@@ -1,0 +1,10 @@
+<svg width="386.25" height="100" viewBox="0 0 386.25 100" xmlns="http://www.w3.org/2000/svg">
+                    <g transform="translate(0, 10) scale(1)">
+                        <path d="M5 30 L35 12 L65 30 L35 48 Z" fill="#f8fafc"></path>
+                        <path d="M15 36 V52 Q35 62 55 52 V36" fill="none" stroke="#f8fafc" stroke-width="5" stroke-linejoin="round"></path>
+                        <circle cx="62" cy="12" r="9" fill="#34d399"></circle>
+                        <path d="M62 8 V16 M58 12 H66" stroke="#064e3b" stroke-width="2" stroke-linecap="round"></path>
+                    </g>
+                    <text x="85" y="65" font-family="'Inter', sans-serif" font-size="46" font-weight="800" fill="#f8fafc">coach</text>
+                    <text x="236.25" y="63" font-family="'Noto Sans JP', sans-serif" font-size="14" font-weight="700" fill="#94a3b8">for 総合型選抜</text>
+                </svg>

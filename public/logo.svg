@@ -1,0 +1,13 @@
+<svg width="387.0625" height="100" viewBox="0 0 387.0625 100" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Icon -->
+                    <g transform="translate(-5, 10) scale(1)">
+                        <path d="M5 30 L35 12 L65 30 L35 48 Z" fill="#1e293b"></path>
+                        <path d="M15 36 V52 Q35 62 55 52 V36" fill="none" stroke="#1e293b" stroke-width="5" stroke-linejoin="round"></path>
+                        <circle cx="62" cy="12" r="9" fill="#10b981"></circle>
+                        <path d="M62 8 V16 M58 12 H66" stroke="#ffffff" stroke-width="2" stroke-linecap="round"></path>
+                    </g>
+                    <!-- coach -->
+                    <text x="80" y="63" font-family="'Inter', sans-serif" font-size="49" font-weight="800" fill="#1e293b">coach</text>
+                    <!-- for... -->
+                    <text x="237.0625" y="61" font-family="'Noto Sans JP', sans-serif" font-size="20" font-weight="700" fill="#64748b">for 総合型選抜</text>
+                </svg>

@@ -1,0 +1,102 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Calendar, Video } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
+import type { Session, SessionStatus } from "@/lib/types/session";
+import { SESSION_TYPE_LABELS, SESSION_STATUS_LABELS } from "@/lib/types/session";
+import { useAuthSWR } from "@/lib/api/swr";
+
+const STATUS_VARIANT: Record<
+  SessionStatus,
+  "default" | "secondary" | "outline" | "destructive"
+> = {
+  scheduled: "outline",
+  in_progress: "default",
+  completed: "secondary",
+  cancelled: "destructive",
+};
+
+export default function StudentSessionsPage() {
+  const router = useRouter();
+  const { data: rawData, isLoading: loading } = useAuthSWR<Session[] | { sessions: Session[] }>("/api/sessions?sharedWithStudent=true");
+  const sessions = Array.isArray(rawData) ? rawData : (rawData as { sessions?: Session[] })?.sessions ?? [];
+
+  return (
+    <div className="max-w-3xl mx-auto px-4 py-5 lg:py-8 space-y-4 lg:space-y-6">
+      <h1 className="text-xl font-bold flex items-center gap-2">
+        <Calendar className="size-5" />
+        セッション一覧
+      </h1>
+
+      {loading ? (
+        <div className="space-y-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-24 w-full" />
+          ))}
+        </div>
+      ) : sessions.length === 0 ? (
+        <Card>
+          <CardContent>
+            <EmptyState
+              icon={Calendar}
+              title="予定されたセッションはありません"
+              description="講師がセッションを予約すると、ここに表示されます"
+            />
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {sessions.map((s) => (
+            <Card
+              key={s.id}
+              className="cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => router.push(`/student/sessions/${s.id}`)}
+            >
+              <CardContent className="py-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium text-sm">
+                        {new Date(s.scheduledAt).toLocaleDateString("ja-JP")}
+                      </span>
+                      <span className="text-sm text-muted-foreground">
+                        {new Date(s.scheduledAt).toLocaleTimeString("ja-JP", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                      {s.duration && (
+                        <span className="text-xs text-muted-foreground">
+                          ({s.duration}分)
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      <span className="text-sm">{s.teacherName}</span>
+                      <Badge variant="outline" className="text-xs">
+                        {SESSION_TYPE_LABELS[s.type]}
+                      </Badge>
+                      <Badge
+                        variant={STATUS_VARIANT[s.status]}
+                        className="text-xs"
+                      >
+                        {SESSION_STATUS_LABELS[s.status]}
+                      </Badge>
+                    </div>
+                  </div>
+                  {s.meetLink && (
+                    <Video className="size-5 text-emerald-600 shrink-0" />
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

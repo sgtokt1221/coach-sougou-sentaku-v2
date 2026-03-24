@@ -1,0 +1,802 @@
+[
+  {
+    "id": "waseda-u",
+    "name": "早稲田大学",
+    "shortName": "早稲田",
+    "group": "soukeijochi",
+    "officialUrl": "https://www.waseda.jp/inst/admission/undergraduate/system/ao/",
+    "faculties": [
+      {
+        "id": "culture-media-society",
+        "name": "文化構想学部（JCulPプログラム）",
+        "admissionPolicy": "英語と日本語の二言語で日本文化を多角的に研究し、グローバルな視点から文化の創造・発信に貢献できる人材を求める。異文化理解力と高い語学力を基盤に、日本文化論を国際的に展開する意欲と独創的な思考力を有する者を歓迎する。",
+        "capacity": 15,
+        "requirements": {
+          "gpa": null,
+          "englishCert": "英語外部試験スコア提出必須（TOEFL iBT、IELTS等）",
+          "otherReqs": ["志望理由書（日本語・英語）", "活動記録報告書", "英語外部試験スコア"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書（日英）、活動記録報告書、英語外部試験スコアの書類審査" },
+          { "stage": 2, "type": "interview", "details": "日本語および英語による面接試験" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-08",
+          "examDate": "2025-10-19",
+          "resultDate": "2025-11-01"
+        },
+        "interviewTendency": {
+          "format": "個人面接（日本語・英語）",
+          "duration": "約20分",
+          "interviewers": "教員2〜3名",
+          "pressure": "medium",
+          "weight": "面接重視",
+          "frequentTopics": [
+            "日本文化への関心と研究テーマ",
+            "英語での自己紹介・志望動機説明",
+            "異文化体験とそこから得た学び",
+            "JCulPプログラムで何を学びたいか",
+            "グローバルな視点での日本文化発信"
+          ],
+          "tips": "日本語と英語の両方で面接が行われるため、志望理由や研究テーマを両言語でスムーズに説明できるよう準備が必要。日本文化に対する具体的な関心テーマを持ち、国際的な視点から語れるようにしておくこと。"
+        }
+      },
+      {
+        "id": "social-sciences",
+        "name": "社会科学部（全国自己推薦入試）",
+        "admissionPolicy": "社会科学の学際的な視座から現代社会の諸問題を分析し、解決策を提案できる人材を求める。学業・課外活動において優れた実績を持ち、多様な価値観を尊重しながら社会の発展に寄与する強い意志を有する者を歓迎する。",
+        "capacity": 35,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": ["志望理由書", "活動記録報告書", "全国7ブロックからの選抜"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "志望理由書、活動記録報告書、調査書による1次選考" },
+          { "stage": 2, "type": "essay", "details": "小論文試験" },
+          { "stage": 3, "type": "interview", "details": "個別面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-24",
+          "applicationEnd": "2025-09-30",
+          "examDate": "2025-11-01",
+          "resultDate": "2025-11-14"
+        },
+        "interviewTendency": {
+          "format": "個人面接",
+          "duration": "約15分",
+          "interviewers": "教員2名",
+          "pressure": "medium",
+          "weight": "均等",
+          "frequentTopics": [
+            "小論文の内容に関する深掘り質問",
+            "志望理由と社会科学への関心",
+            "課外活動の実績と学んだこと",
+            "現代社会の課題に対する自分の意見",
+            "大学で取り組みたい研究テーマ"
+          ],
+          "tips": "小論文試験の後に面接が行われるため、自分が書いた小論文の内容を踏まえた質問に備えること。社会科学の学際性を理解し、複数の分野を横断する視点で社会問題を語れるようにしておくと好印象。"
+        }
+      },
+      {
+        "id": "international-liberal-studies",
+        "name": "国際教養学部（AO入試・4月入学国内選考）",
+        "admissionPolicy": "多様な学問分野を英語で横断的に学び、国際社会の課題に主体的に取り組む人材を求める。高い英語運用能力と幅広い知的好奇心を持ち、異文化環境で協働しながらリベラルアーツの精神を実践する意欲のある者を歓迎する。",
+        "capacity": 100,
+        "requirements": {
+          "gpa": null,
+          "englishCert": "英語外部試験スコア提出必須（TOEFL iBT、IELTS、英検等）",
+          "otherReqs": ["志望理由書（英語）", "Critical Writing（英語）", "英語外部試験スコア"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書（英語）、英語外部試験スコア等の書類審査" },
+          { "stage": 2, "type": "test", "details": "Critical Writing（英語による論述試験）" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-08",
+          "examDate": "2025-10-19",
+          "resultDate": "2025-11-01"
+        },
+        "interviewTendency": {
+          "format": "書類・筆記中心（面接なし）",
+          "duration": "なし（Critical Writing 90分）",
+          "interviewers": "なし",
+          "pressure": "medium",
+          "weight": "書類重視",
+          "frequentTopics": [
+            "Critical Writingでの論理的英語論述",
+            "社会問題・国際問題に関するエッセイ",
+            "志望理由書（英語）の説得力",
+            "リベラルアーツへの関心と学習計画",
+            "英語外部試験スコアの高さ"
+          ],
+          "tips": "面接は実施されず、書類審査とCritical Writing（英語論述試験）で合否が決まる。英語で論理的に議論を構築する力が問われるため、英語エッセイの練習を重点的に行うこと。TOEFL iBT 95+やIELTS 7.0+が目安。"
+        }
+      },
+      {
+        "id": "sport-sciences",
+        "name": "スポーツ科学部（スポーツ自己推薦入試）",
+        "admissionPolicy": "スポーツ科学の研究・実践を通じて社会に貢献する人材を求める。競技スポーツにおける顕著な実績と、スポーツを科学的に探究する知的好奇心を併せ持ち、心身ともに健全で学業との両立に意欲のある者を歓迎する。",
+        "capacity": 60,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": ["競技歴・スポーツ活動実績報告書", "志望理由書", "競技成績証明書"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、競技歴報告書、志望理由書による1次選考" },
+          { "stage": 2, "type": "essay", "details": "小論文試験" },
+          { "stage": 3, "type": "interview", "details": "面接試験" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-16",
+          "applicationEnd": "2025-09-29",
+          "examDate": "2025-11-14",
+          "resultDate": "2025-11-21"
+        },
+        "interviewTendency": {
+          "format": "個人面接",
+          "duration": "約15分",
+          "interviewers": "教員2名",
+          "pressure": "medium",
+          "weight": "均等",
+          "frequentTopics": [
+            "競技実績と競技を通じた成長",
+            "スポーツ科学への関心と研究テーマ",
+            "学業とスポーツの両立計画",
+            "怪我や挫折の経験とその克服",
+            "卒業後のキャリアビジョン"
+          ],
+          "tips": "競技実績だけでなく、スポーツを科学的に探究したいという知的好奇心をアピールすることが重要。小論文と面接の両方でスポーツ科学の視点を示し、単なるアスリートではなく研究者としての姿勢も見せること。"
+        }
+      },
+      {
+        "id": "human-sciences",
+        "name": "人間科学部（FACT選抜）",
+        "admissionPolicy": "人間に関する諸問題を多角的・学際的に研究し、社会の福祉と発展に貢献する人材を求める。人間環境科学・健康福祉科学・人間情報科学のいずれかの分野に強い関心と探究意欲を持ち、独自の問題発見能力と論理的思考力を有する者を歓迎する。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": ["志望理由書", "事前課題レポート", "活動報告書"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書、事前課題レポート、活動報告書による書類審査" },
+          { "stage": 2, "type": "essay", "details": "論述試験" },
+          { "stage": 3, "type": "interview", "details": "面接試験（口頭試問含む）" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-16",
+          "applicationEnd": "2025-09-25",
+          "examDate": "2025-10-26",
+          "resultDate": "2025-11-07"
+        },
+        "interviewTendency": {
+          "format": "個人面接（口頭試問含む）",
+          "duration": "約20分",
+          "interviewers": "教員2〜3名",
+          "pressure": "medium",
+          "weight": "面接重視",
+          "frequentTopics": [
+            "事前課題レポートの内容に関する口頭試問",
+            "志望する学科（環境・福祉・情報）の選択理由",
+            "研究計画の具体性と実現可能性",
+            "人間科学の学際的アプローチへの理解",
+            "社会課題に対する問題意識"
+          ],
+          "tips": "口頭試問が含まれるため、事前課題レポートの内容を深く理解し、質問に論理的に答えられるよう準備が必須。FACT選抜は少人数（10名）で競争率が高いため、独自の問題発見能力と探究の深さが鍵となる。"
+        }
+      },
+      {
+        "id": "creative-science-engineering",
+        "name": "創造理工学部（建築学科AO入試）",
+        "admissionPolicy": "建築・空間デザインの分野で独創的な発想力と表現力を持ち、社会と環境の課題に向き合える人材を求める。デッサン等の造形的実技能力と論理的思考力を兼ね備え、豊かな感性と専門的探究心で建築の未来を切り開く意欲のある者を歓迎する。",
+        "capacity": 15,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": ["志望理由書", "活動記録報告書", "デッサン等の実技作品（事前課題）"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "志望理由書、活動記録報告書、事前課題（デッサン等）の書類審査" },
+          { "stage": 2, "type": "presentation", "details": "事前課題に基づくプレゼンテーション" },
+          { "stage": 3, "type": "interview", "details": "口頭試問を含む個人面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-10",
+          "examDate": "2025-10-18",
+          "resultDate": "2025-11-01"
+        },
+        "interviewTendency": {
+          "format": "個人面接（口頭試問含む）＋プレゼンテーション",
+          "duration": "約20〜30分",
+          "interviewers": "教員3名",
+          "pressure": "medium",
+          "weight": "面接重視",
+          "frequentTopics": [
+            "事前提出デッサン・課題の制作意図と表現の説明",
+            "建築への関心のきっかけと目指す建築像",
+            "空間・環境・デザインに関する考え方",
+            "実技経験（デッサン、模型、CGなど）の実績",
+            "早稲田建築学科で取り組みたい研究・設計テーマ"
+          ],
+          "tips": "デッサン等の実技課題が事前に課されるため、造形力の鍛錬が必須。プレゼンでは制作意図を論理的かつ熱意を持って伝えることが重要。建築雑誌や著名建築家の作品研究を通じて、自分の建築観を確立しておくこと。"
+        }
+      },
+      {
+        "id": "advanced-science-engineering",
+        "name": "先進理工学部（特別選抜入試）",
+        "admissionPolicy": "化学グランプリ・情報オリンピック等の国内外の科学競技において優秀な実績を持ち、先進理工学の最前線で独創的な研究に挑む高い資質を有する人材を求める。卓越した専門的基礎力と問題解決能力を備え、科学技術の革新に貢献する強い意欲のある者を歓迎する。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": ["化学グランプリ・情報オリンピック・物理オリンピック等の実績証明書", "志望理由書", "研究計画書"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "実績証明書、志望理由書、研究計画書、調査書の書類審査" },
+          { "stage": 2, "type": "interview", "details": "口頭試問（専門分野の深い知識を問う）＋個人面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-16",
+          "applicationEnd": "2025-09-25",
+          "examDate": "2025-10-25",
+          "resultDate": "2025-11-07"
+        },
+        "interviewTendency": {
+          "format": "口頭試問＋個人面接",
+          "duration": "約30〜40分",
+          "interviewers": "教員3名",
+          "pressure": "high",
+          "weight": "面接重視",
+          "frequentTopics": [
+            "科学競技（オリンピック等）の問題解決プロセスの詳細説明",
+            "専門分野（化学・物理・情報等）の高度な口頭試問",
+            "研究計画書の内容と実現可能性の検証",
+            "将来の研究テーマと先進理工学への貢献ビジョン",
+            "科学的思考の方法論と独創的アイデアの源泉"
+          ],
+          "tips": "科学オリンピック等の突出した実績が出願条件であるため、その問題解決の過程を自分の言葉で詳しく説明できる準備が不可欠。口頭試問は専門的かつ高度な内容が問われるため、競技で扱った問題の原理・背景・応用まで深く理解しておくこと。"
+        }
+      },
+      {
+        "id": "education",
+        "name": "教育学部（地域探究・貢献入試）",
+        "admissionPolicy": "地域社会の課題に主体的に向き合い、フィールドワークや実践活動を通じて探究してきた人材を求める。地域の教育・文化・環境・福祉等の課題解決に継続的に取り組んだ実績と、その経験を教育学の視点から発展させる意欲を持つ者を歓迎する。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": ["地域活動・探究活動報告書", "志望理由書", "指導教員の推薦状または活動証明書"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "地域活動報告書、志望理由書、活動証明書等の書類審査" },
+          { "stage": 2, "type": "essay", "details": "小論文（地域課題と教育に関する論述）" },
+          { "stage": 3, "type": "interview", "details": "個人面接（活動実績の深掘りと教育学的考察）" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-24",
+          "applicationEnd": "2025-09-30",
+          "examDate": "2025-11-01",
+          "resultDate": "2025-11-14"
+        },
+        "interviewTendency": {
+          "format": "個人面接",
+          "duration": "約20分",
+          "interviewers": "教員2〜3名",
+          "pressure": "medium",
+          "weight": "均等",
+          "frequentTopics": [
+            "地域活動・探究活動の具体的な内容と成果",
+            "取り組んだ地域課題の背景と問題構造の分析",
+            "活動を通じて発見した教育との関連性",
+            "教育学部で深めたい研究テーマ",
+            "地域貢献と教育実践に向けた将来ビジョン"
+          ],
+          "tips": "地域での実践的な探究活動が評価の中心となるため、単なるボランティア参加にとどまらず、課題発見・分析・解決への主体的関与を具体的に語れることが重要。活動の「なぜ」と「何が変わったか」を教育学的視点で言語化しておくこと。"
+        }
+      }
+    ]
+  },
+  {
+    "id": "keio-u",
+    "name": "慶應義塾大学",
+    "shortName": "慶應",
+    "group": "soukeijochi",
+    "officialUrl": "https://www.keio.ac.jp/ja/admissions/",
+    "faculties": [
+      {
+        "id": "law-fit",
+        "name": "法学部（FIT入試）",
+        "admissionPolicy": "法律学・政治学の基礎を習得し、公正な社会の実現に向けて行動できる人材を求める。社会問題への鋭い関心と論理的思考力を持ち、法的素養を活かして国内外で指導的役割を担う志のある者を歓迎する。A方式は多様な活動実績、B方式は学業成績を重視する。",
+        "capacity": 160,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": ["志望理由書", "自己推薦書", "A方式:活動実績、B方式:評定平均4.0以上"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "志望理由書、調査書、自己推薦書等の書類審査（A・B方式共通）" },
+          { "stage": 2, "type": "essay", "details": "A方式：グループディスカッション、B方式：総合考査（論述）" },
+          { "stage": 3, "type": "interview", "details": "A方式・B方式ともに個別面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-08-01",
+          "applicationEnd": "2025-09-03",
+          "examDate": "2025-10-04",
+          "resultDate": "2025-10-17"
+        },
+        "interviewTendency": {
+          "format": "A方式：グループディスカッション＋個人面接、B方式：プレゼンテーション＋個人面接",
+          "duration": "GD約45分＋面接約15分（A方式）、プレゼン＋面接約20分（B方式）",
+          "interviewers": "教員3名",
+          "pressure": "high",
+          "weight": "面接重視",
+          "frequentTopics": [
+            "A方式：社会問題に関するGDテーマ（法・政治・経済）",
+            "B方式：与えられた資料に基づくプレゼンテーション",
+            "法律学・政治学を学ぶ動機",
+            "社会正義・公正に関する考え",
+            "将来のキャリアと社会貢献のビジョン",
+            "時事問題への見解"
+          ],
+          "tips": "FIT入試は2段階選考でA方式はGD、B方式はプレゼンが課されるため、それぞれ専用の対策が必要。A方式では他の受験生との協調性とリーダーシップの両立、B方式では論理的な資料分析力が問われる。面接ではpressureが高く、深い追質問に備えること。"
+        }
+      },
+      {
+        "id": "policy-management",
+        "name": "総合政策学部（SFC AO入試）",
+        "admissionPolicy": "問題発見・解決に強い意欲を持ち、多様な学問分野を統合しながら政策立案・実践に取り組む人材を求める。SFCの理念である「実践知」を体現し、社会のあらゆる領域で新たな価値を創造する意志と行動力を有する者を歓迎する。",
+        "capacity": 150,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": ["志望理由書・入学志願書", "自由記述（A4×2枚）", "任意提出資料"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "志望理由書、自由記述、任意提出資料等の書類審査" },
+          { "stage": 2, "type": "interview", "details": "個別面接（プレゼンテーション含む場合あり）" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-08-01",
+          "applicationEnd": "2025-09-02",
+          "examDate": "2025-10-11",
+          "resultDate": "2025-10-24"
+        },
+        "interviewTendency": {
+          "format": "個人面接（プレゼンテーション含む場合あり）",
+          "duration": "約15〜20分",
+          "interviewers": "教員2〜3名",
+          "pressure": "medium",
+          "weight": "書類重視",
+          "frequentTopics": [
+            "志望理由書・自由記述の内容の深掘り",
+            "自分が発見した社会課題とその解決策",
+            "SFCで具体的に何を学び実践したいか",
+            "これまでの活動実績とそこから得た知見",
+            "問題解決に向けた行動力のエピソード"
+          ],
+          "tips": "SFC AO入試は書類審査で大きく絞り込まれるため、まず書類の完成度を高めることが最優先。面接では自由記述の内容について深く問われるため、自分の問題意識と解決アプローチを具体的に語れるよう準備すること。"
+        }
+      },
+      {
+        "id": "environment-information",
+        "name": "環境情報学部（SFC AO入試）",
+        "admissionPolicy": "テクノロジーとデザインの融合により持続可能な未来社会を構想・実装できる人材を求める。プログラミング・データサイエンス・環境学・メディア等の分野で高い専門性と独創的な発想力を持ち、分野横断的に社会課題の解決に挑む意欲のある者を歓迎する。",
+        "capacity": 150,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": ["志望理由書・入学志願書", "自由記述（A4×2枚）", "任意提出資料"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "志望理由書、自由記述、任意提出資料等の書類審査" },
+          { "stage": 2, "type": "interview", "details": "個別面接（プレゼンテーション含む場合あり）" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-08-01",
+          "applicationEnd": "2025-09-02",
+          "examDate": "2025-10-11",
+          "resultDate": "2025-10-24"
+        },
+        "interviewTendency": {
+          "format": "個人面接（プレゼンテーション含む場合あり）",
+          "duration": "約15〜20分",
+          "interviewers": "教員2〜3名",
+          "pressure": "medium",
+          "weight": "書類重視",
+          "frequentTopics": [
+            "テクノロジーを活用した課題解決の具体案",
+            "プログラミング・制作物のポートフォリオ説明",
+            "環境問題やデジタル社会への関心",
+            "SFC環境情報学部で取り組みたい研究・プロジェクト",
+            "分野横断的な学びへの意欲と計画"
+          ],
+          "tips": "総合政策学部と同じSFC AO入試の枠組みだが、環境情報学部ではテクノロジーやものづくりの具体的なスキル・実績が重視される。任意提出資料で制作物やポートフォリオを効果的に見せることが合否を左右する。"
+        }
+      },
+      {
+        "id": "letters",
+        "name": "文学部（自主応募制推薦入試）",
+        "admissionPolicy": "人文科学の幅広い領域に知的好奇心を持ち、真理探究の姿勢で学問に取り組む人材を求める。評定平均4.1以上の学業実績を基盤に、文学・歴史・哲学・芸術等の領域で深い洞察力と表現力を発揮し、自主的に学びを深める意欲のある者を歓迎する。",
+        "capacity": 120,
+        "requirements": {
+          "gpa": 4.1,
+          "englishCert": null,
+          "otherReqs": ["自己推薦書", "調査書", "評定平均値4.1以上の現役生"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、自己推薦書の書類審査（評定平均4.1以上必須）" },
+          { "stage": 2, "type": "essay", "details": "総合考査I（小論文：与えられたテーマについて論述）" },
+          { "stage": 3, "type": "test", "details": "総合考査II（テキスト読解に基づく論述試験）" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-04",
+          "applicationEnd": "2025-11-06",
+          "examDate": "2025-11-23",
+          "resultDate": "2025-12-03"
+        },
+        "interviewTendency": {
+          "format": "筆記中心（面接なし）",
+          "duration": "なし（総合考査I・II 各120分）",
+          "interviewers": "なし",
+          "pressure": "medium",
+          "weight": "書類重視",
+          "frequentTopics": [
+            "総合考査I：人文科学に関するテーマの小論文",
+            "総合考査II：長文読解に基づく論述",
+            "自己推薦書の読書歴・研究関心",
+            "評定平均4.1以上の学業実績",
+            "人文科学分野への深い知的好奇心"
+          ],
+          "tips": "面接は実施されず、書類（自己推薦書）と2つの総合考査（小論文＋読解論述）で合否が決まる。読書量と論述力が直接問われるため、人文科学系の書籍を幅広く読み、論理的に自分の考えを展開する練習を重ねること。"
+        }
+      },
+      {
+        "id": "science-technology",
+        "name": "理工学部（AO入試）",
+        "admissionPolicy": "自然科学・工学の基礎力と応用力を兼ね備え、独創的な研究・技術開発に挑戦する人材を求める。数学・理科における高い学力と科学的探究心を持ち、グローバルな視野で科学技術の発展と社会課題の解決に貢献する意欲のある者を歓迎する。",
+        "capacity": 20,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": ["志望理由書", "活動報告書", "科学オリンピック等の実績があれば有利"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "志望理由書、活動報告書、調査書等の書類審査" },
+          { "stage": 2, "type": "test", "details": "数学・理科の筆記試験" },
+          { "stage": 3, "type": "interview", "details": "口頭試問を含む面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-05",
+          "examDate": "2025-10-18",
+          "resultDate": "2025-11-01"
+        },
+        "interviewTendency": {
+          "format": "口頭試問＋個人面接",
+          "duration": "約20〜30分",
+          "interviewers": "教員3名",
+          "pressure": "high",
+          "weight": "面接重視",
+          "frequentTopics": [
+            "数学・物理・化学の基礎的な口頭試問",
+            "研究活動や科学オリンピックの成果説明",
+            "志望する学門分野の選択理由",
+            "将来の研究テーマと目標",
+            "科学的思考プロセスの説明"
+          ],
+          "tips": "口頭試問では数学・理科の基礎知識をその場で問われるため、教科書レベルの原理を自分の言葉で説明できるようにしておくこと。研究実績や科学オリンピック経験がある場合は、その内容を深く掘り下げられるため、自分の成果を論理的にプレゼンできる準備が必須。"
+        }
+      },
+      {
+        "id": "nursing",
+        "name": "看護医療学部（AO入試）",
+        "admissionPolicy": "人間の生命と尊厳を大切にし、科学的根拠に基づく看護実践で人々の健康と福祉に貢献する人材を求める。高い共感力と倫理観を基盤に、医療・保健・福祉の現場で主体的に課題解決に取り組む強い意志と探究心を持つ者を歓迎する。A方式は活動実績、B方式は小論文を重視する。",
+        "capacity": 20,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": ["志望理由書", "A方式:医療・福祉活動の実績報告書、B方式:調査書（学業成績）"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "A方式：志望理由書＋活動実績報告書の書類審査、B方式：志望理由書＋調査書の書類審査" },
+          { "stage": 2, "type": "essay", "details": "小論文（看護・医療・生命倫理に関する論述）" },
+          { "stage": 3, "type": "interview", "details": "個人面接（看護職への適性・動機の確認）" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-05",
+          "examDate": "2025-10-11",
+          "resultDate": "2025-10-24"
+        },
+        "interviewTendency": {
+          "format": "個人面接",
+          "duration": "約15〜20分",
+          "interviewers": "教員2名",
+          "pressure": "medium",
+          "weight": "均等",
+          "frequentTopics": [
+            "看護職を志望した動機と原体験",
+            "医療・福祉ボランティアや病院見学等の体験とその学び",
+            "看護師・保健師・助産師として将来実現したいこと",
+            "生命倫理・患者の尊厳に関する考え方",
+            "小論文の内容に関するフォローアップ質問"
+          ],
+          "tips": "看護職への強い動機付けと医療現場の実体験が重視される。ボランティアや医療見学等の具体的エピソードを通じて共感力と使命感を伝えることが重要。小論文では生命倫理的テーマが出題されやすいため、医療ニュースや倫理的事例を事前に学習しておくこと。"
+        }
+      }
+    ]
+  },
+  {
+    "id": "sophia-u",
+    "name": "上智大学",
+    "shortName": "上智",
+    "group": "soukeijochi",
+    "officialUrl": "https://adm.sophia.ac.jp/jpn/gakubu_tokubetsu_ad/koubo/",
+    "faculties": [
+      {
+        "id": "foreign-studies",
+        "name": "外国語学部（公募制推薦入試）",
+        "admissionPolicy": "高度な外国語運用能力と異文化理解力を備え、国際社会で活躍する人材を求める。対象言語・地域に対する深い関心と探究心を持ち、語学力を活かして異文化間のコミュニケーションと相互理解の推進に貢献する意欲のある者を歓迎する。",
+        "capacity": 55,
+        "requirements": {
+          "gpa": 4.0,
+          "englishCert": "英検準1級以上、TOEFL iBT 72以上、IELTS 5.5以上、TEAP 309以上等（学科により異なる）",
+          "otherReqs": ["自己推薦書", "志望動機書", "学校長の推薦不要（自己推薦型）"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、自己推薦書、志望動機書、外国語検定試験成績の書類審査" },
+          { "stage": 2, "type": "essay", "details": "学科別の論文テスト（外国語を含む場合あり）" },
+          { "stage": 3, "type": "interview", "details": "個別面接（外国語による質疑応答を含む学科あり）" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-01",
+          "applicationEnd": "2025-11-06",
+          "examDate": "2025-11-29",
+          "resultDate": "2025-12-11"
+        },
+        "interviewTendency": {
+          "format": "個人面接（外国語による質疑応答を含む学科あり）",
+          "duration": "約15分",
+          "interviewers": "教員2名",
+          "pressure": "medium",
+          "weight": "均等",
+          "frequentTopics": [
+            "志望言語・地域への関心と学習歴",
+            "英語または志望言語での自己紹介・質疑応答",
+            "異文化体験や国際交流の経験",
+            "外国語を活かした将来のキャリア",
+            "志望動機書の内容に関する深掘り"
+          ],
+          "tips": "学科によっては英語や志望言語での質疑応答があるため、外国語での受け答えを練習しておくこと。語学力の高さだけでなく、対象地域の文化・社会への深い理解と研究意欲を示すことが差別化のポイント。"
+        }
+      },
+      {
+        "id": "law",
+        "name": "法学部（公募制推薦入試）",
+        "admissionPolicy": "法律学・国際関係法学・地球環境法学の分野で、正義と公正の理念に基づき社会の諸問題を解決する人材を求める。論理的思考力と幅広い教養を持ち、法的素養を活かして地域社会から国際社会まで多層的に貢献する志のある者を歓迎する。",
+        "capacity": 28,
+        "requirements": {
+          "gpa": 4.0,
+          "englishCert": "英検2級以上、TOEFL iBT 55以上、IELTS 4.5以上、TEAP 250以上等",
+          "otherReqs": ["自己推薦書", "志望動機書", "レポート等の自主制作物（任意）"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、自己推薦書、志望動機書の書類審査" },
+          { "stage": 2, "type": "essay", "details": "論文テスト（社会問題に関する論述）" },
+          { "stage": 3, "type": "interview", "details": "個別面接（志望動機・学修計画に関する質疑応答）" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-01",
+          "applicationEnd": "2025-11-06",
+          "examDate": "2025-11-29",
+          "resultDate": "2025-12-11"
+        },
+        "interviewTendency": {
+          "format": "個人面接",
+          "duration": "約15分",
+          "interviewers": "教員2名",
+          "pressure": "medium",
+          "weight": "均等",
+          "frequentTopics": [
+            "社会問題・時事問題への見解",
+            "法律学を学ぶ動機と将来の目標",
+            "論文テストの内容に関するフォローアップ",
+            "正義・公正・人権に関する考え方",
+            "学修計画の具体性"
+          ],
+          "tips": "論文テストで社会問題に関する論述が課された後に面接となるため、時事問題への幅広い関心が必要。法律や政治に関するニュースを日常的にフォローし、自分なりの意見を論理的に述べられるようにしておくこと。"
+        }
+      },
+      {
+        "id": "global-studies",
+        "name": "総合グローバル学部（公募制推薦入試）",
+        "admissionPolicy": "グローバルな課題を多角的に分析し、異文化共生社会の実現に貢献する人材を求める。国際関係・地域研究に強い関心を持ち、高い語学力と異文化コミュニケーション能力を基盤に、国際協力・平和構築に主体的に取り組む意欲のある者を歓迎する。",
+        "capacity": 40,
+        "requirements": {
+          "gpa": 4.0,
+          "englishCert": "英検準1級以上、TOEFL iBT 72以上、IELTS 5.5以上、TEAP 309以上等",
+          "otherReqs": ["自己推薦書", "志望動機書", "課題レポート"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、自己推薦書、志望動機書、課題レポートの書類審査" },
+          { "stage": 2, "type": "essay", "details": "論文テスト（グローバルな課題に関する論述）" },
+          { "stage": 3, "type": "interview", "details": "個別面接（英語による質疑応答を含む）" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-01",
+          "applicationEnd": "2025-11-06",
+          "examDate": "2025-11-29",
+          "resultDate": "2025-12-11"
+        },
+        "interviewTendency": {
+          "format": "個人面接（英語による質疑応答を含む）",
+          "duration": "約15〜20分",
+          "interviewers": "教員2名",
+          "pressure": "medium",
+          "weight": "均等",
+          "frequentTopics": [
+            "グローバルな社会課題への関心と具体例",
+            "英語での自己紹介・志望動機説明",
+            "異文化体験や国際ボランティア経験",
+            "国際協力・平和構築に関する考え",
+            "課題レポートの内容に関する深掘り"
+          ],
+          "tips": "英語での質疑応答が含まれるため、志望動機や関心のあるグローバル課題について英語で説明できるよう準備すること。課題レポートの内容と面接での回答に一貫性を持たせ、国際問題への深い理解を示すことが重要。"
+        }
+      },
+      {
+        "id": "economics",
+        "name": "経済学部（公募制推薦入試）",
+        "admissionPolicy": "経済学の理論と実証分析を通じて現代社会の諸課題を解明し、政策提言につなげる人材を求める。数量的分析能力と論理的思考力を持ち、国内外の経済問題に対する広い視野と深い洞察力で社会の発展に寄与する意欲のある者を歓迎する。",
+        "capacity": 25,
+        "requirements": {
+          "gpa": 4.0,
+          "englishCert": "英検2級以上、TOEFL iBT 55以上、IELTS 4.5以上、TEAP 250以上等",
+          "otherReqs": ["自己推薦書", "志望動機書"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、自己推薦書、志望動機書の書類審査" },
+          { "stage": 2, "type": "essay", "details": "論文テスト（経済・社会問題に関する論述）" },
+          { "stage": 3, "type": "interview", "details": "個別面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-01",
+          "applicationEnd": "2025-11-06",
+          "examDate": "2025-11-29",
+          "resultDate": "2025-12-11"
+        },
+        "interviewTendency": {
+          "format": "個人面接",
+          "duration": "約15分",
+          "interviewers": "教員2名",
+          "pressure": "medium",
+          "weight": "均等",
+          "frequentTopics": [
+            "経済学を学ぶ動機と関心分野",
+            "日本経済・世界経済の時事問題への見解",
+            "論文テストの内容に関するフォローアップ",
+            "数量的分析や論理的思考力を示すエピソード",
+            "卒業後のキャリアビジョン"
+          ],
+          "tips": "論文テストで経済・社会問題について論述した後の面接となるため、経済ニュースや基本的な経済概念（GDP、インフレ、財政政策等）を理解しておくこと。論理的に筋道立てて自分の考えを述べる力が評価される。"
+        }
+      },
+      {
+        "id": "human-sciences",
+        "name": "総合人間科学部（公募制推薦入試）",
+        "admissionPolicy": "人間の尊厳を基盤に、教育学・心理学・社会学・社会福祉学・看護学の各領域で人間理解を深め、社会貢献を目指す人材を求める。他者への深い共感力と科学的探究心を併せ持ち、多様な人々の幸福と社会的包摂の実現に取り組む意欲のある者を歓迎する。",
+        "capacity": 35,
+        "requirements": {
+          "gpa": 4.0,
+          "englishCert": "英検2級以上、TOEFL iBT 55以上、IELTS 4.5以上、TEAP 250以上等（学科により異なる）",
+          "otherReqs": ["自己推薦書", "志望動機書", "活動報告書"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、自己推薦書、志望動機書、活動報告書の書類審査" },
+          { "stage": 2, "type": "essay", "details": "学科別の論文テスト" },
+          { "stage": 3, "type": "interview", "details": "個別面接（口頭試問含む）" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-01",
+          "applicationEnd": "2025-11-06",
+          "examDate": "2025-11-29",
+          "resultDate": "2025-12-11"
+        },
+        "interviewTendency": {
+          "format": "個人面接（口頭試問含む）",
+          "duration": "約15〜20分",
+          "interviewers": "教員2名",
+          "pressure": "medium",
+          "weight": "面接重視",
+          "frequentTopics": [
+            "志望学科（教育・心理・社会・福祉・看護）の選択理由",
+            "人間の尊厳や社会的包摂に関する考え",
+            "ボランティアや社会貢献活動の経験",
+            "論文テストの内容に関する口頭試問",
+            "他者への共感力を示す具体的エピソード"
+          ],
+          "tips": "口頭試問が含まれるため、論文テストの内容を振り返り説明できるよう準備すること。上智大学のカトリック精神に基づく「人間の尊厳」への理解を示し、志望学科の専門領域に対する具体的な関心と将来ビジョンを語れるようにしておくことが重要。"
+        }
+      },
+      {
+        "id": "theology",
+        "name": "神学部（公募制推薦入試）",
+        "admissionPolicy": "カトリックの信仰と神学的探究を深め、宗教・哲学・倫理の視点から人間と社会の根本問題に向き合う人材を求める。評定平均3.5以上の学業実績を持ち、信仰や人間の尊厳・価値に対する真摯な関心を基盤に、社会の中で宗教的・倫理的課題に取り組む意欲のある者を歓迎する。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": 3.5,
+          "englishCert": null,
+          "otherReqs": ["自己推薦書", "志望動機書", "評定平均3.5以上"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、自己推薦書、志望動機書の書類審査（評定平均3.5以上必須）" },
+          { "stage": 2, "type": "essay", "details": "論文テスト（宗教・哲学・倫理に関する論述）" },
+          { "stage": 3, "type": "interview", "details": "個別面接（神学への関心と動機の確認）" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-10",
+          "examDate": "2025-11-29",
+          "resultDate": "2025-12-11"
+        },
+        "interviewTendency": {
+          "format": "個人面接",
+          "duration": "約15分",
+          "interviewers": "教員2名",
+          "pressure": "low",
+          "weight": "均等",
+          "frequentTopics": [
+            "神学・宗教学を志望した動機と信仰的背景",
+            "カトリックの精神や上智大学の理念への理解",
+            "宗教・倫理・哲学に関心を持ったきっかけ",
+            "人間の尊厳や生命倫理に関する自分の考え",
+            "神学部卒業後のキャリアと社会貢献ビジョン"
+          ],
+          "tips": "必ずしもカトリック信者でなくても受験できるが、上智大学のカトリック精神と神学的探究への誠実な関心が重視される。宗教・哲学・倫理に関する基礎的な読書経験を積み、人間存在や社会の根本問題に対して自分なりの考えを持っておくことが好印象につながる。"
+        }
+      },
+      {
+        "id": "literature",
+        "name": "文学部（公募制推薦入試）",
+        "admissionPolicy": "人文科学の幅広い領域において高い知的好奇心と探究力を持ち、言語・文学・哲学・史学・文化等の深い洞察を通じて社会と人間を理解する人材を求める。評定平均4.0以上の学業実績を基盤に、専門分野への情熱と論理的表現力を活かして学術研究に貢献する意欲のある者を歓迎する。",
+        "capacity": 20,
+        "requirements": {
+          "gpa": 4.0,
+          "englishCert": "英検2級以上、TOEFL iBT 55以上、IELTS 4.5以上、TEAP 250以上等（学科により異なる）",
+          "otherReqs": ["自己推薦書", "志望動機書", "評定平均4.0以上（全学科共通）"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、自己推薦書、志望動機書の書類審査（評定平均4.0以上必須）" },
+          { "stage": 2, "type": "essay", "details": "論文テスト（人文科学に関する読解・論述）" },
+          { "stage": 3, "type": "interview", "details": "個別面接（志望学科の研究テーマと動機の確認）" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-10",
+          "examDate": "2025-11-29",
+          "resultDate": "2025-12-11"
+        },
+        "interviewTendency": {
+          "format": "個人面接",
+          "duration": "約15分",
+          "interviewers": "教員2名",
+          "pressure": "medium",
+          "weight": "均等",
+          "frequentTopics": [
+            "志望学科（哲学・史学・国文・英文・独文・仏文等）の選択理由",
+            "専門分野への関心のきっかけと読書・研究体験",
+            "論文テストの内容に関するフォローアップ",
+            "大学で取り組みたい研究テーマの具体的説明",
+            "人文科学の学びを通じた社会貢献ビジョン"
+          ],
+          "tips": "全学科対象の公募制推薦だが、各学科の専門性が問われるため志望学科に関連する書籍を複数読んで深い関心を示すこと。論文テストは読解と論述が中心であり、人文科学の基礎的な議論の構成力が問われる。面接では自分の研究テーマを具体的に語れるよう準備すること。"
+        }
+      }
+    ]
+  }
+]

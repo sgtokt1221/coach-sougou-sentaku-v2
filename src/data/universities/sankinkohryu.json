@@ -1,0 +1,1176 @@
+[
+  {
+    "id": "kyoto-sangyo-u",
+    "name": "京都産業大学",
+    "shortName": "京産",
+    "group": "sankinkohryu",
+    "officialUrl": "https://www.kyoto-su.ac.jp/",
+    "faculties": [
+      {
+        "id": "law",
+        "name": "法学部",
+        "admissionPolicy": "法律学・政治学の学修に強い関心を持ち、社会正義の実現に意欲のある学生を求める。幅広い教養と専門知識を身につけ、論理的思考力と表現力をもって地域社会や国際社会の課題解決に貢献する志を持つ者を歓迎する。",
+        "capacity": 15,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": ["志望理由書", "調査書"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書の審査" },
+          { "stage": 2, "type": "essay", "details": "論文試験（法学・政策に関する論述）" },
+          { "stage": 3, "type": "interview", "details": "プレゼンテーション・質疑応答" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-08",
+          "examDate": "2025-09-21",
+          "resultDate": "2025-09-26"
+        },
+        "interviewTendency": {
+          "format": "個人面接（プレゼンテーション含む）",
+          "duration": "約15分",
+          "interviewers": "教員2名",
+          "pressure": "low",
+          "weight": "均等",
+          "frequentTopics": [
+            "志望理由と将来のキャリアビジョン",
+            "関心のある社会問題・法的課題",
+            "時事問題（憲法・人権・国際法関連）",
+            "プレゼンテーション内容への質疑",
+            "高校時代の活動と学びの関連"
+          ],
+          "tips": "プレゼンテーション形式の質疑応答があるため、法学・政策に関する自分の考えを論理的に整理しておくこと。日頃から社会問題や法律ニュースに関心を持ち、自分なりの意見を述べられるようにしておくと良い。"
+        }
+      },
+      {
+        "id": "economics",
+        "name": "経済学部",
+        "admissionPolicy": "経済学の基礎理論と現実社会への応用に関心を持ち、データ分析や論理的思考力を身につけたい学生を求める。「むすんで、うみだす。」の理念のもと、経済問題の解決に主体的に取り組む意欲のある者を歓迎する。",
+        "capacity": 20,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": ["志望理由書", "調査書"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書の審査" },
+          { "stage": 2, "type": "essay", "details": "One Dayセミナー（模擬講義）・記述式テスト" },
+          { "stage": 3, "type": "interview", "details": "個人面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-08",
+          "examDate": "2025-09-21",
+          "resultDate": "2025-09-26"
+        },
+        "interviewTendency": {
+          "format": "個人面接",
+          "duration": "約15分",
+          "interviewers": "教員2名",
+          "pressure": "low",
+          "weight": "均等",
+          "frequentTopics": [
+            "志望理由と経済学への関心",
+            "最近の経済ニュース・時事問題",
+            "One Dayセミナーの感想と学び",
+            "データ分析やグラフの読み取りに関する質問",
+            "大学での学修計画"
+          ],
+          "tips": "One Dayセミナー後の面接なので、模擬講義の内容を踏まえた受け答えが重要。日頃から経済ニュース（為替・物価・雇用等）に目を通し、自分の言葉で説明できるようにしておこう。"
+        }
+      },
+      {
+        "id": "business",
+        "name": "経営学部",
+        "admissionPolicy": "マネジメントに関する実践的な知識と経験を持ち、ビジネスの現場で活躍する力を養いたい学生を求める。起業やリーダーシップに関心があり、社会的課題をビジネスで解決する意欲のある者を歓迎する。",
+        "capacity": 25,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": ["志望理由書", "マネジメント関連の経験・実績の証明書類"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書、活動実績証明の審査" },
+          { "stage": 2, "type": "essay", "details": "社会的問題に関する論述試験" },
+          { "stage": 3, "type": "interview", "details": "個人面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-08",
+          "examDate": "2025-09-21",
+          "resultDate": "2025-09-26"
+        },
+        "interviewTendency": {
+          "format": "個人面接",
+          "duration": "約15分",
+          "interviewers": "教員2名",
+          "pressure": "low",
+          "weight": "均等",
+          "frequentTopics": [
+            "マネジメント経験・リーダーシップ経験の具体的エピソード",
+            "起業やビジネスへの関心・アイデア",
+            "社会的課題をビジネスで解決する方法",
+            "志望理由と将来のキャリアプラン",
+            "高校時代の活動実績の深掘り"
+          ],
+          "tips": "活動実績証明を提出するため、その経験から何を学び経営学にどうつなげるかを明確に語れるよう準備すること。実践的なビジネス感覚をアピールできると好印象。"
+        }
+      },
+      {
+        "id": "modern-society",
+        "name": "現代社会学部",
+        "admissionPolicy": "現代社会の多様な課題に関心を持ち、社会学・メディア学・地域学等の学際的なアプローチで問題解決に取り組む意欲のある学生を求める。リーダーシップ経験やスポーツ・文化活動の実績を持つ者を歓迎する。",
+        "capacity": 30,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": ["志望理由書", "リーダーシップ経験等の活動実績証明"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書、活動実績の審査" },
+          { "stage": 2, "type": "other", "details": "セミナー参加型選考（グループワーク・口頭発表）" },
+          { "stage": 3, "type": "interview", "details": "個人面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-08",
+          "examDate": "2025-09-21",
+          "resultDate": "2025-09-26"
+        },
+        "interviewTendency": {
+          "format": "個人面接",
+          "duration": "約15分",
+          "interviewers": "教員2名",
+          "pressure": "low",
+          "weight": "均等",
+          "frequentTopics": [
+            "関心のある社会課題（地域・メディア・環境等）",
+            "リーダーシップ経験の具体的エピソード",
+            "グループワークでの役割と学び",
+            "志望理由と学部で取り組みたい研究テーマ",
+            "社会学的視点からの問題分析"
+          ],
+          "tips": "セミナー参加型選考の後に面接があるため、グループワークでの自分の貢献や気づきを振り返って話せるようにしておくこと。社会課題に対して学際的な視点を持っていることをアピールしよう。"
+        }
+      },
+      {
+        "id": "foreign-languages",
+        "name": "外国語学部",
+        "admissionPolicy": "外国語の高い運用能力と異文化理解への意欲を持つ学生を求める。語学資格の取得や国際的な活動経験を有し、グローバル社会で言語を武器に活躍する志を持つ者を歓迎する。",
+        "capacity": 18,
+        "requirements": {
+          "gpa": null,
+          "englishCert": "外部外国語試験・検定の取得（英検・TOEIC等）",
+          "otherReqs": ["志望理由書", "外国語資格証明書", "特色ある活動の証明書類"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書、語学資格・活動証明の審査" },
+          { "stage": 2, "type": "test", "details": "筆記試験（外国語関連）" },
+          { "stage": 3, "type": "interview", "details": "個人面接（外国語での質疑を含む場合あり）" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-08",
+          "examDate": "2025-10-19",
+          "resultDate": "2025-11-01"
+        },
+        "interviewTendency": {
+          "format": "個人面接（外国語での質疑を含む場合あり）",
+          "duration": "約15分",
+          "interviewers": "教員2名",
+          "pressure": "low",
+          "weight": "均等",
+          "frequentTopics": [
+            "語学学習の動機と学習方法",
+            "留学や国際交流の経験・希望",
+            "異文化理解に関するエピソード",
+            "志望する言語・地域への関心",
+            "外国語を活かした将来のキャリアビジョン"
+          ],
+          "tips": "外国語での質疑がある場合に備え、志望理由や自己PRを英語等でも準備しておくこと。語学資格のスコアだけでなく、言語を学ぶ情熱や異文化体験を具体的に語れると評価が高い。"
+        }
+      },
+      {
+        "id": "information-science",
+        "name": "情報理工学部",
+        "admissionPolicy": "コンピュータサイエンスや情報技術に強い関心を持ち、プログラミングや数学的思考を通じて社会課題を解決したい学生を求める。ICTを活用して新たな価値を創造する実践的な学修に意欲的に取り組む姿勢を持つ者を歓迎する。",
+        "capacity": 15,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": ["志望理由書", "調査書", "情報技術・プログラミング等に関する活動実績（あれば）"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書の審査" },
+          { "stage": 2, "type": "essay", "details": "情報・数学に関する論述試験" },
+          { "stage": 3, "type": "interview", "details": "個人面接・口頭試問" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-08",
+          "examDate": "2025-09-21",
+          "resultDate": "2025-09-26"
+        },
+        "interviewTendency": {
+          "format": "個人面接・口頭試問",
+          "duration": "約15分",
+          "interviewers": "教員2名",
+          "pressure": "low",
+          "weight": "均等",
+          "frequentTopics": [
+            "情報技術・コンピュータへの関心のきっかけ",
+            "プログラミング経験・数学的思考に関する質問",
+            "ICTで解決したい社会課題",
+            "志望理由と大学での学修計画",
+            "理工学的な問題への取り組み姿勢"
+          ],
+          "tips": "プログラミングや数学への関心を具体的なエピソードとともに語れるよう準備すること。情報技術で社会に貢献するという明確なビジョンを持ち、論述試験の内容と一貫した主張ができるようにしておこう。"
+        }
+      }
+    ]
+  },
+  {
+    "id": "kindai-u",
+    "name": "近畿大学",
+    "shortName": "近大",
+    "group": "sankinkohryu",
+    "officialUrl": "https://www.kindai.ac.jp/",
+    "faculties": [
+      {
+        "id": "economics",
+        "name": "経済学部",
+        "admissionPolicy": "経済学の学修に強い関心を持ち、「実学教育」と「人格の陶冶」を重視する本学の理念に共感する学生を求める。経済理論と実践を結びつけ、データ分析力と論理的思考力をもって社会に貢献する意欲のある者を歓迎する。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": 3.0,
+          "englishCert": null,
+          "otherReqs": ["志望理由書", "活動実績報告"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書、活動実績報告の書類選考" },
+          { "stage": 2, "type": "essay", "details": "小論文・口頭試問" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-05",
+          "examDate": "2025-10-11",
+          "resultDate": "2025-11-06"
+        },
+        "interviewTendency": {
+          "format": "口頭試問",
+          "duration": "約15分",
+          "interviewers": "教員2名",
+          "pressure": "low",
+          "weight": "書類重視",
+          "frequentTopics": [
+            "小論文の内容に関する質疑",
+            "最近の経済問題・時事ニュース",
+            "志望理由と経済学への関心",
+            "データや統計に関する基礎的な質問",
+            "大学卒業後のキャリアプラン"
+          ],
+          "tips": "小論文と口頭試問がセットの選考形式。小論文で書いた内容を深掘りされるため、自分の論旨を明確に説明できるよう準備すること。経済時事の基本用語（GDP・インフレ等）も押さえておこう。"
+        }
+      },
+      {
+        "id": "business-administration",
+        "name": "経営学部",
+        "admissionPolicy": "経営学・マーケティング・会計学への関心を持ち、ビジネスの実践的課題に挑戦する意欲のある学生を求める。主体的な学修姿勢と論理的思考力を備え、企業経営や新規事業創出に貢献する志を持つ者を歓迎する。",
+        "capacity": 40,
+        "requirements": {
+          "gpa": 3.0,
+          "englishCert": null,
+          "otherReqs": ["志望理由書", "活動実績報告"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書、活動実績報告の書類選考" },
+          { "stage": 2, "type": "essay", "details": "小論文・口頭試問" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-08",
+          "examDate": "2025-10-11",
+          "resultDate": "2025-11-01"
+        },
+        "interviewTendency": {
+          "format": "口頭試問",
+          "duration": "約15分",
+          "interviewers": "教員2名",
+          "pressure": "low",
+          "weight": "書類重視",
+          "frequentTopics": [
+            "小論文の内容に関する質疑",
+            "関心のある企業やビジネスモデル",
+            "マーケティングや経営戦略に関する考え",
+            "起業・新規事業への関心",
+            "活動実績とリーダーシップ経験"
+          ],
+          "tips": "実践的なビジネス感覚が問われる口頭試問。関心のある企業を1-2社挙げてその経営戦略を分析できると説得力が増す。小論文の内容と一貫した主張を心がけよう。"
+        }
+      },
+      {
+        "id": "international-studies",
+        "name": "国際学部",
+        "admissionPolicy": "グローバル社会で活躍できる人材の育成を目指し、国際問題への関心と語学力を有する学生を求める。異文化理解力と実践的なコミュニケーション能力を身につけ、国際社会に貢献する志を持つ者を歓迎する。",
+        "capacity": 30,
+        "requirements": {
+          "gpa": 3.2,
+          "englishCert": "英検2級以上またはTOEIC 500以上推奨",
+          "otherReqs": ["志望理由書", "語学資格証明書（あれば）"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書の書類選考" },
+          { "stage": 2, "type": "interview", "details": "面接（英語質問含む場合あり）" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-15",
+          "applicationEnd": "2025-09-29",
+          "examDate": "2025-10-11",
+          "resultDate": "2025-11-01"
+        },
+        "interviewTendency": {
+          "format": "個人面接（英語質問含む場合あり）",
+          "duration": "約15分",
+          "interviewers": "教員2名",
+          "pressure": "medium",
+          "weight": "面接重視",
+          "frequentTopics": [
+            "異文化理解・国際交流の経験",
+            "関心のある国際問題（紛争・貧困・環境等）",
+            "留学への意欲と計画",
+            "英語での自己紹介・志望理由",
+            "グローバル社会での将来ビジョン"
+          ],
+          "tips": "書類選考と面接の2段階で面接比重が高い。英語での質問に備え、自己紹介と志望理由は英語でも練習しておくこと。異文化体験を具体的なエピソードとともに語れると高評価。"
+        }
+      },
+      {
+        "id": "literature-arts",
+        "name": "文芸学部",
+        "admissionPolicy": "文学・芸術・文化に対する深い関心と探究心を持ち、創造的な表現活動に意欲のある学生を求める。人文学の幅広い教養と専門的な研究力を身につけ、文化の発展に寄与する志を持つ者を歓迎する。",
+        "capacity": 20,
+        "requirements": {
+          "gpa": 3.0,
+          "englishCert": null,
+          "otherReqs": ["志望理由書", "活動実績報告"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書、活動実績報告の書類選考" },
+          { "stage": 2, "type": "essay", "details": "小論文試験" },
+          { "stage": 3, "type": "interview", "details": "口頭試問" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-03",
+          "applicationEnd": "2025-09-09",
+          "examDate": "2025-10-25",
+          "resultDate": "2025-11-06"
+        },
+        "interviewTendency": {
+          "format": "口頭試問",
+          "duration": "約15分",
+          "interviewers": "教員2名",
+          "pressure": "low",
+          "weight": "均等",
+          "frequentTopics": [
+            "関心のある文学作品・芸術作品",
+            "小論文の内容に関する質疑",
+            "創作活動や表現活動の経験",
+            "志望する専攻分野への関心と学修計画",
+            "読書歴や文化的な活動"
+          ],
+          "tips": "口頭試問では小論文の内容を踏まえた質問が中心。関心のある作家や作品について深く語れるよう準備し、なぜその分野を学びたいのかを自分の言葉で説明できるようにしよう。"
+        }
+      },
+      {
+        "id": "comprehensive-social",
+        "name": "総合社会学部",
+        "admissionPolicy": "社会学・心理学・メディア等の学際的視点から現代社会の課題を分析し解決する力を養いたい学生を求める。フィールドワークや実践的な学修に積極的に取り組み、多様な価値観を尊重する姿勢を持つ者を歓迎する。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": 3.0,
+          "englishCert": null,
+          "otherReqs": ["志望理由書", "活動実績報告"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書、活動実績報告の書類選考" },
+          { "stage": 2, "type": "presentation", "details": "プレゼンテーション・ディスカッション" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-08",
+          "examDate": "2025-10-18",
+          "resultDate": "2025-11-06"
+        },
+        "interviewTendency": {
+          "format": "プレゼンテーション・ディスカッション",
+          "duration": "約15分",
+          "interviewers": "教員2名",
+          "pressure": "medium",
+          "weight": "面接重視",
+          "frequentTopics": [
+            "関心のある社会問題のプレゼンテーション",
+            "社会学・心理学・メディアに関する問題意識",
+            "フィールドワークやボランティア経験",
+            "ディスカッションでの論理的な主張",
+            "多様な価値観への理解と姿勢"
+          ],
+          "tips": "プレゼンとディスカッションが選考の中心。社会問題について自分の分析と提案を5分程度で発表できるよう準備し、他者の意見にも柔軟に対応できる姿勢を見せよう。定員が少ないため準備は入念に。"
+        }
+      },
+      {
+        "id": "law",
+        "name": "法学部",
+        "admissionPolicy": "法律・政治の学修に強い関心を持ち、「実学教育」の理念のもと社会正義の実現に貢献したい学生を求める。論理的思考力と表現力を磨き、法曹・公務員・企業法務など多様な進路で活躍する意欲のある者を歓迎する。",
+        "capacity": 15,
+        "requirements": {
+          "gpa": 3.0,
+          "englishCert": null,
+          "otherReqs": ["志望理由書", "活動実績報告"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書、活動実績報告の書類選考" },
+          { "stage": 2, "type": "essay", "details": "法律・社会問題に関する小論文・口頭試問" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-05",
+          "examDate": "2025-10-11",
+          "resultDate": "2025-11-06"
+        },
+        "interviewTendency": {
+          "format": "口頭試問",
+          "duration": "約15分",
+          "interviewers": "教員2名",
+          "pressure": "low",
+          "weight": "書類重視",
+          "frequentTopics": [
+            "法律に関心を持ったきっかけ",
+            "関心のある法的課題・社会問題",
+            "小論文の内容に関する質疑",
+            "志望理由と卒業後の進路（法曹・公務員等）",
+            "時事的な法律・政治ニュース"
+          ],
+          "tips": "小論文と口頭試問がセットの選考形式。法律・社会問題に対する自分の考えを論理的に説明できるよう準備すること。法曹や公務員など具体的な進路ビジョンを持っていると評価される。"
+        }
+      },
+      {
+        "id": "science-engineering",
+        "name": "理工学部",
+        "admissionPolicy": "数学・物理・化学・生物等の基礎理工学から応用技術まで幅広い分野に関心を持ち、科学技術で社会に貢献したい学生を求める。「実学教育」の精神のもと、研究開発や技術革新に挑戦する主体的な学修姿勢を持つ者を歓迎する。",
+        "capacity": 15,
+        "requirements": {
+          "gpa": 3.0,
+          "englishCert": null,
+          "otherReqs": ["志望理由書", "活動実績報告（理工系の課外活動・研究等）"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書、活動実績報告の書類選考" },
+          { "stage": 2, "type": "essay", "details": "理工学に関する論述・口頭試問" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-05",
+          "examDate": "2025-10-11",
+          "resultDate": "2025-11-06"
+        },
+        "interviewTendency": {
+          "format": "口頭試問",
+          "duration": "約15分",
+          "interviewers": "教員2名",
+          "pressure": "low",
+          "weight": "書類重視",
+          "frequentTopics": [
+            "理工学への関心のきっかけ・動機",
+            "関心のある研究分野・専攻希望",
+            "数学・理科に関する基礎的な口頭試問",
+            "科学技術で解決したい社会課題",
+            "大学での研究計画と将来のキャリア"
+          ],
+          "tips": "口頭試問では高校数学・理科の基礎が問われることがある。関心のある研究分野を具体的に挙げ、なぜ近畿大学理工学部でその研究をしたいのかを説明できるよう準備すること。"
+        }
+      },
+      {
+        "id": "bio-engineering",
+        "name": "生物理工学部",
+        "admissionPolicy": "生命科学・バイオテクノロジー・医療工学等の融合領域に関心を持ち、生命の神秘を解き明かして人類の健康に貢献したい学生を求める。生物学と工学の両分野を横断して学ぶ意欲と、実験・研究への積極的な姿勢を持つ者を歓迎する。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": 3.0,
+          "englishCert": null,
+          "otherReqs": ["志望理由書", "活動実績報告"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書、活動実績報告の書類選考" },
+          { "stage": 2, "type": "essay", "details": "生命科学・生物工学に関する論述・口頭試問" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-05",
+          "examDate": "2025-10-11",
+          "resultDate": "2025-11-06"
+        },
+        "interviewTendency": {
+          "format": "口頭試問",
+          "duration": "約15分",
+          "interviewers": "教員2名",
+          "pressure": "low",
+          "weight": "書類重視",
+          "frequentTopics": [
+            "生命科学・バイオテクノロジーへの関心のきっかけ",
+            "生物学と工学の融合への理解と学修意欲",
+            "医療・健康分野への貢献ビジョン",
+            "高校での生物・化学の学習経験",
+            "関心のある研究テーマと将来の進路"
+          ],
+          "tips": "生物と工学を融合した独自のカリキュラムへの理解を示すこと。医療・農業・環境など、バイオテクノロジーで貢献したい分野を具体的に述べ、高校での理科の学習がどう活かせるかを語れると良い。"
+        }
+      },
+      {
+        "id": "engineering",
+        "name": "工学部",
+        "admissionPolicy": "機械・電気・建築・化学等の工学分野に関心を持ち、ものづくりと技術革新を通じて社会に貢献したい学生を求める（広島キャンパス）。「実学教育」の理念に基づき、産業界と連携した実践的な技術力を身につける意欲のある者を歓迎する。",
+        "capacity": 15,
+        "requirements": {
+          "gpa": 3.0,
+          "englishCert": null,
+          "otherReqs": ["志望理由書", "活動実績報告（工作・技術系活動等があれば）"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書、活動実績報告の書類選考" },
+          { "stage": 2, "type": "essay", "details": "工学に関する論述・口頭試問" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-05",
+          "examDate": "2025-10-11",
+          "resultDate": "2025-11-06"
+        },
+        "interviewTendency": {
+          "format": "口頭試問",
+          "duration": "約15分",
+          "interviewers": "教員2名",
+          "pressure": "low",
+          "weight": "書類重視",
+          "frequentTopics": [
+            "工学・ものづくりへの関心のきっかけ",
+            "志望する専攻（機械・電気・建築・化学等）への関心",
+            "数学・物理に関する基礎的な口頭試問",
+            "産業界への貢献ビジョンと将来の進路",
+            "広島キャンパスで学ぶことへの意欲"
+          ],
+          "tips": "広島キャンパスが拠点となるため、実学教育と産業連携への理解を深めておくこと。志望する工学系専攻を明確にし、その分野で取り組みたい課題や卒業後のキャリアを具体的に語れるよう準備しよう。"
+        }
+      },
+      {
+        "id": "industrial-engineering",
+        "name": "産業理工学部",
+        "admissionPolicy": "生命科学・電気電子・建築・情報等の理工学分野に関心を持ち、地域産業の発展に貢献したい学生を求める（福岡キャンパス）。少人数教育のもと、九州・地域社会と連携した実践的な理工学の学修に意欲的に取り組む姿勢を持つ者を歓迎する。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": 3.0,
+          "englishCert": null,
+          "otherReqs": ["志望理由書", "活動実績報告"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書、活動実績報告の書類選考" },
+          { "stage": 2, "type": "essay", "details": "理工学に関する論述・口頭試問" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-05",
+          "examDate": "2025-10-11",
+          "resultDate": "2025-11-06"
+        },
+        "interviewTendency": {
+          "format": "口頭試問",
+          "duration": "約15分",
+          "interviewers": "教員2名",
+          "pressure": "low",
+          "weight": "書類重視",
+          "frequentTopics": [
+            "理工学への関心と志望専攻（生命科学・電気電子・建築・情報等）",
+            "地域産業・九州の課題への関心",
+            "少人数教育環境で学ぶことへの期待",
+            "数学・理科に関する基礎的な質問",
+            "卒業後の進路と地域貢献ビジョン"
+          ],
+          "tips": "福岡キャンパスでの学びの特色（少人数・地域連携）を理解した上で志望動機を語ること。地域産業への貢献意識を明確に示し、志望する専攻分野で取り組みたいテーマを具体的に準備しておこう。"
+        }
+      }
+    ]
+  },
+  {
+    "id": "konan-u",
+    "name": "甲南大学",
+    "shortName": "甲南",
+    "group": "sankinkohryu",
+    "officialUrl": "https://www.konan-u.ac.jp/",
+    "faculties": [
+      {
+        "id": "letters",
+        "name": "文学部",
+        "admissionPolicy": "人文科学の諸分野に対する知的好奇心と、歴史・文化への深い関心を有する学生を求める。「人物教育の率先」を教育理念とし、豊かな人間性と教養を身につけて社会に貢献する意欲のある者を歓迎する。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": 3.5,
+          "englishCert": null,
+          "otherReqs": ["志望理由書", "活動報告書"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書の書類選考" },
+          { "stage": 2, "type": "other", "details": "グループワーク" },
+          { "stage": 3, "type": "interview", "details": "個人面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-07",
+          "examDate": "2025-09-25",
+          "resultDate": "2025-10-11"
+        },
+        "interviewTendency": {
+          "format": "個人面接",
+          "duration": "約15分",
+          "interviewers": "教員2名",
+          "pressure": "low",
+          "weight": "均等",
+          "frequentTopics": [
+            "関心のある学問分野・研究テーマ",
+            "読書歴と印象に残った書籍",
+            "歴史・文化に関する興味・関心",
+            "グループワークでの役割と感想",
+            "大学での学修計画と将来像"
+          ],
+          "tips": "グループワーク後の面接なので、そこでの自分の役割や気づきを整理しておくこと。人文科学への純粋な知的好奇心を伝えることが大切。読書歴は具体的な作品名と感想を準備しよう。"
+        }
+      },
+      {
+        "id": "business",
+        "name": "経営学部",
+        "admissionPolicy": "経営学・マーケティング・会計学への関心を持ち、ビジネスの現場で実践的に活躍する力を養いたい学生を求める。少人数教育を通じて主体的に学び、企業経営や起業に挑戦する意欲のある者を歓迎する。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": 3.6,
+          "englishCert": "英検2級以上など所定の資格いずれか1つ",
+          "otherReqs": ["志望理由書", "資格証明書"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書、資格証明の書類選考" },
+          { "stage": 2, "type": "other", "details": "グループワーク" },
+          { "stage": 3, "type": "interview", "details": "個人面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-07",
+          "examDate": "2025-09-25",
+          "resultDate": "2025-10-11"
+        },
+        "interviewTendency": {
+          "format": "個人面接",
+          "duration": "約15分",
+          "interviewers": "教員2名",
+          "pressure": "low",
+          "weight": "均等",
+          "frequentTopics": [
+            "経営学を学びたい理由と具体的な関心分野",
+            "関心のある企業やビジネスモデル",
+            "グループワークでの貢献と学び",
+            "起業やマーケティングに関するアイデア",
+            "少人数教育への期待と学修計画"
+          ],
+          "tips": "少人数教育を重視する甲南の特色を理解した上で志望理由を語ること。グループワークでの協調性と主体性のバランスが見られる。実践的なビジネスへの関心を具体例とともに示そう。"
+        }
+      },
+      {
+        "id": "management-creation",
+        "name": "マネジメント創造学部",
+        "admissionPolicy": "経済・経営の理論と実践を融合し、グローバルな視野で社会課題を解決できる人材を育成する。英語力とマネジメント力を兼ね備え、多文化環境で主体的に行動する意欲のある者を歓迎する。",
+        "capacity": 15,
+        "requirements": {
+          "gpa": 3.5,
+          "englishCert": null,
+          "otherReqs": ["志望理由書", "活動報告書"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書の書類選考" },
+          { "stage": 2, "type": "other", "details": "グループワーク" },
+          { "stage": 3, "type": "interview", "details": "個人面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-07",
+          "examDate": "2025-09-25",
+          "resultDate": "2025-10-11"
+        },
+        "interviewTendency": {
+          "format": "個人面接（プレゼンテーション要素含む）",
+          "duration": "約15分",
+          "interviewers": "教員2名",
+          "pressure": "low",
+          "weight": "面接重視",
+          "frequentTopics": [
+            "グローバルな社会課題への関心と提案",
+            "英語力を活かした将来のビジョン",
+            "グループワークでの役割とプレゼン力",
+            "マネジメントに関する実践的な考え",
+            "多文化環境での経験や関心"
+          ],
+          "tips": "理論と実践の融合を重視する学部のため、自分の経験をマネジメントの視点で語れるよう準備すること。グループワークではプレゼンテーション要素もあるため、論理的で簡潔な発表力が評価される。"
+        }
+      },
+      {
+        "id": "global-liberal-arts",
+        "name": "グローバル教養学環",
+        "admissionPolicy": "文理融合の教養教育を通じてグローバル社会の課題に挑戦する意欲のある学生を求める。多様な学問分野への好奇心と、異文化環境でのコミュニケーション力を備え、新しい価値を創造する志を持つ者を歓迎する。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": 3.5,
+          "englishCert": "英検2級以上またはTOEIC 500以上推奨",
+          "otherReqs": ["志望理由書", "活動報告書", "英語資格証明書"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書の書類選考" },
+          { "stage": 2, "type": "other", "details": "グループワーク" },
+          { "stage": 3, "type": "interview", "details": "個人面接（英語質問含む場合あり）" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-07",
+          "examDate": "2025-09-25",
+          "resultDate": "2025-10-11"
+        },
+        "interviewTendency": {
+          "format": "個人面接（英語質問含む場合あり）",
+          "duration": "約15分",
+          "interviewers": "教員2名",
+          "pressure": "low",
+          "weight": "面接重視",
+          "frequentTopics": [
+            "英語での自己紹介・志望理由",
+            "文理融合の学びへの関心と具体的な学修計画",
+            "異文化交流の経験やグローバルな視野",
+            "多様な学問分野への好奇心を示すエピソード",
+            "グループワークでの英語コミュニケーション力"
+          ],
+          "tips": "英語での質問がある可能性が高いため、志望理由と自己PRは英語でも準備必須。定員5名と少数精鋭のため、文理融合への明確な学問的関心と将来ビジョンを具体的に語れるかが鍵。"
+        }
+      },
+      {
+        "id": "economics",
+        "name": "経済学部",
+        "admissionPolicy": "経済学の理論と現実社会の経済問題に関心を持ち、「人物教育の率先」の精神のもと主体的に学ぶ学生を求める。データ分析や政策立案の視点を持ち、地域経済や国際経済の課題解決に貢献する意欲のある者を歓迎する。",
+        "capacity": 15,
+        "requirements": {
+          "gpa": 3.5,
+          "englishCert": null,
+          "otherReqs": ["志望理由書", "活動報告書"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書の書類選考" },
+          { "stage": 2, "type": "other", "details": "グループワーク" },
+          { "stage": 3, "type": "interview", "details": "個人面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-07",
+          "examDate": "2025-09-25",
+          "resultDate": "2025-10-11"
+        },
+        "interviewTendency": {
+          "format": "個人面接",
+          "duration": "約15分",
+          "interviewers": "教員2名",
+          "pressure": "low",
+          "weight": "均等",
+          "frequentTopics": [
+            "経済学に関心を持ったきっかけ",
+            "最近の経済ニュース・時事問題（物価・雇用等）",
+            "グループワークでの役割と貢献",
+            "志望理由と大学での学修計画",
+            "卒業後のキャリアビジョン"
+          ],
+          "tips": "グループワーク後の面接なので、そこでの自分の貢献や気づきを整理しておくこと。甲南大学の少人数教育の特色を活かした学修計画を語れるよう準備し、経済時事に関する自分の考えも持っておこう。"
+        }
+      },
+      {
+        "id": "law",
+        "name": "法学部",
+        "admissionPolicy": "法律学・政治学への関心を持ち、社会正義の実現と法的マインドの涵養を目指す学生を求める。「人物教育の率先」の理念のもと、論理的思考と誠実な人間性を養い、法曹・公務員・企業法務等で活躍する意欲のある者を歓迎する。",
+        "capacity": 15,
+        "requirements": {
+          "gpa": 3.5,
+          "englishCert": null,
+          "otherReqs": ["志望理由書", "活動報告書"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書の書類選考" },
+          { "stage": 2, "type": "other", "details": "グループワーク" },
+          { "stage": 3, "type": "interview", "details": "個人面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-07",
+          "examDate": "2025-09-25",
+          "resultDate": "2025-10-11"
+        },
+        "interviewTendency": {
+          "format": "個人面接",
+          "duration": "約15分",
+          "interviewers": "教員2名",
+          "pressure": "low",
+          "weight": "均等",
+          "frequentTopics": [
+            "法律・政治への関心のきっかけ",
+            "関心のある法的・社会的課題",
+            "グループワークでの役割と学び",
+            "志望理由と卒業後の進路（法曹・公務員等）",
+            "甲南大学法学部を選んだ理由"
+          ],
+          "tips": "グループワーク後の面接なので、議論の中での自分の主張や他者への配慮を振り返っておくこと。法律に関心を持ったきっかけを具体的なエピソードとともに語り、将来の進路と学びのつながりを明確に示そう。"
+        }
+      },
+      {
+        "id": "science-engineering",
+        "name": "理工学部",
+        "admissionPolicy": "数学・物理・化学・生物等の自然科学に関心を持ち、基礎から応用まで幅広い理工学の学修に意欲的に取り組む学生を求める。少人数教育の環境で主体的に研究し、科学技術で社会に貢献する志を持つ者を歓迎する。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": 3.5,
+          "englishCert": null,
+          "otherReqs": ["志望理由書", "活動報告書（理科系の課外活動等があれば）"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書の書類選考" },
+          { "stage": 2, "type": "other", "details": "グループワーク" },
+          { "stage": 3, "type": "interview", "details": "個人面接・口頭試問" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-07",
+          "examDate": "2025-09-25",
+          "resultDate": "2025-10-11"
+        },
+        "interviewTendency": {
+          "format": "個人面接・口頭試問",
+          "duration": "約15分",
+          "interviewers": "教員2名",
+          "pressure": "low",
+          "weight": "均等",
+          "frequentTopics": [
+            "理工学への関心と志望する研究分野",
+            "数学・理科に関する基礎的な口頭試問",
+            "科学技術で解決したい課題",
+            "少人数教育環境での学修への期待",
+            "大学での研究計画と将来のキャリア"
+          ],
+          "tips": "口頭試問では高校数学・物理・化学の基礎が問われることがある。甲南大学の少人数教育の強みを活かした研究ビジョンを持ち、自分が取り組みたい研究テーマを具体的に語れるよう準備しよう。"
+        }
+      },
+      {
+        "id": "intelligent-informatics",
+        "name": "知能情報学部",
+        "admissionPolicy": "人工知能・機械学習・データサイエンス等の先端情報技術に強い関心を持ち、情報と人間知能の融合を探求したい学生を求める。プログラミングや数学的思考力を活かし、知的情報処理技術で社会課題を解決する意欲のある者を歓迎する。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": 3.5,
+          "englishCert": null,
+          "otherReqs": ["志望理由書", "活動報告書（プログラミング・情報系活動があれば）"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書の書類選考" },
+          { "stage": 2, "type": "other", "details": "グループワーク" },
+          { "stage": 3, "type": "interview", "details": "個人面接・口頭試問" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-07",
+          "examDate": "2025-09-25",
+          "resultDate": "2025-10-11"
+        },
+        "interviewTendency": {
+          "format": "個人面接・口頭試問",
+          "duration": "約15分",
+          "interviewers": "教員2名",
+          "pressure": "low",
+          "weight": "均等",
+          "frequentTopics": [
+            "AIやデータサイエンスへの関心のきっかけ",
+            "プログラミング・数学への取り組み経験",
+            "情報技術で解決したい社会課題",
+            "知能情報学を学ぶ目的と将来の進路",
+            "数学・情報に関する基礎的な口頭試問"
+          ],
+          "tips": "AI・機械学習への関心を具体的なエピソード（自作プログラム、競プロ参加等）とともに語れると印象が良い。情報技術の社会応用について自分なりの考えを持ち、数学や統計への興味も示せるよう準備しよう。"
+        }
+      },
+      {
+        "id": "frontier-science",
+        "name": "フロンティアサイエンス学部",
+        "admissionPolicy": "生命科学・分子生物学・バイオテクノロジー等の最先端サイエンスに強い探究心を持つ学生を求める。少人数の研究室配属により早期から本格的な研究を体験し、科学の最前線で活躍する研究者・専門家を目指す意欲のある者を歓迎する。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": 3.5,
+          "englishCert": null,
+          "otherReqs": ["志望理由書", "活動報告書（理科系の研究・実験活動があれば）"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書の書類選考" },
+          { "stage": 2, "type": "other", "details": "グループワーク" },
+          { "stage": 3, "type": "interview", "details": "個人面接・口頭試問" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-07",
+          "examDate": "2025-09-25",
+          "resultDate": "2025-10-11"
+        },
+        "interviewTendency": {
+          "format": "個人面接・口頭試問",
+          "duration": "約15分",
+          "interviewers": "教員2名",
+          "pressure": "low",
+          "weight": "均等",
+          "frequentTopics": [
+            "生命科学・バイオテクノロジーへの関心と動機",
+            "研究者を目指すきっかけとビジョン",
+            "生物・化学に関する基礎的な口頭試問",
+            "将来取り組みたい研究テーマ",
+            "少人数研究環境での学修への期待"
+          ],
+          "tips": "早期から研究室に配属される少数精鋭の学部のため、具体的な研究への意欲と好奇心が問われる。関心のある生命科学の最先端研究を1-2つ挙げ、その意義と自分がどう関わりたいかを語れるよう準備しよう。"
+        }
+      }
+    ]
+  },
+  {
+    "id": "ryukoku-u",
+    "name": "龍谷大学",
+    "shortName": "龍谷",
+    "group": "sankinkohryu",
+    "officialUrl": "https://www.ryukoku.ac.jp/",
+    "faculties": [
+      {
+        "id": "sociology",
+        "name": "社会学部",
+        "admissionPolicy": "社会の多様な現象に関心を持ち、社会学的な視点から分析する力を養いたい学生を求める。「真実を求め、真実に生きる」の建学の精神に基づき、共生社会の実現に向けて主体的に行動する意欲のある者を歓迎する。",
+        "capacity": 11,
+        "requirements": {
+          "gpa": 3.0,
+          "englishCert": null,
+          "otherReqs": ["志望理由書", "活動報告書"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書、活動報告書の書類選考" },
+          { "stage": 2, "type": "essay", "details": "小論文試験" },
+          { "stage": 3, "type": "interview", "details": "個人面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-09",
+          "examDate": "2025-10-19",
+          "resultDate": "2025-11-01"
+        },
+        "interviewTendency": {
+          "format": "個人面接",
+          "duration": "約15分",
+          "interviewers": "教員2名",
+          "pressure": "low",
+          "weight": "均等",
+          "frequentTopics": [
+            "関心のある社会問題・社会現象",
+            "共生社会や多様性に対する考え",
+            "志望理由と社会学を学ぶ目的",
+            "ボランティアや地域活動の経験",
+            "建学の精神への共感"
+          ],
+          "tips": "龍谷大学の建学の精神「真実を求め、真実に生きる」を理解し、共生社会への関心を具体的に語れるよう準備すること。社会問題を多角的な視点で分析できる姿勢が評価される。"
+        }
+      },
+      {
+        "id": "policy-studies",
+        "name": "政策学部",
+        "admissionPolicy": "地域社会や国際社会の政策課題に関心を持ち、多角的な視点から解決策を構想する力を養いたい学生を求める。NPO・行政・企業等との連携を通じた実践的な学修に積極的に取り組む姿勢を持つ者を歓迎する。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": 3.0,
+          "englishCert": null,
+          "otherReqs": ["志望理由書", "政策提言レポートまたは活動実績"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書の書類選考" },
+          { "stage": 2, "type": "essay", "details": "政策課題に関する小論文" },
+          { "stage": 3, "type": "interview", "details": "個人面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-09",
+          "examDate": "2025-10-19",
+          "resultDate": "2025-11-01"
+        },
+        "interviewTendency": {
+          "format": "個人面接",
+          "duration": "約15分",
+          "interviewers": "教員2名",
+          "pressure": "low",
+          "weight": "均等",
+          "frequentTopics": [
+            "地域社会の課題と解決策の提案",
+            "政策提言レポートの内容に関する質疑",
+            "NPO・行政・企業との連携への関心",
+            "まちづくりや地域貢献の経験・意欲",
+            "将来の政策立案者としてのビジョン"
+          ],
+          "tips": "政策提言レポートを提出する場合は、その内容を深掘りされるため十分に準備すること。地域の具体的な課題を挙げて自分なりの解決策を論理的に提案できると高評価。実践的な活動経験があれば積極的にアピールしよう。"
+        }
+      },
+      {
+        "id": "letters",
+        "name": "文学部",
+        "admissionPolicy": "仏教学・歴史学・日本語日本文学・英語英米文学等の人文学諸分野に深い関心を持ち、文献読解力と批判的思考力を養いたい学生を求める。建学の精神を理解し、多様な文化への敬意をもって学問に取り組む者を歓迎する。",
+        "capacity": 8,
+        "requirements": {
+          "gpa": 3.2,
+          "englishCert": null,
+          "otherReqs": ["志望理由書", "学修計画書"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書、学修計画書の書類選考" },
+          { "stage": 2, "type": "essay", "details": "小論文試験" },
+          { "stage": 3, "type": "interview", "details": "個人面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-09",
+          "examDate": "2025-10-19",
+          "resultDate": "2025-11-01"
+        },
+        "interviewTendency": {
+          "format": "個人面接",
+          "duration": "約15分",
+          "interviewers": "教員2名",
+          "pressure": "low",
+          "weight": "均等",
+          "frequentTopics": [
+            "志望する専攻分野への関心と学修計画",
+            "仏教文化や日本文化への理解・関心",
+            "読書歴と印象に残った文献・作品",
+            "建学の精神と人文学の学びへの共感",
+            "卒業後の進路と学びの活かし方"
+          ],
+          "tips": "龍谷大学文学部は仏教学の伝統があるため、建学の精神や仏教文化への理解を示せると好印象。学修計画書の内容を深掘りされるので、具体的な研究テーマや学びたいことを明確にしておこう。"
+        }
+      },
+      {
+        "id": "economics",
+        "name": "経済学部",
+        "admissionPolicy": "経済学の理論と現実社会の経済問題への応用に関心を持つ学生を求める。データ分析や統計的手法を活用し、持続可能な社会の実現に向けて経済的視点から貢献する意欲のある者を歓迎する。",
+        "capacity": 8,
+        "requirements": {
+          "gpa": 3.0,
+          "englishCert": null,
+          "otherReqs": ["志望理由書", "活動報告書"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書、活動報告書の書類選考" },
+          { "stage": 2, "type": "essay", "details": "小論文試験（経済分野）" },
+          { "stage": 3, "type": "interview", "details": "個人面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-09",
+          "examDate": "2025-10-19",
+          "resultDate": "2025-11-01"
+        },
+        "interviewTendency": {
+          "format": "個人面接",
+          "duration": "約15分",
+          "interviewers": "教員2名",
+          "pressure": "low",
+          "weight": "均等",
+          "frequentTopics": [
+            "最近の経済問題・経済ニュース",
+            "持続可能な社会と経済学の関係",
+            "志望理由と経済学を学ぶ目的",
+            "データ分析や統計への関心",
+            "小論文の内容に関する質疑"
+          ],
+          "tips": "経済分野の小論文の後に面接があるため、論述内容と一貫した主張ができるよう準備すること。持続可能な社会やSDGsと経済学の関連について自分の考えを持っておくと良い。"
+        }
+      },
+      {
+        "id": "psychology",
+        "name": "心理学部",
+        "admissionPolicy": "人間の心理や行動に対する科学的な関心を持ち、心理学の理論と実践を通じて人々の支援に貢献したい学生を求める。実験・調査・臨床等の多様なアプローチに意欲的に取り組む姿勢のある者を歓迎する。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": 3.2,
+          "englishCert": null,
+          "otherReqs": ["志望理由書", "学修計画書"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書、学修計画書の書類選考" },
+          { "stage": 2, "type": "essay", "details": "小論文試験（心理学関連テーマ）" },
+          { "stage": 3, "type": "interview", "details": "個人面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-09",
+          "examDate": "2025-10-19",
+          "resultDate": "2025-11-01"
+        },
+        "interviewTendency": {
+          "format": "個人面接",
+          "duration": "約15分",
+          "interviewers": "教員2名",
+          "pressure": "low",
+          "weight": "均等",
+          "frequentTopics": [
+            "心理学に興味を持ったきっかけ",
+            "関心のある心理学の分野（臨床・発達・社会等）",
+            "人の心や行動への科学的な関心を示すエピソード",
+            "将来の進路（臨床心理士・公認心理師等）",
+            "学修計画書の内容に関する質疑"
+          ],
+          "tips": "心理学への関心が本物かどうかが問われる。漫画やドラマではなく、心理学書を読んだ経験や、人の行動を科学的に理解したいという動機を具体的に語ろう。定員5名と少数のため、学修計画の具体性が重要。"
+        }
+      },
+      {
+        "id": "advanced-science-engineering",
+        "name": "先端理工学部",
+        "admissionPolicy": "数理科学・物質化学・電子情報通信・機械工学・環境生態工学等の先端理工学に関心を持ち、持続可能な社会の実現に向けて科学技術で貢献したい学生を求める。建学の精神を理解し、探究心と実践力を兼ね備えた研究者・技術者を目指す者を歓迎する。",
+        "capacity": 15,
+        "requirements": {
+          "gpa": 3.0,
+          "englishCert": null,
+          "otherReqs": ["志望理由書", "学修計画書", "理工系の課外活動・研究実績（あれば）"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書、学修計画書の書類選考" },
+          { "stage": 2, "type": "essay", "details": "理工学に関する小論文試験" },
+          { "stage": 3, "type": "interview", "details": "個人面接・口頭試問" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-09",
+          "examDate": "2025-10-19",
+          "resultDate": "2025-11-01"
+        },
+        "interviewTendency": {
+          "format": "個人面接・口頭試問",
+          "duration": "約15分",
+          "interviewers": "教員2名",
+          "pressure": "low",
+          "weight": "均等",
+          "frequentTopics": [
+            "先端理工学への関心と志望専攻（数理・物質・電子・機械・環境等）",
+            "持続可能な社会と理工学の関係",
+            "数学・理科に関する基礎的な口頭試問",
+            "学修計画書の内容と将来の研究ビジョン",
+            "建学の精神「真実を求め、真実に生きる」への共感"
+          ],
+          "tips": "龍谷大学の建学の精神と先端理工学の融合という学部の特色を理解した上で志望動機を語ること。持続可能な社会やSDGsと自分の研究テーマのつながりを意識し、学修計画書の内容を深掘りできるよう十分に準備しよう。"
+        }
+      }
+    ]
+  }
+]

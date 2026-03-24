@@ -1,0 +1,88 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ユーザー: 自分のデータのみ読み書き可能、管理者は読み取り可
+    match /users/{userId} {
+      allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
+      allow write: if request.auth != null && (request.auth.uid == userId || isSuperAdmin());
+
+      // 弱点サブコレクション
+      match /weaknesses/{weaknessId} {
+        allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // 小論文サブコレクション
+      match /essays/{essayId} {
+        allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // 面接サブコレクション
+      match /interviews/{interviewId} {
+        allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // 出願書類
+      match /documents/{docId} {
+        allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // 活動実績
+      match /activities/{activityId} {
+        allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    // 大学データ: 全員読み取り可、管理者のみ書き込み
+    match /universities/{universityId} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+
+    // 面接セッション（トップレベル）
+    match /interviews/{interviewId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // 面談セッション
+    match /sessions/{sessionId} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+
+    // 合格者データ（匿名化済み）
+    match /passedStudentData/{dataId} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+
+    // 分析データ
+    match /analytics/{docId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // 招待コード: Admin SDKのみアクセス（クライアント全拒否）
+    match /invitations/{code} {
+      allow read, write: if false;
+    }
+
+    // スーパー管理者チェック関数
+    function isSuperAdmin() {
+      return request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin';
+    }
+
+    // 管理者チェック関数（admin, teacher, superadmin）
+    function isAdmin() {
+      return request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'teacher', 'superadmin'];
+    }
+  }
+}

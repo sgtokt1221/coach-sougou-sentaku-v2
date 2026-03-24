@@ -1,0 +1,2358 @@
+[
+  {
+    "id": "tokyo-u",
+    "name": "東京大学",
+    "shortName": "東大",
+    "group": "kyutei",
+    "officialUrl": "https://www.u-tokyo.ac.jp/",
+    "faculties": [
+      {
+        "id": "law",
+        "name": "法学部",
+        "admissionPolicy": "法学・政治学の基礎的素養を有し、社会の諸問題に対して深い関心と鋭い問題意識を持つ学生を求める。主体的に学び、多様な人々と協働しながら社会に貢献する意欲を持ち、論理的思考力と表現力に優れた者を歓迎する。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": ["学校長の推薦が必要（男女各3人まで、合計4人まで）", "大学入学共通テスト受験必須"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、推薦書、志望理由書の審査" },
+          { "stage": 2, "type": "interview", "details": "面接等（プレゼンテーション・質疑応答含む）" },
+          { "stage": 3, "type": "test", "details": "大学入学共通テストの成績による最終判定" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-01",
+          "applicationEnd": "2025-11-06",
+          "examDate": "2025-12-07",
+          "resultDate": "2026-02-12"
+        },
+        "interviewTendency": {
+          "format": "個人面接（プレゼンテーション＋質疑応答）",
+          "duration": "約30分",
+          "interviewers": "教員3名",
+          "pressure": "high",
+          "weight": "面接重視",
+          "frequentTopics": [
+            "志望理由書の内容に基づく深掘り",
+            "法学・政治学に関する時事問題",
+            "社会問題への自分なりの見解",
+            "プレゼン内容への専門的質問",
+            "将来のキャリアビジョン"
+          ],
+          "tips": "プレゼンテーションでは論理的構成と独自の視点が求められる。法学・政治学の基礎概念を踏まえた上で、自分の問題意識を明確に伝えられるよう準備すること。"
+        }
+      },
+      {
+        "id": "engineering",
+        "name": "工学部",
+        "admissionPolicy": "科学技術に対する強い関心と探究心を有し、数学・理科の基礎学力に優れた学生を求める。ものづくりや研究を通じて社会課題の解決に貢献する意欲と、多様な分野の人々と協働できるコミュニケーション能力を持つ者を歓迎する。",
+        "capacity": 30,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": ["学校長の推薦が必要（男女各3人まで、合計4人まで）", "大学入学共通テスト受験必須", "科学オリンピック等の実績があれば望ましい"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、推薦書、活動報告書の審査" },
+          { "stage": 2, "type": "presentation", "details": "研究活動等に関するプレゼンテーションと質疑応答" },
+          { "stage": 3, "type": "test", "details": "大学入学共通テストの成績による最終判定" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-01",
+          "applicationEnd": "2025-11-06",
+          "examDate": "2025-12-07",
+          "resultDate": "2026-02-12"
+        },
+        "interviewTendency": {
+          "format": "プレゼンテーション＋口頭試問",
+          "duration": "約30分",
+          "interviewers": "教員3〜4名",
+          "pressure": "high",
+          "weight": "面接重視",
+          "frequentTopics": [
+            "研究活動の内容・動機・成果",
+            "数学・物理・化学の専門的質問",
+            "研究手法や実験設計への質問",
+            "科学技術で解決したい社会課題",
+            "大学での研究計画"
+          ],
+          "tips": "プレゼンでは研究の独自性と科学的妥当性を示すことが重要。口頭試問では基礎的な数理科学の知識を問われるため、高校範囲を超えた学習も有効。"
+        }
+      },
+      {
+        "id": "science",
+        "name": "理学部",
+        "admissionPolicy": "自然科学に対する強い好奇心と探究心を持ち、数学・理科の基礎学力が十分にある学生を求める。自然現象の本質を追求し、科学的な思考力・表現力を通じて新たな知見を切り拓く意欲を持つ者を歓迎する。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": ["学校長の推薦が必要（男女各3人まで、合計4人まで）", "大学入学共通テスト受験必須", "科学オリンピック等の顕著な実績が望ましい"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、推薦書、研究活動報告書の審査" },
+          { "stage": 2, "type": "presentation", "details": "研究内容に関するプレゼンテーションと口頭試問" },
+          { "stage": 3, "type": "test", "details": "大学入学共通テストの成績による最終判定" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-01",
+          "applicationEnd": "2025-11-06",
+          "examDate": "2025-12-07",
+          "resultDate": "2026-02-12"
+        },
+        "interviewTendency": {
+          "format": "プレゼンテーション＋口頭試問",
+          "duration": "約30分",
+          "interviewers": "教員3〜4名",
+          "pressure": "high",
+          "weight": "面接重視",
+          "frequentTopics": [
+            "研究内容の科学的根拠と考察",
+            "専門分野の基礎知識に関する口頭試問",
+            "研究の発展可能性",
+            "自然科学への興味の原点",
+            "大学入学後の研究ビジョン"
+          ],
+          "tips": "口頭試問では高校範囲を超えた専門的質問が飛ぶことがある。プレゼンは研究の独創性を軸に、科学的論理性を明確に示すこと。"
+        }
+      },
+      {
+        "id": "economics",
+        "name": "経済学部",
+        "admissionPolicy": "経済学に対する強い関心を持ち、社会の経済現象を多角的に分析し考察する能力を有する学生を求める。数理的思考力と論理的表現力を兼ね備え、グローバルな視野で経済問題の解決に貢献する意欲のある者を歓迎する。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": ["学校長の推薦が必要（男女各3人まで、合計4人まで）", "大学入学共通テスト受験必須"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、推薦書、志望理由書の審査" },
+          { "stage": 2, "type": "interview", "details": "面接等（口頭試問を含む）" },
+          { "stage": 3, "type": "test", "details": "大学入学共通テストの成績による最終判定" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-01",
+          "applicationEnd": "2025-11-06",
+          "examDate": "2025-12-07",
+          "resultDate": "2026-02-12"
+        },
+        "interviewTendency": {
+          "format": "個人面接（口頭試問含む）",
+          "duration": "約25分",
+          "interviewers": "教員3名",
+          "pressure": "high",
+          "weight": "面接重視",
+          "frequentTopics": [
+            "経済学への関心の背景",
+            "時事的な経済問題への見解",
+            "数理的思考力を試す質問",
+            "志望理由書の内容の深掘り",
+            "グローバル経済に関する問題意識"
+          ],
+          "tips": "経済学の基礎概念（需要と供給、GDP、財政政策等）を理解した上で、自分の関心領域を明確に語れるようにすること。数学的な素養も問われる。"
+        }
+      },
+      {
+        "id": "education",
+        "name": "教育学部",
+        "admissionPolicy": "教育に関する幅広い関心と、人間の発達・学習・社会についての深い問題意識を持つ学生を求める。多様な背景を持つ人々と協力し、教育を通じて社会の課題解決に取り組む意欲と能力を持つ者を歓迎する。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": ["学校長の推薦が必要（男女各3人まで、合計4人まで）", "大学入学共通テスト受験必須"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、推薦書、志望理由書の審査" },
+          { "stage": 2, "type": "interview", "details": "面接等（プレゼンテーション・質疑応答含む）" },
+          { "stage": 3, "type": "test", "details": "大学入学共通テストの成績による最終判定" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-01",
+          "applicationEnd": "2025-11-06",
+          "examDate": "2025-12-07",
+          "resultDate": "2026-02-12"
+        },
+        "interviewTendency": {
+          "format": "個人面接（プレゼンテーション＋質疑応答）",
+          "duration": "約25分",
+          "interviewers": "教員2〜3名",
+          "pressure": "medium",
+          "weight": "面接重視",
+          "frequentTopics": [
+            "教育に対する問題意識",
+            "自身の学習経験と教育観",
+            "教育課題への具体的な解決策",
+            "志望理由書の内容の深掘り",
+            "大学で学びたいテーマ"
+          ],
+          "tips": "教育に対する自分自身の体験を踏まえた具体的な問題意識が問われる。抽象論ではなく、実体験と結びつけた教育観を語れるよう準備すること。"
+        }
+      },
+      {
+        "id": "literature",
+        "name": "文学部",
+        "admissionPolicy": "人文学の諸分野に深い関心を持ち、言語・文学・歴史・哲学等を通じて人間と社会を探究する知的好奇心と論述力を有する学生を求める。学校推薦型選抜として、高い学業成績と豊かな人文的素養を持ち、文学部の学問的伝統を継承しながら新たな知を切り拓く意欲のある者を歓迎する。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": ["学校長の推薦が必要", "大学入学共通テスト受験必須"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、推薦書、志望理由書の審査" },
+          { "stage": 2, "type": "interview", "details": "面接（口頭試問を含む）" },
+          { "stage": 3, "type": "test", "details": "大学入学共通テストの成績による最終判定" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-01",
+          "applicationEnd": "2025-11-06",
+          "examDate": "2025-12-07",
+          "resultDate": "2026-02-12"
+        },
+        "interviewTendency": {
+          "format": "個人面接（口頭試問含む）",
+          "duration": "約30分",
+          "interviewers": "教員2〜3名",
+          "pressure": "high",
+          "weight": "面接重視",
+          "frequentTopics": [
+            "人文学への学問的関心と動機",
+            "志望理由書の内容の深掘り",
+            "読書経験や関連分野の知識",
+            "大学で追究したい研究テーマ",
+            "文学・歴史・哲学に関する口頭試問"
+          ],
+          "tips": "東大文学部の学校推薦型は口頭試問で専門的な知識が問われる。自分の関心分野の書籍や論文を読み込み、学問的な議論ができるレベルまで準備すること。"
+        }
+      },
+      {
+        "id": "agriculture",
+        "name": "農学部",
+        "admissionPolicy": "農学・生命科学・環境科学に強い関心と探究心を有し、食料・農業・環境問題の解決に貢献する意欲のある学生を求める。生物学・化学・数学の基礎学力を備え、学際的なアプローチで持続可能な社会の構築に取り組む志を持つ者を歓迎する。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": ["学校長の推薦が必要", "大学入学共通テスト受験必須"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、推薦書、研究活動報告書の審査" },
+          { "stage": 2, "type": "presentation", "details": "研究活動等に関するプレゼンテーションと質疑応答" },
+          { "stage": 3, "type": "test", "details": "大学入学共通テストの成績による最終判定" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-01",
+          "applicationEnd": "2025-11-06",
+          "examDate": "2025-12-07",
+          "resultDate": "2026-02-12"
+        },
+        "interviewTendency": {
+          "format": "プレゼンテーション＋口頭試問",
+          "duration": "約30分",
+          "interviewers": "教員3名",
+          "pressure": "high",
+          "weight": "面接重視",
+          "frequentTopics": [
+            "農学・生命科学に関する研究活動",
+            "食料・農業・環境問題への問題意識",
+            "生物学・化学の専門的質問",
+            "大学での研究計画",
+            "持続可能な社会への貢献ビジョン"
+          ],
+          "tips": "プレゼンでは農学・生命科学に関する自身の研究や探究活動を具体的に示すこと。食料安全保障や環境問題に関する最新動向も把握しておくと良い。"
+        }
+      },
+      {
+        "id": "pharmacy",
+        "name": "薬学部",
+        "admissionPolicy": "薬学・生命科学に対する強い関心と探究心を持ち、化学・生物学の基礎学力が十分にある学生を求める。医薬品の開発・応用を通じて人々の健康に貢献する意欲と、高い倫理観を備えた者を歓迎する。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": ["学校長の推薦が必要", "大学入学共通テスト受験必須"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、推薦書、志望理由書の審査" },
+          { "stage": 2, "type": "interview", "details": "面接（口頭試問を含む）" },
+          { "stage": 3, "type": "test", "details": "大学入学共通テストの成績による最終判定" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-01",
+          "applicationEnd": "2025-11-06",
+          "examDate": "2025-12-07",
+          "resultDate": "2026-02-12"
+        },
+        "interviewTendency": {
+          "format": "個人面接（口頭試問含む）",
+          "duration": "約30分",
+          "interviewers": "教員2〜3名",
+          "pressure": "high",
+          "weight": "面接重視",
+          "frequentTopics": [
+            "薬学・生命科学への関心の動機",
+            "化学・生物学の専門的知識",
+            "医薬品開発に関する問題意識",
+            "志望理由書の内容の深掘り",
+            "薬剤師または研究者としてのキャリアビジョン"
+          ],
+          "tips": "薬学部は化学と生物の両方の専門的な口頭試問が行われる。医薬品に関するニュースや倫理的問題についても自分の見解を持っておくこと。"
+        }
+      },
+      {
+        "id": "medicine",
+        "name": "医学部",
+        "admissionPolicy": "医学・健康科学に対する強い関心と高い学業成績を有し、人々の生命と健康に寄与する使命感を持つ学生を求める。医学科（3名）では生命科学の探究心と高度な自然科学の能力を、健康総合科学科（2名）では医療・保健・社会福祉の幅広い視野と学際的な問題解決力を備えた者を歓迎する。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": ["学校長の推薦が必要", "大学入学共通テスト受験必須"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、推薦書、志望理由書の審査" },
+          { "stage": 2, "type": "interview", "details": "面接（プレゼンテーション・口頭試問含む）" },
+          { "stage": 3, "type": "test", "details": "大学入学共通テストの成績による最終判定" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-01",
+          "applicationEnd": "2025-11-06",
+          "examDate": "2025-12-07",
+          "resultDate": "2026-02-12"
+        },
+        "interviewTendency": {
+          "format": "個人面接（プレゼンテーション＋口頭試問）",
+          "duration": "約30分",
+          "interviewers": "教員3〜4名",
+          "pressure": "high",
+          "weight": "面接重視",
+          "frequentTopics": [
+            "医学・医療への強い志望動機",
+            "生命科学・医学の専門的知識",
+            "医療倫理に関する見解",
+            "自己研究活動や探究活動の内容",
+            "医師・研究者・医療従事者としてのキャリアビジョン"
+          ],
+          "tips": "東大医学部の推薦入試は最難関。高度な学問的準備に加え、医療倫理や現代医療の課題についての深い考察が求められる。プレゼンでは自身の研究・探究活動の独自性を明確に示すこと。"
+        }
+      }
+    ]
+  },
+  {
+    "id": "kyoto-u",
+    "name": "京都大学",
+    "shortName": "京大",
+    "group": "kyutei",
+    "officialUrl": "https://www.kyoto-u.ac.jp/",
+    "faculties": [
+      {
+        "id": "letters",
+        "name": "文学部",
+        "admissionPolicy": "人文学に対する幅広い関心と深い知的好奇心を有し、自ら問いを立て探究する力を持つ学生を求める。多様な文化や思想を理解し、異なる価値観を尊重しつつ、独自の視点で人間と社会を考察する意欲のある者を歓迎する。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": ["学業活動報告書の提出", "学びの設計書の提出"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、学業活動報告書、学びの設計書の審査" },
+          { "stage": 2, "type": "essay", "details": "人文学に関する論述試験" },
+          { "stage": 3, "type": "interview", "details": "口頭試問を含む面接（30分程度）" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-05",
+          "applicationEnd": "2025-11-11",
+          "examDate": "2026-01-18",
+          "resultDate": "2026-02-10"
+        },
+        "interviewTendency": {
+          "format": "口頭試問",
+          "duration": "約30分",
+          "interviewers": "教員2〜3名",
+          "pressure": "medium",
+          "weight": "均等",
+          "frequentTopics": [
+            "学びの設計書の内容に基づく深掘り",
+            "人文学への関心の原点",
+            "読書経験や学問的関心",
+            "論述試験の内容に関する質疑",
+            "大学での学修計画"
+          ],
+          "tips": "穏やかだが学問的に深い質問が多い。自分の関心分野の書籍を複数読み、それについて自分の言葉で語れるようにしておくこと。"
+        }
+      },
+      {
+        "id": "economics",
+        "name": "経済学部",
+        "admissionPolicy": "経済学・経営学への強い関心を持ち、数理的思考力と論理的表現力を兼ね備えた学生を求める。現代社会の経済現象を多角的に分析し、自ら課題を発見して解決策を構想する能力と意欲を持つ者を歓迎する。",
+        "capacity": 8,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": ["学業活動報告書の提出", "学びの設計書の提出"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、学業活動報告書の審査" },
+          { "stage": 2, "type": "essay", "details": "経済学に関する論述試験（数学的素養を含む）" },
+          { "stage": 3, "type": "interview", "details": "口頭試問を含む面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-05",
+          "applicationEnd": "2025-11-11",
+          "examDate": "2026-01-19",
+          "resultDate": "2026-02-10"
+        },
+        "interviewTendency": {
+          "format": "口頭試問",
+          "duration": "約25分",
+          "interviewers": "教員2〜3名",
+          "pressure": "medium",
+          "weight": "均等",
+          "frequentTopics": [
+            "論述試験の解答に関する質疑",
+            "経済現象への論理的分析力",
+            "数理的思考力を試す追加質問",
+            "関心のある経済テーマ",
+            "学びの設計書の内容確認"
+          ],
+          "tips": "論述試験の内容をベースに口頭試問が展開される。経済学の基本的な考え方と数学的思考を結びつけて説明できる力が求められる。"
+        }
+      },
+      {
+        "id": "law",
+        "name": "法学部",
+        "admissionPolicy": "法学・政治学に関する基礎的な知識と論理的思考力を有し、現代社会の法的・政治的課題に深い関心を持つ学生を求める。主体的に学び、多様な視点から問題を分析し、公正な社会の実現に寄与する意欲を持つ者を歓迎する。",
+        "capacity": 20,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": ["学業活動報告書の提出", "学びの設計書の提出", "大学入学共通テスト受験必須"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、学業活動報告書、学びの設計書の審査" },
+          { "stage": 2, "type": "essay", "details": "小論文試験" },
+          { "stage": 3, "type": "test", "details": "大学入学共通テストの成績による最終判定" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-05",
+          "applicationEnd": "2025-11-11",
+          "examDate": "2026-01-18",
+          "resultDate": "2026-02-10"
+        },
+        "interviewTendency": {
+          "format": "小論文中心（面接なし、書類＋共通テスト判定）",
+          "duration": "該当なし",
+          "interviewers": "該当なし",
+          "pressure": "low",
+          "weight": "書類重視",
+          "frequentTopics": [
+            "社会問題への多角的な分析（小論文で出題）",
+            "法的思考力を問うテーマ",
+            "現代社会の公正・正義に関する問題",
+            "学びの設計書における法学への関心"
+          ],
+          "tips": "法学部は面接がなく小論文と共通テストで判定される。小論文では社会問題を法的視点から論理的に分析する力が求められるため、時事問題の法的側面を日頃から考察しておくこと。"
+        }
+      },
+      {
+        "id": "education",
+        "name": "教育学部",
+        "admissionPolicy": "教育学に対する深い関心を持ち、人間の発達・学習・教育に関する多角的な視点から探究する意欲のある学生を求める。フィールドワークや実証研究を通じて教育課題の解決に取り組む姿勢と、自律的な学修能力を備えた者を歓迎する。",
+        "capacity": 6,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": ["学業活動報告書の提出", "学びの設計書の提出"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、学業活動報告書、学びの設計書の審査" },
+          { "stage": 2, "type": "essay", "details": "教育学に関する論述試験" },
+          { "stage": 3, "type": "interview", "details": "口頭試問を含む面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-10-01",
+          "applicationEnd": "2025-10-07",
+          "examDate": "2025-11-23",
+          "resultDate": "2026-02-10"
+        },
+        "interviewTendency": {
+          "format": "口頭試問",
+          "duration": "約25分",
+          "interviewers": "教員2〜3名",
+          "pressure": "low",
+          "weight": "均等",
+          "frequentTopics": [
+            "教育観・学習観",
+            "自身の教育体験と問題意識",
+            "教育課題に対する具体的な考察",
+            "学びの設計書の内容に関する質問",
+            "フィールドワークや実践的活動への関心"
+          ],
+          "tips": "穏やかな雰囲気で教育に対する考えを深く聞かれる。自分の教育体験から具体的な問題意識を導き出し、それを学問的にどう探究したいかを明確にしておくこと。"
+        }
+      },
+      {
+        "id": "science",
+        "name": "理学部",
+        "admissionPolicy": "自然科学に対する強い好奇心と探究心を持ち、数学・物理・化学・生物・地学のいずれかの分野で卓越した能力を有する学生を求める。基礎科学の発展に貢献し、未知の現象を解明する意欲と独創的な発想力を持つ者を歓迎する。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": ["学業活動報告書の提出", "学びの設計書の提出", "科学分野での顕著な活動実績が望ましい"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、学業活動報告書、学びの設計書の審査" },
+          { "stage": 2, "type": "test", "details": "理科・数学に関する筆記試験" },
+          { "stage": 3, "type": "interview", "details": "口頭試問を含む面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-10-01",
+          "applicationEnd": "2025-10-07",
+          "examDate": "2025-12-14",
+          "resultDate": "2026-02-10"
+        },
+        "interviewTendency": {
+          "format": "口頭試問",
+          "duration": "約25分",
+          "interviewers": "教員2〜3名",
+          "pressure": "medium",
+          "weight": "均等",
+          "frequentTopics": [
+            "筆記試験の解答に関する質疑",
+            "専門分野の科学的思考力を問う質問",
+            "研究活動や実験の内容",
+            "自然科学への根本的な関心",
+            "大学での研究テーマ構想"
+          ],
+          "tips": "穏やかだが専門的な質問が中心。筆記試験の解答について掘り下げられることがあるため、自分の解法を論理的に説明できるよう準備すること。"
+        }
+      },
+      {
+        "id": "integrated-human-studies",
+        "name": "総合人間学部",
+        "admissionPolicy": "人文・社会・自然科学の枠を超えた学際的な関心を持ち、人間と社会を総合的に探究する能力を有する学生を求める。特色入試として、既存の学問分野にとらわれない独創的な問題意識と高い知的水準を持ち、自ら学びを設計する主体性のある者を歓迎する。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": ["学業活動報告書の提出", "学校長の推薦が必要", "大学入学共通テスト受験必須"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、推薦書、学業活動報告書の審査" },
+          { "stage": 2, "type": "essay", "details": "学際的テーマに関する論述試験" },
+          { "stage": 3, "type": "interview", "details": "口頭試問を含む面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-05",
+          "applicationEnd": "2025-11-11",
+          "examDate": "2026-01-18",
+          "resultDate": "2026-02-10"
+        },
+        "interviewTendency": {
+          "format": "口頭試問",
+          "duration": "約30分",
+          "interviewers": "教員2〜3名",
+          "pressure": "high",
+          "weight": "面接重視",
+          "frequentTopics": [
+            "学際的な問題意識と研究テーマ",
+            "人文・社会・自然科学を横断した思考力",
+            "学業活動報告書の内容の深掘り",
+            "学びの設計と大学での計画",
+            "総合人間学部を志望する理由"
+          ],
+          "tips": "特色入試として独自の思考力が最も問われる。複数の学問分野を横断した自分なりの問いを持ち、それをどのように探究するかを具体的に語れるよう準備すること。"
+        }
+      },
+      {
+        "id": "medicine",
+        "name": "医学部",
+        "admissionPolicy": "医学・生命科学に対する卓越した才能と強い使命感を持ち、人類の健康と医療の発展に貢献する意欲のある学生を求める。自然科学の基礎学力が高く、高い倫理観と人間性を備え、将来の医学研究・医療の担い手として成長できる資質を持つ者を歓迎する。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": ["学業活動報告書の提出", "学校長の推薦が必要", "大学入学共通テスト受験必須"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、推薦書、学業活動報告書の審査" },
+          { "stage": 2, "type": "test", "details": "理科・数学に関する筆記試験" },
+          { "stage": 3, "type": "interview", "details": "面接（口頭試問含む）" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-05",
+          "applicationEnd": "2025-11-11",
+          "examDate": "2026-01-18",
+          "resultDate": "2026-02-10"
+        },
+        "interviewTendency": {
+          "format": "個人面接（口頭試問含む）",
+          "duration": "約30分",
+          "interviewers": "教員3〜4名",
+          "pressure": "high",
+          "weight": "面接重視",
+          "frequentTopics": [
+            "医学・医療への志望動機と使命感",
+            "生命科学・医学に関する専門的知識",
+            "医療倫理と現代医療の課題",
+            "研究活動や探究活動の内容",
+            "医師・研究者としてのキャリアビジョン"
+          ],
+          "tips": "京大医学部の特色入試は学問的な深さと倫理観の両方が問われる。最新の医療問題や生命倫理について自分の考えを論理的に述べられるよう準備すること。"
+        }
+      },
+      {
+        "id": "pharmacy",
+        "name": "薬学部",
+        "admissionPolicy": "薬学・生命科学に対する強い関心と化学・生物学の高い基礎学力を持ち、医薬品の創製・評価・活用を通じて人々の健康に貢献する意欲のある学生を求める。科学的探究心と高い倫理観を備え、薬学の発展に寄与する志を持つ者を歓迎する。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": ["学業活動報告書の提出", "学校長の推薦が必要", "大学入学共通テスト受験必須"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、推薦書、学業活動報告書の審査" },
+          { "stage": 2, "type": "test", "details": "化学・生物に関する筆記試験" },
+          { "stage": 3, "type": "interview", "details": "面接（口頭試問含む）" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-05",
+          "applicationEnd": "2025-11-11",
+          "examDate": "2026-01-18",
+          "resultDate": "2026-02-10"
+        },
+        "interviewTendency": {
+          "format": "個人面接（口頭試問含む）",
+          "duration": "約25分",
+          "interviewers": "教員2〜3名",
+          "pressure": "high",
+          "weight": "均等",
+          "frequentTopics": [
+            "薬学・生命科学への関心の動機",
+            "化学・生物学の専門的知識",
+            "医薬品開発への関心と問題意識",
+            "研究活動の内容と成果",
+            "薬学研究者・薬剤師としての展望"
+          ],
+          "tips": "筆記試験の内容を踏まえた口頭試問が行われる。化学と生物の両方を高いレベルで理解していることが前提であり、自分の研究への関心を具体的に語れるようにしておくこと。"
+        }
+      },
+      {
+        "id": "engineering-civil",
+        "name": "工学部（地球工学科）",
+        "admissionPolicy": "地球環境・土木・資源・エネルギー等の分野に強い関心を持ち、持続可能な地球社会の構築に貢献する意欲のある学生を求める。数学・物理・化学の基礎学力と創造的な問題解決力を備え、グローバルな視野で地球規模の課題に挑む志を持つ者を歓迎する。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": ["学業活動報告書の提出", "学校長の推薦が必要", "大学入学共通テスト受験必須"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、推薦書、学業活動報告書の審査" },
+          { "stage": 2, "type": "test", "details": "数学・理科の筆記試験" },
+          { "stage": 3, "type": "interview", "details": "口頭試問を含む面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-05",
+          "applicationEnd": "2025-11-11",
+          "examDate": "2026-01-19",
+          "resultDate": "2026-02-10"
+        },
+        "interviewTendency": {
+          "format": "口頭試問",
+          "duration": "約25分",
+          "interviewers": "教員2〜3名",
+          "pressure": "high",
+          "weight": "均等",
+          "frequentTopics": [
+            "地球環境・土木・資源分野への関心",
+            "数学・物理の専門的口頭試問",
+            "持続可能な社会への貢献ビジョン",
+            "研究活動や社会参加の経験",
+            "大学での学修・研究計画"
+          ],
+          "tips": "筆記試験の内容に基づいた口頭試問が中心。地球環境や土木工学に関する最新の課題を把握し、自分が取り組みたいテーマを明確にしておくこと。"
+        }
+      },
+      {
+        "id": "agriculture",
+        "name": "農学部",
+        "admissionPolicy": "農学・生命科学・環境科学に強い関心と探究心を持ち、食料・農業・生命環境の諸問題に取り組む意欲のある学生を求める。生物学・化学の基礎学力を備え、自然と人間の関わりを科学的に探究し、持続可能な社会の実現に貢献する志を持つ者を歓迎する。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": ["学業活動報告書の提出", "学校長の推薦が必要", "大学入学共通テスト受験必須"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、推薦書、学業活動報告書の審査" },
+          { "stage": 2, "type": "test", "details": "理科・数学に関する筆記試験" },
+          { "stage": 3, "type": "interview", "details": "口頭試問を含む面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-05",
+          "applicationEnd": "2025-11-11",
+          "examDate": "2026-01-19",
+          "resultDate": "2026-02-10"
+        },
+        "interviewTendency": {
+          "format": "口頭試問",
+          "duration": "約25分",
+          "interviewers": "教員2〜3名",
+          "pressure": "high",
+          "weight": "均等",
+          "frequentTopics": [
+            "農学・生命科学への関心と動機",
+            "生物学・化学の専門的知識",
+            "食料・農業・環境問題への問題意識",
+            "研究活動や農業体験の経験",
+            "大学での研究テーマと将来の展望"
+          ],
+          "tips": "筆記試験に基づく口頭試問に加え、農学への志望動機を具体的に語れることが重要。フィールドワークや農業体験など実践的な経験があると評価される。"
+        }
+      }
+    ]
+  },
+  {
+    "id": "hokkaido-u",
+    "name": "北海道大学",
+    "shortName": "北大",
+    "group": "kyutei",
+    "officialUrl": "https://www.hokudai.ac.jp/",
+    "faculties": [
+      {
+        "id": "science",
+        "name": "理学部",
+        "admissionPolicy": "自然科学に対する強い好奇心と探究心を持ち、数学・理科の基礎学力が十分にある学生を求める。自然現象の本質を追求し、独創的な発想で新たな知見を切り拓く意欲を持つ者を歓迎する。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": 4.0,
+          "englishCert": null,
+          "otherReqs": ["学校長の推薦が必要", "科学に関する研究実績があれば望ましい"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、推薦書、研究活動報告書の審査" },
+          { "stage": 2, "type": "test", "details": "理科・数学に関する筆記試験" },
+          { "stage": 3, "type": "interview", "details": "口頭試問を含む面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-01",
+          "applicationEnd": "2025-11-08",
+          "examDate": "2025-12-01",
+          "resultDate": "2025-12-13"
+        },
+        "interviewTendency": {
+          "format": "口頭試問",
+          "duration": "約20分",
+          "interviewers": "教員2名",
+          "pressure": "low",
+          "weight": "均等",
+          "frequentTopics": [
+            "研究活動の内容と成果",
+            "理科・数学の基礎的な口頭試問",
+            "自然科学への探究心の原点",
+            "大学での研究希望分野",
+            "科学的な問題解決のアプローチ"
+          ],
+          "tips": "フロンティア入試らしく総合的に評価される。口頭試問は基礎的だが、自分の研究活動を科学的に説明できることが重要。"
+        }
+      },
+      {
+        "id": "engineering",
+        "name": "工学部",
+        "admissionPolicy": "工学の基盤となる数学・物理学・化学の基礎学力と応用力を有し、科学技術を通じた社会課題の解決に強い意欲を持つ学生を求める。フロンティア精神のもと、創造的なものづくりに挑戦し、持続可能な社会に貢献する意志を持つ者を歓迎する。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": 4.0,
+          "englishCert": null,
+          "otherReqs": ["学校長の推薦が必要", "大学入学共通テスト受験必須"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、推薦書、志望理由書の審査" },
+          { "stage": 2, "type": "test", "details": "数学・理科の筆記試験" },
+          { "stage": 3, "type": "interview", "details": "口頭試問を含む面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-01",
+          "applicationEnd": "2025-11-08",
+          "examDate": "2025-12-01",
+          "resultDate": "2025-12-13"
+        },
+        "interviewTendency": {
+          "format": "口頭試問",
+          "duration": "約20分",
+          "interviewers": "教員2名",
+          "pressure": "low",
+          "weight": "均等",
+          "frequentTopics": [
+            "工学分野への関心と志望動機",
+            "数学・物理の基礎的な口頭試問",
+            "ものづくりや技術に関する経験",
+            "持続可能な社会への貢献ビジョン",
+            "北海道大学で学びたい具体的な内容"
+          ],
+          "tips": "穏やかな雰囲気が特徴。筆記試験の内容に関連した口頭試問もあるため、自分の解答を説明できるよう準備しておくこと。"
+        }
+      },
+      {
+        "id": "medicine",
+        "name": "医学部",
+        "admissionPolicy": "医学・生命科学に対する強い関心と自然科学の高い基礎学力を持ち、北海道の医療・研究に貢献する意欲のある学生を求める。フロンティア精神のもと、高い倫理観と人間性を備え、地域医療から先端医学研究まで幅広く活躍できる医師・研究者を志す者を歓迎する。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": 4.0,
+          "englishCert": null,
+          "otherReqs": ["学校長の推薦が必要", "大学入学共通テスト受験必須"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、推薦書、志望理由書の審査" },
+          { "stage": 2, "type": "interview", "details": "面接（口頭試問含む）" },
+          { "stage": 3, "type": "test", "details": "大学入学共通テストの成績による最終判定" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-01",
+          "applicationEnd": "2025-11-08",
+          "examDate": "2025-12-01",
+          "resultDate": "2025-12-13"
+        },
+        "interviewTendency": {
+          "format": "個人面接（口頭試問含む）",
+          "duration": "約30分",
+          "interviewers": "教員3名",
+          "pressure": "high",
+          "weight": "面接重視",
+          "frequentTopics": [
+            "医学・医療への志望動機と使命感",
+            "北海道の地域医療への関心",
+            "医療倫理に関する見解",
+            "自然科学の基礎知識に関する口頭試問",
+            "将来の医師・研究者としてのビジョン"
+          ],
+          "tips": "北海道の地域医療や医学研究への具体的な関心が問われる。医療倫理の問題についても自分の考えを整理しておくこと。北大らしいフロンティア精神も意識して語ること。"
+        }
+      },
+      {
+        "id": "dentistry",
+        "name": "歯学部",
+        "admissionPolicy": "歯科医学・口腔科学に対する強い関心と使命感を持ち、自然科学の基礎学力が優れた学生を求める。フロンティア精神のもと、口腔の健康を通じて人々の生活の質の向上に貢献する意欲を持ち、歯科医師・研究者として地域と社会に寄与する志を持つ者を歓迎する。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": 4.0,
+          "englishCert": null,
+          "otherReqs": ["学校長の推薦が必要", "大学入学共通テスト受験必須"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、推薦書、志望理由書の審査" },
+          { "stage": 2, "type": "interview", "details": "面接（口頭試問含む）" },
+          { "stage": 3, "type": "test", "details": "大学入学共通テストの成績による最終判定" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-01",
+          "applicationEnd": "2025-11-08",
+          "examDate": "2025-12-01",
+          "resultDate": "2025-12-13"
+        },
+        "interviewTendency": {
+          "format": "個人面接（口頭試問含む）",
+          "duration": "約20分",
+          "interviewers": "教員2〜3名",
+          "pressure": "high",
+          "weight": "面接重視",
+          "frequentTopics": [
+            "歯科医学・口腔科学への関心の動機",
+            "口腔健康と全身健康への問題意識",
+            "自然科学の基礎知識に関する口頭試問",
+            "地域医療・社会貢献への意欲",
+            "歯科医師・研究者としての展望"
+          ],
+          "tips": "歯科医学への明確な志望動機が重要。口腔健康と全身健康の関連性など最新のトピックも把握しておくと良い。誠実で温かみのある人柄も評価される。"
+        }
+      },
+      {
+        "id": "fisheries",
+        "name": "水産学部",
+        "admissionPolicy": "水産学・海洋科学・生命科学に対する強い関心と探究心を持ち、水産資源の持続可能な利用と海洋環境の保全に貢献する意欲のある学生を求める。フロンティア入試として、生物学・化学の基礎学力と独自の問題意識を持ち、水産・海洋分野で新たな知を切り拓く志を持つ者を歓迎する。",
+        "capacity": 20,
+        "requirements": {
+          "gpa": 4.0,
+          "englishCert": null,
+          "otherReqs": ["学校長の推薦が必要", "大学入学共通テスト受験必須"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、推薦書、研究活動報告書の審査" },
+          { "stage": 2, "type": "presentation", "details": "研究・活動内容に関するプレゼンテーションと質疑応答" },
+          { "stage": 3, "type": "test", "details": "大学入学共通テストの成績による最終判定" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-01",
+          "applicationEnd": "2025-11-08",
+          "examDate": "2025-12-01",
+          "resultDate": "2025-12-13"
+        },
+        "interviewTendency": {
+          "format": "プレゼンテーション＋口頭試問",
+          "duration": "約25分",
+          "interviewers": "教員2〜3名",
+          "pressure": "high",
+          "weight": "面接重視",
+          "frequentTopics": [
+            "水産・海洋科学への関心の動機",
+            "水産資源や海洋環境に関する問題意識",
+            "生物学・化学の専門的知識",
+            "研究活動や自然体験の内容",
+            "大学での研究・学修計画"
+          ],
+          "tips": "フロンティア入試らしく総合的な評価が行われる。水産資源の枯渇や海洋プラスチック問題など時事的なトピックについても自分の考えを持っておくこと。函館キャンパスに進学することも踏まえて志望動機を語ること。"
+        }
+      }
+    ]
+  },
+  {
+    "id": "tohoku-u",
+    "name": "東北大学",
+    "shortName": "東北大",
+    "group": "kyutei",
+    "officialUrl": "https://www.tohoku.ac.jp/",
+    "faculties": [
+      {
+        "id": "law",
+        "name": "法学部",
+        "admissionPolicy": "法学・政治学に対する深い関心と社会問題への鋭い問題意識を持つ学生を求める。論理的思考力、文章表現力に優れ、多様な人々と協力して社会の発展に寄与する意欲のある者を歓迎する。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": 4.0,
+          "englishCert": null,
+          "otherReqs": ["大学入学共通テスト受験必須", "東北大学を第一志望とすること"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書、活動報告書の審査" },
+          { "stage": 2, "type": "essay", "details": "小論文試験" },
+          { "stage": 3, "type": "interview", "details": "個人面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2026-01-20",
+          "applicationEnd": "2026-01-23",
+          "examDate": "2026-02-14",
+          "resultDate": "2026-02-20"
+        },
+        "interviewTendency": {
+          "format": "個人面接",
+          "duration": "約20分",
+          "interviewers": "教員2〜3名",
+          "pressure": "medium",
+          "weight": "均等",
+          "frequentTopics": [
+            "志望理由と法学への関心",
+            "社会問題に対する自分の見解",
+            "活動報告書の内容の深掘り",
+            "論理的思考力を試す質問",
+            "東北大学を志望する理由"
+          ],
+          "tips": "AO入試の形式で、意欲と思考力を総合的に評価される。社会問題について自分の立場を論理的に述べられるよう、日頃からニュースに関心を持つこと。"
+        }
+      },
+      {
+        "id": "engineering",
+        "name": "工学部",
+        "admissionPolicy": "工学の基盤となる数学・物理学・化学の基礎学力を有し、科学技術によるイノベーションに強い関心を持つ学生を求める。研究開発や社会実装を通じて、持続可能な社会の実現に貢献する意欲のある者を歓迎する。",
+        "capacity": 18,
+        "requirements": {
+          "gpa": 4.0,
+          "englishCert": null,
+          "otherReqs": ["大学入学共通テスト受験必須", "東北大学を第一志望とすること"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書の審査" },
+          { "stage": 2, "type": "test", "details": "数学・理科の筆記試験" },
+          { "stage": 3, "type": "interview", "details": "口頭試問を含む面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2026-01-20",
+          "applicationEnd": "2026-01-23",
+          "examDate": "2026-02-14",
+          "resultDate": "2026-02-20"
+        },
+        "interviewTendency": {
+          "format": "口頭試問",
+          "duration": "約20分",
+          "interviewers": "教員2〜3名",
+          "pressure": "medium",
+          "weight": "均等",
+          "frequentTopics": [
+            "筆記試験の解答に関する口頭試問",
+            "数学・物理の基礎的な専門質問",
+            "研究や技術に関する関心",
+            "工学で解決したい課題",
+            "大学での学修・研究計画"
+          ],
+          "tips": "理系のAO入試として、筆記試験の内容を踏まえた口頭試問が行われる。自分の解答プロセスを論理的に説明できるようにしておくこと。"
+        }
+      },
+      {
+        "id": "letters",
+        "name": "文学部",
+        "admissionPolicy": "人文社会科学の諸分野に幅広い関心を持ち、人間と社会に関する深い洞察力を有する学生を求める。文献の読解力や論理的な文章表現力に優れ、自主的な研究活動を通じて新たな知を探究する意欲のある者を歓迎する。",
+        "capacity": 27,
+        "requirements": {
+          "gpa": 4.0,
+          "englishCert": null,
+          "otherReqs": ["東北大学を第一志望とすること"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書、活動報告書の審査" },
+          { "stage": 2, "type": "essay", "details": "小論文試験" },
+          { "stage": 3, "type": "interview", "details": "面接（口頭試問含む）" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-25",
+          "applicationEnd": "2025-10-03",
+          "examDate": "2025-10-25",
+          "resultDate": "2025-11-07"
+        },
+        "interviewTendency": {
+          "format": "個人面接（口頭試問含む）",
+          "duration": "約20分",
+          "interviewers": "教員2〜3名",
+          "pressure": "medium",
+          "weight": "均等",
+          "frequentTopics": [
+            "志望理由と人文学への関心",
+            "小論文の内容に関する質疑",
+            "読書経験や研究活動",
+            "活動報告書の深掘り",
+            "大学で追究したいテーマ"
+          ],
+          "tips": "小論文の内容に基づいた口頭試問が行われることがある。自分の文章の論点を明確に説明できるよう準備しておくこと。"
+        }
+      },
+      {
+        "id": "science",
+        "name": "理学部",
+        "admissionPolicy": "自然科学の基礎的な素養と探究心を有し、数学・物理学・化学・生物学・地学のいずれかの分野で深く学ぶ意欲のある学生を求める。未知の自然現象に果敢に挑み、独創的な研究を展開する気概を持つ者を歓迎する。",
+        "capacity": 20,
+        "requirements": {
+          "gpa": 4.0,
+          "englishCert": null,
+          "otherReqs": ["大学入学共通テスト受験必須", "東北大学を第一志望とすること"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書、研究活動報告書の審査" },
+          { "stage": 2, "type": "test", "details": "理科・数学に関する筆記試験" },
+          { "stage": 3, "type": "interview", "details": "口頭試問を含む面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2026-01-20",
+          "applicationEnd": "2026-01-23",
+          "examDate": "2026-02-14",
+          "resultDate": "2026-02-20"
+        },
+        "interviewTendency": {
+          "format": "口頭試問",
+          "duration": "約25分",
+          "interviewers": "教員2〜3名",
+          "pressure": "medium",
+          "weight": "均等",
+          "frequentTopics": [
+            "筆記試験の解答に関する口頭試問",
+            "専門分野の基礎知識",
+            "研究活動の内容と考察",
+            "自然科学への関心の原点",
+            "大学での研究テーマ構想"
+          ],
+          "tips": "筆記試験と面接が連動している。自分の研究活動報告書の内容について、科学的根拠を持って説明できるようにしておくこと。"
+        }
+      },
+      {
+        "id": "education",
+        "name": "教育学部",
+        "admissionPolicy": "教育科学に対する強い関心を持ち、人間の発達と教育の関係を多角的に探究する意欲のある学生を求める。フィールドワークや実践的活動を通じて教育課題に取り組み、社会の発展に貢献する志を持つ者を歓迎する。",
+        "capacity": 7,
+        "requirements": {
+          "gpa": 4.0,
+          "englishCert": null,
+          "otherReqs": ["東北大学を第一志望とすること"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書、活動報告書の審査" },
+          { "stage": 2, "type": "essay", "details": "小論文試験" },
+          { "stage": 3, "type": "interview", "details": "個人面接（質疑応答含む）" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-25",
+          "applicationEnd": "2025-10-03",
+          "examDate": "2025-10-25",
+          "resultDate": "2025-11-07"
+        },
+        "interviewTendency": {
+          "format": "個人面接",
+          "duration": "約20分",
+          "interviewers": "教員2〜3名",
+          "pressure": "medium",
+          "weight": "均等",
+          "frequentTopics": [
+            "教育に対する問題意識",
+            "自身の教育・学習体験",
+            "活動報告書の内容に関する質問",
+            "教育課題への具体的な考え",
+            "大学での学修計画"
+          ],
+          "tips": "教育に関する実践的な活動経験があると強い。自分の体験を教育学的な観点から言語化できるよう準備すること。"
+        }
+      },
+      {
+        "id": "medicine",
+        "name": "医学部",
+        "admissionPolicy": "医学・生命科学に対する強い関心と使命感を持ち、AO入試II期・III期として優れた自然科学の基礎学力と探究力を有する学生を求める。東北の地から革新的な医学研究と質の高い医療を創出する意欲を持ち、将来の医学・医療のリーダーを志す者を歓迎する。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": 4.0,
+          "englishCert": null,
+          "otherReqs": ["大学入学共通テスト受験必須", "東北大学を第一志望とすること"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書、研究活動報告書の審査" },
+          { "stage": 2, "type": "test", "details": "理科・数学に関する筆記試験" },
+          { "stage": 3, "type": "interview", "details": "個人面接（口頭試問含む）" }
+        ],
+        "schedule": {
+          "applicationStart": "2026-01-20",
+          "applicationEnd": "2026-01-23",
+          "examDate": "2026-02-14",
+          "resultDate": "2026-02-20"
+        },
+        "interviewTendency": {
+          "format": "個人面接（口頭試問含む）",
+          "duration": "約30分",
+          "interviewers": "教員3〜4名",
+          "pressure": "high",
+          "weight": "面接重視",
+          "frequentTopics": [
+            "医学・医療への強い志望動機と使命感",
+            "生命科学・医学に関する専門的知識",
+            "医療倫理と現代医療の課題",
+            "研究活動の内容と考察",
+            "東北大学医学部を志望する理由"
+          ],
+          "tips": "AO入試として学問的な深さと医療への使命感の両方が問われる。筆記試験と連動した口頭試問があるため、自分の解答を論理的に説明できるよう準備すること。"
+        }
+      },
+      {
+        "id": "dentistry",
+        "name": "歯学部",
+        "admissionPolicy": "歯科医学・口腔科学に対する強い関心と使命感を持ち、自然科学の基礎学力が優れた学生を求める。東北大学の研究マインドを持ち、口腔の健康を通じて人々の生活の質の向上に貢献し、将来の歯科医学・研究の発展に寄与する志を持つ者を歓迎する。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": 4.0,
+          "englishCert": null,
+          "otherReqs": ["大学入学共通テスト受験必須", "東北大学を第一志望とすること"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書の審査" },
+          { "stage": 2, "type": "interview", "details": "個人面接（口頭試問含む）" },
+          { "stage": 3, "type": "test", "details": "大学入学共通テストの成績による最終判定" }
+        ],
+        "schedule": {
+          "applicationStart": "2026-01-20",
+          "applicationEnd": "2026-01-23",
+          "examDate": "2026-02-14",
+          "resultDate": "2026-02-20"
+        },
+        "interviewTendency": {
+          "format": "個人面接（口頭試問含む）",
+          "duration": "約25分",
+          "interviewers": "教員2〜3名",
+          "pressure": "high",
+          "weight": "面接重視",
+          "frequentTopics": [
+            "歯科医学・口腔科学への志望動機",
+            "口腔健康と全身健康への問題意識",
+            "自然科学の基礎知識に関する口頭試問",
+            "研究・医療への意欲",
+            "歯科医師・研究者としての将来ビジョン"
+          ],
+          "tips": "歯科医学への明確な志望動機と研究への関心が問われる。東北大は「研究第一」を掲げているため、歯科医学研究の最前線への興味も示すと評価が高い。"
+        }
+      },
+      {
+        "id": "agriculture",
+        "name": "農学部",
+        "admissionPolicy": "農学・生命科学・食料環境科学に強い関心と探究心を持ち、生物学・化学の基礎学力が十分にある学生を求める。東北の農業・環境を科学的に探究し、持続可能な食料・農業システムの構築に貢献する意欲と実践力を持つ者を歓迎する。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": 4.0,
+          "englishCert": null,
+          "otherReqs": ["大学入学共通テスト受験必須", "東北大学を第一志望とすること"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書、研究活動報告書の審査" },
+          { "stage": 2, "type": "test", "details": "理科・数学に関する筆記試験" },
+          { "stage": 3, "type": "interview", "details": "口頭試問を含む面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2026-01-20",
+          "applicationEnd": "2026-01-23",
+          "examDate": "2026-02-14",
+          "resultDate": "2026-02-20"
+        },
+        "interviewTendency": {
+          "format": "口頭試問",
+          "duration": "約25分",
+          "interviewers": "教員2〜3名",
+          "pressure": "high",
+          "weight": "均等",
+          "frequentTopics": [
+            "農学・生命科学への関心の動機",
+            "食料・農業・環境問題への問題意識",
+            "生物学・化学の専門的知識",
+            "研究活動や農業体験の経験",
+            "大学での研究テーマ構想"
+          ],
+          "tips": "筆記試験に基づく口頭試問が行われる。東北の農業や食料問題への具体的な関心を示し、研究への意欲を具体的なエピソードと共に語れるよう準備すること。"
+        }
+      }
+    ]
+  },
+  {
+    "id": "nagoya-u",
+    "name": "名古屋大学",
+    "shortName": "名大",
+    "group": "kyutei",
+    "officialUrl": "https://www.nagoya-u.ac.jp/",
+    "faculties": [
+      {
+        "id": "law",
+        "name": "法学部",
+        "admissionPolicy": "法律学・政治学に強い関心を持ち、現代社会の諸課題を法的・政治的視点から考察する能力を有する学生を求める。主体的な学修姿勢と、他者との対話を通じた問題解決力を備えた者を歓迎する。",
+        "capacity": 45,
+        "requirements": {
+          "gpa": 4.3,
+          "englishCert": "TOEFL iBT 72以上またはIELTS 5.5以上",
+          "otherReqs": ["学校長の推薦が必要", "大学入学共通テスト受験必須"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、推薦書、志望理由書の審査" },
+          { "stage": 2, "type": "essay", "details": "小論文試験（120分）" },
+          { "stage": 3, "type": "interview", "details": "個人面接（30分程度）" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-01",
+          "applicationEnd": "2025-11-07",
+          "examDate": "2025-11-29",
+          "resultDate": "2025-12-12"
+        },
+        "interviewTendency": {
+          "format": "個人面接",
+          "duration": "約30分",
+          "interviewers": "教員2〜3名",
+          "pressure": "medium",
+          "weight": "均等",
+          "frequentTopics": [
+            "社会問題に対する法的視点からの考察",
+            "志望理由書の内容の深掘り",
+            "時事問題への見解",
+            "大学での学修計画",
+            "将来のキャリアビジョン"
+          ],
+          "tips": "30分と比較的長い面接で、社会問題について多角的に議論する力が問われる。新聞の社説やニュースから法的論点を考察する習慣をつけておくこと。"
+        }
+      },
+      {
+        "id": "informatics",
+        "name": "情報学部",
+        "admissionPolicy": "情報科学・情報技術に強い関心を持ち、数理的思考力とプログラミング能力の基礎を有する学生を求める。情報技術を活用して社会課題の解決に取り組む意欲と、分野横断的な視野を持つ者を歓迎する。",
+        "capacity": 8,
+        "requirements": {
+          "gpa": 4.0,
+          "englishCert": null,
+          "otherReqs": ["学校長の推薦が必要", "情報分野での活動実績があれば望ましい"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、推薦書、活動報告書の審査" },
+          { "stage": 2, "type": "presentation", "details": "研究・活動についてのプレゼンテーション" },
+          { "stage": 3, "type": "interview", "details": "口頭試問を含む面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-01",
+          "applicationEnd": "2025-11-07",
+          "examDate": "2025-11-30",
+          "resultDate": "2025-12-12"
+        },
+        "interviewTendency": {
+          "format": "プレゼンテーション＋口頭試問",
+          "duration": "約25分",
+          "interviewers": "教員2〜3名",
+          "pressure": "medium",
+          "weight": "面接重視",
+          "frequentTopics": [
+            "情報技術に関する活動・研究の内容",
+            "プログラミング経験やプロジェクト",
+            "情報技術で解決したい社会課題",
+            "数理的思考力を問う質問",
+            "大学での学修・研究計画"
+          ],
+          "tips": "プレゼンでは自分の情報系活動を技術的に説明できることが重要。プログラミングや情報系コンテストの経験があれば具体的に示すこと。"
+        }
+      },
+      {
+        "id": "letters",
+        "name": "文学部",
+        "admissionPolicy": "人文学の幅広い分野に知的好奇心を持ち、人間と文化に関する深い理解力と洞察力を備えた学生を求める。文献読解力・論述力に優れ、多様な価値観を尊重しながら独自の研究テーマを追求する意欲のある者を歓迎する。",
+        "capacity": 15,
+        "requirements": {
+          "gpa": 4.0,
+          "englishCert": null,
+          "otherReqs": ["学校長の推薦が必要"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、推薦書、志望理由書の審査" },
+          { "stage": 2, "type": "essay", "details": "小論文試験" },
+          { "stage": 3, "type": "interview", "details": "個人面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-07-01",
+          "applicationEnd": "2025-07-07",
+          "examDate": "2025-08-20",
+          "resultDate": "2025-09-12"
+        },
+        "interviewTendency": {
+          "format": "個人面接",
+          "duration": "約20分",
+          "interviewers": "教員2名",
+          "pressure": "medium",
+          "weight": "均等",
+          "frequentTopics": [
+            "人文学への関心の背景",
+            "読書経験や学問的探究",
+            "志望理由書の内容の確認",
+            "小論文の内容に関する質疑",
+            "大学での研究テーマ"
+          ],
+          "tips": "穏やかだが学問的関心の深さを見られる。自分が興味を持つ人文学のテーマについて、先行研究を踏まえて語れると評価が高い。"
+        }
+      },
+      {
+        "id": "education",
+        "name": "教育学部",
+        "admissionPolicy": "教育と人間発達に関する多角的な関心を持ち、社会の中で教育が果たす役割について深く考える学生を求める。多様な人々と協働し、教育の課題解決に向けて実践的に取り組む意欲と行動力を備えた者を歓迎する。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": 4.0,
+          "englishCert": null,
+          "otherReqs": ["学校長の推薦が必要", "大学入学共通テスト受験必須"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、推薦書、志望理由書の審査" },
+          { "stage": 2, "type": "essay", "details": "小論文試験" },
+          { "stage": 3, "type": "interview", "details": "個人面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-01",
+          "applicationEnd": "2025-11-07",
+          "examDate": "2025-11-29",
+          "resultDate": "2025-12-12"
+        },
+        "interviewTendency": {
+          "format": "個人面接",
+          "duration": "約20分",
+          "interviewers": "教員2名",
+          "pressure": "medium",
+          "weight": "均等",
+          "frequentTopics": [
+            "教育観と教育への関心の原点",
+            "現代の教育課題への考え",
+            "自身の教育・学習体験",
+            "大学で学びたいテーマ",
+            "将来の教育分野でのキャリア"
+          ],
+          "tips": "教育観を具体的なエピソードと共に語れることが重要。教育に関するニュースや書籍に触れ、自分なりの考えを整理しておくこと。"
+        }
+      },
+      {
+        "id": "economics",
+        "name": "経済学部",
+        "admissionPolicy": "経済学・経営学に強い関心を持ち、数理的・論理的思考力を用いて社会の経済現象を分析する能力を有する学生を求める。グローバルな視野で経済課題に取り組み、政策立案や企業経営に貢献する意欲を持つ者を歓迎する。",
+        "capacity": 40,
+        "requirements": {
+          "gpa": 4.0,
+          "englishCert": null,
+          "otherReqs": ["学校長の推薦が必要", "大学入学共通テスト受験必須"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、推薦書、志望理由書の審査" },
+          { "stage": 2, "type": "essay", "details": "小論文試験" },
+          { "stage": 3, "type": "interview", "details": "個人面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-01",
+          "applicationEnd": "2025-11-07",
+          "examDate": "2025-11-29",
+          "resultDate": "2025-12-12"
+        },
+        "interviewTendency": {
+          "format": "個人面接",
+          "duration": "約20分",
+          "interviewers": "教員2名",
+          "pressure": "medium",
+          "weight": "均等",
+          "frequentTopics": [
+            "経済学への関心の背景",
+            "時事的な経済問題への考え",
+            "志望理由書の内容の確認",
+            "グローバル経済に関する視点",
+            "大学での学修計画"
+          ],
+          "tips": "経済学の基本的な概念を理解した上で、具体的な経済問題について自分の意見を論理的に述べられるよう準備すること。"
+        }
+      },
+      {
+        "id": "science",
+        "name": "理学部",
+        "admissionPolicy": "自然科学に対する強い好奇心と探究心を持ち、数学・物理学・化学・生物学・地球科学のいずれかの分野で卓越した能力を有する学生を求める。2025年度新規募集として、基礎科学の発展と人類の知的遺産の継承に貢献する意欲と独創的な発想力を持つ者を歓迎する。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": 4.0,
+          "englishCert": null,
+          "otherReqs": ["学校長の推薦が必要", "大学入学共通テスト受験必須"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、推薦書、研究活動報告書の審査" },
+          { "stage": 2, "type": "test", "details": "理科・数学に関する筆記試験" },
+          { "stage": 3, "type": "interview", "details": "口頭試問を含む面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-01",
+          "applicationEnd": "2025-11-07",
+          "examDate": "2025-11-29",
+          "resultDate": "2025-12-12"
+        },
+        "interviewTendency": {
+          "format": "口頭試問",
+          "duration": "約25分",
+          "interviewers": "教員2〜3名",
+          "pressure": "high",
+          "weight": "均等",
+          "frequentTopics": [
+            "自然科学への関心の原点と探究活動",
+            "筆記試験の解答に関する口頭試問",
+            "専門分野の基礎知識",
+            "研究テーマとその科学的意義",
+            "大学での研究計画"
+          ],
+          "tips": "筆記試験と口頭試問が連動している。自分の研究活動を科学的に説明できることが重要。名古屋大理学部の研究内容についても調べておくと良い。"
+        }
+      },
+      {
+        "id": "medicine",
+        "name": "医学部",
+        "admissionPolicy": "医学・生命科学に対する強い関心と使命感を持ち、自然科学の高い基礎学力を有する学生を求める。患者に寄り添う人間性と高い倫理観を備え、名古屋大学の医学教育のもと、臨床・研究両面で優れた医師・研究者として活躍する意欲を持つ者を歓迎する。",
+        "capacity": 20,
+        "requirements": {
+          "gpa": 4.3,
+          "englishCert": null,
+          "otherReqs": ["学校長の推薦が必要", "大学入学共通テスト受験必須"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、推薦書、志望理由書の審査" },
+          { "stage": 2, "type": "test", "details": "理科・数学に関する筆記試験" },
+          { "stage": 3, "type": "interview", "details": "個人面接（口頭試問含む）" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-01",
+          "applicationEnd": "2025-11-07",
+          "examDate": "2025-11-29",
+          "resultDate": "2025-12-12"
+        },
+        "interviewTendency": {
+          "format": "個人面接（口頭試問含む）",
+          "duration": "約30分",
+          "interviewers": "教員3名",
+          "pressure": "high",
+          "weight": "面接重視",
+          "frequentTopics": [
+            "医学・医療への志望動機と使命感",
+            "医療倫理に関する見解",
+            "生命科学・医学の専門的知識",
+            "医師としての人間性や患者への姿勢",
+            "将来の医師・研究者としてのビジョン"
+          ],
+          "tips": "医療への使命感と高い倫理観が強く問われる。医療倫理の事例（インフォームドコンセント、終末期医療等）について自分の考えを整理しておくこと。"
+        }
+      },
+      {
+        "id": "engineering",
+        "name": "工学部",
+        "admissionPolicy": "工学の基盤となる数学・物理学・化学の高い基礎学力と応用力を有し、科学技術によるイノベーションと社会課題の解決に強い意欲を持つ学生を求める。創造的な思考力と実行力を持ち、持続可能な社会の実現に向けて工学の知見を活用する志を持つ者を歓迎する。",
+        "capacity": 20,
+        "requirements": {
+          "gpa": 4.0,
+          "englishCert": null,
+          "otherReqs": ["学校長の推薦が必要", "大学入学共通テスト受験必須"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、推薦書、研究活動報告書の審査" },
+          { "stage": 2, "type": "test", "details": "数学・理科の筆記試験" },
+          { "stage": 3, "type": "interview", "details": "口頭試問を含む面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-01",
+          "applicationEnd": "2025-11-07",
+          "examDate": "2025-11-29",
+          "resultDate": "2025-12-12"
+        },
+        "interviewTendency": {
+          "format": "口頭試問",
+          "duration": "約25分",
+          "interviewers": "教員2〜3名",
+          "pressure": "high",
+          "weight": "均等",
+          "frequentTopics": [
+            "工学分野への関心と志望動機",
+            "数学・物理の専門的口頭試問",
+            "研究活動やものづくりの経験",
+            "科学技術で解決したい社会課題",
+            "大学での学修・研究計画"
+          ],
+          "tips": "筆記試験と口頭試問が連動している。数学・物理の基礎を確実に固めた上で、自分の興味ある工学分野について具体的に語れるよう準備すること。"
+        }
+      },
+      {
+        "id": "agriculture",
+        "name": "農学部",
+        "admissionPolicy": "農学・生命科学・食料環境科学に強い関心と探究心を持ち、生物学・化学の基礎学力が十分にある学生を求める。自然と人間の共生を科学的に探究し、食料安全保障や環境保全の課題解決に取り組む意欲と実践力を備えた者を歓迎する。",
+        "capacity": 15,
+        "requirements": {
+          "gpa": 4.0,
+          "englishCert": null,
+          "otherReqs": ["学校長の推薦が必要", "大学入学共通テスト受験必須"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、推薦書、研究活動報告書の審査" },
+          { "stage": 2, "type": "test", "details": "理科・数学に関する筆記試験" },
+          { "stage": 3, "type": "interview", "details": "口頭試問を含む面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-01",
+          "applicationEnd": "2025-11-07",
+          "examDate": "2025-11-29",
+          "resultDate": "2025-12-12"
+        },
+        "interviewTendency": {
+          "format": "口頭試問",
+          "duration": "約20分",
+          "interviewers": "教員2〜3名",
+          "pressure": "high",
+          "weight": "均等",
+          "frequentTopics": [
+            "農学・生命科学への関心の動機",
+            "食料・農業・環境問題への問題意識",
+            "生物学・化学の専門的知識",
+            "研究活動や農業・自然体験の経験",
+            "大学での研究テーマと将来の展望"
+          ],
+          "tips": "筆記試験に基づく口頭試問が中心。農業・食料・環境分野の最新課題についても自分の考えを持ち、具体的に語れるよう準備すること。"
+        }
+      }
+    ]
+  },
+  {
+    "id": "osaka-u",
+    "name": "大阪大学",
+    "shortName": "阪大",
+    "group": "kyutei",
+    "officialUrl": "https://www.osaka-u.ac.jp/",
+    "faculties": [
+      {
+        "id": "letters",
+        "name": "文学部",
+        "admissionPolicy": "人文学諸分野への深い関心と幅広い教養を有し、批判的・創造的思考力を持つ学生を求める。多様な文化・社会への理解を深め、自ら問いを立て、新たな知の地平を切り拓く意欲のある者を歓迎する。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": ["大学入学共通テスト受験必須", "志望理由書・活動報告書の提出"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書、活動報告書の審査" },
+          { "stage": 2, "type": "essay", "details": "小論文試験" },
+          { "stage": 3, "type": "interview", "details": "口頭試問を含む面接（30分）" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-01",
+          "applicationEnd": "2025-11-06",
+          "examDate": "2025-12-07",
+          "resultDate": "2026-02-10"
+        },
+        "interviewTendency": {
+          "format": "口頭試問",
+          "duration": "約30分",
+          "interviewers": "教員2〜3名",
+          "pressure": "medium",
+          "weight": "面接重視",
+          "frequentTopics": [
+            "人文学への学問的関心",
+            "志望理由書の内容の深掘り",
+            "小論文の内容に基づく質疑",
+            "研究志向と大学での学修計画",
+            "多様な文化への理解"
+          ],
+          "tips": "世界適塾入試らしく研究志向が問われる。30分と長めの面接なので、自分の学問的関心について深く掘り下げて語れるよう準備すること。"
+        }
+      },
+      {
+        "id": "human-sciences",
+        "name": "人間科学部",
+        "admissionPolicy": "人間と社会に関する学際的な関心を持ち、教育学・心理学・社会学等の多角的な視点から人間の行動と社会現象を理解しようとする学生を求める。実証的な研究方法への関心と、社会貢献への強い意欲を持つ者を歓迎する。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": ["大学入学共通テスト受験必須", "志望理由書の提出"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書の審査" },
+          { "stage": 2, "type": "essay", "details": "人間科学に関する論述試験" },
+          { "stage": 3, "type": "interview", "details": "面接（プレゼンテーション含む）" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-01",
+          "applicationEnd": "2025-11-06",
+          "examDate": "2025-12-07",
+          "resultDate": "2026-02-10"
+        },
+        "interviewTendency": {
+          "format": "個人面接（プレゼンテーション含む）",
+          "duration": "約25分",
+          "interviewers": "教員2〜3名",
+          "pressure": "medium",
+          "weight": "面接重視",
+          "frequentTopics": [
+            "人間科学への関心と研究テーマ",
+            "学際的な視点からの問題意識",
+            "実証的研究への関心",
+            "プレゼン内容に関する質疑",
+            "社会貢献のビジョン"
+          ],
+          "tips": "プレゼンテーションを含む面接で、研究志向が強く問われる。自分の関心テーマを学際的に捉え、どのような研究アプローチを取りたいか明確にしておくこと。"
+        }
+      },
+      {
+        "id": "law",
+        "name": "法学部",
+        "admissionPolicy": "法学・政治学に対する深い関心を持ち、社会の諸問題を法的な観点から分析・解決する能力を有する学生を求める。多様な価値観を理解し、公共的な課題に取り組む志と論理的思考力を備えた者を歓迎する。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": ["大学入学共通テスト受験必須", "志望理由書・活動報告書の提出"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書、活動報告書の審査" },
+          { "stage": 2, "type": "essay", "details": "小論文試験" },
+          { "stage": 3, "type": "interview", "details": "面接（口頭試問含む）" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-01",
+          "applicationEnd": "2025-11-06",
+          "examDate": "2025-12-07",
+          "resultDate": "2026-02-10"
+        },
+        "interviewTendency": {
+          "format": "個人面接（口頭試問含む）",
+          "duration": "約25分",
+          "interviewers": "教員2〜3名",
+          "pressure": "medium",
+          "weight": "面接重視",
+          "frequentTopics": [
+            "法学・政治学への関心の背景",
+            "社会問題への法的視点からの分析",
+            "志望理由書・活動報告書の深掘り",
+            "公共的課題への取り組み意欲",
+            "大学での学修計画"
+          ],
+          "tips": "法学部は面接重視の傾向。社会問題を法的な枠組みで分析する力を見せることが重要。小論文の内容についても質問されることがある。"
+        }
+      },
+      {
+        "id": "economics",
+        "name": "経済学部",
+        "admissionPolicy": "経済学に対する強い関心と数理的基礎力を有し、現代社会の経済問題を多角的に分析する能力を備えた学生を求める。世界適塾の理念のもと、国際的な視野で経済の発展に寄与する意欲を持つ者を歓迎する。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": ["大学入学共通テスト受験必須", "志望理由書の提出"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書の審査" },
+          { "stage": 2, "type": "essay", "details": "経済学に関する小論文試験" },
+          { "stage": 3, "type": "interview", "details": "個人面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-01",
+          "applicationEnd": "2025-11-06",
+          "examDate": "2025-12-07",
+          "resultDate": "2026-02-10"
+        },
+        "interviewTendency": {
+          "format": "個人面接",
+          "duration": "約20分",
+          "interviewers": "教員2〜3名",
+          "pressure": "medium",
+          "weight": "面接重視",
+          "frequentTopics": [
+            "経済学への関心と動機",
+            "時事的な経済問題への見解",
+            "国際経済に関する視点",
+            "志望理由書の内容の確認",
+            "大学での学修・研究計画"
+          ],
+          "tips": "世界適塾の理念に沿い、国際的な経済問題に関する知見が問われる。経済ニュースを日頃からフォローし、自分の関心領域を深めておくこと。"
+        }
+      },
+      {
+        "id": "engineering",
+        "name": "工学部",
+        "admissionPolicy": "工学の基盤となる数学・物理学・化学の基礎学力と応用力を有し、科学技術を通じた社会課題の解決に強い意欲を持つ学生を求める。世界適塾の精神のもと、国際的に活躍する技術者・研究者を志す者を歓迎する。",
+        "capacity": 15,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": ["大学入学共通テスト受験必須", "志望理由書・研究活動報告書の提出"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書、研究活動報告書の審査" },
+          { "stage": 2, "type": "test", "details": "数学・理科の筆記試験" },
+          { "stage": 3, "type": "interview", "details": "口頭試問を含む面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-01",
+          "applicationEnd": "2025-11-06",
+          "examDate": "2025-12-07",
+          "resultDate": "2026-02-10"
+        },
+        "interviewTendency": {
+          "format": "口頭試問",
+          "duration": "約20分",
+          "interviewers": "教員2〜3名",
+          "pressure": "medium",
+          "weight": "均等",
+          "frequentTopics": [
+            "研究活動報告書の内容に関する質問",
+            "数学・理科の専門的な口頭試問",
+            "工学で取り組みたい研究テーマ",
+            "科学技術と社会課題の関係",
+            "大学での研究計画"
+          ],
+          "tips": "筆記試験の結果を踏まえた口頭試問が行われる。研究活動報告書の内容を深く掘り下げられるため、自分の研究を科学的に説明できるよう準備すること。"
+        }
+      },
+      {
+        "id": "science",
+        "name": "理学部",
+        "admissionPolicy": "自然科学に対する強い好奇心と探究心を持ち、数学・物理学・化学・生物学・地球科学の分野で卓越した能力を有する学生を求める。世界適塾の精神のもと、基礎科学の発展に貢献し、未知の現象を解明する独創的な発想力と研究への強い意欲を持つ者を歓迎する。",
+        "capacity": 20,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": ["大学入学共通テスト受験必須", "志望理由書・研究活動報告書の提出"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書、研究活動報告書の審査" },
+          { "stage": 2, "type": "test", "details": "理科・数学に関する筆記試験" },
+          { "stage": 3, "type": "interview", "details": "口頭試問を含む面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-01",
+          "applicationEnd": "2025-11-06",
+          "examDate": "2025-12-07",
+          "resultDate": "2026-02-10"
+        },
+        "interviewTendency": {
+          "format": "口頭試問",
+          "duration": "約25分",
+          "interviewers": "教員2〜3名",
+          "pressure": "high",
+          "weight": "均等",
+          "frequentTopics": [
+            "自然科学への関心の原点と探究活動",
+            "筆記試験の解答に関する口頭試問",
+            "専門分野の基礎知識",
+            "研究テーマとその科学的意義",
+            "大学での研究計画と将来の展望"
+          ],
+          "tips": "世界適塾らしく研究志向が問われる。筆記試験と連動した口頭試問があるため、解答プロセスを論理的に説明できるよう準備すること。"
+        }
+      },
+      {
+        "id": "engineering-science",
+        "name": "基礎工学部",
+        "admissionPolicy": "自然科学と工学の境界領域を探究する知的好奇心と創造力を持ち、物理・化学・数学・生物の基礎学力に優れた学生を求める。基礎から応用まで幅広い視野で科学技術の本質に迫り、新たな工学的原理の創出に貢献する意欲と独創性を持つ者を歓迎する。",
+        "capacity": 15,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": ["大学入学共通テスト受験必須", "志望理由書・研究活動報告書の提出"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書、研究活動報告書の審査" },
+          { "stage": 2, "type": "test", "details": "数学・理科の筆記試験" },
+          { "stage": 3, "type": "interview", "details": "口頭試問を含む面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-01",
+          "applicationEnd": "2025-11-06",
+          "examDate": "2025-12-07",
+          "resultDate": "2026-02-10"
+        },
+        "interviewTendency": {
+          "format": "口頭試問",
+          "duration": "約25分",
+          "interviewers": "教員2〜3名",
+          "pressure": "high",
+          "weight": "均等",
+          "frequentTopics": [
+            "基礎工学への関心と志望動機",
+            "物理・数学の専門的な口頭試問",
+            "研究活動や実験・ものづくりの経験",
+            "科学技術の基礎研究への関心",
+            "大学での研究テーマ構想"
+          ],
+          "tips": "基礎科学と工学の両方への深い関心が問われる。理工学の境界を探究する独自の問題意識を持ち、それを具体的に語れるよう準備すること。"
+        }
+      },
+      {
+        "id": "information-science",
+        "name": "情報科学研究科（学部相当）",
+        "admissionPolicy": "情報科学・情報工学に強い関心と数理的思考力を持ち、プログラミングや情報技術の基礎を有する学生を求める。世界適塾の精神のもと、情報科学の理論と応用を通じて社会のデジタル変革に貢献する意欲と創造力を備えた者を歓迎する。",
+        "capacity": 15,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": ["大学入学共通テスト受験必須", "志望理由書・活動報告書の提出"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書、活動報告書の審査" },
+          { "stage": 2, "type": "presentation", "details": "研究・活動内容のプレゼンテーションと質疑応答" },
+          { "stage": 3, "type": "interview", "details": "口頭試問を含む面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-01",
+          "applicationEnd": "2025-11-06",
+          "examDate": "2025-12-07",
+          "resultDate": "2026-02-10"
+        },
+        "interviewTendency": {
+          "format": "プレゼンテーション＋口頭試問",
+          "duration": "約25分",
+          "interviewers": "教員2〜3名",
+          "pressure": "high",
+          "weight": "面接重視",
+          "frequentTopics": [
+            "情報科学・情報工学への関心と動機",
+            "プログラミングや情報系活動の経験",
+            "数理的思考力を問う質問",
+            "情報技術で解決したい社会課題",
+            "大学での研究計画"
+          ],
+          "tips": "プレゼンでは情報系活動を技術的に説明できることが重要。プログラミング経験や情報系コンテストへの参加経験があれば具体的に示すと評価が高い。"
+        }
+      },
+      {
+        "id": "medicine",
+        "name": "医学部",
+        "admissionPolicy": "医学・生命科学に対する強い関心と高い使命感を持ち、自然科学の卓越した基礎学力を有する学生を求める。世界適塾の理念のもと、先端医学研究と高度な臨床医療の両立を目指し、国際的に活躍する医師・研究者を志す者を歓迎する。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": ["大学入学共通テスト受験必須", "志望理由書の提出"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書の審査" },
+          { "stage": 2, "type": "test", "details": "理科・数学に関する筆記試験" },
+          { "stage": 3, "type": "interview", "details": "面接（口頭試問含む）" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-01",
+          "applicationEnd": "2025-11-06",
+          "examDate": "2025-12-07",
+          "resultDate": "2026-02-10"
+        },
+        "interviewTendency": {
+          "format": "個人面接（口頭試問含む）",
+          "duration": "約30分",
+          "interviewers": "教員3〜4名",
+          "pressure": "high",
+          "weight": "面接重視",
+          "frequentTopics": [
+            "医学・医療への強い志望動機",
+            "生命科学・医学の専門的知識",
+            "医療倫理と現代医療の課題",
+            "国際的な医療・研究への関心",
+            "将来の医師・研究者としてのビジョン"
+          ],
+          "tips": "世界適塾の理念に沿い、国際的に活躍する医師・研究者を志す意欲が問われる。医療倫理や最先端の医学研究についても自分の考えを持っておくこと。"
+        }
+      },
+      {
+        "id": "dentistry",
+        "name": "歯学部",
+        "admissionPolicy": "歯科医学・口腔科学に強い関心と使命感を持ち、自然科学の基礎学力が優れた学生を求める。口腔の健康が全身の健康に与える影響を科学的に探究し、高度な歯科医療と研究を通じて人々の健康と生活の質の向上に貢献する志を持つ者を歓迎する。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": ["大学入学共通テスト受験必須", "志望理由書の提出"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書の審査" },
+          { "stage": 2, "type": "interview", "details": "面接（口頭試問含む）" },
+          { "stage": 3, "type": "test", "details": "大学入学共通テストの成績による最終判定" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-01",
+          "applicationEnd": "2025-11-06",
+          "examDate": "2025-12-07",
+          "resultDate": "2026-02-10"
+        },
+        "interviewTendency": {
+          "format": "個人面接（口頭試問含む）",
+          "duration": "約25分",
+          "interviewers": "教員2〜3名",
+          "pressure": "high",
+          "weight": "面接重視",
+          "frequentTopics": [
+            "歯科医学への志望動機と使命感",
+            "口腔健康と全身健康への科学的関心",
+            "自然科学の基礎知識に関する口頭試問",
+            "研究や医療への意欲",
+            "歯科医師・研究者としての展望"
+          ],
+          "tips": "歯科医学への明確な志望動機と研究への関心が問われる。口腔健康と全身健康の最新知見についても把握しておくと評価が高い。"
+        }
+      },
+      {
+        "id": "pharmacy",
+        "name": "薬学部",
+        "admissionPolicy": "薬学・生命科学に対する強い関心と化学・生物学の高い基礎学力を持ち、医薬品の創製・研究を通じて人々の健康に貢献する意欲のある学生を求める。世界適塾の理念のもと、薬学の国際的な発展に寄与する研究者・薬剤師を志す者を歓迎する。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": ["大学入学共通テスト受験必須", "志望理由書・研究活動報告書の提出"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書、研究活動報告書の審査" },
+          { "stage": 2, "type": "test", "details": "化学・生物に関する筆記試験" },
+          { "stage": 3, "type": "interview", "details": "面接（口頭試問含む）" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-11-01",
+          "applicationEnd": "2025-11-06",
+          "examDate": "2025-12-07",
+          "resultDate": "2026-02-10"
+        },
+        "interviewTendency": {
+          "format": "個人面接（口頭試問含む）",
+          "duration": "約25分",
+          "interviewers": "教員2〜3名",
+          "pressure": "high",
+          "weight": "均等",
+          "frequentTopics": [
+            "薬学・生命科学への関心の動機",
+            "化学・生物学の専門的知識",
+            "医薬品開発への問題意識と関心",
+            "研究活動の内容と成果",
+            "薬学研究者・薬剤師としての将来展望"
+          ],
+          "tips": "筆記試験と連動した口頭試問が行われる。化学と生物の両方を高いレベルで理解していることが前提。薬学研究の最新動向についても関心を持っておくこと。"
+        }
+      }
+    ]
+  },
+  {
+    "id": "kyushu-u",
+    "name": "九州大学",
+    "shortName": "九大",
+    "group": "kyutei",
+    "officialUrl": "https://www.kyushu-u.ac.jp/",
+    "faculties": [
+      {
+        "id": "law",
+        "name": "法学部",
+        "admissionPolicy": "法学・政治学に対する旺盛な知的好奇心を持ち、社会正義の実現や民主主義の発展に貢献したいという志を有する学生を求める。グローバルな視野と地域社会への深い理解を併せ持つ者を歓迎する。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": 4.3,
+          "englishCert": null,
+          "otherReqs": ["大学入学共通テスト受験必須"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書、活動歴報告書の審査" },
+          { "stage": 2, "type": "essay", "details": "小論文試験（法学・社会科学関連のテーマ）" },
+          { "stage": 3, "type": "interview", "details": "個人面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2026-01-20",
+          "applicationEnd": "2026-01-23",
+          "examDate": "2026-02-14",
+          "resultDate": "2026-02-20"
+        },
+        "interviewTendency": {
+          "format": "個人面接",
+          "duration": "約20分",
+          "interviewers": "教員2〜3名",
+          "pressure": "medium",
+          "weight": "均等",
+          "frequentTopics": [
+            "法学・政治学への関心の動機",
+            "社会正義に関する自分の考え",
+            "時事問題への法的視点",
+            "活動歴報告書の内容の深掘り",
+            "大学での学修計画"
+          ],
+          "tips": "総合型選抜として意欲と思考力を見られる。社会問題を法的観点から分析する練習をし、自分の志を具体的に語れるようにしておくこと。"
+        }
+      },
+      {
+        "id": "engineering",
+        "name": "工学部",
+        "admissionPolicy": "工学の基盤である数学・物理学・化学に優れた基礎学力を有し、科学技術を通じて持続可能な社会の発展に貢献する意欲のある学生を求める。課題発見力・解決力・協働力を備えた者を歓迎する。",
+        "capacity": 47,
+        "requirements": {
+          "gpa": 4.3,
+          "englishCert": null,
+          "otherReqs": ["大学入学共通テスト受験必須"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書の審査" },
+          { "stage": 2, "type": "test", "details": "数学・理科の筆記試験" },
+          { "stage": 3, "type": "interview", "details": "口頭試問を含む面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2026-01-20",
+          "applicationEnd": "2026-01-23",
+          "examDate": "2026-02-14",
+          "resultDate": "2026-02-20"
+        },
+        "interviewTendency": {
+          "format": "プレゼンテーション＋口頭試問",
+          "duration": "約20分",
+          "interviewers": "教員2〜3名",
+          "pressure": "medium",
+          "weight": "均等",
+          "frequentTopics": [
+            "筆記試験の内容に基づく口頭試問",
+            "工学分野への関心と動機",
+            "数学・理科の基礎知識",
+            "研究やものづくりの経験",
+            "大学での学修・研究計画"
+          ],
+          "tips": "筆記試験の解答を口頭で説明させる形式が多い。自分の解法の根拠を明確に述べられるよう、論理的な説明力を鍛えておくこと。"
+        }
+      },
+      {
+        "id": "kyoso",
+        "name": "共創学部",
+        "admissionPolicy": "文理を超えた幅広い学問分野に関心を持ち、多様な人々と協働して新たな知を共創する意欲のある学生を求める。課題発見力とコミュニケーション能力に優れ、社会変革に挑戦する志を持つ者を歓迎する。",
+        "capacity": 15,
+        "requirements": {
+          "gpa": 4.0,
+          "englishCert": null,
+          "otherReqs": ["活動歴報告書の提出", "志望理由書の提出"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書、活動歴報告書の審査" },
+          { "stage": 2, "type": "presentation", "details": "講義に基づくレポート作成とプレゼンテーション" },
+          { "stage": 3, "type": "interview", "details": "個人面接（質疑応答含む）" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-17",
+          "applicationEnd": "2025-09-24",
+          "examDate": "2025-10-25",
+          "resultDate": "2025-11-14"
+        },
+        "interviewTendency": {
+          "format": "プレゼンテーション＋グループディスカッション＋個人面接",
+          "duration": "約30分（プレゼン含む）",
+          "interviewers": "教員3名",
+          "pressure": "medium",
+          "weight": "面接重視",
+          "frequentTopics": [
+            "講義内容に基づくレポートの発表",
+            "文理融合的な課題への取り組み",
+            "多様な人々との協働経験",
+            "社会変革に向けたビジョン",
+            "活動歴報告書の内容の深掘り"
+          ],
+          "tips": "共創学部は講義を聴いてレポートを書き、それをプレゼンする独自の形式。柔軟な思考力とコミュニケーション能力が重視されるため、即興的な対応力も鍛えておくこと。"
+        }
+      },
+      {
+        "id": "economics",
+        "name": "経済学部",
+        "admissionPolicy": "経済学・経営学に対する強い関心を持ち、数理的思考力と論理的表現力を兼ね備えた学生を求める。地域から世界までの経済課題を多角的に分析し、持続可能な社会の実現に貢献する意欲のある者を歓迎する。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": 4.3,
+          "englishCert": null,
+          "otherReqs": ["大学入学共通テスト受験必須"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書の審査" },
+          { "stage": 2, "type": "essay", "details": "経済学に関する小論文試験" },
+          { "stage": 3, "type": "interview", "details": "個人面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2026-01-20",
+          "applicationEnd": "2026-01-23",
+          "examDate": "2026-02-14",
+          "resultDate": "2026-02-20"
+        },
+        "interviewTendency": {
+          "format": "個人面接",
+          "duration": "約20分",
+          "interviewers": "教員2名",
+          "pressure": "medium",
+          "weight": "均等",
+          "frequentTopics": [
+            "経済学への関心の動機",
+            "地域経済やグローバル経済への視点",
+            "志望理由書の内容の確認",
+            "小論文の内容に関する質疑",
+            "大学での学修計画"
+          ],
+          "tips": "地域経済からグローバル経済まで幅広い視点が求められる。自分の関心領域を具体的なデータや事例で裏付けて語れると良い。"
+        }
+      },
+      {
+        "id": "letters",
+        "name": "文学部",
+        "admissionPolicy": "人文学の諸分野に対する深い知的好奇心と幅広い教養を有し、文献読解力と論述力に優れた学生を求める。多様な文化や歴史への理解を基盤に、人間と社会の本質を探究する意欲のある者を歓迎する。",
+        "capacity": 7,
+        "requirements": {
+          "gpa": 4.3,
+          "englishCert": null,
+          "otherReqs": ["大学入学共通テスト受験必須"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書、活動歴報告書の審査" },
+          { "stage": 2, "type": "essay", "details": "小論文試験" },
+          { "stage": 3, "type": "interview", "details": "個人面接（口頭試問含む）" }
+        ],
+        "schedule": {
+          "applicationStart": "2026-01-20",
+          "applicationEnd": "2026-01-23",
+          "examDate": "2026-02-14",
+          "resultDate": "2026-02-20"
+        },
+        "interviewTendency": {
+          "format": "個人面接（口頭試問含む）",
+          "duration": "約20分",
+          "interviewers": "教員2〜3名",
+          "pressure": "medium",
+          "weight": "均等",
+          "frequentTopics": [
+            "人文学への関心の背景",
+            "小論文の内容に関する口頭試問",
+            "読書経験や研究テーマ",
+            "活動歴報告書の深掘り",
+            "大学での学修・研究計画"
+          ],
+          "tips": "小論文と連動した口頭試問が特徴。自分の文章の論点を把握し、さらに深い議論ができるよう準備しておくこと。"
+        }
+      },
+      {
+        "id": "science",
+        "name": "理学部",
+        "admissionPolicy": "自然科学に対する強い好奇心と探究心を持ち、数学・物理学・化学・生物学・地球惑星科学の分野で卓越した能力を有する学生を求める。九州の地から世界に通用する基礎科学研究を推進し、未知の現象を解明する独創的な発想力と粘り強い探究心を持つ者を歓迎する。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": 4.3,
+          "englishCert": null,
+          "otherReqs": ["大学入学共通テスト受験必須"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書、研究活動報告書の審査" },
+          { "stage": 2, "type": "test", "details": "理科・数学に関する筆記試験" },
+          { "stage": 3, "type": "interview", "details": "口頭試問を含む面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2026-01-20",
+          "applicationEnd": "2026-01-23",
+          "examDate": "2026-02-14",
+          "resultDate": "2026-02-20"
+        },
+        "interviewTendency": {
+          "format": "口頭試問",
+          "duration": "約25分",
+          "interviewers": "教員2〜3名",
+          "pressure": "high",
+          "weight": "均等",
+          "frequentTopics": [
+            "自然科学への関心の原点と探究活動",
+            "筆記試験の解答に関する口頭試問",
+            "専門分野の基礎知識",
+            "研究テーマとその科学的意義",
+            "大学での研究計画"
+          ],
+          "tips": "筆記試験と連動した口頭試問が行われる。自分の研究活動報告書の内容を科学的に説明できるよう準備すること。九州大学理学部の研究内容も調べておくと良い。"
+        }
+      },
+      {
+        "id": "agriculture",
+        "name": "農学部",
+        "admissionPolicy": "農学・生命科学・資源環境科学に強い関心と探究心を持ち、生物学・化学の基礎学力が十分にある学生を求める。農業・食料・環境問題の解決に向けて科学的にアプローチし、九州の農業と世界の食料安全保障に貢献する意欲のある者を歓迎する。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": 4.3,
+          "englishCert": null,
+          "otherReqs": ["大学入学共通テスト受験必須"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書、活動歴報告書の審査" },
+          { "stage": 2, "type": "test", "details": "理科・数学に関する筆記試験" },
+          { "stage": 3, "type": "interview", "details": "口頭試問を含む面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2026-01-20",
+          "applicationEnd": "2026-01-23",
+          "examDate": "2026-02-14",
+          "resultDate": "2026-02-20"
+        },
+        "interviewTendency": {
+          "format": "口頭試問",
+          "duration": "約20分",
+          "interviewers": "教員2〜3名",
+          "pressure": "high",
+          "weight": "均等",
+          "frequentTopics": [
+            "農学・生命科学への関心の動機",
+            "食料・農業・環境問題への問題意識",
+            "生物学・化学の専門的知識",
+            "農業や自然に関する体験・活動",
+            "大学での研究テーマ構想"
+          ],
+          "tips": "筆記試験に基づく口頭試問が中心。農業・食料・環境分野の課題について自分の考えを持ち、具体的なエピソードと共に語れるよう準備すること。"
+        }
+      },
+      {
+        "id": "medicine",
+        "name": "医学部",
+        "admissionPolicy": "医学・生命科学に対する強い関心と使命感を持ち、自然科学の高い基礎学力を有する学生を求める。保健学科を含む医学部として、医師・医学研究者だけでなく看護・医療技術分野のリーダーとして九州の地域医療と国際的な医学研究に貢献する意欲のある者を歓迎する。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": 4.3,
+          "englishCert": null,
+          "otherReqs": ["大学入学共通テスト受験必須"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書の審査" },
+          { "stage": 2, "type": "test", "details": "理科・数学に関する筆記試験" },
+          { "stage": 3, "type": "interview", "details": "個人面接（口頭試問含む）" }
+        ],
+        "schedule": {
+          "applicationStart": "2026-01-20",
+          "applicationEnd": "2026-01-23",
+          "examDate": "2026-02-14",
+          "resultDate": "2026-02-20"
+        },
+        "interviewTendency": {
+          "format": "個人面接（口頭試問含む）",
+          "duration": "約30分",
+          "interviewers": "教員3名",
+          "pressure": "high",
+          "weight": "面接重視",
+          "frequentTopics": [
+            "医学・医療への志望動機と使命感",
+            "九州の地域医療への関心",
+            "医療倫理に関する見解",
+            "生命科学の専門的知識",
+            "将来の医師・医療従事者としてのビジョン"
+          ],
+          "tips": "医療への使命感と人間性が強く問われる。保健学科志望の場合はそれぞれの職種の専門性と役割について明確に語れるようにしておくこと。"
+        }
+      },
+      {
+        "id": "dentistry",
+        "name": "歯学部",
+        "admissionPolicy": "歯科医学・口腔科学に対する強い関心と使命感を持ち、自然科学の基礎学力が優れた学生を求める。口腔の健康を通じて人々の生活の質の向上に貢献し、九州の歯科医療と国際的な歯科医学研究を担う歯科医師・研究者を志す者を歓迎する。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": 4.3,
+          "englishCert": null,
+          "otherReqs": ["大学入学共通テスト受験必須"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書の審査" },
+          { "stage": 2, "type": "interview", "details": "個人面接（口頭試問含む）" },
+          { "stage": 3, "type": "test", "details": "大学入学共通テストの成績による最終判定" }
+        ],
+        "schedule": {
+          "applicationStart": "2026-01-20",
+          "applicationEnd": "2026-01-23",
+          "examDate": "2026-02-14",
+          "resultDate": "2026-02-20"
+        },
+        "interviewTendency": {
+          "format": "個人面接（口頭試問含む）",
+          "duration": "約25分",
+          "interviewers": "教員2〜3名",
+          "pressure": "high",
+          "weight": "面接重視",
+          "frequentTopics": [
+            "歯科医学への志望動機と使命感",
+            "口腔健康と全身健康への科学的関心",
+            "自然科学の基礎知識に関する口頭試問",
+            "地域医療・研究への貢献意欲",
+            "歯科医師・研究者としての展望"
+          ],
+          "tips": "歯科医学への明確な志望動機が重要。九州大学の特色である基礎研究への関心も示すことで評価が高くなる。口腔機能と全身疾患の関連性についても学んでおくこと。"
+        }
+      },
+      {
+        "id": "design",
+        "name": "芸術工学部",
+        "admissionPolicy": "芸術・デザイン・工学を融合した独自の視点と創造力を持ち、社会の課題を美的・技術的に解決する意欲のある学生を求める。感性と論理性を兼ね備え、人間と社会の豊かさを実現する新たなデザインを創出する志と実践力を持つ者を歓迎する。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": 4.3,
+          "englishCert": null,
+          "otherReqs": ["大学入学共通テスト受験必須"]
+        },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書、志望理由書、ポートフォリオ（作品集）の審査" },
+          { "stage": 2, "type": "presentation", "details": "作品・活動に関するプレゼンテーションと質疑応答" },
+          { "stage": 3, "type": "interview", "details": "個人面接" }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-17",
+          "applicationEnd": "2025-09-24",
+          "examDate": "2025-10-25",
+          "resultDate": "2025-11-14"
+        },
+        "interviewTendency": {
+          "format": "プレゼンテーション＋個人面接",
+          "duration": "約30分",
+          "interviewers": "教員3名",
+          "pressure": "high",
+          "weight": "面接重視",
+          "frequentTopics": [
+            "芸術工学への関心の動機と志望理由",
+            "ポートフォリオの内容に関する深掘り",
+            "デザイン・芸術に関する問題意識",
+            "工学的観点からのデザイン思考",
+            "大学での制作・研究計画"
+          ],
+          "tips": "ポートフォリオとプレゼンが評価の中心。自分の作品の創作意図と社会的な意義を明確に語れるよう準備すること。芸術と工学の融合という芸術工学部の特色を意識したビジョンを示すことが重要。"
+        }
+      }
+    ]
+  }
+]
