@@ -11,13 +11,12 @@ export async function GET(
   let university: University | null =
     MOCK_UNIVERSITIES.find((u) => u.id === id) ?? null;
 
-  const { db } = await import("@/lib/firebase/config");
-  if (db) {
+  const { adminDb } = await import("@/lib/firebase/admin");
+  if (adminDb) {
     try {
-      const { doc, getDoc } = await import("firebase/firestore");
-      const snap = await getDoc(doc(db, "universities", id));
-      if (snap.exists()) {
-        university = { id: snap.id, ...snap.data() } as University;
+      const snap = await adminDb.doc(`universities/${id}`).get();
+      if (snap.exists) {
+        university = { id: snap.id, ...snap.data()! } as University;
       }
     } catch {
       // fall through to mock data

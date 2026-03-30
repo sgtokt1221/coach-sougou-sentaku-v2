@@ -66,6 +66,82 @@ const MOCK_STUDENTS: StudentListItem[] = [
   },
 ];
 
+export async function POST(request: NextRequest) {
+  const authResult = await requireRole(request, ["admin", "teacher", "superadmin"]);
+  if (authResult instanceof NextResponse) return authResult;
+  const { uid: callerUid } = authResult;
+
+  const body = await request.json();
+  const { email, displayName, password, school, grade, targetUniversities } = body as {
+    email: string;
+    displayName: string;
+    password: string;
+    school?: string;
+    grade?: number;
+    targetUniversities?: string[];
+  };
+
+  if (!email || !displayName || !password) {
+    return NextResponse.json({ error: "必須フィールドが不足しています" }, { status: 400 });
+  }
+
+  if (password.length < 6) {
+    return NextResponse.json({ error: "パスワードは6文字以上必要です" }, { status: 400 });
+  }
+
+  const { adminAuth, adminDb } = await import("@/lib/firebase/admin");
+
+  if (!adminAuth || !adminDb) {
+    return NextResponse.json({
+      uid: "mock_new_student",
+      email,
+      displayName,
+      school: school ?? "",
+      grade: grade ?? null,
+      managedBy: callerUid,
+      targetUniversities: targetUniversities ?? [],
+      createdAt: new Date().toISOString(),
+    });
+  }
+
+  try {
+    const userRecord = await adminAuth.createUser({
+      email,
+      password,
+      displayName,
+    });
+
+    await adminDb.doc(`users/${userRecord.uid}`).set({
+      email,
+      displayName,
+      role: "student",
+      plan: "free",
+      school: school ?? "",
+      grade: grade ?? null,
+      managedBy: callerUid,
+      targetUniversities: targetUniversities ?? [],
+      onboardingCompleted: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    return NextResponse.json({
+      uid: userRecord.uid,
+      email,
+      displayName,
+      school: school ?? "",
+      grade: grade ?? null,
+      managedBy: callerUid,
+      targetUniversities: targetUniversities ?? [],
+      createdAt: new Date().toISOString(),
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "作成に失敗しました";
+    const status = message.includes("already exists") ? 409 : 500;
+    return NextResponse.json({ error: message }, { status });
+  }
+}
+
 export async function GET(request: NextRequest) {
   const authResult = await requireRole(request, ["admin", "teacher", "superadmin"]);
   if (authResult instanceof NextResponse) return authResult;
@@ -77,6 +153,7 @@ export async function GET(request: NextRequest) {
     const sort = searchParams.get("sort") || "lastActivity";
     const order = searchParams.get("order") || "desc";
     const viewAs = searchParams.get("viewAs");
+    const universityFilter = searchParams.get("university");
 
     // superadminがviewAsを指定している場合、そのadminの視点でフィルタ
     const effectiveUid = (role === "superadmin" && viewAs) ? viewAs : uid;
@@ -93,6 +170,11 @@ export async function GET(request: NextRequest) {
           (s) =>
             s.displayName.toLowerCase().includes(q) ||
             s.email.toLowerCase().includes(q)
+        );
+      }
+      if (universityFilter) {
+        results = results.filter((s) =>
+          s.targetUniversities.includes(universityFilter)
         );
       }
       return NextResponse.json(results);
@@ -180,6 +262,11 @@ export async function GET(request: NextRequest) {
         (s) =>
           s.displayName.toLowerCase().includes(q) ||
           s.email.toLowerCase().includes(q)
+      );
+    }
+    if (universityFilter) {
+      filtered = filtered.filter((s) =>
+        s.targetUniversities.includes(universityFilter)
       );
     }
 

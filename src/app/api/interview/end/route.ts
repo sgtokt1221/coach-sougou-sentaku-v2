@@ -12,25 +12,6 @@ import type { WeaknessRecord } from "@/lib/types/growth";
 import { logInterviewSession } from "@/lib/bigquery/logger";
 import { logActivity } from "@/lib/firebase/activity-log";
 
-const MOCK_END: InterviewEndResponse = {
-  interviewId: "mock",
-  scores: { clarity: 7, apAlignment: 6, enthusiasm: 8, specificity: 6, total: 27 },
-  feedback: {
-    overall:
-      "全体的に誠実な印象で、志望理由が明確に伝えられていました。具体的なエピソードをより多く交えることで、さらに説得力が増すでしょう。",
-    goodPoints: [
-      "志望理由が明確で一貫性がある",
-      "質問に対して誠実に回答できている",
-    ],
-    improvements: [
-      "具体的なエピソードや数値データをもっと活用しましょう",
-      "将来ビジョンをより具体的に述べましょう",
-    ],
-    repeatedIssues: [],
-    improvementsSinceLast: [],
-  },
-  growthEvents: [],
-};
 
 export async function POST(request: NextRequest) {
   try {
@@ -46,23 +27,25 @@ export async function POST(request: NextRequest) {
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
-      return NextResponse.json(MOCK_END);
+      return NextResponse.json(
+        { error: "ANTHROPIC_API_KEYが設定されていません" },
+        { status: 500 }
+      );
     }
 
     let existingWeaknesses: WeaknessRecord[] = [];
     let universityName = "（大学名未設定）";
     let facultyName = "（学部名未設定）";
     let admissionPolicy = "（AP未設定）";
+    let selfAnalysisContext = "";
 
-    const { db } = await import("@/lib/firebase/config");
-    if (db) {
+    const { adminDb } = await import("@/lib/firebase/admin");
+    if (adminDb) {
       try {
-        const { doc, getDoc, collection, query, where, getDocs } = await import("firebase/firestore");
-
         // セッション情報から大学コンテキストを取得
-        const sessionDoc = await getDoc(doc(db, "interviews", sessionId));
-        if (sessionDoc.exists()) {
-          const ctx = sessionDoc.data().universityContext;
+        const sessionDoc = await adminDb.doc(`interviews/${sessionId}`).get();
+        if (sessionDoc.exists) {
+          const ctx = sessionDoc.data()!.universityContext;
           if (ctx) {
             universityName = ctx.universityName ?? universityName;
             facultyName = ctx.facultyName ?? facultyName;
@@ -71,11 +54,7 @@ export async function POST(request: NextRequest) {
         }
 
         if (userId) {
-          const weaknessQuery = query(
-            collection(db, "users", userId, "weaknesses"),
-            where("resolved", "==", false)
-          );
-          const weaknessDocs = await getDocs(weaknessQuery);
+          const weaknessDocs = await adminDb.collection(`users/${userId}/weaknesses`).where("resolved", "==", false).get();
           if (!weaknessDocs.empty) {
             existingWeaknesses = weaknessDocs.docs.map((d) => {
               const w = d.data();
@@ -90,6 +69,30 @@ export async function POST(request: NextRequest) {
                 reminderDismissedAt: w.reminderDismissedAt?.toDate() ?? null,
               } satisfies WeaknessRecord;
             });
+          }
+
+          // 自己分析データ取得
+          try {
+            const saDoc = await adminDb.doc(`selfAnalysis/${userId}`).get();
+            if (saDoc.exists) {
+              const sa = saDoc.data()!;
+              const parts: string[] = [];
+              if (sa.values?.coreValues) parts.push(`価値観: ${sa.values.coreValues.join("、")}`);
+              if (sa.strengths?.strengths) parts.push(`強み: ${sa.strengths.strengths.join("、")}`);
+              if (sa.strengths?.evidences) parts.push(`強みの根拠: ${sa.strengths.evidences.join(" / ")}`);
+              if (sa.weaknesses?.weaknesses) parts.push(`課題: ${sa.weaknesses.weaknesses.join("、")}`);
+              if (sa.weaknesses?.growthStories) parts.push(`克服エピソード: ${sa.weaknesses.growthStories.join(" / ")}`);
+              if (sa.interests?.fields) parts.push(`関心分野: ${sa.interests.fields.join("、")}`);
+              if (sa.vision?.shortTermGoal) parts.push(`短期目標: ${sa.vision.shortTermGoal}`);
+              if (sa.vision?.longTermVision) parts.push(`長期ビジョン: ${sa.vision.longTermVision}`);
+              if (sa.identity?.selfStatement) parts.push(`自己像: ${sa.identity.selfStatement}`);
+              if (sa.identity?.apConnection) parts.push(`AP接続: ${sa.identity.apConnection}`);
+              if (parts.length > 0) {
+                selfAnalysisContext = parts.join("\n");
+              }
+            }
+          } catch {
+            // 自己分析データなくても続行
           }
         }
       } catch (err) {
@@ -106,13 +109,17 @@ export async function POST(request: NextRequest) {
 
     const evaluationPrompt = buildInterviewEvaluationPrompt(universityName, facultyName, admissionPolicy);
 
+    const selfAnalysisSection = selfAnalysisContext
+      ? `\n\n## この生徒の自己分析データ（面接前に本人が整理した内容）\n${selfAnalysisContext}\n\n※ 上記の自己分析を踏まえて、「面接でこう答えるべきだった」「自己分析のこの強みをもっと活かすべきだった」等の具体的なアドバイスをimprovementsに含めてください。`
+      : "";
+
     const response = await client.messages.create({
       model: "claude-sonnet-4-6",
       max_tokens: 4096,
       messages: [
         {
           role: "user",
-          content: `${evaluationPrompt}\n\n## 面接会話記録\n\n${conversationText}`,
+          content: `${evaluationPrompt}${selfAnalysisSection}\n\n## 面接会話記録\n\n${conversationText}`,
         },
       ],
     });
@@ -126,7 +133,10 @@ export async function POST(request: NextRequest) {
 
     if (!jsonMatch) {
       console.error("Could not parse AI evaluation response:", rawText);
-      return NextResponse.json(MOCK_END);
+      return NextResponse.json(
+        { error: "AI評価結果のパースに失敗しました", rawResponse: rawText.slice(0, 500) },
+        { status: 500 }
+      );
     }
 
     const parsed = JSON.parse(jsonMatch[1]);
@@ -164,16 +174,16 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    if (db) {
+    if (adminDb) {
       try {
-        const { doc, updateDoc, setDoc, serverTimestamp } = await import("firebase/firestore");
-        await updateDoc(doc(db, "interviews", sessionId), {
+        const { FieldValue } = await import("firebase-admin/firestore");
+        await adminDb.doc(`interviews/${sessionId}`).update({
           scores,
           feedback,
           weaknessTags,
           duration,
           status: "completed",
-          completedAt: serverTimestamp(),
+          completedAt: FieldValue.serverTimestamp(),
           ...(transcription ? { transcription } : {}),
           ...(voiceAnalysis ? { voiceAnalysis } : {}),
           ...(videoAnalysis ? { videoAnalysis } : {}),
@@ -181,8 +191,7 @@ export async function POST(request: NextRequest) {
 
         if (userId) {
           for (const weakness of updatedWeaknesses) {
-            await setDoc(
-              doc(db, "users", userId, "weaknesses", weakness.area),
+            await adminDb.doc(`users/${userId}/weaknesses/${weakness.area}`).set(
               {
                 area: weakness.area,
                 count: weakness.count,
@@ -235,13 +244,15 @@ export async function POST(request: NextRequest) {
       studentName: studentDisplayName,
     });
 
-    const result: InterviewEndResponse = {
+    return NextResponse.json({
       interviewId: sessionId,
       scores,
       feedback,
       growthEvents,
-    };
-    return NextResponse.json(result);
+      ...(voiceAnalysis ? { voiceAnalysis } : {}),
+      ...(videoAnalysis ? { videoAnalysis } : {}),
+      ...(transcription ? { transcription } : {}),
+    });
   } catch (error) {
     console.error("Interview end error:", error);
     return NextResponse.json(

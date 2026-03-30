@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
+import { adminDb } from "@/lib/firebase/admin";
 import type { StudentDetail } from "@/lib/types/admin";
 
 const MOCK_DETAIL: StudentDetail = {
@@ -254,6 +255,75 @@ export async function GET(
     console.error("Admin student detail error:", error);
     return NextResponse.json(
       { error: "生徒詳細の取得中にエラーが発生しました" },
+      { status: 500 }
+    );
+  }
+}
+
+const ALLOWED_FIELDS = ["displayName", "school", "grade", "targetUniversities"] as const;
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const authResult = await requireRole(request, ["admin", "teacher", "superadmin"]);
+  if (authResult instanceof NextResponse) return authResult;
+  const { uid, role } = authResult;
+
+  const { id } = await params;
+  const body = await request.json();
+
+  // フィールドをフィルタリング
+  const updates: Record<string, unknown> = {};
+  for (const field of ALLOWED_FIELDS) {
+    if (field in body) {
+      updates[field] = body[field];
+    }
+  }
+
+  if (Object.keys(updates).length === 0) {
+    return NextResponse.json(
+      { error: "更新するフィールドがありません" },
+      { status: 400 }
+    );
+  }
+
+  if (!adminDb) {
+    // devモード: モックレスポンス
+    return NextResponse.json({ uid: id, ...updates });
+  }
+
+  try {
+    const userDoc = await adminDb.doc(`users/${id}`).get();
+    if (!userDoc.exists) {
+      return NextResponse.json(
+        { error: "生徒が見つかりません" },
+        { status: 404 }
+      );
+    }
+
+    const userData = userDoc.data()!;
+
+    // managedByスコーピング
+    const { searchParams } = new URL(request.url);
+    const viewAs = searchParams.get("viewAs");
+    const effectiveUid = (role === "superadmin" && viewAs) ? viewAs : uid;
+
+    if (role !== "superadmin" && userData.managedBy !== effectiveUid) {
+      return NextResponse.json(
+        { error: "この生徒の編集権限がありません" },
+        { status: 403 }
+      );
+    }
+
+    updates.updatedAt = new Date();
+    await adminDb.doc(`users/${id}`).update(updates);
+
+    return NextResponse.json({ uid: id, ...updates });
+  } catch (error) {
+    console.error("Admin student update error:", error);
+    return NextResponse.json(
+      { error: "生徒情報の更新に失敗しました" },
       { status: 500 }
     );
   }

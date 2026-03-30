@@ -16,6 +16,7 @@ import { Send, StopCircle, ChevronDown, ChevronUp, Video, VideoOff } from "lucid
 import type { InterviewMessage, InterviewMode, InterviewInputMode, VoiceAnalysis, VideoAnalysis } from "@/lib/types/interview";
 import { INTERVIEW_MODE_LABELS } from "@/lib/types/interview";
 import VoiceRecorder from "@/components/interview/VoiceRecorder";
+import ContinuousVoiceRecorder from "@/components/interview/ContinuousVoiceRecorder";
 import VoiceAnalyzer from "@/components/interview/VoiceAnalyzer";
 import VideoAnalyzer from "@/components/interview/VideoAnalyzer";
 import CameraPreview from "@/components/interview/CameraPreview";
@@ -58,9 +59,65 @@ export default function InterviewSessionPage() {
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
   const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
   const [cameraEnabled, setCameraEnabled] = useState(false);
+  const [aiSpeaking, setAiSpeaking] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const ttsAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  const speakText = useCallback(async (text: string) => {
+    try {
+      setAiSpeaking(true);
+      const res = await fetch("/api/interview/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, voice: "alloy" }),
+      });
+      if (!res.ok) { setAiSpeaking(false); return; }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+
+      // Stop previous
+      if (ttsAudioRef.current) {
+        ttsAudioRef.current.pause();
+        ttsAudioRef.current.src = "";
+      }
+
+      const audio = new Audio(url);
+
+      // Try to route TTS to default speaker (not Bluetooth) to preserve AirPods mic
+      if ("setSinkId" in audio && typeof (audio as HTMLAudioElement & { setSinkId: (id: string) => Promise<void> }).setSinkId === "function") {
+        try {
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const builtinSpeaker = devices.find(
+            (d) => d.kind === "audiooutput" && d.label.toLowerCase().includes("macbook")
+          ) || devices.find(
+            (d) => d.kind === "audiooutput" && d.label.toLowerCase().includes("built-in")
+          ) || devices.find(
+            (d) => d.kind === "audiooutput" && d.deviceId === "default"
+          );
+          if (builtinSpeaker) {
+            await (audio as HTMLAudioElement & { setSinkId: (id: string) => Promise<void> }).setSinkId(builtinSpeaker.deviceId);
+          }
+        } catch {
+          // setSinkId not supported or failed, play on default device
+        }
+      }
+
+      ttsAudioRef.current = audio;
+      audio.onended = () => {
+        URL.revokeObjectURL(url);
+        setAiSpeaking(false);
+      };
+      audio.onerror = () => {
+        URL.revokeObjectURL(url);
+        setAiSpeaking(false);
+      };
+      audio.play().catch(() => setAiSpeaking(false));
+    } catch {
+      setAiSpeaking(false);
+    }
+  }, []);
 
   // Load session info from sessionStorage
   useEffect(() => {
@@ -69,6 +126,10 @@ export default function InterviewSessionPage() {
       const info: SessionInfo = JSON.parse(stored);
       setSessionInfo(info);
       setMessages([{ role: "ai", content: info.openingMessage }]);
+      if (info.inputMode === "voice") {
+        speakText(info.openingMessage);
+        setCameraEnabled(true);
+      }
     }
   }, [sessionId]);
 
@@ -85,7 +146,7 @@ export default function InterviewSessionPage() {
 
   // Camera initialization
   useEffect(() => {
-    if (!cameraEnabled) return;
+    if (!cameraEnabled || !navigator.mediaDevices?.getUserMedia) return;
     let stream: MediaStream | null = null;
     navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: 640, height: 480 } })
       .then((s) => {
@@ -135,24 +196,27 @@ export default function InterviewSessionPage() {
       const res = await fetch("/api/interview/message", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId, messages: updatedMessages }),
+        body: JSON.stringify({
+          sessionId,
+          messages: updatedMessages,
+          mode: sessionInfo?.mode,
+          universityContext: sessionInfo?.universityContext,
+        }),
       });
       if (!res.ok) throw new Error();
       const data = await res.json();
       setMessages((prev) => [...prev, { role: "ai", content: data.content }]);
+      if (sessionInfo?.inputMode === "voice") {
+        speakText(data.content);
+      }
       if (!data.isActive) {
         setShowEndDialog(true);
       }
     } catch {
-      // API未実装のためモック返答
-      const mockResponses = [
-        "なるほど、具体的に教えていただけますか？",
-        "その点について、もう少し詳しく聞かせてください。",
-        "志望動機はとても明確ですね。次に、大学卒業後のビジョンを聞かせてください。",
-        "ありがとうございます。では最後に、自己PRをお願いします。",
-      ];
-      const idx = Math.floor(Math.random() * mockResponses.length);
-      setMessages((prev) => [...prev, { role: "ai", content: mockResponses[idx] }]);
+      setMessages((prev) => [
+        ...prev,
+        { role: "ai", content: "⚠ 通信エラーが発生しました。もう一度お話しください。" },
+      ]);
     } finally {
       setIsLoading(false);
       inputRef.current?.focus();
@@ -162,6 +226,8 @@ export default function InterviewSessionPage() {
   async function handleEnd() {
     setIsEnding(true);
     try {
+      console.log("[handleEnd] Sending messages:", messages.length, "turns, duration:", elapsed);
+      console.log("[handleEnd] Messages:", JSON.stringify(messages.map(m => ({ role: m.role, content: m.content.slice(0, 50) }))));
       const res = await fetch("/api/interview/end", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -169,14 +235,22 @@ export default function InterviewSessionPage() {
       });
       if (!res.ok) throw new Error();
       const data = await res.json();
+      // Store result for immediate display on result page
+      sessionStorage.setItem(`interview_result_${data.interviewId}`, JSON.stringify({
+        ...data,
+        messages,
+        universityName: sessionInfo?.universityContext?.universityName ?? "",
+        facultyName: sessionInfo?.universityContext?.facultyName ?? "",
+        mode: sessionInfo?.mode ?? "individual",
+        duration: elapsed,
+        practicedAt: new Date().toISOString(),
+      }));
       sessionStorage.removeItem(`interview_session_${sessionId}`);
       sessionStorage.removeItem(`interview_messages_${sessionId}`);
       router.push(`/student/interview/${data.interviewId}/result`);
-    } catch {
-      // API未実装のためモック遷移
-      sessionStorage.removeItem(`interview_session_${sessionId}`);
-      sessionStorage.removeItem(`interview_messages_${sessionId}`);
-      router.push(`/student/interview/mock-interview-id/result`);
+    } catch (err) {
+      console.error("Interview end failed:", err);
+      alert("面接結果の生成に失敗しました。もう一度お試しください。");
     } finally {
       setIsEnding(false);
       setShowEndDialog(false);
@@ -199,7 +273,14 @@ export default function InterviewSessionPage() {
         const res = await fetch("/api/interview/voice-message", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sessionId, audioBase64, mimeType }),
+          body: JSON.stringify({
+            sessionId,
+            audioBase64,
+            mimeType,
+            messages,
+            mode: sessionInfo?.mode,
+            universityContext: sessionInfo?.universityContext,
+          }),
         });
         if (!res.ok) throw new Error();
         const data = await res.json();
@@ -209,25 +290,18 @@ export default function InterviewSessionPage() {
           { role: "student", content: data.transcribedText },
           { role: "ai", content: data.aiResponse },
         ]);
+        speakText(data.aiResponse);
 
         if (!data.isActive) {
           setShowEndDialog(true);
         }
       } catch {
-        // Fallback to mock
+        const errorMsg = "⚠ 音声の処理に失敗しました。もう一度お話しください。";
         setMessages((prev) => [
           ...prev,
-          {
-            role: "student",
-            content:
-              "私は貴学の文学部を志望しています。日本近代文学に深い関心があり、特に夏目漱石の作品研究を通じて現代社会の問題を考察したいと考えています。",
-          },
-          {
-            role: "ai",
-            content:
-              "志望理由を具体的に述べていただきありがとうございます。夏目漱石の作品の中で、特にどの作品に関心をお持ちですか？",
-          },
+          { role: "ai", content: errorMsg },
         ]);
+        speakText(errorMsg);
       } finally {
         setIsLoading(false);
       }
@@ -330,10 +404,19 @@ export default function InterviewSessionPage() {
       {/* Input */}
       <div className="px-4 py-3 border-t bg-background shrink-0">
         {isVoiceMode ? (
-          <VoiceRecorder
+          <ContinuousVoiceRecorder
             onRecordingComplete={handleVoiceComplete}
             onStreamReady={(stream) => setMediaStream(stream)}
+            onInterrupt={() => {
+              // Stop TTS playback when user starts speaking
+              if (ttsAudioRef.current) {
+                ttsAudioRef.current.pause();
+                ttsAudioRef.current.src = "";
+              }
+              setAiSpeaking(false);
+            }}
             disabled={isLoading}
+            aiSpeaking={aiSpeaking}
           />
         ) : (
           <div className="flex gap-2">

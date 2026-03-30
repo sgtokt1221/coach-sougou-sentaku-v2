@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { buildInterviewSystemPrompt } from "@/lib/ai/prompts/interview";
-import type { InterviewMessageRequest, InterviewMessageResponse } from "@/lib/types/interview";
+import type { InterviewMessageResponse, InterviewMessage, InterviewMode } from "@/lib/types/interview";
 
 const MOCK_QUESTIONS = [
   "なるほど、具体的にどのような経験がそのような考えに至ったきっかけですか？",
@@ -13,8 +13,13 @@ const MOCK_QUESTIONS = [
 
 export async function POST(request: NextRequest) {
   try {
-    const body: InterviewMessageRequest = await request.json();
-    const { sessionId, messages } = body;
+    const body = await request.json();
+    const { sessionId, messages, mode, universityContext }: {
+      sessionId: string;
+      messages: InterviewMessage[];
+      mode?: InterviewMode;
+      universityContext?: any;
+    } = body;
 
     if (!sessionId || !messages) {
       return NextResponse.json(
@@ -25,38 +30,46 @@ export async function POST(request: NextRequest) {
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
-      const questionIndex = Math.min(
-        Math.floor(messages.length / 2),
-        MOCK_QUESTIONS.length - 1
+      return NextResponse.json(
+        { error: "ANTHROPIC_API_KEYが設定されていません" },
+        { status: 500 }
       );
-      const content = MOCK_QUESTIONS[questionIndex];
-      const isActive = messages.length < 16;
-      const mockResponse: InterviewMessageResponse = { content, isActive };
-      return NextResponse.json(mockResponse);
     }
 
-    // セッション情報をFirestoreから取得（システムプロンプト再構築用）
+    // セッション情報からシステムプロンプトを構築
     let systemPrompt = "あなたは大学入試の面接官です。総合型選抜の面接を行ってください。";
-    const { db } = await import("@/lib/firebase/config");
-    if (db) {
-      try {
-        const { doc, getDoc } = await import("firebase/firestore");
-        const sessionDoc = await getDoc(doc(db, "interviews", sessionId));
-        if (sessionDoc.exists()) {
-          const sessionData = sessionDoc.data();
-          const ctx = sessionData.universityContext;
-          if (ctx) {
-            systemPrompt = buildInterviewSystemPrompt(
-              sessionData.mode ?? "individual",
-              ctx.universityName,
-              ctx.facultyName,
-              ctx.admissionPolicy,
-              "（過去の弱点なし）"
-            );
+
+    // 1. リクエストボディから直接コンテキストを取得（優先）
+    if (universityContext) {
+      systemPrompt = buildInterviewSystemPrompt(
+        mode ?? "individual",
+        universityContext.universityName ?? "（大学名未設定）",
+        universityContext.facultyName ?? "（学部名未設定）",
+        universityContext.admissionPolicy ?? "（AP未設定）",
+        "（過去の弱点なし）"
+      );
+    } else {
+      // 2. Firestoreから取得（フォールバック）
+      const { adminDb } = await import("@/lib/firebase/admin");
+      if (adminDb) {
+        try {
+          const sessionDoc = await adminDb.doc(`interviews/${sessionId}`).get();
+          if (sessionDoc.exists) {
+            const sessionData = sessionDoc.data()!;
+            const ctx = sessionData.universityContext;
+            if (ctx) {
+              systemPrompt = buildInterviewSystemPrompt(
+                sessionData.mode ?? "individual",
+                ctx.universityName,
+                ctx.facultyName,
+                ctx.admissionPolicy,
+                "（過去の弱点なし）"
+              );
+            }
           }
+        } catch (err) {
+          console.warn("Failed to fetch session from Firestore:", err);
         }
-      } catch (err) {
-        console.warn("Failed to fetch session from Firestore:", err);
       }
     }
 

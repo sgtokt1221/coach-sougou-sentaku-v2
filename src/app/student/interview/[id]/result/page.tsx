@@ -217,13 +217,42 @@ export default function InterviewResultPage() {
   useEffect(() => {
     async function load() {
       setLoading(true);
+
+      // 1. Try sessionStorage first (freshly completed interview)
+      const cached = sessionStorage.getItem(`interview_result_${id}`);
+      if (cached) {
+        try {
+          const data = JSON.parse(cached);
+          setResult({
+            id: data.interviewId ?? id,
+            universityName: data.universityName ?? "",
+            facultyName: data.facultyName ?? "",
+            mode: data.mode ?? "individual",
+            practicedAt: data.practicedAt ?? new Date().toISOString(),
+            duration: data.duration ?? 0,
+            scores: data.scores,
+            feedback: data.feedback,
+            messages: data.messages,
+            growthEvents: data.growthEvents,
+            voiceAnalysis: data.voiceAnalysis,
+            videoAnalysis: data.videoAnalysis,
+            transcription: data.transcription,
+            summary: data.summary,
+          });
+          sessionStorage.removeItem(`interview_result_${id}`);
+          setLoading(false);
+          return;
+        } catch { /* fall through to API */ }
+      }
+
+      // 2. Fetch from Firestore via API
       try {
         const res = await fetch(`/api/interview/${id}`);
         if (!res.ok) throw new Error();
         const data = await res.json();
         setResult(data);
       } catch {
-        setResult(mockResult);
+        setResult(null);
       } finally {
         setLoading(false);
       }
@@ -384,6 +413,30 @@ export default function InterviewResultPage() {
                 )}
               </div>
             ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* あなたへの個別アドバイス */}
+      {result.feedback.personalizedAdvice && result.feedback.personalizedAdvice.length > 0 && (
+        <Card className="bg-blue-50 border-blue-200">
+          <CardHeader>
+            <CardTitle className="text-base text-blue-800 flex items-center gap-2">
+              <Sparkles className="size-4" />
+              あなたへの個別アドバイス
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-2">
+              {result.feedback.personalizedAdvice.map((advice: string, i: number) => (
+                <li key={i} className="text-sm text-blue-900 flex items-start gap-2">
+                  <span className="shrink-0 w-5 h-5 rounded-full bg-blue-200 text-blue-800 text-xs flex items-center justify-center font-bold mt-0.5">
+                    {i + 1}
+                  </span>
+                  {advice}
+                </li>
+              ))}
+            </ul>
           </CardContent>
         </Card>
       )}

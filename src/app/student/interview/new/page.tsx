@@ -142,6 +142,19 @@ export default function InterviewNewPage() {
         </h1>
       </div>
 
+      {/* ドリルモード導線 */}
+      <Card className="border-primary/20 bg-primary/5">
+        <CardContent className="flex items-center justify-between p-4">
+          <div>
+            <p className="font-semibold text-sm">テーマ別ドリル練習</p>
+            <p className="text-xs text-muted-foreground mt-0.5">1問ずつ短い質問に答える軽い練習。5問で1セット（3-5分）</p>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => router.push("/student/interview/drill")}>
+            <ChevronRight className="size-4 ml-1" />
+          </Button>
+        </CardContent>
+      </Card>
+
       {/* 志望校選択 */}
       {loadingUniversities ? (
         <Card>

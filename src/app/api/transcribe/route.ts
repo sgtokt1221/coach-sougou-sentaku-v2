@@ -27,8 +27,9 @@ export async function POST(request: NextRequest) {
     const audioBuffer = Buffer.from(audioBase64, "base64");
     const ext = mimeType?.includes("webm") ? "webm" : mimeType?.includes("mp4") ? "mp4" : "wav";
 
+    const blob = new Blob([audioBuffer], { type: mimeType || "audio/webm" });
     const formData = new FormData();
-    formData.append("file", new Blob([audioBuffer], { type: mimeType || "audio/webm" }), `audio.${ext}`);
+    formData.append("file", blob, `audio.${ext}`);
     formData.append("model", "whisper-1");
     formData.append("response_format", "verbose_json");
     formData.append("language", language || "ja");

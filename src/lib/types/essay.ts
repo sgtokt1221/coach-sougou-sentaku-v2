@@ -57,6 +57,9 @@ export interface EssayReviewRequest {
   universityId: string;
   facultyId: string;
   topic?: string;
+  questionType?: "essay" | "english-reading" | "data-analysis" | "mixed";
+  sourceText?: string;
+  chartDataSummary?: string;
 }
 
 export interface EssayReviewResponse {

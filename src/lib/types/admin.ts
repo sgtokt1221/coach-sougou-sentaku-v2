@@ -117,8 +117,8 @@ export interface AlertItem {
   id: string;
   studentUid: string;
   studentName: string;
-  type: "inactive" | "declining" | "repeated_weakness";
-  severity: "critical" | "warning";
+  type: "inactive" | "declining" | "repeated_weakness" | "document_deadline";
+  severity: "critical" | "warning" | "high";
   message: string;
   detectedAt: string;
   acknowledged: boolean;

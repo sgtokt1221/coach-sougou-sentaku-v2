@@ -6,10 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import { Users, FileText, BarChart3, AlertTriangle } from "lucide-react";
+import { Users, FileText, BarChart3, AlertTriangle, Trophy, FileWarning } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAuthSWR } from "@/lib/api/swr";
-import type { StudentListItem } from "@/lib/types/admin";
+import type { StudentListItem, AlertItem } from "@/lib/types/admin";
+import type { ExamResultStats } from "@/lib/types/exam-result";
 
 const mockStudents: StudentListItem[] = [
   {
@@ -87,8 +88,14 @@ export default function AdminDashboard() {
   const { userProfile } = useAuth();
   const isSuperadmin = userProfile?.role === "superadmin";
   const { data: rawData, isLoading } = useAuthSWR<StudentListItem[]>("/api/admin/students");
+  const { data: dashboardData } = useAuthSWR<{ examResultStats: ExamResultStats }>("/api/admin/dashboard");
+  const { data: alertsData } = useAuthSWR<AlertItem[]>("/api/admin/alerts");
   const students = rawData ?? mockStudents;
   const loading = isLoading;
+
+  const deadlineAlertCount = alertsData?.filter(
+    (a) => a.type === "document_deadline" && !a.acknowledged
+  ).length ?? 0;
 
   const totalStudents = students.length;
   const weeklyEssayCount = students.reduce((sum, s) => sum + s.essayCount, 0);
@@ -152,7 +159,76 @@ export default function AdminDashboard() {
         )
       )}
 
+      {/* Exam Results Stats */}
+      {dashboardData?.examResultStats && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Trophy className="size-4" />
+              合格率
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                  {dashboardData.examResultStats.totalApplied}
+                </p>
+                <p className="text-xs text-muted-foreground">出願中</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                  {dashboardData.examResultStats.totalPassed}
+                </p>
+                <p className="text-xs text-muted-foreground">合格</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-rose-600 dark:text-rose-400">
+                  {dashboardData.examResultStats.totalFailed}
+                </p>
+                <p className="text-xs text-muted-foreground">不合格</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-gray-600 dark:text-gray-400">
+                  {dashboardData.examResultStats.totalWithdrawn}
+                </p>
+                <p className="text-xs text-muted-foreground">辞退</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold">
+                  {dashboardData.examResultStats.passRate !== null
+                    ? `${dashboardData.examResultStats.passRate}%`
+                    : "-"}
+                </p>
+                <p className="text-xs text-muted-foreground">合格率</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Separator />
+
+      {/* Document Deadline Alerts */}
+      {deadlineAlertCount > 0 && (
+        <Link href="/admin/alerts?filter=document_deadline">
+          <Card className="border-purple-200 bg-purple-50/50 transition-colors hover:bg-purple-50 dark:border-purple-900 dark:bg-purple-950/20 dark:hover:bg-purple-950/30">
+            <CardContent className="flex items-center gap-4 py-4">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/30">
+                <FileWarning className="size-5 text-purple-600 dark:text-purple-400" />
+              </div>
+              <div>
+                <p className="font-medium">
+                  書類期限アラート: {deadlineAlertCount}件
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  期限が迫っている未完成書類があります
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+      )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Alert Students */}

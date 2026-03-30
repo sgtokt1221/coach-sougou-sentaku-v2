@@ -21,6 +21,7 @@ export interface InterviewFeedback {
   improvements: string[];
   repeatedIssues: RepeatedIssue[];
   improvementsSinceLast: Improvement[];
+  personalizedAdvice?: string[];
 }
 
 export interface Interview {

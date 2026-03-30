@@ -24,6 +24,9 @@ import {
   Brain,
   Lightbulb,
   BookCheck,
+  BookOpen,
+  Zap,
+  CalendarDays,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -51,6 +54,7 @@ const studentNavGroups: NavGroup[] = [
     title: "Practice",
     items: [
       { label: "小論文添削", href: "/student/essay/new", icon: FileText },
+      { label: "テーマ・過去問", href: "/student/essay/themes", icon: BookOpen },
       { label: "添削履歴", href: "/student/essay/history", icon: History },
       { label: "模擬面接", href: "/student/interview/new", icon: Mic },
     ],
@@ -98,8 +102,10 @@ const adminNavGroups: NavGroup[] = [
     title: "Manage",
     items: [
       { label: "生徒管理", href: "/admin/students", icon: Users },
+      { label: "講師管理", href: "/admin/teachers", icon: GraduationCap },
       { label: "大学データ", href: "/admin/universities", icon: Database },
       { label: "セッション", href: "/admin/sessions", icon: ClipboardList },
+      { label: "スケジュール", href: "/admin/schedule", icon: CalendarDays },
     ],
   },
   {

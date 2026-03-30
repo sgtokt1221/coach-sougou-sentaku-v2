@@ -8,21 +8,22 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Bell,
-  AlertTriangle,
   TrendingDown,
   Clock,
   Repeat,
   CheckCircle,
   ExternalLink,
+  FileWarning,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthSWR } from "@/lib/api/swr";
 import type { AlertItem } from "@/lib/types/admin";
 
-type FilterType = "all" | "inactive" | "declining" | "repeated_weakness";
+type FilterType = "all" | "inactive" | "declining" | "repeated_weakness" | "document_deadline";
 
 const filterOptions: { value: FilterType; label: string }[] = [
   { value: "all", label: "すべて" },
+  { value: "document_deadline", label: "書類期限" },
   { value: "inactive", label: "非アクティブ" },
   { value: "declining", label: "スコア低下" },
   { value: "repeated_weakness", label: "弱点繰返し" },
@@ -36,7 +37,47 @@ function alertTypeConfig(type: AlertItem["type"]) {
       return { label: "スコア低下", icon: TrendingDown, color: "text-rose-600 dark:text-rose-400" };
     case "repeated_weakness":
       return { label: "弱点繰返し", icon: Repeat, color: "text-orange-600 dark:text-orange-400" };
+    case "document_deadline":
+      return { label: "書類期限", icon: FileWarning, color: "text-purple-600 dark:text-purple-400" };
   }
+}
+
+function severityBgClass(severity: AlertItem["severity"], acknowledged: boolean) {
+  if (acknowledged) return "";
+  switch (severity) {
+    case "critical":
+      return "border-red-200 bg-red-50/50 dark:border-red-900 dark:bg-red-950/20";
+    case "high":
+      return "border-orange-200 bg-orange-50/50 dark:border-orange-900 dark:bg-orange-950/20";
+    case "warning":
+      return "border-yellow-200 bg-yellow-50/50 dark:border-yellow-900 dark:bg-yellow-950/20";
+  }
+}
+
+function severityIconBgClass(severity: AlertItem["severity"]) {
+  switch (severity) {
+    case "critical":
+      return "bg-red-100 dark:bg-red-900/30";
+    case "high":
+      return "bg-orange-100 dark:bg-orange-900/30";
+    case "warning":
+      return "bg-yellow-100 dark:bg-yellow-900/30";
+  }
+}
+
+function severityLabel(severity: AlertItem["severity"]) {
+  switch (severity) {
+    case "critical":
+      return "緊急";
+    case "high":
+      return "重要";
+    case "warning":
+      return "注意";
+  }
+}
+
+function severityBadgeVariant(severity: AlertItem["severity"]): "destructive" | "secondary" {
+  return severity === "critical" || severity === "high" ? "destructive" : "secondary";
 }
 
 export default function AdminAlertsPage() {
@@ -51,7 +92,10 @@ export default function AdminAlertsPage() {
 
   const unacknowledgedCount = alerts.filter((a) => !a.acknowledged).length;
   const criticalCount = alerts.filter(
-    (a) => a.severity === "critical" && !a.acknowledged
+    (a) => (a.severity === "critical" || a.severity === "high") && !a.acknowledged
+  ).length;
+  const deadlineCount = alerts.filter(
+    (a) => a.type === "document_deadline" && !a.acknowledged
   ).length;
 
   function toggleAcknowledged(id: string) {
@@ -81,6 +125,11 @@ export default function AdminAlertsPage() {
               緊急 {criticalCount}件
             </Badge>
           )}
+          {deadlineCount > 0 && (
+            <Badge variant="outline" className="border-purple-300 text-sm text-purple-600 dark:border-purple-700 dark:text-purple-400">
+              書類期限 {deadlineCount}件
+            </Badge>
+          )}
           <Badge variant="secondary" className="text-sm">
             未確認 {unacknowledgedCount}件
           </Badge>
@@ -88,7 +137,7 @@ export default function AdminAlertsPage() {
       </div>
 
       {/* Filter */}
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         {filterOptions.map((opt) => (
           <Button
             key={opt.value}
@@ -132,21 +181,14 @@ export default function AdminAlertsPage() {
                 className={cn(
                   "transition-all",
                   alert.acknowledged && "opacity-60",
-                  !alert.acknowledged &&
-                    alert.severity === "critical" &&
-                    "border-red-200 bg-red-50/50 dark:border-red-900 dark:bg-red-950/20",
-                  !alert.acknowledged &&
-                    alert.severity === "warning" &&
-                    "border-yellow-200 bg-yellow-50/50 dark:border-yellow-900 dark:bg-yellow-950/20"
+                  !alert.acknowledged && severityBgClass(alert.severity, alert.acknowledged)
                 )}
               >
                 <CardContent className="flex items-start gap-4 py-4">
                   <div
                     className={cn(
                       "mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-full",
-                      alert.severity === "critical"
-                        ? "bg-red-100 dark:bg-red-900/30"
-                        : "bg-yellow-100 dark:bg-yellow-900/30"
+                      severityIconBgClass(alert.severity)
                     )}
                   >
                     <TypeIcon
@@ -155,16 +197,12 @@ export default function AdminAlertsPage() {
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <div className="mb-1 flex items-center gap-2">
+                    <div className="mb-1 flex flex-wrap items-center gap-2">
                       <Badge
-                        variant={
-                          alert.severity === "critical"
-                            ? "destructive"
-                            : "secondary"
-                        }
+                        variant={severityBadgeVariant(alert.severity)}
                         className="text-xs"
                       >
-                        {alert.severity === "critical" ? "緊急" : "注意"}
+                        {severityLabel(alert.severity)}
                       </Badge>
                       <Badge variant="outline" className="text-xs">
                         {config.label}

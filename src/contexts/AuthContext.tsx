@@ -38,6 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const devRole = typeof window !== "undefined" ? localStorage.getItem("devRole") : null;
     if (!auth || (process.env.NODE_ENV === "development" && devRole)) {
       if (process.env.NODE_ENV === "development") {
+        const savedProfile = JSON.parse(localStorage.getItem("studentProfile") ?? "{}");
         setUserProfile({
           uid: "dev-user",
           email: "dev@example.com",
@@ -45,6 +46,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           role: (devRole as "student" | "admin" | "teacher" | "superadmin") || "student",
           targetUniversities: JSON.parse(localStorage.getItem("targetUniversities") ?? "[]"),
           onboardingCompleted: localStorage.getItem("onboardingCompleted") === "true",
+          gpa: savedProfile.gpa ?? null,
+          englishCerts: savedProfile.englishCerts ?? [],
+          grade: savedProfile.grade ?? null,
+          school: savedProfile.school ?? "",
           createdAt: new Date(),
           updatedAt: new Date(),
         } as UserProfile);
@@ -58,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!auth || (process.env.NODE_ENV === "development" && devRole)) {
       if (process.env.NODE_ENV === "development") {
         setUser({ uid: "dev-user", email: "dev@example.com" } as User);
+        const savedProfile = JSON.parse(localStorage.getItem("studentProfile") ?? "{}");
         setUserProfile({
           uid: "dev-user",
           email: "dev@example.com",
@@ -65,6 +71,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           role: (devRole as "student" | "admin" | "teacher" | "superadmin") || "student",
           targetUniversities: JSON.parse(localStorage.getItem("targetUniversities") ?? "[]"),
           onboardingCompleted: localStorage.getItem("onboardingCompleted") === "true",
+          gpa: savedProfile.gpa ?? null,
+          englishCerts: savedProfile.englishCerts ?? [],
+          grade: savedProfile.grade ?? null,
+          school: savedProfile.school ?? "",
           createdAt: new Date(),
           updatedAt: new Date(),
         } as UserProfile);

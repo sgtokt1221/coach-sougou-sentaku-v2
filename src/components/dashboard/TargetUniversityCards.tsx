@@ -32,6 +32,7 @@ interface EventInfo {
 }
 
 function getNextEvent(schedule: ResolvedUniversity["schedule"]): EventInfo | null {
+  if (!schedule) return null;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -40,7 +41,7 @@ function getNextEvent(schedule: ResolvedUniversity["schedule"]): EventInfo | nul
     { type: "出願締切", date: schedule.applicationEnd },
     { type: "試験日", date: schedule.examDate },
     { type: "合格発表", date: schedule.resultDate },
-  ];
+  ].filter((ev) => ev.date);
 
   for (const ev of events) {
     const target = new Date(ev.date + "T00:00:00");

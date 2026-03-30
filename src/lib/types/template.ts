@@ -39,8 +39,16 @@ export interface DraftGenerateRequest {
 
 export interface DraftGenerateResponse {
   draft: string;
-  frameworkType: FrameworkType;
+  frameworkType?: FrameworkType;
   sections: { title: string; content: string }[];
+  wordCount?: number;
+  evaluationScores?: {
+    apAlignment?: number;
+    consistency?: number;
+    specificity?: number;
+    futureVision?: number;
+  };
+  improvementSuggestions?: string[];
 }
 
 export const FRAMEWORK_TYPE_LABELS: Record<FrameworkType, string> = {

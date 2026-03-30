@@ -1,11 +1,15 @@
 export type UserRole = "student" | "teacher" | "admin" | "superadmin";
 
+export type PlanType = "free" | "pro";
+
 export interface UserProfile {
   uid: string;
   email: string;
   displayName: string;
   role: UserRole;
   photoURL?: string;
+  plan?: PlanType;
+  stripeCustomerId?: string;
   createdAt: Date;
   updatedAt: Date;
 }

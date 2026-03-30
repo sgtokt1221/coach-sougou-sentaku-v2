@@ -6,36 +6,50 @@ service cloud.firestore {
     // ユーザー: 自分のデータのみ読み書き可能、管理者は読み取り可
     match /users/{userId} {
       allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
-      allow write: if request.auth != null && (request.auth.uid == userId || isSuperAdmin());
+      allow write: if request.auth != null && (
+        request.auth.uid == userId ||
+        isSuperAdmin() ||
+        isManagerOf(userId)
+      );
 
       // 弱点サブコレクション
       match /weaknesses/{weaknessId} {
         allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
-        allow write: if request.auth != null && request.auth.uid == userId;
+        allow write: if request.auth != null && (
+          request.auth.uid == userId || isSuperAdmin() || isManagerOf(userId)
+        );
       }
 
       // 小論文サブコレクション
       match /essays/{essayId} {
         allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
-        allow write: if request.auth != null && request.auth.uid == userId;
+        allow write: if request.auth != null && (
+          request.auth.uid == userId || isSuperAdmin() || isManagerOf(userId)
+        );
       }
 
       // 面接サブコレクション
       match /interviews/{interviewId} {
         allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
-        allow write: if request.auth != null && request.auth.uid == userId;
+        allow write: if request.auth != null && (
+          request.auth.uid == userId || isSuperAdmin() || isManagerOf(userId)
+        );
       }
 
       // 出願書類
       match /documents/{docId} {
         allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
-        allow write: if request.auth != null && request.auth.uid == userId;
+        allow write: if request.auth != null && (
+          request.auth.uid == userId || isSuperAdmin() || isManagerOf(userId)
+        );
       }
 
       // 活動実績
       match /activities/{activityId} {
         allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
-        allow write: if request.auth != null && request.auth.uid == userId;
+        allow write: if request.auth != null && (
+          request.auth.uid == userId || isSuperAdmin() || isManagerOf(userId)
+        );
       }
     }
 
@@ -45,15 +59,34 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // 面接セッション（トップレベル）
+    // 面接セッション（トップレベル）: 参加者 + admin/superadmin のみ
     match /interviews/{interviewId} {
-      allow read, write: if request.auth != null;
+      allow read: if request.auth != null && (
+        resource.data.userId == request.auth.uid ||
+        isAdmin()
+      );
+      allow write: if request.auth != null && (
+        resource.data.userId == request.auth.uid ||
+        isSuperAdmin()
+      );
+      allow create: if request.auth != null && (
+        request.resource.data.userId == request.auth.uid ||
+        isAdmin()
+      );
     }
 
-    // 面談セッション
+    // 面談セッション: 参加者 + admin/superadmin のみ
     match /sessions/{sessionId} {
-      allow read: if request.auth != null;
-      allow write: if isAdmin();
+      allow read: if request.auth != null && (
+        resource.data.teacherId == request.auth.uid ||
+        resource.data.studentId == request.auth.uid ||
+        isSuperAdmin()
+      );
+      allow write: if request.auth != null && (
+        resource.data.teacherId == request.auth.uid ||
+        isSuperAdmin()
+      );
+      allow create: if request.auth != null && isAdmin();
     }
 
     // 合格者データ（匿名化済み）
@@ -83,6 +116,12 @@ service cloud.firestore {
     function isAdmin() {
       return request.auth != null &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'teacher', 'superadmin'];
+    }
+
+    // 担当admin/teacherチェック: 対象生徒のmanagedByが自分のuidか確認
+    function isManagerOf(userId) {
+      return isAdmin() &&
+        get(/databases/$(database)/documents/users/$(userId)).data.managedBy == request.auth.uid;
     }
   }
 }

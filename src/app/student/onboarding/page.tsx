@@ -52,6 +52,12 @@ export default function OnboardingPage() {
     }
     localStorage.setItem("onboardingCompleted", "true");
     localStorage.setItem("targetUniversities", JSON.stringify(selectedUniversities));
+    localStorage.setItem("studentProfile", JSON.stringify({
+      gpa: profileData.gpa,
+      englishCerts: profileData.englishCerts,
+      grade: profileData.grade,
+      school: profileData.school,
+    }));
     refreshProfile();
     router.replace("/student/dashboard");
   };

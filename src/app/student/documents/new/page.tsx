@@ -113,6 +113,43 @@ export default function NewDocumentPage() {
     }
   };
 
+  const handleGenerateFromSelfAnalysis = async () => {
+    if (!documentType || !selectedUniversity) return;
+    setGenerating(true);
+
+    try {
+      const res = await authFetch("/api/documents/generate-statement", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          universityId: selectedUniversity.universityId,
+          facultyId: selectedUniversity.facultyId,
+        }),
+      });
+
+      if (!res.ok) throw new Error("自己分析下書きの生成に失敗しました");
+      const data = await res.json();
+
+      // 既存のDraftGenerateResponse形式に変換
+      setDraftResult({
+        draft: data.draft,
+        sections: [
+          { title: "導入", content: data.structure.intro },
+          { title: "志望理由", content: data.structure.body },
+          { title: "自己の強みと貢献", content: data.structure.strengths },
+          { title: "将来への展開", content: data.structure.conclusion },
+        ],
+        wordCount: data.draft.length,
+        evaluationScores: data.evaluationScores,
+        improvementSuggestions: data.improvementSuggestions,
+      });
+    } catch (err) {
+      console.error("Self-analysis draft generation failed:", err);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!documentType || !selectedUniversity || !draftResult) return;
     setSaving(true);
@@ -371,10 +408,24 @@ export default function NewDocumentPage() {
                     {` / 目標: ${targetWordCount}字`}
                   </p>
                 </div>
-                <Button onClick={handleGenerate} size="lg" className="gap-2">
-                  <Sparkles className="h-4 w-4" />
-                  AIで下書きを生成
-                </Button>
+
+                <div className="space-y-3">
+                  {documentType === "志望理由書" && (
+                    <Button
+                      onClick={handleGenerateFromSelfAnalysis}
+                      size="lg"
+                      className="gap-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      自己分析から自動下書き生成
+                    </Button>
+                  )}
+
+                  <Button onClick={handleGenerate} size="lg" className="gap-2" variant="outline">
+                    <Sparkles className="h-4 w-4" />
+                    フレームワーク形式で下書き生成
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           )}

@@ -14,14 +14,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "userId is required" }, { status: 400 });
   }
 
-  const { db } = await import("@/lib/firebase/config");
-  if (!db) {
+  const { adminDb } = await import("@/lib/firebase/admin");
+  if (!adminDb) {
     return NextResponse.json({ weaknesses: [] });
   }
 
   try {
-    const { collection, getDocs } = await import("firebase/firestore");
-    const snapshot = await getDocs(collection(db, "users", userId, "weaknesses"));
+    const snapshot = await adminDb.collection(`users/${userId}/weaknesses`).get();
     const weaknesses: WeaknessRecord[] = snapshot.docs.map((d) => {
       const data = d.data();
       return {
@@ -52,15 +51,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "userId and area are required" }, { status: 400 });
   }
 
-  const { db } = await import("@/lib/firebase/config");
-  if (!db) {
+  const { adminDb } = await import("@/lib/firebase/admin");
+  if (!adminDb) {
     return NextResponse.json({ success: false, reason: "Firebase not configured" });
   }
 
   try {
-    const { doc, updateDoc, serverTimestamp } = await import("firebase/firestore");
-    await updateDoc(doc(db, "users", userId, "weaknesses", area), {
-      reminderDismissedAt: serverTimestamp(),
+    const { FieldValue } = await import("firebase-admin/firestore");
+    await adminDb.doc(`users/${userId}/weaknesses/${area}`).update({
+      reminderDismissedAt: FieldValue.serverTimestamp(),
     });
     return NextResponse.json({ success: true });
   } catch (err) {

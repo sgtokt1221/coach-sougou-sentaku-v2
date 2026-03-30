@@ -40,7 +40,7 @@ export default function RootLayout({
       className={`${sora.variable} ${zenKaku.variable} ${jetbrainsMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col font-sans bg-grain">
+      <body className="min-h-full flex flex-col font-sans bg-grain" suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>
     </html>

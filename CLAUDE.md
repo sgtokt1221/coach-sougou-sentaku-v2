@@ -184,6 +184,21 @@
   - /student/interview/session/[id]: VoiceAnalyzer統合
   - /student/interview/[id]/result: VoiceAnalysisReport表示
   - Sidebar: 生徒「出願書類」「活動実績」「合格者データ」、管理者「合格者データ」追加
+- Phase D-2: 合否結果トラッキング完了
+  - src/lib/types/exam-result.ts: ExamResult, ExamResultInput, ExamResultStats型定義
+  - /api/admin/students/[id]/exam-results: GET(一覧) + POST(追加) managedByスコーピング適用
+  - /api/admin/students/[id]/exam-results/[resultId]: PUT(更新) + DELETE(削除)
+  - /api/admin/dashboard: GET(合格率集計)
+  - src/components/admin/ExamResultsSection.tsx: 受験結果カード表示+追加モーダル+ステータス変更ドロップダウン+削除
+  - /admin/students/[id]: ExamResultsSectionを埋め込み済み
+  - /admin/dashboard: 合格率集計カード（出願中/合格/不合格/辞退/合格率）追加
+  - Firestoreパス: users/{userId}/examResults/{resultId}
+- Phase D-1: 書類期限アラート完了
+  - AlertItem型に `document_deadline` タイプ + `high` severity追加
+  - /api/admin/alerts: 書類期限検出ロジック追加（7日以内warning、3日以内high、当日/超過critical）
+  - Firestore走査: users/{id}/documents の deadline + status をチェック
+  - /admin/alerts: フィルタに「書類期限」追加、FileWarningアイコン、高/重要/注意の3段階表示
+  - /admin/dashboard: 書類期限アラートカード追加（件数表示+アラートページへのリンク）
 - Firebase SDK: .env.local 未設定（ビルドはnullセーフ、未設定でもSSG通過）
 - npmキャッシュにroot所有ファイルあり → `--cache /tmp/npm-cache` で回避中
 

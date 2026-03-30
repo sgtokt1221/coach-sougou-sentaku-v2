@@ -15,7 +15,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthSWR } from "@/lib/api/swr";
-import type { DailyTasksResponse, DailyTask } from "@/lib/ai/prompts/daily-tasks";
+import type { StudyPlanResponse, StudyPlanTask } from "@/lib/types/study-plan";
 
 const STORAGE_KEY = "daily-tasks-completed";
 
@@ -46,15 +46,15 @@ function saveCompletedIds(ids: string[]) {
   );
 }
 
-const taskIcons: Record<DailyTask["type"], typeof FileText> = {
+const taskIcons: Record<StudyPlanTask["type"], typeof FileText> = {
   essay: FileText,
   interview: Mic,
   document: FolderOpen,
-  activity: ClipboardList,
+  drill: Mic,
   university: GraduationCap,
 };
 
-const taskColors: Record<DailyTask["type"], { bg: string; icon: string; border: string }> = {
+const taskColors: Record<StudyPlanTask["type"], { bg: string; icon: string; border: string }> = {
   essay: {
     bg: "bg-teal-50 dark:bg-teal-950/30",
     icon: "text-teal-600 dark:text-teal-400",
@@ -70,10 +70,10 @@ const taskColors: Record<DailyTask["type"], { bg: string; icon: string; border: 
     icon: "text-amber-600 dark:text-amber-400",
     border: "border-amber-200 dark:border-amber-800",
   },
-  activity: {
-    bg: "bg-purple-50 dark:bg-purple-950/30",
-    icon: "text-purple-600 dark:text-purple-400",
-    border: "border-purple-200 dark:border-purple-800",
+  drill: {
+    bg: "bg-violet-50 dark:bg-violet-950/30",
+    icon: "text-violet-600 dark:text-violet-400",
+    border: "border-violet-200 dark:border-violet-800",
   },
   university: {
     bg: "bg-sky-50 dark:bg-sky-950/30",
@@ -89,8 +89,8 @@ const priorityBadge: Record<string, string> = {
 };
 
 export function DailyTasksPanel() {
-  const { data, isLoading } = useAuthSWR<DailyTasksResponse>(
-    "/api/student/daily-tasks"
+  const { data, isLoading } = useAuthSWR<StudyPlanResponse>(
+    "/api/study-plan"
   );
   const [completedIds, setCompletedIds] = useState<string[]>([]);
 
@@ -193,7 +193,7 @@ export function DailyTasksPanel() {
                     </span>
                   </div>
                   <p className="text-xs text-muted-foreground line-clamp-1">
-                    {task.description}
+                    {task.reason}
                   </p>
                 </div>
 
@@ -205,6 +205,14 @@ export function DailyTasksPanel() {
             </Link>
           );
         })}
+
+        {data?.encouragement && (
+          <div className="mt-4 pt-3 border-t border-border">
+            <p className="text-xs text-muted-foreground text-center italic">
+              {data.encouragement}
+            </p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

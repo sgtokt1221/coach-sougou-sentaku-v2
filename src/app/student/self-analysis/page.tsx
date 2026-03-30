@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -21,12 +21,6 @@ export default function SelfAnalysisPage() {
   const [chatHistories, setChatHistories] = useState<StepChatHistory[]>([]);
   const [stepsData, setStepsData] = useState<Record<number, Record<string, unknown>>>({});
   const [allComplete, setAllComplete] = useState(false);
-
-  // If already complete, redirect to result
-  if (data?.isComplete) {
-    router.push("/student/self-analysis/result");
-    return null;
-  }
 
   const handleStepComplete = useCallback(
     (stepData: Record<string, unknown>, messages: ChatMessage[]) => {
@@ -71,6 +65,17 @@ export default function SelfAnalysisPage() {
 
   const currentMessages =
     chatHistories.find((h) => h.step === currentStep)?.messages ?? [];
+
+  // If already complete, redirect to result
+  useEffect(() => {
+    if (data?.isComplete) {
+      router.push("/student/self-analysis/result");
+    }
+  }, [data, router]);
+
+  if (data?.isComplete) {
+    return null;
+  }
 
   if (isLoading) {
     return (

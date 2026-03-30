@@ -50,7 +50,7 @@ const MOCK_REVIEW_RESPONSE: EssayReviewResponse = {
 export async function POST(request: NextRequest) {
   try {
     const body: EssayReviewRequest = await request.json();
-    const { essayId, ocrText, universityId, facultyId, topic } = body;
+    const { essayId, ocrText, universityId, facultyId, topic, questionType, sourceText, chartDataSummary } = body;
 
     if (!essayId || !ocrText || !universityId || !facultyId) {
       return NextResponse.json(
@@ -65,15 +65,13 @@ export async function POST(request: NextRequest) {
     let essayUserId: string | null = null;
     let existingWeaknesses: WeaknessRecord[] = [];
 
-    const { db } = await import("@/lib/firebase/config");
-    if (db) {
+    const { adminDb } = await import("@/lib/firebase/admin");
+    if (adminDb) {
       try {
-        const { doc, getDoc, collection, query, where, getDocs } = await import("firebase/firestore");
-
         // AP取得
-        const universityDoc = await getDoc(doc(db, "universities", universityId));
-        if (universityDoc.exists()) {
-          const universityData = universityDoc.data();
+        const universityDoc = await adminDb.doc(`universities/${universityId}`).get();
+        if (universityDoc.exists) {
+          const universityData = universityDoc.data()!;
           const faculty = universityData.faculties?.find(
             (f: { id: string; admissionPolicy?: string }) => f.id === facultyId
           );
@@ -83,16 +81,12 @@ export async function POST(request: NextRequest) {
         }
 
         // 弱点リスト取得（essayIdからuserIdを引く）
-        const essayDoc = await getDoc(doc(db, "essays", essayId));
-        if (essayDoc.exists()) {
-          const essayData = essayDoc.data();
+        const essayDoc = await adminDb.doc(`essays/${essayId}`).get();
+        if (essayDoc.exists) {
+          const essayData = essayDoc.data()!;
           essayUserId = essayData.userId ?? null;
           if (essayUserId) {
-            const weaknessQuery = query(
-              collection(db, "users", essayUserId, "weaknesses"),
-              where("resolved", "==", false)
-            );
-            const weaknessDocs = await getDocs(weaknessQuery);
+            const weaknessDocs = await adminDb.collection(`users/${essayUserId}/weaknesses`).where("resolved", "==", false).get();
             if (!weaknessDocs.empty) {
               existingWeaknesses = weaknessDocs.docs.map((d) => {
                 const w = d.data();
@@ -120,16 +114,23 @@ export async function POST(request: NextRequest) {
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
-      const mockResponse = { ...MOCK_REVIEW_RESPONSE, essayId };
-      return NextResponse.json(mockResponse);
+      return NextResponse.json(
+        { error: "ANTHROPIC_API_KEYが設定されていません" },
+        { status: 500 }
+      );
     }
 
     const client = new Anthropic();
-    const systemPrompt = buildEssayReviewPrompt(admissionPolicy, weaknessList);
+    const questionContext = questionType && questionType !== "essay"
+      ? { questionType: questionType as "english-reading" | "data-analysis" | "mixed", sourceText, chartDataSummary }
+      : undefined;
+    const systemPrompt = buildEssayReviewPrompt(admissionPolicy, weaknessList, undefined, questionContext);
 
-    const userMessage = topic
-      ? `【テーマ】${topic}\n\n【小論文本文】\n${ocrText}`
-      : `【小論文本文】\n${ocrText}`;
+    let userMessage = "";
+    if (topic) userMessage += `【テーマ】${topic}\n\n`;
+    if (sourceText) userMessage += `【出題資料（英文）】\n${sourceText}\n\n`;
+    if (chartDataSummary) userMessage += `【資料データ】\n${chartDataSummary}\n\n`;
+    userMessage += `【小論文本文】\n${ocrText}`;
 
     const response = await client.messages.create({
       model: "claude-sonnet-4-6",
@@ -147,7 +148,10 @@ export async function POST(request: NextRequest) {
 
     if (!jsonMatch) {
       console.error("Could not parse AI response:", rawText);
-      return NextResponse.json({ ...MOCK_REVIEW_RESPONSE, essayId });
+      return NextResponse.json(
+        { error: "AI添削結果のパースに失敗しました", rawResponse: rawText.slice(0, 500) },
+        { status: 500 }
+      );
     }
 
     const parsed = JSON.parse(jsonMatch[1]);
@@ -199,21 +203,20 @@ export async function POST(request: NextRequest) {
     }
 
     // Firestoreに結果を保存
-    if (db) {
+    if (adminDb) {
       try {
-        const { doc, setDoc, updateDoc, serverTimestamp } = await import("firebase/firestore");
-        await updateDoc(doc(db, "essays", essayId), {
+        const { FieldValue } = await import("firebase-admin/firestore");
+        await adminDb.doc(`essays/${essayId}`).update({
           scores,
           feedback,
           weaknessTags,
           status: "reviewed",
-          reviewedAt: serverTimestamp(),
+          reviewedAt: FieldValue.serverTimestamp(),
         });
 
         if (essayUserId) {
           for (const weakness of updatedWeaknesses) {
-            await setDoc(
-              doc(db, "users", essayUserId, "weaknesses", weakness.area),
+            await adminDb.doc(`users/${essayUserId}/weaknesses/${weakness.area}`).set(
               {
                 area: weakness.area,
                 count: weakness.count,

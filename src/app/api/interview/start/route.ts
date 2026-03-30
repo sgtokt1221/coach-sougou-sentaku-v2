@@ -37,14 +37,13 @@ export async function POST(request: NextRequest) {
     let existingWeaknesses: WeaknessRecord[] = [];
     let interviewTendency: InterviewTendency | undefined;
 
-    const { db } = await import("@/lib/firebase/config");
-    if (db) {
+    // Admin SDKでFirestoreからデータ取得（サーバーサイドなのでセキュリティルールをバイパス）
+    const { adminDb } = await import("@/lib/firebase/admin");
+    if (adminDb) {
       try {
-        const { doc, getDoc, collection, query, where, getDocs } = await import("firebase/firestore");
-
-        const universityDoc = await getDoc(doc(db, "universities", universityId));
-        if (universityDoc.exists()) {
-          const universityData = universityDoc.data();
+        const universityDoc = await adminDb.doc(`universities/${universityId}`).get();
+        if (universityDoc.exists) {
+          const universityData = universityDoc.data()!;
           universityName = universityData.name ?? universityName;
           const faculty = universityData.faculties?.find(
             (f: { id: string; name?: string; admissionPolicy?: string }) => f.id === facultyId
@@ -61,11 +60,10 @@ export async function POST(request: NextRequest) {
         }
 
         if (userId) {
-          const weaknessQuery = query(
-            collection(db, "users", userId, "weaknesses"),
-            where("resolved", "==", false)
-          );
-          const weaknessDocs = await getDocs(weaknessQuery);
+          const weaknessDocs = await adminDb
+            .collection(`users/${userId}/weaknesses`)
+            .where("resolved", "==", false)
+            .get();
           if (!weaknessDocs.empty) {
             existingWeaknesses = weaknessDocs.docs.map((d) => {
               const w = d.data();
@@ -92,12 +90,10 @@ export async function POST(request: NextRequest) {
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
-      const mockResponse: InterviewStartResponse = {
-        ...MOCK_START,
-        sessionId: "mock-interview-" + Date.now(),
-        universityContext: { universityName, facultyName, admissionPolicy },
-      };
-      return NextResponse.json(mockResponse);
+      return NextResponse.json(
+        { error: "ANTHROPIC_API_KEYが設定されていません" },
+        { status: 500 }
+      );
     }
 
     const client = new Anthropic();
@@ -113,20 +109,20 @@ export async function POST(request: NextRequest) {
     const openingMessage =
       response.content[0].type === "text"
         ? response.content[0].text
-        : MOCK_START.openingMessage;
+        : "本日はお越しいただきありがとうございます。まず、志望理由をお聞かせください。";
 
     const sessionId = crypto.randomUUID();
 
-    if (db) {
+    if (adminDb) {
       try {
-        const { doc, setDoc, serverTimestamp } = await import("firebase/firestore");
-        await setDoc(doc(db, "interviews", sessionId), {
+        const { FieldValue } = await import("firebase-admin/firestore");
+        await adminDb.doc(`interviews/${sessionId}`).set({
           userId: userId ?? null,
           universityId,
           facultyId,
           mode,
           status: "in_progress",
-          startedAt: serverTimestamp(),
+          startedAt: FieldValue.serverTimestamp(),
           universityContext: { universityName, facultyName, admissionPolicy },
           inputMode: resolvedInputMode,
         });

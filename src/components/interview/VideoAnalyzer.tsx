@@ -24,7 +24,8 @@ const RIGHT_IRIS_CENTER = 473;
 const EYE_CONTACT_ANGLE_THRESHOLD = 15; // degrees
 const SMILE_RATIO_THRESHOLD = 0.35;
 const NOD_AMPLITUDE_THRESHOLD = 0.015; // normalized Y movement
-const ANALYSIS_FPS = 10;
+const isMobile = typeof navigator !== "undefined" && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+const ANALYSIS_FPS = isMobile ? 5 : 10;
 const FRAME_INTERVAL = 1000 / ANALYSIS_FPS;
 
 interface FrameData {
@@ -110,6 +111,8 @@ export default function VideoAnalyzer({
   const currentStreakRef = useRef<number>(0);
   const wasRecordingRef = useRef(false);
   const initializingRef = useRef(false);
+  const errorCountRef = useRef(0);
+  const lastDetectTimeRef = useRef<number | null>(null);
 
   const cleanup = useCallback(() => {
     if (animFrameRef.current) {
@@ -156,16 +159,32 @@ export default function VideoAnalyzer({
             const vision = await FilesetResolver.forVisionTasks(
               "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
             );
-            const faceLandmarker = await FaceLandmarker.createFromOptions(vision, {
-              baseOptions: {
-                modelAssetPath: "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
-                delegate: "GPU",
-              },
-              runningMode: "VIDEO",
-              numFaces: 1,
-              outputFaceBlendshapes: false,
-              outputFacialTransformationMatrixes: false,
-            });
+            // Try GPU first, fall back to CPU (needed for mobile)
+            let faceLandmarker: FaceLandmarkerInstance;
+            try {
+              faceLandmarker = await FaceLandmarker.createFromOptions(vision, {
+                baseOptions: {
+                  modelAssetPath: "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
+                  delegate: "GPU",
+                },
+                runningMode: "VIDEO",
+                numFaces: 1,
+                outputFaceBlendshapes: false,
+                outputFacialTransformationMatrixes: false,
+              });
+            } catch {
+              // GPU delegate failed (common on mobile), retry with CPU
+              faceLandmarker = await FaceLandmarker.createFromOptions(vision, {
+                baseOptions: {
+                  modelAssetPath: "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
+                  delegate: "CPU",
+                },
+                runningMode: "VIDEO",
+                numFaces: 1,
+                outputFaceBlendshapes: false,
+                outputFacialTransformationMatrixes: false,
+              });
+            }
             faceLandmarkerRef.current = faceLandmarker;
             initializingRef.current = false;
             startAnalysis();
@@ -201,13 +220,25 @@ export default function VideoAnalyzer({
         lastFrameTimeRef.current = now;
 
         try {
-          const result = fl.detectForVideo(video, now);
-          if (result.faceLandmarks && result.faceLandmarks.length > 0) {
+          if (video.videoWidth === 0 || video.videoHeight === 0) {
+            animFrameRef.current = requestAnimationFrame(analyze);
+            return;
+          }
+          // Ensure monotonically increasing timestamp
+          const ts = Math.max(Math.round(now), (lastDetectTimeRef.current ?? 0) + 1);
+          lastDetectTimeRef.current = ts;
+          const result = fl.detectForVideo(video, ts);
+          if (result?.faceLandmarks && result.faceLandmarks.length > 0) {
             const landmarks = result.faceLandmarks[0];
             processLandmarks(landmarks, now);
           }
+          errorCountRef.current = 0;
         } catch {
-          // Frame processing error, continue
+          errorCountRef.current++;
+          if (errorCountRef.current > 3) {
+            console.warn("[VideoAnalyzer] Too many errors, stopping analysis");
+            return;
+          }
         }
 
         animFrameRef.current = requestAnimationFrame(analyze);

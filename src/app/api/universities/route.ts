@@ -8,13 +8,12 @@ export async function GET(request: NextRequest) {
 
   let universities: University[] = MOCK_UNIVERSITIES;
 
-  const { db } = await import("@/lib/firebase/config");
-  if (db) {
+  const { adminDb } = await import("@/lib/firebase/admin");
+  if (adminDb) {
     try {
-      const { collection, getDocs, query, where } = await import("firebase/firestore");
-      const ref = collection(db, "universities");
-      const q = group ? query(ref, where("group", "==", group)) : ref;
-      const snap = await getDocs(q);
+      const ref = adminDb.collection("universities");
+      const q = group ? ref.where("group", "==", group) : ref;
+      const snap = await q.get();
       if (!snap.empty) {
         universities = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as University);
       }
