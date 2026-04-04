@@ -193,8 +193,8 @@ export async function GET(request: NextRequest) {
     const effectiveUid = (role === "superadmin" && viewAs) ? viewAs : uid;
     const effectiveRole = (role === "superadmin" && viewAs) ? "admin" : role;
 
-    const { db } = await import("@/lib/firebase/config");
-    if (!db) {
+    const { adminDb } = await import("@/lib/firebase/admin");
+    if (!adminDb) {
       let results = effectiveRole === "superadmin"
         ? [...MOCK_STUDENTS]
         : MOCK_STUDENTS.filter((s) => s.managedBy === effectiveUid);
@@ -214,22 +214,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(results);
     }
 
-    const { collection, query, where, getDocs, orderBy, limit } =
-      await import("firebase/firestore");
-
-    const studentsQuery = effectiveRole === "superadmin"
-      ? query(
-          collection(db, "users"),
-          where("role", "==", "student"),
-          where("plan", "==", "coach")
-        )
-      : query(
-          collection(db, "users"),
-          where("role", "==", "student"),
-          where("plan", "==", "coach"),
-          where("managedBy", "==", effectiveUid)
-        );
-    const snapshot = await getDocs(studentsQuery);
+    let studentsRef = adminDb.collection("users").where("role", "==", "student");
+    if (effectiveRole !== "superadmin") {
+      studentsRef = studentsRef.where("managedBy", "==", effectiveUid);
+    }
+    const snapshot = await studentsRef.get();
 
     const students: StudentListItem[] = await Promise.all(
       snapshot.docs.map(async (docSnap) => {
@@ -237,23 +226,11 @@ export async function GET(request: NextRequest) {
         const uid = docSnap.id;
 
         const [essaysSnap, weaknessesSnap, documentsSnap, sessionsSnap] = await Promise.all([
-          getDocs(
-            query(
-              collection(db, "users", uid, "essays"),
-              orderBy("submittedAt", "desc")
-            )
-          ),
-          getDocs(collection(db, "users", uid, "weaknesses")),
-          getDocs(collection(db, "users", uid, "documents")),
-          getDocs(
-            query(
-              collection(db, "sessions"),
-              where("studentUid", "==", uid),
-              orderBy("scheduledAt", "desc"),
-              limit(1)
-            )
-          ),
-        ]);
+          adminDb!.collection(`users/${uid}/essays`).orderBy("submittedAt", "desc").get().catch(() => ({ size: 0, docs: [] })),
+          adminDb!.collection(`users/${uid}/weaknesses`).get().catch(() => ({ size: 0, docs: [] })),
+          adminDb!.collection(`users/${uid}/documents`).get().catch(() => ({ size: 0, docs: [] })),
+          adminDb!.collection("sessions").where("studentUid", "==", uid).orderBy("scheduledAt", "desc").limit(1).get().catch(() => ({ size: 0, docs: [] })),
+        ]) as [FirebaseFirestore.QuerySnapshot, FirebaseFirestore.QuerySnapshot, FirebaseFirestore.QuerySnapshot, FirebaseFirestore.QuerySnapshot];
 
         const essayCount = essaysSnap.size;
         const latestEssay = essaysSnap.docs[0]?.data();
