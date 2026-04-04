@@ -19,8 +19,8 @@ const MOCK_START: InterviewStartResponse = {
 
 export async function POST(request: NextRequest) {
   try {
-    const body: InterviewStartRequest & { inputMode?: string } = await request.json();
-    const { universityId, facultyId, mode, userId, inputMode } = body;
+    const body: InterviewStartRequest & { inputMode?: string; presentationContent?: string } = await request.json();
+    const { universityId, facultyId, mode, userId, inputMode, presentationContent } = body;
     const resolvedInputMode = inputMode ?? "text";
 
     if (!universityId || !facultyId || !mode) {
@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
     }
 
     const client = new Anthropic();
-    const systemPrompt = buildInterviewSystemPrompt(mode, universityName, facultyName, admissionPolicy, weaknessList, interviewTendency);
+    const systemPrompt = buildInterviewSystemPrompt(mode, universityName, facultyName, admissionPolicy, weaknessList, interviewTendency, presentationContent);
 
     const response = await client.messages.create({
       model: "claude-sonnet-4-6",

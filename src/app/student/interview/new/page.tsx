@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Mic, Users, BookOpen, ChevronRight, MessageSquare, GraduationCap, Settings } from "lucide-react";
+import { ArrowLeft, Mic, Users, BookOpen, ChevronRight, MessageSquare, GraduationCap, Settings, Upload, FileText, Loader2, X } from "lucide-react";
 import type { InterviewMode } from "@/lib/types/interview";
 import {
   INTERVIEW_MODE_LABELS,
@@ -68,6 +68,9 @@ export default function InterviewNewPage() {
   const [selectedMode, setSelectedMode] = useState<InterviewMode | null>(null);
   const [inputMode, setInputMode] = useState<"text" | "voice">("text");
   const [isLoading, setIsLoading] = useState(false);
+  const [presentationContent, setPresentationContent] = useState<string | null>(null);
+  const [presFileName, setPresFileName] = useState<string | null>(null);
+  const [presUploading, setPresUploading] = useState(false);
 
   // 1校の場合は自動選択
   useEffect(() => {
@@ -89,7 +92,10 @@ export default function InterviewNewPage() {
       const res = await fetch("/api/interview/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ universityId, facultyId, mode: selectedMode, inputMode }),
+        body: JSON.stringify({
+          universityId, facultyId, mode: selectedMode, inputMode,
+          presentationContent: selectedMode === "presentation" ? presentationContent : undefined,
+        }),
       });
       if (!res.ok) throw new Error("面接の開始に失敗しました");
       const data = await res.json();
@@ -102,6 +108,7 @@ export default function InterviewNewPage() {
           inputMode,
           universityContext: data.universityContext,
           openingMessage: data.openingMessage,
+          presentationContent: selectedMode === "presentation" ? presentationContent : undefined,
         })
       );
       router.push(`/student/interview/session/${data.sessionId}`);
@@ -351,6 +358,74 @@ export default function InterviewNewPage() {
               </button>
             </CardContent>
           </Card>
+
+          {/* プレゼン資料アップロード（プレゼンモード時のみ） */}
+          {selectedMode === "presentation" && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">発表資料（任意）</CardTitle>
+              </CardHeader>
+              <CardContent className="p-3 lg:p-4 space-y-3">
+                <p className="text-xs text-muted-foreground">
+                  PPTX, Keynote, PDF, 画像に対応。資料がなくてもプレゼン面接は開始できます。
+                </p>
+                {presFileName ? (
+                  <div className="flex items-center gap-2 rounded-lg border bg-primary/5 border-primary/30 px-3 py-2">
+                    <FileText className="size-4 text-primary shrink-0" />
+                    <span className="text-sm font-medium truncate flex-1">{presFileName}</span>
+                    <button
+                      type="button"
+                      onClick={() => { setPresentationContent(null); setPresFileName(null); }}
+                      className="rounded-full p-1 hover:bg-muted text-muted-foreground"
+                    >
+                      <X className="size-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex items-center justify-center gap-2 rounded-lg border-2 border-dashed py-6 cursor-pointer hover:bg-muted/50 transition-colors">
+                    {presUploading ? (
+                      <Loader2 className="size-5 animate-spin text-muted-foreground" />
+                    ) : (
+                      <Upload className="size-5 text-muted-foreground" />
+                    )}
+                    <span className="text-sm text-muted-foreground">
+                      {presUploading ? "解析中..." : "ファイルを選択"}
+                    </span>
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept=".pptx,.key,.pdf,.png,.jpg,.jpeg"
+                      disabled={presUploading}
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        setPresUploading(true);
+                        try {
+                          const reader = new FileReader();
+                          const base64 = await new Promise<string>((resolve) => {
+                            reader.onloadend = () => resolve((reader.result as string).split(",")[1]);
+                            reader.readAsDataURL(file);
+                          });
+                          const res = await fetch("/api/interview/upload-presentation", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ fileBase64: base64, fileName: file.name, mimeType: file.type }),
+                          });
+                          if (res.ok) {
+                            const data = await res.json();
+                            setPresentationContent(data.extractedText);
+                            setPresFileName(file.name);
+                          }
+                        } catch { /* */ }
+                        setPresUploading(false);
+                        e.target.value = "";
+                      }}
+                    />
+                  </label>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           <Separator />
 

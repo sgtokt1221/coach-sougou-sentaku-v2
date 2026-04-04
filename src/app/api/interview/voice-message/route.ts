@@ -11,7 +11,7 @@ const MOCK_RESPONSE = {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { sessionId, audioBase64, mimeType, messages: existingMessages, mode, universityContext } = body;
+    const { sessionId, audioBase64, mimeType, messages: existingMessages, mode, universityContext, presentationContent } = body;
 
     if (!sessionId || !audioBase64) {
       return NextResponse.json(
@@ -87,7 +87,9 @@ export async function POST(request: NextRequest) {
             universityContext.universityName ?? "（大学名未設定）",
             universityContext.facultyName ?? "（学部名未設定）",
             universityContext.admissionPolicy ?? "（AP未設定）",
-            "（過去の弱点なし）"
+            "（過去の弱点なし）",
+            undefined,
+            presentationContent
           );
         }
 

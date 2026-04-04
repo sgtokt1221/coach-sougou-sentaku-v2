@@ -32,6 +32,7 @@ interface SessionInfo {
     admissionPolicy: string;
   };
   openingMessage: string;
+  presentationContent?: string;
 }
 
 function formatTime(seconds: number): string {
@@ -244,6 +245,7 @@ export default function InterviewSessionPage() {
           messages: updatedMessages,
           mode: sessionInfo?.mode,
           universityContext: sessionInfo?.universityContext,
+          presentationContent: sessionInfo?.presentationContent,
         }),
       });
       if (!res.ok) throw new Error();
@@ -323,6 +325,7 @@ export default function InterviewSessionPage() {
             messages,
             mode: sessionInfo?.mode,
             universityContext: sessionInfo?.universityContext,
+            presentationContent: sessionInfo?.presentationContent,
           }),
         });
         if (!res.ok) throw new Error();

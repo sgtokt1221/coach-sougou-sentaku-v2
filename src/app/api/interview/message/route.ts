@@ -14,11 +14,12 @@ const MOCK_QUESTIONS = [
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { sessionId, messages, mode, universityContext }: {
+    const { sessionId, messages, mode, universityContext, presentationContent }: {
       sessionId: string;
       messages: InterviewMessage[];
       mode?: InterviewMode;
       universityContext?: any;
+      presentationContent?: string;
     } = body;
 
     if (!sessionId || !messages) {
@@ -46,7 +47,9 @@ export async function POST(request: NextRequest) {
         universityContext.universityName ?? "（大学名未設定）",
         universityContext.facultyName ?? "（学部名未設定）",
         universityContext.admissionPolicy ?? "（AP未設定）",
-        "（過去の弱点なし）"
+        "（過去の弱点なし）",
+        undefined,
+        presentationContent
       );
     } else {
       // 2. Firestoreから取得（フォールバック）

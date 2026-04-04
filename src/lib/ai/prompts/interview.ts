@@ -91,12 +91,27 @@ export const INTERVIEW_SYSTEM_PROMPTS: Record<InterviewMode, string> = {
 ## この大学・学部の面接傾向
 {{INTERVIEW_TENDENCY}}
 
+{{PRESENTATION_CONTENT}}
+
 ## 面接の進め方（プレゼンテーション）
-- 受験生がプレゼンテーションを行う前提で、質疑応答を中心に進めてください
-- まず受験生に発表内容の概要を説明するよう促してください
+以下の流れで進めてください：
+
+### フェーズ1：プレゼンテーション（ターン1〜2）
+- まず受験生にプレゼンテーションのテーマと時間（3〜5分程度）を伝えてください
+- 資料が提供されている場合でも、必ず受験生自身の口で発表させてください
+- 資料の内容は事前に把握しつつ、発表を聞く姿勢で臨んでください
+- 「それでは、プレゼンテーションをお願いします」と促してください
+
+### フェーズ2：質疑応答（ターン3〜8）
 - 発表内容に対して深掘りする質問を1つずつ行ってください
+- 資料がある場合は、資料の内容と口頭発表の差異や、資料に書かれていない点を掘り下げてください
 - 内容の論理性、データの根拠、独自性を確認する質問をしてください
 - 曖昧な点には「その根拠は何ですか？」「どのように調べましたか？」と掘り下げてください
+
+### フェーズ3：締め（ターン9〜10）
+- 「最後に補足したいことはありますか？」と聞いてください
+- 「以上でプレゼンテーション面接を終了いたします」と終了してください
+
 - 面接官としての発言のみ出力してください。JSON出力や評価コメントは不要です
 
 ## 過去の弱点リスト（参考：重点的に確認すべき領域）
@@ -224,18 +239,24 @@ export function buildInterviewSystemPrompt(
   facultyName: string,
   admissionPolicy: string,
   weaknessList: string,
-  interviewTendency?: InterviewTendency
+  interviewTendency?: InterviewTendency,
+  presentationContent?: string
 ): string {
   const tendencyText = interviewTendency
     ? `- 面接形式: ${interviewTendency.format}\n- 所要時間: ${interviewTendency.duration}\n- 面接官: ${interviewTendency.interviewers}\n- 雰囲気: ${pressureLabel(interviewTendency.pressure)}\n- 配点傾向: ${interviewTendency.weight}\n- 頻出テーマ: ${interviewTendency.frequentTopics.join("、")}\n- 対策ポイント: ${interviewTendency.tips}`
     : "（傾向データなし）";
+
+  const presContent = presentationContent
+    ? `## 受験生の発表資料（事前提出済み）\n以下の資料内容を把握した上で、内容に基づいた質疑応答を行ってください。\n\n${presentationContent}`
+    : "";
 
   return INTERVIEW_SYSTEM_PROMPTS[mode]
     .replace(/{{UNIVERSITY_NAME}}/g, universityName)
     .replace(/{{FACULTY_NAME}}/g, facultyName)
     .replace("{{ADMISSION_POLICY}}", admissionPolicy)
     .replace("{{WEAKNESS_LIST}}", weaknessList)
-    .replace("{{INTERVIEW_TENDENCY}}", tendencyText);
+    .replace("{{INTERVIEW_TENDENCY}}", tendencyText)
+    .replace("{{PRESENTATION_CONTENT}}", presContent);
 }
 
 export function buildInterviewEvaluationPrompt(
