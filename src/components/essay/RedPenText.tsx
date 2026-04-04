@@ -63,14 +63,6 @@ function findCorrectionsInText(text: string, corrections: LanguageCorrection[]):
 export function RedPenText({ text, corrections }: RedPenTextProps) {
   const [selected, setSelected] = useState<number | null>(null);
 
-  if (!corrections.length) {
-    return (
-      <div className="rounded-lg border bg-muted/30 p-4">
-        <p className="text-sm leading-relaxed whitespace-pre-wrap font-mono">{text}</p>
-      </div>
-    );
-  }
-
   const segments = findCorrectionsInText(text, corrections);
 
   // Build rendered parts
@@ -78,7 +70,6 @@ export function RedPenText({ text, corrections }: RedPenTextProps) {
   let cursor = 0;
 
   for (const seg of segments) {
-    // Plain text before this match
     if (seg.start > cursor) {
       parts.push(
         <span key={`t-${cursor}`}>{text.slice(cursor, seg.start)}</span>
@@ -100,7 +91,7 @@ export function RedPenText({ text, corrections }: RedPenTextProps) {
           {text.slice(seg.start, seg.end)}
         </button>
         {isSelected && (
-          <span className={`absolute left-0 top-full mt-1 z-20 w-64 rounded-lg border ${colors.border} ${colors.bg} p-3 shadow-lg text-left`}>
+          <span className={`absolute left-0 top-full mt-1 z-20 w-72 rounded-lg border ${colors.border} ${colors.bg} p-3 shadow-lg text-left`}>
             <button
               type="button"
               onClick={() => setSelected(null)}
@@ -125,17 +116,36 @@ export function RedPenText({ text, corrections }: RedPenTextProps) {
     cursor = seg.end;
   }
 
-  // Remaining text
   if (cursor < text.length) {
     parts.push(<span key={`t-${cursor}`}>{text.slice(cursor)}</span>);
   }
 
   return (
-    <div className="rounded-lg border bg-muted/30 p-4 relative">
-      <p className="text-sm leading-[2] whitespace-pre-wrap font-mono">
-        {parts}
-      </p>
-      <p className="text-[10px] text-muted-foreground mt-3 text-right">
+    <div className="space-y-2">
+      {/* 原稿用紙風コンテナ */}
+      <div
+        className="relative rounded-lg border border-amber-200 bg-amber-50/30 p-5 overflow-hidden"
+        style={{
+          backgroundImage:
+            "repeating-linear-gradient(transparent, transparent 1.9em, #d4a574 1.9em, #d4a574 2em)",
+          backgroundSize: "100% 2em",
+          backgroundPosition: "0 0.6em",
+        }}
+      >
+        {/* 縦の赤マージン線 */}
+        <div className="absolute left-10 top-0 bottom-0 w-px bg-red-300/60" />
+        <p
+          className="text-sm whitespace-pre-wrap pl-4"
+          style={{
+            fontFamily: '"Zen Maru Gothic", "Noto Serif JP", serif',
+            lineHeight: "2em",
+          }}
+        >
+          {parts.length > 0 ? parts : text}
+        </p>
+      </div>
+
+      <p className="text-[10px] text-muted-foreground text-right">
         ※ 波線の箇所をタップすると修正案が表示されます
       </p>
     </div>

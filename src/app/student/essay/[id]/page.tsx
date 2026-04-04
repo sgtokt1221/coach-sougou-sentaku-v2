@@ -23,7 +23,6 @@ import {
   Compass,
   PenTool,
   SpellCheck,
-  ArrowRight,
 } from "lucide-react";
 import {
   Radar,
@@ -409,40 +408,10 @@ export default function EssayResultPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {result.ocrText ? (
-              <RedPenText
-                text={result.ocrText}
-                corrections={result.feedback.languageCorrections}
-              />
-            ) : (
-              <ul className="space-y-3">
-                {result.feedback.languageCorrections.map((c, i) => (
-                  <li key={i} className="rounded-lg border p-3 space-y-1.5">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className={`text-[10px] ${
-                        c.type === "typo" ? "border-red-300 text-red-600" :
-                        c.type === "grammar" ? "border-orange-300 text-orange-600" :
-                        c.type === "connector" ? "border-blue-300 text-blue-600" :
-                        c.type === "expression" ? "border-purple-300 text-purple-600" :
-                        "border-amber-300 text-amber-600"
-                      }`}>
-                        {c.type === "typo" ? "誤字脱字" :
-                         c.type === "grammar" ? "文法" :
-                         c.type === "connector" ? "接続語" :
-                         c.type === "expression" ? "表現" : "冗長"}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">{c.location}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="line-through text-muted-foreground">{c.original}</span>
-                      <ArrowRight className="size-3 text-muted-foreground shrink-0" />
-                      <span className="font-medium text-primary">{c.suggestion}</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground">{c.reason}</p>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <RedPenText
+              text={result.ocrText ?? ""}
+              corrections={result.feedback.languageCorrections}
+            />
           </CardContent>
         </Card>
       )}
