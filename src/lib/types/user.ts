@@ -1,6 +1,6 @@
 export type UserRole = "student" | "teacher" | "admin" | "superadmin";
 
-export type PlanType = "free" | "pro";
+export type PlanType = "self" | "coach";
 
 export interface UserProfile {
   uid: string;

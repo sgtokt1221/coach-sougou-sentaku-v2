@@ -30,6 +30,9 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
+import { CHART_COLORS, SCORE_COLORS, CHART_ANIMATION, GRID_STYLE } from "@/components/charts/theme";
+import { CustomTooltip } from "@/components/charts/CustomTooltip";
+import { CustomDot, CustomActiveDot } from "@/components/charts/CustomDot";
 
 export default function AnalyticsPage() {
   const { userProfile } = useAuth();
@@ -153,36 +156,55 @@ function OverviewContent({ overview }: { overview: AnalyticsOverview }) {
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={monthlyData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis yAxisId="left" />
-              <YAxis yAxisId="right" orientation="right" />
-              <Tooltip />
-              <Legend />
+              <CartesianGrid
+                strokeDasharray={GRID_STYLE.strokeDasharray}
+                stroke={GRID_STYLE.stroke}
+                opacity={GRID_STYLE.opacity}
+              />
+              <XAxis dataKey="month" tickLine={false} axisLine={false} />
+              <YAxis yAxisId="left" tickLine={false} axisLine={false} />
+              <YAxis yAxisId="right" orientation="right" tickLine={false} axisLine={false} />
+              <Tooltip content={<CustomTooltip />} />
+              <Legend wrapperStyle={{ fontSize: 12 }} />
               <Line
                 yAxisId="left"
                 type="monotone"
                 dataKey="essays"
-                stroke="#3b82f6"
+                stroke={CHART_COLORS.primary}
                 name="添削数"
                 strokeWidth={2}
+                dot={<CustomDot />}
+                activeDot={<CustomActiveDot />}
+                isAnimationActive={true}
+                animationDuration={CHART_ANIMATION.duration}
+                animationEasing={CHART_ANIMATION.easing}
               />
               <Line
                 yAxisId="left"
                 type="monotone"
                 dataKey="interviews"
-                stroke="#8b5cf6"
+                stroke={CHART_COLORS.tertiary}
                 name="面接数"
                 strokeWidth={2}
+                dot={<CustomDot />}
+                activeDot={<CustomActiveDot />}
+                isAnimationActive={true}
+                animationDuration={CHART_ANIMATION.duration}
+                animationEasing={CHART_ANIMATION.easing}
               />
               <Line
                 yAxisId="right"
                 type="monotone"
                 dataKey="avgScore"
-                stroke="#10b981"
+                stroke={CHART_COLORS.quaternary}
                 name="平均スコア"
                 strokeWidth={2}
                 strokeDasharray="5 5"
+                dot={<CustomDot />}
+                activeDot={<CustomActiveDot />}
+                isAnimationActive={true}
+                animationDuration={CHART_ANIMATION.duration}
+                animationEasing={CHART_ANIMATION.easing}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -198,11 +220,23 @@ function OverviewContent({ overview }: { overview: AnalyticsOverview }) {
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={overview.scoreDistribution}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="range" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="count" fill="#3b82f6" name="人数" radius={[4, 4, 0, 0]} />
+                <CartesianGrid
+                  strokeDasharray={GRID_STYLE.strokeDasharray}
+                  stroke={GRID_STYLE.stroke}
+                  opacity={GRID_STYLE.opacity}
+                />
+                <XAxis dataKey="range" tickLine={false} axisLine={false} />
+                <YAxis tickLine={false} axisLine={false} />
+                <Tooltip content={<CustomTooltip />} />
+                <Bar
+                  dataKey="count"
+                  fill={CHART_COLORS.primary}
+                  name="人数"
+                  radius={[4, 4, 0, 0]}
+                  isAnimationActive={true}
+                  animationDuration={CHART_ANIMATION.duration}
+                  animationEasing={CHART_ANIMATION.easing}
+                />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>

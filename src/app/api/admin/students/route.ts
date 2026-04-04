@@ -8,6 +8,15 @@ function isDeclining(scores: number[]): boolean {
   return recent[0] > recent[1] && recent[1] > recent[2];
 }
 
+function computeScoreTrend(scores: number[]): "up" | "down" | "flat" | null {
+  if (scores.length < 3) return null;
+  const recent = scores.slice(-3);
+  const diff = recent[2] - recent[0];
+  if (diff > 0) return "up";
+  if (diff < 0) return "down";
+  return "flat";
+}
+
 const MOCK_STUDENTS: StudentListItem[] = [
   {
     uid: "mock_student_001",
@@ -19,6 +28,11 @@ const MOCK_STUDENTS: StudentListItem[] = [
     lastActivityAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
     alertFlags: [],
     managedBy: "dev-user",
+    plan: "coach",
+    scoreTrend: "up",
+    activeWeaknessCount: 2,
+    documentProgress: { completed: 3, total: 5 },
+    lastSessionAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
   },
   {
     uid: "mock_student_002",
@@ -30,6 +44,11 @@ const MOCK_STUDENTS: StudentListItem[] = [
     lastActivityAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
     alertFlags: ["inactive"],
     managedBy: "dev-user",
+    plan: "coach",
+    scoreTrend: "flat",
+    activeWeaknessCount: 4,
+    documentProgress: { completed: 1, total: 3 },
+    lastSessionAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
   },
   {
     uid: "mock_student_003",
@@ -41,6 +60,11 @@ const MOCK_STUDENTS: StudentListItem[] = [
     lastActivityAt: new Date(Date.now() - 0.5 * 24 * 60 * 60 * 1000).toISOString(),
     alertFlags: [],
     managedBy: "dev-user",
+    plan: "coach",
+    scoreTrend: "up",
+    activeWeaknessCount: 1,
+    documentProgress: { completed: 4, total: 5 },
+    lastSessionAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
   },
   {
     uid: "mock_student_004",
@@ -52,6 +76,11 @@ const MOCK_STUDENTS: StudentListItem[] = [
     lastActivityAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
     alertFlags: ["repeated_weakness", "declining"],
     managedBy: "dev-user",
+    plan: "coach",
+    scoreTrend: "down",
+    activeWeaknessCount: 6,
+    documentProgress: { completed: 0, total: 4 },
+    lastSessionAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
   },
   {
     uid: "mock_student_005",
@@ -63,6 +92,11 @@ const MOCK_STUDENTS: StudentListItem[] = [
     lastActivityAt: null,
     alertFlags: ["inactive"],
     managedBy: "dev-user",
+    plan: "coach",
+    scoreTrend: null,
+    activeWeaknessCount: 0,
+    documentProgress: { completed: 0, total: 0 },
+    lastSessionAt: null,
   },
 ];
 
@@ -115,7 +149,7 @@ export async function POST(request: NextRequest) {
       email,
       displayName,
       role: "student",
-      plan: "free",
+      plan: "coach",
       school: school ?? "",
       grade: grade ?? null,
       managedBy: callerUid,
@@ -186,11 +220,13 @@ export async function GET(request: NextRequest) {
     const studentsQuery = effectiveRole === "superadmin"
       ? query(
           collection(db, "users"),
-          where("role", "==", "student")
+          where("role", "==", "student"),
+          where("plan", "==", "coach")
         )
       : query(
           collection(db, "users"),
           where("role", "==", "student"),
+          where("plan", "==", "coach"),
           where("managedBy", "==", effectiveUid)
         );
     const snapshot = await getDocs(studentsQuery);
@@ -200,12 +236,25 @@ export async function GET(request: NextRequest) {
         const data = docSnap.data();
         const uid = docSnap.id;
 
-        const essaysSnap = await getDocs(
-          query(
-            collection(db, "users", uid, "essays"),
-            orderBy("submittedAt", "desc")
-          )
-        );
+        const [essaysSnap, weaknessesSnap, documentsSnap, sessionsSnap] = await Promise.all([
+          getDocs(
+            query(
+              collection(db, "users", uid, "essays"),
+              orderBy("submittedAt", "desc")
+            )
+          ),
+          getDocs(collection(db, "users", uid, "weaknesses")),
+          getDocs(collection(db, "users", uid, "documents")),
+          getDocs(
+            query(
+              collection(db, "sessions"),
+              where("studentUid", "==", uid),
+              orderBy("scheduledAt", "desc"),
+              limit(1)
+            )
+          ),
+        ]);
+
         const essayCount = essaysSnap.size;
         const latestEssay = essaysSnap.docs[0]?.data();
         const latestScore: number | null =
@@ -214,9 +263,6 @@ export async function GET(request: NextRequest) {
           ? latestEssay.submittedAt.toDate().toISOString()
           : null;
 
-        const weaknessesSnap = await getDocs(
-          collection(db, "users", uid, "weaknesses")
-        );
         const alertFlags: StudentListItem["alertFlags"] = [];
 
         if (lastActivityAt) {
@@ -242,6 +288,26 @@ export async function GET(request: NextRequest) {
           alertFlags.push("declining");
         }
 
+        // スコア推移（直近3回）
+        const scoreTrend = computeScoreTrend(recentScores);
+
+        // アクティブ弱点数（dismissedでないもの）
+        const activeWeaknessCount = weaknessesSnap.docs.filter(
+          (d) => !d.data().dismissed
+        ).length;
+
+        // 書類完了度
+        const totalDocs = documentsSnap.size;
+        const completedDocs = documentsSnap.docs.filter(
+          (d) => d.data().status === "final" || d.data().status === "reviewed"
+        ).length;
+
+        // 最終セッション日
+        const lastSessionDoc = sessionsSnap.docs[0]?.data();
+        const lastSessionAt: string | null = lastSessionDoc?.scheduledAt
+          ? (lastSessionDoc.scheduledAt.toDate?.()?.toISOString() ?? lastSessionDoc.scheduledAt)
+          : null;
+
         return {
           uid,
           displayName: data.displayName ?? "",
@@ -251,6 +317,10 @@ export async function GET(request: NextRequest) {
           essayCount,
           lastActivityAt,
           alertFlags,
+          scoreTrend,
+          activeWeaknessCount,
+          documentProgress: { completed: completedDocs, total: totalDocs },
+          lastSessionAt,
         };
       })
     );

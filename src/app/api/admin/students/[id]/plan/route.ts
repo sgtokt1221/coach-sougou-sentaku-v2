@@ -13,9 +13,9 @@ export async function PUT(
     const { id: studentId } = await params;
     const { plan } = await request.json();
 
-    if (plan !== "free" && plan !== "pro") {
+    if (plan !== "self" && plan !== "coach") {
       return NextResponse.json(
-        { error: "無効なプランです。free または pro を指定してください" },
+        { error: "無効なプランです。self または coach を指定してください" },
         { status: 400 }
       );
     }

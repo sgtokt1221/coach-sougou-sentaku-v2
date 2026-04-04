@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireRole } from "@/lib/api/auth";
 import type { Session, SessionCreateRequest } from "@/lib/types/session";
 
 const MOCK_SESSIONS: Session[] = [
   {
     id: "session-1",
-    teacherId: "teacher-1",
+    teacherId: "teacher_001",
     studentId: "student-1",
-    teacherName: "山田先生",
+    teacherName: "講師 花子",
     studentName: "田中太郎",
+    createdByAdminId: "dev-user",
     type: "coaching",
     status: "completed",
     scheduledAt: "2026-03-18T14:00:00",
@@ -48,10 +50,11 @@ const MOCK_SESSIONS: Session[] = [
   },
   {
     id: "session-2",
-    teacherId: "teacher-1",
+    teacherId: "teacher_001",
     studentId: "student-2",
-    teacherName: "山田先生",
+    teacherName: "講師 花子",
     studentName: "佐藤花子",
+    createdByAdminId: "dev-user",
     type: "mock_interview",
     status: "scheduled",
     scheduledAt: "2026-03-22T10:00:00",
@@ -64,10 +67,11 @@ const MOCK_SESSIONS: Session[] = [
   },
   {
     id: "session-3",
-    teacherId: "teacher-2",
+    teacherId: "teacher_002",
     studentId: "student-1",
-    teacherName: "鈴木先生",
+    teacherName: "講師 太郎",
     studentName: "田中太郎",
+    createdByAdminId: "dev-user",
     type: "essay_review",
     status: "in_progress",
     scheduledAt: "2026-03-21T15:00:00",
@@ -77,52 +81,36 @@ const MOCK_SESSIONS: Session[] = [
     createdAt: "2026-03-20T11:00:00",
     updatedAt: "2026-03-21T15:05:00",
   },
-  {
-    id: "session-4",
-    teacherId: "teacher-2",
-    studentId: "student-3",
-    teacherName: "鈴木先生",
-    studentName: "高橋健一",
-    type: "general",
-    status: "cancelled",
-    scheduledAt: "2026-03-17T16:00:00",
-    notes: "体調不良のためキャンセル",
-    sharedWithStudent: false,
-    createdAt: "2026-03-14T08:00:00",
-    updatedAt: "2026-03-16T20:00:00",
-  },
-  {
-    id: "session-5",
-    teacherId: "teacher-1",
-    studentId: "student-3",
-    teacherName: "山田先生",
-    studentName: "高橋健一",
-    type: "coaching",
-    status: "scheduled",
-    scheduledAt: "2026-03-24T13:00:00",
-    duration: 45,
-    meetLink: "https://meet.google.com/uvw-xyza-bcd",
-    notes: "出願戦略の最終確認",
-    sharedWithStudent: true,
-    createdAt: "2026-03-20T14:00:00",
-    updatedAt: "2026-03-20T14:00:00",
-  },
 ];
 
 export async function GET(request: NextRequest) {
+  const authResult = await requireRole(request, [
+    "teacher",
+    "admin",
+    "superadmin",
+  ]);
+  if (authResult instanceof NextResponse) return authResult;
+
+  const { uid, role } = authResult;
   const { searchParams } = new URL(request.url);
   const status = searchParams.get("status");
   const studentId = searchParams.get("studentId");
   const teacherId = searchParams.get("teacherId");
   const sharedOnly = searchParams.get("sharedWithStudent");
 
+  // viewAs support for superadmin
+  const viewAs = searchParams.get("viewAs");
+  const effectiveUid =
+    role === "superadmin" && viewAs ? viewAs : uid;
+  const effectiveRole =
+    role === "superadmin" && viewAs ? "admin" : role;
+
   let sessions: Session[] = [];
 
-  const { db } = await import("@/lib/firebase/config");
-  if (db) {
+  const { adminDb } = await import("@/lib/firebase/admin");
+  if (adminDb) {
     try {
-      const { collection, getDocs } = await import("firebase/firestore");
-      const snap = await getDocs(collection(db, "sessions"));
+      const snap = await adminDb.collection("sessions").get();
       if (!snap.empty) {
         sessions = snap.docs.map(
           (d) => ({ id: d.id, ...d.data() }) as Session
@@ -136,6 +124,14 @@ export async function GET(request: NextRequest) {
   if (sessions.length === 0) {
     sessions = MOCK_SESSIONS;
   }
+
+  // ロールベーススコーピング
+  if (effectiveRole === "teacher") {
+    sessions = sessions.filter((s) => s.teacherId === effectiveUid);
+  } else if (effectiveRole === "admin") {
+    sessions = sessions.filter((s) => s.createdByAdminId === effectiveUid);
+  }
+  // superadmin（viewAsなし）: 全件
 
   if (status) {
     sessions = sessions.filter((s) => s.status === status);
@@ -159,25 +155,60 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const authResult = await requireRole(request, ["admin", "superadmin"]);
+  if (authResult instanceof NextResponse) return authResult;
+
   const body: SessionCreateRequest = await request.json();
 
   const now = new Date().toISOString();
   const session: Session = {
     id: `session-${Date.now()}`,
     ...body,
+    createdByAdminId: authResult.uid,
     status: "scheduled",
     sharedWithStudent: false,
     createdAt: now,
     updatedAt: now,
   };
 
-  const { db } = await import("@/lib/firebase/config");
-  if (db) {
+  const { adminDb } = await import("@/lib/firebase/admin");
+  if (adminDb) {
     try {
-      const { collection, addDoc } = await import("firebase/firestore");
-      const ref = await addDoc(collection(db, "sessions"), {
-        ...session,
-        id: undefined,
+      // 生徒のmanagedBy + planチェック
+      const studentDoc = await adminDb.doc(`users/${body.studentId}`).get();
+      const studentData = studentDoc.data();
+      if (
+        authResult.role !== "superadmin" &&
+        studentData?.managedBy !== authResult.uid
+      ) {
+        return NextResponse.json(
+          { error: "この生徒のセッションを作成する権限がありません" },
+          { status: 403 }
+        );
+      }
+      // コーチプランでない生徒にはセッション作成不可（undefinedはselfとして扱う）
+      if ((studentData?.plan ?? "self") !== "coach") {
+        return NextResponse.json(
+          { error: "コーチプランの生徒のみセッションを作成できます" },
+          { status: 403 }
+        );
+      }
+
+      const ref = await adminDb.collection("sessions").add({
+        teacherId: session.teacherId,
+        studentId: session.studentId,
+        teacherName: session.teacherName,
+        studentName: session.studentName,
+        createdByAdminId: session.createdByAdminId,
+        type: session.type,
+        status: session.status,
+        scheduledAt: session.scheduledAt,
+        duration: session.duration ?? null,
+        meetLink: session.meetLink ?? null,
+        notes: session.notes ?? null,
+        sharedWithStudent: session.sharedWithStudent,
+        createdAt: now,
+        updatedAt: now,
       });
       session.id = ref.id;
     } catch {

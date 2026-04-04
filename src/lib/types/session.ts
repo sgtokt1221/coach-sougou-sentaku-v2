@@ -7,6 +7,7 @@ export interface Session {
   studentId: string;
   teacherName: string;
   studentName: string;
+  createdByAdminId?: string;
   type: SessionType;
   status: SessionStatus;
   scheduledAt: string;

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { Session } from "@/lib/types/session";
+import { generateSessionSummary } from "@/lib/ai/generate-session-summary";
 
 const MOCK_SESSIONS: Session[] = [
   {
@@ -157,7 +158,24 @@ export async function PATCH(
       const ref = doc(db, "sessions", id);
       const snap = await getDoc(ref);
       if (snap.exists()) {
-        await updateDoc(ref, { ...updates, updatedAt: new Date().toISOString() });
+        const prevData = snap.data() as Session;
+        const updatePayload: Record<string, unknown> = { ...updates, updatedAt: new Date().toISOString() };
+
+        // セッション完了時にサマリーを自動生成
+        if (updates.status === "completed" && prevData.status !== "completed") {
+          try {
+            const summary = await generateSessionSummary({
+              notes: prevData.notes,
+              type: prevData.type,
+            });
+            updatePayload.summary = summary;
+            updatePayload.sharedWithStudent = true;
+          } catch (err) {
+            console.warn("Auto summary generation failed:", err);
+          }
+        }
+
+        await updateDoc(ref, updatePayload);
         const updated = await getDoc(ref);
         return NextResponse.json({ id: updated.id, ...updated.data() });
       }
@@ -170,9 +188,25 @@ export async function PATCH(
     return NextResponse.json({ error: "Session not found" }, { status: 404 });
   }
 
+  let summaryUpdate: Partial<Session> = {};
+
+  // セッション完了時にサマリーを自動生成（モックパス）
+  if (updates.status === "completed" && session.status !== "completed") {
+    try {
+      const summary = await generateSessionSummary({
+        notes: session.notes,
+        type: session.type,
+      });
+      summaryUpdate = { summary, sharedWithStudent: true };
+    } catch (err) {
+      console.warn("Auto summary generation failed:", err);
+    }
+  }
+
   const updated: Session = {
     ...session,
     ...updates,
+    ...summaryUpdate,
     id,
     updatedAt: new Date().toISOString(),
   };

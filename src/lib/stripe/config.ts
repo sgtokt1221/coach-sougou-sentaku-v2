@@ -5,6 +5,6 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 });
 
 export const PLANS = {
-  free: { name: "Free", priceId: null },
-  pro: { name: "Pro", priceId: process.env.STRIPE_PRO_PRICE_ID },
+  self: { name: "AI自習プラン", priceId: null },
+  coach: { name: "コーチプラン", priceId: process.env.STRIPE_COACH_PRICE_ID },
 } as const;

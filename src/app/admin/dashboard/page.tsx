@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +7,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Users, FileText, BarChart3, AlertTriangle, Trophy, FileWarning } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { CountUp } from "@/components/shared/CountUp";
+import { AnimatedList } from "@/components/shared/AnimatedList";
 import { useAuthSWR } from "@/lib/api/swr";
 import type { StudentListItem, AlertItem } from "@/lib/types/admin";
 import type { ExamResultStats } from "@/lib/types/exam-result";
@@ -22,6 +23,10 @@ const mockStudents: StudentListItem[] = [
     essayCount: 5,
     lastActivityAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
     alertFlags: [],
+    scoreTrend: "up",
+    activeWeaknessCount: 2,
+    documentProgress: { completed: 3, total: 5 },
+    lastSessionAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
   },
   {
     uid: "mock_student_002",
@@ -32,6 +37,10 @@ const mockStudents: StudentListItem[] = [
     essayCount: 3,
     lastActivityAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
     alertFlags: ["inactive"],
+    scoreTrend: "flat",
+    activeWeaknessCount: 4,
+    documentProgress: { completed: 1, total: 3 },
+    lastSessionAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
   },
   {
     uid: "mock_student_003",
@@ -42,6 +51,10 @@ const mockStudents: StudentListItem[] = [
     essayCount: 8,
     lastActivityAt: new Date(Date.now() - 0.5 * 24 * 60 * 60 * 1000).toISOString(),
     alertFlags: [],
+    scoreTrend: "up",
+    activeWeaknessCount: 1,
+    documentProgress: { completed: 4, total: 5 },
+    lastSessionAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
   },
   {
     uid: "mock_student_004",
@@ -52,6 +65,10 @@ const mockStudents: StudentListItem[] = [
     essayCount: 6,
     lastActivityAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
     alertFlags: ["repeated_weakness", "declining"],
+    scoreTrend: "down",
+    activeWeaknessCount: 6,
+    documentProgress: { completed: 0, total: 4 },
+    lastSessionAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
   },
   {
     uid: "mock_student_005",
@@ -62,6 +79,10 @@ const mockStudents: StudentListItem[] = [
     essayCount: 0,
     lastActivityAt: null,
     alertFlags: ["inactive"],
+    scoreTrend: null,
+    activeWeaknessCount: 0,
+    documentProgress: { completed: 0, total: 0 },
+    lastSessionAt: null,
   },
 ];
 
@@ -141,21 +162,27 @@ export default function AdminDashboard() {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <AnimatedList className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             {stats.map((stat) => (
               <Card key={stat.label}>
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-muted-foreground">{stat.label}</p>
-                      <p className="text-2xl font-bold">{stat.value}</p>
+                      <p className="text-2xl font-bold">
+                        {typeof stat.value === "number" ? (
+                          <CountUp value={stat.value} duration={0.8} />
+                        ) : (
+                          stat.value
+                        )}
+                      </p>
                     </div>
                     <stat.icon className={`size-8 ${stat.color}`} />
                   </div>
                 </CardContent>
               </Card>
             ))}
-          </div>
+          </AnimatedList>
         )
       )}
 

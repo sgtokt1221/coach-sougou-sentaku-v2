@@ -27,14 +27,18 @@ import {
   BookOpen,
   Zap,
   CalendarDays,
+  MessageSquare,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { FeedbackBadge } from "@/components/student/FeedbackBadge";
 
 interface NavItem {
   label: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
+  coachOnly?: boolean;
+  badge?: React.ComponentType;
 }
 
 interface NavGroup {
@@ -48,6 +52,7 @@ const studentNavGroups: NavGroup[] = [
     items: [
       { label: "ダッシュボード", href: "/student/dashboard", icon: LayoutDashboard },
       { label: "成長", href: "/student/growth", icon: TrendingUp },
+      { label: "フィードバック", href: "/student/feedback", icon: MessageSquare, badge: FeedbackBadge },
     ],
   },
   {
@@ -72,7 +77,7 @@ const studentNavGroups: NavGroup[] = [
     items: [
       { label: "出願書類", href: "/student/documents", icon: FolderOpen },
       { label: "活動実績", href: "/student/activities", icon: Award },
-      { label: "面談記録", href: "/student/sessions", icon: CalendarCheck },
+      { label: "面談記録", href: "/student/sessions", icon: CalendarCheck, coachOnly: true },
     ],
   },
   {
@@ -149,6 +154,7 @@ const superadminNavGroups: NavGroup[] = [
 
 function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
   const isActive = pathname.startsWith(item.href);
+  const Badge = item.badge;
   return (
     <Link
       href={item.href}
@@ -168,6 +174,7 @@ function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
         )}
       />
       {item.label}
+      {Badge && <Badge />}
     </Link>
   );
 }
@@ -191,6 +198,16 @@ function getSuperadminNavGroups(pathname: string) {
   return adminNavGroups;
 }
 
+function filterNavByPlan(groups: NavGroup[], plan: string | undefined): NavGroup[] {
+  const isCoach = plan === "coach";
+  return groups
+    .map((g) => ({
+      ...g,
+      items: g.items.filter((item) => !item.coachOnly || isCoach),
+    }))
+    .filter((g) => g.items.length > 0);
+}
+
 export function Sidebar() {
   const pathname = usePathname();
   const { userProfile } = useAuth();
@@ -200,7 +217,7 @@ export function Sidebar() {
       return getSuperadminNavGroups(pathname);
     }
     if (userProfile?.role === "admin" || userProfile?.role === "teacher") return adminNavGroups;
-    return studentNavGroups;
+    return filterNavByPlan(studentNavGroups, userProfile?.plan);
   })();
 
   return (
@@ -281,7 +298,7 @@ export function SidebarContent() {
       return getSuperadminNavGroups(pathname);
     }
     if (userProfile?.role === "admin" || userProfile?.role === "teacher") return adminNavGroups;
-    return studentNavGroups;
+    return filterNavByPlan(studentNavGroups, userProfile?.plan);
   })();
 
   return (
@@ -309,6 +326,7 @@ export function SidebarContent() {
               <div className="space-y-0.5">
                 {group.items.map((item) => {
                   const isActive = pathname.startsWith(item.href);
+                  const Badge = item.badge;
                   return (
                     <Link
                       key={item.href}
@@ -329,6 +347,7 @@ export function SidebarContent() {
                         )}
                       />
                       {item.label}
+                      {Badge && <Badge />}
                     </Link>
                   );
                 })}

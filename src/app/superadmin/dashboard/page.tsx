@@ -32,6 +32,8 @@ import {
   CartesianGrid,
   Legend,
 } from "recharts";
+import { CHART_COLORS, CHART_ANIMATION, GRID_STYLE } from "@/components/charts/theme";
+import { CustomTooltip } from "@/components/charts/CustomTooltip";
 import { useAuthSWR } from "@/lib/api/swr";
 import type { SuperadminDashboardStats } from "@/lib/types/admin";
 
@@ -201,20 +203,31 @@ export default function SuperadminDashboard() {
                   <div className="h-48">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={barData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                        <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                        <YAxis tick={{ fontSize: 11 }} />
-                        <Tooltip
-                          contentStyle={{ fontSize: 12 }}
-                          formatter={(value, name) => [String(value), String(name)]}
-                          labelFormatter={(_label, payload) => {
-                            const item = payload?.[0]?.payload;
-                            return item?.fullName ?? String(_label);
-                          }}
+                        <CartesianGrid
+                          strokeDasharray={GRID_STYLE.strokeDasharray}
+                          stroke={GRID_STYLE.stroke}
+                          opacity={GRID_STYLE.opacity}
                         />
+                        <XAxis dataKey="name" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                        <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                        <Tooltip content={<CustomTooltip />} />
                         <Legend wrapperStyle={{ fontSize: 11 }} />
-                        <Bar dataKey="生徒数" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                        <Bar dataKey="要注意" fill="hsl(0 84% 60%)" radius={[4, 4, 0, 0]} />
+                        <Bar
+                          dataKey="生徒数"
+                          fill={CHART_COLORS.primary}
+                          radius={[4, 4, 0, 0]}
+                          isAnimationActive={true}
+                          animationDuration={CHART_ANIMATION.duration}
+                          animationEasing={CHART_ANIMATION.easing}
+                        />
+                        <Bar
+                          dataKey="要注意"
+                          fill={CHART_COLORS.quinary}
+                          radius={[4, 4, 0, 0]}
+                          isAnimationActive={true}
+                          animationDuration={CHART_ANIMATION.duration}
+                          animationEasing={CHART_ANIMATION.easing}
+                        />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -366,30 +379,36 @@ export default function SuperadminDashboard() {
                     <AreaChart data={stats.scoreTrend} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
                       <defs>
                         <linearGradient id="scoreFill" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                          <stop offset="5%" stopColor={CHART_COLORS.primary} stopOpacity={0.3} />
+                          <stop offset="95%" stopColor={CHART_COLORS.primary} stopOpacity={0} />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <CartesianGrid
+                        strokeDasharray={GRID_STYLE.strokeDasharray}
+                        stroke={GRID_STYLE.stroke}
+                        opacity={GRID_STYLE.opacity}
+                      />
                       <XAxis
                         dataKey="date"
                         tick={{ fontSize: 10 }}
                         tickFormatter={(v: string) => v.slice(5)}
+                        tickLine={false}
+                        axisLine={false}
                       />
-                      <YAxis tick={{ fontSize: 10 }} domain={["dataMin - 2", "dataMax + 2"]} />
-                      <Tooltip
-                        contentStyle={{ fontSize: 12 }}
-                        labelFormatter={(label) => `日付: ${String(label)}`}
-                        formatter={(value) => [Number(value).toFixed(1), "平均スコア"]}
-                      />
+                      <YAxis tick={{ fontSize: 10 }} domain={["dataMin - 2", "dataMax + 2"]} tickLine={false} axisLine={false} />
+                      <Tooltip content={<CustomTooltip />} />
                       <Area
                         type="monotone"
                         dataKey="averageScore"
-                        stroke="hsl(var(--primary))"
+                        name="平均スコア"
+                        stroke={CHART_COLORS.primary}
                         fill="url(#scoreFill)"
                         strokeWidth={2}
                         dot={{ r: 3 }}
                         activeDot={{ r: 5 }}
+                        isAnimationActive={true}
+                        animationDuration={CHART_ANIMATION.duration}
+                        animationEasing={CHART_ANIMATION.easing}
                       />
                     </AreaChart>
                   </ResponsiveContainer>

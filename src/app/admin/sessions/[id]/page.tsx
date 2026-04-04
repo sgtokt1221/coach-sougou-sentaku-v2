@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ArrowLeft,
   Video,
@@ -19,10 +20,30 @@ import {
   Square,
   XCircle,
   Save,
+  User,
+  GraduationCap,
+  School,
+  TrendingUp,
+  AlertCircle,
+  BarChart3,
+  FileText,
+  Mic,
+  Briefcase,
+  StickyNote,
 } from "lucide-react";
+import Link from "next/link";
+import { AnimatedButton } from "@/components/shared/AnimatedButton";
 import { authFetch } from "@/lib/api/client";
 import type { Session, SessionStatus } from "@/lib/types/session";
 import { SESSION_TYPE_LABELS, SESSION_STATUS_LABELS } from "@/lib/types/session";
+import type { StudentDetail, ScoreTrendPoint } from "@/lib/types/admin";
+import type { WeaknessRecord } from "@/lib/types/growth";
+import { getWeaknessReminderLevel } from "@/lib/types/growth";
+import { ScoresTrendChart } from "@/components/growth/ScoresTrendChart";
+import { InterviewsSection } from "@/components/admin/InterviewsSection";
+import { DocumentsSection } from "@/components/admin/DocumentsSection";
+import { ActivitiesSection } from "@/components/admin/ActivitiesSection";
+import { CoachMemo } from "@/components/admin/CoachMemo";
 
 const STATUS_VARIANT: Record<
   SessionStatus,
@@ -34,6 +55,40 @@ const STATUS_VARIANT: Record<
   cancelled: "destructive",
 };
 
+function weaknessBadge(w: WeaknessRecord) {
+  const level = getWeaknessReminderLevel(w);
+  switch (level) {
+    case "critical":
+      return <Badge variant="destructive">要注意</Badge>;
+    case "warning":
+      return (
+        <Badge variant="outline" className="border-yellow-400 bg-yellow-50 text-yellow-700">
+          警告
+        </Badge>
+      );
+    case "improving":
+      return (
+        <Badge variant="outline" className="border-blue-400 bg-blue-50 text-blue-700">
+          改善中
+        </Badge>
+      );
+    case "resolved":
+      return (
+        <Badge variant="outline" className="border-green-400 bg-green-50 text-green-700">
+          解決済み
+        </Badge>
+      );
+    default:
+      return <Badge variant="secondary">-</Badge>;
+  }
+}
+
+function scoreColor(total: number): string {
+  if (total >= 40) return "text-emerald-600 dark:text-emerald-400";
+  if (total >= 30) return "text-amber-600 dark:text-amber-400";
+  return "text-rose-600 dark:text-rose-400";
+}
+
 export default function AdminSessionDetailPage() {
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
@@ -42,7 +97,13 @@ export default function AdminSessionDetailPage() {
   const [notes, setNotes] = useState("");
   const [copied, setCopied] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
+  const [isCompleting, setIsCompleting] = useState(false);
+
+  const [student, setStudent] = useState<StudentDetail | null>(null);
+  const [studentLoading, setStudentLoading] = useState(false);
+  const [studentError, setStudentError] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -62,6 +123,27 @@ export default function AdminSessionDetailPage() {
     load();
   }, [load]);
 
+  useEffect(() => {
+    if (!session?.studentId) return;
+    const isActive = session.status === "scheduled" || session.status === "in_progress";
+    if (!isActive) return;
+
+    setStudentLoading(true);
+    setStudentError(false);
+    authFetch(`/api/admin/students/${session.studentId}`)
+      .then(async (res) => {
+        if (!res.ok) throw new Error();
+        const data: StudentDetail = await res.json();
+        setStudent(data);
+      })
+      .catch(() => {
+        setStudentError(true);
+      })
+      .finally(() => {
+        setStudentLoading(false);
+      });
+  }, [session?.studentId, session?.status]);
+
   async function patchSession(updates: Partial<Session>) {
     setSaving(true);
     try {
@@ -78,6 +160,25 @@ export default function AdminSessionDetailPage() {
       // silent
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function completeSession() {
+    setIsCompleting(true);
+    try {
+      const res = await authFetch(`/api/sessions/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "completed" }),
+      });
+      if (!res.ok) throw new Error();
+      const data: Session = await res.json();
+      setSession(data);
+      setNotes(data.notes ?? "");
+    } catch {
+      // silent
+    } finally {
+      setIsCompleting(false);
     }
   }
 
@@ -132,8 +233,11 @@ export default function AdminSessionDetailPage() {
     );
   }
 
+  const showStudentPanel =
+    session.status === "scheduled" || session.status === "in_progress";
+
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+    <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="sm" onClick={() => router.back()}>
           <ArrowLeft className="size-4" />
@@ -155,7 +259,12 @@ export default function AdminSessionDetailPage() {
           <div className="grid gap-3 sm:grid-cols-2 text-sm">
             <div>
               <span className="text-muted-foreground">生徒名:</span>{" "}
-              <span className="font-medium">{session.studentName}</span>
+              <Link
+                href={`/admin/students/${session.studentId}`}
+                className="font-medium text-primary hover:underline underline-offset-4"
+              >
+                {session.studentName}
+              </Link>
             </div>
             <div>
               <span className="text-muted-foreground">講師名:</span>{" "}
@@ -240,11 +349,20 @@ export default function AdminSessionDetailPage() {
           {session.status === "in_progress" && (
             <Button
               size="sm"
-              onClick={() => patchSession({ status: "completed" })}
-              disabled={saving}
+              onClick={completeSession}
+              disabled={saving || isCompleting}
             >
-              <Square className="size-4 mr-1" />
-              完了
+              {isCompleting ? (
+                <>
+                  <Sparkles className="size-4 mr-1 animate-spin" />
+                  サマリー生成中...
+                </>
+              ) : (
+                <>
+                  <Square className="size-4 mr-1" />
+                  完了
+                </>
+              )}
             </Button>
           )}
           <Button
@@ -273,16 +391,30 @@ export default function AdminSessionDetailPage() {
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
           />
-          <Button
+          <AnimatedButton
             size="sm"
-            onClick={() => patchSession({ notes })}
+            status={saving ? "loading" : saved ? "success" : "idle"}
+            idleText="保存"
+            idleIcon={<Save className="size-4" />}
+            onStatusReset={() => setSaved(false)}
+            onClick={() => {
+              setSaved(false);
+              patchSession({ notes }).then(() => setSaved(true));
+            }}
             disabled={saving || notes === (session.notes ?? "")}
-          >
-            <Save className="size-4 mr-1" />
-            保存
-          </Button>
+          />
         </CardContent>
       </Card>
+
+      {/* Student Info Panel - only for scheduled/in_progress */}
+      {showStudentPanel && (
+        <StudentInfoPanel
+          studentId={session.studentId}
+          student={student}
+          loading={studentLoading}
+          error={studentError}
+        />
+      )}
 
       {/* Summary */}
       <Card>
@@ -380,5 +512,240 @@ export default function AdminSessionDetailPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function StudentInfoPanel({
+  studentId,
+  student,
+  loading,
+  error,
+}: {
+  studentId: string;
+  student: StudentDetail | null;
+  loading: boolean;
+  error: boolean;
+}) {
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <User className="size-4" />
+            生徒情報
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-[280px] w-full" />
+          <Skeleton className="h-40 w-full" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error || !student) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <User className="size-4" />
+            生徒情報
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center gap-2 py-8 text-sm text-muted-foreground">
+            <AlertCircle className="size-8" />
+            <p>生徒データの取得に失敗しました</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const { profile, weaknesses, essays, scoreTrend } = student;
+
+  const chartData = scoreTrend.map((p) => ({
+    ...p,
+    date: p.date.slice(5, 10).replace("-", "/"),
+  }));
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <User className="size-4" />
+            生徒情報: {profile.displayName}
+          </CardTitle>
+          <Link href={`/admin/students/${studentId}`}>
+            <Button variant="outline" size="sm">
+              詳細ページ
+              <ExternalLink className="ml-1 size-3" />
+            </Button>
+          </Link>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <Tabs defaultValue="overview" className="space-y-4">
+          <TabsList className="w-full">
+            <TabsTrigger value="overview">概要</TabsTrigger>
+            <TabsTrigger value="essays-interviews">添削・面接</TabsTrigger>
+            <TabsTrigger value="docs-activities">書類・活動</TabsTrigger>
+            <TabsTrigger value="memos">メモ</TabsTrigger>
+          </TabsList>
+
+          {/* Overview Tab */}
+          <TabsContent value="overview">
+            <div className="space-y-6">
+              {/* Profile summary */}
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 text-sm">
+                {profile.school && (
+                  <div className="flex items-center gap-2">
+                    <School className="size-4 text-muted-foreground" />
+                    <span>{profile.school}</span>
+                  </div>
+                )}
+                {profile.grade && (
+                  <div className="flex items-center gap-2">
+                    <GraduationCap className="size-4 text-muted-foreground" />
+                    <span>{profile.grade}年生</span>
+                  </div>
+                )}
+                <div className="flex items-start gap-2 sm:col-span-2">
+                  <TrendingUp className="mt-0.5 size-4 text-muted-foreground" />
+                  <div className="flex flex-wrap gap-1">
+                    {profile.targetUniversities.length > 0 ? (
+                      profile.targetUniversities.map((u) => (
+                        <Badge key={u} variant="outline" className="text-xs">
+                          {u}
+                        </Badge>
+                      ))
+                    ) : (
+                      <span className="text-muted-foreground">志望校未設定</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Score trend */}
+              <div>
+                <p className="flex items-center gap-2 text-sm font-medium mb-2">
+                  <BarChart3 className="size-4" />
+                  スコア推移
+                </p>
+                <ScoresTrendChart data={chartData} />
+              </div>
+
+              <Separator />
+
+              {/* Weaknesses */}
+              <div>
+                <p className="text-sm font-medium mb-2">弱点一覧</p>
+                {weaknesses.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    弱点データなし
+                  </p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b bg-muted/50">
+                          <th className="px-3 py-2 text-left font-medium">弱点項目</th>
+                          <th className="px-3 py-2 text-center font-medium">指摘回数</th>
+                          <th className="px-3 py-2 text-center font-medium">ステータス</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {weaknesses.map((w) => (
+                          <tr key={w.area} className="border-b">
+                            <td className="px-3 py-2">{w.area}</td>
+                            <td className="px-3 py-2 text-center">{w.count}回</td>
+                            <td className="px-3 py-2 text-center">{weaknessBadge(w)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* Essays & Interviews Tab */}
+          <TabsContent value="essays-interviews">
+            <div className="space-y-6">
+              {/* Essays */}
+              <div>
+                <p className="flex items-center gap-2 text-sm font-medium mb-3">
+                  <FileText className="size-4" />
+                  添削履歴
+                </p>
+                {essays.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    添削履歴なし
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {essays.map((essay) => (
+                      <div
+                        key={essay.id}
+                        className="flex items-center justify-between rounded-lg border p-3"
+                      >
+                        <div>
+                          <p className="font-medium text-sm">
+                            {essay.targetUniversity} {essay.targetFaculty}
+                          </p>
+                          {essay.topic && (
+                            <p className="text-xs text-muted-foreground">{essay.topic}</p>
+                          )}
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(essay.submittedAt).toLocaleDateString("ja-JP")}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          {essay.scores ? (
+                            <>
+                              <p className={`text-lg font-bold ${scoreColor(essay.scores.total)}`}>
+                                {essay.scores.total}
+                              </p>
+                              <p className="text-xs text-muted-foreground">/50</p>
+                            </>
+                          ) : (
+                            <Badge variant="secondary" className="text-xs">
+                              {essay.status === "uploaded" ? "OCR待ち" : essay.status}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <Separator />
+
+              {/* Interviews */}
+              <InterviewsSection studentId={studentId} />
+            </div>
+          </TabsContent>
+
+          {/* Documents & Activities Tab */}
+          <TabsContent value="docs-activities">
+            <div className="space-y-6">
+              <DocumentsSection studentId={studentId} />
+              <ActivitiesSection studentId={studentId} />
+            </div>
+          </TabsContent>
+
+          {/* Memos Tab */}
+          <TabsContent value="memos">
+            <CoachMemo studentId={studentId} />
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
   );
 }

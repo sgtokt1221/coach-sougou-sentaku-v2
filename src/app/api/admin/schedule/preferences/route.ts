@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
     const studentsSnapshot = await adminDb
       .collection("users")
       .where("role", "==", "student")
-      .where("plan", "==", "pro")
+      .where("plan", "==", "coach")
       .get();
 
     const preferences: StudentPreference[] = [];

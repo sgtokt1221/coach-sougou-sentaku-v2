@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -13,45 +14,67 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft, Save, Loader2, UserPlus } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
+import { useAuthSWR } from "@/lib/api/swr";
+import { toast } from "sonner";
 import type { SessionType } from "@/lib/types/session";
 import { SESSION_TYPE_LABELS } from "@/lib/types/session";
+import type { StudentListItem, TeacherListItem } from "@/lib/types/admin";
 
 export default function NewSessionPage() {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
-  const [studentName, setStudentName] = useState("");
-  const [teacherName, setTeacherName] = useState("");
+  const [studentId, setStudentId] = useState("");
+  const [teacherId, setTeacherId] = useState("");
   const [type, setType] = useState<SessionType | "">("");
   const [scheduledAt, setScheduledAt] = useState("");
   const [meetLink, setMeetLink] = useState("");
   const [notes, setNotes] = useState("");
 
-  const canSubmit = studentName && teacherName && type && scheduledAt;
+  const { data: students, isLoading: studentsLoading } =
+    useAuthSWR<StudentListItem[]>("/api/admin/students");
+  const { data: myTeachers } =
+    useAuthSWR<TeacherListItem[]>("/api/admin/teachers");
+  const { data: allTeachers, isLoading: teachersLoading } =
+    useAuthSWR<TeacherListItem[]>("/api/admin/teachers/all");
+
+  const selectedStudent = students?.find((s) => s.uid === studentId);
+  const selectedTeacher = allTeachers?.find((t) => t.uid === teacherId);
+  const isExternalTeacher =
+    selectedTeacher && !myTeachers?.some((t) => t.uid === teacherId);
+
+  const canSubmit = studentId && teacherId && type && scheduledAt;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!canSubmit) return;
+    if (!canSubmit || !selectedStudent || !selectedTeacher) return;
     setSaving(true);
     try {
       const res = await authFetch("/api/sessions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          teacherId: "teacher-1",
-          studentId: "student-1",
-          teacherName,
-          studentName,
+          teacherId,
+          studentId,
+          teacherName: selectedTeacher.displayName,
+          studentName: selectedStudent.displayName,
           type,
           scheduledAt,
           meetLink: meetLink || undefined,
           notes: notes || undefined,
         }),
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error || "作成に失敗しました");
+      }
+      toast.success("セッションを作成しました");
       router.push("/admin/sessions");
-    } catch {
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "セッション作成に失敗しました"
+      );
       setSaving(false);
     }
   }
@@ -73,24 +96,69 @@ export default function NewSessionPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="studentName">生徒名</Label>
-                <Input
-                  id="studentName"
-                  placeholder="例: 田中太郎"
-                  value={studentName}
-                  onChange={(e) => setStudentName(e.target.value)}
-                />
+                <Label htmlFor="student">生徒</Label>
+                {studentsLoading ? (
+                  <div className="flex h-10 items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="size-4 animate-spin" />
+                    読み込み中...
+                  </div>
+                ) : (
+                  <Select value={studentId} onValueChange={(v) => setStudentId(v ?? "")}>
+                    <SelectTrigger id="student">
+                      <SelectValue placeholder="生徒を選択" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(students ?? []).map((s) => (
+                        <SelectItem key={s.uid} value={s.uid}>
+                          {s.displayName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="teacherName">講師名</Label>
-                <Input
-                  id="teacherName"
-                  placeholder="例: 山田先生"
-                  value={teacherName}
-                  onChange={(e) => setTeacherName(e.target.value)}
-                />
+                <Label htmlFor="teacher">講師</Label>
+                {teachersLoading ? (
+                  <div className="flex h-10 items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="size-4 animate-spin" />
+                    読み込み中...
+                  </div>
+                ) : (
+                  <Select value={teacherId} onValueChange={(v) => setTeacherId(v ?? "")}>
+                    <SelectTrigger id="teacher">
+                      <SelectValue placeholder="講師を選択" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(allTeachers ?? []).map((t) => {
+                        const isExternal = !myTeachers?.some(
+                          (mt) => mt.uid === t.uid
+                        );
+                        return (
+                          <SelectItem key={t.uid} value={t.uid}>
+                            {t.displayName}
+                            {isExternal ? " (外部)" : ""}
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
             </div>
+
+            {isExternalTeacher && (
+              <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 dark:border-blue-800 dark:bg-blue-950/30">
+                <UserPlus className="size-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                <p className="text-xs text-blue-700 dark:text-blue-300">
+                  <Badge variant="secondary" className="mr-1.5">
+                    外部講師
+                  </Badge>
+                  {selectedTeacher.displayName}
+                  はこのセッションのみ生徒データにアクセスできます
+                </p>
+              </div>
+            )}
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
@@ -159,7 +227,11 @@ export default function NewSessionPage() {
                 キャンセル
               </Button>
               <Button type="submit" disabled={!canSubmit || saving}>
-                <Save className="size-4 mr-2" />
+                {saving ? (
+                  <Loader2 className="size-4 mr-2 animate-spin" />
+                ) : (
+                  <Save className="size-4 mr-2" />
+                )}
                 {saving ? "保存中..." : "作成"}
               </Button>
             </div>

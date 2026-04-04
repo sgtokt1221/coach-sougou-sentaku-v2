@@ -14,8 +14,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, ArrowUpDown, Users, UserPlus, Filter } from "lucide-react";
+import { Search, ArrowUpDown, Users, UserPlus, Filter, TrendingUp, TrendingDown, Minus, AlertTriangle, FileText } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { motion, useReducedMotion } from "framer-motion";
 import { useAuthSWR } from "@/lib/api/swr";
 import type { StudentListItem } from "@/lib/types/admin";
 
@@ -45,8 +46,22 @@ function scoreColor(total: number): string {
   return "text-rose-600 dark:text-rose-400";
 }
 
+function scoreTrendIcon(trend: StudentListItem["scoreTrend"]) {
+  switch (trend) {
+    case "up":
+      return <TrendingUp className="size-4 text-emerald-500" />;
+    case "down":
+      return <TrendingDown className="size-4 text-rose-500" />;
+    case "flat":
+      return <Minus className="size-4 text-muted-foreground" />;
+    default:
+      return <span className="text-muted-foreground">-</span>;
+  }
+}
+
 export default function AdminStudentsPage() {
   const router = useRouter();
+  const shouldReduceMotion = useReducedMotion();
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("lastActivity");
   const [universityFilter, setUniversityFilter] = useState("");
@@ -161,17 +176,23 @@ export default function AdminStudentsPage() {
                     <th className="px-4 py-3 text-left font-medium">名前</th>
                     <th className="px-4 py-3 text-left font-medium hidden sm:table-cell">志望校</th>
                     <th className="px-4 py-3 text-center font-medium">最新スコア</th>
+                    <th className="px-4 py-3 text-center font-medium hidden lg:table-cell">推移</th>
+                    <th className="px-4 py-3 text-center font-medium hidden lg:table-cell">弱点</th>
+                    <th className="px-4 py-3 text-center font-medium hidden lg:table-cell">書類</th>
                     <th className="px-4 py-3 text-center font-medium hidden md:table-cell">添削回数</th>
-                    <th className="px-4 py-3 text-center font-medium hidden md:table-cell">最終活動</th>
+                    <th className="px-4 py-3 text-center font-medium hidden md:table-cell">最終セッション</th>
                     <th className="px-4 py-3 text-center font-medium">ステータス</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {students.map((s) => {
+                  {students.map((s, i) => {
                     const status = getStatus(s);
                     return (
-                      <tr
+                      <motion.tr
                         key={s.uid}
+                        initial={shouldReduceMotion ? false : { opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.25, ease: "easeOut", delay: i * 0.05 }}
                         className="cursor-pointer border-b transition-colors hover:bg-accent"
                         onClick={() => router.push(`/admin/students/${s.uid}`)}
                       >
@@ -202,18 +223,50 @@ export default function AdminStudentsPage() {
                             <span className="text-muted-foreground">-</span>
                           )}
                         </td>
+                        <td className="px-4 py-3 text-center hidden lg:table-cell">
+                          <span className="inline-flex justify-center">{scoreTrendIcon(s.scoreTrend)}</span>
+                        </td>
+                        <td className="px-4 py-3 text-center hidden lg:table-cell">
+                          {s.activeWeaknessCount > 0 ? (
+                            <Badge
+                              variant={s.activeWeaknessCount >= 5 ? "destructive" : "secondary"}
+                              className={[
+                                "text-xs transition-transform hover:scale-110",
+                                s.activeWeaknessCount >= 5 ? "animate-pulse" : "",
+                              ].join(" ")}
+                            >
+                              {s.activeWeaknessCount}
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground">0</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-center hidden lg:table-cell">
+                          {s.documentProgress.total > 0 ? (
+                            <span className={`text-xs font-medium ${
+                              s.documentProgress.completed === s.documentProgress.total
+                                ? "text-emerald-600 dark:text-emerald-400"
+                                : "text-muted-foreground"
+                            }`}>
+                              <FileText className="inline size-3 mr-0.5" />
+                              {s.documentProgress.completed}/{s.documentProgress.total}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground text-xs">-</span>
+                          )}
+                        </td>
                         <td className="px-4 py-3 text-center hidden md:table-cell">
                           {s.essayCount}
                         </td>
                         <td className="px-4 py-3 text-center hidden md:table-cell text-xs text-muted-foreground">
-                          {s.lastActivityAt
-                            ? new Date(s.lastActivityAt).toLocaleDateString("ja-JP")
+                          {s.lastSessionAt
+                            ? new Date(s.lastSessionAt).toLocaleDateString("ja-JP")
                             : "-"}
                         </td>
                         <td className="px-4 py-3 text-center">
                           {statusBadge(status)}
                         </td>
-                      </tr>
+                      </motion.tr>
                     );
                   })}
                 </tbody>

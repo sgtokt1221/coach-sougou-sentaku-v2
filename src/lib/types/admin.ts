@@ -11,6 +11,11 @@ export interface StudentListItem {
   lastActivityAt: string | null;
   alertFlags: ("inactive" | "repeated_weakness" | "declining")[];
   managedBy?: string;
+  plan?: "self" | "coach";
+  scoreTrend: "up" | "down" | "flat" | null;
+  activeWeaknessCount: number;
+  documentProgress: { completed: number; total: number };
+  lastSessionAt: string | null;
 }
 
 export interface StudentDetail {

@@ -31,6 +31,7 @@ import {
   PolarRadiusAxis,
   ResponsiveContainer,
 } from "recharts";
+import { ScoreRing } from "@/components/shared/ScoreRing";
 import type { GrowthEvent } from "@/lib/types/essay";
 
 interface EssayScores {
@@ -241,10 +242,13 @@ export default function EssayResultPage() {
         <CardContent className="pt-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold">総合スコア</h2>
-            <span className="text-4xl font-bold text-primary">
-              {totalScore}
-              <span className="text-lg text-muted-foreground">/50</span>
-            </span>
+            <div className="flex items-center gap-3">
+              <ScoreRing score={totalScore} maxScore={50} size={72} strokeWidth={5} />
+              <span className="text-4xl font-bold text-primary">
+                {totalScore}
+                <span className="text-lg text-muted-foreground">/50</span>
+              </span>
+            </div>
           </div>
           <div className="w-full max-w-[280px] mx-auto lg:max-w-none">
             <ResponsiveContainer width="100%" height={280}>

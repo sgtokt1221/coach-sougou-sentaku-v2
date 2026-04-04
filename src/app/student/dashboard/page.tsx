@@ -19,6 +19,9 @@ import { TargetUniversityCards } from "@/components/dashboard/TargetUniversityCa
 import { DailyTasksPanel } from "@/components/student/DailyTasksPanel";
 import type { StudentProfile } from "@/lib/types/user";
 import { useAuthSWR } from "@/lib/api/swr";
+import { NotificationPermissionBanner } from "@/components/notifications/NotificationPermissionBanner";
+import { AnimatedList } from "@/components/shared/AnimatedList";
+import { CountUp } from "@/components/shared/CountUp";
 
 interface EssayHistoryItem {
   id: string;
@@ -162,6 +165,9 @@ export default function StudentDashboard() {
         </p>
       </div>
 
+      {/* Notification Permission Banner */}
+      <NotificationPermissionBanner />
+
       {/* Daily Tasks AI Panel */}
       <div className="animate-fade-in-up" style={{ animationDelay: "50ms" }}>
         <DailyTasksPanel />
@@ -177,7 +183,7 @@ export default function StudentDashboard() {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 stagger-children">
+      <AnimatedList className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {quickActions.map((action) => (
           <Link key={action.href} href={action.href}>
             <div className={`group relative card-hover rounded-xl border-2 border-transparent p-4 lg:p-5 flex items-center gap-3 ${action.bgColor} transition-all duration-200 hover:scale-105 hover:shadow-lg`}>
@@ -192,7 +198,7 @@ export default function StudentDashboard() {
             </div>
           </Link>
         ))}
-      </div>
+      </AnimatedList>
 
       {/* Weakness Reminder */}
       <div className="animate-fade-in-up" style={{ animationDelay: "100ms" }}>
@@ -282,9 +288,11 @@ export default function StudentDashboard() {
                         </p>
                       </div>
                       <div className={`flex items-center justify-center size-11 rounded-lg ${scoreBg(item.scores.total)}`}>
-                        <span className={`font-heading text-lg font-bold ${scoreColor(item.scores.total)}`}>
-                          {item.scores.total}
-                        </span>
+                        <CountUp
+                          value={item.scores.total}
+                          duration={0.6}
+                          className={`font-heading text-lg font-bold ${scoreColor(item.scores.total)}`}
+                        />
                       </div>
                     </div>
                   </Link>

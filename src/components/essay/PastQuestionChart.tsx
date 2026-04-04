@@ -4,6 +4,9 @@ import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
+import { CHART_ANIMATION, GRID_STYLE } from "@/components/charts/theme";
+import { CustomTooltip } from "@/components/charts/CustomTooltip";
+import { CustomDot, CustomActiveDot } from "@/components/charts/CustomDot";
 
 interface ChartDef {
   type: "bar" | "line" | "pie";
@@ -14,8 +17,10 @@ interface ChartDef {
 }
 
 const PIE_COLORS = [
-  "#6366F1", "#374151", "#F59E0B", "#FBBF24", "#3B82F6",
-  "#10B981", "#34D399", "#9CA3AF", "#EF4444", "#8B5CF6",
+  "oklch(var(--chart-1))", "oklch(var(--chart-2))", "oklch(var(--chart-3))",
+  "oklch(var(--chart-4))", "oklch(var(--chart-5))",
+  "oklch(var(--chart-1) / 0.7)", "oklch(var(--chart-2) / 0.7)", "oklch(var(--chart-3) / 0.7)",
+  "oklch(var(--chart-4) / 0.7)", "oklch(var(--chart-5) / 0.7)",
 ];
 
 export function PastQuestionChart({ charts }: { charts: ChartDef[] }) {
@@ -28,13 +33,13 @@ export function PastQuestionChart({ charts }: { charts: ChartDef[] }) {
           {chart.type === "bar" && (
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={chart.data} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                <XAxis dataKey={chart.xKey} tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} />
-                <Tooltip />
-                {chart.yKeys.length > 1 && <Legend />}
+                <CartesianGrid strokeDasharray={GRID_STYLE.strokeDasharray} stroke={GRID_STYLE.stroke} opacity={GRID_STYLE.opacity} />
+                <XAxis dataKey={chart.xKey} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                <Tooltip content={<CustomTooltip />} />
+                {chart.yKeys.length > 1 && <Legend wrapperStyle={{ fontSize: 11 }} />}
                 {chart.yKeys.map((yk) => (
-                  <Bar key={yk.key} dataKey={yk.key} name={yk.name} fill={yk.color} radius={[4, 4, 0, 0]} />
+                  <Bar key={yk.key} dataKey={yk.key} name={yk.name} fill={yk.color} radius={[4, 4, 0, 0]} isAnimationActive={true} animationDuration={CHART_ANIMATION.duration} animationEasing={CHART_ANIMATION.easing} />
                 ))}
               </BarChart>
             </ResponsiveContainer>
@@ -43,13 +48,13 @@ export function PastQuestionChart({ charts }: { charts: ChartDef[] }) {
           {chart.type === "line" && (
             <ResponsiveContainer width="100%" height={250}>
               <LineChart data={chart.data} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                <XAxis dataKey={chart.xKey} tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} />
-                <Tooltip />
-                <Legend />
+                <CartesianGrid strokeDasharray={GRID_STYLE.strokeDasharray} stroke={GRID_STYLE.stroke} opacity={GRID_STYLE.opacity} />
+                <XAxis dataKey={chart.xKey} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
                 {chart.yKeys.map((yk) => (
-                  <Line key={yk.key} type="monotone" dataKey={yk.key} name={yk.name} stroke={yk.color} strokeWidth={2} dot={{ r: 4 }} />
+                  <Line key={yk.key} type="monotone" dataKey={yk.key} name={yk.name} stroke={yk.color} strokeWidth={2} dot={<CustomDot />} activeDot={<CustomActiveDot />} isAnimationActive={true} animationDuration={CHART_ANIMATION.duration} animationEasing={CHART_ANIMATION.easing} />
                 ))}
               </LineChart>
             </ResponsiveContainer>
@@ -67,12 +72,15 @@ export function PastQuestionChart({ charts }: { charts: ChartDef[] }) {
                   outerRadius={100}
                   label={({ name, value }: { name?: string; value?: number }) => `${name ?? ""} ${value ?? 0}%`}
                   labelLine={{ strokeWidth: 1 }}
+                  isAnimationActive={true}
+                  animationDuration={CHART_ANIMATION.duration}
+                  animationEasing={CHART_ANIMATION.easing}
                 >
                   {chart.data.map((_, i) => (
                     <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip content={<CustomTooltip />} />
               </PieChart>
             </ResponsiveContainer>
           )}

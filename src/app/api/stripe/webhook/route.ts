@@ -44,7 +44,7 @@ export async function POST(request: Request) {
         const userId = session.metadata?.userId;
         if (userId) {
           await adminDb.doc(`users/${userId}`).update({
-            plan: "pro",
+            plan: "coach",
             stripeCustomerId: session.customer as string,
             updatedAt: new Date(),
           });
@@ -66,7 +66,7 @@ export async function POST(request: Request) {
         if (!usersSnapshot.empty) {
           const userDoc = usersSnapshot.docs[0];
           await userDoc.ref.update({
-            plan: "free",
+            plan: "self",
             updatedAt: new Date(),
           });
         }

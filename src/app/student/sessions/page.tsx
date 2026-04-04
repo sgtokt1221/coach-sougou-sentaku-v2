@@ -4,11 +4,12 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Calendar, Video } from "lucide-react";
+import { Calendar, Video, Lock } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import type { Session, SessionStatus } from "@/lib/types/session";
 import { SESSION_TYPE_LABELS, SESSION_STATUS_LABELS } from "@/lib/types/session";
 import { useAuthSWR } from "@/lib/api/swr";
+import { useAuth } from "@/contexts/AuthContext";
 
 const STATUS_VARIANT: Record<
   SessionStatus,
@@ -22,8 +23,26 @@ const STATUS_VARIANT: Record<
 
 export default function StudentSessionsPage() {
   const router = useRouter();
-  const { data: rawData, isLoading: loading } = useAuthSWR<Session[] | { sessions: Session[] }>("/api/sessions?sharedWithStudent=true");
+  const { userProfile } = useAuth();
+  const isCoach = userProfile?.plan === "coach";
+  const { data: rawData, isLoading: loading } = useAuthSWR<Session[] | { sessions: Session[] }>(isCoach ? "/api/sessions?sharedWithStudent=true" : null);
   const sessions = Array.isArray(rawData) ? rawData : (rawData as { sessions?: Session[] })?.sessions ?? [];
+
+  if (!isCoach) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-5 lg:py-8">
+        <Card>
+          <CardContent className="py-12">
+            <EmptyState
+              icon={Lock}
+              title="コーチプラン限定機能"
+              description="面談記録はコーチプランでご利用いただけます"
+            />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-5 lg:py-8 space-y-4 lg:space-y-6">

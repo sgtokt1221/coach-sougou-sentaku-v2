@@ -51,6 +51,13 @@ service cloud.firestore {
           request.auth.uid == userId || isSuperAdmin() || isManagerOf(userId)
         );
       }
+
+      // フィードバック
+      match /feedback/{feedbackId} {
+        allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
+        allow create: if request.auth != null && isAdmin();
+        allow update: if request.auth != null && request.auth.uid == userId;
+      }
     }
 
     // 大学データ: 全員読み取り可、管理者のみ書き込み

@@ -54,6 +54,9 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { CHART_COLORS, SCORE_COLORS, CHART_ANIMATION, GRID_STYLE } from "@/components/charts/theme";
+import { CustomTooltip } from "@/components/charts/CustomTooltip";
+import { CustomDot, CustomActiveDot } from "@/components/charts/CustomDot";
 import { authFetch } from "@/lib/api/client";
 import { useAuthSWR } from "@/lib/api/swr";
 import type { StudentDetail } from "@/lib/types/admin";
@@ -65,14 +68,16 @@ import { ExamResultsSection } from "@/components/admin/ExamResultsSection";
 import { DocumentsSection } from "@/components/admin/DocumentsSection";
 import { InterviewsSection } from "@/components/admin/InterviewsSection";
 import { ActivitiesSection } from "@/components/admin/ActivitiesSection";
+import { InlineFeedbackButton } from "@/components/admin/InlineFeedbackButton";
+import { CoachMemo } from "@/components/admin/CoachMemo";
 
 const SCORE_LINES = [
-  { key: "total", label: "合計", color: "hsl(var(--primary))" },
-  { key: "structure", label: "構成", color: "#6366f1" },
-  { key: "logic", label: "論理性", color: "#f59e0b" },
-  { key: "expression", label: "表現力", color: "#10b981" },
-  { key: "apAlignment", label: "AP合致度", color: "#ef4444" },
-  { key: "originality", label: "独自性", color: "#8b5cf6" },
+  { key: "total", label: "合計", color: CHART_COLORS.primary },
+  { key: "structure", label: "構成", color: SCORE_COLORS.structure },
+  { key: "logic", label: "論理性", color: SCORE_COLORS.logic },
+  { key: "expression", label: "表現力", color: SCORE_COLORS.expression },
+  { key: "apAlignment", label: "AP合致度", color: SCORE_COLORS.apAlignment },
+  { key: "originality", label: "独自性", color: SCORE_COLORS.originality },
 ] as const;
 
 function weaknessBadge(w: WeaknessRecord) {
@@ -431,7 +436,11 @@ export default function AdminStudentDetailPage() {
           ) : (
             <ResponsiveContainer width="100%" height={280}>
               <LineChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <CartesianGrid
+                  strokeDasharray={GRID_STYLE.strokeDasharray}
+                  stroke={GRID_STYLE.stroke}
+                  opacity={GRID_STYLE.opacity}
+                />
                 <XAxis
                   dataKey="date"
                   tick={{ fontSize: 12 }}
@@ -439,19 +448,13 @@ export default function AdminStudentDetailPage() {
                   axisLine={false}
                 />
                 <YAxis
-                  domain={showAllLines ? [0, 50] : [0, 50]}
+                  domain={[0, 50]}
                   tick={{ fontSize: 12 }}
                   tickLine={false}
                   axisLine={false}
                   width={30}
                 />
-                <Tooltip
-                  contentStyle={{
-                    fontSize: 12,
-                    borderRadius: 8,
-                    border: "1px solid hsl(var(--border))",
-                  }}
-                />
+                <Tooltip content={<CustomTooltip />} />
                 {showAllLines && <Legend wrapperStyle={{ fontSize: 12 }} />}
                 {visibleLines.map((line) => (
                   <Line
@@ -461,8 +464,11 @@ export default function AdminStudentDetailPage() {
                     name={line.label}
                     stroke={line.color}
                     strokeWidth={line.key === "total" ? 2 : 1.5}
-                    dot={{ r: line.key === "total" ? 4 : 3 }}
-                    activeDot={{ r: line.key === "total" ? 6 : 5 }}
+                    dot={<CustomDot />}
+                    activeDot={<CustomActiveDot />}
+                    isAnimationActive={true}
+                    animationDuration={CHART_ANIMATION.duration}
+                    animationEasing={CHART_ANIMATION.easing}
                   />
                 ))}
               </LineChart>
@@ -491,6 +497,7 @@ export default function AdminStudentDetailPage() {
                     <th className="px-4 py-3 text-left font-medium">弱点項目</th>
                     <th className="px-4 py-3 text-center font-medium">指摘回数</th>
                     <th className="px-4 py-3 text-center font-medium">ステータス</th>
+                    <th className="px-4 py-3 text-center font-medium w-12">FB</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -499,6 +506,15 @@ export default function AdminStudentDetailPage() {
                       <td className="px-4 py-3">{w.area}</td>
                       <td className="px-4 py-3 text-center">{w.count}回</td>
                       <td className="px-4 py-3 text-center">{weaknessBadge(w)}</td>
+                      <td className="px-4 py-3 text-center">
+                        <InlineFeedbackButton
+                          studentId={id}
+                          type="weakness"
+                          targetId={w.area}
+                          targetLabel={w.area}
+                          compact
+                        />
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -705,6 +721,14 @@ export default function AdminStudentDetailPage() {
                   )}
                 </>
               )}
+              {/* Admin Feedback */}
+              <Separator />
+              <InlineFeedbackButton
+                studentId={id}
+                type="essay"
+                targetId={essayDetail.id}
+                targetLabel={`${essayDetail.targetUniversity} ${essayDetail.topic ?? ""}`}
+              />
             </div>
           ) : (
             <div className="py-8 text-center text-sm text-muted-foreground">
@@ -725,6 +749,9 @@ export default function AdminStudentDetailPage() {
 
       {/* Exam Results */}
       <ExamResultsSection studentId={id} />
+
+      {/* Coach Memo */}
+      <CoachMemo studentId={id} />
     </div>
   );
 }

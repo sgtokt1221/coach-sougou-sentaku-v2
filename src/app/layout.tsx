@@ -24,6 +24,8 @@ const jetbrainsMono = JetBrains_Mono({
   weight: ["400", "500"],
 });
 
+
+
 export const metadata: Metadata = {
   title: "coach for 総合型選抜",
   description: "AI搭載の総合型選抜対策プラットフォーム",

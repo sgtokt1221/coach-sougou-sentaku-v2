@@ -180,10 +180,22 @@ export async function GET(
     const effectiveUid = (role === "superadmin" && viewAs) ? viewAs : uid;
 
     if (role !== "superadmin" && userData.managedBy !== effectiveUid) {
-      return NextResponse.json(
-        { error: "この生徒へのアクセス権がありません" },
-        { status: 403 }
-      );
+      // セッションベースのアクセス権チェック（ヘルパー講師用）
+      if (role === "teacher") {
+        const { hasActiveSessionAccess } = await import("@/lib/api/session-access");
+        const hasAccess = await hasActiveSessionAccess(effectiveUid, id);
+        if (!hasAccess) {
+          return NextResponse.json(
+            { error: "この生徒へのアクセス権がありません" },
+            { status: 403 }
+          );
+        }
+      } else {
+        return NextResponse.json(
+          { error: "この生徒へのアクセス権がありません" },
+          { status: 403 }
+        );
+      }
     }
 
     const essaysSnap = await getDocs(
@@ -310,10 +322,21 @@ export async function PUT(
     const effectiveUid = (role === "superadmin" && viewAs) ? viewAs : uid;
 
     if (role !== "superadmin" && userData.managedBy !== effectiveUid) {
-      return NextResponse.json(
-        { error: "この生徒の編集権限がありません" },
-        { status: 403 }
-      );
+      if (role === "teacher") {
+        const { hasActiveSessionAccess } = await import("@/lib/api/session-access");
+        const hasAccess = await hasActiveSessionAccess(effectiveUid, id);
+        if (!hasAccess) {
+          return NextResponse.json(
+            { error: "この生徒の編集権限がありません" },
+            { status: 403 }
+          );
+        }
+      } else {
+        return NextResponse.json(
+          { error: "この生徒の編集権限がありません" },
+          { status: 403 }
+        );
+      }
     }
 
     updates.updatedAt = new Date();

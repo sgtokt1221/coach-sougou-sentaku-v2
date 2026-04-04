@@ -7,9 +7,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Video, ExternalLink } from "lucide-react";
+import { ArrowLeft, Video, ExternalLink, Lock } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import type { Session, SessionStatus } from "@/lib/types/session";
 import { SESSION_TYPE_LABELS, SESSION_STATUS_LABELS } from "@/lib/types/session";
+import { useAuth } from "@/contexts/AuthContext";
 
 const STATUS_VARIANT: Record<
   SessionStatus,
@@ -24,10 +26,16 @@ const STATUS_VARIANT: Record<
 export default function StudentSessionDetailPage() {
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
+  const { userProfile } = useAuth();
+  const isCoach = userProfile?.plan === "coach";
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
+    if (!isCoach) {
+      setLoading(false);
+      return;
+    }
     try {
       const res = await fetch(`/api/sessions/${id}`);
       if (!res.ok) throw new Error();
@@ -38,11 +46,27 @@ export default function StudentSessionDetailPage() {
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, isCoach]);
 
   useEffect(() => {
     load();
   }, [load]);
+
+  if (!isCoach) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-5 lg:py-8">
+        <Card>
+          <CardContent className="py-12">
+            <EmptyState
+              icon={Lock}
+              title="コーチプラン限定機能"
+              description="面談記録はコーチプランでご利用いただけます"
+            />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

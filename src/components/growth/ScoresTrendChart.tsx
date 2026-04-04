@@ -9,6 +9,9 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { CHART_COLORS, CHART_ANIMATION, GRID_STYLE } from "@/components/charts/theme";
+import { CustomTooltip } from "@/components/charts/CustomTooltip";
+import { CustomDot, CustomActiveDot } from "@/components/charts/CustomDot";
 
 interface TrendDataPoint {
   date: string;
@@ -36,7 +39,11 @@ export function ScoresTrendChart({ data }: ScoresTrendChartProps) {
   return (
     <ResponsiveContainer width="100%" height={280}>
       <LineChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+        <CartesianGrid
+          strokeDasharray={GRID_STYLE.strokeDasharray}
+          stroke={GRID_STYLE.stroke}
+          opacity={GRID_STYLE.opacity}
+        />
         <XAxis
           dataKey="date"
           tick={{ fontSize: 12 }}
@@ -51,20 +58,20 @@ export function ScoresTrendChart({ data }: ScoresTrendChartProps) {
           width={30}
         />
         <Tooltip
-          contentStyle={{
-            fontSize: 12,
-            borderRadius: 8,
-            border: "1px solid hsl(var(--border))",
-          }}
+          content={<CustomTooltip />}
           formatter={(value) => [`${value}点`, "合計スコア"]}
         />
         <Line
           type="monotone"
           dataKey="total"
-          stroke="hsl(var(--primary))"
+          name="合計スコア"
+          stroke={CHART_COLORS.primary}
           strokeWidth={2}
-          dot={{ r: 4, fill: "hsl(var(--primary))" }}
-          activeDot={{ r: 6 }}
+          dot={<CustomDot />}
+          activeDot={<CustomActiveDot />}
+          isAnimationActive={true}
+          animationDuration={CHART_ANIMATION.duration}
+          animationEasing={CHART_ANIMATION.easing}
         />
       </LineChart>
     </ResponsiveContainer>

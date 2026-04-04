@@ -10,6 +10,9 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { SCORE_LINES, CHART_ANIMATION, GRID_STYLE } from "@/components/charts/theme";
+import { CustomTooltip } from "@/components/charts/CustomTooltip";
+import { CustomDot, CustomActiveDot } from "@/components/charts/CustomDot";
 
 interface TrendDataPoint {
   date: string;
@@ -25,14 +28,6 @@ interface DetailedScoresTrendChartProps {
   data: TrendDataPoint[];
 }
 
-const SCORE_LINES = [
-  { key: "structure", label: "構成", color: "#6366f1" },
-  { key: "logic", label: "論理性", color: "#f59e0b" },
-  { key: "expression", label: "表現力", color: "#10b981" },
-  { key: "apAlignment", label: "AP合致度", color: "#ef4444" },
-  { key: "originality", label: "独自性", color: "#8b5cf6" },
-] as const;
-
 export function DetailedScoresTrendChart({ data }: DetailedScoresTrendChartProps) {
   if (data.length === 0) {
     return (
@@ -45,7 +40,11 @@ export function DetailedScoresTrendChart({ data }: DetailedScoresTrendChartProps
   return (
     <ResponsiveContainer width="100%" height={280}>
       <LineChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+        <CartesianGrid
+          strokeDasharray={GRID_STYLE.strokeDasharray}
+          stroke={GRID_STYLE.stroke}
+          opacity={GRID_STYLE.opacity}
+        />
         <XAxis
           dataKey="date"
           tick={{ fontSize: 12 }}
@@ -59,13 +58,7 @@ export function DetailedScoresTrendChart({ data }: DetailedScoresTrendChartProps
           axisLine={false}
           width={30}
         />
-        <Tooltip
-          contentStyle={{
-            fontSize: 12,
-            borderRadius: 8,
-            border: "1px solid hsl(var(--border))",
-          }}
-        />
+        <Tooltip content={<CustomTooltip />} />
         <Legend wrapperStyle={{ fontSize: 12 }} />
         {SCORE_LINES.map((line) => (
           <Line
@@ -75,8 +68,11 @@ export function DetailedScoresTrendChart({ data }: DetailedScoresTrendChartProps
             name={line.label}
             stroke={line.color}
             strokeWidth={2}
-            dot={{ r: 3 }}
-            activeDot={{ r: 5 }}
+            dot={<CustomDot />}
+            activeDot={<CustomActiveDot />}
+            isAnimationActive={true}
+            animationDuration={CHART_ANIMATION.duration}
+            animationEasing={CHART_ANIMATION.easing}
           />
         ))}
       </LineChart>

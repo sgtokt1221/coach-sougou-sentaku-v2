@@ -14,9 +14,11 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
 } from "recharts";
+import { CHART_COLORS, CHART_ANIMATION, GRID_STYLE } from "@/components/charts/theme";
+import { CustomTooltip } from "@/components/charts/CustomTooltip";
+import { CustomDot, CustomActiveDot } from "@/components/charts/CustomDot";
 import type { InterviewMode } from "@/lib/types/interview";
 import { INTERVIEW_MODE_LABELS } from "@/lib/types/interview";
 import { useAuthSWR } from "@/lib/api/swr";
@@ -141,18 +143,25 @@ export default function InterviewHistoryPage() {
               <CardContent>
                 <ResponsiveContainer width="100%" height={200}>
                   <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-                    <YAxis domain={[0, 40]} tick={{ fontSize: 11 }} />
-                    <Tooltip />
-                    <Legend />
+                    <CartesianGrid
+                      strokeDasharray={GRID_STYLE.strokeDasharray}
+                      stroke={GRID_STYLE.stroke}
+                      opacity={GRID_STYLE.opacity}
+                    />
+                    <XAxis dataKey="date" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                    <YAxis domain={[0, 40]} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                    <Tooltip content={<CustomTooltip />} />
                     <Line
                       type="monotone"
                       dataKey="score"
                       name="総合スコア"
-                      stroke="#6366f1"
+                      stroke={CHART_COLORS.primary}
                       strokeWidth={2.5}
-                      dot={{ r: 4 }}
+                      dot={<CustomDot />}
+                      activeDot={<CustomActiveDot />}
+                      isAnimationActive={true}
+                      animationDuration={CHART_ANIMATION.duration}
+                      animationEasing={CHART_ANIMATION.easing}
                     />
                   </LineChart>
                 </ResponsiveContainer>

@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Briefcase, CheckCircle2 } from "lucide-react";
 import { useAuthSWR } from "@/lib/api/swr";
 import { ACTIVITY_CATEGORY_LABELS, type ActivityCategory } from "@/lib/types/activity";
+import { InlineFeedbackButton } from "@/components/admin/InlineFeedbackButton";
 
 interface ActivityListItem {
   id: string;
@@ -98,7 +99,7 @@ export function ActivitiesSection({ studentId }: { studentId: string }) {
                       {act.period.start} ~ {act.period.end}
                     </p>
                   </div>
-                  <div className="shrink-0 ml-3">
+                  <div className="shrink-0 ml-3 flex items-center gap-2">
                     {act.isStructured ? (
                       <Badge
                         variant="outline"
@@ -112,6 +113,13 @@ export function ActivitiesSection({ studentId }: { studentId: string }) {
                         未構造化
                       </Badge>
                     )}
+                    <InlineFeedbackButton
+                      studentId={studentId}
+                      type="activity"
+                      targetId={act.id}
+                      targetLabel={act.title}
+                      compact
+                    />
                   </div>
                 </div>
               ))}

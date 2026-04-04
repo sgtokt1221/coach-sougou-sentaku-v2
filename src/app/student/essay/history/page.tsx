@@ -19,6 +19,9 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { CHART_COLORS, SCORE_COLORS, CHART_ANIMATION, GRID_STYLE } from "@/components/charts/theme";
+import { CustomTooltip } from "@/components/charts/CustomTooltip";
+import { CustomDot, CustomActiveDot } from "@/components/charts/CustomDot";
 
 interface EssayHistoryItem {
   id: string;
@@ -98,12 +101,12 @@ const STATUS_VARIANT: Record<
 };
 
 const SCORE_LINE_COLORS = {
-  total: "#6366f1",
-  structure: "#f59e0b",
-  logic: "#10b981",
-  expression: "#3b82f6",
-  apAlignment: "#ef4444",
-  originality: "#8b5cf6",
+  total: CHART_COLORS.primary,
+  structure: SCORE_COLORS.structure,
+  logic: SCORE_COLORS.logic,
+  expression: SCORE_COLORS.expression,
+  apAlignment: SCORE_COLORS.apAlignment,
+  originality: SCORE_COLORS.originality,
 };
 
 type LineKey = "structure" | "logic" | "expression" | "apAlignment" | "originality";
@@ -217,10 +220,14 @@ export default function EssayHistoryPage() {
               <CardContent>
                 <ResponsiveContainer width="100%" height={240}>
                   <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-                    <YAxis domain={[0, 50]} tick={{ fontSize: 11 }} />
-                    <Tooltip />
+                    <CartesianGrid
+                      strokeDasharray={GRID_STYLE.strokeDasharray}
+                      stroke={GRID_STYLE.stroke}
+                      opacity={GRID_STYLE.opacity}
+                    />
+                    <XAxis dataKey="date" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                    <YAxis domain={[0, 50]} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                    <Tooltip content={<CustomTooltip />} />
                     {visibleLines.has("total") && (
                       <Line
                         type="monotone"
@@ -228,7 +235,11 @@ export default function EssayHistoryPage() {
                         name="合計"
                         stroke={SCORE_LINE_COLORS.total}
                         strokeWidth={2.5}
-                        dot={{ r: 4 }}
+                        dot={<CustomDot />}
+                        activeDot={<CustomActiveDot />}
+                        isAnimationActive={true}
+                        animationDuration={CHART_ANIMATION.duration}
+                        animationEasing={CHART_ANIMATION.easing}
                       />
                     )}
                     {DETAIL_LINES.filter(({ key }) => visibleLines.has(key)).map(
@@ -240,11 +251,15 @@ export default function EssayHistoryPage() {
                           name={label}
                           stroke={SCORE_LINE_COLORS[key]}
                           strokeWidth={1.5}
-                          dot={{ r: 3 }}
+                          dot={<CustomDot />}
+                          activeDot={<CustomActiveDot />}
+                          isAnimationActive={true}
+                          animationDuration={CHART_ANIMATION.duration}
+                          animationEasing={CHART_ANIMATION.easing}
                         />
                       )
                     )}
-                    <Legend />
+                    <Legend wrapperStyle={{ fontSize: 12 }} />
                   </LineChart>
                 </ResponsiveContainer>
               </CardContent>

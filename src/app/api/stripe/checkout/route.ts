@@ -15,14 +15,14 @@ export async function POST(request: Request) {
   try {
     const { userId, planId } = await request.json();
 
-    if (planId !== "pro") {
+    if (planId !== "coach") {
       return NextResponse.json(
         { error: "無効なプランです" },
         { status: 400 }
       );
     }
 
-    const priceId = PLANS.pro.priceId;
+    const priceId = PLANS.coach.priceId;
     if (!priceId) {
       return NextResponse.json(
         { error: "Stripeの価格IDが設定されていません" },

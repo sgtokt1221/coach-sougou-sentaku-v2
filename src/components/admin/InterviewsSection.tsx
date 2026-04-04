@@ -24,6 +24,9 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { CHART_COLORS, SCORE_COLORS, CHART_ANIMATION, GRID_STYLE } from "@/components/charts/theme";
+import { CustomTooltip } from "@/components/charts/CustomTooltip";
+import { CustomDot, CustomActiveDot } from "@/components/charts/CustomDot";
 import { useAuthSWR } from "@/lib/api/swr";
 import { authFetch } from "@/lib/api/client";
 import type { InterviewMode, InterviewMessage, InterviewScores, InterviewFeedback } from "@/lib/types/interview";
@@ -60,11 +63,11 @@ const SCORE_LABELS: Record<string, string> = {
 };
 
 const INTERVIEW_SCORE_LINES = [
-  { key: "total", label: "合計", color: "hsl(var(--primary))" },
-  { key: "clarity", label: "明確さ", color: "#6366f1" },
-  { key: "apAlignment", label: "AP合致度", color: "#ef4444" },
-  { key: "enthusiasm", label: "熱意", color: "#f59e0b" },
-  { key: "specificity", label: "具体性", color: "#10b981" },
+  { key: "total", label: "合計", color: CHART_COLORS.primary },
+  { key: "clarity", label: "明確さ", color: SCORE_COLORS.structure },
+  { key: "apAlignment", label: "AP合致度", color: SCORE_COLORS.apAlignment },
+  { key: "enthusiasm", label: "熱意", color: SCORE_COLORS.logic },
+  { key: "specificity", label: "具体性", color: SCORE_COLORS.expression },
 ] as const;
 
 function modeBadge(mode: InterviewMode) {
@@ -198,10 +201,14 @@ export function InterviewsSection({ studentId }: { studentId: string }) {
                   </div>
                   <ResponsiveContainer width="100%" height={220}>
                     <LineChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <CartesianGrid
+                        strokeDasharray={GRID_STYLE.strokeDasharray}
+                        stroke={GRID_STYLE.stroke}
+                        opacity={GRID_STYLE.opacity}
+                      />
                       <XAxis dataKey="date" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
                       <YAxis domain={[0, 40]} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} width={28} />
-                      <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid hsl(var(--border))" }} />
+                      <Tooltip content={<CustomTooltip />} />
                       {showAllLines && <Legend wrapperStyle={{ fontSize: 11 }} />}
                       {visibleLines.map((line) => (
                         <Line
@@ -211,7 +218,11 @@ export function InterviewsSection({ studentId }: { studentId: string }) {
                           name={line.label}
                           stroke={line.color}
                           strokeWidth={line.key === "total" ? 2 : 1.5}
-                          dot={{ r: line.key === "total" ? 4 : 3 }}
+                          dot={<CustomDot />}
+                          activeDot={<CustomActiveDot />}
+                          isAnimationActive={true}
+                          animationDuration={CHART_ANIMATION.duration}
+                          animationEasing={CHART_ANIMATION.easing}
                         />
                       ))}
                     </LineChart>

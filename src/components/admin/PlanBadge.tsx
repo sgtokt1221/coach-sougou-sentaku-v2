@@ -20,15 +20,15 @@ export function PlanBadge({
 }: PlanBadgeProps) {
   const [updating, setUpdating] = useState(false);
 
-  const isPro = plan === "pro";
+  const isCoach = plan === "coach";
 
   async function handleToggle() {
     if (!editable || !studentId || updating) return;
 
-    const newPlan: PlanType = isPro ? "free" : "pro";
-    const confirmMsg = isPro
-      ? "Freeプランに変更しますか？"
-      : "Proプランに変更しますか？";
+    const newPlan: PlanType = isCoach ? "self" : "coach";
+    const confirmMsg = isCoach
+      ? "AI自習プランに変更しますか？"
+      : "コーチプランに変更しますか？";
 
     if (!confirm(confirmMsg)) return;
 
@@ -57,13 +57,13 @@ export function PlanBadge({
     <span className="inline-flex items-center gap-1">
       <span
         className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${
-          isPro
+          isCoach
             ? "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300"
             : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
         }`}
       >
-        {isPro ? <Crown className="h-3 w-3" /> : <User className="h-3 w-3" />}
-        {isPro ? "Pro" : "Free"}
+        {isCoach ? <Crown className="h-3 w-3" /> : <User className="h-3 w-3" />}
+        {isCoach ? "コーチ" : "AI自習"}
       </span>
       {editable && (
         <button

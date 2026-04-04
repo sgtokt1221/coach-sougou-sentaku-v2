@@ -36,6 +36,9 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { CHART_COLORS, CHART_ANIMATION, GRID_STYLE } from "@/components/charts/theme";
+import { CustomTooltip } from "@/components/charts/CustomTooltip";
+import { CustomDot, CustomActiveDot } from "@/components/charts/CustomDot";
 import type { PassedDataResponse, PassedDataCompareResponse } from "@/lib/types/passed-data";
 import type { University } from "@/lib/types/university";
 
@@ -286,27 +289,39 @@ export default function PassedDataPage() {
                   </div>
                   <ResponsiveContainer width="100%" height={280}>
                     <LineChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="label" fontSize={12} />
-                      <YAxis domain={[0, 50]} fontSize={12} />
-                      <Tooltip />
-                      <Legend />
+                      <CartesianGrid
+                        strokeDasharray={GRID_STYLE.strokeDasharray}
+                        stroke={GRID_STYLE.stroke}
+                        opacity={GRID_STYLE.opacity}
+                      />
+                      <XAxis dataKey="label" fontSize={12} tickLine={false} axisLine={false} />
+                      <YAxis domain={[0, 50]} fontSize={12} tickLine={false} axisLine={false} />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Legend wrapperStyle={{ fontSize: 12 }} />
                       <Line
                         type="monotone"
                         dataKey="passedAvg"
                         name="合格者平均"
-                        stroke="#14b8a6"
+                        stroke={CHART_COLORS.primary}
                         strokeWidth={2}
-                        dot={{ r: 4 }}
+                        dot={<CustomDot />}
+                        activeDot={<CustomActiveDot />}
+                        isAnimationActive={true}
+                        animationDuration={CHART_ANIMATION.duration}
+                        animationEasing={CHART_ANIMATION.easing}
                       />
                       <Line
                         type="monotone"
                         dataKey="myScore"
                         name="あなた"
-                        stroke="#6366f1"
+                        stroke={CHART_COLORS.tertiary}
                         strokeWidth={2}
                         strokeDasharray="5 5"
-                        dot={{ r: 4 }}
+                        dot={<CustomDot />}
+                        activeDot={<CustomActiveDot />}
+                        isAnimationActive={true}
+                        animationDuration={CHART_ANIMATION.duration}
+                        animationEasing={CHART_ANIMATION.easing}
                       />
                     </LineChart>
                   </ResponsiveContainer>
