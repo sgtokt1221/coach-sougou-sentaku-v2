@@ -45,6 +45,7 @@ import {
   ArrowRightLeft,
   Star,
   Languages,
+  Plus,
 } from "lucide-react";
 import {
   LineChart,
@@ -65,6 +66,18 @@ import type { Essay } from "@/lib/types/essay";
 import type { WeaknessRecord } from "@/lib/types/growth";
 import { getWeaknessReminderLevel } from "@/lib/types/growth";
 import { UniversitySelectStep } from "@/components/onboarding/UniversitySelectStep";
+import type { EnglishCert } from "@/lib/types/user";
+
+const CERT_TYPES: { value: EnglishCert["type"]; label: string }[] = [
+  { value: "EIKEN", label: "英検" },
+  { value: "TOEIC", label: "TOEIC" },
+  { value: "TOEFL", label: "TOEFL" },
+  { value: "IELTS", label: "IELTS" },
+  { value: "TEAP", label: "TEAP" },
+  { value: "GTEC", label: "GTEC" },
+  { value: "OTHER", label: "その他" },
+];
+const EIKEN_GRADES = ["1級", "準1級", "2級", "準2級", "3級", "4級", "5級"];
 import { ExamResultsSection } from "@/components/admin/ExamResultsSection";
 import { DocumentsSection } from "@/components/admin/DocumentsSection";
 import { InterviewsSection } from "@/components/admin/InterviewsSection";
@@ -152,6 +165,10 @@ export default function AdminStudentDetailPage() {
   const [editSchool, setEditSchool] = useState("");
   const [editGrade, setEditGrade] = useState<string>("");
   const [editUniversities, setEditUniversities] = useState<string[]>([]);
+  const [editGpa, setEditGpa] = useState("");
+  const [editEnglishCerts, setEditEnglishCerts] = useState<EnglishCert[]>([]);
+  const [editCertType, setEditCertType] = useState<EnglishCert["type"]>("EIKEN");
+  const [editCertScore, setEditCertScore] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -186,6 +203,10 @@ export default function AdminStudentDetailPage() {
     setEditSchool(detail.profile.school ?? "");
     setEditGrade(detail.profile.grade?.toString() ?? "");
     setEditUniversities([...detail.profile.targetUniversities]);
+    setEditGpa(detail.profile.gpa?.toString() ?? "");
+    setEditEnglishCerts([...(detail.profile.englishCerts ?? [])]);
+    setEditCertType("EIKEN");
+    setEditCertScore("");
     setEditOpen(true);
   }
 
@@ -199,6 +220,8 @@ export default function AdminStudentDetailPage() {
           displayName: editName,
           school: editSchool || undefined,
           grade: editGrade ? Number(editGrade) : undefined,
+          gpa: editGpa ? Number(editGpa) : null,
+          englishCerts: editEnglishCerts,
           targetUniversities: editUniversities,
         }),
       });
@@ -383,6 +406,94 @@ export default function AdminStudentDetailPage() {
                   <SelectItem value="3">3年生</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-gpa">評定平均（GPA）</Label>
+              <Input
+                id="edit-gpa"
+                type="number"
+                min={0}
+                max={5}
+                step={0.1}
+                placeholder="例: 4.2"
+                value={editGpa}
+                onChange={(e) => setEditGpa(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>英語資格</Label>
+              {editEnglishCerts.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {editEnglishCerts.map((cert, i) => (
+                    <Badge key={i} variant="secondary" className="gap-1 pr-1">
+                      {CERT_TYPES.find((t) => t.value === cert.type)?.label} {cert.score}
+                      <button
+                        type="button"
+                        onClick={() => setEditEnglishCerts((prev) => prev.filter((_, idx) => idx !== i))}
+                        className="rounded-full p-0.5 hover:bg-muted"
+                      >
+                        <X className="size-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              <div className="flex gap-2">
+                <Select
+                  value={editCertType}
+                  onValueChange={(v) => { setEditCertType(v as EnglishCert["type"]); setEditCertScore(""); }}
+                >
+                  <SelectTrigger className="w-28">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CERT_TYPES.map((t) => (
+                      <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {editCertType === "EIKEN" ? (
+                  <Select
+                    value={editCertScore}
+                    onValueChange={(v) => {
+                      if (!v) return;
+                      setEditEnglishCerts((prev) => [...prev, { type: "EIKEN", score: v }]);
+                      setEditCertScore("");
+                    }}
+                  >
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="級を選択" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {EIKEN_GRADES.map((g) => (
+                        <SelectItem key={g} value={g}>{g}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <>
+                    <Input
+                      placeholder="スコア"
+                      value={editCertScore}
+                      onChange={(e) => setEditCertScore(e.target.value)}
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => {
+                        if (editCertScore.trim()) {
+                          setEditEnglishCerts((prev) => [...prev, { type: editCertType, score: editCertScore.trim() }]);
+                          setEditCertScore("");
+                        }
+                      }}
+                    >
+                      <Plus className="size-4" />
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
             <div className="space-y-2">
               <Label>志望校</Label>
