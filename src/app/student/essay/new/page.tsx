@@ -281,6 +281,7 @@ export default function EssayNewPage() {
     setIsUploading(true);
     setError(null);
     try {
+      const ocrResults: string[] = [];
       let firstEssayId = "";
       for (let i = 0; i < images.length; i++) {
         setUploadProgress(`${i + 1}/${images.length}枚目を解析中...`);
@@ -299,8 +300,10 @@ export default function EssayNewPage() {
           setOcrWords(data.ocrWords ?? []);
           setPageSize({ width: data.pageWidth ?? 0, height: data.pageHeight ?? 0 });
         }
+        if (data.ocrText) ocrResults.push(data.ocrText);
       }
       setEssayId(firstEssayId);
+      setOcrText(ocrResults.join("\n\n"));
       setStep(3);
     } catch {
       setError("画像のアップロードに失敗しました");
@@ -903,30 +906,60 @@ export default function EssayNewPage() {
         </Card>
       )}
 
-      {/* Step 3: Dictation mode — read aloud */}
+      {/* Step 3: Dictation mode — OCR確認 + 音読 */}
       {step === 3 && inputMode === "dictation" && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm lg:text-base">小論文を音読してください</CardTitle>
+            <CardTitle className="text-sm lg:text-base">OCR結果を確認</CardTitle>
           </CardHeader>
           <CardContent className="p-3 lg:p-4 space-y-4">
-            <div className="rounded-lg bg-blue-50 border border-blue-200 p-3">
-              <p className="text-sm text-blue-800">画像を見ながら、最初から最後まで声に出して読んでください。</p>
-              <p className="text-xs text-blue-700 mt-1">音声認識で正確にテキスト化されます。ゆっくり、はっきりと読むのがコツです。</p>
-            </div>
+            {/* OCR結果表示 */}
+            {ocrText ? (
+              <>
+                <div className="rounded-lg bg-green-50 border border-green-200 p-3">
+                  <p className="text-sm text-green-800">画像から文字を認識しました。内容を確認してください。</p>
+                  <p className="text-xs text-green-700 mt-1">修正が必要な場合は「確認・修正して添削」へ進んでください。</p>
+                </div>
+                <ManuscriptEditor
+                  value={ocrText}
+                  onChange={setOcrText}
+                  maxLength={2000}
+                  placeholder="OCR結果"
+                />
+                <div className="flex flex-col gap-2">
+                  <Button className="w-full" onClick={() => setStep(4)} disabled={!ocrText.trim()}>
+                    確認・修正して添削へ
+                    <ChevronRight className="size-4 ml-1" />
+                  </Button>
+                </div>
+                <Separator />
+                <div className="rounded-lg bg-blue-50 border border-blue-200 p-3">
+                  <p className="text-sm text-blue-800">認識がうまくいかなかった場合は、音読で補正できます。</p>
+                </div>
+              </>
+            ) : (
+              <div className="rounded-lg bg-amber-50 border border-amber-200 p-3">
+                <p className="text-sm text-amber-800">画像から文字を認識できませんでした。音読でテキスト化してください。</p>
+              </div>
+            )}
 
             {/* Show uploaded images */}
             {images.length > 0 && (
-              <div className="rounded-lg border overflow-hidden max-h-[300px] overflow-y-auto space-y-1">
-                {images.map((img, i) => (
-                  <div key={i} className="relative">
-                    <img src={img.preview} alt={`${i + 1}枚目`} className="w-full object-contain" />
-                    {images.length > 1 && (
-                      <span className="absolute top-1 left-1 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded-full">{i + 1}</span>
-                    )}
-                  </div>
-                ))}
-              </div>
+              <details>
+                <summary className="text-sm text-muted-foreground cursor-pointer hover:text-foreground">
+                  元画像を表示（{images.length}枚）
+                </summary>
+                <div className={`mt-2 gap-2 ${images.length > 1 ? "grid grid-cols-2" : ""}`}>
+                  {images.map((img, i) => (
+                    <div key={i} className="relative">
+                      <img src={img.preview} alt={`${i + 1}枚目`} className="w-full rounded-lg border object-contain max-h-64" />
+                      {images.length > 1 && (
+                        <span className="absolute top-1 left-1 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded-full">{i + 1}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </details>
             )}
 
             {/* Recording UI */}
