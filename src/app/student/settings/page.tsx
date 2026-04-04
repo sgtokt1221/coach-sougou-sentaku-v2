@@ -13,6 +13,7 @@ import {
 import { UniversitySelectStep } from "@/components/onboarding/UniversitySelectStep";
 import { ProfileStep, type ProfileData } from "@/components/onboarding/ProfileStep";
 import { useAuth } from "@/contexts/AuthContext";
+import { authFetch } from "@/lib/api/client";
 import type { StudentProfile } from "@/lib/types/user";
 import {
   GraduationCap,
@@ -108,7 +109,7 @@ export default function SettingsPage() {
     setSaving(true);
     setSaved(false);
     try {
-      await fetch("/api/profile", {
+      await authFetch("/api/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

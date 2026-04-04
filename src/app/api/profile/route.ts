@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { verifyAuthToken, adminDb } from "@/lib/firebase/admin";
 
 export async function PUT(request: NextRequest) {
   try {
@@ -12,21 +13,22 @@ export async function PUT(request: NextRequest) {
       onboardingCompleted,
     } = body;
 
-    const { db } = await import("@/lib/firebase/config");
-    if (!db) {
-      return NextResponse.json({ success: true, mock: true });
-    }
+    const authResult = await verifyAuthToken(request);
 
-    const { doc, updateDoc, serverTimestamp } = await import(
-      "firebase/firestore"
-    );
-    const { auth } = await import("@/lib/firebase/config");
-    const uid = auth?.currentUser?.uid;
-    if (!uid) {
+    if (!authResult) {
+      // dev mode fallback
+      if (process.env.NODE_ENV === "development") {
+        return NextResponse.json({ success: true, mock: true });
+      }
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const updateData: Record<string, unknown> = { updatedAt: serverTimestamp() };
+    if (!adminDb) {
+      return NextResponse.json({ success: true, mock: true });
+    }
+
+    const { FieldValue } = await import("firebase-admin/firestore");
+    const updateData: Record<string, unknown> = { updatedAt: FieldValue.serverTimestamp() };
     if (targetUniversities !== undefined)
       updateData.targetUniversities = targetUniversities;
     if (gpa !== undefined) updateData.gpa = gpa;
@@ -36,10 +38,13 @@ export async function PUT(request: NextRequest) {
     if (onboardingCompleted !== undefined)
       updateData.onboardingCompleted = onboardingCompleted;
 
-    await updateDoc(doc(db, "users", uid), updateData);
+    await adminDb.doc(`users/${authResult.uid}`).update(updateData);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Profile update error:", error);
-    return NextResponse.json({ success: true, mock: true });
+    return NextResponse.json(
+      { error: "プロフィールの更新に失敗しました" },
+      { status: 500 }
+    );
   }
 }

@@ -10,6 +10,7 @@ import { ProfileStep, type ProfileData } from "@/components/onboarding/ProfileSt
 import { ConfirmStep } from "@/components/onboarding/ConfirmStep";
 import { ArrowLeft, ArrowRight, Sparkles, Loader2, Search, HelpCircle } from "lucide-react";
 import { SuggestPanel } from "@/components/shared/SuggestPanel";
+import { authFetch } from "@/lib/api/client";
 import type { StudentProfile } from "@/lib/types/user";
 
 const STEPS = ["志望校選択", "基礎情報", "確認"] as const;
@@ -54,7 +55,7 @@ export default function OnboardingPage() {
   const handleFinish = async () => {
     setSaving(true);
     try {
-      await fetch("/api/profile", {
+      await authFetch("/api/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
