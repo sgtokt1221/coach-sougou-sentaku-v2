@@ -13,7 +13,7 @@ import {
 import { UniversitySelectStep } from "@/components/onboarding/UniversitySelectStep";
 import { ProfileStep, type ProfileData } from "@/components/onboarding/ProfileStep";
 import { useAuth } from "@/contexts/AuthContext";
-import { authFetch } from "@/lib/api/client";
+import { updateProfile } from "@/lib/firebase/profile";
 import type { StudentProfile } from "@/lib/types/user";
 import {
   GraduationCap,
@@ -109,22 +109,17 @@ export default function SettingsPage() {
     setSaving(true);
     setSaved(false);
     try {
-      await authFetch("/api/profile", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          targetUniversities,
-          gpa: profileData.gpa,
-          englishCerts: profileData.englishCerts,
-          grade: profileData.grade,
-          school: profileData.school || undefined,
-        }),
+      await updateProfile({
+        targetUniversities,
+        gpa: profileData.gpa,
+        englishCerts: profileData.englishCerts,
+        grade: profileData.grade,
+        school: profileData.school || undefined,
       });
       localStorage.setItem("targetUniversities", JSON.stringify(targetUniversities));
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch {
-      // mock mode
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } finally {

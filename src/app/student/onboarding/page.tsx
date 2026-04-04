@@ -10,7 +10,7 @@ import { ProfileStep, type ProfileData } from "@/components/onboarding/ProfileSt
 import { ConfirmStep } from "@/components/onboarding/ConfirmStep";
 import { ArrowLeft, ArrowRight, Sparkles, Loader2, Search, HelpCircle } from "lucide-react";
 import { SuggestPanel } from "@/components/shared/SuggestPanel";
-import { authFetch } from "@/lib/api/client";
+import { updateProfile } from "@/lib/firebase/profile";
 import type { StudentProfile } from "@/lib/types/user";
 
 const STEPS = ["志望校選択", "基礎情報", "確認"] as const;
@@ -55,20 +55,16 @@ export default function OnboardingPage() {
   const handleFinish = async () => {
     setSaving(true);
     try {
-      await authFetch("/api/profile", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          targetUniversities: selectedUniversities,
-          gpa: profileData.gpa,
-          englishCerts: profileData.englishCerts,
-          grade: profileData.grade,
-          school: profileData.school || undefined,
-          onboardingCompleted: true,
-        }),
+      await updateProfile({
+        targetUniversities: selectedUniversities,
+        gpa: profileData.gpa,
+        englishCerts: profileData.englishCerts,
+        grade: profileData.grade,
+        school: profileData.school || undefined,
+        onboardingCompleted: true,
       });
     } catch {
-      // mock mode - proceed anyway
+      // Firestore未設定時はスキップ
     }
     localStorage.setItem("onboardingCompleted", "true");
     localStorage.setItem("targetUniversities", JSON.stringify(selectedUniversities));
