@@ -106,12 +106,14 @@ export async function POST(request: NextRequest) {
   const { uid: callerUid } = authResult;
 
   const body = await request.json();
-  const { email, displayName, password, school, grade, targetUniversities } = body as {
+  const { email, displayName, password, school, grade, gpa, englishCerts, targetUniversities } = body as {
     email: string;
     displayName: string;
     password: string;
     school?: string;
     grade?: number;
+    gpa?: number;
+    englishCerts?: { type: string; score?: string }[];
     targetUniversities?: string[];
   };
 
@@ -132,6 +134,8 @@ export async function POST(request: NextRequest) {
       displayName,
       school: school ?? "",
       grade: grade ?? null,
+      gpa: gpa ?? null,
+      englishCerts: englishCerts ?? [],
       managedBy: callerUid,
       targetUniversities: targetUniversities ?? [],
       createdAt: new Date().toISOString(),
@@ -152,6 +156,8 @@ export async function POST(request: NextRequest) {
       plan: "coach",
       school: school ?? "",
       grade: grade ?? null,
+      gpa: gpa ?? null,
+      englishCerts: englishCerts ?? [],
       managedBy: callerUid,
       targetUniversities: targetUniversities ?? [],
       onboardingCompleted: false,
@@ -165,6 +171,8 @@ export async function POST(request: NextRequest) {
       displayName,
       school: school ?? "",
       grade: grade ?? null,
+      gpa: gpa ?? null,
+      englishCerts: englishCerts ?? [],
       managedBy: callerUid,
       targetUniversities: targetUniversities ?? [],
       createdAt: new Date().toISOString(),

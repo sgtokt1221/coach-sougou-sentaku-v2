@@ -43,6 +43,8 @@ import {
   ThumbsUp,
   Lightbulb,
   ArrowRightLeft,
+  Star,
+  Languages,
 } from "lucide-react";
 import {
   LineChart,
@@ -298,6 +300,24 @@ export default function AdminStudentDetailPage() {
               <div className="flex items-center gap-2 text-sm">
                 <GraduationCap className="size-4 text-muted-foreground" />
                 <span>{profile.grade}年生</span>
+              </div>
+            )}
+            {profile.gpa != null && (
+              <div className="flex items-center gap-2 text-sm">
+                <Star className="size-4 text-muted-foreground" />
+                <span>評定平均 {profile.gpa.toFixed(1)}</span>
+              </div>
+            )}
+            {profile.englishCerts && profile.englishCerts.length > 0 && (
+              <div className="flex items-start gap-2 text-sm">
+                <Languages className="mt-0.5 size-4 text-muted-foreground" />
+                <div className="flex flex-wrap gap-1">
+                  {profile.englishCerts.map((cert, i) => (
+                    <Badge key={i} variant="secondary" className="text-xs">
+                      {cert.type === "EIKEN" ? "英検" : cert.type} {cert.score}
+                    </Badge>
+                  ))}
+                </div>
               </div>
             )}
             <div className="flex items-start gap-2 text-sm">

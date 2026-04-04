@@ -1,5 +1,6 @@
 import type { WeaknessRecord } from "./growth";
 import type { EssayScores } from "./essay";
+import type { EnglishCert } from "./user";
 
 export interface StudentListItem {
   uid: string;
@@ -25,6 +26,8 @@ export interface StudentDetail {
     email: string;
     school?: string;
     grade?: number;
+    gpa?: number;
+    englishCerts?: EnglishCert[];
     targetUniversities: string[];
   };
   weaknesses: WeaknessRecord[];

@@ -10,6 +10,8 @@ const MOCK_DETAIL: StudentDetail = {
     email: "tanaka@example.com",
     school: "私立開成高等学校",
     grade: 3,
+    gpa: 4.5,
+    englishCerts: [{ type: "EIKEN" as const, score: "準1級" }],
     targetUniversities: ["東京大学", "京都大学"],
   },
   weaknesses: [
@@ -255,6 +257,8 @@ export async function GET(
         email: userData.email ?? "",
         school: userData.school,
         grade: userData.grade,
+        gpa: userData.gpa ?? undefined,
+        englishCerts: userData.englishCerts ?? undefined,
         targetUniversities: userData.targetUniversities ?? [],
       },
       weaknesses,

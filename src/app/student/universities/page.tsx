@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +24,8 @@ import {
 import { EmptyState } from "@/components/shared/EmptyState";
 import type { MatchResult, MatchingResponse } from "@/lib/types/matching";
 import { SuggestPanel, ResultSkeleton } from "@/components/shared/SuggestPanel";
+import { useAuth } from "@/contexts/AuthContext";
+import type { StudentProfile } from "@/lib/types/user";
 
 const CERT_TYPES = ["EIKEN", "TOEIC", "TOEFL", "IELTS", "TEAP", "GTEC"] as const;
 
@@ -94,6 +96,7 @@ function ResultCard({ result }: { result: MatchResult }) {
 }
 
 export default function UniversitiesPage() {
+  const { userProfile } = useAuth();
   const [mode, setMode] = useState<"match" | "suggest">("match");
   const [gpa, setGpa] = useState("");
   const [certType, setCertType] = useState("");
@@ -102,6 +105,21 @@ export default function UniversitiesPage() {
   const [summary, setSummary] = useState<{ total: number; matched: number } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Pre-populate from profile
+  useEffect(() => {
+    const profile = userProfile as StudentProfile | null;
+    if (!profile) return;
+    if (profile.gpa != null && !gpa) {
+      setGpa(String(profile.gpa));
+    }
+    if (profile.englishCerts?.length && !certType) {
+      const first = profile.englishCerts[0];
+      setCertType(first.type);
+      setCertScore(first.score ?? "");
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userProfile]);
 
   async function handleMatch() {
     setLoading(true);

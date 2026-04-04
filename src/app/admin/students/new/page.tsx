@@ -14,9 +14,22 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Loader2, X } from "lucide-react";
+import { ArrowLeft, Loader2, X, Plus } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import type { University } from "@/lib/types/university";
+import type { EnglishCert } from "@/lib/types/user";
+
+const CERT_TYPES: { value: EnglishCert["type"]; label: string }[] = [
+  { value: "EIKEN", label: "英検" },
+  { value: "TOEIC", label: "TOEIC" },
+  { value: "TOEFL", label: "TOEFL" },
+  { value: "IELTS", label: "IELTS" },
+  { value: "TEAP", label: "TEAP" },
+  { value: "GTEC", label: "GTEC" },
+  { value: "OTHER", label: "そ��他" },
+];
+
+const EIKEN_GRADES = ["1級", "準1級", "2級", "準2級", "3級", "4級", "5級"];
 
 interface FormData {
   displayName: string;
@@ -24,6 +37,8 @@ interface FormData {
   password: string;
   school: string;
   grade: string;
+  gpa: string;
+  englishCerts: EnglishCert[];
   targetUniversities: string[];
 }
 
@@ -41,6 +56,8 @@ export default function AdminStudentNewPage() {
     password: "",
     school: "",
     grade: "",
+    gpa: "",
+    englishCerts: [],
     targetUniversities: [],
   });
   const [errors, setErrors] = useState<FormErrors>({});
@@ -48,6 +65,8 @@ export default function AdminStudentNewPage() {
   const [apiError, setApiError] = useState("");
   const [universities, setUniversities] = useState<University[]>([]);
   const [selectedUni, setSelectedUni] = useState("");
+  const [certType, setCertType] = useState<EnglishCert["type"]>("EIKEN");
+  const [certScore, setCertScore] = useState("");
 
   useEffect(() => {
     authFetch("/api/universities")
@@ -92,6 +111,8 @@ export default function AdminStudentNewPage() {
           password: form.password,
           school: form.school.trim(),
           grade: form.grade ? Number(form.grade) : undefined,
+          gpa: form.gpa ? Number(form.gpa) : undefined,
+          englishCerts: form.englishCerts.length > 0 ? form.englishCerts : undefined,
           targetUniversities: form.targetUniversities,
         }),
       });
@@ -228,6 +249,128 @@ export default function AdminStudentNewPage() {
                   <SelectItem value="3">高校3年</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="gpa">評定平均（GPA）</Label>
+              <Input
+                id="gpa"
+                type="number"
+                min={0}
+                max={5}
+                step={0.1}
+                placeholder="例: 4.2"
+                value={form.gpa}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, gpa: e.target.value }))
+                }
+              />
+              <p className="text-xs text-muted-foreground">0.0〜5.0（任意）</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>英語資格</Label>
+              {form.englishCerts.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {form.englishCerts.map((cert, i) => (
+                    <Badge key={i} variant="secondary" className="gap-1 pr-1">
+                      {CERT_TYPES.find((t) => t.value === cert.type)?.label} {cert.score}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setForm((prev) => ({
+                            ...prev,
+                            englishCerts: prev.englishCerts.filter((_, idx) => idx !== i),
+                          }))
+                        }
+                        className="rounded-full p-0.5 hover:bg-muted"
+                      >
+                        <X className="size-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              <div className="flex gap-2">
+                <Select
+                  value={certType}
+                  onValueChange={(v) => {
+                    setCertType(v as EnglishCert["type"]);
+                    setCertScore("");
+                  }}
+                >
+                  <SelectTrigger className="w-28">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CERT_TYPES.map((t) => (
+                      <SelectItem key={t.value} value={t.value}>
+                        {t.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {certType === "EIKEN" ? (
+                  <Select
+                    value={certScore}
+                    onValueChange={(v) => {
+                      if (!v) return;
+                      setForm((prev) => ({
+                        ...prev,
+                        englishCerts: [...prev.englishCerts, { type: "EIKEN", score: v }],
+                      }));
+                      setCertScore("");
+                    }}
+                  >
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="級を選択" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {EIKEN_GRADES.map((g) => (
+                        <SelectItem key={g} value={g}>{g}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <>
+                    <Input
+                      placeholder="スコア"
+                      value={certScore}
+                      onChange={(e) => setCertScore(e.target.value)}
+                      className="flex-1"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          if (certScore.trim()) {
+                            setForm((prev) => ({
+                              ...prev,
+                              englishCerts: [...prev.englishCerts, { type: certType, score: certScore.trim() }],
+                            }));
+                            setCertScore("");
+                          }
+                        }
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => {
+                        if (certScore.trim()) {
+                          setForm((prev) => ({
+                            ...prev,
+                            englishCerts: [...prev.englishCerts, { type: certType, score: certScore.trim() }],
+                          }));
+                          setCertScore("");
+                        }
+                      }}
+                    >
+                      <Plus className="size-4" />
+                    </Button>
+                  </>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">任意・複数追加可</p>
             </div>
 
             <div className="space-y-2">
