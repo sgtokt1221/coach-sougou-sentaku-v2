@@ -5,7 +5,8 @@ export interface InterviewScores {
   apAlignment: number;   // AP合致度 0-10
   enthusiasm: number;    // 熱意 0-10
   specificity: number;   // 具体性 0-10
-  total: number;         // 合計 0-40
+  bodyLanguage: number;  // ボディランゲージ 0-10
+  total: number;         // 合計 0-50
 }
 
 export type InterviewMode = "individual" | "group_discussion" | "presentation" | "oral_exam";
@@ -75,6 +76,7 @@ export interface InterviewEndRequest {
   transcription?: Transcription;
   voiceAnalysis?: VoiceAnalysis;
   videoAnalysis?: VideoAnalysis;
+  appearanceAnalysis?: AppearanceAnalysis;
 }
 
 export interface InterviewEndResponse {
@@ -82,6 +84,19 @@ export interface InterviewEndResponse {
   scores: InterviewScores;
   feedback: InterviewFeedback;
   growthEvents: GrowthEvent[];
+  appearanceAnalysis?: AppearanceAnalysis;
+}
+
+export interface AppearanceIssue {
+  category: "clothing" | "hair" | "object" | "background" | "lighting";
+  severity: "critical" | "warning" | "info";
+  description: string;
+}
+
+export interface AppearanceAnalysis {
+  score: number; // 0-10
+  issues: AppearanceIssue[];
+  advice: string;
 }
 
 // Re-export for convenience

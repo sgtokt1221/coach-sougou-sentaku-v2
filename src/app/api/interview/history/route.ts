@@ -10,7 +10,7 @@ const MOCK_HISTORY = [
     status: "completed",
     startedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
     duration: 15,
-    scores: { clarity: 7, apAlignment: 6, enthusiasm: 8, specificity: 6, total: 27 },
+    scores: { clarity: 7, apAlignment: 6, enthusiasm: 8, specificity: 6, bodyLanguage: 0, total: 27 },
     universityContext: {
       universityName: "東京大学",
       facultyName: "工学部",
@@ -26,7 +26,7 @@ const MOCK_HISTORY = [
     status: "completed",
     startedAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
     duration: 18,
-    scores: { clarity: 6, apAlignment: 7, enthusiasm: 7, specificity: 5, total: 25 },
+    scores: { clarity: 6, apAlignment: 7, enthusiasm: 7, specificity: 5, bodyLanguage: 0, total: 25 },
     universityContext: {
       universityName: "京都大学",
       facultyName: "法学部",
@@ -42,7 +42,7 @@ const MOCK_HISTORY = [
     status: "completed",
     startedAt: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString(),
     duration: 12,
-    scores: { clarity: 5, apAlignment: 5, enthusiasm: 6, specificity: 5, total: 21 },
+    scores: { clarity: 5, apAlignment: 5, enthusiasm: 6, specificity: 5, bodyLanguage: 0, total: 21 },
     universityContext: {
       universityName: "早稲田大学",
       facultyName: "政治経済学部",

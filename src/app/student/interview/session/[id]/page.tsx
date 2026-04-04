@@ -13,7 +13,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Send, StopCircle, ChevronDown, ChevronUp, Video, VideoOff } from "lucide-react";
-import type { InterviewMessage, InterviewMode, InterviewInputMode, VoiceAnalysis, VideoAnalysis } from "@/lib/types/interview";
+import type { InterviewMessage, InterviewMode, InterviewInputMode, VoiceAnalysis, VideoAnalysis, AppearanceAnalysis } from "@/lib/types/interview";
 import { INTERVIEW_MODE_LABELS } from "@/lib/types/interview";
 import VoiceRecorder from "@/components/interview/VoiceRecorder";
 import ContinuousVoiceRecorder from "@/components/interview/ContinuousVoiceRecorder";
@@ -56,6 +56,9 @@ export default function InterviewSessionPage() {
   const [memo, setMemo] = useState("");
   const [voiceAnalysis, setVoiceAnalysis] = useState<VoiceAnalysis | null>(null);
   const [videoAnalysis, setVideoAnalysis] = useState<VideoAnalysis | null>(null);
+  const [appearanceAnalysis, setAppearanceAnalysis] = useState<AppearanceAnalysis | null>(null);
+  const [appearanceAlert, setAppearanceAlert] = useState<string | null>(null);
+  const appearanceCheckCount = useRef(0);
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
   const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
   const [cameraEnabled, setCameraEnabled] = useState(false);
@@ -164,6 +167,54 @@ export default function InterviewSessionPage() {
     };
   }, [cameraEnabled]);
 
+  // Appearance check via Claude Vision
+  const runAppearanceCheck = useCallback(async () => {
+    if (!videoStream || appearanceCheckCount.current >= 3) return;
+    try {
+      const video = document.querySelector("video");
+      if (!video) return;
+      const canvas = document.createElement("canvas");
+      canvas.width = 320;
+      canvas.height = 240;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      ctx.drawImage(video, 0, 0, 320, 240);
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
+      const imageBase64 = dataUrl.split(",")[1];
+
+      const res = await fetch("/api/interview/appearance-check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageBase64, mimeType: "image/jpeg" }),
+      });
+      if (!res.ok) return;
+      const analysis: AppearanceAnalysis = await res.json();
+      setAppearanceAnalysis(analysis);
+      appearanceCheckCount.current++;
+
+      const critical = analysis.issues.filter((i) => i.severity === "critical");
+      if (critical.length > 0) {
+        setAppearanceAlert(critical.map((i) => i.description).join("、"));
+        setTimeout(() => setAppearanceAlert(null), 8000);
+      }
+    } catch {
+      // 外見チェック失敗は無視
+    }
+  }, [videoStream]);
+
+  // Run appearance check on camera start and every 5 minutes
+  useEffect(() => {
+    if (!videoStream) return;
+    // Initial check after 3 seconds (let camera stabilize)
+    const initialTimeout = setTimeout(runAppearanceCheck, 3000);
+    // Periodic check every 5 minutes
+    const interval = setInterval(runAppearanceCheck, 5 * 60 * 1000);
+    return () => {
+      clearTimeout(initialTimeout);
+      clearInterval(interval);
+    };
+  }, [videoStream, runAppearanceCheck]);
+
   // Timer
   useEffect(() => {
     const interval = setInterval(() => setElapsed((e) => e + 1), 1000);
@@ -231,7 +282,7 @@ export default function InterviewSessionPage() {
       const res = await fetch("/api/interview/end", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId, messages, duration: elapsed, ...(voiceAnalysis ? { voiceAnalysis } : {}), ...(videoAnalysis ? { videoAnalysis } : {}) }),
+        body: JSON.stringify({ sessionId, messages, duration: elapsed, ...(voiceAnalysis ? { voiceAnalysis } : {}), ...(videoAnalysis ? { videoAnalysis } : {}), ...(appearanceAnalysis ? { appearanceAnalysis } : {}) }),
       });
       if (!res.ok) throw new Error();
       const data = await res.json();
@@ -345,6 +396,13 @@ export default function InterviewSessionPage() {
           </Button>
         </div>
       </div>
+
+      {/* Appearance alert */}
+      {appearanceAlert && (
+        <div className="mx-4 mt-2 rounded-lg border border-rose-300 bg-rose-50 dark:border-rose-700 dark:bg-rose-950/30 px-3 py-2 text-sm text-rose-700 dark:text-rose-300 animate-in fade-in slide-in-from-top-2">
+          <strong>身だしなみ:</strong> {appearanceAlert}
+        </div>
+      )}
 
       {/* Messages */}
       <div

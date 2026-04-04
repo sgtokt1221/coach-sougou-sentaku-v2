@@ -27,13 +27,16 @@ import type {
   Transcription,
   VoiceAnalysis,
   VideoAnalysis,
+  AppearanceAnalysis,
 } from "@/lib/types/interview";
 import { INTERVIEW_MODE_LABELS } from "@/lib/types/interview";
 import type { GrowthEvent, RepeatedIssue } from "@/lib/types/essay";
 import type { SessionSummary } from "@/lib/types/session";
+import { ScoreRing } from "@/components/shared/ScoreRing";
 import { TranscriptionView } from "@/components/interview/TranscriptionView";
 import VoiceAnalysisReport from "@/components/interview/VoiceAnalysisReport";
 import VideoAnalysisReport from "@/components/interview/VideoAnalysisReport";
+import AppearanceReport from "@/components/interview/AppearanceReport";
 
 interface InterviewResult {
   id: string;
@@ -49,6 +52,7 @@ interface InterviewResult {
   transcription?: Transcription;
   voiceAnalysis?: VoiceAnalysis;
   videoAnalysis?: VideoAnalysis;
+  appearanceAnalysis?: AppearanceAnalysis;
   summary?: SessionSummary;
 }
 
@@ -64,6 +68,7 @@ const mockResult: InterviewResult = {
     apAlignment: 6,
     enthusiasm: 8,
     specificity: 5,
+    bodyLanguage: 0,
     total: 26,
   },
   feedback: {
@@ -196,6 +201,7 @@ const SCORE_LABELS: Record<keyof Omit<InterviewScores, "total">, string> = {
   apAlignment: "AP合致度",
   enthusiasm: "熱意",
   specificity: "具体性",
+  bodyLanguage: "ボディランゲージ",
 };
 
 const SCORE_COLORS: Record<keyof Omit<InterviewScores, "total">, string> = {
@@ -203,6 +209,7 @@ const SCORE_COLORS: Record<keyof Omit<InterviewScores, "total">, string> = {
   apAlignment: "bg-purple-500",
   enthusiasm: "bg-orange-500",
   specificity: "bg-green-500",
+  bodyLanguage: "bg-teal-500",
 };
 
 export default function InterviewResultPage() {
@@ -236,6 +243,7 @@ export default function InterviewResultPage() {
             growthEvents: data.growthEvents,
             voiceAnalysis: data.voiceAnalysis,
             videoAnalysis: data.videoAnalysis,
+            appearanceAnalysis: data.appearanceAnalysis,
             transcription: data.transcription,
             summary: data.summary,
           });
@@ -291,6 +299,7 @@ export default function InterviewResultPage() {
     "apAlignment",
     "enthusiasm",
     "specificity",
+    "bodyLanguage",
   ];
 
   return (
@@ -314,10 +323,13 @@ export default function InterviewResultPage() {
         <CardContent className="pt-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="font-semibold">総合スコア</h2>
-            <span className="text-4xl font-bold text-primary">
-              {result.scores.total}
-              <span className="text-lg text-muted-foreground">/40</span>
-            </span>
+            <div className="flex items-center gap-3">
+              <ScoreRing score={result.scores.total} maxScore={50} size={72} strokeWidth={5} />
+              <span className="text-4xl font-bold text-primary">
+                {result.scores.total}
+                <span className="text-lg text-muted-foreground">/40</span>
+              </span>
+            </div>
           </div>
           <div className="space-y-4">
             {scoreKeys.map((key) => (
@@ -346,6 +358,11 @@ export default function InterviewResultPage() {
       {/* 映像分析 */}
       {result.videoAnalysis && (
         <VideoAnalysisReport analysis={result.videoAnalysis} />
+      )}
+
+      {/* 身だしなみチェック */}
+      {result.appearanceAnalysis && (
+        <AppearanceReport analysis={result.appearanceAnalysis} />
       )}
 
       {/* 繰り返し弱点 */}

@@ -35,7 +35,7 @@ const mockDetail: InterviewDetail = {
     { role: "ai", content: "模擬国連での経験は素晴らしいですね。東京大学法学部で学ぶことで、将来どのようなキャリアを考えていますか？" },
     { role: "student", content: "将来は国際機関や外務省で、人権問題に関わる政策立案に携わりたいと考えています。東京大学の国際法研究室は国内トップレベルであり、その環境で学ぶことが目標達成の最短ルートだと確信しています。" },
   ],
-  scores: { clarity: 8, apAlignment: 7, enthusiasm: 9, specificity: 7, total: 31 },
+  scores: { clarity: 8, apAlignment: 7, enthusiasm: 9, specificity: 7, bodyLanguage: 0, total: 31 },
   feedback: {
     overall: "志望理由が明確で、熱意が伝わる回答でした。具体例をもう少し増やすとより説得力が増します。",
     goodPoints: [

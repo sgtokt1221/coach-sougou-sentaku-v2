@@ -1,9 +1,7 @@
-export type InvitationStatus = "pending" | "used" | "expired";
-
 export interface Invitation {
   code: string;
-  role: "admin" | "teacher";
-  status: InvitationStatus;
+  role: "teacher" | "admin";
+  status: "pending" | "used" | "expired";
   createdBy: string;
   createdAt: string;
   expiresAt: string;

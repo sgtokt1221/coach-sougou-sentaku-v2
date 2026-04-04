@@ -13,8 +13,10 @@ import {
   signUpWithEmail,
 } from "@/lib/firebase/auth";
 import { Loader2, ArrowRight } from "lucide-react";
+import UniversityMarquee from "@/components/shared/UniversityMarquee";
+import FeatureSlider from "@/components/shared/FeatureSlider";
 
-type Mode = "login" | "signup" | "invitation";
+type Mode = "login" | "signup";
 
 export default function LoginPage() {
   const { user, userProfile, loading: authLoading } = useAuth();
@@ -25,9 +27,6 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
-  const [invCode, setInvCode] = useState("");
-  const [invCodeValid, setInvCodeValid] = useState(false);
-  const [invValidating, setInvValidating] = useState(false);
 
   useEffect(() => {
     if (!authLoading && user && userProfile) {
@@ -54,56 +53,6 @@ export default function LoginPage() {
       toast.error(
         err instanceof Error ? err.message : "Google login failed"
       );
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handleValidateCode(e: React.FormEvent) {
-    e.preventDefault();
-    if (!/^[a-f0-9]{8}$/.test(invCode)) {
-      toast.error("招待コードは8桁の英数字です");
-      return;
-    }
-    setInvValidating(true);
-    try {
-      const res = await fetch("/api/auth/validate-code", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: invCode }),
-      });
-      const data = await res.json();
-      if (data.valid) {
-        setInvCodeValid(true);
-      } else {
-        toast.error(data.error || "無効な招待コードです");
-      }
-    } catch {
-      toast.error("検証に失敗しました");
-    } finally {
-      setInvValidating(false);
-    }
-  }
-
-  async function handleInvitationRegister(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const res = await fetch("/api/auth/register-with-code", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: invCode, email, password, displayName }),
-      });
-      const data = await res.json();
-      if (data.error) {
-        toast.error(data.error);
-        return;
-      }
-      // Auto-login after registration
-      await signInWithEmail(email, password);
-      toast.success("管理者アカウントを作成しました");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "登録に失敗しました");
     } finally {
       setLoading(false);
     }
@@ -147,66 +96,40 @@ export default function LoginPage() {
         {/* Background gradient */}
         <div className="absolute inset-0 bg-gradient-to-br from-[oklch(0.22_0.03_260)] via-[oklch(0.18_0.04_220)] to-[oklch(0.15_0.02_260)]" />
 
-        {/* Decorative elements with animation */}
-        <div className="absolute inset-0">
-          <div className="absolute top-[15%] left-[10%] size-72 rounded-full bg-[oklch(0.52_0.14_175_/_0.12)] blur-[80px] animate-orb-float-1" />
-          <div className="absolute bottom-[20%] right-[15%] size-64 rounded-full bg-[oklch(0.75_0.16_75_/_0.08)] blur-[60px] animate-orb-float-2" style={{ animationDelay: "1s" }} />
-          <div className="absolute top-[60%] left-[40%] size-48 rounded-full bg-[oklch(0.55_0.12_280_/_0.06)] blur-[50px] animate-orb-float-3" style={{ animationDelay: "2s" }} />
-        </div>
-
-        {/* Geometric decorations */}
-        <div className="absolute bottom-24 left-8">
-          <div className="w-20 h-20 border border-white/10 rounded-full backdrop-blur-sm"></div>
-        </div>
-        <div className="absolute top-1/3 right-24">
-          <div className="w-16 h-16 border border-white/8 rounded-lg rotate-45 backdrop-blur-sm"></div>
-        </div>
-
-        {/* Grid pattern with animation */}
-        <div
-          className="absolute inset-0 opacity-[0.04] animate-grid-scroll"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)",
-            backgroundSize: "60px 60px"
-          }}
-        />
-
-        {/* Content */}
-        <div className="relative z-10 flex flex-col justify-between p-12">
-          {/* Logo */}
+        {/* Content — vertically centered with natural spacing */}
+        <div className="relative z-10 flex flex-col justify-between h-full px-10 py-8">
+          {/* Top: Logo */}
           <div className="animate-fade-in">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/logo-dark.svg" alt="coach for 総合型選抜" className="h-14" />
           </div>
 
-          {/* Hero text */}
-          <div className="max-w-lg animate-fade-in-up" style={{ animationDelay: "200ms" }}>
-            <h1 className="font-heading text-[3.2rem] font-bold leading-[1.1] tracking-tight text-white">
-              総合型選抜を、
-              <br />
-              <span className="bg-gradient-to-r from-[oklch(0.70_0.16_175)] to-[oklch(0.80_0.18_75)] bg-clip-text text-transparent">
-                AIとともに。
-              </span>
-            </h1>
-            <p className="mt-5 text-[15px] leading-relaxed text-white/50 max-w-md">
-              小論文添削、模擬面接、出願書類作成、活動実績の構造化。
-              あなたの合格までの道のりを、AIが伴走します。
-            </p>
+          {/* Middle: Hero + Features */}
+          <div className="space-y-8">
+            {/* Hero */}
+            <div className="animate-fade-in-up" style={{ animationDelay: "200ms" }}>
+              <h1 className="font-heading text-[2.75rem] font-bold leading-[1.12] tracking-tight text-white">
+                総合型選抜を、
+                <br />
+                <span className="bg-gradient-to-r from-[oklch(0.70_0.16_175)] to-[oklch(0.80_0.18_75)] bg-clip-text text-transparent">
+                  AIとともに。
+                </span>
+              </h1>
+              <p className="mt-4 text-[15px] leading-relaxed text-white/40 max-w-md">
+                小論文添削、模擬面接、出願書類作成、活動実績の構造化。あなたの合格までの道のりを、AIが伴走します。
+              </p>
+            </div>
+
+            {/* Feature slider */}
+            <div className="animate-fade-in-up" style={{ animationDelay: "400ms" }}>
+              <FeatureSlider />
+            </div>
           </div>
 
-          {/* Stats */}
-          <div className="flex gap-10 animate-fade-in-up" style={{ animationDelay: "400ms" }}>
-            {[
-              { value: "20+", label: "対応大学" },
-              { value: "5", label: "AI機能" },
-              { value: "24/7", label: "いつでも練習" },
-            ].map((stat) => (
-              <div key={stat.label}>
-                <p className="font-heading text-2xl font-black text-white">{stat.value}</p>
-                <p className="mt-0.5 text-xs text-white/35">{stat.label}</p>
-              </div>
-            ))}
+          {/* Bottom: University marquee */}
+          <div className="animate-fade-in-up" style={{ animationDelay: "600ms" }}>
+            <p className="text-[12px] uppercase tracking-widest text-white/25 mb-2">23大学対応</p>
+            <UniversityMarquee />
           </div>
         </div>
       </div>
@@ -222,125 +145,15 @@ export default function LoginPage() {
 
           <div className="mb-8">
             <h2 className="font-heading text-2xl font-bold tracking-tight">
-              {mode === "invitation" ? "招待コードで登録" : isSignUp ? "アカウント作成" : "おかえりなさい"}
+              {isSignUp ? "アカウント作成" : "おかえりなさい"}
             </h2>
             <p className="mt-1.5 text-sm text-muted-foreground">
-              {mode === "invitation"
-                ? "管理者から受け取った招待コードで登録します"
-                : isSignUp
+              {isSignUp
                 ? "coach for 総合型選抜で準備を始めましょう"
                 : "アカウントにサインインしてください"}
             </p>
           </div>
 
-          {mode === "invitation" ? (
-            <div className="space-y-5">
-              {!invCodeValid ? (
-                <form onSubmit={handleValidateCode} className="space-y-4">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="invCode" className="text-xs font-medium">
-                      招待コード
-                    </Label>
-                    <Input
-                      id="invCode"
-                      value={invCode}
-                      onChange={(e) => setInvCode(e.target.value.toLowerCase().replace(/[^a-f0-9]/g, ""))}
-                      maxLength={8}
-                      placeholder="8桁のコードを入力"
-                      className="h-10 font-mono text-center text-lg tracking-widest"
-                    />
-                  </div>
-                  <Button
-                    type="submit"
-                    className="w-full h-11 gap-2 text-sm font-medium transition-all hover:shadow-lg hover:shadow-primary/25"
-                    disabled={invValidating || invCode.length !== 8}
-                  >
-                    {invValidating ? (
-                      <Loader2 className="size-4 animate-spin" />
-                    ) : (
-                      <>
-                        コードを確認
-                        <ArrowRight className="size-4" />
-                      </>
-                    )}
-                  </Button>
-                </form>
-              ) : (
-                <form onSubmit={handleInvitationRegister} className="space-y-4">
-                  <div className="rounded-lg border border-green-200 bg-green-50 p-3 dark:border-green-800 dark:bg-green-950/30">
-                    <p className="text-xs font-medium text-green-700 dark:text-green-400">
-                      招待コード <span className="font-mono">{invCode}</span> が確認されました
-                    </p>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="invDisplayName" className="text-xs font-medium group-focus-within:text-primary transition-colors">
-                      お名前
-                    </Label>
-                    <Input
-                      id="invDisplayName"
-                      value={displayName}
-                      onChange={(e) => setDisplayName(e.target.value)}
-                      required
-                      placeholder="山田太郎"
-                      className="h-10 focus:ring-2 focus:ring-primary/20"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="invEmail" className="text-xs font-medium group-focus-within:text-primary transition-colors">
-                      メールアドレス
-                    </Label>
-                    <Input
-                      id="invEmail"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      placeholder="email@example.com"
-                      className="h-10 focus:ring-2 focus:ring-primary/20"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="invPassword" className="text-xs font-medium group-focus-within:text-primary transition-colors">
-                      パスワード
-                    </Label>
-                    <Input
-                      id="invPassword"
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      minLength={8}
-                      placeholder="8文字以上"
-                      className="h-10 focus:ring-2 focus:ring-primary/20"
-                    />
-                  </div>
-                  <Button
-                    type="submit"
-                    className="w-full h-11 gap-2 text-sm font-medium transition-all hover:shadow-lg hover:shadow-primary/25"
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <Loader2 className="size-4 animate-spin" />
-                    ) : (
-                      <>
-                        管理者アカウントを作成
-                        <ArrowRight className="size-4" />
-                      </>
-                    )}
-                  </Button>
-                </form>
-              )}
-              <p className="text-center text-[13px] text-muted-foreground">
-                <button
-                  type="button"
-                  className="font-medium text-primary hover:underline underline-offset-4"
-                  onClick={() => { setMode("login"); setInvCode(""); setInvCodeValid(false); }}
-                >
-                  サインインに戻る
-                </button>
-              </p>
-            </div>
-          ) : (
           <div className="space-y-5">
             <Button
               variant="outline"
@@ -454,18 +267,8 @@ export default function LoginPage() {
                   {isSignUp ? "サインイン" : "新規登録"}
                 </button>
               </p>
-              <p className="text-center text-[13px] text-muted-foreground">
-                <button
-                  type="button"
-                  className="font-medium text-primary hover:underline underline-offset-4"
-                  onClick={() => setMode("invitation")}
-                >
-                  招待コードをお持ちの方
-                </button>
-              </p>
             </div>
           </div>
-          )}
 
           {process.env.NODE_ENV === "development" && (
             <div className="mt-6 rounded-lg border border-amber-300/60 bg-amber-100/60 p-4 dark:border-amber-700/50 dark:bg-amber-950/20">

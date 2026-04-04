@@ -16,7 +16,7 @@ import { logActivity } from "@/lib/firebase/activity-log";
 export async function POST(request: NextRequest) {
   try {
     const body: InterviewEndRequest = await request.json();
-    const { sessionId, messages, duration, userId, transcription, voiceAnalysis, videoAnalysis } = body;
+    const { sessionId, messages, duration, userId, transcription, voiceAnalysis, videoAnalysis, appearanceAnalysis } = body;
 
     if (!sessionId || !messages || duration === undefined) {
       return NextResponse.json(
@@ -141,12 +141,14 @@ export async function POST(request: NextRequest) {
 
     const parsed = JSON.parse(jsonMatch[1]);
 
+    const bodyLanguageScore = videoAnalysis?.overallVideoScore ?? 0;
     const scores: InterviewScores = {
       clarity: parsed.scores.clarity,
       apAlignment: parsed.scores.apAlignment,
       enthusiasm: parsed.scores.enthusiasm,
       specificity: parsed.scores.specificity,
-      total: parsed.scores.total,
+      bodyLanguage: Math.round(bodyLanguageScore * 10) / 10,
+      total: parsed.scores.clarity + parsed.scores.apAlignment + parsed.scores.enthusiasm + parsed.scores.specificity + Math.round(bodyLanguageScore * 10) / 10,
     };
 
     const feedback: InterviewFeedback = {
@@ -157,16 +159,34 @@ export async function POST(request: NextRequest) {
       improvementsSinceLast: parsed.feedback.improvementsSinceLast ?? [],
     };
 
-    // 弱点タグを抽出
+    // 弱点タグを抽出（会話内容）
     const weaknessTags: string[] = [
       ...feedback.repeatedIssues.map((issue) => issue.area),
       ...feedback.improvements,
     ];
 
+    // VideoAnalysis → 弱点タグ
+    if (videoAnalysis) {
+      if (videoAnalysis.eyeContactRate < 40) weaknessTags.push("視線が散漫");
+      if (videoAnalysis.smileRate < 10) weaknessTags.push("表情が硬い");
+      if (videoAnalysis.positionStability < 0.5) weaknessTags.push("姿勢が不安定");
+      if (videoAnalysis.avgHeadTilt > 10) weaknessTags.push("首が傾きがち");
+      if (videoAnalysis.nodRate < 2) weaknessTags.push("うなずきが少��い");
+    }
+
+    // AppearanceAnalysis → 弱点タグ（critical/warningのみ���
+    if (appearanceAnalysis?.issues) {
+      for (const issue of appearanceAnalysis.issues) {
+        if (issue.severity === "critical" || issue.severity === "warning") {
+          weaknessTags.push(`身だしなみ: ${issue.description}`);
+        }
+      }
+    }
+
     const updatedWeaknesses = updateWeaknessRecords(existingWeaknesses, weaknessTags);
     const growthEvents = analyzeGrowth(weaknessTags, existingWeaknesses);
 
-    if (scores.total >= 32) {
+    if (scores.total >= 40) {
       growthEvents.unshift({
         type: "praise",
         area: "overall",
@@ -187,6 +207,7 @@ export async function POST(request: NextRequest) {
           ...(transcription ? { transcription } : {}),
           ...(voiceAnalysis ? { voiceAnalysis } : {}),
           ...(videoAnalysis ? { videoAnalysis } : {}),
+          ...(appearanceAnalysis ? { appearanceAnalysis } : {}),
         });
 
         if (userId) {
@@ -251,6 +272,7 @@ export async function POST(request: NextRequest) {
       growthEvents,
       ...(voiceAnalysis ? { voiceAnalysis } : {}),
       ...(videoAnalysis ? { videoAnalysis } : {}),
+      ...(appearanceAnalysis ? { appearanceAnalysis } : {}),
       ...(transcription ? { transcription } : {}),
     });
   } catch (error) {
