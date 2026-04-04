@@ -17,7 +17,7 @@ interface RedPenTextProps {
   corrections: LanguageCorrection[];
 }
 
-const TYPE_COLORS = {
+const TYPE_STYLES = {
   typo: { underline: "decoration-red-500", bg: "bg-red-50", border: "border-red-200", badge: "border-red-300 text-red-600", label: "誤字脱字" },
   grammar: { underline: "decoration-orange-500", bg: "bg-orange-50", border: "border-orange-200", badge: "border-orange-300 text-orange-600", label: "文法" },
   connector: { underline: "decoration-blue-500", bg: "bg-blue-50", border: "border-blue-200", badge: "border-blue-300 text-blue-600", label: "接続語" },
@@ -60,12 +60,14 @@ function findCorrectionsInText(text: string, corrections: LanguageCorrection[]):
   return segments;
 }
 
+const LINE_HEIGHT = 32; // px
+const FONT_SIZE = 14; // px
+
 export function RedPenText({ text, corrections }: RedPenTextProps) {
   const [selected, setSelected] = useState<number | null>(null);
 
   const segments = findCorrectionsInText(text, corrections);
 
-  // Build rendered parts
   const parts: React.ReactNode[] = [];
   let cursor = 0;
 
@@ -78,39 +80,20 @@ export function RedPenText({ text, corrections }: RedPenTextProps) {
 
     const ci = seg.correctionIndex;
     const correction = corrections[ci];
-    const colors = TYPE_COLORS[correction.type];
+    const styles = TYPE_STYLES[correction.type];
     const isSelected = selected === ci;
 
     parts.push(
-      <span key={`c-${ci}`} className="relative inline">
-        <button
-          type="button"
-          onClick={() => setSelected(isSelected ? null : ci)}
-          className={`underline decoration-wavy decoration-2 ${colors.underline} ${isSelected ? colors.bg : "hover:bg-red-50/50"} rounded-sm px-0.5 -mx-0.5 transition-colors cursor-pointer`}
-        >
-          {text.slice(seg.start, seg.end)}
-        </button>
-        {isSelected && (
-          <span className={`absolute left-0 top-full mt-1 z-20 w-72 rounded-lg border ${colors.border} ${colors.bg} p-3 shadow-lg text-left`}>
-            <button
-              type="button"
-              onClick={() => setSelected(null)}
-              className="absolute top-1.5 right-1.5 text-muted-foreground hover:text-foreground"
-            >
-              <X className="size-3.5" />
-            </button>
-            <Badge variant="outline" className={`text-[10px] mb-1.5 ${colors.badge}`}>
-              {colors.label}
-            </Badge>
-            <span className="flex items-center gap-1.5 text-sm mb-1.5">
-              <span className="line-through text-muted-foreground">{correction.original}</span>
-              <ArrowRight className="size-3 text-muted-foreground shrink-0" />
-              <span className="font-medium text-primary">{correction.suggestion}</span>
-            </span>
-            <span className="text-xs text-muted-foreground block">{correction.reason}</span>
-          </span>
-        )}
-      </span>
+      <button
+        key={`c-${ci}`}
+        type="button"
+        onClick={() => setSelected(isSelected ? null : ci)}
+        className={`underline decoration-wavy decoration-2 ${styles.underline} ${
+          isSelected ? `${styles.bg} rounded-sm` : "hover:bg-red-50/50"
+        } transition-colors cursor-pointer`}
+      >
+        {text.slice(seg.start, seg.end)}
+      </button>
     );
 
     cursor = seg.end;
@@ -120,30 +103,60 @@ export function RedPenText({ text, corrections }: RedPenTextProps) {
     parts.push(<span key={`t-${cursor}`}>{text.slice(cursor)}</span>);
   }
 
+  const selectedCorrection = selected !== null ? corrections[selected] : null;
+  const selectedStyles = selectedCorrection ? TYPE_STYLES[selectedCorrection.type] : null;
+
   return (
-    <div className="space-y-2">
-      {/* 原稿用紙風コンテナ */}
+    <div className="space-y-3">
+      {/* 原稿用紙 */}
       <div
-        className="relative rounded-lg border border-amber-200 bg-amber-50/30 p-5 overflow-hidden"
+        className="relative rounded-lg border border-amber-200/80 bg-[#fdf8f0] px-5 py-0"
         style={{
-          backgroundImage:
-            "repeating-linear-gradient(transparent, transparent 1.9em, #d4a574 1.9em, #d4a574 2em)",
-          backgroundSize: "100% 2em",
-          backgroundPosition: "0 0.6em",
+          backgroundImage: `repeating-linear-gradient(
+            transparent 0px,
+            transparent ${LINE_HEIGHT - 1}px,
+            #d4a574 ${LINE_HEIGHT - 1}px,
+            #d4a574 ${LINE_HEIGHT}px
+          )`,
+          backgroundSize: `100% ${LINE_HEIGHT}px`,
         }}
       >
-        {/* 縦の赤マージン線 */}
-        <div className="absolute left-10 top-0 bottom-0 w-px bg-red-300/60" />
+        <div className="absolute left-10 top-0 bottom-0 w-px bg-red-300/50" />
         <p
-          className="text-sm whitespace-pre-wrap pl-4"
+          className="whitespace-pre-wrap pl-4 py-0 my-0"
           style={{
             fontFamily: '"Zen Maru Gothic", "Noto Serif JP", serif',
-            lineHeight: "2em",
+            fontSize: `${FONT_SIZE}px`,
+            lineHeight: `${LINE_HEIGHT}px`,
           }}
         >
           {parts.length > 0 ? parts : text}
         </p>
       </div>
+
+      {/* 選択中の修正案（本文の下に固定表示） */}
+      {selectedCorrection && selectedStyles && (
+        <div className={`rounded-lg border ${selectedStyles.border} ${selectedStyles.bg} p-4 relative animate-in fade-in slide-in-from-top-2 duration-200`}>
+          <button
+            type="button"
+            onClick={() => setSelected(null)}
+            className="absolute top-2 right-2 text-muted-foreground hover:text-foreground"
+          >
+            <X className="size-4" />
+          </button>
+          <div className="space-y-2">
+            <Badge variant="outline" className={`text-[10px] ${selectedStyles.badge}`}>
+              {selectedStyles.label}
+            </Badge>
+            <div className="flex items-start gap-2 text-sm flex-wrap">
+              <span className="line-through text-muted-foreground">{selectedCorrection.original}</span>
+              <ArrowRight className="size-3 text-muted-foreground shrink-0 mt-1" />
+              <span className="font-medium text-primary">{selectedCorrection.suggestion}</span>
+            </div>
+            <p className="text-xs text-muted-foreground">{selectedCorrection.reason}</p>
+          </div>
+        </div>
+      )}
 
       <p className="text-[10px] text-muted-foreground text-right">
         ※ 波線の箇所をタップすると修正案が表示されます
