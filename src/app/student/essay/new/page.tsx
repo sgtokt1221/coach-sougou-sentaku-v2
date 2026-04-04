@@ -17,6 +17,8 @@ import {
   CheckCircle,
   ArrowLeft,
   ChevronRight,
+  ChevronUp,
+  ChevronDown,
   FileText,
   GraduationCap,
   Settings,
@@ -25,6 +27,8 @@ import {
   Mic,
   Loader2,
   Square,
+  Trash2,
+  Plus,
 } from "lucide-react";
 import { WeaknessReminderCard } from "@/components/growth/WeaknessReminderCard";
 import { ManuscriptEditor } from "@/components/essay/ManuscriptEditor";
@@ -175,11 +179,11 @@ export default function EssayNewPage() {
   const universityId = selectedUni?.universityId ?? "";
   const facultyId = selectedUni?.facultyId ?? "";
 
-  // Step 2
-  const [imageBase64, setImageBase64] = useState<string | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  // Step 2 — 複数画像対応
+  const [images, setImages] = useState<Array<{ base64: string; preview: string }>>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  const [uploadProgress, setUploadProgress] = useState("");
 
   // Step 3
   const [essayId, setEssayId] = useState<string | null>(null);
@@ -188,78 +192,121 @@ export default function EssayNewPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // 後方互換用
+  const imageBase64 = images[0]?.base64 ?? null;
+  const imagePreview = images[0]?.preview ?? null;
+
   function handleImageFile(file: File) {
     const reader = new FileReader();
     reader.onload = (e) => {
       const base64 = e.target?.result as string;
-      setImageBase64(base64);
-      setImagePreview(base64);
+      setImages((prev) => [...prev, { base64, preview: base64 }]);
     };
     reader.readAsDataURL(file);
   }
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (file) handleImageFile(file);
+    const files = e.target.files;
+    if (!files) return;
+    for (let i = 0; i < files.length; i++) {
+      handleImageFile(files[i]);
+    }
+    e.target.value = "";
   }
 
   function handleDrop(e: React.DragEvent<HTMLDivElement>) {
     e.preventDefault();
-    const file = e.dataTransfer.files?.[0];
-    if (file && file.type.startsWith("image/")) handleImageFile(file);
+    const files = e.dataTransfer.files;
+    for (let i = 0; i < files.length; i++) {
+      if (files[i].type.startsWith("image/")) handleImageFile(files[i]);
+    }
   }
 
   function handleDragOver(e: React.DragEvent<HTMLDivElement>) {
     e.preventDefault();
   }
 
+  function removeImage(index: number) {
+    setImages((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function moveImage(index: number, direction: "up" | "down") {
+    setImages((prev) => {
+      const next = [...prev];
+      const target = direction === "up" ? index - 1 : index + 1;
+      if (target < 0 || target >= next.length) return prev;
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
+  }
+
   async function handleUpload() {
-    if (!imageBase64) return;
+    if (images.length === 0) return;
     setIsUploading(true);
     setError(null);
     try {
-      const res = await fetch("/api/essay/upload", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageBase64, universityId, facultyId, topic, writingDirection }),
-      });
-      if (!res.ok) throw new Error("アップロードに失敗しました");
-      const data = await res.json();
-      setEssayId(data.essayId);
-      setOcrText(data.ocrText ?? "");
+      const ocrResults: string[] = [];
+      let firstEssayId = "";
+
+      for (let i = 0; i < images.length; i++) {
+        setUploadProgress(`${i + 1}/${images.length}枚目を解析中...`);
+        const res = await fetch("/api/essay/upload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            imageBase64: images[i].base64,
+            universityId, facultyId, topic, writingDirection,
+          }),
+        });
+        if (!res.ok) throw new Error(`${i + 1}枚目のアップロードに失敗しました`);
+        const data = await res.json();
+        if (i === 0) firstEssayId = data.essayId;
+        if (data.ocrText) ocrResults.push(data.ocrText);
+      }
+
+      setEssayId(firstEssayId);
+      setOcrText(ocrResults.join("\n\n"));
       setStep(3);
-    } catch {
-      setEssayId("mock-essay-id");
-      setOcrText(
-        "（OCRで認識されたテキストがここに表示されます。実際のAPIが接続されると自動で入力されます。）"
-      );
-      setStep(3);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "アップロードに失敗しました");
     } finally {
       setIsUploading(false);
+      setUploadProgress("");
     }
   }
 
   // 音読モード: 画像アップロード（OCR polygon取得用）
   async function handleDictationUpload() {
-    if (!imageBase64) return;
+    if (images.length === 0) return;
     setIsUploading(true);
     setError(null);
     try {
-      const res = await fetch("/api/essay/upload", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageBase64, universityId, facultyId, topic, writingDirection }),
-      });
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      setEssayId(data.essayId);
-      setOcrWords(data.ocrWords ?? []);
-      setPageSize({ width: data.pageWidth ?? 0, height: data.pageHeight ?? 0 });
-      setStep(3); // Go to dictation step
+      let firstEssayId = "";
+      for (let i = 0; i < images.length; i++) {
+        setUploadProgress(`${i + 1}/${images.length}枚目を解析中...`);
+        const res = await fetch("/api/essay/upload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            imageBase64: images[i].base64,
+            universityId, facultyId, topic, writingDirection,
+          }),
+        });
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        if (i === 0) {
+          firstEssayId = data.essayId;
+          setOcrWords(data.ocrWords ?? []);
+          setPageSize({ width: data.pageWidth ?? 0, height: data.pageHeight ?? 0 });
+        }
+      }
+      setEssayId(firstEssayId);
+      setStep(3);
     } catch {
       setError("画像のアップロードに失敗しました");
     } finally {
       setIsUploading(false);
+      setUploadProgress("");
     }
   }
 
@@ -807,27 +854,49 @@ export default function EssayNewPage() {
           </CardHeader>
           <CardContent className="p-3 lg:p-4 space-y-4">
             <p className="text-sm text-muted-foreground">
-              原稿用紙の写真を撮影してください。この後、見ながら音読していただきます。
+              原稿用紙の写真を撮影してください。複数枚の場合はページ順に追加してください。
             </p>
+            {images.length > 0 && (
+              <div className="grid grid-cols-3 gap-2">
+                {images.map((img, i) => (
+                  <div key={i} className="relative group rounded-lg border overflow-hidden">
+                    <img src={img.preview} alt={`${i + 1}枚目`} className="w-full aspect-[3/4] object-cover" />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <button type="button" onClick={() => removeImage(i)} className="size-7 rounded-full bg-red-500 text-white flex items-center justify-center">
+                        <Trash2 className="size-3.5" />
+                      </button>
+                    </div>
+                    <span className="absolute top-1 left-1 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded-full">{i + 1}</span>
+                  </div>
+                ))}
+              </div>
+            )}
             <div
-              className="border-2 border-dashed border-border rounded-lg min-h-[160px] flex flex-col items-center justify-center gap-3 cursor-pointer hover:bg-muted/50 transition-colors"
+              className="border-2 border-dashed border-border rounded-lg min-h-[120px] flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-muted/50 transition-colors"
               onClick={() => fileInputRef.current?.click()}
               onDrop={handleDrop}
               onDragOver={handleDragOver}
             >
-              {imagePreview ? (
-                <img src={imagePreview} alt="プレビュー" className="max-h-48 rounded-lg object-contain" />
-              ) : (
+              {images.length === 0 ? (
                 <>
                   <Camera className="size-8 text-muted-foreground" />
                   <p className="text-sm text-muted-foreground">タップして撮影</p>
                 </>
+              ) : (
+                <>
+                  <Plus className="size-6 text-muted-foreground" />
+                  <p className="text-xs text-muted-foreground">もう1枚追加</p>
+                </>
               )}
             </div>
             <input ref={fileInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileChange} />
-            {imageBase64 && (
+            {images.length > 0 && (
               <Button className="w-full" onClick={handleDictationUpload} disabled={isUploading}>
-                {isUploading ? <><Loader2 className="size-4 mr-1 animate-spin" />処理中...</> : <>次へ：音読<ChevronRight className="size-4 ml-1" /></>}
+                {isUploading ? (
+                  <><Loader2 className="size-4 mr-1 animate-spin" />{uploadProgress || "処理中..."}</>
+                ) : (
+                  <>次へ：音読<ChevronRight className="size-4 ml-1" /></>
+                )}
               </Button>
             )}
           </CardContent>
@@ -846,10 +915,17 @@ export default function EssayNewPage() {
               <p className="text-xs text-blue-700 mt-1">音声認識で正確にテキスト化されます。ゆっくり、はっきりと読むのがコツです。</p>
             </div>
 
-            {/* Show uploaded image */}
-            {imagePreview && (
-              <div className="rounded-lg border overflow-hidden max-h-[300px] overflow-y-auto">
-                <img src={imagePreview} alt="小論文" className="w-full object-contain" />
+            {/* Show uploaded images */}
+            {images.length > 0 && (
+              <div className="rounded-lg border overflow-hidden max-h-[300px] overflow-y-auto space-y-1">
+                {images.map((img, i) => (
+                  <div key={i} className="relative">
+                    <img src={img.preview} alt={`${i + 1}枚目`} className="w-full object-contain" />
+                    {images.length > 1 && (
+                      <span className="absolute top-1 left-1 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded-full">{i + 1}</span>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
 
@@ -928,10 +1004,16 @@ export default function EssayNewPage() {
               <p className="text-sm text-green-800">音声認識の結果です。間違いがあれば修正してください。</p>
             </div>
 
-            {imagePreview && (
+            {images.length > 0 && (
               <details>
-                <summary className="text-sm text-muted-foreground cursor-pointer hover:text-foreground">元画像を表示</summary>
-                <img src={imagePreview} alt="小論文" className="w-full rounded-lg border object-contain max-h-64 mt-2" />
+                <summary className="text-sm text-muted-foreground cursor-pointer hover:text-foreground">
+                  元画像を表示（{images.length}枚）
+                </summary>
+                <div className={`mt-2 gap-2 ${images.length > 1 ? "grid grid-cols-2" : ""}`}>
+                  {images.map((img, i) => (
+                    <img key={i} src={img.preview} alt={`${i + 1}枚目`} className="w-full rounded-lg border object-contain max-h-64" />
+                  ))}
+                </div>
               </details>
             )}
 
@@ -957,75 +1039,90 @@ export default function EssayNewPage() {
             <CardTitle className="text-sm lg:text-base">小論文の画像をアップロード</CardTitle>
           </CardHeader>
           <CardContent className="p-3 lg:p-4 space-y-4">
+            <p className="text-xs text-muted-foreground">
+              複数枚の原稿用紙にも対応しています。ページ順にアップロードしてください。
+            </p>
+
+            {/* アップロード済み画像一覧 */}
+            {images.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium">{images.length}枚の画像</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {images.map((img, i) => (
+                    <div key={i} className="relative group rounded-lg border overflow-hidden">
+                      <img src={img.preview} alt={`${i + 1}枚目`} className="w-full aspect-[3/4] object-cover" />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
+                        {i > 0 && (
+                          <button type="button" onClick={() => moveImage(i, "up")} className="size-7 rounded-full bg-white/90 flex items-center justify-center">
+                            <ChevronUp className="size-4" />
+                          </button>
+                        )}
+                        {i < images.length - 1 && (
+                          <button type="button" onClick={() => moveImage(i, "down")} className="size-7 rounded-full bg-white/90 flex items-center justify-center">
+                            <ChevronDown className="size-4" />
+                          </button>
+                        )}
+                        <button type="button" onClick={() => removeImage(i)} className="size-7 rounded-full bg-red-500 text-white flex items-center justify-center">
+                          <Trash2 className="size-3.5" />
+                        </button>
+                      </div>
+                      <span className="absolute top-1 left-1 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded-full">
+                        {i + 1}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ドロップエリア */}
             <div
-              className="border-2 border-dashed border-border rounded-lg min-h-[160px] lg:min-h-[200px] flex flex-col items-center justify-center gap-3 cursor-pointer hover:bg-muted/50 transition-colors"
+              className="border-2 border-dashed border-border rounded-lg min-h-[120px] flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-muted/50 transition-colors"
               onDrop={handleDrop}
               onDragOver={handleDragOver}
               onClick={() => fileInputRef.current?.click()}
             >
-              <Upload className="size-10 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground text-center">
-                ここに画像をドラッグ&ドロップ
-                <br />
-                またはクリックして選択
-              </p>
+              {images.length === 0 ? (
+                <>
+                  <Upload className="size-8 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground text-center">
+                    ここに画像をドラッグ&ドロップ<br />またはクリックして選択
+                  </p>
+                </>
+              ) : (
+                <>
+                  <Plus className="size-6 text-muted-foreground" />
+                  <p className="text-xs text-muted-foreground">もう1枚追加</p>
+                </>
+              )}
             </div>
 
             <div className="flex gap-3">
-              <Button
-                variant="outline"
-                className="flex-1"
-                onClick={() => fileInputRef.current?.click()}
-              >
+              <Button variant="outline" className="flex-1" onClick={() => fileInputRef.current?.click()}>
                 <Upload className="size-4 mr-2" />
                 ファイル選択
               </Button>
-              <Button
-                variant="outline"
-                className="flex-1"
-                onClick={() => cameraInputRef.current?.click()}
-              >
+              <Button variant="outline" className="flex-1" onClick={() => cameraInputRef.current?.click()}>
                 <Camera className="size-4 mr-2" />
                 カメラ撮影
               </Button>
             </div>
 
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleFileChange}
-            />
-            <input
-              ref={cameraInputRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              className="hidden"
-              onChange={handleFileChange}
-            />
-
-            {imagePreview && (
-              <div className="space-y-2">
-                <p className="text-sm font-medium">プレビュー</p>
-                <img
-                  src={imagePreview}
-                  alt="アップロード画像プレビュー"
-                  className="w-full rounded-lg border object-contain max-h-64"
-                />
-              </div>
-            )}
+            <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
+            <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileChange} />
 
             <Separator />
 
             <Button
               className="w-full"
-              disabled={!imageBase64 || isUploading}
+              disabled={images.length === 0 || isUploading}
               onClick={handleUpload}
             >
-              {isUploading ? "OCR解析中..." : "次へ（OCR解析）"}
-              {!isUploading && <ChevronRight className="size-4 ml-1" />}
+              {isUploading ? (
+                <><Loader2 className="size-4 mr-1 animate-spin" />{uploadProgress || "OCR解析中..."}</>
+              ) : (
+                <>{images.length > 1 ? `${images.length}枚をOCR解析` : "次へ（OCR解析）"}<ChevronRight className="size-4 ml-1" /></>
+              )}
             </Button>
           </CardContent>
         </Card>
@@ -1047,14 +1144,21 @@ export default function EssayNewPage() {
               <p className="text-xs text-amber-700 mt-1">誤認識がある場合は修正してから添削に進んでください。正確な添削には正しいテキストが必要です。</p>
             </div>
 
-            {imagePreview && (
+            {images.length > 0 && (
               <details className="mb-2">
-                <summary className="text-sm text-muted-foreground cursor-pointer hover:text-foreground">元画像を表示</summary>
-                <img
-                  src={imagePreview}
-                  alt="提出した小論文"
-                  className="w-full rounded-lg border object-contain max-h-64 mt-2"
-                />
+                <summary className="text-sm text-muted-foreground cursor-pointer hover:text-foreground">
+                  元画像を表示（{images.length}枚）
+                </summary>
+                <div className={`mt-2 gap-2 ${images.length > 1 ? "grid grid-cols-2" : ""}`}>
+                  {images.map((img, i) => (
+                    <div key={i} className="relative">
+                      <img src={img.preview} alt={`${i + 1}枚目`} className="w-full rounded-lg border object-contain max-h-64" />
+                      {images.length > 1 && (
+                        <span className="absolute top-1 left-1 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded-full">{i + 1}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </details>
             )}
 
