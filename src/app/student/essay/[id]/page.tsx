@@ -23,7 +23,6 @@ import {
   Compass,
   PenTool,
   SpellCheck,
-  ArrowRight,
 } from "lucide-react";
 import {
   Radar,
@@ -34,6 +33,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { ScoreRing } from "@/components/shared/ScoreRing";
+import { RedPenText } from "@/components/essay/RedPenText";
 import type { GrowthEvent } from "@/lib/types/essay";
 
 interface EssayScores {
@@ -86,6 +86,7 @@ interface EssayResult {
   facultyName: string;
   topic: string;
   submittedAt: string;
+  ocrText?: string;
   scores: EssayScores;
   feedback: EssayFeedback;
   growthEvents?: GrowthEvent[];
@@ -128,6 +129,7 @@ export default function EssayResultPage() {
             facultyName: parsed.facultyName ?? "",
             topic: parsed.topic ?? "",
             submittedAt: parsed.submittedAt ?? new Date().toISOString(),
+            ocrText: parsed.ocrText ?? "",
             scores: parsed.scores,
             feedback: parsed.feedback,
             growthEvents: parsed.growthEvents,
@@ -396,43 +398,20 @@ export default function EssayResultPage() {
         </Card>
       )}
 
-      {/* 文章の指摘 */}
-      {result.feedback.languageCorrections && result.feedback.languageCorrections.length > 0 && (
+      {/* 赤ペン添削 */}
+      {result.ocrText && result.feedback.languageCorrections && result.feedback.languageCorrections.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <SpellCheck className="size-4" />
-              文章の指摘（{result.feedback.languageCorrections.length}件）
+              赤ペン添削（{result.feedback.languageCorrections.length}件）
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ul className="space-y-3">
-              {result.feedback.languageCorrections.map((c, i) => (
-                <li key={i} className="rounded-lg border p-3 space-y-1.5">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className={`text-[10px] ${
-                      c.type === "typo" ? "border-red-300 text-red-600" :
-                      c.type === "grammar" ? "border-orange-300 text-orange-600" :
-                      c.type === "connector" ? "border-blue-300 text-blue-600" :
-                      c.type === "expression" ? "border-purple-300 text-purple-600" :
-                      "border-amber-300 text-amber-600"
-                    }`}>
-                      {c.type === "typo" ? "誤字脱字" :
-                       c.type === "grammar" ? "文法" :
-                       c.type === "connector" ? "接続語" :
-                       c.type === "expression" ? "表現" : "冗長"}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground">{c.location}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="line-through text-muted-foreground">{c.original}</span>
-                    <ArrowRight className="size-3 text-muted-foreground shrink-0" />
-                    <span className="font-medium text-primary">{c.suggestion}</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">{c.reason}</p>
-                </li>
-              ))}
-            </ul>
+            <RedPenText
+              text={result.ocrText}
+              corrections={result.feedback.languageCorrections}
+            />
           </CardContent>
         </Card>
       )}

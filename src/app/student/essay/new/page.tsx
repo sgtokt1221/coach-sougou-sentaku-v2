@@ -305,6 +305,7 @@ export default function EssayNewPage() {
       const data = await res.json();
       sessionStorage.setItem("essayReviewResult", JSON.stringify({
         ...data,
+        ocrText: directText,
         universityName: selectedUni?.universityName ?? "",
         facultyName: selectedUni?.facultyName ?? "",
         topic: topic ?? "",
@@ -339,6 +340,7 @@ export default function EssayNewPage() {
       const data = await res.json();
       sessionStorage.setItem("essayReviewResult", JSON.stringify({
         ...data,
+        ocrText,
         universityName: selectedUni?.universityName ?? "",
         facultyName: selectedUni?.facultyName ?? "",
         topic: topic ?? "",
