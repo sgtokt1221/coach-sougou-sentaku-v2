@@ -15,8 +15,16 @@ export function OnboardingGuard({ children }: { children: ReactNode }) {
     if (pathname.startsWith("/student/onboarding")) return;
 
     const profile = userProfile as StudentProfile | null;
-    const localCompleted = typeof window !== "undefined" && localStorage.getItem("onboardingCompleted") === "true";
-    if (profile && profile.role === "student" && !profile.onboardingCompleted && !localCompleted) {
+    if (!profile || profile.role !== "student") return;
+
+    // Firestoreで完了済みならlocalStorageにも同期
+    if (profile.onboardingCompleted) {
+      localStorage.setItem("onboardingCompleted", "true");
+      return;
+    }
+
+    const localCompleted = localStorage.getItem("onboardingCompleted") === "true";
+    if (!localCompleted) {
       router.replace("/student/onboarding");
     }
   }, [userProfile, loading, pathname, router]);

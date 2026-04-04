@@ -73,8 +73,8 @@ export function ReviewProgress() {
   const progress = Math.min(15 + stageIndex * 20 + (elapsed % 8) * 2, 95);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-teal-50/30">
-      <div className="w-full max-w-md mx-6 space-y-10">
+    <div className="fixed inset-0 z-50 flex items-center justify-center min-h-dvh bg-gradient-to-br from-slate-50 via-white to-teal-50/30">
+      <div className="w-full max-w-md mx-6 space-y-8 py-8">
         {/* Main animation area */}
         <div className="flex flex-col items-center gap-6">
           {/* Animated rings + icon */}

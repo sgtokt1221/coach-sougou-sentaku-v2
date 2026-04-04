@@ -40,48 +40,6 @@ interface EssayHistoryItem {
   };
 }
 
-const mockHistory: EssayHistoryItem[] = [
-  {
-    id: "essay-1",
-    universityName: "京都大学",
-    facultyName: "文学部",
-    topic: "グローバル化と日本の未来",
-    submittedAt: "2026-03-21",
-    status: "reviewed",
-    totalScore: 33,
-    scores: { structure: 7, logic: 6, expression: 8, apAlignment: 5, originality: 7 },
-  },
-  {
-    id: "essay-2",
-    universityName: "大阪大学",
-    facultyName: "法学部",
-    topic: "民主主義の課題",
-    submittedAt: "2026-03-14",
-    status: "reviewed",
-    totalScore: 29,
-    scores: { structure: 6, logic: 5, expression: 7, apAlignment: 5, originality: 6 },
-  },
-  {
-    id: "essay-3",
-    universityName: "東北大学",
-    facultyName: "文学部",
-    topic: "AI時代の人間性",
-    submittedAt: "2026-03-07",
-    status: "reviewed",
-    totalScore: 25,
-    scores: { structure: 5, logic: 5, expression: 5, apAlignment: 4, originality: 6 },
-  },
-  {
-    id: "essay-4",
-    universityName: "京都大学",
-    facultyName: "法学部",
-    topic: "",
-    submittedAt: "2026-03-21",
-    status: "reviewing",
-    totalScore: 0,
-    scores: { structure: 0, logic: 0, expression: 0, apAlignment: 0, originality: 0 },
-  },
-];
 
 const STATUS_LABEL: Record<EssayHistoryItem["status"], string> = {
   reviewed: "添削完了",
@@ -123,7 +81,7 @@ export default function EssayHistoryPage() {
   const [visibleLines, setVisibleLines] = useState<Set<string>>(new Set(["total"]));
 
   const { data: rawData, isLoading: loading } = useAuthSWR<{ essays: EssayHistoryItem[] }>("/api/essay/history");
-  const history = rawData?.essays ?? mockHistory;
+  const history = rawData?.essays ?? [];
 
   function toggleLine(key: string) {
     setVisibleLines((prev) => {
