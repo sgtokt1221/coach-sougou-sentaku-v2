@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { WeaknessReminderCard } from "@/components/growth/WeaknessReminderCard";
 import { ManuscriptEditor } from "@/components/essay/ManuscriptEditor";
+import { ReviewProgress } from "@/components/essay/ReviewProgress";
 import { PastQuestionChart } from "@/components/essay/PastQuestionChart";
 import { getThemeById, EssayTheme } from "@/data/essay-themes";
 import { getPastQuestionById, summarizeChartData, PastQuestion } from "@/data/essay-past-questions";
@@ -352,6 +353,10 @@ export default function EssayNewPage() {
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  if (isSubmitting) {
+    return <ReviewProgress />;
   }
 
   return (
