@@ -1036,65 +1036,45 @@ export default function EssayNewPage() {
       {step === 2 && inputMode === "image" && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm lg:text-base">小論文の画像をアップロード</CardTitle>
+            <CardTitle className="text-sm lg:text-base">
+              {images.length === 0 ? "1枚目の原稿用紙" : `${images.length + 1}枚目を追加しますか？`}
+            </CardTitle>
           </CardHeader>
           <CardContent className="p-3 lg:p-4 space-y-4">
-            <p className="text-xs text-muted-foreground">
-              複数枚の原稿用紙にも対応しています。ページ順にアップロードしてください。
-            </p>
-
-            {/* アップロード済み画像一覧 */}
+            {/* 確認済み画像一覧 */}
             {images.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-sm font-medium">{images.length}枚の画像</p>
-                <div className="grid grid-cols-3 gap-2">
-                  {images.map((img, i) => (
-                    <div key={i} className="relative group rounded-lg border overflow-hidden">
-                      <img src={img.preview} alt={`${i + 1}枚目`} className="w-full aspect-[3/4] object-cover" />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
-                        {i > 0 && (
-                          <button type="button" onClick={() => moveImage(i, "up")} className="size-7 rounded-full bg-white/90 flex items-center justify-center">
-                            <ChevronUp className="size-4" />
-                          </button>
-                        )}
-                        {i < images.length - 1 && (
-                          <button type="button" onClick={() => moveImage(i, "down")} className="size-7 rounded-full bg-white/90 flex items-center justify-center">
-                            <ChevronDown className="size-4" />
-                          </button>
-                        )}
-                        <button type="button" onClick={() => removeImage(i)} className="size-7 rounded-full bg-red-500 text-white flex items-center justify-center">
-                          <Trash2 className="size-3.5" />
-                        </button>
-                      </div>
-                      <span className="absolute top-1 left-1 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded-full">
-                        {i + 1}
-                      </span>
+              <div className="space-y-3">
+                {images.map((img, i) => (
+                  <div key={i} className="flex items-center gap-3 rounded-lg border p-2">
+                    <img src={img.preview} alt={`${i + 1}枚目`} className="size-16 rounded-md object-cover shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium">{i + 1}枚目</p>
+                      <p className="text-xs text-green-600 flex items-center gap-1">
+                        <CheckCircle className="size-3" />追加済み
+                      </p>
                     </div>
-                  ))}
-                </div>
+                    <button type="button" onClick={() => removeImage(i)} className="text-muted-foreground hover:text-destructive p-1">
+                      <Trash2 className="size-4" />
+                    </button>
+                  </div>
+                ))}
+                <Separator />
               </div>
             )}
 
-            {/* ドロップエリア */}
+            {/* 撮影/選択エリア */}
             <div
-              className="border-2 border-dashed border-border rounded-lg min-h-[120px] flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-muted/50 transition-colors"
+              className="border-2 border-dashed border-border rounded-lg min-h-[180px] flex flex-col items-center justify-center gap-3 cursor-pointer hover:bg-muted/50 transition-colors"
               onDrop={handleDrop}
               onDragOver={handleDragOver}
               onClick={() => fileInputRef.current?.click()}
             >
-              {images.length === 0 ? (
-                <>
-                  <Upload className="size-8 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground text-center">
-                    ここに画像をドラッグ&ドロップ<br />またはクリックして選択
-                  </p>
-                </>
-              ) : (
-                <>
-                  <Plus className="size-6 text-muted-foreground" />
-                  <p className="text-xs text-muted-foreground">もう1枚追加</p>
-                </>
-              )}
+              <Camera className="size-10 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground text-center">
+                {images.length === 0
+                  ? "タップして1枚目を撮影・選択"
+                  : "タップして次のページを追加"}
+              </p>
             </div>
 
             <div className="flex gap-3">
@@ -1108,22 +1088,26 @@ export default function EssayNewPage() {
               </Button>
             </div>
 
-            <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
             <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileChange} />
 
-            <Separator />
-
-            <Button
-              className="w-full"
-              disabled={images.length === 0 || isUploading}
-              onClick={handleUpload}
-            >
-              {isUploading ? (
-                <><Loader2 className="size-4 mr-1 animate-spin" />{uploadProgress || "OCR解析中..."}</>
-              ) : (
-                <>{images.length > 1 ? `${images.length}枚をOCR解析` : "次へ（OCR解析）"}<ChevronRight className="size-4 ml-1" /></>
-              )}
-            </Button>
+            {/* 画像がある場合のアクションボタン */}
+            {images.length > 0 && (
+              <>
+                <Separator />
+                <Button
+                  className="w-full"
+                  disabled={isUploading}
+                  onClick={handleUpload}
+                >
+                  {isUploading ? (
+                    <><Loader2 className="size-4 mr-1 animate-spin" />{uploadProgress || "OCR解析中..."}</>
+                  ) : (
+                    <>{images.length === 1 ? "この1枚でOCR解析" : `${images.length}枚でOCR解析`}<ChevronRight className="size-4 ml-1" /></>
+                  )}
+                </Button>
+              </>
+            )}
           </CardContent>
         </Card>
       )}
