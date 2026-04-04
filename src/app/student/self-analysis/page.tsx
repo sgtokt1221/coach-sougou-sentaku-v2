@@ -21,46 +21,77 @@ export default function SelfAnalysisPage() {
   const [chatHistories, setChatHistories] = useState<StepChatHistory[]>([]);
   const [stepsData, setStepsData] = useState<Record<number, Record<string, unknown>>>({});
   const [allComplete, setAllComplete] = useState(false);
+  const [restored, setRestored] = useState(false);
+
+  // Restore progress from Firestore
+  useEffect(() => {
+    if (restored || !data || data.isComplete) return;
+    const saved = data.completedSteps ?? 0;
+    if (saved > 0) {
+      setCompletedSteps(saved);
+      setCurrentStep(saved + 1 <= 7 ? saved + 1 : 7);
+      const restoredData: Record<number, Record<string, unknown>> = {};
+      const STEP_KEYS = ["values", "strengths", "weaknesses", "interests", "vision", "identity"] as const;
+      STEP_KEYS.forEach((key, i) => {
+        const val = data[key];
+        if (val && typeof val === "object" && Object.keys(val as object).length > 0) {
+          restoredData[i + 1] = val as unknown as Record<string, unknown>;
+        }
+      });
+      setStepsData(restoredData);
+      if (data.chatHistory?.length) {
+        setChatHistories(data.chatHistory);
+      }
+    }
+    setRestored(true);
+  }, [data, restored]);
+
+  const saveProgress = useCallback(
+    (updatedStepsData: Record<number, Record<string, unknown>>, updatedChatHistories: StepChatHistory[], newCompleted: number, isComplete: boolean) => {
+      const payload = {
+        userId: "me",
+        values: updatedStepsData[1] ?? {},
+        strengths: updatedStepsData[2] ?? {},
+        weaknesses: updatedStepsData[3] ?? {},
+        interests: updatedStepsData[4] ?? {},
+        vision: updatedStepsData[5] ?? {},
+        identity: updatedStepsData[6] ?? {},
+        completedSteps: newCompleted,
+        isComplete,
+        chatHistory: updatedChatHistories,
+      };
+      fetch("/api/self-analysis", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      }).catch(() => {});
+    },
+    []
+  );
 
   const handleStepComplete = useCallback(
     (stepData: Record<string, unknown>, messages: ChatMessage[]) => {
-      setStepsData((prev) => ({ ...prev, [currentStep]: stepData }));
-      setChatHistories((prev) => {
-        const filtered = prev.filter((h) => h.step !== currentStep);
-        return [...filtered, { step: currentStep, messages }];
-      });
+      const updatedStepsData = { ...stepsData, [currentStep]: stepData };
+      setStepsData(updatedStepsData);
+
+      const updatedChatHistories = [
+        ...chatHistories.filter((h) => h.step !== currentStep),
+        { step: currentStep, messages },
+      ];
+      setChatHistories(updatedChatHistories);
 
       const newCompleted = Math.max(completedSteps, currentStep);
       setCompletedSteps(newCompleted);
 
       if (currentStep >= 7) {
         setAllComplete(true);
-        // Save complete analysis
-        const analysisPayload = {
-          userId: "me",
-          values: stepsData[1] ?? stepData,
-          strengths: stepsData[2] ?? {},
-          weaknesses: stepsData[3] ?? {},
-          interests: stepsData[4] ?? {},
-          vision: stepsData[5] ?? {},
-          identity: currentStep >= 6 ? (stepsData[6] ?? stepData) : {},
-          completedSteps: 7,
-          isComplete: true,
-          chatHistory: [
-            ...chatHistories.filter((h) => h.step !== currentStep),
-            { step: currentStep, messages },
-          ],
-        };
-        fetch("/api/self-analysis", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(analysisPayload),
-        }).catch(() => {});
+        saveProgress(updatedStepsData, updatedChatHistories, 7, true);
       } else {
+        saveProgress(updatedStepsData, updatedChatHistories, newCompleted, false);
         setCurrentStep(currentStep + 1);
       }
     },
-    [currentStep, completedSteps, stepsData, chatHistories]
+    [currentStep, completedSteps, stepsData, chatHistories, saveProgress]
   );
 
   const currentMessages =
