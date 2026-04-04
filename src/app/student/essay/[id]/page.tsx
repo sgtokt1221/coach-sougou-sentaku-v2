@@ -22,6 +22,8 @@ import {
   ChevronUp,
   Compass,
   PenTool,
+  SpellCheck,
+  ArrowRight,
 } from "lucide-react";
 import {
   Radar,
@@ -59,6 +61,14 @@ interface TopicInsights {
   recommendedAngle: string;
 }
 
+interface LanguageCorrection {
+  location: string;
+  original: string;
+  suggestion: string;
+  type: "typo" | "grammar" | "connector" | "expression" | "redundancy";
+  reason: string;
+}
+
 interface EssayFeedback {
   overall: string;
   goodPoints: string[];
@@ -67,6 +77,7 @@ interface EssayFeedback {
   improvementsSinceLast: ImprovementSinceLast[];
   topicInsights?: TopicInsights;
   brushedUpText?: string;
+  languageCorrections?: LanguageCorrection[];
 }
 
 interface EssayResult {
@@ -424,6 +435,47 @@ export default function EssayResultPage() {
                 <li key={i} className="flex items-start gap-2 text-sm">
                   <AlertTriangle className="size-4 mt-0.5 shrink-0 text-yellow-500" />
                   <span>{point}</span>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* 文章の指摘 */}
+      {result.feedback.languageCorrections && result.feedback.languageCorrections.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <SpellCheck className="size-4" />
+              文章の指摘（{result.feedback.languageCorrections.length}件）
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-3">
+              {result.feedback.languageCorrections.map((c, i) => (
+                <li key={i} className="rounded-lg border p-3 space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className={`text-[10px] ${
+                      c.type === "typo" ? "border-red-300 text-red-600" :
+                      c.type === "grammar" ? "border-orange-300 text-orange-600" :
+                      c.type === "connector" ? "border-blue-300 text-blue-600" :
+                      c.type === "expression" ? "border-purple-300 text-purple-600" :
+                      "border-amber-300 text-amber-600"
+                    }`}>
+                      {c.type === "typo" ? "誤字脱字" :
+                       c.type === "grammar" ? "文法" :
+                       c.type === "connector" ? "接続語" :
+                       c.type === "expression" ? "表現" : "冗長"}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground">{c.location}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="line-through text-muted-foreground">{c.original}</span>
+                    <ArrowRight className="size-3 text-muted-foreground shrink-0" />
+                    <span className="font-medium text-primary">{c.suggestion}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{c.reason}</p>
                 </li>
               ))}
             </ul>
