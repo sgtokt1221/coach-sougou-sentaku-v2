@@ -906,60 +906,61 @@ export default function EssayNewPage() {
         </Card>
       )}
 
-      {/* Step 3: Dictation mode — OCR確認 + 音読 */}
+      {/* Step 3: Dictation mode — OCR確認 + 音読補正 */}
       {step === 3 && inputMode === "dictation" && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm lg:text-base">OCR結果を確認</CardTitle>
+            <CardTitle className="text-sm lg:text-base">認識結果の確認</CardTitle>
           </CardHeader>
           <CardContent className="p-3 lg:p-4 space-y-4">
-            {/* OCR結果表示 */}
+            {/* OCR結果 */}
             {ocrText ? (
-              <>
-                <div className="rounded-lg bg-green-50 border border-green-200 p-3">
-                  <p className="text-sm text-green-800">画像から文字を認識しました。内容を確認してください。</p>
-                  <p className="text-xs text-green-700 mt-1">修正が必要な場合は「確認・修正して添削」へ進んでください。</p>
-                </div>
-                <ManuscriptEditor
-                  value={ocrText}
-                  onChange={setOcrText}
-                  maxLength={2000}
-                  placeholder="OCR結果"
-                />
-                <div className="flex flex-col gap-2">
-                  <Button className="w-full" onClick={() => setStep(4)} disabled={!ocrText.trim()}>
-                    確認・修正して添削へ
-                    <ChevronRight className="size-4 ml-1" />
-                  </Button>
-                </div>
-                <Separator />
-                <div className="rounded-lg bg-blue-50 border border-blue-200 p-3">
-                  <p className="text-sm text-blue-800">認識がうまくいかなかった場合は、音読で補正できます。</p>
-                </div>
-              </>
+              <div className="rounded-lg bg-green-50 border border-green-200 p-3">
+                <p className="text-sm text-green-800">画像からテキストを認識しました。</p>
+                <p className="text-xs text-green-700 mt-1">内容が正しければ「このまま添削」、不十分なら下の音読で補正できます。</p>
+              </div>
             ) : (
               <div className="rounded-lg bg-amber-50 border border-amber-200 p-3">
-                <p className="text-sm text-amber-800">画像から文字を認識できませんでした。音読でテキスト化してください。</p>
+                <p className="text-sm text-amber-800">画像からテキストを認識できませんでした。下の音読でテキスト化してください。</p>
               </div>
             )}
 
-            {/* Show uploaded images */}
+            {/* OCRテキスト表示エリア */}
+            <ManuscriptEditor
+              value={ocrText}
+              onChange={setOcrText}
+              maxLength={2000}
+              placeholder="認識されたテキストがここに表示されます"
+            />
+
+            {/* スキップボタン（OCR結果で十分な場合） */}
+            {ocrText.trim() && (
+              <Button className="w-full" variant="default" onClick={() => setStep(4)} >
+                <CheckCircle className="size-4 mr-1" />
+                このまま添削へ進む
+              </Button>
+            )}
+
+            <Separator />
+
+            {/* 音読セクション */}
+            <div className="rounded-lg bg-blue-50 border border-blue-200 p-3">
+              <p className="text-sm text-blue-800 font-medium">音読で補正する</p>
+              <p className="text-xs text-blue-700 mt-1">画像を見ながら音読すると、OCR結果をより正確に補正できます。</p>
+            </div>
+
+            {/* 元画像 */}
             {images.length > 0 && (
-              <details>
-                <summary className="text-sm text-muted-foreground cursor-pointer hover:text-foreground">
-                  元画像を表示（{images.length}枚）
-                </summary>
-                <div className={`mt-2 gap-2 ${images.length > 1 ? "grid grid-cols-2" : ""}`}>
-                  {images.map((img, i) => (
-                    <div key={i} className="relative">
-                      <img src={img.preview} alt={`${i + 1}枚目`} className="w-full rounded-lg border object-contain max-h-64" />
-                      {images.length > 1 && (
-                        <span className="absolute top-1 left-1 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded-full">{i + 1}</span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </details>
+              <div className="rounded-lg border overflow-hidden max-h-[250px] overflow-y-auto">
+                {images.map((img, i) => (
+                  <div key={i} className="relative">
+                    <img src={img.preview} alt={`${i + 1}枚目`} className="w-full object-contain" />
+                    {images.length > 1 && (
+                      <span className="absolute top-1 left-1 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded-full">{i + 1}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
             )}
 
             {/* Recording UI */}
