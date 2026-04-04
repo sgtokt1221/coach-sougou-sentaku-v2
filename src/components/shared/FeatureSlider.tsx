@@ -7,36 +7,36 @@ const FEATURES = [
   {
     icon: PenLine,
     label: "小論文添削",
-    title: "手書きの小論文を撮影するだけ。AIが即座に添削。",
-    description: "カメラで撮影→OCRで読み取り→大学のAPに沿った観点でスコアリング。具体的な改善ポイントと模範表現を提示し、何度でも書き直しを支援します。",
+    title: "手書きの小論文を撮影するだけ。\nAIが即座に添削。",
+    description: "カメラで撮影→OCRで読み取り→大学のAPに沿った観点でスコアリング。改善ポイントと模範表現を提示します。",
     accent: "from-teal-400 to-emerald-400",
   },
   {
     icon: Mic,
     label: "AI模擬面接",
-    title: "志望大学別のAI面接官と、いつでも練習。",
-    description: "個人面接・集団討論・プレゼン・口頭試問の4モードに対応。テキスト・音声・ビデオで練習でき、姿勢・表情・話し方までAIが分析してフィードバック。",
+    title: "志望大学別のAI面接官と、\nいつでも練習。",
+    description: "4モード対応。音声・ビデオで練習でき、姿勢・表情・話し方までAIが分析してフィードバック。",
     accent: "from-amber-400 to-orange-400",
   },
   {
     icon: FileText,
     label: "出願書類サポート",
-    title: "志望理由書をAIと一緒につくる。",
-    description: "大学ごとの要件チェックリスト、AIドラフト生成、添削、バージョン管理。期限アラートで提出漏れも防ぎます。",
+    title: "志望理由書を\nAIと一緒につくる。",
+    description: "要件チェックリスト、AIドラフト生成、添削、バージョン管理。期限アラートで提出漏れも防ぎます。",
     accent: "from-blue-400 to-indigo-400",
   },
   {
     icon: Activity,
     label: "活動実績の構造化",
-    title: "散らばった経験を、合格に繋がる形に。",
-    description: "部活・ボランティア・研究活動をAIがヒアリングして深掘り。経験を整理し、志望大学のAPに合わせた最適な表現に構造化します。",
+    title: "散らばった経験を、\n合格に繋がる形に。",
+    description: "部活・ボランティア・研究をAIがヒアリング。APに合わせた最適な表現に構造化します。",
     accent: "from-purple-400 to-pink-400",
   },
   {
     icon: Brain,
     label: "成長トラッキング",
-    title: "弱点を可視化して、着実に成長。",
-    description: "添削・面接の結果を自動分析。繰り返し指摘される課題をリマインドし、改善の軌跡をグラフで確認。自分の成長を実感できます。",
+    title: "弱点を可視化して、\n着実に成長。",
+    description: "添削・面接の結果を自動分析。繰り返し指摘される課題をリマインドし、成長をグラフで確認。",
     accent: "from-rose-400 to-red-400",
   },
 ];
@@ -78,7 +78,7 @@ export default function FeatureSlider() {
 
         {/* Title + Description stacked */}
         <div className="mt-4 max-w-[90%]">
-          <h2 className="text-[1.25rem] leading-snug font-bold text-white">
+          <h2 className="text-[1.25rem] leading-snug font-bold text-white whitespace-pre-line">
             {feature.title}
           </h2>
           <p className="mt-3 text-[13px] leading-relaxed text-white/40">
