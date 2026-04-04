@@ -196,20 +196,34 @@ const mockResult: InterviewResult = {
   },
 };
 
-const SCORE_LABELS: Record<keyof Omit<InterviewScores, "total">, string> = {
+const SCORE_LABELS: Partial<Record<keyof InterviewScores, string>> = {
   clarity: "明確さ",
   apAlignment: "AP合致度",
   enthusiasm: "熱意",
   specificity: "具体性",
   bodyLanguage: "ボディランゲージ",
+  presentationStructure: "発表の論理構成",
+  dataEvidence: "データの根拠",
+  resourceConsistency: "資料との整合性",
+  knowledgeAccuracy: "専門知識の正確性",
+  criticalThinking: "応用思考力",
+  collaboration: "協調性",
+  leadership: "リーダーシップ",
 };
 
-const SCORE_COLORS: Record<keyof Omit<InterviewScores, "total">, string> = {
+const SCORE_COLORS: Partial<Record<keyof InterviewScores, string>> = {
   clarity: "bg-blue-500",
   apAlignment: "bg-purple-500",
   enthusiasm: "bg-orange-500",
   specificity: "bg-green-500",
   bodyLanguage: "bg-teal-500",
+  presentationStructure: "bg-indigo-500",
+  dataEvidence: "bg-cyan-500",
+  resourceConsistency: "bg-pink-500",
+  knowledgeAccuracy: "bg-amber-500",
+  criticalThinking: "bg-rose-500",
+  collaboration: "bg-emerald-500",
+  leadership: "bg-violet-500",
 };
 
 export default function InterviewResultPage() {
@@ -294,13 +308,13 @@ export default function InterviewResultPage() {
     );
   }
 
-  const scoreKeys: (keyof Omit<InterviewScores, "total">)[] = [
-    "clarity",
-    "apAlignment",
-    "enthusiasm",
-    "specificity",
-    "bodyLanguage",
+  const allScoreKeys: (keyof Omit<InterviewScores, "total">)[] = [
+    "clarity", "apAlignment", "enthusiasm", "specificity", "bodyLanguage",
+    "presentationStructure", "dataEvidence", "resourceConsistency",
+    "knowledgeAccuracy", "criticalThinking",
+    "collaboration", "leadership",
   ];
+  const scoreKeys = allScoreKeys.filter((k) => result.scores[k] != null);
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-5 lg:px-6 lg:py-8 space-y-4 lg:space-y-6">
@@ -335,13 +349,13 @@ export default function InterviewResultPage() {
             {scoreKeys.map((key) => (
               <div key={key} className="space-y-1">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">{SCORE_LABELS[key]}</span>
-                  <span className="font-medium">{result.scores[key]}/10</span>
+                  <span className="text-muted-foreground">{SCORE_LABELS[key] ?? key}</span>
+                  <span className="font-medium">{result.scores[key] ?? 0}/10</span>
                 </div>
                 <div className="h-2 bg-muted rounded-full overflow-hidden">
                   <div
-                    className={`h-full rounded-full ${SCORE_COLORS[key]}`}
-                    style={{ width: `${result.scores[key] * 10}%` }}
+                    className={`h-full rounded-full ${SCORE_COLORS[key] ?? "bg-gray-500"}`}
+                    style={{ width: `${(result.scores[key] ?? 0) * 10}%` }}
                   />
                 </div>
               </div>

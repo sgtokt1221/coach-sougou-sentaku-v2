@@ -276,7 +276,14 @@ export default function InterviewSessionPage() {
       const res = await fetch("/api/interview/end", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId, messages, duration: elapsed, ...(voiceAnalysis ? { voiceAnalysis } : {}), ...(videoAnalysis ? { videoAnalysis } : {}), ...(appearanceAnalysis ? { appearanceAnalysis } : {}) }),
+        body: JSON.stringify({
+          sessionId, messages, duration: elapsed,
+          mode: sessionInfo?.mode,
+          presentationContent: sessionInfo?.presentationContent,
+          ...(voiceAnalysis ? { voiceAnalysis } : {}),
+          ...(videoAnalysis ? { videoAnalysis } : {}),
+          ...(appearanceAnalysis ? { appearanceAnalysis } : {}),
+        }),
       });
       if (!res.ok) throw new Error();
       const data = await res.json();

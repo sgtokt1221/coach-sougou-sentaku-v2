@@ -15,8 +15,8 @@ import { logActivity } from "@/lib/firebase/activity-log";
 
 export async function POST(request: NextRequest) {
   try {
-    const body: InterviewEndRequest = await request.json();
-    const { sessionId, messages, duration, userId, transcription, voiceAnalysis, videoAnalysis, appearanceAnalysis } = body;
+    const body: InterviewEndRequest & { mode?: string; presentationContent?: string } = await request.json();
+    const { sessionId, messages, duration, userId, transcription, voiceAnalysis, videoAnalysis, appearanceAnalysis, mode, presentationContent } = body;
 
     if (!sessionId || !messages || duration === undefined) {
       return NextResponse.json(
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
       .map((m) => `${m.role === "ai" ? "面接官" : "受験生"}: ${m.content}`)
       .join("\n");
 
-    const evaluationPrompt = buildInterviewEvaluationPrompt(universityName, facultyName, admissionPolicy);
+    const evaluationPrompt = buildInterviewEvaluationPrompt(universityName, facultyName, admissionPolicy, mode, presentationContent);
 
     const selfAnalysisSection = selfAnalysisContext
       ? `\n\n## この生徒の自己分析データ（面接前に本人が整理した内容）\n${selfAnalysisContext}\n\n※ 上記の自己分析を踏まえて、「面接でこう答えるべきだった」「自己分析のこの強みをもっと活かすべきだった」等の具体的なアドバイスをimprovementsに含めてください。`

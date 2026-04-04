@@ -6,7 +6,17 @@ export interface InterviewScores {
   enthusiasm: number;    // 熱意 0-10
   specificity: number;   // 具体性 0-10
   bodyLanguage: number;  // ボディランゲージ 0-10
-  total: number;         // 合計 0-50
+  total: number;
+  // プレゼンテーション追加項目
+  presentationStructure?: number;  // 発表の論理構成 0-10
+  dataEvidence?: number;           // データの根拠 0-10
+  resourceConsistency?: number;    // 資料との整合性 0-10
+  // 口頭試問追加項目
+  knowledgeAccuracy?: number;      // 専門知識の正確性 0-10
+  criticalThinking?: number;       // 応用思考力 0-10
+  // 集団討論追加項目
+  collaboration?: number;          // 協調性 0-10
+  leadership?: number;             // リーダーシップ 0-10
 }
 
 export type InterviewMode = "individual" | "group_discussion" | "presentation" | "oral_exam";
