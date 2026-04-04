@@ -532,16 +532,27 @@ export default function InterviewSessionPage() {
           <DialogHeader>
             <DialogTitle>面接を終了しますか？</DialogTitle>
             <DialogDescription>
-              終了すると採点・フィードバックが生成されます。
+              採点・フィードバックを受けるか、評価なしで終了できます。
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
             <Button
               variant="outline"
               onClick={() => setShowEndDialog(false)}
               disabled={isEnding}
             >
               続ける
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                // Stop TTS/recording
+                if (ttsAudioRef.current) { ttsAudioRef.current.pause(); ttsAudioRef.current.src = ""; }
+                router.push("/student/interview/history");
+              }}
+              disabled={isEnding}
+            >
+              評価せずに終了
             </Button>
             <Button onClick={handleEnd} disabled={isEnding}>
               {isEnding ? "採点中..." : "終了して採点"}
