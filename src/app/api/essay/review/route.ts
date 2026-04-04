@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { buildEssayReviewPrompt } from "@/lib/ai/prompts/essay";
-import type { EssayReviewRequest, EssayReviewResponse, EssayScores, EssayFeedback, TopicInsights } from "@/lib/types/essay";
+import type { EssayReviewRequest, EssayScores, EssayFeedback, TopicInsights } from "@/lib/types/essay";
 import { analyzeGrowth, updateWeaknessRecords } from "@/lib/growth/analyze";
 import type { WeaknessRecord } from "@/lib/types/growth";
 import { logEssaySubmission } from "@/lib/bigquery/logger";
@@ -141,6 +141,7 @@ export async function POST(request: NextRequest) {
       improvementsSinceLast: parsed.feedback.improvementsSinceLast ?? [],
       topicInsights,
       brushedUpText: parsed.feedback.brushedUpText ?? undefined,
+      languageCorrections: parsed.feedback.languageCorrections ?? [],
     };
 
     // 弱点タグを抽出
@@ -214,7 +215,7 @@ export async function POST(request: NextRequest) {
       improvement_tags: feedback.improvements,
     });
 
-    const result: EssayReviewResponse = { essayId, scores, feedback, growthEvents };
+    const result = { essayId, ocrText, scores, feedback, growthEvents };
     return NextResponse.json(result);
   } catch (error) {
     console.error("Essay review error:", error);

@@ -28,6 +28,14 @@ export interface TopicInsights {
   recommendedAngle: string;
 }
 
+export interface LanguageCorrection {
+  location: string;
+  original: string;
+  suggestion: string;
+  type: "typo" | "grammar" | "connector" | "expression" | "redundancy";
+  reason: string;
+}
+
 export interface EssayFeedback {
   overall: string;
   goodPoints: string[];
@@ -36,6 +44,7 @@ export interface EssayFeedback {
   improvementsSinceLast: Improvement[];
   topicInsights?: TopicInsights;
   brushedUpText?: string;
+  languageCorrections?: LanguageCorrection[];
 }
 
 export interface RepeatedIssue {
