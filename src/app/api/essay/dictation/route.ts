@@ -1,5 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
 
+const FILLERS = [
+  "えーと", "ええと", "えっと",
+  "あのー", "あのー", "あのう",
+  "そのー", "その―",
+  "えー", "えぇ",
+  "あー", "ああ",
+  "うー", "うーん",
+  "まあ", "まぁ",
+  "なんか",
+  "こう",
+  "ほら",
+  "なんていうか",
+  "なんだろう",
+];
+
+function removeFillers(text: string): string {
+  let result = text;
+  for (const filler of FILLERS) {
+    result = result.replaceAll(filler, "");
+  }
+  // 連続する空白や句読点前後の余分な空白を整理
+  result = result.replace(/\s{2,}/g, " ").replace(/\s([、。])/g, "$1").trim();
+  return result;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { audioBase64, mimeType } = await request.json();
@@ -37,12 +62,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "音声認識に失敗しました" }, { status: 500 });
     }
 
+    const rawText = data.text ?? "";
+    const cleanText = removeFillers(rawText);
+
     return NextResponse.json({
-      text: data.text ?? "",
+      text: cleanText,
+      rawText,
       segments: (data.segments ?? []).map((s: { start: number; end: number; text: string }) => ({
         start: s.start,
         end: s.end,
-        text: s.text.trim(),
+        text: removeFillers(s.text.trim()),
       })),
       duration: data.duration ?? 0,
       language: data.language ?? "ja",

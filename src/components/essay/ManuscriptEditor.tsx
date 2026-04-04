@@ -2,12 +2,18 @@
 
 import { useState, useRef, useEffect } from "react";
 
+interface Highlight {
+  start: number;
+  end: number;
+}
+
 interface ManuscriptEditorProps {
   value: string;
   onChange: (value: string) => void;
   maxLength?: number;
   placeholder?: string;
   readOnly?: boolean;
+  highlights?: Highlight[];
 }
 
 export function ManuscriptEditor({
@@ -16,11 +22,14 @@ export function ManuscriptEditor({
   maxLength = 800,
   placeholder = "ここに小論文を入力してください...",
   readOnly = false,
+  highlights,
 }: ManuscriptEditorProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const backdropRef = useRef<HTMLDivElement>(null);
   const charCount = value.length;
   const isOver = charCount > maxLength;
   const percentage = Math.min(100, (charCount / maxLength) * 100);
+  const hasHighlights = highlights && highlights.length > 0;
 
   // Auto-resize textarea
   useEffect(() => {
@@ -30,6 +39,41 @@ export function ManuscriptEditor({
       ta.style.height = Math.max(400, ta.scrollHeight) + "px";
     }
   }, [value]);
+
+  // Sync scroll between textarea and backdrop
+  useEffect(() => {
+    if (!hasHighlights) return;
+    const ta = textareaRef.current;
+    const bd = backdropRef.current;
+    if (!ta || !bd) return;
+    const syncScroll = () => { bd.scrollTop = ta.scrollTop; };
+    ta.addEventListener("scroll", syncScroll);
+    return () => ta.removeEventListener("scroll", syncScroll);
+  }, [hasHighlights]);
+
+  function renderHighlightedText() {
+    if (!highlights || highlights.length === 0) return value;
+
+    const sorted = [...highlights].sort((a, b) => a.start - b.start);
+    const parts: React.ReactNode[] = [];
+    let cursor = 0;
+
+    for (const hl of sorted) {
+      if (hl.start > cursor) {
+        parts.push(<span key={`t-${cursor}`}>{value.slice(cursor, hl.start)}</span>);
+      }
+      parts.push(
+        <mark key={`h-${hl.start}`} className="bg-orange-200/70 text-inherit rounded-sm">
+          {value.slice(hl.start, hl.end)}
+        </mark>
+      );
+      cursor = hl.end;
+    }
+    if (cursor < value.length) {
+      parts.push(<span key={`t-${cursor}`}>{value.slice(cursor)}</span>);
+    }
+    return parts;
+  }
 
   return (
     <div className="space-y-2">
@@ -70,6 +114,22 @@ export function ManuscriptEditor({
           }}
         />
 
+        {/* Highlight backdrop (visible only when highlights exist) */}
+        {hasHighlights && (
+          <div
+            ref={backdropRef}
+            className="absolute inset-0 z-[1] p-4 lg:p-6 overflow-hidden pointer-events-none whitespace-pre-wrap break-words"
+            style={{
+              fontSize: "15px",
+              letterSpacing: "0.05em",
+              lineHeight: "24px",
+              color: "transparent",
+            }}
+          >
+            {renderHighlightedText()}
+          </div>
+        )}
+
         <textarea
           ref={textareaRef}
           value={value}
@@ -78,11 +138,12 @@ export function ManuscriptEditor({
           readOnly={readOnly}
           className={`
             relative z-10 w-full min-h-[400px] resize-none
-            bg-transparent p-4 lg:p-6
+            p-4 lg:p-6
             text-[15px] lg:text-base leading-[24px]
             font-sans text-foreground
             placeholder:text-muted-foreground/50
             focus:outline-none
+            ${hasHighlights ? "bg-transparent" : "bg-transparent"}
             ${readOnly ? "cursor-default" : ""}
           `}
           style={{ letterSpacing: "0.05em", lineHeight: "24px" }}
@@ -94,8 +155,10 @@ export function ManuscriptEditor({
         <span>
           {value.split(/\n/).length}段落 ・ {value.split(/[。！？\n]/).filter(Boolean).length}文
         </span>
-        {readOnly && (
-          <span className="text-amber-600 font-medium">OCR結果を確認・修正してください</span>
+        {hasHighlights && (
+          <span className="text-orange-600 font-medium">
+            オレンジ = 音読で補正された箇所
+          </span>
         )}
       </div>
     </div>

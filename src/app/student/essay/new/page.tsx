@@ -188,6 +188,7 @@ export default function EssayNewPage() {
   // Step 3
   const [essayId, setEssayId] = useState<string | null>(null);
   const [ocrText, setOcrText] = useState("");
+  const [dictationHighlights, setDictationHighlights] = useState<Array<{ start: number; end: number }>>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -325,8 +326,25 @@ export default function EssayNewPage() {
       });
       if (!res.ok) throw new Error();
       const data = await res.json();
-      setOcrText(data.text ?? "");
-      setStep(4); // Go to confirm step
+      const newText: string = data.text ?? "";
+
+      // 文単位でOCRと音読結果を比較し、変更箇所をハイライト
+      const highlights: Array<{ start: number; end: number }> = [];
+      const oldSentences = ocrText.split(/(?<=[。！？\n])/);
+      const newSentences = newText.split(/(?<=[。！？\n])/);
+      let pos = 0;
+      for (let i = 0; i < newSentences.length; i++) {
+        const ns = newSentences[i];
+        const os = oldSentences[i] ?? "";
+        if (ns !== os && ns.trim()) {
+          highlights.push({ start: pos, end: pos + ns.length });
+        }
+        pos += ns.length;
+      }
+
+      setOcrText(newText);
+      setDictationHighlights(highlights);
+      setStep(4);
     } catch {
       setError("音声認識に失敗しました。もう一度お試しください。");
     } finally {
@@ -1053,8 +1071,9 @@ export default function EssayNewPage() {
 
             <ManuscriptEditor
               value={ocrText}
-              onChange={setOcrText}
+              onChange={(v) => { setOcrText(v); setDictationHighlights([]); }}
               maxLength={800}
+              highlights={dictationHighlights}
             />
 
             {error && <p className="text-sm text-destructive">{error}</p>}
