@@ -10,7 +10,7 @@ import {
 import { onAuthStateChanged, type User } from "firebase/auth";
 import { doc, onSnapshot } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase/config";
-import type { UserProfile } from "@/lib/types/user";
+import type { UserProfile, PlanType } from "@/lib/types/user";
 
 interface AuthContextValue {
   user: User | null;
@@ -39,11 +39,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!auth || (process.env.NODE_ENV === "development" && devRole)) {
       if (process.env.NODE_ENV === "development") {
         const savedProfile = JSON.parse(localStorage.getItem("studentProfile") ?? "{}");
+        const devPlan = (localStorage.getItem("devPlan") as PlanType | null) ?? "self";
         setUserProfile({
           uid: "dev-user",
           email: "dev@example.com",
           displayName: "開発ユーザー",
           role: (devRole as "student" | "admin" | "teacher" | "superadmin") || "student",
+          plan: devPlan,
           targetUniversities: JSON.parse(localStorage.getItem("targetUniversities") ?? "[]"),
           onboardingCompleted: localStorage.getItem("onboardingCompleted") === "true",
           gpa: savedProfile.gpa ?? null,
@@ -64,11 +66,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (process.env.NODE_ENV === "development") {
         setUser({ uid: "dev-user", email: "dev@example.com" } as User);
         const savedProfile = JSON.parse(localStorage.getItem("studentProfile") ?? "{}");
+        const devPlan = (localStorage.getItem("devPlan") as PlanType | null) ?? "self";
         setUserProfile({
           uid: "dev-user",
           email: "dev@example.com",
           displayName: "開発ユーザー",
           role: (devRole as "student" | "admin" | "teacher" | "superadmin") || "student",
+          plan: devPlan,
           targetUniversities: JSON.parse(localStorage.getItem("targetUniversities") ?? "[]"),
           onboardingCompleted: localStorage.getItem("onboardingCompleted") === "true",
           gpa: savedProfile.gpa ?? null,
@@ -85,6 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubAuth = onAuthStateChanged(
       auth,
       (firebaseUser) => {
+        console.log("[AuthContext] onAuthStateChanged:", firebaseUser?.uid ?? "null");
         setUser(firebaseUser);
         if (!firebaseUser) {
           setUserProfile(null);
@@ -92,6 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       },
       (err) => {
+        console.error("[AuthContext] onAuthStateChanged error:", err);
         setError(err);
         setLoading(false);
       }
@@ -104,14 +110,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const devRole = typeof window !== "undefined" ? localStorage.getItem("devRole") : null;
     if (process.env.NODE_ENV === "development" && devRole) return;
 
-    if (!user || !db) return;
+    if (!user || !db) {
+      console.log("[AuthContext] Skipping profile fetch: user=", !!user, "db=", !!db);
+      return;
+    }
 
+    console.log("[AuthContext] Fetching profile for:", user.uid);
     const userRef = doc(db, "users", user.uid);
     const unsubProfile = onSnapshot(
       userRef,
       (snap) => {
+        console.log("[AuthContext] onSnapshot success, exists:", snap.exists());
         if (snap.exists()) {
           const data = snap.data();
+          console.log("[AuthContext] Profile data role:", data.role);
           setUserProfile({
             ...data,
             uid: user.uid,
@@ -119,11 +131,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             updatedAt: data.updatedAt?.toDate?.() ?? new Date(),
           } as UserProfile);
         } else {
+          console.log("[AuthContext] No profile document found");
           setUserProfile(null);
         }
         setLoading(false);
       },
       (err) => {
+        console.error("[AuthContext] onSnapshot error:", err.code, err.message);
         setError(err);
         setLoading(false);
       }
