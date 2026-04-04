@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -10,15 +10,17 @@ import { ProfileStep, type ProfileData } from "@/components/onboarding/ProfileSt
 import { ConfirmStep } from "@/components/onboarding/ConfirmStep";
 import { ArrowLeft, ArrowRight, Sparkles, Loader2, Search, HelpCircle } from "lucide-react";
 import { SuggestPanel } from "@/components/shared/SuggestPanel";
+import type { StudentProfile } from "@/lib/types/user";
 
 const STEPS = ["志望校選択", "基礎情報", "確認"] as const;
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const { refreshProfile } = useAuth();
+  const { userProfile, refreshProfile } = useAuth();
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [step0Mode, setStep0Mode] = useState<"select" | "suggest">("select");
+  const [initialized, setInitialized] = useState(false);
 
   const [selectedUniversities, setSelectedUniversities] = useState<string[]>(
     []
@@ -29,6 +31,23 @@ export default function OnboardingPage() {
     grade: null,
     school: "",
   });
+
+  // Pre-populate from existing profile (e.g. admin-set data)
+  useEffect(() => {
+    if (initialized) return;
+    const profile = userProfile as StudentProfile | null;
+    if (!profile) return;
+    setProfileData((prev) => ({
+      gpa: profile.gpa ?? prev.gpa,
+      englishCerts: profile.englishCerts?.length ? profile.englishCerts : prev.englishCerts,
+      grade: profile.grade ?? prev.grade,
+      school: profile.school || prev.school,
+    }));
+    if (profile.targetUniversities?.length) {
+      setSelectedUniversities(profile.targetUniversities);
+    }
+    setInitialized(true);
+  }, [userProfile, initialized]);
 
   const canNext = true;
 
