@@ -100,8 +100,8 @@ export async function POST(request: NextRequest) {
     const systemPrompt = buildInterviewSystemPrompt(mode, universityName, facultyName, admissionPolicy, weaknessList, interviewTendency, presentationContent);
 
     const response = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 1024,
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 512,
       system: systemPrompt,
       messages: [{ role: "user", content: "面接を開始してください。開始の挨拶と最初の質問をしてください。" }],
     });
