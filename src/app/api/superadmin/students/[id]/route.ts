@@ -21,7 +21,7 @@ export async function GET(
       grade: 3,
       managedBy: "admin_001",
       managedByName: "管理者 太郎",
-      targetUniversities: ["東京大学", "京都大学"],
+      targetUniversities: ["tokyo-u:law", "kyoto-u:economics"],
       createdAt: "2025-09-15T00:00:00.000Z",
       latestScore: 38,
       essayCount: 5,

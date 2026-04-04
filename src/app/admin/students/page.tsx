@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -82,12 +82,35 @@ export default function AdminStudentsPage() {
   const { data: allStudents } = useAuthSWR<StudentListItem[]>(
     `/api/admin/students?${allParams.toString()}`
   );
-  const universityOptions = useMemo(() => {
+  const allCompoundIds = useMemo(() => {
     if (!allStudents) return [];
     const set = new Set<string>();
     allStudents.forEach((s) => s.targetUniversities.forEach((u) => set.add(u)));
-    return [...set].sort((a, b) => a.localeCompare(b, "ja"));
+    return [...set];
   }, [allStudents]);
+
+  const [uniNameMap, setUniNameMap] = useState<Record<string, string>>({});
+  useEffect(() => {
+    if (allCompoundIds.length === 0) return;
+    fetch(`/api/universities/resolve?ids=${allCompoundIds.join(",")}`)
+      .then((r) => r.json())
+      .then((d) => {
+        const map: Record<string, string> = {};
+        for (const r of d.resolved ?? []) {
+          map[`${r.universityId}:${r.facultyId}`] = `${r.universityName} ${r.facultyName}`;
+        }
+        setUniNameMap(map);
+      })
+      .catch(() => {});
+  }, [allCompoundIds]);
+
+  const resolveUniName = (compoundId: string) => uniNameMap[compoundId] ?? compoundId;
+
+  const universityOptions = useMemo(() => {
+    return allCompoundIds
+      .map((id) => ({ id, name: uniNameMap[id] ?? id }))
+      .sort((a, b) => a.name.localeCompare(b.name, "ja"));
+  }, [allCompoundIds, uniNameMap]);
 
   const sortOptions: { key: SortKey; label: string }[] = [
     { key: "lastActivity", label: "最終活動" },
@@ -131,8 +154,8 @@ export default function AdminStudentsPage() {
             <SelectContent>
               <SelectItem value="all">すべての志望校</SelectItem>
               {universityOptions.map((uni) => (
-                <SelectItem key={uni} value={uni}>
-                  {uni}
+                <SelectItem key={uni.id} value={uni.id}>
+                  {uni.name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -203,7 +226,7 @@ export default function AdminStudentsPage() {
                         <td className="px-4 py-3 hidden sm:table-cell">
                           {s.targetUniversities.length > 0 ? (
                             <div className="flex items-center gap-1.5">
-                              <span className="text-xs">{s.targetUniversities[0]}</span>
+                              <span className="text-xs">{resolveUniName(s.targetUniversities[0])}</span>
                               {s.targetUniversities.length > 1 && (
                                 <Badge variant="outline" className="text-[10px] px-1.5 py-0">
                                   他{s.targetUniversities.length - 1}校

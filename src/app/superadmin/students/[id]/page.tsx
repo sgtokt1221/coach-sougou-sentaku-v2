@@ -45,6 +45,7 @@ export default function SuperadminStudentDetailPage({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [admins, setAdmins] = useState<AdminListItem[]>([]);
+  const [resolvedUnis, setResolvedUnis] = useState<string[]>([]);
 
   // Editable fields
   const [displayName, setDisplayName] = useState("");
@@ -79,6 +80,15 @@ export default function SuperadminStudentDetailPage({
     }
     fetchData();
   }, [id]);
+
+  useEffect(() => {
+    const ids = student?.targetUniversities ?? [];
+    if (ids.length === 0) { setResolvedUnis([]); return; }
+    fetch(`/api/universities/resolve?ids=${ids.join(",")}`)
+      .then((r) => r.json())
+      .then((d) => setResolvedUnis((d.resolved ?? []).map((r: { universityName: string; facultyName: string }) => `${r.universityName} ${r.facultyName}`)))
+      .catch(() => setResolvedUnis([]));
+  }, [student?.targetUniversities]);
 
   async function handleSave() {
     setSaving(true);
@@ -181,9 +191,11 @@ export default function SuperadminStudentDetailPage({
               <p className="text-xs text-muted-foreground">志望校</p>
             </div>
             <p className="text-sm font-medium">
-              {student.targetUniversities.length > 0
-                ? student.targetUniversities.join(", ")
-                : "-"}
+              {resolvedUnis.length > 0
+                ? resolvedUnis.join(", ")
+                : student.targetUniversities.length > 0
+                  ? student.targetUniversities.join(", ")
+                  : "-"}
             </p>
           </CardContent>
         </Card>

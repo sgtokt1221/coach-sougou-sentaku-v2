@@ -60,12 +60,11 @@ import { CHART_COLORS, SCORE_COLORS, CHART_ANIMATION, GRID_STYLE } from "@/compo
 import { CustomTooltip } from "@/components/charts/CustomTooltip";
 import { CustomDot, CustomActiveDot } from "@/components/charts/CustomDot";
 import { authFetch } from "@/lib/api/client";
-import { useAuthSWR } from "@/lib/api/swr";
 import type { StudentDetail } from "@/lib/types/admin";
 import type { Essay } from "@/lib/types/essay";
 import type { WeaknessRecord } from "@/lib/types/growth";
-import type { University } from "@/lib/types/university";
 import { getWeaknessReminderLevel } from "@/lib/types/growth";
+import { UniversitySelectStep } from "@/components/onboarding/UniversitySelectStep";
 import { ExamResultsSection } from "@/components/admin/ExamResultsSection";
 import { DocumentsSection } from "@/components/admin/DocumentsSection";
 import { InterviewsSection } from "@/components/admin/InterviewsSection";
@@ -124,6 +123,7 @@ export default function AdminStudentDetailPage() {
   const [detail, setDetail] = useState<StudentDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [showAllLines, setShowAllLines] = useState(false);
+  const [resolvedUnis, setResolvedUnis] = useState<{ universityName: string; facultyName: string }[]>([]);
 
   // Essay detail state
   const [essayDetailOpen, setEssayDetailOpen] = useState(false);
@@ -154,11 +154,6 @@ export default function AdminStudentDetailPage() {
   const [editUniversities, setEditUniversities] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
-  const { data: uniData } = useAuthSWR<{ universities: University[] }>(
-    editOpen ? "/api/universities" : null
-  );
-  const allUniversities = uniData?.universities ?? [];
-
   useEffect(() => {
     async function fetchDetail() {
       try {
@@ -174,6 +169,16 @@ export default function AdminStudentDetailPage() {
     }
     if (id) fetchDetail();
   }, [id]);
+
+  // Resolve compound IDs to display names
+  useEffect(() => {
+    const ids = detail?.profile.targetUniversities ?? [];
+    if (ids.length === 0) { setResolvedUnis([]); return; }
+    fetch(`/api/universities/resolve?ids=${ids.join(",")}`)
+      .then((r) => r.json())
+      .then((d) => setResolvedUnis(d.resolved ?? []))
+      .catch(() => setResolvedUnis([]));
+  }, [detail?.profile.targetUniversities]);
 
   function openEditDialog() {
     if (!detail) return;
@@ -211,12 +216,6 @@ export default function AdminStudentDetailPage() {
     } finally {
       setSaving(false);
     }
-  }
-
-  function toggleUniversity(name: string) {
-    setEditUniversities((prev) =>
-      prev.includes(name) ? prev.filter((u) => u !== name) : [...prev, name]
-    );
   }
 
   if (loading) {
@@ -323,7 +322,13 @@ export default function AdminStudentDetailPage() {
             <div className="flex items-start gap-2 text-sm">
               <TrendingUp className="mt-0.5 size-4 text-muted-foreground" />
               <div className="flex flex-wrap gap-1">
-                {profile.targetUniversities.length > 0 ? (
+                {resolvedUnis.length > 0 ? (
+                  resolvedUnis.map((u, i) => (
+                    <Badge key={i} variant="outline" className="text-xs">
+                      {u.universityName} {u.facultyName}
+                    </Badge>
+                  ))
+                ) : profile.targetUniversities.length > 0 ? (
                   profile.targetUniversities.map((u) => (
                     <Badge key={u} variant="outline" className="text-xs">
                       {u}
@@ -381,43 +386,10 @@ export default function AdminStudentDetailPage() {
             </div>
             <div className="space-y-2">
               <Label>志望校</Label>
-              {editUniversities.length > 0 && (
-                <div className="flex flex-wrap gap-1 mb-2">
-                  {editUniversities.map((name) => (
-                    <Badge
-                      key={name}
-                      variant="secondary"
-                      className="cursor-pointer hover:bg-destructive/20"
-                      onClick={() => toggleUniversity(name)}
-                    >
-                      {name}
-                      <X className="ml-1 size-3" />
-                    </Badge>
-                  ))}
-                </div>
-              )}
-              <div className="max-h-40 overflow-y-auto rounded-md border p-2 space-y-1">
-                {allUniversities.length === 0 ? (
-                  <p className="text-xs text-muted-foreground text-center py-2">
-                    大学データを読み込み中...
-                  </p>
-                ) : (
-                  allUniversities.map((uni) => (
-                    <label
-                      key={uni.id}
-                      className="flex items-center gap-2 rounded px-2 py-1 text-sm hover:bg-accent cursor-pointer"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={editUniversities.includes(uni.name)}
-                        onChange={() => toggleUniversity(uni.name)}
-                        className="rounded border-muted-foreground"
-                      />
-                      {uni.name}
-                    </label>
-                  ))
-                )}
-              </div>
+              <UniversitySelectStep
+                selected={editUniversities}
+                onChange={setEditUniversities}
+              />
             </div>
           </div>
           <DialogFooter>

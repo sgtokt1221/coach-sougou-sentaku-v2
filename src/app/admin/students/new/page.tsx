@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,8 +16,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Loader2, X, Plus } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
-import type { University } from "@/lib/types/university";
 import type { EnglishCert } from "@/lib/types/user";
+import { UniversitySelectStep } from "@/components/onboarding/UniversitySelectStep";
 
 const CERT_TYPES: { value: EnglishCert["type"]; label: string }[] = [
   { value: "EIKEN", label: "英検" },
@@ -63,19 +63,8 @@ export default function AdminStudentNewPage() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitting, setSubmitting] = useState(false);
   const [apiError, setApiError] = useState("");
-  const [universities, setUniversities] = useState<University[]>([]);
-  const [selectedUni, setSelectedUni] = useState("");
   const [certType, setCertType] = useState<EnglishCert["type"]>("EIKEN");
   const [certScore, setCertScore] = useState("");
-
-  useEffect(() => {
-    authFetch("/api/universities")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.universities) setUniversities(data.universities);
-      })
-      .catch(() => {});
-  }, []);
 
   function validate(): boolean {
     const errs: FormErrors = {};
@@ -128,23 +117,6 @@ export default function AdminStudentNewPage() {
     } finally {
       setSubmitting(false);
     }
-  }
-
-  function addUniversity(uniName: string | null) {
-    if (uniName && !form.targetUniversities.includes(uniName)) {
-      setForm((prev) => ({
-        ...prev,
-        targetUniversities: [...prev.targetUniversities, uniName],
-      }));
-    }
-    setSelectedUni("");
-  }
-
-  function removeUniversity(uniName: string) {
-    setForm((prev) => ({
-      ...prev,
-      targetUniversities: prev.targetUniversities.filter((u) => u !== uniName),
-    }));
   }
 
   return (
@@ -375,44 +347,12 @@ export default function AdminStudentNewPage() {
 
             <div className="space-y-2">
               <Label>志望校</Label>
-              <div className="flex gap-2">
-                <Select value={selectedUni} onValueChange={addUniversity}>
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="大学を選択して追加" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {universities
-                      .filter(
-                        (u) => !form.targetUniversities.includes(u.name)
-                      )
-                      .map((u) => (
-                        <SelectItem key={u.id} value={u.name}>
-                          {u.name}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              {form.targetUniversities.length > 0 && (
-                <div className="flex flex-wrap gap-2 pt-1">
-                  {form.targetUniversities.map((name) => (
-                    <Badge
-                      key={name}
-                      variant="secondary"
-                      className="gap-1 pr-1"
-                    >
-                      {name}
-                      <button
-                        type="button"
-                        onClick={() => removeUniversity(name)}
-                        className="rounded-full p-0.5 hover:bg-muted"
-                      >
-                        <X className="size-3" />
-                      </button>
-                    </Badge>
-                  ))}
-                </div>
-              )}
+              <UniversitySelectStep
+                selected={form.targetUniversities}
+                onChange={(selected) =>
+                  setForm((prev) => ({ ...prev, targetUniversities: selected }))
+                }
+              />
             </div>
 
             <div className="flex justify-end gap-3 pt-4">

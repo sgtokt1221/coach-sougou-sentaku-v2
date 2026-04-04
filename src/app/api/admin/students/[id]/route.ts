@@ -12,7 +12,7 @@ const MOCK_DETAIL: StudentDetail = {
     grade: 3,
     gpa: 4.5,
     englishCerts: [{ type: "EIKEN" as const, score: "準1級" }],
-    targetUniversities: ["東京大学", "京都大学"],
+    targetUniversities: ["tokyo-u:law", "kyoto-u:economics"],
   },
   weaknesses: [
     {
