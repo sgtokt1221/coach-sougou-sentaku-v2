@@ -303,6 +303,13 @@ export default function EssayNewPage() {
       });
       if (!res.ok) throw new Error("添削リクエストに失敗しました");
       const data = await res.json();
+      sessionStorage.setItem("essayReviewResult", JSON.stringify({
+        ...data,
+        universityName: selectedUni?.universityName ?? "",
+        facultyName: selectedUni?.facultyName ?? "",
+        topic: topic ?? "",
+        submittedAt: new Date().toISOString(),
+      }));
       router.push(`/student/essay/${data.essayId ?? id}`);
     } catch (err) {
       setError("添削に失敗しました。もう一度お試しください。");
@@ -330,9 +337,16 @@ export default function EssayNewPage() {
       });
       if (!res.ok) throw new Error("添削リクエストに失敗しました");
       const data = await res.json();
+      sessionStorage.setItem("essayReviewResult", JSON.stringify({
+        ...data,
+        universityName: selectedUni?.universityName ?? "",
+        facultyName: selectedUni?.facultyName ?? "",
+        topic: topic ?? "",
+        submittedAt: new Date().toISOString(),
+      }));
       router.push(`/student/essay/${data.essayId ?? essayId}`);
     } catch {
-      router.push(`/student/essay/mock-result-id`);
+      setError("添削に失敗しました。もう一度お試しください。");
     } finally {
       setIsSubmitting(false);
     }

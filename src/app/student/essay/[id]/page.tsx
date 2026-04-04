@@ -91,69 +91,6 @@ interface EssayResult {
   growthEvents?: GrowthEvent[];
 }
 
-const mockResult: EssayResult = {
-  id: "mock-result-id",
-  universityName: "京都大学",
-  facultyName: "文学部",
-  topic: "グローバル化と日本の未来",
-  submittedAt: "2026-03-21",
-  scores: {
-    structure: 7,
-    logic: 6,
-    expression: 8,
-    apAlignment: 5,
-    originality: 7,
-  },
-  feedback: {
-    overall:
-      "全体的に文章の流れが良く、表現力は高いレベルにあります。ただし、論理的な根拠の提示が不足している箇所があり、AP（アドミッション・ポリシー）との連動をより意識することで、さらに説得力が増すでしょう。",
-    goodPoints: [
-      "導入部分で問題提起が明確にされており、読者を引き込む力があります",
-      "独自の視点から日本社会の課題を捉えており、オリジナリティが感じられます",
-      "文章表現が豊かで、適切な語彙が使われています",
-    ],
-    improvements: [
-      "主張を裏付ける具体的なデータや事例が少ないため、論拠を補強してください",
-      "AP（アドミッション・ポリシー）で求める批判的思考力をより前面に出してください",
-      "結論部分で提案が曖昧なため、具体的な解決策を明示するとよいでしょう",
-    ],
-    repeatedIssues: [
-      { issue: "論拠となるデータ・事例の不足", count: 5 },
-      { issue: "AP連動の弱さ", count: 3 },
-      { issue: "結論の曖昧さ", count: 2 },
-    ],
-    improvementsSinceLast: [
-      {
-        before: "導入部分に問題提起がなく、唐突に本論に入っていた",
-        after: "問いを設定してから論を展開できるようになった",
-      },
-      {
-        before: "段落間の接続語が不自然だった",
-        after: "論理的な接続語を適切に使えるようになった",
-      },
-    ],
-    topicInsights: {
-      background: "グローバル化は経済・文化・政治の各分野で国境を越えた相互依存を深める現象です。日本では少子高齢化や労働力不足を背景に、外国人材の受入れ拡大や多文化共生が重要な政策課題となっています。一方で、地域文化の喪失や格差拡大といった負の側面も議論されており、グローバル化への対応は一様ではありません。",
-      relatedThemes: [
-        "多文化共生と地域コミュニティの変容",
-        "デジタル・グローバリゼーションと情報格差",
-        "SDGsとグローバル・ガバナンス",
-        "ローカリゼーション（地産地消）との両立",
-      ],
-      deepDivePoints: [
-        "グローバル化がもたらす「文化の均質化」と「文化の多様化」の両面を対比させると議論が深まります",
-        "日本の教育現場での英語化推進と母語教育のバランスという身近な視点から論じることも効果的です",
-      ],
-      recommendedAngle: "あなたの文章は独自の体験を軸に書く力が強みです。次回は自身の国際交流やボランティアなどの具体的経験を出発点に、マクロな社会課題に接続する構成を試みると、APが求める「主体的な学び」との合致度がさらに高まるでしょう。",
-    },
-    brushedUpText: "　グローバル化が加速する現代社会において、日本はどのような未来を描くべきだろうか。本稿では、経済・文化の両面からこの問いを検討し、日本が取るべき方向性を提示する。\n\n　まず経済面では、少子高齢化に伴う労働力不足が深刻化しており、外国人材の受入れ拡大は避けられない潮流である。2024年の改正入管法施行により、特定技能制度の対象分野は拡大し、多くの産業で外国人労働者が不可欠な存在となりつつある。\n\n　一方、文化面ではグローバル化による均質化への懸念がある。しかし私は、高校時代の国際交流プログラムでの経験から、異文化との接触はむしろ自文化への理解を深める契機になると考える。実際に、ホストファミリーに日本の伝統文化を紹介する過程で、私自身が日本文化の奥深さを再発見した。\n\n　以上を踏まえ、日本が目指すべきは「開かれた独自性」である。グローバルな視野を持ちながらも、日本固有の価値観や文化を軸に据えた発展モデルこそ、持続可能な未来への道筋となるだろう。",
-  },
-  growthEvents: [
-    { type: "praise", area: "導入部分", message: "「導入部分」の課題が改善されています。継続して良い傾向です！" },
-    { type: "warning", area: "論拠となるデータ・事例の不足", message: "「論拠となるデータ・事例の不足」が5回指摘されています。重点的に改善が必要です。" },
-    { type: "new_weakness", area: "結論の具体性", message: "「結論の具体性」が新しい課題として検出されました。" },
-  ],
-};
 
 function ScoreSkeleton() {
   return (
@@ -180,13 +117,30 @@ export default function EssayResultPage() {
     async function load() {
       setLoading(true);
       try {
+        // sessionStorageにレビュー結果があればそれを使用（添削直後の遷移）
+        const cached = sessionStorage.getItem("essayReviewResult");
+        if (cached) {
+          sessionStorage.removeItem("essayReviewResult");
+          const parsed = JSON.parse(cached);
+          setResult({
+            id: parsed.essayId ?? id,
+            universityName: parsed.universityName ?? "",
+            facultyName: parsed.facultyName ?? "",
+            topic: parsed.topic ?? "",
+            submittedAt: parsed.submittedAt ?? new Date().toISOString(),
+            scores: parsed.scores,
+            feedback: parsed.feedback,
+            growthEvents: parsed.growthEvents,
+          });
+          return;
+        }
+
         const res = await fetch(`/api/essay/${id}`);
         if (!res.ok) throw new Error("データの取得に失敗しました");
         const data = await res.json();
         setResult(data);
       } catch {
-        // API未実装のためモックデータを使用
-        setResult(mockResult);
+        setError("添削結果の取得に失敗しました");
       } finally {
         setLoading(false);
       }
