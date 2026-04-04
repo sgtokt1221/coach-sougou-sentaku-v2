@@ -365,7 +365,12 @@ export default function InterviewSessionPage() {
               ? `${sessionInfo.universityContext.universityName} ${sessionInfo.universityContext.facultyName}`
               : "面接セッション"}
           </p>
-          <p className="text-xs text-muted-foreground">{modeLabel}</p>
+          <p className="text-xs text-muted-foreground">
+            {modeLabel}
+            {sessionInfo?.mode === "group_discussion" && " — 複数の面接官が参加"}
+            {sessionInfo?.mode === "presentation" && " — プレゼン後に質疑応答"}
+            {sessionInfo?.mode === "oral_exam" && " — 専門知識を問う試問"}
+          </p>
         </div>
         <div className="flex items-center gap-3">
           <button
