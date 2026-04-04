@@ -14,59 +14,60 @@ import {
   DialogFooter,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { GraduationCap, UserPlus, Copy, Check, Users, ChevronDown, ChevronRight } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { GraduationCap, UserPlus, Users, ChevronDown, ChevronRight, Loader2 } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { useAuthSWR } from "@/lib/api/swr";
 import { authFetch } from "@/lib/api/client";
+import { toast } from "sonner";
 import type { TeacherListItem } from "@/lib/types/admin";
 
-interface TeacherWithStudents extends TeacherListItem {
-  students?: { uid: string; displayName: string; email: string }[];
-}
-
 export default function AdminTeachersPage() {
-  const { data: rawData, isLoading } = useAuthSWR<TeacherListItem[]>("/api/admin/teachers");
+  const { data: rawData, isLoading, mutate } = useAuthSWR<TeacherListItem[]>("/api/admin/teachers");
   const teachers = rawData ?? [];
 
-  const [inviteOpen, setInviteOpen] = useState(false);
-  const [inviteCode, setInviteCode] = useState<string | null>(null);
-  const [inviteLoading, setInviteLoading] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createLoading, setCreateLoading] = useState(false);
+  const [newEmail, setNewEmail] = useState("");
+  const [newName, setNewName] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const [expandedTeacher, setExpandedTeacher] = useState<string | null>(null);
   const [studentsByTeacher, setStudentsByTeacher] = useState<
     Record<string, { uid: string; displayName: string; email: string }[]>
   >({});
 
-  async function handleInvite() {
-    setInviteLoading(true);
+  async function handleCreate() {
+    if (!newEmail || !newName || !newPassword) {
+      toast.error("全ての項目を入力してください");
+      return;
+    }
+    if (newPassword.length < 6) {
+      toast.error("パスワードは6文字以上で入力してください");
+      return;
+    }
+    setCreateLoading(true);
     try {
       const res = await authFetch("/api/admin/teachers/invite", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ email: newEmail, displayName: newName, password: newPassword }),
       });
-      const data = await res.json();
-      if (data.code) {
-        setInviteCode(data.code);
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "作成に失敗しました");
       }
-    } catch {
-      // エラー時は何もしない
+      toast.success("講師を追加しました");
+      setCreateOpen(false);
+      setNewEmail("");
+      setNewName("");
+      setNewPassword("");
+      mutate();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "作成に失敗しました");
     } finally {
-      setInviteLoading(false);
+      setCreateLoading(false);
     }
-  }
-
-  async function handleCopy() {
-    if (!inviteCode) return;
-    await navigator.clipboard.writeText(inviteCode);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
-
-  function handleDialogClose() {
-    setInviteOpen(false);
-    setInviteCode(null);
-    setCopied(false);
   }
 
   async function toggleStudents(teacherUid: string) {
@@ -94,46 +95,45 @@ export default function AdminTeachersPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">講師管理</h1>
-          <p className="text-sm text-muted-foreground">講師の一覧と招待コード発行</p>
+          <p className="text-sm text-muted-foreground">講師の一覧と新規追加</p>
         </div>
-        <Dialog open={inviteOpen} onOpenChange={(open) => (open ? setInviteOpen(true) : handleDialogClose())}>
+        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogTrigger
             render={
               <Button>
                 <UserPlus className="mr-2 size-4" />
-                招待コード発行
+                講師を追加
               </Button>
             }
           />
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>講師招待コードを発行</DialogTitle>
+              <DialogTitle>新規講師を追加</DialogTitle>
               <DialogDescription>
-                発行されたコードを講師に共有してください。コードは7日間有効です。
+                講師のアカウント情報を入力してください。
               </DialogDescription>
             </DialogHeader>
-
-            {inviteCode ? (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <code className="flex-1 rounded-lg border bg-muted px-4 py-3 text-center text-lg font-mono font-bold tracking-widest">
-                    {inviteCode}
-                  </code>
-                  <Button variant="outline" size="icon" onClick={handleCopy}>
-                    {copied ? <Check className="size-4 text-emerald-500" /> : <Copy className="size-4" />}
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground text-center">
-                  {copied ? "コピーしました" : "コードをコピーして講師に共有してください"}
-                </p>
+            <div className="space-y-4 py-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="teacher-name" className="text-xs font-medium">名前</Label>
+                <Input id="teacher-name" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="講師名" />
               </div>
-            ) : (
-              <DialogFooter>
-                <Button onClick={handleInvite} disabled={inviteLoading}>
-                  {inviteLoading ? "発行中..." : "コードを発行する"}
-                </Button>
-              </DialogFooter>
-            )}
+              <div className="space-y-1.5">
+                <Label htmlFor="teacher-email" className="text-xs font-medium">メールアドレス</Label>
+                <Input id="teacher-email" type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="teacher@example.com" />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="teacher-password" className="text-xs font-medium">パスワード</Label>
+                <Input id="teacher-password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="6文字以上" minLength={6} />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setCreateOpen(false)}>キャンセル</Button>
+              <Button onClick={handleCreate} disabled={createLoading} className="gap-2">
+                {createLoading && <Loader2 className="size-4 animate-spin" />}
+                追加
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
@@ -151,7 +151,7 @@ export default function AdminTeachersPage() {
             <EmptyState
               icon={GraduationCap}
               title="講師がまだ登録されていません"
-              description="招待コードを発行して講師を追加してください"
+              description="「講師を追加」ボタンから講師を登録してください"
             />
           ) : (
             <div className="overflow-x-auto">
