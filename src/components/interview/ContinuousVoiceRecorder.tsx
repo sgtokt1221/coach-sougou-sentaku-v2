@@ -9,10 +9,11 @@ interface ContinuousVoiceRecorderProps {
   onInterrupt?: () => void;
   disabled?: boolean;
   aiSpeaking?: boolean;
+  autoStart?: boolean;
 }
 
 const SILENCE_THRESHOLD = 0.01;
-const SILENCE_DURATION_MS = 2000;
+const SILENCE_DURATION_MS = 1200;
 const MIN_SPEECH_MS = 600;
 const MIN_BLOB_SIZE = 5000;
 
@@ -22,6 +23,7 @@ export default function ContinuousVoiceRecorder({
   onInterrupt,
   disabled,
   aiSpeaking,
+  autoStart,
 }: ContinuousVoiceRecorderProps) {
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -253,6 +255,14 @@ export default function ContinuousVoiceRecorder({
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Auto-start listening on mount if autoStart is true
+  useEffect(() => {
+    if (autoStart && !isListening && supported) {
+      startListening();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoStart]);
 
   useEffect(() => () => stopListening(), [stopListening]);
 

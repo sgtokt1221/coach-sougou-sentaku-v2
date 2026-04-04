@@ -76,7 +76,19 @@ export default function InterviewSessionPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text, voice: "alloy" }),
       });
-      if (!res.ok) { setAiSpeaking(false); return; }
+
+      // TTS failed - skip audio, text is already displayed in chat
+      if (!res.ok) {
+        setAiSpeaking(false);
+        return;
+      }
+
+      const contentType = res.headers.get("Content-Type") ?? "";
+      if (!contentType.startsWith("audio/")) {
+        setAiSpeaking(false);
+        return;
+      }
+
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
 
@@ -87,26 +99,6 @@ export default function InterviewSessionPage() {
       }
 
       const audio = new Audio(url);
-
-      // Try to route TTS to default speaker (not Bluetooth) to preserve AirPods mic
-      if ("setSinkId" in audio && typeof (audio as HTMLAudioElement & { setSinkId: (id: string) => Promise<void> }).setSinkId === "function") {
-        try {
-          const devices = await navigator.mediaDevices.enumerateDevices();
-          const builtinSpeaker = devices.find(
-            (d) => d.kind === "audiooutput" && d.label.toLowerCase().includes("macbook")
-          ) || devices.find(
-            (d) => d.kind === "audiooutput" && d.label.toLowerCase().includes("built-in")
-          ) || devices.find(
-            (d) => d.kind === "audiooutput" && d.deviceId === "default"
-          );
-          if (builtinSpeaker) {
-            await (audio as HTMLAudioElement & { setSinkId: (id: string) => Promise<void> }).setSinkId(builtinSpeaker.deviceId);
-          }
-        } catch {
-          // setSinkId not supported or failed, play on default device
-        }
-      }
-
       ttsAudioRef.current = audio;
       audio.onended = () => {
         URL.revokeObjectURL(url);
@@ -116,7 +108,7 @@ export default function InterviewSessionPage() {
         URL.revokeObjectURL(url);
         setAiSpeaking(false);
       };
-      audio.play().catch(() => setAiSpeaking(false));
+      await audio.play();
     } catch {
       setAiSpeaking(false);
     }
@@ -463,6 +455,7 @@ export default function InterviewSessionPage() {
       <div className="px-4 py-3 border-t bg-background shrink-0">
         {isVoiceMode ? (
           <ContinuousVoiceRecorder
+            autoStart
             onRecordingComplete={handleVoiceComplete}
             onStreamReady={(stream) => setMediaStream(stream)}
             onInterrupt={() => {
