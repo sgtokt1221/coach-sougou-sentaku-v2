@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import type { StudentProfile } from "@/lib/types/user";
@@ -46,15 +46,11 @@ const STEPS = ["書類タイプ", "志望校", "フレームワーク", "活動�
 export default function NewDocumentPage() {
   const router = useRouter();
   const { userProfile } = useAuth();
-  const universities: UniversityOption[] = useMemo(() => {
-    const profile = userProfile as StudentProfile | null;
-    return (profile?.targetUniversities ?? []).map((t) => ({
-      universityId: t.universityId,
-      facultyId: t.facultyId,
-      universityName: t.universityName ?? t.universityId,
-      facultyName: t.facultyName ?? t.facultyId,
-    }));
-  }, [userProfile]);
+  const targetIds = ((userProfile as StudentProfile | null)?.targetUniversities ?? []).join(",");
+  const { data: uniData } = useAuthSWR<{ resolved: UniversityOption[] }>(
+    targetIds ? `/api/universities/resolve?ids=${encodeURIComponent(targetIds)}` : null
+  );
+  const universities: UniversityOption[] = uniData?.resolved ?? [];
 
   const [step, setStep] = useState(0);
   const [documentType, setDocumentType] = useState<DocumentType | null>(null);
