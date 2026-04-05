@@ -226,7 +226,13 @@ ${presSection}
     "repeatedIssues": [{ "area": "<弱点>", "count": 0, "message": "<アドバイス>" }],
     "improvementsSinceLast": [{ "area": "<領域>", "before": "<前>", "after": "<後>", "message": "<コメント>" }]
   },
-  "weaknessUpdates": [{ "area": "<領域>", "action": "add", "message": "<詳細>" }]
+  "weaknessUpdates": [{ "area": "<領域>", "action": "add", "message": "<詳細>" }],
+  "conversationSummary": {
+    "keyWeaknesses": ["<この面接で露呈した主要弱点1>", "<弱点2>"],
+    "strongPoints": ["<良かった回答ポイント1>", "<ポイント2>"],
+    "criticalMoments": ["<改善すべき回答の引用と改善案1>", "<引用と改善案2>"],
+    "nextFocusAreas": ["<次回の面接で重点的に改善すべき点1>", "<改善点2>"]
+  }
 }
 \`\`\`
 

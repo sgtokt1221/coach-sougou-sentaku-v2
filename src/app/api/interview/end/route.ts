@@ -159,6 +159,14 @@ export async function POST(request: NextRequest) {
       improvementsSinceLast: parsed.feedback.improvementsSinceLast ?? [],
     };
 
+    // 会話分析サマリー
+    const conversationSummary = parsed.conversationSummary ?? {
+      keyWeaknesses: [],
+      strongPoints: [],
+      criticalMoments: [],
+      nextFocusAreas: [],
+    };
+
     // 弱点タグを抽出（会話内容）
     const weaknessTags: string[] = [
       ...feedback.repeatedIssues.map((issue) => issue.area),
@@ -200,6 +208,8 @@ export async function POST(request: NextRequest) {
         await adminDb.doc(`interviews/${sessionId}`).update({
           scores,
           feedback,
+          conversationSummary,
+          messages: messages.map((m) => ({ role: m.role, content: m.content })),
           weaknessTags,
           duration,
           status: "completed",
@@ -269,6 +279,7 @@ export async function POST(request: NextRequest) {
       interviewId: sessionId,
       scores,
       feedback,
+      conversationSummary,
       growthEvents,
       ...(voiceAnalysis ? { voiceAnalysis } : {}),
       ...(videoAnalysis ? { videoAnalysis } : {}),

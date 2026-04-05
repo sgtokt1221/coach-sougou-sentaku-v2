@@ -43,6 +43,13 @@ interface InterviewListItem {
   duration: number;
 }
 
+interface ConversationSummary {
+  keyWeaknesses: string[];
+  strongPoints: string[];
+  criticalMoments: string[];
+  nextFocusAreas: string[];
+}
+
 interface InterviewDetail {
   id: string;
   mode: InterviewMode;
@@ -51,6 +58,7 @@ interface InterviewDetail {
   messages: InterviewMessage[];
   scores: InterviewScores | null;
   feedback: InterviewFeedback | null;
+  conversationSummary: ConversationSummary | null;
   createdAt: string;
   duration: number;
 }
@@ -345,6 +353,55 @@ export function InterviewsSection({ studentId }: { studentId: string }) {
                           </li>
                         ))}
                       </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Conversation Summary */}
+              {detailData.conversationSummary && (
+                <div className="space-y-3">
+                  <p className="text-sm font-medium">弱点分析サマリー</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {detailData.conversationSummary.keyWeaknesses.length > 0 && (
+                      <div className="rounded-lg border border-rose-200 bg-rose-50 dark:bg-rose-950/20 p-3">
+                        <p className="text-xs font-medium text-rose-700 dark:text-rose-400 mb-2">主要弱点</p>
+                        <ul className="space-y-1">
+                          {detailData.conversationSummary.keyWeaknesses.map((w, i) => (
+                            <li key={i} className="text-xs text-rose-600 dark:text-rose-300">{w}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {detailData.conversationSummary.strongPoints.length > 0 && (
+                      <div className="rounded-lg border border-emerald-200 bg-emerald-50 dark:bg-emerald-950/20 p-3">
+                        <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400 mb-2">強み</p>
+                        <ul className="space-y-1">
+                          {detailData.conversationSummary.strongPoints.map((s, i) => (
+                            <li key={i} className="text-xs text-emerald-600 dark:text-emerald-300">{s}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                  {detailData.conversationSummary.criticalMoments.length > 0 && (
+                    <div className="rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/20 p-3">
+                      <p className="text-xs font-medium text-amber-700 dark:text-amber-400 mb-2">改善すべき回答</p>
+                      <ul className="space-y-1.5">
+                        {detailData.conversationSummary.criticalMoments.map((c, i) => (
+                          <li key={i} className="text-xs text-amber-700 dark:text-amber-300">{c}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {detailData.conversationSummary.nextFocusAreas.length > 0 && (
+                    <div className="rounded-lg border p-3">
+                      <p className="text-xs font-medium mb-2">次回の重点改善ポイント</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {detailData.conversationSummary.nextFocusAreas.map((a, i) => (
+                          <Badge key={i} variant="secondary" className="text-[10px]">{a}</Badge>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
