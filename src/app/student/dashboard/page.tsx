@@ -11,7 +11,6 @@ import {
   Mic,
   FolderOpen,
   ArrowUpRight,
-  Sparkles,
   GraduationCap,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -116,88 +115,73 @@ export default function StudentDashboard() {
   const latestScore = trendData.length > 0 ? trendData[trendData.length - 1].total : null;
 
   return (
-    <div className="space-y-6 lg:space-y-10 px-4 py-5 lg:px-8 lg:py-8 max-w-5xl mx-auto">
-      {/* Header with greeting */}
-      <div className="animate-fade-in-up">
-        <div className="flex items-center gap-2 mb-2">
-          <Sparkles className="size-4 text-primary/70" />
-          <p className="text-xs font-medium text-primary/70 uppercase tracking-wide">
-            {greeting}
-          </p>
-        </div>
-        <h1 className="font-heading text-xl lg:text-3xl font-bold tracking-tight">
+    <div className="space-y-8 lg:space-y-10 px-4 py-6 lg:px-8 lg:py-10 max-w-5xl mx-auto">
+      {/* Header — Stripe: light weight, no decorations */}
+      <div>
+        <p className="text-sm text-muted-foreground mb-1">{greeting}</p>
+        <h1 className="text-xl lg:text-2xl font-light tracking-tight text-foreground">
           {userName ? `${userName}さん、` : ""}学習の進捗を確認しましょう
         </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          今日も目標に向かって一歩ずつ進んでいきましょう
-        </p>
       </div>
 
       {/* Notification Permission Banner */}
       <NotificationPermissionBanner />
 
       {/* Target Universities */}
-      <div className="animate-fade-in-up" style={{ animationDelay: "100ms" }}>
+      <div>
         <div className="flex items-center gap-2 mb-4">
-          <GraduationCap className="size-5 text-primary" />
-          <h2 className="text-base font-semibold text-foreground">志望校</h2>
+          <GraduationCap className="size-4 text-muted-foreground" />
+          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">志望校</h2>
         </div>
         <TargetUniversityCards targetUniversities={targetUniversities} />
       </div>
 
-      {/* Quick Actions */}
+      {/* Quick Actions — Stripe: clean cards, blue-tinted shadow, no gradient bars */}
       <AnimatedList className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {quickActions.map((action) => (
           <Link key={action.href} href={action.href}>
-            <div className={`group relative card-hover rounded-xl border-2 border-transparent p-4 lg:p-5 flex items-center gap-3 ${action.bgColor} transition-all duration-200 hover:scale-105 hover:shadow-lg`}>
-              {/* Gradient border accent */}
-              <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${action.gradient} rounded-t-xl`} />
-
-              <div className={`flex size-11 items-center justify-center rounded-xl ${action.iconBg} shadow-sm group-hover:scale-110 transition-transform duration-200`}>
+            <div
+              className="group flex items-center gap-3 rounded-lg border border-border/60 bg-card p-4 transition-all duration-200 hover:border-border"
+              style={{ boxShadow: "0 2px 5px rgba(50,50,93,0.1), 0 1px 2px rgba(0,0,0,0.06)" }}
+            >
+              <div className={`flex size-10 items-center justify-center rounded-lg ${action.iconBg}`}>
                 <action.icon className={`size-5 ${action.iconColor}`} />
               </div>
-              <span className={`text-sm font-semibold flex-1 ${action.textColor}`}>{action.label}</span>
-              <ArrowUpRight className={`size-4 opacity-50 group-hover:opacity-100 transition-opacity duration-200 ${action.textColor}`} />
+              <span className="text-sm font-medium flex-1 text-foreground">{action.label}</span>
+              <ArrowUpRight className="size-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
           </Link>
         ))}
       </AnimatedList>
 
       {/* Weakness Reminder */}
-      <div className="animate-fade-in-up" style={{ animationDelay: "100ms" }}>
-        <WeaknessReminderBanner />
-      </div>
+      <WeaknessReminderBanner />
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        {/* Score Trend - wider */}
-        <div className="lg:col-span-3 animate-fade-in-up" style={{ animationDelay: "200ms" }}>
-          <Card className="overflow-hidden">
-            <CardHeader className="pb-3 border-b border-border/50">
-              {/* Subtle gradient line */}
-              <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-primary/30 via-primary to-primary/30" />
-
+        {/* Score Trend — Stripe: clean card, blue shadow */}
+        <div className="lg:col-span-3">
+          <Card className="rounded-lg border-border/60" style={{ boxShadow: "0 2px 5px rgba(50,50,93,0.1), 0 1px 2px rgba(0,0,0,0.06)" }}>
+            <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <TrendingUp className="size-4 text-primary" />
-                  スコア推移
-                  {/* 直近スコアのbadge */}
+                <div className="flex items-center gap-3">
+                  <CardTitle className="text-sm font-medium text-foreground">スコア推移</CardTitle>
                   {latestScore && (
-                    <span className={`ml-2 px-2 py-1 text-xs font-bold rounded-full ${scoreBg(latestScore)} ${scoreColor(latestScore)}`}>
-                      最新: {latestScore}点
+                    <span className={`px-2 py-0.5 text-xs font-medium rounded ${scoreBg(latestScore)} ${scoreColor(latestScore)}`}>
+                      最新 {latestScore}点
                     </span>
                   )}
-                </CardTitle>
+                </div>
                 <Link
                   href="/student/growth"
-                  className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1"
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
                 >
                   詳細 <ArrowUpRight className="size-3" />
                 </Link>
               </div>
             </CardHeader>
-            <CardContent className="pt-4">
+            <CardContent className="pt-2">
               {loadingTrend ? (
-                <Skeleton className="h-[260px] w-full rounded-lg" />
+                <Skeleton className="h-[260px] w-full rounded" />
               ) : (
                 <ScoresTrendChart data={trendData} />
               )}
@@ -205,18 +189,15 @@ export default function StudentDashboard() {
           </Card>
         </div>
 
-        {/* Recent Essays - narrower */}
-        <div className="lg:col-span-2 animate-fade-in-up" style={{ animationDelay: "300ms" }}>
-          <Card className="h-full">
+        {/* Recent Essays — Stripe: minimal list */}
+        <div className="lg:col-span-2">
+          <Card className="h-full rounded-lg border-border/60" style={{ boxShadow: "0 2px 5px rgba(50,50,93,0.1), 0 1px 2px rgba(0,0,0,0.06)" }}>
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <FileText className="size-4 text-primary" />
-                  直近の添削
-                </CardTitle>
+                <CardTitle className="text-sm font-medium text-foreground">直近の添削</CardTitle>
                 <Link
                   href="/student/essay/history"
-                  className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1"
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
                 >
                   すべて <ArrowUpRight className="size-3" />
                 </Link>
@@ -232,31 +213,18 @@ export default function StudentDashboard() {
               ) : (
                 history.map((item) => (
                   <Link key={item.id} href={`/student/essay/${item.id}`}>
-                    <div className="group card-hover flex items-center justify-between rounded-lg border p-2.5 lg:p-3 cursor-pointer relative overflow-hidden">
-                      {/* スコアに応じたカラーバー */}
-                      <div
-                        className={`absolute left-0 top-0 w-1 h-full rounded-l-lg transition-all duration-300 group-hover:w-2 ${
-                          item.scores.total >= 40 ? 'bg-emerald-500' :
-                          item.scores.total >= 30 ? 'bg-amber-500' :
-                          'bg-rose-500'
-                        }`}
-                      />
-
-                      <div className="min-w-0 pl-2">
-                        <p className="text-sm font-medium truncate">
+                    <div className="group flex items-center justify-between rounded-md border border-border/50 p-3 cursor-pointer transition-all duration-150 hover:border-border hover:bg-muted/30">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate text-foreground">
                           {item.universityName} {item.facultyName}
                         </p>
-                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                        <p className="text-xs text-muted-foreground mt-0.5">
                           {item.submittedAt}
                         </p>
                       </div>
-                      <div className={`flex items-center justify-center size-11 rounded-lg ${scoreBg(item.scores.total)}`}>
-                        <CountUp
-                          value={item.scores.total}
-                          duration={0.6}
-                          className={`font-heading text-lg font-bold ${scoreColor(item.scores.total)}`}
-                        />
-                      </div>
+                      <span className={`text-lg font-light tabular-nums ${scoreColor(item.scores.total)}`}>
+                        <CountUp value={item.scores.total} duration={0.6} />
+                      </span>
                     </div>
                   </Link>
                 ))

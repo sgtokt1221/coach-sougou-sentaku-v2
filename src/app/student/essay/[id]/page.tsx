@@ -171,7 +171,7 @@ export default function EssayResultPage() {
   if (error || !result) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-5 lg:px-6 lg:py-8">
-        <Card>
+        <Card className="rounded-2xl border-border/40">
           <CardContent className="py-8 text-center">
             <p className="text-destructive">{error ?? "データが見つかりません"}</p>
             <Button className="mt-4" onClick={() => router.back()}>
@@ -199,31 +199,31 @@ export default function EssayResultPage() {
   ];
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-5 lg:px-6 lg:py-8 space-y-4 lg:space-y-6">
-      <div className="flex items-center gap-2">
-        <Button variant="ghost" size="sm" onClick={() => router.back()}>
-          <ArrowLeft className="size-4 mr-1" />
-          戻る
+    <div className="max-w-3xl mx-auto px-4 py-8 lg:px-6 lg:py-12 space-y-8">
+      {/* Header — Superhuman: minimal, generous spacing */}
+      <div className="flex items-center gap-3">
+        <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={() => router.back()}>
+          <ArrowLeft className="size-4" />
         </Button>
         <div>
-          <h1 className="text-lg lg:text-xl font-bold">添削結果</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="text-lg lg:text-xl font-light tracking-tight">添削結果</h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
             {result.universityName} {result.facultyName}
             {result.topic && ` / ${result.topic}`}
           </p>
         </div>
       </div>
 
-      {/* スコアサマリー */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold">総合スコア</h2>
+      {/* スコアサマリー — Superhuman: ultra-clean, minimal borders */}
+      <Card className="rounded-2xl border-border/40">
+        <CardContent className="pt-8 pb-6">
+          <div className="flex items-center justify-between mb-6">
+            <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">総合スコア</p>
             <div className="flex items-center gap-3">
               <ScoreRing score={totalScore} maxScore={50} size={72} strokeWidth={5} />
-              <span className="text-4xl font-bold text-primary">
+              <span className="text-4xl font-light tabular-nums text-foreground">
                 {totalScore}
-                <span className="text-lg text-muted-foreground">/50</span>
+                <span className="text-lg text-muted-foreground/60">/50</span>
               </span>
             </div>
           </div>
@@ -248,9 +248,9 @@ export default function EssayResultPage() {
 
       {/* 繰り返し弱点 */}
       {result.feedback.repeatedIssues.length > 0 && (
-        <Card>
+        <Card className="rounded-2xl border-border/40">
           <CardHeader>
-            <CardTitle className="text-base">繰り返し見られる弱点</CardTitle>
+            <CardTitle className="text-sm font-medium uppercase tracking-wide text-muted-foreground">繰り返し見られる弱点</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {result.feedback.repeatedIssues.map((item, i) => {
@@ -294,7 +294,7 @@ export default function EssayResultPage() {
 
       {/* 改善おめでとう */}
       {result.feedback.improvementsSinceLast.length > 0 && (
-        <Card className="bg-green-50 border-green-200">
+        <Card className="rounded-2xl border-border/40 bg-green-50/50 dark:bg-green-950/10">
           <CardHeader>
             <CardTitle className="text-base text-green-800">
               前回からの改善点
@@ -319,7 +319,7 @@ export default function EssayResultPage() {
 
       {/* 成長イベント */}
       {result.growthEvents && result.growthEvents.length > 0 && (
-        <Card>
+        <Card className="rounded-2xl border-border/40">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <TrendingUp className="size-4" />
@@ -372,7 +372,7 @@ export default function EssayResultPage() {
 
       {/* 良い点 */}
       {result.feedback.goodPoints.length > 0 && (
-        <Card>
+        <Card className="rounded-2xl border-border/40">
           <CardHeader>
             <CardTitle className="text-base">良い点</CardTitle>
           </CardHeader>
@@ -391,7 +391,7 @@ export default function EssayResultPage() {
 
       {/* 改善点 */}
       {result.feedback.improvements.length > 0 && (
-        <Card>
+        <Card className="rounded-2xl border-border/40">
           <CardHeader>
             <CardTitle className="text-base">改善点</CardTitle>
           </CardHeader>
@@ -410,7 +410,7 @@ export default function EssayResultPage() {
 
       {/* 赤ペン添削 */}
       {result.feedback.languageCorrections && result.feedback.languageCorrections.length > 0 && (
-        <Card>
+        <Card className="rounded-2xl border-border/40">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <SpellCheck className="size-4" />
@@ -428,7 +428,7 @@ export default function EssayResultPage() {
 
       {/* テーマ深掘り */}
       {result.feedback.topicInsights && (
-        <Card>
+        <Card className="rounded-2xl border-border/40">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
               <BookOpen className="size-4" />
@@ -492,7 +492,7 @@ export default function EssayResultPage() {
 
       {/* ブラッシュアップ版 */}
       {result.feedback.brushedUpText && (
-        <Card>
+        <Card className="rounded-2xl border-border/40">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
               <PenTool className="size-4" />
