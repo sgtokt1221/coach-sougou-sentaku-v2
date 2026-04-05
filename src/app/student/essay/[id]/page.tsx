@@ -321,7 +321,7 @@ export default function EssayResultPage() {
       {result.growthEvents && result.growthEvents.length > 0 && (
         <Card className="rounded-2xl border-border/40">
           <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
+            <CardTitle className="text-xs font-medium uppercase tracking-widest text-muted-foreground flex items-center gap-2">
               <TrendingUp className="size-4" />
               成長フィードバック
             </CardTitle>
@@ -374,7 +374,7 @@ export default function EssayResultPage() {
       {result.feedback.goodPoints.length > 0 && (
         <Card className="rounded-2xl border-border/40">
           <CardHeader>
-            <CardTitle className="text-base">良い点</CardTitle>
+            <CardTitle className="text-xs font-medium uppercase tracking-widest text-muted-foreground">良い点</CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="space-y-2">
@@ -393,7 +393,7 @@ export default function EssayResultPage() {
       {result.feedback.improvements.length > 0 && (
         <Card className="rounded-2xl border-border/40">
           <CardHeader>
-            <CardTitle className="text-base">改善点</CardTitle>
+            <CardTitle className="text-xs font-medium uppercase tracking-widest text-muted-foreground">改善点</CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="space-y-2">
@@ -412,7 +412,7 @@ export default function EssayResultPage() {
       {result.feedback.languageCorrections && result.feedback.languageCorrections.length > 0 && (
         <Card className="rounded-2xl border-border/40">
           <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
+            <CardTitle className="text-xs font-medium uppercase tracking-widest text-muted-foreground flex items-center gap-2">
               <SpellCheck className="size-4" />
               赤ペン添削（{result.feedback.languageCorrections.length}件）
             </CardTitle>
@@ -430,7 +430,7 @@ export default function EssayResultPage() {
       {result.feedback.topicInsights && (
         <Card className="rounded-2xl border-border/40">
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-base flex items-center gap-2">
+            <CardTitle className="text-xs font-medium uppercase tracking-widest text-muted-foreground flex items-center gap-2">
               <BookOpen className="size-4" />
               テーマ深掘り
             </CardTitle>
@@ -494,7 +494,7 @@ export default function EssayResultPage() {
       {result.feedback.brushedUpText && (
         <Card className="rounded-2xl border-border/40">
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-base flex items-center gap-2">
+            <CardTitle className="text-xs font-medium uppercase tracking-widest text-muted-foreground flex items-center gap-2">
               <PenTool className="size-4" />
               ブラッシュアップ版
             </CardTitle>
