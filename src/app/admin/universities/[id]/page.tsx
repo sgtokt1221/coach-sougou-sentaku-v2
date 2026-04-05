@@ -42,9 +42,14 @@ type SelectionMethodType = SelectionMethod["type"];
 const GROUP_LABELS: Record<string, string> = {
   kyutei: "旧帝大",
   soukeijochi: "早慶上智",
-  kankandouritsu: "関関同立",
   march: "MARCH",
+  kankandouritsu: "関関同立",
   sankinkohryu: "産近甲龍",
+  nittoukomasen: "日東駒専",
+  seiseimeidoku: "成成明獨國武",
+  national: "国立大学",
+  public: "公立大学",
+  private: "その他私立",
 };
 
 const METHOD_TYPE_LABELS: Record<SelectionMethodType, string> = {
@@ -548,11 +553,9 @@ export default function AdminUniversityEditPage() {
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="kyutei">旧帝大</SelectItem>
-                  <SelectItem value="soukeijochi">早慶上智</SelectItem>
-                  <SelectItem value="kankandouritsu">関関同立</SelectItem>
-                  <SelectItem value="march">MARCH</SelectItem>
-                  <SelectItem value="sankinkohryu">産近甲龍</SelectItem>
+                  {Object.entries(GROUP_LABELS).map(([key, label]) => (
+                    <SelectItem key={key} value={key}>{label}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

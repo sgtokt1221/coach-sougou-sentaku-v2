@@ -2,7 +2,17 @@ export interface University {
   id: string;
   name: string;
   shortName: string;
-  group: "kyutei" | "soukeijochi" | "kankandouritsu" | "march" | "sankinkohryu";
+  group:
+    | "kyutei"
+    | "soukeijochi"
+    | "march"
+    | "kankandouritsu"
+    | "sankinkohryu"
+    | "nittoukomasen"
+    | "seiseimeidoku"
+    | "national"
+    | "public"
+    | "private";
   officialUrl: string;
   updatedAt?: Date;
   faculties: Faculty[];

@@ -51,10 +51,15 @@ const DATA_DIR = join(__dirname, "../src/data/universities");
 
 const JSON_FILES = [
   "kyutei.json",
-  "kankandouritsu.json",
-  "march.json",
-  "sankinkohryu.json",
   "soukeijochi.json",
+  "march.json",
+  "kankandouritsu.json",
+  "sankinkohryu.json",
+  "nittoukomasen.json",
+  "seiseimeidoku.json",
+  "national.json",
+  "public.json",
+  "private.json",
 ];
 
 function initFirebase() {

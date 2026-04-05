@@ -1,302 +1,343 @@
 [
   {
-    "id": "waseda-u",
-    "name": "早稲田大学",
-    "shortName": "早稲田",
+    "id": "sophia-u",
+    "name": "上智大学",
+    "shortName": "上智",
     "group": "soukeijochi",
-    "officialUrl": "https://www.waseda.jp/inst/admission/undergraduate/system/ao/",
+    "officialUrl": "https://www.sophia.ac.jp/",
     "faculties": [
       {
-        "id": "culture-media-society",
-        "name": "文化構想学部（JCulPプログラム）",
-        "admissionPolicy": "英語と日本語の二言語で日本文化を多角的に研究し、グローバルな視点から文化の創造・発信に貢献できる人材を求める。異文化理解力と高い語学力を基盤に、日本文化論を国際的に展開する意欲と独創的な思考力を有する者を歓迎する。",
-        "capacity": 15,
+        "id": "letters",
+        "name": "文学部",
+        "admissionPolicy": "文学部\n　\n本学部は、人間性の探究および人文教養の各領域について深く幅広い関心と動機づけを持つ学生が、学科を選択して入学し、自発的かつ積極的な態度で学業に研鑽することを期待します。そこで、次のような学生を受け入れます。\n\n人文教養を主体的に探究しようとする意欲と、学業への誠実な態度を持っている。\n志望する個別の専門分野について具体的な関心を持っている。\nものごとを批判的に考え、自らの意見を明確に表現するための基礎的なスキルを身につけている。\n大学での学修に必要とされる基礎的な教養、知識、語学能力を備えている。\n\n哲学科\n　\n本学科では、次のような学生を受け入れます。\n\n１，人間とそれをとりまく世界にさまざまな問題を見出し、その問題の表層的な解決ではなく本質的な理解を求めて、主体的・対話的・協働的に探求することに強い関心と意欲を持つ。\n２、〈知恵を愛し求めること〉としての哲学を通じて思考力、判断力、表現力を陶冶することによって、〈他者とともに他者のために生きる〉ことに強い関心と意欲を持つ。\n３，人間の社会、文化、歴史に関する基礎的な知識・教養と、日本語の優れた理解力・表現力、および堅実な英語の技能を持つ。\n\n史学科\n　\n歴史学は「過去を学ぶことによって、現在を深く理解し、未来への指針を獲得する」学問です。それに向いている資質を持った以下のような学生を受け入れます。\n\n１，さまざまな社会事象やその歴史的背景について、幅広い関心と知識欲を持っていること。\n２，ありきたりの解説に満足せず、自分の頭で考え問題点を発見しようとする主体性を持っていること。\n３，史料の記述とねばり強く対話し、客観的に読解できるような忍耐力、文脈を把握する論理的な思考力\nを持っていること。\n４，自らの主張を理論的に組み立て、他者に分かりやすく提示できる表現力を持っていること。\n\n国文学科\n　\n日本の伝統的な言語文化と日本語の特質を理解するために、文語や漢文訓読も含んだ日本語の豊かな言語作品を、国文学・国語学・漢文学の領域で広く深く学ぶ意欲を持ち、そのための基礎的な読解力を備えている学生を受け入れます。\n\n１，古代から現代に至る日本の文学作品に関心があり、それぞれの原典資料を、より深く、より綿密に判断して読み解く力を更に伸ばし、自らの主体的な新しい読み方を発見し、それを他との対話の中で磨いて行くことに意欲がある。\n２，古代から現代に至るまで一貫して「国語」であり続けた日本語の仕組みを、時に他国語との対照も交えながら、主体的に解明して行くことに意欲がある。\n３，日本語・日本文学の歴史で、常に基盤の一つであった漢文体に関心があり、漢文体の作品を味わう力を、更に伸ばすことに意欲がある。\n\n英文学科\n　\n本学科では、言葉というもの全般に興味があり、特定の言語のもつ社会的な意味作用や、言語表現としてのテクストの読解、分析に関心がある学生を受け入れます。\n\n１，英語の修得が必要である理由を、国際共通語であるからという点のみに求めてしまうのではなく、国際共通語としての英語をとりまく負の要素も視野に入れたのち、それでもなお英語を学ぶ意味はどこにあるのかを考えることができる。\n２，言語こそが人間の営為の根幹を形作っていることを理解し、その人間の言語活動の重要な一角を成している文学に、一定以上の関心がある。\n３，他者を知るということは自己を知ることと連動しており、そのための媒介となるのが言葉であり、また言語表現としてのテクストであることを認識したうえで、そのテクストを読み解くための一定以上の英語運用能力を有している。\n\nドイツ文学科\n　\n本学科は、上智大学の建学の精神についての十全な理解に加えて、以下のような資質を持った学生を受け入れます。\n\n１，ドイツ語圏の文学、芸術、思想、歴史等々に大きな関心を持ち、それらの学修に不可欠のドイツ語能力を確実に体得するため、日々の地道な努力を厭わず、自発的・持続的に勉学に取り組むことができる。\n２，異文化に関する新しい知識や体験を求めようとする知的好奇心が旺盛で、自由で柔軟な精神を有し、加えて高度に学問的な内容の文章を読み書きするのに必要な論理的思考能力と豊かな言語表現力を持っている。\n３，現代世界のありようを多角的に捉えることのできる視点、そして自己とは異質な文化を育んできた「他者」に対する想像力と寛容の精神、畏敬の念をもって、自国とドイツ語文化圏の相互的理解と協力関係の深化に貢献しようという強い意欲を有する。\n\nフランス文学科\n　\nひとりひとりがフランス語の修得と、フランス語圏の文学をはじめとする文化事象の学習を通して人間に対する理解を深め、他者との平和的共存をはかりつつ自己の個性を高めてゆくことを期待する本学科は、以下のような学生を受け入れます。\n\n１，フランス語やフランス語圏の文学・文化を学び、柔軟かつ論理的な思考力を養い、自己とは異質なものを理解することに関心や意欲がある。\n２，人文学に関する講義を聞いたり、芸術作品を鑑賞したり、書物や論文を読んでその要点をまとめたり、自分の考察を口頭や文書で発表するために必要な常識と、言語能力とを備えている。\n３，自発的、主体的に考え、学ぶことができると同時に、他者との対話や共同作業を通じて学びあうことの意義を認識している。\n\n新聞学科\n　\n本学科では、以下のような学生を受け入れます。\n\n１，情報化が進む現代社会において、ジャーナリズムやメディア・コミュニケーションの諸領域に積極的な関心を持ち、それを深く学び、考える意欲がある。\n２，現代社会に対する問題関心を突き詰める姿勢と、それらの問題について批判的に検証する論理的な思考力、判断力がある。\n３，自らの問題関心に基づいた調査研究の成果を表現する能力、説明する対話力がある。　　　　　　　　　　　　　　　　　　　　　　　Department of Journalism\n　\nThe Department of Journalism welcomes students with the qualities described below:\n\n１，Students proactively interested in the disciplines of journalism and media communications in the information-oriented modern world and motivated to study and contemplate the disciplines in depth\n２，Students with an inquisitive attitude towards issues challenging modern society as well as the logical thought and judgment required to critically verify such issues\n３，Students with the competence to present the survey and research outcomes based on their own interests and the articulateness to explain them",
+        "capacity": 248,
         "requirements": {
-          "gpa": null,
-          "englishCert": "英語外部試験スコア提出必須（TOEFL iBT、IELTS等）",
-          "otherReqs": ["志望理由書（日本語・英語）", "活動記録報告書", "英語外部試験スコア"]
+          "gpa": 4,
+          "englishCert": "英検2級 / TOEFL iBT 42以上 / IELTS 4.0以上 / GTEC 930以上",
+          "otherReqs": [
+            "・TOEIC L&R 550 & S&W 240\n・国連英検 C級\n・TEAP CBT 325\n・ケンブリッジ英検 142\n・仏検 2級\n・DELF ・DALF B1\n・TCF B1\n・独検 準1級\n・Goetheinstitutのドイツ語検定試験 B1\n・オーストリア政府公認ドイツ語能力試験 B1",
+            "専願"
+          ]
         },
         "selectionMethods": [
-          { "stage": 1, "type": "documents", "details": "調査書、志望理由書（日英）、活動記録報告書、英語外部試験スコアの書類審査" },
-          { "stage": 2, "type": "interview", "details": "日本語および英語による面接試験" }
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "上智大学志願票、高等学校調査書、高等学校長の推薦、自己推薦書、外国語検定試験、レポート等特定課題"
+          },
+          {
+            "stage": 2,
+            "type": "other",
+            "details": "学科試問"
+          },
+          {
+            "stage": 3,
+            "type": "interview",
+            "details": "面接"
+          }
         ],
         "schedule": {
-          "applicationStart": "2025-09-01",
-          "applicationEnd": "2025-09-08",
-          "examDate": "2025-10-19",
-          "resultDate": "2025-11-01"
-        },
-        "interviewTendency": {
-          "format": "個人面接（日本語・英語）",
-          "duration": "約20分",
-          "interviewers": "教員2〜3名",
-          "pressure": "medium",
-          "weight": "面接重視",
-          "frequentTopics": [
-            "日本文化への関心と研究テーマ",
-            "英語での自己紹介・志望動機説明",
-            "異文化体験とそこから得た学び",
-            "JCulPプログラムで何を学びたいか",
-            "グローバルな視点での日本文化発信"
-          ],
-          "tips": "日本語と英語の両方で面接が行われるため、志望理由や研究テーマを両言語でスムーズに説明できるよう準備が必要。日本文化に対する具体的な関心テーマを持ち、国際的な視点から語れるようにしておくこと。"
+          "applicationStart": "2024-10-24",
+          "applicationEnd": "2024-11-7",
+          "examDate": "2024-12-02",
+          "resultDate": "2024-12-20"
         }
       },
       {
-        "id": "social-sciences",
-        "name": "社会科学部（全国自己推薦入試）",
-        "admissionPolicy": "社会科学の学際的な視座から現代社会の諸問題を分析し、解決策を提案できる人材を求める。学業・課外活動において優れた実績を持ち、多様な価値観を尊重しながら社会の発展に寄与する強い意志を有する者を歓迎する。",
-        "capacity": 35,
-        "requirements": {
-          "gpa": null,
-          "englishCert": null,
-          "otherReqs": ["志望理由書", "活動記録報告書", "全国7ブロックからの選抜"]
-        },
-        "selectionMethods": [
-          { "stage": 1, "type": "documents", "details": "志望理由書、活動記録報告書、調査書による1次選考" },
-          { "stage": 2, "type": "essay", "details": "小論文試験" },
-          { "stage": 3, "type": "interview", "details": "個別面接" }
-        ],
-        "schedule": {
-          "applicationStart": "2025-09-24",
-          "applicationEnd": "2025-09-30",
-          "examDate": "2025-11-01",
-          "resultDate": "2025-11-14"
-        },
-        "interviewTendency": {
-          "format": "個人面接",
-          "duration": "約15分",
-          "interviewers": "教員2名",
-          "pressure": "medium",
-          "weight": "均等",
-          "frequentTopics": [
-            "小論文の内容に関する深掘り質問",
-            "志望理由と社会科学への関心",
-            "課外活動の実績と学んだこと",
-            "現代社会の課題に対する自分の意見",
-            "大学で取り組みたい研究テーマ"
-          ],
-          "tips": "小論文試験の後に面接が行われるため、自分が書いた小論文の内容を踏まえた質問に備えること。社会科学の学際性を理解し、複数の分野を横断する視点で社会問題を語れるようにしておくと好印象。"
-        }
-      },
-      {
-        "id": "international-liberal-studies",
-        "name": "国際教養学部（AO入試・4月入学国内選考）",
-        "admissionPolicy": "多様な学問分野を英語で横断的に学び、国際社会の課題に主体的に取り組む人材を求める。高い英語運用能力と幅広い知的好奇心を持ち、異文化環境で協働しながらリベラルアーツの精神を実践する意欲のある者を歓迎する。",
-        "capacity": 100,
-        "requirements": {
-          "gpa": null,
-          "englishCert": "英語外部試験スコア提出必須（TOEFL iBT、IELTS、英検等）",
-          "otherReqs": ["志望理由書（英語）", "Critical Writing（英語）", "英語外部試験スコア"]
-        },
-        "selectionMethods": [
-          { "stage": 1, "type": "documents", "details": "調査書、志望理由書（英語）、英語外部試験スコア等の書類審査" },
-          { "stage": 2, "type": "test", "details": "Critical Writing（英語による論述試験）" }
-        ],
-        "schedule": {
-          "applicationStart": "2025-09-01",
-          "applicationEnd": "2025-09-08",
-          "examDate": "2025-10-19",
-          "resultDate": "2025-11-01"
-        },
-        "interviewTendency": {
-          "format": "書類・筆記中心（面接なし）",
-          "duration": "なし（Critical Writing 90分）",
-          "interviewers": "なし",
-          "pressure": "medium",
-          "weight": "書類重視",
-          "frequentTopics": [
-            "Critical Writingでの論理的英語論述",
-            "社会問題・国際問題に関するエッセイ",
-            "志望理由書（英語）の説得力",
-            "リベラルアーツへの関心と学習計画",
-            "英語外部試験スコアの高さ"
-          ],
-          "tips": "面接は実施されず、書類審査とCritical Writing（英語論述試験）で合否が決まる。英語で論理的に議論を構築する力が問われるため、英語エッセイの練習を重点的に行うこと。TOEFL iBT 95+やIELTS 7.0+が目安。"
-        }
-      },
-      {
-        "id": "sport-sciences",
-        "name": "スポーツ科学部（スポーツ自己推薦入試）",
-        "admissionPolicy": "スポーツ科学の研究・実践を通じて社会に貢献する人材を求める。競技スポーツにおける顕著な実績と、スポーツを科学的に探究する知的好奇心を併せ持ち、心身ともに健全で学業との両立に意欲のある者を歓迎する。",
+        "id": "science-eng",
+        "name": "理工学部",
+        "admissionPolicy": "理工学部\n　\n理工学部では、その教育・研究理念に沿って、未知の領域に挑戦する強い意志と、深い洞察力と豊かな創造力をもち、幅広く国際教養を身につけ、これからの日本と国際社会を先導すべき優れた人材の育成を目標としており、これに応えることができる、意欲ある学生諸君の入学を歓迎します。一般選抜を筆頭に多様な入試（指定校推薦、留学生、帰国生、AO、一貫教育高校からの推薦入学）を実施し、様々な能力をもつ学生が互いに切磋琢磨し、創発効果を生み出せる教育研究環境を目指します。\n\n物質生命理工学科\n　\n本学科は、自然科学における諸現象の解明や新たな物質の創成と技術開発への貢献を可能にする学生を求めています。科学・技術と地球環境の融和に関心を持ち、自然と調和した物質観・生命観を構築することに意欲を持つ学生を求めています。\n\n１，高等学校の数学、理科、英語の授業内容を十分に理解している者。\n２，論理的な思考力や幅広い視野、コミュニケーション能力を持つ者。\n３，自然科学に強い興味をもち、諸現象の解明、新たな物質の創成や技術開発への貢献に意欲を持つ者。\n\n機能創造理工学科\n　\n本学科は、幅広い教養とゆるぎない専門知識を背景に、柔軟な発想でそれらを融合し、科学・技術上の諸問題の解決への貢献を可能にする学生を受け入れます。\n\n１，高等学校の数学、理科、英語の授業内容を十分に理解している者。\n２，論理的な思考力や幅広い視野、コミュニケーション能力を持つ者。\n３，本学科が担う物理学、機械工学、電気・電子工学を自ら幅広くかつ深く学ぼうとする積極性と、修得した学問・技術によって卒業後に社会へ貢献しようとする強い意志を持つ者。\n\n情報理工学科\n　\n本学科では、幅広い教養とさまざまな分野で活用されている情報に関する専門知識を修得し、それらを融合・応用・発展させることのできる人材を求めています。科学技術とそれを支える基礎学問、人間・社会に関する「複合知」の構築を背景に独創性を持って、未来の社会を構築することに意欲をもつ人材を求めています。\n\n１，情報科学・通信工学・数学・生物学を学修する前提となる確かな基礎学力を持つ者。\n２，学問に関する問題発見および課題解決に必要な論理的な思考力や幅広い視野、コミュニケーション能力を持つ者。\n３，人間・通信・社会・数理の情報分野を複合的に学習し、現象を理解する原理の解明、新たなシステムの構築や技術開発への貢献に意欲を持つ者。\n\nGreen Science Program（理工学部英語コース）\n　\nThe Green Science Course seeks students who have a strong desire to tackle environmental issues by elucidating various phenomena in natural science and creating new materials. They also should be interested in the harmony of science and technology with the global environment.\n\n１， Those who well understand high school level mathematics, science, and English.\n２，Those who have logical thinking ability, a broad perspective, and communication skills.\n３，Those who show keen interest in natural science and the global environment as well as eagerness toward the elucidation of various phenomena, the creation of new materials, technological development, and grappling with environmental issues.\n\nGreen Engineering Program （理工学部英語コース）\n　\nThe Green Engineering Course is seeking students who have received extensive education, possess solid expertise in relevant fields, and are able to contribute to solving various problems in science and engineering by flexibly making the most of their educational backgrounds.\n\n１，Those who have a good grasp of high school level mathematics, science, and English\n２，Those who are logical thinkers, possess a broad perspective, and have good communication skills.\n３，Those who show enthusiasm in widely and deeply learning physics, mechanical engineering, and electrical and electronic engineering, which constitute the basis of the Green Engineering Course, and who have a strong desire to contribute to society after graduation, using acquired academic knowledge and technology.",
         "capacity": 60,
         "requirements": {
-          "gpa": null,
-          "englishCert": null,
-          "otherReqs": ["競技歴・スポーツ活動実績報告書", "志望理由書", "競技成績証明書"]
+          "gpa": 3.8,
+          "englishCert": "英検2級 / TOEFL iBT 42以上 / IELTS 4.0以上 / GTEC 930以上",
+          "otherReqs": [
+            "・TOEIC L&R 550 ＆ S&W 240\n・国連英検 C級\n・TEAPCBT 325\n・TEAP 220\n・ケンブリッジ英検 142\n・独検 準1級\n・仏検 2級\n・DELF・DALF B1\n・TCF B1\n・Goetheinstitutのドイツ語検定試験 B1\n・オーストリア政府公認ドイツ語能力試験 B1",
+            "専願",
+            "①全体4.0以上\n②全体3.8以上かつ数学と理科それぞれ4.5以上　\nのいずれか"
+          ]
         },
         "selectionMethods": [
-          { "stage": 1, "type": "documents", "details": "調査書、競技歴報告書、志望理由書による1次選考" },
-          { "stage": 2, "type": "essay", "details": "小論文試験" },
-          { "stage": 3, "type": "interview", "details": "面接試験" }
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "上智大学志願票、高等学校調査書、高等学校長の推薦、自己推薦書、外国語検定試験、レポート等特定課題"
+          },
+          {
+            "stage": 2,
+            "type": "other",
+            "details": "学科試問"
+          },
+          {
+            "stage": 3,
+            "type": "interview",
+            "details": "面接"
+          }
         ],
         "schedule": {
-          "applicationStart": "2025-09-16",
-          "applicationEnd": "2025-09-29",
-          "examDate": "2025-11-14",
-          "resultDate": "2025-11-21"
-        },
-        "interviewTendency": {
-          "format": "個人面接",
-          "duration": "約15分",
-          "interviewers": "教員2名",
-          "pressure": "medium",
-          "weight": "均等",
-          "frequentTopics": [
-            "競技実績と競技を通じた成長",
-            "スポーツ科学への関心と研究テーマ",
-            "学業とスポーツの両立計画",
-            "怪我や挫折の経験とその克服",
-            "卒業後のキャリアビジョン"
-          ],
-          "tips": "競技実績だけでなく、スポーツを科学的に探究したいという知的好奇心をアピールすることが重要。小論文と面接の両方でスポーツ科学の視点を示し、単なるアスリートではなく研究者としての姿勢も見せること。"
+          "applicationStart": "2024-10-24",
+          "applicationEnd": "2024-11-7",
+          "examDate": "2024-12-02",
+          "resultDate": "2024-12-20"
         }
       },
       {
-        "id": "human-sciences",
-        "name": "人間科学部（FACT選抜）",
-        "admissionPolicy": "人間に関する諸問題を多角的・学際的に研究し、社会の福祉と発展に貢献する人材を求める。人間環境科学・健康福祉科学・人間情報科学のいずれかの分野に強い関心と探究意欲を持ち、独自の問題発見能力と論理的思考力を有する者を歓迎する。",
-        "capacity": 10,
+        "id": "law",
+        "name": "法学部",
+        "admissionPolicy": "法学部\n　\n法学部では、慶應義塾の建学の精神を理解し、国際的な視野に立ちつつ、新しい社会を創造し先導する気概を持つ学生を求めている。入学する学生には、法学部の教育目標（カリキュラムポ リシー）をよく理解し、そのカリキュラムの下で学習するために必要な学力、能力、そして意欲を有していることが求められる。その具体的な考査方法は、一般選抜、帰国生入試、留学生入試、指定高校による推薦入試、そして自己推薦形式でのFIT入試と多様であり、それぞれに制度の趣旨は異なるが、それらに共通する目標は、一定の知識水準を有し、その上で知的好奇心に溢れ、かつ個性豊かな学生を選考することである。\n\n法律学科\n　\n本学科では、社会に現実として存在する紛争や問題の法的な解決に資する思考力・構想力（いわゆるリーガル・マインド）を養成します。そのため以下の学生を受け入れます。\n\n１，社会と人間への高い関心を有する学生\n２，社会科学一般への柔軟かつ広い興味や国際問題への関心を有する学生\n３，高校までの学習により、上記関心を持つのみならず柔軟な思考のできる学生\n\n国際関係法学科\n　\n本学科では、教員と学生が一緒になって、法学および政治学を基礎とした国際関係の分析を行い、解決に向けた提言を模索していきます。そのために、次のような特質を持つ学生を求めています。\r\n\r\n１，国際社会に生起する外交、安全保障、紛争、難民、商取引、婚姻などの諸問題について関心を持つ学生\r\n２，世界のさまざまな地域における社会のあり方を、偏見を抱くことなく観察し、分析することができる学生\r\n３，国際舞台で活躍する人材に成長するための基礎になるような一定の語学力を持つ学生\n\r\n\n地球環境法学科\n　\n本学科では、主に法学と政治学の観点から、日本や世界が直面している環境問題への取り組みに資する\r\n能力を養成します。そのため以下のような特質を有する学生を求めています。\r\n\r\n１，環境問題に関わる人間や社会のあり方に対して、高い関心を有する学生\r\n２，海外事情・国際情勢に対する幅広い関心と一定の語学力を備え、グローバル化する環境問題にも対応しうる学生\r\n３，社会科学一般を中心に柔軟かつ広範な関心を有する学生",
+        "capacity": 136,
         "requirements": {
-          "gpa": null,
-          "englishCert": null,
-          "otherReqs": ["志望理由書", "事前課題レポート", "活動報告書"]
+          "gpa": 4,
+          "englishCert": "英検2級 / TOEFL iBT 42以上 / IELTS 4.0以上 / GTEC 930以上",
+          "otherReqs": [
+            "・TOEIC L&R 550 & S&W 240\n・国連英検 C級\n・TEAP CBT 325\n・ケンブリッジ英検 142\n・仏検 2級\n・DELF ・DALF B1\n・TCF B1\n・独検 準1級\n・Goetheinstitutのドイツ語検定試験 B1\n・オーストリア政府公認ドイツ語能力試験 B1",
+            "専願"
+          ]
         },
         "selectionMethods": [
-          { "stage": 1, "type": "documents", "details": "調査書、志望理由書、事前課題レポート、活動報告書による書類審査" },
-          { "stage": 2, "type": "essay", "details": "論述試験" },
-          { "stage": 3, "type": "interview", "details": "面接試験（口頭試問含む）" }
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "上智大学志願票、高等学校調査書、高等学校長の推薦、自己推薦書、外国語検定試験、レポート等特定課題"
+          },
+          {
+            "stage": 2,
+            "type": "other",
+            "details": "学科試問"
+          },
+          {
+            "stage": 3,
+            "type": "interview",
+            "details": "面接"
+          }
         ],
         "schedule": {
-          "applicationStart": "2025-09-16",
-          "applicationEnd": "2025-09-25",
-          "examDate": "2025-10-26",
-          "resultDate": "2025-11-07"
-        },
-        "interviewTendency": {
-          "format": "個人面接（口頭試問含む）",
-          "duration": "約20分",
-          "interviewers": "教員2〜3名",
-          "pressure": "medium",
-          "weight": "面接重視",
-          "frequentTopics": [
-            "事前課題レポートの内容に関する口頭試問",
-            "志望する学科（環境・福祉・情報）の選択理由",
-            "研究計画の具体性と実現可能性",
-            "人間科学の学際的アプローチへの理解",
-            "社会課題に対する問題意識"
-          ],
-          "tips": "口頭試問が含まれるため、事前課題レポートの内容を深く理解し、質問に論理的に答えられるよう準備が必須。FACT選抜は少人数（10名）で競争率が高いため、独自の問題発見能力と探究の深さが鍵となる。"
+          "applicationStart": "2024-10-24",
+          "applicationEnd": "2024-11-7",
+          "examDate": "2024-12-02",
+          "resultDate": "2024-12-20"
         }
       },
       {
-        "id": "creative-science-engineering",
-        "name": "創造理工学部（建築学科AO入試）",
-        "admissionPolicy": "建築・空間デザインの分野で独創的な発想力と表現力を持ち、社会と環境の課題に向き合える人材を求める。デッサン等の造形的実技能力と論理的思考力を兼ね備え、豊かな感性と専門的探究心で建築の未来を切り開く意欲のある者を歓迎する。",
-        "capacity": 15,
+        "id": "generalhuman",
+        "name": "総合人間科学部",
+        "admissionPolicy": "総合人間科学部\n　\n人間の尊厳とは何かを理解しその実現に向けて、教育、医療、福祉、さらには日々の生活の中で実践でき\nる人材の養成を目指している総合人間科学部では、以下のような学生を受け入れています。\n\n１，個人や社会、さらには諸外国で起きている人間の尊厳に関わるさまざまな事象に対して強い関心を持\nっている。\n２，それらの事象を論理的かつ客観的に分析し表現するために必要な基礎的な知識と能力を持っている。\n３，コミュニケーション能力を高め、他の専門領域の人々とも積極的に協働することができる。\n４，困難な状況にある個人や地域社会を支援し、国際社会の発展に貢献したいという意欲に満ちている。\n\n教育学科\n　\n人間と教育をめぐる諸問題に関心を持ち、それらの問題を柔軟かつ複眼的に思考することのできる学生を受け入れます。また、国際社会や異文化に対して広い関心を有する探究心の旺盛な学生を求めています。\n\n１，人間と教育をめぐる諸問題に関心を持ち、その解決に取り組む意欲を抱く学生を求めています。その際、国際社会や異文化に対して広く関心を有する探究心の旺盛な学生を特に歓迎します。\n２，学習の基礎力として、どの入試種別においても、日本語を用いて論理的に思考し、表現する能力と、英語による基礎的なコミュニケーション能力を要求しています。その上で、自らの考えを率直に表現できると共に、広く寛容な姿勢で他者の考えを受け入れ、柔軟に発想し、複眼的に思考することのできる学生を求めています。\n３，さまざまな個性や多様な文化的背景を有する学生を歓迎します。\nまた、特別入試では、新聞等で報道される時事的問題の水準において、教育に関わる諸問題への関心や理解、それらに対して自分なりの考えを形成し表現する基礎的能力を備えた学生を受け入れます。\n\n心理学科\n　\n他者に対する温かな関心と人間の尊厳を尊重する姿勢を持ち、次のような素養を持つ学生を求めています。\n\n１，身の回りで起きていることに対して好奇心を持ち、自ら調べ、学んでいこうとする意欲のある学生、さらに、物事を多角的な視点から柔軟に眺めようとする意欲のある学生。\n２、先行する多くの文献を臆することなく読み進めることのできる学生、さらに、さまざまな領域の人々と協働的に学ぶことのできる学生。\n３，物事を論理的かつ客観的に分析し、文章にまとめたり口頭で発表したりすることのできる学生。\n\n社会学科\n　\n本学科は、学位授与に向けた人材養成の目的を達成するため、以下のような意欲や関心を持つ学生の受け入れを希望します。\n\n１，社会や文化と個人との多様な関係を深く理解するため、政治・経済・歴史など社会の広い領域への関心を持つこと。\n２，論理的な思考力とコミュニケーションへの積極的な姿勢を持ち、さらにそれを鍛えて、他者や社会に対する豊かな想像力を育みたいという強い意欲を持つこと。\n３，社会のメンバーが相互に理解しあい、その誰もが尊重される公正な社会の実現に向けて、自分なりの方法で貢献していきたいという将来構想を持つこと。\n\n社会福祉学科\n　\n本学科では、以下のような学生を受け入れたいと考えています。\n\n１．人間の尊厳に深い関心を持ち、社会の発展や世界・地域に貢献するために主体的かつ自発的に学ぶ意欲がある学生を求めています。\n２．社会や福祉についての基本的な知識、新しい福祉社会について自由に考えることができる柔軟性と、他者とコミュニケーションをとりながら問題解決を図ることができる技能を求めています。\n３．卒業後は、社会福祉の実践現場はもとより行政機関や産業界を含む、さまざまな場面で活躍し、新しい福祉社会を政策的・運営的にデザインし創造していくためにリーダーシップを発揮していくことを期待しています。\n\n看護学科\n　\n本学科の設置の目的を理解し、人間と社会をめぐる諸問題に関心を持ち、それらの問題を柔軟かつ複眼的に思考することのできる学生を受け入れます。また、幅広く深い学術への関心を持ち、科学の知、臨床の知、政策・運営の知を積極的に学ぶ姿勢を有し、ひとびとの健康と福祉に多様な形で貢献し、従来の職業看護教育を超えた看護の発展に寄与しようとする探究心の旺盛な学生を求めています。\n\n１，幅広く深い学術への関心を持ち、科学の知、臨床の知、政策・運営の知を積極的に学ぶ姿勢を有している学生を受け入れます。\n２，健康に関する諸問題に関心を持ち、それらの問題をさまざまな視点から考えることのできる学生を受けれます。\n３，人々の健康と福祉に多様な形で貢献する明確な意志を持った学生を受け入れます。\n４，看護学の発展に寄与しようとする探究心の旺盛な学生を受け入れます。\n　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　Department of Education (SPSF)\n　\nThe Department of Education welcomes students who are interested in the various issues associated with education and human development and who are willing to examine them flexibly and multifacetedly. We also seek inquisitive students with a broad interest in the global world and in different cultures.\n\n１，We seek students who are interested in the various issues associated with education and human development and are eager to find solutions to them. We especially welcome inquisitive students with a broad interest in the global world and different cultures.\n２，The basic academic competence required include the ability to think, present logically, and communicate in English. We seek students who can use these skills to clearly express their own ideas and, at the same time, accept the ideas of others, flexibly come up with new ideas, and always think multifacetedly.　　　　　　　　　　　　　　\n\nDepartment of Sociology (SPSF)\n　\nIn order to achieve our aim of fostering individuals who qualify for a degree, the Department of Sociology welcomes students with the following motivations and interests:\r\n\r\n１，Possesses an interest in a wide range of social disciplines, including politics, economics, and history, that will assist in deeply understanding diversified relationships among society, culture, and individuals.\r\n２，Possesses both the ability to think logically and a proactive attitude towards communication, and a strong motivation to build on such abilities to foster a rich imagination that considers others and society.\r\n３，Possesses a future vision of contributing in one’s own way to realizing a fair society based on mutual understanding in which all members are respected.",
+        "capacity": 97,
         "requirements": {
-          "gpa": null,
-          "englishCert": null,
-          "otherReqs": ["志望理由書", "活動記録報告書", "デッサン等の実技作品（事前課題）"]
+          "gpa": 4,
+          "englishCert": "英検2級 / TOEFL iBT 42以上 / IELTS 4.0以上 / GTEC 930以上",
+          "otherReqs": [
+            "・TOEIC L&R 550 & S&W 240\n・国連英検 C級\n・TEAP CBT 325\n・ケンブリッジ英検 142\n・仏検 2級\n・DELF ・DALF B1\n・TCF B1\n・独検 準1級\n・Goetheinstitutのドイツ語検定試験 B1\n・オーストリア政府公認ドイツ語能力試験 B1",
+            "専願"
+          ]
         },
         "selectionMethods": [
-          { "stage": 1, "type": "documents", "details": "志望理由書、活動記録報告書、事前課題（デッサン等）の書類審査" },
-          { "stage": 2, "type": "presentation", "details": "事前課題に基づくプレゼンテーション" },
-          { "stage": 3, "type": "interview", "details": "口頭試問を含む個人面接" }
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "上智大学志願票、高等学校調査書、高等学校長の推薦、自己推薦書、外国語検定試験、レポート等特定課題"
+          },
+          {
+            "stage": 2,
+            "type": "other",
+            "details": "学科試問"
+          },
+          {
+            "stage": 3,
+            "type": "interview",
+            "details": "面接"
+          }
         ],
         "schedule": {
-          "applicationStart": "2025-09-01",
-          "applicationEnd": "2025-09-10",
-          "examDate": "2025-10-18",
-          "resultDate": "2025-11-01"
-        },
-        "interviewTendency": {
-          "format": "個人面接（口頭試問含む）＋プレゼンテーション",
-          "duration": "約20〜30分",
-          "interviewers": "教員3名",
-          "pressure": "medium",
-          "weight": "面接重視",
-          "frequentTopics": [
-            "事前提出デッサン・課題の制作意図と表現の説明",
-            "建築への関心のきっかけと目指す建築像",
-            "空間・環境・デザインに関する考え方",
-            "実技経験（デッサン、模型、CGなど）の実績",
-            "早稲田建築学科で取り組みたい研究・設計テーマ"
-          ],
-          "tips": "デッサン等の実技課題が事前に課されるため、造形力の鍛錬が必須。プレゼンでは制作意図を論理的かつ熱意を持って伝えることが重要。建築雑誌や著名建築家の作品研究を通じて、自分の建築観を確立しておくこと。"
+          "applicationStart": "2024-10-24",
+          "applicationEnd": "2024-11-7",
+          "examDate": "2024-12-02",
+          "resultDate": "2024-12-20"
         }
       },
       {
-        "id": "advanced-science-engineering",
-        "name": "先進理工学部（特別選抜入試）",
-        "admissionPolicy": "化学グランプリ・情報オリンピック等の国内外の科学競技において優秀な実績を持ち、先進理工学の最前線で独創的な研究に挑む高い資質を有する人材を求める。卓越した専門的基礎力と問題解決能力を備え、科学技術の革新に貢献する強い意欲のある者を歓迎する。",
-        "capacity": 5,
+        "id": "generalglobal",
+        "name": "総合グローバル学部",
+        "admissionPolicy": "総合グローバル学科\n　\n知的な関心と意欲を主体的努力によって伸ばし、グローバルな共生社会の形成に貢献しようとする以下のような学生を受け入れます。\n\n１，グローバル化する世界が呈する正負の諸側面に��する大きな関心を抱き、高等学校在学中の現代社会に関わる授業等を通して一定の知識を有する者。\n２，世界を構成するさまざまな地域や人々の多様性がもたらす人類の社会と文化の豊かさに対する大きな関心を抱き、高等学校在学中の地理、世界史に関わる授業等を通して一定の知識を有する者。\n３，物事に対して根拠に基づいた論理的な思考ができ、かつ主体的に取り組むことができるよう努力を重ねてきた者。\n４，グローバル化する世界の動きを理解するのに必要な基本的な文献を読解することのできる英語能力を有している者。\n\nDepartment of Global Studies（SPSF）\n　\nThe Faculty of Global Studies welcomes students  welcomes students who will engage in proactive efforts to build on their intellectual interests and motivation, and endeavor to contribute to the creation of a global inclusive society, as described below:\r\n\r\n１，Those highly interested in the positive and negative dimensions of a globalizing world and have acquired a certain level of knowledge through classes associated with Modern Society in secondary education.\r\n２，Those highly interested in the richness of human society and culture created by the diversity of regions and people constituting the world who have acquired a certain level of knowledge in high school classes associated with Geography and World History.\r\n３，Those who can approach matters with evidence-based logical thinking and who have made continued efforts to address matters independently.\r\n４，Those who bear the English skills to read and comprehend the literature required to understand globalization trends.",
+        "capacity": 163,
         "requirements": {
-          "gpa": null,
-          "englishCert": null,
-          "otherReqs": ["化学グランプリ・情報オリンピック・物理オリンピック等の実績証明書", "志望理由書", "研究計画書"]
+          "gpa": 4,
+          "englishCert": "英検2級A / TOEFL iBT 55以上 / IELTS 4.5以上 / GTEC 1050以上",
+          "otherReqs": [
+            "・TOEIC L&R 650 ＆ S&W 250\n・国連英検 B級\n・TEAPCBT 445\n・TEAP 270\n・ケンブリッジ英検 147\n・独検 準1級\n・仏検 2級\n・DELF・DALF B1\n・TCF B1\n・Goetheinstitutのドイツ語検定試験 B1\n・オーストリア政府公認ドイツ語能力試験 B1",
+            "専願"
+          ]
         },
         "selectionMethods": [
-          { "stage": 1, "type": "documents", "details": "実績証明書、志望理由書、研究計画書、調査書の書類審査" },
-          { "stage": 2, "type": "interview", "details": "口頭試問（専門分野の深い知識を問う）＋個人面接" }
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "上智大学志願票、高等学校調査書、高等学校長の推薦、自己推薦書、外国語検定試験、レポート等特定課題"
+          },
+          {
+            "stage": 2,
+            "type": "other",
+            "details": "学科試問"
+          },
+          {
+            "stage": 3,
+            "type": "interview",
+            "details": "面接"
+          }
         ],
         "schedule": {
-          "applicationStart": "2025-09-16",
-          "applicationEnd": "2025-09-25",
-          "examDate": "2025-10-25",
-          "resultDate": "2025-11-07"
-        },
-        "interviewTendency": {
-          "format": "口頭試問＋個人面接",
-          "duration": "約30〜40分",
-          "interviewers": "教員3名",
-          "pressure": "high",
-          "weight": "面接重視",
-          "frequentTopics": [
-            "科学競技（オリンピック等）の問題解決プロセスの詳細説明",
-            "専門分野（化学・物理・情報等）の高度な口頭試問",
-            "研究計画書の内容と実現可能性の検証",
-            "将来の研究テーマと先進理工学への貢献ビジョン",
-            "科学的思考の方法論と独創的アイデアの源泉"
-          ],
-          "tips": "科学オリンピック等の突出した実績が出願条件であるため、その問題解決の過程を自分の言葉で詳しく説明できる準備が不可欠。口頭試問は専門的かつ高度な内容が問われるため、競技で扱った問題の原理・背景・応用まで深く理解しておくこと。"
+          "applicationStart": "2024-10-24",
+          "applicationEnd": "2024-11-7",
+          "examDate": "2024-12-02",
+          "resultDate": "2024-12-20"
         }
       },
       {
-        "id": "education",
-        "name": "教育学部（地域探究・貢献入試）",
-        "admissionPolicy": "地域社会の課題に主体的に向き合い、フィールドワークや実践活動を通じて探究してきた人材を求める。地域の教育・文化・環境・福祉等の課題解決に継続的に取り組んだ実績と、その経験を教育学の視点から発展させる意欲を持つ者を歓迎する。",
-        "capacity": 10,
+        "id": "international-liberal-arts",
+        "name": "国際教養学部",
+        "admissionPolicy": "Department of Liberal Arts\n　\nThe Faculty of Liberal Arts of Sophia University welcomes students who are:\n１，Motivated to become active and responsible members of the global community and to participate in the creation of social, economic, and humanistic values essential for its sustenance and betterment.\n２，Intellectually curious and eager to improve their communication and analytical skills to\nconstructively interact with others from diverse socio-cultural backgrounds.\n３，Prepared to expand further their knowledge so that they become able to identify and approach with competence global issues.\n\n国際教養学科\n　\n本学部は以下のような学生を求めます。\r\n\r\n１，能動的にかつ責任を持って、グローバル化する社会の一員となる意欲を持ち、その維持と改善に欠かせない社会的・経済的・人文的な価値の創出にすすんで参画する。\r\n２，多様な社会文化的背景をもつ他者と建設的に交流するために欠かせない知的好奇心の旺盛さ、自らのコミュニケーション能力・分析力を改善する強い意欲を持つ。\r\n３，グローバルな問題を見極めアプローチしてゆくことができるよう、自らの知識を増やしてゆく覚悟がある。",
+        "capacity": 67,
         "requirements": {
-          "gpa": null,
-          "englishCert": null,
-          "otherReqs": ["地域活動・探究活動報告書", "志望理由書", "指導教員の推薦状または活動証明書"]
+          "gpa": 4,
+          "englishCert": "TOEFL iBT 83以上 / IELTS 6.5以上",
+          "otherReqs": [
+            "・TEAP CBT 615\n・TEAP 340",
+            "専願"
+          ]
         },
         "selectionMethods": [
-          { "stage": 1, "type": "documents", "details": "地域活動報告書、志望理由書、活動証明書等の書類審査" },
-          { "stage": 2, "type": "essay", "details": "小論文（地域課題と教育に関する論述）" },
-          { "stage": 3, "type": "interview", "details": "個人面接（活動実績の深掘りと教育学的考察）" }
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "上智大学志願票、高等学校調査書、高等学校長の推薦、自己推薦書、外国語検定試験"
+          },
+          {
+            "stage": 2,
+            "type": "other",
+            "details": "学科試問"
+          },
+          {
+            "stage": 3,
+            "type": "interview",
+            "details": "面接"
+          }
         ],
         "schedule": {
-          "applicationStart": "2025-09-24",
-          "applicationEnd": "2025-09-30",
-          "examDate": "2025-11-01",
-          "resultDate": "2025-11-14"
+          "applicationStart": "2024-10-24",
+          "applicationEnd": "2024-11-7",
+          "examDate": "2024-12-02",
+          "resultDate": "2024-12-20"
+        }
+      },
+      {
+        "id": "economics",
+        "name": "経済学部",
+        "admissionPolicy": "経済学部\n　\n社会に積極的に関与する強い意志を持ち、自らの智力によって変化する社会を把握しようという気概をもった人間を求めています。また、学問的基礎に基づいて厳密に考える能力にすぐれると同時に、バランス感覚に富み、多様なものの見方を尊重できる人材の育成を目指しています。このような知性により社会の指導的役割を担える潜在力を備えた多彩な学生を受け入れたいと考えます。\n\n経済学科\n　\n本学科の基本的な教育目標は、現代社会を取り巻く現実的課題を解決するための論理的思考能力の涵養です。経済学的視点にもとづき構築したモデルを駆使する学問的特性から、経済学の論理には「数学的思考」が不可欠です。このため、本学科では、入試科目として、論理的思考の基礎となる国語・外国語（英語等）に加えて数学を必須科目とし、高い意欲をもつ優秀な学生を受け入れます。\n\n１，現代社会の諸問題に対して高い関心を持ち、社会に貢献できるようになりたいという高い意欲を持つ学生を求めています。\n２，論理的思考の基礎となる言語能力（自らの考えを整理して言葉で表現する力や他者の考えを理解する力）、および数学的な思考能力を備えた学生を求めています。\n３，学生が経済学科において、自ら主体的に行動し、対話を通じて他者を理解し、他者と協働できるようになることを期待します。\n\n経営学科\n　\n本学科は企業の経営活動に関する高度な専門知識を体系的に学習すると同時に、グローバルな社会との関わりの中で経営活動を理解し、経営に関する合理的な意思決定により社会に貢献できる人材の育成を目指しています。\n\n１，多様な現実社会の問題に対し関心を持ち、主体的に関わりあう意欲を持つ学生を求めています。\n２，多面的な視点から社会現象を論理的に分析して理解するために必要とされる日本語および外国語の能力、歴史などの社会科の素養、論理的能力に秀でた高い意欲を持つ学生を求めています。\n３，将来、営利組織、非営利組織を問わず、国内外の組織やプロジェクトにおいて活躍する意欲のある学生を求めています。\n\nDepartment of Economics (SPSF)\n　\nThe basic educational aim of the Department of Economics is to cultivate students’ ability to think logically to find solutions for real-life issues of modern society. “Mathematical thinking” is essential in economic logic due to the academic nature of economic models. Consequently, highly motivated students who have achieved excellent academic performance both in quantitative and language subjects are welcomed in the Department.\n\n１，We seek students with a high degree of interest in various issues in modern society and who are strongly motivated to contribute to society.\n２，We seek students who are equipped with strong language skills (the ability to organize ideas and express them in words, both in the written and oral format, and to understand and discuss the ideas of others), good logical thinking ability, and good mathematical skills.\n３，We expect students to self-motivated, understand others through dialogue, and be capable of collaborating with others to achieve certain goals.\n\nDepartment of Management (SPSF)\n　\nThe Department of Management aims to foster individuals who can systematically study highly professional expertise regarding corporate business management activities and can simultaneously understand business management in the context of global society and contribute to society by making management decisions.\n\n１，We seek students interested in the various issues challenging society and motivated to play an active part in dealing with them.\n２，We seek students with the Japanese and foreign language skills required to logically analyze and understand social phenomena from a multidimensional perspective, a grounding in social studies, including history, and excellent logical thinking skills.\n３，We seek strongly motivated students who will be future leaders in both commercial and non-profit organizations and projects in Japan and overseas.",
+        "capacity": 132,
+        "requirements": {
+          "gpa": 4,
+          "englishCert": "英検2級A / TOEFL iBT 55以上 / IELTS 4.5以上 / GTEC 1050以上",
+          "otherReqs": [
+            "・TOEIC L&R 685 ＆ S&W 250\n・国連英検 B級\n・TEAP CBT 445\n・TEAP 270\n・ケンブリッジ英検 147\n・独検 準1級\n・仏検 2級\n・DELF ・DALF B1\n・TCF B1\n・Goetheinstitutのドイツ語検定試験 B1\n・オーストリア政府公認ドイツ語能力試験 B1",
+            "専願"
+          ]
         },
-        "interviewTendency": {
-          "format": "個人面接",
-          "duration": "約20分",
-          "interviewers": "教員2〜3名",
-          "pressure": "medium",
-          "weight": "均等",
-          "frequentTopics": [
-            "地域活動・探究活動の具体的な内容と成果",
-            "取り組んだ地域課題の背景と問題構造の分析",
-            "活動を通じて発見した教育との関連性",
-            "教育学部で深めたい研究テーマ",
-            "地域貢献と教育実践に向けた将来ビジョン"
-          ],
-          "tips": "地域での実践的な探究活動が評価の中心となるため、単なるボランティア参加にとどまらず、課題発見・分析・解決への主体的関与を具体的に語れることが重要。活動の「なぜ」と「何が変わったか」を教育学的視点で言語化しておくこと。"
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "上智大学志願票、高等学校調査書、高等学校長の推薦、自己推薦書、外国語検定試験、レポート等特定課題"
+          },
+          {
+            "stage": 2,
+            "type": "other",
+            "details": "学科試問"
+          },
+          {
+            "stage": 3,
+            "type": "interview",
+            "details": "面接"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2024-10-24",
+          "applicationEnd": "2024-11-7",
+          "examDate": "2024-12-02",
+          "resultDate": "2024-12-20"
+        }
+      },
+      {
+        "id": "general",
+        "name": "神学部",
+        "admissionPolicy": "神学部\n　\n本学部は、人間性の探究および人文教養の各領域について深く幅広い関心と動機づけを持つ学生が、学科を選択して入学し、自発的かつ積極的な態度で学業に研鑽することを期待します。そこで、次のような学生を受け入れます。\n\n１，人文教養を主体的に探究しようとする意欲と、学業への誠実な態度を持っている。\n２，志望する個別の専門分野について具体的な関心を持っている。\n３，ものごとを批判的に考え、自らの意見を明確に表現するための基礎的なスキルを身につけている。\n４，大学での学修に必要とされる基礎的な教養、知識、語学能力を備えている。",
+        "capacity": 38,
+        "requirements": {
+          "gpa": 3.5,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "上智大学志願票、高等学校調査書、高等学校長の推薦、自己推薦書、レポート等特定課題、特筆すべき能力実績を証明する書類"
+          },
+          {
+            "stage": 2,
+            "type": "other",
+            "details": "学科試問"
+          },
+          {
+            "stage": 3,
+            "type": "interview",
+            "details": "面接"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2024-10-24",
+          "applicationEnd": "2024-11-7",
+          "examDate": "2024-12-02",
+          "resultDate": "2024-12-20"
+        }
+      },
+      {
+        "id": "foreign-languages",
+        "name": "外国語学部",
+        "admissionPolicy": "外国語学部\n　\n日本語の運用能力を基盤に、外国語運用能力の獲得に真摯に取り組むことのできる学生を求めています。\n\nまた、単に言語運用能力にとどまらず、自らの住む地域から世界全体に至るまで起こっていることに積極的に関心を持ち、それを自分の問題として考え、解決策を見出していこうと努力を重ねていけることを期待します。\n\n英語学科\n　\n１，英語圏の言語・歴史・政治・経済・社会・文化などに関わる諸問題に関心を持ち、英語の高度な運用能力を身に付けることを望む学生を求めます。\n２，これまでにしっかりとした英語の学習経験のある学生で、高度な内容について英語で学習するための基本的な知識と技能を備え、真摯に勉学に取り組む姿勢を持つ学生を受け入れます。\n３，英語とその他の外国語の実践的な運用能力を基盤として、外国語学部が設けている９つの「研究コース」のいずれかにおいて、自ら選んだ領域やテーマについて専門的に掘り下げることを期待します。\n\nドイツ語学科\n　\n１，ドイツ語圏の言語・歴史・政治・経済・社会・文化などに関心を持ち、ドイツ語の高度な運用能力を身に付けることを望む学生を求めます。\n２，基本的に、本学科においてドイツ語の学習を開始したい学生を求めています。すでに何らかの形でドイツ語の学習経験のある学生で、改めて体系的に学ぶことを通じ、その運用能力の向上に真摯に取り組む姿勢を持つ学生も受け入れます。\n３，ドイツ語と英語の実践的な運用能力を基盤として、外国語学部が設けている９つの「研究コース」のいずれかにおいて、自ら選んだ領域やテーマについて専門的に掘り下げることを期待します。\n\nフランス語学科\n　\n１，フランス語圏の言語・歴史・政治・経済・社会・文化などに関心を持ち、フランス語の高度な運用能力を身に付けることを望む学生を求めます。\n２，基本的に、本学科においてフランス語の学習を開始したい学生を求めています。すでに何らかの形でフランス語の学習経験のある学生で、改めて体系的に学ぶことを通じ、その運用能力の向上に真摯に取り組む姿勢を持つ学生も受け入れます。\n３，フランス語と英語の実践的な運用能力を基盤として、外国語学部が設けている９つの「研究コース」のいずれかにおいて、自ら選んだ領域やテーマについて専門的に掘り下げることを期待します。\n\nイスパニア語学科\n　\n１，イスパニア語圏の言語・歴史・政治・経済・社会・文化などに関心を持ち、イスパニア語の高度な運用能力を身に付けることを望む学生を求めます。\n２，基本的に、本学科においてイスパニア語の学習を開始したい学生を求めています。すでに何らかの形でイスパニア語の学習経験のある学生で、改めて体系的に学ぶことを通じ、その運用能力の向上に真摯に取り組む姿勢を持つ学生も受け入れます。\n３，イスパニア語と英語の実践的な運用能力を基盤として、外国語学部が設けている９つの「研究コース」のいずれかにおいて、自ら選んだ領域やテーマについて専門的に掘り下げることを期待します。\n\nロシア語学科\n　\n１，ロシア語圏の言語・歴史・政治・経済・社会・文化などに関心を持ち、ロシア語の高度な運用能力を身に付けることを望む学生を求めます。\n２，基本的に、本学科においてロシア語の学習を開始したい学生を求めています。\n３，ロシア語と英語の実践的な運用能力を基盤として、外国語学部が設けている９つの「研究コース」のいずれかにおいて、自ら選んだ領域やテーマについて専門的に掘り下げることを期待します。\n\nポルトガル語学科\n　\n１，ポルトガル語圏の言語・歴史・政治・経済・社会・文化などに関心を持ち、ポルトガル語の高度な運用能力を身に付けることを望む学生を求めます。\n２，基本的に、本学科においてポルトガル語の学習を開始したい学生を求めています。すでに何らかの形でポルトガル語の学習経験のある学生で、改めて体系的に学ぶことを通じ、その運用能力の向上に真摯に取り組む姿勢を持つ学生も受け入れます。\n３，ポルトガル語と英語の実践的な運用能力を基盤として、外国語学部が設けている９つの「研究コース」のいずれかにおいて、自ら選んだ領域やテーマについて専門的に掘り下げることを期待します。",
+        "capacity": 828,
+        "requirements": {
+          "gpa": 4,
+          "englishCert": "英検2級 / TOEFL iBT 42以上 / IELTS 4.0以上 / GTEC 930以上",
+          "otherReqs": [
+            " ・TOEIC L&R 550 ＆ S&W 240\n・国連英検 C級\n・TEAPCBT 325\n・TEAP 220\n・ケンブリッジ英検 142\n・独検 準1級\n・仏検 2級\n・DELF ・DALF B1\n・TCF B1\n・Goetheinstitutのドイツ語検定試験 B1\n・オーストリア政府公認ドイツ語能力試験 B1",
+            "専願",
+            "全体4.0以上かつ外国語、国語それぞれ4.0以上　"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "上智大学志願票、高等学校調査書、高等学校長の推薦、自己推薦書、外国語検定試験、レポート等特定課題"
+          },
+          {
+            "stage": 2,
+            "type": "other",
+            "details": "学科試問"
+          },
+          {
+            "stage": 3,
+            "type": "interview",
+            "details": "面接"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2024-10-24",
+          "applicationEnd": "2024-11-7",
+          "examDate": "2024-12-02",
+          "resultDate": "2024-12-20"
         }
       }
     ]
@@ -306,495 +347,652 @@
     "name": "慶應義塾大学",
     "shortName": "慶應",
     "group": "soukeijochi",
-    "officialUrl": "https://www.keio.ac.jp/ja/admissions/",
+    "officialUrl": "https://www.keio.ac.jp/",
     "faculties": [
       {
-        "id": "law-fit",
-        "name": "法学部（FIT入試）",
-        "admissionPolicy": "法律学・政治学の基礎を習得し、公正な社会の実現に向けて行動できる人材を求める。社会問題への鋭い関心と論理的思考力を持ち、法的素養を活かして国内外で指導的役割を担う志のある者を歓迎する。A方式は多様な活動実績、B方式は学業成績を重視する。",
-        "capacity": 160,
+        "id": "environment-info",
+        "name": "環境情報学部",
+        "admissionPolicy": "環境情報学科\n　\n求める学生像\r\n\r\n（１）地球環境や人間社会に存在する数多の未解決な問題を発見しそれらの問題を解決するという学部の理念や教育内容を良く理解している学生\r\n（２）高等学校等の教育課程で培われた基礎的学力を背景に、SFC の教育環境やシステムなどあらゆるリソースを積極的に活用することで、より高いレベルでの自己実現を図ろうとする情熱を持った学生\r\n（３）時代に変革を起こし、明るい未来を創り出すために、独自のビジョンとアイデアに基づき挑戦する意欲のある学生",
+        "capacity": 441,
         "requirements": {
           "gpa": null,
           "englishCert": null,
-          "otherReqs": ["志望理由書", "自己推薦書", "A方式:活動実績、B方式:評定平均4.0以上"]
+          "otherReqs": [
+            "・外国の教育課程に基づく高等学校に最終学年を含め2年以上継続して在籍した者\n\nどちらかのスコアを提出できる者\n・TOEFLiBT®\n・IELTSAcademicMoudule\n\n・各国の大学入学に必要な国家試験等の統一試験またはこれに準ずる試験を受験し、結果を提出できる者",
+            "併願可（・総合政策学部との併願不可\n・同年度内に環境情報学部が行う帰国生対象入学試験と外国人留学生対象入学試験の両方に出願は不可）"
+          ]
         },
         "selectionMethods": [
-          { "stage": 1, "type": "documents", "details": "志望理由書、調査書、自己推薦書等の書類審査（A・B方式共通）" },
-          { "stage": 2, "type": "essay", "details": "A方式：グループディスカッション、B方式：総合考査（論述）" },
-          { "stage": 3, "type": "interview", "details": "A方式・B方式ともに個別面接" }
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "出願書類チェックリスト、入学検定料収納証明書、入学志願書、入学志願票、入学志願調査書、国家試験等の統一試験の試験成績評価証明書、高等学校3年間（4年間）の成績証明書、パスポートのコピー、TOEFLiBT®もしくはIELTSAcademicMouduleの結果、、該当者のみ：、外国の出身高等学校の校長または教員の推薦状、志望理由書、エッセイ、外国の中学校の成績証明書"
+          },
+          {
+            "stage": 2,
+            "type": "essay",
+            "details": "小論文"
+          }
         ],
         "schedule": {
-          "applicationStart": "2025-08-01",
-          "applicationEnd": "2025-09-03",
-          "examDate": "2025-10-04",
-          "resultDate": "2025-10-17"
-        },
-        "interviewTendency": {
-          "format": "A方式：グループディスカッション＋個人面接、B方式：プレゼンテーション＋個人面接",
-          "duration": "GD約45分＋面接約15分（A方式）、プレゼン＋面接約20分（B方式）",
-          "interviewers": "教員3名",
-          "pressure": "high",
-          "weight": "面接重視",
-          "frequentTopics": [
-            "A方式：社会問題に関するGDテーマ（法・政治・経済）",
-            "B方式：与えられた資料に基づくプレゼンテーション",
-            "法律学・政治学を学ぶ動機",
-            "社会正義・公正に関する考え",
-            "将来のキャリアと社会貢献のビジョン",
-            "時事問題への見解"
-          ],
-          "tips": "FIT入試は2段階選考でA方式はGD、B方式はプレゼンが課されるため、それぞれ専用の対策が必要。A方式では他の受験生との協調性とリーダーシップの両立、B方式では論理的な資料分析力が問われる。面接ではpressureが高く、深い追質問に備えること。"
+          "applicationStart": "2025-07-01",
+          "applicationEnd": "2025-07-15",
+          "examDate": "2025-08-09",
+          "resultDate": "2025-08-27"
         }
       },
       {
-        "id": "policy-management",
-        "name": "総合政策学部（SFC AO入試）",
-        "admissionPolicy": "問題発見・解決に強い意欲を持ち、多様な学問分野を統合しながら政策立案・実践に取り組む人材を求める。SFCの理念である「実践知」を体現し、社会のあらゆる領域で新たな価値を創造する意志と行動力を有する者を歓迎する。",
-        "capacity": 150,
+        "id": "economics",
+        "name": "経済学部",
+        "admissionPolicy": "経済学部\n　\n社会に積極的に関与する強い意志を持ち、自らの智力によって変化する社会を把握しようという気概をもった人間を求めています。また、学問的基礎に基づいて厳密に考える能力にすぐれると同時に、バランス感覚に富み、多様なものの見方を尊重できる人材の育成を目指しています。このような知性により社会の指導的役割を担える潜在力を備えた多彩な学生を受け入れたいと考えます。",
+        "capacity": 253,
         "requirements": {
           "gpa": null,
           "englishCert": null,
-          "otherReqs": ["志望理由書・入学志願書", "自由記述（A4×2枚）", "任意提出資料"]
+          "otherReqs": []
         },
         "selectionMethods": [
-          { "stage": 1, "type": "documents", "details": "志望理由書、自由記述、任意提出資料等の書類審査" },
-          { "stage": 2, "type": "interview", "details": "個別面接（プレゼンテーション含む場合あり）" }
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "書類審査"
+          }
         ],
         "schedule": {
-          "applicationStart": "2025-08-01",
-          "applicationEnd": "2025-09-02",
-          "examDate": "2025-10-11",
-          "resultDate": "2025-10-24"
-        },
-        "interviewTendency": {
-          "format": "個人面接（プレゼンテーション含む場合あり）",
-          "duration": "約15〜20分",
-          "interviewers": "教員2〜3名",
-          "pressure": "medium",
-          "weight": "書類重視",
-          "frequentTopics": [
-            "志望理由書・自由記述の内容の深掘り",
-            "自分が発見した社会課題とその解決策",
-            "SFCで具体的に何を学び実践したいか",
-            "これまでの活動実績とそこから得た知見",
-            "問題解決に向けた行動力のエピソード"
-          ],
-          "tips": "SFC AO入試は書類審査で大きく絞り込まれるため、まず書類の完成度を高めることが最優先。面接では自由記述の内容について深く問われるため、自分の問題意識と解決アプローチを具体的に語れるよう準備すること。"
-        }
-      },
-      {
-        "id": "environment-information",
-        "name": "環境情報学部（SFC AO入試）",
-        "admissionPolicy": "テクノロジーとデザインの融合により持続可能な未来社会を構想・実装できる人材を求める。プログラミング・データサイエンス・環境学・メディア等の分野で高い専門性と独創的な発想力を持ち、分野横断的に社会課題の解決に挑む意欲のある者を歓迎する。",
-        "capacity": 150,
-        "requirements": {
-          "gpa": null,
-          "englishCert": null,
-          "otherReqs": ["志望理由書・入学志願書", "自由記述（A4×2枚）", "任意提出資料"]
-        },
-        "selectionMethods": [
-          { "stage": 1, "type": "documents", "details": "志望理由書、自由記述、任意提出資料等の書類審査" },
-          { "stage": 2, "type": "interview", "details": "個別面接（プレゼンテーション含む場合あり）" }
-        ],
-        "schedule": {
-          "applicationStart": "2025-08-01",
-          "applicationEnd": "2025-09-02",
-          "examDate": "2025-10-11",
-          "resultDate": "2025-10-24"
-        },
-        "interviewTendency": {
-          "format": "個人面接（プレゼンテーション含む場合あり）",
-          "duration": "約15〜20分",
-          "interviewers": "教員2〜3名",
-          "pressure": "medium",
-          "weight": "書類重視",
-          "frequentTopics": [
-            "テクノロジーを活用した課題解決の具体案",
-            "プログラミング・制作物のポートフォリオ説明",
-            "環境問題やデジタル社会への関心",
-            "SFC環境情報学部で取り組みたい研究・プロジェクト",
-            "分野横断的な学びへの意欲と計画"
-          ],
-          "tips": "総合政策学部と同じSFC AO入試の枠組みだが、環境情報学部ではテクノロジーやものづくりの具体的なスキル・実績が重視される。任意提出資料で制作物やポートフォリオを効果的に見せることが合否を左右する。"
+          "applicationStart": "2025-09-16",
+          "applicationEnd": "2025-09-30",
+          "examDate": "2025-10-25",
+          "resultDate": "2025-11-12"
         }
       },
       {
         "id": "letters",
-        "name": "文学部（自主応募制推薦入試）",
-        "admissionPolicy": "人文科学の幅広い領域に知的好奇心を持ち、真理探究の姿勢で学問に取り組む人材を求める。評定平均4.1以上の学業実績を基盤に、文学・歴史・哲学・芸術等の領域で深い洞察力と表現力を発揮し、自主的に学びを深める意欲のある者を歓迎する。",
-        "capacity": 120,
+        "name": "文学部",
+        "admissionPolicy": "文学部\n　\n文学部では次のような資質・能力を有する学生を求めている。\r\n\r\n・慶應義塾の精神に対する十分な理解、および学問に対する意欲と向上心\r\n・先人による古典類から最新の研究成果が書かれた論文に至るまでの諸文献を読み込み、理解するための基礎となる語学力（日本語、および英語・フランス語・ドイツ語・中国語）\r\n・与えられた課題に対して論理的に思考し、それに対する自分の考えを正確かつ十分に記述する能力\r\n・現在の社会や文化の成り立ちを理解するための基礎となる歴史的な知識（日本史または世界史）\r\nこれらは、文学部が設置しているすべての専攻（哲学、倫理学、美学美術史学、日本史学、東洋史学、西洋史学、民族学考古学、国文学、中国文学、英米文学、独文学、仏文学、図書館・情報学、社会学、心理学、教育学、人間科学）に共通しており、入学後、それぞれの専攻における独自のカリキュラムに従って、専門的な知識や能力を身につけてゆく。したがって、文学部に入学する者は、これらの専攻が対象とするいずれかの学問に対する関心・好奇心を有することもまた必要である。。",
+        "capacity": 129,
         "requirements": {
           "gpa": 4.1,
           "englishCert": null,
-          "otherReqs": ["自己推薦書", "調査書", "評定平均値4.1以上の現役生"]
+          "otherReqs": [
+            "専願"
+          ]
         },
         "selectionMethods": [
-          { "stage": 1, "type": "documents", "details": "調査書、自己推薦書の書類審査（評定平均4.1以上必須）" },
-          { "stage": 2, "type": "essay", "details": "総合考査I（小論文：与えられたテーマについて論述）" },
-          { "stage": 3, "type": "test", "details": "総合考査II（テキスト読解に基づく論述試験）" }
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "志願確認票、調査書、評価書、自己推薦書"
+          },
+          {
+            "stage": 2,
+            "type": "other",
+            "details": "総合考査Ⅰ"
+          },
+          {
+            "stage": 3,
+            "type": "other",
+            "details": "総合考査Ⅱ"
+          }
         ],
         "schedule": {
-          "applicationStart": "2025-11-04",
+          "applicationStart": "2025-10-23",
           "applicationEnd": "2025-11-06",
-          "examDate": "2025-11-23",
-          "resultDate": "2025-12-03"
-        },
-        "interviewTendency": {
-          "format": "筆記中心（面接なし）",
-          "duration": "なし（総合考査I・II 各120分）",
-          "interviewers": "なし",
-          "pressure": "medium",
-          "weight": "書類重視",
-          "frequentTopics": [
-            "総合考査I：人文科学に関するテーマの小論文",
-            "総合考査II：長文読解に基づく論述",
-            "自己推薦書の読書歴・研究関心",
-            "評定平均4.1以上の学業実績",
-            "人文科学分野への深い知的好奇心"
-          ],
-          "tips": "面接は実施されず、書類（自己推薦書）と2つの総合考査（小論文＋読解論述）で合否が決まる。読書量と論述力が直接問われるため、人文科学系の書籍を幅広く読み、論理的に自分の考えを展開する練習を重ねること。"
+          "examDate": "2025-12-01",
+          "resultDate": "2025-12-19"
         }
       },
       {
-        "id": "science-technology",
-        "name": "理工学部（AO入試）",
-        "admissionPolicy": "自然科学・工学の基礎力と応用力を兼ね備え、独創的な研究・技術開発に挑戦する人材を求める。数学・理科における高い学力と科学的探究心を持ち、グローバルな視野で科学技術の発展と社会課題の解決に貢献する意欲のある者を歓迎する。",
-        "capacity": 20,
+        "id": "policy",
+        "name": "総合政策学部",
+        "admissionPolicy": "総合政策学科\n　\n求める学生像\r\n\r\n（１）学部が理念として掲げる「実践知」やその理念に基づく教育内容を良く理解し、問題発見・問題解決の能力の修得に意欲を持っている学生\r\n（２）高等学校等の教育課程で培われた基礎的学力を背景に、SFC の教育環境やシステムなどあらゆるリソースを積極的に活用することで、より高いレベルでの自己実現を図ろうとする情熱を持った学生\r\n（３）社会の変化を見通し、人類社会が直面する問題を発見・分析し、自分の課題として積極的にこれを解決へと導くことができる学生",
+        "capacity": 474,
         "requirements": {
           "gpa": null,
           "englishCert": null,
-          "otherReqs": ["志望理由書", "活動報告書", "科学オリンピック等の実績があれば有利"]
+          "otherReqs": [
+            "併願可（環境情報学部との併願は不可）"
+          ]
         },
         "selectionMethods": [
-          { "stage": 1, "type": "documents", "details": "志望理由書、活動報告書、調査書等の書類審査" },
-          { "stage": 2, "type": "test", "details": "数学・理科の筆記試験" },
-          { "stage": 3, "type": "interview", "details": "口頭試問を含む面接" }
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "オンライン提出、応募試験基本情報、志願者に関する履歴等、活動報告、志望理由書、入学後の学習計画、自己アピール、任意提出資料、、郵送提出、入学志願票、調査書等、成績卒業に関する証明書類、、(該当者のみ)、1次選考免除対象コンテストの所定の成績をおさめたことを証明する書面、、大学の成績証明書、日本語能力試験結果/日本語学習歴関係書類、英語能力試験結果/英語学習歴関係書類、学校プロフィール、国家試験等の統一試験の成績証明書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接試験"
+          }
         ],
         "schedule": {
-          "applicationStart": "2025-09-01",
-          "applicationEnd": "2025-09-05",
-          "examDate": "2025-10-18",
-          "resultDate": "2025-11-01"
-        },
-        "interviewTendency": {
-          "format": "口頭試問＋個人面接",
-          "duration": "約20〜30分",
-          "interviewers": "教員3名",
-          "pressure": "high",
-          "weight": "面接重視",
-          "frequentTopics": [
-            "数学・物理・化学の基礎的な口頭試問",
-            "研究活動や科学オリンピックの成果説明",
-            "志望する学門分野の選択理由",
-            "将来の研究テーマと目標",
-            "科学的思考プロセスの説明"
-          ],
-          "tips": "口頭試問では数学・理科の基礎知識をその場で問われるため、教科書レベルの原理を自分の言葉で説明できるようにしておくこと。研究実績や科学オリンピック経験がある場合は、その内容を深く掘り下げられるため、自分の成果を論理的にプレゼンできる準備が必須。"
+          "applicationStart": "2025-08-18",
+          "applicationEnd": "2025-09-01",
+          "examDate": "2025-09-26",
+          "resultDate": "2025-10-14"
         }
       },
       {
-        "id": "nursing",
-        "name": "看護医療学部（AO入試）",
-        "admissionPolicy": "人間の生命と尊厳を大切にし、科学的根拠に基づく看護実践で人々の健康と福祉に貢献する人材を求める。高い共感力と倫理観を基盤に、医療・保健・福祉の現場で主体的に課題解決に取り組む強い意志と探究心を持つ者を歓迎する。A方式は活動実績、B方式は小論文を重視する。",
-        "capacity": 20,
+        "id": "nursingmedicine",
+        "name": "看護医療学部",
+        "admissionPolicy": "看護医療学部\n　\n看護医療学部は、「人の健康と生命、看護への関心をもち、他者の苦痛や悩みを理解しようとする人」、「人を尊重し自分とは異なる立場や文化、価値観を持つ人々とコミュニケーションでき、関係を築いていこうとする人」、「ものごとを多角的にとらえ、そこにある問題に気づき、解決の方向性と対策を考え出し、それを実行する意志と行動力がある人」、「自らやると決めたことをやり遂げようとし、失敗の経験から学び、自身を成長させようとする人」、「自分の行いが人々や社会に役立つことを望み、人々や社会のよりよいあり方を追求しようとする人」を求めている。学部開設の目的である、人々と社会のため看護医療の先導者となる意欲ある人材を、一般選抜、ＡＯ入試、第2学年学士編入学試験などの多様な方法により選抜している",
+        "capacity": 6,
         "requirements": {
           "gpa": null,
           "englishCert": null,
-          "otherReqs": ["志望理由書", "A方式:医療・福祉活動の実績報告書、B方式:調査書（学業成績）"]
+          "otherReqs": [
+            "併願可（）",
+            "4.5"
+          ]
         },
         "selectionMethods": [
-          { "stage": 1, "type": "documents", "details": "A方式：志望理由書＋活動実績報告書の書類審査、B方式：志望理由書＋調査書の書類審査" },
-          { "stage": 2, "type": "essay", "details": "小論文（看護・医療・生命倫理に関する論述）" },
-          { "stage": 3, "type": "interview", "details": "個人面接（看護職への適性・動機の確認）" }
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "入学志願票、収納証明書台帳、写真票、成績卒業に関する証明書等、入学志願者調書、志望理由書、学習計画書、志願者評価書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接試験"
+          }
         ],
         "schedule": {
-          "applicationStart": "2025-09-01",
-          "applicationEnd": "2025-09-05",
-          "examDate": "2025-10-11",
-          "resultDate": "2025-10-24"
+          "applicationStart": "2025-09-04",
+          "applicationEnd": "2025-09-18",
+          "examDate": "2025-10-13",
+          "resultDate": "2025-10-31"
+        }
+      },
+      {
+        "id": "commerce",
+        "name": "商学部",
+        "admissionPolicy": "商学部\n　\n商学部では、産業社会の抱える問題を自ら発見し、説得力ある解決策を導き、発信する能力を養うことにより、国際社会に貢献できる人材の育成を目指しています。入学者の選抜もこの方針に沿って実施されており、社会に対する強い関心、論理的な思考能力、資料を読み解く力、英語をはじめとする基礎学力をとくに重視しています。",
+        "capacity": 253,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": []
         },
-        "interviewTendency": {
-          "format": "個人面接",
-          "duration": "約15〜20分",
-          "interviewers": "教員2名",
-          "pressure": "medium",
-          "weight": "均等",
-          "frequentTopics": [
-            "看護職を志望した動機と原体験",
-            "医療・福祉ボランティアや病院見学等の体験とその学び",
-            "看護師・保健師・助産師として将来実現したいこと",
-            "生命倫理・患者の尊厳に関する考え方",
-            "小論文の内容に関するフォローアップ質問"
-          ],
-          "tips": "看護職への強い動機付けと医療現場の実体験が重視される。ボランティアや医療見学等の具体的エピソードを通じて共感力と使命感を伝えることが重要。小論文では生命倫理的テーマが出題されやすいため、医療ニュースや倫理的事例を事前に学習しておくこと。"
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "書類審査"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-16",
+          "applicationEnd": "2025-09-30",
+          "examDate": "2025-10-25",
+          "resultDate": "2025-11-12"
+        }
+      },
+      {
+        "id": "law",
+        "name": "法学部",
+        "admissionPolicy": "法学部\n　\n法学部では、慶應義塾の建学の精神を理解し、国際的な視野に立ちつつ、新しい社会を創造し先導する気概を持つ学生を求めている。入学する学生には、法学部の教育目標（カリキュラムポ リシー）をよく理解し、そのカリキュラムの下で学習するために必要な学力、能力、そして意欲を有していることが求められる。その具体的な考査方法は、一般選抜、帰国生入試、留学生入試、指定高校による推薦入試、そして自己推薦形式でのFIT入試と多様であり、それぞれに制度の趣旨は異なるが、それらに共通する目標は、一定の知識水準を有し、その上で知的好奇心に溢れ、かつ個性豊かな学生を選考することである。",
+        "capacity": 253,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": []
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "書類審査"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-16",
+          "applicationEnd": "2025-09-30",
+          "examDate": "2025-10-25",
+          "resultDate": "2025-11-12"
+        }
+      },
+      {
+        "id": "medicine",
+        "name": "医学部",
+        "admissionPolicy": "医学部\n　\n本学医学部は、本学の使命「独立自尊と実学（サイエンス）の精神に基づき、患者中心の医療を実践し、世界の医学を先導する」に基づき、「基礎臨床一体型の医学・医療の実現」の理念の下、人材を育成してきました。\r\n本学医学部は、この使命・建学の精神を理解し、次世代を先導し、豊かな人間性と深い知性を併せ持つ医学生を強く求めます。そのために、創立者 福澤諭吉の「一身独立（自ら考え、実践する）」の教えを理解し、世界に雄飛し、患者中心の医療を実現できるphysician scientist（科学的思考力を備えた医師）となりうる医療人としての資質、使命感、学習意欲を重視し、卒業時コンピテンスを修得しうる人材を選抜します。",
+        "capacity": 2,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "・外国の教育課程に基づく高等学校に最終学年を含め2年以上継続して在籍した者\n\nどちらかのスコアを提出できる者\n・TOEFLiBT®\n・IELTSAcademicMoudule\n\n・各国の大学入学に必要な国家試験等の統一試験またはこれに準ずる試験を受験し、結果を提出できる者\n\n・日本国籍を有する者\n・永住権の在留資格をもつ者\n・入館特例法による特別永住者",
+            "併願可（）"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "出願書類チェックリスト、入学検定料収納証明書、入学志願書、入学志願票、入学志願調査書、国家試験等の統一試験の試験成績評価証明書、高等学校3年間（4年間）の成績証明書、パスポートのコピー、TOEFLiBT®もしくはIELTSAcademicMouduleの結果、、該当者のみ：、外国の出身高等学校の校長または教員の推薦状、志望理由書、エッセイ、外国の中学校の成績証明書"
+          },
+          {
+            "stage": 2,
+            "type": "other",
+            "details": "総合問題"
+          },
+          {
+            "stage": 3,
+            "type": "other",
+            "details": "模擬講義"
+          },
+          {
+            "stage": 4,
+            "type": "interview",
+            "details": "面接試験"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-07-01",
+          "applicationEnd": "2025-07-15",
+          "examDate": "2025-08-09",
+          "resultDate": "2025-08-27"
+        }
+      },
+      {
+        "id": "pharmacy",
+        "name": "薬学部",
+        "admissionPolicy": "薬学部\n　\n福澤諭吉の建学の精神は、独立自尊の人格を育成し、気品の泉源、智徳の模範となり全社会の先導者たる人を養成することである。薬学部では、建学の精神に則り、医療・創薬に関わる分野で求められる学識と能力を培うことを目的に薬学の理論と応用とを研究教授する。その目的を理解し、化学、数学、語学（英語）の基礎力と薬学を学ぶ強い意志を持つ学生の入学を求める。\n\n薬学科（6年生）\n　\n医療薬学を学び薬剤師の資格を持って社会に貢献する意欲のある学生\n\n薬科学科（4年生）\n　\n自然科学に興味があり、薬の創製等を通して人類へ貢献する意欲のある学生",
+        "capacity": 253,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": []
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "書類審査"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-16",
+          "applicationEnd": "2025-09-30",
+          "examDate": "2025-10-25",
+          "resultDate": "2025-11-12"
+        }
+      },
+      {
+        "id": "science-eng",
+        "name": "理工学部",
+        "admissionPolicy": "理工学部\n　\n理工学部では、その教育・研究理念に沿って、未知の領域に挑戦する強い意志と、深い洞察力と豊かな創造力をもち、幅広く国際教養を身につけ、これからの日本と国際社会を先導すべき優れた人材の育成を目標としており、これに応えることができる、意欲ある学生諸君の入学を歓迎します。一般選抜を筆頭に多様な入試（指定校推薦、留学生、帰国生、AO、一貫教育高校からの推薦入学）を実施し、様々な能力をもつ学生が互いに切磋琢磨し、創発効果を生み出せる教育研究環境を目指します。",
+        "capacity": 253,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": []
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "書類審査"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-16",
+          "applicationEnd": "2025-09-30",
+          "examDate": "2025-10-25",
+          "resultDate": "2025-11-12"
         }
       }
     ]
   },
   {
-    "id": "sophia-u",
-    "name": "上智大学",
-    "shortName": "上智",
+    "id": "waseda-u",
+    "name": "早稲田大学",
+    "shortName": "早稲田",
     "group": "soukeijochi",
-    "officialUrl": "https://adm.sophia.ac.jp/jpn/gakubu_tokubetsu_ad/koubo/",
+    "officialUrl": "https://www.waseda.jp/",
     "faculties": [
       {
-        "id": "foreign-studies",
-        "name": "外国語学部（公募制推薦入試）",
-        "admissionPolicy": "高度な外国語運用能力と異文化理解力を備え、国際社会で活躍する人材を求める。対象言語・地域に対する深い関心と探究心を持ち、語学力を活かして異文化間のコミュニケーションと相互理解の推進に貢献する意欲のある者を歓迎する。",
-        "capacity": 55,
+        "id": "commerce",
+        "name": "商学部",
+        "admissionPolicy": "商学部 \n　\n本学部では学識および実業両面の修養を兼ね備えた「学識ある実業家」を送り出すという理念を実現するため、一定の高い基礎学力を持ちながら、知的好奇心が旺盛で、自分で計画を立て、種々の課題に積極的に立ち向かう意欲に満ちた個性的な学生を、全国各地や世界中から多数受け入れることを基本方針とする。\n\n上記の方針に基づき、以下の入試による選抜を行う。\n\n一般選抜では、国語、外国語、地歴・公民または数学において高い基礎学力を有することを重視し、設問によっては記述型の解答方式を用いて思考力や表現力も多角的に評価する。また、数学は専門科目に加えて統計やデータ分析を修得するうえで重要であることから、数学型試験を実施し、高い数学的素養を有する者を受け入れる。\n\n指定校推薦入試では、知的好奇心が旺盛で、自分で計画を立て、種々の課題に積極的に立ち向かう意欲に満ちた個性的な者を全国各地から受け入れる。そのため、小論文、面接、高校調査書等を用いて、幅広い基礎学力に加え、学習・課外活動等の取り組み、本学部で学ぶ意欲等を総合的に評価する。\n\n外国学生入学試験および中国指定校推薦入試では、外部検定試験、面接等を用いて日本国外での教育・文化的な経験から国際的な視点を持ち、かつ確かな基礎学力を備えた者を受け入れる。\n\n附属高校・系属高校推薦入試では、高校調査書等を用いて基礎学力に加え幅広い知識と豊かな教養を持ち、リーダーシップを発揮できる個性的な者を受け入れる。",
+        "capacity": 311,
         "requirements": {
-          "gpa": 4.0,
-          "englishCert": "英検準1級以上、TOEFL iBT 72以上、IELTS 5.5以上、TEAP 309以上等（学科により異なる）",
-          "otherReqs": ["自己推薦書", "志望動機書", "学校長の推薦不要（自己推薦型）"]
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": []
         },
         "selectionMethods": [
-          { "stage": 1, "type": "documents", "details": "調査書、自己推薦書、志望動機書、外国語検定試験成績の書類審査" },
-          { "stage": 2, "type": "essay", "details": "学科別の論文テスト（外国語を含む場合あり）" },
-          { "stage": 3, "type": "interview", "details": "個別面接（外国語による質疑応答を含む学科あり）" }
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "書類審査"
+          }
         ],
         "schedule": {
-          "applicationStart": "2025-11-01",
-          "applicationEnd": "2025-11-06",
-          "examDate": "2025-11-29",
-          "resultDate": "2025-12-11"
+          "applicationStart": "2025-09-16",
+          "applicationEnd": "2025-09-30",
+          "examDate": "2025-10-25",
+          "resultDate": "2025-11-12"
+        }
+      },
+      {
+        "id": "human",
+        "name": "人間科学部",
+        "admissionPolicy": "人間科学部\n　\n【使命と教育理念】\r\n\r\n人間科学部は、現代の人間が直面する複雑かつ多様な問題に対し、諸学問の融合をもって解決に取り組む「人間科学」の高い理想を掲げて教育・研究を行っている。真摯に人間性を追求しながら、よりよい社会を実現していこうとする強い意識を持ち、高度職業人・研究者としての基礎を身につけた人材を社会に送り出すことを使命としている。\r\n\r\n人間科学部のカリキュラムは、学生による主体的な探求と、理論に裏付けられた実践的な活動を重視している。調査・実験・フィールドワークなどへの参加を通じて問題発見・分析・解決力を育成するよう、体系的かつ段階的に構成されている。授業やゼミにおいては、自身の興味関心や獲得したい専門性に応じて、時に高等学校および中等教育学校における文理の枠組みを超えながら、学際的な探究を行う。\r\n\r\n【期待する学生像】\r\n\r\nこのような学部教育に対応できるよう、人間科学部が入学者に特に期待する資質・能力は次の通りである。\r\n\r\nA　リテラシー：言語・数量・自然科学および社会科学に関する知識を用いて問題解決ができる。\r\n\r\nB　方法論・専門性：論理的思考力に基づき、事象を客観的・批判的に捉えることができる。\r\n\r\nC　学際性・多様性：多様な学問分野や、自然・人間・社会の複雑なありようを、複数の視点から捉えることができる。\r\n\r\nD　デザイン力：問題解決の手段を考案し、他者が理解できるように表現することができる。\r\n\r\nE　協働性：自他の個性を認め、多様な他者と協働しながら学ぶことができる。\r\n\r\nF　反省性・倫理観・自己教育：知的好奇心と進取の精神を持って、新しい分野にチャレンジできる。",
+        "capacity": 311,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": []
         },
-        "interviewTendency": {
-          "format": "個人面接（外国語による質疑応答を含む学科あり）",
-          "duration": "約15分",
-          "interviewers": "教員2名",
-          "pressure": "medium",
-          "weight": "均等",
-          "frequentTopics": [
-            "志望言語・地域への関心と学習歴",
-            "英語または志望言語での自己紹介・質疑応答",
-            "異文化体験や国際交流の経験",
-            "外国語を活かした将来のキャリア",
-            "志望動機書の内容に関する深掘り"
-          ],
-          "tips": "学科によっては英語や志望言語での質疑応答があるため、外国語での受け答えを練習しておくこと。語学力の高さだけでなく、対象地域の文化・社会への深い理解と研究意欲を示すことが差別化のポイント。"
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "書類審査"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-16",
+          "applicationEnd": "2025-09-30",
+          "examDate": "2025-10-25",
+          "resultDate": "2025-11-12"
+        }
+      },
+      {
+        "id": "fundamental-science-eng",
+        "name": "基幹理工学部",
+        "admissionPolicy": "基幹理工学部\n　\n近年、科学技術の領域は飛躍的に大きな広がりを呈し、それに対応してそれぞれの領域は分化・深化してきた。大学における教育研究体制もこれに呼応した形で発展してきた。しかしながら、専門分野の発展と同時に、新しい価値観の創造、新しい科学技術分野あるいは学問分野の開拓が強く求められる時代を迎えた。これに伴い、地球規模で考え行動し、新しい時代を切り拓く人材を育成する教育研究の展開が求められることとなった。\n\n基幹理工学部は、科学技術の根幹をなす数学をはじめとする理工系の素養と共に人文・社会学系の素養を身に付け、その上で科学技術の基幹を担う数学・応用数理、機械科学、航空宇宙工学、材料科学、電子物理システム学、情報理工学、情報通信学、表現工学などの基本を学習し、新しい分野に創造的に取り組む意欲と能力を備えた人材を求める。高等学校等における学習によって、確かな基礎学力（知識・技能・思考力・判断力・表現力）、および主体的に学ぶ姿勢を身につけた者を受け入れることを基本方針とする。\n\n基幹理工学研究科\n　\n早稲田大学では，『学の独立』の教育理念のもとで，一定の高い基礎学力を持ち，かつ知的好奇心が旺盛で，本学の理念である進取の精神に富む，勉学意欲の高い学生を，我が国をはじめ世界から多数迎え入れる。\n\n近年、科学技術の領域は飛躍的に大きな広がりを呈し、それに対応してそれぞれの領域は分化・深化してきた。大学における教育研究体制もこれに呼応した形で発展してきた。しかしながら、専門分野の発展と同時に、新しい価値観の創造、新しい科学技術と学問分野の開拓が強く求められる時代を迎えた。これに伴い、基幹理工学研究科では、地球規模で考え、行動し、新たな時代を切り拓く、高い将来性を有する人物を広く受け入れる。修士課程では、科学技術の根幹を担う数理科学、機械科学、航空宇宙工学、材料科学、電子物理学、情報工学、情報通信学、表現工学などの専門分野を修得するための基礎的な知識と能力、探究心を有することが求められる。博士後期課程では、これらの専門分野の発展・深化に貢献するのみならず、新しい分野に創造的に取り組む高度な知識と能力、開拓精神と倫理観を有することが求められる。",
+        "capacity": 311,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": []
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "書類審査"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-16",
+          "applicationEnd": "2025-09-30",
+          "examDate": "2025-10-25",
+          "resultDate": "2025-11-12"
+        }
+      },
+      {
+        "id": "culture-media",
+        "name": "文化構想学部",
+        "admissionPolicy": "文化構想学部\n　\n早稲田大学では、「学問の独立」の教育理念のもとで、一定の高い基礎学力を持ち、かつ知的好奇心が旺盛で、本学の理念である進取の精神に富む、勉学意欲の高い学生を、わが国をはじめ世界から多数迎え入れる。文化構想学部が特に入学者に求める資質・能力は、次のとおりである。\n・「文化の様相と構造を解明し、表象の分析と文芸の創造に取り組み、人間と社会の本質に迫ることによって、新しい時代にふさわしい文化を構想する」　「文化学の叡智を現代の課題で照らし、これまでの学問領域の枠組を大胆に乗り越えて、広領域的・学融合的アプローチを実践する」という学部の理念・目標を理解し、学位取得に積極的に取り組む意欲がある。\n・文化構想学部の基礎から専門に亘るカリキュラムを理解して、入学後の修学に必要な基礎学力を有する。また入学以前に幅広い学習と経験を積んでいる。",
+        "capacity": 311,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": []
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "書類審査"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-16",
+          "applicationEnd": "2025-09-30",
+          "examDate": "2025-10-25",
+          "resultDate": "2025-11-12"
+        }
+      },
+      {
+        "id": "creative-science-eng",
+        "name": "創造理工学部",
+        "admissionPolicy": "創造理工学部\n　\n創造理工学部は、人間、生活、環境の3つのキーワードに基づき、科学技術の観点から人間生活と環境分野で発生している様々な問題を解決し、多様な価値観に基づく新しい豊かさを創造できる人材の養成を目的としている。この豊かさの創造のために、人間活動を支援し、地球環境に調和する空間・装置・コミュニティを創出する技術および環境システム技術に関する実践的教育と研究を展開していくことが、当学部が掲げる教育研究上の理念である。このような理念のもとで、ともに学び、ともに新たな豊かさを創造しようという意欲に満ちた個性的な学生を、日本国内はもとより世界から幅広く求める。高等学校等における学習によって、高い基礎学力（知識・技能・思考力・判断力・表現力）を身に着け、勉学意欲が強く、自ら主体的に考え、行動しようとする意識が高い者を受け入れることを基本方針とする。\n\n創造理工学研究科\n　\n早稲田大学では『学の独立』の教育理念のもとで，一定の高い基礎学力を持ち，かつ知的好奇心が旺盛で，本学の理念である進取の精神に富む，勉学意欲の高い学生を，我が国をはじめ世界から多数迎え入れる。\n\n修士課程においては、建築学、総合機械工学、経営システム工学、経営デザイン、建設工学、地球・環境資源理工学などに関する基礎能力、専門的に深く、同時に広い視野から学ぶための基礎知識が求められる。博士後期課程においては、上記の修士号取得に必要な能力を備え、現代社会の諸問題を科学技術の観点から解決し、真に豊かな社会創造に貢献できるための高い専門性、経験、理論、意欲を有することが求められる。",
+        "capacity": 311,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": []
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "書類審査"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-16",
+          "applicationEnd": "2025-09-30",
+          "examDate": "2025-10-25",
+          "resultDate": "2025-11-12"
         }
       },
       {
         "id": "law",
-        "name": "法学部（公募制推薦入試）",
-        "admissionPolicy": "法律学・国際関係法学・地球環境法学の分野で、正義と公正の理念に基づき社会の諸問題を解決する人材を求める。論理的思考力と幅広い教養を持ち、法的素養を活かして地域社会から国際社会まで多層的に貢献する志のある者を歓迎する。",
-        "capacity": 28,
+        "name": "法学部",
+        "admissionPolicy": "法学部で養成する人物像\n　\n法学部では、早稲田大学建学の理念と法学部の教育理念に即して展開される高度な学部教育カリキュラムを履修することにより、進取の精神に富んだ、広い意味での法律家として国内外のさまざまな分野でリーダーとして活躍できる人物の養成を目指しています。\n\n法学部は、段階的な法学専門教育を徹底しており、基本から応用までの多彩な科目を含む体系的なカリキュラムを整え、深く幅広い専門知識の教授とその運用能力の涵養を行っています。その一方で、法学の専門教育のみならず、社会科学、人文科学や自然科学の科目のほか、法学と融合した学際的な科目など、多種多様な科目を設置しており、高いレベルで行われている外国語教育と合わせて、充実した語学・教養教育を展開しています。加えて、学んだ知識を具体的な問題に実践的に応用できるように、少人数の演習教育も重視しています。\n\n法律専門科目と語学・教養科目をバランスよく学ぶことによって、公平や公正という鋭い感覚を磨き、法曹はもとより、国家・地方公務員、民間企業や国内・国際機関の職員、法学研究者といった多様な進路、あらゆる場面においても、深い洞察力と的確な法的判断力をもって活躍できる市民を育成します。",
+        "capacity": 311,
         "requirements": {
-          "gpa": 4.0,
-          "englishCert": "英検2級以上、TOEFL iBT 55以上、IELTS 4.5以上、TEAP 250以上等",
-          "otherReqs": ["自己推薦書", "志望動機書", "レポート等の自主制作物（任意）"]
-        },
-        "selectionMethods": [
-          { "stage": 1, "type": "documents", "details": "調査書、自己推薦書、志望動機書の書類審査" },
-          { "stage": 2, "type": "essay", "details": "論文テスト（社会問題に関する論述）" },
-          { "stage": 3, "type": "interview", "details": "個別面接（志望動機・学修計画に関する質疑応答）" }
-        ],
-        "schedule": {
-          "applicationStart": "2025-11-01",
-          "applicationEnd": "2025-11-06",
-          "examDate": "2025-11-29",
-          "resultDate": "2025-12-11"
-        },
-        "interviewTendency": {
-          "format": "個人面接",
-          "duration": "約15分",
-          "interviewers": "教員2名",
-          "pressure": "medium",
-          "weight": "均等",
-          "frequentTopics": [
-            "社会問題・時事問題への見解",
-            "法律学を学ぶ動機と将来の目標",
-            "論文テストの内容に関するフォローアップ",
-            "正義・公正・人権に関する考え方",
-            "学修計画の具体性"
-          ],
-          "tips": "論文テストで社会問題に関する論述が課された後に面接となるため、時事問題への幅広い関心が必要。法律や政治に関するニュースを日常的にフォローし、自分なりの意見を論理的に述べられるようにしておくこと。"
-        }
-      },
-      {
-        "id": "global-studies",
-        "name": "総合グローバル学部（公募制推薦入試）",
-        "admissionPolicy": "グローバルな課題を多角的に分析し、異文化共生社会の実現に貢献する人材を求める。国際関係・地域研究に強い関心を持ち、高い語学力と異文化コミュニケーション能力を基盤に、国際協力・平和構築に主体的に取り組む意欲のある者を歓迎する。",
-        "capacity": 40,
-        "requirements": {
-          "gpa": 4.0,
-          "englishCert": "英検準1級以上、TOEFL iBT 72以上、IELTS 5.5以上、TEAP 309以上等",
-          "otherReqs": ["自己推薦書", "志望動機書", "課題レポート"]
-        },
-        "selectionMethods": [
-          { "stage": 1, "type": "documents", "details": "調査書、自己推薦書、志望動機書、課題レポートの書類審査" },
-          { "stage": 2, "type": "essay", "details": "論文テスト（グローバルな課題に関する論述）" },
-          { "stage": 3, "type": "interview", "details": "個別面接（英語による質疑応答を含む）" }
-        ],
-        "schedule": {
-          "applicationStart": "2025-11-01",
-          "applicationEnd": "2025-11-06",
-          "examDate": "2025-11-29",
-          "resultDate": "2025-12-11"
-        },
-        "interviewTendency": {
-          "format": "個人面接（英語による質疑応答を含む）",
-          "duration": "約15〜20分",
-          "interviewers": "教員2名",
-          "pressure": "medium",
-          "weight": "均等",
-          "frequentTopics": [
-            "グローバルな社会課題への関心と具体例",
-            "英語での自己紹介・志望動機説明",
-            "異文化体験や国際ボランティア経験",
-            "国際協力・平和構築に関する考え",
-            "課題レポートの内容に関する深掘り"
-          ],
-          "tips": "英語での質疑応答が含まれるため、志望動機や関心のあるグローバル課題について英語で説明できるよう準備すること。課題レポートの内容と面接での回答に一貫性を持たせ、国際問題への深い理解を示すことが重要。"
-        }
-      },
-      {
-        "id": "economics",
-        "name": "経済学部（公募制推薦入試）",
-        "admissionPolicy": "経済学の理論と実証分析を通じて現代社会の諸課題を解明し、政策提言につなげる人材を求める。数量的分析能力と論理的思考力を持ち、国内外の経済問題に対する広い視野と深い洞察力で社会の発展に寄与する意欲のある者を歓迎する。",
-        "capacity": 25,
-        "requirements": {
-          "gpa": 4.0,
-          "englishCert": "英検2級以上、TOEFL iBT 55以上、IELTS 4.5以上、TEAP 250以上等",
-          "otherReqs": ["自己推薦書", "志望動機書"]
-        },
-        "selectionMethods": [
-          { "stage": 1, "type": "documents", "details": "調査書、自己推薦書、志望動機書の書類審査" },
-          { "stage": 2, "type": "essay", "details": "論文テスト（経済・社会問題に関する論述）" },
-          { "stage": 3, "type": "interview", "details": "個別面接" }
-        ],
-        "schedule": {
-          "applicationStart": "2025-11-01",
-          "applicationEnd": "2025-11-06",
-          "examDate": "2025-11-29",
-          "resultDate": "2025-12-11"
-        },
-        "interviewTendency": {
-          "format": "個人面接",
-          "duration": "約15分",
-          "interviewers": "教員2名",
-          "pressure": "medium",
-          "weight": "均等",
-          "frequentTopics": [
-            "経済学を学ぶ動機と関心分野",
-            "日本経済・世界経済の時事問題への見解",
-            "論文テストの内容に関するフォローアップ",
-            "数量的分析や論理的思考力を示すエピソード",
-            "卒業後のキャリアビジョン"
-          ],
-          "tips": "論文テストで経済・社会問題について論述した後の面接となるため、経済ニュースや基本的な経済概念（GDP、インフレ、財政政策等）を理解しておくこと。論理的に筋道立てて自分の考えを述べる力が評価される。"
-        }
-      },
-      {
-        "id": "human-sciences",
-        "name": "総合人間科学部（公募制推薦入試）",
-        "admissionPolicy": "人間の尊厳を基盤に、教育学・心理学・社会学・社会福祉学・看護学の各領域で人間理解を深め、社会貢献を目指す人材を求める。他者への深い共感力と科学的探究心を併せ持ち、多様な人々の幸福と社会的包摂の実現に取り組む意欲のある者を歓迎する。",
-        "capacity": 35,
-        "requirements": {
-          "gpa": 4.0,
-          "englishCert": "英検2級以上、TOEFL iBT 55以上、IELTS 4.5以上、TEAP 250以上等（学科により異なる）",
-          "otherReqs": ["自己推薦書", "志望動機書", "活動報告書"]
-        },
-        "selectionMethods": [
-          { "stage": 1, "type": "documents", "details": "調査書、自己推薦書、志望動機書、活動報告書の書類審査" },
-          { "stage": 2, "type": "essay", "details": "学科別の論文テスト" },
-          { "stage": 3, "type": "interview", "details": "個別面接（口頭試問含む）" }
-        ],
-        "schedule": {
-          "applicationStart": "2025-11-01",
-          "applicationEnd": "2025-11-06",
-          "examDate": "2025-11-29",
-          "resultDate": "2025-12-11"
-        },
-        "interviewTendency": {
-          "format": "個人面接（口頭試問含む）",
-          "duration": "約15〜20分",
-          "interviewers": "教員2名",
-          "pressure": "medium",
-          "weight": "面接重視",
-          "frequentTopics": [
-            "志望学科（教育・心理・社会・福祉・看護）の選択理由",
-            "人間の尊厳や社会的包摂に関する考え",
-            "ボランティアや社会貢献活動の経験",
-            "論文テストの内容に関する口頭試問",
-            "他者への共感力を示す具体的エピソード"
-          ],
-          "tips": "口頭試問が含まれるため、論文テストの内容を振り返り説明できるよう準備すること。上智大学のカトリック精神に基づく「人間の尊厳」への理解を示し、志望学科の専門領域に対する具体的な関心と将来ビジョンを語れるようにしておくことが重要。"
-        }
-      },
-      {
-        "id": "theology",
-        "name": "神学部（公募制推薦入試）",
-        "admissionPolicy": "カトリックの信仰と神学的探究を深め、宗教・哲学・倫理の視点から人間と社会の根本問題に向き合う人材を求める。評定平均3.5以上の学業実績を持ち、信仰や人間の尊厳・価値に対する真摯な関心を基盤に、社会の中で宗教的・倫理的課題に取り組む意欲のある者を歓迎する。",
-        "capacity": 10,
-        "requirements": {
-          "gpa": 3.5,
+          "gpa": null,
           "englishCert": null,
-          "otherReqs": ["自己推薦書", "志望動機書", "評定平均3.5以上"]
+          "otherReqs": []
         },
         "selectionMethods": [
-          { "stage": 1, "type": "documents", "details": "調査書、自己推薦書、志望動機書の書類審査（評定平均3.5以上必須）" },
-          { "stage": 2, "type": "essay", "details": "論文テスト（宗教・哲学・倫理に関する論述）" },
-          { "stage": 3, "type": "interview", "details": "個別面接（神学への関心と動機の確認）" }
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "書類審査"
+          }
         ],
         "schedule": {
-          "applicationStart": "2025-09-01",
-          "applicationEnd": "2025-09-10",
-          "examDate": "2025-11-29",
-          "resultDate": "2025-12-11"
-        },
-        "interviewTendency": {
-          "format": "個人面接",
-          "duration": "約15分",
-          "interviewers": "教員2名",
-          "pressure": "low",
-          "weight": "均等",
-          "frequentTopics": [
-            "神学・宗教学を志望した動機と信仰的背景",
-            "カトリックの精神や上智大学の理念への理解",
-            "宗教・倫理・哲学に関心を持ったきっかけ",
-            "人間の尊厳や生命倫理に関する自分の考え",
-            "神学部卒業後のキャリアと社会貢献ビジョン"
-          ],
-          "tips": "必ずしもカトリック信者でなくても受験できるが、上智大学のカトリック精神と神学的探究への誠実な関心が重視される。宗教・哲学・倫理に関する基礎的な読書経験を積み、人間存在や社会の根本問題に対して自分なりの考えを持っておくことが好印象につながる。"
+          "applicationStart": "2025-09-16",
+          "applicationEnd": "2025-09-30",
+          "examDate": "2025-10-25",
+          "resultDate": "2025-11-12"
         }
       },
       {
-        "id": "literature",
-        "name": "文学部（公募制推薦入試）",
-        "admissionPolicy": "人文科学の幅広い領域において高い知的好奇心と探究力を持ち、言語・文学・哲学・史学・文化等の深い洞察を通じて社会と人間を理解する人材を求める。評定平均4.0以上の学業実績を基盤に、専門分野への情熱と論理的表現力を活かして学術研究に貢献する意欲のある者を歓迎する。",
-        "capacity": 20,
+        "id": "international-liberal-arts",
+        "name": "国際教養学部",
+        "admissionPolicy": "国際教養学部　\n　\n早稲田大学の掲げる『学問の独立』という理念のもと、高い基礎学力を持ち、かつ知的好奇心が旺盛で、進取の精神に富む、勉学意欲の高い学生を、わが国をはじめ世界から迎え入れる。\n\n国際教養学部は以下のような学生の選抜に努める。\n\n1．英語で学習する強い意欲を持つ者\n２．母語以外の言語で効果的に意思疎通できる言語能力、または、その潜在能力を有する者\n３．複数の学問分野の視点から諸課題に取り組むにあたり、総じて高い学力、または、その潜在能力を有する者\n４．独自の視点から問題を分析できる批判的能力、または、その潜在能力を有する者\n５．考えや情報を発表するときに、明確かつ正確にそれらを伝達できる表現能力、または、その潜在能力を有する者\n６．日本国内外での局所的かつ広域的な、多様な文化、修学の経験を持ち、本学部に多様性をもたらす者\n７．新しい環境において生活、学習することに挑戦できる社会的・心理的な適応性と柔軟性を有する者\n８．国際的、比較相対的視点から知的、道徳的問題に取り組む意思と意欲を有する者\n国際教養学部の各入試制度では上記のうちの複数の原則に重きを置きつつ、全体として八原則を体現するよう努める。",
+        "capacity": 311,
         "requirements": {
-          "gpa": 4.0,
-          "englishCert": "英検2級以上、TOEFL iBT 55以上、IELTS 4.5以上、TEAP 250以上等（学科により異なる）",
-          "otherReqs": ["自己推薦書", "志望動機書", "評定平均4.0以上（全学科共通）"]
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": []
         },
         "selectionMethods": [
-          { "stage": 1, "type": "documents", "details": "調査書、自己推薦書、志望動機書の書類審査（評定平均4.0以上必須）" },
-          { "stage": 2, "type": "essay", "details": "論文テスト（人文科学に関する読解・論述）" },
-          { "stage": 3, "type": "interview", "details": "個別面接（志望学科の研究テーマと動機の確認）" }
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "書類審査"
+          }
         ],
         "schedule": {
-          "applicationStart": "2025-09-01",
-          "applicationEnd": "2025-09-10",
-          "examDate": "2025-11-29",
-          "resultDate": "2025-12-11"
+          "applicationStart": "2025-09-16",
+          "applicationEnd": "2025-09-30",
+          "examDate": "2025-10-25",
+          "resultDate": "2025-11-12"
+        }
+      },
+      {
+        "id": "advanced-science-eng",
+        "name": "先進理工学部",
+        "admissionPolicy": "先進理工学部\n　\n先進理工学部は、伝統・定評ある本学理工系教育を継承しつつ、新しい時代に即した効果的な教育研究を推進する基礎と応用の融合を体系的に構築することを目指している。本学部の理念は、自然科学（物理学・化学・生命科学）を基礎とし、先端科学技術の向上および学際的新領域の創成を目指した広範な理工学分野への展開にあり、新たな学問領域を開拓する進取の精神のもと、常に世界最高水準の教育研究拠点として本学理工系の教育研究を先導することを目的としている。\n自然科学を基礎とした先端科学技術の向上および学際的新領域の創成を目指し、21世紀の「知」「能」「技」を主導的に展開できる人材の育成を行うため、入学者選抜においては、高等学校等における学習によって、基礎学力（知識・技能・思考力・判断力・表現力および自ら学ぼうとする主体性）を十分に身につけ、論理的な思考によりその応用にも意欲的な学生を求めている。また、本学部では国際化を格段に進めており、入学者は異なる文化・教育体系で学んできた様々な学生との交流を可能とするような高い英語能力も身につけていることが望ましい。\n\n先進理工学研究科\n　\n早稲田大学では『学の独立』の教育理念のもとで，一定の高い基礎学力を持ち，かつ知的好奇心が旺盛で，本学の理念である進取の精神に富む，勉学意欲の高い学生を，我が国をはじめ世界から多数迎え入れる。\n\n修士課程においては、物理学・応用物理学、化学・生命化学、応用化学、生命医科学、電気・情報生命、生命理工学、ナノ理工学、原子力、先進理工学などに関する基礎能力、専門的に深く、同時に広い視野から学ぶための基礎知識が求められる。博士後期課程においては、上記の修士号取得に必要な能力を備え、物理学・応用物理学、化学・生命化学、応用化学、生命医科学、電気・情報生命、生命理工学、ナノ理工学、共同先端生命医科学、共同先進健康科学、共同原子力において自らの可能性に挑戦しながら幅広い分野でリーダーとして世界的に活躍できるための高い専門性、経験、理論、意欲を有することが求められる。",
+        "capacity": 311,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": []
         },
-        "interviewTendency": {
-          "format": "個人面接",
-          "duration": "約15分",
-          "interviewers": "教員2名",
-          "pressure": "medium",
-          "weight": "均等",
-          "frequentTopics": [
-            "志望学科（哲学・史学・国文・英文・独文・仏文等）の選択理由",
-            "専門分野への関心のきっかけと読書・研究体験",
-            "論文テストの内容に関するフォローアップ",
-            "大学で取り組みたい研究テーマの具体的説明",
-            "人文科学の学びを通じた社会貢献ビジョン"
-          ],
-          "tips": "全学科対象の公募制推薦だが、各学科の専門性が問われるため志望学科に関連する書籍を複数読んで深い関心を示すこと。論文テストは読解と論述が中心であり、人文科学の基礎的な議論の構成力が問われる。面接では自分の研究テーマを具体的に語れるよう準備すること。"
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "書類審査"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-16",
+          "applicationEnd": "2025-09-30",
+          "examDate": "2025-10-25",
+          "resultDate": "2025-11-12"
+        }
+      },
+      {
+        "id": "social",
+        "name": "社会科学部",
+        "admissionPolicy": "社会科学部\n　\n【社会科学部の特色・社会的役割・大学教育で発展・向上させる力】\n\n社会科学部は、早稲田大学教旨（『学問の独立』『学問の活用』『模範国民の造就』）を本旨として、日本各地また世界各国から多種多様な学生達が相互に刺激し感化し合いながら独創的な知を研鑽し、その成果を社会的責任の自覚のもとに活用して困難な課題に立ち向かう地球社会の未来への貢献者を育てる。\n\nそのために、学際性（多くの専門領域の知識・技能によって本質を見抜き、学際的で独創的な知をもって問題解決する力、自由な討究によって相互に刺激・感化し合いながら社会的に共有・発信する力）、臨床性（豊かな感性をもって現実やその課題を発見・洞察する力、困難な状況にあっても解決策を切り開く力）、国際性（国・言語・民族・文化の理解の壁をこえて、問題解決にむけて利害等を統合する力）を発展・向上させる。",
+        "capacity": 115,
+        "requirements": {
+          "gpa": 4,
+          "englishCert": "英検CSE 1950以上 / TOEFL iBT 42以上 / IELTS 4.0以上 / GTEC 930以上",
+          "otherReqs": [
+            "高等学校または中等教育学校後期課程在籍期間の活動において、次の1つ以上に該当する者。ただし、資格に関しては、高等学校または中等教育学校後期課程在籍期間以前に取得したものによる出願も受け付ける。\n\n・学芸系またはスポーツ系クラブなどに所属し、都道府県以上の大会・コンクール・展覧会などにおいて優秀な成績を収めた者。\n・生徒会活動において、めざましい活躍をした者。\n・資格（語学検定や財務・会計資格など）を有する者。\n・その他、学校外での諸活動（クラブ活動、ボランティア活動など）において、めざましい活躍をした者。\n\n英語外部検定試験のうち、以下の基準点を満たすスコアを提出できる者\n・TEAP:225 以上\n・TOEIC L＆R / TOEIC S＆W:1,150 以上",
+            "併願可（）",
+            "調査書記載の欠席日数が45日以内（4年制定時制は60日以内）"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "「全国自己推薦入学試験（第一次選考）志願票、調査書、志望理由書、活動記録報告書、英語外部検定試験のスコア、出願書類チェックリスト"
+          },
+          {
+            "stage": 2,
+            "type": "essay",
+            "details": "小論文"
+          },
+          {
+            "stage": 3,
+            "type": "interview",
+            "details": "面接"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-16",
+          "applicationEnd": "2025-09-30",
+          "examDate": "2025-10-25",
+          "resultDate": "2025-11-12"
+        }
+      },
+      {
+        "id": "education",
+        "name": "教育学部",
+        "admissionPolicy": "早稲田大学では、『学問の独立』の教育理念のもとで、一定の高い基礎学力を持ち、かつ知的好奇心が旺盛で、本学の理念である進取の精神に富む、勉学意欲の高い学生を、わが国をはじめ世界から多数迎え入れる。\n\n教育学部の主要な教育目的は二つある。一つは高等師範部以来、幾多の教育指導者を斯界に輩出してきた100年の伝統を継承し、優秀な教育者を送り出すことであり、一つは広く実社会の各分野で活躍しうる有能な人間を育成することである。この二つの目的は決して別のものではなく、その根底は、深い専門性、幅広い知識、豊かな教養、優れたコミュニケーション能力を身に付けた人間を育成することにある。\n\nこれらの目的に照らし、教育学部の志望者には、①教科に関する確かな基礎学力に加え、②「教える・伝える力」の基盤となる高い論理的思考能力と言語運用能力、さらに③異質な他者との関係性のなかで自ら求めて学ぶ姿勢を備えていることが求められる。入学後は、教育者としての資質をもって、学校を含む社会の各分野で活躍しうる人間となるべく、本学部の教育課程を通じて、学問的に裏打ちされた知識を基盤に物事を多面的に捉え、的確に判断していく力を身につけることが目指される。\n\n多様な学生に開かれた学部であるために、本学部では一般選抜、指定校推薦入試、帰国生･外国学生入試、学士入試、地域探究・貢献入試の各制度を設けている。\n\n一般選抜では、学科試験において①及び②を評価し、指定校推薦入試では出願書類を通じて①③を測るとともに面接試験において②③を評価している。帰国生・外国学生入試及び学士入試においては、出願書類、学科並びに小論文試験及び面接試験を通じて、①②③を総合的に評価している。地域探究・貢献入試においては、出願書類、総合試験、大学入学共通テストを通じて、①②③を総合的に評価している。",
+        "capacity": 311,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": []
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "書類審査"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-16",
+          "applicationEnd": "2025-09-30",
+          "examDate": "2025-10-25",
+          "resultDate": "2025-11-12"
+        }
+      },
+      {
+        "id": "letters",
+        "name": "文学部",
+        "admissionPolicy": "文学部\n　\nアドミッション・ポリシー\nディプロマ・ポリシー\nカリキュラム・ポリシー\nアドミッション・ポリシー\n人材養成その他の教育研究上の目的\nアセスメント・ポリシー\n早稲田大学では、「学問の独立」の教育理念のもとで、一定の高い基礎学力を持ち、かつ知的好奇心が旺盛で、本学の理念である進取の精神に富む、勉学意欲の高い学生を、わが国をはじめ世界から多数迎え入れる。文学部が特に入学者に求める資質・能力は、次のとおりである。\n\n「人間・世界を深く探り、言語・文学・表現の本質を解明し、人間・社会を歴史的に究明する」「豊かな学問的蓄積を受け止めて、新しい時代のなかで発展させるとともに、伝統的な学問体系をより洗練して確固たる学問として確立する」という学部の理念・目標を理解し、学位取得に積極的に取り組む意欲がある。\n文学部の基礎から専門に亘るカリキュラムを理解して、入学後の修学に必要な基礎学力を有する。また入学以前に幅広い学習と経験を積んでいる。",
+        "capacity": 311,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": []
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "書類審査"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-16",
+          "applicationEnd": "2025-09-30",
+          "examDate": "2025-10-25",
+          "resultDate": "2025-11-12"
+        }
+      },
+      {
+        "id": "political-economy",
+        "name": "政治経済学部",
+        "admissionPolicy": "政治経済学部\n　\n政治経済学部は、早稲田大学の校旨である『学問の独立』の教育理念のもと、高い基礎学力を持ち、かつ知的好奇心が旺盛で、本学の理念である進取の精神に富む、勉学意欲の高い学生を、わが国をはじめ世界から多数迎え入れる。こうした学生の質の高さ、および多様性を確保するため、政治経済学部では一般選抜、大学入学共通テスト利用入学試験、推薦入試、グローバル（海外就学経験者）入学試験の４つを核とする入学試験を実施し、推薦入試、グローバル（海外就学経験者）入学試験については門戸を国外にまで開放して、多くの受験機会を提供している。受験生に期待されるのは、学習の土台となる母語および英語を核とする言語運用能力や論理的思考力、自身の立ち位置を認識するために必要となる歴史・文化的知識、そして世界中の人々と交流しながら様々な問題に立ち向かう行動力であり、上述の各種入学試験ではこれらの知識・能力を多面的に考査することになる。\n\n政治学科\n　\n政治学科は、学問の独立と自律的な市民社会の確立という建学の精神を今に受け継いでいる。その精神は、経済学との密接な連携により、生きた政治現象を分析し、日本から世界に発信できる学問をめざすという高い理想に反映されている。入学者にはこのような学科の伝統を発展的に継承できる人物であることを求める。高校までの基礎学力を十分に備えたうえで、現代の政治や経済などの社会的現象に対する強い関心、新しい時代に対応した理解力・分析力・コミュニケーション能力・行動力を身につけようとする姿勢、的確な知識と豊かな創造性に裏付けられた意見表明を通じて地域、日本そして世界の創造的発展に貢献しようとする意欲など、多様な背景をもつ者を選抜する。こうして選抜された学生が、政治学という学問の場でお互いに切磋琢磨することを通じて、学問的深みと人間的成熟を追求する場となることを目指す。\n\n経済学科\n　\n経済学科における入学者選抜の基本理念は、「経済を中心とした社会現象を論理的に理解し説明することに深い関心と素養をもつ学生を選ぶ」ことにある。このことは、政治経済のみならず広く社会の現状と歴史に関心を持つことに加えて、論理的思考を重視する学生が望まれることを意味する。経済学を習得し社会現象の理解に活用するためには、一定程度の数理的能力が不可欠である。たとえ多少の苦手意識があっても、数理的に展開される論理を根気よく追跡する姿勢が必要とされる。政治経済の現在や過去に関する豊富な知識を持つ学生、数理的思考に長けた学生、国際関係に強い関心を持つ学生など、多様な学生がそれぞれの長所を活かしつつ切磋琢磨する過程で社会経済現象の論理的な分析力を身につけていくことが理想である。このため、複数の入試形態によって、さまざまな長所をもつ学生を集めるように努力する。\n\n国際政治経済学科\n　\n現代の国際社会における政治・経済などの諸現象とその結びつきに強い関心を持ち、グローバルな課題を自分たちの問題として専門知識を用いて分析した上で実現可能な解決方法を探り、地域や世界の発展に役立ちたい、という気概をもつ学生を求める。また国際化社会に対応できるコミュニケーション能力と論理的な思考法、さまざまな人々の立場を思いやれる幅広い感受性を備え、積極的かつ自省的に行動ができる者が望ましい。特に政治・経済を中心とした幅広い学問領域について、既存の枠にとらわれずに新たな知見や多様な考え方を吸収しようとする学生の好奇心を尊重する。あわせて、日英両言語による専門科目を積極的に履修する意欲を持ち、分析力・思考力・実行力を身につける努力を惜しまない学生が望まれる。",
+        "capacity": 311,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": []
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "書類審査"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-16",
+          "applicationEnd": "2025-09-30",
+          "examDate": "2025-10-25",
+          "resultDate": "2025-11-12"
+        }
+      },
+      {
+        "id": "sports",
+        "name": "スポーツ科学部",
+        "admissionPolicy": "スポーツ科学部\n　\nスポーツ科学部は、早稲田大学の教旨に基づき、大学をより豊かで充実した学問の場とし、スポーツ界はもとより多種多様な分野でグローバルリーダーとなり得る人材を輩出することを目指している。また、スポーツには「する」という関わり方だけではなく、「みる」、「ささえる」、「しる」など幅広い関わり方があるため、様々な立場でスポーツひいては社会の発展を成し遂げられる人材の育成を目指している。そのために、学際的な学問であるスポーツ科学を真摯に探究しようとする強い意欲に加えて、これまでの学習やスポーツ経験等を通じて培われた以下の能力や素養を、各種の入学試験形態に応じて総合的に評価し、多彩な個性を持つ学生を国内外から広く受け入れる。\r\n\r\n■グローバルに活躍するための語学力\r\n■スポーツ科学の探究を支える高い基礎学力と経験\r\n■課題を定義し解決に導くための思考力や判断力、そして表現力\r\n■スポーツ科学を活用して自らの成長のみならず、スポーツひいては社会の発展を成し遂げようという強い意志と利他の精神",
+        "capacity": 252,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "出願時点で、オリンピックや世界選手権への出場経験、あるいはオリンピックや世界選手権出場につながる国際的レベルの競技大会への出場経験、もしくはそれに相当するレベルの競技能力を有すること",
+            "併願可（）"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "申込書類チェックリスト、情報登録フォーム　自動返信メール（コピー）、事前セミナー申し込み用紙（1）、事前セミナー申し込み用紙（2）、スポーツ競技成績証明書表紙、封筒貼付用ラベル"
+          },
+          {
+            "stage": 2,
+            "type": "other",
+            "details": "事前セミナー受講"
+          },
+          {
+            "stage": 3,
+            "type": "other",
+            "details": "個別面談"
+          },
+          {
+            "stage": 4,
+            "type": "documents",
+            "details": "書類選考"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-03-31",
+          "applicationEnd": "2025-04-14",
+          "examDate": "2025-05-09",
+          "resultDate": "2025-05-27"
         }
       }
     ]

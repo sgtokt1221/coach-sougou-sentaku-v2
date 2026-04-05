@@ -20,9 +20,14 @@ const GROUP_TABS = [
   { key: "all", label: "すべて" },
   { key: "kyutei", label: "旧帝大" },
   { key: "soukeijochi", label: "早慶上智" },
-  { key: "kankandouritsu", label: "関関同立" },
   { key: "march", label: "MARCH" },
+  { key: "kankandouritsu", label: "関関同立" },
   { key: "sankinkohryu", label: "産近甲龍" },
+  { key: "nittoukomasen", label: "日東駒専" },
+  { key: "seiseimeidoku", label: "成成明獨國武" },
+  { key: "national", label: "国立" },
+  { key: "public", label: "公立" },
+  { key: "private", label: "その他私立" },
 ] as const;
 
 interface Props {
