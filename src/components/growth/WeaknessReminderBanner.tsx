@@ -7,44 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CheckCircle2, AlertCircle, AlertTriangle, TrendingUp } from "lucide-react";
 import { WeaknessRecord, WeaknessReminderLevel, getWeaknessReminderLevel } from "@/lib/types/growth";
+import { authFetch } from "@/lib/api/client";
 
 type WeaknessWithLevel = WeaknessRecord & { level: WeaknessReminderLevel };
 
-const mockWeaknesses: WeaknessWithLevel[] = [
-  {
-    area: "論拠となるデータ・事例の不足",
-    count: 5,
-    firstOccurred: new Date(),
-    lastOccurred: new Date(),
-    improving: false,
-    resolved: false,
-    source: "essay",
-    reminderDismissedAt: null,
-    level: "critical",
-  },
-  {
-    area: "AP連動の弱さ",
-    count: 3,
-    firstOccurred: new Date(),
-    lastOccurred: new Date(),
-    improving: false,
-    resolved: false,
-    source: "essay",
-    reminderDismissedAt: null,
-    level: "warning",
-  },
-  {
-    area: "導入部分の改善",
-    count: 2,
-    firstOccurred: new Date(),
-    lastOccurred: new Date(),
-    improving: true,
-    resolved: false,
-    source: "essay",
-    reminderDismissedAt: null,
-    level: "improving",
-  },
-];
 
 const levelConfig: Record<
   WeaknessReminderLevel,
@@ -90,7 +56,7 @@ export function WeaknessReminderBanner() {
   useEffect(() => {
     async function fetchWeaknesses() {
       try {
-        const res = await fetch("/api/growth/weaknesses?context=dashboard");
+        const res = await authFetch("/api/growth/weaknesses?context=dashboard");
         if (!res.ok) throw new Error("fetch failed");
         const data = await res.json();
         const items: WeaknessRecord[] = data.weaknesses ?? [];
@@ -99,7 +65,7 @@ export function WeaknessReminderBanner() {
           .filter((w): w is WeaknessWithLevel => w.level !== null);
         setWeaknesses(withLevel);
       } catch {
-        setWeaknesses(mockWeaknesses);
+        setWeaknesses([]);
       } finally {
         setLoading(false);
       }

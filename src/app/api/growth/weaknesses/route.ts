@@ -4,14 +4,28 @@ import type { WeaknessRecord } from "@/lib/types/growth";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const userId = searchParams.get("userId");
+  let userId = searchParams.get("userId");
   const context = (searchParams.get("context") ?? "dashboard") as
     | "dashboard"
     | "essay_new"
     | "essay_result";
 
+  // トークンからuserIdを取得
   if (!userId) {
-    return NextResponse.json({ error: "userId is required" }, { status: 400 });
+    const authHeader = request.headers.get("Authorization");
+    if (authHeader?.startsWith("Bearer ")) {
+      try {
+        const { adminAuth } = await import("@/lib/firebase/admin");
+        if (adminAuth) {
+          const decoded = await adminAuth.verifyIdToken(authHeader.slice(7));
+          userId = decoded.uid;
+        }
+      } catch {}
+    }
+  }
+
+  if (!userId) {
+    return NextResponse.json({ weaknesses: [] });
   }
 
   const { adminDb } = await import("@/lib/firebase/admin");

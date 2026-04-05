@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { TargetUniversityCards } from "@/components/dashboard/TargetUniversityCards";
-import { DailyTasksPanel } from "@/components/student/DailyTasksPanel";
 import type { StudentProfile } from "@/lib/types/user";
 import { useAuthSWR } from "@/lib/api/swr";
 import { NotificationPermissionBanner } from "@/components/notifications/NotificationPermissionBanner";
@@ -136,11 +135,6 @@ export default function StudentDashboard() {
 
       {/* Notification Permission Banner */}
       <NotificationPermissionBanner />
-
-      {/* Daily Tasks AI Panel */}
-      <div className="animate-fade-in-up" style={{ animationDelay: "50ms" }}>
-        <DailyTasksPanel />
-      </div>
 
       {/* Target Universities */}
       <div className="animate-fade-in-up" style={{ animationDelay: "100ms" }}>
