@@ -1,5 +1,94 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import * as crypto from "crypto";
+
+// ---- Google Cloud Vision API OCR ----
+
+function createJwt(clientEmail: string, privateKey: string): string {
+  const now = Math.floor(Date.now() / 1000);
+  const header = Buffer.from(JSON.stringify({ alg: "RS256", typ: "JWT" })).toString("base64url");
+  const payload = Buffer.from(JSON.stringify({
+    iss: clientEmail,
+    scope: "https://www.googleapis.com/auth/cloud-vision",
+    aud: "https://oauth2.googleapis.com/token",
+    iat: now,
+    exp: now + 3600,
+  })).toString("base64url");
+
+  const signInput = `${header}.${payload}`;
+  const sign = crypto.createSign("RSA-SHA256");
+  sign.update(signInput);
+  const signature = sign.sign(privateKey, "base64url");
+
+  return `${signInput}.${signature}`;
+}
+
+async function getAccessToken(): Promise<string | null> {
+  const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
+  const privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, "\n");
+  if (!clientEmail || !privateKey) return null;
+
+  const jwt = createJwt(clientEmail, privateKey);
+
+  const res = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`,
+  });
+
+  if (!res.ok) {
+    console.warn("[GCV] Token request failed:", res.status);
+    return null;
+  }
+
+  const data = await res.json();
+  return data.access_token ?? null;
+}
+
+async function ocrWithGoogleVision(base64Data: string): Promise<string | null> {
+  try {
+    const accessToken = await getAccessToken();
+    if (!accessToken) {
+      console.warn("[GCV] No access token available");
+      return null;
+    }
+
+    const res = await fetch("https://vision.googleapis.com/v1/images:annotate", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        requests: [{
+          image: { content: base64Data },
+          features: [{ type: "DOCUMENT_TEXT_DETECTION" }],
+          imageContext: { languageHints: ["ja"] },
+        }],
+      }),
+    });
+
+    if (!res.ok) {
+      console.warn("[GCV] API error:", res.status, await res.text());
+      return null;
+    }
+
+    const data = await res.json();
+    const text = data.responses?.[0]?.fullTextAnnotation?.text;
+    if (text) {
+      console.log(`[GCV] Success: ${text.length} chars`);
+      return text;
+    }
+
+    console.warn("[GCV] No text detected");
+    return null;
+  } catch (err) {
+    console.warn("[GCV] Exception:", err);
+    return null;
+  }
+}
+
+// ---- Claude Vision OCR (fallback) ----
 
 async function ocrWithClaude(base64Data: string): Promise<string | null> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -39,6 +128,8 @@ async function ocrWithClaude(base64Data: string): Promise<string | null> {
   return response.content[0].type === "text" ? response.content[0].text : null;
 }
 
+// ---- Main handler ----
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -55,7 +146,15 @@ export async function POST(request: NextRequest) {
     const imageUrl = `gs://placeholder/${essayId}.jpg`;
     const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, "");
 
-    const ocrText = await ocrWithClaude(base64Data);
+    // 1. Google Cloud Vision (高精度・低コスト)
+    let ocrText = await ocrWithGoogleVision(base64Data);
+    let ocrSource = ocrText ? "google-vision" : "";
+
+    // 2. Claude Vision フォールバック
+    if (!ocrText) {
+      ocrText = await ocrWithClaude(base64Data);
+      ocrSource = "claude";
+    }
 
     if (!ocrText) {
       return NextResponse.json(
@@ -64,7 +163,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`[Essay OCR] Claude Vision: ${ocrText.length} chars`);
+    console.log(`[Essay OCR] Source: ${ocrSource}, Length: ${ocrText.length} chars`);
 
     return NextResponse.json({
       essayId,
