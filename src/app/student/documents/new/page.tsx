@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
+import type { StudentProfile } from "@/lib/types/user";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -38,18 +40,21 @@ interface UniversityOption {
   facultyName: string;
 }
 
-const MOCK_UNIVERSITIES: UniversityOption[] = [
-  { universityId: "kyoto-u", facultyId: "letters", universityName: "京都大学", facultyName: "文学部" },
-  { universityId: "osaka-u", facultyId: "engineering", universityName: "大阪大学", facultyName: "工学部" },
-  { universityId: "doshisha-u", facultyId: "law", universityName: "同志社大学", facultyName: "法学部" },
-  { universityId: "kobe-u", facultyId: "economics", universityName: "神戸大学", facultyName: "経済学部" },
-  { universityId: "ritsumeikan-u", facultyId: "policy", universityName: "立命館大学", facultyName: "政策科学部" },
-];
 
 const STEPS = ["書類タイプ", "志望校", "フレームワーク", "活動実績", "下書き生成"];
 
 export default function NewDocumentPage() {
   const router = useRouter();
+  const { userProfile } = useAuth();
+  const universities: UniversityOption[] = useMemo(() => {
+    const profile = userProfile as StudentProfile | null;
+    return (profile?.targetUniversities ?? []).map((t) => ({
+      universityId: t.universityId,
+      facultyId: t.facultyId,
+      universityName: t.universityName ?? t.universityId,
+      facultyName: t.facultyName ?? t.facultyId,
+    }));
+  }, [userProfile]);
 
   const [step, setStep] = useState(0);
   const [documentType, setDocumentType] = useState<DocumentType | null>(null);
@@ -258,7 +263,7 @@ export default function NewDocumentPage() {
       {/* Step 1: University selection */}
       {step === 1 && (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {MOCK_UNIVERSITIES.map((u) => (
+          {universities.map((u) => (
             <Card
               key={`${u.universityId}-${u.facultyId}`}
               className={`cursor-pointer transition-all hover:shadow-md ${

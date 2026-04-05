@@ -41,37 +41,6 @@ interface TrendDataPoint {
   originality: number;
 }
 
-const mockHistory: EssayHistoryItem[] = [
-  {
-    id: "1",
-    universityName: "京都大学",
-    facultyName: "文学部",
-    submittedAt: "2026-03-15",
-    scores: { total: 34 },
-  },
-  {
-    id: "2",
-    universityName: "大阪大学",
-    facultyName: "法学部",
-    submittedAt: "2026-03-10",
-    scores: { total: 38 },
-  },
-  {
-    id: "3",
-    universityName: "東北大学",
-    facultyName: "文学部",
-    submittedAt: "2026-03-05",
-    scores: { total: 31 },
-  },
-];
-
-const mockTrendData: TrendDataPoint[] = [
-  { date: "3/1", total: 28, structure: 5, logic: 5, expression: 7, apAlignment: 5, originality: 6 },
-  { date: "3/5", total: 31, structure: 6, logic: 5, expression: 7, apAlignment: 6, originality: 7 },
-  { date: "3/10", total: 38, structure: 7, logic: 7, expression: 8, apAlignment: 8, originality: 8 },
-  { date: "3/15", total: 34, structure: 7, logic: 6, expression: 8, apAlignment: 7, originality: 6 },
-  { date: "3/20", total: 40, structure: 8, logic: 7, expression: 9, apAlignment: 8, originality: 8 },
-];
 
 function scoreColor(total: number): string {
   if (total >= 40) return "text-emerald-600 dark:text-emerald-400";
@@ -131,7 +100,7 @@ export default function StudentDashboard() {
   const { data: essayData, isLoading: loadingHistory } = useAuthSWR<{ essays: EssayHistoryItem[] }>("/api/essay/history");
   const loadingTrend = loadingHistory;
 
-  const history = (essayData?.essays ?? mockHistory).slice(0, 3);
+  const history = (essayData?.essays ?? []).slice(0, 3);
 
   const rawTrend = (essayData?.essays ?? [])
     .filter((e) => e.scores)

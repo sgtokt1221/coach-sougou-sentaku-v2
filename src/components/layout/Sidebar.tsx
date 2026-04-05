@@ -226,7 +226,8 @@ export function Sidebar() {
       <div className="flex h-16 items-center border-b border-sidebar-border px-5 hover:bg-sidebar-accent/10 transition-all duration-200 group">
         <Link href="/" className="relative">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-dark.svg" alt="coach for 総合型選抜" className="h-10 group-hover:drop-shadow-sm transition-all duration-200" />
+          <img src="/logo-dark.svg" alt="coach for 総合型選抜" className="h-10 group-hover:drop-shadow-sm transition-all duration-200 hidden dark:block" />
+          <img src="/logo.svg" alt="coach for 総合型選抜" className="h-10 group-hover:drop-shadow-sm transition-all duration-200 dark:hidden" />
           <div className="absolute -bottom-1 left-0 right-0 h-px bg-gradient-to-r from-transparent via-sidebar-primary/20 to-transparent opacity-60"></div>
         </Link>
       </div>
@@ -303,15 +304,19 @@ export function SidebarContent() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="px-3 py-4">
+      <div className="px-3 py-4 shrink-0">
         <div className="mb-5 px-3 hover:bg-accent/10 transition-all duration-200 group rounded-lg">
           <Link href="/" className="relative block">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo-dark.svg" alt="coach for 総合型選抜" className="h-10 group-hover:drop-shadow-sm transition-all duration-200" />
+            <img src="/logo-dark.svg" alt="coach for 総合型選抜" className="h-10 group-hover:drop-shadow-sm transition-all duration-200 hidden dark:block" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.svg" alt="coach for 総合型選抜" className="h-10 group-hover:drop-shadow-sm transition-all duration-200 dark:hidden" />
             <div className="absolute -bottom-1 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent opacity-60"></div>
           </Link>
         </div>
+      </div>
 
+      <div className="flex-1 overflow-y-auto px-3 pb-4">
         <div className="space-y-6">
           {navGroups.map((group, gi) => (
             <div key={gi}>

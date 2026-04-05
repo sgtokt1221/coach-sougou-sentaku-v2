@@ -32,32 +32,6 @@ interface InterviewHistoryItem {
   totalScore: number;
 }
 
-const mockHistory: InterviewHistoryItem[] = [
-  {
-    id: "interview-1",
-    universityName: "京都大学",
-    facultyName: "文学部",
-    mode: "individual",
-    practicedAt: "2026-03-21",
-    totalScore: 26,
-  },
-  {
-    id: "interview-2",
-    universityName: "大阪大学",
-    facultyName: "法学部",
-    mode: "presentation",
-    practicedAt: "2026-03-14",
-    totalScore: 22,
-  },
-  {
-    id: "interview-3",
-    universityName: "東北大学",
-    facultyName: "文学部",
-    mode: "oral_exam",
-    practicedAt: "2026-03-07",
-    totalScore: 18,
-  },
-];
 
 const MODE_VARIANT: Record<
   InterviewMode,
@@ -93,7 +67,7 @@ export default function InterviewHistoryPage() {
       totalScore: item.totalScore ?? item.scores?.total ?? 0,
     })
   );
-  const historyToShow = history.length > 0 || rawData !== undefined ? history : (loading ? [] : mockHistory);
+  const historyToShow = history;
 
   const chartData = [...historyToShow]
     .sort((a, b) => a.practicedAt.localeCompare(b.practicedAt))
