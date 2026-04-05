@@ -23,6 +23,8 @@ import {
   Compass,
   PenTool,
   SpellCheck,
+  Copy,
+  Check,
 } from "lucide-react";
 import {
   Radar,
@@ -113,6 +115,14 @@ export default function EssayResultPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showBrushedUp, setShowBrushedUp] = useState(false);
+  const [copiedSection, setCopiedSection] = useState<string | null>(null);
+
+  function copyToClipboard(text: string, section: string) {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedSection(section);
+      setTimeout(() => setCopiedSection(null), 2000);
+    });
+  }
 
   useEffect(() => {
     async function load() {
@@ -419,10 +429,23 @@ export default function EssayResultPage() {
       {/* テーマ深掘り */}
       {result.feedback.topicInsights && (
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
               <BookOpen className="size-4" />
               テーマ深掘り
+            </CardTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs text-muted-foreground"
+              onClick={() => {
+                const ti = result.feedback.topicInsights!;
+                const text = `【背景・文脈】\n${ti.background}\n\n【関連テーマ】\n${ti.relatedThemes.join("、")}\n\n【深掘りの視点】\n${ti.deepDivePoints.map((p, i) => `${i + 1}. ${p}`).join("\n")}\n\n【推奨切り口】\n${ti.recommendedAngle}`;
+                copyToClipboard(text, "topic");
+              }}
+            >
+              {copiedSection === "topic" ? <><Check className="size-3 mr-1" />コピー済み</> : <><Copy className="size-3 mr-1" />全コピー</>}
+            </Button>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -471,11 +494,21 @@ export default function EssayResultPage() {
       {/* ブラッシュアップ版 */}
       {result.feedback.brushedUpText && (
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
               <PenTool className="size-4" />
               ブラッシュアップ版
             </CardTitle>
+            {showBrushedUp && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs text-muted-foreground"
+                onClick={() => copyToClipboard(result.feedback.brushedUpText!, "brushup")}
+              >
+                {copiedSection === "brushup" ? <><Check className="size-3 mr-1" />コピー済み</> : <><Copy className="size-3 mr-1" />全コピー</>}
+              </Button>
+            )}
           </CardHeader>
           <CardContent>
             {!showBrushedUp ? (

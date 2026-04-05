@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { Check, X } from "lucide-react";
 
 interface Highlight {
   start: number;
@@ -14,6 +15,7 @@ interface ManuscriptEditorProps {
   placeholder?: string;
   readOnly?: boolean;
   highlights?: Highlight[];
+  onHighlightsChange?: (highlights: Highlight[]) => void;
 }
 
 export function ManuscriptEditor({
@@ -23,6 +25,7 @@ export function ManuscriptEditor({
   placeholder = "ここに小論文を入力してください...",
   readOnly = false,
   highlights,
+  onHighlightsChange,
 }: ManuscriptEditorProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const backdropRef = useRef<HTMLDivElement>(null);
@@ -30,6 +33,10 @@ export function ManuscriptEditor({
   const isOver = charCount > maxLength;
   const percentage = Math.min(100, (charCount / maxLength) * 100);
   const hasHighlights = highlights && highlights.length > 0;
+
+  const [editingHighlight, setEditingHighlight] = useState<number | null>(null);
+  const [editValue, setEditValue] = useState("");
+  const editInputRef = useRef<HTMLInputElement>(null);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -51,10 +58,51 @@ export function ManuscriptEditor({
     return () => ta.removeEventListener("scroll", syncScroll);
   }, [hasHighlights]);
 
+  // Focus edit input when editing
+  useEffect(() => {
+    if (editingHighlight !== null) {
+      editInputRef.current?.focus();
+      editInputRef.current?.select();
+    }
+  }, [editingHighlight]);
+
+  function startEdit(index: number, hl: Highlight) {
+    setEditingHighlight(index);
+    setEditValue(value.slice(hl.start, hl.end));
+  }
+
+  function applyEdit(hl: Highlight) {
+    if (editingHighlight === null) return;
+    const before = value.slice(0, hl.start);
+    const after = value.slice(hl.end);
+    const newValue = before + editValue + after;
+    const lengthDiff = editValue.length - (hl.end - hl.start);
+
+    // Update highlights positions
+    if (highlights && onHighlightsChange) {
+      const updated = highlights
+        .filter((_, i) => i !== editingHighlight)
+        .map((h) => {
+          if (h.start > hl.start) {
+            return { start: h.start + lengthDiff, end: h.end + lengthDiff };
+          }
+          return h;
+        });
+      onHighlightsChange(updated);
+    }
+
+    onChange(newValue);
+    setEditingHighlight(null);
+  }
+
+  function cancelEdit() {
+    setEditingHighlight(null);
+  }
+
   function renderHighlightedText() {
     if (!highlights || highlights.length === 0) return value;
 
-    const sorted = [...highlights].sort((a, b) => a.start - b.start);
+    const sorted = [...highlights].map((hl, i) => ({ ...hl, origIndex: i })).sort((a, b) => a.start - b.start);
     const parts: React.ReactNode[] = [];
     let cursor = 0;
 
@@ -62,8 +110,17 @@ export function ManuscriptEditor({
       if (hl.start > cursor) {
         parts.push(<span key={`t-${cursor}`}>{value.slice(cursor, hl.start)}</span>);
       }
+
+      const isEditing = editingHighlight === hl.origIndex;
+
       parts.push(
-        <mark key={`h-${hl.start}`} className="bg-orange-200/70 text-inherit rounded-sm">
+        <mark
+          key={`h-${hl.start}`}
+          className={`text-inherit rounded-sm cursor-pointer transition-colors ${
+            isEditing ? "bg-orange-300/80 ring-2 ring-orange-400" : "bg-orange-200/70 hover:bg-orange-300/70"
+          }`}
+          onClick={() => !isEditing && startEdit(hl.origIndex, hl)}
+        >
           {value.slice(hl.start, hl.end)}
         </mark>
       );
@@ -74,6 +131,9 @@ export function ManuscriptEditor({
     }
     return parts;
   }
+
+  // Find the currently editing highlight for the popup
+  const editingHl = editingHighlight !== null && highlights ? highlights[editingHighlight] : null;
 
   return (
     <div className="space-y-2">
@@ -114,7 +174,7 @@ export function ManuscriptEditor({
           }}
         />
 
-        {/* Highlight backdrop (visible only when highlights exist) */}
+        {/* Highlight backdrop */}
         {hasHighlights && (
           <div
             ref={backdropRef}
@@ -133,7 +193,10 @@ export function ManuscriptEditor({
         <textarea
           ref={textareaRef}
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => {
+            onChange(e.target.value);
+            if (onHighlightsChange) onHighlightsChange([]);
+          }}
           placeholder={placeholder}
           readOnly={readOnly}
           className={`
@@ -143,12 +206,46 @@ export function ManuscriptEditor({
             font-sans text-foreground
             placeholder:text-muted-foreground/50
             focus:outline-none
-            ${hasHighlights ? "bg-transparent" : "bg-transparent"}
+            bg-transparent
             ${readOnly ? "cursor-default" : ""}
           `}
           style={{ letterSpacing: "0.05em", lineHeight: "24px" }}
         />
       </div>
+
+      {/* Inline edit popup */}
+      {editingHl && (
+        <div className="rounded-lg border border-orange-300 bg-orange-50 p-3 space-y-2 animate-in fade-in slide-in-from-top-1 duration-150">
+          <p className="text-xs font-medium text-orange-700">音読補正箇所を修正</p>
+          <div className="flex items-center gap-2">
+            <input
+              ref={editInputRef}
+              type="text"
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") applyEdit(editingHl);
+                if (e.key === "Escape") cancelEdit();
+              }}
+              className="flex-1 rounded-md border border-orange-300 bg-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+            />
+            <button
+              type="button"
+              onClick={() => applyEdit(editingHl)}
+              className="size-8 rounded-md bg-orange-500 text-white flex items-center justify-center hover:bg-orange-600"
+            >
+              <Check className="size-4" />
+            </button>
+            <button
+              type="button"
+              onClick={cancelEdit}
+              className="size-8 rounded-md bg-muted text-muted-foreground flex items-center justify-center hover:bg-muted/80"
+            >
+              <X className="size-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Footer info */}
       <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -157,7 +254,7 @@ export function ManuscriptEditor({
         </span>
         {hasHighlights && (
           <span className="text-orange-600 font-medium">
-            オレンジ = 音読で補正された箇所
+            オレンジ部分をタップで修正可能
           </span>
         )}
       </div>

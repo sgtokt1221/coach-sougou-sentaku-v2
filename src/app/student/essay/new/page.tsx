@@ -1071,9 +1071,10 @@ export default function EssayNewPage() {
 
             <ManuscriptEditor
               value={ocrText}
-              onChange={(v) => { setOcrText(v); setDictationHighlights([]); }}
+              onChange={setOcrText}
               maxLength={800}
               highlights={dictationHighlights}
+              onHighlightsChange={setDictationHighlights}
             />
 
             {error && <p className="text-sm text-destructive">{error}</p>}
