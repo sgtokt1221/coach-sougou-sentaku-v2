@@ -28,87 +28,87 @@ export interface PastQuestion {
 
 export const PAST_QUESTIONS: PastQuestion[] = [
   // ===== 京都大学 =====
-  { id: "pq-kyoto-law-1", universityId: "kyoto", universityName: "京都大学", facultyName: "法学部", year: 2024, theme: "民主主義と多数決原理の限界", description: "民主主義における多数決原理の正当性と限界について、具体例を挙げながら論じなさい。少数者の権利保障との関係にも言及すること。", type: "past", wordLimit: 800, timeLimit: 90, field: "法律" },
-  { id: "pq-kyoto-law-2", universityId: "kyoto", universityName: "京都大学", facultyName: "法学部", year: 2024, theme: "AIと法的責任", description: "自律的AI システムが引き起こした損害について、法的責任の所在をどのように考えるべきか論じなさい。", type: "frequent", wordLimit: 800, timeLimit: 90, field: "法律" },
-  { id: "pq-kyoto-edu-1", universityId: "kyoto", universityName: "京都大学", facultyName: "教育学部", year: 2024, theme: "教育における平等と公正", description: "教育の機会均等とは何か。形式的平等と実質的平等の違いを踏まえ、日本の教育制度の課題を論じなさい。", type: "past", wordLimit: 800, timeLimit: 90, field: "教育" },
-  { id: "pq-kyoto-bun-1", universityId: "kyoto", universityName: "京都大学", facultyName: "文学部", year: 2024, theme: "翻訳と文化理解", description: "文学作品の翻訳において失われるものと得られるものについて、具体例を挙げて論じなさい。", type: "past", wordLimit: 800, timeLimit: 90, field: "文化" },
+  { id: "pq-kyoto-law-1", universityId: "kyoto-u", universityName: "京都大学", facultyName: "法学部", year: 2024, theme: "民主主義と多数決原理の限界", description: "民主主義における多数決原理の正当性と限界について、具体例を挙げながら論じなさい。少数者の権利保障との関係にも言及すること。", type: "past", wordLimit: 800, timeLimit: 90, field: "法律" },
+  { id: "pq-kyoto-law-2", universityId: "kyoto-u", universityName: "京都大学", facultyName: "法学部", year: 2024, theme: "AIと法的責任", description: "自律的AI システムが引き起こした損害について、法的責任の所在をどのように考えるべきか論じなさい。", type: "frequent", wordLimit: 800, timeLimit: 90, field: "法律" },
+  { id: "pq-kyoto-edu-1", universityId: "kyoto-u", universityName: "京都大学", facultyName: "教育学部", year: 2024, theme: "教育における平等と公正", description: "教育の機会均等とは何か。形式的平等と実質的平等の違いを踏まえ、日本の教育制度の課題を論じなさい。", type: "past", wordLimit: 800, timeLimit: 90, field: "教育" },
+  { id: "pq-kyoto-bun-1", universityId: "kyoto-u", universityName: "京都大学", facultyName: "文学部", year: 2024, theme: "翻訳と文化理解", description: "文学作品の翻訳において失われるものと得られるものについて、具体例を挙げて論じなさい。", type: "past", wordLimit: 800, timeLimit: 90, field: "文化" },
 
   // ===== 東京大学 =====
-  { id: "pq-tokyo-bun-1", universityId: "tokyo", universityName: "東京大学", facultyName: "文科一類", year: 2024, theme: "国際秩序の変容", description: "冷戦後の国際秩序がどのように変容してきたか。多極化する世界における日本の役割について論じなさい。", type: "frequent", wordLimit: 600, timeLimit: 60, field: "国際" },
-  { id: "pq-tokyo-bun-2", universityId: "tokyo", universityName: "東京大学", facultyName: "文科二類", year: 2024, theme: "格差社会と再分配", description: "経済成長と所得格差の関係について、再分配政策の観点から論じなさい。", type: "frequent", wordLimit: 600, timeLimit: 60, field: "経済" },
-  { id: "pq-tokyo-ri-1", universityId: "tokyo", universityName: "東京大学", facultyName: "理科一類", year: 2024, theme: "科学技術と倫理", description: "先端科学技術の研究において、研究の自由と社会的責任のバランスをどう取るべきか論じなさい。", type: "frequent", wordLimit: 600, timeLimit: 60, field: "倫理" },
+  { id: "pq-tokyo-bun-1", universityId: "tokyo-u", universityName: "東京大学", facultyName: "文科一類", year: 2024, theme: "国際秩序の変容", description: "冷戦後の国際秩序がどのように変容してきたか。多極化する世界における日本の役割について論じなさい。", type: "frequent", wordLimit: 600, timeLimit: 60, field: "国際" },
+  { id: "pq-tokyo-bun-2", universityId: "tokyo-u", universityName: "東京大学", facultyName: "文科二類", year: 2024, theme: "格差社会と再分配", description: "経済成長と所得格差の関係について、再分配政策の観点から論じなさい。", type: "frequent", wordLimit: 600, timeLimit: 60, field: "経済" },
+  { id: "pq-tokyo-ri-1", universityId: "tokyo-u", universityName: "東京大学", facultyName: "理科一類", year: 2024, theme: "科学技術と倫理", description: "先端科学技術の研究において、研究の自由と社会的責任のバランスをどう取るべきか論じなさい。", type: "frequent", wordLimit: 600, timeLimit: 60, field: "倫理" },
 
   // ===== 大阪大学 =====
-  { id: "pq-osaka-law-1", universityId: "osaka", universityName: "大阪大学", facultyName: "法学部", year: 2024, theme: "表現の自由とヘイトスピーチ規制", description: "表現の自由の保障と差別的表現の規制について、各国の事例を参照しながら論じなさい。", type: "past", wordLimit: 800, timeLimit: 90, field: "法律" },
-  { id: "pq-osaka-bun-1", universityId: "osaka", universityName: "大阪大学", facultyName: "文学部", year: 2024, theme: "多文化共生社会の課題", description: "日本における多文化共生社会の実現に向けた課題と方策について論じなさい。", type: "frequent", wordLimit: 800, timeLimit: 90, field: "社会" },
+  { id: "pq-osaka-law-1", universityId: "osaka-u", universityName: "大阪大学", facultyName: "法学部", year: 2024, theme: "表現の自由とヘイトスピーチ規制", description: "表現の自由の保障と差別的表現の規制について、各国の事例を参照しながら論じなさい。", type: "past", wordLimit: 800, timeLimit: 90, field: "法律" },
+  { id: "pq-osaka-bun-1", universityId: "osaka-u", universityName: "大阪大学", facultyName: "文学部", year: 2024, theme: "多文化共生社会の課題", description: "日本における多文化共生社会の実現に向けた課題と方策について論じなさい。", type: "frequent", wordLimit: 800, timeLimit: 90, field: "社会" },
 
   // ===== 北海道大学 =====
-  { id: "pq-hokkaido-env-1", universityId: "hokkaido", universityName: "北海道大学", facultyName: "環境社会工学科", year: 2024, theme: "持続可能な都市開発", description: "人口減少社会における持続可能な都市開発のあり方について、コンパクトシティの概念を踏まえて論じなさい。", type: "frequent", wordLimit: 800, timeLimit: 90, field: "環境" },
+  { id: "pq-hokkaido-env-1", universityId: "hokkaido-u", universityName: "北海道大学", facultyName: "環境社会工学科", year: 2024, theme: "持続可能な都市開発", description: "人口減少社会における持続可能な都市開発のあり方について、コンパクトシティの概念を踏まえて論じなさい。", type: "frequent", wordLimit: 800, timeLimit: 90, field: "環境" },
 
   // ===== 東北大学 =====
-  { id: "pq-tohoku-law-1", universityId: "tohoku", universityName: "東北大学", facultyName: "法学部", year: 2024, theme: "災害と法制度", description: "大規模自然災害時における法制度の役割と課題について、東日本大震災の経験を踏まえて論じなさい。", type: "past", wordLimit: 800, timeLimit: 90, field: "法律" },
+  { id: "pq-tohoku-law-1", universityId: "tohoku-u", universityName: "東北大学", facultyName: "法学部", year: 2024, theme: "災害と法制度", description: "大規模自然災害時における法制度の役割と課題について、東日本大震災の経験を踏まえて論じなさい。", type: "past", wordLimit: 800, timeLimit: 90, field: "法律" },
 
   // ===== 早稲田大学 =====
-  { id: "pq-waseda-pol-1", universityId: "waseda", universityName: "早稲田大学", facultyName: "政治経済学部", year: 2024, theme: "デジタル民主主義", description: "デジタル技術の発展が民主主義のあり方にどのような影響を与えるか。メリットとリスクの両面から論じなさい。", type: "frequent", wordLimit: 800, timeLimit: 90, field: "政治" },
-  { id: "pq-waseda-bun-1", universityId: "waseda", universityName: "早稲田大学", facultyName: "文学部", year: 2024, theme: "記憶と歴史認識", description: "個人の記憶と集合的記憶の関係について論じ、歴史認識の形成過程を考察しなさい。", type: "frequent", wordLimit: 800, timeLimit: 90, field: "文化" },
-  { id: "pq-waseda-sps-1", universityId: "waseda", universityName: "早稲田大学", facultyName: "スポーツ科学部", year: 2024, theme: "eスポーツはスポーツか", description: "eスポーツをスポーツと認めるべきかどうか、スポーツの定義を踏まえて論じなさい。", type: "frequent", wordLimit: 600, timeLimit: 60, field: "スポーツ" },
+  { id: "pq-waseda-pol-1", universityId: "waseda-u", universityName: "早稲田大学", facultyName: "政治経済学部", year: 2024, theme: "デジタル民主主義", description: "デジタル技術の発展が民主主義のあり方にどのような影響を与えるか。メリットとリスクの両面から論じなさい。", type: "frequent", wordLimit: 800, timeLimit: 90, field: "政治" },
+  { id: "pq-waseda-bun-1", universityId: "waseda-u", universityName: "早稲田大学", facultyName: "文学部", year: 2024, theme: "記憶と歴史認識", description: "個人の記憶と集合的記憶の関係について論じ、歴史認識の形成過程を考察しなさい。", type: "frequent", wordLimit: 800, timeLimit: 90, field: "文化" },
+  { id: "pq-waseda-sps-1", universityId: "waseda-u", universityName: "早稲田大学", facultyName: "スポーツ科学部", year: 2024, theme: "eスポーツはスポーツか", description: "eスポーツをスポーツと認めるべきかどうか、スポーツの定義を踏まえて論じなさい。", type: "frequent", wordLimit: 600, timeLimit: 60, field: "スポーツ" },
 
   // ===== 慶應義塾大学 =====
-  { id: "pq-keio-law-1", universityId: "keio", universityName: "慶應義塾大学", facultyName: "法学部", year: 2024, theme: "プライバシー権とデジタル監視", description: "デジタル社会におけるプライバシー権の意義と、国家による監視技術の利用について論じなさい。", type: "frequent", wordLimit: 1000, timeLimit: 90, field: "法律" },
-  { id: "pq-keio-sfc-1", universityId: "keio", universityName: "慶應義塾大学", facultyName: "総合政策学部（SFC）", year: 2024, theme: "社会課題の解決策を提案せよ", description: "あなたが最も重要だと考える社会課題を一つ選び、その解決に向けた具体的な政策提案を行いなさい。", type: "past", wordLimit: 800, timeLimit: 120, field: "社会" },
-  { id: "pq-keio-env-1", universityId: "keio", universityName: "慶應義塾大学", facultyName: "環境情報学部（SFC）", year: 2024, theme: "テクノロジーと人間の共存", description: "AI・ロボット技術の進展が人間の労働・生活・創造性にどのような影響を与えるか論じなさい。", type: "past", wordLimit: 800, timeLimit: 120, field: "AI・テクノロジー" },
-  { id: "pq-keio-eco-1", universityId: "keio", universityName: "慶應義塾大学", facultyName: "経済学部", year: 2024, theme: "円安と日本経済", description: "近年の円安が日本経済に与える影響について、メリット・デメリットの両面から分析しなさい。", type: "frequent", wordLimit: 800, timeLimit: 90, field: "経済" },
+  { id: "pq-keio-law-1", universityId: "keio-u", universityName: "慶應義塾大学", facultyName: "法学部", year: 2024, theme: "プライバシー権とデジタル監視", description: "デジタル社会におけるプライバシー権の意義と、国家による監視技術の利用について論じなさい。", type: "frequent", wordLimit: 1000, timeLimit: 90, field: "法律" },
+  { id: "pq-keio-sfc-1", universityId: "keio-u", universityName: "慶應義塾大学", facultyName: "総合政策学部（SFC）", year: 2024, theme: "社会課題の解決策を提案せよ", description: "あなたが最も重要だと考える社会課題を一つ選び、その解決に向けた具体的な政策提案を行いなさい。", type: "past", wordLimit: 800, timeLimit: 120, field: "社会" },
+  { id: "pq-keio-env-1", universityId: "keio-u", universityName: "慶應義塾大学", facultyName: "環境情報学部（SFC）", year: 2024, theme: "テクノロジーと人間の共存", description: "AI・ロボット技術の進展が人間の労働・生活・創造性にどのような影響を与えるか論じなさい。", type: "past", wordLimit: 800, timeLimit: 120, field: "AI・テクノロジー" },
+  { id: "pq-keio-eco-1", universityId: "keio-u", universityName: "慶應義塾大学", facultyName: "経済学部", year: 2024, theme: "円安と日本経済", description: "近年の円安が日本経済に与える影響について、メリット・デメリットの両面から分析しなさい。", type: "frequent", wordLimit: 800, timeLimit: 90, field: "経済" },
 
   // ===== 上智大学 =====
-  { id: "pq-sophia-gc-1", universityId: "sophia", universityName: "上智大学", facultyName: "グローバル・スタディーズ", year: 2024, theme: "難民問題と国際協力", description: "世界の難民問題について、受入国の負担と人道的責任のバランスを論じなさい。", type: "frequent", wordLimit: 800, timeLimit: 90, field: "国際" },
+  { id: "pq-sophia-gc-1", universityId: "sophia-u", universityName: "上智大学", facultyName: "グローバル・スタディーズ", year: 2024, theme: "難民問題と国際協力", description: "世界の難民問題について、受入国の負担と人道的責任のバランスを論じなさい。", type: "frequent", wordLimit: 800, timeLimit: 90, field: "国際" },
 
   // ===== 同志社大学 =====
   { id: "pq-doshisha-gc-1", universityId: "doshisha-u", universityName: "同志社大学", facultyName: "グローバル・コミュニケーション学部", year: 2024, theme: "異文化理解とコミュニケーション", description: "グローバル化が進む社会において、異文化間の相互理解を深めるために必要なことは何か論じなさい。", type: "frequent", wordLimit: 800, timeLimit: 60, field: "国際" },
   { id: "pq-doshisha-law-1", universityId: "doshisha-u", universityName: "同志社大学", facultyName: "法学部", year: 2024, theme: "SNSと名誉毀損", description: "SNS上の誹謗中傷と表現の自由について、法規制のあるべき姿を論じなさい。", type: "frequent", wordLimit: 800, timeLimit: 60, field: "法律" },
 
   // ===== 関西学院大学 =====
-  { id: "pq-kwansei-soc-1", universityId: "kwansei-gakuin", universityName: "関西学院大学", facultyName: "社会学部", year: 2024, theme: "多様性と社会的包摂", description: "多様性を尊重する社会の実現に向けて、日本社会が取り組むべき課題について論じなさい。", type: "past", wordLimit: 800, timeLimit: 60, field: "社会" },
-  { id: "pq-kwansei-eco-1", universityId: "kwansei-gakuin", universityName: "関西学院大学", facultyName: "経済学部", year: 2024, theme: "サステナブル経営", description: "企業のサステナビリティ経営が注目される背景と、具体的な取り組み事例を挙げて論じなさい。", type: "frequent", wordLimit: 800, timeLimit: 60, field: "経済" },
+  { id: "pq-kwansei-soc-1", universityId: "kwansei-u", universityName: "関西学院大学", facultyName: "社会学部", year: 2024, theme: "多様性と社会的包摂", description: "多様性を尊重する社会の実現に向けて、日本社会が取り組むべき課題について論じなさい。", type: "past", wordLimit: 800, timeLimit: 60, field: "社会" },
+  { id: "pq-kwansei-eco-1", universityId: "kwansei-u", universityName: "関西学院大学", facultyName: "経済学部", year: 2024, theme: "サステナブル経営", description: "企業のサステナビリティ経営が注目される背景と、具体的な取り組み事例を挙げて論じなさい。", type: "frequent", wordLimit: 800, timeLimit: 60, field: "経済" },
 
   // ===== 関西大学 =====
-  { id: "pq-kansai-soc-1", universityId: "kansai", universityName: "関西大学", facultyName: "社会安全学部", year: 2024, theme: "防災とコミュニティ", description: "大規模災害に対する地域コミュニティの備えと、行政との連携のあり方について論じなさい。", type: "frequent", wordLimit: 600, timeLimit: 60, field: "社会" },
+  { id: "pq-kansai-soc-1", universityId: "kansai-u", universityName: "関西大学", facultyName: "社会安全学部", year: 2024, theme: "防災とコミュニティ", description: "大規模災害に対する地域コミュニティの備えと、行政との連携のあり方について論じなさい。", type: "frequent", wordLimit: 600, timeLimit: 60, field: "社会" },
 
   // ===== 立命館大学 =====
-  { id: "pq-ritsumeikan-ir-1", universityId: "ritsumeikan", universityName: "立命館大学", facultyName: "国際関係学部", year: 2024, theme: "経済安全保障", description: "経済安全保障の観点から、日本が直面する課題と今後の方向性について論じなさい。", type: "frequent", wordLimit: 800, timeLimit: 60, field: "国際" },
+  { id: "pq-ritsumeikan-ir-1", universityId: "ritsumeikan-u", universityName: "立命館大学", facultyName: "国際関係学部", year: 2024, theme: "経済安全保障", description: "経済安全保障の観点から、日本が直面する課題と今後の方向性について論じなさい。", type: "frequent", wordLimit: 800, timeLimit: 60, field: "国際" },
 
   // ===== 明治大学 =====
-  { id: "pq-meiji-bun-1", universityId: "meiji", universityName: "明治大学", facultyName: "文学部", year: 2024, theme: "読書文化の変容", description: "デジタル時代における読書の意義と、読書文化の変容について論じなさい。", type: "frequent", wordLimit: 600, timeLimit: 60, field: "文化" },
-  { id: "pq-meiji-pol-1", universityId: "meiji", universityName: "明治大学", facultyName: "政治経済学部", year: 2024, theme: "若者の政治参加", description: "18歳選挙権導入後の若者の政治参加の現状と課題について、投票率向上の方策を含めて論じなさい。", type: "frequent", wordLimit: 800, timeLimit: 60, field: "政治" },
+  { id: "pq-meiji-bun-1", universityId: "meiji-u", universityName: "明治大学", facultyName: "文学部", year: 2024, theme: "読書文化の変容", description: "デジタル時代における読書の意義と、読書文化の変容について論じなさい。", type: "frequent", wordLimit: 600, timeLimit: 60, field: "文化" },
+  { id: "pq-meiji-pol-1", universityId: "meiji-u", universityName: "明治大学", facultyName: "政治経済学部", year: 2024, theme: "若者の政治参加", description: "18歳選挙権導入後の若者の政治参加の現状と課題について、投票率向上の方策を含めて論じなさい。", type: "frequent", wordLimit: 800, timeLimit: 60, field: "政治" },
 
   // ===== 青山学院大学 =====
-  { id: "pq-aoyama-com-1", universityId: "aoyama-gakuin", universityName: "青山学院大学", facultyName: "コミュニティ人間科学部", year: 2024, theme: "地域の居場所づくり", description: "地域において人々が安心して過ごせる「居場所」をどのように創出していくべきか論じなさい。", type: "frequent", wordLimit: 600, timeLimit: 60, field: "地域" },
+  { id: "pq-aoyama-com-1", universityId: "aoyama-u", universityName: "青山学院大学", facultyName: "コミュニティ人間科学部", year: 2024, theme: "地域の居場所づくり", description: "地域において人々が安心して過ごせる「居場所」をどのように創出していくべきか論じなさい。", type: "frequent", wordLimit: 600, timeLimit: 60, field: "地域" },
 
   // ===== 立教大学 =====
-  { id: "pq-rikkyo-soc-1", universityId: "rikkyo", universityName: "立教大学", facultyName: "社会学部", year: 2024, theme: "メディアリテラシー", description: "フェイクニュースが社会に与える影響と、メディアリテラシー教育の重要性について論じなさい。", type: "frequent", wordLimit: 600, timeLimit: 60, field: "メディア" },
+  { id: "pq-rikkyo-soc-1", universityId: "rikkyo-u", universityName: "立教大学", facultyName: "社会学部", year: 2024, theme: "メディアリテラシー", description: "フェイクニュースが社会に与える影響と、メディアリテラシー教育の重要性について論じなさい。", type: "frequent", wordLimit: 600, timeLimit: 60, field: "メディア" },
 
   // ===== 中央大学 =====
-  { id: "pq-chuo-law-1", universityId: "chuo", universityName: "中央大学", facultyName: "法学部", year: 2024, theme: "少年法の適用年齢引き下げ", description: "少年法の適用年齢引き下げの是非について、更生と処罰の観点から論じなさい。", type: "frequent", wordLimit: 800, timeLimit: 60, field: "法律" },
+  { id: "pq-chuo-law-1", universityId: "chuo-u", universityName: "中央大学", facultyName: "法学部", year: 2024, theme: "少年法の適用年齢引き下げ", description: "少年法の適用年齢引き下げの是非について、更生と処罰の観点から論じなさい。", type: "frequent", wordLimit: 800, timeLimit: 60, field: "法律" },
 
   // ===== 法政大学 =====
-  { id: "pq-hosei-env-1", universityId: "hosei", universityName: "法政大学", facultyName: "人間環境学部", year: 2024, theme: "気候変動と世代間公平", description: "気候変動問題における世代間公平の観点から、現世代の責任と将来世代への配慮について論じなさい。", type: "frequent", wordLimit: 600, timeLimit: 60, field: "環境" },
+  { id: "pq-hosei-env-1", universityId: "hosei-u", universityName: "法政大学", facultyName: "人間環境学部", year: 2024, theme: "気候変動と世代間公平", description: "気候変動問題における世代間公平の観点から、現世代の責任と将来世代への配慮について論じなさい。", type: "frequent", wordLimit: 600, timeLimit: 60, field: "環境" },
 
   // ===== 近畿大学 =====
-  { id: "pq-kindai-sci-1", universityId: "kindai", universityName: "近畿大学", facultyName: "理工学部", year: 2024, theme: "再生可能エネルギーの可能性と課題", description: "日本における再生可能エネルギーの普及促進に向けた技術的・制度的課題について論じなさい。", type: "frequent", wordLimit: 600, timeLimit: 60, field: "科学技術" },
+  { id: "pq-kindai-sci-1", universityId: "kindai-u", universityName: "近畿大学", facultyName: "理工学部", year: 2024, theme: "再生可能エネルギーの可能性と課題", description: "日本における再生可能エネルギーの普及促進に向けた技術的・制度的課題について論じなさい。", type: "frequent", wordLimit: 600, timeLimit: 60, field: "科学技術" },
 
   // ===== 甲南大学 =====
-  { id: "pq-konan-eco-1", universityId: "konan", universityName: "甲南大学", facultyName: "経済学部", year: 2024, theme: "キャッシュレス社会", description: "キャッシュレス決済の普及が社会に与える影響について、メリットとデメリットの両面から論じなさい。", type: "frequent", wordLimit: 600, timeLimit: 60, field: "経済" },
+  { id: "pq-konan-eco-1", universityId: "konan-u", universityName: "甲南大学", facultyName: "経済学部", year: 2024, theme: "キャッシュレス社会", description: "キャッシュレス決済の普及が社会に与える影響について、メリットとデメリットの両面から論じなさい。", type: "frequent", wordLimit: 600, timeLimit: 60, field: "経済" },
 
   // ===== 龍谷大学 =====
-  { id: "pq-ryukoku-soc-1", universityId: "ryukoku", universityName: "龍谷大学", facultyName: "社会学部", year: 2024, theme: "孤独・孤立問題", description: "現代日本における孤独・孤立問題の実態と、社会全体での対策について論じなさい。", type: "frequent", wordLimit: 600, timeLimit: 60, field: "福祉" },
+  { id: "pq-ryukoku-soc-1", universityId: "ryukoku-u", universityName: "龍谷大学", facultyName: "社会学部", year: 2024, theme: "孤独・孤立問題", description: "現代日本における孤独・孤立問題の実態と、社会全体での対策について論じなさい。", type: "frequent", wordLimit: 600, timeLimit: 60, field: "福祉" },
 
   // ===== 京都産業大学 =====
-  { id: "pq-kyosan-biz-1", universityId: "kyoto-sangyo", universityName: "京都産業大学", facultyName: "経営学部", year: 2024, theme: "ソーシャルビジネス", description: "社会課題の解決とビジネスの両立について、ソーシャルビジネスの具体例を挙げて論じなさい。", type: "frequent", wordLimit: 600, timeLimit: 60, field: "経済" },
+  { id: "pq-kyosan-biz-1", universityId: "kyoto-sangyo-u", universityName: "京都産業大学", facultyName: "経営学部", year: 2024, theme: "ソーシャルビジネス", description: "社会課題の解決とビジネスの両立について、ソーシャルビジネスの具体例を挙げて論じなさい。", type: "frequent", wordLimit: 600, timeLimit: 60, field: "経済" },
 
   // ===== 九州大学 =====
-  { id: "pq-kyushu-eng-1", universityId: "kyushu", universityName: "九州大学", facultyName: "工学部", year: 2024, theme: "カーボンニュートラル実現への技術的アプローチ", description: "2050年カーボンニュートラル実現に向けて、工学的にどのようなアプローチが可能か論じなさい。", type: "frequent", wordLimit: 800, timeLimit: 90, field: "環境" },
+  { id: "pq-kyushu-eng-1", universityId: "kyushu-u", universityName: "九州大学", facultyName: "工学部", year: 2024, theme: "カーボンニュートラル実現への技術的アプローチ", description: "2050年カーボンニュートラル実現に向けて、工学的にどのようなアプローチが可能か論じなさい。", type: "frequent", wordLimit: 800, timeLimit: 90, field: "環境" },
 
   // ===== 名古屋大学 =====
-  { id: "pq-nagoya-info-1", universityId: "nagoya", universityName: "名古屋大学", facultyName: "情報学部", year: 2024, theme: "個人情報保護とデータ利活用", description: "ビッグデータの利活用と個人情報保護のバランスについて、具体的な事例を踏まえて論じなさい。", type: "frequent", wordLimit: 800, timeLimit: 90, field: "AI・テクノロジー" },
+  { id: "pq-nagoya-info-1", universityId: "nagoya-u", universityName: "名古屋大学", facultyName: "情報学部", year: 2024, theme: "個人情報保護とデータ利活用", description: "ビッグデータの利活用と個人情報保護のバランスについて、具体的な事例を踏まえて論じなさい。", type: "frequent", wordLimit: 800, timeLimit: 90, field: "AI・テクノロジー" },
 
   // ===== 学部別頻出テーマ（大学横断） =====
   // 法学部
@@ -146,25 +146,25 @@ export const PAST_QUESTIONS: PastQuestion[] = [
   { id: "pq-cross-spo-1", universityId: "", universityName: "全大学共通", facultyName: "スポーツ科学部", year: 2025, theme: "ドーピング問題", description: "スポーツにおけるドーピング問題と、パラスポーツにおける補助器具の改良の限度について論じなさい。", type: "frequent", wordLimit: 600, field: "スポーツ" },
 
   // ===== 英文読解型 =====
-  { id: "pq-eng-kyoto-1", universityId: "kyoto", universityName: "京都大学", facultyName: "法学部", year: 2024,
+  { id: "pq-eng-kyoto-1", universityId: "kyoto-u", universityName: "京都大学", facultyName: "法学部", year: 2024,
     theme: "【英文読解】Rule of Law and Democracy",
     description: "以下の英文を読み、法の支配と民主主義の関係について、筆者の主張を踏まえて日本語800字以内で論じなさい。",
     type: "past", questionType: "english-reading", wordLimit: 800, timeLimit: 90, field: "法律",
     sourceText: `The rule of law is often considered the cornerstone of democratic governance. However, the relationship between law and democracy is more complex than it appears. While democracy emphasizes majority rule, the rule of law protects individual rights against the tyranny of the majority. This tension has been at the heart of constitutional debates since the founding of modern democracies.\n\nIn recent years, several democratic nations have experienced challenges to the rule of law, including attempts to undermine judicial independence and restrict press freedom. These developments raise fundamental questions about whether democracy can survive without a robust commitment to legal principles that transcend political power.` },
 
-  { id: "pq-eng-keio-1", universityId: "keio", universityName: "慶應義塾大学", facultyName: "法学部", year: 2024,
+  { id: "pq-eng-keio-1", universityId: "keio-u", universityName: "慶應義塾大学", facultyName: "法学部", year: 2024,
     theme: "【英文読解】Artificial Intelligence and Human Rights",
     description: "Read the following passage and answer in Japanese (600 words): What are the key human rights challenges posed by AI, and how should society address them?",
     type: "past", questionType: "english-reading", wordLimit: 600, timeLimit: 90, field: "AI・テクノロジー",
     sourceText: `Artificial intelligence systems are increasingly being used in decisions that profoundly affect people's lives—from criminal sentencing to hiring, from loan approvals to immigration. Yet these systems often operate as "black boxes," making decisions that are difficult to explain or challenge.\n\nThe European Union's AI Act represents one approach to regulating these technologies, but critics argue it does not go far enough. Meanwhile, in many parts of the world, AI systems continue to be deployed with minimal oversight, raising concerns about bias, discrimination, and accountability.` },
 
-  { id: "pq-eng-waseda-1", universityId: "waseda", universityName: "早稲田大学", facultyName: "国際教養学部", year: 2024,
+  { id: "pq-eng-waseda-1", universityId: "waseda-u", universityName: "早稲田大学", facultyName: "国際教養学部", year: 2024,
     theme: "【英文読解】Globalization and Cultural Identity",
     description: "以下の英文を読んで、グローバル化が文化的アイデンティティに与える影響について、あなたの考えを日本語600字以内で述べなさい。",
     type: "past", questionType: "english-reading", wordLimit: 600, timeLimit: 60, field: "国際",
     sourceText: `Globalization has created unprecedented opportunities for cultural exchange, but it has also raised concerns about cultural homogenization. The spread of American popular culture, the dominance of English as a global language, and the expansion of multinational corporations have led some scholars to warn of a "McDonaldization" of the world.\n\nHowever, others argue that globalization has actually strengthened local cultures by providing new platforms for expression and creating hybrid cultural forms. The K-pop phenomenon, for example, demonstrates how non-Western cultures can achieve global influence while maintaining distinct cultural characteristics.` },
 
-  { id: "pq-eng-sophia-1", universityId: "sophia", universityName: "上智大学", facultyName: "国際教養学部", year: 2024,
+  { id: "pq-eng-sophia-1", universityId: "sophia-u", universityName: "上智大学", facultyName: "国際教養学部", year: 2024,
     theme: "【英文読解】Climate Change and Intergenerational Justice",
     description: "Read the passage below and discuss in Japanese (800 words): To what extent do current generations have an obligation to future generations regarding climate change?",
     type: "past", questionType: "english-reading", wordLimit: 800, timeLimit: 90, field: "環境",
@@ -177,7 +177,7 @@ export const PAST_QUESTIONS: PastQuestion[] = [
     sourceText: `Machine translation technology has improved dramatically in recent years, leading some to question the value of learning foreign languages. If AI can translate any language in real time, why spend years studying grammar and vocabulary?\n\nLanguage educators argue that learning a language is about much more than translation. It develops cognitive flexibility, cultural understanding, and empathy. Research shows that bilingual individuals have enhanced problem-solving abilities and are better at understanding different perspectives. The question is not whether language learning is valuable, but how it should adapt to a world where AI translation is ubiquitous.` },
 
   // ===== 資料・データ読解型 =====
-  { id: "pq-data-keio-sfc-1", universityId: "keio", universityName: "慶應義塾大学", facultyName: "総合政策学部（SFC）", year: 2024,
+  { id: "pq-data-keio-sfc-1", universityId: "keio-u", universityName: "慶應義塾大学", facultyName: "総合政策学部（SFC）", year: 2024,
     theme: "【資料読解】日本の人口推移と社会保障",
     description: "以下のデータを読み取り、日本の人口構造の変化が社会保障制度に与える影響と、今後の対策について800字以内で論じなさい。",
     type: "past", questionType: "data-analysis", wordLimit: 800, timeLimit: 120, field: "社会",
@@ -206,7 +206,7 @@ export const PAST_QUESTIONS: PastQuestion[] = [
         yKeys: [{ key: "給付費", name: "給付費（兆円）", color: "#8B5CF6" }] },
     ] },
 
-  { id: "pq-data-tokyo-1", universityId: "tokyo", universityName: "東京大学", facultyName: "文科二類", year: 2024,
+  { id: "pq-data-tokyo-1", universityId: "tokyo-u", universityName: "東京大学", facultyName: "文科二類", year: 2024,
     theme: "【資料読解】世界のエネルギー消費と温室効果ガス排出",
     description: "以下の資料を分析し、世界のエネルギー政策の課題と日本が果たすべき役割について600字以内で論じなさい。",
     type: "past", questionType: "data-analysis", wordLimit: 600, timeLimit: 60, field: "環境",
@@ -232,7 +232,7 @@ export const PAST_QUESTIONS: PastQuestion[] = [
         ] },
     ] },
 
-  { id: "pq-data-osaka-1", universityId: "osaka", universityName: "大阪大学", facultyName: "経済学部", year: 2024,
+  { id: "pq-data-osaka-1", universityId: "osaka-u", universityName: "大阪大学", facultyName: "経済学部", year: 2024,
     theme: "【資料読解】日本の賃金と労働生産性の国際比較",
     description: "以下のデータから読み取れる日本経済の課題を分析し、賃金上昇のために必要な政策を800字以内で提案しなさい。",
     type: "past", questionType: "data-analysis", wordLimit: 800, timeLimit: 90, field: "経済",
@@ -252,7 +252,7 @@ export const PAST_QUESTIONS: PastQuestion[] = [
         yKeys: [{ key: "賃金指数", name: "実質賃金指数", color: "#EF4444" }] },
     ] },
 
-  { id: "pq-data-nagoya-1", universityId: "nagoya", universityName: "名古屋大学", facultyName: "情報学部", year: 2024,
+  { id: "pq-data-nagoya-1", universityId: "nagoya-u", universityName: "名古屋大学", facultyName: "情報学部", year: 2024,
     theme: "【資料読解】インターネット利用とデジタルデバイド",
     description: "以下の資料を読み取り、デジタルデバイド（情報格差）の現状と解消に向けた方策を600字以内で論じなさい。",
     type: "past", questionType: "data-analysis", wordLimit: 600, timeLimit: 60, field: "AI・テクノロジー",
@@ -275,7 +275,7 @@ export const PAST_QUESTIONS: PastQuestion[] = [
     ] },
 
   // ===== 複合型（英文＋資料） =====
-  { id: "pq-mixed-keio-env-1", universityId: "keio", universityName: "慶應義塾大学", facultyName: "環境情報学部（SFC）", year: 2024,
+  { id: "pq-mixed-keio-env-1", universityId: "keio-u", universityName: "慶應義塾大学", facultyName: "環境情報学部（SFC）", year: 2024,
     theme: "【複合型】Sustainable Development Goals: Progress and Challenges",
     description: "以下の英文と資料を読み、SDGsの達成に向けた課題と、テクノロジーの活用による解決策を日本語800字以内で提案しなさい。",
     type: "past", questionType: "mixed", wordLimit: 800, timeLimit: 120, field: "環境",
@@ -334,12 +334,12 @@ export const PAST_QUESTIONS: PastQuestion[] = [
   { id: "pq-kyoto-sangyo-econ-001", universityId: "kyoto-sangyo-u", universityName: "京都産業大学", facultyName: "経済学部", year: 2024, theme: "現代経済の課題に関する論述", description: "総合型選抜。日本経済・グローバル経済の課題について自分の意見を論述する。時事問題への関心が問われる。", type: "frequent", field: "経済学" },
 
   // ===== 全大学共通 =====
-  { id: "pq-freq-sdgs-001", universityId: "all", universityName: "全大学共通", facultyName: "全学部", year: 2024, theme: "SDGs（持続可能な開発目標）", description: "頻出テーマ。貧困、飢餓、ジェンダー、教育、働きがいと経済、エネルギー、技術革新、平和など、SDGsの各目標に関連するテーマが多くの大学で出題。", type: "frequent", field: "社会・国際" },
-  { id: "pq-freq-environment-001", universityId: "all", universityName: "全大学共通", facultyName: "全学部", year: 2024, theme: "環境問題（温暖化・脱炭素）", description: "頻出テーマ。地球温暖化、脱炭素社会、再生可能エネルギー、サステナビリティに関する出題が増加傾向。", type: "frequent", field: "環境学" },
-  { id: "pq-freq-ai-001", universityId: "all", universityName: "全大学共通", facultyName: "全学部", year: 2024, theme: "生成AI・デジタル社会の課題", description: "頻出テーマ。ChatGPT等の生成AIが社会・教育・経済に与える影響。AIと人間の共存、著作権、雇用への影響。2024年以降急増。", type: "frequent", field: "テクノロジー・社会" },
-  { id: "pq-freq-diversity-001", universityId: "all", universityName: "全大学共通", facultyName: "全学部", year: 2024, theme: "多様性・ジェンダー・インクルージョン", description: "頻出テーマ。ダイバーシティ＆インクルージョン、ジェンダー平等、LGBTQ+の権利、多文化共生に関する出題。", type: "frequent", field: "社会" },
-  { id: "pq-freq-disaster-001", universityId: "all", universityName: "全大学共通", facultyName: "全学部", year: 2024, theme: "日本の自然災害と防災", description: "頻出テーマ。地震・台風・豪雨等の自然災害への備え、防災教育、コミュニティレジリエンスについて。", type: "frequent", field: "防災・社会安全" },
-  { id: "pq-freq-aging-001", universityId: "all", universityName: "全大学共通", facultyName: "全学部", year: 2024, theme: "少子高齢化と社会保障", description: "頻出テーマ。日本の少子高齢化問題、年金・医療・介護制度の持続可能性、地方創生との関連。", type: "frequent", field: "社会政策" },
+  { id: "pq-freq-sdgs-001", universityId: "", universityName: "全大学共通", facultyName: "全学部", year: 2024, theme: "SDGs（持続可能な開発目標）", description: "頻出テーマ。貧困、飢餓、ジェンダー、教育、働きがいと経済、エネルギー、技術革新、平和など、SDGsの各目標に関連するテーマが多くの大学で出題。", type: "frequent", field: "社会・国際" },
+  { id: "pq-freq-environment-001", universityId: "", universityName: "全大学共通", facultyName: "全学部", year: 2024, theme: "環境問題（温暖化・脱炭素）", description: "頻出テーマ。地球温暖化、脱炭素社会、再生可能エネルギー、サステナビリティに関する出題が増加傾向。", type: "frequent", field: "環境学" },
+  { id: "pq-freq-ai-001", universityId: "", universityName: "全大学共通", facultyName: "全学部", year: 2024, theme: "生成AI・デジタル社会の課題", description: "頻出テーマ。ChatGPT等の生成AIが社会・教育・経済に与える影響。AIと人間の共存、著作権、雇用への影響。2024年以降急増。", type: "frequent", field: "テクノロジー・社会" },
+  { id: "pq-freq-diversity-001", universityId: "", universityName: "全大学共通", facultyName: "全学部", year: 2024, theme: "多様性・ジェンダー・インクルージョン", description: "頻出テーマ。ダイバーシティ＆インクルージョン、ジェンダー平等、LGBTQ+の権利、多文化共生に関する出題。", type: "frequent", field: "社会" },
+  { id: "pq-freq-disaster-001", universityId: "", universityName: "全大学共通", facultyName: "全学部", year: 2024, theme: "日本の自然災害と防災", description: "頻出テーマ。地震・台風・豪雨等の自然災害への備え、防災教育、コミュニティレジリエンスについて。", type: "frequent", field: "防災・社会安全" },
+  { id: "pq-freq-aging-001", universityId: "", universityName: "全大学共通", facultyName: "全学部", year: 2024, theme: "少子高齢化と社会保障", description: "頻出テーマ。日本の少子高齢化問題、年金・医療・介護制度の持続可能性、地方創生との関連。", type: "frequent", field: "社会政策" },
 
   // ===== 北海道大学 =====
   { id: "pq-hokkaido-lit-001", universityId: "hokkaido-u", universityName: "北海道大学", facultyName: "文学部", year: 2024, theme: "「不要不急」と消費社会の論理", description: "課題文読解型（人文系）。國分功一郎『目的への抵抗』（新潮新書、2023年）を題材に論述。英文問題（恐怖リスクと人間の回避行動）も併出。", type: "past", timeLimit: 180, field: "社会" },

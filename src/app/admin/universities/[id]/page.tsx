@@ -32,10 +32,15 @@ import {
   Building2,
   GraduationCap,
   Calendar,
+  FileText,
+  Clock,
+  BookOpen,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { authFetch } from "@/lib/api/client";
 import type { University, Faculty, SelectionMethod } from "@/lib/types/university";
+import { Badge } from "@/components/ui/badge";
+import { PAST_QUESTIONS } from "@/data/essay-past-questions";
 
 type SelectionMethodType = SelectionMethod["type"];
 
@@ -630,6 +635,63 @@ export default function AdminUniversityEditPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* 過去問セクション */}
+      {(() => {
+        const pastQuestions = PAST_QUESTIONS.filter(
+          (pq) => pq.universityId === university.id
+        );
+        if (pastQuestions.length === 0) return null;
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <BookOpen className="size-5" />
+                過去問・頻出テーマ（{pastQuestions.length}件）
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {pastQuestions.map((pq) => (
+                <div
+                  key={pq.id}
+                  className="rounded-lg border p-3 space-y-1.5"
+                >
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-medium text-sm">{pq.facultyName}</span>
+                    <Badge variant={pq.type === "past" ? "default" : "secondary"} className="text-xs">
+                      {pq.type === "past" ? "過去問" : "頻出"}
+                    </Badge>
+                    <Badge variant="outline" className="text-xs">
+                      {pq.year}年度
+                    </Badge>
+                    <Badge variant="outline" className="text-xs">
+                      {pq.field}
+                    </Badge>
+                  </div>
+                  <p className="text-sm font-medium">{pq.theme}</p>
+                  <p className="text-xs text-muted-foreground line-clamp-2">
+                    {pq.description}
+                  </p>
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                    {pq.wordLimit && (
+                      <span className="flex items-center gap-1">
+                        <FileText className="size-3" />
+                        {pq.wordLimit}字
+                      </span>
+                    )}
+                    {pq.timeLimit && (
+                      <span className="flex items-center gap-1">
+                        <Clock className="size-3" />
+                        {pq.timeLimit}分
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        );
+      })()}
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
