@@ -90,7 +90,7 @@ async function ocrWithGoogleVision(base64Data: string): Promise<string | null> {
 
 // ---- Claude: OCR結果から本文のみ抽出 ----
 
-async function extractEssayBody(rawOcrText: string, base64Data: string): Promise<string> {
+async function extractEssayBody(rawOcrText: string): Promise<string> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return rawOcrText;
 
@@ -99,34 +99,25 @@ async function extractEssayBody(rawOcrText: string, base64Data: string): Promise
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 4096,
+      system: `あなたはOCRテキストから小論文の本文だけを抽出するフィルターです。
+入力されたテキストから、手書きの小論文本文のみを抽出し、それだけを出力してください。
+絶対に自分の言葉を追加しないでください。説明、前置き、コメント、注釈は一切不要です。
+抽出した本文テキストだけを出力してください。それ以外は何も出力しないでください。`,
       messages: [
         {
           role: "user",
-          content: [
-            {
-              type: "image",
-              source: { type: "base64", media_type: "image/jpeg", data: base64Data },
-            },
-            {
-              type: "text",
-              text: `以下はこの画像（原稿用紙）からOCRで抽出した全テキストです。この中から**原稿用紙のマス目内に手書きされた小論文の本文のみ**を抽出してください。
+          content: `以下のOCRテキストから小論文の本文のみを抽出してください。
 
 【除外するもの】
-- 用紙の印刷済みテキスト（タイトル欄、注意書き、受験番号欄、学校名、氏名欄など）
-- マス目の外にある印刷文字
-- ページ番号
-- 問題文や設問文
+- 印刷済みの文字（「小論文」「受験番号」「氏名」「注意事項」「問題」「以下の〜」等の定型文）
+- 用紙のヘッダー・フッター・欄外テキスト
+- ページ番号、行番号
+- 問題文・設問文
 
-【抽出ルール】
-- 手書きされた本文のみを出力すること
-- 原文に忠実に、一字一句変えないこと
-- 段落の改行は原文に従うこと
-- 本文以外の説明は一切不要
+本文テキストだけを出力。他は何も書かないで。
 
-【OCRテキスト】
+---
 ${rawOcrText}`,
-            },
-          ],
         },
       ],
     });
@@ -208,7 +199,7 @@ export async function POST(request: NextRequest) {
     // 1. Google Cloud Vision (高精度・低コスト) → Claude Haikuで本文抽出
     const rawGcvText = await ocrWithGoogleVision(base64Data);
     if (rawGcvText) {
-      ocrText = await extractEssayBody(rawGcvText, base64Data);
+      ocrText = await extractEssayBody(rawGcvText);
       ocrSource = "google-vision+haiku";
     }
 
