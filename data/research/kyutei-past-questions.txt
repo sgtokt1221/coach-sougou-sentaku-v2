@@ -1,0 +1,114 @@
+// 旧帝大 総合型選抜・学校推薦型選抜 小論文過去問・頻出テーマ
+// 調査日: 2026-04-06
+// 対象: 東京大学、京都大学、大阪大学、北海道大学、東北大学、名古屋大学、九州大学
+// ソース: 各大学公式サイト、河合塾Kei-Net、パスナビ、早稲田塾、Loohcs志塾、WIE小論文添削講座、axis.onl 等
+
+// ============================================================
+// 東京大学 (tokyo-u)
+// ============================================================
+// 学校推薦型選抜: 法学部・文学部・教養学部で小論文実施
+// 公式: https://www.u-tokyo.ac.jp/ja/admissions/undergraduate/e01_29.html
+
+  { id: "pq-tokyo-law-001", universityId: "tokyo-u", universityName: "東京大学", facultyName: "法学部", year: 2025, theme: "法と社会秩序に関する論述", description: "法学部の学校推薦型選抜で出題。法的問題や社会制度に関する課題文を読み、論理的に自身の見解を述べる形式。具体的課題はPDFで公開（令和7年度）。", type: "past", wordLimit: null, timeLimit: null, field: "法律" },
+  { id: "pq-tokyo-law-002", universityId: "tokyo-u", universityName: "東京大学", facultyName: "法学部", year: 2024, theme: "法制度と現代社会の課題", description: "法学部の学校推薦型選抜で出題。社会制度・法律に関する課題文を読解し、論述する形式。具体的課題はPDFで公開（令和6年度）。", type: "past", wordLimit: null, timeLimit: null, field: "法律" },
+  { id: "pq-tokyo-lit-001", universityId: "tokyo-u", universityName: "東京大学", facultyName: "文学部", year: 2022, theme: "科学と宗教の観点から「奇跡」について", description: "「文学部で学ぶということについて、文章を踏まえながらあなたの考えを述べなさい」という形式。科学と宗教における「奇跡」の概念を論じる。", type: "past", wordLimit: 1000, timeLimit: null, field: "文化" },
+  { id: "pq-tokyo-las-001", universityId: "tokyo-u", universityName: "東京大学", facultyName: "教養学部", year: 2022, theme: "メリトクラシー（能力主義）と業績主義", description: "「メリトクラシーの和訳は業績主義ではなく能力主義のほうが適しているのではないか」という議題について、著者の理由を読み取り論じる。英語課題文あり。", type: "past", wordLimit: 1000, timeLimit: null, field: "社会" },
+  { id: "pq-tokyo-freq-001", universityId: "tokyo-u", universityName: "東京大学", facultyName: "教養学部", year: 2025, theme: "グローバル社会における多様性と共生", description: "東大推薦では国際的な視野、社会課題への関心が問われる。多文化共生、SDGs、グローバルガバナンスなどが頻出テーマ。", type: "frequent", wordLimit: 1000, timeLimit: null, field: "国際" },
+
+// ============================================================
+// 京都大学 (kyoto-u)
+// ============================================================
+// 特色入試: ほぼ全学部で小論文・論述試験を実施
+// 公式: https://www.kyoto-u.ac.jp/ja/admissions/tokusyoku/past-eq
+// 特徴: 課題読み取り型が多く、英語長文が頻出。全国トップクラスの難度。
+
+  { id: "pq-kyoto-gen-001", universityId: "kyoto-u", universityName: "京都大学", facultyName: "総合人間学部", year: 2025, theme: "災害対策と社会的資源", description: "課題文読み取り問題。2,000〜2,400字の回答が必要。文章要約と具体的な事例を交えた意見が求められる。", type: "past", wordLimit: 2400, timeLimit: null, field: "社会" },
+  { id: "pq-kyoto-lit-001", universityId: "kyoto-u", universityName: "京都大学", facultyName: "文学部", year: 2025, theme: "言語のジレンマ", description: "「学びの設計書」との関連づけが特徴。言語のジレンマについて800〜1,600字で論述。", type: "past", wordLimit: 1600, timeLimit: null, field: "文化" },
+  { id: "pq-kyoto-lit-002", universityId: "kyoto-u", universityName: "京都大学", facultyName: "文学部", year: 2025, theme: "歴史における個人と全体の関係", description: "歴史学的視点から個人と社会全体の関係性について論述する。「学びの設計書」に基づく出題。", type: "past", wordLimit: 1600, timeLimit: null, field: "文化" },
+  { id: "pq-kyoto-edu-001", universityId: "kyoto-u", universityName: "京都大学", facultyName: "教育学部", year: 2025, theme: "教育と人間形成に関する論述", description: "2025年度は資料集が廃止され英語長文が削除、字数が増加（2,000〜2,500字）。教育と心・人間・社会にかかわる多様な事象についての論述。", type: "past", wordLimit: 2500, timeLimit: null, field: "教育" },
+  { id: "pq-kyoto-law-001", universityId: "kyoto-u", universityName: "京都大学", facultyName: "法学部", year: 2025, theme: "家族法に関する英文読解と論述", description: "英語長文読解を含み、法的問題についての考察が求められる。約1,500字の論述。家族法に関する英文が出題。", type: "past", wordLimit: 1500, timeLimit: null, field: "法律" },
+  { id: "pq-kyoto-med-001", universityId: "kyoto-u", universityName: "京都大学", facultyName: "医学部人間健康科学科", year: 2024, theme: "医療倫理とコミュニケーション", description: "日本語・英語で約30ページの文章を読解。医療倫理やコミュニケーション、障害観などが出題。2,000〜2,500字。", type: "past", wordLimit: 2500, timeLimit: null, field: "医療" },
+  { id: "pq-kyoto-pharm-001", universityId: "kyoto-u", universityName: "京都大学", facultyName: "薬学部", year: 2025, theme: "化学反応とタンパク質構造予測", description: "化学的知識が必須。化学反応とタンパク質構造予測に関する問題が出題。", type: "past", wordLimit: null, timeLimit: null, field: "科学" },
+  { id: "pq-kyoto-agr-001", universityId: "kyoto-u", universityName: "京都大学", facultyName: "農学部応用生命科学科", year: 2024, theme: "科学技術のメリット・デメリット", description: "科学技術の利点と課題について論じる。具体的字数指定なし。", type: "past", wordLimit: null, timeLimit: null, field: "科学" },
+  { id: "pq-kyoto-agr-002", universityId: "kyoto-u", universityName: "京都大学", facultyName: "農学部森林科学科", year: 2025, theme: "環境・生態系と森林保全", description: "環境問題や生態系についての文章が取り上げられ、英語長文の日本語訳が求められる。", type: "past", wordLimit: null, timeLimit: null, field: "環境" },
+  { id: "pq-kyoto-agr-003", universityId: "kyoto-u", universityName: "京都大学", facultyName: "農学部食料・環境経済学科", year: 2025, theme: "食料問題と環境経済", description: "英語長文と教科問題が含まれる。食料・環境に関する経済的視点からの論述。", type: "past", wordLimit: null, timeLimit: null, field: "環境" },
+
+// ============================================================
+// 大阪大学 (osaka-u)
+// ============================================================
+// 総合型選抜: 文学部・人間科学部・外国語学部で小論文実施
+// 学校推薦型選抜: 医学部・薬学部で小論文実施
+// 公式: https://www.nyusi.icho.osaka-u.ac.jp/data
+
+  { id: "pq-osaka-lit-001", universityId: "osaka-u", universityName: "大阪大学", facultyName: "文学部", year: 2024, theme: "思想・文化に関する課題文読解", description: "日本語課題文を読み日本語で解答する形式。やや長めの課題文だが出題形式・内容は一般的。思想・社会・歴史・地理・文学・言語・芸術に関連するテーマ。", type: "past", wordLimit: null, timeLimit: null, field: "文化" },
+  { id: "pq-osaka-lit-002", universityId: "osaka-u", universityName: "大阪大学", facultyName: "文学部", year: 2025, theme: "文学・哲学・歴史学に関する論述", description: "総合型選抜の第2次選考で実施。提出書類50点＋小論文＋面接＋共通テストで総合評価。", type: "past", wordLimit: null, timeLimit: null, field: "文化" },
+  { id: "pq-osaka-human-001", universityId: "osaka-u", universityName: "大阪大学", facultyName: "人間科学部", year: 2024, theme: "文理融合的視点からの社会課題分析", description: "人間科学部は「文理融合」の理念を掲げる。学際性・実践性・国際性を評価。特定の教科の枠にとらわれない問題が出題。", type: "past", wordLimit: null, timeLimit: null, field: "社会" },
+  { id: "pq-osaka-human-002", universityId: "osaka-u", universityName: "大阪大学", facultyName: "人間科学部", year: 2025, theme: "グローバルな諸課題と人間行動", description: "グローバルな諸課題に積極的に関与する意欲や能力を評価。フィールドでの実践的活動に関する問題。", type: "past", wordLimit: null, timeLimit: null, field: "国際" },
+  { id: "pq-osaka-lang-001", universityId: "osaka-u", universityName: "大阪大学", facultyName: "外国語学部", year: 2024, theme: "言語・文化・国際社会に関する論述", description: "日本語課題文を読み日本語で解答する形式。外国語学部ならではの多文化・多言語に関するテーマ。", type: "past", wordLimit: null, timeLimit: null, field: "国際" },
+  { id: "pq-osaka-pharm-001", universityId: "osaka-u", universityName: "大阪大学", facultyName: "薬学部", year: 2024, theme: "薬学・生命科学に関する英文・和文読解", description: "学校推薦型選抜で実施。日文・英文いずれも理系分野の内容で相当の難問。薬学に関する専門的知識が問われる。", type: "past", wordLimit: null, timeLimit: null, field: "科学" },
+  { id: "pq-osaka-freq-001", universityId: "osaka-u", universityName: "大阪大学", facultyName: "文学部", year: 2025, theme: "AI時代における人文学の意義", description: "近年の頻出テーマ。技術革新と人文科学の関係、デジタル社会における文化の変容などが問われる傾向。", type: "frequent", wordLimit: null, timeLimit: null, field: "文化" },
+
+// ============================================================
+// 北海道大学 (hokkaido-u)
+// ============================================================
+// フロンティア入試（総合型選抜）: 医学部で課題論文、理系学部で適性試験
+// 後期日程: 文系学部で小論文実施
+// 公式: https://www.hokudai.ac.jp/admission/faculty/ao/
+// Kei-Net: https://www.keinet.ne.jp/learning/essay/execute/2024/national/1025.html
+
+  { id: "pq-hokkaido-lit-001", universityId: "hokkaido-u", universityName: "北海道大学", facultyName: "文学部", year: 2024, theme: "「不要不急」と消費社会の論理", description: "課題文読解型（人文系）。國分功一郎『目的への抵抗』（新潮新書、2023年）を題材に論述。英文問題（恐怖リスクと人間の回避行動）も併出。", type: "past", wordLimit: null, timeLimit: 180, field: "社会" },
+  { id: "pq-hokkaido-edu-001", universityId: "hokkaido-u", universityName: "北海道大学", facultyName: "教育学部", year: 2024, theme: "コミュニケーションと身体との関わり", description: "課題文読解型（人文系）。コミュニケーションにおける身体性の役割について論述。", type: "past", wordLimit: null, timeLimit: 180, field: "教育" },
+  { id: "pq-hokkaido-edu-002", universityId: "hokkaido-u", universityName: "北海道大学", facultyName: "教育学部", year: 2024, theme: "孤食でも共食でもない「縁食」の大切さ", description: "課題文読解型（社会科学系）。食事形態と人間関係・社会性について論じる。", type: "past", wordLimit: null, timeLimit: 180, field: "社会" },
+  { id: "pq-hokkaido-law-001", universityId: "hokkaido-u", universityName: "北海道大学", facultyName: "法学部", year: 2024, theme: "「治外法権」についての誤解と実際", description: "課題文読解型（社会科学系）。国際法における治外法権の概念を正確に理解し論述する。", type: "past", wordLimit: null, timeLimit: 180, field: "法律" },
+  { id: "pq-hokkaido-law-002", universityId: "hokkaido-u", universityName: "北海道大学", facultyName: "法学部", year: 2024, theme: "「移民」のもたらす経済的影響", description: "課題文読解型（社会科学系）。移民政策と経済への影響について多角的に論じる。", type: "past", wordLimit: null, timeLimit: 180, field: "経済" },
+  { id: "pq-hokkaido-econ-001", universityId: "hokkaido-u", universityName: "北海道大学", facultyName: "経済学部", year: 2024, theme: "医療サービスの質をどう評価すべきか", description: "課題文読解型（社会科学系）。医療経済学の観点からサービスの質の評価方法について論述。", type: "past", wordLimit: null, timeLimit: 180, field: "経済" },
+  { id: "pq-hokkaido-med-001", universityId: "hokkaido-u", universityName: "北海道大学", facultyName: "医学部医学科", year: 2024, theme: "医学・生命科学に関する課題論文", description: "フロンティア入試（総合型選抜）で課題論文を出題。提出書類・課題論文・面接・共通テストで総合評価。", type: "past", wordLimit: null, timeLimit: null, field: "医療" },
+
+// ============================================================
+// 東北大学 (tohoku-u)
+// ============================================================
+// AO入試II期: 文学部・教育学部・法学部で小論文実施
+// AO入試III期: 工学部・農学部で小論文相当あり
+// 公式: https://admissions.tohoku.ac.jp/ja/materials/kakomon/
+
+  { id: "pq-tohoku-lit-001", universityId: "tohoku-u", universityName: "東北大学", facultyName: "文学部", year: 2024, theme: "人文学的テーマに関する長文論述", description: "AO II期。試験時間180分。600〜800字と1400〜1600字の2題が出題される。かなり重めの内容で長文の課題文が特徴。", type: "past", wordLimit: 1600, timeLimit: 180, field: "文化" },
+  { id: "pq-tohoku-edu-001", universityId: "tohoku-u", universityName: "東北大学", facultyName: "教育学部", year: 2024, theme: "資料読み取り型小論文（グラフ分析含む）", description: "AO II期。試験時間60分。100〜400文字の記述問題が4問。国語の読解問題的な要素が強く、グラフの読み取りが3年連続出題。", type: "past", wordLimit: 400, timeLimit: 60, field: "教育" },
+  { id: "pq-tohoku-law-001", universityId: "tohoku-u", universityName: "東北大学", facultyName: "法学部", year: 2024, theme: "日本語・英語による法的問題の論述", description: "AO II期。試験時間90分。第一題は日本語で小論文形式（設問4問）、第二題は英語で小論文形式（設問2問）。", type: "past", wordLimit: null, timeLimit: 90, field: "法律" },
+  { id: "pq-tohoku-eng-001", universityId: "tohoku-u", universityName: "東北大学", facultyName: "工学部", year: 2024, theme: "英文読解に基づく科学技術論述", description: "AO III期。英文読解問題で本文に関連する内容について日本語で300〜400字程度の小論文形式の設問。基礎技法の習得が重要。", type: "past", wordLimit: 400, timeLimit: null, field: "科学" },
+  { id: "pq-tohoku-agr-001", universityId: "tohoku-u", universityName: "東北大学", facultyName: "農学部", year: 2024, theme: "農学に関する小作文（面接前課題）", description: "AO III期。面接前に農学に関する小作文を回答。作文自体は採点されないが、面接の質問がこの内容から派生する。", type: "past", wordLimit: null, timeLimit: null, field: "科学" },
+  { id: "pq-tohoku-freq-001", universityId: "tohoku-u", universityName: "東北大学", facultyName: "文学部", year: 2025, theme: "現代社会における人文学の役割", description: "東北大文学部AO入試の頻出テーマ。人文学の社会的意義、学際的研究、文化理解に関する深い考察が求められる。", type: "frequent", wordLimit: 1600, timeLimit: 180, field: "文化" },
+
+// ============================================================
+// 名古屋大学 (nagoya-u)
+// ============================================================
+// 学校推薦型選抜: 文学部・教育学部で小論文実施
+// 総合型選抜: 理学部（2025年度〜新規）で実施
+// 公式: https://www.nagoya-u.ac.jp/admissions/exam/
+
+  { id: "pq-nagoya-lit-001", universityId: "nagoya-u", universityName: "名古屋大学", facultyName: "文学部", year: 2024, theme: "英語課題文に基づく人文学的論述", description: "学校推薦型選抜。小論文120分。英語の文章を読み日本語で論述する形式。第1次選考は書類審査、第2次選考で小論文と面接。", type: "past", wordLimit: null, timeLimit: 120, field: "文化" },
+  { id: "pq-nagoya-edu-001", universityId: "nagoya-u", universityName: "名古屋大学", facultyName: "教育学部", year: 2024, theme: "教育・人間発達に関する小論文", description: "学校推薦型選抜。人間の成長発達と教育をめぐる多様な事象と問題に対する関心と問題意識を評価。小論文と面接で総合評価。", type: "past", wordLimit: null, timeLimit: null, field: "教育" },
+  { id: "pq-nagoya-law-001", universityId: "nagoya-u", universityName: "名古屋大学", facultyName: "法学部", year: 2024, theme: "高校地歴・公民を前提とした社会科学論述", description: "学校推薦型選抜。「高等学校の地歴、公民の学習を前提とする」出題。面接が主な評価。", type: "past", wordLimit: null, timeLimit: null, field: "法律" },
+  { id: "pq-nagoya-sci-001", universityId: "nagoya-u", universityName: "名古屋大学", facultyName: "理学部", year: 2025, theme: "数理・物理・地球惑星科学の適性検査", description: "2025年度より新設の総合型選抜。数理学科・物理学科・地球惑星科学科で共通テスト課す方式、化学科・生命理学科で課さない方式。", type: "past", wordLimit: null, timeLimit: null, field: "科学" },
+  { id: "pq-nagoya-freq-001", universityId: "nagoya-u", universityName: "名古屋大学", facultyName: "文学部", year: 2025, theme: "異文化理解と言語コミュニケーション", description: "文学部推薦では英語課題文が定番。異文化理解、言語・翻訳論、文学批評などが頻出テーマ。", type: "frequent", wordLimit: null, timeLimit: 120, field: "文化" },
+
+// ============================================================
+// 九州大学 (kyushu-u)
+// ============================================================
+// 総合型選抜I: 共創学部で講義レポート・討論・小論文・面接
+// 一般入試後期: 文学部・共創学部・経済学部・農学部等で小論文
+// 公式: https://www.kyushu-u.ac.jp/ja/admission/faculty/exam_question/
+// Kei-Net: https://www.keinet.ne.jp/learning/essay/execute/2024/national/1405.html
+
+  { id: "pq-kyushu-kyoso-001", universityId: "kyushu-u", universityName: "九州大学", facultyName: "共創学部", year: 2024, theme: "鳥獣被害防止政策に関する分析", description: "前期日程。180分。図表分析型（社会科学系）。現代社会の諸問題に関する文章や資料を用いた出題。", type: "past", wordLimit: null, timeLimit: 180, field: "環境" },
+  { id: "pq-kyushu-kyoso-002", universityId: "kyushu-u", universityName: "九州大学", facultyName: "共創学部", year: 2024, theme: "ジェンダーギャップ改善策", description: "前期日程。図表分析型（社会科学系）。ジェンダー格差の現状分析と改善策の提案。", type: "past", wordLimit: null, timeLimit: 180, field: "社会" },
+  { id: "pq-kyushu-kyoso-003", universityId: "kyushu-u", universityName: "九州大学", facultyName: "共創学部", year: 2024, theme: "総合型選抜: 講義に基づく小論文", description: "総合型選抜I。100分。人文社会系と自然科学系の2つの講義を受講した上で執筆するレポートと小論文。多角的思考力・論理的記述力を評価。", type: "past", wordLimit: null, timeLimit: 100, field: "社会" },
+  { id: "pq-kyushu-lit-001", universityId: "kyushu-u", universityName: "九州大学", facultyName: "文学部", year: 2024, theme: "叡智を表現する言語としての国語の意義", description: "後期日程。小論文I: 150分、課題文読解型（人文系）。国語の役割と叡智の表現について論述。", type: "past", wordLimit: null, timeLimit: 150, field: "文化" },
+  { id: "pq-kyushu-lit-002", universityId: "kyushu-u", universityName: "九州大学", facultyName: "文学部", year: 2024, theme: "志望動機（テーマ型小論文）", description: "後期日程。小論文II: 90分、テーマ型（人文系）。志望動機に関する論述。", type: "past", wordLimit: null, timeLimit: 90, field: "文化" },
+  { id: "pq-kyushu-econ-001", universityId: "kyushu-u", universityName: "九州大学", facultyName: "経済学部（経済・経営学科）", year: 2024, theme: "経済史における経済成長の条件", description: "後期日程。180分。英文問題。経済史と経済成長の要因分析。", type: "past", wordLimit: null, timeLimit: 180, field: "経済" },
+  { id: "pq-kyushu-econ-002", universityId: "kyushu-u", universityName: "九州大学", facultyName: "経済学部（経済・経営学科）", year: 2024, theme: "芸術と経済学の交差点", description: "後期日程。英文問題。芸術活動の経済的側面について分析・論述。", type: "past", wordLimit: null, timeLimit: 180, field: "経済" },
+  { id: "pq-kyushu-agr-001", universityId: "kyushu-u", universityName: "九州大学", facultyName: "農学部", year: 2024, theme: "光汚染の影響とカロリー制限の効果", description: "後期日程。180分。英文問題。環境問題（光汚染）と生物学的テーマ（カロリー制限）の2題。", type: "past", wordLimit: null, timeLimit: 180, field: "環境" },
+  { id: "pq-kyushu-freq-001", universityId: "kyushu-u", universityName: "九州大学", facultyName: "共創学部", year: 2025, theme: "持続可能な社会の実現に向けた学際的アプローチ", description: "共創学部の頻出テーマ。環境・社会・経済の統合的視点、SDGs、地域課題と国際課題の接続などが問われる。", type: "frequent", wordLimit: null, timeLimit: 100, field: "社会" },
+
+// ============================================================
+// 合計: 42件（実際の過去問 36件 + 頻出テーマ 6件）
+// ============================================================
