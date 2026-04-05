@@ -344,7 +344,6 @@ export default function EssayNewPage() {
 
       setOcrText(newText);
       setDictationHighlights(highlights);
-      setStep(4);
     } catch {
       setError("音声認識に失敗しました。もう一度お試しください。");
     } finally {
@@ -949,13 +948,14 @@ export default function EssayNewPage() {
               onChange={setOcrText}
               maxLength={2000}
               placeholder="認識されたテキストがここに表示されます"
+              highlights={dictationHighlights}
+              onHighlightsChange={setDictationHighlights}
             />
 
-            {/* スキップボタン（OCR結果で十分な場合） */}
+            {/* 添削ボタン */}
             {ocrText.trim() && (
-              <Button className="w-full" variant="default" onClick={() => setStep(4)} >
-                <CheckCircle className="size-4 mr-1" />
-                このまま添削へ進む
+              <Button className="w-full" variant="default" onClick={handleReview} disabled={isSubmitting}>
+                {isSubmitting ? <><Loader2 className="size-4 mr-1 animate-spin" />添削中...</> : <><CheckCircle className="size-4 mr-1" />この内容で添削する</>}
               </Button>
             )}
 
@@ -1045,46 +1045,6 @@ export default function EssayNewPage() {
         </Card>
       )}
 
-      {/* Step 4: Dictation mode — confirm text */}
-      {step === 4 && inputMode === "dictation" && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm lg:text-base">音読結果を確認・修正</CardTitle>
-          </CardHeader>
-          <CardContent className="p-3 lg:p-4 space-y-4">
-            <div className="rounded-lg bg-green-50 border border-green-200 p-3">
-              <p className="text-sm text-green-800">音声認識の結果です。間違いがあれば修正してください。</p>
-            </div>
-
-            {images.length > 0 && (
-              <details>
-                <summary className="text-sm text-muted-foreground cursor-pointer hover:text-foreground">
-                  元画像を表示（{images.length}枚）
-                </summary>
-                <div className={`mt-2 gap-2 ${images.length > 1 ? "grid grid-cols-2" : ""}`}>
-                  {images.map((img, i) => (
-                    <img key={i} src={img.preview} alt={`${i + 1}枚目`} className="w-full rounded-lg border object-contain max-h-64" />
-                  ))}
-                </div>
-              </details>
-            )}
-
-            <ManuscriptEditor
-              value={ocrText}
-              onChange={setOcrText}
-              maxLength={800}
-              highlights={dictationHighlights}
-              onHighlightsChange={setDictationHighlights}
-            />
-
-            {error && <p className="text-sm text-destructive">{error}</p>}
-
-            <Button className="w-full" onClick={handleReview} disabled={isSubmitting || !ocrText.trim()}>
-              {isSubmitting ? <><Loader2 className="size-4 mr-1 animate-spin" />添削中...</> : <>添削する<ChevronRight className="size-4 ml-1" /></>}
-            </Button>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Step 2: Image upload mode */}
       {step === 2 && inputMode === "image" && (
