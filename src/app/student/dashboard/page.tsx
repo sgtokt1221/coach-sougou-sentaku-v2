@@ -113,7 +113,7 @@ export default function StudentDashboard() {
       apAlignment: 0,
       originality: 0,
     }));
-  const trendData = rawTrend.length > 0 ? rawTrend : mockTrendData;
+  const trendData = rawTrend;
   const latestScore = trendData.length > 0 ? trendData[trendData.length - 1].total : null;
 
   return (
