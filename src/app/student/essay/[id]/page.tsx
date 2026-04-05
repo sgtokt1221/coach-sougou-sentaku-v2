@@ -446,7 +446,6 @@ export default function EssayResultPage() {
             >
               {copiedSection === "topic" ? <><Check className="size-3 mr-1" />コピー済み</> : <><Copy className="size-3 mr-1" />全コピー</>}
             </Button>
-            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
