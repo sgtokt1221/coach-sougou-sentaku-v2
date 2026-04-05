@@ -88,6 +88,57 @@ async function ocrWithGoogleVision(base64Data: string): Promise<string | null> {
   }
 }
 
+// ---- Claude: OCR結果から本文のみ抽出 ----
+
+async function extractEssayBody(rawOcrText: string, base64Data: string): Promise<string> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return rawOcrText;
+
+  try {
+    const client = new Anthropic();
+    const response = await client.messages.create({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 4096,
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "image",
+              source: { type: "base64", media_type: "image/jpeg", data: base64Data },
+            },
+            {
+              type: "text",
+              text: `以下はこの画像（原稿用紙）からOCRで抽出した全テキストです。この中から**原稿用紙のマス目内に手書きされた小論文の本文のみ**を抽出してください。
+
+【除外するもの】
+- 用紙の印刷済みテキスト（タイトル欄、注意書き、受験番号欄、学校名、氏名欄など）
+- マス目の外にある印刷文字
+- ページ番号
+- 問題文や設問文
+
+【抽出ルール】
+- 手書きされた本文のみを出力すること
+- 原文に忠実に、一字一句変えないこと
+- 段落の改行は原文に従うこと
+- 本文以外の説明は一切不要
+
+【OCRテキスト】
+${rawOcrText}`,
+            },
+          ],
+        },
+      ],
+    });
+
+    const result = response.content[0].type === "text" ? response.content[0].text : null;
+    return result?.trim() || rawOcrText;
+  } catch (err) {
+    console.warn("[Extract] Failed, using raw OCR:", err);
+    return rawOcrText;
+  }
+}
+
 // ---- Claude Vision OCR (fallback) ----
 
 async function ocrWithClaude(base64Data: string): Promise<string | null> {
@@ -110,7 +161,12 @@ async function ocrWithClaude(base64Data: string): Promise<string | null> {
             type: "text",
             text: `この画像は原稿用紙に手書きされた小論文です。以下のルールに厳密に従って書き起こしてください。
 
-【最重要ルール】
+【読み取り範囲】
+- 原稿用紙のマス目内に手書きされた本文のみを読み取ること
+- 用紙に印刷されたタイトル欄、注意書き、受験番号、学校名、氏名欄、問題文、設問文は全て無視すること
+- マス目の外にある印刷文字は全て無視すること
+
+【書き起こしルール】
 - 一字一句、原文に忠実に書き起こすこと。絶対に要約・省略・言い換えをしないこと
 - 読めない文字は「■」で表示すること
 - 誤字・脱字があっても原文のまま書き起こすこと（勝手に修正しない）
@@ -146,11 +202,17 @@ export async function POST(request: NextRequest) {
     const imageUrl = `gs://placeholder/${essayId}.jpg`;
     const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, "");
 
-    // 1. Google Cloud Vision (高精度・低コスト)
-    let ocrText = await ocrWithGoogleVision(base64Data);
-    let ocrSource = ocrText ? "google-vision" : "";
+    let ocrText: string | null = null;
+    let ocrSource = "";
 
-    // 2. Claude Vision フォールバック
+    // 1. Google Cloud Vision (高精度・低コスト) → Claude Haikuで本文抽出
+    const rawGcvText = await ocrWithGoogleVision(base64Data);
+    if (rawGcvText) {
+      ocrText = await extractEssayBody(rawGcvText, base64Data);
+      ocrSource = "google-vision+haiku";
+    }
+
+    // 2. Claude Vision フォールバック（プロンプトで本文のみ指示済み）
     if (!ocrText) {
       ocrText = await ocrWithClaude(base64Data);
       ocrSource = "claude";
