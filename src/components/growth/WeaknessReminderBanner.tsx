@@ -103,14 +103,7 @@ export function WeaknessReminderBanner() {
   }
 
   if (weaknesses.length === 0) {
-    return (
-      <Card className="border-emerald-200 bg-emerald-50 dark:border-emerald-800/50 dark:bg-emerald-950/30">
-        <CardContent className="flex items-center gap-3 py-4">
-          <CheckCircle2 className="size-5 text-emerald-500" />
-          <p className="font-medium text-emerald-700 dark:text-emerald-300">全ての弱点を克服しました！素晴らしい！</p>
-        </CardContent>
-      </Card>
-    );
+    return null;
   }
 
   const displayed = weaknesses.slice(0, MAX_DISPLAY);
