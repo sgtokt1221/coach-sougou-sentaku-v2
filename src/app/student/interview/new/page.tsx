@@ -9,7 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Mic, Users, BookOpen, ChevronRight, MessageSquare, GraduationCap, Settings, Upload, FileText, Loader2, X } from "lucide-react";
+import { ArrowLeft, Mic, Users, BookOpen, ChevronRight, MessageSquare, GraduationCap, Settings, Upload, FileText, Loader2, X, Plus, History } from "lucide-react";
+import { InterviewHistory } from "@/components/interview/InterviewHistory";
 import type { InterviewMode } from "@/lib/types/interview";
 import {
   INTERVIEW_MODE_LABELS,
@@ -64,6 +65,7 @@ export default function InterviewNewPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetUniversities.join(",")]);
 
+  const [activeTab, setActiveTab] = useState<"new" | "history">("new");
   const [selectedCompoundId, setSelectedCompoundId] = useState<string | null>(null);
   const [selectedMode, setSelectedMode] = useState<InterviewMode | null>(null);
   const [inputMode, setInputMode] = useState<"text" | "voice">("text");
@@ -145,10 +147,41 @@ export default function InterviewNewPage() {
         </Button>
         <h1 className="text-lg lg:text-xl font-bold flex items-center gap-2">
           <Mic className="size-5" />
-          模擬面接を始める
+          模擬面接
         </h1>
       </div>
 
+      <div className="flex rounded-lg border bg-muted p-1">
+        <button
+          onClick={() => setActiveTab("new")}
+          className={[
+            "flex-1 flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+            activeTab === "new"
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground",
+          ].join(" ")}
+        >
+          <Plus className="size-3.5" />
+          新規面接
+        </button>
+        <button
+          onClick={() => setActiveTab("history")}
+          className={[
+            "flex-1 flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+            activeTab === "history"
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground",
+          ].join(" ")}
+        >
+          <History className="size-3.5" />
+          面接履歴
+        </button>
+      </div>
+
+      {activeTab === "history" ? (
+        <InterviewHistory />
+      ) : (
+      <>
       {/* ドリルモード導線 */}
       <Card className="border-primary/20 bg-primary/5">
         <CardContent className="flex items-center justify-between p-4">
@@ -438,6 +471,8 @@ export default function InterviewNewPage() {
             {!isLoading && <ChevronRight className="size-4 ml-1" />}
           </Button>
         </>
+      )}
+      </>
       )}
     </div>
   );

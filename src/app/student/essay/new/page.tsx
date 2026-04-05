@@ -29,10 +29,12 @@ import {
   Square,
   Trash2,
   Plus,
+  History,
 } from "lucide-react";
 import { WeaknessReminderCard } from "@/components/growth/WeaknessReminderCard";
 import { ManuscriptEditor } from "@/components/essay/ManuscriptEditor";
 import { ReviewProgress } from "@/components/essay/ReviewProgress";
+import { EssayHistory } from "@/components/essay/EssayHistory";
 import { PastQuestionChart } from "@/components/essay/PastQuestionChart";
 import { getThemeById, EssayTheme } from "@/data/essay-themes";
 import { getPastQuestionById, summarizeChartData, PastQuestion } from "@/data/essay-past-questions";
@@ -90,6 +92,7 @@ export default function EssayNewPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { userProfile } = useAuth();
+  const [activeTab, setActiveTab] = useState<"new" | "history">("new");
   const [step, setStep] = useState(1);
   const [inputMode, setInputMode] = useState<"text" | "image" | "dictation">("text");
   const [directText, setDirectText] = useState("");
@@ -428,7 +431,7 @@ export default function EssayNewPage() {
 
   return (
     <div className={`mx-auto px-4 py-5 lg:px-6 lg:py-8 ${step >= 2 && pastQuestion && (pastQuestion.sourceText || pastQuestion.chartData) ? "max-w-4xl" : "max-w-2xl"}`}>
-      <div className="flex items-center gap-2 mb-6">
+      <div className="flex items-center gap-2 mb-4">
         <Button
           variant="ghost"
           size="sm"
@@ -439,10 +442,41 @@ export default function EssayNewPage() {
         </Button>
         <h1 className="text-lg lg:text-xl font-bold flex items-center gap-2">
           <FileText className="size-5" />
-          小論文を提出する
+          小論文添削
         </h1>
       </div>
 
+      <div className="flex rounded-lg border bg-muted p-1 mb-6">
+        <button
+          onClick={() => setActiveTab("new")}
+          className={[
+            "flex-1 flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+            activeTab === "new"
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground",
+          ].join(" ")}
+        >
+          <Plus className="size-3.5" />
+          新規提出
+        </button>
+        <button
+          onClick={() => setActiveTab("history")}
+          className={[
+            "flex-1 flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+            activeTab === "history"
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground",
+          ].join(" ")}
+        >
+          <History className="size-3.5" />
+          添削履歴
+        </button>
+      </div>
+
+      {activeTab === "history" ? (
+        <EssayHistory />
+      ) : (
+      <>
       <StepIndicator
         current={step}
         total={inputMode === "text" ? 2 : inputMode === "dictation" ? 4 : 3}
@@ -1179,6 +1213,8 @@ export default function EssayNewPage() {
             </Button>
           </CardContent>
         </Card>
+      )}
+      </>
       )}
     </div>
   );

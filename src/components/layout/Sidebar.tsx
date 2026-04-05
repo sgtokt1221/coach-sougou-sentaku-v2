@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   FileText,
-  History,
   Mic,
   GraduationCap,
   Settings,
@@ -60,7 +59,6 @@ const studentNavGroups: NavGroup[] = [
     items: [
       { label: "小論文添削", href: "/student/essay/new", icon: FileText },
       { label: "テーマ・過去問", href: "/student/essay/themes", icon: BookOpen },
-      { label: "添削履歴", href: "/student/essay/history", icon: History },
       { label: "模擬面接", href: "/student/interview/new", icon: Mic },
     ],
   },
@@ -226,8 +224,7 @@ export function Sidebar() {
       <div className="flex h-16 items-center border-b border-sidebar-border px-5 hover:bg-sidebar-accent/10 transition-all duration-200 group">
         <Link href="/" className="relative">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-dark.svg" alt="coach for 総合型選抜" className="h-10 group-hover:drop-shadow-sm transition-all duration-200 hidden dark:block" />
-          <img src="/logo.svg" alt="coach for 総合型選抜" className="h-10 group-hover:drop-shadow-sm transition-all duration-200 dark:hidden" />
+          <img src="/logo-dark.svg" alt="coach for 総合型選抜" className="h-10 group-hover:drop-shadow-sm transition-all duration-200" />
           <div className="absolute -bottom-1 left-0 right-0 h-px bg-gradient-to-r from-transparent via-sidebar-primary/20 to-transparent opacity-60"></div>
         </Link>
       </div>
