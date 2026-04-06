@@ -537,6 +537,18 @@ export const PAST_QUESTIONS: PastQuestion[] = [
 
 ];
 
+/** 生徒が実際に取り組める具体的な設問かどうかを判定 */
+export function isActionableQuestion(pq: PastQuestion): boolean {
+  const jp = /論じ|述べ|分析し|提案[しをす]|提案を行[いう]|考察し|説明し|答え[なる]|書き|記述|論述|読み|読んで|議論|執筆|字以?内|字で|なさい/;
+  const en = /\b(Read|answer|discuss|write|analyze|explain)\b/i;
+  return jp.test(pq.description) || en.test(pq.description);
+}
+
+/** 生徒向け: 具体的な設問のみ返す */
+export function getActionablePastQuestions(): PastQuestion[] {
+  return PAST_QUESTIONS.filter(isActionableQuestion);
+}
+
 export function getPastQuestionsByUniversity(universityId: string): PastQuestion[] {
   return PAST_QUESTIONS.filter((pq) => pq.universityId === universityId || pq.universityId === "");
 }

@@ -7,7 +7,7 @@ import {
   EssayTheme,
   fieldLabelMap
 } from "@/data/essay-themes";
-import { PAST_QUESTIONS, getPastQuestionsByUniversity } from "@/data/essay-past-questions";
+import { PAST_QUESTIONS, getPastQuestionsByUniversity, isActionableQuestion } from "@/data/essay-past-questions";
 
 // 大学のAP情報を取得する関数（モック）
 async function getUniversityAPs(universityId: string): Promise<string[]> {
@@ -70,10 +70,10 @@ export async function GET(request: NextRequest) {
       label: fieldLabelMap[key]
     }));
 
-    // 過去問データ
-    let pastQuestions = PAST_QUESTIONS;
+    // 過去問データ（生徒向け: 具体的な設問のみ表示）
+    let pastQuestions = PAST_QUESTIONS.filter(isActionableQuestion);
     if (universityId) {
-      pastQuestions = getPastQuestionsByUniversity(universityId);
+      pastQuestions = pastQuestions.filter((pq) => pq.universityId === universityId || pq.universityId === "");
     }
     if (field && field !== "all") {
       pastQuestions = pastQuestions.filter((pq) => pq.field === field);
