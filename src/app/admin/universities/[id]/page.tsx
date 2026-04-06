@@ -147,14 +147,19 @@ function FacultyForm({ faculty, onChange, canEdit }: FacultyFormProps) {
       {/* Admission Policy */}
       <div className="space-y-2">
         <Label>アドミッションポリシー</Label>
-        <textarea
-          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-          rows={6}
-          value={faculty.admissionPolicy}
-          onChange={(e) => update("admissionPolicy", e.target.value)}
-          placeholder="アドミッションポリシーを入力..."
-          disabled={!canEdit}
-        />
+        {canEdit ? (
+          <textarea
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            rows={6}
+            value={faculty.admissionPolicy}
+            onChange={(e) => update("admissionPolicy", e.target.value)}
+            placeholder="アドミッションポリシーを入力..."
+          />
+        ) : (
+          <div className="w-full rounded-md border border-input bg-muted/50 px-3 py-2 text-sm whitespace-pre-wrap min-h-[6rem]">
+            {faculty.admissionPolicy || <span className="text-muted-foreground">未設定</span>}
+          </div>
+        )}
       </div>
 
       <Separator />
@@ -198,21 +203,28 @@ function FacultyForm({ faculty, onChange, canEdit }: FacultyFormProps) {
         </div>
         <div className="mt-4 space-y-2">
           <Label>その他の要件（1行1件）</Label>
-          <textarea
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-            rows={3}
-            value={faculty.requirements.otherReqs.join("\n")}
-            onChange={(e) =>
-              update("requirements", {
-                ...faculty.requirements,
-                otherReqs: e.target.value
-                  ? e.target.value.split("\n").filter(Boolean)
-                  : [],
-              })
-            }
-            placeholder="志望理由書&#10;活動報告書&#10;推薦書"
-            disabled={!canEdit}
-          />
+          {canEdit ? (
+            <textarea
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              rows={3}
+              value={faculty.requirements.otherReqs.join("\n")}
+              onChange={(e) =>
+                update("requirements", {
+                  ...faculty.requirements,
+                  otherReqs: e.target.value
+                    ? e.target.value.split("\n").filter(Boolean)
+                    : [],
+                })
+              }
+              placeholder="志望理由書&#10;活動報告書&#10;推薦書"
+            />
+          ) : (
+            <div className="w-full rounded-md border border-input bg-muted/50 px-3 py-2 text-sm whitespace-pre-wrap min-h-[3rem]">
+              {faculty.requirements.otherReqs.length > 0
+                ? faculty.requirements.otherReqs.join("\n")
+                : <span className="text-muted-foreground">未設定</span>}
+            </div>
+          )}
         </div>
       </div>
 
@@ -601,13 +613,15 @@ export default function AdminUniversityEditPage() {
             </p>
           ) : (
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="flex flex-wrap gap-1 group-data-horizontal/tabs:!h-auto">
-                {university.faculties.map((faculty, idx) => (
-                  <TabsTrigger key={idx} value={String(idx)}>
-                    {faculty.name || `学部${idx + 1}`}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
+              <div className="overflow-x-auto">
+                <TabsList className="flex flex-nowrap gap-1 w-max group-data-horizontal/tabs:!h-auto">
+                  {university.faculties.map((faculty, idx) => (
+                    <TabsTrigger key={idx} value={String(idx)} className="shrink-0">
+                      {faculty.name || `学部${idx + 1}`}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </div>
 
               {university.faculties.map((faculty, idx) => (
                 <TabsContent key={idx} value={String(idx)} className="mt-6">
