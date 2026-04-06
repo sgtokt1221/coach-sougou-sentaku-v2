@@ -135,6 +135,7 @@ export default function AdminStudentDetailPage() {
 
   const [detail, setDetail] = useState<StudentDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [showAllLines, setShowAllLines] = useState(false);
   const [resolvedUnis, setResolvedUnis] = useState<{ universityName: string; facultyName: string }[]>([]);
 
@@ -175,10 +176,20 @@ export default function AdminStudentDetailPage() {
     async function fetchDetail() {
       try {
         const res = await authFetch(`/api/admin/students/${id}`);
-        if (!res.ok) throw new Error("fetch failed");
+        if (!res.ok) {
+          const body = await res.text().catch(() => "");
+          const msg = `HTTP ${res.status}: ${body || res.statusText}`;
+          console.error("[AdminStudentDetail] fetch failed:", msg);
+          setFetchError(msg);
+          setDetail(null);
+          return;
+        }
         const data = await res.json();
         setDetail(data);
-      } catch {
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "不明なエラー";
+        console.error("[AdminStudentDetail] fetch error:", msg);
+        setFetchError(msg);
         setDetail(null);
       } finally {
         setLoading(false);
@@ -259,6 +270,9 @@ export default function AdminStudentDetailPage() {
           <CardContent className="py-8 text-center">
             <AlertCircle className="mx-auto mb-2 size-8 text-muted-foreground" />
             <p className="text-muted-foreground">生徒データの取得に失敗しました</p>
+            {fetchError && (
+              <p className="mt-1 text-xs text-destructive">{fetchError}</p>
+            )}
             <Button className="mt-4" variant="outline" onClick={() => router.push("/admin/students")}>
               <ArrowLeft className="mr-1 size-4" />
               生徒一覧に戻る
