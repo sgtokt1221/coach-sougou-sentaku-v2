@@ -69,6 +69,7 @@ export interface EssayReviewRequest {
   questionType?: "essay" | "english-reading" | "data-analysis" | "mixed";
   sourceText?: string;
   chartDataSummary?: string;
+  pastQuestionFacultyName?: string;
 }
 
 export interface EssayReviewResponse {

@@ -9,7 +9,7 @@ import { logEssaySubmission } from "@/lib/bigquery/logger";
 export async function POST(request: NextRequest) {
   try {
     const body: EssayReviewRequest = await request.json();
-    const { essayId, ocrText, universityId, facultyId, topic, questionType, sourceText, chartDataSummary } = body;
+    const { essayId, ocrText, universityId, facultyId, topic, questionType, sourceText, chartDataSummary, pastQuestionFacultyName } = body;
 
     if (!essayId || !ocrText || !universityId || !facultyId) {
       return NextResponse.json(
@@ -27,13 +27,23 @@ export async function POST(request: NextRequest) {
     const { adminDb } = await import("@/lib/firebase/admin");
     if (adminDb) {
       try {
-        // AP取得
+        // AP取得（過去問の場合は過去問の学部APを優先）
         const universityDoc = await adminDb.doc(`universities/${universityId}`).get();
         if (universityDoc.exists) {
           const universityData = universityDoc.data()!;
-          const faculty = universityData.faculties?.find(
-            (f: { id: string; admissionPolicy?: string }) => f.id === facultyId
-          );
+          // 過去問の学部名でマッチを試みる（過去問練習時はその学部のAPで添削）
+          let faculty = pastQuestionFacultyName
+            ? universityData.faculties?.find(
+                (f: { name: string; admissionPolicy?: string }) =>
+                  f.name === pastQuestionFacultyName || pastQuestionFacultyName.includes(f.name)
+              )
+            : null;
+          // 過去問学部が見つからなければ生徒の志望学部IDでフォールバック
+          if (!faculty) {
+            faculty = universityData.faculties?.find(
+              (f: { id: string; admissionPolicy?: string }) => f.id === facultyId
+            );
+          }
           if (faculty?.admissionPolicy) {
             admissionPolicy = `大学: ${universityData.name}\n学部: ${faculty.name}\nAP: ${faculty.admissionPolicy}`;
           }

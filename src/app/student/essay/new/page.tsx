@@ -369,6 +369,7 @@ export default function EssayNewPage() {
             questionType: pastQuestion.questionType,
             sourceText: pastQuestion.sourceText,
             chartDataSummary: pastQuestion.chartData ? summarizeChartData(pastQuestion.chartData) : undefined,
+            pastQuestionFacultyName: pastQuestion.facultyName,
           }),
         }),
       });
@@ -404,6 +405,7 @@ export default function EssayNewPage() {
             questionType: pastQuestion.questionType,
             sourceText: pastQuestion.sourceText,
             chartDataSummary: pastQuestion.chartData ? summarizeChartData(pastQuestion.chartData) : undefined,
+            pastQuestionFacultyName: pastQuestion.facultyName,
           }),
         }),
       });
