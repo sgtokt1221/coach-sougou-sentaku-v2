@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
+import { adminDb } from "@/lib/firebase/admin";
 import type { AlertItem } from "@/lib/types/admin";
 
 interface MockStudentData {
@@ -254,38 +255,31 @@ export async function GET(request: NextRequest) {
     const effectiveUid = (role === "superadmin" && viewAs) ? viewAs : uid;
     const effectiveRole = (role === "superadmin" && viewAs) ? "admin" : role;
 
-    const { db } = await import("@/lib/firebase/config");
-    if (!db) {
+    if (!adminDb) {
       const alerts = detectAlerts(MOCK_STUDENT_DATA);
       return NextResponse.json(alerts);
     }
 
     // Firestore接続時: 全生徒を走査してアラート生成
-    const { collection, getDocs, query, where, orderBy } = await import("firebase/firestore");
-
     const studentsQuery = effectiveRole === "superadmin"
-      ? query(
-          collection(db, "users"),
-          where("role", "==", "student")
-        )
-      : query(
-          collection(db, "users"),
-          where("role", "==", "student"),
-          where("managedBy", "==", effectiveUid)
-        );
-    const snapshot = await getDocs(studentsQuery);
+      ? adminDb.collection("users").where("role", "==", "student")
+      : adminDb
+          .collection("users")
+          .where("role", "==", "student")
+          .where("managedBy", "==", effectiveUid);
+    const snapshot = await studentsQuery.get();
 
     const studentDataList: MockStudentData[] = await Promise.all(
       snapshot.docs.map(async (docSnap) => {
         const data = docSnap.data();
         const studentUid = docSnap.id;
 
-        const essaysSnap = await getDocs(
-          query(
-            collection(db, "users", studentUid, "essays"),
-            orderBy("submittedAt", "desc")
-          )
-        );
+        const essaysSnap = await adminDb!
+          .collection("users")
+          .doc(studentUid)
+          .collection("essays")
+          .orderBy("submittedAt", "desc")
+          .get();
         const latestEssay = essaysSnap.docs[0]?.data();
         const lastActivityAt: string | null = latestEssay?.submittedAt
           ? latestEssay.submittedAt.toDate().toISOString()
@@ -296,18 +290,22 @@ export async function GET(request: NextRequest) {
           .filter((s): s is number => typeof s === "number")
           .reverse();
 
-        const weaknessesSnap = await getDocs(
-          collection(db, "users", studentUid, "weaknesses")
-        );
+        const weaknessesSnap = await adminDb!
+          .collection("users")
+          .doc(studentUid)
+          .collection("weaknesses")
+          .get();
         const weaknesses = weaknessesSnap.docs.map((d) => {
           const wData = d.data();
           return { area: wData.area ?? "", count: wData.count ?? 0 };
         });
 
         // 書類データ取得
-        const documentsSnap = await getDocs(
-          collection(db, "users", studentUid, "documents")
-        );
+        const documentsSnap = await adminDb!
+          .collection("users")
+          .doc(studentUid)
+          .collection("documents")
+          .get();
         const documents: MockDocumentData[] = documentsSnap.docs.map((d) => {
           const dData = d.data();
           return {

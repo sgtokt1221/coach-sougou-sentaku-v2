@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
+import { adminDb } from "@/lib/firebase/admin";
 import type { WeaknessAnalytics } from "@/lib/types/analytics";
 
 const MOCK_WEAKNESSES: WeaknessAnalytics = {
@@ -71,15 +72,12 @@ export async function GET(request: NextRequest) {
   if (authResult instanceof NextResponse) return authResult;
 
   try {
-    const { db } = await import("@/lib/firebase/config");
-    if (!db) {
+    if (!adminDb) {
       return NextResponse.json(MOCK_WEAKNESSES);
     }
 
     try {
-      const { collectionGroup, getDocs } = await import("firebase/firestore");
-
-      const weaknessesSnap = await getDocs(collectionGroup(db, "weaknesses"));
+      const weaknessesSnap = await adminDb.collectionGroup("weaknesses").get();
       if (weaknessesSnap.empty) {
         return NextResponse.json(MOCK_WEAKNESSES);
       }

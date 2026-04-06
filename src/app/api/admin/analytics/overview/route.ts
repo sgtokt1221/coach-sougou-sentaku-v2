@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
+import { adminDb } from "@/lib/firebase/admin";
 import type { AnalyticsOverview } from "@/lib/types/analytics";
 
 const MOCK_OVERVIEW: AnalyticsOverview = {
@@ -39,17 +40,14 @@ export async function GET(request: NextRequest) {
   if (authResult instanceof NextResponse) return authResult;
 
   try {
-    const { db } = await import("@/lib/firebase/config");
-    if (!db) {
+    if (!adminDb) {
       return NextResponse.json(MOCK_OVERVIEW);
     }
 
     // Firestore集計
     try {
-      const { collection, getDocs } = await import("firebase/firestore");
-
-      const essaysSnap = await getDocs(collection(db, "essays"));
-      const interviewsSnap = await getDocs(collection(db, "interviews"));
+      const essaysSnap = await adminDb.collection("essays").get();
+      const interviewsSnap = await adminDb.collection("interviews").get();
 
       const essays = essaysSnap.docs.map((d) => d.data());
       const interviews = interviewsSnap.docs.map((d) => d.data());

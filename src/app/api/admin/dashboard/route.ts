@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
+import { adminDb } from "@/lib/firebase/admin";
 import type { ExamResultStats } from "@/lib/types/exam-result";
 
 interface DashboardResponse {
@@ -30,13 +31,9 @@ export async function GET(request: NextRequest) {
   const { uid, role } = authResult;
 
   try {
-    const { db } = await import("@/lib/firebase/config");
-    if (!db) {
+    if (!adminDb) {
       return NextResponse.json(MOCK_STATS);
     }
-
-    const { collection, query, where, getDocs, collectionGroup } =
-      await import("firebase/firestore");
 
     // managedByスコーピング: 担当生徒のIDを取得
     let studentIds: string[] = [];
@@ -44,21 +41,23 @@ export async function GET(request: NextRequest) {
       const { searchParams } = new URL(request.url);
       const viewAs = searchParams.get("viewAs");
       if (viewAs) {
-        const studentsSnap = await getDocs(
-          query(collection(db, "users"), where("managedBy", "==", viewAs))
-        );
+        const studentsSnap = await adminDb
+          .collection("users")
+          .where("managedBy", "==", viewAs)
+          .get();
         studentIds = studentsSnap.docs.map((d) => d.id);
       } else {
-        // superadmin sees all - get all students
-        const studentsSnap = await getDocs(
-          query(collection(db, "users"), where("role", "==", "student"))
-        );
+        const studentsSnap = await adminDb
+          .collection("users")
+          .where("role", "==", "student")
+          .get();
         studentIds = studentsSnap.docs.map((d) => d.id);
       }
     } else {
-      const studentsSnap = await getDocs(
-        query(collection(db, "users"), where("managedBy", "==", uid))
-      );
+      const studentsSnap = await adminDb
+        .collection("users")
+        .where("managedBy", "==", uid)
+        .get();
       studentIds = studentsSnap.docs.map((d) => d.id);
     }
 
@@ -68,12 +67,11 @@ export async function GET(request: NextRequest) {
     let totalFailed = 0;
     let totalWithdrawn = 0;
 
-    // collectionGroupが使えない場合は個別に取得
     for (const studentId of studentIds) {
       try {
-        const resultsSnap = await getDocs(
-          collection(db, "users", studentId, "examResults")
-        );
+        const resultsSnap = await adminDb
+          .collection(`users/${studentId}/examResults`)
+          .get();
         for (const doc of resultsSnap.docs) {
           const status = doc.data().status;
           switch (status) {

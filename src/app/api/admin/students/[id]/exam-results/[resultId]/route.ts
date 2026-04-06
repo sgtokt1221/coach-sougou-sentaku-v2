@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
+import { adminDb } from "@/lib/firebase/admin";
 import type { ExamResult, ExamResultInput } from "@/lib/types/exam-result";
 
 /**
@@ -32,8 +33,7 @@ export async function PUT(
       }
     }
 
-    const { db } = await import("@/lib/firebase/config");
-    if (!db) {
+    if (!adminDb) {
       const mockResult: ExamResult = {
         id: resultId,
         userId: id,
@@ -51,13 +51,9 @@ export async function PUT(
       return NextResponse.json(mockResult);
     }
 
-    const { doc, getDoc, updateDoc, serverTimestamp } = await import(
-      "firebase/firestore"
-    );
-
     // managedByスコーピング
-    const userDoc = await getDoc(doc(db, "users", id));
-    if (!userDoc.exists()) {
+    const userDoc = await adminDb.doc(`users/${id}`).get();
+    if (!userDoc.exists) {
       return NextResponse.json(
         { error: "生徒が見つかりません" },
         { status: 404 }
@@ -69,16 +65,20 @@ export async function PUT(
     const viewAs = searchParams.get("viewAs");
     const effectiveUid = role === "superadmin" && viewAs ? viewAs : uid;
 
-    if (role !== "superadmin" && userData.managedBy !== effectiveUid) {
+    if (role !== "superadmin" && userData?.managedBy !== effectiveUid) {
       return NextResponse.json(
         { error: "この生徒へのアクセス権がありません" },
         { status: 403 }
       );
     }
 
-    const resultRef = doc(db, "users", id, "examResults", resultId);
-    const resultDoc = await getDoc(resultRef);
-    if (!resultDoc.exists()) {
+    const resultRef = adminDb
+      .collection("users")
+      .doc(id)
+      .collection("examResults")
+      .doc(resultId);
+    const resultDoc = await resultRef.get();
+    if (!resultDoc.exists) {
       return NextResponse.json(
         { error: "受験結果が見つかりません" },
         { status: 404 }
@@ -86,7 +86,7 @@ export async function PUT(
     }
 
     const updateData: Record<string, unknown> = {
-      updatedAt: serverTimestamp(),
+      updatedAt: new Date(),
     };
     if (body.universityId !== undefined)
       updateData.universityId = body.universityId;
@@ -100,9 +100,9 @@ export async function PUT(
     if (body.resultDate !== undefined) updateData.resultDate = body.resultDate;
     if (body.notes !== undefined) updateData.notes = body.notes;
 
-    await updateDoc(resultRef, updateData);
+    await resultRef.update(updateData);
 
-    const updated = await getDoc(resultRef);
+    const updated = await resultRef.get();
     const data = updated.data()!;
 
     const result: ExamResult = {
@@ -149,16 +149,13 @@ export async function DELETE(
   try {
     const { id, resultId } = await params;
 
-    const { db } = await import("@/lib/firebase/config");
-    if (!db) {
+    if (!adminDb) {
       return NextResponse.json({ success: true });
     }
 
-    const { doc, getDoc, deleteDoc } = await import("firebase/firestore");
-
     // managedByスコーピング
-    const userDoc = await getDoc(doc(db, "users", id));
-    if (!userDoc.exists()) {
+    const userDoc = await adminDb.doc(`users/${id}`).get();
+    if (!userDoc.exists) {
       return NextResponse.json(
         { error: "生徒が見つかりません" },
         { status: 404 }
@@ -170,23 +167,27 @@ export async function DELETE(
     const viewAs = searchParams.get("viewAs");
     const effectiveUid = role === "superadmin" && viewAs ? viewAs : uid;
 
-    if (role !== "superadmin" && userData.managedBy !== effectiveUid) {
+    if (role !== "superadmin" && userData?.managedBy !== effectiveUid) {
       return NextResponse.json(
         { error: "この生徒へのアクセス権がありません" },
         { status: 403 }
       );
     }
 
-    const resultRef = doc(db, "users", id, "examResults", resultId);
-    const resultDoc = await getDoc(resultRef);
-    if (!resultDoc.exists()) {
+    const resultRef = adminDb
+      .collection("users")
+      .doc(id)
+      .collection("examResults")
+      .doc(resultId);
+    const resultDoc = await resultRef.get();
+    if (!resultDoc.exists) {
       return NextResponse.json(
         { error: "受験結果が見つかりません" },
         { status: 404 }
       );
     }
 
-    await deleteDoc(resultRef);
+    await resultRef.delete();
 
     return NextResponse.json({ success: true });
   } catch (error) {

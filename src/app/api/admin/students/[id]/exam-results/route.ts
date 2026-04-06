@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
+import { adminDb } from "@/lib/firebase/admin";
 import type { ExamResult, ExamResultInput } from "@/lib/types/exam-result";
 
 const MOCK_RESULTS: ExamResult[] = [
@@ -49,25 +50,15 @@ export async function GET(
   try {
     const { id } = await params;
 
-    const { db } = await import("@/lib/firebase/config");
-    if (!db) {
+    if (!adminDb) {
       return NextResponse.json(
         MOCK_RESULTS.map((r) => ({ ...r, userId: id }))
       );
     }
 
-    const {
-      doc,
-      getDoc,
-      collection,
-      query,
-      orderBy,
-      getDocs,
-    } = await import("firebase/firestore");
-
     // managedByスコーピング
-    const userDoc = await getDoc(doc(db, "users", id));
-    if (!userDoc.exists()) {
+    const userDoc = await adminDb.doc(`users/${id}`).get();
+    if (!userDoc.exists) {
       return NextResponse.json(
         { error: "生徒が見つかりません" },
         { status: 404 }
@@ -79,19 +70,19 @@ export async function GET(
     const viewAs = searchParams.get("viewAs");
     const effectiveUid = role === "superadmin" && viewAs ? viewAs : uid;
 
-    if (role !== "superadmin" && userData.managedBy !== effectiveUid) {
+    if (role !== "superadmin" && userData?.managedBy !== effectiveUid) {
       return NextResponse.json(
         { error: "この生徒へのアクセス権がありません" },
         { status: 403 }
       );
     }
 
-    const snap = await getDocs(
-      query(
-        collection(db, "users", id, "examResults"),
-        orderBy("createdAt", "desc")
-      )
-    );
+    const snap = await adminDb
+      .collection("users")
+      .doc(id)
+      .collection("examResults")
+      .orderBy("createdAt", "desc")
+      .get();
 
     const results: ExamResult[] = snap.docs.map((d) => {
       const data = d.data();
@@ -157,8 +148,7 @@ export async function POST(
       );
     }
 
-    const { db } = await import("@/lib/firebase/config");
-    if (!db) {
+    if (!adminDb) {
       const newResult: ExamResult = {
         id: `er_${Date.now()}`,
         userId: id,
@@ -169,13 +159,9 @@ export async function POST(
       return NextResponse.json(newResult, { status: 201 });
     }
 
-    const { doc, getDoc, collection, addDoc, serverTimestamp } = await import(
-      "firebase/firestore"
-    );
-
     // managedByスコーピング
-    const userDoc = await getDoc(doc(db, "users", id));
-    if (!userDoc.exists()) {
+    const userDoc = await adminDb.doc(`users/${id}`).get();
+    if (!userDoc.exists) {
       return NextResponse.json(
         { error: "生徒が見つかりません" },
         { status: 404 }
@@ -187,25 +173,29 @@ export async function POST(
     const viewAs = searchParams.get("viewAs");
     const effectiveUid = role === "superadmin" && viewAs ? viewAs : uid;
 
-    if (role !== "superadmin" && userData.managedBy !== effectiveUid) {
+    if (role !== "superadmin" && userData?.managedBy !== effectiveUid) {
       return NextResponse.json(
         { error: "この生徒へのアクセス権がありません" },
         { status: 403 }
       );
     }
 
-    const docRef = await addDoc(collection(db, "users", id, "examResults"), {
-      universityId: body.universityId,
-      universityName: body.universityName,
-      facultyId: body.facultyId,
-      facultyName: body.facultyName,
-      status: body.status,
-      examDate: body.examDate ?? null,
-      resultDate: body.resultDate ?? null,
-      notes: body.notes ?? null,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    });
+    const docRef = await adminDb
+      .collection("users")
+      .doc(id)
+      .collection("examResults")
+      .add({
+        universityId: body.universityId,
+        universityName: body.universityName,
+        facultyId: body.facultyId,
+        facultyName: body.facultyName,
+        status: body.status,
+        examDate: body.examDate ?? null,
+        resultDate: body.resultDate ?? null,
+        notes: body.notes ?? null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
 
     const newResult: ExamResult = {
       id: docRef.id,

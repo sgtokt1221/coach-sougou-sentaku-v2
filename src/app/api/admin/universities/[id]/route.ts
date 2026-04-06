@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
+import { adminDb } from "@/lib/firebase/admin";
 import { MOCK_UNIVERSITIES } from "@/lib/matching/mockData";
 import type { University } from "@/lib/types/university";
 
@@ -13,13 +14,10 @@ export async function GET(
   try {
     const { id } = await params;
 
-    const { db } = await import("@/lib/firebase/config");
-    if (db) {
+    if (adminDb) {
       try {
-        const { doc, getDoc } = await import("firebase/firestore");
-        const docRef = doc(db, "universities", id);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
+        const docSnap = await adminDb.doc(`universities/${id}`).get();
+        if (docSnap.exists) {
           return NextResponse.json({ id: docSnap.id, ...docSnap.data() });
         }
       } catch {
@@ -59,14 +57,12 @@ export async function PUT(
       );
     }
 
-    const { db } = await import("@/lib/firebase/config");
-    if (!db) {
+    if (!adminDb) {
       return NextResponse.json({ id, ...body });
     }
 
-    const { doc, setDoc, serverTimestamp } = await import("firebase/firestore");
-    const docRef = doc(db, "universities", id);
-    await setDoc(docRef, { ...body, updatedAt: serverTimestamp() }, { merge: true });
+    const docRef = adminDb.doc(`universities/${id}`);
+    await docRef.set({ ...body, updatedAt: new Date() }, { merge: true });
 
     return NextResponse.json({ id, ...body });
   } catch (error) {

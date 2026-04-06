@@ -155,31 +155,23 @@ export async function GET(
 
   try {
     const { id } = await params;
-    console.log("[student-detail] Start:", { id, uid, role });
 
-    const { db } = await import("@/lib/firebase/config");
-    if (!db) {
-      console.log("[student-detail] No db, returning mock");
+    if (!adminDb) {
       return NextResponse.json({
         ...MOCK_DETAIL,
         profile: { ...MOCK_DETAIL.profile, uid: id },
       });
     }
 
-    const { doc, getDoc, collection, query, orderBy, getDocs } =
-      await import("firebase/firestore");
-
-    console.log("[student-detail] Fetching user doc...");
-    const userDoc = await getDoc(doc(db, "users", id));
-    if (!userDoc.exists()) {
+    const userDoc = await adminDb.doc(`users/${id}`).get();
+    if (!userDoc.exists) {
       return NextResponse.json(
         { error: "生徒が見つかりません" },
         { status: 404 }
       );
     }
 
-    const userData = userDoc.data();
-    console.log("[student-detail] User found, managedBy:", userData.managedBy, "effectiveUid:", uid);
+    const userData = userDoc.data()!;
 
     const { searchParams } = new URL(request.url);
     const viewAs = searchParams.get("viewAs");
@@ -197,19 +189,16 @@ export async function GET(
         }
       } else {
         return NextResponse.json(
-          { error: `この生徒へのアクセス権がありません (managedBy: ${userData.managedBy}, you: ${effectiveUid})` },
+          { error: "この生徒へのアクセス権がありません" },
           { status: 403 }
         );
       }
     }
 
-    console.log("[student-detail] Access OK, fetching essays...");
-    const essaysSnap = await getDocs(
-      query(
-        collection(db, "users", id, "essays"),
-        orderBy("submittedAt", "desc")
-      )
-    );
+    const essaysSnap = await adminDb
+      .collection(`users/${id}/essays`)
+      .orderBy("submittedAt", "desc")
+      .get();
 
     const essays = essaysSnap.docs.map((d) => {
       const data = d.data();
@@ -224,9 +213,9 @@ export async function GET(
       };
     });
 
-    const weaknessesSnap = await getDocs(
-      collection(db, "users", id, "weaknesses")
-    );
+    const weaknessesSnap = await adminDb
+      .collection(`users/${id}/weaknesses`)
+      .get();
     const weaknesses = weaknessesSnap.docs.map((d) => {
       const data = d.data();
       return {
