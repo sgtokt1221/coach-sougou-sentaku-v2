@@ -155,9 +155,11 @@ export async function GET(
 
   try {
     const { id } = await params;
+    console.log("[student-detail] Start:", { id, uid, role });
 
     const { db } = await import("@/lib/firebase/config");
     if (!db) {
+      console.log("[student-detail] No db, returning mock");
       return NextResponse.json({
         ...MOCK_DETAIL,
         profile: { ...MOCK_DETAIL.profile, uid: id },
@@ -167,6 +169,7 @@ export async function GET(
     const { doc, getDoc, collection, query, orderBy, getDocs } =
       await import("firebase/firestore");
 
+    console.log("[student-detail] Fetching user doc...");
     const userDoc = await getDoc(doc(db, "users", id));
     if (!userDoc.exists()) {
       return NextResponse.json(
@@ -176,13 +179,13 @@ export async function GET(
     }
 
     const userData = userDoc.data();
+    console.log("[student-detail] User found, managedBy:", userData.managedBy, "effectiveUid:", uid);
 
     const { searchParams } = new URL(request.url);
     const viewAs = searchParams.get("viewAs");
     const effectiveUid = (role === "superadmin" && viewAs) ? viewAs : uid;
 
     if (role !== "superadmin" && userData.managedBy !== effectiveUid) {
-      // セッションベースのアクセス権チェック（ヘルパー講師用）
       if (role === "teacher") {
         const { hasActiveSessionAccess } = await import("@/lib/api/session-access");
         const hasAccess = await hasActiveSessionAccess(effectiveUid, id);
@@ -194,12 +197,13 @@ export async function GET(
         }
       } else {
         return NextResponse.json(
-          { error: "この生徒へのアクセス権がありません" },
+          { error: `この生徒へのアクセス権がありません (managedBy: ${userData.managedBy}, you: ${effectiveUid})` },
           { status: 403 }
         );
       }
     }
 
+    console.log("[student-detail] Access OK, fetching essays...");
     const essaysSnap = await getDocs(
       query(
         collection(db, "users", id, "essays"),
@@ -269,8 +273,9 @@ export async function GET(
     return NextResponse.json(detail);
   } catch (error) {
     console.error("Admin student detail error:", error);
+    const message = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
-      { error: "生徒詳細の取得中にエラーが発生しました" },
+      { error: `生徒詳細の取得中にエラー: ${message}` },
       { status: 500 }
     );
   }
