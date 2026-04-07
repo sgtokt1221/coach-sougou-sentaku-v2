@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Calendar, Video, Lock } from "lucide-react";
+import { Calendar, Video, Lock, FileText, Clock } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import type { Session, SessionStatus } from "@/lib/types/session";
 import { SESSION_TYPE_LABELS, SESSION_STATUS_LABELS } from "@/lib/types/session";
@@ -105,7 +105,34 @@ export default function StudentSessionsPage() {
                       >
                         {SESSION_STATUS_LABELS[s.status]}
                       </Badge>
+                      {s.type === "group_review" && (
+                        <Badge variant="secondary" className="text-xs">
+                          グループ添削
+                        </Badge>
+                      )}
                     </div>
+
+                    {/* Group Review Additional Info */}
+                    {s.type === "group_review" && (
+                      <div className="mt-2 space-y-1">
+                        {(s as any).theme && (
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <FileText className="size-3" />
+                            テーマ: {(s as any).theme}
+                          </div>
+                        )}
+                        {(s as any).submissionDeadline && (
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Clock className="size-3" />
+                            提出期限: {new Date((s as any).submissionDeadline).toLocaleDateString("ja-JP")}
+                          </div>
+                        )}
+                        {/* TODO: Show submission status */}
+                        <div className="flex items-center gap-1 text-xs">
+                          <span className="text-green-600">提出済み</span> {/* This will be dynamic */}
+                        </div>
+                      </div>
+                    )}
                   </div>
                   {s.meetLink && (
                     <Video className="size-5 text-emerald-600 shrink-0" />

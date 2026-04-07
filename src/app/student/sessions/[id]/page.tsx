@@ -7,11 +7,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Video, ExternalLink, Lock } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowLeft, Video, ExternalLink, Lock, FileText, Clock, ThumbsUp, CheckCircle } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
-import type { Session, SessionStatus } from "@/lib/types/session";
+import type { Session, SessionStatus, SessionSubmission } from "@/lib/types/session";
 import { SESSION_TYPE_LABELS, SESSION_STATUS_LABELS } from "@/lib/types/session";
 import { useAuth } from "@/contexts/AuthContext";
+import { authFetch } from "@/lib/api/client";
 
 const STATUS_VARIANT: Record<
   SessionStatus,
@@ -30,6 +32,12 @@ export default function StudentSessionDetailPage() {
   const isCoach = userProfile?.plan === "coach";
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [submissions, setSubmissions] = useState<SessionSubmission[]>([]);
+  const [userEssays, setUserEssays] = useState<any[]>([]);
+  const [selectedEssayId, setSelectedEssayId] = useState<string>("");
+  const [submitting, setSubmitting] = useState(false);
+  const [userSubmission, setUserSubmission] = useState<SessionSubmission | null>(null);
+  const [votedSubmissions, setVotedSubmissions] = useState<Set<string>>(new Set());
 
   const load = useCallback(async () => {
     if (!isCoach) {
@@ -41,12 +49,100 @@ export default function StudentSessionDetailPage() {
       if (!res.ok) throw new Error();
       const data: Session = await res.json();
       setSession(data);
+
+      // For group_review sessions, load additional data
+      if (data.type === "group_review") {
+        await loadGroupReviewData();
+      }
     } catch {
       setSession(null);
     } finally {
       setLoading(false);
     }
   }, [id, isCoach]);
+
+  const loadGroupReviewData = useCallback(async () => {
+    try {
+      // Load user's essays for submission selection
+      const essaysRes = await authFetch(`/api/essay/history?userId=${userProfile?.uid}`);
+      if (essaysRes.ok) {
+        const essaysData = await essaysRes.json();
+        setUserEssays(essaysData.essays || []);
+      }
+
+      // Load existing submissions for voting
+      const submissionsRes = await authFetch(`/api/sessions/${id}/submissions`);
+      if (submissionsRes.ok) {
+        const submissionsData = await submissionsRes.json();
+        setSubmissions(submissionsData.submissions || []);
+
+        // Check if current user has submitted
+        const userSub = submissionsData.submissions.find((s: SessionSubmission) =>
+          // For students, userId is stripped, so we need to check differently
+          // For now, assume we get this info from a separate check
+          false
+        );
+        setUserSubmission(userSub);
+      }
+    } catch (error) {
+      console.error("Failed to load group review data:", error);
+    }
+  }, [id, userProfile?.uid]);
+
+  const handleSubmitEssay = async () => {
+    if (!selectedEssayId) return;
+
+    setSubmitting(true);
+    try {
+      const res = await authFetch(`/api/sessions/${id}/submissions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ essayId: selectedEssayId })
+      });
+
+      if (res.ok) {
+        const newSubmission = await res.json();
+        setUserSubmission(newSubmission);
+        setSelectedEssayId("");
+        // Reload submissions to get updated list
+        await loadGroupReviewData();
+      } else {
+        const errorData = await res.json();
+        alert(errorData.error || "提出に失敗しました");
+      }
+    } catch (error) {
+      console.error("Submission error:", error);
+      alert("提出中にエラーが発生しました");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleVote = async (submissionId: string) => {
+    if (votedSubmissions.has(submissionId)) return;
+
+    try {
+      const res = await authFetch(`/api/sessions/${id}/submissions/${submissionId}/vote`, {
+        method: 'POST'
+      });
+
+      if (res.ok) {
+        setVotedSubmissions(prev => new Set([...prev, submissionId]));
+        // Update vote count locally
+        setSubmissions(prev => prev.map(sub =>
+          sub.id === submissionId
+            ? { ...sub, voteCount: sub.voteCount + 1 }
+            : sub
+        ));
+      } else {
+        const errorData = await res.json();
+        alert(errorData.error || "投票に失敗しました");
+      }
+    } catch (error) {
+      console.error("Vote error:", error);
+      alert("投票中にエラーが発生しました");
+    }
+  };
 
   useEffect(() => {
     load();
@@ -137,6 +233,37 @@ export default function StudentSessionDetailPage() {
             )}
           </div>
 
+          {/* Group Review Additional Info */}
+          {session.type === "group_review" && (
+            <>
+              <Separator />
+              <div className="space-y-2">
+                {(session as any).theme && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <FileText className="size-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">テーマ:</span>
+                    <span className="font-medium">{(session as any).theme}</span>
+                  </div>
+                )}
+                {(session as any).submissionDeadline && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Clock className="size-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">提出期限:</span>
+                    <span className="font-medium">
+                      {new Date((session as any).submissionDeadline).toLocaleString("ja-JP")}
+                    </span>
+                  </div>
+                )}
+                {(session as any).targetWeakness && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-muted-foreground">対象弱点:</span>
+                    <Badge variant="outline">{(session as any).targetWeakness}</Badge>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
           {session.meetLink && (
             <>
               <Separator />
@@ -155,6 +282,130 @@ export default function StudentSessionDetailPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Group Review Sections */}
+      {session.type === "group_review" && (
+        <>
+          {/* Essay Submission Section */}
+          {!userSubmission && new Date() < new Date((session as any).submissionDeadline) && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">答案提出</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  添削済みの小論文から一つ選んで提出してください。提出された答案は匿名化され、他の参加者と一緒に検討されます。
+                </p>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">提出する答案を選択</label>
+                  <Select value={selectedEssayId} onValueChange={(v) => setSelectedEssayId(v ?? "")}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="答案を選択してください" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {userEssays.map((essay) => (
+                        <SelectItem key={essay.id} value={essay.id}>
+                          {essay.topic} ({essay.universityName} - スコア: {essay.totalScore}点)
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button
+                  onClick={handleSubmitEssay}
+                  disabled={!selectedEssayId || submitting}
+                  className="w-full"
+                >
+                  {submitting ? "提出中..." : "この答案を提出する"}
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Submission Status */}
+          {userSubmission && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <CheckCircle className="size-5 text-green-600" />
+                  提出完了
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">匿名ラベル: {userSubmission.anonymousLabel}</p>
+                    <p className="text-sm text-muted-foreground">{userSubmission.topic}</p>
+                  </div>
+                  <Badge variant="default">提出済み</Badge>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Anonymous Voting Section */}
+          {submissions.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">答案に投票</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  解説してほしい答案に投票してください。投票数の多い答案が講師によって取り上げられます。
+                </p>
+                <div className="space-y-3">
+                  {submissions.map((submission) => (
+                    <Card key={submission.id} className="p-4">
+                      <div className="space-y-3">
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="font-mono">
+                                {submission.anonymousLabel}
+                              </Badge>
+                              {submission.selectedByTeacher && (
+                                <Badge variant="default">取り上げ</Badge>
+                              )}
+                            </div>
+                            {submission.topic && (
+                              <p className="text-sm font-medium">{submission.topic}</p>
+                            )}
+                            {submission.scores && (
+                              <p className="text-xs text-muted-foreground">
+                                スコア: {submission.scores.total}点
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="secondary" className="text-xs">
+                              {submission.voteCount}票
+                            </Badge>
+                            <Button
+                              size="sm"
+                              variant={votedSubmissions.has(submission.id) ? "default" : "outline"}
+                              onClick={() => handleVote(submission.id)}
+                              disabled={votedSubmissions.has(submission.id)}
+                            >
+                              <ThumbsUp className="size-4 mr-1" />
+                              {votedSubmissions.has(submission.id) ? "投票済み" : "解説してほしい"}
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="text-sm text-muted-foreground bg-muted p-3 rounded">
+                          {submission.ocrText.length > 200
+                            ? submission.ocrText.substring(0, 200) + "..."
+                            : submission.ocrText
+                          }
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </>
+      )}
 
       {/* Summary */}
       {session.summary && (

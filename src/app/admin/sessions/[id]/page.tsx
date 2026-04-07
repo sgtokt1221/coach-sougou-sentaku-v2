@@ -30,12 +30,15 @@ import {
   Mic,
   Briefcase,
   StickyNote,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
 import { AnimatedButton } from "@/components/shared/AnimatedButton";
 import { authFetch } from "@/lib/api/client";
-import type { Session, SessionStatus } from "@/lib/types/session";
+import type { Session, SessionStatus, SessionSubmission, GroupSessionFields } from "@/lib/types/session";
 import { SESSION_TYPE_LABELS, SESSION_STATUS_LABELS } from "@/lib/types/session";
+
+type GroupSession = Session & GroupSessionFields;
 import type { StudentDetail, ScoreTrendPoint } from "@/lib/types/admin";
 import type { WeaknessRecord } from "@/lib/types/growth";
 import { getWeaknessReminderLevel } from "@/lib/types/growth";
@@ -105,6 +108,11 @@ export default function AdminSessionDetailPage() {
   const [studentLoading, setStudentLoading] = useState(false);
   const [studentError, setStudentError] = useState(false);
 
+  // Group review submissions
+  const [submissions, setSubmissions] = useState<SessionSubmission[]>([]);
+  const [submissionsLoading, setSubmissionsLoading] = useState(false);
+  const [submissionUpdating, setSubmissionUpdating] = useState<string | null>(null);
+
   const load = useCallback(async () => {
     try {
       const res = await authFetch(`/api/sessions/${id}`);
@@ -122,6 +130,25 @@ export default function AdminSessionDetailPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  // Load submissions for group review sessions
+  useEffect(() => {
+    if (!session || session.type !== "group_review") return;
+
+    setSubmissionsLoading(true);
+    authFetch(`/api/sessions/${id}/submissions`)
+      .then(async (res) => {
+        if (!res.ok) throw new Error();
+        const data: SessionSubmission[] = await res.json();
+        setSubmissions(data);
+      })
+      .catch(() => {
+        setSubmissions([]);
+      })
+      .finally(() => {
+        setSubmissionsLoading(false);
+      });
+  }, [session, id]);
 
   useEffect(() => {
     if (!session?.studentId) return;
@@ -208,6 +235,31 @@ export default function AdminSessionDetailPage() {
     }
   }
 
+  async function toggleSubmissionSelection(submissionId: string, selected: boolean) {
+    setSubmissionUpdating(submissionId);
+    try {
+      const res = await authFetch(`/api/sessions/${id}/submissions/${submissionId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ selectedByTeacher: selected }),
+      });
+      if (!res.ok) throw new Error();
+
+      // Update local state
+      setSubmissions(prev =>
+        prev.map(sub =>
+          sub.id === submissionId
+            ? { ...sub, selectedByTeacher: selected }
+            : sub
+        )
+      );
+    } catch {
+      // silent
+    } finally {
+      setSubmissionUpdating(null);
+    }
+  }
+
   if (loading) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
@@ -257,15 +309,17 @@ export default function AdminSessionDetailPage() {
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="grid gap-3 sm:grid-cols-2 text-sm">
-            <div>
-              <span className="text-muted-foreground">生徒名:</span>{" "}
-              <Link
-                href={`/admin/students/${session.studentId}`}
-                className="font-medium text-primary hover:underline underline-offset-4"
-              >
-                {session.studentName}
-              </Link>
-            </div>
+            {session.type !== "group_review" && (
+              <div>
+                <span className="text-muted-foreground">生徒名:</span>{" "}
+                <Link
+                  href={`/admin/students/${session.studentId}`}
+                  className="font-medium text-primary hover:underline underline-offset-4"
+                >
+                  {session.studentName}
+                </Link>
+              </div>
+            )}
             <div>
               <span className="text-muted-foreground">講師名:</span>{" "}
               <span className="font-medium">{session.teacherName}</span>
@@ -287,6 +341,30 @@ export default function AdminSessionDetailPage() {
                 <span className="text-muted-foreground">時間:</span>{" "}
                 <span className="font-medium">{session.duration}分</span>
               </div>
+            )}
+
+            {/* Group review specific fields */}
+            {session.type === "group_review" && (
+              <>
+                {(session as GroupSession).theme && (
+                  <div>
+                    <span className="text-muted-foreground">テーマ:</span>{" "}
+                    <span className="font-medium">{(session as GroupSession).theme}</span>
+                  </div>
+                )}
+                {(session as GroupSession).targetWeakness && (
+                  <div>
+                    <span className="text-muted-foreground">対象の弱点:</span>{" "}
+                    <span className="font-medium">{(session as GroupSession).targetWeakness}</span>
+                  </div>
+                )}
+                <div className="sm:col-span-2">
+                  <span className="text-muted-foreground">提出期限:</span>{" "}
+                  <span className="font-medium">
+                    {new Date((session as GroupSession).submissionDeadline).toLocaleString("ja-JP")}
+                  </span>
+                </div>
+              </>
             )}
           </div>
 
@@ -407,13 +485,121 @@ export default function AdminSessionDetailPage() {
       </Card>
 
       {/* Student Info Panel - only for scheduled/in_progress */}
-      {showStudentPanel && (
+      {showStudentPanel && session.type !== "group_review" && (
         <StudentInfoPanel
           studentId={session.studentId}
           student={student}
           loading={studentLoading}
           error={studentError}
         />
+      )}
+
+      {/* Group Review Submissions */}
+      {session.type === "group_review" && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">提出された小論文</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {submissionsLoading ? (
+              <div className="space-y-3">
+                {[...Array(3)].map((_, i) => (
+                  <Skeleton key={i} className="h-24 w-full" />
+                ))}
+              </div>
+            ) : submissions.length === 0 ? (
+              <div className="text-center py-8">
+                <FileText className="size-8 mx-auto text-muted-foreground mb-2" />
+                <p className="text-sm text-muted-foreground mb-1">
+                  まだ提出された小論文がありません
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  提出期限: {(session as GroupSession).submissionDeadline ?
+                    new Date((session as GroupSession).submissionDeadline).toLocaleString("ja-JP") : "未設定"}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Stats */}
+                <div className="flex items-center gap-4 text-sm text-muted-foreground pb-2 border-b">
+                  <span>総提出数: <strong className="text-foreground">{submissions.length}件</strong></span>
+                  <span>選択済み: <strong className="text-foreground">{submissions.filter(s => s.selectedByTeacher).length}件</strong></span>
+                  {(session as GroupSession).submissionDeadline && (
+                    <span>期限: {new Date((session as GroupSession).submissionDeadline).toLocaleString("ja-JP")}</span>
+                  )}
+                </div>
+
+                {/* Submissions List */}
+                <div className="space-y-3">
+                  {submissions
+                    .sort((a, b) => b.voteCount - a.voteCount) // Sort by votes descending
+                    .map((submission) => (
+                    <div
+                      key={submission.id}
+                      className={`rounded-lg border p-4 ${
+                        submission.selectedByTeacher
+                          ? "border-primary bg-primary/5"
+                          : "border-border"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="secondary" className="text-xs">
+                              {submission.anonymousLabel}
+                            </Badge>
+                            {submission.topic && (
+                              <Badge variant="outline" className="text-xs">
+                                {submission.topic}
+                              </Badge>
+                            )}
+                          </div>
+
+                          {submission.scores?.total && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-muted-foreground">スコア:</span>
+                              <span className={`font-medium ${scoreColor(submission.scores.total)}`}>
+                                {submission.scores.total}/50
+                              </span>
+                            </div>
+                          )}
+
+                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                            <span>👍 {submission.voteCount} votes</span>
+                            <span>{new Date(submission.createdAt).toLocaleDateString("ja-JP")}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant={submission.selectedByTeacher ? "secondary" : "outline"}
+                            onClick={() => toggleSubmissionSelection(
+                              submission.id,
+                              !submission.selectedByTeacher
+                            )}
+                            disabled={submissionUpdating === submission.id}
+                          >
+                            {submissionUpdating === submission.id ? (
+                              <Loader2 className="size-4 animate-spin" />
+                            ) : submission.selectedByTeacher ? (
+                              <>
+                                <Check className="size-4 mr-1" />
+                                選択中
+                              </>
+                            ) : (
+                              "取り上げる"
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       )}
 
       {/* Summary */}

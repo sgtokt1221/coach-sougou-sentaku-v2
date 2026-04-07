@@ -18,7 +18,7 @@ import { ArrowLeft, Save, Loader2, UserPlus } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import { useAuthSWR } from "@/lib/api/swr";
 import { toast } from "sonner";
-import type { SessionType } from "@/lib/types/session";
+import type { SessionType, GroupSessionCreateRequest } from "@/lib/types/session";
 import { SESSION_TYPE_LABELS } from "@/lib/types/session";
 import type { StudentListItem, TeacherListItem } from "@/lib/types/admin";
 
@@ -31,6 +31,10 @@ export default function NewSessionPage() {
   const [scheduledAt, setScheduledAt] = useState("");
   const [meetLink, setMeetLink] = useState("");
   const [notes, setNotes] = useState("");
+  // Group review specific fields
+  const [theme, setTheme] = useState("");
+  const [targetWeakness, setTargetWeakness] = useState("");
+  const [submissionDeadline, setSubmissionDeadline] = useState("");
 
   const { data: students, isLoading: studentsLoading } =
     useAuthSWR<StudentListItem[]>("/api/admin/students");
@@ -44,26 +48,51 @@ export default function NewSessionPage() {
   const isExternalTeacher =
     selectedTeacher && !myTeachers?.some((t) => t.uid === teacherId);
 
-  const canSubmit = studentId && teacherId && type && scheduledAt;
+  const canSubmit = teacherId && type && scheduledAt &&
+    (type !== "group_review" ? studentId : submissionDeadline);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!canSubmit || !selectedStudent || !selectedTeacher) return;
+    if (!canSubmit || !selectedTeacher) return;
+    if (type !== "group_review" && (!selectedStudent)) return;
     setSaving(true);
     try {
-      const res = await authFetch("/api/sessions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      let requestBody: any;
+
+      if (type === "group_review") {
+        // Group review session
+        const groupRequest: GroupSessionCreateRequest = {
+          teacherId,
+          teacherName: selectedTeacher.displayName,
+          type: "group_review",
+          scheduledAt,
+          meetLink: meetLink || undefined,
+          notes: notes || undefined,
+          theme: theme || undefined,
+          targetWeakness: targetWeakness || undefined,
+          submissionDeadline,
+          maxParticipants: 10, // Default value
+          participantIds: [], // Empty initially
+        };
+        requestBody = groupRequest;
+      } else {
+        // Regular session
+        requestBody = {
           teacherId,
           studentId,
           teacherName: selectedTeacher.displayName,
-          studentName: selectedStudent.displayName,
+          studentName: selectedStudent!.displayName,
           type,
           scheduledAt,
           meetLink: meetLink || undefined,
           notes: notes || undefined,
-        }),
+        };
+      }
+
+      const res = await authFetch("/api/sessions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => null);
@@ -95,28 +124,30 @@ export default function NewSessionPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="student">生徒</Label>
-                {studentsLoading ? (
-                  <div className="flex h-10 items-center gap-2 text-sm text-muted-foreground">
-                    <Loader2 className="size-4 animate-spin" />
-                    読み込み中...
-                  </div>
-                ) : (
-                  <Select value={studentId} onValueChange={(v) => setStudentId(v ?? "")}>
-                    <SelectTrigger id="student">
-                      <SelectValue placeholder="生徒を選択" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(students ?? []).map((s) => (
-                        <SelectItem key={s.uid} value={s.uid}>
-                          {s.displayName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              </div>
+              {type !== "group_review" && (
+                <div className="space-y-2">
+                  <Label htmlFor="student">生徒</Label>
+                  {studentsLoading ? (
+                    <div className="flex h-10 items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="size-4 animate-spin" />
+                      読み込み中...
+                    </div>
+                  ) : (
+                    <Select value={studentId} onValueChange={(v) => setStudentId(v ?? "")}>
+                      <SelectTrigger id="student">
+                        <SelectValue placeholder="生徒を選択" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(students ?? []).map((s) => (
+                          <SelectItem key={s.uid} value={s.uid}>
+                            {s.displayName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="teacher">講師</Label>
                 {teachersLoading ? (
@@ -196,6 +227,41 @@ export default function NewSessionPage() {
                 />
               </div>
             </div>
+
+            {/* Group review specific fields */}
+            {type === "group_review" && (
+              <>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="theme">テーマ (任意)</Label>
+                    <Input
+                      id="theme"
+                      placeholder="添削テーマを入力..."
+                      value={theme}
+                      onChange={(e) => setTheme(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="targetWeakness">対象の弱点 (任意)</Label>
+                    <Input
+                      id="targetWeakness"
+                      placeholder="論理的一貫性など..."
+                      value={targetWeakness}
+                      onChange={(e) => setTargetWeakness(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="submissionDeadline">小論文提出期限 *</Label>
+                  <Input
+                    id="submissionDeadline"
+                    type="datetime-local"
+                    value={submissionDeadline}
+                    onChange={(e) => setSubmissionDeadline(e.target.value)}
+                  />
+                </div>
+              </>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="meetLink">Google Meetリンク (任意)</Label>

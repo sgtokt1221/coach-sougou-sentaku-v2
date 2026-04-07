@@ -158,9 +158,45 @@ export async function POST(request: NextRequest) {
   const authResult = await requireRole(request, ["admin", "superadmin"]);
   if (authResult instanceof NextResponse) return authResult;
 
-  const body: SessionCreateRequest = await request.json();
-
+  const body = await request.json();
   const now = new Date().toISOString();
+  const isGroup = body.type === "group_review";
+
+  const { adminDb } = await import("@/lib/firebase/admin");
+
+  // Group review session
+  if (isGroup) {
+    const sessionData = {
+      teacherId: body.teacherId,
+      teacherName: body.teacherName,
+      createdByAdminId: authResult.uid,
+      type: "group_review" as const,
+      status: "scheduled" as const,
+      scheduledAt: body.scheduledAt,
+      duration: body.duration ?? null,
+      meetLink: body.meetLink ?? null,
+      notes: body.notes ?? null,
+      theme: body.theme ?? null,
+      targetWeakness: body.targetWeakness ?? null,
+      submissionDeadline: body.submissionDeadline,
+      maxParticipants: body.maxParticipants ?? 20,
+      participantIds: body.participantIds ?? [],
+      votingEnabled: true,
+      sharedWithStudent: true,
+      studentId: "",
+      studentName: "",
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    if (adminDb) {
+      const ref = await adminDb.collection("sessions").add(sessionData);
+      return NextResponse.json({ ...sessionData, id: ref.id });
+    }
+    return NextResponse.json({ ...sessionData, id: `session-${Date.now()}` });
+  }
+
+  // 1:1 session (existing logic)
   const session: Session = {
     id: `session-${Date.now()}`,
     ...body,
@@ -171,10 +207,8 @@ export async function POST(request: NextRequest) {
     updatedAt: now,
   };
 
-  const { adminDb } = await import("@/lib/firebase/admin");
   if (adminDb) {
     try {
-      // 生徒のmanagedBy + planチェック
       const studentDoc = await adminDb.doc(`users/${body.studentId}`).get();
       const studentData = studentDoc.data();
       if (
@@ -186,7 +220,6 @@ export async function POST(request: NextRequest) {
           { status: 403 }
         );
       }
-      // コーチプランでない生徒にはセッション作成不可（undefinedはselfとして扱う）
       if ((studentData?.plan ?? "self") !== "coach") {
         return NextResponse.json(
           { error: "コーチプランの生徒のみセッションを作成できます" },
