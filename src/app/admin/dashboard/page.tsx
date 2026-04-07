@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import { Users, FileText, BarChart3, AlertTriangle, Trophy, FileWarning } from "lucide-react";
+import { Users, FileText, BarChart3, AlertTriangle, Trophy, FileWarning, TrendingDown, TrendingUp, Sparkles, Target } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { CountUp } from "@/components/shared/CountUp";
 import { AnimatedList } from "@/components/shared/AnimatedList";
@@ -111,6 +111,10 @@ export default function AdminDashboard() {
   const { data: rawData, isLoading } = useAuthSWR<StudentListItem[]>("/api/admin/students");
   const { data: dashboardData } = useAuthSWR<{ examResultStats: ExamResultStats }>("/api/admin/dashboard");
   const { data: alertsData } = useAuthSWR<AlertItem[]>("/api/admin/alerts");
+  const { data: weeklyWeaknesses } = useAuthSWR<{
+    weeklyTop: { area: string; count: number; studentCount: number }[];
+    comparedToLastWeek: { improved: string[]; worsened: string[]; new: string[] };
+  }>("/api/admin/weekly-weaknesses");
   const students = rawData ?? mockStudents;
   const loading = isLoading;
 
@@ -255,6 +259,58 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         </Link>
+      )}
+
+      {/* Weekly Common Weaknesses */}
+      {weeklyWeaknesses && weeklyWeaknesses.weeklyTop.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Target className="size-4" />
+              今週の共通弱点
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {weeklyWeaknesses.weeklyTop.map((w, i) => {
+              const isWorsened = weeklyWeaknesses.comparedToLastWeek.worsened.includes(w.area);
+              const isNew = weeklyWeaknesses.comparedToLastWeek.new.includes(w.area);
+              return (
+                <div key={w.area} className="flex items-center justify-between rounded-lg border p-3">
+                  <div className="flex items-center gap-3">
+                    <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold">
+                      {i + 1}
+                    </span>
+                    <div>
+                      <p className="text-sm font-medium">{w.area}</p>
+                      <p className="text-xs text-muted-foreground">{w.studentCount}名の生徒</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {isWorsened && (
+                      <Badge variant="destructive" className="text-[10px] gap-0.5">
+                        <TrendingUp className="size-3" />悪化
+                      </Badge>
+                    )}
+                    {isNew && (
+                      <Badge className="bg-blue-500 text-[10px] gap-0.5">
+                        <Sparkles className="size-3" />NEW
+                      </Badge>
+                    )}
+                    <Badge variant="outline" className="text-xs">{w.count}件</Badge>
+                  </div>
+                </div>
+              );
+            })}
+            {weeklyWeaknesses.comparedToLastWeek.improved.length > 0 && (
+              <div className="flex items-center gap-2 rounded-lg bg-green-50 dark:bg-green-950/20 p-3">
+                <TrendingDown className="size-4 text-green-600" />
+                <p className="text-xs text-green-700 dark:text-green-400">
+                  改善: {weeklyWeaknesses.comparedToLastWeek.improved.join("、")}
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
