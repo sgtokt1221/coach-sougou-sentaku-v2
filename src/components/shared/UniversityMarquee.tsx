@@ -35,10 +35,10 @@ function UniversityItem({ name, file, short, color, theme }: { name: string; fil
   const [imgError, setImgError] = useState(false);
 
   return (
-    <div className="flex items-center px-5 shrink-0 select-none" title={name}>
+    <div className="flex items-center px-3 lg:px-5 shrink-0 select-none" title={name}>
       {imgError ? (
         <div
-          className="flex items-center justify-center h-12 w-12 rounded-xl text-white text-sm font-bold shrink-0"
+          className="flex items-center justify-center h-9 w-9 lg:h-12 lg:w-12 rounded-lg lg:rounded-xl text-white text-xs lg:text-sm font-bold shrink-0"
           style={{ backgroundColor: color }}
         >
           {short.slice(0, 2)}
@@ -49,7 +49,7 @@ function UniversityItem({ name, file, short, color, theme }: { name: string; fil
           alt={name}
           width={120}
           height={56}
-          className={`h-14 w-auto shrink-0 object-contain transition-opacity ${
+          className={`h-10 lg:h-14 w-auto shrink-0 object-contain transition-opacity ${
             theme === "dark"
               ? "brightness-0 invert opacity-50 hover:opacity-80"
               : "opacity-60 hover:opacity-90"

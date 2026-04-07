@@ -64,31 +64,31 @@ export default function FeatureSlider() {
   const Icon = feature.icon;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-6">
       {/* Feature card */}
       <div
-        className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-6 transition-opacity duration-200"
+        className="rounded-xl lg:rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4 lg:p-6 transition-opacity duration-200"
         style={{ opacity: fade ? 1 : 0 }}
       >
         {/* Badge */}
-        <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-semibold tracking-wide bg-gradient-to-r ${feature.accent} text-white`}>
+        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 lg:px-3 lg:py-1 rounded-full text-[10px] lg:text-[11px] font-semibold tracking-wide bg-gradient-to-r ${feature.accent} text-white`}>
           <Icon className="size-3" />
           {feature.label}
         </span>
 
         {/* Title + Description stacked */}
-        <div className="mt-4 max-w-[90%]">
-          <h2 className="text-[1.25rem] leading-snug font-bold text-white whitespace-pre-line">
+        <div className="mt-3 lg:mt-4 max-w-[90%]">
+          <h2 className="text-base lg:text-[1.25rem] leading-snug font-bold text-white whitespace-pre-line">
             {feature.title}
           </h2>
-          <p className="mt-3 text-[13px] leading-relaxed text-white/40">
+          <p className="mt-2 lg:mt-3 text-xs lg:text-[13px] leading-relaxed text-white/40 line-clamp-2 lg:line-clamp-none">
             {feature.description}
           </p>
         </div>
       </div>
 
-      {/* Tab navigation */}
-      <div className="flex gap-1">
+      {/* Navigation: dots on mobile, icon tabs on desktop */}
+      <div className="flex gap-1 lg:gap-1">
         {FEATURES.map((f, i) => {
           const FIcon = f.icon;
           const active = i === current;
@@ -96,13 +96,18 @@ export default function FeatureSlider() {
             <button
               key={f.label}
               onClick={() => goTo(i)}
-              className={`group flex items-center gap-1.5 px-3 py-2 rounded-lg text-[12px] font-medium transition-all duration-200 ${
+              className={`cursor-pointer transition-all duration-200 ${
                 active
-                  ? "bg-white/10 text-white"
-                  : "text-white/25 hover:text-white/40 hover:bg-white/[0.04]"
-              }`}
+                  ? "lg:bg-white/10 lg:text-white"
+                  : "lg:text-white/25 lg:hover:text-white/40 lg:hover:bg-white/[0.04]"
+              } max-lg:p-1 lg:flex lg:items-center lg:gap-1.5 lg:px-3 lg:py-2 lg:rounded-lg lg:text-[12px] lg:font-medium`}
             >
-              <FIcon className="size-3.5" />
+              {/* Mobile: dot indicator */}
+              <span className={`block lg:hidden size-2 rounded-full transition-all duration-200 ${
+                active ? "bg-white scale-125" : "bg-white/25"
+              }`} />
+              {/* Desktop: icon + label */}
+              <FIcon className="size-3.5 hidden lg:block" />
               <span className="hidden xl:inline">{f.label}</span>
             </button>
           );

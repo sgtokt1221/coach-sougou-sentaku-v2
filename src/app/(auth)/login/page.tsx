@@ -248,27 +248,27 @@ export default function LoginPage() {
         className="lg:hidden h-screen overflow-y-auto snap-y snap-mandatory"
       >
         {/* Section 1: Branding splash */}
-        <section className="relative flex h-screen snap-start flex-col justify-between overflow-hidden px-6 py-8">
+        <section className="relative flex h-screen snap-start flex-col overflow-hidden px-5 py-6">
           <div className="absolute inset-0 bg-gradient-to-br from-[oklch(0.22_0.03_260)] via-[oklch(0.18_0.04_220)] to-[oklch(0.15_0.02_260)]" />
           <div className="relative z-10 flex flex-col justify-between h-full">
             {/* Logo */}
-            <div className="animate-fade-in">
+            <div className="animate-fade-in pt-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo-dark.svg" alt="coach for 総合型選抜" className="h-10" />
+              <img src="/logo-dark.svg" alt="coach for 総合型選抜" className="h-8" />
             </div>
 
             {/* Hero */}
-            <div className="space-y-6">
+            <div className="space-y-5 -mt-4">
               <div className="animate-fade-in-up" style={{ animationDelay: "200ms" }}>
-                <h1 className="font-heading text-3xl font-bold leading-[1.15] tracking-tight text-white">
+                <h1 className="font-heading text-2xl font-bold leading-[1.2] tracking-tight text-white">
                   総合型選抜を、
                   <br />
                   <span className="bg-gradient-to-r from-[oklch(0.70_0.16_175)] to-[oklch(0.80_0.18_75)] bg-clip-text text-transparent">
                     AIとともに。
                   </span>
                 </h1>
-                <p className="mt-3 text-sm leading-relaxed text-white/40 max-w-xs">
-                  小論文添削、模擬面接、出願書類作成、活動実績の構造化。あなたの合格までの道のりを、AIが伴走します。
+                <p className="mt-2 text-xs leading-relaxed text-white/40">
+                  小論文添削、模擬面接、出願書類作成。あなたの合格をAIが伴走します。
                 </p>
               </div>
               <div className="animate-fade-in-up" style={{ animationDelay: "400ms" }}>
@@ -277,13 +277,14 @@ export default function LoginPage() {
             </div>
 
             {/* Marquee + scroll hint */}
-            <div className="space-y-4 animate-fade-in-up" style={{ animationDelay: "600ms" }}>
+            <div className="space-y-3 animate-fade-in-up pb-2" style={{ animationDelay: "600ms" }}>
               <div>
-                <p className="text-[11px] uppercase tracking-widest text-white/25 mb-1.5">23大学対応</p>
+                <p className="text-[10px] uppercase tracking-widest text-white/25 mb-1">対応大学</p>
                 <UniversityMarquee />
               </div>
-              <div className="flex justify-center">
-                <ChevronDown className="size-5 text-white/30 animate-bounce" />
+              <div className="flex flex-col items-center gap-1">
+                <span className="text-[10px] text-white/20">スワイプしてログイン</span>
+                <ChevronDown className="size-4 text-white/30 animate-bounce" />
               </div>
             </div>
           </div>
