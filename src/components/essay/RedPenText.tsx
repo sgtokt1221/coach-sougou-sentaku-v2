@@ -108,9 +108,11 @@ export function RedPenText({ text, corrections }: RedPenTextProps) {
 
   return (
     <div className="space-y-3">
-      {/* 原稿用紙 */}
+      {/* 原稿用紙 — ボトムシート表示時は下にパディング確保 */}
       <div
-        className="relative rounded-lg border border-amber-200/80 bg-[#fdf8f0] px-5 py-0"
+        className={`relative rounded-lg border border-amber-200/80 bg-[#fdf8f0] px-5 py-0 ${
+          selectedCorrection ? "pb-0 lg:pb-0" : ""
+        }`}
         style={{
           backgroundImage: `repeating-linear-gradient(
             transparent 0px,
@@ -134,13 +136,13 @@ export function RedPenText({ text, corrections }: RedPenTextProps) {
         </p>
       </div>
 
-      {/* 選択中の修正案（本文の下に固定表示） */}
+      {/* Desktop: インラインポップアップ（従来通り） */}
       {selectedCorrection && selectedStyles && (
-        <div className={`rounded-lg border ${selectedStyles.border} ${selectedStyles.bg} p-4 relative animate-in fade-in slide-in-from-top-2 duration-200`}>
+        <div className={`hidden lg:block rounded-lg border ${selectedStyles.border} ${selectedStyles.bg} p-4 relative animate-in fade-in slide-in-from-top-2 duration-200`}>
           <button
             type="button"
             onClick={() => setSelected(null)}
-            className="absolute top-2 right-2 text-muted-foreground hover:text-foreground"
+            className="absolute top-2 right-2 text-muted-foreground hover:text-foreground cursor-pointer"
           >
             <X className="size-4" />
           </button>
@@ -154,6 +156,42 @@ export function RedPenText({ text, corrections }: RedPenTextProps) {
               <span className="font-medium text-primary">{selectedCorrection.suggestion}</span>
             </div>
             <p className="text-xs text-muted-foreground">{selectedCorrection.reason}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile: ボトムシート（画面下部に固定表示） */}
+      {selectedCorrection && selectedStyles && (
+        <div className="lg:hidden fixed inset-x-0 bottom-0 z-50 animate-in slide-in-from-bottom duration-200">
+          {/* 背景オーバーレイ */}
+          <button
+            type="button"
+            onClick={() => setSelected(null)}
+            className="fixed inset-0 bg-black/20 -z-10 cursor-pointer"
+            aria-label="閉じる"
+          />
+          <div className={`rounded-t-2xl border-t ${selectedStyles.border} ${selectedStyles.bg} p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-lg`}>
+            <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-black/10" />
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Badge variant="outline" className={`text-[10px] ${selectedStyles.badge}`}>
+                  {selectedStyles.label}
+                </Badge>
+                <button
+                  type="button"
+                  onClick={() => setSelected(null)}
+                  className="text-muted-foreground hover:text-foreground cursor-pointer p-1"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+              <div className="flex items-start gap-2 text-sm flex-wrap">
+                <span className="line-through text-muted-foreground">{selectedCorrection.original}</span>
+                <ArrowRight className="size-3 text-muted-foreground shrink-0 mt-1" />
+                <span className="font-medium text-primary">{selectedCorrection.suggestion}</span>
+              </div>
+              <p className="text-xs text-muted-foreground">{selectedCorrection.reason}</p>
+            </div>
           </div>
         </div>
       )}
