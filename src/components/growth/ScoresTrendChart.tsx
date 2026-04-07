@@ -7,6 +7,7 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
+  ReferenceLine,
   ResponsiveContainer,
 } from "recharts";
 import { CHART_COLORS, CHART_ANIMATION, GRID_STYLE } from "@/components/charts/theme";
@@ -56,6 +57,13 @@ export function ScoresTrendChart({ data }: ScoresTrendChartProps) {
           tickLine={false}
           axisLine={false}
           width={30}
+        />
+        <ReferenceLine
+          y={35}
+          stroke="#10B981"
+          strokeDasharray="6 4"
+          strokeWidth={1.5}
+          label={{ value: "合格ライン", position: "insideTopRight", fill: "#10B981", fontSize: 11 }}
         />
         <Tooltip
           content={<CustomTooltip />}

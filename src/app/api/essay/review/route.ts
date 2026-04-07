@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
     const questionContext = questionType && questionType !== "essay"
       ? { questionType: questionType as "english-reading" | "data-analysis" | "mixed", sourceText, chartDataSummary }
       : undefined;
-    const systemPrompt = buildEssayReviewPrompt(admissionPolicy, weaknessList, undefined, questionContext);
+    const systemPrompt = buildEssayReviewPrompt(admissionPolicy, weaknessList, undefined, questionContext, body.wordLimit);
 
     let userMessage = "";
     if (topic) userMessage += `【テーマ】${topic}\n\n`;

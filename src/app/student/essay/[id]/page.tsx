@@ -25,6 +25,10 @@ import {
   SpellCheck,
   Copy,
   Check,
+  Star,
+  BarChart3,
+  Target,
+  RefreshCw,
 } from "lucide-react";
 import {
   Radar,
@@ -36,7 +40,7 @@ import {
 } from "recharts";
 import { ScoreRing } from "@/components/shared/ScoreRing";
 import { RedPenText } from "@/components/essay/RedPenText";
-import type { GrowthEvent } from "@/lib/types/essay";
+import type { GrowthEvent, QuantitativeAnalysis } from "@/lib/types/essay";
 
 interface EssayScores {
   structure: number;
@@ -80,6 +84,9 @@ interface EssayFeedback {
   topicInsights?: TopicInsights;
   brushedUpText?: string;
   languageCorrections?: LanguageCorrection[];
+  priorityImprovement?: string;
+  nextChallenge?: string;
+  quantitativeAnalysis?: QuantitativeAnalysis;
 }
 
 interface EssayResult {
@@ -92,6 +99,8 @@ interface EssayResult {
   scores: EssayScores;
   feedback: EssayFeedback;
   growthEvents?: GrowthEvent[];
+  targetUniversity?: string;
+  targetFaculty?: string;
 }
 
 
@@ -246,6 +255,80 @@ export default function EssayResultPage() {
         </CardContent>
       </Card>
 
+      {/* Quantitative Analysis Panel */}
+      {result.feedback.quantitativeAnalysis && (() => {
+        const qa = result.feedback.quantitativeAnalysis;
+        return (
+          <Card>
+            <CardHeader><CardTitle className="text-base flex items-center gap-2"><BarChart3 className="size-4" />定量分析</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              {/* Word count + fill rate */}
+              {qa.wordLimit && (
+                <div>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span>字数</span>
+                    <span>{qa.wordCount} / {qa.wordLimit}字（{qa.fillRate}%）</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-muted overflow-hidden">
+                    <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(qa.fillRate ?? 0, 100)}%`, backgroundColor: (qa.fillRate ?? 0) >= 90 ? '#10B981' : (qa.fillRate ?? 0) >= 80 ? '#F59E0B' : '#EF4444' }} />
+                  </div>
+                </div>
+              )}
+
+              {/* Stats grid */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-lg border p-3 text-center">
+                  <p className="text-2xl font-bold">{qa.evidenceCount}</p>
+                  <p className="text-xs text-muted-foreground">根拠・具体例</p>
+                  {qa.evidenceCount < 2 && <p className="text-xs text-amber-500 mt-1">2個以上推奨</p>}
+                </div>
+                <div className="rounded-lg border p-3 text-center">
+                  <p className="text-2xl font-bold">{qa.connectorVariety}</p>
+                  <p className="text-xs text-muted-foreground">接続詞の種類</p>
+                  {qa.connectorVariety < 4 && <p className="text-xs text-amber-500 mt-1">4種以上が理想</p>}
+                </div>
+                <div className="rounded-lg border p-3 text-center">
+                  <p className="text-2xl font-bold">{qa.sentenceCount}</p>
+                  <p className="text-xs text-muted-foreground">文の数</p>
+                </div>
+                <div className="rounded-lg border p-3 text-center">
+                  <p className="text-2xl font-bold">{qa.paragraphCount}</p>
+                  <p className="text-xs text-muted-foreground">段落数</p>
+                </div>
+              </div>
+
+              {/* Paragraph ratio bar */}
+              <div>
+                <p className="text-sm font-medium mb-2">段落構成</p>
+                <div className="flex h-4 rounded-full overflow-hidden">
+                  <div className="bg-blue-400" style={{ width: `${qa.paragraphRatio.intro}%` }} title={`序論 ${qa.paragraphRatio.intro}%`} />
+                  <div className="bg-emerald-400" style={{ width: `${qa.paragraphRatio.body}%` }} title={`本論 ${qa.paragraphRatio.body}%`} />
+                  <div className="bg-purple-400" style={{ width: `${qa.paragraphRatio.conclusion}%` }} title={`結論 ${qa.paragraphRatio.conclusion}%`} />
+                </div>
+                <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                  <span>序論 {qa.paragraphRatio.intro}%</span>
+                  <span>本論 {qa.paragraphRatio.body}%</span>
+                  <span>結論 {qa.paragraphRatio.conclusion}%</span>
+                </div>
+              </div>
+
+              {/* Gap to pass */}
+              {qa.gapToPass > 0 ? (
+                <div className="flex items-center gap-2 rounded-lg bg-red-50 dark:bg-red-950/30 p-3">
+                  <Badge variant="destructive" className="text-xs">あと{qa.gapToPass}点</Badge>
+                  <span className="text-sm text-red-700 dark:text-red-400">合格ライン（{qa.passTarget}点）まで</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 rounded-lg bg-green-50 dark:bg-green-950/30 p-3">
+                  <Badge className="bg-green-500 text-xs">合格圏内</Badge>
+                  <span className="text-sm text-green-700 dark:text-green-400">合格ライン（{qa.passTarget}点）をクリア</span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        );
+      })()}
+
       {/* 繰り返し弱点 */}
       {result.feedback.repeatedIssues.length > 0 && (
         <Card className="rounded-2xl border-border/40">
@@ -385,6 +468,21 @@ export default function EssayResultPage() {
                 </li>
               ))}
             </ul>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Priority Improvement Card */}
+      {result.feedback.priorityImprovement && (
+        <Card className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <Star className="size-5 text-amber-500 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">最優先の改善ポイント</p>
+                <p className="mt-1 text-sm text-amber-700 dark:text-amber-400">{result.feedback.priorityImprovement}</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
       )}
@@ -544,6 +642,37 @@ export default function EssayResultPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Next Challenge Card */}
+      {result.feedback.nextChallenge && (
+        <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <Target className="size-5 text-blue-500 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-blue-800 dark:text-blue-300">次回のチャレンジ</p>
+                <p className="mt-1 text-sm text-blue-700 dark:text-blue-400">{result.feedback.nextChallenge}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Retry Button */}
+      <Button
+        variant="outline"
+        className="w-full cursor-pointer"
+        onClick={() => {
+          const params = new URLSearchParams();
+          if (result.topic) params.set("topic", result.topic);
+          if (result.targetUniversity) params.set("universityId", result.targetUniversity);
+          if (result.targetFaculty) params.set("facultyId", result.targetFaculty);
+          router.push(`/student/essay/new?${params.toString()}`);
+        }}
+      >
+        <RefreshCw className="size-4 mr-2" />
+        同じテーマで書き直す
+      </Button>
 
       <div className="flex flex-col sm:flex-row gap-3">
         <Button

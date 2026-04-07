@@ -365,6 +365,7 @@ export default function EssayNewPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           essayId: id, ocrText: directText, universityId, facultyId, topic,
+          wordLimit: pastQuestion?.wordLimit ?? selectedTheme?.wordLimit,
           ...(pastQuestion && {
             questionType: pastQuestion.questionType,
             sourceText: pastQuestion.sourceText,
@@ -401,6 +402,7 @@ export default function EssayNewPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           essayId, ocrText, universityId, facultyId, topic,
+          wordLimit: pastQuestion?.wordLimit ?? selectedTheme?.wordLimit,
           ...(pastQuestion && {
             questionType: pastQuestion.questionType,
             sourceText: pastQuestion.sourceText,

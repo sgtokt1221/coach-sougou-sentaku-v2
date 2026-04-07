@@ -36,6 +36,23 @@ export interface LanguageCorrection {
   reason: string;
 }
 
+export interface QuantitativeAnalysis {
+  wordCount: number;
+  wordLimit: number | null;
+  fillRate: number | null;
+  sentenceCount: number;
+  paragraphCount: number;
+  paragraphRatio: {
+    intro: number;
+    body: number;
+    conclusion: number;
+  };
+  evidenceCount: number;
+  connectorVariety: number;
+  passTarget: number;
+  gapToPass: number;
+}
+
 export interface EssayFeedback {
   overall: string;
   goodPoints: string[];
@@ -45,6 +62,9 @@ export interface EssayFeedback {
   topicInsights?: TopicInsights;
   brushedUpText?: string;
   languageCorrections?: LanguageCorrection[];
+  priorityImprovement?: string;
+  nextChallenge?: string;
+  quantitativeAnalysis?: QuantitativeAnalysis;
 }
 
 export interface RepeatedIssue {
@@ -66,6 +86,7 @@ export interface EssayReviewRequest {
   universityId: string;
   facultyId: string;
   topic?: string;
+  wordLimit?: number;
   questionType?: "essay" | "english-reading" | "data-analysis" | "mixed";
   sourceText?: string;
   chartDataSummary?: string;
