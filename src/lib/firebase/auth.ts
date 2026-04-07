@@ -5,6 +5,7 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   updateProfile,
+  sendPasswordResetEmail,
 } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "./config";
@@ -73,6 +74,10 @@ export async function signUpWithEmail(
     updatedAt: serverTimestamp(),
   });
   return user;
+}
+
+export async function resetPassword(email: string) {
+  await sendPasswordResetEmail(requireAuth(), email);
 }
 
 export async function signOutUser() {
