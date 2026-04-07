@@ -72,20 +72,27 @@ export default function InterviewSessionPage() {
   const speakText = useCallback(async (text: string) => {
     try {
       setAiSpeaking(true);
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000);
+
       const res = await fetch("/api/interview/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text, voice: "alloy" }),
+        signal: controller.signal,
       });
+      clearTimeout(timeout);
 
-      // TTS failed - skip audio, text is already displayed in chat
       if (!res.ok) {
+        console.warn("[TTS] API returned", res.status);
         setAiSpeaking(false);
         return;
       }
 
       const contentType = res.headers.get("Content-Type") ?? "";
       if (!contentType.startsWith("audio/")) {
+        console.warn("[TTS] Unexpected Content-Type:", contentType);
         setAiSpeaking(false);
         return;
       }
@@ -100,17 +107,27 @@ export default function InterviewSessionPage() {
       }
 
       const audio = new Audio(url);
+      audio.preload = "auto";
       ttsAudioRef.current = audio;
       audio.onended = () => {
         URL.revokeObjectURL(url);
         setAiSpeaking(false);
       };
       audio.onerror = () => {
+        console.warn("[TTS] Audio playback error");
         URL.revokeObjectURL(url);
         setAiSpeaking(false);
       };
+
+      // Wait for audio to be ready before playing
+      await new Promise<void>((resolve, reject) => {
+        audio.oncanplaythrough = () => resolve();
+        audio.onerror = () => reject(new Error("Audio decode failed"));
+        audio.load();
+      });
       await audio.play();
-    } catch {
+    } catch (err) {
+      console.warn("[TTS] Error:", err instanceof Error ? err.message : err);
       setAiSpeaking(false);
     }
   }, []);
