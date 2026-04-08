@@ -4,7 +4,7 @@ import { adminDb } from "@/lib/firebase/admin";
 import type { AnalyticsOverview } from "@/lib/types/analytics";
 
 export async function GET(request: NextRequest) {
-  const authResult = await requireRole(request, ["superadmin"]);
+  const authResult = await requireRole(request, ["admin", "superadmin", "teacher"]);
   if (authResult instanceof NextResponse) return authResult;
 
   try {
