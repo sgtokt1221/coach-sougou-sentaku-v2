@@ -15,17 +15,24 @@ export async function GET(request: NextRequest) {
             const decoded = await adminAuth.verifyIdToken(authHeader.slice(7));
             userId = decoded.uid;
           }
-        } catch {}
+        } catch (e) {
+          console.error("Interview history: auth token verification failed:", e);
+        }
       }
     }
 
     if (!userId) {
-      return NextResponse.json({ interviews: [] });
+      console.warn("Interview history: userId not resolved from token");
+      return NextResponse.json({ interviews: [], error: "認証情報が取得できませんでした" });
     }
 
     const { adminDb } = await import("@/lib/firebase/admin");
     if (!adminDb) {
-      return NextResponse.json({ interviews: [] });
+      console.error("Interview history: Firebase Admin SDK not initialized");
+      return NextResponse.json(
+        { error: "Firebase Admin SDKが初期化されていません" },
+        { status: 500 }
+      );
     }
 
     const snapshot = await adminDb
@@ -58,6 +65,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ interviews });
   } catch (error) {
     console.error("Interview history error:", error);
-    return NextResponse.json({ interviews: [] });
+    return NextResponse.json(
+      { error: "面接履歴取得中にエラーが発生しました" },
+      { status: 500 }
+    );
   }
 }
