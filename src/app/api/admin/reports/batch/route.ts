@@ -81,28 +81,32 @@ export async function POST(request: NextRequest) {
         const [periodEssaysSnap, prevEssaysSnap, periodInterviewsSnap, prevInterviewsSnap, weaknessesSnap] =
           await Promise.all([
             adminDb!
-              .collection(`users/${studentId}/essays`)
+              .collection("essays")
+              .where("userId", "==", studentId)
               .where("submittedAt", ">=", start)
               .where("submittedAt", "<=", end)
               .orderBy("submittedAt", "desc")
               .get()
               .catch(() => ({ docs: [] })),
             adminDb!
-              .collection(`users/${studentId}/essays`)
+              .collection("essays")
+              .where("userId", "==", studentId)
               .where("submittedAt", ">=", prevStart)
               .where("submittedAt", "<", start)
               .orderBy("submittedAt", "desc")
               .get()
               .catch(() => ({ docs: [] })),
             adminDb!
-              .collection(`users/${studentId}/interviews`)
+              .collection("interviews")
+              .where("userId", "==", studentId)
               .where("startedAt", ">=", start)
               .where("startedAt", "<=", end)
               .orderBy("startedAt", "desc")
               .get()
               .catch(() => ({ docs: [] })),
             adminDb!
-              .collection(`users/${studentId}/interviews`)
+              .collection("interviews")
+              .where("userId", "==", studentId)
               .where("startedAt", ">=", prevStart)
               .where("startedAt", "<", start)
               .orderBy("startedAt", "desc")
