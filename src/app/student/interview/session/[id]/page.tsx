@@ -12,7 +12,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Send, StopCircle, ChevronDown, ChevronUp, Video, VideoOff } from "lucide-react";
+import { Send, StopCircle, ChevronDown, ChevronUp, Video, VideoOff, Volume2 } from "lucide-react";
 import type { InterviewMessage, InterviewMode, InterviewInputMode, VoiceAnalysis, VideoAnalysis, AppearanceAnalysis } from "@/lib/types/interview";
 import { INTERVIEW_MODE_LABELS } from "@/lib/types/interview";
 import VoiceRecorder from "@/components/interview/VoiceRecorder";
@@ -68,8 +68,27 @@ export default function InterviewSessionPage() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const ttsAudioRef = useRef<HTMLAudioElement | null>(null);
+  const audioUnlocked = useRef(false);
+  const [pendingTTS, setPendingTTS] = useState<string | null>(null);
+
+  // Unlock audio on user gesture (required by mobile browsers)
+  const unlockAudio = useCallback(() => {
+    if (audioUnlocked.current) return;
+    const silent = new Audio("data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=");
+    silent.play().then(() => {
+      audioUnlocked.current = true;
+      console.log("[TTS] Audio unlocked via user gesture");
+    }).catch(() => {});
+  }, []);
 
   const speakText = useCallback(async (text: string) => {
+    // If audio not unlocked yet, queue it and show tap-to-play prompt
+    if (!audioUnlocked.current) {
+      console.warn("[TTS] Audio not unlocked, queuing text");
+      setPendingTTS(text);
+      return;
+    }
+
     try {
       setAiSpeaking(true);
 
@@ -131,6 +150,17 @@ export default function InterviewSessionPage() {
       setAiSpeaking(false);
     }
   }, []);
+
+  // Handle tap-to-play: unlock audio and play pending TTS
+  const handleTapToPlay = useCallback(() => {
+    unlockAudio();
+    if (pendingTTS) {
+      const text = pendingTTS;
+      setPendingTTS(null);
+      // Small delay to ensure unlock completes
+      setTimeout(() => speakText(text), 100);
+    }
+  }, [pendingTTS, speakText, unlockAudio]);
 
   // Load session info from sessionStorage
   useEffect(() => {
@@ -244,6 +274,7 @@ export default function InterviewSessionPage() {
   }, [messages, sessionId]);
 
   const sendMessage = useCallback(async () => {
+    unlockAudio(); // Unlock on user gesture (send button click)
     const text = input.trim();
     if (!text || isLoading) return;
 
@@ -426,6 +457,17 @@ export default function InterviewSessionPage() {
         <div className="mx-4 mt-2 rounded-lg border border-rose-300 bg-rose-50 dark:border-rose-700 dark:bg-rose-950/30 px-3 py-2 text-sm text-rose-700 dark:text-rose-300 animate-in fade-in slide-in-from-top-2">
           <strong>身だしなみ:</strong> {appearanceAlert}
         </div>
+      )}
+
+      {/* Tap-to-play banner (mobile audio unlock) */}
+      {pendingTTS && (
+        <button
+          onClick={handleTapToPlay}
+          className="mx-4 mt-2 flex items-center gap-2 rounded-lg bg-primary/10 border border-primary/20 p-3 text-sm text-primary cursor-pointer animate-pulse"
+        >
+          <Volume2 className="size-4 shrink-0" />
+          <span>タップして面接官の音声を再生</span>
+        </button>
       )}
 
       {/* Messages */}
