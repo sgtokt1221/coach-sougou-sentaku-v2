@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { authFetch } from "@/lib/api/client";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Calendar, Clock, GraduationCap } from "lucide-react";
@@ -118,7 +119,7 @@ export default function SchedulePage() {
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch("/api/schedule");
+        const res = await authFetch("/api/schedule");
         if (!res.ok) throw new Error("スケジュール取得に失敗しました");
         const data: { events: ScheduleEvent[] } = await res.json();
         setEvents(data.events);

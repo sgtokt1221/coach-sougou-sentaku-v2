@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { authFetch } from "@/lib/api/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -60,7 +61,7 @@ export default function ChecklistPage() {
     async function load() {
       setLoading(true);
       try {
-        const res = await fetch("/api/documents/checklist");
+        const res = await authFetch("/api/documents/checklist");
         if (!res.ok) throw new Error();
         const data = await res.json();
         setChecklists(data.checklists ?? []);

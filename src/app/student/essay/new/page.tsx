@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
+import { authFetch } from "@/lib/api/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -254,7 +255,7 @@ export default function EssayNewPage() {
 
       for (let i = 0; i < images.length; i++) {
         setUploadProgress(`${i + 1}/${images.length}枚目を解析中...`);
-        const res = await fetch("/api/essay/upload", {
+        const res = await authFetch("/api/essay/upload", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -289,7 +290,7 @@ export default function EssayNewPage() {
       let firstEssayId = "";
       for (let i = 0; i < images.length; i++) {
         setUploadProgress(`${i + 1}/${images.length}枚目を解析中...`);
-        const res = await fetch("/api/essay/upload", {
+        const res = await authFetch("/api/essay/upload", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -322,7 +323,7 @@ export default function EssayNewPage() {
     setIsDictating(true);
     setError(null);
     try {
-      const res = await fetch("/api/essay/dictation", {
+      const res = await authFetch("/api/essay/dictation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ audioBase64, mimeType }),
@@ -360,7 +361,7 @@ export default function EssayNewPage() {
     setError(null);
     try {
       const id = `essay_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
-      const res = await fetch("/api/essay/review", {
+      const res = await authFetch("/api/essay/review", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -397,7 +398,7 @@ export default function EssayNewPage() {
     setIsSubmitting(true);
     setError(null);
     try {
-      const res = await fetch("/api/essay/review", {
+      const res = await authFetch("/api/essay/review", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

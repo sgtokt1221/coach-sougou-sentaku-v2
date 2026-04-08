@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { authFetch } from "@/lib/api/client";
 import { DRILL_CATEGORIES, type DrillCategory } from "@/lib/ai/prompts/interview-drill";
 
 interface DrillScore {
@@ -78,7 +79,7 @@ export default function InterviewDrillPage() {
     setState(prev => ({ ...prev, loading: true, currentCategory: category, error: null }));
 
     try {
-      const response = await fetch("/api/interview/drill", {
+      const response = await authFetch("/api/interview/drill", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -134,7 +135,7 @@ export default function InterviewDrillPage() {
     setState(prev => ({ ...prev, loading: true, error: null }));
 
     try {
-      const response = await fetch("/api/interview/drill", {
+      const response = await authFetch("/api/interview/drill", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

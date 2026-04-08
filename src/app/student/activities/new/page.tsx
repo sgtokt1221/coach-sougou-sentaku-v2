@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { authFetch } from "@/lib/api/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -64,7 +65,7 @@ export default function NewActivityPage() {
     const initialMessage = `活動タイトル: ${title}\nカテゴリ: ${ACTIVITY_CATEGORY_LABELS[category as ActivityCategory]}\n期間: ${periodStart} ~ ${periodEnd || "現在"}\n概要: ${description || "（未入力）"}`;
 
     try {
-      const res = await fetch("/api/activities/new-temp/interview", {
+      const res = await authFetch("/api/activities/new-temp/interview", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: initialMessage, history: [] }),
@@ -101,7 +102,7 @@ export default function NewActivityPage() {
         content: m.content,
       }));
 
-      const res = await fetch("/api/activities/new-temp/interview", {
+      const res = await authFetch("/api/activities/new-temp/interview", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: text, history }),
@@ -147,7 +148,7 @@ export default function NewActivityPage() {
     setSaving(true);
 
     try {
-      const res = await fetch("/api/activities", {
+      const res = await authFetch("/api/activities", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

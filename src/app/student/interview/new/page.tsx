@@ -440,7 +440,7 @@ export default function InterviewNewPage() {
                             reader.onloadend = () => resolve((reader.result as string).split(",")[1]);
                             reader.readAsDataURL(file);
                           });
-                          const res = await fetch("/api/interview/upload-presentation", {
+                          const res = await authFetch("/api/interview/upload-presentation", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({ fileBase64: base64, fileName: file.name, mimeType: file.type }),

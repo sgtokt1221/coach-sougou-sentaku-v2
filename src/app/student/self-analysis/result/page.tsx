@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { authFetch } from "@/lib/api/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, RotateCcw } from "lucide-react";
 import { AnalysisResultCard } from "@/components/self-analysis/AnalysisResultCard";
@@ -39,7 +40,7 @@ export default function SelfAnalysisResultPage() {
   }
 
   async function handleReset() {
-    await fetch("/api/self-analysis", {
+    await authFetch("/api/self-analysis", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId: "me", reset: true }),
@@ -66,7 +67,7 @@ export default function SelfAnalysisResultPage() {
       <AnalysisResultCard
         analysis={data}
         onUpdate={async (updated) => {
-          await fetch("/api/self-analysis", {
+          await authFetch("/api/self-analysis", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(updated),
