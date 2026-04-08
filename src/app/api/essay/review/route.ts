@@ -6,6 +6,8 @@ import { analyzeGrowth, updateWeaknessRecords } from "@/lib/growth/analyze";
 import type { WeaknessRecord } from "@/lib/types/growth";
 import { logEssaySubmission } from "@/lib/bigquery/logger";
 
+export const maxDuration = 120;
+
 export async function POST(request: NextRequest) {
   try {
     const body: EssayReviewRequest = await request.json();
@@ -132,7 +134,7 @@ export async function POST(request: NextRequest) {
 
     const response = await client.messages.create({
       model: "claude-sonnet-4-6",
-      max_tokens: 8192,
+      max_tokens: 4096,
       system: systemPrompt,
       messages: [{ role: "user", content: userMessage }],
     });

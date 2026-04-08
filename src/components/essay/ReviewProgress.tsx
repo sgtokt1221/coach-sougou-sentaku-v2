@@ -56,7 +56,7 @@ export function ReviewProgress() {
 
   useEffect(() => {
     const timeouts = STAGES.map((_, i) =>
-      setTimeout(() => setStageIndex(i), i * 8000 + 2000)
+      setTimeout(() => setStageIndex(i), i * 12000 + 3000)
     );
     return () => timeouts.forEach(clearTimeout);
   }, []);
@@ -70,7 +70,7 @@ export function ReviewProgress() {
   const StageIcon = stage.icon;
   const tip = TIPS[tipIndex];
   const TipIcon = tip.icon;
-  const progress = Math.min(15 + stageIndex * 20 + (elapsed % 8) * 2, 95);
+  const progress = Math.min(10 + stageIndex * 18 + Math.floor(elapsed * 0.8), 95);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center min-h-dvh bg-gradient-to-br from-slate-50 via-white to-teal-50/30">
@@ -98,7 +98,10 @@ export function ReviewProgress() {
               <p className="text-sm font-medium">{stage.label}</p>
             </div>
             <p className="text-xs text-muted-foreground">
-              {elapsed < 10 ? "AI添削には30秒ほどかかります" : `${elapsed}秒経過...もう少しお待ちください`}
+              {elapsed < 10 ? "AI添削には30〜60秒ほどかかります" :
+               elapsed < 40 ? `${elapsed}秒経過...もう少しお待ちください` :
+               elapsed < 70 ? `${elapsed}秒経過...あと少しで完了です` :
+               `${elapsed}秒経過...もうすぐ結果が表示されます`}
             </p>
           </div>
         </div>

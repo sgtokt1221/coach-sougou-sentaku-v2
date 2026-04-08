@@ -361,6 +361,8 @@ export default function EssayNewPage() {
     setError(null);
     try {
       const id = `essay_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 100000);
       const res = await authFetch("/api/essay/review", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -374,7 +376,9 @@ export default function EssayNewPage() {
             pastQuestionFacultyName: pastQuestion.facultyName,
           }),
         }),
+        signal: controller.signal,
       });
+      clearTimeout(timeout);
       if (!res.ok) throw new Error("添削リクエストに失敗しました");
       const data = await res.json();
       sessionStorage.setItem("essayReviewResult", JSON.stringify({
@@ -387,7 +391,11 @@ export default function EssayNewPage() {
       }));
       router.push(`/student/essay/${data.essayId ?? id}`);
     } catch (err) {
-      setError("添削に失敗しました。もう一度お試しください。");
+      if (err instanceof DOMException && err.name === "AbortError") {
+        setError("添削に時間がかかりすぎました。もう一度お試しください。");
+      } else {
+        setError("添削に失敗しました。もう一度お試しください。");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -398,6 +406,8 @@ export default function EssayNewPage() {
     setIsSubmitting(true);
     setError(null);
     try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 100000);
       const res = await authFetch("/api/essay/review", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -411,7 +421,9 @@ export default function EssayNewPage() {
             pastQuestionFacultyName: pastQuestion.facultyName,
           }),
         }),
+        signal: controller.signal,
       });
+      clearTimeout(timeout);
       if (!res.ok) throw new Error("添削リクエストに失敗しました");
       const data = await res.json();
       sessionStorage.setItem("essayReviewResult", JSON.stringify({
@@ -423,8 +435,12 @@ export default function EssayNewPage() {
         submittedAt: new Date().toISOString(),
       }));
       router.push(`/student/essay/${data.essayId ?? essayId}`);
-    } catch {
-      setError("添削に失敗しました。もう一度お試しください。");
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        setError("添削に時間がかかりすぎました。もう一度お試しください。");
+      } else {
+        setError("添削に失敗しました。もう一度お試しください。");
+      }
     } finally {
       setIsSubmitting(false);
     }

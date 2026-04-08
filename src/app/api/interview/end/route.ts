@@ -12,6 +12,7 @@ import type { WeaknessRecord } from "@/lib/types/growth";
 import { logInterviewSession } from "@/lib/bigquery/logger";
 import { logActivity } from "@/lib/firebase/activity-log";
 
+export const maxDuration = 120;
 
 export async function POST(request: NextRequest) {
   try {
