@@ -125,9 +125,18 @@ export interface AlertItem {
   id: string;
   studentUid: string;
   studentName: string;
-  type: "inactive" | "declining" | "repeated_weakness" | "document_deadline";
+  type:
+    | "inactive"
+    | "declining"
+    | "repeated_weakness"
+    | "document_deadline"
+    | "ap_struggle"
+    | "weakness_stuck"
+    | "deadline_risk"
+    | "score_plateau";
   severity: "critical" | "warning" | "high";
   message: string;
   detectedAt: string;
   acknowledged: boolean;
+  recommendedAction?: string;
 }

@@ -24,9 +24,9 @@ import {
   Lightbulb,
   BookCheck,
   BookOpen,
-  Zap,
   CalendarDays,
   MessageSquare,
+  FileBarChart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -99,6 +99,7 @@ const adminNavGroups: NavGroup[] = [
     items: [
       { label: "ダッシュボード", href: "/admin/dashboard", icon: LayoutDashboard },
       { label: "アラート", href: "/admin/alerts", icon: Bell },
+      { label: "レポート", href: "/admin/reports", icon: FileBarChart },
     ],
   },
   {

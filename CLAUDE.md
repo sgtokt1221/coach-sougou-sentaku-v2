@@ -199,6 +199,24 @@
   - Firestore走査: users/{id}/documents の deadline + status をチェック
   - /admin/alerts: フィルタに「書類期限」追加、FileWarningアイコン、高/重要/注意の3段階表示
   - /admin/dashboard: 書類期限アラートカード追加（件数表示+アラートページへのリンク）
+- Phase 3D: 成長レポート自動生成完了
+  - src/lib/types/growth-report.ts: GrowthReport, WeaknessProgress, GrowthReportSummary, GenerateReportRequest, BatchReportRequest
+  - src/lib/growth/report.ts: generateGrowthReport()（小論文/面接統計、弱点推移、推奨アクション、総合評価）
+  - /api/admin/reports/generate: POST(個別レポート生成) requireRole+managedByスコーピング適用
+  - /api/admin/reports/batch: POST(一括レポート生成) 全担当生徒のレポートを一括生成
+  - /api/admin/reports/[studentId]: GET(レポート履歴) period/limitクエリ対応
+  - /admin/reports: レポート生成ページ（週次/月次トグル、一括生成、展開式詳細表示）
+  - Firestoreパス: users/{studentId}/growthReports/{reportId}
+  - Sidebar: 管理者「レポート」追加
+- Phase 3E: 予測型要注意アラート完了
+  - AlertItem型に4つの新タイプ追加: ap_struggle, weakness_stuck, deadline_risk, score_plateau
+  - AlertItem型にrecommendedAction（推奨アクション文）追加
+  - /api/admin/alerts: 4つの新検出ロジック追加
+    - ap_struggle: 直近5回のAP合致度スコア全て50%未満
+    - weakness_stuck: 弱点3回以上指摘で改善なし
+    - deadline_risk: 14日以内期限の未完成書類50%以上
+    - score_plateau: 直近4回のスコア分散3点未満（成長停滞）
+  - /admin/alerts: 8タイプフィルタ、各タイプ専用アイコン、推奨アクション表示（Lightbulbアイコン）
 - Firebase SDK: .env.local 未設定（ビルドはnullセーフ、未設定でもSSG通過）
 - npmキャッシュにroot所有ファイルあり → `--cache /tmp/npm-cache` で回避中
 

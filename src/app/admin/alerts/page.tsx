@@ -14,12 +14,26 @@ import {
   CheckCircle,
   ExternalLink,
   FileWarning,
+  Target,
+  Lock,
+  CalendarClock,
+  Activity,
+  Lightbulb,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthSWR } from "@/lib/api/swr";
 import type { AlertItem } from "@/lib/types/admin";
 
-type FilterType = "all" | "inactive" | "declining" | "repeated_weakness" | "document_deadline";
+type FilterType =
+  | "all"
+  | "inactive"
+  | "declining"
+  | "repeated_weakness"
+  | "document_deadline"
+  | "ap_struggle"
+  | "weakness_stuck"
+  | "deadline_risk"
+  | "score_plateau";
 
 const filterOptions: { value: FilterType; label: string }[] = [
   { value: "all", label: "すべて" },
@@ -27,6 +41,10 @@ const filterOptions: { value: FilterType; label: string }[] = [
   { value: "inactive", label: "非アクティブ" },
   { value: "declining", label: "スコア低下" },
   { value: "repeated_weakness", label: "弱点繰返し" },
+  { value: "ap_struggle", label: "AP不適合" },
+  { value: "weakness_stuck", label: "弱点停滞" },
+  { value: "deadline_risk", label: "期限リスク" },
+  { value: "score_plateau", label: "成長停滞" },
 ];
 
 function alertTypeConfig(type: AlertItem["type"]) {
@@ -39,6 +57,14 @@ function alertTypeConfig(type: AlertItem["type"]) {
       return { label: "弱点繰返し", icon: Repeat, color: "text-orange-600 dark:text-orange-400" };
     case "document_deadline":
       return { label: "書類期限", icon: FileWarning, color: "text-purple-600 dark:text-purple-400" };
+    case "ap_struggle":
+      return { label: "AP不適合", icon: Target, color: "text-red-600 dark:text-red-400" };
+    case "weakness_stuck":
+      return { label: "弱点停滞", icon: Lock, color: "text-yellow-600 dark:text-yellow-400" };
+    case "deadline_risk":
+      return { label: "期限リスク", icon: CalendarClock, color: "text-indigo-600 dark:text-indigo-400" };
+    case "score_plateau":
+      return { label: "成長停滞", icon: Activity, color: "text-cyan-600 dark:text-cyan-400" };
   }
 }
 
@@ -97,6 +123,11 @@ export default function AdminAlertsPage() {
   const deadlineCount = alerts.filter(
     (a) => a.type === "document_deadline" && !a.acknowledged
   ).length;
+  const predictiveCount = alerts.filter(
+    (a) =>
+      ["ap_struggle", "weakness_stuck", "deadline_risk", "score_plateau"].includes(a.type) &&
+      !a.acknowledged
+  ).length;
 
   function toggleAcknowledged(id: string) {
     setLocalAlerts((prev) =>
@@ -119,7 +150,7 @@ export default function AdminAlertsPage() {
             要注意生徒のアラートを確認・管理できます
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           {criticalCount > 0 && (
             <Badge variant="destructive" className="text-sm">
               緊急 {criticalCount}件
@@ -130,6 +161,11 @@ export default function AdminAlertsPage() {
               書類期限 {deadlineCount}件
             </Badge>
           )}
+          {predictiveCount > 0 && (
+            <Badge variant="outline" className="border-cyan-300 text-sm text-cyan-600 dark:border-cyan-700 dark:text-cyan-400">
+              予測 {predictiveCount}件
+            </Badge>
+          )}
           <Badge variant="secondary" className="text-sm">
             未確認 {unacknowledgedCount}件
           </Badge>
@@ -138,21 +174,24 @@ export default function AdminAlertsPage() {
 
       {/* Filter */}
       <div className="flex flex-wrap gap-2">
-        {filterOptions.map((opt) => (
-          <Button
-            key={opt.value}
-            variant={filter === opt.value ? "default" : "outline"}
-            size="sm"
-            onClick={() => setFilter(opt.value)}
-          >
-            {opt.label}
-            {opt.value !== "all" && (
-              <span className="ml-1 text-xs opacity-70">
-                ({alerts.filter((a) => a.type === opt.value).length})
-              </span>
-            )}
-          </Button>
-        ))}
+        {filterOptions.map((opt) => {
+          const count = alerts.filter((a) => a.type === opt.value).length;
+          return (
+            <Button
+              key={opt.value}
+              variant={filter === opt.value ? "default" : "outline"}
+              size="sm"
+              onClick={() => setFilter(opt.value)}
+            >
+              {opt.label}
+              {opt.value !== "all" && (
+                <span className="ml-1 text-xs opacity-70">
+                  ({count})
+                </span>
+              )}
+            </Button>
+          );
+        })}
       </div>
 
       {/* Alert List */}
@@ -221,6 +260,17 @@ export default function AdminAlertsPage() {
                     <p className="text-sm text-muted-foreground">
                       {alert.message}
                     </p>
+
+                    {/* Recommended Action */}
+                    {alert.recommendedAction && !alert.acknowledged && (
+                      <div className="mt-2 flex items-start gap-1.5 rounded-md bg-blue-50/60 dark:bg-blue-950/20 px-2.5 py-1.5">
+                        <Lightbulb className="mt-0.5 size-3.5 shrink-0 text-blue-500" />
+                        <p className="text-xs text-blue-700 dark:text-blue-400">
+                          {alert.recommendedAction}
+                        </p>
+                      </div>
+                    )}
+
                     <p className="mt-1 text-xs text-muted-foreground/70">
                       検出日時:{" "}
                       {new Date(alert.detectedAt).toLocaleString("ja-JP")}
