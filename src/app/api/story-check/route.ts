@@ -203,20 +203,17 @@ export async function POST(request: NextRequest) {
 
     // Try fetching from Firestore
     try {
-      const { db } = await import("@/lib/firebase/config");
-      if (db) {
-        const { collection, query, where, getDocs, orderBy, limit } =
-          await import("firebase/firestore");
+      const { adminDb } = await import("@/lib/firebase/admin");
+      if (adminDb) {
         const userId = body.userId || "dev-user";
 
         // Fetch documents for this university/faculty
-        const docsQuery = query(
-          collection(db, `users/${userId}/documents`),
-          where("universityId", "==", universityId),
-          where("facultyId", "==", facultyId)
-        );
-        const docsSnap = await getDocs(docsQuery);
-        docsSnap.forEach((d) => {
+        const docsSnap = await adminDb
+          .collection(`users/${userId}/documents`)
+          .where("universityId", "==", universityId)
+          .where("facultyId", "==", facultyId)
+          .get();
+        docsSnap.forEach((d: FirebaseFirestore.QueryDocumentSnapshot) => {
           const data = d.data();
           materials.documents.push({
             type: data.type,
@@ -225,14 +222,14 @@ export async function POST(request: NextRequest) {
           });
         });
 
-        // Fetch recent essays
-        const essaysQuery = query(
-          collection(db, `users/${userId}/essays`),
-          orderBy("createdAt", "desc"),
-          limit(5)
-        );
-        const essaysSnap = await getDocs(essaysQuery);
-        essaysSnap.forEach((d) => {
+        // Fetch recent essays (top-level collection)
+        const essaysSnap = await adminDb
+          .collection("essays")
+          .where("userId", "==", userId)
+          .orderBy("submittedAt", "desc")
+          .limit(5)
+          .get();
+        essaysSnap.forEach((d: FirebaseFirestore.QueryDocumentSnapshot) => {
           const data = d.data();
           materials.essays.push({
             topic: data.topic || data.title || "無題",
@@ -241,14 +238,14 @@ export async function POST(request: NextRequest) {
           });
         });
 
-        // Fetch recent interviews
-        const interviewsQuery = query(
-          collection(db, `users/${userId}/interviews`),
-          orderBy("createdAt", "desc"),
-          limit(5)
-        );
-        const interviewsSnap = await getDocs(interviewsQuery);
-        interviewsSnap.forEach((d) => {
+        // Fetch recent interviews (top-level collection)
+        const interviewsSnap = await adminDb
+          .collection("interviews")
+          .where("userId", "==", userId)
+          .orderBy("startedAt", "desc")
+          .limit(5)
+          .get();
+        interviewsSnap.forEach((d: FirebaseFirestore.QueryDocumentSnapshot) => {
           const data = d.data();
           materials.interviews.push({
             mode: data.mode || "個人面接",
@@ -257,10 +254,10 @@ export async function POST(request: NextRequest) {
         });
 
         // Fetch all activities
-        const activitiesSnap = await getDocs(
-          collection(db, `users/${userId}/activities`)
-        );
-        activitiesSnap.forEach((d) => {
+        const activitiesSnap = await adminDb
+          .collection(`users/${userId}/activities`)
+          .get();
+        activitiesSnap.forEach((d: FirebaseFirestore.QueryDocumentSnapshot) => {
           const data = d.data();
           materials.activities.push({
             title: data.title,

@@ -143,7 +143,7 @@ function WeaknessColumn({
 }
 
 export default function GrowthPage() {
-  const { data: essayData, isLoading: loadingTrend } = useAuthSWR<{ essays: { submittedAt: string; scores?: { total: number } }[] }>("/api/essay/history");
+  const { data: essayData, isLoading: loadingTrend } = useAuthSWR<{ essays: { submittedAt: string; scores?: { total: number } }[] }>("/api/essay/history?userId=current");
   const { data: reportData, isLoading: loadingReport } = useAuthSWR<GrowthReport>("/api/growth/report");
   const { data: weaknessData, isLoading: loadingWeaknesses } = useAuthSWR<{ weaknesses: WeaknessRecord[] }>("/api/growth/weaknesses?context=dashboard");
 

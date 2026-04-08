@@ -196,7 +196,8 @@ export async function GET(
     }
 
     const essaysSnap = await adminDb
-      .collection(`users/${id}/essays`)
+      .collection("essays")
+      .where("userId", "==", id)
       .orderBy("submittedAt", "desc")
       .get();
 

@@ -124,7 +124,7 @@ export async function POST(
     }
 
     // Fetch the essay
-    const essayDoc = await adminDb.doc(`users/${uid}/essays/${essayId}`).get();
+    const essayDoc = await adminDb.doc(`essays/${essayId}`).get();
     if (!essayDoc.exists) {
       return NextResponse.json(
         { error: "Essay not found" },

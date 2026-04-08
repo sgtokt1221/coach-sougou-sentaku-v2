@@ -95,7 +95,7 @@ export default function StudentDashboard() {
   const greeting = hour < 12 ? "おはようございます" : hour < 18 ? "こんにちは" : "おつかれさまです";
   const userName = studentProfile?.displayName;
 
-  const { data: essayData, isLoading: loadingHistory } = useAuthSWR<{ essays: EssayHistoryItem[] }>("/api/essay/history");
+  const { data: essayData, isLoading: loadingHistory } = useAuthSWR<{ essays: EssayHistoryItem[] }>("/api/essay/history?userId=current");
   const loadingTrend = loadingHistory;
 
   const history = (essayData?.essays ?? []).slice(0, 3);

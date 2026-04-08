@@ -88,7 +88,8 @@ export async function GET(
     }
 
     const snapshot = await adminDb
-      .collection(`users/${id}/interviews`)
+      .collection("interviews")
+      .where("userId", "==", id)
       .orderBy("startedAt", "desc")
       .get();
 

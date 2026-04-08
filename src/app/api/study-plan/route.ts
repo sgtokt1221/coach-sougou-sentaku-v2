@@ -20,13 +20,15 @@ export async function GET(request: NextRequest) {
     const [userDoc, essaysSnapshot, interviewsSnapshot, documentsSnapshot] = await Promise.all([
       adminDb.doc(`users/${userId}`).get(),
       adminDb
-        .collection(`users/${userId}/essays`)
-        .orderBy("createdAt", "desc")
+        .collection("essays")
+        .where("userId", "==", userId)
+        .orderBy("submittedAt", "desc")
         .limit(5)
         .get(),
       adminDb
-        .collection(`users/${userId}/interviews`)
-        .orderBy("createdAt", "desc")
+        .collection("interviews")
+        .where("userId", "==", userId)
+        .orderBy("startedAt", "desc")
         .limit(3)
         .get(),
       adminDb

@@ -234,7 +234,7 @@ export async function GET(request: NextRequest) {
         const uid = docSnap.id;
 
         const [essaysSnap, weaknessesSnap, documentsSnap, sessionsSnap] = await Promise.all([
-          adminDb!.collection(`users/${uid}/essays`).orderBy("submittedAt", "desc").get().catch(() => ({ size: 0, docs: [] })),
+          adminDb!.collection("essays").where("userId", "==", uid).orderBy("submittedAt", "desc").get().catch(() => ({ size: 0, docs: [] })),
           adminDb!.collection(`users/${uid}/weaknesses`).get().catch(() => ({ size: 0, docs: [] })),
           adminDb!.collection(`users/${uid}/documents`).get().catch(() => ({ size: 0, docs: [] })),
           adminDb!.collection("sessions").where("studentUid", "==", uid).orderBy("scheduledAt", "desc").limit(1).get().catch(() => ({ size: 0, docs: [] })),
