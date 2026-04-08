@@ -12,20 +12,7 @@ export async function GET(
   const { id } = await params;
 
   if (!adminDb) {
-    return NextResponse.json({
-      uid: id,
-      displayName: "田中 太郎",
-      email: "tanaka@example.com",
-      role: "student",
-      school: "東京都立高校",
-      grade: 3,
-      managedBy: "admin_001",
-      managedByName: "管理者 太郎",
-      targetUniversities: ["tokyo-u:law", "kyoto-u:economics"],
-      createdAt: "2025-09-15T00:00:00.000Z",
-      latestScore: 38,
-      essayCount: 5,
-    });
+    return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
   }
 
   try {
@@ -97,7 +84,7 @@ export async function PATCH(
   updates.updatedAt = new Date();
 
   if (!adminDb) {
-    return NextResponse.json({ success: true, uid: id, ...updates });
+    return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
   }
 
   try {
@@ -118,7 +105,7 @@ export async function DELETE(
   const { id } = await params;
 
   if (!adminDb) {
-    return NextResponse.json({ success: true, uid: id, role: "disabled" });
+    return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
   }
 
   try {

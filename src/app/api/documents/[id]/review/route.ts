@@ -4,19 +4,6 @@ import { buildDocumentReviewPrompt } from "@/lib/ai/prompts/document";
 import type { SelfAnalysisContext } from "@/lib/ai/prompts/document";
 import type { DocumentFeedback } from "@/lib/types/document";
 
-const MOCK_FEEDBACK: DocumentFeedback = {
-  apAlignmentScore: 7,
-  structureScore: 7,
-  originalityScore: 6,
-  overallFeedback: "全体的にバランスの取れた書類です。志望動機が明確で、大学への理解も感じられます。独自の経験をもう少し深掘りすると、さらに説得力が増すでしょう。",
-  improvements: [
-    "志望大学・学部ならではの特色に言及し、なぜその大学でなければならないかを明確にしましょう",
-    "具体的なエピソードをもう一つ追加し、主張の裏付けを強化しましょう",
-    "結論部分で将来のビジョンをより具体的に描きましょう",
-  ],
-  apSpecificNotes: "アドミッションポリシーが求める「主体的に学ぶ姿勢」への言及が弱いです。自ら課題を発見し解決に取り組んだ経験を具体的に示しましょう。",
-};
-
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -87,7 +74,10 @@ export async function POST(
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
-      return NextResponse.json({ feedback: MOCK_FEEDBACK, documentId: id });
+      return NextResponse.json(
+        { error: "APIキーが設定されていません", available: false },
+        { status: 503 }
+      );
     }
 
     const client = new Anthropic();
@@ -114,7 +104,10 @@ export async function POST(
 
     if (!jsonMatch) {
       console.error("Could not parse AI response:", rawText);
-      return NextResponse.json({ feedback: MOCK_FEEDBACK, documentId: id });
+      return NextResponse.json(
+        { error: "AIレスポンスの解析に失敗しました" },
+        { status: 500 }
+      );
     }
 
     const parsed = JSON.parse(jsonMatch[1]);

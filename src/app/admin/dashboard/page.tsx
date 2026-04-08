@@ -13,79 +13,6 @@ import { useAuthSWR } from "@/lib/api/swr";
 import type { StudentListItem, AlertItem } from "@/lib/types/admin";
 import type { ExamResultStats } from "@/lib/types/exam-result";
 
-const mockStudents: StudentListItem[] = [
-  {
-    uid: "mock_student_001",
-    displayName: "田中 太郎",
-    email: "tanaka@example.com",
-    targetUniversities: ["東京大学", "京都大学"],
-    latestScore: 38,
-    essayCount: 5,
-    lastActivityAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-    alertFlags: [],
-    scoreTrend: "up",
-    activeWeaknessCount: 2,
-    documentProgress: { completed: 3, total: 5 },
-    lastSessionAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    uid: "mock_student_002",
-    displayName: "佐藤 花子",
-    email: "sato@example.com",
-    targetUniversities: ["早稲田大学"],
-    latestScore: 32,
-    essayCount: 3,
-    lastActivityAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    alertFlags: ["inactive"],
-    scoreTrend: "flat",
-    activeWeaknessCount: 4,
-    documentProgress: { completed: 1, total: 3 },
-    lastSessionAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    uid: "mock_student_003",
-    displayName: "鈴木 一郎",
-    email: "suzuki@example.com",
-    targetUniversities: ["大阪大学", "神戸大学"],
-    latestScore: 41,
-    essayCount: 8,
-    lastActivityAt: new Date(Date.now() - 0.5 * 24 * 60 * 60 * 1000).toISOString(),
-    alertFlags: [],
-    scoreTrend: "up",
-    activeWeaknessCount: 1,
-    documentProgress: { completed: 4, total: 5 },
-    lastSessionAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    uid: "mock_student_004",
-    displayName: "山田 美咲",
-    email: "yamada@example.com",
-    targetUniversities: ["同志社大学"],
-    latestScore: 25,
-    essayCount: 6,
-    lastActivityAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    alertFlags: ["repeated_weakness", "declining"],
-    scoreTrend: "down",
-    activeWeaknessCount: 6,
-    documentProgress: { completed: 0, total: 4 },
-    lastSessionAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    uid: "mock_student_005",
-    displayName: "高橋 健太",
-    email: "takahashi@example.com",
-    targetUniversities: ["慶應義塾大学", "明治大学"],
-    latestScore: null,
-    essayCount: 0,
-    lastActivityAt: null,
-    alertFlags: ["inactive"],
-    scoreTrend: null,
-    activeWeaknessCount: 0,
-    documentProgress: { completed: 0, total: 0 },
-    lastSessionAt: null,
-  },
-];
-
 function scoreColor(total: number): string {
   if (total >= 40) return "text-emerald-600 dark:text-emerald-400";
   if (total >= 30) return "text-amber-600 dark:text-amber-400";
@@ -115,7 +42,7 @@ export default function AdminDashboard() {
     weeklyTop: { area: string; count: number; studentCount: number }[];
     comparedToLastWeek: { improved: string[]; worsened: string[]; new: string[] };
   }>("/api/admin/weekly-weaknesses");
-  const students = rawData ?? mockStudents;
+  const students = rawData ?? [];
   const loading = isLoading;
 
   const deadlineAlertCount = alertsData?.filter(

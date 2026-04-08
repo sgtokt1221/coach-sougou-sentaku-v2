@@ -3,31 +3,6 @@ import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
 import type { AdminFeedback, FeedbackCreateRequest } from "@/lib/types/feedback";
 
-const MOCK_FEEDBACKS: AdminFeedback[] = [
-  {
-    id: "fb_001",
-    type: "essay",
-    targetId: "essay_001",
-    targetLabel: "小論文 #1: 社会問題について",
-    message: "論理展開が良くなっています。次回は具体例をもう少し増やしてみましょう。",
-    createdBy: "admin_001",
-    createdByName: "田中先生",
-    createdAt: "2026-03-28T10:00:00Z",
-    read: false,
-  },
-  {
-    id: "fb_002",
-    type: "general",
-    targetId: "",
-    targetLabel: "全般",
-    message: "志望理由書の提出期限が近づいています。早めに取り掛かりましょう。",
-    createdBy: "admin_001",
-    createdByName: "田中先生",
-    createdAt: "2026-03-25T14:30:00Z",
-    read: true,
-  },
-];
-
 /**
  * GET /api/admin/students/[id]/feedback
  * 指定生徒のフィードバック一覧を取得
@@ -48,13 +23,7 @@ export async function GET(
     const { id } = await params;
 
     if (!adminDb) {
-      const { searchParams } = new URL(request.url);
-      const typeFilter = searchParams.get("type");
-      const targetIdFilter = searchParams.get("targetId");
-      let filtered = MOCK_FEEDBACKS;
-      if (typeFilter) filtered = filtered.filter((f) => f.type === typeFilter);
-      if (targetIdFilter) filtered = filtered.filter((f) => f.targetId === targetIdFilter);
-      return NextResponse.json(filtered);
+      return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
     }
 
     // managedByスコーピング
@@ -147,18 +116,7 @@ export async function POST(
     }
 
     if (!adminDb) {
-      const newFeedback: AdminFeedback = {
-        id: `fb_${Date.now()}`,
-        type: body.type,
-        targetId: body.targetId ?? "",
-        targetLabel: body.targetLabel ?? "",
-        message: body.message,
-        createdBy: uid,
-        createdByName: "開発ユーザー",
-        createdAt: new Date().toISOString(),
-        read: false,
-      };
-      return NextResponse.json(newFeedback, { status: 201 });
+      return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
     }
 
     // managedByスコーピング

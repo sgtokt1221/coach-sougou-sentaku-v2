@@ -9,42 +9,6 @@ import { WeaknessRecord, WeaknessReminderLevel, getWeaknessReminderLevel } from 
 
 type WeaknessWithLevel = WeaknessRecord & { level: WeaknessReminderLevel };
 
-const mockWeaknesses: WeaknessWithLevel[] = [
-  {
-    area: "論拠となるデータ・事例の不足",
-    count: 5,
-    firstOccurred: new Date(),
-    lastOccurred: new Date(),
-    improving: false,
-    resolved: false,
-    source: "essay",
-    reminderDismissedAt: null,
-    level: "critical",
-  },
-  {
-    area: "AP連動の弱さ",
-    count: 3,
-    firstOccurred: new Date(),
-    lastOccurred: new Date(),
-    improving: false,
-    resolved: false,
-    source: "essay",
-    reminderDismissedAt: null,
-    level: "warning",
-  },
-  {
-    area: "導入部分の改善",
-    count: 2,
-    firstOccurred: new Date(),
-    lastOccurred: new Date(),
-    improving: true,
-    resolved: false,
-    source: "essay",
-    reminderDismissedAt: null,
-    level: "improving",
-  },
-];
-
 const levelLabel: Record<WeaknessReminderLevel, string> = {
   critical: "要注意",
   warning: "警告",
@@ -78,7 +42,7 @@ export function WeaknessReminderCard() {
           .slice(0, MAX_DISPLAY);
         setWeaknesses(withLevel);
       } catch {
-        setWeaknesses(mockWeaknesses.slice(0, MAX_DISPLAY));
+        setWeaknesses([]);
       } finally {
         setLoading(false);
       }

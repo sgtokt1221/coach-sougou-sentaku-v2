@@ -17,89 +17,6 @@ function computeScoreTrend(scores: number[]): "up" | "down" | "flat" | null {
   return "flat";
 }
 
-const MOCK_STUDENTS: StudentListItem[] = [
-  {
-    uid: "mock_student_001",
-    displayName: "田中 太郎",
-    email: "tanaka@example.com",
-    targetUniversities: ["tokyo-u:law", "kyoto-u:economics"],
-    latestScore: 38,
-    essayCount: 5,
-    lastActivityAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-    alertFlags: [],
-    managedBy: "dev-user",
-    plan: "coach",
-    scoreTrend: "up",
-    activeWeaknessCount: 2,
-    documentProgress: { completed: 3, total: 5 },
-    lastSessionAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    uid: "mock_student_002",
-    displayName: "佐藤 花子",
-    email: "sato@example.com",
-    targetUniversities: ["waseda-u:political-science"],
-    latestScore: 32,
-    essayCount: 3,
-    lastActivityAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    alertFlags: ["inactive"],
-    managedBy: "dev-user",
-    plan: "coach",
-    scoreTrend: "flat",
-    activeWeaknessCount: 4,
-    documentProgress: { completed: 1, total: 3 },
-    lastSessionAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    uid: "mock_student_003",
-    displayName: "鈴木 一郎",
-    email: "suzuki@example.com",
-    targetUniversities: ["osaka-u:law", "kyoto-u:law"],
-    latestScore: 41,
-    essayCount: 8,
-    lastActivityAt: new Date(Date.now() - 0.5 * 24 * 60 * 60 * 1000).toISOString(),
-    alertFlags: [],
-    managedBy: "dev-user",
-    plan: "coach",
-    scoreTrend: "up",
-    activeWeaknessCount: 1,
-    documentProgress: { completed: 4, total: 5 },
-    lastSessionAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    uid: "mock_student_004",
-    displayName: "山田 美咲",
-    email: "yamada@example.com",
-    targetUniversities: ["doshisha-u:law"],
-    latestScore: 25,
-    essayCount: 6,
-    lastActivityAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    alertFlags: ["repeated_weakness", "declining"],
-    managedBy: "dev-user",
-    plan: "coach",
-    scoreTrend: "down",
-    activeWeaknessCount: 6,
-    documentProgress: { completed: 0, total: 4 },
-    lastSessionAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    uid: "mock_student_005",
-    displayName: "高橋 健太",
-    email: "takahashi@example.com",
-    targetUniversities: ["keio-u:law", "meiji-u:law"],
-    latestScore: null,
-    essayCount: 0,
-    lastActivityAt: null,
-    alertFlags: ["inactive"],
-    managedBy: "dev-user",
-    plan: "coach",
-    scoreTrend: null,
-    activeWeaknessCount: 0,
-    documentProgress: { completed: 0, total: 0 },
-    lastSessionAt: null,
-  },
-];
-
 export async function POST(request: NextRequest) {
   const authResult = await requireRole(request, ["admin", "teacher", "superadmin"]);
   if (authResult instanceof NextResponse) return authResult;
@@ -128,18 +45,7 @@ export async function POST(request: NextRequest) {
   const { adminAuth, adminDb } = await import("@/lib/firebase/admin");
 
   if (!adminAuth || !adminDb) {
-    return NextResponse.json({
-      uid: "mock_new_student",
-      email,
-      displayName,
-      school: school ?? "",
-      grade: grade ?? null,
-      gpa: gpa ?? null,
-      englishCerts: englishCerts ?? [],
-      managedBy: callerUid,
-      targetUniversities: targetUniversities ?? [],
-      createdAt: new Date().toISOString(),
-    });
+    return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
   }
 
   try {
@@ -203,23 +109,7 @@ export async function GET(request: NextRequest) {
 
     const { adminDb } = await import("@/lib/firebase/admin");
     if (!adminDb) {
-      let results = effectiveRole === "superadmin"
-        ? [...MOCK_STUDENTS]
-        : MOCK_STUDENTS.filter((s) => s.managedBy === effectiveUid);
-      if (search) {
-        const q = search.toLowerCase();
-        results = results.filter(
-          (s) =>
-            s.displayName.toLowerCase().includes(q) ||
-            s.email.toLowerCase().includes(q)
-        );
-      }
-      if (universityFilter) {
-        results = results.filter((s) =>
-          s.targetUniversities.includes(universityFilter)
-        );
-      }
-      return NextResponse.json(results);
+      return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
     }
 
     let studentsRef = adminDb.collection("users").where("role", "==", "student");

@@ -4,46 +4,6 @@ import type { Transcription } from "@/lib/types/interview";
 import type { SessionSummary } from "@/lib/types/session";
 import { buildSummaryPrompt } from "@/lib/ai/prompts/summary";
 
-const MOCK_SUMMARY: SessionSummary = {
-  overview:
-    "志望理由書の構成と具体的なエピソードの選定について指導を行った。生徒は志望動機を明確に持っているが、APとの関連付けをより強化する必要がある。",
-  topicsDiscussed: [
-    "志望理由書の全体構成",
-    "活動実績の整理と選定",
-    "アドミッションポリシーとの関連付け",
-    "次回面接練習の方針",
-  ],
-  strengths: [
-    "志望動機が明確で一貫性がある",
-    "活動実績が豊富で多面的な経験がある",
-    "質問に対して積極的に考えを述べられる",
-  ],
-  improvements: [
-    "具体的なエピソードの深掘りが不足している",
-    "APとの関連付けをより明確にする必要がある",
-    "将来ビジョンの具体性を高める",
-  ],
-  actionItems: [
-    {
-      task: "志望理由書の第1稿を作成する",
-      assignee: "student",
-      deadline: "2026-03-28",
-      completed: false,
-    },
-    {
-      task: "活動実績を時系列で整理する",
-      assignee: "student",
-      completed: false,
-    },
-    {
-      task: "志望理由書のフィードバックを準備する",
-      assignee: "teacher",
-      completed: false,
-    },
-  ],
-  generatedAt: new Date().toISOString(),
-};
-
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -68,7 +28,10 @@ export async function POST(request: NextRequest) {
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
-      return NextResponse.json({ summary: MOCK_SUMMARY });
+      return NextResponse.json(
+        { error: "APIキーが設定されていません", available: false },
+        { status: 503 }
+      );
     }
 
     const client = new Anthropic();
@@ -106,7 +69,10 @@ export async function POST(request: NextRequest) {
 
     if (!jsonMatch) {
       console.error("Could not parse summary response:", rawText);
-      return NextResponse.json({ summary: MOCK_SUMMARY });
+      return NextResponse.json(
+        { error: "サマリーレスポンスの解析に失敗しました" },
+        { status: 500 }
+      );
     }
 
     const parsed = JSON.parse(jsonMatch[1]);
@@ -134,6 +100,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ summary });
   } catch (error) {
     console.error("Summary generation error:", error);
-    return NextResponse.json({ summary: MOCK_SUMMARY });
+    return NextResponse.json(
+      { error: "サマリー生成中にエラーが発生しました" },
+      { status: 500 }
+    );
   }
 }

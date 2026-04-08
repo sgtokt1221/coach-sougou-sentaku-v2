@@ -2,45 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 import { adminAuth, adminDb } from "@/lib/firebase/admin";
 
-const mockStudents = [
-  {
-    uid: "mock_student_001",
-    displayName: "田中 太郎",
-    email: "tanaka@example.com",
-    school: "東京都立高校",
-    grade: 3,
-    managedBy: "admin_001",
-    managedByName: "管理者 太郎",
-    createdAt: "2025-09-15T00:00:00.000Z",
-  },
-  {
-    uid: "mock_student_002",
-    displayName: "佐藤 花子",
-    email: "sato@example.com",
-    school: "私立高校",
-    grade: 3,
-    managedBy: "admin_002",
-    managedByName: "講師 花子",
-    createdAt: "2025-10-01T00:00:00.000Z",
-  },
-  {
-    uid: "mock_student_003",
-    displayName: "鈴木 一郎",
-    email: "suzuki@example.com",
-    school: "県立高校",
-    grade: 2,
-    managedBy: "",
-    managedByName: "",
-    createdAt: "2026-01-10T00:00:00.000Z",
-  },
-];
-
 export async function GET(request: NextRequest) {
   const authResult = await requireRole(request, ["superadmin"]);
   if (authResult instanceof NextResponse) return authResult;
 
   if (!adminDb) {
-    return NextResponse.json(mockStudents);
+    return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
   }
 
   try {
@@ -82,8 +49,12 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json(students);
-  } catch {
-    return NextResponse.json(mockStudents);
+  } catch (error) {
+    console.error("Superadmin students list error:", error);
+    return NextResponse.json(
+      { error: "生徒一覧の取得中にエラーが発生しました" },
+      { status: 500 }
+    );
   }
 }
 
@@ -106,15 +77,7 @@ export async function POST(request: Request) {
   }
 
   if (!adminAuth || !adminDb) {
-    return NextResponse.json({
-      uid: "mock_new_student",
-      email,
-      displayName,
-      school: school ?? "",
-      grade: grade ?? null,
-      managedBy: managedBy ?? "",
-      createdAt: new Date().toISOString(),
-    });
+    return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
   }
 
   try {

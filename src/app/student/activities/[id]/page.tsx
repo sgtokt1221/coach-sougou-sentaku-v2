@@ -24,35 +24,15 @@ import {
   BookOpen,
   Link2,
 } from "lucide-react";
+import { toast } from "sonner";
 import type { Activity, ActivityOptimization } from "@/lib/types/activity";
 import { ACTIVITY_CATEGORY_LABELS } from "@/lib/types/activity";
 
-const mockUniversities = [
-  {
-    id: "kyoto-u",
-    name: "京都大学",
-    faculties: [
-      { id: "letters", name: "文学部" },
-      { id: "law", name: "法学部" },
-    ],
-  },
-  {
-    id: "osaka-u",
-    name: "大阪大学",
-    faculties: [
-      { id: "letters", name: "文学部" },
-      { id: "law", name: "法学部" },
-    ],
-  },
-  {
-    id: "tohoku-u",
-    name: "東北大学",
-    faculties: [
-      { id: "arts-letters", name: "文学部" },
-      { id: "law", name: "法学部" },
-    ],
-  },
-];
+interface UniversityOption {
+  id: string;
+  name: string;
+  faculties: { id: string; name: string }[];
+}
 
 export default function ActivityDetailPage({
   params,
@@ -66,11 +46,28 @@ export default function ActivityDetailPage({
   const [description, setDescription] = useState("");
   const [editingDesc, setEditingDesc] = useState(false);
 
+  // Universities
+  const [universities, setUniversities] = useState<UniversityOption[]>([]);
+
   // Optimize state
   const [selectedUni, setSelectedUni] = useState("");
   const [selectedFaculty, setSelectedFaculty] = useState("");
   const [optimizing, setOptimizing] = useState(false);
   const [optimizations, setOptimizations] = useState<ActivityOptimization[]>([]);
+
+  useEffect(() => {
+    async function fetchUniversities() {
+      try {
+        const res = await fetch("/api/universities");
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        setUniversities(data.universities ?? []);
+      } catch {
+        setUniversities([]);
+      }
+    }
+    fetchUniversities();
+  }, []);
 
   useEffect(() => {
     async function fetchActivity() {
@@ -90,12 +87,12 @@ export default function ActivityDetailPage({
     fetchActivity();
   }, [id]);
 
-  const selectedUniData = mockUniversities.find((u) => u.id === selectedUni);
+  const selectedUniData = universities.find((u) => u.id === selectedUni);
   const faculties = selectedUniData?.faculties ?? [];
 
   async function handleOptimize() {
     if (!selectedUni || !selectedFaculty) return;
-    const uni = mockUniversities.find((u) => u.id === selectedUni);
+    const uni = universities.find((u) => u.id === selectedUni);
     const fac = uni?.faculties.find((f) => f.id === selectedFaculty);
     if (!uni || !fac) return;
 
@@ -115,20 +112,7 @@ export default function ActivityDetailPage({
       const data = await res.json();
       setOptimizations((prev) => [...prev, data.optimization]);
     } catch {
-      // Fallback mock
-      setOptimizations((prev) => [
-        ...prev,
-        {
-          universityId: uni.id,
-          facultyId: fac.id,
-          universityName: uni.name,
-          facultyName: fac.name,
-          optimizedText: `${uni.name}${fac.name}向けに最適化されたテキストです。主体性と探求心をアピールする表現に調整しています。`,
-          alignmentScore: 7,
-          keyApKeywords: ["主体性", "探求心"],
-          generatedAt: new Date().toISOString(),
-        },
-      ]);
+      toast.error("最適化に失敗しました");
     } finally {
       setOptimizing(false);
       setSelectedUni("");
@@ -296,7 +280,7 @@ export default function ActivityDetailPage({
                   <SelectValue placeholder="大学を選択" />
                 </SelectTrigger>
                 <SelectContent>
-                  {mockUniversities.map((u) => (
+                  {universities.map((u) => (
                     <SelectItem key={u.id} value={u.id}>
                       {u.name}
                     </SelectItem>

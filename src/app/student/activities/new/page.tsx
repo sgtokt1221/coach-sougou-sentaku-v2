@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { authFetch } from "@/lib/api/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -77,10 +78,8 @@ export default function NewActivityPage() {
         { role: "ai", content: data.aiQuestion },
       ]);
     } catch {
-      setChatMessages([
-        { role: "user", content: initialMessage },
-        { role: "ai", content: "その活動を始めたきっかけは何ですか？どのような背景や動機がありましたか？" },
-      ]);
+      toast.error("AIヒアリングの開始に失敗しました");
+      setInterviewStarted(false);
     } finally {
       setIsLoading(false);
       inputRef.current?.focus();
@@ -115,28 +114,7 @@ export default function NewActivityPage() {
         setStructuredData(data.structuredData);
       }
     } catch {
-      const mockResponses = [
-        "具体的にはどのような行動をとりましたか？特に工夫した点を教えてください。",
-        "その活動を通じてどのような成果が得られましたか？",
-        "この経験から何を学びましたか？大学での学びにどうつなげたいですか？",
-      ];
-      const idx = Math.min(Math.floor(updated.length / 2), mockResponses.length - 1);
-
-      if (updated.length >= 10) {
-        setStructuredData({
-          motivation: "活動を通じて成長したいという思いから始めた。",
-          actions: ["チームでの協働活動", "企画・運営の主導"],
-          results: ["参加者増加", "活動範囲の拡大"],
-          learnings: ["リーダーシップの重要性", "継続する力"],
-          connection: "大学での学びに活かしたい。",
-        });
-        setChatMessages((prev) => [
-          ...prev,
-          { role: "ai", content: "ヒアリングが完了しました。活動の全体像が把握できましたので、構造化データを生成しました。内容を確認してください。" },
-        ]);
-      } else {
-        setChatMessages((prev) => [...prev, { role: "ai", content: mockResponses[idx] }]);
-      }
+      toast.error("AIヒアリングの応答取得に失敗しました");
     } finally {
       setIsLoading(false);
       inputRef.current?.focus();

@@ -2,8 +2,10 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { BarChart3, AlertTriangle, Users, ShieldAlert } from "lucide-react";
+import { BarChart3, AlertTriangle, Users, ShieldAlert, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffect, useState } from "react";
+import { authFetch } from "@/lib/api/client";
 
 interface UniversityDataRow {
   universityName: string;
@@ -13,46 +15,31 @@ interface UniversityDataRow {
   status: "sufficient" | "insufficient";
 }
 
-const MOCK_DATA: UniversityDataRow[] = [
-  {
-    universityName: "京都大学",
-    facultyName: "文学部",
-    sampleSize: 12,
-    coveragePercent: 80,
-    status: "sufficient",
-  },
-  {
-    universityName: "大阪大学",
-    facultyName: "法学部",
-    sampleSize: 8,
-    coveragePercent: 55,
-    status: "sufficient",
-  },
-  {
-    universityName: "東北大学",
-    facultyName: "経済学部",
-    sampleSize: 3,
-    coveragePercent: 20,
-    status: "insufficient",
-  },
-  {
-    universityName: "同志社大学",
-    facultyName: "グローバル・コミュニケーション学部",
-    sampleSize: 15,
-    coveragePercent: 100,
-    status: "sufficient",
-  },
-  {
-    universityName: "関西大学",
-    facultyName: "社会学部",
-    sampleSize: 2,
-    coveragePercent: 13,
-    status: "insufficient",
-  },
-];
-
 export default function AdminPassedDataPage() {
   const { userProfile } = useAuth();
+  const [data, setData] = useState<UniversityDataRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const res = await authFetch("/api/admin/passed-data");
+        if (res.ok) {
+          const json = await res.json();
+          setData(json.rows ?? []);
+        }
+      } catch {
+        // silent
+      } finally {
+        setLoading(false);
+      }
+    }
+    if (userProfile?.role === "superadmin") {
+      fetchData();
+    } else {
+      setLoading(false);
+    }
+  }, [userProfile]);
 
   if (userProfile?.role !== "superadmin") {
     return (
@@ -66,8 +53,16 @@ export default function AdminPassedDataPage() {
     );
   }
 
-  const sufficient = MOCK_DATA.filter((d) => d.status === "sufficient").length;
-  const insufficient = MOCK_DATA.filter((d) => d.status === "insufficient").length;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-12">
+        <Loader2 className="size-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  const sufficient = data.filter((d) => d.status === "sufficient").length;
+  const insufficient = data.filter((d) => d.status === "insufficient").length;
 
   return (
     <div className="space-y-6 p-6">
@@ -88,7 +83,7 @@ export default function AdminPassedDataPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">{MOCK_DATA.length}校</p>
+            <p className="text-2xl font-bold">{data.length}校</p>
           </CardContent>
         </Card>
         <Card>
@@ -136,49 +131,57 @@ export default function AdminPassedDataPage() {
                 </tr>
               </thead>
               <tbody>
-                {MOCK_DATA.map((row) => (
-                  <tr
-                    key={`${row.universityName}-${row.facultyName}`}
-                    className="border-b"
-                  >
-                    <td className="px-4 py-3 font-medium">
-                      {row.universityName}
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {row.facultyName}
-                    </td>
-                    <td className="px-4 py-3 text-center">{row.sampleSize}件</td>
-                    <td className="px-4 py-3">
-                      <div className="mx-auto flex w-32 items-center gap-2">
-                        <div className="h-2 flex-1 rounded-full bg-muted">
-                          <div
-                            className={`h-2 rounded-full ${
-                              row.coveragePercent >= 50
-                                ? "bg-emerald-500"
-                                : "bg-rose-400"
-                            }`}
-                            style={{
-                              width: `${Math.min(row.coveragePercent, 100)}%`,
-                            }}
-                          />
-                        </div>
-                        <span className="text-xs text-muted-foreground">
-                          {row.coveragePercent}%
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      {row.status === "sufficient" ? (
-                        <Badge variant="default">充足</Badge>
-                      ) : (
-                        <Badge variant="destructive">
-                          <AlertTriangle className="mr-1 size-3" />
-                          不足
-                        </Badge>
-                      )}
+                {data.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
+                      まだデータがありません
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  data.map((row) => (
+                    <tr
+                      key={`${row.universityName}-${row.facultyName}`}
+                      className="border-b"
+                    >
+                      <td className="px-4 py-3 font-medium">
+                        {row.universityName}
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {row.facultyName}
+                      </td>
+                      <td className="px-4 py-3 text-center">{row.sampleSize}件</td>
+                      <td className="px-4 py-3">
+                        <div className="mx-auto flex w-32 items-center gap-2">
+                          <div className="h-2 flex-1 rounded-full bg-muted">
+                            <div
+                              className={`h-2 rounded-full ${
+                                row.coveragePercent >= 50
+                                  ? "bg-emerald-500"
+                                  : "bg-rose-400"
+                              }`}
+                              style={{
+                                width: `${Math.min(row.coveragePercent, 100)}%`,
+                              }}
+                            />
+                          </div>
+                          <span className="text-xs text-muted-foreground">
+                            {row.coveragePercent}%
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {row.status === "sufficient" ? (
+                          <Badge variant="default">充足</Badge>
+                        ) : (
+                          <Badge variant="destructive">
+                            <AlertTriangle className="mr-1 size-3" />
+                            不足
+                          </Badge>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

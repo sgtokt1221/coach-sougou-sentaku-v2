@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Mic, Users, BookOpen, ChevronRight, MessageSquare, GraduationCap, Settings, Upload, FileText, Loader2, X, Plus, History } from "lucide-react";
+import { toast } from "sonner";
 import { authFetch } from "@/lib/api/client";
 import { InterviewHistory } from "@/components/interview/InterviewHistory";
 import type { InterviewMode } from "@/lib/types/interview";
@@ -116,24 +117,7 @@ export default function InterviewNewPage() {
       );
       router.push(`/student/interview/session/${data.sessionId}`);
     } catch {
-      const mockSessionId = `mock-session-${Date.now()}`;
-      sessionStorage.setItem(
-        `interview_session_${mockSessionId}`,
-        JSON.stringify({
-          universityId,
-          facultyId,
-          mode: selectedMode,
-          inputMode,
-          universityContext: {
-            universityName: selectedUni?.universityName ?? "",
-            facultyName: selectedUni?.facultyName ?? "",
-            admissionPolicy: "自主的に考え、行動できる人材を求めます。",
-          },
-          openingMessage:
-            "それでは面接を始めましょう。まず、志望動機をお聞かせください。",
-        })
-      );
-      router.push(`/student/interview/session/${mockSessionId}`);
+      toast.error("面接セッションの開始に失敗しました");
     } finally {
       setIsLoading(false);
     }

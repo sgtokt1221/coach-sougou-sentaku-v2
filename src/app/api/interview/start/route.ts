@@ -5,18 +5,6 @@ import type { InterviewStartRequest, InterviewStartResponse } from "@/lib/types/
 import type { WeaknessRecord } from "@/lib/types/growth";
 import type { InterviewTendency } from "@/lib/types/university";
 
-const MOCK_START: InterviewStartResponse = {
-  sessionId: "mock-interview-" + Date.now(),
-  openingMessage:
-    "こんにちは。本日は面接にお越しいただきありがとうございます。まず、志望理由についてお聞かせください。なぜ本学部を志望されたのですか？",
-  estimatedDuration: 15,
-  universityContext: {
-    universityName: "（大学名未設定）",
-    facultyName: "（学部名未設定）",
-    admissionPolicy: "（AP未設定）",
-  },
-};
-
 export async function POST(request: NextRequest) {
   try {
     const body: InterviewStartRequest & { inputMode?: string; presentationContent?: string } = await request.json();
@@ -113,8 +101,8 @@ export async function POST(request: NextRequest) {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
-        { error: "ANTHROPIC_API_KEYが設定されていません" },
-        { status: 500 }
+        { error: "APIキーが設定されていません", available: false },
+        { status: 503 }
       );
     }
 

@@ -24,60 +24,6 @@ interface TrendDataPoint {
   originality: number;
 }
 
-const mockTrendData: TrendDataPoint[] = [
-  { date: "3/1", total: 28, structure: 5, logic: 5, expression: 7, apAlignment: 5, originality: 6 },
-  { date: "3/5", total: 31, structure: 6, logic: 5, expression: 7, apAlignment: 6, originality: 7 },
-  { date: "3/10", total: 38, structure: 7, logic: 7, expression: 8, apAlignment: 8, originality: 8 },
-  { date: "3/15", total: 34, structure: 7, logic: 6, expression: 8, apAlignment: 7, originality: 6 },
-  { date: "3/20", total: 40, structure: 8, logic: 7, expression: 9, apAlignment: 8, originality: 8 },
-];
-
-const mockWeaknesses: WeaknessWithLevel[] = [
-  {
-    area: "論拠となるデータ・事例の不足",
-    count: 5,
-    firstOccurred: new Date(),
-    lastOccurred: new Date(),
-    improving: false,
-    resolved: false,
-    source: "essay",
-    reminderDismissedAt: null,
-    level: "critical",
-  },
-  {
-    area: "AP連動の弱さ",
-    count: 3,
-    firstOccurred: new Date(),
-    lastOccurred: new Date(),
-    improving: false,
-    resolved: false,
-    source: "essay",
-    reminderDismissedAt: null,
-    level: "warning",
-  },
-  {
-    area: "導入部分の改善",
-    count: 2,
-    firstOccurred: new Date(),
-    lastOccurred: new Date(),
-    improving: true,
-    resolved: false,
-    source: "essay",
-    reminderDismissedAt: null,
-    level: "improving",
-  },
-  {
-    area: "結論の明確化",
-    count: 2,
-    firstOccurred: new Date(),
-    lastOccurred: new Date(),
-    improving: false,
-    resolved: true,
-    source: "essay",
-    reminderDismissedAt: null,
-    level: "resolved",
-  },
-];
 
 const levelConfig: Record<
   WeaknessReminderLevel,
@@ -162,12 +108,12 @@ export default function GrowthPage() {
         apAlignment: 0,
         originality: 0,
       }));
-    return trend.length > 0 ? trend : mockTrendData;
+    return trend;
   }, [essayData]);
 
   const weaknesses = useMemo((): WeaknessWithLevel[] => {
     const items: WeaknessRecord[] = weaknessData?.weaknesses ?? [];
-    if (items.length === 0 && weaknessData === undefined) return mockWeaknesses;
+    if (items.length === 0) return [];
     return items
       .map((w) => ({ ...w, level: getWeaknessReminderLevel(w) }))
       .filter((w): w is WeaknessWithLevel => w.level !== null);
@@ -267,6 +213,8 @@ export default function GrowthPage() {
           <CardContent>
             {loadingTrend ? (
               <Skeleton className="h-[220px] lg:h-[280px] w-full" />
+            ) : trendData.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">まだデータがありません</p>
             ) : (
               <div className="h-[220px] lg:h-[300px]">
                 <ScoresTrendChart data={trendData} />
@@ -291,6 +239,8 @@ export default function GrowthPage() {
           <CardContent>
             {loadingTrend ? (
               <Skeleton className="h-[220px] lg:h-[280px] w-full" />
+            ) : trendData.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">まだデータがありません</p>
             ) : (
               <div className="h-[220px] lg:h-[300px]">
                 <DetailedScoresTrendChart data={trendData} />

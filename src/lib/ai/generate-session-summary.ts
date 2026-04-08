@@ -1,34 +1,18 @@
 import type { SessionSummary } from "@/lib/types/session";
 import { buildSummaryPrompt } from "@/lib/ai/prompts/summary";
 
-const MOCK_SUMMARY: SessionSummary = {
-  overview:
-    "志望理由書の方向性と面接対策について包括的に指導した。生徒は意欲的に取り組んでおり、着実に成長が見られる。",
-  topicsDiscussed: [
-    "志望理由書レビュー",
-    "面接練習の振り返り",
-    "今後のスケジュール確認",
-  ],
-  strengths: ["積極的な姿勢", "志望動機の一貫性"],
-  improvements: ["具体的エピソードの充実", "時間配分の意識"],
-  actionItems: [
-    {
-      task: "志望理由書を修正して再提出",
-      assignee: "student" as const,
-      completed: false,
-    },
-    {
-      task: "次回面接練習の質問リスト作成",
-      assignee: "teacher" as const,
-      completed: false,
-    },
-  ],
+const EMPTY_SUMMARY: SessionSummary = {
+  overview: "",
+  topicsDiscussed: [],
+  strengths: [],
+  improvements: [],
+  actionItems: [],
   generatedAt: new Date().toISOString(),
 };
 
 /**
  * セッションのAIサマリーを生成する共通関数。
- * Claude APIキーが未設定の場合はモックサマリーを返す。
+ * Claude APIキーが未設定の場合はエラーをスローする。
  */
 export async function generateSessionSummary(params: {
   notes?: string;
@@ -36,7 +20,7 @@ export async function generateSessionSummary(params: {
 }): Promise<SessionSummary> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return { ...MOCK_SUMMARY, generatedAt: new Date().toISOString() };
+    throw new Error("APIキーが設定されていません");
   }
 
   try {
@@ -63,7 +47,7 @@ export async function generateSessionSummary(params: {
       rawText.match(/(\{[\s\S]*\})/);
 
     if (!jsonMatch) {
-      return { ...MOCK_SUMMARY, generatedAt: new Date().toISOString() };
+      return { ...EMPTY_SUMMARY, overview: rawText, generatedAt: new Date().toISOString() };
     }
 
     const parsed = JSON.parse(jsonMatch[1]);
@@ -89,6 +73,6 @@ export async function generateSessionSummary(params: {
     };
   } catch (error) {
     console.error("Summary generation error:", error);
-    return { ...MOCK_SUMMARY, generatedAt: new Date().toISOString() };
+    return { ...EMPTY_SUMMARY, generatedAt: new Date().toISOString() };
   }
 }

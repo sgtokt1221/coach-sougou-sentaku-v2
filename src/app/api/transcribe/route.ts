@@ -1,17 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { Transcription } from "@/lib/types/interview";
 
-const MOCK_TRANSCRIPTION: Transcription = {
-  segments: [
-    { start: 0, end: 5.2, text: "私は貴学の文学部を志望しています。", speaker: "student" },
-    { start: 5.5, end: 12.8, text: "日本近代文学に深い関心があり、特に夏目漱石の作品研究を通じて現代社会の問題を考察したいと考えています。", speaker: "student" },
-    { start: 13.0, end: 18.5, text: "高校時代には文芸部で活動し、創作活動を通じて文学の持つ力を実感しました。", speaker: "student" },
-  ],
-  fullText: "私は貴学の文学部を志望しています。日本近代文学に深い関心があり、特に夏目漱石の作品研究を通じて現代社会の問題を考察したいと考えています。高校時代には文芸部で活動し、創作活動を通じて文学の持つ力を実感しました。",
-  language: "ja",
-  duration: 18.5,
-};
-
 export async function POST(request: NextRequest) {
   try {
     const { audioBase64, mimeType, language } = await request.json();
@@ -21,7 +10,10 @@ export async function POST(request: NextRequest) {
 
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
-      return NextResponse.json({ transcription: MOCK_TRANSCRIPTION });
+      return NextResponse.json(
+        { error: "APIキーが設定されていません", available: false },
+        { status: 503 }
+      );
     }
 
     const audioBuffer = Buffer.from(audioBase64, "base64");
@@ -42,7 +34,10 @@ export async function POST(request: NextRequest) {
 
     if (!response.ok) {
       console.error("Whisper API error:", await response.text());
-      return NextResponse.json({ transcription: MOCK_TRANSCRIPTION });
+      return NextResponse.json(
+        { error: "文字起こしAPIでエラーが発生しました" },
+        { status: 502 }
+      );
     }
 
     const data = await response.json();
@@ -61,6 +56,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ transcription });
   } catch (error) {
     console.error("Transcription error:", error);
-    return NextResponse.json({ transcription: MOCK_TRANSCRIPTION });
+    return NextResponse.json(
+      { error: "文字起こし処理中にエラーが発生しました" },
+      { status: 500 }
+    );
   }
 }
