@@ -18,15 +18,44 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // IDトークンからuserIdを取得
+    let requestUserId: string | null = null;
+    const authHeader = request.headers.get("Authorization");
+    if (authHeader?.startsWith("Bearer ")) {
+      try {
+        const { adminAuth } = await import("@/lib/firebase/admin");
+        if (adminAuth) {
+          const decoded = await adminAuth.verifyIdToken(authHeader.slice(7));
+          requestUserId = decoded.uid;
+        }
+      } catch {}
+    }
+
     // 大学・学部のAPを取得
     let admissionPolicy = "（大学情報未設定）";
     let weaknessList = "（過去の弱点なし）";
-    let essayUserId: string | null = null;
+    let essayUserId: string | null = requestUserId;
     let existingWeaknesses: WeaknessRecord[] = [];
 
     const { adminDb } = await import("@/lib/firebase/admin");
     if (adminDb) {
       try {
+        // essayドキュメントが存在しなければ作成（初回保存）
+        const existingEssay = await adminDb.doc(`essays/${essayId}`).get();
+        if (!existingEssay.exists) {
+          await adminDb.doc(`essays/${essayId}`).set({
+            userId: requestUserId,
+            ocrText,
+            targetUniversity: universityId,
+            targetFaculty: facultyId,
+            topic: topic ?? "",
+            imageUrl: "",
+            status: "reviewing",
+            submittedAt: new Date(),
+          });
+        } else {
+          essayUserId = existingEssay.data()?.userId ?? requestUserId;
+        }
         // AP取得（過去問の場合は過去問の学部APを優先）
         const universityDoc = await adminDb.doc(`universities/${universityId}`).get();
         if (universityDoc.exists) {
@@ -176,13 +205,13 @@ export async function POST(request: NextRequest) {
     if (adminDb) {
       try {
         const { FieldValue } = await import("firebase-admin/firestore");
-        await adminDb.doc(`essays/${essayId}`).update({
+        await adminDb.doc(`essays/${essayId}`).set({
           scores,
           feedback,
           weaknessTags,
           status: "reviewed",
           reviewedAt: FieldValue.serverTimestamp(),
-        });
+        }, { merge: true });
 
         if (essayUserId) {
           for (const weakness of updatedWeaknesses) {
