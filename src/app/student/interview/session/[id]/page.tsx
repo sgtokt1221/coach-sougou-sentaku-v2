@@ -12,7 +12,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Send, StopCircle, ChevronDown, ChevronUp, Video, VideoOff, Volume2 } from "lucide-react";
+import { Send, StopCircle, ChevronDown, ChevronUp, Video, VideoOff, Volume2, VolumeX } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import type { InterviewMessage, InterviewMode, InterviewInputMode, VoiceAnalysis, VideoAnalysis, AppearanceAnalysis } from "@/lib/types/interview";
 import { INTERVIEW_MODE_LABELS } from "@/lib/types/interview";
@@ -65,30 +65,14 @@ export default function InterviewSessionPage() {
   const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
   const [cameraEnabled, setCameraEnabled] = useState(false);
   const [aiSpeaking, setAiSpeaking] = useState(false);
+  const [ttsEnabled, setTtsEnabled] = useState(true);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const ttsAudioRef = useRef<HTMLAudioElement | null>(null);
-  const audioUnlocked = useRef(false);
-  const [pendingTTS, setPendingTTS] = useState<string | null>(null);
-
-  // Unlock audio on user gesture (required by mobile browsers)
-  const unlockAudio = useCallback(() => {
-    if (audioUnlocked.current) return;
-    const silent = new Audio("data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=");
-    silent.play().then(() => {
-      audioUnlocked.current = true;
-      console.log("[TTS] Audio unlocked via user gesture");
-    }).catch(() => {});
-  }, []);
 
   const speakText = useCallback(async (text: string) => {
-    // If audio not unlocked yet, queue it and show tap-to-play prompt
-    if (!audioUnlocked.current) {
-      console.warn("[TTS] Audio not unlocked, queuing text");
-      setPendingTTS(text);
-      return;
-    }
+    if (!ttsEnabled) return;
 
     try {
       setAiSpeaking(true);
@@ -96,7 +80,8 @@ export default function InterviewSessionPage() {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 15000);
 
-      const res = await authFetch("/api/interview/tts", {
+      // TTS APIは認証不要なので素fetchでOK
+      const res = await fetch("/api/interview/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text, voice: "alloy" }),
@@ -105,14 +90,14 @@ export default function InterviewSessionPage() {
       clearTimeout(timeout);
 
       if (!res.ok) {
-        console.warn("[TTS] API returned", res.status);
+        console.warn("[TTS] API error:", res.status);
         setAiSpeaking(false);
         return;
       }
 
       const contentType = res.headers.get("Content-Type") ?? "";
       if (!contentType.startsWith("audio/")) {
-        console.warn("[TTS] Unexpected Content-Type:", contentType);
+        console.warn("[TTS] Not audio:", contentType);
         setAiSpeaking(false);
         return;
       }
@@ -120,48 +105,29 @@ export default function InterviewSessionPage() {
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
 
-      // Stop previous
       if (ttsAudioRef.current) {
         ttsAudioRef.current.pause();
         ttsAudioRef.current.src = "";
       }
 
       const audio = new Audio(url);
-      audio.preload = "auto";
       ttsAudioRef.current = audio;
-      audio.onended = () => {
-        URL.revokeObjectURL(url);
-        setAiSpeaking(false);
-      };
-      audio.onerror = () => {
-        console.warn("[TTS] Audio playback error");
-        URL.revokeObjectURL(url);
-        setAiSpeaking(false);
-      };
+      audio.onended = () => { URL.revokeObjectURL(url); setAiSpeaking(false); };
+      audio.onerror = () => { URL.revokeObjectURL(url); setAiSpeaking(false); };
 
-      // Wait for audio to be ready before playing
-      await new Promise<void>((resolve, reject) => {
-        audio.oncanplaythrough = () => resolve();
-        audio.onerror = () => reject(new Error("Audio decode failed"));
-        audio.load();
-      });
-      await audio.play();
+      // play()を直接呼ぶ — ブラウザがブロックしたらcatchで処理
+      try {
+        await audio.play();
+      } catch (playErr) {
+        console.warn("[TTS] play() blocked:", playErr);
+        URL.revokeObjectURL(url);
+        setAiSpeaking(false);
+      }
     } catch (err) {
       console.warn("[TTS] Error:", err instanceof Error ? err.message : err);
       setAiSpeaking(false);
     }
-  }, []);
-
-  // Handle tap-to-play: unlock audio and play pending TTS
-  const handleTapToPlay = useCallback(() => {
-    unlockAudio();
-    if (pendingTTS) {
-      const text = pendingTTS;
-      setPendingTTS(null);
-      // Small delay to ensure unlock completes
-      setTimeout(() => speakText(text), 100);
-    }
-  }, [pendingTTS, speakText, unlockAudio]);
+  }, [ttsEnabled]);
 
   // Load session info from sessionStorage
   useEffect(() => {
@@ -275,7 +241,6 @@ export default function InterviewSessionPage() {
   }, [messages, sessionId]);
 
   const sendMessage = useCallback(async () => {
-    unlockAudio(); // Unlock on user gesture (send button click)
     const text = input.trim();
     if (!text || isLoading) return;
 
@@ -433,8 +398,15 @@ export default function InterviewSessionPage() {
         </div>
         <div className="flex items-center gap-3">
           <button
+            onClick={() => setTtsEnabled((v) => !v)}
+            className={`p-1.5 rounded-md transition-colors cursor-pointer ${ttsEnabled ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground"}`}
+            title={ttsEnabled ? "音声ON" : "音声OFF"}
+          >
+            {ttsEnabled ? <Volume2 className="size-4" /> : <VolumeX className="size-4" />}
+          </button>
+          <button
             onClick={() => setCameraEnabled((v) => !v)}
-            className={`p-1.5 rounded-md transition-colors ${cameraEnabled ? "text-emerald-600 bg-emerald-50" : "text-muted-foreground hover:text-foreground"}`}
+            className={`p-1.5 rounded-md transition-colors cursor-pointer ${cameraEnabled ? "text-emerald-600 bg-emerald-50" : "text-muted-foreground hover:text-foreground"}`}
             title={cameraEnabled ? "カメラ分析ON" : "カメラ分析OFF"}
           >
             {cameraEnabled ? <Video className="size-4" /> : <VideoOff className="size-4" />}
@@ -458,17 +430,6 @@ export default function InterviewSessionPage() {
         <div className="mx-4 mt-2 rounded-lg border border-rose-300 bg-rose-50 dark:border-rose-700 dark:bg-rose-950/30 px-3 py-2 text-sm text-rose-700 dark:text-rose-300 animate-in fade-in slide-in-from-top-2">
           <strong>身だしなみ:</strong> {appearanceAlert}
         </div>
-      )}
-
-      {/* Tap-to-play banner (mobile audio unlock) */}
-      {pendingTTS && (
-        <button
-          onClick={handleTapToPlay}
-          className="mx-4 mt-2 flex items-center gap-2 rounded-lg bg-primary/10 border border-primary/20 p-3 text-sm text-primary cursor-pointer animate-pulse"
-        >
-          <Volume2 className="size-4 shrink-0" />
-          <span>タップして面接官の音声を再生</span>
-        </button>
       )}
 
       {/* Messages */}
