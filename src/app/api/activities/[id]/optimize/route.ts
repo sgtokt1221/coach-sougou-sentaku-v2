@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireFeature } from "@/lib/api/subscription";
 import { buildActivityOptimizePrompt } from "@/lib/ai/prompts/activity";
 import type { ActivityOptimization } from "@/lib/types/activity";
 
@@ -14,6 +15,9 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const gate = await requireFeature(request, "apOptimization");
+    if (gate) return gate;
+
     const { id } = await params;
     const body: OptimizeRequest = await request.json();
     const { universityId, facultyId, universityName, facultyName } = body;

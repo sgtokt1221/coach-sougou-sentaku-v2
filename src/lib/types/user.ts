@@ -1,6 +1,13 @@
+import type {
+  SubscriptionPlan,
+  StandardSubscription,
+  DocumentPackage,
+  FeatureFlags,
+} from "@/lib/types/subscription";
+
 export type UserRole = "student" | "teacher" | "admin" | "superadmin";
 
-export type PlanType = "self" | "coach";
+export type PlanType = "self" | "coach" | "free" | "standard";
 
 export interface UserProfile {
   uid: string;
@@ -10,6 +17,11 @@ export interface UserProfile {
   photoURL?: string;
   plan?: PlanType;
   stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
+  standardSubscription?: StandardSubscription;
+  documentPackage?: DocumentPackage;
+  features?: FeatureFlags;
+  subscriptionPlan?: SubscriptionPlan;
   createdAt: Date;
   updatedAt: Date;
 }

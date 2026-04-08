@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireFeature } from "@/lib/api/subscription";
 import type { Document, DocumentCreateRequest } from "@/lib/types/document";
 
 const MOCK_DOCUMENTS: Document[] = [
@@ -117,6 +118,9 @@ const MOCK_DOCUMENTS: Document[] = [
 
 export async function GET(request: NextRequest) {
   try {
+    const gate = await requireFeature(request, "documentEditor");
+    if (gate) return gate;
+
     const { searchParams } = new URL(request.url);
     const universityId = searchParams.get("universityId");
 
@@ -145,6 +149,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const gate = await requireFeature(request, "documentEditor");
+    if (gate) return gate;
+
     const body: DocumentCreateRequest = await request.json();
 
     if (!body.type || !body.universityId || !body.facultyId) {

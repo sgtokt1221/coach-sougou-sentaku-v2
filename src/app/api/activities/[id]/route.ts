@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireFeature } from "@/lib/api/subscription";
 import type { Activity } from "@/lib/types/activity";
 
 const MOCK_ACTIVITIES: Record<string, Activity> = {
@@ -88,6 +89,9 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const gate = await requireFeature(_request, "activityManager");
+    if (gate) return gate;
+
     const { id } = await params;
     const activity = MOCK_ACTIVITIES[id];
     if (!activity) {
@@ -105,6 +109,9 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const gate = await requireFeature(request, "activityManager");
+    if (gate) return gate;
+
     const { id } = await params;
     const activity = MOCK_ACTIVITIES[id];
     if (!activity) {
@@ -131,6 +138,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const gate = await requireFeature(_request, "activityManager");
+    if (gate) return gate;
+
     const { id } = await params;
     const activity = MOCK_ACTIVITIES[id];
     if (!activity) {

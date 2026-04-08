@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireFeature } from "@/lib/api/subscription";
 import type { Document } from "@/lib/types/document";
 
 const MOCK_DOCUMENT: Document = {
@@ -39,6 +40,9 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const gate = await requireFeature(_request, "documentEditor");
+    if (gate) return gate;
+
     const { id } = await params;
 
     const { db } = await import("@/lib/firebase/config");
@@ -65,6 +69,9 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const gate = await requireFeature(request, "documentEditor");
+    if (gate) return gate;
+
     const { id } = await params;
     const body = await request.json();
     const now = new Date().toISOString();
@@ -140,6 +147,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const gate = await requireFeature(_request, "documentEditor");
+    if (gate) return gate;
+
     const { id } = await params;
 
     const { db } = await import("@/lib/firebase/config");

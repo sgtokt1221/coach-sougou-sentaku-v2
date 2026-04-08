@@ -27,6 +27,7 @@ import {
   CalendarDays,
   MessageSquare,
   FileBarChart,
+  Crown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -88,6 +89,7 @@ const studentNavGroups: NavGroup[] = [
   {
     title: "",
     items: [
+      { label: "プラン", href: "/student/pricing", icon: Crown },
       { label: "設定", href: "/student/settings", icon: Settings },
     ],
   },
