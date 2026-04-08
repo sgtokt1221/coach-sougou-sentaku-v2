@@ -90,6 +90,7 @@ const studentNavGroups: NavGroup[] = [
     title: "",
     items: [
       { label: "プラン", href: "/student/pricing", icon: Crown },
+      { label: "通知設定", href: "/student/settings/notifications", icon: Bell },
       { label: "設定", href: "/student/settings", icon: Settings },
     ],
   },
@@ -117,6 +118,7 @@ const adminNavGroups: NavGroup[] = [
   {
     title: "",
     items: [
+      { label: "通知管理", href: "/admin/settings/notifications", icon: Bell },
       { label: "設定", href: "/admin/settings", icon: Settings },
     ],
   },
