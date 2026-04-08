@@ -80,7 +80,7 @@ export default function EssayHistoryPage() {
   const router = useRouter();
   const [visibleLines, setVisibleLines] = useState<Set<string>>(new Set(["total"]));
 
-  const { data: rawData, isLoading: loading } = useAuthSWR<{ essays: EssayHistoryItem[] }>("/api/essay/history");
+  const { data: rawData, isLoading: loading } = useAuthSWR<{ essays: EssayHistoryItem[] }>("/api/essay/history?userId=current");
   const history = rawData?.essays ?? [];
 
   function toggleLine(key: string) {

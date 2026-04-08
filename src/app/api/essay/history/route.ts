@@ -3,13 +3,24 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get("userId");
+    let userId = searchParams.get("userId");
+
+    // トークンからuserIdを取得（interview/historyと同じパターン）
+    if (!userId || userId === "current") {
+      const authHeader = request.headers.get("Authorization");
+      if (authHeader?.startsWith("Bearer ")) {
+        try {
+          const { adminAuth } = await import("@/lib/firebase/admin");
+          if (adminAuth) {
+            const decoded = await adminAuth.verifyIdToken(authHeader.slice(7));
+            userId = decoded.uid;
+          }
+        } catch {}
+      }
+    }
 
     if (!userId) {
-      return NextResponse.json(
-        { error: "userId パラメータは必須です" },
-        { status: 400 }
-      );
+      return NextResponse.json({ essays: [] });
     }
 
     const { adminDb } = await import("@/lib/firebase/admin");
