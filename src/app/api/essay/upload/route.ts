@@ -190,8 +190,22 @@ export async function POST(request: NextRequest) {
     }
 
     const essayId = `essay_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
-    const imageUrl = `gs://placeholder/${essayId}.jpg`;
     const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, "");
+
+    // Cloud Storageに画像をアップロード
+    let imageUrl = "";
+    try {
+      const { getStorage } = await import("firebase-admin/storage");
+      const bucket = getStorage().bucket();
+      const file = bucket.file(`essays/${essayId}.jpg`);
+      const imageBuffer = Buffer.from(base64Data, "base64");
+      await file.save(imageBuffer, { contentType: "image/jpeg" });
+      const [url] = await file.getSignedUrl({ action: "read", expires: "2030-01-01" });
+      imageUrl = url;
+    } catch (storageErr) {
+      console.warn("[Storage] Upload failed, using fallback:", storageErr);
+      imageUrl = `gs://essays/${essayId}.jpg`;
+    }
 
     let ocrText: string | null = null;
     let ocrSource = "";

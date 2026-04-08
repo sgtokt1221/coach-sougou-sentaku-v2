@@ -1,13 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const MOCK_RESPONSE = {
-  transcribedText:
-    "私は貴学の文学部を志望しています。日本近代文学に深い関心があり、特に夏目漱石の作品研究を通じて現代社会の問題を考察したいと考えています。",
-  aiResponse:
-    "志望理由を具体的に述べていただきありがとうございます。夏目漱石の作品の中で、特にどの作品に関心をお持ちですか？また、その作品を通じてどのような現代社会の問題を考察されたいですか？",
-  isActive: true,
-};
-
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();

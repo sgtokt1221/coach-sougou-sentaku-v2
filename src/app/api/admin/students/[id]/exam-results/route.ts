@@ -3,34 +3,6 @@ import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
 import type { ExamResult, ExamResultInput } from "@/lib/types/exam-result";
 
-const MOCK_RESULTS: ExamResult[] = [
-  {
-    id: "er_001",
-    userId: "mock_student_001",
-    universityId: "univ_tokyo",
-    universityName: "東京大学",
-    facultyId: "law",
-    facultyName: "法学部",
-    status: "passed",
-    examDate: "2026-02-25",
-    resultDate: "2026-03-10",
-    createdAt: new Date("2026-01-15"),
-    updatedAt: new Date("2026-03-10"),
-  },
-  {
-    id: "er_002",
-    userId: "mock_student_001",
-    universityId: "univ_kyoto",
-    universityName: "京都大学",
-    facultyId: "economics",
-    facultyName: "経済学部",
-    status: "applied",
-    examDate: "2026-03-15",
-    createdAt: new Date("2026-02-01"),
-    updatedAt: new Date("2026-02-01"),
-  },
-];
-
 /**
  * GET /api/admin/students/[id]/exam-results
  * 指定生徒の全受験結果を取得
@@ -51,9 +23,7 @@ export async function GET(
     const { id } = await params;
 
     if (!adminDb) {
-      return NextResponse.json(
-        MOCK_RESULTS.map((r) => ({ ...r, userId: id }))
-      );
+      return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
     }
 
     // managedByスコーピング
@@ -149,14 +119,7 @@ export async function POST(
     }
 
     if (!adminDb) {
-      const newResult: ExamResult = {
-        id: `er_${Date.now()}`,
-        userId: id,
-        ...body,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-      return NextResponse.json(newResult, { status: 201 });
+      return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
     }
 
     // managedByスコーピング

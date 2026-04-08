@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { adminDb, verifyAuthToken } from "@/lib/firebase/admin";
 import type { DocumentType, DocumentStatus } from "@/lib/types/document";
 
 interface ChecklistItem {
@@ -15,48 +16,89 @@ interface UniversityChecklist {
   items: ChecklistItem[];
 }
 
-const MOCK_CHECKLISTS: UniversityChecklist[] = [
-  {
-    universityId: "kyoto-u",
-    universityName: "京都大学",
-    facultyName: "文学部",
-    items: [
-      { type: "志望理由書", status: "draft", documentId: "doc-001", deadline: "2026-09-01" },
-      { type: "学業活動報告書", status: "draft", deadline: "2026-09-01" },
-      { type: "学びの設計書", status: "draft", deadline: "2026-09-01" },
-    ],
-  },
-  {
-    universityId: "doshisha-u",
-    universityName: "同志社大学",
-    facultyName: "法学部",
-    items: [
-      { type: "自己推薦書", status: "reviewed", documentId: "doc-002", deadline: "2026-10-15" },
-      { type: "志望理由書", status: "draft", deadline: "2026-10-15" },
-    ],
-  },
-  {
-    universityId: "osaka-u",
-    universityName: "大阪大学",
-    facultyName: "工学部",
-    items: [
-      { type: "研究計画書", status: "final", documentId: "doc-003", deadline: "2026-08-20" },
-      { type: "志望理由書", status: "draft", deadline: "2026-08-20" },
-    ],
-  },
-];
-
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const { db } = await import("@/lib/firebase/config");
-    if (!db) {
-      return NextResponse.json({ checklists: MOCK_CHECKLISTS });
+    const auth = await verifyAuthToken(request);
+    const uid = auth?.uid ?? (process.env.NODE_ENV === "development" ? "dev-user" : null);
+
+    if (!adminDb) {
+      return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
+    }
+    if (!uid) {
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }
 
-    // TODO: Firestoreからチェックリストを動的に構築
-    return NextResponse.json({ checklists: MOCK_CHECKLISTS });
+    // Get user profile for targetUniversities
+    const userDoc = await adminDb.doc(`users/${uid}`).get();
+    const userData = userDoc.data();
+    const targetUniversities: Array<{ universityId: string; facultyId: string }> =
+      userData?.targetUniversities ?? [];
+
+    if (targetUniversities.length === 0) {
+      return NextResponse.json({ checklists: [] });
+    }
+
+    // Fetch university data and user documents in parallel
+    const [universityDocs, userDocumentsSnap] = await Promise.all([
+      Promise.all(
+        targetUniversities.map((t) =>
+          adminDb!.doc(`universities/${t.universityId}`).get()
+        )
+      ),
+      adminDb.collection(`users/${uid}/documents`).get(),
+    ]);
+
+    // Index existing documents by universityId + type for quick lookup
+    const existingDocs = new Map<string, { id: string; status: DocumentStatus; deadline?: string }>();
+    for (const doc of userDocumentsSnap.docs) {
+      const data = doc.data();
+      const key = `${data.universityId}:${data.type}`;
+      existingDocs.set(key, {
+        id: doc.id,
+        status: data.status as DocumentStatus,
+        deadline: data.deadline,
+      });
+    }
+
+    const checklists: UniversityChecklist[] = [];
+
+    for (let i = 0; i < targetUniversities.length; i++) {
+      const target = targetUniversities[i];
+      const uniDoc = universityDocs[i];
+      if (!uniDoc.exists) continue;
+
+      const uniData = uniDoc.data();
+      const faculty = uniData?.faculties?.find(
+        (f: { id: string }) => f.id === target.facultyId
+      );
+      if (!faculty) continue;
+
+      // Get required document types from faculty's admission info
+      const requiredTypes: DocumentType[] =
+        faculty.requiredDocuments ?? faculty.admissionRequirements?.documents ?? [];
+
+      const items: ChecklistItem[] = requiredTypes.map((type: DocumentType) => {
+        const key = `${target.universityId}:${type}`;
+        const existing = existingDocs.get(key);
+        return {
+          type,
+          status: existing?.status ?? ("draft" as DocumentStatus),
+          documentId: existing?.id,
+          deadline: existing?.deadline ?? faculty.deadline,
+        };
+      });
+
+      checklists.push({
+        universityId: target.universityId,
+        universityName: uniData?.name ?? target.universityId,
+        facultyName: faculty.name ?? target.facultyId,
+        items,
+      });
+    }
+
+    return NextResponse.json({ checklists });
   } catch (error) {
     console.error("Checklist error:", error);
-    return NextResponse.json({ checklists: MOCK_CHECKLISTS });
+    return NextResponse.json({ error: "チェックリストの取得に失敗しました" }, { status: 500 });
   }
 }

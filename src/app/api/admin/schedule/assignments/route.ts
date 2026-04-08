@@ -3,20 +3,6 @@ import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
 import type { Assignment } from "@/lib/types/schedule";
 
-const MOCK_ASSIGNMENTS: Assignment[] = [
-  {
-    id: "assign_001",
-    teacherId: "teacher_001",
-    teacherName: "山田 先生",
-    studentId: "mock_student_001",
-    studentName: "田中 太郎",
-    dayOfWeek: 1,
-    startTime: "10:00",
-    endTime: "10:30",
-    createdAt: new Date(),
-  },
-];
-
 export async function GET(request: NextRequest) {
   const auth = await requireRole(request, [
     "admin",
@@ -30,12 +16,7 @@ export async function GET(request: NextRequest) {
   const studentId = searchParams.get("studentId");
 
   if (!adminDb) {
-    let filtered = MOCK_ASSIGNMENTS;
-    if (teacherId)
-      filtered = filtered.filter((a) => a.teacherId === teacherId);
-    if (studentId)
-      filtered = filtered.filter((a) => a.studentId === studentId);
-    return NextResponse.json(filtered);
+    return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
   }
 
   try {
@@ -58,7 +39,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(assignments);
   } catch (error) {
     console.error("Failed to fetch assignments:", error);
-    return NextResponse.json(MOCK_ASSIGNMENTS);
+    return NextResponse.json({ error: "アサインの取得に失敗しました" }, { status: 500 });
   }
 }
 
@@ -70,12 +51,7 @@ export async function POST(request: NextRequest) {
     const body = (await request.json()) as Omit<Assignment, "id" | "createdAt">;
 
     if (!adminDb) {
-      const newAssignment: Assignment = {
-        ...body,
-        id: `assign_${Date.now()}`,
-        createdAt: new Date(),
-      };
-      return NextResponse.json(newAssignment, { status: 201 });
+      return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
     }
 
     const docRef = await adminDb.collection("assignments").add({
@@ -114,7 +90,7 @@ export async function DELETE(request: NextRequest) {
   }
 
   if (!adminDb) {
-    return NextResponse.json({ deleted: true, id });
+    return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
   }
 
   try {

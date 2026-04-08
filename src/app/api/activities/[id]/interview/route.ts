@@ -1,34 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { buildActivityInterviewPrompt } from "@/lib/ai/prompts/activity";
-import type { StructuredActivityData } from "@/lib/types/activity";
 
 interface InterviewRequest {
   message: string;
   history?: Array<{ role: string; content: string }>;
 }
-
-const MOCK_QUESTIONS = [
-  "その活動を始めたきっかけは何ですか？どのような背景や動機がありましたか？",
-  "具体的にどのような行動をとりましたか？特に工夫した点や苦労した点を教えてください。",
-  "その活動を通じてどのような成果が得られましたか？数値で表せるものがあれば教えてください。",
-];
-
-const MOCK_STRUCTURED_DATA: StructuredActivityData = {
-  motivation: "自分の好きなことを通じて仲間と一緒に成長したいという思いから活動を始めた。",
-  actions: [
-    "チームメンバーとの定期的なミーティングを主催",
-    "外部との連携イベントを企画・実行",
-  ],
-  results: [
-    "参加者数の大幅な増加を達成",
-    "活動の認知度向上に成功",
-  ],
-  learnings: [
-    "リーダーシップとチームワークの重要性",
-    "計画を実行に移す力",
-  ],
-  connection: "大学での学びと将来のキャリアに活動経験を活かしたい。",
-};
 
 export async function POST(
   request: NextRequest,
@@ -45,23 +21,10 @@ export async function POST(
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
-      const turnCount = (history?.length ?? 0) + 1;
-      if (turnCount >= 6) {
-        return NextResponse.json({
-          aiQuestion: "ヒアリングが完了しました。活動の全体像が把握できましたので、以下の内容で構造化しました。内容を確認してください。",
-          isComplete: true,
-          structuredData: MOCK_STRUCTURED_DATA,
-        });
-      }
-
-      const questionIndex = Math.min(
-        Math.floor(turnCount / 2),
-        MOCK_QUESTIONS.length - 1
+      return NextResponse.json(
+        { error: "ヒアリング機能にはAPIキーが必要です", available: false },
+        { status: 503 }
       );
-      return NextResponse.json({
-        aiQuestion: MOCK_QUESTIONS[questionIndex],
-        isComplete: false,
-      });
     }
 
     const Anthropic = (await import("@anthropic-ai/sdk")).default;

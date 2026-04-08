@@ -13,14 +13,11 @@ export async function POST(request: Request) {
     );
   }
 
-  // 開発環境モック
   if (!process.env.ANTHROPIC_API_KEY) {
-    const mock: AppearanceAnalysis = {
-      score: 8,
-      issues: [],
-      advice: "身だしなみは整っています。自信を持って面接に臨みましょう。",
-    };
-    return NextResponse.json(mock);
+    return NextResponse.json(
+      { error: "身だしなみチェックにはAPI設定が必要です", available: false },
+      { status: 503 }
+    );
   }
 
   try {

@@ -24,7 +24,7 @@ export async function PUT(request: NextRequest) {
     }
 
     if (!adminDb) {
-      return NextResponse.json({ success: true, mock: true });
+      return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
     }
 
     const { FieldValue } = await import("firebase-admin/firestore");

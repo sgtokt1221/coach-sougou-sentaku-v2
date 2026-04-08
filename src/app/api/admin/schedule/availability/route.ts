@@ -3,34 +3,6 @@ import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
 import type { TeacherAvailability, TimeSlot } from "@/lib/types/schedule";
 
-const MOCK_AVAILABILITY: TeacherAvailability[] = [
-  {
-    teacherId: "teacher_001",
-    teacherName: "山田 先生",
-    slots: [
-      { dayOfWeek: 1, startTime: "10:00", endTime: "10:30" },
-      { dayOfWeek: 1, startTime: "10:30", endTime: "11:00" },
-      { dayOfWeek: 1, startTime: "14:00", endTime: "14:30" },
-      { dayOfWeek: 3, startTime: "09:00", endTime: "09:30" },
-      { dayOfWeek: 3, startTime: "09:30", endTime: "10:00" },
-      { dayOfWeek: 5, startTime: "15:00", endTime: "15:30" },
-      { dayOfWeek: 5, startTime: "15:30", endTime: "16:00" },
-    ],
-  },
-  {
-    teacherId: "teacher_002",
-    teacherName: "鈴木 先生",
-    slots: [
-      { dayOfWeek: 2, startTime: "13:00", endTime: "13:30" },
-      { dayOfWeek: 2, startTime: "13:30", endTime: "14:00" },
-      { dayOfWeek: 4, startTime: "10:00", endTime: "10:30" },
-      { dayOfWeek: 4, startTime: "10:30", endTime: "11:00" },
-      { dayOfWeek: 6, startTime: "09:00", endTime: "09:30" },
-      { dayOfWeek: 6, startTime: "09:30", endTime: "10:00" },
-    ],
-  },
-];
-
 export async function GET(request: NextRequest) {
   const auth = await requireRole(request, [
     "admin",
@@ -40,7 +12,7 @@ export async function GET(request: NextRequest) {
   if (auth instanceof NextResponse) return auth;
 
   if (!adminDb) {
-    return NextResponse.json(MOCK_AVAILABILITY);
+    return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
   }
 
   try {
@@ -67,7 +39,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(availability);
   } catch (error) {
     console.error("Failed to fetch availability:", error);
-    return NextResponse.json(MOCK_AVAILABILITY);
+    return NextResponse.json({ error: "空きコマの取得に失敗しました" }, { status: 500 });
   }
 }
 
@@ -90,7 +62,7 @@ export async function PUT(request: NextRequest) {
       auth.role === "teacher" ? auth.uid : teacherId || auth.uid;
 
     if (!adminDb) {
-      return NextResponse.json({ teacherId: targetId, slots });
+      return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
     }
 
     await adminDb.doc(`users/${targetId}/availability/current`).set(

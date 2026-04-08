@@ -21,7 +21,7 @@ export async function POST(request: Request) {
   }
 
   if (!adminDb) {
-    return NextResponse.json({ success: true, mock: true });
+    return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
   }
 
   const tokenRef = adminDb

@@ -9,103 +9,12 @@ import type {
   InvitationSummary,
 } from "@/lib/types/admin";
 
-const mockAdminPerformance: AdminPerformance[] = [
-  {
-    uid: "admin_001",
-    displayName: "管理者 太郎",
-    role: "admin",
-    studentCount: 12,
-    averageScore: 35.2,
-    alertStudentCount: 2,
-  },
-  {
-    uid: "admin_002",
-    displayName: "講師 花子",
-    role: "teacher",
-    studentCount: 8,
-    averageScore: 38.5,
-    alertStudentCount: 1,
-  },
-  {
-    uid: "admin_003",
-    displayName: "管理者 次郎",
-    role: "admin",
-    studentCount: 5,
-    averageScore: 32.0,
-    alertStudentCount: 3,
-  },
-];
-
-const mockRecentActivity: RecentActivity[] = [
-  {
-    id: "act_001",
-    type: "essay_submit",
-    description: "小論文を提出しました",
-    timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-    studentName: "田中 太郎",
-  },
-  {
-    id: "act_002",
-    type: "interview_complete",
-    description: "模擬面接を完了しました",
-    timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
-    studentName: "佐藤 花子",
-  },
-  {
-    id: "act_003",
-    type: "student_assigned",
-    description: "生徒を割り当てました",
-    timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-    adminName: "管理者 太郎",
-    studentName: "高橋 健太",
-  },
-  {
-    id: "act_004",
-    type: "essay_submit",
-    description: "小論文を提出しました",
-    timestamp: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
-    studentName: "鈴木 一郎",
-  },
-  {
-    id: "act_005",
-    type: "student_added",
-    description: "新規生徒が登録されました",
-    timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-    studentName: "中村 翔太",
-  },
-];
-
-function generateMockScoreTrend(): ScoreTrendItem[] {
-  const trend: ScoreTrendItem[] = [];
-  const now = new Date();
-  for (let i = 29; i >= 0; i--) {
-    const date = new Date(now);
-    date.setDate(date.getDate() - i);
-    trend.push({
-      date: date.toISOString().slice(0, 10),
-      averageScore: 30 + Math.random() * 10,
-      count: Math.floor(Math.random() * 5) + 1,
-    });
-  }
-  return trend;
-}
-
 export async function GET(request: Request) {
   const authResult = await requireRole(request, ["superadmin"]);
   if (authResult instanceof NextResponse) return authResult;
 
   if (!adminDb) {
-    const mock: SuperadminDashboardStats = {
-      totalAdmins: 2,
-      totalTeachers: 3,
-      totalStudents: 25,
-      unassignedStudents: 7,
-      adminPerformance: mockAdminPerformance,
-      recentActivity: mockRecentActivity,
-      scoreTrend: generateMockScoreTrend(),
-      invitationSummary: { total: 10, pending: 3, used: 5, expired: 2 },
-    };
-    return NextResponse.json(mock);
+    return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
   }
 
   try {

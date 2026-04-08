@@ -3,14 +3,6 @@ import Anthropic from "@anthropic-ai/sdk";
 import { buildInterviewSystemPrompt } from "@/lib/ai/prompts/interview";
 import type { InterviewMessageResponse, InterviewMessage, InterviewMode } from "@/lib/types/interview";
 
-const MOCK_QUESTIONS = [
-  "なるほど、具体的にどのような経験がそのような考えに至ったきっかけですか？",
-  "それは興味深いですね。では、その経験を通じて学んだことを、大学でどのように活かしたいですか？",
-  "将来のキャリアについてはどのようにお考えですか？",
-  "最後に、本学に対して何か質問はありますか？",
-  "ありがとうございました。以上で面接を終了いたします。",
-];
-
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();

@@ -7,16 +7,6 @@ interface DashboardResponse {
   examResultStats: ExamResultStats;
 }
 
-const MOCK_STATS: DashboardResponse = {
-  examResultStats: {
-    totalApplied: 5,
-    totalPassed: 3,
-    totalFailed: 1,
-    totalWithdrawn: 0,
-    passRate: 75,
-  },
-};
-
 /**
  * GET /api/admin/dashboard
  * ダッシュボード用集計データ（合格率等）
@@ -32,7 +22,7 @@ export async function GET(request: NextRequest) {
 
   try {
     if (!adminDb) {
-      return NextResponse.json(MOCK_STATS);
+      return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
     }
 
     // managedByスコーピング: 担当生徒のIDを取得

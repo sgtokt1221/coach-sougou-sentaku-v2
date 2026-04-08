@@ -8,30 +8,6 @@ interface WeaknessEntry {
   studentCount: number;
 }
 
-interface WeeklyWeaknessesResponse {
-  weeklyTop: WeaknessEntry[];
-  comparedToLastWeek: {
-    improved: string[];
-    worsened: string[];
-    new: string[];
-  };
-}
-
-const MOCK_RESPONSE: WeeklyWeaknessesResponse = {
-  weeklyTop: [
-    { area: "論拠となるデータ・事例の不足", count: 8, studentCount: 5 },
-    { area: "構成の不明確さ", count: 6, studentCount: 4 },
-    { area: "接続詞のバリエーション不足", count: 5, studentCount: 3 },
-    { area: "口語的表現の使用", count: 4, studentCount: 3 },
-    { area: "結論の弱さ", count: 3, studentCount: 2 },
-  ],
-  comparedToLastWeek: {
-    improved: ["表現力の不足"],
-    worsened: ["構成の不明確さ"],
-    new: ["接続詞のバリエーション不足"],
-  },
-};
-
 export async function GET(request: NextRequest) {
   const authResult = await requireRole(request, ["admin", "teacher", "superadmin"]);
   if (authResult instanceof NextResponse) return authResult;
@@ -39,7 +15,7 @@ export async function GET(request: NextRequest) {
 
   try {
     if (!adminDb) {
-      return NextResponse.json(MOCK_RESPONSE);
+      return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
     }
 
     // Get managed student IDs for scoping

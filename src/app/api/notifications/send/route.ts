@@ -27,12 +27,7 @@ export async function POST(request: Request) {
   }
 
   if (!adminDb) {
-    return NextResponse.json({
-      success: true,
-      mock: true,
-      sentTo: 0,
-      message: "Firebase Admin未設定のためモック応答",
-    });
+    return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
   }
 
   // ユーザーのFCMトークン一覧を取得

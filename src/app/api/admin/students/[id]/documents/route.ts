@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
-import type { Document, DocumentStatus } from "@/lib/types/document";
+import type { DocumentStatus } from "@/lib/types/document";
 
 interface DocumentListItem {
   id: string;
@@ -20,54 +20,6 @@ interface DocumentListItem {
   };
 }
 
-const MOCK_DOCUMENTS: DocumentListItem[] = [
-  {
-    id: "doc_001",
-    type: "志望理由書",
-    universityName: "東京大学",
-    facultyName: "法学部",
-    wordCount: 650,
-    targetWordCount: 800,
-    status: "reviewed",
-    deadline: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-    aiScore: { apAlignment: 7, structure: 8, originality: 6 },
-  },
-  {
-    id: "doc_002",
-    type: "学業活動報告書",
-    universityName: "東京大学",
-    facultyName: "法学部",
-    wordCount: 350,
-    targetWordCount: 1000,
-    status: "draft",
-    deadline: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "doc_003",
-    type: "志望理由書",
-    universityName: "京都大学",
-    facultyName: "経済学部",
-    wordCount: 800,
-    targetWordCount: 800,
-    status: "final",
-    deadline: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    aiScore: { apAlignment: 8, structure: 9, originality: 7 },
-  },
-  {
-    id: "doc_004",
-    type: "自己推薦書",
-    universityName: "京都大学",
-    facultyName: "経済学部",
-    wordCount: 200,
-    targetWordCount: 600,
-    status: "draft",
-    updatedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-];
-
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -78,7 +30,7 @@ export async function GET(
   const { id: studentId } = await params;
 
   if (!adminDb) {
-    return NextResponse.json(MOCK_DOCUMENTS);
+    return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
   }
 
   try {
@@ -125,6 +77,6 @@ export async function GET(
     return NextResponse.json(documents);
   } catch (error) {
     console.error("Admin student documents error:", error);
-    return NextResponse.json(MOCK_DOCUMENTS);
+    return NextResponse.json({ error: "データの取得中にエラーが発生しました" }, { status: 500 });
   }
 }

@@ -10,8 +10,7 @@ export async function POST(request: Request) {
   }
 
   if (!adminDb) {
-    // mock: any code is valid
-    return NextResponse.json({ valid: true, role: "admin" });
+    return NextResponse.json({ valid: false, error: "サーバー設定エラー" }, { status: 500 });
   }
 
   try {

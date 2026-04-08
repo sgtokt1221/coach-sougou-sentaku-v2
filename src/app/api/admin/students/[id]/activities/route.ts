@@ -13,45 +13,6 @@ interface ActivityListItem {
   updatedAt: string;
 }
 
-const MOCK_ACTIVITIES: ActivityListItem[] = [
-  {
-    id: "act_001",
-    title: "生徒会長として学校改革",
-    category: "leadership",
-    period: { start: "2025-04-01", end: "2026-03-31" },
-    description: "生徒会長として校則改正プロジェクトを主導。全校生徒アンケートを実施し、合理的な校則改正案を策定。",
-    isStructured: true,
-    updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "act_002",
-    title: "地域清掃ボランティア",
-    category: "volunteer",
-    period: { start: "2025-06-01", end: "2025-12-31" },
-    description: "月2回の地域清掃活動に参加。参加者募集や活動報告の作成を担当。",
-    isStructured: true,
-    updatedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "act_003",
-    title: "数学オリンピック出場",
-    category: "competition",
-    period: { start: "2025-07-01", end: "2025-08-15" },
-    description: "日本数学オリンピック予選に出場。",
-    isStructured: false,
-    updatedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "act_004",
-    title: "プログラミング部での研究活動",
-    category: "research",
-    period: { start: "2025-04-01", end: "2026-03-31" },
-    description: "機械学習を用いた植物の成長予測モデルの研究。",
-    isStructured: false,
-    updatedAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-];
-
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -62,7 +23,7 @@ export async function GET(
   const { id: studentId } = await params;
 
   if (!adminDb) {
-    return NextResponse.json(MOCK_ACTIVITIES);
+    return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
   }
 
   try {
@@ -94,6 +55,6 @@ export async function GET(
     return NextResponse.json(activities);
   } catch (error) {
     console.error("Admin student activities error:", error);
-    return NextResponse.json(MOCK_ACTIVITIES);
+    return NextResponse.json({ error: "データの取得中にエラーが発生しました" }, { status: 500 });
   }
 }

@@ -3,48 +3,15 @@ import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
 import type { AnalyticsOverview } from "@/lib/types/analytics";
 
-const MOCK_OVERVIEW: AnalyticsOverview = {
-  totalEssays: 156,
-  totalInterviews: 89,
-  avgEssayScore: 33.2,
-  avgInterviewScore: 27.5,
-  monthlyTrend: [
-    { month: "2025-10", essays: 18, interviews: 8, avgScore: 28.5 },
-    { month: "2025-11", essays: 22, interviews: 12, avgScore: 30.1 },
-    { month: "2025-12", essays: 25, interviews: 15, avgScore: 31.8 },
-    { month: "2026-01", essays: 30, interviews: 18, avgScore: 33.0 },
-    { month: "2026-02", essays: 32, interviews: 20, avgScore: 34.5 },
-    { month: "2026-03", essays: 29, interviews: 16, avgScore: 35.2 },
-  ],
-  universityPopularity: [
-    { universityName: "東京大学", count: 24 },
-    { universityName: "京都大学", count: 18 },
-    { universityName: "早稲田大学", count: 22 },
-    { universityName: "慶應義塾大学", count: 20 },
-    { universityName: "大阪大学", count: 15 },
-    { universityName: "同志社大学", count: 12 },
-    { universityName: "明治大学", count: 11 },
-    { universityName: "立命館大学", count: 10 },
-  ],
-  scoreDistribution: [
-    { range: "0-10", count: 2 },
-    { range: "11-20", count: 8 },
-    { range: "21-30", count: 35 },
-    { range: "31-40", count: 78 },
-    { range: "41-50", count: 33 },
-  ],
-};
-
 export async function GET(request: NextRequest) {
   const authResult = await requireRole(request, ["superadmin"]);
   if (authResult instanceof NextResponse) return authResult;
 
   try {
     if (!adminDb) {
-      return NextResponse.json(MOCK_OVERVIEW);
+      return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
     }
 
-    // Firestore集計
     try {
       const essaysSnap = await adminDb.collection("essays").get();
       const interviewsSnap = await adminDb.collection("interviews").get();
@@ -125,15 +92,15 @@ export async function GET(request: NextRequest) {
         totalInterviews,
         avgEssayScore,
         avgInterviewScore,
-        monthlyTrend: monthlyTrend.length > 0 ? monthlyTrend : MOCK_OVERVIEW.monthlyTrend,
-        universityPopularity: universityPopularity.length > 0 ? universityPopularity : MOCK_OVERVIEW.universityPopularity,
+        monthlyTrend,
+        universityPopularity,
         scoreDistribution: distribution,
       };
 
       return NextResponse.json(result);
     } catch (err) {
-      console.warn("Firestore analytics fetch failed, using mock:", err);
-      return NextResponse.json(MOCK_OVERVIEW);
+      console.error("Firestore analytics fetch failed:", err);
+      return NextResponse.json({ error: "データの取得中にエラーが発生しました" }, { status: 500 });
     }
   } catch (error) {
     console.error("Analytics overview error:", error);

@@ -21,10 +21,6 @@ export async function PUT(
     }
 
     if (!adminDb) {
-      // dev mode mock
-      if (process.env.NODE_ENV === "development") {
-        return NextResponse.json({ studentId, plan, updatedAt: new Date() });
-      }
       return NextResponse.json(
         { error: "サーバー設定エラー" },
         { status: 500 }

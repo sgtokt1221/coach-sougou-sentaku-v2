@@ -26,12 +26,7 @@ export async function POST(request: Request) {
   }
 
   if (!adminDb) {
-    return NextResponse.json({
-      success: true,
-      mock: true,
-      checked: { documents: 0, sessions: 0 },
-      notifications: [],
-    });
+    return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
   }
 
   const now = new Date();
