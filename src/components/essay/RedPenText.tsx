@@ -160,40 +160,41 @@ export function RedPenText({ text, corrections }: RedPenTextProps) {
         </div>
       )}
 
-      {/* Mobile: ボトムシート（画面下部に固定表示） */}
+      {/* Mobile: 背景オーバーレイ + ボトムシート（兄弟要素で正しいスタッキング） */}
       {selectedCorrection && selectedStyles && (
-        <div className="lg:hidden fixed inset-x-0 bottom-0 z-50 animate-in slide-in-from-bottom duration-200">
-          {/* 背景オーバーレイ */}
+        <>
           <button
             type="button"
             onClick={() => setSelected(null)}
-            className="fixed inset-0 bg-black/20 -z-10 cursor-pointer"
+            className="lg:hidden fixed inset-0 z-40 bg-black/20 cursor-pointer"
             aria-label="閉じる"
           />
-          <div className={`rounded-t-2xl border-t ${selectedStyles.border} ${selectedStyles.bg} p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-lg`}>
-            <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-black/10" />
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Badge variant="outline" className={`text-[10px] ${selectedStyles.badge}`}>
-                  {selectedStyles.label}
-                </Badge>
-                <button
-                  type="button"
-                  onClick={() => setSelected(null)}
-                  className="text-muted-foreground hover:text-foreground cursor-pointer p-1"
-                >
-                  <X className="size-4" />
-                </button>
+          <div className="lg:hidden fixed inset-x-0 bottom-0 z-50 animate-in slide-in-from-bottom duration-200">
+            <div className={`rounded-t-2xl border-t ${selectedStyles.border} ${selectedStyles.bg} p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-lg`}>
+              <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-black/10" />
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Badge variant="outline" className={`text-[10px] ${selectedStyles.badge}`}>
+                    {selectedStyles.label}
+                  </Badge>
+                  <button
+                    type="button"
+                    onClick={() => setSelected(null)}
+                    className="text-muted-foreground hover:text-foreground cursor-pointer p-1"
+                  >
+                    <X className="size-4" />
+                  </button>
+                </div>
+                <div className="flex items-start gap-2 text-sm flex-wrap">
+                  <span className="line-through text-muted-foreground">{selectedCorrection.original}</span>
+                  <ArrowRight className="size-3 text-muted-foreground shrink-0 mt-1" />
+                  <span className="font-medium text-primary">{selectedCorrection.suggestion}</span>
+                </div>
+                <p className="text-xs text-muted-foreground">{selectedCorrection.reason}</p>
               </div>
-              <div className="flex items-start gap-2 text-sm flex-wrap">
-                <span className="line-through text-muted-foreground">{selectedCorrection.original}</span>
-                <ArrowRight className="size-3 text-muted-foreground shrink-0 mt-1" />
-                <span className="font-medium text-primary">{selectedCorrection.suggestion}</span>
-              </div>
-              <p className="text-xs text-muted-foreground">{selectedCorrection.reason}</p>
             </div>
           </div>
-        </div>
+        </>
       )}
 
       <p className="text-[10px] text-muted-foreground text-right">
