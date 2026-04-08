@@ -330,13 +330,13 @@ export default function EssayResultPage() {
       })()}
 
       {/* 繰り返し弱点 */}
-      {result.feedback.repeatedIssues.length > 0 && (
+      {(result.feedback.repeatedIssues ?? []).length > 0 && (
         <Card className="rounded-2xl border-border/40">
           <CardHeader>
             <CardTitle className="text-sm font-medium uppercase tracking-wide text-muted-foreground">繰り返し見られる弱点</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {result.feedback.repeatedIssues.map((item, i) => {
+            {(result.feedback.repeatedIssues ?? []).map((item, i) => {
               const isCritical = item.count >= 5;
               const isWarning = item.count >= 3 && item.count < 5;
               return (
@@ -376,7 +376,7 @@ export default function EssayResultPage() {
       )}
 
       {/* 改善おめでとう */}
-      {result.feedback.improvementsSinceLast.length > 0 && (
+      {(result.feedback.improvementsSinceLast ?? []).length > 0 && (
         <Card className="rounded-2xl border-border/40 bg-green-50/50 dark:bg-green-950/10">
           <CardHeader>
             <CardTitle className="text-base text-green-800">
@@ -384,14 +384,14 @@ export default function EssayResultPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {result.feedback.improvementsSinceLast.map((item, i) => (
+            {(result.feedback.improvementsSinceLast ?? []).map((item, i) => (
               <div key={i} className="text-sm space-y-1">
                 <p className="text-muted-foreground line-through">{item.before}</p>
                 <p className="text-green-700 font-medium flex items-start gap-1">
                   <CheckCircle className="size-4 mt-0.5 shrink-0" />
                   {item.after}
                 </p>
-                {i < result.feedback.improvementsSinceLast.length - 1 && (
+                {i < (result.feedback.improvementsSinceLast ?? []).length - 1 && (
                   <Separator className="my-2" />
                 )}
               </div>
@@ -454,14 +454,14 @@ export default function EssayResultPage() {
       </Card>
 
       {/* 良い点 */}
-      {result.feedback.goodPoints.length > 0 && (
+      {(result.feedback.goodPoints ?? []).length > 0 && (
         <Card className="rounded-2xl border-border/40">
           <CardHeader>
             <CardTitle className="text-xs font-medium uppercase tracking-widest text-muted-foreground">良い点</CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="space-y-2">
-              {result.feedback.goodPoints.map((point, i) => (
+              {(result.feedback.goodPoints ?? []).map((point, i) => (
                 <li key={i} className="flex items-start gap-2 text-sm">
                   <CheckCircle className="size-4 mt-0.5 shrink-0 text-green-500" />
                   <span>{point}</span>
@@ -488,14 +488,14 @@ export default function EssayResultPage() {
       )}
 
       {/* 改善点 */}
-      {result.feedback.improvements.length > 0 && (
+      {(result.feedback.improvements ?? []).length > 0 && (
         <Card className="rounded-2xl border-border/40">
           <CardHeader>
             <CardTitle className="text-xs font-medium uppercase tracking-widest text-muted-foreground">改善点</CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="space-y-2">
-              {result.feedback.improvements.map((point, i) => (
+              {(result.feedback.improvements ?? []).map((point, i) => (
                 <li key={i} className="flex items-start gap-2 text-sm">
                   <AlertTriangle className="size-4 mt-0.5 shrink-0 text-yellow-500" />
                   <span>{point}</span>
