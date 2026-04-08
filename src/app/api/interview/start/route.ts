@@ -33,10 +33,17 @@ export async function POST(request: NextRequest) {
           if (adminAuth) {
             const decoded = await adminAuth.verifyIdToken(authHeader.slice(7));
             userId = decoded.uid;
+          } else {
+            console.warn("[interview/start] adminAuth is null — Firebase Admin SDK not initialized");
           }
-        } catch {}
+        } catch (authErr) {
+          console.warn("[interview/start] Failed to verify ID token:", authErr);
+        }
+      } else {
+        console.warn("[interview/start] No Authorization header found");
       }
     }
+    console.log("[interview/start] Resolved userId:", userId);
 
     if (!universityId || !facultyId || !mode) {
       return NextResponse.json(

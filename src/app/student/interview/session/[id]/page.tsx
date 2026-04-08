@@ -70,17 +70,28 @@ export default function InterviewSessionPage() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const ttsAudioRef = useRef<HTMLAudioElement | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+
+  // ユーザー操作時にAudioContextを初期化（Autoplay Policy対策）
+  const ensureAudioContext = useCallback(() => {
+    if (!audioContextRef.current) {
+      audioContextRef.current = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+    }
+    if (audioContextRef.current.state === "suspended") {
+      audioContextRef.current.resume();
+    }
+  }, []);
 
   const speakText = useCallback(async (text: string) => {
     if (!ttsEnabled) return;
 
     try {
       setAiSpeaking(true);
+      console.log("[TTS] Starting for text length:", text.length);
 
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 15000);
 
-      // TTS APIは認証不要なので素fetchでOK
       const res = await fetch("/api/interview/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -95,14 +106,34 @@ export default function InterviewSessionPage() {
         return;
       }
 
-      const contentType = res.headers.get("Content-Type") ?? "";
-      if (!contentType.startsWith("audio/")) {
-        console.warn("[TTS] Not audio:", contentType);
+      const arrayBuffer = await res.arrayBuffer();
+      console.log("[TTS] Received audio bytes:", arrayBuffer.byteLength);
+
+      if (arrayBuffer.byteLength === 0) {
+        console.warn("[TTS] Empty audio response");
         setAiSpeaking(false);
         return;
       }
 
-      const blob = await res.blob();
+      // Web Audio APIで再生（Autoplay Policy回避に強い）
+      const ctx = audioContextRef.current;
+      if (ctx && ctx.state !== "closed") {
+        try {
+          const audioBuffer = await ctx.decodeAudioData(arrayBuffer.slice(0));
+          const source = ctx.createBufferSource();
+          source.buffer = audioBuffer;
+          source.connect(ctx.destination);
+          source.onended = () => setAiSpeaking(false);
+          source.start(0);
+          console.log("[TTS] Playing via Web Audio API");
+          return;
+        } catch (webAudioErr) {
+          console.warn("[TTS] Web Audio API failed, falling back to <audio>:", webAudioErr);
+        }
+      }
+
+      // フォールバック: DOM <audio> 要素で再生
+      const blob = new Blob([arrayBuffer], { type: "audio/mpeg" });
       const url = URL.createObjectURL(blob);
 
       if (ttsAudioRef.current) {
@@ -110,14 +141,15 @@ export default function InterviewSessionPage() {
         ttsAudioRef.current.src = "";
       }
 
-      const audio = new Audio(url);
+      const audio = ttsAudioRef.current ?? document.createElement("audio");
       ttsAudioRef.current = audio;
+      audio.src = url;
       audio.onended = () => { URL.revokeObjectURL(url); setAiSpeaking(false); };
-      audio.onerror = () => { URL.revokeObjectURL(url); setAiSpeaking(false); };
+      audio.onerror = (e) => { console.warn("[TTS] audio error:", e); URL.revokeObjectURL(url); setAiSpeaking(false); };
 
-      // play()を直接呼ぶ — ブラウザがブロックしたらcatchで処理
       try {
         await audio.play();
+        console.log("[TTS] Playing via <audio> element");
       } catch (playErr) {
         console.warn("[TTS] play() blocked:", playErr);
         URL.revokeObjectURL(url);
@@ -141,7 +173,7 @@ export default function InterviewSessionPage() {
         setCameraEnabled(true);
       }
     }
-  }, [sessionId]);
+  }, [sessionId, speakText]);
 
   // Restore messages from sessionStorage backup
   useEffect(() => {
@@ -241,6 +273,7 @@ export default function InterviewSessionPage() {
   }, [messages, sessionId]);
 
   const sendMessage = useCallback(async () => {
+    ensureAudioContext();
     const text = input.trim();
     if (!text || isLoading) return;
 
@@ -280,7 +313,7 @@ export default function InterviewSessionPage() {
       setIsLoading(false);
       inputRef.current?.focus();
     }
-  }, [input, isLoading, messages, sessionId]);
+  }, [input, isLoading, messages, sessionId, sessionInfo, speakText, ensureAudioContext]);
 
   async function handleEnd() {
     setIsEnding(true);
@@ -332,6 +365,7 @@ export default function InterviewSessionPage() {
 
   const handleVoiceComplete = useCallback(
     async (audioBase64: string, mimeType: string) => {
+      ensureAudioContext();
       if (isLoading) return;
       setIsLoading(true);
 
@@ -373,7 +407,7 @@ export default function InterviewSessionPage() {
         setIsLoading(false);
       }
     },
-    [isLoading, sessionId]
+    [isLoading, sessionId, messages, sessionInfo, speakText, ensureAudioContext]
   );
 
   const isVoiceMode = sessionInfo?.inputMode === "voice";
