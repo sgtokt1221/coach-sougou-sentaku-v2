@@ -13,6 +13,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Send, StopCircle, ChevronDown, ChevronUp, Video, VideoOff, Volume2 } from "lucide-react";
+import { authFetch } from "@/lib/api/client";
 import type { InterviewMessage, InterviewMode, InterviewInputMode, VoiceAnalysis, VideoAnalysis, AppearanceAnalysis } from "@/lib/types/interview";
 import { INTERVIEW_MODE_LABELS } from "@/lib/types/interview";
 import VoiceRecorder from "@/components/interview/VoiceRecorder";
@@ -95,7 +96,7 @@ export default function InterviewSessionPage() {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 15000);
 
-      const res = await fetch("/api/interview/tts", {
+      const res = await authFetch("/api/interview/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text, voice: "alloy" }),
@@ -222,7 +223,7 @@ export default function InterviewSessionPage() {
       const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
       const imageBase64 = dataUrl.split(",")[1];
 
-      const res = await fetch("/api/interview/appearance-check", {
+      const res = await authFetch("/api/interview/appearance-check", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ imageBase64, mimeType: "image/jpeg" }),
@@ -285,7 +286,7 @@ export default function InterviewSessionPage() {
     setIsLoading(true);
 
     try {
-      const res = await fetch("/api/interview/message", {
+      const res = await authFetch("/api/interview/message", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -321,7 +322,7 @@ export default function InterviewSessionPage() {
     try {
       console.log("[handleEnd] Sending messages:", messages.length, "turns, duration:", elapsed);
       console.log("[handleEnd] Messages:", JSON.stringify(messages.map(m => ({ role: m.role, content: m.content.slice(0, 50) }))));
-      const res = await fetch("/api/interview/end", {
+      const res = await authFetch("/api/interview/end", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -370,7 +371,7 @@ export default function InterviewSessionPage() {
       setIsLoading(true);
 
       try {
-        const res = await fetch("/api/interview/voice-message", {
+        const res = await authFetch("/api/interview/voice-message", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

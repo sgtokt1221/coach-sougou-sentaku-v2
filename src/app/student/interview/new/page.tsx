@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Mic, Users, BookOpen, ChevronRight, MessageSquare, GraduationCap, Settings, Upload, FileText, Loader2, X, Plus, History } from "lucide-react";
+import { authFetch } from "@/lib/api/client";
 import { InterviewHistory } from "@/components/interview/InterviewHistory";
 import type { InterviewMode } from "@/lib/types/interview";
 import {
@@ -91,7 +92,7 @@ export default function InterviewNewPage() {
     if (!selectedCompoundId || !selectedMode) return;
     setIsLoading(true);
     try {
-      const res = await fetch("/api/interview/start", {
+      const res = await authFetch("/api/interview/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

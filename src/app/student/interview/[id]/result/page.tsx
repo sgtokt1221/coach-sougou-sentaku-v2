@@ -130,7 +130,8 @@ export default function InterviewResultPage() {
 
       // 2. Fetch from Firestore via API
       try {
-        const res = await fetch(`/api/interview/${id}`);
+        const { authFetch } = await import("@/lib/api/client");
+        const res = await authFetch(`/api/interview/${id}`);
         if (!res.ok) throw new Error();
         const data = await res.json();
         setResult(data);

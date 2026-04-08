@@ -20,8 +20,23 @@ const MOCK_START: InterviewStartResponse = {
 export async function POST(request: NextRequest) {
   try {
     const body: InterviewStartRequest & { inputMode?: string; presentationContent?: string } = await request.json();
-    const { universityId, facultyId, mode, userId, inputMode, presentationContent } = body;
+    const { universityId, facultyId, mode, inputMode, presentationContent } = body;
     const resolvedInputMode = inputMode ?? "text";
+
+    // IDトークンからuserIdを取得（クライアントから送られたuserIdより安全）
+    let userId: string | null = body.userId ?? null;
+    if (!userId) {
+      const authHeader = request.headers.get("Authorization");
+      if (authHeader?.startsWith("Bearer ")) {
+        try {
+          const { adminAuth } = await import("@/lib/firebase/admin");
+          if (adminAuth) {
+            const decoded = await adminAuth.verifyIdToken(authHeader.slice(7));
+            userId = decoded.uid;
+          }
+        } catch {}
+      }
+    }
 
     if (!universityId || !facultyId || !mode) {
       return NextResponse.json(

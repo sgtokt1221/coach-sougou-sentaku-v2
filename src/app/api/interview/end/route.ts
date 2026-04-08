@@ -16,7 +16,22 @@ import { logActivity } from "@/lib/firebase/activity-log";
 export async function POST(request: NextRequest) {
   try {
     const body: InterviewEndRequest & { mode?: string; presentationContent?: string } = await request.json();
-    const { sessionId, messages, duration, userId, transcription, voiceAnalysis, videoAnalysis, appearanceAnalysis, mode, presentationContent } = body;
+    const { sessionId, messages, duration, transcription, voiceAnalysis, videoAnalysis, appearanceAnalysis, mode, presentationContent } = body;
+
+    // IDトークンからuserIdを取得
+    let userId: string | null = body.userId ?? null;
+    if (!userId) {
+      const authHeader = request.headers.get("Authorization");
+      if (authHeader?.startsWith("Bearer ")) {
+        try {
+          const { adminAuth } = await import("@/lib/firebase/admin");
+          if (adminAuth) {
+            const decoded = await adminAuth.verifyIdToken(authHeader.slice(7));
+            userId = decoded.uid;
+          }
+        } catch {}
+      }
+    }
 
     if (!sessionId || !messages || duration === undefined) {
       return NextResponse.json(
