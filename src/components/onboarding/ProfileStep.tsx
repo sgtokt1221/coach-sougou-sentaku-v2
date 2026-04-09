@@ -160,7 +160,7 @@ export function ProfileStep({ data, onChange }: Props) {
             }}
           >
             <SelectTrigger className="w-28">
-              <SelectValue />
+              <SelectValue>{CERT_TYPES.find((t) => t.value === certType)?.label ?? certType}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               {CERT_TYPES.map((t) => (

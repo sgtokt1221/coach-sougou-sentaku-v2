@@ -32,7 +32,14 @@ import { useAuth } from "@/contexts/AuthContext";
 import { authFetch } from "@/lib/api/client";
 import type { StudentProfile } from "@/lib/types/user";
 
-const CERT_TYPES = ["EIKEN", "TOEIC", "TOEFL", "IELTS", "TEAP", "GTEC"] as const;
+const CERT_TYPES = [
+  { value: "EIKEN", label: "英検" },
+  { value: "TOEIC", label: "TOEIC" },
+  { value: "TOEFL", label: "TOEFL" },
+  { value: "IELTS", label: "IELTS" },
+  { value: "TEAP", label: "TEAP" },
+  { value: "GTEC", label: "GTEC" },
+] as const;
 
 function scoreColor(score: number): string {
   if (score >= 80) return "text-emerald-600 dark:text-emerald-400";
@@ -211,8 +218,8 @@ export default function UniversitiesPage() {
                     <SelectContent>
                       <SelectItem value="_none">なし</SelectItem>
                       {CERT_TYPES.map((c) => (
-                        <SelectItem key={c} value={c}>
-                          {c}
+                        <SelectItem key={c.value} value={c.value}>
+                          {c.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
