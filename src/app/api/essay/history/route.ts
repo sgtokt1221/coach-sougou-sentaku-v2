@@ -15,12 +15,15 @@ export async function GET(request: NextRequest) {
             const decoded = await adminAuth.verifyIdToken(authHeader.slice(7));
             userId = decoded.uid;
           }
-        } catch {}
+        } catch (e) {
+          console.error("Essay history: auth token verification failed:", e);
+        }
       }
     }
 
     if (!userId) {
-      return NextResponse.json({ essays: [] });
+      console.warn("Essay history: userId not resolved from token");
+      return NextResponse.json({ essays: [], error: "認証情報が取得できませんでした" });
     }
 
     const { adminDb } = await import("@/lib/firebase/admin");

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { requireFeature } from "@/lib/api/subscription";
 import { buildDocumentReviewPrompt } from "@/lib/ai/prompts/document";
 import type { SelfAnalysisContext } from "@/lib/ai/prompts/document";
 import type { DocumentFeedback } from "@/lib/types/document";
@@ -9,6 +10,9 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const gate = await requireFeature(request, "documentEditor");
+    if (gate) return gate;
+
     const { id } = await params;
     const body = await request.json();
     const { content, universityName, facultyName, documentType } = body;

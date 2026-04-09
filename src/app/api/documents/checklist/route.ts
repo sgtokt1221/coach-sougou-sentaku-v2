@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb, verifyAuthToken } from "@/lib/firebase/admin";
+import { requireFeature } from "@/lib/api/subscription";
 import type { DocumentType, DocumentStatus } from "@/lib/types/document";
 
 interface ChecklistItem {
@@ -18,6 +19,9 @@ interface UniversityChecklist {
 
 export async function GET(request: NextRequest) {
   try {
+    const gate = await requireFeature(request, "documentEditor");
+    if (gate) return gate;
+
     const auth = await verifyAuthToken(request);
     const uid = auth?.uid ?? (process.env.NODE_ENV === "development" ? "dev-user" : null);
 

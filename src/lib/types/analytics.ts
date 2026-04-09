@@ -61,3 +61,88 @@ export interface GrowthReport {
   recommendations: string[];
   generatedAt: string;
 }
+
+// --- Phase 3B/3C: Enhanced Analytics Types ---
+
+export interface GapItem {
+  area: string;
+  studentAvg: number;
+  required: number;
+  gap: number;
+  status: "red" | "yellow" | "green";
+}
+
+export interface UniversityGapAnalysis {
+  universityId: string;
+  universityName: string;
+  facultyId: string;
+  facultyName: string;
+  avgEssayScore: number;
+  avgInterviewScore: number;
+  requiredScores: {
+    essay: number;
+    interview: number;
+  };
+  gapAnalysis: GapItem[];
+  studentCount: number;
+}
+
+export interface ScoreDistribution {
+  range: string;
+  count: number;
+  percentage: number;
+}
+
+export interface MonthlyTrend {
+  month: string;
+  essayAvg: number;
+  interviewAvg: number;
+  studentCount: number;
+  submissionCount: number;
+}
+
+export interface WeaknessPattern {
+  weakness: string;
+  occurrenceCount: number;
+  resolvedCount: number;
+  resolutionRate: number;
+  avgResolutionDays: number;
+  affectedStudents: number;
+  relatedUniversities: string[];
+}
+
+export interface CohortComparison {
+  cohortLabel: string;
+  metrics: {
+    avgEssayScore: number;
+    avgInterviewScore: number;
+    avgWeaknessCount: number;
+    avgResolutionDays: number;
+  };
+}
+
+export interface UniversityGapResponse {
+  gaps: UniversityGapAnalysis[];
+  generatedAt: string;
+}
+
+export interface ScoreDistributionResponse {
+  essay: ScoreDistribution[];
+  interview: ScoreDistribution[];
+  type: "essay" | "interview" | "both";
+  period: string;
+  generatedAt: string;
+}
+
+export interface MonthlyTrendsResponse {
+  trends: MonthlyTrend[];
+  generatedAt: string;
+}
+
+export interface WeaknessPatternsResponse {
+  patterns: WeaknessPattern[];
+  totalWeaknesses: number;
+  overallResolutionRate: number;
+  avgResolutionDays: number;
+  generatedAt: string;
+}

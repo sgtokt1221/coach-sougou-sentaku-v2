@@ -24,9 +24,10 @@ import {
   Lightbulb,
   BookCheck,
   BookOpen,
-  Zap,
   CalendarDays,
   MessageSquare,
+  FileBarChart,
+  Crown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -88,6 +89,8 @@ const studentNavGroups: NavGroup[] = [
   {
     title: "",
     items: [
+      { label: "プラン", href: "/student/pricing", icon: Crown },
+      { label: "通知設定", href: "/student/settings/notifications", icon: Bell },
       { label: "設定", href: "/student/settings", icon: Settings },
     ],
   },
@@ -99,6 +102,7 @@ const adminNavGroups: NavGroup[] = [
     items: [
       { label: "ダッシュボード", href: "/admin/dashboard", icon: LayoutDashboard },
       { label: "アラート", href: "/admin/alerts", icon: Bell },
+      { label: "レポート", href: "/admin/reports", icon: FileBarChart },
     ],
   },
   {
@@ -114,6 +118,7 @@ const adminNavGroups: NavGroup[] = [
   {
     title: "",
     items: [
+      { label: "通知管理", href: "/admin/settings/notifications", icon: Bell },
       { label: "設定", href: "/admin/settings", icon: Settings },
     ],
   },

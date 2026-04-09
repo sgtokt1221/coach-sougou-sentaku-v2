@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb, verifyAuthToken } from "@/lib/firebase/admin";
+import { requireFeature } from "@/lib/api/subscription";
 import { buildStatementDraftPrompt, type SelfAnalysisData } from "@/lib/ai/prompts/statement";
 
 interface GenerateStatementRequest {
@@ -27,6 +28,9 @@ interface StatementDraftResponse {
 
 export async function POST(request: NextRequest) {
   try {
+    const gate = await requireFeature(request, "documentEditor");
+    if (gate) return gate;
+
     // 認証確認
     const authData = await verifyAuthToken(request);
     if (!authData) {

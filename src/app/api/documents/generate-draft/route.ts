@@ -3,9 +3,13 @@ import type { DraftGenerateRequest, DraftGenerateResponse } from "@/lib/types/te
 import { getFrameworkByType } from "@/lib/templates/frameworks";
 import { buildTemplateDraftPrompt } from "@/lib/ai/prompts/template-draft";
 import { adminDb, verifyAuthToken } from "@/lib/firebase/admin";
+import { requireFeature } from "@/lib/api/subscription";
 
 export async function POST(request: NextRequest) {
   try {
+    const gate = await requireFeature(request, "documentEditor");
+    if (gate) return gate;
+
     const auth = await verifyAuthToken(request);
     if (!auth) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 });

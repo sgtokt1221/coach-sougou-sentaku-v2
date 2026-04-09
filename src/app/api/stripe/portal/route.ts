@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { stripe } from "@/lib/stripe/config";
+import { stripe, isStripeConfigured } from "@/lib/stripe/config";
 import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
 
@@ -13,7 +13,26 @@ export async function POST(request: Request) {
   if (auth instanceof NextResponse) return auth;
 
   try {
-    const { userId } = await request.json();
+    if (!isStripeConfigured() || !stripe) {
+      return NextResponse.json({
+        url: null,
+        devMode: true,
+        message: "Stripe未設定のため、開発モードで動作しています",
+      });
+    }
+
+    const userId = auth.uid;
+
+    // Allow admin/teacher to manage a student's portal by passing userId
+    let targetUserId = userId;
+    try {
+      const body = await request.json();
+      if (body.userId && auth.role !== "student") {
+        targetUserId = body.userId;
+      }
+    } catch {
+      // No body provided, use authenticated user's own ID
+    }
 
     if (!adminDb) {
       return NextResponse.json(
@@ -22,21 +41,26 @@ export async function POST(request: Request) {
       );
     }
 
-    const userDoc = await adminDb.doc(`users/${userId}`).get();
+    const userDoc = await adminDb.doc(`users/${targetUserId}`).get();
     const stripeCustomerId = userDoc.data()?.stripeCustomerId;
 
     if (!stripeCustomerId) {
       return NextResponse.json(
-        { error: "Stripeカスタマーが見つかりません" },
+        { error: "Stripeの顧客情報が見つかりません。まずプランを購入してください。" },
         { status: 404 }
       );
     }
 
     const origin = request.headers.get("origin") ?? "http://localhost:3000";
 
+    const returnUrl =
+      auth.role === "student"
+        ? `${origin}/student/pricing`
+        : `${origin}/admin/students/${targetUserId}`;
+
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: stripeCustomerId,
-      return_url: `${origin}/admin/students/${userId}`,
+      return_url: returnUrl,
     });
 
     return NextResponse.json({ url: portalSession.url });

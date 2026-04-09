@@ -61,6 +61,9 @@ export async function POST(request: NextRequest) {
     let facultyName = "（学部名未設定）";
     let admissionPolicy = "（AP未設定）";
     let selfAnalysisContext = "";
+    let sessionUniversityId = "";
+    let sessionFacultyId = "";
+    let sessionMode = mode ?? "";
 
     const { adminDb } = await import("@/lib/firebase/admin");
     if (adminDb) {
@@ -68,7 +71,11 @@ export async function POST(request: NextRequest) {
         // セッション情報から大学コンテキストを取得
         const sessionDoc = await adminDb.doc(`interviews/${sessionId}`).get();
         if (sessionDoc.exists) {
-          const ctx = sessionDoc.data()!.universityContext;
+          const sessionData = sessionDoc.data()!;
+          sessionUniversityId = sessionData.universityId ?? "";
+          sessionFacultyId = sessionData.facultyId ?? "";
+          if (!sessionMode) sessionMode = sessionData.mode ?? "";
+          const ctx = sessionData.universityContext;
           if (ctx) {
             universityName = ctx.universityName ?? universityName;
             facultyName = ctx.facultyName ?? facultyName;
@@ -269,11 +276,11 @@ export async function POST(request: NextRequest) {
     void logInterviewSession({
       interview_id: sessionId,
       user_id: userId ?? "unknown",
-      university_id: "",
-      faculty_id: "",
+      university_id: sessionUniversityId,
+      faculty_id: sessionFacultyId,
       started_at: new Date().toISOString(),
       duration_seconds: duration,
-      mode: "",
+      mode: sessionMode,
       score_clarity: scores.clarity,
       score_ap_alignment: scores.apAlignment,
       score_enthusiasm: scores.enthusiasm,
