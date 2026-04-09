@@ -97,8 +97,8 @@ export async function POST(request: Request) {
             standardSubscription: {
               status: "active",
               currentPeriodEnd: new Date(
-                (session as Record<string, unknown> & { current_period_end?: number }).current_period_end
-                  ? ((session as Record<string, unknown>).current_period_end as number) * 1000
+                (session as unknown as Record<string, unknown> & { current_period_end?: number }).current_period_end
+                  ? ((session as unknown as Record<string, unknown>).current_period_end as number) * 1000
                   : Date.now() + 30 * 24 * 60 * 60 * 1000
               ).toISOString(),
               cancelAtPeriodEnd: false,
@@ -138,9 +138,10 @@ export async function POST(request: Request) {
         const userDoc = await findUserByCustomerId(customerId);
 
         if (userDoc) {
-          const subscriptionId = invoice.subscription as string;
+          const subscriptionId = (invoice as unknown as Record<string, unknown>).subscription as string;
           if (subscriptionId) {
-            const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+            const subResponse = await stripe.subscriptions.retrieve(subscriptionId);
+            const sub = subResponse as unknown as Record<string, unknown>;
             const hasDocPackage = userDoc.data()?.documentPackage?.purchased === true;
             const features = getFeaturesByPlan("standard", hasDocPackage);
 
@@ -148,9 +149,9 @@ export async function POST(request: Request) {
               standardSubscription: {
                 status: "active",
                 currentPeriodEnd: new Date(
-                  subscription.current_period_end * 1000
+                  (sub.current_period_end as number) * 1000
                 ).toISOString(),
-                cancelAtPeriodEnd: subscription.cancel_at_period_end,
+                cancelAtPeriodEnd: sub.cancel_at_period_end as boolean,
               },
               features,
             });
@@ -182,14 +183,14 @@ export async function POST(request: Request) {
       }
 
       case "customer.subscription.updated": {
-        const subscription = event.data.object as Stripe.Subscription;
-        const customerId = subscription.customer as string;
+        const subUpdated = event.data.object as unknown as Record<string, unknown>;
+        const customerId = subUpdated.customer as string;
         const userDoc = await findUserByCustomerId(customerId);
 
         if (userDoc) {
           const existingData = userDoc.data();
           const hasDocPackage = existingData?.documentPackage?.purchased === true;
-          const status = subscription.status as "active" | "past_due" | "canceled" | "unpaid" | "trialing";
+          const status = subUpdated.status as "active" | "past_due" | "canceled" | "unpaid" | "trialing";
           const isActive = ["active", "trialing"].includes(status);
           const features = getFeaturesByPlan(
             isActive ? "standard" : "free",
@@ -201,9 +202,9 @@ export async function POST(request: Request) {
             standardSubscription: {
               status,
               currentPeriodEnd: new Date(
-                subscription.current_period_end * 1000
+                (subUpdated.current_period_end as number) * 1000
               ).toISOString(),
-              cancelAtPeriodEnd: subscription.cancel_at_period_end,
+              cancelAtPeriodEnd: subUpdated.cancel_at_period_end as boolean,
             },
             features,
           });
@@ -212,8 +213,8 @@ export async function POST(request: Request) {
       }
 
       case "customer.subscription.deleted": {
-        const subscription = event.data.object as Stripe.Subscription;
-        const customerId = subscription.customer as string;
+        const subDeleted = event.data.object as unknown as Record<string, unknown>;
+        const customerId = subDeleted.customer as string;
         const userDoc = await findUserByCustomerId(customerId);
 
         if (userDoc) {
@@ -227,7 +228,7 @@ export async function POST(request: Request) {
             standardSubscription: {
               status: "canceled",
               currentPeriodEnd: new Date(
-                subscription.current_period_end * 1000
+                (subDeleted.current_period_end as number) * 1000
               ).toISOString(),
               cancelAtPeriodEnd: false,
             },

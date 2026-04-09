@@ -160,7 +160,7 @@ export async function GET(request: NextRequest) {
       }
 
       interviewDist = buildDistribution(
-        interviewScores.map((e) => e.score),
+        interviewScores.map((e: { score: number }) => e.score),
         40
       );
     }

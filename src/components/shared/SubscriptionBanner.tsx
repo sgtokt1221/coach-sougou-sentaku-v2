@@ -28,9 +28,11 @@ export function SubscriptionBanner({
               "この機能を利用するにはプランのアップグレードが必要です。"}
           </p>
           <div className="mt-3">
-            <Button asChild size="sm" variant="outline" className="border-amber-300 text-amber-700 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-300 dark:hover:bg-amber-900/50">
-              <Link href="/student/pricing">プランを確認する</Link>
-            </Button>
+            <Link href="/student/pricing">
+              <Button size="sm" variant="outline" className="border-amber-300 text-amber-700 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-300 dark:hover:bg-amber-900/50">
+                プランを確認する
+              </Button>
+            </Link>
           </div>
         </div>
       </div>
