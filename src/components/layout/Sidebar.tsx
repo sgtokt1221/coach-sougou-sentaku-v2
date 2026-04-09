@@ -30,6 +30,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { FeedbackBadge } from "@/components/student/FeedbackBadge";
+import { SelfAnalysisBadge, MatchingBadge } from "@/components/student/IncompleteStepBadge";
 
 interface NavItem {
   label: string;
@@ -64,8 +65,8 @@ const studentNavGroups: NavGroup[] = [
   {
     title: "Discover",
     items: [
-      { label: "自己分析", href: "/student/self-analysis", icon: Lightbulb },
-      { label: "志望校マッチング", href: "/student/universities", icon: GraduationCap },
+      { label: "自己分析", href: "/student/self-analysis", icon: Lightbulb, badge: SelfAnalysisBadge },
+      { label: "志望校マッチング", href: "/student/universities", icon: GraduationCap, badge: MatchingBadge },
     ],
   },
   {

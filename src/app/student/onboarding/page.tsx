@@ -8,12 +8,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UniversitySelectStep } from "@/components/onboarding/UniversitySelectStep";
 import { ProfileStep, type ProfileData } from "@/components/onboarding/ProfileStep";
 import { ConfirmStep } from "@/components/onboarding/ConfirmStep";
-import { ArrowLeft, ArrowRight, Sparkles, Loader2, Search, HelpCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, Sparkles, Loader2, Search, HelpCircle, Lightbulb, GraduationCap, SkipForward } from "lucide-react";
 import { SuggestPanel } from "@/components/shared/SuggestPanel";
 import { updateProfile } from "@/lib/firebase/profile";
 import type { StudentProfile } from "@/lib/types/user";
 
-const STEPS = ["志望校選択", "基礎情報", "確認"] as const;
+const STEPS = ["志望校選択", "基礎情報", "確認", "次のステップ"] as const;
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -52,7 +52,7 @@ export default function OnboardingPage() {
 
   const canNext = true;
 
-  const handleFinish = async () => {
+  const saveAndComplete = async () => {
     setSaving(true);
     try {
       await updateProfile({
@@ -75,7 +75,17 @@ export default function OnboardingPage() {
       school: profileData.school,
     }));
     refreshProfile();
+    setSaving(false);
+  };
+
+  const handleFinish = async () => {
+    await saveAndComplete();
     router.replace("/student/dashboard");
+  };
+
+  const handleConfirmNext = async () => {
+    await saveAndComplete();
+    setStep(3);
   };
 
   return (
@@ -192,6 +202,49 @@ export default function OnboardingPage() {
                 profileData={profileData}
               />
             )}
+            {step === 3 && (
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  総合型選抜の準備をさらに進めるために、以下をおすすめします。
+                </p>
+                <button
+                  type="button"
+                  onClick={() => router.push("/student/self-analysis")}
+                  className="w-full text-left rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 p-5 transition-colors hover:bg-primary/10 hover:border-primary/50"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                      <Lightbulb className="size-6 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-base font-semibold text-primary">自己分析を始める</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        AIとの対話で、あなたの価値観・強み・将来ビジョンを整理します。志望理由書や面接の土台になります。
+                      </p>
+                    </div>
+                    <ArrowRight className="size-5 text-primary shrink-0 ml-auto" />
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => router.push("/student/universities")}
+                  className="w-full text-left rounded-xl border-2 border-dashed border-violet-300/50 bg-violet-50/50 dark:bg-violet-950/20 p-5 transition-colors hover:bg-violet-100/50 hover:border-violet-400/50"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-violet-100 dark:bg-violet-900/30">
+                      <GraduationCap className="size-6 text-violet-600 dark:text-violet-400" />
+                    </div>
+                    <div>
+                      <p className="text-base font-semibold text-violet-700 dark:text-violet-300">志望校をAIに相談</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        AIと対話しながら、あなたに合った大学・学部を見つけましょう。
+                      </p>
+                    </div>
+                    <ArrowRight className="size-5 text-violet-500 shrink-0 ml-auto" />
+                  </div>
+                </button>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -212,14 +265,19 @@ export default function OnboardingPage() {
                 次へ
                 <ArrowRight className="size-4 ml-1" />
               </Button>
-            ) : (
-              <Button onClick={handleFinish} disabled={saving}>
+            ) : step === 2 ? (
+              <Button onClick={handleConfirmNext} disabled={saving}>
                 {saving ? (
                   <Loader2 className="size-4 mr-1 animate-spin" />
                 ) : (
-                  <Sparkles className="size-4 mr-1" />
+                  <ArrowRight className="size-4 mr-1" />
                 )}
-                始める
+                次へ
+              </Button>
+            ) : (
+              <Button variant="ghost" onClick={handleFinish}>
+                <SkipForward className="size-4 mr-1" />
+                あとでやる
               </Button>
             )}
           </div>
