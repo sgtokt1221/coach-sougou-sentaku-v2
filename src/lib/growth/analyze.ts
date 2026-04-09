@@ -56,19 +56,25 @@ export function analyzeGrowth(
 
 export function updateWeaknessRecords(
   existingWeaknesses: WeaknessRecord[],
-  currentWeaknessTags: string[]
+  currentWeaknessTags: string[],
+  newSource: "essay" | "interview" = "essay"
 ): WeaknessRecord[] {
   const currentSet = new Set(currentWeaknessTags);
   const now = new Date();
 
   const updated = existingWeaknesses.map((w): WeaknessRecord => {
     if (currentSet.has(w.area)) {
+      // 既存の弱点が今回も指摘された → sourceを適切に更新
+      const mergedSource: "essay" | "interview" | "both" =
+        w.source === newSource ? w.source :
+        w.source === "both" ? "both" : "both";
       return {
         ...w,
         count: w.count + 1,
         lastOccurred: now,
         improving: false,
         resolved: false,
+        source: mergedSource,
       };
     } else {
       return {
@@ -88,7 +94,7 @@ export function updateWeaknessRecords(
         lastOccurred: now,
         improving: false,
         resolved: false,
-        source: "essay",
+        source: newSource,
         reminderDismissedAt: null,
       });
     }

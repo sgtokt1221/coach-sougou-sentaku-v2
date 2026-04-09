@@ -221,7 +221,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const updatedWeaknesses = updateWeaknessRecords(existingWeaknesses, weaknessTags);
+    const updatedWeaknesses = updateWeaknessRecords(existingWeaknesses, weaknessTags, "interview");
     const growthEvents = analyzeGrowth(weaknessTags, existingWeaknesses);
 
     if (scores.total >= 40) {
@@ -260,7 +260,7 @@ export async function POST(request: NextRequest) {
                 lastOccurred: weakness.lastOccurred,
                 improving: weakness.improving,
                 resolved: weakness.resolved,
-                source: "interview",
+                source: weakness.source,
                 reminderDismissedAt: weakness.reminderDismissedAt,
               },
               { merge: true }
