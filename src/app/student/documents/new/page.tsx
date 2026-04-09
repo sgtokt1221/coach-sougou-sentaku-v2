@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import type { StudentProfile } from "@/lib/types/user";
@@ -51,6 +51,28 @@ export default function NewDocumentPage() {
     targetIds ? `/api/universities/resolve?ids=${encodeURIComponent(targetIds)}` : null
   );
   const universities: UniversityOption[] = uniData?.resolved ?? [];
+
+  const [allUniversities, setAllUniversities] = useState<UniversityOption[]>([]);
+  const [showAllUniversities, setShowAllUniversities] = useState(false);
+
+  useEffect(() => {
+    if (!showAllUniversities || allUniversities.length > 0) return;
+    async function fetchAll() {
+      try {
+        const res = await fetch("/api/universities");
+        if (!res.ok) return;
+        const data = await res.json();
+        const unis: UniversityOption[] = [];
+        for (const u of data.universities ?? []) {
+          for (const f of u.faculties ?? []) {
+            unis.push({ universityId: u.id, facultyId: f.id, universityName: u.name, facultyName: f.name });
+          }
+        }
+        setAllUniversities(unis);
+      } catch {}
+    }
+    fetchAll();
+  }, [showAllUniversities, allUniversities.length]);
 
   const [step, setStep] = useState(0);
   const [documentType, setDocumentType] = useState<DocumentType | null>(null);
@@ -278,6 +300,38 @@ export default function NewDocumentPage() {
               </CardContent>
             </Card>
           ))}
+
+          {/* 他の大学から選ぶ */}
+          <div className="pt-2">
+            {!showAllUniversities ? (
+              <button
+                type="button"
+                onClick={() => setShowAllUniversities(true)}
+                className="text-xs text-muted-foreground hover:text-primary transition-colors underline"
+              >
+                他の大学・学部から選ぶ
+              </button>
+            ) : (
+              <div className="space-y-2">
+                <Label className="text-xs">他の大学・学部</Label>
+                <select
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                  value={selectedUniversity ? `${selectedUniversity.universityId}:${selectedUniversity.facultyId}` : ""}
+                  onChange={(e) => {
+                    const uni = allUniversities.find(u => `${u.universityId}:${u.facultyId}` === e.target.value);
+                    if (uni) setSelectedUniversity(uni);
+                  }}
+                >
+                  <option value="">選択してください</option>
+                  {allUniversities.map((u) => (
+                    <option key={`${u.universityId}:${u.facultyId}`} value={`${u.universityId}:${u.facultyId}`}>
+                      {u.universityName} — {u.facultyName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
