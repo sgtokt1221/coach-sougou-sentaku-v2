@@ -395,6 +395,9 @@ export default function EssayNewPage() {
             sourceText: pastQuestion.sourceText,
             chartDataSummary: pastQuestion.chartData ? summarizeChartData(pastQuestion.chartData) : undefined,
             pastQuestionFacultyName: pastQuestion.facultyName,
+            ...(pastQuestion.tedTalk && {
+              lectureInfo: `講義タイトル: ${pastQuestion.tedTalk.title}\n講演者: ${pastQuestion.tedTalk.speaker}\n講義時間: ${pastQuestion.tedTalk.durationMinutes}分`,
+            }),
           }),
         }),
         signal: controller.signal,
@@ -440,6 +443,9 @@ export default function EssayNewPage() {
             sourceText: pastQuestion.sourceText,
             chartDataSummary: pastQuestion.chartData ? summarizeChartData(pastQuestion.chartData) : undefined,
             pastQuestionFacultyName: pastQuestion.facultyName,
+            ...(pastQuestion.tedTalk && {
+              lectureInfo: `講義タイトル: ${pastQuestion.tedTalk.title}\n講演者: ${pastQuestion.tedTalk.speaker}\n講義時間: ${pastQuestion.tedTalk.durationMinutes}分`,
+            }),
           }),
         }),
         signal: controller.signal,
@@ -913,6 +919,33 @@ export default function EssayNewPage() {
       {/* Step 2: Text input mode */}
       {step === 2 && inputMode === "text" && (
         <>
+          {/* TED講義動画パネル（講義型の場合） */}
+          {pastQuestion?.tedTalk && (
+            <Card className="mb-4 border-indigo-200">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-indigo-800 flex items-center gap-2">
+                  <FileText className="size-4" />
+                  講義動画
+                  <Badge variant="outline" className="text-xs bg-indigo-50 text-indigo-700 border-indigo-300">TED Talk</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="aspect-video rounded-lg overflow-hidden">
+                  <iframe
+                    src={`https://embed.ted.com/talks/${pastQuestion.tedTalk.talkId}?subtitle=${pastQuestion.tedTalk.language}`}
+                    width="100%" height="100%"
+                    allow="autoplay; fullscreen; encrypted-media"
+                    allowFullScreen
+                    className="border-0"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  {pastQuestion.tedTalk.speaker}「{pastQuestion.tedTalk.title}」({pastQuestion.tedTalk.durationMinutes}分)
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
           {/* 参考資料パネル（過去問で英文/グラフがある場合） */}
           {pastQuestion && (pastQuestion.sourceText || pastQuestion.chartData) && (
             <Card className="mb-4 border-indigo-200">

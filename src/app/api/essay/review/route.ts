@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
 
     const client = new Anthropic();
     const questionContext = questionType && questionType !== "essay"
-      ? { questionType: questionType as "english-reading" | "data-analysis" | "mixed", sourceText, chartDataSummary }
+      ? { questionType: questionType as "english-reading" | "data-analysis" | "mixed" | "lecture", sourceText, chartDataSummary, lectureInfo: body.lectureInfo }
       : undefined;
     const systemPrompt = buildEssayReviewPrompt(admissionPolicy, weaknessList, undefined, questionContext, body.wordLimit);
 

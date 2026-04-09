@@ -204,15 +204,29 @@ function buildEssaySelfAnalysisSection(selfAnalysis?: EssaySelfAnalysisContext):
 }
 
 export interface QuestionTypeContext {
-  questionType: "essay" | "english-reading" | "data-analysis" | "mixed";
+  questionType: "essay" | "english-reading" | "data-analysis" | "mixed" | "lecture";
   sourceText?: string;
   chartDataSummary?: string;
+  lectureInfo?: string;
 }
 
 function buildQuestionTypeSection(ctx?: QuestionTypeContext): string {
   if (!ctx || ctx.questionType === "essay") return "";
 
   const sections: string[] = ["## 出題形式別の追加評価基準"];
+
+  if (ctx.questionType === "lecture") {
+    sections.push(`### 講義型小論文
+この小論文はTEDトーク等の講義動画を視聴した上で書かれています。以下の観点も重視して採点してください：
+- 講義内容の要旨を正確に理解し、適切に要約できているか
+- 講演者の主張やキーワードを踏まえた上で、自分の意見を展開できているか
+- 講義の論点を単に繰り返すだけでなく、自分の視点で発展させているか
+- 講義で触れられた具体例やデータを引用して論を補強しているか
+- 講義を見ずに書けるような一般論に終始していないか（講義固有の内容への言及が必要）`);
+    if (ctx.lectureInfo) {
+      sections.push(`### 講義情報\n${ctx.lectureInfo}`);
+    }
+  }
 
   if (ctx.questionType === "english-reading" || ctx.questionType === "mixed") {
     sections.push(`### 英文読解問題

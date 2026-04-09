@@ -87,10 +87,11 @@ export interface EssayReviewRequest {
   facultyId: string;
   topic?: string;
   wordLimit?: number;
-  questionType?: "essay" | "english-reading" | "data-analysis" | "mixed";
+  questionType?: "essay" | "english-reading" | "data-analysis" | "mixed" | "lecture";
   sourceText?: string;
   chartDataSummary?: string;
   pastQuestionFacultyName?: string;
+  lectureInfo?: string;
 }
 
 export interface EssayReviewResponse {
