@@ -36,8 +36,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshProfile = () => {
     const devRole = typeof window !== "undefined" ? localStorage.getItem("devRole") : null;
-    if (!auth || (process.env.NODE_ENV === "development" && devRole)) {
-      if (process.env.NODE_ENV === "development") {
+    if (!auth) {
+      if (process.env.NODE_ENV === "development" && devRole) {
         const savedProfile = JSON.parse(localStorage.getItem("studentProfile") ?? "{}");
         const devPlan = (localStorage.getItem("devPlan") as PlanType | null) ?? "self";
         setUserProfile({
@@ -60,10 +60,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    // devRoleがlocalStorageにある場合はモックユーザーで認証バイパス（開発環境のみ）
+    // Firebase Authが設定済みなら常にFirebase Authを使用
+    // devRoleバイパスはFirebase Auth未設定時のみ（auth === null）
     const devRole = typeof window !== "undefined" ? localStorage.getItem("devRole") : null;
-    if (!auth || (process.env.NODE_ENV === "development" && devRole)) {
-      if (process.env.NODE_ENV === "development") {
+    if (!auth) {
+      if (process.env.NODE_ENV === "development" && devRole) {
         setUser({ uid: "dev-user", email: "dev@example.com" } as User);
         const savedProfile = JSON.parse(localStorage.getItem("studentProfile") ?? "{}");
         const devPlan = (localStorage.getItem("devPlan") as PlanType | null) ?? "self";
@@ -106,9 +107,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    // devモード時はFirestoreリスナーをスキップ（dev-userドキュメントは存在しないため）
-    const devRole = typeof window !== "undefined" ? localStorage.getItem("devRole") : null;
-    if (process.env.NODE_ENV === "development" && devRole) return;
+    // devモード時（Firebase Auth未設定）はFirestoreリスナーをスキップ
+    if (!auth) return;
 
     if (!user || !db) {
       console.log("[AuthContext] Skipping profile fetch: user=", !!user, "db=", !!db);
