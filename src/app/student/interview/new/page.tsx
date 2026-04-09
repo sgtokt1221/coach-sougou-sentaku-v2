@@ -42,21 +42,22 @@ export default function InterviewNewPage() {
   // 志望校解決
   const targetUniversities = (userProfile as Record<string, unknown> | null)?.targetUniversities as string[] | undefined ?? [];
   const [resolved, setResolved] = useState<ResolvedUniversity[]>([]);
+  const [allUniversities, setAllUniversities] = useState<ResolvedUniversity[]>([]);
+  const [showAllUniversities, setShowAllUniversities] = useState(false);
   const [loadingUniversities, setLoadingUniversities] = useState(true);
 
   useEffect(() => {
-    if (targetUniversities.length === 0) {
-      setLoadingUniversities(false);
-      return;
-    }
     async function fetchResolved() {
       try {
-        const res = await fetch(
-          `/api/universities/resolve?ids=${targetUniversities.join(",")}`
-        );
-        if (!res.ok) throw new Error();
-        const data = await res.json();
-        setResolved(data.resolved ?? []);
+        if (targetUniversities.length > 0) {
+          const res = await fetch(
+            `/api/universities/resolve?ids=${targetUniversities.join(",")}`
+          );
+          if (res.ok) {
+            const data = await res.json();
+            setResolved(data.resolved ?? []);
+          }
+        }
       } catch {
         setResolved([]);
       } finally {
@@ -66,6 +67,25 @@ export default function InterviewNewPage() {
     fetchResolved();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetUniversities.join(",")]);
+
+  useEffect(() => {
+    if (!showAllUniversities || allUniversities.length > 0) return;
+    async function fetchAll() {
+      try {
+        const res = await fetch("/api/universities");
+        if (!res.ok) return;
+        const data = await res.json();
+        const unis: ResolvedUniversity[] = [];
+        for (const u of data.universities ?? []) {
+          for (const f of u.faculties ?? []) {
+            unis.push({ universityId: u.id, facultyId: f.id, universityName: u.name, facultyName: f.name });
+          }
+        }
+        setAllUniversities(unis);
+      } catch {}
+    }
+    fetchAll();
+  }, [showAllUniversities, allUniversities.length]);
 
   const [activeTab, setActiveTab] = useState<"new" | "history">("new");
   const [selectedCompoundId, setSelectedCompoundId] = useState<string | null>(null);
@@ -83,7 +103,7 @@ export default function InterviewNewPage() {
     }
   }, [resolved]);
 
-  const selectedUni = resolved.find(
+  const selectedUni = [...resolved, ...allUniversities].find(
     (r) => `${r.universityId}:${r.facultyId}` === selectedCompoundId
   );
   const universityId = selectedUni?.universityId ?? "";
@@ -269,8 +289,44 @@ export default function InterviewNewPage() {
         </Card>
       )}
 
+      {/* 他の大学から選ぶ */}
+      <div className="px-1">
+        {!showAllUniversities ? (
+          <button
+            type="button"
+            onClick={() => setShowAllUniversities(true)}
+            className="text-xs text-muted-foreground hover:text-primary transition-colors underline"
+          >
+            他の大学・学部から選ぶ
+          </button>
+        ) : (
+          <Card>
+            <CardContent className="p-3 lg:p-4 space-y-2">
+              <Label className="text-xs">他の大学・学部</Label>
+              <select
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                value={selectedCompoundId ?? ""}
+                onChange={(e) => {
+                  if (e.target.value) setSelectedCompoundId(e.target.value);
+                }}
+              >
+                <option value="">選択してください</option>
+                {allUniversities.map((u) => {
+                  const cid = `${u.universityId}:${u.facultyId}`;
+                  return (
+                    <option key={cid} value={cid}>
+                      {u.universityName} — {u.facultyName}
+                    </option>
+                  );
+                })}
+              </select>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
       {/* 面接モード選択 */}
-      {targetUniversities.length > 0 && (
+      {(targetUniversities.length > 0 || selectedCompoundId) && (
         <>
           <Card>
             <CardHeader>

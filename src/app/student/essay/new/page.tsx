@@ -133,21 +133,22 @@ export default function EssayNewPage() {
   // 志望校解決
   const targetUniversities = (userProfile as Record<string, unknown> | null)?.targetUniversities as string[] | undefined ?? [];
   const [resolved, setResolved] = useState<ResolvedUniversity[]>([]);
+  const [allUniversities, setAllUniversities] = useState<ResolvedUniversity[]>([]);
+  const [showAllUniversities, setShowAllUniversities] = useState(false);
   const [loadingUniversities, setLoadingUniversities] = useState(true);
 
   useEffect(() => {
-    if (targetUniversities.length === 0) {
-      setLoadingUniversities(false);
-      return;
-    }
     async function fetchResolved() {
       try {
-        const res = await fetch(
-          `/api/universities/resolve?ids=${targetUniversities.join(",")}`
-        );
-        if (!res.ok) throw new Error();
-        const data = await res.json();
-        setResolved(data.resolved ?? []);
+        if (targetUniversities.length > 0) {
+          const res = await fetch(
+            `/api/universities/resolve?ids=${targetUniversities.join(",")}`
+          );
+          if (res.ok) {
+            const data = await res.json();
+            setResolved(data.resolved ?? []);
+          }
+        }
       } catch {
         setResolved([]);
       } finally {
@@ -157,6 +158,26 @@ export default function EssayNewPage() {
     fetchResolved();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetUniversities.join(",")]);
+
+  // 全大学リスト取得（他の大学選択用）
+  useEffect(() => {
+    if (!showAllUniversities || allUniversities.length > 0) return;
+    async function fetchAll() {
+      try {
+        const res = await fetch("/api/universities");
+        if (!res.ok) return;
+        const data = await res.json();
+        const unis: ResolvedUniversity[] = [];
+        for (const u of data.universities ?? []) {
+          for (const f of u.faculties ?? []) {
+            unis.push({ universityId: u.id, facultyId: f.id, universityName: u.name, facultyName: f.name });
+          }
+        }
+        setAllUniversities(unis);
+      } catch {}
+    }
+    fetchAll();
+  }, [showAllUniversities, allUniversities.length]);
 
   // Step 1: 志望校選択
   const [selectedCompoundId, setSelectedCompoundId] = useState<string | null>(null);
@@ -791,6 +812,40 @@ export default function EssayNewPage() {
                   </div>
                 </div>
               )}
+
+              {/* 他の大学から選ぶ */}
+              <div className="pt-2">
+                {!showAllUniversities ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowAllUniversities(true)}
+                    className="text-xs text-muted-foreground hover:text-primary transition-colors underline"
+                  >
+                    他の大学・学部から選ぶ
+                  </button>
+                ) : (
+                  <div className="space-y-2">
+                    <Label className="text-xs">他の大学・学部</Label>
+                    <select
+                      className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                      value={selectedCompoundId ?? ""}
+                      onChange={(e) => {
+                        if (e.target.value) setSelectedCompoundId(e.target.value);
+                      }}
+                    >
+                      <option value="">選択してください</option>
+                      {allUniversities.map((u) => {
+                        const cid = `${u.universityId}:${u.facultyId}`;
+                        return (
+                          <option key={cid} value={cid}>
+                            {u.universityName} — {u.facultyName}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+                )}
+              </div>
 
               {!selectedTheme && !pastQuestion && (
                 <div className="space-y-2">
