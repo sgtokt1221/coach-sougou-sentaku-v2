@@ -122,7 +122,7 @@ export default function GrowthPage() {
     const trend = essays
       .filter((e) => e.scores)
       .map((e) => ({
-        date: e.submittedAt.slice(5).replace("-", "/"),
+        date: (() => { const d = new Date(e.submittedAt); return `${d.getMonth() + 1}/${d.getDate()}`; })(),
         total: e.scores!.total,
         structure: 0,
         logic: 0,

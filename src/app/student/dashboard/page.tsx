@@ -104,15 +104,18 @@ export default function StudentDashboard() {
 
   const rawTrend = (essayData?.essays ?? [])
     .filter((e) => e.scores)
-    .map((e) => ({
-      date: e.submittedAt.slice(5).replace("-", "/"),
-      total: e.scores.total,
-      structure: 0,
-      logic: 0,
-      expression: 0,
-      apAlignment: 0,
-      originality: 0,
-    }));
+    .map((e) => {
+      const d = new Date(e.submittedAt);
+      return {
+        date: `${d.getMonth() + 1}/${d.getDate()}`,
+        total: e.scores.total,
+        structure: 0,
+        logic: 0,
+        expression: 0,
+        apAlignment: 0,
+        originality: 0,
+      };
+    });
   const trendData = rawTrend;
   const latestScore = trendData.length > 0 ? trendData[trendData.length - 1].total : null;
 
@@ -222,7 +225,7 @@ export default function StudentDashboard() {
                           {item.universityName} {item.facultyName}
                         </p>
                         <p className="text-xs text-muted-foreground mt-0.5">
-                          {item.submittedAt}
+                          {(() => { const d = new Date(item.submittedAt); return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`; })()}
                         </p>
                       </div>
                       <span className={`text-lg font-light tabular-nums ${scoreColor(item.scores.total)}`}>

@@ -76,6 +76,16 @@ const DETAIL_LINES: { key: LineKey; label: string }[] = [
   { key: "originality", label: "独自性" },
 ];
 
+function formatDate(iso: string): string {
+  const d = new Date(iso);
+  return `${d.getMonth() + 1}/${d.getDate()}`;
+}
+
+function formatDateTime(iso: string): string {
+  const d = new Date(iso);
+  return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
 export default function EssayHistoryPage() {
   const router = useRouter();
   const [visibleLines, setVisibleLines] = useState<Set<string>>(new Set(["total"]));
@@ -100,7 +110,7 @@ export default function EssayHistoryPage() {
   const chartData = [...reviewedHistory]
     .sort((a, b) => a.submittedAt.localeCompare(b.submittedAt))
     .map((item) => ({
-      date: item.submittedAt,
+      date: formatDate(item.submittedAt),
       total: item.totalScore,
       structure: item.scores.structure,
       logic: item.scores.logic,
@@ -247,7 +257,7 @@ export default function EssayHistoryPage() {
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">{item.submittedAt}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{formatDateTime(item.submittedAt)}</p>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
                     {item.status === "reviewed" && (
