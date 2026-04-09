@@ -39,12 +39,21 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const snapshot = await adminDb
-      .collection("interviews")
-      .where("userId", "==", userId)
-      .orderBy("startedAt", "desc")
-      .limit(20)
-      .get();
+    let snapshot;
+    try {
+      snapshot = await adminDb
+        .collection("interviews")
+        .where("userId", "==", userId)
+        .orderBy("startedAt", "desc")
+        .limit(20)
+        .get();
+    } catch {
+      // Fallback: インデックス未作成時はorderByなしでクエリし、JS側でソート
+      snapshot = await adminDb
+        .collection("interviews")
+        .where("userId", "==", userId)
+        .get();
+    }
 
     const interviews = snapshot.docs.map((d) => {
       const data = d.data();
@@ -66,6 +75,8 @@ export async function GET(request: NextRequest) {
       };
     });
 
+    // フォールバック時のためJS側でもソート
+    interviews.sort((a, b) => b.startedAt.localeCompare(a.startedAt));
     return NextResponse.json({ interviews });
   } catch (error) {
     console.error("Interview history error:", error);

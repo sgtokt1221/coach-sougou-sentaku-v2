@@ -38,11 +38,20 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const snapshot = await adminDb
-      .collection("essays")
-      .where("userId", "==", userId)
-      .orderBy("submittedAt", "desc")
-      .get();
+    let snapshot;
+    try {
+      snapshot = await adminDb
+        .collection("essays")
+        .where("userId", "==", userId)
+        .orderBy("submittedAt", "desc")
+        .get();
+    } catch {
+      // Fallback: インデックス未作成時はorderByなしでクエリし、JS側でソート
+      snapshot = await adminDb
+        .collection("essays")
+        .where("userId", "==", userId)
+        .get();
+    }
 
     // 大学名解決用キャッシュ
     const universityCache = new Map<string, { name: string; faculties: Array<{ id: string; name: string }> }>();
@@ -87,6 +96,8 @@ export async function GET(request: NextRequest) {
       })
     );
 
+    // フォールバック時のためJS側でもソート
+    essays.sort((a, b) => b.submittedAt.localeCompare(a.submittedAt));
     return NextResponse.json({ essays });
   } catch (error) {
     console.error("Essay history error:", error);
