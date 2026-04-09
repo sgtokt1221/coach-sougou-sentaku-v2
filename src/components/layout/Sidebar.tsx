@@ -22,7 +22,6 @@ import {
   ExternalLink,
   Brain,
   Lightbulb,
-  BookCheck,
   BookOpen,
   CalendarDays,
   MessageSquare,
@@ -68,7 +67,6 @@ const studentNavGroups: NavGroup[] = [
     items: [
       { label: "性格診断", href: "/student/mbti", icon: Brain },
       { label: "自己分析", href: "/student/self-analysis", icon: Lightbulb },
-      { label: "合格ストーリー", href: "/student/story-check", icon: BookCheck },
     ],
   },
   {

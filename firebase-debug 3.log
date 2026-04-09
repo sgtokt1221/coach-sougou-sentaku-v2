@@ -1,0 +1,34 @@
+[debug] [2026-04-04T05:25:08.434Z] ----------------------------------------------------------------------
+[debug] [2026-04-04T05:25:08.434Z] Command:       /usr/local/bin/node /usr/local/bin/firebase apphosting:backends:create --project coach-sougou-sentaku --backend coach-app --primary-region asia-east1 --root-dir .
+[debug] [2026-04-04T05:25:08.435Z] CLI Version:   14.17.0
+[debug] [2026-04-04T05:25:08.435Z] Platform:      darwin
+[debug] [2026-04-04T05:25:08.435Z] Node Version:  v22.19.0
+[debug] [2026-04-04T05:25:08.435Z] Time:          Sat Apr 04 2026 14:25:08 GMT+0900 (日本標準時)
+[debug] [2026-04-04T05:25:08.435Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-04-04T05:25:08.514Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-04-04T05:25:08.514Z] > authorizing via signed-in user (tsukasafoods@gmail.com)
+[debug] [2026-04-04T05:25:08.515Z] Checked if tokens are valid: true, expires at: 1775282435579
+[debug] [2026-04-04T05:25:08.515Z] Checked if tokens are valid: true, expires at: 1775282435579
+[debug] [2026-04-04T05:25:08.515Z] Checked if tokens are valid: true, expires at: 1775282435579
+[debug] [2026-04-04T05:25:08.515Z] Checked if tokens are valid: true, expires at: 1775282435579
+[debug] [2026-04-04T05:25:08.515Z] Checked if tokens are valid: true, expires at: 1775282435579
+[debug] [2026-04-04T05:25:08.515Z] Checked if tokens are valid: true, expires at: 1775282435579
+[debug] [2026-04-04T05:25:08.515Z] Checked if tokens are valid: true, expires at: 1775282435579
+[debug] [2026-04-04T05:25:08.515Z] Checked if tokens are valid: true, expires at: 1775282435579
+[debug] [2026-04-04T05:25:08.515Z] Checked if tokens are valid: true, expires at: 1775282435579
+[debug] [2026-04-04T05:25:08.515Z] Checked if tokens are valid: true, expires at: 1775282435579
+[debug] [2026-04-04T05:25:08.515Z] Checked if tokens are valid: true, expires at: 1775282435579
+[debug] [2026-04-04T05:25:08.515Z] Checked if tokens are valid: true, expires at: 1775282435579
+[debug] [2026-04-04T05:25:08.515Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/coach-sougou-sentaku/services/developerconnect.googleapis.com [none]
+[debug] [2026-04-04T05:25:08.515Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/coach-sougou-sentaku/services/developerconnect.googleapis.com x-goog-quota-user=projects/coach-sougou-sentaku
+[debug] [2026-04-04T05:25:08.533Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/coach-sougou-sentaku/services/cloudbuild.googleapis.com [none]
+[debug] [2026-04-04T05:25:08.533Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/coach-sougou-sentaku/services/cloudbuild.googleapis.com x-goog-quota-user=projects/coach-sougou-sentaku
+[debug] [2026-04-04T05:25:08.533Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/coach-sougou-sentaku/services/secretmanager.googleapis.com [none]
+[debug] [2026-04-04T05:25:08.533Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/coach-sougou-sentaku/services/secretmanager.googleapis.com x-goog-quota-user=projects/coach-sougou-sentaku
+[debug] [2026-04-04T05:25:08.534Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/coach-sougou-sentaku/services/run.googleapis.com [none]
+[debug] [2026-04-04T05:25:08.534Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/coach-sougou-sentaku/services/run.googleapis.com x-goog-quota-user=projects/coach-sougou-sentaku
+[debug] [2026-04-04T05:25:08.534Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/coach-sougou-sentaku/services/artifactregistry.googleapis.com [none]
+[debug] [2026-04-04T05:25:08.534Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/coach-sougou-sentaku/services/artifactregistry.googleapis.com x-goog-quota-user=projects/coach-sougou-sentaku
+[debug] [2026-04-04T05:25:08.534Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/coach-sougou-sentaku/services/iam.googleapis.com [none]
+[debug] [2026-04-04T05:25:08.534Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/coach-sougou-sentaku/services/iam.googleapis.com x-goog-quota-user=projects/coach-sougou-sentaku

@@ -1,0 +1,14 @@
+[debug] [2026-04-04T05:23:52.935Z] ----------------------------------------------------------------------
+[debug] [2026-04-04T05:23:52.936Z] Command:       /usr/local/bin/node /usr/local/bin/firebase apphosting:backends:list --project coach-sougou-sentaku
+[debug] [2026-04-04T05:23:52.936Z] CLI Version:   14.17.0
+[debug] [2026-04-04T05:23:52.936Z] Platform:      darwin
+[debug] [2026-04-04T05:23:52.936Z] Node Version:  v22.19.0
+[debug] [2026-04-04T05:23:52.936Z] Time:          Sat Apr 04 2026 14:23:52 GMT+0900 (日本標準時)
+[debug] [2026-04-04T05:23:52.936Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-04-04T05:23:53.022Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-04-04T05:23:53.022Z] > authorizing via signed-in user (tsukasafoods@gmail.com)
+[debug] [2026-04-04T05:23:53.022Z] Checked if tokens are valid: true, expires at: 1775282435579
+[debug] [2026-04-04T05:23:53.022Z] Checked if tokens are valid: true, expires at: 1775282435579
+[debug] [2026-04-04T05:23:53.023Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/coach-sougou-sentaku/services/firebaseapphosting.googleapis.com [none]
+[debug] [2026-04-04T05:23:53.023Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/coach-sougou-sentaku/services/firebaseapphosting.googleapis.com x-goog-quota-user=projects/coach-sougou-sentaku
