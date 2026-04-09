@@ -28,7 +28,7 @@ interface EssayHistoryItem {
   universityName: string;
   facultyName: string;
   submittedAt: string;
-  scores: { total: number };
+  scores: { total: number; structure?: number; logic?: number; expression?: number; apAlignment?: number; originality?: number };
 }
 
 interface TrendDataPoint {
@@ -109,11 +109,11 @@ export default function StudentDashboard() {
       return {
         date: `${d.getMonth() + 1}/${d.getDate()}`,
         total: e.scores.total,
-        structure: 0,
-        logic: 0,
-        expression: 0,
-        apAlignment: 0,
-        originality: 0,
+        structure: e.scores.structure ?? 0,
+        logic: e.scores.logic ?? 0,
+        expression: e.scores.expression ?? 0,
+        apAlignment: e.scores.apAlignment ?? 0,
+        originality: e.scores.originality ?? 0,
       };
     });
   const trendData = rawTrend;

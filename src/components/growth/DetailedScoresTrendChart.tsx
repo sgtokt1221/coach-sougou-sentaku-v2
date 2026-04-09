@@ -37,9 +37,14 @@ export function DetailedScoresTrendChart({ data }: DetailedScoresTrendChartProps
     );
   }
 
+  // 1データ点の場合、前後にダミー点を追加して中央に表示
+  const chartData = data.length === 1
+    ? [{ date: "", total: 0, structure: 0, logic: 0, expression: 0, apAlignment: 0, originality: 0 }, data[0], { date: " ", total: 0, structure: 0, logic: 0, expression: 0, apAlignment: 0, originality: 0 }]
+    : data;
+
   return (
     <ResponsiveContainer width="100%" height={280}>
-      <LineChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+      <LineChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
         <CartesianGrid
           strokeDasharray={GRID_STYLE.strokeDasharray}
           stroke={GRID_STYLE.stroke}
@@ -68,7 +73,7 @@ export function DetailedScoresTrendChart({ data }: DetailedScoresTrendChartProps
             name={line.label}
             stroke={line.color}
             strokeWidth={2}
-            dot={<CustomDot />}
+            dot={{ r: 4, fill: "white", strokeWidth: 2 }}
             activeDot={<CustomActiveDot />}
             isAnimationActive={true}
             animationDuration={CHART_ANIMATION.duration}

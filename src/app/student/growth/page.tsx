@@ -111,7 +111,7 @@ function WeaknessColumn({
 }
 
 export default function GrowthPage() {
-  const { data: essayData, isLoading: loadingTrend } = useAuthSWR<{ essays: { submittedAt: string; scores?: { total: number } }[] }>("/api/essay/history?userId=current");
+  const { data: essayData, isLoading: loadingTrend } = useAuthSWR<{ essays: { submittedAt: string; status: string; scores?: { total: number; structure: number; logic: number; expression: number; apAlignment: number; originality: number } }[] }>("/api/essay/history?userId=current");
   const { data: reportData, isLoading: loadingReport } = useAuthSWR<GrowthReport>("/api/growth/report");
   const { data: weaknessData, isLoading: loadingWeaknesses } = useAuthSWR<{ weaknesses: WeaknessRecord[] }>("/api/growth/weaknesses?context=dashboard");
 
@@ -119,18 +119,21 @@ export default function GrowthPage() {
 
   const trendData = useMemo(() => {
     const essays = essayData?.essays ?? [];
-    const trend = essays
-      .filter((e) => e.scores)
-      .map((e) => ({
-        date: (() => { const d = new Date(e.submittedAt); return `${d.getMonth() + 1}/${d.getDate()}`; })(),
-        total: e.scores!.total,
-        structure: 0,
-        logic: 0,
-        expression: 0,
-        apAlignment: 0,
-        originality: 0,
-      }));
-    return trend;
+    return essays
+      .filter((e) => e.scores && e.status === "reviewed")
+      .map((e) => {
+        const d = new Date(e.submittedAt);
+        const s = e.scores!;
+        return {
+          date: `${d.getMonth() + 1}/${d.getDate()}`,
+          total: s.total,
+          structure: s.structure ?? 0,
+          logic: s.logic ?? 0,
+          expression: s.expression ?? 0,
+          apAlignment: s.apAlignment ?? 0,
+          originality: s.originality ?? 0,
+        };
+      });
   }, [essayData]);
 
   const weaknesses = useMemo((): WeaknessWithLevel[] => {
