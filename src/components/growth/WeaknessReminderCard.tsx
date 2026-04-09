@@ -75,17 +75,25 @@ export function WeaknessReminderCard() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2 pt-0">
-        {weaknesses.map((w) => (
-          <div key={w.area} className="flex items-center gap-2">
-            <Badge
-              variant="outline"
-              className={`shrink-0 text-xs ${levelBadgeClass[w.level]}`}
-            >
-              {levelLabel[w.level]}
-            </Badge>
-            <span className="text-sm text-yellow-900">{w.area}</span>
-          </div>
-        ))}
+        {weaknesses.map((w) => {
+          const daysAgo = w.lastOccurred
+            ? Math.max(0, Math.floor((Date.now() - new Date(w.lastOccurred).getTime()) / (1000 * 60 * 60 * 24)))
+            : null;
+          return (
+            <div key={w.area} className="flex items-center gap-2">
+              <Badge
+                variant="outline"
+                className={`shrink-0 text-xs ${levelBadgeClass[w.level]}`}
+              >
+                {levelLabel[w.level]}
+              </Badge>
+              <span className="text-sm text-yellow-900 flex-1">{w.area}</span>
+              <span className="text-xs text-yellow-700/70">
+                {w.count}回{daysAgo !== null && ` · ${daysAgo === 0 ? "今日" : `${daysAgo}日前`}`}
+              </span>
+            </div>
+          );
+        })}
       </CardContent>
     </Card>
   );

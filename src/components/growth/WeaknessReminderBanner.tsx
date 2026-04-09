@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { CheckCircle2, AlertCircle, AlertTriangle, TrendingUp } from "lucide-react";
 import { WeaknessRecord, WeaknessReminderLevel, getWeaknessReminderLevel } from "@/lib/types/growth";
 import { authFetch } from "@/lib/api/client";
+import { WeaknessSourceBadge, sourceLeftBorder } from "@/components/growth/WeaknessSourceBadge";
 
 type WeaknessWithLevel = WeaknessRecord & { level: WeaknessReminderLevel };
 
@@ -113,8 +114,11 @@ export function WeaknessReminderBanner() {
     <div className="space-y-2">
       {displayed.map((w) => {
         const cfg = levelConfig[w.level];
+        const daysAgo = w.lastOccurred
+          ? Math.max(0, Math.floor((Date.now() - new Date(w.lastOccurred).getTime()) / (1000 * 60 * 60 * 24)))
+          : null;
         return (
-          <Card key={w.area} className={`${cfg.bg} ${cfg.border}`}>
+          <Card key={w.area} className={`${cfg.bg} ${cfg.border} border-l-4 ${sourceLeftBorder(w.source)}`}>
             <CardContent className="flex items-center gap-3 py-3">
               {cfg.icon}
               <div className="min-w-0 flex-1">
@@ -122,8 +126,17 @@ export function WeaknessReminderBanner() {
                   <Badge variant="outline" className="text-xs">
                     {cfg.label}
                   </Badge>
+                  <WeaknessSourceBadge source={w.source} />
                   <span className="text-sm font-medium">{w.area}</span>
-                  <span className="text-xs text-muted-foreground">{w.count}回指摘</span>
+                </div>
+                <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
+                  <span>{w.count}回指摘</span>
+                  {daysAgo !== null && (
+                    <>
+                      <span>·</span>
+                      <span>最終: {daysAgo === 0 ? "今日" : `${daysAgo}日前`}</span>
+                    </>
+                  )}
                 </div>
               </div>
               <Button

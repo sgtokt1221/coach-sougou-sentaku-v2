@@ -4,6 +4,8 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { WeaknessReminderBanner } from "@/components/growth/WeaknessReminderBanner";
+import { WeaknessRecord } from "@/lib/types/growth";
+import { FileEdit, Mic as MicIcon, CheckCircle2, Target } from "lucide-react";
 import { ScoresTrendChart } from "@/components/growth/ScoresTrendChart";
 import {
   FileText,
@@ -154,7 +156,8 @@ export default function StudentDashboard() {
         ))}
       </AnimatedList>
 
-      {/* Weakness Reminder */}
+      {/* Weakness Summary + Reminder */}
+      <WeaknessSummarySection />
       <WeaknessReminderBanner />
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
@@ -233,6 +236,45 @@ export default function StudentDashboard() {
           </Card>
         </div>
       </div>
+    </div>
+  );
+}
+
+function WeaknessSummarySection() {
+  const { data } = useAuthSWR<{ weaknesses: WeaknessRecord[] }>("/api/growth/weaknesses?context=dashboard");
+  const weaknesses = data?.weaknesses ?? [];
+
+  if (weaknesses.length === 0) return null;
+
+  const essayCount = weaknesses.filter(w => !w.resolved && (w.source === "essay" || w.source === "both")).length;
+  const interviewCount = weaknesses.filter(w => !w.resolved && (w.source === "interview" || w.source === "both")).length;
+  const resolvedCount = weaknesses.filter(w => w.resolved).length;
+  const totalActive = weaknesses.filter(w => !w.resolved).length;
+
+  const items = [
+    { label: "添削", count: essayCount, icon: FileEdit, color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-50 dark:bg-blue-950/30" },
+    { label: "面接", count: interviewCount, icon: MicIcon, color: "text-violet-600 dark:text-violet-400", bg: "bg-violet-50 dark:bg-violet-950/30" },
+    { label: "解決済み", count: resolvedCount, icon: CheckCircle2, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-950/30" },
+    { label: "未解決", count: totalActive, icon: Target, color: "text-rose-600 dark:text-rose-400", bg: "bg-rose-50 dark:bg-rose-950/30" },
+  ];
+
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      {items.map((item) => (
+        <div
+          key={item.label}
+          className={`flex items-center gap-2.5 rounded-lg border border-border/60 px-3 py-2.5 ${item.count === 0 ? "opacity-40" : ""}`}
+          style={{ boxShadow: "0 1px 3px rgba(50,50,93,0.06)" }}
+        >
+          <div className={`flex size-8 items-center justify-center rounded-md ${item.bg}`}>
+            <item.icon className={`size-4 ${item.color}`} />
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">{item.label}</p>
+            <p className={`text-lg font-semibold tabular-nums ${item.color}`}>{item.count}</p>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

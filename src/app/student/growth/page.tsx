@@ -11,6 +11,7 @@ import { TrendingUp, AlertCircle, AlertTriangle, CheckCircle2, BarChart3, Sparkl
 import { WeaknessRecord, WeaknessReminderLevel, getWeaknessReminderLevel } from "@/lib/types/growth";
 import type { GrowthReport } from "@/lib/types/analytics";
 import { useAuthSWR } from "@/lib/api/swr";
+import { WeaknessSourceBadge, sourceLeftBorder } from "@/components/growth/WeaknessSourceBadge";
 
 type WeaknessWithLevel = WeaknessRecord & { level: WeaknessReminderLevel };
 
@@ -55,12 +56,18 @@ function WeaknessColumn({
   title,
   items,
   level,
+  maxCount,
 }: {
   title: string;
   items: WeaknessWithLevel[];
   level: WeaknessReminderLevel;
+  maxCount: number;
 }) {
   const cfg = levelConfig[level];
+  const sorted = [...items].sort((a, b) => {
+    const sourceOrder = { essay: 0, both: 1, interview: 2 };
+    return (sourceOrder[a.source] ?? 1) - (sourceOrder[b.source] ?? 1);
+  });
   return (
     <div>
       <div className="mb-3 flex items-center gap-2">
@@ -71,14 +78,29 @@ function WeaknessColumn({
         </Badge>
       </div>
       <div className="space-y-2">
-        {items.length === 0 ? (
+        {sorted.length === 0 ? (
           <p className="text-xs text-muted-foreground">該当なし</p>
         ) : (
-          items.map((w) => (
-            <Card key={w.area} className="border">
+          sorted.map((w) => (
+            <Card key={w.area} className={`border border-l-4 ${sourceLeftBorder(w.source)}`}>
               <CardContent className="py-3">
-                <p className="text-sm font-medium">{w.area}</p>
-                <p className="text-xs text-muted-foreground">{w.count}回指摘</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium flex-1">{w.area}</p>
+                  <WeaknessSourceBadge source={w.source} />
+                </div>
+                <div className="mt-2 flex items-center gap-2">
+                  <div className="h-1.5 flex-1 rounded-full bg-muted">
+                    <div
+                      className={`h-1.5 rounded-full transition-all ${
+                        level === "resolved" ? "bg-emerald-400" :
+                        level === "improving" ? "bg-blue-400" :
+                        w.count >= 5 ? "bg-rose-400" : "bg-amber-400"
+                      }`}
+                      style={{ width: `${Math.min((w.count / Math.max(maxCount, 1)) * 100, 100)}%` }}
+                    />
+                  </div>
+                  <span className="text-xs text-muted-foreground shrink-0">{w.count}回</span>
+                </div>
               </CardContent>
             </Card>
           ))
@@ -263,21 +285,16 @@ export default function GrowthPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            <WeaknessColumn
-              title="要注意・警告"
-              items={activeWeaknesses}
-              level="critical"
-            />
-            <WeaknessColumn
-              title="改善中"
-              items={improvingWeaknesses}
-              level="improving"
-            />
-            <WeaknessColumn
-              title="解決済み"
-              items={resolvedWeaknesses}
-              level="resolved"
-            />
+            {(() => {
+              const maxCount = Math.max(...weaknesses.map(w => w.count), 1);
+              return (
+                <>
+                  <WeaknessColumn title="要注意・警告" items={activeWeaknesses} level="critical" maxCount={maxCount} />
+                  <WeaknessColumn title="改善中" items={improvingWeaknesses} level="improving" maxCount={maxCount} />
+                  <WeaknessColumn title="解決済み" items={resolvedWeaknesses} level="resolved" maxCount={maxCount} />
+                </>
+              );
+            })()}
           </div>
         )}
       </section>
