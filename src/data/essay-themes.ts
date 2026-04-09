@@ -1426,10 +1426,369 @@ export const essayThemes: EssayTheme[] = [
     difficulty: 2,
     relatedAP: ["感染症対策", "公衆衛生", "危機管理", "社会の備え"],
     wordLimit: 800
-  }
+  },
 
-  // 残り12分野×20題 = 240題は同様のパターンで作成
-  // 実装時間の都合上、ここでは一部のみ記載
+  // ===== 法律 (law) — 総合型選抜頻出テーマ =====
+  {
+    id: "law-001",
+    field: "law",
+    fieldLabel: "法律",
+    title: "感染症対策と私権制限の法的正当性",
+    description: "感染症拡大防止のための行動制限措置と個人の自由・権利の制限について、法的正当性の観点から論じなさい。",
+    difficulty: 3,
+    relatedAP: ["人権", "公共の福祉", "感染症対策", "憲法"],
+    wordLimit: 1000
+  },
+  {
+    id: "law-002",
+    field: "law",
+    fieldLabel: "法律",
+    title: "AI技術の発展と法整備の課題",
+    description: "AI技術の急速な発展に対して、現行法制度の課題と今後の法整備のあり方について論じなさい。",
+    difficulty: 3,
+    relatedAP: ["AI規制", "法整備", "テクノロジー", "個人情報"],
+    wordLimit: 1000
+  },
+  {
+    id: "law-003",
+    field: "law",
+    fieldLabel: "法律",
+    title: "死刑制度の存廃をめぐる法的議論",
+    description: "死刑制度の存廃について、犯罪抑止効果、人権保障、国際的潮流の観点から法的に論じなさい。",
+    difficulty: 3,
+    relatedAP: ["刑法", "人権", "国際法", "司法制度"],
+    wordLimit: 1000
+  },
+  {
+    id: "law-004",
+    field: "law",
+    fieldLabel: "法律",
+    title: "選択的夫婦別姓制度の法的論点",
+    description: "選択的夫婦別姓制度の導入について、憲法上の権利と家族法の観点から論じなさい。",
+    difficulty: 2,
+    relatedAP: ["家族法", "憲法", "ジェンダー平等", "個人の尊厳"],
+    wordLimit: 800
+  },
+  {
+    id: "law-005",
+    field: "law",
+    fieldLabel: "法律",
+    title: "移民・難民の法的地位と受入れ制度",
+    description: "移民・難民の法的地位の保障と、日本の受入れ制度の課題について論じなさい。",
+    difficulty: 3,
+    relatedAP: ["国際法", "人権", "入管法", "多文化共生"],
+    wordLimit: 1000
+  },
+  {
+    id: "law-006",
+    field: "law",
+    fieldLabel: "法律",
+    title: "安楽死・尊厳死の法制化の是非",
+    description: "安楽死・尊厳死の法制化について、自己決定権と生命の尊厳の観点から法的に論じなさい。",
+    difficulty: 3,
+    relatedAP: ["生命倫理", "自己決定権", "医事法", "人権"],
+    wordLimit: 1000
+  },
+  {
+    id: "law-007",
+    field: "law",
+    fieldLabel: "法律",
+    title: "SNS上の誹謗中傷と法的対応",
+    description: "SNS上の誹謗中傷に対する法的規制のあり方について、表現の自由との均衡を踏まえて論じなさい。",
+    difficulty: 2,
+    relatedAP: ["表現の自由", "名誉毀損", "プロバイダ責任", "デジタル法"],
+    wordLimit: 800
+  },
+  {
+    id: "law-008",
+    field: "law",
+    fieldLabel: "法律",
+    title: "少年法の適用年齢と更生理念",
+    description: "少年法の適用年齢引き下げ議論について、更生と処罰のバランスの観点から論じなさい。",
+    difficulty: 2,
+    relatedAP: ["少年法", "更生", "刑事政策", "青少年保護"],
+    wordLimit: 800
+  },
+  {
+    id: "law-009",
+    field: "law",
+    fieldLabel: "法律",
+    title: "個人情報保護法と監視社会",
+    description: "デジタル監視技術の発展と個人情報保護法の整備について、プライバシー権の観点から論じなさい。",
+    difficulty: 2,
+    relatedAP: ["プライバシー権", "個人情報保護", "監視技術", "デジタル社会"],
+    wordLimit: 800
+  },
+  {
+    id: "law-010",
+    field: "law",
+    fieldLabel: "法律",
+    title: "裁判員制度の現状と課題",
+    description: "裁判員制度の導入から15年以上が経過した現在、制度の成果と今後の課題について論じなさい。",
+    difficulty: 2,
+    relatedAP: ["司法制度", "国民参加", "裁判員制度", "民主主義"],
+    wordLimit: 800
+  },
+
+  // ===== 国際 (international) — 総合型選抜頻出テーマ =====
+  {
+    id: "international-001",
+    field: "international",
+    fieldLabel: "国際",
+    title: "ヘイトスピーチ規制と表現の自由",
+    description: "ヘイトスピーチ規制と表現の自由の両立について、各国の取り組みを参照しながら論じなさい。",
+    difficulty: 3,
+    relatedAP: ["人権", "表現の自由", "差別禁止", "国際比較"],
+    wordLimit: 1000
+  },
+  {
+    id: "international-002",
+    field: "international",
+    fieldLabel: "国際",
+    title: "言論の自由とフェイクニュース・陰謀論",
+    description: "SNS時代における言論の自由と、フェイクニュース・陰謀論の拡散防止の両立について論じなさい。",
+    difficulty: 2,
+    relatedAP: ["メディアリテラシー", "言論の自由", "情報倫理", "民主主義"],
+    wordLimit: 800
+  },
+  {
+    id: "international-003",
+    field: "international",
+    fieldLabel: "国際",
+    title: "文系学部の存在意義と社会的役割",
+    description: "理系偏重が指摘される中、文系学部の存在意義と社会における役割について論じなさい。",
+    difficulty: 2,
+    relatedAP: ["高等教育", "リベラルアーツ", "人文科学", "社会科学"],
+    wordLimit: 800
+  },
+  {
+    id: "international-004",
+    field: "international",
+    fieldLabel: "国際",
+    title: "グローバルサウスの台頭と国際秩序の変容",
+    description: "グローバルサウス諸国の台頭が国際秩序に与える影響について論じなさい。",
+    difficulty: 3,
+    relatedAP: ["国際政治", "多極化", "途上国", "国際経済"],
+    wordLimit: 1000
+  },
+  {
+    id: "international-005",
+    field: "international",
+    fieldLabel: "国際",
+    title: "経済安全保障と国際協力の両立",
+    description: "経済安全保障を確保しつつ国際的な自由貿易を維持する方策について論じなさい。",
+    difficulty: 3,
+    relatedAP: ["経済安全保障", "サプライチェーン", "自由貿易", "地政学"],
+    wordLimit: 1000
+  },
+  {
+    id: "international-006",
+    field: "international",
+    fieldLabel: "国際",
+    title: "難民問題と国際社会の責任",
+    description: "増加する難民に対して国際社会はどのような責任を果たすべきか、日本の役割も含めて論じなさい。",
+    difficulty: 2,
+    relatedAP: ["難民問題", "国際協力", "人道支援", "国際法"],
+    wordLimit: 800
+  },
+  {
+    id: "international-007",
+    field: "international",
+    fieldLabel: "国際",
+    title: "異文化コミュニケーションとAI翻訳",
+    description: "AI翻訳技術の発展が異文化コミュニケーションに与える影響について、利点と課題を論じなさい。",
+    difficulty: 2,
+    relatedAP: ["異文化理解", "AI技術", "言語教育", "コミュニケーション"],
+    wordLimit: 800
+  },
+  {
+    id: "international-008",
+    field: "international",
+    fieldLabel: "国際",
+    title: "国際機関の改革と民主的正統性",
+    description: "国連などの国際機関の改革について、民主的正統性と効率性の観点から論じなさい。",
+    difficulty: 3,
+    relatedAP: ["国連改革", "国際機関", "民主主義", "グローバルガバナンス"],
+    wordLimit: 1000
+  },
+  {
+    id: "international-009",
+    field: "international",
+    fieldLabel: "国際",
+    title: "食料安全保障のグローバルな課題",
+    description: "グローバルな食料安全保障の課題と、持続可能な食料システム構築の方策を論じなさい。",
+    difficulty: 2,
+    relatedAP: ["食料安全保障", "持続可能性", "国際協力", "農業政策"],
+    wordLimit: 800
+  },
+  {
+    id: "international-010",
+    field: "international",
+    fieldLabel: "国際",
+    title: "デジタル覇権競争と国際ルール",
+    description: "米中を中心としたデジタル覇権競争と国際的なルール形成の課題について論じなさい。",
+    difficulty: 3,
+    relatedAP: ["デジタル経済", "国際競争", "データガバナンス", "技術標準"],
+    wordLimit: 1000
+  },
+
+  // ===== 経済 (economy) 追加 — 総合型選抜トレンド =====
+  {
+    id: "economy-021",
+    field: "economy",
+    fieldLabel: "経済",
+    title: "インフレ・物価高と家計への影響",
+    description: "近年の物価上昇が家計に与える影響を分析し、有効な経済対策について論じなさい。",
+    difficulty: 2,
+    relatedAP: ["物価", "金融政策", "家計", "経済対策"],
+    wordLimit: 800
+  },
+  {
+    id: "economy-022",
+    field: "economy",
+    fieldLabel: "経済",
+    title: "暗号通貨・ブロックチェーンと金融の未来",
+    description: "暗号通貨やブロックチェーン技術が金融システムに与える影響と課題について論じなさい。",
+    difficulty: 3,
+    relatedAP: ["フィンテック", "金融イノベーション", "規制", "デジタル経済"],
+    wordLimit: 1000
+  },
+  {
+    id: "economy-023",
+    field: "economy",
+    fieldLabel: "経済",
+    title: "ベーシックインカムの導入可能性",
+    description: "ベーシックインカム制度の導入について、財源確保と社会的影響の観点から論じなさい。",
+    difficulty: 3,
+    relatedAP: ["社会保障", "財政政策", "格差是正", "労働政策"],
+    wordLimit: 1000
+  },
+
+  // ===== 教育 (education) 追加 — 総合型選抜トレンド =====
+  {
+    id: "education-021",
+    field: "education",
+    fieldLabel: "教育",
+    title: "アクティブ・ラーニングの効果と課題",
+    description: "主体的・対話的で深い学び（アクティブ・ラーニング）の効果と導入上の課題について論じなさい。",
+    difficulty: 2,
+    relatedAP: ["主体的学習", "協働学習", "教育改革", "学習効果"],
+    wordLimit: 800
+  },
+  {
+    id: "education-022",
+    field: "education",
+    fieldLabel: "教育",
+    title: "学校現場でのAI導入と教師の役割変化",
+    description: "AI技術の学校現場への導入が教育と教師の役割にどのような変化をもたらすか論じなさい。",
+    difficulty: 2,
+    relatedAP: ["AI教育", "教師の役割", "EdTech", "教育DX"],
+    wordLimit: 800
+  },
+  {
+    id: "education-023",
+    field: "education",
+    fieldLabel: "教育",
+    title: "STEAM教育と創造性育成",
+    description: "STEAM教育が子どもの創造性育成に果たす役割と、日本の教育課程への導入方法について論じなさい。",
+    difficulty: 2,
+    relatedAP: ["STEAM", "創造性", "理数教育", "芸術教育"],
+    wordLimit: 800
+  },
+  {
+    id: "education-024",
+    field: "education",
+    fieldLabel: "教育",
+    title: "外国籍児童の受け入れと教育保障",
+    description: "増加する外国籍児童・生徒の教育保障について、言語支援や文化的配慮の観点から論じなさい。",
+    difficulty: 2,
+    relatedAP: ["多文化教育", "日本語教育", "教育の権利", "インクルーシブ"],
+    wordLimit: 800
+  },
+
+  // ===== 医療 (medical) 追加 — 総合型選抜トレンド =====
+  {
+    id: "medical-021",
+    field: "medical",
+    fieldLabel: "医療",
+    title: "遺伝子検査・ゲノム編集と生命倫理",
+    description: "遺伝子検査やゲノム編集技術の医療応用について、生命倫理の観点から論じなさい。",
+    difficulty: 3,
+    relatedAP: ["ゲノム医療", "生命倫理", "遺伝子技術", "インフォームドコンセント"],
+    wordLimit: 1000
+  },
+  {
+    id: "medical-022",
+    field: "medical",
+    fieldLabel: "医療",
+    title: "再生医療の現状と将来展望",
+    description: "iPS細胞などを活用した再生医療の現状と将来展望について、実用化の課題を含めて論じなさい。",
+    difficulty: 3,
+    relatedAP: ["再生医療", "iPS細胞", "医療イノベーション", "臨床応用"],
+    wordLimit: 1000
+  },
+  {
+    id: "medical-023",
+    field: "medical",
+    fieldLabel: "医療",
+    title: "健康寿命延伸と予防医学の推進",
+    description: "平均寿命と健康寿命の差を縮小するための予防医学の推進策について論じなさい。",
+    difficulty: 2,
+    relatedAP: ["予防医学", "健康寿命", "公衆衛生", "生活習慣病"],
+    wordLimit: 800
+  },
+  {
+    id: "medical-024",
+    field: "medical",
+    fieldLabel: "医療",
+    title: "AI医療の可能性と医師の役割",
+    description: "AI診断やロボット手術など、AI医療の進展が医師の役割をどう変えるか論じなさい。",
+    difficulty: 2,
+    relatedAP: ["AI医療", "医療DX", "診断支援", "医療倫理"],
+    wordLimit: 800
+  },
+
+  // ===== 科学技術 (technology) 追加 — 総合型選抜トレンド =====
+  {
+    id: "technology-021",
+    field: "technology",
+    fieldLabel: "科学技術",
+    title: "自動運転技術の社会実装と法的課題",
+    description: "自動運転技術の社会実装に向けた技術的・法的課題について論じなさい。",
+    difficulty: 2,
+    relatedAP: ["自動運転", "安全技術", "法整備", "モビリティ"],
+    wordLimit: 800
+  },
+  {
+    id: "technology-022",
+    field: "technology",
+    fieldLabel: "科学技術",
+    title: "スマートシティ構想と都市課題の解決",
+    description: "ICT技術を活用したスマートシティ構想が都市課題の解決にどう貢献できるか論じなさい。",
+    difficulty: 2,
+    relatedAP: ["スマートシティ", "IoT", "都市計画", "データ活用"],
+    wordLimit: 800
+  },
+  {
+    id: "technology-023",
+    field: "technology",
+    fieldLabel: "科学技術",
+    title: "水素エネルギー社会の実現可能性",
+    description: "水素エネルギー社会の実現に向けた技術的課題と可能性について論じなさい。",
+    difficulty: 3,
+    relatedAP: ["水素エネルギー", "脱炭素", "エネルギー転換", "技術開発"],
+    wordLimit: 1000
+  },
+  {
+    id: "technology-024",
+    field: "technology",
+    fieldLabel: "科学技術",
+    title: "ChatGPTなど生成AIの社会的影響",
+    description: "ChatGPTに代表される生成AIの急速な普及が社会・教育・労働に与える影響と課題について論じなさい。",
+    difficulty: 2,
+    relatedAP: ["生成AI", "ChatGPT", "社会変革", "AI倫理"],
+    wordLimit: 800
+  },
 ];
 
 // 分野一覧を取得する関数

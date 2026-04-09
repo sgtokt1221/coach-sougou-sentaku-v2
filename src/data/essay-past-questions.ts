@@ -527,6 +527,283 @@ export const PAST_QUESTIONS: PastQuestion[] = [
   { id: "pq-komazawa-econ-001", universityId: "komazawa-u", universityName: "駒澤大学", facultyName: "経済学部", year: 2024, theme: "経済・社会問題に関する小論文", description: "自己推薦選抜。経済的・社会的課題について分析・論述。時事問題への関心と論理的思考力が問われる。60分。", type: "frequent", timeLimit: 60, field: "経済学" },
   { id: "pq-komazawa-gms-001", universityId: "komazawa-u", universityName: "駒澤大学", facultyName: "グローバル・メディア・スタディーズ学部", year: 2024, theme: "メディア・国際社会に関する時事問題", description: "自己推薦選抜。メディアやグローバル社会に関する時事的テーマについて論述。60分。", type: "frequent", timeLimit: 60, field: "メディア・国際" },
 
+  // ===== 資料・データ読解型（追加）— 総合型選抜 頻出グラフ問題 =====
+
+  { id: "pq-data-aging-1", universityId: "keio-u", universityName: "慶應義塾大学", facultyName: "総合政策学部（SFC）", year: 2025,
+    theme: "【資料読解】少子高齢化と出生率の国際比較",
+    description: "以下の資料を分析し、日本の少子高齢化の特徴を国際比較の観点から明らかにした上で、出生率回復のために必要な政策を800字以内で論じなさい。",
+    type: "frequent", questionType: "data-analysis", wordLimit: 800, timeLimit: 90, field: "社会",
+    chartData: [
+      { type: "line", title: "合計特殊出生率の推移（国際比較）", xKey: "year",
+        data: [
+          { year: "2000", 日本: 1.36, フランス: 1.87, スウェーデン: 1.54, 韓国: 1.47, 米国: 2.06 },
+          { year: "2005", 日本: 1.26, フランス: 1.94, スウェーデン: 1.77, 韓国: 1.08, 米国: 2.05 },
+          { year: "2010", 日本: 1.39, フランス: 2.03, スウェーデン: 1.98, 韓国: 1.23, 米国: 1.93 },
+          { year: "2015", 日本: 1.45, フランス: 1.96, スウェーデン: 1.85, 韓国: 1.24, 米国: 1.84 },
+          { year: "2020", 日本: 1.33, フランス: 1.83, スウェーデン: 1.66, 韓国: 0.84, 米国: 1.64 },
+          { year: "2024", 日本: 1.20, フランス: 1.68, スウェーデン: 1.45, 韓国: 0.72, 米国: 1.62 },
+        ],
+        yKeys: [
+          { key: "日本", name: "日本", color: "#EF4444" },
+          { key: "フランス", name: "フランス", color: "#3B82F6" },
+          { key: "スウェーデン", name: "スウェーデン", color: "#10B981" },
+          { key: "韓国", name: "韓国", color: "#F59E0B" },
+          { key: "米国", name: "米国", color: "#8B5CF6" },
+        ] },
+    ] },
+
+  { id: "pq-data-ai-adoption-1", universityId: "waseda-u", universityName: "早稲田大学", facultyName: "政治経済学部", year: 2025,
+    theme: "【資料読解】AI導入企業の割合と生産性への影響",
+    description: "以下の資料からAI導入の現状と生産性への影響を読み取り、日本企業がAI活用を進めるための課題と方策を800字以内で論じなさい。",
+    type: "frequent", questionType: "data-analysis", wordLimit: 800, timeLimit: 90, field: "AI・テクノロジー",
+    chartData: [
+      { type: "bar", title: "AI導入企業の割合（国別・2024年・%）", xKey: "country",
+        data: [
+          { country: "米国", 導入率: 56, 検討中: 22 },
+          { country: "中国", 導入率: 50, 検討中: 28 },
+          { country: "英国", 導入率: 42, 検討中: 25 },
+          { country: "ドイツ", 導入率: 38, 検討中: 27 },
+          { country: "日本", 導入率: 23, 検討中: 31 },
+          { country: "韓国", 導入率: 34, 検討中: 24 },
+        ],
+        yKeys: [
+          { key: "導入率", name: "導入済み", color: "#3B82F6" },
+          { key: "検討中", name: "検討中", color: "#93C5FD" },
+        ] },
+    ] },
+
+  { id: "pq-data-sdgs-1", universityId: "doshisha-u", universityName: "同志社大学", facultyName: "政策学部", year: 2025,
+    theme: "【資料読解】日本のSDGs達成度スコアの推移",
+    description: "以下の資料からSDGs達成度の推移を読み取り、日本が特に課題を抱える目標について分析し、改善策を600字以内で論じなさい。",
+    type: "frequent", questionType: "data-analysis", wordLimit: 600, timeLimit: 60, field: "環境",
+    chartData: [
+      { type: "line", title: "SDGs達成度指数の推移（上位国との比較）", xKey: "year",
+        data: [
+          { year: "2019", 日本: 78.9, フィンランド: 83.0, スウェーデン: 82.6, デンマーク: 82.3 },
+          { year: "2020", 日本: 79.2, フィンランド: 83.8, スウェーデン: 83.4, デンマーク: 82.4 },
+          { year: "2021", 日本: 79.8, フィンランド: 84.5, スウェーデン: 83.9, デンマーク: 83.0 },
+          { year: "2022", 日本: 79.6, フィンランド: 86.5, スウェーデン: 85.2, デンマーク: 85.6 },
+          { year: "2023", 日本: 79.4, フィンランド: 86.8, スウェーデン: 85.7, デンマーク: 85.2 },
+          { year: "2024", 日本: 79.1, フィンランド: 86.4, スウェーデン: 85.7, デンマーク: 84.9 },
+        ],
+        yKeys: [
+          { key: "日本", name: "日本", color: "#EF4444" },
+          { key: "フィンランド", name: "フィンランド", color: "#3B82F6" },
+          { key: "スウェーデン", name: "スウェーデン", color: "#10B981" },
+          { key: "デンマーク", name: "デンマーク", color: "#F59E0B" },
+        ] },
+    ] },
+
+  { id: "pq-data-telework-1", universityId: "meiji-u", universityName: "明治大学", facultyName: "政治経済学部", year: 2025,
+    theme: "【資料読解】テレワーク実施率と労働時間の変化",
+    description: "以下の資料からテレワークの普及状況と労働時間の変化を読み取り、働き方改革の成果と今後の課題を800字以内で論じなさい。",
+    type: "frequent", questionType: "data-analysis", wordLimit: 800, timeLimit: 90, field: "経済",
+    chartData: [
+      { type: "line", title: "テレワーク実施率の推移（%）", xKey: "year",
+        data: [
+          { year: "2019", 全体: 10.3, 大企業: 24.0, 中小企業: 5.6 },
+          { year: "2020", 全体: 27.7, 大企業: 55.2, 中小企業: 14.3 },
+          { year: "2021", 全体: 32.2, 大企業: 58.4, 中小企業: 18.1 },
+          { year: "2022", 全体: 28.5, 大企業: 50.3, 中小企業: 15.7 },
+          { year: "2023", 全体: 24.8, 大企業: 46.1, 中小企業: 13.2 },
+          { year: "2024", 全体: 22.4, 大企業: 42.0, 中小企業: 11.8 },
+        ],
+        yKeys: [
+          { key: "全体", name: "全体", color: "#6366F1" },
+          { key: "大企業", name: "大企業", color: "#3B82F6" },
+          { key: "中小企業", name: "中小企業", color: "#F59E0B" },
+        ] },
+      { type: "bar", title: "年間総実労働時間の推移（時間）", xKey: "year",
+        data: [
+          { year: "2019", 実労働時間: 1669 },
+          { year: "2020", 実労働時間: 1621 },
+          { year: "2021", 実労働時間: 1633 },
+          { year: "2022", 実労働時間: 1607 },
+          { year: "2023", 実労働時間: 1594 },
+        ],
+        yKeys: [{ key: "実労働時間", name: "年間総実労働時間", color: "#10B981" }] },
+    ] },
+
+  { id: "pq-data-co2-1", universityId: "kyoto-u", universityName: "京都大学", facultyName: "総合人間学部", year: 2025,
+    theme: "【資料読解】CO2排出量の国別推移と削減目標",
+    description: "以下の資料を分析し、主要国のCO2排出量の推移と削減目標の達成可能性について600字以内で論じなさい。",
+    type: "frequent", questionType: "data-analysis", wordLimit: 600, timeLimit: 60, field: "環境",
+    chartData: [
+      { type: "line", title: "CO2排出量の推移（億トン）", xKey: "year",
+        data: [
+          { year: "2010", 中国: 83, 米国: 55, EU: 37, インド: 19, 日本: 12 },
+          { year: "2015", 中国: 95, 米国: 51, EU: 33, インド: 23, 日本: 12 },
+          { year: "2020", 中国: 107, 米国: 44, EU: 27, インド: 24, 日本: 10 },
+          { year: "2023", 中国: 119, 米国: 48, EU: 27, インド: 29, 日本: 10 },
+        ],
+        yKeys: [
+          { key: "中国", name: "中国", color: "#EF4444" },
+          { key: "米国", name: "米国", color: "#3B82F6" },
+          { key: "EU", name: "EU", color: "#10B981" },
+          { key: "インド", name: "インド", color: "#F59E0B" },
+          { key: "日本", name: "日本", color: "#8B5CF6" },
+        ] },
+    ] },
+
+  { id: "pq-data-univ-cost-1", universityId: "osaka-u", universityName: "大阪大学", facultyName: "文学部", year: 2025,
+    theme: "【資料読解】大学進学率と学費の推移",
+    description: "以下の資料を分析し、大学進学率の上昇と学費増加の関係を踏まえ、教育機会の平等をどう確保すべきか800字以内で論じなさい。",
+    type: "frequent", questionType: "data-analysis", wordLimit: 800, timeLimit: 90, field: "教育",
+    chartData: [
+      { type: "line", title: "大学進学率と国立大学授業料の推移", xKey: "year",
+        data: [
+          { year: "1990", 進学率: 30.5, 国立授業料: 33.96 },
+          { year: "2000", 進学率: 45.1, 国立授業料: 47.88 },
+          { year: "2010", 進学率: 50.9, 国立授業料: 53.58 },
+          { year: "2020", 進学率: 54.4, 国立授業料: 53.58 },
+          { year: "2025", 進学率: 57.7, 国立授業料: 53.58 },
+        ],
+        yKeys: [
+          { key: "進学率", name: "大学進学率（%）", color: "#3B82F6" },
+          { key: "国立授業料", name: "国立大授業料（万円）", color: "#EF4444" },
+        ] },
+    ] },
+
+  { id: "pq-data-gini-1", universityId: "chuo-u", universityName: "中央大学", facultyName: "法学部", year: 2025,
+    theme: "【資料読解】ジニ係数の国際比較と格差問題",
+    description: "以下の資料を分析し、日本の経済格差の現状を国際比較の観点から明らかにした上で、格差是正のための政策を800字以内で提案しなさい。",
+    type: "frequent", questionType: "data-analysis", wordLimit: 800, timeLimit: 90, field: "経済",
+    chartData: [
+      { type: "bar", title: "ジニ係数の国際比較（2022年・OECD）", xKey: "country",
+        data: [
+          { country: "米国", ジニ係数: 0.375 },
+          { country: "英国", ジニ係数: 0.351 },
+          { country: "日本", ジニ係数: 0.334 },
+          { country: "韓国", ジニ係数: 0.325 },
+          { country: "カナダ", ジニ係数: 0.301 },
+          { country: "ドイツ", ジニ係数: 0.296 },
+          { country: "フランス", ジニ係数: 0.292 },
+          { country: "スウェーデン", ジニ係数: 0.268 },
+          { country: "デンマーク", ジニ係数: 0.261 },
+        ],
+        yKeys: [{ key: "ジニ係数", name: "ジニ係数", color: "#EF4444" }] },
+    ] },
+
+  { id: "pq-data-medical-cost-1", universityId: "keio-u", universityName: "慶應義塾大学", facultyName: "経済学部", year: 2025,
+    theme: "【資料読解】医療費の推移と高齢者人口の相関",
+    description: "以下の資料を分析し、医療費増大の要因を明らかにした上で、持続可能な医療制度を実現するための方策を800字以内で論じなさい。",
+    type: "frequent", questionType: "data-analysis", wordLimit: 800, timeLimit: 90, field: "医療",
+    chartData: [
+      { type: "line", title: "国民医療費と高齢化率の推移", xKey: "year",
+        data: [
+          { year: "2000", 国民医療費: 30.1, 高齢化率: 17.4 },
+          { year: "2005", 国民医療費: 33.1, 高齢化率: 20.2 },
+          { year: "2010", 国民医療費: 37.4, 高齢化率: 23.0 },
+          { year: "2015", 国民医療費: 42.4, 高齢化率: 26.6 },
+          { year: "2020", 国民医療費: 43.0, 高齢化率: 28.6 },
+          { year: "2023", 国民医療費: 47.3, 高齢化率: 29.1 },
+        ],
+        yKeys: [
+          { key: "国民医療費", name: "国民医療費（兆円）", color: "#EF4444" },
+          { key: "高齢化率", name: "高齢化率（%）", color: "#3B82F6" },
+        ] },
+    ] },
+
+  { id: "pq-data-digital-divide-age-1", universityId: "ritsumeikan-u", universityName: "立命館大学", facultyName: "情報理工学部", year: 2025,
+    theme: "【資料読解】年齢別デジタルサービス利用率の比較",
+    description: "以下の資料を分析し、年齢層間のデジタルデバイドの実態と、デジタル化の恩恵を全世代に広げるための方策を600字以内で論じなさい。",
+    type: "frequent", questionType: "data-analysis", wordLimit: 600, timeLimit: 60, field: "AI・テクノロジー",
+    chartData: [
+      { type: "bar", title: "年齢別デジタルサービス利用率（2024年・%）", xKey: "service",
+        data: [
+          { service: "SNS", "20代": 95.2, "40代": 82.1, "60代": 51.3, "80代以上": 14.8 },
+          { service: "ネット通販", "20代": 89.7, "40代": 86.3, "60代": 55.7, "80代以上": 11.2 },
+          { service: "キャッシュレス決済", "20代": 91.4, "40代": 78.9, "60代": 44.6, "80代以上": 8.5 },
+          { service: "オンライン行政手続", "20代": 52.1, "40代": 48.7, "60代": 22.3, "80代以上": 3.1 },
+          { service: "遠隔医療", "20代": 18.3, "40代": 15.6, "60代": 8.9, "80代以上": 2.4 },
+        ],
+        yKeys: [
+          { key: "20代", name: "20代", color: "#3B82F6" },
+          { key: "40代", name: "40代", color: "#10B981" },
+          { key: "60代", name: "60代", color: "#F59E0B" },
+          { key: "80代以上", name: "80代以上", color: "#EF4444" },
+        ] },
+    ] },
+
+  { id: "pq-data-foreign-workers-1", universityId: "kansai-u", universityName: "関西大学", facultyName: "社会学部", year: 2025,
+    theme: "【資料読解】外国人労働者数の推移と在留資格別構成",
+    description: "以下の資料を分析し、外国人労働者の受入れ状況の変化を踏まえ、多文化共生社会の実現に向けた課題と方策を800字以内で論じなさい。",
+    type: "frequent", questionType: "data-analysis", wordLimit: 800, timeLimit: 90, field: "社会",
+    chartData: [
+      { type: "line", title: "外国人労働者数の推移（万人）", xKey: "year",
+        data: [
+          { year: "2015", 労働者数: 90.8 },
+          { year: "2017", 労働者数: 127.9 },
+          { year: "2019", 労働者数: 165.9 },
+          { year: "2020", 労働者数: 172.4 },
+          { year: "2022", 労働者数: 182.3 },
+          { year: "2024", 労働者数: 230.5 },
+        ],
+        yKeys: [{ key: "労働者数", name: "外国人労働者数（万人）", color: "#3B82F6" }] },
+      { type: "pie", title: "在留資格別構成（2024年）", xKey: "name",
+        data: [
+          { name: "技能実習", value: 25.8 },
+          { name: "専門的・技術的分野", value: 23.5 },
+          { name: "資格外活動（留学生等）", value: 19.2 },
+          { name: "特定技能", value: 14.1 },
+          { name: "身分に基づく在留資格", value: 12.8 },
+          { name: "その他", value: 4.6 },
+        ],
+        yKeys: [
+          { key: "value", name: "技能実習", color: "#3B82F6" },
+          { key: "value", name: "専門的・技術的分野", color: "#10B981" },
+          { key: "value", name: "資格外活動", color: "#F59E0B" },
+          { key: "value", name: "特定技能", color: "#8B5CF6" },
+          { key: "value", name: "身分に基づく在留資格", color: "#EF4444" },
+          { key: "value", name: "その他", color: "#9CA3AF" },
+        ] },
+    ] },
+
+  { id: "pq-data-renewable-1", universityId: "kwansei-gakuin-u", universityName: "関西学院大学", facultyName: "総合政策学部", year: 2025,
+    theme: "【資料読解】再生可能エネルギー比率の国際比較",
+    description: "以下の資料を分析し、日本の再生可能エネルギー普及の現状と課題を国際比較から明らかにし、エネルギー政策のあり方を600字以内で論じなさい。",
+    type: "frequent", questionType: "data-analysis", wordLimit: 600, timeLimit: 60, field: "環境",
+    chartData: [
+      { type: "bar", title: "電源構成に占める再エネ比率（2023年・%）", xKey: "country",
+        data: [
+          { country: "ドイツ", 再エネ比率: 52.4 },
+          { country: "英国", 再エネ比率: 47.1 },
+          { country: "スペイン", 再エネ比率: 50.3 },
+          { country: "中国", 再エネ比率: 31.9 },
+          { country: "日本", 再エネ比率: 22.7 },
+          { country: "米国", 再エネ比率: 22.1 },
+          { country: "韓国", 再エネ比率: 9.2 },
+        ],
+        yKeys: [{ key: "再エネ比率", name: "再エネ比率（%）", color: "#10B981" }] },
+    ] },
+
+  // ===== 講義型小論文（lecture type）— トレンド出題形式 =====
+
+  { id: "pq-lecture-waseda-1", universityId: "waseda-u", universityName: "早稲田大学", facultyName: "文学部", year: 2025,
+    theme: "【講義型】AIと創造性の関係",
+    description: "「AIは人間の創造性を拡張するか、それとも代替するか」という講義を聴いた後、講義の要旨をまとめ（200字程度）、それに対するあなたの意見を600字以内で述べなさい。講義要旨：生成AIの登場により、絵画・音楽・文章の自動生成が可能になった。一部の研究者はAIが人間の創造的パートナーとなると主張するが、芸術家の中にはAIによる創作は本質的な創造性を欠くと批判する声もある。",
+    type: "frequent", questionType: "essay", wordLimit: 800, timeLimit: 90, field: "AI・テクノロジー" },
+
+  { id: "pq-lecture-keio-1", universityId: "keio-u", universityName: "慶應義塾大学", facultyName: "文学部", year: 2025,
+    theme: "【講義型】言語と思考の関係",
+    description: "「言語が思考を規定する」というサピア=ウォーフ仮説に関する講義を聴いた後、講義の要旨をまとめ（200字程度）、それを踏まえてバイリンガル教育の意義について800字以内で論じなさい。講義要旨：サピア=ウォーフ仮説によれば、使用する言語が世界の認知方法に影響を与える。近年の認知科学の研究は、言語が色彩知覚や時間概念に影響することを実験的に示している。",
+    type: "frequent", questionType: "essay", wordLimit: 1000, timeLimit: 90, field: "文化" },
+
+  { id: "pq-lecture-doshisha-1", universityId: "doshisha-u", universityName: "同志社大学", facultyName: "法学部", year: 2025,
+    theme: "【講義型】個人情報保護と公共の利益",
+    description: "「ビッグデータ時代の個人情報保護」に関する講義を聴いた後、講義で示された論点を整理し（200字程度）、個人情報保護と公共の利益の両立について、具体例を挙げながら600字以内で論じなさい。講義要旨：医療・防災・犯罪捜査などの分野では個人データの活用が公共の利益に資する。一方、監視社会化への懸念やプロファイリングによる差別のリスクも指摘されている。",
+    type: "frequent", questionType: "essay", wordLimit: 800, timeLimit: 60, field: "法律" },
+
+  { id: "pq-lecture-ritsumeikan-1", universityId: "ritsumeikan-u", universityName: "立命館大学", facultyName: "国際関係学部", year: 2025,
+    theme: "【講義型】グローバルサウスと国際開発",
+    description: "「グローバルサウスの台頭と国際開発の再定義」に関する講義を聴いた後、講義の要旨をまとめ（200字程度）、従来の南北問題の枠組みがどう変容しているかについて600字以内で論じなさい。講義要旨：BRICSの拡大や途上国間協力（南南協力）の進展により、先進国主導の国際開発体制が変化している。インドやブラジルなどは援助の受け手から担い手へと移行しつつある。",
+    type: "frequent", questionType: "essay", wordLimit: 800, timeLimit: 60, field: "国際" },
+
+  { id: "pq-lecture-kwansei-1", universityId: "kwansei-gakuin-u", universityName: "関西学院大学", facultyName: "教育学部", year: 2025,
+    theme: "【講義型】非認知能力の教育的意義",
+    description: "「非認知能力と教育成果の関係」に関する講義を聴いた後、講義内容を要約し（200字程度）、非認知能力を育成するための教育方法について600字以内で提案しなさい。講義要旨：ヘックマンの研究は、幼児期の非認知能力（忍耐力、自制心、協調性など）への投資が長期的な教育・経済的成果に大きな影響を与えることを示した。しかし、非認知能力の評価方法や育成カリキュラムには課題が残る。",
+    type: "frequent", questionType: "essay", wordLimit: 800, timeLimit: 60, field: "教育" },
+
   // ===== 龍谷大学 =====
   { id: "pq-ryukoku-policy-001", universityId: "ryukoku-u", universityName: "龍谷大学", facultyName: "政策学部", year: 2024, theme: "社会政策に関する課題文読み取り型小論文", description: "公募推薦入試（専門高校対象）。社会政策に関する課題文を読み取り、自分の意見を論述。字数は小問合計1000字前後。", type: "past", wordLimit: 1000, field: "社会" },
   { id: "pq-ryukoku-intl-001", universityId: "ryukoku-u", universityName: "龍谷大学", facultyName: "国際学部国際文化学科", year: 2024, theme: "国際文化に関する小論文", description: "公募推薦入試（専門高校対象）。国際文化・異文化理解に関するテーマで論述。2024年11月24日実施。", type: "past", field: "国際文化" },
