@@ -1726,5 +1726,1900 @@
         }
       }
     ]
+  },
+  {
+    "id": "aomori-pu",
+    "name": "青森公立大学",
+    "shortName": "青森公立",
+    "group": "public",
+    "officialUrl": "https://www.nebuta.ac.jp/",
+    "faculties": [
+      {
+        "id": "business-economics",
+        "name": "経営経済学部",
+        "admissionPolicy": "経営経済学部では、経営学と経済学の基礎的知識を修得し、地域経済の活性化やビジネスの創造に貢献できる人材を育成します。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書、活動報告書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接、小論文"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-14",
+          "examDate": "2025-10-18",
+          "resultDate": "2025-11-01"
+        }
+      }
+    ]
+  },
+  {
+    "id": "iwate-pu",
+    "name": "岩手県立大学",
+    "shortName": "岩手県立",
+    "group": "public",
+    "officialUrl": "https://www.iwate-pu.ac.jp/",
+    "faculties": [
+      {
+        "id": "software-info",
+        "name": "ソフトウェア情報学部",
+        "admissionPolicy": "ソフトウェア情報学部では、情報科学の基礎理論とソフトウェア開発の実践力を修得し、情報化社会の発展に貢献できる人材を育成します。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書、活動報告書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接（プレゼンテーション含む）"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-12",
+          "examDate": "2025-10-19",
+          "resultDate": "2025-11-07"
+        }
+      },
+      {
+        "id": "comprehensive-policy",
+        "name": "総合政策学部",
+        "admissionPolicy": "総合政策学部では、社会科学の幅広い知識を修得し、地域社会の政策課題を分析・解決できる人材を育成します。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接、小論文"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-12",
+          "examDate": "2025-10-19",
+          "resultDate": "2025-11-07"
+        }
+      }
+    ]
+  },
+  {
+    "id": "akita-pu",
+    "name": "秋田県立大学",
+    "shortName": "秋田県立",
+    "group": "public",
+    "officialUrl": "https://www.akita-pu.ac.jp/",
+    "faculties": [
+      {
+        "id": "system-science",
+        "name": "システム科学技術学部",
+        "admissionPolicy": "システム科学技術学部では、工学の基礎と応用力を修得し、複雑なシステムの設計・開発に貢献できる技術者を育成します。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接（口頭試問を含む）"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-12",
+          "examDate": "2025-10-18",
+          "resultDate": "2025-11-01"
+        }
+      },
+      {
+        "id": "bioresource",
+        "name": "生物資源科学部",
+        "admissionPolicy": "生物資源科学部では、生物資源の持続的利活用に関する知識と技術を修得し、農業・環境・食品分野で貢献できる人材を育成します。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書、活動報告書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-12",
+          "examDate": "2025-10-18",
+          "resultDate": "2025-11-01"
+        }
+      }
+    ]
+  },
+  {
+    "id": "miyagi-u",
+    "name": "宮城大学",
+    "shortName": "宮城",
+    "group": "public",
+    "officialUrl": "https://www.myu.ac.jp/",
+    "faculties": [
+      {
+        "id": "project-design",
+        "name": "事業構想学群",
+        "admissionPolicy": "事業構想学群では、社会の課題を発見し、新たな事業を構想・実現できる人材を育成します。創造的思考力とビジネスセンスを備えた人材を求めます。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書、活動報告書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接（プレゼンテーション含む）、小論文"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-14",
+          "examDate": "2025-10-18",
+          "resultDate": "2025-11-01"
+        }
+      },
+      {
+        "id": "food-industry",
+        "name": "食産業学群",
+        "admissionPolicy": "食産業学群では、食の生産から加工・流通・消費に至る食産業全体を俯瞰し、食の安全・安心と持続可能な食料供給に貢献できる人材を育成します。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-14",
+          "examDate": "2025-10-18",
+          "resultDate": "2025-11-01"
+        }
+      }
+    ]
+  },
+  {
+    "id": "yamagata-health-u",
+    "name": "山形県立保健医療大学",
+    "shortName": "山形県立保健医療",
+    "group": "public",
+    "officialUrl": "https://www.yachts.ac.jp/",
+    "faculties": [
+      {
+        "id": "nursing",
+        "name": "看護学科",
+        "admissionPolicy": "看護学科では、人間への深い理解と高い倫理観を持ち、科学的根拠に基づく質の高い看護を実践できる人材を育成します。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接、小論文"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-12",
+          "examDate": "2025-10-18",
+          "resultDate": "2025-11-01"
+        }
+      }
+    ]
+  },
+  {
+    "id": "fmu",
+    "name": "福島県立医科大学",
+    "shortName": "福島医大",
+    "group": "public",
+    "officialUrl": "https://www.fmu.ac.jp/",
+    "faculties": [
+      {
+        "id": "medicine",
+        "name": "医学部医学科",
+        "admissionPolicy": "医学部医学科では、福島の復興と地域医療の充実に貢献する強い意志を持ち、高い倫理観と使命感を備えた医師を養成します。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": 4,
+          "englishCert": null,
+          "otherReqs": [
+            "専願",
+            "福島県出身者優先枠あり"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接（個人）、小論文、適性検査"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-14",
+          "examDate": "2025-10-25",
+          "resultDate": "2025-11-14"
+        }
+      }
+    ]
+  },
+  {
+    "id": "kuhs",
+    "name": "神奈川県立保健福祉大学",
+    "shortName": "神奈川県立保健福祉",
+    "group": "public",
+    "officialUrl": "https://www.kuhs.ac.jp/",
+    "faculties": [
+      {
+        "id": "health-welfare",
+        "name": "保健福祉学部",
+        "admissionPolicy": "保健福祉学部では、看護・栄養・社会福祉・リハビリテーション等の専門知識と技術を修得し、地域の健康と福祉に貢献できる人材を育成します。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接、小論文"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-14",
+          "examDate": "2025-10-18",
+          "resultDate": "2025-11-01"
+        }
+      }
+    ]
+  },
+  {
+    "id": "gpwu",
+    "name": "群馬県立女子大学",
+    "shortName": "群馬県立女子",
+    "group": "public",
+    "officialUrl": "https://www.gpwu.ac.jp/",
+    "faculties": [
+      {
+        "id": "letters",
+        "name": "文学部",
+        "admissionPolicy": "文学部では、国文学・英米文化・美学美術史・総合教養の分野で幅広い教養と深い専門性を備え、現代社会で活躍できる女性を育成します。",
+        "capacity": 8,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "女子のみ",
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接、小論文"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-14",
+          "examDate": "2025-10-18",
+          "resultDate": "2025-11-01"
+        }
+      },
+      {
+        "id": "international-communication",
+        "name": "国際コミュニケーション学部",
+        "admissionPolicy": "国際コミュニケーション学部では、異文化理解と高い語学力を基盤に、グローバル社会で活躍できるコミュニケーション能力を持つ女性を育成します。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": null,
+          "englishCert": "英検2級以上推奨",
+          "otherReqs": [
+            "女子のみ",
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書、英語資格証明書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接（英語面接を含む）"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-14",
+          "examDate": "2025-10-18",
+          "resultDate": "2025-11-01"
+        }
+      }
+    ]
+  },
+  {
+    "id": "tsuru-u",
+    "name": "都留文科大学",
+    "shortName": "都留文科",
+    "group": "public",
+    "officialUrl": "https://www.tsuru.ac.jp/",
+    "faculties": [
+      {
+        "id": "school-education",
+        "name": "学校教育学科",
+        "admissionPolicy": "学校教育学科では、教育への強い情熱と使命感を持ち、高い専門性と実践的指導力を備えた教員を養成します。",
+        "capacity": 8,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接、小論文"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-14",
+          "examDate": "2025-10-18",
+          "resultDate": "2025-11-01"
+        }
+      },
+      {
+        "id": "regional-society",
+        "name": "地域社会学科",
+        "admissionPolicy": "地域社会学科では、地域社会の課題を多角的に分析し、地域活性化に貢献できる人材を育成します。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書、活動報告書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接（プレゼンテーション含む）"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-14",
+          "examDate": "2025-10-18",
+          "resultDate": "2025-11-01"
+        }
+      }
+    ]
+  },
+  {
+    "id": "maebashi-it",
+    "name": "前橋工科大学",
+    "shortName": "前橋工科",
+    "group": "public",
+    "officialUrl": "https://www.maebashi-it.ac.jp/",
+    "faculties": [
+      {
+        "id": "engineering",
+        "name": "工学部",
+        "admissionPolicy": "工学部では、工学の基礎知識と応用力を修得し、ものづくりを通じて地域社会と産業の発展に貢献できる技術者を育成します。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接（口頭試問を含む）"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-14",
+          "examDate": "2025-10-18",
+          "resultDate": "2025-11-01"
+        }
+      }
+    ]
+  },
+  {
+    "id": "niigata-pu",
+    "name": "新潟県立大学",
+    "shortName": "新潟県立",
+    "group": "public",
+    "officialUrl": "https://www.unii.ac.jp/",
+    "faculties": [
+      {
+        "id": "international-economics",
+        "name": "国際経済学部",
+        "admissionPolicy": "国際経済学部では、経済学の基礎と国際的な視野を持ち、グローバル化する経済社会の課題に対応できる人材を育成します。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接、小論文"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-12",
+          "examDate": "2025-10-18",
+          "resultDate": "2025-11-01"
+        }
+      }
+    ]
+  },
+  {
+    "id": "nagano-u",
+    "name": "長野大学",
+    "shortName": "長野",
+    "group": "public",
+    "officialUrl": "https://www.nagano.ac.jp/",
+    "faculties": [
+      {
+        "id": "cocreation-info",
+        "name": "共創情報科学部",
+        "admissionPolicy": "共創情報科学部では、情報科学と地域課題解決の知識を融合し、データを活用して新たな価値を共創できる人材を育成します。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書、活動報告書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接（プレゼンテーション含む）"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-12",
+          "examDate": "2025-10-19",
+          "resultDate": "2025-11-07"
+        }
+      },
+      {
+        "id": "social-welfare",
+        "name": "社会福祉学部",
+        "admissionPolicy": "社会福祉学部では、社会福祉の理論と実践を修得し、人々の生活と福祉の向上に貢献できるソーシャルワーカーを育成します。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接、小論文"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-12",
+          "examDate": "2025-10-19",
+          "resultDate": "2025-11-07"
+        }
+      }
+    ]
+  },
+  {
+    "id": "nagano-kenritsu-u",
+    "name": "長野県立大学",
+    "shortName": "長野県立",
+    "group": "public",
+    "officialUrl": "https://www.u-nagano.ac.jp/",
+    "faculties": [
+      {
+        "id": "global-management",
+        "name": "グローバルマネジメント学部",
+        "admissionPolicy": "グローバルマネジメント学部では、国際的な視野とマネジメント力を備え、地域とグローバル社会の双方で活躍できるリーダーを育成します。",
+        "capacity": 8,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書、活動報告書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接（プレゼンテーション含む）、グループディスカッション"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-12",
+          "examDate": "2025-10-19",
+          "resultDate": "2025-11-07"
+        }
+      },
+      {
+        "id": "health-development",
+        "name": "健康発達学部",
+        "admissionPolicy": "健康発達学部では、食と子どもの健康に関する科学的知識を修得し、人々の健やかな生涯発達を支援できる人材を育成します。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接、小論文"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-12",
+          "examDate": "2025-10-19",
+          "resultDate": "2025-11-07"
+        }
+      }
+    ]
+  },
+  {
+    "id": "fukui-pu",
+    "name": "福井県立大学",
+    "shortName": "福井県立",
+    "group": "public",
+    "officialUrl": "https://www.fpu.ac.jp/",
+    "faculties": [
+      {
+        "id": "dinosaur",
+        "name": "恐竜学部",
+        "admissionPolicy": "恐竜学部では、古生物学を中心に地球科学の幅広い知識を修得し、福井県の恐竜研究の知見を活かして地球の歴史解明と地域振興に貢献できる人材を育成します。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書、研究活動報告書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接（プレゼンテーション含む）"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-12",
+          "examDate": "2025-10-18",
+          "resultDate": "2025-11-01"
+        }
+      },
+      {
+        "id": "economics",
+        "name": "経済学部",
+        "admissionPolicy": "経済学部では、経済学の基礎理論と応用力を修得し、地域経済や国際経済の課題を分析・解決できる人材を育成します。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接、小論文"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-12",
+          "examDate": "2025-10-18",
+          "resultDate": "2025-11-01"
+        }
+      }
+    ]
+  },
+  {
+    "id": "kobe-cufs",
+    "name": "神戸市外国語大学",
+    "shortName": "神戸外大",
+    "group": "public",
+    "officialUrl": "https://www.kobe-cufs.ac.jp/",
+    "faculties": [
+      {
+        "id": "foreign-languages",
+        "name": "外国語学部",
+        "admissionPolicy": "外国語学部では、英語・ロシア語・中国語・イスパニア語・国際関係・第2部英米の6学科で、高度な語学力と異文化理解力を備え、国際社会で活躍できる人材を育成します。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": null,
+          "englishCert": "英検準1級以上またはTOEFL iBT 72点以上推奨",
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書、語学資格証明書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接（外国語運用力評価を含む）、小論文"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-14",
+          "examDate": "2025-10-25",
+          "resultDate": "2025-11-14"
+        }
+      }
+    ]
+  },
+  {
+    "id": "u-hyogo",
+    "name": "兵庫県立大学",
+    "shortName": "兵庫県立",
+    "group": "public",
+    "officialUrl": "https://www.u-hyogo.ac.jp/",
+    "faculties": [
+      {
+        "id": "environment-human",
+        "name": "環境人間学部",
+        "admissionPolicy": "環境人間学部では、人間と環境の関係を総合的に捉え、持続可能な社会の実現に貢献できる人材を育成します。食環境栄養課程と環境人間学科の2課程を設置。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書、活動報告書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接（プレゼンテーション含む）、小論文"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-14",
+          "examDate": "2025-10-25",
+          "resultDate": "2025-11-07"
+        }
+      }
+    ]
+  },
+  {
+    "id": "narapu",
+    "name": "奈良県立大学",
+    "shortName": "奈良県立",
+    "group": "public",
+    "officialUrl": "https://www.narapu.ac.jp/",
+    "faculties": [
+      {
+        "id": "regional-creation",
+        "name": "地域創造学部",
+        "admissionPolicy": "地域創造学部では、奈良をフィールドに地域の文化・経済・社会を総合的に学び、地域創造に貢献できる人材を育成します。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書、活動報告書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接（プレゼンテーション含む）、小論文"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-14",
+          "examDate": "2025-10-18",
+          "resultDate": "2025-11-01"
+        }
+      }
+    ]
+  },
+  {
+    "id": "fukuchiyama-u",
+    "name": "福知山公立大学",
+    "shortName": "福知山公立",
+    "group": "public",
+    "officialUrl": "https://www.fukuchiyama.ac.jp/",
+    "faculties": [
+      {
+        "id": "regional-management",
+        "name": "地域経営学部",
+        "admissionPolicy": "地域経営学部では、経営学とまちづくりの知識を融合し、地域の持続的発展に貢献できるマネジメント人材を育成します。",
+        "capacity": 8,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書、活動報告書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接（プレゼンテーション含む）"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-14",
+          "examDate": "2025-10-18",
+          "resultDate": "2025-11-01"
+        }
+      },
+      {
+        "id": "information",
+        "name": "情報学部",
+        "admissionPolicy": "情報学部では、情報技術の基礎と応用力を修得し、地域社会のDX推進に貢献できる人材を育成します。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接、適性検査"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-14",
+          "examDate": "2025-10-18",
+          "resultDate": "2025-11-01"
+        }
+      }
+    ]
+  },
+  {
+    "id": "shimane-prefectural-u",
+    "name": "島根県立大学",
+    "shortName": "島根県立",
+    "group": "public",
+    "officialUrl": "https://www.u-shimane.ac.jp/",
+    "faculties": [
+      {
+        "id": "international-relations",
+        "name": "国際関係学部",
+        "admissionPolicy": "国際関係学部では、国際社会の構造と動態を理解し、異文化間の相互理解と協力を推進できる人材を育成します。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接、小論文"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-12",
+          "examDate": "2025-10-19",
+          "resultDate": "2025-11-07"
+        }
+      },
+      {
+        "id": "regional-policy",
+        "name": "地域政策学部",
+        "admissionPolicy": "地域政策学部では、政策科学の知識を基盤に、地域の課題を発見・分析し、実践的な政策提言ができる人材を育成します。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書、活動報告書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接（プレゼンテーション含む）"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-12",
+          "examDate": "2025-10-19",
+          "resultDate": "2025-11-07"
+        }
+      }
+    ]
+  },
+  {
+    "id": "okayama-prefectural-u",
+    "name": "岡山県立大学",
+    "shortName": "岡山県立",
+    "group": "public",
+    "officialUrl": "https://www.oka-pu.ac.jp/",
+    "faculties": [
+      {
+        "id": "design",
+        "name": "デザイン学部",
+        "admissionPolicy": "デザイン学部では、造形力と構想力を備え、デザインを通じて人々の生活の質の向上と社会課題の解決に貢献できる人材を育成します。",
+        "capacity": 8,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書、ポートフォリオ"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接、実技試験"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-12",
+          "examDate": "2025-10-19",
+          "resultDate": "2025-11-07"
+        }
+      },
+      {
+        "id": "health-welfare",
+        "name": "保健福祉学部",
+        "admissionPolicy": "保健福祉学部では、保健・医療・福祉の専門知識と技術を修得し、地域住民の健康と福祉の向上に貢献できる人材を育成します。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接、小論文"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-12",
+          "examDate": "2025-10-19",
+          "resultDate": "2025-11-07"
+        }
+      }
+    ]
+  },
+  {
+    "id": "hiroshima-city-u",
+    "name": "広島市立大学",
+    "shortName": "広島市立",
+    "group": "public",
+    "officialUrl": "https://www.hiroshima-cu.ac.jp/",
+    "faculties": [
+      {
+        "id": "international",
+        "name": "国際学部",
+        "admissionPolicy": "国際学部では、国際関係・多文化共生・平和学の知識を修得し、広島の平和の精神を基盤にグローバル社会で活躍できる人材を育成します。",
+        "capacity": 8,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接、小論文"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-12",
+          "examDate": "2025-10-19",
+          "resultDate": "2025-11-07"
+        }
+      },
+      {
+        "id": "arts",
+        "name": "芸術学部",
+        "admissionPolicy": "芸術学部では、美術・デザインの高い技術と創造力を修得し、芸術を通じて社会に貢献できる人材を育成します。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書、ポートフォリオ"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接、実技試験"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-12",
+          "examDate": "2025-10-19",
+          "resultDate": "2025-11-07"
+        }
+      }
+    ]
+  },
+  {
+    "id": "prefectural-hiroshima-u",
+    "name": "県立広島大学",
+    "shortName": "県立広島",
+    "group": "public",
+    "officialUrl": "https://www.pu-hiroshima.ac.jp/",
+    "faculties": [
+      {
+        "id": "regional-creation",
+        "name": "地域創生学部",
+        "admissionPolicy": "地域創生学部では、地域の文化・経済・環境を総合的に理解し、地域課題の解決と新たな価値の創造に貢献できる人材を育成します。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書、活動報告書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接（プレゼンテーション含む）、小論文"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-12",
+          "examDate": "2025-10-19",
+          "resultDate": "2025-11-07"
+        }
+      },
+      {
+        "id": "bioresource",
+        "name": "生物資源科学部",
+        "admissionPolicy": "生物資源科学部では、生命科学・環境科学の知識を修得し、生物資源の持続的活用と環境保全に貢献できる人材を育成します。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接（口頭試問を含む）"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-12",
+          "examDate": "2025-10-19",
+          "resultDate": "2025-11-07"
+        }
+      }
+    ]
+  },
+  {
+    "id": "yamaguchi-prefectural-u",
+    "name": "山口県立大学",
+    "shortName": "山口県立",
+    "group": "public",
+    "officialUrl": "https://www.yamaguchi-pu.ac.jp/",
+    "faculties": [
+      {
+        "id": "international-culture",
+        "name": "国際文化学部",
+        "admissionPolicy": "国際文化学部では、異文化理解と高い語学力を基盤に、国際文化・文化創造・国際ビジネスの分野で活躍できる人材を育成します。",
+        "capacity": 8,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接、小論文"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-12",
+          "examDate": "2025-10-19",
+          "resultDate": "2025-11-07"
+        }
+      },
+      {
+        "id": "social-welfare",
+        "name": "社会福祉学部",
+        "admissionPolicy": "社会福祉学部では、社会福祉の理論と実践力を修得し、地域の福祉課題の解決に貢献できる専門人材を育成します。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接、小論文"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-12",
+          "examDate": "2025-10-19",
+          "resultDate": "2025-11-07"
+        }
+      }
+    ]
+  },
+  {
+    "id": "tottori-kankyo-u",
+    "name": "公立鳥取環境大学",
+    "shortName": "鳥取環境",
+    "group": "public",
+    "officialUrl": "https://www.kankyo-u.ac.jp/",
+    "faculties": [
+      {
+        "id": "environment",
+        "name": "環境学部",
+        "admissionPolicy": "環境学部では、環境科学の知識と技術を修得し、持続可能な社会の実現に向けて環境課題の解決に貢献できる人材を育成します。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書、活動報告書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接（プレゼンテーション含む）"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-12",
+          "examDate": "2025-10-19",
+          "resultDate": "2025-11-07"
+        }
+      },
+      {
+        "id": "management",
+        "name": "経営学部",
+        "admissionPolicy": "経営学部では、経営学の知識を基盤に、地域の産業振興や持続可能なビジネスの創造に貢献できる人材を育成します。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接、小論文"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-12",
+          "examDate": "2025-10-19",
+          "resultDate": "2025-11-07"
+        }
+      }
+    ]
+  },
+  {
+    "id": "kochi-tech",
+    "name": "高知工科大学",
+    "shortName": "高知工科",
+    "group": "public",
+    "officialUrl": "https://www.kochi-tech.ac.jp/",
+    "faculties": [
+      {
+        "id": "systems-engineering",
+        "name": "システム工学群",
+        "admissionPolicy": "高知工科大学では、工学と情報科学の知識を統合的に修得し、技術イノベーションを通じて社会に貢献できる人材を育成します。5学群全てで総合型選抜を実施しています。",
+        "capacity": 15,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書、活動報告書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接（プレゼンテーション含む）、適性検査"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-12",
+          "examDate": "2025-10-19",
+          "resultDate": "2025-11-07"
+        }
+      },
+      {
+        "id": "economics-management",
+        "name": "経済・マネジメント学群",
+        "admissionPolicy": "経済・マネジメント学群では、経済学とマネジメントの知識を修得し、データ分析力を活かして地域経済の活性化に貢献できる人材を育成します。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接、小論文"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-12",
+          "examDate": "2025-10-19",
+          "resultDate": "2025-11-07"
+        }
+      }
+    ]
+  },
+  {
+    "id": "kitakyushu-u",
+    "name": "北九州市立大学",
+    "shortName": "北九州市立",
+    "group": "public",
+    "officialUrl": "https://www.kitakyu-u.ac.jp/",
+    "faculties": [
+      {
+        "id": "foreign-languages",
+        "name": "外国語学部",
+        "admissionPolicy": "外国語学部では、高度な外国語運用能力と異文化理解力を修得し、国際社会で活躍できるグローバル人材を育成します。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": null,
+          "englishCert": "英検2級以上推奨",
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書、語学資格証明書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接（外国語運用力評価を含む）、小論文"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-14",
+          "examDate": "2025-10-25",
+          "resultDate": "2025-11-07"
+        }
+      },
+      {
+        "id": "regional-creation",
+        "name": "地域創生学群",
+        "admissionPolicy": "地域創生学群では、地域社会の課題を多角的に理解し、実践的な行動力をもって地域の活性化に貢献できる人材を育成します。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書、活動報告書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接（プレゼンテーション含む）"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-14",
+          "examDate": "2025-10-25",
+          "resultDate": "2025-11-07"
+        }
+      }
+    ]
+  },
+  {
+    "id": "fwu",
+    "name": "福岡女子大学",
+    "shortName": "福岡女子",
+    "group": "public",
+    "officialUrl": "https://www.fwu.ac.jp/",
+    "faculties": [
+      {
+        "id": "international-liberal-arts",
+        "name": "国際文理学部",
+        "admissionPolicy": "国際文理学部では、国際教養・環境科学・食健康の3学科で、文理融合の知識とグローバルな視野を備えた女性リーダーを育成します。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "女子のみ",
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書、活動報告書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接（プレゼンテーション含む）、小論文"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-14",
+          "examDate": "2025-10-25",
+          "resultDate": "2025-11-07"
+        }
+      }
+    ]
+  },
+  {
+    "id": "nagasaki-pu",
+    "name": "長崎県立大学",
+    "shortName": "長崎県立",
+    "group": "public",
+    "officialUrl": "https://sun.ac.jp/",
+    "faculties": [
+      {
+        "id": "management",
+        "name": "経営学部",
+        "admissionPolicy": "経営学部では、経営学の理論と実践を修得し、地域産業の発展と国際ビジネスに貢献できる人材を育成します。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接、小論文"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-14",
+          "examDate": "2025-10-25",
+          "resultDate": "2025-11-07"
+        }
+      },
+      {
+        "id": "international-society",
+        "name": "国際社会学部",
+        "admissionPolicy": "国際社会学部では、グローバルな視野と異文化理解力を修得し、国際社会の課題解決に貢献できる人材を育成します。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接、小論文"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-14",
+          "examDate": "2025-10-25",
+          "resultDate": "2025-11-07"
+        }
+      }
+    ]
+  },
+  {
+    "id": "kumamoto-pu",
+    "name": "熊本県立大学",
+    "shortName": "熊本県立",
+    "group": "public",
+    "officialUrl": "https://www.pu-kumamoto.ac.jp/",
+    "faculties": [
+      {
+        "id": "comprehensive-management",
+        "name": "総合管理学部",
+        "admissionPolicy": "総合管理学部では、行政・ビジネス・情報の知識を統合的に修得し、公共と民間の双方で活躍できるマネジメント人材を育成します。",
+        "capacity": 8,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書、活動報告書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接（プレゼンテーション含む）、小論文"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-14",
+          "examDate": "2025-10-25",
+          "resultDate": "2025-11-07"
+        }
+      },
+      {
+        "id": "environment-symbiosis",
+        "name": "環境共生学部",
+        "admissionPolicy": "環境共生学部では、環境科学・食環境の知識を修得し、人と自然が共生する持続可能な社会の実現に貢献できる人材を育成します。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接、小論文"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-14",
+          "examDate": "2025-10-25",
+          "resultDate": "2025-11-07"
+        }
+      }
+    ]
+  },
+  {
+    "id": "meio-u",
+    "name": "名桜大学",
+    "shortName": "名桜",
+    "group": "public",
+    "officialUrl": "https://www.meio-u.ac.jp/",
+    "faculties": [
+      {
+        "id": "international",
+        "name": "国際学部",
+        "admissionPolicy": "国際学部では、国際学類と語学教育の2学科で、沖縄・アジア太平洋地域を中心とした国際的視野と語学力を備えた人材を育成します。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接、小論文"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-14",
+          "examDate": "2025-10-25",
+          "resultDate": "2025-11-07"
+        }
+      },
+      {
+        "id": "human-health",
+        "name": "人間健康学部",
+        "admissionPolicy": "人間健康学部では、スポーツ健康学科と看護学科の2学科で、地域住民の健康増進と医療に貢献できる人材を育成します。",
+        "capacity": 8,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接、小論文"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-14",
+          "examDate": "2025-10-25",
+          "resultDate": "2025-11-07"
+        }
+      }
+    ]
+  },
+  {
+    "id": "okigei-u",
+    "name": "沖縄県立芸術大学",
+    "shortName": "沖縄芸大",
+    "group": "public",
+    "officialUrl": "https://www.okigei.ac.jp/",
+    "faculties": [
+      {
+        "id": "fine-arts",
+        "name": "美術工芸学部",
+        "admissionPolicy": "美術工芸学部では、沖縄の伝統文化と現代美術を融合した教育を通じて、高い造形力と表現力を備え、芸術文化の発展に貢献できる人材を育成します。",
+        "capacity": 10,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書、ポートフォリオ"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接、実技試験"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-14",
+          "examDate": "2025-10-25",
+          "resultDate": "2025-11-07"
+        }
+      },
+      {
+        "id": "music",
+        "name": "音楽学部",
+        "admissionPolicy": "音楽学部では、琉球音楽を含む多様な音楽の専門教育を通じて、高い演奏技術と音楽的表現力を備えた人材を育成します。",
+        "capacity": 5,
+        "requirements": {
+          "gpa": null,
+          "englishCert": null,
+          "otherReqs": [
+            "専願"
+          ]
+        },
+        "selectionMethods": [
+          {
+            "stage": 1,
+            "type": "documents",
+            "details": "調査書、志望理由書"
+          },
+          {
+            "stage": 2,
+            "type": "interview",
+            "details": "面接、実技試験（演奏審査）"
+          }
+        ],
+        "schedule": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-14",
+          "examDate": "2025-10-25",
+          "resultDate": "2025-11-07"
+        }
+      }
+    ]
   }
 ]
