@@ -4,13 +4,6 @@ export interface MatchRequirementCheck {
   detail: string;
 }
 
-export interface PersonalityCheck {
-  mbtiType: string;
-  fieldScore: number;
-  matchedField?: string;
-  detail: string;
-}
-
 export interface MatchResult {
   universityId: string;
   universityName: string;
@@ -20,7 +13,6 @@ export interface MatchResult {
   recommendation: "適正校" | "挑戦校" | "難関校";
   gpaCheck: MatchRequirementCheck;
   certCheck: MatchRequirementCheck;
-  personalityCheck?: PersonalityCheck;
   requirementChecks: MatchRequirementCheck[];
   admissionPolicy: string;
 }
@@ -33,7 +25,6 @@ export interface MatchingRequest {
     grade?: string;
   }[];
   activities?: string[];
-  mbtiType?: string;
 }
 
 export interface MatchingResponse {

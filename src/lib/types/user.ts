@@ -37,7 +37,6 @@ export interface StudentProfile extends UserProfile {
   targetUniversities?: string[];
   onboardingCompleted?: boolean;
   managedBy?: string;
-  mbtiType?: string;
   selfAnalysisId?: string;
 }
 

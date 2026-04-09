@@ -26,11 +26,6 @@ export async function GET(request: NextRequest) {
     ];
   }
 
-  const mbtiType = searchParams.get("mbtiType");
-  if (mbtiType) {
-    profile.mbtiType = mbtiType;
-  }
-
   let universities: University[] = MOCK_UNIVERSITIES;
 
   const { db } = await import("@/lib/firebase/config");

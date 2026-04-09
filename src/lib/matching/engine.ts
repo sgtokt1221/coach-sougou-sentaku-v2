@@ -1,76 +1,15 @@
 import type { University, Faculty } from "@/lib/types/university";
-import type { MatchResult, MatchRequirementCheck, MatchingRequest, PersonalityCheck } from "@/lib/types/matching";
-import type { AcademicFieldMatch } from "@/lib/types/mbti";
-
-let mbtiFacultyMapping: Record<string, AcademicFieldMatch[]> | null = null;
-
-async function getMbtiFacultyMapping(): Promise<Record<string, AcademicFieldMatch[]>> {
-  if (mbtiFacultyMapping) return mbtiFacultyMapping;
-  try {
-    const mod = await import("@/data/mbti-faculty-mapping");
-    mbtiFacultyMapping = mod.mbtiFacultyMapping;
-    return mbtiFacultyMapping;
-  } catch {
-    return {};
-  }
-}
-
-function getPersonalityScore(
-  mbtiType: string | undefined,
-  academicField: string | undefined,
-  mapping: Record<string, AcademicFieldMatch[]>
-): { score: number; check?: PersonalityCheck } {
-  if (!mbtiType || !mapping[mbtiType]) {
-    return { score: -1 };
-  }
-
-  const fields = mapping[mbtiType];
-  if (!academicField) {
-    const avg = fields.reduce((sum, f) => sum + f.score, 0) / fields.length;
-    return {
-      score: avg,
-      check: {
-        mbtiType,
-        fieldScore: Math.round(avg),
-        detail: "学部の学問分野が未設定のため、平均適性スコアを使用",
-      },
-    };
-  }
-
-  const match = fields.find((f) => f.field === academicField);
-  if (match) {
-    return {
-      score: match.score,
-      check: {
-        mbtiType,
-        fieldScore: match.score,
-        matchedField: match.field,
-        detail: match.reason,
-      },
-    };
-  }
-
-  const avg = fields.reduce((sum, f) => sum + f.score, 0) / fields.length;
-  return {
-    score: avg,
-    check: {
-      mbtiType,
-      fieldScore: Math.round(avg),
-      detail: "該当する学問分野が見つからないため、平均適性スコアを使用",
-    },
-  };
-}
+import type { MatchResult, MatchRequirementCheck, MatchingRequest } from "@/lib/types/matching";
 
 export async function matchUniversities(
   profile: MatchingRequest,
   universities: University[]
 ): Promise<MatchResult[]> {
-  const mapping = profile.mbtiType ? await getMbtiFacultyMapping() : {};
   const results: MatchResult[] = [];
 
   for (const uni of universities) {
     for (const faculty of uni.faculties) {
-      const result = matchFaculty(profile, uni, faculty, mapping);
+      const result = matchFaculty(profile, uni, faculty);
       results.push(result);
     }
   }
@@ -82,7 +21,6 @@ function matchFaculty(
   profile: MatchingRequest,
   uni: University,
   faculty: Faculty,
-  mapping: Record<string, AcademicFieldMatch[]>
 ): MatchResult {
   const gpaCheck = checkGpa(profile.gpa, faculty.requirements.gpa);
   const certCheck = checkCert(profile.englishCerts, faculty.requirements.englishCert);
@@ -99,20 +37,7 @@ function matchFaculty(
       : 100;
   const certScore = certCheck.met ? 100 : faculty.requirements.englishCert ? 0 : 100;
 
-  const personality = getPersonalityScore(profile.mbtiType, faculty.academicField, mapping);
-
-  let total: number;
-  let personalityCheck: PersonalityCheck | undefined;
-
-  if (personality.score >= 0 && personality.check) {
-    // MBTI available: adjusted weights
-    total = Math.round(gpaScore * 0.35 + certScore * 0.35 + personality.score * 0.15 + 15);
-    personalityCheck = personality.check;
-  } else {
-    // MBTI not available: original weights
-    total = Math.round(gpaScore * 0.4 + certScore * 0.4 + 20);
-  }
-
+  const total = Math.round(gpaScore * 0.5 + certScore * 0.5);
   const clampedTotal = Math.min(100, Math.max(0, total));
 
   const recommendation =
@@ -127,7 +52,6 @@ function matchFaculty(
     recommendation,
     gpaCheck,
     certCheck,
-    personalityCheck,
     requirementChecks,
     admissionPolicy: faculty.admissionPolicy,
   };

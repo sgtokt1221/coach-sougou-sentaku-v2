@@ -20,7 +20,6 @@ import {
   Trophy,
   Shield,
   ExternalLink,
-  Brain,
   Lightbulb,
   BookOpen,
   CalendarDays,
@@ -65,7 +64,6 @@ const studentNavGroups: NavGroup[] = [
   {
     title: "Discover",
     items: [
-      { label: "性格診断", href: "/student/mbti", icon: Brain },
       { label: "自己分析", href: "/student/self-analysis", icon: Lightbulb },
     ],
   },
