@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,11 +20,16 @@ import {
   Search,
   ArrowRight,
   Sparkles,
+  MessageCircle,
+  BarChart3,
+  Send,
+  Loader2,
 } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import type { MatchResult, MatchingResponse } from "@/lib/types/matching";
 import { SuggestPanel, ResultSkeleton } from "@/components/shared/SuggestPanel";
 import { useAuth } from "@/contexts/AuthContext";
+import { authFetch } from "@/lib/api/client";
 import type { StudentProfile } from "@/lib/types/user";
 
 const CERT_TYPES = ["EIKEN", "TOEIC", "TOEFL", "IELTS", "TEAP", "GTEC"] as const;
@@ -97,7 +102,7 @@ function ResultCard({ result }: { result: MatchResult }) {
 
 export default function UniversitiesPage() {
   const { userProfile } = useAuth();
-  const [mode, setMode] = useState<"match" | "suggest">("match");
+  const [mode, setMode] = useState<"ai" | "match" | "suggest">("ai");
   const [gpa, setGpa] = useState("");
   const [certType, setCertType] = useState("");
   const [certScore, setCertScore] = useState("");
@@ -149,43 +154,31 @@ export default function UniversitiesPage() {
         <h1 className="text-xl font-bold">志望校マッチング</h1>
       </div>
 
-      {/* Suggest CTA banner (shown in match mode) */}
-      {mode === "match" && (
+      {/* Tab switcher */}
+      <div className="flex gap-1 rounded-lg bg-muted p-1 mb-6">
         <button
-          type="button"
-          onClick={() => setMode("suggest")}
-          className="w-full mb-6 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 p-4 text-left transition-colors hover:bg-primary/10 hover:border-primary/50"
+          onClick={() => setMode("ai")}
+          className={`flex-1 flex items-center justify-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+            mode === "ai" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+          }`}
         >
-          <div className="flex items-center gap-3">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
-              <Sparkles className="size-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-primary">
-                志望校がまだ決まっていない方へ
-              </p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                かんたんな質問に答えるだけで、あなたに合った大学・学部をAP基準でサジェストします
-              </p>
-            </div>
-            <ArrowRight className="size-4 text-primary shrink-0 ml-auto" />
-          </div>
+          <MessageCircle className="size-4" />
+          AI相談
         </button>
-      )}
-
-      {/* Back to match mode (shown in suggest mode) */}
-      {mode === "suggest" && (
         <button
-          type="button"
           onClick={() => setMode("match")}
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors"
+          className={`flex-1 flex items-center justify-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+            mode === "match" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+          }`}
         >
-          <ArrowRight className="size-3.5 rotate-180" />
-          志望校マッチングに戻る
+          <BarChart3 className="size-4" />
+          スコア一覧
         </button>
-      )}
+      </div>
 
-      {mode === "suggest" ? (
+      {mode === "ai" ? (
+        <MatchingChat profile={{ gpa: gpa ? parseFloat(gpa) : undefined, englishCerts: certType ? [{ type: certType, score: certScore || undefined }] : undefined }} />
+      ) : mode === "suggest" ? (
         <SuggestPanel />
       ) : (
         <>
@@ -284,6 +277,126 @@ export default function UniversitiesPage() {
           )}
         </>
       )}
+    </div>
+  );
+}
+
+interface Suggestion {
+  universityId: string;
+  facultyId: string;
+  universityName: string;
+  facultyName: string;
+  reason: string;
+}
+
+function MatchingChat({ profile }: { profile: { gpa?: number; englishCerts?: { type: string; score?: string }[] } }) {
+  const router = useRouter();
+  const [messages, setMessages] = useState<Array<{ role: "user" | "assistant"; content: string; suggestions?: Suggestion[] }>>([]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+  }, [messages]);
+
+  async function handleSend() {
+    const text = input.trim();
+    if (!text || loading) return;
+
+    const userMsg = { role: "user" as const, content: text };
+    setMessages((prev) => [...prev, userMsg]);
+    setInput("");
+    setLoading(true);
+
+    try {
+      const history = messages.map((m) => ({ role: m.role, content: m.content }));
+      const res = await authFetch("/api/matching/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text, history, profile }),
+      });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      setMessages((prev) => [...prev, { role: "assistant", content: data.response, suggestions: data.suggestions }]);
+    } catch {
+      setMessages((prev) => [...prev, { role: "assistant", content: "申し訳ありません、エラーが発生しました。もう一度お試しください。" }]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col" style={{ height: "calc(100vh - 220px)" }}>
+      <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-4 pb-4">
+        {messages.length === 0 && (
+          <div className="text-center py-12">
+            <Sparkles className="size-10 text-primary/40 mx-auto mb-4" />
+            <p className="text-sm text-muted-foreground">
+              AIに相談して、あなたに合った志望校を見つけましょう。
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              興味のある分野や将来の目標を教えてください。
+            </p>
+          </div>
+        )}
+        {messages.map((msg, i) => (
+          <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+            <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+              msg.role === "user"
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-foreground"
+            }`}>
+              <p className="whitespace-pre-wrap">{msg.content}</p>
+              {msg.suggestions && msg.suggestions.length > 0 && (
+                <div className="mt-3 space-y-2">
+                  {msg.suggestions.map((s, j) => (
+                    <button
+                      key={j}
+                      onClick={() => router.push(`/student/universities/${s.universityId}/${s.facultyId}`)}
+                      className="w-full text-left rounded-lg border border-border/50 bg-background/80 p-3 hover:bg-background transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <GraduationCap className="size-4 text-primary shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium text-foreground">{s.universityName} {s.facultyName}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{s.reason}</p>
+                        </div>
+                        <ArrowRight className="size-3.5 text-muted-foreground shrink-0 ml-auto" />
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+        {loading && (
+          <div className="flex justify-start">
+            <div className="bg-muted rounded-2xl px-4 py-3">
+              <Loader2 className="size-4 animate-spin text-muted-foreground" />
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="border-t pt-3">
+        <form
+          onSubmit={(e) => { e.preventDefault(); handleSend(); }}
+          className="flex gap-2"
+        >
+          <Input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="興味のある分野や将来の目標を入力..."
+            disabled={loading}
+            className="flex-1"
+          />
+          <Button type="submit" size="icon" disabled={loading || !input.trim()}>
+            <Send className="size-4" />
+          </Button>
+        </form>
+      </div>
     </div>
   );
 }

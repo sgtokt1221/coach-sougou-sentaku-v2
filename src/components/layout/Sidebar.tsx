@@ -65,6 +65,7 @@ const studentNavGroups: NavGroup[] = [
     title: "Discover",
     items: [
       { label: "自己分析", href: "/student/self-analysis", icon: Lightbulb },
+      { label: "志望校マッチング", href: "/student/universities", icon: GraduationCap },
     ],
   },
   {
@@ -73,13 +74,6 @@ const studentNavGroups: NavGroup[] = [
       { label: "出願書類", href: "/student/documents", icon: FolderOpen },
       { label: "活動実績", href: "/student/activities", icon: Award },
       { label: "面談記録", href: "/student/sessions", icon: CalendarCheck, coachOnly: true },
-    ],
-  },
-  {
-    title: "Research",
-    items: [
-      { label: "合格者データ", href: "/student/passed-data", icon: Trophy },
-      { label: "大学情報", href: "/student/universities", icon: GraduationCap },
     ],
   },
   {
