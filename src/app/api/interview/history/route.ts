@@ -19,11 +19,15 @@ export async function GET(request: NextRequest) {
           console.error("Interview history: auth token verification failed:", e);
         }
       }
+      // dev mode fallback
+      if (!userId && process.env.NODE_ENV === "development") {
+        const devRole = request.headers.get("X-Dev-Role");
+        if (devRole) userId = "dev-user";
+      }
     }
 
     if (!userId) {
-      console.warn("Interview history: userId not resolved from token");
-      return NextResponse.json({ interviews: [], error: "認証情報が取得できませんでした" });
+      return NextResponse.json({ interviews: [] });
     }
 
     const { adminDb } = await import("@/lib/firebase/admin");

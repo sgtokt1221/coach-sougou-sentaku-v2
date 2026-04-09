@@ -32,6 +32,11 @@ export async function POST(request: NextRequest) {
         }
       } catch {}
     }
+    // dev mode fallback
+    if (!requestUserId && process.env.NODE_ENV === "development") {
+      const devRole = request.headers.get("X-Dev-Role");
+      if (devRole) requestUserId = "dev-user";
+    }
 
     // 大学・学部のAPを取得
     let admissionPolicy = "（大学情報未設定）";

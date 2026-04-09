@@ -22,6 +22,11 @@ export async function GET(request: NextRequest) {
         }
       } catch {}
     }
+    // dev mode fallback
+    if (!userId && process.env.NODE_ENV === "development") {
+      const devRole = request.headers.get("X-Dev-Role");
+      if (devRole) userId = "dev-user";
+    }
   }
 
   if (!userId) {

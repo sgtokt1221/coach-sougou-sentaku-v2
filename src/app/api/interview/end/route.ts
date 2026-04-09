@@ -29,17 +29,17 @@ export async function POST(request: NextRequest) {
           if (adminAuth) {
             const decoded = await adminAuth.verifyIdToken(authHeader.slice(7));
             userId = decoded.uid;
-          } else {
-            console.warn("[interview/end] adminAuth is null — Firebase Admin SDK not initialized");
           }
         } catch (authErr) {
           console.warn("[interview/end] Failed to verify ID token:", authErr);
         }
-      } else {
-        console.warn("[interview/end] No Authorization header found");
+      }
+      // dev mode fallback
+      if (!userId && process.env.NODE_ENV === "development") {
+        const devRole = request.headers.get("X-Dev-Role");
+        if (devRole) userId = "dev-user";
       }
     }
-    console.log("[interview/end] Resolved userId:", userId);
 
     if (!sessionId || !messages || duration === undefined) {
       return NextResponse.json(
