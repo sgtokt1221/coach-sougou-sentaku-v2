@@ -52,7 +52,7 @@ interface PastQuestion {
   theme: string;
   description: string;
   type: "past" | "frequent";
-  questionType?: "essay" | "english-reading" | "data-analysis" | "mixed";
+  questionType?: "essay" | "english-reading" | "data-analysis" | "mixed" | "lecture";
   sourceText?: string;
   wordLimit?: number;
   timeLimit?: number;
@@ -64,6 +64,13 @@ interface PastQuestion {
     xKey: string;
     yKeys: { key: string; name: string; color: string }[];
   }[];
+  tedTalk?: {
+    talkId: string;
+    title: string;
+    speaker: string;
+    durationMinutes: number;
+    language: string;
+  };
 }
 
 export default function EssayThemesPage() {
@@ -224,7 +231,7 @@ export default function EssayThemesPage() {
         <div className="space-y-3">
           {pastQuestions.map((pq) => {
             const isExpanded = expandedPQ === pq.id;
-            const hasExtra = pq.chartData || pq.sourceText;
+            const hasExtra = pq.chartData || pq.sourceText || pq.tedTalk;
             return (
               <Card key={pq.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-4">
@@ -245,6 +252,11 @@ export default function EssayThemesPage() {
                         {pq.questionType === "data-analysis" && (
                           <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
                             <BarChart3 className="w-3 h-3 mr-1" />資料読解
+                          </Badge>
+                        )}
+                        {pq.questionType === "lecture" && (
+                          <Badge variant="outline" className="text-xs bg-indigo-50 text-indigo-700 border-indigo-200">
+                            講義型
                           </Badge>
                         )}
                         {pq.questionType === "english-reading" && (
@@ -269,7 +281,7 @@ export default function EssayThemesPage() {
                       {hasExtra && (
                         <button className="text-xs text-muted-foreground flex items-center gap-1">
                           {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                          {isExpanded ? "閉じる" : "資料を見る"}
+                          {isExpanded ? "閉じる" : pq.tedTalk ? "講義を見る" : "資料を見る"}
                         </button>
                       )}
                     </div>
@@ -278,6 +290,26 @@ export default function EssayThemesPage() {
                   {/* 展開エリア: 資料テキスト + グラフ */}
                   {isExpanded && (
                     <div className="mt-4 pt-4 border-t space-y-4">
+                      {pq.tedTalk && (
+                        <div className="rounded-lg border bg-card overflow-hidden">
+                          <div className="aspect-video">
+                            <iframe
+                              src={`https://embed.ted.com/talks/${pq.tedTalk.talkId}?subtitle=${pq.tedTalk.language}`}
+                              width="100%"
+                              height="100%"
+                              allow="autoplay; fullscreen; encrypted-media"
+                              allowFullScreen
+                              className="border-0"
+                            />
+                          </div>
+                          <div className="p-3 border-t bg-muted/30">
+                            <p className="text-sm font-medium">{pq.tedTalk.title}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              {pq.tedTalk.speaker} · {pq.tedTalk.durationMinutes}分
+                            </p>
+                          </div>
+                        </div>
+                      )}
                       {pq.sourceText && (
                         <div className="rounded-lg bg-muted/50 p-3">
                           <p className="text-xs font-medium text-muted-foreground mb-2">出題資料</p>

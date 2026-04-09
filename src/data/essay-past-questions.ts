@@ -12,7 +12,7 @@ export interface PastQuestion {
   theme: string;
   description: string;
   type: "past" | "frequent";
-  questionType?: "essay" | "english-reading" | "data-analysis" | "mixed"; // 出題形式
+  questionType?: "essay" | "english-reading" | "data-analysis" | "mixed" | "lecture"; // 出題形式
   sourceText?: string; // 英文や資料のテキスト（出題文）
   wordLimit?: number;
   timeLimit?: number;
@@ -24,6 +24,13 @@ export interface PastQuestion {
     xKey: string;
     yKeys: { key: string; name: string; color: string }[];
   }[];
+  tedTalk?: {
+    talkId: string; // TED talk ID (used for embed URL)
+    title: string;
+    speaker: string;
+    durationMinutes: number;
+    language: "ja" | "en";
+  };
 }
 
 export const PAST_QUESTIONS: PastQuestion[] = [
@@ -812,6 +819,175 @@ export const PAST_QUESTIONS: PastQuestion[] = [
   { id: "pq-ryukoku-agri-001", universityId: "ryukoku-u", universityName: "龍谷大学", facultyName: "農学部", year: 2024, theme: "農業・食・環境に関する論述", description: "公募推薦入試（専門高校対象）。農業・食料・環境問題に関する課題文読み取り型の小論文。各学科ごとに出題。2024年11月24日実施。", type: "past", field: "農学" },
   { id: "pq-ryukoku-sports-001", universityId: "ryukoku-u", universityName: "龍谷大学", facultyName: "全学部（スポーツ活動選抜）", year: 2023, theme: "スポーツと社会に関するテーマ型小論文", description: "総合型選抜スポーツ活動選抜。スポーツの社会的意義や自身の競技経験に関するテーマ型小論文。2023年11月11日実施。", type: "past", wordLimit: 1000, field: "スポーツ" },
 
+  // ===== TED Talks 講義型小論文 =====
+  {
+    id: "ted-lecture-001",
+    universityId: "",
+    universityName: "講義型練習",
+    facultyName: "全学部共通",
+    year: 2025,
+    theme: "【TED講義型】学校がクリエイティビティを殺す — ケン・ロビンソン",
+    description: "以下のTEDトークを視聴し、講演者の主張を200字程度で要約した上で、日本の教育制度における創造性の育成について、あなたの考えを600字以内で論じなさい。",
+    type: "frequent",
+    questionType: "lecture",
+    wordLimit: 800,
+    timeLimit: 60,
+    field: "教育",
+    tedTalk: {
+      talkId: "ken_robinson_says_schools_kill_creativity",
+      title: "学校教育は創造性を殺してしまっている",
+      speaker: "ケン・ロビンソン",
+      durationMinutes: 19,
+      language: "ja",
+    },
+  },
+  {
+    id: "ted-lecture-002",
+    universityId: "",
+    universityName: "講義型練習",
+    facultyName: "全学部共通",
+    year: 2025,
+    theme: "【TED講義型】AIは仕事をどう変えるか — アンドリュー・マカフィー",
+    description: "以下のTEDトークを視聴し、講演者が述べるAIと労働の関係を要約した上で、AIが日本の労働市場に与える影響と、若者が取るべき対策についてあなたの意見を800字以内で論じなさい。",
+    type: "frequent",
+    questionType: "lecture",
+    wordLimit: 800,
+    timeLimit: 60,
+    field: "AI・テクノロジー",
+    tedTalk: {
+      talkId: "andrew_mcafee_what_will_future_jobs_look_like",
+      title: "未来の仕事はどうなるか",
+      speaker: "アンドリュー・マカフィー",
+      durationMinutes: 14,
+      language: "ja",
+    },
+  },
+  {
+    id: "ted-lecture-003",
+    universityId: "",
+    universityName: "講義型練習",
+    facultyName: "全学部共通",
+    year: 2025,
+    theme: "【TED講義型】危険な考え方の科学 — スティーブン・ピンカー",
+    description: "以下のTEDトークを視聴し、講演者の主張を踏まえて、「危険な考え」を社会がどう扱うべきかについて、言論の自由と公共の安全のバランスの観点から600字以内で論じなさい。",
+    type: "frequent",
+    questionType: "lecture",
+    wordLimit: 600,
+    timeLimit: 45,
+    field: "社会",
+    tedTalk: {
+      talkId: "steven_pinker_is_the_world_getting_better_or_worse_a_look_at_the_numbers",
+      title: "世界は良くなっているのか悪くなっているのか — 数字を見てみよう",
+      speaker: "スティーブン・ピンカー",
+      durationMinutes: 18,
+      language: "ja",
+    },
+  },
+  {
+    id: "ted-lecture-004",
+    universityId: "",
+    universityName: "講義型練習",
+    facultyName: "法学部・政治学部",
+    year: 2025,
+    theme: "【TED講義型】なぜ民主主義が重要なのか — ベリン・マルティネス＝カルデラ",
+    description: "以下のTEDトークを視聴し、民主主義の意義について講演者の主張を要約した上で、現代の民主主義が直面する課題（SNSによる分断、ポピュリズムなど）について、あなたの考えを800字以内で論じなさい。",
+    type: "frequent",
+    questionType: "lecture",
+    wordLimit: 800,
+    timeLimit: 60,
+    field: "法律",
+    tedTalk: {
+      talkId: "belin_martinez_caldera_what_does_democracy_look_like",
+      title: "民主主義はどのような姿をしているか",
+      speaker: "ベリン・マルティネス＝カルデラ",
+      durationMinutes: 12,
+      language: "ja",
+    },
+  },
+  {
+    id: "ted-lecture-005",
+    universityId: "",
+    universityName: "講義型練習",
+    facultyName: "経済学部",
+    year: 2025,
+    theme: "【TED講義型】格差社会の不都合な真実 — リチャード・ウィルキンソン",
+    description: "以下のTEDトークを視聴し、経済格差が社会に与える影響について講演者の主張を整理した上で、日本社会における格差問題の現状と解決策をあなたの考えで800字以内で論じなさい。",
+    type: "frequent",
+    questionType: "lecture",
+    wordLimit: 800,
+    timeLimit: 60,
+    field: "経済",
+    tedTalk: {
+      talkId: "richard_wilkinson_how_economic_inequality_harms_societies",
+      title: "いかに経済格差が社会を蝕むか",
+      speaker: "リチャード・ウィルキンソン",
+      durationMinutes: 17,
+      language: "ja",
+    },
+  },
+  {
+    id: "ted-lecture-006",
+    universityId: "",
+    universityName: "講義型練習",
+    facultyName: "環境学部",
+    year: 2025,
+    theme: "【TED講義型】気候変動に対して今すぐできること — アル・ゴア",
+    description: "以下のTEDトークを視聴し、気候変動問題について講演者の主張を要約した上で、個人・企業・政府それぞれがとるべき対策について、あなたの意見を800字以内で論じなさい。",
+    type: "frequent",
+    questionType: "lecture",
+    wordLimit: 800,
+    timeLimit: 60,
+    field: "環境",
+    tedTalk: {
+      talkId: "al_gore_the_case_for_optimism_on_climate_change",
+      title: "気候変動について楽観できる理由",
+      speaker: "アル・ゴア",
+      durationMinutes: 24,
+      language: "ja",
+    },
+  },
+  {
+    id: "ted-lecture-007",
+    universityId: "",
+    universityName: "講義型練習",
+    facultyName: "医学部・医療系",
+    year: 2025,
+    theme: "【TED講義型】ゲノム編集の倫理 — ジェニファー・ダウドナ",
+    description: "以下のTEDトークを視聴し、CRISPR技術の可能性と倫理的課題について講演者の主張を整理した上で、遺伝子編集技術をどこまで許容すべきかについて、あなたの考えを800字以内で論じなさい。",
+    type: "frequent",
+    questionType: "lecture",
+    wordLimit: 800,
+    timeLimit: 60,
+    field: "医療",
+    tedTalk: {
+      talkId: "jennifer_doudna_how_crispr_lets_us_edit_our_dna",
+      title: "CRISPRでDNAを編集できる時代",
+      speaker: "ジェニファー・ダウドナ",
+      durationMinutes: 16,
+      language: "ja",
+    },
+  },
+  {
+    id: "ted-lecture-008",
+    universityId: "",
+    universityName: "講義型練習",
+    facultyName: "国際関係学部",
+    year: 2025,
+    theme: "【TED講義型】移民問題の新しい見方 — アレクサンダー・ベッツ",
+    description: "以下のTEDトークを視聴し、難民・移民問題について講演者の提案を要約した上で、日本が移民・難民政策においてとるべきスタンスについて、あなたの意見を800字以内で論じなさい。",
+    type: "frequent",
+    questionType: "lecture",
+    wordLimit: 800,
+    timeLimit: 60,
+    field: "国際",
+    tedTalk: {
+      talkId: "alexander_betts_our_refugee_system_is_failing_here_s_how_we_can_fix_it",
+      title: "破綻した難民制度の直し方",
+      speaker: "アレクサンダー・ベッツ",
+      durationMinutes: 17,
+      language: "ja",
+    },
+  },
 ];
 
 /** 生徒が実際に取り組める具体的な設問かどうかを判定 */
