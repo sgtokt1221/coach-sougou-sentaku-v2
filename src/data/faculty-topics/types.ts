@@ -27,6 +27,8 @@ export interface FacultyTopic {
   summary: string;
   sections: TopicSection[];
   practiceQuestion: string;
+  /** 練習問題の解答例（200-400字程度の論述要約） */
+  practiceAnswer?: string;
   relatedTopicIds: string[];
 }
 

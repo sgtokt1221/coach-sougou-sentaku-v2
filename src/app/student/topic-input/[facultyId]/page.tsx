@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useRef, useCallback } from "react";
 import { notFound, useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -14,6 +14,7 @@ import {
 } from "@/components/shared/SegmentControl";
 import { getFacultyById } from "@/data/faculty-topics/registry";
 import type {
+  FacultyTopic,
   FacultyTopicCategory,
   FacultyTopicData,
 } from "@/data/faculty-topics/types";
@@ -49,6 +50,52 @@ export default function FacultyTopicPage() {
 
   const [activeId, setActiveId] = useState<FacultyTopicCategory>(
     data?.categories[0]?.id ?? "",
+  );
+  const [openTopicId, setOpenTopicId] = useState<string | null>(null);
+
+  // ID → DOM ref のマップ（スクロール用）
+  const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  // ID → topic, ID → categoryId, ID → title の検索用マップ
+  const indices = useMemo(() => {
+    const topicById: Record<string, FacultyTopic> = {};
+    const categoryByTopicId: Record<string, string> = {};
+    const titleById: Record<string, string> = {};
+    if (data) {
+      for (const cat of data.categories) {
+        for (const t of cat.topics) {
+          topicById[t.id] = t;
+          categoryByTopicId[t.id] = cat.id;
+          titleById[t.id] = `#${t.number} ${t.title}`;
+        }
+      }
+    }
+    return { topicById, categoryByTopicId, titleById };
+  }, [data]);
+
+  const handleNavigateToTopic = useCallback(
+    (topicId: string) => {
+      const targetCategory = indices.categoryByTopicId[topicId];
+      if (!targetCategory) return;
+
+      // カテゴリが違えば切替
+      if (targetCategory !== activeId) {
+        setActiveId(targetCategory);
+      }
+      // 開く
+      setOpenTopicId(topicId);
+
+      // スクロール（DOM更新を待つため少し遅延）
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          const el = cardRefs.current[topicId];
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        }, 50);
+      });
+    },
+    [activeId, indices.categoryByTopicId],
   );
 
   if (!faculty || !data) {
@@ -105,7 +152,19 @@ export default function FacultyTopicPage() {
           {activeCategory.description}
         </p>
         {activeCategory.topics.map((topic) => (
-          <TopicCard key={topic.id} topic={topic} />
+          <TopicCard
+            key={topic.id}
+            topic={topic}
+            ref={(el) => {
+              cardRefs.current[topic.id] = el;
+            }}
+            isOpen={openTopicId === topic.id}
+            onToggle={() =>
+              setOpenTopicId((prev) => (prev === topic.id ? null : topic.id))
+            }
+            onRelatedClick={handleNavigateToTopic}
+            topicTitleMap={indices.titleById}
+          />
         ))}
       </div>
     </div>
