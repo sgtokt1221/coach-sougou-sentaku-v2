@@ -5,6 +5,7 @@ import { notFound, useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { lawTopics } from "@/data/faculty-topics/law";
+import { economicsTopics } from "@/data/faculty-topics/economics";
 import { TopicCard } from "@/components/topic-input/TopicCard";
 import { HighlightLegend } from "@/components/topic-input/HighlightLegend";
 import {
@@ -19,12 +20,24 @@ import type {
 
 const FACULTY_DATA: Record<string, FacultyTopicData> = {
   law: lawTopics,
+  economics: economicsTopics,
 };
 
-const ACCENT_BY_CATEGORY: Record<FacultyTopicCategory, SegmentAccent> = {
-  jinken: "blue",
-  "iken-hanketsu": "amber",
-  "ai-ho": "violet",
+/**
+ * 学部 × カテゴリID のアクセント色マッピング。
+ * 新しい学部を追加するときはここに 3-5 色を定義する。
+ */
+const ACCENT_BY_FACULTY: Record<string, Record<string, SegmentAccent>> = {
+  law: {
+    jinken: "blue",
+    "iken-hanketsu": "amber",
+    "ai-ho": "violet",
+  },
+  economics: {
+    basics: "emerald",
+    history: "amber",
+    trends: "violet",
+  },
 };
 
 export default function FacultyTopicPage() {
@@ -35,7 +48,7 @@ export default function FacultyTopicPage() {
   const data = FACULTY_DATA[facultyId];
 
   const [activeId, setActiveId] = useState<FacultyTopicCategory>(
-    data?.categories[0]?.id ?? ("jinken" as FacultyTopicCategory),
+    data?.categories[0]?.id ?? "",
   );
 
   if (!faculty || !data) {
@@ -49,11 +62,12 @@ export default function FacultyTopicPage() {
   const activeCategory =
     data.categories.find((c) => c.id === activeId) ?? data.categories[0];
 
+  const accentMap = ACCENT_BY_FACULTY[facultyId] ?? {};
   const segmentOptions = data.categories.map((c) => ({
     id: c.id,
     label: c.label,
     count: c.topics.length,
-    accent: ACCENT_BY_CATEGORY[c.id],
+    accent: accentMap[c.id] as SegmentAccent | undefined,
   }));
 
   return (

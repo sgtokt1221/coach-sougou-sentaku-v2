@@ -42,8 +42,8 @@ export const FACULTY_REGISTRY: FacultyEntry[] = [
     label: "経済学系",
     category: "humanities",
     description: "ミクロ・マクロ・行動経済学・気候経済。経済の仕組みを問う。",
-    available: false,
-    plannedCount: 25,
+    available: true,
+    topicCount: 21,
     accent: "from-emerald-500/10 to-green-500/10 border-emerald-200",
   },
   {

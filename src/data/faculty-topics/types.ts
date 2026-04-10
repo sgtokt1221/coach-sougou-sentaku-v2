@@ -4,7 +4,12 @@
 
 export type HighlightColor = "red" | "blue" | "yellow" | "green" | "purple";
 
-export type FacultyTopicCategory = "jinken" | "iken-hanketsu" | "ai-ho";
+/**
+ * 学部内のネタカテゴリID。学部ごとに自由に定義できる文字列。
+ * 例: 法学系 = "jinken" | "iken-hanketsu" | "ai-ho"
+ *     経済学系 = "basics" | "history" | "trends"
+ */
+export type FacultyTopicCategory = string;
 
 export interface TopicSection {
   id: string;
