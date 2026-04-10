@@ -76,7 +76,22 @@ export async function GET(request: NextRequest) {
       pastQuestions = pastQuestions.filter((pq) => pq.universityId === universityId || pq.universityId === "");
     }
     if (field && field !== "all") {
-      pastQuestions = pastQuestions.filter((pq) => pq.field === field);
+      // テーマ側の英語field → 過去問の日本語fieldに変換してマッチング
+      const fieldJpMap: Record<string, string[]> = {
+        society: ["社会"],
+        technology: ["AI・テクノロジー"],
+        environment: ["環境"],
+        education: ["教育"],
+        economy: ["経済"],
+        medical: ["医療"],
+        politics: ["政治", "法律"],
+        law: ["法律"],
+        international: ["国際"],
+      };
+      const jpFields = fieldJpMap[field] ?? [];
+      pastQuestions = pastQuestions.filter(
+        (pq) => pq.field === field || jpFields.includes(pq.field)
+      );
     }
 
     return NextResponse.json({
