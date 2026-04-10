@@ -15,6 +15,14 @@ interface ThemeWithScore extends EssayTheme {
   recommendationScore?: number;
 }
 
+const QUESTION_TYPE_OPTIONS = [
+  { value: "all", label: "全形式" },
+  { value: "essay", label: "通常" },
+  { value: "data-analysis", label: "資料読解" },
+  { value: "english-reading", label: "英文読解" },
+  { value: "lecture", label: "講義型(TED)" },
+];
+
 interface ThemesResponse {
   success: boolean;
   data: {
@@ -85,6 +93,7 @@ export default function EssayThemesPage() {
   // フィルター状態
   const [selectedField, setSelectedField] = useState("all");
   const [selectedDifficulty, setSelectedDifficulty] = useState("all");
+  const [selectedQuestionType, setSelectedQuestionType] = useState("all");
   const [hasRecommendations, setHasRecommendations] = useState(false);
   const [expandedPQ, setExpandedPQ] = useState<string | null>(null);
 
@@ -381,6 +390,22 @@ export default function EssayThemesPage() {
               </SelectContent>
             </Select>
           </div>
+
+          {/* 出題形式フィルター */}
+          <div className="min-w-[160px]">
+            <Select value={selectedQuestionType} onValueChange={(value: string | null) => setSelectedQuestionType(value ?? "all")}>
+              <SelectTrigger>
+                <SelectValue placeholder="形式を選択" />
+              </SelectTrigger>
+              <SelectContent>
+                {QUESTION_TYPE_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
@@ -391,16 +416,25 @@ export default function EssayThemesPage() {
         </div>
       )}
 
-      {/* テーマ一覧 */}
+      {/* テーマ一覧（formatフィルタ適用） */}
+      {(() => {
+        const visibleThemes = themes.filter((t) => {
+          if (selectedQuestionType === "all") return true;
+          if (selectedQuestionType === "essay") {
+            return !t.questionType || t.questionType === "essay";
+          }
+          return t.questionType === selectedQuestionType;
+        });
+        return (
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
           <p className="text-sm text-gray-600">
-            {themes.length} 個のテーマが見つかりました
+            {visibleThemes.length} 個のテーマが見つかりました
           </p>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {themes.map((theme) => (
+          {visibleThemes.map((theme) => (
             <Card
               key={theme.id}
               className="hover:shadow-lg transition-all duration-200 cursor-pointer group border-gray-200"
@@ -408,9 +442,26 @@ export default function EssayThemesPage() {
             >
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between gap-2 mb-2">
-                  <Badge variant="outline" className={difficultyLabels[theme.difficulty].color}>
-                    {difficultyLabels[theme.difficulty].label}
-                  </Badge>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <Badge variant="outline" className={difficultyLabels[theme.difficulty].color}>
+                      {difficultyLabels[theme.difficulty].label}
+                    </Badge>
+                    {theme.questionType === "data-analysis" && (
+                      <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 text-xs">
+                        <BarChart3 className="w-3 h-3 mr-1" />資料読解
+                      </Badge>
+                    )}
+                    {theme.questionType === "english-reading" && (
+                      <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-xs">
+                        英文読解
+                      </Badge>
+                    )}
+                    {theme.questionType === "lecture" && (
+                      <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200 text-xs">
+                        講義型
+                      </Badge>
+                    )}
+                  </div>
                   <div className="flex items-center gap-1">
                     {theme.recommendationScore !== undefined && theme.recommendationScore > 0 && (
                       <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-300">
@@ -474,7 +525,7 @@ export default function EssayThemesPage() {
           ))}
         </div>
 
-        {themes.length === 0 && !loading && (
+        {visibleThemes.length === 0 && !loading && (
           <div className="text-center py-12">
             <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <p className="text-gray-500 text-lg mb-2">該当するテーマが見つかりませんでした</p>
@@ -482,6 +533,8 @@ export default function EssayThemesPage() {
           </div>
         )}
       </div>
+        );
+      })()}
       </>}
     </div>
   );
