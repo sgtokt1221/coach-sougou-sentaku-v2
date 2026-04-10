@@ -6,6 +6,20 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { lawTopics } from "@/data/faculty-topics/law";
 import { economicsTopics } from "@/data/faculty-topics/economics";
+import { medicineTopics } from "@/data/faculty-topics/medicine";
+import { nursingTopics } from "@/data/faculty-topics/nursing";
+import { informaticsTopics } from "@/data/faculty-topics/informatics";
+import { engineeringTopics } from "@/data/faculty-topics/engineering";
+import { educationTopics } from "@/data/faculty-topics/education";
+import { psychologyTopics } from "@/data/faculty-topics/psychology";
+import { internationalTopics } from "@/data/faculty-topics/international";
+import { sociologyTopics } from "@/data/faculty-topics/sociology";
+import { businessTopics } from "@/data/faculty-topics/business";
+import { humanitiesTopics } from "@/data/faculty-topics/humanities";
+import { scienceTopics } from "@/data/faculty-topics/science";
+import { agricultureTopics } from "@/data/faculty-topics/agriculture";
+import { pharmacyTopics } from "@/data/faculty-topics/pharmacy";
+import { artSportsTopics } from "@/data/faculty-topics/art-sports";
 import { TopicCard } from "@/components/topic-input/TopicCard";
 import { HighlightLegend } from "@/components/topic-input/HighlightLegend";
 import {
@@ -22,11 +36,26 @@ import type {
 const FACULTY_DATA: Record<string, FacultyTopicData> = {
   law: lawTopics,
   economics: economicsTopics,
+  medicine: medicineTopics,
+  nursing: nursingTopics,
+  informatics: informaticsTopics,
+  engineering: engineeringTopics,
+  education: educationTopics,
+  psychology: psychologyTopics,
+  international: internationalTopics,
+  sociology: sociologyTopics,
+  business: businessTopics,
+  humanities: humanitiesTopics,
+  science: scienceTopics,
+  agriculture: agricultureTopics,
+  pharmacy: pharmacyTopics,
+  "art-sports": artSportsTopics,
 };
 
 /**
  * 学部 × カテゴリID のアクセント色マッピング。
  * 新しい学部を追加するときはここに 3-5 色を定義する。
+ * カテゴリIDが定義されていない場合は undefined が返り、SegmentControl の defaultAccent が使われる。
  */
 const ACCENT_BY_FACULTY: Record<string, Record<string, SegmentAccent>> = {
   law: {
@@ -37,6 +66,76 @@ const ACCENT_BY_FACULTY: Record<string, Record<string, SegmentAccent>> = {
   economics: {
     basics: "emerald",
     history: "amber",
+    trends: "violet",
+  },
+  medicine: {
+    basics: "blue",
+    ethics: "rose",
+    trends: "violet",
+  },
+  nursing: {
+    basics: "blue",
+    practice: "emerald",
+    trends: "violet",
+  },
+  informatics: {
+    basics: "blue",
+    society: "amber",
+    trends: "violet",
+  },
+  engineering: {
+    basics: "slate",
+    history: "amber",
+    trends: "violet",
+  },
+  education: {
+    theory: "blue",
+    system: "amber",
+    trends: "violet",
+  },
+  psychology: {
+    basics: "blue",
+    applied: "emerald",
+    trends: "violet",
+  },
+  international: {
+    basics: "blue",
+    issues: "amber",
+    trends: "violet",
+  },
+  sociology: {
+    theory: "blue",
+    modern: "amber",
+    trends: "violet",
+  },
+  business: {
+    basics: "emerald",
+    history: "amber",
+    trends: "violet",
+  },
+  humanities: {
+    literature: "rose",
+    philosophy: "blue",
+    history: "amber",
+  },
+  science: {
+    basics: "blue",
+    history: "amber",
+    trends: "violet",
+  },
+  agriculture: {
+    basics: "emerald",
+    environment: "amber",
+    trends: "violet",
+  },
+  pharmacy: {
+    basics: "blue",
+    practice: "emerald",
+    trends: "violet",
+  },
+  "art-sports": {
+    arts: "rose",
+    sports: "amber",
     trends: "violet",
   },
 };
