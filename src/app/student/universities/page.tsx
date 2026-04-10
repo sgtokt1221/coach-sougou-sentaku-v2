@@ -298,22 +298,39 @@ interface Suggestion {
 
 function MatchingChat({ profile }: { profile: { gpa?: number; englishCerts?: { type: string; score?: string }[] } }) {
   const router = useRouter();
+  const { user } = useAuth();
   const [messages, setMessages] = useState<Array<{ role: "user" | "assistant"; content: string; suggestions?: Suggestion[] }>>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [autoStarted, setAutoStarted] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
-  async function handleSend() {
-    const text = input.trim();
-    if (!text || loading) return;
+  // 自己分析が完了している場合、自動で初回メッセージを送信
+  useEffect(() => {
+    const uid = user?.uid;
+    if (autoStarted || !uid) return;
+    async function checkAndStart() {
+      try {
+        const res = await authFetch(`/api/self-analysis?userId=${uid}`);
+        if (!res.ok) return;
+        const sa = await res.json();
+        if (sa?.isComplete) {
+          setAutoStarted(true);
+          await sendMessage("自己分析の結果を踏まえて、私に合いそうな志望校を教えてください。");
+        }
+      } catch {}
+    }
+    checkAndStart();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.uid]);
 
+  async function sendMessage(text: string) {
     const userMsg = { role: "user" as const, content: text };
     setMessages((prev) => [...prev, userMsg]);
-    setInput("");
     setLoading(true);
 
     try {
@@ -331,6 +348,13 @@ function MatchingChat({ profile }: { profile: { gpa?: number; englishCerts?: { t
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleSend() {
+    const text = input.trim();
+    if (!text || loading) return;
+    setInput("");
+    await sendMessage(text);
   }
 
   return (
