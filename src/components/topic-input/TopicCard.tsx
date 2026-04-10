@@ -62,8 +62,8 @@ export function TopicCard({ topic }: TopicCardProps) {
   const [open, setOpen] = useState(false);
 
   return (
-    <Card>
-      <CardContent className="p-4 space-y-3">
+    <Card className="w-full">
+      <CardContent className="w-full p-4 space-y-3">
         {/* ヘッダー */}
         <button
           type="button"
