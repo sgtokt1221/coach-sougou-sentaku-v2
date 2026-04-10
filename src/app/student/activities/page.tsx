@@ -5,17 +5,17 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SegmentControl } from "@/components/shared/SegmentControl";
 import { Plus, CheckCircle, AlertCircle, Sparkles, ClipboardList } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import type { Activity, ActivityCategory } from "@/lib/types/activity";
 import { ACTIVITY_CATEGORY_LABELS } from "@/lib/types/activity";
 import { useAuthSWR } from "@/lib/api/swr";
 
-const CATEGORY_FILTERS: Array<{ value: string; label: string }> = [
-  { value: "all", label: "すべて" },
-  ...Object.entries(ACTIVITY_CATEGORY_LABELS).map(([value, label]) => ({
-    value,
+const CATEGORY_FILTERS: Array<{ id: string; label: string }> = [
+  { id: "all", label: "すべて" },
+  ...Object.entries(ACTIVITY_CATEGORY_LABELS).map(([id, label]) => ({
+    id,
     label,
   })),
 ];
@@ -38,17 +38,12 @@ export default function ActivitiesPage() {
         </Button>
       </div>
 
-      <Tabs value={filter} onValueChange={setFilter}>
-        <div className="overflow-x-auto">
-          <TabsList className="flex flex-nowrap h-auto gap-1 w-max">
-            {CATEGORY_FILTERS.map((f) => (
-              <TabsTrigger key={f.value} value={f.value} className="text-xs whitespace-nowrap">
-                {f.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </div>
-      </Tabs>
+      <SegmentControl
+        value={filter}
+        onChange={setFilter}
+        options={CATEGORY_FILTERS}
+        size="sm"
+      />
 
       {loading ? (
         <div className="space-y-3">

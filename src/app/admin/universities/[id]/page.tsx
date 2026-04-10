@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SegmentControl } from "@/components/shared/SegmentControl";
 import {
   Dialog,
   DialogContent,
@@ -612,40 +612,44 @@ export default function AdminUniversityEditPage() {
               学部がまだ登録されていません。「学部追加」ボタンで追加してください。
             </p>
           ) : (
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <div className="overflow-x-auto">
-                <TabsList className="flex flex-nowrap gap-1 w-max group-data-horizontal/tabs:!h-auto">
-                  {university.faculties.map((faculty, idx) => (
-                    <TabsTrigger key={idx} value={String(idx)} className="shrink-0">
-                      {faculty.name || `学部${idx + 1}`}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-              </div>
+            <div className="space-y-6">
+              <SegmentControl
+                value={activeTab}
+                onChange={setActiveTab}
+                options={university.faculties.map((faculty, idx) => ({
+                  id: String(idx),
+                  label: faculty.name || `学部${idx + 1}`,
+                }))}
+              />
 
-              {university.faculties.map((faculty, idx) => (
-                <TabsContent key={idx} value={String(idx)} className="mt-6">
-                  {canEdit && (
-                    <div className="mb-4 flex justify-end">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => confirmDeleteFaculty(idx)}
-                      >
-                        <Trash2 className="mr-1 size-3" />
-                        この学部を削除
-                      </Button>
-                    </div>
-                  )}
-                  <FacultyForm
-                    faculty={faculty}
-                    onChange={(updated) => updateFaculty(idx, updated)}
-                    canEdit={canEdit}
-                  />
-                </TabsContent>
-              ))}
-            </Tabs>
+              {(() => {
+                const idx = Number(activeTab);
+                const faculty = university.faculties[idx];
+                if (!faculty) return null;
+                return (
+                  <div>
+                    {canEdit && (
+                      <div className="mb-4 flex justify-end">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => confirmDeleteFaculty(idx)}
+                        >
+                          <Trash2 className="mr-1 size-3" />
+                          この学部を削除
+                        </Button>
+                      </div>
+                    )}
+                    <FacultyForm
+                      faculty={faculty}
+                      onChange={(updated) => updateFaculty(idx, updated)}
+                      canEdit={canEdit}
+                    />
+                  </div>
+                );
+              })()}
+            </div>
           )}
         </CardContent>
       </Card>

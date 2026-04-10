@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SegmentControl } from "@/components/shared/SegmentControl";
 import {
   ArrowLeft,
   Video,
@@ -749,6 +749,22 @@ function StudentInfoPanel({
     );
   }
 
+  return (
+    <StudentInfoPanelInner studentId={studentId} student={student} />
+  );
+}
+
+function StudentInfoPanelInner({
+  studentId,
+  student,
+}: {
+  studentId: string;
+  student: StudentDetail;
+}) {
+  const [activeTab, setActiveTab] = useState<
+    "overview" | "essays-interviews" | "docs-activities" | "memos"
+  >("overview");
+
   const { profile, weaknesses, essays, scoreTrend } = student;
 
   const chartData = scoreTrend.map((p) => ({
@@ -773,16 +789,21 @@ function StudentInfoPanel({
         </div>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="overview" className="space-y-4">
-          <TabsList className="w-full">
-            <TabsTrigger value="overview">概要</TabsTrigger>
-            <TabsTrigger value="essays-interviews">添削・面接</TabsTrigger>
-            <TabsTrigger value="docs-activities">書類・活動</TabsTrigger>
-            <TabsTrigger value="memos">メモ</TabsTrigger>
-          </TabsList>
+        <div className="space-y-4">
+          <SegmentControl
+            value={activeTab}
+            onChange={(v) => setActiveTab(v as typeof activeTab)}
+            options={[
+              { id: "overview", label: "概要" },
+              { id: "essays-interviews", label: "添削・面接", accent: "violet" },
+              { id: "docs-activities", label: "書類・活動", accent: "amber" },
+              { id: "memos", label: "メモ", accent: "emerald" },
+            ]}
+            fullWidth
+          />
 
           {/* Overview Tab */}
-          <TabsContent value="overview">
+          {activeTab === "overview" && (
             <div className="space-y-6">
               {/* Profile summary */}
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 text-sm">
@@ -858,10 +879,10 @@ function StudentInfoPanel({
                 )}
               </div>
             </div>
-          </TabsContent>
+          )}
 
           {/* Essays & Interviews Tab */}
-          <TabsContent value="essays-interviews">
+          {activeTab === "essays-interviews" && (
             <div className="space-y-6">
               {/* Essays */}
               <div>
@@ -916,21 +937,19 @@ function StudentInfoPanel({
               {/* Interviews */}
               <InterviewsSection studentId={studentId} />
             </div>
-          </TabsContent>
+          )}
 
           {/* Documents & Activities Tab */}
-          <TabsContent value="docs-activities">
+          {activeTab === "docs-activities" && (
             <div className="space-y-6">
               <DocumentsSection studentId={studentId} />
               <ActivitiesSection studentId={studentId} />
             </div>
-          </TabsContent>
+          )}
 
           {/* Memos Tab */}
-          <TabsContent value="memos">
-            <CoachMemo studentId={studentId} />
-          </TabsContent>
-        </Tabs>
+          {activeTab === "memos" && <CoachMemo studentId={studentId} />}
+        </div>
       </CardContent>
     </Card>
   );

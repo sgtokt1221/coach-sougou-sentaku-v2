@@ -14,13 +14,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SegmentControl } from "@/components/shared/SegmentControl";
 import {
   ArrowLeft,
   Save,
   Sparkles,
   History,
-  FileText,
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
@@ -64,6 +63,7 @@ export default function DocumentEditorPage() {
   const [reviewing, setReviewing] = useState(false);
   const [feedback, setFeedback] = useState<DocumentFeedback | null>(null);
   const [showVersions, setShowVersions] = useState(false);
+  const [mobileTab, setMobileTab] = useState<"editor" | "review">("editor");
 
   const loadDocument = useCallback(async () => {
     setLoading(true);
@@ -197,20 +197,18 @@ export default function DocumentEditorPage() {
         </div>
       </div>
 
-      {/* Main content - responsive layout */}
-      <Tabs defaultValue="editor" className="lg:hidden">
-        <TabsList className="w-full">
-          <TabsTrigger value="editor" className="flex-1">
-            <FileText className="size-4 mr-1" />
-            エディタ
-          </TabsTrigger>
-          <TabsTrigger value="review" className="flex-1">
-            <Sparkles className="size-4 mr-1" />
-            AI添削
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="editor">
+      {/* Main content - responsive layout (mobile only) */}
+      <div className="lg:hidden space-y-4">
+        <SegmentControl
+          value={mobileTab}
+          onChange={(v) => setMobileTab(v as "editor" | "review")}
+          options={[
+            { id: "editor", label: "エディタ" },
+            { id: "review", label: "AI添削", accent: "violet" },
+          ]}
+          fullWidth
+        />
+        {mobileTab === "editor" ? (
           <EditorPanel
             content={content}
             setContent={setContent}
@@ -221,8 +219,7 @@ export default function DocumentEditorPage() {
             onSave={handleSave}
             saving={saving}
           />
-        </TabsContent>
-        <TabsContent value="review">
+        ) : (
           <ReviewPanel
             feedback={feedback}
             reviewing={reviewing}
@@ -232,8 +229,8 @@ export default function DocumentEditorPage() {
             showVersions={showVersions}
             setShowVersions={setShowVersions}
           />
-        </TabsContent>
-      </Tabs>
+        )}
+      </div>
 
       {/* Desktop layout */}
       <div className="hidden lg:grid lg:grid-cols-3 gap-6">

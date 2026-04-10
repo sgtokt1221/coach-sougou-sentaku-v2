@@ -8,9 +8,9 @@ import { lawTopics } from "@/data/faculty-topics/law";
 import { TopicCard } from "@/components/topic-input/TopicCard";
 import { HighlightLegend } from "@/components/topic-input/HighlightLegend";
 import {
-  CategorySegment,
+  SegmentControl,
   type SegmentAccent,
-} from "@/components/topic-input/CategorySegment";
+} from "@/components/shared/SegmentControl";
 import { getFacultyById } from "@/data/faculty-topics/registry";
 import type {
   FacultyTopicCategory,
@@ -80,7 +80,7 @@ export default function FacultyTopicPage() {
 
       <HighlightLegend />
 
-      <CategorySegment
+      <SegmentControl
         value={activeId}
         onChange={(next) => setActiveId(next as FacultyTopicCategory)}
         options={segmentOptions}

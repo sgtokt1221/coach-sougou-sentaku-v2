@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SegmentControl } from "@/components/shared/SegmentControl";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -53,9 +53,18 @@ import { CHART_COLORS, CHART_ANIMATION, GRID_STYLE } from "@/components/charts/t
 import { CustomTooltip } from "@/components/charts/CustomTooltip";
 import { CustomDot, CustomActiveDot } from "@/components/charts/CustomDot";
 
+type AnalyticsTab =
+  | "overview"
+  | "weaknesses"
+  | "university-gap"
+  | "score-distribution"
+  | "monthly-trends"
+  | "weakness-patterns";
+
 export default function AnalyticsPage() {
   const { userProfile } = useAuth();
   const isSuperadmin = userProfile?.role === "superadmin";
+  const [activeTab, setActiveTab] = useState<AnalyticsTab>("overview");
 
   const { data: overview, isLoading: loadingOverview } = useAuthSWR<AnalyticsOverview>(
     isSuperadmin ? "/api/admin/analytics/overview" : null
@@ -95,64 +104,80 @@ export default function AnalyticsPage() {
         </p>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="flex flex-wrap h-auto gap-1">
-          <TabsTrigger value="overview">概況</TabsTrigger>
-          <TabsTrigger value="weaknesses">弱点分析</TabsTrigger>
-          <TabsTrigger value="university-gap">大学別ギャップ</TabsTrigger>
-          <TabsTrigger value="score-distribution">スコア分布</TabsTrigger>
-          <TabsTrigger value="monthly-trends">月次推移</TabsTrigger>
-          <TabsTrigger value="weakness-patterns">弱点パターン</TabsTrigger>
-        </TabsList>
+      <div className="space-y-6">
+        <SegmentControl
+          value={activeTab}
+          onChange={(v) => setActiveTab(v as AnalyticsTab)}
+          options={[
+            { id: "overview", label: "概況" },
+            { id: "weaknesses", label: "弱点分析", accent: "rose" },
+            { id: "university-gap", label: "大学別ギャップ", accent: "amber" },
+            { id: "score-distribution", label: "スコア分布", accent: "violet" },
+            { id: "monthly-trends", label: "月次推移", accent: "emerald" },
+            { id: "weakness-patterns", label: "弱点パターン", accent: "rose" },
+          ]}
+        />
 
-        <TabsContent value="overview" className="space-y-6">
-          {loadingOverview ? (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-28" />
-              ))}
-            </div>
-          ) : overview ? (
-            <OverviewContent overview={overview} />
-          ) : null}
-        </TabsContent>
+        {activeTab === "overview" && (
+          <div className="space-y-6">
+            {loadingOverview ? (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton key={i} className="h-28" />
+                ))}
+              </div>
+            ) : overview ? (
+              <OverviewContent overview={overview} />
+            ) : null}
+          </div>
+        )}
 
-        <TabsContent value="weaknesses" className="space-y-6">
-          {loadingWeaknesses ? (
-            <Skeleton className="h-96" />
-          ) : weaknesses ? (
-            <WeaknessContent weaknesses={weaknesses} />
-          ) : null}
-        </TabsContent>
+        {activeTab === "weaknesses" && (
+          <div className="space-y-6">
+            {loadingWeaknesses ? (
+              <Skeleton className="h-96" />
+            ) : weaknesses ? (
+              <WeaknessContent weaknesses={weaknesses} />
+            ) : null}
+          </div>
+        )}
 
-        <TabsContent value="university-gap" className="space-y-6">
-          {loadingGap ? (
-            <Skeleton className="h-96" />
-          ) : universityGap ? (
-            <UniversityGapContent data={universityGap} />
-          ) : null}
-        </TabsContent>
+        {activeTab === "university-gap" && (
+          <div className="space-y-6">
+            {loadingGap ? (
+              <Skeleton className="h-96" />
+            ) : universityGap ? (
+              <UniversityGapContent data={universityGap} />
+            ) : null}
+          </div>
+        )}
 
-        <TabsContent value="score-distribution" className="space-y-6">
-          <ScoreDistributionContent />
-        </TabsContent>
+        {activeTab === "score-distribution" && (
+          <div className="space-y-6">
+            <ScoreDistributionContent />
+          </div>
+        )}
 
-        <TabsContent value="monthly-trends" className="space-y-6">
-          {loadingTrends ? (
-            <Skeleton className="h-96" />
-          ) : monthlyTrends ? (
-            <MonthlyTrendsContent data={monthlyTrends} />
-          ) : null}
-        </TabsContent>
+        {activeTab === "monthly-trends" && (
+          <div className="space-y-6">
+            {loadingTrends ? (
+              <Skeleton className="h-96" />
+            ) : monthlyTrends ? (
+              <MonthlyTrendsContent data={monthlyTrends} />
+            ) : null}
+          </div>
+        )}
 
-        <TabsContent value="weakness-patterns" className="space-y-6">
-          {loadingPatterns ? (
-            <Skeleton className="h-96" />
-          ) : weaknessPatterns ? (
-            <WeaknessPatternsContent data={weaknessPatterns} />
-          ) : null}
-        </TabsContent>
-      </Tabs>
+        {activeTab === "weakness-patterns" && (
+          <div className="space-y-6">
+            {loadingPatterns ? (
+              <Skeleton className="h-96" />
+            ) : weaknessPatterns ? (
+              <WeaknessPatternsContent data={weaknessPatterns} />
+            ) : null}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
