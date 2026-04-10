@@ -22,6 +22,7 @@ import {
   ExternalLink,
   Lightbulb,
   BookOpen,
+  BookMarked,
   CalendarDays,
   MessageSquare,
   FileBarChart,
@@ -58,6 +59,7 @@ const studentNavGroups: NavGroup[] = [
     title: "Practice",
     items: [
       { label: "小論文添削", href: "/student/essay/new", icon: FileText },
+      { label: "ネタインプット", href: "/student/topic-input", icon: BookMarked },
       { label: "模擬面接", href: "/student/interview/new", icon: Mic },
       { label: "テーマ・過去問", href: "/student/essay/themes", icon: BookOpen },
     ],
