@@ -70,6 +70,7 @@ const SCORE_LABELS: Partial<Record<keyof InterviewScores, string>> = {
   criticalThinking: "応用思考力",
   collaboration: "協調性",
   leadership: "リーダーシップ",
+  listening: "傾聴力",
 };
 
 const SCORE_COLORS: Partial<Record<keyof InterviewScores, string>> = {
@@ -85,6 +86,7 @@ const SCORE_COLORS: Partial<Record<keyof InterviewScores, string>> = {
   criticalThinking: "bg-rose-500",
   collaboration: "bg-emerald-500",
   leadership: "bg-violet-500",
+  listening: "bg-sky-500",
 };
 
 export default function InterviewResultPage() {
@@ -174,7 +176,7 @@ export default function InterviewResultPage() {
     "clarity", "apAlignment", "enthusiasm", "specificity", "bodyLanguage",
     "presentationStructure", "dataEvidence", "resourceConsistency",
     "knowledgeAccuracy", "criticalThinking",
-    "collaboration", "leadership",
+    "collaboration", "leadership", "listening",
   ];
   const scoreKeys = allScoreKeys.filter((k) => result.scores[k] != null);
 

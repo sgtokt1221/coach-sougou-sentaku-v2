@@ -17,6 +17,7 @@ export interface InterviewScores {
   // 集団討論追加項目
   collaboration?: number;          // 協調性 0-10
   leadership?: number;             // リーダーシップ 0-10
+  listening?: number;              // 傾聴力 0-10 (相手の意見を受け止めてから反応できるか)
 }
 
 export type InterviewMode = "individual" | "group_discussion" | "presentation" | "oral_exam";
