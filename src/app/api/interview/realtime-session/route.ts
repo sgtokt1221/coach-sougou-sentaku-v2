@@ -29,13 +29,15 @@ const REALTIME_MODEL_CANDIDATES = [
   "gpt-4o-realtime-preview",
 ];
 
+// Realtime API がサポートする voice: alloy / ash / ballad / coral / echo / sage / shimmer / verse
+// TTS API の nova/onyx/fable は Realtime では使えないので、代替を割り当てる
 const GD_SPEAKERS: { key: GdSpeakerKey; voice: string }[] = [
-  { key: "moderator", voice: "nova" },
-  { key: "professor_logic", voice: "onyx" },
-  { key: "professor_practical", voice: "echo" },
-  { key: "peer_bold", voice: "fable" },
-  { key: "peer_careful", voice: "shimmer" },
-  { key: "peer_creative", voice: "alloy" },
+  { key: "moderator", voice: "sage" },          // 落ち着いた司会
+  { key: "professor_logic", voice: "ash" },     // 厳密・深みのある教員
+  { key: "professor_practical", voice: "echo" }, // 実践派の教員
+  { key: "peer_bold", voice: "ballad" },        // 積極派の受験生
+  { key: "peer_careful", voice: "shimmer" },    // 慎重派の受験生
+  { key: "peer_creative", voice: "coral" },     // 独創派の受験生
 ];
 
 interface CreateSessionParams {
@@ -232,7 +234,7 @@ export async function POST(request: NextRequest) {
     undefined,
     presentationContent,
   );
-  const voice = "nova"; // 個人モードはデフォルト nova
+  const voice = "alloy"; // 個人モードはニュートラルな alloy
   const issueResult = await issueEphemeralToken(apiKey, { instructions, voice });
   if (!issueResult.token) {
     return NextResponse.json(
