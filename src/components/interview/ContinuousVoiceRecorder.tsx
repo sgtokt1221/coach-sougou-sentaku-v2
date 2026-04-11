@@ -86,11 +86,6 @@ export default function ContinuousVoiceRecorder({
       const rms = Math.sqrt(sum / dataArray.length);
       setAudioLevel(Math.min(1, rms * 15));
 
-      // Interrupt detection during AI speech
-      if (aiSpeakingRef.current && rms > 0.02) {
-        onInterruptRef.current?.();
-      }
-
       rafRef.current = requestAnimationFrame(check);
     }
     rafRef.current = requestAnimationFrame(check);
