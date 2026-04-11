@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SegmentControl } from "@/components/shared/SegmentControl";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BookOpen, Star, Clock, TrendingUp, Filter, ArrowRight, ChevronDown, ChevronUp, BarChart3 } from "lucide-react";
+import { BookOpen, Star, Clock, ArrowRight, ChevronDown, ChevronUp, BarChart3 } from "lucide-react";
 import { PastQuestionChart } from "@/components/essay/PastQuestionChart";
 import { EssayTheme } from "@/data/essay-themes";
 
@@ -348,64 +348,42 @@ export default function EssayThemesPage() {
       {/* テーマタブ: フィルター */}
       {tab === "themes" && <>
 
-      {/* フィルター */}
-      <div className="mb-8">
-        <div className="flex items-center gap-4 mb-4">
-          <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-gray-500" />
-            <span className="text-sm font-medium text-gray-700">フィルター</span>
-          </div>
+      {/* フィルター: SegmentControl 形式 (ネタインプットと統一) */}
+      <div className="mb-8 space-y-4">
+        <div>
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">分野</h3>
+          <SegmentControl
+            value={selectedField}
+            onChange={(v) => handleFilterChange("field", v)}
+            defaultAccent="blue"
+            options={[
+              { id: "all", label: "全ての分野" },
+              ...fields.map((f) => ({ id: f.value, label: f.label })),
+            ]}
+          />
         </div>
 
-        <div className="flex flex-wrap gap-4">
-          {/* 分野フィルター */}
-          <div className="min-w-[160px]">
-            <Select value={selectedField} onValueChange={(value: string | null) => handleFilterChange("field", value ?? "all")}>
-              <SelectTrigger>
-                <SelectValue placeholder="分野を選択" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">全ての分野</SelectItem>
-                {fields.map((field) => (
-                  <SelectItem key={field.value} value={field.value}>
-                    {field.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        <div>
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">難易度</h3>
+          <SegmentControl
+            value={selectedDifficulty}
+            onChange={(v) => handleFilterChange("difficulty", v)}
+            options={difficultyOptions.map((opt) => ({
+              id: opt.value,
+              label: opt.label,
+              accent: opt.value === "1" ? "emerald" : opt.value === "2" ? "amber" : opt.value === "3" ? "rose" : "slate",
+            }))}
+          />
+        </div>
 
-          {/* 難易度フィルター */}
-          <div className="min-w-[160px]">
-            <Select value={selectedDifficulty} onValueChange={(value: string | null) => handleFilterChange("difficulty", value ?? "all")}>
-              <SelectTrigger>
-                <SelectValue placeholder="難易度を選択" />
-              </SelectTrigger>
-              <SelectContent>
-                {difficultyOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* 出題形式フィルター */}
-          <div className="min-w-[160px]">
-            <Select value={selectedQuestionType} onValueChange={(value: string | null) => setSelectedQuestionType(value ?? "all")}>
-              <SelectTrigger>
-                <SelectValue placeholder="形式を選択" />
-              </SelectTrigger>
-              <SelectContent>
-                {QUESTION_TYPE_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        <div>
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">出題形式</h3>
+          <SegmentControl
+            value={selectedQuestionType}
+            onChange={(v) => setSelectedQuestionType(v)}
+            defaultAccent="violet"
+            options={QUESTION_TYPE_OPTIONS.map((opt) => ({ id: opt.value, label: opt.label }))}
+          />
         </div>
       </div>
 
