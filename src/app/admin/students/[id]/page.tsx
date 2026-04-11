@@ -84,6 +84,7 @@ import { ExamResultsSection } from "@/components/admin/ExamResultsSection";
 import { DocumentsSection } from "@/components/admin/DocumentsSection";
 import { InterviewsSection } from "@/components/admin/InterviewsSection";
 import { ActivitiesSection } from "@/components/admin/ActivitiesSection";
+import { DiscoverSection } from "@/components/admin/DiscoverSection";
 import { InlineFeedbackButton } from "@/components/admin/InlineFeedbackButton";
 import { CoachMemo } from "@/components/admin/CoachMemo";
 
@@ -891,6 +892,9 @@ export default function AdminStudentDetailPage() {
 
       {/* Activities */}
       <ActivitiesSection studentId={id} />
+
+      {/* Discover (自己分析 + 志望校マッチング) */}
+      <DiscoverSection studentId={id} />
 
       {/* Exam Results */}
       <ExamResultsSection studentId={id} />
