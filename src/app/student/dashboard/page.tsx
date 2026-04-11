@@ -20,21 +20,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { TargetUniversityCards } from "@/components/dashboard/TargetUniversityCards";
 import type { StudentProfile } from "@/lib/types/user";
 import { useAuthSWR } from "@/lib/api/swr";
-import dynamic from "next/dynamic";
 import { NotificationPermissionBanner } from "@/components/notifications/NotificationPermissionBanner";
 import { AnimatedList } from "@/components/shared/AnimatedList";
 import { CountUp } from "@/components/shared/CountUp";
+import { GrowthTree } from "@/components/self-analysis/GrowthTree";
 import type { SelfAnalysis } from "@/lib/types/self-analysis";
-
-const GrowthTree3D = dynamic(
-  () => import("@/components/self-analysis/GrowthTree3D").then((m) => m.GrowthTree3D),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="h-[280px] w-full rounded-2xl border bg-gradient-to-b from-sky-50/60 via-emerald-50/40 to-amber-50/40 dark:from-slate-900/60 dark:via-emerald-950/40 dark:to-slate-900/60 animate-pulse" />
-    ),
-  }
-);
 
 interface EssayHistoryItem {
   id: string;
@@ -199,12 +189,11 @@ export default function StudentDashboard() {
         <TargetUniversityCards targetUniversities={targetUniversities} />
       </div>
 
-      {/* 自己分析の木 (3D) */}
+      {/* 自己分析の木 */}
       <Link href="/student/self-analysis" className="block group">
-        <GrowthTree3D
+        <GrowthTree
           completedSteps={saCompletedSteps}
           stepsData={saStepsData}
-          height={280}
           className="group-hover:shadow-md transition-shadow"
         />
       </Link>

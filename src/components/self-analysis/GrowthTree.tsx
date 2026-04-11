@@ -1,17 +1,10 @@
 "use client";
 
 /**
- * 自己分析の 7 ステップ進捗を「木と果実」で可視化するアニメーションコンポーネント。
+ * 自己分析の 7 ステップ進捗を「木と果実」で可視化する SVG アニメーションコンポーネント。
  *
- * - 木の SVG は常に表示 (幹 + 葉の塊)
- * - 各ステップの完了に応じて 7 つの果実が順にふわっと出現する
- * - 果実にはセクションごとのカラーが付き、完了済み = 鮮やか / 未完了 = 薄いグレー
- * - 全 7 完了時は木全体にキラキラオーバーレイ
- *
- * 実装ノート:
- * - 純粋な SVG + Tailwind クラス + CSS transition/animation だけで済ませ、
- *   Framer Motion など追加依存は入れない (パフォーマンスと簡潔さ優先)
- * - 果実の出現は `style={{ transition, transform, opacity }}` + `delay-*` で制御
+ * 洗練版: グラデーション / 光彩フィルター / 葉のゆらぎアニメ / 果実の球体表現。
+ * React 追加依存なし、純粋な SVG + CSS keyframes で実装。
  */
 
 import { useState } from "react";
@@ -27,13 +20,19 @@ interface GrowthTreeProps {
   className?: string;
 }
 
-// SVG 版の座標 (tree-shared の x2d/y2d を再エクスポート用に展開)
 const FRUIT_POSITIONS = FRUIT_META.map((m) => ({
   x: m.x2d,
   y: m.y2d,
   color: m.color,
   ring: m.ring,
 }));
+
+// 背景装飾: 遠景の丘・雲・蝶
+const BG_CLOUDS = [
+  { cx: 50, cy: 40, rx: 18, ry: 6 },
+  { cx: 270, cy: 55, rx: 22, ry: 7 },
+  { cx: 160, cy: 20, rx: 24, ry: 6 },
+];
 
 export function GrowthTree({ completedSteps, currentStep, stepsData, className }: GrowthTreeProps) {
   const allDone = completedSteps >= 7;
@@ -46,103 +45,211 @@ export function GrowthTree({ completedSteps, currentStep, stepsData, className }
   return (
     <div
       className={cn(
-        "relative rounded-2xl border bg-gradient-to-b from-sky-50/60 via-emerald-50/40 to-amber-50/40 dark:from-slate-900/60 dark:via-emerald-950/40 dark:to-slate-900/60 p-4 overflow-hidden",
+        "relative rounded-2xl border bg-gradient-to-b from-sky-100/70 via-emerald-50/50 to-amber-50/60 dark:from-slate-900 dark:via-emerald-950/50 dark:to-slate-900 overflow-hidden",
         className,
       )}
     >
-      {/* 背景のふわっとした光 */}
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.6),transparent_70%)]" />
+      {/* 背景のふわっとした光 + ぼんやりした星 */}
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.8),transparent_60%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,rgba(134,239,172,0.35),transparent_70%)]" />
 
       {/* タイトル */}
-      <div className="relative flex items-baseline justify-between mb-2">
+      <div className="relative flex items-baseline justify-between px-4 pt-4 mb-2">
         <h2 className="text-sm font-semibold text-foreground/80">自己分析の木</h2>
-        <span className="text-[11px] text-muted-foreground tabular-nums">
+        <span className="text-[11px] text-muted-foreground tabular-nums bg-background/60 backdrop-blur-sm rounded-full px-2 py-0.5">
           {completedSteps} / 7 実っています
         </span>
       </div>
 
       {/* SVG 木 */}
-      <div className="relative w-full flex justify-center">
+      <div className="relative w-full flex justify-center px-4">
         <svg
-          viewBox="0 0 320 260"
-          className="w-full max-w-[360px] h-auto"
+          viewBox="0 0 320 270"
+          className="w-full max-w-[420px] h-auto"
           aria-label={`自己分析の進捗 ${completedSteps}/7`}
+          role="img"
         >
-          {/* 地面 */}
-          <ellipse cx="160" cy="238" rx="110" ry="8" fill="#a3a3a3" opacity="0.18" />
-          <path
-            d="M60 236 Q160 226 260 236 L260 240 L60 240 Z"
-            fill="#86efac"
-            opacity="0.5"
-            className="dark:fill-emerald-700/30"
-          />
+          <defs>
+            {/* 幹のグラデーション */}
+            <linearGradient id="trunkGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#5a3416" />
+              <stop offset="45%" stopColor="#8a5828" />
+              <stop offset="100%" stopColor="#6b3d1c" />
+            </linearGradient>
 
-          {/* 幹 */}
+            {/* 地面のグラデーション */}
+            <linearGradient id="groundGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#86efac" />
+              <stop offset="100%" stopColor="#4ade80" />
+            </linearGradient>
+
+            {/* 葉のグラデーション (明るい緑 → 濃い緑) */}
+            <radialGradient id="leafGrad1" cx="35%" cy="30%" r="70%">
+              <stop offset="0%" stopColor="#86efac" />
+              <stop offset="60%" stopColor="#4ade80" />
+              <stop offset="100%" stopColor="#16a34a" />
+            </radialGradient>
+            <radialGradient id="leafGrad2" cx="40%" cy="35%" r="65%">
+              <stop offset="0%" stopColor="#4ade80" />
+              <stop offset="100%" stopColor="#15803d" />
+            </radialGradient>
+            <radialGradient id="leafGrad3" cx="30%" cy="25%" r="75%">
+              <stop offset="0%" stopColor="#bbf7d0" />
+              <stop offset="100%" stopColor="#22c55e" />
+            </radialGradient>
+
+            {/* 果実の radialGradient (step 色ごとに生成) */}
+            {FRUIT_POSITIONS.map((pos, i) => (
+              <radialGradient key={`fg-${i}`} id={`fruitGrad-${i}`} cx="35%" cy="30%" r="70%">
+                <stop offset="0%" stopColor="#ffffff" stopOpacity="0.95" />
+                <stop offset="30%" stopColor={pos.color} stopOpacity="1" />
+                <stop offset="100%" stopColor={pos.color} stopOpacity="1" />
+              </radialGradient>
+            ))}
+
+            {/* 未完了の灰色の実 */}
+            <radialGradient id="fruitGradGray" cx="35%" cy="30%" r="70%">
+              <stop offset="0%" stopColor="#f3f4f6" stopOpacity="0.9" />
+              <stop offset="100%" stopColor="#9ca3af" stopOpacity="1" />
+            </radialGradient>
+
+            {/* 光彩フィルター (Bloom 風) */}
+            <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+              <feGaussianBlur stdDeviation="3.5" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+
+            {/* 強い光彩 (currentStep 用) */}
+            <filter id="glowStrong" x="-80%" y="-80%" width="260%" height="260%">
+              <feGaussianBlur stdDeviation="5" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+
+            {/* 幹のドロップシャドウ */}
+            <filter id="softShadow" x="-30%" y="-30%" width="160%" height="160%">
+              <feDropShadow dx="0" dy="3" stdDeviation="3" floodOpacity="0.25" />
+            </filter>
+          </defs>
+
+          {/* 背景の雲 */}
+          {BG_CLOUDS.map((c, i) => (
+            <ellipse
+              key={`cloud-${i}`}
+              cx={c.cx}
+              cy={c.cy}
+              rx={c.rx}
+              ry={c.ry}
+              fill="#ffffff"
+              opacity="0.7"
+            >
+              <animate
+                attributeName="cx"
+                values={`${c.cx};${c.cx + 8};${c.cx}`}
+                dur={`${10 + i * 3}s`}
+                repeatCount="indefinite"
+              />
+            </ellipse>
+          ))}
+
+          {/* 地面の影 */}
+          <ellipse cx="160" cy="248" rx="115" ry="7" fill="#000000" opacity="0.12" />
+          {/* 地面の芝 */}
           <path
-            d="M152 238 C150 210 148 180 154 150 C156 130 152 110 158 90"
-            stroke="#7c4a20"
-            strokeWidth="10"
-            strokeLinecap="round"
-            fill="none"
-            className="dark:stroke-amber-900"
-          />
-          <path
-            d="M160 238 C164 210 168 180 162 150 C160 130 166 110 160 90"
-            stroke="#8a5828"
-            strokeWidth="6"
-            strokeLinecap="round"
-            fill="none"
+            d="M45 246 Q100 236 160 240 Q220 244 275 238 L275 252 L45 252 Z"
+            fill="url(#groundGrad)"
             opacity="0.7"
-            className="dark:stroke-amber-800"
           />
-
-          {/* 枝 (果実を支える細い枝) */}
-          <g stroke="#7c4a20" strokeWidth="2.5" strokeLinecap="round" fill="none" className="dark:stroke-amber-900">
-            <path d="M156 150 Q130 130 102 100" />
-            <path d="M156 150 Q186 130 218 104" />
-            <path d="M156 170 Q110 150 80 140" />
-            <path d="M156 170 Q200 150 242 148" />
-            <path d="M156 185 Q140 170 136 162" />
-            <path d="M160 185 Q180 172 186 168" />
+          {/* 芝の小刻みなライン */}
+          <g stroke="#16a34a" strokeWidth="1" strokeLinecap="round" opacity="0.5">
+            {Array.from({ length: 14 }).map((_, i) => {
+              const x = 55 + i * 16;
+              return <line key={i} x1={x} y1="247" x2={x + 2} y2="243" />;
+            })}
           </g>
 
-          {/* 葉の塊 (ぽっこりした雲形状) */}
+          {/* 幹 (グラデーション + softShadow) */}
+          <g filter="url(#softShadow)">
+            <path
+              d="M148 248 C146 220 144 190 150 155 C152 130 149 110 156 88"
+              stroke="url(#trunkGrad)"
+              strokeWidth="14"
+              strokeLinecap="round"
+              fill="none"
+            />
+            {/* 幹の樹皮テクスチャ (薄い縦線) */}
+            <path
+              d="M152 240 C151 210 150 180 155 150"
+              stroke="#4a2810"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              fill="none"
+              opacity="0.4"
+            />
+            <path
+              d="M156 240 C157 210 160 180 157 150"
+              stroke="#4a2810"
+              strokeWidth="1"
+              strokeLinecap="round"
+              fill="none"
+              opacity="0.3"
+            />
+          </g>
+
+          {/* 枝 (果実を支える細い枝) */}
+          <g stroke="#6b3d1c" strokeWidth="3.5" strokeLinecap="round" fill="none" filter="url(#softShadow)">
+            <path d="M152 145 Q130 128 102 100" />
+            <path d="M156 145 Q186 130 218 104" />
+            <path d="M152 170 Q110 150 80 140" />
+            <path d="M156 170 Q200 150 242 148" />
+            <path d="M154 190 Q140 175 136 165" />
+            <path d="M158 190 Q180 178 188 172" />
+          </g>
+          <g stroke="#8a5828" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.6">
+            <path d="M152 145 Q130 128 102 100" />
+            <path d="M156 145 Q186 130 218 104" />
+            <path d="M152 170 Q110 150 80 140" />
+            <path d="M156 170 Q200 150 242 148" />
+          </g>
+
+          {/* 葉の塊 (複数のグラデーション円を重ねて立体感) */}
           <g>
             {[
-              { cx: 160, cy: 78, r: 48 },
-              { cx: 110, cy: 108, r: 40 },
-              { cx: 210, cy: 108, r: 42 },
-              { cx: 82, cy: 148, r: 32 },
-              { cx: 238, cy: 150, r: 34 },
-              { cx: 136, cy: 160, r: 28 },
-              { cx: 188, cy: 168, r: 30 },
-              { cx: 160, cy: 130, r: 50 },
+              { cx: 160, cy: 80, r: 52, fill: "url(#leafGrad1)" },
+              { cx: 108, cy: 110, r: 42, fill: "url(#leafGrad2)" },
+              { cx: 212, cy: 108, r: 44, fill: "url(#leafGrad2)" },
+              { cx: 80, cy: 148, r: 32, fill: "url(#leafGrad3)" },
+              { cx: 240, cy: 150, r: 34, fill: "url(#leafGrad3)" },
+              { cx: 135, cy: 160, r: 30, fill: "url(#leafGrad1)" },
+              { cx: 190, cy: 170, r: 32, fill: "url(#leafGrad1)" },
+              { cx: 160, cy: 132, r: 52, fill: "url(#leafGrad1)" },
             ].map((leaf, i) => (
               <circle
-                key={i}
+                key={`leaf-main-${i}`}
                 cx={leaf.cx}
                 cy={leaf.cy}
                 r={leaf.r}
-                fill="#4ade80"
-                opacity="0.65"
-                className="dark:fill-emerald-600"
+                fill={leaf.fill}
+                style={{
+                  transformOrigin: `${leaf.cx}px ${leaf.cy}px`,
+                  animation: `leaf-sway 6s ease-in-out ${i * 0.3}s infinite`,
+                }}
               />
             ))}
+            {/* ハイライト用小円 (葉の光沢) */}
             {[
-              { cx: 145, cy: 62, r: 38 },
-              { cx: 178, cy: 96, r: 42 },
-              { cx: 95, cy: 132, r: 28 },
-              { cx: 226, cy: 130, r: 30 },
-            ].map((leaf, i) => (
-              <circle
-                key={i}
-                cx={leaf.cx}
-                cy={leaf.cy}
-                r={leaf.r}
-                fill="#22c55e"
-                opacity="0.55"
-                className="dark:fill-emerald-700"
-              />
+              { cx: 148, cy: 65, r: 10 },
+              { cx: 200, cy: 90, r: 8 },
+              { cx: 100, cy: 100, r: 6 },
+              { cx: 160, cy: 115, r: 10 },
+            ].map((h, i) => (
+              <circle key={`leaf-hl-${i}`} cx={h.cx} cy={h.cy} r={h.r} fill="#ffffff" opacity="0.25" />
             ))}
           </g>
 
@@ -157,9 +264,9 @@ export function GrowthTree({ completedSteps, currentStep, stepsData, className }
                 key={stepNum}
                 style={{
                   transformOrigin: `${pos.x}px ${pos.y}px`,
-                  transform: isDone ? (isHovered ? "scale(1.2)" : "scale(1)") : "scale(0.3)",
-                  opacity: isDone ? 1 : 0.15,
-                  transition: `transform 700ms cubic-bezier(0.34, 1.56, 0.64, 1) ${i * 150}ms, opacity 500ms ease-out ${i * 150}ms`,
+                  transform: isDone ? (isHovered ? "scale(1.25)" : "scale(1)") : "scale(0.2)",
+                  opacity: isDone ? 1 : 0.18,
+                  transition: `transform 800ms cubic-bezier(0.34, 1.56, 0.64, 1) ${i * 180}ms, opacity 600ms ease-out ${i * 180}ms`,
                   cursor: isDone ? "pointer" : "default",
                 }}
                 onMouseEnter={() => isDone && setHoveredStep(stepNum)}
@@ -170,70 +277,102 @@ export function GrowthTree({ completedSteps, currentStep, stepsData, className }
                 role={isDone ? "button" : undefined}
                 aria-label={isDone ? `${SELF_ANALYSIS_STEPS[i].title}の内容を表示` : undefined}
               >
-                {/* 影 */}
-                {isDone && (
-                  <circle
-                    cx={pos.x}
-                    cy={pos.y + 1}
-                    r="10"
-                    fill="rgba(0,0,0,0.15)"
-                  />
-                )}
-                {/* リング (オーラ) */}
-                {isDone && (
+                {/* フロートアニメ用のネストグループ */}
+                <g
+                  style={{
+                    transformOrigin: `${pos.x}px ${pos.y}px`,
+                    animation: isDone ? `fruit-float 3s ease-in-out ${i * 0.3}s infinite` : undefined,
+                  }}
+                >
+                  {/* 落ち影 */}
+                  {isDone && (
+                    <ellipse
+                      cx={pos.x}
+                      cy={pos.y + 14}
+                      rx="8"
+                      ry="2"
+                      fill="#000000"
+                      opacity="0.2"
+                    />
+                  )}
+                  {/* オーラ (光彩) */}
+                  {isDone && (
+                    <circle
+                      cx={pos.x}
+                      cy={pos.y}
+                      r="18"
+                      fill={pos.ring}
+                      opacity="0.5"
+                      filter="url(#glow)"
+                      style={{
+                        animation: isCurrent
+                          ? "fruit-pulse 1.5s ease-in-out infinite"
+                          : undefined,
+                      }}
+                    />
+                  )}
+                  {/* 実本体 */}
                   <circle
                     cx={pos.x}
                     cy={pos.y}
-                    r="13"
-                    fill={pos.ring}
-                    opacity="0.7"
-                    className={cn(isCurrent && "animate-pulse")}
+                    r="11"
+                    fill={isDone ? `url(#fruitGrad-${i})` : "url(#fruitGradGray)"}
+                    filter={isDone ? (isCurrent ? "url(#glowStrong)" : "url(#glow)") : undefined}
                   />
-                )}
-                {/* 実本体 */}
-                <circle
-                  cx={pos.x}
-                  cy={pos.y}
-                  r="9"
-                  fill={isDone ? pos.color : "#d4d4d8"}
-                />
-                {/* ハイライト */}
-                {isDone && (
-                  <circle
-                    cx={pos.x - 3}
-                    cy={pos.y - 3}
-                    r="2.5"
-                    fill="rgba(255,255,255,0.75)"
-                  />
-                )}
-                {/* 小さな葉 */}
-                {isDone && (
-                  <path
-                    d={`M ${pos.x + 2} ${pos.y - 9} Q ${pos.x + 8} ${pos.y - 14} ${pos.x + 11} ${pos.y - 8}`}
-                    stroke="#16a34a"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    fill="none"
-                  />
-                )}
+                  {/* ハイライト (光沢) */}
+                  {isDone && (
+                    <>
+                      <circle cx={pos.x - 3.5} cy={pos.y - 3.5} r="3" fill="rgba(255,255,255,0.85)" />
+                      <circle cx={pos.x - 2} cy={pos.y - 2} r="1.2" fill="#ffffff" />
+                    </>
+                  )}
+                  {/* 果実のヘタ */}
+                  {isDone && (
+                    <>
+                      <line
+                        x1={pos.x}
+                        y1={pos.y - 11}
+                        x2={pos.x + 1}
+                        y2={pos.y - 15}
+                        stroke="#4a2810"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                      />
+                      <path
+                        d={`M ${pos.x + 1} ${pos.y - 15} Q ${pos.x + 7} ${pos.y - 19} ${pos.x + 11} ${pos.y - 13}`}
+                        stroke="#16a34a"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        fill="#4ade80"
+                      />
+                    </>
+                  )}
+                </g>
+                {isDone && <title>{SELF_ANALYSIS_STEPS[i].title}</title>}
               </g>
             );
           })}
 
           {/* 全完了時のキラキラ */}
           {allDone && (
-            <g>
+            <g filter="url(#glow)">
               {[
-                { x: 60, y: 50 },
-                { x: 260, y: 60 },
-                { x: 40, y: 170 },
-                { x: 280, y: 180 },
-                { x: 160, y: 30 },
+                { x: 55, y: 50 },
+                { x: 265, y: 55 },
+                { x: 35, y: 170 },
+                { x: 285, y: 180 },
+                { x: 160, y: 28 },
+                { x: 100, y: 200 },
+                { x: 230, y: 205 },
               ].map((s, i) => (
-                <g key={i} style={{ animation: `growth-sparkle 2.2s ease-in-out ${i * 0.4}s infinite` }}>
+                <g
+                  key={i}
+                  style={{ animation: `growth-sparkle 2.4s ease-in-out ${i * 0.35}s infinite` }}
+                  transform-origin={`${s.x} ${s.y}`}
+                >
                   <circle cx={s.x} cy={s.y} r="2.5" fill="#fde047" />
                   <path
-                    d={`M ${s.x} ${s.y - 6} L ${s.x} ${s.y + 6} M ${s.x - 6} ${s.y} L ${s.x + 6} ${s.y}`}
+                    d={`M ${s.x} ${s.y - 7} L ${s.x} ${s.y + 7} M ${s.x - 7} ${s.y} L ${s.x + 7} ${s.y} M ${s.x - 5} ${s.y - 5} L ${s.x + 5} ${s.y + 5} M ${s.x - 5} ${s.y + 5} L ${s.x + 5} ${s.y - 5}`}
                     stroke="#fde047"
                     strokeWidth="1.2"
                     strokeLinecap="round"
@@ -244,20 +383,20 @@ export function GrowthTree({ completedSteps, currentStep, stepsData, className }
           )}
         </svg>
 
-        {/* ホバー時のツールチップ (SVG 座標を % に変換して overlay) */}
+        {/* ホバー時のツールチップ */}
         {hoveredStep != null && hoveredMeta && hoveredPos && (
           <div
-            className="pointer-events-none absolute z-10 w-[240px] -translate-x-1/2 rounded-lg border bg-background/95 p-3 shadow-lg backdrop-blur-sm"
+            className="pointer-events-none absolute z-10 w-[260px] -translate-x-1/2 rounded-lg border bg-background/95 p-3 shadow-xl backdrop-blur-sm"
             style={{
               left: `${(hoveredPos.x / 320) * 100}%`,
-              top: `${(hoveredPos.y / 260) * 100}%`,
-              marginTop: "16px",
+              top: `${(hoveredPos.y / 270) * 100}%`,
+              marginTop: "20px",
             }}
           >
             <div className="flex items-center gap-2 mb-1.5">
               <span
-                className="inline-block size-2 rounded-full"
-                style={{ backgroundColor: hoveredPos.color }}
+                className="inline-block size-2.5 rounded-full shadow-sm"
+                style={{ backgroundColor: hoveredPos.color, boxShadow: `0 0 8px ${hoveredPos.color}` }}
               />
               <p className="text-xs font-semibold text-foreground">{hoveredMeta.title}</p>
             </div>
@@ -278,7 +417,7 @@ export function GrowthTree({ completedSteps, currentStep, stepsData, className }
       </div>
 
       {/* 下部: 完了したセクションのラベル */}
-      <div className="relative mt-2 flex flex-wrap gap-1 justify-center">
+      <div className="relative mt-2 px-4 pb-4 flex flex-wrap gap-1 justify-center">
         {SELF_ANALYSIS_STEPS.map((s, i) => {
           const isDone = s.step <= completedSteps;
           const isCurrent = s.step === currentStep;
@@ -295,7 +434,10 @@ export function GrowthTree({ completedSteps, currentStep, stepsData, className }
             >
               <span
                 className="inline-block size-1.5 rounded-full"
-                style={{ backgroundColor: isDone ? FRUIT_POSITIONS[i].color : "#d4d4d8" }}
+                style={{
+                  backgroundColor: isDone ? FRUIT_POSITIONS[i].color : "#d4d4d8",
+                  boxShadow: isDone ? `0 0 6px ${FRUIT_POSITIONS[i].color}` : undefined,
+                }}
               />
               {s.title}
             </span>
@@ -305,8 +447,20 @@ export function GrowthTree({ completedSteps, currentStep, stepsData, className }
 
       <style jsx>{`
         @keyframes growth-sparkle {
-          0%, 100% { opacity: 0.2; transform: scale(0.6); }
-          50% { opacity: 1; transform: scale(1.2); }
+          0%, 100% { opacity: 0.2; transform: scale(0.5); }
+          50% { opacity: 1; transform: scale(1.3); }
+        }
+        @keyframes fruit-float {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-2px); }
+        }
+        @keyframes fruit-pulse {
+          0%, 100% { opacity: 0.4; transform: scale(1); }
+          50% { opacity: 0.8; transform: scale(1.2); }
+        }
+        @keyframes leaf-sway {
+          0%, 100% { transform: rotate(0deg) scale(1); }
+          50% { transform: rotate(0.8deg) scale(1.01); }
         }
       `}</style>
     </div>
