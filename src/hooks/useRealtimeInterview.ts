@@ -140,10 +140,18 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
       return { success: false, fallback: "error" };
     }
 
-    // 2. マイクを取得
+    // 2. マイクを取得 (エコー除去・ノイズ抑制を明示してクリア化)
     let micStream: MediaStream;
     try {
-      micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      micStream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+          channelCount: 1,
+          sampleRate: 24000, // Realtime API は 24kHz mono pcm16
+        },
+      });
       micStreamRef.current = micStream;
     } catch (err) {
       console.warn("[useRealtimeInterview] mic access failed", err);
@@ -186,6 +194,8 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
       if (!audioElementRef.current) {
         const el = document.createElement("audio");
         el.autoplay = true;
+        el.setAttribute("playsinline", ""); // iOS Safari 対策 (HTMLAudioElement に playsInline プロパティはないので属性で)
+        el.volume = 1.0;
         el.style.display = "none";
         document.body.appendChild(el);
         audioElementRef.current = el;

@@ -91,10 +91,18 @@ export function useVoiceChat() {
       return false;
     }
 
-    // 2. マイク取得
+    // 2. マイク取得 (エコー除去・ノイズ抑制を明示してクリア化)
     let micStream: MediaStream;
     try {
-      micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      micStream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+          channelCount: 1,
+          sampleRate: 24000,
+        },
+      });
       micStreamRef.current = micStream;
     } catch (err) {
       console.warn("[useVoiceChat] mic access failed", err);
@@ -107,6 +115,8 @@ export function useVoiceChat() {
     if (!audioElementRef.current) {
       const el = document.createElement("audio");
       el.autoplay = true;
+      el.setAttribute("playsinline", ""); // iOS Safari 対策
+      el.volume = 1.0;
       el.style.display = "none";
       document.body.appendChild(el);
       audioElementRef.current = el;

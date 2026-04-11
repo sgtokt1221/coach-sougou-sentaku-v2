@@ -23,12 +23,30 @@ import { buildWhisperPrompt } from "@/lib/interview/whisper-context";
 import type { InterviewMode } from "@/lib/types/interview";
 import type { InterviewTendency } from "@/lib/types/university";
 
-/** モデル名のフォールバックチェーン。上から順に試す。 */
+/**
+ * モデル名のフォールバックチェーン。上から順に試す。
+ *
+ * 2026/04 時点の OpenAI Realtime モデル価格 (audio in / audio out per 1M tokens):
+ * - gpt-realtime-1.5         : $32 / $64   ← 新 GA 版フル (旧 gpt-4o-realtime-preview $40/$80 より安く高品質)
+ * - gpt-realtime-mini        : $10 / $20   ← 新 GA 版 mini (旧 gpt-4o-mini-realtime-preview と同価格・品質向上)
+ * - gpt-4o-realtime-preview-2024-12-17 : $40 / $80 (旧 preview, fallback)
+ * - gpt-4o-mini-realtime-preview-2024-12-17 : $10 / $20 (旧 preview, 最終 fallback)
+ *
+ * 個人系では音声品質を優先して GA 版フルを最優先。GA mini が次点 (旧 mini と同コスト)。
+ */
 const REALTIME_MODEL_CANDIDATES = [
-  "gpt-4o-mini-realtime-preview-2024-12-17",
-  "gpt-4o-mini-realtime-preview",
+  "gpt-realtime-1.5",
+  "gpt-realtime-mini",
   "gpt-4o-realtime-preview-2024-12-17",
-  "gpt-4o-realtime-preview",
+  "gpt-4o-mini-realtime-preview-2024-12-17",
+];
+
+/** GD モード用の安価チェーン (3 並列のためコスト重視で mini 優先) */
+const REALTIME_MODEL_CANDIDATES_GD = [
+  "gpt-realtime-mini",
+  "gpt-4o-mini-realtime-preview-2024-12-17",
+  "gpt-realtime-1.5",
+  "gpt-4o-realtime-preview-2024-12-17",
 ];
 
 // Realtime API がサポートする voice: alloy / ash / ballad / coral / echo / sage / shimmer / verse
@@ -65,6 +83,7 @@ interface IssueResult {
 async function issueEphemeralToken(
   apiKey: string,
   params: CreateSessionParams,
+  modelChain: string[] = REALTIME_MODEL_CANDIDATES,
 ): Promise<IssueResult> {
   const debugErrors: IssueResult["debugErrors"] = [];
 
@@ -77,7 +96,7 @@ async function issueEphemeralToken(
     transcriptionConfig.prompt = params.transcriptionPrompt;
   }
 
-  for (const model of REALTIME_MODEL_CANDIDATES) {
+  for (const model of modelChain) {
     try {
       const res = await fetch("https://api.openai.com/v1/realtime/sessions", {
         method: "POST",
@@ -230,7 +249,11 @@ export async function POST(request: NextRequest) {
           weaknessList,
           interviewTendency,
         );
-        const issueResult = await issueEphemeralToken(apiKey, { instructions, voice, transcriptionPrompt });
+        const issueResult = await issueEphemeralToken(
+          apiKey,
+          { instructions, voice, transcriptionPrompt },
+          REALTIME_MODEL_CANDIDATES_GD,
+        );
         return { key, voice, issueResult };
       }),
     );

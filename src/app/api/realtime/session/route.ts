@@ -12,11 +12,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 
+// 自己分析・マッチング等の汎用音声チャット用。コスト重視で mini 系を優先。
+// (面接 individual と違い、長時間使用される可能性があるため)
 const REALTIME_MODEL_CANDIDATES = [
+  "gpt-realtime-mini",
   "gpt-4o-mini-realtime-preview-2024-12-17",
-  "gpt-4o-mini-realtime-preview",
+  "gpt-realtime-1.5",
   "gpt-4o-realtime-preview-2024-12-17",
-  "gpt-4o-realtime-preview",
 ];
 
 interface EphemeralTokenResponse {
