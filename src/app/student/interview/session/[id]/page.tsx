@@ -110,6 +110,10 @@ export default function InterviewSessionPage() {
   const inputRef = useRef<HTMLInputElement>(null);
   const ttsAudioRef = useRef<HTMLAudioElement | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
+  /** 現在再生中の BufferSource をすべて追跡する (連打重複 & 遷移中断対策) */
+  const activeSourcesRef = useRef<AudioBufferSourceNode[]>([]);
+  /** unmount 後の非同期コールバック抑止用 */
+  const isMountedRef = useRef(true);
 
   // AudioContextを初期化（Autoplay Policy対策）
   // /new ページで作成された window.__interviewAudioCtx があれば再利用する
@@ -136,6 +140,46 @@ export default function InterviewSessionPage() {
     if (audioContextRef.current?.state === "suspended") {
       audioContextRef.current.resume().catch(() => {});
     }
+  }, []);
+
+  /**
+   * 現在再生中の全 BufferSource を即時停止する。
+   * - speakText/speakUtterances の再入時に呼び、音声の重なりを防ぐ
+   * - TTS トグル OFF 時、ページ unmount 時にも呼ぶ
+   */
+  const stopAllAudio = useCallback(() => {
+    const sources = activeSourcesRef.current;
+    activeSourcesRef.current = [];
+    for (const src of sources) {
+      try {
+        src.onended = null;
+        src.stop(0);
+      } catch {
+        /* 既に停止済み or 未開始なら無視 */
+      }
+      try {
+        src.disconnect();
+      } catch {
+        /* noop */
+      }
+    }
+    if (isMountedRef.current) {
+      setAiSpeaking(false);
+    }
+  }, []);
+
+  /**
+   * 再生用に作成した BufferSource を登録する。
+   * onended では自動的に配列から除去し、全て再生完了したら aiSpeaking を落とす。
+   */
+  const registerSource = useCallback((source: AudioBufferSourceNode, isLast: boolean) => {
+    activeSourcesRef.current.push(source);
+    source.onended = () => {
+      activeSourcesRef.current = activeSourcesRef.current.filter((s) => s !== source);
+      if (isLast && activeSourcesRef.current.length === 0 && isMountedRef.current) {
+        setAiSpeaking(false);
+      }
+    };
   }, []);
 
   /**
@@ -221,6 +265,9 @@ export default function InterviewSessionPage() {
       return;
     }
 
+    // 再入時に過去再生を打ち切り、音声の重なりを防ぐ
+    stopAllAudio();
+
     try {
       setAiSpeaking(true);
       const chunks = splitIntoChunks(text);
@@ -233,6 +280,8 @@ export default function InterviewSessionPage() {
       for (let i = 0; i < buffers.length; i++) {
         const audioBuffer = await buffers[i];
         if (!audioBuffer) continue;
+        // unmount 後は新 source を開始しない
+        if (!isMountedRef.current || (ctx.state as string) === "closed") return;
 
         const source = ctx.createBufferSource();
         source.buffer = audioBuffer;
@@ -243,16 +292,13 @@ export default function InterviewSessionPage() {
         source.start(startAt);
         cursorTime = startAt + audioBuffer.duration;
 
-        // 最後のチャンクの終了で aiSpeaking 解除
-        if (i === buffers.length - 1) {
-          source.onended = () => setAiSpeaking(false);
-        }
+        registerSource(source, i === buffers.length - 1);
       }
     } catch (err) {
       console.warn("[TTS] speakText error:", err instanceof Error ? err.message : err);
-      setAiSpeaking(false);
+      if (isMountedRef.current) setAiSpeaking(false);
     }
-  }, [ttsEnabled, fetchChunkAudio]);
+  }, [ttsEnabled, fetchChunkAudio, stopAllAudio, registerSource]);
 
   /**
    * GD モードの複数人連続発話を、話者ごとに voice を切り替えて順次読み上げる。
@@ -272,6 +318,9 @@ export default function InterviewSessionPage() {
       const utterances = splitIntoUtterances(content, DEFAULT_INTERVIEWER);
       if (utterances.length === 0) return;
 
+      // 再入時に過去再生を打ち切る
+      stopAllAudio();
+
       setAiSpeaking(true);
 
       // 各発言を 1 リクエストで並列 fetch。順序は utterance インデックスで保持
@@ -282,6 +331,7 @@ export default function InterviewSessionPage() {
         // eslint-disable-next-line no-await-in-loop
         const audioBuffer = await buffers[i];
         if (!audioBuffer) continue;
+        if (!isMountedRef.current || (ctx.state as string) === "closed") return;
 
         const source = ctx.createBufferSource();
         source.buffer = audioBuffer;
@@ -293,12 +343,10 @@ export default function InterviewSessionPage() {
         source.start(startAt);
         cursorTime = startAt + audioBuffer.duration;
 
-        if (i === buffers.length - 1) {
-          source.onended = () => setAiSpeaking(false);
-        }
+        registerSource(source, i === buffers.length - 1);
       }
     },
-    [ttsEnabled, fetchChunkAudio],
+    [ttsEnabled, fetchChunkAudio, stopAllAudio, registerSource],
   );
 
   /**
@@ -307,6 +355,8 @@ export default function InterviewSessionPage() {
    */
   const handleAudioUnlock = useCallback(async () => {
     if (typeof window === "undefined") return;
+    // 連打対策: ボタンを即座に隠して二重押下を物理的に防ぐ
+    setNeedsAudioUnlock(false);
     interface WindowWithAudio extends Window {
       __interviewAudioCtx?: AudioContext;
       webkitAudioContext?: typeof AudioContext;
@@ -334,7 +384,6 @@ export default function InterviewSessionPage() {
     } catch (err) {
       console.warn("[TTS] unlock failed", err);
     }
-    setNeedsAudioUnlock(false);
 
     // 再生: sessionInfo から openingMessage を読み直して speak する
     const stored = sessionStorage.getItem(`interview_session_${sessionId}`);
@@ -386,12 +435,15 @@ export default function InterviewSessionPage() {
           }
         }
         try {
+          // 初回 preOpening 再生前にも念のため既存音声を停止
+          stopAllAudio();
           setAiSpeaking(true);
           // base64 → ArrayBuffer → decode → 即再生
           const binary = atob(info.preOpeningAudioBase64!);
           const bytes = new Uint8Array(binary.length);
           for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
           const audioBuffer = await ctx.decodeAudioData(bytes.buffer.slice(0) as ArrayBuffer);
+          if (!isMountedRef.current || (ctx.state as string) === "closed") return;
           const source = ctx.createBufferSource();
           source.buffer = audioBuffer;
           source.connect(ctx.destination);
@@ -403,9 +455,11 @@ export default function InterviewSessionPage() {
           // openingMessage からそれを除いた後続を取り出す
           const remaining = info.openingMessage.slice(info.preOpeningText!.length).trim();
           if (remaining.length === 0) {
-            source.onended = () => setAiSpeaking(false);
+            registerSource(source, true);
             return;
           }
+          // 先頭 source は末尾ではないので isLast=false で登録
+          registerSource(source, false);
 
           // 残りを話者単位に分解、各発言を 1 リクエストで並列 fetch
           const utterances =
@@ -419,6 +473,7 @@ export default function InterviewSessionPage() {
             // eslint-disable-next-line no-await-in-loop
             const buf = await buffers[i];
             if (!buf) continue;
+            if (!isMountedRef.current || (ctx.state as string) === "closed") return;
             const src2 = ctx.createBufferSource();
             src2.buffer = buf;
             src2.connect(ctx.destination);
@@ -427,17 +482,11 @@ export default function InterviewSessionPage() {
             src2.start(at);
             cursorTime = at + buf.duration;
 
-            if (i === buffers.length - 1) {
-              src2.onended = () => setAiSpeaking(false);
-            }
-          }
-          // buffers が全部 null でも aiSpeaking を落とす
-          if (buffers.length === 0 || buffers.every((b) => !b)) {
-            source.onended = () => setAiSpeaking(false);
+            registerSource(src2, i === buffers.length - 1);
           }
         } catch (err) {
           console.warn("[TTS] preOpening playback failed", err);
-          setAiSpeaking(false);
+          if (isMountedRef.current) setAiSpeaking(false);
           // フォールバック: 通常経路で最初から読み直す
           if (info.mode === "group_discussion") {
             speakUtterances(info.openingMessage);
@@ -457,7 +506,7 @@ export default function InterviewSessionPage() {
       const { profile } = resolveSpeaker(info.openingMessage, DEFAULT_INTERVIEWER);
       speakText(info.openingMessage, profile.voice);
     }
-  }, [sessionId, speakText, speakUtterances, ensureAudioContext, fetchChunkAudio]);
+  }, [sessionId, speakText, speakUtterances, ensureAudioContext, fetchChunkAudio, stopAllAudio, registerSource]);
 
   // Restore messages from sessionStorage backup
   useEffect(() => {
@@ -543,6 +592,23 @@ export default function InterviewSessionPage() {
     const interval = setInterval(() => setElapsed((e) => e + 1), 1000);
     return () => clearInterval(interval);
   }, []);
+
+  // ページ unmount 時に音声再生を完全停止する (画面遷移で音声が垂れ流しになるのを防ぐ)
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      stopAllAudio();
+      const ctx = audioContextRef.current;
+      if (ctx && ctx.state !== "closed") {
+        ctx.close().catch(() => {});
+      }
+      audioContextRef.current = null;
+      if (typeof window !== "undefined") {
+        (window as unknown as { __interviewAudioCtx?: AudioContext }).__interviewAudioCtx = undefined;
+      }
+    };
+  }, [stopAllAudio]);
 
   // Auto-scroll
   useEffect(() => {
@@ -743,7 +809,13 @@ export default function InterviewSessionPage() {
         </div>
         <div className="flex items-center gap-3">
           <button
-            onClick={() => setTtsEnabled((v) => !v)}
+            onClick={() => {
+              setTtsEnabled((v) => {
+                // ON → OFF に切り替える時は再生中の音声を即停止
+                if (v) stopAllAudio();
+                return !v;
+              });
+            }}
             className={`p-1.5 rounded-md transition-colors cursor-pointer ${ttsEnabled ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground"}`}
             title={ttsEnabled ? "音声ON" : "音声OFF"}
           >
@@ -969,11 +1041,7 @@ export default function InterviewSessionPage() {
             onStreamReady={(stream) => setMediaStream(stream)}
             onInterrupt={() => {
               // Stop TTS playback when user starts speaking
-              if (ttsAudioRef.current) {
-                ttsAudioRef.current.pause();
-                ttsAudioRef.current.src = "";
-              }
-              setAiSpeaking(false);
+              stopAllAudio();
             }}
             disabled={isLoading}
             aiSpeaking={aiSpeaking}
@@ -1040,8 +1108,8 @@ export default function InterviewSessionPage() {
             <Button
               variant="ghost"
               onClick={() => {
-                // Stop TTS/recording
-                if (ttsAudioRef.current) { ttsAudioRef.current.pause(); ttsAudioRef.current.src = ""; }
+                // Stop TTS/recording (unmount cleanup でも止まるが即応性のため明示呼び出し)
+                stopAllAudio();
                 router.push("/student/interview/history");
               }}
               disabled={isEnding}
