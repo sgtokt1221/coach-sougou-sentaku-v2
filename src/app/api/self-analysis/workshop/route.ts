@@ -6,13 +6,15 @@ interface WorkshopRequest {
   message: string;
   history?: Array<{ role: string; content: string }>;
   previousStepsData?: Record<string, unknown>;
+  /** 音声会話からの終了依頼: これまでの history のみから stepData を抽出する */
+  forceComplete?: boolean;
 }
 
 
 export async function POST(request: NextRequest) {
   try {
     const body: WorkshopRequest = await request.json();
-    const { step, message, history, previousStepsData } = body;
+    const { step, message, history, previousStepsData, forceComplete } = body;
 
     if (!message || !step) {
       return NextResponse.json(
@@ -32,7 +34,12 @@ export async function POST(request: NextRequest) {
     const Anthropic = (await import("@anthropic-ai/sdk")).default;
     const client = new Anthropic();
 
-    const systemPrompt = buildSelfAnalysisPrompt(step, previousStepsData);
+    let systemPrompt = buildSelfAnalysisPrompt(step, previousStepsData);
+    if (forceComplete) {
+      systemPrompt += `\n\n## 重要: 即時完了モード
+ここまでの history を踏まえ、追加質問はせず直ちに stepData を抽出して JSON で返してください。
+必ず isComplete: true で、全フィールドを history から抽出してください。追加質問は禁止です。`;
+    }
     const messages: Array<{ role: "user" | "assistant"; content: string }> = [];
 
     if (history) {

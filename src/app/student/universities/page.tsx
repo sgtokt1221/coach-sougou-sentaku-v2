@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -24,7 +24,11 @@ import {
   BarChart3,
   Send,
   Loader2,
+  Mic,
+  MicOff,
 } from "lucide-react";
+import { useVoiceChat } from "@/hooks/useVoiceChat";
+import { buildMatchingVoiceInstructions } from "@/lib/ai/prompts/voice-chat-realtime";
 import { EmptyState } from "@/components/shared/EmptyState";
 import type { MatchResult, MatchingResponse } from "@/lib/types/matching";
 import { SuggestPanel, ResultSkeleton } from "@/components/shared/SuggestPanel";
@@ -304,6 +308,25 @@ function MatchingChat({ profile }: { profile: { gpa?: number; englishCerts?: { t
   const [loading, setLoading] = useState(false);
   const [autoStarted, setAutoStarted] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const voiceChat = useVoiceChat();
+
+  const toggleVoice = useCallback(async () => {
+    if (voiceChat.isActive) {
+      voiceChat.stop();
+      return;
+    }
+    const instructions = buildMatchingVoiceInstructions(profile);
+    await voiceChat.start({
+      instructions,
+      voice: "alloy",
+      onUserTranscript: (text) => {
+        if (text.trim()) setMessages((prev) => [...prev, { role: "user", content: text }]);
+      },
+      onAssistantTranscript: (text) => {
+        if (text.trim()) setMessages((prev) => [...prev, { role: "assistant", content: text }]);
+      },
+    });
+  }, [voiceChat, profile]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -359,6 +382,24 @@ function MatchingChat({ profile }: { profile: { gpa?: number; englishCerts?: { t
 
   return (
     <div className="flex flex-col" style={{ height: "calc(100vh - 220px)" }}>
+      <div className="mb-3 flex items-center justify-center gap-2">
+        <Button
+          size="sm"
+          variant={voiceChat.isActive ? "default" : "outline"}
+          onClick={toggleVoice}
+          disabled={voiceChat.status === "requesting_token" || voiceChat.status === "connecting"}
+        >
+          {voiceChat.isActive ? <Mic className="size-4 mr-1" /> : <MicOff className="size-4 mr-1" />}
+          {voiceChat.status === "requesting_token" || voiceChat.status === "connecting"
+            ? "接続中..."
+            : voiceChat.isActive
+              ? "音声会話中 (タップで停止)"
+              : "音声で相談する"}
+        </Button>
+        {voiceChat.error && (
+          <span className="text-xs text-rose-600">{voiceChat.error.slice(0, 80)}</span>
+        )}
+      </div>
       <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-4 pb-4">
         {messages.length === 0 && (
           <div className="text-center py-12">
