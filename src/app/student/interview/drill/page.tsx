@@ -18,12 +18,15 @@ import {
   Loader2,
   Check,
   Trophy,
-  TrendingUp
+  TrendingUp,
+  Mic,
+  Keyboard,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { authFetch } from "@/lib/api/client";
 import { DRILL_CATEGORIES, type DrillCategory } from "@/lib/ai/prompts/interview-drill";
+import VoiceRecorder from "@/components/interview/VoiceRecorder";
 
 interface DrillScore {
   category: DrillCategory;
@@ -73,6 +76,43 @@ export default function InterviewDrillPage() {
   });
 
   const [sessionScores, setSessionScores] = useState<DrillScore[]>([]);
+  const [inputMode, setInputMode] = useState<"text" | "voice">("text");
+  const [transcribing, setTranscribing] = useState(false);
+  const [transcribeError, setTranscribeError] = useState<string | null>(null);
+
+  // 音声録音完了時: Whisper で文字起こしして textarea に追記
+  const handleVoiceRecorded = useCallback(async (audioBase64: string, mimeType: string) => {
+    setTranscribing(true);
+    setTranscribeError(null);
+    try {
+      const res = await authFetch("/api/transcribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ audioBase64, mimeType, language: "ja" }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      const text = (data.transcription?.fullText ?? "").trim();
+      if (text) {
+        setState((prev) => ({
+          ...prev,
+          currentAnswer: prev.currentAnswer
+            ? `${prev.currentAnswer}${prev.currentAnswer.endsWith("。") ? "" : "。"}${text}`
+            : text,
+        }));
+      } else {
+        setTranscribeError("音声を認識できませんでした。もう一度お試しください。");
+      }
+    } catch (err) {
+      console.error("Transcribe failed", err);
+      setTranscribeError(err instanceof Error ? err.message : "文字起こしに失敗しました");
+    } finally {
+      setTranscribing(false);
+    }
+  }, []);
 
   // カテゴリ選択
   const handleCategorySelect = useCallback(async (category: DrillCategory) => {
@@ -407,19 +447,65 @@ export default function InterviewDrillPage() {
               </div>
 
               <div className="space-y-3">
-                <label className="text-sm font-medium text-slate-700">
-                  あなたの回答
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-slate-700">
+                    あなたの回答
+                  </label>
+                  <div className="flex gap-1 rounded-lg border bg-white p-0.5">
+                    <button
+                      type="button"
+                      onClick={() => setInputMode("text")}
+                      className={cn(
+                        "flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                        inputMode === "text" ? "bg-primary text-primary-foreground" : "text-slate-600 hover:bg-slate-100"
+                      )}
+                    >
+                      <Keyboard className="h-3 w-3" />
+                      テキスト
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setInputMode("voice")}
+                      className={cn(
+                        "flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                        inputMode === "voice" ? "bg-primary text-primary-foreground" : "text-slate-600 hover:bg-slate-100"
+                      )}
+                    >
+                      <Mic className="h-3 w-3" />
+                      音声
+                    </button>
+                  </div>
+                </div>
                 <Textarea
                   value={state.currentAnswer}
                   onChange={(e) => setState(prev => ({ ...prev, currentAnswer: e.target.value }))}
-                  placeholder="2-3分程度で回答できる内容で答えてください..."
+                  placeholder={inputMode === "voice"
+                    ? "下のマイクで話すと自動で文字起こしされます。直接の編集も可能です..."
+                    : "2-3分程度で回答できる内容で答えてください..."}
                   className="min-h-32 resize-none"
                   disabled={state.loading}
                 />
-                <div className="text-xs text-slate-500">
-                  文字数: {state.currentAnswer.length}文字
+                <div className="flex items-center justify-between text-xs text-slate-500">
+                  <span>文字数: {state.currentAnswer.length}文字</span>
+                  {transcribing && (
+                    <span className="flex items-center gap-1 text-primary">
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      文字起こし中...
+                    </span>
+                  )}
                 </div>
+
+                {inputMode === "voice" && (
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                    <VoiceRecorder
+                      onRecordingComplete={handleVoiceRecorded}
+                      disabled={state.loading || transcribing}
+                    />
+                    {transcribeError && (
+                      <p className="mt-2 text-center text-xs text-red-600">{transcribeError}</p>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="flex gap-3">
