@@ -76,15 +76,49 @@ export async function POST(request: NextRequest) {
       content: m.content,
     }));
 
+    // GD は複数人の連続発話を含むため max_tokens を拡張
+    const maxTokens = mode === "group_discussion" ? 1200 : 512;
+
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 512,
+      max_tokens: maxTokens,
       system: systemPrompt,
       messages: claudeMessages,
     });
 
-    const content =
+    let content =
       response.content[0].type === "text" ? response.content[0].text : "";
+
+    // GD で極端に短いレスポンス(司会の指示だけ等)が返ってきた場合、続きを生成して結合
+    // 目安: 接頭辞【...】が 1 つ以下かつ 120 字未満なら続きを促す
+    if (mode === "group_discussion") {
+      const bracketCount = (content.match(/[【\[][^】\]]+[】\]]/g) ?? []).length;
+      if (bracketCount <= 1 && content.length < 120) {
+        try {
+          const followup = await client.messages.create({
+            model: "claude-haiku-4-5-20251001",
+            max_tokens: maxTokens,
+            system: systemPrompt,
+            messages: [
+              ...claudeMessages,
+              { role: "assistant", content },
+              {
+                role: "user",
+                content:
+                  "続けてください。自己紹介フェーズなら【健太】【美咲】【翔太】の自己紹介を順番に出し、最後に【司会】が受験生Dさん(あなた)に発言を促してください。",
+              },
+            ],
+          });
+          const extra =
+            followup.content[0].type === "text" ? followup.content[0].text : "";
+          if (extra) {
+            content = `${content}\n\n${extra}`;
+          }
+        } catch (err) {
+          console.warn("[interview/message] followup generation failed", err);
+        }
+      }
+    }
 
     // GD は他受験生3名も絡むので長めに、それ以外は従来通り
     const maxTurns = mode === "group_discussion" ? 26 : 16;

@@ -31,18 +31,28 @@ export async function POST(request: NextRequest) {
     const safeVoice =
       typeof voice === "string" && ALLOWED_VOICES.has(voice) ? voice : "alloy";
 
-    const ttsRes = await fetch("https://api.openai.com/v1/audio/speech", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${openaiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "tts-1",
-        input: text,
-        voice: safeVoice,
-      }),
-    });
+    // gpt-4o-mini-tts は tts-1 より高速。未サポート環境では tts-1 にフォールバック
+    const callOpenAI = (model: string) =>
+      fetch("https://api.openai.com/v1/audio/speech", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${openaiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model,
+          input: text,
+          voice: safeVoice,
+          response_format: "mp3",
+        }),
+      });
+
+    let ttsRes = await callOpenAI("gpt-4o-mini-tts");
+    if (!ttsRes.ok && (ttsRes.status === 400 || ttsRes.status === 404)) {
+      // モデル未対応の場合のみ tts-1 にフォールバック
+      console.warn("[TTS] gpt-4o-mini-tts failed, falling back to tts-1");
+      ttsRes = await callOpenAI("tts-1");
+    }
 
     if (!ttsRes.ok) {
       console.error("TTS API error:", ttsRes.status, await ttsRes.text().catch(() => ""));

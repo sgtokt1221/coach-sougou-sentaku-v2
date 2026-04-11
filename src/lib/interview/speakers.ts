@@ -174,3 +174,68 @@ export function resolveSpeaker(
   if (parsed) return parsed;
   return { profile: defaultProfile, body: content };
 }
+
+export interface Utterance {
+  profile: SpeakerProfile;
+  body: string;
+}
+
+/**
+ * メッセージ内の 【話者名】本文 ブロックを話者ごとに分解する。
+ * 導入フェーズでの連続自己紹介や教員の連続コメントなど、複数人の発話を含むケース向け。
+ *
+ * - 接頭辞が見つからない場合は 1 要素の配列 (defaultProfile) を返す
+ * - 空 body は除外する
+ */
+export function splitIntoUtterances(
+  content: string,
+  defaultProfile: SpeakerProfile = DEFAULT_INTERVIEWER,
+): Utterance[] {
+  const bracketPattern = /[【\[]([^】\]]+)[】\]]/g;
+  const marks: Array<{ start: number; labelEnd: number; label: string }> = [];
+  let m: RegExpExecArray | null;
+  while ((m = bracketPattern.exec(content)) !== null) {
+    marks.push({
+      start: m.index,
+      labelEnd: m.index + m[0].length,
+      label: m[1].trim(),
+    });
+  }
+
+  if (marks.length === 0) {
+    const trimmed = content.trim();
+    return trimmed.length > 0
+      ? [{ profile: defaultProfile, body: trimmed }]
+      : [];
+  }
+
+  const result: Utterance[] = [];
+
+  // 先頭に接頭辞なしの地の文があれば default として先頭に追加
+  if (marks[0].start > 0) {
+    const preface = content.slice(0, marks[0].start).trim();
+    if (preface) {
+      result.push({ profile: defaultProfile, body: preface });
+    }
+  }
+
+  for (let i = 0; i < marks.length; i++) {
+    const current = marks[i];
+    const nextStart = i + 1 < marks.length ? marks[i + 1].start : content.length;
+    const body = content.slice(current.labelEnd, nextStart).trim();
+    if (!body) continue;
+
+    const profile =
+      Object.values(GD_SPEAKERS).find(
+        (p) =>
+          current.label === p.prefix ||
+          current.label === p.displayName ||
+          current.label.includes(p.displayName) ||
+          current.label.includes(p.prefix),
+      ) ?? defaultProfile;
+
+    result.push({ profile, body });
+  }
+
+  return result;
+}

@@ -22,6 +22,7 @@ import VideoAnalyzer from "@/components/interview/VideoAnalyzer";
 import CameraPreview from "@/components/interview/CameraPreview";
 import {
   resolveSpeaker,
+  splitIntoUtterances,
   DEFAULT_INTERVIEWER,
   type TtsVoice,
   GD_SPEAKERS,
@@ -87,16 +88,36 @@ export default function InterviewSessionPage() {
     }
   }, []);
 
-  const speakText = useCallback(async (text: string, voice: TtsVoice = "alloy") => {
-    if (!ttsEnabled) return;
+  /**
+   * 長文を文境界で複数チャンクに分割する。
+   * 目標: 1 チャンク 80-200 字。短い文は前のチャンクに連結する。
+   */
+  const splitIntoChunks = (text: string): string[] => {
+    const sentences = text
+      .replace(/\r/g, "")
+      .split(/(?<=[。！？!?])/)
+      .map((s) => s.trim())
+      .filter(Boolean);
 
+    const chunks: string[] = [];
+    let buf = "";
+    for (const s of sentences) {
+      if ((buf + s).length > 200 && buf.length >= 80) {
+        chunks.push(buf);
+        buf = s;
+      } else {
+        buf += s;
+      }
+    }
+    if (buf) chunks.push(buf);
+    return chunks.length > 0 ? chunks : [text];
+  };
+
+  /** 1 チャンクを fetch して AudioBuffer を返す (並列実行可能) */
+  const fetchChunkAudio = useCallback(async (text: string, voice: TtsVoice): Promise<AudioBuffer | null> => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 20000);
     try {
-      setAiSpeaking(true);
-      console.log("[TTS] Starting for text length:", text.length, "voice:", voice);
-
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 15000);
-
       const res = await fetch("/api/interview/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -104,67 +125,122 @@ export default function InterviewSessionPage() {
         signal: controller.signal,
       });
       clearTimeout(timeout);
-
       if (!res.ok) {
-        console.warn("[TTS] API error:", res.status);
-        setAiSpeaking(false);
-        return;
+        console.warn("[TTS] chunk fetch failed:", res.status);
+        return null;
       }
+      const buffer = await res.arrayBuffer();
+      if (buffer.byteLength === 0) return null;
 
-      const arrayBuffer = await res.arrayBuffer();
-      console.log("[TTS] Received audio bytes:", arrayBuffer.byteLength);
-
-      if (arrayBuffer.byteLength === 0) {
-        console.warn("[TTS] Empty audio response");
-        setAiSpeaking(false);
-        return;
-      }
-
-      // Web Audio APIで再生（Autoplay Policy回避に強い）
       const ctx = audioContextRef.current;
-      if (ctx && ctx.state !== "closed") {
-        try {
-          const audioBuffer = await ctx.decodeAudioData(arrayBuffer.slice(0));
-          const source = ctx.createBufferSource();
-          source.buffer = audioBuffer;
-          source.connect(ctx.destination);
+      if (!ctx || ctx.state === "closed") return null;
+      return await ctx.decodeAudioData(buffer.slice(0));
+    } catch (err) {
+      console.warn("[TTS] chunk decode failed:", err instanceof Error ? err.message : err);
+      return null;
+    }
+  }, []);
+
+  /**
+   * テキストを文単位で並列 fetch し、順次 Web Audio API で再生する。
+   * 最初のチャンクが届き次第再生開始するため、体感遅延が最小化される。
+   */
+  const speakText = useCallback(async (text: string, voice: TtsVoice = "alloy") => {
+    if (!ttsEnabled) return;
+    const ctx = audioContextRef.current;
+    if (!ctx || ctx.state === "closed") {
+      console.warn("[TTS] AudioContext unavailable");
+      return;
+    }
+
+    try {
+      setAiSpeaking(true);
+      const chunks = splitIntoChunks(text);
+      console.log("[TTS] chunks:", chunks.length, "voice:", voice);
+
+      // 全チャンクを並列 fetch (順序は保持)
+      const buffers = chunks.map((c) => fetchChunkAudio(c, voice));
+
+      let cursorTime = ctx.currentTime;
+      for (let i = 0; i < buffers.length; i++) {
+        const audioBuffer = await buffers[i];
+        if (!audioBuffer) continue;
+
+        const source = ctx.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(ctx.destination);
+
+        // 次のチャンクの開始時刻を計算してギャップなく連結
+        const startAt = Math.max(cursorTime, ctx.currentTime);
+        source.start(startAt);
+        cursorTime = startAt + audioBuffer.duration;
+
+        // 最後のチャンクの終了で aiSpeaking 解除
+        if (i === buffers.length - 1) {
           source.onended = () => setAiSpeaking(false);
-          source.start(0);
-          console.log("[TTS] Playing via Web Audio API");
-          return;
-        } catch (webAudioErr) {
-          console.warn("[TTS] Web Audio API failed, falling back to <audio>:", webAudioErr);
         }
       }
-
-      // フォールバック: DOM <audio> 要素で再生
-      const blob = new Blob([arrayBuffer], { type: "audio/mpeg" });
-      const url = URL.createObjectURL(blob);
-
-      if (ttsAudioRef.current) {
-        ttsAudioRef.current.pause();
-        ttsAudioRef.current.src = "";
-      }
-
-      const audio = ttsAudioRef.current ?? document.createElement("audio");
-      ttsAudioRef.current = audio;
-      audio.src = url;
-      audio.onended = () => { URL.revokeObjectURL(url); setAiSpeaking(false); };
-      audio.onerror = (e) => { console.warn("[TTS] audio error:", e); URL.revokeObjectURL(url); setAiSpeaking(false); };
-
-      try {
-        await audio.play();
-        console.log("[TTS] Playing via <audio> element");
-      } catch (playErr) {
-        console.warn("[TTS] play() blocked:", playErr);
-        URL.revokeObjectURL(url);
-        setAiSpeaking(false);
-      }
     } catch (err) {
-      console.warn("[TTS] Error:", err instanceof Error ? err.message : err);
+      console.warn("[TTS] speakText error:", err instanceof Error ? err.message : err);
       setAiSpeaking(false);
     }
-  }, [ttsEnabled]);
+  }, [ttsEnabled, fetchChunkAudio]);
+
+  /**
+   * GD モードの複数人連続発話を、話者ごとに voice を切り替えて順次読み上げる。
+   * 全発言 (各々を更にチャンク分割) を並列 fetch し、(発言順, チャンク順) でキューに積む。
+   * 先頭チャンクが届き次第 cursor 時刻から連結再生するので遅延が最小化される。
+   */
+  const speakUtterances = useCallback(
+    async (content: string) => {
+      if (!ttsEnabled) return;
+      const ctx = audioContextRef.current;
+      if (!ctx || ctx.state === "closed") return;
+
+      const utterances = splitIntoUtterances(content, DEFAULT_INTERVIEWER);
+      if (utterances.length === 0) return;
+
+      setAiSpeaking(true);
+
+      // 全チャンクを事前に並列 fetch
+      type Item = { utteranceIdx: number; voice: TtsVoice; promise: Promise<AudioBuffer | null> };
+      const items: Item[] = [];
+      utterances.forEach((u, uIdx) => {
+        const chunks = splitIntoChunks(u.body);
+        for (const c of chunks) {
+          items.push({
+            utteranceIdx: uIdx,
+            voice: u.profile.voice,
+            promise: fetchChunkAudio(c, u.profile.voice),
+          });
+        }
+      });
+
+      let cursorTime = ctx.currentTime;
+      for (let i = 0; i < items.length; i++) {
+        // eslint-disable-next-line no-await-in-loop
+        const audioBuffer = await items[i].promise;
+        if (!audioBuffer) continue;
+
+        const source = ctx.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(ctx.destination);
+
+        // 発言が切り替わるときに 200ms のポーズを入れる
+        const isNewUtterance =
+          i > 0 && items[i - 1].utteranceIdx !== items[i].utteranceIdx;
+        const gap = isNewUtterance ? 0.2 : 0;
+        const startAt = Math.max(cursorTime + gap, ctx.currentTime);
+        source.start(startAt);
+        cursorTime = startAt + audioBuffer.duration;
+
+        if (i === items.length - 1) {
+          source.onended = () => setAiSpeaking(false);
+        }
+      }
+    },
+    [ttsEnabled, fetchChunkAudio],
+  );
 
   // Load session info from sessionStorage
   useEffect(() => {
@@ -174,12 +250,16 @@ export default function InterviewSessionPage() {
       setSessionInfo(info);
       setMessages([{ role: "ai", content: info.openingMessage }]);
       if (info.inputMode === "voice") {
-        const { profile } = resolveSpeaker(info.openingMessage, DEFAULT_INTERVIEWER);
-        speakText(info.openingMessage, profile.voice);
+        if (info.mode === "group_discussion") {
+          speakUtterances(info.openingMessage);
+        } else {
+          const { profile } = resolveSpeaker(info.openingMessage, DEFAULT_INTERVIEWER);
+          speakText(info.openingMessage, profile.voice);
+        }
         setCameraEnabled(true);
       }
     }
-  }, [sessionId, speakText]);
+  }, [sessionId, speakText, speakUtterances]);
 
   // Restore messages from sessionStorage backup
   useEffect(() => {
@@ -305,8 +385,12 @@ export default function InterviewSessionPage() {
       const data = await res.json();
       setMessages((prev) => [...prev, { role: "ai", content: data.content }]);
       if (sessionInfo?.inputMode === "voice") {
-        const { profile } = resolveSpeaker(data.content, DEFAULT_INTERVIEWER);
-        speakText(data.content, profile.voice);
+        if (sessionInfo.mode === "group_discussion") {
+          speakUtterances(data.content);
+        } else {
+          const { profile } = resolveSpeaker(data.content, DEFAULT_INTERVIEWER);
+          speakText(data.content, profile.voice);
+        }
       }
       if (!data.isActive) {
         setShowEndDialog(true);
@@ -320,7 +404,7 @@ export default function InterviewSessionPage() {
       setIsLoading(false);
       inputRef.current?.focus();
     }
-  }, [input, isLoading, messages, sessionId, sessionInfo, speakText, ensureAudioContext]);
+  }, [input, isLoading, messages, sessionId, sessionInfo, speakText, speakUtterances, ensureAudioContext]);
 
   async function handleEnd() {
     setIsEnding(true);
@@ -398,8 +482,12 @@ export default function InterviewSessionPage() {
           { role: "student", content: data.transcribedText },
           { role: "ai", content: data.aiResponse },
         ]);
-        const { profile } = resolveSpeaker(data.aiResponse, DEFAULT_INTERVIEWER);
-        speakText(data.aiResponse, profile.voice);
+        if (sessionInfo?.mode === "group_discussion") {
+          speakUtterances(data.aiResponse);
+        } else {
+          const { profile } = resolveSpeaker(data.aiResponse, DEFAULT_INTERVIEWER);
+          speakText(data.aiResponse, profile.voice);
+        }
 
         if (!data.isActive) {
           setShowEndDialog(true);
@@ -415,7 +503,7 @@ export default function InterviewSessionPage() {
         setIsLoading(false);
       }
     },
-    [isLoading, sessionId, messages, sessionInfo, speakText, ensureAudioContext]
+    [isLoading, sessionId, messages, sessionInfo, speakText, speakUtterances, ensureAudioContext]
   );
 
   const isVoiceMode = sessionInfo?.inputMode === "voice";
@@ -518,26 +606,30 @@ export default function InterviewSessionPage() {
             );
           }
 
-          // AI 発言: GDモードなら話者別カード、それ以外は従来の吹き出し
+          // AI 発言: GDモードなら複数発言を話者別カードに分解、それ以外は従来の吹き出し
           if (sessionInfo?.mode === "group_discussion") {
-            const { profile, body } = resolveSpeaker(msg.content, DEFAULT_INTERVIEWER);
+            const utterances = splitIntoUtterances(msg.content, DEFAULT_INTERVIEWER);
             return (
-              <div key={i} className="flex justify-start">
-                <div
-                  className={`max-w-[90%] lg:max-w-[80%] rounded-2xl rounded-tl-sm border px-3 py-2 ${profile.colorClass}`}
-                >
-                  <div className="mb-1 flex items-center gap-1.5">
-                    <span className="flex size-5 items-center justify-center rounded-full bg-white/70 text-[10px] font-bold">
-                      {profile.avatar}
-                    </span>
-                    <span className="text-xs font-semibold">
-                      {profile.displayName}
-                    </span>
+              <div key={i} className="flex flex-col gap-2">
+                {utterances.map((u, j) => (
+                  <div key={j} className="flex justify-start">
+                    <div
+                      className={`max-w-[90%] lg:max-w-[80%] rounded-2xl rounded-tl-sm border px-3 py-2 ${u.profile.colorClass}`}
+                    >
+                      <div className="mb-1 flex items-center gap-1.5">
+                        <span className="flex size-5 items-center justify-center rounded-full bg-white/70 text-[10px] font-bold">
+                          {u.profile.avatar}
+                        </span>
+                        <span className="text-xs font-semibold">
+                          {u.profile.displayName}
+                        </span>
+                      </div>
+                      <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                        {u.body}
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                    {body}
-                  </p>
-                </div>
+                ))}
               </div>
             );
           }
