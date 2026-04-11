@@ -4,82 +4,6 @@ import { buildInterviewSystemPrompt } from "@/lib/ai/prompts/interview";
 import type { InterviewStartRequest, InterviewStartResponse } from "@/lib/types/interview";
 import type { WeaknessRecord } from "@/lib/types/growth";
 import type { InterviewTendency } from "@/lib/types/university";
-import { resolveSpeaker, DEFAULT_INTERVIEWER } from "@/lib/interview/speakers";
-
-/**
- * オープニングメッセージの最初の1文だけ TTS で先行生成し、base64 で返す。
- * これでクライアントは TTS fetch のラウンドトリップ(~2秒)を省略できる。
- */
-async function prefetchOpeningAudio(
-  openingMessage: string,
-): Promise<{ audioBase64: string; voice: string; text: string } | null> {
-  const openaiKey = process.env.OPENAI_API_KEY;
-  if (!openaiKey) return null;
-
-  try {
-    // 「次の 【話者名】 の直前まで」を最初の 1 発話として切り出す
-    // 例: "【司会】おはようございます。本日は..." → 【健太】の直前まで
-    const bracketPattern = /[【\[][^】\]]+[】\]]/g;
-    const brackets: number[] = [];
-    let bm: RegExpExecArray | null;
-    while ((bm = bracketPattern.exec(openingMessage)) !== null) {
-      brackets.push(bm.index);
-    }
-
-    let firstText = openingMessage;
-    if (brackets.length >= 2) {
-      firstText = openingMessage.slice(0, brackets[1]).trim();
-    }
-
-    // あまりに長い場合はレイテンシ優先で先頭 1 文に丸める
-    if (firstText.length > 250) {
-      const prefixMatch = firstText.match(/^[【\[][^】\]]+[】\]]/);
-      const prefix = prefixMatch ? prefixMatch[0] : "";
-      const rest = prefix ? firstText.slice(prefix.length) : firstText;
-      const sentences = rest
-        .split(/(?<=[。！？!?])/)
-        .map((s) => s.trim())
-        .filter(Boolean);
-      if (sentences.length > 0) {
-        firstText = prefix + sentences[0];
-      }
-    }
-
-    if (!firstText) return null;
-
-    // 話者を抽出して voice 決定(接頭辞【話者名】を除いた本文で音声生成)
-    const { profile, body } = resolveSpeaker(firstText, DEFAULT_INTERVIEWER);
-    const ttsText = body || firstText;
-
-    const callOpenAI = (model: string) =>
-      fetch("https://api.openai.com/v1/audio/speech", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${openaiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model,
-          input: ttsText,
-          voice: profile.voice,
-          response_format: "mp3",
-        }),
-      });
-
-    let ttsRes = await callOpenAI("gpt-4o-mini-tts");
-    if (!ttsRes.ok && (ttsRes.status === 400 || ttsRes.status === 404)) {
-      ttsRes = await callOpenAI("tts-1");
-    }
-    if (!ttsRes.ok) return null;
-
-    const buffer = await ttsRes.arrayBuffer();
-    const base64 = Buffer.from(buffer).toString("base64");
-    return { audioBase64: base64, voice: profile.voice, text: firstText };
-  } catch (err) {
-    console.warn("[interview/start] prefetch TTS failed", err);
-    return null;
-  }
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -174,31 +98,38 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: "APIキーが設定されていません", available: false },
-        { status: 503 }
-      );
+    // 音声モード (個人/プレゼン/口頭試問/GD すべて) は Realtime API が自分で挨拶を生成するので
+    // Claude での openingMessage 生成はスキップして爆速化する
+    const skipClaudeOpening = resolvedInputMode === "voice";
+
+    let openingMessage = "";
+    if (!skipClaudeOpening) {
+      const apiKey = process.env.ANTHROPIC_API_KEY;
+      if (!apiKey) {
+        return NextResponse.json(
+          { error: "APIキーが設定されていません", available: false },
+          { status: 503 }
+        );
+      }
+
+      const client = new Anthropic();
+      const systemPrompt = buildInterviewSystemPrompt(mode, universityName, facultyName, admissionPolicy, weaknessList, interviewTendency, presentationContent);
+
+      // GD の導入は 司会→健太→美咲→翔太→司会(締め) の 5 発話を一度に返すため長めに
+      const maxTokens = mode === "group_discussion" ? 1800 : 512;
+
+      const response = await client.messages.create({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: maxTokens,
+        system: systemPrompt,
+        messages: [{ role: "user", content: "面接を開始してください。開始の挨拶と最初の質問をしてください。" }],
+      });
+
+      openingMessage =
+        response.content[0].type === "text"
+          ? response.content[0].text
+          : "本日はお越しいただきありがとうございます。まず、志望理由をお聞かせください。";
     }
-
-    const client = new Anthropic();
-    const systemPrompt = buildInterviewSystemPrompt(mode, universityName, facultyName, admissionPolicy, weaknessList, interviewTendency, presentationContent);
-
-    // GD の導入は 司会→健太→美咲→翔太→司会(締め) の 5 発話を一度に返すため長めに
-    const maxTokens = mode === "group_discussion" ? 1800 : 512;
-
-    const response = await client.messages.create({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: maxTokens,
-      system: systemPrompt,
-      messages: [{ role: "user", content: "面接を開始してください。開始の挨拶と最初の質問をしてください。" }],
-    });
-
-    const openingMessage =
-      response.content[0].type === "text"
-        ? response.content[0].text
-        : "本日はお越しいただきありがとうございます。まず、志望理由をお聞かせください。";
 
     const sessionId = crypto.randomUUID();
 
@@ -220,28 +151,13 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 音声モードの場合、最初の1文だけ TTS をサーバー側で先行生成
-    // クライアントは受信後に即再生できるので体感レイテンシが大幅短縮
-    let preOpeningAudioBase64: string | undefined;
-    let preOpeningVoice: string | undefined;
-    let preOpeningText: string | undefined;
-    if (resolvedInputMode === "voice") {
-      const prefetch = await prefetchOpeningAudio(openingMessage);
-      if (prefetch) {
-        preOpeningAudioBase64 = prefetch.audioBase64;
-        preOpeningVoice = prefetch.voice;
-        preOpeningText = prefetch.text;
-      }
-    }
-
+    // 音声モードは Realtime API がサーバー側で直接音声生成するため、
+    // ここでの TTS prefetch は一切不要
     const result: InterviewStartResponse = {
       sessionId,
       openingMessage,
       estimatedDuration: 15,
       universityContext: { universityName, facultyName, admissionPolicy },
-      preOpeningAudioBase64,
-      preOpeningVoice,
-      preOpeningText,
     };
     return NextResponse.json(result);
   } catch (error) {

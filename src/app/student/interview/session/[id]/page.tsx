@@ -12,21 +12,18 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Send, StopCircle, ChevronDown, ChevronUp, Video, VideoOff, Volume2, VolumeX, Pencil, Check, X, BookOpenCheck } from "lucide-react";
+import { Send, StopCircle, ChevronDown, ChevronUp, Video, VideoOff, Pencil, Check, X, BookOpenCheck } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import type { InterviewMessage, InterviewMode, InterviewInputMode, VoiceAnalysis, VideoAnalysis, AppearanceAnalysis } from "@/lib/types/interview";
 import type { WeaknessRecord } from "@/lib/types/growth";
 import { useRealtimeInterview } from "@/hooks/useRealtimeInterview";
 import { INTERVIEW_MODE_LABELS } from "@/lib/types/interview";
-import ContinuousVoiceRecorder from "@/components/interview/ContinuousVoiceRecorder";
-import VoiceAnalyzer, { refineWithTranscription } from "@/components/interview/VoiceAnalyzer";
+import { refineWithTranscription } from "@/components/interview/VoiceAnalyzer";
 import VideoAnalyzer from "@/components/interview/VideoAnalyzer";
 import CameraPreview from "@/components/interview/CameraPreview";
 import {
-  resolveSpeaker,
   splitIntoUtterances,
   DEFAULT_INTERVIEWER,
-  type TtsVoice,
   GD_SPEAKERS,
 } from "@/lib/interview/speakers";
 
@@ -42,10 +39,6 @@ interface SessionInfo {
   };
   openingMessage: string;
   presentationContent?: string;
-  /** サーバーが先行生成したオープニング最初の1文の音声 (base64 MP3) */
-  preOpeningAudioBase64?: string;
-  preOpeningVoice?: string;
-  preOpeningText?: string;
 }
 
 function formatTime(seconds: number): string {
@@ -93,13 +86,8 @@ export default function InterviewSessionPage() {
     },
   });
   const appearanceCheckCount = useRef(0);
-  const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
   const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
   const [cameraEnabled, setCameraEnabled] = useState(false);
-  const [aiSpeaking, setAiSpeaking] = useState(false);
-  const [ttsEnabled, setTtsEnabled] = useState(true);
-  /** 音声自動再生がブロックされた場合に表示するボタン */
-  const [needsAudioUnlock, setNeedsAudioUnlock] = useState(false);
   /** 編集中のメッセージインデックス。null なら編集していない */
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [editDraft, setEditDraft] = useState("");
@@ -130,295 +118,6 @@ export default function InterviewSessionPage() {
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const ttsAudioRef = useRef<HTMLAudioElement | null>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  /** 現在再生中の BufferSource をすべて追跡する (連打重複 & 遷移中断対策) */
-  const activeSourcesRef = useRef<AudioBufferSourceNode[]>([]);
-  /** unmount 後の非同期コールバック抑止用 */
-  const isMountedRef = useRef(true);
-
-  // AudioContextを初期化（Autoplay Policy対策）
-  // /new ページで作成された window.__interviewAudioCtx があれば再利用する
-  // (クライアントサイドナビゲーションなので window は同一タブで維持される)
-  const ensureAudioContext = useCallback(() => {
-    if (typeof window === "undefined") return;
-    interface WindowWithAudio extends Window {
-      __interviewAudioCtx?: AudioContext;
-      webkitAudioContext?: typeof AudioContext;
-    }
-    const win = window as WindowWithAudio;
-
-    if (!audioContextRef.current) {
-      if (win.__interviewAudioCtx && win.__interviewAudioCtx.state !== "closed") {
-        audioContextRef.current = win.__interviewAudioCtx;
-      } else {
-        const Ctor = window.AudioContext || win.webkitAudioContext;
-        if (Ctor) {
-          audioContextRef.current = new Ctor();
-          win.__interviewAudioCtx = audioContextRef.current;
-        }
-      }
-    }
-    if (audioContextRef.current?.state === "suspended") {
-      audioContextRef.current.resume().catch(() => {});
-    }
-  }, []);
-
-  /**
-   * 現在再生中の全 BufferSource を即時停止する。
-   * - speakText/speakUtterances の再入時に呼び、音声の重なりを防ぐ
-   * - TTS トグル OFF 時、ページ unmount 時にも呼ぶ
-   */
-  const stopAllAudio = useCallback(() => {
-    const sources = activeSourcesRef.current;
-    activeSourcesRef.current = [];
-    for (const src of sources) {
-      try {
-        src.onended = null;
-        src.stop(0);
-      } catch {
-        /* 既に停止済み or 未開始なら無視 */
-      }
-      try {
-        src.disconnect();
-      } catch {
-        /* noop */
-      }
-    }
-    if (isMountedRef.current) {
-      setAiSpeaking(false);
-    }
-  }, []);
-
-  /**
-   * 再生用に作成した BufferSource を登録する。
-   * onended では自動的に配列から除去し、全て再生完了したら aiSpeaking を落とす。
-   */
-  const registerSource = useCallback((source: AudioBufferSourceNode, isLast: boolean) => {
-    activeSourcesRef.current.push(source);
-    source.onended = () => {
-      activeSourcesRef.current = activeSourcesRef.current.filter((s) => s !== source);
-      if (isLast && activeSourcesRef.current.length === 0 && isMountedRef.current) {
-        setAiSpeaking(false);
-      }
-    };
-  }, []);
-
-  /**
-   * 長文を文境界で複数チャンクに分割する。
-   * - 第1チャンク: 最初の1文だけ(max 80字)にして最初の音を最速で出す
-   * - それ以降: 150-250字でまとめる
-   */
-  const splitIntoChunks = (text: string): string[] => {
-    const sentences = text
-      .replace(/\r/g, "")
-      .split(/(?<=[。！？!?])/)
-      .map((s) => s.trim())
-      .filter(Boolean);
-
-    if (sentences.length === 0) return [text];
-    if (sentences.length === 1) return sentences;
-
-    const chunks: string[] = [];
-
-    // 第1チャンク: 最初の1文だけ(長すぎる場合は読点で区切る)
-    const first = sentences[0];
-    if (first.length > 80) {
-      const parts = first.split(/(?<=、)/);
-      chunks.push(parts[0]);
-      const rest = parts.slice(1).join("");
-      if (rest) chunks.push(rest);
-    } else {
-      chunks.push(first);
-    }
-
-    // 残りの文: 150-250 字でまとめる
-    let buf = "";
-    for (let i = 1; i < sentences.length; i++) {
-      const s = sentences[i];
-      if ((buf + s).length > 250 && buf.length >= 100) {
-        chunks.push(buf);
-        buf = s;
-      } else {
-        buf += s;
-      }
-    }
-    if (buf) chunks.push(buf);
-    return chunks;
-  };
-
-  /** 1 チャンクを fetch して AudioBuffer を返す (並列実行可能) */
-  const fetchChunkAudio = useCallback(async (text: string, voice: TtsVoice): Promise<AudioBuffer | null> => {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 20000);
-    try {
-      const res = await fetch("/api/interview/tts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, voice }),
-        signal: controller.signal,
-      });
-      clearTimeout(timeout);
-      if (!res.ok) {
-        console.warn("[TTS] chunk fetch failed:", res.status);
-        return null;
-      }
-      const buffer = await res.arrayBuffer();
-      if (buffer.byteLength === 0) return null;
-
-      const ctx = audioContextRef.current;
-      if (!ctx || ctx.state === "closed") return null;
-      return await ctx.decodeAudioData(buffer.slice(0));
-    } catch (err) {
-      console.warn("[TTS] chunk decode failed:", err instanceof Error ? err.message : err);
-      return null;
-    }
-  }, []);
-
-  /**
-   * テキストを文単位で並列 fetch し、順次 Web Audio API で再生する。
-   * 最初のチャンクが届き次第再生開始するため、体感遅延が最小化される。
-   */
-  const speakText = useCallback(async (text: string, voice: TtsVoice = "alloy") => {
-    if (!ttsEnabled) return;
-    const ctx = audioContextRef.current;
-    if (!ctx || ctx.state === "closed") {
-      console.warn("[TTS] AudioContext unavailable");
-      return;
-    }
-
-    // 再入時に過去再生を打ち切り、音声の重なりを防ぐ
-    stopAllAudio();
-
-    try {
-      setAiSpeaking(true);
-      const chunks = splitIntoChunks(text);
-      console.log("[TTS] chunks:", chunks.length, "voice:", voice);
-
-      // 全チャンクを並列 fetch (順序は保持)
-      const buffers = chunks.map((c) => fetchChunkAudio(c, voice));
-
-      let cursorTime = ctx.currentTime;
-      for (let i = 0; i < buffers.length; i++) {
-        const audioBuffer = await buffers[i];
-        if (!audioBuffer) continue;
-        // unmount 後は新 source を開始しない
-        if (!isMountedRef.current || (ctx.state as string) === "closed") return;
-
-        const source = ctx.createBufferSource();
-        source.buffer = audioBuffer;
-        source.connect(ctx.destination);
-
-        // 次のチャンクの開始時刻を計算してギャップなく連結
-        const startAt = Math.max(cursorTime, ctx.currentTime);
-        source.start(startAt);
-        cursorTime = startAt + audioBuffer.duration;
-
-        registerSource(source, i === buffers.length - 1);
-      }
-    } catch (err) {
-      console.warn("[TTS] speakText error:", err instanceof Error ? err.message : err);
-      if (isMountedRef.current) setAiSpeaking(false);
-    }
-  }, [ttsEnabled, fetchChunkAudio, stopAllAudio, registerSource]);
-
-  /**
-   * GD モードの複数人連続発話を、話者ごとに voice を切り替えて順次読み上げる。
-   *
-   * 重要: **1 発言 = 1 TTS リクエスト** を徹底する。
-   * 同じ話者の発言を複数チャンクに分割すると、OpenAI TTS は同じ voice でも
-   * 入力テキストごとに声質がわずかに変わるため、「1 人の発言が途中で別人風になる」
-   * という違和感が出る。発言全体を丸ごと 1 リクエストで送れば、
-   * 話者交代のタイミングでだけ voice が切り替わる自然な討論になる。
-   */
-  const speakUtterances = useCallback(
-    async (content: string) => {
-      if (!ttsEnabled) return;
-      const ctx = audioContextRef.current;
-      if (!ctx || ctx.state === "closed") return;
-
-      const utterances = splitIntoUtterances(content, DEFAULT_INTERVIEWER);
-      if (utterances.length === 0) return;
-
-      // 再入時に過去再生を打ち切る
-      stopAllAudio();
-
-      setAiSpeaking(true);
-
-      // 各発言を 1 リクエストで並列 fetch。順序は utterance インデックスで保持
-      const buffers = utterances.map((u) => fetchChunkAudio(u.body, u.profile.voice));
-
-      let cursorTime = ctx.currentTime;
-      for (let i = 0; i < buffers.length; i++) {
-        // eslint-disable-next-line no-await-in-loop
-        const audioBuffer = await buffers[i];
-        if (!audioBuffer) continue;
-        if (!isMountedRef.current || (ctx.state as string) === "closed") return;
-
-        const source = ctx.createBufferSource();
-        source.buffer = audioBuffer;
-        source.connect(ctx.destination);
-
-        // 発言境界に 250ms のポーズ(自然な間)
-        const gap = i > 0 ? 0.25 : 0;
-        const startAt = Math.max(cursorTime + gap, ctx.currentTime);
-        source.start(startAt);
-        cursorTime = startAt + audioBuffer.duration;
-
-        registerSource(source, i === buffers.length - 1);
-      }
-    },
-    [ttsEnabled, fetchChunkAudio, stopAllAudio, registerSource],
-  );
-
-  /**
-   * autoplay policy で音声再生がブロックされた場合、
-   * ユーザーがボタンクリックで unlock + オープニング再生を開始する。
-   */
-  const handleAudioUnlock = useCallback(async () => {
-    if (typeof window === "undefined") return;
-    // 連打対策: ボタンを即座に隠して二重押下を物理的に防ぐ
-    setNeedsAudioUnlock(false);
-    interface WindowWithAudio extends Window {
-      __interviewAudioCtx?: AudioContext;
-      webkitAudioContext?: typeof AudioContext;
-    }
-    const win = window as WindowWithAudio;
-    if (!audioContextRef.current) {
-      const Ctor = window.AudioContext || win.webkitAudioContext;
-      if (Ctor) {
-        audioContextRef.current = new Ctor();
-        win.__interviewAudioCtx = audioContextRef.current;
-      }
-    }
-    const ctx = audioContextRef.current;
-    if (!ctx) return;
-    try {
-      if (ctx.state === "suspended") {
-        await ctx.resume();
-      }
-      // 無音1サンプル再生で iOS Safari の autoplay を unlock
-      const buffer = ctx.createBuffer(1, 1, 22050);
-      const source = ctx.createBufferSource();
-      source.buffer = buffer;
-      source.connect(ctx.destination);
-      source.start(0);
-    } catch (err) {
-      console.warn("[TTS] unlock failed", err);
-    }
-
-    // 再生: sessionInfo から openingMessage を読み直して speak する
-    const stored = sessionStorage.getItem(`interview_session_${sessionId}`);
-    if (!stored) return;
-    const info: SessionInfo = JSON.parse(stored);
-
-    if (info.mode === "group_discussion") {
-      speakUtterances(info.openingMessage);
-    } else {
-      const { profile } = resolveSpeaker(info.openingMessage, DEFAULT_INTERVIEWER);
-      speakText(info.openingMessage, profile.voice);
-    }
-  }, [sessionId, speakText, speakUtterances]);
 
   // Load session info from sessionStorage
   useEffect(() => {
@@ -428,114 +127,17 @@ export default function InterviewSessionPage() {
     const info: SessionInfo = JSON.parse(stored);
     setSessionInfo(info);
 
-    // 音声モードで Realtime 対象 (非 GD) の場合は opening を messages に入れない
-    // Realtime 側が自動で挨拶を生成し、input_audio_transcription 経由で messages に載る
-    const willUseRealtime = info.inputMode === "voice" && info.mode !== "group_discussion";
-    if (!willUseRealtime) {
+    // 音声モードは OpenAI Realtime が挨拶を生成するので、opening を messages に入れない
+    // テキストモードはサーバーが Claude で生成した openingMessage を初期メッセージとして表示
+    if (info.inputMode !== "voice") {
       setMessages([{ role: "ai", content: info.openingMessage }]);
     }
 
-    if (info.inputMode !== "voice") return;
-    if (willUseRealtime) return; // Realtime 経路では以降の Claude TTS セットアップは一切不要
-
-    // AudioContext を必ず初期化してから再生
-    ensureAudioContext();
-    setCameraEnabled(true);
-
-    // autoplay policy で AudioContext が suspended の場合は unlock ボタンを出す
-    const ctx0 = audioContextRef.current;
-    if (ctx0 && ctx0.state === "suspended") {
-      setNeedsAudioUnlock(true);
-      // ボタン経由で再生するので即 return
-      return;
+    // 音声モードはカメラを自動有効化 (顔認識・視線指導)
+    if (info.inputMode === "voice") {
+      setCameraEnabled(true);
     }
-
-    // サーバープリフェッチ音声があれば即座に再生、残りテキストは話者単位で 1 リクエストずつ fetch
-    if (info.preOpeningAudioBase64 && info.preOpeningText) {
-      void (async () => {
-        const ctx = audioContextRef.current;
-        if (!ctx || ctx.state === "closed") return;
-        // autoplay policy 対策: suspended 状態なら resume を待つ
-        if (ctx.state === "suspended") {
-          try {
-            await ctx.resume();
-          } catch {
-            /* noop */
-          }
-        }
-        try {
-          // 初回 preOpening 再生前にも念のため既存音声を停止
-          stopAllAudio();
-          setAiSpeaking(true);
-          // base64 → ArrayBuffer → decode → 即再生
-          const binary = atob(info.preOpeningAudioBase64!);
-          const bytes = new Uint8Array(binary.length);
-          for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-          const audioBuffer = await ctx.decodeAudioData(bytes.buffer.slice(0) as ArrayBuffer);
-          if (!isMountedRef.current || (ctx.state as string) === "closed") return;
-          const source = ctx.createBufferSource();
-          source.buffer = audioBuffer;
-          source.connect(ctx.destination);
-          const startAt = ctx.currentTime;
-          source.start(startAt);
-          let cursorTime = startAt + audioBuffer.duration;
-
-          // 残りテキストを取得: preOpeningText は接頭辞付きの最初の発話
-          // openingMessage からそれを除いた後続を取り出す
-          const remaining = info.openingMessage.slice(info.preOpeningText!.length).trim();
-          if (remaining.length === 0) {
-            registerSource(source, true);
-            return;
-          }
-          // 先頭 source は末尾ではないので isLast=false で登録
-          registerSource(source, false);
-
-          // 残りを話者単位に分解、各発言を 1 リクエストで並列 fetch
-          const utterances =
-            info.mode === "group_discussion"
-              ? splitIntoUtterances(remaining, DEFAULT_INTERVIEWER)
-              : [{ profile: resolveSpeaker(info.openingMessage, DEFAULT_INTERVIEWER).profile, body: remaining }];
-
-          const buffers = utterances.map((u) => fetchChunkAudio(u.body, u.profile.voice));
-
-          for (let i = 0; i < buffers.length; i++) {
-            // eslint-disable-next-line no-await-in-loop
-            const buf = await buffers[i];
-            if (!buf) continue;
-            if (!isMountedRef.current || (ctx.state as string) === "closed") return;
-            const src2 = ctx.createBufferSource();
-            src2.buffer = buf;
-            src2.connect(ctx.destination);
-            const gap = 0.25; // 話者境界のポーズ
-            const at = Math.max(cursorTime + gap, ctx.currentTime);
-            src2.start(at);
-            cursorTime = at + buf.duration;
-
-            registerSource(src2, i === buffers.length - 1);
-          }
-        } catch (err) {
-          console.warn("[TTS] preOpening playback failed", err);
-          if (isMountedRef.current) setAiSpeaking(false);
-          // フォールバック: 通常経路で最初から読み直す
-          if (info.mode === "group_discussion") {
-            speakUtterances(info.openingMessage);
-          } else {
-            const { profile } = resolveSpeaker(info.openingMessage, DEFAULT_INTERVIEWER);
-            speakText(info.openingMessage, profile.voice);
-          }
-        }
-      })();
-      return;
-    }
-
-    // プリフェッチがない場合は通常経路
-    if (info.mode === "group_discussion") {
-      speakUtterances(info.openingMessage);
-    } else {
-      const { profile } = resolveSpeaker(info.openingMessage, DEFAULT_INTERVIEWER);
-      speakText(info.openingMessage, profile.voice);
-    }
-  }, [sessionId, speakText, speakUtterances, ensureAudioContext, fetchChunkAudio, stopAllAudio, registerSource]);
+  }, [sessionId]);
 
   // Restore messages from sessionStorage backup
   useEffect(() => {
@@ -659,29 +261,18 @@ export default function InterviewSessionPage() {
     };
   }, []);
 
-  // ページ unmount 時に音声再生を完全停止する (画面遷移で音声が垂れ流しになるのを防ぐ)
+  // ページ unmount 時に Realtime セッションと gaze タイマーを片付ける
   useEffect(() => {
-    isMountedRef.current = true;
     return () => {
-      isMountedRef.current = false;
-      stopAllAudio();
-      const ctx = audioContextRef.current;
-      if (ctx && ctx.state !== "closed") {
-        ctx.close().catch(() => {});
-      }
-      audioContextRef.current = null;
-      if (typeof window !== "undefined") {
-        (window as unknown as { __interviewAudioCtx?: AudioContext }).__interviewAudioCtx = undefined;
-      }
       if (gazeAlertTimerRef.current) {
         clearTimeout(gazeAlertTimerRef.current);
         gazeAlertTimerRef.current = null;
       }
-      // Realtime セッションも unmount 時に明示終了 (useRealtimeInterview 内にも cleanup あり)
+      // Realtime セッションを明示終了 (useRealtimeInterview 内にも cleanup あり)
       realtime.stop();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stopAllAudio]);
+  }, []);
 
   // Auto-scroll
   useEffect(() => {
@@ -695,8 +286,9 @@ export default function InterviewSessionPage() {
     }
   }, [messages, sessionId]);
 
+  // テキストモード専用の送信ハンドラ (Claude 経由)
+  // 音声モードは Realtime API が直接音声をやり取りするため、このフローは使わない
   const sendMessage = useCallback(async () => {
-    ensureAudioContext();
     const text = input.trim();
     if (!text || isLoading) return;
 
@@ -722,14 +314,6 @@ export default function InterviewSessionPage() {
       if (!res.ok) throw new Error();
       const data = await res.json();
       setMessages((prev) => [...prev, { role: "ai", content: data.content }]);
-      if (sessionInfo?.inputMode === "voice") {
-        if (sessionInfo.mode === "group_discussion") {
-          speakUtterances(data.content);
-        } else {
-          const { profile } = resolveSpeaker(data.content, DEFAULT_INTERVIEWER);
-          speakText(data.content, profile.voice);
-        }
-      }
       if (!data.isActive) {
         setShowEndDialog(true);
       }
@@ -742,7 +326,7 @@ export default function InterviewSessionPage() {
       setIsLoading(false);
       inputRef.current?.focus();
     }
-  }, [input, isLoading, messages, sessionId, sessionInfo, speakText, speakUtterances, ensureAudioContext, elapsed]);
+  }, [input, isLoading, messages, sessionId, sessionInfo, elapsed]);
 
   async function handleEnd() {
     setIsEnding(true);
@@ -809,59 +393,6 @@ export default function InterviewSessionPage() {
     }
   }
 
-  const handleVoiceComplete = useCallback(
-    async (audioBase64: string, mimeType: string) => {
-      ensureAudioContext();
-      if (isLoading) return;
-      setIsLoading(true);
-
-      try {
-        const res = await authFetch("/api/interview/voice-message", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            sessionId,
-            audioBase64,
-            mimeType,
-            messages,
-            mode: sessionInfo?.mode,
-            universityContext: sessionInfo?.universityContext,
-            presentationContent: sessionInfo?.presentationContent,
-            elapsedSeconds: elapsed,
-          }),
-        });
-        if (!res.ok) throw new Error();
-        const data = await res.json();
-
-        setMessages((prev) => [
-          ...prev,
-          { role: "student", content: data.transcribedText },
-          { role: "ai", content: data.aiResponse },
-        ]);
-        if (sessionInfo?.mode === "group_discussion") {
-          speakUtterances(data.aiResponse);
-        } else {
-          const { profile } = resolveSpeaker(data.aiResponse, DEFAULT_INTERVIEWER);
-          speakText(data.aiResponse, profile.voice);
-        }
-
-        if (!data.isActive) {
-          setShowEndDialog(true);
-        }
-      } catch {
-        const errorMsg = "⚠ 音声の処理に失敗しました。もう一度お話しください。";
-        setMessages((prev) => [
-          ...prev,
-          { role: "ai", content: errorMsg },
-        ]);
-        speakText(errorMsg, "alloy");
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [isLoading, sessionId, messages, sessionInfo, speakText, speakUtterances, ensureAudioContext, elapsed]
-  );
-
   const isVoiceMode = sessionInfo?.inputMode === "voice";
   const modeLabel = sessionInfo ? INTERVIEW_MODE_LABELS[sessionInfo.mode] : "";
 
@@ -883,19 +414,6 @@ export default function InterviewSessionPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => {
-              setTtsEnabled((v) => {
-                // ON → OFF に切り替える時は再生中の音声を即停止
-                if (v) stopAllAudio();
-                return !v;
-              });
-            }}
-            className={`p-1.5 rounded-md transition-colors cursor-pointer ${ttsEnabled ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground"}`}
-            title={ttsEnabled ? "音声ON" : "音声OFF"}
-          >
-            {ttsEnabled ? <Volume2 className="size-4" /> : <VolumeX className="size-4" />}
-          </button>
           <button
             onClick={() => setCameraEnabled((v) => !v)}
             className={`p-1.5 rounded-md transition-colors cursor-pointer ${cameraEnabled ? "text-emerald-600 bg-emerald-50" : "text-muted-foreground hover:text-foreground"}`}
@@ -932,22 +450,6 @@ export default function InterviewSessionPage() {
         </div>
       </div>
 
-      {/* Audio unlock prompt */}
-      {needsAudioUnlock && (
-        <div className="mx-4 mt-2 rounded-lg border border-primary/40 bg-primary/5 px-3 py-3 flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2">
-          <div className="text-sm">
-            <strong>音声を開始</strong>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              ブラウザの自動再生制限のため、ボタンを押して面接音声を開始してください
-            </p>
-          </div>
-          <Button size="sm" onClick={handleAudioUnlock}>
-            <Volume2 className="size-4 mr-1" />
-            開始
-          </Button>
-        </div>
-      )}
-
       {/* Appearance alert */}
       {appearanceAlert && (
         <div className="mx-4 mt-2 rounded-lg border border-rose-300 bg-rose-50 dark:border-rose-700 dark:bg-rose-950/30 px-3 py-2 text-sm text-rose-700 dark:text-rose-300 animate-in fade-in slide-in-from-top-2">
@@ -955,8 +457,8 @@ export default function InterviewSessionPage() {
         </div>
       )}
 
-      {/* Realtime デバッグバッジ (Phase 1 診断用、安定したら削除) */}
-      {sessionInfo?.inputMode === "voice" && sessionInfo?.mode !== "group_discussion" && (
+      {/* Realtime デバッグバッジ (診断用、安定したら削除) */}
+      {sessionInfo?.inputMode === "voice" && (
         <div className="mx-4 mt-2 rounded-md border border-sky-300 bg-sky-50 dark:border-sky-700 dark:bg-sky-950/30 px-3 py-1.5 text-[11px] text-sky-800 dark:text-sky-200 font-mono">
           <strong>Realtime:</strong> {realtime.status}
           {realtime.error && (
@@ -1180,15 +682,14 @@ export default function InterviewSessionPage() {
 
       {/* Input */}
       <div className="px-4 py-3 border-t bg-background shrink-0">
-        {realtimeActive ? (
-          // Realtime API 経路: サーバー側 VAD が発話を検知するため PTT ボタンは不要
-          <div className="flex items-center justify-center gap-2 py-3 text-sm text-muted-foreground">
-            <span className="inline-flex size-2 rounded-full bg-emerald-500 animate-pulse" />
-            マイクが常時有効です。自然に話してください
-          </div>
-        ) : isVoiceMode && sessionInfo?.mode !== "group_discussion" ? (
-          // Realtime 対象モードは Claude にフォールバックせず、接続状況を表示
-          realtime.status === "fallback_error" || realtime.status === "fallback_rate_limited" ? (
+        {isVoiceMode ? (
+          // 音声モードは OpenAI Realtime API が直接双方向音声を扱う
+          realtimeActive ? (
+            <div className="flex items-center justify-center gap-2 py-3 text-sm text-muted-foreground">
+              <span className="inline-flex size-2 rounded-full bg-emerald-500 animate-pulse" />
+              マイクが常時有効です。自然に話してください
+            </div>
+          ) : realtime.status === "fallback_error" || realtime.status === "fallback_rate_limited" ? (
             <div className="flex flex-col items-center justify-center gap-1 py-3 text-sm text-rose-600">
               <span>Realtime 接続に失敗しました</span>
               {realtime.error && <span className="text-[11px] font-mono">{realtime.error.slice(0, 200)}</span>}
@@ -1199,18 +700,6 @@ export default function InterviewSessionPage() {
               Realtime セッションを準備中... ({realtime.status})
             </div>
           )
-        ) : isVoiceMode ? (
-          // GD 音声モード: 現状は Claude 経路のみ (Phase 2 で Realtime 対応)
-          <ContinuousVoiceRecorder
-            autoStart
-            onRecordingComplete={handleVoiceComplete}
-            onStreamReady={(stream) => setMediaStream(stream)}
-            onInterrupt={() => {
-              stopAllAudio();
-            }}
-            disabled={isLoading}
-            aiSpeaking={aiSpeaking}
-          />
         ) : (
           <div className="flex gap-2">
             <input
@@ -1233,15 +722,6 @@ export default function InterviewSessionPage() {
           </div>
         )}
       </div>
-
-      {/* Voice Analyzer (hidden, analysis engine only) */}
-      {isVoiceMode && (
-        <VoiceAnalyzer
-          mediaStream={mediaStream}
-          isRecording={!!mediaStream && !isLoading}
-          onAnalysisComplete={setVoiceAnalysis}
-        />
-      )}
 
       {/* Camera Preview & Video Analyzer */}
       {videoStream && <CameraPreview mediaStream={videoStream} />}
@@ -1278,8 +758,7 @@ export default function InterviewSessionPage() {
             <Button
               variant="ghost"
               onClick={() => {
-                // Stop TTS/recording (unmount cleanup でも止まるが即応性のため明示呼び出し)
-                stopAllAudio();
+                realtime.stop();
                 router.push("/student/interview/history");
               }}
               disabled={isEnding}
