@@ -30,14 +30,11 @@ const REALTIME_MODEL_CANDIDATES = [
 ];
 
 // Realtime API がサポートする voice: alloy / ash / ballad / coral / echo / sage / shimmer / verse
-// TTS API の nova/onyx/fable は Realtime では使えないので、代替を割り当てる
+// GD は 3 話者構成: 教授 1 + 受験生 2 (ユーザー = 受験生D)
 const GD_SPEAKERS: { key: GdSpeakerKey; voice: string }[] = [
-  { key: "moderator", voice: "sage" },          // 落ち着いた司会
-  { key: "professor_logic", voice: "ash" },     // 厳密・深みのある教員
-  { key: "professor_practical", voice: "echo" }, // 実践派の教員
-  { key: "peer_bold", voice: "ballad" },        // 積極派の受験生
-  { key: "peer_careful", voice: "shimmer" },    // 慎重派の受験生
-  { key: "peer_creative", voice: "coral" },     // 独創派の受験生
+  { key: "moderator", voice: "sage" },         // 教授 (進行役 + 鋭い質問)
+  { key: "peer_bold", voice: "ballad" },       // 健太 (積極派・リーダー型)
+  { key: "peer_careful", voice: "shimmer" },   // 美咲 (慎重派・データ重視)
 ];
 
 interface CreateSessionParams {
@@ -196,8 +193,8 @@ export async function POST(request: NextRequest) {
         expiresAt: r.issueResult.token!.client_secret.expires_at,
       }));
 
-    if (successful.length < 6) {
-      // 6 本全部揃わなければフォールバック扱い
+    if (successful.length < GD_SPEAKERS.length) {
+      // 全話者分揃わなければフォールバック扱い
       const debug = results.flatMap((r) => r.issueResult.debugErrors);
       return NextResponse.json({
         rateLimited: false,

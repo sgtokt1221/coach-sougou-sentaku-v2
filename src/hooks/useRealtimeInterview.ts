@@ -19,6 +19,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { authFetch } from "@/lib/api/client";
 import { RealtimeSession } from "@/lib/interview/realtime/client";
+import { GdOrchestrator, type GdOrchestratorTokens } from "@/lib/interview/realtime/gd-orchestrator";
+import type { ActiveSpeaker } from "@/lib/interview/realtime/gd-director";
 import type { InterviewMessage, InterviewMode } from "@/lib/types/interview";
 
 export type RealtimeStatus =
@@ -54,6 +56,7 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
   const [nextAvailableAt, setNextAvailableAt] = useState<string | null>(null);
 
   const sessionRef = useRef<RealtimeSession | null>(null);
+  const orchestratorRef = useRef<GdOrchestrator | null>(null);
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
   const micStreamRef = useRef<MediaStream | null>(null);
   const optsRef = useRef(options);
@@ -71,6 +74,10 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
       sessionRef.current.close();
       sessionRef.current = null;
     }
+    if (orchestratorRef.current) {
+      orchestratorRef.current.close();
+      orchestratorRef.current = null;
+    }
     if (micStreamRef.current) {
       micStreamRef.current.getTracks().forEach((t) => t.stop());
       micStreamRef.current = null;
@@ -87,12 +94,6 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
   const start = useCallback(async (): Promise<RealtimeStartResult> => {
     setError(null);
     setStatus("requesting_token");
-
-    // GD は Phase 1 では未対応。フォールバック扱い。
-    if (optsRef.current.mode === "group_discussion") {
-      setStatus("fallback_error");
-      return { success: false, fallback: "error" };
-    }
 
     // 1. ephemeral token を取得
     let tokenData: {
@@ -147,23 +148,51 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
       return { success: false, fallback: "error" };
     }
 
-    // 3. audio 出力用の要素を用意 (まだなければ body に append)
-    if (!audioElementRef.current) {
-      const el = document.createElement("audio");
-      el.autoplay = true;
-      el.style.display = "none";
-      document.body.appendChild(el);
-      audioElementRef.current = el;
-    }
-
-    // 4. WebRTC 接続
+    // 3. WebRTC 接続
     setStatus("connecting");
     try {
+      const model = tokenData.model ?? "gpt-4o-mini-realtime-preview-2024-12-17";
+
+      if (optsRef.current.mode === "group_discussion") {
+        // GD: 3 並列セッションを GdOrchestrator で束ねる
+        const gdTokens: GdOrchestratorTokens[] = tokenData.tokens.map((t) => ({
+          speaker: t.speaker as ActiveSpeaker,
+          voice: t.voice,
+          token: t.token,
+        }));
+        const orch = new GdOrchestrator({
+          tokens: gdTokens,
+          model,
+          micStream,
+          onMessageAppend: appendMessage,
+          onError: (err) => {
+            console.warn("[useRealtimeInterview] GD orchestrator error", err);
+            setError(err.message);
+          },
+        });
+        await orch.connect();
+        orchestratorRef.current = orch;
+        // 接続完了後、教授から議論をキックオフ
+        orch.startOpening();
+        setStatus("connected");
+        return { success: true };
+      }
+
+      // 個人系モード: 単一セッション
+      if (!audioElementRef.current) {
+        const el = document.createElement("audio");
+        el.autoplay = true;
+        el.style.display = "none";
+        document.body.appendChild(el);
+        audioElementRef.current = el;
+      }
+
       const session = new RealtimeSession({
         ephemeralToken: tokenData.tokens[0].token,
-        model: tokenData.model ?? "gpt-4o-mini-realtime-preview-2024-12-17",
+        model,
         audioOutputElement: audioElementRef.current,
         micStream,
+        withMic: true,
         onUserTranscript: (text) => {
           appendMessage({ role: "student", content: text });
         },

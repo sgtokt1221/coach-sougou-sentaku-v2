@@ -33,8 +33,15 @@ export interface RealtimeSessionOptions {
   model: string;
   /** 音声出力を鳴らす HTMLAudioElement (呼び出し側で用意) */
   audioOutputElement: HTMLAudioElement;
-  /** ユーザーのマイク MediaStream */
-  micStream: MediaStream;
+  /** ユーザーのマイク MediaStream (withMic=false のときは無視される) */
+  micStream: MediaStream | null;
+  /**
+   * true: このセッションがマイクを所有し PeerConnection に送る
+   * false: マイクを送らない (データチャネルのみで動作、履歴は text 経由で同期)
+   * GD モードで複数セッションに同時にマイクを流すとコストが嵩むため、
+   * リスナー 1 つだけ withMic=true、それ以外は false とする
+   */
+  withMic?: boolean;
   /** イベント受信コールバック */
   onEvent?: (event: RealtimeEvent) => void;
   /** ユーザーの発話が確定したときに呼ばれる (input_audio_transcription.completed) */
@@ -63,6 +70,7 @@ export class RealtimeSession {
     if (this.isClosed) throw new Error("RealtimeSession is closed");
     const pc = new RTCPeerConnection();
     this.pc = pc;
+    const withMic = this.opts.withMic !== false;
 
     // OpenAI からの音声トラックを audio 要素に流す
     pc.ontrack = (event) => {
@@ -71,9 +79,15 @@ export class RealtimeSession {
       }
     };
 
-    // マイクトラックを peer connection に追加
-    for (const track of this.opts.micStream.getAudioTracks()) {
-      pc.addTrack(track, this.opts.micStream);
+    // マイクトラックを peer connection に追加 (withMic 時のみ)
+    if (withMic && this.opts.micStream) {
+      for (const track of this.opts.micStream.getAudioTracks()) {
+        pc.addTrack(track, this.opts.micStream);
+      }
+    } else {
+      // withMic=false でも OpenAI 側が音声レスポンスを返すためには
+      // 受信専用 (recvonly) の audio transceiver を追加する必要がある
+      pc.addTransceiver("audio", { direction: "recvonly" });
     }
 
     // イベント用データチャネル
@@ -107,6 +121,32 @@ export class RealtimeSession {
     }
     const answerSdp = await sdpRes.text();
     await pc.setRemoteDescription({ type: "answer", sdp: answerSdp });
+
+    // data channel が open になるまで待つ (open 前に sendEvent すると dropped になる)
+    await this.waitForDataChannelOpen();
+  }
+
+  /** data channel が open 状態になるまで最大 10 秒待つ */
+  private waitForDataChannelOpen(timeoutMs = 10000): Promise<void> {
+    const dc = this.dc;
+    if (!dc) return Promise.reject(new Error("data channel not created"));
+    if (dc.readyState === "open") return Promise.resolve();
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        dc.removeEventListener("open", onOpen);
+        reject(new Error("data channel open timeout"));
+      }, timeoutMs);
+      const onOpen = () => {
+        clearTimeout(timer);
+        resolve();
+      };
+      dc.addEventListener("open", onOpen, { once: true });
+    });
+  }
+
+  /** session.update イベントで session 設定を上書き */
+  updateSession(config: Record<string, unknown>): void {
+    this.sendEvent({ type: "session.update", session: config });
   }
 
   private handleEvent(event: RealtimeEvent) {

@@ -224,13 +224,10 @@ export default function InterviewSessionPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // Realtime API: 音声モードかつ個人系モードなら 1 度だけ接続を試みる
-  // 失敗/レート超過なら従来の Claude 経路にフォールバックする
+  // Realtime API: 音声モードなら 1 度だけ接続を試みる (個人/プレゼン/口頭試問/GD 全モード対応)
   useEffect(() => {
     if (!sessionInfo || realtimeTriedRef.current) return;
     if (sessionInfo.inputMode !== "voice") return;
-    // Phase 1: GD は従来の Claude 経路 (useRealtimeInterview 内でも弾く)
-    if (sessionInfo.mode === "group_discussion") return;
 
     realtimeTriedRef.current = true;
     (async () => {
@@ -239,7 +236,6 @@ export default function InterviewSessionPage() {
         setRealtimeActive(true);
         setCameraEnabled(true); // カメラ分析は引き続き有効
       }
-      // フォールバックは何もしない (既存の Claude 経路がそのまま動く)
     })();
   }, [sessionInfo, realtime]);
 
