@@ -11,6 +11,8 @@ interface AppearanceReportProps {
 const CATEGORY_LABELS: Record<AppearanceIssue["category"], string> = {
   clothing: "服装",
   hair: "髪型",
+  grooming: "顔まわり",
+  posture: "姿勢",
   object: "不適切な物",
   background: "背景",
   lighting: "照明",
