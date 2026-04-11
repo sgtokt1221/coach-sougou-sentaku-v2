@@ -117,7 +117,9 @@ export function WorkshopChat({
   }, [input, isLoading, sendToAI]);
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter" && !e.shiftKey) {
+    // 修飾キーなしの Enter は送信しない (IME 確定との衝突防止)
+    // 送信: Cmd/Ctrl+Enter または Shift+Enter
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey || e.shiftKey)) {
       e.preventDefault();
       handleSend();
     }
@@ -251,7 +253,7 @@ export function WorkshopChat({
                   ref={inputRef}
                   type="text"
                   className="flex-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                  placeholder="回答を入力..."
+                  placeholder="回答を入力 (Cmd/Ctrl+Enter で送信)"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
