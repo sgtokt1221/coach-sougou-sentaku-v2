@@ -2,26 +2,15 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, PartyPopper, Sparkles, Pencil } from "lucide-react";
 import { StepIndicator } from "@/components/self-analysis/StepIndicator";
 import { WorkshopChat } from "@/components/self-analysis/WorkshopChat";
 import { SegmentControl } from "@/components/shared/SegmentControl";
+import { GrowthTree } from "@/components/self-analysis/GrowthTree";
 import { useAuthSWR } from "@/lib/api/swr";
 import type { SelfAnalysis, ChatMessage, StepChatHistory } from "@/lib/types/self-analysis";
-
-// WebGL の 3D 木 (SSR 不可)
-const GrowthTree3D = dynamic(
-  () => import("@/components/self-analysis/GrowthTree3D").then((m) => m.GrowthTree3D),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="h-[440px] w-full rounded-2xl border bg-gradient-to-b from-sky-200/70 via-sky-100/50 to-emerald-100/40 animate-pulse" />
-    ),
-  }
-);
 
 export default function SelfAnalysisPage() {
   const router = useRouter();
@@ -182,12 +171,11 @@ export default function SelfAnalysisPage() {
 
       {view === "tree" ? (
         <>
-          <GrowthTree3D
+          <GrowthTree
             completedSteps={completedSteps}
             currentStep={currentStep}
             stepsData={stepsData}
             onFruitClick={handleFruitClick}
-            height={440}
           />
 
           {/* 分析を始める CTA */}
