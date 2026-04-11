@@ -39,6 +39,7 @@ interface NavItem {
   icon: React.ComponentType<{ className?: string }>;
   coachOnly?: boolean;
   badge?: React.ComponentType;
+  children?: NavItem[];
 }
 
 interface NavGroup {
@@ -58,10 +59,23 @@ const studentNavGroups: NavGroup[] = [
   {
     title: "Practice",
     items: [
-      { label: "小論文添削", href: "/student/essay/new", icon: FileText },
-      { label: "ネタインプット", href: "/student/topic-input", icon: BookMarked },
-      { label: "模擬面接", href: "/student/interview/new", icon: Mic },
-      { label: "テーマ・過去問", href: "/student/essay/themes", icon: BookOpen },
+      {
+        label: "小論文添削",
+        href: "/student/essay/new",
+        icon: FileText,
+        children: [
+          { label: "ネタインプット", href: "/student/topic-input", icon: BookMarked },
+          { label: "テーマ・過去問", href: "/student/essay/themes", icon: BookOpen },
+        ],
+      },
+      {
+        label: "模擬面接",
+        href: "/student/interview/new",
+        icon: Mic,
+        children: [
+          { label: "テーマ別ドリル演習", href: "/student/interview/drill", icon: ClipboardList },
+        ],
+      },
     ],
   },
   {
@@ -148,30 +162,42 @@ const superadminNavGroups: NavGroup[] = [
   },
 ];
 
-function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
-  const isActive = pathname.startsWith(item.href);
+function NavLink({ item, pathname, isChild = false }: { item: NavItem; pathname: string; isChild?: boolean }) {
+  // 子アイテムを持つ場合、子のいずれかが active なときは親も "親 active" 状態にする
+  const isActive = pathname === item.href || pathname.startsWith(item.href + "/") || pathname.startsWith(item.href + "?");
   const Badge = item.badge;
   return (
-    <Link
-      href={item.href}
-      className={cn(
-        "group flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150 cubic-bezier(0.4, 0, 0.2, 1)",
-        isActive
-          ? "nav-active-indicator bg-gradient-to-r from-sidebar-accent to-sidebar-accent/80 text-sidebar-primary-foreground shadow-sm"
-          : "text-sidebar-foreground/60 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground hover:translate-x-0.5"
-      )}
-    >
-      <item.icon
+    <>
+      <Link
+        href={item.href}
         className={cn(
-          "size-[18px] transition-all duration-150",
+          "group flex items-center gap-3 rounded-lg py-2 text-[13px] font-medium transition-all duration-150 cubic-bezier(0.4, 0, 0.2, 1)",
+          isChild ? "pl-9 pr-3 text-[12px]" : "px-3",
           isActive
-            ? "text-sidebar-primary drop-shadow-sm"
-            : "text-sidebar-foreground/40 group-hover:text-sidebar-foreground/70 group-hover:translate-x-0.5"
+            ? "nav-active-indicator bg-gradient-to-r from-sidebar-accent to-sidebar-accent/80 text-sidebar-primary-foreground shadow-sm"
+            : "text-sidebar-foreground/60 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground hover:translate-x-0.5"
         )}
-      />
-      {item.label}
-      {Badge && <Badge />}
-    </Link>
+      >
+        <item.icon
+          className={cn(
+            "transition-all duration-150",
+            isChild ? "size-[14px]" : "size-[18px]",
+            isActive
+              ? "text-sidebar-primary drop-shadow-sm"
+              : "text-sidebar-foreground/40 group-hover:text-sidebar-foreground/70 group-hover:translate-x-0.5"
+          )}
+        />
+        {item.label}
+        {Badge && <Badge />}
+      </Link>
+      {item.children && item.children.length > 0 && (
+        <div className="space-y-0.5">
+          {item.children.map((child) => (
+            <NavLink key={child.href} item={child} pathname={pathname} isChild />
+          ))}
+        </div>
+      )}
+    </>
   );
 }
 
@@ -194,12 +220,55 @@ function getSuperadminNavGroups(pathname: string) {
   return adminNavGroups;
 }
 
+function ContentNavLink({ item, pathname, isChild = false }: { item: NavItem; pathname: string; isChild?: boolean }) {
+  const isActive = pathname === item.href || pathname.startsWith(item.href + "/") || pathname.startsWith(item.href + "?");
+  const Badge = item.badge;
+  return (
+    <>
+      <Link
+        href={item.href}
+        className={cn(
+          "group flex items-center gap-3 rounded-lg py-2 text-[13px] font-medium transition-all duration-150 cubic-bezier(0.4, 0, 0.2, 1)",
+          isChild ? "pl-9 pr-3 text-[12px]" : "px-3",
+          isActive
+            ? "bg-gradient-to-r from-accent to-accent/80 text-accent-foreground shadow-sm"
+            : "text-muted-foreground hover:bg-accent/60 hover:text-accent-foreground hover:translate-x-0.5"
+        )}
+      >
+        <item.icon
+          className={cn(
+            "transition-all duration-150",
+            isChild ? "size-[14px]" : "size-[18px]",
+            isActive ? "drop-shadow-sm" : "group-hover:translate-x-0.5"
+          )}
+        />
+        {item.label}
+        {Badge && <Badge />}
+      </Link>
+      {item.children && item.children.length > 0 && (
+        <div className="space-y-0.5">
+          {item.children.map((child) => (
+            <ContentNavLink key={child.href} item={child} pathname={pathname} isChild />
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
 function filterNavByPlan(groups: NavGroup[], plan: string | undefined): NavGroup[] {
   const isCoach = plan === "coach";
+  const filterItem = (item: NavItem): NavItem | null => {
+    if (item.coachOnly && !isCoach) return null;
+    if (item.children) {
+      return { ...item, children: item.children.filter((c) => !c.coachOnly || isCoach) };
+    }
+    return item;
+  };
   return groups
     .map((g) => ({
       ...g,
-      items: g.items.filter((item) => !item.coachOnly || isCoach),
+      items: g.items.map(filterItem).filter((i): i is NavItem => i !== null),
     }))
     .filter((g) => g.items.length > 0);
 }
@@ -324,33 +393,9 @@ export function SidebarContent() {
                 </p>
               )}
               <div className="space-y-0.5">
-                {group.items.map((item) => {
-                  const isActive = pathname.startsWith(item.href);
-                  const Badge = item.badge;
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className={cn(
-                        "group flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150 cubic-bezier(0.4, 0, 0.2, 1)",
-                        isActive
-                          ? "bg-gradient-to-r from-accent to-accent/80 text-accent-foreground shadow-sm"
-                          : "text-muted-foreground hover:bg-accent/60 hover:text-accent-foreground hover:translate-x-0.5"
-                      )}
-                    >
-                      <item.icon
-                        className={cn(
-                          "size-[18px] transition-all duration-150",
-                          isActive
-                            ? "drop-shadow-sm"
-                            : "group-hover:translate-x-0.5"
-                        )}
-                      />
-                      {item.label}
-                      {Badge && <Badge />}
-                    </Link>
-                  );
-                })}
+                {group.items.map((item) => (
+                  <ContentNavLink key={item.href} item={item} pathname={pathname} />
+                ))}
               </div>
             </div>
           ))}
