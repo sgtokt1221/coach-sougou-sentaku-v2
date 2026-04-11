@@ -23,6 +23,8 @@ import { useAuthSWR } from "@/lib/api/swr";
 import { NotificationPermissionBanner } from "@/components/notifications/NotificationPermissionBanner";
 import { AnimatedList } from "@/components/shared/AnimatedList";
 import { CountUp } from "@/components/shared/CountUp";
+import { GrowthTree } from "@/components/self-analysis/GrowthTree";
+import type { SelfAnalysis } from "@/lib/types/self-analysis";
 
 interface EssayHistoryItem {
   id: string;
@@ -100,7 +102,23 @@ export default function StudentDashboard() {
 
   const { data: essayData, isLoading: loadingHistory } = useAuthSWR<{ essays: EssayHistoryItem[] }>("/api/essay/history?userId=current");
   const { data: interviewData, isLoading: loadingInterview } = useAuthSWR<{ interviews: { id: string; startedAt: string; scores: { total: number } | null }[] }>("/api/interview/history?userId=current");
+  const { data: selfAnalysisData } = useAuthSWR<SelfAnalysis | null>("/api/self-analysis?userId=me");
   const loadingTrend = loadingHistory || loadingInterview;
+
+  // 自己分析の進捗と stepsData を抽出 (GrowthTree 用)
+  const { saCompletedSteps, saStepsData } = useMemo(() => {
+    if (!selfAnalysisData) return { saCompletedSteps: 0, saStepsData: {} as Record<number, Record<string, unknown>> };
+    const completed = selfAnalysisData.completedSteps ?? 0;
+    const data: Record<number, Record<string, unknown>> = {};
+    const STEP_KEYS = ["values", "strengths", "weaknesses", "interests", "vision", "identity"] as const;
+    STEP_KEYS.forEach((key, i) => {
+      const val = (selfAnalysisData as unknown as Record<string, unknown>)[key];
+      if (val && typeof val === "object" && Object.keys(val as object).length > 0) {
+        data[i + 1] = val as Record<string, unknown>;
+      }
+    });
+    return { saCompletedSteps: completed, saStepsData: data };
+  }, [selfAnalysisData]);
 
   const history = (essayData?.essays ?? []).slice(0, 3);
 
@@ -165,6 +183,15 @@ export default function StudentDashboard() {
         </div>
         <TargetUniversityCards targetUniversities={targetUniversities} />
       </div>
+
+      {/* 自己分析の木 */}
+      <Link href="/student/self-analysis" className="block group">
+        <GrowthTree
+          completedSteps={saCompletedSteps}
+          stepsData={saStepsData}
+          className="group-hover:shadow-md transition-shadow"
+        />
+      </Link>
 
       {/* Quick Actions — Stripe: clean cards, blue-tinted shadow, no gradient bars */}
       <AnimatedList className="grid grid-cols-1 sm:grid-cols-3 gap-4">

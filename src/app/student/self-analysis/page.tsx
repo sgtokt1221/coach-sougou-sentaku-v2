@@ -8,6 +8,7 @@ import { ArrowLeft, PartyPopper } from "lucide-react";
 import { StepIndicator } from "@/components/self-analysis/StepIndicator";
 import { WorkshopChat } from "@/components/self-analysis/WorkshopChat";
 import { GrowthTree } from "@/components/self-analysis/GrowthTree";
+import { SegmentControl } from "@/components/shared/SegmentControl";
 import { useAuthSWR } from "@/lib/api/swr";
 import type { SelfAnalysis, ChatMessage, StepChatHistory } from "@/lib/types/self-analysis";
 
@@ -23,6 +24,7 @@ export default function SelfAnalysisPage() {
   const [stepsData, setStepsData] = useState<Record<number, Record<string, unknown>>>({});
   const [allComplete, setAllComplete] = useState(false);
   const [restored, setRestored] = useState(false);
+  const [view, setView] = useState<"tree" | "workshop">("workshop");
 
   // Restore progress from Firestore
   useEffect(() => {
@@ -128,34 +130,52 @@ export default function SelfAnalysisPage() {
         <h1 className="text-xl lg:text-2xl font-bold">AI自己分析ワークショップ</h1>
       </div>
 
-      <GrowthTree completedSteps={completedSteps} currentStep={currentStep} />
-
-      <StepIndicator
-        currentStep={currentStep}
-        completedSteps={completedSteps}
-        onStepClick={(step) => setCurrentStep(step)}
+      <SegmentControl
+        value={view}
+        onChange={(v) => setView(v as "tree" | "workshop")}
+        fullWidth
+        defaultAccent="emerald"
+        options={[
+          { id: "workshop", label: "ワークショップ", count: completedSteps },
+          { id: "tree", label: "自己分析の木" },
+        ]}
       />
 
-      {allComplete ? (
-        <div className="text-center py-12 space-y-4">
-          <PartyPopper className="size-12 mx-auto text-primary" />
-          <h2 className="text-xl font-bold">自己分析が完了しました</h2>
-          <p className="text-sm text-muted-foreground">
-            全7ステップの分析が完了しました。結果を確認しましょう。
-          </p>
-          <Button onClick={() => router.push("/student/self-analysis/result")}>
-            結果を見る
-          </Button>
-        </div>
-      ) : (
-        <WorkshopChat
-          step={currentStep}
-          initialMessages={currentMessages}
-          previousStepsData={
-            Object.keys(stepsData).length > 0 ? stepsData : undefined
-          }
-          onStepComplete={handleStepComplete}
+      {view === "tree" ? (
+        <GrowthTree
+          completedSteps={completedSteps}
+          currentStep={currentStep}
+          stepsData={stepsData}
         />
+      ) : (
+        <>
+          <StepIndicator
+            currentStep={currentStep}
+            completedSteps={completedSteps}
+            onStepClick={(step) => setCurrentStep(step)}
+          />
+          {allComplete ? (
+            <div className="text-center py-12 space-y-4">
+              <PartyPopper className="size-12 mx-auto text-primary" />
+              <h2 className="text-xl font-bold">自己分析が完了しました</h2>
+              <p className="text-sm text-muted-foreground">
+                全7ステップの分析が完了しました。結果を確認しましょう。
+              </p>
+              <Button onClick={() => router.push("/student/self-analysis/result")}>
+                結果を見る
+              </Button>
+            </div>
+          ) : (
+            <WorkshopChat
+              step={currentStep}
+              initialMessages={currentMessages}
+              previousStepsData={
+                Object.keys(stepsData).length > 0 ? stepsData : undefined
+              }
+              onStepComplete={handleStepComplete}
+            />
+          )}
+        </>
       )}
     </div>
   );

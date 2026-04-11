@@ -14,13 +14,41 @@
  * - 果実の出現は `style={{ transition, transform, opacity }}` + `delay-*` で制御
  */
 
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { SELF_ANALYSIS_STEPS } from "@/lib/types/self-analysis";
 
 interface GrowthTreeProps {
   completedSteps: number;
-  currentStep: number;
+  currentStep?: number;
+  /** 各ステップに保存されたデータ。ホバー時のツールチップに表示する */
+  stepsData?: Record<number, Record<string, unknown>>;
   className?: string;
+}
+
+/**
+ * 保存された stepData (任意の形の object) をツールチップに表示するため
+ * 簡易的に整形する。キー = 文字列 / 配列 / ネストオブジェクト対応。
+ */
+function formatStepDataForTooltip(data: Record<string, unknown> | undefined): { key: string; value: string }[] {
+  if (!data || typeof data !== "object") return [];
+  const entries: { key: string; value: string }[] = [];
+  for (const [k, v] of Object.entries(data)) {
+    if (v == null || v === "") continue;
+    let valueStr = "";
+    if (Array.isArray(v)) {
+      valueStr = v.filter(Boolean).map((x) => (typeof x === "string" ? x : JSON.stringify(x))).join("、");
+    } else if (typeof v === "object") {
+      valueStr = Object.values(v as Record<string, unknown>)
+        .filter((x) => x != null && x !== "")
+        .map((x) => (typeof x === "string" ? x : JSON.stringify(x)))
+        .join("、");
+    } else {
+      valueStr = String(v);
+    }
+    if (valueStr) entries.push({ key: k, value: valueStr });
+  }
+  return entries.slice(0, 5); // 最大 5 項目
 }
 
 // 7 つの果実の (x,y) を葉群の中に配置。SVG viewBox は 320x260。
@@ -35,8 +63,13 @@ const FRUIT_POSITIONS: { x: number; y: number; color: string; ring: string }[] =
   { x: 188, y: 170, color: "#f87171", ring: "#fecaca" }, // red - 統合
 ];
 
-export function GrowthTree({ completedSteps, currentStep, className }: GrowthTreeProps) {
+export function GrowthTree({ completedSteps, currentStep, stepsData, className }: GrowthTreeProps) {
   const allDone = completedSteps >= 7;
+  const [hoveredStep, setHoveredStep] = useState<number | null>(null);
+
+  const hoveredData = hoveredStep != null ? formatStepDataForTooltip(stepsData?.[hoveredStep]) : [];
+  const hoveredMeta = hoveredStep != null ? SELF_ANALYSIS_STEPS.find((s) => s.step === hoveredStep) : null;
+  const hoveredPos = hoveredStep != null ? FRUIT_POSITIONS[hoveredStep - 1] : null;
 
   return (
     <div
@@ -146,15 +179,24 @@ export function GrowthTree({ completedSteps, currentStep, className }: GrowthTre
             const stepNum = i + 1;
             const isDone = stepNum <= completedSteps;
             const isCurrent = stepNum === currentStep;
+            const isHovered = hoveredStep === stepNum;
             return (
               <g
                 key={stepNum}
                 style={{
                   transformOrigin: `${pos.x}px ${pos.y}px`,
-                  transform: isDone ? "scale(1)" : "scale(0.3)",
+                  transform: isDone ? (isHovered ? "scale(1.2)" : "scale(1)") : "scale(0.3)",
                   opacity: isDone ? 1 : 0.15,
                   transition: `transform 700ms cubic-bezier(0.34, 1.56, 0.64, 1) ${i * 150}ms, opacity 500ms ease-out ${i * 150}ms`,
+                  cursor: isDone ? "pointer" : "default",
                 }}
+                onMouseEnter={() => isDone && setHoveredStep(stepNum)}
+                onMouseLeave={() => setHoveredStep(null)}
+                onFocus={() => isDone && setHoveredStep(stepNum)}
+                onBlur={() => setHoveredStep(null)}
+                tabIndex={isDone ? 0 : -1}
+                role={isDone ? "button" : undefined}
+                aria-label={isDone ? `${SELF_ANALYSIS_STEPS[i].title}の内容を表示` : undefined}
               >
                 {/* 影 */}
                 {isDone && (
@@ -229,6 +271,38 @@ export function GrowthTree({ completedSteps, currentStep, className }: GrowthTre
             </g>
           )}
         </svg>
+
+        {/* ホバー時のツールチップ (SVG 座標を % に変換して overlay) */}
+        {hoveredStep != null && hoveredMeta && hoveredPos && (
+          <div
+            className="pointer-events-none absolute z-10 w-[240px] -translate-x-1/2 rounded-lg border bg-background/95 p-3 shadow-lg backdrop-blur-sm"
+            style={{
+              left: `${(hoveredPos.x / 320) * 100}%`,
+              top: `${(hoveredPos.y / 260) * 100}%`,
+              marginTop: "16px",
+            }}
+          >
+            <div className="flex items-center gap-2 mb-1.5">
+              <span
+                className="inline-block size-2 rounded-full"
+                style={{ backgroundColor: hoveredPos.color }}
+              />
+              <p className="text-xs font-semibold text-foreground">{hoveredMeta.title}</p>
+            </div>
+            {hoveredData.length > 0 ? (
+              <ul className="space-y-1">
+                {hoveredData.map((entry, i) => (
+                  <li key={i} className="text-[11px] leading-snug">
+                    <span className="text-muted-foreground">{entry.key}: </span>
+                    <span className="text-foreground">{entry.value.length > 80 ? entry.value.slice(0, 80) + "…" : entry.value}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-[11px] text-muted-foreground">保存された内容はありません</p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* 下部: 完了したセクションのラベル */}
