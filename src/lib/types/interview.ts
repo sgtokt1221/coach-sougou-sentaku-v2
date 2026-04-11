@@ -98,7 +98,14 @@ export interface InterviewEndResponse {
 }
 
 export interface AppearanceIssue {
-  category: "clothing" | "hair" | "object" | "background" | "lighting";
+  category:
+    | "clothing"
+    | "hair"
+    | "grooming"
+    | "posture"
+    | "object"
+    | "background"
+    | "lighting";
   severity: "critical" | "warning" | "info";
   description: string;
 }
@@ -167,6 +174,10 @@ export interface VoiceAnalysis {
   fillerCount: number;
   fillerRate: number;          // フィラー/分
   fillerWords: Array<{ word: string; count: number; timestamps: number[] }>;
+  /** 相槌(「はい」「そうですね」「なるほど」等)の回数。主に文頭や単独発話を検出 */
+  backchannelCount?: number;
+  /** 検出された相槌の内訳 */
+  backchannelWords?: Array<{ word: string; count: number }>;
   pauseAnalysis: {
     avgPauseDuration: number;
     longPauses: number;        // 3秒以上の間の回数
@@ -177,5 +188,7 @@ export interface VoiceAnalysis {
     speechRateAdvice: string;
     fillerAdvice: string;
     deliveryAdvice: string;
+    /** 相槌の使い方に関するアドバイス */
+    backchannelAdvice?: string;
   };
 }

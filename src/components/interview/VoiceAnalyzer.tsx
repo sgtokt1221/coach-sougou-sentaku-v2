@@ -18,6 +18,12 @@ const FILLER_PATTERNS = [
   "なんか", "そのー", "その", "うーん", "うん", "ええと",
 ];
 
+/** 面接での相槌(面接官の発言を受けた応答) */
+const BACKCHANNEL_PATTERNS = [
+  "はい", "そうですね", "そうです", "なるほど", "ええ",
+  "確かに", "おっしゃる通り", "わかります", "分かります",
+];
+
 function detectFillers(text: string): Array<{ word: string; count: number; timestamps: number[] }> {
   const results: Map<string, number> = new Map();
   for (const pattern of FILLER_PATTERNS) {
@@ -32,6 +38,27 @@ function detectFillers(text: string): Array<{ word: string; count: number; times
     count,
     timestamps: Array.from({ length: count }, (_, i) => i * 30),
   }));
+}
+
+/**
+ * 相槌の検出。
+ * ユーザー発話テキスト内での「はい」「そうですね」等の使用回数を数える。
+ * 頻度が高すぎる(内容より相槌が多い)・低すぎる(機械的)のバランスを評価する材料。
+ */
+function detectBackchannels(text: string): Array<{ word: string; count: number }> {
+  const results: Array<{ word: string; count: number }> = [];
+  for (const pattern of BACKCHANNEL_PATTERNS) {
+    // 単独発話や文頭での使用をカウント
+    const regex = new RegExp(
+      `(^|[、。\\s])${pattern}([、。\\s!?！？]|$)`,
+      "g",
+    );
+    const matches = text.match(regex);
+    if (matches && matches.length > 0) {
+      results.push({ word: pattern, count: matches.length });
+    }
+  }
+  return results;
 }
 
 function generateFeedback(
@@ -261,6 +288,9 @@ export function refineWithTranscription(
   const fillerCount = fillerWords.reduce((sum, f) => sum + f.count, 0);
   const fillerRate = durationMinutes > 0 ? Math.round((fillerCount / durationMinutes) * 10) / 10 : 0;
 
+  const backchannelWords = detectBackchannels(text);
+  const backchannelCount = backchannelWords.reduce((sum, b) => sum + b.count, 0);
+
   const speechRateScore = speechRate >= 200 && speechRate <= 400 ? 8 : speechRate >= 150 && speechRate <= 450 ? 6 : 4;
   const fillerScore = fillerRate < 2 ? 9 : fillerRate < 5 ? 6 : 3;
   const pauseScore = base.pauseAnalysis.longPauses <= 2 ? 8 : base.pauseAnalysis.longPauses <= 5 ? 5 : 3;
@@ -271,13 +301,25 @@ export function refineWithTranscription(
 
   const feedback = generateFeedback(speechRate, fillerCount, fillerRate, base.pauseAnalysis, base.volumeVariation);
 
+  // 相槌アドバイスの生成
+  let backchannelAdvice: string;
+  if (backchannelCount === 0) {
+    backchannelAdvice = "相槌がほとんど検出されませんでした。面接官の発言には適度に「はい」「なるほど」などで反応すると、聞いている姿勢が伝わります。";
+  } else if (backchannelCount > charCount * 0.1) {
+    backchannelAdvice = `相槌が${backchannelCount}回検出されました。やや多めなので、実質的な回答のボリュームを増やしましょう。`;
+  } else {
+    backchannelAdvice = `相槌が${backchannelCount}回検出されました。自然なコミュニケーションができています。`;
+  }
+
   return {
     ...base,
     speechRate,
     fillerCount,
     fillerRate,
     fillerWords,
+    backchannelCount,
+    backchannelWords,
     overallVoiceScore: Math.min(10, Math.max(0, overallVoiceScore)),
-    feedback,
+    feedback: { ...feedback, backchannelAdvice },
   };
 }

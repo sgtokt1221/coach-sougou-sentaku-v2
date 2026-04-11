@@ -12,12 +12,12 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Send, StopCircle, ChevronDown, ChevronUp, Video, VideoOff, Volume2, VolumeX } from "lucide-react";
+import { Send, StopCircle, ChevronDown, ChevronUp, Video, VideoOff, Volume2, VolumeX, Pencil, Check, X } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import type { InterviewMessage, InterviewMode, InterviewInputMode, VoiceAnalysis, VideoAnalysis, AppearanceAnalysis } from "@/lib/types/interview";
 import { INTERVIEW_MODE_LABELS } from "@/lib/types/interview";
 import ContinuousVoiceRecorder from "@/components/interview/ContinuousVoiceRecorder";
-import VoiceAnalyzer from "@/components/interview/VoiceAnalyzer";
+import VoiceAnalyzer, { refineWithTranscription } from "@/components/interview/VoiceAnalyzer";
 import VideoAnalyzer from "@/components/interview/VideoAnalyzer";
 import CameraPreview from "@/components/interview/CameraPreview";
 import {
@@ -72,6 +72,33 @@ export default function InterviewSessionPage() {
   const [cameraEnabled, setCameraEnabled] = useState(false);
   const [aiSpeaking, setAiSpeaking] = useState(false);
   const [ttsEnabled, setTtsEnabled] = useState(true);
+  /** 編集中のメッセージインデックス。null なら編集していない */
+  const [editingIdx, setEditingIdx] = useState<number | null>(null);
+  const [editDraft, setEditDraft] = useState("");
+
+  const startEditMessage = useCallback((idx: number) => {
+    setEditingIdx(idx);
+    setEditDraft(messages[idx]?.content ?? "");
+  }, [messages]);
+
+  const commitEditMessage = useCallback(() => {
+    if (editingIdx === null) return;
+    const trimmed = editDraft.trim();
+    if (!trimmed) {
+      setEditingIdx(null);
+      return;
+    }
+    setMessages((prev) =>
+      prev.map((m, i) => (i === editingIdx ? { ...m, content: trimmed } : m)),
+    );
+    setEditingIdx(null);
+    setEditDraft("");
+  }, [editingIdx, editDraft]);
+
+  const cancelEditMessage = useCallback(() => {
+    setEditingIdx(null);
+    setEditDraft("");
+  }, []);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -411,6 +438,23 @@ export default function InterviewSessionPage() {
     try {
       console.log("[handleEnd] Sending messages:", messages.length, "turns, duration:", elapsed);
       console.log("[handleEnd] Messages:", JSON.stringify(messages.map(m => ({ role: m.role, content: m.content.slice(0, 50) }))));
+
+      // フィラー・相槌検出のため、ユーザー発言の文字起こしを集約して refineWithTranscription を呼ぶ
+      let refinedVoiceAnalysis = voiceAnalysis;
+      if (voiceAnalysis) {
+        const studentTexts = messages
+          .filter((m) => m.role === "student")
+          .map((m) => m.content)
+          .join(" ");
+        if (studentTexts.length > 0) {
+          refinedVoiceAnalysis = refineWithTranscription(
+            voiceAnalysis,
+            studentTexts,
+            elapsed,
+          );
+        }
+      }
+
       const res = await authFetch("/api/interview/end", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -418,7 +462,7 @@ export default function InterviewSessionPage() {
           sessionId, messages, duration: elapsed,
           mode: sessionInfo?.mode,
           presentationContent: sessionInfo?.presentationContent,
-          ...(voiceAnalysis ? { voiceAnalysis } : {}),
+          ...(refinedVoiceAnalysis ? { voiceAnalysis: refinedVoiceAnalysis } : {}),
           ...(videoAnalysis ? { videoAnalysis } : {}),
           ...(appearanceAnalysis ? { appearanceAnalysis } : {}),
         }),
@@ -597,11 +641,66 @@ export default function InterviewSessionPage() {
 
         {messages.map((msg, i) => {
           if (msg.role === "student") {
+            const isEditing = editingIdx === i;
             return (
-              <div key={i} className="flex justify-end">
-                <div className="max-w-[85%] lg:max-w-[75%] rounded-2xl rounded-tr-sm bg-primary text-primary-foreground px-4 py-2 text-sm">
-                  {msg.content}
-                </div>
+              <div key={i} className="flex justify-end group">
+                {isEditing ? (
+                  <div className="w-full max-w-[90%] lg:max-w-[80%] rounded-2xl rounded-tr-sm border-2 border-primary bg-primary/5 p-2">
+                    <textarea
+                      value={editDraft}
+                      onChange={(e) => setEditDraft(e.target.value)}
+                      className="w-full min-h-[60px] text-sm bg-background rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-primary/30 resize-y"
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                          e.preventDefault();
+                          commitEditMessage();
+                        } else if (e.key === "Escape") {
+                          e.preventDefault();
+                          cancelEditMessage();
+                        }
+                      }}
+                    />
+                    <div className="mt-1 flex items-center justify-between">
+                      <p className="text-[10px] text-muted-foreground">
+                        ⌘+Enterで保存 / Escでキャンセル
+                      </p>
+                      <div className="flex gap-1">
+                        <button
+                          onClick={cancelEditMessage}
+                          className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
+                          type="button"
+                        >
+                          <X className="size-3" />
+                          取消
+                        </button>
+                        <button
+                          onClick={commitEditMessage}
+                          className="inline-flex items-center gap-1 rounded bg-primary px-2 py-1 text-xs text-primary-foreground hover:bg-primary/90"
+                          type="button"
+                        >
+                          <Check className="size-3" />
+                          保存
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-end gap-1">
+                    <button
+                      type="button"
+                      onClick={() => startEditMessage(i)}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-muted-foreground hover:text-foreground"
+                      title="発言を編集(誤変換を修正)"
+                      aria-label="発言を編集"
+                    >
+                      <Pencil className="size-3.5" />
+                    </button>
+                    <div className="max-w-[85%] lg:max-w-[75%] rounded-2xl rounded-tr-sm bg-primary text-primary-foreground px-4 py-2 text-sm whitespace-pre-wrap">
+                      {msg.content}
+                    </div>
+                  </div>
+                )}
               </div>
             );
           }
