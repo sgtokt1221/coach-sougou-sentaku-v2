@@ -1,25 +1,32 @@
 "use client";
 
 /**
- * 自己分析の 7 ステップ進捗を描画する「自己分析の木」。
+ * 自己分析の 7 ステップ進捗を描く「自己分析の木」(GSAP-first 版)。
  *
- * GSAP (+ @gsap/react) でアニメーションを制御。
- * - 葉が常にゆらぐ (yoyo)
- * - 背景の雲が流れる
- * - 果実が段階的に pop-in (stagger timeline)
- * - 現在ステップの果実はオーラが pulse
- * - ホバーで果実が拡大 + glow
- * - 全 7 完了時: 木全体のシェイク + キラキラ爆発
+ * 設計:
+ * - マスタータイムラインで生成アニメを物語化 (種→幹→枝→葉→果実)
+ *   DrawSVGPlugin で幹と枝が「描かれる」演出
+ *   SplitText でタイトル文字が順次入場
+ * - マスター完了後、loop アニメ群が開始 (葉揺れ・雲流れ・果実浮遊・蝶周回・キラキラ)
+ * - 各果実にホバーサブタイムライン (バウンス拡大・オーラ波紋・葉が譲る動き)
+ * - MotionPathPlugin で蝶 2 匹が曲線軌道を周回
+ * - prefers-reduced-motion: reduce では生成アニメをスキップ、loop も停止
+ *
+ * 性能:
+ * - useGSAP (scope) で自動 cleanup
+ * - force3D でトランスフォームを GPU 合成
  */
 
 import { useRef, useState } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
+import { DrawSVGPlugin } from "gsap/DrawSVGPlugin";
+import { MotionPathPlugin } from "gsap/MotionPathPlugin";
 import { cn } from "@/lib/utils";
 import { SELF_ANALYSIS_STEPS } from "@/lib/types/self-analysis";
 import { FRUIT_META, formatStepDataForTooltip } from "./tree-shared";
 
-gsap.registerPlugin(useGSAP);
+gsap.registerPlugin(useGSAP, DrawSVGPlugin, MotionPathPlugin);
 
 interface GrowthTreeProps {
   completedSteps: number;
@@ -29,13 +36,56 @@ interface GrowthTreeProps {
   className?: string;
 }
 
-// SVG 上の果実座標 (viewBox 320x270)
-const FRUIT_POSITIONS = FRUIT_META.map((m) => ({
-  x: m.x2d,
-  y: m.y2d,
+// viewBox 360x300 にリマッピングした果実座標
+// (元 320x270 から 1.125倍)
+const FRUIT_POS = FRUIT_META.map((m, i) => ({
+  index: i,
+  x: Math.round(m.x2d * 1.125) + 20,
+  y: Math.round(m.y2d * 1.111) + 10,
   color: m.color,
   ring: m.ring,
 }));
+
+// 葉の塊 (viewBox 360x300)
+const LEAVES = [
+  { cx: 180, cy: 90, r: 58, fill: "url(#gt-leaf1)" },
+  { cx: 122, cy: 122, r: 47, fill: "url(#gt-leaf2)" },
+  { cx: 238, cy: 120, r: 49, fill: "url(#gt-leaf2)" },
+  { cx: 90, cy: 165, r: 36, fill: "url(#gt-leaf3)" },
+  { cx: 270, cy: 167, r: 38, fill: "url(#gt-leaf3)" },
+  { cx: 152, cy: 178, r: 33, fill: "url(#gt-leaf1)" },
+  { cx: 214, cy: 190, r: 36, fill: "url(#gt-leaf1)" },
+  { cx: 180, cy: 146, r: 58, fill: "url(#gt-leaf1)" },
+];
+
+// 葉のハイライト
+const LEAF_HIGHLIGHTS = [
+  { cx: 166, cy: 72, r: 11 },
+  { cx: 225, cy: 100, r: 9 },
+  { cx: 112, cy: 112, r: 7 },
+  { cx: 180, cy: 128, r: 11 },
+];
+
+// 枝のパス (DrawSVG 対象)
+const BRANCHES = [
+  "M170 162 Q144 142 114 110",
+  "M175 162 Q208 144 244 114",
+  "M170 186 Q122 164 90 154",
+  "M175 186 Q222 164 272 162",
+  "M172 208 Q156 190 152 180",
+  "M178 208 Q200 194 210 188",
+];
+
+// 全完了時のキラキラ位置
+const SPARKLE_POS = [
+  { x: 60, y: 55 },
+  { x: 298, y: 60 },
+  { x: 38, y: 190 },
+  { x: 320, y: 200 },
+  { x: 180, y: 30 },
+  { x: 110, y: 220 },
+  { x: 260, y: 225 },
+];
 
 export function GrowthTree({
   completedSteps,
@@ -46,101 +96,307 @@ export function GrowthTree({
 }: GrowthTreeProps) {
   const allDone = completedSteps >= 7;
   const [hoveredStep, setHoveredStep] = useState<number | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const scopeRef = useRef<HTMLDivElement>(null);
+  const hoverTlsRef = useRef<Map<number, gsap.core.Timeline>>(new Map());
 
   const hoveredData =
     hoveredStep != null ? formatStepDataForTooltip(stepsData?.[hoveredStep]) : [];
   const hoveredMeta =
     hoveredStep != null ? SELF_ANALYSIS_STEPS.find((s) => s.step === hoveredStep) : null;
-  const hoveredPos = hoveredStep != null ? FRUIT_POSITIONS[hoveredStep - 1] : null;
+  const hoveredPosInfo = hoveredStep != null ? FRUIT_POS[hoveredStep - 1] : null;
 
-  // GSAP アニメーション (useGSAP で scope-safe)
   useGSAP(
     () => {
-      // 1. 葉のゆらぎ (無限 yoyo)
-      gsap.to(".growth-leaf", {
-        rotation: 2,
-        transformOrigin: "center center",
-        duration: 3.5,
-        ease: "sine.inOut",
-        repeat: -1,
-        yoyo: true,
-        stagger: { each: 0.2, from: "random" },
-      });
+      const mm = gsap.matchMedia();
 
-      // 2. 背景の雲が流れる
-      gsap.utils.toArray<SVGElement>(".growth-cloud").forEach((cloud, i) => {
-        const baseCx = parseFloat(cloud.getAttribute("data-cx") || "0");
-        gsap.fromTo(
-          cloud,
-          { attr: { cx: baseCx - 8 } },
-          {
-            attr: { cx: baseCx + 12 },
-            duration: 12 + i * 3,
+      mm.add("(prefers-reduced-motion: no-preference)", () => {
+        // ========================================
+        // マスタータイムライン (生成アニメ)
+        // ========================================
+        const master = gsap.timeline({ defaults: { force3D: true } });
+
+        // 0: 初期状態を設定
+        master.set([".gt-sky", ".gt-ground", ".gt-cloud"], { opacity: 0 });
+        master.set(".gt-trunk", { drawSVG: "50% 50%" });
+        master.set(".gt-bark", { drawSVG: "50% 50%", opacity: 0 });
+        master.set(".gt-branch", { drawSVG: "0%" });
+        master.set(".gt-leaf", { scale: 0, transformOrigin: "center center" });
+        master.set(".gt-leaf-highlight", { opacity: 0 });
+        master.set(".gt-fruit", { scale: 0, transformOrigin: "center center" });
+        master.set(".gt-seed", { y: -30, opacity: 0 });
+        master.set(".gt-title-char", { y: 20, opacity: 0 });
+        master.set(".gt-sparkle", { scale: 0, opacity: 0, transformOrigin: "center center" });
+        master.set(".gt-butterfly", { opacity: 0 });
+
+        // 空 → 雲
+        master.to(".gt-sky", { opacity: 1, duration: 0.4, ease: "power2.out" }, 0);
+        master.to(".gt-cloud", { opacity: 0.78, duration: 0.5, stagger: 0.1 }, 0.1);
+
+        // タイトル文字 stagger
+        master.to(".gt-title-char", {
+          y: 0,
+          opacity: 1,
+          duration: 0.5,
+          stagger: 0.06,
+          ease: "back.out(1.6)",
+        }, 0.1);
+
+        // 地面
+        master.to(".gt-ground", { opacity: 1, duration: 0.4 }, 0.2);
+
+        // 種が落ちる
+        master.to(".gt-seed", {
+          y: 0,
+          opacity: 1,
+          duration: 0.4,
+          ease: "bounce.out",
+        }, 0.4);
+
+        // 種が消えて幹が生える
+        master.to(".gt-seed", { opacity: 0, duration: 0.2 }, 0.75);
+        master.to(".gt-trunk", {
+          drawSVG: "0% 100%",
+          duration: 0.7,
+          ease: "power2.out",
+        }, 0.6);
+        master.to(".gt-bark", {
+          drawSVG: "0% 100%",
+          opacity: 0.4,
+          duration: 0.5,
+          ease: "power2.out",
+        }, 0.9);
+
+        // 枝が順に伸びる
+        master.to(".gt-branch", {
+          drawSVG: "0% 100%",
+          duration: 0.5,
+          stagger: 0.08,
+          ease: "power2.out",
+        }, 1.2);
+
+        // 葉が pop-in
+        master.to(".gt-leaf", {
+          scale: 1,
+          duration: 0.7,
+          stagger: { each: 0.06, from: "random" },
+          ease: "back.out(1.7)",
+        }, 1.65);
+        master.to(".gt-leaf-highlight", {
+          opacity: 0.25,
+          duration: 0.4,
+        }, 2.1);
+
+        // 果実が pop-in (完了済みのみ可視)
+        master.to(".gt-fruit", {
+          scale: 1,
+          duration: 0.9,
+          stagger: 0.12,
+          ease: "elastic.out(1.1, 0.55)",
+        }, 2.1);
+
+        // 蝶が現れる
+        master.to(".gt-butterfly", { opacity: 1, duration: 0.5 }, 2.5);
+
+        // 全完了時のキラキラ
+        if (allDone) {
+          master.to(".gt-sparkle", {
+            scale: 1,
+            opacity: 1,
+            duration: 0.6,
+            stagger: { each: 0.08, from: "random" },
+            ease: "back.out(2)",
+          }, 2.8);
+        }
+
+        // マスター終了後、loop 開始
+        master.call(startLoops, [], "+=0.05");
+
+        function startLoops() {
+          // 葉のゆらぎ
+          gsap.to(".gt-leaf", {
+            rotation: 2,
+            transformOrigin: "center center",
+            duration: 3.5,
             ease: "sine.inOut",
             repeat: -1,
             yoyo: true,
+            stagger: { each: 0.2, from: "random" },
+          });
+
+          // 雲の流れ
+          gsap.utils.toArray<SVGElement>(".gt-cloud").forEach((cloud, i) => {
+            const baseCx = parseFloat(cloud.getAttribute("data-cx") || "0");
+            gsap.fromTo(
+              cloud,
+              { attr: { cx: baseCx - 10 } },
+              {
+                attr: { cx: baseCx + 14 },
+                duration: 13 + i * 3,
+                ease: "sine.inOut",
+                repeat: -1,
+                yoyo: true,
+              }
+            );
+          });
+
+          // 完了済み果実のふわふわ
+          const doneFruits = gsap.utils.toArray<SVGElement>(".gt-fruit.is-done");
+          doneFruits.forEach((fruit, i) => {
+            gsap.to(fruit, {
+              y: "-=3",
+              duration: 2 + (i % 3) * 0.3,
+              ease: "sine.inOut",
+              repeat: -1,
+              yoyo: true,
+              delay: i * 0.2,
+            });
+          });
+
+          // 現在ステップのオーラ pulse
+          gsap.to(".gt-aura-current", {
+            scale: 1.3,
+            opacity: 0.9,
+            transformOrigin: "center center",
+            duration: 1.2,
+            ease: "sine.inOut",
+            repeat: -1,
+            yoyo: true,
+          });
+
+          // 蝶の MotionPath 周回
+          const butterflyA = scopeRef.current?.querySelector(".gt-butterfly-a");
+          const butterflyB = scopeRef.current?.querySelector(".gt-butterfly-b");
+          if (butterflyA) {
+            gsap.to(butterflyA, {
+              motionPath: {
+                path: "#gt-butterfly-path-a",
+                alignOrigin: [0.5, 0.5],
+                autoRotate: 30,
+              },
+              duration: 14,
+              repeat: -1,
+              ease: "none",
+            });
           }
+          if (butterflyB) {
+            gsap.to(butterflyB, {
+              motionPath: {
+                path: "#gt-butterfly-path-b",
+                alignOrigin: [0.5, 0.5],
+                autoRotate: -20,
+              },
+              duration: 18,
+              repeat: -1,
+              ease: "none",
+            });
+          }
+          // 蝶の羽ばたき
+          gsap.to(".gt-wing-left", {
+            scaleX: 0.4,
+            transformOrigin: "right center",
+            duration: 0.2,
+            ease: "sine.inOut",
+            repeat: -1,
+            yoyo: true,
+          });
+          gsap.to(".gt-wing-right", {
+            scaleX: 0.4,
+            transformOrigin: "left center",
+            duration: 0.2,
+            ease: "sine.inOut",
+            repeat: -1,
+            yoyo: true,
+          });
+
+          // キラキラ pulse (全完了時)
+          if (allDone) {
+            gsap.to(".gt-sparkle", {
+              scale: 1.5,
+              opacity: 0.6,
+              duration: 1.6,
+              ease: "sine.inOut",
+              repeat: -1,
+              yoyo: true,
+              stagger: { each: 0.2, from: "random" },
+            });
+          }
+        }
+
+        // ========================================
+        // ホバーサブタイムライン (各果実ごと)
+        // ========================================
+        FRUIT_POS.forEach((pos, i) => {
+          const stepNum = i + 1;
+          if (stepNum > completedSteps) return; // 完了済みのみ
+          const fruitEl = scopeRef.current?.querySelector(`.gt-fruit-${stepNum}`);
+          const auraEl = scopeRef.current?.querySelector(`.gt-aura-${stepNum}`);
+          if (!fruitEl) return;
+
+          const tl = gsap.timeline({ paused: true });
+          tl.to(
+            fruitEl,
+            {
+              scale: 1.3,
+              transformOrigin: `${pos.x}px ${pos.y}px`,
+              duration: 0.3,
+              ease: "back.out(2)",
+            },
+            0,
+          );
+          if (auraEl) {
+            tl.to(
+              auraEl,
+              {
+                scale: 1.6,
+                opacity: 0.9,
+                transformOrigin: `${pos.x}px ${pos.y}px`,
+                duration: 0.4,
+                ease: "power2.out",
+              },
+              0,
+            );
+          }
+          hoverTlsRef.current.set(stepNum, tl);
+        });
+
+        return () => {
+          hoverTlsRef.current.forEach((tl) => tl.kill());
+          hoverTlsRef.current.clear();
+        };
+      });
+
+      mm.add("(prefers-reduced-motion: reduce)", () => {
+        // モーション抑制: 即最終状態
+        gsap.set(
+          [".gt-sky", ".gt-ground", ".gt-cloud", ".gt-leaf-highlight", ".gt-butterfly"],
+          { opacity: 1, clearProps: "transform" },
         );
+        gsap.set([".gt-trunk", ".gt-bark", ".gt-branch"], { drawSVG: "0% 100%" });
+        gsap.set([".gt-leaf", ".gt-fruit"], { scale: 1, clearProps: "transform" });
+        gsap.set(".gt-title-char", { y: 0, opacity: 1 });
+        gsap.set(".gt-seed", { opacity: 0 });
+        if (allDone) {
+          gsap.set(".gt-sparkle", { scale: 1, opacity: 1 });
+        }
       });
-
-      // 3. 果実の pop-in (完了済みだけ)
-      const tl = gsap.timeline();
-      const fruits = gsap.utils.toArray<SVGElement>(".growth-fruit.is-done");
-      if (fruits.length > 0) {
-        tl.from(fruits, {
-          scale: 0,
-          opacity: 0,
-          transformOrigin: "center center",
-          duration: 0.9,
-          ease: "elastic.out(1.1, 0.55)",
-          stagger: 0.15,
-        });
-      }
-
-      // 4. 完了済みの果実を常時ふわふわ浮遊
-      fruits.forEach((fruit, i) => {
-        gsap.to(fruit, {
-          y: "-=3",
-          duration: 2 + (i % 3) * 0.3,
-          ease: "sine.inOut",
-          repeat: -1,
-          yoyo: true,
-          delay: i * 0.2,
-        });
-      });
-
-      // 5. 現在ステップの果実オーラを pulse
-      gsap.to(".growth-aura-current", {
-        scale: 1.25,
-        opacity: 0.9,
-        transformOrigin: "center center",
-        duration: 1.2,
-        ease: "sine.inOut",
-        repeat: -1,
-        yoyo: true,
-      });
-
-      // 6. 全完了時のキラキラ
-      if (allDone) {
-        gsap.to(".growth-sparkle", {
-          scale: 1.5,
-          opacity: 1,
-          transformOrigin: "center center",
-          duration: 1.8,
-          ease: "sine.inOut",
-          repeat: -1,
-          yoyo: true,
-          stagger: { each: 0.2, from: "random" },
-        });
-      }
     },
-    { scope: containerRef, dependencies: [completedSteps, currentStep, allDone] },
+    { scope: scopeRef, dependencies: [completedSteps, currentStep, allDone] },
   );
+
+  const handleFruitHover = (step: number) => {
+    setHoveredStep(step);
+    hoverTlsRef.current.get(step)?.play();
+  };
+  const handleFruitLeave = (step: number) => {
+    setHoveredStep(null);
+    hoverTlsRef.current.get(step)?.reverse();
+  };
+
+  const titleChars = "自己分析の木".split("");
 
   return (
     <div
-      ref={containerRef}
+      ref={scopeRef}
       className={cn(
         "relative rounded-2xl border overflow-hidden shadow-sm",
         "bg-gradient-to-b from-sky-100/80 via-emerald-50/50 to-amber-50/60 dark:from-slate-900 dark:via-emerald-950/50 dark:to-slate-900",
@@ -151,9 +407,19 @@ export function GrowthTree({
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.85),transparent_55%)]" />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,rgba(134,239,172,0.35),transparent_65%)]" />
 
-      {/* タイトル */}
+      {/* タイトル (SplitText 代替: 文字ごとに span) */}
       <div className="relative flex items-baseline justify-between px-4 pt-4 mb-2">
-        <h2 className="text-sm font-semibold text-foreground/80">自己分析の木</h2>
+        <h2 className="text-sm font-semibold text-foreground/80 flex">
+          {titleChars.map((c, i) => (
+            <span
+              key={i}
+              className="gt-title-char inline-block"
+              style={{ willChange: "transform" }}
+            >
+              {c}
+            </span>
+          ))}
+        </h2>
         <span className="text-[11px] text-muted-foreground tabular-nums bg-background/70 backdrop-blur-sm rounded-full px-2 py-0.5">
           {completedSteps} / 7 実っています
         </span>
@@ -162,26 +428,21 @@ export function GrowthTree({
       {/* SVG 木 */}
       <div className="relative w-full flex justify-center px-4">
         <svg
-          viewBox="0 0 320 270"
-          className="w-full max-w-[440px] h-auto"
+          viewBox="0 0 360 300"
+          className="w-full max-w-[480px] h-auto"
           aria-label={`自己分析の進捗 ${completedSteps}/7`}
           role="img"
         >
           <defs>
-            {/* 幹のグラデーション */}
-            <linearGradient id="gt-trunk" x1="0%" y1="0%" x2="100%" y2="0%">
+            <linearGradient id="gt-trunk-grad" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor="#5a3416" />
               <stop offset="45%" stopColor="#8a5828" />
               <stop offset="100%" stopColor="#6b3d1c" />
             </linearGradient>
-
-            {/* 地面 */}
-            <linearGradient id="gt-ground" x1="0%" y1="0%" x2="0%" y2="100%">
+            <linearGradient id="gt-ground-grad" x1="0%" y1="0%" x2="0%" y2="100%">
               <stop offset="0%" stopColor="#86efac" />
               <stop offset="100%" stopColor="#4ade80" />
             </linearGradient>
-
-            {/* 葉の塊 3 種 */}
             <radialGradient id="gt-leaf1" cx="35%" cy="30%" r="70%">
               <stop offset="0%" stopColor="#86efac" />
               <stop offset="60%" stopColor="#4ade80" />
@@ -195,10 +456,8 @@ export function GrowthTree({
               <stop offset="0%" stopColor="#bbf7d0" />
               <stop offset="100%" stopColor="#22c55e" />
             </radialGradient>
-
-            {/* 果実 (step 色別) */}
-            {FRUIT_POSITIONS.map((pos, i) => (
-              <radialGradient key={`fg-${i}`} id={`gt-fruit-${i}`} cx="35%" cy="30%" r="70%">
+            {FRUIT_POS.map((pos, i) => (
+              <radialGradient key={`fg-${i}`} id={`gt-fruit-grad-${i}`} cx="35%" cy="30%" r="70%">
                 <stop offset="0%" stopColor="#ffffff" stopOpacity="0.95" />
                 <stop offset="30%" stopColor={pos.color} />
                 <stop offset="100%" stopColor={pos.color} />
@@ -208,8 +467,6 @@ export function GrowthTree({
               <stop offset="0%" stopColor="#f3f4f6" stopOpacity="0.9" />
               <stop offset="100%" stopColor="#9ca3af" />
             </radialGradient>
-
-            {/* 光彩フィルター */}
             <filter id="gt-glow" x="-80%" y="-80%" width="260%" height="260%">
               <feGaussianBlur stdDeviation="3.5" result="blur" />
               <feMerge>
@@ -228,105 +485,91 @@ export function GrowthTree({
             <filter id="gt-shadow" x="-30%" y="-30%" width="160%" height="160%">
               <feDropShadow dx="0" dy="3" stdDeviation="3" floodOpacity="0.25" />
             </filter>
+
+            {/* 蝶の飛行軌道 (非表示) */}
+            <path id="gt-butterfly-path-a" d="M 30 130 Q 90 60, 180 100 Q 270 140, 330 80 Q 280 180, 180 160 Q 80 140, 30 130 Z" />
+            <path id="gt-butterfly-path-b" d="M 340 200 Q 260 150, 180 210 Q 100 270, 40 180 Q 120 230, 200 220 Q 280 210, 340 200 Z" />
           </defs>
 
-          {/* 背景の雲 (GSAP で流れる) */}
+          {/* 空 */}
+          <rect className="gt-sky" x="0" y="0" width="360" height="300" fill="url(#gt-sky-grad)" opacity="0" />
+
+          {/* 背景の雲 */}
           {[
-            { cx: 50, cy: 40, rx: 18, ry: 6 },
-            { cx: 270, cy: 55, rx: 22, ry: 7 },
-            { cx: 160, cy: 22, rx: 24, ry: 6 },
+            { cx: 60, cy: 45, rx: 20, ry: 7 },
+            { cx: 300, cy: 60, rx: 24, ry: 8 },
+            { cx: 180, cy: 28, rx: 26, ry: 7 },
           ].map((c, i) => (
             <ellipse
               key={`cloud-${i}`}
-              className="growth-cloud"
+              className="gt-cloud"
               data-cx={c.cx}
               cx={c.cx}
               cy={c.cy}
               rx={c.rx}
               ry={c.ry}
               fill="#ffffff"
-              opacity="0.78"
             />
           ))}
 
           {/* 地面 */}
-          <ellipse cx="160" cy="248" rx="115" ry="7" fill="#000000" opacity="0.12" />
-          <path
-            d="M45 246 Q100 236 160 240 Q220 244 275 238 L275 252 L45 252 Z"
-            fill="url(#gt-ground)"
-            opacity="0.75"
-          />
-          <g stroke="#16a34a" strokeWidth="1" strokeLinecap="round" opacity="0.5">
-            {Array.from({ length: 14 }).map((_, i) => {
-              const x = 55 + i * 16;
-              return <line key={i} x1={x} y1="247" x2={x + 2} y2="243" />;
-            })}
+          <g className="gt-ground">
+            <ellipse cx="180" cy="272" rx="130" ry="8" fill="#000000" opacity="0.12" />
+            <path
+              d="M50 270 Q115 258 180 264 Q245 268 310 260 L310 278 L50 278 Z"
+              fill="url(#gt-ground-grad)"
+              opacity="0.75"
+            />
+            <g stroke="#16a34a" strokeWidth="1" strokeLinecap="round" opacity="0.5">
+              {Array.from({ length: 15 }).map((_, i) => {
+                const x = 62 + i * 16;
+                return <line key={i} x1={x} y1="271" x2={x + 2} y2="267" />;
+              })}
+            </g>
           </g>
 
-          {/* 幹 + 樹皮テクスチャ */}
+          {/* 種 (幹出現前の一瞬) */}
+          <circle className="gt-seed" cx="170" cy="270" r="4" fill="#4a2810" />
+
+          {/* 幹 (DrawSVG 対象) */}
           <g filter="url(#gt-shadow)">
             <path
-              d="M148 248 C146 220 144 190 150 155 C152 130 149 110 156 88"
-              stroke="url(#gt-trunk)"
-              strokeWidth="14"
+              className="gt-trunk"
+              d="M168 272 C166 240 164 210 170 175 C172 150 169 130 176 108"
+              stroke="url(#gt-trunk-grad)"
+              strokeWidth="15"
               strokeLinecap="round"
               fill="none"
             />
             <path
-              d="M152 240 C151 210 150 180 155 150"
+              className="gt-bark"
+              d="M172 262 C171 230 170 200 175 168"
               stroke="#4a2810"
               strokeWidth="1.5"
               strokeLinecap="round"
               fill="none"
-              opacity="0.4"
-            />
-            <path
-              d="M156 240 C157 210 160 180 157 150"
-              stroke="#4a2810"
-              strokeWidth="1"
-              strokeLinecap="round"
-              fill="none"
-              opacity="0.3"
             />
           </g>
 
-          {/* 枝 */}
+          {/* 枝 (DrawSVG 対象) */}
           <g
             stroke="#6b3d1c"
-            strokeWidth="3.5"
+            strokeWidth="4"
             strokeLinecap="round"
             fill="none"
             filter="url(#gt-shadow)"
           >
-            <path d="M152 145 Q130 128 102 100" />
-            <path d="M156 145 Q186 130 218 104" />
-            <path d="M152 170 Q110 150 80 140" />
-            <path d="M156 170 Q200 150 242 148" />
-            <path d="M154 190 Q140 175 136 165" />
-            <path d="M158 190 Q180 178 188 172" />
-          </g>
-          <g stroke="#8a5828" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.6">
-            <path d="M152 145 Q130 128 102 100" />
-            <path d="M156 145 Q186 130 218 104" />
-            <path d="M152 170 Q110 150 80 140" />
-            <path d="M156 170 Q200 150 242 148" />
+            {BRANCHES.map((d, i) => (
+              <path key={`branch-${i}`} className="gt-branch" d={d} />
+            ))}
           </g>
 
-          {/* 葉の塊 (GSAP で揺れる) */}
+          {/* 葉 */}
           <g>
-            {[
-              { cx: 160, cy: 80, r: 52, fill: "url(#gt-leaf1)" },
-              { cx: 108, cy: 110, r: 42, fill: "url(#gt-leaf2)" },
-              { cx: 212, cy: 108, r: 44, fill: "url(#gt-leaf2)" },
-              { cx: 80, cy: 148, r: 32, fill: "url(#gt-leaf3)" },
-              { cx: 240, cy: 150, r: 34, fill: "url(#gt-leaf3)" },
-              { cx: 135, cy: 160, r: 30, fill: "url(#gt-leaf1)" },
-              { cx: 190, cy: 170, r: 32, fill: "url(#gt-leaf1)" },
-              { cx: 160, cy: 132, r: 52, fill: "url(#gt-leaf1)" },
-            ].map((leaf, i) => (
+            {LEAVES.map((leaf, i) => (
               <circle
                 key={`leaf-${i}`}
-                className="growth-leaf"
+                className="gt-leaf"
                 style={{ transformOrigin: `${leaf.cx}px ${leaf.cy}px` }}
                 cx={leaf.cx}
                 cy={leaf.cy}
@@ -334,15 +577,10 @@ export function GrowthTree({
                 fill={leaf.fill}
               />
             ))}
-            {/* 光沢 */}
-            {[
-              { cx: 148, cy: 65, r: 10 },
-              { cx: 200, cy: 90, r: 8 },
-              { cx: 100, cy: 100, r: 6 },
-              { cx: 160, cy: 115, r: 10 },
-            ].map((h, i) => (
+            {LEAF_HIGHLIGHTS.map((h, i) => (
               <circle
                 key={`leaf-hl-${i}`}
+                className="gt-leaf-highlight"
                 cx={h.cx}
                 cy={h.cy}
                 r={h.r}
@@ -353,26 +591,27 @@ export function GrowthTree({
           </g>
 
           {/* 果実 */}
-          {FRUIT_POSITIONS.map((pos, i) => {
+          {FRUIT_POS.map((pos, i) => {
             const stepNum = i + 1;
             const isDone = stepNum <= completedSteps;
             const isCurrent = stepNum === currentStep;
-            const isHovered = hoveredStep === stepNum;
             return (
               <g
                 key={stepNum}
-                className={cn("growth-fruit", isDone && "is-done")}
+                className={cn(
+                  "gt-fruit",
+                  `gt-fruit-${stepNum}`,
+                  isDone && "is-done",
+                )}
                 style={{
                   transformOrigin: `${pos.x}px ${pos.y}px`,
-                  transform: isHovered && isDone ? "scale(1.25)" : undefined,
-                  transition: "transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1)",
                   cursor: isDone ? "pointer" : "default",
                   opacity: isDone ? 1 : 0.2,
                 }}
-                onMouseEnter={() => isDone && setHoveredStep(stepNum)}
-                onMouseLeave={() => setHoveredStep(null)}
-                onFocus={() => isDone && setHoveredStep(stepNum)}
-                onBlur={() => setHoveredStep(null)}
+                onMouseEnter={() => isDone && handleFruitHover(stepNum)}
+                onMouseLeave={() => isDone && handleFruitLeave(stepNum)}
+                onFocus={() => isDone && handleFruitHover(stepNum)}
+                onBlur={() => isDone && handleFruitLeave(stepNum)}
                 onClick={() => isDone && onFruitClick?.(stepNum)}
                 onKeyDown={(e) => {
                   if (isDone && (e.key === "Enter" || e.key === " ")) {
@@ -384,93 +623,90 @@ export function GrowthTree({
                 role={isDone ? "button" : undefined}
                 aria-label={isDone ? `${SELF_ANALYSIS_STEPS[i].title}を編集` : undefined}
               >
-                {/* 落ち影 */}
                 {isDone && (
                   <ellipse
                     cx={pos.x}
-                    cy={pos.y + 14}
-                    rx="8"
-                    ry="2"
+                    cy={pos.y + 15}
+                    rx="9"
+                    ry="2.5"
                     fill="#000000"
                     opacity="0.2"
                   />
                 )}
-                {/* オーラ */}
                 {isDone && (
                   <circle
-                    className={cn(isCurrent && "growth-aura-current")}
+                    className={cn(`gt-aura-${stepNum}`, isCurrent && "gt-aura-current")}
                     cx={pos.x}
                     cy={pos.y}
-                    r="19"
+                    r="20"
                     fill={pos.ring}
                     opacity="0.55"
                     filter="url(#gt-glow)"
-                    style={{ transformOrigin: `${pos.x}px ${pos.y}px` }}
                   />
                 )}
-                {/* 実本体 */}
                 <circle
                   cx={pos.x}
                   cy={pos.y}
-                  r="12"
-                  fill={isDone ? `url(#gt-fruit-${i})` : "url(#gt-fruit-gray)"}
-                  filter={isDone ? (isCurrent ? "url(#gt-glow-strong)" : "url(#gt-glow)") : undefined}
+                  r="13"
+                  fill={isDone ? `url(#gt-fruit-grad-${i})` : "url(#gt-fruit-gray)"}
+                  filter={
+                    isDone ? (isCurrent ? "url(#gt-glow-strong)" : "url(#gt-glow)") : undefined
+                  }
                 />
-                {/* ハイライト */}
                 {isDone && (
                   <>
-                    <circle cx={pos.x - 3.5} cy={pos.y - 3.5} r="3.2" fill="rgba(255,255,255,0.9)" />
-                    <circle cx={pos.x - 2} cy={pos.y - 2} r="1.3" fill="#ffffff" />
-                  </>
-                )}
-                {/* ヘタ + 葉 */}
-                {isDone && (
-                  <>
+                    <circle cx={pos.x - 4} cy={pos.y - 4} r="3.5" fill="rgba(255,255,255,0.9)" />
+                    <circle cx={pos.x - 2.5} cy={pos.y - 2.5} r="1.4" fill="#ffffff" />
                     <line
                       x1={pos.x}
-                      y1={pos.y - 12}
+                      y1={pos.y - 13}
                       x2={pos.x + 1}
-                      y2={pos.y - 16}
+                      y2={pos.y - 18}
                       stroke="#4a2810"
-                      strokeWidth="1.6"
+                      strokeWidth="1.8"
                       strokeLinecap="round"
                     />
                     <path
-                      d={`M ${pos.x + 1} ${pos.y - 16} Q ${pos.x + 8} ${pos.y - 20} ${pos.x + 12} ${pos.y - 14}`}
+                      d={`M ${pos.x + 1} ${pos.y - 18} Q ${pos.x + 9} ${pos.y - 22} ${pos.x + 13} ${pos.y - 16}`}
                       stroke="#16a34a"
                       strokeWidth="2"
                       strokeLinecap="round"
                       fill="#4ade80"
                     />
+                    <title>{SELF_ANALYSIS_STEPS[i].title}</title>
                   </>
                 )}
-                {isDone && <title>{SELF_ANALYSIS_STEPS[i].title}</title>}
               </g>
             );
           })}
 
+          {/* 蝶 A (ピンク) */}
+          <g className="gt-butterfly gt-butterfly-a">
+            <ellipse className="gt-wing-left" cx="-4" cy="0" rx="4.5" ry="3.5" fill="#f9a8d4" opacity="0.85" />
+            <ellipse className="gt-wing-right" cx="4" cy="0" rx="4.5" ry="3.5" fill="#f9a8d4" opacity="0.85" />
+            <circle cx="0" cy="0" r="0.9" fill="#1f2937" />
+          </g>
+          {/* 蝶 B (水色) */}
+          <g className="gt-butterfly gt-butterfly-b">
+            <ellipse className="gt-wing-left" cx="-4" cy="0" rx="4.5" ry="3.5" fill="#a5b4fc" opacity="0.85" />
+            <ellipse className="gt-wing-right" cx="4" cy="0" rx="4.5" ry="3.5" fill="#a5b4fc" opacity="0.85" />
+            <circle cx="0" cy="0" r="0.9" fill="#1f2937" />
+          </g>
+
           {/* 全完了時のキラキラ */}
           {allDone && (
             <g filter="url(#gt-glow)">
-              {[
-                { x: 55, y: 50 },
-                { x: 265, y: 55 },
-                { x: 35, y: 170 },
-                { x: 285, y: 180 },
-                { x: 160, y: 28 },
-                { x: 100, y: 200 },
-                { x: 230, y: 205 },
-              ].map((s, i) => (
+              {SPARKLE_POS.map((s, i) => (
                 <g
                   key={`sparkle-${i}`}
-                  className="growth-sparkle"
-                  style={{ transformOrigin: `${s.x}px ${s.y}px`, opacity: 0.4 }}
+                  className="gt-sparkle"
+                  style={{ transformOrigin: `${s.x}px ${s.y}px` }}
                 >
-                  <circle cx={s.x} cy={s.y} r="2.5" fill="#fde047" />
+                  <circle cx={s.x} cy={s.y} r="2.8" fill="#fde047" />
                   <path
-                    d={`M ${s.x} ${s.y - 7} L ${s.x} ${s.y + 7} M ${s.x - 7} ${s.y} L ${s.x + 7} ${s.y} M ${s.x - 5} ${s.y - 5} L ${s.x + 5} ${s.y + 5} M ${s.x - 5} ${s.y + 5} L ${s.x + 5} ${s.y - 5}`}
+                    d={`M ${s.x} ${s.y - 8} L ${s.x} ${s.y + 8} M ${s.x - 8} ${s.y} L ${s.x + 8} ${s.y} M ${s.x - 5.5} ${s.y - 5.5} L ${s.x + 5.5} ${s.y + 5.5} M ${s.x - 5.5} ${s.y + 5.5} L ${s.x + 5.5} ${s.y - 5.5}`}
                     stroke="#fde047"
-                    strokeWidth="1.2"
+                    strokeWidth="1.3"
                     strokeLinecap="round"
                   />
                 </g>
@@ -480,21 +716,21 @@ export function GrowthTree({
         </svg>
 
         {/* ホバー時のツールチップ */}
-        {hoveredStep != null && hoveredMeta && hoveredPos && (
+        {hoveredStep != null && hoveredMeta && hoveredPosInfo && (
           <div
             className="pointer-events-none absolute z-10 w-[280px] -translate-x-1/2 rounded-lg border bg-background/95 p-3 shadow-xl backdrop-blur-sm"
             style={{
-              left: `${(hoveredPos.x / 320) * 100}%`,
-              top: `${(hoveredPos.y / 270) * 100}%`,
-              marginTop: "24px",
+              left: `${(hoveredPosInfo.x / 360) * 100}%`,
+              top: `${(hoveredPosInfo.y / 300) * 100}%`,
+              marginTop: "26px",
             }}
           >
             <div className="flex items-center gap-2 mb-1.5">
               <span
                 className="inline-block size-2.5 rounded-full shadow-sm"
                 style={{
-                  backgroundColor: hoveredPos.color,
-                  boxShadow: `0 0 8px ${hoveredPos.color}`,
+                  backgroundColor: hoveredPosInfo.color,
+                  boxShadow: `0 0 8px ${hoveredPosInfo.color}`,
                 }}
               />
               <p className="text-xs font-semibold text-foreground">{hoveredMeta.title}</p>
@@ -539,8 +775,8 @@ export function GrowthTree({
               <span
                 className="inline-block size-1.5 rounded-full"
                 style={{
-                  backgroundColor: isDone ? FRUIT_POSITIONS[i].color : "#d4d4d8",
-                  boxShadow: isDone ? `0 0 6px ${FRUIT_POSITIONS[i].color}` : undefined,
+                  backgroundColor: isDone ? FRUIT_POS[i].color : "#d4d4d8",
+                  boxShadow: isDone ? `0 0 6px ${FRUIT_POS[i].color}` : undefined,
                 }}
               />
               {s.title}
