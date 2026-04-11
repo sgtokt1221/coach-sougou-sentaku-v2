@@ -38,6 +38,8 @@ export interface StudentProfile extends UserProfile {
   onboardingCompleted?: boolean;
   managedBy?: string;
   selfAnalysisId?: string;
+  /** 最後に Realtime API で GD 面接を実行した日時 (2ヶ月に1回の制限判定用) */
+  lastRealtimeGdAt?: Date;
 }
 
 export interface EnglishCert {

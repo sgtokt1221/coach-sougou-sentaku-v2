@@ -16,6 +16,7 @@ import { Send, StopCircle, ChevronDown, ChevronUp, Video, VideoOff, Volume2, Vol
 import { authFetch } from "@/lib/api/client";
 import type { InterviewMessage, InterviewMode, InterviewInputMode, VoiceAnalysis, VideoAnalysis, AppearanceAnalysis } from "@/lib/types/interview";
 import type { WeaknessRecord } from "@/lib/types/growth";
+import { useRealtimeInterview } from "@/hooks/useRealtimeInterview";
 import { INTERVIEW_MODE_LABELS } from "@/lib/types/interview";
 import ContinuousVoiceRecorder from "@/components/interview/ContinuousVoiceRecorder";
 import VoiceAnalyzer, { refineWithTranscription } from "@/components/interview/VoiceAnalyzer";
@@ -76,6 +77,21 @@ export default function InterviewSessionPage() {
   // カンペ機能: 自分の弱点とAPを常時参照できるように
   const [weaknesses, setWeaknesses] = useState<WeaknessRecord[]>([]);
   const [cheatSheetOpen, setCheatSheetOpen] = useState(false);
+  /** Realtime API を試したか (成功/失敗問わず 1 回だけ試行) */
+  const realtimeTriedRef = useRef(false);
+  /** Realtime 経路が有効 (true なら従来 Claude 経路は使わない) */
+  const [realtimeActive, setRealtimeActive] = useState(false);
+  const realtime = useRealtimeInterview({
+    mode: sessionInfo?.mode ?? "individual",
+    universityName: sessionInfo?.universityContext.universityName ?? "",
+    facultyName: sessionInfo?.universityContext.facultyName ?? "",
+    admissionPolicy: sessionInfo?.universityContext.admissionPolicy ?? "",
+    weaknessList: weaknesses.map((w) => `- ${w.area}(${w.count}回)`).join("\n") || "（過去の弱点なし）",
+    presentationContent: sessionInfo?.presentationContent,
+    onMessageAppend: (m) => {
+      setMessages((prev) => [...prev, m]);
+    },
+  });
   const appearanceCheckCount = useRef(0);
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
   const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
@@ -411,9 +427,13 @@ export default function InterviewSessionPage() {
 
     const info: SessionInfo = JSON.parse(stored);
     setSessionInfo(info);
-    setMessages([{ role: "ai", content: info.openingMessage }]);
+    // Realtime 経路が有効なら opening を messages に入れない (Realtime 側が挨拶を生成する)
+    if (!realtimeActive) {
+      setMessages([{ role: "ai", content: info.openingMessage }]);
+    }
 
     if (info.inputMode !== "voice") return;
+    if (realtimeActive) return; // Realtime 経路では以降の Claude TTS セットアップは不要
 
     // AudioContext を必ず初期化してから再生
     ensureAudioContext();
@@ -599,6 +619,25 @@ export default function InterviewSessionPage() {
     return () => clearInterval(interval);
   }, []);
 
+  // Realtime API: 音声モードかつ個人系モードなら 1 度だけ接続を試みる
+  // 失敗/レート超過なら従来の Claude 経路にフォールバックする
+  useEffect(() => {
+    if (!sessionInfo || realtimeTriedRef.current) return;
+    if (sessionInfo.inputMode !== "voice") return;
+    // Phase 1: GD は従来の Claude 経路 (useRealtimeInterview 内でも弾く)
+    if (sessionInfo.mode === "group_discussion") return;
+
+    realtimeTriedRef.current = true;
+    (async () => {
+      const result = await realtime.start();
+      if (result.success) {
+        setRealtimeActive(true);
+        setCameraEnabled(true); // カメラ分析は引き続き有効
+      }
+      // フォールバックは何もしない (既存の Claude 経路がそのまま動く)
+    })();
+  }, [sessionInfo, realtime]);
+
   // カンペ用: 自分の弱点を取得
   useEffect(() => {
     let cancelled = false;
@@ -635,7 +674,10 @@ export default function InterviewSessionPage() {
         clearTimeout(gazeAlertTimerRef.current);
         gazeAlertTimerRef.current = null;
       }
+      // Realtime セッションも unmount 時に明示終了 (useRealtimeInterview 内にも cleanup あり)
+      realtime.stop();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stopAllAudio]);
 
   // Auto-scroll
@@ -1125,7 +1167,13 @@ export default function InterviewSessionPage() {
 
       {/* Input */}
       <div className="px-4 py-3 border-t bg-background shrink-0">
-        {isVoiceMode ? (
+        {realtimeActive ? (
+          // Realtime API 経路: サーバー側 VAD が発話を検知するため PTT ボタンは不要
+          <div className="flex items-center justify-center gap-2 py-3 text-sm text-muted-foreground">
+            <span className="inline-flex size-2 rounded-full bg-emerald-500 animate-pulse" />
+            マイクが常時有効です。自然に話してください
+          </div>
+        ) : isVoiceMode ? (
           <ContinuousVoiceRecorder
             autoStart
             onRecordingComplete={handleVoiceComplete}
