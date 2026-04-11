@@ -1,17 +1,21 @@
+// globals.css では `--chart-1: oklch(0.52 0.14 175)` のように
+// oklch(...) 関数まるごとが CSS 変数に入っているので、ここでは var(--x) だけで使う。
+// `oklch(var(--chart-1))` と書くと oklch(oklch(...)) に展開されて無効になる。
+
 export const CHART_COLORS = {
-  primary: "oklch(var(--chart-1))",
-  secondary: "oklch(var(--chart-2))",
-  tertiary: "oklch(var(--chart-3))",
-  quaternary: "oklch(var(--chart-4))",
-  quinary: "oklch(var(--chart-5))",
+  primary: "var(--chart-1)",
+  secondary: "var(--chart-2)",
+  tertiary: "var(--chart-3)",
+  quaternary: "var(--chart-4)",
+  quinary: "var(--chart-5)",
 } as const;
 
 export const SCORE_COLORS = {
-  structure: "oklch(var(--chart-3))",   // purple/indigo系 — 構成
-  logic: "oklch(var(--chart-2))",       // amber系 — 論理性
-  expression: "oklch(var(--chart-4))",  // green系 — 表現力
-  apAlignment: "oklch(var(--chart-5))", // rose/orange系 — AP合致度
-  originality: "oklch(var(--chart-1))", // teal系 — 独自性
+  structure: "var(--chart-3)",   // purple/indigo系 — 構成
+  logic: "var(--chart-2)",       // amber系 — 論理性
+  expression: "var(--chart-4)",  // green系 — 表現力
+  apAlignment: "var(--chart-5)", // rose/orange系 — AP合致度
+  originality: "var(--chart-1)", // teal系 — 独自性
 } as const;
 
 export const SCORE_LINES = [
@@ -29,6 +33,6 @@ export const CHART_ANIMATION = {
 
 export const GRID_STYLE = {
   strokeDasharray: "3 3",
-  stroke: "oklch(var(--border))",
+  stroke: "var(--border)",
   opacity: 0.5,
 };
