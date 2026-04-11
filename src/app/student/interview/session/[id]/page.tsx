@@ -427,13 +427,16 @@ export default function InterviewSessionPage() {
 
     const info: SessionInfo = JSON.parse(stored);
     setSessionInfo(info);
-    // Realtime 経路が有効なら opening を messages に入れない (Realtime 側が挨拶を生成する)
-    if (!realtimeActive) {
+
+    // 音声モードで Realtime 対象 (非 GD) の場合は opening を messages に入れない
+    // Realtime 側が自動で挨拶を生成し、input_audio_transcription 経由で messages に載る
+    const willUseRealtime = info.inputMode === "voice" && info.mode !== "group_discussion";
+    if (!willUseRealtime) {
       setMessages([{ role: "ai", content: info.openingMessage }]);
     }
 
     if (info.inputMode !== "voice") return;
-    if (realtimeActive) return; // Realtime 経路では以降の Claude TTS セットアップは不要
+    if (willUseRealtime) return; // Realtime 経路では以降の Claude TTS セットアップは一切不要
 
     // AudioContext を必ず初期化してから再生
     ensureAudioContext();
@@ -1183,13 +1186,26 @@ export default function InterviewSessionPage() {
             <span className="inline-flex size-2 rounded-full bg-emerald-500 animate-pulse" />
             マイクが常時有効です。自然に話してください
           </div>
+        ) : isVoiceMode && sessionInfo?.mode !== "group_discussion" ? (
+          // Realtime 対象モードは Claude にフォールバックせず、接続状況を表示
+          realtime.status === "fallback_error" || realtime.status === "fallback_rate_limited" ? (
+            <div className="flex flex-col items-center justify-center gap-1 py-3 text-sm text-rose-600">
+              <span>Realtime 接続に失敗しました</span>
+              {realtime.error && <span className="text-[11px] font-mono">{realtime.error.slice(0, 200)}</span>}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center gap-2 py-3 text-sm text-muted-foreground">
+              <span className="inline-flex size-2 rounded-full bg-sky-500 animate-pulse" />
+              Realtime セッションを準備中... ({realtime.status})
+            </div>
+          )
         ) : isVoiceMode ? (
+          // GD 音声モード: 現状は Claude 経路のみ (Phase 2 で Realtime 対応)
           <ContinuousVoiceRecorder
             autoStart
             onRecordingComplete={handleVoiceComplete}
             onStreamReady={(stream) => setMediaStream(stream)}
             onInterrupt={() => {
-              // Stop TTS playback when user starts speaking
               stopAllAudio();
             }}
             disabled={isLoading}

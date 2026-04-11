@@ -75,12 +75,19 @@ async function issueEphemeralToken(
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
         },
-        // リクエストは最小構成: model / voice / instructions のみ
-        // turn_detection / input_audio_transcription はデフォルトに任せる
         body: JSON.stringify({
           model,
           voice: params.voice,
           instructions: params.instructions,
+          // ユーザー発話を whisper で文字起こしする (これがないと画面に出ない)
+          input_audio_transcription: { model: "whisper-1" },
+          // サーバー VAD でユーザーの発話終了を検知して即応答生成
+          turn_detection: {
+            type: "server_vad",
+            threshold: 0.5,
+            prefix_padding_ms: 300,
+            silence_duration_ms: 500,
+          },
         }),
       });
       if (res.ok) {
