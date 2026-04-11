@@ -123,7 +123,10 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
         return { success: false, fallback: "rate_limited", nextAvailableAt: tokenData.nextAvailableAt };
       }
       if (!res.ok || !tokenData.tokens || tokenData.tokens.length === 0) {
-        throw new Error(tokenData.error ?? "Failed to get ephemeral token");
+        const debugInfo = (tokenData as { debug?: unknown }).debug;
+        console.warn("[useRealtimeInterview] token fetch rejected", res.status, tokenData);
+        const detail = debugInfo ? JSON.stringify(debugInfo).slice(0, 300) : tokenData.error ?? `HTTP ${res.status}`;
+        throw new Error(`token: ${detail}`);
       }
     } catch (err) {
       console.warn("[useRealtimeInterview] token fetch failed", err);

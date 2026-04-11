@@ -952,6 +952,16 @@ export default function InterviewSessionPage() {
         </div>
       )}
 
+      {/* Realtime デバッグバッジ (Phase 1 診断用、安定したら削除) */}
+      {sessionInfo?.inputMode === "voice" && sessionInfo?.mode !== "group_discussion" && (
+        <div className="mx-4 mt-2 rounded-md border border-sky-300 bg-sky-50 dark:border-sky-700 dark:bg-sky-950/30 px-3 py-1.5 text-[11px] text-sky-800 dark:text-sky-200 font-mono">
+          <strong>Realtime:</strong> {realtime.status}
+          {realtime.error && (
+            <span className="ml-2 text-rose-600 dark:text-rose-300">err={realtime.error.slice(0, 200)}</span>
+          )}
+        </div>
+      )}
+
       {/* Gaze alert (リアルタイム視線指導) */}
       {gazeAlert && (
         <div className="mx-4 mt-2 rounded-lg border border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-950/30 px-3 py-2 text-sm text-amber-800 dark:text-amber-200 animate-in fade-in slide-in-from-top-2">

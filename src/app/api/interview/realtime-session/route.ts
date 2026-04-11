@@ -21,7 +21,13 @@ import {
 } from "@/lib/ai/prompts/interview-realtime";
 import type { InterviewMode } from "@/lib/types/interview";
 
-const REALTIME_MODEL = "gpt-4o-mini-realtime-preview-2024-12-17";
+/** モデル名のフォールバックチェーン。上から順に試す。 */
+const REALTIME_MODEL_CANDIDATES = [
+  "gpt-4o-mini-realtime-preview-2024-12-17",
+  "gpt-4o-mini-realtime-preview",
+  "gpt-4o-realtime-preview-2024-12-17",
+  "gpt-4o-realtime-preview",
+];
 
 const GD_SPEAKERS: { key: GdSpeakerKey; voice: string }[] = [
   { key: "moderator", voice: "nova" },
@@ -42,44 +48,58 @@ interface EphemeralTokenResponse {
   id: string;
 }
 
+interface IssueResult {
+  token: EphemeralTokenResponse | null;
+  model?: string;
+  debugErrors: Array<{ model: string; status: number; body: string }>;
+}
+
+/**
+ * 最小リクエストで ephemeral token を発行。
+ * 複数モデルをフォールバックチェーンで順に試し、最初に成功したものを返す。
+ * 失敗したモデルのエラー詳細は debugErrors で蓄積する。
+ */
 async function issueEphemeralToken(
   apiKey: string,
   params: CreateSessionParams,
-): Promise<EphemeralTokenResponse | null> {
-  try {
-    const res = await fetch("https://api.openai.com/v1/realtime/sessions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: REALTIME_MODEL,
-        voice: params.voice,
-        instructions: params.instructions,
-        modalities: ["audio", "text"],
-        input_audio_format: "pcm16",
-        output_audio_format: "pcm16",
-        input_audio_transcription: { model: "whisper-1" },
-        turn_detection: {
-          type: "server_vad",
-          threshold: 0.5,
-          prefix_padding_ms: 300,
-          silence_duration_ms: 500,
+): Promise<IssueResult> {
+  const debugErrors: IssueResult["debugErrors"] = [];
+
+  for (const model of REALTIME_MODEL_CANDIDATES) {
+    try {
+      const res = await fetch("https://api.openai.com/v1/realtime/sessions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
         },
-      }),
-    });
-    if (!res.ok) {
+        // リクエストは最小構成: model / voice / instructions のみ
+        // turn_detection / input_audio_transcription はデフォルトに任せる
+        body: JSON.stringify({
+          model,
+          voice: params.voice,
+          instructions: params.instructions,
+        }),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as EphemeralTokenResponse;
+        console.log(`[realtime-session] success with model ${model}`);
+        return { token: data, model, debugErrors };
+      }
       const body = await res.text().catch(() => "");
-      console.error("[realtime-session] OpenAI error", res.status, body);
-      return null;
+      console.warn(`[realtime-session] model ${model} failed: ${res.status} ${body.slice(0, 500)}`);
+      debugErrors.push({ model, status: res.status, body: body.slice(0, 500) });
+      // 401/403 は全モデル共通の問題なので即打ち切り
+      if (res.status === 401 || res.status === 403) {
+        return { token: null, debugErrors };
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error(`[realtime-session] model ${model} exception`, msg);
+      debugErrors.push({ model, status: 0, body: msg });
     }
-    const data = (await res.json()) as EphemeralTokenResponse;
-    return data;
-  } catch (err) {
-    console.error("[realtime-session] issue token failed", err);
-    return null;
   }
+  return { token: null, debugErrors };
 }
 
 export async function POST(request: NextRequest) {
@@ -144,7 +164,7 @@ export async function POST(request: NextRequest) {
   // トークン発行
   if (mode === "group_discussion") {
     // GD: 6 話者分を並列発行
-    const tokens = await Promise.all(
+    const results = await Promise.all(
       GD_SPEAKERS.map(async ({ key, voice }) => {
         const instructions = buildRealtimeGdSpeakerInstructions(
           key,
@@ -153,20 +173,32 @@ export async function POST(request: NextRequest) {
           admissionPolicy,
           weaknessList,
         );
-        const token = await issueEphemeralToken(apiKey, { instructions, voice });
-        return token ? { speaker: key, voice, token: token.client_secret.value, expiresAt: token.client_secret.expires_at } : null;
+        const issueResult = await issueEphemeralToken(apiKey, { instructions, voice });
+        return { key, voice, issueResult };
       }),
     );
 
-    const successful = tokens.filter((t): t is NonNullable<typeof t> => t !== null);
+    const successful = results
+      .filter((r) => r.issueResult.token !== null)
+      .map((r) => ({
+        speaker: r.key,
+        voice: r.voice,
+        token: r.issueResult.token!.client_secret.value,
+        expiresAt: r.issueResult.token!.client_secret.expires_at,
+      }));
+
     if (successful.length < 6) {
       // 6 本全部揃わなければフォールバック扱い
+      const debug = results.flatMap((r) => r.issueResult.debugErrors);
       return NextResponse.json({
         rateLimited: false,
         error: "Realtime セッションの確立に失敗しました",
         partial: successful.length,
+        debug,
       }, { status: 502 });
     }
+
+    const usedModel = results[0].issueResult.model;
 
     // 成功したら lastRealtimeGdAt を更新 (管理者以外)
     if (role !== "admin" && role !== "superadmin") {
@@ -185,7 +217,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       mode: "group_discussion",
-      model: REALTIME_MODEL,
+      model: usedModel,
       tokens: successful,
     });
   }
@@ -201,22 +233,25 @@ export async function POST(request: NextRequest) {
     presentationContent,
   );
   const voice = "nova"; // 個人モードはデフォルト nova
-  const token = await issueEphemeralToken(apiKey, { instructions, voice });
-  if (!token) {
+  const issueResult = await issueEphemeralToken(apiKey, { instructions, voice });
+  if (!issueResult.token) {
     return NextResponse.json(
-      { error: "Realtime セッションの確立に失敗しました" },
+      {
+        error: "Realtime セッションの確立に失敗しました",
+        debug: issueResult.debugErrors,
+      },
       { status: 502 },
     );
   }
 
   return NextResponse.json({
     mode,
-    model: REALTIME_MODEL,
+    model: issueResult.model,
     tokens: [{
       speaker: "interviewer",
       voice,
-      token: token.client_secret.value,
-      expiresAt: token.client_secret.expires_at,
+      token: issueResult.token.client_secret.value,
+      expiresAt: issueResult.token.client_secret.expires_at,
     }],
   });
 }
