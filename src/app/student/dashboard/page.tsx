@@ -132,45 +132,50 @@ export default function StudentDashboard() {
 
   const history = (essayData?.essays ?? []).slice(0, 3);
 
-  // 小論文と面接の両方を時系列でマージしてトレンドチャートに表示
-  const trendData = useMemo(() => {
-    const essayPoints = (essayData?.essays ?? [])
+  // 小論文と面接を別系列として保持 (チャート側で 2 本線として描画)
+  const essayTrend = useMemo(() => {
+    return (essayData?.essays ?? [])
       .filter((e) => e.scores && typeof e.scores.total === "number")
-      .map((e) => ({
-        timestamp: new Date(e.submittedAt).getTime(),
-        date: (() => {
-          const d = new Date(e.submittedAt);
-          return `${d.getMonth() + 1}/${d.getDate()}`;
-        })(),
-        total: e.scores.total,
-        structure: e.scores.structure ?? 0,
-        logic: e.scores.logic ?? 0,
-        expression: e.scores.expression ?? 0,
-        apAlignment: e.scores.apAlignment ?? 0,
-        originality: e.scores.originality ?? 0,
-      }));
+      .map((e) => {
+        const d = new Date(e.submittedAt);
+        return {
+          date: `${d.getMonth() + 1}/${d.getDate()}`,
+          total: e.scores.total,
+          _ts: d.getTime(),
+        };
+      })
+      .sort((a, b) => a._ts - b._ts)
+      .map(({ _ts: _, ...rest }) => rest); // eslint-disable-line @typescript-eslint/no-unused-vars
+  }, [essayData]);
 
-    const interviewPoints = (interviewData?.interviews ?? [])
+  const interviewTrend = useMemo(() => {
+    return (interviewData?.interviews ?? [])
       .filter((i) => i.scores && typeof i.scores.total === "number")
-      .map((i) => ({
-        timestamp: new Date(i.startedAt).getTime(),
-        date: (() => {
-          const d = new Date(i.startedAt);
-          return `${d.getMonth() + 1}/${d.getDate()}`;
-        })(),
-        total: i.scores!.total,
-        structure: 0,
-        logic: 0,
-        expression: 0,
-        apAlignment: 0,
-        originality: 0,
-      }));
+      .map((i) => {
+        const d = new Date(i.startedAt);
+        return {
+          date: `${d.getMonth() + 1}/${d.getDate()}`,
+          total: i.scores!.total,
+          _ts: d.getTime(),
+        };
+      })
+      .sort((a, b) => a._ts - b._ts)
+      .map(({ _ts: _, ...rest }) => rest); // eslint-disable-line @typescript-eslint/no-unused-vars
+  }, [interviewData]);
 
-    return [...essayPoints, ...interviewPoints]
-      .sort((a, b) => a.timestamp - b.timestamp)
-      .map(({ timestamp: _ts, ...rest }) => rest); // eslint-disable-line @typescript-eslint/no-unused-vars
+  // 最新スコア: 2 系列のうち時系列で最新のもの
+  const latestScore = useMemo(() => {
+    const allPoints = [
+      ...(essayData?.essays ?? [])
+        .filter((e) => e.scores && typeof e.scores.total === "number")
+        .map((e) => ({ ts: new Date(e.submittedAt).getTime(), total: e.scores.total })),
+      ...(interviewData?.interviews ?? [])
+        .filter((i) => i.scores && typeof i.scores.total === "number")
+        .map((i) => ({ ts: new Date(i.startedAt).getTime(), total: i.scores!.total })),
+    ];
+    if (allPoints.length === 0) return null;
+    return allPoints.sort((a, b) => b.ts - a.ts)[0].total;
   }, [essayData, interviewData]);
-  const latestScore = trendData.length > 0 ? trendData[trendData.length - 1].total : null;
 
   return (
     <div className="space-y-8 lg:space-y-10 px-4 py-6 lg:px-8 lg:py-10 max-w-5xl mx-auto">
@@ -252,7 +257,7 @@ export default function StudentDashboard() {
               {loadingTrend ? (
                 <Skeleton className="h-[260px] w-full rounded" />
               ) : (
-                <ScoresTrendChart data={trendData} />
+                <ScoresTrendChart essayData={essayTrend} interviewData={interviewTrend} />
               )}
             </CardContent>
           </Card>

@@ -135,20 +135,15 @@ export default function GrowthPage() {
     return [...list].sort((a, b) => b.startedAt.localeCompare(a.startedAt));
   }, [interviewData]);
 
+  // 面接のみの時系列 (面接履歴セクション用)
   const interviewTrendData = useMemo(() => {
     return interviewList
       .filter((i) => i.scores && typeof i.scores.total === "number")
       .map((i) => {
         const d = new Date(i.startedAt);
-        // ScoresTrendChart は total のみ描画するが、型都合で 0 埋め
         return {
           date: `${d.getMonth() + 1}/${d.getDate()}`,
           total: i.scores!.total,
-          structure: 0,
-          logic: 0,
-          expression: 0,
-          apAlignment: 0,
-          originality: 0,
         };
       })
       .reverse(); // 新しい順 → 古い順にして時系列グラフに
@@ -156,6 +151,7 @@ export default function GrowthPage() {
 
   const report = reportData ?? null;
 
+  // 添削 (小論文) のみの時系列 — 項目別チャート用に 5 項目を保持
   const trendData = useMemo(() => {
     const essays = essayData?.essays ?? [];
     return essays
@@ -174,6 +170,13 @@ export default function GrowthPage() {
         };
       });
   }, [essayData]);
+
+  // 総合チャート用: 添削と面接を別系列で渡す
+  const essaySeries = useMemo(
+    () => trendData.map(({ date, total }) => ({ date, total })),
+    [trendData],
+  );
+  const hasCombined = essaySeries.length > 0 || interviewTrendData.length > 0;
 
   const weaknesses = useMemo((): WeaknessWithLevel[] => {
     const items: WeaknessRecord[] = weaknessData?.weaknesses ?? [];
@@ -271,17 +274,17 @@ export default function GrowthPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              合計スコア（0〜50点）
+              小論文と面接の合計スコア(0〜50点)
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {loadingTrend ? (
+            {loadingTrend || loadingInterviews ? (
               <Skeleton className="h-[220px] lg:h-[280px] w-full" />
-            ) : trendData.length === 0 ? (
+            ) : !hasCombined ? (
               <p className="text-sm text-muted-foreground text-center py-8">まだデータがありません</p>
             ) : (
-              <div className="h-[220px] lg:h-[300px]">
-                <ScoresTrendChart data={trendData} />
+              <div className="h-[260px] lg:h-[300px]">
+                <ScoresTrendChart essayData={essaySeries} interviewData={interviewTrendData} />
               </div>
             )}
           </CardContent>
@@ -343,7 +346,7 @@ export default function GrowthPage() {
                 {interviewTrendData.length >= 2 && (
                   <div className="mb-6">
                     <p className="text-xs text-muted-foreground mb-2">面接スコア推移(0〜50)</p>
-                    <ScoresTrendChart data={interviewTrendData} />
+                    <ScoresTrendChart interviewData={interviewTrendData} />
                   </div>
                 )}
                 <div className="space-y-2">
