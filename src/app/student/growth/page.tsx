@@ -341,11 +341,9 @@ export default function GrowthPage() {
             ) : (
               <div className="space-y-4">
                 {interviewTrendData.length >= 2 && (
-                  <div>
+                  <div className="mb-6">
                     <p className="text-xs text-muted-foreground mb-2">面接スコア推移(0〜50)</p>
-                    <div className="h-[180px] lg:h-[220px]">
-                      <ScoresTrendChart data={interviewTrendData} />
-                    </div>
+                    <ScoresTrendChart data={interviewTrendData} />
                   </div>
                 )}
                 <div className="space-y-2">

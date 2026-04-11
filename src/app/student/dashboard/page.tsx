@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -98,25 +99,49 @@ export default function StudentDashboard() {
   const userName = studentProfile?.displayName;
 
   const { data: essayData, isLoading: loadingHistory } = useAuthSWR<{ essays: EssayHistoryItem[] }>("/api/essay/history?userId=current");
-  const loadingTrend = loadingHistory;
+  const { data: interviewData, isLoading: loadingInterview } = useAuthSWR<{ interviews: { id: string; startedAt: string; scores: { total: number } | null }[] }>("/api/interview/history?userId=current");
+  const loadingTrend = loadingHistory || loadingInterview;
 
   const history = (essayData?.essays ?? []).slice(0, 3);
 
-  const rawTrend = (essayData?.essays ?? [])
-    .filter((e) => e.scores)
-    .map((e) => {
-      const d = new Date(e.submittedAt);
-      return {
-        date: `${d.getMonth() + 1}/${d.getDate()}`,
+  // 小論文と面接の両方を時系列でマージしてトレンドチャートに表示
+  const trendData = useMemo(() => {
+    const essayPoints = (essayData?.essays ?? [])
+      .filter((e) => e.scores && typeof e.scores.total === "number")
+      .map((e) => ({
+        timestamp: new Date(e.submittedAt).getTime(),
+        date: (() => {
+          const d = new Date(e.submittedAt);
+          return `${d.getMonth() + 1}/${d.getDate()}`;
+        })(),
         total: e.scores.total,
         structure: e.scores.structure ?? 0,
         logic: e.scores.logic ?? 0,
         expression: e.scores.expression ?? 0,
         apAlignment: e.scores.apAlignment ?? 0,
         originality: e.scores.originality ?? 0,
-      };
-    });
-  const trendData = rawTrend;
+      }));
+
+    const interviewPoints = (interviewData?.interviews ?? [])
+      .filter((i) => i.scores && typeof i.scores.total === "number")
+      .map((i) => ({
+        timestamp: new Date(i.startedAt).getTime(),
+        date: (() => {
+          const d = new Date(i.startedAt);
+          return `${d.getMonth() + 1}/${d.getDate()}`;
+        })(),
+        total: i.scores!.total,
+        structure: 0,
+        logic: 0,
+        expression: 0,
+        apAlignment: 0,
+        originality: 0,
+      }));
+
+    return [...essayPoints, ...interviewPoints]
+      .sort((a, b) => a.timestamp - b.timestamp)
+      .map(({ timestamp: _ts, ...rest }) => rest); // eslint-disable-line @typescript-eslint/no-unused-vars
+  }, [essayData, interviewData]);
   const latestScore = trendData.length > 0 ? trendData[trendData.length - 1].total : null;
 
   return (

@@ -66,7 +66,8 @@ export async function GET(request: NextRequest) {
       }
       const uni = universityCache.get(universityId);
       const faculty = uni?.faculties.find((f) => f.id === facultyId);
-      return { universityName: uni?.name ?? universityId, facultyName: faculty?.name ?? facultyId };
+      // 学部名が見つからない場合は facultyId (例: global-communications) を表示せず空文字にする
+      return { universityName: uni?.name ?? universityId, facultyName: faculty?.name ?? "" };
     }
 
     const essays = await Promise.all(
