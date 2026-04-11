@@ -66,6 +66,16 @@ export interface InterviewStartResponse {
     facultyName: string;
     admissionPolicy: string;
   };
+  /**
+   * オープニングの最初の文だけ先行でTTS生成した音声 (base64 MP3)。
+   * 音声モードの場合にサーバーがプリフェッチして埋め込む。
+   * クライアントは受け取り次第即再生できるので TTS レイテンシが大幅短縮。
+   */
+  preOpeningAudioBase64?: string;
+  /** プリフェッチに使用した voice 名 (再生時の整合確認用) */
+  preOpeningVoice?: string;
+  /** プリフェッチした音声の元テキスト(残りを判定するために使用) */
+  preOpeningText?: string;
 }
 
 export interface InterviewMessageRequest {

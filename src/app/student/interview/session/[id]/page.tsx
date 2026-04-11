@@ -40,6 +40,10 @@ interface SessionInfo {
   };
   openingMessage: string;
   presentationContent?: string;
+  /** サーバーが先行生成したオープニング最初の1文の音声 (base64 MP3) */
+  preOpeningAudioBase64?: string;
+  preOpeningVoice?: string;
+  preOpeningText?: string;
 }
 
 function formatTime(seconds: number): string {
@@ -105,19 +109,37 @@ export default function InterviewSessionPage() {
   const ttsAudioRef = useRef<HTMLAudioElement | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
 
-  // ユーザー操作時にAudioContextを初期化（Autoplay Policy対策）
+  // AudioContextを初期化（Autoplay Policy対策）
+  // /new ページで作成された window.__interviewAudioCtx があれば再利用する
+  // (クライアントサイドナビゲーションなので window は同一タブで維持される)
   const ensureAudioContext = useCallback(() => {
-    if (!audioContextRef.current) {
-      audioContextRef.current = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+    if (typeof window === "undefined") return;
+    interface WindowWithAudio extends Window {
+      __interviewAudioCtx?: AudioContext;
+      webkitAudioContext?: typeof AudioContext;
     }
-    if (audioContextRef.current.state === "suspended") {
-      audioContextRef.current.resume();
+    const win = window as WindowWithAudio;
+
+    if (!audioContextRef.current) {
+      if (win.__interviewAudioCtx && win.__interviewAudioCtx.state !== "closed") {
+        audioContextRef.current = win.__interviewAudioCtx;
+      } else {
+        const Ctor = window.AudioContext || win.webkitAudioContext;
+        if (Ctor) {
+          audioContextRef.current = new Ctor();
+          win.__interviewAudioCtx = audioContextRef.current;
+        }
+      }
+    }
+    if (audioContextRef.current?.state === "suspended") {
+      audioContextRef.current.resume().catch(() => {});
     }
   }, []);
 
   /**
    * 長文を文境界で複数チャンクに分割する。
-   * 目標: 1 チャンク 80-200 字。短い文は前のチャンクに連結する。
+   * - 第1チャンク: 最初の1文だけ(max 80字)にして最初の音を最速で出す
+   * - それ以降: 150-250字でまとめる
    */
   const splitIntoChunks = (text: string): string[] => {
     const sentences = text
@@ -126,10 +148,27 @@ export default function InterviewSessionPage() {
       .map((s) => s.trim())
       .filter(Boolean);
 
+    if (sentences.length === 0) return [text];
+    if (sentences.length === 1) return sentences;
+
     const chunks: string[] = [];
+
+    // 第1チャンク: 最初の1文だけ(長すぎる場合は読点で区切る)
+    const first = sentences[0];
+    if (first.length > 80) {
+      const parts = first.split(/(?<=、)/);
+      chunks.push(parts[0]);
+      const rest = parts.slice(1).join("");
+      if (rest) chunks.push(rest);
+    } else {
+      chunks.push(first);
+    }
+
+    // 残りの文: 150-250 字でまとめる
     let buf = "";
-    for (const s of sentences) {
-      if ((buf + s).length > 200 && buf.length >= 80) {
+    for (let i = 1; i < sentences.length; i++) {
+      const s = sentences[i];
+      if ((buf + s).length > 250 && buf.length >= 100) {
         chunks.push(buf);
         buf = s;
       } else {
@@ -137,7 +176,7 @@ export default function InterviewSessionPage() {
       }
     }
     if (buf) chunks.push(buf);
-    return chunks.length > 0 ? chunks : [text];
+    return chunks;
   };
 
   /** 1 チャンクを fetch して AudioBuffer を返す (並列実行可能) */
@@ -272,21 +311,108 @@ export default function InterviewSessionPage() {
   // Load session info from sessionStorage
   useEffect(() => {
     const stored = sessionStorage.getItem(`interview_session_${sessionId}`);
-    if (stored) {
-      const info: SessionInfo = JSON.parse(stored);
-      setSessionInfo(info);
-      setMessages([{ role: "ai", content: info.openingMessage }]);
-      if (info.inputMode === "voice") {
-        if (info.mode === "group_discussion") {
-          speakUtterances(info.openingMessage);
-        } else {
-          const { profile } = resolveSpeaker(info.openingMessage, DEFAULT_INTERVIEWER);
-          speakText(info.openingMessage, profile.voice);
+    if (!stored) return;
+
+    const info: SessionInfo = JSON.parse(stored);
+    setSessionInfo(info);
+    setMessages([{ role: "ai", content: info.openingMessage }]);
+
+    if (info.inputMode !== "voice") return;
+
+    // AudioContext を必ず初期化してから再生
+    ensureAudioContext();
+    setCameraEnabled(true);
+
+    // サーバープリフェッチ音声があれば即座に再生、残りテキストは並列 fetch
+    if (info.preOpeningAudioBase64 && info.preOpeningText) {
+      void (async () => {
+        const ctx = audioContextRef.current;
+        if (!ctx || ctx.state === "closed") return;
+        try {
+          setAiSpeaking(true);
+          // base64 → ArrayBuffer → decode → 即再生
+          const binary = atob(info.preOpeningAudioBase64!);
+          const bytes = new Uint8Array(binary.length);
+          for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+          const audioBuffer = await ctx.decodeAudioData(bytes.buffer.slice(0) as ArrayBuffer);
+          const source = ctx.createBufferSource();
+          source.buffer = audioBuffer;
+          source.connect(ctx.destination);
+          const startAt = ctx.currentTime;
+          source.start(startAt);
+          const preEndTime = startAt + audioBuffer.duration;
+
+          // 残りテキスト(プリフェッチ分を除いた部分)を並列 fetch
+          const remaining = info.openingMessage.slice(info.preOpeningText!.length).trim();
+          if (remaining.length === 0) {
+            source.onended = () => setAiSpeaking(false);
+            return;
+          }
+
+          // GD モードなら複数発話として処理、それ以外は単一 speakText
+          if (info.mode === "group_discussion") {
+            // 残り部分を話者別に分解して順次読み上げ(先頭文はスキップ済み)
+            const utterances = splitIntoUtterances(remaining, DEFAULT_INTERVIEWER);
+            let cursorTime = preEndTime + 0.15;
+            for (const u of utterances) {
+              const chunks = splitIntoChunks(u.body);
+              for (const c of chunks) {
+                // eslint-disable-next-line no-await-in-loop
+                const buf = await fetchChunkAudio(c, u.profile.voice);
+                if (!buf) continue;
+                const src2 = ctx.createBufferSource();
+                src2.buffer = buf;
+                src2.connect(ctx.destination);
+                const at = Math.max(cursorTime, ctx.currentTime);
+                src2.start(at);
+                cursorTime = at + buf.duration;
+              }
+              cursorTime += 0.15;
+            }
+            // 最後の音源が終わったら aiSpeaking 解除(簡略化)
+            const totalMs = Math.max(0, (cursorTime - ctx.currentTime) * 1000);
+            setTimeout(() => setAiSpeaking(false), totalMs + 200);
+          } else {
+            const { profile } = resolveSpeaker(info.openingMessage, DEFAULT_INTERVIEWER);
+            const chunks = splitIntoChunks(remaining);
+            let cursorTime = preEndTime + 0.05;
+            for (const c of chunks) {
+              // eslint-disable-next-line no-await-in-loop
+              const buf = await fetchChunkAudio(c, profile.voice);
+              if (!buf) continue;
+              const src2 = ctx.createBufferSource();
+              src2.buffer = buf;
+              src2.connect(ctx.destination);
+              const at = Math.max(cursorTime, ctx.currentTime);
+              src2.start(at);
+              cursorTime = at + buf.duration;
+            }
+            const totalMs = Math.max(0, (cursorTime - ctx.currentTime) * 1000);
+            setTimeout(() => setAiSpeaking(false), totalMs + 200);
+          }
+        } catch (err) {
+          console.warn("[TTS] preOpening playback failed", err);
+          setAiSpeaking(false);
+          // フォールバック: 通常経路で最初から読み直す
+          if (info.mode === "group_discussion") {
+            speakUtterances(info.openingMessage);
+          } else {
+            const { profile } = resolveSpeaker(info.openingMessage, DEFAULT_INTERVIEWER);
+            speakText(info.openingMessage, profile.voice);
+          }
         }
-        setCameraEnabled(true);
-      }
+      })();
+      return;
     }
-  }, [sessionId, speakText, speakUtterances]);
+
+    // プリフェッチがない場合は通常経路
+    if (info.mode === "group_discussion") {
+      speakUtterances(info.openingMessage);
+    } else {
+      const { profile } = resolveSpeaker(info.openingMessage, DEFAULT_INTERVIEWER);
+      speakText(info.openingMessage, profile.voice);
+    }
+  }, [sessionId, speakText, speakUtterances, ensureAudioContext, fetchChunkAudio]);
 
   // Restore messages from sessionStorage backup
   useEffect(() => {

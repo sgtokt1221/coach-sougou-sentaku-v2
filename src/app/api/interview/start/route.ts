@@ -4,6 +4,65 @@ import { buildInterviewSystemPrompt } from "@/lib/ai/prompts/interview";
 import type { InterviewStartRequest, InterviewStartResponse } from "@/lib/types/interview";
 import type { WeaknessRecord } from "@/lib/types/growth";
 import type { InterviewTendency } from "@/lib/types/university";
+import { resolveSpeaker, DEFAULT_INTERVIEWER } from "@/lib/interview/speakers";
+
+/**
+ * オープニングメッセージの最初の1文だけ TTS で先行生成し、base64 で返す。
+ * これでクライアントは TTS fetch のラウンドトリップ(~2秒)を省略できる。
+ */
+async function prefetchOpeningAudio(
+  openingMessage: string,
+): Promise<{ audioBase64: string; voice: string; text: string } | null> {
+  const openaiKey = process.env.OPENAI_API_KEY;
+  if (!openaiKey) return null;
+
+  try {
+    // 最初の1文だけ抽出(80字上限、読点フォールバック)
+    const sentences = openingMessage
+      .replace(/\r/g, "")
+      .split(/(?<=[。！？!?])/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    let firstText = sentences[0] ?? openingMessage;
+    if (firstText.length > 80) {
+      const parts = firstText.split(/(?<=、)/);
+      firstText = parts[0];
+    }
+    if (!firstText) return null;
+
+    // 話者を抽出して voice 決定(接頭辞【話者名】を除いた本文で音声生成)
+    const { profile, body } = resolveSpeaker(firstText, DEFAULT_INTERVIEWER);
+    const ttsText = body || firstText;
+
+    const callOpenAI = (model: string) =>
+      fetch("https://api.openai.com/v1/audio/speech", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${openaiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model,
+          input: ttsText,
+          voice: profile.voice,
+          response_format: "mp3",
+        }),
+      });
+
+    let ttsRes = await callOpenAI("gpt-4o-mini-tts");
+    if (!ttsRes.ok && (ttsRes.status === 400 || ttsRes.status === 404)) {
+      ttsRes = await callOpenAI("tts-1");
+    }
+    if (!ttsRes.ok) return null;
+
+    const buffer = await ttsRes.arrayBuffer();
+    const base64 = Buffer.from(buffer).toString("base64");
+    return { audioBase64: base64, voice: profile.voice, text: firstText };
+  } catch (err) {
+    console.warn("[interview/start] prefetch TTS failed", err);
+    return null;
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -141,11 +200,28 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // 音声モードの場合、最初の1文だけ TTS をサーバー側で先行生成
+    // クライアントは受信後に即再生できるので体感レイテンシが大幅短縮
+    let preOpeningAudioBase64: string | undefined;
+    let preOpeningVoice: string | undefined;
+    let preOpeningText: string | undefined;
+    if (resolvedInputMode === "voice") {
+      const prefetch = await prefetchOpeningAudio(openingMessage);
+      if (prefetch) {
+        preOpeningAudioBase64 = prefetch.audioBase64;
+        preOpeningVoice = prefetch.voice;
+        preOpeningText = prefetch.text;
+      }
+    }
+
     const result: InterviewStartResponse = {
       sessionId,
       openingMessage,
       estimatedDuration: 15,
       universityContext: { universityName, facultyName, admissionPolicy },
+      preOpeningAudioBase64,
+      preOpeningVoice,
+      preOpeningText,
     };
     return NextResponse.json(result);
   } catch (error) {

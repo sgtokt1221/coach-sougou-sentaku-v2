@@ -111,6 +111,37 @@ export default function InterviewNewPage() {
 
   async function handleStart() {
     if (!selectedCompoundId || !selectedMode) return;
+
+    // ユーザー操作中に AudioContext を unlock しておく(navigation 後の autoplay block 回避)
+    // 次のページでは window.__interviewAudioCtx を再利用する
+    if (inputMode === "voice" && typeof window !== "undefined") {
+      try {
+        interface WindowWithAudio extends Window {
+          __interviewAudioCtx?: AudioContext;
+          webkitAudioContext?: typeof AudioContext;
+        }
+        const win = window as WindowWithAudio;
+        if (!win.__interviewAudioCtx) {
+          const Ctor = window.AudioContext || win.webkitAudioContext;
+          if (Ctor) {
+            const ctx = new Ctor();
+            win.__interviewAudioCtx = ctx;
+            // 無音の1サンプルを鳴らしてブラウザの autoplay policy を unlock
+            const buffer = ctx.createBuffer(1, 1, 22050);
+            const source = ctx.createBufferSource();
+            source.buffer = buffer;
+            source.connect(ctx.destination);
+            source.start(0);
+          }
+        }
+        if (win.__interviewAudioCtx?.state === "suspended") {
+          await win.__interviewAudioCtx.resume();
+        }
+      } catch (err) {
+        console.warn("[interview/new] AudioContext unlock failed", err);
+      }
+    }
+
     setIsLoading(true);
     try {
       const res = await authFetch("/api/interview/start", {
@@ -133,6 +164,9 @@ export default function InterviewNewPage() {
           universityContext: data.universityContext,
           openingMessage: data.openingMessage,
           presentationContent: selectedMode === "presentation" ? presentationContent : undefined,
+          preOpeningAudioBase64: data.preOpeningAudioBase64,
+          preOpeningVoice: data.preOpeningVoice,
+          preOpeningText: data.preOpeningText,
         })
       );
       router.push(`/student/interview/session/${data.sessionId}`);
