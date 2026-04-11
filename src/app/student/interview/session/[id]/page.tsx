@@ -12,9 +12,10 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Send, StopCircle, ChevronDown, ChevronUp, Video, VideoOff, Volume2, VolumeX, Pencil, Check, X } from "lucide-react";
+import { Send, StopCircle, ChevronDown, ChevronUp, Video, VideoOff, Volume2, VolumeX, Pencil, Check, X, BookOpenCheck } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import type { InterviewMessage, InterviewMode, InterviewInputMode, VoiceAnalysis, VideoAnalysis, AppearanceAnalysis } from "@/lib/types/interview";
+import type { WeaknessRecord } from "@/lib/types/growth";
 import { INTERVIEW_MODE_LABELS } from "@/lib/types/interview";
 import ContinuousVoiceRecorder from "@/components/interview/ContinuousVoiceRecorder";
 import VoiceAnalyzer, { refineWithTranscription } from "@/components/interview/VoiceAnalyzer";
@@ -72,6 +73,9 @@ export default function InterviewSessionPage() {
   const [appearanceAlert, setAppearanceAlert] = useState<string | null>(null);
   const [gazeAlert, setGazeAlert] = useState<string | null>(null);
   const gazeAlertTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // カンペ機能: 自分の弱点とAPを常時参照できるように
+  const [weaknesses, setWeaknesses] = useState<WeaknessRecord[]>([]);
+  const [cheatSheetOpen, setCheatSheetOpen] = useState(false);
   const appearanceCheckCount = useRef(0);
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
   const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
@@ -595,6 +599,24 @@ export default function InterviewSessionPage() {
     return () => clearInterval(interval);
   }, []);
 
+  // カンペ用: 自分の弱点を取得
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await authFetch("/api/growth/weaknesses?context=dashboard");
+        if (!res.ok || cancelled) return;
+        const data = await res.json();
+        if (!cancelled) setWeaknesses(data.weaknesses ?? []);
+      } catch {
+        /* 弱点取得失敗は静かに無視 (カンペ表示だけなので致命的ではない) */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // ページ unmount 時に音声再生を完全停止する (画面遷移で音声が垂れ流しになるのを防ぐ)
   useEffect(() => {
     isMountedRef.current = true;
@@ -836,6 +858,13 @@ export default function InterviewSessionPage() {
           >
             {cameraEnabled ? <Video className="size-4" /> : <VideoOff className="size-4" />}
           </button>
+          <button
+            onClick={() => setCheatSheetOpen((v) => !v)}
+            className={`p-1.5 rounded-md transition-colors cursor-pointer ${cheatSheetOpen ? "text-sky-600 bg-sky-50" : "text-muted-foreground hover:text-foreground"}`}
+            title={cheatSheetOpen ? "カンペを閉じる" : "弱点とAPをカンペ表示"}
+          >
+            <BookOpenCheck className="size-4" />
+          </button>
           <span
             className={`text-sm font-mono tabular-nums ${
               sessionInfo?.mode === "group_discussion" && elapsed >= 14 * 60
@@ -885,6 +914,45 @@ export default function InterviewSessionPage() {
       {gazeAlert && (
         <div className="mx-4 mt-2 rounded-lg border border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-950/30 px-3 py-2 text-sm text-amber-800 dark:text-amber-200 animate-in fade-in slide-in-from-top-2">
           <strong>目線:</strong> {gazeAlert}
+        </div>
+      )}
+
+      {/* カンペ: 弱点 + アドミッションポリシー */}
+      {cheatSheetOpen && sessionInfo && (
+        <div className="mx-4 mt-2 rounded-lg border border-sky-300 bg-sky-50/60 dark:border-sky-700 dark:bg-sky-950/20 shrink-0 animate-in fade-in slide-in-from-top-2">
+          <div className="max-h-[38vh] overflow-y-auto px-3 py-2.5 space-y-3">
+            {/* 指摘されている弱点 */}
+            <div>
+              <p className="text-[11px] font-semibold text-sky-800 dark:text-sky-200 mb-1.5">
+                ⚠ 自分の弱点 (カンペ)
+              </p>
+              {weaknesses.length === 0 ? (
+                <p className="text-xs text-muted-foreground">指摘された弱点はまだありません</p>
+              ) : (
+                <ul className="space-y-0.5">
+                  {weaknesses
+                    .filter((w) => !w.resolved)
+                    .slice(0, 8)
+                    .map((w) => (
+                      <li key={w.area} className="text-xs text-foreground/90 flex items-center gap-1.5">
+                        <span className="inline-block size-1.5 rounded-full bg-rose-400" />
+                        <span className="flex-1">{w.area}</span>
+                        <span className="text-[10px] text-muted-foreground">{w.count}回</span>
+                      </li>
+                    ))}
+                </ul>
+              )}
+            </div>
+            {/* アドミッションポリシー */}
+            <div>
+              <p className="text-[11px] font-semibold text-sky-800 dark:text-sky-200 mb-1.5">
+                📘 {sessionInfo.universityContext.universityName} {sessionInfo.universityContext.facultyName} のAP
+              </p>
+              <p className="text-xs leading-relaxed text-foreground/85 whitespace-pre-wrap">
+                {sessionInfo.universityContext.admissionPolicy}
+              </p>
+            </div>
+          </div>
         </div>
       )}
 

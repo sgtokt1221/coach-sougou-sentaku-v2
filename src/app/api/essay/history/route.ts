@@ -77,6 +77,7 @@ export async function GET(request: NextRequest) {
           data.targetFaculty ?? ""
         );
         const scores = data.scores ?? { structure: 0, logic: 0, expression: 0, apAlignment: 0, originality: 0 };
+        const total = scores.total ?? ((scores.structure ?? 0) + (scores.logic ?? 0) + (scores.expression ?? 0) + (scores.apAlignment ?? 0) + (scores.originality ?? 0));
         return {
           id: d.id,
           universityName,
@@ -84,13 +85,14 @@ export async function GET(request: NextRequest) {
           topic: data.topic ?? "",
           submittedAt: data.submittedAt?.toDate?.()?.toISOString() ?? new Date().toISOString(),
           status: data.status ?? "reviewed",
-          totalScore: scores.total ?? (scores.structure + scores.logic + scores.expression + scores.apAlignment + scores.originality),
+          totalScore: total,
           scores: {
             structure: scores.structure ?? 0,
             logic: scores.logic ?? 0,
             expression: scores.expression ?? 0,
             apAlignment: scores.apAlignment ?? 0,
             originality: scores.originality ?? 0,
+            total,
           },
         };
       })

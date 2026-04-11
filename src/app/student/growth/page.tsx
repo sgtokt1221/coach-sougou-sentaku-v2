@@ -7,11 +7,25 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { ScoresTrendChart } from "@/components/growth/ScoresTrendChart";
 import { DetailedScoresTrendChart } from "@/components/growth/DetailedScoresTrendChart";
-import { TrendingUp, AlertCircle, AlertTriangle, CheckCircle2, BarChart3, Sparkles, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { TrendingUp, AlertCircle, AlertTriangle, CheckCircle2, BarChart3, Sparkles, ArrowUpRight, ArrowDownRight, Mic } from "lucide-react";
+import Link from "next/link";
 import { WeaknessRecord, WeaknessReminderLevel, getWeaknessReminderLevel } from "@/lib/types/growth";
 import type { GrowthReport } from "@/lib/types/analytics";
+import type { InterviewScores, InterviewMode } from "@/lib/types/interview";
+import { INTERVIEW_MODE_LABELS } from "@/lib/types/interview";
 import { useAuthSWR } from "@/lib/api/swr";
 import { WeaknessSourceBadge, sourceLeftBorder } from "@/components/growth/WeaknessSourceBadge";
+
+interface InterviewHistoryItem {
+  id: string;
+  mode: InterviewMode;
+  startedAt: string;
+  duration: number;
+  scores: InterviewScores | null;
+  universityName: string;
+  facultyName: string;
+  totalScore: number;
+}
 
 type WeaknessWithLevel = WeaknessRecord & { level: WeaknessReminderLevel };
 
@@ -112,8 +126,33 @@ function WeaknessColumn({
 
 export default function GrowthPage() {
   const { data: essayData, isLoading: loadingTrend } = useAuthSWR<{ essays: { submittedAt: string; status: string; scores?: { total: number; structure: number; logic: number; expression: number; apAlignment: number; originality: number } }[] }>("/api/essay/history?userId=current");
+  const { data: interviewData, isLoading: loadingInterviews } = useAuthSWR<{ interviews: InterviewHistoryItem[] }>("/api/interview/history?userId=current");
   const { data: reportData, isLoading: loadingReport } = useAuthSWR<GrowthReport>("/api/growth/report");
   const { data: weaknessData, isLoading: loadingWeaknesses } = useAuthSWR<{ weaknesses: WeaknessRecord[] }>("/api/growth/weaknesses?context=dashboard");
+
+  const interviewList = useMemo(() => {
+    const list = interviewData?.interviews ?? [];
+    return [...list].sort((a, b) => b.startedAt.localeCompare(a.startedAt));
+  }, [interviewData]);
+
+  const interviewTrendData = useMemo(() => {
+    return interviewList
+      .filter((i) => i.scores && typeof i.scores.total === "number")
+      .map((i) => {
+        const d = new Date(i.startedAt);
+        // ScoresTrendChart は total のみ描画するが、型都合で 0 埋め
+        return {
+          date: `${d.getMonth() + 1}/${d.getDate()}`,
+          total: i.scores!.total,
+          structure: 0,
+          logic: 0,
+          expression: 0,
+          apAlignment: 0,
+          originality: 0,
+        };
+      })
+      .reverse(); // 新しい順 → 古い順にして時系列グラフに
+  }, [interviewList]);
 
   const report = reportData ?? null;
 
@@ -269,6 +308,75 @@ export default function GrowthPage() {
             ) : (
               <div className="h-[220px] lg:h-[300px]">
                 <DetailedScoresTrendChart data={trendData} />
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </section>
+
+      <Separator />
+
+      {/* 面接履歴 */}
+      <section>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="flex items-center gap-2 text-sm lg:text-lg font-semibold">
+            <Mic className="size-5" />
+            面接履歴
+          </h2>
+          <Link
+            href="/student/interview/history"
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+          >
+            すべて見る <ArrowUpRight className="size-3" />
+          </Link>
+        </div>
+        <Card>
+          <CardContent className="pt-6">
+            {loadingInterviews ? (
+              <Skeleton className="h-[200px] w-full" />
+            ) : interviewList.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">
+                まだ面接練習の履歴がありません
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {interviewTrendData.length >= 2 && (
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-2">面接スコア推移(0〜50)</p>
+                    <div className="h-[180px] lg:h-[220px]">
+                      <ScoresTrendChart data={interviewTrendData} />
+                    </div>
+                  </div>
+                )}
+                <div className="space-y-2">
+                  {interviewList.slice(0, 8).map((i) => {
+                    const d = new Date(i.startedAt);
+                    const dateStr = `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`;
+                    const modeLabel = INTERVIEW_MODE_LABELS[i.mode] ?? i.mode;
+                    const total = i.scores?.total ?? 0;
+                    return (
+                      <Link
+                        key={i.id}
+                        href={`/student/interview/${i.id}/result`}
+                        className="group flex items-center justify-between rounded-md border border-border/50 p-3 transition-all hover:border-border hover:bg-muted/30"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium truncate">
+                            {i.universityName || "大学情報なし"} {i.facultyName}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {dateStr}・{modeLabel}
+                          </p>
+                        </div>
+                        <span className={`text-lg font-light tabular-nums ${
+                          total >= 40 ? "text-emerald-600" : total >= 30 ? "text-amber-600" : "text-rose-600"
+                        }`}>
+                          {total}
+                        </span>
+                      </Link>
+                    );
+                  })}
+                </div>
               </div>
             )}
           </CardContent>
