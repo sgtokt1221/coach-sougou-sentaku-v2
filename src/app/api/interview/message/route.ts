@@ -6,12 +6,13 @@ import type { InterviewMessageResponse, InterviewMessage, InterviewMode } from "
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { sessionId, messages, mode, universityContext, presentationContent }: {
+    const { sessionId, messages, mode, universityContext, presentationContent, elapsedSeconds }: {
       sessionId: string;
       messages: InterviewMessage[];
       mode?: InterviewMode;
       universityContext?: any;
       presentationContent?: string;
+      elapsedSeconds?: number;
     } = body;
 
     if (!sessionId || !messages) {
@@ -68,6 +69,15 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // GD 残り時間が少なくなってきたら総括フェーズに入る指示を system prompt に追加
+    if (mode === "group_discussion" && typeof elapsedSeconds === "number") {
+      if (elapsedSeconds >= 13 * 60) {
+        systemPrompt += `\n\n## ⏰ 時間警告\n経過時間は ${Math.floor(elapsedSeconds / 60)} 分です。残り約 2 分しかありません。次のレスポンスで Phase 3 総括フェーズに入り、【司会】が「そろそろ時間です。最後に一言ずつ」と促してください。次か次々のレスポンスで必ず「以上で集団討論を終了いたします」と締めてください。`;
+      } else if (elapsedSeconds >= 11 * 60) {
+        systemPrompt += `\n\n## ⏰ 時間警告\n経過時間は ${Math.floor(elapsedSeconds / 60)} 分です。残り約 4 分です。そろそろ議論を収束させ、総括フェーズに向かってください。`;
+      }
+    }
+
     const client = new Anthropic();
 
     // ai→assistant, student→user に変換
@@ -120,16 +130,26 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // GD は他受験生3名も絡むので長めに、それ以外は従来通り
-    const maxTurns = mode === "group_discussion" ? 26 : 16;
-    const minTurns = mode === "group_discussion" ? 14 : 8;
-    const isActive =
+    // GD は Phase 構造で 10〜14 ターン、約 15 分で収束するよう調整
+    const maxTurns = mode === "group_discussion" ? 18 : 16;
+    const minTurns = mode === "group_discussion" ? 10 : 8;
+
+    // GD の 15 分ハード制限: 14 分超過かつ minTurns 到達済みなら強制終了
+    const timeUp =
+      mode === "group_discussion" &&
+      typeof elapsedSeconds === "number" &&
+      elapsedSeconds >= 14 * 60 &&
+      messages.length >= minTurns;
+
+    const naturalActive =
       (messages.length < maxTurns &&
         !content.includes("以上で面接を終了") &&
         !content.includes("以上で集団討論を終了") &&
         !content.includes("面接を終わりにします") &&
         response.stop_reason !== "end_turn") ||
       messages.length < minTurns;
+
+    const isActive = !timeUp && naturalActive;
 
     const result: InterviewMessageResponse = { content, isActive: Boolean(isActive) };
     return NextResponse.json(result);

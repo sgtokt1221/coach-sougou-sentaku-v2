@@ -643,6 +643,7 @@ export default function InterviewSessionPage() {
           mode: sessionInfo?.mode,
           universityContext: sessionInfo?.universityContext,
           presentationContent: sessionInfo?.presentationContent,
+          elapsedSeconds: elapsed,
         }),
       });
       if (!res.ok) throw new Error();
@@ -668,7 +669,7 @@ export default function InterviewSessionPage() {
       setIsLoading(false);
       inputRef.current?.focus();
     }
-  }, [input, isLoading, messages, sessionId, sessionInfo, speakText, speakUtterances, ensureAudioContext]);
+  }, [input, isLoading, messages, sessionId, sessionInfo, speakText, speakUtterances, ensureAudioContext, elapsed]);
 
   async function handleEnd() {
     setIsEnding(true);
@@ -753,6 +754,7 @@ export default function InterviewSessionPage() {
             mode: sessionInfo?.mode,
             universityContext: sessionInfo?.universityContext,
             presentationContent: sessionInfo?.presentationContent,
+            elapsedSeconds: elapsed,
           }),
         });
         if (!res.ok) throw new Error();
@@ -784,7 +786,7 @@ export default function InterviewSessionPage() {
         setIsLoading(false);
       }
     },
-    [isLoading, sessionId, messages, sessionInfo, speakText, speakUtterances, ensureAudioContext]
+    [isLoading, sessionId, messages, sessionInfo, speakText, speakUtterances, ensureAudioContext, elapsed]
   );
 
   const isVoiceMode = sessionInfo?.inputMode === "voice";
@@ -828,7 +830,15 @@ export default function InterviewSessionPage() {
           >
             {cameraEnabled ? <Video className="size-4" /> : <VideoOff className="size-4" />}
           </button>
-          <span className="text-sm font-mono tabular-nums text-muted-foreground">
+          <span
+            className={`text-sm font-mono tabular-nums ${
+              sessionInfo?.mode === "group_discussion" && elapsed >= 14 * 60
+                ? "text-rose-600 font-semibold"
+                : sessionInfo?.mode === "group_discussion" && elapsed >= 11 * 60
+                  ? "text-amber-600 font-semibold"
+                  : "text-muted-foreground"
+            }`}
+          >
             {formatTime(elapsed)}
           </span>
           <Button

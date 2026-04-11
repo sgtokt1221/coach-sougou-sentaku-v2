@@ -81,6 +81,8 @@ export interface InterviewStartResponse {
 export interface InterviewMessageRequest {
   sessionId: string;
   messages: InterviewMessage[];
+  /** 面接開始からの経過秒数。GD の15分制御に使用 */
+  elapsedSeconds?: number;
 }
 
 export interface InterviewMessageResponse {

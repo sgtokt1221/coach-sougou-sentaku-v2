@@ -4,7 +4,7 @@ import { buildWhisperPrompt } from "@/lib/interview/whisper-context";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { sessionId, audioBase64, mimeType, messages: existingMessages, mode, universityContext, presentationContent } = body;
+    const { sessionId, audioBase64, mimeType, messages: existingMessages, mode, universityContext, presentationContent, elapsedSeconds } = body;
 
     if (!sessionId || !audioBase64) {
       return NextResponse.json(
@@ -96,6 +96,15 @@ export async function POST(request: NextRequest) {
           );
         }
 
+        // GD 残り時間警告を system prompt に追加
+        if (mode === "group_discussion" && typeof elapsedSeconds === "number") {
+          if (elapsedSeconds >= 13 * 60) {
+            systemPrompt += `\n\n## ⏰ 時間警告\n経過時間は ${Math.floor(elapsedSeconds / 60)} 分です。残り約 2 分しかありません。次のレスポンスで Phase 3 総括フェーズに入り、【司会】が「そろそろ時間です。最後に一言ずつ」と促してください。次か次々のレスポンスで必ず「以上で集団討論を終了いたします」と締めてください。`;
+          } else if (elapsedSeconds >= 11 * 60) {
+            systemPrompt += `\n\n## ⏰ 時間警告\n経過時間は ${Math.floor(elapsedSeconds / 60)} 分です。残り約 4 分です。そろそろ議論を収束させ、総括フェーズに向かってください。`;
+          }
+        }
+
         // 既存の会話履歴 + 今回の発言を組み立て
         const allMessages: Array<{ role: "user" | "assistant"; content: string }> = [];
         if (existingMessages && Array.isArray(existingMessages)) {
@@ -108,9 +117,10 @@ export async function POST(request: NextRequest) {
         }
         allMessages.push({ role: "user", content: transcribedText });
 
+        const maxTokens = mode === "group_discussion" ? 1200 : 512;
         const res = await client.messages.create({
           model: "claude-haiku-4-5-20251001",
-          max_tokens: 512,
+          max_tokens: maxTokens,
           system: systemPrompt,
           messages: allMessages,
         });
@@ -120,10 +130,20 @@ export async function POST(request: NextRequest) {
         }
 
         const totalTurns = allMessages.length;
-        isActive =
-          totalTurns < 16 &&
-          !aiResponse.includes("以上で面接を終了") &&
-          !aiResponse.includes("面接を終わりにします");
+        const maxTurns = mode === "group_discussion" ? 18 : 16;
+        const minTurns = mode === "group_discussion" ? 10 : 8;
+        const timeUp =
+          mode === "group_discussion" &&
+          typeof elapsedSeconds === "number" &&
+          elapsedSeconds >= 14 * 60 &&
+          totalTurns >= minTurns;
+        const naturalActive =
+          (totalTurns < maxTurns &&
+            !aiResponse.includes("以上で面接を終了") &&
+            !aiResponse.includes("以上で集団討論を終了") &&
+            !aiResponse.includes("面接を終わりにします")) ||
+          totalTurns < minTurns;
+        isActive = !timeUp && naturalActive;
       } catch (err) {
         console.error("[voice-message] Claude API failed:", err);
         return NextResponse.json(
