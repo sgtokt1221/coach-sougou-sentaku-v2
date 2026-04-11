@@ -323,39 +323,26 @@ export function GrowthTree({
         }
 
         // ========================================
-        // ホバーサブタイムライン (各果実ごと)
+        // ホバーサブタイムライン (各果実のオーラだけ強調、果実本体は動かさない)
         // ========================================
         FRUIT_POS.forEach((pos, i) => {
           const stepNum = i + 1;
           if (stepNum > completedSteps) return; // 完了済みのみ
-          const fruitEl = scopeRef.current?.querySelector(`.gt-fruit-${stepNum}`);
           const auraEl = scopeRef.current?.querySelector(`.gt-aura-${stepNum}`);
-          if (!fruitEl) return;
+          if (!auraEl) return;
 
           const tl = gsap.timeline({ paused: true });
           tl.to(
-            fruitEl,
+            auraEl,
             {
-              scale: 1.3,
+              scale: 1.4,
+              opacity: 0.85,
               transformOrigin: `${pos.x}px ${pos.y}px`,
-              duration: 0.3,
-              ease: "back.out(2)",
+              duration: 0.35,
+              ease: "power2.out",
             },
             0,
           );
-          if (auraEl) {
-            tl.to(
-              auraEl,
-              {
-                scale: 1.6,
-                opacity: 0.9,
-                transformOrigin: `${pos.x}px ${pos.y}px`,
-                duration: 0.4,
-                ease: "power2.out",
-              },
-              0,
-            );
-          }
           hoverTlsRef.current.set(stepNum, tl);
         });
 
