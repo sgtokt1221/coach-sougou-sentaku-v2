@@ -19,6 +19,7 @@ import {
   buildRealtimeGdSpeakerInstructions,
   type GdSpeakerKey,
 } from "@/lib/ai/prompts/interview-realtime";
+import { buildWhisperPrompt } from "@/lib/interview/whisper-context";
 import type { InterviewMode } from "@/lib/types/interview";
 import type { InterviewTendency } from "@/lib/types/university";
 
@@ -41,6 +42,8 @@ const GD_SPEAKERS: { key: GdSpeakerKey; voice: string }[] = [
 interface CreateSessionParams {
   instructions: string;
   voice: string;
+  /** 転写ヒント: 大学名や専門用語を列挙した文字列 (誤変換対策) */
+  transcriptionPrompt?: string;
 }
 
 interface EphemeralTokenResponse {
@@ -65,6 +68,15 @@ async function issueEphemeralToken(
 ): Promise<IssueResult> {
   const debugErrors: IssueResult["debugErrors"] = [];
 
+  // 転写設定: 日本語固定 + 新世代モデル + 学部文脈プロンプト
+  const transcriptionConfig: Record<string, unknown> = {
+    model: "gpt-4o-mini-transcribe",
+    language: "ja",
+  };
+  if (params.transcriptionPrompt) {
+    transcriptionConfig.prompt = params.transcriptionPrompt;
+  }
+
   for (const model of REALTIME_MODEL_CANDIDATES) {
     try {
       const res = await fetch("https://api.openai.com/v1/realtime/sessions", {
@@ -77,8 +89,8 @@ async function issueEphemeralToken(
           model,
           voice: params.voice,
           instructions: params.instructions,
-          // ユーザー発話を whisper で文字起こしする (これがないと画面に出ない)
-          input_audio_transcription: { model: "whisper-1" },
+          // ユーザー発話を gpt-4o-mini-transcribe で文字起こし (日本語固定 + 学部語彙ヒント)
+          input_audio_transcription: transcriptionConfig,
           // サーバー VAD でユーザーの発話終了を検知して即応答生成
           turn_detection: {
             type: "server_vad",
@@ -202,6 +214,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // 学部文脈の転写ヒント (大学名・学部名・学部別専門用語を列挙)
+  const transcriptionPrompt = buildWhisperPrompt(facultyName, universityName);
+
   // トークン発行
   if (mode === "group_discussion") {
     // GD: 6 話者分を並列発行
@@ -215,7 +230,7 @@ export async function POST(request: NextRequest) {
           weaknessList,
           interviewTendency,
         );
-        const issueResult = await issueEphemeralToken(apiKey, { instructions, voice });
+        const issueResult = await issueEphemeralToken(apiKey, { instructions, voice, transcriptionPrompt });
         return { key, voice, issueResult };
       }),
     );
@@ -275,7 +290,7 @@ export async function POST(request: NextRequest) {
     presentationContent,
   );
   const voice = "alloy"; // 個人モードはニュートラルな alloy
-  const issueResult = await issueEphemeralToken(apiKey, { instructions, voice });
+  const issueResult = await issueEphemeralToken(apiKey, { instructions, voice, transcriptionPrompt });
   if (!issueResult.token) {
     return NextResponse.json(
       {

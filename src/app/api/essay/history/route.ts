@@ -65,8 +65,14 @@ export async function GET(request: NextRequest) {
         }
       }
       const uni = universityCache.get(universityId);
-      const faculty = uni?.faculties.find((f) => f.id === facultyId);
-      // 学部名が見つからない場合は facultyId (例: global-communications) を表示せず空文字にする
+      // 旧データの facultyId typo に対する alias 辞書
+      // 過去データが誤った id で保存されている場合に正しい id にマップして表示を綺麗にする
+      const facultyIdAliases: Record<string, string> = {
+        "global-communications": "global-comm",
+      };
+      const resolvedFacultyId = facultyIdAliases[facultyId] ?? facultyId;
+      const faculty = uni?.faculties.find((f) => f.id === resolvedFacultyId);
+      // 学部名が見つからない場合は facultyId を表示せず空文字にする
       return { universityName: uni?.name ?? universityId, facultyName: faculty?.name ?? "" };
     }
 

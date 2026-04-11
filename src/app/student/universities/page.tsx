@@ -319,6 +319,7 @@ function MatchingChat({ profile }: { profile: { gpa?: number; englishCerts?: { t
     await voiceChat.start({
       instructions,
       voice: "alloy",
+      transcriptionHint: "総合型選抜、東京大学、京都大学、大阪大学、早稲田大学、慶應義塾大学、同志社大学、立命館大学、関西大学、関西学院大学、明治大学、青山学院大学、立教大学、中央大学、法政大学、近畿大学、龍谷大学、アドミッションポリシー、志望理由、学部、文学部、法学部、経済学部、商学部、経営学部、社会学部、情報学部、工学部、理学部、医学部、薬学部、国際学部、グローバル・コミュニケーション学部、探究学習、英検、TOEIC、TOEFL",
       onUserTranscript: (text) => {
         if (text.trim()) setMessages((prev) => [...prev, { role: "user", content: text }]);
       },

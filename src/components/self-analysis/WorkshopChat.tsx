@@ -170,6 +170,8 @@ export function WorkshopChat({
     await voiceChat.start({
       instructions,
       voice: "alloy",
+      // 受験語彙ヒント (誤変換対策)
+      transcriptionHint: "総合型選抜、アドミッションポリシー、志望理由、探究学習、自己分析、価値観、強み、弱み、興味関心、将来ビジョン、社会貢献、高校生活、原体験、小論文、面接",
       onUserTranscript: (text) => {
         if (text.trim()) setMessages((prev) => [...prev, { role: "user", content: text }]);
       },

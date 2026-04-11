@@ -34,8 +34,17 @@ async function issueEphemeralToken(
   apiKey: string,
   instructions: string,
   voice: string,
+  transcriptionPrompt?: string,
 ): Promise<IssueResult> {
   const debugErrors: IssueResult["debugErrors"] = [];
+
+  const transcriptionConfig: Record<string, unknown> = {
+    model: "gpt-4o-mini-transcribe",
+    language: "ja",
+  };
+  if (transcriptionPrompt) {
+    transcriptionConfig.prompt = transcriptionPrompt;
+  }
 
   for (const model of REALTIME_MODEL_CANDIDATES) {
     try {
@@ -49,7 +58,7 @@ async function issueEphemeralToken(
           model,
           voice,
           instructions,
-          input_audio_transcription: { model: "whisper-1" },
+          input_audio_transcription: transcriptionConfig,
           turn_detection: {
             type: "server_vad",
             threshold: 0.5,
@@ -81,14 +90,14 @@ export async function POST(request: NextRequest) {
   const authResult = await requireRole(request, ["student", "admin", "superadmin"]);
   if (authResult instanceof NextResponse) return authResult;
 
-  let body: { instructions?: string; voice?: string };
+  let body: { instructions?: string; voice?: string; transcriptionHint?: string };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: "リクエストボディが不正です" }, { status: 400 });
   }
 
-  const { instructions, voice = "alloy" } = body;
+  const { instructions, voice = "alloy", transcriptionHint } = body;
   if (!instructions || typeof instructions !== "string") {
     return NextResponse.json({ error: "instructions は必須です" }, { status: 400 });
   }
@@ -101,7 +110,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const issueResult = await issueEphemeralToken(apiKey, instructions, voice);
+  const issueResult = await issueEphemeralToken(apiKey, instructions, voice, transcriptionHint);
   if (!issueResult.token) {
     return NextResponse.json(
       { error: "Realtime セッションの確立に失敗しました", debug: issueResult.debugErrors },

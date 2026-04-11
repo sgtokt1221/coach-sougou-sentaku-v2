@@ -30,6 +30,8 @@ export type VoiceChatStatus =
 export interface VoiceChatOptions {
   instructions: string;
   voice?: string;
+  /** 転写ヒント (大学名・学部名・専門用語を列挙した文字列) 誤変換対策 */
+  transcriptionHint?: string;
   /** ユーザーが話した transcription が確定したとき */
   onUserTranscript?: (text: string) => void;
   /** AI の応答テキストが確定したとき */
@@ -75,6 +77,7 @@ export function useVoiceChat() {
         body: JSON.stringify({
           instructions: opts.instructions,
           voice: opts.voice ?? "alloy",
+          transcriptionHint: opts.transcriptionHint,
         }),
       });
       tokenData = await res.json();
