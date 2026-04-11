@@ -76,6 +76,8 @@ export default function InterviewSessionPage() {
   const [cameraEnabled, setCameraEnabled] = useState(false);
   const [aiSpeaking, setAiSpeaking] = useState(false);
   const [ttsEnabled, setTtsEnabled] = useState(true);
+  /** 音声自動再生がブロックされた場合に表示するボタン */
+  const [needsAudioUnlock, setNeedsAudioUnlock] = useState(false);
   /** 編集中のメッセージインデックス。null なら編集していない */
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [editDraft, setEditDraft] = useState("");
@@ -254,8 +256,12 @@ export default function InterviewSessionPage() {
 
   /**
    * GD モードの複数人連続発話を、話者ごとに voice を切り替えて順次読み上げる。
-   * 全発言 (各々を更にチャンク分割) を並列 fetch し、(発言順, チャンク順) でキューに積む。
-   * 先頭チャンクが届き次第 cursor 時刻から連結再生するので遅延が最小化される。
+   *
+   * 重要: **1 発言 = 1 TTS リクエスト** を徹底する。
+   * 同じ話者の発言を複数チャンクに分割すると、OpenAI TTS は同じ voice でも
+   * 入力テキストごとに声質がわずかに変わるため、「1 人の発言が途中で別人風になる」
+   * という違和感が出る。発言全体を丸ごと 1 リクエストで送れば、
+   * 話者交代のタイミングでだけ voice が切り替わる自然な討論になる。
    */
   const speakUtterances = useCallback(
     async (content: string) => {
@@ -268,45 +274,80 @@ export default function InterviewSessionPage() {
 
       setAiSpeaking(true);
 
-      // 全チャンクを事前に並列 fetch
-      type Item = { utteranceIdx: number; voice: TtsVoice; promise: Promise<AudioBuffer | null> };
-      const items: Item[] = [];
-      utterances.forEach((u, uIdx) => {
-        const chunks = splitIntoChunks(u.body);
-        for (const c of chunks) {
-          items.push({
-            utteranceIdx: uIdx,
-            voice: u.profile.voice,
-            promise: fetchChunkAudio(c, u.profile.voice),
-          });
-        }
-      });
+      // 各発言を 1 リクエストで並列 fetch。順序は utterance インデックスで保持
+      const buffers = utterances.map((u) => fetchChunkAudio(u.body, u.profile.voice));
 
       let cursorTime = ctx.currentTime;
-      for (let i = 0; i < items.length; i++) {
+      for (let i = 0; i < buffers.length; i++) {
         // eslint-disable-next-line no-await-in-loop
-        const audioBuffer = await items[i].promise;
+        const audioBuffer = await buffers[i];
         if (!audioBuffer) continue;
 
         const source = ctx.createBufferSource();
         source.buffer = audioBuffer;
         source.connect(ctx.destination);
 
-        // 発言が切り替わるときに 200ms のポーズを入れる
-        const isNewUtterance =
-          i > 0 && items[i - 1].utteranceIdx !== items[i].utteranceIdx;
-        const gap = isNewUtterance ? 0.2 : 0;
+        // 発言境界に 250ms のポーズ(自然な間)
+        const gap = i > 0 ? 0.25 : 0;
         const startAt = Math.max(cursorTime + gap, ctx.currentTime);
         source.start(startAt);
         cursorTime = startAt + audioBuffer.duration;
 
-        if (i === items.length - 1) {
+        if (i === buffers.length - 1) {
           source.onended = () => setAiSpeaking(false);
         }
       }
     },
     [ttsEnabled, fetchChunkAudio],
   );
+
+  /**
+   * autoplay policy で音声再生がブロックされた場合、
+   * ユーザーがボタンクリックで unlock + オープニング再生を開始する。
+   */
+  const handleAudioUnlock = useCallback(async () => {
+    if (typeof window === "undefined") return;
+    interface WindowWithAudio extends Window {
+      __interviewAudioCtx?: AudioContext;
+      webkitAudioContext?: typeof AudioContext;
+    }
+    const win = window as WindowWithAudio;
+    if (!audioContextRef.current) {
+      const Ctor = window.AudioContext || win.webkitAudioContext;
+      if (Ctor) {
+        audioContextRef.current = new Ctor();
+        win.__interviewAudioCtx = audioContextRef.current;
+      }
+    }
+    const ctx = audioContextRef.current;
+    if (!ctx) return;
+    try {
+      if (ctx.state === "suspended") {
+        await ctx.resume();
+      }
+      // 無音1サンプル再生で iOS Safari の autoplay を unlock
+      const buffer = ctx.createBuffer(1, 1, 22050);
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      source.connect(ctx.destination);
+      source.start(0);
+    } catch (err) {
+      console.warn("[TTS] unlock failed", err);
+    }
+    setNeedsAudioUnlock(false);
+
+    // 再生: sessionInfo から openingMessage を読み直して speak する
+    const stored = sessionStorage.getItem(`interview_session_${sessionId}`);
+    if (!stored) return;
+    const info: SessionInfo = JSON.parse(stored);
+
+    if (info.mode === "group_discussion") {
+      speakUtterances(info.openingMessage);
+    } else {
+      const { profile } = resolveSpeaker(info.openingMessage, DEFAULT_INTERVIEWER);
+      speakText(info.openingMessage, profile.voice);
+    }
+  }, [sessionId, speakText, speakUtterances]);
 
   // Load session info from sessionStorage
   useEffect(() => {
@@ -323,11 +364,27 @@ export default function InterviewSessionPage() {
     ensureAudioContext();
     setCameraEnabled(true);
 
-    // サーバープリフェッチ音声があれば即座に再生、残りテキストは並列 fetch
+    // autoplay policy で AudioContext が suspended の場合は unlock ボタンを出す
+    const ctx0 = audioContextRef.current;
+    if (ctx0 && ctx0.state === "suspended") {
+      setNeedsAudioUnlock(true);
+      // ボタン経由で再生するので即 return
+      return;
+    }
+
+    // サーバープリフェッチ音声があれば即座に再生、残りテキストは話者単位で 1 リクエストずつ fetch
     if (info.preOpeningAudioBase64 && info.preOpeningText) {
       void (async () => {
         const ctx = audioContextRef.current;
         if (!ctx || ctx.state === "closed") return;
+        // autoplay policy 対策: suspended 状態なら resume を待つ
+        if (ctx.state === "suspended") {
+          try {
+            await ctx.resume();
+          } catch {
+            /* noop */
+          }
+        }
         try {
           setAiSpeaking(true);
           // base64 → ArrayBuffer → decode → 即再生
@@ -340,55 +397,43 @@ export default function InterviewSessionPage() {
           source.connect(ctx.destination);
           const startAt = ctx.currentTime;
           source.start(startAt);
-          const preEndTime = startAt + audioBuffer.duration;
+          let cursorTime = startAt + audioBuffer.duration;
 
-          // 残りテキスト(プリフェッチ分を除いた部分)を並列 fetch
+          // 残りテキストを取得: preOpeningText は接頭辞付きの最初の発話
+          // openingMessage からそれを除いた後続を取り出す
           const remaining = info.openingMessage.slice(info.preOpeningText!.length).trim();
           if (remaining.length === 0) {
             source.onended = () => setAiSpeaking(false);
             return;
           }
 
-          // GD モードなら複数発話として処理、それ以外は単一 speakText
-          if (info.mode === "group_discussion") {
-            // 残り部分を話者別に分解して順次読み上げ(先頭文はスキップ済み)
-            const utterances = splitIntoUtterances(remaining, DEFAULT_INTERVIEWER);
-            let cursorTime = preEndTime + 0.15;
-            for (const u of utterances) {
-              const chunks = splitIntoChunks(u.body);
-              for (const c of chunks) {
-                // eslint-disable-next-line no-await-in-loop
-                const buf = await fetchChunkAudio(c, u.profile.voice);
-                if (!buf) continue;
-                const src2 = ctx.createBufferSource();
-                src2.buffer = buf;
-                src2.connect(ctx.destination);
-                const at = Math.max(cursorTime, ctx.currentTime);
-                src2.start(at);
-                cursorTime = at + buf.duration;
-              }
-              cursorTime += 0.15;
+          // 残りを話者単位に分解、各発言を 1 リクエストで並列 fetch
+          const utterances =
+            info.mode === "group_discussion"
+              ? splitIntoUtterances(remaining, DEFAULT_INTERVIEWER)
+              : [{ profile: resolveSpeaker(info.openingMessage, DEFAULT_INTERVIEWER).profile, body: remaining }];
+
+          const buffers = utterances.map((u) => fetchChunkAudio(u.body, u.profile.voice));
+
+          for (let i = 0; i < buffers.length; i++) {
+            // eslint-disable-next-line no-await-in-loop
+            const buf = await buffers[i];
+            if (!buf) continue;
+            const src2 = ctx.createBufferSource();
+            src2.buffer = buf;
+            src2.connect(ctx.destination);
+            const gap = 0.25; // 話者境界のポーズ
+            const at = Math.max(cursorTime + gap, ctx.currentTime);
+            src2.start(at);
+            cursorTime = at + buf.duration;
+
+            if (i === buffers.length - 1) {
+              src2.onended = () => setAiSpeaking(false);
             }
-            // 最後の音源が終わったら aiSpeaking 解除(簡略化)
-            const totalMs = Math.max(0, (cursorTime - ctx.currentTime) * 1000);
-            setTimeout(() => setAiSpeaking(false), totalMs + 200);
-          } else {
-            const { profile } = resolveSpeaker(info.openingMessage, DEFAULT_INTERVIEWER);
-            const chunks = splitIntoChunks(remaining);
-            let cursorTime = preEndTime + 0.05;
-            for (const c of chunks) {
-              // eslint-disable-next-line no-await-in-loop
-              const buf = await fetchChunkAudio(c, profile.voice);
-              if (!buf) continue;
-              const src2 = ctx.createBufferSource();
-              src2.buffer = buf;
-              src2.connect(ctx.destination);
-              const at = Math.max(cursorTime, ctx.currentTime);
-              src2.start(at);
-              cursorTime = at + buf.duration;
-            }
-            const totalMs = Math.max(0, (cursorTime - ctx.currentTime) * 1000);
-            setTimeout(() => setAiSpeaking(false), totalMs + 200);
+          }
+          // buffers が全部 null でも aiSpeaking を落とす
+          if (buffers.length === 0 || buffers.every((b) => !b)) {
+            source.onended = () => setAiSpeaking(false);
           }
         } catch (err) {
           console.warn("[TTS] preOpening playback failed", err);
@@ -724,6 +769,22 @@ export default function InterviewSessionPage() {
           </Button>
         </div>
       </div>
+
+      {/* Audio unlock prompt */}
+      {needsAudioUnlock && (
+        <div className="mx-4 mt-2 rounded-lg border border-primary/40 bg-primary/5 px-3 py-3 flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2">
+          <div className="text-sm">
+            <strong>音声を開始</strong>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              ブラウザの自動再生制限のため、ボタンを押して面接音声を開始してください
+            </p>
+          </div>
+          <Button size="sm" onClick={handleAudioUnlock}>
+            <Volume2 className="size-4 mr-1" />
+            開始
+          </Button>
+        </div>
+      )}
 
       {/* Appearance alert */}
       {appearanceAlert && (

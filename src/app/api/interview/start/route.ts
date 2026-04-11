@@ -17,17 +17,34 @@ async function prefetchOpeningAudio(
   if (!openaiKey) return null;
 
   try {
-    // 最初の1文だけ抽出(80字上限、読点フォールバック)
-    const sentences = openingMessage
-      .replace(/\r/g, "")
-      .split(/(?<=[。！？!?])/)
-      .map((s) => s.trim())
-      .filter(Boolean);
-    let firstText = sentences[0] ?? openingMessage;
-    if (firstText.length > 80) {
-      const parts = firstText.split(/(?<=、)/);
-      firstText = parts[0];
+    // 「次の 【話者名】 の直前まで」を最初の 1 発話として切り出す
+    // 例: "【司会】おはようございます。本日は..." → 【健太】の直前まで
+    const bracketPattern = /[【\[][^】\]]+[】\]]/g;
+    const brackets: number[] = [];
+    let bm: RegExpExecArray | null;
+    while ((bm = bracketPattern.exec(openingMessage)) !== null) {
+      brackets.push(bm.index);
     }
+
+    let firstText = openingMessage;
+    if (brackets.length >= 2) {
+      firstText = openingMessage.slice(0, brackets[1]).trim();
+    }
+
+    // あまりに長い場合はレイテンシ優先で先頭 1 文に丸める
+    if (firstText.length > 250) {
+      const prefixMatch = firstText.match(/^[【\[][^】\]]+[】\]]/);
+      const prefix = prefixMatch ? prefixMatch[0] : "";
+      const rest = prefix ? firstText.slice(prefix.length) : firstText;
+      const sentences = rest
+        .split(/(?<=[。！？!?])/)
+        .map((s) => s.trim())
+        .filter(Boolean);
+      if (sentences.length > 0) {
+        firstText = prefix + sentences[0];
+      }
+    }
+
     if (!firstText) return null;
 
     // 話者を抽出して voice 決定(接頭辞【話者名】を除いた本文で音声生成)
@@ -168,9 +185,12 @@ export async function POST(request: NextRequest) {
     const client = new Anthropic();
     const systemPrompt = buildInterviewSystemPrompt(mode, universityName, facultyName, admissionPolicy, weaknessList, interviewTendency, presentationContent);
 
+    // GD の導入は 司会→健太→美咲→翔太→司会(締め) の 5 発話を一度に返すため長めに
+    const maxTokens = mode === "group_discussion" ? 1800 : 512;
+
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 512,
+      max_tokens: maxTokens,
       system: systemPrompt,
       messages: [{ role: "user", content: "面接を開始してください。開始の挨拶と最初の質問をしてください。" }],
     });

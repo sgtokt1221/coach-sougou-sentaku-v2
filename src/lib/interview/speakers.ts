@@ -187,6 +187,38 @@ export interface Utterance {
  * - 接頭辞が見つからない場合は 1 要素の配列 (defaultProfile) を返す
  * - 空 body は除外する
  */
+/**
+ * TTS リクエスト単位。splitIntoUtterances の結果をそのまま TTS に渡せる形。
+ * 「1 発言 = 1 リクエスト」を徹底することで、
+ * - 同じ voice でもチャンクごとに声質がブレる問題を回避
+ * - 話者切替のタイミングを明確にする
+ */
+export interface TtsRequest {
+  voice: TtsVoice;
+  /** 読み上げるテキスト(接頭辞除外済み) */
+  text: string;
+  /** 表示用の話者プロフィール */
+  profile: SpeakerProfile;
+}
+
+/**
+ * メッセージを解析し、話者ごとの TTS リクエストに変換する。
+ * resolveSpeaker/splitIntoUtterances の薄いラッパー。
+ * 長すぎる発言(>800字)はエラーにせず、そのまま 1 リクエストで渡す
+ * (OpenAI TTS は 4096 字まで対応)。
+ */
+export function buildTtsRequests(
+  content: string,
+  defaultProfile: SpeakerProfile = DEFAULT_INTERVIEWER,
+): TtsRequest[] {
+  const utterances = splitIntoUtterances(content, defaultProfile);
+  return utterances.map((u) => ({
+    voice: u.profile.voice,
+    text: u.body,
+    profile: u.profile,
+  }));
+}
+
 export function splitIntoUtterances(
   content: string,
   defaultProfile: SpeakerProfile = DEFAULT_INTERVIEWER,
