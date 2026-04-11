@@ -8,7 +8,14 @@ interface VideoAnalyzerProps {
   mediaStream: MediaStream | null;
   isRecording: boolean;
   onAnalysisComplete: (analysis: VideoAnalysis) => void;
+  /** 視線が一定時間外れた時にリアルタイム警告を出すコールバック */
+  onGazeAlert?: (message: string) => void;
 }
+
+/** 視線外れが続いたと見なす閾値(秒) */
+const GAZE_LOSS_ALERT_SECONDS = 3.0;
+/** 同じ警告を連発しないためのクールダウン(ミリ秒) */
+const GAZE_ALERT_COOLDOWN_MS = 20 * 1000;
 
 // Landmark indices
 const NOSE_TIP = 1;
@@ -100,6 +107,7 @@ export default function VideoAnalyzer({
   mediaStream,
   isRecording,
   onAnalysisComplete,
+  onGazeAlert,
 }: VideoAnalyzerProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -113,6 +121,15 @@ export default function VideoAnalyzer({
   const initializingRef = useRef(false);
   const errorCountRef = useRef(0);
   const lastDetectTimeRef = useRef<number | null>(null);
+  /** 視線が外れ始めた時刻(ms)。目線が戻ったら null にリセット */
+  const gazeLossStartRef = useRef<number | null>(null);
+  /** 最後に警告を発火した時刻(ms)。クールダウン判定用 */
+  const lastGazeAlertAtRef = useRef<number>(0);
+  /** onGazeAlert を最新値で参照するための ref */
+  const onGazeAlertRef = useRef(onGazeAlert);
+  useEffect(() => {
+    onGazeAlertRef.current = onGazeAlert;
+  }, [onGazeAlert]);
 
   const cleanup = useCallback(() => {
     if (animFrameRef.current) {
@@ -133,6 +150,8 @@ export default function VideoAnalyzer({
       eyeContactStreakRef.current = [];
       currentStreakRef.current = 0;
       lastFrameTimeRef.current = 0;
+      gazeLossStartRef.current = null;
+      lastGazeAlertAtRef.current = 0;
 
       // Create hidden video element
       if (!videoRef.current) {
@@ -294,10 +313,27 @@ export default function VideoAnalyzer({
       // Track eye contact streaks
       if (isEyeContact) {
         currentStreakRef.current += FRAME_INTERVAL / 1000;
+        // 目線が戻ったので視線外れ計測をリセット
+        gazeLossStartRef.current = null;
       } else {
         if (currentStreakRef.current > 0) {
           eyeContactStreakRef.current.push(currentStreakRef.current);
           currentStreakRef.current = 0;
+        }
+        // リアルタイム視線警告: 視線外れが閾値を超えたらクールダウン付きで発火
+        if (gazeLossStartRef.current === null) {
+          gazeLossStartRef.current = timestamp;
+        } else {
+          const lossSeconds = (timestamp - gazeLossStartRef.current) / 1000;
+          const sinceLastAlert = timestamp - lastGazeAlertAtRef.current;
+          if (
+            lossSeconds >= GAZE_LOSS_ALERT_SECONDS &&
+            sinceLastAlert >= GAZE_ALERT_COOLDOWN_MS &&
+            onGazeAlertRef.current
+          ) {
+            lastGazeAlertAtRef.current = timestamp;
+            onGazeAlertRef.current("視線が外れています。面接官（カメラ）を見るよう意識しましょう");
+          }
         }
       }
 

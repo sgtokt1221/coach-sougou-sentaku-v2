@@ -70,6 +70,8 @@ export default function InterviewSessionPage() {
   const [videoAnalysis, setVideoAnalysis] = useState<VideoAnalysis | null>(null);
   const [appearanceAnalysis, setAppearanceAnalysis] = useState<AppearanceAnalysis | null>(null);
   const [appearanceAlert, setAppearanceAlert] = useState<string | null>(null);
+  const [gazeAlert, setGazeAlert] = useState<string | null>(null);
+  const gazeAlertTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const appearanceCheckCount = useRef(0);
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
   const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
@@ -607,6 +609,10 @@ export default function InterviewSessionPage() {
       if (typeof window !== "undefined") {
         (window as unknown as { __interviewAudioCtx?: AudioContext }).__interviewAudioCtx = undefined;
       }
+      if (gazeAlertTimerRef.current) {
+        clearTimeout(gazeAlertTimerRef.current);
+        gazeAlertTimerRef.current = null;
+      }
     };
   }, [stopAllAudio]);
 
@@ -875,6 +881,13 @@ export default function InterviewSessionPage() {
         </div>
       )}
 
+      {/* Gaze alert (リアルタイム視線指導) */}
+      {gazeAlert && (
+        <div className="mx-4 mt-2 rounded-lg border border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-950/30 px-3 py-2 text-sm text-amber-800 dark:text-amber-200 animate-in fade-in slide-in-from-top-2">
+          <strong>目線:</strong> {gazeAlert}
+        </div>
+      )}
+
       {/* Messages */}
       <div
         ref={scrollRef}
@@ -1095,6 +1108,11 @@ export default function InterviewSessionPage() {
           mediaStream={videoStream}
           isRecording={!isEnding && elapsed > 0}
           onAnalysisComplete={setVideoAnalysis}
+          onGazeAlert={(msg) => {
+            setGazeAlert(msg);
+            if (gazeAlertTimerRef.current) clearTimeout(gazeAlertTimerRef.current);
+            gazeAlertTimerRef.current = setTimeout(() => setGazeAlert(null), 6000);
+          }}
         />
       )}
 
