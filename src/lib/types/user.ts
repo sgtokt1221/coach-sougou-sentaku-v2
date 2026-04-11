@@ -38,8 +38,10 @@ export interface StudentProfile extends UserProfile {
   onboardingCompleted?: boolean;
   managedBy?: string;
   selfAnalysisId?: string;
-  /** 最後に Realtime API で GD 面接を実行した日時 (2ヶ月に1回の制限判定用) */
+  /** @deprecated 旧 GD 専用 60 日制限の名残。新規コードは lastRealtimeAt を使用 */
   lastRealtimeGdAt?: Date;
+  /** 最後に Realtime API で音声面接 (全モード) を実行した日時。7 日に 1 回の制限判定用 */
+  lastRealtimeAt?: Date;
 }
 
 export interface EnglishCert {

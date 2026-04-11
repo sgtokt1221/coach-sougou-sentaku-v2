@@ -98,6 +98,27 @@ export default function InterviewNewPage() {
   const [presFileName, setPresFileName] = useState<string | null>(null);
   const [presUploading, setPresUploading] = useState(false);
 
+  // 音声モード利用可否 (7日に1回の制限)
+  const [voiceAllowed, setVoiceAllowed] = useState<boolean>(true);
+  const [voiceNextAvailableAt, setVoiceNextAvailableAt] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchStatus() {
+      try {
+        const res = await authFetch("/api/interview/realtime-status");
+        if (!res.ok) return;
+        const data = await res.json();
+        setVoiceAllowed(data.allowed !== false);
+        setVoiceNextAvailableAt(data.nextAvailableAt ?? null);
+        // 音声不可のときはテキストに強制
+        if (data.allowed === false) setInputMode("text");
+      } catch {
+        // 取得失敗時は voice 許可のまま (サーバー側で再判定される)
+      }
+    }
+    fetchStatus();
+  }, []);
+
   // 1校の場合は自動選択
   useEffect(() => {
     if (resolved.length === 1) {
@@ -452,10 +473,13 @@ export default function InterviewNewPage() {
                 <p className="text-xs text-muted-foreground mt-1">キーボードで回答</p>
               </button>
               <button
-                onClick={() => setInputMode("voice")}
+                onClick={() => voiceAllowed && setInputMode("voice")}
+                disabled={!voiceAllowed}
                 className={[
                   "rounded-lg border p-3 lg:p-4 text-center transition-colors",
-                  inputMode === "voice"
+                  !voiceAllowed
+                    ? "border-border bg-muted/30 opacity-60 cursor-not-allowed"
+                    : inputMode === "voice"
                     ? "border-primary bg-primary/5"
                     : "border-border hover:bg-muted/50",
                 ].join(" ")}
@@ -463,20 +487,33 @@ export default function InterviewNewPage() {
                 <Mic
                   className={[
                     "size-6 mx-auto mb-2",
-                    inputMode === "voice" ? "text-primary" : "text-muted-foreground",
+                    !voiceAllowed
+                      ? "text-muted-foreground/50"
+                      : inputMode === "voice" ? "text-primary" : "text-muted-foreground",
                   ].join(" ")}
                 />
                 <p
                   className={[
                     "font-medium text-sm",
-                    inputMode === "voice" ? "text-primary" : "",
+                    !voiceAllowed ? "text-muted-foreground" : inputMode === "voice" ? "text-primary" : "",
                   ].join(" ")}
                 >
                   音声入力
                 </p>
-                <p className="text-xs text-muted-foreground mt-1">マイクで回答</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {!voiceAllowed && voiceNextAvailableAt
+                    ? `${new Date(voiceNextAvailableAt).toLocaleDateString("ja-JP")} から利用可`
+                    : "マイクで回答"}
+                </p>
               </button>
             </CardContent>
+            {!voiceAllowed && (
+              <div className="px-4 pb-4">
+                <p className="text-xs text-muted-foreground bg-muted/40 rounded-md p-2 leading-relaxed">
+                  音声モードの面接は 7 日に 1 回までです。それまではテキストモードで練習できます。
+                </p>
+              </div>
+            )}
           </Card>
 
           {/* プレゼン資料アップロード（プレゼンモード時のみ） */}

@@ -687,7 +687,17 @@ export default function InterviewSessionPage() {
               <span className="inline-flex size-2 rounded-full bg-emerald-500 animate-pulse" />
               マイクが常時有効です。自然に話してください
             </div>
-          ) : realtime.status === "fallback_error" || realtime.status === "fallback_rate_limited" ? (
+          ) : realtime.status === "fallback_rate_limited" ? (
+            <div className="flex flex-col items-center justify-center gap-1 py-3 text-sm text-amber-700">
+              <span>音声モードの面接は 7 日に 1 回までです</span>
+              {realtime.nextAvailableAt && (
+                <span className="text-[12px]">
+                  次回は {new Date(realtime.nextAvailableAt).toLocaleDateString("ja-JP")} から利用できます
+                </span>
+              )}
+              <span className="text-[11px] text-muted-foreground">それまではテキストモードで練習できます</span>
+            </div>
+          ) : realtime.status === "fallback_error" ? (
             <div className="flex flex-col items-center justify-center gap-1 py-3 text-sm text-rose-600">
               <span>Realtime 接続に失敗しました</span>
               {realtime.error && <span className="text-[11px] font-mono">{realtime.error.slice(0, 200)}</span>}

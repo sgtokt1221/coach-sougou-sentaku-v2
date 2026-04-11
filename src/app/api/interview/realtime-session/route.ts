@@ -199,30 +199,28 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // GD モードのレートリミット確認
-  if (mode === "group_discussion") {
-    let lastRealtimeGdAt: Date | null = null;
-    try {
-      const { adminDb } = await import("@/lib/firebase/admin");
-      if (adminDb) {
-        const userDoc = await adminDb.doc(`users/${uid}`).get();
-        const data = userDoc.data();
-        if (data?.lastRealtimeGdAt?.toDate) {
-          lastRealtimeGdAt = data.lastRealtimeGdAt.toDate();
-        }
+  // 全モード共通: 7 日 cooldown のレートリミット確認
+  let lastRealtimeAt: Date | null = null;
+  try {
+    const { adminDb } = await import("@/lib/firebase/admin");
+    if (adminDb) {
+      const userDoc = await adminDb.doc(`users/${uid}`).get();
+      const data = userDoc.data();
+      if (data?.lastRealtimeAt?.toDate) {
+        lastRealtimeAt = data.lastRealtimeAt.toDate();
       }
-    } catch (err) {
-      console.warn("[realtime-session] failed to read lastRealtimeGdAt", err);
     }
+  } catch (err) {
+    console.warn("[realtime-session] failed to read lastRealtimeAt", err);
+  }
 
-    const rate = checkRealtimeRateLimit(mode, role, lastRealtimeGdAt);
-    if (!rate.allowed) {
-      return NextResponse.json({
-        rateLimited: true,
-        nextAvailableAt: rate.nextAvailableAt,
-        reason: rate.reason,
-      });
-    }
+  const rate = checkRealtimeRateLimit(role, lastRealtimeAt);
+  if (!rate.allowed) {
+    return NextResponse.json({
+      rateLimited: true,
+      nextAvailableAt: rate.nextAvailableAt,
+      reason: rate.reason,
+    });
   }
 
   const apiKey = process.env.OPENAI_API_KEY;
@@ -280,20 +278,7 @@ export async function POST(request: NextRequest) {
 
     const usedModel = results[0].issueResult.model;
 
-    // 成功したら lastRealtimeGdAt を更新 (管理者以外)
-    if (role !== "admin" && role !== "superadmin") {
-      try {
-        const { adminDb } = await import("@/lib/firebase/admin");
-        const { FieldValue } = await import("firebase-admin/firestore");
-        if (adminDb) {
-          await adminDb.doc(`users/${uid}`).update({
-            lastRealtimeGdAt: FieldValue.serverTimestamp(),
-          });
-        }
-      } catch (err) {
-        console.warn("[realtime-session] failed to update lastRealtimeGdAt", err);
-      }
-    }
+    await updateLastRealtimeAt(uid, role);
 
     return NextResponse.json({
       mode: "group_discussion",
@@ -324,6 +309,8 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  await updateLastRealtimeAt(uid, role);
+
   return NextResponse.json({
     mode,
     model: issueResult.model,
@@ -334,4 +321,23 @@ export async function POST(request: NextRequest) {
       expiresAt: issueResult.token.client_secret.expires_at,
     }],
   });
+}
+
+/**
+ * Realtime セッション開始成功時に Firestore の lastRealtimeAt を更新する。
+ * 管理者系ロールはレート制限対象外なので更新もスキップ。
+ */
+async function updateLastRealtimeAt(uid: string, role: string): Promise<void> {
+  if (role === "admin" || role === "teacher" || role === "superadmin") return;
+  try {
+    const { adminDb } = await import("@/lib/firebase/admin");
+    const { FieldValue } = await import("firebase-admin/firestore");
+    if (adminDb) {
+      await adminDb.doc(`users/${uid}`).update({
+        lastRealtimeAt: FieldValue.serverTimestamp(),
+      });
+    }
+  } catch (err) {
+    console.warn("[realtime-session] failed to update lastRealtimeAt", err);
+  }
 }

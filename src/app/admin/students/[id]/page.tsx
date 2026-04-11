@@ -46,7 +46,9 @@ import {
   Star,
   Languages,
   Plus,
+  MicOff,
 } from "lucide-react";
+import { toast } from "sonner";
 import {
   LineChart,
   Line,
@@ -171,6 +173,7 @@ export default function AdminStudentDetailPage() {
   const [editCertType, setEditCertType] = useState<EnglishCert["type"]>("EIKEN");
   const [editCertScore, setEditCertScore] = useState("");
   const [saving, setSaving] = useState(false);
+  const [unlockingRealtime, setUnlockingRealtime] = useState(false);
 
   useEffect(() => {
     async function fetchDetail() {
@@ -207,6 +210,25 @@ export default function AdminStudentDetailPage() {
       .then((d) => setResolvedUnis(d.resolved ?? []))
       .catch(() => setResolvedUnis([]));
   }, [detail?.profile.targetUniversities]);
+
+  async function handleUnlockRealtime() {
+    if (!detail) return;
+    if (!confirm(`${detail.profile.displayName} さんの音声面接の 7 日制限を解除しますか？`)) return;
+    setUnlockingRealtime(true);
+    try {
+      const res = await authFetch(`/api/admin/students/${id}/unlock-realtime`, { method: "POST" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `HTTP ${res.status}`);
+      }
+      toast.success("音声面接の制限を解除しました");
+    } catch (err) {
+      console.error("unlock-realtime failed", err);
+      toast.error(err instanceof Error ? err.message : "解除に失敗しました");
+    } finally {
+      setUnlockingRealtime(false);
+    }
+  }
 
   function openEditDialog() {
     if (!detail) return;
@@ -314,10 +336,16 @@ export default function AdminStudentDetailPage() {
               <User className="size-4" />
               プロフィール
             </CardTitle>
-            <Button variant="outline" size="sm" onClick={openEditDialog}>
-              <Pencil className="mr-1 size-3" />
-              編集
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={handleUnlockRealtime} disabled={unlockingRealtime}>
+                <MicOff className="mr-1 size-3" />
+                {unlockingRealtime ? "解除中..." : "音声制限を解除"}
+              </Button>
+              <Button variant="outline" size="sm" onClick={openEditDialog}>
+                <Pencil className="mr-1 size-3" />
+                編集
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
