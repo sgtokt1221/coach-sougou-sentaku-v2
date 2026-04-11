@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, PartyPopper } from "lucide-react";
 import { StepIndicator } from "@/components/self-analysis/StepIndicator";
 import { WorkshopChat } from "@/components/self-analysis/WorkshopChat";
+import { GrowthTree } from "@/components/self-analysis/GrowthTree";
 import { useAuthSWR } from "@/lib/api/swr";
 import type { SelfAnalysis, ChatMessage, StepChatHistory } from "@/lib/types/self-analysis";
 
@@ -126,6 +127,8 @@ export default function SelfAnalysisPage() {
         </Button>
         <h1 className="text-xl lg:text-2xl font-bold">AI自己分析ワークショップ</h1>
       </div>
+
+      <GrowthTree completedSteps={completedSteps} currentStep={currentStep} />
 
       <StepIndicator
         currentStep={currentStep}
