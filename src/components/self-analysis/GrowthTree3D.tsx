@@ -152,7 +152,7 @@ function Fruit({
   const baseRadius = 0.28;
 
   return (
-    <Float speed={1.5} rotationIntensity={0.15} floatIntensity={0.35} enabled={isDone}>
+    <Float speed={1.5} rotationIntensity={0.12} floatIntensity={isDone ? 0.3 : 0.05}>
       <animated.group position={position} scale={displayScale}>
         {/* 地面への影リング */}
         {isDone && (

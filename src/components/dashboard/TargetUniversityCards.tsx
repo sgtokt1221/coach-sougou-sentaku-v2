@@ -126,9 +126,9 @@ export function TargetUniversityCards({ targetUniversities }: Props) {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="space-y-5">
         {[1, 2].map((i) => (
-          <Skeleton key={i} className="h-40 rounded-2xl" />
+          <Skeleton key={i} className="h-48 lg:h-56 rounded-3xl" />
         ))}
       </div>
     );
@@ -156,7 +156,7 @@ export function TargetUniversityCards({ targetUniversities }: Props) {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="space-y-5">
       {resolved.map((item) => {
         const nextEvent = getNextEvent(item.schedule);
         const cd = nextEvent ? countdownStyle(nextEvent.daysLeft) : null;
@@ -168,78 +168,80 @@ export function TargetUniversityCards({ targetUniversities }: Props) {
             href={`/student/universities/${item.universityId}/${item.facultyId}`}
             className="block group"
           >
-            <Card className="relative overflow-hidden rounded-2xl border-border/60 group-hover:border-primary/40 group-hover:shadow-xl transition-all duration-300">
+            <Card className="relative overflow-hidden rounded-3xl border-border/60 group-hover:border-primary/40 group-hover:shadow-2xl transition-all duration-300">
               {/* 背景の装飾グラデーション */}
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.02] via-transparent to-primary/[0.04] pointer-events-none" />
-              <div className="absolute top-0 right-0 size-40 bg-gradient-to-bl from-primary/[0.08] to-transparent rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.03] via-transparent to-primary/[0.06] pointer-events-none" />
+              <div className="absolute top-0 right-0 size-64 bg-gradient-to-bl from-primary/[0.1] to-transparent rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-20 -left-20 size-52 bg-gradient-to-tr from-primary/[0.06] to-transparent rounded-full blur-3xl pointer-events-none" />
 
-              <CardContent className="relative p-5 lg:p-6 space-y-4">
-                {/* ヘッダー: 大学名 */}
-                <div className="flex items-start justify-between gap-3">
+              <CardContent className="relative p-6 lg:p-10">
+                <div className="flex flex-col lg:flex-row lg:items-center gap-6 lg:gap-10">
+                  {/* 左: 大学名 */}
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <GraduationCap className="size-4 text-primary shrink-0" />
-                      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                    <div className="flex items-center gap-2 mb-3">
+                      <GraduationCap className="size-5 text-primary shrink-0" />
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-[0.2em]">
                         志望校
                       </p>
                     </div>
-                    <h3 className="text-xl lg:text-2xl font-bold text-foreground leading-tight truncate">
+                    <h3 className="text-3xl lg:text-5xl font-black text-foreground leading-[1.1] tracking-tight">
                       {item.universityName}
                     </h3>
-                    <p className="text-sm text-muted-foreground mt-0.5 truncate">
+                    <p className="text-base lg:text-xl text-muted-foreground mt-2 font-medium">
                       {item.facultyName}
                     </p>
                   </div>
-                  <ArrowRight className="size-5 text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-1 transition-all shrink-0 mt-2" />
+
+                  {/* 右: カウントダウン */}
+                  {nextEvent && cd ? (
+                    <div className="flex items-center gap-5 lg:flex-col lg:items-end lg:text-right shrink-0">
+                      <div
+                        className={`flex flex-col items-center justify-center rounded-3xl bg-gradient-to-br ${cd.bg} ${cd.text} px-6 lg:px-8 py-4 lg:py-5 shadow-xl ring-4 ${cd.ring} min-w-[140px] lg:min-w-[180px]`}
+                      >
+                        <span className="text-[11px] lg:text-xs font-bold uppercase tracking-[0.15em] opacity-90">
+                          残り
+                        </span>
+                        <div className="flex items-baseline gap-1 mt-0.5">
+                          <span className="text-5xl lg:text-7xl font-black tabular-nums leading-none">
+                            {nextEvent.daysLeft}
+                          </span>
+                          <span className="text-lg lg:text-2xl font-bold opacity-90">日</span>
+                        </div>
+                      </div>
+                      <div className="flex-1 lg:flex-initial min-w-0">
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1 lg:justify-end">
+                          <NextIcon className="size-3.5" />
+                          <span>次のイベント</span>
+                        </div>
+                        <p className="text-lg lg:text-2xl font-bold text-foreground leading-tight">
+                          {nextEvent.type}
+                        </p>
+                        <p className="text-sm text-muted-foreground mt-0.5 tabular-nums">
+                          {new Date(nextEvent.date + "T00:00:00").toLocaleDateString("ja-JP", {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                            weekday: "short",
+                          })}
+                        </p>
+                        {cd.label && (
+                          <span
+                            className={`inline-block mt-2 text-[11px] font-bold uppercase tracking-[0.15em] px-2.5 py-1 rounded-full bg-gradient-to-r ${cd.bg} ${cd.text} shadow-sm`}
+                          >
+                            {cd.label}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground shrink-0">
+                      <Trophy className="size-5" />
+                      全日程終了
+                    </div>
+                  )}
                 </div>
 
-                {/* カウントダウン: 大きく・太く・スタイリッシュ */}
-                {nextEvent && cd ? (
-                  <div className="flex items-center gap-4 pt-2 border-t border-border/40">
-                    <div
-                      className={`flex flex-col items-center justify-center rounded-2xl bg-gradient-to-br ${cd.bg} ${cd.text} px-5 py-3 shadow-lg ring-4 ${cd.ring} min-w-[110px]`}
-                    >
-                      <span className="text-[10px] font-semibold uppercase tracking-wider opacity-90">
-                        残り
-                      </span>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-4xl lg:text-5xl font-black tabular-nums leading-none">
-                          {nextEvent.daysLeft}
-                        </span>
-                        <span className="text-sm font-bold opacity-90">日</span>
-                      </div>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
-                        <NextIcon className="size-3.5" />
-                        <span>次のイベント</span>
-                      </div>
-                      <p className="text-base lg:text-lg font-bold text-foreground leading-tight">
-                        {nextEvent.type}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-0.5 tabular-nums">
-                        {new Date(nextEvent.date + "T00:00:00").toLocaleDateString("ja-JP", {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                          weekday: "short",
-                        })}
-                      </p>
-                      {cd.label && (
-                        <span
-                          className={`inline-block mt-1.5 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-gradient-to-r ${cd.bg} ${cd.text}`}
-                        >
-                          {cd.label}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2 pt-2 border-t border-border/40 text-sm text-muted-foreground">
-                    <Trophy className="size-4" />
-                    全日程終了
-                  </div>
-                )}
+                <ArrowRight className="absolute bottom-5 right-5 size-5 text-muted-foreground/30 group-hover:text-primary group-hover:translate-x-1 transition-all" />
               </CardContent>
             </Card>
           </Link>

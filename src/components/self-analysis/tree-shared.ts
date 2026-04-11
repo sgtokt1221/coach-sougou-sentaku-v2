@@ -15,21 +15,23 @@ export interface FruitMeta {
   ring: string;
 }
 
+// 3D 座標は葉群 (中心 (0, 3, 0), 半径 ~2.3) の「外側表面」に配置し、
+// カメラ (+z 方向) に向かって大きめに +z を取ることで葉に埋もれないようにする。
 export const FRUIT_META: FruitMeta[] = [
-  // 1. 価値観 - pink - 頂上中央
-  { x2d: 160, y2d: 70, pos3d: [0.0, 3.2, 0.4], color: "#f472b6", ring: "#fbcfe8" },
-  // 2. 強み - orange - 左上
-  { x2d: 102, y2d: 92, pos3d: [-1.4, 2.8, 0.3], color: "#fb923c", ring: "#fed7aa" },
-  // 3. 弱み - violet - 右上
-  { x2d: 218, y2d: 96, pos3d: [1.4, 2.7, 0.2], color: "#a78bfa", ring: "#ddd6fe" },
-  // 4. 興味 - blue - 左
-  { x2d: 76, y2d: 140, pos3d: [-1.7, 2.1, 0.5], color: "#60a5fa", ring: "#bfdbfe" },
-  // 5. ビジョン - emerald - 右
-  { x2d: 244, y2d: 146, pos3d: [1.7, 2.0, 0.4], color: "#34d399", ring: "#a7f3d0" },
-  // 6. 大学接続 - amber - 左下
-  { x2d: 132, y2d: 158, pos3d: [-0.7, 1.7, 0.8], color: "#fbbf24", ring: "#fde68a" },
-  // 7. 統合 - red - 右下
-  { x2d: 188, y2d: 170, pos3d: [0.8, 1.6, 0.7], color: "#f87171", ring: "#fecaca" },
+  // 1. 価値観 - pink - 頂点手前
+  { x2d: 160, y2d: 70, pos3d: [0.0, 3.85, 1.35], color: "#f472b6", ring: "#fbcfe8" },
+  // 2. 強み - orange - 左上手前
+  { x2d: 102, y2d: 92, pos3d: [-1.65, 3.5, 1.05], color: "#fb923c", ring: "#fed7aa" },
+  // 3. 弱み - violet - 右上手前
+  { x2d: 218, y2d: 96, pos3d: [1.7, 3.4, 1.1], color: "#a78bfa", ring: "#ddd6fe" },
+  // 4. 興味 - blue - 左中央
+  { x2d: 76, y2d: 140, pos3d: [-2.15, 2.6, 0.8], color: "#60a5fa", ring: "#bfdbfe" },
+  // 5. ビジョン - emerald - 右中央
+  { x2d: 244, y2d: 146, pos3d: [2.2, 2.5, 0.9], color: "#34d399", ring: "#a7f3d0" },
+  // 6. 大学接続 - amber - 左下手前
+  { x2d: 132, y2d: 158, pos3d: [-0.95, 2.1, 1.55], color: "#fbbf24", ring: "#fde68a" },
+  // 7. 統合 - red - 右下手前
+  { x2d: 188, y2d: 170, pos3d: [1.05, 2.0, 1.5], color: "#f87171", ring: "#fecaca" },
 ];
 
 /**
