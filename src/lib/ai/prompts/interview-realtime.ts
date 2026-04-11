@@ -176,6 +176,7 @@ export function buildRealtimeGdSpeakerInstructions(
   facultyName: string,
   admissionPolicy: string,
   weaknessList: string,
+  interviewTendency?: InterviewTendency,
 ): string {
   const characterPrompt = GD_CHARACTER_PROMPTS[speaker];
 
@@ -184,6 +185,7 @@ export function buildRealtimeGdSpeakerInstructions(
 ## 討論の文脈
 ${universityName} ${facultyName} の入学試験における集団討論です。
 アドミッションポリシー: ${admissionPolicy}
+${interviewTendency ? `\n## この学部の面接傾向\n${typeof interviewTendency === "string" ? interviewTendency : JSON.stringify(interviewTendency)}` : ""}
 
 ## あなたが特に意識する受験生Dさん (ユーザー) の弱点
 ${weaknessList}

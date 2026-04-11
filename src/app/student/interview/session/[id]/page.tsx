@@ -76,6 +76,8 @@ export default function InterviewSessionPage() {
   const [realtimeActive, setRealtimeActive] = useState(false);
   const realtime = useRealtimeInterview({
     mode: sessionInfo?.mode ?? "individual",
+    universityId: sessionInfo?.universityId,
+    facultyId: sessionInfo?.facultyId,
     universityName: sessionInfo?.universityContext.universityName ?? "",
     facultyName: sessionInfo?.universityContext.facultyName ?? "",
     admissionPolicy: sessionInfo?.universityContext.admissionPolicy ?? "",

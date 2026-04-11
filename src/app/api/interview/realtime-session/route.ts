@@ -20,6 +20,7 @@ import {
   type GdSpeakerKey,
 } from "@/lib/ai/prompts/interview-realtime";
 import type { InterviewMode } from "@/lib/types/interview";
+import type { InterviewTendency } from "@/lib/types/university";
 
 /** モデル名のフォールバックチェーン。上から順に試す。 */
 const REALTIME_MODEL_CANDIDATES = [
@@ -115,6 +116,8 @@ export async function POST(request: NextRequest) {
 
   let body: {
     mode: InterviewMode;
+    universityId?: string;
+    facultyId?: string;
     universityName?: string;
     facultyName?: string;
     admissionPolicy?: string;
@@ -127,10 +130,42 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "リクエストボディが不正です" }, { status: 400 });
   }
 
-  const { mode, universityName = "", facultyName = "", admissionPolicy = "", weaknessList = "（過去の弱点なし）", presentationContent } = body;
+  const {
+    mode,
+    universityId,
+    facultyId,
+    universityName = "",
+    facultyName = "",
+    admissionPolicy = "",
+    weaknessList = "（過去の弱点なし）",
+    presentationContent,
+  } = body;
 
   if (!mode) {
     return NextResponse.json({ error: "mode は必須です" }, { status: 400 });
+  }
+
+  // Firestore から面接傾向 (interviewTendency) を取得
+  // universityId / facultyId があれば引き当てて、instructions に含める
+  let interviewTendency: InterviewTendency | undefined;
+  if (universityId && facultyId) {
+    try {
+      const { adminDb } = await import("@/lib/firebase/admin");
+      if (adminDb) {
+        const universityDoc = await adminDb.doc(`universities/${universityId}`).get();
+        if (universityDoc.exists) {
+          const universityData = universityDoc.data()!;
+          const faculty = universityData.faculties?.find(
+            (f: { id: string; interviewTendency?: InterviewTendency }) => f.id === facultyId
+          );
+          if (faculty?.interviewTendency) {
+            interviewTendency = faculty.interviewTendency;
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("[realtime-session] failed to fetch interviewTendency", err);
+    }
   }
 
   // GD モードのレートリミット確認
@@ -178,6 +213,7 @@ export async function POST(request: NextRequest) {
           facultyName,
           admissionPolicy,
           weaknessList,
+          interviewTendency,
         );
         const issueResult = await issueEphemeralToken(apiKey, { instructions, voice });
         return { key, voice, issueResult };
@@ -235,7 +271,7 @@ export async function POST(request: NextRequest) {
     facultyName,
     admissionPolicy,
     weaknessList,
-    undefined,
+    interviewTendency,
     presentationContent,
   );
   const voice = "alloy"; // 個人モードはニュートラルな alloy

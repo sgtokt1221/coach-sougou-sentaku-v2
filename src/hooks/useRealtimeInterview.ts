@@ -34,6 +34,8 @@ export type RealtimeStatus =
 
 interface UseRealtimeInterviewOptions {
   mode: InterviewMode;
+  universityId?: string;
+  facultyId?: string;
   universityName: string;
   facultyName: string;
   admissionPolicy: string;
@@ -110,6 +112,8 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           mode: optsRef.current.mode,
+          universityId: optsRef.current.universityId,
+          facultyId: optsRef.current.facultyId,
           universityName: optsRef.current.universityName,
           facultyName: optsRef.current.facultyName,
           admissionPolicy: optsRef.current.admissionPolicy,
