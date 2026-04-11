@@ -16,11 +16,16 @@ import { Send, StopCircle, ChevronDown, ChevronUp, Video, VideoOff, Volume2, Vol
 import { authFetch } from "@/lib/api/client";
 import type { InterviewMessage, InterviewMode, InterviewInputMode, VoiceAnalysis, VideoAnalysis, AppearanceAnalysis } from "@/lib/types/interview";
 import { INTERVIEW_MODE_LABELS } from "@/lib/types/interview";
-import VoiceRecorder from "@/components/interview/VoiceRecorder";
 import ContinuousVoiceRecorder from "@/components/interview/ContinuousVoiceRecorder";
 import VoiceAnalyzer from "@/components/interview/VoiceAnalyzer";
 import VideoAnalyzer from "@/components/interview/VideoAnalyzer";
 import CameraPreview from "@/components/interview/CameraPreview";
+import {
+  resolveSpeaker,
+  DEFAULT_INTERVIEWER,
+  type TtsVoice,
+  GD_SPEAKERS,
+} from "@/lib/interview/speakers";
 
 interface SessionInfo {
   universityId: string;
@@ -82,12 +87,12 @@ export default function InterviewSessionPage() {
     }
   }, []);
 
-  const speakText = useCallback(async (text: string) => {
+  const speakText = useCallback(async (text: string, voice: TtsVoice = "alloy") => {
     if (!ttsEnabled) return;
 
     try {
       setAiSpeaking(true);
-      console.log("[TTS] Starting for text length:", text.length);
+      console.log("[TTS] Starting for text length:", text.length, "voice:", voice);
 
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 15000);
@@ -95,7 +100,7 @@ export default function InterviewSessionPage() {
       const res = await fetch("/api/interview/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, voice: "alloy" }),
+        body: JSON.stringify({ text, voice }),
         signal: controller.signal,
       });
       clearTimeout(timeout);
@@ -169,7 +174,8 @@ export default function InterviewSessionPage() {
       setSessionInfo(info);
       setMessages([{ role: "ai", content: info.openingMessage }]);
       if (info.inputMode === "voice") {
-        speakText(info.openingMessage);
+        const { profile } = resolveSpeaker(info.openingMessage, DEFAULT_INTERVIEWER);
+        speakText(info.openingMessage, profile.voice);
         setCameraEnabled(true);
       }
     }
@@ -299,7 +305,8 @@ export default function InterviewSessionPage() {
       const data = await res.json();
       setMessages((prev) => [...prev, { role: "ai", content: data.content }]);
       if (sessionInfo?.inputMode === "voice") {
-        speakText(data.content);
+        const { profile } = resolveSpeaker(data.content, DEFAULT_INTERVIEWER);
+        speakText(data.content, profile.voice);
       }
       if (!data.isActive) {
         setShowEndDialog(true);
@@ -391,7 +398,8 @@ export default function InterviewSessionPage() {
           { role: "student", content: data.transcribedText },
           { role: "ai", content: data.aiResponse },
         ]);
-        speakText(data.aiResponse);
+        const { profile } = resolveSpeaker(data.aiResponse, DEFAULT_INTERVIEWER);
+        speakText(data.aiResponse, profile.voice);
 
         if (!data.isActive) {
           setShowEndDialog(true);
@@ -402,7 +410,7 @@ export default function InterviewSessionPage() {
           ...prev,
           { role: "ai", content: errorMsg },
         ]);
-        speakText(errorMsg);
+        speakText(errorMsg, "alloy");
       } finally {
         setIsLoading(false);
       }
@@ -425,7 +433,7 @@ export default function InterviewSessionPage() {
           </p>
           <p className="text-xs text-muted-foreground">
             {modeLabel}
-            {sessionInfo?.mode === "group_discussion" && " — 複数の面接官が参加"}
+            {sessionInfo?.mode === "group_discussion" && " — 教員3名 + 他受験生3名が参加"}
             {sessionInfo?.mode === "presentation" && " — プレゼン後に質疑応答"}
             {sessionInfo?.mode === "oral_exam" && " — 専門知識を問う試問"}
           </p>
@@ -471,25 +479,78 @@ export default function InterviewSessionPage() {
         ref={scrollRef}
         className="flex-1 overflow-y-auto px-4 py-4 space-y-3"
       >
-        {messages.map((msg, i) => (
-          <div
-            key={i}
-            className={["flex", msg.role === "student" ? "justify-end" : "justify-start"].join(
-              " "
-            )}
-          >
-            <div
-              className={[
-                "max-w-[85%] lg:max-w-[75%] rounded-2xl px-4 py-2 text-sm",
-                msg.role === "ai"
-                  ? "bg-muted text-foreground rounded-tl-sm"
-                  : "bg-primary text-primary-foreground rounded-tr-sm",
-              ].join(" ")}
-            >
-              {msg.content}
+        {sessionInfo?.mode === "group_discussion" && messages.length > 0 && (
+          <div className="mb-3 rounded-lg border border-border/60 bg-muted/30 p-3">
+            <p className="text-[11px] font-semibold text-muted-foreground mb-2">
+              👥 集団討論の参加者
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {Object.values(GD_SPEAKERS).map((sp) => (
+                <span
+                  key={sp.role}
+                  className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] ${sp.colorClass}`}
+                  title={sp.description}
+                >
+                  <span className="flex size-4 items-center justify-center rounded-full bg-white/70 text-[9px] font-bold">
+                    {sp.avatar}
+                  </span>
+                  {sp.displayName}
+                </span>
+              ))}
+              <span className="inline-flex items-center gap-1 rounded-md border border-primary/40 bg-primary/10 px-2 py-0.5 text-[10px] text-primary">
+                <span className="flex size-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground">
+                  あ
+                </span>
+                あなた
+              </span>
             </div>
           </div>
-        ))}
+        )}
+
+        {messages.map((msg, i) => {
+          if (msg.role === "student") {
+            return (
+              <div key={i} className="flex justify-end">
+                <div className="max-w-[85%] lg:max-w-[75%] rounded-2xl rounded-tr-sm bg-primary text-primary-foreground px-4 py-2 text-sm">
+                  {msg.content}
+                </div>
+              </div>
+            );
+          }
+
+          // AI 発言: GDモードなら話者別カード、それ以外は従来の吹き出し
+          if (sessionInfo?.mode === "group_discussion") {
+            const { profile, body } = resolveSpeaker(msg.content, DEFAULT_INTERVIEWER);
+            return (
+              <div key={i} className="flex justify-start">
+                <div
+                  className={`max-w-[90%] lg:max-w-[80%] rounded-2xl rounded-tl-sm border px-3 py-2 ${profile.colorClass}`}
+                >
+                  <div className="mb-1 flex items-center gap-1.5">
+                    <span className="flex size-5 items-center justify-center rounded-full bg-white/70 text-[10px] font-bold">
+                      {profile.avatar}
+                    </span>
+                    <span className="text-xs font-semibold">
+                      {profile.displayName}
+                    </span>
+                  </div>
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                    {body}
+                  </p>
+                </div>
+              </div>
+            );
+          }
+
+          // 個人面接・プレゼン・口頭試問: 従来通り
+          return (
+            <div key={i} className="flex justify-start">
+              <div className="max-w-[85%] lg:max-w-[75%] rounded-2xl rounded-tl-sm bg-muted text-foreground px-4 py-2 text-sm">
+                {msg.content}
+              </div>
+            </div>
+          );
+        })}
 
         {isLoading && (
           <div className="flex justify-start">

@@ -1,5 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 
+const ALLOWED_VOICES = new Set([
+  "alloy",
+  "echo",
+  "fable",
+  "onyx",
+  "nova",
+  "shimmer",
+]);
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -18,6 +27,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 許容リスト外や未指定の場合は alloy にフォールバック
+    const safeVoice =
+      typeof voice === "string" && ALLOWED_VOICES.has(voice) ? voice : "alloy";
+
     const ttsRes = await fetch("https://api.openai.com/v1/audio/speech", {
       method: "POST",
       headers: {
@@ -27,7 +40,7 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         model: "tts-1",
         input: text,
-        voice: voice || "alloy",
+        voice: safeVoice,
       }),
     });
 

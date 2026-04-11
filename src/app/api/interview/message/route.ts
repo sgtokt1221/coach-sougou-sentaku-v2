@@ -86,13 +86,16 @@ export async function POST(request: NextRequest) {
     const content =
       response.content[0].type === "text" ? response.content[0].text : "";
 
-    // stop_reason が end_turn かつ終了フレーズが含まれる場合は非アクティブ
+    // GD は他受験生3名も絡むので長めに、それ以外は従来通り
+    const maxTurns = mode === "group_discussion" ? 26 : 16;
+    const minTurns = mode === "group_discussion" ? 14 : 8;
     const isActive =
-      messages.length < 16 &&
-      !content.includes("以上で面接を終了") &&
-      !content.includes("面接を終わりにします") &&
-      response.stop_reason !== "end_turn" ||
-      messages.length < 8;
+      (messages.length < maxTurns &&
+        !content.includes("以上で面接を終了") &&
+        !content.includes("以上で集団討論を終了") &&
+        !content.includes("面接を終わりにします") &&
+        response.stop_reason !== "end_turn") ||
+      messages.length < minTurns;
 
     const result: InterviewMessageResponse = { content, isActive: Boolean(isActive) };
     return NextResponse.json(result);
