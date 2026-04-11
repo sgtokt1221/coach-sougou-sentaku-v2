@@ -133,29 +133,32 @@ function Fruit({
 }: FruitProps) {
   const meshRef = useRef<THREE.Mesh>(null);
 
-  // scale はバネ、emissive もバネ。未完了は 0.55 (小さく)、完了は 1.0
-  const { springScale, emissive, matOpacity } = useSpring({
-    springScale: isDone ? (isHovered ? 1.3 : 1.0) : 0.55,
-    emissive: isDone ? (isCurrent ? 1.2 : 0.5) : 0,
-    matOpacity: isDone ? 1 : 0.4,
-    delay: isDone ? index * 150 : 0,
-    config: { tension: 180, friction: 14 },
+  // scale/emissive を spring で補間。未完了でも小さく見せる (scale 0.5)
+  const { displayScale, emissiveI, matOpacity } = useSpring({
+    displayScale: isDone ? (isHovered ? 1.35 : 1.0) : 0.5,
+    emissiveI: isDone ? (isCurrent ? 1.3 : 0.65) : 0.05,
+    matOpacity: isDone ? 1 : 0.55,
+    delay: isDone ? index * 120 : 0,
+    config: { tension: 170, friction: 13 },
   });
 
   useFrame((_, delta) => {
     if (meshRef.current && isDone) {
-      meshRef.current.rotation.y += delta * 0.25;
+      meshRef.current.rotation.y += delta * 0.3;
     }
   });
 
+  // 果実本体のサイズを大きめに (0.22 → 0.28)
+  const baseRadius = 0.28;
+
   return (
-    <Float speed={1.6} rotationIntensity={0.2} floatIntensity={0.3}>
-      <animated.group position={position} scale={springScale}>
-        {/* 落ち影の代わりに単純な ring */}
+    <Float speed={1.5} rotationIntensity={0.15} floatIntensity={0.35} enabled={isDone}>
+      <animated.group position={position} scale={displayScale}>
+        {/* 地面への影リング */}
         {isDone && (
-          <mesh position={[0, -0.28, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-            <ringGeometry args={[0.14, 0.22, 24]} />
-            <meshBasicMaterial color={color} transparent opacity={0.35} />
+          <mesh position={[0, -baseRadius - 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+            <ringGeometry args={[baseRadius * 0.7, baseRadius * 1.1, 24]} />
+            <meshBasicMaterial color={color} transparent opacity={0.4} />
           </mesh>
         )}
 
@@ -179,40 +182,38 @@ function Fruit({
             if (isDone) onClick();
           }}
         >
-          <sphereGeometry args={[0.22, 32, 32]} />
+          <sphereGeometry args={[baseRadius, 32, 32]} />
           <animated.meshStandardMaterial
-            color={isDone ? color : "#cbd5e1"}
+            color={color}
             emissive={color}
-            emissiveIntensity={emissive}
-            roughness={0.35}
-            metalness={0.15}
+            emissiveIntensity={emissiveI}
+            roughness={0.3}
+            metalness={0.2}
             transparent
             opacity={matOpacity}
           />
         </mesh>
 
-        {/* 果実のヘタ (小さな茶色の棒) */}
+        {/* 果実のヘタ */}
         {isDone && (
-          <mesh position={[0.02, 0.24, 0]}>
-            <cylinderGeometry args={[0.012, 0.018, 0.08, 6]} />
-            <meshStandardMaterial color="#4a2810" />
-          </mesh>
-        )}
-
-        {/* ヘタの葉 */}
-        {isDone && (
-          <mesh position={[0.08, 0.27, 0]} rotation={[0, 0, -0.7]}>
-            <coneGeometry args={[0.05, 0.12, 6]} />
-            <meshStandardMaterial color="#16a34a" flatShading />
-          </mesh>
+          <>
+            <mesh position={[0.02, baseRadius + 0.04, 0]}>
+              <cylinderGeometry args={[0.015, 0.022, 0.09, 6]} />
+              <meshStandardMaterial color="#4a2810" />
+            </mesh>
+            <mesh position={[0.1, baseRadius + 0.06, 0]} rotation={[0, 0, -0.7]}>
+              <coneGeometry args={[0.06, 0.14, 6]} />
+              <meshStandardMaterial color="#16a34a" flatShading />
+            </mesh>
+          </>
         )}
 
         {/* キラキラ */}
         {isDone && (
           <Sparkles
-            count={isCurrent ? 14 : 7}
-            scale={0.8}
-            size={isCurrent ? 4 : 2.5}
+            count={isCurrent ? 16 : 8}
+            scale={1.0}
+            size={isCurrent ? 5 : 3}
             speed={0.5}
             color={color}
           />
