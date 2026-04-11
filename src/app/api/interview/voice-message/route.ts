@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { buildWhisperPrompt } from "@/lib/interview/whisper-context";
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,6 +29,16 @@ export async function POST(request: NextRequest) {
         formData.append("file", blob, `recording.${ext}`);
         formData.append("model", "whisper-1");
         formData.append("language", "ja");
+
+        // 学部文脈を Whisper に伝え同音異義語の誤認識を抑制
+        // 例: 法学系では「ほうそう」→「法曹」(「放送」ではなく)
+        const whisperPrompt = buildWhisperPrompt(
+          universityContext?.facultyName,
+          universityContext?.universityName,
+        );
+        if (whisperPrompt) {
+          formData.append("prompt", whisperPrompt);
+        }
 
         const whisperRes = await fetch("https://api.openai.com/v1/audio/transcriptions", {
           method: "POST",
