@@ -10,7 +10,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { CHART_COLORS, CHART_ANIMATION, GRID_STYLE } from "@/components/charts/theme";
+import { CHART_COLORS, CHART_ANIMATION, GRID_STYLE, SCORE_TYPE_COLORS } from "@/components/charts/theme";
 import { CustomTooltip } from "@/components/charts/CustomTooltip";
 import { CustomActiveDot } from "@/components/charts/CustomDot";
 
@@ -103,9 +103,9 @@ export function ScoresTrendChart({ data, essayData, interviewData }: ScoresTrend
             type="monotone"
             dataKey="essay"
             name="小論文"
-            stroke={CHART_COLORS.primary}
+            stroke={SCORE_TYPE_COLORS.essay}
             strokeWidth={2.5}
-            dot={{ r: 5, fill: "white", stroke: CHART_COLORS.primary, strokeWidth: 2 }}
+            dot={{ r: 5, fill: "white", stroke: SCORE_TYPE_COLORS.essay, strokeWidth: 2 }}
             activeDot={<CustomActiveDot />}
             connectNulls={false}
             isAnimationActive
@@ -116,10 +116,10 @@ export function ScoresTrendChart({ data, essayData, interviewData }: ScoresTrend
             type="monotone"
             dataKey="interview"
             name="面接"
-            stroke={CHART_COLORS.quaternary}
+            stroke={SCORE_TYPE_COLORS.interview}
             strokeWidth={2.5}
             strokeDasharray="6 4"
-            dot={{ r: 5, fill: "white", stroke: CHART_COLORS.quaternary, strokeWidth: 2 }}
+            dot={{ r: 5, fill: "white", stroke: SCORE_TYPE_COLORS.interview, strokeWidth: 2 }}
             activeDot={<CustomActiveDot />}
             connectNulls={false}
             isAnimationActive

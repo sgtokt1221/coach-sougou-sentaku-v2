@@ -2,15 +2,26 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, PartyPopper } from "lucide-react";
+import { ArrowLeft, PartyPopper, Sparkles, Pencil } from "lucide-react";
 import { StepIndicator } from "@/components/self-analysis/StepIndicator";
 import { WorkshopChat } from "@/components/self-analysis/WorkshopChat";
 import { SegmentControl } from "@/components/shared/SegmentControl";
-import { GrowthTree } from "@/components/self-analysis/GrowthTree";
 import { useAuthSWR } from "@/lib/api/swr";
 import type { SelfAnalysis, ChatMessage, StepChatHistory } from "@/lib/types/self-analysis";
+
+// WebGL の 3D 木 (SSR 不可)
+const GrowthTree3D = dynamic(
+  () => import("@/components/self-analysis/GrowthTree3D").then((m) => m.GrowthTree3D),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[440px] w-full rounded-2xl border bg-gradient-to-b from-sky-200/70 via-sky-100/50 to-emerald-100/40 animate-pulse" />
+    ),
+  }
+);
 
 export default function SelfAnalysisPage() {
   const router = useRouter();
@@ -24,7 +35,9 @@ export default function SelfAnalysisPage() {
   const [stepsData, setStepsData] = useState<Record<number, Record<string, unknown>>>({});
   const [allComplete, setAllComplete] = useState(false);
   const [restored, setRestored] = useState(false);
-  const [view, setView] = useState<"tree" | "workshop">("workshop");
+  const [view, setView] = useState<"tree" | "workshop">("tree");
+  // 編集中の step: 完了済みの果実をクリックで編集モードに入ったときに記録
+  const [editingStep, setEditingStep] = useState<number | null>(null);
 
   // Restore progress from Firestore
   useEffect(() => {
@@ -100,6 +113,26 @@ export default function SelfAnalysisPage() {
   const currentMessages =
     chatHistories.find((h) => h.step === currentStep)?.messages ?? [];
 
+  // 「分析を始める」ボタンのハンドラ
+  const handleStartAnalysis = useCallback(() => {
+    if (allComplete) {
+      router.push("/student/self-analysis/result");
+      return;
+    }
+    // 次の未入力 step に移動
+    const nextStep = Math.min(completedSteps + 1, 7);
+    setCurrentStep(nextStep);
+    setEditingStep(null);
+    setView("workshop");
+  }, [allComplete, completedSteps, router]);
+
+  // 果実クリックで編集モードに入る
+  const handleFruitClick = useCallback((step: number) => {
+    setCurrentStep(step);
+    setEditingStep(step);
+    setView("workshop");
+  }, []);
+
   // If already complete, redirect to result
   useEffect(() => {
     if (data?.isComplete) {
@@ -121,8 +154,14 @@ export default function SelfAnalysisPage() {
     );
   }
 
+  const ctaLabel = allComplete
+    ? "結果を見る"
+    : completedSteps === 0
+      ? "分析を始める"
+      : `続きから再開 (Step ${Math.min(completedSteps + 1, 7)})`;
+
   return (
-    <div className="max-w-2xl mx-auto px-4 py-5 lg:py-6 space-y-4 lg:space-y-6">
+    <div className="max-w-3xl mx-auto px-4 py-5 lg:py-6 space-y-4 lg:space-y-6">
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="sm" onClick={() => router.back()}>
           <ArrowLeft className="size-4" />
@@ -136,17 +175,34 @@ export default function SelfAnalysisPage() {
         fullWidth
         defaultAccent="emerald"
         options={[
-          { id: "workshop", label: "ワークショップ", count: completedSteps },
           { id: "tree", label: "自己分析の木" },
+          { id: "workshop", label: "ワークショップ", count: completedSteps },
         ]}
       />
 
       {view === "tree" ? (
-        <GrowthTree
-          completedSteps={completedSteps}
-          currentStep={currentStep}
-          stepsData={stepsData}
-        />
+        <>
+          <GrowthTree3D
+            completedSteps={completedSteps}
+            currentStep={currentStep}
+            stepsData={stepsData}
+            onFruitClick={handleFruitClick}
+            height={440}
+          />
+
+          {/* 分析を始める CTA */}
+          <div className="flex flex-col items-center gap-2">
+            <Button size="lg" onClick={handleStartAnalysis} className="min-w-[240px] gap-2">
+              <Sparkles className="size-4" />
+              {ctaLabel}
+            </Button>
+            {completedSteps > 0 && !allComplete && (
+              <p className="text-xs text-muted-foreground">
+                木の実をクリックすると過去の内容を編集できます
+              </p>
+            )}
+          </div>
+        </>
       ) : (
         <>
           <StepIndicator
@@ -154,7 +210,30 @@ export default function SelfAnalysisPage() {
             completedSteps={completedSteps}
             onStepClick={(step) => setCurrentStep(step)}
           />
-          {allComplete ? (
+
+          {/* 編集モード表示 */}
+          {editingStep != null && (
+            <div className="flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50/80 dark:border-amber-900 dark:bg-amber-950/30 px-3 py-2">
+              <div className="flex items-center gap-2 text-xs">
+                <Pencil className="size-3.5 text-amber-600 dark:text-amber-400" />
+                <span className="font-medium text-amber-800 dark:text-amber-200">
+                  Step {editingStep} を編集中
+                </span>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setEditingStep(null);
+                  setView("tree");
+                }}
+              >
+                木に戻る
+              </Button>
+            </div>
+          )}
+
+          {allComplete && editingStep == null ? (
             <div className="text-center py-12 space-y-4">
               <PartyPopper className="size-12 mx-auto text-primary" />
               <h2 className="text-xl font-bold">自己分析が完了しました</h2>
@@ -167,6 +246,7 @@ export default function SelfAnalysisPage() {
             </div>
           ) : (
             <WorkshopChat
+              key={currentStep}
               step={currentStep}
               initialMessages={currentMessages}
               previousStepsData={

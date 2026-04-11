@@ -10,6 +10,15 @@ export const CHART_COLORS = {
   quinary: "var(--chart-5)",
 } as const;
 
+/**
+ * 小論文 vs 面接を視覚的に明確に区別するための 2 系列カラー。
+ * chart-1 (teal 175°) と chart-5 (rose 30°) は hue がほぼ反対で識別しやすい。
+ */
+export const SCORE_TYPE_COLORS = {
+  essay: "var(--chart-1)",       // teal — 小論文
+  interview: "var(--chart-5)",   // rose/red — 面接
+} as const;
+
 export const SCORE_COLORS = {
   structure: "var(--chart-3)",   // purple/indigo系 — 構成
   logic: "var(--chart-2)",       // amber系 — 論理性

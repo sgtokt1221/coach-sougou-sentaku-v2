@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { ScoresTrendChart } from "@/components/growth/ScoresTrendChart";
 import { DetailedScoresTrendChart } from "@/components/growth/DetailedScoresTrendChart";
+import { SegmentControl } from "@/components/shared/SegmentControl";
 import { TrendingUp, AlertCircle, AlertTriangle, CheckCircle2, BarChart3, Sparkles, ArrowUpRight, ArrowDownRight, Mic } from "lucide-react";
 import Link from "next/link";
 import { WeaknessRecord, WeaknessReminderLevel, getWeaknessReminderLevel } from "@/lib/types/growth";
@@ -151,6 +152,9 @@ export default function GrowthPage() {
 
   const report = reportData ?? null;
 
+  // 総合スコア推移のタブ切替
+  const [trendTab, setTrendTab] = useState<"combined" | "essay" | "interview">("combined");
+
   // 添削 (小論文) のみの時系列 — 項目別チャート用に 5 項目を保持
   const trendData = useMemo(() => {
     const essays = essayData?.essays ?? [];
@@ -272,10 +276,23 @@ export default function GrowthPage() {
           総合スコア推移
         </h2>
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              小論文と面接の合計スコア(0〜50点)
-            </CardTitle>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                合計スコア(0〜50点)
+              </CardTitle>
+              <SegmentControl
+                value={trendTab}
+                onChange={(v) => setTrendTab(v as "combined" | "essay" | "interview")}
+                size="sm"
+                defaultAccent="blue"
+                options={[
+                  { id: "combined", label: "総合" },
+                  { id: "essay", label: "小論文", count: essaySeries.length },
+                  { id: "interview", label: "面接", count: interviewTrendData.length },
+                ]}
+              />
+            </div>
           </CardHeader>
           <CardContent>
             {loadingTrend || loadingInterviews ? (
@@ -284,7 +301,23 @@ export default function GrowthPage() {
               <p className="text-sm text-muted-foreground text-center py-8">まだデータがありません</p>
             ) : (
               <div className="h-[260px] lg:h-[300px]">
-                <ScoresTrendChart essayData={essaySeries} interviewData={interviewTrendData} />
+                {trendTab === "combined" && (
+                  <ScoresTrendChart essayData={essaySeries} interviewData={interviewTrendData} />
+                )}
+                {trendTab === "essay" && (
+                  essaySeries.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-16">小論文のデータがありません</p>
+                  ) : (
+                    <ScoresTrendChart essayData={essaySeries} />
+                  )
+                )}
+                {trendTab === "interview" && (
+                  interviewTrendData.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-16">面接のデータがありません</p>
+                  ) : (
+                    <ScoresTrendChart interviewData={interviewTrendData} />
+                  )
+                )}
               </div>
             )}
           </CardContent>

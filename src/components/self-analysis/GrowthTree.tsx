@@ -17,6 +17,8 @@ interface GrowthTreeProps {
   currentStep?: number;
   /** 各ステップに保存されたデータ。ホバー時のツールチップに表示する */
   stepsData?: Record<number, Record<string, unknown>>;
+  /** 果実クリック時のコールバック (完了済みの果実のみ発火) */
+  onFruitClick?: (step: number) => void;
   className?: string;
 }
 
@@ -34,7 +36,7 @@ const BG_CLOUDS = [
   { cx: 160, cy: 20, rx: 24, ry: 6 },
 ];
 
-export function GrowthTree({ completedSteps, currentStep, stepsData, className }: GrowthTreeProps) {
+export function GrowthTree({ completedSteps, currentStep, stepsData, onFruitClick, className }: GrowthTreeProps) {
   const allDone = completedSteps >= 7;
   const [hoveredStep, setHoveredStep] = useState<number | null>(null);
 
@@ -273,9 +275,16 @@ export function GrowthTree({ completedSteps, currentStep, stepsData, className }
                 onMouseLeave={() => setHoveredStep(null)}
                 onFocus={() => isDone && setHoveredStep(stepNum)}
                 onBlur={() => setHoveredStep(null)}
+                onClick={() => isDone && onFruitClick?.(stepNum)}
+                onKeyDown={(e) => {
+                  if (isDone && (e.key === "Enter" || e.key === " ")) {
+                    e.preventDefault();
+                    onFruitClick?.(stepNum);
+                  }
+                }}
                 tabIndex={isDone ? 0 : -1}
                 role={isDone ? "button" : undefined}
-                aria-label={isDone ? `${SELF_ANALYSIS_STEPS[i].title}の内容を表示` : undefined}
+                aria-label={isDone ? `${SELF_ANALYSIS_STEPS[i].title}を編集` : undefined}
               >
                 {/* フロートアニメ用のネストグループ */}
                 <g
