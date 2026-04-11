@@ -5,10 +5,21 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, PartyPopper } from "lucide-react";
+import dynamic from "next/dynamic";
 import { StepIndicator } from "@/components/self-analysis/StepIndicator";
 import { WorkshopChat } from "@/components/self-analysis/WorkshopChat";
-import { GrowthTree } from "@/components/self-analysis/GrowthTree";
 import { SegmentControl } from "@/components/shared/SegmentControl";
+
+// WebGL の木は SSR 不可・bundle が大きいので dynamic import
+const GrowthTree3D = dynamic(
+  () => import("@/components/self-analysis/GrowthTree3D").then((m) => m.GrowthTree3D),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[420px] w-full rounded-2xl border bg-gradient-to-b from-sky-50/60 via-emerald-50/40 to-amber-50/40 dark:from-slate-900/60 dark:via-emerald-950/40 dark:to-slate-900/60 animate-pulse" />
+    ),
+  }
+);
 import { useAuthSWR } from "@/lib/api/swr";
 import type { SelfAnalysis, ChatMessage, StepChatHistory } from "@/lib/types/self-analysis";
 
@@ -142,10 +153,11 @@ export default function SelfAnalysisPage() {
       />
 
       {view === "tree" ? (
-        <GrowthTree
+        <GrowthTree3D
           completedSteps={completedSteps}
           currentStep={currentStep}
           stepsData={stepsData}
+          height={420}
         />
       ) : (
         <>

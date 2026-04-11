@@ -17,6 +17,7 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { SELF_ANALYSIS_STEPS } from "@/lib/types/self-analysis";
+import { FRUIT_META, formatStepDataForTooltip } from "./tree-shared";
 
 interface GrowthTreeProps {
   completedSteps: number;
@@ -26,42 +27,13 @@ interface GrowthTreeProps {
   className?: string;
 }
 
-/**
- * 保存された stepData (任意の形の object) をツールチップに表示するため
- * 簡易的に整形する。キー = 文字列 / 配列 / ネストオブジェクト対応。
- */
-function formatStepDataForTooltip(data: Record<string, unknown> | undefined): { key: string; value: string }[] {
-  if (!data || typeof data !== "object") return [];
-  const entries: { key: string; value: string }[] = [];
-  for (const [k, v] of Object.entries(data)) {
-    if (v == null || v === "") continue;
-    let valueStr = "";
-    if (Array.isArray(v)) {
-      valueStr = v.filter(Boolean).map((x) => (typeof x === "string" ? x : JSON.stringify(x))).join("、");
-    } else if (typeof v === "object") {
-      valueStr = Object.values(v as Record<string, unknown>)
-        .filter((x) => x != null && x !== "")
-        .map((x) => (typeof x === "string" ? x : JSON.stringify(x)))
-        .join("、");
-    } else {
-      valueStr = String(v);
-    }
-    if (valueStr) entries.push({ key: k, value: valueStr });
-  }
-  return entries.slice(0, 5); // 最大 5 項目
-}
-
-// 7 つの果実の (x,y) を葉群の中に配置。SVG viewBox は 320x260。
-// 左右にばらけさせて、視覚的な木の生え方に合うように調整。
-const FRUIT_POSITIONS: { x: number; y: number; color: string; ring: string }[] = [
-  { x: 160, y: 70,  color: "#f472b6", ring: "#fbcfe8" }, // pink - 価値観
-  { x: 102, y: 92,  color: "#fb923c", ring: "#fed7aa" }, // orange - 強み
-  { x: 218, y: 96,  color: "#a78bfa", ring: "#ddd6fe" }, // violet - 弱み
-  { x: 76,  y: 140, color: "#60a5fa", ring: "#bfdbfe" }, // blue - 興味
-  { x: 244, y: 146, color: "#34d399", ring: "#a7f3d0" }, // emerald - ビジョン
-  { x: 132, y: 158, color: "#fbbf24", ring: "#fde68a" }, // amber - 大学接続
-  { x: 188, y: 170, color: "#f87171", ring: "#fecaca" }, // red - 統合
-];
+// SVG 版の座標 (tree-shared の x2d/y2d を再エクスポート用に展開)
+const FRUIT_POSITIONS = FRUIT_META.map((m) => ({
+  x: m.x2d,
+  y: m.y2d,
+  color: m.color,
+  ring: m.ring,
+}));
 
 export function GrowthTree({ completedSteps, currentStep, stepsData, className }: GrowthTreeProps) {
   const allDone = completedSteps >= 7;
