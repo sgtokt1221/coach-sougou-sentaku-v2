@@ -138,11 +138,11 @@ export default function ContinuousVoiceRecorder({
 
   // PTT: Start recording on press
   const startRecording = useCallback(() => {
-    if (!micReady || disabled || isSendingRef.current || aiSpeaking) return;
+    if (!micReady || disabled || isSendingRef.current) return;
     const stream = streamRef.current;
     if (!stream) return;
 
-    // Interrupt AI if speaking
+    // AI 発話中にボタンを押したら割り込んで発言開始
     if (aiSpeaking) {
       onInterruptRef.current?.();
     }
@@ -268,7 +268,7 @@ export default function ContinuousVoiceRecorder({
 
           <p className="text-xs text-muted-foreground">
             {isAiTurn
-              ? "面接官が話しています..."
+              ? "面接官が話しています(長押しで割り込み可)"
               : status === "processing"
                 ? "認識中..."
                 : isRecording
