@@ -199,6 +199,26 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // 自己分析データを取得 (面接プロンプトに受験生の価値観・強みを反映)
+  let selfAnalysis: import("@/lib/ai/prompts/interview-realtime").SelfAnalysisContext | undefined;
+  try {
+    const { adminDb } = await import("@/lib/firebase/admin");
+    if (adminDb) {
+      const saDoc = await adminDb.doc(`selfAnalysis/${uid}`).get();
+      if (saDoc.exists) {
+        const sa = saDoc.data()!;
+        selfAnalysis = {
+          values: sa.values?.coreValues,
+          strengths: sa.strengths?.strengths,
+          vision: sa.vision?.longTermVision,
+          selfStatement: sa.identity?.selfStatement,
+        };
+      }
+    }
+  } catch (err) {
+    console.warn("[realtime-session] failed to fetch selfAnalysis", err);
+  }
+
   // 全モード共通: 7 日 cooldown のレートリミット確認
   let lastRealtimeAt: Date | null = null;
   try {
@@ -296,6 +316,7 @@ export async function POST(request: NextRequest) {
     weaknessList,
     interviewTendency,
     presentationContent,
+    selfAnalysis,
   );
   const voice = "alloy"; // 個人モードはニュートラルな alloy
   const issueResult = await issueEphemeralToken(apiKey, { instructions, voice, transcriptionPrompt });

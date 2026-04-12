@@ -15,6 +15,13 @@ import type { InterviewTendency } from "@/lib/types/university";
  * 個人面接 / プレゼンテーション / 口頭試問用の instructions を生成。
  * 単一の面接官キャラクターとしてユーザーと 1 対 1 で対話する。
  */
+export interface SelfAnalysisContext {
+  values?: string[];
+  strengths?: string[];
+  vision?: string;
+  selfStatement?: string;
+}
+
 export function buildRealtimeIndividualInstructions(
   mode: InterviewMode,
   universityName: string,
@@ -23,6 +30,7 @@ export function buildRealtimeIndividualInstructions(
   weaknessList: string,
   interviewTendency?: InterviewTendency,
   presentationContent?: string,
+  selfAnalysis?: SelfAnalysisContext,
 ): string {
   const modeIntro = (() => {
     switch (mode) {
@@ -130,6 +138,7 @@ ${phaseGuide}
 ## 受験生の弱点 (重点的に確認すべき領域)
 ${weaknessList}
 
+${selfAnalysis ? buildSelfAnalysisSection(selfAnalysis) : ""}
 ## 発話ルール (必ず守る)
 - **日本語の敬語で話す** (「です・ます調」を徹底)
 - **1 発話 = 1 つの質問** に限定する。複数の質問を同時に投げない
@@ -246,4 +255,25 @@ ${weaknessList}
 - 相手の発言内容を自分の言葉で要約してから補強・反論する (アクティブリスニング)
 - ユーザー (受験生Dさん) の発言に対しても必ず同じ姿勢で臨む。相手を否定から入らないこと
 `;
+}
+
+function buildSelfAnalysisSection(sa: SelfAnalysisContext): string {
+  const parts: string[] = [
+    "## 受験生の自己分析結果 (面接で深掘りすべき素材)",
+    "以下は受験生が事前の自己分析で明らかにした内容です。この情報を踏まえて、受験生の人物像をより深く理解した上で質問を組み立ててください。表面的な確認ではなく、自己分析の内容と AP の整合性を鋭く掘り下げてください。",
+  ];
+  if (sa.values?.length) {
+    parts.push(`- 大切にしている価値観: ${sa.values.join("、")}`);
+  }
+  if (sa.strengths?.length) {
+    parts.push(`- 強み: ${sa.strengths.join("、")}`);
+  }
+  if (sa.vision) {
+    parts.push(`- 将来の理想像: ${sa.vision}`);
+  }
+  if (sa.selfStatement) {
+    parts.push(`- 自己紹介文: ${sa.selfStatement}`);
+  }
+  parts.push("");
+  return parts.join("\n");
 }
