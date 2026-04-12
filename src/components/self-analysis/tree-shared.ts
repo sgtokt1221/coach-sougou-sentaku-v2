@@ -34,9 +34,38 @@ export const FRUIT_META: FruitMeta[] = [
   { x2d: 188, y2d: 170, pos3d: [1.05, 2.0, 1.5], color: "#f87171", ring: "#fecaca" },
 ];
 
+/** 英語キー → 日本語ラベルの辞書 */
+const KEY_LABELS: Record<string, string> = {
+  // Step 1: 価値観
+  coreValues: "大切にしている価値観",
+  valueOrigins: "価値観の原体験",
+  priorityOrder: "優先順位",
+  // Step 2: 強み
+  strengths: "強み",
+  evidences: "根拠となる経験",
+  uniqueCombo: "自分だけの組み合わせ",
+  // Step 3: 弱みと成長
+  weaknesses: "弱み",
+  growthStories: "成長エピソード",
+  overcomeLessons: "克服から学んだこと",
+  // Step 4: 興味関心
+  fields: "興味のある分野",
+  reasons: "興味を持ったきっかけ",
+  deepDiveTopics: "深掘りしたいテーマ",
+  // Step 5: 将来ビジョン
+  shortTermGoal: "短期目標",
+  longTermVision: "将来の理想像",
+  socialContribution: "社会への貢献",
+  whyThisField: "この分野を選ぶ理由",
+  // Step 6: 大学との接続
+  selfStatement: "自己紹介文",
+  uniqueNarrative: "自分だけのストーリー",
+  apConnection: "APとのつながり",
+};
+
 /**
- * 保存された stepData (任意の形の object) をツールチップ用に整形。
- * キー = 文字列 / 配列 / ネストオブジェクト対応。
+ * 保存された stepData をツールチップ用に整形。
+ * 英語キーを日本語ラベルに変換し、値を読みやすくまとめる。
  */
 export function formatStepDataForTooltip(
   data: Record<string, unknown> | undefined,
@@ -45,6 +74,7 @@ export function formatStepDataForTooltip(
   const entries: { key: string; value: string }[] = [];
   for (const [k, v] of Object.entries(data)) {
     if (v == null || v === "") continue;
+    const label = KEY_LABELS[k] ?? k;
     let valueStr = "";
     if (Array.isArray(v)) {
       valueStr = v
@@ -59,7 +89,7 @@ export function formatStepDataForTooltip(
     } else {
       valueStr = String(v);
     }
-    if (valueStr) entries.push({ key: k, value: valueStr });
+    if (valueStr) entries.push({ key: label, value: valueStr });
   }
   return entries.slice(0, 5);
 }
