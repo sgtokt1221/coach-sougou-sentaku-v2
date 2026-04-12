@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Mic, Users, BookOpen, ChevronRight, MessageSquare, GraduationCap, Settings, Upload, FileText, Loader2, X, Plus, History } from "lucide-react";
+import { FluidLoader } from "@/components/shared/FluidLoader";
 import { toast } from "sonner";
 import { authFetch } from "@/lib/api/client";
 import { InterviewHistory } from "@/components/interview/InterviewHistory";
@@ -191,26 +192,13 @@ export default function InterviewNewPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-5 lg:px-6 lg:py-8 space-y-4 lg:space-y-6">
       {/* 面接開始ローディングオーバーレイ */}
-      {isLoading && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-6 bg-background/90 backdrop-blur-sm animate-in fade-in">
-          <div className="relative">
-            <div className="absolute inset-0 rounded-full bg-primary/20 blur-2xl animate-pulse" />
-            <Loader2 className="size-14 text-primary animate-spin relative" />
-          </div>
-          <div className="text-center space-y-2">
-            <p className="text-base font-semibold">面接を準備中</p>
-            <p
-              key={loadingMessageIdx}
-              className="text-sm text-muted-foreground animate-in fade-in slide-in-from-bottom-1 duration-500"
-            >
-              {loadingMessages[loadingMessageIdx % loadingMessages.length]}
-            </p>
-          </div>
-          <p className="text-xs text-muted-foreground/70">
-            通常 3〜5 秒かかります。しばらくお待ちください
-          </p>
-        </div>
-      )}
+      <FluidLoader
+        visible={isLoading}
+        title="面接を準備中"
+        stages={loadingMessages}
+        stageInterval={1800}
+        subtitle="通常 3〜5 秒かかります"
+      />
 
       <div className="flex items-center gap-2">
         <Button variant="ghost" size="sm" onClick={() => router.back()}>

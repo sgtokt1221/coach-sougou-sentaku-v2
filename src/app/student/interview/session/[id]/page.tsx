@@ -18,6 +18,7 @@ import type { InterviewMessage, InterviewMode, InterviewInputMode, VoiceAnalysis
 import type { WeaknessRecord } from "@/lib/types/growth";
 import { useRealtimeInterview } from "@/hooks/useRealtimeInterview";
 import { INTERVIEW_MODE_LABELS } from "@/lib/types/interview";
+import { FluidLoader } from "@/components/shared/FluidLoader";
 import { refineWithTranscription } from "@/components/interview/VoiceAnalyzer";
 import VideoAnalyzer from "@/components/interview/VideoAnalyzer";
 import CameraPreview from "@/components/interview/CameraPreview";
@@ -398,6 +399,21 @@ export default function InterviewSessionPage() {
 
   return (
     <div className="flex flex-col h-[calc(100dvh-3.5rem-76px)] lg:h-[calc(100dvh-3.5rem)] max-w-2xl lg:max-w-3xl mx-auto">
+      {/* 採点中ローディング */}
+      <FluidLoader
+        visible={isEnding}
+        title="AI が採点中"
+        stages={[
+          "会話内容を分析しています...",
+          "論理性と構成力を評価しています...",
+          "AP との合致度を判定しています...",
+          "改善ポイントを整理しています...",
+          "最終スコアを算出しています...",
+        ]}
+        stageInterval={2200}
+        subtitle="通常 10〜20 秒かかります"
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b bg-background shrink-0">
         <div>
