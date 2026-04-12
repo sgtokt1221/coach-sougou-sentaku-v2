@@ -30,7 +30,8 @@ import {
 import { useVoiceChat } from "@/hooks/useVoiceChat";
 import { buildMatchingVoiceInstructions } from "@/lib/ai/prompts/voice-chat-realtime";
 import { EmptyState } from "@/components/shared/EmptyState";
-import type { MatchResult, MatchingResponse } from "@/lib/types/matching";
+import type { MatchResult, MatchingResponse, FitRecommendation } from "@/lib/types/matching";
+import { FluidLoader } from "@/components/shared/FluidLoader";
 import { SuggestPanel, ResultSkeleton } from "@/components/shared/SuggestPanel";
 import { useAuth } from "@/contexts/AuthContext";
 import { authFetch } from "@/lib/api/client";
@@ -63,12 +64,23 @@ function recommendationVariant(r: string): "default" | "secondary" | "destructiv
   return "destructive";
 }
 
+function fitBadgeStyle(fit?: FitRecommendation): string {
+  switch (fit) {
+    case "ぴったり校": return "bg-emerald-100 text-emerald-800 border-emerald-300";
+    case "おすすめ校": return "bg-blue-100 text-blue-800 border-blue-300";
+    case "検討校": return "bg-amber-100 text-amber-800 border-amber-300";
+    case "要件不足": return "bg-rose-100 text-rose-800 border-rose-300";
+    default: return "bg-muted text-muted-foreground border-border";
+  }
+}
+
 function ResultCard({ result }: { result: MatchResult }) {
   const router = useRouter();
   const [expanded, setExpanded] = useState(false);
+  const hasFit = result.apFitScore != null;
   return (
     <Card
-      className={`cursor-pointer hover:shadow-md transition-shadow border overflow-visible ${scoreBg(result.matchScore)}`}
+      className={`cursor-pointer hover:shadow-md transition-shadow border overflow-visible ${hasFit ? scoreBg(result.apFitScore!) : scoreBg(result.matchScore)}`}
       onClick={() => setExpanded((prev) => !prev)}
     >
       <CardContent className="p-4">
@@ -79,13 +91,35 @@ function ResultCard({ result }: { result: MatchResult }) {
               <span className="text-muted-foreground text-sm">{result.facultyName}</span>
             </div>
             <div className="flex items-center gap-2 mt-2 flex-wrap">
-              <Badge variant={recommendationVariant(result.recommendation)}>
-                {result.recommendation}
-              </Badge>
-              <span className={`text-sm font-bold ${scoreColor(result.matchScore)}`}>
-                マッチ度 {result.matchScore}%
-              </span>
+              {result.fitRecommendation ? (
+                <Badge variant="outline" className={fitBadgeStyle(result.fitRecommendation)}>
+                  {result.fitRecommendation}
+                </Badge>
+              ) : (
+                <Badge variant={recommendationVariant(result.recommendation)}>
+                  {result.recommendation}
+                </Badge>
+              )}
+              {hasFit ? (
+                <>
+                  <span className={`text-sm font-bold ${scoreColor(result.apFitScore!)}`}>
+                    適合度 {result.apFitScore}%
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    (出願要件 {result.matchScore}%)
+                  </span>
+                </>
+              ) : (
+                <span className={`text-sm font-bold ${scoreColor(result.matchScore)}`}>
+                  マッチ度 {result.matchScore}%
+                </span>
+              )}
             </div>
+            {result.apFitReason && (
+              <p className="text-xs text-primary/80 mt-1.5 leading-snug">
+                {result.apFitReason}
+              </p>
+            )}
             <p className={`text-xs text-muted-foreground mt-2 ${expanded ? "" : "line-clamp-2"}`}>
               {result.admissionPolicy}
             </p>
@@ -188,7 +222,14 @@ export default function UniversitiesPage() {
       </div>
 
       {mode === "ai" ? (
-        <MatchingChat profile={{ gpa: gpa ? parseFloat(gpa) : undefined, englishCerts: certType ? [{ type: certType, score: certScore || undefined }] : undefined }} />
+        <MatchingChat
+          profile={{ gpa: gpa ? parseFloat(gpa) : undefined, englishCerts: certType ? [{ type: certType, score: certScore || undefined }] : undefined }}
+          onFitComputed={(fitResults) => {
+            setResults(fitResults);
+            setSummary({ total: fitResults.length, matched: fitResults.filter((r) => r.matchScore >= 60).length });
+            setMode("match");
+          }}
+        />
       ) : mode === "suggest" ? (
         <SuggestPanel />
       ) : (
@@ -300,15 +341,52 @@ interface Suggestion {
   reason: string;
 }
 
-function MatchingChat({ profile }: { profile: { gpa?: number; englishCerts?: { type: string; score?: string }[] } }) {
+function MatchingChat({ profile, onFitComputed }: { profile: { gpa?: number; englishCerts?: { type: string; score?: string }[] }; onFitComputed?: (results: MatchResult[]) => void }) {
   const router = useRouter();
   const { user } = useAuth();
   const [messages, setMessages] = useState<Array<{ role: "user" | "assistant"; content: string; suggestions?: Suggestion[] }>>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [autoStarted, setAutoStarted] = useState(false);
+  const [computing, setComputing] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const voiceChat = useVoiceChat();
+
+  // チャットの会話が十分 (3 ターン以上) になったら診断ボタンを表示
+  const userMessageCount = messages.filter((m) => m.role === "user").length;
+  const canCompute = userMessageCount >= 2 && !loading && !computing;
+
+  async function handleComputeFit() {
+    setComputing(true);
+    try {
+      // 1. 希望サマリー抽出
+      const extractRes = await authFetch("/api/matching/extract-preferences", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ history: messages.map((m) => ({ role: m.role, content: m.content })) }),
+      });
+      if (!extractRes.ok) throw new Error("希望の抽出に失敗しました");
+      const { preferences } = await extractRes.json();
+
+      // 2. AI 適合度一括計算
+      const fitRes = await authFetch("/api/matching/compute-fit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ preferences }),
+      });
+      if (!fitRes.ok) throw new Error("適合度の計算に失敗しました");
+      const data = await fitRes.json();
+
+      onFitComputed?.(data.results ?? []);
+    } catch (err) {
+      setMessages((prev) => [...prev, {
+        role: "assistant",
+        content: `適合度の計算中にエラーが発生しました: ${err instanceof Error ? err.message : "不明なエラー"}`,
+      }]);
+    } finally {
+      setComputing(false);
+    }
+  }
 
   const toggleVoice = useCallback(async () => {
     if (voiceChat.isActive) {
@@ -453,7 +531,32 @@ function MatchingChat({ profile }: { profile: { gpa?: number; englishCerts?: { t
         )}
       </div>
 
-      <div className="border-t pt-3">
+      {/* 適合度計算ローディング */}
+      <FluidLoader
+        visible={computing}
+        title="AI が適合度を診断中"
+        stages={[
+          "会話内容から希望を整理しています...",
+          "自己分析データを照合しています...",
+          "各大学の AP と比較しています...",
+          "適合度スコアを算出しています...",
+        ]}
+        stageInterval={3000}
+        subtitle="通常 15〜30 秒かかります"
+      />
+
+      <div className="border-t pt-3 space-y-2">
+        {canCompute && (
+          <Button
+            onClick={handleComputeFit}
+            variant="default"
+            className="w-full gap-2"
+            disabled={computing}
+          >
+            <Sparkles className="size-4" />
+            この会話をもとに適合度を診断する
+          </Button>
+        )}
         <form
           onSubmit={(e) => { e.preventDefault(); handleSend(); }}
           className="flex gap-2"
@@ -462,10 +565,10 @@ function MatchingChat({ profile }: { profile: { gpa?: number; englishCerts?: { t
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="興味のある分野や将来の目標を入力..."
-            disabled={loading}
+            disabled={loading || computing}
             className="flex-1"
           />
-          <Button type="submit" size="icon" disabled={loading || !input.trim()}>
+          <Button type="submit" size="icon" disabled={loading || computing || !input.trim()}>
             <Send className="size-4" />
           </Button>
         </form>
