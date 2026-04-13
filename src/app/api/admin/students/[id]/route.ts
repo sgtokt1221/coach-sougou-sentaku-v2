@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
+import { MOCK_UNIVERSITIES } from "@/lib/matching/mockData";
 import type { StudentDetail } from "@/lib/types/admin";
 
 export async function GET(
@@ -128,6 +129,19 @@ export async function GET(
       ? dates.sort().reverse()[0]
       : null;
 
+    // 志望校のcompound IDを日本語名に解決
+    const targetUnis = userData.targetUniversities ?? [];
+    const resolvedUniversities = targetUnis.map((compoundId: string) => {
+      const [universityId, facultyId] = compoundId.split(":");
+      const uni = MOCK_UNIVERSITIES.find((u) => u.id === universityId);
+      const faculty = uni?.faculties?.find((f) => f.id === facultyId);
+      return {
+        compoundId,
+        universityName: uni?.name ?? universityId,
+        facultyName: faculty?.name ?? facultyId ?? "",
+      };
+    });
+
     const detail: StudentDetail = {
       profile: {
         uid: id,
@@ -137,7 +151,8 @@ export async function GET(
         grade: userData.grade,
         gpa: userData.gpa ?? undefined,
         englishCerts: userData.englishCerts ?? undefined,
-        targetUniversities: userData.targetUniversities ?? [],
+        targetUniversities: targetUnis,
+        resolvedUniversities,
       },
       weaknesses,
       essays,

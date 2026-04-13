@@ -29,6 +29,7 @@ export interface StudentDetail {
     gpa?: number;
     englishCerts?: EnglishCert[];
     targetUniversities: string[];
+    resolvedUniversities?: { compoundId: string; universityName: string; facultyName: string }[];
   };
   weaknesses: WeaknessRecord[];
   essays: EssayListItem[];

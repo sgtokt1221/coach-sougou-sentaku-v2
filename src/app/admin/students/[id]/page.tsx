@@ -120,7 +120,7 @@ export default function AdminStudentDetailPage() {
   const [detail, setDetail] = useState<StudentDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
-  const [resolvedUnis, setResolvedUnis] = useState<{ universityName: string; facultyName: string }[]>([]);
+  // resolvedUniversitiesはAPIから直接返される
 
   // Essay detail state
   const [essayDetailOpen, setEssayDetailOpen] = useState(false);
@@ -182,15 +182,6 @@ export default function AdminStudentDetailPage() {
     if (id) fetchDetail();
   }, [id]);
 
-  // Resolve compound IDs to display names
-  useEffect(() => {
-    const ids = detail?.profile.targetUniversities ?? [];
-    if (ids.length === 0) { setResolvedUnis([]); return; }
-    fetch(`/api/universities/resolve?ids=${ids.join(",")}`)
-      .then((r) => r.json())
-      .then((d) => setResolvedUnis(d.resolved ?? []))
-      .catch(() => setResolvedUnis([]));
-  }, [detail?.profile.targetUniversities]);
 
   async function handleUnlockRealtime() {
     if (!detail) return;
@@ -405,8 +396,8 @@ export default function AdminStudentDetailPage() {
             <div className="flex items-start gap-2 text-sm">
               <TrendingUp className="mt-0.5 size-4 text-muted-foreground" />
               <div className="flex flex-wrap gap-1">
-                {resolvedUnis.length > 0 ? (
-                  resolvedUnis.map((u, i) => (
+                {(profile.resolvedUniversities ?? []).length > 0 ? (
+                  profile.resolvedUniversities!.map((u, i) => (
                     <Badge key={i} variant="outline" className="text-xs">
                       {u.universityName} {u.facultyName}
                     </Badge>
