@@ -3,21 +3,21 @@
 export const TUTORIAL_STEPS = [
   { key: "self-analysis", title: "自己分析", icon: "Lightbulb" },
   { key: "university-match", title: "志望校マッチング", icon: "GraduationCap" },
+  { key: "essay-themes", title: "テーマ・過去問", icon: "BookOpen" },
   { key: "essay", title: "小論文添削", icon: "FileText" },
+  { key: "documents", title: "志望理由書", icon: "FileEdit" },
+  { key: "interview-drill", title: "面接ドリル", icon: "Zap" },
   { key: "interview", title: "模擬面接", icon: "MessageCircle" },
 ] as const;
 
 export const SELF_ANALYSIS_MOCK = {
   completedSteps: 3,
-  steps: [
-    { name: "価値観", color: "#f97316", result: "社会貢献、チームワーク、誠実さ" },
-    { name: "強み", color: "#eab308", result: "論理的思考、リーダーシップ、粘り強さ" },
-    { name: "弱み", color: "#22c55e", result: "プレゼン力、時間管理" },
-    { name: "興味", color: "#3b82f6", result: "" },
-    { name: "ビジョン", color: "#8b5cf6", result: "" },
-    { name: "アイデンティティ", color: "#ec4899", result: "" },
-    { name: "統合", color: "#14b8a6", result: "" },
-  ],
+  currentStep: 4,
+  stepsData: {
+    1: { values: "社会貢献、チームワーク、誠実さ" },
+    2: { strengths: "論理的思考、リーダーシップ、粘り強さ" },
+    3: { weaknesses: "プレゼン力、時間管理" },
+  } as Record<number, Record<string, unknown>>,
   messages: [
     { role: "ai" as const, content: "あなたが大切にしている価値観について教えてください。日常生活や部活動で「これだけは譲れない」と感じることはありますか？" },
     { role: "user" as const, content: "人の役に立つことと、チームで協力して何かを成し遂げることを大切にしています。文化祭の実行委員長を務めた経験が大きいです。" },
@@ -57,6 +57,38 @@ export const UNIVERSITY_MATCH_MOCK = {
   ],
 };
 
+export const ESSAY_THEMES_MOCK = {
+  themes: [
+    {
+      title: "AIと雇用: 自動化時代の労働市場",
+      difficulty: 2,
+      difficultyLabel: "標準",
+      field: "経済学",
+      wordLimit: 800,
+      relatedAP: ["分析力", "問題解決", "創意工夫"],
+      isRecommended: true,
+    },
+    {
+      title: "持続可能な都市づくりと市民参加",
+      difficulty: 1,
+      difficultyLabel: "基礎",
+      field: "社会学",
+      wordLimit: 600,
+      relatedAP: ["社会貢献", "協調性"],
+      isRecommended: false,
+    },
+  ],
+  pastQuestion: {
+    universityName: "慶應義塾大学",
+    facultyName: "総合政策学部",
+    year: 2025,
+    title: "地域社会における若者の役割について",
+    field: "総合政策",
+    wordLimit: 800,
+    timeLimit: 120,
+  },
+};
+
 export const ESSAY_MOCK = {
   text: "私が貴学の総合政策学部を志望する理由は、地域コミュニティの課題解決に取り組みたいからです。高校時代、文化祭実行委員長として地域住民との連携イベントを企画し、来場者数を前年比150%に増やしました。この経験から、多様なステークホルダーとの対話を通じて社会課題に取り組む力を身につけたいと考えています。",
   scores: [
@@ -75,6 +107,53 @@ export const ESSAY_MOCK = {
     "入学後の具体的な活動計画を追加する",
     "なぜ「この大学」でなければならないかを深掘りする",
   ],
+};
+
+export const DOCUMENTS_MOCK = {
+  universityName: "慶應義塾大学",
+  facultyName: "総合政策学部",
+  completionRate: 75,
+  documents: [
+    {
+      title: "志望理由書",
+      status: "reviewed" as const,
+      statusLabel: "添削済み",
+      wordCount: 1250,
+      targetWordCount: 1600,
+      daysLeft: 14,
+    },
+    {
+      title: "活動報告書",
+      status: "draft" as const,
+      statusLabel: "下書き",
+      wordCount: 400,
+      targetWordCount: 1000,
+      daysLeft: 14,
+    },
+  ],
+  feedback: {
+    scores: [
+      { label: "AP合致度", score: 7, max: 10 },
+      { label: "構成", score: 8, max: 10 },
+      { label: "独自性", score: 6, max: 10 },
+    ],
+    overall: "志望理由が明確で、大学の教育方針との関連性がよく示されています。具体的な研究例を追加するとさらに説得力が増します。",
+  },
+};
+
+export const INTERVIEW_DRILL_MOCK = {
+  categories: [
+    { name: "志望理由", color: "bg-blue-100 text-blue-700" },
+    { name: "自己PR", color: "bg-green-100 text-green-700" },
+    { name: "学問関心", color: "bg-purple-100 text-purple-700" },
+    { name: "将来ビジョン", color: "bg-orange-100 text-orange-700" },
+    { name: "時事問題", color: "bg-red-100 text-red-700" },
+  ],
+  question: "なぜこの大学・学部を志望されたのですか？具体的なきっかけがあれば教えてください。",
+  score: 4,
+  maxScore: 5,
+  feedback: "志望理由が明確で具体的です。PBL型授業への言及が良いポイントです。",
+  betterAnswer: "貴学の○○ゼミで△△教授のもと、地域課題解決の実践的な学びに取り組みたいと考えています。高校時代の文化祭での経験が原点です。",
 };
 
 export const INTERVIEW_MOCK = {

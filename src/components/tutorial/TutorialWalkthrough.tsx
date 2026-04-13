@@ -11,11 +11,14 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Lightbulb, GraduationCap, FileText, MessageCircle, ArrowRight, Rocket } from "lucide-react";
+import { Lightbulb, GraduationCap, FileText, MessageCircle, ArrowRight, Rocket, BookOpen, FileEdit, Zap } from "lucide-react";
 import { TutorialProgress } from "./TutorialProgress";
 import { SelfAnalysisPreview } from "./steps/SelfAnalysisPreview";
 import { UniversityMatchPreview } from "./steps/UniversityMatchPreview";
+import { EssayThemesPreview } from "./steps/EssayThemesPreview";
 import { EssayCorrectionPreview } from "./steps/EssayCorrectionPreview";
+import { DocumentsPreview } from "./steps/DocumentsPreview";
+import { InterviewDrillPreview } from "./steps/InterviewDrillPreview";
 import { InterviewPreview } from "./steps/InterviewPreview";
 
 interface TutorialWalkthroughProps {
@@ -41,12 +44,36 @@ const STEPS = [
     Preview: UniversityMatchPreview,
   },
   {
+    icon: BookOpen,
+    iconColor: "text-orange-500",
+    iconBg: "bg-orange-50",
+    title: "テーマ・過去問",
+    description: "分野別のテーマや大学別の過去問で小論文の練習ができます。難易度やAPとの関連も表示されます。",
+    Preview: EssayThemesPreview,
+  },
+  {
     icon: FileText,
     iconColor: "text-blue-500",
     iconBg: "bg-blue-50",
     title: "小論文添削",
     description: "小論文の写真を撮るかテキストを入力するだけ。AIが大学のAPに沿った添削フィードバックを返します。",
     Preview: EssayCorrectionPreview,
+  },
+  {
+    icon: FileEdit,
+    iconColor: "text-teal-500",
+    iconBg: "bg-teal-50",
+    title: "志望理由書",
+    description: "大学別の出願書類を管理。AIが志望理由書をAP・構成・独自性の3軸で添削してくれます。",
+    Preview: DocumentsPreview,
+  },
+  {
+    icon: Zap,
+    iconColor: "text-yellow-500",
+    iconBg: "bg-yellow-50",
+    title: "面接ドリル",
+    description: "カテゴリ別の頻出質問で面接の基礎力を鍛えます。即座にスコアとフィードバック、模範回答が表示されます。",
+    Preview: InterviewDrillPreview,
   },
   {
     icon: MessageCircle,
