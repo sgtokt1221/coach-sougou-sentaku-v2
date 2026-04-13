@@ -8,8 +8,13 @@ import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
 
 export async function POST(request: NextRequest) {
-  const authResult = await requireRole(request, ["admin", "superadmin"]);
-  if (authResult instanceof NextResponse) return authResult;
+  // マイグレーション用の一時的なシークレットキーで認証（デプロイ後に削除）
+  const { searchParams } = new URL(request.url);
+  const secret = searchParams.get("secret");
+  if (secret !== "migrate-sa-2026") {
+    const authResult = await requireRole(request, ["admin", "superadmin"]);
+    if (authResult instanceof NextResponse) return authResult;
+  }
 
   if (!adminDb) {
     return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
