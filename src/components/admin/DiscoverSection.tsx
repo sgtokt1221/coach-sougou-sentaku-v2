@@ -28,6 +28,7 @@ interface MatchingResponse {
 
 export function DiscoverSection({ studentId }: DiscoverSectionProps) {
   const [selfAnalysis, setSelfAnalysis] = useState<SelfAnalysis | null>(null);
+  const [saError, setSaError] = useState<string | null>(null);
   const [matching, setMatching] = useState<MatchingResponse | null>(null);
   const [loadingSa, setLoadingSa] = useState(true);
   const [loadingMatch, setLoadingMatch] = useState(true);
@@ -37,12 +38,16 @@ export function DiscoverSection({ studentId }: DiscoverSectionProps) {
     (async () => {
       try {
         const res = await authFetch(`/api/admin/students/${studentId}/self-analysis`);
-        if (!cancelled && res.ok) {
+        if (cancelled) return;
+        if (res.ok) {
           const data = await res.json();
           setSelfAnalysis(data);
+        } else {
+          const body = await res.text().catch(() => "");
+          setSaError(`HTTP ${res.status}: ${body}`);
         }
       } catch (err) {
-        console.warn("[DiscoverSection] self-analysis fetch failed", err);
+        if (!cancelled) setSaError(err instanceof Error ? err.message : "取得失敗");
       } finally {
         if (!cancelled) setLoadingSa(false);
       }
@@ -110,8 +115,12 @@ export function DiscoverSection({ studentId }: DiscoverSectionProps) {
             <GrowthTree
               completedSteps={saCompletedSteps}
               stepsData={saStepsData}
-              // 管理者ビューは読み取り専用 (onFruitClick を渡さない → クリックしてもコールバックなし)
             />
+          ) : saError ? (
+            <div className="py-8 text-center">
+              <p className="text-sm text-muted-foreground">自己分析データの取得に失敗しました</p>
+              <p className="text-xs text-destructive mt-1">{saError}</p>
+            </div>
           ) : (
             <p className="text-sm text-muted-foreground py-8 text-center">
               まだ自己分析を始めていません

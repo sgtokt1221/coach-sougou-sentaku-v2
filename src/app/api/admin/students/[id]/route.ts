@@ -115,6 +115,19 @@ export async function GET(
       .filter((i): i is { date: string; total: number } => i.total != null)
       .reverse();
 
+    // 最終活動日を計算（添削・面接の最新日時）
+    const dates: string[] = [];
+    if (essays.length > 0) dates.push(essays[0].submittedAt);
+    if (interviewsSnap.docs.length > 0) {
+      const latestInterview = interviewsSnap.docs[0].data();
+      if (latestInterview.startedAt) {
+        dates.push(latestInterview.startedAt.toDate().toISOString());
+      }
+    }
+    const lastActivityAt = dates.length > 0
+      ? dates.sort().reverse()[0]
+      : null;
+
     const detail: StudentDetail = {
       profile: {
         uid: id,
@@ -130,6 +143,7 @@ export async function GET(
       essays,
       essayScoreTrend,
       interviewScoreTrend,
+      lastActivityAt,
     };
 
     return NextResponse.json(detail);

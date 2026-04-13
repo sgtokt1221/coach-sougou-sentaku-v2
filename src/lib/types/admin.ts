@@ -36,6 +36,7 @@ export interface StudentDetail {
   scoreTrend?: ScoreTrendPoint[];
   essayScoreTrend?: { date: string; total: number }[];
   interviewScoreTrend?: { date: string; total: number }[];
+  lastActivityAt?: string | null;
 }
 
 export interface EssayListItem {

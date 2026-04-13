@@ -286,7 +286,7 @@ export default function AdminStudentDetailPage() {
     );
   }
 
-  const { profile, weaknesses, essays, essayScoreTrend, interviewScoreTrend } = detail;
+  const { profile, weaknesses, essays, essayScoreTrend, interviewScoreTrend, lastActivityAt } = detail;
 
   const essayChartData = (essayScoreTrend ?? []).map((p) => ({
     ...p,
@@ -305,10 +305,45 @@ export default function AdminStudentDetailPage() {
           <ArrowLeft className="size-4 mr-1" />
           戻る
         </Button>
-        <div>
-          <h1 className="text-2xl font-bold">{profile.displayName}</h1>
-          <p className="text-sm text-muted-foreground">生徒詳細</p>
+        <div className="flex items-center gap-3">
+          <div>
+            <h1 className="text-2xl font-bold">{profile.displayName}</h1>
+            <p className="text-sm text-muted-foreground">生徒詳細</p>
+          </div>
+          {(() => {
+            if (!lastActivityAt) return <Badge variant="secondary">活動なし</Badge>;
+            const days = Math.floor((Date.now() - new Date(lastActivityAt).getTime()) / 86400000);
+            if (days <= 7) return <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300">アクティブ</Badge>;
+            if (days <= 14) return <Badge className="bg-amber-100 text-amber-800 border-amber-300">やや停滞</Badge>;
+            return <Badge className="bg-rose-100 text-rose-800 border-rose-300">非アクティブ（{days}日）</Badge>;
+          })()}
         </div>
+      </div>
+
+      {/* Overview Stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <Card className="p-3">
+          <p className="text-2xl font-bold">{essays.length}</p>
+          <p className="text-xs text-muted-foreground">添削回数</p>
+        </Card>
+        <Card className="p-3">
+          <p className={`text-2xl font-bold ${essays.length > 0 && essays[0].scores ? scoreColor(essays[0].scores.total) : ""}`}>
+            {essays.length > 0 && essays[0].scores ? essays[0].scores.total : "-"}
+          </p>
+          <p className="text-xs text-muted-foreground">最新スコア /50</p>
+        </Card>
+        <Card className="p-3">
+          <p className="text-2xl font-bold">{weaknesses.filter((w) => !w.resolved).length}</p>
+          <p className="text-xs text-muted-foreground">未解決の弱点</p>
+        </Card>
+        <Card className="p-3">
+          <p className="text-xs text-muted-foreground">最終活動</p>
+          <p className="text-sm font-medium">
+            {lastActivityAt
+              ? new Date(lastActivityAt).toLocaleDateString("ja-JP")
+              : "なし"}
+          </p>
+        </Card>
       </div>
 
       {/* Profile Card */}

@@ -14,19 +14,6 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Mic, ChevronRight, MessageSquare, ThumbsUp, Lightbulb } from "lucide-react";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts";
-import { CHART_COLORS, SCORE_COLORS, CHART_ANIMATION, GRID_STYLE } from "@/components/charts/theme";
-import { CustomTooltip } from "@/components/charts/CustomTooltip";
-import { CustomDot, CustomActiveDot } from "@/components/charts/CustomDot";
 import { useAuthSWR } from "@/lib/api/swr";
 import { authFetch } from "@/lib/api/client";
 import type { InterviewMode, InterviewMessage, InterviewScores, InterviewFeedback } from "@/lib/types/interview";
@@ -70,14 +57,6 @@ const SCORE_LABELS: Record<string, string> = {
   specificity: "具体性",
 };
 
-const INTERVIEW_SCORE_LINES = [
-  { key: "total", label: "合計", color: CHART_COLORS.primary },
-  { key: "clarity", label: "明確さ", color: SCORE_COLORS.structure },
-  { key: "apAlignment", label: "AP合致度", color: SCORE_COLORS.apAlignment },
-  { key: "enthusiasm", label: "熱意", color: SCORE_COLORS.logic },
-  { key: "specificity", label: "具体性", color: SCORE_COLORS.expression },
-] as const;
-
 function modeBadge(mode: InterviewMode) {
   const colors: Record<InterviewMode, string> = {
     individual: "bg-blue-50 text-blue-700 border-blue-300",
@@ -112,7 +91,6 @@ export function InterviewsSection({ studentId }: { studentId: string }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detailData, setDetailData] = useState<InterviewDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
-  const [showAllLines, setShowAllLines] = useState(false);
 
   const items = interviews ?? [];
 
@@ -123,21 +101,6 @@ export function InterviewsSection({ studentId }: { studentId: string }) {
     totalCount > 0
       ? Math.round(completedInterviews.reduce((sum, i) => sum + (i.scores?.total ?? 0), 0) / totalCount)
       : 0;
-
-  // Chart data
-  const chartData = [...items]
-    .filter((i) => i.scores)
-    .reverse()
-    .map((i) => ({
-      date: i.createdAt.slice(5, 10).replace("-", "/"),
-      total: i.scores!.total,
-      clarity: i.scores!.clarity,
-      apAlignment: i.scores!.apAlignment,
-      enthusiasm: i.scores!.enthusiasm,
-      specificity: i.scores!.specificity,
-    }));
-
-  const visibleLines = showAllLines ? INTERVIEW_SCORE_LINES : INTERVIEW_SCORE_LINES.slice(0, 1);
 
   async function openDetail(interviewId: string) {
     setSelectedId(interviewId);
@@ -193,50 +156,6 @@ export function InterviewsSection({ studentId }: { studentId: string }) {
                   <p className="text-xs text-muted-foreground">平均スコア /40</p>
                 </div>
               </div>
-
-              {/* Score Trend */}
-              {chartData.length >= 2 && (
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-sm font-medium">スコア推移</p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowAllLines((v) => !v)}
-                    >
-                      {showAllLines ? "合計のみ" : "項目別も表示"}
-                    </Button>
-                  </div>
-                  <ResponsiveContainer width="100%" height={220}>
-                    <LineChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
-                      <CartesianGrid
-                        strokeDasharray={GRID_STYLE.strokeDasharray}
-                        stroke={GRID_STYLE.stroke}
-                        opacity={GRID_STYLE.opacity}
-                      />
-                      <XAxis dataKey="date" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-                      <YAxis domain={[0, 40]} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} width={28} />
-                      <Tooltip content={<CustomTooltip />} />
-                      {showAllLines && <Legend wrapperStyle={{ fontSize: 11 }} />}
-                      {visibleLines.map((line) => (
-                        <Line
-                          key={line.key}
-                          type="monotone"
-                          dataKey={line.key}
-                          name={line.label}
-                          stroke={line.color}
-                          strokeWidth={line.key === "total" ? 2 : 1.5}
-                          dot={<CustomDot />}
-                          activeDot={<CustomActiveDot />}
-                          isAnimationActive={true}
-                          animationDuration={CHART_ANIMATION.duration}
-                          animationEasing={CHART_ANIMATION.easing}
-                        />
-                      ))}
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
 
               {/* Interview List */}
               <div className="space-y-2">
