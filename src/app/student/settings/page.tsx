@@ -22,7 +22,9 @@ import {
   Loader2,
   Plus,
   X,
+  HelpCircle,
 } from "lucide-react";
+import { TutorialWalkthrough } from "@/components/tutorial/TutorialWalkthrough";
 
 const CERT_LABELS: Record<string, string> = {
   EIKEN: "英検",
@@ -57,6 +59,7 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogSelection, setDialogSelection] = useState<string[]>([]);
+  const [showTutorial, setShowTutorial] = useState(false);
 
   // Initialize from profile
   useEffect(() => {
@@ -236,6 +239,29 @@ export default function SettingsPage() {
           保存
         </Button>
       </div>
+
+      {/* Tutorial */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <HelpCircle className="size-4 text-primary" />
+            チュートリアル
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground mb-3">
+            アプリの主要機能を確認できます
+          </p>
+          <Button variant="outline" onClick={() => setShowTutorial(true)}>
+            チュートリアルを再表示
+          </Button>
+        </CardContent>
+      </Card>
+
+      <TutorialWalkthrough
+        open={showTutorial}
+        onComplete={() => setShowTutorial(false)}
+      />
     </div>
   );
 }
