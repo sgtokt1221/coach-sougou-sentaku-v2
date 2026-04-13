@@ -68,12 +68,23 @@ export async function GET(
         .get(),
     ]);
 
+    // 大学ID→日本語名のヘルパー
+    function resolveUniName(uniId: string, facId: string): { uniName: string; facName: string } {
+      const uni = MOCK_UNIVERSITIES.find((u) => u.id === uniId);
+      const fac = uni?.faculties?.find((f) => f.id === facId);
+      return {
+        uniName: uni?.name ?? uniId,
+        facName: fac?.name ?? facId,
+      };
+    }
+
     const essays = essaysSnap.docs.map((d) => {
       const data = d.data();
+      const resolved = resolveUniName(data.targetUniversity ?? "", data.targetFaculty ?? "");
       return {
         id: d.id,
-        targetUniversity: data.targetUniversity ?? "",
-        targetFaculty: data.targetFaculty ?? "",
+        targetUniversity: resolved.uniName,
+        targetFaculty: resolved.facName,
         topic: data.topic,
         submittedAt: data.submittedAt?.toDate().toISOString() ?? new Date().toISOString(),
         scores: data.scores ?? null,

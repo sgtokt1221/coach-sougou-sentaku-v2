@@ -47,6 +47,7 @@ import {
   Languages,
   Plus,
   MicOff,
+  ChevronDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import { authFetch } from "@/lib/api/client";
@@ -120,7 +121,7 @@ export default function AdminStudentDetailPage() {
   const [detail, setDetail] = useState<StudentDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
-  // resolvedUniversitiesはAPIから直接返される
+  const [openSections, setOpenSections] = useState({ weaknesses: false, essays: false });
 
   // Essay detail state
   const [essayDetailOpen, setEssayDetailOpen] = useState(false);
@@ -578,114 +579,138 @@ export default function AdminStudentDetailPage() {
         </CardContent>
       </Card>
 
+      {/* Discover (自己分析 + 志望校マッチング) — プロフィール直後に配置 */}
+      <DiscoverSection studentId={id} />
+
       <Separator />
 
-      {/* Weaknesses Table */}
+      {/* Weaknesses Table — Accordion */}
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">弱点一覧</CardTitle>
+        <CardHeader
+          className="cursor-pointer select-none"
+          onClick={() => setOpenSections((s) => ({ ...s, weaknesses: !s.weaknesses }))}
+        >
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base flex items-center gap-2">
+              <AlertCircle className="size-4" />
+              弱点一覧
+              <Badge variant="secondary" className="text-xs ml-1">{weaknesses.filter((w) => !w.resolved).length}</Badge>
+            </CardTitle>
+            <ChevronDown className={`size-4 text-muted-foreground transition-transform ${openSections.weaknesses ? "rotate-180" : ""}`} />
+          </div>
         </CardHeader>
-        <CardContent className="p-0">
-          {weaknesses.length === 0 ? (
-            <div className="py-8 text-center text-sm text-muted-foreground">
-              弱点データなし
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b bg-muted/50">
-                    <th className="px-4 py-3 text-left font-medium">弱点項目</th>
-                    <th className="px-4 py-3 text-center font-medium">出所</th>
-                    <th className="px-4 py-3 text-center font-medium">指摘回数</th>
-                    <th className="px-4 py-3 text-center font-medium">ステータス</th>
-                    <th className="px-4 py-3 text-center font-medium w-12">FB</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {weaknesses.map((w) => (
-                    <tr key={w.area} className="border-b">
-                      <td className="px-4 py-3">{w.area}</td>
-                      <td className="px-4 py-3 text-center">
-                        <WeaknessSourceBadge source={w.source as "essay" | "interview" | "both"} />
-                      </td>
-                      <td className="px-4 py-3 text-center">{w.count}回</td>
-                      <td className="px-4 py-3 text-center">{weaknessBadge(w)}</td>
-                      <td className="px-4 py-3 text-center">
-                        <InlineFeedbackButton
-                          studentId={id}
-                          type="weakness"
-                          targetId={w.area}
-                          targetLabel={w.area}
-                          compact
-                        />
-                      </td>
+        {openSections.weaknesses && (
+          <CardContent className="p-0">
+            {weaknesses.length === 0 ? (
+              <div className="py-8 text-center text-sm text-muted-foreground">
+                弱点データなし
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b bg-muted/50">
+                      <th className="px-4 py-3 text-left font-medium">弱点項目</th>
+                      <th className="px-4 py-3 text-center font-medium">出所</th>
+                      <th className="px-4 py-3 text-center font-medium">指摘回数</th>
+                      <th className="px-4 py-3 text-center font-medium">ステータス</th>
+                      <th className="px-4 py-3 text-center font-medium w-12">FB</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </CardContent>
+                  </thead>
+                  <tbody>
+                    {weaknesses.map((w) => (
+                      <tr key={w.area} className="border-b">
+                        <td className="px-4 py-3">{w.area}</td>
+                        <td className="px-4 py-3 text-center">
+                          <WeaknessSourceBadge source={w.source as "essay" | "interview" | "both"} />
+                        </td>
+                        <td className="px-4 py-3 text-center">{w.count}回</td>
+                        <td className="px-4 py-3 text-center">{weaknessBadge(w)}</td>
+                        <td className="px-4 py-3 text-center">
+                          <InlineFeedbackButton
+                            studentId={id}
+                            type="weakness"
+                            targetId={w.area}
+                            targetLabel={w.area}
+                            compact
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        )}
       </Card>
 
-      {/* Essay History */}
+      {/* Essay History — Accordion */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <FileText className="size-4" />
-            添削履歴
-          </CardTitle>
+        <CardHeader
+          className="cursor-pointer select-none"
+          onClick={() => setOpenSections((s) => ({ ...s, essays: !s.essays }))}
+        >
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <FileText className="size-4" />
+              添削履歴
+              <Badge variant="secondary" className="text-xs ml-1">{essays.length}</Badge>
+            </CardTitle>
+            <ChevronDown className={`size-4 text-muted-foreground transition-transform ${openSections.essays ? "rotate-180" : ""}`} />
+          </div>
         </CardHeader>
-        <CardContent>
-          {essays.length === 0 ? (
-            <div className="py-8 text-center text-sm text-muted-foreground">
-              添削履歴なし
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {essays.map((essay) => (
-                <div key={essay.id} className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-accent">
-                  <div>
-                    <p className="font-medium">
-                      {essay.targetUniversity} {essay.targetFaculty}
-                    </p>
-                    {essay.topic && (
-                      <p className="text-xs text-muted-foreground">{essay.topic}</p>
-                    )}
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(essay.submittedAt).toLocaleDateString("ja-JP")}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="text-right">
-                      {essay.scores ? (
-                        <>
-                          <p className={`text-lg font-bold ${scoreColor(essay.scores.total)}`}>
-                            {essay.scores.total}
-                          </p>
-                          <p className="text-xs text-muted-foreground">/50</p>
-                        </>
-                      ) : (
-                        <Badge variant="secondary" className="text-xs">
-                          {essay.status === "uploaded" ? "OCR待ち" : essay.status}
-                        </Badge>
+        {openSections.essays && (
+          <CardContent>
+            {essays.length === 0 ? (
+              <div className="py-8 text-center text-sm text-muted-foreground">
+                添削履歴なし
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {essays.map((essay) => (
+                  <div key={essay.id} className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-accent">
+                    <div>
+                      <p className="font-medium">
+                        {essay.targetUniversity} {essay.targetFaculty}
+                      </p>
+                      {essay.topic && (
+                        <p className="text-xs text-muted-foreground">{essay.topic}</p>
                       )}
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(essay.submittedAt).toLocaleDateString("ja-JP")}
+                      </p>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openEssayDetail(essay.id)}
-                    >
-                      <Eye className="mr-1 size-3" />
-                      詳細
-                    </Button>
+                    <div className="flex items-center gap-3">
+                      <div className="text-right">
+                        {essay.scores ? (
+                          <>
+                            <p className={`text-lg font-bold ${scoreColor(essay.scores.total)}`}>
+                              {essay.scores.total}
+                            </p>
+                            <p className="text-xs text-muted-foreground">/50</p>
+                          </>
+                        ) : (
+                          <Badge variant="secondary" className="text-xs">
+                            {essay.status === "uploaded" ? "OCR待ち" : essay.status}
+                          </Badge>
+                        )}
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openEssayDetail(essay.id)}
+                      >
+                        <Eye className="mr-1 size-3" />
+                        詳細
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        )}
       </Card>
 
       {/* Essay Detail Dialog */}
@@ -851,9 +876,6 @@ export default function AdminStudentDetailPage() {
 
       {/* Activities */}
       <ActivitiesSection studentId={id} />
-
-      {/* Discover (自己分析 + 志望校マッチング) */}
-      <DiscoverSection studentId={id} />
 
       {/* Exam Results */}
       <ExamResultsSection studentId={id} />
