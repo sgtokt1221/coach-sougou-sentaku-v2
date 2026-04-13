@@ -49,20 +49,9 @@ import {
   MicOff,
 } from "lucide-react";
 import { toast } from "sonner";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts";
-import { CHART_COLORS, SCORE_COLORS, CHART_ANIMATION, GRID_STYLE } from "@/components/charts/theme";
-import { CustomTooltip } from "@/components/charts/CustomTooltip";
-import { CustomDot, CustomActiveDot } from "@/components/charts/CustomDot";
 import { authFetch } from "@/lib/api/client";
+import { ScoresTrendChart } from "@/components/growth/ScoresTrendChart";
+import { WeaknessSourceBadge } from "@/components/growth/WeaknessSourceBadge";
 import type { StudentDetail } from "@/lib/types/admin";
 import type { Essay } from "@/lib/types/essay";
 import type { WeaknessRecord } from "@/lib/types/growth";
@@ -88,14 +77,6 @@ import { DiscoverSection } from "@/components/admin/DiscoverSection";
 import { InlineFeedbackButton } from "@/components/admin/InlineFeedbackButton";
 import { CoachMemo } from "@/components/admin/CoachMemo";
 
-const SCORE_LINES = [
-  { key: "total", label: "合計", color: CHART_COLORS.primary },
-  { key: "structure", label: "構成", color: SCORE_COLORS.structure },
-  { key: "logic", label: "論理性", color: SCORE_COLORS.logic },
-  { key: "expression", label: "表現力", color: SCORE_COLORS.expression },
-  { key: "apAlignment", label: "AP合致度", color: SCORE_COLORS.apAlignment },
-  { key: "originality", label: "独自性", color: SCORE_COLORS.originality },
-] as const;
 
 function weaknessBadge(w: WeaknessRecord) {
   const level = getWeaknessReminderLevel(w);
@@ -139,7 +120,6 @@ export default function AdminStudentDetailPage() {
   const [detail, setDetail] = useState<StudentDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
-  const [showAllLines, setShowAllLines] = useState(false);
   const [resolvedUnis, setResolvedUnis] = useState<{ universityName: string; facultyName: string }[]>([]);
 
   // Essay detail state
@@ -306,14 +286,16 @@ export default function AdminStudentDetailPage() {
     );
   }
 
-  const { profile, weaknesses, essays, scoreTrend } = detail;
+  const { profile, weaknesses, essays, essayScoreTrend, interviewScoreTrend } = detail;
 
-  const chartData = scoreTrend.map((p) => ({
+  const essayChartData = (essayScoreTrend ?? []).map((p) => ({
     ...p,
     date: p.date.slice(5, 10).replace("-", "/"),
   }));
-
-  const visibleLines = showAllLines ? SCORE_LINES : SCORE_LINES.slice(0, 1);
+  const interviewChartData = (interviewScoreTrend ?? []).map((p) => ({
+    ...p,
+    date: p.date.slice(5, 10).replace("-", "/"),
+  }));
 
   return (
     <div className="space-y-6 p-6">
@@ -560,66 +542,13 @@ export default function AdminStudentDetailPage() {
       {/* Score Trend Chart */}
       <Card>
         <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <BarChart3 className="size-4" />
-              スコア推移
-            </CardTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowAllLines((v) => !v)}
-            >
-              {showAllLines ? "合計のみ" : "項目別も表示"}
-            </Button>
-          </div>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <BarChart3 className="size-4" />
+            スコア推移（小論文・面接）
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          {chartData.length === 0 ? (
-            <div className="flex h-[280px] items-center justify-center text-sm text-muted-foreground">
-              まだデータがありません
-            </div>
-          ) : (
-            <ResponsiveContainer width="100%" height={280}>
-              <LineChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
-                <CartesianGrid
-                  strokeDasharray={GRID_STYLE.strokeDasharray}
-                  stroke={GRID_STYLE.stroke}
-                  opacity={GRID_STYLE.opacity}
-                />
-                <XAxis
-                  dataKey="date"
-                  tick={{ fontSize: 12 }}
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <YAxis
-                  domain={[0, 50]}
-                  tick={{ fontSize: 12 }}
-                  tickLine={false}
-                  axisLine={false}
-                  width={30}
-                />
-                <Tooltip content={<CustomTooltip />} />
-                {showAllLines && <Legend wrapperStyle={{ fontSize: 12 }} />}
-                {visibleLines.map((line) => (
-                  <Line
-                    key={line.key}
-                    type="monotone"
-                    dataKey={line.key}
-                    name={line.label}
-                    stroke={line.color}
-                    strokeWidth={line.key === "total" ? 2 : 1.5}
-                    dot={<CustomDot />}
-                    activeDot={<CustomActiveDot />}
-                    isAnimationActive={true}
-                    animationDuration={CHART_ANIMATION.duration}
-                    animationEasing={CHART_ANIMATION.easing}
-                  />
-                ))}
-              </LineChart>
-            </ResponsiveContainer>
-          )}
+          <ScoresTrendChart essayData={essayChartData} interviewData={interviewChartData} />
         </CardContent>
       </Card>
 
@@ -641,6 +570,7 @@ export default function AdminStudentDetailPage() {
                 <thead>
                   <tr className="border-b bg-muted/50">
                     <th className="px-4 py-3 text-left font-medium">弱点項目</th>
+                    <th className="px-4 py-3 text-center font-medium">出所</th>
                     <th className="px-4 py-3 text-center font-medium">指摘回数</th>
                     <th className="px-4 py-3 text-center font-medium">ステータス</th>
                     <th className="px-4 py-3 text-center font-medium w-12">FB</th>
@@ -650,6 +580,9 @@ export default function AdminStudentDetailPage() {
                   {weaknesses.map((w) => (
                     <tr key={w.area} className="border-b">
                       <td className="px-4 py-3">{w.area}</td>
+                      <td className="px-4 py-3 text-center">
+                        <WeaknessSourceBadge source={w.source as "essay" | "interview" | "both"} />
+                      </td>
                       <td className="px-4 py-3 text-center">{w.count}回</td>
                       <td className="px-4 py-3 text-center">{weaknessBadge(w)}</td>
                       <td className="px-4 py-3 text-center">

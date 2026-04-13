@@ -32,7 +32,10 @@ export interface StudentDetail {
   };
   weaknesses: WeaknessRecord[];
   essays: EssayListItem[];
-  scoreTrend: ScoreTrendPoint[];
+  /** @deprecated Use essayScoreTrend + interviewScoreTrend */
+  scoreTrend?: ScoreTrendPoint[];
+  essayScoreTrend?: { date: string; total: number }[];
+  interviewScoreTrend?: { date: string; total: number }[];
 }
 
 export interface EssayListItem {

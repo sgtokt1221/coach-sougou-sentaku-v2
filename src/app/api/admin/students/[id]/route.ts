@@ -50,11 +50,22 @@ export async function GET(
       }
     }
 
-    const essaysSnap = await adminDb
-      .collection("essays")
-      .where("userId", "==", id)
-      .orderBy("submittedAt", "desc")
-      .get();
+    const [essaysSnap, interviewsSnap, weaknessesSnap] = await Promise.all([
+      adminDb
+        .collection("essays")
+        .where("userId", "==", id)
+        .orderBy("submittedAt", "desc")
+        .get(),
+      adminDb
+        .collection("interviews")
+        .where("userId", "==", id)
+        .orderBy("startedAt", "desc")
+        .get()
+        .catch(() => ({ docs: [] })),
+      adminDb
+        .collection(`users/${id}/weaknesses`)
+        .get(),
+    ]);
 
     const essays = essaysSnap.docs.map((d) => {
       const data = d.data();
@@ -69,9 +80,6 @@ export async function GET(
       };
     });
 
-    const weaknessesSnap = await adminDb
-      .collection(`users/${id}/weaknesses`)
-      .get();
     const weaknesses = weaknessesSnap.docs.map((d) => {
       const data = d.data();
       return {
@@ -86,18 +94,26 @@ export async function GET(
       };
     });
 
-    const scoreTrend = essays
+    // 添削スコア推移
+    const essayScoreTrend = essays
       .filter((e) => e.scores)
       .reverse()
       .map((e) => ({
         date: e.submittedAt,
         total: e.scores!.total,
-        structure: e.scores!.structure,
-        logic: e.scores!.logic,
-        expression: e.scores!.expression,
-        apAlignment: e.scores!.apAlignment,
-        originality: e.scores!.originality,
       }));
+
+    // 面接スコア推移
+    const interviewScoreTrend = interviewsSnap.docs
+      .map((d) => {
+        const data = d.data();
+        return {
+          date: data.startedAt?.toDate().toISOString() ?? new Date().toISOString(),
+          total: data.scores?.total ?? null,
+        };
+      })
+      .filter((i): i is { date: string; total: number } => i.total != null)
+      .reverse();
 
     const detail: StudentDetail = {
       profile: {
@@ -112,7 +128,8 @@ export async function GET(
       },
       weaknesses,
       essays,
-      scoreTrend,
+      essayScoreTrend,
+      interviewScoreTrend,
     };
 
     return NextResponse.json(detail);
