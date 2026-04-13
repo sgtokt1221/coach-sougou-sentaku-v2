@@ -7,9 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SegmentControl } from "@/components/shared/SegmentControl";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BookOpen, Star, Clock, ArrowRight, ChevronDown, ChevronUp, BarChart3 } from "lucide-react";
+import { BookOpen, Star, Clock, ArrowRight, ChevronDown, ChevronUp, BarChart3, Lightbulb } from "lucide-react";
 import { PastQuestionChart } from "@/components/essay/PastQuestionChart";
 import { EssayTheme } from "@/data/essay-themes";
+import { getRelatedFaculties } from "@/lib/essay-topic-mapping";
 
 interface ThemeWithScore extends EssayTheme {
   recommendationScore?: number;
@@ -286,6 +287,22 @@ export default function EssayThemesPage() {
                         {pq.wordLimit && <span>{pq.wordLimit}字</span>}
                         {pq.timeLimit && <span>{pq.timeLimit}分</span>}
                         <Badge variant="outline" className="text-xs">{pq.field}</Badge>
+                        {(() => {
+                          const faculties = getRelatedFaculties(pq.field);
+                          if (faculties.length === 0) return null;
+                          return (
+                            <button
+                              className="inline-flex items-center gap-0.5 text-amber-600 hover:text-amber-800 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                router.push(`/student/topic-input/${faculties[0].id}`);
+                              }}
+                            >
+                              <Lightbulb className="w-3 h-3" />
+                              ネタを読む
+                            </button>
+                          );
+                        })()}
                       </div>
                       {hasExtra && (
                         <button className="text-xs text-muted-foreground flex items-center gap-1">
@@ -328,6 +345,21 @@ export default function EssayThemesPage() {
                       {pq.chartData && pq.chartData.length > 0 && (
                         <PastQuestionChart charts={pq.chartData} />
                       )}
+                      {(() => {
+                        const faculties = getRelatedFaculties(pq.field);
+                        if (faculties.length === 0) return null;
+                        return (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full mb-2 text-amber-700 border-amber-200 hover:bg-amber-50"
+                            onClick={() => router.push(`/student/topic-input/${faculties[0].id}`)}
+                          >
+                            <Lightbulb className="w-4 h-4 mr-1" />
+                            ネタを読む（{faculties.map((f) => f.label).join("・")}）
+                          </Button>
+                        );
+                      })()}
                       <Button
                         size="sm"
                         className="w-full"
@@ -489,6 +521,29 @@ export default function EssayThemesPage() {
                     </div>
                   </div>
                 )}
+
+                {(() => {
+                  const faculties = getRelatedFaculties(theme.field);
+                  if (faculties.length === 0) return null;
+                  return (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full mb-2 text-amber-700 border-amber-200 hover:bg-amber-50"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (faculties.length === 1) {
+                          router.push(`/student/topic-input/${faculties[0].id}`);
+                        } else {
+                          router.push(`/student/topic-input/${faculties[0].id}`);
+                        }
+                      }}
+                    >
+                      <Lightbulb className="w-4 h-4 mr-1" />
+                      ネタを読む（{faculties.map((f) => f.label).join("・")}）
+                    </Button>
+                  );
+                })()}
 
                 <Button
                   variant="ghost"
