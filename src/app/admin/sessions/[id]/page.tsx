@@ -765,9 +765,13 @@ function StudentInfoPanelInner({
     "overview" | "essays-interviews" | "docs-activities" | "memos"
   >("overview");
 
-  const { profile, weaknesses, essays, scoreTrend } = student;
+  const { profile, weaknesses, essays, essayScoreTrend, interviewScoreTrend } = student;
 
-  const chartData = scoreTrend.map((p) => ({
+  const essayChartData = (essayScoreTrend ?? []).map((p) => ({
+    ...p,
+    date: p.date.slice(5, 10).replace("-", "/"),
+  }));
+  const interviewChartData = (interviewScoreTrend ?? []).map((p) => ({
     ...p,
     date: p.date.slice(5, 10).replace("-", "/"),
   }));
@@ -843,7 +847,7 @@ function StudentInfoPanelInner({
                   <BarChart3 className="size-4" />
                   スコア推移
                 </p>
-                <ScoresTrendChart data={chartData} />
+                <ScoresTrendChart essayData={essayChartData} interviewData={interviewChartData} />
               </div>
 
               <Separator />
