@@ -10,6 +10,7 @@ import { WorkshopChat } from "@/components/self-analysis/WorkshopChat";
 import { SegmentControl } from "@/components/shared/SegmentControl";
 import { GrowthTree } from "@/components/self-analysis/GrowthTree";
 import { useAuthSWR } from "@/lib/api/swr";
+import { authFetch } from "@/lib/api/client";
 import type { SelfAnalysis, ChatMessage, StepChatHistory } from "@/lib/types/self-analysis";
 
 export default function SelfAnalysisPage() {
@@ -65,7 +66,7 @@ export default function SelfAnalysisPage() {
         isComplete,
         chatHistory: updatedChatHistories,
       };
-      fetch("/api/self-analysis", {
+      authFetch("/api/self-analysis", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

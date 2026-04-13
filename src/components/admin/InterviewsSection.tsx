@@ -13,7 +13,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Mic, ChevronRight, MessageSquare, ThumbsUp, Lightbulb } from "lucide-react";
+import { Mic, ChevronRight, ChevronDown, MessageSquare, ThumbsUp, Lightbulb } from "lucide-react";
 import { useAuthSWR } from "@/lib/api/swr";
 import { authFetch } from "@/lib/api/client";
 import type { InterviewMode, InterviewMessage, InterviewScores, InterviewFeedback } from "@/lib/types/interview";
@@ -88,6 +88,7 @@ export function InterviewsSection({ studentId }: { studentId: string }) {
     `/api/admin/students/${studentId}/interviews`
   );
 
+  const [open, setOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detailData, setDetailData] = useState<InterviewDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -124,17 +125,24 @@ export function InterviewsSection({ studentId }: { studentId: string }) {
   return (
     <>
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Mic className="size-4" />
-            面接練習
-          </CardTitle>
+        <CardHeader
+          className="cursor-pointer select-none"
+          onClick={() => setOpen((v) => !v)}
+        >
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Mic className="size-4" />
+              面接練習
+              {!isLoading && <Badge variant="secondary" className="text-xs ml-1">{items.length}</Badge>}
+            </CardTitle>
+            <ChevronDown className={`size-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
+          </div>
         </CardHeader>
+        {open && (
         <CardContent>
           {isLoading ? (
             <div className="space-y-3">
               <Skeleton className="h-16 w-full" />
-              <Skeleton className="h-[240px] w-full" />
               <Skeleton className="h-12 w-full" />
             </div>
           ) : items.length === 0 ? (
@@ -194,6 +202,7 @@ export function InterviewsSection({ studentId }: { studentId: string }) {
             </div>
           )}
         </CardContent>
+        )}
       </Card>
 
       {/* Interview Detail Dialog */}

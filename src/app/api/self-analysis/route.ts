@@ -1,9 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 
+async function resolveUserId(request: NextRequest, rawId: string): Promise<string> {
+  if (rawId !== "me") return rawId;
+  try {
+    const { verifyAuthToken } = await import("@/lib/firebase/admin");
+    const decoded = await verifyAuthToken(request);
+    if (decoded?.uid) return decoded.uid;
+  } catch {}
+  return rawId;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get("userId");
+    let userId = searchParams.get("userId");
 
     if (!userId) {
       return NextResponse.json(
@@ -11,6 +21,8 @@ export async function GET(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    userId = await resolveUserId(request, userId);
 
     const { adminDb } = await import("@/lib/firebase/admin");
     if (adminDb) {
@@ -42,11 +54,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const resolvedId = await resolveUserId(request, body.userId);
+
     // リセットリクエスト
     if (body.reset) {
       const { adminDb } = await import("@/lib/firebase/admin");
       if (adminDb) {
-        await adminDb.doc(`selfAnalysis/${body.userId}`).delete();
+        await adminDb.doc(`selfAnalysis/${resolvedId}`).delete();
       }
       return NextResponse.json({ success: true, reset: true });
     }
@@ -54,7 +68,7 @@ export async function POST(request: NextRequest) {
     const { adminDb } = await import("@/lib/firebase/admin");
     if (adminDb) {
       const { FieldValue } = await import("firebase-admin/firestore");
-      const docId = body.userId;
+      const docId = resolvedId;
       await adminDb.doc(`selfAnalysis/${docId}`).set(
         {
           userId: body.userId,
