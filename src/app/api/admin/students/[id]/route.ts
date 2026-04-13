@@ -68,10 +68,19 @@ export async function GET(
         .get(),
     ]);
 
-    // 大学ID→日本語名のヘルパー
+    // 大学ID→日本語名のヘルパー（部分一致フォールバック付き）
     function resolveUniName(uniId: string, facId: string): { uniName: string; facName: string } {
-      const uni = MOCK_UNIVERSITIES.find((u) => u.id === uniId);
-      const fac = uni?.faculties?.find((f) => f.id === facId);
+      // 完全一致を試す
+      let uni = MOCK_UNIVERSITIES.find((u) => u.id === uniId);
+      // 部分一致フォールバック（IDの先頭部分で探す）
+      if (!uni && uniId) {
+        uni = MOCK_UNIVERSITIES.find((u) => uniId.startsWith(u.id) || u.id.startsWith(uniId));
+      }
+      let fac = uni?.faculties?.find((f) => f.id === facId);
+      // 学部も部分一致
+      if (!fac && facId && uni?.faculties) {
+        fac = uni.faculties.find((f) => facId.startsWith(f.id) || f.id.startsWith(facId));
+      }
       return {
         uniName: uni?.name ?? uniId,
         facName: fac?.name ?? facId,

@@ -1,7 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
+import { MOCK_UNIVERSITIES } from "@/lib/matching/mockData";
 import type { InterviewScores, InterviewMode } from "@/lib/types/interview";
+
+function resolveUniName(uniId: string, facId: string): { uniName: string; facName: string } {
+  let uni = MOCK_UNIVERSITIES.find((u) => u.id === uniId);
+  if (!uni && uniId) uni = MOCK_UNIVERSITIES.find((u) => uniId.startsWith(u.id) || u.id.startsWith(uniId));
+  let fac = uni?.faculties?.find((f) => f.id === facId);
+  if (!fac && facId && uni?.faculties) fac = uni.faculties.find((f) => facId.startsWith(f.id) || f.id.startsWith(facId));
+  return { uniName: uni?.name ?? uniId, facName: fac?.name ?? facId };
+}
 
 export interface InterviewListItem {
   id: string;
@@ -95,11 +104,12 @@ export async function GET(
 
     const interviews: InterviewListItem[] = snapshot.docs.map((doc) => {
       const data = doc.data();
+      const resolved = resolveUniName(data.targetUniversity ?? "", data.targetFaculty ?? "");
       return {
         id: doc.id,
         mode: data.mode ?? "individual",
-        targetUniversity: data.targetUniversity ?? "",
-        targetFaculty: data.targetFaculty ?? "",
+        targetUniversity: resolved.uniName,
+        targetFaculty: resolved.facName,
         scores: data.scores ?? null,
         feedbackSummary: data.feedback?.overall ?? null,
         createdAt: data.startedAt?.toDate?.()?.toISOString() ?? new Date().toISOString(),

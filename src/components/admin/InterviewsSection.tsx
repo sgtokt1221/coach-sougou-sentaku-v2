@@ -207,7 +207,7 @@ export function InterviewsSection({ studentId }: { studentId: string }) {
 
       {/* Interview Detail Dialog */}
       <Dialog open={selectedId !== null} onOpenChange={(open) => { if (!open) setSelectedId(null); }}>
-        <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-2xl !top-[8vh] !-translate-y-0 max-h-[84vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>面接詳細</DialogTitle>
             {detailData && (

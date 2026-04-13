@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Lightbulb, GraduationCap, Star, Target } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
+import { MOCK_UNIVERSITIES } from "@/lib/matching/mockData";
 import { GrowthTree } from "@/components/self-analysis/GrowthTree";
 import type { SelfAnalysis } from "@/lib/types/self-analysis";
 import type { MatchResult } from "@/lib/types/matching";
@@ -158,11 +159,19 @@ export function DiscoverSection({ studentId }: DiscoverSectionProps) {
                     この生徒が選んでいる志望校 ({matching.targetUniversities.length})
                   </p>
                   <div className="flex flex-wrap gap-1.5">
-                    {matching.targetUniversities.map((uid) => (
-                      <Badge key={uid} variant="secondary" className="text-xs">
-                        {uid}
-                      </Badge>
-                    ))}
+                    {matching.targetUniversities.map((compoundId) => {
+                      const [uniId, facId] = compoundId.split(":");
+                      let uni = MOCK_UNIVERSITIES.find((u) => u.id === uniId);
+                      if (!uni) uni = MOCK_UNIVERSITIES.find((u) => uniId.startsWith(u.id) || u.id.startsWith(uniId));
+                      let fac = uni?.faculties?.find((f) => f.id === facId);
+                      if (!fac && uni?.faculties) fac = uni.faculties.find((f) => facId?.startsWith(f.id) || f.id.startsWith(facId ?? ""));
+                      const label = uni ? `${uni.name} ${fac?.name ?? facId ?? ""}` : compoundId;
+                      return (
+                        <Badge key={compoundId} variant="secondary" className="text-xs">
+                          {label}
+                        </Badge>
+                      );
+                    })}
                   </div>
                 </div>
               )}
