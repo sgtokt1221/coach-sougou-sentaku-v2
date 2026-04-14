@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   typescript: { ignoreBuildErrors: true },
+  generateBuildId: () => `build-${Date.now()}`,
   allowedDevOrigins: ['192.168.1.80'],
   async headers() {
     return [{

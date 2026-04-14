@@ -119,7 +119,7 @@ const adminNavGroups: NavGroup[] = [
       { label: "講師管理", href: "/admin/teachers", icon: GraduationCap },
       { label: "大学データ", href: "/admin/universities", icon: Database },
       { label: "セッション", href: "/admin/sessions", icon: ClipboardList },
-      { label: "スケジュール", href: "/admin/schedule", icon: CalendarDays },
+      { label: "セッションマスター", href: "/admin/sessions/master", icon: CalendarCheck },
     ],
   },
   {
@@ -127,6 +127,29 @@ const adminNavGroups: NavGroup[] = [
     items: [
       { label: "通知管理", href: "/admin/settings/notifications", icon: Bell },
       { label: "設定", href: "/admin/settings", icon: Settings },
+    ],
+  },
+];
+
+const teacherNavGroups: NavGroup[] = [
+  {
+    title: "Overview",
+    items: [
+      { label: "ダッシュボード", href: "/teacher/dashboard", icon: LayoutDashboard },
+    ],
+  },
+  {
+    title: "Work",
+    items: [
+      { label: "シフト入力", href: "/teacher/schedule", icon: CalendarCheck },
+      { label: "担当生徒", href: "/teacher/students", icon: Users },
+      { label: "セッション履歴", href: "/teacher/sessions", icon: ClipboardList },
+    ],
+  },
+  {
+    title: "",
+    items: [
+      { label: "設定", href: "/teacher/settings", icon: Settings },
     ],
   },
 ];
@@ -281,7 +304,8 @@ export function Sidebar() {
     if (userProfile?.role === "superadmin") {
       return getSuperadminNavGroups(pathname);
     }
-    if (userProfile?.role === "admin" || userProfile?.role === "teacher") return adminNavGroups;
+    if (userProfile?.role === "admin") return adminNavGroups;
+    if (userProfile?.role === "teacher") return teacherNavGroups;
     return filterNavByPlan(studentNavGroups, userProfile?.plan);
   })();
 
@@ -362,7 +386,8 @@ export function SidebarContent() {
     if (userProfile?.role === "superadmin") {
       return getSuperadminNavGroups(pathname);
     }
-    if (userProfile?.role === "admin" || userProfile?.role === "teacher") return adminNavGroups;
+    if (userProfile?.role === "admin") return adminNavGroups;
+    if (userProfile?.role === "teacher") return teacherNavGroups;
     return filterNavByPlan(studentNavGroups, userProfile?.plan);
   })();
 
