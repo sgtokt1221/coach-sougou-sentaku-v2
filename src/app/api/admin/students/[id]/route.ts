@@ -192,7 +192,7 @@ export async function GET(
   }
 }
 
-const ALLOWED_FIELDS = ["displayName", "school", "grade", "gpa", "englishCerts", "targetUniversities"] as const;
+const ALLOWED_FIELDS = ["displayName", "school", "grade", "gpa", "englishCerts", "targetUniversities", "sessionsPerMonth"] as const;
 
 export async function PUT(
   request: NextRequest,

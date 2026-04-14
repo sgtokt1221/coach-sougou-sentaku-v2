@@ -52,23 +52,32 @@ export async function GET(request: NextRequest) {
       .where("scheduledAt", "<", monthEnd)
       .get();
 
-    const placedStudentIds = new Set<string>();
+    // 生徒ごとの配置済みセッション数をカウント
+    const placedCountMap = new Map<string, number>();
     for (const doc of sessionsSnap.docs) {
       const data = doc.data();
       if (data.type !== "group_review" && data.studentId) {
-        placedStudentIds.add(data.studentId);
+        placedCountMap.set(data.studentId, (placedCountMap.get(data.studentId) ?? 0) + 1);
       }
     }
 
-    const unplaced: UnplacedStudent[] = allStudents
-      .filter((s) => !placedStudentIds.has(s.uid))
-      .map((s) => ({
-        uid: s.uid,
-        displayName: s.displayName ?? "",
-        targetUniversities: s.targetUniversities ?? [],
-        latestScore: s.latestScore ?? null,
-        lastSessionAt: s.lastSessionAt ?? null,
-      }));
+    // 月回数と配置済み数を比較して、残り分のカードを生成
+    const unplaced: UnplacedStudent[] = [];
+    for (const s of allStudents) {
+      const sessionsPerMonth = (s as Record<string, unknown>).sessionsPerMonth as number ?? 1;
+      const placedCount = placedCountMap.get(s.uid) ?? 0;
+      const remaining = Math.max(0, sessionsPerMonth - placedCount);
+
+      for (let i = 0; i < remaining; i++) {
+        unplaced.push({
+          uid: s.uid,
+          displayName: `${s.displayName ?? ""}${sessionsPerMonth > 1 ? `　${["①","②","③","④"][placedCount + i] ?? `(${placedCount + i + 1})`}` : ""}`,
+          targetUniversities: s.targetUniversities ?? [],
+          latestScore: s.latestScore ?? null,
+          lastSessionAt: s.lastSessionAt ?? null,
+        });
+      }
+    }
 
     return NextResponse.json({ students: unplaced });
   } catch (error) {

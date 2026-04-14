@@ -1,8 +1,11 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, lazy, Suspense } from "react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+
+const SessionMasterContent = lazy(() => import("./master/page"));
 import { useAuthSWR } from "@/lib/api/swr";
 import { authFetch } from "@/lib/api/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -41,6 +44,7 @@ interface AvailableSlot {
 
 export default function AdminSessionsPage() {
   const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState<"schedule" | "master">("schedule");
   const [weekStart, setWeekStart] = useState<Date>(getMonday(new Date()));
   const [pickerSession, setPickerSession] = useState<Session | null>(null);
 
@@ -244,31 +248,54 @@ export default function AdminSessionsPage() {
     <div className="flex h-[calc(100vh-64px)]">
       {/* メインコンテンツ */}
       <div className="flex-1 overflow-auto p-4">
-        {/* 週ナビゲーションヘッダー */}
-        <div className="flex items-center justify-between mb-6">
+        {/* タブ切替 + ヘッダー */}
+        <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-2xl font-bold">セッション管理</h1>
-            <p className="text-sm text-muted-foreground">
-              週間スケジュール - ドラッグ&ドロップでセッションを配置
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={goToPreviousWeek}>
-              <ChevronLeft className="size-4" />
-            </Button>
-            <Button variant="outline" size="sm" onClick={goToCurrentWeek}>
-              今週
-            </Button>
-            <Button variant="outline" size="sm" onClick={goToNextWeek}>
-              <ChevronRight className="size-4" />
-            </Button>
-            <div className="ml-4 text-sm font-medium">
-              {formatWeekRange()}
+            <div className="flex rounded-lg border p-1 mt-2 w-fit">
+              <button
+                onClick={() => setActiveTab("schedule")}
+                className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
+                  activeTab === "schedule" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                スケジュール
+              </button>
+              <button
+                onClick={() => setActiveTab("master")}
+                className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
+                  activeTab === "master" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                マスタ
+              </button>
             </div>
           </div>
+
+          {activeTab === "schedule" && (
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={goToPreviousWeek}>
+                <ChevronLeft className="size-4" />
+              </Button>
+              <Button variant="outline" size="sm" onClick={goToCurrentWeek}>
+                今週
+              </Button>
+              <Button variant="outline" size="sm" onClick={goToNextWeek}>
+                <ChevronRight className="size-4" />
+              </Button>
+              <div className="ml-4 text-sm font-medium">
+                {formatWeekRange()}
+              </div>
+            </div>
+          )}
         </div>
 
+        {activeTab === "master" ? (
+          <Suspense fallback={<Skeleton className="h-96 w-full" />}>
+            <SessionMasterContent />
+          </Suspense>
+        ) : (
+        <>
         {/* セッションカレンダー */}
         <SessionCalendar
           weekStart={weekStart}
@@ -278,15 +305,19 @@ export default function AdminSessionsPage() {
           onRemoveSession={handleRemoveSession}
           onClickSession={handleSessionClick}
         />
+        </>
+        )}
       </div>
 
-      {/* 未配置生徒サイドバー */}
+      {/* 未配置生徒サイドバー（スケジュールタブのみ） */}
+      {activeTab === "schedule" && (
       <div className="w-64 border-l bg-gray-50/50">
         <UnplacedStudentsSidebar
           students={unplacedStudents}
           loading={!unplacedStudents}
         />
       </div>
+      )}
 
       {/* 講師選択ポップオーバー */}
       {pickerSession && (
