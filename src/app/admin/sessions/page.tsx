@@ -60,9 +60,12 @@ export default function AdminSessionsPage() {
 
   // データ取得
   const { data: allSessions = [], mutate: mutateSessions } = useAuthSWR<Session[]>('/api/sessions');
-  const { data: unplacedStudents = [] } = useAuthSWR<UnplacedStudent[]>(
+  const { data: unplacedData } = useAuthSWR<{ students: UnplacedStudent[] } | UnplacedStudent[]>(
     `/api/admin/sessions/unplaced?month=${currentMonth}`
   );
+  const unplacedStudents: UnplacedStudent[] = Array.isArray(unplacedData)
+    ? unplacedData
+    : unplacedData?.students ?? [];
   const { data: teachers = [] } = useAuthSWR<Teacher[]>('/api/admin/teachers/all');
   const { data: availabilityData = {} } = useAuthSWR('/api/admin/schedule/availability');
 
