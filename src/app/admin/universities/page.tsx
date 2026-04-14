@@ -161,7 +161,7 @@ export default function AdminUniversitiesPage() {
                       最終更新
                     </th>
                     <th className="px-4 py-3 text-center font-medium w-16">
-                      公式
+                      リンク
                     </th>
                   </tr>
                 </thead>
@@ -193,19 +193,24 @@ export default function AdminUniversitiesPage() {
                           : "-"}
                       </td>
                       <td className="px-4 py-3 text-center">
-                        {u.officialUrl ? (
-                          <a
-                            href={u.officialUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center text-primary hover:text-primary/80"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <ExternalLink className="size-4" />
-                          </a>
-                        ) : (
-                          <span className="text-muted-foreground/30">-</span>
-                        )}
+                        {(() => {
+                          const admUrl = u.faculties?.[0]?.admissionUrl;
+                          const url = admUrl || u.officialUrl;
+                          if (!url) return <span className="text-muted-foreground/30">-</span>;
+                          return (
+                            <a
+                              href={url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                              onClick={(e) => e.stopPropagation()}
+                              title={admUrl ? "総合型選抜ページ" : "大学公式サイト"}
+                            >
+                              <ExternalLink className="size-3.5" />
+                              {admUrl ? "入試" : "公式"}
+                            </a>
+                          );
+                        })()}
                       </td>
                     </tr>
                   ))}
