@@ -40,6 +40,8 @@ export interface Faculty {
   academicField?: string;
   /** 総合型選抜の募集要項・入試情報ページURL */
   admissionUrl?: string;
+  /** 選抜タイプ: comprehensive=総合型選抜, school_recommendation=学校推薦型選抜 */
+  selectionType?: "comprehensive" | "school_recommendation";
 }
 
 export interface Requirements {

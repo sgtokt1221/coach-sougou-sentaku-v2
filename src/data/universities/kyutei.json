@@ -36,7 +36,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
         },
-        "admissionUrl": "https://www.kyushu-u.ac.jp/ja/admission/"
+        "admissionUrl": "https://www.kyushu-u.ac.jp/ja/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "economics",
@@ -63,7 +64,8 @@
           "examDate": "2026-03-02",
           "resultDate": "2026-03-20"
         },
-        "admissionUrl": "https://www.kyushu-u.ac.jp/ja/admission/"
+        "admissionUrl": "https://www.kyushu-u.ac.jp/ja/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "general",
@@ -96,7 +98,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
         },
-        "admissionUrl": "https://www.kyushu-u.ac.jp/ja/admission/"
+        "admissionUrl": "https://www.kyushu-u.ac.jp/ja/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "law",
@@ -123,7 +126,8 @@
           "examDate": "2025-11-25",
           "resultDate": "2025-12-13"
         },
-        "admissionUrl": "https://www.kyushu-u.ac.jp/ja/admission/"
+        "admissionUrl": "https://www.kyushu-u.ac.jp/ja/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "artsengineering",
@@ -150,7 +154,8 @@
           "examDate": "2026-03-02",
           "resultDate": "2026-03-20"
         },
-        "admissionUrl": "https://www.kyushu-u.ac.jp/ja/admission/"
+        "admissionUrl": "https://www.kyushu-u.ac.jp/ja/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "letters",
@@ -180,7 +185,8 @@
           "examDate": "2025-11-25",
           "resultDate": "2025-12-13"
         },
-        "admissionUrl": "https://www.kyushu-u.ac.jp/ja/admission/"
+        "admissionUrl": "https://www.kyushu-u.ac.jp/ja/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "pharmacy",
@@ -272,7 +278,8 @@
           "examDate": "2026-03-02",
           "resultDate": "2026-03-20"
         },
-        "admissionUrl": "https://www.kyushu-u.ac.jp/ja/admission/"
+        "admissionUrl": "https://www.kyushu-u.ac.jp/ja/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "agriculture",
@@ -299,7 +306,8 @@
           "examDate": "2026-03-02",
           "resultDate": "2026-03-20"
         },
-        "admissionUrl": "https://www.kyushu-u.ac.jp/ja/admission/"
+        "admissionUrl": "https://www.kyushu-u.ac.jp/ja/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "science",
@@ -326,7 +334,8 @@
           "examDate": "2025-11-25",
           "resultDate": "2025-12-13"
         },
-        "admissionUrl": "https://www.kyushu-u.ac.jp/ja/admission/"
+        "admissionUrl": "https://www.kyushu-u.ac.jp/ja/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "education",
@@ -358,7 +367,8 @@
           "examDate": "2026-03-02",
           "resultDate": "2026-03-20"
         },
-        "admissionUrl": "https://www.kyushu-u.ac.jp/ja/admission/"
+        "admissionUrl": "https://www.kyushu-u.ac.jp/ja/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "dentistry",
@@ -388,7 +398,8 @@
           "examDate": "2025-12-24",
           "resultDate": "2026-01-11"
         },
-        "admissionUrl": "https://www.kyushu-u.ac.jp/ja/admission/"
+        "admissionUrl": "https://www.kyushu-u.ac.jp/ja/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "engineering",
@@ -425,7 +436,8 @@
           "examDate": "2026-03-02",
           "resultDate": "2026-03-20"
         },
-        "admissionUrl": "https://www.kyushu-u.ac.jp/ja/admission/"
+        "admissionUrl": "https://www.kyushu-u.ac.jp/ja/admission/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -466,7 +478,8 @@
           "examDate": "2025-11-01",
           "resultDate": "2025-11-19"
         },
-        "admissionUrl": "https://www.kyoto-u.ac.jp/ja/admissions/tokusyoku"
+        "admissionUrl": "https://www.kyoto-u.ac.jp/ja/admissions/tokusyoku",
+        "selectionType": "comprehensive"
       },
       {
         "id": "economics",
@@ -503,7 +516,8 @@
           "examDate": "2025-12-06",
           "resultDate": "2025-12-24"
         },
-        "admissionUrl": "https://www.kyoto-u.ac.jp/ja/admissions/tokusyoku"
+        "admissionUrl": "https://www.kyoto-u.ac.jp/ja/admissions/tokusyoku",
+        "selectionType": "comprehensive"
       },
       {
         "id": "law",
@@ -545,7 +559,8 @@
           "examDate": "2026-03-02",
           "resultDate": "2026-03-20"
         },
-        "admissionUrl": "https://www.kyoto-u.ac.jp/ja/admissions/tokusyoku"
+        "admissionUrl": "https://www.kyoto-u.ac.jp/ja/admissions/tokusyoku",
+        "selectionType": "comprehensive"
       },
       {
         "id": "education",
@@ -579,7 +594,8 @@
           "examDate": "2025-11-01",
           "resultDate": "2025-11-19"
         },
-        "admissionUrl": "https://www.kyoto-u.ac.jp/ja/admissions/tokusyoku"
+        "admissionUrl": "https://www.kyoto-u.ac.jp/ja/admissions/tokusyoku",
+        "selectionType": "comprehensive"
       },
       {
         "id": "generalhuman",
@@ -636,7 +652,8 @@
           "examDate": "2026-03-02",
           "resultDate": "2026-03-20"
         },
-        "admissionUrl": "https://www.kyoto-u.ac.jp/ja/admissions/tokusyoku"
+        "admissionUrl": "https://www.kyoto-u.ac.jp/ja/admissions/tokusyoku",
+        "selectionType": "comprehensive"
       },
       {
         "id": "science",
@@ -678,7 +695,8 @@
           "examDate": "2026-03-02",
           "resultDate": "2026-03-20"
         },
-        "admissionUrl": "https://www.kyoto-u.ac.jp/ja/admissions/tokusyoku"
+        "admissionUrl": "https://www.kyoto-u.ac.jp/ja/admissions/tokusyoku",
+        "selectionType": "comprehensive"
       },
       {
         "id": "letters",
@@ -720,7 +738,8 @@
           "examDate": "2026-03-02",
           "resultDate": "2026-03-20"
         },
-        "admissionUrl": "https://www.kyoto-u.ac.jp/ja/admissions/tokusyoku"
+        "admissionUrl": "https://www.kyoto-u.ac.jp/ja/admissions/tokusyoku",
+        "selectionType": "comprehensive"
       },
       {
         "id": "agriculture",
@@ -763,7 +782,8 @@
           "examDate": "2026-03-02",
           "resultDate": "2026-03-20"
         },
-        "admissionUrl": "https://www.kyoto-u.ac.jp/ja/admissions/tokusyoku"
+        "admissionUrl": "https://www.kyoto-u.ac.jp/ja/admissions/tokusyoku",
+        "selectionType": "comprehensive"
       },
       {
         "id": "engineering",
@@ -795,7 +815,8 @@
           "examDate": "2025-12-06",
           "resultDate": "2025-12-24"
         },
-        "admissionUrl": "https://www.kyoto-u.ac.jp/ja/admissions/tokusyoku"
+        "admissionUrl": "https://www.kyoto-u.ac.jp/ja/admissions/tokusyoku",
+        "selectionType": "comprehensive"
       },
       {
         "id": "pharmacy",
@@ -837,7 +858,8 @@
           "examDate": "2026-03-02",
           "resultDate": "2026-03-20"
         },
-        "admissionUrl": "https://www.kyoto-u.ac.jp/ja/admissions/tokusyoku"
+        "admissionUrl": "https://www.kyoto-u.ac.jp/ja/admissions/tokusyoku",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -878,7 +900,8 @@
           "examDate": "2025-10-20",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.hokudai.ac.jp/admission/faculty/ao/"
+        "admissionUrl": "https://www.hokudai.ac.jp/admission/faculty/ao/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "engineering",
@@ -941,7 +964,8 @@
           "examDate": "2025-10-12",
           "resultDate": "2025-10-30"
         },
-        "admissionUrl": "https://www.hokudai.ac.jp/admission/faculty/ao/"
+        "admissionUrl": "https://www.hokudai.ac.jp/admission/faculty/ao/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "dentistry",
@@ -988,7 +1012,8 @@
           "examDate": "2025-10-20",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.hokudai.ac.jp/admission/faculty/ao/"
+        "admissionUrl": "https://www.hokudai.ac.jp/admission/faculty/ao/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "pharmacy",
@@ -1020,7 +1045,8 @@
           "examDate": "2025-10-20",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.hokudai.ac.jp/admission/faculty/ao/"
+        "admissionUrl": "https://www.hokudai.ac.jp/admission/faculty/ao/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "medicine",
@@ -1052,7 +1078,8 @@
           "examDate": "2025-10-20",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.hokudai.ac.jp/admission/faculty/ao/"
+        "admissionUrl": "https://www.hokudai.ac.jp/admission/faculty/ao/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "education",
@@ -1084,7 +1111,8 @@
           "examDate": "2025-10-20",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.hokudai.ac.jp/admission/faculty/ao/"
+        "admissionUrl": "https://www.hokudai.ac.jp/admission/faculty/ao/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "science",
@@ -1137,7 +1165,8 @@
           "examDate": "2025-10-12",
           "resultDate": "2025-10-30"
         },
-        "admissionUrl": "https://www.hokudai.ac.jp/admission/faculty/ao/"
+        "admissionUrl": "https://www.hokudai.ac.jp/admission/faculty/ao/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "medicine-2",
@@ -1215,7 +1244,8 @@
           "examDate": "2025-10-20",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.hokudai.ac.jp/admission/faculty/ao/"
+        "admissionUrl": "https://www.hokudai.ac.jp/admission/faculty/ao/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "agriculture",
@@ -1247,7 +1277,8 @@
           "examDate": "2025-10-20",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.hokudai.ac.jp/admission/faculty/ao/"
+        "admissionUrl": "https://www.hokudai.ac.jp/admission/faculty/ao/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "general",
@@ -1279,7 +1310,8 @@
           "examDate": "2025-10-20",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.hokudai.ac.jp/admission/faculty/ao/"
+        "admissionUrl": "https://www.hokudai.ac.jp/admission/faculty/ao/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "law",
@@ -1311,7 +1343,8 @@
           "examDate": "2025-10-20",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.hokudai.ac.jp/admission/faculty/ao/"
+        "admissionUrl": "https://www.hokudai.ac.jp/admission/faculty/ao/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "economics",
@@ -1358,7 +1391,8 @@
           "examDate": "2025-10-20",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.hokudai.ac.jp/admission/faculty/ao/"
+        "admissionUrl": "https://www.hokudai.ac.jp/admission/faculty/ao/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -1404,7 +1438,8 @@
           "examDate": "2025-12-02",
           "resultDate": "2025-12-20"
         },
-        "admissionUrl": "https://www.nagoya-u.ac.jp/admissions/exam/us-exam/cat3/index.html"
+        "admissionUrl": "https://www.nagoya-u.ac.jp/admissions/exam/us-exam/cat3/index.html",
+        "selectionType": "school_recommendation"
       },
       {
         "id": "science",
@@ -1441,7 +1476,8 @@
           "examDate": "2025-10-31",
           "resultDate": "2025-11-18"
         },
-        "admissionUrl": "https://www.nagoya-u.ac.jp/admissions/exam/us-exam/cat3/index.html"
+        "admissionUrl": "https://www.nagoya-u.ac.jp/admissions/exam/us-exam/cat3/index.html",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -1487,7 +1523,8 @@
           "examDate": "2025-12-02",
           "resultDate": "2025-12-20"
         },
-        "admissionUrl": "https://www.osaka-u.ac.jp/ja/admissions/faculty/n4boz8"
+        "admissionUrl": "https://www.osaka-u.ac.jp/ja/admissions/faculty/n4boz8",
+        "selectionType": "school_recommendation"
       },
       {
         "id": "letters",
@@ -1524,7 +1561,8 @@
           "examDate": "2025-12-02",
           "resultDate": "2025-12-20"
         },
-        "admissionUrl": "https://www.osaka-u.ac.jp/ja/admissions/faculty/n4boz8"
+        "admissionUrl": "https://www.osaka-u.ac.jp/ja/admissions/faculty/n4boz8",
+        "selectionType": "comprehensive"
       },
       {
         "id": "foreign-languages",
@@ -1561,7 +1599,8 @@
           "examDate": "2025-12-02",
           "resultDate": "2025-12-20"
         },
-        "admissionUrl": "https://www.osaka-u.ac.jp/ja/admissions/faculty/n4boz8"
+        "admissionUrl": "https://www.osaka-u.ac.jp/ja/admissions/faculty/n4boz8",
+        "selectionType": "comprehensive"
       },
       {
         "id": "medicinemedicine",
@@ -1598,7 +1637,8 @@
           "examDate": "2025-12-02",
           "resultDate": "2025-12-20"
         },
-        "admissionUrl": "https://www.osaka-u.ac.jp/ja/admissions/faculty/n4boz8"
+        "admissionUrl": "https://www.osaka-u.ac.jp/ja/admissions/faculty/n4boz8",
+        "selectionType": "school_recommendation"
       },
       {
         "id": "engineering",
@@ -1628,7 +1668,8 @@
           "examDate": "2025-12-02",
           "resultDate": "2025-12-20"
         },
-        "admissionUrl": "https://www.osaka-u.ac.jp/ja/admissions/faculty/n4boz8"
+        "admissionUrl": "https://www.osaka-u.ac.jp/ja/admissions/faculty/n4boz8",
+        "selectionType": "school_recommendation"
       },
       {
         "id": "science",
@@ -1660,7 +1701,8 @@
           "examDate": "2025-12-02",
           "resultDate": "2025-12-20"
         },
-        "admissionUrl": "https://www.osaka-u.ac.jp/ja/admissions/faculty/n4boz8"
+        "admissionUrl": "https://www.osaka-u.ac.jp/ja/admissions/faculty/n4boz8",
+        "selectionType": "comprehensive"
       },
       {
         "id": "engineering-2",
@@ -1697,7 +1739,8 @@
           "examDate": "2025-12-02",
           "resultDate": "2025-12-20"
         },
-        "admissionUrl": "https://www.osaka-u.ac.jp/ja/admissions/faculty/n4boz8"
+        "admissionUrl": "https://www.osaka-u.ac.jp/ja/admissions/faculty/n4boz8",
+        "selectionType": "school_recommendation"
       },
       {
         "id": "human",
@@ -1734,7 +1777,8 @@
           "examDate": "2025-12-02",
           "resultDate": "2025-12-20"
         },
-        "admissionUrl": "https://www.osaka-u.ac.jp/ja/admissions/faculty/n4boz8"
+        "admissionUrl": "https://www.osaka-u.ac.jp/ja/admissions/faculty/n4boz8",
+        "selectionType": "school_recommendation"
       },
       {
         "id": "law",
@@ -1766,7 +1810,8 @@
           "examDate": "2025-12-02",
           "resultDate": "2025-12-20"
         },
-        "admissionUrl": "https://www.osaka-u.ac.jp/ja/admissions/faculty/n4boz8"
+        "admissionUrl": "https://www.osaka-u.ac.jp/ja/admissions/faculty/n4boz8",
+        "selectionType": "comprehensive"
       },
       {
         "id": "medicine",
@@ -1798,7 +1843,8 @@
           "examDate": "2025-12-02",
           "resultDate": "2025-12-20"
         },
-        "admissionUrl": "https://www.osaka-u.ac.jp/ja/admissions/faculty/n4boz8"
+        "admissionUrl": "https://www.osaka-u.ac.jp/ja/admissions/faculty/n4boz8",
+        "selectionType": "school_recommendation"
       },
       {
         "id": "dentistry",
@@ -1830,7 +1876,8 @@
           "examDate": "2025-12-02",
           "resultDate": "2025-12-20"
         },
-        "admissionUrl": "https://www.osaka-u.ac.jp/ja/admissions/faculty/n4boz8"
+        "admissionUrl": "https://www.osaka-u.ac.jp/ja/admissions/faculty/n4boz8",
+        "selectionType": "school_recommendation"
       },
       {
         "id": "economics",
@@ -1863,7 +1910,8 @@
           "examDate": "2025-12-02",
           "resultDate": "2025-12-20"
         },
-        "admissionUrl": "https://www.osaka-u.ac.jp/ja/admissions/faculty/n4boz8"
+        "admissionUrl": "https://www.osaka-u.ac.jp/ja/admissions/faculty/n4boz8",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -1969,7 +2017,8 @@
           "examDate": "2025-12-30",
           "resultDate": "2026-01-17"
         },
-        "admissionUrl": "https://www.u-tokyo.ac.jp/ja/admissions/undergraduate/e01_26.html"
+        "admissionUrl": "https://www.u-tokyo.ac.jp/ja/admissions/undergraduate/e01_26.html",
+        "selectionType": "school_recommendation"
       },
       {
         "id": "letters",
@@ -1997,7 +2046,8 @@
           "examDate": "2025-12-01",
           "resultDate": "2025-12-19"
         },
-        "admissionUrl": "https://www.u-tokyo.ac.jp/ja/admissions/undergraduate/e01_26.html"
+        "admissionUrl": "https://www.u-tokyo.ac.jp/ja/admissions/undergraduate/e01_26.html",
+        "selectionType": "school_recommendation"
       },
       {
         "id": "letters-2",
@@ -2025,7 +2075,8 @@
           "examDate": "2025-12-01",
           "resultDate": "2025-12-19"
         },
-        "admissionUrl": "https://www.u-tokyo.ac.jp/ja/admissions/undergraduate/e01_26.html"
+        "admissionUrl": "https://www.u-tokyo.ac.jp/ja/admissions/undergraduate/e01_26.html",
+        "selectionType": "school_recommendation"
       },
       {
         "id": "science-2",
@@ -2053,7 +2104,8 @@
           "examDate": "2025-12-01",
           "resultDate": "2025-12-19"
         },
-        "admissionUrl": "https://www.u-tokyo.ac.jp/ja/admissions/undergraduate/e01_26.html"
+        "admissionUrl": "https://www.u-tokyo.ac.jp/ja/admissions/undergraduate/e01_26.html",
+        "selectionType": "school_recommendation"
       },
       {
         "id": "science-3",
@@ -2081,7 +2133,8 @@
           "examDate": "2025-12-01",
           "resultDate": "2025-12-19"
         },
-        "admissionUrl": "https://www.u-tokyo.ac.jp/ja/admissions/undergraduate/e01_26.html"
+        "admissionUrl": "https://www.u-tokyo.ac.jp/ja/admissions/undergraduate/e01_26.html",
+        "selectionType": "school_recommendation"
       },
       {
         "id": "letters-3",
@@ -2109,7 +2162,8 @@
           "examDate": "2025-12-01",
           "resultDate": "2025-12-19"
         },
-        "admissionUrl": "https://www.u-tokyo.ac.jp/ja/admissions/undergraduate/e01_26.html"
+        "admissionUrl": "https://www.u-tokyo.ac.jp/ja/admissions/undergraduate/e01_26.html",
+        "selectionType": "school_recommendation"
       }
     ]
   },
@@ -2160,7 +2214,8 @@
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
         },
-        "admissionUrl": "https://admissions.tohoku.ac.jp/ja/entrance-info/undergraduate-info/ao/"
+        "admissionUrl": "https://admissions.tohoku.ac.jp/ja/entrance-info/undergraduate-info/ao/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "law",
@@ -2197,7 +2252,8 @@
           "examDate": "2026-03-02",
           "resultDate": "2026-03-20"
         },
-        "admissionUrl": "https://admissions.tohoku.ac.jp/ja/entrance-info/undergraduate-info/ao/"
+        "admissionUrl": "https://admissions.tohoku.ac.jp/ja/entrance-info/undergraduate-info/ao/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "science",
@@ -2239,7 +2295,8 @@
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
         },
-        "admissionUrl": "https://admissions.tohoku.ac.jp/ja/entrance-info/undergraduate-info/ao/"
+        "admissionUrl": "https://admissions.tohoku.ac.jp/ja/entrance-info/undergraduate-info/ao/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "agriculture",
@@ -2271,7 +2328,8 @@
           "examDate": "2025-11-11",
           "resultDate": "2025-11-29"
         },
-        "admissionUrl": "https://admissions.tohoku.ac.jp/ja/entrance-info/undergraduate-info/ao/"
+        "admissionUrl": "https://admissions.tohoku.ac.jp/ja/entrance-info/undergraduate-info/ao/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "education",
@@ -2308,7 +2366,8 @@
           "examDate": "2026-03-02",
           "resultDate": "2026-03-20"
         },
-        "admissionUrl": "https://admissions.tohoku.ac.jp/ja/entrance-info/undergraduate-info/ao/"
+        "admissionUrl": "https://admissions.tohoku.ac.jp/ja/entrance-info/undergraduate-info/ao/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "pharmacy",
@@ -2345,7 +2404,8 @@
           "examDate": "2026-03-02",
           "resultDate": "2026-03-20"
         },
-        "admissionUrl": "https://admissions.tohoku.ac.jp/ja/entrance-info/undergraduate-info/ao/"
+        "admissionUrl": "https://admissions.tohoku.ac.jp/ja/entrance-info/undergraduate-info/ao/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "economics",
@@ -2382,7 +2442,8 @@
           "examDate": "2026-03-02",
           "resultDate": "2026-03-20"
         },
-        "admissionUrl": "https://admissions.tohoku.ac.jp/ja/entrance-info/undergraduate-info/ao/"
+        "admissionUrl": "https://admissions.tohoku.ac.jp/ja/entrance-info/undergraduate-info/ao/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "medicine",
@@ -2419,7 +2480,8 @@
           "examDate": "2026-03-02",
           "resultDate": "2026-03-20"
         },
-        "admissionUrl": "https://admissions.tohoku.ac.jp/ja/entrance-info/undergraduate-info/ao/"
+        "admissionUrl": "https://admissions.tohoku.ac.jp/ja/entrance-info/undergraduate-info/ao/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "dentistry",
@@ -2456,7 +2518,8 @@
           "examDate": "2026-03-02",
           "resultDate": "2026-03-20"
         },
-        "admissionUrl": "https://admissions.tohoku.ac.jp/ja/entrance-info/undergraduate-info/ao/"
+        "admissionUrl": "https://admissions.tohoku.ac.jp/ja/entrance-info/undergraduate-info/ao/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "letters",
@@ -2493,7 +2556,8 @@
           "examDate": "2026-03-02",
           "resultDate": "2026-03-20"
         },
-        "admissionUrl": "https://admissions.tohoku.ac.jp/ja/entrance-info/undergraduate-info/ao/"
+        "admissionUrl": "https://admissions.tohoku.ac.jp/ja/entrance-info/undergraduate-info/ao/",
+        "selectionType": "comprehensive"
       }
     ]
   }
