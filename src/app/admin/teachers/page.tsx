@@ -16,7 +16,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { GraduationCap, UserPlus, Users, ChevronDown, ChevronRight, Loader2 } from "lucide-react";
+import { GraduationCap, UserPlus, Users, ChevronDown, ChevronRight, Loader2, ExternalLink } from "lucide-react";
+import Link from "next/link";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { useAuthSWR } from "@/lib/api/swr";
 import { authFetch } from "@/lib/api/client";
@@ -163,6 +164,7 @@ export default function AdminTeachersPage() {
                     <th className="px-4 py-3 text-left font-medium hidden sm:table-cell">メール</th>
                     <th className="px-4 py-3 text-center font-medium">担当生徒数</th>
                     <th className="px-4 py-3 text-center font-medium hidden md:table-cell">登録日</th>
+                    <th className="px-4 py-3 text-center font-medium">操作</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -198,10 +200,18 @@ export default function AdminTeachersPage() {
                           <td className="px-4 py-3 text-center hidden md:table-cell text-xs text-muted-foreground">
                             {new Date(teacher.createdAt).toLocaleDateString("ja-JP")}
                           </td>
+                          <td className="px-4 py-3 text-center">
+                            <Link href={`/admin/teachers/${teacher.uid}`}>
+                              <Button size="sm" variant="outline" className="gap-1">
+                                <ExternalLink className="size-3" />
+                                詳細
+                              </Button>
+                            </Link>
+                          </td>
                         </tr>
                         {isExpanded && (
                           <tr key={`${teacher.uid}-students`} className="border-b">
-                            <td colSpan={5} className="px-8 py-3 bg-muted/30">
+                            <td colSpan={6} className="px-8 py-3 bg-muted/30">
                               {!students ? (
                                 <div className="space-y-2">
                                   <Skeleton className="h-6 w-48" />
