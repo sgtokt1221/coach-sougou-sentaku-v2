@@ -42,7 +42,8 @@
           "applicationEnd": "2024-11-01",
           "examDate": "2024-11-26",
           "resultDate": "2024-12-14"
-        }
+        },
+        "admissionUrl": "https://www.chuo-u.ac.jp/connect/admission/special/"
       },
       {
         "id": "policy",
@@ -80,7 +81,8 @@
           "applicationEnd": "2024-11-01",
           "examDate": "2024-11-26",
           "resultDate": "2024-12-14"
-        }
+        },
+        "admissionUrl": "https://www.chuo-u.ac.jp/connect/admission/special/"
       },
       {
         "id": "law",
@@ -118,7 +120,8 @@
           "applicationEnd": "2024-11-01",
           "examDate": "2024-11-26",
           "resultDate": "2024-12-14"
-        }
+        },
+        "admissionUrl": "https://www.chuo-u.ac.jp/connect/admission/special/"
       },
       {
         "id": "internationalbusiness",
@@ -155,7 +158,8 @@
           "applicationEnd": "2024年9月6日",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://www.chuo-u.ac.jp/connect/admission/special/"
       },
       {
         "id": "letters",
@@ -193,7 +197,8 @@
           "applicationEnd": "2024-11-01",
           "examDate": "2024-11-26",
           "resultDate": "2024-12-14"
-        }
+        },
+        "admissionUrl": "https://www.chuo-u.ac.jp/connect/admission/special/"
       },
       {
         "id": "internationalinformation",
@@ -217,7 +222,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://www.chuo-u.ac.jp/connect/admission/special/"
       },
       {
         "id": "economics",
@@ -255,7 +261,8 @@
           "applicationEnd": "2024-11-01",
           "examDate": "2024-11-26",
           "resultDate": "2024-12-14"
-        }
+        },
+        "admissionUrl": "https://www.chuo-u.ac.jp/connect/admission/special/"
       },
       {
         "id": "commerce",
@@ -293,7 +300,8 @@
           "applicationEnd": "2024-11-01",
           "examDate": "2024-11-26",
           "resultDate": "2024-12-14"
-        }
+        },
+        "admissionUrl": "https://www.chuo-u.ac.jp/connect/admission/special/"
       }
     ]
   },
@@ -335,7 +343,8 @@
           "applicationEnd": "2025-10-02",
           "examDate": "2025-10-27",
           "resultDate": "2025-11-14"
-        }
+        },
+        "admissionUrl": "https://www.meiji.ac.jp/exam/reference/tgansho.html"
       },
       {
         "id": "international-japan",
@@ -373,7 +382,8 @@
           "applicationEnd": "2024-09-24",
           "examDate": "2024-10-19",
           "resultDate": "2024-11-06"
-        }
+        },
+        "admissionUrl": "https://www.meiji.ac.jp/exam/reference/tgansho.html"
       },
       {
         "id": "agriculture",
@@ -405,7 +415,8 @@
           "applicationEnd": "2024-09-06",
           "examDate": "2024-10-01",
           "resultDate": "2024-10-19"
-        }
+        },
+        "admissionUrl": "https://www.meiji.ac.jp/exam/reference/tgansho.html"
       },
       {
         "id": "law",
@@ -447,7 +458,8 @@
           "applicationEnd": "2025-08-21",
           "examDate": "2025-09-15",
           "resultDate": "2025-10-03"
-        }
+        },
+        "admissionUrl": "https://www.meiji.ac.jp/exam/reference/tgansho.html"
       },
       {
         "id": "science-eng",
@@ -471,7 +483,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://www.meiji.ac.jp/exam/reference/tgansho.html"
       },
       {
         "id": "math-science",
@@ -508,7 +521,8 @@
           "applicationEnd": "2024-09-25",
           "examDate": "2024-10-20",
           "resultDate": "2024-11-07"
-        }
+        },
+        "admissionUrl": "https://www.meiji.ac.jp/exam/reference/tgansho.html"
       },
       {
         "id": "political-economy",
@@ -545,7 +559,8 @@
           "applicationEnd": "2024-09-05",
           "examDate": "2024-09-30",
           "resultDate": "2024-10-18"
-        }
+        },
+        "admissionUrl": "https://www.meiji.ac.jp/exam/reference/tgansho.html"
       },
       {
         "id": "commerce",
@@ -577,7 +592,8 @@
           "applicationEnd": "2025-10-20",
           "examDate": "2025-11-14",
           "resultDate": "2025-12-02"
-        }
+        },
+        "admissionUrl": "https://www.meiji.ac.jp/exam/reference/tgansho.html"
       }
     ]
   },
@@ -622,7 +638,8 @@
           "applicationEnd": "10月11日",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://nyushi.hosei.ac.jp/nyushi/"
       },
       {
         "id": "business",
@@ -659,7 +676,8 @@
           "applicationEnd": "2024年10月4日",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://nyushi.hosei.ac.jp/nyushi/"
       },
       {
         "id": "information",
@@ -696,7 +714,8 @@
           "applicationEnd": "10月18日（金）",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://nyushi.hosei.ac.jp/nyushi/"
       },
       {
         "id": "international-culture",
@@ -729,7 +748,8 @@
           "applicationEnd": "2024-10-11",
           "examDate": "2024-11-05",
           "resultDate": "2024-11-23"
-        }
+        },
+        "admissionUrl": "https://nyushi.hosei.ac.jp/nyushi/"
       },
       {
         "id": "human-environment",
@@ -765,7 +785,8 @@
           "applicationEnd": "10月11日",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://nyushi.hosei.ac.jp/nyushi/"
       },
       {
         "id": "design-eng",
@@ -789,7 +810,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://nyushi.hosei.ac.jp/nyushi/"
       },
       {
         "id": "global-liberal-arts",
@@ -813,7 +835,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://nyushi.hosei.ac.jp/nyushi/"
       },
       {
         "id": "law",
@@ -845,7 +868,8 @@
           "applicationEnd": "2024-10-18",
           "examDate": "2024-11-12",
           "resultDate": "2024-11-30"
-        }
+        },
+        "admissionUrl": "https://nyushi.hosei.ac.jp/nyushi/"
       },
       {
         "id": "general",
@@ -869,7 +893,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://nyushi.hosei.ac.jp/nyushi/"
       },
       {
         "id": "modern-welfare",
@@ -906,7 +931,8 @@
           "applicationEnd": "2024-10-04",
           "examDate": "2024-10-29",
           "resultDate": "2024-11-16"
-        }
+        },
+        "admissionUrl": "https://nyushi.hosei.ac.jp/nyushi/"
       },
       {
         "id": "careerdesign",
@@ -939,7 +965,8 @@
           "applicationEnd": "2024-10-11",
           "examDate": "2024-11-05",
           "resultDate": "2024-11-23"
-        }
+        },
+        "admissionUrl": "https://nyushi.hosei.ac.jp/nyushi/"
       },
       {
         "id": "social",
@@ -963,7 +990,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://nyushi.hosei.ac.jp/nyushi/"
       },
       {
         "id": "economics",
@@ -1000,7 +1028,8 @@
           "applicationEnd": "2024-10-18",
           "examDate": "2024-11-12",
           "resultDate": "2024-11-30"
-        }
+        },
+        "admissionUrl": "https://nyushi.hosei.ac.jp/nyushi/"
       },
       {
         "id": "sports",
@@ -1038,7 +1067,8 @@
           "applicationEnd": "・トップアスリート\n2024年9月20日\n\n・理数系、アスリート\n2024年10月18日",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://nyushi.hosei.ac.jp/nyushi/"
       },
       {
         "id": "science-eng",
@@ -1062,7 +1092,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://nyushi.hosei.ac.jp/nyushi/"
       }
     ]
   },
@@ -1124,7 +1155,8 @@
           "applicationEnd": "2025年9月17日",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://www.rikkyo.ac.jp/admissions/undergraduate/free_selection.html"
       },
       {
         "id": "sports",
@@ -1162,7 +1194,8 @@
           "applicationEnd": "2025年9月17日",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://www.rikkyo.ac.jp/admissions/undergraduate/free_selection.html"
       },
       {
         "id": "economics",
@@ -1199,7 +1232,8 @@
           "applicationEnd": "2025年9月17日",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://www.rikkyo.ac.jp/admissions/undergraduate/free_selection.html"
       },
       {
         "id": "glap",
@@ -1223,7 +1257,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://www.rikkyo.ac.jp/admissions/undergraduate/free_selection.html"
       },
       {
         "id": "tourism",
@@ -1261,7 +1296,8 @@
           "applicationEnd": "2025年9月17日",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://www.rikkyo.ac.jp/admissions/undergraduate/free_selection.html"
       },
       {
         "id": "letters",
@@ -1299,7 +1335,8 @@
           "applicationEnd": "2025年9月17日",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://www.rikkyo.ac.jp/admissions/undergraduate/free_selection.html"
       },
       {
         "id": "general",
@@ -1332,7 +1369,8 @@
           "applicationEnd": "2025年9月17日",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://www.rikkyo.ac.jp/admissions/undergraduate/free_selection.html"
       },
       {
         "id": "letters-2",
@@ -1370,7 +1408,8 @@
           "applicationEnd": "2025-09-04",
           "examDate": "2025-09-29",
           "resultDate": "2025-10-17"
-        }
+        },
+        "admissionUrl": "https://www.rikkyo.ac.jp/admissions/undergraduate/free_selection.html"
       },
       {
         "id": "social",
@@ -1408,7 +1447,8 @@
           "applicationEnd": "2025-09-04",
           "examDate": "2025-09-29",
           "resultDate": "2025-10-17"
-        }
+        },
+        "admissionUrl": "https://www.rikkyo.ac.jp/admissions/undergraduate/free_selection.html"
       },
       {
         "id": "community-welfare",
@@ -1441,7 +1481,8 @@
           "applicationEnd": "2025年9月17日",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://www.rikkyo.ac.jp/admissions/undergraduate/free_selection.html"
       },
       {
         "id": "business",
@@ -1479,7 +1520,8 @@
           "applicationEnd": "2025-09-04",
           "examDate": "2025-09-29",
           "resultDate": "2025-10-17"
-        }
+        },
+        "admissionUrl": "https://www.rikkyo.ac.jp/admissions/undergraduate/free_selection.html"
       },
       {
         "id": "law",
@@ -1512,7 +1554,8 @@
           "applicationEnd": "2025年9月17日",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://www.rikkyo.ac.jp/admissions/undergraduate/free_selection.html"
       },
       {
         "id": "science-2",
@@ -1550,7 +1593,8 @@
           "applicationEnd": "2025-09-04",
           "examDate": "2025-09-29",
           "resultDate": "2025-10-17"
-        }
+        },
+        "admissionUrl": "https://www.rikkyo.ac.jp/admissions/undergraduate/free_selection.html"
       }
     ]
   },
@@ -1597,7 +1641,8 @@
           "applicationEnd": "2025-11-04",
           "examDate": "2025-11-29",
           "resultDate": "2025-12-17"
-        }
+        },
+        "admissionUrl": "https://www.aoyama.ac.jp/admission/undergraduate/examination/"
       },
       {
         "id": "letters",
@@ -1634,7 +1679,8 @@
           "applicationEnd": "2025-9-11",
           "examDate": "2025-10-06",
           "resultDate": "2025-10-24"
-        }
+        },
+        "admissionUrl": "https://www.aoyama.ac.jp/admission/undergraduate/examination/"
       },
       {
         "id": "economics",
@@ -1671,7 +1717,8 @@
           "applicationEnd": "2025-11-04",
           "examDate": "2025-11-29",
           "resultDate": "2025-12-17"
-        }
+        },
+        "admissionUrl": "https://www.aoyama.ac.jp/admission/undergraduate/examination/"
       },
       {
         "id": "business",
@@ -1709,7 +1756,8 @@
           "applicationEnd": "2024-11-05",
           "examDate": "2024-11-30",
           "resultDate": "2024-12-18"
-        }
+        },
+        "admissionUrl": "https://www.aoyama.ac.jp/admission/undergraduate/examination/"
       },
       {
         "id": "educationhuman",
@@ -1747,7 +1795,8 @@
           "applicationEnd": "2025-11-04",
           "examDate": "2025-11-29",
           "resultDate": "2025-12-17"
-        }
+        },
+        "admissionUrl": "https://www.aoyama.ac.jp/admission/undergraduate/examination/"
       },
       {
         "id": "science-eng",
@@ -1785,7 +1834,8 @@
           "applicationEnd": "2024-11-05",
           "examDate": "2024-11-30",
           "resultDate": "2024-12-18"
-        }
+        },
+        "admissionUrl": "https://www.aoyama.ac.jp/admission/undergraduate/examination/"
       },
       {
         "id": "social",
@@ -1822,7 +1872,8 @@
           "applicationEnd": "2025-11-04",
           "examDate": "2025-11-29",
           "resultDate": "2025-12-17"
-        }
+        },
+        "admissionUrl": "https://www.aoyama.ac.jp/admission/undergraduate/examination/"
       },
       {
         "id": "international-political-economy",
@@ -1860,7 +1911,8 @@
           "applicationEnd": "2025-11-04",
           "examDate": "2025-11-29",
           "resultDate": "2025-12-17"
-        }
+        },
+        "admissionUrl": "https://www.aoyama.ac.jp/admission/undergraduate/examination/"
       },
       {
         "id": "law",
@@ -1897,7 +1949,8 @@
           "applicationEnd": "2024-11-05",
           "examDate": "2024-11-30",
           "resultDate": "2024-12-18"
-        }
+        },
+        "admissionUrl": "https://www.aoyama.ac.jp/admission/undergraduate/examination/"
       },
       {
         "id": "communityhuman",
@@ -1934,7 +1987,8 @@
           "applicationEnd": "2025-09-11",
           "examDate": "2025-10-06",
           "resultDate": "2025-10-24"
-        }
+        },
+        "admissionUrl": "https://www.aoyama.ac.jp/admission/undergraduate/examination/"
       },
       {
         "id": "cultural-policy",
@@ -1971,7 +2025,8 @@
           "applicationEnd": "2025-11-04",
           "examDate": "2025-11-29",
           "resultDate": "2025-12-17"
-        }
+        },
+        "admissionUrl": "https://www.aoyama.ac.jp/admission/undergraduate/examination/"
       }
     ]
   }

@@ -41,7 +41,8 @@
           "applicationEnd": "2025年9月16日",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://www.senshu-u.ac.jp/admission/shikenseido/"
       },
       {
         "id": "commerce",
@@ -78,7 +79,8 @@
           "applicationEnd": "2024年11月5日",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://www.senshu-u.ac.jp/admission/shikenseido/"
       },
       {
         "id": "business",
@@ -110,7 +112,8 @@
           "applicationEnd": "2025年9月12日",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://www.senshu-u.ac.jp/admission/shikenseido/"
       },
       {
         "id": "economics",
@@ -143,7 +146,8 @@
           "applicationEnd": "2024年10月18日",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://www.senshu-u.ac.jp/admission/shikenseido/"
       },
       {
         "id": "international-comm",
@@ -179,7 +183,8 @@
           "applicationEnd": "2024年9月13日",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://www.senshu-u.ac.jp/admission/shikenseido/"
       }
     ]
   },
@@ -215,7 +220,8 @@
           "applicationEnd": "2025-09-11",
           "examDate": "2025-10-06",
           "resultDate": "2025-10-24"
-        }
+        },
+        "admissionUrl": "https://www.nihon-u.ac.jp/admission_info/application/"
       },
       {
         "id": "sports",
@@ -246,7 +252,8 @@
           "applicationEnd": "2025-11-05",
           "examDate": "2025-11-30",
           "resultDate": "2025-12-18"
-        }
+        },
+        "admissionUrl": "https://www.nihon-u.ac.jp/admission_info/application/"
       },
       {
         "id": "economics",
@@ -277,7 +284,8 @@
           "applicationEnd": "2025-09-12",
           "examDate": "2025-10-07",
           "resultDate": "2025-10-25"
-        }
+        },
+        "admissionUrl": "https://www.nihon-u.ac.jp/admission_info/application/"
       },
       {
         "id": "pharmacy",
@@ -308,7 +316,8 @@
           "applicationEnd": "令和7年9月25日",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://www.nihon-u.ac.jp/admission_info/application/"
       },
       {
         "id": "lettersscience",
@@ -340,7 +349,8 @@
           "applicationEnd": "2025-09-10",
           "examDate": "2025-10-05",
           "resultDate": "2025-10-23"
-        }
+        },
+        "admissionUrl": "https://www.nihon-u.ac.jp/admission_info/application/"
       },
       {
         "id": "engineering",
@@ -387,7 +397,8 @@
           "applicationEnd": "第1期：2025年9月8日\n第2期：2025年9月29日",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://www.nihon-u.ac.jp/admission_info/application/"
       },
       {
         "id": "law",
@@ -509,7 +520,8 @@
           "applicationEnd": "2025-09-12",
           "examDate": "2025-10-07",
           "resultDate": "2025-10-25"
-        }
+        },
+        "admissionUrl": "https://www.nihon-u.ac.jp/admission_info/application/"
       },
       {
         "id": "commerce",
@@ -540,7 +552,8 @@
           "applicationEnd": "2025-09-08",
           "examDate": "2025-10-03",
           "resultDate": "2025-10-21"
-        }
+        },
+        "admissionUrl": "https://www.nihon-u.ac.jp/admission_info/application/"
       },
       {
         "id": "medicine",
@@ -572,7 +585,8 @@
           "applicationEnd": "2025-11-28",
           "examDate": "2025-12-23",
           "resultDate": "2026-01-10"
-        }
+        },
+        "admissionUrl": "https://www.nihon-u.ac.jp/admission_info/application/"
       },
       {
         "id": "dentistry",
@@ -613,7 +627,8 @@
           "applicationEnd": "第1期：2025-1010\n第2期：2025-12-5\n第3期：2025-3-13",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://www.nihon-u.ac.jp/admission_info/application/"
       },
       {
         "id": "arts",
@@ -645,7 +660,8 @@
           "applicationEnd": "2025-09-03",
           "examDate": "2025-09-28",
           "resultDate": "2025-10-16"
-        }
+        },
+        "admissionUrl": "https://www.nihon-u.ac.jp/admission_info/application/"
       },
       {
         "id": "engineering-2",
@@ -672,7 +688,8 @@
           "applicationEnd": "2025-09-08",
           "examDate": "2025-10-03",
           "resultDate": "2025-10-21"
-        }
+        },
+        "admissionUrl": "https://www.nihon-u.ac.jp/admission_info/application/"
       },
       {
         "id": "general",
@@ -723,7 +740,8 @@
           "applicationEnd": "9月26日（金）",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://www.nihon-u.ac.jp/admission_info/application/"
       },
       {
         "id": "international-relations",
@@ -780,7 +798,8 @@
           "applicationEnd": "第1期　2025-9-25\n第2期　2025-10-9\n第3期　2025-11-27\n第4期　2026-2-19\n",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://www.nihon-u.ac.jp/admission_info/application/"
       },
       {
         "id": "science-eng",
@@ -812,7 +831,8 @@
           "applicationEnd": "2025-09-08",
           "examDate": "2025-10-03",
           "resultDate": "2025-10-21"
-        }
+        },
+        "admissionUrl": "https://www.nihon-u.ac.jp/admission_info/application/"
       }
     ]
   },
@@ -857,7 +877,8 @@
           "applicationEnd": "2025-11-05",
           "examDate": "2025-11-30",
           "resultDate": "2025-12-18"
-        }
+        },
+        "admissionUrl": "https://www.toyo.ac.jp/nyushi/admission/admission-data/requirements-special/"
       },
       {
         "id": "welfaresocialdesign",
@@ -893,7 +914,8 @@
           "applicationEnd": "2025-11-05",
           "examDate": "2025-11-30",
           "resultDate": "2025-12-18"
-        }
+        },
+        "admissionUrl": "https://www.toyo.ac.jp/nyushi/admission/admission-data/requirements-special/"
       },
       {
         "id": "general",
@@ -929,7 +951,8 @@
           "applicationEnd": "2025-11-05",
           "examDate": "2025-11-30",
           "resultDate": "2025-12-18"
-        }
+        },
+        "admissionUrl": "https://www.toyo.ac.jp/nyushi/admission/admission-data/requirements-special/"
       },
       {
         "id": "internationaltourism",
@@ -966,7 +989,8 @@
           "applicationEnd": "2025-11-05",
           "examDate": "2025-11-30",
           "resultDate": "2025-12-18"
-        }
+        },
+        "admissionUrl": "https://www.toyo.ac.jp/nyushi/admission/admission-data/requirements-special/"
       },
       {
         "id": "info-networking",
@@ -1003,7 +1027,8 @@
           "applicationEnd": "2025-09-11",
           "examDate": "2025-10-06",
           "resultDate": "2025-10-24"
-        }
+        },
+        "admissionUrl": "https://www.toyo.ac.jp/nyushi/admission/admission-data/requirements-special/"
       },
       {
         "id": "social",
@@ -1040,7 +1065,8 @@
           "applicationEnd": "2025-11-05",
           "examDate": "2025-11-30",
           "resultDate": "2025-12-18"
-        }
+        },
+        "admissionUrl": "https://www.toyo.ac.jp/nyushi/admission/admission-data/requirements-special/"
       },
       {
         "id": "economics",
@@ -1077,7 +1103,8 @@
           "applicationEnd": "2025-11-05",
           "examDate": "2025-11-30",
           "resultDate": "2025-12-18"
-        }
+        },
+        "admissionUrl": "https://www.toyo.ac.jp/nyushi/admission/admission-data/requirements-special/"
       },
       {
         "id": "law",
@@ -1113,7 +1140,8 @@
           "applicationEnd": "2025-11-05",
           "examDate": "2025-11-30",
           "resultDate": "2025-12-18"
-        }
+        },
+        "admissionUrl": "https://www.toyo.ac.jp/nyushi/admission/admission-data/requirements-special/"
       },
       {
         "id": "international",
@@ -1155,7 +1183,8 @@
           "applicationEnd": "2025-11-05",
           "examDate": "2025-11-30",
           "resultDate": "2025-12-18"
-        }
+        },
+        "admissionUrl": "https://www.toyo.ac.jp/nyushi/admission/admission-data/requirements-special/"
       },
       {
         "id": "business",
@@ -1192,7 +1221,8 @@
           "applicationEnd": "2025-11-05",
           "examDate": "2025-11-30",
           "resultDate": "2025-12-18"
-        }
+        },
+        "admissionUrl": "https://www.toyo.ac.jp/nyushi/admission/admission-data/requirements-special/"
       },
       {
         "id": "letters",
@@ -1228,7 +1258,8 @@
           "applicationEnd": "2025-11-05",
           "examDate": "2025-11-30",
           "resultDate": "2025-12-18"
-        }
+        },
+        "admissionUrl": "https://www.toyo.ac.jp/nyushi/admission/admission-data/requirements-special/"
       },
       {
         "id": "general-info",
@@ -1264,7 +1295,8 @@
           "applicationEnd": "2025-11-05",
           "examDate": "2025-11-30",
           "resultDate": "2025-12-18"
-        }
+        },
+        "admissionUrl": "https://www.toyo.ac.jp/nyushi/admission/admission-data/requirements-special/"
       },
       {
         "id": "science-eng",
@@ -1296,7 +1328,8 @@
           "applicationEnd": "2025-11-11",
           "examDate": "2025-12-06",
           "resultDate": "2025-12-24"
-        }
+        },
+        "admissionUrl": "https://www.toyo.ac.jp/nyushi/admission/admission-data/requirements-special/"
       },
       {
         "id": "sports",
@@ -1332,7 +1365,8 @@
           "applicationEnd": "2025-11-05",
           "examDate": "2025-11-30",
           "resultDate": "2025-12-18"
-        }
+        },
+        "admissionUrl": "https://www.toyo.ac.jp/nyushi/admission/admission-data/requirements-special/"
       }
     ]
   },
@@ -1373,7 +1407,8 @@
           "applicationEnd": "2025-10-01",
           "examDate": "2025-10-26",
           "resultDate": "2025-11-13"
-        }
+        },
+        "admissionUrl": "https://think.komazawa-u.ac.jp/admission/"
       },
       {
         "id": "economics",
@@ -1404,7 +1439,8 @@
           "applicationEnd": "2025-09-12",
           "examDate": "2025-10-07",
           "resultDate": "2025-10-25"
-        }
+        },
+        "admissionUrl": "https://think.komazawa-u.ac.jp/admission/"
       },
       {
         "id": "law",
@@ -1436,7 +1472,8 @@
           "applicationEnd": "2025-10-01",
           "examDate": "2025-10-26",
           "resultDate": "2025-11-13"
-        }
+        },
+        "admissionUrl": "https://think.komazawa-u.ac.jp/admission/"
       },
       {
         "id": "letters",
@@ -1468,7 +1505,8 @@
           "applicationEnd": "2025-10-01",
           "examDate": "2025-10-26",
           "resultDate": "2025-11-13"
-        }
+        },
+        "admissionUrl": "https://think.komazawa-u.ac.jp/admission/"
       },
       {
         "id": "global",
@@ -1505,7 +1543,8 @@
           "applicationEnd": "2025-09-12",
           "examDate": "2025-10-07",
           "resultDate": "2025-10-25"
-        }
+        },
+        "admissionUrl": "https://think.komazawa-u.ac.jp/admission/"
       },
       {
         "id": "buddhism",
@@ -1537,7 +1576,8 @@
           "applicationEnd": "2025-09-12",
           "examDate": "2025-10-07",
           "resultDate": "2025-10-25"
-        }
+        },
+        "admissionUrl": "https://think.komazawa-u.ac.jp/admission/"
       },
       {
         "id": "business",
@@ -1569,7 +1609,8 @@
           "applicationEnd": "2025-10-01",
           "examDate": "2025-10-26",
           "resultDate": "2025-11-13"
-        }
+        },
+        "admissionUrl": "https://think.komazawa-u.ac.jp/admission/"
       }
     ]
   }

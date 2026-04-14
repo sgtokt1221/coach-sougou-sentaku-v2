@@ -40,7 +40,8 @@
           "applicationEnd": "2025-09-08",
           "examDate": "2025-10-03",
           "resultDate": "2025-10-21"
-        }
+        },
+        "admissionUrl": "https://www.kyoto-su.ac.jp/"
       },
       {
         "id": "business",
@@ -77,7 +78,8 @@
           "applicationEnd": "2025-09-08",
           "examDate": "2025-10-03",
           "resultDate": "2025-10-21"
-        }
+        },
+        "admissionUrl": "https://www.kyoto-su.ac.jp/"
       },
       {
         "id": "general",
@@ -129,7 +131,8 @@
           "applicationEnd": "2025-09-08",
           "examDate": "2025-10-03",
           "resultDate": "2025-10-21"
-        }
+        },
+        "admissionUrl": "https://www.kyoto-su.ac.jp/"
       },
       {
         "id": "economics",
@@ -165,7 +168,8 @@
           "applicationEnd": "2025-09-08",
           "examDate": "2025-10-03",
           "resultDate": "2025-10-21"
-        }
+        },
+        "admissionUrl": "https://www.kyoto-su.ac.jp/"
       },
       {
         "id": "informationscience-eng",
@@ -197,7 +201,8 @@
           "applicationEnd": "2025-09-08",
           "examDate": "2025-10-03",
           "resultDate": "2025-10-21"
-        }
+        },
+        "admissionUrl": "https://www.kyoto-su.ac.jp/"
       },
       {
         "id": "letters",
@@ -229,7 +234,8 @@
           "applicationEnd": "2025-11-10",
           "examDate": "2025-12-05",
           "resultDate": "2025-12-23"
-        }
+        },
+        "admissionUrl": "https://www.kyoto-su.ac.jp/"
       },
       {
         "id": "general-2",
@@ -261,7 +267,8 @@
           "applicationEnd": "2025-11-10",
           "examDate": "2025-12-05",
           "resultDate": "2025-12-23"
-        }
+        },
+        "admissionUrl": "https://www.kyoto-su.ac.jp/"
       },
       {
         "id": "law",
@@ -297,7 +304,8 @@
           "applicationEnd": "2025-09-08",
           "examDate": "2025-10-03",
           "resultDate": "2025-10-21"
-        }
+        },
+        "admissionUrl": "https://www.kyoto-su.ac.jp/"
       },
       {
         "id": "science",
@@ -334,7 +342,8 @@
           "applicationEnd": "2025-09-08",
           "examDate": "2025-10-03",
           "resultDate": "2025-10-21"
-        }
+        },
+        "admissionUrl": "https://www.kyoto-su.ac.jp/"
       },
       {
         "id": "foreign-languages",
@@ -371,7 +380,8 @@
           "applicationEnd": "2025-09-08",
           "examDate": "2025-10-03",
           "resultDate": "2025-10-21"
-        }
+        },
+        "admissionUrl": "https://www.kyoto-su.ac.jp/"
       },
       {
         "id": "social",
@@ -408,7 +418,8 @@
           "applicationEnd": "2025-09-08",
           "examDate": "2025-10-03",
           "resultDate": "2025-10-21"
-        }
+        },
+        "admissionUrl": "https://www.kyoto-su.ac.jp/"
       }
     ]
   },
@@ -449,7 +460,8 @@
           "applicationEnd": "2024年9月7日",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://ch.konan-u.ac.jp/admission/other/"
       },
       {
         "id": "management",
@@ -487,7 +499,8 @@
           "applicationEnd": "2024年9月7日",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://ch.konan-u.ac.jp/admission/other/"
       },
       {
         "id": "law",
@@ -524,7 +537,8 @@
           "applicationEnd": "2024-10-15",
           "examDate": "2024-11-09",
           "resultDate": "2024-11-27"
-        }
+        },
+        "admissionUrl": "https://ch.konan-u.ac.jp/admission/other/"
       },
       {
         "id": "information",
@@ -556,7 +570,8 @@
           "applicationEnd": "2024-10-15",
           "examDate": "2024-11-09",
           "resultDate": "2024-11-27"
-        }
+        },
+        "admissionUrl": "https://ch.konan-u.ac.jp/admission/other/"
       },
       {
         "id": "economics",
@@ -594,7 +609,8 @@
           "applicationEnd": "2024年9月7日",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://ch.konan-u.ac.jp/admission/other/"
       },
       {
         "id": "letters",
@@ -626,7 +642,8 @@
           "applicationEnd": "2024-10-15",
           "examDate": "2024-11-09",
           "resultDate": "2024-11-27"
-        }
+        },
+        "admissionUrl": "https://ch.konan-u.ac.jp/admission/other/"
       },
       {
         "id": "global-liberal-arts",
@@ -658,7 +675,8 @@
           "applicationEnd": "2024年9月7日",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://ch.konan-u.ac.jp/admission/other/"
       },
       {
         "id": "science-eng",
@@ -695,7 +713,8 @@
           "applicationEnd": "2024-11-07",
           "examDate": "2024-12-02",
           "resultDate": "2024-12-20"
-        }
+        },
+        "admissionUrl": "https://ch.konan-u.ac.jp/admission/other/"
       },
       {
         "id": "general",
@@ -727,7 +746,8 @@
           "applicationEnd": "2024-10-15",
           "examDate": "2024-11-09",
           "resultDate": "2024-11-27"
-        }
+        },
+        "admissionUrl": "https://ch.konan-u.ac.jp/admission/other/"
       }
     ]
   },
@@ -793,7 +813,8 @@
           "applicationEnd": "2025-09-26",
           "examDate": "2025-10-21",
           "resultDate": "2025-11-08"
-        }
+        },
+        "admissionUrl": "https://www.kindai.ac.jp/admissions/"
       },
       {
         "id": "literary-arts",
@@ -830,7 +851,8 @@
           "applicationEnd": "2025-09-09",
           "examDate": "2025-10-04",
           "resultDate": "2025-10-22"
-        }
+        },
+        "admissionUrl": "https://www.kindai.ac.jp/admissions/"
       },
       {
         "id": "science-eng-2",
@@ -872,7 +894,8 @@
           "applicationEnd": "2025-09-19",
           "examDate": "2025-10-14",
           "resultDate": "2025-11-01"
-        }
+        },
+        "admissionUrl": "https://www.kindai.ac.jp/admissions/"
       },
       {
         "id": "law",
@@ -908,7 +931,8 @@
           "applicationEnd": "2025-11-14",
           "examDate": "2025-12-09",
           "resultDate": "2025-12-27"
-        }
+        },
+        "admissionUrl": "https://www.kindai.ac.jp/admissions/"
       },
       {
         "id": "pharmacy",
@@ -964,7 +988,8 @@
           "applicationEnd": "2025-11-14",
           "examDate": "2025-12-09",
           "resultDate": "2025-12-27"
-        }
+        },
+        "admissionUrl": "https://www.kindai.ac.jp/admissions/"
       },
       {
         "id": "information",
@@ -1001,7 +1026,8 @@
           "applicationEnd": "2025-09-18",
           "examDate": "2025-10-13",
           "resultDate": "2025-10-31"
-        }
+        },
+        "admissionUrl": "https://www.kindai.ac.jp/admissions/"
       },
       {
         "id": "science-eng-3",
@@ -1033,7 +1059,8 @@
           "applicationEnd": "2025-09-08",
           "examDate": "2025-10-03",
           "resultDate": "2025-10-21"
-        }
+        },
+        "admissionUrl": "https://www.kindai.ac.jp/admissions/"
       },
       {
         "id": "economics",
@@ -1070,7 +1097,8 @@
           "applicationEnd": "2025-09-05",
           "examDate": "2025-09-30",
           "resultDate": "2025-10-18"
-        }
+        },
+        "admissionUrl": "https://www.kindai.ac.jp/admissions/"
       },
       {
         "id": "architecture",
@@ -1116,7 +1144,8 @@
           "applicationEnd": "2025-11-14",
           "examDate": "2025-12-09",
           "resultDate": "2025-12-27"
-        }
+        },
+        "admissionUrl": "https://www.kindai.ac.jp/admissions/"
       },
       {
         "id": "business",
@@ -1153,7 +1182,8 @@
           "applicationEnd": "2025-09-08",
           "examDate": "2025-10-03",
           "resultDate": "2025-10-21"
-        }
+        },
+        "admissionUrl": "https://www.kindai.ac.jp/admissions/"
       },
       {
         "id": "general-social",
@@ -1195,7 +1225,8 @@
           "applicationEnd": "2025-09-08",
           "examDate": "2025-10-03",
           "resultDate": "2025-10-21"
-        }
+        },
+        "admissionUrl": "https://www.kindai.ac.jp/admissions/"
       },
       {
         "id": "engineering",
@@ -1232,7 +1263,8 @@
           "applicationEnd": "2025-10-01",
           "examDate": "2025-10-26",
           "resultDate": "2025-11-13"
-        }
+        },
+        "admissionUrl": "https://www.kindai.ac.jp/admissions/"
       },
       {
         "id": "agriculture",
@@ -1283,7 +1315,8 @@
           "applicationEnd": "2025-11-28",
           "examDate": "2025-12-23",
           "resultDate": "2026-01-10"
-        }
+        },
+        "admissionUrl": "https://www.kindai.ac.jp/admissions/"
       },
       {
         "id": "international",
@@ -1325,7 +1358,8 @@
           "applicationEnd": "2025-09-29",
           "examDate": "2025-10-24",
           "resultDate": "2025-11-11"
-        }
+        },
+        "admissionUrl": "https://www.kindai.ac.jp/admissions/"
       },
       {
         "id": "nursing",
@@ -1351,7 +1385,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://www.kindai.ac.jp/admissions/"
       },
       {
         "id": "medicine",
@@ -1387,7 +1422,8 @@
           "applicationEnd": "2025-11-28",
           "examDate": "2025-12-23",
           "resultDate": "2026-01-10"
-        }
+        },
+        "admissionUrl": "https://www.kindai.ac.jp/admissions/"
       }
     ]
   },
@@ -1433,7 +1469,8 @@
           "applicationEnd": "2025-11-11",
           "examDate": "2025-12-06",
           "resultDate": "2025-12-24"
-        }
+        },
+        "admissionUrl": "https://www.ryukoku.ac.jp/admission/nyushi/about/sogo.html"
       },
       {
         "id": "science",
@@ -1470,7 +1507,8 @@
           "applicationEnd": "2025-11-11",
           "examDate": "2025-12-06",
           "resultDate": "2025-12-24"
-        }
+        },
+        "admissionUrl": "https://www.ryukoku.ac.jp/admission/nyushi/about/sogo.html"
       },
       {
         "id": "agriculture",
@@ -1507,7 +1545,8 @@
           "applicationEnd": "2025-11-11",
           "examDate": "2025-12-06",
           "resultDate": "2025-12-24"
-        }
+        },
+        "admissionUrl": "https://www.ryukoku.ac.jp/admission/nyushi/about/sogo.html"
       },
       {
         "id": "general",
@@ -1544,7 +1583,8 @@
           "applicationEnd": "2025-11-11",
           "examDate": "2025-12-06",
           "resultDate": "2025-12-24"
-        }
+        },
+        "admissionUrl": "https://www.ryukoku.ac.jp/admission/nyushi/about/sogo.html"
       },
       {
         "id": "letters",
@@ -1581,7 +1621,8 @@
           "applicationEnd": "2025-11-11",
           "examDate": "2025-12-06",
           "resultDate": "2025-12-24"
-        }
+        },
+        "admissionUrl": "https://www.ryukoku.ac.jp/admission/nyushi/about/sogo.html"
       },
       {
         "id": "law",
@@ -1618,7 +1659,8 @@
           "applicationEnd": "2025-11-11",
           "examDate": "2025-12-06",
           "resultDate": "2025-12-24"
-        }
+        },
+        "admissionUrl": "https://www.ryukoku.ac.jp/admission/nyushi/about/sogo.html"
       },
       {
         "id": "economics",
@@ -1655,7 +1697,8 @@
           "applicationEnd": "2025-11-11",
           "examDate": "2025-12-06",
           "resultDate": "2025-12-24"
-        }
+        },
+        "admissionUrl": "https://www.ryukoku.ac.jp/admission/nyushi/about/sogo.html"
       },
       {
         "id": "business",
@@ -1692,7 +1735,8 @@
           "applicationEnd": "2025-11-11",
           "examDate": "2025-12-06",
           "resultDate": "2025-12-24"
-        }
+        },
+        "admissionUrl": "https://www.ryukoku.ac.jp/admission/nyushi/about/sogo.html"
       },
       {
         "id": "science-eng",
@@ -1734,7 +1778,8 @@
           "applicationEnd": "2025-11-11",
           "examDate": "2025-12-06",
           "resultDate": "2025-12-24"
-        }
+        },
+        "admissionUrl": "https://www.ryukoku.ac.jp/admission/nyushi/about/sogo.html"
       },
       {
         "id": "international",
@@ -1771,7 +1816,8 @@
           "applicationEnd": "2025-11-11",
           "examDate": "2025-12-06",
           "resultDate": "2025-12-24"
-        }
+        },
+        "admissionUrl": "https://www.ryukoku.ac.jp/admission/nyushi/about/sogo.html"
       }
     ]
   }

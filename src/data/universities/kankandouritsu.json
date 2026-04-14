@@ -41,7 +41,8 @@
           "applicationEnd": "2025-09-05",
           "examDate": "2025-09-30",
           "resultDate": "2025-10-18"
-        }
+        },
+        "admissionUrl": "https://www.doshisha.ac.jp/admissions_undergrad/preferred_application/index.html"
       },
       {
         "id": "commerce",
@@ -77,7 +78,8 @@
           "applicationEnd": "2025-09-05",
           "examDate": "2025-09-30",
           "resultDate": "2025-10-18"
-        }
+        },
+        "admissionUrl": "https://www.doshisha.ac.jp/admissions_undergrad/preferred_application/index.html"
       },
       {
         "id": "letters",
@@ -115,7 +117,8 @@
           "applicationEnd": "2025-11-06",
           "examDate": "2025-12-01",
           "resultDate": "2025-12-19"
-        }
+        },
+        "admissionUrl": "https://www.doshisha.ac.jp/admissions_undergrad/preferred_application/index.html"
       },
       {
         "id": "general",
@@ -139,7 +142,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://www.doshisha.ac.jp/admissions_undergrad/preferred_application/index.html"
       },
       {
         "id": "science-eng",
@@ -176,7 +180,8 @@
           "applicationEnd": "2025-11-06",
           "examDate": "2025-12-01",
           "resultDate": "2025-12-19"
-        }
+        },
+        "admissionUrl": "https://www.doshisha.ac.jp/admissions_undergrad/preferred_application/index.html"
       },
       {
         "id": "social",
@@ -213,7 +218,8 @@
           "applicationEnd": "2025-09-05",
           "examDate": "2025-09-30",
           "resultDate": "2025-10-18"
-        }
+        },
+        "admissionUrl": "https://www.doshisha.ac.jp/admissions_undergrad/preferred_application/index.html"
       },
       {
         "id": "general-2",
@@ -245,7 +251,8 @@
           "applicationEnd": "2025-09-05",
           "examDate": "2025-09-30",
           "resultDate": "2025-10-18"
-        }
+        },
+        "admissionUrl": "https://www.doshisha.ac.jp/admissions_undergrad/preferred_application/index.html"
       },
       {
         "id": "lettersinformation",
@@ -282,7 +289,8 @@
           "applicationEnd": "2025-09-05",
           "examDate": "2025-09-30",
           "resultDate": "2025-10-18"
-        }
+        },
+        "admissionUrl": "https://www.doshisha.ac.jp/admissions_undergrad/preferred_application/index.html"
       },
       {
         "id": "globalregionalletters",
@@ -319,7 +327,8 @@
           "applicationEnd": "2025-11-06",
           "examDate": "2025-12-01",
           "resultDate": "2025-12-19"
-        }
+        },
+        "admissionUrl": "https://www.doshisha.ac.jp/admissions_undergrad/preferred_application/index.html"
       },
       {
         "id": "science",
@@ -356,7 +365,8 @@
           "applicationEnd": "2025-09-05",
           "examDate": "2025-09-30",
           "resultDate": "2025-10-18"
-        }
+        },
+        "admissionUrl": "https://www.doshisha.ac.jp/admissions_undergrad/preferred_application/index.html"
       },
       {
         "id": "sports",
@@ -392,7 +402,8 @@
           "applicationEnd": "2025-09-05",
           "examDate": "2025-09-30",
           "resultDate": "2025-10-18"
-        }
+        },
+        "admissionUrl": "https://www.doshisha.ac.jp/admissions_undergrad/preferred_application/index.html"
       },
       {
         "id": "internationaleducation",
@@ -423,7 +434,8 @@
           "applicationEnd": "2026年4月入学の場合：2025年8月28日（木）\n2026年9月入学の場合：2026年2月12日（木）",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://www.doshisha.ac.jp/admissions_undergrad/preferred_application/index.html"
       },
       {
         "id": "global-comm",
@@ -497,7 +509,8 @@
           "applicationEnd": "2025-11-06",
           "examDate": "2025-12-01",
           "resultDate": "2025-12-19"
-        }
+        },
+        "admissionUrl": "https://www.doshisha.ac.jp/admissions_undergrad/preferred_application/index.html"
       },
       {
         "id": "medicine",
@@ -529,7 +542,8 @@
           "applicationEnd": "2025-09-05",
           "examDate": "2025-09-30",
           "resultDate": "2025-10-18"
-        }
+        },
+        "admissionUrl": "https://www.doshisha.ac.jp/admissions_undergrad/preferred_application/index.html"
       },
       {
         "id": "economics",
@@ -560,7 +574,8 @@
           "applicationEnd": "2025-09-12",
           "examDate": "2025-10-07",
           "resultDate": "2025-10-25"
-        }
+        },
+        "admissionUrl": "https://www.doshisha.ac.jp/admissions_undergrad/preferred_application/index.html"
       }
     ]
   },
@@ -611,7 +626,8 @@
           "applicationEnd": "2024-09-09",
           "examDate": "2024-10-04",
           "resultDate": "2024-10-22"
-        }
+        },
+        "admissionUrl": "https://admission.ritsumei.ac.jp/"
       },
       {
         "id": "business",
@@ -653,7 +669,8 @@
           "applicationEnd": "2024-09-09",
           "examDate": "2024-10-04",
           "resultDate": "2024-10-22"
-        }
+        },
+        "admissionUrl": "https://admission.ritsumei.ac.jp/"
       },
       {
         "id": "foodmanagement",
@@ -695,7 +712,8 @@
           "applicationEnd": "2024-09-09",
           "examDate": "2024-10-04",
           "resultDate": "2024-10-22"
-        }
+        },
+        "admissionUrl": "https://admission.ritsumei.ac.jp/"
       },
       {
         "id": "general",
@@ -738,7 +756,8 @@
           "applicationEnd": "2024-09-09",
           "examDate": "2024-10-04",
           "resultDate": "2024-10-22"
-        }
+        },
+        "admissionUrl": "https://admission.ritsumei.ac.jp/"
       },
       {
         "id": "international-relations",
@@ -780,7 +799,8 @@
           "applicationEnd": "2024-09-09",
           "examDate": "2024-10-04",
           "resultDate": "2024-10-22"
-        }
+        },
+        "admissionUrl": "https://admission.ritsumei.ac.jp/"
       },
       {
         "id": "general-2",
@@ -822,7 +842,8 @@
           "applicationEnd": "2024-09-09",
           "examDate": "2024-10-04",
           "resultDate": "2024-10-22"
-        }
+        },
+        "admissionUrl": "https://admission.ritsumei.ac.jp/"
       },
       {
         "id": "informationscience-eng",
@@ -865,7 +886,8 @@
           "applicationEnd": "2024-09-09",
           "examDate": "2024-10-04",
           "resultDate": "2024-10-22"
-        }
+        },
+        "admissionUrl": "https://admission.ritsumei.ac.jp/"
       },
       {
         "id": "letters",
@@ -897,7 +919,8 @@
           "applicationEnd": "2025-09-08",
           "examDate": "2025-10-03",
           "resultDate": "2025-10-21"
-        }
+        },
+        "admissionUrl": "https://admission.ritsumei.ac.jp/"
       },
       {
         "id": "global-liberal-arts",
@@ -924,7 +947,8 @@
           "applicationEnd": "2025年9月29日\n2025年11月20日",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://admission.ritsumei.ac.jp/"
       },
       {
         "id": "science-eng",
@@ -967,7 +991,8 @@
           "applicationEnd": "2024-09-09",
           "examDate": "2024-10-04",
           "resultDate": "2024-10-22"
-        }
+        },
+        "admissionUrl": "https://admission.ritsumei.ac.jp/"
       },
       {
         "id": "sports",
@@ -1010,7 +1035,8 @@
           "applicationEnd": "2024-09-09",
           "examDate": "2024-10-04",
           "resultDate": "2024-10-22"
-        }
+        },
+        "admissionUrl": "https://admission.ritsumei.ac.jp/"
       },
       {
         "id": "general-3",
@@ -1052,7 +1078,8 @@
           "applicationEnd": "2024-09-09",
           "examDate": "2024-10-04",
           "resultDate": "2024-10-22"
-        }
+        },
+        "admissionUrl": "https://admission.ritsumei.ac.jp/"
       },
       {
         "id": "pharmacy",
@@ -1095,7 +1122,8 @@
           "applicationEnd": "2024-09-09",
           "examDate": "2024-10-04",
           "resultDate": "2024-10-22"
-        }
+        },
+        "admissionUrl": "https://admission.ritsumei.ac.jp/"
       },
       {
         "id": "social",
@@ -1131,7 +1159,8 @@
           "applicationEnd": "2025-09-08",
           "examDate": "2025-10-03",
           "resultDate": "2025-10-21"
-        }
+        },
+        "admissionUrl": "https://admission.ritsumei.ac.jp/"
       },
       {
         "id": "economics",
@@ -1173,7 +1202,8 @@
           "applicationEnd": "2024-09-09",
           "examDate": "2024-10-04",
           "resultDate": "2024-10-22"
-        }
+        },
+        "admissionUrl": "https://admission.ritsumei.ac.jp/"
       },
       {
         "id": "law",
@@ -1215,7 +1245,8 @@
           "applicationEnd": "2024-09-09",
           "examDate": "2024-10-04",
           "resultDate": "2024-10-22"
-        }
+        },
+        "admissionUrl": "https://admission.ritsumei.ac.jp/"
       }
     ]
   },
@@ -1261,7 +1292,8 @@
           "applicationEnd": "2025-09-05",
           "examDate": "2025-09-30",
           "resultDate": "2025-10-18"
-        }
+        },
+        "admissionUrl": "https://www.nyusi.kansai-u.ac.jp/admission/ao/"
       },
       {
         "id": "social",
@@ -1293,7 +1325,8 @@
           "applicationEnd": "2025-09-05",
           "examDate": "2025-09-30",
           "resultDate": "2025-10-18"
-        }
+        },
+        "admissionUrl": "https://www.nyusi.kansai-u.ac.jp/admission/ao/"
       },
       {
         "id": "commerce",
@@ -1325,7 +1358,8 @@
           "applicationEnd": "2025-09-05",
           "examDate": "2025-09-30",
           "resultDate": "2025-10-18"
-        }
+        },
+        "admissionUrl": "https://www.nyusi.kansai-u.ac.jp/admission/ao/"
       },
       {
         "id": "science-eng",
@@ -1357,7 +1391,8 @@
           "applicationEnd": "2025-09-05",
           "examDate": "2025-09-30",
           "resultDate": "2025-10-18"
-        }
+        },
+        "admissionUrl": "https://www.nyusi.kansai-u.ac.jp/admission/ao/"
       },
       {
         "id": "general-info",
@@ -1399,7 +1434,8 @@
           "applicationEnd": "2025-09-05",
           "examDate": "2025-09-30",
           "resultDate": "2025-10-18"
-        }
+        },
+        "admissionUrl": "https://www.nyusi.kansai-u.ac.jp/admission/ao/"
       },
       {
         "id": "economics",
@@ -1436,7 +1472,8 @@
           "applicationEnd": "2025-09-05",
           "examDate": "2025-09-30",
           "resultDate": "2025-10-18"
-        }
+        },
+        "admissionUrl": "https://www.nyusi.kansai-u.ac.jp/admission/ao/"
       },
       {
         "id": "businessdata-science",
@@ -1468,7 +1505,8 @@
           "applicationEnd": "2025-09-05",
           "examDate": "2025-09-30",
           "resultDate": "2025-10-18"
-        }
+        },
+        "admissionUrl": "https://www.nyusi.kansai-u.ac.jp/admission/ao/"
       },
       {
         "id": "law",
@@ -1505,7 +1543,8 @@
           "applicationEnd": "2025-09-05",
           "examDate": "2025-09-30",
           "resultDate": "2025-10-18"
-        }
+        },
+        "admissionUrl": "https://www.nyusi.kansai-u.ac.jp/admission/ao/"
       },
       {
         "id": "social-safety",
@@ -1537,7 +1576,8 @@
           "applicationEnd": "2025-09-05",
           "examDate": "2025-09-30",
           "resultDate": "2025-10-18"
-        }
+        },
+        "admissionUrl": "https://www.nyusi.kansai-u.ac.jp/admission/ao/"
       },
       {
         "id": "policy-creation",
@@ -1569,7 +1609,8 @@
           "applicationEnd": "2025-09-05",
           "examDate": "2025-09-30",
           "resultDate": "2025-10-18"
-        }
+        },
+        "admissionUrl": "https://www.nyusi.kansai-u.ac.jp/admission/ao/"
       },
       {
         "id": "engineering",
@@ -1607,7 +1648,8 @@
           "applicationEnd": "2025-09-05",
           "examDate": "2025-09-30",
           "resultDate": "2025-10-18"
-        }
+        },
+        "admissionUrl": "https://www.nyusi.kansai-u.ac.jp/admission/ao/"
       },
       {
         "id": "foreign-languages",
@@ -1645,7 +1687,8 @@
           "applicationEnd": "2025-09-05",
           "examDate": "2025-09-30",
           "resultDate": "2025-10-18"
-        }
+        },
+        "admissionUrl": "https://www.nyusi.kansai-u.ac.jp/admission/ao/"
       },
       {
         "id": "human-health",
@@ -1677,7 +1720,8 @@
           "applicationEnd": "2025-12-02",
           "examDate": "2025-12-27",
           "resultDate": "2026-01-14"
-        }
+        },
+        "admissionUrl": "https://www.nyusi.kansai-u.ac.jp/admission/ao/"
       },
       {
         "id": "engineering-2",
@@ -1709,7 +1753,8 @@
           "applicationEnd": "2025-09-05",
           "examDate": "2025-09-30",
           "resultDate": "2025-10-18"
-        }
+        },
+        "admissionUrl": "https://www.nyusi.kansai-u.ac.jp/admission/ao/"
       }
     ]
   },
@@ -1742,7 +1787,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://www.kwansei.ac.jp/admissions/faq/comprehensive.html"
       },
       {
         "id": "life-environment",
@@ -1766,7 +1812,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://www.kwansei.ac.jp/admissions/faq/comprehensive.html"
       },
       {
         "id": "economics",
@@ -1790,7 +1837,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://www.kwansei.ac.jp/admissions/faq/comprehensive.html"
       },
       {
         "id": "engineering",
@@ -1814,7 +1862,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://www.kwansei.ac.jp/admissions/faq/comprehensive.html"
       },
       {
         "id": "policy",
@@ -1838,7 +1887,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://www.kwansei.ac.jp/admissions/faq/comprehensive.html"
       },
       {
         "id": "architecture",
@@ -1862,7 +1912,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://www.kwansei.ac.jp/admissions/faq/comprehensive.html"
       },
       {
         "id": "education",
@@ -1886,7 +1937,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://www.kwansei.ac.jp/admissions/faq/comprehensive.html"
       },
       {
         "id": "science",
@@ -1910,7 +1962,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://www.kwansei.ac.jp/admissions/faq/comprehensive.html"
       },
       {
         "id": "general",
@@ -1934,7 +1987,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://www.kwansei.ac.jp/admissions/faq/comprehensive.html"
       },
       {
         "id": "international",
@@ -1958,7 +2012,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://www.kwansei.ac.jp/admissions/faq/comprehensive.html"
       },
       {
         "id": "law",
@@ -1982,7 +2037,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://www.kwansei.ac.jp/admissions/faq/comprehensive.html"
       },
       {
         "id": "letters",
@@ -2006,7 +2062,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://www.kwansei.ac.jp/admissions/faq/comprehensive.html"
       },
       {
         "id": "human-welfare",
@@ -2030,7 +2087,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://www.kwansei.ac.jp/admissions/faq/comprehensive.html"
       },
       {
         "id": "social",
@@ -2054,7 +2112,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://www.kwansei.ac.jp/admissions/faq/comprehensive.html"
       }
     ]
   }

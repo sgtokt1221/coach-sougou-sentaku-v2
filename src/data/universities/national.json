@@ -47,7 +47,8 @@
           "applicationEnd": "2024-09-03",
           "examDate": "2024-09-28",
           "resultDate": "2024-10-16"
-        }
+        },
+        "admissionUrl": "https://www.ocha.ac.jp/admissions/"
       },
       {
         "id": "letterseducation",
@@ -95,7 +96,8 @@
           "applicationEnd": "2024-09-03",
           "examDate": "2024-09-28",
           "resultDate": "2024-10-16"
-        }
+        },
+        "admissionUrl": "https://www.ocha.ac.jp/admissions/"
       },
       {
         "id": "engineering",
@@ -132,7 +134,8 @@
           "applicationEnd": "2024-10-24",
           "examDate": "2024-11-18",
           "resultDate": "2024-12-06"
-        }
+        },
+        "admissionUrl": "https://www.ocha.ac.jp/admissions/"
       },
       {
         "id": "science",
@@ -184,7 +187,8 @@
           "applicationEnd": "2024-10-24",
           "examDate": "2024-11-18",
           "resultDate": "2024-12-06"
-        }
+        },
+        "admissionUrl": "https://www.ocha.ac.jp/admissions/"
       }
     ]
   },
@@ -234,7 +238,8 @@
           "applicationEnd": "2026-02-04",
           "examDate": "2026-03-01",
           "resultDate": "2026-03-19"
-        }
+        },
+        "admissionUrl": "https://www.kyutech.ac.jp/admissions/"
       },
       {
         "id": "engineering",
@@ -277,7 +282,8 @@
           "applicationEnd": "2026-02-04",
           "examDate": "2026-03-01",
           "resultDate": "2026-03-19"
-        }
+        },
+        "admissionUrl": "https://www.kyutech.ac.jp/admissions/"
       }
     ]
   },
@@ -322,7 +328,8 @@
           "applicationEnd": "2025-10-24",
           "examDate": "2025-11-18",
           "resultDate": "2025-12-06"
-        }
+        },
+        "admissionUrl": "https://www.saga-u.ac.jp/admission/"
       },
       {
         "id": "artsregionaldesign",
@@ -349,7 +356,8 @@
           "applicationEnd": "2025-09-18",
           "examDate": "2025-10-13",
           "resultDate": "2025-10-31"
-        }
+        },
+        "admissionUrl": "https://www.saga-u.ac.jp/admission/"
       },
       {
         "id": "science-eng",
@@ -376,7 +384,8 @@
           "applicationEnd": "2026-01-29",
           "examDate": "2026-02-23",
           "resultDate": "2026-03-13"
-        }
+        },
+        "admissionUrl": "https://www.saga-u.ac.jp/admission/"
       },
       {
         "id": "education",
@@ -403,7 +412,8 @@
           "applicationEnd": "2025-09-18",
           "examDate": "2025-10-13",
           "resultDate": "2025-10-31"
-        }
+        },
+        "admissionUrl": "https://www.saga-u.ac.jp/admission/"
       },
       {
         "id": "agriculture",
@@ -429,7 +439,8 @@
           "applicationEnd": "2026-01-29",
           "examDate": "2026-02-23",
           "resultDate": "2026-03-13"
-        }
+        },
+        "admissionUrl": "https://www.saga-u.ac.jp/admission/"
       },
       {
         "id": "general",
@@ -456,7 +467,8 @@
           "applicationEnd": "2026-01-29",
           "examDate": "2026-02-23",
           "resultDate": "2026-03-13"
-        }
+        },
+        "admissionUrl": "https://www.saga-u.ac.jp/admission/"
       }
     ]
   },
@@ -506,7 +518,8 @@
           "applicationEnd": "2025-09-17",
           "examDate": "2025-10-12",
           "resultDate": "2025-10-30"
-        }
+        },
+        "admissionUrl": "https://www.hokkyodai.ac.jp/admission/"
       }
     ]
   },
@@ -542,7 +555,8 @@
           "applicationEnd": "2025-10-03",
           "examDate": "2025-10-28",
           "resultDate": "2025-11-15"
-        }
+        },
+        "admissionUrl": "https://www.kitami-it.ac.jp/admission/"
       }
     ]
   },
@@ -593,7 +607,8 @@
           "applicationEnd": "2024-11-06",
           "examDate": "2024-12-01",
           "resultDate": "2024-12-19"
-        }
+        },
+        "admissionUrl": "https://www.chiba-u.ac.jp/exam/"
       },
       {
         "id": "pharmacy",
@@ -630,7 +645,8 @@
           "applicationEnd": "2024-11-06",
           "examDate": "2024-12-01",
           "resultDate": "2024-12-19"
-        }
+        },
+        "admissionUrl": "https://www.chiba-u.ac.jp/exam/"
       },
       {
         "id": "international-liberal-arts",
@@ -672,7 +688,8 @@
           "applicationEnd": "2024-09-11",
           "examDate": "2024-10-06",
           "resultDate": "2024-10-24"
-        }
+        },
+        "admissionUrl": "https://www.chiba-u.ac.jp/exam/"
       },
       {
         "id": "education",
@@ -714,7 +731,8 @@
           "applicationEnd": "2024-09-04",
           "examDate": "2024-09-29",
           "resultDate": "2024-10-17"
-        }
+        },
+        "admissionUrl": "https://www.chiba-u.ac.jp/exam/"
       },
       {
         "id": "science",
@@ -751,7 +769,8 @@
           "applicationEnd": "2024-09-26",
           "examDate": "2024-10-21",
           "resultDate": "2024-11-08"
-        }
+        },
+        "admissionUrl": "https://www.chiba-u.ac.jp/exam/"
       },
       {
         "id": "general",
@@ -788,7 +807,8 @@
           "applicationEnd": "2025-10-10",
           "examDate": "2025-11-04",
           "resultDate": "2025-11-22"
-        }
+        },
+        "admissionUrl": "https://www.chiba-u.ac.jp/exam/"
       },
       {
         "id": "information-data-science",
@@ -830,7 +850,8 @@
           "applicationEnd": "2024-11-06",
           "examDate": "2024-12-01",
           "resultDate": "2024-12-19"
-        }
+        },
+        "admissionUrl": "https://www.chiba-u.ac.jp/exam/"
       },
       {
         "id": "law",
@@ -867,7 +888,8 @@
           "applicationEnd": "2024-10-23",
           "examDate": "2024-11-17",
           "resultDate": "2024-12-05"
-        }
+        },
+        "admissionUrl": "https://www.chiba-u.ac.jp/exam/"
       },
       {
         "id": "engineering",
@@ -909,7 +931,8 @@
           "applicationEnd": "2024-09-27",
           "examDate": "2024-10-22",
           "resultDate": "2024-11-09"
-        }
+        },
+        "admissionUrl": "https://www.chiba-u.ac.jp/exam/"
       },
       {
         "id": "letters",
@@ -951,7 +974,8 @@
           "applicationEnd": "2024-10-03",
           "examDate": "2024-10-28",
           "resultDate": "2024-11-15"
-        }
+        },
+        "admissionUrl": "https://www.chiba-u.ac.jp/exam/"
       }
     ]
   },
@@ -986,7 +1010,8 @@
           "applicationEnd": "2025-09-19",
           "examDate": "2025-10-14",
           "resultDate": "2025-11-01"
-        }
+        },
+        "admissionUrl": "https://www.nitech.ac.jp/entrance/"
       }
     ]
   },
@@ -1027,7 +1052,8 @@
           "applicationEnd": "2024-09-24",
           "examDate": "2024-10-19",
           "resultDate": "2024-11-06"
-        }
+        },
+        "admissionUrl": "https://web.aiu.ac.jp/admission/"
       }
     ]
   },
@@ -1073,7 +1099,8 @@
           "applicationEnd": "2024-11-07",
           "examDate": "2024-12-02",
           "resultDate": "2024-12-20"
-        }
+        },
+        "admissionUrl": "https://www.saitama-u.ac.jp/entrance/"
       },
       {
         "id": "engineering",
@@ -1110,7 +1137,8 @@
           "applicationEnd": "2024-09-07",
           "examDate": "2024-10-02",
           "resultDate": "2024-10-20"
-        }
+        },
+        "admissionUrl": "https://www.saitama-u.ac.jp/entrance/"
       },
       {
         "id": "science",
@@ -1147,7 +1175,8 @@
           "applicationEnd": "2024-09-07",
           "examDate": "2024-10-02",
           "resultDate": "2024-10-20"
-        }
+        },
+        "admissionUrl": "https://www.saitama-u.ac.jp/entrance/"
       },
       {
         "id": "general",
@@ -1183,7 +1212,8 @@
           "applicationEnd": "2024-11-07",
           "examDate": "2024-12-02",
           "resultDate": "2024-12-20"
-        }
+        },
+        "admissionUrl": "https://www.saitama-u.ac.jp/entrance/"
       }
     ]
   },
@@ -1223,7 +1253,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://www.oita-u.ac.jp/admission/"
       },
       {
         "id": "welfare",
@@ -1254,7 +1285,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://www.oita-u.ac.jp/admission/"
       },
       {
         "id": "education",
@@ -1285,7 +1317,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://www.oita-u.ac.jp/admission/"
       },
       {
         "id": "medicine",
@@ -1316,7 +1349,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://www.oita-u.ac.jp/admission/"
       },
       {
         "id": "economics",
@@ -1348,7 +1382,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://www.oita-u.ac.jp/admission/"
       }
     ]
   },
@@ -1381,7 +1416,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://www.omu.ac.jp/admissions/"
       },
       {
         "id": "medicine",
@@ -1427,7 +1463,8 @@
           "applicationEnd": "2025-01-22",
           "examDate": "2025-02-16",
           "resultDate": "2025-03-06"
-        }
+        },
+        "admissionUrl": "https://www.omu.ac.jp/admissions/"
       },
       {
         "id": "nursing",
@@ -1453,7 +1490,8 @@
           "applicationEnd": "2024-11-06",
           "examDate": "2024-12-01",
           "resultDate": "2024-12-19"
-        }
+        },
+        "admissionUrl": "https://www.omu.ac.jp/admissions/"
       },
       {
         "id": "engineering",
@@ -1495,7 +1533,8 @@
           "applicationEnd": "2024-09-09",
           "examDate": "2024-10-04",
           "resultDate": "2024-10-22"
-        }
+        },
+        "admissionUrl": "https://www.omu.ac.jp/admissions/"
       },
       {
         "id": "economics",
@@ -1521,7 +1560,8 @@
           "applicationEnd": "2024-11-06",
           "examDate": "2024-12-01",
           "resultDate": "2024-12-19"
-        }
+        },
+        "admissionUrl": "https://www.omu.ac.jp/admissions/"
       },
       {
         "id": "commerce",
@@ -1547,7 +1587,8 @@
           "applicationEnd": "2024-11-06",
           "examDate": "2024-12-01",
           "resultDate": "2024-12-19"
-        }
+        },
+        "admissionUrl": "https://www.omu.ac.jp/admissions/"
       },
       {
         "id": "general",
@@ -1584,7 +1625,8 @@
           "applicationEnd": "2024-10-10",
           "examDate": "2024-11-04",
           "resultDate": "2024-11-22"
-        }
+        },
+        "admissionUrl": "https://www.omu.ac.jp/admissions/"
       },
       {
         "id": "medicine-2",
@@ -1630,7 +1672,8 @@
           "applicationEnd": "2024-11-06",
           "examDate": "2024-12-01",
           "resultDate": "2024-12-19"
-        }
+        },
+        "admissionUrl": "https://www.omu.ac.jp/admissions/"
       },
       {
         "id": "letters",
@@ -1672,7 +1715,8 @@
           "applicationEnd": "2024-10-10",
           "examDate": "2024-11-04",
           "resultDate": "2024-11-22"
-        }
+        },
+        "admissionUrl": "https://www.omu.ac.jp/admissions/"
       },
       {
         "id": "science",
@@ -1708,7 +1752,8 @@
           "applicationEnd": "2024-11-06",
           "examDate": "2024-12-01",
           "resultDate": "2024-12-19"
-        }
+        },
+        "admissionUrl": "https://www.omu.ac.jp/admissions/"
       },
       {
         "id": "general-2",
@@ -1739,7 +1784,8 @@
           "applicationEnd": "2024-11-06",
           "examDate": "2024-12-01",
           "resultDate": "2024-12-19"
-        }
+        },
+        "admissionUrl": "https://www.omu.ac.jp/admissions/"
       }
     ]
   },
@@ -1784,7 +1830,8 @@
           "applicationEnd": "2024-10-03",
           "examDate": "2024-10-28",
           "resultDate": "2024-11-15"
-        }
+        },
+        "admissionUrl": "https://www.utsunomiya-u.ac.jp/admission/"
       },
       {
         "id": "engineering",
@@ -1821,7 +1868,8 @@
           "applicationEnd": "2024-10-03",
           "examDate": "2024-10-28",
           "resultDate": "2024-11-15"
-        }
+        },
+        "admissionUrl": "https://www.utsunomiya-u.ac.jp/admission/"
       },
       {
         "id": "international",
@@ -1863,7 +1911,8 @@
           "applicationEnd": "2024-12-06",
           "examDate": "2024-12-31",
           "resultDate": "2025-01-18"
-        }
+        },
+        "admissionUrl": "https://www.utsunomiya-u.ac.jp/admission/"
       },
       {
         "id": "agriculture",
@@ -1904,7 +1953,8 @@
           "applicationEnd": "2024-10-03",
           "examDate": "2024-10-28",
           "resultDate": "2024-11-15"
-        }
+        },
+        "admissionUrl": "https://www.utsunomiya-u.ac.jp/admission/"
       },
       {
         "id": "data-sciencebusiness",
@@ -1946,7 +1996,8 @@
           "applicationEnd": "2024-10-03",
           "examDate": "2024-10-28",
           "resultDate": "2024-11-15"
-        }
+        },
+        "admissionUrl": "https://www.utsunomiya-u.ac.jp/admission/"
       },
       {
         "id": "regionaldesign",
@@ -1982,7 +2033,8 @@
           "applicationEnd": "2024-10-03",
           "examDate": "2024-10-28",
           "resultDate": "2024-11-15"
-        }
+        },
+        "admissionUrl": "https://www.utsunomiya-u.ac.jp/admission/"
       }
     ]
   },
@@ -2017,7 +2069,8 @@
           "applicationEnd": "2025-09-26",
           "examDate": "2025-10-21",
           "resultDate": "2025-11-08"
-        }
+        },
+        "admissionUrl": "https://www.muroran-it.ac.jp/entrance/"
       }
     ]
   },
@@ -2057,7 +2110,8 @@
           "applicationEnd": "2025-10-21",
           "examDate": "2025-11-15",
           "resultDate": "2025-12-03"
-        }
+        },
+        "admissionUrl": "https://www.otaru-uc.ac.jp/admission/"
       }
     ]
   },
@@ -2098,7 +2152,8 @@
           "applicationEnd": "2025-01-24",
           "examDate": "2025-02-18",
           "resultDate": "2025-03-08"
-        }
+        },
+        "admissionUrl": "https://www.gifu-u.ac.jp/admission/"
       },
       {
         "id": "medicine",
@@ -2134,7 +2189,8 @@
           "applicationEnd": "2024-11-06",
           "examDate": "2024-12-01",
           "resultDate": "2024-12-19"
-        }
+        },
+        "admissionUrl": "https://www.gifu-u.ac.jp/admission/"
       },
       {
         "id": "general",
@@ -2170,7 +2226,8 @@
           "applicationEnd": "2024-11-06",
           "examDate": "2024-12-01",
           "resultDate": "2024-12-19"
-        }
+        },
+        "admissionUrl": "https://www.gifu-u.ac.jp/admission/"
       },
       {
         "id": "regional",
@@ -2201,7 +2258,8 @@
           "applicationEnd": "2024-12-20",
           "examDate": "2025-01-14",
           "resultDate": "2025-02-01"
-        }
+        },
+        "admissionUrl": "https://www.gifu-u.ac.jp/admission/"
       },
       {
         "id": "education",
@@ -2233,7 +2291,8 @@
           "applicationEnd": "2024-12-20",
           "examDate": "2025-01-14",
           "resultDate": "2025-02-01"
-        }
+        },
+        "admissionUrl": "https://www.gifu-u.ac.jp/admission/"
       },
       {
         "id": "socialbusiness",
@@ -2269,7 +2328,8 @@
           "applicationEnd": "2024-12-20",
           "examDate": "2025-01-14",
           "resultDate": "2025-02-01"
-        }
+        },
+        "admissionUrl": "https://www.gifu-u.ac.jp/admission/"
       }
     ]
   },
@@ -2309,7 +2369,8 @@
           "applicationEnd": "2025-11-11",
           "examDate": "2025-12-06",
           "resultDate": "2025-12-24"
-        }
+        },
+        "admissionUrl": "https://www.okayama-u.ac.jp/tp/admission/"
       },
       {
         "id": "agriculture",
@@ -2340,7 +2401,8 @@
           "applicationEnd": "2025-11-11",
           "examDate": "2025-12-06",
           "resultDate": "2025-12-24"
-        }
+        },
+        "admissionUrl": "https://www.okayama-u.ac.jp/tp/admission/"
       },
       {
         "id": "economics",
@@ -2371,7 +2433,8 @@
           "applicationEnd": "2025-11-11",
           "examDate": "2025-12-06",
           "resultDate": "2025-12-24"
-        }
+        },
+        "admissionUrl": "https://www.okayama-u.ac.jp/tp/admission/"
       },
       {
         "id": "law",
@@ -2402,7 +2465,8 @@
           "applicationEnd": "2025-11-11",
           "examDate": "2025-12-06",
           "resultDate": "2025-12-24"
-        }
+        },
+        "admissionUrl": "https://www.okayama-u.ac.jp/tp/admission/"
       },
       {
         "id": "letters",
@@ -2433,7 +2497,8 @@
           "applicationEnd": "2025-11-11",
           "examDate": "2025-12-06",
           "resultDate": "2025-12-24"
-        }
+        },
+        "admissionUrl": "https://www.okayama-u.ac.jp/tp/admission/"
       },
       {
         "id": "science",
@@ -2464,7 +2529,8 @@
           "applicationEnd": "2025-11-11",
           "examDate": "2025-12-06",
           "resultDate": "2025-12-24"
-        }
+        },
+        "admissionUrl": "https://www.okayama-u.ac.jp/tp/admission/"
       },
       {
         "id": "education",
@@ -2495,7 +2561,8 @@
           "applicationEnd": "2025-11-11",
           "examDate": "2025-12-06",
           "resultDate": "2025-12-24"
-        }
+        },
+        "admissionUrl": "https://www.okayama-u.ac.jp/tp/admission/"
       },
       {
         "id": "pharmacy",
@@ -2526,7 +2593,8 @@
           "applicationEnd": "2025-11-11",
           "examDate": "2025-12-06",
           "resultDate": "2025-12-24"
-        }
+        },
+        "admissionUrl": "https://www.okayama-u.ac.jp/tp/admission/"
       },
       {
         "id": "engineering",
@@ -2557,7 +2625,8 @@
           "applicationEnd": "2025-11-11",
           "examDate": "2025-12-06",
           "resultDate": "2025-12-24"
-        }
+        },
+        "admissionUrl": "https://www.okayama-u.ac.jp/tp/admission/"
       },
       {
         "id": "medicine",
@@ -2598,7 +2667,8 @@
           "applicationEnd": "2025-11-11",
           "examDate": "2025-12-06",
           "resultDate": "2025-12-24"
-        }
+        },
+        "admissionUrl": "https://www.okayama-u.ac.jp/tp/admission/"
       }
     ]
   },
@@ -2643,7 +2713,8 @@
           "applicationEnd": "2025-10-23",
           "examDate": "2025-11-17",
           "resultDate": "2025-12-05"
-        }
+        },
+        "admissionUrl": "https://www.obihiro.ac.jp/admission/"
       }
     ]
   },
@@ -2689,7 +2760,8 @@
           "applicationEnd": "2025-09-09",
           "examDate": "2025-10-04",
           "resultDate": "2025-10-22"
-        }
+        },
+        "admissionUrl": "https://www.hiroshima-u.ac.jp/nyushi/"
       },
       {
         "id": "letters",
@@ -2726,7 +2798,8 @@
           "applicationEnd": "2025-09-09",
           "examDate": "2025-10-04",
           "resultDate": "2025-10-22"
-        }
+        },
+        "admissionUrl": "https://www.hiroshima-u.ac.jp/nyushi/"
       },
       {
         "id": "information",
@@ -2763,7 +2836,8 @@
           "applicationEnd": "2025-09-09",
           "examDate": "2025-10-04",
           "resultDate": "2025-10-22"
-        }
+        },
+        "admissionUrl": "https://www.hiroshima-u.ac.jp/nyushi/"
       },
       {
         "id": "pharmacy",
@@ -2800,7 +2874,8 @@
           "applicationEnd": "2025-09-09",
           "examDate": "2025-10-04",
           "resultDate": "2025-10-22"
-        }
+        },
+        "admissionUrl": "https://www.hiroshima-u.ac.jp/nyushi/"
       },
       {
         "id": "medicine",
@@ -2837,7 +2912,8 @@
           "applicationEnd": "2025-09-09",
           "examDate": "2025-10-04",
           "resultDate": "2025-10-22"
-        }
+        },
+        "admissionUrl": "https://www.hiroshima-u.ac.jp/nyushi/"
       },
       {
         "id": "science",
@@ -2874,7 +2950,8 @@
           "applicationEnd": "2025-09-09",
           "examDate": "2025-10-04",
           "resultDate": "2025-10-22"
-        }
+        },
+        "admissionUrl": "https://www.hiroshima-u.ac.jp/nyushi/"
       },
       {
         "id": "law",
@@ -2911,7 +2988,8 @@
           "applicationEnd": "2025-09-09",
           "examDate": "2025-10-04",
           "resultDate": "2025-10-22"
-        }
+        },
+        "admissionUrl": "https://www.hiroshima-u.ac.jp/nyushi/"
       },
       {
         "id": "dentistry",
@@ -2948,7 +3026,8 @@
           "applicationEnd": "2025-09-09",
           "examDate": "2025-10-04",
           "resultDate": "2025-10-22"
-        }
+        },
+        "admissionUrl": "https://www.hiroshima-u.ac.jp/nyushi/"
       },
       {
         "id": "economics",
@@ -2985,7 +3064,8 @@
           "applicationEnd": "2025-09-09",
           "examDate": "2025-10-04",
           "resultDate": "2025-10-22"
-        }
+        },
+        "admissionUrl": "https://www.hiroshima-u.ac.jp/nyushi/"
       },
       {
         "id": "general",
@@ -3022,7 +3102,8 @@
           "applicationEnd": "2025-09-09",
           "examDate": "2025-10-04",
           "resultDate": "2025-10-22"
-        }
+        },
+        "admissionUrl": "https://www.hiroshima-u.ac.jp/nyushi/"
       },
       {
         "id": "engineering",
@@ -3059,7 +3140,8 @@
           "applicationEnd": "2025-09-09",
           "examDate": "2025-10-04",
           "resultDate": "2025-10-22"
-        }
+        },
+        "admissionUrl": "https://www.hiroshima-u.ac.jp/nyushi/"
       },
       {
         "id": "general-2",
@@ -3096,7 +3178,8 @@
           "applicationEnd": "2025-09-09",
           "examDate": "2025-10-04",
           "resultDate": "2025-10-22"
-        }
+        },
+        "admissionUrl": "https://www.hiroshima-u.ac.jp/nyushi/"
       }
     ]
   },
@@ -3131,7 +3214,8 @@
           "applicationEnd": "2025-09-18",
           "examDate": "2025-10-13",
           "resultDate": "2025-10-31"
-        }
+        },
+        "admissionUrl": "https://www.aichi-edu.ac.jp/admission/"
       }
     ]
   },
@@ -3172,7 +3256,8 @@
           "applicationEnd": "2024年11月1日(金)～6日(水)",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://www.niigata-u.ac.jp/admissions/"
       },
       {
         "id": "economics",
@@ -3203,7 +3288,8 @@
           "applicationEnd": "2024年9月12日(木)～17日(火)",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://www.niigata-u.ac.jp/admissions/"
       },
       {
         "id": "engineering",
@@ -3235,7 +3321,8 @@
           "applicationEnd": "2024年9月2日(月)～4日(水)",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://www.niigata-u.ac.jp/admissions/"
       },
       {
         "id": "science",
@@ -3282,7 +3369,8 @@
           "applicationEnd": "2024年9月5日(木)～9日(月)",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://www.niigata-u.ac.jp/admissions/"
       },
       {
         "id": "medicine",
@@ -3313,7 +3401,8 @@
           "applicationEnd": "2024年11月1日(金)～6日(水)",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://www.niigata-u.ac.jp/admissions/"
       },
       {
         "id": "general",
@@ -3345,7 +3434,8 @@
           "applicationEnd": "2024年10月15日(火)～17日(木)",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://www.niigata-u.ac.jp/admissions/"
       },
       {
         "id": "education",
@@ -3377,7 +3467,8 @@
           "applicationEnd": "2024年11月1日(金)～6日(水)",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://www.niigata-u.ac.jp/admissions/"
       },
       {
         "id": "dentistry",
@@ -3409,7 +3500,8 @@
           "applicationEnd": "2024年11月1日(金)～6日(水)",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://www.niigata-u.ac.jp/admissions/"
       },
       {
         "id": "law",
@@ -3440,7 +3532,8 @@
           "applicationEnd": "2024年11月1日(金)～6日(水)",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://www.niigata-u.ac.jp/admissions/"
       },
       {
         "id": "agriculture",
@@ -3472,7 +3565,8 @@
           "applicationEnd": "2024年11月1日(金)～6日(水)",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://www.niigata-u.ac.jp/admissions/"
       }
     ]
   },
@@ -3509,7 +3603,8 @@
           "applicationEnd": "2025-10-02",
           "examDate": "2025-10-27",
           "resultDate": "2025-11-14"
-        }
+        },
+        "admissionUrl": "https://www.asahikawa-med.ac.jp/bureau/nyusi/"
       }
     ]
   },
@@ -3555,7 +3650,8 @@
           "applicationEnd": "2025-11-05",
           "examDate": "2025-11-30",
           "resultDate": "2025-12-18"
-        }
+        },
+        "admissionUrl": "https://www.tufs.ac.jp/admission/"
       },
       {
         "id": "internationalsocial",
@@ -3592,7 +3688,8 @@
           "applicationEnd": "2025-11-05",
           "examDate": "2025-11-30",
           "resultDate": "2025-12-18"
-        }
+        },
+        "admissionUrl": "https://www.tufs.ac.jp/admission/"
       },
       {
         "id": "letters",
@@ -3629,7 +3726,8 @@
           "applicationEnd": "2025-11-05",
           "examDate": "2025-11-30",
           "resultDate": "2025-12-18"
-        }
+        },
+        "admissionUrl": "https://www.tufs.ac.jp/admission/"
       }
     ]
   },
@@ -3674,7 +3772,8 @@
           "applicationEnd": "2024-10-7",
           "examDate": "2024-11-01",
           "resultDate": "2024-11-19"
-        }
+        },
+        "admissionUrl": "https://www.u-gakugei.ac.jp/admissions/"
       }
     ]
   },
@@ -3721,7 +3820,8 @@
           "applicationEnd": "2024-11-6",
           "examDate": "2024-12-01",
           "resultDate": "2024-12-19"
-        }
+        },
+        "admissionUrl": "https://www.kaiyodai.ac.jp/entrance/"
       },
       {
         "id": "general-2",
@@ -3759,7 +3859,8 @@
           "applicationEnd": "2024-11-6",
           "examDate": "2024-12-01",
           "resultDate": "2024-12-19"
-        }
+        },
+        "admissionUrl": "https://www.kaiyodai.ac.jp/entrance/"
       },
       {
         "id": "engineering",
@@ -3800,7 +3901,8 @@
           "applicationEnd": "2024-9-6",
           "examDate": "2024-10-01",
           "resultDate": "2024-10-19"
-        }
+        },
+        "admissionUrl": "https://www.kaiyodai.ac.jp/entrance/"
       }
     ]
   },
@@ -3845,7 +3947,8 @@
           "applicationEnd": "2024-09-09",
           "examDate": "2024-10-04",
           "resultDate": "2024-10-22"
-        }
+        },
+        "admissionUrl": "https://www.tuat.ac.jp/admission/"
       },
       {
         "id": "agriculture",
@@ -3887,7 +3990,8 @@
           "applicationEnd": "2024-10-10",
           "examDate": "2024-11-04",
           "resultDate": "2024-11-22"
-        }
+        },
+        "admissionUrl": "https://www.tuat.ac.jp/admission/"
       }
     ]
   },
@@ -3933,7 +4037,8 @@
           "applicationEnd": "2025年9月18日",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://www.ynu.ac.jp/admissions/"
       },
       {
         "id": "business",
@@ -3970,7 +4075,8 @@
           "applicationEnd": "2025年11月10日",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://www.ynu.ac.jp/admissions/"
       },
       {
         "id": "education",
@@ -4007,7 +4113,8 @@
           "applicationEnd": "2025年9月26日",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://www.ynu.ac.jp/admissions/"
       },
       {
         "id": "science-eng",
@@ -4044,7 +4151,8 @@
           "applicationEnd": "2025年9月18日",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://www.ynu.ac.jp/admissions/"
       },
       {
         "id": "economics",
@@ -4081,7 +4189,8 @@
           "applicationEnd": "2025年9月4日",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://www.ynu.ac.jp/admissions/"
       }
     ]
   },
@@ -4128,7 +4237,8 @@
           "applicationEnd": "2024年11月1日(金)～6日(水)",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://www.yokohama-cu.ac.jp/admissions/"
       },
       {
         "id": "international-liberal-arts",
@@ -4165,7 +4275,8 @@
           "applicationEnd": "2025年9月1日(月)～3日(水)",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://www.yokohama-cu.ac.jp/admissions/"
       },
       {
         "id": "internationalcommerce",
@@ -4202,7 +4313,8 @@
           "applicationEnd": "2025年9月1日(月)～3日(水)",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://www.yokohama-cu.ac.jp/admissions/"
       },
       {
         "id": "science",
@@ -4239,7 +4351,8 @@
           "applicationEnd": "2025年9月1日(月)～3日(水)",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://www.yokohama-cu.ac.jp/admissions/"
       },
       {
         "id": "data-science",
@@ -4276,7 +4389,8 @@
           "applicationEnd": "2025年10月日(木)～15日(火)",
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
-        }
+        },
+        "admissionUrl": "https://www.yokohama-cu.ac.jp/admissions/"
       }
     ]
   },
@@ -4312,7 +4426,8 @@
           "applicationEnd": "2026-01-23",
           "examDate": "2026-02-17",
           "resultDate": "2026-03-07"
-        }
+        },
+        "admissionUrl": "https://www.kumamoto-u.ac.jp/nyuushi/"
       },
       {
         "id": "medicine",
@@ -4339,7 +4454,8 @@
           "applicationEnd": "2025-10-03",
           "examDate": "2025-10-28",
           "resultDate": "2025-11-15"
-        }
+        },
+        "admissionUrl": "https://www.kumamoto-u.ac.jp/nyuushi/"
       },
       {
         "id": "information",
@@ -4366,7 +4482,8 @@
           "applicationEnd": "2026-01-23",
           "examDate": "2026-02-17",
           "resultDate": "2026-03-07"
-        }
+        },
+        "admissionUrl": "https://www.kumamoto-u.ac.jp/nyuushi/"
       },
       {
         "id": "engineering",
@@ -4393,7 +4510,8 @@
           "applicationEnd": "2026-02-04",
           "examDate": "2026-03-01",
           "resultDate": "2026-03-19"
-        }
+        },
+        "admissionUrl": "https://www.kumamoto-u.ac.jp/nyuushi/"
       },
       {
         "id": "education",
@@ -4420,7 +4538,8 @@
           "applicationEnd": "2026-01-23",
           "examDate": "2026-02-17",
           "resultDate": "2026-03-07"
-        }
+        },
+        "admissionUrl": "https://www.kumamoto-u.ac.jp/nyuushi/"
       },
       {
         "id": "letters",
@@ -4447,7 +4566,8 @@
           "applicationEnd": "2025-11-07",
           "examDate": "2025-12-02",
           "resultDate": "2025-12-20"
-        }
+        },
+        "admissionUrl": "https://www.kumamoto-u.ac.jp/nyuushi/"
       },
       {
         "id": "law",
@@ -4474,7 +4594,8 @@
           "applicationEnd": "2025-10-03",
           "examDate": "2025-10-28",
           "resultDate": "2025-11-15"
-        }
+        },
+        "admissionUrl": "https://www.kumamoto-u.ac.jp/nyuushi/"
       },
       {
         "id": "science",
@@ -4501,7 +4622,8 @@
           "applicationEnd": "2026-01-23",
           "examDate": "2026-02-17",
           "resultDate": "2026-03-07"
-        }
+        },
+        "admissionUrl": "https://www.kumamoto-u.ac.jp/nyuushi/"
       }
     ]
   },
@@ -4537,7 +4659,8 @@
           "applicationEnd": "2025-11-10",
           "examDate": "2025-12-05",
           "resultDate": "2025-12-23"
-        }
+        },
+        "admissionUrl": "https://www.fukuoka-edu.ac.jp/admission/"
       }
     ]
   },
@@ -4578,7 +4701,8 @@
           "applicationEnd": "2024-11-08",
           "examDate": "2024-12-03",
           "resultDate": "2024-12-21"
-        }
+        },
+        "admissionUrl": "https://ac.tsukuba.ac.jp/"
       },
       {
         "id": "medicine",
@@ -4610,7 +4734,8 @@
           "applicationEnd": "2024-11-08",
           "examDate": "2024-12-03",
           "resultDate": "2024-12-21"
-        }
+        },
+        "admissionUrl": "https://ac.tsukuba.ac.jp/"
       },
       {
         "id": "social-international",
@@ -4642,7 +4767,8 @@
           "applicationEnd": "2024-11-08",
           "examDate": "2024-12-03",
           "resultDate": "2024-12-21"
-        }
+        },
+        "admissionUrl": "https://ac.tsukuba.ac.jp/"
       },
       {
         "id": "sports",
@@ -4674,7 +4800,8 @@
           "applicationEnd": "2024-11-08",
           "examDate": "2024-12-03",
           "resultDate": "2024-12-21"
-        }
+        },
+        "admissionUrl": "https://ac.tsukuba.ac.jp/"
       },
       {
         "id": "information",
@@ -4706,7 +4833,8 @@
           "applicationEnd": "2024-11-08",
           "examDate": "2024-12-03",
           "resultDate": "2024-12-21"
-        }
+        },
+        "admissionUrl": "https://ac.tsukuba.ac.jp/"
       },
       {
         "id": "human",
@@ -4743,7 +4871,8 @@
           "applicationEnd": "2024-11-08",
           "examDate": "2024-12-03",
           "resultDate": "2024-12-21"
-        }
+        },
+        "admissionUrl": "https://ac.tsukuba.ac.jp/"
       },
       {
         "id": "letters-letters",
@@ -4775,7 +4904,8 @@
           "applicationEnd": "2024-11-08",
           "examDate": "2024-12-03",
           "resultDate": "2024-12-21"
-        }
+        },
+        "admissionUrl": "https://ac.tsukuba.ac.jp/"
       },
       {
         "id": "arts",
@@ -4807,7 +4937,8 @@
           "applicationEnd": "2024-11-08",
           "examDate": "2024-12-03",
           "resultDate": "2024-12-21"
-        }
+        },
+        "admissionUrl": "https://ac.tsukuba.ac.jp/"
       },
       {
         "id": "science-eng",
@@ -4839,7 +4970,8 @@
           "applicationEnd": "2024-11-08",
           "examDate": "2024-12-03",
           "resultDate": "2024-12-21"
-        }
+        },
+        "admissionUrl": "https://ac.tsukuba.ac.jp/"
       }
     ]
   },
@@ -4880,7 +5012,8 @@
           "applicationEnd": "2024-11-07",
           "examDate": "2024-12-02",
           "resultDate": "2024-12-20"
-        }
+        },
+        "admissionUrl": "https://www.gunma-u.ac.jp/admission/"
       },
       {
         "id": "information",
@@ -4912,7 +5045,8 @@
           "applicationEnd": "2024-09-06",
           "examDate": "2024-10-01",
           "resultDate": "2024-10-19"
-        }
+        },
+        "admissionUrl": "https://www.gunma-u.ac.jp/admission/"
       },
       {
         "id": "education",
@@ -5068,7 +5202,8 @@
           "applicationEnd": "2024-11-07",
           "examDate": "2024-12-02",
           "resultDate": "2024-12-20"
-        }
+        },
+        "admissionUrl": "https://www.gunma-u.ac.jp/admission/"
       },
       {
         "id": "science-eng",
@@ -5100,7 +5235,8 @@
           "applicationEnd": "2024-09-06",
           "examDate": "2024-10-01",
           "resultDate": "2024-10-19"
-        }
+        },
+        "admissionUrl": "https://www.gunma-u.ac.jp/admission/"
       }
     ]
   },
@@ -5145,7 +5281,8 @@
           "applicationEnd": "2024-11-06",
           "examDate": "2024-12-01",
           "resultDate": "2024-12-19"
-        }
+        },
+        "admissionUrl": "https://www.ibaraki.ac.jp/admission/"
       },
       {
         "id": "science",
@@ -5182,7 +5319,8 @@
           "applicationEnd": "2024-11-06",
           "examDate": "2024-12-01",
           "resultDate": "2024-12-19"
-        }
+        },
+        "admissionUrl": "https://www.ibaraki.ac.jp/admission/"
       },
       {
         "id": "engineering",
@@ -5218,7 +5356,8 @@
           "applicationEnd": "2024-11-06",
           "examDate": "2024-12-01",
           "resultDate": "2024-12-19"
-        }
+        },
+        "admissionUrl": "https://www.ibaraki.ac.jp/admission/"
       },
       {
         "id": "education",
@@ -5269,7 +5408,8 @@
           "applicationEnd": "2024-11-06",
           "examDate": "2024-12-01",
           "resultDate": "2024-12-19"
-        }
+        },
+        "admissionUrl": "https://www.ibaraki.ac.jp/admission/"
       },
       {
         "id": "agriculture",
@@ -5306,7 +5446,8 @@
           "applicationEnd": "2024-11-06",
           "examDate": "2024-12-01",
           "resultDate": "2024-12-19"
-        }
+        },
+        "admissionUrl": "https://www.ibaraki.ac.jp/admission/"
       }
     ]
   },
@@ -5341,7 +5482,8 @@
           "applicationEnd": "2025-11-11",
           "examDate": "2025-12-06",
           "resultDate": "2025-12-24"
-        }
+        },
+        "admissionUrl": "https://www.tut.ac.jp/exam/"
       }
     ]
   },
@@ -5387,7 +5529,8 @@
           "applicationEnd": "2025-02-05",
           "examDate": "2025-03-02",
           "resultDate": "2025-03-20"
-        }
+        },
+        "admissionUrl": "https://www.nagasaki-u.ac.jp/nyugaku/"
       },
       {
         "id": "engineering",
@@ -5425,7 +5568,8 @@
           "applicationEnd": "2025-02-05",
           "examDate": "2025-03-02",
           "resultDate": "2025-03-20"
-        }
+        },
+        "admissionUrl": "https://www.nagasaki-u.ac.jp/nyugaku/"
       },
       {
         "id": "medicine",
@@ -5462,7 +5606,8 @@
           "applicationEnd": "2025-02-05",
           "examDate": "2025-03-02",
           "resultDate": "2025-03-20"
-        }
+        },
+        "admissionUrl": "https://www.nagasaki-u.ac.jp/nyugaku/"
       },
       {
         "id": "dentistry",
@@ -5500,7 +5645,8 @@
           "applicationEnd": "2025-02-05",
           "examDate": "2025-03-02",
           "resultDate": "2025-03-20"
-        }
+        },
+        "admissionUrl": "https://www.nagasaki-u.ac.jp/nyugaku/"
       },
       {
         "id": "general",
@@ -5538,7 +5684,8 @@
           "applicationEnd": "2025-02-05",
           "examDate": "2025-03-02",
           "resultDate": "2025-03-20"
-        }
+        },
+        "admissionUrl": "https://www.nagasaki-u.ac.jp/nyugaku/"
       },
       {
         "id": "letterssocial",
@@ -5581,7 +5728,8 @@
           "applicationEnd": "2025-02-05",
           "examDate": "2025-03-02",
           "resultDate": "2025-03-20"
-        }
+        },
+        "admissionUrl": "https://www.nagasaki-u.ac.jp/nyugaku/"
       },
       {
         "id": "medicine-2",
@@ -5618,7 +5766,8 @@
           "applicationEnd": "2025-02-05",
           "examDate": "2025-03-02",
           "resultDate": "2025-03-20"
-        }
+        },
+        "admissionUrl": "https://www.nagasaki-u.ac.jp/nyugaku/"
       },
       {
         "id": "education",
@@ -5656,7 +5805,8 @@
           "applicationEnd": "2025-02-05",
           "examDate": "2025-03-02",
           "resultDate": "2025-03-20"
-        }
+        },
+        "admissionUrl": "https://www.nagasaki-u.ac.jp/nyugaku/"
       },
       {
         "id": "general-2",
@@ -5694,7 +5844,8 @@
           "applicationEnd": "2025-02-05",
           "examDate": "2025-03-02",
           "resultDate": "2025-03-20"
-        }
+        },
+        "admissionUrl": "https://www.nagasaki-u.ac.jp/nyugaku/"
       },
       {
         "id": "pharmacy",
@@ -5731,7 +5882,8 @@
           "applicationEnd": "2025-02-05",
           "examDate": "2025-03-02",
           "resultDate": "2025-03-20"
-        }
+        },
+        "admissionUrl": "https://www.nagasaki-u.ac.jp/nyugaku/"
       },
       {
         "id": "economics",
@@ -5769,7 +5921,8 @@
           "applicationEnd": "2025-02-05",
           "examDate": "2025-03-02",
           "resultDate": "2025-03-20"
-        }
+        },
+        "admissionUrl": "https://www.nagasaki-u.ac.jp/nyugaku/"
       }
     ]
   },
@@ -5819,7 +5972,8 @@
           "applicationEnd": "2025-9-4",
           "examDate": "2025-09-29",
           "resultDate": "2025-10-17"
-        }
+        },
+        "admissionUrl": "https://www.uec.ac.jp/admission/"
       }
     ]
   },
@@ -5865,7 +6019,8 @@
           "applicationEnd": "2024-09-06",
           "examDate": "2024-10-01",
           "resultDate": "2024-10-19"
-        }
+        },
+        "admissionUrl": "https://www.shizuoka.ac.jp/admission/"
       },
       {
         "id": "education",
@@ -5902,7 +6057,8 @@
           "applicationEnd": "2025-01-31",
           "examDate": "2025-02-25",
           "resultDate": "2025-03-15"
-        }
+        },
+        "admissionUrl": "https://www.shizuoka.ac.jp/admission/"
       },
       {
         "id": "science",
@@ -5934,7 +6090,8 @@
           "applicationEnd": "2025-01-31",
           "examDate": "2025-02-25",
           "resultDate": "2025-03-15"
-        }
+        },
+        "admissionUrl": "https://www.shizuoka.ac.jp/admission/"
       },
       {
         "id": "letterssocial",
@@ -5971,7 +6128,8 @@
           "applicationEnd": "2024-09-06",
           "examDate": "2024-10-01",
           "resultDate": "2024-10-19"
-        }
+        },
+        "admissionUrl": "https://www.shizuoka.ac.jp/admission/"
       },
       {
         "id": "information",
@@ -6013,7 +6171,8 @@
           "applicationEnd": "2024-09-06",
           "examDate": "2024-10-01",
           "resultDate": "2024-10-19"
-        }
+        },
+        "admissionUrl": "https://www.shizuoka.ac.jp/admission/"
       },
       {
         "id": "engineering",
@@ -6050,7 +6209,8 @@
           "applicationEnd": "2024-09-06",
           "examDate": "2024-10-01",
           "resultDate": "2024-10-19"
-        }
+        },
+        "admissionUrl": "https://www.shizuoka.ac.jp/admission/"
       },
       {
         "id": "agriculture",
@@ -6092,7 +6252,8 @@
           "applicationEnd": "2024-09-06",
           "examDate": "2024-10-01",
           "resultDate": "2024-10-19"
-        }
+        },
+        "admissionUrl": "https://www.shizuoka.ac.jp/admission/"
       }
     ]
   },
@@ -6128,7 +6289,8 @@
           "applicationEnd": "2025-11-06",
           "examDate": "2025-12-01",
           "resultDate": "2025-12-19"
-        }
+        },
+        "admissionUrl": "https://www.kagoshima-u.ac.jp/admission/"
       },
       {
         "id": "medicine",
@@ -6155,7 +6317,8 @@
           "applicationEnd": "2025-11-06",
           "examDate": "2025-12-01",
           "resultDate": "2025-12-19"
-        }
+        },
+        "admissionUrl": "https://www.kagoshima-u.ac.jp/admission/"
       },
       {
         "id": "engineering",
@@ -6182,7 +6345,8 @@
           "applicationEnd": "2025-11-06",
           "examDate": "2025-12-01",
           "resultDate": "2025-12-19"
-        }
+        },
+        "admissionUrl": "https://www.kagoshima-u.ac.jp/admission/"
       },
       {
         "id": "medicine-2",
@@ -6209,7 +6373,8 @@
           "applicationEnd": "2025-11-06",
           "examDate": "2025-12-01",
           "resultDate": "2025-12-19"
-        }
+        },
+        "admissionUrl": "https://www.kagoshima-u.ac.jp/admission/"
       },
       {
         "id": "science",
@@ -6236,7 +6401,8 @@
           "applicationEnd": "2025-11-06",
           "examDate": "2025-12-01",
           "resultDate": "2025-12-19"
-        }
+        },
+        "admissionUrl": "https://www.kagoshima-u.ac.jp/admission/"
       },
       {
         "id": "lawletters",
@@ -6263,7 +6429,8 @@
           "applicationEnd": "2025-11-06",
           "examDate": "2025-12-01",
           "resultDate": "2025-12-19"
-        }
+        },
+        "admissionUrl": "https://www.kagoshima-u.ac.jp/admission/"
       },
       {
         "id": "education",
@@ -6290,7 +6457,8 @@
           "applicationEnd": "2025-11-26",
           "examDate": "2025-12-21",
           "resultDate": "2026-01-08"
-        }
+        },
+        "admissionUrl": "https://www.kagoshima-u.ac.jp/admission/"
       },
       {
         "id": "general",
@@ -6317,7 +6485,8 @@
           "applicationEnd": "2025-09-26",
           "examDate": "2025-10-21",
           "resultDate": "2025-11-08"
-        }
+        },
+        "admissionUrl": "https://www.kagoshima-u.ac.jp/admission/"
       },
       {
         "id": "dentistry",
@@ -6344,7 +6513,8 @@
           "applicationEnd": "2025-11-06",
           "examDate": "2025-12-01",
           "resultDate": "2025-12-19"
-        }
+        },
+        "admissionUrl": "https://www.kagoshima-u.ac.jp/admission/"
       }
     ]
   },
@@ -6381,7 +6551,8 @@
           "applicationEnd": "2025-09-16",
           "examDate": "2025-10-11",
           "resultDate": "2025-10-29"
-        }
+        },
+        "admissionUrl": "https://www.nifs-k.ac.jp/admission/"
       }
     ]
   },
@@ -6421,7 +6592,8 @@
           "applicationEnd": "2025-09-14",
           "examDate": "2025-10-18",
           "resultDate": "2025-11-01"
-        }
+        },
+        "admissionUrl": "https://www.hirosaki-u.ac.jp/"
       },
       {
         "id": "education",
@@ -6452,7 +6624,8 @@
           "applicationEnd": "2025-09-14",
           "examDate": "2025-10-18",
           "resultDate": "2025-11-01"
-        }
+        },
+        "admissionUrl": "https://www.hirosaki-u.ac.jp/"
       }
     ]
   },
@@ -6492,7 +6665,8 @@
           "applicationEnd": "2025-09-12",
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
-        }
+        },
+        "admissionUrl": "https://www.iwate-u.ac.jp/"
       },
       {
         "id": "agriculture",
@@ -6523,7 +6697,8 @@
           "applicationEnd": "2025-09-12",
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
-        }
+        },
+        "admissionUrl": "https://www.iwate-u.ac.jp/"
       }
     ]
   },
@@ -6563,7 +6738,8 @@
           "applicationEnd": "2025-09-12",
           "examDate": "2025-10-18",
           "resultDate": "2025-11-01"
-        }
+        },
+        "admissionUrl": "https://www.akita-u.ac.jp/"
       },
       {
         "id": "education-culture",
@@ -6594,7 +6770,8 @@
           "applicationEnd": "2025-09-12",
           "examDate": "2025-10-18",
           "resultDate": "2025-11-01"
-        }
+        },
+        "admissionUrl": "https://www.akita-u.ac.jp/"
       }
     ]
   },
@@ -6634,7 +6811,8 @@
           "applicationEnd": "2025-09-14",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-07"
-        }
+        },
+        "admissionUrl": "https://www.yamagata-u.ac.jp/"
       },
       {
         "id": "engineering",
@@ -6665,7 +6843,8 @@
           "applicationEnd": "2025-09-14",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-07"
-        }
+        },
+        "admissionUrl": "https://www.yamagata-u.ac.jp/"
       }
     ]
   },
@@ -6705,7 +6884,8 @@
           "applicationEnd": "2025-09-12",
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
-        }
+        },
+        "admissionUrl": "https://www.fukushima-u.ac.jp/"
       },
       {
         "id": "food-agriculture",
@@ -6736,7 +6916,8 @@
           "applicationEnd": "2025-09-12",
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
-        }
+        },
+        "admissionUrl": "https://www.fukushima-u.ac.jp/"
       }
     ]
   },
@@ -6776,7 +6957,8 @@
           "applicationEnd": "2025-09-14",
           "examDate": "2025-10-18",
           "resultDate": "2025-11-01"
-        }
+        },
+        "admissionUrl": "https://www.miyakyo-u.ac.jp/"
       }
     ]
   },
@@ -6817,7 +6999,8 @@
           "applicationEnd": "2025-09-14",
           "examDate": "2025-11-01",
           "resultDate": "2025-11-14"
-        }
+        },
+        "admissionUrl": "https://www.isct.ac.jp/"
       },
       {
         "id": "life-science-tech",
@@ -6848,7 +7031,8 @@
           "applicationEnd": "2025-09-14",
           "examDate": "2025-11-01",
           "resultDate": "2025-11-14"
-        }
+        },
+        "admissionUrl": "https://www.isct.ac.jp/"
       }
     ]
   },
@@ -6888,7 +7072,8 @@
           "applicationEnd": "2025-09-12",
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
-        }
+        },
+        "admissionUrl": "https://www.u-toyama.ac.jp/"
       },
       {
         "id": "urban-design",
@@ -6919,7 +7104,8 @@
           "applicationEnd": "2025-09-12",
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
-        }
+        },
+        "admissionUrl": "https://www.u-toyama.ac.jp/"
       }
     ]
   },
@@ -6960,7 +7146,8 @@
           "applicationEnd": "2025-09-14",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-14"
-        }
+        },
+        "admissionUrl": "https://www.kanazawa-u.ac.jp/"
       },
       {
         "id": "fusion",
@@ -6992,7 +7179,8 @@
           "applicationEnd": "2025-09-14",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-14"
-        }
+        },
+        "admissionUrl": "https://www.kanazawa-u.ac.jp/"
       }
     ]
   },
@@ -7032,7 +7220,8 @@
           "applicationEnd": "2025-09-12",
           "examDate": "2025-10-18",
           "resultDate": "2025-11-01"
-        }
+        },
+        "admissionUrl": "https://www.u-fukui.ac.jp/"
       },
       {
         "id": "engineering",
@@ -7063,7 +7252,8 @@
           "applicationEnd": "2025-09-12",
           "examDate": "2025-10-18",
           "resultDate": "2025-11-01"
-        }
+        },
+        "admissionUrl": "https://www.u-fukui.ac.jp/"
       }
     ]
   },
@@ -7103,7 +7293,8 @@
           "applicationEnd": "2025-09-12",
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
-        }
+        },
+        "admissionUrl": "https://www.yamanashi.ac.jp/"
       },
       {
         "id": "life-environment",
@@ -7134,7 +7325,8 @@
           "applicationEnd": "2025-09-12",
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
-        }
+        },
+        "admissionUrl": "https://www.yamanashi.ac.jp/"
       }
     ]
   },
@@ -7174,7 +7366,8 @@
           "applicationEnd": "2025-09-14",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-07"
-        }
+        },
+        "admissionUrl": "https://www.shinshu-u.ac.jp/"
       },
       {
         "id": "engineering",
@@ -7205,7 +7398,8 @@
           "applicationEnd": "2025-09-14",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-07"
-        }
+        },
+        "admissionUrl": "https://www.shinshu-u.ac.jp/"
       }
     ]
   },
@@ -7246,7 +7440,8 @@
           "applicationEnd": "2025-09-14",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-14"
-        }
+        },
+        "admissionUrl": "https://www.mie-u.ac.jp/"
       },
       {
         "id": "bioresources",
@@ -7278,7 +7473,8 @@
           "applicationEnd": "2025-09-14",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-14"
-        }
+        },
+        "admissionUrl": "https://www.mie-u.ac.jp/"
       }
     ]
   },
@@ -7318,7 +7514,8 @@
           "applicationEnd": "2025-09-12",
           "examDate": "2025-10-18",
           "resultDate": "2025-11-01"
-        }
+        },
+        "admissionUrl": "https://www.juen.ac.jp/"
       }
     ]
   },
@@ -7358,7 +7555,8 @@
           "applicationEnd": "2025-09-14",
           "examDate": "2025-11-08",
           "resultDate": "2025-11-21"
-        }
+        },
+        "admissionUrl": "https://www.kobe-u.ac.jp/"
       },
       {
         "id": "maritime-policy",
@@ -7389,7 +7587,8 @@
           "applicationEnd": "2025-09-14",
           "examDate": "2025-11-08",
           "resultDate": "2025-11-21"
-        }
+        },
+        "admissionUrl": "https://www.kobe-u.ac.jp/"
       }
     ]
   },
@@ -7429,7 +7628,8 @@
           "applicationEnd": "2025-09-14",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-07"
-        }
+        },
+        "admissionUrl": "https://www.shiga-u.ac.jp/"
       },
       {
         "id": "economics",
@@ -7460,7 +7660,8 @@
           "applicationEnd": "2025-09-14",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-07"
-        }
+        },
+        "admissionUrl": "https://www.shiga-u.ac.jp/"
       }
     ]
   },
@@ -7501,7 +7702,8 @@
           "applicationEnd": "2025-09-14",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-14"
-        }
+        },
+        "admissionUrl": "https://www.kit.ac.jp/"
       }
     ]
   },
@@ -7543,7 +7745,8 @@
           "applicationEnd": "2025-09-14",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-14"
-        }
+        },
+        "admissionUrl": "https://www.nara-wu.ac.jp/"
       }
     ]
   },
@@ -7583,7 +7786,8 @@
           "applicationEnd": "2025-09-14",
           "examDate": "2025-10-18",
           "resultDate": "2025-11-01"
-        }
+        },
+        "admissionUrl": "https://www.nara-edu.ac.jp/"
       }
     ]
   },
@@ -7623,7 +7827,8 @@
           "applicationEnd": "2025-09-14",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-07"
-        }
+        },
+        "admissionUrl": "https://www.wakayama-u.ac.jp/"
       }
     ]
   },
@@ -7663,7 +7868,8 @@
           "applicationEnd": "2025-09-14",
           "examDate": "2025-10-18",
           "resultDate": "2025-11-01"
-        }
+        },
+        "admissionUrl": "https://www.hyogo-u.ac.jp/"
       }
     ]
   },
@@ -7703,7 +7909,8 @@
           "applicationEnd": "2025-09-12",
           "examDate": "2025-10-19",
           "resultDate": "2025-11-01"
-        }
+        },
+        "admissionUrl": "https://www.tottori-u.ac.jp/"
       },
       {
         "id": "agriculture",
@@ -7734,7 +7941,8 @@
           "applicationEnd": "2025-09-12",
           "examDate": "2025-10-19",
           "resultDate": "2025-11-01"
-        }
+        },
+        "admissionUrl": "https://www.tottori-u.ac.jp/"
       }
     ]
   },
@@ -7774,7 +7982,8 @@
           "applicationEnd": "2025-09-12",
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
-        }
+        },
+        "admissionUrl": "https://www.shimane-u.ac.jp/"
       },
       {
         "id": "human-science",
@@ -7805,7 +8014,8 @@
           "applicationEnd": "2025-09-12",
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
-        }
+        },
+        "admissionUrl": "https://www.shimane-u.ac.jp/"
       }
     ]
   },
@@ -7845,7 +8055,8 @@
           "applicationEnd": "2025-09-14",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-07"
-        }
+        },
+        "admissionUrl": "https://www.yamaguchi-u.ac.jp/"
       },
       {
         "id": "education",
@@ -7876,7 +8087,8 @@
           "applicationEnd": "2025-09-14",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-07"
-        }
+        },
+        "admissionUrl": "https://www.yamaguchi-u.ac.jp/"
       }
     ]
   },
@@ -7918,7 +8130,8 @@
           "applicationEnd": "2025-09-14",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-14"
-        }
+        },
+        "admissionUrl": "https://www.tokushima-u.ac.jp/"
       }
     ]
   },
@@ -7958,7 +8171,8 @@
           "applicationEnd": "2025-09-12",
           "examDate": "2025-10-19",
           "resultDate": "2025-11-01"
-        }
+        },
+        "admissionUrl": "https://www.kagawa-u.ac.jp/"
       },
       {
         "id": "creative-engineering",
@@ -7989,7 +8203,8 @@
           "applicationEnd": "2025-09-12",
           "examDate": "2025-10-19",
           "resultDate": "2025-11-01"
-        }
+        },
+        "admissionUrl": "https://www.kagawa-u.ac.jp/"
       }
     ]
   },
@@ -8029,7 +8244,8 @@
           "applicationEnd": "2025-09-12",
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
-        }
+        },
+        "admissionUrl": "https://www.ehime-u.ac.jp/"
       },
       {
         "id": "law-letters",
@@ -8060,7 +8276,8 @@
           "applicationEnd": "2025-09-12",
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
-        }
+        },
+        "admissionUrl": "https://www.ehime-u.ac.jp/"
       }
     ]
   },
@@ -8100,7 +8317,8 @@
           "applicationEnd": "2025-09-12",
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
-        }
+        },
+        "admissionUrl": "https://www.kochi-u.ac.jp/"
       },
       {
         "id": "humanities-social",
@@ -8131,7 +8349,8 @@
           "applicationEnd": "2025-09-12",
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
-        }
+        },
+        "admissionUrl": "https://www.kochi-u.ac.jp/"
       }
     ]
   },
@@ -8171,7 +8390,8 @@
           "applicationEnd": "2025-09-12",
           "examDate": "2025-10-19",
           "resultDate": "2025-11-01"
-        }
+        },
+        "admissionUrl": "https://www.miyazaki-u.ac.jp/"
       },
       {
         "id": "agriculture",
@@ -8202,7 +8422,8 @@
           "applicationEnd": "2025-09-12",
           "examDate": "2025-10-19",
           "resultDate": "2025-11-01"
-        }
+        },
+        "admissionUrl": "https://www.miyazaki-u.ac.jp/"
       }
     ]
   },
@@ -8242,7 +8463,8 @@
           "applicationEnd": "2025-09-14",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-07"
-        }
+        },
+        "admissionUrl": "https://www.u-ryukyu.ac.jp/"
       },
       {
         "id": "agriculture",
@@ -8273,7 +8495,8 @@
           "applicationEnd": "2025-09-14",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-07"
-        }
+        },
+        "admissionUrl": "https://www.u-ryukyu.ac.jp/"
       }
     ]
   }

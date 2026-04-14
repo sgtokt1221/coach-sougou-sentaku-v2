@@ -41,7 +41,8 @@
           "applicationEnd": "2024-11-7",
           "examDate": "2024-12-02",
           "resultDate": "2024-12-20"
-        }
+        },
+        "admissionUrl": "https://adm.sophia.ac.jp/jpn/gakubu_tokubetsu_ad/koubo/"
       },
       {
         "id": "science-eng",
@@ -79,7 +80,8 @@
           "applicationEnd": "2024-11-7",
           "examDate": "2024-12-02",
           "resultDate": "2024-12-20"
-        }
+        },
+        "admissionUrl": "https://adm.sophia.ac.jp/jpn/gakubu_tokubetsu_ad/koubo/"
       },
       {
         "id": "law",
@@ -116,7 +118,8 @@
           "applicationEnd": "2024-11-7",
           "examDate": "2024-12-02",
           "resultDate": "2024-12-20"
-        }
+        },
+        "admissionUrl": "https://adm.sophia.ac.jp/jpn/gakubu_tokubetsu_ad/koubo/"
       },
       {
         "id": "generalhuman",
@@ -153,7 +156,8 @@
           "applicationEnd": "2024-11-7",
           "examDate": "2024-12-02",
           "resultDate": "2024-12-20"
-        }
+        },
+        "admissionUrl": "https://adm.sophia.ac.jp/jpn/gakubu_tokubetsu_ad/koubo/"
       },
       {
         "id": "generalglobal",
@@ -190,7 +194,8 @@
           "applicationEnd": "2024-11-7",
           "examDate": "2024-12-02",
           "resultDate": "2024-12-20"
-        }
+        },
+        "admissionUrl": "https://adm.sophia.ac.jp/jpn/gakubu_tokubetsu_ad/koubo/"
       },
       {
         "id": "international-liberal-arts",
@@ -227,7 +232,8 @@
           "applicationEnd": "2024-11-7",
           "examDate": "2024-12-02",
           "resultDate": "2024-12-20"
-        }
+        },
+        "admissionUrl": "https://adm.sophia.ac.jp/jpn/gakubu_tokubetsu_ad/koubo/"
       },
       {
         "id": "economics",
@@ -264,7 +270,8 @@
           "applicationEnd": "2024-11-7",
           "examDate": "2024-12-02",
           "resultDate": "2024-12-20"
-        }
+        },
+        "admissionUrl": "https://adm.sophia.ac.jp/jpn/gakubu_tokubetsu_ad/koubo/"
       },
       {
         "id": "general",
@@ -300,7 +307,8 @@
           "applicationEnd": "2024-11-7",
           "examDate": "2024-12-02",
           "resultDate": "2024-12-20"
-        }
+        },
+        "admissionUrl": "https://adm.sophia.ac.jp/jpn/gakubu_tokubetsu_ad/koubo/"
       },
       {
         "id": "foreign-languages",
@@ -338,7 +346,8 @@
           "applicationEnd": "2024-11-7",
           "examDate": "2024-12-02",
           "resultDate": "2024-12-20"
-        }
+        },
+        "admissionUrl": "https://adm.sophia.ac.jp/jpn/gakubu_tokubetsu_ad/koubo/"
       }
     ]
   },
@@ -379,7 +388,8 @@
           "applicationEnd": "2025-07-15",
           "examDate": "2025-08-09",
           "resultDate": "2025-08-27"
-        }
+        },
+        "admissionUrl": "https://www.keio.ac.jp/ja/admissions/examinations/"
       },
       {
         "id": "economics",
@@ -403,7 +413,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://www.keio.ac.jp/ja/admissions/examinations/"
       },
       {
         "id": "letters",
@@ -439,7 +450,8 @@
           "applicationEnd": "2025-11-06",
           "examDate": "2025-12-01",
           "resultDate": "2025-12-19"
-        }
+        },
+        "admissionUrl": "https://www.keio.ac.jp/ja/admissions/examinations/"
       },
       {
         "id": "policy",
@@ -470,7 +482,8 @@
           "applicationEnd": "2025-09-01",
           "examDate": "2025-09-26",
           "resultDate": "2025-10-14"
-        }
+        },
+        "admissionUrl": "https://www.keio.ac.jp/ja/admissions/examinations/"
       },
       {
         "id": "nursingmedicine",
@@ -502,7 +515,8 @@
           "applicationEnd": "2025-09-18",
           "examDate": "2025-10-13",
           "resultDate": "2025-10-31"
-        }
+        },
+        "admissionUrl": "https://www.keio.ac.jp/ja/admissions/examinations/"
       },
       {
         "id": "commerce",
@@ -526,7 +540,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://www.keio.ac.jp/ja/admissions/examinations/"
       },
       {
         "id": "law",
@@ -550,7 +565,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://www.keio.ac.jp/ja/admissions/examinations/"
       },
       {
         "id": "medicine",
@@ -592,7 +608,8 @@
           "applicationEnd": "2025-07-15",
           "examDate": "2025-08-09",
           "resultDate": "2025-08-27"
-        }
+        },
+        "admissionUrl": "https://www.keio.ac.jp/ja/admissions/examinations/"
       },
       {
         "id": "pharmacy",
@@ -616,7 +633,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://www.keio.ac.jp/ja/admissions/examinations/"
       },
       {
         "id": "science-eng",
@@ -640,7 +658,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://www.keio.ac.jp/ja/admissions/examinations/"
       }
     ]
   },
@@ -673,7 +692,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://www.waseda.jp/inst/admission/undergraduate/system/ao/"
       },
       {
         "id": "human",
@@ -697,7 +717,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://www.waseda.jp/inst/admission/undergraduate/system/ao/"
       },
       {
         "id": "fundamental-science-eng",
@@ -721,7 +742,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://www.waseda.jp/inst/admission/undergraduate/system/ao/"
       },
       {
         "id": "culture-media",
@@ -745,7 +767,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://www.waseda.jp/inst/admission/undergraduate/system/ao/"
       },
       {
         "id": "creative-science-eng",
@@ -769,7 +792,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://www.waseda.jp/inst/admission/undergraduate/system/ao/"
       },
       {
         "id": "law",
@@ -793,7 +817,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://www.waseda.jp/inst/admission/undergraduate/system/ao/"
       },
       {
         "id": "international-liberal-arts",
@@ -817,7 +842,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://www.waseda.jp/inst/admission/undergraduate/system/ao/"
       },
       {
         "id": "advanced-science-eng",
@@ -841,7 +867,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://www.waseda.jp/inst/admission/undergraduate/system/ao/"
       },
       {
         "id": "social",
@@ -879,7 +906,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://www.waseda.jp/inst/admission/undergraduate/system/ao/"
       },
       {
         "id": "education",
@@ -903,7 +931,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://www.waseda.jp/inst/admission/undergraduate/system/ao/"
       },
       {
         "id": "letters",
@@ -927,7 +956,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://www.waseda.jp/inst/admission/undergraduate/system/ao/"
       },
       {
         "id": "political-economy",
@@ -951,7 +981,8 @@
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
-        }
+        },
+        "admissionUrl": "https://www.waseda.jp/inst/admission/undergraduate/system/ao/"
       },
       {
         "id": "sports",
@@ -993,7 +1024,8 @@
           "applicationEnd": "2025-04-14",
           "examDate": "2025-05-09",
           "resultDate": "2025-05-27"
-        }
+        },
+        "admissionUrl": "https://www.waseda.jp/inst/admission/undergraduate/system/ao/"
       }
     ]
   }

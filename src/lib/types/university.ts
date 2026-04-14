@@ -38,6 +38,8 @@ export interface Faculty {
   schedule: Schedule;
   interviewTendency?: InterviewTendency;
   academicField?: string;
+  /** 総合型選抜の募集要項・入試情報ページURL */
+  admissionUrl?: string;
 }
 
 export interface Requirements {
