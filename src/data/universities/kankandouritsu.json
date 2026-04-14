@@ -10,7 +10,7 @@
         "id": "law",
         "name": "法学部",
         "admissionPolicy": "法律学科\n　\n法学部法律学科は、法学についての体系的・専門的知識を修得し、これをもとに法を理解することができ、法学についての専門的な知識を活用して、法的問題の妥当な解決を図ることができ（いわゆるリーガルマインドを身につけ）、社会において幅広く活躍することができるような人材を養成することを目的としています。そのために次のような学生を求めています。\n\n政治学科\n　\n法学部政治学科は、政治学についての体系的・専門的知識にもとづき、政治をはじめとする、過去・現在における国内外の多様な社会現象に関する妥当な価値判断を行い、それらを理論的・実証的に分析することによって、社会における多くの分野で問題を発見・解決できる能力を備えた人材を養成することを目的としています。そのために次のような学生を求めています。",
-        "capacity": 5,
+        "capacity": 20,
         "requirements": {
           "gpa": 4,
           "englishCert": "英検準1級 / TOEFL iBT 72以上 / IELTS 6.0以上",
@@ -42,13 +42,14 @@
           "examDate": "2025-09-30",
           "resultDate": "2025-10-18"
         },
-        "admissionUrl": "https://www.doshisha.ac.jp/admissions_undergrad/preferred_application/index.html"
+        "admissionUrl": "https://www.doshisha.ac.jp/admissions_undergrad/preferred_application/index.html",
+        "selectionType": "comprehensive"
       },
       {
         "id": "commerce",
         "name": "商学部",
         "admissionPolicy": "商学部\n　\n商学部では、現代産業社会の経済活動について、基礎的な知識の修得をはかるとともに豊かな教養を培い、専門領域の体系的かつ系統的な教育方針に基づく学習と実践的能力の育成を通して、企業や産業に関わる諸問題を的確に分析し、その解決のための判断能力を身につけ、多様な価値観が共存する世界の人々とともに「良心を手腕に運用する」有為な人物を養成することを目的としています。こうした観点から、商学部では、次のような学生を求めています。",
-        "capacity": 5,
+        "capacity": 10,
         "requirements": {
           "gpa": null,
           "englishCert": "TOEFL iBT 70以上 / IELTS 5.5以上",
@@ -79,13 +80,14 @@
           "examDate": "2025-09-30",
           "resultDate": "2025-10-18"
         },
-        "admissionUrl": "https://www.doshisha.ac.jp/admissions_undergrad/preferred_application/index.html"
+        "admissionUrl": "https://www.doshisha.ac.jp/admissions_undergrad/preferred_application/index.html",
+        "selectionType": "comprehensive"
       },
       {
         "id": "letters",
         "name": "文学部",
         "admissionPolicy": "文学部\n　\n文学部は、キリスト教主義・自由主義・国際主義に基づく人間形成を根本的な教育理念として、人文学の諸領域（英文学・哲学・美学芸術学・文化史学・国文学）における専門的な教育・研究をとおして、現代のグローバル社会の諸課題に自立的かつ実践的に対応する力を備えた人物を養成することを目的としています。そのために、次のような学生を求めています。",
-        "capacity": 5,
+        "capacity": 27,
         "requirements": {
           "gpa": 4,
           "englishCert": "英検2級 / TOEFL iBT 45以上",
@@ -118,7 +120,8 @@
           "examDate": "2025-12-01",
           "resultDate": "2025-12-19"
         },
-        "admissionUrl": "https://www.doshisha.ac.jp/admissions_undergrad/preferred_application/index.html"
+        "admissionUrl": "https://www.doshisha.ac.jp/admissions_undergrad/preferred_application/index.html",
+        "selectionType": "comprehensive"
       },
       {
         "id": "general",
@@ -143,13 +146,14 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
         },
-        "admissionUrl": "https://www.doshisha.ac.jp/admissions_undergrad/preferred_application/index.html"
+        "admissionUrl": "https://www.doshisha.ac.jp/admissions_undergrad/preferred_application/index.html",
+        "selectionType": "comprehensive"
       },
       {
         "id": "science-eng",
         "name": "理工学部",
         "admissionPolicy": "インテリジェント情報工学科\n　\n理工学部インテリジェント情報工学科では、情報科学・情報工学分野、特にハードウェアやセンシング・制御技術、人工知能について、多様で体系的なカリキュラムに基づく講義や実習をとおして、基礎および応用を深く学びます。そして、問題を論理的に分析し、コンピュータをより知的にする情報技術を開発・応用する技能を有し、様々な分野で活躍できる人材を養成することを目的としています。そのため、次のような学生を求めています。\n\n情報システムデザイン学科\n　\n理工学部情報システムデザイン学科では、情報科学・情報工学分野、特にヒト・モノ・AI・IoT・ビッグデータを連携させる基盤技術とシステム開発について学びます。多様で体系的なカリキュラムに基づく講義や実習をとおして、基礎から応用まで習得していきます。そして、物事の本質を見極めて、人と社会に役立つ情報システムを企画・設計・開発する技能を有し、様々な分野で活躍できる人材を養成することを目的としています。そのために、次のような学生を求めています。\n\n電気工学科\n　\n理工学部電気工学科は、電力の安定供給と省エネルギー化を支える電気工学分野の基礎理論とそれらを応用・展開する能力を養い、学問領域の修得を目指して体系的に編成したカリキュラムを通して、電気工学に関わる技術課題を主体的に見出すとともに最適な解決方策を探る能力を身につけ、高いコミュニケーション能力と表現力および倫理観をもち合わせた社会の発展に貢献できる人材の養成を目的としています。そのために、次のような学生を求めています。\n\n電子工学科\n　\n理工学部電子工学科は、高度情報化社会を支える電子工学分野の基礎理論とそれらを応用・展開する能力を養い、学問領域の修得を目指して体系的に編成したカリキュラムを通して、電子工学に関わる技術課題を主体的に見出すとともに最適な解決方策を探る能力を身につけ、高いコミュニケーション能力と表現力および倫理観をもち合わせた社会の発展に貢献できる人材の養成を目的としています。そのために、次のような学生を求めています。\n\n機械システム工学科\n　\n理工学部機械システム工学科はものづくりを原点とする最先端技術に必要な機械システムの構築と創成に関わる技術分野について、講義と実習をとおして、それらの基礎を十分に学習し、次世代の機械とシステムの技術開発や問題解決を行う技術者としての能力と、それらを自らの良心に基づき運用できる技術者としての倫理観を身につけて、安全・安心な社会の発展に貢献する人材を養成することを目的としています。そのために、次のような学生を求めています。\n\n機械理工学科\n　\n\n理工学部機械理工学科は、自然科学の原理を理解し、その応用を可能とする技術分野について、講義と実習をとおして、それらの基礎を十分に学習し、地球資源の有効利用や環境に優しい機械に関する技術を開発する技術者としての能力と、それらを自らの良心に基づき運用できる技術者としての倫理観を身につけて、理工学の視点を有し、持続可能な社会の構築に貢献する人材を養成することを目的としています。そのため、以下のような学生を求めています。\n\n機能分子・生命化学科\n　\n理工学部機能分子・生命化学科は、化学と化学技術について、教育と先端的な研究をとおして、また、本学の教育理念（キリスト教主義・自由主義・国際主義）に基づき、環境や生命を意識したナノ・バイオを含む化学の基礎と応用に関する幅広い学術的な知識・技術を身につけて、「機能分子創製および生命現象解明の化学」に関連する工学・薬学・医学に貢献できる独創性にあふれ、問題解決能力を備えた人材を養成することを目的としています。そのために、次のような学生を求めています。\n\n化学システム創成工学科\n　\n\n理工学部化学システム創成工学科は、持続可能な社会・環境づくりに貢献する化学技術について、本学の教育理念（キリスト教主義・自由主義・国際主義）に基づき、化学および化学工学を基盤とする工学全般にわたる幅広い学術的な知識・技術を身につけて、地球環境、資源・エネルギー、バイオテクノロジーなどが関わる諸問題を解決することができる「新しい化学システムの創成」に貢献することができる人材を養成することを目的としています。そのために、次のような学生を求めています。\n\n環境システム学科\n　\n理工学部環境システム学科は、環境科学について、自然科学分野の横断的な知識をもとにシステムとしての環境の特質を理解することをとおして、問題を発見し、論理的な思考と豊かな発想をもって科学的に分析する能力、そして学際的な素養をもとに問題を解決する能力を身につけて、国内外の各種産業界や研究・教育機関等において貢献する人材を養成することを目的としています。そのために、次のような学生を求めています。\n\n数理システム学科\n\r\n理工学部数理システム学科は、数理科学について、講義、問題演習およびコンピュータ実習をとおして、数学を中心とする理学的素養およびコンピュータを用いて様々な問題を具体的に解く能力とデータの統計処理能力を身につけて、情報・金融関連産業など高度な数学的能力を必要とする企業や、次世代の高度な理数能力の養成を担う教育機関、または数理科学の研究機関等において活躍する人材を養成することを目的としています。そのため、以下のような学生を求めています。",
-        "capacity": 5,
+        "capacity": 10,
         "requirements": {
           "gpa": 4.3,
           "englishCert": null,
@@ -181,7 +185,8 @@
           "examDate": "2025-12-01",
           "resultDate": "2025-12-19"
         },
-        "admissionUrl": "https://www.doshisha.ac.jp/admissions_undergrad/preferred_application/index.html"
+        "admissionUrl": "https://www.doshisha.ac.jp/admissions_undergrad/preferred_application/index.html",
+        "selectionType": "comprehensive"
       },
       {
         "id": "social",
@@ -219,7 +224,8 @@
           "examDate": "2025-09-30",
           "resultDate": "2025-10-18"
         },
-        "admissionUrl": "https://www.doshisha.ac.jp/admissions_undergrad/preferred_application/index.html"
+        "admissionUrl": "https://www.doshisha.ac.jp/admissions_undergrad/preferred_application/index.html",
+        "selectionType": "comprehensive"
       },
       {
         "id": "general-2",
@@ -252,7 +258,8 @@
           "examDate": "2025-09-30",
           "resultDate": "2025-10-18"
         },
-        "admissionUrl": "https://www.doshisha.ac.jp/admissions_undergrad/preferred_application/index.html"
+        "admissionUrl": "https://www.doshisha.ac.jp/admissions_undergrad/preferred_application/index.html",
+        "selectionType": "comprehensive"
       },
       {
         "id": "lettersinformation",
@@ -290,13 +297,14 @@
           "examDate": "2025-09-30",
           "resultDate": "2025-10-18"
         },
-        "admissionUrl": "https://www.doshisha.ac.jp/admissions_undergrad/preferred_application/index.html"
+        "admissionUrl": "https://www.doshisha.ac.jp/admissions_undergrad/preferred_application/index.html",
+        "selectionType": "comprehensive"
       },
       {
         "id": "globalregionalletters",
         "name": "グローバル地域文化学部",
         "admissionPolicy": "グローバル地域文化学部\n　\nグローバル地域文化学部は、学部で培った知見を十全に活用することにより、本学の教育理念のひとつである国際主義を更に推進し、国内外のあらゆる場面で活躍できる、良心と自由な精神を備えた人物の育成を目的としています。そのために次のような学生を求めています。",
-        "capacity": 5,
+        "capacity": 20,
         "requirements": {
           "gpa": 3.5,
           "englishCert": "英検2級 / TOEFL iBT 55以上 / IELTS 4.5以上",
@@ -328,7 +336,8 @@
           "examDate": "2025-12-01",
           "resultDate": "2025-12-19"
         },
-        "admissionUrl": "https://www.doshisha.ac.jp/admissions_undergrad/preferred_application/index.html"
+        "admissionUrl": "https://www.doshisha.ac.jp/admissions_undergrad/preferred_application/index.html",
+        "selectionType": "comprehensive"
       },
       {
         "id": "science",
@@ -366,7 +375,8 @@
           "examDate": "2025-09-30",
           "resultDate": "2025-10-18"
         },
-        "admissionUrl": "https://www.doshisha.ac.jp/admissions_undergrad/preferred_application/index.html"
+        "admissionUrl": "https://www.doshisha.ac.jp/admissions_undergrad/preferred_application/index.html",
+        "selectionType": "comprehensive"
       },
       {
         "id": "sports",
@@ -403,7 +413,8 @@
           "examDate": "2025-09-30",
           "resultDate": "2025-10-18"
         },
-        "admissionUrl": "https://www.doshisha.ac.jp/admissions_undergrad/preferred_application/index.html"
+        "admissionUrl": "https://www.doshisha.ac.jp/admissions_undergrad/preferred_application/index.html",
+        "selectionType": "comprehensive"
       },
       {
         "id": "internationaleducation",
@@ -435,7 +446,8 @@
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
         },
-        "admissionUrl": "https://www.doshisha.ac.jp/admissions_undergrad/preferred_application/index.html"
+        "admissionUrl": "https://www.doshisha.ac.jp/admissions_undergrad/preferred_application/index.html",
+        "selectionType": "comprehensive"
       },
       {
         "id": "global-comm",
@@ -458,7 +470,7 @@
           ],
           "tips": "英語 (または中国語) での流暢さだけでなく、内容の具体性と自分の言葉で語る力が問われる。単に留学したいだけでなく、留学を通して何を達成したいかを明確にしておくこと。同志社の国際主義・自由主義の教育理念と自分の経験を結びつけて語れると強い"
         },
-        "capacity": 5,
+        "capacity": 20,
         "requirements": {
           "gpa": null,
           "englishCert": "英検2級 / IELTS 4.5以上",
@@ -510,7 +522,8 @@
           "examDate": "2025-12-01",
           "resultDate": "2025-12-19"
         },
-        "admissionUrl": "https://www.doshisha.ac.jp/admissions_undergrad/preferred_application/index.html"
+        "admissionUrl": "https://www.doshisha.ac.jp/admissions_undergrad/preferred_application/index.html",
+        "selectionType": "comprehensive"
       },
       {
         "id": "medicine",
@@ -543,13 +556,14 @@
           "examDate": "2025-09-30",
           "resultDate": "2025-10-18"
         },
-        "admissionUrl": "https://www.doshisha.ac.jp/admissions_undergrad/preferred_application/index.html"
+        "admissionUrl": "https://www.doshisha.ac.jp/admissions_undergrad/preferred_application/index.html",
+        "selectionType": "comprehensive"
       },
       {
         "id": "economics",
         "name": "経済学部",
         "admissionPolicy": "経済学部\n　\n経済学部は、長い歴史に培われてきた教育研究環境の下で、幅広い教養を身につけるための科目、経済学の系統的・段階的理解をはかる科目、および問題発見と問題解決能力の強化をはかる科目を提供し、主体的な学修を促すことにより、国際化する経済・社会の状況に対応し、広く社会のために行動しうる、自治自立の人物を養成することを目的としています。そのために、次のような学生を求めています。",
-        "capacity": 5,
+        "capacity": 10,
         "requirements": {
           "gpa": 3.4,
           "englishCert": null,
@@ -575,7 +589,8 @@
           "examDate": "2025-10-07",
           "resultDate": "2025-10-25"
         },
-        "admissionUrl": "https://www.doshisha.ac.jp/admissions_undergrad/preferred_application/index.html"
+        "admissionUrl": "https://www.doshisha.ac.jp/admissions_undergrad/preferred_application/index.html",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -627,13 +642,14 @@
           "examDate": "2024-10-04",
           "resultDate": "2024-10-22"
         },
-        "admissionUrl": "https://admission.ritsumei.ac.jp/"
+        "admissionUrl": "https://admission.ritsumei.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "business",
         "name": "経営学部",
         "admissionPolicy": "経営学部\n　\r\n経営学部は、学部の教育目標を達成するためのカリキュラムで学ぶ\r\nために必要な、以下の能力・資質を有するものを求めます。\r\n１　経営学に強い関心を持ち、高い意欲と目的意識を持って学習を行\r\nおうとしている\r\n２　学部の掲げる人材育成目的・教育目標を理解し、経営学部での勉\r\n学を強く志望している\r\n３　広く高等学校卒業レベルの基礎学力を有している\n４　大学での学びに必要な日本語運用能力を有している\r\nまた、各分野あるいは将来の進路に関わって、下記のような人材\r\nをより積極的に求めます。\r\n５　経営学分野における高度な専門的能力を獲得し、戦略、マーケティ\r\nング、組織、会計・ファイナンスの各分野で活躍をめざしている\r\n６　会計分野における高度な専門的能力および関連する資格の獲得を\r\nめざしている\r\n７　将来、広い意味での起業家（アントレプレナー）や事業の継承（承継）\r\nをめざしている\r\n８　高い外国語運用能力を獲得し、将来、広く国際ビジネスの分野に\r\nおいて活躍をめざしている\r\n９　アジアビジネスに興味を持ち、将来、アジアを舞台に活躍をめざ\r\nしている",
-        "capacity": 5,
+        "capacity": 17,
         "requirements": {
           "gpa": 3.2,
           "englishCert": null,
@@ -670,7 +686,8 @@
           "examDate": "2024-10-04",
           "resultDate": "2024-10-22"
         },
-        "admissionUrl": "https://admission.ritsumei.ac.jp/"
+        "admissionUrl": "https://admission.ritsumei.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "foodmanagement",
@@ -713,7 +730,8 @@
           "examDate": "2024-10-04",
           "resultDate": "2024-10-22"
         },
-        "admissionUrl": "https://admission.ritsumei.ac.jp/"
+        "admissionUrl": "https://admission.ritsumei.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "general",
@@ -757,7 +775,8 @@
           "examDate": "2024-10-04",
           "resultDate": "2024-10-22"
         },
-        "admissionUrl": "https://admission.ritsumei.ac.jp/"
+        "admissionUrl": "https://admission.ritsumei.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "international-relations",
@@ -800,7 +819,8 @@
           "examDate": "2024-10-04",
           "resultDate": "2024-10-22"
         },
-        "admissionUrl": "https://admission.ritsumei.ac.jp/"
+        "admissionUrl": "https://admission.ritsumei.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "general-2",
@@ -843,7 +863,8 @@
           "examDate": "2024-10-04",
           "resultDate": "2024-10-22"
         },
-        "admissionUrl": "https://admission.ritsumei.ac.jp/"
+        "admissionUrl": "https://admission.ritsumei.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "informationscience-eng",
@@ -887,13 +908,14 @@
           "examDate": "2024-10-04",
           "resultDate": "2024-10-22"
         },
-        "admissionUrl": "https://admission.ritsumei.ac.jp/"
+        "admissionUrl": "https://admission.ritsumei.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "letters",
         "name": "文学部",
         "admissionPolicy": "文学部\n　\r\n　文学部では、以下のような学生を求めます。\r\n１　人文学の分野・領域に対して深い関心と探究心を持つ者\r\n２　人文学を学ぶために必要な基礎学力を有する者\r\n３　学域・専攻での学びを通して幅広い知識と豊かな表現力を身につ\r\nけて、人間と社会が抱える諸問題を主体的に追求・解決しようと\r\nする意欲を持つ者",
-        "capacity": 5,
+        "capacity": 63,
         "requirements": {
           "gpa": null,
           "englishCert": "英検2級 / TOEFL iBT 57以上 / IELTS 4.5以上 / GTEC 1050以上",
@@ -920,13 +942,14 @@
           "examDate": "2025-10-03",
           "resultDate": "2025-10-21"
         },
-        "admissionUrl": "https://admission.ritsumei.ac.jp/"
+        "admissionUrl": "https://admission.ritsumei.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "global-liberal-arts",
         "name": "グローバル教養学部",
         "admissionPolicy": "グローバル教養学部\n　\n立命館大学グローバル教養学部では、以下のような学生を求めています。\n・グローバル社会の諸問題を知的に論じられる英語力及び基礎学力を有する者（具体的英語\n要件は別途参照）\n・グローバル社会の諸問題に高い関心をもち、多様な文化や価値観を尊重し、協力すること\nができる者。\n・知の技法を習得し、人文学、社会科学、科学技術の諸分野から自らの問題関心や進路に\n関わる学術分野への理解を深めることを通して、グローバル社会の諸問題を主体的、実践\n的に解決するグローバルリーダーを志す者。",
-        "capacity": 5,
+        "capacity": 12,
         "requirements": {
           "gpa": null,
           "englishCert": "TOEFL iBT 68以上 / IELTS 6.0以上",
@@ -948,13 +971,14 @@
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
         },
-        "admissionUrl": "https://admission.ritsumei.ac.jp/"
+        "admissionUrl": "https://admission.ritsumei.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "science-eng",
         "name": "理工学部",
         "admissionPolicy": "理工学部\n　\r\n　理工学部は、数学と理科の確かな学力と論理的思考力を兼ね備えた、\r\n以下のような意欲的な学生を求めます。\r\n１　旺盛な好奇心と鋭い問題意識を持ち、物事の本質をよく理解し、\r\n課題を見つけようと努力する者\r\n２　科学技術や社会の動向に関心を持ち、幅広い視野から創造的に物\r\n事をとらえようとする者\r\n３　他人の立場が理解でき、寛容な精神を持ち自己を律することがで\r\nきる者\r\n４　確かな自分の意見を持ち、新しいことに挑戦する気構えがある者",
-        "capacity": 5,
+        "capacity": 36,
         "requirements": {
           "gpa": 3.2,
           "englishCert": null,
@@ -992,7 +1016,8 @@
           "examDate": "2024-10-04",
           "resultDate": "2024-10-22"
         },
-        "admissionUrl": "https://admission.ritsumei.ac.jp/"
+        "admissionUrl": "https://admission.ritsumei.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "sports",
@@ -1036,7 +1061,8 @@
           "examDate": "2024-10-04",
           "resultDate": "2024-10-22"
         },
-        "admissionUrl": "https://admission.ritsumei.ac.jp/"
+        "admissionUrl": "https://admission.ritsumei.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "general-3",
@@ -1079,13 +1105,14 @@
           "examDate": "2024-10-04",
           "resultDate": "2024-10-22"
         },
-        "admissionUrl": "https://admission.ritsumei.ac.jp/"
+        "admissionUrl": "https://admission.ritsumei.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "pharmacy",
         "name": "薬学部",
         "admissionPolicy": "薬学部\n　\n薬学部は、医療の高度化に伴う薬学の深い専門的な力量をつけるた\nめ、以下のような学生を求めます。\n１　理科・数学において基礎的な知識を有し、科学的な思考力を持つ\n者\n２　課題探究心、社会性および一定のコミュニケーション能力を有す\nる者\n３　薬学科では先端的な医療に関心を持ち、高度専門職業人としての\n薬剤師となることを強く志望し、そのために努力を惜しまない者\n４　創薬科学科では医薬品創製および関連分野において基礎研究およ\nび臨床開発に携わり、グローバルに活躍することを強く志望し、\nそのために努力を惜しまない者",
-        "capacity": 5,
+        "capacity": 9,
         "requirements": {
           "gpa": 3.2,
           "englishCert": null,
@@ -1123,7 +1150,8 @@
           "examDate": "2024-10-04",
           "resultDate": "2024-10-22"
         },
-        "admissionUrl": "https://admission.ritsumei.ac.jp/"
+        "admissionUrl": "https://admission.ritsumei.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "social",
@@ -1160,13 +1188,14 @@
           "examDate": "2025-10-03",
           "resultDate": "2025-10-21"
         },
-        "admissionUrl": "https://admission.ritsumei.ac.jp/"
+        "admissionUrl": "https://admission.ritsumei.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "economics",
         "name": "経済学部",
         "admissionPolicy": "経済学部\n　\r\n　経済学部は、経済学を基軸に社会科学を総合的に学ぶことで、多様\r\n性理解力とグローバルな視野を有し、経済センスに裏打ちされた論理\r\n的思考力をもって経済社会の諸課題に取り組み、その解決に貢献でき\r\nる人材を育成することを目的としています。こうした人材育成目的に\r\n向けて設定された教育目標とカリキュラムで学ぶため、入学時点にお\r\nいて以下の学力、意欲、興味を有することを求めます。\r\n１　経済・社会の問題を分析するために必要な基礎学力\r\n２　経済・社会の問題に対する関心と問題解決に主体的に取り組む意\r\n欲\r\n３　他者と協力しながら、ものごとに取り組む意欲\r\n４　論理的なものの見方・考え方に対する興味",
-        "capacity": 5,
+        "capacity": 24,
         "requirements": {
           "gpa": 3.2,
           "englishCert": null,
@@ -1203,50 +1232,8 @@
           "examDate": "2024-10-04",
           "resultDate": "2024-10-22"
         },
-        "admissionUrl": "https://admission.ritsumei.ac.jp/"
-      },
-      {
-        "id": "law",
-        "name": "法学部",
-        "admissionPolicy": "法学部\n　\n　立命館大学法学部は、次に掲げる3つのことをすべて満たす者を、入\n学者として積極的に受け入れます。\n１　中等教育修了程度の基礎学力を有していること\n２　法学・政治学の専門教育を受けるのに必要な素養を有していること\n３　立命館大学法学部の人材育成目的を理解し、法学・政治学の学び\nに強い意欲を有していること\n　また、法学・政治学の専門教育を受けるのに必要な素養（２）の有無\nを判断するにあたっては、社会科学に関する基本的な語彙の知識（漢字\nの読み書きの力を含む）、論理的思考力、文章読解力、文章表現力（理\n解した内容やこれに基づく自己の見解を口頭で述べる力を含む）、歴史\nや政治経済に関する基礎的な知識、および英語をはじめとする外国語\nの基礎的素養の有無ならびに程度を重視します。",
-        "capacity": 5,
-        "requirements": {
-          "gpa": 3.2,
-          "englishCert": null,
-          "otherReqs": [
-            "以下に定める競技基準を満たす実績を持つ者\n・オリンピック・パラリンピック、世界選手権大会等、各種国際大会に出場した者\n・全国高等学校総合体育大会、全国高等学校選手権大会、全国高等学校選抜大会に出場した者\n・国民スポーツ大会・国民体育大会出場のために都道府県選抜チームに選ばれた者\n・国別代表もしくは代表候補に選ばれた者（年齢別代表も含む）\n・ 各協会等による強化指定やタレント発掘事業等による指定を受けた者\n・それぞれの競技種目において、チームまたは個人が上記の成績をあげていない場合でも、同等の競技能力を有すると証明できる者\n\nアイスホッケー（男子）、アメリカンフットボール（男子）、硬式野球（男子）、サッカー（男子）、ラグビー（男子）、バスケットボール（男子）、バスケットボール（女子）、バレーボール（男子）、準硬式野球（男子）、水球（男子）、ボート（男子・女子）、ソフトボール（男子・女子）、ハンドボール（男子・女子）、ホッケー（男子・女子）、ヨット（男子・女子）、アーチェリー（男子・女子）、弓道（男子・女子）、剣道（男子・女子）、柔道（男子・女子）、馬術（男子・女子）、射撃（男子・女子）、フェンシング（男子・女子）、スキー（男子・女子）、卓球（男子・女子）、カヌー（男子・女子）、ソフトテニス（男子・女子）、バドミントン（男子・女子）、自転車＜ロード・スプリント＞（男子・女子）、ゴルフ（男子・女子）、スケート（男子・女子）、重量挙（男子・女子）、日本拳法（男子・女子）、競泳（男子・女子）、硬式庭球（男子・女子）、陸上競技（男子・女子）、ボクシング（男子・女子）、\n相撲（男子・女子）、レスリング（男子）、トライアスロン（男子・女子）\n・その他上記以外のスポーツ活動での個人でオリンピック等の国際試合に通用する程度の競技能力を有する者",
-            "併願可（）"
-          ]
-        },
-        "selectionMethods": [
-          {
-            "stage": 1,
-            "type": "documents",
-            "details": "入学志願書、調査書、志望理由書、競技成績証明書、運動能力測定証明書、写真貼付用紙、特別奨学金願書（該当者のみ）"
-          },
-          {
-            "stage": 2,
-            "type": "essay",
-            "details": "小論文"
-          },
-          {
-            "stage": 3,
-            "type": "interview",
-            "details": "面接"
-          },
-          {
-            "stage": 4,
-            "type": "interview",
-            "details": "口頭試問"
-          }
-        ],
-        "schedule": {
-          "applicationStart": "2024-08-26",
-          "applicationEnd": "2024-09-09",
-          "examDate": "2024-10-04",
-          "resultDate": "2024-10-22"
-        },
-        "admissionUrl": "https://admission.ritsumei.ac.jp/"
+        "admissionUrl": "https://admission.ritsumei.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -1261,7 +1248,7 @@
         "id": "letters",
         "name": "文学部",
         "admissionPolicy": "文学部\n　\n文学部では、学位授与の方針（ディプロマ・ポリシー）及び教育課程編成・実施の方針（カリキュラム・ポリシー）に基づく教育を受けるために必要な、次に掲げる知識・技能、思考力・判断力・表現力等の能力及び主体的な態度を備えた人を求めます。\r\n\r\n1 高等学校等での教育課程で求められる基礎的な学力を有している。具体的には、次のような学力を身につけていることを推奨する。\r\n(1) 文章を的確に理解する読解力と、自己の考えを明確に述べるのに十分な語彙力・表現力（国語・外国語）、\r\n(2) 日本を含めた現代世界の情勢とその歴史的・地理的背景に関する基礎的事項（地歴・公民）知識、\r\n(3) 基礎的な数学的思考や自然科学的説明様式への理解力（数学・理科）\r\n2 自己を表現し他者を理解するために必要な基本的言語運用能力を備えている。\r\n3 人間の文化的営みに対する関心と感性を持ち、主体的に探求する姿勢を有している。",
-        "capacity": 5,
+        "capacity": 10,
         "requirements": {
           "gpa": 3.5,
           "englishCert": "英検2級 / TOEFL iBT 52以上",
@@ -1293,13 +1280,14 @@
           "examDate": "2025-09-30",
           "resultDate": "2025-10-18"
         },
-        "admissionUrl": "https://www.nyusi.kansai-u.ac.jp/admission/ao/"
+        "admissionUrl": "https://www.nyusi.kansai-u.ac.jp/admission/ao/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "social",
         "name": "社会学部",
         "admissionPolicy": "社会学部\n　\n社会学部は、学位授与の方針（ディプロマ・ポリシー）及び教育課程編成の方針（カリキュラム・ポリシー）に定める教育を受けるために必要な、次に掲げる知識・技能、思考力・判断力・表現力等の能力及び主体的な態度を備えた人を求めます。\n\n人間と社会に関する現象を科学的に分析し、理論的・実践的に学んでいくために、高等学校の課程での学習等を通じて以下の能力を有している。\n国語や外国語の学習により、的確な読解力と自らの考えを表現する能力を有している。\n地理歴史および公民の学習を通じて、わが国を含む世界各国・各地域の歴史的発展過程や生活・文化の地域的特色、並びに現代の社会における政治・経済の仕組みを理解している。\n数学や理科などの学習によって、論理的思考に十分親しむとともに、日進月歩する科学技術に関する基本的知識を身につけている。\n人間と社会に関する問題に目を向け、その解決に挑み、新たな価値を創出することで社会への貢献を志している。\n人間と社会に対する知的好奇心とともに、社会現象に対する多様な評価や視点を許容する柔軟性を持って主体的に学んでいく意欲を持っている。",
-        "capacity": 5,
+        "capacity": 10,
         "requirements": {
           "gpa": 4,
           "englishCert": null,
@@ -1326,7 +1314,8 @@
           "examDate": "2025-09-30",
           "resultDate": "2025-10-18"
         },
-        "admissionUrl": "https://www.nyusi.kansai-u.ac.jp/admission/ao/"
+        "admissionUrl": "https://www.nyusi.kansai-u.ac.jp/admission/ao/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "commerce",
@@ -1359,7 +1348,8 @@
           "examDate": "2025-09-30",
           "resultDate": "2025-10-18"
         },
-        "admissionUrl": "https://www.nyusi.kansai-u.ac.jp/admission/ao/"
+        "admissionUrl": "https://www.nyusi.kansai-u.ac.jp/admission/ao/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "science-eng",
@@ -1392,13 +1382,14 @@
           "examDate": "2025-09-30",
           "resultDate": "2025-10-18"
         },
-        "admissionUrl": "https://www.nyusi.kansai-u.ac.jp/admission/ao/"
+        "admissionUrl": "https://www.nyusi.kansai-u.ac.jp/admission/ao/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "general-info",
         "name": "総合情報学部",
         "admissionPolicy": "総合情報学部\n　\n総合情報学部では、学位授与の方針及び教育課程編成・実施の方針に基づく教育を受けることのできる者として、様々な入試制度を通じて、次に掲げる知識・技能、思考力・判断力・表現力等の能力及び主体的な態度を備えた入学者を広く受け入れます。\n\n1\n特定の科目にとどまらず、高等学校までの各教科・科目を全般的に習得し、基礎的な学力を十分身に付けている。\n2\nコンピュータや情報と人間・社会に対して強い興味や関心を持ち、幅広い教養と実践能力の基盤を有している。\n3\n入学後に修得する知識やスキルを最大限に活用しながら、自分の専門を深く追求し、社会に貢献しようとする高い目的意識を持っている。\n4\n文系・理系という枠にとらわれることなく、さまざまな領域を「情報」という視点から総合的に探究するための素養を有している。",
-        "capacity": 5,
+        "capacity": 10,
         "requirements": {
           "gpa": 3.5,
           "englishCert": null,
@@ -1435,7 +1426,8 @@
           "examDate": "2025-09-30",
           "resultDate": "2025-10-18"
         },
-        "admissionUrl": "https://www.nyusi.kansai-u.ac.jp/admission/ao/"
+        "admissionUrl": "https://www.nyusi.kansai-u.ac.jp/admission/ao/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "economics",
@@ -1473,7 +1465,8 @@
           "examDate": "2025-09-30",
           "resultDate": "2025-10-18"
         },
-        "admissionUrl": "https://www.nyusi.kansai-u.ac.jp/admission/ao/"
+        "admissionUrl": "https://www.nyusi.kansai-u.ac.jp/admission/ao/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "businessdata-science",
@@ -1506,13 +1499,14 @@
           "examDate": "2025-09-30",
           "resultDate": "2025-10-18"
         },
-        "admissionUrl": "https://www.nyusi.kansai-u.ac.jp/admission/ao/"
+        "admissionUrl": "https://www.nyusi.kansai-u.ac.jp/admission/ao/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "law",
         "name": "法学部",
         "admissionPolicy": "法学部\n　\n法学部では、学位授与の方針（ディプロマ・ポリシー）及び教育課程編成・実施の方針（カリキュラム・ポリシー）に基づく教育を受けるために必要な、次に掲げる知識・技能、思考力・判断力・表現力等の能力及び主体的な態度を備えた人を求めます。\n\n1 次の知識・技能を有している。\n(1) 今日の社会制度の歴史的形成過程に関する知識\n(2) 外国で行われている議論を理解するための外国語能力\n(3) 他者の見解を十分に理解し、かつ、自己の見解を表明し得る日本語能力\n2 さまざまな文化的背景や価値観を持つ他者の見解の意義を認めつつ、十分に根拠づけられた議論を通じて他者を説得し、合意を形成する能力。\n3 広く社会の出来事に関心を持ち、法と政治を学ぶことで自らの考えを形づくり、さまざまな利益や価値を民主的に調整しながら問題解決に向けて行動しようとする意欲を有している。",
-        "capacity": 5,
+        "capacity": 25,
         "requirements": {
           "gpa": null,
           "englishCert": "英検準1級 / 英検CSE 2300以上 / TOEFL iBT 72以上 / IELTS 5.5以上 / GTEC 1180以上",
@@ -1544,7 +1538,8 @@
           "examDate": "2025-09-30",
           "resultDate": "2025-10-18"
         },
-        "admissionUrl": "https://www.nyusi.kansai-u.ac.jp/admission/ao/"
+        "admissionUrl": "https://www.nyusi.kansai-u.ac.jp/admission/ao/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "social-safety",
@@ -1577,7 +1572,8 @@
           "examDate": "2025-09-30",
           "resultDate": "2025-10-18"
         },
-        "admissionUrl": "https://www.nyusi.kansai-u.ac.jp/admission/ao/"
+        "admissionUrl": "https://www.nyusi.kansai-u.ac.jp/admission/ao/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "policy-creation",
@@ -1610,7 +1606,8 @@
           "examDate": "2025-09-30",
           "resultDate": "2025-10-18"
         },
-        "admissionUrl": "https://www.nyusi.kansai-u.ac.jp/admission/ao/"
+        "admissionUrl": "https://www.nyusi.kansai-u.ac.jp/admission/ao/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "engineering",
@@ -1649,13 +1646,14 @@
           "examDate": "2025-09-30",
           "resultDate": "2025-10-18"
         },
-        "admissionUrl": "https://www.nyusi.kansai-u.ac.jp/admission/ao/"
+        "admissionUrl": "https://www.nyusi.kansai-u.ac.jp/admission/ao/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "foreign-languages",
         "name": "外国語学部",
         "admissionPolicy": "外国語学部（以下、「本学部」という）では、学位授与の方針（ディプロマ・ポリシー）及び教育課程編成・実施の方針（カリキュラム・ポリシー）に基づく教育を受けるために必要な、次に掲げる知識・技能、思考力・判断力・表現力等の能力及び主体的な態度を備えた人を求めます。\n\n高等学校の教育課程を通じて学ぶ知識、技能を十分に習得している。特に外国語、国語、地理歴史、公民などの学習を通して、外国語及び日本語の高度な運用能力を身につけ、多文化の理解を深めるうえでの基礎的知識を有している。\n外国語を通して新たな知識を吸収し、国際的な諸問題についての理解を深めようとする「考動力」の基盤を持っている。さらに本学部ではスタディ・アブロードを必修としていることから、様々な文化的背景を持った人々と直接接触する体験に強い意欲を持つとともに、環境の変化に対応できる柔軟性や、コミュニケーションに対する積極性など、「生きる力」につながる資質や態度を有している。\n「外国語」を切り口に時代と社会に向き合い、グローバル社会のフロントランナーとなるために必要な学問領域を主体的に学んでいく強い意欲を持っている。",
-        "capacity": 5,
+        "capacity": 15,
         "requirements": {
           "gpa": 3.8,
           "englishCert": "英検2級 / 英検CSE 2100以上 / TOEFL iBT 55以上 / IELTS 5.5以上 / GTEC 1080以上",
@@ -1688,13 +1686,14 @@
           "examDate": "2025-09-30",
           "resultDate": "2025-10-18"
         },
-        "admissionUrl": "https://www.nyusi.kansai-u.ac.jp/admission/ao/"
+        "admissionUrl": "https://www.nyusi.kansai-u.ac.jp/admission/ao/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "human-health",
         "name": "人間健康学部",
         "admissionPolicy": "人間健康学部\n\n人間健康学部では、学位授与の方針および教育課程編成・実施の方針に基づく教育を受けることのできる者として、様々な入試制度を通じて、次に掲げる知識・技能、思考力・判断力・表現力等の能力および主体的な態度を備えた入学者を広く受け入れます。\n\n1\n人間の心身の健康に関する積極的関心およびそれを科学的に展開するための基礎学力を有している。\n2\n社会に関心をもち、幅広い教養と実践能力を兼ね備えた関西大学が推奨する判断力と行動力を融合した「考動力」の基盤を有している。\n3\n「スポーツと健康コース」では、スポーツや健康に興味関心をもち、スポーツ活動を通しての人間形成やコミュニティの再生、あるいは新たな人間の健康のあり方を探り、地域において活躍したいという意欲がある。\n4\n「福祉と健康コース」では、福祉と健康に興味関心をもち、これまでの社会福祉のあり方や実践を、人間の生活環境と健康の関係からとらえることができるとともに、地域コミュニティにおける福祉文化の構築および醸成に、積極的に貢献したいという意欲がある。",
-        "capacity": 5,
+        "capacity": 10,
         "requirements": {
           "gpa": 3.4,
           "englishCert": null,
@@ -1721,7 +1720,8 @@
           "examDate": "2025-12-27",
           "resultDate": "2026-01-14"
         },
-        "admissionUrl": "https://www.nyusi.kansai-u.ac.jp/admission/ao/"
+        "admissionUrl": "https://www.nyusi.kansai-u.ac.jp/admission/ao/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "engineering-2",
@@ -1754,7 +1754,8 @@
           "examDate": "2025-09-30",
           "resultDate": "2025-10-18"
         },
-        "admissionUrl": "https://www.nyusi.kansai-u.ac.jp/admission/ao/"
+        "admissionUrl": "https://www.nyusi.kansai-u.ac.jp/admission/ao/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -1769,7 +1770,7 @@
         "id": "commerce",
         "name": "商学部",
         "admissionPolicy": "商学部\n　\n商学部の教育理念は、“Mastery for Service（奉仕のための練達）”というスクールモットーの精神を踏まえて、営利、非営利を問わず経済活動に関わるすべての主体がおかれている現実と向かうべき方向に対する認識を深めつつ、同時に広範な人間生活や環境との関わりの中で、その役割を見極める能力と主体性をもった人材、すなわち「真に創造的な能力を有するビジネスパーソン」を育成することにあります。本学部は、この教育理念に基づき、人間性を向上させる意欲に満ちあふれた、多様な適性と能力を有する学生を受け入れたいと考えています。\nそのため、筆記試験を中心とする一般選抜入学試験と、面接（口頭試問含む）を取り入れた各種入学試験を実施し、高等学校における基礎学力の三要素である「知識・技能」、「思考力・判断力・表現力」および「主体性・多様性・協働性」を総合的に評価します。",
-        "capacity": 5,
+        "capacity": 15,
         "requirements": {
           "gpa": null,
           "englishCert": null,
@@ -1777,9 +1778,16 @@
         },
         "selectionMethods": [
           {
-            "stage": 1,
             "type": "documents",
-            "details": "書類審査"
+            "description": "志願理由書・活動報告書・調査書"
+          },
+          {
+            "type": "essay",
+            "description": "筆記試験（小論文等）"
+          },
+          {
+            "type": "interview",
+            "description": "面接・口頭試問"
           }
         ],
         "schedule": {
@@ -1788,13 +1796,14 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
         },
-        "admissionUrl": "https://www.kwansei.ac.jp/admissions/faq/comprehensive.html"
+        "admissionUrl": "https://www.kwansei.ac.jp/admissions/faq/comprehensive.html",
+        "selectionType": "comprehensive"
       },
       {
         "id": "life-environment",
         "name": "生命環境学部",
         "admissionPolicy": "生物科学科\n　\r\n生物科学科は、生物機能の活用を通じて再生・共生型社会の構築に貢献するため、生物学を基礎として生命のしくみを理解するとともに、生命を分子レベルで分析・評価するための知識や技術を身につけ、高い倫理観をもってグローバルに活躍できる人材の育成をめざしている。そのため、生物科学ばかりでなく、数学、物理学、化学の基礎を確実に身につけさせ、知識の土台作りを行った後、幅広い知識と深い専門性の修得のため専門教育科目を教育する。また、国際社会でコミュニケーションを図るために必要不可欠な英語力の向上のため、英語教育にも力を入れる。以上の人材養成の目的に沿って、生物科学科では以下のような学生を求める。\r\n\r\n① 生物科学科の各専攻分野と社会、文化、人間との関係に深い関心を抱き、各専攻分野の発展を通じて、再生・共生型社会の構築に貢献しようとする学生\r\n② 生物学に加え、数学、物理学、化学の体系的・構造的な理解に基づき、各専攻についての知識や技能を多角的な視点をもって修得しようとする学生\r\n③ 自然科学に関する基礎知識や技能、また日本語及び英語の基礎学力を基に、コミュニケーション能力、論理的思考力、情報収集力、表現力の向上に努める学生\r\n④ 各専攻分野において現代社会における課題を見出し、健全な倫理観をもって課題を解決する能力を身につけようとする学生\r\n\r\n生命医科学科\n　\r\n生命医科学科は、生命科学の確固たる知識に加え、基礎医学、薬学、医工学分野やデータサイエンスに関連した知識を兼ね備え、健全な倫理観をもってヒトの健康に関わる基礎医学系分野で活躍し、ライフイノベーションに資する人材を育成することを使命としている。生命科学を基礎医学系分野に応用するためには、まず生命科学の知識を確実に修得した上で基礎医学系分野の知識も兼ね備えている必要がある。生命科学の確実な知識を修得するためには、その基礎となる数学や物理学、化学をはじめとする基礎科目の知識を身につけている必要がある。また、医工学や医学系情報学分野の知識も養い、実験系分野で得られた成果を基礎医学系分野に効率的に応用できる人材の養成をめざす。さらに、ヒトの健康維持や疾病の治療に関わる分野で活躍する人材は、生命に関する健全な倫理観をもっている必要がある。以上の人材養成の目的に沿って、生命医科学科では以下のような学生を求める。\r\n\r\n① 生命科学を生命医科学科の各専攻分野に応用し、ヒトの健康の維持や疾病の治療等、ライフイノベーションに貢献しようとする学生\r\n② 数学や物理学、化学等、基礎科目も含め、生命科学及び各専攻分野の体系的な知識・技能を高い意欲をもって修得しようとする学生\r\n③ 人文・社会系科目の基礎学力を有し、多角的な視点と生命に関する健全な倫理観を意欲的に身につけようとする学生\r\n④ 日本語及び英語の基礎学力を有し、その学力を基に文章読解・作成、コミュニケーション能力の向上に努める学生\r\n\r\n環境応用化学科\n　\r\n環境応用化学科は、地球環境問題に関連する多様な課題に化学的な視点から柔軟に取組み、国際的に活躍できる人材を養成することを使命としている。そのため、自然科学の基礎を身につけて知識の土台作りを行った後、幅広い知識と深い専門性を修得できる教育研究の実践が必要である。特に、原子・分子レベルから地球スケールまでの広範な対象を取扱う環境応用化学分野の理解には、化学ばかりでなく数学、物理学、地学等の基礎知識の修得も必要となる。以上の人材養成の目的に沿って、環境応用化学科では以下のような学生を求める。\r\n\r\n① 物質と人間生活や地球環境との関わりに幅広い関心を抱き、化学的な視点からグリーンイノベーションに代表される地球環境問題の解決に貢献しようとする学生\r\n② 自然科学の基礎学力を十分に有し、地球環境化学・応用化学分野の体系的な知識・技能を高い意欲をもって修得しようとする学生\r\n③ 修得した専門的知識・技能を応用に発展させる柔軟な思考力と知識を養い、新しい課題に取組むことのできる能力と、成果を発信するコミュニケーション能力の修得に努めようとする学生\r\n④ 科学技術と地球環境との調和を重視した高い倫理観をもった学生",
-        "capacity": 5,
+        "capacity": 15,
         "requirements": {
           "gpa": null,
           "englishCert": null,
@@ -1802,9 +1811,16 @@
         },
         "selectionMethods": [
           {
-            "stage": 1,
             "type": "documents",
-            "details": "書類審査"
+            "description": "志願理由書・活動報告書・調査書"
+          },
+          {
+            "type": "essay",
+            "description": "筆記試験（小論文等）"
+          },
+          {
+            "type": "interview",
+            "description": "面接・口頭試問"
           }
         ],
         "schedule": {
@@ -1813,13 +1829,14 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
         },
-        "admissionUrl": "https://www.kwansei.ac.jp/admissions/faq/comprehensive.html"
+        "admissionUrl": "https://www.kwansei.ac.jp/admissions/faq/comprehensive.html",
+        "selectionType": "comprehensive"
       },
       {
         "id": "economics",
         "name": "経済学部",
         "admissionPolicy": "経済学部\n　\nわが国を含め世界の政治・経済情勢は大きな変化の時代を迎えています。その一つに、貧困や環境の問題などが挙げられますが、その根本には経済問題があるのは言うまでもありません。\r\n今の時代に大学で経済学を学ぶ意義はきわめて大きいと言えます。同時に、社会や世界の多様な文化や考え方の違いを認識することが大切だと言えます。まさに、激動の世界において活躍できる「世界市民」に求められる資質は、経済学の専門知識だけでなく幅の広い多様な知識としっかりとした価値観を持つことです。",
-        "capacity": 5,
+        "capacity": 13,
         "requirements": {
           "gpa": null,
           "englishCert": null,
@@ -1827,9 +1844,16 @@
         },
         "selectionMethods": [
           {
-            "stage": 1,
             "type": "documents",
-            "details": "書類審査"
+            "description": "志願理由書・活動報告書・調査書"
+          },
+          {
+            "type": "essay",
+            "description": "筆記試験（小論文等）"
+          },
+          {
+            "type": "interview",
+            "description": "面接・口頭試問"
           }
         ],
         "schedule": {
@@ -1838,13 +1862,14 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
         },
-        "admissionUrl": "https://www.kwansei.ac.jp/admissions/faq/comprehensive.html"
+        "admissionUrl": "https://www.kwansei.ac.jp/admissions/faq/comprehensive.html",
+        "selectionType": "comprehensive"
       },
       {
         "id": "engineering",
         "name": "工学部",
         "admissionPolicy": "物質工学課程\n　\n物質工学課程では、「創エネ」、「蓄エネ」、「省エネ」の3つの分野に関連づけられる物質工学において、基礎に必要な数学系・物理系・化学系科目の知識を身につけた上で、課程制を活用して、電磁気学や固体電子論等の電気電子工学分野の知識や他領域科目を含む幅広い知識を身につけることで物質創製、物性評価、機能付与、デバイス応用等の応用力を修得させ、物質工学の分野における課題に対して新たな視点から取組み、持続可能な社会実現に貢献できる人材を養成することで社会に貢献することを目的としている。以上の人材養成の目的に沿って、物質工学課程では次のような入学者を求める。\n\n①工学部及び物質工学課程の目的及び養成する人材像に賛同し、自然科学・科学技術の発展を通じて、自立的な態度をもって社会・文化・人類の発展に貢献しようとする学生\n②理数系科目の十分な学力を有し、物質工学に関わる専門的知識を中心にしつつ、極端な専門性に偏らず、幅広い自然科学・科学技術分野の体系的な知識・技能を高い意欲をもって修得しようとする学生\n③人文・社会系科目の基礎学力を有し、多角的な視点を意欲的に身につけようとする学生\n④日本語及び英語の基礎学力を有し、その学力を基に文章読解・作成、コミュニケーション能力の向上に努める学生\n\n電気電子応用工学課程\n　\n電気電子応用工学課程では自然現象に対する好奇心と科学技術に対する探究心を有し、電気エネルギーに関わる新しい課題に挑戦する意欲と情熱を有する人材を育成しようとしている。また、幅広い知識と深い専門性に加えて、柔軟な思考力を有する人材の育成を目標としている。以上の人材養成の目的に沿って、電気電子応用工学課程では次のような学生を求める。\n\n①工学部及び電気電子応用工学課程の目的及び養成する人物像に賛同し、電気エネルギーに関連した問題に強い関心を示し、本学の教育研究環境を積極的に活用して主体的に学び、近い将来、省電力パワーエレクトロニクスの分野で創造的役割を果たす人材へと成長していこうとする意志をもった学生\n②関西学院のスクールモットーである“Mastery for Service”への共感と、本課程における学びに対する強い関心、そして、その学びを通した人間的成長への強い意欲をもった学生\n③与えられた問題に対して、自分が有する知識を総合化して解を導く能力、あるいは導こうとして考え抜く力を有する学生\n④日本語及び英語の基礎学力を有し、その学力を基に文章読解・作成、コミュニケーション能力の向上に努める学生\n\n情報工学課程\n　\n情報工学課程は、情報技術に関する専門知識とプログラミングの能力を有し、IoTやAI、ヒューマンインタフェース、感性工学等、最先端の情報技術及び幅広い知識を修得した人材を養成することで社会に貢献することを目的としている。以上の人材養成の目的に沿って、情報工学課程では次のような学生を求める。\n\n①工学部及び情報工学課程の目的及び養成する人物像に賛同し、自然科学・科学技術の発展を通じて、自律的な態度をもって人類の進歩に貢献しようとする学生\n②理数系科目の十分な学力を有し、情報工学に関わる専門的知識を中心に、自然科学・科学技術分野の体系的な知識・技能を高い意欲をもって修得しようとする学生\n③人文・社会系科目の基礎学力を有し、多角的な視点を意欲的に身につけようとする学生\n④日本語及び英語の基礎学力を有し、その学力を基に文章読解・作成、コミュニケーション能力の向上に努める学生\n\n知能・機械工学課程\n　\n知能・機械工学課程は、機械工学と人工知能の両方の分野にわたる知識と技能を身につけ、それらに基づいてこれからの社会に求められる高度に知的な機械システムの創出や、それらを活用した新たな産業の創出に貢献できる創造性に富んだ人材を養成することで社会に貢献することを目的としている。以上の人材養成の目的に沿って、知能・機械工学課程では次のような学生を求める。\n\n①工学部及び知能・機械工学課程の目的及び養成する人材像に賛同し、機械工学・人工知能技術の発展を通じて、自律的な態度をもって社会・文化・人類の発展に貢献しようとする学生\n②理数系科目の十分な学力を有し、機械工学・人工知能技術分野の体系的な知識・技能を高い意欲をもって修得しようとする学生\n③人文・社会系科目の基礎学力を有し、多角的な視点を意欲的に身につけようとする学生\n④日本語及び英語の基礎学力を有し、その学力を基に文章読解・作成、コミュニケーション能力の向上に努める学生",
-        "capacity": 5,
+        "capacity": 16,
         "requirements": {
           "gpa": null,
           "englishCert": null,
@@ -1852,9 +1877,16 @@
         },
         "selectionMethods": [
           {
-            "stage": 1,
             "type": "documents",
-            "details": "書類審査"
+            "description": "志願理由書・活動報告書・調査書"
+          },
+          {
+            "type": "essay",
+            "description": "筆記試験（小論文等）"
+          },
+          {
+            "type": "interview",
+            "description": "面接・口頭試問"
           }
         ],
         "schedule": {
@@ -1863,7 +1895,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
         },
-        "admissionUrl": "https://www.kwansei.ac.jp/admissions/faq/comprehensive.html"
+        "admissionUrl": "https://www.kwansei.ac.jp/admissions/faq/comprehensive.html",
+        "selectionType": "comprehensive"
       },
       {
         "id": "policy",
@@ -1877,9 +1910,16 @@
         },
         "selectionMethods": [
           {
-            "stage": 1,
             "type": "documents",
-            "details": "書類審査"
+            "description": "志願理由書・活動報告書・調査書"
+          },
+          {
+            "type": "essay",
+            "description": "筆記試験（小論文等）"
+          },
+          {
+            "type": "interview",
+            "description": "面接・口頭試問"
           }
         ],
         "schedule": {
@@ -1888,13 +1928,14 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
         },
-        "admissionUrl": "https://www.kwansei.ac.jp/admissions/faq/comprehensive.html"
+        "admissionUrl": "https://www.kwansei.ac.jp/admissions/faq/comprehensive.html",
+        "selectionType": "comprehensive"
       },
       {
         "id": "architecture",
         "name": "建築学部",
         "admissionPolicy": "建築学科\n　\r\n建築学科は、安全・快適で美しい建築及び都市空間の計画、設計、運営等に関する専門的知識と技術に基づいて、グローバルな視点で建築と都市の未来を創造する国際的人材を養成することで建築学の立場から社会に貢献することを目的としている。\r\n以上の人材養成の目的に沿って、建築学科では次のような入学者を求める。\r\n\r\n① 建築学部及び建築学科の目的及び養成する人材像に賛同し、自然科学・科学技術の発展を通じて、自律的な態度をもって社会・文化・人類の発展に貢献しようとする学生\r\n② 理数系科目の十分な学力を有し、自然科学・科学技術分野の体系的な知識・技能を高い意欲をもって修得しようとする学生\r\n③ 人文・社会系科目の基礎学力を有し、建築・都市が存立する社会・文化・歴史等について理解しようとする意欲をもつ学生\r\n④ 日本語及び英語の基礎学力を有し、論理的思考に基づいて、文章読解・作成、コミュニケーション能力の向上に努める学生",
-        "capacity": 5,
+        "capacity": 7,
         "requirements": {
           "gpa": null,
           "englishCert": null,
@@ -1902,9 +1943,16 @@
         },
         "selectionMethods": [
           {
-            "stage": 1,
             "type": "documents",
-            "details": "書類審査"
+            "description": "志願理由書・活動報告書・調査書"
+          },
+          {
+            "type": "essay",
+            "description": "筆記試験（小論文等）"
+          },
+          {
+            "type": "interview",
+            "description": "面接・口頭試問"
           }
         ],
         "schedule": {
@@ -1913,13 +1961,14 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
         },
-        "admissionUrl": "https://www.kwansei.ac.jp/admissions/faq/comprehensive.html"
+        "admissionUrl": "https://www.kwansei.ac.jp/admissions/faq/comprehensive.html",
+        "selectionType": "comprehensive"
       },
       {
         "id": "education",
         "name": "教育学部",
         "admissionPolicy": "教育学部\n　\n教育学部は、「子ども理解」を基本的な教育理念として、学校教育及び保育の現場で活躍する「教育者」、広く社会で子どもを育てる活動にかかわり、またそうした活動を支援できる「教育者」を養成することを目的としています。そのため、「実践力」、「教育力」、「人間力」など「教育者」に求められる資質をさらに伸ばそうとする意志をもつ者を受け入れることを基本方針としています。具体的には、以下のような者を受け入れます。\r\n\r\n●人間・社会に対する幅広い関心をもち、教育・保育現場などで学びと育ちを支える資質を身につけようとする意欲をもつ者。\r\n●高等教育に相応しい学力をもち、主体的に問題を発見し、その問題解決に実践的に取り組もうとする意欲をもつ者。\r\n●多様な価値観への理解・共感をもち、相互に人間的な成熟へと向かうことが期待できる者。\r\n●関西学院のスクール・モットーである「Mastery for Service（奉仕のための練達）」という精神を体現しようとする意欲をもつ者。\r\n\r\n以上を募集方針の要素として、教科・科目を設定して筆記試験を中心とする一般選抜入学試験と、面接等を採り入れた各種入学試験を実施しています。高等学校段階までに身につけた「知識・技能」「思考力・判断力・表現力」「主体性・多様性・協働性」をそれぞれの入学試験において重みづけを行い、評価しています。",
-        "capacity": 5,
+        "capacity": 40,
         "requirements": {
           "gpa": null,
           "englishCert": null,
@@ -1927,9 +1976,16 @@
         },
         "selectionMethods": [
           {
-            "stage": 1,
             "type": "documents",
-            "details": "書類審査"
+            "description": "志願理由書・活動報告書・調査書"
+          },
+          {
+            "type": "essay",
+            "description": "筆記試験（小論文等）"
+          },
+          {
+            "type": "interview",
+            "description": "面接・口頭試問"
           }
         ],
         "schedule": {
@@ -1938,13 +1994,14 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
         },
-        "admissionUrl": "https://www.kwansei.ac.jp/admissions/faq/comprehensive.html"
+        "admissionUrl": "https://www.kwansei.ac.jp/admissions/faq/comprehensive.html",
+        "selectionType": "comprehensive"
       },
       {
         "id": "science",
         "name": "理学部",
         "admissionPolicy": "数理科学科\n　 \n数理科学科は、現代社会で必要とされる数学理論に関する柔軟で論理的かつ創造的な思考能力を有し、それらを積極的に現代社会の様々な問題に適用し解決することのできる人材を養成することで社会に貢献することを目的としている。\nよって、次のような入学者を求める。\n\n① 理学部及び数理科学科の目的及び養成する人材像に賛同し、自然科学・科学技術の発展を通じて、自律的な態度をもって社会・文化・人類の発展に貢献しようとする学生\n② 理数系科目の十分な学力を有し、自然科学・科学技術分野の体系的な知識・技能を高い意欲をもって修得しようとする学生\n③ 人文・社会系科目の基礎学力を有し、多角的な視点を意欲的に身につけようとする学生\n④ 日本語及び英語の基礎学力を有し、その学力を基に文章読解・作成、コミュニケーション能力の向上に努める学生\n\n物理・宇宙学科\n　\n物理・宇宙学科は、古典物理学から量子力学・相対性理論等の現代物理学までの物理法則を理解するとともに、ミクロな物質からマクロな天体までの物理現象の実験・観測・理論を用いた研究体験を通して涵養された論理的思考能力と専門性を有する人材を養成することで社会に貢献することを目的としている。\nよって、次のような入学者を求める。\n\n① 理学部及び物理・宇宙学科の目的及び養成する人材像に賛同し、自然科学・科学技術の発展を通じて、自律的な態度をもって社会・文化・人類の発展に貢献しようとする学生\n② 理数系科目の十分な学力を有し、自然科学・科学技術分野の体系的な知識・技能を高い意欲をもって修得しようとする学生\n③ 人文・社会系科目の基礎学力を有し、多角的な視点を意欲的に身につけようとする学生\n④ 日本語及び英語の基礎学力を有し、その学力を基に文章読解・作成、コミュニケーション能力の向上に努める学生\n\n化学科\n　\n化学科は、基礎化学と無機分析化学、有機化学、物理化学を中心とした多面的なカリキュラムと卒業研究を通じ、新物質の創成や未解明現象の解明に資する化学の基礎を体系的に身につけ、多様な課題を解決できる能力と新しい科学技術を創出できる能力を有する人材を養成することで社会に貢献することを目的としている。\nよって、次のような入学者を求める。\n\n① 理学部及び化学科の目的及び養成する人材像に賛同し、自然科学・科学技術の発展を通じて、自律的な態度をもって社会・文化・人類の発展に貢献しようとする学生\n② 理数系科目の十分な学力を有し、自然科学・科学技術分野の体系的な知識・技能を高い意欲をもって修得しようとする学生\n③ 人文・社会系科目の基礎学力を有し、多角的な視点を意欲的に身につけようとする学生\n④ 日本語及び英語の基礎学力を有し、その学力を基に文章読解・作成、コミュニケーション能力の向上に努める学生",
-        "capacity": 5,
+        "capacity": 13,
         "requirements": {
           "gpa": null,
           "englishCert": null,
@@ -1952,9 +2009,16 @@
         },
         "selectionMethods": [
           {
-            "stage": 1,
             "type": "documents",
-            "details": "書類審査"
+            "description": "志願理由書・活動報告書・調査書"
+          },
+          {
+            "type": "essay",
+            "description": "筆記試験（小論文等）"
+          },
+          {
+            "type": "interview",
+            "description": "面接・口頭試問"
           }
         ],
         "schedule": {
@@ -1963,7 +2027,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
         },
-        "admissionUrl": "https://www.kwansei.ac.jp/admissions/faq/comprehensive.html"
+        "admissionUrl": "https://www.kwansei.ac.jp/admissions/faq/comprehensive.html",
+        "selectionType": "comprehensive"
       },
       {
         "id": "general",
@@ -1977,9 +2042,16 @@
         },
         "selectionMethods": [
           {
-            "stage": 1,
             "type": "documents",
-            "details": "書類審査"
+            "description": "志願理由書・活動報告書・調査書"
+          },
+          {
+            "type": "essay",
+            "description": "筆記試験（小論文等）"
+          },
+          {
+            "type": "interview",
+            "description": "面接・口頭試問"
           }
         ],
         "schedule": {
@@ -1988,7 +2060,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
         },
-        "admissionUrl": "https://www.kwansei.ac.jp/admissions/faq/comprehensive.html"
+        "admissionUrl": "https://www.kwansei.ac.jp/admissions/faq/comprehensive.html",
+        "selectionType": "comprehensive"
       },
       {
         "id": "international",
@@ -2002,9 +2075,16 @@
         },
         "selectionMethods": [
           {
-            "stage": 1,
             "type": "documents",
-            "details": "書類審査"
+            "description": "志願理由書・活動報告書・調査書"
+          },
+          {
+            "type": "essay",
+            "description": "筆記試験（小論文等）"
+          },
+          {
+            "type": "interview",
+            "description": "面接・口頭試問"
           }
         ],
         "schedule": {
@@ -2013,7 +2093,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
         },
-        "admissionUrl": "https://www.kwansei.ac.jp/admissions/faq/comprehensive.html"
+        "admissionUrl": "https://www.kwansei.ac.jp/admissions/faq/comprehensive.html",
+        "selectionType": "comprehensive"
       },
       {
         "id": "law",
@@ -2027,9 +2108,16 @@
         },
         "selectionMethods": [
           {
-            "stage": 1,
             "type": "documents",
-            "details": "書類審査"
+            "description": "志願理由書・活動報告書・調査書"
+          },
+          {
+            "type": "essay",
+            "description": "筆記試験（小論文等）"
+          },
+          {
+            "type": "interview",
+            "description": "面接・口頭試問"
           }
         ],
         "schedule": {
@@ -2038,7 +2126,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
         },
-        "admissionUrl": "https://www.kwansei.ac.jp/admissions/faq/comprehensive.html"
+        "admissionUrl": "https://www.kwansei.ac.jp/admissions/faq/comprehensive.html",
+        "selectionType": "comprehensive"
       },
       {
         "id": "letters",
@@ -2052,9 +2141,16 @@
         },
         "selectionMethods": [
           {
-            "stage": 1,
             "type": "documents",
-            "details": "書類審査"
+            "description": "志願理由書・活動報告書・調査書"
+          },
+          {
+            "type": "essay",
+            "description": "筆記試験（小論文等）"
+          },
+          {
+            "type": "interview",
+            "description": "面接・口頭試問"
           }
         ],
         "schedule": {
@@ -2063,13 +2159,14 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
         },
-        "admissionUrl": "https://www.kwansei.ac.jp/admissions/faq/comprehensive.html"
+        "admissionUrl": "https://www.kwansei.ac.jp/admissions/faq/comprehensive.html",
+        "selectionType": "comprehensive"
       },
       {
         "id": "human-welfare",
         "name": "人間福祉学部",
         "admissionPolicy": "人間福祉学部\n　\n「質の高い生活と社会」の実現に向けて貢献できる人材を育成する\r\n人間福祉学部では、人間とその生活環境としての社会、そして両者の交互作用を全体的に捉えながら、「質の高い生活と社会」の実現に向けて貢献できる人材の育成を目指します。\r\n\r\nそのための基本理念として「３つのC」、すなわち「人への思いやり（Compassion）」、「幅広い視野（Comprehensiveness）」、「高度な問題解決能力（Competence）」をすべての学科に共通するキー・コンセプトとして位置づけています。\r\n\r\n３つのC\r\n一般選抜入試ではこの理念や教育プログラムにふさわしい生徒を確保するために、「高校において基本とするような科目全体について一定の学力を持っているか、特に言語的能力があり理解力や論述力に優れているか、あるいは特に数理的な能力に優れているか」との観点から試験を実施します。\r\n\r\nなお、本学部の入学にあたって、社会福祉学科は、「社会福祉にかかわる分野での職業選択を希望しているかその分野に理解がある」ことが、社会起業学科は、「社会起業に関心があり、国内外での社会貢献活動をめざしているかそのような分野に理解がある」ことが、人間科学科は、「死生学・生命倫理学・悲嘆学などのこころ（スピリチュアリティ）に関する学問に関心があるか、身体（スポーツ・健康）に関連する分野に関心があり、それぞれの分野での職業選択を希望しているかそれらの分野に理解がある」ことが求められます。",
-        "capacity": 5,
+        "capacity": 10,
         "requirements": {
           "gpa": null,
           "englishCert": null,
@@ -2077,9 +2174,16 @@
         },
         "selectionMethods": [
           {
-            "stage": 1,
             "type": "documents",
-            "details": "書類審査"
+            "description": "志願理由書・活動報告書・調査書"
+          },
+          {
+            "type": "essay",
+            "description": "筆記試験（小論文等）"
+          },
+          {
+            "type": "interview",
+            "description": "面接・口頭試問"
           }
         ],
         "schedule": {
@@ -2088,7 +2192,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
         },
-        "admissionUrl": "https://www.kwansei.ac.jp/admissions/faq/comprehensive.html"
+        "admissionUrl": "https://www.kwansei.ac.jp/admissions/faq/comprehensive.html",
+        "selectionType": "comprehensive"
       },
       {
         "id": "social",
@@ -2102,9 +2207,16 @@
         },
         "selectionMethods": [
           {
-            "stage": 1,
             "type": "documents",
-            "details": "書類審査"
+            "description": "志願理由書・活動報告書・調査書"
+          },
+          {
+            "type": "essay",
+            "description": "筆記試験（小論文等）"
+          },
+          {
+            "type": "interview",
+            "description": "面接・口頭試問"
           }
         ],
         "schedule": {
@@ -2113,7 +2225,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
         },
-        "admissionUrl": "https://www.kwansei.ac.jp/admissions/faq/comprehensive.html"
+        "admissionUrl": "https://www.kwansei.ac.jp/admissions/faq/comprehensive.html",
+        "selectionType": "comprehensive"
       }
     ]
   }
