@@ -618,7 +618,7 @@ export default function AdminSessionDetailPage() {
               <div>
                 <p className="text-muted-foreground mb-1">話題</p>
                 <div className="flex flex-wrap gap-1">
-                  {session.summary.topicsDiscussed.map((t, i) => (
+                  {(session.summary.topicsDiscussed ?? []).map((t, i) => (
                     <Badge key={i} variant="outline" className="text-xs">
                       {t}
                     </Badge>
@@ -629,7 +629,7 @@ export default function AdminSessionDetailPage() {
                 <div>
                   <p className="text-muted-foreground mb-1">強み</p>
                   <ul className="list-disc list-inside space-y-1">
-                    {session.summary.strengths.map((s, i) => (
+                    {(session.summary.strengths ?? []).map((s, i) => (
                       <li key={i}>{s}</li>
                     ))}
                   </ul>
@@ -637,7 +637,7 @@ export default function AdminSessionDetailPage() {
                 <div>
                   <p className="text-muted-foreground mb-1">改善点</p>
                   <ul className="list-disc list-inside space-y-1">
-                    {session.summary.improvements.map((s, i) => (
+                    {(session.summary.improvements ?? []).map((s, i) => (
                       <li key={i}>{s}</li>
                     ))}
                   </ul>
@@ -647,7 +647,7 @@ export default function AdminSessionDetailPage() {
               <div>
                 <p className="text-muted-foreground mb-2">アクションアイテム</p>
                 <div className="space-y-2">
-                  {session.summary.actionItems.map((item, i) => (
+                  {(session.summary.actionItems ?? []).map((item, i) => (
                     <label
                       key={i}
                       className="flex items-start gap-2 cursor-pointer"
@@ -656,7 +656,7 @@ export default function AdminSessionDetailPage() {
                         type="checkbox"
                         checked={item.completed}
                         onChange={() => {
-                          const updated = [...session.summary!.actionItems];
+                          const updated = [...(session.summary!.actionItems ?? [])];
                           updated[i] = { ...updated[i], completed: !updated[i].completed };
                           patchSession({
                             summary: { ...session.summary!, actionItems: updated },
