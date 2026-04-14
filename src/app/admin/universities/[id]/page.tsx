@@ -35,6 +35,7 @@ import {
   FileText,
   Clock,
   BookOpen,
+  ExternalLink,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { authFetch } from "@/lib/api/client";
@@ -578,13 +579,26 @@ export default function AdminUniversityEditPage() {
             </div>
             <div className="space-y-2">
               <Label>公式URL</Label>
-              <Input
-                type="url"
-                value={university.officialUrl}
-                onChange={(e) => updateBasicField("officialUrl", e.target.value)}
-                placeholder="https://..."
-                disabled={!canEdit}
-              />
+              <div className="flex gap-2">
+                <Input
+                  type="url"
+                  value={university.officialUrl}
+                  onChange={(e) => updateBasicField("officialUrl", e.target.value)}
+                  placeholder="https://..."
+                  disabled={!canEdit}
+                  className="flex-1"
+                />
+                {university.officialUrl && (
+                  <a
+                    href={university.officialUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center rounded-md border px-3 text-sm text-primary hover:bg-accent"
+                  >
+                    <ExternalLink className="size-4" />
+                  </a>
+                )}
+              </div>
             </div>
           </div>
         </CardContent>
@@ -628,8 +642,21 @@ export default function AdminUniversityEditPage() {
                 if (!faculty) return null;
                 return (
                   <div>
-                    {canEdit && (
-                      <div className="mb-4 flex justify-end">
+                    <div className="mb-4 flex items-center justify-between">
+                      {faculty.admissionUrl ? (
+                        <a
+                          href={faculty.admissionUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                        >
+                          <ExternalLink className="size-3.5" />
+                          総合型選抜ページを開く
+                        </a>
+                      ) : (
+                        <span />
+                      )}
+                      {canEdit && (
                         <Button
                           variant="outline"
                           size="sm"
@@ -639,8 +666,8 @@ export default function AdminUniversityEditPage() {
                           <Trash2 className="mr-1 size-3" />
                           この学部を削除
                         </Button>
-                      </div>
-                    )}
+                      )}
+                    </div>
                     <FacultyForm
                       faculty={faculty}
                       onChange={(updated) => updateFaculty(idx, updated)}

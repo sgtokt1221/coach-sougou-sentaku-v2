@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Building2, GraduationCap } from "lucide-react";
+import { Search, Building2, GraduationCap, ExternalLink } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { authFetch } from "@/lib/api/client";
 import type { University } from "@/lib/types/university";
@@ -160,6 +160,9 @@ export default function AdminUniversitiesPage() {
                     <th className="px-4 py-3 text-center font-medium hidden md:table-cell">
                       最終更新
                     </th>
+                    <th className="px-4 py-3 text-center font-medium w-16">
+                      公式
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -188,6 +191,21 @@ export default function AdminUniversitiesPage() {
                         {u.updatedAt
                           ? new Date(u.updatedAt).toLocaleDateString("ja-JP")
                           : "-"}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {u.officialUrl ? (
+                          <a
+                            href={u.officialUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center text-primary hover:text-primary/80"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <ExternalLink className="size-4" />
+                          </a>
+                        ) : (
+                          <span className="text-muted-foreground/30">-</span>
+                        )}
                       </td>
                     </tr>
                   ))}
