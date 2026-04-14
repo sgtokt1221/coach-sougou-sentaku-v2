@@ -272,30 +272,34 @@ export default function AdminSessionsPage() {
               </div>
 
               <div className="space-y-2 max-h-60 overflow-y-auto">
-                {teachers
-                  .filter(teacher => {
+                {teachers.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">講師が登録されていません</p>
+                ) : teachers
+                  .map((teacher) => {
                     const { dayOfWeek, time } = getSessionDayAndTime(pickerSession);
                     const slots = availabilities.get(teacher.uid) || [];
                     const targetMinutes = parseInt(time.split(':')[0]) * 60 + parseInt(time.split(':')[1]);
-
-                    return slots.some(slot => {
+                    const isAvailable = slots.some(slot => {
                       if (slot.dayOfWeek !== dayOfWeek) return false;
                       const startMinutes = parseInt(slot.startTime.split(':')[0]) * 60 + parseInt(slot.startTime.split(':')[1]);
                       const endMinutes = parseInt(slot.endTime.split(':')[0]) * 60 + parseInt(slot.endTime.split(':')[1]);
                       return targetMinutes >= startMinutes && targetMinutes < endMinutes;
                     });
+                    return { teacher, isAvailable };
                   })
-                  .map((teacher) => (
+                  .sort((a, b) => (a.isAvailable === b.isAvailable ? 0 : a.isAvailable ? -1 : 1))
+                  .map(({ teacher, isAvailable }) => (
                     <div
                       key={teacher.uid}
-                      className="flex items-center gap-3 p-3 rounded-md hover:bg-accent cursor-pointer transition-colors border"
+                      className={`flex items-center gap-3 p-3 rounded-md hover:bg-accent cursor-pointer transition-colors border ${!isAvailable ? "opacity-60" : ""}`}
                       onClick={() => handleTeacherSelect(teacher.uid, teacher.displayName)}
                     >
-                      <div className="w-3 h-3 bg-emerald-500 rounded-full flex-shrink-0"></div>
+                      <div className={`w-3 h-3 rounded-full flex-shrink-0 ${isAvailable ? "bg-emerald-500" : "bg-gray-300"}`}></div>
                       <div className="flex-1">
                         <div className="font-medium">{teacher.displayName}</div>
                         <div className="text-xs text-muted-foreground">
                           担当: {teacher.studentCount}名
+                          {!isAvailable && " · この時間帯は未登録"}
                         </div>
                       </div>
                     </div>
