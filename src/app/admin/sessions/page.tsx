@@ -155,6 +155,33 @@ export default function AdminSessionsPage() {
     }
   };
 
+  // セッション移動ハンドラー（D&Dで別の時間帯に移動）
+  const handleMoveSession = async (sessionId: string, date: string, time: string) => {
+    try {
+      const response = await authFetch(`/api/sessions/${sessionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scheduledAt: `${date}T${time}:00` }),
+      });
+      if (!response.ok) throw new Error();
+      await mutateSessions();
+    } catch {
+      console.error('セッション移動エラー');
+    }
+  };
+
+  // セッション削除（未配置に戻す）
+  const handleRemoveSession = async (sessionId: string) => {
+    if (!confirm('このセッションを未配置に戻しますか？')) return;
+    try {
+      const response = await authFetch(`/api/sessions/${sessionId}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error();
+      await mutateSessions();
+    } catch {
+      console.error('セッション削除エラー');
+    }
+  };
+
   // セッションクリックハンドラー
   const handleClickSession = (sessionId: string) => {
     window.location.href = `/admin/sessions/${sessionId}`;
@@ -247,6 +274,8 @@ export default function AdminSessionsPage() {
           weekStart={weekStart}
           sessions={weekSessions}
           onDropStudent={handleDropStudent}
+          onMoveSession={handleMoveSession}
+          onRemoveSession={handleRemoveSession}
           onClickSession={handleSessionClick}
         />
       </div>

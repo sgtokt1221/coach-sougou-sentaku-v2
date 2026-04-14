@@ -18,6 +18,8 @@ interface SessionCalendarProps {
     teacherId: string;
   }>;
   onDropStudent: (studentId: string, date: string, time: string) => void;
+  onMoveSession?: (sessionId: string, date: string, time: string) => void;
+  onRemoveSession?: (sessionId: string) => void;
   onClickSession: (sessionId: string) => void;
 }
 
@@ -29,6 +31,8 @@ export default function SessionCalendar({
   weekStart,
   sessions,
   onDropStudent,
+  onMoveSession,
+  onRemoveSession,
   onClickSession
 }: SessionCalendarProps) {
   const [dragoverCell, setDragoverCell] = useState<string | null>(null);
@@ -121,17 +125,24 @@ export default function SessionCalendar({
     }
   };
 
-  // ドロップハンドラー
+  // ドロップハンドラー（新規配置 or セッション移動）
   const handleDrop = (e: React.DragEvent, dayIndex: number, timeSlot: { hour: number; minute: number }) => {
     e.preventDefault();
     setDragoverCell(null);
 
-    const studentId = e.dataTransfer.getData('studentId');
-    if (!studentId) return;
-
     const date = weekDates[dayIndex];
     const timeString = `${timeSlot.hour.toString().padStart(2, '0')}:${timeSlot.minute.toString().padStart(2, '0')}`;
 
+    // セッション移動の場合
+    const sessionId = e.dataTransfer.getData('sessionId');
+    if (sessionId && onMoveSession) {
+      onMoveSession(sessionId, date.toISOString().split('T')[0], timeString);
+      return;
+    }
+
+    // 新規配置の場合
+    const studentId = e.dataTransfer.getData('studentId');
+    if (!studentId) return;
     onDropStudent(studentId, date.toISOString().split('T')[0], timeString);
   };
 
@@ -222,11 +233,16 @@ export default function SessionCalendar({
           );
         })}
 
-        {/* セッションカード */}
+        {/* セッションカード（ドラッグ移動対応） */}
         {sessionPositions.map((session) => (
           <div
             key={session.id}
-            className={`absolute z-10 rounded-md border text-xs p-1.5 cursor-pointer shadow-sm hover:shadow-md transition-shadow ${getSessionBgColor(session.type)}`}
+            draggable
+            onDragStart={(e) => {
+              e.dataTransfer.setData('sessionId', session.id);
+              e.dataTransfer.effectAllowed = 'move';
+            }}
+            className={`absolute z-10 rounded-md border text-xs p-1.5 cursor-grab active:cursor-grabbing shadow-sm hover:shadow-md transition-shadow group ${getSessionBgColor(session.type)}`}
             style={{
               gridColumn: session.gridColumn,
               gridRow: `${session.gridRow} / ${session.gridRowEnd}`,
@@ -234,6 +250,19 @@ export default function SessionCalendar({
             }}
             onClick={() => onClickSession(session.id)}
           >
+            {/* 未配置に戻すボタン */}
+            {onRemoveSession && (
+              <button
+                className="absolute -top-1.5 -right-1.5 z-20 size-4 rounded-full bg-rose-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-[10px] leading-none hover:bg-rose-600"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRemoveSession(session.id);
+                }}
+                title="未配置に戻す"
+              >
+                ×
+              </button>
+            )}
             <div className="space-y-1">
               {session.type === 'group_review' ? (
                 <>
