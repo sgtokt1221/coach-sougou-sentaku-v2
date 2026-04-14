@@ -192,7 +192,8 @@
           "examDate": "2025-10-21",
           "resultDate": "2025-11-08"
         },
-        "admissionUrl": "https://www.fun.ac.jp/admission/"
+        "admissionUrl": "https://www.fun.ac.jp/admission/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -238,7 +239,8 @@
           "examDate": "2025-10-03",
           "resultDate": "2025-10-21"
         },
-        "admissionUrl": "https://www.chitose.ac.jp/admissions/"
+        "admissionUrl": "https://www.chitose.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -253,7 +255,7 @@
         "id": "generalscience",
         "name": "総合生命理学部",
         "admissionPolicy": "学校推薦型選抜（連携指定校型）\n求める学生像\n生命科学、物質科学、数理情報科学のいずれか、又は複数に関心があり、好奇心を持って自ら学ぼうとする意志のある人\n理学を学ぶための基礎学力と語学力（国語力・英語力）を修得している人\n現象を観察し、そこに様々な疑問を持ち、その解決に強い興味を持つ人\n論理的な思考能力で適切に判断し、結論を導ける人\n主体的に行動し、協調性や高い倫理観を持って諸問題に対処できる人\n自らの考えを適切に他人に伝え、互いの考えを深められるコミュニケーション力を持つ人\n\n学校推薦型選抜（名古屋市高大接続型）\n求める学生像\n生命科学、物質科学、数理情報科学のいずれか、又は複数に関心があり、好奇心を持って自ら学ぼうとする意志のある人\n理学を学ぶための基礎学力と語学力（国語力・英語力）を修得している人\n現象を観察し、そこに様々な疑問を持ち、その解決に強い興味を持つ人\n論理的な思考能力で適切に判断し、結論を導ける人\n主体的に行動し、協調性や高い倫理観を持って諸問題に対処できる人\n自らの考えを適切に他人に伝え、互いの考えを深められるコミュニケーション力を持つ人\n\n私費外国人留学生選抜\n求める学生像\n生命科学、物質科学、数理情報科学のいずれか、又は複数に関心があり、好奇心を持って自ら学ぼうとする意志のある人\n理学を学ぶための基礎学力と語学力(日本語力・英語力)を修得している人\n現象を観察し、そこに様々な疑問を持ち、その解決に強い興味を持つ人\n論理的な思考能力で適切に判断し、結論を導ける人\n主体的に行動し、協調性や高い倫理観を持って諸問題に対処できる人\n自らの考えを適切に他人に伝え、互いの考えを深められるコミュニケーション力を持つ人",
-        "capacity": 5,
+        "capacity": 3,
         "requirements": {
           "gpa": 3.2,
           "englishCert": null,
@@ -275,13 +277,14 @@
           "examDate": "2026-02-17",
           "resultDate": "2026-03-07"
         },
-        "admissionUrl": "https://www.nagoya-cu.ac.jp/admissions/"
+        "admissionUrl": "https://www.nagoya-cu.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "medicine",
         "name": "医学部",
         "admissionPolicy": "学校推薦型選抜(中部圏活躍型)\n医学・医療への使命感と倫理観、創造性豊かな探究心と幅広い知識・向学心をもち、リーダーシップを発揮し指導的な立場で活躍し、国際的な舞台で医学・医療の発展に貢献できる学生を求めます。\n医学・医療への強い使命感と高い倫理観をもった人\n創造性豊かな探究心と幅広い知識への向学心を備えている人\n協調性をもって優れたリーダーシップを発揮し、指導的立場で本学の発展に貢献できる人\n国際的な舞台で医学・医療の発展に貢献できる人\n学校推薦型選抜(名古屋市高大接続型)\n医学・医療への使命感と倫理観、幅広い知識・向学心をもち、リーダーシップを発揮し指導的な立場で活躍し、名古屋都市圏における患者中心の医療ができる国際的視野をもった意欲のある学生を求めます。\n医学・医療への強い使命感と高い倫理観をもった人\n創造性豊かな探究心と幅広い知識への向学心を備えている人\n協調性をもって優れたリーダーシップを発揮し、名古屋都市圏の医療の発展に貢献できる人\n国際的な視野をもち、医学・医療の発展に気概ある人\n地域枠学校推薦型選抜\n医学・医療への使命感と倫理観、社会や文化に関する幅広い知識と向学心をもち、人間性豊かな温かさとリーダーシップを発揮し、地域社会に貢献する意欲をもった学生を求めます。\n医学・医療への強い使命感と高い倫理観をもった人\n自然科学とともに社会や文化に関する幅広い基礎学力と向学心を備えている人\n温かで協調性をもち、「学び続ける医療人」としてリーダーシップを発揮できる人\n愛知県の地域医療に貢献する強い意志をもち、着実な活躍ができる人",
-        "capacity": 5,
+        "capacity": 2,
         "requirements": {
           "gpa": 3.8,
           "englishCert": null,
@@ -393,7 +396,8 @@
           "examDate": "2025-12-02",
           "resultDate": "2025-12-20"
         },
-        "admissionUrl": "https://www.nagoya-cu.ac.jp/admissions/"
+        "admissionUrl": "https://www.nagoya-cu.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "economics",
@@ -535,13 +539,14 @@
           "examDate": "2025-12-02",
           "resultDate": "2025-12-20"
         },
-        "admissionUrl": "https://www.nagoya-cu.ac.jp/admissions/"
+        "admissionUrl": "https://www.nagoya-cu.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "pharmacy",
         "name": "薬学部",
         "admissionPolicy": "理念・目的・教育目標\n薬学は、様々な基礎科学を薬に関して総合し、医療への応用を目指す学問です。\n医療に不可欠な学問である薬学を志す人は、薬を通じて人類の健康と福祉の発展に貢献することが求められています。\nこれを踏まえ、薬学部では生命薬科学科と薬学科を設置し、薬の創製・生産・臨床応用・適正管理・適正使用のための基礎知識と創造力・研究能力を有し、世界に羽ばたける多彩な薬のスペシャリストを社会に送り出すことを目指しています。\n求める学生像\n薬学への強い意欲と探究心を持った人\n科学としての薬学に強い学習意欲と探究心を有している人を求めます。\n医療・薬学への使命感と倫理観を持った人\n薬のスペシャリストとして医療現場での薬剤師活動、医薬品の研究開発、行政などを通じて、人類の健康と福祉の発展に貢献するという使命感と倫理観を持てる人を求めます。\n科学を中心とする幅広い学力を有する人\n薬学は自然科学の応用分野で、理科系の学力を重視します。しかし、薬剤師や薬学分野の研究者・技術者には、社会科学や人文社会学をも含む幅広い学問知識と教養が必要です。そのため、文科系科目に関しても基礎的な知識を有する人を求めます。\n国際的な視野とコミュニケーション能力を持てる人\n医薬品研究開発や医療人としての活動において、国際的なレベルでの連携が不可欠な時代となっています。将来、国際的な視野で考え、コミュニケーションを円滑に取り、行動できる能力の獲得を目指し、そのための努力を継続できる人を求めます。\n生命科学としての薬学への向学心を有する人(生命薬科学科)\n将来、基礎薬学研究や医薬品開発等を通じて、科学者として人類の健康と福祉の発展に貢献しようという情熱を有する人を求めます。\n医療人としての自覚を持てる人(薬学科)\n将来、薬剤師として患者さんを思いやり、医療に携わる様々な職種の人々と協調して、患者さんのための医療に貢献しようという意欲のある人を求めます。\n大学院への進学意欲を持つ人\n卒業後は大学院に進学して創薬・生命科学、臨床薬学の進歩に貢献しようとする強い意欲を持った人を求めます。",
-        "capacity": 5,
+        "capacity": 2,
         "requirements": {
           "gpa": null,
           "englishCert": null,
@@ -652,7 +657,8 @@
           "examDate": "2025-12-02",
           "resultDate": "2025-12-20"
         },
-        "admissionUrl": "https://www.nagoya-cu.ac.jp/admissions/"
+        "admissionUrl": "https://www.nagoya-cu.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "letterssocial",
@@ -790,13 +796,14 @@
           "examDate": "2025-12-02",
           "resultDate": "2025-12-20"
         },
-        "admissionUrl": "https://www.nagoya-cu.ac.jp/admissions/"
+        "admissionUrl": "https://www.nagoya-cu.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "artsengineering",
         "name": "芸術工学部",
         "admissionPolicy": "情報環境デザイン学科\n\n学校推薦型選抜\n求める学生像\n情報環境デザインへの知的関心と探究心を持ち、メディア表現、ソフトウェアやコンテンツ制作に関わる、デザイナー、クリエータ、技術者等として、国内外の情報デザイン分野の発展に貢献する意欲のある学生を求めます。\n理学と情報通信、および、芸術に強い関心を持つ人\n情報通信、メディア工学などの分野の先端技術を積極的に学びたい人\nデザイン実習や課外の社会連携プロジェクトなどにおいて、自ら問題を発見し、メディアや情報により提案できる人\n学習したことの応用だけでなく、身の回りの事象を観察し、自ら考えて創意工夫のできる人\n理学、情報通信、芸術の融合による、情報、映像、音響などのメディア表現、ソフトウェアやコンテンツ制作に関わるデザイナー、クリエータ、技術者等を目指す人\n幅広い基礎学力と知識、数学、英語の優れた学力に加え、豊かな表現力、構想力と理学、工学の知識、技法を修得し、情報デザイン分野に貢献できる実践力を備えた人材を目指す人\n主体性をもって多様な人々と協働して学べる人\n\n私費外国人留学生選抜\n求める学生像\n情報環境デザインへの知的関心と探究心を持ち、メディア表現、ソフトウェアやコンテンツ制作に関わる、デザイナー、クリエータ、技術者等として、国内外の情報デザイン分野の発展に貢献する意欲のある学生を求めます。\n理学と情報通信、および、芸術に強い関心を持つ人\nデザイン実習や課外の社会連携プロジェクトなどにおいて、自ら問題を発見し、メディアや情報により提案できる人\n学習したことの応用だけでなく、身の回りの事象を観察し、自ら考えて創意工夫のできる人\n理学、情報通信、芸術の融合による、情報、映像、音響などのメディア表現、ソフトウェアやコンテンツ制作に関わるデザイナー、クリエータ、技術者等を目指す人\n異文化経験を持ち、豊かな表現力、構想力と理学、工学の知識、技法を修得し、情報デザイン分野に貢献できる実践力を備えた人材を目指す人\n主体性をもって多様な人々と協働して学べる人\n\n帰国生徒・外国学校出身者選抜\n求める学生像\n情報環境デザインへの知的関心と探究心を持ち、メディア表現、ソフトウェアやコンテンツ制作に関わる、デザイナー、クリエータ、技術者等として、国内外の情報デザイン分野の発展に貢献する意欲のある学生を求めます。\n理学と情報通信、および、芸術に強い関心を持つ人\n情報通信、メディア工学などの分野の先端技術を積極的に学びたい人\nデザイン実習や課外の社会連携プロジェクトなどにおいて、自ら問題を発見し、メディアや情報により提案できる人\n学習したことの応用だけでなく、身の回りの事象を観察し、自ら考えて創意工夫のできる人\n理学、情報通信、芸術の融合による、情報、映像、音響などのメディア表現、ソフトウェアやコンテンツ制作に関わるデザイナー、クリエータ、技術者等を目指す人\n異文化経験を持ち、豊かな表現力、構想力と理学、工学の知識、技法を修得し、情報デザイン分野に貢献できる実践力を備えた人材を目指す人\n主体性をもって多様な人々と協働して学べる人\n\n産業イノベーションデザイン学科\n\n学校推薦型選抜\n求める学生像\n産業イノベーションデザインへの知的関心と探究心を持ち、工学およびデザイン分野においてイノベーションを創出できる技術者およびデザイナーとして、国内外の産業デザイン分野の発展に貢献する意欲のある学生を求めます。\n現代社会の諸問題を、芸術的手法および工学的手法で解決することに興味を持つ人\n電子・情報・ロボット工学などの先端工学技術およびプロダクト・グラフィックなどの高度デザイン技術を積極的に学びたい人\nデザイン実習や課外の社会連携プロジェクトなどにおいて、自ら問題を発見し工学およびデザインの知識により解決策を提案できる人\n学習したことの応用だけでなく、身の回りの事象を観察し、自ら考えて創意工夫できる人\n幅広い基礎学力と知識、数学、英語の優れた学力に加え、豊かな表現力、構想力と理学、工学の知識、技法を修得し、産業デザイン分野に貢献できる実践力を備えた人材を目指す人\n主体性をもって多様な人々と協働して学べる人\n\n私費外国人留学生選抜\n求める学生像\n産業イノベーションデザインへの知的関心と探究心を持ち、工学およびデザイン分野においてイノベーションを創出できる技術者およびデザイナーとして、国内外の産業デザイン分野の発展に貢献する意欲のある学生を求めます。\n現代社会の諸問題を、芸術的手法および工学的手法で解決することに興味を持つ人\n電子・情報・ロボット工学などの先端工学技術およびプロダクト・グラフィックなどの高度デザイン技術を積極的に学びたい人\nデザイン実習や課外の社会連携プロジェクトなどにおいて、自ら問題を発見し工学およびデザインの知識により解決策を提案できる人\n学習したことの応用だけでなく、身の回りの事象を観察し、自ら考えて創意工夫できる人\n異文化経験を持ち、豊かな表現力、構想力と理学、工学の知識、技法を修得し、産業デザイン分野に貢献できる実践力を備えた人材を目指す人\n主体性をもって多様な人々と協働して学べる人\n\n帰国生徒・外国学校出身者選抜\n求める学生像\n産業イノベーションデザインへの知的関心と探究心を持ち、工学およびデザイン分野においてイノベーションを創出できる技術者およびデザイナーとして、国内外の産業デザイン分野の発展に貢献する意欲のある学生を求めます。\n現代社会の諸問題を、芸術的手法および工学的手法で解決することに興味を持つ人\n電子・情報・ロボット工学などの先端工学技術およびプロダクト・グラフィックなどの高度デザイン技術を積極的に学びたい人\nデザイン実習や課外の社会連携プロジェクトなどにおいて、自ら問題を発見し工学およびデザインの知識により解決策を提案できる人\n学習したことの応用だけでなく、身の回りの事象を観察し、自ら考えて創意工夫できる人\n異文化経験を持ち、豊かな表現力、構想力と理学、工学の知識、技法を修得し、産業デザイン分野に貢献できる実践力を備えた人材を目指す人\n主体性をもって多様な人々と協働して学べる人\n\n建築都市デザイン学科\n\n学校推薦型選抜\n求める学生像\n建築・都市分野への知的関心と探究心に加え、倫理観と幅広い基礎知識をもち、設計者や技術者等として、国内外の建築・都市分野の発展に貢献する意欲のある学生を求めます。\n建築・都市分野への強い関心とデザインへの興味を持つ人\n継続的な努力ができる人\n自分を律し、責任感と倫理観を備える人\n人間性豊かな感性と探究心を持つ人\n大学院への進学意欲を持ち、建築・都市分野の発展に寄与する意欲のある人\n多様な社会や異文化に興味を持つ人\n主体性をもって多様な人々と協働して学べる人\n\n私費外国人留学生選抜\n求める学生像\n建築・都市分野への知的関心と探究心に加え、倫理観と幅広い基礎知識をもち、設計者や技術者等として、国内外の建築・都市分野の発展に貢献する意欲のある学生を求めます。\n建築・都市分野への強い関心とデザインへの興味を持つ人\n継続的な努力ができる人\n自分を律し、責任感と倫理観を備える人\n人間性豊かな感性と探究心を持つ人\n大学院への進学意欲を持ち、建築・都市分野の発展に寄与する意欲のある人\n多様な社会や異文化に興味を持つ人\n主体性をもって多様な人々と協働して学べる人\n\n帰国生徒・外国学校出身者選抜\n求める学生像\n建築・都市分野への知的関心と探究心に加え、倫理観と幅広い基礎知識をもち、設計者や技術者等として、国内外の建築・都市分野の発展に貢献する意欲のある学生を求めます。\n建築・都市分野への強い関心とデザインへの興味を持つ人\n継続的な努力ができる人\n自分を律し、責任感と倫理観を備える人\n人間性豊かな感性と探究心を持つ人\n大学院への進学意欲を持ち、建築・都市分野の発展に寄与する意欲のある人\n多様な社会や異文化に興味を持つ人\n主体性をもって多様な人々と協働して学べる人",
-        "capacity": 5,
+        "capacity": 8,
         "requirements": {
           "gpa": null,
           "englishCert": null,
@@ -907,7 +914,8 @@
           "examDate": "2025-12-02",
           "resultDate": "2025-12-20"
         },
-        "admissionUrl": "https://www.nagoya-cu.ac.jp/admissions/"
+        "admissionUrl": "https://www.nagoya-cu.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "data-science",
@@ -934,7 +942,8 @@
           "examDate": "2026-02-17",
           "resultDate": "2026-03-07"
         },
-        "admissionUrl": "https://www.nagoya-cu.ac.jp/admissions/"
+        "admissionUrl": "https://www.nagoya-cu.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -980,7 +989,8 @@
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
         },
-        "admissionUrl": "https://www.nayoro.ac.jp/admission/"
+        "admissionUrl": "https://www.nayoro.ac.jp/admission/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -1017,7 +1027,8 @@
           "examDate": "2025-12-02",
           "resultDate": "2025-12-20"
         },
-        "admissionUrl": "https://www.aichi-pu.ac.jp/admissions/"
+        "admissionUrl": "https://www.aichi-pu.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "letters",
@@ -1060,7 +1071,8 @@
           "examDate": "2025-12-02",
           "resultDate": "2025-12-20"
         },
-        "admissionUrl": "https://www.aichi-pu.ac.jp/admissions/"
+        "admissionUrl": "https://www.aichi-pu.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "educationwelfare",
@@ -1103,7 +1115,8 @@
           "examDate": "2025-12-02",
           "resultDate": "2025-12-20"
         },
-        "admissionUrl": "https://www.aichi-pu.ac.jp/admissions/"
+        "admissionUrl": "https://www.aichi-pu.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "information",
@@ -1130,7 +1143,8 @@
           "examDate": "2026-02-20",
           "resultDate": "2026-03-10"
         },
-        "admissionUrl": "https://www.aichi-pu.ac.jp/admissions/"
+        "admissionUrl": "https://www.aichi-pu.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "nursing",
@@ -1158,7 +1172,8 @@
           "examDate": "2025-12-02",
           "resultDate": "2025-12-20"
         },
-        "admissionUrl": "https://www.aichi-pu.ac.jp/admissions/"
+        "admissionUrl": "https://www.aichi-pu.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -1194,7 +1209,8 @@
           "examDate": "2025-11-29",
           "resultDate": "2025-12-17"
         },
-        "admissionUrl": "https://www.aichi-fam-u.ac.jp/admission/"
+        "admissionUrl": "https://www.aichi-fam-u.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "music",
@@ -1221,7 +1237,8 @@
           "examDate": "2025-11-29",
           "resultDate": "2025-12-17"
         },
-        "admissionUrl": "https://www.aichi-fam-u.ac.jp/admission/"
+        "admissionUrl": "https://www.aichi-fam-u.ac.jp/admission/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -1257,7 +1274,8 @@
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
         },
-        "admissionUrl": "https://www.asahikawa-u.ac.jp/admission/"
+        "admissionUrl": "https://www.asahikawa-u.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "economics",
@@ -1294,7 +1312,8 @@
           "examDate": "2025-10-03",
           "resultDate": "2025-10-21"
         },
-        "admissionUrl": "https://www.asahikawa-u.ac.jp/admission/"
+        "admissionUrl": "https://www.asahikawa-u.ac.jp/admission/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -1336,7 +1355,8 @@
           "examDate": "2025-11-02",
           "resultDate": "2025-11-20"
         },
-        "admissionUrl": "https://www.sapmed.ac.jp/admission/"
+        "admissionUrl": "https://www.sapmed.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "medicine-2",
@@ -1369,7 +1389,8 @@
           "examDate": "2025-12-02",
           "resultDate": "2025-12-20"
         },
-        "admissionUrl": "https://www.sapmed.ac.jp/admission/"
+        "admissionUrl": "https://www.sapmed.ac.jp/admission/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -1415,7 +1436,8 @@
           "examDate": "2025-12-02",
           "resultDate": "2025-12-20"
         },
-        "admissionUrl": "https://www.scu.ac.jp/admission/"
+        "admissionUrl": "https://www.scu.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "design",
@@ -1447,7 +1469,8 @@
           "examDate": "2025-09-30",
           "resultDate": "2025-10-18"
         },
-        "admissionUrl": "https://www.scu.ac.jp/admission/"
+        "admissionUrl": "https://www.scu.ac.jp/admission/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -1462,7 +1485,7 @@
         "id": "law",
         "name": "法学部",
         "admissionPolicy": "法学部\n　\n私たちの日常の諸活動は、ことごとく社会秩序の安定の上に成り立っています。その秩序の形成には、公正なルールの確立とその適切な解釈と運用、さらには社会的諸力を結集させてそのルールに実効性をもたせることが必要です。そして、これこそが法学部のなかで学ばれる「法」や「政治」の働きなのです。\r\n現代社会のグローバル化の急速な進展のなかで、環境問題や地域紛争、失業問題や社会保障不安など、さまざまな社会問題が生じて、私たちの日々の生活を脅かしています。こうした状況に適切に対応していくためには、社会の基本原理やルールを知った上で、問題の性質を自ら見極め、必要な情報を取捨選択し、問題解決の手段や方法を論理的に構成しなければなりません。このようなことから、今日、法や政治の原理的な探求が切実に求められるようになっています。\r\n法学部では、学生一人ひとりの能力を引き出す少人数教育を通じて、現代社会の複雑性を踏まえた法的思考（legal mind）を修得し、多様な人々と協働する良き社会人としての特性（civility）を備え、現代に山積する諸問題に果敢に挑む有益な人材の育成を目的としています。\r\n\r\n【求める学生像】\r\n現代社会の諸問題を解決するために法学・政治学を学びたいと思う人\r\n社会的に有意義な活動に積極的に取り組もうという意欲がある人\r\n法曹、公務員、企業等、社会の第一線で活躍したい人\r\n【高等学校段階までに修得すべき学力・能力】\r\n現代社会の諸問題を学ぶために必要な基礎知識及び基礎学力\r\n問題への主体的な取り組みのために必要な論理的な思考力\r\n幅広い視野から多様な人々と協働して問題を解決するために必要な外国語能力を含む表現力",
-        "capacity": 5,
+        "capacity": 0,
         "requirements": {
           "gpa": null,
           "englishCert": null,
@@ -1489,13 +1512,14 @@
           "examDate": "2024-12-01",
           "resultDate": "2024-12-19"
         },
-        "admissionUrl": "https://www.tmu.ac.jp/entrance/"
+        "admissionUrl": "https://www.tmu.ac.jp/entrance/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "letterssocial",
         "name": "人文社会学部",
         "admissionPolicy": "人文社会学部\n　\n人文社会学部は、人間・社会・文化の広い分野について、高い専門性をもって学ぶことのできる特色を持った学部として高い評価を得てきました。人間・社会・文化への広い関心をもとに、人文社会諸学の原理や研究方法を修得することを目標としています。また、学んだ成果を言葉で表現し、発信することのできる、社会の形成者の育成を目的としています。\r\n\r\n【求める学生像】\r\n人間・社会・文化に関する広い関心と強い探究心を持つと同時に、人文諸科学の原理や研究方法を学ぶ意欲を持つ人\n\n人間社会学科\n　\r\n人間社会学科は、人間・社会・文化への広い関心をもとに、社会、心理、教育、言語などに関する人文社会諸学の原理や研究方法を修得することを目標としています。また、学んだ成果を言葉で表現し、発信することのできる、社会の形成者の育成を目的としています。\r\n\r\n【求める学生像】\r\n人間・社会・文化に関する広い関心と強い探究心を持つと同時に、とりわけ社会、心理、教育、言語などを対象とする人文諸科学の原理や研究方法を学ぶ意欲を持つ人\r\n\r\n【高等学校段階までに修得すべき学力・能力】\r\n高等学校の段階で幅広く修得した教科に関する基礎的な学力と知識\r\n基礎的な言語能力に基づく思考力と表現力\r\n社会、心理、教育、言語などに関する広い関心と強い探究心\n\n人文学科\n　\r\n人文学科は、人間・社会・文化への広い関心をもとに、哲学、史学、文学、芸術などに関する人文社会諸学の原理や研究方法を修得することを目標としています。また、学んだ成果を言葉で表現し、発信することのできる、社会の形成者の育成を目的としています。\r\n\r\n【求める学生像】\r\n人間・社会・文化に関する広い関心と強い探究心を持つと同時に、とりわけ哲学、史学、文学、芸術などを対象とする人文学の原理や研究方法を学ぶ意欲を持つ人\r\n\r\n【高等学校段階までに修得すべき学力・能力】\r\n高等学校の段階で幅広く修得した教科に関する基礎的な学力と知識\r\n基礎的な言語能力に基づく思考力と表現力\r\n哲学、史学、文学、芸術などに関する広い関心と強い探究心",
-        "capacity": 5,
+        "capacity": 4,
         "requirements": {
           "gpa": null,
           "englishCert": "英検CSE 2300以上 / TOEFL iBT 72以上 / IELTS 5.5以上 / GTEC 1180以上",
@@ -1532,7 +1556,8 @@
           "examDate": "2024-12-01",
           "resultDate": "2024-12-19"
         },
-        "admissionUrl": "https://www.tmu.ac.jp/entrance/"
+        "admissionUrl": "https://www.tmu.ac.jp/entrance/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "welfare",
@@ -1570,13 +1595,14 @@
           "examDate": "2024-09-29",
           "resultDate": "2024-10-17"
         },
-        "admissionUrl": "https://www.tmu.ac.jp/entrance/"
+        "admissionUrl": "https://www.tmu.ac.jp/entrance/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "science",
         "name": "理学部",
         "admissionPolicy": "理学部\n　\n理学部では、創造性に富み、夢を持ち、自然界の仕組みを明らかにしたり、人類の将来に関わる新たな課題に果敢にチャレンジしたりする研究者や技術者の育成を目指しています。したがって、理学部では、次に挙げるような資質を備えた人を求めています。\r\n\r\n【求める学生像】\r\n理学部各学科の教育目標に基づく学士課程教育を受けるにふさわしい基礎学力を備え、向上心が強く努力を惜しまない人\r\n知的好奇心にあふれ、未知のものにチャレンジし、独創的な発想に富み、個性豊かに学習・研究に邁進できる人\r\n倫理性に富み、自然や人類社会の現状と将来に世界的な視点から深い関心を持ち、その課題発見と解決に寄与する意欲を持っている人\n\n数理科学科\n　\r\n数学は、科学の言葉です。その美しい理論を理解し、独創性を発揮するには、深く論理的に考える力と、直感的・感覚的に理解する力を養うことが大切です。以上のことをふまえ、数理科学科では、次のような人の入学を歓迎します。\r\n\r\n【求める学生像】\r\n数学が好きで、さらにきちんと学ぶ意欲と粘り強さのある人\r\n数理科学のセンスを磨き、応用へとつなげるチャレンジ精神を発揮したい人\r\n学んだ知識とともに、数学の精神や発想法を現代社会に活かしたい人\r\n【高等学校段階までに修得すべき学力・能力】\r\n大学で数学及び数理科学を学ぶために必要となる数学及び理科の十分な基礎学力\r\n論理的に物事を考える思考力と、考えをまとめる日本語と外国語の能力\r\n主体性を持って多様な人々と協働して学ぶ態度\n\n物理学科\n　\r\n物理学は、物質の成り立ちから宇宙の構造まで、自然界の基本的な仕組みを探る学問です。私たちを取り巻く環境や、生活を支えている技術を考える上でも、物理学の基礎は欠かせません。本学科では、好奇心に満ち、積極性のある次のような人の入学を大いに歓迎します。\r\n\r\n【求める学生像】\r\n物質の成り立ちから宇宙の構造まで、自然界の基本的な仕組みを理解したい人\r\n実験や観測を通じて、物質の従う法則を探求したい人\r\n数学や物理、化学などの理系科目が好きで、さらに深く学びたい人\r\n【高等学校段階までに修得すべき学力・能力】\r\n大学で物理学を学ぶために必要となる数学及び理科の十分な基礎学力\r\n論理的に物事を考える思考力と、考えをまとめる日本語と外国語の能力\r\n主体性を持って多様な人々と協働して学ぶ態度\n\n化学科\n　\r\n化学は自然科学の幅広い分野で重要な役割を担っている原子や分子、またその複合体や集合体を扱う学問です。化学科では新しい物質を作り出すこと、様々な現象を分子のレベルで理解することを目指しています。次のような意欲的な方々を歓迎します。\r\n\r\n【求める学生像】\r\n論理的に物事を考え、新しいことに挑戦したい人\r\n中学や高校の化学実験を「面白かった」と感じた人\r\n分子が関与する様々な学問領域に幅広い興味を持っている人\r\n【高等学校段階までに修得すべき学力・能力】\r\n大学で化学を学ぶために必要となる数学及び理科の十分な基礎学力\r\n論理的に物事を考える思考力と、考えをまとめ伝える日本語の能力\r\n大学で化学を外国語により学修するための基礎となる語学力\r\n主体性を持って多様な人々と協働して学ぶ態度\n\n生命科学科\n　\r\n生命科学は、生命の仕組みを明らかにし、生物と環境との関係や進化について考える学問です。次のような人たちと、生命科学・生物学の学習と研究を進めていきたいと考えています。\r\n\r\n【求める学生像】\r\n生物が大好きで、実験・観察・研究をしたい人\r\n生命科学を通じて、研究する力、企画力、実行力を身につけたい人\r\n英語力も高めて、国際的に活躍したいと思っている人\r\n【高等学校段階までに修得すべき学力・能力】\r\n大学で生命科学を学ぶために必要となる理科、数学、語学の十分な基礎学力\r\n論理的に物事を考える思考力と、考えをまとめる日本語又は外国語の能力\r\n主体性を持って多様な人々と協働して学ぶ態度",
-        "capacity": 5,
+        "capacity": 15,
         "requirements": {
           "gpa": null,
           "englishCert": null,
@@ -1603,7 +1629,8 @@
           "examDate": "2024-12-01",
           "resultDate": "2024-12-19"
         },
-        "admissionUrl": "https://www.tmu.ac.jp/entrance/"
+        "admissionUrl": "https://www.tmu.ac.jp/entrance/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "economics-business",
@@ -1641,13 +1668,14 @@
           "examDate": "2024-12-01",
           "resultDate": "2024-12-19"
         },
-        "admissionUrl": "https://www.tmu.ac.jp/entrance/"
+        "admissionUrl": "https://www.tmu.ac.jp/entrance/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "urban-environment",
         "name": "都市環境学部",
         "admissionPolicy": "都市環境学部\n　\n都市環境学部では、都市の文化を継承しつつ、安全・安心・快適な都市環境を持続的に発展・維持させるための科学体系や施策について、専門分野ごとに、また学際的・文理融合的に掘り下げて学び、研究しています。本学部では、講義で系統的に基礎を固めるとともに、様々なフィールドワークや実験室での分析、シミュレーション、そして真摯な議論を通じて、都市環境を構成する人間、物質、エネルギー、情報、人工物、自然を解析し探究する能力を培い、都市環境の課題を発見し解決し得る先導的人材を養成する教育を行っています。\n\n【求める学生像】\n都市環境学部で主体的に学修して自らの夢を実現するための十分な学力と熱意を持つ人\n広い視野と柔軟な思考力をもち、国際性を備えた巨大都市社会のリーダーになろうとする人\n工学、自然科学、人文社会科学を融合した総合的アプローチから、多様な都市環境問題を解決しようとする意欲を持つ人\n\n地理環境学科\n　\n地理環境学科の特色は、地形や気候、土壌、植生などの自然環境、地域の文化や社会・経済などの人文社会環境、そして両者の相互関係について幅広く学び、研究できるところにあります。特にフィールドワークのスキルの修得と、GIS（地理情報システム）の活用を重視しており、最先端の地理学を基礎から学べる日本で数少ない理系の地理学教室です。本学科では、地理学を中心とした環境科学の知識に基づく地域・地球の理解を通して、自然環境と調和した人間社会の実現に貢献できる技術者、教育者、研究者などの人材を育成する教育を行っています。\n\n【求める学生像】\n自然の成り立ち、人間と自然の関わり、地域の違いに興味のある人\n野外で調査したり、自然を観察したり、地図を使うことが好きな人\n身近な地域から地球規模に至るさまざまな環境問題・自然災害・社会問題に幅広く関心を持っている人\n自ら課題を発見し、それを解決するための努力ができる人\n【高等学校段階までに修得すべき学力・能力】\n広範な視野と柔軟な思考力を獲得するための、幅広い勉学に基づく十分な基礎学力\n地理学、環境科学、地球科学を学ぶために必要な、理数系科目と外国語の高い基礎学力\n物事を筋道立てて思考できる論理構成力と、それを適切に表現できる言語運用能力の素養\n主体的・意欲的に物事に取り組み、自ら工夫して成し遂げようとする姿勢\n\n都市基盤環境学科\n　\r\n本学科では、都市が直面する様々な問題(特に人口減少・超高齢化社会を見据えた活力ある国土・都市基盤の再構築と都市インフラの老朽化に備えた効率的な維持管理、都市環境の維持・保全・創造、自然災害に対する防災)に主眼を置き、既成の概念にとらわれず総合的な視野を有する土木技術者として、主体的な判断、行動能力を有し、創造的な力を発揮出来る人材を教育・育成します。\r\n\r\n【求める学生像】\r\n都市基盤環境学科で学修するための十分な基礎学力を持つ人\r\n広い視野と柔軟な思考力を持ち、社会や自然とのつながりを論理的に考えられる人\r\n豊かな教養を備え、地域社会や国際社会で活躍する意欲のある人\r\nバイタリティにあふれ、困難な問題にチャレンジしていける人\r\n【高等学校段階までに修得すべき学力・能力】\r\n都市基盤環境学科で学修するための十分な数学、理科の基礎学力\r\n論理的な文章を書くための国語力、及び情報を読み解き簡単な文章にまとめることのできる外国語力\r\n自然・社会的な多様な視点を基礎とする柔軟な観察力\r\n他人と協働し一つのものを作り上げるために必要なコミュニケーション能力\n\n建築学科\n　\r\n建築学科では、建築全般の幅広い知識と技術を有するとともに、東京をはじめとする大都市における建築的諸問題及びそこから発生する都市的諸問題に積極的に取り組む建築家、都市計画家、設計者、技術者などの職業専門家と教育・研究者を育成します。持続可能な都市環境を実現するために、建築及びその集合である都市空間を、安全かつ快適で美しく構築する理論及び技術と仕組みを修得するため、建築と都市に関する総合的な教育を行います。また、建築及び都市空間で構築される都市環境とその活用主体である人間及び社会との関わりを、総合的に理解し評価できる知識と思考能力を養成します。\r\n\r\n【求める学生像】\r\n数理、人文、社会、語学などの総合的な基礎学力を持っている人\r\n建築及びその集合である都市に大いに興味があり、学習意欲及び行動力がある人\r\n的確な論理を構築し、それを適切に表現できる能力がある人\r\n造形や空間デザインに興味があり、それを美しく表現する意欲のある人\r\n【高等学校段階までに修得すべき学力・能力】\r\n数学、国語、理科、社会、外国語などの総合的な基礎学力\r\n的確な論理を構築し、それを適切に表現できる能力\r\n建築、都市、造形、空間デザインに関する学習意欲及び行動力\r\n主体性を持って多様な人々と協働して学ぶ能力\n\n環境応用化学科\n　\r\n都市が抱える環境や資源・エネルギーに関する様々な問題を「化学の力」を利用して解決するには、環境と共生しながら持続的な発展を可能とする新材料や新デバイスを開発していかなければなりません。そのためには「物質の持つ本質を原子・分子レベルで理解できる基礎学力」と、「より複雑な理論や現象を解明できる応用力」が必要とされます。\r\n環境応用化学科では、工学としての化学である応用化学・材料化学に関する教育と研究を行っています。特に、有限な資源やエネルギーのもとで人類や都市社会が、環境と共生しながら持続的に発展して行くために必要な応用化学・材料化学の実現に貢献できる研究者・技術者を育成します。本学科では、確かな基礎学力と高い専門性だけでなく、主体的に課題を発見し解決できる能力と自分の意見を論理的に述べる力を育て、グローバルに活躍できる人材を輩出する教育を行っています。\r\n\r\n【求める学生像】\r\n都市の環境問題やエネルギー問題に関心があり、「化学の力でそれらの課題解決に貢献したい」と考えている人\r\n都市社会・生活の持続的な発展に役立つ新材料や新デバイスの開発に意欲がある人\r\n応用化学・材料化学に関する専門知識を活用して、将来「国際社会で活躍したい」という意欲がある人\r\n入学後も「旺盛な好奇心」、「自主的に考え行動する力」、「未来を切り開く強い意欲と意識」などを発揮できる素質を兼ね備えた人\r\n【高等学校段階までに修得すべき学力・能力】\r\n物質の持つ本質を原子・分子の立場から理解するために必要となる数学、理科において十分な基礎学力を持つ人\r\n高等学校等において基本とされる教科・科目について幅広く勉強して偏りのない素養と語学力がある人\r\n知識・技能を活用して課題を発見し、それを解決するために必要な思考力・判断力・表現力を有している人\r\n主体性を持って多様な人々と協働して学ぶ態度を身に付けている人\n\n観光科学科\n　\r\n観光科学科では、「観光」の資源やフィールドとなる都市・集落や自然地域の諸環境の保全や改善、適正な利用を担える人材や、観光を活用して地域の魅力や価値の向上、地域経済の向上といったまちづくりを担える人材を育成し、人間社会の向上・発展に寄与することを基本理念としています。特に、理学的・工学的な知識と技術を用いて、現象解明から計画立案、観光振興の実践活動を担える技術者、コンサルタント、レンジャー等の専門家、観光の総合的なマネジメントを行うことができる複数の専門性と豊かな発想力を身につけた実務的ジェネラリストなどを育成します。また、国際的な場での研究・学修を通して、国内外の企業や行政、ＮＧＯ／ＮＰＯで活躍できる人材を育成します。\r\n\r\n【求める学生像】\r\n自然環境や歴史・文化、芸術、産業などの地域資源の保全・活用や、観光地経営に関わる、理系や人文社会系の講座や演習に興味のある人\r\nもの・人との共生や交流を通して、人に夢や活力を与える観光を学ぶ意欲を有する人\r\n観光の調査から計画、実践までの技術を身につけ、社会に貢献する意欲を有する人\r\n【高等学校段階までに修得すべき学力・能力】\r\n学際的な分野である観光に科学的に取り組むための、理系・文系にわたる総合的な学力を有する人\r\n人・空間・情報を分析する論理的思考の素養や基礎的な学力を有する人\r\n多様な人と観光に取り組むための、外国語を含む基礎的なコミュニケーション能力や構想力、調整力を有する人\r\n多様な資源の価値をみとめ、課題に対してステークホルダーらと積極的に協働し、その解決に向けて主体的に取り組める人\n\n都市政策科学科\n　\r\n東京を含めた日本の都市は、環境の維持・向上、高齢化・健康・福祉、産業の発展、防災復興、多様な人々の共生など複雑な都市課題を創造的に解決していかなければなりません。そのためには、グローバルな視点を持ち、あるべき都市社会の姿、都市空間の姿を的確に描き、それを制度として立案し、人々とともに実現していくという、都市づくりの政策立案能力が必要��なります。\r\nこの都市づくりの政策立案能力は、社会学、法学、政治学、行政学、経済学、都市工学、建築学などの諸分野の幅広い知識・方法論・技術が必要となります。また、実際に制度を動かしていくためには、教室や教科書から得られる知識だけではなく、現場を知ることや体験から得られる知識も必要となります。\r\n本学科は、このような幅広い学問分野における教育・研究を“都市に関する政策科学”としてさまざまな授業、現場体験型授業、少人数のワークショップ、卒業研究などを通じて提供・実践していきます。\r\n\r\n【求める学生像】\r\n都市の抱える複雑な問題に対して、学究的かつ人に対して優しい心で（Cool Head, but Warm Heart）チャレンジしていくことができる人\r\n大学で学んだ都市づくりの政策立案能力を活かし、社会に貢献したいという気持ちのある人\r\n講義、現場体験型授業、少人数のワークショップ、その他大学における他者と交わる活動等を通して自己を研鑽していこうという意欲のある人\r\n自主的に考え行動する力を持つ人\r\n【高等学校段階までに修得すべき学力・能力】\r\n人文、社会、数理、語学などにおける幅広い基礎的学力\r\n大学入学以降、主体性を持って多様な人々と協働して学ぶために必要な、コミュニケーション力、情報活用能力、問題解決能力・創造的思考力\r\n的確な論理を構築し、それを適切に表現できる能力",
-        "capacity": 7,
+        "capacity": 14,
         "requirements": {
           "gpa": 4,
           "englishCert": "英検CSE 2300以上 / TOEFL iBT 72以上 / IELTS 5.5以上 / GTEC 1180以上",
@@ -1680,7 +1708,8 @@
           "examDate": "2024-12-01",
           "resultDate": "2024-12-19"
         },
-        "admissionUrl": "https://www.tmu.ac.jp/entrance/"
+        "admissionUrl": "https://www.tmu.ac.jp/entrance/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "design",
@@ -1718,7 +1747,8 @@
           "examDate": "2024-12-01",
           "resultDate": "2024-12-19"
         },
-        "admissionUrl": "https://www.tmu.ac.jp/entrance/"
+        "admissionUrl": "https://www.tmu.ac.jp/entrance/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -1754,7 +1784,8 @@
           "examDate": "2025-12-06",
           "resultDate": "2025-12-24"
         },
-        "admissionUrl": "https://www.kushiro-pu.ac.jp/admission/"
+        "admissionUrl": "https://www.kushiro-pu.ac.jp/admission/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -1795,7 +1826,8 @@
           "examDate": "2025-10-18",
           "resultDate": "2025-11-01"
         },
-        "admissionUrl": "https://www.nebuta.ac.jp/"
+        "admissionUrl": "https://www.nebuta.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -1836,7 +1868,8 @@
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.iwate-pu.ac.jp/"
+        "admissionUrl": "https://www.iwate-pu.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "comprehensive-policy",
@@ -1868,7 +1901,8 @@
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.iwate-pu.ac.jp/"
+        "admissionUrl": "https://www.iwate-pu.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -1909,7 +1943,8 @@
           "examDate": "2025-10-18",
           "resultDate": "2025-11-01"
         },
-        "admissionUrl": "https://www.akita-pu.ac.jp/"
+        "admissionUrl": "https://www.akita-pu.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "bioresource",
@@ -1941,7 +1976,8 @@
           "examDate": "2025-10-18",
           "resultDate": "2025-11-01"
         },
-        "admissionUrl": "https://www.akita-pu.ac.jp/"
+        "admissionUrl": "https://www.akita-pu.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -1982,7 +2018,8 @@
           "examDate": "2025-10-18",
           "resultDate": "2025-11-01"
         },
-        "admissionUrl": "https://www.myu.ac.jp/"
+        "admissionUrl": "https://www.myu.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "food-industry",
@@ -2014,7 +2051,8 @@
           "examDate": "2025-10-18",
           "resultDate": "2025-11-01"
         },
-        "admissionUrl": "https://www.myu.ac.jp/"
+        "admissionUrl": "https://www.myu.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -2055,7 +2093,8 @@
           "examDate": "2025-10-18",
           "resultDate": "2025-11-01"
         },
-        "admissionUrl": "https://www.yachts.ac.jp/"
+        "admissionUrl": "https://www.yachts.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -2097,7 +2136,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-14"
         },
-        "admissionUrl": "https://www.fmu.ac.jp/"
+        "admissionUrl": "https://www.fmu.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -2138,7 +2178,8 @@
           "examDate": "2025-10-18",
           "resultDate": "2025-11-01"
         },
-        "admissionUrl": "https://www.kuhs.ac.jp/"
+        "admissionUrl": "https://www.kuhs.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -2180,7 +2221,8 @@
           "examDate": "2025-10-18",
           "resultDate": "2025-11-01"
         },
-        "admissionUrl": "https://www.gpwu.ac.jp/"
+        "admissionUrl": "https://www.gpwu.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "international-communication",
@@ -2213,7 +2255,8 @@
           "examDate": "2025-10-18",
           "resultDate": "2025-11-01"
         },
-        "admissionUrl": "https://www.gpwu.ac.jp/"
+        "admissionUrl": "https://www.gpwu.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -2254,7 +2297,8 @@
           "examDate": "2025-10-18",
           "resultDate": "2025-11-01"
         },
-        "admissionUrl": "https://www.tsuru.ac.jp/"
+        "admissionUrl": "https://www.tsuru.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "regional-society",
@@ -2286,7 +2330,8 @@
           "examDate": "2025-10-18",
           "resultDate": "2025-11-01"
         },
-        "admissionUrl": "https://www.tsuru.ac.jp/"
+        "admissionUrl": "https://www.tsuru.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -2327,7 +2372,8 @@
           "examDate": "2025-10-18",
           "resultDate": "2025-11-01"
         },
-        "admissionUrl": "https://www.maebashi-it.ac.jp/"
+        "admissionUrl": "https://www.maebashi-it.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -2368,7 +2414,8 @@
           "examDate": "2025-10-18",
           "resultDate": "2025-11-01"
         },
-        "admissionUrl": "https://www.unii.ac.jp/"
+        "admissionUrl": "https://www.unii.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -2409,7 +2456,8 @@
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.nagano.ac.jp/"
+        "admissionUrl": "https://www.nagano.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "social-welfare",
@@ -2441,7 +2489,8 @@
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.nagano.ac.jp/"
+        "admissionUrl": "https://www.nagano.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -2482,7 +2531,8 @@
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.u-nagano.ac.jp/"
+        "admissionUrl": "https://www.u-nagano.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "health-development",
@@ -2514,7 +2564,8 @@
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.u-nagano.ac.jp/"
+        "admissionUrl": "https://www.u-nagano.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -2555,7 +2606,8 @@
           "examDate": "2025-10-18",
           "resultDate": "2025-11-01"
         },
-        "admissionUrl": "https://www.fpu.ac.jp/"
+        "admissionUrl": "https://www.fpu.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "economics",
@@ -2587,7 +2639,8 @@
           "examDate": "2025-10-18",
           "resultDate": "2025-11-01"
         },
-        "admissionUrl": "https://www.fpu.ac.jp/"
+        "admissionUrl": "https://www.fpu.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -2628,7 +2681,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-14"
         },
-        "admissionUrl": "https://www.kobe-cufs.ac.jp/"
+        "admissionUrl": "https://www.kobe-cufs.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -2669,7 +2723,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.u-hyogo.ac.jp/"
+        "admissionUrl": "https://www.u-hyogo.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -2710,7 +2765,8 @@
           "examDate": "2025-10-18",
           "resultDate": "2025-11-01"
         },
-        "admissionUrl": "https://www.narapu.ac.jp/"
+        "admissionUrl": "https://www.narapu.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -2751,7 +2807,8 @@
           "examDate": "2025-10-18",
           "resultDate": "2025-11-01"
         },
-        "admissionUrl": "https://www.fukuchiyama.ac.jp/"
+        "admissionUrl": "https://www.fukuchiyama.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "information",
@@ -2783,7 +2840,8 @@
           "examDate": "2025-10-18",
           "resultDate": "2025-11-01"
         },
-        "admissionUrl": "https://www.fukuchiyama.ac.jp/"
+        "admissionUrl": "https://www.fukuchiyama.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -2824,7 +2882,8 @@
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.u-shimane.ac.jp/"
+        "admissionUrl": "https://www.u-shimane.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "regional-policy",
@@ -2856,7 +2915,8 @@
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.u-shimane.ac.jp/"
+        "admissionUrl": "https://www.u-shimane.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -2897,7 +2957,8 @@
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.oka-pu.ac.jp/"
+        "admissionUrl": "https://www.oka-pu.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "health-welfare",
@@ -2929,7 +2990,8 @@
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.oka-pu.ac.jp/"
+        "admissionUrl": "https://www.oka-pu.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -2970,7 +3032,8 @@
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.hiroshima-cu.ac.jp/"
+        "admissionUrl": "https://www.hiroshima-cu.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "arts",
@@ -3002,7 +3065,8 @@
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.hiroshima-cu.ac.jp/"
+        "admissionUrl": "https://www.hiroshima-cu.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -3043,7 +3107,8 @@
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.pu-hiroshima.ac.jp/"
+        "admissionUrl": "https://www.pu-hiroshima.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "bioresource",
@@ -3075,7 +3140,8 @@
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.pu-hiroshima.ac.jp/"
+        "admissionUrl": "https://www.pu-hiroshima.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -3116,7 +3182,8 @@
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.yamaguchi-pu.ac.jp/"
+        "admissionUrl": "https://www.yamaguchi-pu.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "social-welfare",
@@ -3148,7 +3215,8 @@
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.yamaguchi-pu.ac.jp/"
+        "admissionUrl": "https://www.yamaguchi-pu.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -3189,7 +3257,8 @@
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.kankyo-u.ac.jp/"
+        "admissionUrl": "https://www.kankyo-u.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "management",
@@ -3221,7 +3290,8 @@
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.kankyo-u.ac.jp/"
+        "admissionUrl": "https://www.kankyo-u.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -3262,7 +3332,8 @@
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.kochi-tech.ac.jp/"
+        "admissionUrl": "https://www.kochi-tech.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "economics-management",
@@ -3294,7 +3365,8 @@
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.kochi-tech.ac.jp/"
+        "admissionUrl": "https://www.kochi-tech.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -3335,7 +3407,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.kitakyu-u.ac.jp/"
+        "admissionUrl": "https://www.kitakyu-u.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "regional-creation",
@@ -3367,7 +3440,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.kitakyu-u.ac.jp/"
+        "admissionUrl": "https://www.kitakyu-u.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -3409,7 +3483,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.fwu.ac.jp/"
+        "admissionUrl": "https://www.fwu.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -3450,7 +3525,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://sun.ac.jp/"
+        "admissionUrl": "https://sun.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "international-society",
@@ -3482,7 +3558,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://sun.ac.jp/"
+        "admissionUrl": "https://sun.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -3523,7 +3600,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.pu-kumamoto.ac.jp/"
+        "admissionUrl": "https://www.pu-kumamoto.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "environment-symbiosis",
@@ -3555,7 +3633,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.pu-kumamoto.ac.jp/"
+        "admissionUrl": "https://www.pu-kumamoto.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -3596,7 +3675,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.meio-u.ac.jp/"
+        "admissionUrl": "https://www.meio-u.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "human-health",
@@ -3628,7 +3708,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.meio-u.ac.jp/"
+        "admissionUrl": "https://www.meio-u.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -3669,7 +3750,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.okigei.ac.jp/"
+        "admissionUrl": "https://www.okigei.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "music",
@@ -3701,7 +3783,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.okigei.ac.jp/"
+        "admissionUrl": "https://www.okigei.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   }
