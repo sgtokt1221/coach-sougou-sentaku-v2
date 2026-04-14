@@ -48,7 +48,8 @@
           "examDate": "2024-09-28",
           "resultDate": "2024-10-16"
         },
-        "admissionUrl": "https://www.ocha.ac.jp/admissions/"
+        "admissionUrl": "https://www.ocha.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "letterseducation",
@@ -97,7 +98,8 @@
           "examDate": "2024-09-28",
           "resultDate": "2024-10-16"
         },
-        "admissionUrl": "https://www.ocha.ac.jp/admissions/"
+        "admissionUrl": "https://www.ocha.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "engineering",
@@ -135,7 +137,8 @@
           "examDate": "2024-11-18",
           "resultDate": "2024-12-06"
         },
-        "admissionUrl": "https://www.ocha.ac.jp/admissions/"
+        "admissionUrl": "https://www.ocha.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "science",
@@ -188,7 +191,8 @@
           "examDate": "2024-11-18",
           "resultDate": "2024-12-06"
         },
-        "admissionUrl": "https://www.ocha.ac.jp/admissions/"
+        "admissionUrl": "https://www.ocha.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -239,7 +243,8 @@
           "examDate": "2026-03-01",
           "resultDate": "2026-03-19"
         },
-        "admissionUrl": "https://www.kyutech.ac.jp/admissions/"
+        "admissionUrl": "https://www.kyutech.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "engineering",
@@ -283,7 +288,8 @@
           "examDate": "2026-03-01",
           "resultDate": "2026-03-19"
         },
-        "admissionUrl": "https://www.kyutech.ac.jp/admissions/"
+        "admissionUrl": "https://www.kyutech.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -329,7 +335,8 @@
           "examDate": "2025-11-18",
           "resultDate": "2025-12-06"
         },
-        "admissionUrl": "https://www.saga-u.ac.jp/admission/"
+        "admissionUrl": "https://www.saga-u.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "artsregionaldesign",
@@ -357,7 +364,8 @@
           "examDate": "2025-10-13",
           "resultDate": "2025-10-31"
         },
-        "admissionUrl": "https://www.saga-u.ac.jp/admission/"
+        "admissionUrl": "https://www.saga-u.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "science-eng",
@@ -385,7 +393,8 @@
           "examDate": "2026-02-23",
           "resultDate": "2026-03-13"
         },
-        "admissionUrl": "https://www.saga-u.ac.jp/admission/"
+        "admissionUrl": "https://www.saga-u.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "education",
@@ -413,7 +422,8 @@
           "examDate": "2025-10-13",
           "resultDate": "2025-10-31"
         },
-        "admissionUrl": "https://www.saga-u.ac.jp/admission/"
+        "admissionUrl": "https://www.saga-u.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "agriculture",
@@ -440,7 +450,8 @@
           "examDate": "2026-02-23",
           "resultDate": "2026-03-13"
         },
-        "admissionUrl": "https://www.saga-u.ac.jp/admission/"
+        "admissionUrl": "https://www.saga-u.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "general",
@@ -468,7 +479,8 @@
           "examDate": "2026-02-23",
           "resultDate": "2026-03-13"
         },
-        "admissionUrl": "https://www.saga-u.ac.jp/admission/"
+        "admissionUrl": "https://www.saga-u.ac.jp/admission/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -519,7 +531,8 @@
           "examDate": "2025-10-12",
           "resultDate": "2025-10-30"
         },
-        "admissionUrl": "https://www.hokkyodai.ac.jp/admission/"
+        "admissionUrl": "https://www.hokkyodai.ac.jp/admission/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -556,7 +569,8 @@
           "examDate": "2025-10-28",
           "resultDate": "2025-11-15"
         },
-        "admissionUrl": "https://www.kitami-it.ac.jp/admission/"
+        "admissionUrl": "https://www.kitami-it.ac.jp/admission/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -608,7 +622,8 @@
           "examDate": "2024-12-01",
           "resultDate": "2024-12-19"
         },
-        "admissionUrl": "https://www.chiba-u.ac.jp/exam/"
+        "admissionUrl": "https://www.chiba-u.ac.jp/exam/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "pharmacy",
@@ -646,7 +661,8 @@
           "examDate": "2024-12-01",
           "resultDate": "2024-12-19"
         },
-        "admissionUrl": "https://www.chiba-u.ac.jp/exam/"
+        "admissionUrl": "https://www.chiba-u.ac.jp/exam/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "international-liberal-arts",
@@ -689,7 +705,8 @@
           "examDate": "2024-10-06",
           "resultDate": "2024-10-24"
         },
-        "admissionUrl": "https://www.chiba-u.ac.jp/exam/"
+        "admissionUrl": "https://www.chiba-u.ac.jp/exam/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "education",
@@ -732,7 +749,8 @@
           "examDate": "2024-09-29",
           "resultDate": "2024-10-17"
         },
-        "admissionUrl": "https://www.chiba-u.ac.jp/exam/"
+        "admissionUrl": "https://www.chiba-u.ac.jp/exam/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "science",
@@ -770,7 +788,8 @@
           "examDate": "2024-10-21",
           "resultDate": "2024-11-08"
         },
-        "admissionUrl": "https://www.chiba-u.ac.jp/exam/"
+        "admissionUrl": "https://www.chiba-u.ac.jp/exam/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "general",
@@ -808,7 +827,8 @@
           "examDate": "2025-11-04",
           "resultDate": "2025-11-22"
         },
-        "admissionUrl": "https://www.chiba-u.ac.jp/exam/"
+        "admissionUrl": "https://www.chiba-u.ac.jp/exam/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "information-data-science",
@@ -851,7 +871,8 @@
           "examDate": "2024-12-01",
           "resultDate": "2024-12-19"
         },
-        "admissionUrl": "https://www.chiba-u.ac.jp/exam/"
+        "admissionUrl": "https://www.chiba-u.ac.jp/exam/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "law",
@@ -889,7 +910,8 @@
           "examDate": "2024-11-17",
           "resultDate": "2024-12-05"
         },
-        "admissionUrl": "https://www.chiba-u.ac.jp/exam/"
+        "admissionUrl": "https://www.chiba-u.ac.jp/exam/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "engineering",
@@ -932,7 +954,8 @@
           "examDate": "2024-10-22",
           "resultDate": "2024-11-09"
         },
-        "admissionUrl": "https://www.chiba-u.ac.jp/exam/"
+        "admissionUrl": "https://www.chiba-u.ac.jp/exam/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "letters",
@@ -975,7 +998,8 @@
           "examDate": "2024-10-28",
           "resultDate": "2024-11-15"
         },
-        "admissionUrl": "https://www.chiba-u.ac.jp/exam/"
+        "admissionUrl": "https://www.chiba-u.ac.jp/exam/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -1011,7 +1035,8 @@
           "examDate": "2025-10-14",
           "resultDate": "2025-11-01"
         },
-        "admissionUrl": "https://www.nitech.ac.jp/entrance/"
+        "admissionUrl": "https://www.nitech.ac.jp/entrance/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -1053,7 +1078,8 @@
           "examDate": "2024-10-19",
           "resultDate": "2024-11-06"
         },
-        "admissionUrl": "https://web.aiu.ac.jp/admission/"
+        "admissionUrl": "https://web.aiu.ac.jp/admission/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -1100,7 +1126,8 @@
           "examDate": "2024-12-02",
           "resultDate": "2024-12-20"
         },
-        "admissionUrl": "https://www.saitama-u.ac.jp/entrance/"
+        "admissionUrl": "https://www.saitama-u.ac.jp/entrance/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "engineering",
@@ -1138,7 +1165,8 @@
           "examDate": "2024-10-02",
           "resultDate": "2024-10-20"
         },
-        "admissionUrl": "https://www.saitama-u.ac.jp/entrance/"
+        "admissionUrl": "https://www.saitama-u.ac.jp/entrance/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "science",
@@ -1176,7 +1204,8 @@
           "examDate": "2024-10-02",
           "resultDate": "2024-10-20"
         },
-        "admissionUrl": "https://www.saitama-u.ac.jp/entrance/"
+        "admissionUrl": "https://www.saitama-u.ac.jp/entrance/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "general",
@@ -1213,7 +1242,8 @@
           "examDate": "2024-12-02",
           "resultDate": "2024-12-20"
         },
-        "admissionUrl": "https://www.saitama-u.ac.jp/entrance/"
+        "admissionUrl": "https://www.saitama-u.ac.jp/entrance/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -1254,7 +1284,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
         },
-        "admissionUrl": "https://www.oita-u.ac.jp/admission/"
+        "admissionUrl": "https://www.oita-u.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "welfare",
@@ -1286,7 +1317,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
         },
-        "admissionUrl": "https://www.oita-u.ac.jp/admission/"
+        "admissionUrl": "https://www.oita-u.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "education",
@@ -1318,7 +1350,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
         },
-        "admissionUrl": "https://www.oita-u.ac.jp/admission/"
+        "admissionUrl": "https://www.oita-u.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "medicine",
@@ -1350,7 +1383,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
         },
-        "admissionUrl": "https://www.oita-u.ac.jp/admission/"
+        "admissionUrl": "https://www.oita-u.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "economics",
@@ -1383,7 +1417,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
         },
-        "admissionUrl": "https://www.oita-u.ac.jp/admission/"
+        "admissionUrl": "https://www.oita-u.ac.jp/admission/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -1417,7 +1452,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-12"
         },
-        "admissionUrl": "https://www.omu.ac.jp/admissions/"
+        "admissionUrl": "https://www.omu.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "medicine",
@@ -1464,7 +1500,8 @@
           "examDate": "2025-02-16",
           "resultDate": "2025-03-06"
         },
-        "admissionUrl": "https://www.omu.ac.jp/admissions/"
+        "admissionUrl": "https://www.omu.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "nursing",
@@ -1491,7 +1528,8 @@
           "examDate": "2024-12-01",
           "resultDate": "2024-12-19"
         },
-        "admissionUrl": "https://www.omu.ac.jp/admissions/"
+        "admissionUrl": "https://www.omu.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "engineering",
@@ -1534,7 +1572,8 @@
           "examDate": "2024-10-04",
           "resultDate": "2024-10-22"
         },
-        "admissionUrl": "https://www.omu.ac.jp/admissions/"
+        "admissionUrl": "https://www.omu.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "economics",
@@ -1561,7 +1600,8 @@
           "examDate": "2024-12-01",
           "resultDate": "2024-12-19"
         },
-        "admissionUrl": "https://www.omu.ac.jp/admissions/"
+        "admissionUrl": "https://www.omu.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "commerce",
@@ -1588,7 +1628,8 @@
           "examDate": "2024-12-01",
           "resultDate": "2024-12-19"
         },
-        "admissionUrl": "https://www.omu.ac.jp/admissions/"
+        "admissionUrl": "https://www.omu.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "general",
@@ -1626,7 +1667,8 @@
           "examDate": "2024-11-04",
           "resultDate": "2024-11-22"
         },
-        "admissionUrl": "https://www.omu.ac.jp/admissions/"
+        "admissionUrl": "https://www.omu.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "medicine-2",
@@ -1673,7 +1715,8 @@
           "examDate": "2024-12-01",
           "resultDate": "2024-12-19"
         },
-        "admissionUrl": "https://www.omu.ac.jp/admissions/"
+        "admissionUrl": "https://www.omu.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "letters",
@@ -1716,7 +1759,8 @@
           "examDate": "2024-11-04",
           "resultDate": "2024-11-22"
         },
-        "admissionUrl": "https://www.omu.ac.jp/admissions/"
+        "admissionUrl": "https://www.omu.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "science",
@@ -1753,7 +1797,8 @@
           "examDate": "2024-12-01",
           "resultDate": "2024-12-19"
         },
-        "admissionUrl": "https://www.omu.ac.jp/admissions/"
+        "admissionUrl": "https://www.omu.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "general-2",
@@ -1785,7 +1830,8 @@
           "examDate": "2024-12-01",
           "resultDate": "2024-12-19"
         },
-        "admissionUrl": "https://www.omu.ac.jp/admissions/"
+        "admissionUrl": "https://www.omu.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -1831,7 +1877,8 @@
           "examDate": "2024-10-28",
           "resultDate": "2024-11-15"
         },
-        "admissionUrl": "https://www.utsunomiya-u.ac.jp/admission/"
+        "admissionUrl": "https://www.utsunomiya-u.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "engineering",
@@ -1869,7 +1916,8 @@
           "examDate": "2024-10-28",
           "resultDate": "2024-11-15"
         },
-        "admissionUrl": "https://www.utsunomiya-u.ac.jp/admission/"
+        "admissionUrl": "https://www.utsunomiya-u.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "international",
@@ -1912,7 +1960,8 @@
           "examDate": "2024-12-31",
           "resultDate": "2025-01-18"
         },
-        "admissionUrl": "https://www.utsunomiya-u.ac.jp/admission/"
+        "admissionUrl": "https://www.utsunomiya-u.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "agriculture",
@@ -1954,7 +2003,8 @@
           "examDate": "2024-10-28",
           "resultDate": "2024-11-15"
         },
-        "admissionUrl": "https://www.utsunomiya-u.ac.jp/admission/"
+        "admissionUrl": "https://www.utsunomiya-u.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "data-sciencebusiness",
@@ -1997,7 +2047,8 @@
           "examDate": "2024-10-28",
           "resultDate": "2024-11-15"
         },
-        "admissionUrl": "https://www.utsunomiya-u.ac.jp/admission/"
+        "admissionUrl": "https://www.utsunomiya-u.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "regionaldesign",
@@ -2034,7 +2085,8 @@
           "examDate": "2024-10-28",
           "resultDate": "2024-11-15"
         },
-        "admissionUrl": "https://www.utsunomiya-u.ac.jp/admission/"
+        "admissionUrl": "https://www.utsunomiya-u.ac.jp/admission/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -2070,7 +2122,8 @@
           "examDate": "2025-10-21",
           "resultDate": "2025-11-08"
         },
-        "admissionUrl": "https://www.muroran-it.ac.jp/entrance/"
+        "admissionUrl": "https://www.muroran-it.ac.jp/entrance/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -2111,7 +2164,8 @@
           "examDate": "2025-11-15",
           "resultDate": "2025-12-03"
         },
-        "admissionUrl": "https://www.otaru-uc.ac.jp/admission/"
+        "admissionUrl": "https://www.otaru-uc.ac.jp/admission/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -2153,7 +2207,8 @@
           "examDate": "2025-02-18",
           "resultDate": "2025-03-08"
         },
-        "admissionUrl": "https://www.gifu-u.ac.jp/admission/"
+        "admissionUrl": "https://www.gifu-u.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "medicine",
@@ -2190,7 +2245,8 @@
           "examDate": "2024-12-01",
           "resultDate": "2024-12-19"
         },
-        "admissionUrl": "https://www.gifu-u.ac.jp/admission/"
+        "admissionUrl": "https://www.gifu-u.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "general",
@@ -2227,7 +2283,8 @@
           "examDate": "2024-12-01",
           "resultDate": "2024-12-19"
         },
-        "admissionUrl": "https://www.gifu-u.ac.jp/admission/"
+        "admissionUrl": "https://www.gifu-u.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "regional",
@@ -2259,7 +2316,8 @@
           "examDate": "2025-01-14",
           "resultDate": "2025-02-01"
         },
-        "admissionUrl": "https://www.gifu-u.ac.jp/admission/"
+        "admissionUrl": "https://www.gifu-u.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "education",
@@ -2292,7 +2350,8 @@
           "examDate": "2025-01-14",
           "resultDate": "2025-02-01"
         },
-        "admissionUrl": "https://www.gifu-u.ac.jp/admission/"
+        "admissionUrl": "https://www.gifu-u.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "socialbusiness",
@@ -2329,7 +2388,8 @@
           "examDate": "2025-01-14",
           "resultDate": "2025-02-01"
         },
-        "admissionUrl": "https://www.gifu-u.ac.jp/admission/"
+        "admissionUrl": "https://www.gifu-u.ac.jp/admission/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -2370,7 +2430,8 @@
           "examDate": "2025-12-06",
           "resultDate": "2025-12-24"
         },
-        "admissionUrl": "https://www.okayama-u.ac.jp/tp/admission/"
+        "admissionUrl": "https://www.okayama-u.ac.jp/tp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "agriculture",
@@ -2402,7 +2463,8 @@
           "examDate": "2025-12-06",
           "resultDate": "2025-12-24"
         },
-        "admissionUrl": "https://www.okayama-u.ac.jp/tp/admission/"
+        "admissionUrl": "https://www.okayama-u.ac.jp/tp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "economics",
@@ -2434,13 +2496,14 @@
           "examDate": "2025-12-06",
           "resultDate": "2025-12-24"
         },
-        "admissionUrl": "https://www.okayama-u.ac.jp/tp/admission/"
+        "admissionUrl": "https://www.okayama-u.ac.jp/tp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "law",
         "name": "法学部",
         "admissionPolicy": "教育内容・特色 持続可能な社会の実現に向けて，現実社会で生起する諸課題に対して柔軟かつ適切な判断を行うため，法学および政治学を学ぶことを通して，以下の能力の発展・向上を目指します。  １．それぞれの法分野について基礎的な知識と理論を修得し，論理的かつ合理的に課題を解決できる法的思考能力（リーガル・マインド） ２．政治や社会について多角的な視点から理解し，現代社会に生起する諸課題を自ら発見し解決しようとする意欲と能力 ３．国際社会に関する理解をもち，グローバル化・情報化する社会で活躍できるコミュニケーション能力と情報活用能力 求める人材 高校までの学習を通じて形成された学力を重視しつつ，以下のような資質をもった学生を求めます。 １．社会に対する広範な関心を持ち，幅広い視点から柔軟にものごとを考えようとする人 ２．自ら課題を発見し，ねばり強く考え，自ら判断していこうとする人 ３．持続可能な社会の実現といった世界の動きに関心があり，グローバルな視点をもって活躍したいという意欲のある人 また，将来の職業との関係では，裁判官，検察官，弁護士などの法律専門職や公務員，民間企業などで活躍することを志望する学生を歓迎します。 入学後の学修のため，国語・外国語の２教科を中心に読解力，思考力，表現力を養い，まんべんなく基礎学力を積み上げ，着実に学習する態度を身につけていることが望まれます。",
-        "capacity": 5,
+        "capacity": 43,
         "requirements": {
           "gpa": null,
           "englishCert": null,
@@ -2466,13 +2529,14 @@
           "examDate": "2025-12-06",
           "resultDate": "2025-12-24"
         },
-        "admissionUrl": "https://www.okayama-u.ac.jp/tp/admission/"
+        "admissionUrl": "https://www.okayama-u.ac.jp/tp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "letters",
         "name": "文学部",
         "admissionPolicy": "教育内容・特色 人文学科１学科制のもとで，「哲学・芸術学」「地理学・社会学・文化人類学・社会文化学」「心理学」「歴史学・考古学」「言語文化学」の５つの教育分野を設け，幅広い学習を保証しています。１年次生は「人文学の基礎」を含む教養教育科目に加え，「人文学入門演習」「人文学の論点」などの専門教育科目を履修することを通して，人文学のエッセンスを学ぶとともに，専門分野の決定に結びつけていきます。２年次以降の学生は，主専攻プログラムを通じて「人文学概説」で各分野の学問の体系的な知識を身につけ，「人文学講義」で研究の最先端の成果を学びます。また「実践演習」「課題演習」では，研究方法に関する指導を受けながら，学びの集大成としての卒業論文に取り組みます。分野の枠を超えたテーマを扱う総合人文学プログラムの修得を推奨するとともに，資格取得のための心理職養成プログラムや学芸員養成プログラム，留学を目指す外国語習得・留学プログラム，さらには，専門性の高い研究指導を行う研究力養成プログラムを通じて豊かな経験と感性を育み，人間の築き上げた文化に対する理解を深めます。そして，複雑で多様な現代社会を生き抜くために必要な思考力と表現力を身につけ，持続可能な社会の実現に貢献できる人材を養成しています。 求める人材 文学部人文学科では，高校で履修した基礎的な知識を備え，課題を発見し解決していく意欲と能力をもち，論理的な思考とそれを的確に表現する力量を備えている人を求めます。入学後は次のような人材に成長できる人を求めています。 １．哲学・倫理・芸術に関心をもち，幅広く本や芸術作品に親しんでいる人 ２．心や行動，社会や文化，それらと自然環境との関係や地域性に関心をもち，自ら情報を収集して，データに基づいた議論に取り組める人 ３．日本と世界の歴史や異文化に関心があり，斬新な発想と論理的な思考で，過去と現代のつながりを学ぼうとする意欲のある人 ４．言葉そのものの仕組みや歴史，言葉の多様性と普遍性，地域・社会・文化と言葉の関係などに関心や問題意識があり，それらについて科学的に研究する方法を学びたいと思っている人 ５．言葉と文化に対する感性を養いつつ，人間および世界について問うことで，現代社会と積極的に関わろうとする意欲をもつ人 ６．地域・世界のあり方を把握し，持続可能な社会を実現することに強い意欲を持つ人 入学後の学修のため，特に以下の教科の内容を修得していることが望まれます。 【国語，外国語，地理歴史，公民】",
-        "capacity": 5,
+        "capacity": 40,
         "requirements": {
           "gpa": null,
           "englishCert": null,
@@ -2498,13 +2562,14 @@
           "examDate": "2025-12-06",
           "resultDate": "2025-12-24"
         },
-        "admissionUrl": "https://www.okayama-u.ac.jp/tp/admission/"
+        "admissionUrl": "https://www.okayama-u.ac.jp/tp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "science",
         "name": "理学部",
         "admissionPolicy": "理学部では、上記の教育理念・目標をふまえ、基礎的かつ総合的な学力を重視しつつ、以下のような意欲と能力をもった学生が入学することを希望します。\n\n自然科学の基礎を学び、その知識や能力を社会で生かしたいと考える人\n自然現象を原理や法則から理解したいと考える人\n真理探究への情熱をもっている人",
-        "capacity": 5,
+        "capacity": 9,
         "requirements": {
           "gpa": null,
           "englishCert": null,
@@ -2530,13 +2595,14 @@
           "examDate": "2025-12-06",
           "resultDate": "2025-12-24"
         },
-        "admissionUrl": "https://www.okayama-u.ac.jp/tp/admission/"
+        "admissionUrl": "https://www.okayama-u.ac.jp/tp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "education",
         "name": "教育学部",
         "admissionPolicy": "教育内容・特色 【教育学部 アドミッション・ポリシー】 教育学部の使命は，高度な教育実践力を身につけた教師を育成するとともに，教育研究の発展に寄与することです。 教育学部は，幼稚園・小学校・中学校・特別支援学校の教諭，養護教諭を目指す学生を育てています。教師には幅広い教養と専門性が求められます。そのために，人文科学，社会科学，自然科学，医学などを教育の視点から学ぶとともに，教育実習等を通して教育実践力を身につけることができます。 求める人材 １．基礎的な学力を持ち，学校教育への関心と理解そして熱意がある人 ２．学ぶことの楽しさを伝えることに意欲のある人 ３．子供の発育発達と心身の健康について学び，豊かな感性を育みたい人 ４．子供たちと一緒に活動することが好きな人 ５．多様な人々と連携・協働しながら地域社会に貢献していく意欲がある人",
-        "capacity": 5,
+        "capacity": 12,
         "requirements": {
           "gpa": null,
           "englishCert": null,
@@ -2562,13 +2628,14 @@
           "examDate": "2025-12-06",
           "resultDate": "2025-12-24"
         },
-        "admissionUrl": "https://www.okayama-u.ac.jp/tp/admission/"
+        "admissionUrl": "https://www.okayama-u.ac.jp/tp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "pharmacy",
         "name": "薬学部",
         "admissionPolicy": "優れた倫理観を有し、研究心・探究心を持ち続け、高度な知識と最先端の技術および他者と共感・協働できるコミュニケーション力を身につけた薬剤師あるいは創薬研究者として活躍したいと考えている人\n大学院博士課程・博士後期課程に進学し、将来の薬学あるいは創薬科学関連分野を担う研究者や教育者を目指したいと考えている人\n専門分野に関連する科目への高い理解度と応用能力が期待できる人\n高等学校卒業レベルの幅広い基礎学力と教養を有する人",
-        "capacity": 5,
+        "capacity": 15,
         "requirements": {
           "gpa": null,
           "englishCert": null,
@@ -2594,7 +2661,8 @@
           "examDate": "2025-12-06",
           "resultDate": "2025-12-24"
         },
-        "admissionUrl": "https://www.okayama-u.ac.jp/tp/admission/"
+        "admissionUrl": "https://www.okayama-u.ac.jp/tp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "engineering",
@@ -2626,13 +2694,14 @@
           "examDate": "2025-12-06",
           "resultDate": "2025-12-24"
         },
-        "admissionUrl": "https://www.okayama-u.ac.jp/tp/admission/"
+        "admissionUrl": "https://www.okayama-u.ac.jp/tp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "medicine",
         "name": "医学部",
         "admissionPolicy": "求める人材像\n学んで身につけた知識を統合して課題に迫る実践力、課題に対する自らの考えを多角的に導き出す探究力、自らの疑問や興味、考えを多様な方法で分かり易く表現できる力、自然や社会に関する高い水準の知識・語学力、学びそのものに興味を持ち、工夫・創造することができる力を身につけている人材を広く求めます。\n\n求める力\n【実践力】\n学んで身につけた知識を統合して課題に迫ることができる。\n【探究力】\n課題に対する自らの考えを多角的に導き出すことができる。\n【コミュニケーション力】\n自らの疑問や興味、考えを多様な方法で分かり易く表現できる。\n【専門力】\n自然や社会に関する高い水準の知識・語学力を備えている。\n【教養力】\n学びそのものに興味を持ち、工夫・創造することができる。",
-        "capacity": 5,
+        "capacity": 43,
         "requirements": {
           "gpa": null,
           "englishCert": null,
@@ -2668,7 +2737,8 @@
           "examDate": "2025-12-06",
           "resultDate": "2025-12-24"
         },
-        "admissionUrl": "https://www.okayama-u.ac.jp/tp/admission/"
+        "admissionUrl": "https://www.okayama-u.ac.jp/tp/admission/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -2714,7 +2784,8 @@
           "examDate": "2025-11-17",
           "resultDate": "2025-12-05"
         },
-        "admissionUrl": "https://www.obihiro.ac.jp/admission/"
+        "admissionUrl": "https://www.obihiro.ac.jp/admission/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -2729,7 +2800,7 @@
         "id": "education",
         "name": "教育学部",
         "admissionPolicy": "1　求める学生像\n　教育学部では、21世紀にふさわしい学校教育の創造や生涯学習社会の構築に貢献できる幅広い社会的視野と豊かな課題探究力を有する人材の育成を目指しており、次のような学生を求めています。\n　(1)　高等学校での基礎的・基本的な学力を幅広くきちんと身につけ、自ら考え、学ぶ意欲を持つ人\n　(2)　広く人間の心や教育又は初等・中等教育における各教科に強い興味・関心・情熱を持つ人\n　(3)　自らの問題意識に基づいて、主体的に学修や研究を遂行し、物事に多面的、創造的にアプローチする人\n　(4)　子どもを愛し、将来、教員になることを希望する人、又は大学院に進学し、研究者や専門家になることを目指す人\n\n2　入学者選抜の基本方針\n　教育学部に、初等教育、特別支援教育、中等教育、高等教育、生涯教育、さらには教育学や心理学まで、教育に関するあらゆる段階・分野を網羅した5つの類・16のプログラムを設置しており、各プログラムでは、編成している各主専攻プログラムのディプロマ・ポリシー及びカリキュラム・ポリシーを踏まえ、入学者に求める能力やその評価方法を「学力の3要素」と関連付けて明示し、多面的・総合的な評価による選抜を実施します。",
-        "capacity": 5,
+        "capacity": 51,
         "requirements": {
           "gpa": null,
           "englishCert": "英検2級",
@@ -2761,13 +2832,14 @@
           "examDate": "2025-10-04",
           "resultDate": "2025-10-22"
         },
-        "admissionUrl": "https://www.hiroshima-u.ac.jp/nyushi/"
+        "admissionUrl": "https://www.hiroshima-u.ac.jp/nyushi/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "letters",
         "name": "文学部",
         "admissionPolicy": "1　求める学生像\n　文学部では、個性あふれる豊かな人間性を培い、人文学における新しい知の探求を通じて、学問を究めようとする人材を育成するために、次のような資質を備えた学生を求めています。\n(1) 論理的思考力、創造力、語学力など、人文学を学ぶために必要な基礎的能力を身につけている人\n(2) 柔軟で批判的な精神を持ち、主体的に学修や研究を行う意欲のある人\n(3) 原典・資史料に基づいて、人間、文化、歴史、環境について深く考察したい人\n(4) 専門性を活かして世界に羽ばたきたいという意欲を持つ人\n\n2　入学者選抜の基本方針\n　文学部では、「1　求める学生像」で提示した(1)から(4)の資質を備えた学生を受け入れるため、各主専攻プログラムのディプロマ・ポリシー及びカリキュラム・ポリシーを踏まえ、入学者に求める能力やその評価方法を「学力の3要素」と関連付けて明示し、多面的・総合的な評価による選抜を実施します。",
-        "capacity": 5,
+        "capacity": 25,
         "requirements": {
           "gpa": null,
           "englishCert": "英検2級",
@@ -2799,7 +2871,8 @@
           "examDate": "2025-10-04",
           "resultDate": "2025-10-22"
         },
-        "admissionUrl": "https://www.hiroshima-u.ac.jp/nyushi/"
+        "admissionUrl": "https://www.hiroshima-u.ac.jp/nyushi/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "information",
@@ -2837,13 +2910,14 @@
           "examDate": "2025-10-04",
           "resultDate": "2025-10-22"
         },
-        "admissionUrl": "https://www.hiroshima-u.ac.jp/nyushi/"
+        "admissionUrl": "https://www.hiroshima-u.ac.jp/nyushi/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "pharmacy",
         "name": "薬学部",
         "admissionPolicy": "1　求める学生像\n　薬学部では、次のような学生を求めています。\n(1) 高等学校段階での基礎的・基本的な学力を幅広くきちんと身につけ、特に理科(特に化学)・数学・英語に高い学力を有する人\n(2) 化学や生命科学を積極的に学ぼうとする人、並びに医療や薬を必要とする人たちの立場を真に理解し、医療の質の向上、あるいは医薬品の創薬と薬学研究の進歩発展に貢献したいと考える人\n(3) 大学院に進学して最先端の創薬科学を学び、国際的にも活躍できる創薬研究者・技術者・次世代医療開発者、高度医療情報提供者、環境・衛生技術者等の職能人となることを志す人。あるいは、高度な知識と技術を身につけ、チーム医療の中で科学的観点から意見が言える専門性の高い薬剤師となることを志す人\n\n2　入学者選抜の基本方針\n　薬学部に薬学科及び薬科学科の2学科を設置しており、学生の多様なニーズに応え、卒業後の幅広い進路に対応するため、編成している各主専攻プログラムのディプロマ・ポリシー及びカリキュラム・ポリシーを踏まえ、入学者に求める能力やその評価方法を「学力の3要素」と関連付けて明示し、多面的・総合的な評価による選抜を実施します。",
-        "capacity": 5,
+        "capacity": 7,
         "requirements": {
           "gpa": null,
           "englishCert": "英検2級",
@@ -2875,13 +2949,14 @@
           "examDate": "2025-10-04",
           "resultDate": "2025-10-22"
         },
-        "admissionUrl": "https://www.hiroshima-u.ac.jp/nyushi/"
+        "admissionUrl": "https://www.hiroshima-u.ac.jp/nyushi/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "medicine",
         "name": "医学部",
         "admissionPolicy": "1　求める学生像\n　医学部では、広島大学医学部医学科、保健学科の各専攻で学ぶことを強く願い、人と関わり、人の健康のために学び、働く人となる意欲を持ち、各学科・専攻で行われる専門教育を修了するための学力と適性を備えた人を求めています。\n\n2　入学者選抜の基本方針\n　医学部に、学生の多様なニーズに応え、卒業後の幅広い進路に対応するための医学科及び保健学科の2つの学科及び保健学科に3つの専攻を設置しており、各学科・専攻では、これらの人を受け入れるため、編成している各主専攻プログラムのディプロマ・ポリシー及びカリキュラム・ポリシーを踏まえ、入学者に求める能力やその評価方法を「学力の3要素」と関連付けて明示し、多面的・総合的な評価による選抜を実施します。",
-        "capacity": 5,
+        "capacity": 15,
         "requirements": {
           "gpa": null,
           "englishCert": "英検2級",
@@ -2913,13 +2988,14 @@
           "examDate": "2025-10-04",
           "resultDate": "2025-10-22"
         },
-        "admissionUrl": "https://www.hiroshima-u.ac.jp/nyushi/"
+        "admissionUrl": "https://www.hiroshima-u.ac.jp/nyushi/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "science",
         "name": "理学部",
         "admissionPolicy": "1　求める学生像\n　理学部では、自然の真理解明のための基礎的知識、基本的手法と技術及び論理的思考力を培い、幅広い科学的素養を身につけた人材の育成を目指しており、次のような学生を求めています。\n(1) 自然科学に関する基礎的な知識と理解力を備えており、特に高等学校教育課程の数学と理科において高い学力を身につけた人\n(2) 自然界への知的好奇心に満ち、課題の発見と解決に積極的に取り組み、真理解明への探究心の旺盛な人。より高度な専門知識と技術を身につけて創造性を発揮する勉学意欲にあふれている人\n(3) 大学での学修のために必要な文章読解力と語学力を持ち、学修・研究対象について論理的に思考できる人。また、得た結論を日本語及び外国語で論理的にわかりやすく表現しようとする人\n(4) 将来、修得した科学的素養を活かして社会において指導的役割を果たすことを目指す人。専門性と独創性を磨き、大学院進学も視野に入れて研究者・技術者・教育者になることを希望する人\n\n2　入学者選抜の基本方針\n　理学部には、学生の多様なニーズに応え、卒業後の幅広い進路に対応するために数学科・物理学科・化学科・生物科学科・地球惑星システム学科の5学科を設置しており、各学科で編成している主専攻プログラムのディプロマ・ポリシー及びカリキュラム・ポリシーを踏まえ、入学者に求める能力やその評価方法を「学力の3要素」と関連付けて明示し、多面的・総合的な評価による選抜を実施します。",
-        "capacity": 5,
+        "capacity": 26,
         "requirements": {
           "gpa": null,
           "englishCert": "英検2級",
@@ -2951,13 +3027,14 @@
           "examDate": "2025-10-04",
           "resultDate": "2025-10-22"
         },
-        "admissionUrl": "https://www.hiroshima-u.ac.jp/nyushi/"
+        "admissionUrl": "https://www.hiroshima-u.ac.jp/nyushi/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "law",
         "name": "法学部",
         "admissionPolicy": "1　求める学生像\n　法学部では、次のような学生を求めています。\n・ 高等学校での基礎的・基本的な学力を幅広くしっかりと身につけ、特に国語や社会、外国語に高い学力を有する人\n・ 人間と社会への深い関心と幅広い理解力を備え、現実に生じている社会の諸現象にさまざまな疑問を抱き、その背景を知りたい、解決策を探ってみたいと思う人、他者の意見を聞くことができ、語り合う過程で新たなものを発見しうると思う人\n・ 将来、官公庁、民間企業などで活躍することを希望する人、法科大学院に進学して法曹をめざす人、又は大学院に進学し研究者や専門家になることを希望する人\n\n2　入学者選抜の基本方針\n　法学部に法学科を設置しており、学生の多様なニーズに応え、卒業後の幅広い進路に対応するための昼間コース及び夜間主コースでは、これらの人を受け入れるため、編成している各主専攻プログラムのディプロマ・ポリシー及びカリキュラム・ポリシーを踏まえ、入学者に求める能力やその評価方法を「学力の3要素」と関連付けて明示し、多面的・総合的な評価による選抜を実施します。",
-        "capacity": 5,
+        "capacity": 10,
         "requirements": {
           "gpa": null,
           "englishCert": "英検2級",
@@ -2989,13 +3066,14 @@
           "examDate": "2025-10-04",
           "resultDate": "2025-10-22"
         },
-        "admissionUrl": "https://www.hiroshima-u.ac.jp/nyushi/"
+        "admissionUrl": "https://www.hiroshima-u.ac.jp/nyushi/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "dentistry",
         "name": "歯学部",
         "admissionPolicy": "1　求める学生像\n　歯学部では、入学段階において、将来医療人となるための十分な豊かな人間性を備えていると同時に、専門職医療人として高度な学識と医療技術を身につけるための科学的探究心をもち、幅広い知識を統合して問題解決を図ることができ、国際社会で活躍する強い意志を持った学生を求めます。\n\n2　入学者選抜の基本方針\n　歯学部では、学生からの多様なニーズに応え、卒業後の幅広い進路に対応するために歯学科及び口腔健康科学科の２つの学科を設置し、さらに口腔健康科学科には2つの専攻を設置しています。各学科・専攻では、編成している各主専攻プログラムのディプロマ・ポリシー及びカリキュラム・ポリシーを踏まえ、入学者に求める能力やその評価方法を「学力の3要素」と関連付けて明示し、多面的・総合的な評価による選抜を実施します。",
-        "capacity": 5,
+        "capacity": 11,
         "requirements": {
           "gpa": null,
           "englishCert": "英検2級",
@@ -3027,13 +3105,14 @@
           "examDate": "2025-10-04",
           "resultDate": "2025-10-22"
         },
-        "admissionUrl": "https://www.hiroshima-u.ac.jp/nyushi/"
+        "admissionUrl": "https://www.hiroshima-u.ac.jp/nyushi/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "economics",
         "name": "経済学部",
         "admissionPolicy": "1　求める学生像\n　経済学部では、次のような学生を求めています。\n(1) 官公庁や企業での活躍を目指す学生\n(2) 先端領域のビジネス分野でビジネスモデルの開発や起業を目指す学生\n(3) グローバル経済の分析や予測を、数理的分析手法を駆使して行うエコノミストを目指す学生\n(4) 地球規模の問題に対しグローバルな視点から政策を立案し実行するリーダーを目指す学生\n(5) 従来にない独創的な理論の構築を目指し、深い思索と幅広い視点から学問研究に従事しようとする学生\n\n2　入学者選抜の基本方針\n　経済学科昼間コース及び夜間主コースが編成している各主専攻プログラムのディプロマ・ポリシー及びカリキュラム・ポリシーを踏まえ、入学者に求める能力やその評価方法を「学力の3要素」と関連付け、多面的・総合的な評価による選抜を実施します。",
-        "capacity": 5,
+        "capacity": 3,
         "requirements": {
           "gpa": null,
           "englishCert": "英検2級",
@@ -3065,13 +3144,14 @@
           "examDate": "2025-10-04",
           "resultDate": "2025-10-22"
         },
-        "admissionUrl": "https://www.hiroshima-u.ac.jp/nyushi/"
+        "admissionUrl": "https://www.hiroshima-u.ac.jp/nyushi/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "general",
         "name": "生物生産学部",
         "admissionPolicy": "1　求める学生像\n　生物生産学部では、環境と調和した持続可能な食料生産や生物資源の有効利用に関する教育・研究を行っています。こうした分野で深い科学的知識と広い視野をもって社会の発展に貢献できる人材の育成を目指しており、次のような学生を求めています。\n・ 高等学校での基礎的な学力を幅広く身につけ、特に理科において高い学力を有する人\n・ 食料や環境に関して問題意識が高い人\n・ 将来、食料や環境に係わる仕事に就いて社会で活躍することを希望する人\n\n2　入学者選抜の基本方針\n　生物生産学部に生物生産学科を設置しており、学生の多様なニーズに応え、卒業後の幅広い進路に対応するこれらの人を受け入れるため、編成している各主専攻プログラムのディプロマ・ポリシー及びカリキュラム・ポリシーを踏まえ、入学者に求める能力やその評価方法を「学力の3要素」と関連付けて明示し、多面的・総合的な評価による選抜を実施します。",
-        "capacity": 5,
+        "capacity": 18,
         "requirements": {
           "gpa": null,
           "englishCert": "英検2級",
@@ -3103,13 +3183,14 @@
           "examDate": "2025-10-04",
           "resultDate": "2025-10-22"
         },
-        "admissionUrl": "https://www.hiroshima-u.ac.jp/nyushi/"
+        "admissionUrl": "https://www.hiroshima-u.ac.jp/nyushi/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "engineering",
         "name": "工学部",
         "admissionPolicy": "1　求める学生像\n　工学部では、工学を培い、工学を通じて人の社会のために働く人材の育成を目指しており、次のような学生を求めています。\n(1) 基礎的･基本的な学力を幅広くきちんと身につけ、特に理科や数学に高い学力を有する人\n(2) 工学に興味を持ち、これを学ぶことに意欲を有する人\n(3) 工学を通じて社会に貢献することを目標とする人\n\n2　入学者選抜の基本方針\n　工学に対する社会の多様なニーズに応え、また学生の幅広い進路を可能にするため、広島大学工学部では4つの類を設置し、さらに各類に複数の主専攻プログラム(修学のコース)を設けています。各類では、各主専攻プログラムのディプロマ・ポリシー及びカリキュラム・ポリシーを踏まえ、入学者に求める能力やその評価方法を下記のように「学力の3要素」と関連付けて明示し、多面的・総合的な評価による選抜を実施します。",
-        "capacity": 5,
+        "capacity": 39,
         "requirements": {
           "gpa": null,
           "englishCert": "英検2級",
@@ -3141,13 +3222,14 @@
           "examDate": "2025-10-04",
           "resultDate": "2025-10-22"
         },
-        "admissionUrl": "https://www.hiroshima-u.ac.jp/nyushi/"
+        "admissionUrl": "https://www.hiroshima-u.ac.jp/nyushi/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "general-2",
         "name": "総合科学部",
         "admissionPolicy": "1　求める学生像\n　総合科学部では、豊かな教養を備えると同時に、幅広い知識を統合して問題解決を図ることができ、地域社会や国際社会に貢献できる人材の育成を目指しており、次のような人の入学を期待します。\n（1） 知的好奇心に富み、文理融合をはじめとする新たな学問的創造を求めることのできる人\n（2） 意見や文化的背景等の異なる人とも協働し、問題の解決に向かって努力できる人\n\n2　入学者選抜の基本方針\n　総合科学科及び国際共創学科が編成している主専攻プログラムのディプロマ・ポリシー及びカリキュラム・ポリシーを踏まえ、入学者に求める能力やその評価方法を「学力の3要素」と関連付けて明示し、多面的・総合的な評価による選抜を実施します。",
-        "capacity": 5,
+        "capacity": 18,
         "requirements": {
           "gpa": null,
           "englishCert": "英検2級",
@@ -3179,7 +3261,8 @@
           "examDate": "2025-10-04",
           "resultDate": "2025-10-22"
         },
-        "admissionUrl": "https://www.hiroshima-u.ac.jp/nyushi/"
+        "admissionUrl": "https://www.hiroshima-u.ac.jp/nyushi/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -3215,7 +3298,8 @@
           "examDate": "2025-10-13",
           "resultDate": "2025-10-31"
         },
-        "admissionUrl": "https://www.aichi-edu.ac.jp/admission/"
+        "admissionUrl": "https://www.aichi-edu.ac.jp/admission/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -3257,7 +3341,8 @@
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
         },
-        "admissionUrl": "https://www.niigata-u.ac.jp/admissions/"
+        "admissionUrl": "https://www.niigata-u.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "economics",
@@ -3289,7 +3374,8 @@
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
         },
-        "admissionUrl": "https://www.niigata-u.ac.jp/admissions/"
+        "admissionUrl": "https://www.niigata-u.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "engineering",
@@ -3322,7 +3408,8 @@
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
         },
-        "admissionUrl": "https://www.niigata-u.ac.jp/admissions/"
+        "admissionUrl": "https://www.niigata-u.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "science",
@@ -3370,7 +3457,8 @@
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
         },
-        "admissionUrl": "https://www.niigata-u.ac.jp/admissions/"
+        "admissionUrl": "https://www.niigata-u.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "medicine",
@@ -3402,7 +3490,8 @@
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
         },
-        "admissionUrl": "https://www.niigata-u.ac.jp/admissions/"
+        "admissionUrl": "https://www.niigata-u.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "general",
@@ -3435,7 +3524,8 @@
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
         },
-        "admissionUrl": "https://www.niigata-u.ac.jp/admissions/"
+        "admissionUrl": "https://www.niigata-u.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "education",
@@ -3468,7 +3558,8 @@
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
         },
-        "admissionUrl": "https://www.niigata-u.ac.jp/admissions/"
+        "admissionUrl": "https://www.niigata-u.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "dentistry",
@@ -3501,7 +3592,8 @@
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
         },
-        "admissionUrl": "https://www.niigata-u.ac.jp/admissions/"
+        "admissionUrl": "https://www.niigata-u.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "law",
@@ -3533,7 +3625,8 @@
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
         },
-        "admissionUrl": "https://www.niigata-u.ac.jp/admissions/"
+        "admissionUrl": "https://www.niigata-u.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "agriculture",
@@ -3566,7 +3659,8 @@
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
         },
-        "admissionUrl": "https://www.niigata-u.ac.jp/admissions/"
+        "admissionUrl": "https://www.niigata-u.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -3604,7 +3698,8 @@
           "examDate": "2025-10-27",
           "resultDate": "2025-11-14"
         },
-        "admissionUrl": "https://www.asahikawa-med.ac.jp/bureau/nyusi/"
+        "admissionUrl": "https://www.asahikawa-med.ac.jp/bureau/nyusi/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -3651,7 +3746,8 @@
           "examDate": "2025-11-30",
           "resultDate": "2025-12-18"
         },
-        "admissionUrl": "https://www.tufs.ac.jp/admission/"
+        "admissionUrl": "https://www.tufs.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "internationalsocial",
@@ -3689,7 +3785,8 @@
           "examDate": "2025-11-30",
           "resultDate": "2025-12-18"
         },
-        "admissionUrl": "https://www.tufs.ac.jp/admission/"
+        "admissionUrl": "https://www.tufs.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "letters",
@@ -3727,7 +3824,8 @@
           "examDate": "2025-11-30",
           "resultDate": "2025-12-18"
         },
-        "admissionUrl": "https://www.tufs.ac.jp/admission/"
+        "admissionUrl": "https://www.tufs.ac.jp/admission/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -3773,7 +3871,8 @@
           "examDate": "2024-11-01",
           "resultDate": "2024-11-19"
         },
-        "admissionUrl": "https://www.u-gakugei.ac.jp/admissions/"
+        "admissionUrl": "https://www.u-gakugei.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -3821,7 +3920,8 @@
           "examDate": "2024-12-01",
           "resultDate": "2024-12-19"
         },
-        "admissionUrl": "https://www.kaiyodai.ac.jp/entrance/"
+        "admissionUrl": "https://www.kaiyodai.ac.jp/entrance/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "general-2",
@@ -3860,7 +3960,8 @@
           "examDate": "2024-12-01",
           "resultDate": "2024-12-19"
         },
-        "admissionUrl": "https://www.kaiyodai.ac.jp/entrance/"
+        "admissionUrl": "https://www.kaiyodai.ac.jp/entrance/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "engineering",
@@ -3902,7 +4003,8 @@
           "examDate": "2024-10-01",
           "resultDate": "2024-10-19"
         },
-        "admissionUrl": "https://www.kaiyodai.ac.jp/entrance/"
+        "admissionUrl": "https://www.kaiyodai.ac.jp/entrance/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -3948,7 +4050,8 @@
           "examDate": "2024-10-04",
           "resultDate": "2024-10-22"
         },
-        "admissionUrl": "https://www.tuat.ac.jp/admission/"
+        "admissionUrl": "https://www.tuat.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "agriculture",
@@ -3991,7 +4094,8 @@
           "examDate": "2024-11-04",
           "resultDate": "2024-11-22"
         },
-        "admissionUrl": "https://www.tuat.ac.jp/admission/"
+        "admissionUrl": "https://www.tuat.ac.jp/admission/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -4038,7 +4142,8 @@
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
         },
-        "admissionUrl": "https://www.ynu.ac.jp/admissions/"
+        "admissionUrl": "https://www.ynu.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "business",
@@ -4076,7 +4181,8 @@
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
         },
-        "admissionUrl": "https://www.ynu.ac.jp/admissions/"
+        "admissionUrl": "https://www.ynu.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "education",
@@ -4114,7 +4220,8 @@
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
         },
-        "admissionUrl": "https://www.ynu.ac.jp/admissions/"
+        "admissionUrl": "https://www.ynu.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "science-eng",
@@ -4152,7 +4259,8 @@
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
         },
-        "admissionUrl": "https://www.ynu.ac.jp/admissions/"
+        "admissionUrl": "https://www.ynu.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "economics",
@@ -4190,7 +4298,8 @@
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
         },
-        "admissionUrl": "https://www.ynu.ac.jp/admissions/"
+        "admissionUrl": "https://www.ynu.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -4238,7 +4347,8 @@
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
         },
-        "admissionUrl": "https://www.yokohama-cu.ac.jp/admissions/"
+        "admissionUrl": "https://www.yokohama-cu.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "international-liberal-arts",
@@ -4276,7 +4386,8 @@
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
         },
-        "admissionUrl": "https://www.yokohama-cu.ac.jp/admissions/"
+        "admissionUrl": "https://www.yokohama-cu.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "internationalcommerce",
@@ -4314,7 +4425,8 @@
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
         },
-        "admissionUrl": "https://www.yokohama-cu.ac.jp/admissions/"
+        "admissionUrl": "https://www.yokohama-cu.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "science",
@@ -4352,7 +4464,8 @@
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
         },
-        "admissionUrl": "https://www.yokohama-cu.ac.jp/admissions/"
+        "admissionUrl": "https://www.yokohama-cu.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "data-science",
@@ -4390,7 +4503,8 @@
           "examDate": "2025-11-01",
           "resultDate": "2025-12-01"
         },
-        "admissionUrl": "https://www.yokohama-cu.ac.jp/admissions/"
+        "admissionUrl": "https://www.yokohama-cu.ac.jp/admissions/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -4427,7 +4541,8 @@
           "examDate": "2026-02-17",
           "resultDate": "2026-03-07"
         },
-        "admissionUrl": "https://www.kumamoto-u.ac.jp/nyuushi/"
+        "admissionUrl": "https://www.kumamoto-u.ac.jp/nyuushi/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "medicine",
@@ -4455,13 +4570,14 @@
           "examDate": "2025-10-28",
           "resultDate": "2025-11-15"
         },
-        "admissionUrl": "https://www.kumamoto-u.ac.jp/nyuushi/"
+        "admissionUrl": "https://www.kumamoto-u.ac.jp/nyuushi/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "information",
         "name": "情報融合学環",
         "admissionPolicy": "◆求める学生像\nデータサイエンスの応用領域は自然科学のみならず人文社会分野にも幅広く関連してくることから文理融合\n型の視点が必要とされます。理系文系を問わず、グローバルな視野を持つデータサイエンティストや技術者、研\n究者を目指す次のような人を求めています。\n1．人間の幸福や人間と環境の融和に対して問題意識を持ち、新時代のデータ駆動型イノベーションの創造に強\nい意欲を持つ人\n2．国際的な視野と優れた表現力やコミュニケーション能力を身に付け、リーダーシップと行動力を発揮するデ\nータサイエンティストや技術者、研究者を目指す人\n3．課題に対して問題点を明確にし、計画的に問題解決を目指すことができる人\n4．文理を問わず幅広い教養の上に数理・データサイエンス・AI の専門知識を身に付け、それらの実社会への応\n用に興味を持ち、総合的な視点から広く社会に貢献しようと考えている人\n5．高等学校までの履修科目の基礎事項を理解し、その上で数学と英語の科目において特に優れた力を有する人\n◆入学者選抜の基本方針\n◎ 一般選抜（前期日程）では、「知識・技能」については、大学入学共通テストを利用して高等学校の教育課\n程の教科・科目に関する総合的な学力を判定します。個別学力検査では、「思考力・判断力・表現力」を判\n定します。また「主体性を持って多様な人々と協働して学ぶ態度」については調査書により評価します。以\n上の判定結果を総合して入学者を選抜します。\n◎ 学校推薦型選抜Ⅱでは、「知識・技能」については、大学入学共通テストを利用して高等学校の教育課程の\n教科・科目に関する総合的な学力を判定します。面接では、「思考力・判断力・表現力」及び「主体性を\n持って多様な人々と協働して学ぶ態度」を判定します。以上の判定結果を総合して入学者を選抜します。\n◎ 総合型選抜I（私費外国人留学生入試）では、「知識・技能」については、日本留学試験を利用してこれまでの\n教育課程の教科・科目及び日本語に関する総合的な学力を判定します。個別学力検査では、入学後の学修と\nより密接にかかわる教科・科目について学力をより深く判定します。また、面接では、「思考力・判断力・\n表現力」及び「主体性を持って多様な人々と協働して学ぶ態度」を判定します。以上の判定結果を総合して入\n学者を選抜します。",
-        "capacity": 5,
+        "capacity": 18,
         "requirements": {
           "gpa": null,
           "englishCert": null,
@@ -4483,7 +4599,8 @@
           "examDate": "2026-02-17",
           "resultDate": "2026-03-07"
         },
-        "admissionUrl": "https://www.kumamoto-u.ac.jp/nyuushi/"
+        "admissionUrl": "https://www.kumamoto-u.ac.jp/nyuushi/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "engineering",
@@ -4511,7 +4628,8 @@
           "examDate": "2026-03-01",
           "resultDate": "2026-03-19"
         },
-        "admissionUrl": "https://www.kumamoto-u.ac.jp/nyuushi/"
+        "admissionUrl": "https://www.kumamoto-u.ac.jp/nyuushi/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "education",
@@ -4539,7 +4657,8 @@
           "examDate": "2026-02-17",
           "resultDate": "2026-03-07"
         },
-        "admissionUrl": "https://www.kumamoto-u.ac.jp/nyuushi/"
+        "admissionUrl": "https://www.kumamoto-u.ac.jp/nyuushi/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "letters",
@@ -4567,7 +4686,8 @@
           "examDate": "2025-12-02",
           "resultDate": "2025-12-20"
         },
-        "admissionUrl": "https://www.kumamoto-u.ac.jp/nyuushi/"
+        "admissionUrl": "https://www.kumamoto-u.ac.jp/nyuushi/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "law",
@@ -4595,7 +4715,8 @@
           "examDate": "2025-10-28",
           "resultDate": "2025-11-15"
         },
-        "admissionUrl": "https://www.kumamoto-u.ac.jp/nyuushi/"
+        "admissionUrl": "https://www.kumamoto-u.ac.jp/nyuushi/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "science",
@@ -4623,7 +4744,8 @@
           "examDate": "2026-02-17",
           "resultDate": "2026-03-07"
         },
-        "admissionUrl": "https://www.kumamoto-u.ac.jp/nyuushi/"
+        "admissionUrl": "https://www.kumamoto-u.ac.jp/nyuushi/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -4660,7 +4782,8 @@
           "examDate": "2025-12-05",
           "resultDate": "2025-12-23"
         },
-        "admissionUrl": "https://www.fukuoka-edu.ac.jp/admission/"
+        "admissionUrl": "https://www.fukuoka-edu.ac.jp/admission/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -4675,7 +4798,7 @@
         "id": "life-environment",
         "name": "生命環境学群",
         "admissionPolicy": "生物学類\n　\r\n求める人材\r\n生き物や生物学が好きで，自然科学と語学の基礎学力をもち，広範で多様な生命現象に対して強い好奇心と探究心をもつ，創造的能力が豊かな人材。\r\n入学までに学んでおいてほしいこと\r\n高等学校の生物の内容を十分に理解していること。また，授業は英語で行われることもあるため，十分な英語の読み書き会話の能力を有していること。さらに，ホームページや電子メール等からの情報の取得，パソコンを用いた文章・表作成などが必要となるため，それらの操作に習熟していること。\r\n人材養成目的\r\n生物界のシステム，生体機能のメカニズム，生命現象の本質，生物学の研究方法及び先端研究の意義を理解し，生物と関わる幅広い学問分野でグローバルに活躍する研究者，教育者，技術者，企業人など，先端科学と社会の接点となる人材を育成します。\n\n生物資源学類\n　\r\n求める人材\r\n生物資源，農林業，環境保全に関心が強く，広範な学問を学ぶことができる柔軟な思考力を持ち，自ら問題を発見し解決に取り組むとともに，それを内外に伝え論理的に説明することができる意欲のある人材を望んでいます。\r\n入学までに学んでおいてほしいこと\r\n数学，生物，物理，化学についての基礎的な知識と理解，さらには応用する能力および語学力を備えていることが望ましい。\r\n人材養成目的\r\n生物資源学類は，人類の生存と安全で豊かな生活の基盤である生物資源に関する総合的学習を通じ，地域的かつ地球的視野で，食料の安定供給ならびに環境と調和した生物資源の持続的な開発・保全利用に貢献できる人材を育成します。\n\n地球学類\n　\r\n求める人材\r\n地球環境や地球進化に高い関心と探究心を持ち，問題解決に向けて自主的かつ積極的に取組み，広い視野から事象を分析することができる人材。\r\n入学までに学んでおいてほしいこと\r\n理科の諸科目と数学についての知識と理解力，日本語の文章表現力や英語の読解・作文能力を身につけていることが望ましい。また，地理や地学に強い関心を持ち，自ら学ぶ努力をしてほしい。\r\n人材養成目的\r\n地球の誕生から現在に至る地球の進化，大気圏・水圏・岩石圏で起こる様々な現象とそのプロセス，そして地球環境を舞台に展開される人間活動についての総合的な知識と思考力を有する，社会の諸分野で国際的な視野に立って活躍できる人材を養成します。",
-        "capacity": 5,
+        "capacity": 3,
         "requirements": {
           "gpa": 4.3,
           "englishCert": null,
@@ -4702,7 +4825,8 @@
           "examDate": "2024-12-03",
           "resultDate": "2024-12-21"
         },
-        "admissionUrl": "https://ac.tsukuba.ac.jp/"
+        "admissionUrl": "https://ac.tsukuba.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "medicine",
@@ -4735,7 +4859,8 @@
           "examDate": "2024-12-03",
           "resultDate": "2024-12-21"
         },
-        "admissionUrl": "https://ac.tsukuba.ac.jp/"
+        "admissionUrl": "https://ac.tsukuba.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "social-international",
@@ -4768,13 +4893,14 @@
           "examDate": "2024-12-03",
           "resultDate": "2024-12-21"
         },
-        "admissionUrl": "https://ac.tsukuba.ac.jp/"
+        "admissionUrl": "https://ac.tsukuba.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "sports",
         "name": "体育専門学群",
         "admissionPolicy": "体育専門学群\n　\r\n求める人材\r\n体育・スポーツ・健康・コーチングに関する分野に強い関心があり，教養を高め運動経験の幅を広げるだけではなく，これまで身につけた運動技能や関連する知識をさらに高めて，体育・スポーツの国内的・国際的発展に貢献する情熱と意欲を持った人材。\r\n入学までに学んでおいてほしいこと\r\n高校の保健体育で学ぶ内容を習得し，さらに英語の基礎的能力を身につけていること。\r\n人材養成目的\r\n優れた運動技能と幅広い運動経験を基盤に体育・スポーツ・健康・コーチングに関する総合的な知識と最新の科学的知見を活かしながら，組織を的確にマネジメントして諸々の問題解決を図ることのできる知・徳・体を具備した体育・スポーツ界のリーダーを育成することを目的とします。体育専門学群\r\n求める人材\r\n体育・スポーツ・健康・コーチングに関する分野に強い関心があり，教養を高め運動経験の幅を広げるだけではなく，これまで身につけた運動技能や関連する知識をさらに高めて，体育・スポーツの国内的・国際的発展に貢献する情熱と意欲を持った人材。\r\n入学までに学んでおいてほしいこと\r\n高校の保健体育で学ぶ内容を習得し，さらに英語の基礎的能力を身につけていること。\r\n人材養成目的\r\n優れた運動技能と幅広い運動経験を基盤に体育・スポーツ・健康・コーチングに関する総合的な知識と最新の科学的知見を活かしながら，組織を的確にマネジメントして諸々の問題解決を図ることのできる知・徳・体を具備した体育・スポーツ界のリーダーを育成することを目的とします。",
-        "capacity": 5,
+        "capacity": 8,
         "requirements": {
           "gpa": 4.3,
           "englishCert": null,
@@ -4801,13 +4927,14 @@
           "examDate": "2024-12-03",
           "resultDate": "2024-12-21"
         },
-        "admissionUrl": "https://ac.tsukuba.ac.jp/"
+        "admissionUrl": "https://ac.tsukuba.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "information",
         "name": "情報学群",
         "admissionPolicy": "情報科学類\n　\r\n求める人材\r\n情報技術や自然科学・工学に強い好奇心と探究心を持ち，その学習のために必要な基礎学力を有し，修得した知識を創造的に活用・発展させて新しい課題に積極的に取り組み，情報化社会の中核を担う意欲のある人材を求めます。\r\n入学までに学んでおいてほしいこと\r\n情報科学や情報技術についての基本的な理解力を身につけていることが望ましい。数学的な知識も備えていることが望ましい。\r\n人材養成目的\r\n現代社会の原動力である情報を収集・分析・理解・伝達・変換・活用するための工学的な技術やその原理となる数理や自然科学を理解し，それを実社会における様々な問題に適用して解決する実践力を備え，グローバルな視点に立って情報技術の発展を主体的に担うことができる人材を養成することを目的とします。\n\n情報メディア創成学類\n　\r\n求める人材\r\n理数系の素養と文化や芸術に対する豊かな感性を兼ね備え，ネットワーク情報社会における各種の技術や学問分野に強い興味と学習意欲を持ち，創造的に社会貢献することを目指す人材を求めます。\r\n入学までに学んでおいてほしいこと\r\n在学中に学んだ科目，特に数学や英語についてはよく復習して内容を身につけておくこと。また，情報ネットワークを基盤とする社会全体に対して広く関心を持ち，知識や見識を意欲的に広げていくことを普段から心がける姿勢。\r\n人材養成目的\r\nこれからのネットワーク情報社会を発展させるために不可欠な基盤的技術分野や，Web・映像・音楽などの多種多様な情報をコンテンツとして扱い流通させる分野などにおいて，革新的技術や科学的理論を創造的に生み出すことができる技術者，研究者を養成します。\n\n知識情報・図書館学類\n　\r\n求める人材\r\n知識スペシャリストにふさわしい豊かな発想と表現力をもった人材，知識ゼネラリストにふさわしい論理的思考力とコミュニケーション力をもった人材を求めます。\r\n入学までに学んでおいてほしいこと\r\n高等学校までの学習内容に広く関心を持ち，特に英語，国語，数学（数Ⅱ・数Ｂまで）の基礎学力を身につけていること。\r\n人材養成目的\r\n知識や情報を活用する能力を育み，関連する社会制度と技術の専門教育を行います。これらの教育を通じて，知識資源の形成，加工，流通，利用の発展に寄与する専門家と人間，社会，技術にわたる総合的視野や問題解決能力を持った職業人を育成します。",
-        "capacity": 22,
+        "capacity": 18,
         "requirements": {
           "gpa": 4,
           "englishCert": null,
@@ -4834,7 +4961,8 @@
           "examDate": "2024-12-03",
           "resultDate": "2024-12-21"
         },
-        "admissionUrl": "https://ac.tsukuba.ac.jp/"
+        "admissionUrl": "https://ac.tsukuba.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "human",
@@ -4872,13 +5000,14 @@
           "examDate": "2024-12-03",
           "resultDate": "2024-12-21"
         },
-        "admissionUrl": "https://ac.tsukuba.ac.jp/"
+        "admissionUrl": "https://ac.tsukuba.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "letters-letters",
         "name": "人文・文化学群",
         "admissionPolicy": "人文学類\n　\r\n求める人材\r\n人文系の学問に必要な論理的な思考力と表現力を十分に持つと同時に，世界の多様な文化や歴史に対して開かれた関心を持ち，自律的な学習と批判的な考察を通して問題を自ら発見し解決していく能力と意欲を有する人材。\r\n入学までに学んでおいてほしいこと\r\n人文系の学問の基礎となる言語や社会に関する学科について十分な能力を習得し，希望する専攻分野に関連する他の学科についても基礎的な知識を有していることが望ましい。\r\n人材養成目的\r\n「人間とは何か」という問いを根底におき，人間存在とその諸活動の所産としての文化全般について主体的に考察しうるとともに，グローバル化が進展する世界における諸問題に積極的に関与し発言しうる，真に教養ある人材を養成します。\n\n比較文化学類\n　\r\n求める人材\r\n自らの問題意識を出発点として，さまざまな学問領域に関心を寄せながら，文化・社会について広く柔軟に学ぶ意欲を持つ人。\r\n\r\n異文化理解に裏付けられたグローバル・コミュニケーション能力を身につけようとする人。\r\n\r\n海外経験・社会経験などを通じて得た問題意識を学問的に深めたい人。\r\n\r\n入学までに学んでおいてほしいこと\r\n日本語及び外国語に関する優れた能力，特に文化・社会に対する旺盛な好奇心と高い教養を身につけておくことが望ましい。また，希望する学問領域に関連する社会科科目の知識を備えていることが望ましい。\r\n人材養成目的\r\n人類が築いてきた様々な文化を，「学際性」と「現代性」という問題意識のもとに比較・検討し，それを通じてひとつの学問分野に閉ざされることのない，開かれた知と批判的思考力を持った人材を育成します。また，国際的なコミュニケーション能力によって，グローバル化する社会に求められる問題解決能力と交渉力を備えた人材を育成します。\n\n日本語・日本文化学類\n　\r\n求める人材\r\n旺盛な知的好奇心を持ち，日本語や日本文化，さらに多文化共生社会のあり方に対する明確な問題意識とそれに対応した能力を有する人材を求めています。\r\n入学までに学んでおいてほしいこと\r\n日本語および外国語に関して，十分な読解力と自分の考えを明確に伝える表現力を高めておくことが望ましい。\r\n人材養成目的\r\n日本における言語・文化事象を総合的に捉え，グローバルな視点で理解する力を養います。これにより，多文化共生社会を見据えたうえで，異言語・異文化を背景とする人たち，次世代の人たちと課題を共有し，ともに解決していくことのできる文化の創造者たる人材を養成します。",
-        "capacity": 15,
+        "capacity": 13,
         "requirements": {
           "gpa": 4.3,
           "englishCert": null,
@@ -4905,7 +5034,8 @@
           "examDate": "2024-12-03",
           "resultDate": "2024-12-21"
         },
-        "admissionUrl": "https://ac.tsukuba.ac.jp/"
+        "admissionUrl": "https://ac.tsukuba.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "arts",
@@ -4938,7 +5068,8 @@
           "examDate": "2024-12-03",
           "resultDate": "2024-12-21"
         },
-        "admissionUrl": "https://ac.tsukuba.ac.jp/"
+        "admissionUrl": "https://ac.tsukuba.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "science-eng",
@@ -4971,7 +5102,8 @@
           "examDate": "2024-12-03",
           "resultDate": "2024-12-21"
         },
-        "admissionUrl": "https://ac.tsukuba.ac.jp/"
+        "admissionUrl": "https://ac.tsukuba.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -5013,7 +5145,8 @@
           "examDate": "2024-12-02",
           "resultDate": "2024-12-20"
         },
-        "admissionUrl": "https://www.gunma-u.ac.jp/admission/"
+        "admissionUrl": "https://www.gunma-u.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "information",
@@ -5046,7 +5179,8 @@
           "examDate": "2024-10-01",
           "resultDate": "2024-10-19"
         },
-        "admissionUrl": "https://www.gunma-u.ac.jp/admission/"
+        "admissionUrl": "https://www.gunma-u.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "education",
@@ -5203,7 +5337,8 @@
           "examDate": "2024-12-02",
           "resultDate": "2024-12-20"
         },
-        "admissionUrl": "https://www.gunma-u.ac.jp/admission/"
+        "admissionUrl": "https://www.gunma-u.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "science-eng",
@@ -5236,7 +5371,8 @@
           "examDate": "2024-10-01",
           "resultDate": "2024-10-19"
         },
-        "admissionUrl": "https://www.gunma-u.ac.jp/admission/"
+        "admissionUrl": "https://www.gunma-u.ac.jp/admission/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -5282,7 +5418,8 @@
           "examDate": "2024-12-01",
           "resultDate": "2024-12-19"
         },
-        "admissionUrl": "https://www.ibaraki.ac.jp/admission/"
+        "admissionUrl": "https://www.ibaraki.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "science",
@@ -5320,7 +5457,8 @@
           "examDate": "2024-12-01",
           "resultDate": "2024-12-19"
         },
-        "admissionUrl": "https://www.ibaraki.ac.jp/admission/"
+        "admissionUrl": "https://www.ibaraki.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "engineering",
@@ -5357,7 +5495,8 @@
           "examDate": "2024-12-01",
           "resultDate": "2024-12-19"
         },
-        "admissionUrl": "https://www.ibaraki.ac.jp/admission/"
+        "admissionUrl": "https://www.ibaraki.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "education",
@@ -5409,7 +5548,8 @@
           "examDate": "2024-12-01",
           "resultDate": "2024-12-19"
         },
-        "admissionUrl": "https://www.ibaraki.ac.jp/admission/"
+        "admissionUrl": "https://www.ibaraki.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "agriculture",
@@ -5447,7 +5587,8 @@
           "examDate": "2024-12-01",
           "resultDate": "2024-12-19"
         },
-        "admissionUrl": "https://www.ibaraki.ac.jp/admission/"
+        "admissionUrl": "https://www.ibaraki.ac.jp/admission/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -5483,7 +5624,8 @@
           "examDate": "2025-12-06",
           "resultDate": "2025-12-24"
         },
-        "admissionUrl": "https://www.tut.ac.jp/exam/"
+        "admissionUrl": "https://www.tut.ac.jp/exam/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -5530,13 +5672,14 @@
           "examDate": "2025-03-02",
           "resultDate": "2025-03-20"
         },
-        "admissionUrl": "https://www.nagasaki-u.ac.jp/nyugaku/"
+        "admissionUrl": "https://www.nagasaki-u.ac.jp/nyugaku/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "engineering",
         "name": "工学部",
         "admissionPolicy": "工学部は，入学者に以下の資質・素養を求めます。\n\n・数学，理科，英語の基礎学力を有している。\n・論理的思考力や読解力を有している。\n・工学に強い関心を持ち，主体的に学修を継続する強い意志と実行力がある。\n・協調性やコミュニケーション能力がある。",
-        "capacity": 5,
+        "capacity": 8,
         "requirements": {
           "gpa": null,
           "englishCert": null,
@@ -5569,7 +5712,8 @@
           "examDate": "2025-03-02",
           "resultDate": "2025-03-20"
         },
-        "admissionUrl": "https://www.nagasaki-u.ac.jp/nyugaku/"
+        "admissionUrl": "https://www.nagasaki-u.ac.jp/nyugaku/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "medicine",
@@ -5607,7 +5751,8 @@
           "examDate": "2025-03-02",
           "resultDate": "2025-03-20"
         },
-        "admissionUrl": "https://www.nagasaki-u.ac.jp/nyugaku/"
+        "admissionUrl": "https://www.nagasaki-u.ac.jp/nyugaku/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "dentistry",
@@ -5646,7 +5791,8 @@
           "examDate": "2025-03-02",
           "resultDate": "2025-03-20"
         },
-        "admissionUrl": "https://www.nagasaki-u.ac.jp/nyugaku/"
+        "admissionUrl": "https://www.nagasaki-u.ac.jp/nyugaku/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "general",
@@ -5685,13 +5831,14 @@
           "examDate": "2025-03-02",
           "resultDate": "2025-03-20"
         },
-        "admissionUrl": "https://www.nagasaki-u.ac.jp/nyugaku/"
+        "admissionUrl": "https://www.nagasaki-u.ac.jp/nyugaku/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "letterssocial",
         "name": "多文化社会学部",
         "admissionPolicy": "多文化社会学部は，全学共通のアドミッション・ポリシーに加えて，学部の教育理念，教育研究上の目的，ディプロマ・ポリシー及びカリキュラム・ポリシーを踏まえて，入学者に以下の資質・素養を求めます。\n\n・専門科目の学修の基盤となる高等学校卒業程度の基礎的・基本的知識を有している。\n・英語を主とする外国語の運用能力の基礎が充実している。\n・世界規模の多種多様な考え方や価値観を尊重しつつ，それらについて批判的に思考できる基礎を有する。\n・世界の多文化状況を客観的に捉え，見出された課題の解決に向けて論理的に思考できる基礎を有する。\n・自らの考えを整理し，表現するライティング能力（文章力）を有する。\n・多様な人々と共生的な関係を築き，協働する為に必要なコミュニケーション能力・自己表現力の基礎を有する。\n・世界の多文化状況や異文化交流に興味・関心を持ち，グローバルな視点で自ら学ぼうとする意欲がある。",
-        "capacity": 5,
+        "capacity": 10,
         "requirements": {
           "gpa": null,
           "englishCert": "英検準1級 / TOEFL iBT 61以上 / IELTS 5.5以上 / GTEC 1140以上",
@@ -5729,7 +5876,8 @@
           "examDate": "2025-03-02",
           "resultDate": "2025-03-20"
         },
-        "admissionUrl": "https://www.nagasaki-u.ac.jp/nyugaku/"
+        "admissionUrl": "https://www.nagasaki-u.ac.jp/nyugaku/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "medicine-2",
@@ -5767,13 +5915,14 @@
           "examDate": "2025-03-02",
           "resultDate": "2025-03-20"
         },
-        "admissionUrl": "https://www.nagasaki-u.ac.jp/nyugaku/"
+        "admissionUrl": "https://www.nagasaki-u.ac.jp/nyugaku/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "education",
         "name": " 教育学部",
         "admissionPolicy": "教育学部は入学者に以下の資質・素養を求めます。\n\n・専門科目の学修の基盤となる高等学校卒業程度の知識・技能・理解が充実している。\n・専門的な学修に必要となる基礎的な論理的・批判的思考力や判断力，表現力がある。\n・幼児・児童・生徒および保護者，同僚その他の人々との良好な対人関係を構築するために必要な非言語的要素を含むコミュニケーション能力がある。\n・主体的に学修を継続し，発展させようとする意欲と態度がある。\n・現代の教育課題への関心を持ち，教職を志望している。",
-        "capacity": 5,
+        "capacity": 4,
         "requirements": {
           "gpa": null,
           "englishCert": null,
@@ -5806,13 +5955,14 @@
           "examDate": "2025-03-02",
           "resultDate": "2025-03-20"
         },
-        "admissionUrl": "https://www.nagasaki-u.ac.jp/nyugaku/"
+        "admissionUrl": "https://www.nagasaki-u.ac.jp/nyugaku/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "general-2",
         "name": "環境科学部",
         "admissionPolicy": "環境科学部は入学者に以下の資質・素養を求めます。\n\n・多様な環境科学を学修する基盤となる高等学校卒業程度の知識・技能・理解が充実している。\nこのため，大学入学共通テストでは幅広い科目に対して配点しています。前期日程試験の選抜方法Ａ（文系受験）では国語と地歴・公民，選抜方法Ｂ（理系受験）では数学と理科の配点を高くしています。\n\n・学修・研究に必要となる基本的な英語能力がある。\n前期日程の選抜方法Ａ（文系受験）の個別学力検査で英語を課し，選抜方法Ｂ（理系受験）では英語を選択可能な科目として位置づけています。\n\n・環境科学を専門的に学修するために必要となる判断力や思考力を有する。\n後期日程試験では，小論文試験でこれらの資質を評価します。\n\n・環境をめぐる諸問題に強い関心を持ち，環境科学を学ぶ意欲にあふれ，主体的に学修を継続する姿勢がある。\nこのため，前期日程ではペーパー・インタビューで，後期日程や総合型選抜，学校推薦型選抜，外国人留学生選抜等では面接で，これらの資質・素養を評価します。",
-        "capacity": 5,
+        "capacity": 4,
         "requirements": {
           "gpa": null,
           "englishCert": null,
@@ -5845,7 +5995,8 @@
           "examDate": "2025-03-02",
           "resultDate": "2025-03-20"
         },
-        "admissionUrl": "https://www.nagasaki-u.ac.jp/nyugaku/"
+        "admissionUrl": "https://www.nagasaki-u.ac.jp/nyugaku/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "pharmacy",
@@ -5883,13 +6034,14 @@
           "examDate": "2025-03-02",
           "resultDate": "2025-03-20"
         },
-        "admissionUrl": "https://www.nagasaki-u.ac.jp/nyugaku/"
+        "admissionUrl": "https://www.nagasaki-u.ac.jp/nyugaku/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "economics",
         "name": "経済学部",
         "admissionPolicy": "経済学部は入学者に以下の資質・素養を求めます。\n\n・基礎的学力が身についている。\n・論理的思考力が身についている。\n・英語を含むコミュニケーション力が身についている。\n・強い学習意欲，主体性や行動力がある。",
-        "capacity": 5,
+        "capacity": 45,
         "requirements": {
           "gpa": null,
           "englishCert": null,
@@ -5922,7 +6074,8 @@
           "examDate": "2025-03-02",
           "resultDate": "2025-03-20"
         },
-        "admissionUrl": "https://www.nagasaki-u.ac.jp/nyugaku/"
+        "admissionUrl": "https://www.nagasaki-u.ac.jp/nyugaku/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -5973,7 +6126,8 @@
           "examDate": "2025-09-29",
           "resultDate": "2025-10-17"
         },
-        "admissionUrl": "https://www.uec.ac.jp/admission/"
+        "admissionUrl": "https://www.uec.ac.jp/admission/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -6020,7 +6174,8 @@
           "examDate": "2024-10-01",
           "resultDate": "2024-10-19"
         },
-        "admissionUrl": "https://www.shizuoka.ac.jp/admission/"
+        "admissionUrl": "https://www.shizuoka.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "education",
@@ -6058,7 +6213,8 @@
           "examDate": "2025-02-25",
           "resultDate": "2025-03-15"
         },
-        "admissionUrl": "https://www.shizuoka.ac.jp/admission/"
+        "admissionUrl": "https://www.shizuoka.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "science",
@@ -6091,7 +6247,8 @@
           "examDate": "2025-02-25",
           "resultDate": "2025-03-15"
         },
-        "admissionUrl": "https://www.shizuoka.ac.jp/admission/"
+        "admissionUrl": "https://www.shizuoka.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "letterssocial",
@@ -6129,7 +6286,8 @@
           "examDate": "2024-10-01",
           "resultDate": "2024-10-19"
         },
-        "admissionUrl": "https://www.shizuoka.ac.jp/admission/"
+        "admissionUrl": "https://www.shizuoka.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "information",
@@ -6172,7 +6330,8 @@
           "examDate": "2024-10-01",
           "resultDate": "2024-10-19"
         },
-        "admissionUrl": "https://www.shizuoka.ac.jp/admission/"
+        "admissionUrl": "https://www.shizuoka.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "engineering",
@@ -6210,7 +6369,8 @@
           "examDate": "2024-10-01",
           "resultDate": "2024-10-19"
         },
-        "admissionUrl": "https://www.shizuoka.ac.jp/admission/"
+        "admissionUrl": "https://www.shizuoka.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "agriculture",
@@ -6253,7 +6413,8 @@
           "examDate": "2024-10-01",
           "resultDate": "2024-10-19"
         },
-        "admissionUrl": "https://www.shizuoka.ac.jp/admission/"
+        "admissionUrl": "https://www.shizuoka.ac.jp/admission/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -6268,7 +6429,7 @@
         "id": "agriculture",
         "name": "農学部",
         "admissionPolicy": "農学部は、次のような学生を国内外から広く求めています。\n◎農学関連分野に強い関心を持ち、将来これらの分野で活躍を目指す意欲のある人\n◎自然科学の幅広い知識と英語の基礎的な学力を備え、知識・技能を活用して課題を解決するために必要な思考力・判断力・表現力の修得に意欲のある人\n◎フィールドや生産現場での技術・研究に強い関心を持ち、農林業及び食品生命科学に関する実務・実技能力の向上を目指す人\n◎多様で持続的な社会の構築に参画し、地域社会、国際社会に貢献することを目指す人",
-        "capacity": 5,
+        "capacity": 13,
         "requirements": {
           "gpa": null,
           "englishCert": null,
@@ -6290,13 +6451,14 @@
           "examDate": "2025-12-01",
           "resultDate": "2025-12-19"
         },
-        "admissionUrl": "https://www.kagoshima-u.ac.jp/admission/"
+        "admissionUrl": "https://www.kagoshima-u.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "medicine",
         "name": "医学部",
         "admissionPolicy": "【一般選抜・学校推薦型選抜・私費外国人学部留学生選抜・国際バカロレア選抜】\n高校で学ぶ理科、数学、外国語、国語、社会、情報の基礎学力と学校と社会生活の中で養った資質として、\n\n自然界や人間社会についての幅広い基礎学力と問題解決力\n医療や医学、生命科学などに対する関心\n地域／グローバル社会への関心と社会に貢献する意欲\n互いを尊重し、思いやりいたわる心\n話を正確に聞き、自分の意見を論理的に伝える能力\n学習意欲があり、自主的に学習する力と習慣\nAIなどの革新的技術に柔軟かつ適切に対応する意欲\nを備えている人\n\n \n\n【第2年次学士編入学試験】\n豊かな人間性と高い倫理観、医療人としての適性をそなえた、多様な専門能力を有する大学卒業者で、\n\n自然界や人間社会についての幅広い基礎学力と問題解決力\n医療や医学、生命科学などに対する関心\n地域／グローバル社会への関心と社会に貢献する意欲\n互いを尊重し、思いやりいたわる心\n話を正確に聞き、自分の意見を論理的に伝える能力\n学習意欲があり、自主的に学習する力と習慣\nAIなどの革新的技術に柔軟かつ適切に対応する意欲\nを備えている人",
-        "capacity": 5,
+        "capacity": 8,
         "requirements": {
           "gpa": null,
           "englishCert": null,
@@ -6318,13 +6480,14 @@
           "examDate": "2025-12-01",
           "resultDate": "2025-12-19"
         },
-        "admissionUrl": "https://www.kagoshima-u.ac.jp/admission/"
+        "admissionUrl": "https://www.kagoshima-u.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "engineering",
         "name": "工学部",
         "admissionPolicy": "工学部は、本学部の教育目標に共感できる次のような人を、国内外から広く求めています。\n\n工学部の学位授与の方針を達成できる基礎学力ないしは素養のある人\n工学の面白さを学びたい、ものづくりに取り組んでみたい、技術開発に挑戦したい等の夢をもつ人\n自ら考え、主体的に学修する目的意識が明確で、そのための学修意欲が高い人",
-        "capacity": 5,
+        "capacity": 18,
         "requirements": {
           "gpa": null,
           "englishCert": null,
@@ -6346,13 +6509,14 @@
           "examDate": "2025-12-01",
           "resultDate": "2025-12-19"
         },
-        "admissionUrl": "https://www.kagoshima-u.ac.jp/admission/"
+        "admissionUrl": "https://www.kagoshima-u.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "medicine-2",
         "name": "共同獣医学部",
         "admissionPolicy": "共同獣医学部では、発展・進化する獣医・畜産科学に取り組む知識欲と探究心、これを実践・活用する論理性と創造力、及びチーム活動と共生社会形成のためのコミュニケーション能力の素養を備えた、次のような学生を求めます。\n\n獣医師の幅広い職責について理解し、獣医学を志す明確な目的意識を有する人\n動物を慈しみ、動物生命科学研究によって畜産資源の安定供給と安全性確保に貢献する目的意識のある人\n自然科学、人文・社会科学及び語学に関する基礎教科を満遍なく学習し、獣医学・畜産科学の知識や技術を充分に理解、修得するための基礎学力を身に付けている人\n人と動物の健全な共生社会実現のために積極的に取り組む意思を有し、社会的にコミュニケーションがとれる人",
-        "capacity": 5,
+        "capacity": 11,
         "requirements": {
           "gpa": null,
           "englishCert": null,
@@ -6374,13 +6538,14 @@
           "examDate": "2025-12-01",
           "resultDate": "2025-12-19"
         },
-        "admissionUrl": "https://www.kagoshima-u.ac.jp/admission/"
+        "admissionUrl": "https://www.kagoshima-u.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "science",
         "name": "理学部",
         "admissionPolicy": "自然科学に関する基礎的な知識と理解力を備えており、数学と理科に高い学力を有する人\n課題の発見と解決に積極的に取り組み、知的好奇心や探究心の旺盛な人\n広い学問的視野と適応性を兼ね備えて、自然と調和の取れた科学の発展に貢献できる人\n\n１．求める人材像 • 自然科学に関する基礎的な知識と理解力を備えており、数学と理科に高い学力を有する人\n • 課題の発見と解決に積極的に取り組み、知的好奇心や探究心の旺盛な人 \n• 広い学問的視野と適応性を兼ね備えて、自然と調和の取れた科学の発展に貢献できる人",
-        "capacity": 5,
+        "capacity": 14,
         "requirements": {
           "gpa": null,
           "englishCert": null,
@@ -6402,7 +6567,8 @@
           "examDate": "2025-12-01",
           "resultDate": "2025-12-19"
         },
-        "admissionUrl": "https://www.kagoshima-u.ac.jp/admission/"
+        "admissionUrl": "https://www.kagoshima-u.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "lawletters",
@@ -6430,7 +6596,8 @@
           "examDate": "2025-12-01",
           "resultDate": "2025-12-19"
         },
-        "admissionUrl": "https://www.kagoshima-u.ac.jp/admission/"
+        "admissionUrl": "https://www.kagoshima-u.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "education",
@@ -6458,13 +6625,14 @@
           "examDate": "2025-12-21",
           "resultDate": "2026-01-08"
         },
-        "admissionUrl": "https://www.kagoshima-u.ac.jp/admission/"
+        "admissionUrl": "https://www.kagoshima-u.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "general",
         "name": "水産学部",
         "admissionPolicy": "水産学科のそれぞれの分野等で求める人材像と入学後に必要とする学力は以下の通りです。\n求める人材像\n\n（1）\t海洋環境や水圏の生物に興味を持ち、水産業の基盤である海洋環境や水圏に生息する生物の特性と両者の相互作用についての基礎科学を学び、学校教育や環境教育の現場あるいは海洋環境と生物に関する調査・保全に関わる機関で働きたい人（水圏科学分野）\n（2）\t水産資源の生産管理や増養殖に興味を持ち、水産資源とその採捕・管理及び増養殖に関する理論と技術について学び、漁業技術産業、増養殖産業あるいは水産資源の開発・管理や増養殖に係る公的機関で働きたい人（水産資源科学分野）\n（3）\t\n水産食品や水産資源の先進利用に興味を持ち、水産資源の食品としての利用と機能性化成品などへの先進的な利用について学び、食品・化学品製造業及び製薬業ならびにそれらの関連分野で働きたい人（食品生命科学分野）\n（4）\t水産政策や水産物流通に興味を持ち、水産政策と水産物流通・経済に関連する知識と技術について学び、水産流通業や食品産業、水産系公務員、水産系金融、水産系公的機関などで働きたい人（水産経済学分野）\n（5）\t水圏環境の保全に興味を持ち、赤潮、有機汚染、有害化学物質汚染（人為的ネガティブインパクト）、水圏環境の保全と修復について学び、環境アセスメントや関連分野及び公的機関で働きたい人（水圏環境保全学分野）\n（6）\t水産教員、海技士またはグローバル人材として働くために必要な職業能力を強化し、地域社会に貢献したい人",
-        "capacity": 5,
+        "capacity": 7,
         "requirements": {
           "gpa": null,
           "englishCert": null,
@@ -6486,13 +6654,14 @@
           "examDate": "2025-10-21",
           "resultDate": "2025-11-08"
         },
-        "admissionUrl": "https://www.kagoshima-u.ac.jp/admission/"
+        "admissionUrl": "https://www.kagoshima-u.ac.jp/admission/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "dentistry",
         "name": "歯学部",
         "admissionPolicy": "求める人材像\n(1) 生命への強い関心、人間としてのモラル、奉仕精神にあふれる人\n(2) 歯科医学の知識や技能を十分理解・修得できる基礎学力のある人\n(3) 歯科医療に情報科学技術を活用するための基礎的素養を備える人\n(4) 歯科医学に興味を持ち、科学的探究心の豊かな人\n(5) 幅広い視野と柔軟な感性を持ち、常に考え行動する資質のある人\n(6) 歯科医療人として社会に貢献しようとする強い意欲を持つ人\nさらに、学校推薦型選抜Ⅱ、総合型選抜（自己推薦型選抜）による入学者として、歯科医療の発展に貢献しようとする強い意欲と情熱を持つ人を望んでいます。",
-        "capacity": 5,
+        "capacity": 3,
         "requirements": {
           "gpa": null,
           "englishCert": null,
@@ -6514,7 +6683,8 @@
           "examDate": "2025-12-01",
           "resultDate": "2025-12-19"
         },
-        "admissionUrl": "https://www.kagoshima-u.ac.jp/admission/"
+        "admissionUrl": "https://www.kagoshima-u.ac.jp/admission/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -6552,7 +6722,8 @@
           "examDate": "2025-10-11",
           "resultDate": "2025-10-29"
         },
-        "admissionUrl": "https://www.nifs-k.ac.jp/admission/"
+        "admissionUrl": "https://www.nifs-k.ac.jp/admission/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -6593,7 +6764,8 @@
           "examDate": "2025-10-18",
           "resultDate": "2025-11-01"
         },
-        "admissionUrl": "https://www.hirosaki-u.ac.jp/"
+        "admissionUrl": "https://www.hirosaki-u.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "education",
@@ -6625,7 +6797,8 @@
           "examDate": "2025-10-18",
           "resultDate": "2025-11-01"
         },
-        "admissionUrl": "https://www.hirosaki-u.ac.jp/"
+        "admissionUrl": "https://www.hirosaki-u.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -6666,7 +6839,8 @@
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.iwate-u.ac.jp/"
+        "admissionUrl": "https://www.iwate-u.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "agriculture",
@@ -6698,7 +6872,8 @@
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.iwate-u.ac.jp/"
+        "admissionUrl": "https://www.iwate-u.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -6739,7 +6914,8 @@
           "examDate": "2025-10-18",
           "resultDate": "2025-11-01"
         },
-        "admissionUrl": "https://www.akita-u.ac.jp/"
+        "admissionUrl": "https://www.akita-u.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "education-culture",
@@ -6771,7 +6947,8 @@
           "examDate": "2025-10-18",
           "resultDate": "2025-11-01"
         },
-        "admissionUrl": "https://www.akita-u.ac.jp/"
+        "admissionUrl": "https://www.akita-u.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -6812,7 +6989,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.yamagata-u.ac.jp/"
+        "admissionUrl": "https://www.yamagata-u.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "engineering",
@@ -6844,7 +7022,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.yamagata-u.ac.jp/"
+        "admissionUrl": "https://www.yamagata-u.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -6885,7 +7064,8 @@
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.fukushima-u.ac.jp/"
+        "admissionUrl": "https://www.fukushima-u.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "food-agriculture",
@@ -6917,7 +7097,8 @@
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.fukushima-u.ac.jp/"
+        "admissionUrl": "https://www.fukushima-u.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -6958,7 +7139,8 @@
           "examDate": "2025-10-18",
           "resultDate": "2025-11-01"
         },
-        "admissionUrl": "https://www.miyakyo-u.ac.jp/"
+        "admissionUrl": "https://www.miyakyo-u.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -7000,7 +7182,8 @@
           "examDate": "2025-11-01",
           "resultDate": "2025-11-14"
         },
-        "admissionUrl": "https://www.isct.ac.jp/"
+        "admissionUrl": "https://www.isct.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "life-science-tech",
@@ -7032,7 +7215,8 @@
           "examDate": "2025-11-01",
           "resultDate": "2025-11-14"
         },
-        "admissionUrl": "https://www.isct.ac.jp/"
+        "admissionUrl": "https://www.isct.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -7073,7 +7257,8 @@
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.u-toyama.ac.jp/"
+        "admissionUrl": "https://www.u-toyama.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "urban-design",
@@ -7105,7 +7290,8 @@
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.u-toyama.ac.jp/"
+        "admissionUrl": "https://www.u-toyama.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -7147,7 +7333,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-14"
         },
-        "admissionUrl": "https://www.kanazawa-u.ac.jp/"
+        "admissionUrl": "https://www.kanazawa-u.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "fusion",
@@ -7180,7 +7367,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-14"
         },
-        "admissionUrl": "https://www.kanazawa-u.ac.jp/"
+        "admissionUrl": "https://www.kanazawa-u.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -7221,7 +7409,8 @@
           "examDate": "2025-10-18",
           "resultDate": "2025-11-01"
         },
-        "admissionUrl": "https://www.u-fukui.ac.jp/"
+        "admissionUrl": "https://www.u-fukui.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "engineering",
@@ -7253,7 +7442,8 @@
           "examDate": "2025-10-18",
           "resultDate": "2025-11-01"
         },
-        "admissionUrl": "https://www.u-fukui.ac.jp/"
+        "admissionUrl": "https://www.u-fukui.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -7294,7 +7484,8 @@
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.yamanashi.ac.jp/"
+        "admissionUrl": "https://www.yamanashi.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "life-environment",
@@ -7326,7 +7517,8 @@
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.yamanashi.ac.jp/"
+        "admissionUrl": "https://www.yamanashi.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -7367,7 +7559,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.shinshu-u.ac.jp/"
+        "admissionUrl": "https://www.shinshu-u.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "engineering",
@@ -7399,7 +7592,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.shinshu-u.ac.jp/"
+        "admissionUrl": "https://www.shinshu-u.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -7441,7 +7635,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-14"
         },
-        "admissionUrl": "https://www.mie-u.ac.jp/"
+        "admissionUrl": "https://www.mie-u.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "bioresources",
@@ -7474,7 +7669,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-14"
         },
-        "admissionUrl": "https://www.mie-u.ac.jp/"
+        "admissionUrl": "https://www.mie-u.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -7515,7 +7711,8 @@
           "examDate": "2025-10-18",
           "resultDate": "2025-11-01"
         },
-        "admissionUrl": "https://www.juen.ac.jp/"
+        "admissionUrl": "https://www.juen.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -7533,7 +7730,7 @@
         "capacity": 3,
         "selectionType": "comprehensive",
         "requirements": {
-          "gpa": 4.0,
+          "gpa": 4,
           "certifications": [],
           "otherRequirements": [
             "専願",
@@ -7569,7 +7766,7 @@
         "capacity": 46,
         "selectionType": "comprehensive",
         "requirements": {
-          "gpa": 4.0,
+          "gpa": 4,
           "certifications": [],
           "otherRequirements": [
             "専願",
@@ -7605,7 +7802,7 @@
         "capacity": 3,
         "selectionType": "comprehensive",
         "requirements": {
-          "gpa": 4.0,
+          "gpa": 4,
           "certifications": [],
           "otherRequirements": [
             "専願",
@@ -7637,7 +7834,7 @@
         "capacity": 5,
         "selectionType": "comprehensive",
         "requirements": {
-          "gpa": 4.0,
+          "gpa": 4,
           "certifications": [],
           "otherRequirements": [
             "専願",
@@ -7673,7 +7870,7 @@
         "capacity": 10,
         "selectionType": "comprehensive",
         "requirements": {
-          "gpa": 4.0,
+          "gpa": 4,
           "certifications": [],
           "otherRequirements": [
             "専願",
@@ -7705,7 +7902,7 @@
         "capacity": 13,
         "selectionType": "comprehensive",
         "requirements": {
-          "gpa": 4.0,
+          "gpa": 4,
           "certifications": [],
           "otherRequirements": [
             "専願",
@@ -7737,7 +7934,7 @@
         "capacity": 11,
         "selectionType": "comprehensive",
         "requirements": {
-          "gpa": 4.0,
+          "gpa": 4,
           "certifications": [],
           "otherRequirements": [
             "専願",
@@ -7806,7 +8003,7 @@
         "capacity": 12,
         "selectionType": "comprehensive",
         "requirements": {
-          "gpa": 4.0,
+          "gpa": 4,
           "certifications": [],
           "otherRequirements": [
             "専願",
@@ -7838,7 +8035,7 @@
         "capacity": 15,
         "selectionType": "comprehensive",
         "requirements": {
-          "gpa": 4.0,
+          "gpa": 4,
           "certifications": [],
           "otherRequirements": [
             "専願",
@@ -7902,7 +8099,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.shiga-u.ac.jp/"
+        "admissionUrl": "https://www.shiga-u.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "economics",
@@ -7934,7 +8132,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.shiga-u.ac.jp/"
+        "admissionUrl": "https://www.shiga-u.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -7976,7 +8175,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-14"
         },
-        "admissionUrl": "https://www.kit.ac.jp/"
+        "admissionUrl": "https://www.kit.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -8019,7 +8219,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-14"
         },
-        "admissionUrl": "https://www.nara-wu.ac.jp/"
+        "admissionUrl": "https://www.nara-wu.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -8060,7 +8261,8 @@
           "examDate": "2025-10-18",
           "resultDate": "2025-11-01"
         },
-        "admissionUrl": "https://www.nara-edu.ac.jp/"
+        "admissionUrl": "https://www.nara-edu.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -8101,7 +8303,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.wakayama-u.ac.jp/"
+        "admissionUrl": "https://www.wakayama-u.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -8142,7 +8345,8 @@
           "examDate": "2025-10-18",
           "resultDate": "2025-11-01"
         },
-        "admissionUrl": "https://www.hyogo-u.ac.jp/"
+        "admissionUrl": "https://www.hyogo-u.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -8183,7 +8387,8 @@
           "examDate": "2025-10-19",
           "resultDate": "2025-11-01"
         },
-        "admissionUrl": "https://www.tottori-u.ac.jp/"
+        "admissionUrl": "https://www.tottori-u.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "agriculture",
@@ -8215,7 +8420,8 @@
           "examDate": "2025-10-19",
           "resultDate": "2025-11-01"
         },
-        "admissionUrl": "https://www.tottori-u.ac.jp/"
+        "admissionUrl": "https://www.tottori-u.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -8256,7 +8462,8 @@
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.shimane-u.ac.jp/"
+        "admissionUrl": "https://www.shimane-u.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "human-science",
@@ -8288,7 +8495,8 @@
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.shimane-u.ac.jp/"
+        "admissionUrl": "https://www.shimane-u.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -8329,7 +8537,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.yamaguchi-u.ac.jp/"
+        "admissionUrl": "https://www.yamaguchi-u.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "education",
@@ -8361,7 +8570,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.yamaguchi-u.ac.jp/"
+        "admissionUrl": "https://www.yamaguchi-u.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -8404,7 +8614,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-14"
         },
-        "admissionUrl": "https://www.tokushima-u.ac.jp/"
+        "admissionUrl": "https://www.tokushima-u.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -8445,7 +8656,8 @@
           "examDate": "2025-10-19",
           "resultDate": "2025-11-01"
         },
-        "admissionUrl": "https://www.kagawa-u.ac.jp/"
+        "admissionUrl": "https://www.kagawa-u.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "creative-engineering",
@@ -8477,7 +8689,8 @@
           "examDate": "2025-10-19",
           "resultDate": "2025-11-01"
         },
-        "admissionUrl": "https://www.kagawa-u.ac.jp/"
+        "admissionUrl": "https://www.kagawa-u.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -8518,7 +8731,8 @@
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.ehime-u.ac.jp/"
+        "admissionUrl": "https://www.ehime-u.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "law-letters",
@@ -8550,7 +8764,8 @@
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.ehime-u.ac.jp/"
+        "admissionUrl": "https://www.ehime-u.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -8591,7 +8806,8 @@
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.kochi-u.ac.jp/"
+        "admissionUrl": "https://www.kochi-u.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "humanities-social",
@@ -8623,7 +8839,8 @@
           "examDate": "2025-10-19",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.kochi-u.ac.jp/"
+        "admissionUrl": "https://www.kochi-u.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -8664,7 +8881,8 @@
           "examDate": "2025-10-19",
           "resultDate": "2025-11-01"
         },
-        "admissionUrl": "https://www.miyazaki-u.ac.jp/"
+        "admissionUrl": "https://www.miyazaki-u.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "agriculture",
@@ -8696,7 +8914,8 @@
           "examDate": "2025-10-19",
           "resultDate": "2025-11-01"
         },
-        "admissionUrl": "https://www.miyazaki-u.ac.jp/"
+        "admissionUrl": "https://www.miyazaki-u.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
@@ -8737,7 +8956,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.u-ryukyu.ac.jp/"
+        "admissionUrl": "https://www.u-ryukyu.ac.jp/",
+        "selectionType": "comprehensive"
       },
       {
         "id": "agriculture",
@@ -8769,7 +8989,8 @@
           "examDate": "2025-10-25",
           "resultDate": "2025-11-07"
         },
-        "admissionUrl": "https://www.u-ryukyu.ac.jp/"
+        "admissionUrl": "https://www.u-ryukyu.ac.jp/",
+        "selectionType": "comprehensive"
       }
     ]
   },
