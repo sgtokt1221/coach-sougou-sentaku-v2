@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -11,17 +12,14 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import {
-  Sheet,
-  SheetTrigger,
-  SheetContent,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useAuth } from "@/contexts/AuthContext";
 import { signOutUser } from "@/lib/firebase/auth";
-import { SidebarContent } from "./Sidebar";
+import { MobileMenuContent } from "./MobileMenuContent";
 import { AdminScopeSelector } from "./AdminScopeSelector";
 
 export function Header() {
+  const [menuOpen, setMenuOpen] = useState(false);
   const { user, userProfile } = useAuth();
   const pathname = usePathname();
   const showScopeSelector = userProfile?.role === "superadmin" && pathname.startsWith("/admin");
@@ -36,17 +34,18 @@ export function Header() {
 
   return (
     <header className="flex h-12 lg:h-14 items-center justify-between border-b border-border/60 bg-background/80 px-4 backdrop-blur-md gap-2">
-      <Sheet>
-        <SheetTrigger
-          render={
-            <Button variant="ghost" size="icon" className="lg:hidden" />
-          }
-        >
-          <Menu className="size-5" />
-          <span className="sr-only">Menu</span>
-        </SheetTrigger>
-        <SheetContent side="left" showCloseButton>
-          <SidebarContent />
+      <Button
+        variant="ghost"
+        size="icon"
+        className="lg:hidden"
+        onClick={() => setMenuOpen(true)}
+        aria-label="メニューを開く"
+      >
+        <Menu className="size-5" />
+      </Button>
+      <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+        <SheetContent side="left" showCloseButton className="w-[85vw] sm:w-[360px] p-0">
+          <MobileMenuContent onNavigate={() => setMenuOpen(false)} />
         </SheetContent>
       </Sheet>
 

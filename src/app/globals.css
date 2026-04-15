@@ -1075,3 +1075,11 @@
     opacity: 0.2;
   }
 }
+
+/* セーフエリアユーティリティ（iOS のホームバー対策） */
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+@utility h-safe-bottom {
+  height: env(safe-area-inset-bottom);
+}
