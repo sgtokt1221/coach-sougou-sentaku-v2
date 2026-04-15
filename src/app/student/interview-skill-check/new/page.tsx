@@ -44,6 +44,12 @@ export default function InterviewSkillCheckNew() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length]);
 
+  // ページロード時に自動でセッション開始（1クリック化）
+  useEffect(() => {
+    void handleStart();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   async function handleStart() {
     setStarting(true);
     try {
@@ -120,23 +126,12 @@ export default function InterviewSkillCheckNew() {
         <div>
           <h1 className="text-2xl font-bold">面接スキルチェック</h1>
           <p className="text-sm text-muted-foreground">
-            5ターンの対話で4軸を定量評価します。所要時間は約5〜10分。
+            セッションを準備しています...
           </p>
         </div>
         <Card>
-          <CardContent className="space-y-3 py-6">
-            <p className="text-sm">受験前の確認:</p>
-            <ul className="text-sm text-muted-foreground space-y-1">
-              <li>・面接官（AI）があなたに5つの質問を順に投げかけます</li>
-              <li>・1ターンずつ、テキストで回答してください</li>
-              <li>・途中で揺さぶり質問があります。一度受け止めてから答えると効果的です</li>
-              <li>・5ターン終わると自動で採点画面に移ります</li>
-            </ul>
-            <div className="pt-2">
-              <Button disabled={starting} onClick={handleStart}>
-                {starting ? <Loader2 className="size-4 animate-spin" /> : "開始する"}
-              </Button>
-            </div>
+          <CardContent className="flex items-center justify-center py-12">
+            <Loader2 className="size-6 animate-spin text-muted-foreground" />
           </CardContent>
         </Card>
       </div>
