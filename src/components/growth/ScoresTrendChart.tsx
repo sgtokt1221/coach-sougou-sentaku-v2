@@ -45,6 +45,8 @@ interface ScoresTrendChartProps {
   essayData?: SeriesPoint[];
   /** 面接スコア系列 */
   interviewData?: SeriesPoint[];
+  /** チャート高さ (px)。既定 280 */
+  height?: number;
 }
 
 /**
@@ -71,7 +73,7 @@ function mergeSeries(
   return Array.from(byDate.values()).sort((a, b) => a.date.localeCompare(b.date));
 }
 
-export function ScoresTrendChart({ data, essayData, interviewData }: ScoresTrendChartProps) {
+export function ScoresTrendChart({ data, essayData, interviewData, height = 280 }: ScoresTrendChartProps) {
   const isCombined = essayData != null || interviewData != null;
 
   // 2 系列モード
@@ -79,13 +81,13 @@ export function ScoresTrendChart({ data, essayData, interviewData }: ScoresTrend
     const merged = mergeSeries(essayData ?? [], interviewData ?? []);
     if (merged.length === 0) {
       return (
-        <div className="flex h-[280px] items-center justify-center text-sm text-muted-foreground">
+        <div className="flex items-center justify-center text-sm text-muted-foreground" style={{ height }}>
           まだデータがありません
         </div>
       );
     }
     return (
-      <ResponsiveContainer width="100%" height={280}>
+      <ResponsiveContainer width="100%" height={height}>
         <LineChart data={merged} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
           <CartesianGrid
             strokeDasharray={GRID_STYLE.strokeDasharray}
@@ -135,7 +137,7 @@ export function ScoresTrendChart({ data, essayData, interviewData }: ScoresTrend
   const single = data ?? [];
   if (single.length === 0) {
     return (
-      <div className="flex h-[280px] items-center justify-center text-sm text-muted-foreground">
+      <div className="flex items-center justify-center text-sm text-muted-foreground" style={{ height }}>
         まだデータがありません
       </div>
     );
@@ -147,7 +149,7 @@ export function ScoresTrendChart({ data, essayData, interviewData }: ScoresTrend
     : single;
 
   return (
-    <ResponsiveContainer width="100%" height={280}>
+    <ResponsiveContainer width="100%" height={height}>
       <LineChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
         <CartesianGrid
           strokeDasharray={GRID_STYLE.strokeDasharray}

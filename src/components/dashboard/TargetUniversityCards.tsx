@@ -95,9 +95,11 @@ function countdownStyle(daysLeft: number): { bg: string; text: string; ring: str
 
 interface Props {
   targetUniversities: string[];
+  /** compact 版: 横スクロール chip 形式で密度を上げる */
+  compact?: boolean;
 }
 
-export function TargetUniversityCards({ targetUniversities }: Props) {
+export function TargetUniversityCards({ targetUniversities, compact = false }: Props) {
   const [resolved, setResolved] = useState<ResolvedUniversity[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -125,6 +127,15 @@ export function TargetUniversityCards({ targetUniversities }: Props) {
   }, [targetUniversities]);
 
   if (loading) {
+    if (compact) {
+      return (
+        <div className="flex gap-2 overflow-x-auto">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-[70px] w-[180px] rounded-xl shrink-0" />
+          ))}
+        </div>
+      );
+    }
     return (
       <div className="space-y-5">
         {[1, 2].map((i) => (
@@ -135,6 +146,17 @@ export function TargetUniversityCards({ targetUniversities }: Props) {
   }
 
   if (targetUniversities.length === 0) {
+    if (compact) {
+      return (
+        <Link href="/student/settings" className="block">
+          <div className="flex items-center gap-2 rounded-xl border border-dashed border-border px-3 py-3 text-sm text-muted-foreground hover:border-primary/50 transition-colors">
+            <GraduationCap className="size-4" />
+            志望校を設定
+            <Settings className="size-3.5 ml-auto" />
+          </div>
+        </Link>
+      );
+    }
     return (
       <Link href="/student/settings">
         <Card className="border-dashed hover:border-primary/50 transition-colors cursor-pointer">
@@ -152,6 +174,46 @@ export function TargetUniversityCards({ targetUniversities }: Props) {
           </CardContent>
         </Card>
       </Link>
+    );
+  }
+
+  if (compact) {
+    return (
+      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 snap-x snap-mandatory">
+        {resolved.map((item) => {
+          const nextEvent = getNextEvent(item.schedule);
+          const cd = nextEvent ? countdownStyle(nextEvent.daysLeft) : null;
+          return (
+            <Link
+              key={`${item.universityId}:${item.facultyId}`}
+              href={`/student/universities/${item.universityId}/${item.facultyId}`}
+              className="shrink-0 snap-start group"
+            >
+              <div className="flex items-center gap-2.5 rounded-xl border border-border/60 bg-card px-3 py-2.5 min-w-[180px] hover:border-primary/40 transition-colors">
+                <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 shrink-0">
+                  <GraduationCap className="size-4 text-primary" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold truncate leading-tight">{item.universityName}</p>
+                  <p className="text-[11px] text-muted-foreground truncate">{item.facultyName}</p>
+                </div>
+                {nextEvent && cd ? (
+                  <div className={`flex flex-col items-center rounded-lg bg-gradient-to-br ${cd.bg} ${cd.text} px-2 py-1 shrink-0 min-w-[48px]`}>
+                    <span className="text-[9px] font-bold uppercase opacity-90 leading-none">
+                      {nextEvent.type.slice(0, 2)}
+                    </span>
+                    <span className="text-base font-black tabular-nums leading-tight">
+                      {nextEvent.daysLeft === 0 ? "本日" : `${nextEvent.daysLeft}日`}
+                    </span>
+                  </div>
+                ) : (
+                  <Trophy className="size-4 text-muted-foreground shrink-0" />
+                )}
+              </div>
+            </Link>
+          );
+        })}
+      </div>
     );
   }
 

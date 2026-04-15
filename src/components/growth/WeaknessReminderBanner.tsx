@@ -47,9 +47,16 @@ const levelConfig: Record<
   },
 };
 
-const MAX_DISPLAY = 5;
+const DEFAULT_MAX_DISPLAY = 5;
 
-export function WeaknessReminderBanner() {
+interface WeaknessReminderBannerProps {
+  /** 最大表示件数（デフォルト 5）*/
+  maxItems?: number;
+  /** compact 版: パディング縮小、レベルバッジのみ、詳細文字小さく */
+  compact?: boolean;
+}
+
+export function WeaknessReminderBanner({ maxItems = DEFAULT_MAX_DISPLAY, compact = false }: WeaknessReminderBannerProps = {}) {
   const [weaknesses, setWeaknesses] = useState<WeaknessWithLevel[]>([]);
   const [loading, setLoading] = useState(true);
   const [dismissing, setDismissing] = useState<Set<string>>(new Set());
@@ -107,16 +114,28 @@ export function WeaknessReminderBanner() {
     return null;
   }
 
-  const displayed = weaknesses.slice(0, MAX_DISPLAY);
-  const remaining = weaknesses.length - MAX_DISPLAY;
+  const displayed = weaknesses.slice(0, maxItems);
+  const remaining = weaknesses.length - maxItems;
 
   return (
-    <div className="space-y-2">
+    <div className={compact ? "space-y-1.5" : "space-y-2"}>
       {displayed.map((w) => {
         const cfg = levelConfig[w.level];
         const daysAgo = w.lastOccurred
           ? Math.max(0, Math.floor((Date.now() - new Date(w.lastOccurred).getTime()) / (1000 * 60 * 60 * 24)))
           : null;
+        if (compact) {
+          return (
+            <div
+              key={w.area}
+              className={`${cfg.bg} ${cfg.border} border border-l-4 ${sourceLeftBorder(w.source)} rounded-lg flex items-center gap-2 px-2.5 py-1.5`}
+            >
+              {cfg.icon}
+              <span className="text-xs font-medium truncate flex-1">{w.area}</span>
+              <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">{w.count}回</span>
+            </div>
+          );
+        }
         return (
           <Card key={w.area} className={`${cfg.bg} ${cfg.border} border-l-4 ${sourceLeftBorder(w.source)}`}>
             <CardContent className="flex items-center gap-3 py-3">
@@ -153,7 +172,7 @@ export function WeaknessReminderBanner() {
         );
       })}
       {remaining > 0 && (
-        <p className="text-sm text-muted-foreground">
+        <p className={compact ? "text-[11px] text-muted-foreground" : "text-sm text-muted-foreground"}>
           他{remaining}件の弱点があります。
           <a href="/student/growth" className="ml-1 text-primary underline">
             すべて見る

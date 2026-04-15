@@ -34,6 +34,8 @@ interface GrowthTreeProps {
   stepsData?: Record<number, Record<string, unknown>>;
   onFruitClick?: (step: number) => void;
   className?: string;
+  /** compact 版: 下部ステップラベル省略、max-width と padding を縮小 */
+  compact?: boolean;
 }
 
 // viewBox 360x300 にリマッピングした果実座標
@@ -93,6 +95,7 @@ export function GrowthTree({
   stepsData,
   onFruitClick,
   className,
+  compact = false,
 }: GrowthTreeProps) {
   const allDone = completedSteps >= 7;
   const [hoveredStep, setHoveredStep] = useState<number | null>(null);
@@ -395,7 +398,7 @@ export function GrowthTree({
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,rgba(134,239,172,0.35),transparent_65%)]" />
 
       {/* タイトル (SplitText 代替: 文字ごとに span) */}
-      <div className="relative flex items-baseline justify-between px-4 pt-4 mb-2">
+      <div className={cn("relative flex items-baseline justify-between", compact ? "px-3 pt-2 mb-1" : "px-4 pt-4 mb-2")}>
         <h2 className="text-sm font-semibold text-foreground/80 flex">
           {titleChars.map((c, i) => (
             <span
@@ -408,15 +411,15 @@ export function GrowthTree({
           ))}
         </h2>
         <span className="text-[11px] text-muted-foreground tabular-nums bg-background/70 backdrop-blur-sm rounded-full px-2 py-0.5">
-          {completedSteps} / 7 実っています
+          {completedSteps} / 7{compact ? "" : " 実っています"}
         </span>
       </div>
 
       {/* SVG 木 */}
-      <div className="relative w-full flex justify-center px-4">
+      <div className={cn("relative w-full flex justify-center", compact ? "px-2" : "px-4")}>
         <svg
           viewBox="0 0 360 300"
-          className="w-full max-w-[480px] h-auto"
+          className={cn("w-full h-auto", compact ? "max-w-[260px]" : "max-w-[480px]")}
           aria-label={`自己分析の進捗 ${completedSteps}/7`}
           role="img"
         >
@@ -743,7 +746,8 @@ export function GrowthTree({
         )}
       </div>
 
-      {/* 下部: 完了したセクションのラベル */}
+      {/* 下部: 完了したセクションのラベル (compact では省略) */}
+      {!compact && (
       <div className="relative mt-2 px-4 pb-4 flex flex-wrap gap-1 justify-center">
         {SELF_ANALYSIS_STEPS.map((s, i) => {
           const isDone = s.step <= completedSteps;
@@ -771,6 +775,7 @@ export function GrowthTree({
           );
         })}
       </div>
+      )}
     </div>
   );
 }
