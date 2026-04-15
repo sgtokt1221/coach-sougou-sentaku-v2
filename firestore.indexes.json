@@ -15,20 +15,6 @@
         { "fieldPath": "userId", "order": "ASCENDING" },
         { "fieldPath": "startedAt", "order": "DESCENDING" }
       ]
-    },
-    {
-      "collectionGroup": "skillChecks",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "takenAt", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "interviewSkillChecks",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "takenAt", "order": "DESCENDING" }
-      ]
     }
   ],
   "fieldOverrides": []
