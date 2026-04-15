@@ -286,7 +286,16 @@ export const PAST_QUESTIONS: PastQuestion[] = [
     theme: "【複合型】Sustainable Development Goals: Progress and Challenges",
     description: "以下の英文と資料を読み、SDGsの達成に向けた課題と、テクノロジーの活用による解決策を日本語800字以内で提案しなさい。",
     type: "past", questionType: "mixed", wordLimit: 800, timeLimit: 120, field: "環境",
-    sourceText: `[English Text]\nThe United Nations' Sustainable Development Goals (SDGs) were adopted in 2015 with the ambition of transforming the world by 2030. However, as we approach the deadline, progress has been uneven. While some goals, such as reducing extreme poverty, have seen significant advances, others—particularly those related to climate action and reducing inequalities—remain critically off-track.\n\n[Data]\nSDGs Progress Index 2024 (selected goals):\n- Goal 1 (No Poverty): 68% on track\n- Goal 4 (Quality Education): 54% on track\n- Goal 7 (Clean Energy): 41% on track\n- Goal 10 (Reduced Inequalities): 28% on track\n- Goal 13 (Climate Action): 22% on track\n- Goal 14 (Life Below Water): 19% on track` },
+    sourceText: `[English Text]\nThe United Nations' Sustainable Development Goals (SDGs) were adopted in 2015 with the ambition of transforming the world by 2030. However, as we approach the deadline, progress has been uneven. While some goals, such as reducing extreme poverty, have seen significant advances, others—particularly those related to climate action and reducing inequalities—remain critically off-track.\n\n[Data]\nSDGs Progress Index 2024 (selected goals):\n- Goal 1 (No Poverty): 68% on track\n- Goal 4 (Quality Education): 54% on track\n- Goal 7 (Clean Energy): 41% on track\n- Goal 10 (Reduced Inequalities): 28% on track\n- Goal 13 (Climate Action): 22% on track\n- Goal 14 (Life Below Water): 19% on track`,
+    chartData: [
+      { type: "bar", title: "SDGs Progress Index 2024（達成見込み %）", xKey: "goal",
+        data: [
+          { goal: "G1 貧困", 達成率: 68 }, { goal: "G4 教育", 達成率: 54 },
+          { goal: "G7 エネルギー", 達成率: 41 }, { goal: "G10 不平等", 達成率: 28 },
+          { goal: "G13 気候", 達成率: 22 }, { goal: "G14 海洋", 達成率: 19 },
+        ],
+        yKeys: [{ key: "達成率", name: "達成見込み（%）", color: "#3B82F6" }] },
+    ] },
   // ============================================================
   // 以下、2026-04-06 miraizu-suisen.com 調査データ追加分
   // ============================================================
@@ -820,16 +829,201 @@ export const PAST_QUESTIONS: PastQuestion[] = [
   { id: "pq-ryukoku-sports-001", universityId: "ryukoku-u", universityName: "龍谷大学", facultyName: "全学部（スポーツ活動選抜）", year: 2023, theme: "スポーツと社会に関するテーマ型小論文", description: "総合型選抜スポーツ活動選抜。スポーツの社会的意義や自身の競技経験に関するテーマ型小論文。2023年11月11日実施。", type: "past", wordLimit: 1000, field: "スポーツ" },
 
   // ===== 九州大学（追加分） =====
-  { id: "pq-kyushu-kyoso-1", universityId: "kyushu-u", universityName: "九州大学", facultyName: "共創学部", year: 2024, theme: "鳥獣被害を防止するための政策", description: "農林水産省「鳥獣被害の現状と対策」の図表資料を分析し、鳥獣被害防止のための政策について課題を抽出し、自分の意見を論述する。図表分析型。", type: "past", questionType: "data-analysis", wordLimit: 850, timeLimit: 180, field: "社会" },
-  { id: "pq-kyushu-kyoso-2", universityId: "kyushu-u", universityName: "九州大学", facultyName: "共創学部", year: 2024, theme: "日本におけるジェンダーギャップの改善策", description: "世界経済フォーラム「グローバル・ジェンダー・ギャップ報告書2023」等の複数資料を分析し、日本のジェンダーギャップの課題と改善策を論述する。", type: "past", questionType: "data-analysis", wordLimit: 850, timeLimit: 180, field: "社会" },
-  { id: "pq-kyushu-kyoso-3", universityId: "kyushu-u", universityName: "九州大学", facultyName: "共創学部", year: 2023, theme: "宗教人口と統計および宗教教育", description: "『日本人の考え方 世界の人の考え方Ⅱ：第7回世界価値観調査から見えるもの』等の資料を分析し、宗教人口の統計データと宗教教育の在り方について論述する。", type: "past", questionType: "data-analysis", wordLimit: 850, timeLimit: 180, field: "社会" },
-  { id: "pq-kyushu-kyoso-4", universityId: "kyushu-u", universityName: "九州大学", facultyName: "共創学部", year: 2023, theme: "九州にある原子力発電所が抱えるリスク", description: "経済産業省・資源エネルギー庁「放射性廃棄物について」、産業技術総合研究所「活断層データベース」等を分析し、九州の原発リスクについて論述する。", type: "past", questionType: "data-analysis", wordLimit: 850, timeLimit: 180, field: "社会" },
-  { id: "pq-kyushu-kyoso-5", universityId: "kyushu-u", universityName: "九州大学", facultyName: "共創学部", year: 2022, theme: "情報通信技術を活用した社会問題の解決", description: "ICT・Society5.0関連の資料を読み解き、情報通信技術による社会問題解決の可能性と課題について論述する。", type: "past", questionType: "data-analysis", wordLimit: 850, timeLimit: 180, field: "AI・テクノロジー" },
-  { id: "pq-kyushu-kyoso-6", universityId: "kyushu-u", universityName: "九州大学", facultyName: "共創学部", year: 2021, theme: "オリンピックと国際社会", description: "オリンピックに関する複数の資料を分析し、国際社会における意義や課題について自分の意見を論述する。", type: "past", questionType: "data-analysis", wordLimit: 850, timeLimit: 180, field: "国際" },
-  { id: "pq-kyushu-kyoso-7", universityId: "kyushu-u", universityName: "九州大学", facultyName: "共創学部", year: 2020, theme: "世界遺産の保全と活用", description: "世界遺産に関する複数のスライド資料を読み解き、世界遺産の保全と活用における課題を説明し、自分の意見を論述する。", type: "past", questionType: "data-analysis", wordLimit: 850, timeLimit: 180, field: "社会" },
-  { id: "pq-kyushu-kyoso-8", universityId: "kyushu-u", universityName: "九州大学", facultyName: "共創学部", year: 2019, theme: "食品ロスの削減", description: "食品ロスに関する統計データやスライド資料を読み解き、食品廃棄の現状と削減に向けた方策について論述する。", type: "past", questionType: "data-analysis", wordLimit: 850, timeLimit: 180, field: "社会" },
-  { id: "pq-kyushu-kyoso-9", universityId: "kyushu-u", universityName: "九州大学", facultyName: "共創学部", year: 2018, theme: "不安のない生活と社会", description: "社会における不安に関する8枚のスライド資料を読み解き、不安のない生活と社会の実現に向けた課題を説明し、自分の貢献策を論述する。", type: "past", questionType: "data-analysis", wordLimit: 850, timeLimit: 180, field: "社会" },
-  { id: "pq-kyushu-kyoso-10", universityId: "kyushu-u", universityName: "九州大学", facultyName: "共創学部", year: 2018, theme: "AIと人間社会の共存", description: "AI（人工知能）に関する資料を分析し、AIと人間社会の共存における課題と可能性について論述する。", type: "past", questionType: "data-analysis", wordLimit: 850, timeLimit: 180, field: "AI・テクノロジー" },
+  { id: "pq-kyushu-kyoso-1", universityId: "kyushu-u", universityName: "九州大学", facultyName: "共創学部", year: 2024, theme: "鳥獣被害を防止するための政策", description: "農林水産省「鳥獣被害の現状と対策」の図表資料を分析し、鳥獣被害防止のための政策について課題を抽出し、自分の意見を論述する。図表分析型。", type: "past", questionType: "data-analysis", wordLimit: 850, timeLimit: 180, field: "社会",
+    chartData: [
+      { type: "bar", title: "野生鳥獣による農作物被害額（億円・2022年度）", xKey: "animal",
+        data: [
+          { animal: "シカ", 被害額: 65 }, { animal: "イノシシ", 被害額: 36 },
+          { animal: "サル", 被害額: 8 }, { animal: "カラス", 被害額: 14 },
+          { animal: "その他", 被害額: 33 },
+        ],
+        yKeys: [{ key: "被害額", name: "被害額（億円）", color: "#EF4444" }] },
+      { type: "line", title: "農作物被害総額と捕獲頭数の推移", xKey: "year",
+        data: [
+          { year: "2013", 被害額: 199, 捕獲万頭: 93 },
+          { year: "2016", 被害額: 172, 捕獲万頭: 115 },
+          { year: "2019", 被害額: 158, 捕獲万頭: 124 },
+          { year: "2022", 被害額: 156, 捕獲万頭: 128 },
+        ],
+        yKeys: [
+          { key: "被害額", name: "被害額（億円）", color: "#EF4444" },
+          { key: "捕獲万頭", name: "捕獲頭数（万頭）", color: "#3B82F6" },
+        ] },
+    ] },
+  { id: "pq-kyushu-kyoso-2", universityId: "kyushu-u", universityName: "九州大学", facultyName: "共創学部", year: 2024, theme: "日本におけるジェンダーギャップの改善策", description: "世界経済フォーラム「グローバル・ジェンダー・ギャップ報告書2023」等の複数資料を分析し、日本のジェンダーギャップの課題と改善策を論述する。", type: "past", questionType: "data-analysis", wordLimit: 850, timeLimit: 180, field: "社会",
+    chartData: [
+      { type: "bar", title: "GGI 2023 総合順位（主要国）", xKey: "country",
+        data: [
+          { country: "アイスランド", 順位: 1 }, { country: "ノルウェー", 順位: 2 },
+          { country: "独", 順位: 6 }, { country: "英", 順位: 15 },
+          { country: "米", 順位: 43 }, { country: "中", 順位: 107 }, { country: "日本", 順位: 125 },
+        ],
+        yKeys: [{ key: "順位", name: "順位（低いほど良い）", color: "#EF4444" }] },
+      { type: "bar", title: "日本のGGI 分野別スコア（2023）", xKey: "area",
+        data: [
+          { area: "経済", score: 0.561 }, { area: "教育", score: 0.997 },
+          { area: "健康", score: 0.973 }, { area: "政治", score: 0.057 },
+        ],
+        yKeys: [{ key: "score", name: "スコア（1が完全平等）", color: "#6366F1" }] },
+    ] },
+  { id: "pq-kyushu-kyoso-3", universityId: "kyushu-u", universityName: "九州大学", facultyName: "共創学部", year: 2023, theme: "宗教人口と統計および宗教教育", description: "『日本人の考え方 世界の人の考え方Ⅱ：第7回世界価値観調査から見えるもの』等の資料を分析し、宗教人口の統計データと宗教教育の在り方について論述する。", type: "past", questionType: "data-analysis", wordLimit: 850, timeLimit: 180, field: "社会",
+    chartData: [
+      { type: "pie", title: "世界の宗教人口比率（2020年・Pew Research）", xKey: "name",
+        data: [
+          { name: "キリスト教", value: 31.1 }, { name: "イスラム教", value: 24.9 },
+          { name: "無宗教", value: 15.6 }, { name: "ヒンドゥー教", value: 15.2 },
+          { name: "仏教", value: 6.6 }, { name: "民族宗教", value: 5.6 },
+          { name: "その他", value: 1.0 },
+        ],
+        yKeys: [
+          { key: "value", name: "キリスト教", color: "#3B82F6" },
+          { key: "value", name: "イスラム教", color: "#10B981" },
+          { key: "value", name: "無宗教", color: "#9CA3AF" },
+          { key: "value", name: "ヒンドゥー教", color: "#F59E0B" },
+          { key: "value", name: "仏教", color: "#8B5CF6" },
+          { key: "value", name: "民族宗教", color: "#14B8A6" },
+          { key: "value", name: "その他", color: "#6B7280" },
+        ] },
+      { type: "bar", title: "「宗教を信じている」と答えた割合（世界価値観調査・%）", xKey: "country",
+        data: [
+          { country: "日本", 割合: 18 }, { country: "米", 割合: 73 },
+          { country: "独", 割合: 44 }, { country: "インド", 割合: 93 },
+          { country: "中", 割合: 12 }, { country: "ブラジル", 割合: 89 },
+        ],
+        yKeys: [{ key: "割合", name: "信仰あり（%）", color: "#8B5CF6" }] },
+    ] },
+  { id: "pq-kyushu-kyoso-4", universityId: "kyushu-u", universityName: "九州大学", facultyName: "共創学部", year: 2023, theme: "九州にある原子力発電所が抱えるリスク", description: "経済産業省・資源エネルギー庁「放射性廃棄物について」、産業技術総合研究所「活断層データベース」等を分析し、九州の原発リスクについて論述する。", type: "past", questionType: "data-analysis", wordLimit: 850, timeLimit: 180, field: "社会",
+    chartData: [
+      { type: "bar", title: "九州の原発周辺50km圏内の主要活断層数（想定マグニチュード7以上）", xKey: "plant",
+        data: [
+          { plant: "玄海原発", 活断層: 4 },
+          { plant: "川内原発", 活断層: 7 },
+        ],
+        yKeys: [{ key: "活断層", name: "活断層数", color: "#EF4444" }] },
+      { type: "line", title: "日本の高レベル放射性廃棄物 累積量（本・ガラス固化体換算）", xKey: "year",
+        data: [
+          { year: "2010", 累積: 1664 }, { year: "2015", 累積: 2124 },
+          { year: "2020", 累積: 2462 }, { year: "2023", 累積: 2700 },
+        ],
+        yKeys: [{ key: "累積", name: "累積本数", color: "#8B5CF6" }] },
+    ] },
+  { id: "pq-kyushu-kyoso-5", universityId: "kyushu-u", universityName: "九州大学", facultyName: "共創学部", year: 2022, theme: "情報通信技術を活用した社会問題の解決", description: "ICT・Society5.0関連の資料を読み解き、情報通信技術による社会問題解決の可能性と課題について論述する。", type: "past", questionType: "data-analysis", wordLimit: 850, timeLimit: 180, field: "AI・テクノロジー",
+    chartData: [
+      { type: "line", title: "企業のDX推進状況（取り組み企業割合 %）", xKey: "year",
+        data: [
+          { year: "2018", 全社推進: 16, 部分推進: 23 },
+          { year: "2020", 全社推進: 26, 部分推進: 30 },
+          { year: "2022", 全社推進: 38, 部分推進: 30 },
+          { year: "2024", 全社推進: 47, 部分推進: 28 },
+        ],
+        yKeys: [
+          { key: "全社推進", name: "全社で推進", color: "#3B82F6" },
+          { key: "部分推進", name: "部分的に推進", color: "#F59E0B" },
+        ] },
+      { type: "bar", title: "ICT活用により社会課題解決を期待する分野（複数回答・%）", xKey: "area",
+        data: [
+          { area: "医療・介護", 期待: 68 }, { area: "教育", 期待: 55 },
+          { area: "防災", 期待: 52 }, { area: "農業", 期待: 41 },
+          { area: "行政", 期待: 48 },
+        ],
+        yKeys: [{ key: "期待", name: "期待する割合（%）", color: "#10B981" }] },
+    ] },
+  { id: "pq-kyushu-kyoso-6", universityId: "kyushu-u", universityName: "九州大学", facultyName: "共創学部", year: 2021, theme: "オリンピックと国際社会", description: "オリンピックに関する複数の資料を分析し、国際社会における意義や課題について自分の意見を論述する。", type: "past", questionType: "data-analysis", wordLimit: 850, timeLimit: 180, field: "国際",
+    chartData: [
+      { type: "line", title: "夏季五輪の開催コスト推移（億USドル）", xKey: "year",
+        data: [
+          { year: "2000 シドニー", コスト: 32 }, { year: "2004 アテネ", コスト: 90 },
+          { year: "2008 北京", コスト: 68 }, { year: "2012 ロンドン", コスト: 150 },
+          { year: "2016 リオ", コスト: 132 }, { year: "2020 東京", コスト: 155 },
+        ],
+        yKeys: [{ key: "コスト", name: "総コスト（億USD）", color: "#EF4444" }] },
+      { type: "bar", title: "五輪参加国・地域数の推移", xKey: "year",
+        data: [
+          { year: "1964 東京", 国数: 93 }, { year: "1984 LA", 国数: 140 },
+          { year: "2000 シドニー", 国数: 199 }, { year: "2020 東京", 国数: 206 },
+        ],
+        yKeys: [{ key: "国数", name: "参加国・地域数", color: "#3B82F6" }] },
+    ] },
+  { id: "pq-kyushu-kyoso-7", universityId: "kyushu-u", universityName: "九州大学", facultyName: "共創学部", year: 2020, theme: "世界遺産の保全と活用", description: "世界遺産に関する複数のスライド資料を読み解き、世界遺産の保全と活用における課題を説明し、自分の意見を論述する。", type: "past", questionType: "data-analysis", wordLimit: 850, timeLimit: 180, field: "社会",
+    chartData: [
+      { type: "pie", title: "世界遺産の種類別登録件数（2024年・UNESCO）", xKey: "name",
+        data: [
+          { name: "文化遺産", value: 933 },
+          { name: "自然遺産", value: 227 },
+          { name: "複合遺産", value: 39 },
+        ],
+        yKeys: [
+          { key: "value", name: "文化遺産", color: "#8B5CF6" },
+          { key: "value", name: "自然遺産", color: "#10B981" },
+          { key: "value", name: "複合遺産", color: "#F59E0B" },
+        ] },
+      { type: "bar", title: "危機遺産リスト登録件数の推移", xKey: "year",
+        data: [
+          { year: "2000", 件数: 31 }, { year: "2010", 件数: 34 },
+          { year: "2015", 件数: 48 }, { year: "2020", 件数: 53 },
+          { year: "2024", 件数: 56 },
+        ],
+        yKeys: [{ key: "件数", name: "危機遺産件数", color: "#EF4444" }] },
+    ] },
+  { id: "pq-kyushu-kyoso-8", universityId: "kyushu-u", universityName: "九州大学", facultyName: "共創学部", year: 2019, theme: "食品ロスの削減", description: "食品ロスに関する統計データやスライド資料を読み解き、食品廃棄の現状と削減に向けた方策について論述する。", type: "past", questionType: "data-analysis", wordLimit: 850, timeLimit: 180, field: "社会",
+    chartData: [
+      { type: "line", title: "日本の食品ロス量の推移（万トン）", xKey: "year",
+        data: [
+          { year: "2012", 事業系: 331, 家庭系: 312 },
+          { year: "2016", 事業系: 352, 家庭系: 291 },
+          { year: "2020", 事業系: 275, 家庭系: 247 },
+          { year: "2022", 事業系: 236, 家庭系: 236 },
+        ],
+        yKeys: [
+          { key: "事業系", name: "事業系ロス", color: "#3B82F6" },
+          { key: "家庭系", name: "家庭系ロス", color: "#F59E0B" },
+        ] },
+      { type: "bar", title: "事業系食品ロスの内訳（2022年度・万トン）", xKey: "sector",
+        data: [
+          { sector: "食品製造業", ロス: 114 }, { sector: "外食産業", ロス: 60 },
+          { sector: "食品小売業", ロス: 49 }, { sector: "食品卸売業", ロス: 13 },
+        ],
+        yKeys: [{ key: "ロス", name: "食品ロス（万トン）", color: "#10B981" }] },
+    ] },
+  { id: "pq-kyushu-kyoso-9", universityId: "kyushu-u", universityName: "九州大学", facultyName: "共創学部", year: 2018, theme: "不安のない生活と社会", description: "社会における不安に関する8枚のスライド資料を読み解き、不安のない生活と社会の実現に向けた課題を説明し、自分の貢献策を論述する。", type: "past", questionType: "data-analysis", wordLimit: 850, timeLimit: 180, field: "社会",
+    chartData: [
+      { type: "bar", title: "日常生活で不安を感じる事柄（国民生活世論調査・%）", xKey: "item",
+        data: [
+          { item: "老後の生活", 不安: 63 }, { item: "収入・雇用", 不安: 48 },
+          { item: "健康", 不安: 56 }, { item: "介護", 不安: 42 },
+          { item: "自然災害", 不安: 51 }, { item: "治安", 不安: 35 },
+        ],
+        yKeys: [{ key: "不安", name: "不安を感じる割合（%）", color: "#EF4444" }] },
+      { type: "line", title: "「悩みや不安がある」と答えた割合（内閣府・%）", xKey: "year",
+        data: [
+          { year: "2000", 全体: 55.8 }, { year: "2010", 全体: 69.4 },
+          { year: "2015", 全体: 66.4 }, { year: "2020", 全体: 78.7 },
+          { year: "2023", 全体: 71.2 },
+        ],
+        yKeys: [{ key: "全体", name: "不安ありの割合（%）", color: "#8B5CF6" }] },
+    ] },
+  { id: "pq-kyushu-kyoso-10", universityId: "kyushu-u", universityName: "九州大学", facultyName: "共創学部", year: 2018, theme: "AIと人間社会の共存", description: "AI（人工知能）に関する資料を分析し、AIと人間社会の共存における課題と可能性について論述する。", type: "past", questionType: "data-analysis", wordLimit: 850, timeLimit: 180, field: "AI・テクノロジー",
+    chartData: [
+      { type: "line", title: "AI導入企業率の推移（主要国・%）", xKey: "year",
+        data: [
+          { year: "2018", 日本: 14, 米国: 22, 中国: 32 },
+          { year: "2020", 日本: 20, 米国: 30, 中国: 41 },
+          { year: "2022", 日本: 25, 米国: 35, 中国: 50 },
+          { year: "2024", 日本: 42, 米国: 55, 中国: 58 },
+        ],
+        yKeys: [
+          { key: "日本", name: "日本", color: "#EF4444" },
+          { key: "米国", name: "米国", color: "#3B82F6" },
+          { key: "中国", name: "中国", color: "#10B981" },
+        ] },
+      { type: "bar", title: "AIにより自動化リスクが高い職業カテゴリ（OECD・%）", xKey: "job",
+        data: [
+          { job: "単純事務", リスク: 71 }, { job: "運輸", リスク: 58 },
+          { job: "製造", リスク: 49 }, { job: "接客", リスク: 42 },
+          { job: "医療", リスク: 18 }, { job: "教育", リスク: 11 },
+        ],
+        yKeys: [{ key: "リスク", name: "自動化リスク（%）", color: "#F59E0B" }] },
+    ] },
   { id: "pq-kyushu-lit-1", universityId: "kyushu-u", universityName: "九州大学", facultyName: "文学部", year: 2024, theme: "叡智を表現する言語としての国語の意義", description: "水村美苗『日本語が滅びるとき 英語の世紀の中で』を課題文とし、国語が叡智を表現する言語としてどのような意義を持つかを読解・論述する。150分。", type: "past", wordLimit: 800, timeLimit: 150, field: "文化" },
   { id: "pq-kyushu-lit-2", universityId: "kyushu-u", universityName: "九州大学", facultyName: "文学部", year: 2023, theme: "AI時代における人間の想像力の役割", description: "岡田暁生『音楽と出会う──21世紀的つきあい方』を課題文とし、AI時代における人間の想像力の役割について論述する。150分。", type: "past", wordLimit: 800, timeLimit: 150, field: "文化" },
   { id: "pq-kyushu-econ-1", universityId: "kyushu-u", universityName: "九州大学", facultyName: "経済学部（経済・経営学科）", year: 2023, theme: "スタートアップ企業を左右するCVC", description: "Alfred A. Marcus 'Innovations in Sustainability' を英文課題として、スタートアップ企業とCVCについて論述する。英文問題。180分。", type: "past", questionType: "english-reading", timeLimit: 180, field: "経済" },
@@ -896,8 +1090,45 @@ export const PAST_QUESTIONS: PastQuestion[] = [
   { id: "pq-hokudai-sui-001", universityId: "hokkaido-u", universityName: "北海道大学", facultyName: "水産学部", year: 2024, theme: "水産科学に関する課題論文", description: "TypeI。課題論文＋面接による選考。水産科学・海洋環境に関連するテーマで論理性、読解力、思考力を評価。", type: "past", field: "科学技術" },
 
   // ===== 明治大学（追加分） =====
-  { id: "pq-meiji-pse-004", universityId: "meiji-u", universityName: "明治大学", facultyName: "政治経済学部", year: 2025, theme: "ジェンダーギャップ指数と日本社会", description: "グローバル型特別入学試験。世界経済フォーラムの「ジェンダー・ギャップ指数（GGI）2023」のデータを読み取り、日本のジェンダー格差の現状と課題について分析・論述しなさい。", type: "past", questionType: "data-analysis", wordLimit: 800, timeLimit: 90, field: "社会" },
-  { id: "pq-meiji-pse-005", universityId: "meiji-u", universityName: "明治大学", facultyName: "政治経済学部", year: 2021, theme: "コロナ禍と経済格差", description: "グローバル型特別入学試験。新型コロナウイルス感染症が各国の経済格差に与えた影響について、統計データをもとに分析し、今後の政策的対応について論述しなさい。", type: "past", questionType: "data-analysis", wordLimit: 800, timeLimit: 90, field: "経済" },
+  { id: "pq-meiji-pse-004", universityId: "meiji-u", universityName: "明治大学", facultyName: "政治経済学部", year: 2025, theme: "ジェンダーギャップ指数と日本社会", description: "グローバル型特別入学試験。世界経済フォーラムの「ジェンダー・ギャップ指数（GGI）2023」のデータを読み取り、日本のジェンダー格差の現状と課題について分析・論述しなさい。", type: "past", questionType: "data-analysis", wordLimit: 800, timeLimit: 90, field: "社会",
+    chartData: [
+      { type: "line", title: "日本のGGI総合順位の推移（WEF）", xKey: "year",
+        data: [
+          { year: "2006", 順位: 80 }, { year: "2013", 順位: 105 },
+          { year: "2018", 順位: 110 }, { year: "2021", 順位: 120 },
+          { year: "2023", 順位: 125 },
+        ],
+        yKeys: [{ key: "順位", name: "総合順位", color: "#EF4444" }] },
+      { type: "bar", title: "管理職に占める女性比率の国際比較（2023・%）", xKey: "country",
+        data: [
+          { country: "スウェーデン", 比率: 43 }, { country: "米", 比率: 41 },
+          { country: "英", 比率: 37 }, { country: "仏", 比率: 34 },
+          { country: "韓国", 比率: 14 }, { country: "日本", 比率: 13 },
+        ],
+        yKeys: [{ key: "比率", name: "女性管理職比率（%）", color: "#6366F1" }] },
+    ] },
+  { id: "pq-meiji-pse-005", universityId: "meiji-u", universityName: "明治大学", facultyName: "政治経済学部", year: 2021, theme: "コロナ禍と経済格差", description: "グローバル型特別入学試験。新型コロナウイルス感染症が各国の経済格差に与えた影響について、統計データをもとに分析し、今後の政策的対応について論述しなさい。", type: "past", questionType: "data-analysis", wordLimit: 800, timeLimit: 90, field: "経済",
+    chartData: [
+      { type: "line", title: "主要国のジニ係数推移（OECD）", xKey: "year",
+        data: [
+          { year: "2015", 日本: 0.339, 米国: 0.390, 独: 0.289, 仏: 0.292 },
+          { year: "2018", 日本: 0.334, 米国: 0.395, 独: 0.289, 仏: 0.291 },
+          { year: "2020", 日本: 0.339, 米国: 0.375, 独: 0.296, 仏: 0.298 },
+          { year: "2022", 日本: 0.340, 米国: 0.396, 独: 0.294, 仏: 0.296 },
+        ],
+        yKeys: [
+          { key: "日本", name: "日本", color: "#EF4444" },
+          { key: "米国", name: "米国", color: "#3B82F6" },
+          { key: "独", name: "ドイツ", color: "#10B981" },
+          { key: "仏", name: "フランス", color: "#F59E0B" },
+        ] },
+      { type: "bar", title: "コロナ禍での所得階層別就業率変化（2020年・%ポイント）", xKey: "income",
+        data: [
+          { income: "低所得層", 変化: -8.3 }, { income: "中所得層", 変化: -3.2 },
+          { income: "高所得層", 変化: -1.1 },
+        ],
+        yKeys: [{ key: "変化", name: "就業率変化（%ポイント）", color: "#EF4444" }] },
+    ] },
   { id: "pq-meiji-agr-001", universityId: "meiji-u", universityName: "明治大学", facultyName: "農学部", year: 2024, theme: "食料安全保障と持続可能な農業", description: "自己推薦特別入試。世界の食料安全保障の現状と課題について、持続可能な農業の観点から具体例を挙げて論じなさい。", type: "past", wordLimit: 800, timeLimit: 60, field: "環境" },
   { id: "pq-meiji-agr-002", universityId: "meiji-u", universityName: "明治大学", facultyName: "農学部", year: 2023, theme: "生物多様性の保全と農業", description: "自己推薦特別入試。農業活動が生物多様性に与える影響と、両立させるための方策について論じなさい。", type: "past", wordLimit: 800, timeLimit: 60, field: "環境" },
   { id: "pq-meiji-intl-001", universityId: "meiji-u", universityName: "明治大学", facultyName: "国際日本学部", year: 2024, theme: "日本文化の国際発信", description: "総合型選抜。日本文化の海外への発信において、何が求められているか。具体的な文化事象を取り上げて論じなさい。", type: "past", wordLimit: 800, timeLimit: 90, field: "文化" },
@@ -1133,13 +1364,49 @@ export const PAST_QUESTIONS: PastQuestion[] = [
 
   // ===== 筑波大学 =====
   { id: "pq-tsukuba-soc-1", universityId: "tsukuba-u", universityName: "筑波大学", facultyName: "社会・国際学群 社会学類（推薦入試）", year: 2021, theme: "予言の自己成就", description: "課題文読み取り型。社会学における「予言の自己成就」概念に関する課題文を読み、内容を踏まえて自身の考えを1200字で論述しなさい。", type: "past", wordLimit: 1200, timeLimit: 90, field: "社会" },
-  { id: "pq-tsukuba-soc-2", universityId: "tsukuba-u", universityName: "筑波大学", facultyName: "社会・国際学群 社会学類（推薦入試）", year: 2020, theme: "福島第一原発事故後の風評被害", description: "資料読み取り型。福島第一原発事故後の風評被害に関する統計資料・データを読み取り、社会的影響と対策について1200字で論述しなさい。", type: "past", questionType: "data-analysis", wordLimit: 1200, timeLimit: 90, field: "社会" },
+  { id: "pq-tsukuba-soc-2", universityId: "tsukuba-u", universityName: "筑波大学", facultyName: "社会・国際学群 社会学類（推薦入試）", year: 2020, theme: "福島第一原発事故後の風評被害", description: "資料読み取り型。福島第一原発事故後の風評被害に関する統計資料・データを読み取り、社会的影響と対策について1200字で論述しなさい。", type: "past", questionType: "data-analysis", wordLimit: 1200, timeLimit: 90, field: "社会",
+    chartData: [
+      { type: "line", title: "福島県産農産物の取引価格指数（全国平均=100）", xKey: "year",
+        data: [
+          { year: "2010", 桃: 100, 米: 100, きゅうり: 100 },
+          { year: "2012", 桃: 72, 米: 78, きゅうり: 85 },
+          { year: "2015", 桃: 83, 米: 86, きゅうり: 93 },
+          { year: "2020", 桃: 93, 米: 91, きゅうり: 97 },
+          { year: "2023", 桃: 97, 米: 94, きゅうり: 99 },
+        ],
+        yKeys: [
+          { key: "桃", name: "桃", color: "#EC4899" },
+          { key: "米", name: "米", color: "#F59E0B" },
+          { key: "きゅうり", name: "きゅうり", color: "#10B981" },
+        ] },
+      { type: "bar", title: "福島県産食品の購入をためらう消費者の割合（%）", xKey: "year",
+        data: [
+          { year: "2013", 割合: 19.4 }, { year: "2016", 割合: 15.7 },
+          { year: "2019", 割合: 10.7 }, { year: "2022", 割合: 8.1 },
+        ],
+        yKeys: [{ key: "割合", name: "ためらう消費者（%）", color: "#EF4444" }] },
+    ] },
   { id: "pq-tsukuba-intl-1", universityId: "tsukuba-u", universityName: "筑波大学", facultyName: "社会・国際学群 国際総合学類（推薦入試）", year: 2022, theme: "グローバル化と国家主権の変容", description: "課題文読み取り型（英文含む）。グローバル化が国家主権に与える影響について日本語・英語の課題文を読み、2000字以上で論述しなさい。国際総合学類は英文読解も出題される。", type: "past", questionType: "english-reading", wordLimit: 2000, timeLimit: 120, field: "国際" },
   { id: "pq-tsukuba-edu-1", universityId: "tsukuba-u", universityName: "筑波大学", facultyName: "人間学群 教育学類（推薦入試）", year: 2022, theme: "子どもの読解力を伸ばす指導", description: "課題文読み取り型。子どもの読解力向上に関する研究論文を読み、教育実践への示唆を1000字で論述しなさい。", type: "past", wordLimit: 1000, timeLimit: 90, field: "教育" },
   { id: "pq-tsukuba-psy-1", universityId: "tsukuba-u", universityName: "筑波大学", facultyName: "人間学群 心理学類（推薦入試）", year: 2021, theme: "主体性と協同性の関係", description: "課題文読み取り型。主体性と協同性が人間の発達においてどのように関係するかについて、課題文を踏まえて1000字で論述しなさい。", type: "past", wordLimit: 1000, timeLimit: 90, field: "心理" },
   { id: "pq-tsukuba-psy-2", universityId: "tsukuba-u", universityName: "筑波大学", facultyName: "人間学群 心理学類（推薦入試）", year: 2022, theme: "コミュニケーションの社会的変化", description: "課題文読み取り型。SNS等のデジタル技術によるコミュニケーションの変化が人間の心理に与える影響について論述しなさい。", type: "past", wordLimit: 1000, timeLimit: 90, field: "心理" },
   { id: "pq-tsukuba-bio-1", universityId: "tsukuba-u", universityName: "筑波大学", facultyName: "生命環境学群 生物学類（推薦入試）", year: 2023, theme: "細菌の分類方法", description: "英語長文読み取り型。細菌の分類方法に関する英文を読み、内容をまとめた上で生物学的視点から考察を述べなさい。", type: "past", questionType: "english-reading", wordLimit: 800, timeLimit: 90, field: "科学技術" },
-  { id: "pq-tsukuba-soceng-1", universityId: "tsukuba-u", universityName: "筑波大学", facultyName: "理工学群 社会工学類（推薦入試）", year: 2023, theme: "都市計画と住民参加", description: "総合問題形式。都市計画における住民参加の意義と課題について、データや資料を踏まえて多角的に論述しなさい。", type: "past", questionType: "mixed", wordLimit: 1000, timeLimit: 90, field: "社会" },
+  { id: "pq-tsukuba-soceng-1", universityId: "tsukuba-u", universityName: "筑波大学", facultyName: "理工学群 社会工学類（推薦入試）", year: 2023, theme: "都市計画と住民参加", description: "総合問題形式。都市計画における住民参加の意義と課題について、データや資料を踏まえて多角的に論述しなさい。", type: "past", questionType: "mixed", wordLimit: 1000, timeLimit: 90, field: "社会",
+    chartData: [
+      { type: "bar", title: "都市計画策定における住民参加手段の実施率（全国自治体調査・%）", xKey: "method",
+        data: [
+          { method: "パブリックコメント", 実施率: 88 }, { method: "住民説明会", 実施率: 76 },
+          { method: "ワークショップ", 実施率: 42 }, { method: "住民アンケート", 実施率: 65 },
+          { method: "オンライン参加", 実施率: 28 },
+        ],
+        yKeys: [{ key: "実施率", name: "実施自治体率（%）", color: "#3B82F6" }] },
+      { type: "line", title: "まちづくりワークショップ開催件数の推移", xKey: "year",
+        data: [
+          { year: "2010", 件数: 420 }, { year: "2015", 件数: 780 },
+          { year: "2020", 件数: 920 }, { year: "2023", 件数: 1150 },
+        ],
+        yKeys: [{ key: "件数", name: "開催件数", color: "#10B981" }] },
+    ] },
 
   // ===== 神戸大学 =====
   { id: "pq-kobe-law-1", universityId: "kobe-u", universityName: "神戸大学", facultyName: "法学部（志特別選抜）", year: 2023, theme: "憲法と個人の自由の限界", description: "志特別選抜。課題文を読み、憲法が保障する個人の自由とその限界について、具体的事例を挙げながら800字で意見論述しなさい。内容説明2問（各300〜400字）＋意見論述1問。", type: "past", wordLimit: 800, timeLimit: 90, field: "法律" },
@@ -1162,7 +1429,22 @@ export const PAST_QUESTIONS: PastQuestion[] = [
   { id: "pq-chiba-lit-1", universityId: "chiba-u", universityName: "千葉大学", facultyName: "文学部 人文学科 行動科学コース（後期・小論文）", year: 2023, theme: "社会調査と人間行動の理解", description: "後期日程。社会調査の方法論と人間行動の科学的理解に関する課題文を読み、論述しなさい。", type: "past", wordLimit: 800, timeLimit: 90, field: "社会" },
   { id: "pq-chiba-lit-2", universityId: "chiba-u", universityName: "千葉大学", facultyName: "文学部 人文学科 歴史学コース（後期・小論文）", year: 2023, theme: "歴史叙述と史料批判", description: "後期日程。歴史叙述における史料批判の重要性について、課題文を踏まえて論述しなさい。", type: "past", wordLimit: 800, timeLimit: 90, field: "文化" },
   { id: "pq-chiba-edu-1", universityId: "chiba-u", universityName: "千葉大学", facultyName: "教育学部（総合型選抜 方式Ⅱ）", year: 2024, theme: "教育のICT活用と学びの変容", description: "総合型選抜方式Ⅱ（共通テスト不要）。教育現場におけるICT活用が児童・生徒の学びにどのような変容をもたらすか論述しなさい。", type: "past", wordLimit: 800, timeLimit: 60, field: "教育" },
-  { id: "pq-chiba-cfs-1", universityId: "chiba-u", universityName: "千葉大学", facultyName: "先進科学プログラム（飛び入学）", year: 2024, theme: "科学的探究と論理的思考", description: "先進科学プログラム課題論述。物理学・工学・情報科学に関連した課題について、論理的思考力と科学的探究能力を問う総合問題。", type: "past", questionType: "mixed", wordLimit: 800, timeLimit: 90, field: "科学技術" },
+  { id: "pq-chiba-cfs-1", universityId: "chiba-u", universityName: "千葉大学", facultyName: "先進科学プログラム（飛び入学）", year: 2024, theme: "科学的探究と論理的思考", description: "先進科学プログラム課題論述。物理学・工学・情報科学に関連した課題について、論理的思考力と科学的探究能力を問う総合問題。", type: "past", questionType: "mixed", wordLimit: 800, timeLimit: 90, field: "科学技術",
+    chartData: [
+      { type: "bar", title: "主要国の被引用数TOP10%論文シェア（自然科学・%）", xKey: "country",
+        data: [
+          { country: "米国", シェア: 21.9 }, { country: "中国", シェア: 27.2 },
+          { country: "英", シェア: 6.3 }, { country: "独", シェア: 5.8 },
+          { country: "日本", シェア: 2.3 },
+        ],
+        yKeys: [{ key: "シェア", name: "TOP10%論文シェア（%）", color: "#3B82F6" }] },
+      { type: "line", title: "日本の博士課程入学者数の推移", xKey: "year",
+        data: [
+          { year: "2003", 入学者: 18232 }, { year: "2010", 入学者: 16471 },
+          { year: "2018", 入学者: 14903 }, { year: "2022", 入学者: 15014 },
+        ],
+        yKeys: [{ key: "入学者", name: "博士課程入学者数", color: "#EF4444" }] },
+    ] },
 
   // ===== 広島大学 =====
   { id: "pq-hiroshima-sogo-1", universityId: "hiroshima-u", universityName: "広島大学", facultyName: "総合科学部（光り輝き入試・総合型選抜Ⅰ型）", year: 2024, theme: "講義型小論文：現代社会の課題", description: "光り輝き入試。第二次選考で講義を受講した後、講義内容について小論文を作成する形式。現代社会の課題に関する講義を踏まえた論述。", type: "past", questionType: "lecture", wordLimit: 800, timeLimit: 90, field: "社会" },
@@ -1189,7 +1471,24 @@ export const PAST_QUESTIONS: PastQuestion[] = [
 
   // ===== 大阪公立大学 =====
   { id: "pq-omu-sys-1", universityId: "omu", universityName: "大阪公立大学", facultyName: "現代システム科学域（学校推薦型選抜）", year: 2024, theme: "こども基本法と子どもの権利", description: "学校推薦型選抜。2023年4月施行の「こども基本法」を題材に、児童虐待・ヤングケアラー・子どもの貧困など社会背景を読み解き論述。課題文はやや長め。", type: "past", wordLimit: 1000, timeLimit: 90, field: "社会" },
-  { id: "pq-omu-sys-2", universityId: "omu", universityName: "大阪公立大学", facultyName: "現代システム科学域 環境社会システム学類（学校推薦型選抜）", year: 2024, theme: "持続可能な社会と人の暮らし", description: "学校推薦型選抜。「持続可能な社会と人の暮らし」をテーマとした出典から出題。地震をハザードとした場合のエンドポイントの例を挙げる問題等。", type: "past", questionType: "data-analysis", wordLimit: 800, timeLimit: 90, field: "環境" },
+  { id: "pq-omu-sys-2", universityId: "omu", universityName: "大阪公立大学", facultyName: "現代システム科学域 環境社会システム学類（学校推薦型選抜）", year: 2024, theme: "持続可能な社会と人の暮らし", description: "学校推薦型選抜。「持続可能な社会と人の暮らし」をテーマとした出典から出題。地震をハザードとした場合のエンドポイントの例を挙げる問題等。", type: "past", questionType: "data-analysis", wordLimit: 800, timeLimit: 90, field: "環境",
+    chartData: [
+      { type: "bar", title: "日本のSDGs各目標の達成度スコア（SDG Index 2024）", xKey: "goal",
+        data: [
+          { goal: "G1 貧困", score: 99 }, { goal: "G3 健康", score: 95 },
+          { goal: "G5 ジェンダー", score: 63 }, { goal: "G7 エネルギー", score: 68 },
+          { goal: "G12 生産消費", score: 58 }, { goal: "G13 気候", score: 69 },
+          { goal: "G14 海洋", score: 52 }, { goal: "G15 陸上", score: 71 },
+        ],
+        yKeys: [{ key: "score", name: "達成度スコア", color: "#10B981" }] },
+      { type: "line", title: "日本の自然災害による経済損失額（億円）", xKey: "year",
+        data: [
+          { year: "2018", 損失: 14500 }, { year: "2019", 損失: 21500 },
+          { year: "2020", 損失: 8200 }, { year: "2022", 損失: 9800 },
+          { year: "2024", 損失: 18200 },
+        ],
+        yKeys: [{ key: "損失", name: "経済損失（億円）", color: "#EF4444" }] },
+    ] },
   { id: "pq-omu-life-1", universityId: "omu", universityName: "大阪公立大学", facultyName: "生活科学部（学校推薦型選抜）", year: 2024, theme: "食と健康のリテラシー", description: "学校推薦型選抜。食と健康に関する科学的リテラシーの重要性について、栄養学的知見を踏まえて論述しなさい。", type: "past", wordLimit: 800, timeLimit: 60, field: "医療・福祉" },
   { id: "pq-omu-nurs-1", universityId: "omu", universityName: "大阪公立大学", facultyName: "看護学部（学校推薦型選抜）", year: 2024, theme: "地域医療と多職種連携", description: "学校推薦型選抜。地域医療における多職種連携の意義と看護師の役割について論述しなさい。", type: "past", wordLimit: 800, timeLimit: 60, field: "医療・福祉" },
   { id: "pq-omu-lit-1", universityId: "omu", universityName: "大阪公立大学", facultyName: "文学部（学校推薦型選抜）", year: 2023, theme: "言語の多様性と文化的アイデンティティ", description: "学校推薦型選抜。言語の多様性が文化的アイデンティティの形成に果たす役割について論述しなさい。", type: "past", wordLimit: 800, timeLimit: 60, field: "文化" },
