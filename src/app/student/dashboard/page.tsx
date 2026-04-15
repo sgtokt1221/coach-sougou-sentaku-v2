@@ -106,33 +106,43 @@ export default function StudentDashboard() {
         <SkillCheckRefreshBanner daysSinceLast={skillCheckStatus.daysSinceLast} />
       )}
 
-      {/* Mobile: スキル minimal 2カラム */}
-      <section className="grid grid-cols-2 gap-2 lg:hidden">
-        <Link href="/student/skill-check" className="block">
-          <SkillRankPanel
-            minimal
-            label="小論文レベル"
-            rank={skillCheckStatus?.latestResult?.rank ?? null}
-            score={skillCheckStatus?.latestResult?.scores.total ?? null}
-            maxScore={50}
-            category={skillCheckStatus?.currentCategory ?? skillCheckStatus?.latestResult?.category ?? null}
-            emptyMessage="未受験 → 受ける"
-            className="hover:shadow-md transition-shadow cursor-pointer h-full"
-            aggregate={skillCheckStatus?.aggregate}
+      {/* Mobile: GrowthTree (左3/5) + スキル縦積み (右2/5) */}
+      <section className="grid grid-cols-5 gap-2 lg:hidden">
+        <Link href="/student/self-analysis" className="col-span-3 block group">
+          <GrowthTree
+            compact
+            completedSteps={saCompletedSteps}
+            stepsData={saStepsData}
+            className="group-hover:shadow-md transition-shadow h-full"
           />
         </Link>
-        <Link href="/student/interview-skill-check" className="block">
-          <SkillRankPanel
-            minimal
-            label="面接レベル"
-            rank={interviewSkillStatus?.latestResult?.rank ?? null}
-            score={interviewSkillStatus?.latestResult?.scores.total ?? null}
-            maxScore={40}
-            emptyMessage="未受験 → 受ける"
-            className="hover:shadow-md transition-shadow cursor-pointer h-full"
-            aggregate={interviewSkillStatus?.aggregate}
-          />
-        </Link>
+        <div className="col-span-2 flex flex-col gap-2">
+          <Link href="/student/skill-check" className="block flex-1">
+            <SkillRankPanel
+              minimal
+              label="小論文レベル"
+              rank={skillCheckStatus?.latestResult?.rank ?? null}
+              score={skillCheckStatus?.latestResult?.scores.total ?? null}
+              maxScore={50}
+              category={skillCheckStatus?.currentCategory ?? skillCheckStatus?.latestResult?.category ?? null}
+              emptyMessage="未受験 → 受ける"
+              className="hover:shadow-md transition-shadow cursor-pointer h-full"
+              aggregate={skillCheckStatus?.aggregate}
+            />
+          </Link>
+          <Link href="/student/interview-skill-check" className="block flex-1">
+            <SkillRankPanel
+              minimal
+              label="面接レベル"
+              rank={interviewSkillStatus?.latestResult?.rank ?? null}
+              score={interviewSkillStatus?.latestResult?.scores.total ?? null}
+              maxScore={40}
+              emptyMessage="未受験 → 受ける"
+              className="hover:shadow-md transition-shadow cursor-pointer h-full"
+              aggregate={interviewSkillStatus?.aggregate}
+            />
+          </Link>
+        </div>
       </section>
 
       {/* Mobile: 志望校を大きく（フル版） */}
@@ -187,7 +197,7 @@ export default function StudentDashboard() {
       {/* Row 2: 成長ツリー+弱点 | スコア推移 */}
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-3 flex-1 min-h-0">
         <div className="lg:col-span-5 flex flex-col gap-2 min-h-0">
-          <Link href="/student/self-analysis" className="block group">
+          <Link href="/student/self-analysis" className="hidden lg:block group">
             <GrowthTree
               compact
               completedSteps={saCompletedSteps}
