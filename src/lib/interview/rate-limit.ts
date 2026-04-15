@@ -20,13 +20,20 @@ export interface RateLimitResult {
  * ユーザーが Realtime (音声モード) で面接を開始できるか判定する。
  * @param role ユーザーロール (admin/teacher/superadmin は無制限)
  * @param lastRealtimeAt 最後に Realtime セッションを開始した日時 (Date もしくは null)
+ * @param realtimeUnlocked 管理者が無制限フラグを立てている場合 true
  */
 export function checkRealtimeRateLimit(
   role: string,
   lastRealtimeAt: Date | null,
+  realtimeUnlocked = false,
 ): RateLimitResult {
   // 管理者系は常に許可
   if (role === "admin" || role === "teacher" || role === "superadmin") {
+    return { allowed: true };
+  }
+
+  // 管理者による無制限解除中
+  if (realtimeUnlocked) {
     return { allowed: true };
   }
 

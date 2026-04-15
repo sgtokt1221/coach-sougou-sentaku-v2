@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SegmentControl } from "@/components/shared/SegmentControl";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BookOpen, Star, Clock, ArrowRight, ChevronDown, ChevronUp, BarChart3, Lightbulb } from "lucide-react";
+import { BookOpen, Star, Clock, ArrowRight, ChevronDown, ChevronUp, BarChart3, Lightbulb, FileText } from "lucide-react";
+import Link from "next/link";
 import { PastQuestionChart } from "@/components/essay/PastQuestionChart";
 import { EssayTheme } from "@/data/essay-themes";
 import { getRelatedFaculties } from "@/lib/essay-topic-mapping";
@@ -205,6 +206,21 @@ export default function EssayThemesPage() {
             </p>
           </div>
         </div>
+
+        <Link href="/student/essay/summary-drill">
+          <Card className="mb-4 cursor-pointer border-teal-200 bg-gradient-to-r from-teal-50 to-cyan-50 transition-shadow hover:shadow-md">
+            <CardContent className="flex items-center justify-between p-4">
+              <div className="flex items-center gap-3">
+                <FileText className="size-5 text-teal-600" />
+                <div>
+                  <p className="font-semibold text-teal-900">要約ドリル</p>
+                  <p className="text-xs text-teal-700">長文を読んで400字で要約する練習</p>
+                </div>
+              </div>
+              <ArrowRight className="size-4 text-teal-600" />
+            </CardContent>
+          </Card>
+        </Link>
 
         {hasRecommendations && (
           <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">

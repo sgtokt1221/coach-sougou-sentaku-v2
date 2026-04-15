@@ -179,6 +179,7 @@ export async function GET(
       essayScoreTrend,
       interviewScoreTrend,
       lastActivityAt,
+      realtimeUnlocked: userData.realtimeUnlocked === true,
     };
 
     return NextResponse.json(detail);

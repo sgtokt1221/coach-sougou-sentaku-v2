@@ -38,6 +38,7 @@ export interface StudentDetail {
   essayScoreTrend?: { date: string; total: number }[];
   interviewScoreTrend?: { date: string; total: number }[];
   lastActivityAt?: string | null;
+  realtimeUnlocked?: boolean;
 }
 
 export interface EssayListItem {

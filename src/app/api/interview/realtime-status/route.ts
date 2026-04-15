@@ -15,6 +15,7 @@ export async function GET(request: NextRequest) {
   const { uid, role } = authResult;
 
   let lastRealtimeAt: Date | null = null;
+  let realtimeUnlocked = false;
   try {
     const { adminDb } = await import("@/lib/firebase/admin");
     if (adminDb) {
@@ -23,14 +24,18 @@ export async function GET(request: NextRequest) {
       if (data?.lastRealtimeAt?.toDate) {
         lastRealtimeAt = data.lastRealtimeAt.toDate();
       }
+      if (data?.realtimeUnlocked === true) {
+        realtimeUnlocked = true;
+      }
     }
   } catch (err) {
     console.warn("[realtime-status] failed to read lastRealtimeAt", err);
   }
 
-  const result = checkRealtimeRateLimit(role, lastRealtimeAt);
+  const result = checkRealtimeRateLimit(role, lastRealtimeAt, realtimeUnlocked);
   return NextResponse.json({
     allowed: result.allowed,
+    unlocked: realtimeUnlocked,
     nextAvailableAt: result.nextAvailableAt,
     reason: result.reason,
   });

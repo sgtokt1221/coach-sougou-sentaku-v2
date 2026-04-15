@@ -221,6 +221,7 @@ export async function POST(request: NextRequest) {
 
   // 全モード共通: 7 日 cooldown のレートリミット確認
   let lastRealtimeAt: Date | null = null;
+  let realtimeUnlocked = false;
   try {
     const { adminDb } = await import("@/lib/firebase/admin");
     if (adminDb) {
@@ -229,12 +230,15 @@ export async function POST(request: NextRequest) {
       if (data?.lastRealtimeAt?.toDate) {
         lastRealtimeAt = data.lastRealtimeAt.toDate();
       }
+      if (data?.realtimeUnlocked === true) {
+        realtimeUnlocked = true;
+      }
     }
   } catch (err) {
     console.warn("[realtime-session] failed to read lastRealtimeAt", err);
   }
 
-  const rate = checkRealtimeRateLimit(role, lastRealtimeAt);
+  const rate = checkRealtimeRateLimit(role, lastRealtimeAt, realtimeUnlocked);
   if (!rate.allowed) {
     return NextResponse.json({
       rateLimited: true,
@@ -298,7 +302,7 @@ export async function POST(request: NextRequest) {
 
     const usedModel = results[0].issueResult.model;
 
-    await updateLastRealtimeAt(uid, role);
+    if (!realtimeUnlocked) await updateLastRealtimeAt(uid, role);
 
     return NextResponse.json({
       mode: "group_discussion",
@@ -330,7 +334,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  await updateLastRealtimeAt(uid, role);
+  if (!realtimeUnlocked) await updateLastRealtimeAt(uid, role);
 
   return NextResponse.json({
     mode,
