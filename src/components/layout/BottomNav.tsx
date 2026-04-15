@@ -91,22 +91,28 @@ export function BottomNav() {
             <TabLink key={href} label={label} href={href} Icon={Icon} active={pathname.startsWith(href)} />
           ))}
 
-          {/* 中央 "新規" タブ: 他タブと同じ見た目、タップで Bottom sheet */}
+          {/* 中央 "Action!" ボタン: 丸型のカラーFAB。タップで Bottom sheet */}
           <button
             type="button"
             onClick={() => setCreateOpen(true)}
+            aria-label="Action"
             className={cn(
               "flex flex-1 flex-col items-center justify-center gap-0.5 py-1 transition-all duration-200",
-              createOpen ? "text-primary" : "text-muted-foreground",
+              "text-primary",
             )}
           >
-            <Plus
+            <span
               className={cn(
-                "size-5 transition-transform duration-200",
+                "flex size-11 items-center justify-center rounded-full",
+                "bg-gradient-to-br from-primary to-primary/70 text-primary-foreground",
+                "shadow-[0_4px_14px_rgba(0,0,0,0.15)] ring-2 ring-background",
+                "transition-transform duration-200 active:scale-95",
                 createOpen && "scale-105",
               )}
-            />
-            <span className="text-[10px] font-medium leading-none">新規</span>
+            >
+              <Plus className="size-5" />
+            </span>
+            <span className="text-[10px] font-semibold leading-none tracking-wide">Action!</span>
           </button>
 
           {tabsRight.map(({ label, href, icon: Icon }) => (
@@ -135,46 +141,48 @@ export function BottomNav() {
         </SheetContent>
       </Sheet>
 
-      {/* 新規 = クイックアクション bottom sheet */}
+      {/* Action! = クイックアクション bottom sheet */}
       <Sheet open={createOpen} onOpenChange={setCreateOpen}>
         <SheetContent
           side="bottom"
           showCloseButton
-          className="rounded-t-2xl pb-[calc(1rem+env(safe-area-inset-bottom))]"
+          className="rounded-t-2xl max-h-[85vh] overflow-hidden flex flex-col p-0"
         >
-          <SheetHeader>
-            <SheetTitle>新規</SheetTitle>
+          <SheetHeader className="shrink-0">
+            <SheetTitle>Action!</SheetTitle>
           </SheetHeader>
-          <div className="grid grid-cols-2 gap-3 px-4 pb-2">
-            {quickActions.map((a) => (
+          <div className="flex-1 overflow-y-auto overscroll-contain px-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+            <div className="grid grid-cols-2 gap-3">
+              {quickActions.map((a) => (
+                <Link
+                  key={a.href}
+                  href={a.href}
+                  onClick={() => setCreateOpen(false)}
+                  className="flex flex-col gap-2 rounded-xl border border-border bg-card p-4 transition-all hover:border-foreground/20 hover:shadow-sm active:scale-[0.98]"
+                >
+                  <div className={cn("flex size-10 items-center justify-center rounded-lg", a.iconBg)}>
+                    <a.icon className={cn("size-5", a.iconColor)} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold">{a.label}</p>
+                    <p className="text-[11px] text-muted-foreground leading-snug">{a.description}</p>
+                  </div>
+                </Link>
+              ))}
               <Link
-                key={a.href}
-                href={a.href}
+                href="/student/activities"
                 onClick={() => setCreateOpen(false)}
-                className="flex flex-col gap-2 rounded-xl border border-border bg-card p-4 transition-all hover:border-foreground/20 hover:shadow-sm active:scale-[0.98]"
+                className="col-span-2 flex items-center gap-3 rounded-xl border border-border bg-card p-3 transition-all hover:border-foreground/20 active:scale-[0.99]"
               >
-                <div className={cn("flex size-10 items-center justify-center rounded-lg", a.iconBg)}>
-                  <a.icon className={cn("size-5", a.iconColor)} />
+                <div className="flex size-9 items-center justify-center rounded-lg bg-rose-100 dark:bg-rose-950/40">
+                  <Award className="size-4 text-rose-700 dark:text-rose-300" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold">{a.label}</p>
-                  <p className="text-[11px] text-muted-foreground leading-snug">{a.description}</p>
+                  <p className="text-sm font-medium">活動実績を登録</p>
+                  <p className="text-[11px] text-muted-foreground">部活・コンクール・資格など</p>
                 </div>
               </Link>
-            ))}
-            <Link
-              href="/student/activities"
-              onClick={() => setCreateOpen(false)}
-              className="col-span-2 flex items-center gap-3 rounded-xl border border-border bg-card p-3 transition-all hover:border-foreground/20 active:scale-[0.99]"
-            >
-              <div className="flex size-9 items-center justify-center rounded-lg bg-rose-100 dark:bg-rose-950/40">
-                <Award className="size-4 text-rose-700 dark:text-rose-300" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-medium">活動実績を登録</p>
-                <p className="text-[11px] text-muted-foreground">部活・コンクール・資格など</p>
-              </div>
-            </Link>
+            </div>
           </div>
         </SheetContent>
       </Sheet>
