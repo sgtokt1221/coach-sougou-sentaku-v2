@@ -25,7 +25,6 @@ import { AnimatedList } from "@/components/shared/AnimatedList";
 import { CountUp } from "@/components/shared/CountUp";
 import { GrowthTree } from "@/components/self-analysis/GrowthTree";
 import type { SelfAnalysis } from "@/lib/types/self-analysis";
-import { SkillRankCard } from "@/components/dashboard/SkillRankCard";
 import { SkillCheckRefreshBanner } from "@/components/skill-check/SkillCheckRefreshBanner";
 import { SkillRankPanel } from "@/components/skill-check/SkillRankPanel";
 import type { SkillCheckStatus } from "@/lib/types/skill-check";
@@ -187,27 +186,49 @@ export default function StudentDashboard() {
       {/* Notification Permission Banner */}
       <NotificationPermissionBanner />
 
-      {/* Skill Check: 月次更新リマインド + 現在のランク */}
-      {skillCheckStatus?.needsRefresh && skillCheckStatus.daysSinceLast !== null && (
+      {/* Skill Check: 小論文 + 面接を1セクションで並列表示 */}
+      {(skillCheckStatus?.needsRefresh && skillCheckStatus.daysSinceLast !== null) && (
         <SkillCheckRefreshBanner daysSinceLast={skillCheckStatus.daysSinceLast} />
       )}
-      <SkillRankCard status={skillCheckStatus ?? null} />
-
-      {/* 面接スキル（小論文SCと並列、詳細は専用ページへ） */}
-      <Link href="/student/interview-skill-check" className="block">
-        <SkillRankPanel
-          label="面接スキル"
-          rank={interviewSkillStatus?.latestResult?.rank ?? null}
-          score={interviewSkillStatus?.latestResult?.scores.total ?? null}
-          maxScore={40}
-          takenAt={interviewSkillStatus?.latestResult?.takenAt ?? null}
-          daysSinceLast={interviewSkillStatus?.daysSinceLast ?? null}
-          subLabel={interviewSkillStatus?.needsRefresh ? "更新推奨" : undefined}
-          emptyMessage="まだ受けていません → 受ける"
-          className="hover:shadow-md transition-shadow cursor-pointer"
-          aggregate={interviewSkillStatus?.aggregate}
-        />
-      </Link>
+      <section>
+        <div className="flex items-center gap-2 mb-3">
+          <Target className="size-4 text-muted-foreground" />
+          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+            スキル診断
+          </h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <Link href="/student/skill-check" className="block">
+            <SkillRankPanel
+              label="小論文スキル"
+              rank={skillCheckStatus?.latestResult?.rank ?? null}
+              score={skillCheckStatus?.latestResult?.scores.total ?? null}
+              maxScore={50}
+              takenAt={skillCheckStatus?.latestResult?.takenAt ?? null}
+              daysSinceLast={skillCheckStatus?.daysSinceLast ?? null}
+              category={skillCheckStatus?.currentCategory ?? skillCheckStatus?.latestResult?.category ?? null}
+              subLabel={skillCheckStatus?.needsRefresh ? "更新推奨" : undefined}
+              emptyMessage="まだ受けていません → 受ける"
+              className="hover:shadow-md transition-shadow cursor-pointer h-full"
+              aggregate={skillCheckStatus?.aggregate}
+            />
+          </Link>
+          <Link href="/student/interview-skill-check" className="block">
+            <SkillRankPanel
+              label="面接スキル"
+              rank={interviewSkillStatus?.latestResult?.rank ?? null}
+              score={interviewSkillStatus?.latestResult?.scores.total ?? null}
+              maxScore={40}
+              takenAt={interviewSkillStatus?.latestResult?.takenAt ?? null}
+              daysSinceLast={interviewSkillStatus?.daysSinceLast ?? null}
+              subLabel={interviewSkillStatus?.needsRefresh ? "更新推奨" : undefined}
+              emptyMessage="まだ受けていません → 受ける"
+              className="hover:shadow-md transition-shadow cursor-pointer h-full"
+              aggregate={interviewSkillStatus?.aggregate}
+            />
+          </Link>
+        </div>
+      </section>
 
       {/* Target Universities */}
       <div>
