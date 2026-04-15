@@ -23,7 +23,7 @@ import type { SummaryPassage } from "@/data/summary-passages/types";
 import { authFetch } from "@/lib/api/client";
 import { toast } from "sonner";
 
-type Step = "select" | "drill" | "result";
+type Step = "select" | "menu" | "drill" | "result";
 
 const DIFFICULTY_LABELS: Record<number, string> = { 1: "基礎", 2: "標準", 3: "発展" };
 const DIFFICULTY_COLORS: Record<number, string> = {
@@ -91,19 +91,32 @@ export default function SummaryDrillPage() {
     return `${m}:${sec.toString().padStart(2, "0")}`;
   };
 
-  function selectFacultyAndPassage(faculty: FacultyEntry) {
-    setSelectedFaculty(faculty);
+  function openFacultyMenu(faculty: FacultyEntry) {
     const passages = getPassagesByFaculty(faculty.id);
     if (passages.length === 0) {
       toast.error("この学部の長文はまだ準備中です");
       return;
     }
-    const random = passages[Math.floor(Math.random() * passages.length)];
-    setPassage(random);
+    setSelectedFaculty(faculty);
+    setPassage(null);
+    setResult(null);
+    setStep("menu");
+  }
+
+  function startDrillWithPassage(p: SummaryPassage) {
+    setPassage(p);
     setSummaryText("");
     setTimeLeft(TIME_LIMIT);
     setResult(null);
     setStep("drill");
+  }
+
+  function startRandomPassage() {
+    if (!selectedFaculty) return;
+    const passages = getPassagesByFaculty(selectedFaculty.id);
+    if (passages.length === 0) return;
+    const random = passages[Math.floor(Math.random() * passages.length)];
+    startDrillWithPassage(random);
   }
 
   const handleSubmit = useCallback(async () => {
@@ -140,7 +153,13 @@ export default function SummaryDrillPage() {
   }, [passage, summaryText]);
 
   function handleRetry() {
-    if (selectedFaculty) selectFacultyAndPassage(selectedFaculty);
+    if (passage) startDrillWithPassage(passage);
+  }
+
+  function handleBackToMenu() {
+    setPassage(null);
+    setResult(null);
+    setStep("menu");
   }
 
   function handleBackToSelect() {
@@ -189,7 +208,7 @@ export default function SummaryDrillPage() {
                   <Card
                     key={f.id}
                     className={`cursor-pointer transition-shadow hover:shadow-md ${count === 0 ? "opacity-50" : ""}`}
-                    onClick={() => count > 0 && selectFacultyAndPassage(f)}
+                    onClick={() => count > 0 && openFacultyMenu(f)}
                   >
                     <CardContent className="p-4">
                       <p className="font-medium text-sm">{f.label}</p>
@@ -207,6 +226,57 @@ export default function SummaryDrillPage() {
     );
   }
 
+  // ======== Step: 目次（学部内の長文選択） ========
+  if (step === "menu" && selectedFaculty) {
+    const passages = getPassagesByFaculty(selectedFaculty.id);
+    return (
+      <div className="mx-auto max-w-4xl space-y-6 p-4">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={handleBackToSelect}>
+            <ArrowLeft className="size-4" />
+          </Button>
+          <div className="flex-1">
+            <h1 className="text-xl font-bold">{selectedFaculty.label} — 目次</h1>
+            <p className="text-sm text-muted-foreground">
+              長文を選んで要約ドリルを始めましょう（全{passages.length}本）
+            </p>
+          </div>
+          <Button variant="outline" size="sm" onClick={startRandomPassage}>
+            <RotateCcw className="mr-1 size-3" />
+            ランダム
+          </Button>
+        </div>
+
+        <div className="grid gap-3">
+          {passages.map((p, idx) => (
+            <Card
+              key={p.id}
+              className="cursor-pointer transition-shadow hover:shadow-md"
+              onClick={() => startDrillWithPassage(p)}
+            >
+              <CardContent className="flex items-center gap-3 p-4">
+                <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-muted-foreground">
+                  {idx + 1}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium text-sm">{p.title}</p>
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <span className="truncate">{p.source}</span>
+                    <Badge variant="secondary" className={DIFFICULTY_COLORS[p.difficulty]}>
+                      {DIFFICULTY_LABELS[p.difficulty]}
+                    </Badge>
+                    <span>{p.wordCount}字</span>
+                  </div>
+                </div>
+                <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   // ======== Step: ドリル ========
   if (step === "drill" && passage) {
     const timeColor = timeLeft <= 60 ? "text-red-600" : timeLeft <= 180 ? "text-amber-600" : "text-muted-foreground";
@@ -216,7 +286,7 @@ export default function SummaryDrillPage() {
         {/* ヘッダー */}
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={handleBackToSelect}>
+            <Button variant="ghost" size="icon" onClick={handleBackToMenu}>
               <ArrowLeft className="size-4" />
             </Button>
             <div>
@@ -317,7 +387,7 @@ export default function SummaryDrillPage() {
     return (
       <div className="mx-auto max-w-3xl space-y-6 p-4">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={handleBackToSelect}>
+          <Button variant="ghost" size="icon" onClick={handleBackToMenu}>
             <ArrowLeft className="size-4" />
           </Button>
           <h1 className="text-xl font-bold">採点結果</h1>
@@ -411,10 +481,14 @@ export default function SummaryDrillPage() {
         </Card>
 
         {/* アクション */}
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
           <Button variant="outline" onClick={handleRetry}>
             <RotateCcw className="mr-2 size-4" />
-            もう一度（同じ学部）
+            もう一度（同じ長文）
+          </Button>
+          <Button variant="outline" onClick={handleBackToMenu}>
+            <ChevronRight className="mr-2 size-4" />
+            別の長文を選ぶ
           </Button>
           <Button onClick={handleBackToSelect}>
             <ChevronRight className="mr-2 size-4" />
