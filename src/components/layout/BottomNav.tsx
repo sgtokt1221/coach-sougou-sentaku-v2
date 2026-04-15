@@ -85,7 +85,10 @@ export function BottomNav() {
   return (
     <>
       {/* 背景をセーフエリアまで伸ばし、タブ本体は 60px */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background pb-safe">
+      <nav
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background"
+        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      >
         <div className="flex h-[60px] items-center justify-around px-2">
           {tabs.map(({ label, href, icon: Icon }) => (
             <TabLink key={href} label={label} href={href} Icon={Icon} active={pathname.startsWith(href)} />

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
 import { useState } from "react";
@@ -33,7 +34,7 @@ export function Header() {
       .toUpperCase() ?? "?";
 
   return (
-    <header className="flex h-12 lg:h-14 items-center justify-between border-b border-border/60 bg-background/80 px-4 backdrop-blur-md gap-2">
+    <header className="relative flex h-12 lg:h-14 items-center justify-between border-b border-border/60 bg-background px-4 gap-2">
       <Button
         variant="ghost"
         size="icon"
@@ -48,6 +49,24 @@ export function Header() {
           <MobileMenuContent onNavigate={() => setMenuOpen(false)} />
         </SheetContent>
       </Sheet>
+
+      {/* スマホ専用: 中央にロゴ */}
+      <Link
+        href={
+          userProfile?.role === "admin" || userProfile?.role === "superadmin"
+            ? "/admin/dashboard"
+            : userProfile?.role === "teacher"
+              ? "/teacher/dashboard"
+              : "/student/dashboard"
+        }
+        className="lg:hidden absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center"
+        aria-label="ホームへ"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/logo.svg" alt="coach for 総合型選抜" className="h-6 dark:hidden" />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/logo-dark.svg" alt="coach for 総合型選抜" className="h-6 hidden dark:block" />
+      </Link>
 
       {showScopeSelector && (
         <div className="hidden lg:block">

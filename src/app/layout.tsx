@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Sora, Zen_Kaku_Gothic_New, JetBrains_Mono } from "next/font/google";
 import { Providers } from "@/components/Providers";
 import "./globals.css";
@@ -31,11 +31,11 @@ export const metadata: Metadata = {
   description: "AI搭載の総合型選抜対策プラットフォーム",
 };
 
-export const viewport = {
+export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-} as const;
+};
 
 export default function RootLayout({
   children,

@@ -99,11 +99,6 @@ export default function StudentDashboard() {
   const studentProfile = userProfile as StudentProfile | null;
   const targetUniversities = studentProfile?.targetUniversities ?? [];
 
-  // 時間帯に応じた挨拶メッセージ
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? "おはようございます" : hour < 18 ? "こんにちは" : "おつかれさまです";
-  const userName = studentProfile?.displayName;
-
   const { data: essayData, isLoading: loadingHistory } = useAuthSWR<{ essays: EssayHistoryItem[] }>("/api/essay/history?userId=current");
   const { data: interviewData, isLoading: loadingInterview } = useAuthSWR<{ interviews: { id: string; startedAt: string; scores: { total: number } | null }[] }>("/api/interview/history?userId=current");
   const { data: selfAnalysisData } = useAuthSWR<SelfAnalysis | null>("/api/self-analysis?userId=me");
@@ -175,14 +170,6 @@ export default function StudentDashboard() {
 
   return (
     <div className="space-y-8 lg:space-y-10 px-4 py-6 lg:px-8 lg:py-10 max-w-5xl mx-auto">
-      {/* Header — Stripe: light weight, no decorations */}
-      <div>
-        <p className="text-sm text-muted-foreground mb-1">{greeting}</p>
-        <h1 className="text-xl lg:text-2xl font-light tracking-tight text-foreground">
-          {userName ? `${userName}さん、` : ""}学習の進捗を確認しましょう
-        </h1>
-      </div>
-
       {/* Notification Permission Banner */}
       <NotificationPermissionBanner />
 
