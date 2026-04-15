@@ -16,6 +16,14 @@ interface ManuscriptEditorProps {
   readOnly?: boolean;
   highlights?: Highlight[];
   onHighlightsChange?: (highlights: Highlight[]) => void;
+  /** "ja" は原稿用紙グリッド + 字数カウント、"en" は通常テキストエリア + 語数カウント */
+  mode?: "ja" | "en";
+}
+
+function countWords(text: string): number {
+  const trimmed = text.trim();
+  if (!trimmed) return 0;
+  return trimmed.split(/\s+/).filter(Boolean).length;
 }
 
 export function ManuscriptEditor({
@@ -26,10 +34,13 @@ export function ManuscriptEditor({
   readOnly = false,
   highlights,
   onHighlightsChange,
+  mode = "ja",
 }: ManuscriptEditorProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const backdropRef = useRef<HTMLDivElement>(null);
-  const charCount = value.length;
+  const isEn = mode === "en";
+  const charCount = isEn ? countWords(value) : value.length;
+  const unitLabel = isEn ? "words" : "字";
   const isOver = charCount > maxLength;
   const percentage = Math.min(100, (charCount / maxLength) * 100);
   const hasHighlights = highlights && highlights.length > 0;
@@ -143,10 +154,16 @@ export function ManuscriptEditor({
           <span className={isOver ? "text-destructive font-bold" : "text-muted-foreground"}>
             {charCount}
           </span>
-          <span className="text-muted-foreground">/ {maxLength}字</span>
+          <span className="text-muted-foreground">/ {maxLength}{unitLabel}</span>
         </div>
         <span className={`text-xs ${isOver ? "text-destructive" : "text-muted-foreground"}`}>
-          {isOver ? `${charCount - maxLength}字オーバー` : `残り${maxLength - charCount}字`}
+          {isEn
+            ? isOver
+              ? `${charCount - maxLength} over`
+              : `${maxLength - charCount} left`
+            : isOver
+              ? `${charCount - maxLength}字オーバー`
+              : `残り${maxLength - charCount}字`}
         </span>
       </div>
 
@@ -162,17 +179,19 @@ export function ManuscriptEditor({
 
       {/* Manuscript-style textarea */}
       <div className="relative rounded-lg border bg-card overflow-hidden">
-        {/* Grid lines (manuscript paper effect) */}
-        <div
-          className="absolute inset-0 pointer-events-none opacity-[0.08]"
-          style={{
-            backgroundImage: `
-              linear-gradient(to right, currentColor 1px, transparent 1px),
-              linear-gradient(to bottom, currentColor 1px, transparent 1px)
-            `,
-            backgroundSize: "24px 24px",
-          }}
-        />
+        {/* Grid lines (manuscript paper effect) — ja のみ */}
+        {!isEn && (
+          <div
+            className="absolute inset-0 pointer-events-none opacity-[0.08]"
+            style={{
+              backgroundImage: `
+                linear-gradient(to right, currentColor 1px, transparent 1px),
+                linear-gradient(to bottom, currentColor 1px, transparent 1px)
+              `,
+              backgroundSize: "24px 24px",
+            }}
+          />
+        )}
 
         {/* Highlight backdrop */}
         {hasHighlights && (
@@ -209,7 +228,11 @@ export function ManuscriptEditor({
             bg-transparent
             ${readOnly ? "cursor-default" : ""}
           `}
-          style={{ letterSpacing: "0.05em", lineHeight: "24px" }}
+          style={
+            isEn
+              ? { lineHeight: "1.7" }
+              : { letterSpacing: "0.05em", lineHeight: "24px" }
+          }
         />
       </div>
 
@@ -250,7 +273,9 @@ export function ManuscriptEditor({
       {/* Footer info */}
       <div className="flex items-center justify-between text-xs text-muted-foreground">
         <span>
-          {value.split(/\n/).length}段落 ・ {value.split(/[。！？\n]/).filter(Boolean).length}文
+          {isEn
+            ? `${value.split(/\n/).filter(Boolean).length} paragraphs ・ ${value.split(/[.!?\n]/).filter((s) => s.trim()).length} sentences`
+            : `${value.split(/\n/).length}段落 ・ ${value.split(/[。！？\n]/).filter(Boolean).length}文`}
         </span>
         {hasHighlights && (
           <span className="text-orange-600 font-medium">

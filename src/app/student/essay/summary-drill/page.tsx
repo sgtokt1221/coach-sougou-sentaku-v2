@@ -19,19 +19,24 @@ import Link from "next/link";
 import { ManuscriptEditor } from "@/components/essay/ManuscriptEditor";
 import { FACULTY_REGISTRY, type FacultyEntry } from "@/data/faculty-topics/registry";
 import { getAllPassages, getPassagesByFaculty } from "@/data/summary-passages";
-import type { SummaryPassage } from "@/data/summary-passages/types";
+import type { PassageLanguage, SummaryPassage } from "@/data/summary-passages/types";
 import { authFetch } from "@/lib/api/client";
 import { toast } from "sonner";
 
 type Step = "select" | "menu" | "drill" | "result";
 
-const DIFFICULTY_LABELS: Record<number, string> = { 1: "基礎", 2: "標準", 3: "発展" };
+const DIFFICULTY_LABELS: Record<PassageLanguage, Record<number, string>> = {
+  ja: { 1: "基礎", 2: "標準", 3: "発展" },
+  en: { 1: "Basic", 2: "Standard", 3: "Advanced" },
+};
 const DIFFICULTY_COLORS: Record<number, string> = {
   1: "bg-green-100 text-green-700",
   2: "bg-yellow-100 text-yellow-700",
   3: "bg-red-100 text-red-700",
 };
 const TIME_LIMIT = 15 * 60; // 15分
+const MAX_JA = 400;
+const MAX_EN = 150;
 
 interface EvalResult {
   scores: {
@@ -47,16 +52,26 @@ interface EvalResult {
   betterSummary: string;
 }
 
-const SCORE_LABELS: Record<string, string> = {
-  comprehension: "読解力",
-  conciseness: "簡潔さ",
-  keyPoints: "要点網羅",
-  structure: "構成力",
-  expression: "表現力",
+const SCORE_LABELS: Record<PassageLanguage, Record<string, string>> = {
+  ja: {
+    comprehension: "読解力",
+    conciseness: "簡潔さ",
+    keyPoints: "要点網羅",
+    structure: "構成力",
+    expression: "表現力",
+  },
+  en: {
+    comprehension: "Comprehension",
+    conciseness: "Conciseness",
+    keyPoints: "Key Points",
+    structure: "Structure",
+    expression: "Expression",
+  },
 };
 
 export default function SummaryDrillPage() {
   const [step, setStep] = useState<Step>("select");
+  const [language, setLanguage] = useState<PassageLanguage>("ja");
   const [selectedFaculty, setSelectedFaculty] = useState<FacultyEntry | null>(null);
   const [passage, setPassage] = useState<SummaryPassage | null>(null);
   const [summaryText, setSummaryText] = useState("");
@@ -92,9 +107,9 @@ export default function SummaryDrillPage() {
   };
 
   function openFacultyMenu(faculty: FacultyEntry) {
-    const passages = getPassagesByFaculty(faculty.id);
+    const passages = getPassagesByFaculty(faculty.id, language);
     if (passages.length === 0) {
-      toast.error("この学部の長文はまだ準備中です");
+      toast.error(language === "en" ? "No passages available yet for this faculty" : "この学部の長文はまだ準備中です");
       return;
     }
     setSelectedFaculty(faculty);
@@ -113,17 +128,26 @@ export default function SummaryDrillPage() {
 
   function startRandomPassage() {
     if (!selectedFaculty) return;
-    const passages = getPassagesByFaculty(selectedFaculty.id);
+    const passages = getPassagesByFaculty(selectedFaculty.id, language);
     if (passages.length === 0) return;
     const random = passages[Math.floor(Math.random() * passages.length)];
     startDrillWithPassage(random);
+  }
+
+  function switchLanguage(next: PassageLanguage) {
+    if (next === language) return;
+    setLanguage(next);
+    setSelectedFaculty(null);
+    setPassage(null);
+    setResult(null);
+    setStep("select");
   }
 
   const handleSubmit = useCallback(async () => {
     if (!passage) return;
     if (timerRef.current) clearInterval(timerRef.current);
     if (!summaryText.trim()) {
-      toast.error("要約を入力してください");
+      toast.error(language === "en" ? "Please enter your summary" : "要約を入力してください");
       return;
     }
     setIsEvaluating(true);
@@ -138,6 +162,7 @@ export default function SummaryDrillPage() {
           passageText: passage.passage,
           summaryText,
           keyPoints: passage.keyPoints,
+          language: passage.language ?? language,
         }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -188,22 +213,62 @@ export default function SummaryDrillPage() {
               <ArrowLeft className="size-4" />
             </Button>
           </Link>
-          <div>
-            <h1 className="text-xl font-bold">要約ドリル</h1>
+          <div className="flex-1">
+            <h1 className="text-xl font-bold">
+              {language === "en" ? "Summary Drill" : "要約ドリル"}
+            </h1>
             <p className="text-sm text-muted-foreground">
-              長文を読んで400字以内で要約する練習（制限時間15分）
+              {language === "en"
+                ? "Read a passage and summarize it in 150 words or less (15-min limit)"
+                : "長文を読んで400字以内で要約する練習（制限時間15分）"}
             </p>
           </div>
+        </div>
+
+        {/* 言語トグル */}
+        <div className="inline-flex rounded-lg border p-1">
+          <button
+            type="button"
+            onClick={() => switchLanguage("ja")}
+            className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
+              language === "ja" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            日本語
+          </button>
+          <button
+            type="button"
+            onClick={() => switchLanguage("en")}
+            className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
+              language === "en" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            English
+          </button>
         </div>
 
         {Object.entries(grouped).map(([cat, faculties]) => (
           <div key={cat}>
             <h2 className="mb-3 text-sm font-semibold text-muted-foreground">
-              {cat === "humanities" ? "文系" : cat === "science" ? "理系" : cat === "medical" ? "医療系" : "その他"}
+              {language === "en"
+                ? cat === "humanities"
+                  ? "Humanities & Social Sciences"
+                  : cat === "science"
+                    ? "Sciences"
+                    : cat === "medical"
+                      ? "Medical Sciences"
+                      : "Others"
+                : cat === "humanities"
+                  ? "文系"
+                  : cat === "science"
+                    ? "理系"
+                    : cat === "medical"
+                      ? "医療系"
+                      : "その他"}
             </h2>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
               {faculties.map((f) => {
-                const count = getPassagesByFaculty(f.id).length;
+                const count = getPassagesByFaculty(f.id, language).length;
                 return (
                   <Card
                     key={f.id}
@@ -213,7 +278,13 @@ export default function SummaryDrillPage() {
                     <CardContent className="p-4">
                       <p className="font-medium text-sm">{f.label}</p>
                       <p className="mt-1 text-xs text-muted-foreground">
-                        {count > 0 ? `${count}本` : "準備中"}
+                        {count > 0
+                          ? language === "en"
+                            ? `${count} passage${count > 1 ? "s" : ""}`
+                            : `${count}本`
+                          : language === "en"
+                            ? "Coming soon"
+                            : "準備中"}
                       </p>
                     </CardContent>
                   </Card>
@@ -228,7 +299,8 @@ export default function SummaryDrillPage() {
 
   // ======== Step: 目次（学部内の長文選択） ========
   if (step === "menu" && selectedFaculty) {
-    const passages = getPassagesByFaculty(selectedFaculty.id);
+    const passages = getPassagesByFaculty(selectedFaculty.id, language);
+    const isEn = language === "en";
     return (
       <div className="mx-auto max-w-4xl space-y-6 p-4">
         <div className="flex items-center gap-3">
@@ -236,14 +308,18 @@ export default function SummaryDrillPage() {
             <ArrowLeft className="size-4" />
           </Button>
           <div className="flex-1">
-            <h1 className="text-xl font-bold">{selectedFaculty.label} — 目次</h1>
+            <h1 className="text-xl font-bold">
+              {selectedFaculty.label} {isEn ? "— Passages" : "— 目次"}
+            </h1>
             <p className="text-sm text-muted-foreground">
-              長文を選んで要約ドリルを始めましょう（全{passages.length}本）
+              {isEn
+                ? `Pick a passage to start (${passages.length} available)`
+                : `長文を選んで要約ドリルを始めましょう（全${passages.length}本）`}
             </p>
           </div>
           <Button variant="outline" size="sm" onClick={startRandomPassage}>
             <RotateCcw className="mr-1 size-3" />
-            ランダム
+            {isEn ? "Random" : "ランダム"}
           </Button>
         </div>
 
@@ -263,9 +339,9 @@ export default function SummaryDrillPage() {
                   <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                     <span className="truncate">{p.source}</span>
                     <Badge variant="secondary" className={DIFFICULTY_COLORS[p.difficulty]}>
-                      {DIFFICULTY_LABELS[p.difficulty]}
+                      {DIFFICULTY_LABELS[language][p.difficulty]}
                     </Badge>
-                    <span>{p.wordCount}字</span>
+                    <span>{isEn ? `${p.wordCount} words` : `${p.wordCount}字`}</span>
                   </div>
                 </div>
                 <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
@@ -280,6 +356,8 @@ export default function SummaryDrillPage() {
   // ======== Step: ドリル ========
   if (step === "drill" && passage) {
     const timeColor = timeLeft <= 60 ? "text-red-600" : timeLeft <= 180 ? "text-amber-600" : "text-muted-foreground";
+    const passageLang: PassageLanguage = passage.language ?? "ja";
+    const isEn = passageLang === "en";
 
     return (
       <div className="mx-auto max-w-6xl p-4">
@@ -294,9 +372,9 @@ export default function SummaryDrillPage() {
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <span>{selectedFaculty?.label}</span>
                 <Badge variant="secondary" className={DIFFICULTY_COLORS[passage.difficulty]}>
-                  {DIFFICULTY_LABELS[passage.difficulty]}
+                  {DIFFICULTY_LABELS[passageLang][passage.difficulty]}
                 </Badge>
-                <span>{passage.wordCount}字</span>
+                <span>{isEn ? `${passage.wordCount} words` : `${passage.wordCount}字`}</span>
               </div>
             </div>
           </div>
@@ -314,7 +392,7 @@ export default function SummaryDrillPage() {
             onClick={() => setMobileTab("read")}
           >
             <BookOpen className="mr-1 size-3" />
-            読む
+            {isEn ? "Read" : "読む"}
           </Button>
           <Button
             variant={mobileTab === "write" ? "default" : "outline"}
@@ -322,7 +400,7 @@ export default function SummaryDrillPage() {
             onClick={() => setMobileTab("write")}
           >
             <PenLine className="mr-1 size-3" />
-            書く
+            {isEn ? "Write" : "書く"}
           </Button>
         </div>
 
@@ -333,7 +411,7 @@ export default function SummaryDrillPage() {
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-sm">
                 <BookOpen className="size-4" />
-                読み物
+                {isEn ? "Passage" : "読み物"}
               </CardTitle>
               <p className="text-xs text-muted-foreground">{passage.source}</p>
             </CardHeader>
@@ -350,15 +428,20 @@ export default function SummaryDrillPage() {
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center gap-2 text-sm">
                   <PenLine className="size-4" />
-                  あなたの要約（400字以内）
+                  {isEn ? "Your Summary (150 words max)" : "あなたの要約（400字以内）"}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <ManuscriptEditor
                   value={summaryText}
                   onChange={setSummaryText}
-                  maxLength={400}
-                  placeholder="ここに要約を入力してください..."
+                  maxLength={isEn ? MAX_EN : MAX_JA}
+                  mode={passageLang}
+                  placeholder={
+                    isEn
+                      ? "Type your summary here..."
+                      : "ここに要約を入力してください..."
+                  }
                 />
               </CardContent>
             </Card>
@@ -368,11 +451,11 @@ export default function SummaryDrillPage() {
               disabled={isEvaluating || !summaryText.trim()}
             >
               {isEvaluating ? (
-                "採点中..."
+                isEn ? "Grading..." : "採点中..."
               ) : (
                 <>
                   <Send className="mr-2 size-4" />
-                  提出する
+                  {isEn ? "Submit" : "提出する"}
                 </>
               )}
             </Button>
@@ -384,13 +467,15 @@ export default function SummaryDrillPage() {
 
   // ======== Step: 結果 ========
   if (step === "result" && result && passage) {
+    const passageLang: PassageLanguage = passage.language ?? "ja";
+    const isEn = passageLang === "en";
     return (
       <div className="mx-auto max-w-3xl space-y-6 p-4">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={handleBackToMenu}>
             <ArrowLeft className="size-4" />
           </Button>
-          <h1 className="text-xl font-bold">採点結果</h1>
+          <h1 className="text-xl font-bold">{isEn ? "Results" : "採点結果"}</h1>
         </div>
 
         {/* スコア */}
@@ -399,7 +484,7 @@ export default function SummaryDrillPage() {
             <CardTitle className="flex items-center justify-between">
               <span className="flex items-center gap-2">
                 <Star className="size-4" />
-                合計スコア
+                {isEn ? "Total Score" : "合計スコア"}
               </span>
               <span className="text-2xl font-bold">{result.total} / 25</span>
             </CardTitle>
@@ -408,7 +493,7 @@ export default function SummaryDrillPage() {
             <div className="grid grid-cols-5 gap-3">
               {Object.entries(result.scores).map(([key, score]) => (
                 <div key={key} className="text-center">
-                  <div className="text-xs text-muted-foreground">{SCORE_LABELS[key]}</div>
+                  <div className="text-xs text-muted-foreground">{SCORE_LABELS[passageLang][key]}</div>
                   <div className="mt-1 text-lg font-bold">{score}</div>
                   <div className="mx-auto mt-1 flex gap-0.5 justify-center">
                     {[1, 2, 3, 4, 5].map((i) => (
@@ -427,7 +512,7 @@ export default function SummaryDrillPage() {
         {/* フィードバック */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm">講評</CardTitle>
+            <CardTitle className="text-sm">{isEn ? "Feedback" : "講評"}</CardTitle>
           </CardHeader>
           <CardContent className="text-sm leading-relaxed">
             {result.feedback}
@@ -438,7 +523,7 @@ export default function SummaryDrillPage() {
         {result.missedPoints?.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm">見落とした要点</CardTitle>
+              <CardTitle className="text-sm">{isEn ? "Missed Key Points" : "見落とした要点"}</CardTitle>
             </CardHeader>
             <CardContent>
               <ul className="list-disc space-y-1 pl-5 text-sm">
@@ -454,7 +539,7 @@ export default function SummaryDrillPage() {
         <div className="grid gap-4 md:grid-cols-2">
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm">あなたの要約</CardTitle>
+              <CardTitle className="text-sm">{isEn ? "Your Summary" : "あなたの要約"}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="whitespace-pre-wrap text-sm leading-relaxed">{summaryText}</p>
@@ -462,7 +547,7 @@ export default function SummaryDrillPage() {
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm">改善例</CardTitle>
+              <CardTitle className="text-sm">{isEn ? "Improved Example" : "改善例"}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="whitespace-pre-wrap text-sm leading-relaxed">{result.betterSummary}</p>
@@ -473,7 +558,7 @@ export default function SummaryDrillPage() {
         {/* 模範要約 */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm">模範要約</CardTitle>
+            <CardTitle className="text-sm">{isEn ? "Model Summary" : "模範要約"}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="whitespace-pre-wrap text-sm leading-relaxed">{passage.modelSummary}</p>
@@ -484,15 +569,15 @@ export default function SummaryDrillPage() {
         <div className="flex flex-wrap gap-3">
           <Button variant="outline" onClick={handleRetry}>
             <RotateCcw className="mr-2 size-4" />
-            もう一度（同じ長文）
+            {isEn ? "Retry (same passage)" : "もう一度（同じ長文）"}
           </Button>
           <Button variant="outline" onClick={handleBackToMenu}>
             <ChevronRight className="mr-2 size-4" />
-            別の長文を選ぶ
+            {isEn ? "Choose another passage" : "別の長文を選ぶ"}
           </Button>
           <Button onClick={handleBackToSelect}>
             <ChevronRight className="mr-2 size-4" />
-            別の学部を選ぶ
+            {isEn ? "Choose another faculty" : "別の学部を選ぶ"}
           </Button>
         </div>
       </div>

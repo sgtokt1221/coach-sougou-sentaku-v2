@@ -8,7 +8,15 @@ export async function POST(request: NextRequest) {
   if (authResult instanceof NextResponse) return authResult;
 
   const { uid } = authResult;
-  const { passageId, facultyId, passageTitle, passageText, summaryText, keyPoints } = await request.json();
+  const {
+    passageId,
+    facultyId,
+    passageTitle,
+    passageText,
+    summaryText,
+    keyPoints,
+    language,
+  } = await request.json();
 
   if (!passageText || !summaryText) {
     return NextResponse.json({ error: "passageText と summaryText は必須です" }, { status: 400 });
@@ -19,8 +27,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "ANTHROPIC_API_KEYが設定されていません" }, { status: 503 });
   }
 
+  const lang: "ja" | "en" = language === "en" ? "en" : "ja";
   const client = new Anthropic();
-  const prompt = buildSummaryEvaluationPrompt(passageText, summaryText, keyPoints ?? []);
+  const prompt = buildSummaryEvaluationPrompt(passageText, summaryText, keyPoints ?? [], lang);
 
   const response = await client.messages.create({
     model: "claude-sonnet-4-20250514",
@@ -46,6 +55,7 @@ export async function POST(request: NextRequest) {
           passageId: passageId ?? null,
           facultyId: facultyId ?? null,
           passageTitle: passageTitle ?? null,
+          language: lang,
           summaryText,
           scores: result.scores,
           total: result.total,

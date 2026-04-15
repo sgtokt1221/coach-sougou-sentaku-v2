@@ -3,11 +3,49 @@
  * 長文テキストと生徒の要約を受け取り、5段階×5軸で採点する。
  */
 
+export type DrillLanguage = "ja" | "en";
+
 export function buildSummaryEvaluationPrompt(
   passageText: string,
   summaryText: string,
   keyPoints: string[],
+  language: DrillLanguage = "ja",
 ): string {
+  if (language === "en") {
+    return `You are an expert grader of English summarization exercises. Read the passage and evaluate the student's summary.
+
+## Original Passage
+${passageText}
+
+## Student Summary
+${summaryText}
+
+## Key Points that a Good Summary Should Cover
+${keyPoints.map((p, i) => `${i + 1}. ${p}`).join("\n")}
+
+## Scoring Criteria (each on a 1-5 scale)
+1. **comprehension** — Does the summary accurately capture the main argument of the passage?
+2. **conciseness** — Is the summary free of redundancy and efficient in its wording?
+3. **keyPoints** — How well are the required key points covered?
+4. **structure** — Is the summary logically organized as a standalone paragraph?
+5. **expression** — Is the English idiomatic, grammatical, and appropriate in tone?
+
+## Output Format (output only JSON, no other text; feedback and betterSummary must be in English)
+{
+  "scores": {
+    "comprehension": 1-5,
+    "conciseness": 1-5,
+    "keyPoints": 1-5,
+    "structure": 1-5,
+    "expression": 1-5
+  },
+  "total": total (5-25),
+  "feedback": "Overall feedback in 2-3 sentences (English)",
+  "missedPoints": ["Missed point 1 (English)", "Missed point 2 (English)"],
+  "betterSummary": "Improved summary within 150 words (English)"
+}`;
+  }
+
   return `あなたは小論文・要約の採点官です。以下の「元の文章」を読み、「生徒の要約」を評価してください。
 
 ## 元の文章
