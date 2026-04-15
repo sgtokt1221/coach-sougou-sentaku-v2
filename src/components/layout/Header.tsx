@@ -34,7 +34,7 @@ export function Header() {
       .toUpperCase() ?? "?";
 
   return (
-    <header className="relative flex h-12 lg:h-14 items-center justify-between border-b border-border/60 bg-background px-4 gap-2">
+    <header className="relative flex h-14 items-center justify-between border-b border-border/60 bg-background px-4 gap-2">
       <Button
         variant="ghost"
         size="icon"
@@ -63,9 +63,9 @@ export function Header() {
         aria-label="ホームへ"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo.svg" alt="coach for 総合型選抜" className="h-6 dark:hidden" />
+        <img src="/logo.svg" alt="coach for 総合型選抜" className="h-9 lg:h-6 dark:hidden" />
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo-dark.svg" alt="coach for 総合型選抜" className="h-6 hidden dark:block" />
+        <img src="/logo-dark.svg" alt="coach for 総合型選抜" className="h-9 lg:h-6 hidden dark:block" />
       </Link>
 
       {showScopeSelector && (
