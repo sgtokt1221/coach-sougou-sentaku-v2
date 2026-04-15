@@ -27,6 +27,8 @@ interface Props {
   className?: string;
   /** SC + 練習集計の内訳（与えられた場合は breakdown を表示） */
   aggregate?: AggregateBreakdown;
+  /** 最小表示: ランクバッジとラベルのみ（スコア・日付・説明を非表示） */
+  minimal?: boolean;
 }
 
 export function SkillRankPanel({
@@ -41,12 +43,35 @@ export function SkillRankPanel({
   emptyMessage = "未受験",
   className,
   aggregate,
+  minimal = false,
 }: Props) {
   // aggregate が与えられている場合はその値を優先表示
   const displayRank = aggregate?.compositeRank ?? rank;
   const displayScore = aggregate?.compositeScore ?? score;
   const meta = displayRank ? RANK_META[displayRank] : null;
   const scoreDisplay = typeof displayScore === "number" ? displayScore.toFixed(1).replace(/\.0$/, "") : null;
+
+  if (minimal) {
+    return (
+      <Card className={cn("overflow-hidden", className)}>
+        <CardContent className="p-2.5 flex items-center gap-2.5">
+          {displayRank ? (
+            <SkillRankBadge rank={displayRank} size="md" />
+          ) : (
+            <div className="flex size-12 shrink-0 items-center justify-center rounded-full border-2 border-dashed border-muted-foreground/30 text-[10px] text-muted-foreground">
+              未
+            </div>
+          )}
+          <div className="min-w-0">
+            <p className="text-xs font-semibold text-foreground leading-tight">{label}</p>
+            <p className="text-[10px] text-muted-foreground leading-tight">
+              {displayRank ? `ランク${displayRank}` : "未受験"}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className={cn("overflow-hidden", className)}>

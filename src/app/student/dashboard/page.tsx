@@ -106,8 +106,46 @@ export default function StudentDashboard() {
         <SkillCheckRefreshBanner daysSinceLast={skillCheckStatus.daysSinceLast} />
       )}
 
-      {/* Row 1: Skills (2 カラム) + 志望校 横スクロール */}
-      <section className="grid grid-cols-2 lg:grid-cols-12 gap-2 lg:gap-3">
+      {/* Mobile: スキル minimal 2カラム */}
+      <section className="grid grid-cols-2 gap-2 lg:hidden">
+        <Link href="/student/skill-check" className="block">
+          <SkillRankPanel
+            minimal
+            label="小論文レベル"
+            rank={skillCheckStatus?.latestResult?.rank ?? null}
+            score={skillCheckStatus?.latestResult?.scores.total ?? null}
+            maxScore={50}
+            category={skillCheckStatus?.currentCategory ?? skillCheckStatus?.latestResult?.category ?? null}
+            emptyMessage="未受験 → 受ける"
+            className="hover:shadow-md transition-shadow cursor-pointer h-full"
+            aggregate={skillCheckStatus?.aggregate}
+          />
+        </Link>
+        <Link href="/student/interview-skill-check" className="block">
+          <SkillRankPanel
+            minimal
+            label="面接レベル"
+            rank={interviewSkillStatus?.latestResult?.rank ?? null}
+            score={interviewSkillStatus?.latestResult?.scores.total ?? null}
+            maxScore={40}
+            emptyMessage="未受験 → 受ける"
+            className="hover:shadow-md transition-shadow cursor-pointer h-full"
+            aggregate={interviewSkillStatus?.aggregate}
+          />
+        </Link>
+      </section>
+
+      {/* Mobile: 志望校を大きく（フル版） */}
+      <section className="lg:hidden">
+        <div className="flex items-center gap-1.5 mb-1.5">
+          <GraduationCap className="size-3.5 text-muted-foreground" />
+          <h2 className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">志望校</h2>
+        </div>
+        <TargetUniversityCards targetUniversities={targetUniversities} />
+      </section>
+
+      {/* Desktop: スキル2つ + 志望校 compact を 1 行 */}
+      <section className="hidden lg:grid lg:grid-cols-12 gap-3">
         <Link href="/student/skill-check" className="block lg:col-span-3">
           <SkillRankPanel
             label="小論文スキル"
@@ -137,7 +175,7 @@ export default function StudentDashboard() {
             aggregate={interviewSkillStatus?.aggregate}
           />
         </Link>
-        <div className="col-span-2 lg:col-span-6 min-w-0">
+        <div className="lg:col-span-6 min-w-0">
           <div className="flex items-center gap-1.5 mb-1.5">
             <GraduationCap className="size-3.5 text-muted-foreground" />
             <h2 className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">志望校</h2>
