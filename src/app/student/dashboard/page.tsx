@@ -106,6 +106,15 @@ export default function StudentDashboard() {
         <SkillCheckRefreshBanner daysSinceLast={skillCheckStatus.daysSinceLast} />
       )}
 
+      {/* Mobile: 志望校を一番上に大きく（フル版） */}
+      <section className="lg:hidden">
+        <div className="flex items-center gap-1.5 mb-1.5">
+          <GraduationCap className="size-3.5 text-muted-foreground" />
+          <h2 className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">志望校</h2>
+        </div>
+        <TargetUniversityCards targetUniversities={targetUniversities} />
+      </section>
+
       {/* Mobile: GrowthTree (左3/5) + スキル縦積み (右2/5) */}
       <section className="grid grid-cols-5 gap-2 lg:hidden">
         <Link href="/student/self-analysis" className="col-span-3 block group">
@@ -143,15 +152,6 @@ export default function StudentDashboard() {
             />
           </Link>
         </div>
-      </section>
-
-      {/* Mobile: 志望校を大きく（フル版） */}
-      <section className="lg:hidden">
-        <div className="flex items-center gap-1.5 mb-1.5">
-          <GraduationCap className="size-3.5 text-muted-foreground" />
-          <h2 className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">志望校</h2>
-        </div>
-        <TargetUniversityCards targetUniversities={targetUniversities} />
       </section>
 
       {/* Desktop: スキル2つ + 志望校 compact を 1 行 */}
