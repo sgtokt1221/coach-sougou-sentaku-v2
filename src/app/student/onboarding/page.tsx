@@ -8,13 +8,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UniversitySelectStep } from "@/components/onboarding/UniversitySelectStep";
 import { ProfileStep, type ProfileData } from "@/components/onboarding/ProfileStep";
 import { ConfirmStep } from "@/components/onboarding/ConfirmStep";
+import { SkillCheckStep } from "@/components/onboarding/SkillCheckStep";
 import { ArrowLeft, ArrowRight, Loader2, Search, HelpCircle } from "lucide-react";
 import { SuggestPanel } from "@/components/shared/SuggestPanel";
 import { updateProfile } from "@/lib/firebase/profile";
 import { TutorialWalkthrough } from "@/components/tutorial/TutorialWalkthrough";
 import type { StudentProfile } from "@/lib/types/user";
 
-const STEPS = ["志望校選択", "基礎情報", "確認"] as const;
+const STEPS = ["志望校選択", "基礎情報", "確認", "スキルチェック"] as const;
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -87,7 +88,15 @@ export default function OnboardingPage() {
 
   const handleConfirmNext = async () => {
     await saveAndComplete();
+    setStep(3);
+  };
+
+  const handleSkillCheckSkip = async () => {
     setShowTutorial(true);
+  };
+
+  const handleSkillCheckTake = () => {
+    router.push("/student/skill-check/new");
   };
 
   return (
@@ -204,38 +213,46 @@ export default function OnboardingPage() {
                 profileData={profileData}
               />
             )}
+            {step === 3 && (
+              <SkillCheckStep
+                onSkip={handleSkillCheckSkip}
+                onTake={handleSkillCheckTake}
+              />
+            )}
           </CardContent>
         </Card>
 
         {/* Navigation */}
-        <div className="flex items-center justify-between">
-          <Button
-            variant="ghost"
-            onClick={() => setStep(step - 1)}
-            disabled={step === 0}
-          >
-            <ArrowLeft className="size-4 mr-1" />
-            戻る
-          </Button>
+        {step < 3 && (
+          <div className="flex items-center justify-between">
+            <Button
+              variant="ghost"
+              onClick={() => setStep(step - 1)}
+              disabled={step === 0}
+            >
+              <ArrowLeft className="size-4 mr-1" />
+              戻る
+            </Button>
 
-          <div className="flex gap-2">
-            {step < 2 ? (
-              <Button onClick={() => setStep(step + 1)} disabled={!canNext}>
-                次へ
-                <ArrowRight className="size-4 ml-1" />
-              </Button>
-            ) : (
-              <Button onClick={handleConfirmNext} disabled={saving}>
-                {saving ? (
-                  <Loader2 className="size-4 mr-1 animate-spin" />
-                ) : (
-                  <ArrowRight className="size-4 mr-1" />
-                )}
-                次へ
-              </Button>
-            )}
+            <div className="flex gap-2">
+              {step < 2 ? (
+                <Button onClick={() => setStep(step + 1)} disabled={!canNext}>
+                  次へ
+                  <ArrowRight className="size-4 ml-1" />
+                </Button>
+              ) : (
+                <Button onClick={handleConfirmNext} disabled={saving}>
+                  {saving ? (
+                    <Loader2 className="size-4 mr-1 animate-spin" />
+                  ) : (
+                    <ArrowRight className="size-4 mr-1" />
+                  )}
+                  次へ
+                </Button>
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <TutorialWalkthrough

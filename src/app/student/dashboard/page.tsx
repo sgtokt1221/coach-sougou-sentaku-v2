@@ -25,6 +25,11 @@ import { AnimatedList } from "@/components/shared/AnimatedList";
 import { CountUp } from "@/components/shared/CountUp";
 import { GrowthTree } from "@/components/self-analysis/GrowthTree";
 import type { SelfAnalysis } from "@/lib/types/self-analysis";
+import { SkillRankCard } from "@/components/dashboard/SkillRankCard";
+import { SkillCheckRefreshBanner } from "@/components/skill-check/SkillCheckRefreshBanner";
+import { SkillRankPanel } from "@/components/skill-check/SkillRankPanel";
+import type { SkillCheckStatus } from "@/lib/types/skill-check";
+import type { InterviewSkillCheckStatus } from "@/lib/types/interview-skill-check";
 
 interface EssayHistoryItem {
   id: string;
@@ -103,6 +108,8 @@ export default function StudentDashboard() {
   const { data: essayData, isLoading: loadingHistory } = useAuthSWR<{ essays: EssayHistoryItem[] }>("/api/essay/history?userId=current");
   const { data: interviewData, isLoading: loadingInterview } = useAuthSWR<{ interviews: { id: string; startedAt: string; scores: { total: number } | null }[] }>("/api/interview/history?userId=current");
   const { data: selfAnalysisData } = useAuthSWR<SelfAnalysis | null>("/api/self-analysis?userId=me");
+  const { data: skillCheckStatus } = useAuthSWR<SkillCheckStatus>("/api/skill-check/status");
+  const { data: interviewSkillStatus } = useAuthSWR<InterviewSkillCheckStatus>("/api/interview-skill-check/status");
   const loadingTrend = loadingHistory || loadingInterview;
 
   // 自己分析の進捗と stepsData を抽出 (GrowthTree 用)
@@ -179,6 +186,28 @@ export default function StudentDashboard() {
 
       {/* Notification Permission Banner */}
       <NotificationPermissionBanner />
+
+      {/* Skill Check: 月次更新リマインド + 現在のランク */}
+      {skillCheckStatus?.needsRefresh && skillCheckStatus.daysSinceLast !== null && (
+        <SkillCheckRefreshBanner daysSinceLast={skillCheckStatus.daysSinceLast} />
+      )}
+      <SkillRankCard status={skillCheckStatus ?? null} />
+
+      {/* 面接スキル（小論文SCと並列、詳細は専用ページへ） */}
+      <Link href="/student/interview-skill-check" className="block">
+        <SkillRankPanel
+          label="面接スキル"
+          rank={interviewSkillStatus?.latestResult?.rank ?? null}
+          score={interviewSkillStatus?.latestResult?.scores.total ?? null}
+          maxScore={40}
+          takenAt={interviewSkillStatus?.latestResult?.takenAt ?? null}
+          daysSinceLast={interviewSkillStatus?.daysSinceLast ?? null}
+          subLabel={interviewSkillStatus?.needsRefresh ? "更新推奨" : undefined}
+          emptyMessage="まだ受けていません → 受ける"
+          className="hover:shadow-md transition-shadow cursor-pointer"
+          aggregate={interviewSkillStatus?.aggregate}
+        />
+      </Link>
 
       {/* Target Universities */}
       <div>

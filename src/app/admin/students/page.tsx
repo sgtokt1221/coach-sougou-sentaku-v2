@@ -19,8 +19,9 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { motion, useReducedMotion } from "framer-motion";
 import { useAuthSWR } from "@/lib/api/swr";
 import type { StudentListItem } from "@/lib/types/admin";
+import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
 
-type SortKey = "lastActivity" | "score" | "name";
+type SortKey = "lastActivity" | "score" | "name" | "rank" | "interviewRank";
 
 function getStatus(s: StudentListItem): "alert" | "inactive" | "active" {
   if (s.alertFlags.includes("repeated_weakness") || s.alertFlags.includes("declining"))
@@ -115,6 +116,8 @@ export default function AdminStudentsPage() {
   const sortOptions: { key: SortKey; label: string }[] = [
     { key: "lastActivity", label: "最終活動" },
     { key: "score", label: "スコア" },
+    { key: "rank", label: "小論文ランク" },
+    { key: "interviewRank", label: "面接ランク" },
     { key: "name", label: "名前" },
   ];
 
@@ -198,6 +201,14 @@ export default function AdminStudentsPage() {
                   <tr className="border-b bg-muted/50">
                     <th className="px-4 py-3 text-left font-medium">名前</th>
                     <th className="px-4 py-3 text-left font-medium hidden sm:table-cell">志望校</th>
+                    <th className="px-4 py-3 text-center font-medium">
+                      <span className="block text-[10px] uppercase tracking-wide text-muted-foreground">小論文</span>
+                      ランク
+                    </th>
+                    <th className="px-4 py-3 text-center font-medium hidden md:table-cell">
+                      <span className="block text-[10px] uppercase tracking-wide text-muted-foreground">面接</span>
+                      ランク
+                    </th>
                     <th className="px-4 py-3 text-center font-medium">最新スコア</th>
                     <th className="px-4 py-3 text-center font-medium hidden lg:table-cell">推移</th>
                     <th className="px-4 py-3 text-center font-medium hidden lg:table-cell">弱点</th>
@@ -235,6 +246,20 @@ export default function AdminStudentsPage() {
                             </div>
                           ) : (
                             <span className="text-xs text-muted-foreground">-</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          {s.currentSkillRank ? (
+                            <SkillRankBadge rank={s.currentSkillRank} size="sm" />
+                          ) : (
+                            <span className="text-xs text-muted-foreground">未</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-center hidden md:table-cell">
+                          {s.currentInterviewRank ? (
+                            <SkillRankBadge rank={s.currentInterviewRank} size="sm" />
+                          ) : (
+                            <span className="text-xs text-muted-foreground">未</span>
                           )}
                         </td>
                         <td className="px-4 py-3 text-center">

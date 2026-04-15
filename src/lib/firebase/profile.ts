@@ -12,6 +12,7 @@ export async function updateProfile(data: {
   grade?: number | null;
   school?: string;
   onboardingCompleted?: boolean;
+  academicCategory?: string;
 }): Promise<boolean> {
   const uid = auth?.currentUser?.uid;
   if (!uid || !db) return false;
@@ -23,6 +24,7 @@ export async function updateProfile(data: {
   if (data.grade !== undefined) updateData.grade = data.grade;
   if (data.school !== undefined) updateData.school = data.school;
   if (data.onboardingCompleted !== undefined) updateData.onboardingCompleted = data.onboardingCompleted;
+  if (data.academicCategory !== undefined) updateData.academicCategory = data.academicCategory;
 
   await updateDoc(doc(db, "users", uid), updateData);
   return true;

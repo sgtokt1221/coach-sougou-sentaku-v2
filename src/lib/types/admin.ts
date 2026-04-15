@@ -1,6 +1,7 @@
 import type { WeaknessRecord } from "./growth";
 import type { EssayScores } from "./essay";
 import type { EnglishCert } from "./user";
+import type { SkillRank, AcademicCategory, SkillCheckStatus } from "./skill-check";
 
 export interface StudentListItem {
   uid: string;
@@ -17,6 +18,20 @@ export interface StudentListItem {
   activeWeaknessCount: number;
   documentProgress: { completed: number; total: number };
   lastSessionAt: string | null;
+  /** スキルチェック総合ランク（未受験 null） */
+  currentSkillRank: SkillRank | null;
+  /** スキルチェック総合スコア 0-50 */
+  currentSkillScore: number | null;
+  /** 最後に受験した日時 */
+  lastSkillCheckedAt: string | null;
+  /** 受験系統 */
+  academicCategory: AcademicCategory | null;
+  /** 面接スキルランク */
+  currentInterviewRank: SkillRank | null;
+  /** 面接スキルスコア 0-40 */
+  currentInterviewScore: number | null;
+  /** 最後に面接スキルチェックを受けた日時 */
+  lastInterviewCheckedAt: string | null;
 }
 
 export interface StudentDetail {
@@ -39,6 +54,8 @@ export interface StudentDetail {
   interviewScoreTrend?: { date: string; total: number }[];
   lastActivityAt?: string | null;
   realtimeUnlocked?: boolean;
+  skillCheck?: SkillCheckStatus;
+  interviewSkillCheck?: import("./interview-skill-check").InterviewSkillCheckStatus;
 }
 
 export interface EssayListItem {

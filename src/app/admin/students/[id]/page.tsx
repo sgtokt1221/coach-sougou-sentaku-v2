@@ -60,6 +60,10 @@ import type { WeaknessRecord } from "@/lib/types/growth";
 import { getWeaknessReminderLevel } from "@/lib/types/growth";
 import { UniversitySelectStep } from "@/components/onboarding/UniversitySelectStep";
 import type { EnglishCert } from "@/lib/types/user";
+import { SkillRankPanel } from "@/components/skill-check/SkillRankPanel";
+import { CategorySelector } from "@/components/skill-check/CategorySelector";
+import type { SkillCheckStatus, AcademicCategory } from "@/lib/types/skill-check";
+import type { InterviewSkillCheckStatus } from "@/lib/types/interview-skill-check";
 
 const CERT_TYPES: { value: EnglishCert["type"]; label: string }[] = [
   { value: "EIKEN", label: "英検" },
@@ -124,6 +128,9 @@ export default function AdminStudentDetailPage() {
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [openSections, setOpenSections] = useState({ weaknesses: false, essays: false });
+  const [skillCheck, setSkillCheck] = useState<SkillCheckStatus | null>(null);
+  const [interviewSkillCheck, setInterviewSkillCheck] = useState<InterviewSkillCheckStatus | null>(null);
+  const [savingCategory, setSavingCategory] = useState(false);
 
   // Essay detail state
   const [essayDetailOpen, setEssayDetailOpen] = useState(false);
@@ -185,6 +192,44 @@ export default function AdminStudentDetailPage() {
     if (id) fetchDetail();
   }, [id]);
 
+  useEffect(() => {
+    async function fetchSkill() {
+      try {
+        const [essayRes, interviewRes] = await Promise.all([
+          authFetch(`/api/admin/students/${id}/skill-check`),
+          authFetch(`/api/admin/students/${id}/interview-skill-check`),
+        ]);
+        if (essayRes.ok) setSkillCheck(await essayRes.json());
+        if (interviewRes.ok) setInterviewSkillCheck(await interviewRes.json());
+      } catch {
+        // ignore
+      }
+    }
+    if (id) fetchSkill();
+  }, [id]);
+
+  async function handleChangeSkillCategory(cat: AcademicCategory) {
+    setSavingCategory(true);
+    try {
+      const res = await authFetch(`/api/admin/students/${id}/skill-check/category`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ category: cat }),
+      });
+      if (res.ok) {
+        toast.success("系統を更新しました");
+        // 再取得
+        const next = await authFetch(`/api/admin/students/${id}/skill-check`);
+        if (next.ok) setSkillCheck(await next.json());
+      } else {
+        toast.error("更新に失敗しました");
+      }
+    } catch {
+      toast.error("通信エラー");
+    } finally {
+      setSavingCategory(false);
+    }
+  }
 
   async function handleToggleRealtime() {
     if (!detail) return;
@@ -347,6 +392,50 @@ export default function AdminStudentDetailPage() {
           </p>
         </Card>
       </div>
+
+      {/* Skill Ranks: 小論文 + 面接。SC + 直近30日練習の合成ランクを表示 */}
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <SkillRankPanel
+          label="小論文スキル"
+          rank={skillCheck?.latestResult?.rank ?? null}
+          score={skillCheck?.latestResult?.scores.total ?? null}
+          takenAt={skillCheck?.latestResult?.takenAt ?? null}
+          daysSinceLast={skillCheck?.daysSinceLast ?? null}
+          category={skillCheck?.currentCategory ?? skillCheck?.latestResult?.category ?? null}
+          subLabel={skillCheck?.needsRefresh ? "更新推奨" : undefined}
+          aggregate={skillCheck?.aggregate}
+        />
+        <SkillRankPanel
+          label="面接スキル"
+          rank={interviewSkillCheck?.latestResult?.rank ?? null}
+          score={interviewSkillCheck?.latestResult?.scores.total ?? null}
+          maxScore={40}
+          takenAt={interviewSkillCheck?.latestResult?.takenAt ?? null}
+          daysSinceLast={interviewSkillCheck?.daysSinceLast ?? null}
+          subLabel={interviewSkillCheck?.needsRefresh ? "更新推奨" : undefined}
+          emptyMessage="未受験"
+          aggregate={interviewSkillCheck?.aggregate}
+        />
+      </div>
+
+      {/* 系統変更（管理者操作） */}
+      {skillCheck && (
+        <Card>
+          <CardContent className="flex flex-wrap items-center gap-3 py-3">
+            <span className="text-xs font-medium text-muted-foreground">
+              スキルチェック系統
+            </span>
+            <CategorySelector
+              value={skillCheck.currentCategory ?? null}
+              onChange={handleChangeSkillCategory}
+              disabled={savingCategory}
+            />
+            <p className="text-xs text-muted-foreground">
+              次回受験時に出題される系統を変更できます。
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Profile Card */}
       <Card>

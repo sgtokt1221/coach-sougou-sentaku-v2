@@ -5,7 +5,7 @@ export interface WeaknessRecord {
   lastOccurred: Date;
   improving: boolean;
   resolved: boolean;
-  source: "essay" | "interview" | "both";
+  source: "essay" | "interview" | "skill_check" | "interview_skill_check" | "both";
   reminderDismissedAt: Date | null;
 }
 

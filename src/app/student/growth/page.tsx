@@ -77,7 +77,7 @@ function WeaknessColumn({
 }) {
   const cfg = levelConfig[level];
   const sorted = [...items].sort((a, b) => {
-    const sourceOrder = { essay: 0, both: 1, interview: 2 };
+    const sourceOrder: Record<string, number> = { essay: 0, both: 1, skill_check: 2, interview: 3 };
     return (sourceOrder[a.source] ?? 1) - (sourceOrder[b.source] ?? 1);
   });
   return (

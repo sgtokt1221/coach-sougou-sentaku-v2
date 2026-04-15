@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 import type { StudentListItem } from "@/lib/types/admin";
+import {
+  computeEssayAggregate,
+  computeInterviewAggregate,
+} from "@/lib/skill-check/aggregate";
 
 function isDeclining(scores: number[]): boolean {
   if (scores.length < 3) return false;
@@ -102,6 +106,7 @@ export async function GET(request: NextRequest) {
     const order = searchParams.get("order") || "desc";
     const viewAs = searchParams.get("viewAs");
     const universityFilter = searchParams.get("university");
+    const rankFilter = searchParams.get("rank");
 
     // superadminがviewAsを指定している場合、そのadminの視点でフィルタ
     const effectiveUid = (role === "superadmin" && viewAs) ? viewAs : uid;
@@ -183,6 +188,16 @@ export async function GET(request: NextRequest) {
           ? (lastSessionDoc.scheduledAt.toDate?.()?.toISOString() ?? lastSessionDoc.scheduledAt)
           : null;
 
+        const lastSkillCheckedAt: string | null = data.lastSkillCheckedAt?.toDate?.()?.toISOString() ?? null;
+        const lastInterviewCheckedAt: string | null = data.lastInterviewCheckedAt?.toDate?.()?.toISOString() ?? null;
+
+        // 練習集計を反映した aggregate ランクを算出
+        // currentSkillRank/currentInterviewRank は「SC + 直近30日練習の合成」値
+        const [essayAgg, interviewAgg] = await Promise.all([
+          computeEssayAggregate(uid, typeof data.currentSkillScore === "number" ? data.currentSkillScore : null),
+          computeInterviewAggregate(uid, typeof data.currentInterviewScore === "number" ? data.currentInterviewScore : null),
+        ]);
+
         return {
           uid,
           displayName: data.displayName ?? "",
@@ -196,6 +211,13 @@ export async function GET(request: NextRequest) {
           activeWeaknessCount,
           documentProgress: { completed: completedDocs, total: totalDocs },
           lastSessionAt,
+          currentSkillRank: essayAgg.compositeRank,
+          currentSkillScore: essayAgg.compositeScore,
+          lastSkillCheckedAt,
+          academicCategory: data.academicCategory ?? null,
+          currentInterviewRank: interviewAgg.compositeRank,
+          currentInterviewScore: interviewAgg.compositeScore,
+          lastInterviewCheckedAt,
         };
       })
     );
@@ -214,6 +236,9 @@ export async function GET(request: NextRequest) {
         s.targetUniversities.includes(universityFilter)
       );
     }
+    if (rankFilter) {
+      filtered = filtered.filter((s) => s.currentSkillRank === rankFilter);
+    }
 
     filtered.sort((a, b) => {
       let cmp = 0;
@@ -221,6 +246,12 @@ export async function GET(request: NextRequest) {
         cmp = (a.latestScore ?? -1) - (b.latestScore ?? -1);
       } else if (sort === "name") {
         cmp = a.displayName.localeCompare(b.displayName, "ja");
+      } else if (sort === "rank" || sort === "interviewRank") {
+        const rankOrder: Record<string, number> = { S: 0, A: 1, B: 2, C: 3, D: 4 };
+        const field = sort === "interviewRank" ? "currentInterviewRank" : "currentSkillRank";
+        const aRank = a[field] ? rankOrder[a[field] as string] : 99;
+        const bRank = b[field] ? rankOrder[b[field] as string] : 99;
+        cmp = aRank - bRank;
       } else {
         const aTime = a.lastActivityAt
           ? new Date(a.lastActivityAt).getTime()
