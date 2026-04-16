@@ -89,8 +89,8 @@ export function RedPenText({ text, corrections }: RedPenTextProps) {
         type="button"
         onClick={() => setSelected(isSelected ? null : ci)}
         className={`underline decoration-wavy decoration-2 ${styles.underline} ${
-          isSelected ? `${styles.bg} rounded-sm` : "hover:bg-red-50/50"
-        } transition-colors cursor-pointer`}
+          isSelected ? `${styles.bg} rounded-sm` : "bg-yellow-50/60 hover:bg-yellow-100/80"
+        } transition-colors cursor-pointer rounded-sm`}
       >
         {text.slice(seg.start, seg.end)}
       </button>
@@ -160,17 +160,17 @@ export function RedPenText({ text, corrections }: RedPenTextProps) {
         </div>
       )}
 
-      {/* Mobile: 背景オーバーレイ + ボトムシート（兄弟要素で正しいスタッキング） */}
+      {/* Mobile: 背景オーバーレイ + ボトムシート（BottomNavより上に表示） */}
       {selectedCorrection && selectedStyles && (
         <>
           <button
             type="button"
             onClick={() => setSelected(null)}
-            className="lg:hidden fixed inset-0 z-40 bg-black/20 cursor-pointer"
+            className="lg:hidden fixed inset-0 z-[60] bg-black/20 cursor-pointer"
             aria-label="閉じる"
           />
-          <div className="lg:hidden fixed inset-x-0 bottom-0 z-50 animate-in slide-in-from-bottom duration-200">
-            <div className={`rounded-t-2xl border-t ${selectedStyles.border} ${selectedStyles.bg} p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-lg`}>
+          <div className="lg:hidden fixed inset-x-0 bottom-0 z-[70] animate-in slide-in-from-bottom duration-200">
+            <div className={`rounded-t-2xl border-t ${selectedStyles.border} ${selectedStyles.bg} p-4 pb-[calc(60px+env(safe-area-inset-bottom)+0.5rem)] shadow-lg`}>
               <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-black/10" />
               <div className="space-y-2">
                 <div className="flex items-center justify-between">

@@ -52,6 +52,7 @@ const studentNavGroups: NavGroup[] = [
     title: "Overview",
     items: [
       { label: "ダッシュボード", href: "/student/dashboard", icon: LayoutDashboard },
+      { label: "今週のまとめ", href: "/student/weekly-digest", icon: CalendarDays },
       { label: "成長", href: "/student/growth", icon: TrendingUp },
       { label: "フィードバック", href: "/student/feedback", icon: MessageSquare, badge: FeedbackBadge },
     ],
