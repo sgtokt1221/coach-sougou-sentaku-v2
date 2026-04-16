@@ -62,9 +62,12 @@ function findCorrectionsInText(text: string, corrections: LanguageCorrection[]):
 
 const LINE_HEIGHT = 32;
 const FONT_SIZE = 14;
+const CARD_MIN_WIDTH = 280;
 
 export function RedPenText({ text, corrections }: RedPenTextProps) {
   const [selected, setSelected] = useState<number | null>(null);
+  const [feedbackPos, setFeedbackPos] = useState<{ top: number; left: number } | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const feedbackRef = useRef<HTMLDivElement>(null);
   const buttonRefs = useRef<Map<number, HTMLButtonElement>>(new Map());
 
@@ -77,39 +80,32 @@ export function RedPenText({ text, corrections }: RedPenTextProps) {
   }, []);
 
   useEffect(() => {
-    if (selected !== null && feedbackRef.current) {
-      const tappedButton = buttonRefs.current.get(selected);
-      if (tappedButton) {
-        const scrollContainer = tappedButton.closest("[data-scroll-container]") ??
-          tappedButton.closest("main") ??
-          document.scrollingElement ??
-          document.documentElement;
-
-        const containerRect = scrollContainer instanceof HTMLElement
-          ? scrollContainer.getBoundingClientRect()
-          : { top: 0, height: window.innerHeight };
-
-        const btnRect = tappedButton.getBoundingClientRect();
-        const fbRect = feedbackRef.current.getBoundingClientRect();
-
-        const viewportHeight = containerRect.height || window.innerHeight;
-        const bottomNavHeight = 80;
-
-        const bothFitInView =
-          btnRect.top >= containerRect.top &&
-          fbRect.bottom <= containerRect.top + viewportHeight - bottomNavHeight;
-
-        if (!bothFitInView) {
-          const targetScrollTop = btnRect.top - containerRect.top - 60;
-          if (scrollContainer instanceof HTMLElement && scrollContainer !== document.documentElement) {
-            scrollContainer.scrollBy({ top: targetScrollTop, behavior: "smooth" });
-          } else {
-            window.scrollBy({ top: targetScrollTop, behavior: "smooth" });
-          }
-        }
+    if (selected !== null) {
+      const btn = buttonRefs.current.get(selected);
+      const container = containerRef.current;
+      if (btn && container) {
+        const btnRect = btn.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+        setFeedbackPos({
+          top: btnRect.bottom - containerRect.top + 4,
+          left: Math.max(0, Math.min(
+            btnRect.left - containerRect.left,
+            containerRect.width - CARD_MIN_WIDTH
+          )),
+        });
       }
+    } else {
+      setFeedbackPos(null);
     }
   }, [selected]);
+
+  useEffect(() => {
+    if (feedbackPos && feedbackRef.current) {
+      requestAnimationFrame(() => {
+        feedbackRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      });
+    }
+  }, [feedbackPos]);
 
   const segments = findCorrectionsInText(text, corrections);
 
@@ -154,8 +150,9 @@ export function RedPenText({ text, corrections }: RedPenTextProps) {
 
   return (
     <div className="space-y-3">
-      {/* 原稿用紙 */}
+      {/* 原稿用紙 + フローティングフィードバック */}
       <div
+        ref={containerRef}
         className="relative rounded-lg border border-amber-200/80 bg-[#fdf8f0] px-5 py-0"
         style={{
           backgroundImage: `repeating-linear-gradient(
@@ -165,6 +162,7 @@ export function RedPenText({ text, corrections }: RedPenTextProps) {
             #d4a574 ${LINE_HEIGHT}px
           )`,
           backgroundSize: `100% ${LINE_HEIGHT}px`,
+          overflow: "visible",
         }}
       >
         <div className="absolute left-10 top-0 bottom-0 w-px bg-red-300/50" />
@@ -178,34 +176,38 @@ export function RedPenText({ text, corrections }: RedPenTextProps) {
         >
           {parts.length > 0 ? parts : text}
         </p>
-      </div>
 
-      {/* インラインフィードバック（モバイル・デスクトップ共通） */}
-      {selectedCorrection && selectedStyles && (
-        <div
-          ref={feedbackRef}
-          className={`rounded-lg border ${selectedStyles.border} ${selectedStyles.bg} p-4 relative animate-in fade-in slide-in-from-top-2 duration-200`}
-        >
-          <button
-            type="button"
-            onClick={() => setSelected(null)}
-            className="absolute top-2 right-2 text-muted-foreground hover:text-foreground cursor-pointer p-1"
+        {/* フィードバックカード: タップした傍線部の直下にフローティング表示 */}
+        {selectedCorrection && selectedStyles && feedbackPos && (
+          <div
+            ref={feedbackRef}
+            className={`absolute z-10 w-[85vw] max-w-[320px] rounded-xl border ${selectedStyles.border} ${selectedStyles.bg} p-3.5 shadow-lg animate-in fade-in slide-in-from-top-1 duration-150`}
+            style={{
+              top: feedbackPos.top,
+              left: feedbackPos.left,
+            }}
           >
-            <X className="size-4" />
-          </button>
-          <div className="space-y-2">
-            <Badge variant="outline" className={`text-[10px] ${selectedStyles.badge}`}>
-              {selectedStyles.label}
-            </Badge>
-            <div className="flex items-start gap-2 text-sm flex-wrap">
-              <span className="line-through text-muted-foreground">{selectedCorrection.original}</span>
-              <ArrowRight className="size-3 text-muted-foreground shrink-0 mt-1" />
-              <span className="font-medium text-primary">{selectedCorrection.suggestion}</span>
+            <button
+              type="button"
+              onClick={() => setSelected(null)}
+              className="absolute top-2 right-2 text-muted-foreground hover:text-foreground cursor-pointer p-1"
+            >
+              <X className="size-4" />
+            </button>
+            <div className="space-y-1.5">
+              <Badge variant="outline" className={`text-[10px] ${selectedStyles.badge}`}>
+                {selectedStyles.label}
+              </Badge>
+              <div className="flex items-start gap-2 text-sm flex-wrap">
+                <span className="line-through text-muted-foreground">{selectedCorrection.original}</span>
+                <ArrowRight className="size-3 text-muted-foreground shrink-0 mt-1" />
+                <span className="font-medium text-primary">{selectedCorrection.suggestion}</span>
+              </div>
+              <p className="text-xs text-muted-foreground">{selectedCorrection.reason}</p>
             </div>
-            <p className="text-xs text-muted-foreground">{selectedCorrection.reason}</p>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       <p className="text-[10px] text-muted-foreground text-right">
         ※ 波線の箇所をタップすると修正案が表示されます
