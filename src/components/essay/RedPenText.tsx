@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, X } from "lucide-react";
 
@@ -60,11 +60,56 @@ function findCorrectionsInText(text: string, corrections: LanguageCorrection[]):
   return segments;
 }
 
-const LINE_HEIGHT = 32; // px
-const FONT_SIZE = 14; // px
+const LINE_HEIGHT = 32;
+const FONT_SIZE = 14;
 
 export function RedPenText({ text, corrections }: RedPenTextProps) {
   const [selected, setSelected] = useState<number | null>(null);
+  const feedbackRef = useRef<HTMLDivElement>(null);
+  const buttonRefs = useRef<Map<number, HTMLButtonElement>>(new Map());
+
+  const setButtonRef = useCallback((ci: number, el: HTMLButtonElement | null) => {
+    if (el) {
+      buttonRefs.current.set(ci, el);
+    } else {
+      buttonRefs.current.delete(ci);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (selected !== null && feedbackRef.current) {
+      const tappedButton = buttonRefs.current.get(selected);
+      if (tappedButton) {
+        const scrollContainer = tappedButton.closest("[data-scroll-container]") ??
+          tappedButton.closest("main") ??
+          document.scrollingElement ??
+          document.documentElement;
+
+        const containerRect = scrollContainer instanceof HTMLElement
+          ? scrollContainer.getBoundingClientRect()
+          : { top: 0, height: window.innerHeight };
+
+        const btnRect = tappedButton.getBoundingClientRect();
+        const fbRect = feedbackRef.current.getBoundingClientRect();
+
+        const viewportHeight = containerRect.height || window.innerHeight;
+        const bottomNavHeight = 80;
+
+        const bothFitInView =
+          btnRect.top >= containerRect.top &&
+          fbRect.bottom <= containerRect.top + viewportHeight - bottomNavHeight;
+
+        if (!bothFitInView) {
+          const targetScrollTop = btnRect.top - containerRect.top - 60;
+          if (scrollContainer instanceof HTMLElement && scrollContainer !== document.documentElement) {
+            scrollContainer.scrollBy({ top: targetScrollTop, behavior: "smooth" });
+          } else {
+            window.scrollBy({ top: targetScrollTop, behavior: "smooth" });
+          }
+        }
+      }
+    }
+  }, [selected]);
 
   const segments = findCorrectionsInText(text, corrections);
 
@@ -86,10 +131,11 @@ export function RedPenText({ text, corrections }: RedPenTextProps) {
     parts.push(
       <button
         key={`c-${ci}`}
+        ref={(el) => setButtonRef(ci, el)}
         type="button"
         onClick={() => setSelected(isSelected ? null : ci)}
         className={`underline decoration-wavy decoration-2 ${styles.underline} ${
-          isSelected ? `${styles.bg} rounded-sm` : "bg-yellow-50/60 hover:bg-yellow-100/80"
+          isSelected ? `${styles.bg} rounded-sm ring-2 ring-offset-1 ring-current/20` : "bg-yellow-50/60 hover:bg-yellow-100/80"
         } transition-colors cursor-pointer rounded-sm`}
       >
         {text.slice(seg.start, seg.end)}
@@ -108,11 +154,9 @@ export function RedPenText({ text, corrections }: RedPenTextProps) {
 
   return (
     <div className="space-y-3">
-      {/* 原稿用紙 — ボトムシート表示時は下にパディング確保 */}
+      {/* 原稿用紙 */}
       <div
-        className={`relative rounded-lg border border-amber-200/80 bg-[#fdf8f0] px-5 py-0 ${
-          selectedCorrection ? "pb-0 lg:pb-0" : ""
-        }`}
+        className="relative rounded-lg border border-amber-200/80 bg-[#fdf8f0] px-5 py-0"
         style={{
           backgroundImage: `repeating-linear-gradient(
             transparent 0px,
@@ -136,13 +180,16 @@ export function RedPenText({ text, corrections }: RedPenTextProps) {
         </p>
       </div>
 
-      {/* Desktop: インラインポップアップ（従来通り） */}
+      {/* インラインフィードバック（モバイル・デスクトップ共通） */}
       {selectedCorrection && selectedStyles && (
-        <div className={`hidden lg:block rounded-lg border ${selectedStyles.border} ${selectedStyles.bg} p-4 relative animate-in fade-in slide-in-from-top-2 duration-200`}>
+        <div
+          ref={feedbackRef}
+          className={`rounded-lg border ${selectedStyles.border} ${selectedStyles.bg} p-4 relative animate-in fade-in slide-in-from-top-2 duration-200`}
+        >
           <button
             type="button"
             onClick={() => setSelected(null)}
-            className="absolute top-2 right-2 text-muted-foreground hover:text-foreground cursor-pointer"
+            className="absolute top-2 right-2 text-muted-foreground hover:text-foreground cursor-pointer p-1"
           >
             <X className="size-4" />
           </button>
@@ -158,43 +205,6 @@ export function RedPenText({ text, corrections }: RedPenTextProps) {
             <p className="text-xs text-muted-foreground">{selectedCorrection.reason}</p>
           </div>
         </div>
-      )}
-
-      {/* Mobile: 背景オーバーレイ + ボトムシート（BottomNavより上に表示） */}
-      {selectedCorrection && selectedStyles && (
-        <>
-          <button
-            type="button"
-            onClick={() => setSelected(null)}
-            className="lg:hidden fixed inset-0 z-[60] bg-black/20 cursor-pointer"
-            aria-label="閉じる"
-          />
-          <div className="lg:hidden fixed inset-x-0 bottom-0 z-[70] animate-in slide-in-from-bottom duration-200">
-            <div className={`rounded-t-2xl border-t ${selectedStyles.border} ${selectedStyles.bg} p-4 pb-[calc(60px+env(safe-area-inset-bottom)+0.5rem)] shadow-lg`}>
-              <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-black/10" />
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Badge variant="outline" className={`text-[10px] ${selectedStyles.badge}`}>
-                    {selectedStyles.label}
-                  </Badge>
-                  <button
-                    type="button"
-                    onClick={() => setSelected(null)}
-                    className="text-muted-foreground hover:text-foreground cursor-pointer p-1"
-                  >
-                    <X className="size-4" />
-                  </button>
-                </div>
-                <div className="flex items-start gap-2 text-sm flex-wrap">
-                  <span className="line-through text-muted-foreground">{selectedCorrection.original}</span>
-                  <ArrowRight className="size-3 text-muted-foreground shrink-0 mt-1" />
-                  <span className="font-medium text-primary">{selectedCorrection.suggestion}</span>
-                </div>
-                <p className="text-xs text-muted-foreground">{selectedCorrection.reason}</p>
-              </div>
-            </div>
-          </div>
-        </>
       )}
 
       <p className="text-[10px] text-muted-foreground text-right">
