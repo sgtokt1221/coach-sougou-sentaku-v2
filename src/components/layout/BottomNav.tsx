@@ -103,22 +103,6 @@ interface QuickAction {
 
 const quickActions: QuickAction[] = [
   {
-    label: "小論文を提出",
-    description: "過去問を選んで添削を依頼",
-    href: "/student/essay/new",
-    icon: FileText,
-    iconBg: "bg-sky-100 dark:bg-sky-950/40",
-    iconColor: "text-sky-700 dark:text-sky-300",
-  },
-  {
-    label: "面接を始める",
-    description: "AIと個人面接の練習",
-    href: "/student/interview/new",
-    icon: Mic,
-    iconBg: "bg-violet-100 dark:bg-violet-950/40",
-    iconColor: "text-violet-700 dark:text-violet-300",
-  },
-  {
     label: "スキル診断",
     description: "小論文・面接のランクを測定",
     href: "/student/skill-check",
@@ -306,6 +290,56 @@ export function BottomNav() {
             <SheetTitle>Action!</SheetTitle>
           </SheetHeader>
           <div className="flex-1 overflow-y-auto overscroll-contain px-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+            {/* 小論文セクション */}
+            <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/60">
+              小論文
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              {essaySubMenu.map((a) => (
+                <Link
+                  key={a.href}
+                  href={a.href}
+                  onClick={() => setCreateOpen(false)}
+                  className="flex flex-col gap-2 rounded-xl border border-border bg-card p-4 transition-all hover:border-foreground/20 hover:shadow-sm active:scale-[0.98]"
+                >
+                  <div className={cn("flex size-10 items-center justify-center rounded-lg", a.iconBg)}>
+                    <a.icon className={cn("size-5", a.iconColor)} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold">{a.label}</p>
+                    <p className="text-[11px] text-muted-foreground leading-snug">{a.description}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+
+            {/* 面接セクション */}
+            <p className="mt-4 mb-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/60">
+              面接
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              {interviewSubMenu.map((a) => (
+                <Link
+                  key={a.href}
+                  href={a.href}
+                  onClick={() => setCreateOpen(false)}
+                  className="flex flex-col gap-2 rounded-xl border border-border bg-card p-4 transition-all hover:border-foreground/20 hover:shadow-sm active:scale-[0.98]"
+                >
+                  <div className={cn("flex size-10 items-center justify-center rounded-lg", a.iconBg)}>
+                    <a.icon className={cn("size-5", a.iconColor)} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold">{a.label}</p>
+                    <p className="text-[11px] text-muted-foreground leading-snug">{a.description}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+
+            {/* その他セクション */}
+            <p className="mt-4 mb-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/60">
+              その他
+            </p>
             <div className="grid grid-cols-2 gap-3">
               {quickActions.map((a) => (
                 <Link
@@ -323,20 +357,20 @@ export function BottomNav() {
                   </div>
                 </Link>
               ))}
-              <Link
-                href="/student/activities"
-                onClick={() => setCreateOpen(false)}
-                className="col-span-2 flex items-center gap-3 rounded-xl border border-border bg-card p-3 transition-all hover:border-foreground/20 active:scale-[0.99]"
-              >
-                <div className="flex size-9 items-center justify-center rounded-lg bg-rose-100 dark:bg-rose-950/40">
-                  <Award className="size-4 text-rose-700 dark:text-rose-300" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-medium">活動実績を登録</p>
-                  <p className="text-[11px] text-muted-foreground">部活・コンクール・資格など</p>
-                </div>
-              </Link>
             </div>
+            <Link
+              href="/student/activities"
+              onClick={() => setCreateOpen(false)}
+              className="mt-3 flex items-center gap-3 rounded-xl border border-border bg-card p-3 transition-all hover:border-foreground/20 active:scale-[0.99]"
+            >
+              <div className="flex size-9 items-center justify-center rounded-lg bg-rose-100 dark:bg-rose-950/40">
+                <Award className="size-4 text-rose-700 dark:text-rose-300" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-medium">活動実績を登録</p>
+                <p className="text-[11px] text-muted-foreground">部活・コンクール・資格など</p>
+              </div>
+            </Link>
           </div>
         </SheetContent>
       </Sheet>
