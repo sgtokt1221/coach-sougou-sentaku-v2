@@ -14,20 +14,29 @@ import {
   BookMarked,
   BookOpen,
   ClipboardList,
+  Users,
+  Bell,
+  FileBarChart,
+  CalendarCheck,
+  Shield,
+  GraduationCap,
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { MobileMenuContent } from "./MobileMenuContent";
 
 /**
  * ボトムナブ（モバイル専用）
- * - 5タブ: ホーム / 小論文 / 新規(+) / 面接 / その他
- * - 「小論文」「面接」はタップでサブメニューを展開する Bottom sheet を開く。
- * - 中央の「新規」は他タブと同じ見た目。タップで Bottom sheet を開いて
- *   小論文・面接・スキル診断・書類 への入口を提示する。
- * - セーフエリア対応: 背景を画面端まで伸ばしつつ、タブ本体は 60px に保つ。
+ * ロール別にタブを切り替え:
+ * - student:    ホーム / 小論文(展開) / Action!(FAB) / 面接(展開) / メニュー
+ * - admin:      ホーム / 生徒管理 / アラート / レポート / メニュー
+ * - teacher:    ホーム / シフト / 担当生徒 / セッション / メニュー
+ * - superadmin: ホーム / 管理者 / 生徒 / 講師 / メニュー
  */
+
+/* ─── 生徒用サブメニュー定義 ─── */
 
 interface SubMenuItem {
   label: string;
@@ -120,19 +129,99 @@ const quickActions: QuickAction[] = [
   },
 ];
 
+/* ─── ロール別タブ定義 ─── */
+
+type TabDef = {
+  label: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+};
+
+const adminTabs: TabDef[] = [
+  { label: "ホーム", href: "/admin/dashboard", icon: LayoutDashboard },
+  { label: "生徒", href: "/admin/students", icon: Users },
+  { label: "アラート", href: "/admin/alerts", icon: Bell },
+  { label: "レポート", href: "/admin/reports", icon: FileBarChart },
+];
+
+const teacherTabs: TabDef[] = [
+  { label: "ホーム", href: "/teacher/dashboard", icon: LayoutDashboard },
+  { label: "シフト", href: "/teacher/schedule", icon: CalendarCheck },
+  { label: "生徒", href: "/teacher/students", icon: Users },
+  { label: "セッション", href: "/teacher/sessions", icon: ClipboardList },
+];
+
+const superadminTabs: TabDef[] = [
+  { label: "ホーム", href: "/superadmin/dashboard", icon: LayoutDashboard },
+  { label: "管理者", href: "/superadmin/admins", icon: Shield },
+  { label: "生徒", href: "/superadmin/students", icon: Users },
+  { label: "講師", href: "/superadmin/teachers", icon: GraduationCap },
+];
+
 export function BottomNav() {
   const pathname = usePathname();
+  const { userProfile } = useAuth();
+  const role = userProfile?.role ?? "student";
+
   const [menuOpen, setMenuOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [essayOpen, setEssayOpen] = useState(false);
   const [interviewOpen, setInterviewOpen] = useState(false);
 
+  /* ─── admin / teacher / superadmin: シンプルタブ + メニュー ─── */
+  if (role === "admin" || role === "teacher" || role === "superadmin") {
+    const tabs =
+      role === "admin"
+        ? adminTabs
+        : role === "teacher"
+          ? teacherTabs
+          : superadminTabs;
+
+    return (
+      <>
+        <nav
+          className="lg:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background"
+          style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+        >
+          <div className="flex h-[60px] items-center justify-around px-2">
+            {tabs.map(({ label, href, icon: Icon }) => (
+              <TabLink
+                key={href}
+                label={label}
+                href={href}
+                Icon={Icon}
+                active={pathname.startsWith(href)}
+              />
+            ))}
+            <button
+              type="button"
+              onClick={() => setMenuOpen(true)}
+              className={cn(
+                "flex flex-1 flex-col items-center justify-center gap-0.5 py-1 transition-all duration-200",
+                menuOpen ? "text-primary" : "text-muted-foreground",
+              )}
+            >
+              <Menu className={cn("size-5 transition-transform duration-200", menuOpen && "scale-105")} />
+              <span className="text-[10px] font-medium leading-none">メニュー</span>
+            </button>
+          </div>
+        </nav>
+
+        <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+          <SheetContent side="left" showCloseButton className="w-[85vw] sm:w-[360px] p-0">
+            <MobileMenuContent onNavigate={() => setMenuOpen(false)} />
+          </SheetContent>
+        </Sheet>
+      </>
+    );
+  }
+
+  /* ─── student: FAB + サブメニュー展開 ─── */
   const essayActive = pathname.startsWith("/student/essay") || pathname.startsWith("/student/topic-input");
   const interviewActive = pathname.startsWith("/student/interview");
 
   return (
     <>
-      {/* 背景をセーフエリアまで伸ばし、タブ本体は 60px */}
       <nav
         className="lg:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
@@ -154,7 +243,7 @@ export function BottomNav() {
             <span className="text-[10px] font-medium leading-none">小論文</span>
           </button>
 
-          {/* 中央 "Action!" ボタン: 丸型のカラーFAB。タップで Bottom sheet */}
+          {/* 中央 "Action!" ボタン */}
           <button
             type="button"
             onClick={() => setCreateOpen(true)}
@@ -191,7 +280,7 @@ export function BottomNav() {
             <span className="text-[10px] font-medium leading-none">面接</span>
           </button>
 
-          {/* その他 = ハンバーガー */}
+          {/* メニュー */}
           <button
             type="button"
             onClick={() => setMenuOpen(true)}
@@ -206,7 +295,7 @@ export function BottomNav() {
         </div>
       </nav>
 
-      {/* ハンバーガー: スマホ専用レイアウト */}
+      {/* ハンバーガー */}
       <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
         <SheetContent side="left" showCloseButton className="w-[85vw] sm:w-[360px] p-0">
           <MobileMenuContent onNavigate={() => setMenuOpen(false)} />
