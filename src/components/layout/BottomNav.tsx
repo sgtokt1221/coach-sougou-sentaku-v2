@@ -165,8 +165,6 @@ export function BottomNav() {
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
-  const [essayOpen, setEssayOpen] = useState(false);
-  const [interviewOpen, setInterviewOpen] = useState(false);
 
   /* ─── admin / teacher / superadmin: シンプルタブ + メニュー ─── */
   if (role === "admin" || role === "teacher" || role === "superadmin") {
@@ -216,7 +214,7 @@ export function BottomNav() {
     );
   }
 
-  /* ─── student: FAB + サブメニュー展開 ─── */
+  /* ─── student: 直接リンク + FAB + メニュー ─── */
   const essayActive = pathname.startsWith("/student/essay") || pathname.startsWith("/student/topic-input");
   const interviewActive = pathname.startsWith("/student/interview");
 
@@ -227,21 +225,8 @@ export function BottomNav() {
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         <div className="flex h-[60px] items-center justify-around px-2">
-          {/* ホーム */}
           <TabLink label="ホーム" href="/student/dashboard" Icon={LayoutDashboard} active={pathname.startsWith("/student/dashboard")} />
-
-          {/* 小論文: タップでサブメニュー展開 */}
-          <button
-            type="button"
-            onClick={() => setEssayOpen(true)}
-            className={cn(
-              "flex flex-1 flex-col items-center justify-center gap-0.5 py-1 transition-all duration-200",
-              essayActive ? "text-primary" : "text-muted-foreground",
-            )}
-          >
-            <FileText className={cn("size-5 transition-transform duration-200", essayActive && "scale-105")} />
-            <span className="text-[10px] font-medium leading-none">小論文</span>
-          </button>
+          <TabLink label="小論文" href="/student/essay/new" Icon={FileText} active={essayActive} />
 
           {/* 中央 "Action!" ボタン */}
           <button
@@ -267,18 +252,7 @@ export function BottomNav() {
             <span className="text-[10px] font-semibold leading-none tracking-wide">Action!</span>
           </button>
 
-          {/* 面接: タップでサブメニュー展開 */}
-          <button
-            type="button"
-            onClick={() => setInterviewOpen(true)}
-            className={cn(
-              "flex flex-1 flex-col items-center justify-center gap-0.5 py-1 transition-all duration-200",
-              interviewActive ? "text-primary" : "text-muted-foreground",
-            )}
-          >
-            <Mic className={cn("size-5 transition-transform duration-200", interviewActive && "scale-105")} />
-            <span className="text-[10px] font-medium leading-none">面接</span>
-          </button>
+          <TabLink label="面接" href="/student/interview/new" Icon={Mic} active={interviewActive} />
 
           {/* メニュー */}
           <button
@@ -299,72 +273,6 @@ export function BottomNav() {
       <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
         <SheetContent side="left" showCloseButton className="w-[85vw] sm:w-[360px] p-0">
           <MobileMenuContent onNavigate={() => setMenuOpen(false)} />
-        </SheetContent>
-      </Sheet>
-
-      {/* 小論文サブメニュー bottom sheet */}
-      <Sheet open={essayOpen} onOpenChange={setEssayOpen}>
-        <SheetContent
-          side="bottom"
-          showCloseButton
-          className="rounded-t-2xl max-h-[85vh] overflow-hidden flex flex-col p-0"
-        >
-          <SheetHeader className="shrink-0">
-            <SheetTitle>小論文</SheetTitle>
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto overscroll-contain px-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-            <div className="grid grid-cols-2 gap-3">
-              {essaySubMenu.map((a) => (
-                <Link
-                  key={a.href}
-                  href={a.href}
-                  onClick={() => setEssayOpen(false)}
-                  className="flex flex-col gap-2 rounded-xl border border-border bg-card p-4 transition-all hover:border-foreground/20 hover:shadow-sm active:scale-[0.98]"
-                >
-                  <div className={cn("flex size-10 items-center justify-center rounded-lg", a.iconBg)}>
-                    <a.icon className={cn("size-5", a.iconColor)} />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold">{a.label}</p>
-                    <p className="text-[11px] text-muted-foreground leading-snug">{a.description}</p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </SheetContent>
-      </Sheet>
-
-      {/* 面接サブメニュー bottom sheet */}
-      <Sheet open={interviewOpen} onOpenChange={setInterviewOpen}>
-        <SheetContent
-          side="bottom"
-          showCloseButton
-          className="rounded-t-2xl max-h-[85vh] overflow-hidden flex flex-col p-0"
-        >
-          <SheetHeader className="shrink-0">
-            <SheetTitle>面接</SheetTitle>
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto overscroll-contain px-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-            <div className="grid grid-cols-2 gap-3">
-              {interviewSubMenu.map((a) => (
-                <Link
-                  key={a.href}
-                  href={a.href}
-                  onClick={() => setInterviewOpen(false)}
-                  className="flex flex-col gap-2 rounded-xl border border-border bg-card p-4 transition-all hover:border-foreground/20 hover:shadow-sm active:scale-[0.98]"
-                >
-                  <div className={cn("flex size-10 items-center justify-center rounded-lg", a.iconBg)}>
-                    <a.icon className={cn("size-5", a.iconColor)} />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold">{a.label}</p>
-                    <p className="text-[11px] text-muted-foreground leading-snug">{a.description}</p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
         </SheetContent>
       </Sheet>
 

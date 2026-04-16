@@ -128,6 +128,10 @@ const studentPrimary: PrimaryAction[] = [
 
 const studentSecondary: ListItem[] = [
   { label: "今週のまとめ", href: "/student/weekly-digest", icon: CalendarCheck },
+  { label: "ネタインプット", href: "/student/topic-input", icon: BookMarked },
+  { label: "テーマ・過去問", href: "/student/essay/themes", icon: BookOpen },
+  { label: "要約ドリル", href: "/student/essay/summary-drill", icon: ClipboardList },
+  { label: "テーマ別ドリル演習", href: "/student/interview/drill", icon: ClipboardList },
   { label: "志望校マッチング", href: "/student/universities", icon: GraduationCap },
   { label: "出願書類", href: "/student/documents", icon: FolderOpen },
   { label: "活動実績", href: "/student/activities", icon: Award },
@@ -417,10 +421,10 @@ function PrimaryActionCard({
   pathname: string;
   onNavigate?: () => void;
 }) {
-  const [expanded, setExpanded] = useState(false);
+  const hasChildren = a.children && a.children.length > 0;
+  const [expanded, setExpanded] = useState(hasChildren ?? false);
   const active = pathname.startsWith(a.href) ||
     a.children?.some((c) => pathname.startsWith(c.href));
-  const hasChildren = a.children && a.children.length > 0;
 
   return (
     <div className="col-span-1 flex flex-col">
