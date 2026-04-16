@@ -51,8 +51,9 @@ interface EssayScores {
 }
 
 interface RepeatedIssue {
-  issue: string;
+  area: string;
   count: number;
+  message?: string;
 }
 
 interface ImprovementSinceLast {
@@ -351,7 +352,7 @@ export default function EssayResultPage() {
                         : "bg-muted border-border",
                   ].join(" ")}
                 >
-                  <p className="text-sm flex-1">{item.issue}</p>
+                  <p className="text-sm flex-1">{item.area}</p>
                   <div className="flex items-center gap-2 shrink-0">
                     <span className="text-xs text-muted-foreground">{item.count}回</span>
                     {isCritical && (
