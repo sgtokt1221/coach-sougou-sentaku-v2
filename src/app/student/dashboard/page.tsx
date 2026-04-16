@@ -154,9 +154,18 @@ export default function StudentDashboard() {
         </div>
       </section>
 
-      {/* Desktop: スキル2つ + 志望校 compact を 1 行 */}
-      <section className="hidden lg:grid lg:grid-cols-12 gap-3">
-        <Link href="/student/skill-check" className="block lg:col-span-3">
+      {/* Desktop: 志望校を大きく（フル版、横並び） */}
+      <section className="hidden lg:block">
+        <div className="flex items-center gap-1.5 mb-2">
+          <GraduationCap className="size-3.5 text-muted-foreground" />
+          <h2 className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">志望校</h2>
+        </div>
+        <TargetUniversityCards targetUniversities={targetUniversities} />
+      </section>
+
+      {/* Desktop: スキル2つ */}
+      <section className="hidden lg:grid lg:grid-cols-2 gap-3">
+        <Link href="/student/skill-check" className="block">
           <SkillRankPanel
             label="小論文スキル"
             rank={skillCheckStatus?.latestResult?.rank ?? null}
@@ -171,7 +180,7 @@ export default function StudentDashboard() {
             aggregate={skillCheckStatus?.aggregate}
           />
         </Link>
-        <Link href="/student/interview-skill-check" className="block lg:col-span-3">
+        <Link href="/student/interview-skill-check" className="block">
           <SkillRankPanel
             label="面接スキル"
             rank={interviewSkillStatus?.latestResult?.rank ?? null}
@@ -185,13 +194,6 @@ export default function StudentDashboard() {
             aggregate={interviewSkillStatus?.aggregate}
           />
         </Link>
-        <div className="lg:col-span-6 min-w-0">
-          <div className="flex items-center gap-1.5 mb-1.5">
-            <GraduationCap className="size-3.5 text-muted-foreground" />
-            <h2 className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">志望校</h2>
-          </div>
-          <TargetUniversityCards compact targetUniversities={targetUniversities} />
-        </div>
       </section>
 
       {/* Row 2: 成長ツリー+弱点 | スコア推移 */}
