@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { mutate } from "swr";
 import { authFetch } from "@/lib/api/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -114,6 +115,12 @@ export default function SkillCheckNewPage() {
       try {
         sessionStorage.setItem("skillCheckResult", JSON.stringify(data.result));
       } catch {}
+      // SWR キャッシュを無効化してダッシュボード・履歴を再取得
+      await Promise.all([
+        mutate("/api/skill-check/status"),
+        mutate("/api/essay/history?userId=current"),
+        mutate("/api/self-analysis?userId=me"),
+      ]);
       router.push(`/student/skill-check/${data.result.id}`);
     } catch (err) {
       console.error(err);

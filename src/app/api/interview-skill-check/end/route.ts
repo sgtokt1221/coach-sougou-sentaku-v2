@@ -133,73 +133,94 @@ export async function POST(request: NextRequest) {
   const { adminDb } = await import("@/lib/firebase/admin");
   let resultId = `mock-${Date.now()}`;
 
-  if (adminDb) {
-    try {
-      const { FieldValue } = await import("firebase-admin/firestore");
-      const docRef = await adminDb.collection(`users/${userId}/interviewSkillChecks`).add({
-        userId,
-        scores,
-        rank,
-        feedback,
-        messages,
-        durationSec: durationSec ?? 0,
-        turnCount,
-        takenAt: FieldValue.serverTimestamp(),
-        version: "v1",
+  if (!adminDb) {
+    console.error("[interview-skill-check/end] adminDb is null — Firebase Admin SDK not initialized");
+    return NextResponse.json(
+      { error: "サーバー側の設定不備により保存できませんでした" },
+      { status: 500 },
+    );
+  }
+
+  const { FieldValue } = await import("firebase-admin/firestore");
+  const sanitize = <T>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
+
+  // 重要書き込み: interviewSkillCheck 本体 (失敗したら 500)
+  try {
+    const docRef = await adminDb.collection(`users/${userId}/interviewSkillChecks`).add({
+      userId,
+      scores: sanitize(scores),
+      rank,
+      feedback: sanitize(feedback),
+      messages: sanitize(messages),
+      durationSec: durationSec ?? 0,
+      turnCount,
+      takenAt: FieldValue.serverTimestamp(),
+      version: "v1",
+    });
+    resultId = docRef.id;
+  } catch (err) {
+    console.error("[interview-skill-check/end] Failed to write doc:", err);
+    return NextResponse.json(
+      { error: "面接スキルチェック結果の保存に失敗しました" },
+      { status: 500 },
+    );
+  }
+
+  // 補助書き込み: user doc (失敗しても続行)
+  try {
+    await adminDb.doc(`users/${userId}`).set(
+      {
+        interviewSkillCheckCompleted: true,
+        lastInterviewCheckedAt: FieldValue.serverTimestamp(),
+        currentInterviewRank: rank,
+        currentInterviewScore: scores.total,
+      },
+      { merge: true },
+    );
+  } catch (err) {
+    console.error("[interview-skill-check/end] Failed to update user doc:", err);
+  }
+
+  // 補助書き込み: 弱点 (失敗しても続行)
+  try {
+    const weaknessTags = feedback.improvements.slice();
+    if (weaknessTags.length > 0) {
+      const existingSnap = await adminDb
+        .collection(`users/${userId}/weaknesses`)
+        .where("resolved", "==", false)
+        .get();
+      const existing: WeaknessRecord[] = existingSnap.docs.map((d) => {
+        const w = d.data();
+        return {
+          area: w.area,
+          count: w.count ?? 0,
+          firstOccurred: w.firstOccurred?.toDate() ?? new Date(),
+          lastOccurred: w.lastOccurred?.toDate() ?? new Date(),
+          improving: w.improving ?? false,
+          resolved: w.resolved ?? false,
+          source: w.source ?? "essay",
+          reminderDismissedAt: w.reminderDismissedAt?.toDate() ?? null,
+        };
       });
-      resultId = docRef.id;
-
-      // デノーマライズ更新
-      await adminDb.doc(`users/${userId}`).set(
-        {
-          interviewSkillCheckCompleted: true,
-          lastInterviewCheckedAt: FieldValue.serverTimestamp(),
-          currentInterviewRank: rank,
-          currentInterviewScore: scores.total,
-        },
-        { merge: true },
-      );
-
-      // 弱点DBへ合流
-      const weaknessTags = feedback.improvements.slice();
-      if (weaknessTags.length > 0) {
-        const existingSnap = await adminDb
-          .collection(`users/${userId}/weaknesses`)
-          .where("resolved", "==", false)
-          .get();
-        const existing: WeaknessRecord[] = existingSnap.docs.map((d) => {
-          const w = d.data();
-          return {
+      const updated = updateWeaknessRecords(existing, weaknessTags, "interview_skill_check");
+      for (const w of updated) {
+        await adminDb.doc(`users/${userId}/weaknesses/${w.area}`).set(
+          {
             area: w.area,
-            count: w.count ?? 0,
-            firstOccurred: w.firstOccurred?.toDate() ?? new Date(),
-            lastOccurred: w.lastOccurred?.toDate() ?? new Date(),
-            improving: w.improving ?? false,
-            resolved: w.resolved ?? false,
-            source: w.source ?? "essay",
-            reminderDismissedAt: w.reminderDismissedAt?.toDate() ?? null,
-          };
-        });
-        const updated = updateWeaknessRecords(existing, weaknessTags, "interview_skill_check");
-        for (const w of updated) {
-          await adminDb.doc(`users/${userId}/weaknesses/${w.area}`).set(
-            {
-              area: w.area,
-              count: w.count,
-              firstOccurred: w.firstOccurred,
-              lastOccurred: w.lastOccurred,
-              improving: w.improving,
-              resolved: w.resolved,
-              source: w.source,
-              reminderDismissedAt: w.reminderDismissedAt,
-            },
-            { merge: true },
-          );
-        }
+            count: w.count,
+            firstOccurred: w.firstOccurred,
+            lastOccurred: w.lastOccurred,
+            improving: w.improving,
+            resolved: w.resolved,
+            source: w.source,
+            reminderDismissedAt: w.reminderDismissedAt,
+          },
+          { merge: true },
+        );
       }
-    } catch (err) {
-      console.warn("Failed to persist interview skill check result:", err);
     }
+  } catch (err) {
+    console.error("[interview-skill-check/end] Failed to update weaknesses:", err);
   }
 
   const result: InterviewSkillCheckResult = {

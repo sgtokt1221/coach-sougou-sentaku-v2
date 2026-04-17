@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { mutate } from "swr";
 import { authFetch } from "@/lib/api/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -111,6 +112,10 @@ export default function InterviewSkillCheckNew() {
       try {
         sessionStorage.setItem("interviewSkillCheckResult", JSON.stringify(data.result));
       } catch {}
+      await Promise.all([
+        mutate("/api/interview-skill-check/status"),
+        mutate("/api/interview/history?userId=current"),
+      ]);
       router.push(`/student/interview-skill-check/${data.result.id}`);
     } catch (err) {
       console.error(err);
