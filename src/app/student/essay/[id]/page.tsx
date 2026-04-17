@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SegmentControl } from "@/components/shared/SegmentControl";
 import {
   CheckCircle,
   AlertTriangle,
@@ -131,6 +131,7 @@ export default function EssayResultPage() {
   const [error, setError] = useState<string | null>(null);
   const [showBrushedUp, setShowBrushedUp] = useState(false);
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
+  const [tab, setTab] = useState<"overview"|"redpen"|"weaknesses"|"brushup"|"insights">("overview");
 
   function copyToClipboard(text: string, section: string) {
     navigator.clipboard.writeText(text).then(() => {
@@ -280,16 +281,16 @@ export default function EssayResultPage() {
               <div className="lg:grid lg:grid-cols-2 lg:gap-8 lg:items-center">
                 <div className="h-[220px] lg:h-[280px] mb-4 lg:mb-0">
                   <ResponsiveContainer width="100%" height="100%">
-                    <RadarChart data={radarData}>
-                      <PolarGrid stroke="#e2e8f0" />
-                      <PolarAngleAxis dataKey="subject" className="text-xs fill-slate-600" />
-                      <PolarRadiusAxis domain={[0, 10]} tick={false} axisLine={false} />
+                    <RadarChart data={radarData} outerRadius="80%">
+                      <PolarGrid gridType="polygon" stroke="#e2e8f0" />
+                      <PolarAngleAxis dataKey="subject" tick={{ fill: "#475569", fontSize: 12 }} />
+                      <PolarRadiusAxis domain={[0, 10]} tickCount={6} tick={{ fill: "#94a3b8", fontSize: 10 }} axisLine={false} />
                       <Radar
                         name="スコア"
                         dataKey="value"
-                        stroke="#3b82f6"
+                        stroke="#2563eb"
                         fill="#3b82f6"
-                        fillOpacity={0.15}
+                        fillOpacity={0.25}
                         strokeWidth={2}
                       />
                     </RadarChart>
@@ -422,26 +423,22 @@ export default function EssayResultPage() {
 
           {/* コンテンツ */}
           <div className="lg:hidden">
-            <Tabs defaultValue="overview" className="space-y-0">
-              <TabsList className="grid w-full grid-cols-5 bg-white/80 backdrop-blur-sm border shadow-sm">
-                <TabsTrigger value="overview" className="text-xs">
-                  <BarChart3 className="size-3 lg:size-4" />
-                </TabsTrigger>
-                <TabsTrigger value="redpen" className="text-xs">
-                  <SpellCheck className="size-3 lg:size-4" />
-                </TabsTrigger>
-                <TabsTrigger value="weaknesses" className="text-xs">
-                  <AlertTriangle className="size-3 lg:size-4" />
-                </TabsTrigger>
-                <TabsTrigger value="brushup" className="text-xs">
-                  <PenTool className="size-3 lg:size-4" />
-                </TabsTrigger>
-                <TabsTrigger value="insights" className="text-xs">
-                  <Lightbulb className="size-3 lg:size-4" />
-                </TabsTrigger>
-              </TabsList>
+            <div className="space-y-6">
+              <SegmentControl
+                value={tab}
+                onChange={setTab}
+                fullWidth
+                size="sm"
+                options={[
+                  { id: "overview", label: "概要" },
+                  { id: "redpen", label: "赤ペン" },
+                  { id: "weaknesses", label: "弱点" },
+                  { id: "brushup", label: "ブラッシュ" },
+                  { id: "insights", label: "洞察" },
+                ]}
+              />
 
-              <TabsContent value="overview" className="space-y-6 mt-6">
+              {tab === "overview" && (
                 <div id="overview-section">
                   {/* 全体講評 */}
                   <Card className="border-0 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 shadow-lg">
@@ -561,9 +558,9 @@ export default function EssayResultPage() {
                     );
                   })()}
                 </div>
-              </TabsContent>
+              )}
 
-              <TabsContent value="redpen" className="space-y-6 mt-6">
+              {tab === "redpen" && (
                 <div id="redpen-section">
                   {result.feedback.languageCorrections && result.feedback.languageCorrections.length > 0 ? (
                     <Card className="border-0 bg-white/80 backdrop-blur-sm shadow-lg">
@@ -595,9 +592,9 @@ export default function EssayResultPage() {
                     </Card>
                   )}
                 </div>
-              </TabsContent>
+              )}
 
-              <TabsContent value="weaknesses" className="space-y-6 mt-6">
+              {tab === "weaknesses" && (
                 <div id="weaknesses-section" className="space-y-6">
                   {/* 2カラムレイアウト: 良い点 & 改善点 */}
                   <div className="grid gap-6 lg:grid-cols-2">
@@ -769,9 +766,9 @@ export default function EssayResultPage() {
                     </Card>
                   )}
                 </div>
-              </TabsContent>
+              )}
 
-              <TabsContent value="brushup" className="space-y-6 mt-6">
+              {tab === "brushup" && (
                 <div id="brushup-section">
                   {/* ブラッシュアップ版 */}
                   {result.feedback.brushedUpText && (
@@ -845,9 +842,9 @@ export default function EssayResultPage() {
                     </Card>
                   )}
                 </div>
-              </TabsContent>
+              )}
 
-              <TabsContent value="insights" className="space-y-6 mt-6">
+              {tab === "insights" && (
                 <div id="insights-section">
                   {/* テーマ深掘り */}
                   {result.feedback.topicInsights && (
@@ -936,8 +933,8 @@ export default function EssayResultPage() {
                     </Card>
                   )}
                 </div>
-              </TabsContent>
-            </Tabs>
+              )}
+            </div>
           </div>
 
           {/* PC用レイアウト - 全セクションが見える形 */}

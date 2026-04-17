@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SegmentControl } from "@/components/shared/SegmentControl";
 import {
   CheckCircle,
   AlertTriangle,
@@ -107,6 +107,7 @@ export default function InterviewResultPage() {
   const [result, setResult] = useState<InterviewResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [showLog, setShowLog] = useState(false);
+  const [tab, setTab] = useState<"overview"|"qa"|"voice"|"video">("overview");
 
   useEffect(() => {
     async function load() {
@@ -390,23 +391,21 @@ export default function InterviewResultPage() {
 
           {/* コンテンツ */}
           <div className="lg:hidden">
-            <Tabs defaultValue="overview" className="space-y-0">
-              <TabsList className="grid w-full grid-cols-4 bg-white/80 backdrop-blur-sm border shadow-sm">
-                <TabsTrigger value="overview" className="text-xs">
-                  <BarChart3 className="size-3 lg:size-4" />
-                </TabsTrigger>
-                <TabsTrigger value="qa" className="text-xs">
-                  <MessageSquare className="size-3 lg:size-4" />
-                </TabsTrigger>
-                <TabsTrigger value="voice" className="text-xs">
-                  <Mic className="size-3 lg:size-4" />
-                </TabsTrigger>
-                <TabsTrigger value="video" className="text-xs">
-                  <Video className="size-3 lg:size-4" />
-                </TabsTrigger>
-              </TabsList>
+            <div className="space-y-6">
+              <SegmentControl
+                value={tab}
+                onChange={setTab}
+                fullWidth
+                size="sm"
+                options={[
+                  { id: "overview", label: "概要" },
+                  { id: "qa", label: "QA" },
+                  { id: "voice", label: "音声" },
+                  { id: "video", label: "映像" },
+                ]}
+              />
 
-              <TabsContent value="overview" className="space-y-6 mt-6">
+              {tab === "overview" && (
                 <div id="overview-section">
                   {/* 全体講評 */}
                   <Card className="border-0 bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50 shadow-lg">
@@ -476,9 +475,9 @@ export default function InterviewResultPage() {
                     )}
                   </div>
                 </div>
-              </TabsContent>
+              )}
 
-              <TabsContent value="qa" className="space-y-6 mt-6">
+              {tab === "qa" && (
                 <div id="qa-section">
                   {/* あなたへの個別アドバイス */}
                   {result.feedback.personalizedAdvice && result.feedback.personalizedAdvice.length > 0 && (
@@ -626,9 +625,9 @@ export default function InterviewResultPage() {
                     </Card>
                   )}
                 </div>
-              </TabsContent>
+              )}
 
-              <TabsContent value="voice" className="space-y-6 mt-6">
+              {tab === "voice" && (
                 <div id="voice-section">
                   {/* 音声分析 */}
                   {result.voiceAnalysis && (
@@ -655,9 +654,9 @@ export default function InterviewResultPage() {
                     </Card>
                   )}
                 </div>
-              </TabsContent>
+              )}
 
-              <TabsContent value="video" className="space-y-6 mt-6">
+              {tab === "video" && (
                 <div id="video-section">
                   {/* 映像分析 */}
                   {result.videoAnalysis && (
@@ -686,8 +685,8 @@ export default function InterviewResultPage() {
                     </Card>
                   )}
                 </div>
-              </TabsContent>
-            </Tabs>
+              )}
+            </div>
           </div>
 
           {/* PC用レイアウト - 全セクションが見える形 */}
