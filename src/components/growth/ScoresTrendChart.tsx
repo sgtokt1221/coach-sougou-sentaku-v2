@@ -68,9 +68,14 @@ function mergeSeries(
   interview.forEach((p) => {
     upsert(p.date).interview = p.total;
   });
-  // 元々の並び順 (essay→interview の結合順) を維持したいが、表示順は時系列にしたい
-  // data 入力時点で時系列ソート済みと仮定せず、ここでもソートする
-  return Array.from(byDate.values()).sort((a, b) => a.date.localeCompare(b.date));
+  // "M/D" を数値キーに変換して昇順ソート
+  // (localeCompare だと "4/11" < "4/8" となり左右が逆転する)
+  const toSortKey = (s: string): number => {
+    const parts = s.split("/").map(Number);
+    if (parts.length !== 2 || parts.some((n) => !Number.isFinite(n))) return 0;
+    return parts[0] * 100 + parts[1];
+  };
+  return Array.from(byDate.values()).sort((a, b) => toSortKey(a.date) - toSortKey(b.date));
 }
 
 export function ScoresTrendChart({ data, essayData, interviewData, height = 280 }: ScoresTrendChartProps) {

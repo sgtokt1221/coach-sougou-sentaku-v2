@@ -153,6 +153,7 @@ export default function GrowthPage() {
   const [trendTab, setTrendTab] = useState<"combined" | "essay" | "interview">("combined");
 
   // 添削 (小論文) のみの時系列 — 項目別チャート用に 5 項目を保持
+  // API が desc 順で返すので、ここで昇順にソートしてグラフ左=古, 右=新 にする
   const trendData = useMemo(() => {
     const essays = essayData?.essays ?? [];
     return essays
@@ -168,8 +169,11 @@ export default function GrowthPage() {
           expression: s.expression ?? 0,
           apAlignment: s.apAlignment ?? 0,
           originality: s.originality ?? 0,
+          _ts: d.getTime(),
         };
-      });
+      })
+      .sort((a, b) => a._ts - b._ts)
+      .map(({ _ts: _, ...rest }) => rest); // eslint-disable-line @typescript-eslint/no-unused-vars
   }, [essayData]);
 
   // 総合チャート用: 添削と面接を別系列で渡す
