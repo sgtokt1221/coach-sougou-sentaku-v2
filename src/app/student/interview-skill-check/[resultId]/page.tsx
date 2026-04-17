@@ -58,7 +58,7 @@ export default function InterviewSkillCheckResultPage({
       <div className="container mx-auto max-w-4xl p-6">
         <p className="text-sm text-muted-foreground">結果が見つかりませんでした。</p>
         <Link
-          href="/student/interview-skill-check"
+          href="/student/skill-check?tab=interview"
           className="text-sm text-primary hover:underline"
         >
           ← 戻る
@@ -70,7 +70,7 @@ export default function InterviewSkillCheckResultPage({
   return (
     <div className="container mx-auto max-w-4xl space-y-4 p-6">
       <Link
-        href="/student/interview-skill-check"
+        href="/student/skill-check?tab=interview"
         className="text-sm text-primary hover:underline"
       >
         ← 面接スキルチェック履歴へ

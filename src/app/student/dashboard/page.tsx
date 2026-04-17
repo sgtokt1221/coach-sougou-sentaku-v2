@@ -143,7 +143,7 @@ export default function StudentDashboard() {
               aggregate={skillCheckStatus?.aggregate}
             />
           </Link>
-          <Link href="/student/interview-skill-check" className="block flex-1">
+          <Link href="/student/skill-check?tab=interview" className="block flex-1">
             <SkillRankPanel
               minimal
               label="面接レベル"
@@ -184,7 +184,7 @@ export default function StudentDashboard() {
             aggregate={skillCheckStatus?.aggregate}
           />
         </Link>
-        <Link href="/student/interview-skill-check" className="block">
+        <Link href="/student/skill-check?tab=interview" className="block">
           <SkillRankPanel
             label="面接スキル"
             rank={interviewSkillStatus?.latestResult?.rank ?? null}

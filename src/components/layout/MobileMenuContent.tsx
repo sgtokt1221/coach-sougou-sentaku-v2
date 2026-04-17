@@ -337,7 +337,7 @@ export function MobileMenuContent({ onNavigate }: { onNavigate?: () => void }) {
         {isStudent && (
           <div className="mt-4 grid grid-cols-2 gap-2">
             <RankSummary label="小論文" rank={essayRank} href="/student/skill-check" onNavigate={onNavigate} />
-            <RankSummary label="面接" rank={interviewRank} href="/student/interview-skill-check" onNavigate={onNavigate} />
+            <RankSummary label="面接" rank={interviewRank} href="/student/skill-check?tab=interview" onNavigate={onNavigate} />
           </div>
         )}
       </div>
