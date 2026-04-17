@@ -44,8 +44,10 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { ScoreRing } from "@/components/shared/ScoreRing";
+import { RankBadge } from "@/components/shared/RankBadge";
 import { RedPenText } from "@/components/essay/RedPenText";
 import type { GrowthEvent, QuantitativeAnalysis } from "@/lib/types/essay";
+import { getRankFromPercentage, getScorePercentage } from "@/lib/score-rank";
 
 interface EssayScores {
   structure: number;
@@ -206,6 +208,9 @@ export default function EssayResultPage() {
     result.scores.apAlignment +
     result.scores.originality;
 
+  const percentage = getScorePercentage(totalScore, 50);
+  const rank = getRankFromPercentage(percentage);
+
   const radarData = [
     { subject: "構成", value: result.scores.structure },
     { subject: "論理性", value: result.scores.logic },
@@ -252,27 +257,35 @@ export default function EssayResultPage() {
             <CardContent className="relative pt-8 pb-6">
               {/* Mobile-first スコア表示 */}
               <div className="text-center mb-6">
-                <div className="inline-flex items-center gap-4 lg:gap-6">
-                  <ScoreRing score={totalScore} maxScore={50} size={80} strokeWidth={6} />
-                  <div className="text-left">
-                    <div className="text-4xl lg:text-5xl font-bold tabular-nums text-slate-900">
-                      {totalScore}
-                      <span className="text-xl text-muted-foreground/60 font-normal">/50</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground mt-1">総合スコア</p>
-                    {result.feedback.quantitativeAnalysis?.gapToPass !== undefined && (
-                      <div className="mt-2">
-                        {result.feedback.quantitativeAnalysis.gapToPass > 0 ? (
-                          <Badge variant="outline" className="text-amber-700 border-amber-300 bg-amber-50">
-                            合格まで{result.feedback.quantitativeAnalysis.gapToPass}点
-                          </Badge>
-                        ) : (
-                          <Badge className="bg-emerald-500 text-white border-0">
-                            合格圏内
-                          </Badge>
-                        )}
+                <div className="flex flex-col lg:flex-row items-center gap-6 lg:gap-8">
+                  {/* スコア情報 */}
+                  <div className="inline-flex items-center gap-4 lg:gap-6">
+                    <ScoreRing score={totalScore} maxScore={50} size={80} strokeWidth={6} />
+                    <div className="text-left">
+                      <div className="text-4xl lg:text-5xl font-bold tabular-nums text-slate-900">
+                        {totalScore}
+                        <span className="text-xl text-muted-foreground/60 font-normal">/50</span>
                       </div>
-                    )}
+                      <p className="text-sm text-muted-foreground mt-1">総合スコア</p>
+                      {result.feedback.quantitativeAnalysis?.gapToPass !== undefined && (
+                        <div className="mt-2">
+                          {result.feedback.quantitativeAnalysis.gapToPass > 0 ? (
+                            <Badge variant="outline" className="text-amber-700 border-amber-300 bg-amber-50">
+                              合格まで{result.feedback.quantitativeAnalysis.gapToPass}点
+                            </Badge>
+                          ) : (
+                            <Badge className="bg-emerald-500 text-white border-0">
+                              合格圏内
+                            </Badge>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* ランクバッジ */}
+                  <div className="mt-4 lg:mt-0">
+                    <RankBadge rank={rank} size="lg" />
                   </div>
                 </div>
               </div>

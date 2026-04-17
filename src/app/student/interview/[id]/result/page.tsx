@@ -43,10 +43,12 @@ import type { GrowthEvent } from "@/lib/types/essay";
 import type { RepeatedIssue } from "@/lib/types/essay";
 import type { SessionSummary } from "@/lib/types/session";
 import { ScoreRing } from "@/components/shared/ScoreRing";
+import { RankBadge } from "@/components/shared/RankBadge";
 import { TranscriptionView } from "@/components/interview/TranscriptionView";
 import VoiceAnalysisReport from "@/components/interview/VoiceAnalysisReport";
 import VideoAnalysisReport from "@/components/interview/VideoAnalysisReport";
 import AppearanceReport from "@/components/interview/AppearanceReport";
+import { getRankFromPercentage, getScorePercentage } from "@/lib/score-rank";
 
 interface InterviewResult {
   id: string;
@@ -191,6 +193,9 @@ export default function InterviewResultPage() {
   ];
   const scoreKeys = allScoreKeys.filter((k) => result.scores[k] != null);
 
+  const percentage = getScorePercentage(result.scores.total, 40);
+  const rank = getRankFromPercentage(percentage);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 pb-20 lg:pb-8">
       <div className="max-w-6xl mx-auto px-4 py-6 lg:px-6 lg:py-8">
@@ -231,19 +236,27 @@ export default function InterviewResultPage() {
             <CardContent className="relative pt-8 pb-6">
               {/* Mobile-first スコア表示 */}
               <div className="text-center mb-6">
-                <div className="inline-flex items-center gap-4 lg:gap-6">
-                  <ScoreRing score={result.scores.total} maxScore={50} size={80} strokeWidth={6} />
-                  <div className="text-left">
-                    <div className="text-4xl lg:text-5xl font-bold tabular-nums text-slate-900">
-                      {result.scores.total}
-                      <span className="text-xl text-muted-foreground/60 font-normal">/40</span>
+                <div className="flex flex-col lg:flex-row items-center gap-6 lg:gap-8">
+                  {/* スコア情報 */}
+                  <div className="inline-flex items-center gap-4 lg:gap-6">
+                    <ScoreRing score={result.scores.total} maxScore={40} size={80} strokeWidth={6} />
+                    <div className="text-left">
+                      <div className="text-4xl lg:text-5xl font-bold tabular-nums text-slate-900">
+                        {result.scores.total}
+                        <span className="text-xl text-muted-foreground/60 font-normal">/40</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">総合スコア</p>
+                      <div className="mt-2">
+                        <Badge className="bg-indigo-500 text-white border-0">
+                          {result.scores.total >= 32 ? "優秀" : result.scores.total >= 28 ? "良好" : result.scores.total >= 20 ? "標準" : "要改善"}
+                        </Badge>
+                      </div>
                     </div>
-                    <p className="text-sm text-muted-foreground mt-1">総合スコア</p>
-                    <div className="mt-2">
-                      <Badge className="bg-indigo-500 text-white border-0">
-                        {result.scores.total >= 32 ? "優秀" : result.scores.total >= 28 ? "良好" : result.scores.total >= 20 ? "標準" : "要改善"}
-                      </Badge>
-                    </div>
+                  </div>
+
+                  {/* ランクバッジ */}
+                  <div className="mt-4 lg:mt-0">
+                    <RankBadge rank={rank} size="lg" />
                   </div>
                 </div>
               </div>
@@ -299,7 +312,7 @@ export default function InterviewResultPage() {
         <div className="lg:hidden sticky top-0 z-30 backdrop-blur-md bg-white/80 border-b border-slate-200 px-4 py-3 mb-6 shadow-sm">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <ScoreRing score={result.scores.total} maxScore={50} size={40} strokeWidth={4} />
+              <ScoreRing score={result.scores.total} maxScore={40} size={40} strokeWidth={4} />
               <div>
                 <div className="text-lg font-bold tabular-nums text-slate-900">
                   {result.scores.total}<span className="text-sm text-muted-foreground/60 font-normal">/40</span>
