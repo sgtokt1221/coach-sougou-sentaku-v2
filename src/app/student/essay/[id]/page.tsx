@@ -1254,43 +1254,6 @@ export default function EssayResultPage() {
           </div>
         </div>
 
-        {/* アクションボタン - Sticky for mobile */}
-        <div className="sticky bottom-4 z-20 mt-8 space-y-3">
-          {/* 同テーマでリトライ */}
-          <Button
-            variant="outline"
-            className="w-full bg-white/90 backdrop-blur-sm shadow-md border-slate-200 hover:bg-white hover:shadow-lg transition-all"
-            onClick={() => {
-              const params = new URLSearchParams();
-              if (result.topic) params.set("topic", result.topic);
-              if (result.targetUniversity) params.set("universityId", result.targetUniversity);
-              if (result.targetFaculty) params.set("facultyId", result.targetFaculty);
-              router.push(`/student/essay/new?${params.toString()}`);
-            }}
-          >
-            <RefreshCw className="size-4 mr-2" />
-            同じテーマで書き直す
-          </Button>
-
-          {/* Primary Actions */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Button
-              variant="outline"
-              className="flex-1 bg-white/90 backdrop-blur-sm shadow-md border-slate-200 hover:bg-white hover:shadow-lg transition-all"
-              onClick={() => router.push("/student/dashboard")}
-            >
-              <LayoutDashboard className="size-4 mr-2" />
-              ダッシュボードへ
-            </Button>
-            <Button
-              className="flex-1 shadow-md hover:shadow-lg transition-all"
-              onClick={() => router.push("/student/essay/new")}
-            >
-              <RotateCcw className="size-4 mr-2" />
-              もう一度提出
-            </Button>
-          </div>
-        </div>
       </div>
     </div>
   );

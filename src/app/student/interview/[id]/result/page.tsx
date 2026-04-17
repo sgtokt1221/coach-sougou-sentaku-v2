@@ -886,26 +886,6 @@ export default function InterviewResultPage() {
           </div>
         </div>
 
-        {/* アクションボタン - Sticky for mobile */}
-        <div className="sticky bottom-4 z-20 mt-8">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Button
-              variant="outline"
-              className="flex-1 bg-white/90 backdrop-blur-sm shadow-md border-slate-200 hover:bg-white hover:shadow-lg transition-all"
-              onClick={() => router.push("/student/dashboard")}
-            >
-              <LayoutDashboard className="size-4 mr-2" />
-              ダッシュボードへ
-            </Button>
-            <Button
-              className="flex-1 shadow-md hover:shadow-lg transition-all"
-              onClick={() => router.push("/student/interview/new")}
-            >
-              <RotateCcw className="size-4 mr-2" />
-              もう一度練習
-            </Button>
-          </div>
-        </div>
       </div>
     </div>
   );
