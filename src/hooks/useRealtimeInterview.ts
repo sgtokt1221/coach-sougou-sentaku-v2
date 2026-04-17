@@ -56,6 +56,7 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
   const [messages, setMessages] = useState<InterviewMessage[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [nextAvailableAt, setNextAvailableAt] = useState<string | null>(null);
+  const [micStream, setMicStream] = useState<MediaStream | null>(null);
 
   const sessionRef = useRef<RealtimeSession | null>(null);
   const orchestratorRef = useRef<GdOrchestrator | null>(null);
@@ -84,6 +85,7 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
       micStreamRef.current.getTracks().forEach((t) => t.stop());
       micStreamRef.current = null;
     }
+    setMicStream(null);
     setStatus("closed");
   }, []);
 
@@ -153,6 +155,7 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
         },
       });
       micStreamRef.current = micStream;
+      setMicStream(micStream);
     } catch (err) {
       console.warn("[useRealtimeInterview] mic access failed", err);
       setStatus("fallback_error");
@@ -241,6 +244,7 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
     messages,
     error,
     nextAvailableAt,
+    micStream,
     start,
     stop,
     isActive: status === "connected",

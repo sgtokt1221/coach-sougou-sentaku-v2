@@ -19,7 +19,7 @@ import type { WeaknessRecord } from "@/lib/types/growth";
 import { useRealtimeInterview } from "@/hooks/useRealtimeInterview";
 import { INTERVIEW_MODE_LABELS } from "@/lib/types/interview";
 import { FluidLoader } from "@/components/shared/FluidLoader";
-import { refineWithTranscription } from "@/components/interview/VoiceAnalyzer";
+import VoiceAnalyzer, { refineWithTranscription } from "@/components/interview/VoiceAnalyzer";
 import VideoAnalyzer from "@/components/interview/VideoAnalyzer";
 import CameraPreview from "@/components/interview/CameraPreview";
 import {
@@ -760,6 +760,15 @@ export default function InterviewSessionPage() {
             if (gazeAlertTimerRef.current) clearTimeout(gazeAlertTimerRef.current);
             gazeAlertTimerRef.current = setTimeout(() => setGazeAlert(null), 6000);
           }}
+        />
+      )}
+
+      {/* Voice Analyzer (音声モード時のみ、Realtime のマイクストリームを共有) */}
+      {isVoiceMode && realtime.micStream && (
+        <VoiceAnalyzer
+          mediaStream={realtime.micStream}
+          isRecording={realtimeActive && !isEnding}
+          onAnalysisComplete={setVoiceAnalysis}
         />
       )}
 
