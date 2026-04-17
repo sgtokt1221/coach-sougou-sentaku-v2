@@ -11,10 +11,10 @@ export interface RankInfo {
 
 export function getRankFromPercentage(percentage: number): ScoreRank {
   if (percentage >= 90) return "S";
-  if (percentage >= 80) return "A";
-  if (percentage >= 70) return "B";
-  if (percentage >= 60) return "C";
-  if (percentage >= 50) return "D";
+  if (percentage >= 75) return "A";
+  if (percentage >= 60) return "B";
+  if (percentage >= 45) return "C";
+  if (percentage > 20) return "D";
   return "F";
 }
 
