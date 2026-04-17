@@ -196,9 +196,9 @@ export default function StudentDashboard() {
         </Link>
       </section>
 
-      {/* Row 2: 主要KPI+弱点 | スコア推移 | 右サイドバー */}
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-3 flex-1 min-h-0">
-        <div className="flex flex-col gap-2 min-h-0">
+      {/* Row 2: 成長ツリー+弱点 | スコア推移 */}
+      <section className="grid grid-cols-1 lg:grid-cols-12 gap-3 flex-1 min-h-0">
+        <div className="lg:col-span-5 flex flex-col gap-2 min-h-0">
           <Link href="/student/self-analysis" className="hidden lg:block group">
             <GrowthTree
               compact
@@ -208,9 +208,10 @@ export default function StudentDashboard() {
             />
           </Link>
           <WeaknessSummaryCompact />
+          <WeaknessReminderBanner maxItems={2} compact />
         </div>
 
-        <div>
+        <div className="lg:col-span-7">
           <Card className="rounded-lg border-border/60 h-full" style={{ boxShadow: "0 2px 5px rgba(50,50,93,0.1), 0 1px 2px rgba(0,0,0,0.06)" }}>
             <CardHeader className="pb-2 pt-3">
               <div className="flex items-center justify-between">
@@ -235,10 +236,6 @@ export default function StudentDashboard() {
               )}
             </CardContent>
           </Card>
-        </div>
-
-        <div className="flex flex-col gap-2 min-h-0">
-          <WeaknessReminderBanner maxItems={2} compact />
         </div>
       </section>
     </div>
