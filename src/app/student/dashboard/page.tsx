@@ -45,7 +45,7 @@ export default function StudentDashboard() {
 
   const { data: essayData, isLoading: loadingHistory } = useAuthSWR<{ essays: EssayHistoryItem[] }>("/api/essay/history?userId=current");
   const { data: interviewData, isLoading: loadingInterview } = useAuthSWR<{ interviews: { id: string; startedAt: string; scores: { total: number } | null }[] }>("/api/interview/history?userId=current");
-  const { data: selfAnalysisData } = useAuthSWR<SelfAnalysis | null>("/api/self-analysis?userId=me");
+  const { data: selfAnalysisData, isLoading: loadingSelfAnalysis } = useAuthSWR<SelfAnalysis | null>("/api/self-analysis?userId=me");
   const { data: skillCheckStatus } = useAuthSWR<SkillCheckStatus>("/api/skill-check/status");
   const { data: interviewSkillStatus } = useAuthSWR<InterviewSkillCheckStatus>("/api/interview-skill-check/status");
   const loadingTrend = loadingHistory || loadingInterview;
@@ -118,12 +118,16 @@ export default function StudentDashboard() {
       {/* Mobile: GrowthTree (左3/5) + スキル縦積み (右2/5) */}
       <section className="grid grid-cols-5 gap-2 lg:hidden">
         <Link href="/student/self-analysis" className="col-span-3 block group">
-          <GrowthTree
-            compact
-            completedSteps={saCompletedSteps}
-            stepsData={saStepsData}
-            className="group-hover:shadow-md transition-shadow h-full"
-          />
+          {loadingSelfAnalysis ? (
+            <div className="h-full min-h-[200px] rounded-2xl border border-border/40 bg-gradient-to-b from-sky-50 to-emerald-50/40 animate-pulse" />
+          ) : (
+            <GrowthTree
+              compact
+              completedSteps={saCompletedSteps}
+              stepsData={saStepsData}
+              className="group-hover:shadow-md transition-shadow h-full"
+            />
+          )}
         </Link>
         <div className="col-span-2 flex flex-col gap-2">
           <Link href="/student/skill-check" className="block flex-1">
@@ -200,12 +204,16 @@ export default function StudentDashboard() {
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-3 flex-1 min-h-0">
         <div className="lg:col-span-5 flex flex-col gap-2 min-h-0">
           <Link href="/student/self-analysis" className="hidden lg:block group">
-            <GrowthTree
-              compact
-              completedSteps={saCompletedSteps}
-              stepsData={saStepsData}
-              className="group-hover:shadow-md transition-shadow"
-            />
+            {loadingSelfAnalysis ? (
+              <div className="h-[280px] rounded-2xl border border-border/40 bg-gradient-to-b from-sky-50 to-emerald-50/40 animate-pulse" />
+            ) : (
+              <GrowthTree
+                compact
+                completedSteps={saCompletedSteps}
+                stepsData={saStepsData}
+                className="group-hover:shadow-md transition-shadow"
+              />
+            )}
           </Link>
           <WeaknessSummaryCompact />
           <WeaknessReminderBanner maxItems={2} compact />
