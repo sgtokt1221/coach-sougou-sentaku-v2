@@ -370,7 +370,7 @@ export function GrowthTree({
         }
       });
     },
-    { scope: scopeRef, dependencies: [completedSteps, currentStep, allDone] },
+    { scope: scopeRef, dependencies: [completedSteps, currentStep, allDone, stepsData] },
   );
 
   const handleFruitHover = (step: number) => {
