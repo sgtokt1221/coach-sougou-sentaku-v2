@@ -22,6 +22,17 @@ export default function InterviewSkillCheckResultPage({
   useEffect(() => {
     void (async () => {
       try {
+        const cached = sessionStorage.getItem("interviewSkillCheckResult");
+        if (cached) {
+          try {
+            const parsed: InterviewSkillCheckResult = JSON.parse(cached);
+            if (parsed.id === resultId) {
+              sessionStorage.removeItem("interviewSkillCheckResult");
+              setResult({ ...parsed, takenAt: new Date(parsed.takenAt) });
+              return;
+            }
+          } catch {}
+        }
         const res = await authFetch("/api/interview-skill-check/status");
         if (res.ok) {
           const status: InterviewSkillCheckStatus = await res.json();

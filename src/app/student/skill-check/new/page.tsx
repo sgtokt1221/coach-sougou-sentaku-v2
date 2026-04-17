@@ -111,6 +111,9 @@ export default function SkillCheckNewPage() {
       }
       const data = await res.json();
       toast.success("採点が完了しました");
+      try {
+        sessionStorage.setItem("skillCheckResult", JSON.stringify(data.result));
+      } catch {}
       router.push(`/student/skill-check/${data.result.id}`);
     } catch (err) {
       console.error(err);

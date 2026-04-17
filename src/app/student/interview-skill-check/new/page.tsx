@@ -108,6 +108,9 @@ export default function InterviewSkillCheckNew() {
       }
       const data = await res.json();
       toast.success("採点が完了しました");
+      try {
+        sessionStorage.setItem("interviewSkillCheckResult", JSON.stringify(data.result));
+      } catch {}
       router.push(`/student/interview-skill-check/${data.result.id}`);
     } catch (err) {
       console.error(err);

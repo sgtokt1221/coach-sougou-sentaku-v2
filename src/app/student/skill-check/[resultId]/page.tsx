@@ -19,7 +19,19 @@ export default function SkillCheckResultPage({
   useEffect(() => {
     void (async () => {
       try {
-        // status APIが直近6件を返すので、その中からIDマッチを探す
+        // 直後の提出ならsessionStorageに結果がある
+        const cached = sessionStorage.getItem("skillCheckResult");
+        if (cached) {
+          try {
+            const parsed: SkillCheckResult = JSON.parse(cached);
+            if (parsed.id === resultId) {
+              sessionStorage.removeItem("skillCheckResult");
+              setResult({ ...parsed, takenAt: new Date(parsed.takenAt) });
+              return;
+            }
+          } catch {}
+        }
+        // fallback: status APIから検索
         const res = await authFetch("/api/skill-check/status");
         if (res.ok) {
           const status: SkillCheckStatus = await res.json();
