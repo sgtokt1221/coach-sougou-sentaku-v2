@@ -398,7 +398,7 @@ export default function EssayResultPage() {
         <div className="lg:grid lg:grid-cols-[280px_1fr] lg:gap-8">
           {/* PC用ナビゲーション */}
           <div className="hidden lg:block">
-            <div className="sticky top-8 space-y-2">
+            <div className="sticky top-4 max-h-[calc(100vh-2rem)] overflow-y-auto space-y-2">
               <div className="space-y-1">
                 <button
                   onClick={() => document.getElementById('overview-section')?.scrollIntoView({ behavior: 'smooth' })}

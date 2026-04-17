@@ -390,12 +390,20 @@ function TabLink({
     <Link
       href={href}
       className={cn(
-        "flex flex-1 flex-col items-center justify-center gap-0.5 py-1 transition-all duration-200",
-        active ? "text-primary" : "text-muted-foreground",
+        "flex flex-1 flex-col items-center justify-center gap-0.5 py-1 rounded-lg transition-all duration-200",
+        active
+          ? "bg-indigo-50 text-indigo-700"
+          : "text-muted-foreground",
       )}
     >
-      <Icon className={cn("size-5 transition-transform duration-200", active && "scale-105")} />
-      <span className="text-[10px] font-medium leading-none">{label}</span>
+      <Icon className={cn(
+        "size-5 transition-transform duration-200",
+        active ? "text-indigo-600 scale-105" : "",
+      )} />
+      <span className={cn(
+        "text-[10px] leading-none",
+        active ? "font-semibold" : "font-medium",
+      )}>{label}</span>
     </Link>
   );
 }

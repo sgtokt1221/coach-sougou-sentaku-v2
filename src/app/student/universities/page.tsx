@@ -321,9 +321,11 @@ export default function UniversitiesPage() {
                   </CardContent>
                 </Card>
               ) : (
-                results.map((r) => (
-                  <ResultCard key={`${r.universityId}-${r.facultyId}`} result={r} />
-                ))
+                <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {results.map((r) => (
+                    <ResultCard key={`${r.universityId}-${r.facultyId}`} result={r} />
+                  ))}
+                </div>
               )}
             </div>
           )}

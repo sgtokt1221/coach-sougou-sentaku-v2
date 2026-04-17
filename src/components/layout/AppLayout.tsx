@@ -11,10 +11,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header />
-        <main
-          className="flex-1 overflow-y-auto bg-mesh lg:!pb-0"
-          style={{ paddingBottom: "calc(60px + env(safe-area-inset-bottom) + 16px)" }}
-        >
+        <main className="flex-1 overflow-y-auto bg-mesh pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-8">
           {children}
         </main>
       </div>

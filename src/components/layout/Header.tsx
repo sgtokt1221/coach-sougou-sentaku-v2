@@ -33,6 +33,31 @@ export function Header() {
       .slice(0, 2)
       .toUpperCase() ?? "?";
 
+  // 簡易パンくず生成
+  const getPageTitle = (pathname: string): string => {
+    if (pathname.startsWith("/student/essay/new")) return "小論文 / 新規作成";
+    if (pathname.startsWith("/student/essay")) return "小論文";
+    if (pathname.startsWith("/student/interview/new")) return "面接 / 新規作成";
+    if (pathname.startsWith("/student/interview")) return "面接";
+    if (pathname.startsWith("/student/activities")) return "活動実績";
+    if (pathname.startsWith("/student/documents")) return "出願書類";
+    if (pathname.startsWith("/student/universities")) return "大学検索";
+    if (pathname.startsWith("/student/sessions")) return "面談記録";
+    if (pathname.startsWith("/student/pricing")) return "プラン";
+    if (pathname.startsWith("/student/dashboard")) return "ダッシュボード";
+    if (pathname.startsWith("/admin/students")) return "生徒管理";
+    if (pathname.startsWith("/admin/alerts")) return "アラート";
+    if (pathname.startsWith("/admin/reports")) return "レポート";
+    if (pathname.startsWith("/admin/sessions")) return "セッション";
+    if (pathname.startsWith("/admin/universities")) return "大学管理";
+    if (pathname.startsWith("/admin/dashboard")) return "管理者ダッシュボード";
+    if (pathname.startsWith("/superadmin/admins")) return "管理者管理";
+    if (pathname.startsWith("/superadmin/students")) return "生徒管理";
+    if (pathname.startsWith("/superadmin/teachers")) return "講師管理";
+    if (pathname.startsWith("/superadmin/dashboard")) return "スーパーダッシュボード";
+    return "ホーム";
+  };
+
   return (
     <header className="relative flex h-14 items-center justify-between border-b border-border/60 bg-background px-4 gap-2">
       <Button
@@ -68,18 +93,25 @@ export function Header() {
         <img src="/logo-dark.svg" alt="coach for 総合型選抜" className="h-9 lg:h-6 hidden dark:block" />
       </Link>
 
+      {/* PC以上: タイトル領域 */}
+      <div className="hidden md:flex flex-1 items-center justify-center">
+        <h1 className="text-lg font-semibold text-foreground">
+          {getPageTitle(pathname)}
+        </h1>
+      </div>
+
       {showScopeSelector && (
         <div className="hidden lg:block">
           <AdminScopeSelector />
         </div>
       )}
 
-      <div className="flex-1" />
+      <div className="md:flex-initial lg:flex-1" />
 
       <DropdownMenu>
         <DropdownMenuTrigger
           render={
-            <button className="flex items-center gap-2.5 rounded-full px-2 py-1 outline-none transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring" />
+            <button className="flex items-center gap-2.5 rounded-full px-2 py-1 min-h-[44px] min-w-[44px] outline-none transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring" />
           }
         >
           <span className="hidden text-sm font-medium sm:block">

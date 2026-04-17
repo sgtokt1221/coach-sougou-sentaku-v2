@@ -37,6 +37,7 @@ import { ManuscriptEditor } from "@/components/essay/ManuscriptEditor";
 import { ReviewProgress } from "@/components/essay/ReviewProgress";
 import { EssayHistory } from "@/components/essay/EssayHistory";
 import { PastQuestionChart } from "@/components/essay/PastQuestionChart";
+import { SegmentControl } from "@/components/shared/SegmentControl";
 import { getThemeById, EssayTheme } from "@/data/essay-themes";
 import { getPastQuestionById, summarizeChartData, PastQuestion } from "@/data/essay-past-questions";
 
@@ -75,7 +76,7 @@ function StepIndicator({ current, total, labels: customLabels }: StepIndicatorPr
               >
                 {isDone ? <CheckCircle className="size-4" /> : step}
               </div>
-              <span className="text-xs text-muted-foreground hidden sm:block">
+              <span className={`text-xs text-muted-foreground ${isActive ? "inline" : "hidden sm:block"}`}>
                 {labels[i]}
               </span>
             </div>
@@ -494,7 +495,7 @@ export default function EssayNewPage() {
   }
 
   return (
-    <div className={`mx-auto px-4 py-5 lg:px-6 lg:py-8 ${step >= 2 && pastQuestion && (pastQuestion.sourceText || pastQuestion.chartData) ? "max-w-4xl" : "max-w-2xl"}`}>
+    <div className={`mx-auto px-4 py-5 lg:px-6 lg:py-8 ${step >= 2 && pastQuestion && (pastQuestion.sourceText || pastQuestion.chartData) ? "max-w-6xl lg:grid lg:grid-cols-2 lg:gap-8" : "max-w-2xl"}`}>
       <div className="flex items-center gap-2 mb-4">
         <Button
           variant="ghost"
@@ -510,32 +511,18 @@ export default function EssayNewPage() {
         </h1>
       </div>
 
-      <div className="flex rounded-lg border bg-muted p-1 mb-6">
-        <button
-          onClick={() => setActiveTab("new")}
-          className={[
-            "flex-1 flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
-            activeTab === "new"
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground",
-          ].join(" ")}
-        >
-          <Plus className="size-3.5" />
-          新規提出
-        </button>
-        <button
-          onClick={() => setActiveTab("history")}
-          className={[
-            "flex-1 flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
-            activeTab === "history"
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground",
-          ].join(" ")}
-        >
-          <History className="size-3.5" />
-          添削履歴
-        </button>
-      </div>
+      <SegmentControl
+        value={activeTab}
+        onChange={setActiveTab}
+        fullWidth
+        size="sm"
+        defaultAccent="blue"
+        options={[
+          { id: "new", label: "新規提出" },
+          { id: "history", label: "添削履歴" },
+        ]}
+        className="mb-6"
+      />
 
       {activeTab === "history" ? (
         <EssayHistory />
@@ -669,7 +656,7 @@ export default function EssayNewPage() {
           <button
             type="button"
             onClick={() => setInputMode("text")}
-            className={`flex-1 flex items-center justify-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+            className={`flex-1 flex items-center justify-center gap-1.5 rounded-md px-3 py-2 h-11 text-sm font-medium transition-colors ${
               inputMode === "text"
                 ? "bg-primary text-primary-foreground"
                 : "text-muted-foreground hover:text-foreground"
@@ -681,7 +668,7 @@ export default function EssayNewPage() {
           <button
             type="button"
             onClick={() => setInputMode("dictation")}
-            className={`flex-1 flex items-center justify-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+            className={`flex-1 flex items-center justify-center gap-1.5 rounded-md px-3 py-2 h-11 text-sm font-medium transition-colors ${
               inputMode === "dictation"
                 ? "bg-primary text-primary-foreground"
                 : "text-muted-foreground hover:text-foreground"
@@ -739,7 +726,7 @@ export default function EssayNewPage() {
               <Separator />
 
               <Button
-                className="w-full"
+                className="w-full min-h-[44px] py-3"
                 disabled={!selectedCompoundId}
                 onClick={() => setStep(2)}
               >
@@ -794,7 +781,7 @@ export default function EssayNewPage() {
               ) : (
                 <div className="space-y-2">
                   <Label>志望校を選択</Label>
-                  <div className="grid gap-2">
+                  <div className="grid gap-2 grid-cols-1 lg:grid-cols-2">
                     {resolved.map((item) => {
                       const compoundId = `${item.universityId}:${item.facultyId}`;
                       const isSelected = selectedCompoundId === compoundId;
@@ -803,7 +790,7 @@ export default function EssayNewPage() {
                           key={compoundId}
                           onClick={() => setSelectedCompoundId(compoundId)}
                           className={[
-                            "w-full text-left rounded-lg border p-3 transition-colors",
+                            "w-full text-left rounded-lg border p-3 min-h-[44px] py-3 transition-colors",
                             isSelected
                               ? "border-primary bg-primary/5"
                               : "border-border hover:bg-muted/50",
@@ -919,7 +906,7 @@ export default function EssayNewPage() {
               <Separator />
 
               <Button
-                className="w-full"
+                className="w-full min-h-[44px] py-3"
                 disabled={!selectedCompoundId}
                 onClick={() => setStep(2)}
               >
@@ -1067,7 +1054,7 @@ export default function EssayNewPage() {
               原稿用紙の写真を撮影してください。複数枚の場合はページ順に追加してください。
             </p>
             {images.length > 0 && (
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
                 {images.map((img, i) => (
                   <div key={i} className="relative group rounded-lg border overflow-hidden">
                     <img src={img.preview} alt={`${i + 1}枚目`} className="w-full aspect-[3/4] object-cover" />
