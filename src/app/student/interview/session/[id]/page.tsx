@@ -75,6 +75,8 @@ export default function InterviewSessionPage() {
   const realtimeTriedRef = useRef(false);
   /** Realtime 経路が有効 (true なら従来 Claude 経路は使わない) */
   const [realtimeActive, setRealtimeActive] = useState(false);
+  /** AI初回挨拶transcript重複防止フラグ */
+  const firstAiTranscriptSkippedRef = useRef(false);
   const realtime = useRealtimeInterview({
     mode: sessionInfo?.mode ?? "individual",
     universityId: sessionInfo?.universityId,
@@ -85,6 +87,15 @@ export default function InterviewSessionPage() {
     weaknessList: weaknesses.map((w) => `- ${w.area}(${w.count}回)`).join("\n") || "（過去の弱点なし）",
     presentationContent: sessionInfo?.presentationContent,
     onMessageAppend: (m) => {
+      // 音声モードで最初のAI transcript（挨拶）は事前表示のopeningMessageと重複するため、1回のみskip
+      if (
+        sessionInfo?.inputMode === "voice" &&
+        m.role === "ai" &&
+        !firstAiTranscriptSkippedRef.current
+      ) {
+        firstAiTranscriptSkippedRef.current = true;
+        return; // skip
+      }
       setMessages((prev) => [...prev, m]);
     },
   });
@@ -130,11 +141,8 @@ export default function InterviewSessionPage() {
     const info: SessionInfo = JSON.parse(stored);
     setSessionInfo(info);
 
-    // 音声モードは OpenAI Realtime が挨拶を生成するので、opening を messages に入れない
-    // テキストモードはサーバーが Claude で生成した openingMessage を初期メッセージとして表示
-    if (info.inputMode !== "voice") {
-      setMessages([{ role: "ai", content: info.openingMessage }]);
-    }
+    // 音声モードでも事前表示のため、両モードで初期メッセージを設定
+    setMessages([{ role: "ai", content: info.openingMessage }]);
 
     // 音声モードはカメラを自動有効化 (顔認識・視線指導)
     if (info.inputMode === "voice") {
@@ -473,15 +481,6 @@ export default function InterviewSessionPage() {
         </div>
       )}
 
-      {/* Realtime デバッグバッジ (診断用、安定したら削除) */}
-      {sessionInfo?.inputMode === "voice" && (
-        <div className="mx-4 mt-2 rounded-md border border-sky-300 bg-sky-50 dark:border-sky-700 dark:bg-sky-950/30 px-3 py-1.5 text-[11px] text-sky-800 dark:text-sky-200 font-mono">
-          <strong>Realtime:</strong> {realtime.status}
-          {realtime.error && (
-            <span className="ml-2 text-rose-600 dark:text-rose-300">err={realtime.error.slice(0, 200)}</span>
-          )}
-        </div>
-      )}
 
       {/* Gaze alert (リアルタイム視線指導) */}
       {gazeAlert && (

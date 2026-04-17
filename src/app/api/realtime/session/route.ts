@@ -44,9 +44,6 @@ async function issueEphemeralToken(
     model: "gpt-4o-mini-transcribe",
     language: "ja",
   };
-  if (transcriptionPrompt) {
-    transcriptionConfig.prompt = transcriptionPrompt;
-  }
 
   for (const model of REALTIME_MODEL_CANDIDATES) {
     try {
