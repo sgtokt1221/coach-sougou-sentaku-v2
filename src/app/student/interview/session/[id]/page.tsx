@@ -75,8 +75,6 @@ export default function InterviewSessionPage() {
   const realtimeTriedRef = useRef(false);
   /** Realtime 経路が有効 (true なら従来 Claude 経路は使わない) */
   const [realtimeActive, setRealtimeActive] = useState(false);
-  /** AI初回挨拶transcript重複防止フラグ */
-  const firstAiTranscriptSkippedRef = useRef(false);
   const realtime = useRealtimeInterview({
     mode: sessionInfo?.mode ?? "individual",
     universityId: sessionInfo?.universityId,
@@ -87,15 +85,6 @@ export default function InterviewSessionPage() {
     weaknessList: weaknesses.map((w) => `- ${w.area}(${w.count}回)`).join("\n") || "（過去の弱点なし）",
     presentationContent: sessionInfo?.presentationContent,
     onMessageAppend: (m) => {
-      // 音声モードで最初のAI transcript（挨拶）は事前表示のopeningMessageと重複するため、1回のみskip
-      if (
-        sessionInfo?.inputMode === "voice" &&
-        m.role === "ai" &&
-        !firstAiTranscriptSkippedRef.current
-      ) {
-        firstAiTranscriptSkippedRef.current = true;
-        return; // skip
-      }
       setMessages((prev) => [...prev, m]);
     },
   });
@@ -141,8 +130,13 @@ export default function InterviewSessionPage() {
     const info: SessionInfo = JSON.parse(stored);
     setSessionInfo(info);
 
-    // 音声モードでも事前表示のため、両モードで初期メッセージを設定
-    setMessages([{ role: "ai", content: info.openingMessage }]);
+    // 音声モードは Realtime API が transcript を append するので pre-insert しない
+    // テキストモードは Claude 生成の openingMessage を初期表示
+    if (info.inputMode === "voice") {
+      setMessages([]);
+    } else {
+      setMessages([{ role: "ai", content: info.openingMessage }]);
+    }
 
     // 音声モードはカメラを自動有効化 (顔認識・視線指導)
     if (info.inputMode === "voice") {
