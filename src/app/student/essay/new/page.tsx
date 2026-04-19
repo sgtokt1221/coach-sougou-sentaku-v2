@@ -721,6 +721,16 @@ export default function EssayNewPage() {
                       横書き
                     </button>
                   </div>
+                  {writingDirection === "vertical" && (
+                    <a
+                      href="/api/essay/template"
+                      download
+                      className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline mt-1"
+                    >
+                      <Download className="size-3" />
+                      B4 原稿用紙 PDF をダウンロード（印刷して手書き → OCR 精度向上）
+                    </a>
+                  )}
                 </div>
               )}
 
@@ -901,6 +911,16 @@ export default function EssayNewPage() {
                       横書き
                     </button>
                   </div>
+                  {writingDirection === "vertical" && (
+                    <a
+                      href="/api/essay/template"
+                      download
+                      className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline mt-1"
+                    >
+                      <Download className="size-3" />
+                      B4 原稿用紙 PDF をダウンロード（印刷して手書き → OCR 精度向上）
+                    </a>
+                  )}
                 </div>
               )}
 
@@ -1054,17 +1074,6 @@ export default function EssayNewPage() {
             <div className="space-y-3">
               <p className="text-sm text-muted-foreground">
                 原稿用紙の写真を撮影してください。複数枚の場合はページ順に追加してください。
-              </p>
-              <div className="flex items-center justify-center">
-                <Button variant="outline" size="sm" asChild>
-                  <a href="/api/essay/template" download>
-                    <Download className="size-3.5 mr-1.5" />
-                    作文用紙をダウンロード (B4)
-                  </a>
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground text-center">
-                印刷用原稿用紙。B4 原寸で印刷→手書きで書いて撮影すると OCR 精度がアップ
               </p>
             </div>
             {images.length > 0 && (
@@ -1246,22 +1255,6 @@ export default function EssayNewPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-3 lg:p-4 space-y-4">
-            {/* 原稿用紙ダウンロード */}
-            <div className="rounded-lg bg-blue-50 border border-blue-200 p-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-blue-800">手書き用原稿用紙</p>
-                  <p className="text-xs text-blue-600">B4原寸印刷でOCR精度向上</p>
-                </div>
-                <Button variant="outline" size="sm" asChild>
-                  <a href="/api/essay/template" download>
-                    <Download className="size-3.5 mr-1.5" />
-                    ダウンロード
-                  </a>
-                </Button>
-              </div>
-            </div>
-
             {/* 確認済み画像一覧 */}
             {images.length > 0 && (
               <div className="space-y-3">

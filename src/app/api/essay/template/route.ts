@@ -45,13 +45,11 @@ export async function GET() {
       });
     });
 
-    // 2. ヘッダーフィールド（氏名・学校・大学名・学部名・日付）
+    // 2. ヘッダーフィールド枠のみ（ラベルは印刷後に手書き。pdf-lib の標準フォントは日本語非対応のため）
     const headerFields = getHeaderFieldCoordinates();
-    const labels = ['氏名', '学校名', '志望大学', '学部', '日付'];
     const fields = [headerFields.name, headerFields.school, headerFields.university, headerFields.department, headerFields.date];
 
-    fields.forEach((field, index) => {
-      // フィールド枠線
+    fields.forEach((field) => {
       page.drawRectangle({
         x: field.x,
         y: TEMPLATE_PAGE_PT.height - field.y - field.height,
@@ -59,14 +57,6 @@ export async function GET() {
         height: field.height,
         borderColor: veryLightGray,
         borderWidth: 1
-      });
-
-      // ラベル（小さい文字で左上に配置）
-      page.drawText(labels[index], {
-        x: field.x + 2,
-        y: TEMPLATE_PAGE_PT.height - field.y - 8,
-        size: 6,
-        color: lightGray
       });
     });
 
@@ -96,17 +86,17 @@ export async function GET() {
       });
     }
 
-    // 4. クレジット（右下）
-    page.drawText('© Coach for 総合型選抜', {
-      x: TEMPLATE_PAGE_PT.width - 120,
+    // 4. クレジット（右下、ASCII のみ）
+    page.drawText('Coach for Sogo-gata Sentaku', {
+      x: TEMPLATE_PAGE_PT.width - 150,
       y: 20,
       size: 8,
       color: lightGray
     });
 
-    // 5. 印刷注意書き（フッター中央）
-    page.drawText('B4原寸印刷推奨 / A4縮小印刷不可', {
-      x: TEMPLATE_PAGE_PT.width / 2 - 80,
+    // 5. 印刷注意書き（ASCII のみ）
+    page.drawText('Print on B4 at 100% scale (no shrink to fit)', {
+      x: TEMPLATE_PAGE_PT.width / 2 - 120,
       y: 10,
       size: 8,
       color: lightGray
