@@ -689,16 +689,13 @@ export default function InterviewSessionPage() {
         )}
       </div>
 
-      {/* Input */}
+      {/* Input: テキストモードは常時、音声モードはレート制限・エラー時のみ */}
+      {(!isVoiceMode ||
+        realtime.status === "fallback_rate_limited" ||
+        realtime.status === "fallback_error") && (
       <div className="px-4 py-3 border-t bg-background shrink-0">
         {isVoiceMode ? (
-          // 音声モードは OpenAI Realtime API が直接双方向音声を扱う
-          realtimeActive ? (
-            <div className="flex items-center justify-center gap-2 py-3 text-sm text-muted-foreground">
-              <span className="inline-flex size-2 rounded-full bg-emerald-500 animate-pulse" />
-              マイクが常時有効です。自然に話してください
-            </div>
-          ) : realtime.status === "fallback_rate_limited" ? (
+          realtime.status === "fallback_rate_limited" ? (
             <div className="flex flex-col items-center justify-center gap-1 py-3 text-sm text-amber-700">
               <span>音声モードの面接は 7 日に 1 回までです</span>
               {realtime.nextAvailableAt && (
@@ -710,15 +707,10 @@ export default function InterviewSessionPage() {
             </div>
           ) : realtime.status === "fallback_error" ? (
             <div className="flex flex-col items-center justify-center gap-1 py-3 text-sm text-rose-600">
-              <span>Realtime 接続に失敗しました</span>
+              <span>接続に失敗しました</span>
               {realtime.error && <span className="text-[11px] font-mono">{realtime.error.slice(0, 200)}</span>}
             </div>
-          ) : (
-            <div className="flex items-center justify-center gap-2 py-3 text-sm text-muted-foreground">
-              <span className="inline-flex size-2 rounded-full bg-sky-500 animate-pulse" />
-              Realtime セッションを準備中... ({realtime.status})
-            </div>
-          )
+          ) : null
         ) : (
           <div className="flex gap-2">
             <input
@@ -741,6 +733,7 @@ export default function InterviewSessionPage() {
           </div>
         )}
       </div>
+      )}
 
       {/* Camera Preview & Video Analyzer */}
       {videoStream && <CameraPreview mediaStream={videoStream} />}
