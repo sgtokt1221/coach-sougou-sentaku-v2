@@ -2,14 +2,12 @@ import { NextResponse } from 'next/server';
 import { PDFDocument, rgb } from 'pdf-lib';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import sharp from 'sharp';
 import {
   TEMPLATE_PAGE_PT,
   TEMPLATE_GRID,
   TEMPLATE_MARGINS,
   getFiducialMarkerCoordinates,
   getGridStartCoordinates,
-  getHeaderFieldCoordinates,
   getGridSize
 } from '@/lib/essay/template-layout';
 
@@ -50,14 +48,10 @@ export async function GET() {
       });
     });
 
-    // 2. ロゴを読み込んで埋め込み (SVG → sharp で PNG 化)
+    // 2. ロゴを埋め込み (事前生成した PNG を使用。サーバーの sharp に librsvg がなくても確実に描画される)
     try {
-      const logoPath = path.join(process.cwd(), 'public', 'logo.svg');
-      const svgBuffer = await readFile(logoPath);
-      const pngBuffer = await sharp(svgBuffer)
-        .resize({ width: 480, withoutEnlargement: false })
-        .png()
-        .toBuffer();
+      const logoPath = path.join(process.cwd(), 'public', 'logo.png');
+      const pngBuffer = await readFile(logoPath);
       const logoImg = await pdfDoc.embedPng(pngBuffer);
       const gridStart = getGridStartCoordinates();
       const logoHeight = 40;
@@ -72,20 +66,8 @@ export async function GET() {
       console.warn('[template] Logo embed failed, continuing without logo:', logoErr);
     }
 
-    // 3. ヘッダーフィールド枠のみ（ラベルは印刷後に手書き。pdf-lib は日本語非対応）
-    const headerFields = getHeaderFieldCoordinates();
-    const fields = [headerFields.name, headerFields.school, headerFields.university, headerFields.department, headerFields.date];
-
-    fields.forEach((field) => {
-      page.drawRectangle({
-        x: field.x,
-        y: TEMPLATE_PAGE_PT.height - field.y - field.height,
-        width: field.width,
-        height: field.height,
-        borderColor: veryLightGray,
-        borderWidth: 1
-      });
-    });
+    // ヘッダフィールド枠は削除（マス目と混同を避けるため）
+    // 印刷時には学生がロゴ横のスペースに手書きで名前等を記入する前提
 
     // 3. 400字詰めマス目（20列 × 20行）
     const gridStart = getGridStartCoordinates();

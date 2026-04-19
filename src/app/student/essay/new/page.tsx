@@ -725,10 +725,20 @@ export default function EssayNewPage() {
                     <a
                       href="/api/essay/template"
                       download
-                      className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline mt-1"
+                      className="group mt-3 flex items-center gap-3 rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50 via-sky-50 to-indigo-50 p-3 shadow-sm transition-all hover:shadow-md hover:border-emerald-300 hover:-translate-y-0.5"
                     >
-                      <Download className="size-3" />
-                      B4 原稿用紙 PDF をダウンロード（印刷して手書き → OCR 精度向上）
+                      <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-sky-500 text-white shadow-sm">
+                        <Download className="size-5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-semibold text-slate-900 tracking-tight">
+                          B4 原稿用紙 PDF をダウンロード
+                        </div>
+                        <div className="text-xs text-slate-600 mt-0.5">
+                          印刷して手書き → 撮影すると OCR 精度が大幅アップ
+                        </div>
+                      </div>
+                      <ChevronRight className="size-4 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-emerald-600" />
                     </a>
                   )}
                 </div>
@@ -915,10 +925,20 @@ export default function EssayNewPage() {
                     <a
                       href="/api/essay/template"
                       download
-                      className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline mt-1"
+                      className="group mt-3 flex items-center gap-3 rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50 via-sky-50 to-indigo-50 p-3 shadow-sm transition-all hover:shadow-md hover:border-emerald-300 hover:-translate-y-0.5"
                     >
-                      <Download className="size-3" />
-                      B4 原稿用紙 PDF をダウンロード（印刷して手書き → OCR 精度向上）
+                      <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-sky-500 text-white shadow-sm">
+                        <Download className="size-5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-semibold text-slate-900 tracking-tight">
+                          B4 原稿用紙 PDF をダウンロード
+                        </div>
+                        <div className="text-xs text-slate-600 mt-0.5">
+                          印刷して手書き → 撮影すると OCR 精度が大幅アップ
+                        </div>
+                      </div>
+                      <ChevronRight className="size-4 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-emerald-600" />
                     </a>
                   )}
                 </div>
