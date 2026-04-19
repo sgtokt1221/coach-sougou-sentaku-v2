@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
 import { PDFDocument, rgb } from 'pdf-lib';
-import { readFile } from 'node:fs/promises';
-import path from 'node:path';
 import {
   TEMPLATE_PAGE_PT,
   TEMPLATE_GRID,
@@ -10,6 +8,7 @@ import {
   getGridStartCoordinates,
   getGridSize
 } from '@/lib/essay/template-layout';
+import { LOGO_PNG_BASE64 } from '@/lib/essay/logo-base64';
 
 export const runtime = 'nodejs';
 
@@ -48,10 +47,9 @@ export async function GET() {
       });
     });
 
-    // 2. ロゴを埋め込み (事前生成した PNG を使用。サーバーの sharp に librsvg がなくても確実に描画される)
+    // 2. ロゴを埋め込み (base64 インライン定数から、環境依存なし)
     try {
-      const logoPath = path.join(process.cwd(), 'public', 'logo.png');
-      const pngBuffer = await readFile(logoPath);
+      const pngBuffer = Buffer.from(LOGO_PNG_BASE64, 'base64');
       const logoImg = await pdfDoc.embedPng(pngBuffer);
       const gridStart = getGridStartCoordinates();
       const logoHeight = 40;
@@ -112,7 +110,7 @@ export async function GET() {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': 'attachment; filename="essay-template-b4.pdf"',
-        'Cache-Control': 'public, max-age=3600' // 1時間キャッシュ
+        'Cache-Control': 'public, max-age=300' // 5分キャッシュ (差し替え反映を早める)
       }
     });
 
