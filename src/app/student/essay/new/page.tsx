@@ -184,7 +184,7 @@ export default function EssayNewPage() {
   // Step 1: 志望校選択
   const [selectedCompoundId, setSelectedCompoundId] = useState<string | null>(null);
   const [topic, setTopic] = useState("");
-  const [writingDirection, setWritingDirection] = useState<"vertical" | "horizontal">("vertical");
+  const [writingDirection, setWritingDirection] = useState<"vertical" | "horizontal">("horizontal");
 
   // 1校の場合は自動選択、過去問選択時はuniversityIdでマッチ
   useEffect(() => {
@@ -721,7 +721,7 @@ export default function EssayNewPage() {
                       横書き
                     </button>
                   </div>
-                  {writingDirection === "vertical" && (
+                  {writingDirection === "horizontal" && (
                     <a
                       href="/api/essay/template"
                       download
@@ -921,7 +921,7 @@ export default function EssayNewPage() {
                       横書き
                     </button>
                   </div>
-                  {writingDirection === "vertical" && (
+                  {writingDirection === "horizontal" && (
                     <a
                       href="/api/essay/template"
                       download
