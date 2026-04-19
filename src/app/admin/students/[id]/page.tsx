@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -83,6 +83,10 @@ import { ActivitiesSection } from "@/components/admin/ActivitiesSection";
 import { DiscoverSection } from "@/components/admin/DiscoverSection";
 import { InlineFeedbackButton } from "@/components/admin/InlineFeedbackButton";
 import { CoachMemo } from "@/components/admin/CoachMemo";
+import { ActivityHeatmap } from "@/components/admin/ActivityHeatmap";
+import { WeaknessTopChart } from "@/components/admin/WeaknessTopChart";
+import { buildActivityHeatmapData } from "@/lib/utils/activity-heatmap";
+import { useAuthSWR } from "@/lib/api/swr";
 
 
 function weaknessBadge(w: WeaknessRecord) {
@@ -131,6 +135,30 @@ export default function AdminStudentDetailPage() {
   const [skillCheck, setSkillCheck] = useState<SkillCheckStatus | null>(null);
   const [interviewSkillCheck, setInterviewSkillCheck] = useState<InterviewSkillCheckStatus | null>(null);
   const [savingCategory, setSavingCategory] = useState(false);
+
+  // ヒートマップ用データ取得
+  const { data: interviewsData } = useAuthSWR<any[]>(`/api/admin/students/${id}/interviews`);
+  const { data: summaryDrillsData } = useAuthSWR<any[]>(`/api/admin/students/${id}/summary-drills`);
+  const { data: activitiesData } = useAuthSWR<any[]>(`/api/admin/students/${id}/activities`);
+
+  // 活動ヒートマップ用データ生成
+  const activityHeatmapData = useMemo(() => {
+    if (!detail) return [];
+
+    return buildActivityHeatmapData({
+      essays: detail.essays,
+      interviews: interviewsData,
+      skillChecks: skillCheck ? [skillCheck.latestResult].filter(Boolean) : [],
+      summaryDrills: summaryDrillsData,
+      activities: activitiesData,
+    });
+  }, [detail, interviewsData, summaryDrillsData, activitiesData, skillCheck]);
+
+  // 弱点Top5データ
+  const topWeaknesses = useMemo(() => {
+    if (!detail?.weaknesses) return [];
+    return detail.weaknesses.filter(w => !w.resolved);
+  }, [detail?.weaknesses]);
 
   // Essay detail state
   const [essayDetailOpen, setEssayDetailOpen] = useState(false);
@@ -391,6 +419,16 @@ export default function AdminStudentDetailPage() {
               : "なし"}
           </p>
         </Card>
+      </div>
+
+      {/* Activity Heatmap & Top Weaknesses */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <ActivityHeatmap data={activityHeatmapData} />
+        </div>
+        <div className="lg:col-span-1">
+          <WeaknessTopChart weaknesses={topWeaknesses} />
+        </div>
       </div>
 
       {/* Skill Ranks: 小論文 + 面接。SC + 直近30日練習の合成ランクを表示 */}

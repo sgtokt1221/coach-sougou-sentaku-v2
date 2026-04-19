@@ -11,7 +11,7 @@ export interface StudentListItem {
   latestScore: number | null;
   essayCount: number;
   lastActivityAt: string | null;
-  alertFlags: ("inactive" | "repeated_weakness" | "declining")[];
+  alertFlags: ("inactive" | "repeated_weakness" | "declining" | "document_deadline" | "ap_struggle" | "weakness_stuck" | "deadline_risk" | "score_plateau")[];
   managedBy?: string;
   plan?: "self" | "coach";
   scoreTrend: "up" | "down" | "flat" | null;

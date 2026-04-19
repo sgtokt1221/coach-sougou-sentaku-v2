@@ -14,14 +14,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, ArrowUpDown, Users, UserPlus, Filter, TrendingUp, TrendingDown, Minus, AlertTriangle, FileText } from "lucide-react";
+import { Search, ArrowUpDown, Users, UserPlus, Filter, TrendingUp, TrendingDown, Minus, AlertTriangle, FileText, CheckCircle2, AlertCircle } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { motion, useReducedMotion } from "framer-motion";
 import { useAuthSWR } from "@/lib/api/swr";
 import type { StudentListItem } from "@/lib/types/admin";
 import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
+import { StudentStatusLamps } from "@/components/admin/StudentStatusLamps";
 
 type SortKey = "lastActivity" | "score" | "name" | "rank" | "interviewRank";
+type StatusFilter = "all" | "attention" | "healthy";
 
 function getStatus(s: StudentListItem): "alert" | "inactive" | "active" {
   if (s.alertFlags.includes("repeated_weakness") || s.alertFlags.includes("declining"))
@@ -66,6 +68,7 @@ export default function AdminStudentsPage() {
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("lastActivity");
   const [universityFilter, setUniversityFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
 
   const params = new URLSearchParams();
   if (search) params.set("search", search);
@@ -74,7 +77,28 @@ export default function AdminStudentsPage() {
   const { data: rawData, isLoading } = useAuthSWR<StudentListItem[]>(
     `/api/admin/students?${params.toString()}`
   );
-  const students = rawData ?? [];
+
+  // ステータスフィルタをクライアントサイドで適用
+  const filteredStudents = useMemo(() => {
+    if (!rawData) return [];
+    if (statusFilter === "all") return rawData;
+
+    return rawData.filter((student) => {
+      const hasAlerts = student.alertFlags.length > 0;
+      const hasCriticalOrHighAlerts = student.alertFlags.some(flag =>
+        ["inactive", "document_deadline", "declining", "weakness_stuck", "ap_struggle", "deadline_risk"].includes(flag)
+      );
+
+      if (statusFilter === "attention") {
+        return hasAlerts && hasCriticalOrHighAlerts;
+      } else if (statusFilter === "healthy") {
+        return !hasAlerts;
+      }
+      return true;
+    });
+  }, [rawData, statusFilter]);
+
+  const students = filteredStudents;
   const loading = isLoading;
 
   // フィルタなしの全データから志望校一覧を取得（フィルタ用）
@@ -135,47 +159,82 @@ export default function AdminStudentsPage() {
       </div>
 
       {/* Search, Filter & Sort */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-1 items-center gap-3 max-w-2xl">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="名前・メールで検索..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <Select
-            value={universityFilter}
-            onValueChange={(v) => setUniversityFilter(v === "all" ? "" : (v ?? ""))}
-          >
-            <SelectTrigger className="w-[200px]">
-              <Filter className="mr-2 size-4 text-muted-foreground" />
-              <SelectValue placeholder="志望校で絞り込み" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">すべての志望校</SelectItem>
-              {universityOptions.map((uni) => (
-                <SelectItem key={uni.id} value={uni.id}>
-                  {uni.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex items-center gap-2">
-          <ArrowUpDown className="size-4 text-muted-foreground" />
-          {sortOptions.map((opt) => (
-            <Button
-              key={opt.key}
-              variant={sortKey === opt.key ? "default" : "outline"}
-              size="sm"
-              onClick={() => setSortKey(opt.key)}
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-1 items-center gap-3 max-w-2xl">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="名前・メールで検索..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Select
+              value={universityFilter}
+              onValueChange={(v) => setUniversityFilter(v === "all" ? "" : (v ?? ""))}
             >
-              {opt.label}
+              <SelectTrigger className="w-[200px]">
+                <Filter className="mr-2 size-4 text-muted-foreground" />
+                <SelectValue placeholder="志望校で絞り込み" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">すべての志望校</SelectItem>
+                {universityOptions.map((uni) => (
+                  <SelectItem key={uni.id} value={uni.id}>
+                    {uni.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-2">
+            <ArrowUpDown className="size-4 text-muted-foreground" />
+            {sortOptions.map((opt) => (
+              <Button
+                key={opt.key}
+                variant={sortKey === opt.key ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSortKey(opt.key)}
+              >
+                {opt.label}
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        {/* Status Filter */}
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-muted-foreground">ステータス:</span>
+          <div className="flex items-center gap-1 p-1 bg-muted rounded-lg">
+            <Button
+              variant={statusFilter === "all" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setStatusFilter("all")}
+              className="h-7"
+            >
+              全員
             </Button>
-          ))}
+            <Button
+              variant={statusFilter === "attention" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setStatusFilter("attention")}
+              className="h-7 gap-1.5"
+            >
+              <AlertCircle className="size-3" />
+              要対応
+            </Button>
+            <Button
+              variant={statusFilter === "healthy" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setStatusFilter("healthy")}
+              className="h-7 gap-1.5"
+            >
+              <CheckCircle2 className="size-3" />
+              順調
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -231,8 +290,13 @@ export default function AdminStudentsPage() {
                         onClick={() => router.push(`/admin/students/${s.uid}`)}
                       >
                         <td className="px-4 py-3">
-                          <p className="font-medium">{s.displayName}</p>
-                          <p className="text-xs text-muted-foreground">{s.email}</p>
+                          <div className="flex items-center gap-2">
+                            <div>
+                              <p className="font-medium">{s.displayName}</p>
+                              <p className="text-xs text-muted-foreground">{s.email}</p>
+                            </div>
+                            <StudentStatusLamps alertFlags={s.alertFlags} />
+                          </div>
                         </td>
                         <td className="px-4 py-3 hidden sm:table-cell">
                           {s.targetUniversities.length > 0 ? (
