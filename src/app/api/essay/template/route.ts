@@ -1,11 +1,16 @@
 import { NextResponse } from 'next/server';
 import { PDFDocument, rgb } from 'pdf-lib';
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
+import sharp from 'sharp';
 import {
   TEMPLATE_PAGE_PT,
   TEMPLATE_GRID,
+  TEMPLATE_MARGINS,
   getFiducialMarkerCoordinates,
   getGridStartCoordinates,
-  getHeaderFieldCoordinates
+  getHeaderFieldCoordinates,
+  getGridSize
 } from '@/lib/essay/template-layout';
 
 export const runtime = 'nodejs';
@@ -45,7 +50,29 @@ export async function GET() {
       });
     });
 
-    // 2. ヘッダーフィールド枠のみ（ラベルは印刷後に手書き。pdf-lib の標準フォントは日本語非対応のため）
+    // 2. ロゴを読み込んで埋め込み (SVG → sharp で PNG 化)
+    try {
+      const logoPath = path.join(process.cwd(), 'public', 'logo.svg');
+      const svgBuffer = await readFile(logoPath);
+      const pngBuffer = await sharp(svgBuffer)
+        .resize({ width: 480, withoutEnlargement: false })
+        .png()
+        .toBuffer();
+      const logoImg = await pdfDoc.embedPng(pngBuffer);
+      const gridStart = getGridStartCoordinates();
+      const logoHeight = 40;
+      const logoWidth = (logoImg.width / logoImg.height) * logoHeight;
+      page.drawImage(logoImg, {
+        x: gridStart.x,
+        y: TEMPLATE_PAGE_PT.height - TEMPLATE_MARGINS.top - logoHeight,
+        width: logoWidth,
+        height: logoHeight
+      });
+    } catch (logoErr) {
+      console.warn('[template] Logo embed failed, continuing without logo:', logoErr);
+    }
+
+    // 3. ヘッダーフィールド枠のみ（ラベルは印刷後に手書き。pdf-lib は日本語非対応）
     const headerFields = getHeaderFieldCoordinates();
     const fields = [headerFields.name, headerFields.school, headerFields.university, headerFields.department, headerFields.date];
 
@@ -86,19 +113,12 @@ export async function GET() {
       });
     }
 
-    // 4. クレジット（右下、ASCII のみ）
-    page.drawText('Coach for Sogo-gata Sentaku', {
-      x: TEMPLATE_PAGE_PT.width - 150,
-      y: 20,
-      size: 8,
-      color: lightGray
-    });
-
-    // 5. 印刷注意書き（ASCII のみ）
-    page.drawText('Print on B4 at 100% scale (no shrink to fit)', {
-      x: TEMPLATE_PAGE_PT.width / 2 - 120,
-      y: 10,
-      size: 8,
+    // 5. 印刷注意書き（ASCII のみ、マス目の下）
+    const gridBottomY = getGridStartCoordinates().y + getGridSize().height + 20;
+    page.drawText('Print on B4 at 100% scale (do not shrink to fit)', {
+      x: TEMPLATE_PAGE_PT.width / 2 - 125,
+      y: TEMPLATE_PAGE_PT.height - gridBottomY,
+      size: 9,
       color: lightGray
     });
 

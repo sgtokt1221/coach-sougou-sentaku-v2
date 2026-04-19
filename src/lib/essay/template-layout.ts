@@ -9,11 +9,11 @@ export const TEMPLATE_PAGE_PT = {
   height: 1031
 } as const;
 
-// 20列 × 20行 = 400字詰めマス目
+// 20列 × 20行 = 400字詰めマス目 (B4用紙をできるだけ活用)
 export const TEMPLATE_GRID = {
   cols: 20,
   rows: 20,
-  cellSize: 28
+  cellSize: 33
 } as const;
 
 // 四隅のフィデューシャルマーカー設定
@@ -22,14 +22,12 @@ export const TEMPLATE_MARKER = {
   stroke: 3  // 線の太さ
 } as const;
 
-// ヘッダー高さ
-export const TEMPLATE_HEADER_HEIGHT = 60;
+// ヘッダー高さ (ロゴ + ヘッダフィールド)
+export const TEMPLATE_HEADER_HEIGHT = 130;
 
-// マージン設定
+// マージン設定 (ページ端から)
 export const TEMPLATE_MARGINS = {
-  left: 40,
-  right: 40,
-  top: 20,
+  top: 30,
   bottom: 40
 } as const;
 
@@ -63,31 +61,38 @@ export function getFiducialMarkerCoordinates() {
 }
 
 /**
- * マス目の開始座標を取得
+ * マス目の全体幅・高さ
+ */
+export function getGridSize() {
+  const { cols, rows, cellSize } = TEMPLATE_GRID;
+  return { width: cols * cellSize, height: rows * cellSize };
+}
+
+/**
+ * マス目の開始座標 (水平中央揃え + 上ヘッダ分を避けた位置)
  */
 export function getGridStartCoordinates() {
-  const headerHeight = TEMPLATE_HEADER_HEIGHT;
-  const { left, top } = TEMPLATE_MARGINS;
-
+  const { width: gridWidth } = getGridSize();
   return {
-    x: left,
-    y: top + headerHeight + 20 // ヘッダー下に少し余白
+    x: (TEMPLATE_PAGE_PT.width - gridWidth) / 2, // 水平中央
+    y: TEMPLATE_MARGINS.top + TEMPLATE_HEADER_HEIGHT
   };
 }
 
 /**
- * ヘッダーフィールドの座標を取得
+ * ヘッダーフィールドの座標 (grid と同じ左右揃え)
  */
 export function getHeaderFieldCoordinates() {
-  const { left, top } = TEMPLATE_MARGINS;
-  const fieldHeight = 20;
-  const fieldSpacing = 5;
+  const gridStart = getGridStartCoordinates();
+  const fieldHeight = 22;
+  const fieldsY = TEMPLATE_MARGINS.top + 70; // ロゴ下
+  const colWidth = (TEMPLATE_GRID.cols * TEMPLATE_GRID.cellSize - 4 * 8) / 5;
 
   return {
-    name: { x: left, y: top + 10, width: 150, height: fieldHeight },
-    school: { x: left + 160, y: top + 10, width: 150, height: fieldHeight },
-    university: { x: left + 320, y: top + 10, width: 120, height: fieldHeight },
-    department: { x: left + 450, y: top + 10, width: 120, height: fieldHeight },
-    date: { x: left + 580, y: top + 10, width: 100, height: fieldHeight }
+    name: { x: gridStart.x, y: fieldsY, width: colWidth, height: fieldHeight },
+    school: { x: gridStart.x + (colWidth + 8) * 1, y: fieldsY, width: colWidth, height: fieldHeight },
+    university: { x: gridStart.x + (colWidth + 8) * 2, y: fieldsY, width: colWidth, height: fieldHeight },
+    department: { x: gridStart.x + (colWidth + 8) * 3, y: fieldsY, width: colWidth, height: fieldHeight },
+    date: { x: gridStart.x + (colWidth + 8) * 4, y: fieldsY, width: colWidth, height: fieldHeight }
   };
 }
