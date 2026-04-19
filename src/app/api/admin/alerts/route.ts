@@ -286,15 +286,46 @@ export async function GET(request: NextRequest) {
         const data = docSnap.data();
         const studentUid = docSnap.id;
 
+        // Essays: top-level collection with userId field (not subcollection)
         const essaysSnap = await adminDb!
-          .collection("users")
-          .doc(studentUid)
           .collection("essays")
+          .where("userId", "==", studentUid)
           .orderBy("submittedAt", "desc")
-          .get();
+          .get()
+          .catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] }));
+
+        // 全活動タイプの最新日時を集計して lastActivityAt を算出
+        const activityDates: number[] = [];
         const latestEssay = essaysSnap.docs[0]?.data();
-        const lastActivityAt: string | null = latestEssay?.submittedAt
-          ? latestEssay.submittedAt.toDate().toISOString()
+        if (latestEssay?.submittedAt?.toDate) {
+          activityDates.push(latestEssay.submittedAt.toDate().getTime());
+        }
+
+        // 面接・スキルチェック・要約ドリル・活動登録 (いずれも user サブコレクション)
+        const otherCollections: Array<{ name: string; field: string }> = [
+          { name: "interviews", field: "startedAt" },
+          { name: "skillChecks", field: "takenAt" },
+          { name: "interviewSkillChecks", field: "takenAt" },
+          { name: "summaryDrills", field: "completedAt" },
+          { name: "activities", field: "createdAt" },
+        ];
+        for (const { name, field } of otherCollections) {
+          try {
+            const snap = await adminDb!
+              .collection(`users/${studentUid}/${name}`)
+              .orderBy(field, "desc")
+              .limit(1)
+              .get();
+            const latest = snap.docs[0]?.data();
+            const ts = latest?.[field]?.toDate?.();
+            if (ts) activityDates.push(ts.getTime());
+          } catch {
+            // フィールド不存在・インデックス未作成時はスキップ
+          }
+        }
+
+        const lastActivityAt: string | null = activityDates.length > 0
+          ? new Date(Math.max(...activityDates)).toISOString()
           : null;
 
         const scoreHistory = essaysSnap.docs

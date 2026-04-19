@@ -139,8 +139,34 @@ export async function GET(request: NextRequest) {
         const latestEssay = essaysSnap.docs[0]?.data();
         const latestScore: number | null =
           latestEssay?.scores?.total ?? null;
-        const lastActivityAt: string | null = latestEssay?.submittedAt
-          ? latestEssay.submittedAt.toDate().toISOString()
+
+        // lastActivityAt は essay 以外 (面接・スキルチェック・要約ドリル・活動登録) も含める
+        const activityTimestamps: number[] = [];
+        if (latestEssay?.submittedAt?.toDate) {
+          activityTimestamps.push(latestEssay.submittedAt.toDate().getTime());
+        }
+        const otherCollections: Array<{ name: string; field: string }> = [
+          { name: "interviews", field: "startedAt" },
+          { name: "skillChecks", field: "takenAt" },
+          { name: "interviewSkillChecks", field: "takenAt" },
+          { name: "summaryDrills", field: "completedAt" },
+          { name: "activities", field: "createdAt" },
+        ];
+        for (const { name, field } of otherCollections) {
+          try {
+            const snap = await adminDb!
+              .collection(`users/${uid}/${name}`)
+              .orderBy(field, "desc")
+              .limit(1)
+              .get();
+            const ts = snap.docs[0]?.data()?.[field]?.toDate?.();
+            if (ts) activityTimestamps.push(ts.getTime());
+          } catch {
+            // スキップ
+          }
+        }
+        const lastActivityAt: string | null = activityTimestamps.length > 0
+          ? new Date(Math.max(...activityTimestamps)).toISOString()
           : null;
 
         const alertFlags: StudentListItem["alertFlags"] = [];
