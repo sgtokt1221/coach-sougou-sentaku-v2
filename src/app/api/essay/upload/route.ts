@@ -151,7 +151,42 @@ ${rawOcrText}`,
   }
 }
 
-// ---- Claude Vision OCR (fallback) ----
+// ---- テンプレート判定 (Claude Haiku で YES/NO を高速判定) ----
+
+async function detectTemplate(base64Data: string): Promise<boolean> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return false;
+
+  try {
+    const client = new Anthropic();
+    const response = await client.messages.create({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 16,
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "image",
+              source: { type: "base64", media_type: "image/jpeg", data: base64Data },
+            },
+            {
+              type: "text",
+              text: `この画像は「四隅に黒いL字マーカーがあり、20列×20行=400マスの原稿用紙」に手書きされたものですか？ YES か NO のみで答えてください。説明不要。`,
+            },
+          ],
+        },
+      ],
+    });
+    const text = response.content[0].type === "text" ? response.content[0].text.trim().toUpperCase() : "";
+    return text.startsWith("YES");
+  } catch (err) {
+    console.warn("[detectTemplate] Failed:", err);
+    return false;
+  }
+}
+
+// ---- Claude Vision OCR (fallback or template path) ----
 
 async function ocrWithClaude(base64Data: string): Promise<string | null> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -234,11 +269,22 @@ export async function POST(request: NextRequest) {
     let ocrText: string | null = null;
     let ocrSource = "";
 
+    // 0. テンプレート判定: L字マーカー付き 20×20 原稿用紙なら Claude Vision 直行
+    const templateOcrEnabled = process.env.ESSAY_TEMPLATE_OCR_ENABLED !== "false";
+    const isTemplate = templateOcrEnabled && (await detectTemplate(processedBase64));
+
+    if (isTemplate) {
+      ocrText = await ocrWithClaude(processedBase64);
+      ocrSource = "claude-template";
+    }
+
     // 1. Google Cloud Vision (高精度・低コスト) → Claude Haikuで本文抽出
-    const rawGcvText = await ocrWithGoogleVision(processedBase64);
-    if (rawGcvText) {
-      ocrText = await extractEssayBody(rawGcvText);
-      ocrSource = "google-vision+haiku";
+    if (!ocrText) {
+      const rawGcvText = await ocrWithGoogleVision(processedBase64);
+      if (rawGcvText) {
+        ocrText = await extractEssayBody(rawGcvText);
+        ocrSource = "google-vision+haiku";
+      }
     }
 
     // 2. Claude Vision フォールバック（プロンプトで本文のみ指示済み）
