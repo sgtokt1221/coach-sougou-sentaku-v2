@@ -1,6 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import * as crypto from "crypto";
+import sharp from "sharp";
+
+// ---- 画像前処理関数 ----
+
+async function preprocessImage(base64Data: string): Promise<string> {
+  try {
+    const input = Buffer.from(base64Data, "base64");
+    const output = await sharp(input)
+      .rotate() // EXIF orientation 対応
+      .resize({ width: 2000, height: 2000, fit: "inside", withoutEnlargement: true })
+      .grayscale()
+      .normalize() // コントラスト正規化
+      .sharpen({ sigma: 1.0 })
+      .jpeg({ quality: 92 })
+      .toBuffer();
+    return output.toString("base64");
+  } catch (err) {
+    console.warn("[preprocess] Failed, using original:", err);
+    return base64Data;
+  }
+}
 
 // ---- Google Cloud Vision API OCR ----
 
@@ -150,22 +171,22 @@ async function ocrWithClaude(base64Data: string): Promise<string | null> {
           },
           {
             type: "text",
-            text: `この画像は原稿用紙に手書きされた小論文です。以下のルールに厳密に従って書き起こしてください。
+            text: `この画像は日本語の手書き小論文です。原稿用紙（多くは 20 列 × 20 行 = 400字詰め）の可能性が高いです。
 
-【読み取り範囲】
-- 原稿用紙のマス目内に手書きされた本文のみを読み取ること
-- 用紙に印刷されたタイトル欄、注意書き、受験番号、学校名、氏名欄、問題文、設問文は全て無視すること
-- マス目の外にある印刷文字は全て無視すること
+【もし四隅に L 字マーカーがあり、20×20 のマス目が明確なら】
+マスごとに左→右、行ごとに上→下の順で手書き文字を 1 マス = 1 文字として読み取り、句読点もマス内に書かれていればその位置で出力してください。空白マスは無視して詰めて出力してください。
 
-【書き起こしルール】
-- 一字一句、原文に忠実に書き起こすこと。絶対に要約・省略・言い換えをしないこと
-- 読めない文字は「■」で表示すること
-- 誤字・脱字があっても原文のまま書き起こすこと（勝手に修正しない）
-- 文法的におかしくても原文通りに書くこと
-- 段落の改行は原文に従うこと
-- 句読点（、。）の位置も原文通りにすること
+【通常の原稿用紙 or 他の用紙の場合】
+手書き本文のみを左上から右下に書き起こしてください。
 
-テキスト以外の説明は一切不要です。書き起こした本文のみを出力してください。`,
+【共通ルール】
+- マスの外・欄外・印刷文字（タイトル欄・氏名欄・受験番号・問題文・注意書き）は一切無視
+- 一字一句、原文に忠実。要約・省略・言い換えは絶対にしない
+- 読めない文字は ■ で埋める
+- 誤字脱字はそのまま（勝手に直さない）
+- 改行は原文の段落に従う
+
+テキスト以外の説明は一切不要。書き起こした本文のみを出力してください。`,
           },
         ],
       },
@@ -192,6 +213,9 @@ export async function POST(request: NextRequest) {
     const essayId = `essay_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
     const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, "");
 
+    // 画像前処理を適用
+    const processedBase64 = await preprocessImage(base64Data);
+
     // Cloud Storageに画像をアップロード
     let imageUrl = "";
     try {
@@ -211,7 +235,7 @@ export async function POST(request: NextRequest) {
     let ocrSource = "";
 
     // 1. Google Cloud Vision (高精度・低コスト) → Claude Haikuで本文抽出
-    const rawGcvText = await ocrWithGoogleVision(base64Data);
+    const rawGcvText = await ocrWithGoogleVision(processedBase64);
     if (rawGcvText) {
       ocrText = await extractEssayBody(rawGcvText);
       ocrSource = "google-vision+haiku";
@@ -219,7 +243,7 @@ export async function POST(request: NextRequest) {
 
     // 2. Claude Vision フォールバック（プロンプトで本文のみ指示済み）
     if (!ocrText) {
-      ocrText = await ocrWithClaude(base64Data);
+      ocrText = await ocrWithClaude(processedBase64);
       ocrSource = "claude";
     }
 
