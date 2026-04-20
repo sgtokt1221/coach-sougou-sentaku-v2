@@ -5,15 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import { Users, FileText, BarChart3, AlertTriangle, FileWarning, TrendingDown, TrendingUp, Sparkles, Target } from "lucide-react";
+import { Users, FileText, BarChart3, AlertTriangle, FileWarning } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { CountUp } from "@/components/shared/CountUp";
 import { AnimatedList } from "@/components/shared/AnimatedList";
 import { useAuthSWR } from "@/lib/api/swr";
 import type { StudentListItem, AlertItem } from "@/lib/types/admin";
-import type { ExamResultStats } from "@/lib/types/exam-result";
 import { StudentStatusPie } from "@/components/admin/StudentStatusPie";
-import { AiInterventionCard } from "@/components/admin/AiInterventionCard";
+import { AdminCalendar } from "@/components/admin/AdminCalendar";
 
 function scoreColor(total: number): string {
   if (total >= 40) return "text-emerald-600 dark:text-emerald-400";
@@ -39,19 +38,6 @@ export default function AdminDashboard() {
   const isSuperadmin = userProfile?.role === "superadmin";
   const { data: rawData, isLoading } = useAuthSWR<StudentListItem[]>("/api/admin/students?limit=500");
   const { data: alertsData } = useAuthSWR<AlertItem[]>("/api/admin/alerts");
-  const { data: weeklyWeaknesses } = useAuthSWR<{
-    weeklyTop: { area: string; count: number; studentCount: number; sources: string[] }[];
-    comparedToLastWeek: { improved: string[]; worsened: string[]; new: string[] };
-  }>("/api/admin/weekly-weaknesses");
-  const { data: interventionData } = useAuthSWR<{
-    items: Array<{
-      studentUid: string;
-      studentName: string;
-      recommendation: string;
-      reasoning: string;
-      severity: "critical" | "high" | "warning";
-    }>;
-  }>("/api/admin/intervention-recommendations");
   const students = rawData ?? [];
   const loading = isLoading;
 
@@ -155,69 +141,8 @@ export default function AdminDashboard() {
         </Link>
       )}
 
-      {/* Weekly Common Weaknesses */}
-      {weeklyWeaknesses && weeklyWeaknesses.weeklyTop.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Target className="size-4" />
-              今週の共通弱点
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {weeklyWeaknesses.weeklyTop.map((w, i) => {
-              const isWorsened = weeklyWeaknesses.comparedToLastWeek.worsened.includes(w.area);
-              const isNew = weeklyWeaknesses.comparedToLastWeek.new.includes(w.area);
-              const sources = w.sources ?? [];
-              const hasEssay = sources.includes("essay") || sources.includes("skill_check");
-              const hasInterview = sources.includes("interview") || sources.includes("interview_skill_check");
-              const hasBoth = sources.includes("both");
-              return (
-                <div key={w.area} className="flex items-center justify-between rounded-lg border p-3">
-                  <div className="flex items-center gap-3">
-                    <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold">
-                      {i + 1}
-                    </span>
-                    <div>
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <p className="text-sm font-medium">{w.area}</p>
-                        {(hasEssay || hasBoth) && (
-                          <Badge className="text-[10px] bg-emerald-100 text-emerald-700 border-0 hover:bg-emerald-100">添削</Badge>
-                        )}
-                        {(hasInterview || hasBoth) && (
-                          <Badge className="text-[10px] bg-indigo-100 text-indigo-700 border-0 hover:bg-indigo-100">面接</Badge>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-0.5">{w.studentCount}名の生徒</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {isWorsened && (
-                      <Badge variant="destructive" className="text-[10px] gap-0.5">
-                        <TrendingUp className="size-3" />悪化
-                      </Badge>
-                    )}
-                    {isNew && (
-                      <Badge className="bg-blue-500 text-[10px] gap-0.5">
-                        <Sparkles className="size-3" />NEW
-                      </Badge>
-                    )}
-                    <Badge variant="outline" className="text-xs">{w.count}件</Badge>
-                  </div>
-                </div>
-              );
-            })}
-            {weeklyWeaknesses.comparedToLastWeek.improved.length > 0 && (
-              <div className="flex items-center gap-2 rounded-lg bg-green-50 dark:bg-green-950/20 p-3">
-                <TrendingDown className="size-4 text-green-600" />
-                <p className="text-xs text-green-700 dark:text-green-400">
-                  改善: {weeklyWeaknesses.comparedToLastWeek.improved.join("、")}
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+      {/* Calendar: sessions + university admission schedules */}
+      <AdminCalendar />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Alert Students */}
@@ -325,9 +250,6 @@ export default function AdminDashboard() {
           )}
         </section>
       </div>
-
-      {/* AI Intervention Recommendations */}
-      <AiInterventionCard items={interventionData?.items ?? []} />
     </div>
   );
 }
