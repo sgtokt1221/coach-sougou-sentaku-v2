@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useMemo, useRef, useCallback } from "react";
+import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { notFound, useParams } from "next/navigation";
+import { authFetch } from "@/lib/api/client";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { lawTopics } from "@/data/faculty-topics/law";
@@ -146,6 +147,16 @@ export default function FacultyTopicPage() {
 
   const faculty = getFacultyById(facultyId);
   const data = FACULTY_DATA[facultyId];
+
+  // ネタインプット閲覧ログ (fire-and-forget)
+  useEffect(() => {
+    if (!facultyId) return;
+    authFetch("/api/student/activity-log", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: "topicInput", metadata: { facultyId } }),
+    }).catch(() => {});
+  }, [facultyId]);
 
   const [activeId, setActiveId] = useState<FacultyTopicCategory>(
     data?.categories[0]?.id ?? "",

@@ -139,7 +139,7 @@ export default function AdminStudentDetailPage() {
   // ヒートマップ用データ取得
   const { data: interviewsData } = useAuthSWR<any[]>(`/api/admin/students/${id}/interviews`);
   const { data: summaryDrillsData } = useAuthSWR<any[]>(`/api/admin/students/${id}/summary-drills`);
-  const { data: activitiesData } = useAuthSWR<any[]>(`/api/admin/students/${id}/activities`);
+  const { data: activityLogsData } = useAuthSWR<any[]>(`/api/admin/students/${id}/activity-logs`);
 
   // 活動ヒートマップ用データ生成
   const activityHeatmapData = useMemo(() => {
@@ -150,9 +150,9 @@ export default function AdminStudentDetailPage() {
       interviews: interviewsData,
       skillChecks: skillCheck ? [skillCheck.latestResult].filter(Boolean) : [],
       summaryDrills: summaryDrillsData,
-      activities: activitiesData,
+      activityLogs: activityLogsData,
     });
-  }, [detail, interviewsData, summaryDrillsData, activitiesData, skillCheck]);
+  }, [detail, interviewsData, summaryDrillsData, activityLogsData, skillCheck]);
 
   // 弱点Top5データ
   const topWeaknesses = useMemo(() => {

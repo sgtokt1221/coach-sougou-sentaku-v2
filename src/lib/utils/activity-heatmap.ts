@@ -62,8 +62,14 @@ export interface ActivityHeatmapData {
   essay: number;
   interview: number;
   skillCheck: number;
-  drill: number;
-  activity: number;
+  drill: number;          // 要約ドリル
+  topicInput: number;     // ネタインプット
+  interviewDrill: number; // 面接ドリル
+}
+
+export interface ActivityLog {
+  type: "topicInput" | "interviewDrill";
+  createdAt: string;
 }
 
 export interface ActivityDataSources {
@@ -71,11 +77,13 @@ export interface ActivityDataSources {
   interviews?: Array<{ startedAt?: string; createdAt?: string }>;
   skillChecks?: Array<{ takenAt?: string; createdAt?: string }>;
   summaryDrills?: Array<{ completedAt?: string; createdAt?: string }>;
-  activities?: Array<{ updatedAt?: string; createdAt?: string }>;
+  activityLogs?: ActivityLog[];
 }
 
 export function buildActivityHeatmapData(sources: ActivityDataSources): ActivityHeatmapData[] {
   const last30Days = buildLast30Days();
+  const topicInputLogs = (sources.activityLogs ?? []).filter(l => l.type === "topicInput");
+  const interviewDrillLogs = (sources.activityLogs ?? []).filter(l => l.type === "interviewDrill");
 
   return last30Days.map(day => ({
     date: day,
@@ -86,7 +94,7 @@ export function buildActivityHeatmapData(sources: ActivityDataSources): Activity
                 countByDay(sources.skillChecks ?? [], 'createdAt', day),
     drill: countByDay(sources.summaryDrills ?? [], 'completedAt', day) +
            countByDay(sources.summaryDrills ?? [], 'createdAt', day),
-    activity: countByDay(sources.activities ?? [], 'updatedAt', day) +
-              countByDay(sources.activities ?? [], 'createdAt', day),
+    topicInput: countByDay(topicInputLogs, 'createdAt', day),
+    interviewDrill: countByDay(interviewDrillLogs, 'createdAt', day),
   }));
 }

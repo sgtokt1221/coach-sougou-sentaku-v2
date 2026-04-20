@@ -34,7 +34,25 @@ interface DrillEvaluationResponse {
   betterAnswer: string;
 }
 
+async function logInterviewDrill(authHeader: string | null, metadata: Record<string, unknown>) {
+  if (!authHeader?.startsWith("Bearer ")) return;
+  try {
+    const { adminAuth, adminDb } = await import("@/lib/firebase/admin");
+    if (!adminAuth || !adminDb) return;
+    const decoded = await adminAuth.verifyIdToken(authHeader.slice(7));
+    const { FieldValue } = await import("firebase-admin/firestore");
+    await adminDb.collection(`users/${decoded.uid}/activityLogs`).add({
+      type: "interviewDrill",
+      createdAt: FieldValue.serverTimestamp(),
+      metadata,
+    });
+  } catch (err) {
+    console.warn("[interview-drill] log failed:", err);
+  }
+}
+
 export async function POST(request: NextRequest) {
+  const authHeader = request.headers.get("Authorization");
   try {
     const body: DrillRequest = await request.json();
     const { action } = body;
@@ -138,6 +156,7 @@ export async function POST(request: NextRequest) {
           betterAnswer: evaluation.betterAnswer || "具体的なエピソードや経験を交えながら、より詳しく説明してみましょう。"
         };
 
+        void logInterviewDrill(authHeader, { universityId: body.universityId, facultyId: body.facultyId });
         return NextResponse.json(result);
       } catch (parseError) {
         console.error("JSON parse error:", parseError, responseText);
@@ -150,6 +169,7 @@ export async function POST(request: NextRequest) {
           betterAnswer: "実体験を交えながら、より詳細に説明することで説得力のある回答になります。"
         };
 
+        void logInterviewDrill(authHeader, { universityId: body.universityId, facultyId: body.facultyId });
         return NextResponse.json(result);
       }
     }
