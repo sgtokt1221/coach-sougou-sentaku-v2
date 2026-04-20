@@ -8,9 +8,9 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  Cell,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { AlertTriangle } from "lucide-react";
 import type { WeaknessRecord } from "@/lib/types/growth";
 import { getWeaknessReminderLevel } from "@/lib/types/growth";
@@ -115,11 +115,11 @@ export function WeaknessTopChart({ weaknesses }: WeaknessTopChartProps) {
         <div className="h-[240px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
-              layout="horizontal"
+              layout="vertical"
               data={chartData}
-              margin={{ top: 8, right: 8, left: 60, bottom: 8 }}
+              margin={{ top: 8, right: 16, left: 8, bottom: 8 }}
             >
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" opacity={0.5} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" opacity={0.5} horizontal={false} />
               <XAxis
                 type="number"
                 tick={{ fontSize: 11 }}
@@ -130,18 +130,18 @@ export function WeaknessTopChart({ weaknesses }: WeaknessTopChartProps) {
               <YAxis
                 type="category"
                 dataKey="area"
-                tick={{ fontSize: 10 }}
+                tick={{ fontSize: 11 }}
                 tickFormatter={formatYAxisLabel}
                 axisLine={false}
                 tickLine={false}
-                width={55}
+                width={100}
               />
               <Tooltip content={<WeaknessTooltip />} />
-              <Bar
-                dataKey="count"
-                fill="#6366f1"
-                radius={[0, 2, 2, 0]}
-              />
+              <Bar dataKey="count" radius={[0, 4, 4, 0]}>
+                {chartData.map((entry, i) => (
+                  <Cell key={i} fill={SOURCE_COLORS[entry.source] ?? "#6366f1"} />
+                ))}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -155,16 +155,20 @@ export function WeaknessTopChart({ weaknesses }: WeaknessTopChartProps) {
           </div>
         )}
 
-        {/* ステータス凡例 */}
+        {/* 出所別凡例 */}
         <div className="mt-3 pt-3 border-t">
-          <div className="flex flex-wrap gap-2 justify-center">
-            <Badge variant="destructive" className="text-xs">要注意</Badge>
-            <Badge variant="outline" className="text-xs border-yellow-400 bg-yellow-50 text-yellow-700">
-              警告
-            </Badge>
-            <Badge variant="outline" className="text-xs border-blue-400 bg-blue-50 text-blue-700">
-              改善中
-            </Badge>
+          <div className="flex flex-wrap gap-x-3 gap-y-1 justify-center text-[11px] text-muted-foreground">
+            {[
+              { color: SOURCE_COLORS.essay, label: "小論文" },
+              { color: SOURCE_COLORS.interview, label: "面接" },
+              { color: SOURCE_COLORS.skill_check, label: "スキルチェック" },
+              { color: SOURCE_COLORS.both, label: "複数" },
+            ].map((item) => (
+              <div key={item.label} className="flex items-center gap-1">
+                <span className="inline-block size-2 rounded-sm" style={{ backgroundColor: item.color }} />
+                {item.label}
+              </div>
+            ))}
           </div>
         </div>
       </CardContent>

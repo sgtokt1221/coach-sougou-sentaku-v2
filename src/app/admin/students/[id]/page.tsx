@@ -421,16 +421,6 @@ export default function AdminStudentDetailPage() {
         </Card>
       </div>
 
-      {/* Activity Heatmap & Top Weaknesses */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <ActivityHeatmap data={activityHeatmapData} />
-        </div>
-        <div className="lg:col-span-1">
-          <WeaknessTopChart weaknesses={topWeaknesses} />
-        </div>
-      </div>
-
       {/* Skill Ranks: 小論文 + 面接。SC + 直近30日練習の合成ランクを表示 */}
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         <SkillRankPanel
@@ -474,6 +464,16 @@ export default function AdminStudentDetailPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Activity Heatmap & Top Weaknesses */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <ActivityHeatmap data={activityHeatmapData} />
+        </div>
+        <div className="lg:col-span-1">
+          <WeaknessTopChart weaknesses={topWeaknesses} />
+        </div>
+      </div>
 
       {/* Profile Card */}
       <Card>

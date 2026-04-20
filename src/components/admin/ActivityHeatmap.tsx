@@ -7,7 +7,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -69,30 +68,72 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
     day.drill > 0 || day.activity > 0
   );
 
+  // 合計回数 (30日間)
+  const totals = data.reduce(
+    (acc, d) => ({
+      essay: acc.essay + d.essay,
+      interview: acc.interview + d.interview,
+      skillCheck: acc.skillCheck + d.skillCheck,
+      drill: acc.drill + d.drill,
+      activity: acc.activity + d.activity,
+    }),
+    { essay: 0, interview: 0, skillCheck: 0, drill: 0, activity: 0 },
+  );
+  // 直近7日にアクティブだった日の数
+  const activeDaysRecent = data.slice(-7).filter(d =>
+    d.essay > 0 || d.interview > 0 || d.skillCheck > 0 || d.drill > 0 || d.activity > 0
+  ).length;
+
+  const summaryItems = [
+    { label: "添削", value: totals.essay, color: "#10b981" },
+    { label: "面接", value: totals.interview, color: "#6366f1" },
+    { label: "スキルチェック", value: totals.skillCheck, color: "#8b5cf6" },
+    { label: "要約ドリル", value: totals.drill, color: "#f59e0b" },
+    { label: "活動登録", value: totals.activity, color: "#e11d48" },
+  ];
+
   return (
     <Card className="rounded-2xl shadow-sm">
       <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Activity className="size-4" />
-          活動状況（直近30日）
+        <CardTitle className="flex items-center justify-between text-base">
+          <span className="flex items-center gap-2">
+            <Activity className="size-4" />
+            活動状況（直近30日）
+          </span>
+          <span className="text-xs font-normal text-muted-foreground">
+            直近7日: <span className="font-semibold text-foreground">{activeDaysRecent}日</span> 活動
+          </span>
         </CardTitle>
       </CardHeader>
       <CardContent>
+        {/* 合計サマリーストリップ */}
+        <div className="grid grid-cols-5 gap-2 mb-4">
+          {summaryItems.map((item) => (
+            <div key={item.label} className="rounded-lg border border-border/40 bg-slate-50 p-2 text-center">
+              <div className="flex items-center justify-center gap-1 text-[10px] text-muted-foreground mb-0.5">
+                <span className="inline-block size-1.5 rounded-sm" style={{ backgroundColor: item.color }} />
+                <span>{item.label}</span>
+              </div>
+              <div className="text-lg font-bold tabular-nums">{item.value}</div>
+            </div>
+          ))}
+        </div>
+
         {!hasAnyActivity ? (
-          <div className="flex h-[240px] items-center justify-center text-sm text-muted-foreground">
+          <div className="flex h-[200px] items-center justify-center text-sm text-muted-foreground border border-dashed rounded-lg">
             直近30日間に活動がありません
           </div>
         ) : (
-          <div className="h-[240px]">
+          <div className="h-[220px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={data}
-                margin={{ top: 8, right: 8, left: 0, bottom: 24 }}
+                margin={{ top: 4, right: 8, left: 0, bottom: 4 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" opacity={0.5} />
                 <XAxis
                   dataKey="date"
-                  tick={{ fontSize: 11 }}
+                  tick={{ fontSize: 10 }}
                   tickFormatter={formatXAxisTick}
                   axisLine={false}
                   tickLine={false}
@@ -102,11 +143,9 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
                   axisLine={false}
                   tickLine={false}
                   allowDecimals={false}
+                  width={24}
                 />
                 <Tooltip content={<ActivityTooltip />} />
-                <Legend
-                  wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }}
-                />
 
                 {/* スタック棒グラフ - 各活動タイプ */}
                 <Bar
