@@ -14,6 +14,17 @@ export async function authFetch(
   url: string,
   options: RequestInit = {}
 ): Promise<Response> {
+  // チュートリアル中の非 GET リクエストは握りつぶす (実 DB 汚染防止)
+  if (
+    typeof window !== "undefined" &&
+    localStorage.getItem("tutorialActive") === "true" &&
+    options.method &&
+    options.method.toUpperCase() !== "GET"
+  ) {
+    console.warn("[tutorial] blocked non-GET:", options.method, url);
+    return new Response(null, { status: 204 });
+  }
+
   const headers = new Headers(options.headers);
 
   if (auth?.currentUser) {

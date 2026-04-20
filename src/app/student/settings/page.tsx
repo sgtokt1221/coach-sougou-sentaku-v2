@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,7 +25,7 @@ import {
   X,
   HelpCircle,
 } from "lucide-react";
-import { TutorialWalkthrough } from "@/components/tutorial/TutorialWalkthrough";
+import { useTutorial } from "@/contexts/TutorialContext";
 
 const CERT_LABELS: Record<string, string> = {
   EIKEN: "英検",
@@ -44,6 +45,7 @@ interface ResolvedItem {
 }
 
 export default function SettingsPage() {
+  const router = useRouter();
   const { userProfile } = useAuth();
   const profile = userProfile as StudentProfile | null;
 
@@ -59,7 +61,7 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogSelection, setDialogSelection] = useState<string[]>([]);
-  const [showTutorial, setShowTutorial] = useState(false);
+  const { start: startTutorial } = useTutorial();
 
   // Initialize from profile
   useEffect(() => {
@@ -252,16 +254,18 @@ export default function SettingsPage() {
           <p className="text-sm text-muted-foreground mb-3">
             アプリの主要機能を確認できます
           </p>
-          <Button variant="outline" onClick={() => setShowTutorial(true)}>
+          <Button
+            variant="outline"
+            onClick={() => {
+              startTutorial();
+              router.push("/student/demo/dashboard");
+            }}
+            className="cursor-pointer"
+          >
             チュートリアルを再表示
           </Button>
         </CardContent>
       </Card>
-
-      <TutorialWalkthrough
-        open={showTutorial}
-        onComplete={() => setShowTutorial(false)}
-      />
     </div>
   );
 }

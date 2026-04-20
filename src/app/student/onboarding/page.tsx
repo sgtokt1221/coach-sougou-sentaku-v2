@@ -12,7 +12,7 @@ import { SkillCheckStep } from "@/components/onboarding/SkillCheckStep";
 import { ArrowLeft, ArrowRight, Loader2, Search, HelpCircle } from "lucide-react";
 import { SuggestPanel } from "@/components/shared/SuggestPanel";
 import { updateProfile } from "@/lib/firebase/profile";
-import { TutorialWalkthrough } from "@/components/tutorial/TutorialWalkthrough";
+import { useTutorial } from "@/contexts/TutorialContext";
 import type { StudentProfile } from "@/lib/types/user";
 
 const STEPS = ["志望校選択", "基礎情報", "確認", "スキルチェック"] as const;
@@ -24,7 +24,7 @@ export default function OnboardingPage() {
   const [saving, setSaving] = useState(false);
   const [step0Mode, setStep0Mode] = useState<"select" | "suggest">("select");
   const [initialized, setInitialized] = useState(false);
-  const [showTutorial, setShowTutorial] = useState(false);
+  const { start: startTutorial } = useTutorial();
 
   const [selectedUniversities, setSelectedUniversities] = useState<string[]>(
     []
@@ -83,7 +83,8 @@ export default function OnboardingPage() {
 
   const handleFinish = async () => {
     await saveAndComplete();
-    router.replace("/student/dashboard");
+    startTutorial();
+    router.replace("/student/demo/dashboard");
   };
 
   const handleConfirmNext = async () => {
@@ -92,7 +93,8 @@ export default function OnboardingPage() {
   };
 
   const handleSkillCheckSkip = async () => {
-    setShowTutorial(true);
+    startTutorial();
+    router.replace("/student/demo/dashboard");
   };
 
   const handleSkillCheckTake = () => {
@@ -255,10 +257,6 @@ export default function OnboardingPage() {
         )}
       </div>
 
-      <TutorialWalkthrough
-        open={showTutorial}
-        onComplete={() => router.replace("/student/dashboard")}
-      />
     </div>
   );
 }
