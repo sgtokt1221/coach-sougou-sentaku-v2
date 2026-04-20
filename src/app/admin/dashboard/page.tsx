@@ -40,7 +40,7 @@ export default function AdminDashboard() {
   const { data: rawData, isLoading } = useAuthSWR<StudentListItem[]>("/api/admin/students?limit=500");
   const { data: alertsData } = useAuthSWR<AlertItem[]>("/api/admin/alerts");
   const { data: weeklyWeaknesses } = useAuthSWR<{
-    weeklyTop: { area: string; count: number; studentCount: number }[];
+    weeklyTop: { area: string; count: number; studentCount: number; sources: string[] }[];
     comparedToLastWeek: { improved: string[]; worsened: string[]; new: string[] };
   }>("/api/admin/weekly-weaknesses");
   const { data: interventionData } = useAuthSWR<{
@@ -168,6 +168,10 @@ export default function AdminDashboard() {
             {weeklyWeaknesses.weeklyTop.map((w, i) => {
               const isWorsened = weeklyWeaknesses.comparedToLastWeek.worsened.includes(w.area);
               const isNew = weeklyWeaknesses.comparedToLastWeek.new.includes(w.area);
+              const sources = w.sources ?? [];
+              const hasEssay = sources.includes("essay") || sources.includes("skill_check");
+              const hasInterview = sources.includes("interview") || sources.includes("interview_skill_check");
+              const hasBoth = sources.includes("both");
               return (
                 <div key={w.area} className="flex items-center justify-between rounded-lg border p-3">
                   <div className="flex items-center gap-3">
@@ -175,8 +179,16 @@ export default function AdminDashboard() {
                       {i + 1}
                     </span>
                     <div>
-                      <p className="text-sm font-medium">{w.area}</p>
-                      <p className="text-xs text-muted-foreground">{w.studentCount}名の生徒</p>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <p className="text-sm font-medium">{w.area}</p>
+                        {(hasEssay || hasBoth) && (
+                          <Badge className="text-[10px] bg-emerald-100 text-emerald-700 border-0 hover:bg-emerald-100">添削</Badge>
+                        )}
+                        {(hasInterview || hasBoth) && (
+                          <Badge className="text-[10px] bg-indigo-100 text-indigo-700 border-0 hover:bg-indigo-100">面接</Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5">{w.studentCount}名の生徒</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">

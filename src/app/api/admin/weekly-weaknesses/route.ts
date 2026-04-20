@@ -6,6 +6,7 @@ interface WeaknessEntry {
   area: string;
   count: number;
   studentCount: number;
+  sources: string[]; // ["essay", "interview", "skill_check", "interview_skill_check", "both"]
 }
 
 export async function GET(request: NextRequest) {
@@ -39,6 +40,7 @@ export async function GET(request: NextRequest) {
     // Aggregate weaknesses for this week and last week
     const thisWeekMap = new Map<string, Set<string>>();
     const lastWeekMap = new Map<string, Set<string>>();
+    const thisWeekSources = new Map<string, Set<string>>(); // area → sources set
 
     for (const studentId of studentIds) {
       const weakSnap = await adminDb.collection(`users/${studentId}/weaknesses`).get();
@@ -50,11 +52,14 @@ export async function GET(request: NextRequest) {
         if (!lastOccurred) continue;
 
         const area = data.area ?? doc.id;
+        const source = (data.source ?? "essay") as string;
 
         // This week
         if (lastOccurred >= oneWeekAgo) {
           if (!thisWeekMap.has(area)) thisWeekMap.set(area, new Set());
           thisWeekMap.get(area)!.add(studentId);
+          if (!thisWeekSources.has(area)) thisWeekSources.set(area, new Set());
+          thisWeekSources.get(area)!.add(source);
         }
 
         // Last week (for comparison)
@@ -71,6 +76,7 @@ export async function GET(request: NextRequest) {
         area,
         count: students.size,
         studentCount: students.size,
+        sources: Array.from(thisWeekSources.get(area) ?? []),
       }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 7);
