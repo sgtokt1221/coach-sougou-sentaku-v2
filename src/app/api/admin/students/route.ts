@@ -150,7 +150,7 @@ export async function GET(request: NextRequest) {
           { name: "skillChecks", field: "takenAt" },
           { name: "interviewSkillChecks", field: "takenAt" },
           { name: "summaryDrills", field: "completedAt" },
-          { name: "activities", field: "createdAt" },
+          { name: "activityLogs", field: "createdAt" },
         ];
         for (const { name, field } of otherCollections) {
           try {
@@ -165,6 +165,10 @@ export async function GET(request: NextRequest) {
             // スキップ
           }
         }
+        // users.lastSeenAt (ハートビート)
+        const lastSeenAt = data.lastSeenAt?.toDate?.();
+        if (lastSeenAt) activityTimestamps.push(lastSeenAt.getTime());
+
         const lastActivityAt: string | null = activityTimestamps.length > 0
           ? new Date(Math.max(...activityTimestamps)).toISOString()
           : null;

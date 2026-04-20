@@ -301,13 +301,13 @@ export async function GET(request: NextRequest) {
           activityDates.push(latestEssay.submittedAt.toDate().getTime());
         }
 
-        // 面接・スキルチェック・要約ドリル・活動登録 (いずれも user サブコレクション)
+        // 面接・スキルチェック・要約ドリル・活動ログ (ネタインプット/面接ドリル)
         const otherCollections: Array<{ name: string; field: string }> = [
           { name: "interviews", field: "startedAt" },
           { name: "skillChecks", field: "takenAt" },
           { name: "interviewSkillChecks", field: "takenAt" },
           { name: "summaryDrills", field: "completedAt" },
-          { name: "activities", field: "createdAt" },
+          { name: "activityLogs", field: "createdAt" },
         ];
         for (const { name, field } of otherCollections) {
           try {
@@ -323,6 +323,10 @@ export async function GET(request: NextRequest) {
             // フィールド不存在・インデックス未作成時はスキップ
           }
         }
+
+        // users.lastSeenAt (ハートビートで更新される「最後にアプリを開いた時刻」)
+        const lastSeenAt = data.lastSeenAt?.toDate?.();
+        if (lastSeenAt) activityDates.push(lastSeenAt.getTime());
 
         const lastActivityAt: string | null = activityDates.length > 0
           ? new Date(Math.max(...activityDates)).toISOString()

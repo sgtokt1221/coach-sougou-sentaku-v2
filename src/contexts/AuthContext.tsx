@@ -145,6 +145,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => unsubProfile();
   }, [user]);
 
+  // ハートビート: ログイン中は 10 分ごとに users.lastSeenAt を更新
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    const beat = async () => {
+      try {
+        const token = await user.getIdToken();
+        if (cancelled) return;
+        await fetch("/api/student/heartbeat", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        }).catch(() => {});
+      } catch {}
+    };
+    beat();
+    const id = setInterval(beat, 10 * 60 * 1000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [user]);
+
   return (
     <AuthContext value={{ user, userProfile, loading, error, refreshProfile }}>
       {children}
