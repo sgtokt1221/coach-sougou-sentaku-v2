@@ -5,13 +5,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import { Users, FileText, BarChart3, AlertTriangle, Trophy, FileWarning, TrendingDown, TrendingUp, Sparkles, Target } from "lucide-react";
+import { Users, FileText, BarChart3, AlertTriangle, FileWarning, TrendingDown, TrendingUp, Sparkles, Target } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { CountUp } from "@/components/shared/CountUp";
 import { AnimatedList } from "@/components/shared/AnimatedList";
 import { useAuthSWR } from "@/lib/api/swr";
 import type { StudentListItem, AlertItem } from "@/lib/types/admin";
 import type { ExamResultStats } from "@/lib/types/exam-result";
+import { StudentStatusPie } from "@/components/admin/StudentStatusPie";
+import { AiInterventionCard } from "@/components/admin/AiInterventionCard";
 
 function scoreColor(total: number): string {
   if (total >= 40) return "text-emerald-600 dark:text-emerald-400";
@@ -35,13 +37,21 @@ function alertFlagLabel(flag: string): { label: string; variant: "destructive" |
 export default function AdminDashboard() {
   const { userProfile } = useAuth();
   const isSuperadmin = userProfile?.role === "superadmin";
-  const { data: rawData, isLoading } = useAuthSWR<StudentListItem[]>("/api/admin/students");
-  const { data: dashboardData } = useAuthSWR<{ examResultStats: ExamResultStats }>("/api/admin/dashboard");
+  const { data: rawData, isLoading } = useAuthSWR<StudentListItem[]>("/api/admin/students?limit=500");
   const { data: alertsData } = useAuthSWR<AlertItem[]>("/api/admin/alerts");
   const { data: weeklyWeaknesses } = useAuthSWR<{
     weeklyTop: { area: string; count: number; studentCount: number }[];
     comparedToLastWeek: { improved: string[]; worsened: string[]; new: string[] };
   }>("/api/admin/weekly-weaknesses");
+  const { data: interventionData } = useAuthSWR<{
+    items: Array<{
+      studentUid: string;
+      studentName: string;
+      recommendation: string;
+      reasoning: string;
+      severity: "critical" | "high" | "warning";
+    }>;
+  }>("/api/admin/intervention-recommendations");
   const students = rawData ?? [];
   const loading = isLoading;
 
@@ -117,52 +127,9 @@ export default function AdminDashboard() {
         )
       )}
 
-      {/* Exam Results Stats */}
-      {dashboardData?.examResultStats && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Trophy className="size-4" />
-              合格率
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                  {dashboardData.examResultStats.totalApplied}
-                </p>
-                <p className="text-xs text-muted-foreground">出願中</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-                  {dashboardData.examResultStats.totalPassed}
-                </p>
-                <p className="text-xs text-muted-foreground">合格</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-rose-600 dark:text-rose-400">
-                  {dashboardData.examResultStats.totalFailed}
-                </p>
-                <p className="text-xs text-muted-foreground">不合格</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-gray-600 dark:text-gray-400">
-                  {dashboardData.examResultStats.totalWithdrawn}
-                </p>
-                <p className="text-xs text-muted-foreground">辞退</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold">
-                  {dashboardData.examResultStats.passRate !== null
-                    ? `${dashboardData.examResultStats.passRate}%`
-                    : "-"}
-                </p>
-                <p className="text-xs text-muted-foreground">合格率</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Student Status Distribution */}
+      {isSuperadmin && (
+        <StudentStatusPie students={students} />
       )}
 
       <Separator />
@@ -346,6 +313,9 @@ export default function AdminDashboard() {
           )}
         </section>
       </div>
+
+      {/* AI Intervention Recommendations */}
+      <AiInterventionCard items={interventionData?.items ?? []} />
     </div>
   );
 }
