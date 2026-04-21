@@ -76,6 +76,7 @@ const CERT_TYPES: { value: EnglishCert["type"]; label: string }[] = [
 ];
 const EIKEN_GRADES = ["1級", "準1級", "2級", "準2級", "3級", "4級", "5級"];
 import { ExamResultsSection } from "@/components/admin/ExamResultsSection";
+import { EssayCoachHistorySection } from "@/components/admin/EssayCoachHistorySection";
 import { DocumentsSection } from "@/components/admin/DocumentsSection";
 import { InterviewsSection } from "@/components/admin/InterviewsSection";
 import { SummaryDrillsSection } from "@/components/admin/SummaryDrillsSection";
@@ -1022,6 +1023,9 @@ export default function AdminStudentDetailPage() {
 
       {/* Activities */}
       <ActivitiesSection studentId={id} />
+
+      {/* AIコーチ履歴 */}
+      <EssayCoachHistorySection studentId={id} />
 
       {/* Exam Results */}
       <ExamResultsSection studentId={id} />

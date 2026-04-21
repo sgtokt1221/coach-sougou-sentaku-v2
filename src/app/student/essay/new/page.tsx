@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import { WeaknessReminderCard } from "@/components/growth/WeaknessReminderCard";
 import { ManuscriptEditor } from "@/components/essay/ManuscriptEditor";
+import { EssayCoachPanel } from "@/components/essay/EssayCoachPanel";
 import { ReviewProgress } from "@/components/essay/ReviewProgress";
 import { EssayHistory } from "@/components/essay/EssayHistory";
 import { PastQuestionChart } from "@/components/essay/PastQuestionChart";
@@ -1057,30 +1058,38 @@ export default function EssayNewPage() {
             </Card>
           )}
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm lg:text-base">小論文を入力</CardTitle>
-            </CardHeader>
-            <CardContent className="p-3 lg:p-4 space-y-4">
-              <ManuscriptEditor
-                value={directText}
-                onChange={setDirectText}
-                maxLength={pastQuestion?.wordLimit ?? 800}
-                placeholder="ここに小論文を入力してください..."
-              />
-              {error && (
-                <p className="text-sm text-destructive">{error}</p>
-              )}
-              <Button
-                className="w-full"
-                onClick={handleDirectSubmit}
-                disabled={isSubmitting || !directText.trim()}
-              >
-                {isSubmitting ? "添削中..." : "添削する"}
-                <ChevronRight className="size-4 ml-1" />
-              </Button>
-            </CardContent>
-          </Card>
+          <div className="md:grid md:grid-cols-[minmax(0,1fr)_22rem] md:gap-4 md:items-start">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm lg:text-base">小論文を入力</CardTitle>
+              </CardHeader>
+              <CardContent className="p-3 lg:p-4 space-y-4">
+                <ManuscriptEditor
+                  value={directText}
+                  onChange={setDirectText}
+                  maxLength={pastQuestion?.wordLimit ?? 800}
+                  placeholder="ここに小論文を入力してください..."
+                />
+                {error && (
+                  <p className="text-sm text-destructive">{error}</p>
+                )}
+                <Button
+                  className="w-full"
+                  onClick={handleDirectSubmit}
+                  disabled={isSubmitting || !directText.trim()}
+                >
+                  {isSubmitting ? "添削中..." : "添削する"}
+                  <ChevronRight className="size-4 ml-1" />
+                </Button>
+              </CardContent>
+            </Card>
+            <EssayCoachPanel
+              topic={topic}
+              draft={directText}
+              universityId={universityId || undefined}
+              facultyId={facultyId || undefined}
+            />
+          </div>
         </>
       )}
 

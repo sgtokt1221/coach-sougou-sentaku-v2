@@ -129,6 +129,16 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // 管理者カスタムカレンダーイベント: Admin SDK 経由のみ
+    match /adminEvents/{eventId} {
+      allow read, write: if false;
+    }
+
+    // 小論文AIコーチ対話スレッド: Admin SDK 経由のみ
+    match /users/{userId}/essayCoachThreads/{threadId} {
+      allow read, write: if false;
+    }
+
     // スーパー管理者チェック関数
     function isSuperAdmin() {
       return request.auth != null &&
