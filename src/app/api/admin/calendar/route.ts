@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getHolidaysOf } from "japanese-holidays";
 import { requireRole } from "@/lib/api/auth";
 import { MOCK_UNIVERSITIES } from "@/lib/matching/mockData";
 import type { University } from "@/lib/types/university";
@@ -6,6 +7,7 @@ import type {
   CalendarEvent,
   CalendarEventType,
 } from "@/lib/types/admin-calendar";
+import type { AdminEvent } from "@/lib/types/admin-event";
 
 const JST_OFFSET = "+09:00";
 const PAST_CUTOFF_DAYS = 30;
@@ -268,7 +270,79 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // 4. ソート
+    // 4. 管理者カスタムイベント (adminEvents)
+    try {
+      let q: FirebaseFirestore.Query = adminDb.collection("adminEvents");
+      if (effectiveRole !== "superadmin") {
+        q = q.where("createdByAdminId", "==", effectiveUid);
+      }
+      if (from) q = q.where("date", ">=", from);
+      if (to) q = q.where("date", "<=", to);
+      const snap = await q.get();
+      for (const doc of snap.docs) {
+        const ev = doc.data() as AdminEvent;
+        if (!ev.date) continue;
+        const d = new Date(`${ev.date}T00:00:00${JST_OFFSET}`);
+        if (isNaN(d.getTime())) continue;
+        if (!inRange(d)) continue;
+        const start = ev.allDay
+          ? `${ev.date}T00:00:00${JST_OFFSET}`
+          : `${ev.date}T${ev.startTime ?? "00:00"}:00${JST_OFFSET}`;
+        const end = ev.allDay
+          ? `${ev.date}T23:59:59${JST_OFFSET}`
+          : `${ev.date}T${ev.endTime ?? ev.startTime ?? "23:59"}:00${JST_OFFSET}`;
+        events.push({
+          uid: `coach-custom-${ev.id}@coach.app`,
+          id: `coach-custom-${ev.id}@coach.app`,
+          startAt: new Date(start).toISOString(),
+          endAt: new Date(end).toISOString(),
+          allDay: ev.allDay,
+          date: ev.date,
+          type: "custom",
+          label: ev.title,
+          description: ev.description,
+          location: ev.location,
+          studentNames: [],
+          adminEventId: ev.id,
+        });
+      }
+    } catch (err) {
+      console.warn("[calendar] adminEvents fetch failed:", err);
+    }
+
+    // 5. 日本の祝日
+    if (fromDate && toDate) {
+      const years = new Set<number>();
+      for (
+        let y = fromDate.getFullYear();
+        y <= toDate.getFullYear();
+        y++
+      ) {
+        years.add(y);
+      }
+      for (const y of years) {
+        const holidays = getHolidaysOf(y, true);
+        for (const h of holidays) {
+          const dateStr = `${y}-${String(h.month).padStart(2, "0")}-${String(h.date).padStart(2, "0")}`;
+          const d = new Date(`${dateStr}T00:00:00${JST_OFFSET}`);
+          if (!inRange(d)) continue;
+          const iso = toAllDayIso(dateStr);
+          events.push({
+            uid: `coach-holiday-${dateStr}@coach.app`,
+            id: `coach-holiday-${dateStr}@coach.app`,
+            startAt: iso.startAt,
+            endAt: iso.endAt,
+            allDay: true,
+            date: dateStr,
+            type: "holiday",
+            label: h.name,
+            studentNames: [],
+          });
+        }
+      }
+    }
+
+    // 6. ソート
     events.sort((a, b) => {
       if (a.startAt < b.startAt) return -1;
       if (a.startAt > b.startAt) return 1;

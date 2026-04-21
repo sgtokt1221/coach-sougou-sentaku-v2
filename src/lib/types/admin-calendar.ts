@@ -5,7 +5,9 @@ export type CalendarEventType =
   | "app_start"
   | "app_end"
   | "exam"
-  | "result";
+  | "result"
+  | "custom"
+  | "holiday";
 
 export interface CalendarEvent {
   /** iCal UID 互換のグローバルユニークID (将来 iCal 同期で利用) */
@@ -32,6 +34,8 @@ export interface CalendarEvent {
   /** 管理ポータル内遷移先 */
   href?: string;
   sessionType?: SessionType;
+  /** 管理者カスタムイベントの Firestore ID (custom のみ)。編集/削除時に使用 */
+  adminEventId?: string;
 }
 
 export const CALENDAR_EVENT_COLORS: Record<CalendarEventType, string> = {
@@ -40,6 +44,8 @@ export const CALENDAR_EVENT_COLORS: Record<CalendarEventType, string> = {
   app_end: "bg-orange-500",
   exam: "bg-red-500",
   result: "bg-emerald-500",
+  custom: "bg-violet-500",
+  holiday: "bg-rose-400",
 };
 
 export const CALENDAR_EVENT_LABELS: Record<CalendarEventType, string> = {
@@ -48,4 +54,6 @@ export const CALENDAR_EVENT_LABELS: Record<CalendarEventType, string> = {
   app_end: "出願締切",
   exam: "試験日",
   result: "合格発表",
+  custom: "予定",
+  holiday: "祝日",
 };

@@ -30,6 +30,7 @@
     "firebase": "^12.11.0",
     "framer-motion": "^12.38.0",
     "gsap": "^3.14.2",
+    "japanese-holidays": "^1.0.10",
     "jszip": "^3.10.1",
     "jwa": "^2.0.1",
     "lucide-react": "^0.577.0",
