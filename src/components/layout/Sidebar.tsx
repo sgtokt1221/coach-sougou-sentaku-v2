@@ -175,7 +175,8 @@ const superadminNavGroups: NavGroup[] = [
     title: "Analytics",
     items: [
       { label: "合格者データ", href: "/admin/passed-data", icon: Trophy },
-      { label: "分析", href: "/admin/analytics", icon: BarChart3 },
+      { label: "担当分析", href: "/admin/analytics", icon: BarChart3 },
+      { label: "全体分析", href: "/superadmin/analytics", icon: BarChart3 },
     ],
   },
   {
