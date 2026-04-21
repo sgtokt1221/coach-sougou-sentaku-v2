@@ -37,7 +37,7 @@
           "resultDate": "2026-01-20"
         },
         "admissionUrl": "https://www.ikensen.ac.jp/admission/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       }
     ]
   },
@@ -963,7 +963,7 @@
           "resultDate": "2025-11-06"
         },
         "admissionUrl": "https://www.uhe.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "general-psychology",
@@ -1050,7 +1050,7 @@
           "resultDate": "2025-11-06"
         },
         "admissionUrl": "https://www.uhe.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       }
     ]
   },
@@ -1088,7 +1088,7 @@
           "resultDate": "2025-11-06"
         },
         "admissionUrl": "https://www.shubun.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "medicine",
@@ -1117,7 +1117,7 @@
           "resultDate": "2025-11-06"
         },
         "admissionUrl": "https://www.shubun.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "nutrition",
@@ -1194,7 +1194,7 @@
           "resultDate": "2025-10-31"
         },
         "admissionUrl": "https://www.corp.hyo-med.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "pharmacy",
@@ -1234,7 +1234,7 @@
           "resultDate": "2025-10-31"
         },
         "admissionUrl": "https://www.corp.hyo-med.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "medicine",
@@ -1273,7 +1273,7 @@
           "resultDate": "2025-11-27"
         },
         "admissionUrl": "https://www.corp.hyo-med.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "nursing",
@@ -1311,7 +1311,7 @@
           "resultDate": "2025-10-31"
         },
         "admissionUrl": "https://www.corp.hyo-med.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       }
     ]
   },
@@ -2420,7 +2420,7 @@
           "resultDate": "2025-11-19"
         },
         "admissionUrl": "https://www.nuas.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "general",
@@ -2796,7 +2796,7 @@
           "resultDate": "2026-01-08"
         },
         "admissionUrl": "https://www.ngu.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "foreign-languages",
@@ -3306,7 +3306,7 @@
           "resultDate": "2025-11-20"
         },
         "admissionUrl": "https://www.owari.ac.jp/admission/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "general",
@@ -3743,7 +3743,7 @@
           "resultDate": "2025-11-29"
         },
         "admissionUrl": "https://www.meijo-u.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "business",
@@ -4068,7 +4068,7 @@
           "resultDate": "2024-11-29"
         },
         "admissionUrl": "https://www.saitama-med.ac.jp/admission/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "medicine-2",
@@ -4112,7 +4112,7 @@
           "resultDate": "2024-12-28"
         },
         "admissionUrl": "https://www.saitama-med.ac.jp/admission/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       }
     ]
   },
@@ -4654,7 +4654,7 @@
           "resultDate": "2025-12-01"
         },
         "admissionUrl": "https://www.teikyo-u.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "medicine",
@@ -4693,7 +4693,7 @@
           "resultDate": "2025-12-01"
         },
         "admissionUrl": "https://www.teikyo-u.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "economics",
@@ -4810,7 +4810,7 @@
           "resultDate": "2025-12-01"
         },
         "admissionUrl": "https://www.teikyo-u.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "education",
@@ -4898,7 +4898,7 @@
           "resultDate": "2024-11-22"
         },
         "admissionUrl": "https://www.teikyo-u.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       }
     ]
   },
@@ -4978,7 +4978,7 @@
           "resultDate": "2025-12-27"
         },
         "admissionUrl": "https://www.yuai.ac.jp/admission/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       }
     ]
   },
@@ -5030,7 +5030,7 @@
           "resultDate": "2025-12-23"
         },
         "admissionUrl": "https://www.aichi-med-u.ac.jp/admission/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "nursing",
@@ -5068,7 +5068,7 @@
           "resultDate": "2025-12-10"
         },
         "admissionUrl": "https://www.aichi-med-u.ac.jp/admission/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       }
     ]
   },
@@ -5615,7 +5615,7 @@
           "resultDate": "2025-12-19"
         },
         "admissionUrl": "https://navi.agu.ac.jp/admission/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "business",
@@ -5767,7 +5767,7 @@
           "resultDate": "2025-11-11"
         },
         "admissionUrl": "https://navi.agu.ac.jp/admission/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "general",
@@ -6408,7 +6408,7 @@
           "resultDate": "2025-12-21"
         },
         "admissionUrl": "https://www.aasa.ac.jp/admission/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "global-comm",
@@ -6523,7 +6523,7 @@
           "resultDate": "2025-12-21"
         },
         "admissionUrl": "https://www.aasa.ac.jp/admission/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "architecture",
@@ -6676,7 +6676,7 @@
           "resultDate": "2025-03-07"
         },
         "admissionUrl": "https://www.nms.ac.jp/college/admission/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       }
     ]
   },
@@ -7284,7 +7284,7 @@
           "resultDate": "2025-12-28"
         },
         "admissionUrl": "https://www.n-fukushi.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       }
     ]
   },
@@ -7321,7 +7321,7 @@
           "resultDate": "2026-01-01"
         },
         "admissionUrl": "https://www.rctoyota.ac.jp/admission/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       }
     ]
   },
@@ -7368,7 +7368,7 @@
           "resultDate": "2025-11-21"
         },
         "admissionUrl": "https://www.seijoh.ac.jp/admission/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "business",
@@ -7453,7 +7453,7 @@
           "resultDate": "2024-10-30"
         },
         "admissionUrl": "https://www.showa-u.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "medicine",
@@ -7491,7 +7491,7 @@
           "resultDate": "2024-10-30"
         },
         "admissionUrl": "https://www.showa-u.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "medicine-2",
@@ -7535,7 +7535,7 @@
           "resultDate": "2024-12-23"
         },
         "admissionUrl": "https://www.showa-u.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "pharmacy",
@@ -7584,7 +7584,7 @@
           "resultDate": "2024-10-30"
         },
         "admissionUrl": "https://www.showa-u.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       }
     ]
   },
@@ -7797,7 +7797,7 @@
           "resultDate": "2024-12-28"
         },
         "admissionUrl": "https://www.tokyo-med.ac.jp/med/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       }
     ]
   },
@@ -7856,7 +7856,7 @@
           "resultDate": "2024-12-24"
         },
         "admissionUrl": "https://www.twmu.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "nursing",
@@ -7894,7 +7894,7 @@
           "resultDate": "2024-12-26"
         },
         "admissionUrl": "https://www.twmu.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       }
     ]
   },
@@ -8005,7 +8005,7 @@
           "resultDate": "2025-03-06"
         },
         "admissionUrl": "https://www.jikei.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       }
     ]
   },
@@ -8193,7 +8193,7 @@
           "resultDate": "2024-12-11"
         },
         "admissionUrl": "https://www.tus.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "business",
@@ -8870,7 +8870,7 @@
           "resultDate": "2025-12-21"
         },
         "admissionUrl": "https://www.u-tokai.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "international",
@@ -9406,7 +9406,7 @@
           "resultDate": "2024-12-21"
         },
         "admissionUrl": "https://www.toho-u.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "nursing",
@@ -9444,7 +9444,7 @@
           "resultDate": "2024-12-21"
         },
         "admissionUrl": "https://www.toho-u.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "medicine",
@@ -9483,7 +9483,7 @@
           "resultDate": "2024-12-19"
         },
         "admissionUrl": "https://www.toho-u.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "science",
@@ -9839,7 +9839,7 @@
           "resultDate": "2025-12-20"
         },
         "admissionUrl": "https://www.sugiyama-u.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "management",
@@ -10217,7 +10217,7 @@
           "resultDate": "2024-10-23"
         },
         "admissionUrl": "https://www.musashino-u.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "global",
@@ -10305,7 +10305,7 @@
           "resultDate": "2025-10-23"
         },
         "admissionUrl": "https://www.musashino-u.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "law",
@@ -11768,7 +11768,7 @@
           "resultDate": "2025-10-22"
         },
         "admissionUrl": "https://www.fukuoka-u.ac.jp/admission/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "law",
@@ -11965,7 +11965,7 @@
           "resultDate": "2024-12-21"
         },
         "admissionUrl": "https://www.fukuoka-u.ac.jp/admission/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       }
     ]
   },
@@ -12172,7 +12172,7 @@
           "resultDate": "2025-12-09"
         },
         "admissionUrl": "https://www.fujita-hu.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "medicine-2",
@@ -12205,7 +12205,7 @@
           "resultDate": "2025-11-20"
         },
         "admissionUrl": "https://www.fujita-hu.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "general",
@@ -12244,7 +12244,7 @@
           "resultDate": "2025-11-20"
         },
         "admissionUrl": "https://www.fujita-hu.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       }
     ]
   },
@@ -12583,7 +12583,7 @@
           "resultDate": "2025-11-18"
         },
         "admissionUrl": "https://www.sozo.ac.jp/admission/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "business",
@@ -12883,7 +12883,7 @@
           "resultDate": "2025-12-24"
         },
         "admissionUrl": "https://www.kinjo-u.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "design-eng",
@@ -12959,7 +12959,7 @@
           "resultDate": "2025-12-24"
         },
         "admissionUrl": "https://www.kinjo-u.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       }
     ]
   },
@@ -13008,7 +13008,7 @@
           "resultDate": "2024-12-24"
         },
         "admissionUrl": "https://www.kmu.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "nursing",
@@ -13052,7 +13052,7 @@
           "resultDate": "2024-12-21"
         },
         "admissionUrl": "https://www.kmu.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "general",
@@ -13096,7 +13096,7 @@
           "resultDate": "2024-12-21"
         },
         "admissionUrl": "https://www.kmu.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       }
     ]
   },
@@ -13216,7 +13216,7 @@
           "resultDate": "2024-11-22"
         },
         "admissionUrl": "https://www.juntendo.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "medicinenursing",
@@ -13259,7 +13259,7 @@
           "resultDate": "2024-11-27"
         },
         "admissionUrl": "https://www.juntendo.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "pharmacy",
@@ -13302,7 +13302,7 @@
           "resultDate": "2025-12-01"
         },
         "admissionUrl": "https://www.juntendo.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "medicine-2",
@@ -13346,7 +13346,7 @@
           "resultDate": "2025-03-01"
         },
         "admissionUrl": "https://www.juntendo.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "nursing",
@@ -13384,7 +13384,7 @@
           "resultDate": "2024-11-06"
         },
         "admissionUrl": "https://www.juntendo.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "medicine-3",
@@ -13427,7 +13427,7 @@
           "resultDate": "2024-11-02"
         },
         "admissionUrl": "https://www.juntendo.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "data-science",

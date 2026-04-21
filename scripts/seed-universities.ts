@@ -8,6 +8,9 @@
  *
  * B) プロジェクトID指定（ADC使用）:
  *    GCLOUD_PROJECT=coach-sougou-sentaku npx tsx scripts/seed-universities.ts
+ *
+ * 任意引数:
+ *   --group <name>  指定グループの JSON のみ投入 (例: --group kyutei)
  */
 
 import { cert, getApps, initializeApp } from "firebase-admin/app";
@@ -79,14 +82,38 @@ function initFirebase() {
   }
 }
 
+function parseArgs(): { group?: string } {
+  const args = process.argv.slice(2);
+  const groupIdx = args.indexOf("--group");
+  if (groupIdx >= 0 && args[groupIdx + 1]) {
+    return { group: args[groupIdx + 1] };
+  }
+  return {};
+}
+
 async function seedUniversities() {
   initFirebase();
   const db = getFirestore();
+  const { group } = parseArgs();
+
+  const targetFiles = group
+    ? JSON_FILES.filter((f) => f === `${group}.json`)
+    : JSON_FILES;
+
+  if (group && targetFiles.length === 0) {
+    throw new Error(
+      `Unknown group '${group}'. Available: ${JSON_FILES.map((f) => f.replace(/\.json$/, "")).join(", ")}`
+    );
+  }
+
+  if (group) {
+    console.log(`[filter] group='${group}' -> ${targetFiles.join(", ")}`);
+  }
 
   let totalUniversities = 0;
   let totalFaculties = 0;
 
-  for (const file of JSON_FILES) {
+  for (const file of targetFiles) {
     const filePath = join(DATA_DIR, file);
     const raw = readFileSync(filePath, "utf-8");
     const universities: UniversityData[] = JSON.parse(raw);

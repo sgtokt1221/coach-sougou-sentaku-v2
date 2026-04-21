@@ -326,7 +326,7 @@
           "resultDate": "2025-12-01"
         },
         "admissionUrl": "https://www.nihon-u.ac.jp/admission_info/application/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "lettersscience",
@@ -600,7 +600,7 @@
           "resultDate": "2026-01-10"
         },
         "admissionUrl": "https://www.nihon-u.ac.jp/admission_info/application/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "dentistry",
@@ -643,7 +643,7 @@
           "resultDate": "2025-12-01"
         },
         "admissionUrl": "https://www.nihon-u.ac.jp/admission_info/application/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "arts",
@@ -1443,7 +1443,7 @@
           "resultDate": "2025-11-13"
         },
         "admissionUrl": "https://think.komazawa-u.ac.jp/admission/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "economics",

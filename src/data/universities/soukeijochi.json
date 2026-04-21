@@ -504,7 +504,7 @@
           "resultDate": "2025-10-31"
         },
         "admissionUrl": "https://www.keio.ac.jp/ja/admissions/examinations/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "law",
@@ -581,7 +581,7 @@
           "resultDate": "2025-08-27"
         },
         "admissionUrl": "https://www.keio.ac.jp/ja/admissions/examinations/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "science-eng",

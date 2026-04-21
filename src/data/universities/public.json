@@ -397,7 +397,7 @@
           "resultDate": "2025-12-20"
         },
         "admissionUrl": "https://www.nagoya-cu.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "economics",
@@ -658,7 +658,7 @@
           "resultDate": "2025-12-20"
         },
         "admissionUrl": "https://www.nagoya-cu.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "letterssocial",
@@ -990,7 +990,7 @@
           "resultDate": "2025-12-01"
         },
         "admissionUrl": "https://www.nayoro.ac.jp/admission/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       }
     ]
   },
@@ -1173,7 +1173,7 @@
           "resultDate": "2025-12-20"
         },
         "admissionUrl": "https://www.aichi-pu.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       }
     ]
   },
@@ -1275,7 +1275,7 @@
           "resultDate": "2025-12-01"
         },
         "admissionUrl": "https://www.asahikawa-u.ac.jp/admission/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "economics",
@@ -1356,7 +1356,7 @@
           "resultDate": "2025-11-20"
         },
         "admissionUrl": "https://www.sapmed.ac.jp/admission/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "medicine-2",
@@ -1390,7 +1390,7 @@
           "resultDate": "2025-12-20"
         },
         "admissionUrl": "https://www.sapmed.ac.jp/admission/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       }
     ]
   },
@@ -1437,7 +1437,7 @@
           "resultDate": "2025-12-20"
         },
         "admissionUrl": "https://www.scu.ac.jp/admission/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "design",
@@ -1596,7 +1596,7 @@
           "resultDate": "2024-10-17"
         },
         "admissionUrl": "https://www.tmu.ac.jp/entrance/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "science",
@@ -2094,7 +2094,7 @@
           "resultDate": "2025-11-01"
         },
         "admissionUrl": "https://www.yachts.ac.jp/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       }
     ]
   },
@@ -2137,7 +2137,7 @@
           "resultDate": "2025-11-14"
         },
         "admissionUrl": "https://www.fmu.ac.jp/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       }
     ]
   },
@@ -2179,7 +2179,7 @@
           "resultDate": "2025-11-01"
         },
         "admissionUrl": "https://www.kuhs.ac.jp/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       }
     ]
   },
@@ -2991,7 +2991,7 @@
           "resultDate": "2025-11-07"
         },
         "admissionUrl": "https://www.oka-pu.ac.jp/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       }
     ]
   },

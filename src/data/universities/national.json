@@ -336,7 +336,7 @@
           "resultDate": "2025-12-06"
         },
         "admissionUrl": "https://www.saga-u.ac.jp/admission/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "artsregionaldesign",
@@ -623,7 +623,7 @@
           "resultDate": "2024-12-19"
         },
         "admissionUrl": "https://www.chiba-u.ac.jp/exam/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "pharmacy",
@@ -662,7 +662,7 @@
           "resultDate": "2024-12-19"
         },
         "admissionUrl": "https://www.chiba-u.ac.jp/exam/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "international-liberal-arts",
@@ -1318,7 +1318,7 @@
           "resultDate": "2025-11-12"
         },
         "admissionUrl": "https://www.oita-u.ac.jp/admission/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "education",
@@ -1384,7 +1384,7 @@
           "resultDate": "2025-11-12"
         },
         "admissionUrl": "https://www.oita-u.ac.jp/admission/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "economics",
@@ -1526,7 +1526,7 @@
           "resultDate": "2026-02-13"
         },
         "admissionUrl": "https://www.omu.ac.jp/admissions/assets/4_Sougou_SR_med2026.pdf",
-        "selectionType": "comprehensive",
+        "selectionType": "school_recommendation",
         "academicField": "medicine",
         "interviewTendency": {
           "format": "口述試験 + 個人面接",
@@ -2472,7 +2472,7 @@
           "resultDate": "2024-12-19"
         },
         "admissionUrl": "https://www.gifu-u.ac.jp/admission/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "general",
@@ -2657,7 +2657,7 @@
           "resultDate": "2025-12-24"
         },
         "admissionUrl": "https://www.okayama-u.ac.jp/tp/admission/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "agriculture",
@@ -2888,7 +2888,7 @@
           "resultDate": "2025-12-24"
         },
         "admissionUrl": "https://www.okayama-u.ac.jp/tp/admission/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "engineering",
@@ -2964,7 +2964,7 @@
           "resultDate": "2025-12-24"
         },
         "admissionUrl": "https://www.okayama-u.ac.jp/tp/admission/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       }
     ]
   },
@@ -3176,7 +3176,7 @@
           "resultDate": "2025-10-22"
         },
         "admissionUrl": "https://www.hiroshima-u.ac.jp/nyushi/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "medicine",
@@ -3215,7 +3215,7 @@
           "resultDate": "2025-10-22"
         },
         "admissionUrl": "https://www.hiroshima-u.ac.jp/nyushi/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "science",
@@ -3332,7 +3332,7 @@
           "resultDate": "2025-10-22"
         },
         "admissionUrl": "https://www.hiroshima-u.ac.jp/nyushi/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "economics",
@@ -3717,7 +3717,7 @@
           "resultDate": "2025-12-01"
         },
         "admissionUrl": "https://www.niigata-u.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "general",
@@ -3819,7 +3819,7 @@
           "resultDate": "2025-12-01"
         },
         "admissionUrl": "https://www.niigata-u.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "law",
@@ -3925,7 +3925,7 @@
           "resultDate": "2025-11-14"
         },
         "admissionUrl": "https://www.asahikawa-med.ac.jp/bureau/nyusi/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       }
     ]
   },
@@ -4574,7 +4574,7 @@
           "resultDate": "2025-12-01"
         },
         "admissionUrl": "https://www.yokohama-cu.ac.jp/admissions/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "international-liberal-arts",
@@ -4768,7 +4768,7 @@
           "resultDate": "2026-03-07"
         },
         "admissionUrl": "https://www.kumamoto-u.ac.jp/nyuushi/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "medicine",
@@ -4797,7 +4797,7 @@
           "resultDate": "2025-11-15"
         },
         "admissionUrl": "https://www.kumamoto-u.ac.jp/nyuushi/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "information",
@@ -5086,7 +5086,7 @@
           "resultDate": "2024-12-21"
         },
         "admissionUrl": "https://ac.tsukuba.ac.jp/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "social-international",
@@ -5372,7 +5372,7 @@
           "resultDate": "2024-12-20"
         },
         "admissionUrl": "https://www.gunma-u.ac.jp/admission/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "information",
@@ -5978,7 +5978,7 @@
           "resultDate": "2025-03-20"
         },
         "admissionUrl": "https://www.nagasaki-u.ac.jp/nyugaku/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "dentistry",
@@ -6018,7 +6018,7 @@
           "resultDate": "2025-03-20"
         },
         "admissionUrl": "https://www.nagasaki-u.ac.jp/nyugaku/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "general",
@@ -6142,7 +6142,7 @@
           "resultDate": "2025-03-20"
         },
         "admissionUrl": "https://www.nagasaki-u.ac.jp/nyugaku/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "education",
@@ -6261,7 +6261,7 @@
           "resultDate": "2025-03-20"
         },
         "admissionUrl": "https://www.nagasaki-u.ac.jp/nyugaku/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "economics",
@@ -6707,7 +6707,7 @@
           "resultDate": "2025-12-19"
         },
         "admissionUrl": "https://www.kagoshima-u.ac.jp/admission/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "engineering",
@@ -6765,7 +6765,7 @@
           "resultDate": "2025-12-19"
         },
         "admissionUrl": "https://www.kagoshima-u.ac.jp/admission/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       },
       {
         "id": "science",
@@ -6910,7 +6910,7 @@
           "resultDate": "2025-12-19"
         },
         "admissionUrl": "https://www.kagoshima-u.ac.jp/admission/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       }
     ]
   },
@@ -8094,7 +8094,7 @@
         "name": "医学部医学科",
         "admissionPolicy": "医学部医学科では、生命科学・医学に強い興味を持ち、探究心と学習意欲が旺盛な学生を求めます。高い倫理観と高度な専門知識を備えた医師および研究者を育成します。",
         "capacity": 10,
-        "selectionType": "comprehensive",
+        "selectionType": "school_recommendation",
         "requirements": {
           "gpa": 4,
           "certifications": [],
@@ -8126,7 +8126,7 @@
         "name": "医学部保健学科",
         "admissionPolicy": "医学部保健学科では、明確な目的意識と旺盛な学習意欲を持ち、ひとに対する深い思いやりと協調性、優れたコミュニケーション能力を持った学生を求めます。",
         "capacity": 13,
-        "selectionType": "comprehensive",
+        "selectionType": "school_recommendation",
         "requirements": {
           "gpa": 4,
           "certifications": [],
@@ -8841,7 +8841,7 @@
           "resultDate": "2025-11-14"
         },
         "admissionUrl": "https://www.tokushima-u.ac.jp/",
-        "selectionType": "comprehensive"
+        "selectionType": "school_recommendation"
       }
     ]
   },

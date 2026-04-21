@@ -36,14 +36,12 @@ import {
   Clock,
   BookOpen,
   ExternalLink,
-  Lock,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { authFetch } from "@/lib/api/client";
 import type { University, Faculty, SelectionMethod } from "@/lib/types/university";
 import { Badge } from "@/components/ui/badge";
 import { PAST_QUESTIONS } from "@/data/essay-past-questions";
-import { SelectionTypeBadge } from "@/components/shared/SelectionTypeBadge";
 
 type SelectionMethodType = SelectionMethod["type"];
 
@@ -392,7 +390,7 @@ export default function AdminUniversityEditPage() {
     type: "success" | "error";
     text: string;
   } | null>(null);
-  const [activeTab, setActiveTab] = useState<string>("0");
+  const [activeFacultyId, setActiveFacultyId] = useState<string>("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteFacultyIndex, setDeleteFacultyIndex] = useState<number | null>(null);
 
@@ -403,7 +401,9 @@ export default function AdminUniversityEditPage() {
         if (!res.ok) throw new Error("fetch failed");
         const data = await res.json();
         setUniversity(data);
-        if (data.faculties?.length > 0) setActiveTab("0");
+        if (data.faculties?.length > 0) {
+          setActiveFacultyId(data.faculties[0].id ?? "");
+        }
       } catch {
         setUniversity(null);
       } finally {
@@ -431,9 +431,10 @@ export default function AdminUniversityEditPage() {
   function addFaculty() {
     if (!university) return;
     const newIndex = university.faculties.length;
-    const faculties = [...university.faculties, newFaculty(newIndex)];
+    const created = newFaculty(newIndex);
+    const faculties = [...university.faculties, created];
     setUniversity({ ...university, faculties });
-    setActiveTab(String(newIndex));
+    setActiveFacultyId(created.id);
   }
 
   function confirmDeleteFaculty(index: number) {
@@ -447,8 +448,8 @@ export default function AdminUniversityEditPage() {
       (_, i) => i !== deleteFacultyIndex
     );
     setUniversity({ ...university, faculties });
-    const newActive = Math.max(0, deleteFacultyIndex - 1);
-    setActiveTab(faculties.length > 0 ? String(newActive) : "0");
+    const fallbackIdx = Math.max(0, deleteFacultyIndex - 1);
+    setActiveFacultyId(faculties[fallbackIdx]?.id ?? faculties[0]?.id ?? "");
     setDeleteDialogOpen(false);
     setDeleteFacultyIndex(null);
   }
@@ -508,9 +509,6 @@ export default function AdminUniversityEditPage() {
           </Button>
           <div>
             <h1 className="text-2xl font-bold">{university.name}</h1>
-            <p className="text-sm text-muted-foreground">
-              {canEdit ? "大学情報の編集" : "大学情報の閲覧 (読み取り専用)"}
-            </p>
           </div>
         </div>
         {canEdit && (
@@ -529,18 +527,6 @@ export default function AdminUniversityEditPage() {
           </div>
         )}
       </div>
-
-      {!canEdit && (
-        <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50/70 p-4 dark:border-amber-900 dark:bg-amber-950/20">
-          <Lock className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400" />
-          <div className="text-sm">
-            <p className="font-medium text-amber-800 dark:text-amber-200">閲覧モード</p>
-            <p className="mt-1 text-amber-700 dark:text-amber-300">
-              このページは参考情報の閲覧用です。大学・学部情報の編集は superadmin 権限でのみ可能です。
-            </p>
-          </div>
-        </div>
-      )}
 
       {/* Basic Info */}
       <Card>
@@ -639,29 +625,84 @@ export default function AdminUniversityEditPage() {
             <p className="text-sm text-muted-foreground">
               学部がまだ登録されていません。「学部追加」ボタンで追加してください。
             </p>
-          ) : (
-            <div className="space-y-6">
-              <SegmentControl
-                value={activeTab}
-                onChange={setActiveTab}
-                options={university.faculties.map((faculty, idx) => ({
-                  id: String(idx),
-                  label: faculty.name || `学部${idx + 1}`,
-                }))}
-              />
+          ) : (() => {
+            const compFaculties = university.faculties
+              .map((f, idx) => ({ faculty: f, idx }))
+              .filter(
+                ({ faculty }) =>
+                  (faculty.selectionType ?? "comprehensive") === "comprehensive",
+              );
+            const recFaculties = university.faculties
+              .map((f, idx) => ({ faculty: f, idx }))
+              .filter(
+                ({ faculty }) => faculty.selectionType === "school_recommendation",
+              );
 
-              {(() => {
-                const idx = Number(activeTab);
-                const faculty = university.faculties[idx];
-                if (!faculty) return null;
-                return (
-                  <div>
+            const activeIdx = university.faculties.findIndex(
+              (f) => f.id === activeFacultyId,
+            );
+            const activeFaculty =
+              activeIdx >= 0 ? university.faculties[activeIdx] : null;
+
+            return (
+              <div className="space-y-8">
+                {compFaculties.length > 0 && (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-block size-2 rounded-full bg-sky-500" />
+                      <h3 className="text-sm font-semibold text-sky-700 dark:text-sky-300">
+                        総合型選抜
+                      </h3>
+                      <span className="text-xs text-muted-foreground">
+                        （{compFaculties.length}学部）
+                      </span>
+                    </div>
+                    <SegmentControl
+                      value={activeFacultyId}
+                      onChange={setActiveFacultyId}
+                      defaultAccent="blue"
+                      options={compFaculties.map(({ faculty, idx }) => ({
+                        id: faculty.id,
+                        label: faculty.name || `学部${idx + 1}`,
+                      }))}
+                    />
+                  </div>
+                )}
+
+                {compFaculties.length > 0 && recFaculties.length > 0 && (
+                  <Separator />
+                )}
+
+                {recFaculties.length > 0 && (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-block size-2 rounded-full bg-amber-500" />
+                      <h3 className="text-sm font-semibold text-amber-700 dark:text-amber-300">
+                        学校推薦型選抜
+                      </h3>
+                      <span className="text-xs text-muted-foreground">
+                        （{recFaculties.length}学部）
+                      </span>
+                    </div>
+                    <SegmentControl
+                      value={activeFacultyId}
+                      onChange={setActiveFacultyId}
+                      defaultAccent="amber"
+                      options={recFaculties.map(({ faculty, idx }) => ({
+                        id: faculty.id,
+                        label: faculty.name || `学部${idx + 1}`,
+                      }))}
+                    />
+                  </div>
+                )}
+
+                {activeFaculty && (
+                  <div className="pt-2">
                     <div className="mb-4 flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3 flex-wrap">
-                        <SelectionTypeBadge type={faculty.selectionType} />
-                        {faculty.admissionUrl ? (
+                        {activeFaculty.admissionUrl ? (
                           <a
-                            href={faculty.admissionUrl}
+                            href={activeFaculty.admissionUrl}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
@@ -676,7 +717,7 @@ export default function AdminUniversityEditPage() {
                           variant="outline"
                           size="sm"
                           className="text-destructive hover:text-destructive"
-                          onClick={() => confirmDeleteFaculty(idx)}
+                          onClick={() => confirmDeleteFaculty(activeIdx)}
                         >
                           <Trash2 className="mr-1 size-3" />
                           この学部を削除
@@ -684,15 +725,15 @@ export default function AdminUniversityEditPage() {
                       )}
                     </div>
                     <FacultyForm
-                      faculty={faculty}
-                      onChange={(updated) => updateFaculty(idx, updated)}
+                      faculty={activeFaculty}
+                      onChange={(updated) => updateFaculty(activeIdx, updated)}
                       canEdit={canEdit}
                     />
                   </div>
-                );
-              })()}
-            </div>
-          )}
+                )}
+              </div>
+            );
+          })()}
         </CardContent>
       </Card>
 
