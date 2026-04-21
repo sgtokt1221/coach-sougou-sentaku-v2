@@ -23,6 +23,8 @@ export interface MatchResult {
   apFitReason?: string;
   /** 自己分析 + チャット希望を踏まえた推薦ラベル */
   fitRecommendation?: FitRecommendation;
+  /** 選抜種別 (総合型選抜 or 学校推薦型選抜) */
+  selectionType?: "comprehensive" | "school_recommendation";
 }
 
 export interface MatchingRequest {

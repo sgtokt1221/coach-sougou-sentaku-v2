@@ -16,6 +16,7 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import type { University, Faculty, SelectionMethod } from "@/lib/types/university";
+import { SelectionTypeBadge } from "@/components/shared/SelectionTypeBadge";
 
 function calcDaysLeft(dateStr: string): number {
   const today = new Date();
@@ -188,9 +189,12 @@ export default function FacultyDetailPage({
         <div>
           <h1 className="text-lg lg:text-xl font-bold">{university.name}</h1>
           <p className="text-muted-foreground">{faculty.name}</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            定員: {faculty.capacity}名
-          </p>
+          <div className="mt-2 flex items-center gap-2 flex-wrap">
+            <SelectionTypeBadge type={faculty.selectionType} />
+            <span className="text-xs text-muted-foreground">
+              定員: {faculty.capacity}名
+            </span>
+          </div>
         </div>
       </div>
 

@@ -16,6 +16,7 @@ import { Search, Building2, GraduationCap, ExternalLink } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { authFetch } from "@/lib/api/client";
 import type { University } from "@/lib/types/university";
+import { SelectionTypeBadge } from "@/components/shared/SelectionTypeBadge";
 
 type Group = University["group"] | "all";
 
@@ -154,6 +155,9 @@ export default function AdminUniversitiesPage() {
                       略称
                     </th>
                     <th className="px-4 py-3 text-left font-medium">グループ</th>
+                    <th className="px-4 py-3 text-left font-medium hidden md:table-cell">
+                      選抜種別
+                    </th>
                     <th className="px-4 py-3 text-center font-medium hidden md:table-cell">
                       学部数
                     </th>
@@ -183,6 +187,20 @@ export default function AdminUniversitiesPage() {
                       </td>
                       <td className="px-4 py-3">
                         <GroupBadge group={u.group} />
+                      </td>
+                      <td className="px-4 py-3 hidden md:table-cell">
+                        {(() => {
+                          const types = new Set(
+                            u.faculties.map((f) => f.selectionType).filter(Boolean) as string[]
+                          );
+                          if (types.size === 0) return <span className="text-xs text-muted-foreground/50">-</span>;
+                          return (
+                            <div className="flex flex-wrap gap-1">
+                              {types.has("comprehensive") && <SelectionTypeBadge type="comprehensive" size="sm" />}
+                              {types.has("school_recommendation") && <SelectionTypeBadge type="school_recommendation" size="sm" />}
+                            </div>
+                          );
+                        })()}
                       </td>
                       <td className="px-4 py-3 text-center hidden md:table-cell">
                         {u.faculties.length}

@@ -36,12 +36,14 @@ import {
   Clock,
   BookOpen,
   ExternalLink,
+  Lock,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { authFetch } from "@/lib/api/client";
 import type { University, Faculty, SelectionMethod } from "@/lib/types/university";
 import { Badge } from "@/components/ui/badge";
 import { PAST_QUESTIONS } from "@/data/essay-past-questions";
+import { SelectionTypeBadge } from "@/components/shared/SelectionTypeBadge";
 
 type SelectionMethodType = SelectionMethod["type"];
 
@@ -130,7 +132,7 @@ function FacultyForm({ faculty, onChange, canEdit }: FacultyFormProps) {
             value={faculty.name}
             onChange={(e) => update("name", e.target.value)}
             placeholder="例: 法学部"
-            disabled={!canEdit}
+            readOnly={!canEdit}
           />
         </div>
         <div className="space-y-2">
@@ -140,7 +142,7 @@ function FacultyForm({ faculty, onChange, canEdit }: FacultyFormProps) {
             value={faculty.capacity || ""}
             onChange={(e) => update("capacity", Number(e.target.value))}
             placeholder="例: 20"
-            disabled={!canEdit}
+            readOnly={!canEdit}
           />
         </div>
       </div>
@@ -184,7 +186,7 @@ function FacultyForm({ faculty, onChange, canEdit }: FacultyFormProps) {
                 })
               }
               placeholder="例: 3.5"
-              disabled={!canEdit}
+              readOnly={!canEdit}
             />
           </div>
           <div className="space-y-2">
@@ -198,7 +200,7 @@ function FacultyForm({ faculty, onChange, canEdit }: FacultyFormProps) {
                 })
               }
               placeholder="例: TOEFL iBT 90以上"
-              disabled={!canEdit}
+              readOnly={!canEdit}
             />
           </div>
         </div>
@@ -286,7 +288,7 @@ function FacultyForm({ faculty, onChange, canEdit }: FacultyFormProps) {
                       updateMethod(idx, { ...method, details: e.target.value })
                     }
                     placeholder="詳細説明"
-                    disabled={!canEdit}
+                    readOnly={!canEdit}
                   />
                 </div>
                 {canEdit && (
@@ -325,7 +327,7 @@ function FacultyForm({ faculty, onChange, canEdit }: FacultyFormProps) {
                   applicationStart: e.target.value,
                 })
               }
-              disabled={!canEdit}
+              readOnly={!canEdit}
             />
           </div>
           <div className="space-y-2">
@@ -339,7 +341,7 @@ function FacultyForm({ faculty, onChange, canEdit }: FacultyFormProps) {
                   applicationEnd: e.target.value,
                 })
               }
-              disabled={!canEdit}
+              readOnly={!canEdit}
             />
           </div>
           <div className="space-y-2">
@@ -353,7 +355,7 @@ function FacultyForm({ faculty, onChange, canEdit }: FacultyFormProps) {
                   examDate: e.target.value,
                 })
               }
-              disabled={!canEdit}
+              readOnly={!canEdit}
             />
           </div>
           <div className="space-y-2">
@@ -367,7 +369,7 @@ function FacultyForm({ faculty, onChange, canEdit }: FacultyFormProps) {
                   resultDate: e.target.value,
                 })
               }
-              disabled={!canEdit}
+              readOnly={!canEdit}
             />
           </div>
         </div>
@@ -507,7 +509,7 @@ export default function AdminUniversityEditPage() {
           <div>
             <h1 className="text-2xl font-bold">{university.name}</h1>
             <p className="text-sm text-muted-foreground">
-              {canEdit ? "大学情報の編集" : "大学情報の閲覧"}
+              {canEdit ? "大学情報の編集" : "大学情報の閲覧 (読み取り専用)"}
             </p>
           </div>
         </div>
@@ -528,6 +530,18 @@ export default function AdminUniversityEditPage() {
         )}
       </div>
 
+      {!canEdit && (
+        <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50/70 p-4 dark:border-amber-900 dark:bg-amber-950/20">
+          <Lock className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+          <div className="text-sm">
+            <p className="font-medium text-amber-800 dark:text-amber-200">閲覧モード</p>
+            <p className="mt-1 text-amber-700 dark:text-amber-300">
+              このページは参考情報の閲覧用です。大学・学部情報の編集は superadmin 権限でのみ可能です。
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Basic Info */}
       <Card>
         <CardHeader>
@@ -544,7 +558,7 @@ export default function AdminUniversityEditPage() {
                 value={university.name}
                 onChange={(e) => updateBasicField("name", e.target.value)}
                 placeholder="例: 東京大学"
-                disabled={!canEdit}
+                readOnly={!canEdit}
               />
             </div>
             <div className="space-y-2">
@@ -553,7 +567,7 @@ export default function AdminUniversityEditPage() {
                 value={university.shortName}
                 onChange={(e) => updateBasicField("shortName", e.target.value)}
                 placeholder="例: 東大"
-                disabled={!canEdit}
+                readOnly={!canEdit}
               />
             </div>
             <div className="space-y-2">
@@ -585,7 +599,7 @@ export default function AdminUniversityEditPage() {
                   value={university.officialUrl}
                   onChange={(e) => updateBasicField("officialUrl", e.target.value)}
                   placeholder="https://..."
-                  disabled={!canEdit}
+                  readOnly={!canEdit}
                   className="flex-1"
                 />
                 {university.officialUrl && (
@@ -642,20 +656,21 @@ export default function AdminUniversityEditPage() {
                 if (!faculty) return null;
                 return (
                   <div>
-                    <div className="mb-4 flex items-center justify-between">
-                      {faculty.admissionUrl ? (
-                        <a
-                          href={faculty.admissionUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
-                        >
-                          <ExternalLink className="size-3.5" />
-                          総合型選抜ページを開く
-                        </a>
-                      ) : (
-                        <span />
-                      )}
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <SelectionTypeBadge type={faculty.selectionType} />
+                        {faculty.admissionUrl ? (
+                          <a
+                            href={faculty.admissionUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                          >
+                            <ExternalLink className="size-3.5" />
+                            募集要項ページを開く
+                          </a>
+                        ) : null}
+                      </div>
                       {canEdit && (
                         <Button
                           variant="outline"

@@ -54,6 +54,7 @@ function matchFaculty(
     certCheck,
     requirementChecks,
     admissionPolicy: faculty.admissionPolicy,
+    selectionType: faculty.selectionType,
   };
 }
 

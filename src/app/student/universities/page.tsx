@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { SelectionTypeBadge } from "@/components/shared/SelectionTypeBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -91,6 +92,7 @@ function ResultCard({ result }: { result: MatchResult }) {
               <span className="text-muted-foreground text-sm">{result.facultyName}</span>
             </div>
             <div className="flex items-center gap-2 mt-2 flex-wrap">
+              <SelectionTypeBadge type={result.selectionType} size="sm" />
               {result.fitRecommendation ? (
                 <Badge variant="outline" className={fitBadgeStyle(result.fitRecommendation)}>
                   {result.fitRecommendation}
