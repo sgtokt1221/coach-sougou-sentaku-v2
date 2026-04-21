@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, ArrowUpDown, Users, UserPlus, Filter, TrendingUp, TrendingDown, Minus, AlertTriangle, FileText, CheckCircle2, AlertCircle } from "lucide-react";
+import { Search, ArrowUpDown, Users, UserPlus, Filter, TrendingUp, TrendingDown, Minus, CheckCircle2, AlertCircle } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { motion, useReducedMotion } from "framer-motion";
 import { useAuthSWR } from "@/lib/api/swr";
@@ -24,24 +24,6 @@ import { StudentStatusLamps } from "@/components/admin/StudentStatusLamps";
 
 type SortKey = "lastActivity" | "score" | "name" | "rank" | "interviewRank";
 type StatusFilter = "all" | "attention" | "healthy";
-
-function getStatus(s: StudentListItem): "alert" | "inactive" | "active" {
-  if (s.alertFlags.includes("repeated_weakness") || s.alertFlags.includes("declining"))
-    return "alert";
-  if (s.alertFlags.includes("inactive")) return "inactive";
-  return "active";
-}
-
-function statusBadge(status: "alert" | "inactive" | "active") {
-  switch (status) {
-    case "alert":
-      return <Badge variant="destructive">要注意</Badge>;
-    case "inactive":
-      return <Badge variant="secondary">非アクティブ</Badge>;
-    case "active":
-      return <Badge variant="default">アクティブ</Badge>;
-  }
-}
 
 function scoreColor(total: number): string {
   if (total >= 40) return "text-emerald-600 dark:text-emerald-400";
@@ -271,15 +253,11 @@ export default function AdminStudentsPage() {
                     <th className="px-4 py-3 text-center font-medium">最新スコア</th>
                     <th className="px-4 py-3 text-center font-medium hidden lg:table-cell">推移</th>
                     <th className="px-4 py-3 text-center font-medium hidden lg:table-cell">弱点</th>
-                    <th className="px-4 py-3 text-center font-medium hidden lg:table-cell">書類</th>
-                    <th className="px-4 py-3 text-center font-medium hidden md:table-cell">添削回数</th>
-                    <th className="px-4 py-3 text-center font-medium hidden md:table-cell">最終セッション</th>
                     <th className="px-4 py-3 text-center font-medium">ステータス</th>
                   </tr>
                 </thead>
                 <tbody>
                   {students.map((s, i) => {
-                    const status = getStatus(s);
                     return (
                       <motion.tr
                         key={s.uid}
@@ -290,12 +268,9 @@ export default function AdminStudentsPage() {
                         onClick={() => router.push(`/admin/students/${s.uid}`)}
                       >
                         <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <div>
-                              <p className="font-medium">{s.displayName}</p>
-                              <p className="text-xs text-muted-foreground">{s.email}</p>
-                            </div>
-                            <StudentStatusLamps alertFlags={s.alertFlags} />
+                          <div>
+                            <p className="font-medium">{s.displayName}</p>
+                            <p className="text-xs text-muted-foreground">{s.email}</p>
                           </div>
                         </td>
                         <td className="px-4 py-3 hidden sm:table-cell">
@@ -353,30 +328,10 @@ export default function AdminStudentsPage() {
                             <span className="text-muted-foreground">0</span>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-center hidden lg:table-cell">
-                          {s.documentProgress.total > 0 ? (
-                            <span className={`text-xs font-medium ${
-                              s.documentProgress.completed === s.documentProgress.total
-                                ? "text-emerald-600 dark:text-emerald-400"
-                                : "text-muted-foreground"
-                            }`}>
-                              <FileText className="inline size-3 mr-0.5" />
-                              {s.documentProgress.completed}/{s.documentProgress.total}
-                            </span>
-                          ) : (
-                            <span className="text-muted-foreground text-xs">-</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-center hidden md:table-cell">
-                          {s.essayCount}
-                        </td>
-                        <td className="px-4 py-3 text-center hidden md:table-cell text-xs text-muted-foreground">
-                          {s.lastSessionAt
-                            ? new Date(s.lastSessionAt).toLocaleDateString("ja-JP")
-                            : "-"}
-                        </td>
                         <td className="px-4 py-3 text-center">
-                          {statusBadge(status)}
+                          <div className="flex justify-center">
+                            <StudentStatusLamps alertFlags={s.alertFlags} />
+                          </div>
                         </td>
                       </motion.tr>
                     );
