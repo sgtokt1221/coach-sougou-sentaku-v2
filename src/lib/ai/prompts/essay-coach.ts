@@ -8,6 +8,15 @@
  *  - 日本語、「です・ます」調、2-4 文程度の短い返答
  */
 
+export interface CoachSelfAnalysis {
+  coreValues?: string[];
+  valueOrigins?: string[];
+  strengths?: string[];
+  interests?: string[];
+  longTermVision?: string;
+  selfStatement?: string;
+}
+
 export interface CoachContext {
   topic: string;
   admissionPolicy?: string;
@@ -18,6 +27,7 @@ export interface CoachContext {
     category?: string;
     summary: string;
   }>;
+  selfAnalysis?: CoachSelfAnalysis;
   draft: string;
   turnCount: number;
 }
@@ -41,6 +51,31 @@ export function buildEssayCoachSystemPrompt(ctx: CoachContext): string {
           )
           .join("\n")
       : "  (まだ活動実績が登録されていません)";
+
+  const sa = ctx.selfAnalysis;
+  const saLines: string[] = [];
+  if (sa?.coreValues?.length) {
+    saLines.push(`  - 価値観: ${sa.coreValues.join("、")}`);
+  }
+  if (sa?.valueOrigins?.length) {
+    saLines.push(`  - 価値観の原体験: ${sa.valueOrigins.join("、")}`);
+  }
+  if (sa?.strengths?.length) {
+    saLines.push(`  - 強み: ${sa.strengths.join("、")}`);
+  }
+  if (sa?.interests?.length) {
+    saLines.push(`  - 興味分野: ${sa.interests.join("、")}`);
+  }
+  if (sa?.longTermVision) {
+    saLines.push(`  - 長期ビジョン: ${sa.longTermVision.slice(0, 300)}`);
+  }
+  if (sa?.selfStatement) {
+    saLines.push(`  - 自己宣言: ${sa.selfStatement.slice(0, 300)}`);
+  }
+  const selfAnalysisSection =
+    saLines.length > 0
+      ? `\n## 生徒の自己分析結果 (背景知識として把握するだけで、露骨な引用は避ける)\n${saLines.join("\n")}\n`
+      : "";
 
   const draftSection = ctx.draft.trim()
     ? `\n## 生徒が現時点で書いている本文 (進捗確認用)\n\`\`\`\n${ctx.draft}\n\`\`\`\n`
@@ -71,7 +106,8 @@ export function buildEssayCoachSystemPrompt(ctx: CoachContext): string {
 - 生徒が「ここから何を書けばいい?」と聞いてきたら、まずテーマに対して今伝えたいことは何かを問う
 - 抽象的な答えが返ってきたら、「具体例は?」「その経験で何を感じた?」と掘り下げる
 - 書いている本文を読んで、論の飛躍・根拠不足・主張の不明瞭さがあれば「この段落で何を伝えたいの?」と問い返す
-- 活動実績 (下記) と関連しそうな話題が出たら、「それに関連して、何か思い出す経験はある?」のように呼び水を出す${stuckModeHint}
+- 活動実績 (下記) と関連しそうな話題が出たら、「それに関連して、何か思い出す経験はある?」のように呼び水を出す
+- 生徒の価値観・強み・ビジョン (自己分析結果、下記) が書いている主張や経験と繋がりそうな時は、「あなたが大事にしている○○と、今書いている経験はどう繋がる?」のように問い返す。ただし「価値観は○○ですね」と露骨に確定表現で引用しない${stuckModeHint}
 
 ## 今回のテーマ・背景
 - お題: ${ctx.topic || "(未設定)"}
@@ -80,6 +116,6 @@ ${apSection}
 
 ## 生徒の登録済み活動実績 (背景知識)
 ${actLines}
-${draftSection}
+${selfAnalysisSection}${draftSection}
 以上を踏まえ、生徒の発話に対して問い返しを中心に短く応答してください。`;
 }

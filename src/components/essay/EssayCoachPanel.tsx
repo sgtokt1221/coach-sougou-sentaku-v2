@@ -8,6 +8,7 @@ import {
   BookOpen,
   Menu,
   ChevronRight,
+  Sprout,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,8 +23,9 @@ import { useAuthSWR } from "@/lib/api/swr";
 import type { University } from "@/lib/types/university";
 import type { Activity } from "@/lib/types/activity";
 import { EssayCoachChat } from "./EssayCoachChat";
+import { SelfAnalysisReference } from "./SelfAnalysisReference";
 
-type TabId = "coach" | "ap" | "neta";
+type TabId = "coach" | "ap" | "neta" | "self";
 
 interface EssayCoachPanelProps {
   topic: string;
@@ -36,6 +38,7 @@ const TAB_CONFIG: Array<{ id: TabId; label: string; Icon: typeof MessageSquare }
   { id: "coach", label: "AIコーチ", Icon: MessageSquare },
   { id: "ap", label: "AP", Icon: Target },
   { id: "neta", label: "ネタ", Icon: BookOpen },
+  { id: "self", label: "自己分析", Icon: Sprout },
 ];
 
 export function EssayCoachPanel({
@@ -128,6 +131,7 @@ function PanelBody({
           <APReference universityId={universityId} facultyId={facultyId} />
         )}
         {active === "neta" && <NetaReference />}
+        {active === "self" && <SelfAnalysisReference />}
       </div>
     </Card>
   );

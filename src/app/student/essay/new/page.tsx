@@ -36,6 +36,7 @@ import {
 import { WeaknessReminderCard } from "@/components/growth/WeaknessReminderCard";
 import { ManuscriptEditor } from "@/components/essay/ManuscriptEditor";
 import { EssayCoachPanel } from "@/components/essay/EssayCoachPanel";
+import { SelfAnalysisGuardCard } from "@/components/essay/SelfAnalysisGuardCard";
 import { ReviewProgress } from "@/components/essay/ReviewProgress";
 import { EssayHistory } from "@/components/essay/EssayHistory";
 import { PastQuestionChart } from "@/components/essay/PastQuestionChart";
@@ -544,6 +545,8 @@ export default function EssayNewPage() {
 
       {step === 1 && (
         <>
+        <SelfAnalysisGuardCard />
+
         <WeaknessReminderCard />
 
         {/* 過去問情報表示（読み取り専用） */}

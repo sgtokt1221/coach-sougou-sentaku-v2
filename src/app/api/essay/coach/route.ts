@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
-import { buildEssayCoachSystemPrompt } from "@/lib/ai/prompts/essay-coach";
+import {
+  buildEssayCoachSystemPrompt,
+  type CoachSelfAnalysis,
+} from "@/lib/ai/prompts/essay-coach";
 import type {
   CoachMessage,
   CoachRequestBody,
@@ -142,6 +145,31 @@ export async function POST(request: NextRequest) {
     console.warn("[essay/coach] activities fetch failed:", err);
   }
 
+  // 自己分析取得 (matching/chat と同じパターン)
+  let selfAnalysis: CoachSelfAnalysis | undefined;
+  try {
+    const saSnap = await adminDb.doc(`selfAnalysis/${uid}`).get();
+    if (saSnap.exists) {
+      const sa = saSnap.data() as {
+        values?: { coreValues?: string[]; valueOrigins?: string[] };
+        strengths?: { strengths?: string[] };
+        interests?: { fields?: string[] };
+        vision?: { longTermVision?: string };
+        identity?: { selfStatement?: string };
+      };
+      selfAnalysis = {
+        coreValues: sa.values?.coreValues,
+        valueOrigins: sa.values?.valueOrigins,
+        strengths: sa.strengths?.strengths,
+        interests: sa.interests?.fields,
+        longTermVision: sa.vision?.longTermVision,
+        selfStatement: sa.identity?.selfStatement,
+      };
+    }
+  } catch (err) {
+    console.warn("[essay/coach] selfAnalysis fetch failed:", err);
+  }
+
   // 履歴 + 新規 user メッセージ
   const now = new Date().toISOString();
   const historyMessages: CoachMessage[] = existing?.messages ?? [];
@@ -159,6 +187,7 @@ export async function POST(request: NextRequest) {
     universityName,
     facultyName,
     activities,
+    selfAnalysis,
     draft,
     turnCount,
   });
