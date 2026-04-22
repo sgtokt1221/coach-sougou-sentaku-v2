@@ -6,7 +6,6 @@ import {
   MessageSquare,
   Target,
   BookOpen,
-  Menu,
   ChevronRight,
   Sprout,
 } from "lucide-react";
@@ -47,31 +46,22 @@ export function EssayCoachPanel({
   universityId,
   facultyId,
 }: EssayCoachPanelProps) {
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [open, setOpen] = useState(false);
 
   return (
     <>
-      {/* デスクトップ: 右固定カラム */}
-      <div className="hidden md:flex md:flex-col md:sticky md:top-4 md:max-h-[calc(100vh-2rem)]">
-        <PanelBody
-          topic={topic}
-          draft={draft}
-          universityId={universityId}
-          facultyId={facultyId}
-        />
-      </div>
-
-      {/* モバイル: floating ボタン */}
+      {/* floating chatbot ボタン (全デバイス共通) */}
       <Button
-        onClick={() => setMobileOpen(true)}
-        className="md:hidden fixed bottom-6 right-6 z-40 size-14 rounded-full shadow-lg cursor-pointer"
+        onClick={() => setOpen(true)}
+        className="fixed bottom-6 right-6 z-40 h-14 rounded-full shadow-lg cursor-pointer px-5 gap-2"
         aria-label="AIコーチを開く"
       >
-        <Menu className="size-6" />
+        <MessageSquare className="size-5" />
+        <span className="hidden sm:inline text-sm">AIコーチ</span>
       </Button>
 
-      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetContent side="right" className="w-full p-0 sm:max-w-md md:hidden">
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetContent side="right" className="w-full p-0 sm:max-w-md">
           <SheetHeader className="border-b">
             <SheetTitle>執筆サポート</SheetTitle>
           </SheetHeader>
