@@ -29,6 +29,14 @@ export interface GrowthReport {
   weaknessProgress: WeaknessProgress[];
   recommendations: string[];
   overallAssessment: string;
+  /** 期間内の授業から抽出した観察 (レッスンシート実装後に付与) */
+  sessionSummary?: {
+    totalCount: number;
+    mainTopics: string[];
+    teacherObservations: string[];
+    newWeaknessAreas: string[];
+    latestNextAgenda?: string;
+  };
 }
 
 export interface GrowthReportSummary {

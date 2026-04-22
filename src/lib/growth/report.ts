@@ -274,6 +274,8 @@ export function generateGrowthReport(params: {
   periodInterviews: InterviewData[];
   previousInterviews: InterviewData[];
   weaknesses: WeaknessData[];
+  /** 期間内のセッションから事前に集計されたサマリー (null/undefined で非表示) */
+  sessionSummary?: GrowthReport["sessionSummary"];
 }): GrowthReport {
   const { start, end } = getPeriodRange(params.period);
 
@@ -281,7 +283,17 @@ export function generateGrowthReport(params: {
   const interviewStats = computeInterviewStats(params.periodInterviews, params.previousInterviews);
   const weaknessProgress = computeWeaknessProgress(params.weaknesses);
   const recommendations = generateRecommendations(essayStats, interviewStats, weaknessProgress);
-  const overallAssessment = generateOverallAssessment(essayStats, interviewStats, weaknessProgress);
+  let overallAssessment = generateOverallAssessment(essayStats, interviewStats, weaknessProgress);
+
+  // 授業観察を総合評価に織り込む (先頭 1-2 件、既存文の後に追加)
+  if (
+    params.sessionSummary &&
+    params.sessionSummary.totalCount > 0 &&
+    params.sessionSummary.teacherObservations.length > 0
+  ) {
+    const obs = params.sessionSummary.teacherObservations.slice(0, 2).join(" ");
+    overallAssessment = `${overallAssessment} 授業での講師の観察: ${obs}`;
+  }
 
   const reportId = `report_${params.studentId}_${params.period}_${Date.now()}`;
 
@@ -298,6 +310,61 @@ export function generateGrowthReport(params: {
     weaknessProgress,
     recommendations,
     overallAssessment,
+    sessionSummary: params.sessionSummary,
+  };
+}
+
+/** 期間内セッションから sessionSummary の生データを構築 (AI 抽出は別関数で) */
+export function buildSessionSummaryDraft(
+  sessions: Array<{
+    status?: string;
+    prepPlan?: { goal?: string };
+    debrief?: {
+      notes?: string;
+      newWeaknessAreas?: string[];
+      nextAgendaSeed?: string;
+    };
+    scheduledAt?: string;
+  }>,
+): NonNullable<GrowthReport["sessionSummary"]> {
+  const completed = sessions.filter((s) => s.status === "completed");
+  const totalCount = completed.length;
+
+  const goals = completed
+    .map((s) => s.prepPlan?.goal)
+    .filter((g): g is string => typeof g === "string" && g.trim().length > 0);
+  const mainTopics = Array.from(new Set(goals)).slice(0, 5);
+
+  const newWeaknessAreas = Array.from(
+    new Set(
+      completed
+        .flatMap((s) => s.debrief?.newWeaknessAreas ?? [])
+        .filter((a): a is string => typeof a === "string" && a.trim().length > 0),
+    ),
+  );
+
+  // latestNextAgenda: scheduledAt 降順で最初の nextAgendaSeed
+  const sortedByDate = [...completed].sort((a, b) => {
+    const ta = a.scheduledAt ? new Date(a.scheduledAt).getTime() : 0;
+    const tb = b.scheduledAt ? new Date(b.scheduledAt).getTime() : 0;
+    return tb - ta;
+  });
+  const latestNextAgenda = sortedByDate.find(
+    (s) => s.debrief?.nextAgendaSeed && s.debrief.nextAgendaSeed.trim().length > 0,
+  )?.debrief?.nextAgendaSeed;
+
+  // teacherObservations: notes をそのまま連結 (AI 抽出はルート側で行う、ここではフォールバックとして短文列)
+  const rawObservations = completed
+    .map((s) => s.debrief?.notes)
+    .filter((n): n is string => typeof n === "string" && n.trim().length > 0)
+    .map((n) => n.split("\n")[0].slice(0, 60));
+
+  return {
+    totalCount,
+    mainTopics,
+    teacherObservations: Array.from(new Set(rawObservations)).slice(0, 3),
+    newWeaknessAreas,
+    latestNextAgenda,
   };
 }
 

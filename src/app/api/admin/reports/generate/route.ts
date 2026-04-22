@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
-import { generateGrowthReport, getPeriodRange } from "@/lib/growth/report";
+import { generateGrowthReport, getPeriodRange, buildSessionSummaryDraft } from "@/lib/growth/report";
+import { buildLessonObservationSummaryPrompt } from "@/lib/ai/prompts/lesson-summary";
 import type { GenerateReportRequest, GrowthReport } from "@/lib/types/growth-report";
 
 // Mock data for dev mode
@@ -129,6 +130,63 @@ export async function POST(request: NextRequest) {
           .catch(() => ({ docs: [] })),
       ]);
 
+    // 期間内セッション取得
+    const sessionsSnap = await adminDb
+      .collection("sessions")
+      .where("studentId", "==", studentId)
+      .where("scheduledAt", ">=", start.toISOString())
+      .where("scheduledAt", "<=", end.toISOString())
+      .orderBy("scheduledAt", "desc")
+      .get()
+      .catch(() => ({ docs: [] }));
+    const sessions = sessionsSnap.docs.map((d) => d.data()) as Array<{
+      status?: string;
+      prepPlan?: { goal?: string };
+      debrief?: {
+        notes?: string;
+        newWeaknessAreas?: string[];
+        nextAgendaSeed?: string;
+      };
+      scheduledAt?: string;
+    }>;
+    const sessionSummary = buildSessionSummaryDraft(sessions);
+
+    // debrief が 2 件以上あれば AI で観察キーポイント抽出
+    const debriefNotes = sessions
+      .filter((s) => s.status === "completed" && s.debrief?.notes)
+      .map((s) => s.debrief!.notes!)
+      .filter((n) => n.trim().length > 0);
+    if (debriefNotes.length >= 2 && process.env.ANTHROPIC_API_KEY) {
+      try {
+        const Anthropic = (await import("@anthropic-ai/sdk")).default;
+        const client = new Anthropic();
+        const concatenated = debriefNotes.join("\n---\n");
+        const systemPrompt = buildLessonObservationSummaryPrompt(
+          studentData.displayName ?? "生徒",
+          concatenated,
+        );
+        const resp = await client.messages.create({
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 500,
+          system: systemPrompt,
+          messages: [{ role: "user", content: "JSON 配列を出力してください。" }],
+        });
+        const text =
+          resp.content[0]?.type === "text" ? resp.content[0].text : "";
+        const match = text.match(/\[[\s\S]*\]/);
+        if (match) {
+          const parsed = JSON.parse(match[0]);
+          if (Array.isArray(parsed)) {
+            sessionSummary.teacherObservations = parsed
+              .filter((s) => typeof s === "string")
+              .slice(0, 3);
+          }
+        }
+      } catch (err) {
+        console.warn("[reports/generate] observation extraction failed:", err);
+      }
+    }
+
     const toEssayData = (doc: FirebaseFirestore.QueryDocumentSnapshot) => {
       const d = doc.data();
       return {
@@ -164,6 +222,7 @@ export async function POST(request: NextRequest) {
           resolved: wData.resolved ?? false,
         };
       }),
+      sessionSummary: sessionSummary.totalCount > 0 ? sessionSummary : undefined,
     });
 
     // Save the report to Firestore

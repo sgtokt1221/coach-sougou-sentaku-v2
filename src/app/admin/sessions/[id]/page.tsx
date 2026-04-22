@@ -47,6 +47,8 @@ import { InterviewsSection } from "@/components/admin/InterviewsSection";
 import { DocumentsSection } from "@/components/admin/DocumentsSection";
 import { ActivitiesSection } from "@/components/admin/ActivitiesSection";
 import { CoachMemo } from "@/components/admin/CoachMemo";
+import { LessonPrepSection } from "@/components/admin/LessonPrepSection";
+import { LessonDebriefSection } from "@/components/admin/LessonDebriefSection";
 
 const STATUS_VARIANT: Record<
   SessionStatus,
@@ -602,10 +604,30 @@ export default function AdminSessionDetailPage() {
         </Card>
       )}
 
-      {/* Summary */}
+      {/* レッスン台本 */}
+      {session.type !== "group_review" && (
+        <LessonPrepSection
+          sessionId={id}
+          initial={session.prepPlan}
+          onChange={(plan) => setSession({ ...session, prepPlan: plan })}
+        />
+      )}
+
+      {/* 振り返り */}
+      {session.type !== "group_review" && (
+        <LessonDebriefSection
+          sessionId={id}
+          initial={session.debrief}
+          existingWeaknessAreas={[]}
+          onChange={(d) => setSession({ ...session, debrief: d })}
+        />
+      )}
+
+      {/* Summary (後方互換、既存データがある場合のみ表示) */}
+      {session.summary && (
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">サマリー</CardTitle>
+          <CardTitle className="text-base">サマリー (旧)</CardTitle>
         </CardHeader>
         <CardContent>
           {session.summary ? (
@@ -678,25 +700,10 @@ export default function AdminSessionDetailPage() {
                 </div>
               </div>
             </div>
-          ) : (
-            <div className="text-center py-8">
-              <Sparkles className="size-8 mx-auto text-muted-foreground mb-2" />
-              <p className="text-sm text-muted-foreground mb-3">
-                サマリーはまだ生成されていません
-              </p>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={isGeneratingSummary}
-                onClick={generateSummary}
-              >
-                <Sparkles className="size-4 mr-1" />
-                {isGeneratingSummary ? "生成中..." : "サマリーを生成"}
-              </Button>
-            </div>
-          )}
+          ) : null}
         </CardContent>
       </Card>
+      )}
     </div>
   );
 }
