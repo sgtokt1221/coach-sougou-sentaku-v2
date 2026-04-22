@@ -33,6 +33,15 @@ export interface Session {
   transcription?: LessonTranscription;
   /** Google Calendar event ID (同期更新/削除に使用) */
   calendarEventId?: string;
+  /** Phase 2: 両側録音の進行状態 (両ブラウザで onSnapshot 同期) */
+  recordingState?: SessionRecordingState;
+  /** Phase 2: 生徒側録音 */
+  studentRecordingUrl?: string;
+  studentRecordingPath?: string;
+  studentRecordingDurationSec?: number;
+  studentRecordingSizeBytes?: number;
+  /** Phase 2: 生徒側 Whisper 結果 (マージ前に保持) */
+  studentTranscription?: LessonTranscription;
   sharedWithStudent: boolean;
   // Group review fields
   theme?: string;
@@ -69,6 +78,16 @@ export interface LessonPrepPlan {
   cautions: string[];
   generatedAt: string;
   generatedBy: "ai" | "teacher" | "ai_then_teacher";
+}
+
+/** Phase 2: 両側録音の進行状態 */
+export interface SessionRecordingState {
+  teacherRecording: boolean;
+  teacherStartedAt?: string;
+  studentRecording: boolean;
+  studentStartedAt?: string;
+  /** 講師が「授業を終了」を押した時刻 (生徒側の自動停止トリガー) */
+  stopRequestedAt?: string;
 }
 
 /** Whisper 文字起こし結果 */

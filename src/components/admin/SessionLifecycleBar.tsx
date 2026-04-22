@@ -36,6 +36,31 @@ const MAX_RECORDING_SEC = 150 * 60; // 150min hard limit
 const WARN_RECORDING_SEC = 120 * 60;
 const MAX_SIZE_BYTES = 25 * 1024 * 1024;
 
+/** 生徒側のアップロードが完了するまで session ドキュメントをポーリング (最大 timeoutMs) */
+async function waitForStudentUpload(
+  sessionId: string,
+  timeoutMs: number,
+): Promise<boolean> {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    try {
+      const res = await authFetch(`/api/sessions/${sessionId}`);
+      if (res.ok) {
+        const s = (await res.json()) as Session;
+        if (s.studentRecordingPath) return true;
+        if (!s.recordingState?.studentRecording && !s.studentRecordingPath) {
+          // 生徒がアップロードせずに早期離脱したケース → 待たない
+          return false;
+        }
+      }
+    } catch {
+      // 無視してリトライ
+    }
+    await new Promise((r) => setTimeout(r, 2000));
+  }
+  return false;
+}
+
 function formatTime(sec: number): string {
   const h = Math.floor(sec / 3600);
   const m = Math.floor((sec % 3600) / 60);
@@ -93,13 +118,14 @@ export function SessionLifecycleBar({ sessionId, session, onSessionUpdate }: Pro
   const handleStart = async () => {
     const ok = await recorder.start();
     if (!ok) return;
+    const startedAt = new Date().toISOString();
     try {
       const res = await authFetch(`/api/sessions/${sessionId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           status: "in_progress",
-          startedAt: new Date().toISOString(),
+          startedAt,
         }),
       });
       if (res.ok) {
@@ -109,11 +135,45 @@ export function SessionLifecycleBar({ sessionId, session, onSessionUpdate }: Pro
     } catch (err) {
       console.warn("[lifecycle] status update failed:", err);
     }
+    // Phase 2: recordingState を更新して生徒側に通知
+    try {
+      await authFetch(
+        `/api/admin/sessions/${sessionId}/recording-state`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            teacherRecording: true,
+            teacherStartedAt: startedAt,
+          }),
+        },
+      );
+    } catch (err) {
+      console.warn("[lifecycle] recording-state update failed:", err);
+    }
   };
 
   const handleStop = async () => {
     setPostFlow("stopping");
     setPostError(null);
+    const stopRequestedAt = new Date().toISOString();
+    // Phase 2: 生徒側に停止シグナル (生徒が参加している場合のみ意味を持つ)
+    try {
+      await authFetch(
+        `/api/admin/sessions/${sessionId}/recording-state`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            teacherRecording: false,
+            stopRequestedAt,
+          }),
+        },
+      );
+    } catch (err) {
+      console.warn("[lifecycle] stop signal failed:", err);
+    }
+
     const blob = await recorder.stop();
     if (!blob) {
       setPostError("録音停止に失敗しました");
@@ -166,15 +226,21 @@ export function SessionLifecycleBar({ sessionId, session, onSessionUpdate }: Pro
       return;
     }
 
-    // Transcribe
+    // Transcribe + merge (Phase 2: 生徒録音を待つ、なければ講師側のみ)
     setPostFlow("transcribing");
+
+    // 生徒が参加している場合はアップロード完了を最大 60 秒待つ
+    if (session.recordingState?.studentRecording) {
+      await waitForStudentUpload(sessionId, 60_000);
+    }
+
     try {
       const tr = await authFetch(
-        `/api/admin/sessions/${sessionId}/transcribe-recording`,
+        `/api/admin/sessions/${sessionId}/merge-transcriptions`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ auto: true }),
+          body: JSON.stringify({}),
         },
       );
       if (!tr.ok) {
@@ -182,14 +248,14 @@ export function SessionLifecycleBar({ sessionId, session, onSessionUpdate }: Pro
         throw new Error(data.error ?? "文字起こし失敗");
       }
       const trData = (await tr.json()) as {
-        transcription: Session["transcription"];
-        debriefNotes: string;
+        mergedNotes: string;
+        hasTeacherTranscription: boolean;
+        hasStudentTranscription: boolean;
       };
       onSessionUpdate({
         ...session,
         status: "completed",
         endedAt: new Date().toISOString(),
-        transcription: trData.transcription,
         debrief: {
           ...(session.debrief ?? {
             notes: "",
@@ -198,7 +264,7 @@ export function SessionLifecycleBar({ sessionId, session, onSessionUpdate }: Pro
             nextAgendaSeed: "",
             capturedAt: "",
           }),
-          notes: trData.debriefNotes,
+          notes: trData.mergedNotes,
           capturedAt: new Date().toISOString(),
         },
       });
@@ -317,6 +383,15 @@ export function SessionLifecycleBar({ sessionId, session, onSessionUpdate }: Pro
             {formatTime(recorder.durationSec)}
           </span>
           <Waveform level={recorder.peakLevel} />
+          {session.recordingState?.studentRecording && (
+            <Badge
+              variant="outline"
+              className="gap-1 border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-300"
+            >
+              <span className="size-2 rounded-full bg-emerald-500" />
+              生徒参加中
+            </Badge>
+          )}
         </div>
         <Button
           onClick={handleStop}

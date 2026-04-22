@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Video, ExternalLink, Lock, FileText, Clock, ThumbsUp, CheckCircle } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { StudentRecordingController } from "@/components/student/StudentRecordingController";
 import type { Session, SessionStatus, SessionSubmission } from "@/lib/types/session";
 import { SESSION_TYPE_LABELS, SESSION_STATUS_LABELS } from "@/lib/types/session";
 import { useAuth } from "@/contexts/AuthContext";
@@ -190,6 +191,11 @@ export default function StudentSessionDetailPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-5 lg:py-8 space-y-4 lg:space-y-6">
+      <StudentRecordingController
+        sessionId={id}
+        teacherName={session.teacherName}
+      />
+
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="sm" onClick={() => router.back()}>
           <ArrowLeft className="size-4" />
