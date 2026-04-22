@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,26 @@ export default function NewSessionPage() {
   const [type, setType] = useState<SessionType | "">("");
   const [scheduledAt, setScheduledAt] = useState("");
   const [meetLink, setMeetLink] = useState("");
+  const [autoCalendar, setAutoCalendar] = useState(true);
+  const [googleConnected, setGoogleConnected] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    authFetch("/api/admin/google/status")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!alive) return;
+        const connected = data?.connected === true;
+        setGoogleConnected(connected);
+        if (!connected) setAutoCalendar(false);
+      })
+      .catch(() => {
+        if (alive) setGoogleConnected(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
   const [notes, setNotes] = useState("");
   // Group review specific fields
   const [theme, setTheme] = useState("");
@@ -98,6 +119,29 @@ export default function NewSessionPage() {
         const data = await res.json().catch(() => null);
         throw new Error(data?.error || "作成に失敗しました");
       }
+      const created = (await res.json()) as { id: string };
+
+      // Calendar event 自動作成 (トグル ON かつ連携済みかつ 1 対 1 のみ)
+      if (autoCalendar && googleConnected && type !== "group_review" && created.id) {
+        try {
+          const ev = await authFetch(
+            `/api/admin/sessions/${created.id}/calendar-event`,
+            { method: "POST" },
+          );
+          if (!ev.ok) {
+            const errData = await ev.json().catch(() => ({}));
+            toast.warning(
+              errData.error ?? "Calendar 連携に失敗しましたが、セッションは作成されました",
+            );
+          }
+        } catch (err) {
+          console.warn("[calendar] auto create failed:", err);
+          toast.warning(
+            "Calendar 連携に失敗しましたが、セッションは作成されました",
+          );
+        }
+      }
+
       toast.success("セッションを作成しました");
       router.push("/admin/sessions");
     } catch (err) {
@@ -263,15 +307,52 @@ export default function NewSessionPage() {
               </>
             )}
 
-            <div className="space-y-2">
-              <Label htmlFor="meetLink">Google Meetリンク (任意)</Label>
-              <Input
-                id="meetLink"
-                placeholder="https://meet.google.com/..."
-                value={meetLink}
-                onChange={(e) => setMeetLink(e.target.value)}
-              />
-            </div>
+            {type !== "group_review" && googleConnected && (
+              <div className="flex items-start gap-3 rounded-lg border border-teal-200 bg-teal-50 p-3 dark:border-teal-900 dark:bg-teal-950/30">
+                <div className="flex-1">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={autoCalendar}
+                      onChange={(e) => setAutoCalendar(e.target.checked)}
+                      className="size-4 rounded cursor-pointer"
+                    />
+                    <span className="text-sm font-medium text-teal-800 dark:text-teal-200">
+                      Google Calendar + Meet を自動作成
+                    </span>
+                  </label>
+                  <p className="mt-1 text-xs text-teal-700/80 dark:text-teal-300/80">
+                    イベント作成 + Meet リンク発行 + 生徒へのゲスト招待を自動で行います
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {type !== "group_review" && googleConnected === false && (
+              <div className="flex items-start gap-2 rounded-lg border p-3 bg-muted/40">
+                <div className="flex-1 text-xs text-muted-foreground">
+                  <Link
+                    href="/admin/settings"
+                    className="font-medium text-primary hover:underline"
+                  >
+                    Google Calendar を連携
+                  </Link>
+                  すると、Meet リンクの発行とカレンダー登録が自動化されます。
+                </div>
+              </div>
+            )}
+
+            {(!(autoCalendar && googleConnected && type !== "group_review")) && (
+              <div className="space-y-2">
+                <Label htmlFor="meetLink">Google Meetリンク (任意)</Label>
+                <Input
+                  id="meetLink"
+                  placeholder="https://meet.google.com/..."
+                  value={meetLink}
+                  onChange={(e) => setMeetLink(e.target.value)}
+                />
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="notes">メモ (任意)</Label>

@@ -49,6 +49,7 @@ import { ActivitiesSection } from "@/components/admin/ActivitiesSection";
 import { CoachMemo } from "@/components/admin/CoachMemo";
 import { LessonPrepSection } from "@/components/admin/LessonPrepSection";
 import { LessonDebriefSection } from "@/components/admin/LessonDebriefSection";
+import { SessionLifecycleBar } from "@/components/admin/SessionLifecycleBar";
 
 const STATUS_VARIANT: Record<
   SessionStatus,
@@ -602,6 +603,15 @@ export default function AdminSessionDetailPage() {
             )}
           </CardContent>
         </Card>
+      )}
+
+      {/* 授業ライフサイクル (録音開始/終了) */}
+      {session.type !== "group_review" && (
+        <SessionLifecycleBar
+          sessionId={id}
+          session={session}
+          onSessionUpdate={(s) => setSession(s)}
+        />
       )}
 
       {/* レッスン台本 */}

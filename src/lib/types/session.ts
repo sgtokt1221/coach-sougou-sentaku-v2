@@ -19,6 +19,20 @@ export interface Session {
   prepPlan?: LessonPrepPlan;
   /** 授業後の振り返り */
   debrief?: LessonDebrief;
+  /** 授業実際開始時刻 (講師が「授業を開始」押下時) */
+  startedAt?: string;
+  /** 授業実際終了時刻 (「授業を終了」押下時) */
+  endedAt?: string;
+  /** Firebase Storage の署名付き URL (録音再生用) */
+  recordingUrl?: string;
+  /** Storage 上の path (再取得・削除用) */
+  recordingPath?: string;
+  recordingDurationSec?: number;
+  recordingSizeBytes?: number;
+  /** Whisper 文字起こし結果 (保持して再実行回避) */
+  transcription?: LessonTranscription;
+  /** Google Calendar event ID (同期更新/削除に使用) */
+  calendarEventId?: string;
   sharedWithStudent: boolean;
   // Group review fields
   theme?: string;
@@ -55,6 +69,14 @@ export interface LessonPrepPlan {
   cautions: string[];
   generatedAt: string;
   generatedBy: "ai" | "teacher" | "ai_then_teacher";
+}
+
+/** Whisper 文字起こし結果 */
+export interface LessonTranscription {
+  fullText: string;
+  segments: Array<{ start: number; end: number; text: string }>;
+  language: string;
+  transcribedAt: string;
 }
 
 /** 授業後の振り返り (講師入力 + AI 下書き) */
