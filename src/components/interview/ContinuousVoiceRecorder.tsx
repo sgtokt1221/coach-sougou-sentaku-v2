@@ -239,7 +239,7 @@ export default function ContinuousVoiceRecorder({
             disabled={buttonDisabled}
             className={`relative flex items-center justify-center w-20 h-20 rounded-full shadow-lg transition-all select-none touch-none ${
               isRecording
-                ? "bg-red-500 text-white scale-110"
+                ? "bg-rose-500 text-white scale-110"
                 : isAiTurn
                   ? "bg-muted text-muted-foreground"
                   : status === "processing"
@@ -248,7 +248,7 @@ export default function ContinuousVoiceRecorder({
             }`}
           >
             {isRecording && (
-              <span className="absolute inset-0 rounded-full bg-red-500/30 animate-ping" />
+              <span className="absolute inset-0 rounded-full bg-rose-500/30 animate-ping" />
             )}
             {status === "processing" && (
               <span className="absolute inset-0 rounded-full bg-amber-500/30 animate-pulse" />
@@ -260,7 +260,7 @@ export default function ContinuousVoiceRecorder({
           <div className="w-36 h-1.5 bg-muted rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full transition-all duration-75 ${
-                isRecording ? "bg-red-500" : status === "processing" ? "bg-amber-500" : "bg-primary"
+                isRecording ? "bg-rose-500" : status === "processing" ? "bg-amber-500" : "bg-primary"
               }`}
               style={{ width: `${audioLevel * 100}%` }}
             />

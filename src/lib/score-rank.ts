@@ -3,7 +3,7 @@ export type ScoreRank = "S" | "A" | "B" | "C" | "D" | "F";
 export interface RankInfo {
   rank: ScoreRank;
   label: string;       // 例: "神級", "極めて優秀" 等
-  gradient: string;    // Tailwind クラス（text用）例: "from-yellow-400 via-amber-500 to-orange-500"
+  gradient: string;    // Tailwind クラス（text用）例: "from-amber-400 via-amber-500 to-amber-500"
   glowColor: string;   // box-shadow 用 hex 例: "#f59e0b"
   ringColor: string;   // Tailwind ring 用クラス
   description: string; // 一言コメント
@@ -24,7 +24,7 @@ export function getRankInfo(rank: ScoreRank): RankInfo {
       return {
         rank: "S",
         label: "神級",
-        gradient: "from-yellow-400 via-amber-500 to-orange-500",
+        gradient: "from-amber-400 via-amber-500 to-amber-500",
         glowColor: "#f59e0b",
         ringColor: "ring-amber-500",
         description: "AP要件を大きく超える完成度",
@@ -42,9 +42,9 @@ export function getRankInfo(rank: ScoreRank): RankInfo {
       return {
         rank: "B",
         label: "良好",
-        gradient: "from-blue-400 via-blue-500 to-blue-600",
-        glowColor: "#3b82f6",
-        ringColor: "ring-blue-500",
+        gradient: "from-sky-400 via-sky-500 to-sky-600",
+        glowColor: "#0ea5e9",
+        ringColor: "ring-sky-500",
         description: "合格ラインに到達",
       };
     case "C":
@@ -60,7 +60,7 @@ export function getRankInfo(rank: ScoreRank): RankInfo {
       return {
         rank: "D",
         label: "要改善",
-        gradient: "from-amber-400 via-orange-500 to-amber-600",
+        gradient: "from-amber-400 via-amber-500 to-amber-600",
         glowColor: "#f59e0b",
         ringColor: "ring-amber-500",
         description: "基礎固めが必要",

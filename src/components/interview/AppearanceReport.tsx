@@ -21,7 +21,7 @@ const CATEGORY_LABELS: Record<AppearanceIssue["category"], string> = {
 const SEVERITY_STYLES: Record<AppearanceIssue["severity"], { icon: typeof AlertTriangle; color: string; bg: string }> = {
   critical: { icon: AlertTriangle, color: "text-rose-600 dark:text-rose-400", bg: "bg-rose-50 dark:bg-rose-950/30" },
   warning: { icon: AlertTriangle, color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-950/30" },
-  info: { icon: Info, color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-50 dark:bg-blue-950/30" },
+  info: { icon: Info, color: "text-sky-600 dark:text-sky-400", bg: "bg-sky-50 dark:bg-sky-950/30" },
 };
 
 function ScoreColor(score: number): string {

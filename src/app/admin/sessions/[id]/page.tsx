@@ -65,19 +65,19 @@ function weaknessBadge(w: WeaknessRecord) {
       return <Badge variant="destructive">要注意</Badge>;
     case "warning":
       return (
-        <Badge variant="outline" className="border-yellow-400 bg-yellow-50 text-yellow-700">
+        <Badge variant="outline" className="border-amber-400 bg-amber-50 text-amber-700">
           警告
         </Badge>
       );
     case "improving":
       return (
-        <Badge variant="outline" className="border-blue-400 bg-blue-50 text-blue-700">
+        <Badge variant="outline" className="border-sky-400 bg-sky-50 text-sky-700">
           改善中
         </Badge>
       );
     case "resolved":
       return (
-        <Badge variant="outline" className="border-green-400 bg-green-50 text-green-700">
+        <Badge variant="outline" className="border-emerald-400 bg-emerald-50 text-emerald-700">
           解決済み
         </Badge>
       );

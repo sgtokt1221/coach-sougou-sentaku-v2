@@ -129,7 +129,7 @@ export default function StudentSessionsPage() {
                         )}
                         {/* TODO: Show submission status */}
                         <div className="flex items-center gap-1 text-xs">
-                          <span className="text-green-600">提出済み</span> {/* This will be dynamic */}
+                          <span className="text-emerald-600">提出済み</span> {/* This will be dynamic */}
                         </div>
                       </div>
                     )}

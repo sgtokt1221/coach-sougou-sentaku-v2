@@ -18,9 +18,9 @@ interface RedPenTextProps {
 }
 
 const TYPE_STYLES = {
-  typo: { underline: "decoration-red-500", bg: "bg-red-50", border: "border-red-200", badge: "border-red-300 text-red-600", label: "誤字脱字" },
-  grammar: { underline: "decoration-orange-500", bg: "bg-orange-50", border: "border-orange-200", badge: "border-orange-300 text-orange-600", label: "文法" },
-  connector: { underline: "decoration-blue-500", bg: "bg-blue-50", border: "border-blue-200", badge: "border-blue-300 text-blue-600", label: "接続語" },
+  typo: { underline: "decoration-rose-500", bg: "bg-rose-50", border: "border-rose-200", badge: "border-rose-300 text-rose-600", label: "誤字脱字" },
+  grammar: { underline: "decoration-amber-500", bg: "bg-amber-50", border: "border-amber-200", badge: "border-amber-300 text-amber-600", label: "文法" },
+  connector: { underline: "decoration-sky-500", bg: "bg-sky-50", border: "border-sky-200", badge: "border-sky-300 text-sky-600", label: "接続語" },
   expression: { underline: "decoration-purple-500", bg: "bg-purple-50", border: "border-purple-200", badge: "border-purple-300 text-purple-600", label: "表現" },
   redundancy: { underline: "decoration-amber-500", bg: "bg-amber-50", border: "border-amber-200", badge: "border-amber-300 text-amber-600", label: "冗長" },
 } as const;
@@ -131,7 +131,7 @@ export function RedPenText({ text, corrections }: RedPenTextProps) {
         type="button"
         onClick={() => setSelected(isSelected ? null : ci)}
         className={`underline decoration-wavy decoration-2 ${styles.underline} ${
-          isSelected ? `${styles.bg} rounded-sm ring-2 ring-offset-1 ring-current/20` : "bg-yellow-50/60 hover:bg-yellow-100/80"
+          isSelected ? `${styles.bg} rounded-sm ring-2 ring-offset-1 ring-current/20` : "bg-amber-50/60 hover:bg-amber-100/80"
         } transition-colors cursor-pointer rounded-sm`}
       >
         {text.slice(seg.start, seg.end)}
@@ -165,7 +165,7 @@ export function RedPenText({ text, corrections }: RedPenTextProps) {
           overflow: "visible",
         }}
       >
-        <div className="absolute left-10 top-0 bottom-0 w-px bg-red-300/50" />
+        <div className="absolute left-10 top-0 bottom-0 w-px bg-rose-300/50" />
         <p
           className="whitespace-pre-wrap pl-4 py-0 my-0"
           style={{

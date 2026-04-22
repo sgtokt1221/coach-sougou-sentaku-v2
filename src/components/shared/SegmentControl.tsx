@@ -30,7 +30,7 @@ interface SegmentControlProps<T extends string = string> {
 }
 
 const ACCENT_ACTIVE_RING: Record<SegmentAccent, string> = {
-  blue: "ring-blue-500/30",
+  blue: "ring-sky-500/30",
   amber: "ring-amber-500/30",
   violet: "ring-violet-500/30",
   emerald: "ring-emerald-500/30",
@@ -39,7 +39,7 @@ const ACCENT_ACTIVE_RING: Record<SegmentAccent, string> = {
 };
 
 const ACCENT_ACTIVE_TEXT: Record<SegmentAccent, string> = {
-  blue: "text-blue-700 dark:text-blue-300",
+  blue: "text-sky-700 dark:text-sky-300",
   amber: "text-amber-700 dark:text-amber-300",
   violet: "text-violet-700 dark:text-violet-300",
   emerald: "text-emerald-700 dark:text-emerald-300",
@@ -48,7 +48,7 @@ const ACCENT_ACTIVE_TEXT: Record<SegmentAccent, string> = {
 };
 
 const ACCENT_ACTIVE_BADGE: Record<SegmentAccent, string> = {
-  blue: "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200",
+  blue: "bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200",
   amber: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200",
   violet:
     "bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-200",

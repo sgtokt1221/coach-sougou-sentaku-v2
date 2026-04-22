@@ -327,7 +327,7 @@ export default function StudentSessionDetailPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
-                  <CheckCircle className="size-5 text-green-600" />
+                  <CheckCircle className="size-5 text-emerald-600" />
                   提出完了
                 </CardTitle>
               </CardHeader>

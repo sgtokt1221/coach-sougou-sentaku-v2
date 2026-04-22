@@ -176,9 +176,9 @@ export default function DocumentsPage() {
                               {days !== null && (
                                 <span className="flex items-center gap-1">
                                   {days <= 7 ? (
-                                    <AlertTriangle className="size-3 text-orange-500" />
+                                    <AlertTriangle className="size-3 text-amber-500" />
                                   ) : days <= 0 ? (
-                                    <AlertTriangle className="size-3 text-red-500" />
+                                    <AlertTriangle className="size-3 text-rose-500" />
                                   ) : (
                                     <Clock className="size-3" />
                                   )}
@@ -188,7 +188,7 @@ export default function DocumentsPage() {
                             </div>
                           </div>
                           {doc.status === "final" && (
-                            <CheckCircle className="size-5 text-green-500 shrink-0" />
+                            <CheckCircle className="size-5 text-emerald-500 shrink-0" />
                           )}
                         </div>
                       );

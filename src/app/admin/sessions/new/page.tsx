@@ -179,9 +179,9 @@ export default function NewSessionPage() {
             </div>
 
             {isExternalTeacher && (
-              <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 dark:border-blue-800 dark:bg-blue-950/30">
-                <UserPlus className="size-4 text-blue-600 dark:text-blue-400 shrink-0" />
-                <p className="text-xs text-blue-700 dark:text-blue-300">
+              <div className="flex items-center gap-2 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 dark:border-sky-800 dark:bg-sky-950/30">
+                <UserPlus className="size-4 text-sky-600 dark:text-sky-400 shrink-0" />
+                <p className="text-xs text-sky-700 dark:text-sky-300">
                   <Badge variant="secondary" className="mr-1.5">
                     外部講師
                   </Badge>

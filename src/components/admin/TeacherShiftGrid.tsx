@@ -212,7 +212,7 @@ export function TeacherShiftGrid({
                       className={`
                         aspect-square border cursor-pointer transition-colors
                         ${isAvailable
-                          ? "bg-green-500/20 border-green-500/40 hover:bg-green-500/30"
+                          ? "bg-emerald-500/20 border-emerald-500/40 hover:bg-emerald-500/30"
                           : "bg-gray-100 border-gray-200 hover:bg-gray-200"
                         }
                         ${readonly ? "cursor-not-allowed" : ""}

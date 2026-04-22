@@ -121,8 +121,8 @@ const studentPrimary: PrimaryAction[] = [
     label: "自己分析",
     href: "/student/self-analysis",
     icon: Lightbulb,
-    iconBg: "bg-yellow-100 dark:bg-yellow-950/40",
-    iconColor: "text-yellow-700 dark:text-yellow-300",
+    iconBg: "bg-amber-100 dark:bg-amber-950/40",
+    iconColor: "text-amber-700 dark:text-amber-300",
   },
 ];
 

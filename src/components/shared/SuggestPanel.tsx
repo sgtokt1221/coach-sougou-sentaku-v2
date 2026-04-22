@@ -55,9 +55,9 @@ export interface SuggestResult {
 }
 
 function scoreBg(score: number): string {
-  if (score >= 80) return "bg-green-50 border-green-200";
-  if (score >= 60) return "bg-yellow-50 border-yellow-200";
-  return "bg-red-50 border-red-200";
+  if (score >= 80) return "bg-emerald-50 border-emerald-200";
+  if (score >= 60) return "bg-amber-50 border-amber-200";
+  return "bg-rose-50 border-rose-200";
 }
 
 export function ToggleChip({

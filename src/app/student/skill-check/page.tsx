@@ -328,7 +328,7 @@ function EssayTab({
         <Card className="shadow-md">
           <CardContent className="p-4 text-center">
             <div className="flex items-center justify-center gap-2 mb-2">
-              <TrendingUp className="h-4 w-4 text-blue-600" />
+              <TrendingUp className="h-4 w-4 text-sky-600" />
               <span className="text-xs font-medium text-muted-foreground">最新スコア</span>
             </div>
             <div className="text-3xl font-bold tabular-nums text-gray-900">
@@ -340,7 +340,7 @@ function EssayTab({
         <Card className="shadow-md">
           <CardContent className="p-4 text-center">
             <div className="flex items-center justify-center gap-2 mb-2">
-              <Clock className="h-4 w-4 text-orange-600" />
+              <Clock className="h-4 w-4 text-amber-600" />
               <span className="text-xs font-medium text-muted-foreground">経過日数</span>
             </div>
             <div className="text-3xl font-bold tabular-nums text-gray-900">
@@ -356,10 +356,10 @@ function EssayTab({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.2 }}
       >
-        <Card className="bg-gradient-to-r from-blue-50/50 to-transparent shadow-md">
+        <Card className="bg-gradient-to-r from-sky-50/50 to-transparent shadow-md">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Sparkles className="h-5 w-5 text-blue-600" />
+              <Sparkles className="h-5 w-5 text-sky-600" />
               現在の系統
             </CardTitle>
           </CardHeader>
@@ -431,7 +431,7 @@ function EssayTab({
             <Card className="shadow-md">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
-                  <TrendingUp className="h-5 w-5 text-blue-600" />
+                  <TrendingUp className="h-5 w-5 text-sky-600" />
                   スコア推移（直近6回）
                 </CardTitle>
               </CardHeader>
@@ -590,7 +590,7 @@ function InterviewTab({
         <Card className="shadow-md">
           <CardContent className="p-4 text-center">
             <div className="flex items-center justify-center gap-2 mb-2">
-              <Clock className="h-4 w-4 text-orange-600" />
+              <Clock className="h-4 w-4 text-amber-600" />
               <span className="text-xs font-medium text-muted-foreground">経過日数</span>
             </div>
             <div className="text-3xl font-bold tabular-nums text-gray-900">

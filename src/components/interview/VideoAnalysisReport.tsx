@@ -47,7 +47,7 @@ export default function VideoAnalysisReport({ analysis }: VideoAnalysisReportPro
         {/* Eye Contact */}
         <div className="space-y-2 rounded-lg border p-3">
           <div className="flex items-center gap-2 text-sm font-medium">
-            <Eye className="size-4 text-blue-500" />
+            <Eye className="size-4 text-sky-500" />
             視線安定性
           </div>
           <div className="flex justify-between text-sm">
@@ -61,13 +61,13 @@ export default function VideoAnalysisReport({ analysis }: VideoAnalysisReportPro
           <RateBar
             value={analysis.eyeContactRate}
             max={100}
-            color={analysis.eyeContactRate >= 60 ? "bg-blue-500" : "bg-yellow-500"}
+            color={analysis.eyeContactRate >= 60 ? "bg-sky-500" : "bg-amber-500"}
           />
           <p className="text-xs text-muted-foreground flex items-start gap-1">
             {analysis.eyeContactRate >= 60 ? (
-              <CheckCircle className="size-3 mt-0.5 shrink-0 text-green-500" />
+              <CheckCircle className="size-3 mt-0.5 shrink-0 text-emerald-500" />
             ) : (
-              <AlertCircle className="size-3 mt-0.5 shrink-0 text-yellow-500" />
+              <AlertCircle className="size-3 mt-0.5 shrink-0 text-amber-500" />
             )}
             {analysis.feedback.eyeContactAdvice}
           </p>
@@ -76,7 +76,7 @@ export default function VideoAnalysisReport({ analysis }: VideoAnalysisReportPro
         {/* Expression */}
         <div className="space-y-2 rounded-lg border p-3">
           <div className="flex items-center gap-2 text-sm font-medium">
-            <Smile className="size-4 text-orange-500" />
+            <Smile className="size-4 text-amber-500" />
             表情
           </div>
           <div className="grid grid-cols-2 gap-2 text-sm">
@@ -98,13 +98,13 @@ export default function VideoAnalysisReport({ analysis }: VideoAnalysisReportPro
           <RateBar
             value={analysis.smileRate}
             max={100}
-            color={analysis.smileRate >= 20 ? "bg-orange-500" : "bg-yellow-500"}
+            color={analysis.smileRate >= 20 ? "bg-amber-500" : "bg-amber-500"}
           />
           <p className="text-xs text-muted-foreground flex items-start gap-1">
             {analysis.smileRate >= 20 ? (
-              <CheckCircle className="size-3 mt-0.5 shrink-0 text-green-500" />
+              <CheckCircle className="size-3 mt-0.5 shrink-0 text-emerald-500" />
             ) : (
-              <AlertCircle className="size-3 mt-0.5 shrink-0 text-yellow-500" />
+              <AlertCircle className="size-3 mt-0.5 shrink-0 text-amber-500" />
             )}
             {analysis.feedback.expressionAdvice}
           </p>
@@ -137,13 +137,13 @@ export default function VideoAnalysisReport({ analysis }: VideoAnalysisReportPro
           <RateBar
             value={analysis.positionStability}
             max={1}
-            color={analysis.positionStability >= 0.7 ? "bg-purple-500" : "bg-yellow-500"}
+            color={analysis.positionStability >= 0.7 ? "bg-purple-500" : "bg-amber-500"}
           />
           <p className="text-xs text-muted-foreground flex items-start gap-1">
             {analysis.positionStability >= 0.7 ? (
-              <CheckCircle className="size-3 mt-0.5 shrink-0 text-green-500" />
+              <CheckCircle className="size-3 mt-0.5 shrink-0 text-emerald-500" />
             ) : (
-              <AlertCircle className="size-3 mt-0.5 shrink-0 text-yellow-500" />
+              <AlertCircle className="size-3 mt-0.5 shrink-0 text-amber-500" />
             )}
             {analysis.feedback.postureAdvice}
           </p>

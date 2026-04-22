@@ -35,7 +35,7 @@ export function TranscriptionView({ transcription }: TranscriptionViewProps) {
             <div className="flex-1">
               {segment.speaker && (
                 <span className={`text-xs font-medium mr-1 ${
-                  segment.speaker === "ai" ? "text-blue-600" : "text-emerald-600"
+                  segment.speaker === "ai" ? "text-sky-600" : "text-emerald-600"
                 }`}>
                   [{segment.speaker === "ai" ? "面接官" : "受験生"}]
                 </span>

@@ -110,9 +110,9 @@ function RequirementRow({ label, met, detail }: RequirementRowProps) {
   return (
     <div className="flex items-start gap-3">
       {met ? (
-        <CheckCircle className="size-4 text-green-500 shrink-0 mt-0.5" />
+        <CheckCircle className="size-4 text-emerald-500 shrink-0 mt-0.5" />
       ) : (
-        <XCircle className="size-4 text-red-400 shrink-0 mt-0.5" />
+        <XCircle className="size-4 text-rose-400 shrink-0 mt-0.5" />
       )}
       <div className="min-w-0">
         <p className="text-sm font-medium">{label}</p>

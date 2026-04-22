@@ -78,9 +78,9 @@ export default function SuperadminDashboard() {
 
   const activityConfig: Record<string, { icon: React.ReactNode; border: string; bg: string }> = {
     essay_submit: {
-      icon: <FileText className="size-4 text-blue-500" />,
-      border: "border-l-blue-500",
-      bg: "bg-blue-50 dark:bg-blue-950/30",
+      icon: <FileText className="size-4 text-sky-500" />,
+      border: "border-l-sky-500",
+      bg: "bg-sky-50 dark:bg-sky-950/30",
     },
     interview_complete: {
       icon: <Mic className="size-4 text-purple-500" />,
@@ -88,9 +88,9 @@ export default function SuperadminDashboard() {
       bg: "bg-purple-50 dark:bg-purple-950/30",
     },
     student_added: {
-      icon: <UserPlus className="size-4 text-green-500" />,
-      border: "border-l-green-500",
-      bg: "bg-green-50 dark:bg-green-950/30",
+      icon: <UserPlus className="size-4 text-emerald-500" />,
+      border: "border-l-emerald-500",
+      bg: "bg-emerald-50 dark:bg-emerald-950/30",
     },
     student_assigned: {
       icon: <Users className="size-4 text-amber-500" />,

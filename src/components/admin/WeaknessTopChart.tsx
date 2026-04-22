@@ -30,7 +30,7 @@ interface WeaknessChartData {
  * source別の色マッピング
  */
 const SOURCE_COLORS: Record<string, string> = {
-  essay: "#3b82f6",      // blue
+  essay: "#0ea5e9",      // blue
   interview: "#6366f1",  // indigo
   skill_check: "#10b981", // emerald
   both: "#8b5cf6",       // purple
@@ -56,7 +56,7 @@ function WeaknessTooltip({ active, payload, label }: any) {
       <p className="text-sm">指摘回数: {data.count}回</p>
       <p className="text-sm">出所: {sourceLabels[data.source] || data.source}</p>
       {data.count >= 5 && (
-        <p className="text-sm font-medium text-red-600">要注意</p>
+        <p className="text-sm font-medium text-rose-600">要注意</p>
       )}
     </div>
   );

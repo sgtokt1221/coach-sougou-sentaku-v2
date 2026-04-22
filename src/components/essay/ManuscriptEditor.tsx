@@ -128,7 +128,7 @@ export function ManuscriptEditor({
         <mark
           key={`h-${hl.start}`}
           className={`text-inherit rounded-sm cursor-pointer transition-colors ${
-            isEditing ? "bg-orange-300/80 ring-2 ring-orange-400" : "bg-orange-200/70 hover:bg-orange-300/70"
+            isEditing ? "bg-amber-300/80 ring-2 ring-amber-400" : "bg-amber-200/70 hover:bg-amber-300/70"
           }`}
           onClick={() => !isEditing && startEdit(hl.origIndex, hl)}
         >
@@ -238,8 +238,8 @@ export function ManuscriptEditor({
 
       {/* Inline edit popup */}
       {editingHl && (
-        <div className="rounded-lg border border-orange-300 bg-orange-50 p-3 space-y-2 animate-in fade-in slide-in-from-top-1 duration-150">
-          <p className="text-xs font-medium text-orange-700">音読補正箇所を修正</p>
+        <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 space-y-2 animate-in fade-in slide-in-from-top-1 duration-150">
+          <p className="text-xs font-medium text-amber-700">音読補正箇所を修正</p>
           <div className="flex items-center gap-2">
             <input
               ref={editInputRef}
@@ -250,12 +250,12 @@ export function ManuscriptEditor({
                 if (e.key === "Enter") applyEdit(editingHl);
                 if (e.key === "Escape") cancelEdit();
               }}
-              className="flex-1 rounded-md border border-orange-300 bg-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+              className="flex-1 rounded-md border border-amber-300 bg-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
             />
             <button
               type="button"
               onClick={() => applyEdit(editingHl)}
-              className="size-8 rounded-md bg-orange-500 text-white flex items-center justify-center hover:bg-orange-600"
+              className="size-8 rounded-md bg-amber-500 text-white flex items-center justify-center hover:bg-amber-600"
             >
               <Check className="size-4" />
             </button>
@@ -278,7 +278,7 @@ export function ManuscriptEditor({
             : `${value.split(/\n/).length}段落 ・ ${value.split(/[。！？\n]/).filter(Boolean).length}文`}
         </span>
         {hasHighlights && (
-          <span className="text-orange-600 font-medium">
+          <span className="text-amber-600 font-medium">
             オレンジ部分をタップで修正可能
           </span>
         )}

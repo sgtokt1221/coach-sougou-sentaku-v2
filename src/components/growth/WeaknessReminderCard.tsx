@@ -17,10 +17,10 @@ const levelLabel: Record<WeaknessReminderLevel, string> = {
 };
 
 const levelBadgeClass: Record<WeaknessReminderLevel, string> = {
-  critical: "border-red-300 bg-red-100 text-red-700",
-  warning: "border-yellow-300 bg-yellow-100 text-yellow-700",
-  improving: "border-blue-300 bg-blue-100 text-blue-700",
-  resolved: "border-green-300 bg-green-100 text-green-700",
+  critical: "border-rose-300 bg-rose-100 text-rose-700",
+  warning: "border-amber-300 bg-amber-100 text-amber-700",
+  improving: "border-emerald-300 bg-emerald-100 text-emerald-700",
+  resolved: "border-emerald-300 bg-emerald-100 text-emerald-700",
 };
 
 const MAX_DISPLAY = 3;
@@ -67,9 +67,9 @@ export function WeaknessReminderCard() {
   if (weaknesses.length === 0) return null;
 
   return (
-    <Card className="border-yellow-200 bg-yellow-50">
+    <Card className="border-amber-200 bg-amber-50">
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-sm font-semibold text-yellow-800">
+        <CardTitle className="flex items-center gap-2 text-sm font-semibold text-amber-800">
           <AlertTriangle className="size-4" />
           書く前にチェック
         </CardTitle>
@@ -87,8 +87,8 @@ export function WeaknessReminderCard() {
               >
                 {levelLabel[w.level]}
               </Badge>
-              <span className="text-sm text-yellow-900 flex-1">{w.area}</span>
-              <span className="text-xs text-yellow-700/70">
+              <span className="text-sm text-amber-900 flex-1">{w.area}</span>
+              <span className="text-xs text-amber-700/70">
                 {w.count}回{daysAgo !== null && ` · ${daysAgo === 0 ? "今日" : `${daysAgo}日前`}`}
               </span>
             </div>

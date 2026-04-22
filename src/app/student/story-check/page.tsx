@@ -31,16 +31,16 @@ interface UniversityOption {
 function ScoreCircle({ score, size = "lg" }: { score: number; size?: "sm" | "lg" }) {
   const color =
     score >= 80
-      ? "text-green-500"
+      ? "text-emerald-500"
       : score >= 60
-        ? "text-yellow-500"
-        : "text-red-500";
+        ? "text-amber-500"
+        : "text-rose-500";
   const bgColor =
     score >= 80
-      ? "bg-green-500/10"
+      ? "bg-emerald-500/10"
       : score >= 60
-        ? "bg-yellow-500/10"
-        : "bg-red-500/10";
+        ? "bg-amber-500/10"
+        : "bg-rose-500/10";
 
   return (
     <div
@@ -104,9 +104,9 @@ function AxisScoreCard({ axis }: { axis: AxisScore }) {
 
 function ContradictionCard({ item }: { item: ContradictionItem }) {
   const severityConfig = {
-    critical: { icon: AlertTriangle, color: "text-red-500", bg: "bg-red-500/10", label: "重大" },
-    warning: { icon: AlertCircle, color: "text-yellow-500", bg: "bg-yellow-500/10", label: "注意" },
-    info: { icon: Info, color: "text-blue-500", bg: "bg-blue-500/10", label: "情報" },
+    critical: { icon: AlertTriangle, color: "text-rose-500", bg: "bg-rose-500/10", label: "重大" },
+    warning: { icon: AlertCircle, color: "text-amber-500", bg: "bg-amber-500/10", label: "注意" },
+    info: { icon: Info, color: "text-sky-500", bg: "bg-sky-500/10", label: "情報" },
   };
   const config = severityConfig[item.severity];
   const Icon = config.icon;
@@ -288,7 +288,7 @@ export default function StoryCheckPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
+                  <CheckCircle className="h-4 w-4 text-emerald-500" />
                   ストーリーの強み
                 </CardTitle>
               </CardHeader>
@@ -296,7 +296,7 @@ export default function StoryCheckPage() {
                 <ul className="space-y-2">
                   {report.storyStrengths.map((s, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm">
-                      <CheckCircle className="mt-0.5 h-4 w-4 text-green-500 shrink-0" />
+                      <CheckCircle className="mt-0.5 h-4 w-4 text-emerald-500 shrink-0" />
                       {s}
                     </li>
                   ))}
@@ -358,9 +358,9 @@ export default function StoryCheckPage() {
                 <div className="space-y-3">
                   {report.actionItems.map((item, i) => {
                     const priorityConfig = {
-                      high: { color: "bg-red-500", label: "優先" },
-                      medium: { color: "bg-yellow-500", label: "中" },
-                      low: { color: "bg-blue-500", label: "低" },
+                      high: { color: "bg-rose-500", label: "優先" },
+                      medium: { color: "bg-amber-500", label: "中" },
+                      low: { color: "bg-sky-500", label: "低" },
                     };
                     const config = priorityConfig[item.priority];
 

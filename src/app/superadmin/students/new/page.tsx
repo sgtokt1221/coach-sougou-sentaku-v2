@@ -102,7 +102,7 @@ export default function NewStudentPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="email" className="text-xs font-medium">
-                メールアドレス <span className="text-red-500">*</span>
+                メールアドレス <span className="text-rose-500">*</span>
               </Label>
               <Input
                 id="email"
@@ -115,7 +115,7 @@ export default function NewStudentPage() {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="displayName" className="text-xs font-medium">
-                名前 <span className="text-red-500">*</span>
+                名前 <span className="text-rose-500">*</span>
               </Label>
               <Input
                 id="displayName"
@@ -127,7 +127,7 @@ export default function NewStudentPage() {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="password" className="text-xs font-medium">
-                パスワード <span className="text-red-500">*</span>
+                パスワード <span className="text-rose-500">*</span>
               </Label>
               <Input
                 id="password"

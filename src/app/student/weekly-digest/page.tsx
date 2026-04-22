@@ -111,14 +111,14 @@ export default function WeeklyDigestPage() {
                 key={w.area}
                 className={cn(
                   "flex items-center gap-3 rounded-xl border p-3",
-                  i === 0 ? "border-red-200 bg-red-50/50 dark:border-red-900/40 dark:bg-red-950/20" : "border-border",
+                  i === 0 ? "border-rose-200 bg-rose-50/50 dark:border-rose-900/40 dark:bg-rose-950/20" : "border-border",
                 )}
               >
                 <div
                   className={cn(
                     "flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-bold",
                     i === 0
-                      ? "bg-red-100 text-red-600 dark:bg-red-950/40 dark:text-red-400"
+                      ? "bg-rose-100 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400"
                       : "bg-muted text-muted-foreground",
                   )}
                 >
@@ -129,7 +129,7 @@ export default function WeeklyDigestPage() {
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className="text-[11px] text-muted-foreground">{w.count}回指摘</span>
                     {w.level === "critical" && (
-                      <Badge variant="outline" className="text-[9px] border-red-300 text-red-600 px-1.5 py-0">
+                      <Badge variant="outline" className="text-[9px] border-rose-300 text-rose-600 px-1.5 py-0">
                         要改善
                       </Badge>
                     )}
@@ -160,7 +160,7 @@ export default function WeeklyDigestPage() {
                 {imp.status === "resolved" ? (
                   <CheckCircle2 className="size-4 shrink-0 text-emerald-500" />
                 ) : (
-                  <TrendingUp className="size-4 shrink-0 text-blue-500" />
+                  <TrendingUp className="size-4 shrink-0 text-sky-500" />
                 )}
                 <span className="text-sm flex-1">{imp.area}</span>
                 <Badge
@@ -169,7 +169,7 @@ export default function WeeklyDigestPage() {
                     "text-[9px] px-1.5 py-0",
                     imp.status === "resolved"
                       ? "border-emerald-300 text-emerald-600"
-                      : "border-blue-300 text-blue-600",
+                      : "border-sky-300 text-sky-600",
                   )}
                 >
                   {imp.status === "resolved" ? "克服" : "改善中"}
@@ -281,7 +281,7 @@ function StatCard({
               <span
                 className={cn(
                   "flex items-center gap-0.5 text-[11px] font-medium",
-                  scoreChange > 0 ? "text-emerald-600" : "text-red-500",
+                  scoreChange > 0 ? "text-emerald-600" : "text-rose-500",
                 )}
               >
                 {scoreChange > 0 ? (
@@ -308,10 +308,10 @@ function StatCard({
 
 function WeaknessIcon({ level }: { level: "critical" | "warning" | "new" }) {
   if (level === "critical") {
-    return <AlertCircle className="size-5 shrink-0 text-red-500" />;
+    return <AlertCircle className="size-5 shrink-0 text-rose-500" />;
   }
   if (level === "warning") {
     return <AlertTriangle className="size-5 shrink-0 text-amber-500" />;
   }
-  return <Sparkles className="size-4 shrink-0 text-blue-400" />;
+  return <Sparkles className="size-4 shrink-0 text-sky-400" />;
 }

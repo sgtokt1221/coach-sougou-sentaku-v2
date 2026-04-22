@@ -294,7 +294,7 @@ function EditorPanel({
           <div className="text-sm text-muted-foreground">
             {wordCount} 文字
             {targetWordCount ? (
-              <span className={wordCount > targetWordCount ? " text-orange-500" : ""}>
+              <span className={wordCount > targetWordCount ? " text-amber-500" : ""}>
                 {" "}/ {targetWordCount} 文字
               </span>
             ) : null}
@@ -382,7 +382,7 @@ function ReviewPanel({
                     <ul className="space-y-1">
                       {feedback.improvements.map((item, i) => (
                         <li key={i} className="text-sm text-muted-foreground flex gap-2">
-                          <span className="text-orange-500 shrink-0">-</span>
+                          <span className="text-amber-500 shrink-0">-</span>
                           {item}
                         </li>
                       ))}

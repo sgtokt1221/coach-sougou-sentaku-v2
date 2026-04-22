@@ -137,7 +137,7 @@ export default function PricingPage() {
 
       {/* Success Message */}
       {successMessage && (
-        <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-center text-sm text-green-700 dark:border-green-800 dark:bg-green-950/30 dark:text-green-300">
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-center text-sm text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300">
           {successMessage}
         </div>
       )}
@@ -231,7 +231,7 @@ export default function PricingPage() {
               <ul className="space-y-2">
                 {plan.features.map((feature, i) => (
                   <li key={i} className="flex items-center gap-2 text-sm">
-                    <Check className="h-4 w-4 shrink-0 text-green-500" />
+                    <Check className="h-4 w-4 shrink-0 text-emerald-500" />
                     {feature}
                   </li>
                 ))}
@@ -270,7 +270,7 @@ export default function PricingPage() {
             <Card key={plan.id} className="relative overflow-hidden">
               <CardHeader>
                 <div className="flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-blue-500" />
+                  <FileText className="h-5 w-5 text-sky-500" />
                   <CardTitle className="text-lg">{plan.nameJa}</CardTitle>
                 </div>
                 <div className="mt-4">
@@ -287,7 +287,7 @@ export default function PricingPage() {
                 <ul className="space-y-2">
                   {plan.features.map((feature, i) => (
                     <li key={i} className="flex items-center gap-2 text-sm">
-                      <Check className="h-4 w-4 shrink-0 text-green-500" />
+                      <Check className="h-4 w-4 shrink-0 text-emerald-500" />
                       {feature}
                     </li>
                   ))}
@@ -404,21 +404,21 @@ export default function PricingPage() {
                     <td className="py-2">{row.name}</td>
                     <td className="py-2 text-center">
                       {row.free ? (
-                        <Check className="mx-auto h-4 w-4 text-green-500" />
+                        <Check className="mx-auto h-4 w-4 text-emerald-500" />
                       ) : (
                         <span className="text-muted-foreground">-</span>
                       )}
                     </td>
                     <td className="py-2 text-center">
                       {row.standard ? (
-                        <Check className="mx-auto h-4 w-4 text-green-500" />
+                        <Check className="mx-auto h-4 w-4 text-emerald-500" />
                       ) : (
                         <span className="text-muted-foreground">-</span>
                       )}
                     </td>
                     <td className="py-2 text-center">
                       {row.docPkg ? (
-                        <Check className="mx-auto h-4 w-4 text-green-500" />
+                        <Check className="mx-auto h-4 w-4 text-emerald-500" />
                       ) : (
                         <span className="text-muted-foreground">-</span>
                       )}

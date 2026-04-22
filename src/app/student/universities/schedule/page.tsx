@@ -55,14 +55,14 @@ function formatMonth(yearMonth: string): string {
 function EventCard({ event }: { event: ScheduleEvent }) {
   const isUrgent = event.daysLeft >= 0 && event.daysLeft <= 30;
   return (
-    <Card className={isUrgent ? "border-yellow-300 bg-yellow-50/50" : ""}>
+    <Card className={isUrgent ? "border-amber-300 bg-amber-50/50" : ""}>
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap mb-1">
               <Badge variant={eventTypeVariant(event.type)}>{event.type}</Badge>
               {isUrgent && event.daysLeft > 0 && (
-                <Badge variant="outline" className="text-yellow-700 border-yellow-400 text-xs">
+                <Badge variant="outline" className="text-amber-700 border-amber-400 text-xs">
                   もうすぐ
                 </Badge>
               )}

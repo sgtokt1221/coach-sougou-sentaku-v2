@@ -176,15 +176,15 @@ export default function TeacherSchedulePage() {
 
       {/* 締切アラート */}
       {isDeadlineApproaching() && submitStatus === "pending" && (
-        <Card className="border-orange-200 bg-orange-50">
+        <Card className="border-amber-200 bg-amber-50">
           <CardContent className="p-4">
             <div className="flex items-center">
-              <AlertCircle className="h-5 w-5 text-orange-500 mr-3" />
+              <AlertCircle className="h-5 w-5 text-amber-500 mr-3" />
               <div>
-                <div className="font-medium text-orange-800">
+                <div className="font-medium text-amber-800">
                   提出期限が近づいています
                 </div>
-                <div className="text-sm text-orange-700">
+                <div className="text-sm text-amber-700">
                   毎月25日までに翌月のシフトを提出してください。
                 </div>
               </div>
@@ -268,15 +268,15 @@ export default function TeacherSchedulePage() {
       )}
 
       {submitStatus === "confirmed" && (
-        <Card className="border-green-200 bg-green-50">
+        <Card className="border-emerald-200 bg-emerald-50">
           <CardContent className="p-4">
             <div className="flex items-center">
-              <CheckCircle className="h-5 w-5 text-green-500 mr-3" />
+              <CheckCircle className="h-5 w-5 text-emerald-500 mr-3" />
               <div>
-                <div className="font-medium text-green-800">
+                <div className="font-medium text-emerald-800">
                   シフトが確認されました
                 </div>
-                <div className="text-sm text-green-700">
+                <div className="text-sm text-emerald-700">
                   管理者によりシフトが確認済みです。変更が必要な場合は管理者にご連絡ください。
                 </div>
               </div>

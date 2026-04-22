@@ -161,7 +161,7 @@ export default function AdminNotificationManagementPage() {
               <div
                 className={`rounded-lg px-3 py-2 text-sm ${
                   digestResult.success
-                    ? "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300"
+                    ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
                     : "bg-destructive/10 text-destructive"
                 }`}
               >
@@ -182,7 +182,7 @@ export default function AdminNotificationManagementPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <FileText className="size-5 text-orange-500" />
+              <FileText className="size-5 text-amber-500" />
               書類期限リマインダー
             </CardTitle>
             <CardDescription>
@@ -217,7 +217,7 @@ export default function AdminNotificationManagementPage() {
               <div
                 className={`rounded-lg px-3 py-2 text-sm ${
                   reminderResult.success
-                    ? "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300"
+                    ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
                     : "bg-destructive/10 text-destructive"
                 }`}
               >
@@ -268,7 +268,7 @@ export default function AdminNotificationManagementPage() {
 
           <div className="flex items-center justify-between">
             <div className="flex items-start gap-3">
-              <FileText className="mt-0.5 size-5 text-orange-500" />
+              <FileText className="mt-0.5 size-5 text-amber-500" />
               <div>
                 <Label htmlFor="auto-reminder" className="text-sm font-medium">
                   期限リマインダー自動送信

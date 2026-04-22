@@ -35,7 +35,7 @@ export const FACULTY_REGISTRY: FacultyEntry[] = [
     description: "憲法・人権・違憲判決・AI法。法律と政治の核心を体系的に。",
     available: true,
     topicCount: 29,
-    accent: "from-indigo-500/10 to-blue-500/10 border-indigo-200",
+    accent: "from-indigo-500/10 to-sky-500/10 border-indigo-200",
   },
   {
     id: "economics",
@@ -44,7 +44,7 @@ export const FACULTY_REGISTRY: FacultyEntry[] = [
     description: "ミクロ・マクロ・行動経済学・気候経済。経済の仕組みを問う。",
     available: true,
     topicCount: 21,
-    accent: "from-emerald-500/10 to-green-500/10 border-emerald-200",
+    accent: "from-emerald-500/10 to-emerald-500/10 border-emerald-200",
   },
   {
     id: "business",
@@ -53,7 +53,7 @@ export const FACULTY_REGISTRY: FacultyEntry[] = [
     description: "企業経営・マーケティング・ESG・DX。ビジネスの最前線。",
     available: true,
     topicCount: 12,
-    accent: "from-amber-500/10 to-yellow-500/10 border-amber-200",
+    accent: "from-amber-500/10 to-amber-500/10 border-amber-200",
   },
   {
     id: "sociology",
@@ -89,7 +89,7 @@ export const FACULTY_REGISTRY: FacultyEntry[] = [
     description: "国際政治・多文化共生・難民・SDGs。グローバル課題。",
     available: true,
     topicCount: 15,
-    accent: "from-blue-500/10 to-indigo-500/10 border-blue-200",
+    accent: "from-sky-500/10 to-indigo-500/10 border-sky-200",
   },
   {
     id: "psychology",
@@ -127,7 +127,7 @@ export const FACULTY_REGISTRY: FacultyEntry[] = [
     description: "AI・データサイエンス・量子計算・サイバーセキュリティ。",
     available: true,
     topicCount: 15,
-    accent: "from-cyan-500/10 to-blue-500/10 border-cyan-200",
+    accent: "from-cyan-500/10 to-sky-500/10 border-cyan-200",
   },
   {
     id: "agriculture",
@@ -136,7 +136,7 @@ export const FACULTY_REGISTRY: FacultyEntry[] = [
     description: "食料・環境・バイオ・ゲノム編集。生命と地球の科学。",
     available: true,
     topicCount: 12,
-    accent: "from-lime-500/10 to-green-500/10 border-lime-200",
+    accent: "from-lime-500/10 to-emerald-500/10 border-lime-200",
   },
 
   // ── 医療系 ──
@@ -147,7 +147,7 @@ export const FACULTY_REGISTRY: FacultyEntry[] = [
     description: "医療倫理・地域医療・終末期医療・医療AI。命を扱う学問。",
     available: true,
     topicCount: 15,
-    accent: "from-red-500/10 to-rose-500/10 border-red-200",
+    accent: "from-rose-500/10 to-rose-500/10 border-rose-200",
   },
   {
     id: "pharmacy",
@@ -156,7 +156,7 @@ export const FACULTY_REGISTRY: FacultyEntry[] = [
     description: "創薬・薬物治療・薬剤師の役割。医薬の科学。",
     available: true,
     topicCount: 10,
-    accent: "from-orange-500/10 to-red-500/10 border-orange-200",
+    accent: "from-amber-500/10 to-rose-500/10 border-amber-200",
   },
   {
     id: "nursing",

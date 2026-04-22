@@ -30,9 +30,9 @@ const DIFFICULTY_LABELS: Record<PassageLanguage, Record<number, string>> = {
   en: { 1: "Basic", 2: "Standard", 3: "Advanced" },
 };
 const DIFFICULTY_COLORS: Record<number, string> = {
-  1: "bg-green-100 text-green-700",
-  2: "bg-yellow-100 text-yellow-700",
-  3: "bg-red-100 text-red-700",
+  1: "bg-emerald-100 text-emerald-700",
+  2: "bg-amber-100 text-amber-700",
+  3: "bg-rose-100 text-rose-700",
 };
 const TIME_LIMIT = 15 * 60; // 15分
 const MAX_JA = 400;
@@ -355,7 +355,7 @@ export default function SummaryDrillPage() {
 
   // ======== Step: ドリル ========
   if (step === "drill" && passage) {
-    const timeColor = timeLeft <= 60 ? "text-red-600" : timeLeft <= 180 ? "text-amber-600" : "text-muted-foreground";
+    const timeColor = timeLeft <= 60 ? "text-rose-600" : timeLeft <= 180 ? "text-amber-600" : "text-muted-foreground";
     const passageLang: PassageLanguage = passage.language ?? "ja";
     const isEn = passageLang === "en";
 

@@ -39,10 +39,10 @@ export interface CalendarEvent {
 }
 
 export const CALENDAR_EVENT_COLORS: Record<CalendarEventType, string> = {
-  session: "bg-blue-500",
+  session: "bg-sky-500",
   app_start: "bg-amber-400",
-  app_end: "bg-orange-500",
-  exam: "bg-red-500",
+  app_end: "bg-amber-500",
+  exam: "bg-rose-500",
   result: "bg-emerald-500",
   custom: "bg-violet-500",
   holiday: "bg-rose-400",

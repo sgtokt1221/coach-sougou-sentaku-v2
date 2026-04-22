@@ -48,7 +48,7 @@ export default function VoiceAnalysisReport({ analysis }: VoiceAnalysisReportPro
         {/* Speech Rate */}
         <div className="space-y-2 rounded-lg border p-3">
           <div className="flex items-center gap-2 text-sm font-medium">
-            <Clock className="size-4 text-blue-500" />
+            <Clock className="size-4 text-sky-500" />
             話速
           </div>
           <div className="flex justify-between text-sm">
@@ -64,15 +64,15 @@ export default function VoiceAnalysisReport({ analysis }: VoiceAnalysisReportPro
             max={600}
             color={
               analysis.speechRate >= 200 && analysis.speechRate <= 400
-                ? "bg-blue-500"
-                : "bg-yellow-500"
+                ? "bg-sky-500"
+                : "bg-amber-500"
             }
           />
           <p className="text-xs text-muted-foreground flex items-start gap-1">
             {analysis.speechRate >= 200 && analysis.speechRate <= 400 ? (
-              <CheckCircle className="size-3 mt-0.5 shrink-0 text-green-500" />
+              <CheckCircle className="size-3 mt-0.5 shrink-0 text-emerald-500" />
             ) : (
-              <AlertCircle className="size-3 mt-0.5 shrink-0 text-yellow-500" />
+              <AlertCircle className="size-3 mt-0.5 shrink-0 text-amber-500" />
             )}
             {analysis.feedback.speechRateAdvice}
           </p>
@@ -81,7 +81,7 @@ export default function VoiceAnalysisReport({ analysis }: VoiceAnalysisReportPro
         {/* Filler Words */}
         <div className="space-y-2 rounded-lg border p-3">
           <div className="flex items-center gap-2 text-sm font-medium">
-            <AlertCircle className="size-4 text-orange-500" />
+            <AlertCircle className="size-4 text-amber-500" />
             フィラー
           </div>
           <div className="flex justify-between text-sm">
@@ -103,9 +103,9 @@ export default function VoiceAnalysisReport({ analysis }: VoiceAnalysisReportPro
           )}
           <p className="text-xs text-muted-foreground flex items-start gap-1">
             {analysis.fillerRate < 2 ? (
-              <CheckCircle className="size-3 mt-0.5 shrink-0 text-green-500" />
+              <CheckCircle className="size-3 mt-0.5 shrink-0 text-emerald-500" />
             ) : (
-              <AlertCircle className="size-3 mt-0.5 shrink-0 text-yellow-500" />
+              <AlertCircle className="size-3 mt-0.5 shrink-0 text-amber-500" />
             )}
             {analysis.feedback.fillerAdvice}
           </p>
@@ -135,9 +135,9 @@ export default function VoiceAnalysisReport({ analysis }: VoiceAnalysisReportPro
           </div>
           <p className="text-xs text-muted-foreground flex items-start gap-1">
             {analysis.pauseAnalysis.longPauses <= 2 && analysis.volumeVariation >= 0.15 ? (
-              <CheckCircle className="size-3 mt-0.5 shrink-0 text-green-500" />
+              <CheckCircle className="size-3 mt-0.5 shrink-0 text-emerald-500" />
             ) : (
-              <AlertCircle className="size-3 mt-0.5 shrink-0 text-yellow-500" />
+              <AlertCircle className="size-3 mt-0.5 shrink-0 text-amber-500" />
             )}
             {analysis.feedback.deliveryAdvice}
           </p>

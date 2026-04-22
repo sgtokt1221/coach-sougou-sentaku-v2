@@ -73,7 +73,7 @@ function getDeadlineBadge(deadline?: string) {
   }
   if (daysLeft <= 7) {
     return (
-      <Badge variant="outline" className="border-orange-400 bg-orange-50 text-orange-700 text-[10px]">
+      <Badge variant="outline" className="border-amber-400 bg-amber-50 text-amber-700 text-[10px]">
         期限間近
       </Badge>
     );

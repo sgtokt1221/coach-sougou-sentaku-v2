@@ -146,7 +146,7 @@ export function ScheduleGrid({
                     mode === "view" && assignment && "bg-purple-100 dark:bg-purple-900/30",
                     mode === "view" && !assignment && isMatch && "bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/30 dark:hover:bg-amber-900/50 cursor-pointer",
                     mode === "view" && !assignment && isTeacher && !isStudent && "bg-emerald-50 dark:bg-emerald-900/20",
-                    mode === "view" && !assignment && isStudent && !isTeacher && "bg-blue-50 dark:bg-blue-900/20",
+                    mode === "view" && !assignment && isStudent && !isTeacher && "bg-sky-50 dark:bg-sky-900/20",
                     mode === "view" && !assignment && !isTeacher && !isStudent && "hover:bg-muted/20"
                   )}
                 >
@@ -190,7 +190,7 @@ export function ScheduleGrid({
               講師空き
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="inline-block h-3 w-3 rounded-sm bg-blue-100 dark:bg-blue-900/40" />
+              <span className="inline-block h-3 w-3 rounded-sm bg-sky-100 dark:bg-sky-900/40" />
               生徒希望
             </span>
             <span className="flex items-center gap-1.5">

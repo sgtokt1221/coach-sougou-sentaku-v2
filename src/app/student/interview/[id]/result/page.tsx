@@ -86,10 +86,10 @@ const SCORE_LABELS: Partial<Record<keyof InterviewScores, string>> = {
 };
 
 const SCORE_COLORS: Partial<Record<keyof InterviewScores, string>> = {
-  clarity: "bg-blue-500",
+  clarity: "bg-sky-500",
   apAlignment: "bg-purple-500",
-  enthusiasm: "bg-orange-500",
-  specificity: "bg-green-500",
+  enthusiasm: "bg-amber-500",
+  specificity: "bg-emerald-500",
   bodyLanguage: "bg-teal-500",
   presentationStructure: "bg-indigo-500",
   dataEvidence: "bg-cyan-500",
@@ -328,9 +328,9 @@ export default function InterviewResultPage() {
 
         {/* 繰り返し弱点を目立たせるカード */}
         {result.feedback.repeatedIssues.length > 0 && (
-          <Card className="mb-8 border-0 bg-gradient-to-r from-red-50 to-rose-100/60 shadow-lg border-red-200">
+          <Card className="mb-8 border-0 bg-gradient-to-r from-rose-50 to-rose-100/60 shadow-lg border-rose-200">
             <CardHeader className="pb-4">
-              <CardTitle className="text-lg tracking-tight flex items-center gap-2 text-red-700">
+              <CardTitle className="text-lg tracking-tight flex items-center gap-2 text-rose-700">
                 <AlertTriangle className="size-5" />
                 注目すべき弱点パターン
               </CardTitle>
@@ -345,9 +345,9 @@ export default function InterviewResultPage() {
                     className={[
                       "flex items-center justify-between rounded-xl border p-4 gap-3 transition-all hover:shadow-md",
                       isCritical
-                        ? "bg-gradient-to-r from-red-50 to-red-100/60 border-red-200"
+                        ? "bg-gradient-to-r from-rose-50 to-rose-100/60 border-rose-200"
                         : isWarning
-                          ? "bg-gradient-to-r from-amber-50 to-yellow-100/60 border-amber-200"
+                          ? "bg-gradient-to-r from-amber-50 to-amber-100/60 border-amber-200"
                           : "bg-white/60 border-slate-200",
                     ].join(" ")}
                   >
@@ -421,7 +421,7 @@ export default function InterviewResultPage() {
               {tab === "overview" && (
                 <div id="overview-section">
                   {/* 全体講評 */}
-                  <Card className="border-0 bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50 shadow-lg">
+                  <Card className="border-0 bg-gradient-to-br from-indigo-50 via-sky-50 to-purple-50 shadow-lg">
                     <CardHeader className="pb-4">
                       <CardTitle className="text-xl tracking-tight flex items-center gap-2 text-slate-800">
                         <MessageSquare className="size-6 text-indigo-600" />
@@ -441,7 +441,7 @@ export default function InterviewResultPage() {
                   <div className="grid gap-6 lg:grid-cols-2">
                     {/* 良い点 */}
                     {result.feedback.goodPoints.length > 0 && (
-                      <Card className="border-0 bg-gradient-to-br from-emerald-50 to-green-100/60 shadow-md">
+                      <Card className="border-0 bg-gradient-to-br from-emerald-50 to-emerald-100/60 shadow-md">
                         <CardHeader className="pb-4">
                           <CardTitle className="text-lg tracking-tight flex items-center gap-2 text-emerald-700">
                             <CheckCircle className="size-5" />
@@ -465,7 +465,7 @@ export default function InterviewResultPage() {
 
                     {/* 改善点 */}
                     {result.feedback.improvements.length > 0 && (
-                      <Card className="border-0 bg-gradient-to-br from-amber-50 to-yellow-100/60 shadow-md">
+                      <Card className="border-0 bg-gradient-to-br from-amber-50 to-amber-100/60 shadow-md">
                         <CardHeader className="pb-4">
                           <CardTitle className="text-lg tracking-tight flex items-center gap-2 text-amber-700">
                             <AlertTriangle className="size-5" />
@@ -494,9 +494,9 @@ export default function InterviewResultPage() {
                 <div id="qa-section">
                   {/* あなたへの個別アドバイス */}
                   {result.feedback.personalizedAdvice && result.feedback.personalizedAdvice.length > 0 && (
-                    <Card className="border-0 bg-blue-50 border-blue-200 shadow-md">
+                    <Card className="border-0 bg-sky-50 border-sky-200 shadow-md">
                       <CardHeader className="pb-4">
-                        <CardTitle className="text-lg tracking-tight flex items-center gap-2 text-blue-800">
+                        <CardTitle className="text-lg tracking-tight flex items-center gap-2 text-sky-800">
                           <Sparkles className="size-5" />
                           あなたへの個別アドバイス
                         </CardTitle>
@@ -504,8 +504,8 @@ export default function InterviewResultPage() {
                       <CardContent>
                         <ul className="space-y-3">
                           {result.feedback.personalizedAdvice.map((advice: string, i: number) => (
-                            <li key={i} className="text-sm text-blue-900 flex items-start gap-3">
-                              <span className="shrink-0 w-6 h-6 rounded-full bg-blue-200 text-blue-800 text-xs flex items-center justify-center font-bold mt-0.5 tabular-nums">
+                            <li key={i} className="text-sm text-sky-900 flex items-start gap-3">
+                              <span className="shrink-0 w-6 h-6 rounded-full bg-sky-200 text-sky-800 text-xs flex items-center justify-center font-bold mt-0.5 tabular-nums">
                                 {i + 1}
                               </span>
                               <span className="leading-relaxed">{advice}</span>
@@ -518,7 +518,7 @@ export default function InterviewResultPage() {
 
                   {/* 前回からの改善点 */}
                   {result.feedback.improvementsSinceLast.length > 0 && (
-                    <Card className="border-0 bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 shadow-md border-emerald-200">
+                    <Card className="border-0 bg-gradient-to-br from-emerald-50 via-emerald-50 to-teal-50 shadow-md border-emerald-200">
                       <CardHeader className="pb-4">
                         <CardTitle className="text-lg tracking-tight flex items-center gap-2 text-emerald-800">
                           <Award className="size-5" />
@@ -555,7 +555,7 @@ export default function InterviewResultPage() {
                   {result.growthEvents && result.growthEvents.length > 0 && (
                     <Card className="border-0 bg-white/70 backdrop-blur-sm shadow-md">
                       <CardHeader className="pb-4">
-                        <CardTitle className="text-lg tracking-tight flex items-center gap-2 text-blue-700">
+                        <CardTitle className="text-lg tracking-tight flex items-center gap-2 text-sky-700">
                           <TrendingUp className="size-5" />
                           成長フィードバック
                         </CardTitle>
@@ -564,10 +564,10 @@ export default function InterviewResultPage() {
                         {result.growthEvents.map((event: GrowthEvent, i: number) => {
                           const bgClass =
                             event.type === "praise"
-                              ? "bg-gradient-to-r from-emerald-50 to-green-100/60 border-emerald-200"
+                              ? "bg-gradient-to-r from-emerald-50 to-emerald-100/60 border-emerald-200"
                               : event.type === "warning"
-                                ? "bg-gradient-to-r from-red-50 to-rose-100/60 border-red-200"
-                                : "bg-gradient-to-r from-blue-50 to-indigo-100/60 border-blue-200";
+                                ? "bg-gradient-to-r from-rose-50 to-rose-100/60 border-rose-200"
+                                : "bg-gradient-to-r from-sky-50 to-indigo-100/60 border-sky-200";
                           const Icon =
                             event.type === "praise"
                               ? Sparkles
@@ -579,7 +579,7 @@ export default function InterviewResultPage() {
                               ? "text-emerald-600"
                               : event.type === "warning"
                                 ? "text-rose-600"
-                                : "text-blue-600";
+                                : "text-sky-600";
                           return (
                             <div
                               key={i}
@@ -656,7 +656,7 @@ export default function InterviewResultPage() {
 
                   {/* 分析データがない場合 */}
                   {!result.voiceAnalysis && !result.transcription && (
-                    <Card className="border-0 bg-gradient-to-br from-blue-50 to-indigo-100/60 shadow-md">
+                    <Card className="border-0 bg-gradient-to-br from-sky-50 to-indigo-100/60 shadow-md">
                       <CardContent className="p-8 text-center">
                         <Mic className="size-12 text-indigo-500 mx-auto mb-3" />
                         <h3 className="text-lg font-semibold tracking-tight text-indigo-800 mb-2">音声分析</h3>
@@ -687,7 +687,7 @@ export default function InterviewResultPage() {
 
                   {/* 分析データがない場合 */}
                   {!result.videoAnalysis && !result.appearanceAnalysis && (
-                    <Card className="border-0 bg-gradient-to-br from-blue-50 to-indigo-100/60 shadow-md">
+                    <Card className="border-0 bg-gradient-to-br from-sky-50 to-indigo-100/60 shadow-md">
                       <CardContent className="p-8 text-center">
                         <Video className="size-12 text-indigo-500 mx-auto mb-3" />
                         <h3 className="text-lg font-semibold tracking-tight text-indigo-800 mb-2">映像分析</h3>
@@ -707,7 +707,7 @@ export default function InterviewResultPage() {
             {/* 概要セクション */}
             <section id="overview-section" className="scroll-mt-8">
               {/* 全体講評 */}
-              <Card className="border-0 bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50 shadow-lg">
+              <Card className="border-0 bg-gradient-to-br from-indigo-50 via-sky-50 to-purple-50 shadow-lg">
                 <CardHeader className="pb-4">
                   <CardTitle className="text-xl tracking-tight flex items-center gap-2 text-slate-800">
                     <MessageSquare className="size-6 text-indigo-600" />
@@ -732,7 +732,7 @@ export default function InterviewResultPage() {
               <div className="grid gap-6 lg:grid-cols-2">
                 {/* 良い点 */}
                 {result.feedback.goodPoints.length > 0 && (
-                  <Card className="border-0 bg-gradient-to-br from-emerald-50 to-green-100/60 shadow-md">
+                  <Card className="border-0 bg-gradient-to-br from-emerald-50 to-emerald-100/60 shadow-md">
                     <CardHeader className="pb-4">
                       <CardTitle className="text-lg tracking-tight flex items-center gap-2 text-emerald-700">
                         <CheckCircle className="size-5" />
@@ -756,7 +756,7 @@ export default function InterviewResultPage() {
 
                 {/* 改善点 */}
                 {result.feedback.improvements.length > 0 && (
-                  <Card className="border-0 bg-gradient-to-br from-amber-50 to-yellow-100/60 shadow-md">
+                  <Card className="border-0 bg-gradient-to-br from-amber-50 to-amber-100/60 shadow-md">
                     <CardHeader className="pb-4">
                       <CardTitle className="text-lg tracking-tight flex items-center gap-2 text-amber-700">
                         <AlertTriangle className="size-5" />
@@ -838,7 +838,7 @@ export default function InterviewResultPage() {
                   <VoiceAnalysisReport analysis={result.voiceAnalysis} />
                 </div>
               ) : (
-                <Card className="border-0 bg-gradient-to-br from-blue-50 to-indigo-100/60 shadow-md">
+                <Card className="border-0 bg-gradient-to-br from-sky-50 to-indigo-100/60 shadow-md">
                   <CardContent className="p-8 text-center">
                     <Mic className="size-12 text-indigo-500 mx-auto mb-3" />
                     <h3 className="text-lg font-semibold tracking-tight text-indigo-800 mb-2">音声分析</h3>
@@ -871,7 +871,7 @@ export default function InterviewResultPage() {
 
                 {/* 分析データがない場合 */}
                 {!result.videoAnalysis && !result.appearanceAnalysis && (
-                  <Card className="border-0 bg-gradient-to-br from-blue-50 to-indigo-100/60 shadow-md">
+                  <Card className="border-0 bg-gradient-to-br from-sky-50 to-indigo-100/60 shadow-md">
                     <CardContent className="p-8 text-center">
                       <Video className="size-12 text-indigo-500 mx-auto mb-3" />
                       <h3 className="text-lg font-semibold tracking-tight text-indigo-800 mb-2">映像分析</h3>

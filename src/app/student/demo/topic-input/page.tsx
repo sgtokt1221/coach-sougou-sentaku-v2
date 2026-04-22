@@ -7,9 +7,9 @@ import { TutorialDriver } from "@/components/tutorial/TutorialDriver";
 import { DEMO_STEPS } from "@/lib/tutorial/demo-steps";
 
 const FACULTIES = [
-  { name: "総合政策学部", count: 24, color: "from-sky-50 to-blue-50" },
-  { name: "法学部", count: 18, color: "from-amber-50 to-orange-50" },
-  { name: "経済学部", count: 22, color: "from-emerald-50 to-green-50" },
+  { name: "総合政策学部", count: 24, color: "from-sky-50 to-sky-50" },
+  { name: "法学部", count: 18, color: "from-amber-50 to-amber-50" },
+  { name: "経済学部", count: 22, color: "from-emerald-50 to-emerald-50" },
   { name: "医学部", count: 15, color: "from-rose-50 to-pink-50" },
 ];
 

@@ -10,7 +10,7 @@ const sourceConfig: Record<WeaknessSource, {
 }> = {
   essay: {
     label: "添削",
-    className: "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-300",
+    className: "border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-300",
     icons: <FileEdit className="size-3" />,
   },
   interview: {
@@ -52,7 +52,7 @@ export function WeaknessSourceBadge({ source }: { source: WeaknessSource }) {
 
 export function sourceLeftBorder(source: WeaknessSource): string {
   switch (source) {
-    case "essay": return "border-l-blue-400 dark:border-l-blue-500";
+    case "essay": return "border-l-sky-400 dark:border-l-sky-500";
     case "interview": return "border-l-violet-400 dark:border-l-violet-500";
     case "skill_check": return "border-l-emerald-400 dark:border-l-emerald-500";
     case "interview_skill_check": return "border-l-purple-400 dark:border-l-purple-500";

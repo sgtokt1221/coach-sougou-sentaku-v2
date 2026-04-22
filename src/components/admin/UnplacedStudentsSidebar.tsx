@@ -82,7 +82,7 @@ export default function UnplacedStudentsSidebar({
         {students.map((student) => (
           <Card
             key={student.uid}
-            className="p-3 cursor-grab active:cursor-grabbing hover:shadow-sm transition-all duration-200 border-l-4 border-l-orange-400"
+            className="p-3 cursor-grab active:cursor-grabbing hover:shadow-sm transition-all duration-200 border-l-4 border-l-amber-400"
             draggable
             onDragStart={(e) => handleDragStart(e, student)}
           >

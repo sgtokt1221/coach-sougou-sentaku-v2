@@ -54,13 +54,13 @@ function alertTypeConfig(type: AlertItem["type"]) {
     case "declining":
       return { label: "スコア低下", icon: TrendingDown, color: "text-rose-600 dark:text-rose-400" };
     case "repeated_weakness":
-      return { label: "弱点繰返し", icon: Repeat, color: "text-orange-600 dark:text-orange-400" };
+      return { label: "弱点繰返し", icon: Repeat, color: "text-amber-600 dark:text-amber-400" };
     case "document_deadline":
       return { label: "書類期限", icon: FileWarning, color: "text-purple-600 dark:text-purple-400" };
     case "ap_struggle":
-      return { label: "AP不適合", icon: Target, color: "text-red-600 dark:text-red-400" };
+      return { label: "AP不適合", icon: Target, color: "text-rose-600 dark:text-rose-400" };
     case "weakness_stuck":
-      return { label: "弱点停滞", icon: Lock, color: "text-yellow-600 dark:text-yellow-400" };
+      return { label: "弱点停滞", icon: Lock, color: "text-amber-600 dark:text-amber-400" };
     case "deadline_risk":
       return { label: "期限リスク", icon: CalendarClock, color: "text-indigo-600 dark:text-indigo-400" };
     case "score_plateau":
@@ -72,22 +72,22 @@ function severityBgClass(severity: AlertItem["severity"], acknowledged: boolean)
   if (acknowledged) return "";
   switch (severity) {
     case "critical":
-      return "border-red-200 bg-red-50/50 dark:border-red-900 dark:bg-red-950/20";
+      return "border-rose-200 bg-rose-50/50 dark:border-rose-900 dark:bg-rose-950/20";
     case "high":
-      return "border-orange-200 bg-orange-50/50 dark:border-orange-900 dark:bg-orange-950/20";
+      return "border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/20";
     case "warning":
-      return "border-yellow-200 bg-yellow-50/50 dark:border-yellow-900 dark:bg-yellow-950/20";
+      return "border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/20";
   }
 }
 
 function severityIconBgClass(severity: AlertItem["severity"]) {
   switch (severity) {
     case "critical":
-      return "bg-red-100 dark:bg-red-900/30";
+      return "bg-rose-100 dark:bg-rose-900/30";
     case "high":
-      return "bg-orange-100 dark:bg-orange-900/30";
+      return "bg-amber-100 dark:bg-amber-900/30";
     case "warning":
-      return "bg-yellow-100 dark:bg-yellow-900/30";
+      return "bg-amber-100 dark:bg-amber-900/30";
   }
 }
 
@@ -263,9 +263,9 @@ export default function AdminAlertsPage() {
 
                     {/* Recommended Action */}
                     {alert.recommendedAction && !alert.acknowledged && (
-                      <div className="mt-2 flex items-start gap-1.5 rounded-md bg-blue-50/60 dark:bg-blue-950/20 px-2.5 py-1.5">
-                        <Lightbulb className="mt-0.5 size-3.5 shrink-0 text-blue-500" />
-                        <p className="text-xs text-blue-700 dark:text-blue-400">
+                      <div className="mt-2 flex items-start gap-1.5 rounded-md bg-sky-50/60 dark:bg-sky-950/20 px-2.5 py-1.5">
+                        <Lightbulb className="mt-0.5 size-3.5 shrink-0 text-sky-500" />
+                        <p className="text-xs text-sky-700 dark:text-sky-400">
                           {alert.recommendedAction}
                         </p>
                       </div>

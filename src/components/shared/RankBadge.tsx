@@ -171,7 +171,7 @@ export function RankBadge({ rank, size = "md" }: RankBadgeProps) {
               >
                 {rank === "S" && <Sparkles className={`${config.iconSize} text-amber-400`} />}
                 {rank === "A" && <Star className={`${config.iconSize} text-purple-400`} />}
-                {rank === "B" && <Award className={`${config.iconSize} text-blue-400`} />}
+                {rank === "B" && <Award className={`${config.iconSize} text-sky-400`} />}
               </motion.div>
             );
           })}

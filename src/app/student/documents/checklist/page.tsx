@@ -41,8 +41,8 @@ const STATUS_VARIANT: Record<DocumentStatus, "default" | "secondary" | "outline"
 
 const STATUS_ICON: Record<DocumentStatus, React.ReactNode> = {
   draft: <FileText className="size-4 text-muted-foreground" />,
-  in_review: <Clock className="size-4 text-blue-500" />,
-  reviewed: <CheckCircle className="size-4 text-green-500" />,
+  in_review: <Clock className="size-4 text-sky-500" />,
+  reviewed: <CheckCircle className="size-4 text-emerald-500" />,
   final: <CheckCircle className="size-4 text-emerald-600" />,
 };
 
@@ -123,11 +123,11 @@ export default function ChecklistPage() {
                   {days !== null && (
                     <div className="flex items-center gap-1 text-xs mt-1">
                       {days <= 14 ? (
-                        <AlertTriangle className="size-3 text-orange-500" />
+                        <AlertTriangle className="size-3 text-amber-500" />
                       ) : (
                         <Clock className="size-3 text-muted-foreground" />
                       )}
-                      <span className={days <= 14 ? "text-orange-500" : "text-muted-foreground"}>
+                      <span className={days <= 14 ? "text-amber-500" : "text-muted-foreground"}>
                         最短期限: {earliestDeadline}
                         {days > 0 ? `（あと${days}日）` : days === 0 ? "（今日）" : "（期限超過）"}
                       </span>

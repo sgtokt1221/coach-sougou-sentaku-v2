@@ -170,10 +170,10 @@ export default function PassedDataPage() {
 
       {/* Insufficient Data */}
       {stats?.insufficient && (
-        <Card className="border-yellow-300 bg-yellow-50">
+        <Card className="border-amber-300 bg-amber-50">
           <CardContent className="flex items-center gap-3 pt-6">
             <AlertTriangle className="size-5 text-amber-600" />
-            <p className="text-sm text-yellow-800">
+            <p className="text-sm text-amber-800">
               この大学・学部のデータはまだ十分ではありません（最低5件必要）
             </p>
           </CardContent>
@@ -354,7 +354,7 @@ export default function PassedDataPage() {
                       </div>
                       <div className="h-2 rounded-full bg-muted">
                         <div
-                          className="h-2 rounded-full bg-red-400"
+                          className="h-2 rounded-full bg-rose-400"
                           style={{ width: `${w.frequency}%` }}
                         />
                       </div>

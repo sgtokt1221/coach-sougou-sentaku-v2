@@ -3,24 +3,24 @@ import { Card, CardContent } from "@/components/ui/card";
 const LEGEND = [
   {
     color:
-      "bg-red-100 text-red-900 dark:bg-red-950 dark:text-red-200 font-bold",
+      "bg-rose-100 text-rose-900 dark:bg-rose-950 dark:text-rose-200 font-bold",
     label: "必修暗記",
     description: "条文・年号・判例・人名",
   },
   {
     color:
-      "bg-blue-100 text-blue-900 dark:bg-blue-950 dark:text-blue-200 font-semibold",
+      "bg-sky-100 text-sky-900 dark:bg-sky-950 dark:text-sky-200 font-semibold",
     label: "概念",
     description: "用語定義・キーワード",
   },
   {
-    color: "bg-yellow-100 text-yellow-900 dark:bg-yellow-950 dark:text-yellow-200",
+    color: "bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200",
     label: "数値",
     description: "統計・重要数値",
   },
   {
     color:
-      "bg-green-100 text-green-900 dark:bg-green-950 dark:text-green-200 italic",
+      "bg-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200 italic",
     label: "学者",
     description: "学者名・著作名",
   },

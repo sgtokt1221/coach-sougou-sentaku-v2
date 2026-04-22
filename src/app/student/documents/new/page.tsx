@@ -469,7 +469,7 @@ export default function NewDocumentPage() {
                     <Button
                       onClick={handleGenerateFromSelfAnalysis}
                       size="lg"
-                      className="gap-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+                      className="gap-2 bg-gradient-to-r from-sky-500 to-purple-600 hover:from-sky-600 hover:to-purple-700"
                     >
                       <Sparkles className="h-4 w-4" />
                       自己分析から自動下書き生成

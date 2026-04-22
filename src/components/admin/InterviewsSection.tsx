@@ -59,7 +59,7 @@ const SCORE_LABELS: Record<string, string> = {
 
 function modeBadge(mode: InterviewMode) {
   const colors: Record<InterviewMode, string> = {
-    individual: "bg-blue-50 text-blue-700 border-blue-300",
+    individual: "bg-sky-50 text-sky-700 border-sky-300",
     group_discussion: "bg-purple-50 text-purple-700 border-purple-300",
     presentation: "bg-amber-50 text-amber-700 border-amber-300",
     oral_exam: "bg-emerald-50 text-emerald-700 border-emerald-300",

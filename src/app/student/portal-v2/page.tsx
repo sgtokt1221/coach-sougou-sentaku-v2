@@ -36,8 +36,8 @@ const quickActions = [
     label: "NEW ESSAY_ ",
     href: "/student/essay/new",
     icon: FileText,
-    accent: "bg-red-500",
-    textAccent: "group-hover:text-red-500",
+    accent: "bg-rose-500",
+    textAccent: "group-hover:text-rose-500",
   },
   {
     label: "MOCK INTERVIEW_ ",
@@ -50,8 +50,8 @@ const quickActions = [
     label: "DOCUMENTS_ ",
     href: "/student/documents",
     icon: FolderOpen,
-    accent: "bg-blue-500",
-    textAccent: "group-hover:text-blue-500",
+    accent: "bg-sky-500",
+    textAccent: "group-hover:text-sky-500",
   },
 ];
 
@@ -107,7 +107,7 @@ export default function StudentPortalV2() {
   const latestScore = trendData.length > 0 ? trendData[trendData.length - 1].total : null;
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white selection:bg-red-500 selection:text-white font-sans overflow-x-hidden">
+    <div className="min-h-screen bg-[#050505] text-white selection:bg-rose-500 selection:text-white font-sans overflow-x-hidden">
       <motion.nav 
         initial={{ y: -50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -115,7 +115,7 @@ export default function StudentPortalV2() {
         className="w-full flex items-center justify-between p-6 md:px-12 border-b border-white/10 backdrop-blur-md sticky top-0 z-50 bg-[#050505]/70"
       >
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-red-500 rounded-none animate-pulse" />
+          <div className="w-3 h-3 bg-rose-500 rounded-none animate-pulse" />
           <span className="font-bold tracking-tighter text-sm uppercase">Coach System V.2</span>
         </div>
         <div className="text-xs font-mono text-white/50">{timePeriod} PROTOCOL ACTVATED</div>
@@ -123,7 +123,7 @@ export default function StudentPortalV2() {
 
       {/* Extreme Typographic Hero */}
       <section className="relative px-6 md:px-12 pt-20 pb-16 md:pt-32 md:pb-24 flex flex-col items-start border-b border-white/10">
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-red-500/10 blur-[120px] rounded-full pointer-events-none -translate-y-1/2 translate-x-1/4" />
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-rose-500/10 blur-[120px] rounded-full pointer-events-none -translate-y-1/2 translate-x-1/4" />
         
         <motion.div
           initial={{ opacity: 0, x: -50 }}
@@ -135,7 +135,7 @@ export default function StudentPortalV2() {
             <br />
             <span className="text-white drop-shadow-lg">{userName}</span>
           </h1>
-          <p className="text-lg md:text-xl text-white/60 font-light max-w-xl border-l-2 border-red-500 pl-4 mt-8">
+          <p className="text-lg md:text-xl text-white/60 font-light max-w-xl border-l-2 border-rose-500 pl-4 mt-8">
             最新の学習状況が同期されました。志望校合格へ向けた次なるアクションを選択してください。
           </p>
         </motion.div>
@@ -159,7 +159,7 @@ export default function StudentPortalV2() {
               YOUR <br />
               NEXT <br />
               <span className="font-bold italic text-white flex items-center gap-2 mt-2">
-                MOVES <Zap className="w-5 h-5 text-red-500" />
+                MOVES <Zap className="w-5 h-5 text-rose-500" />
               </span>
             </p>
           </div>
@@ -210,7 +210,7 @@ export default function StudentPortalV2() {
           <h2 className="text-sm tracking-widest uppercase text-white/40 font-mono">02 // TARGETS</h2>
           
           <div className="p-1 border border-white/10 bg-black/50 backdrop-blur-md rounded-none shadow-2xl relative">
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-red-500 to-transparent blur opacity-20" />
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-rose-500 to-transparent blur opacity-20" />
             <div className="relative bg-black h-full">
               {/* We utilize existing component but within our brutalist wrapper. Forced light mode simulation internally or handled via pure CSS overrides if necessary */}
                <div className="opacity-90 min-h-[200px] flex items-center p-4">
@@ -224,7 +224,7 @@ export default function StudentPortalV2() {
           <h2 className="text-sm tracking-widest uppercase text-white/40 font-mono">03 // ALERTS</h2>
           
           <div className="w-full relative">
-            <div className="absolute inset-0 bg-red-500/10 blur-xl mix-blend-screen" />
+            <div className="absolute inset-0 bg-rose-500/10 blur-xl mix-blend-screen" />
             <div className="relative border border-white/20 bg-black shadow-2xl min-h-[200px] p-2 flex items-center justify-center">
               {/* Wraps weakness banner inside a high contrast box */}
                <WeaknessReminderBanner />

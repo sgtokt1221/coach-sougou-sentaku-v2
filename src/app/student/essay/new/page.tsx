@@ -71,7 +71,7 @@ function StepIndicator({ current, total, labels: customLabels }: StepIndicatorPr
                 className={[
                   "flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold transition-colors",
                   isDone
-                    ? "bg-green-500 text-white"
+                    ? "bg-emerald-500 text-white"
                     : isActive
                       ? "bg-primary text-primary-foreground"
                       : "bg-muted text-muted-foreground",
@@ -555,7 +555,7 @@ export default function EssayNewPage() {
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between gap-2 mb-2">
                 <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-300">
+                  <Badge variant="outline" className="bg-sky-100 text-sky-700 border-sky-300">
                     {pastQuestion.universityName}
                   </Badge>
                   <Badge variant="outline" className="text-xs">
@@ -610,34 +610,34 @@ export default function EssayNewPage() {
 
         {/* テーマ情報表示（EssayTheme選択時） */}
         {selectedTheme && !pastQuestion && (
-          <Card className="mb-6 border-blue-200 bg-blue-50">
+          <Card className="mb-6 border-sky-200 bg-sky-50">
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between gap-2 mb-2">
-                <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-300">
+                <Badge variant="outline" className="bg-sky-100 text-sky-700 border-sky-300">
                   {selectedTheme.fieldLabel}
                 </Badge>
                 <Badge
                   variant="outline"
                   className={
                     selectedTheme.difficulty === 1
-                      ? "bg-green-100 text-green-800 border-green-300"
+                      ? "bg-emerald-100 text-emerald-800 border-emerald-300"
                       : selectedTheme.difficulty === 2
-                      ? "bg-yellow-100 text-yellow-800 border-yellow-300"
-                      : "bg-red-100 text-red-800 border-red-300"
+                      ? "bg-amber-100 text-amber-800 border-amber-300"
+                      : "bg-rose-100 text-rose-800 border-rose-300"
                   }
                 >
                   {selectedTheme.difficulty === 1 ? "基礎" : selectedTheme.difficulty === 2 ? "標準" : "発展"}
                 </Badge>
               </div>
-              <CardTitle className="text-lg text-blue-900">
+              <CardTitle className="text-lg text-sky-900">
                 {selectedTheme.title}
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
-              <p className="text-blue-800 mb-3">
+              <p className="text-sky-800 mb-3">
                 {selectedTheme.description}
               </p>
-              <div className="flex items-center gap-4 text-sm text-blue-700">
+              <div className="flex items-center gap-4 text-sm text-sky-700">
                 <span>推奨字数: {selectedTheme.wordLimit}字</span>
                 {selectedTheme.relatedAP.length > 0 && (
                   <div className="flex items-center gap-1">
@@ -1114,7 +1114,7 @@ export default function EssayNewPage() {
                   <div key={i} className="relative group rounded-lg border overflow-hidden">
                     <img src={img.preview} alt={`${i + 1}枚目`} className="w-full aspect-[3/4] object-cover" />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <button type="button" onClick={() => removeImage(i)} className="size-7 rounded-full bg-red-500 text-white flex items-center justify-center">
+                      <button type="button" onClick={() => removeImage(i)} className="size-7 rounded-full bg-rose-500 text-white flex items-center justify-center">
                         <Trash2 className="size-3.5" />
                       </button>
                     </div>
@@ -1164,9 +1164,9 @@ export default function EssayNewPage() {
           <CardContent className="p-3 lg:p-4 space-y-4">
             {/* OCR結果 */}
             {ocrText ? (
-              <div className="rounded-lg bg-green-50 border border-green-200 p-3">
-                <p className="text-sm text-green-800">画像からテキストを認識しました。</p>
-                <p className="text-xs text-green-700 mt-1">内容が正しければ「このまま添削」、不十分なら下の音読で補正できます。</p>
+              <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-3">
+                <p className="text-sm text-emerald-800">画像からテキストを認識しました。</p>
+                <p className="text-xs text-emerald-700 mt-1">内容が正しければ「このまま添削」、不十分なら下の音読で補正できます。</p>
               </div>
             ) : (
               <div className="rounded-lg bg-amber-50 border border-amber-200 p-3">
@@ -1194,9 +1194,9 @@ export default function EssayNewPage() {
             <Separator />
 
             {/* 音読セクション */}
-            <div className="rounded-lg bg-blue-50 border border-blue-200 p-3">
-              <p className="text-sm text-blue-800 font-medium">音読で補正する</p>
-              <p className="text-xs text-blue-700 mt-1">画像を見ながら音読すると、OCR結果をより正確に補正できます。</p>
+            <div className="rounded-lg bg-sky-50 border border-sky-200 p-3">
+              <p className="text-sm text-sky-800 font-medium">音読で補正する</p>
+              <p className="text-xs text-sky-700 mt-1">画像を見ながら音読すると、OCR結果をより正確に補正できます。</p>
             </div>
 
             {/* 元画像 */}
@@ -1295,7 +1295,7 @@ export default function EssayNewPage() {
                     <img src={img.preview} alt={`${i + 1}枚目`} className="size-16 rounded-md object-cover shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium">{i + 1}枚目</p>
-                      <p className="text-xs text-green-600 flex items-center gap-1">
+                      <p className="text-xs text-emerald-600 flex items-center gap-1">
                         <CheckCircle className="size-3" />追加済み
                       </p>
                     </div>

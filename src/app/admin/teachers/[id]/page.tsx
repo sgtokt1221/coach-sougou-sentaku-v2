@@ -187,7 +187,7 @@ export default function AdminTeacherDetailPage() {
       case "submitted":
         return <Badge variant="secondary"><AlertCircle className="mr-1 size-3" />提出済み</Badge>;
       case "confirmed":
-        return <Badge variant="default" className="bg-green-600"><Check className="mr-1 size-3" />確定</Badge>;
+        return <Badge variant="default" className="bg-emerald-600"><Check className="mr-1 size-3" />確定</Badge>;
       default:
         return null;
     }

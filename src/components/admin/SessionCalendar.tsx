@@ -113,7 +113,7 @@ export default function SessionCalendar({
   const getSessionBgColor = (type: string) => {
     switch (type) {
       case 'coaching':
-        return 'bg-blue-100 border-blue-200';
+        return 'bg-sky-100 border-sky-200';
       case 'mock_interview':
         return 'bg-amber-100 border-amber-200';
       case 'essay_review':
@@ -278,7 +278,7 @@ export default function SessionCalendar({
                   <div className="font-medium">{session.studentName}</div>
                   <div className="text-gray-600">
                     {session.teacherId ? session.teacherName : (
-                      <span className="text-red-500">講師未設定</span>
+                      <span className="text-rose-500">講師未設定</span>
                     )}
                   </div>
                   <Badge variant="secondary" className="text-xs">
@@ -293,7 +293,7 @@ export default function SessionCalendar({
         {/* 現在時刻インジケーター */}
         {currentTimePosition && (
           <div
-            className="absolute z-20 border-t-2 border-red-500"
+            className="absolute z-20 border-t-2 border-rose-500"
             style={{
               gridColumn: `${currentTimePosition.gridColumn} / span 1`,
               gridRow: currentTimePosition.gridRow,
@@ -302,7 +302,7 @@ export default function SessionCalendar({
               marginTop: '-1px'
             }}
           >
-            <div className="w-2 h-2 bg-red-500 rounded-full -mt-1 -ml-1"></div>
+            <div className="w-2 h-2 bg-rose-500 rounded-full -mt-1 -ml-1"></div>
           </div>
         )}
       </div>

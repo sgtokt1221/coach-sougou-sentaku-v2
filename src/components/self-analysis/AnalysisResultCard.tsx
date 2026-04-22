@@ -138,7 +138,7 @@ export function AnalysisResultCard({
     },
     {
       title: "興味関心",
-      icon: <BookOpen className="size-4 text-blue-500" />,
+      icon: <BookOpen className="size-4 text-sky-500" />,
       fields: [
         { label: "興味のある分野", value: analysis.interests.fields },
         { label: "興味を持った理由", value: analysis.interests.reasons },

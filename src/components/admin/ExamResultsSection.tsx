@@ -42,15 +42,15 @@ import type { ExamResult, ExamResultInput } from "@/lib/types/exam-result";
 const STATUS_CONFIG = {
   applied: {
     label: "出願中",
-    className: "border-blue-400 bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
+    className: "border-sky-400 bg-sky-50 text-sky-700 dark:bg-sky-950 dark:text-sky-300",
   },
   passed: {
     label: "合格",
-    className: "border-green-400 bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300",
+    className: "border-emerald-400 bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
   },
   failed: {
     label: "不合格",
-    className: "border-red-400 bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300",
+    className: "border-rose-400 bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300",
   },
   withdrawn: {
     label: "辞退",

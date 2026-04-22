@@ -19,62 +19,62 @@ type FlagInfo = {
 const FLAG_CONFIG: Record<string, FlagInfo> = {
   // Critical (赤)
   inactive: {
-    color: "bg-red-500",
-    bgColor: "bg-red-500",
-    ringColor: "ring-red-200",
+    color: "bg-rose-500",
+    bgColor: "bg-rose-500",
+    ringColor: "ring-rose-200",
     message: "7日以上活動なし",
     severity: "critical",
   },
   document_deadline: {
-    color: "bg-red-500",
-    bgColor: "bg-red-500",
-    ringColor: "ring-red-200",
+    color: "bg-rose-500",
+    bgColor: "bg-rose-500",
+    ringColor: "ring-rose-200",
     message: "書類期限が迫っている",
     severity: "critical",
   },
 
-  // High (オレンジ)
+  // High (濃い amber)
   declining: {
-    color: "bg-orange-500",
-    bgColor: "bg-orange-500",
-    ringColor: "ring-orange-200",
+    color: "bg-amber-600",
+    bgColor: "bg-amber-600",
+    ringColor: "ring-amber-300",
     message: "スコア下降傾向",
     severity: "high",
   },
   weakness_stuck: {
-    color: "bg-orange-500",
-    bgColor: "bg-orange-500",
-    ringColor: "ring-orange-200",
+    color: "bg-amber-600",
+    bgColor: "bg-amber-600",
+    ringColor: "ring-amber-300",
     message: "弱点が改善せず停滞",
     severity: "high",
   },
   ap_struggle: {
-    color: "bg-orange-500",
-    bgColor: "bg-orange-500",
-    ringColor: "ring-orange-200",
+    color: "bg-amber-600",
+    bgColor: "bg-amber-600",
+    ringColor: "ring-amber-300",
     message: "AP合致度が低迷",
     severity: "high",
   },
   deadline_risk: {
-    color: "bg-orange-500",
-    bgColor: "bg-orange-500",
-    ringColor: "ring-orange-200",
+    color: "bg-amber-600",
+    bgColor: "bg-amber-600",
+    ringColor: "ring-amber-300",
     message: "期限内に完成しない恐れ",
     severity: "high",
   },
 
-  // Warning (黄)
+  // Warning (淡い amber)
   repeated_weakness: {
-    color: "bg-yellow-500",
-    bgColor: "bg-yellow-500",
-    ringColor: "ring-yellow-200",
+    color: "bg-amber-400",
+    bgColor: "bg-amber-400",
+    ringColor: "ring-amber-200",
     message: "弱点の繰り返し指摘が多い",
     severity: "warning",
   },
   score_plateau: {
-    color: "bg-yellow-500",
-    bgColor: "bg-yellow-500",
-    ringColor: "ring-yellow-200",
+    color: "bg-amber-400",
+    bgColor: "bg-amber-400",
+    ringColor: "ring-amber-200",
     message: "スコアが頭打ち",
     severity: "warning",
   },

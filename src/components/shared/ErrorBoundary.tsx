@@ -71,9 +71,9 @@ export class ErrorBoundary extends React.Component<
 
             {/* Error icon */}
             <div className="flex justify-center mb-4">
-              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-full bg-rose-100 flex items-center justify-center">
                 <svg
-                  className="w-6 h-6 text-red-500"
+                  className="w-6 h-6 text-rose-500"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"

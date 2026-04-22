@@ -180,7 +180,7 @@ export default function ActivityDetailPage({
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-start gap-2">
-              <Target className="size-4 mt-0.5 text-blue-500 shrink-0" />
+              <Target className="size-4 mt-0.5 text-sky-500 shrink-0" />
               <div>
                 <p className="text-xs font-medium text-muted-foreground">動機</p>
                 <p className="text-sm">{structured.motivation}</p>
@@ -198,7 +198,7 @@ export default function ActivityDetailPage({
               </div>
             </div>
             <div className="flex items-start gap-2">
-              <Trophy className="size-4 mt-0.5 text-green-500 shrink-0" />
+              <Trophy className="size-4 mt-0.5 text-emerald-500 shrink-0" />
               <div>
                 <p className="text-xs font-medium text-muted-foreground">成果</p>
                 <ul className="text-sm space-y-0.5">

@@ -55,11 +55,11 @@ const CATEGORY_ICONS = {
 } as const;
 
 const CATEGORY_COLORS = {
-  "志望理由": "bg-blue-500",
-  "自己PR": "bg-green-500",
+  "志望理由": "bg-sky-500",
+  "自己PR": "bg-emerald-500",
   "学問関心": "bg-purple-500",
-  "将来ビジョン": "bg-orange-500",
-  "時事問題": "bg-red-500",
+  "将来ビジョン": "bg-amber-500",
+  "時事問題": "bg-rose-500",
 } as const;
 
 export default function InterviewDrillPage() {
@@ -344,8 +344,8 @@ export default function InterviewDrillPage() {
                     <div
                       className={cn(
                         "h-full transition-all duration-300",
-                        score.score >= 4 ? "bg-green-500" :
-                        score.score >= 3 ? "bg-yellow-500" : "bg-red-500"
+                        score.score >= 4 ? "bg-emerald-500" :
+                        score.score >= 3 ? "bg-amber-500" : "bg-rose-500"
                       )}
                       style={{ width: `${(score.score / 5) * 100}%` }}
                     />
@@ -358,10 +358,10 @@ export default function InterviewDrillPage() {
 
         {/* エラーメッセージ */}
         {state.error && (
-          <Card className="bg-red-50 border-red-200">
+          <Card className="bg-rose-50 border-rose-200">
             <CardContent className="pt-4">
-              <div className="flex items-center gap-2 text-red-800">
-                <div className="h-4 w-4 rounded-full bg-red-500" />
+              <div className="flex items-center gap-2 text-rose-800">
+                <div className="h-4 w-4 rounded-full bg-rose-500" />
                 <p className="text-sm">{state.error}</p>
               </div>
             </CardContent>
@@ -399,7 +399,7 @@ export default function InterviewDrillPage() {
                         )}
                       >
                         {isCompleted && (
-                          <Check className="absolute top-2 right-2 h-4 w-4 text-green-600" />
+                          <Check className="absolute top-2 right-2 h-4 w-4 text-emerald-600" />
                         )}
                         <div className={cn("p-2 rounded-lg", colorClass)}>
                           <Icon className="h-6 w-6 text-white" />
@@ -502,7 +502,7 @@ export default function InterviewDrillPage() {
                       disabled={state.loading || transcribing}
                     />
                     {transcribeError && (
-                      <p className="mt-2 text-center text-xs text-red-600">{transcribeError}</p>
+                      <p className="mt-2 text-center text-xs text-rose-600">{transcribeError}</p>
                     )}
                   </div>
                 )}
@@ -539,7 +539,7 @@ export default function InterviewDrillPage() {
           <Card className="bg-white/80 backdrop-blur-sm border-slate-200">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Trophy className="h-5 w-5 text-yellow-600" />
+                <Trophy className="h-5 w-5 text-amber-600" />
                 評価結果
               </CardTitle>
             </CardHeader>
@@ -556,7 +556,7 @@ export default function InterviewDrillPage() {
                       className={cn(
                         "w-4 h-4 rounded-full",
                         i < state.scores[0].score
-                          ? "bg-yellow-400"
+                          ? "bg-amber-400"
                           : "bg-slate-200"
                       )}
                     />
@@ -579,7 +579,7 @@ export default function InterviewDrillPage() {
 
                 <div>
                   <h3 className="font-medium text-slate-900 mb-2">より良い回答例</h3>
-                  <p className="text-slate-700 leading-relaxed p-4 bg-blue-50 rounded-lg border-l-4 border-blue-400">
+                  <p className="text-slate-700 leading-relaxed p-4 bg-sky-50 rounded-lg border-l-4 border-sky-400">
                     {state.scores[0].betterAnswer}
                   </p>
                 </div>
@@ -602,7 +602,7 @@ export default function InterviewDrillPage() {
           <Card className="bg-white/80 backdrop-blur-sm border-slate-200">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-green-600" />
+                <TrendingUp className="h-5 w-5 text-emerald-600" />
                 セッション完了
               </CardTitle>
             </CardHeader>
@@ -638,7 +638,7 @@ export default function InterviewDrillPage() {
                             key={j}
                             className={cn(
                               "w-3 h-3 rounded-full",
-                              j < score.score ? "bg-yellow-400" : "bg-slate-200"
+                              j < score.score ? "bg-amber-400" : "bg-slate-200"
                             )}
                           />
                         ))}

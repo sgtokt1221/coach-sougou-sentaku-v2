@@ -31,7 +31,7 @@ export default function CameraPreview({ mediaStream }: CameraPreviewProps) {
           style={{ transform: "scaleX(-1)" }}
         />
         {/* Green dot indicator */}
-        <div className="absolute top-1.5 left-1.5 size-2 rounded-full bg-green-500 animate-pulse" />
+        <div className="absolute top-1.5 left-1.5 size-2 rounded-full bg-emerald-500 animate-pulse" />
         {/* Close button */}
         <button
           onClick={() => setVisible(false)}

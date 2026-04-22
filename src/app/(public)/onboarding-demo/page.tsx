@@ -52,7 +52,7 @@ const STEPS = [
     subtitle: "すべてはここから始まる",
     description:
       "AI との対話を通じて、あなたの価値観・強み・将来ビジョンを言語化します。\n7 つのステップで「自分だけのストーリー」を発見し、\n面接・志望理由書・小論文すべての土台を作ります。",
-    gradient: "from-amber-950 via-amber-900 to-orange-950",
+    gradient: "from-amber-950 via-amber-900 to-amber-950",
     accent: "#fbbf24", // amber
     iconBg: "bg-amber-500/20",
     iconColor: "text-amber-400",
@@ -78,7 +78,7 @@ const STEPS = [
     subtitle: "本番さながらの面接練習",
     description:
       "AI 面接官が総合型選抜の試験官として質問。\n個人面接・プレゼン・口頭試問・集団討論の 4 モード。\n音声でリアルタイムに会話し、終了後に AI が採点します。",
-    gradient: "from-indigo-950 via-indigo-900 to-blue-950",
+    gradient: "from-indigo-950 via-indigo-900 to-sky-950",
     accent: "#818cf8", // indigo
     iconBg: "bg-indigo-500/20",
     iconColor: "text-indigo-400",
@@ -91,7 +91,7 @@ const STEPS = [
     subtitle: "あなたに合った大学を見つける",
     description:
       "AI とチャットしながら希望を整理。\n自己分析の結果と各大学のアドミッションポリシーを\nAI が照合し、適合度順にランキングします。",
-    gradient: "from-emerald-950 via-emerald-900 to-green-950",
+    gradient: "from-emerald-950 via-emerald-900 to-emerald-950",
     accent: "#34d399", // emerald
     iconBg: "bg-emerald-500/20",
     iconColor: "text-emerald-400",

@@ -20,11 +20,11 @@ interface ActivityListItem {
 
 const CATEGORY_COLORS: Record<ActivityCategory, string> = {
   leadership: "bg-purple-100 text-purple-700 border-purple-300",
-  volunteer: "bg-green-100 text-green-700 border-green-300",
-  research: "bg-blue-100 text-blue-700 border-blue-300",
-  club: "bg-orange-100 text-orange-700 border-orange-300",
+  volunteer: "bg-emerald-100 text-emerald-700 border-emerald-300",
+  research: "bg-sky-100 text-sky-700 border-sky-300",
+  club: "bg-amber-100 text-amber-700 border-amber-300",
   internship: "bg-cyan-100 text-cyan-700 border-cyan-300",
-  competition: "bg-red-100 text-red-700 border-red-300",
+  competition: "bg-rose-100 text-rose-700 border-rose-300",
   other: "bg-gray-100 text-gray-700 border-gray-300",
 };
 
@@ -103,7 +103,7 @@ export function ActivitiesSection({ studentId }: { studentId: string }) {
                     {act.isStructured ? (
                       <Badge
                         variant="outline"
-                        className="border-green-400 bg-green-50 text-green-700 text-[10px] gap-1"
+                        className="border-emerald-400 bg-emerald-50 text-emerald-700 text-[10px] gap-1"
                       >
                         <CheckCircle2 className="size-3" />
                         AI構造化済み

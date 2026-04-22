@@ -49,11 +49,11 @@
   --sidebar-border: oklch(0.30 0.02 260);
   --sidebar-ring: oklch(0.45 0.10 175);
 
-  /* Severity */
-  --severity-critical: #E11D48;
-  --severity-warning: #D97706;
-  --severity-improving: #0891B2;
-  --severity-resolved: #059669;
+  /* Severity (aligned to unified palette: rose/amber/emerald) */
+  --severity-critical: #f43f5e;  /* rose-500 */
+  --severity-warning: #f59e0b;   /* amber-500 */
+  --severity-improving: #10b981; /* emerald-500 (unified positive) */
+  --severity-resolved: #10b981;  /* emerald-500 */
 
   /* Accent gold */
   --gold: oklch(0.75 0.16 75);

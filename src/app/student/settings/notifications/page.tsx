@@ -104,7 +104,7 @@ export default function StudentNotificationSettingsPage() {
           {/* 書類期限リマインダー */}
           <div className="flex items-center justify-between">
             <div className="flex items-start gap-3">
-              <FileText className="mt-0.5 size-5 text-orange-500" />
+              <FileText className="mt-0.5 size-5 text-amber-500" />
               <div>
                 <Label htmlFor="deadline" className="text-sm font-medium">
                   書類期限リマインダー
@@ -126,7 +126,7 @@ export default function StudentNotificationSettingsPage() {
           {/* 週次進捗レポート */}
           <div className="flex items-center justify-between">
             <div className="flex items-start gap-3">
-              <TrendingUp className="mt-0.5 size-5 text-blue-500" />
+              <TrendingUp className="mt-0.5 size-5 text-sky-500" />
               <div>
                 <Label htmlFor="weekly" className="text-sm font-medium">
                   週次進捗レポート
@@ -181,7 +181,7 @@ export default function StudentNotificationSettingsPage() {
 
       <div className="flex items-center justify-end gap-3">
         {saved && (
-          <span className="flex items-center gap-1 text-sm text-green-600">
+          <span className="flex items-center gap-1 text-sm text-emerald-600">
             <CheckCircle2 className="size-4" />
             保存しました
           </span>

@@ -13,12 +13,12 @@ import type { HighlightColor } from "@/data/faculty-topics/types";
  */
 
 const COLOR_CLASSES: Record<HighlightColor, string> = {
-  red: "bg-red-100 text-red-900 px-1 py-0.5 rounded font-bold dark:bg-red-950 dark:text-red-200",
-  blue: "bg-blue-100 text-blue-900 px-1 py-0.5 rounded font-semibold dark:bg-blue-950 dark:text-blue-200",
+  red: "bg-rose-100 text-rose-900 px-1 py-0.5 rounded font-bold dark:bg-rose-950 dark:text-rose-200",
+  blue: "bg-sky-100 text-sky-900 px-1 py-0.5 rounded font-semibold dark:bg-sky-950 dark:text-sky-200",
   yellow:
-    "bg-yellow-100 text-yellow-900 px-1 py-0.5 rounded dark:bg-yellow-950 dark:text-yellow-200",
+    "bg-amber-100 text-amber-900 px-1 py-0.5 rounded dark:bg-amber-950 dark:text-amber-200",
   green:
-    "bg-green-100 text-green-900 px-1 py-0.5 rounded italic dark:bg-green-950 dark:text-green-200",
+    "bg-emerald-100 text-emerald-900 px-1 py-0.5 rounded italic dark:bg-emerald-950 dark:text-emerald-200",
   purple:
     "bg-purple-100 text-purple-900 px-1 py-0.5 rounded dark:bg-purple-950 dark:text-purple-200",
 };

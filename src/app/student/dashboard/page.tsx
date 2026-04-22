@@ -262,7 +262,7 @@ function WeaknessSummaryCompact() {
   const totalActive = weaknesses.filter(w => !w.resolved).length;
 
   const items = [
-    { label: "添削", count: essayCount, icon: FileEdit, color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-50 dark:bg-blue-950/30" },
+    { label: "添削", count: essayCount, icon: FileEdit, color: "text-sky-600 dark:text-sky-400", bg: "bg-sky-50 dark:bg-sky-950/30" },
     { label: "面接", count: interviewCount, icon: MicIcon, color: "text-violet-600 dark:text-violet-400", bg: "bg-violet-50 dark:bg-violet-950/30" },
     { label: "解決", count: resolvedCount, icon: CheckCircle2, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-950/30" },
     { label: "未解決", count: totalActive, icon: Target, color: "text-rose-600 dark:text-rose-400", bg: "bg-rose-50 dark:bg-rose-950/30" },

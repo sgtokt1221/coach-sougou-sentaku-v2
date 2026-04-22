@@ -41,9 +41,9 @@ interface ThemesResponse {
 }
 
 const difficultyLabels = {
-  1: { label: "基礎", color: "bg-green-100 text-green-800 border-green-300" },
-  2: { label: "標準", color: "bg-yellow-100 text-yellow-800 border-yellow-300" },
-  3: { label: "発展", color: "bg-red-100 text-red-800 border-red-300" }
+  1: { label: "基礎", color: "bg-emerald-100 text-emerald-800 border-emerald-300" },
+  2: { label: "標準", color: "bg-amber-100 text-amber-800 border-amber-300" },
+  3: { label: "発展", color: "bg-rose-100 text-rose-800 border-rose-300" }
 };
 
 const difficultyOptions = [
@@ -195,8 +195,8 @@ export default function EssayThemesPage() {
       {/* ヘッダー */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200">
-            <BookOpen className="w-6 h-6 text-blue-600" />
+          <div className="p-2 rounded-lg bg-gradient-to-br from-sky-50 to-sky-100 border border-sky-200">
+            <BookOpen className="w-6 h-6 text-sky-600" />
           </div>
           <div>
             <h1 className="text-3xl font-bold text-gray-900">テーマ・過去問</h1>
@@ -251,7 +251,7 @@ export default function EssayThemesPage() {
                   >
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                        <Badge variant="outline" className="bg-sky-50 text-sky-700 border-sky-200">
                           {pq.universityName}
                         </Badge>
                         <Badge variant="outline" className="text-xs">
@@ -482,7 +482,7 @@ export default function EssayThemesPage() {
                   </div>
                 </div>
 
-                <CardTitle className="text-lg leading-tight group-hover:text-blue-600 transition-colors">
+                <CardTitle className="text-lg leading-tight group-hover:text-sky-600 transition-colors">
                   {theme.title}
                 </CardTitle>
 
@@ -548,7 +548,7 @@ export default function EssayThemesPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="w-full group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors"
+                  className="w-full group-hover:bg-sky-50 group-hover:text-sky-600 transition-colors"
                 >
                   このテーマで練習する
                   <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />

@@ -29,9 +29,9 @@ function getFacultyLabel(facultyId: string | null): string {
 }
 
 function scoreColor(total: number): string {
-  if (total >= 20) return "text-green-600";
-  if (total >= 15) return "text-yellow-600";
-  return "text-red-600";
+  if (total >= 20) return "text-emerald-600";
+  if (total >= 15) return "text-amber-600";
+  return "text-rose-600";
 }
 
 export function SummaryDrillsSection({ studentId }: { studentId: string }) {

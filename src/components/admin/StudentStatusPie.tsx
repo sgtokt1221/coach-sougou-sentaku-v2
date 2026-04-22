@@ -11,7 +11,7 @@ interface StudentStatusPieProps {
 }
 
 const COLORS = {
-  critical: "#ef4444", // red
+  critical: "#f43f5e", // red
   warning: "#f59e0b", // amber
   caution: "#eab308", // yellow
   good: "#10b981", // emerald

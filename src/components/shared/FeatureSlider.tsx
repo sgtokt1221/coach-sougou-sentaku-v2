@@ -16,14 +16,14 @@ const FEATURES = [
     label: "AI模擬面接",
     title: "志望大学別のAI面接官と、\nいつでも練習。",
     description: "4モード対応。音声・ビデオで練習でき、姿勢・表情・話し方までAIが分析してフィードバック。",
-    accent: "from-amber-400 to-orange-400",
+    accent: "from-amber-400 to-amber-400",
   },
   {
     icon: FileText,
     label: "出願書類サポート",
     title: "志望理由書を\nAIと一緒につくる。",
     description: "要件チェックリスト、AIドラフト生成、添削、バージョン管理。期限アラートで提出漏れも防ぎます。",
-    accent: "from-blue-400 to-indigo-400",
+    accent: "from-sky-400 to-indigo-400",
   },
   {
     icon: Activity,
@@ -37,7 +37,7 @@ const FEATURES = [
     label: "成長トラッキング",
     title: "弱点を可視化して、\n着実に成長。",
     description: "添削・面接の結果を自動分析。繰り返し指摘される課題をリマインドし、成長をグラフで確認。",
-    accent: "from-rose-400 to-red-400",
+    accent: "from-rose-400 to-rose-400",
   },
 ];
 

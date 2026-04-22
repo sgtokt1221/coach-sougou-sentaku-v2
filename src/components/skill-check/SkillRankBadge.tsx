@@ -36,7 +36,7 @@ export function SkillRankBadge({
           SIZE_CLASS[size],
           // Sランクはゴールドのグロー+リング付きで特別感を演出
           meta.premium
-            ? "shadow-[0_0_16px_rgba(234,179,8,0.55)] ring-2 ring-yellow-300/70 ring-offset-1"
+            ? "shadow-[0_0_16px_rgba(234,179,8,0.55)] ring-2 ring-amber-300/70 ring-offset-1"
             : "shadow-sm",
         )}
         aria-label={`スキルランク ${meta.label}`}

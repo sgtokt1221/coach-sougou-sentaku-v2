@@ -44,23 +44,23 @@ const levelConfig: Record<
 > = {
   critical: {
     label: "要注意",
-    icon: <AlertCircle className="size-4 text-red-500" />,
-    badgeClass: "border-red-300 bg-red-100 text-red-700",
+    icon: <AlertCircle className="size-4 text-rose-500" />,
+    badgeClass: "border-rose-300 bg-rose-100 text-rose-700",
   },
   warning: {
     label: "警告",
-    icon: <AlertTriangle className="size-4 text-yellow-500" />,
-    badgeClass: "border-yellow-300 bg-yellow-100 text-yellow-700",
+    icon: <AlertTriangle className="size-4 text-amber-500" />,
+    badgeClass: "border-amber-300 bg-amber-100 text-amber-700",
   },
   improving: {
     label: "改善中",
-    icon: <TrendingUp className="size-4 text-blue-500" />,
-    badgeClass: "border-blue-300 bg-blue-100 text-blue-700",
+    icon: <TrendingUp className="size-4 text-emerald-500" />,
+    badgeClass: "border-emerald-300 bg-emerald-100 text-emerald-700",
   },
   resolved: {
     label: "解決済み",
-    icon: <CheckCircle2 className="size-4 text-green-500" />,
-    badgeClass: "border-green-300 bg-green-100 text-green-700",
+    icon: <CheckCircle2 className="size-4 text-emerald-600" />,
+    badgeClass: "border-emerald-400 bg-emerald-50 text-emerald-800",
   },
 };
 
@@ -104,8 +104,8 @@ function WeaknessColumn({
                   <div className="h-1.5 flex-1 rounded-full bg-muted">
                     <div
                       className={`h-1.5 rounded-full transition-all ${
-                        level === "resolved" ? "bg-emerald-400" :
-                        level === "improving" ? "bg-blue-400" :
+                        level === "resolved" ? "bg-emerald-500" :
+                        level === "improving" ? "bg-emerald-400" :
                         w.count >= 5 ? "bg-rose-400" : "bg-amber-400"
                       }`}
                       style={{ width: `${Math.min((w.count / Math.max(maxCount, 1)) * 100, 100)}%` }}
@@ -235,9 +235,9 @@ export default function GrowthPage() {
                       <p className="text-lg font-bold">{c.myScore}</p>
                       <div className="flex items-center justify-center gap-1 text-xs">
                         {c.myScore >= c.avgScore ? (
-                          <ArrowUpRight className="size-3 text-green-500" />
+                          <ArrowUpRight className="size-3 text-emerald-500" />
                         ) : (
-                          <ArrowDownRight className="size-3 text-red-500" />
+                          <ArrowDownRight className="size-3 text-rose-500" />
                         )}
                         <span className="text-muted-foreground">平均 {c.avgScore}</span>
                       </div>
@@ -255,7 +255,7 @@ export default function GrowthPage() {
                 <ul className="space-y-2">
                   {report.recommendations.map((rec, i) => (
                     <li key={i} className="flex gap-2 text-sm">
-                      <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-600">
+                      <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-sky-100 text-xs font-bold text-sky-600">
                         {i + 1}
                       </span>
                       {rec}

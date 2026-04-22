@@ -273,9 +273,9 @@ export function AdminCalendar() {
                   key={label}
                   className={`bg-muted/60 py-1.5 text-center text-xs font-medium ${
                     idx === 0
-                      ? "text-red-600"
+                      ? "text-rose-600"
                       : idx === 6
-                      ? "text-blue-600"
+                      ? "text-sky-600"
                       : "text-muted-foreground"
                   }`}
                 >
@@ -299,9 +299,9 @@ export function AdminCalendar() {
                   : isToday
                   ? "bg-primary text-primary-foreground font-bold"
                   : holidayName || weekday === 0
-                  ? "text-red-600"
+                  ? "text-rose-600"
                   : weekday === 6
-                  ? "text-blue-600"
+                  ? "text-sky-600"
                   : "text-foreground";
                 return (
                   <button
@@ -316,7 +316,7 @@ export function AdminCalendar() {
                         {d.getDate()}
                       </div>
                       {holidayName && (
-                        <span className="truncate text-[10px] text-red-600">
+                        <span className="truncate text-[10px] text-rose-600">
                           {holidayName}
                         </span>
                       )}
@@ -360,7 +360,7 @@ export function AdminCalendar() {
                 })()}
             </DialogTitle>
             {dialogHolidayLabel && (
-              <DialogDescription className="text-red-600">
+              <DialogDescription className="text-rose-600">
                 祝日: {dialogHolidayLabel}
               </DialogDescription>
             )}

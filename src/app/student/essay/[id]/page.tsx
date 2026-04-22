@@ -220,7 +220,7 @@ export default function EssayResultPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30 pb-20 lg:pb-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-sky-50/30 pb-20 lg:pb-8">
       <div className="max-w-6xl mx-auto px-4 py-6 lg:px-6 lg:py-8">
         {/* Header with elevated card design */}
         <div className="mb-8">
@@ -252,8 +252,8 @@ export default function EssayResultPage() {
 
         {/* Hero Section - スコアヒーロー */}
         <div className="mb-8">
-          <Card className="relative overflow-hidden border-0 bg-white/60 backdrop-blur-sm shadow-lg shadow-blue-100/50">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-transparent to-purple-50/30" />
+          <Card className="relative overflow-hidden border-0 bg-white/60 backdrop-blur-sm shadow-lg shadow-sky-100/50">
+            <div className="absolute inset-0 bg-gradient-to-br from-sky-50/50 via-transparent to-purple-50/30" />
             <CardContent className="relative pt-8 pb-6">
               {/* Mobile-first スコア表示 */}
               <div className="text-center mb-6">
@@ -302,7 +302,7 @@ export default function EssayResultPage() {
                         name="スコア"
                         dataKey="value"
                         stroke="#2563eb"
-                        fill="#3b82f6"
+                        fill="#0ea5e9"
                         fillOpacity={0.25}
                         strokeWidth={2}
                       />
@@ -318,7 +318,7 @@ export default function EssayResultPage() {
                       <div className="flex items-center gap-2">
                         <div className="w-20 h-2 bg-slate-100 rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-gradient-to-r from-blue-400 to-blue-600 rounded-full transition-all"
+                            className="h-full bg-gradient-to-r from-sky-400 to-sky-600 rounded-full transition-all"
                             style={{ width: `${(item.value / 10) * 100}%` }}
                           />
                         </div>
@@ -354,9 +354,9 @@ export default function EssayResultPage() {
 
         {/* 繰り返し弱点を目立たせるカード */}
         {(result.feedback.repeatedIssues ?? []).length > 0 && (
-          <Card className="mb-8 border-0 bg-gradient-to-r from-red-50 to-rose-100/60 shadow-lg border-red-200">
+          <Card className="mb-8 border-0 bg-gradient-to-r from-rose-50 to-rose-100/60 shadow-lg border-rose-200">
             <CardHeader className="pb-4">
-              <CardTitle className="text-lg tracking-tight flex items-center gap-2 text-red-700">
+              <CardTitle className="text-lg tracking-tight flex items-center gap-2 text-rose-700">
                 <AlertTriangle className="size-5" />
                 注目すべき弱点パターン
               </CardTitle>
@@ -371,9 +371,9 @@ export default function EssayResultPage() {
                     className={[
                       "flex items-center justify-between rounded-xl border p-4 gap-3 transition-all hover:shadow-md",
                       isCritical
-                        ? "bg-gradient-to-r from-red-50 to-red-100/60 border-red-200"
+                        ? "bg-gradient-to-r from-rose-50 to-rose-100/60 border-rose-200"
                         : isWarning
-                          ? "bg-gradient-to-r from-amber-50 to-yellow-100/60 border-amber-200"
+                          ? "bg-gradient-to-r from-amber-50 to-amber-100/60 border-amber-200"
                           : "bg-white/60 border-slate-200",
                     ].join(" ")}
                   >
@@ -454,15 +454,15 @@ export default function EssayResultPage() {
               {tab === "overview" && (
                 <div id="overview-section">
                   {/* 全体講評 */}
-                  <Card className="border-0 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 shadow-lg">
+                  <Card className="border-0 bg-gradient-to-br from-sky-50 via-indigo-50 to-purple-50 shadow-lg">
                     <CardHeader className="pb-4">
                       <CardTitle className="text-xl tracking-tight flex items-center gap-2 text-slate-800">
-                        <MessageSquare className="size-6 text-blue-600" />
+                        <MessageSquare className="size-6 text-sky-600" />
                         全体講評
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="rounded-xl bg-white/70 border border-blue-200 p-6">
+                      <div className="rounded-xl bg-white/70 border border-sky-200 p-6">
                         <p className="text-sm leading-relaxed text-slate-800 font-medium">
                           {result.feedback.overall}
                         </p>
@@ -477,17 +477,17 @@ export default function EssayResultPage() {
                       <Card className="border-0 bg-white/70 backdrop-blur-sm shadow-md">
                         <CardHeader className="pb-4">
                           <CardTitle className="text-lg tracking-tight flex items-center gap-2 text-slate-800">
-                            <BarChart3 className="size-5 text-blue-600" />
+                            <BarChart3 className="size-5 text-sky-600" />
                             定量分析
                           </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-6">
                           {/* 字数進捗 */}
                           {qa.wordLimit && (
-                            <div className="rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 p-4">
+                            <div className="rounded-xl bg-gradient-to-r from-sky-50 to-indigo-50 border border-sky-100 p-4">
                               <div className="flex justify-between items-center mb-3">
                                 <span className="font-medium text-slate-800">字数</span>
-                                <span className="text-sm font-semibold text-blue-700 tabular-nums">
+                                <span className="text-sm font-semibold text-sky-700 tabular-nums">
                                   {qa.wordCount} / {qa.wordLimit}字 ({qa.fillRate}%)
                                 </span>
                               </div>
@@ -501,7 +501,7 @@ export default function EssayResultPage() {
                                         ? "#10b981"
                                         : (qa.fillRate ?? 0) >= 80
                                           ? "#f59e0b"
-                                          : "#ef4444",
+                                          : "#f43f5e",
                                   }}
                                 />
                               </div>
@@ -539,7 +539,7 @@ export default function EssayResultPage() {
                             <p className="text-sm font-medium text-slate-800 mb-3">段落構成バランス</p>
                             <div className="flex h-6 rounded-full overflow-hidden shadow-inner">
                               <div
-                                className="bg-gradient-to-r from-blue-400 to-blue-500 flex items-center justify-center text-white text-xs font-medium"
+                                className="bg-gradient-to-r from-sky-400 to-sky-500 flex items-center justify-center text-white text-xs font-medium"
                                 style={{ width: `${qa.paragraphRatio.intro}%` }}
                                 title={`序論 ${qa.paragraphRatio.intro}%`}
                               >
@@ -578,7 +578,7 @@ export default function EssayResultPage() {
                   {result.feedback.languageCorrections && result.feedback.languageCorrections.length > 0 ? (
                     <Card className="border-0 bg-white/80 backdrop-blur-sm shadow-lg">
                       <CardHeader className="pb-4">
-                        <CardTitle className="text-xl tracking-tight flex items-center gap-2 text-red-700">
+                        <CardTitle className="text-xl tracking-tight flex items-center gap-2 text-rose-700">
                           <SpellCheck className="size-6" />
                           赤ペン添削
                           <Badge variant="secondary" className="ml-2 text-xs">
@@ -594,7 +594,7 @@ export default function EssayResultPage() {
                       </CardContent>
                     </Card>
                   ) : (
-                    <Card className="border-0 bg-gradient-to-br from-green-50 to-emerald-100/60 shadow-md">
+                    <Card className="border-0 bg-gradient-to-br from-emerald-50 to-emerald-100/60 shadow-md">
                       <CardContent className="p-8 text-center">
                         <CheckCircle className="size-12 text-emerald-500 mx-auto mb-3" />
                         <h3 className="text-lg font-semibold tracking-tight text-emerald-800 mb-2">素晴らしい文章です！</h3>
@@ -613,7 +613,7 @@ export default function EssayResultPage() {
                   <div className="grid gap-6 lg:grid-cols-2">
                     {/* 良い点 */}
                     {(result.feedback.goodPoints ?? []).length > 0 && (
-                      <Card className="border-0 bg-gradient-to-br from-emerald-50 to-green-100/60 shadow-md">
+                      <Card className="border-0 bg-gradient-to-br from-emerald-50 to-emerald-100/60 shadow-md">
                         <CardHeader className="pb-4">
                           <CardTitle className="text-lg tracking-tight flex items-center gap-2 text-emerald-700">
                             <CheckCircle className="size-5" />
@@ -639,7 +639,7 @@ export default function EssayResultPage() {
                     <div className="space-y-4">
                       {/* 最優先改善ポイント */}
                       {result.feedback.priorityImprovement && (
-                        <Card className="border-0 bg-gradient-to-br from-amber-50 to-orange-100/60 shadow-md">
+                        <Card className="border-0 bg-gradient-to-br from-amber-50 to-amber-100/60 shadow-md">
                           <CardContent className="p-4">
                             <div className="flex items-start gap-3">
                               <div className="rounded-full bg-amber-200 p-1.5">
@@ -658,7 +658,7 @@ export default function EssayResultPage() {
 
                       {/* 一般的な改善点 */}
                       {(result.feedback.improvements ?? []).length > 0 && (
-                        <Card className="border-0 bg-gradient-to-br from-amber-50 to-yellow-100/60 shadow-md">
+                        <Card className="border-0 bg-gradient-to-br from-amber-50 to-amber-100/60 shadow-md">
                           <CardHeader className="pb-4">
                             <CardTitle className="text-lg tracking-tight flex items-center gap-2 text-amber-700">
                               <AlertTriangle className="size-5" />
@@ -684,7 +684,7 @@ export default function EssayResultPage() {
 
                   {/* 改善点（成長を褒める） */}
                   {(result.feedback.improvementsSinceLast ?? []).length > 0 && (
-                    <Card className="border-0 bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 shadow-md border-emerald-200">
+                    <Card className="border-0 bg-gradient-to-br from-emerald-50 via-emerald-50 to-teal-50 shadow-md border-emerald-200">
                       <CardHeader className="pb-4">
                         <CardTitle className="text-lg tracking-tight flex items-center gap-2 text-emerald-800">
                           <Award className="size-5" />
@@ -719,15 +719,15 @@ export default function EssayResultPage() {
 
                   {/* Next Challenge */}
                   {result.feedback.nextChallenge && (
-                    <Card className="border-0 bg-gradient-to-br from-blue-50 to-indigo-100/60 shadow-md">
+                    <Card className="border-0 bg-gradient-to-br from-sky-50 to-indigo-100/60 shadow-md">
                       <CardContent className="p-4">
                         <div className="flex items-start gap-3">
-                          <div className="rounded-full bg-blue-200 p-1.5">
-                            <Target className="size-4 text-blue-700" />
+                          <div className="rounded-full bg-sky-200 p-1.5">
+                            <Target className="size-4 text-sky-700" />
                           </div>
                           <div>
-                            <p className="text-sm font-semibold tracking-tight text-blue-800 mb-2">次回のチャレンジ</p>
-                            <p className="text-sm text-blue-700 leading-relaxed">{result.feedback.nextChallenge}</p>
+                            <p className="text-sm font-semibold tracking-tight text-sky-800 mb-2">次回のチャレンジ</p>
+                            <p className="text-sm text-sky-700 leading-relaxed">{result.feedback.nextChallenge}</p>
                           </div>
                         </div>
                       </CardContent>
@@ -738,7 +738,7 @@ export default function EssayResultPage() {
                   {result.growthEvents && result.growthEvents.length > 0 && (
                     <Card className="border-0 bg-white/70 backdrop-blur-sm shadow-md">
                       <CardHeader className="pb-4">
-                        <CardTitle className="text-lg tracking-tight flex items-center gap-2 text-blue-700">
+                        <CardTitle className="text-lg tracking-tight flex items-center gap-2 text-sky-700">
                           <TrendingUp className="size-5" />
                           成長フィードバック
                         </CardTitle>
@@ -747,10 +747,10 @@ export default function EssayResultPage() {
                         {result.growthEvents.map((event, i) => {
                           const bgClass =
                             event.type === "praise"
-                              ? "bg-gradient-to-r from-emerald-50 to-green-100/60 border-emerald-200"
+                              ? "bg-gradient-to-r from-emerald-50 to-emerald-100/60 border-emerald-200"
                               : event.type === "warning"
-                                ? "bg-gradient-to-r from-red-50 to-rose-100/60 border-red-200"
-                                : "bg-gradient-to-r from-blue-50 to-indigo-100/60 border-blue-200";
+                                ? "bg-gradient-to-r from-rose-50 to-rose-100/60 border-rose-200"
+                                : "bg-gradient-to-r from-sky-50 to-indigo-100/60 border-sky-200";
                           const Icon =
                             event.type === "praise"
                               ? Sparkles
@@ -762,7 +762,7 @@ export default function EssayResultPage() {
                               ? "text-emerald-600"
                               : event.type === "warning"
                                 ? "text-rose-600"
-                                : "text-blue-600";
+                                : "text-sky-600";
                           return (
                             <div
                               key={i}
@@ -785,9 +785,9 @@ export default function EssayResultPage() {
                 <div id="brushup-section">
                   {/* ブラッシュアップ版 */}
                   {result.feedback.brushedUpText && (
-                    <Card className="border-0 bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 shadow-lg">
+                    <Card className="border-0 bg-gradient-to-br from-emerald-50 via-emerald-50 to-teal-50 shadow-lg">
                       <CardHeader className="flex flex-row items-center justify-between pb-4">
-                        <CardTitle className="text-xl tracking-tight flex items-center gap-2 text-green-700">
+                        <CardTitle className="text-xl tracking-tight flex items-center gap-2 text-emerald-700">
                           <PenTool className="size-6" />
                           ブラッシュアップ版
                         </CardTitle>
@@ -815,17 +815,17 @@ export default function EssayResultPage() {
                       <CardContent>
                         {!showBrushedUp ? (
                           <div className="text-center py-8">
-                            <div className="inline-flex items-center justify-center size-16 rounded-full bg-green-100 mb-4">
-                              <Zap className="size-8 text-green-600" />
+                            <div className="inline-flex items-center justify-center size-16 rounded-full bg-emerald-100 mb-4">
+                              <Zap className="size-8 text-emerald-600" />
                             </div>
-                            <h3 className="text-lg font-semibold tracking-tight text-green-800 mb-2">自分で考えてから確認</h3>
-                            <p className="text-sm text-green-700 mb-4 max-w-md mx-auto">
+                            <h3 className="text-lg font-semibold tracking-tight text-emerald-800 mb-2">自分で考えてから確認</h3>
+                            <p className="text-sm text-emerald-700 mb-4 max-w-md mx-auto">
                               まず自分で改善点を考えてから、ブラッシュアップ版を確認しましょう。学習効果がより高まります。
                             </p>
                             <Button
                               variant="outline"
                               onClick={() => setShowBrushedUp(true)}
-                              className="border-green-300 text-green-700 hover:bg-green-50 transition-all hover:shadow-md"
+                              className="border-emerald-300 text-emerald-700 hover:bg-emerald-50 transition-all hover:shadow-md"
                             >
                               <ChevronDown className="size-4 mr-1" />
                               ブラッシュアップ版を見る
@@ -838,13 +838,13 @@ export default function EssayResultPage() {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => setShowBrushedUp(false)}
-                                className="text-green-600 hover:bg-green-100/60"
+                                className="text-emerald-600 hover:bg-emerald-100/60"
                               >
                                 <ChevronUp className="size-4 mr-1" />
                                 閉じる
                               </Button>
                             </div>
-                            <div className="rounded-xl bg-white/70 border border-green-200 p-6 shadow-inner">
+                            <div className="rounded-xl bg-white/70 border border-emerald-200 p-6 shadow-inner">
                               <p className="text-sm leading-relaxed whitespace-pre-wrap text-slate-800 font-[450]">
                                 {result.feedback.brushedUpText}
                               </p>
@@ -861,7 +861,7 @@ export default function EssayResultPage() {
                 <div id="insights-section">
                   {/* テーマ深掘り */}
                   {result.feedback.topicInsights && (
-                    <Card className="border-0 bg-gradient-to-br from-purple-50 via-indigo-50 to-blue-50 shadow-lg">
+                    <Card className="border-0 bg-gradient-to-br from-purple-50 via-indigo-50 to-sky-50 shadow-lg">
                       <CardHeader className="flex flex-row items-center justify-between pb-4">
                         <CardTitle className="text-xl tracking-tight flex items-center gap-2 text-purple-700">
                           <BookOpen className="size-6" />
@@ -955,15 +955,15 @@ export default function EssayResultPage() {
             {/* 概要セクション */}
             <section id="overview-section" className="scroll-mt-8">
               {/* 全体講評 */}
-              <Card className="border-0 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 shadow-lg">
+              <Card className="border-0 bg-gradient-to-br from-sky-50 via-indigo-50 to-purple-50 shadow-lg">
                 <CardHeader className="pb-4">
                   <CardTitle className="text-xl tracking-tight flex items-center gap-2 text-slate-800">
-                    <MessageSquare className="size-6 text-blue-600" />
+                    <MessageSquare className="size-6 text-sky-600" />
                     全体講評
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="rounded-xl bg-white/70 border border-blue-200 p-6">
+                  <div className="rounded-xl bg-white/70 border border-sky-200 p-6">
                     <p className="text-sm leading-relaxed text-slate-800 font-medium">
                       {result.feedback.overall}
                     </p>
@@ -979,7 +979,7 @@ export default function EssayResultPage() {
               {result.feedback.languageCorrections && result.feedback.languageCorrections.length > 0 ? (
                 <Card className="border-0 bg-white/80 backdrop-blur-sm shadow-lg">
                   <CardHeader className="pb-4">
-                    <CardTitle className="text-xl tracking-tight flex items-center gap-2 text-red-700">
+                    <CardTitle className="text-xl tracking-tight flex items-center gap-2 text-rose-700">
                       <SpellCheck className="size-6" />
                       赤ペン添削
                       <Badge variant="secondary" className="ml-2 text-xs">
@@ -995,7 +995,7 @@ export default function EssayResultPage() {
                   </CardContent>
                 </Card>
               ) : (
-                <Card className="border-0 bg-gradient-to-br from-green-50 to-emerald-100/60 shadow-md">
+                <Card className="border-0 bg-gradient-to-br from-emerald-50 to-emerald-100/60 shadow-md">
                   <CardContent className="p-8 text-center">
                     <CheckCircle className="size-12 text-emerald-500 mx-auto mb-3" />
                     <h3 className="text-lg font-semibold tracking-tight text-emerald-800 mb-2">素晴らしい文章です！</h3>
@@ -1015,7 +1015,7 @@ export default function EssayResultPage() {
               <div className="grid gap-6 lg:grid-cols-2">
                 {/* 良い点 */}
                 {(result.feedback.goodPoints ?? []).length > 0 && (
-                  <Card className="border-0 bg-gradient-to-br from-emerald-50 to-green-100/60 shadow-md">
+                  <Card className="border-0 bg-gradient-to-br from-emerald-50 to-emerald-100/60 shadow-md">
                     <CardHeader className="pb-4">
                       <CardTitle className="text-lg tracking-tight flex items-center gap-2 text-emerald-700">
                         <CheckCircle className="size-5" />
@@ -1041,7 +1041,7 @@ export default function EssayResultPage() {
                 <div className="space-y-4">
                   {/* 最優先改善ポイント */}
                   {result.feedback.priorityImprovement && (
-                    <Card className="border-0 bg-gradient-to-br from-amber-50 to-orange-100/60 shadow-md">
+                    <Card className="border-0 bg-gradient-to-br from-amber-50 to-amber-100/60 shadow-md">
                       <CardContent className="p-4">
                         <div className="flex items-start gap-3">
                           <div className="rounded-full bg-amber-200 p-1.5">
@@ -1060,7 +1060,7 @@ export default function EssayResultPage() {
 
                   {/* 一般的な改善点 */}
                   {(result.feedback.improvements ?? []).length > 0 && (
-                    <Card className="border-0 bg-gradient-to-br from-amber-50 to-yellow-100/60 shadow-md">
+                    <Card className="border-0 bg-gradient-to-br from-amber-50 to-amber-100/60 shadow-md">
                       <CardHeader className="pb-4">
                         <CardTitle className="text-lg tracking-tight flex items-center gap-2 text-amber-700">
                           <AlertTriangle className="size-5" />
@@ -1090,9 +1090,9 @@ export default function EssayResultPage() {
             {/* ブラッシュアップセクション */}
             <section id="brushup-section" className="scroll-mt-8">
               {result.feedback.brushedUpText && (
-                <Card className="border-0 bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 shadow-lg">
+                <Card className="border-0 bg-gradient-to-br from-emerald-50 via-emerald-50 to-teal-50 shadow-lg">
                   <CardHeader className="flex flex-row items-center justify-between pb-4">
-                    <CardTitle className="text-xl tracking-tight flex items-center gap-2 text-green-700">
+                    <CardTitle className="text-xl tracking-tight flex items-center gap-2 text-emerald-700">
                       <PenTool className="size-6" />
                       ブラッシュアップ版
                     </CardTitle>
@@ -1120,17 +1120,17 @@ export default function EssayResultPage() {
                   <CardContent>
                     {!showBrushedUp ? (
                       <div className="text-center py-8">
-                        <div className="inline-flex items-center justify-center size-16 rounded-full bg-green-100 mb-4">
-                          <Zap className="size-8 text-green-600" />
+                        <div className="inline-flex items-center justify-center size-16 rounded-full bg-emerald-100 mb-4">
+                          <Zap className="size-8 text-emerald-600" />
                         </div>
-                        <h3 className="text-lg font-semibold tracking-tight text-green-800 mb-2">自分で考えてから確認</h3>
-                        <p className="text-sm text-green-700 mb-4 max-w-md mx-auto">
+                        <h3 className="text-lg font-semibold tracking-tight text-emerald-800 mb-2">自分で考えてから確認</h3>
+                        <p className="text-sm text-emerald-700 mb-4 max-w-md mx-auto">
                           まず自分で改善点を考えてから、ブラッシュアップ版を確認しましょう。学習効果がより高まります。
                         </p>
                         <Button
                           variant="outline"
                           onClick={() => setShowBrushedUp(true)}
-                          className="border-green-300 text-green-700 hover:bg-green-50 transition-all hover:shadow-md"
+                          className="border-emerald-300 text-emerald-700 hover:bg-emerald-50 transition-all hover:shadow-md"
                         >
                           <ChevronDown className="size-4 mr-1" />
                           ブラッシュアップ版を見る
@@ -1143,13 +1143,13 @@ export default function EssayResultPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() => setShowBrushedUp(false)}
-                            className="text-green-600 hover:bg-green-100/60"
+                            className="text-emerald-600 hover:bg-emerald-100/60"
                           >
                             <ChevronUp className="size-4 mr-1" />
                             閉じる
                           </Button>
                         </div>
-                        <div className="rounded-xl bg-white/70 border border-green-200 p-6 shadow-inner">
+                        <div className="rounded-xl bg-white/70 border border-emerald-200 p-6 shadow-inner">
                           <p className="text-sm leading-relaxed whitespace-pre-wrap text-slate-800 font-[450]">
                             {result.feedback.brushedUpText}
                           </p>
@@ -1166,7 +1166,7 @@ export default function EssayResultPage() {
             {/* テーマ深掘りセクション */}
             <section id="insights-section" className="scroll-mt-8">
               {result.feedback.topicInsights && (
-                <Card className="border-0 bg-gradient-to-br from-purple-50 via-indigo-50 to-blue-50 shadow-lg">
+                <Card className="border-0 bg-gradient-to-br from-purple-50 via-indigo-50 to-sky-50 shadow-lg">
                   <CardHeader className="flex flex-row items-center justify-between pb-4">
                     <CardTitle className="text-xl tracking-tight flex items-center gap-2 text-purple-700">
                       <BookOpen className="size-6" />
