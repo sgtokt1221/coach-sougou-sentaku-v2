@@ -497,8 +497,15 @@ export default function EssayNewPage() {
     return <ReviewProgress />;
   }
 
+  const hasReference = Boolean(
+    pastQuestion && (pastQuestion.sourceText || pastQuestion.chartData),
+  );
+  const useSideBySide = step >= 2 && inputMode === "text" && hasReference;
+
   return (
-    <div className={`mx-auto px-4 py-5 lg:px-6 lg:py-8 ${step >= 2 && pastQuestion && (pastQuestion.sourceText || pastQuestion.chartData) ? "max-w-6xl lg:grid lg:grid-cols-2 lg:gap-8" : "max-w-2xl"}`}>
+    <div
+      className={`mx-auto px-4 py-5 lg:px-6 lg:py-8 ${useSideBySide ? "max-w-7xl" : "max-w-2xl"}`}
+    >
       <div className="flex items-center gap-2 mb-4">
         <Button
           variant="ghost"
@@ -1025,66 +1032,87 @@ export default function EssayNewPage() {
             </Card>
           )}
 
-          {/* 参考資料パネル（過去問で英文/グラフがある場合） */}
-          {pastQuestion && (pastQuestion.sourceText || pastQuestion.chartData) && (
-            <Card className="mb-4 border-indigo-200">
-              <CardHeader className="pb-2 cursor-pointer" onClick={() => setShowRefMaterial(!showRefMaterial)}>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm text-indigo-800 flex items-center gap-2">
-                    <FileText className="size-4" />
-                    参考資料
-                    {(pastQuestion.questionType === "english-reading" || pastQuestion.questionType === "mixed") && (
-                      <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-300">英文</Badge>
-                    )}
-                    {(pastQuestion.questionType === "data-analysis" || pastQuestion.questionType === "mixed") && (
-                      <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-300">グラフ</Badge>
-                    )}
-                  </CardTitle>
-                  <span className="text-xs text-muted-foreground">
-                    {showRefMaterial ? "閉じる" : "開く"}
-                  </span>
-                </div>
-              </CardHeader>
-              {showRefMaterial && (
-                <CardContent className="pt-0 space-y-4">
-                  {pastQuestion.sourceText && (
-                    <div className="rounded-lg bg-gray-50 border p-3 max-h-[300px] overflow-y-auto">
-                      <p className="text-xs font-medium text-muted-foreground mb-2">出題資料</p>
-                      <p className="text-sm whitespace-pre-wrap leading-relaxed font-mono">{pastQuestion.sourceText}</p>
-                    </div>
-                  )}
-                  {pastQuestion.chartData && pastQuestion.chartData.length > 0 && (
-                    <PastQuestionChart charts={pastQuestion.chartData} />
-                  )}
-                </CardContent>
-              )}
-            </Card>
-          )}
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm lg:text-base">小論文を入力</CardTitle>
-            </CardHeader>
-            <CardContent className="p-3 lg:p-4 space-y-4">
-              <ManuscriptEditor
-                value={directText}
-                onChange={setDirectText}
-                maxLength={pastQuestion?.wordLimit ?? 800}
-                placeholder="ここに小論文を入力してください..."
-              />
-              {error && (
-                <p className="text-sm text-destructive">{error}</p>
-              )}
-              <Button
-                className="w-full"
-                onClick={handleDirectSubmit}
-                disabled={isSubmitting || !directText.trim()}
+          <div
+            className={
+              useSideBySide
+                ? "lg:grid lg:grid-cols-[minmax(18rem,24rem)_minmax(0,1fr)] lg:gap-6 lg:items-start"
+                : ""
+            }
+          >
+            {/* 参考資料パネル (左、sticky) */}
+            {hasReference && (
+              <Card
+                className={`mb-4 border-indigo-200 ${
+                  useSideBySide ? "lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-hidden lg:flex lg:flex-col lg:mb-0" : ""
+                }`}
               >
-                {isSubmitting ? "添削中..." : "添削する"}
-                <ChevronRight className="size-4 ml-1" />
-              </Button>
-            </CardContent>
-          </Card>
+                <CardHeader className="pb-2 cursor-pointer" onClick={() => setShowRefMaterial(!showRefMaterial)}>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-sm text-indigo-800 flex items-center gap-2">
+                      <FileText className="size-4" />
+                      参考資料
+                      {(pastQuestion?.questionType === "english-reading" || pastQuestion?.questionType === "mixed") && (
+                        <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-300">英文</Badge>
+                      )}
+                      {(pastQuestion?.questionType === "data-analysis" || pastQuestion?.questionType === "mixed") && (
+                        <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-300">グラフ</Badge>
+                      )}
+                    </CardTitle>
+                    <span className="text-xs text-muted-foreground">
+                      {showRefMaterial ? "閉じる" : "開く"}
+                    </span>
+                  </div>
+                </CardHeader>
+                {showRefMaterial && (
+                  <CardContent
+                    className={`pt-0 space-y-4 ${useSideBySide ? "lg:flex-1 lg:overflow-y-auto lg:min-h-0" : ""}`}
+                  >
+                    {pastQuestion?.sourceText && (
+                      <div
+                        className={`rounded-lg bg-gray-50 border p-3 overflow-y-auto ${
+                          useSideBySide ? "lg:max-h-none" : "max-h-[300px]"
+                        }`}
+                      >
+                        <p className="text-xs font-medium text-muted-foreground mb-2">出題資料</p>
+                        <p className="text-sm whitespace-pre-wrap leading-relaxed font-mono">{pastQuestion.sourceText}</p>
+                      </div>
+                    )}
+                    {pastQuestion?.chartData && pastQuestion.chartData.length > 0 && (
+                      <PastQuestionChart charts={pastQuestion.chartData} />
+                    )}
+                  </CardContent>
+                )}
+              </Card>
+            )}
+
+            {/* 小論文入力 (右、広め) */}
+            <div className={useSideBySide ? "lg:min-w-0" : ""}>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm lg:text-base">小論文を入力</CardTitle>
+                </CardHeader>
+                <CardContent className="p-3 lg:p-4 space-y-4">
+                  <ManuscriptEditor
+                    value={directText}
+                    onChange={setDirectText}
+                    maxLength={pastQuestion?.wordLimit ?? 800}
+                    placeholder="ここに小論文を入力してください..."
+                  />
+                  {error && (
+                    <p className="text-sm text-destructive">{error}</p>
+                  )}
+                  <Button
+                    className="w-full"
+                    onClick={handleDirectSubmit}
+                    disabled={isSubmitting || !directText.trim()}
+                  >
+                    {isSubmitting ? "添削中..." : "添削する"}
+                    <ChevronRight className="size-4 ml-1" />
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
           <EssayCoachPanel
             topic={topic}
             draft={directText}
