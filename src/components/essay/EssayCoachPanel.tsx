@@ -9,6 +9,7 @@ import {
   ChevronRight,
   Sprout,
   FileText,
+  BarChart3,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -46,19 +47,48 @@ interface EssayCoachPanelProps {
   referenceMaterial?: ReferenceMaterial;
 }
 
-function buildTabs(hasReference: boolean) {
-  const tabs: Array<{ id: TabId; label: string; Icon: typeof MessageSquare }> = [];
-  if (hasReference) {
-    tabs.push({ id: "reference", label: "資料", Icon: FileText });
+function resolveReferenceLabel(material: ReferenceMaterial | undefined): {
+  label: string;
+  Icon: typeof MessageSquare;
+} {
+  const qt = material?.questionType;
+  const hasText = Boolean(material?.sourceText);
+  const hasChart = Boolean(material?.chartData && material.chartData.length > 0);
+  if (qt === "english-reading" || (hasText && !hasChart)) {
+    return { label: "英文", Icon: FileText };
   }
-  tabs.push(
-    { id: "coach", label: "AIコーチ", Icon: MessageSquare },
-    { id: "ap", label: "AP", Icon: Target },
-    { id: "neta", label: "ネタ", Icon: BookOpen },
-    { id: "self", label: "自己分析", Icon: Sprout },
-  );
-  return tabs;
+  if (qt === "data-analysis" || (hasChart && !hasText)) {
+    return { label: "グラフ", Icon: BarChart3 };
+  }
+  return { label: "資料", Icon: FileText };
 }
+
+interface TabDef {
+  id: TabId;
+  label: string;
+  Icon: typeof MessageSquare;
+}
+
+function buildPrimaryTabs(
+  hasReference: boolean,
+  reference: ReferenceMaterial | undefined,
+): TabDef[] {
+  // 主要タブ (大きく表示): 資料 vs AIコーチ の選択
+  if (hasReference) {
+    const ref = resolveReferenceLabel(reference);
+    return [
+      { id: "reference", label: ref.label, Icon: ref.Icon },
+      { id: "coach", label: "AIコーチ", Icon: MessageSquare },
+    ];
+  }
+  return [{ id: "coach", label: "AIコーチ", Icon: MessageSquare }];
+}
+
+const SECONDARY_TABS: TabDef[] = [
+  { id: "ap", label: "AP", Icon: Target },
+  { id: "neta", label: "ネタ", Icon: BookOpen },
+  { id: "self", label: "自己分析", Icon: Sprout },
+];
 
 export function EssayCoachPanel(props: EssayCoachPanelProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -107,24 +137,44 @@ function PanelBody({
     referenceMaterial?.sourceText ||
       (referenceMaterial?.chartData && referenceMaterial.chartData.length > 0),
   );
-  const tabs = buildTabs(hasReference);
+  const primaryTabs = buildPrimaryTabs(hasReference, referenceMaterial);
   const [active, setActive] = useState<TabId>(hasReference ? "reference" : "coach");
 
   return (
     <Card className="flex flex-col h-full min-h-0 overflow-hidden rounded-xl">
-      <div className="flex items-center gap-1 border-b p-2">
-        {tabs.map(({ id, label, Icon }) => (
+      {/* 主要タブ (大きく表示) 資料 ↔ AIコーチ */}
+      <div className="flex items-center gap-1 border-b bg-muted/30 p-1.5">
+        {primaryTabs.map(({ id, label, Icon }) => (
           <button
             key={id}
             type="button"
             onClick={() => setActive(id)}
-            className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-xs font-medium transition-colors cursor-pointer ${
+            className={`flex-1 flex items-center justify-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium transition-colors cursor-pointer ${
               active === id
-                ? "bg-teal-500 text-white"
+                ? "bg-teal-500 text-white shadow-sm"
+                : "text-foreground hover:bg-background/60"
+            }`}
+          >
+            <Icon className="size-4" />
+            <span className="truncate">{label}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* 副次タブ (小さく) AP / ネタ / 自己分析 */}
+      <div className="flex items-center gap-1 border-b px-2 py-1.5">
+        {SECONDARY_TABS.map(({ id, label, Icon }) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setActive(id)}
+            className={`flex-1 flex items-center justify-center gap-1 rounded px-2 py-1 text-[11px] font-medium transition-colors cursor-pointer ${
+              active === id
+                ? "bg-teal-100 text-teal-800 dark:bg-teal-950/50 dark:text-teal-200"
                 : "text-muted-foreground hover:bg-muted"
             }`}
           >
-            <Icon className="size-3.5" />
+            <Icon className="size-3" />
             <span className="truncate">{label}</span>
           </button>
         ))}
