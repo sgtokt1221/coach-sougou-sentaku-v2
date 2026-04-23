@@ -40,13 +40,16 @@ function scoreBg(total: number): string {
 }
 
 export default function StudentDashboard() {
-  const { userProfile } = useAuth();
+  const { userProfile, loading: authLoading } = useAuth();
   const studentProfile = userProfile as StudentProfile | null;
   const targetUniversities = studentProfile?.targetUniversities ?? [];
 
   const { data: essayData, isLoading: loadingHistory } = useAuthSWR<{ essays: EssayHistoryItem[] }>("/api/essay/history?userId=current");
   const { data: interviewData, isLoading: loadingInterview } = useAuthSWR<{ interviews: { id: string; startedAt: string; scores: { total: number } | null }[] }>("/api/interview/history?userId=current");
-  const { data: selfAnalysisData, isLoading: loadingSelfAnalysis } = useAuthSWR<SelfAnalysis | null>("/api/self-analysis?userId=me");
+  const { data: selfAnalysisData, isLoading: loadingSelfAnalysisSWR } = useAuthSWR<SelfAnalysis | null>("/api/self-analysis?userId=me");
+  // 認証ロード中は useAuthSWR の key が null → isLoading=false になるため、
+  // authLoading も含めて初回マウントを1回に抑え、GSAP タイムラインが中断されないようにする
+  const loadingSelfAnalysis = authLoading || loadingSelfAnalysisSWR;
   const { data: skillCheckStatus } = useAuthSWR<SkillCheckStatus>("/api/skill-check/status");
   const { data: interviewSkillStatus } = useAuthSWR<InterviewSkillCheckStatus>("/api/interview-skill-check/status");
   const loadingTrend = loadingHistory || loadingInterview;
