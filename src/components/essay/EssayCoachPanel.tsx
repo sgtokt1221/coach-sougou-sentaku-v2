@@ -8,6 +8,7 @@ import {
   BookOpen,
   ChevronRight,
   Sprout,
+  FileText,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,58 +24,71 @@ import type { University } from "@/lib/types/university";
 import type { Activity } from "@/lib/types/activity";
 import { EssayCoachChat } from "./EssayCoachChat";
 import { SelfAnalysisReference } from "./SelfAnalysisReference";
+import { PastQuestionChart } from "./PastQuestionChart";
 
-type TabId = "coach" | "ap" | "neta" | "self";
+type TabId = "reference" | "coach" | "ap" | "neta" | "self";
+
+// PastQuestionChart の chart data type (既存モデルに合わせる、詳細は chart コンポーネントに委ねる)
+type PastQuestionChartData = Parameters<typeof PastQuestionChart>[0]["charts"];
+
+export interface ReferenceMaterial {
+  sourceText?: string;
+  chartData?: PastQuestionChartData;
+  questionType?: string;
+}
 
 interface EssayCoachPanelProps {
   topic: string;
   draft: string;
   universityId?: string;
   facultyId?: string;
+  /** 過去問の参考資料 (あれば 資料 タブが先頭に追加される) */
+  referenceMaterial?: ReferenceMaterial;
 }
 
-const TAB_CONFIG: Array<{ id: TabId; label: string; Icon: typeof MessageSquare }> = [
-  { id: "coach", label: "AIコーチ", Icon: MessageSquare },
-  { id: "ap", label: "AP", Icon: Target },
-  { id: "neta", label: "ネタ", Icon: BookOpen },
-  { id: "self", label: "自己分析", Icon: Sprout },
-];
+function buildTabs(hasReference: boolean) {
+  const tabs: Array<{ id: TabId; label: string; Icon: typeof MessageSquare }> = [];
+  if (hasReference) {
+    tabs.push({ id: "reference", label: "資料", Icon: FileText });
+  }
+  tabs.push(
+    { id: "coach", label: "AIコーチ", Icon: MessageSquare },
+    { id: "ap", label: "AP", Icon: Target },
+    { id: "neta", label: "ネタ", Icon: BookOpen },
+    { id: "self", label: "自己分析", Icon: Sprout },
+  );
+  return tabs;
+}
 
-export function EssayCoachPanel({
-  topic,
-  draft,
-  universityId,
-  facultyId,
-}: EssayCoachPanelProps) {
-  const [open, setOpen] = useState(false);
+export function EssayCoachPanel(props: EssayCoachPanelProps) {
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <>
-      {/* floating chatbot ボタン (画面左下、入力エリアを妨げない) */}
+      {/* デスクトップ: 左列として常設 (2 カラムレイアウトの左) */}
+      <div className="hidden lg:flex lg:flex-col lg:sticky lg:top-4 lg:h-[calc(100vh-2rem)] lg:min-h-0">
+        <PanelBody {...props} />
+      </div>
+
+      {/* モバイル: FAB + Sheet (lg 未満) */}
       <Button
-        onClick={() => setOpen(true)}
-        className="fixed bottom-6 left-6 z-40 h-14 rounded-full shadow-lg cursor-pointer px-5 gap-2"
-        aria-label="AIコーチを開く"
+        onClick={() => setMobileOpen(true)}
+        className="lg:hidden fixed bottom-6 left-6 z-40 h-14 rounded-full shadow-lg cursor-pointer px-5 gap-2"
+        aria-label="執筆サポートを開く"
       >
         <MessageSquare className="size-5" />
-        <span className="hidden sm:inline text-sm">AIコーチ</span>
+        <span className="hidden sm:inline text-sm">サポート</span>
       </Button>
-
-      <Sheet open={open} onOpenChange={setOpen}>
+      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
         <SheetContent
           side="left"
-          className="w-full p-0 sm:max-w-md lg:max-w-lg"
+          className="lg:hidden w-full p-0 sm:max-w-md"
         >
           <SheetHeader className="border-b">
             <SheetTitle>執筆サポート</SheetTitle>
           </SheetHeader>
           <div className="flex-1 min-h-0 flex flex-col">
-            <PanelBody
-              topic={topic}
-              draft={draft}
-              universityId={universityId}
-              facultyId={facultyId}
-            />
+            <PanelBody {...props} />
           </div>
         </SheetContent>
       </Sheet>
@@ -87,30 +101,39 @@ function PanelBody({
   draft,
   universityId,
   facultyId,
+  referenceMaterial,
 }: EssayCoachPanelProps) {
-  const [active, setActive] = useState<TabId>("coach");
+  const hasReference = Boolean(
+    referenceMaterial?.sourceText ||
+      (referenceMaterial?.chartData && referenceMaterial.chartData.length > 0),
+  );
+  const tabs = buildTabs(hasReference);
+  const [active, setActive] = useState<TabId>(hasReference ? "reference" : "coach");
 
   return (
     <Card className="flex flex-col h-full min-h-0 overflow-hidden rounded-xl">
       <div className="flex items-center gap-1 border-b p-2">
-        {TAB_CONFIG.map(({ id, label, Icon }) => (
+        {tabs.map(({ id, label, Icon }) => (
           <button
             key={id}
             type="button"
             onClick={() => setActive(id)}
-            className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors cursor-pointer ${
+            className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-xs font-medium transition-colors cursor-pointer ${
               active === id
                 ? "bg-teal-500 text-white"
                 : "text-muted-foreground hover:bg-muted"
             }`}
           >
             <Icon className="size-3.5" />
-            {label}
+            <span className="truncate">{label}</span>
           </button>
         ))}
       </div>
 
       <div className="flex-1 min-h-0 overflow-hidden">
+        {active === "reference" && hasReference && (
+          <ReferenceReference material={referenceMaterial!} />
+        )}
         {active === "coach" && (
           <EssayCoachChat
             topic={topic}
@@ -127,6 +150,45 @@ function PanelBody({
         {active === "self" && <SelfAnalysisReference />}
       </div>
     </Card>
+  );
+}
+
+function ReferenceReference({ material }: { material: ReferenceMaterial }) {
+  return (
+    <div className="h-full overflow-y-auto p-4 space-y-4">
+      <div className="flex items-center gap-2 flex-wrap">
+        <FileText className="size-4 text-indigo-600" />
+        <span className="text-sm font-semibold text-indigo-800">出題資料</span>
+        {(material.questionType === "english-reading" ||
+          material.questionType === "mixed") && (
+          <Badge
+            variant="outline"
+            className="text-xs bg-emerald-50 text-emerald-700 border-emerald-300"
+          >
+            英文
+          </Badge>
+        )}
+        {(material.questionType === "data-analysis" ||
+          material.questionType === "mixed") && (
+          <Badge
+            variant="outline"
+            className="text-xs bg-purple-50 text-purple-700 border-purple-300"
+          >
+            グラフ
+          </Badge>
+        )}
+      </div>
+      {material.sourceText && (
+        <div className="rounded-lg bg-gray-50 border p-3">
+          <p className="text-sm whitespace-pre-wrap leading-relaxed font-mono break-words">
+            {material.sourceText}
+          </p>
+        </div>
+      )}
+      {material.chartData && material.chartData.length > 0 && (
+        <PastQuestionChart charts={material.chartData} />
+      )}
+    </div>
   );
 }
 

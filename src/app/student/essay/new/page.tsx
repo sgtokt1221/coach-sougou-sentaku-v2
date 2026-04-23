@@ -500,7 +500,8 @@ export default function EssayNewPage() {
   const hasReference = Boolean(
     pastQuestion && (pastQuestion.sourceText || pastQuestion.chartData),
   );
-  const useSideBySide = step >= 2 && inputMode === "text" && hasReference;
+  // Step 2 テキスト執筆中は常に 2 カラム (左=参照/コーチ、右=入力)
+  const useSideBySide = step >= 2 && inputMode === "text";
 
   return (
     <div
@@ -1035,57 +1036,28 @@ export default function EssayNewPage() {
           <div
             className={
               useSideBySide
-                ? "lg:grid lg:grid-cols-[minmax(18rem,24rem)_minmax(0,1fr)] lg:gap-6 lg:items-start"
+                ? "lg:grid lg:grid-cols-[minmax(22rem,28rem)_minmax(0,1fr)] lg:gap-6 lg:items-start"
                 : ""
             }
           >
-            {/* 参考資料パネル (左、sticky) */}
-            {hasReference && (
-              <Card
-                className={`mb-4 border-indigo-200 ${
-                  useSideBySide ? "lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-hidden lg:flex lg:flex-col lg:mb-0" : ""
-                }`}
-              >
-                <CardHeader className="pb-2 cursor-pointer" onClick={() => setShowRefMaterial(!showRefMaterial)}>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm text-indigo-800 flex items-center gap-2">
-                      <FileText className="size-4" />
-                      参考資料
-                      {(pastQuestion?.questionType === "english-reading" || pastQuestion?.questionType === "mixed") && (
-                        <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-300">英文</Badge>
-                      )}
-                      {(pastQuestion?.questionType === "data-analysis" || pastQuestion?.questionType === "mixed") && (
-                        <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-300">グラフ</Badge>
-                      )}
-                    </CardTitle>
-                    <span className="text-xs text-muted-foreground">
-                      {showRefMaterial ? "閉じる" : "開く"}
-                    </span>
-                  </div>
-                </CardHeader>
-                {showRefMaterial && (
-                  <CardContent
-                    className={`pt-0 space-y-4 ${useSideBySide ? "lg:flex-1 lg:overflow-y-auto lg:min-h-0" : ""}`}
-                  >
-                    {pastQuestion?.sourceText && (
-                      <div
-                        className={`rounded-lg bg-gray-50 border p-3 overflow-y-auto ${
-                          useSideBySide ? "lg:max-h-none" : "max-h-[300px]"
-                        }`}
-                      >
-                        <p className="text-xs font-medium text-muted-foreground mb-2">出題資料</p>
-                        <p className="text-sm whitespace-pre-wrap leading-relaxed font-mono">{pastQuestion.sourceText}</p>
-                      </div>
-                    )}
-                    {pastQuestion?.chartData && pastQuestion.chartData.length > 0 && (
-                      <PastQuestionChart charts={pastQuestion.chartData} />
-                    )}
-                  </CardContent>
-                )}
-              </Card>
-            )}
+            {/* 左列: 執筆サポートパネル (資料/AIコーチ/AP/ネタ/自己分析) */}
+            <EssayCoachPanel
+              topic={topic}
+              draft={directText}
+              universityId={universityId || undefined}
+              facultyId={facultyId || undefined}
+              referenceMaterial={
+                pastQuestion && (pastQuestion.sourceText || pastQuestion.chartData)
+                  ? {
+                      sourceText: pastQuestion.sourceText,
+                      chartData: pastQuestion.chartData,
+                      questionType: pastQuestion.questionType,
+                    }
+                  : undefined
+              }
+            />
 
-            {/* 小論文入力 (右、広め) */}
+            {/* 右列: 小論文入力 (常に最大幅) */}
             <div className={useSideBySide ? "lg:min-w-0" : ""}>
               <Card>
                 <CardHeader>
@@ -1113,12 +1085,6 @@ export default function EssayNewPage() {
               </Card>
             </div>
           </div>
-          <EssayCoachPanel
-            topic={topic}
-            draft={directText}
-            universityId={universityId || undefined}
-            facultyId={facultyId || undefined}
-          />
         </>
       )}
 
