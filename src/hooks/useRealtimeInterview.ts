@@ -43,6 +43,11 @@ interface UseRealtimeInterviewOptions {
   presentationContent?: string;
   /** 毎メッセージ追加時に呼ばれる (会話履歴を上位コンポーネントにシンクしたい場合) */
   onMessageAppend?: (message: InterviewMessage) => void;
+  /**
+   * 直近の AI メッセージの content を更新するときに呼ばれる。
+   * Realtime API の audio_transcript.delta ストリームを UI に反映するために使う。
+   */
+  onMessageUpdateLast?: (content: string) => void;
 }
 
 interface RealtimeStartResult {
@@ -63,6 +68,8 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
   const micStreamRef = useRef<MediaStream | null>(null);
   const optsRef = useRef(options);
+  /** AI の transcript が現在ストリーミング中か。true のうちは末尾メッセージを in-place 更新する */
+  const isStreamingAiRef = useRef(false);
   useEffect(() => {
     optsRef.current = options;
   }, [options]);
@@ -70,6 +77,16 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
   const appendMessage = useCallback((m: InterviewMessage) => {
     setMessages((prev) => [...prev, m]);
     optsRef.current.onMessageAppend?.(m);
+  }, []);
+
+  const updateLastAiMessage = useCallback((content: string) => {
+    setMessages((prev) => {
+      if (prev.length === 0 || prev[prev.length - 1].role !== "ai") return prev;
+      const copy = [...prev];
+      copy[copy.length - 1] = { ...copy[copy.length - 1], content };
+      return copy;
+    });
+    optsRef.current.onMessageUpdateLast?.(content);
   }, []);
 
   const stop = useCallback(() => {
@@ -180,6 +197,7 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
           model,
           micStream,
           onMessageAppend: appendMessage,
+          onMessageUpdateLast: updateLastAiMessage,
           onError: (err) => {
             console.warn("[useRealtimeInterview] GD orchestrator error", err);
             setError(err.message);
@@ -211,10 +229,29 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
         micStream,
         withMic: true,
         onUserTranscript: (text) => {
+          // ユーザー発話が確定したら、まだ AI streaming 中でも区切りをつける
+          isStreamingAiRef.current = false;
           appendMessage({ role: "student", content: text });
         },
+        onAssistantTranscriptDelta: (cumulative) => {
+          if (!isStreamingAiRef.current) {
+            // 初回 delta: 新規メッセージを生やす
+            isStreamingAiRef.current = true;
+            appendMessage({ role: "ai", content: cumulative });
+          } else {
+            // 2回目以降: 末尾メッセージを累積テキストで更新
+            updateLastAiMessage(cumulative);
+          }
+        },
         onAssistantTranscript: (text) => {
-          appendMessage({ role: "ai", content: text });
+          if (isStreamingAiRef.current) {
+            // 欠損 delta の保険として最終 transcript で置き換え
+            updateLastAiMessage(text);
+            isStreamingAiRef.current = false;
+          } else {
+            // delta が来なかった場合のフォールバック
+            appendMessage({ role: "ai", content: text });
+          }
         },
         onError: (err) => {
           console.warn("[useRealtimeInterview] session error", err);

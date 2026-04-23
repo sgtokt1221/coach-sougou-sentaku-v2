@@ -33,6 +33,8 @@ export interface GdOrchestratorOptions {
   micStream: MediaStream;
   /** メッセージ追加コールバック (UI 同期) */
   onMessageAppend?: (message: InterviewMessage) => void;
+  /** 直近 AI メッセージの in-place 更新コールバック (音声と同期した transcript ストリーム用) */
+  onMessageUpdateLast?: (content: string) => void;
   /** エラーコールバック */
   onError?: (error: Error) => void;
 }
@@ -47,6 +49,8 @@ export class GdOrchestrator {
   private lastSpeaker: ActiveSpeaker | null = null;
   private isClosed = false;
   private currentResponseSpeaker: ActiveSpeaker | null = null;
+  /** 現在 transcript がストリーミング中の話者。null のときは次の delta で新規メッセージを生やす */
+  private streamingSpeaker: ActiveSpeaker | null = null;
   private opts: GdOrchestratorOptions;
 
   constructor(opts: GdOrchestratorOptions) {
@@ -90,6 +94,7 @@ export class GdOrchestrator {
         onUserTranscript: speaker === "moderator"
           ? (text) => this.onUserTranscript(text)
           : undefined,
+        onAssistantTranscriptDelta: (cumulative) => this.onAssistantTranscriptDelta(speaker, cumulative),
         onAssistantTranscript: (text) => this.onAssistantTranscript(speaker, text),
         onError: (err) => this.opts.onError?.(err),
       });
@@ -140,6 +145,9 @@ export class GdOrchestrator {
   private onUserTranscript(text: string): void {
     if (this.isClosed || !text.trim()) return;
 
+    // ユーザー発話が入ったら直前の AI streaming は確定扱いにする
+    this.streamingSpeaker = null;
+
     // UI にユーザーメッセージを表示
     this.opts.onMessageAppend?.({ role: "student", content: text });
 
@@ -163,15 +171,39 @@ export class GdOrchestrator {
     if (sess) sess.triggerResponse();
   }
 
-  /** 応答セッションの transcript を受けて UI に追加 + 他セッションに broadcast */
+  /**
+   * 応答セッションの部分 transcript (delta) を受けて UI を更新する。
+   * 初回 delta で prefix 付きの新規 AI メッセージを生やし、
+   * 2回目以降は末尾メッセージを累積テキストで書き換える。
+   */
+  private onAssistantTranscriptDelta(speaker: ActiveSpeaker, cumulative: string): void {
+    if (this.isClosed) return;
+    const displayName = GD_SPEAKERS[speaker].displayName;
+    const prefixedContent = `【${displayName}】${cumulative}`;
+
+    if (this.streamingSpeaker !== speaker) {
+      this.streamingSpeaker = speaker;
+      this.opts.onMessageAppend?.({ role: "ai", content: prefixedContent });
+    } else {
+      this.opts.onMessageUpdateLast?.(prefixedContent);
+    }
+  }
+
+  /** 応答セッションの transcript 確定を受けて UI を確定 + 他セッションに broadcast */
   private onAssistantTranscript(speaker: ActiveSpeaker, text: string): void {
     if (this.isClosed || !text.trim()) return;
 
     const displayName = GD_SPEAKERS[speaker].displayName;
     const prefixedContent = `【${displayName}】${text}`;
 
-    // UI に発話を追加 (prefix 付きで既存の GD 表示ロジックと互換)
-    this.opts.onMessageAppend?.({ role: "ai", content: prefixedContent });
+    if (this.streamingSpeaker === speaker) {
+      // 欠損 delta の保険として最終 transcript で置き換え
+      this.opts.onMessageUpdateLast?.(prefixedContent);
+      this.streamingSpeaker = null;
+    } else {
+      // delta が来なかった場合のフォールバック
+      this.opts.onMessageAppend?.({ role: "ai", content: prefixedContent });
+    }
 
     // 他 2 セッションに「他者の発言」として broadcast
     // role=user で注入することで「他の参加者がこう言った」と認識させる

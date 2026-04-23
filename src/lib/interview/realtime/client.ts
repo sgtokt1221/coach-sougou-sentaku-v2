@@ -46,7 +46,13 @@ export interface RealtimeSessionOptions {
   onEvent?: (event: RealtimeEvent) => void;
   /** ユーザーの発話が確定したときに呼ばれる (input_audio_transcription.completed) */
   onUserTranscript?: (text: string) => void;
-  /** AI の発話テキストが確定したときに呼ばれる */
+  /**
+   * AI の発話テキストが部分的に届くたびに呼ばれる (response.audio_transcript.delta)。
+   * 引数は累積された部分テキスト (これまでの delta を連結したもの)。
+   * 音声再生とほぼ同タイミングで UI にテキストを表示したいときに使う。
+   */
+  onAssistantTranscriptDelta?: (cumulativeText: string) => void;
+  /** AI の発話テキストが確定したときに呼ばれる (response.audio_transcript.done) */
   onAssistantTranscript?: (text: string) => void;
   /** 接続エラー */
   onError?: (error: Error) => void;
@@ -57,6 +63,8 @@ export class RealtimeSession {
   private dc: RTCDataChannel | null = null;
   private opts: RealtimeSessionOptions;
   private isClosed = false;
+  /** 現在応答中の AI transcript の累積バッファ。done で空にする */
+  private transcriptBuffer = "";
 
   constructor(opts: RealtimeSessionOptions) {
     this.opts = opts;
@@ -155,8 +163,13 @@ export class RealtimeSession {
     if (event.type === "conversation.item.input_audio_transcription.completed") {
       const ev = event as Extract<RealtimeEvent, { type: "conversation.item.input_audio_transcription.completed" }>;
       this.opts.onUserTranscript?.(ev.transcript);
+    } else if (event.type === "response.audio_transcript.delta") {
+      const ev = event as Extract<RealtimeEvent, { type: "response.audio_transcript.delta" }>;
+      this.transcriptBuffer += ev.delta;
+      this.opts.onAssistantTranscriptDelta?.(this.transcriptBuffer);
     } else if (event.type === "response.audio_transcript.done") {
       const ev = event as Extract<RealtimeEvent, { type: "response.audio_transcript.done" }>;
+      this.transcriptBuffer = "";
       this.opts.onAssistantTranscript?.(ev.transcript);
     } else if (event.type === "error") {
       const ev = event as Extract<RealtimeEvent, { type: "error" }>;

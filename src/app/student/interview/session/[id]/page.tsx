@@ -87,6 +87,14 @@ export default function InterviewSessionPage() {
     onMessageAppend: (m) => {
       setMessages((prev) => [...prev, m]);
     },
+    onMessageUpdateLast: (content) => {
+      setMessages((prev) => {
+        if (prev.length === 0 || prev[prev.length - 1].role !== "ai") return prev;
+        const copy = [...prev];
+        copy[copy.length - 1] = { ...copy[copy.length - 1], content };
+        return copy;
+      });
+    },
   });
   const appearanceCheckCount = useRef(0);
   const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
@@ -281,10 +289,14 @@ export default function InterviewSessionPage() {
   }, [messages, isLoading]);
 
   // Backup messages to sessionStorage
+  // transcript のストリーミング中は 1 発話あたり数十回 messages が更新されるため、
+  // 300ms デバウンスして最後の値だけ保存する
   useEffect(() => {
-    if (messages.length > 0) {
+    if (messages.length === 0) return;
+    const t = window.setTimeout(() => {
       sessionStorage.setItem(`interview_messages_${sessionId}`, JSON.stringify(messages));
-    }
+    }, 300);
+    return () => window.clearTimeout(t);
   }, [messages, sessionId]);
 
   // テキストモード専用の送信ハンドラ (Claude 経由)
