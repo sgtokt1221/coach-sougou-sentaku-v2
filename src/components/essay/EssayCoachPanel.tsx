@@ -50,10 +50,10 @@ export function EssayCoachPanel({
 
   return (
     <>
-      {/* floating chatbot ボタン (全デバイス共通) */}
+      {/* floating chatbot ボタン (画面左下、入力エリアを妨げない) */}
       <Button
         onClick={() => setOpen(true)}
-        className="fixed bottom-6 right-6 z-40 h-14 rounded-full shadow-lg cursor-pointer px-5 gap-2"
+        className="fixed bottom-6 left-6 z-40 h-14 rounded-full shadow-lg cursor-pointer px-5 gap-2"
         aria-label="AIコーチを開く"
       >
         <MessageSquare className="size-5" />
@@ -61,7 +61,10 @@ export function EssayCoachPanel({
       </Button>
 
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="right" className="w-full p-0 sm:max-w-md">
+        <SheetContent
+          side="left"
+          className="w-full p-0 sm:max-w-md lg:max-w-lg"
+        >
           <SheetHeader className="border-b">
             <SheetTitle>執筆サポート</SheetTitle>
           </SheetHeader>
