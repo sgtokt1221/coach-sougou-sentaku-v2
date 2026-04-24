@@ -226,6 +226,19 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
       await session.connect();
       sessionRef.current = session;
 
+      // [DIAGNOSTIC] 接続直後と 3 秒後のマイクトラック状態をログ。原因特定後に削除する。
+      const logMic = (tag: string) => {
+        const tracks = micStream.getAudioTracks();
+        console.log(`[mic-check:${tag}]`, tracks.map((t) => ({
+          enabled: t.enabled,
+          muted: t.muted,
+          readyState: t.readyState,
+        })));
+      };
+      logMic("post-connect");
+      setTimeout(() => logMic("+3s"), 3000);
+      setTimeout(() => logMic("+10s"), 10000);
+
       // 接続後、AI 側から挨拶を始めるよう指示
       session.triggerResponse();
 

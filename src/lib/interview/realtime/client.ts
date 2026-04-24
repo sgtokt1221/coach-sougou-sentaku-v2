@@ -81,10 +81,23 @@ export class RealtimeSession {
 
     // マイクトラックを peer connection に追加 (withMic 時のみ)
     if (withMic && this.opts.micStream) {
-      for (const track of this.opts.micStream.getAudioTracks()) {
+      const tracks = this.opts.micStream.getAudioTracks();
+      // [DIAGNOSTIC] マイクトラックの状態をログ。原因特定後に削除する。
+      console.log("[mic-setup] withMic=true, tracks.length=", tracks.length);
+      for (const track of tracks) {
+        console.log("[mic-track]", {
+          id: track.id,
+          kind: track.kind,
+          label: track.label,
+          enabled: track.enabled,
+          muted: track.muted,
+          readyState: track.readyState,
+          settings: track.getSettings(),
+        });
         pc.addTrack(track, this.opts.micStream);
       }
     } else {
+      console.log("[mic-setup] withMic=false or micStream=null, adding recvonly transceiver. micStream:", !!this.opts.micStream);
       // withMic=false でも OpenAI 側が音声レスポンスを返すためには
       // 受信専用 (recvonly) の audio transceiver を追加する必要がある
       pc.addTransceiver("audio", { direction: "recvonly" });

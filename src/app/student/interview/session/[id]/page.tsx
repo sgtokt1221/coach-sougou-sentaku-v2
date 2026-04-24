@@ -566,6 +566,8 @@ export default function InterviewSessionPage() {
           </div>
         )}
 
+        {/* [DIAGNOSTIC] 描画時の messages.length を確認。原因特定後に削除 */}
+        {(() => { console.log("[render] messages.length =", messages.length); return null; })()}
         {messages.map((msg, i) => {
           if (msg.role === "student") {
             const isEditing = editingIdx === i;
