@@ -150,16 +150,23 @@ export class RealtimeSession {
   }
 
   private handleEvent(event: RealtimeEvent) {
+    // [DIAGNOSTIC] 全 event type をログ。原因特定後に削除する。
+    if (typeof window !== "undefined") {
+      console.log("[realtime-event]", event.type);
+    }
     this.opts.onEvent?.(event);
 
     if (event.type === "conversation.item.input_audio_transcription.completed") {
       const ev = event as Extract<RealtimeEvent, { type: "conversation.item.input_audio_transcription.completed" }>;
+      console.log("[realtime-user-transcript]", ev.transcript?.slice(0, 60));
       this.opts.onUserTranscript?.(ev.transcript);
     } else if (event.type === "response.audio_transcript.done") {
       const ev = event as Extract<RealtimeEvent, { type: "response.audio_transcript.done" }>;
+      console.log("[realtime-assistant-transcript]", ev.transcript?.slice(0, 60));
       this.opts.onAssistantTranscript?.(ev.transcript);
     } else if (event.type === "error") {
       const ev = event as Extract<RealtimeEvent, { type: "error" }>;
+      console.warn("[realtime-error]", ev.error);
       this.opts.onError?.(new Error(ev.error?.message ?? "unknown realtime error"));
     }
   }

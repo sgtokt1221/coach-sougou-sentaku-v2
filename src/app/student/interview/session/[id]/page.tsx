@@ -85,7 +85,12 @@ export default function InterviewSessionPage() {
     weaknessList: weaknesses.map((w) => `- ${w.area}(${w.count}回)`).join("\n") || "（過去の弱点なし）",
     presentationContent: sessionInfo?.presentationContent,
     onMessageAppend: (m) => {
-      setMessages((prev) => [...prev, m]);
+      // [DIAGNOSTIC] 原因特定後に削除する。
+      console.log("[page-append]", m.role, "→", m.content.slice(0, 40));
+      setMessages((prev) => {
+        console.log("[page-setMessages]", prev.length, "→", prev.length + 1);
+        return [...prev, m];
+      });
     },
   });
   const appearanceCheckCount = useRef(0);
@@ -130,6 +135,9 @@ export default function InterviewSessionPage() {
     const info: SessionInfo = JSON.parse(stored);
     setSessionInfo(info);
 
+    // [DIAGNOSTIC] load の起動状況をログ。原因特定後に削除する。
+    console.log("[load]", sessionId, "inputMode:", info.inputMode);
+
     // 音声モードは Realtime API が transcript を append するので pre-insert しない
     // テキストモードは Claude 生成の openingMessage を初期表示
     if (info.inputMode === "voice") {
@@ -147,9 +155,12 @@ export default function InterviewSessionPage() {
   // Restore messages from sessionStorage backup
   useEffect(() => {
     const backup = sessionStorage.getItem(`interview_messages_${sessionId}`);
+    // [DIAGNOSTIC] restore の起動状況とバックアップ中身をログ。原因特定後に削除する。
+    console.log("[restore]", sessionId, "backup exists:", !!backup, "len:", backup ? JSON.parse(backup).length : 0);
     if (backup) {
       const parsed: InterviewMessage[] = JSON.parse(backup);
       if (parsed.length > 0) {
+        console.log("[restore] setMessages from backup, len:", parsed.length);
         setMessages(parsed);
       }
     }

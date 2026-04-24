@@ -68,6 +68,8 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
   }, [options]);
 
   const appendMessage = useCallback((m: InterviewMessage) => {
+    // [DIAGNOSTIC] 呼び出し状況をログ。原因特定後に削除する。
+    console.log("[hook-append]", m.role, "→", m.content.slice(0, 40), "| onMessageAppend:", typeof optsRef.current.onMessageAppend);
     setMessages((prev) => [...prev, m]);
     optsRef.current.onMessageAppend?.(m);
   }, []);
