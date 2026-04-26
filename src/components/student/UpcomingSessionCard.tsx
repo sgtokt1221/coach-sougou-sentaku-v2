@@ -18,7 +18,7 @@ const TYPE_LABEL: Record<SessionType, string> = {
   group_review: "グループ添削",
 };
 
-function formatDate(iso: string): {
+interface FormattedDate {
   month: number;
   day: number;
   weekday: string;
@@ -26,7 +26,9 @@ function formatDate(iso: string): {
   isToday: boolean;
   isTomorrow: boolean;
   diffHours: number;
-} {
+}
+
+function formatDate(iso: string): FormattedDate {
   const d = new Date(iso);
   const now = new Date();
   const diffMs = d.getTime() - now.getTime();
@@ -49,25 +51,35 @@ function formatDate(iso: string): {
   };
 }
 
+function dateLabelOf(when: FormattedDate): string {
+  if (when.isToday) return "今日";
+  if (when.isTomorrow) return "明日";
+  return `${when.month}/${when.day} (${when.weekday})`;
+}
+
 export function UpcomingSessionCard() {
   const { userProfile } = useAuth();
   const studentProfile = userProfile as StudentProfile | null;
   const isCoachPlan =
     studentProfile?.plan === "coach" || studentProfile?.plan === "standard";
 
-  const { data, isLoading } = useAuthSWR<{ session: Session | null }>(
-    "/api/student/sessions/upcoming",
-    { refreshInterval: 5 * 60 * 1000 },
-  );
+  const { data, isLoading } = useAuthSWR<{
+    sessions?: Session[];
+    session?: Session | null;
+  }>("/api/student/sessions/upcoming", { refreshInterval: 5 * 60 * 1000 });
 
   if (isLoading) {
     return <Skeleton className="h-24 w-full rounded-2xl" />;
   }
 
-  const session = data?.session;
+  // sessions 配列が新しい形式。session は後方互換 fallback
+  const sessions: Session[] =
+    data?.sessions ?? (data?.session ? [data.session] : []);
+  const next = sessions[0];
+  const followUps = sessions.slice(1, 3); // 最大 2 件まで二次表示
 
   // セッション未予定: コーチプランの生徒には「ここに表示されます」プレースホルダーを出す
-  if (!session) {
+  if (!next) {
     if (!isCoachPlan) return null;
     return (
       <Card className="rounded-2xl border-dashed border-border/60 bg-muted/30">
@@ -88,21 +100,29 @@ export function UpcomingSessionCard() {
     );
   }
 
-  const when = formatDate(session.scheduledAt);
-  const dateLabel = when.isToday
-    ? "今日"
-    : when.isTomorrow
-      ? "明日"
-      : `${when.month}/${when.day} (${when.weekday})`;
+  return (
+    <div className="flex flex-col gap-2">
+      <PrimarySessionCard session={next} />
+      {followUps.length > 0 && (
+        <div className="flex flex-col gap-1.5">
+          {followUps.map((s) => (
+            <CompactSessionRow key={s.id} session={s} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
+/** 次回 1 件をフルカードで強調表示 */
+function PrimarySessionCard({ session }: { session: Session }) {
+  const when = formatDate(session.scheduledAt);
+  const dateLabel = dateLabelOf(when);
   const isInProgress = session.status === "in_progress";
   const isSoon = when.diffHours >= 0 && when.diffHours <= 1 && !isInProgress;
 
   return (
-    <Link
-      href={`/student/sessions/${session.id}`}
-      className="block group"
-    >
+    <Link href={`/student/sessions/${session.id}`} className="block group">
       <Card
         className={`relative overflow-hidden rounded-2xl border transition-all ${
           isInProgress
@@ -196,6 +216,31 @@ export function UpcomingSessionCard() {
           )}
         </CardContent>
       </Card>
+    </Link>
+  );
+}
+
+/** 「その次以降」のセッションを 1 行コンパクトに表示 */
+function CompactSessionRow({ session }: { session: Session }) {
+  const when = formatDate(session.scheduledAt);
+  return (
+    <Link
+      href={`/student/sessions/${session.id}`}
+      className="group flex items-center gap-3 rounded-lg border border-border/60 bg-background/80 px-3 py-2 hover:border-border hover:bg-background transition-colors"
+    >
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground shrink-0 min-w-[88px]">
+        <Calendar className="size-3.5" />
+        <span className="font-medium tabular-nums">
+          {dateLabelOf(when)} {when.time}
+        </span>
+      </div>
+      <span className="text-[11px] text-muted-foreground shrink-0">
+        {TYPE_LABEL[session.type] ?? "授業"}
+      </span>
+      <span className="text-xs text-foreground/80 truncate flex-1">
+        {session.teacherName ?? "担当講師"}
+      </span>
+      <ArrowUpRight className="size-3.5 text-muted-foreground shrink-0 group-hover:text-foreground" />
     </Link>
   );
 }

@@ -4,8 +4,14 @@ import type { Session } from "@/lib/types/session";
 
 /**
  * GET /api/student/sessions/upcoming
- * 認証中の生徒の「次回の予定セッション」を 1 件返す
- * 基準: studentId === uid, status in ["scheduled", "in_progress"], scheduledAt >= now-30min
+ * 認証中の生徒の「予定済みセッション」を時系列順で最大 3 件返す。
+ *
+ * 基準: studentId === uid, status in ["scheduled", "in_progress"],
+ *       scheduledAt >= now-30min
+ *
+ * レスポンス:
+ * - sessions: Session[]  ─ 最大 3 件 (ダッシュボードで「次回 + その次」を見せる用)
+ * - session:  Session|null ─ 後方互換 (sessions[0] と同値)
  */
 export async function GET(request: NextRequest) {
   const auth = await requireRole(request, ["student"]);
@@ -24,7 +30,7 @@ export async function GET(request: NextRequest) {
       .where("studentId", "==", auth.uid)
       .where("scheduledAt", ">=", floorIso)
       .orderBy("scheduledAt", "asc")
-      .limit(5)
+      .limit(8)
       .get();
 
     const upcoming = snap.docs
@@ -33,10 +39,13 @@ export async function GET(request: NextRequest) {
         (s) =>
           s.status === "scheduled" ||
           s.status === "in_progress",
-      );
+      )
+      .slice(0, 3);
 
-    const next = upcoming[0] ?? null;
-    return NextResponse.json({ session: next });
+    return NextResponse.json({
+      sessions: upcoming,
+      session: upcoming[0] ?? null, // 後方互換
+    });
   } catch (err) {
     console.error("[student/sessions/upcoming] error:", err);
     return NextResponse.json(

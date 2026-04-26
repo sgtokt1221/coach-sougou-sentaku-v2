@@ -6,23 +6,52 @@
  * - 本物の API レスポンス形式に合わせて作成（実画面の型期待を満たすため）
  */
 
-const upcomingSessionAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 2); // 2 日後
+const sessionDay2 = new Date(Date.now() + 1000 * 60 * 60 * 24 * 2); // 2 日後
+const sessionDay9 = new Date(Date.now() + 1000 * 60 * 60 * 24 * 9); // 9 日後
+const sessionDay16 = new Date(Date.now() + 1000 * 60 * 60 * 24 * 16); // 16 日後
+
+const tourSessionPrimary = {
+  id: "tour-session-1",
+  studentId: "tour-demo-user",
+  teacherId: "tour-teacher-1",
+  teacherName: "コーチ田中",
+  type: "coaching",
+  scheduledAt: sessionDay2.toISOString(),
+  duration: 60,
+  meetLink: "https://meet.example.com/demo-1",
+  status: "scheduled",
+  sharedWithStudent: true,
+};
+
+const tourSessionSecondary = {
+  id: "tour-session-2",
+  studentId: "tour-demo-user",
+  teacherId: "tour-teacher-1",
+  teacherName: "コーチ田中",
+  type: "mock_interview",
+  scheduledAt: sessionDay9.toISOString(),
+  duration: 45,
+  status: "scheduled",
+  sharedWithStudent: true,
+};
+
+const tourSessionTertiary = {
+  id: "tour-session-3",
+  studentId: "tour-demo-user",
+  teacherId: "tour-teacher-1",
+  teacherName: "コーチ田中",
+  type: "essay_review",
+  scheduledAt: sessionDay16.toISOString(),
+  duration: 45,
+  status: "scheduled",
+  sharedWithStudent: true,
+};
 
 export const TUTORIAL_MOCK_API: Record<string, unknown> = {
   // ── ダッシュボード ──
   "/api/student/sessions/upcoming": {
-    session: {
-      id: "tour-session-1",
-      studentId: "tour-demo-user",
-      teacherId: "tour-teacher-1",
-      teacherName: "コーチ田中",
-      type: "coaching",
-      title: "週次コーチング",
-      scheduledAt: upcomingSessionAt.toISOString(),
-      duration: 60,
-      meetingUrl: "https://meet.example.com/demo",
-      status: "scheduled",
-    },
+    sessions: [tourSessionPrimary, tourSessionSecondary, tourSessionTertiary],
+    session: tourSessionPrimary, // 後方互換
   },
 
   "/api/self-analysis?userId=me": {
