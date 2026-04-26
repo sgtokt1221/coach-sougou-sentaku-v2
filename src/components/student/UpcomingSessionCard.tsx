@@ -6,7 +6,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthSWR } from "@/lib/api/swr";
+import { useAuth } from "@/contexts/AuthContext";
 import type { Session, SessionType } from "@/lib/types/session";
+import type { StudentProfile } from "@/lib/types/user";
 
 const TYPE_LABEL: Record<SessionType, string> = {
   coaching: "コーチング",
@@ -48,6 +50,11 @@ function formatDate(iso: string): {
 }
 
 export function UpcomingSessionCard() {
+  const { userProfile } = useAuth();
+  const studentProfile = userProfile as StudentProfile | null;
+  const isCoachPlan =
+    studentProfile?.plan === "coach" || studentProfile?.plan === "standard";
+
   const { data, isLoading } = useAuthSWR<{ session: Session | null }>(
     "/api/student/sessions/upcoming",
     { refreshInterval: 5 * 60 * 1000 },
@@ -58,7 +65,28 @@ export function UpcomingSessionCard() {
   }
 
   const session = data?.session;
-  if (!session) return null;
+
+  // セッション未予定: コーチプランの生徒には「ここに表示されます」プレースホルダーを出す
+  if (!session) {
+    if (!isCoachPlan) return null;
+    return (
+      <Card className="rounded-2xl border-dashed border-border/60 bg-muted/30">
+        <CardContent className="flex items-center gap-3 p-4">
+          <div className="flex size-10 items-center justify-center rounded-xl bg-muted text-muted-foreground shrink-0">
+            <Calendar className="size-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-foreground">
+              次回のセッション予定はまだありません
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              担当コーチがスケジュールするとここに表示されます
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const when = formatDate(session.scheduledAt);
   const dateLabel = when.isToday
@@ -144,14 +172,28 @@ export function UpcomingSessionCard() {
                 </span>
               )}
             </p>
-            {session.meetLink && (isInProgress || isSoon) && (
-              <div className="mt-1.5 inline-flex items-center gap-1 text-xs text-primary">
-                <Video className="size-3" />
-                {isInProgress ? "Meet に参加" : "Meet リンクあり"}
-              </div>
-            )}
           </div>
-          <ArrowUpRight className="size-5 text-muted-foreground shrink-0 group-hover:text-foreground transition-colors" />
+          {/* 開始 1 時間以内 + Meet リンクありなら、詳細ページを経由せず直接 Meet を開く */}
+          {session.meetLink && (isInProgress || isSoon) ? (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                window.open(session.meetLink, "_blank", "noopener,noreferrer");
+              }}
+              className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium shadow-sm shrink-0 transition-colors ${
+                isInProgress
+                  ? "bg-rose-500 hover:bg-rose-600 text-white"
+                  : "bg-amber-500 hover:bg-amber-600 text-white"
+              }`}
+            >
+              <Video className="size-3.5" />
+              Meet に参加
+            </button>
+          ) : (
+            <ArrowUpRight className="size-5 text-muted-foreground shrink-0 group-hover:text-foreground transition-colors" />
+          )}
         </CardContent>
       </Card>
     </Link>
