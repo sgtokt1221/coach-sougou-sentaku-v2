@@ -1,4 +1,5 @@
 import { auth } from "@/lib/firebase/config";
+import { getTutorialMock, isTutorialActive } from "@/lib/tutorial/mocks";
 
 let viewAsAdminUid: string | null = null;
 
@@ -14,15 +15,29 @@ export async function authFetch(
   url: string,
   options: RequestInit = {}
 ): Promise<Response> {
-  // チュートリアル中の非 GET リクエストは握りつぶす (実 DB 汚染防止)
-  if (
-    typeof window !== "undefined" &&
-    localStorage.getItem("tutorialActive") === "true" &&
-    options.method &&
-    options.method.toUpperCase() !== "GET"
-  ) {
-    console.warn("[tutorial] blocked non-GET:", options.method, url);
-    return new Response(null, { status: 204 });
+  // チュートリアル（/tour/*）モード: 実 API を呼ばずにモック・空成功で擬似応答
+  if (isTutorialActive()) {
+    const method = (options.method ?? "GET").toUpperCase();
+    if (method === "GET") {
+      const mock = getTutorialMock(url);
+      if (mock !== null) {
+        return new Response(JSON.stringify(mock), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      // モック未定義の GET は空オブジェクトでフォールバック (実画面の loading/empty を出す)
+      return new Response("{}", {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    // 書き込み系は実 DB 汚染防止のため握りつぶし、空成功扱い
+    console.warn("[tutorial] mocked write:", method, url);
+    return new Response("{}", {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
   const headers = new Headers(options.headers);

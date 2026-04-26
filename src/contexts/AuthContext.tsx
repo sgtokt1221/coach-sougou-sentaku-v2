@@ -11,6 +11,8 @@ import { onAuthStateChanged, type User } from "firebase/auth";
 import { doc, onSnapshot } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase/config";
 import type { UserProfile, PlanType } from "@/lib/types/user";
+import { TUTORIAL_MOCK_PROFILE } from "@/lib/tutorial/mock-profile";
+import { isTutorialActive } from "@/lib/tutorial/mocks";
 
 interface AuthContextValue {
   user: User | null;
@@ -178,6 +180,17 @@ export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
     throw new Error("useAuth must be used within an AuthProvider");
+  }
+  // チュートリアル（/tour/*）モードでは認証なしで動かすため、
+  // モック生徒プロフィールを返して loading=false / user 擬似化する
+  if (isTutorialActive()) {
+    return {
+      user: { uid: TUTORIAL_MOCK_PROFILE.uid, email: TUTORIAL_MOCK_PROFILE.email } as User,
+      userProfile: TUTORIAL_MOCK_PROFILE,
+      loading: false,
+      error: null,
+      refreshProfile: context.refreshProfile,
+    };
   }
   return context;
 }
