@@ -224,6 +224,64 @@ export const TUTORIAL_MOCK_API: Record<string, unknown> = {
   // 通知未読バッジ等
   "/api/student/feedback?countOnly=true": { count: 1 },
   "/api/student/feedback": { feedbacks: [] },
+
+  // ── 出願書類 ──
+  "/api/documents": {
+    documents: [
+      {
+        id: "tour-doc-1",
+        userId: "tour-demo-user",
+        universityId: "kansai-univ",
+        facultyId: "law",
+        type: "志望理由書",
+        content: "私が貴学の法学部を志望する理由は、地域コミュニティの問題解決に法律の側面から取り組みたいからです。文化祭実行委員長として住民連携イベントを企画した際、…",
+        wordCount: 1250,
+        targetWordCount: 1600,
+        status: "draft",
+        deadline: new Date(Date.now() + 1000 * 60 * 60 * 24 * 14).toISOString(),
+        updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(),
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(),
+      },
+      {
+        id: "tour-doc-2",
+        userId: "tour-demo-user",
+        universityId: "kansai-univ",
+        facultyId: "law",
+        type: "活動報告書",
+        content: "高校時代に取り組んだ主な活動は文化祭実行委員長と…",
+        wordCount: 400,
+        targetWordCount: 1000,
+        status: "draft",
+        deadline: new Date(Date.now() + 1000 * 60 * 60 * 24 * 14).toISOString(),
+        updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
+      },
+    ],
+  },
+
+  // ── 面接 ──
+  "/api/interview/realtime-status": {
+    canUseRealtime: true,
+    daysUntilNext: 0,
+    nextAvailableAt: null,
+  },
+
+  // ── 大学情報 ──
+  "/api/universities": {
+    universities: [
+      {
+        id: "kansai-univ",
+        name: "関西大学",
+        faculties: [
+          {
+            id: "law",
+            name: "法学部",
+            admissionPolicy: "法的思考力と社会への問題意識を持つ意欲的な学生を求める。",
+          },
+        ],
+      },
+    ],
+  },
 };
 
 /**
