@@ -25,7 +25,7 @@ import { buildWhisperPrompt } from "@/lib/interview/whisper-context";
 import type { InterviewMessage, InterviewMode } from "@/lib/types/interview";
 
 /** AI 発話終了からマイクを再開するまでの待機時間 (末尾エコー対策) */
-const MIC_RESUME_DELAY_MS = 500;
+const MIC_RESUME_DELAY_MS = 1000;
 
 /**
  * transcript が transcription prompt の漏れ (echo + prompt hallucination) と思われる場合 true。
@@ -92,9 +92,16 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
   const micStreamRef = useRef<MediaStream | null>(null);
   const optsRef = useRef(options);
-  /** AI 応答中フラグ。考え中バブル → delta → done の差し替えと、マイク制御に使う */
+  /** AI 応答中フラグ。マイク制御 (mute/unmute) に使う */
   const isAiRespondingRef = useRef(false);
-  /** マイク再開予定の setTimeout ID (AI 応答終了後 500ms に再開) */
+  /**
+   * AI transcript ストリーミング中フラグ。
+   * 初回 delta で append、以降 update last、done でリセット。
+   * response.created で勝手にバブルを生やすと多重化するため、
+   * バブル生成は必ず first-delta タイミングで行う。
+   */
+  const isAiStreamingRef = useRef(false);
+  /** マイク再開予定の setTimeout ID (AI 応答終了後に再開) */
   const micResumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     optsRef.current = options;
@@ -129,6 +136,7 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
       micResumeTimerRef.current = null;
     }
     isAiRespondingRef.current = false;
+    isAiStreamingRef.current = false;
     if (sessionRef.current) {
       sessionRef.current.close();
       sessionRef.current = null;
@@ -294,29 +302,50 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
             console.warn("[useRealtimeInterview] dropping echoed transcription-prompt:", text.slice(0, 60));
             return;
           }
+          // ユーザー発話が確定したら AI streaming 状態は強制リセット
+          isAiStreamingRef.current = false;
           appendMessage({ role: "student", content: text });
         },
         onResponseStart: () => {
-          // AI が応答開始: マイクをミュートしてエコーループを断つ
+          // AI が応答開始:
+          // 1) マイクをミュートしてエコーループを断つ
+          // 2) サーバー側の入力音声バッファを強制クリア (ミュート前の残留を破棄)
+          // バブル生成は意図的に行わない (first-delta で 1 個だけ生やす)
           isAiRespondingRef.current = true;
           if (micResumeTimerRef.current) {
             clearTimeout(micResumeTimerRef.current);
             micResumeTimerRef.current = null;
           }
           setMicEnabled(false);
-          // 「考え中」プレースホルダーバブルを生やす
-          appendMessage({ role: "ai", content: "", isThinking: true });
+          try {
+            sessionRef.current?.sendEvent({ type: "input_audio_buffer.clear" });
+          } catch {
+            /* noop */
+          }
         },
         onAssistantTranscriptDelta: (cumulative) => {
-          // 部分テキストで考え中バブルを差し替え (タイプライター風)
-          updateLastAiMessage({ content: cumulative, isThinking: false });
+          // 初回 delta = 新規 AI バブルを生やすタイミング。
+          // response.created の重複発火では生やさず、ここで 1 個だけ生える。
+          if (!isAiStreamingRef.current) {
+            isAiStreamingRef.current = true;
+            appendMessage({ role: "ai", content: cumulative });
+          } else {
+            updateLastAiMessage({ content: cumulative });
+          }
         },
         onAssistantTranscript: (text) => {
-          // 最終 transcript で確定。delta が来なかったケース (考え中のまま) でも置換する
-          updateLastAiMessage({ content: text, isThinking: false });
+          // 最終 transcript で確定。streaming 中なら同バブルを置換、
+          // delta が来なかった場合は append フォールバック。
+          if (isAiStreamingRef.current) {
+            updateLastAiMessage({ content: text });
+            isAiStreamingRef.current = false;
+          } else {
+            appendMessage({ role: "ai", content: text });
+          }
         },
         onResponseEnd: () => {
           isAiRespondingRef.current = false;
+          isAiStreamingRef.current = false;
           // 末尾エコー回避のため少し待ってからマイクを再開
           micResumeTimerRef.current = setTimeout(() => {
             setMicEnabled(true);

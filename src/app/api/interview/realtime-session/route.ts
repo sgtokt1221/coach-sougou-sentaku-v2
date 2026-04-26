@@ -110,12 +110,15 @@ async function issueEphemeralToken(
           instructions: params.instructions,
           // ユーザー発話を gpt-4o-mini-transcribe で文字起こし (日本語固定 + 学部語彙ヒント)
           input_audio_transcription: transcriptionConfig,
-          // サーバー VAD でユーザーの発話終了を検知して即応答生成
+          // サーバー VAD でユーザーの発話終了を検知して即応答生成。
+          // threshold/silence は AI 応答中の誤検知 (息・キーボード・微エコー)
+          // で response がキャンセルされる事故を防ぐため、デフォルトより
+          // 鈍感めにチューニング。
           turn_detection: {
             type: "server_vad",
-            threshold: 0.5,
+            threshold: 0.8,
             prefix_padding_ms: 300,
-            silence_duration_ms: 500,
+            silence_duration_ms: 800,
           },
         }),
       });

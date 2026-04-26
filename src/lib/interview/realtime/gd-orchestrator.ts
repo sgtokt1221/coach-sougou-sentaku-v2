@@ -115,9 +115,9 @@ export class GdOrchestrator {
       moderator.updateSession({
         turn_detection: {
           type: "server_vad",
-          threshold: 0.5,
+          threshold: 0.8,
           prefix_padding_ms: 300,
-          silence_duration_ms: 500,
+          silence_duration_ms: 800,
           create_response: false,
         },
         input_audio_transcription: { model: "whisper-1" },
@@ -149,6 +149,9 @@ export class GdOrchestrator {
   private onUserTranscript(text: string): void {
     if (this.isClosed || !text.trim()) return;
 
+    // ユーザー発話確定: AI streaming 状態をリセット (次の AI 応答は新バブル)
+    this.streamingSpeaker = null;
+
     // UI にユーザーメッセージを表示
     this.opts.onMessageAppend?.({ role: "student", content: text });
 
@@ -172,23 +175,38 @@ export class GdOrchestrator {
     if (sess) sess.triggerResponse();
   }
 
-  /** 話者の応答開始: AI 発話中フラグを立て、考え中バブルを生やす */
+  /**
+   * 話者の応答開始: AI 発話中フラグを立てる + 入力バッファクリア。
+   * バブル生成は first-delta で行うため、ここでは何も append しない。
+   */
   private onResponseStart(speaker: ActiveSpeaker): void {
     if (this.isClosed) return;
-    this.streamingSpeaker = speaker;
     this.opts.onAiRespondingChange?.(true);
-    const displayName = GD_SPEAKERS[speaker].displayName;
-    this.opts.onMessageAppend?.({ role: "ai", content: `【${displayName}】`, isThinking: true });
+    // moderator セッションだけがマイクを持つので、moderator の入力バッファをクリア
+    const moderator = this.sessions.get("moderator");
+    try {
+      moderator?.sendEvent({ type: "input_audio_buffer.clear" });
+    } catch {
+      /* noop */
+    }
+    // streamingSpeaker のセットは first-delta 側で行う
+    void speaker;
   }
 
-  /** 部分 transcript で考え中バブルを差し替え (タイプライター風) */
+  /**
+   * 部分 transcript: 初回 delta なら append、以降は update last。
+   * response.created の重複発火に依存せず、必ず 1 バブル/応答 を保証する。
+   */
   private onAssistantTranscriptDelta(speaker: ActiveSpeaker, cumulative: string): void {
     if (this.isClosed) return;
     const displayName = GD_SPEAKERS[speaker].displayName;
-    this.opts.onMessageUpdateLast?.({
-      content: `【${displayName}】${cumulative}`,
-      isThinking: false,
-    });
+    const prefixedContent = `【${displayName}】${cumulative}`;
+    if (this.streamingSpeaker !== speaker) {
+      this.streamingSpeaker = speaker;
+      this.opts.onMessageAppend?.({ role: "ai", content: prefixedContent });
+    } else {
+      this.opts.onMessageUpdateLast?.({ content: prefixedContent });
+    }
   }
 
   /** 応答セッションの transcript 確定: UI を最終化 + 他セッションに broadcast */
@@ -198,8 +216,14 @@ export class GdOrchestrator {
     const displayName = GD_SPEAKERS[speaker].displayName;
     const prefixedContent = `【${displayName}】${text}`;
 
-    // 直近の AI バブルを最終 transcript で置き換える
-    this.opts.onMessageUpdateLast?.({ content: prefixedContent, isThinking: false });
+    if (this.streamingSpeaker === speaker) {
+      // streaming 中: 直近の AI バブルを最終 transcript で置き換える
+      this.opts.onMessageUpdateLast?.({ content: prefixedContent });
+      this.streamingSpeaker = null;
+    } else {
+      // delta が来なかった場合のフォールバック
+      this.opts.onMessageAppend?.({ role: "ai", content: prefixedContent });
+    }
 
     // 他 2 セッションに「他者の発言」として broadcast
     // role=user で注入することで「他の参加者がこう言った」と認識させる
