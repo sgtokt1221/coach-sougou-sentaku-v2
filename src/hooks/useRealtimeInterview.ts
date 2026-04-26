@@ -308,8 +308,10 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
         },
         onResponseStart: () => {
           // AI が応答開始:
-          // 1) マイクをミュートしてエコーループを断つ
-          // 2) サーバー側の入力音声バッファを強制クリア (ミュート前の残留を破棄)
+          // 1) サーバー VAD を完全停止 → AI 自身の音声エコーで誤検知 →
+          //    新たな response が auto-create される事故を根絶
+          // 2) マイクをミュートしてエコーループを断つ
+          // 3) サーバー側の入力音声バッファを強制クリア (ミュート前の残留を破棄)
           // バブル生成は意図的に行わない (first-delta で 1 個だけ生やす)
           isAiRespondingRef.current = true;
           if (micResumeTimerRef.current) {
@@ -318,6 +320,7 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
           }
           setMicEnabled(false);
           try {
+            sessionRef.current?.updateSession({ turn_detection: null });
             sessionRef.current?.sendEvent({ type: "input_audio_buffer.clear" });
           } catch {
             /* noop */
@@ -346,9 +349,24 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
         onResponseEnd: () => {
           isAiRespondingRef.current = false;
           isAiStreamingRef.current = false;
-          // 末尾エコー回避のため少し待ってからマイクを再開
+          // 末尾エコー回避のため少し待ってからマイク + VAD を再開。
+          // VAD を null にしていると次のユーザー発話を検知しないので、
+          // ここで元の server_vad 設定に戻す。
           micResumeTimerRef.current = setTimeout(() => {
             setMicEnabled(true);
+            try {
+              sessionRef.current?.updateSession({
+                turn_detection: {
+                  type: "server_vad",
+                  threshold: 0.8,
+                  prefix_padding_ms: 300,
+                  silence_duration_ms: 800,
+                  create_response: true,
+                },
+              });
+            } catch {
+              /* noop */
+            }
             micResumeTimerRef.current = null;
           }, MIC_RESUME_DELAY_MS);
         },
