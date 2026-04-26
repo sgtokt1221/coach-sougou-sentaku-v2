@@ -25,6 +25,8 @@ export type InterviewMode = "individual" | "group_discussion" | "presentation" |
 export interface InterviewMessage {
   role: "ai" | "student";
   content: string;
+  /** AI が応答開始～最初の transcript delta が届くまでの「考え中」プレースホルダー */
+  isThinking?: boolean;
 }
 
 export interface InterviewFeedback {

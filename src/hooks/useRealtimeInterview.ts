@@ -21,7 +21,31 @@ import { authFetch } from "@/lib/api/client";
 import { RealtimeSession } from "@/lib/interview/realtime/client";
 import { GdOrchestrator, type GdOrchestratorTokens } from "@/lib/interview/realtime/gd-orchestrator";
 import type { ActiveSpeaker } from "@/lib/interview/realtime/gd-director";
+import { buildWhisperPrompt } from "@/lib/interview/whisper-context";
 import type { InterviewMessage, InterviewMode } from "@/lib/types/interview";
+
+/** AI 発話終了からマイクを再開するまでの待機時間 (末尾エコー対策) */
+const MIC_RESUME_DELAY_MS = 500;
+
+/**
+ * transcript が transcription prompt の漏れ (echo + prompt hallucination) と思われる場合 true。
+ * 完全一致または 90% 以上一致を「漏れ」とみなして破棄する。
+ */
+function isPromptEcho(transcript: string, prompt: string): boolean {
+  const t = transcript.trim();
+  const p = prompt.trim();
+  if (!t || !p) return false;
+  if (t === p) return true;
+  // どちらかが他方を 90% 以上含めば漏れとみなす
+  const longer = t.length > p.length ? t : p;
+  const shorter = t.length > p.length ? p : t;
+  if (shorter.length === 0) return false;
+  let match = 0;
+  for (let i = 0; i < shorter.length; i++) {
+    if (longer.includes(shorter[i])) match++;
+  }
+  return match / shorter.length >= 0.9 && shorter.length >= 30;
+}
 
 export type RealtimeStatus =
   | "idle"
@@ -43,6 +67,11 @@ interface UseRealtimeInterviewOptions {
   presentationContent?: string;
   /** 毎メッセージ追加時に呼ばれる (会話履歴を上位コンポーネントにシンクしたい場合) */
   onMessageAppend?: (message: InterviewMessage) => void;
+  /**
+   * 直近の AI メッセージの content / isThinking を更新するときに呼ばれる。
+   * 考え中バブルの差し替えと delta ストリーミングで使う。
+   */
+  onMessageUpdateLast?: (patch: { content?: string; isThinking?: boolean }) => void;
 }
 
 interface RealtimeStartResult {
@@ -63,18 +92,43 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
   const micStreamRef = useRef<MediaStream | null>(null);
   const optsRef = useRef(options);
+  /** AI 応答中フラグ。考え中バブル → delta → done の差し替えと、マイク制御に使う */
+  const isAiRespondingRef = useRef(false);
+  /** マイク再開予定の setTimeout ID (AI 応答終了後 500ms に再開) */
+  const micResumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     optsRef.current = options;
   }, [options]);
 
+  const setMicEnabled = useCallback((enabled: boolean) => {
+    const stream = micStreamRef.current;
+    if (!stream) return;
+    for (const track of stream.getAudioTracks()) {
+      track.enabled = enabled;
+    }
+  }, []);
+
   const appendMessage = useCallback((m: InterviewMessage) => {
-    // [DIAGNOSTIC] 呼び出し状況をログ。原因特定後に削除する。
-    console.log("[hook-append]", m.role, "→", m.content.slice(0, 40), "| onMessageAppend:", typeof optsRef.current.onMessageAppend);
     setMessages((prev) => [...prev, m]);
     optsRef.current.onMessageAppend?.(m);
   }, []);
 
+  const updateLastAiMessage = useCallback((patch: { content?: string; isThinking?: boolean }) => {
+    setMessages((prev) => {
+      if (prev.length === 0 || prev[prev.length - 1].role !== "ai") return prev;
+      const copy = [...prev];
+      copy[copy.length - 1] = { ...copy[copy.length - 1], ...patch };
+      return copy;
+    });
+    optsRef.current.onMessageUpdateLast?.(patch);
+  }, []);
+
   const stop = useCallback(() => {
+    if (micResumeTimerRef.current) {
+      clearTimeout(micResumeTimerRef.current);
+      micResumeTimerRef.current = null;
+    }
+    isAiRespondingRef.current = false;
     if (sessionRef.current) {
       sessionRef.current.close();
       sessionRef.current = null;
@@ -182,6 +236,22 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
           model,
           micStream,
           onMessageAppend: appendMessage,
+          onMessageUpdateLast: updateLastAiMessage,
+          onAiRespondingChange: (isResponding) => {
+            isAiRespondingRef.current = isResponding;
+            if (isResponding) {
+              if (micResumeTimerRef.current) {
+                clearTimeout(micResumeTimerRef.current);
+                micResumeTimerRef.current = null;
+              }
+              setMicEnabled(false);
+            } else {
+              micResumeTimerRef.current = setTimeout(() => {
+                setMicEnabled(true);
+                micResumeTimerRef.current = null;
+              }, MIC_RESUME_DELAY_MS);
+            }
+          },
           onError: (err) => {
             console.warn("[useRealtimeInterview] GD orchestrator error", err);
             setError(err.message);
@@ -206,6 +276,12 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
         audioElementRef.current = el;
       }
 
+      // transcription prompt のリーク（エコー → whisper hallucination）検出用
+      const transcriptionPrompt = buildWhisperPrompt(
+        optsRef.current.facultyName,
+        optsRef.current.universityName,
+      );
+
       const session = new RealtimeSession({
         ephemeralToken: tokenData.tokens[0].token,
         model,
@@ -213,10 +289,39 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
         micStream,
         withMic: true,
         onUserTranscript: (text) => {
+          // エコーが whisper に拾われ prompt がリークしたケースを破棄
+          if (isPromptEcho(text, transcriptionPrompt)) {
+            console.warn("[useRealtimeInterview] dropping echoed transcription-prompt:", text.slice(0, 60));
+            return;
+          }
           appendMessage({ role: "student", content: text });
         },
+        onResponseStart: () => {
+          // AI が応答開始: マイクをミュートしてエコーループを断つ
+          isAiRespondingRef.current = true;
+          if (micResumeTimerRef.current) {
+            clearTimeout(micResumeTimerRef.current);
+            micResumeTimerRef.current = null;
+          }
+          setMicEnabled(false);
+          // 「考え中」プレースホルダーバブルを生やす
+          appendMessage({ role: "ai", content: "", isThinking: true });
+        },
+        onAssistantTranscriptDelta: (cumulative) => {
+          // 部分テキストで考え中バブルを差し替え (タイプライター風)
+          updateLastAiMessage({ content: cumulative, isThinking: false });
+        },
         onAssistantTranscript: (text) => {
-          appendMessage({ role: "ai", content: text });
+          // 最終 transcript で確定。delta が来なかったケース (考え中のまま) でも置換する
+          updateLastAiMessage({ content: text, isThinking: false });
+        },
+        onResponseEnd: () => {
+          isAiRespondingRef.current = false;
+          // 末尾エコー回避のため少し待ってからマイクを再開
+          micResumeTimerRef.current = setTimeout(() => {
+            setMicEnabled(true);
+            micResumeTimerRef.current = null;
+          }, MIC_RESUME_DELAY_MS);
         },
         onError: (err) => {
           console.warn("[useRealtimeInterview] session error", err);
@@ -225,19 +330,6 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
       });
       await session.connect();
       sessionRef.current = session;
-
-      // [DIAGNOSTIC] 接続直後と 3 秒後のマイクトラック状態をログ。原因特定後に削除する。
-      const logMic = (tag: string) => {
-        const tracks = micStream.getAudioTracks();
-        console.log(`[mic-check:${tag}]`, tracks.map((t) => ({
-          enabled: t.enabled,
-          muted: t.muted,
-          readyState: t.readyState,
-        })));
-      };
-      logMic("post-connect");
-      setTimeout(() => logMic("+3s"), 3000);
-      setTimeout(() => logMic("+10s"), 10000);
 
       // 接続後、AI 側から挨拶を始めるよう指示
       session.triggerResponse();
@@ -252,7 +344,7 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
       stop();
       return { success: false, fallback: "error" };
     }
-  }, [appendMessage, stop]);
+  }, [appendMessage, updateLastAiMessage, setMicEnabled, stop]);
 
   return {
     status,

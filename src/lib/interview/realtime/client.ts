@@ -46,8 +46,17 @@ export interface RealtimeSessionOptions {
   onEvent?: (event: RealtimeEvent) => void;
   /** ユーザーの発話が確定したときに呼ばれる (input_audio_transcription.completed) */
   onUserTranscript?: (text: string) => void;
+  /**
+   * AI の発話 transcript が部分的に届くたびに呼ばれる (response.audio_transcript.delta)。
+   * 引数は累積された部分テキスト。音声と同期したストリーム表示用。
+   */
+  onAssistantTranscriptDelta?: (cumulativeText: string) => void;
   /** AI の発話テキストが確定したときに呼ばれる */
   onAssistantTranscript?: (text: string) => void;
+  /** AI が応答を開始したとき (response.created) — マイクのミュートや「考え中」UI 用 */
+  onResponseStart?: () => void;
+  /** AI が応答を完了したとき (response.done) — マイクのミュート解除用 */
+  onResponseEnd?: () => void;
   /** 接続エラー */
   onError?: (error: Error) => void;
 }
@@ -57,6 +66,8 @@ export class RealtimeSession {
   private dc: RTCDataChannel | null = null;
   private opts: RealtimeSessionOptions;
   private isClosed = false;
+  /** 現在応答中の AI transcript の累積バッファ。done で空にする */
+  private transcriptBuffer = "";
 
   constructor(opts: RealtimeSessionOptions) {
     this.opts = opts;
@@ -81,23 +92,10 @@ export class RealtimeSession {
 
     // マイクトラックを peer connection に追加 (withMic 時のみ)
     if (withMic && this.opts.micStream) {
-      const tracks = this.opts.micStream.getAudioTracks();
-      // [DIAGNOSTIC] マイクトラックの状態をログ。原因特定後に削除する。
-      console.log("[mic-setup] withMic=true, tracks.length=", tracks.length);
-      for (const track of tracks) {
-        console.log("[mic-track]", {
-          id: track.id,
-          kind: track.kind,
-          label: track.label,
-          enabled: track.enabled,
-          muted: track.muted,
-          readyState: track.readyState,
-          settings: track.getSettings(),
-        });
+      for (const track of this.opts.micStream.getAudioTracks()) {
         pc.addTrack(track, this.opts.micStream);
       }
     } else {
-      console.log("[mic-setup] withMic=false or micStream=null, adding recvonly transceiver. micStream:", !!this.opts.micStream);
       // withMic=false でも OpenAI 側が音声レスポンスを返すためには
       // 受信専用 (recvonly) の audio transceiver を追加する必要がある
       pc.addTransceiver("audio", { direction: "recvonly" });
@@ -163,20 +161,23 @@ export class RealtimeSession {
   }
 
   private handleEvent(event: RealtimeEvent) {
-    // [DIAGNOSTIC] 全 event type をログ。原因特定後に削除する。
-    if (typeof window !== "undefined") {
-      console.log("[realtime-event]", event.type);
-    }
     this.opts.onEvent?.(event);
 
     if (event.type === "conversation.item.input_audio_transcription.completed") {
       const ev = event as Extract<RealtimeEvent, { type: "conversation.item.input_audio_transcription.completed" }>;
-      console.log("[realtime-user-transcript]", ev.transcript?.slice(0, 60));
       this.opts.onUserTranscript?.(ev.transcript);
+    } else if (event.type === "response.created") {
+      this.opts.onResponseStart?.();
+    } else if (event.type === "response.audio_transcript.delta") {
+      const ev = event as Extract<RealtimeEvent, { type: "response.audio_transcript.delta" }>;
+      this.transcriptBuffer += ev.delta;
+      this.opts.onAssistantTranscriptDelta?.(this.transcriptBuffer);
     } else if (event.type === "response.audio_transcript.done") {
       const ev = event as Extract<RealtimeEvent, { type: "response.audio_transcript.done" }>;
-      console.log("[realtime-assistant-transcript]", ev.transcript?.slice(0, 60));
+      this.transcriptBuffer = "";
       this.opts.onAssistantTranscript?.(ev.transcript);
+    } else if (event.type === "response.done") {
+      this.opts.onResponseEnd?.();
     } else if (event.type === "error") {
       const ev = event as Extract<RealtimeEvent, { type: "error" }>;
       console.warn("[realtime-error]", ev.error);

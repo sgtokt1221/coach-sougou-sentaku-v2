@@ -33,6 +33,10 @@ export interface GdOrchestratorOptions {
   micStream: MediaStream;
   /** メッセージ追加コールバック (UI 同期) */
   onMessageAppend?: (message: InterviewMessage) => void;
+  /** 直近 AI メッセージの content / isThinking を更新 (考え中バブル + delta ストリーム) */
+  onMessageUpdateLast?: (patch: { content?: string; isThinking?: boolean }) => void;
+  /** AI 発話中フラグ通知 (上位 hook がマイクをミュートするため) */
+  onAiRespondingChange?: (isResponding: boolean) => void;
   /** エラーコールバック */
   onError?: (error: Error) => void;
 }
@@ -47,6 +51,8 @@ export class GdOrchestrator {
   private lastSpeaker: ActiveSpeaker | null = null;
   private isClosed = false;
   private currentResponseSpeaker: ActiveSpeaker | null = null;
+  /** 現在 transcript がストリーミング中の話者 (考え中バブル → delta 差し替え用) */
+  private streamingSpeaker: ActiveSpeaker | null = null;
   private opts: GdOrchestratorOptions;
 
   constructor(opts: GdOrchestratorOptions) {
@@ -90,7 +96,10 @@ export class GdOrchestrator {
         onUserTranscript: speaker === "moderator"
           ? (text) => this.onUserTranscript(text)
           : undefined,
+        onResponseStart: () => this.onResponseStart(speaker),
+        onAssistantTranscriptDelta: (cumulative) => this.onAssistantTranscriptDelta(speaker, cumulative),
         onAssistantTranscript: (text) => this.onAssistantTranscript(speaker, text),
+        onResponseEnd: () => this.onResponseEnd(speaker),
         onError: (err) => this.opts.onError?.(err),
       });
       await session.connect();
@@ -163,15 +172,34 @@ export class GdOrchestrator {
     if (sess) sess.triggerResponse();
   }
 
-  /** 応答セッションの transcript を受けて UI に追加 + 他セッションに broadcast */
+  /** 話者の応答開始: AI 発話中フラグを立て、考え中バブルを生やす */
+  private onResponseStart(speaker: ActiveSpeaker): void {
+    if (this.isClosed) return;
+    this.streamingSpeaker = speaker;
+    this.opts.onAiRespondingChange?.(true);
+    const displayName = GD_SPEAKERS[speaker].displayName;
+    this.opts.onMessageAppend?.({ role: "ai", content: `【${displayName}】`, isThinking: true });
+  }
+
+  /** 部分 transcript で考え中バブルを差し替え (タイプライター風) */
+  private onAssistantTranscriptDelta(speaker: ActiveSpeaker, cumulative: string): void {
+    if (this.isClosed) return;
+    const displayName = GD_SPEAKERS[speaker].displayName;
+    this.opts.onMessageUpdateLast?.({
+      content: `【${displayName}】${cumulative}`,
+      isThinking: false,
+    });
+  }
+
+  /** 応答セッションの transcript 確定: UI を最終化 + 他セッションに broadcast */
   private onAssistantTranscript(speaker: ActiveSpeaker, text: string): void {
     if (this.isClosed || !text.trim()) return;
 
     const displayName = GD_SPEAKERS[speaker].displayName;
     const prefixedContent = `【${displayName}】${text}`;
 
-    // UI に発話を追加 (prefix 付きで既存の GD 表示ロジックと互換)
-    this.opts.onMessageAppend?.({ role: "ai", content: prefixedContent });
+    // 直近の AI バブルを最終 transcript で置き換える
+    this.opts.onMessageUpdateLast?.({ content: prefixedContent, isThinking: false });
 
     // 他 2 セッションに「他者の発言」として broadcast
     // role=user で注入することで「他の参加者がこう言った」と認識させる
@@ -180,6 +208,13 @@ export class GdOrchestrator {
         sess.addConversationItem("user", prefixedContent);
       }
     }
+  }
+
+  /** 話者の応答終了: AI 発話中フラグを解除 */
+  private onResponseEnd(_speaker: ActiveSpeaker): void {
+    if (this.isClosed) return;
+    this.streamingSpeaker = null;
+    this.opts.onAiRespondingChange?.(false);
   }
 
   private getElapsedSeconds(): number {
