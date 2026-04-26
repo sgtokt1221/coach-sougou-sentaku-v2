@@ -26,6 +26,7 @@ export const TOUR_ORDER = [
   "/tour/dashboard",
   "/tour/self-analysis",
   "/tour/universities",
+  "/tour/skill-check",
   "/tour/essay/new",
   "/tour/documents",
   "/tour/interview/new",
@@ -86,7 +87,7 @@ export const TOUR_PAGES: Record<string, TourPage> = {
   "/tour/universities": {
     title: "志望校マッチング",
     prev: "/tour/self-analysis",
-    next: "/tour/essay/new",
+    next: "/tour/skill-check",
     tooltips: [
       {
         selector: "[data-tour='matching-input']",
@@ -95,9 +96,31 @@ export const TOUR_PAGES: Record<string, TourPage> = {
       },
     ],
   },
+  "/tour/skill-check": {
+    title: "スキルチェック",
+    prev: "/tour/universities",
+    next: "/tour/essay/new",
+    tooltips: [
+      {
+        selector: "[data-tour='skillcheck-tabs']",
+        title: "小論文 / 面接 の 2 軸",
+        description: "それぞれ独立した実力判定テストを月 1 回受けられます。",
+      },
+      {
+        selector: "[data-tour='skillcheck-hero']",
+        title: "受験ボタン",
+        description: "「受験する」を押すと AI 採点付きの本番形式テストが始まります。所要 20 分。",
+      },
+      {
+        selector: "[data-tour='skillcheck-stats']",
+        title: "成長の見える化",
+        description: "受験回数・最新ランク・最新スコア・経過日数を一覧。月をまたいで自分の伸びを追えます。",
+      },
+    ],
+  },
   "/tour/essay/new": {
     title: "小論文添削",
-    prev: "/tour/universities",
+    prev: "/tour/skill-check",
     next: "/tour/documents",
     tooltips: [
       {

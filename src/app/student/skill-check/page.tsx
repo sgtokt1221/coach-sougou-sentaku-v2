@@ -210,15 +210,17 @@ export default function SkillCheckTopPage() {
         </div>
 
         {/* Tab Control */}
-        <SegmentControl
-          value={activeTab}
-          onChange={handleTabChange}
-          options={[
-            { id: "essay", label: "小論文", accent: "blue" },
-            { id: "interview", label: "面接", accent: "rose" },
-          ]}
-          fullWidth
-        />
+        <div data-tour="skillcheck-tabs">
+          <SegmentControl
+            value={activeTab}
+            onChange={handleTabChange}
+            options={[
+              { id: "essay", label: "小論文", accent: "blue" },
+              { id: "interview", label: "面接", accent: "rose" },
+            ]}
+            fullWidth
+          />
+        </div>
       </motion.div>
 
       {activeTab === "essay" && (
@@ -258,6 +260,7 @@ function EssayTab({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
+        data-tour="skillcheck-hero"
       >
         <Card className="overflow-hidden bg-gradient-to-br from-indigo-50 via-white to-sky-50 shadow-lg">
           <CardContent className="p-8">
@@ -297,6 +300,7 @@ function EssayTab({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.1 }}
         className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+        data-tour="skillcheck-stats"
       >
         <Card className="shadow-md">
           <CardContent className="p-4 text-center">
@@ -547,6 +551,7 @@ function InterviewTab({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.1 }}
         className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+        data-tour="skillcheck-stats"
       >
         <Card className="shadow-md">
           <CardContent className="p-4 text-center">

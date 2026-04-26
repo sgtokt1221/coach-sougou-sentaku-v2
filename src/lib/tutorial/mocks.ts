@@ -59,6 +59,29 @@ export const TUTORIAL_MOCK_API: Record<string, unknown> = {
       scores: { total: 38, logic: 9, structure: 8, expression: 8, ap: 8, depth: 5 },
       takenAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
     },
+    history: [
+      {
+        id: "tour-skill-1",
+        rank: "B",
+        category: "social-science",
+        scores: { total: 38, logic: 9, structure: 8, expression: 8, ap: 8, depth: 5 },
+        takenAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
+      },
+      {
+        id: "tour-skill-2",
+        rank: "C",
+        category: "social-science",
+        scores: { total: 32, logic: 7, structure: 7, expression: 7, ap: 6, depth: 5 },
+        takenAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 35).toISOString(),
+      },
+      {
+        id: "tour-skill-3",
+        rank: "C",
+        category: "social-science",
+        scores: { total: 28, logic: 6, structure: 6, expression: 6, ap: 5, depth: 5 },
+        takenAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 65).toISOString(),
+      },
+    ],
     aggregate: {
       attempts: 3,
       bestRank: "B",
@@ -75,6 +98,20 @@ export const TUTORIAL_MOCK_API: Record<string, unknown> = {
       scores: { total: 30, clarity: 8, ap: 8, passion: 7, specificity: 7 },
       takenAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(),
     },
+    history: [
+      {
+        id: "tour-iv-skill-1",
+        rank: "B",
+        scores: { total: 30, clarity: 8, ap: 8, passion: 7, specificity: 7 },
+        takenAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(),
+      },
+      {
+        id: "tour-iv-skill-2",
+        rank: "C",
+        scores: { total: 24, clarity: 6, ap: 6, passion: 6, specificity: 6 },
+        takenAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 38).toISOString(),
+      },
+    ],
     aggregate: {
       attempts: 2,
       bestRank: "B",
