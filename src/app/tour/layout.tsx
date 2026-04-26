@@ -22,6 +22,11 @@ export default function TourLayout({ children }: { children: ReactNode }) {
     if (typeof window === "undefined") return;
     window.localStorage.setItem("tutorialActive", "true");
     setReady(true);
+    // /tour/* から離脱したら必ずフラグを落とす。
+    // 残ったまま実 /student/* に戻るとモックプロフィールが表示されてしまうので。
+    return () => {
+      window.localStorage.removeItem("tutorialActive");
+    };
   }, []);
 
   // localStorage を立ててから子を描画 (SSR と初回 hydration で不一致を避ける)

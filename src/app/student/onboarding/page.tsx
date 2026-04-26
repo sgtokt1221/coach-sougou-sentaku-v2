@@ -84,7 +84,7 @@ export default function OnboardingPage() {
   const handleFinish = async () => {
     await saveAndComplete();
     startTutorial();
-    router.replace("/student/demo/dashboard");
+    router.replace("/tour/dashboard");
   };
 
   const handleConfirmNext = async () => {
@@ -94,7 +94,7 @@ export default function OnboardingPage() {
 
   const handleSkillCheckSkip = async () => {
     startTutorial();
-    router.replace("/student/demo/dashboard");
+    router.replace("/tour/dashboard");
   };
 
   const handleSkillCheckTake = () => {

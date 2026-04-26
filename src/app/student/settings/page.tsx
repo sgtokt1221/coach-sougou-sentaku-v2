@@ -258,7 +258,7 @@ export default function SettingsPage() {
             variant="outline"
             onClick={() => {
               startTutorial();
-              router.push("/student/demo/dashboard");
+              router.push("/tour/dashboard");
             }}
             className="cursor-pointer"
           >
