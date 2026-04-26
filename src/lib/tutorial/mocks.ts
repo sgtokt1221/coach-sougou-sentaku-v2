@@ -241,9 +241,12 @@ export function getTutorialMock(url: string): unknown | null {
 
 /**
  * SSR セーフに「現在チュートリアルモードか」を返す。
- * localStorage を直接見ているので、サーバー側では常に false を返す。
+ * 条件: localStorage.tutorialActive === "true" かつ パスが /tour/* で始まる。
+ * /tour/* 外では一切モック化しないので、サイドバーや戻るボタンで離脱した
+ * 瞬間に本物のプロフィール・データに復帰できる。
  */
 export function isTutorialActive(): boolean {
   if (typeof window === "undefined") return false;
-  return window.localStorage.getItem("tutorialActive") === "true";
+  if (window.localStorage.getItem("tutorialActive") !== "true") return false;
+  return window.location.pathname.startsWith("/tour");
 }

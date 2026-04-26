@@ -115,7 +115,7 @@ export default function StudentDashboard() {
       </div>
 
       {/* Mobile: 志望校を一番上に大きく（フル版） */}
-      <section className="lg:hidden" data-tour="target-universities">
+      <section className="lg:hidden">
         <div className="flex items-center gap-1.5 mb-1.5">
           <GraduationCap className="size-3.5 text-muted-foreground" />
           <h2 className="text-xs lg:text-sm font-semibold text-muted-foreground uppercase tracking-wide">志望校</h2>
@@ -125,7 +125,7 @@ export default function StudentDashboard() {
 
       {/* Mobile: GrowthTree (左3/5) + スキル縦積み (右2/5) */}
       <section className="grid grid-cols-5 gap-2 lg:hidden">
-        <Link href="/student/self-analysis" className="col-span-3 block group" data-tour="growth-tree">
+        <Link href="/student/self-analysis" className="col-span-3 block group">
           {loadingSelfAnalysis ? (
             <div className="h-full min-h-[200px] rounded-2xl border border-border/40 bg-gradient-to-b from-sky-50 to-emerald-50/40 animate-pulse" />
           ) : (
@@ -138,7 +138,7 @@ export default function StudentDashboard() {
           )}
         </Link>
         <div className="col-span-2 flex flex-col gap-2">
-          <Link href="/student/skill-check" className="block flex-1" data-tour="skill-rank-essay">
+          <Link href="/student/skill-check" className="block flex-1">
             <SkillRankPanel
               minimal
               label="小論文レベル"

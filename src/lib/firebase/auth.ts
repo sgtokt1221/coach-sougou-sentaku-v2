@@ -86,5 +86,8 @@ export async function signOutUser() {
   }
   localStorage.removeItem("onboardingCompleted");
   localStorage.removeItem("devRole");
+  // チュートリアルフラグも必ず消す: /tour/* から普通にログアウトしたとき、
+  // フラグが残っていると login 画面でも mock プロフィールが効いてしまう。
+  localStorage.removeItem("tutorialActive");
   window.location.href = "/login";
 }
