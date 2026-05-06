@@ -74,6 +74,14 @@ service cloud.firestore {
         allow create: if request.auth != null && isAdmin();
         allow update: if request.auth != null && request.auth.uid == userId;
       }
+
+      // 執筆ストリーク
+      match /writingStreak/{streakId} {
+        allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
+        allow write: if request.auth != null && (
+          request.auth.uid == userId || isSuperAdmin() || isManagerOf(userId)
+        );
+      }
     }
 
     // 大学データ: 全員読み取り可、管理者のみ書き込み

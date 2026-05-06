@@ -18,6 +18,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { signOutUser } from "@/lib/firebase/auth";
 import { MobileMenuContent } from "./MobileMenuContent";
 import { AdminScopeSelector } from "./AdminScopeSelector";
+import { StreakBadge } from "@/components/streak/StreakBadge";
 
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -107,6 +108,13 @@ export function Header() {
       )}
 
       <div className="md:flex-initial lg:flex-1" />
+
+      {/* 執筆ストリーク（生徒のみ） */}
+      {userProfile?.role === "student" && (
+        <div className="mr-3">
+          <StreakBadge variant="mini" />
+        </div>
+      )}
 
       <DropdownMenu>
         <DropdownMenuTrigger
