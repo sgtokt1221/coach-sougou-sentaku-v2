@@ -6,6 +6,7 @@ export interface Essay {
   targetUniversity: string;
   targetFaculty: string;
   topic?: string;
+  pastQuestionId?: string;
   submittedAt: Date;
   scores?: EssayScores;
   feedback?: EssayFeedback;
@@ -92,6 +93,7 @@ export interface EssayReviewRequest {
   chartDataSummary?: string;
   pastQuestionFacultyName?: string;
   lectureInfo?: string;
+  pastQuestionId?: string;
 }
 
 export interface EssayReviewResponse {

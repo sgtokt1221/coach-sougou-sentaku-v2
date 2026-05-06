@@ -44,6 +44,9 @@ import { PastQuestionChart } from "@/components/essay/PastQuestionChart";
 import { SegmentControl } from "@/components/shared/SegmentControl";
 import { getThemeById, EssayTheme } from "@/data/essay-themes";
 import { getPastQuestionById, summarizeChartData, PastQuestion } from "@/data/essay-past-questions";
+import { DrillRecommendBanner } from "@/components/essay/DrillRecommendBanner";
+import { useAuthSWR } from "@/lib/api/swr";
+import type { DrillRecommendResponse } from "@/lib/types/drill-recommendation";
 
 interface ResolvedUniversity {
   universityId: string;
@@ -152,6 +155,9 @@ export default function EssayNewPage() {
   const [allUniversities, setAllUniversities] = useState<ResolvedUniversity[]>([]);
   const [showAllUniversities, setShowAllUniversities] = useState(false);
   const [loadingUniversities, setLoadingUniversities] = useState(true);
+
+  // ドリル推奨データ取得
+  const { data: drillRecommendData } = useAuthSWR<DrillRecommendResponse>("/api/recommend/drills");
 
   useEffect(() => {
     async function fetchResolved() {
@@ -411,6 +417,7 @@ export default function EssayNewPage() {
             sourceText: pastQuestion.sourceText,
             chartDataSummary: pastQuestion.chartData ? summarizeChartData(pastQuestion.chartData) : undefined,
             pastQuestionFacultyName: pastQuestion.facultyName,
+            pastQuestionId: pastQuestion.id,
             ...(pastQuestion.tedTalk && {
               lectureInfo: `講義タイトル: ${pastQuestion.tedTalk.title}\n講演者: ${pastQuestion.tedTalk.speaker}\n講義時間: ${pastQuestion.tedTalk.durationMinutes}分`,
             }),
@@ -467,6 +474,7 @@ export default function EssayNewPage() {
             sourceText: pastQuestion.sourceText,
             chartDataSummary: pastQuestion.chartData ? summarizeChartData(pastQuestion.chartData) : undefined,
             pastQuestionFacultyName: pastQuestion.facultyName,
+            pastQuestionId: pastQuestion.id,
             ...(pastQuestion.tedTalk && {
               lectureInfo: `講義タイトル: ${pastQuestion.tedTalk.title}\n講演者: ${pastQuestion.tedTalk.speaker}\n講義時間: ${pastQuestion.tedTalk.durationMinutes}分`,
             }),
@@ -674,6 +682,15 @@ export default function EssayNewPage() {
               </div>
             </CardContent>
           </Card>
+        )}
+
+        {/* ドリル推奨バナー */}
+        {step === 1 &&
+         pastQuestion === null &&
+         selectedTheme === null &&
+         drillRecommendData &&
+         drillRecommendData.recommendations.length > 0 && (
+          <DrillRecommendBanner recommendations={drillRecommendData.recommendations} />
         )}
 
         {/* Input mode toggle */}

@@ -20,6 +20,8 @@ import { SkillCheckRefreshBanner } from "@/components/skill-check/SkillCheckRefr
 import { SkillRankPanel } from "@/components/skill-check/SkillRankPanel";
 import type { SkillCheckStatus } from "@/lib/types/skill-check";
 import type { InterviewSkillCheckStatus } from "@/lib/types/interview-skill-check";
+import { DrillRecommendCard } from "@/components/dashboard/DrillRecommendCard";
+import type { DrillRecommendResponse } from "@/lib/types/drill-recommendation";
 
 interface EssayHistoryItem {
   id: string;
@@ -52,6 +54,7 @@ export default function StudentDashboard() {
   const loadingSelfAnalysis = authLoading || loadingSelfAnalysisSWR;
   const { data: skillCheckStatus } = useAuthSWR<SkillCheckStatus>("/api/skill-check/status");
   const { data: interviewSkillStatus } = useAuthSWR<InterviewSkillCheckStatus>("/api/interview-skill-check/status");
+  const { data: drillRecommendData, isLoading: loadingDrillRecommend } = useAuthSWR<DrillRecommendResponse>("/api/recommend/drills");
   const loadingTrend = loadingHistory || loadingInterview;
 
   const { saCompletedSteps, saStepsData } = useMemo(() => {
@@ -206,6 +209,56 @@ export default function StudentDashboard() {
             aggregate={interviewSkillStatus?.aggregate}
           />
         </Link>
+      </section>
+
+      {/* 次に解く問題 */}
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+          <Target className="w-5 h-5 text-primary" />
+          次に解く問題
+        </h2>
+        {loadingDrillRecommend ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+            <Skeleton className="h-48 rounded-xl" />
+            <Skeleton className="h-48 rounded-xl" />
+          </div>
+        ) : drillRecommendData && drillRecommendData.hasTargetUniversities ? (
+          drillRecommendData.recommendations.length > 0 ? (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+              {drillRecommendData.recommendations.slice(0, 2).map((recommendation) => (
+                <DrillRecommendCard
+                  key={recommendation.pastQuestion.id}
+                  recommendation={recommendation}
+                />
+              ))}
+            </div>
+          ) : (
+            <Card className="border-dashed">
+              <CardContent className="flex flex-col items-center justify-center py-12 text-center space-y-2">
+                <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+                <p className="text-sm text-muted-foreground">
+                  志望校の過去問は全て練習済み。学部分野が近い他大学の過去問にも挑戦してみよう
+                </p>
+              </CardContent>
+            </Card>
+          )
+        ) : (
+          <Card className="border-dashed">
+            <CardContent className="flex flex-col items-center justify-center py-12 text-center space-y-2">
+              <GraduationCap className="w-8 h-8 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground mb-2">
+                志望校を登録するとあなた向けのおすすめが表示されます
+              </p>
+              <Link
+                href="/student/universities"
+                className="text-primary hover:underline text-sm font-medium inline-flex items-center gap-1"
+              >
+                志望校を設定する
+                <ArrowUpRight className="w-3 h-3" />
+              </Link>
+            </CardContent>
+          </Card>
+        )}
       </section>
 
       {/* Row 2: 成長ツリー+弱点 | スコア推移 */}
