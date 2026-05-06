@@ -11,7 +11,7 @@ export const maxDuration = 120;
 export async function POST(request: NextRequest) {
   try {
     const body: EssayReviewRequest = await request.json();
-    const { essayId, ocrText, universityId, facultyId, topic, questionType, sourceText, chartDataSummary, pastQuestionFacultyName } = body;
+    const { essayId, ocrText, universityId, facultyId, topic, questionType, sourceText, chartDataSummary, pastQuestionFacultyName, pastQuestionId } = body;
 
     if (!essayId || !ocrText || !universityId || !facultyId) {
       return NextResponse.json(
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
         // essayドキュメントが存在しなければ作成（初回保存）
         const existingEssay = await adminDb.doc(`essays/${essayId}`).get();
         if (!existingEssay.exists) {
-          await adminDb.doc(`essays/${essayId}`).set({
+          const essayData: any = {
             userId: requestUserId,
             ocrText,
             targetUniversity: universityId,
@@ -59,7 +59,14 @@ export async function POST(request: NextRequest) {
             imageUrl: "",
             status: "reviewing",
             submittedAt: new Date(),
-          });
+          };
+
+          // 過去問IDが指定されている場合は追加
+          if (pastQuestionId) {
+            essayData.pastQuestionId = pastQuestionId;
+          }
+
+          await adminDb.doc(`essays/${essayId}`).set(essayData);
         } else {
           essayUserId = existingEssay.data()?.userId ?? requestUserId;
         }
