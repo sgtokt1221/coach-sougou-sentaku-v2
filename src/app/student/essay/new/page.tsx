@@ -32,6 +32,7 @@ import {
   Plus,
   History,
   Download,
+  Sparkles,
 } from "lucide-react";
 import { WeaknessReminderCard } from "@/components/growth/WeaknessReminderCard";
 import { ManuscriptEditor } from "@/components/essay/ManuscriptEditor";
@@ -101,6 +102,8 @@ export default function EssayNewPage() {
   const [step, setStep] = useState(1);
   const [inputMode, setInputMode] = useState<"text" | "image" | "dictation">("text");
   const [directText, setDirectText] = useState("");
+  /** テキスト入力モードの字数制限。過去問・テーマ選択で推奨値に同期、手動編集も可能。 */
+  const [customMaxLength, setCustomMaxLength] = useState(800);
   const [isRecording, setIsRecording] = useState(false);
   const [isDictating, setIsDictating] = useState(false);
   const [ocrWords, setOcrWords] = useState<Array<{ text: string; polygon: number[]; confidence: number }>>([]);
@@ -133,6 +136,15 @@ export default function EssayNewPage() {
       }
     }
   }, [pastQuestionId]);
+
+  // 過去問・テーマの推奨字数を customMaxLength に同期 (手動編集後に再選択した場合のみ反映)
+  useEffect(() => {
+    if (pastQuestion?.wordLimit) {
+      setCustomMaxLength(pastQuestion.wordLimit);
+    } else if (selectedTheme?.wordLimit) {
+      setCustomMaxLength(selectedTheme.wordLimit);
+    }
+  }, [pastQuestion?.wordLimit, selectedTheme?.wordLimit]);
 
   // 志望校解決
   const targetUniversities = (userProfile as Record<string, unknown> | null)?.targetUniversities as string[] | undefined ?? [];
@@ -1064,10 +1076,62 @@ export default function EssayNewPage() {
                   <CardTitle className="text-sm lg:text-base">小論文を入力</CardTitle>
                 </CardHeader>
                 <CardContent className="p-3 lg:p-4 space-y-4">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-2 text-sm">
+                      <label htmlFor="char-limit" className="text-muted-foreground">
+                        字数制限
+                      </label>
+                      <input
+                        id="char-limit"
+                        type="number"
+                        min={50}
+                        max={5000}
+                        step={50}
+                        value={customMaxLength}
+                        onChange={(e) => {
+                          const n = parseInt(e.target.value, 10);
+                          if (!Number.isFinite(n)) return;
+                          setCustomMaxLength(Math.min(5000, Math.max(50, n)));
+                        }}
+                        className="w-20 rounded border bg-background px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                      />
+                      <span className="text-muted-foreground">字</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {[400, 600, 800, 1200, 2000].map((n) => (
+                        <button
+                          key={n}
+                          type="button"
+                          onClick={() => setCustomMaxLength(n)}
+                          className={`text-xs rounded px-2 py-1 border transition-colors cursor-pointer ${
+                            customMaxLength === n
+                              ? "bg-primary text-primary-foreground border-primary"
+                              : "bg-background text-muted-foreground hover:bg-muted"
+                          }`}
+                        >
+                          {n}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  {directText.trim() === "" && (
+                    <div className="rounded-lg border border-amber-200 bg-amber-50/60 dark:border-amber-900 dark:bg-amber-950/20 p-3 flex gap-2.5">
+                      <Sparkles className="size-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                      <div className="text-xs leading-relaxed text-amber-900 dark:text-amber-100">
+                        <p className="font-semibold mb-0.5">書き出しに迷ったら</p>
+                        <p className="hidden lg:block text-amber-800 dark:text-amber-200">
+                          左の <span className="font-medium">AIコーチ</span> に「お題から何を書けばいい?」と話しかけてみよう。気になる論点や書きたい方向を伝えると、一緒に整理してくれます。
+                        </p>
+                        <p className="lg:hidden text-amber-800 dark:text-amber-200">
+                          左下の <span className="font-medium">サポート</span> ボタンから AIコーチ を開いて「お題から何を書けばいい?」と話しかけてみよう。
+                        </p>
+                      </div>
+                    </div>
+                  )}
                   <ManuscriptEditor
                     value={directText}
                     onChange={setDirectText}
-                    maxLength={pastQuestion?.wordLimit ?? 800}
+                    maxLength={customMaxLength}
                     placeholder="ここに小論文を入力してください..."
                   />
                   {error && (

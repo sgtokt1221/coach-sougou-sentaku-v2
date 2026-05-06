@@ -1,5 +1,23 @@
 # CLAUDE.md - CoachFor総合型選抜
 
+## ⚠️ 重要: 「Coach」は2つのプロジェクトがある — 絶対に混同しない
+
+このリポジトリは **CoachFor総合型選抜（v2）** であり、**ノーマルCoach（武田塾系）とは完全に別プロジェクト**。
+
+| 項目 | このプロジェクト | ノーマルCoach |
+|---|---|---|
+| 通称 | **Coach v2 / CoachFor総合型選抜 / 総合型選抜Coach** | **Coach / ノーマルCoach / 武田塾系Coach** |
+| パス | `~/Projects/coach-sougou-sentaku-v2/` | `~/Projects/study-quest/` |
+| 目的 | 総合型選抜の小論文・面接・出願書類のAI添削 | 武田塾型 自学自習管理（参考書ルート + 日次タスク） |
+| Stack | **Next.js 16** + Firebase | **Vite + React 19** + Firebase |
+| 中核価値 | 添削の質・AP合致度 | 継続性・成長実感 |
+| デプロイ | Firebase App Hosting (`coach-app--coach-sougou-sentaku.asia-east1.hosted.app`) | Firebase Hosting |
+
+判断ルール：
+- **小論文/面接/AP/出願書類** の話題 → このプロジェクト（v2）
+- **参考書ルート/日次タスク/学習トラッキング/ポモドーロ/ストリーク（学習時間）** の話題 → ノーマルCoach
+- ユーザーが「Coach」と言ったとき、文脈から判別不能なら必ず確認する
+
 ## 1. Project Overview
 - 総合型選抜（旧AO入試）に特化したAI学習支援Webアプリ
 - 小論文の画像認識添削、大学別AP面接対策、成長トラッキング、ビッグデータ分析

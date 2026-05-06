@@ -407,8 +407,47 @@ export default function InterviewSessionPage() {
   const isVoiceMode = sessionInfo?.inputMode === "voice";
   const modeLabel = sessionInfo ? INTERVIEW_MODE_LABELS[sessionInfo.mode] : "";
 
+  function renderCheatSheet() {
+    if (!sessionInfo) return null;
+    return (
+      <>
+        {/* 指摘されている弱点 */}
+        <div>
+          <p className="text-[11px] font-semibold text-sky-800 dark:text-sky-200 mb-1.5">
+            ⚠ 自分の弱点 (カンペ)
+          </p>
+          {weaknesses.length === 0 ? (
+            <p className="text-xs text-muted-foreground">指摘された弱点はまだありません</p>
+          ) : (
+            <ul className="space-y-0.5">
+              {weaknesses
+                .filter((w) => !w.resolved)
+                .slice(0, 8)
+                .map((w) => (
+                  <li key={w.area} className="text-xs text-foreground/90 flex items-center gap-1.5">
+                    <span className="inline-block size-1.5 rounded-full bg-rose-400" />
+                    <span className="flex-1">{w.area}</span>
+                    <span className="text-[10px] text-muted-foreground">{w.count}回</span>
+                  </li>
+                ))}
+            </ul>
+          )}
+        </div>
+        {/* アドミッションポリシー */}
+        <div>
+          <p className="text-[11px] font-semibold text-sky-800 dark:text-sky-200 mb-1.5">
+            📘 {sessionInfo.universityContext.universityName} {sessionInfo.universityContext.facultyName} のAP
+          </p>
+          <p className="text-xs leading-relaxed text-foreground/85 whitespace-pre-wrap">
+            {sessionInfo.universityContext.admissionPolicy}
+          </p>
+        </div>
+      </>
+    );
+  }
+
   return (
-    <div className="flex flex-col h-[calc(100dvh-3.5rem-76px)] lg:h-[calc(100dvh-3.5rem)] max-w-2xl lg:max-w-3xl mx-auto">
+    <div className="flex flex-col h-[calc(100dvh-3.5rem-76px)] lg:h-[calc(100dvh-3.5rem)] w-full">
       {/* 採点中ローディング */}
       <FluidLoader
         visible={isEnding}
@@ -449,7 +488,7 @@ export default function InterviewSessionPage() {
           </button>
           <button
             onClick={() => setCheatSheetOpen((v) => !v)}
-            className={`p-1.5 rounded-md transition-colors cursor-pointer ${cheatSheetOpen ? "text-sky-600 bg-sky-50" : "text-muted-foreground hover:text-foreground"}`}
+            className={`lg:hidden p-1.5 rounded-md transition-colors cursor-pointer ${cheatSheetOpen ? "text-sky-600 bg-sky-50" : "text-muted-foreground hover:text-foreground"}`}
             title={cheatSheetOpen ? "カンペを閉じる" : "弱点とAPをカンペ表示"}
           >
             <BookOpenCheck className="size-4" />
@@ -476,6 +515,20 @@ export default function InterviewSessionPage() {
         </div>
       </div>
 
+      {/* 2カラムコンテナ: 左=カンペ(PC固定) / 右=チャット領域 */}
+      <div className="flex-1 flex overflow-hidden min-h-0">
+        {/* 左サイドバー: カンペ常時表示 (lg以上のみ) */}
+        {sessionInfo && (
+          <aside className="hidden lg:flex flex-col lg:w-[360px] xl:w-[440px] shrink-0 border-r bg-sky-50/30 dark:bg-sky-950/10 overflow-y-auto">
+            <div className="px-4 py-3 space-y-4">
+              {renderCheatSheet()}
+            </div>
+          </aside>
+        )}
+
+        {/* 右カラム: alerts / messages / memo / input */}
+        <div className="flex-1 flex flex-col min-w-0">
+
       {/* Appearance alert */}
       {appearanceAlert && (
         <div className="mx-4 mt-2 rounded-lg border border-rose-300 bg-rose-50 dark:border-rose-700 dark:bg-rose-950/30 px-3 py-2 text-sm text-rose-700 dark:text-rose-300 animate-in fade-in slide-in-from-top-2">
@@ -491,41 +544,11 @@ export default function InterviewSessionPage() {
         </div>
       )}
 
-      {/* カンペ: 弱点 + アドミッションポリシー */}
+      {/* カンペ: 弱点 + アドミッションポリシー (モバイル: 上部ドロワー / PC: 左サイドバー) */}
       {cheatSheetOpen && sessionInfo && (
-        <div className="mx-4 mt-2 rounded-lg border border-sky-300 bg-sky-50/60 dark:border-sky-700 dark:bg-sky-950/20 shrink-0 animate-in fade-in slide-in-from-top-2">
+        <div className="lg:hidden mx-4 mt-2 rounded-lg border border-sky-300 bg-sky-50/60 dark:border-sky-700 dark:bg-sky-950/20 shrink-0 animate-in fade-in slide-in-from-top-2">
           <div className="max-h-[38vh] overflow-y-auto px-3 py-2.5 space-y-3">
-            {/* 指摘されている弱点 */}
-            <div>
-              <p className="text-[11px] font-semibold text-sky-800 dark:text-sky-200 mb-1.5">
-                ⚠ 自分の弱点 (カンペ)
-              </p>
-              {weaknesses.length === 0 ? (
-                <p className="text-xs text-muted-foreground">指摘された弱点はまだありません</p>
-              ) : (
-                <ul className="space-y-0.5">
-                  {weaknesses
-                    .filter((w) => !w.resolved)
-                    .slice(0, 8)
-                    .map((w) => (
-                      <li key={w.area} className="text-xs text-foreground/90 flex items-center gap-1.5">
-                        <span className="inline-block size-1.5 rounded-full bg-rose-400" />
-                        <span className="flex-1">{w.area}</span>
-                        <span className="text-[10px] text-muted-foreground">{w.count}回</span>
-                      </li>
-                    ))}
-                </ul>
-              )}
-            </div>
-            {/* アドミッションポリシー */}
-            <div>
-              <p className="text-[11px] font-semibold text-sky-800 dark:text-sky-200 mb-1.5">
-                📘 {sessionInfo.universityContext.universityName} {sessionInfo.universityContext.facultyName} のAP
-              </p>
-              <p className="text-xs leading-relaxed text-foreground/85 whitespace-pre-wrap">
-                {sessionInfo.universityContext.admissionPolicy}
-              </p>
-            </div>
+            {renderCheatSheet()}
           </div>
         </div>
       )}
@@ -759,6 +782,10 @@ export default function InterviewSessionPage() {
         )}
       </div>
       )}
+
+        </div>
+      </div>
+      {/* /2カラムコンテナ */}
 
       {/* Camera Preview & Video Analyzer */}
       {videoStream && <CameraPreview mediaStream={videoStream} />}

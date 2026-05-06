@@ -22,10 +22,63 @@ import {
 } from "@/components/ui/sheet";
 import { useAuthSWR } from "@/lib/api/swr";
 import type { University } from "@/lib/types/university";
-import type { Activity } from "@/lib/types/activity";
 import { EssayCoachChat } from "./EssayCoachChat";
 import { SelfAnalysisReference } from "./SelfAnalysisReference";
 import { PastQuestionChart } from "./PastQuestionChart";
+import type {
+  FacultyTopic,
+  FacultyTopicData,
+} from "@/data/faculty-topics/types";
+import { stripHighlights } from "@/lib/topics/highlightParser";
+import { lawTopics } from "@/data/faculty-topics/law";
+import { economicsTopics } from "@/data/faculty-topics/economics";
+import { medicineTopics } from "@/data/faculty-topics/medicine";
+import { nursingTopics } from "@/data/faculty-topics/nursing";
+import { informaticsTopics } from "@/data/faculty-topics/informatics";
+import { engineeringTopics } from "@/data/faculty-topics/engineering";
+import { educationTopics } from "@/data/faculty-topics/education";
+import { psychologyTopics } from "@/data/faculty-topics/psychology";
+import { internationalTopics } from "@/data/faculty-topics/international";
+import { sociologyTopics } from "@/data/faculty-topics/sociology";
+import { businessTopics } from "@/data/faculty-topics/business";
+import { humanitiesTopics } from "@/data/faculty-topics/humanities";
+import { scienceTopics } from "@/data/faculty-topics/science";
+import { agricultureTopics } from "@/data/faculty-topics/agriculture";
+import { pharmacyTopics } from "@/data/faculty-topics/pharmacy";
+import { artSportsTopics } from "@/data/faculty-topics/art-sports";
+
+/** Faculty.academicField から学部別ネタインプットの登録IDへのマッピング */
+const ACADEMIC_FIELD_TO_TOPIC_FACULTY: Record<string, string> = {
+  law: "law",
+  economics: "economics",
+  business: "business",
+  humanities: "humanities",
+  medicine: "medicine",
+  nursing: "nursing",
+  science: "science",
+  agriculture: "agriculture",
+  engineering: "engineering",
+};
+
+/** topic-input 学部ID → 静的データ */
+const FACULTY_TOPIC_DATA: Record<string, FacultyTopicData> = {
+  law: lawTopics,
+  economics: economicsTopics,
+  medicine: medicineTopics,
+  nursing: nursingTopics,
+  informatics: informaticsTopics,
+  engineering: engineeringTopics,
+  education: educationTopics,
+  psychology: psychologyTopics,
+  international: internationalTopics,
+  sociology: sociologyTopics,
+  business: businessTopics,
+  humanities: humanitiesTopics,
+  science: scienceTopics,
+  agriculture: agricultureTopics,
+  pharmacy: pharmacyTopics,
+  "art-sports": artSportsTopics,
+};
 
 type TabId = "reference" | "coach" | "ap" | "neta" | "self";
 
@@ -196,7 +249,9 @@ function PanelBody({
         {active === "ap" && (
           <APReference universityId={universityId} facultyId={facultyId} />
         )}
-        {active === "neta" && <NetaReference />}
+        {active === "neta" && (
+          <NetaReference universityId={universityId} facultyId={facultyId} />
+        )}
         {active === "self" && <SelfAnalysisReference />}
       </div>
     </Card>
@@ -294,121 +349,129 @@ function APReference({
   );
 }
 
-function NetaReference() {
-  const { data, isLoading } = useAuthSWR<{ activities: Activity[] }>(
-    "/api/activities"
+function NetaReference({
+  universityId,
+  facultyId,
+}: {
+  universityId?: string;
+  facultyId?: string;
+}) {
+  const { data, isLoading } = useAuthSWR<University>(
+    universityId ? `/api/universities/${universityId}` : null,
   );
 
-  const activities = data?.activities ?? [];
-  const sorted = [...activities].sort((a, b) => {
-    const ha = a.structuredData ? 0 : 1;
-    const hb = b.structuredData ? 0 : 1;
-    return ha - hb;
-  });
-
+  if (!universityId || !facultyId) {
+    return (
+      <FallbackToTopicIndex
+        message="志望校・学部が選択されていません。学部が決まるとネタインプットを表示できます。"
+      />
+    );
+  }
   if (isLoading) {
     return <div className="p-4 text-sm text-muted-foreground">読み込み中...</div>;
   }
-  if (sorted.length === 0) {
+
+  const faculty = data?.faculties?.find((f) => f.id === facultyId);
+  const academicField = faculty?.academicField;
+  const topicFacultyId = academicField
+    ? ACADEMIC_FIELD_TO_TOPIC_FACULTY[academicField]
+    : undefined;
+  const topicData = topicFacultyId ? FACULTY_TOPIC_DATA[topicFacultyId] : undefined;
+
+  if (!topicData) {
     return (
-      <div className="p-4 text-sm">
-        <p className="mb-2 text-muted-foreground">
-          まだ活動実績が登録されていません。
-        </p>
-        <Link
-          href="/student/activities/new"
-          className="inline-flex items-center gap-1 text-primary hover:underline"
-        >
-          活動を追加する
-          <ChevronRight className="size-3.5" />
-        </Link>
-      </div>
+      <FallbackToTopicIndex
+        message={
+          academicField
+            ? `${faculty?.name ?? "この学部"} のネタインプットはまだ準備中です。`
+            : "この学部にはネタインプットがマッピングされていません。"
+        }
+      />
     );
   }
 
   return (
-    <div className="h-full overflow-y-auto p-3 space-y-2">
-      {sorted.map((a) => (
-        <NetaCard key={a.id} activity={a} />
+    <div className="h-full overflow-y-auto p-3 space-y-3">
+      <div className="px-1">
+        <div className="text-xs text-muted-foreground">学部別ネタインプット</div>
+        <div className="text-sm font-semibold">{topicData.facultyLabel}</div>
+        <Link
+          href={`/student/topic-input/${topicFacultyId}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 mt-1 text-[11px] text-primary hover:underline"
+        >
+          全ネタを別ページで開く
+          <ChevronRight className="size-3" />
+        </Link>
+      </div>
+      {topicData.categories.map((cat) => (
+        <div key={cat.id} className="space-y-1.5">
+          <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide px-1">
+            {cat.label}
+          </div>
+          <div className="space-y-1.5">
+            {cat.topics.map((topic) => (
+              <NetaTopicCard key={topic.id} topic={topic} />
+            ))}
+          </div>
+        </div>
       ))}
     </div>
   );
 }
 
-function NetaCard({ activity }: { activity: Activity }) {
+function FallbackToTopicIndex({ message }: { message: string }) {
+  return (
+    <div className="p-4 text-sm space-y-2">
+      <p className="text-muted-foreground">{message}</p>
+      <Link
+        href="/student/topic-input"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center gap-1 text-primary hover:underline"
+      >
+        ネタインプット一覧を開く
+        <ChevronRight className="size-3.5" />
+      </Link>
+    </div>
+  );
+}
+
+function NetaTopicCard({ topic }: { topic: FacultyTopic }) {
   const [open, setOpen] = useState(false);
-  const sd = activity.structuredData;
   return (
     <div className="rounded-lg border bg-card">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full text-left p-3 cursor-pointer"
+        className="w-full text-left p-2.5 cursor-pointer"
       >
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
-            <div className="text-sm font-medium truncate">{activity.title}</div>
-            <div className="text-xs text-muted-foreground">
-              {activity.category} ・ {activity.period?.start}〜{activity.period?.end || "継続中"}
+            <div className="text-xs font-medium leading-snug">
+              <span className="text-muted-foreground mr-1">#{topic.number}</span>
+              {topic.title}
             </div>
+            {!open && (
+              <div className="text-[11px] text-muted-foreground line-clamp-2 mt-1">
+                {topic.summary}
+              </div>
+            )}
           </div>
-          {sd && (
-            <Badge variant="outline" className="text-[10px] shrink-0">
-              構造化済
-            </Badge>
-          )}
         </div>
       </button>
       {open && (
-        <div className="border-t px-3 py-2 text-xs space-y-2">
-          {sd ? (
-            <>
-              {sd.motivation && (
-                <div>
-                  <span className="font-semibold">動機:</span> {sd.motivation}
-                </div>
-              )}
-              {sd.actions?.length > 0 && (
-                <div>
-                  <span className="font-semibold">行動:</span>
-                  <ul className="list-disc list-inside text-muted-foreground">
-                    {sd.actions.map((x, i) => (
-                      <li key={i}>{x}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {sd.results?.length > 0 && (
-                <div>
-                  <span className="font-semibold">結果:</span>
-                  <ul className="list-disc list-inside text-muted-foreground">
-                    {sd.results.map((x, i) => (
-                      <li key={i}>{x}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {sd.learnings?.length > 0 && (
-                <div>
-                  <span className="font-semibold">学び:</span>
-                  <ul className="list-disc list-inside text-muted-foreground">
-                    {sd.learnings.map((x, i) => (
-                      <li key={i}>{x}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {sd.connection && (
-                <div>
-                  <span className="font-semibold">接続:</span> {sd.connection}
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="whitespace-pre-wrap text-muted-foreground">
-              {activity.description || "(本文なし)"}
+        <div className="border-t px-2.5 py-2 text-[11px] space-y-2">
+          <div className="text-foreground/85 leading-relaxed">{topic.summary}</div>
+          {topic.sections.map((sec) => (
+            <div key={sec.id} className="border-l-2 border-muted pl-2">
+              <div className="text-[11px] font-semibold mb-0.5">{sec.heading}</div>
+              <p className="whitespace-pre-wrap leading-relaxed text-foreground/85">
+                {stripHighlights(sec.body)}
+              </p>
             </div>
-          )}
+          ))}
         </div>
       )}
     </div>
