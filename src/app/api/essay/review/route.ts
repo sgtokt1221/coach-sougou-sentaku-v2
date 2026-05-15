@@ -288,15 +288,6 @@ export async function POST(request: NextRequest) {
     });
 
     const result = { essayId, ocrText, scores, feedback, growthEvents };
-
-    // ストリーク更新（添削処理本体は阻害しない）
-    if (adminDb && essayUserId) {
-      const { updateStreakOnEssayReview } = await import("@/lib/streak/update");
-      updateStreakOnEssayReview(essayUserId, adminDb).catch(err =>
-        console.error("Failed to update writing streak:", err)
-      );
-    }
-
     return NextResponse.json(result);
   } catch (error) {
     console.error("Essay review error:", error);
