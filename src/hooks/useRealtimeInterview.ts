@@ -320,7 +320,7 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
           }
           setMicEnabled(false);
           try {
-            sessionRef.current?.updateSession({ turn_detection: null });
+            sessionRef.current?.updateSession({ audio: { input: { turn_detection: null } } });
             sessionRef.current?.sendEvent({ type: "input_audio_buffer.clear" });
           } catch {
             /* noop */
@@ -356,12 +356,16 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
             setMicEnabled(true);
             try {
               sessionRef.current?.updateSession({
-                turn_detection: {
-                  type: "server_vad",
-                  threshold: 0.8,
-                  prefix_padding_ms: 300,
-                  silence_duration_ms: 800,
-                  create_response: true,
+                audio: {
+                  input: {
+                    turn_detection: {
+                      type: "server_vad",
+                      threshold: 0.8,
+                      prefix_padding_ms: 300,
+                      silence_duration_ms: 800,
+                      create_response: true,
+                    },
+                  },
                 },
               });
             } catch {

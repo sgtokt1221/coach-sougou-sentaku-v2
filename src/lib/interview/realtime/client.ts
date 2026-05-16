@@ -19,10 +19,10 @@ export type RealtimeEvent =
   | { type: "conversation.item.created"; item: unknown }
   | { type: "conversation.item.input_audio_transcription.completed"; transcript: string; item_id: string }
   | { type: "response.created"; response: unknown }
-  | { type: "response.audio.delta"; delta: string }
-  | { type: "response.audio.done" }
-  | { type: "response.audio_transcript.delta"; delta: string }
-  | { type: "response.audio_transcript.done"; transcript: string }
+  | { type: "response.output_audio.delta"; delta: string }
+  | { type: "response.output_audio.done" }
+  | { type: "response.output_audio_transcript.delta"; delta: string }
+  | { type: "response.output_audio_transcript.done"; transcript: string }
   | { type: "response.done"; response: { status: string; output?: unknown[] } }
   | { type: "error"; error: { message: string } }
   | { type: string; [key: string]: unknown };
@@ -48,7 +48,7 @@ export interface RealtimeSessionOptions {
   /** ユーザーの発話が確定したときに呼ばれる (input_audio_transcription.completed) */
   onUserTranscript?: (text: string) => void;
   /**
-   * AI の発話 transcript が部分的に届くたびに呼ばれる (response.audio_transcript.delta)。
+   * AI の発話 transcript が部分的に届くたびに呼ばれる (response.output_audio_transcript.delta)。
    * 引数は累積された部分テキスト。音声と同期したストリーム表示用。
    */
   onAssistantTranscriptDelta?: (cumulativeText: string) => void;
@@ -109,6 +109,9 @@ export class RealtimeSession {
       if (this.isClosed) return;
       try {
         const event = JSON.parse(ev.data) as RealtimeEvent;
+        if (process.env.NODE_ENV === "development") {
+          console.log("[RealtimeEvent]", event.type);
+        }
         this.handleEvent(event);
       } catch (err) {
         console.warn("[RealtimeSession] failed to parse event", err);
@@ -169,12 +172,12 @@ export class RealtimeSession {
       this.opts.onUserTranscript?.(ev.transcript);
     } else if (event.type === "response.created") {
       this.opts.onResponseStart?.();
-    } else if (event.type === "response.audio_transcript.delta") {
-      const ev = event as Extract<RealtimeEvent, { type: "response.audio_transcript.delta" }>;
+    } else if (event.type === "response.output_audio_transcript.delta") {
+      const ev = event as Extract<RealtimeEvent, { type: "response.output_audio_transcript.delta" }>;
       this.transcriptBuffer += ev.delta;
       this.opts.onAssistantTranscriptDelta?.(this.transcriptBuffer);
-    } else if (event.type === "response.audio_transcript.done") {
-      const ev = event as Extract<RealtimeEvent, { type: "response.audio_transcript.done" }>;
+    } else if (event.type === "response.output_audio_transcript.done") {
+      const ev = event as Extract<RealtimeEvent, { type: "response.output_audio_transcript.done" }>;
       this.transcriptBuffer = "";
       this.opts.onAssistantTranscript?.(ev.transcript);
     } else if (event.type === "response.done") {
@@ -183,6 +186,18 @@ export class RealtimeSession {
       const ev = event as Extract<RealtimeEvent, { type: "error" }>;
       console.warn("[realtime-error]", ev.error);
       this.opts.onError?.(new Error(ev.error?.message ?? "unknown realtime error"));
+    } else if (process.env.NODE_ENV === "development") {
+      const known = [
+        "session.created", "session.updated",
+        "input_audio_buffer.speech_started", "input_audio_buffer.speech_stopped",
+        "input_audio_buffer.committed",
+        "conversation.item.created", "conversation.item.added", "conversation.item.done",
+        "conversation.item.input_audio_transcription.delta",
+        "response.output_audio.delta", "response.output_audio.done",
+      ];
+      if (!known.includes(event.type)) {
+        console.warn("[realtime] unhandled event type:", event.type);
+      }
     }
   }
 
