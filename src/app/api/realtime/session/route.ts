@@ -14,20 +14,29 @@ import { requireRole } from "@/lib/api/auth";
 
 // 自己分析・マッチング等の汎用音声チャット用。コスト重視で mini 系を優先。
 // (面接 individual と違い、長時間使用される可能性があるため)
+// 2026-05 GA 移行後は gpt-realtime / gpt-realtime-mini のみが利用可能。
 const REALTIME_MODEL_CANDIDATES = [
   "gpt-realtime-mini",
-  "gpt-4o-mini-realtime-preview-2024-12-17",
-  "gpt-realtime-1.5",
-  "gpt-4o-realtime-preview-2024-12-17",
+  "gpt-realtime",
 ];
 
+// GA レスポンスは { value, expires_at } を直接返すが、互換のため client_secret 形式も受ける。
 interface EphemeralTokenResponse {
-  client_secret: { value: string; expires_at: number };
-  id: string;
+  client_secret?: { value: string; expires_at: number };
+  value?: string;
+  expires_at?: number;
+  id?: string;
+}
+
+function extractToken(data: EphemeralTokenResponse): { value: string; expiresAt: number } | null {
+  const value = data.client_secret?.value ?? data.value;
+  const expiresAt = data.client_secret?.expires_at ?? data.expires_at;
+  if (!value || typeof expiresAt !== "number") return null;
+  return { value, expiresAt };
 }
 
 interface IssueResult {
-  token: EphemeralTokenResponse | null;
+  token: { value: string; expiresAt: number } | null;
   model?: string;
   debugErrors: Array<{ model: string; status: number; body: string }>;
 }
@@ -44,31 +53,46 @@ async function issueEphemeralToken(
     model: "gpt-4o-mini-transcribe",
     language: "ja",
   };
+  if (transcriptionPrompt) {
+    transcriptionConfig.prompt = transcriptionPrompt;
+  }
 
   for (const model of REALTIME_MODEL_CANDIDATES) {
     try {
-      const res = await fetch("https://api.openai.com/v1/realtime/sessions", {
+      const res = await fetch("https://api.openai.com/v1/realtime/client_secrets", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model,
-          voice,
-          instructions,
-          input_audio_transcription: transcriptionConfig,
-          turn_detection: {
-            type: "server_vad",
-            threshold: 0.5,
-            prefix_padding_ms: 300,
-            silence_duration_ms: 500,
+          session: {
+            type: "realtime",
+            model,
+            instructions,
+            output_modalities: ["audio"],
+            audio: {
+              input: {
+                transcription: transcriptionConfig,
+                turn_detection: {
+                  type: "server_vad",
+                  threshold: 0.5,
+                  prefix_padding_ms: 300,
+                  silence_duration_ms: 500,
+                  create_response: true,
+                },
+              },
+              output: { voice },
+            },
           },
         }),
       });
       if (res.ok) {
         const data = (await res.json()) as EphemeralTokenResponse;
-        return { token: data, model, debugErrors };
+        const token = extractToken(data);
+        if (token) return { token, model, debugErrors };
+        debugErrors.push({ model, status: res.status, body: "token shape unrecognized" });
+        continue;
       }
       const body = await res.text().catch(() => "");
       console.warn(`[realtime/session] model ${model} failed: ${res.status} ${body.slice(0, 300)}`);
@@ -119,7 +143,7 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json({
     model: issueResult.model,
-    token: issueResult.token.client_secret.value,
-    expiresAt: issueResult.token.client_secret.expires_at,
+    token: issueResult.token.value,
+    expiresAt: issueResult.token.expiresAt,
   });
 }

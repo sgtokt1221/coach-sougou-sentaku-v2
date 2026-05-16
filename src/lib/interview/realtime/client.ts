@@ -5,8 +5,9 @@
  * アーキテクチャ:
  * - RTCPeerConnection でメディアトラック (音声) をやり取り
  * - RTCDataChannel (`oai-events`) で JSON イベントを送受信
- * - 接続: SDP offer を作って `POST https://api.openai.com/v1/realtime?model=...` に送る
+ * - 接続: SDP offer を作って `POST https://api.openai.com/v1/realtime/calls` に送る (GA API)
  * - Authorization: Bearer {ephemeral_token}
+ * - モデルは ephemeral token (client_secret) のセッション設定に含まれるため query param 不要
  */
 
 export type RealtimeEvent =
@@ -118,7 +119,7 @@ export class RealtimeSession {
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
 
-    const sdpRes = await fetch(`https://api.openai.com/v1/realtime?model=${encodeURIComponent(this.opts.model)}`, {
+    const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
       method: "POST",
       body: offer.sdp,
       headers: {

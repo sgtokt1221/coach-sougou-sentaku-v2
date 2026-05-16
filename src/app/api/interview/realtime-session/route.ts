@@ -26,27 +26,22 @@ import type { InterviewTendency } from "@/lib/types/university";
 /**
  * モデル名のフォールバックチェーン。上から順に試す。
  *
- * 2026/04 時点の OpenAI Realtime モデル価格 (audio in / audio out per 1M tokens):
- * - gpt-realtime-1.5         : $32 / $64   ← 新 GA 版フル (旧 gpt-4o-realtime-preview $40/$80 より安く高品質)
- * - gpt-realtime-mini        : $10 / $20   ← 新 GA 版 mini (旧 gpt-4o-mini-realtime-preview と同価格・品質向上)
- * - gpt-4o-realtime-preview-2024-12-17 : $40 / $80 (旧 preview, fallback)
- * - gpt-4o-mini-realtime-preview-2024-12-17 : $10 / $20 (旧 preview, 最終 fallback)
+ * 2026-05 時点 (Realtime GA 移行後) の OpenAI Realtime モデル:
+ * - gpt-realtime         : 新 GA 版フル (旧 gpt-realtime-1.5 / gpt-4o-realtime-preview の後継)
+ * - gpt-realtime-mini    : 新 GA 版 mini (コスト重視)
  *
- * 個人系では音声品質を優先して GA 版フルを最優先。GA mini が次点 (旧 mini と同コスト)。
+ * Beta API (`/v1/realtime/sessions`) と preview モデルは 2026-05-12 廃止済み。
+ * 個人系では音声品質を優先して GA 版フルを最優先。
  */
 const REALTIME_MODEL_CANDIDATES = [
-  "gpt-realtime-1.5",
+  "gpt-realtime",
   "gpt-realtime-mini",
-  "gpt-4o-realtime-preview-2024-12-17",
-  "gpt-4o-mini-realtime-preview-2024-12-17",
 ];
 
 /** GD モード用の安価チェーン (3 並列のためコスト重視で mini 優先) */
 const REALTIME_MODEL_CANDIDATES_GD = [
   "gpt-realtime-mini",
-  "gpt-4o-mini-realtime-preview-2024-12-17",
-  "gpt-realtime-1.5",
-  "gpt-4o-realtime-preview-2024-12-17",
+  "gpt-realtime",
 ];
 
 // Realtime API がサポートする voice: alloy / ash / ballad / coral / echo / sage / shimmer / verse
@@ -64,13 +59,23 @@ interface CreateSessionParams {
   transcriptionPrompt?: string;
 }
 
+// GA レスポンスは { value, expires_at } を直接返すが、互換のため client_secret 形式も受ける。
 interface EphemeralTokenResponse {
-  client_secret: { value: string; expires_at: number };
-  id: string;
+  client_secret?: { value: string; expires_at: number };
+  value?: string;
+  expires_at?: number;
+  id?: string;
+}
+
+function extractToken(data: EphemeralTokenResponse): { value: string; expiresAt: number } | null {
+  const value = data.client_secret?.value ?? data.value;
+  const expiresAt = data.client_secret?.expires_at ?? data.expires_at;
+  if (!value || typeof expiresAt !== "number") return null;
+  return { value, expiresAt };
 }
 
 interface IssueResult {
-  token: EphemeralTokenResponse | null;
+  token: { value: string; expiresAt: number } | null;
   model?: string;
   debugErrors: Array<{ model: string; status: number; body: string }>;
 }
@@ -98,34 +103,48 @@ async function issueEphemeralToken(
 
   for (const model of modelChain) {
     try {
-      const res = await fetch("https://api.openai.com/v1/realtime/sessions", {
+      const res = await fetch("https://api.openai.com/v1/realtime/client_secrets", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model,
-          voice: params.voice,
-          instructions: params.instructions,
-          // ユーザー発話を gpt-4o-mini-transcribe で文字起こし (日本語固定 + 学部語彙ヒント)
-          input_audio_transcription: transcriptionConfig,
-          // サーバー VAD でユーザーの発話終了を検知して即応答生成。
-          // threshold/silence は AI 応答中の誤検知 (息・キーボード・微エコー)
-          // で response がキャンセルされる事故を防ぐため、デフォルトより
-          // 鈍感めにチューニング。
-          turn_detection: {
-            type: "server_vad",
-            threshold: 0.8,
-            prefix_padding_ms: 300,
-            silence_duration_ms: 800,
+          session: {
+            type: "realtime",
+            model,
+            instructions: params.instructions,
+            output_modalities: ["audio"],
+            audio: {
+              input: {
+                // ユーザー発話を gpt-4o-mini-transcribe で文字起こし (日本語固定 + 学部語彙ヒント)
+                transcription: transcriptionConfig,
+                // サーバー VAD でユーザーの発話終了を検知して即応答生成。
+                // threshold/silence は AI 応答中の誤検知 (息・キーボード・微エコー)
+                // で response がキャンセルされる事故を防ぐため、デフォルトより
+                // 鈍感めにチューニング。
+                turn_detection: {
+                  type: "server_vad",
+                  threshold: 0.8,
+                  prefix_padding_ms: 300,
+                  silence_duration_ms: 800,
+                  create_response: true,
+                },
+              },
+              output: { voice: params.voice },
+            },
           },
         }),
       });
       if (res.ok) {
         const data = (await res.json()) as EphemeralTokenResponse;
-        console.log(`[realtime-session] success with model ${model}`);
-        return { token: data, model, debugErrors };
+        const token = extractToken(data);
+        if (token) {
+          console.log(`[realtime-session] success with model ${model}`);
+          return { token, model, debugErrors };
+        }
+        debugErrors.push({ model, status: res.status, body: "token shape unrecognized" });
+        continue;
       }
       const body = await res.text().catch(() => "");
       console.warn(`[realtime-session] model ${model} failed: ${res.status} ${body.slice(0, 500)}`);
@@ -288,8 +307,8 @@ export async function POST(request: NextRequest) {
       .map((r) => ({
         speaker: r.key,
         voice: r.voice,
-        token: r.issueResult.token!.client_secret.value,
-        expiresAt: r.issueResult.token!.client_secret.expires_at,
+        token: r.issueResult.token!.value,
+        expiresAt: r.issueResult.token!.expiresAt,
       }));
 
     if (successful.length < GD_SPEAKERS.length) {
@@ -345,8 +364,8 @@ export async function POST(request: NextRequest) {
     tokens: [{
       speaker: "interviewer",
       voice,
-      token: issueResult.token.client_secret.value,
-      expiresAt: issueResult.token.client_secret.expires_at,
+      token: issueResult.token.value,
+      expiresAt: issueResult.token.expiresAt,
     }],
   });
 }
