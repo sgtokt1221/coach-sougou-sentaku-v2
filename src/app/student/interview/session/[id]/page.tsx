@@ -12,10 +12,10 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Send, StopCircle, ChevronDown, ChevronUp, Video, VideoOff, Pencil, Check, X, BookOpenCheck } from "lucide-react";
+import { Send, StopCircle, ChevronDown, ChevronUp, Video, VideoOff, Pencil, Check, X, BookOpenCheck, TrendingUp, TrendingDown } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import type { InterviewMessage, InterviewMode, InterviewInputMode, VoiceAnalysis, VideoAnalysis, AppearanceAnalysis } from "@/lib/types/interview";
-import type { WeaknessRecord } from "@/lib/types/growth";
+import { getWeaknessReminderLevel, type WeaknessRecord } from "@/lib/types/growth";
 import { useRealtimeInterview } from "@/hooks/useRealtimeInterview";
 import { INTERVIEW_MODE_LABELS } from "@/lib/types/interview";
 import { FluidLoader } from "@/components/shared/FluidLoader";
@@ -48,6 +48,46 @@ function formatTime(seconds: number): string {
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
+// === 弱点カンペ用ヘルパー ===
+
+const CHEAT_BADGE_MAP: Record<"critical" | "warning" | "improving", { label: string; cls: string }> = {
+  critical: { label: "重要", cls: "bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900" },
+  warning: { label: "要注意", cls: "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900" },
+  improving: { label: "改善中", cls: "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900" },
+};
+
+const CHEAT_SOURCE_LABEL: Record<WeaknessRecord["source"], string> = {
+  interview: "面接由来",
+  interview_skill_check: "面接由来",
+  both: "面接・小論文",
+  lesson: "授業由来",
+  essay: "小論文由来",
+  skill_check: "小論文由来",
+};
+
+function isInterviewSource(s: WeaknessRecord["source"]): boolean {
+  return s === "interview" || s === "interview_skill_check" || s === "both" || s === "lesson";
+}
+
+/**
+ * カンペ用ソート: 1) 面接由来を上に  2) severity 強い順  3) count 降順
+ * resolved は除外。
+ */
+function sortCheatWeaknesses(list: WeaknessRecord[]): WeaknessRecord[] {
+  const weight: Record<string, number> = { critical: 3, warning: 2, normal: 1, improving: 0 };
+  return [...list]
+    .filter((w) => !w.resolved)
+    .sort((a, b) => {
+      const ai = isInterviewSource(a.source) ? 1 : 0;
+      const bi = isInterviewSource(b.source) ? 1 : 0;
+      if (ai !== bi) return bi - ai;
+      const al = getWeaknessReminderLevel(a) ?? "normal";
+      const bl = getWeaknessReminderLevel(b) ?? "normal";
+      if (weight[al] !== weight[bl]) return weight[bl] - weight[al];
+      return b.count - a.count;
+    });
+}
+
 export default function InterviewSessionPage() {
   const router = useRouter();
   const params = useParams();
@@ -71,6 +111,8 @@ export default function InterviewSessionPage() {
   // カンペ機能: 自分の弱点とAPを常時参照できるように
   const [weaknesses, setWeaknesses] = useState<WeaknessRecord[]>([]);
   const [cheatSheetOpen, setCheatSheetOpen] = useState(false);
+  /** 弱点カンペ: 初期は 3 件、クリックで 5 件まで展開 */
+  const [cheatExpanded, setCheatExpanded] = useState(false);
   /** Realtime API を試したか (成功/失敗問わず 1 回だけ試行) */
   const realtimeTriedRef = useRef(false);
   /** Realtime 経路が有効 (true なら従来 Claude 経路は使わない) */
@@ -409,6 +451,11 @@ export default function InterviewSessionPage() {
 
   function renderCheatSheet() {
     if (!sessionInfo) return null;
+    const sortedWeaknesses = sortCheatWeaknesses(weaknesses);
+    const totalShowable = Math.min(sortedWeaknesses.length, 5);
+    const displayLimit = cheatExpanded ? 5 : 3;
+    const visible = sortedWeaknesses.slice(0, displayLimit);
+    const remaining = totalShowable - visible.length;
     return (
       <>
         {/* 指摘されている弱点 */}
@@ -416,21 +463,55 @@ export default function InterviewSessionPage() {
           <p className="text-[11px] font-semibold text-sky-800 dark:text-sky-200 mb-1.5">
             ⚠ 自分の弱点 (カンペ)
           </p>
-          {weaknesses.length === 0 ? (
+          {sortedWeaknesses.length === 0 ? (
             <p className="text-xs text-muted-foreground">指摘された弱点はまだありません</p>
           ) : (
-            <ul className="space-y-0.5">
-              {weaknesses
-                .filter((w) => !w.resolved)
-                .slice(0, 8)
-                .map((w) => (
-                  <li key={w.area} className="text-xs text-foreground/90 flex items-center gap-1.5">
-                    <span className="inline-block size-1.5 rounded-full bg-rose-400" />
-                    <span className="flex-1">{w.area}</span>
-                    <span className="text-[10px] text-muted-foreground">{w.count}回</span>
-                  </li>
-                ))}
-            </ul>
+            <>
+              <ul className="space-y-1">
+                {visible.map((w) => {
+                  const level = getWeaknessReminderLevel(w);
+                  const badge = level && level !== "resolved" ? CHEAT_BADGE_MAP[level] : null;
+                  const trend = w.improving
+                    ? { Icon: TrendingDown, cls: "text-emerald-500" }
+                    : w.count >= 5
+                    ? { Icon: TrendingUp, cls: "text-rose-500" }
+                    : null;
+                  return (
+                    <li
+                      key={w.area}
+                      className="rounded border border-slate-200/70 dark:border-slate-700/50 bg-white/60 dark:bg-slate-900/30 px-2 py-1.5"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        {badge && (
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded border shrink-0 ${badge.cls}`}>
+                            {badge.label}
+                          </span>
+                        )}
+                        <span className="text-xs font-medium flex-1 line-clamp-1 text-foreground/90">
+                          {w.area}
+                        </span>
+                        {trend && <trend.Icon className={`size-3 shrink-0 ${trend.cls}`} />}
+                        <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">
+                          {w.count}回
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        {CHEAT_SOURCE_LABEL[w.source]}
+                      </p>
+                    </li>
+                  );
+                })}
+              </ul>
+              {remaining > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setCheatExpanded(true)}
+                  className="text-[11px] text-sky-700 dark:text-sky-300 hover:underline mt-1.5"
+                >
+                  ▼ あと {remaining}件
+                </button>
+              )}
+            </>
           )}
         </div>
         {/* アドミッションポリシー */}
