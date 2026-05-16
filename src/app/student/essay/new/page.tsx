@@ -43,7 +43,8 @@ import { EssayHistory } from "@/components/essay/EssayHistory";
 import { PastQuestionChart } from "@/components/essay/PastQuestionChart";
 import { SegmentControl } from "@/components/shared/SegmentControl";
 import { getThemeById, EssayTheme } from "@/data/essay-themes";
-import { getPastQuestionById, summarizeChartData, PastQuestion } from "@/data/essay-past-questions";
+import { getPastQuestionById, needsSourceText, summarizeChartData, PastQuestion } from "@/data/essay-past-questions";
+import type { PastQuestionSourceTextResponse } from "@/lib/types/past-question-source";
 
 interface ResolvedUniversity {
   universityId: string;
@@ -117,6 +118,14 @@ export default function EssayNewPage() {
   const pastQuestionId = searchParams?.get("pastQuestion");
   const [pastQuestion, setPastQuestion] = useState<PastQuestion | null>(null);
   const [showRefMaterial, setShowRefMaterial] = useState(true);
+  /** 動的取得した sourceText (本文が静的データに無い過去問用) */
+  const [dynamicSourceText, setDynamicSourceText] = useState<string | null>(null);
+  /** dynamicSourceText が AI 生成サンプルか (true=サンプル, false=実問題文) */
+  const [dynamicIsSample, setDynamicIsSample] = useState<boolean>(false);
+  /** sourceText 取得中フラグ */
+  const [sourceTextLoading, setSourceTextLoading] = useState<boolean>(false);
+  /** sourceText 取得エラー */
+  const [sourceTextError, setSourceTextError] = useState<string | null>(null);
 
   // テーマIDからテーマデータを取得
   useEffect(() => {
@@ -136,6 +145,56 @@ export default function EssayNewPage() {
       }
     }
   }, [pastQuestionId]);
+
+  // 過去問が「本文必須だが sourceText 未登録」なら API で動的取得
+  useEffect(() => {
+    if (!pastQuestion) {
+      setDynamicSourceText(null);
+      setDynamicIsSample(false);
+      setSourceTextError(null);
+      return;
+    }
+    // 静的データに sourceText がある場合は API を叩かない
+    if (pastQuestion.sourceText) {
+      setDynamicSourceText(null);
+      setDynamicIsSample(pastQuestion.isSampleSourceText === true);
+      setSourceTextError(null);
+      return;
+    }
+    if (!needsSourceText(pastQuestion)) {
+      setDynamicSourceText(null);
+      setDynamicIsSample(false);
+      setSourceTextError(null);
+      return;
+    }
+    let cancelled = false;
+    setSourceTextLoading(true);
+    setSourceTextError(null);
+    (async () => {
+      try {
+        const res = await authFetch(`/api/past-questions/${pastQuestion.id}/source-text`);
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.error ?? "本文の取得に失敗しました");
+        }
+        const data = (await res.json()) as PastQuestionSourceTextResponse;
+        if (!cancelled) {
+          setDynamicSourceText(data.sourceText);
+          setDynamicIsSample(data.isSample === true);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setSourceTextError(err instanceof Error ? err.message : "本文の取得に失敗しました");
+          setDynamicSourceText(null);
+        }
+      } finally {
+        if (!cancelled) setSourceTextLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [pastQuestion]);
 
   // 過去問・テーマの推奨字数を customMaxLength に同期 (手動編集後に再選択した場合のみ反映)
   useEffect(() => {
@@ -408,7 +467,7 @@ export default function EssayNewPage() {
           wordLimit: pastQuestion?.wordLimit ?? selectedTheme?.wordLimit,
           ...(pastQuestion && {
             questionType: pastQuestion.questionType,
-            sourceText: pastQuestion.sourceText,
+            sourceText: pastQuestion.sourceText ?? dynamicSourceText ?? undefined,
             chartDataSummary: pastQuestion.chartData ? summarizeChartData(pastQuestion.chartData) : undefined,
             pastQuestionFacultyName: pastQuestion.facultyName,
             ...(pastQuestion.tedTalk && {
@@ -464,7 +523,7 @@ export default function EssayNewPage() {
           wordLimit: pastQuestion?.wordLimit ?? selectedTheme?.wordLimit,
           ...(pastQuestion && {
             questionType: pastQuestion.questionType,
-            sourceText: pastQuestion.sourceText,
+            sourceText: pastQuestion.sourceText ?? dynamicSourceText ?? undefined,
             chartDataSummary: pastQuestion.chartData ? summarizeChartData(pastQuestion.chartData) : undefined,
             pastQuestionFacultyName: pastQuestion.facultyName,
             ...(pastQuestion.tedTalk && {
@@ -510,7 +569,7 @@ export default function EssayNewPage() {
   }
 
   const hasReference = Boolean(
-    pastQuestion && (pastQuestion.sourceText || pastQuestion.chartData),
+    pastQuestion && (pastQuestion.sourceText || dynamicSourceText || pastQuestion.chartData),
   );
   // Step 2 テキスト執筆中は常に 2 カラム (左=参照/コーチ、右=入力)
   const useSideBySide = step >= 2 && inputMode === "text";
@@ -612,12 +671,27 @@ export default function EssayNewPage() {
                 <Badge variant="outline" className="text-xs">{pastQuestion.field}</Badge>
               </div>
 
-              {/* 参考資料プレビュー */}
-              {(pastQuestion.sourceText || pastQuestion.chartData) && (
+              {/* 参考資料プレビュー (静的 sourceText / 動的取得 / chartData) */}
+              {(pastQuestion.sourceText || dynamicSourceText || pastQuestion.chartData || sourceTextLoading || sourceTextError) && (
                 <div className="rounded-lg bg-white/60 border border-indigo-200 p-3 mt-3">
-                  <p className="text-xs font-medium text-indigo-700 mb-2">出題資料（執筆中も参照できます）</p>
-                  {pastQuestion.sourceText && (
-                    <p className="text-xs text-indigo-600 line-clamp-3 whitespace-pre-wrap">{pastQuestion.sourceText}</p>
+                  <div className="flex items-center gap-2 mb-2">
+                    <p className="text-xs font-medium text-indigo-700">出題資料（執筆中も参照できます）</p>
+                    {(dynamicIsSample || pastQuestion.isSampleSourceText) && (
+                      <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-300 text-[10px] py-0 px-1.5">
+                        AI 生成サンプル
+                      </Badge>
+                    )}
+                  </div>
+                  {sourceTextLoading && (
+                    <p className="text-xs text-indigo-500 italic">本文を生成中...（初回は数秒〜十数秒かかります）</p>
+                  )}
+                  {sourceTextError && (
+                    <p className="text-xs text-rose-600">{sourceTextError}</p>
+                  )}
+                  {(pastQuestion.sourceText || dynamicSourceText) && (
+                    <p className="text-xs text-indigo-600 line-clamp-3 whitespace-pre-wrap">
+                      {pastQuestion.sourceText ?? dynamicSourceText}
+                    </p>
                   )}
                   {pastQuestion.chartData && pastQuestion.chartData.length > 0 && (
                     <p className="text-xs text-indigo-600">グラフ {pastQuestion.chartData.length}点</p>
@@ -1059,9 +1133,9 @@ export default function EssayNewPage() {
               universityId={universityId || undefined}
               facultyId={facultyId || undefined}
               referenceMaterial={
-                pastQuestion && (pastQuestion.sourceText || pastQuestion.chartData)
+                pastQuestion && (pastQuestion.sourceText || dynamicSourceText || pastQuestion.chartData)
                   ? {
-                      sourceText: pastQuestion.sourceText,
+                      sourceText: pastQuestion.sourceText ?? dynamicSourceText ?? undefined,
                       chartData: pastQuestion.chartData,
                       questionType: pastQuestion.questionType,
                     }
