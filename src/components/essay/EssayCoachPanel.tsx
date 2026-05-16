@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
   MessageSquare,
@@ -20,6 +20,15 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useAuthSWR } from "@/lib/api/swr";
 import type { University } from "@/lib/types/university";
 import { EssayCoachChat } from "./EssayCoachChat";
@@ -29,6 +38,12 @@ import type {
   FacultyTopic,
   FacultyTopicData,
 } from "@/data/faculty-topics/types";
+import {
+  FACULTY_REGISTRY,
+  FACULTY_CATEGORY_LABELS,
+  type FacultyCategory,
+  type FacultyEntry,
+} from "@/data/faculty-topics/registry";
 import { stripHighlights } from "@/lib/topics/highlightParser";
 import { lawTopics } from "@/data/faculty-topics/law";
 import { economicsTopics } from "@/data/faculty-topics/economics";
@@ -349,6 +364,14 @@ function APReference({
   );
 }
 
+/** 学部選択 UI のカテゴリ表示順 */
+const FACULTY_CATEGORY_ORDER: FacultyCategory[] = [
+  "humanities",
+  "science",
+  "medical",
+  "other",
+];
+
 function NetaReference({
   universityId,
   facultyId,
@@ -360,80 +383,112 @@ function NetaReference({
     universityId ? `/api/universities/${universityId}` : null,
   );
 
-  if (!universityId || !facultyId) {
-    return (
-      <FallbackToTopicIndex
-        message="志望校・学部が選択されていません。学部が決まるとネタインプットを表示できます。"
-      />
-    );
-  }
-  if (isLoading) {
-    return <div className="p-4 text-sm text-muted-foreground">読み込み中...</div>;
-  }
-
+  // 志望校・学部から自動解決した topicFacultyId (取れない場合は undefined)
   const faculty = data?.faculties?.find((f) => f.id === facultyId);
   const academicField = faculty?.academicField;
-  const topicFacultyId = academicField
+  const autoResolvedFacultyId = academicField
     ? ACADEMIC_FIELD_TO_TOPIC_FACULTY[academicField]
     : undefined;
-  const topicData = topicFacultyId ? FACULTY_TOPIC_DATA[topicFacultyId] : undefined;
 
-  if (!topicData) {
-    return (
-      <FallbackToTopicIndex
-        message={
-          academicField
-            ? `${faculty?.name ?? "この学部"} のネタインプットはまだ準備中です。`
-            : "この学部にはネタインプットがマッピングされていません。"
-        }
-      />
-    );
-  }
+  // ユーザーが手動で選んだ学部 (セッション内のみ保持)
+  const [manualFacultyId, setManualFacultyId] = useState<string | undefined>(undefined);
+  const effectiveFacultyId = manualFacultyId ?? autoResolvedFacultyId;
+  const topicData = effectiveFacultyId ? FACULTY_TOPIC_DATA[effectiveFacultyId] : undefined;
+
+  // 利用可能な学部をカテゴリ別にグループ化
+  const groupedFaculties = useMemo(() => {
+    const groups: Record<FacultyCategory, FacultyEntry[]> = {
+      humanities: [],
+      science: [],
+      medical: [],
+      other: [],
+    };
+    for (const f of FACULTY_REGISTRY) {
+      if (f.available) groups[f.category].push(f);
+    }
+    return groups;
+  }, []);
+
+  const showRevertLink =
+    autoResolvedFacultyId &&
+    manualFacultyId &&
+    manualFacultyId !== autoResolvedFacultyId;
 
   return (
-    <div className="h-full overflow-y-auto p-3 space-y-3">
-      <div className="px-1">
-        <div className="text-xs text-muted-foreground">学部別ネタインプット</div>
-        <div className="text-sm font-semibold">{topicData.facultyLabel}</div>
-        <Link
-          href={`/student/topic-input/${topicFacultyId}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 mt-1 text-[11px] text-primary hover:underline"
+    <div className="h-full flex flex-col min-h-0">
+      {/* 学部セレクタ (常設) */}
+      <div className="border-b p-2.5 space-y-1.5 shrink-0">
+        <div className="text-[11px] text-muted-foreground">学部別ネタインプット</div>
+        <Select
+          value={effectiveFacultyId ?? ""}
+          onValueChange={(v: string | null) =>
+            setManualFacultyId(v ?? undefined)
+          }
         >
-          全ネタを別ページで開く
-          <ChevronRight className="size-3" />
-        </Link>
+          <SelectTrigger className="w-full h-9 text-sm">
+            <SelectValue placeholder="学部を選択..." />
+          </SelectTrigger>
+          <SelectContent>
+            {FACULTY_CATEGORY_ORDER.map((cat) => (
+              <SelectGroup key={cat}>
+                <SelectLabel>{FACULTY_CATEGORY_LABELS[cat]}</SelectLabel>
+                {groupedFaculties[cat].map((f) => (
+                  <SelectItem key={f.id} value={f.id}>
+                    {f.label}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            ))}
+          </SelectContent>
+        </Select>
+        {showRevertLink && (
+          <button
+            type="button"
+            onClick={() => setManualFacultyId(undefined)}
+            className="text-[11px] text-primary hover:underline cursor-pointer"
+          >
+            志望学部に戻す
+          </button>
+        )}
       </div>
-      {topicData.categories.map((cat) => (
-        <div key={cat.id} className="space-y-1.5">
-          <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide px-1">
-            {cat.label}
+
+      {/* 本体 */}
+      <div className="flex-1 min-h-0 overflow-y-auto">
+        {isLoading && universityId && !effectiveFacultyId ? (
+          <div className="p-4 text-sm text-muted-foreground">読み込み中...</div>
+        ) : !topicData ? (
+          <div className="p-4 text-sm text-muted-foreground">
+            上のセレクタから学部を選ぶと、その学部のネタインプットが表示されます。
           </div>
-          <div className="space-y-1.5">
-            {cat.topics.map((topic) => (
-              <NetaTopicCard key={topic.id} topic={topic} />
+        ) : (
+          <div className="p-3 space-y-3">
+            <div className="px-1">
+              <div className="text-sm font-semibold">{topicData.facultyLabel}</div>
+              <Link
+                href={`/student/topic-input/${effectiveFacultyId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 mt-1 text-[11px] text-primary hover:underline"
+              >
+                全ネタを別ページで開く
+                <ChevronRight className="size-3" />
+              </Link>
+            </div>
+            {topicData.categories.map((cat) => (
+              <div key={cat.id} className="space-y-1.5">
+                <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide px-1">
+                  {cat.label}
+                </div>
+                <div className="space-y-1.5">
+                  {cat.topics.map((topic) => (
+                    <NetaTopicCard key={topic.id} topic={topic} />
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function FallbackToTopicIndex({ message }: { message: string }) {
-  return (
-    <div className="p-4 text-sm space-y-2">
-      <p className="text-muted-foreground">{message}</p>
-      <Link
-        href="/student/topic-input"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="inline-flex items-center gap-1 text-primary hover:underline"
-      >
-        ネタインプット一覧を開く
-        <ChevronRight className="size-3.5" />
-      </Link>
+        )}
+      </div>
     </div>
   );
 }
