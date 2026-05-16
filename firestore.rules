@@ -82,6 +82,13 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // 過去問サンプル sourceText キャッシュ (動的生成)
+    // 全認証ユーザー read 可、書き込みは API ルート (Admin SDK) 経由のみ
+    match /pastQuestionSourceTexts/{questionId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
     // 面接セッション（トップレベル）: 参加者 + admin/superadmin のみ
     match /interviews/{interviewId} {
       allow read: if request.auth != null && (
