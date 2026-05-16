@@ -27,20 +27,25 @@ import type { InterviewTendency } from "@/lib/types/university";
  * モデル名のフォールバックチェーン。上から順に試す。
  *
  * 2026-05 時点 (Realtime GA 移行後) の OpenAI Realtime モデル:
- * - gpt-realtime         : 新 GA 版フル (旧 gpt-realtime-1.5 / gpt-4o-realtime-preview の後継)
- * - gpt-realtime-mini    : 新 GA 版 mini (コスト重視)
+ * - gpt-realtime-2       : 最新 (2026-05-07 リリース)。GPT-5 級推論 + 128K context
+ *                          + reasoning_effort 調整可能。音声単価は gpt-realtime と同額
+ *                          ($32 in / $64 out per 1M)
+ * - gpt-realtime         : GA 初版 (2025-08-28 snapshot)。gpt-realtime-2 が落ちた時の fallback
+ * - gpt-realtime-mini    : 新 GA 版 mini (コスト重視。$10 in / $20 out per 1M)
  *
  * Beta API (`/v1/realtime/sessions`) と preview モデルは 2026-05-12 廃止済み。
- * 個人系では音声品質を優先して GA 版フルを最優先。
+ * 個人系では深掘り質問の質を優先して gpt-realtime-2 を最優先。
  */
 const REALTIME_MODEL_CANDIDATES = [
+  "gpt-realtime-2",
   "gpt-realtime",
   "gpt-realtime-mini",
 ];
 
-/** GD モード用の安価チェーン (3 並列のためコスト重視で mini 優先) */
+/** GD モード用の安価チェーン (3 話者並列のためコスト重視で mini 優先) */
 const REALTIME_MODEL_CANDIDATES_GD = [
   "gpt-realtime-mini",
+  "gpt-realtime-2",
   "gpt-realtime",
 ];
 

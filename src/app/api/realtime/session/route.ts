@@ -14,9 +14,10 @@ import { requireRole } from "@/lib/api/auth";
 
 // 自己分析・マッチング等の汎用音声チャット用。コスト重視で mini 系を優先。
 // (面接 individual と違い、長時間使用される可能性があるため)
-// 2026-05 GA 移行後は gpt-realtime / gpt-realtime-mini のみが利用可能。
+// fallback は gpt-realtime-2 (最新、$32/$64) → gpt-realtime (GA 初版) の順。
 const REALTIME_MODEL_CANDIDATES = [
   "gpt-realtime-mini",
+  "gpt-realtime-2",
   "gpt-realtime",
 ];
 
