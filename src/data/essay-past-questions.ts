@@ -820,7 +820,7 @@ export const PAST_QUESTIONS: PastQuestion[] = [
   { id: "pq-konan-business-001", universityId: "konan-u", universityName: "甲南大学", facultyName: "経営学部", year: 2024, theme: "経営・ビジネスに関する課題（教科科目型）", description: "公募制推薦入学試験【教科科目型】。教科試験（英語・国語等）に加え、学部によって面接あり。教科科目型の過去問集は公式サイトで入手可能。", type: "frequent", field: "経済" },
 
   // ===== 立命館大学 =====
-  { id: "pq-ritsumeikan-sansha-001", universityId: "ritsumeikan-u", universityName: "立命館大学", facultyName: "産業社会学部", year: 2025, theme: "高校での活動と大学で学びたいテーマの論述", description: "産業社会小論文方式。高校入学以降の活動でアピールしたいものを挙げ、活動を通じて形成された問題意識と大学で学びたいテーマについて論述。1次：小論文（80分）+書類、2次：面接。", type: "past", timeLimit: 80, field: "社会" },
+  { id: "pq-ritsumeikan-sansha-pr-001", universityId: "ritsumeikan-u", universityName: "立命館大学", facultyName: "産業社会学部", year: 2025, theme: "高校での活動と大学で学びたいテーマの論述", description: "産業社会小論文方式。高校入学以降の活動でアピールしたいものを挙げ、活動を通じて形成された問題意識と大学で学びたいテーマについて論述。1次：小論文（80分）+書類、2次：面接。", type: "past", timeLimit: 80, field: "社会" },
   { id: "pq-ritsumeikan-ir-001", universityId: "ritsumeikan-u", universityName: "立命館大学", facultyName: "国際関係学部", year: 2025,
     theme: "講義と資料に基づく国際関係の小論文",
     description: "国際関係学専攻講義選抜方式。第2次選考で与えられた資料と講義をもとに小論文を作成。国際社会の問題について分析力・論述力が問われる。",
