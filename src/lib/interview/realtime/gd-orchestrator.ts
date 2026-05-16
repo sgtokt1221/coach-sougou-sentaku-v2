@@ -113,14 +113,18 @@ export class GdOrchestrator {
     const moderator = this.sessions.get("moderator");
     if (moderator) {
       moderator.updateSession({
-        turn_detection: {
-          type: "server_vad",
-          threshold: 0.8,
-          prefix_padding_ms: 300,
-          silence_duration_ms: 800,
-          create_response: false,
+        audio: {
+          input: {
+            turn_detection: {
+              type: "server_vad",
+              threshold: 0.8,
+              prefix_padding_ms: 300,
+              silence_duration_ms: 800,
+              create_response: false,
+            },
+            transcription: { model: "gpt-4o-mini-transcribe", language: "ja" },
+          },
         },
-        input_audio_transcription: { model: "whisper-1" },
       });
     }
 
@@ -129,7 +133,7 @@ export class GdOrchestrator {
       const sess = this.sessions.get(speaker);
       if (sess) {
         sess.updateSession({
-          turn_detection: null,
+          audio: { input: { turn_detection: null } },
         });
       }
     }
