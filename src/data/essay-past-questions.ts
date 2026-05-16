@@ -14,6 +14,7 @@ export interface PastQuestion {
   type: "past" | "frequent";
   questionType?: "essay" | "english-reading" | "data-analysis" | "mixed" | "lecture"; // 出題形式
   sourceText?: string; // 英文や資料のテキスト（出題文）
+  isSampleSourceText?: boolean; // sourceText が AI 生成の練習サンプルか (実問題文は false/未指定)
   wordLimit?: number;
   timeLimit?: number;
   field: string;
@@ -1730,6 +1731,27 @@ export function getPastQuestionsByField(field: string): PastQuestion[] {
 
 export function getPastQuestionById(id: string): PastQuestion | undefined {
   return PAST_QUESTIONS.find((pq) => pq.id === id);
+}
+
+/**
+ * 過去問が「本文を読んで答える形式」で、かつ sourceText がまだ無いかを判定。
+ * - 既に sourceText がある → false (生成不要)
+ * - frequent タイプは本文不要 → false
+ * - english-reading / data-analysis / mixed は本文必須
+ * - lecture (TED Talks 等) は別経路で映像コンテンツを利用 → false
+ * - essay (自由論述) は本文不要 → false
+ * - questionType 未指定なら description のキーワードで判定
+ */
+export function needsSourceText(q: PastQuestion): boolean {
+  if (q.sourceText) return false;
+  if (q.type === "frequent") return false;
+  if (q.questionType === "english-reading" || q.questionType === "data-analysis" || q.questionType === "mixed") {
+    return true;
+  }
+  if (q.questionType === "essay" || q.questionType === "lecture") return false;
+  return /(以下の(英文|課題文|資料|文章|本文|データ|英語|長文)|課題文を読|資料を読|英文(を|問題|読解|の長文)|英語(長文|の長文|の文章|の課題文|課題文|読解))/.test(
+    q.description,
+  );
 }
 
 export function summarizeChartData(
