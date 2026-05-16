@@ -215,14 +215,17 @@ export class RealtimeSession {
     this.sendEvent({ type: "response.create" });
   }
 
-  /** 会話履歴にテキストアイテムを追加 (user または assistant) */
+  /** 会話履歴にテキストアイテムを追加 (user / assistant / system) */
   addConversationItem(role: "user" | "assistant" | "system", text: string): void {
     this.sendEvent({
       type: "conversation.item.create",
       item: {
         type: "message",
         role,
-        content: [{ type: role === "assistant" ? "text" : "input_text", text }],
+        // GA: conversation.item.create の content は input 側 schema のみ。
+        // assistant role 注入 (GD broadcast 等) でも input_text を使う。
+        // output_text はサーバ生成 output 専用のため client から送れない。
+        content: [{ type: "input_text", text }],
       },
     });
   }
