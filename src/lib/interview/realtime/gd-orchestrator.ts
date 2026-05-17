@@ -175,10 +175,12 @@ export class GdOrchestrator {
 
     // 背景情報メッセージを全セッションに hidden 注入
     // (instructions に含めると AI が末尾を発話に漏らすため、conversation 履歴側で渡す)
+    // **assistant role で投入** することで AI は「自分が把握している内心メモ」と認識し、
+    // user role の場合のように「ユーザーがこう言った」と誤解して引用発話する事故を防ぐ。
     if (this.opts.contextMessage && this.opts.contextMessage.trim()) {
       for (const sess of this.sessions.values()) {
         try {
-          sess.addConversationItem("user", this.opts.contextMessage);
+          sess.addConversationItem("assistant", this.opts.contextMessage);
         } catch {
           /* noop: 接続が不安定なときは skip */
         }
@@ -308,11 +310,12 @@ export class GdOrchestrator {
       this.opts.onMessageAppend?.({ role: "ai", content: prefixedContent });
     }
 
-    // 他 2 セッションに「他者の発言」として broadcast
-    // role=user で注入することで「他の参加者がこう言った」と認識させる
+    // 他 5 セッションに「他者の発言」として broadcast
+    // **assistant role で注入** することで「過去の対話履歴」として認識させ、
+    // user role 投入時に発生する受信側 auto-response (全員同時発話の原因) を防ぐ。
     for (const [sessionSpeaker, sess] of this.sessions) {
       if (sessionSpeaker !== speaker) {
-        sess.addConversationItem("user", prefixedContent);
+        sess.addConversationItem("assistant", prefixedContent);
       }
     }
   }
