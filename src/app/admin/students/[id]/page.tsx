@@ -398,32 +398,6 @@ export default function AdminStudentDetailPage() {
         </div>
       </div>
 
-      {/* Overview Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <Card className="p-3">
-          <p className="text-2xl font-bold">{essays.length}</p>
-          <p className="text-xs text-muted-foreground">添削回数</p>
-        </Card>
-        <Card className="p-3">
-          <p className={`text-2xl font-bold ${essays.length > 0 && essays[0].scores ? scoreColor(essays[0].scores.total) : ""}`}>
-            {essays.length > 0 && essays[0].scores ? essays[0].scores.total : "-"}
-          </p>
-          <p className="text-xs text-muted-foreground">最新スコア /50</p>
-        </Card>
-        <Card className="p-3">
-          <p className="text-2xl font-bold">{weaknesses.filter((w) => !w.resolved).length}</p>
-          <p className="text-xs text-muted-foreground">未解決の弱点</p>
-        </Card>
-        <Card className="p-3">
-          <p className="text-xs text-muted-foreground">最終活動</p>
-          <p className="text-sm font-medium">
-            {lastActivityAt
-              ? new Date(lastActivityAt).toLocaleDateString("ja-JP")
-              : "なし"}
-          </p>
-        </Card>
-      </div>
-
       {/* Skill Ranks: 小論文 + 面接。SC + 直近30日練習の合成ランクを表示 */}
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         <SkillRankPanel
