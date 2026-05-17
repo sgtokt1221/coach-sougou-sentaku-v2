@@ -54,7 +54,6 @@ import {
   Activity,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { AreaChart, Area, ResponsiveContainer } from "recharts";
 import { toast } from "sonner";
 import { authFetch } from "@/lib/api/client";
 import { ScoresTrendChart } from "@/components/growth/ScoresTrendChart";
@@ -133,24 +132,33 @@ function scoreColor(total: number): string {
   return "text-rose-600 dark:text-rose-400";
 }
 
+/** 数値配列の平均を小数点 1 桁文字列で返す。空配列は null。 */
+function avgOrNull(nums: number[]): number | null {
+  if (nums.length === 0) return null;
+  return nums.reduce((a, b) => a + b, 0) / nums.length;
+}
+
 /**
- * ピン留めサマリ (4 セル + アニメ + スパークライン)
+ * ピン留めサマリ (4 セル + Avg モノグラム)
+ * 添削・面接スコアは全期間の平均値を表示。
  */
 function PinnedSummary({ detail }: { detail: StudentDetail }) {
-  const { essays, weaknesses, lastActivityAt, essayScoreTrend, interviewScoreTrend } = detail;
+  const { essays, weaknesses, lastActivityAt, interviewScoreTrend } = detail;
 
-  // 最新添削スコア
-  const latestEssayScore = essays.find(e => e.scores)?.scores?.total ?? null;
-  const essaySparklineData = (essayScoreTrend ?? []).slice(-5).map((p, i) => ({ x: i, y: p.total }));
+  // 平均添削スコア（全期間）
+  const essayTotals = essays
+    .map((e) => e.scores?.total)
+    .filter((s): s is number => typeof s === "number");
+  const avgEssayScore = avgOrNull(essayTotals);
 
-  // 最新面接スコア
-  const latestInterviewScore = interviewScoreTrend && interviewScoreTrend.length > 0
-    ? interviewScoreTrend[interviewScoreTrend.length - 1].total
-    : null;
-  const interviewSparklineData = (interviewScoreTrend ?? []).slice(-5).map((p, i) => ({ x: i, y: p.total }));
+  // 平均面接スコア（全期間）
+  const interviewTotals = (interviewScoreTrend ?? [])
+    .map((p) => p.total)
+    .filter((s): s is number => typeof s === "number");
+  const avgInterviewScore = avgOrNull(interviewTotals);
 
   // 未解決弱点数
-  const unresolvedWeaknessCount = weaknesses.filter(w => !w.resolved).length;
+  const unresolvedWeaknessCount = weaknesses.filter((w) => !w.resolved).length;
 
   // 最終活動（N日前）
   const lastActivityInfo = (() => {
@@ -163,72 +171,54 @@ function PinnedSummary({ detail }: { detail: StudentDetail }) {
 
   const cells = [
     {
-      label: "最新添削スコア",
-      value: latestEssayScore ? `${latestEssayScore}/50` : "—",
-      sparkline: essaySparklineData,
-      color: latestEssayScore ? scoreColor(latestEssayScore) : "text-gray-400",
+      label: "平均添削スコア",
+      value: avgEssayScore !== null ? `${avgEssayScore.toFixed(1)}/50` : "—",
+      color: avgEssayScore !== null ? scoreColor(avgEssayScore) : "text-gray-400",
+      monogram: avgEssayScore !== null ? `Avg n=${essayTotals.length}` : null,
     },
     {
-      label: "最新面接スコア",
-      value: latestInterviewScore ? `${latestInterviewScore}/40` : "—",
-      sparkline: interviewSparklineData,
-      color: latestInterviewScore ? scoreColor(latestInterviewScore * 1.25) : "text-gray-400", // 0-40 → 0-50 換算で色判定
+      label: "平均面接スコア",
+      value: avgInterviewScore !== null ? `${avgInterviewScore.toFixed(1)}/40` : "—",
+      // scoreColor は 0-50 想定。40 点満点を 50 換算 (×1.25) で色判定
+      color: avgInterviewScore !== null ? scoreColor(avgInterviewScore * 1.25) : "text-gray-400",
+      monogram: avgInterviewScore !== null ? `Avg n=${interviewTotals.length}` : null,
     },
     {
       label: "未解決弱点数",
       value: unresolvedWeaknessCount.toString(),
       color: unresolvedWeaknessCount >= 3 ? "text-amber-600" : "text-gray-600",
       pulse: unresolvedWeaknessCount >= 3,
+      monogram: null,
     },
     {
       label: "最終活動",
       value: lastActivityInfo.text,
       color: lastActivityInfo.color,
       icon: Activity,
+      monogram: null,
     },
   ];
 
   return (
     <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
       {cells.map((cell, i) => (
-        <motion.div
+        <div
           key={i}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: i * 0.1 }}
           className={`rounded-lg border bg-background/50 p-3 ${cell.pulse ? "animate-pulse" : ""}`}
         >
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
               <p className="text-xs text-muted-foreground">{cell.label}</p>
-              <motion.p
-                initial={{ scale: 0.8 }}
-                animate={{ scale: 1 }}
-                transition={{ duration: 0.5, delay: i * 0.1 + 0.2 }}
-                className={`text-lg font-semibold ${cell.color}`}
-              >
-                {cell.value}
-              </motion.p>
+              <p className={`text-lg font-semibold ${cell.color}`}>{cell.value}</p>
             </div>
-            {cell.sparkline && cell.sparkline.length > 0 && (
-              <div className="h-8 w-16">
-                <ResponsiveContainer>
-                  <AreaChart data={cell.sparkline}>
-                    <Area
-                      type="monotone"
-                      dataKey="y"
-                      stroke="#6366f1"
-                      fill="#6366f1"
-                      fillOpacity={0.2}
-                      strokeWidth={1.5}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
+            {cell.monogram && (
+              <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground tabular-nums">
+                · {cell.monogram}
+              </span>
             )}
-            {cell.icon && <cell.icon className="size-4 text-muted-foreground" />}
+            {cell.icon && <cell.icon className="size-4 shrink-0 text-muted-foreground" />}
           </div>
-        </motion.div>
+        </div>
       ))}
     </div>
   );
