@@ -226,13 +226,16 @@ export class GdOrchestrator {
     this.opts.onMessageAppend?.({ role: "student", content: text });
 
     // moderator 以外のセッションに user 発言を注入 (moderator は自分で発話を聞いている)
+    // prefix で「ユーザー (もう一人の受験生) の発言」と明示し、誰の発言か
+    // 受け手が認識できるようにする (テーマ準拠 + 受け止め指示が正しく働く)。
     // user role 投入後は念のため cancelResponse で auto-trigger を物理停止
     // (orchestrator が advanceTurn 経由で明示 triggerResponse する)
+    const broadcastContent = `[他の参加者の発言 - もう一人の受験生]\n${text}`;
     for (const speaker of SPEAKERS_ORDER) {
       if (speaker === "moderator") continue;
       const sess = this.sessions.get(speaker);
       if (sess) {
-        sess.addConversationItem("user", text);
+        sess.addConversationItem("user", broadcastContent);
         try { sess.cancelResponse(); } catch { /* noop */ }
       }
     }
@@ -375,11 +378,17 @@ export class GdOrchestrator {
 
 
     // 他 5 セッションに「他者の発言」として broadcast
-    // **assistant role で注入** することで「過去の対話履歴」として認識させ、
-    // 加えて cancelResponse で auto-response を物理停止 (orchestrator 制御に一本化)
+    // **user role で「外部入力」として投入** する。assistant role で投入すると
+    // 受け手 AI が「自分の過去発言」と誤認し、テーマや他者発言を「他者の発言」
+    // として認識しなくなる (= 議論が噛み合わない原因)。
+    // prefix で「他の参加者の発言 - 〇〇」と明示して、受け手が誰の発言かを
+    // 認識できるようにする。
+    // GD は全 session が create_response: false + cancelResponse 保険で
+    // user role 投入による auto response は走らない。
+    const broadcastContent = `[他の参加者の発言 - ${displayName}]\n${text}`;
     for (const [sessionSpeaker, sess] of this.sessions) {
       if (sessionSpeaker !== speaker) {
-        sess.addConversationItem("assistant", prefixedContent);
+        sess.addConversationItem("user", broadcastContent);
         try { sess.cancelResponse(); } catch { /* noop */ }
       }
     }
