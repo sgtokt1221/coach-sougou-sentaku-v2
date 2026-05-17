@@ -212,7 +212,7 @@ export default function InterviewResultPage() {
             </Button>
             <div className="flex-1">
               <h1 className="text-xl lg:text-2xl font-semibold tracking-tight text-slate-900">
-                面接練習 結果
+                面接結果
               </h1>
               <p className="text-sm text-muted-foreground mt-1">
                 {result.universityName} {result.facultyName}
@@ -321,7 +321,7 @@ export default function InterviewResultPage() {
               </div>
             </div>
             <Badge variant="outline" className="text-xs">
-              面接練習結果
+              面接結果
             </Badge>
           </div>
         </div>

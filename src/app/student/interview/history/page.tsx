@@ -81,7 +81,7 @@ export default function InterviewHistoryPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-lg lg:text-xl font-bold flex items-center gap-2">
           <TrendingUp className="size-5" />
-          面接練習履歴
+          面接履歴
         </h1>
         <Button onClick={() => router.push("/student/interview/new")}>
           <Plus className="size-4 mr-2" />

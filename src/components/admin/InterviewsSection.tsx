@@ -132,7 +132,7 @@ export function InterviewsSection({ studentId }: { studentId: string }) {
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2 text-base">
               <Mic className="size-4" />
-              面接練習
+              面接履歴
               {!isLoading && <Badge variant="secondary" className="text-xs ml-1">{items.length}</Badge>}
             </CardTitle>
             <ChevronDown className={`size-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
@@ -147,7 +147,7 @@ export function InterviewsSection({ studentId }: { studentId: string }) {
             </div>
           ) : items.length === 0 ? (
             <div className="py-8 text-center text-sm text-muted-foreground">
-              面接練習データなし
+              面接履歴データなし
             </div>
           ) : (
             <div className="space-y-6">

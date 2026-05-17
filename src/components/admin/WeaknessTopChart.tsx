@@ -63,11 +63,12 @@ function WeaknessTooltip({ active, payload, label }: any) {
 }
 
 /**
- * Y軸ラベルを短縮表示
+ * Y軸ラベルを短縮表示。
+ * width=140 では概ね 18 文字程度まで表示できる。
  */
 function formatYAxisLabel(value: string) {
-  if (value.length <= 10) return value;
-  return value.substring(0, 10) + "...";
+  if (value.length <= 18) return value;
+  return value.substring(0, 18) + "...";
 }
 
 export function WeaknessTopChart({ weaknesses }: WeaknessTopChartProps) {
@@ -134,7 +135,7 @@ export function WeaknessTopChart({ weaknesses }: WeaknessTopChartProps) {
                 tickFormatter={formatYAxisLabel}
                 axisLine={false}
                 tickLine={false}
-                width={100}
+                width={140}
               />
               <Tooltip content={<WeaknessTooltip />} />
               <Bar dataKey="count" radius={[0, 4, 4, 0]}>

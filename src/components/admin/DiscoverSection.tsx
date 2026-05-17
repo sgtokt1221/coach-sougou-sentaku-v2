@@ -25,6 +25,11 @@ interface MatchingResponse {
   totalUniversities: number;
   matchedCount: number;
   targetUniversities: string[];
+  /** プロフィール完成度。未入力フィールドがあるとマッチ度が同点になりやすい。 */
+  profileCompleteness?: {
+    hasGpa: boolean;
+    hasEnglishCert: boolean;
+  };
 }
 
 export function DiscoverSection({ studentId }: DiscoverSectionProps) {
@@ -181,6 +186,23 @@ export function DiscoverSection({ studentId }: DiscoverSectionProps) {
                 <p className="text-xs font-medium text-muted-foreground mb-2">
                   マッチ度トップ 5
                 </p>
+                {matching.profileCompleteness &&
+                  (!matching.profileCompleteness.hasGpa ||
+                    !matching.profileCompleteness.hasEnglishCert) && (
+                    <div className="mb-2 rounded-md border border-amber-200 bg-amber-50 p-2.5 text-xs text-amber-800">
+                      <p className="font-medium mb-0.5">
+                        プロフィール未完成のためマッチ度は参考値
+                      </p>
+                      <p>
+                        {!matching.profileCompleteness.hasGpa && "GPA"}
+                        {!matching.profileCompleteness.hasGpa &&
+                          !matching.profileCompleteness.hasEnglishCert &&
+                          " と "}
+                        {!matching.profileCompleteness.hasEnglishCert && "英語資格"}
+                        が未入力のため、選考要件と照合できず全大学が同点になる場合があります。
+                      </p>
+                    </div>
+                  )}
                 <div className="space-y-2">
                   {matching.results.slice(0, 5).map((r, i) => {
                     const unmet = [

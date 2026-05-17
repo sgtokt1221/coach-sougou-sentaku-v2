@@ -67,13 +67,23 @@ export async function GET(
   }
 
   const results = await matchUniversities(profile, universities);
-  const response: MatchingResponse & { targetUniversities: string[] } = {
+  // GPA / 英語資格 未入力時はマッチ度が同点になりやすいため、profileCompleteness を返してフロントで警告表示する。
+  const profileCompleteness = {
+    hasGpa: typeof userData.gpa === "number",
+    hasEnglishCert:
+      Array.isArray(userData.englishCerts) && userData.englishCerts.length > 0,
+  };
+  const response: MatchingResponse & {
+    targetUniversities: string[];
+    profileCompleteness: { hasGpa: boolean; hasEnglishCert: boolean };
+  } = {
     results,
     totalUniversities: universities.length,
     matchedCount: results.filter((r) => r.matchScore >= 60).length,
     targetUniversities: Array.isArray(userData.targetUniversities)
       ? userData.targetUniversities
       : [],
+    profileCompleteness,
   };
 
   return NextResponse.json(response);

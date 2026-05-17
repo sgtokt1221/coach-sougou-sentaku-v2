@@ -74,7 +74,7 @@ export interface ActivityLog {
 
 export interface ActivityDataSources {
   essays?: Array<{ submittedAt: string }>;
-  interviews?: Array<{ startedAt?: string; createdAt?: string }>;
+  interviews?: Array<{ startedAt?: string; createdAt?: string; status?: string }>;
   skillChecks?: Array<{ takenAt?: string; createdAt?: string }>;
   summaryDrills?: Array<{ completedAt?: string; createdAt?: string }>;
   activityLogs?: ActivityLog[];
@@ -84,12 +84,13 @@ export function buildActivityHeatmapData(sources: ActivityDataSources): Activity
   const last30Days = buildLast30Days();
   const topicInputLogs = (sources.activityLogs ?? []).filter(l => l.type === "topicInput");
   const interviewDrillLogs = (sources.activityLogs ?? []).filter(l => l.type === "interviewDrill");
+  // 面接は「提出 = 完了したセッション」のみカウント。startedAt と createdAt のダブルカウントを廃止。
+  const completedInterviews = (sources.interviews ?? []).filter(i => i.status === "completed");
 
   return last30Days.map(day => ({
     date: day,
     essay: countByDay(sources.essays ?? [], 'submittedAt', day),
-    interview: countByDay(sources.interviews ?? [], 'startedAt', day) +
-               countByDay(sources.interviews ?? [], 'createdAt', day),
+    interview: countByDay(completedInterviews, 'startedAt', day),
     skillCheck: countByDay(sources.skillChecks ?? [], 'takenAt', day) +
                 countByDay(sources.skillChecks ?? [], 'createdAt', day),
     drill: countByDay(sources.summaryDrills ?? [], 'completedAt', day) +
