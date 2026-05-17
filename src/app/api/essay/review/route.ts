@@ -223,14 +223,18 @@ export async function POST(request: NextRequest) {
         }
       : undefined;
 
+    // Firestore は undefined を許可しないため、optional フィールドは
+    // 値があるときだけ key を含める (条件付き spread)。
+    // これを忘れると set() が reject されて catch でくくられ、
+    // status: reviewed への更新が走らず → 履歴 API で取得できなくなる事故になる。
     const feedback: EssayFeedback = {
       overall: parsed.feedback.overall,
       goodPoints: parsed.feedback.goodPoints ?? [],
       improvements: parsed.feedback.improvements ?? [],
       repeatedIssues: parsed.feedback.repeatedIssues ?? [],
       improvementsSinceLast: parsed.feedback.improvementsSinceLast ?? [],
-      topicInsights,
-      brushedUpText: parsed.feedback.brushedUpText ?? undefined,
+      ...(topicInsights ? { topicInsights } : {}),
+      ...(parsed.feedback.brushedUpText ? { brushedUpText: parsed.feedback.brushedUpText } : {}),
       languageCorrections: parsed.feedback.languageCorrections ?? [],
     };
 

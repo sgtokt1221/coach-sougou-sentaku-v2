@@ -5,8 +5,11 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     let userId = searchParams.get("userId");
 
-    // トークンからuserIdを取得（interview/historyと同じパターン）
+    // "current" は「現在のログインユーザー」のエイリアス。トークン / dev role から解決する。
+    // 旧実装は !userId のみチェックしていて、"current" のままだと後段の
+    // where("userId", "==", "current") で hit せず 0 件返却するバグがあった。
     if (!userId || userId === "current") {
+      userId = null;
       const authHeader = request.headers.get("Authorization");
       if (authHeader?.startsWith("Bearer ")) {
         try {
