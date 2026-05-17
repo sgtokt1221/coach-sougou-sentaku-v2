@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>Coach for 総合型選抜 — 塾向け導入提案</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
+  section.slide {
+    width: 720pt; height: 405pt;
+    display: flex; flex-direction: column;
+    page-break-after: always;
+    overflow: hidden;
+    position: relative;
+  }
+  section.dark { background: #1e293b; justify-content: center; align-items: center; }
+  section.light { background: #ffffff; align-items: center; }
+  .accent-bar { background: #2563eb; width: 100%; height: 5pt; }
+  .header { margin: 16pt 0 0; width: 648pt; border-left: 4pt solid #2563eb; padding-left: 10pt; }
+  .header h1 { color: #1e293b; font-size: 19pt; margin: 0; font-weight: bold; }
+  .header .subtitle { color: #64748b; font-size: 11pt; margin: 4pt 0 0; }
+  .content { width: 648pt; margin-top: 18pt; }
+  .note { width: 648pt; position: absolute; bottom: 14pt; left: 36pt; }
+  .note p { color: #64748b; font-size: 8.5pt; margin: 0; }
+  .num-circle {
+    background: #2563eb; border-radius: 50%; width: 22pt; height: 22pt;
+    display: flex; justify-content: center; align-items: center;
+    flex-shrink: 0;
+  }
+  .num-circle p { color: #ffffff; font-size: 12pt; font-weight: bold; margin: 0; }
+  .card {
+    background: #f8fafc; border-left: 3pt solid #2563eb;
+    padding: 14pt; box-shadow: 1px 1px 4px rgba(0,0,0,0.06);
+  }
+  .card h3 { color: #2563eb; font-size: 13pt; margin: 0 0 6pt; }
+  .card p { color: #334155; font-size: 10pt; margin: 0; line-height: 1.5; }
+  .page-num { position: absolute; right: 24pt; bottom: 12pt; color: #94a3b8; font-size: 8.5pt; }
+</style>
+</head>
+<body>
+
+<!-- ============ Slide 1: 表紙 (ダーク) ============ -->
+<section class="slide dark">
+  <p style="color: #94a3b8; font-size: 11pt; letter-spacing: 4pt; margin: 0 0 14pt;">FOR JUKU PARTNERS</p>
+  <h1 style="color: #ffffff; font-size: 32pt; font-weight: bold; margin: 0; letter-spacing: 1pt;">Coach for 総合型選抜</h1>
+  <div style="background: #3b82f6; width: 80pt; height: 4pt; margin: 18pt 0;"></div>
+  <p style="color: #3b82f6; font-size: 15pt; margin: 0; font-weight: bold;">塾向け導入提案資料</p>
+  <p style="color: #cbd5e1; font-size: 11pt; margin: 32pt 0 0;">総合型選抜のための AI コーチング SaaS</p>
+  <p style="color: #64748b; font-size: 10pt; margin: 8pt 0 0;">2026.05</p>
+</section>
+
+<!-- ============ Slide 2: エグゼクティブサマリー ============ -->
+<section class="slide light">
+  <div class="accent-bar"></div>
+  <div class="header">
+    <h1>エグゼクティブサマリー</h1>
+    <p class="subtitle">Coach は塾の総合型選抜指導を 3 つの軸で強化する</p>
+  </div>
+  <div class="content" style="display: flex; gap: 12pt; margin-top: 24pt;">
+    <div class="card" style="flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center;">
+      <div class="num-circle" style="margin-bottom: 12pt;"><p>1</p></div>
+      <h3 style="text-align: center;">AP 連動 AI 添削</h3>
+      <p style="text-align: left;">大学別のアドミッションポリシーに照らした小論文・書類添削を 24h 即時提供。講師の添削負荷を軽減</p>
+    </div>
+    <div class="card" style="flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center;">
+      <div class="num-circle" style="margin-bottom: 12pt;"><p>2</p></div>
+      <h3 style="text-align: center;">Realtime 音声面接</h3>
+      <p style="text-align: left;">OpenAI Realtime API による本格的な音声対話。個人面接 / 集団討論 / プレゼン / 口頭試問の 4 モード</p>
+    </div>
+    <div class="card" style="flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center;">
+      <div class="num-circle" style="margin-bottom: 12pt;"><p>3</p></div>
+      <h3 style="text-align: center;">管理者ポータル</h3>
+      <p style="text-align: left;">担当生徒の進捗・弱点・要注意アラートを一元管理。レポート自動生成で講師の指導品質を底上げ</p>
+    </div>
+  </div>
+  <p class="page-num">02</p>
+</section>
+
+<!-- ============ Slide 3: 課題 ============ -->
+<section class="slide light">
+  <div class="accent-bar"></div>
+  <div class="header">
+    <h1>総合型選抜の指導現場が抱える課題</h1>
+    <p class="subtitle">受験生・塾・大学情報、3 つの軸で構造的な負荷が発生している</p>
+  </div>
+  <div class="content" style="display: flex; gap: 12pt; margin-top: 24pt;">
+    <div class="card" style="flex: 1; border-left-color: #dc2626;">
+      <h3 style="color: #dc2626;">受験生</h3>
+      <p>・小論文 / 面接 / 書類 / 活動が同時並行で進む<br>・何から手をつけるべきか分からない<br>・添削や面接練習の機会が圧倒的に不足</p>
+    </div>
+    <div class="card" style="flex: 1; border-left-color: #dc2626;">
+      <h3 style="color: #dc2626;">塾</h3>
+      <p>・全大学の AP / 募集要項を把握する負担<br>・添削に時間がかかり対応生徒数が限定<br>・面接練習は講師 1 対 1 で枠が取れない</p>
+    </div>
+    <div class="card" style="flex: 1; border-left-color: #dc2626;">
+      <h3 style="color: #dc2626;">大学情報</h3>
+      <p>・募集要項が毎年変わる<br>・AP / 選考方式 / 日程の更新が高頻度<br>・情報源が散在して整合が難しい</p>
+    </div>
+  </div>
+  <p class="page-num">03</p>
+</section>
+
+<!-- ============ Slide 4: 全体像 ============ -->
+<section class="slide light">
+  <div class="accent-bar"></div>
+  <div class="header">
+    <h1>Coach v2 の全体像</h1>
+    <p class="subtitle">総合型選抜に必要な 6 領域を 1 つのプロダクトで統合</p>
+  </div>
+  <div class="content" style="margin-top: 26pt; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14pt;">
+    <div class="card" style="text-align: center;"><h3>小論文添削</h3><p>AP 連動の AI 添削 + 弱点 DB</p></div>
+    <div class="card" style="text-align: center;"><h3>模擬面接</h3><p>Realtime 音声対話 4 モード</p></div>
+    <div class="card" style="text-align: center;"><h3>志望校マッチング</h3><p>ルールベース + 日程管理</p></div>
+    <div class="card" style="text-align: center;"><h3>出願書類</h3><p>AI 添削 + バージョン履歴</p></div>
+    <div class="card" style="text-align: center;"><h3>活動実績</h3><p>AI ヒアリング + AP 最適化</p></div>
+    <div class="card" style="text-align: center;"><h3>成長トラッキング</h3><p>弱点リマインド + 推移グラフ</p></div>
+  </div>
+  <p style="color: #64748b; font-size: 10pt; margin: 18pt 0 0; width: 648pt;">+ 管理者ポータル / 合格者データ閲覧 / 自己分析 / 受験日程カレンダー</p>
+  <p class="page-num">04</p>
+</section>
+
+<!-- ============ Slide 5: 機能① 小論文 AI 添削 ============ -->
+<section class="slide light">
+  <div class="accent-bar"></div>
+  <div class="header">
+    <h1>機能① 小論文 AI 添削</h1>
+    <p class="subtitle">画像 1 枚で OCR → AP 連動添削 → 弱点蓄積まで一気通貫</p>
+  </div>
+  <div class="content" style="display: flex; gap: 18pt; margin-top: 22pt;">
+    <div style="flex: 0 0 168pt;">
+      <div class="num-circle" style="margin-bottom: 14pt;"><p>1</p></div>
+      <h3 style="color: #1e293b; font-size: 14pt; margin: 0 0 6pt;">手書き対応の Vision OCR</h3>
+      <p style="color: #334155; font-size: 9.5pt; margin: 0; line-height: 1.5;">Claude Vision で答案画像を読み取り、生徒確認ステップ付きでテキスト化</p>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 10pt;">
+      <div class="card"><h3>大学別 AP に照らした添削</h3><p>志望校の AP を参照し、構成・論理・表現・AP 合致度・独自性の 5 軸でスコアリング</p></div>
+      <div class="card"><h3>過去問・自由テーマ両対応</h3><p>過去問選択時は出題資料 (英文・グラフ) も読解、自由テーマ時は推奨字数で柔軟対応</p></div>
+      <div class="card"><h3>弱点 DB 自動更新</h3><p>添削結果から弱点パターンを自動抽出 → 次回添削・面接時にリマインド</p></div>
+    </div>
+  </div>
+  <p class="page-num">05</p>
+</section>
+
+<!-- ============ Slide 6: 機能② 個人系面接 ============ -->
+<section class="slide light">
+  <div class="accent-bar"></div>
+  <div class="header">
+    <h1>機能② AI 模擬面接 (個人・プレゼン・口頭試問)</h1>
+    <p class="subtitle">OpenAI Realtime API による本格的な音声対話面接</p>
+  </div>
+  <div class="content" style="display: flex; gap: 18pt; margin-top: 22pt;">
+    <div style="flex: 0 0 168pt;">
+      <div class="num-circle" style="margin-bottom: 14pt;"><p>2</p></div>
+      <h3 style="color: #1e293b; font-size: 14pt; margin: 0 0 6pt;">3 つのモード</h3>
+      <p style="color: #334155; font-size: 9.5pt; margin: 0; line-height: 1.5;">個人面接 / プレゼンテーション / 口頭試問。大学別の面接傾向データを反映</p>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 10pt;">
+      <div class="card"><h3>本物の対話感</h3><p>WebRTC ストリーミングで遅延の少ない音声応答。受け止め + 質問の自然なキャッチボール</p></div>
+      <div class="card"><h3>マルチモーダル分析</h3><p>発話分析 (話速・フィラー・相槌) + 視線・表情分析。改善点を客観データで提示</p></div>
+      <div class="card"><h3>自動文字起こし & サマリー</h3><p>Whisper で全発話を文字起こし。Claude が指導報告書テンプレで自動サマリー生成</p></div>
+    </div>
+  </div>
+  <p class="page-num">06</p>
+</section>
+
+<!-- ============ Slide 7: 機能③ 集団討論 ============ -->
+<section class="slide light">
+  <div class="accent-bar"></div>
+  <div class="header">
+    <h1>機能③ AI 模擬面接 (集団討論)</h1>
+    <p class="subtitle">6 人体制の本格的 GD を AI で再現</p>
+  </div>
+  <div class="content" style="display: flex; gap: 18pt; margin-top: 22pt;">
+    <div style="flex: 0 0 168pt;">
+      <div class="num-circle" style="margin-bottom: 14pt;"><p>3</p></div>
+      <h3 style="color: #1e293b; font-size: 14pt; margin: 0 0 6pt;">6 並列セッション</h3>
+      <p style="color: #334155; font-size: 9.5pt; margin: 0; line-height: 1.5;">司会 + 教授 2 + 受験生 3 がそれぞれ独立 AI として議論。ユーザーはもう一人の受験生として参加</p>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 10pt;">
+      <div class="card"><h3>テーマに沿った噛み合う議論</h3><p>司会が提示したテーマを全話者が共有。他者発言を引用しつつ自分の立場を述べる</p></div>
+      <div class="card"><h3>手動進行で被り防止</h3><p>「次の話者へ」ボタンで切り替え。前話者の音声を即時カット、ユーザー発話時のみマイク ON</p></div>
+      <div class="card"><h3>協調性・リーダーシップ評価</h3><p>協調性・リーダーシップ・傾聴力をスコアリング。本番想定の練習で慣れを作る</p></div>
+    </div>
+  </div>
+  <p class="page-num">07</p>
+</section>
+
+<!-- ============ Slide 8: 機能④ マッチング + 日程 ============ -->
+<section class="slide light">
+  <div class="accent-bar"></div>
+  <div class="header">
+    <h1>機能④ 志望校マッチング + 受験日程管理</h1>
+    <p class="subtitle">100+ 校のデータベースとルールベース照合で最適候補を提示</p>
+  </div>
+  <div class="content" style="display: flex; gap: 18pt; margin-top: 22pt;">
+    <div style="flex: 0 0 168pt;">
+      <div class="num-circle" style="margin-bottom: 14pt;"><p>4</p></div>
+      <h3 style="color: #1e293b; font-size: 14pt; margin: 0 0 6pt;">対応大学</h3>
+      <p style="color: #334155; font-size: 9.5pt; margin: 0; line-height: 1.5;">旧帝大 / 関関同立 / MARCH / 産近甲龍 / 中堅私大を中心に継続拡大中</p>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 10pt;">
+      <div class="card"><h3>GPA・資格・要件のルール照合</h3><p>生徒プロフィール → 全大学走査 → スコア順マッチング結果を提示</p></div>
+      <div class="card"><h3>志望校詳細ページ</h3><p>AP・選考フロー・要件チェック・過去問サンプル・合格者データを一画面で確認</p></div>
+      <div class="card"><h3>受験日程カレンダー</h3><p>志望校ごとの日程イベントをタイムライン表示、カウントダウン + 月別グループ</p></div>
+    </div>
+  </div>
+  <p class="page-num">08</p>
+</section>
+
+<!-- ============ Slide 9: 機能⑤ 出願書類 + 活動実績 ============ -->
+<section class="slide light">
+  <div class="accent-bar"></div>
+  <div class="header">
+    <h1>機能⑤ 出願書類エディタ + 活動実績 AI ヒアリング</h1>
+    <p class="subtitle">志望理由書・活動報告書を AI と二人三脚で仕上げる</p>
+  </div>
+  <div class="content" style="display: flex; gap: 12pt; margin-top: 22pt;">
+    <div style="flex: 1; background: #f8fafc; border-left: 3pt solid #2563eb; padding: 14pt;">
+      <h3 style="color: #2563eb; font-size: 13pt; margin: 0 0 8pt;">出願書類エディタ</h3>
+      <p style="color: #334155; font-size: 10pt; margin: 0; line-height: 1.6;">
+        ・AP 合致度 / 構成 / 独自性の 3 軸 AI 添削<br>
+        ・文字数カウント + バージョン履歴<br>
+        ・大学別必要書類チェックリスト<br>
+        ・期限カウントダウン + アラート連動
+      </p>
+    </div>
+    <div style="flex: 1; background: #f8fafc; border-left: 3pt solid #14b8a6; padding: 14pt;">
+      <h3 style="color: #14b8a6; font-size: 13pt; margin: 0 0 8pt;">活動実績 AI ヒアリング</h3>
+      <p style="color: #334155; font-size: 10pt; margin: 0; line-height: 1.6;">
+        ・対話形式で活動内容を深掘り<br>
+        ・自動構造化 (STAR フレーム)<br>
+        ・AP 別の最適化表現を生成<br>
+        ・カテゴリ別整理 (探究 / 部活 / 検定 等)
+      </p>
+    </div>
+  </div>
+  <p class="page-num">09</p>
+</section>
+
+<!-- ============ Slide 10: 機能⑥ 成長 + 合格者 ============ -->
+<section class="slide light">
+  <div class="accent-bar"></div>
+  <div class="header">
+    <h1>機能⑥ 成長トラッキング + 合格者データ</h1>
+    <p class="subtitle">数値で成長を可視化し、合格者データと比較してモチベを継続</p>
+  </div>
+  <div class="content" style="display: flex; gap: 12pt; margin-top: 22pt;">
+    <div style="flex: 1; background: #f8fafc; border-left: 3pt solid #2563eb; padding: 14pt;">
+      <h3 style="color: #2563eb; font-size: 13pt; margin: 0 0 8pt;">成長トラッキング</h3>
+      <p style="color: #334155; font-size: 10pt; margin: 0; line-height: 1.6;">
+        ・小論文 / 面接の弱点を自動検出<br>
+        ・改善判定 (3 回連続指摘なしで解消)<br>
+        ・スコア推移 + 項目別レーダーチャート<br>
+        ・弱点リマインドカードで再挑戦導線
+      </p>
+    </div>
+    <div style="flex: 1; background: #f8fafc; border-left: 3pt solid #2563eb; padding: 14pt;">
+      <h3 style="color: #2563eb; font-size: 13pt; margin: 0 0 8pt;">合格者データ閲覧</h3>
+      <p style="color: #334155; font-size: 10pt; margin: 0; line-height: 1.6;">
+        ・志望校・学部別の合格者統計<br>
+        ・スコア推移の Recharts 可視化<br>
+        ・自分 vs 合格者比較<br>
+        ・弱点パターンを類型化して提示
+      </p>
+    </div>
+  </div>
+  <p class="page-num">10</p>
+</section>
+
+<!-- ============ Slide 11: 管理者ポータル ============ -->
+<section class="slide light">
+  <div class="accent-bar"></div>
+  <div class="header">
+    <h1>管理者ポータル — 塾講師の業務効率化</h1>
+    <p class="subtitle">担当生徒の状況を 1 画面で把握、介入が必要な生徒を即発見</p>
+  </div>
+  <div class="content" style="display: flex; gap: 12pt; margin-top: 22pt;">
+    <div class="card" style="flex: 1;">
+      <h3>担当生徒スコーピング</h3>
+      <p>managedBy 連動で担当生徒のみ閲覧。Superadmin / admin / teacher の 3 ロール</p>
+    </div>
+    <div class="card" style="flex: 1;">
+      <h3>8 タイプの要注意アラート</h3>
+      <p>AP 苦戦 / 弱点停滞 / 期限リスク / スコア停滞 / 書類期限など多軸検出</p>
+    </div>
+    <div class="card" style="flex: 1;">
+      <h3>自動レポート生成</h3>
+      <p>週次 / 月次の成長レポートを一括生成。指導報告書テンプレ準拠</p>
+    </div>
+  </div>
+  <div class="content" style="display: flex; gap: 12pt; margin-top: 12pt;">
+    <div class="card" style="flex: 1;"><h3>受験結果トラッキング</h3><p>志望校別の出願中 / 合格 / 不合格を可視化、合格率を集計</p></div>
+    <div class="card" style="flex: 1;"><h3>大学データ編集</h3><p>AP / 選考方法 / 日程を管理者画面から更新可能</p></div>
+    <div class="card" style="flex: 1;"><h3>面談セッション管理</h3><p>Google Meet 連携 + 自動サマリーで指導記録を効率化</p></div>
+  </div>
+  <p class="page-num">11</p>
+</section>
+
+<!-- ============ Slide 12: 懸念 → 回答 ============ -->
+<section class="slide light">
+  <div class="accent-bar"></div>
+  <div class="header">
+    <h1>想定される懸念 → Coach の回答</h1>
+    <p class="subtitle">塾現場の典型的な不安に対する Coach の答え</p>
+  </div>
+  <div class="content" style="display: flex; gap: 12pt; margin-top: 22pt;">
+    <div style="flex: 1;">
+      <div class="card" style="border-left-color: #dc2626; margin-bottom: 10pt;">
+        <h3 style="color: #dc2626; font-size: 12pt;">Q1: AI 添削で十分な品質か？</h3>
+      </div>
+      <div class="card" style="border-left-color: #059669;">
+        <h3 style="color: #059669; font-size: 12pt;">A1: 大学別 AP 連動 + 弱点 DB の継続学習で個別最適化。最終確認は講師が行う運用が前提</h3>
+      </div>
+    </div>
+    <div style="flex: 1;">
+      <div class="card" style="border-left-color: #dc2626; margin-bottom: 10pt;">
+        <h3 style="color: #dc2626; font-size: 12pt;">Q2: 講師の仕事が無くなる？</h3>
+      </div>
+      <div class="card" style="border-left-color: #059669;">
+        <h3 style="color: #059669; font-size: 12pt;">A2: AI は 1 次添削 / 練習量確保を担当、講師は戦略指導 / メンタル支援 / 最終添削に専念</h3>
+      </div>
+    </div>
+    <div style="flex: 1;">
+      <div class="card" style="border-left-color: #dc2626; margin-bottom: 10pt;">
+        <h3 style="color: #dc2626; font-size: 12pt;">Q3: 既存指導と両立できる？</h3>
+      </div>
+      <div class="card" style="border-left-color: #059669;">
+        <h3 style="color: #059669; font-size: 12pt;">A3: 生徒の自学自習を補完する位置づけ。管理者ポータルで講師の指導記録に統合可能</h3>
+      </div>
+    </div>
+  </div>
+  <p class="page-num">12</p>
+</section>
+
+<!-- ============ Slide 13: セキュリティ ============ -->
+<section class="slide light">
+  <div class="accent-bar"></div>
+  <div class="header">
+    <h1>セキュリティ・運用体制</h1>
+    <p class="subtitle">未成年 × 受験データを扱う前提で多層防御を実装</p>
+  </div>
+  <div class="content" style="display: flex; gap: 12pt; margin-top: 24pt;">
+    <div class="card" style="flex: 1;">
+      <h3>認証 + スコーピング</h3>
+      <p>Firebase Authentication / 4 ロール (superadmin / admin / teacher / student) / managedBy で生徒データ分離</p>
+    </div>
+    <div class="card" style="flex: 1;">
+      <h3>OWASP Top10 対策</h3>
+      <p>2026 年セキュリティ監査で Critical+High 10 件を対応完了。継続的に Medium 級も対応中</p>
+    </div>
+    <div class="card" style="flex: 1;">
+      <h3>Firestore Rules</h3>
+      <p>サーバーサイドルール検証 + IDトークン自動付与で API 全ルートに認可レイヤー</p>
+    </div>
+  </div>
+  <div class="note" style="position: static; margin-top: 24pt; width: 648pt;">
+    <p>音声・映像・答案データは保持期間・閲覧権限・削除手段を明文化予定 (運用ガイドライン整備中)</p>
+  </div>
+  <p class="page-num">13</p>
+</section>
+
+<!-- ============ Slide 14: 導入ステップ ============ -->
+<section class="slide light">
+  <div class="accent-bar"></div>
+  <div class="header">
+    <h1>導入ステップ</h1>
+    <p class="subtitle">ヒアリングから運用開始まで、想定期間 2-4 週間</p>
+  </div>
+  <div class="content" style="margin-top: 30pt; display: flex; align-items: stretch; gap: 8pt;">
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+      <div class="num-circle" style="margin-bottom: 10pt;"><p>1</p></div>
+      <h3 style="color: #1e293b; font-size: 12pt; text-align: center; margin: 0 0 6pt;">ヒアリング</h3>
+      <p style="color: #64748b; font-size: 9pt; text-align: center; margin: 0;">塾の指導方針 / 生徒層を確認</p>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+      <div class="num-circle" style="margin-bottom: 10pt;"><p>2</p></div>
+      <h3 style="color: #1e293b; font-size: 12pt; text-align: center; margin: 0 0 6pt;">環境準備</h3>
+      <p style="color: #64748b; font-size: 9pt; text-align: center; margin: 0;">大学データのカスタマイズ / 管理者設定</p>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+      <div class="num-circle" style="margin-bottom: 10pt;"><p>3</p></div>
+      <h3 style="color: #1e293b; font-size: 12pt; text-align: center; margin: 0 0 6pt;">講師研修</h3>
+      <p style="color: #64748b; font-size: 9pt; text-align: center; margin: 0;">管理者ポータル / アラート対応の理解</p>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+      <div class="num-circle" style="margin-bottom: 10pt;"><p>4</p></div>
+      <h3 style="color: #1e293b; font-size: 12pt; text-align: center; margin: 0 0 6pt;">生徒オンボーディング</h3>
+      <p style="color: #64748b; font-size: 9pt; text-align: center; margin: 0;">アカウント発行 / 初回オリエン</p>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+      <div class="num-circle" style="margin-bottom: 10pt;"><p>5</p></div>
+      <h3 style="color: #1e293b; font-size: 12pt; text-align: center; margin: 0 0 6pt;">運用開始</h3>
+      <p style="color: #64748b; font-size: 9pt; text-align: center; margin: 0;">月次フィードバック / 機能拡張提案</p>
+    </div>
+  </div>
+  <p class="page-num">14</p>
+</section>
+
+<!-- ============ Slide 15: 料金プラン ============ -->
+<section class="slide light">
+  <div class="accent-bar"></div>
+  <div class="header">
+    <h1>料金プラン (案)</h1>
+    <p class="subtitle">生徒の自学度に応じて選べる 2 プラン構成 (詳細は別途協議)</p>
+  </div>
+  <div class="content" style="display: flex; gap: 16pt; margin-top: 28pt;">
+    <div style="flex: 1; background: #f8fafc; border: 1pt solid #e2e8f0; padding: 20pt; border-radius: 4pt;">
+      <h3 style="color: #2563eb; font-size: 16pt; margin: 0 0 6pt;">AI 自習プラン</h3>
+      <p style="color: #64748b; font-size: 10pt; margin: 0 0 14pt;">生徒主導 / AI 中心</p>
+      <p style="color: #334155; font-size: 10pt; margin: 0; line-height: 1.7;">
+        ・小論文 AI 添削 (回数制限あり)<br>
+        ・AI 模擬面接 (個人 / 集団)<br>
+        ・志望校マッチング<br>
+        ・成長トラッキング
+      </p>
+    </div>
+    <div style="flex: 1; background: #2563eb; padding: 20pt; border-radius: 4pt; color: #ffffff;">
+      <h3 style="color: #ffffff; font-size: 16pt; margin: 0 0 6pt;">コーチプラン</h3>
+      <p style="color: #cbd5e1; font-size: 10pt; margin: 0 0 14pt;">講師付き / 添削無制限</p>
+      <p style="color: #f1f5f9; font-size: 10pt; margin: 0; line-height: 1.7;">
+        ・AI 自習プランの全機能<br>
+        ・出願書類エディタ + AI 添削<br>
+        ・活動実績 AI ヒアリング<br>
+        ・月次面談 + 講師による最終添削<br>
+        ・管理者ポータル連携
+      </p>
+    </div>
+  </div>
+  <p class="page-num">15</p>
+</section>
+
+<!-- ============ Slide 16: まとめ (ダーク) ============ -->
+<section class="slide dark">
+  <p style="color: #94a3b8; font-size: 11pt; letter-spacing: 4pt; margin: 0 0 16pt;">SUMMARY</p>
+  <h1 style="color: #ffffff; font-size: 26pt; margin: 0 0 18pt; font-weight: bold;">塾の総合型選抜指導を、3 つの軸で強化する</h1>
+  <div style="background: #3b82f6; width: 80pt; height: 4pt; margin: 0 0 28pt;"></div>
+  <div style="display: flex; gap: 24pt;">
+    <div style="display: flex; align-items: center; gap: 12pt;">
+      <div class="num-circle"><p>1</p></div>
+      <p style="color: #ffffff; font-size: 13pt; margin: 0;">AP 連動 AI 添削</p>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12pt;">
+      <div class="num-circle"><p>2</p></div>
+      <p style="color: #ffffff; font-size: 13pt; margin: 0;">Realtime 音声面接</p>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12pt;">
+      <div class="num-circle"><p>3</p></div>
+      <p style="color: #ffffff; font-size: 13pt; margin: 0;">管理者ポータル</p>
+    </div>
+  </div>
+  <p style="color: #cbd5e1; font-size: 11pt; margin: 38pt 0 0;">デモ依頼・トライアル相談を承ります</p>
+  <p style="color: #64748b; font-size: 10pt; margin: 6pt 0 0;">Coach for 総合型選抜 — 2026.05</p>
+</section>
+
+</body>
+</html>
