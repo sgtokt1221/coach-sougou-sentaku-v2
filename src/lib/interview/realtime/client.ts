@@ -21,8 +21,8 @@ export type RealtimeEvent =
   | { type: "response.created"; response: unknown }
   | { type: "response.output_audio.delta"; delta: string }
   | { type: "response.output_audio.done" }
-  | { type: "response.output_audio_transcript.delta"; delta: string }
-  | { type: "response.output_audio_transcript.done"; transcript: string }
+  | { type: "response.output_audio_transcript.delta"; delta: string; response_id?: string; item_id?: string }
+  | { type: "response.output_audio_transcript.done"; transcript: string; response_id?: string; item_id?: string }
   | { type: "response.done"; response: { status: string; output?: unknown[] } }
   | { type: "error"; error: { message: string } }
   | { type: string; [key: string]: unknown };
@@ -49,11 +49,12 @@ export interface RealtimeSessionOptions {
   onUserTranscript?: (text: string) => void;
   /**
    * AI の発話 transcript が部分的に届くたびに呼ばれる (response.output_audio_transcript.delta)。
-   * 引数は累積された部分テキスト。音声と同期したストリーム表示用。
+   * 第 1 引数: 同一 response 内で累積された部分テキスト
+   * 第 2 引数: response_id (OpenAI Realtime の response ID。新しい response ごとに変わる)
    */
-  onAssistantTranscriptDelta?: (cumulativeText: string) => void;
+  onAssistantTranscriptDelta?: (cumulativeText: string, responseId: string | undefined) => void;
   /** AI の発話テキストが確定したときに呼ばれる */
-  onAssistantTranscript?: (text: string) => void;
+  onAssistantTranscript?: (text: string, responseId: string | undefined) => void;
   /** AI が応答を開始したとき (response.created) — マイクのミュートや「考え中」UI 用 */
   onResponseStart?: () => void;
   /** AI が応答を完了したとき (response.done) — マイクのミュート解除用 */
@@ -67,8 +68,8 @@ export class RealtimeSession {
   private dc: RTCDataChannel | null = null;
   private opts: RealtimeSessionOptions;
   private isClosed = false;
-  /** 現在応答中の AI transcript の累積バッファ。done で空にする */
-  private transcriptBuffer = "";
+  /** response_id ごとの transcript 累積バッファ。response.done で該当エントリを破棄 */
+  private transcriptBuffers = new Map<string, string>();
 
   constructor(opts: RealtimeSessionOptions) {
     this.opts = opts;
@@ -174,12 +175,16 @@ export class RealtimeSession {
       this.opts.onResponseStart?.();
     } else if (event.type === "response.output_audio_transcript.delta") {
       const ev = event as Extract<RealtimeEvent, { type: "response.output_audio_transcript.delta" }>;
-      this.transcriptBuffer += ev.delta;
-      this.opts.onAssistantTranscriptDelta?.(this.transcriptBuffer);
+      // response_id 不在のフォールバックは固定キーで管理 (旧挙動互換)
+      const key = ev.response_id ?? "__single__";
+      const next = (this.transcriptBuffers.get(key) ?? "") + ev.delta;
+      this.transcriptBuffers.set(key, next);
+      this.opts.onAssistantTranscriptDelta?.(next, ev.response_id);
     } else if (event.type === "response.output_audio_transcript.done") {
       const ev = event as Extract<RealtimeEvent, { type: "response.output_audio_transcript.done" }>;
-      this.transcriptBuffer = "";
-      this.opts.onAssistantTranscript?.(ev.transcript);
+      const key = ev.response_id ?? "__single__";
+      this.transcriptBuffers.delete(key);
+      this.opts.onAssistantTranscript?.(ev.transcript, ev.response_id);
     } else if (event.type === "response.done") {
       this.opts.onResponseEnd?.();
     } else if (event.type === "error") {

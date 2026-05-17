@@ -51,9 +51,17 @@ export class GdOrchestrator {
   private lastSpeaker: ActiveSpeaker | null = null;
   private isClosed = false;
   private currentResponseSpeaker: ActiveSpeaker | null = null;
-  /** 現在 transcript がストリーミング中の話者 (考え中バブル → delta 差し替え用) */
-  private streamingSpeaker: ActiveSpeaker | null = null;
+  /**
+   * 現在ストリーミング中の発話を識別するキー = `${speaker}:${responseId}`。
+   * response 単位で 1 バブルに集約するために使う。新 response が来たら新規 append、
+   * 同じキー内の delta は update last。
+   */
+  private streamingKey: string | null = null;
   private opts: GdOrchestratorOptions;
+
+  private makeStreamingKey(speaker: ActiveSpeaker, responseId: string | undefined): string {
+    return `${speaker}:${responseId ?? "__single__"}`;
+  }
 
   constructor(opts: GdOrchestratorOptions) {
     this.opts = opts;
@@ -97,8 +105,10 @@ export class GdOrchestrator {
           ? (text) => this.onUserTranscript(text)
           : undefined,
         onResponseStart: () => this.onResponseStart(speaker),
-        onAssistantTranscriptDelta: (cumulative) => this.onAssistantTranscriptDelta(speaker, cumulative),
-        onAssistantTranscript: (text) => this.onAssistantTranscript(speaker, text),
+        onAssistantTranscriptDelta: (cumulative, responseId) =>
+          this.onAssistantTranscriptDelta(speaker, cumulative, responseId),
+        onAssistantTranscript: (text, responseId) =>
+          this.onAssistantTranscript(speaker, text, responseId),
         onResponseEnd: () => this.onResponseEnd(speaker),
         onError: (err) => this.opts.onError?.(err),
       });
@@ -154,7 +164,7 @@ export class GdOrchestrator {
     if (this.isClosed || !text.trim()) return;
 
     // ユーザー発話確定: AI streaming 状態をリセット (次の AI 応答は新バブル)
-    this.streamingSpeaker = null;
+    this.streamingKey = null;
 
     // UI にユーザーメッセージを表示
     this.opts.onMessageAppend?.({ role: "student", content: text });
@@ -198,15 +208,21 @@ export class GdOrchestrator {
   }
 
   /**
-   * 部分 transcript: 初回 delta なら append、以降は update last。
-   * response.created の重複発火に依存せず、必ず 1 バブル/応答 を保証する。
+   * 部分 transcript: 同一 response 内 (streamingKey が一致) なら update last、
+   * 別 response (speaker 変化 or response_id 変化) なら新規 append。
+   * response_id があればそれで識別、無ければ speaker のみで判定 (旧挙動互換)。
    */
-  private onAssistantTranscriptDelta(speaker: ActiveSpeaker, cumulative: string): void {
+  private onAssistantTranscriptDelta(
+    speaker: ActiveSpeaker,
+    cumulative: string,
+    responseId: string | undefined,
+  ): void {
     if (this.isClosed) return;
     const displayName = GD_SPEAKERS[speaker].displayName;
     const prefixedContent = `【${displayName}】${cumulative}`;
-    if (this.streamingSpeaker !== speaker) {
-      this.streamingSpeaker = speaker;
+    const key = this.makeStreamingKey(speaker, responseId);
+    if (this.streamingKey !== key) {
+      this.streamingKey = key;
       this.opts.onMessageAppend?.({ role: "ai", content: prefixedContent });
     } else {
       this.opts.onMessageUpdateLast?.({ content: prefixedContent });
@@ -214,16 +230,21 @@ export class GdOrchestrator {
   }
 
   /** 応答セッションの transcript 確定: UI を最終化 + 他セッションに broadcast */
-  private onAssistantTranscript(speaker: ActiveSpeaker, text: string): void {
+  private onAssistantTranscript(
+    speaker: ActiveSpeaker,
+    text: string,
+    responseId: string | undefined,
+  ): void {
     if (this.isClosed || !text.trim()) return;
 
     const displayName = GD_SPEAKERS[speaker].displayName;
     const prefixedContent = `【${displayName}】${text}`;
+    const key = this.makeStreamingKey(speaker, responseId);
 
-    if (this.streamingSpeaker === speaker) {
+    if (this.streamingKey === key) {
       // streaming 中: 直近の AI バブルを最終 transcript で置き換える
       this.opts.onMessageUpdateLast?.({ content: prefixedContent });
-      this.streamingSpeaker = null;
+      this.streamingKey = null;
     } else {
       // delta が来なかった場合のフォールバック
       this.opts.onMessageAppend?.({ role: "ai", content: prefixedContent });

@@ -146,16 +146,18 @@ export function parseSpeaker(content: string): {
   const label = match[1].trim();
   const body = match[2].trim();
 
+  // 優先順位: displayName 完全一致 → displayName 包含 → prefix 完全一致 → prefix 包含 (旧形式互換)
   for (const profile of Object.values(GD_SPEAKERS)) {
-    // prefix or displayName のどちらかがラベルに含まれていれば採用
-    if (
-      label === profile.prefix ||
-      label === profile.displayName ||
-      label.includes(profile.displayName) ||
-      label.includes(profile.prefix)
-    ) {
-      return { profile, body };
-    }
+    if (label === profile.displayName) return { profile, body };
+  }
+  for (const profile of Object.values(GD_SPEAKERS)) {
+    if (label.includes(profile.displayName)) return { profile, body };
+  }
+  for (const profile of Object.values(GD_SPEAKERS)) {
+    if (label === profile.prefix) return { profile, body };
+  }
+  for (const profile of Object.values(GD_SPEAKERS)) {
+    if (label.includes(profile.prefix)) return { profile, body };
   }
 
   return null;
