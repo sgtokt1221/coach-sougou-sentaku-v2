@@ -23,31 +23,32 @@ export interface DirectorState {
 /**
  * 次に発話する話者を決定する。
  *
- * 設計方針 (シンプル交互制):
+ * 設計方針 (peer 2 連 → user の繰り返し):
  * - Phase 3 (>= 11 分): moderator (教授) が総括フェーズ
- * - 通常: moderator → user → peer → user → peer → ... の交互
- *   - 司会の後は user (Dさんに最初の意見を求める)
- *   - user の後は peer (peer_bold / peer_careful を turnCount で交互)
- *   - peer の後は user (毎ターン Dさんに振る = AI 連投を避ける)
+ * - 通常: moderator → 健太 → 美咲 → user → 健太 → 美咲 → user → ...
+ *   - 司会の後はまず健太 (peer_bold) から (議論を引っ張る役)
+ *   - 健太の後は美咲 (peer_careful) で対立構造を作る
+ *   - 美咲の後は user (Dさんに「他の人の意見を聞いて、あなたはどう思いますか」と振る)
+ *   - user の後は再び健太からラウンドを再開
  *
- * これにより「ユーザーが置いてけぼり」と「AI が永遠に話し続ける」を両方防ぐ。
+ * これにより「いきなり振られて意見が出ない」を防ぎ、議論を聞いてから自分の意見を
+ * 述べる自然な流れになる。
  */
 export function pickNextSpeaker(state: DirectorState): ActiveSpeaker {
   // Phase 3: 11 分超過で moderator が総括
   if (state.elapsedSeconds >= 11 * 60) return "moderator";
 
-  // 司会の後 (開幕 or 総括差し込み後) は Dさんに意見を求める
-  if (state.lastSpeaker === "moderator") return "user";
+  // 司会の後 (開幕 or 総括差し込み後) はまず健太から
+  if (state.lastSpeaker === "moderator") return "peer_bold";
 
-  // user の後は peer (turnCount で peer_bold / peer_careful を交互)
-  if (state.lastSpeaker === "user") {
-    return state.turnCount % 2 === 1 ? "peer_bold" : "peer_careful";
-  }
+  // 健太の後は美咲で対立構造
+  if (state.lastSpeaker === "peer_bold") return "peer_careful";
 
-  // peer の後は user (毎ターン Dさんに振って AI 連投を防ぐ)
-  if (state.lastSpeaker === "peer_bold" || state.lastSpeaker === "peer_careful") {
-    return "user";
-  }
+  // 美咲の後は user (peer 2 人の意見を聞いた後で Dさんに振る)
+  if (state.lastSpeaker === "peer_careful") return "user";
+
+  // user の後は再び健太からラウンド再開
+  if (state.lastSpeaker === "user") return "peer_bold";
 
   // 初回 (lastSpeaker === null): 健太から (理論上は startOpening 経由なので来ない)
   return "peer_bold";
