@@ -27,6 +27,11 @@ export interface InterviewMessage {
   content: string;
   /** AI が応答開始～最初の transcript delta が届くまでの「考え中」プレースホルダー */
   isThinking?: boolean;
+  /**
+   * Realtime API の response_id。AI バブルを per-response で識別し、
+   * 複数 response が並行発火しても正しいバブルを update するために使う。
+   */
+  responseId?: string;
 }
 
 export interface InterviewFeedback {

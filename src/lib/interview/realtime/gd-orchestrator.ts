@@ -194,6 +194,8 @@ export class GdOrchestrator {
     this.startedAt = Date.now();
     this.currentResponseSpeaker = "moderator";
     this.lastSpeaker = "moderator";
+    // UI に「司会が話しています」を即時反映 (currentSpeaker state 初期化)
+    this.opts.onTurnChange?.("moderator");
     const moderator = this.sessions.get("moderator");
     if (moderator) moderator.triggerResponse();
   }
@@ -209,10 +211,15 @@ export class GdOrchestrator {
     this.opts.onMessageAppend?.({ role: "student", content: text });
 
     // moderator 以外のセッションに user 発言を注入 (moderator は自分で発話を聞いている)
+    // user role 投入後は念のため cancelResponse で auto-trigger を物理停止
+    // (orchestrator が advanceTurn 経由で明示 triggerResponse する)
     for (const speaker of SPEAKERS_ORDER) {
       if (speaker === "moderator") continue;
       const sess = this.sessions.get(speaker);
-      if (sess) sess.addConversationItem("user", text);
+      if (sess) {
+        sess.addConversationItem("user", text);
+        try { sess.cancelResponse(); } catch { /* noop */ }
+      }
     }
 
     this.lastSpeaker = "user";
@@ -222,11 +229,24 @@ export class GdOrchestrator {
     this.advanceTurn();
   }
 
+  /** advanceTurn の debounce 用タイマー */
+  private advanceTurnTimer: ReturnType<typeof setTimeout> | null = null;
+
   /**
    * 次の発話者を決定し、AI ターンなら triggerResponse、user ターンならマイクを ON にして待機。
-   * `onUserTranscript` のあとや、moderator の opening 終了後に呼ぶ。
+   * 50ms の debounce で連続呼び出し (複数 session の onResponseEnd 同時発火) を
+   * 最後の 1 つだけ実行し、多重 trigger による state race を防ぐ。
    */
   private advanceTurn(): void {
+    if (this.isClosed) return;
+    if (this.advanceTurnTimer) clearTimeout(this.advanceTurnTimer);
+    this.advanceTurnTimer = setTimeout(() => {
+      this.advanceTurnTimer = null;
+      this.executeAdvanceTurn();
+    }, 50);
+  }
+
+  private executeAdvanceTurn(): void {
     if (this.isClosed) return;
     const nextSpeaker = pickNextSpeaker({
       elapsedSeconds: this.getElapsedSeconds(),
@@ -312,10 +332,11 @@ export class GdOrchestrator {
 
     // 他 5 セッションに「他者の発言」として broadcast
     // **assistant role で注入** することで「過去の対話履歴」として認識させ、
-    // user role 投入時に発生する受信側 auto-response (全員同時発話の原因) を防ぐ。
+    // 加えて cancelResponse で auto-response を物理停止 (orchestrator 制御に一本化)
     for (const [sessionSpeaker, sess] of this.sessions) {
       if (sessionSpeaker !== speaker) {
         sess.addConversationItem("assistant", prefixedContent);
+        try { sess.cancelResponse(); } catch { /* noop */ }
       }
     }
   }
@@ -342,6 +363,10 @@ export class GdOrchestrator {
   close(): void {
     if (this.isClosed) return;
     this.isClosed = true;
+    if (this.advanceTurnTimer) {
+      clearTimeout(this.advanceTurnTimer);
+      this.advanceTurnTimer = null;
+    }
     for (const sess of this.sessions.values()) {
       try {
         sess.close();
