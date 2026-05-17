@@ -82,15 +82,21 @@ export class GdOrchestrator {
    */
   private streamingKey: string | null = null;
   /**
-   * 直近 AI 発話の text 長 (音声再生完了見込み計算用)。
-   * onAssistantTranscript で確定時に更新し、advanceTurn の delay 算出に使う。
-   *
-   * Why: `response.done` (= onResponseEnd) はサーバー側 text 確定タイミングで、
-   * WebRTC で受信した音声は再生バッファに数百 ms〜数秒残っている。即座に
-   * 次話者を triggerResponse すると現話者の音声と被るため、文字数から推定した
-   * 再生完了見込み時間だけ待ってから次へ進む。
+   * 直近 AI 発話の text 長。フォールバック用 (AudioContext 失敗時の delay 算出)。
    */
   private lastAiTextLength = 0;
+  /**
+   * 受信音声の音量監視用。speaker ごとに AnalyserNode を保持し、
+   * onResponseEnd 後にポーリングで「実際の無音」を検知してから advanceTurn する。
+   *
+   * Why: `response.done` (= text 確定) と WebRTC 音声バッファの再生完了は別。
+   * 文字数推定では誤差が大きく被るため、音量解析で確実に「音が止まった」を
+   * 検知する。AudioContext は user gesture 後 (= start ボタン押下後) なので
+   * 作成可能。
+   */
+  private audioCtx: AudioContext | null = null;
+  private analysers = new Map<ActiveSpeaker, AnalyserNode>();
+  private silenceWaitTimer: ReturnType<typeof setTimeout> | null = null;
   private opts: GdOrchestratorOptions;
 
   private makeStreamingKey(speaker: ActiveSpeaker, responseId: string | undefined): string {
@@ -144,6 +150,7 @@ export class GdOrchestrator {
         onAssistantTranscript: (text, responseId) =>
           this.onAssistantTranscript(speaker, text, responseId),
         onResponseEnd: () => this.onResponseEnd(speaker),
+        onAudioTrack: (stream) => this.attachAnalyser(speaker, stream),
         onError: (err) => this.opts.onError?.(err),
       });
       await session.connect();
@@ -239,29 +246,121 @@ export class GdOrchestrator {
     this.advanceTurn();
   }
 
-  /** advanceTurn の debounce 用タイマー */
+  /** advanceTurn の debounce 用タイマー (多重発火対策) */
   private advanceTurnTimer: ReturnType<typeof setTimeout> | null = null;
 
   /**
+   * ontrack 時に受信音声 stream から AnalyserNode を作成して保持。
+   * 無音検知は onResponseEnd 後にこの analyser から音量を読む。
+   */
+  private attachAnalyser(speaker: ActiveSpeaker, stream: MediaStream): void {
+    if (this.isClosed) return;
+    if (this.analysers.has(speaker)) return;
+    try {
+      if (!this.audioCtx) {
+        const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+        this.audioCtx = new Ctx();
+      }
+      const source = this.audioCtx.createMediaStreamSource(stream);
+      const analyser = this.audioCtx.createAnalyser();
+      analyser.fftSize = 512;
+      source.connect(analyser);
+      // analyser は destination に接続しない (audio element が再生する)
+      this.analysers.set(speaker, analyser);
+    } catch (err) {
+      console.warn("[gd] attachAnalyser failed for", speaker, err);
+    }
+  }
+
+  /**
+   * AnalyserNode から現在の音量レベル (振幅平均) を取得。128 基準でずれが小さいほど無音。
+   */
+  private getAudioLevel(analyser: AnalyserNode): number {
+    const buf = new Uint8Array(analyser.fftSize);
+    analyser.getByteTimeDomainData(buf);
+    let sumDiff = 0;
+    for (const b of buf) sumDiff += Math.abs(b - 128);
+    return sumDiff / buf.length;
+  }
+
+  /**
+   * 受信音声が無音になるまで待ってから onComplete を呼ぶ。
+   * SILENCE_CONFIRM_MS の間連続無音なら「再生完了」と判定。
+   * MAX_WAIT_MS に達したら強制的に onComplete (フェイルセーフ)。
+   *
+   * AnalyserNode が無い speaker (attachAnalyser 失敗時) はフォールバックで
+   * 文字数推定 delay を使う。
+   */
+  private waitForAudioSilence(speaker: ActiveSpeaker, onComplete: () => void): void {
+    if (this.isClosed) return;
+    if (this.silenceWaitTimer) {
+      clearTimeout(this.silenceWaitTimer);
+      this.silenceWaitTimer = null;
+    }
+
+    const analyser = this.analysers.get(speaker);
+    if (!analyser) {
+      // フォールバック: 文字数推定 delay
+      const estimatedMs = this.lastAiTextLength * 100 + 500;
+      const fallbackDelay = Math.max(1500, Math.min(5000, estimatedMs));
+      this.silenceWaitTimer = setTimeout(() => {
+        this.silenceWaitTimer = null;
+        onComplete();
+      }, fallbackDelay);
+      return;
+    }
+
+    const SILENCE_AVG_THRESHOLD = 1.5;
+    const SILENCE_CONFIRM_MS = 600;
+    const MAX_WAIT_MS = 8000;
+    const POLL_INTERVAL_MS = 50;
+    const startTime = Date.now();
+    let silenceStartTime: number | null = null;
+
+    const tick = () => {
+      if (this.isClosed) return;
+      const now = Date.now();
+      if (now - startTime > MAX_WAIT_MS) {
+        if (process.env.NODE_ENV === "development") {
+          console.warn("[gd] silence wait timeout for", speaker);
+        }
+        this.silenceWaitTimer = null;
+        onComplete();
+        return;
+      }
+
+      const level = this.getAudioLevel(analyser);
+      if (level < SILENCE_AVG_THRESHOLD) {
+        if (silenceStartTime === null) silenceStartTime = now;
+        else if (now - silenceStartTime >= SILENCE_CONFIRM_MS) {
+          if (process.env.NODE_ENV === "development") {
+            console.log(`[gd] silence confirmed for ${speaker} after ${now - startTime}ms`);
+          }
+          this.silenceWaitTimer = null;
+          onComplete();
+          return;
+        }
+      } else {
+        silenceStartTime = null;
+      }
+      this.silenceWaitTimer = setTimeout(tick, POLL_INTERVAL_MS);
+    };
+
+    tick();
+  }
+
+  /**
    * 次の発話者を決定し、AI ターンなら triggerResponse、user ターンならマイクを ON にして待機。
-   *
-   * delay は「直近 AI 発話の文字数 × 100ms + 500ms バッファ」(最小 1500ms / 最大 5000ms)。
-   * これで現話者の音声再生完了を待ってから次話者を triggerResponse するため、
-   * 同時発話 (= 前の音声バッファに次の音声が被る) を防げる。日本語の発話速度
-   * を「100ms/文字」概算で計算 (300 文字/分相当)。
-   *
-   * 副次効果: 多重呼び出し (複数 session の onResponseEnd 同時発火) も最後の 1 回
-   * だけ実行されるため、debounce としても機能する。
+   * 短い debounce で複数 session の onResponseEnd 同時発火を 1 回に集約。
+   * 実際の「音声完了まで待つ」処理は onResponseEnd 内の waitForAudioSilence が担う。
    */
   private advanceTurn(): void {
     if (this.isClosed) return;
     if (this.advanceTurnTimer) clearTimeout(this.advanceTurnTimer);
-    const estimatedSpeechMs = this.lastAiTextLength * 100 + 500;
-    const delay = Math.max(1500, Math.min(5000, estimatedSpeechMs));
     this.advanceTurnTimer = setTimeout(() => {
       this.advanceTurnTimer = null;
       this.executeAdvanceTurn();
-    }, delay);
+    }, 50);
   }
 
   private executeAdvanceTurn(): void {
@@ -364,15 +463,15 @@ export class GdOrchestrator {
 
   /**
    * 話者の応答終了: AI 発話中フラグを解除 + streamingKey をリセット。
-   * その後 advanceTurn で次の発話者を決定する (user ターンならマイクを ON にして待機、
-   * AI ターンなら次セッションを triggerResponse)。
+   * **音声再生完了を AudioContext の音量解析で待ってから** advanceTurn を呼ぶ。
+   * これで次話者が現話者の音声に被ることが無くなる。
+   * AnalyserNode が無い場合は文字数推定 delay にフォールバック (waitForAudioSilence 内)。
    */
-  private onResponseEnd(_speaker: ActiveSpeaker): void {
+  private onResponseEnd(speaker: ActiveSpeaker): void {
     if (this.isClosed) return;
     this.streamingKey = null;
     this.opts.onAiRespondingChange?.(false);
-    // 次のターンを進める (user に振るか、別 peer に振るかは pickNextSpeaker が決める)
-    this.advanceTurn();
+    this.waitForAudioSilence(speaker, () => this.advanceTurn());
   }
 
   private getElapsedSeconds(): number {
@@ -380,13 +479,22 @@ export class GdOrchestrator {
     return Math.floor((Date.now() - this.startedAt) / 1000);
   }
 
-  /** 全セッション停止 + マイク解放 */
+  /** 全セッション停止 + マイク解放 + AudioContext 解放 */
   close(): void {
     if (this.isClosed) return;
     this.isClosed = true;
     if (this.advanceTurnTimer) {
       clearTimeout(this.advanceTurnTimer);
       this.advanceTurnTimer = null;
+    }
+    if (this.silenceWaitTimer) {
+      clearTimeout(this.silenceWaitTimer);
+      this.silenceWaitTimer = null;
+    }
+    this.analysers.clear();
+    if (this.audioCtx) {
+      try { void this.audioCtx.close(); } catch { /* noop */ }
+      this.audioCtx = null;
     }
     for (const sess of this.sessions.values()) {
       try {

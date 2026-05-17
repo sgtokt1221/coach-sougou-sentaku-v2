@@ -149,6 +149,9 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
   /**
    * responseId に紐づく AI メッセージを更新する (複数 response 並行時の正確な対応用)。
    * 同 responseId のメッセージが見つからなければ何もしない (呼び出し側で append 判断)。
+   *
+   * hook 内 messages と page.tsx 側 messages は別管理なので、page.tsx にも
+   * update 通知を流す必要がある (これが抜けると初回 delta で表示が固まる)。
    */
   const updateAiMessageByResponseId = useCallback(
     (responseId: string, patch: { content?: string; isThinking?: boolean }) => {
@@ -161,6 +164,7 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
         copy[idx] = { ...copy[idx], ...patch };
         return copy;
       });
+      optsRef.current.onMessageUpdateLast?.(patch);
     },
     [],
   );
