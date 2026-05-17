@@ -36,12 +36,14 @@ import {
   Clock,
   BookOpen,
   ExternalLink,
+  ChevronDown,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { authFetch } from "@/lib/api/client";
 import type { University, Faculty, SelectionMethod } from "@/lib/types/university";
 import { Badge } from "@/components/ui/badge";
-import { PAST_QUESTIONS } from "@/data/essay-past-questions";
+import { PAST_QUESTIONS, needsSourceText, type PastQuestion } from "@/data/essay-past-questions";
+import { PastQuestionTopicCard } from "@/components/essay/PastQuestionTopicCard";
 
 type SelectionMethodType = SelectionMethod["type"];
 
@@ -394,6 +396,37 @@ export default function AdminUniversityEditPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteFacultyIndex, setDeleteFacultyIndex] = useState<number | null>(null);
 
+  // 過去問課題文動的取得用state
+  type SourceTextCacheEntry = {
+    text: string | null;
+    isSample: boolean;
+    loading: boolean;
+    error: string | null;
+  };
+  const [sourceTextCache, setSourceTextCache] = useState<Record<string, SourceTextCacheEntry>>({});
+
+  async function loadSourceText(questionId: string) {
+    if (sourceTextCache[questionId]) return; // 既に取得済 or 取得中
+    setSourceTextCache((prev) => ({
+      ...prev,
+      [questionId]: { text: null, isSample: false, loading: true, error: null }
+    }));
+    try {
+      const res = await authFetch(`/api/past-questions/${questionId}/source-text`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data: { sourceText: string; isSample: boolean } = await res.json();
+      setSourceTextCache((prev) => ({
+        ...prev,
+        [questionId]: { text: data.sourceText, isSample: data.isSample, loading: false, error: null }
+      }));
+    } catch (err) {
+      setSourceTextCache((prev) => ({
+        ...prev,
+        [questionId]: { text: null, isSample: false, loading: false, error: err instanceof Error ? err.message : "取得失敗" }
+      }));
+    }
+  }
+
   useEffect(() => {
     async function fetchUniversity() {
       try {
@@ -472,6 +505,46 @@ export default function AdminUniversityEditPage() {
     } finally {
       setSaving(false);
     }
+  }
+
+  function PastQuestionDisclosure({
+    pastQuestion,
+    cacheEntry,
+    onOpen
+  }: {
+    pastQuestion: PastQuestion;
+    cacheEntry?: SourceTextCacheEntry;
+    onOpen: () => void;
+  }) {
+    const [open, setOpen] = useState(false);
+    const toggle = () => {
+      if (!open) onOpen();
+      setOpen((v) => !v);
+    };
+    return (
+      <div className="mt-2">
+        <button
+          type="button"
+          onClick={toggle}
+          className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+        >
+          <ChevronDown className={`size-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
+          {open ? "閉じる" : "課題文・資料を表示"}
+        </button>
+        {open && (
+          <div className="mt-2">
+            <PastQuestionTopicCard
+              pastQuestion={pastQuestion}
+              dynamicSourceText={cacheEntry?.text ?? null}
+              dynamicIsSample={cacheEntry?.isSample ?? false}
+              sourceTextLoading={cacheEntry?.loading ?? false}
+              sourceTextError={cacheEntry?.error ?? null}
+              fullSourceText
+            />
+          </div>
+        )}
+      </div>
+    );
   }
 
   if (loading) {
@@ -787,6 +860,13 @@ export default function AdminUniversityEditPage() {
                       </span>
                     )}
                   </div>
+                  {needsSourceText(pq) && (
+                    <PastQuestionDisclosure
+                      pastQuestion={pq}
+                      cacheEntry={sourceTextCache[pq.id]}
+                      onOpen={() => loadSourceText(pq.id)}
+                    />
+                  )}
                 </div>
               ))}
             </CardContent>
