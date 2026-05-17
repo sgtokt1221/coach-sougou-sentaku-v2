@@ -22,10 +22,10 @@ interface Props {
 }
 
 const SIZE_CLASS: Record<NonNullable<Props["size"]>, string> = {
-  sm: "size-8 text-base",
-  md: "size-12 text-xl",
-  lg: "size-20 text-4xl",
-  xl: "size-28 text-6xl",
+  sm: "size-8",
+  md: "size-12",
+  lg: "size-20",
+  xl: "size-28",
 };
 
 const ICON_SIZE_CLASS: Record<NonNullable<Props["size"]>, string> = {
@@ -33,6 +33,13 @@ const ICON_SIZE_CLASS: Record<NonNullable<Props["size"]>, string> = {
   md: "size-3.5",
   lg: "size-5",
   xl: "size-7",
+};
+
+const TEXT_SIZE_CLASS: Record<NonNullable<Props["size"]>, string> = {
+  sm: "text-xs",
+  md: "text-base",
+  lg: "text-2xl",
+  xl: "text-4xl",
 };
 
 const RANK_ICONS: Record<SkillRank, typeof Crown> = {
@@ -59,13 +66,13 @@ export function SkillRankBadge({
   // showLabel が true の場合は showScore は無視（既存挙動維持）
   const shouldShowScore = showScore && !showLabel;
 
-  // Framer Motion props
+  // Framer Motion props (layout shift防止: scale除去、filterとring使用)
   const motionProps = animate
     ? {
-        initial: { scale: 0.85, opacity: 0 },
-        animate: { scale: 1, opacity: 1 },
+        initial: { opacity: 0 },
+        animate: { opacity: 1 },
         transition: { type: "spring", stiffness: 300, damping: 20 },
-        whileHover: { scale: 1.08, rotate: 2 },
+        whileHover: { filter: "brightness(1.1)" },
       }
     : {};
 
@@ -89,29 +96,35 @@ export function SkillRankBadge({
         {...motionProps}
         {...(meta.premium ? sPulseAnimation : {})}
         className={cn(
-          "relative flex items-center justify-center rounded-full border-2 font-bold bg-gradient-to-br text-white",
+          "relative inline-flex flex-col items-center justify-center rounded-full bg-gradient-to-br text-white ring-1 ring-black/5 transition-colors duration-200",
           meta.gradientFrom,
           meta.gradientTo,
-          meta.borderColor,
           SIZE_CLASS[size],
-          // 3D風のinsetシャドウ追加
+          // 3D風のinsetシャドウ追加（ui-ux-pro-max推奨）
           "shadow-[inset_0_1px_2px_rgba(255,255,255,0.35),inset_0_-2px_4px_rgba(0,0,0,0.18)]",
           // Sランクはゴールドのグロー+リング付きで特別感を演出
           meta.premium
-            ? "ring-2 ring-amber-300/70 ring-offset-1"
-            : "shadow-sm",
+            ? "ring-2 ring-amber-300/70 ring-offset-2"
+            : "hover:ring-2 hover:ring-offset-2 hover:ring-black/10",
         )}
         aria-label={`スキルランク ${meta.label}`}
       >
-        <span className="drop-shadow-sm">{meta.label}</span>
-
-        {/* アイコンを右上に配置 */}
+        {/* アイコンを上部に配置（縦並び） */}
         <IconComponent
           className={cn(
-            "absolute top-0.5 right-0.5 text-white/90 drop-shadow-sm",
-            ICON_SIZE_CLASS[size]
+            "opacity-75 -mb-0.5",
+            ICON_SIZE_CLASS[size],
+            // Sランク特別色
+            meta.premium ? "text-amber-100/80" : "text-white/90"
           )}
         />
+        {/* ランク文字を下部に配置 */}
+        <span className={cn(
+          "font-bold leading-none drop-shadow-sm",
+          TEXT_SIZE_CLASS[size]
+        )}>
+          {meta.label}
+        </span>
       </motion.div>
 
       {shouldShowScore && (

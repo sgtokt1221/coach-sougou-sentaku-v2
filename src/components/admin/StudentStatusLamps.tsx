@@ -4,14 +4,14 @@ import type { StudentListItem } from "@/lib/types/admin";
 
 interface StudentStatusLampsProps {
   alertFlags: StudentListItem["alertFlags"];
+  lastActivityAt: string | null;
   className?: string;
   maxVisible?: number;
 }
 
+type ActivityLevel = "active" | "moderate" | "danger" | "none";
+
 type FlagInfo = {
-  color: string;
-  bgColor: string;
-  ringColor: string;
   message: string;
   severity: "critical" | "high" | "warning";
 };
@@ -19,137 +19,154 @@ type FlagInfo = {
 const FLAG_CONFIG: Record<string, FlagInfo> = {
   // Critical (赤)
   inactive: {
-    color: "bg-rose-500",
-    bgColor: "bg-rose-500",
-    ringColor: "ring-rose-200",
     message: "7日以上活動なし",
     severity: "critical",
   },
   document_deadline: {
-    color: "bg-rose-500",
-    bgColor: "bg-rose-500",
-    ringColor: "ring-rose-200",
     message: "書類期限が迫っている",
     severity: "critical",
   },
 
   // High (濃い amber)
   declining: {
-    color: "bg-amber-600",
-    bgColor: "bg-amber-600",
-    ringColor: "ring-amber-300",
     message: "スコア下降傾向",
     severity: "high",
   },
   weakness_stuck: {
-    color: "bg-amber-600",
-    bgColor: "bg-amber-600",
-    ringColor: "ring-amber-300",
     message: "弱点が改善せず停滞",
     severity: "high",
   },
   ap_struggle: {
-    color: "bg-amber-600",
-    bgColor: "bg-amber-600",
-    ringColor: "ring-amber-300",
     message: "AP合致度が低迷",
     severity: "high",
   },
   deadline_risk: {
-    color: "bg-amber-600",
-    bgColor: "bg-amber-600",
-    ringColor: "ring-amber-300",
     message: "期限内に完成しない恐れ",
     severity: "high",
   },
 
   // Warning (淡い amber)
   repeated_weakness: {
-    color: "bg-amber-400",
-    bgColor: "bg-amber-400",
-    ringColor: "ring-amber-200",
     message: "弱点の繰り返し指摘が多い",
     severity: "warning",
   },
   score_plateau: {
-    color: "bg-amber-400",
-    bgColor: "bg-amber-400",
-    ringColor: "ring-amber-200",
     message: "スコアが頭打ち",
     severity: "warning",
   },
 };
 
-// 順調時の緑ドット
-const HEALTHY_DOT = {
-  color: "bg-emerald-500",
-  bgColor: "bg-emerald-500",
-  ringColor: "ring-emerald-200",
-  message: "順調に進捗中",
-  severity: "healthy" as const,
-};
+/**
+ * 最終活動日から活動レベルを判定
+ */
+function getActivityLevel(lastActivityAt: string | null): {
+  level: ActivityLevel;
+  days: number | null;
+  label: string;
+  dotColor: string;
+  labelColor: string;
+} {
+  if (!lastActivityAt) {
+    return {
+      level: "none",
+      days: null,
+      label: "未活動",
+      dotColor: "bg-slate-400",
+      labelColor: "text-slate-500 dark:text-slate-400",
+    };
+  }
+
+  const now = new Date();
+  const lastActivity = new Date(lastActivityAt);
+  const diffDays = Math.floor((now.getTime() - lastActivity.getTime()) / (1000 * 60 * 60 * 24));
+
+  if (diffDays <= 7) {
+    return {
+      level: "active",
+      days: diffDays,
+      label: "アクティブ",
+      dotColor: "bg-emerald-500",
+      labelColor: "text-emerald-700 dark:text-emerald-400",
+    };
+  } else if (diffDays <= 14) {
+    return {
+      level: "moderate",
+      days: diffDays,
+      label: "やや停滞",
+      dotColor: "bg-amber-500",
+      labelColor: "text-amber-700 dark:text-amber-400",
+    };
+  } else {
+    return {
+      level: "danger",
+      days: diffDays,
+      label: "非アクティブ",
+      dotColor: "bg-rose-500",
+      labelColor: "text-rose-700 dark:text-rose-400",
+    };
+  }
+}
+
+/**
+ * 最終活動日の詳細テキストを生成
+ */
+function getActivityDetailText(lastActivityAt: string | null, days: number | null): string {
+  if (!lastActivityAt || days === null) {
+    return "活動履歴なし";
+  }
+
+  const date = new Date(lastActivityAt);
+  const dateStr = date.toLocaleDateString("ja-JP", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+
+  return `最終活動: ${dateStr} (${days}日前)`;
+}
 
 export function StudentStatusLamps({
   alertFlags,
+  lastActivityAt,
   className,
   maxVisible = 4
 }: StudentStatusLampsProps) {
-  // フラグがない場合は緑ドット1つ
-  if (alertFlags.length === 0) {
-    return (
-      <div className={cn("flex items-center gap-1", className)}>
-        <div
-          className={cn(
-            "size-2.5 rounded-full transition-transform hover:scale-125 hover:ring-2",
-            HEALTHY_DOT.bgColor,
-            "hover:" + HEALTHY_DOT.ringColor
-          )}
-          title={HEALTHY_DOT.message}
-        />
-      </div>
-    );
-  }
-
-  // 重要度順でソート（critical > high > warning）
-  const sortedFlags = [...alertFlags].sort((a, b) => {
-    const severityOrder = { critical: 3, high: 2, warning: 1 };
-    const configA = FLAG_CONFIG[a];
-    const configB = FLAG_CONFIG[b];
-    if (!configA || !configB) return 0;
-    return severityOrder[configB.severity] - severityOrder[configA.severity];
-  });
-
-  const visibleFlags = sortedFlags.slice(0, maxVisible);
-  const hiddenCount = sortedFlags.length - visibleFlags.length;
+  const activity = getActivityLevel(lastActivityAt);
+  const detailText = getActivityDetailText(lastActivityAt, activity.days);
 
   return (
-    <div className={cn("flex items-center gap-1", className)}>
-      {visibleFlags.map((flag, index) => {
-        const config = FLAG_CONFIG[flag];
-        if (!config) return null;
+    <div
+      className={cn("relative inline-flex items-center gap-1.5 cursor-help", className)}
+      title={detailText}
+    >
+      <span className="relative inline-flex h-2.5 w-2.5">
+        {/* 赤（非アクティブ）の場合はパルスリング */}
+        {activity.level === "danger" && (
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75" />
+        )}
+        <span className={cn("relative inline-flex h-2.5 w-2.5 rounded-full", activity.dotColor)} />
+      </span>
 
-        return (
-          <div
-            key={`${flag}-${index}`}
-            className={cn(
-              "size-2.5 rounded-full transition-transform hover:scale-125 hover:ring-2",
-              config.bgColor,
-              "hover:" + config.ringColor
-            )}
-            title={config.message}
-          />
-        );
-      })}
+      <span className={cn("text-xs font-medium", activity.labelColor)}>
+        {activity.label}
+      </span>
 
-      {hiddenCount > 0 && (
-        <Badge
-          variant="secondary"
-          className="text-[10px] px-1.5 py-0 h-5 ml-0.5"
-          title={`他${hiddenCount}件の要注意項目があります`}
+      <span className="text-[10px] text-muted-foreground tabular-nums">
+        {activity.days !== null ? `${activity.days}d` : "-"}
+      </span>
+
+      {/* alertFlags が 1 以上ある場合の補助バッジ */}
+      {alertFlags.length > 0 && (
+        <span
+          className="ml-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-rose-100 px-1 text-[10px] font-medium text-rose-700 dark:bg-rose-900 dark:text-rose-300"
+          title={alertFlags.map(flag => FLAG_CONFIG[flag]?.message || flag).join(", ")}
         >
-          +{hiddenCount}
-        </Badge>
+          ⚠ {alertFlags.length}
+        </span>
       )}
+
+      {/* アクセシビリティ: スクリーンリーダー用 */}
+      <span className="sr-only">{detailText}</span>
     </div>
   );
 }

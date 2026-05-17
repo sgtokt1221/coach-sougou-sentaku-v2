@@ -344,7 +344,10 @@ export default function AdminStudentsPage() {
                         </td>
                         <td className="px-4 py-3 text-center">
                           <div className="flex justify-center">
-                            <StudentStatusLamps alertFlags={s.alertFlags} />
+                            <StudentStatusLamps
+                              alertFlags={s.alertFlags}
+                              lastActivityAt={s.lastActivityAt}
+                            />
                           </div>
                         </td>
                       </motion.tr>
