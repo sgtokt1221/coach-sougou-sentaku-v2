@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useEffect, useState, useMemo, Suspense } from "react";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -49,7 +50,11 @@ import {
   Mic,
   MicOff,
   ChevronDown,
+  Clock,
+  Activity,
 } from "lucide-react";
+import { motion } from "framer-motion";
+import { AreaChart, Area, ResponsiveContainer } from "recharts";
 import { toast } from "sonner";
 import { authFetch } from "@/lib/api/client";
 import { ScoresTrendChart } from "@/components/growth/ScoresTrendChart";
@@ -64,6 +69,7 @@ import { SkillRankPanel } from "@/components/skill-check/SkillRankPanel";
 import { CategorySelector } from "@/components/skill-check/CategorySelector";
 import type { SkillCheckStatus, AcademicCategory } from "@/lib/types/skill-check";
 import type { InterviewSkillCheckStatus } from "@/lib/types/interview-skill-check";
+import { StudentSkillRadar } from "@/components/admin/StudentSkillRadar";
 
 const CERT_TYPES: { value: EnglishCert["type"]; label: string }[] = [
   { value: "EIKEN", label: "英検" },
@@ -126,10 +132,125 @@ function scoreColor(total: number): string {
   return "text-rose-600 dark:text-rose-400";
 }
 
-export default function AdminStudentDetailPage() {
+/**
+ * ピン留めサマリ (4 セル + アニメ + スパークライン)
+ */
+function PinnedSummary({ detail }: { detail: StudentDetail }) {
+  const { essays, weaknesses, lastActivityAt, essayScoreTrend, interviewScoreTrend } = detail;
+
+  // 最新添削スコア
+  const latestEssayScore = essays.find(e => e.scores)?.scores?.total ?? null;
+  const essaySparklineData = (essayScoreTrend ?? []).slice(-5).map((p, i) => ({ x: i, y: p.total }));
+
+  // 最新面接スコア
+  const latestInterviewScore = interviewScoreTrend && interviewScoreTrend.length > 0
+    ? interviewScoreTrend[interviewScoreTrend.length - 1].total
+    : null;
+  const interviewSparklineData = (interviewScoreTrend ?? []).slice(-5).map((p, i) => ({ x: i, y: p.total }));
+
+  // 未解決弱点数
+  const unresolvedWeaknessCount = weaknesses.filter(w => !w.resolved).length;
+
+  // 最終活動（N日前）
+  const lastActivityInfo = (() => {
+    if (!lastActivityAt) return { text: "なし", color: "text-gray-500" };
+    const days = Math.floor((Date.now() - new Date(lastActivityAt).getTime()) / 86400000);
+    if (days <= 7) return { text: `${days}日前`, color: "text-green-600" };
+    if (days <= 14) return { text: `${days}日前`, color: "text-yellow-600" };
+    return { text: `${days}日前`, color: "text-red-600" };
+  })();
+
+  const cells = [
+    {
+      label: "最新添削スコア",
+      value: latestEssayScore ? `${latestEssayScore}/50` : "—",
+      sparkline: essaySparklineData,
+      color: latestEssayScore ? scoreColor(latestEssayScore) : "text-gray-400",
+    },
+    {
+      label: "最新面接スコア",
+      value: latestInterviewScore ? `${latestInterviewScore}/100` : "—",
+      sparkline: interviewSparklineData,
+      color: latestInterviewScore ? scoreColor(latestInterviewScore * 1.25) : "text-gray-400", // 0-40 → 0-50 換算で色判定
+    },
+    {
+      label: "未解決弱点数",
+      value: unresolvedWeaknessCount.toString(),
+      color: unresolvedWeaknessCount >= 3 ? "text-amber-600" : "text-gray-600",
+      pulse: unresolvedWeaknessCount >= 3,
+    },
+    {
+      label: "最終活動",
+      value: lastActivityInfo.text,
+      color: lastActivityInfo.color,
+      icon: Activity,
+    },
+  ];
+
+  return (
+    <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+      {cells.map((cell, i) => (
+        <motion.div
+          key={i}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: i * 0.1 }}
+          className={`rounded-lg border bg-background/50 p-3 ${cell.pulse ? "animate-pulse" : ""}`}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs text-muted-foreground">{cell.label}</p>
+              <motion.p
+                initial={{ scale: 0.8 }}
+                animate={{ scale: 1 }}
+                transition={{ duration: 0.5, delay: i * 0.1 + 0.2 }}
+                className={`text-lg font-semibold ${cell.color}`}
+              >
+                {cell.value}
+              </motion.p>
+            </div>
+            {cell.sparkline && cell.sparkline.length > 0 && (
+              <div className="h-8 w-16">
+                <ResponsiveContainer>
+                  <AreaChart data={cell.sparkline}>
+                    <Area
+                      type="monotone"
+                      dataKey="y"
+                      stroke="#6366f1"
+                      fill="#6366f1"
+                      fillOpacity={0.2}
+                      strokeWidth={1.5}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+            {cell.icon && <cell.icon className="size-4 text-muted-foreground" />}
+          </div>
+        </motion.div>
+      ))}
+    </div>
+  );
+}
+
+type TabKey = "overview" | "performance" | "activity" | "reports";
+const VALID_TABS: TabKey[] = ["overview", "performance", "activity", "reports"];
+
+function AdminStudentDetailPageInner() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const id = params?.id as string;
+
+  // タブ状態とURL同期
+  const rawTab = searchParams?.get("tab") ?? "overview";
+  const tab: TabKey = VALID_TABS.includes(rawTab as TabKey) ? (rawTab as TabKey) : "overview";
+
+  const handleTabChange = (next: string) => {
+    const sp = new URLSearchParams(searchParams?.toString() ?? "");
+    sp.set("tab", next);
+    router.replace(`?${sp.toString()}`, { scroll: false });
+  };
 
   const [detail, setDetail] = useState<StudentDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -375,82 +496,10 @@ export default function AdminStudentDetailPage() {
     date: p.date.slice(5, 10).replace("-", "/"),
   }));
 
-  return (
-    <div className="space-y-6 p-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="sm" onClick={() => router.push("/admin/students")}>
-          <ArrowLeft className="size-4 mr-1" />
-          戻る
-        </Button>
-        <div className="flex items-center gap-3">
-          <div>
-            <h1 className="text-2xl font-bold">{profile.displayName}</h1>
-            <p className="text-sm text-muted-foreground">生徒詳細</p>
-          </div>
-          {(() => {
-            if (!lastActivityAt) return <Badge variant="secondary">活動なし</Badge>;
-            const days = Math.floor((Date.now() - new Date(lastActivityAt).getTime()) / 86400000);
-            if (days <= 7) return <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300">アクティブ</Badge>;
-            if (days <= 14) return <Badge className="bg-amber-100 text-amber-800 border-amber-300">やや停滞</Badge>;
-            return <Badge className="bg-rose-100 text-rose-800 border-rose-300">非アクティブ（{days}日）</Badge>;
-          })()}
-        </div>
-      </div>
-
-      {/* Skill Ranks: 小論文 + 面接。SC + 直近30日練習の合成ランクを表示 */}
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        <SkillRankPanel
-          label="小論文スキル"
-          rank={skillCheck?.latestResult?.rank ?? null}
-          score={skillCheck?.latestResult?.scores.total ?? null}
-          takenAt={skillCheck?.latestResult?.takenAt ?? null}
-          daysSinceLast={skillCheck?.daysSinceLast ?? null}
-          category={skillCheck?.currentCategory ?? skillCheck?.latestResult?.category ?? null}
-          subLabel={skillCheck?.needsRefresh ? "更新推奨" : undefined}
-          aggregate={skillCheck?.aggregate}
-        />
-        <SkillRankPanel
-          label="面接スキル"
-          rank={interviewSkillCheck?.latestResult?.rank ?? null}
-          score={interviewSkillCheck?.latestResult?.scores.total ?? null}
-          maxScore={40}
-          takenAt={interviewSkillCheck?.latestResult?.takenAt ?? null}
-          daysSinceLast={interviewSkillCheck?.daysSinceLast ?? null}
-          subLabel={interviewSkillCheck?.needsRefresh ? "更新推奨" : undefined}
-          emptyMessage="未受験"
-          aggregate={interviewSkillCheck?.aggregate}
-        />
-      </div>
-
-      {/* 系統変更（管理者操作） */}
-      {skillCheck && (
-        <Card>
-          <CardContent className="flex flex-wrap items-center gap-3 py-3">
-            <span className="text-xs font-medium text-muted-foreground">
-              スキルチェック系統
-            </span>
-            <CategorySelector
-              value={skillCheck.currentCategory ?? null}
-              onChange={handleChangeSkillCategory}
-              disabled={savingCategory}
-            />
-            <p className="text-xs text-muted-foreground">
-              次回受験時に出題される系統を変更できます。
-            </p>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Activity Heatmap & Top Weaknesses */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <ActivityHeatmap data={activityHeatmapData} />
-        </div>
-        <div className="lg:col-span-1">
-          <WeaknessTopChart weaknesses={topWeaknesses} />
-        </div>
-      </div>
+  // タブコンテンツ関数
+  const renderOverviewTab = () => (
+    <div className="space-y-6">
+      <StudentSkillRadar detail={detail} />
 
       {/* Profile Card */}
       <Card>
@@ -539,6 +588,291 @@ export default function AdminStudentDetailPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Skill Ranks: 小論文 + 面接 */}
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <SkillRankPanel
+          label="小論文スキル"
+          rank={skillCheck?.latestResult?.rank ?? null}
+          score={skillCheck?.latestResult?.scores.total ?? null}
+          takenAt={skillCheck?.latestResult?.takenAt ?? null}
+          daysSinceLast={skillCheck?.daysSinceLast ?? null}
+          category={skillCheck?.currentCategory ?? skillCheck?.latestResult?.category ?? null}
+          subLabel={skillCheck?.needsRefresh ? "更新推奨" : undefined}
+          aggregate={skillCheck?.aggregate}
+        />
+        <SkillRankPanel
+          label="面接スキル"
+          rank={interviewSkillCheck?.latestResult?.rank ?? null}
+          score={interviewSkillCheck?.latestResult?.scores.total ?? null}
+          maxScore={40}
+          takenAt={interviewSkillCheck?.latestResult?.takenAt ?? null}
+          daysSinceLast={interviewSkillCheck?.daysSinceLast ?? null}
+          subLabel={interviewSkillCheck?.needsRefresh ? "更新推奨" : undefined}
+          emptyMessage="未受験"
+          aggregate={interviewSkillCheck?.aggregate}
+        />
+      </div>
+
+      {/* 系統変更（管理者操作） */}
+      {skillCheck && (
+        <Card>
+          <CardContent className="flex flex-wrap items-center gap-3 py-3">
+            <span className="text-xs font-medium text-muted-foreground">
+              スキルチェック系統
+            </span>
+            <CategorySelector
+              value={skillCheck.currentCategory ?? null}
+              onChange={handleChangeSkillCategory}
+              disabled={savingCategory}
+            />
+            <p className="text-xs text-muted-foreground">
+              次回受験時に出題される系統を変更できます。
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Activity Heatmap & Top Weaknesses */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <ActivityHeatmap data={activityHeatmapData} />
+        </div>
+        <div className="lg:col-span-1">
+          <WeaknessTopChart weaknesses={topWeaknesses} />
+        </div>
+      </div>
+
+      {/* Discover (自己分析 + 志望校マッチング) */}
+      <DiscoverSection studentId={id} />
+    </div>
+  );
+
+  const renderPerformanceTab = () => (
+    <div className="space-y-6">
+      {/* Score Trend Chart */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <BarChart3 className="size-4" />
+            スコア推移（小論文・面接）
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ScoresTrendChart essayData={essayChartData} interviewData={interviewChartData} />
+        </CardContent>
+      </Card>
+
+      {/* Weaknesses Table — Accordion */}
+      <Card>
+        <CardHeader
+          className="cursor-pointer select-none"
+          onClick={() => setOpenSections((s) => ({ ...s, weaknesses: !s.weaknesses }))}
+        >
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base flex items-center gap-2">
+              <AlertCircle className="size-4" />
+              弱点一覧
+              <Badge variant="secondary" className="text-xs ml-1">{weaknesses.filter((w) => !w.resolved).length}</Badge>
+            </CardTitle>
+            <ChevronDown className={`size-4 text-muted-foreground transition-transform ${openSections.weaknesses ? "rotate-180" : ""}`} />
+          </div>
+        </CardHeader>
+        {openSections.weaknesses && (
+          <CardContent className="p-0">
+            {weaknesses.length === 0 ? (
+              <div className="py-8 text-center text-sm text-muted-foreground">
+                弱点データなし
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b bg-muted/50">
+                      <th className="px-4 py-3 text-left font-medium">弱点項目</th>
+                      <th className="px-4 py-3 text-center font-medium">出所</th>
+                      <th className="px-4 py-3 text-center font-medium">指摘回数</th>
+                      <th className="px-4 py-3 text-center font-medium">ステータス</th>
+                      <th className="px-4 py-3 text-center font-medium w-12">FB</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {weaknesses.map((w) => (
+                      <tr key={w.area} className="border-b">
+                        <td className="px-4 py-3">{w.area}</td>
+                        <td className="px-4 py-3 text-center">
+                          <WeaknessSourceBadge source={w.source as "essay" | "interview" | "both"} />
+                        </td>
+                        <td className="px-4 py-3 text-center">{w.count}回</td>
+                        <td className="px-4 py-3 text-center">{weaknessBadge(w)}</td>
+                        <td className="px-4 py-3 text-center">
+                          <InlineFeedbackButton
+                            studentId={id}
+                            type="weakness"
+                            targetId={w.area}
+                            targetLabel={w.area}
+                            compact
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        )}
+      </Card>
+
+      {/* Essay History — Accordion */}
+      <Card>
+        <CardHeader
+          className="cursor-pointer select-none"
+          onClick={() => setOpenSections((s) => ({ ...s, essays: !s.essays }))}
+        >
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <FileText className="size-4" />
+              添削履歴
+              <Badge variant="secondary" className="text-xs ml-1">{essays.length}</Badge>
+            </CardTitle>
+            <ChevronDown className={`size-4 text-muted-foreground transition-transform ${openSections.essays ? "rotate-180" : ""}`} />
+          </div>
+        </CardHeader>
+        {openSections.essays && (
+          <CardContent>
+            {essays.length === 0 ? (
+              <div className="py-8 text-center text-sm text-muted-foreground">
+                添削履歴なし
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {essays.map((essay) => (
+                  <div key={essay.id} className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-accent">
+                    <div>
+                      <p className="font-medium">
+                        {essay.targetUniversity} {essay.targetFaculty}
+                      </p>
+                      {essay.topic && (
+                        <p className="text-xs text-muted-foreground">{essay.topic}</p>
+                      )}
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(essay.submittedAt).toLocaleDateString("ja-JP")}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="text-right">
+                        {essay.scores ? (
+                          <>
+                            <p className={`text-lg font-bold ${scoreColor(essay.scores.total)}`}>
+                              {essay.scores.total}
+                            </p>
+                            <p className="text-xs text-muted-foreground">/50</p>
+                          </>
+                        ) : (
+                          <Badge variant="secondary" className="text-xs">
+                            {essay.status === "uploaded" ? "OCR待ち" : essay.status}
+                          </Badge>
+                        )}
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openEssayDetail(essay.id)}
+                      >
+                        <Eye className="mr-1 size-3" />
+                        詳細
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        )}
+      </Card>
+
+      <InterviewsSection studentId={id} />
+      <SummaryDrillsSection studentId={id} />
+    </div>
+  );
+
+  const renderActivityTab = () => (
+    <div className="space-y-6">
+      <DocumentsSection studentId={id} />
+      <ActivitiesSection studentId={id} />
+      <SessionsHistorySection studentId={id} />
+      <ExamResultsSection studentId={id} />
+    </div>
+  );
+
+  const renderReportsTab = () => (
+    <div className="space-y-6">
+      <GrowthReportsSection studentId={id} />
+      <EssayCoachHistorySection studentId={id} />
+      <CoachMemo studentId={id} />
+    </div>
+  );
+
+  return (
+    <div className="space-y-6 p-6">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <Button variant="ghost" size="sm" onClick={() => router.push("/admin/students")}>
+          <ArrowLeft className="size-4 mr-1" />
+          戻る
+        </Button>
+        <div className="flex items-center gap-3">
+          <div>
+            <h1 className="text-2xl font-bold">{profile.displayName}</h1>
+            <p className="text-sm text-muted-foreground">生徒詳細</p>
+          </div>
+          {(() => {
+            if (!lastActivityAt) return <Badge variant="secondary">活動なし</Badge>;
+            const days = Math.floor((Date.now() - new Date(lastActivityAt).getTime()) / 86400000);
+            if (days <= 7) return <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300">アクティブ</Badge>;
+            if (days <= 14) return <Badge className="bg-amber-100 text-amber-800 border-amber-300">やや停滞</Badge>;
+            return <Badge className="bg-rose-100 text-rose-800 border-rose-300">非アクティブ（{days}日）</Badge>;
+          })()}
+        </div>
+      </div>
+
+      {/* sticky ブロック: ピン留めサマリ + タブリスト */}
+      <Tabs value={tab} onValueChange={handleTabChange}>
+        <div className="sticky top-0 z-20 -mx-6 px-6 pt-2 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/70 border-b">
+          <PinnedSummary detail={detail} />
+          <TabsList className="mt-3 w-full justify-start overflow-x-auto">
+            <TabsTrigger value="overview">概要</TabsTrigger>
+            <TabsTrigger value="performance">成績・弱点</TabsTrigger>
+            <TabsTrigger value="activity">活動・書類</TabsTrigger>
+            <TabsTrigger value="reports">レポート</TabsTrigger>
+          </TabsList>
+        </div>
+
+        <TabsContent value="overview">
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
+            {renderOverviewTab()}
+          </motion.div>
+        </TabsContent>
+
+        <TabsContent value="performance">
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
+            {renderPerformanceTab()}
+          </motion.div>
+        </TabsContent>
+
+        <TabsContent value="activity">
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
+            {renderActivityTab()}
+          </motion.div>
+        </TabsContent>
+
+        <TabsContent value="reports">
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
+            {renderReportsTab()}
+          </motion.div>
+        </TabsContent>
+      </Tabs>
 
       {/* Profile Edit Dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
@@ -688,152 +1022,6 @@ export default function AdminStudentDetailPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Score Trend Chart */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <BarChart3 className="size-4" />
-            スコア推移（小論文・面接）
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ScoresTrendChart essayData={essayChartData} interviewData={interviewChartData} />
-        </CardContent>
-      </Card>
-
-      {/* Discover (自己分析 + 志望校マッチング) — プロフィール直後に配置 */}
-      <DiscoverSection studentId={id} />
-
-      <Separator />
-
-      {/* Weaknesses Table — Accordion */}
-      <Card>
-        <CardHeader
-          className="cursor-pointer select-none"
-          onClick={() => setOpenSections((s) => ({ ...s, weaknesses: !s.weaknesses }))}
-        >
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base flex items-center gap-2">
-              <AlertCircle className="size-4" />
-              弱点一覧
-              <Badge variant="secondary" className="text-xs ml-1">{weaknesses.filter((w) => !w.resolved).length}</Badge>
-            </CardTitle>
-            <ChevronDown className={`size-4 text-muted-foreground transition-transform ${openSections.weaknesses ? "rotate-180" : ""}`} />
-          </div>
-        </CardHeader>
-        {openSections.weaknesses && (
-          <CardContent className="p-0">
-            {weaknesses.length === 0 ? (
-              <div className="py-8 text-center text-sm text-muted-foreground">
-                弱点データなし
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b bg-muted/50">
-                      <th className="px-4 py-3 text-left font-medium">弱点項目</th>
-                      <th className="px-4 py-3 text-center font-medium">出所</th>
-                      <th className="px-4 py-3 text-center font-medium">指摘回数</th>
-                      <th className="px-4 py-3 text-center font-medium">ステータス</th>
-                      <th className="px-4 py-3 text-center font-medium w-12">FB</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {weaknesses.map((w) => (
-                      <tr key={w.area} className="border-b">
-                        <td className="px-4 py-3">{w.area}</td>
-                        <td className="px-4 py-3 text-center">
-                          <WeaknessSourceBadge source={w.source as "essay" | "interview" | "both"} />
-                        </td>
-                        <td className="px-4 py-3 text-center">{w.count}回</td>
-                        <td className="px-4 py-3 text-center">{weaknessBadge(w)}</td>
-                        <td className="px-4 py-3 text-center">
-                          <InlineFeedbackButton
-                            studentId={id}
-                            type="weakness"
-                            targetId={w.area}
-                            targetLabel={w.area}
-                            compact
-                          />
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </CardContent>
-        )}
-      </Card>
-
-      {/* Essay History — Accordion */}
-      <Card>
-        <CardHeader
-          className="cursor-pointer select-none"
-          onClick={() => setOpenSections((s) => ({ ...s, essays: !s.essays }))}
-        >
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <FileText className="size-4" />
-              添削履歴
-              <Badge variant="secondary" className="text-xs ml-1">{essays.length}</Badge>
-            </CardTitle>
-            <ChevronDown className={`size-4 text-muted-foreground transition-transform ${openSections.essays ? "rotate-180" : ""}`} />
-          </div>
-        </CardHeader>
-        {openSections.essays && (
-          <CardContent>
-            {essays.length === 0 ? (
-              <div className="py-8 text-center text-sm text-muted-foreground">
-                添削履歴なし
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {essays.map((essay) => (
-                  <div key={essay.id} className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-accent">
-                    <div>
-                      <p className="font-medium">
-                        {essay.targetUniversity} {essay.targetFaculty}
-                      </p>
-                      {essay.topic && (
-                        <p className="text-xs text-muted-foreground">{essay.topic}</p>
-                      )}
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(essay.submittedAt).toLocaleDateString("ja-JP")}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="text-right">
-                        {essay.scores ? (
-                          <>
-                            <p className={`text-lg font-bold ${scoreColor(essay.scores.total)}`}>
-                              {essay.scores.total}
-                            </p>
-                            <p className="text-xs text-muted-foreground">/50</p>
-                          </>
-                        ) : (
-                          <Badge variant="secondary" className="text-xs">
-                            {essay.status === "uploaded" ? "OCR待ち" : essay.status}
-                          </Badge>
-                        )}
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openEssayDetail(essay.id)}
-                      >
-                        <Eye className="mr-1 size-3" />
-                        詳細
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        )}
-      </Card>
 
       {/* Essay Detail Dialog */}
       <Dialog open={essayDetailOpen} onOpenChange={setEssayDetailOpen}>
@@ -989,31 +1177,21 @@ export default function AdminStudentDetailPage() {
           )}
         </DialogContent>
       </Dialog>
-
-      {/* Interviews */}
-      <InterviewsSection studentId={id} />
-      <SummaryDrillsSection studentId={id} />
-
-      {/* Documents */}
-      <DocumentsSection studentId={id} />
-
-      {/* Activities */}
-      <ActivitiesSection studentId={id} />
-
-      {/* セッション履歴 */}
-      <SessionsHistorySection studentId={id} />
-
-      {/* 成長レポート */}
-      <GrowthReportsSection studentId={id} />
-
-      {/* AIコーチ履歴 */}
-      <EssayCoachHistorySection studentId={id} />
-
-      {/* Exam Results */}
-      <ExamResultsSection studentId={id} />
-
-      {/* Coach Memo */}
-      <CoachMemo studentId={id} />
     </div>
+  );
+}
+
+export default function AdminStudentDetailPage() {
+  return (
+    <Suspense fallback={
+      <div className="space-y-6 p-6">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-40 w-full" />
+        <Skeleton className="h-[320px] w-full" />
+        <Skeleton className="h-40 w-full" />
+      </div>
+    }>
+      <AdminStudentDetailPageInner />
+    </Suspense>
   );
 }
