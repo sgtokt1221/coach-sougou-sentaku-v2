@@ -252,17 +252,17 @@ export class GdOrchestrator {
 
     // 他 2 セッションに「他者の発言」として broadcast
     // role=user で注入することで「他の参加者がこう言った」と認識させる
-    for (const [key, sess] of this.sessions) {
-      if (key !== speaker) {
+    for (const [sessionSpeaker, sess] of this.sessions) {
+      if (sessionSpeaker !== speaker) {
         sess.addConversationItem("user", prefixedContent);
       }
     }
   }
 
-  /** 話者の応答終了: AI 発話中フラグを解除 */
+  /** 話者の応答終了: AI 発話中フラグを解除 + streamingKey をリセット */
   private onResponseEnd(_speaker: ActiveSpeaker): void {
     if (this.isClosed) return;
-    this.streamingSpeaker = null;
+    this.streamingKey = null;
     this.opts.onAiRespondingChange?.(false);
   }
 

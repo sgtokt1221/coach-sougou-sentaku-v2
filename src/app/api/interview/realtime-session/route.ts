@@ -62,6 +62,12 @@ interface CreateSessionParams {
   voice: string;
   /** 転写ヒント: 大学名や専門用語を列挙した文字列 (誤変換対策) */
   transcriptionPrompt?: string;
+  /**
+   * VAD で発話終了を検知したらサーバー側で自動的に response.create するか。
+   * GD モードでは orchestrator が triggerResponse で完全に制御するため false にする。
+   * 個別面接モードでは true (デフォルト) のまま、ユーザー発話に自動応答。
+   */
+  autoCreateResponse?: boolean;
 }
 
 // GA レスポンスは { value, expires_at } を直接返すが、互換のため client_secret 形式も受ける。
@@ -133,7 +139,7 @@ async function issueEphemeralToken(
                   threshold: 0.8,
                   prefix_padding_ms: 300,
                   silence_duration_ms: 800,
-                  create_response: true,
+                  create_response: params.autoCreateResponse ?? true,
                 },
               },
               output: { voice: params.voice },
@@ -300,7 +306,15 @@ export async function POST(request: NextRequest) {
         );
         const issueResult = await issueEphemeralToken(
           apiKey,
-          { instructions, voice, transcriptionPrompt },
+          {
+            instructions,
+            voice,
+            transcriptionPrompt,
+            // GD は orchestrator が triggerResponse で制御するため、サーバー側
+            // 自動応答は禁止 (接続直後の race condition で moderator が複数
+            // opening を吐く事故を防ぐ)
+            autoCreateResponse: false,
+          },
           REALTIME_MODEL_CANDIDATES_GD,
         );
         return { key, voice, issueResult };
