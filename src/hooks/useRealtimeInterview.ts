@@ -109,6 +109,16 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
   const isAiStreamingRef = useRef(false);
   /** マイク再開予定の setTimeout ID (AI 応答終了後に再開) */
   const micResumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /**
+   * 既に AI バブルを append 済みの responseId 集合。
+   *
+   * Why: setMessages 内の closure で `exists` 判定すると React 18 の batching で
+   * state 反映前に連続 delta が走り、毎回 false 判定 → delta ごとに新バブルが
+   * 増殖する (個人面接で挨拶が 1 文字ずつ別バブルになる事故の原因)。
+   * useRef は同期更新なので連続 delta でも 2 回目以降は必ず has() === true に
+   * なり、update 側に分岐できる。
+   */
+  const seenResponseIdsRef = useRef<Set<string>>(new Set());
   useEffect(() => {
     optsRef.current = options;
   }, [options]);
@@ -162,6 +172,7 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
     }
     isAiRespondingRef.current = false;
     isAiStreamingRef.current = false;
+    seenResponseIdsRef.current.clear();
     if (sessionRef.current) {
       sessionRef.current.close();
       sessionRef.current = null;
@@ -190,6 +201,8 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
     // 前回セッションの残骸防止: currentSpeaker を null に明示リセット
     // (これがないと前回の "user" 状態が残ってランプが「あなたの番」のままに見える)
     setCurrentSpeaker(null);
+    // 前回セッションの seen responseId をクリア (新セッションで再利用される ID は無いが念のため)
+    seenResponseIdsRef.current.clear();
 
     // 1. ephemeral token を取得
     let tokenData: {
@@ -369,44 +382,28 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
           }
         },
         onAssistantTranscriptDelta: (cumulative, responseId) => {
-          // responseId 別に「このバブルが既に存在するか」を確認して、
-          // 存在しなければ append、存在すれば update。
-          // これで複数 response が並行発火しても各々が独立バブルになり、
-          // 別 response のバブルを誤って上書きする事故を防ぐ。
+          // 既に append 済みなら update、未 append なら append。
+          // setMessages の closure 内で exists 判定すると React batching で
+          // 連続 delta が全て false 判定になりバブルが増殖する → useRef で
+          // 同期的に「append 済 responseId」を管理して回避。
           const key = responseId ?? "__single__";
-          let exists = false;
-          setMessages((prev) => {
-            exists = prev.some((m) => m.role === "ai" && m.responseId === key);
-            if (exists) {
-              const idx = prev.findLastIndex(
-                (m) => m.role === "ai" && m.responseId === key,
-              );
-              if (idx < 0) return prev;
-              const copy = [...prev];
-              copy[idx] = { ...copy[idx], content: cumulative };
-              return copy;
-            }
-            return [...prev, { role: "ai", content: cumulative, responseId: key }];
-          });
-          if (!exists) {
-            optsRef.current.onMessageAppend?.({ role: "ai", content: cumulative, responseId: key });
+          if (seenResponseIdsRef.current.has(key)) {
+            updateAiMessageByResponseId(key, { content: cumulative });
+          } else {
+            seenResponseIdsRef.current.add(key);
+            appendMessage({ role: "ai", content: cumulative, responseId: key });
           }
         },
         onAssistantTranscript: (text, responseId) => {
-          // 最終 transcript で確定。同 responseId のバブルがあれば update、
-          // 無ければ append (delta が来なかった場合のフォールバック)。
+          // 最終 transcript で確定。append 済みなら update、未 append なら append
+          // (delta が来なかった場合のフォールバック)。
           const key = responseId ?? "__single__";
-          setMessages((prev) => {
-            const idx = prev.findLastIndex(
-              (m) => m.role === "ai" && m.responseId === key,
-            );
-            if (idx >= 0) {
-              const copy = [...prev];
-              copy[idx] = { ...copy[idx], content: text };
-              return copy;
-            }
-            return [...prev, { role: "ai", content: text, responseId: key }];
-          });
+          if (seenResponseIdsRef.current.has(key)) {
+            updateAiMessageByResponseId(key, { content: text });
+          } else {
+            seenResponseIdsRef.current.add(key);
+            appendMessage({ role: "ai", content: text, responseId: key });
+          }
         },
         onResponseEnd: () => {
           isAiRespondingRef.current = false;
@@ -457,7 +454,7 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
       stop();
       return { success: false, fallback: "error" };
     }
-  }, [appendMessage, updateLastAiMessage, setMicEnabled, stop]);
+  }, [appendMessage, updateLastAiMessage, updateAiMessageByResponseId, setMicEnabled, stop]);
 
   return {
     status,

@@ -81,6 +81,16 @@ export class GdOrchestrator {
    * 同じキー内の delta は update last。
    */
   private streamingKey: string | null = null;
+  /**
+   * 直近 AI 発話の text 長 (音声再生完了見込み計算用)。
+   * onAssistantTranscript で確定時に更新し、advanceTurn の delay 算出に使う。
+   *
+   * Why: `response.done` (= onResponseEnd) はサーバー側 text 確定タイミングで、
+   * WebRTC で受信した音声は再生バッファに数百 ms〜数秒残っている。即座に
+   * 次話者を triggerResponse すると現話者の音声と被るため、文字数から推定した
+   * 再生完了見込み時間だけ待ってから次へ進む。
+   */
+  private lastAiTextLength = 0;
   private opts: GdOrchestratorOptions;
 
   private makeStreamingKey(speaker: ActiveSpeaker, responseId: string | undefined): string {
@@ -234,16 +244,24 @@ export class GdOrchestrator {
 
   /**
    * 次の発話者を決定し、AI ターンなら triggerResponse、user ターンならマイクを ON にして待機。
-   * 50ms の debounce で連続呼び出し (複数 session の onResponseEnd 同時発火) を
-   * 最後の 1 つだけ実行し、多重 trigger による state race を防ぐ。
+   *
+   * delay は「直近 AI 発話の文字数 × 100ms + 500ms バッファ」(最小 1500ms / 最大 5000ms)。
+   * これで現話者の音声再生完了を待ってから次話者を triggerResponse するため、
+   * 同時発話 (= 前の音声バッファに次の音声が被る) を防げる。日本語の発話速度
+   * を「100ms/文字」概算で計算 (300 文字/分相当)。
+   *
+   * 副次効果: 多重呼び出し (複数 session の onResponseEnd 同時発火) も最後の 1 回
+   * だけ実行されるため、debounce としても機能する。
    */
   private advanceTurn(): void {
     if (this.isClosed) return;
     if (this.advanceTurnTimer) clearTimeout(this.advanceTurnTimer);
+    const estimatedSpeechMs = this.lastAiTextLength * 100 + 500;
+    const delay = Math.max(1500, Math.min(5000, estimatedSpeechMs));
     this.advanceTurnTimer = setTimeout(() => {
       this.advanceTurnTimer = null;
       this.executeAdvanceTurn();
-    }, 50);
+    }, delay);
   }
 
   private executeAdvanceTurn(): void {
@@ -329,6 +347,9 @@ export class GdOrchestrator {
       // delta が来なかった場合のフォールバック
       this.opts.onMessageAppend?.({ role: "ai", content: prefixedContent });
     }
+
+    // 音声再生完了見込みの算出用に text 長を記録 (prefix 込みではなく純発話のみ)
+    this.lastAiTextLength = text.length;
 
     // 他 5 セッションに「他者の発言」として broadcast
     // **assistant role で注入** することで「過去の対話履歴」として認識させ、
