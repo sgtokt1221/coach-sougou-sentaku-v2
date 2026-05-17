@@ -137,6 +137,19 @@ export default function InterviewSessionPage() {
         return copy;
       });
     },
+    onMessageUpdateByResponseId: (responseId, patch) => {
+      // delta ストリーミングは responseId 指定で安全に update する
+      // (並行 response 時の最後のバブル誤上書きを防ぐ)
+      setMessages((prev) => {
+        const idx = prev.findLastIndex(
+          (m) => m.role === "ai" && m.responseId === responseId,
+        );
+        if (idx < 0) return prev;
+        const copy = [...prev];
+        copy[idx] = { ...copy[idx], ...patch };
+        return copy;
+      });
+    },
   });
   const appearanceCheckCount = useRef(0);
   const [videoStream, setVideoStream] = useState<MediaStream | null>(null);

@@ -69,9 +69,22 @@ interface UseRealtimeInterviewOptions {
   onMessageAppend?: (message: InterviewMessage) => void;
   /**
    * 直近の AI メッセージの content / isThinking を更新するときに呼ばれる。
-   * 考え中バブルの差し替えと delta ストリーミングで使う。
+   * 考え中バブルの差し替えなど「最後の AI バブル」を扱う場面で使う。
+   *
+   * 注意: delta ストリーミング用途には使わないこと。複数 response が並行発火する
+   * 状況で「最後のバブル」は対象 responseId と一致するとは限らず、誤上書きが起きる。
+   * delta は onMessageUpdateByResponseId を使う。
    */
   onMessageUpdateLast?: (patch: { content?: string; isThinking?: boolean }) => void;
+  /**
+   * 特定 responseId に紐づく AI メッセージを更新するときに呼ばれる。
+   * page.tsx 側で messages を独自管理する場合、responseId 指定で安全に
+   * update できる (並行 response 時の最後のバブル誤上書きを防ぐ)。
+   */
+  onMessageUpdateByResponseId?: (
+    responseId: string,
+    patch: { content?: string; isThinking?: boolean }
+  ) => void;
 }
 
 interface RealtimeStartResult {
@@ -157,7 +170,9 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
    * 同 responseId のメッセージが見つからなければ何もしない (呼び出し側で append 判断)。
    *
    * hook 内 messages と page.tsx 側 messages は別管理なので、page.tsx にも
-   * update 通知を流す必要がある (これが抜けると初回 delta で表示が固まる)。
+   * update 通知を流す必要がある。**onMessageUpdateLast は使わない** (並行 response
+   * 時に「最後の AI = 別 response のバブル」を誤上書きする事故が起きるため、
+   * responseId 指定の onMessageUpdateByResponseId に統一)。
    */
   const updateAiMessageByResponseId = useCallback(
     (responseId: string, patch: { content?: string; isThinking?: boolean }) => {
@@ -170,7 +185,7 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
         copy[idx] = { ...copy[idx], ...patch };
         return copy;
       });
-      optsRef.current.onMessageUpdateLast?.(patch);
+      optsRef.current.onMessageUpdateByResponseId?.(responseId, patch);
     },
     [],
   );
@@ -387,6 +402,9 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
           // ユーザー発話が確定したら AI streaming 状態は強制リセット
           isAiStreamingRef.current = false;
           appendMessage({ role: "student", content: text });
+          // create_response: false にしたため、AI 応答を明示的に triggerResponse で発火させる。
+          // これにより VAD 誤発火 (環境音・呼吸) による自動 response 多重発火を防ぐ。
+          sessionRef.current?.triggerResponse();
         },
         onResponseStart: () => {
           // AI が応答開始:
@@ -449,7 +467,9 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
                       threshold: 0.6,
                       prefix_padding_ms: 300,
                       silence_duration_ms: 1500,
-                      create_response: true,
+                      // create_response: false にして hook 側 onUserTranscript で
+                      // 明示的に triggerResponse を呼ぶ (多重 response 防止)
+                      create_response: false,
                     },
                   },
                 },

@@ -134,17 +134,19 @@ async function issueEphemeralToken(
               input: {
                 // ユーザー発話を gpt-4o-mini-transcribe で文字起こし (日本語固定 + 学部語彙ヒント)
                 transcription: transcriptionConfig,
-                // サーバー VAD でユーザーの発話終了を検知して即応答生成。
-                // threshold/silence は AI 応答中の誤検知 (息・キーボード・微エコー)
-                // で response がキャンセルされる事故を防ぎつつ、フィラー (「えー」)
-                // や考えながらの間でユーザー発話が途切れないようにチューニング。
-                // (echoCancellation/noiseSuppression は getUserMedia 側で on)
+                // サーバー VAD でユーザーの発話終了を検知 (transcript 取得のみ)。
+                // create_response: false で **自動応答は禁止**、hook 側で onUserTranscript
+                // を受けて明示的に triggerResponse を呼ぶ設計 (GD と同じパターン)。
+                // これで AI 応答完了直後の環境音 VAD 誤発火による多重 response を
+                // 原理的に防ぐ (= 音声が途中で別内容に切り替わる事故の根絶)。
+                // threshold/silence はフィラーや考える間でユーザー発話が途切れない
+                // よう緩めに設定。(echoCancellation/noiseSuppression は getUserMedia 側で on)
                 turn_detection: {
                   type: "server_vad",
                   threshold: 0.6,
                   prefix_padding_ms: 300,
                   silence_duration_ms: 1500,
-                  create_response: params.autoCreateResponse ?? true,
+                  create_response: false,
                 },
               },
               output: { voice: params.voice },
