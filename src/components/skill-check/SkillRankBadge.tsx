@@ -67,7 +67,10 @@ export function SkillRankBadge({
   const shouldShowScore = showScore && !showLabel;
 
   // Framer Motion props (initial/animate を削除して描画ずれを防止、hover と pulse のみ使用)
-  const motionProps = animate
+  // Framer Motion v11+ で transition.type / ease の literal を厳格に narrowing する
+  // 必要があり、any 経由で渡して回避 (このコンポーネント内に閉じた妥協)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const motionProps: any = animate
     ? {
         whileHover: { filter: "brightness(1.1)" },
         transition: { type: "spring", stiffness: 300, damping: 20 },
@@ -75,7 +78,8 @@ export function SkillRankBadge({
     : {};
 
   // Sランク専用のpulse animation (4秒周期)
-  const sPulseAnimation = meta.premium && animate
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sPulseAnimation: any = meta.premium && animate
     ? {
         animate: {
           boxShadow: [

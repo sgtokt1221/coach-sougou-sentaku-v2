@@ -105,7 +105,8 @@ export async function GET() {
     // PDF生成
     const pdfBytes = await pdfDoc.save();
 
-    return new NextResponse(pdfBytes, {
+    // Uint8Array をそのまま BodyInit に渡せないので Buffer 経由で渡す
+    return new NextResponse(Buffer.from(pdfBytes), {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',

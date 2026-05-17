@@ -292,7 +292,7 @@ export default function AdminStudentsPage() {
                             <SkillRankBadge
                               rank={s.currentSkillRank}
                               size="sm"
-                              score={s.latestScore}
+                              score={s.latestScore ?? undefined}
                               maxScore={50}
                               showScore
                               animate={false}
@@ -306,7 +306,7 @@ export default function AdminStudentsPage() {
                             <SkillRankBadge
                               rank={s.currentInterviewRank}
                               size="sm"
-                              score={s.currentInterviewScore}
+                              score={s.currentInterviewScore ?? undefined}
                               maxScore={40}
                               showScore
                               animate={false}

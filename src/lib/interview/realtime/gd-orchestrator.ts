@@ -339,7 +339,7 @@ export class GdOrchestrator {
    * response_id があればそれで識別、無ければ speaker のみで判定 (旧挙動互換)。
    */
   private onAssistantTranscriptDelta(
-    speaker: ActiveSpeaker,
+    speaker: Exclude<ActiveSpeaker, "user">,
     cumulative: string,
     responseId: string | undefined,
   ): void {
@@ -357,7 +357,7 @@ export class GdOrchestrator {
 
   /** 応答セッションの transcript 確定: UI を最終化 + 他セッションに broadcast */
   private onAssistantTranscript(
-    speaker: ActiveSpeaker,
+    speaker: Exclude<ActiveSpeaker, "user">,
     text: string,
     responseId: string | undefined,
   ): void {

@@ -84,7 +84,8 @@ export async function POST(request: Request) {
       const targetMonthNum = parseInt(targetMonth.split("-")[1]);
 
       for (const doc of sourceSnapshot.docs) {
-        const master = doc.data() as Omit<SessionMaster, "id">;
+        // Firestore doc.id を加えて完全な SessionMaster として扱う
+        const master = { id: doc.id, ...doc.data() } as SessionMaster;
 
         // frequencyに基づいてセッション日程を生成
         const sessions = generateSessionsFromMaster(master, targetYear, targetMonthNum);
@@ -120,7 +121,7 @@ export async function POST(request: Request) {
  * マスターから実際のセッションを生成
  */
 function generateSessionsFromMaster(
-  master: Omit<SessionMaster, "id">,
+  master: SessionMaster,
   year: number,
   month: number
 ) {

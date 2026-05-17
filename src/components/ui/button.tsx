@@ -1,5 +1,6 @@
 "use client"
 
+import * as React from "react"
 import { Button as ButtonPrimitive } from "@base-ui/react/button"
 import { cva, type VariantProps } from "class-variance-authority"
 
@@ -42,18 +43,43 @@ const buttonVariants = cva(
   }
 )
 
+type ButtonProps = Omit<ButtonPrimitive.Props, "render"> &
+  VariantProps<typeof buttonVariants> & {
+    /**
+     * shadcn 互換の asChild。children に渡された単一要素を Base UI の render prop に
+     * 変換して、Link 等を Button として描画する。
+     */
+    asChild?: boolean
+  }
+
 function Button({
   className,
   variant = "default",
   size = "default",
+  asChild = false,
+  children,
   ...props
-}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
+}: ButtonProps) {
+  const mergedClassName = cn(buttonVariants({ variant, size, className }))
+  if (asChild && React.isValidElement(children)) {
+    return (
+      <ButtonPrimitive
+        data-slot="button"
+        className={mergedClassName}
+        render={children}
+        nativeButton={false}
+        {...props}
+      />
+    )
+  }
   return (
     <ButtonPrimitive
       data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={mergedClassName}
       {...props}
-    />
+    >
+      {children}
+    </ButtonPrimitive>
   )
 }
 

@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  typescript: { ignoreBuildErrors: true },
+  // ignoreBuildErrors を撤去し、型エラーをビルドゲートで検出する運用に戻した
+  // (docs/app-improvement-multi-perspective.md P0 #3 対応)
   generateBuildId: () => `build-${Date.now()}`,
   allowedDevOrigins: ['192.168.1.80'],
   async headers() {

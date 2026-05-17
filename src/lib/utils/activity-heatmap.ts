@@ -23,8 +23,8 @@ export function buildLast30Days(): string[] {
 /**
  * ISO日付文字列をMM/DD形式に変換
  */
-export function formatDateForHeatmap(isoString: string): string {
-  const date = new Date(isoString);
+export function formatDateForHeatmap(value: string | Date): string {
+  const date = value instanceof Date ? value : new Date(value);
   const month = date.getMonth() + 1;
   const day = date.getDate();
   return `${month}/${day}`;
@@ -75,7 +75,8 @@ export interface ActivityLog {
 export interface ActivityDataSources {
   essays?: Array<{ submittedAt: string }>;
   interviews?: Array<{ startedAt?: string; createdAt?: string; status?: string }>;
-  skillChecks?: Array<{ takenAt?: string; createdAt?: string }>;
+  // SkillCheckResult.takenAt が Date 型のため string | Date 両対応にする
+  skillChecks?: Array<{ takenAt?: string | Date; createdAt?: string | Date }>;
   summaryDrills?: Array<{ completedAt?: string; createdAt?: string }>;
   activityLogs?: ActivityLog[];
 }

@@ -119,7 +119,7 @@ export function TeacherShiftGrid({
 
     e.preventDefault();
     const touch = e.touches[0];
-    const element = document.elementFromPoint(touch.clientX, touch.clientY);
+    const element = document.elementFromPoint(touch.clientX, touch.clientY) as HTMLElement | null;
 
     if (element && element.dataset.dayIndex && element.dataset.timeIndex) {
       const dayIndex = parseInt(element.dataset.dayIndex, 10);

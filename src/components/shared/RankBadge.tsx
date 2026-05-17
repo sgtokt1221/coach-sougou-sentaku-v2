@@ -31,7 +31,12 @@ const sizeConfig = {
   },
 };
 
-const getAnimationVariants = (rank: ScoreRank) => {
+// Framer Motion v11+ の型厳格化で transition.type/ease の文字列リテラルが
+// AnimationGeneratorType / Easing と互換にならない問題への局所対処。
+// Variant 構造は実行時には正しく動くため、戻り値を any にして利用側で
+// 余計な as 不要にする (この関数内に閉じた妥協)。
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const getAnimationVariants = (rank: ScoreRank): any => {
   switch (rank) {
     case "S":
       return {

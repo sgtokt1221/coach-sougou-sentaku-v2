@@ -39,7 +39,7 @@ export default function SessionMasterPage() {
     preferredTime: "14:00",
     teacherId: "",
     teacherName: "",
-    type: "coaching" as const,
+    type: "coaching" as "coaching" | "mock_interview" | "essay_review" | "general",
     duration: 60,
     notes: "",
   });

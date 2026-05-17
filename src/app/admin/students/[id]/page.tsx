@@ -263,7 +263,7 @@ function AdminStudentDetailPageInner() {
     return buildActivityHeatmapData({
       essays: detail.essays,
       interviews: interviewsData,
-      skillChecks: skillCheck ? [skillCheck.latestResult].filter(Boolean) : [],
+      skillChecks: skillCheck?.latestResult ? [skillCheck.latestResult] : [],
       summaryDrills: summaryDrillsData,
       activityLogs: activityLogsData,
     });

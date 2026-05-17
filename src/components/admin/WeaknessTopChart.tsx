@@ -22,8 +22,8 @@ interface WeaknessTopChartProps {
 interface WeaknessChartData {
   area: string;
   count: number;
-  source: "essay" | "interview" | "skill_check" | "both";
-  severity: "critical" | "warning" | "improving" | "resolved";
+  source: "essay" | "interview" | "skill_check" | "interview_skill_check" | "lesson" | "both";
+  severity: "critical" | "warning" | "improving" | "resolved" | null;
 }
 
 /**
@@ -82,7 +82,7 @@ export function WeaknessTopChart({ weaknesses }: WeaknessTopChartProps) {
   const chartData: WeaknessChartData[] = top5.map(w => ({
     area: w.area,
     count: w.count,
-    source: w.source as "essay" | "interview" | "skill_check" | "both",
+    source: w.source,
     severity: getWeaknessReminderLevel(w),
   }));
 

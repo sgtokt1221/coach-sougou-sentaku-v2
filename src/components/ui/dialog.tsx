@@ -11,8 +11,31 @@ function Dialog({ ...props }: DialogPrimitive.Root.Props) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />
 }
 
-function DialogTrigger({ ...props }: DialogPrimitive.Trigger.Props) {
-  return <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props} />
+type DialogTriggerProps = DialogPrimitive.Trigger.Props & {
+  /**
+   * shadcn 互換の asChild。children に渡された単一要素を Base UI の render prop に
+   * 変換して、Button 等をトリガとして描画する。render と asChild は両立しないが、
+   * 既存の <DialogTrigger render={...} /> パターンも引き続き動くよう asChild は
+   * オプショナル。
+   */
+  asChild?: boolean
+}
+
+function DialogTrigger({ asChild = false, children, render, ...props }: DialogTriggerProps) {
+  if (asChild && React.isValidElement(children)) {
+    return (
+      <DialogPrimitive.Trigger
+        data-slot="dialog-trigger"
+        render={children}
+        {...props}
+      />
+    )
+  }
+  return (
+    <DialogPrimitive.Trigger data-slot="dialog-trigger" render={render} {...props}>
+      {children}
+    </DialogPrimitive.Trigger>
+  )
 }
 
 function DialogPortal({ ...props }: DialogPrimitive.Portal.Props) {

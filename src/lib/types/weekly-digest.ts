@@ -2,7 +2,7 @@ export interface DigestWeakness {
   area: string;
   count: number;
   level: "critical" | "warning" | "new";
-  sources: ("essay" | "interview" | "skill_check" | "interview_skill_check" | "both")[];
+  sources: ("essay" | "interview" | "skill_check" | "interview_skill_check" | "lesson" | "both")[];
   lastOccurred: string;
 }
 
