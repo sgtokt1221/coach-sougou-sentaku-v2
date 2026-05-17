@@ -92,6 +92,12 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
    * 常に null (未使用)。
    */
   const [currentSpeaker, setCurrentSpeaker] = useState<ActiveSpeaker | null>(null);
+  /**
+   * GD モードで AI 発話完了後、「次へ」ボタン待ちかどうか。
+   * true の間はユーザーが advanceGdTurn() を呼ぶまで次の話者は話し始めない。
+   * 被り対策として AI 発話の自動進行を撤去した代わりの UI フック。
+   */
+  const [isAwaitingNext, setIsAwaitingNext] = useState(false);
 
   const sessionRef = useRef<RealtimeSession | null>(null);
   const orchestratorRef = useRef<GdOrchestrator | null>(null);
@@ -169,6 +175,15 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
     [],
   );
 
+  /**
+   * GD モードで「次へ」ボタン押下時に呼ぶ。AI 発話完了後に立っている
+   * isAwaitingNext を解除し、orchestrator に次の話者へ進むよう依頼する。
+   * 個人面接モードでは no-op (orchestrator が無いため)。
+   */
+  const advanceGdTurn = useCallback(() => {
+    orchestratorRef.current?.advanceTurnManually();
+  }, []);
+
   const stop = useCallback(() => {
     if (micResumeTimerRef.current) {
       clearTimeout(micResumeTimerRef.current);
@@ -177,6 +192,7 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
     isAiRespondingRef.current = false;
     isAiStreamingRef.current = false;
     seenResponseIdsRef.current.clear();
+    setIsAwaitingNext(false);
     if (sessionRef.current) {
       sessionRef.current.close();
       sessionRef.current = null;
@@ -205,6 +221,7 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
     // 前回セッションの残骸防止: currentSpeaker を null に明示リセット
     // (これがないと前回の "user" 状態が残ってランプが「あなたの番」のままに見える)
     setCurrentSpeaker(null);
+    setIsAwaitingNext(false);
     // 前回セッションの seen responseId をクリア (新セッションで再利用される ID は無いが念のため)
     seenResponseIdsRef.current.clear();
 
@@ -316,6 +333,12 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
             setMicEnabled(nextSpeaker === "user");
             // UI のランプ表示用に現在ターンを公開
             setCurrentSpeaker(nextSpeaker);
+            // 次の話者に進んだので「次へ」ボタンは隠す
+            setIsAwaitingNext(false);
+          },
+          onAwaitingNext: () => {
+            // AI 発話完了 → ユーザーの「次へ」ボタン押下待ち
+            setIsAwaitingNext(true);
           },
           onError: (err) => {
             console.warn("[useRealtimeInterview] GD orchestrator error", err);
@@ -469,6 +492,10 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
     currentSpeaker,
     /** ユーザーが発話してよいタイミングか (GD は currentSpeaker === "user"、個人面接は常に true) */
     isUserTurn: optsRef.current.mode === "group_discussion" ? currentSpeaker === "user" : status === "connected",
+    /** GD モードで AI 発話完了後の「次へ」ボタン待ち状態 (個人面接は常に false) */
+    isAwaitingNext,
+    /** GD モードで「次へ」ボタンが押されたときに呼ぶ */
+    advanceGdTurn,
     start,
     stop,
     isActive: status === "connected",

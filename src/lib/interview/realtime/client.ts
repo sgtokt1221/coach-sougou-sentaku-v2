@@ -59,11 +59,6 @@ export interface RealtimeSessionOptions {
   onResponseStart?: () => void;
   /** AI が応答を完了したとき (response.done) — マイクのミュート解除用 */
   onResponseEnd?: () => void;
-  /**
-   * OpenAI から音声トラック (MediaStream) を受信したときに呼ばれる。
-   * GD モードで受信音声の音量解析 (無音検知) を行うために MediaStream を取り出すフック。
-   */
-  onAudioTrack?: (stream: MediaStream) => void;
   /** 接続エラー */
   onError?: (error: Error) => void;
 }
@@ -93,9 +88,7 @@ export class RealtimeSession {
     // OpenAI からの音声トラックを audio 要素に流す
     pc.ontrack = (event) => {
       if (!this.isClosed) {
-        const stream = event.streams[0];
-        this.opts.audioOutputElement.srcObject = stream;
-        this.opts.onAudioTrack?.(stream);
+        this.opts.audioOutputElement.srcObject = event.streams[0];
       }
     };
 

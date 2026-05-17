@@ -12,7 +12,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Send, StopCircle, ChevronDown, ChevronUp, Video, VideoOff, Pencil, Check, X, BookOpenCheck, TrendingUp, TrendingDown } from "lucide-react";
+import { Send, StopCircle, ChevronDown, ChevronUp, Video, VideoOff, Pencil, Check, X, BookOpenCheck, TrendingUp, TrendingDown, ArrowRight } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import type { InterviewMessage, InterviewMode, InterviewInputMode, VoiceAnalysis, VideoAnalysis, AppearanceAnalysis } from "@/lib/types/interview";
 import { getWeaknessReminderLevel, type WeaknessRecord } from "@/lib/types/growth";
@@ -685,6 +685,22 @@ export default function InterviewSessionPage() {
                     }が話しています — 待機中`}
               </p>
             </div>
+          </div>
+        )}
+
+        {sessionInfo?.mode === "group_discussion" && realtime.isAwaitingNext && (
+          <div className="mb-3 flex flex-col items-center gap-2 rounded-lg border border-primary/40 bg-primary/5 p-3">
+            <p className="text-xs text-muted-foreground">
+              発言が終わりました。準備ができたら次の話者へ進めてください。
+            </p>
+            <Button
+              size="sm"
+              onClick={realtime.advanceGdTurn}
+              className="gap-1.5"
+            >
+              次の話者へ
+              <ArrowRight className="size-4" />
+            </Button>
           </div>
         )}
 
