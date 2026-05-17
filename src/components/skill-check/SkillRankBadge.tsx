@@ -1,3 +1,5 @@
+"use client";
+
 import type { SkillRank } from "@/lib/types/skill-check";
 import { RANK_META } from "@/lib/skill-check/rank";
 import { cn } from "@/lib/utils";
