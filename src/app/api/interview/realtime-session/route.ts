@@ -17,6 +17,7 @@ import { checkRealtimeRateLimit } from "@/lib/interview/rate-limit";
 import {
   buildRealtimeIndividualInstructions,
   buildRealtimeGdSpeakerInstructions,
+  buildRealtimeGdSpeakerContextMessage,
   type GdSpeakerKey,
 } from "@/lib/ai/prompts/interview-realtime";
 import { buildWhisperPrompt } from "@/lib/interview/whisper-context";
@@ -291,19 +292,26 @@ export async function POST(request: NextRequest) {
   // 学部文脈の転写ヒント (大学名・学部名・学部別専門用語を列挙)
   const transcriptionPrompt = buildWhisperPrompt(facultyName, universityName);
 
-  // トークン発行
-  if (mode === "group_discussion") {
-    // GD: 6 話者分を並列発行
-    const results = await Promise.all(
-      GD_SPEAKERS.map(async ({ key, voice }) => {
-        const instructions = buildRealtimeGdSpeakerInstructions(
-          key,
+  // GD で各セッションに後から conversation.item.create で注入する背景情報
+  // (instructions に埋め込まず別経路で渡すことで発話漏れを防ぐ)
+  const gdContextMessage =
+    mode === "group_discussion"
+      ? buildRealtimeGdSpeakerContextMessage(
           universityName,
           facultyName,
           admissionPolicy,
           weaknessList,
           interviewTendency,
-        );
+        )
+      : null;
+
+  // トークン発行
+  if (mode === "group_discussion") {
+    // GD: 6 話者分を並列発行
+    const results = await Promise.all(
+      GD_SPEAKERS.map(async ({ key, voice }) => {
+        // instructions はキャラ + 発話ルールのみに圧縮 (背景情報は contextMessage で別注入)
+        const instructions = buildRealtimeGdSpeakerInstructions(key);
         const issueResult = await issueEphemeralToken(
           apiKey,
           {
@@ -349,6 +357,7 @@ export async function POST(request: NextRequest) {
       mode: "group_discussion",
       model: usedModel,
       tokens: successful,
+      contextMessage: gdContextMessage,
     });
   }
 

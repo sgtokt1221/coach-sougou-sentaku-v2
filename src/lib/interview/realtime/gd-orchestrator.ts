@@ -31,12 +31,25 @@ export interface GdOrchestratorOptions {
   model: string;
   /** ユーザーマイク (moderator に割り当てる) */
   micStream: MediaStream;
+  /**
+   * 接続後に各セッションに hidden 注入する背景情報メッセージ。
+   * `buildRealtimeGdSpeakerContextMessage` の出力を渡す。
+   * 渡されたら connect() 内で全セッションに addConversationItem("user", contextMessage)
+   * してから startOpening() を呼ぶ前提。
+   */
+  contextMessage?: string | null;
   /** メッセージ追加コールバック (UI 同期) */
   onMessageAppend?: (message: InterviewMessage) => void;
   /** 直近 AI メッセージの content / isThinking を更新 (考え中バブル + delta ストリーム) */
   onMessageUpdateLast?: (patch: { content?: string; isThinking?: boolean }) => void;
   /** AI 発話中フラグ通知 (上位 hook がマイクをミュートするため) */
   onAiRespondingChange?: (isResponding: boolean) => void;
+  /**
+   * 次の発話ターンが決まったときに呼ばれる。マイク制御用。
+   * - "user" のとき: hook 側でマイクを ON にしてユーザー発話を待つ
+   * - それ以外 (AI 話者) のとき: マイクを OFF に保つ
+   */
+  onTurnChange?: (nextSpeaker: ActiveSpeaker) => void;
   /** エラーコールバック */
   onError?: (error: Error) => void;
 }
@@ -147,6 +160,18 @@ export class GdOrchestrator {
         });
       }
     }
+
+    // 背景情報メッセージを全セッションに hidden 注入
+    // (instructions に含めると AI が末尾を発話に漏らすため、conversation 履歴側で渡す)
+    if (this.opts.contextMessage && this.opts.contextMessage.trim()) {
+      for (const sess of this.sessions.values()) {
+        try {
+          sess.addConversationItem("user", this.opts.contextMessage);
+        } catch {
+          /* noop: 接続が不安定なときは skip */
+        }
+      }
+    }
   }
 
   /** 接続完了後、教授から議論をキックオフ */
@@ -175,16 +200,36 @@ export class GdOrchestrator {
       if (sess) sess.addConversationItem("user", text);
     }
 
+    this.lastSpeaker = "user";
+    this.turnCount++;
+
     // 次話者を決定
+    this.advanceTurn();
+  }
+
+  /**
+   * 次の発話者を決定し、AI ターンなら triggerResponse、user ターンならマイクを ON にして待機。
+   * `onUserTranscript` のあとや、moderator の opening 終了後に呼ぶ。
+   */
+  private advanceTurn(): void {
+    if (this.isClosed) return;
     const nextSpeaker = pickNextSpeaker({
       elapsedSeconds: this.getElapsedSeconds(),
       turnCount: this.turnCount,
       lastSpeaker: this.lastSpeaker,
     });
-    this.turnCount++;
+    this.opts.onTurnChange?.(nextSpeaker);
+
+    if (nextSpeaker === "user") {
+      // user ターン: AI 側は何もせず、マイク入力を待つ
+      this.lastSpeaker = "user";
+      this.currentResponseSpeaker = null;
+      return;
+    }
+
+    // AI ターン: 該当セッションで応答を生成
     this.lastSpeaker = nextSpeaker;
     this.currentResponseSpeaker = nextSpeaker;
-
     const sess = this.sessions.get(nextSpeaker);
     if (sess) sess.triggerResponse();
   }
@@ -259,11 +304,17 @@ export class GdOrchestrator {
     }
   }
 
-  /** 話者の応答終了: AI 発話中フラグを解除 + streamingKey をリセット */
+  /**
+   * 話者の応答終了: AI 発話中フラグを解除 + streamingKey をリセット。
+   * その後 advanceTurn で次の発話者を決定する (user ターンならマイクを ON にして待機、
+   * AI ターンなら次セッションを triggerResponse)。
+   */
   private onResponseEnd(_speaker: ActiveSpeaker): void {
     if (this.isClosed) return;
     this.streamingKey = null;
     this.opts.onAiRespondingChange?.(false);
+    // 次のターンを進める (user に振るか、別 peer に振るかは pickNextSpeaker が決める)
+    this.advanceTurn();
   }
 
   private getElapsedSeconds(): number {

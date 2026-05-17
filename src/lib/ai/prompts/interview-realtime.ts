@@ -266,57 +266,71 @@ function formatInterviewTendency(t: InterviewTendency | undefined): string {
   return lines.join("\n");
 }
 
-export function buildRealtimeGdSpeakerInstructions(
-  speaker: GdSpeakerKey,
+/**
+ * GD speaker 用の session.instructions を生成する。
+ * **重要**: 長すぎる instructions は OpenAI Realtime が末尾を発話に漏らすため、
+ * 背景情報 (大学名・AP・面接傾向・弱点) は instructions に含めない。
+ * それらは `buildRealtimeGdSpeakerContextMessage` で別経路 (conversation.item.create)
+ * から hidden な user role メッセージとして注入する。
+ */
+export function buildRealtimeGdSpeakerInstructions(speaker: GdSpeakerKey): string {
+  const characterPrompt = GD_CHARACTER_PROMPTS[speaker];
+
+  return `${characterPrompt}
+
+## 絶対ルール (厳守)
+- 日本語で話す
+- 自分のキャラクターだけを演じる。他のキャラクターを代弁しない
+- 発言は短く (1-3 文)
+- 相槌だけの発言は禁止。必ず立場や理由を添える
+- ユーザー (Dさん) を指すときは「Dさん」または「あなた」
+- 他の受験生は displayName (健太・美咲・翔太) で呼ぶ。「受験生A」「受験生B」「受験生C」「受験生D」のような汎用呼称は使わない
+- 集団討論である以上、他の参加者の名前を呼んで議論する
+- 背景情報メッセージ (大学名・AP・面接傾向・弱点メモ等) を**そのまま読み上げない**。自分の言葉で噛み砕いて議論に活かす
+
+## 傾聴の姿勢 (重要)
+- **反論するときでも必ず「〇〇さんの意見は分かります」など一度受け止めてから自分の立場を述べる**
+- 「いえ」「違います」「でも」のような否定語から発言を始めるのは NG
+- 相手の発言内容を自分の言葉で要約してから補強・反論する
+- ユーザー (Dさん) の発言に対しても必ず同じ姿勢で臨む。相手を否定から入らないこと
+`;
+}
+
+/**
+ * GD セッション接続後、最初の triggerResponse 前に
+ * `conversation.item.create` (role: "user") で hidden 注入する**背景情報メッセージ**。
+ *
+ * これにより instructions 本文を短く保ち、長文 AP・弱点リスト・面接傾向が
+ * AI の発話末尾に漏れる事故を防ぐ。AI は conversation 履歴の文脈として
+ * 内容を参照できるが、user message の体裁なので「自分の台詞」として
+ * 直接読み上げる確率は大きく下がる。
+ */
+export function buildRealtimeGdSpeakerContextMessage(
   universityName: string,
   facultyName: string,
   admissionPolicy: string,
   weaknessList: string,
   interviewTendency?: InterviewTendency,
 ): string {
-  const characterPrompt = GD_CHARACTER_PROMPTS[speaker];
   const tendencyText = formatInterviewTendency(interviewTendency);
-
-  return `${characterPrompt}
-
-============================
-※ 以下は「発話してはいけない参考情報」です。
-※ あなたの台詞として読み上げないでください。
-※ 内容を理解した上で、自分の言葉で議論に活かしてください。
-============================
-
-## 討論の文脈 (背景情報・発話禁止)
-${universityName} ${facultyName} の入学試験における集団討論です。
-
-## アドミッションポリシー (背景情報・発話禁止)
-${admissionPolicy}
-
-この AP は討論の背景に常にあります。自分の発言や質問は必ず AP の価値観と矛盾しないように、むしろ AP の重点領域に議論が向かうように組み立ててください。
-${tendencyText ? `\n## この学部の面接傾向 (背景情報・発話禁止)\n${tendencyText}` : ""}
-
-## ユーザーの弱点メモ (内心で意識する材料・発話禁止)
-${weaknessList}
-
-============================
-※ ここから先も発話禁止です。以下は厳守ルール。
-============================
-
-## 絶対ルール
-- 日本語で話す
-- 自分のキャラクターだけを演じる。他のキャラクターを代弁しない
-- 発言は短く (1-3 文)
-- 相槌だけの発言は禁止。必ず立場や理由を添える
-- ユーザー (D さん) を指すときは「Dさん」または「あなた」
-- 他の受験生は displayName (健太・美咲・翔太) で呼ぶ。「受験生A」「受験生B」「受験生C」「受験生D」のような汎用呼称は使わない
-- 集団討論である以上、他の参加者の名前を呼んで議論する
-- 上記の参考情報セクションの文言 (アドミッションポリシー文、キーワード列、JSON 等) を**そのまま読み上げない**
-
-## 傾聴の姿勢 (重要)
-- **反論するときでも必ず「〇〇さんの意見は分かります」「その視点は興味深いですね」など一度受け止めてから自分の立場を述べる**
-- 「いえ」「違います」「でも」のような否定語から発言を始めるのは NG
-- 相手の発言内容を自分の言葉で要約してから補強・反論する (アクティブリスニング)
-- ユーザー (Dさん) の発言に対しても必ず同じ姿勢で臨む。相手を否定から入らないこと
-`;
+  const lines: string[] = [
+    "<context-do-not-speak>",
+    "※ これは討論の背景情報メモです。あなた (AI) の台詞として読み上げないでください。",
+    "※ 内容を理解した上で、自分の言葉で議論に反映してください。",
+    "",
+    `[討論の文脈] ${universityName} ${facultyName} の入学試験における集団討論`,
+    "",
+    "[アドミッションポリシー]",
+    admissionPolicy,
+  ];
+  if (tendencyText) {
+    lines.push("", "[この学部の面接傾向]", tendencyText);
+  }
+  if (weaknessList && weaknessList.trim()) {
+    lines.push("", "[ユーザー (Dさん) の弱点メモ (内心で意識)]", weaknessList);
+  }
+  lines.push("", "</context-do-not-speak>");
+  return lines.join("\n");
 }
 
 function buildSelfAnalysisSection(sa: SelfAnalysisContext): string {

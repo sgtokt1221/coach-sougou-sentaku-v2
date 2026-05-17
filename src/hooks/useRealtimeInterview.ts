@@ -243,22 +243,32 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
           tokens: gdTokens,
           model,
           micStream,
+          // 接続後に各セッションに hidden 注入する背景情報 (instructions 分離化)
+          contextMessage:
+            typeof (tokenData as { contextMessage?: string }).contextMessage === "string"
+              ? (tokenData as { contextMessage?: string }).contextMessage
+              : null,
           onMessageAppend: appendMessage,
           onMessageUpdateLast: updateLastAiMessage,
           onAiRespondingChange: (isResponding) => {
             isAiRespondingRef.current = isResponding;
             if (isResponding) {
+              // AI が話し始めたら必ず mic OFF (タイマーを消してキャンセル)
               if (micResumeTimerRef.current) {
                 clearTimeout(micResumeTimerRef.current);
                 micResumeTimerRef.current = null;
               }
               setMicEnabled(false);
-            } else {
-              micResumeTimerRef.current = setTimeout(() => {
-                setMicEnabled(true);
-                micResumeTimerRef.current = null;
-              }, MIC_RESUME_DELAY_MS);
             }
+            // 注: AI 終了時は何もしない。マイクの ON/OFF は onTurnChange に委ねる
+          },
+          onTurnChange: (nextSpeaker) => {
+            // user ターンなら mic ON、それ以外 (moderator / peer) は OFF を維持
+            if (micResumeTimerRef.current) {
+              clearTimeout(micResumeTimerRef.current);
+              micResumeTimerRef.current = null;
+            }
+            setMicEnabled(nextSpeaker === "user");
           },
           onError: (err) => {
             console.warn("[useRealtimeInterview] GD orchestrator error", err);
@@ -267,6 +277,8 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
         });
         await orch.connect();
         orchestratorRef.current = orch;
+        // 接続完了直後: 司会 opening 中はマイク OFF (被って話さないように)
+        setMicEnabled(false);
         // 接続完了後、教授から議論をキックオフ
         orch.startOpening();
         setStatus("connected");
