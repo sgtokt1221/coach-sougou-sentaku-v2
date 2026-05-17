@@ -56,7 +56,7 @@ export function SkillRankPanel({
       <Card className={cn("overflow-hidden", className)}>
         <CardContent className="p-2.5 flex items-center gap-2.5">
           {displayRank ? (
-            <SkillRankBadge rank={displayRank} size="md" />
+            <SkillRankBadge rank={displayRank} size="md" maxScore={maxScore} />
           ) : (
             <div className="flex size-12 shrink-0 items-center justify-center rounded-full border-2 border-dashed border-muted-foreground/30 text-[10px] text-muted-foreground">
               未
@@ -78,7 +78,7 @@ export function SkillRankPanel({
       <CardContent className="p-4">
         <div className="flex items-center gap-4">
           {displayRank ? (
-            <SkillRankBadge rank={displayRank} size="lg" />
+            <SkillRankBadge rank={displayRank} size="lg" maxScore={maxScore} />
           ) : (
             <div className="flex size-20 shrink-0 items-center justify-center rounded-full border-2 border-dashed border-muted-foreground/30 text-xs text-muted-foreground">
               未受験

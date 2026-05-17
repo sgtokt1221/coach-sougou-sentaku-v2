@@ -289,14 +289,28 @@ export default function AdminStudentsPage() {
                         </td>
                         <td className="px-4 py-3 text-center">
                           {s.currentSkillRank ? (
-                            <SkillRankBadge rank={s.currentSkillRank} size="sm" />
+                            <SkillRankBadge
+                              rank={s.currentSkillRank}
+                              size="sm"
+                              score={s.latestScore}
+                              maxScore={50}
+                              showScore
+                              animate={false}
+                            />
                           ) : (
                             <span className="text-xs text-muted-foreground">未</span>
                           )}
                         </td>
                         <td className="px-4 py-3 text-center hidden md:table-cell">
                           {s.currentInterviewRank ? (
-                            <SkillRankBadge rank={s.currentInterviewRank} size="sm" />
+                            <SkillRankBadge
+                              rank={s.currentInterviewRank}
+                              size="sm"
+                              score={s.currentInterviewScore}
+                              maxScore={40}
+                              showScore
+                              animate={false}
+                            />
                           ) : (
                             <span className="text-xs text-muted-foreground">未</span>
                           )}

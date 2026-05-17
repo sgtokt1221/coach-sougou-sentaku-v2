@@ -66,6 +66,7 @@ import { getWeaknessReminderLevel } from "@/lib/types/growth";
 import { UniversitySelectStep } from "@/components/onboarding/UniversitySelectStep";
 import type { EnglishCert } from "@/lib/types/user";
 import { SkillRankPanel } from "@/components/skill-check/SkillRankPanel";
+import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
 import { CategorySelector } from "@/components/skill-check/CategorySelector";
 import type { SkillCheckStatus, AcademicCategory } from "@/lib/types/skill-check";
 import type { InterviewSkillCheckStatus } from "@/lib/types/interview-skill-check";
@@ -827,6 +828,34 @@ function AdminStudentDetailPageInner() {
             <h1 className="text-2xl font-bold">{profile.displayName}</h1>
             <p className="text-sm text-muted-foreground">生徒詳細</p>
           </div>
+
+          {/* スキルランクバッヂ2つ */}
+          <div className="flex items-center gap-2">
+            {skillCheck?.latestResult ? (
+              <SkillRankBadge
+                rank={skillCheck.latestResult.rank}
+                score={skillCheck.latestResult.scores.total}
+                maxScore={50}
+                size="md"
+                showScore
+              />
+            ) : (
+              <Badge variant="secondary" className="text-xs">小論文未受験</Badge>
+            )}
+            {interviewSkillCheck?.latestResult ? (
+              <SkillRankBadge
+                rank={interviewSkillCheck.latestResult.rank}
+                score={interviewSkillCheck.latestResult.scores.total}
+                maxScore={40}
+                size="md"
+                showScore
+              />
+            ) : (
+              <Badge variant="secondary" className="text-xs">面接未受験</Badge>
+            )}
+          </div>
+
+          {/* 活動ステータス */}
           {(() => {
             if (!lastActivityAt) return <Badge variant="secondary">活動なし</Badge>;
             const days = Math.floor((Date.now() - new Date(lastActivityAt).getTime()) / 86400000);
