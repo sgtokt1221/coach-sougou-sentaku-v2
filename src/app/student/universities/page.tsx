@@ -79,9 +79,15 @@ function ResultCard({ result }: { result: MatchResult }) {
   const router = useRouter();
   const [expanded, setExpanded] = useState(false);
   const hasFit = result.apFitScore != null;
+  const isUnscored = result.scoreStatus === "insufficient_data";
+  const cardBg = hasFit
+    ? scoreBg(result.apFitScore!)
+    : isUnscored
+      ? "bg-slate-50 border-slate-200"
+      : scoreBg(result.matchScore ?? 0);
   return (
     <Card
-      className={`cursor-pointer hover:shadow-md transition-shadow border overflow-visible ${hasFit ? scoreBg(result.apFitScore!) : scoreBg(result.matchScore)}`}
+      className={`cursor-pointer hover:shadow-md transition-shadow border overflow-visible ${cardBg}`}
       onClick={() => setExpanded((prev) => !prev)}
     >
       <CardContent className="p-4">
@@ -99,7 +105,7 @@ function ResultCard({ result }: { result: MatchResult }) {
                 </Badge>
               ) : (
                 <Badge variant={recommendationVariant(result.recommendation)}>
-                  {result.recommendation}
+                  {result.recommendation === "unscored" ? "マッチ度算出不能" : result.recommendation}
                 </Badge>
               )}
               {hasFit ? (
@@ -107,12 +113,18 @@ function ResultCard({ result }: { result: MatchResult }) {
                   <span className={`text-sm font-bold ${scoreColor(result.apFitScore!)}`}>
                     適合度 {result.apFitScore}%
                   </span>
-                  <span className="text-xs text-muted-foreground">
-                    (出願要件 {result.matchScore}%)
-                  </span>
+                  {result.matchScore != null && (
+                    <span className="text-xs text-muted-foreground">
+                      (出願要件 {result.matchScore}%)
+                    </span>
+                  )}
                 </>
+              ) : isUnscored ? (
+                <span className="text-xs text-muted-foreground">
+                  マッチ度算出不能（GPA / 英語資格を入力してください）
+                </span>
               ) : (
-                <span className={`text-sm font-bold ${scoreColor(result.matchScore)}`}>
+                <span className={`text-sm font-bold ${scoreColor(result.matchScore ?? 0)}`}>
                   マッチ度 {result.matchScore}%
                 </span>
               )}
@@ -228,7 +240,7 @@ export default function UniversitiesPage() {
           profile={{ gpa: gpa ? parseFloat(gpa) : undefined, englishCerts: certType ? [{ type: certType, score: certScore || undefined }] : undefined }}
           onFitComputed={(fitResults) => {
             setResults(fitResults);
-            setSummary({ total: fitResults.length, matched: fitResults.filter((r) => r.matchScore >= 60).length });
+            setSummary({ total: fitResults.length, matched: fitResults.filter((r) => (r.matchScore ?? 0) >= 60).length });
             setMode("match");
           }}
         />

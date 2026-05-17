@@ -15,7 +15,7 @@ export function buildMatchingChatPrompt(
 ): string {
   const topMatches = matchResults
     .slice(0, 20)
-    .map((r) => `- ${r.universityName} ${r.facultyName}（適合度${r.matchScore}%、${r.recommendation}）AP: ${r.admissionPolicy.substring(0, 100)}...`)
+    .map((r) => `- ${r.universityName} ${r.facultyName}（${r.matchScore != null ? `適合度${r.matchScore}%、` : "適合度算出不可（GPA/英語資格未入力）、"}${r.recommendation === "unscored" ? "未判定" : r.recommendation}）AP: ${r.admissionPolicy.substring(0, 100)}...`)
     .join("\n");
 
   const hasSelfAnalysis = selfAnalysis && (

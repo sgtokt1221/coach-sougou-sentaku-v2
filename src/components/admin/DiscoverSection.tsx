@@ -212,6 +212,10 @@ export function DiscoverSection({ studentId }: DiscoverSectionProps) {
                         .filter((c) => !c.met)
                         .map((c) => c.requirement),
                     ];
+                    const notes = r.notes ?? [];
+                    const isUnscored = r.scoreStatus === "insufficient_data";
+                    const recommendationLabel =
+                      r.recommendation === "unscored" ? "マッチ度算出不能" : r.recommendation;
                     return (
                       <div
                         key={`${r.universityId}-${r.facultyId}`}
@@ -224,9 +228,9 @@ export function DiscoverSection({ studentId }: DiscoverSectionProps) {
                           <p className="text-sm font-medium truncate">
                             {r.universityName} {r.facultyName}
                           </p>
-                          <div className="flex items-center gap-1.5 mt-0.5">
+                          <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                             <Badge variant="outline" className="text-[10px] py-0">
-                              {r.recommendation}
+                              {recommendationLabel}
                             </Badge>
                             {unmet.length > 0 && (
                               <span className="text-[11px] text-rose-600 truncate">
@@ -234,21 +238,38 @@ export function DiscoverSection({ studentId }: DiscoverSectionProps) {
                                 {unmet.length > 2 ? ` 他${unmet.length - 2}件` : ""}
                               </span>
                             )}
+                            {notes.length > 0 && (
+                              <span className="text-[11px] text-amber-700 truncate">
+                                条件: {notes.slice(0, 2).join(", ")}
+                                {notes.length > 2 ? ` 他${notes.length - 2}件` : ""}
+                              </span>
+                            )}
                           </div>
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
-                          <Star
-                            className={`size-3.5 ${
-                              r.matchScore >= 80
-                                ? "text-emerald-500"
-                                : r.matchScore >= 60
-                                  ? "text-amber-500"
-                                  : "text-slate-400"
-                            }`}
-                          />
-                          <span className="text-sm font-semibold tabular-nums">
-                            {r.matchScore}
-                          </span>
+                          {isUnscored ? (
+                            <>
+                              <Star className="size-3.5 text-slate-300" />
+                              <span className="text-sm font-semibold tabular-nums text-muted-foreground">
+                                —
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <Star
+                                className={`size-3.5 ${
+                                  (r.matchScore ?? 0) >= 80
+                                    ? "text-emerald-500"
+                                    : (r.matchScore ?? 0) >= 60
+                                      ? "text-amber-500"
+                                      : "text-slate-400"
+                                }`}
+                              />
+                              <span className="text-sm font-semibold tabular-nums">
+                                {r.matchScore}
+                              </span>
+                            </>
+                          )}
                         </div>
                       </div>
                     );

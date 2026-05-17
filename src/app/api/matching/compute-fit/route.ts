@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
 
   // 3. 要件チェック → OK (matchScore >= 60) だけ抽出
   const allResults = await matchUniversities(profile, universities);
-  const eligible = allResults.filter((r) => r.matchScore >= 60);
+  const eligible = allResults.filter((r) => (r.matchScore ?? 0) >= 60);
 
   if (eligible.length === 0) {
     return NextResponse.json({
@@ -151,7 +151,7 @@ ${facultyList.map((f) => `- [${f.id}] ${f.name}\nAP: ${f.ap}`).join("\n\n")}
   const resultsWithFit = allResults.map((r) => {
     const key = `${r.universityId}:${r.facultyId}`;
     const fit = fitResults.find((f) => f.id === key);
-    const isEligible = r.matchScore >= 60;
+    const isEligible = (r.matchScore ?? 0) >= 60;
 
     let fitRecommendation: "ぴったり校" | "おすすめ校" | "検討校" | "要件不足";
     if (!isEligible) {
@@ -174,8 +174,8 @@ ${facultyList.map((f) => `- [${f.id}] ${f.name}\nAP: ${f.ap}`).join("\n\n")}
 
   // apFitScore 順 (undefined は末尾)、要件不足はさらに末尾
   resultsWithFit.sort((a, b) => {
-    const aEligible = a.matchScore >= 60 ? 1 : 0;
-    const bEligible = b.matchScore >= 60 ? 1 : 0;
+    const aEligible = (a.matchScore ?? 0) >= 60 ? 1 : 0;
+    const bEligible = (b.matchScore ?? 0) >= 60 ? 1 : 0;
     if (aEligible !== bEligible) return bEligible - aEligible;
     return (b.apFitScore ?? -1) - (a.apFitScore ?? -1);
   });
@@ -195,7 +195,7 @@ ${facultyList.map((f) => `- [${f.id}] ${f.name}\nAP: ${f.ap}`).join("\n\n")}
   return NextResponse.json({
     results: resultsWithFit,
     totalUniversities: universities.length,
-    matchedCount: resultsWithFit.filter((r) => r.matchScore >= 60).length,
+    matchedCount: resultsWithFit.filter((r) => (r.matchScore ?? 0) >= 60).length,
     fitComputedCount: fitResults.length,
   });
 }

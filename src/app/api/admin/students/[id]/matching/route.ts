@@ -79,7 +79,7 @@ export async function GET(
   } = {
     results,
     totalUniversities: universities.length,
-    matchedCount: results.filter((r) => r.matchScore >= 60).length,
+    matchedCount: results.filter((r) => (r.matchScore ?? 0) >= 60).length,
     targetUniversities: Array.isArray(userData.targetUniversities)
       ? userData.targetUniversities
       : [],

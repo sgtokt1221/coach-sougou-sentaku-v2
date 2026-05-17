@@ -1,6 +1,43 @@
 import type { University, Faculty } from "@/lib/types/university";
 import type { MatchResult, MatchRequirementCheck, MatchingRequest } from "@/lib/types/matching";
 
+/**
+ * otherReqs の中で「要件」ではなく「出願条件・注意事項」に分類すべきキーワード。
+ * これらに該当する文字列は requirementChecks には含めず、notes として返す。
+ */
+const NOTE_KEYWORDS = [
+  "併願",
+  "専願",
+  "学校長",
+  "調査書",
+  "推薦書",
+  "誓約",
+  "保証人",
+  "現役",
+  "指定校",
+  "同窓",
+  "自己推薦",
+  "面接時",
+  "願書",
+  "出願",
+];
+
+function classifyOtherReqs(reqs: string[]): {
+  requirements: string[];
+  notes: string[];
+} {
+  const requirements: string[] = [];
+  const notes: string[] = [];
+  for (const r of reqs) {
+    if (NOTE_KEYWORDS.some((kw) => r.includes(kw))) {
+      notes.push(r);
+    } else {
+      requirements.push(r);
+    }
+  }
+  return { requirements, notes };
+}
+
 export async function matchUniversities(
   profile: MatchingRequest,
   universities: University[]
@@ -14,7 +51,8 @@ export async function matchUniversities(
     }
   }
 
-  return results.sort((a, b) => b.matchScore - a.matchScore);
+  // matchScore=null は末尾へ送る
+  return results.sort((a, b) => (b.matchScore ?? -1) - (a.matchScore ?? -1));
 }
 
 function matchFaculty(
@@ -24,35 +62,57 @@ function matchFaculty(
 ): MatchResult {
   const gpaCheck = checkGpa(profile.gpa, faculty.requirements.gpa);
   const certCheck = checkCert(profile.englishCerts, faculty.requirements.englishCert);
-  const requirementChecks = (faculty.requirements.otherReqs || []).map((req) => ({
+  const { requirements: realRequirements, notes } = classifyOtherReqs(
+    faculty.requirements.otherReqs || [],
+  );
+  const requirementChecks = realRequirements.map((req) => ({
     requirement: req,
     met: false,
     detail: "手動で確認してください",
   }));
 
-  const gpaScore = gpaCheck.met
-    ? 100
-    : profile.gpa && faculty.requirements.gpa
-      ? (profile.gpa / faculty.requirements.gpa) * 100
-      : 100;
-  const certScore = certCheck.met ? 100 : faculty.requirements.englishCert ? 0 : 100;
+  // 学部側にも生徒側にも GPA/英語資格の手掛かりが全くない場合、スコア計算は意味を持たない
+  const noScoringSignal =
+    faculty.requirements.gpa == null &&
+    faculty.requirements.englishCert == null &&
+    profile.gpa == null &&
+    (!profile.englishCerts || profile.englishCerts.length === 0);
 
-  const total = Math.round(gpaScore * 0.5 + certScore * 0.5);
-  const clampedTotal = Math.min(100, Math.max(0, total));
+  let matchScore: number | null = null;
+  let scoreStatus: "calculated" | "insufficient_data" = "insufficient_data";
+  if (!noScoringSignal) {
+    const gpaScore = gpaCheck.met
+      ? 100
+      : profile.gpa && faculty.requirements.gpa
+        ? (profile.gpa / faculty.requirements.gpa) * 100
+        : 100;
+    const certScore = certCheck.met ? 100 : faculty.requirements.englishCert ? 0 : 100;
+    const total = Math.round(gpaScore * 0.5 + certScore * 0.5);
+    matchScore = Math.min(100, Math.max(0, total));
+    scoreStatus = "calculated";
+  }
 
-  const recommendation =
-    clampedTotal >= 80 ? "適正校" : clampedTotal >= 60 ? "挑戦校" : "難関校";
+  const recommendation: MatchResult["recommendation"] =
+    matchScore == null
+      ? "unscored"
+      : matchScore >= 80
+        ? "適正校"
+        : matchScore >= 60
+          ? "挑戦校"
+          : "難関校";
 
   return {
     universityId: uni.id,
     universityName: uni.name,
     facultyId: faculty.id,
     facultyName: faculty.name,
-    matchScore: clampedTotal,
+    matchScore,
+    scoreStatus,
     recommendation,
     gpaCheck,
     certCheck,
     requirementChecks,
+    notes: notes.length > 0 ? notes : undefined,
     admissionPolicy: faculty.admissionPolicy,
     selectionType: faculty.selectionType,
   };

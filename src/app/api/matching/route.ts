@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
   const response: MatchingResponse = {
     results,
     totalUniversities: universities.length,
-    matchedCount: results.filter((r) => r.matchScore >= 60).length,
+    matchedCount: results.filter((r) => (r.matchScore ?? 0) >= 60).length,
   };
 
   return NextResponse.json(response);
