@@ -43,9 +43,13 @@ export async function GET(request: NextRequest) {
 
     let snapshot;
     try {
+      // 添削完了 (status: "reviewed") の essay のみ履歴に表示。
+      // status: "reviewing" のまま放置されたゴミデータ (旧版 brushedUpText
+      // undefined エラーで Firestore reject されたもの等) は除外する。
       snapshot = await adminDb
         .collection("essays")
         .where("userId", "==", userId)
+        .where("status", "==", "reviewed")
         .orderBy("submittedAt", "desc")
         .get();
     } catch {
@@ -53,6 +57,7 @@ export async function GET(request: NextRequest) {
       snapshot = await adminDb
         .collection("essays")
         .where("userId", "==", userId)
+        .where("status", "==", "reviewed")
         .get();
     }
 

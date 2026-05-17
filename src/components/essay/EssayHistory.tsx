@@ -23,6 +23,18 @@ import { CHART_COLORS, SCORE_COLORS, CHART_ANIMATION, GRID_STYLE } from "@/compo
 import { CustomTooltip } from "@/components/charts/CustomTooltip";
 import { CustomDot, CustomActiveDot } from "@/components/charts/CustomDot";
 
+/** ISO 文字列 → "M/D" (グラフ x 軸ラベル用) */
+function formatDate(iso: string): string {
+  const d = new Date(iso);
+  return `${d.getMonth() + 1}/${d.getDate()}`;
+}
+
+/** ISO 文字列 → "YYYY/M/D HH:MM" (日本時間表示) */
+function formatDateTime(iso: string): string {
+  const d = new Date(iso);
+  return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
 interface EssayHistoryItem {
   id: string;
   universityName: string;
@@ -99,7 +111,7 @@ export function EssayHistory() {
   const chartData = [...reviewedHistory]
     .sort((a, b) => a.submittedAt.localeCompare(b.submittedAt))
     .map((item) => ({
-      date: item.submittedAt,
+      date: formatDate(item.submittedAt),
       total: item.totalScore,
       structure: item.scores.structure,
       logic: item.scores.logic,
@@ -238,7 +250,7 @@ export function EssayHistory() {
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">{item.submittedAt}</p>
+                <p className="text-xs text-muted-foreground mt-1">{formatDateTime(item.submittedAt)}</p>
               </div>
               <div className="flex items-center gap-3 shrink-0">
                 {item.status === "reviewed" && (
