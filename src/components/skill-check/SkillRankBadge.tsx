@@ -66,13 +66,11 @@ export function SkillRankBadge({
   // showLabel が true の場合は showScore は無視（既存挙動維持）
   const shouldShowScore = showScore && !showLabel;
 
-  // Framer Motion props (layout shift防止: scale除去、filterとring使用)
+  // Framer Motion props (initial/animate を削除して描画ずれを防止、hover と pulse のみ使用)
   const motionProps = animate
     ? {
-        initial: { opacity: 0 },
-        animate: { opacity: 1 },
-        transition: { type: "spring", stiffness: 300, damping: 20 },
         whileHover: { filter: "brightness(1.1)" },
+        transition: { type: "spring", stiffness: 300, damping: 20 },
       }
     : {};
 
