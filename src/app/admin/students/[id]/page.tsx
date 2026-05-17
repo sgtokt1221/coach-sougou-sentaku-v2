@@ -169,7 +169,7 @@ function PinnedSummary({ detail }: { detail: StudentDetail }) {
     },
     {
       label: "最新面接スコア",
-      value: latestInterviewScore ? `${latestInterviewScore}/100` : "—",
+      value: latestInterviewScore ? `${latestInterviewScore}/40` : "—",
       sparkline: interviewSparklineData,
       color: latestInterviewScore ? scoreColor(latestInterviewScore * 1.25) : "text-gray-400", // 0-40 → 0-50 換算で色判定
     },
@@ -838,7 +838,7 @@ function AdminStudentDetailPageInner() {
       </div>
 
       {/* sticky ブロック: ピン留めサマリ + タブリスト */}
-      <Tabs value={tab} onValueChange={handleTabChange}>
+      <Tabs value={tab} onValueChange={handleTabChange} className="flex-col">
         <div className="sticky top-0 z-20 -mx-6 px-6 pt-2 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/70 border-b">
           <PinnedSummary detail={detail} />
           <TabsList className="mt-3 w-full justify-start overflow-x-auto">
