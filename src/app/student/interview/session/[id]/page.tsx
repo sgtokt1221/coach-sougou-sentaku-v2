@@ -639,6 +639,55 @@ export default function InterviewSessionPage() {
         ref={scrollRef}
         className="flex-1 overflow-y-auto px-4 py-4 space-y-3"
       >
+        {/* ユーザーターンランプ: GD で自分の発話タイミングを明示 */}
+        {sessionInfo?.mode === "group_discussion" && (
+          <div
+            className={`sticky top-0 z-30 mb-3 rounded-lg border-2 p-3 shadow-md transition-all ${
+              realtime.isUserTurn
+                ? "border-emerald-400 bg-emerald-50 dark:bg-emerald-950/40"
+                : "border-slate-300 bg-slate-50 dark:bg-slate-900/40"
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <span className="relative flex size-3.5">
+                {realtime.isUserTurn && (
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                )}
+                <span
+                  className={`relative inline-flex size-3.5 rounded-full ${
+                    realtime.isUserTurn ? "bg-emerald-500" : "bg-slate-400"
+                  }`}
+                />
+              </span>
+              <p
+                className={`text-sm font-bold ${
+                  realtime.isUserTurn
+                    ? "text-emerald-900 dark:text-emerald-200"
+                    : "text-slate-600 dark:text-slate-300"
+                }`}
+              >
+                {realtime.isUserTurn
+                  ? "あなたの番です — マイクが ON です"
+                  : `${
+                      realtime.currentSpeaker === "moderator"
+                        ? "司会"
+                        : realtime.currentSpeaker === "peer_bold"
+                          ? "健太さん"
+                          : realtime.currentSpeaker === "peer_careful"
+                            ? "美咲さん"
+                            : realtime.currentSpeaker === "peer_creative"
+                              ? "翔太さん"
+                              : realtime.currentSpeaker === "professor_logic"
+                                ? "佐藤教授"
+                                : realtime.currentSpeaker === "professor_practical"
+                                  ? "田中准教授"
+                                  : "他の参加者"
+                    }が話しています — 待機中`}
+              </p>
+            </div>
+          </div>
+        )}
+
         {sessionInfo?.mode === "group_discussion" && messages.length > 0 && (
           <div className="mb-3 rounded-lg border border-border/60 bg-muted/30 p-3">
             <p className="text-[11px] font-semibold text-muted-foreground mb-2">

@@ -86,6 +86,12 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
   const [error, setError] = useState<string | null>(null);
   const [nextAvailableAt, setNextAvailableAt] = useState<string | null>(null);
   const [micStream, setMicStream] = useState<MediaStream | null>(null);
+  /**
+   * 現在の発話ターン (GD モードのみ更新)。"user" のときは UI 側で
+   * 「あなたの番です」表示・マイクランプ点灯に使う。個人面接モードは
+   * 常に null (未使用)。
+   */
+  const [currentSpeaker, setCurrentSpeaker] = useState<ActiveSpeaker | null>(null);
 
   const sessionRef = useRef<RealtimeSession | null>(null);
   const orchestratorRef = useRef<GdOrchestrator | null>(null);
@@ -269,6 +275,8 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
               micResumeTimerRef.current = null;
             }
             setMicEnabled(nextSpeaker === "user");
+            // UI のランプ表示用に現在ターンを公開
+            setCurrentSpeaker(nextSpeaker);
           },
           onError: (err) => {
             console.warn("[useRealtimeInterview] GD orchestrator error", err);
@@ -415,6 +423,9 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
     error,
     nextAvailableAt,
     micStream,
+    currentSpeaker,
+    /** ユーザーが発話してよいタイミングか (GD は currentSpeaker === "user"、個人面接は常に true) */
+    isUserTurn: optsRef.current.mode === "group_discussion" ? currentSpeaker === "user" : status === "connected",
     start,
     stop,
     isActive: status === "connected",
