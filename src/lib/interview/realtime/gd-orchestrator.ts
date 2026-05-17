@@ -166,9 +166,9 @@ export class GdOrchestrator {
           input: {
             turn_detection: {
               type: "server_vad",
-              threshold: 0.8,
+              threshold: 0.6,
               prefix_padding_ms: 300,
-              silence_duration_ms: 800,
+              silence_duration_ms: 1500,
               create_response: false,
             },
             transcription: { model: "gpt-4o-mini-transcribe", language: "ja" },
@@ -264,11 +264,21 @@ export class GdOrchestrator {
    * ユーザーが「次へ」ボタンを押したときに呼ぶ public メソッド。
    * AI 発話後に立っていた isAwaitingManualNext を解除して次の話者に進める。
    * 既に進行中 (待機状態でない) の呼び出しは無視。
+   *
+   * 前話者の音声残バッファ (response.done 後も数百ms〜数秒残る) を即時カット
+   * するため、全 audio element を pause + 全 session に cancelResponse を発行。
+   * 次話者の onResponseStart で対応 audio element を play() で明示再開する。
    */
   advanceTurnManually(): void {
     if (this.isClosed) return;
     if (!this.isAwaitingManualNext) return;
     this.isAwaitingManualNext = false;
+    for (const el of this.audioElements.values()) {
+      try { el.pause(); } catch { /* noop */ }
+    }
+    for (const sess of this.sessions.values()) {
+      try { sess.cancelResponse(); } catch { /* noop */ }
+    }
     this.advanceTurn();
   }
 
@@ -298,6 +308,9 @@ export class GdOrchestrator {
   /**
    * 話者の応答開始: AI 発話中フラグを立てる + 入力バッファクリア。
    * バブル生成は first-delta で行うため、ここでは何も append しない。
+   *
+   * 「次の話者へ」ボタンで pause した audio element を確実に再開する
+   * (autoplay 属性は srcObject 維持のままだと再評価されないため)。
    */
   private onResponseStart(speaker: ActiveSpeaker): void {
     if (this.isClosed) return;
@@ -309,8 +322,12 @@ export class GdOrchestrator {
     } catch {
       /* noop */
     }
-    // streamingSpeaker のセットは first-delta 側で行う
-    void speaker;
+    const audioEl = this.audioElements.get(speaker);
+    if (audioEl && audioEl.paused) {
+      audioEl.play().catch((err) => {
+        console.warn("[gd] audio play resume failed for", speaker, err);
+      });
+    }
   }
 
   /**
