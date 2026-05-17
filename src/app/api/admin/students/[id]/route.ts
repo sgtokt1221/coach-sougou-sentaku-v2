@@ -60,6 +60,7 @@ export async function GET(
       adminDb
         .collection("interviews")
         .where("userId", "==", id)
+        .where("status", "==", "completed")
         .orderBy("startedAt", "desc")
         .get()
         .catch(() => ({ docs: [] })),

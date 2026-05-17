@@ -41,9 +41,11 @@ export async function GET(request: NextRequest) {
 
     let snapshot;
     try {
+      // 採点まで完了した面接のみ履歴に表示 (中断データは除外)
       snapshot = await adminDb
         .collection("interviews")
         .where("userId", "==", userId)
+        .where("status", "==", "completed")
         .orderBy("startedAt", "desc")
         .limit(20)
         .get();
@@ -52,6 +54,7 @@ export async function GET(request: NextRequest) {
       snapshot = await adminDb
         .collection("interviews")
         .where("userId", "==", userId)
+        .where("status", "==", "completed")
         .get();
     }
 

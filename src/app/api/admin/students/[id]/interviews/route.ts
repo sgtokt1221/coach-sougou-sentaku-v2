@@ -96,9 +96,11 @@ export async function GET(
       return NextResponse.json({ error: "アクセス権がありません" }, { status: 403 });
     }
 
+    // 採点まで完了した面接のみ表示 (中断データは除外)
     const snapshot = await adminDb
       .collection("interviews")
       .where("userId", "==", id)
+      .where("status", "==", "completed")
       .orderBy("startedAt", "desc")
       .get();
 
