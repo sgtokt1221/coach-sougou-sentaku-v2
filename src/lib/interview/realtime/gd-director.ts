@@ -8,8 +8,17 @@
 /**
  * GD で active になりうる発話者。"user" はユーザー (Dさん) のターン。
  * user ターン中は AI 側は triggerResponse せず、ユーザーのマイク入力を待つ。
+ *
+ * 6 人体制 (司会 + 教授 2 + 受験生 3) + ユーザー の本番に近い構成。
  */
-export type ActiveSpeaker = "moderator" | "peer_bold" | "peer_careful" | "user";
+export type ActiveSpeaker =
+  | "moderator"           // 司会
+  | "professor_logic"     // 佐藤教授 (論理性重視)
+  | "professor_practical" // 田中准教授 (実践重視)
+  | "peer_bold"           // 健太
+  | "peer_careful"        // 美咲
+  | "peer_creative"       // 翔太
+  | "user";               // Dさん
 
 export interface DirectorState {
   /** 面接開始からの経過秒数 */
@@ -21,34 +30,57 @@ export interface DirectorState {
 }
 
 /**
- * 次に発話する話者を決定する。
+ * 次に発話する話者を決定する。6 人フル体制の発火頻度配分。
  *
- * 設計方針 (peer 2 連 → user の繰り返し):
- * - Phase 3 (>= 11 分): moderator (教授) が総括フェーズ
- * - 通常: moderator → 健太 → 美咲 → user → 健太 → 美咲 → user → ...
- *   - 司会の後はまず健太 (peer_bold) から (議論を引っ張る役)
- *   - 健太の後は美咲 (peer_careful) で対立構造を作る
- *   - 美咲の後は user (Dさんに「他の人の意見を聞いて、あなたはどう思いますか」と振る)
- *   - user の後は再び健太からラウンドを再開
+ * 設計方針 (冗長にならず、全員が活きる):
+ * - Phase 3 (>= 11 分): moderator が総括フェーズ
+ * - 基本ラウンド: 健太 → 美咲 → user (peer 2 + user)
+ * - **3 ラウンドに 1 回**: 美咲の後に 翔太 を挟む (健太 → 美咲 → 翔太 → user)
+ * - **user 発話 5 回ごと**: 教授が次に鋭い質問を差し込む (佐藤・田中を交互)
+ *   → 教授の質問の後は健太からラウンド再開
+ * - 司会は **開幕と総括のみ**。基本ラウンド中には登場しない (冗長化防止)
  *
- * これにより「いきなり振られて意見が出ない」を防ぎ、議論を聞いてから自分の意見を
- * 述べる自然な流れになる。
+ * これで 6 人全員が登場するが、メインは健太・美咲・user の対話。翔太と教授は
+ * スパイスとして時々差し込む。
  */
 export function pickNextSpeaker(state: DirectorState): ActiveSpeaker {
   // Phase 3: 11 分超過で moderator が総括
   if (state.elapsedSeconds >= 11 * 60) return "moderator";
 
-  // 司会の後 (開幕 or 総括差し込み後) はまず健太から
+  // 司会の後 (開幕直後) はまず健太から
   if (state.lastSpeaker === "moderator") return "peer_bold";
 
   // 健太の後は美咲で対立構造
   if (state.lastSpeaker === "peer_bold") return "peer_careful";
 
-  // 美咲の後は user (peer 2 人の意見を聞いた後で Dさんに振る)
-  if (state.lastSpeaker === "peer_careful") return "user";
+  // 美咲の後: 3 ラウンドに 1 回は翔太を挟む、それ以外は user
+  if (state.lastSpeaker === "peer_careful") {
+    // turnCount は user 発話ごとに +1 されるので「ラウンド数」相当
+    // turnCount % 3 === 2 (= 2,5,8...回目) のとき翔太を挟む
+    if (state.turnCount > 0 && state.turnCount % 3 === 2) {
+      return "peer_creative";
+    }
+    return "user";
+  }
 
-  // user の後は再び健太からラウンド再開
-  if (state.lastSpeaker === "user") return "peer_bold";
+  // 翔太の後は user
+  if (state.lastSpeaker === "peer_creative") return "user";
+
+  // user の後:
+  //   5 ターンに 1 回は教授が鋭い質問を差し込む (佐藤・田中を交互)
+  //   それ以外は健太からラウンド再開
+  if (state.lastSpeaker === "user") {
+    if (state.turnCount > 0 && state.turnCount % 5 === 0) {
+      // 10 ターンごとに田中、それ以外は佐藤 (粗い交互)
+      return state.turnCount % 10 === 0 ? "professor_practical" : "professor_logic";
+    }
+    return "peer_bold";
+  }
+
+  // 教授の質問の後は健太からラウンド再開
+  if (state.lastSpeaker === "professor_logic" || state.lastSpeaker === "professor_practical") {
+    return "peer_bold";
+  }
 
   // 初回 (lastSpeaker === null): 健太から (理論上は startOpening 経由なので来ない)
   return "peer_bold";

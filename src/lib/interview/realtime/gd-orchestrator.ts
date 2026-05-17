@@ -54,7 +54,18 @@ export interface GdOrchestratorOptions {
   onError?: (error: Error) => void;
 }
 
-const SPEAKERS_ORDER: ActiveSpeaker[] = ["moderator", "peer_bold", "peer_careful"];
+/**
+ * 接続する全 AI セッション。"user" は AI セッションではないので含めない。
+ * 6 人体制: 司会 + 教授 2 + 受験生 3。
+ */
+const SPEAKERS_ORDER: Exclude<ActiveSpeaker, "user">[] = [
+  "moderator",
+  "professor_logic",
+  "professor_practical",
+  "peer_bold",
+  "peer_careful",
+  "peer_creative",
+];
 
 export class GdOrchestrator {
   private sessions = new Map<ActiveSpeaker, RealtimeSession>();
@@ -151,8 +162,9 @@ export class GdOrchestrator {
       });
     }
 
-    // peer 2 セッションは input audio を一切受け取らないので VAD を無効化
-    for (const speaker of ["peer_bold", "peer_careful"] as const) {
+    // moderator 以外のセッションは input audio を一切受け取らないので VAD を無効化
+    for (const speaker of SPEAKERS_ORDER) {
+      if (speaker === "moderator") continue;
       const sess = this.sessions.get(speaker);
       if (sess) {
         sess.updateSession({
@@ -195,7 +207,8 @@ export class GdOrchestrator {
     this.opts.onMessageAppend?.({ role: "student", content: text });
 
     // moderator 以外のセッションに user 発言を注入 (moderator は自分で発話を聞いている)
-    for (const speaker of ["peer_bold", "peer_careful"] as const) {
+    for (const speaker of SPEAKERS_ORDER) {
+      if (speaker === "moderator") continue;
       const sess = this.sessions.get(speaker);
       if (sess) sess.addConversationItem("user", text);
     }

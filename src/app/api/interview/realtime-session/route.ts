@@ -51,11 +51,14 @@ const REALTIME_MODEL_CANDIDATES_GD = [
 ];
 
 // Realtime API がサポートする voice: alloy / ash / ballad / coral / echo / sage / shimmer / verse
-// GD は 3 話者構成: 教授 1 + 受験生 2 (ユーザー = 受験生D)
+// GD は 6 話者構成: 司会 + 教授 2 + 受験生 3 (ユーザー = Dさん) 計 6+1 で、本番に近い場
 const GD_SPEAKERS: { key: GdSpeakerKey; voice: string }[] = [
-  { key: "moderator", voice: "sage" },         // 教授 (進行役 + 鋭い質問)
-  { key: "peer_bold", voice: "ballad" },       // 健太 (積極派・リーダー型)
-  { key: "peer_careful", voice: "shimmer" },   // 美咲 (慎重派・データ重視)
+  { key: "moderator", voice: "sage" },             // 司会 (進行役、開幕 + 総括)
+  { key: "professor_logic", voice: "ash" },        // 佐藤教授 (論理性重視、鋭い質問)
+  { key: "professor_practical", voice: "verse" },  // 田中准教授 (実践重視、社会接続)
+  { key: "peer_bold", voice: "ballad" },           // 健太 (積極派・リーダー型)
+  { key: "peer_careful", voice: "shimmer" },       // 美咲 (慎重派・データ重視)
+  { key: "peer_creative", voice: "coral" },        // 翔太 (独創派・比喩多用)
 ];
 
 interface CreateSessionParams {
