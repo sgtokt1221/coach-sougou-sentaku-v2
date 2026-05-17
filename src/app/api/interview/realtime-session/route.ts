@@ -375,7 +375,7 @@ export async function POST(request: NextRequest) {
     presentationContent,
     selfAnalysis,
   );
-  const voice = "alloy"; // 個人モードはニュートラルな alloy
+  const voice = "shimmer"; // 個人モードは shimmer (落ち着いた女性教員のトーン)
   const issueResult = await issueEphemeralToken(apiKey, { instructions, voice, transcriptionPrompt });
   if (!issueResult.token) {
     return NextResponse.json(
