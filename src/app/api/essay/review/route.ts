@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { jsonrepair } from "jsonrepair";
 import { buildEssayReviewPrompt } from "@/lib/ai/prompts/essay";
 import type { EssayReviewRequest, EssayScores, EssayFeedback, TopicInsights } from "@/lib/types/essay";
 import { analyzeGrowth, updateWeaknessRecords } from "@/lib/growth/analyze";
@@ -178,7 +179,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const parsed = JSON.parse(jsonMatch[1]);
+    // AI が languageCorrections の original / suggestion などに生改行や未エスケープ
+    // " を含む小論文本文を埋め込むため、JSON 構文が頻繁に壊れる (line 127 col 6 付近)。
+    // まず素の parse を試み、失敗したら jsonrepair で構文修復後に再 parse。
+    let parsed: ReturnType<typeof JSON.parse>;
+    try {
+      parsed = JSON.parse(jsonMatch[1]);
+    } catch (parseErr) {
+      console.warn("JSON.parse failed, retrying with jsonrepair:", (parseErr as Error).message);
+      try {
+        parsed = JSON.parse(jsonrepair(jsonMatch[1]));
+      } catch (repairErr) {
+        console.error("JSON parse + repair both failed. rawText head:", rawText.slice(0, 800));
+        return NextResponse.json(
+          {
+            error: "AI添削結果のパースに失敗しました",
+            rawResponse: rawText.slice(0, 500),
+            ...(process.env.NODE_ENV === "development" && {
+              parseError: (parseErr as Error).message,
+              repairError: (repairErr as Error).message,
+            }),
+          },
+          { status: 500 }
+        );
+      }
+    }
 
     const scores: EssayScores = {
       structure: parsed.scores.structure,
@@ -284,8 +309,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(result);
   } catch (error) {
     console.error("Essay review error:", error);
+    const detail = error instanceof Error ? error.message : String(error);
+    const stack = error instanceof Error ? error.stack : undefined;
+    console.error("Essay review error detail:", detail);
+    if (stack) console.error("Essay review error stack:\n" + stack);
     return NextResponse.json(
-      { error: "添削処理中にエラーが発生しました" },
+      {
+        error: "添削処理中にエラーが発生しました",
+        ...(process.env.NODE_ENV === "development" && { detail, stack }),
+      },
       { status: 500 }
     );
   }

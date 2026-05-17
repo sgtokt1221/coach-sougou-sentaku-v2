@@ -1095,6 +1095,51 @@ export default function EssayNewPage() {
                   fullSourceText
                 />
               )}
+              {/* テーマ選択時もお題カードを入力欄の直上に表示（執筆中の参照用） */}
+              {inputMode === "text" && selectedTheme && !pastQuestion && (
+                <Card className="mb-4 border-sky-200 bg-sky-50">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <Badge variant="outline" className="bg-sky-100 text-sky-700 border-sky-300">
+                        {selectedTheme.fieldLabel}
+                      </Badge>
+                      <Badge
+                        variant="outline"
+                        className={
+                          selectedTheme.difficulty === 1
+                            ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                            : selectedTheme.difficulty === 2
+                            ? "bg-amber-100 text-amber-800 border-amber-300"
+                            : "bg-rose-100 text-rose-800 border-rose-300"
+                        }
+                      >
+                        {selectedTheme.difficulty === 1 ? "基礎" : selectedTheme.difficulty === 2 ? "標準" : "発展"}
+                      </Badge>
+                    </div>
+                    <CardTitle className="text-lg text-sky-900">
+                      {selectedTheme.title}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <p className="text-sky-800 mb-3">{selectedTheme.description}</p>
+                    <div className="flex items-center gap-4 text-sm text-sky-700 flex-wrap">
+                      <span>推奨字数: {selectedTheme.wordLimit}字</span>
+                      {selectedTheme.relatedAP.length > 0 && (
+                        <div className="flex items-center gap-1 flex-wrap">
+                          <span>関連分野:</span>
+                          <div className="flex gap-1 flex-wrap">
+                            {selectedTheme.relatedAP.slice(0, 3).map((ap, index) => (
+                              <Badge key={index} variant="secondary" className="text-xs">
+                                {ap}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
               <Card>
                 <CardHeader>
                   <CardTitle className="text-sm lg:text-base">小論文を入力</CardTitle>
