@@ -3,9 +3,13 @@ import { calculateRank } from "./rank";
 import { calculateInterviewRank } from "@/lib/interview-skill-check/rank";
 import { SKILL_CHECK_REFRESH_DAYS } from "@/lib/types/skill-check";
 
-/** 重みつき平均のパラメータ */
-export const SC_WEIGHT = 0.6;
-export const PRACTICE_WEIGHT = 0.4;
+/**
+ * 重みつき平均のパラメータ。
+ * 日々の練習 (小論文添削・面接練習) を主、SC をベンチマーク補正として扱う方針に変更。
+ * 練習量を重視することで継続のモチベを上げ、SC は「定期的な精度補正」として機能させる。
+ */
+export const SC_WEIGHT = 0.4;
+export const PRACTICE_WEIGHT = 0.6;
 
 /** 小論文スケール */
 const ESSAY_MAX = 50;
