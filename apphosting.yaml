@@ -5,6 +5,11 @@ runConfig:
   minInstances: 0
   maxInstances: 2
 
+# ignoreBuildErrors 撤去後、本番ビルドの TypeScript チェックで OOM が起きるため
+# builder のメモリを 4GB に増やす (デフォルトの 2GB だと next build が SIGABRT)
+buildConfig:
+  memoryMiB: 4096
+
 env:
   - variable: NEXT_PUBLIC_FIREBASE_API_KEY
     secret: NEXT_PUBLIC_FIREBASE_API_KEY

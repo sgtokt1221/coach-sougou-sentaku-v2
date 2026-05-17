@@ -6,7 +6,11 @@ import { SkillRankBadge } from "./SkillRankBadge";
 import { ACADEMIC_CATEGORY_LABELS, type AcademicCategory, type SkillRank } from "@/lib/types/skill-check";
 import { RANK_META } from "@/lib/skill-check/rank";
 import type { AggregateBreakdown } from "@/lib/skill-check/aggregate";
+import { SC_WEIGHT, PRACTICE_WEIGHT } from "@/lib/skill-check/weights";
 import { cn } from "@/lib/utils";
+
+const SC_PCT = Math.round(SC_WEIGHT * 100);
+const PRACTICE_PCT = Math.round(PRACTICE_WEIGHT * 100);
 
 /**
  * 小論文・面接など、スキル系の診断結果を1枚のパネルで見せる汎用コンポーネント。
@@ -111,17 +115,17 @@ export function SkillRankPanel({
                 )}
                 {aggregate && aggregate.mode === "weighted" && (
                   <p className="mt-1 text-[11px] text-muted-foreground">
-                    SC {aggregate.scScore}（{aggregate.scRank}）× 60% + 練習平均 {aggregate.practiceAvg?.toFixed(1)}（{aggregate.practiceCount}件）× 40%
+                    SC {aggregate.scScore}（{aggregate.scRank}）× {SC_PCT}% + 練習平均 {aggregate.practiceAvg?.toFixed(1)}（{aggregate.practiceCount}件）× {PRACTICE_PCT}%
                   </p>
                 )}
                 {aggregate && aggregate.mode === "sc_only" && (
                   <p className="mt-1 text-[11px] text-muted-foreground">
-                    SCのみ（直近30日の練習なし）
+                    SCのみ（直近30日の練習なし）— 練習を始めるとランクに{PRACTICE_PCT}%反映されます
                   </p>
                 )}
                 {aggregate && aggregate.mode === "practice_only" && (
                   <p className="mt-1 text-[11px] text-muted-foreground">
-                    練習平均のみ（{aggregate.practiceCount}件、SC未受験）
+                    練習平均のみ（{aggregate.practiceCount}件、SC未受験）— SC を受けるとベンチマーク補正でランク精度が上がります
                   </p>
                 )}
                 <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">

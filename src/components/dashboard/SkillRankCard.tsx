@@ -8,6 +8,10 @@ import type { SkillCheckStatus } from "@/lib/types/skill-check";
 import { ACADEMIC_CATEGORY_LABELS } from "@/lib/types/skill-check";
 import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
 import { SkillRadarChart } from "@/components/skill-check/SkillRadarChart";
+import { SC_WEIGHT, PRACTICE_WEIGHT } from "@/lib/skill-check/weights";
+
+const SC_PCT = Math.round(SC_WEIGHT * 100);
+const PRACTICE_PCT = Math.round(PRACTICE_WEIGHT * 100);
 
 interface Props {
   status: SkillCheckStatus | null;
@@ -56,7 +60,7 @@ export function SkillRankCard({ status }: Props) {
               </Badge>
               {aggregate && aggregate.mode === "weighted" && (
                 <p className="mt-1 text-[10px] text-muted-foreground">
-                  SC{aggregate.scScore}×60% + 練習{aggregate.practiceAvg?.toFixed(1)}（{aggregate.practiceCount}件）×40%
+                  SC{aggregate.scScore}×{SC_PCT}% + 練習{aggregate.practiceAvg?.toFixed(1)}（{aggregate.practiceCount}件）×{PRACTICE_PCT}%
                 </p>
               )}
             </div>
