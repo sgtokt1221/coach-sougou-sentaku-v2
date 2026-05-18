@@ -1253,7 +1253,7 @@ export const PAST_QUESTIONS: PastQuestion[] = [
         ] },
     ] },
 
-  { id: "pq-data-renewable-1", universityId: "kwansei-gakuin-u", universityName: "関西学院大学", facultyName: "総合政策学部", year: 2025,
+  { id: "pq-data-renewable-1", universityId: "kwansei-u", universityName: "関西学院大学", facultyName: "総合政策学部", year: 2025,
     theme: "【資料読解】再生可能エネルギー比率の国際比較",
     description: "以下の資料を分析し、日本の再生可能エネルギー普及の現状と課題を国際比較から明らかにし、エネルギー政策のあり方を600字以内で論じなさい。",
     type: "frequent", questionType: "data-analysis", wordLimit: 600, timeLimit: 60, field: "環境",
@@ -1294,7 +1294,7 @@ export const PAST_QUESTIONS: PastQuestion[] = [
     description: "「グローバルサウスの台頭と国際開発の再定義」に関する講義を聴いた後、講義の要旨をまとめ（200字程度）、従来の南北問題の枠組みがどう変容しているかについて600字以内で論じなさい。講義要旨：BRICSの拡大や途上国間協力（南南協力）の進展により、先進国主導の国際開発体制が変化している。インドやブラジルなどは援助の受け手から担い手へと移行しつつある。",
     type: "frequent", questionType: "essay", wordLimit: 800, timeLimit: 60, field: "国際" },
 
-  { id: "pq-lecture-kwansei-1", universityId: "kwansei-gakuin-u", universityName: "関西学院大学", facultyName: "教育学部", year: 2025,
+  { id: "pq-lecture-kwansei-1", universityId: "kwansei-u", universityName: "関西学院大学", facultyName: "教育学部", year: 2025,
     theme: "【講義型】非認知能力の教育的意義",
     description: "「非認知能力と教育成果の関係」に関する講義を聴いた後、講義内容を要約し（200字程度）、非認知能力を育成するための教育方法について600字以内で提案しなさい。講義要旨：ヘックマンの研究は、幼児期の非認知能力（忍耐力、自制心、協調性など）への投資が長期的な教育・経済的成果に大きな影響を与えることを示した。しかし、非認知能力の評価方法や育成カリキュラムには課題が残る。",
     type: "frequent", questionType: "essay", wordLimit: 800, timeLimit: 60, field: "教育" },

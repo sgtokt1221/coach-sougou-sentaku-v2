@@ -21,15 +21,18 @@ function buildEvents(universities: University[]): ScheduleEvent[] {
   const events: ScheduleEvent[] = [];
 
   for (const uni of universities) {
-    for (const faculty of uni.faculties) {
+    for (const faculty of uni.faculties ?? []) {
+      // schedule が無い学部はスキップ (Firestore のデータ欠落耐性)
+      if (!faculty.schedule) continue;
       const { applicationStart, applicationEnd, examDate, resultDate } = faculty.schedule;
-      const pairs: [string, ScheduleEvent["type"]][] = [
+      const pairs: [string | undefined, ScheduleEvent["type"]][] = [
         [applicationStart, "出願開始"],
         [applicationEnd, "出願締切"],
         [examDate, "試験日"],
         [resultDate, "合格発表"],
       ];
       for (const [date, type] of pairs) {
+        if (!date) continue;
         events.push({
           universityName: uni.name,
           facultyName: faculty.name,

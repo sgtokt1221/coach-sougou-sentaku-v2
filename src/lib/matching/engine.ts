@@ -45,7 +45,7 @@ export async function matchUniversities(
   const results: MatchResult[] = [];
 
   for (const uni of universities) {
-    for (const faculty of uni.faculties) {
+    for (const faculty of uni.faculties ?? []) {
       const result = matchFaculty(profile, uni, faculty);
       results.push(result);
     }
