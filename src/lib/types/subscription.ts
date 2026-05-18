@@ -15,12 +15,24 @@ export interface StandardSubscription {
   status: "active" | "past_due" | "canceled" | "unpaid" | "trialing";
   currentPeriodEnd: string;
   cancelAtPeriodEnd: boolean;
+  /** true の場合、Stripe ではなく管理者画面から手動で付与されたことを示す */
+  manual?: boolean;
+  /** 手動付与時の admin/superadmin の uid */
+  grantedBy?: string;
+  /** 手動付与時の日時 (ISO8601) */
+  grantedAt?: string;
 }
 
 export interface DocumentPackage {
   purchased: boolean;
   purchasedAt?: string;
   paymentIntentId?: string;
+  /** true の場合、Stripe ではなく管理者画面から手動で付与されたことを示す */
+  manual?: boolean;
+  /** 手動付与時の admin/superadmin の uid */
+  grantedBy?: string;
+  /** 手動付与時の日時 (ISO8601) */
+  grantedAt?: string;
 }
 
 export interface UserSubscription {
