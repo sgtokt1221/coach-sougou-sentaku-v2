@@ -10,6 +10,20 @@ export interface Essay {
   scores?: EssayScores;
   feedback?: EssayFeedback;
   status: "uploaded" | "ocr_confirmed" | "reviewing" | "reviewed";
+  rootEssayId?: string;
+  parentEssayId?: string | null;
+  attemptNumber?: number;
+  inputMode?: "image" | "text" | "dictation";
+  retryContext?: EssayRetryContext;
+}
+
+export interface EssayRetryContext {
+  wordLimit?: number | null;
+  questionType?: EssayReviewRequest["questionType"] | null;
+  sourceText?: string | null;
+  chartDataSummary?: string | null;
+  pastQuestionFacultyName?: string | null;
+  lectureInfo?: string | null;
 }
 
 export interface EssayScores {
@@ -92,6 +106,8 @@ export interface EssayReviewRequest {
   chartDataSummary?: string;
   pastQuestionFacultyName?: string;
   lectureInfo?: string;
+  parentEssayId?: string;
+  inputMode?: "image" | "text" | "dictation";
 }
 
 export interface EssayReviewResponse {
@@ -99,6 +115,31 @@ export interface EssayReviewResponse {
   scores: EssayScores;
   feedback: EssayFeedback;
   growthEvents: GrowthEvent[];
+  attemptNumber?: number;
+  rootEssayId?: string;
+  parentEssayId?: string | null;
+  retryComparison?: RetryComparison;
+}
+
+export interface RetryComparison {
+  parentEssayId: string;
+  parentAttemptNumber: number;
+  parentSubmittedAt: string;
+  parentScores: EssayScores;
+  currentScores: EssayScores;
+  scoreDelta: {
+    structure: number;
+    logic: number;
+    expression: number;
+    apAlignment: number;
+    originality: number;
+    total: number;
+  };
+  resolvedWeaknesses: string[];
+  newWeaknesses: string[];
+  persistedWeaknesses: string[];
+  wordCountDelta: number | null;
+  fillRateDelta: number | null;
 }
 
 export interface GrowthEvent {

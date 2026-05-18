@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FileText, Plus } from "lucide-react";
+import { FileText, ChevronDown, ChevronUp, RotateCcw, History as HistoryIcon, ArrowUpRight, Minus } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { useAuthSWR } from "@/lib/api/swr";
 import {
@@ -50,6 +50,16 @@ interface EssayHistoryItem {
     apAlignment: number;
     originality: number;
   };
+  rootEssayId?: string;
+  parentEssayId?: string | null;
+  attemptNumber?: number;
+  inputMode?: "image" | "text" | "dictation" | null;
+}
+
+interface EssayChain {
+  rootId: string;
+  attempts: EssayHistoryItem[]; // 古→新の順
+  latest: EssayHistoryItem;
 }
 
 const STATUS_LABEL: Record<EssayHistoryItem["status"], string> = {
@@ -90,9 +100,10 @@ const DETAIL_LINES: { key: LineKey; label: string }[] = [
 export function EssayHistory() {
   const router = useRouter();
   const [visibleLines, setVisibleLines] = useState<Set<string>>(new Set(["total"]));
+  const [expandedChains, setExpandedChains] = useState<Set<string>>(new Set());
 
   const { data: rawData, isLoading: loading } = useAuthSWR<{ essays: EssayHistoryItem[] }>("/api/essay/history");
-  const history = rawData?.essays ?? [];
+  const history = useMemo(() => rawData?.essays ?? [], [rawData]);
 
   function toggleLine(key: string) {
     setVisibleLines((prev) => {
@@ -102,6 +113,15 @@ export function EssayHistory() {
       } else {
         next.add(key);
       }
+      return next;
+    });
+  }
+
+  function toggleChain(rootId: string) {
+    setExpandedChains((prev) => {
+      const next = new Set(prev);
+      if (next.has(rootId)) next.delete(rootId);
+      else next.add(rootId);
       return next;
     });
   }
@@ -119,6 +139,31 @@ export function EssayHistory() {
       apAlignment: item.scores.apAlignment,
       originality: item.scores.originality,
     }));
+
+  // 同じ rootEssayId の essays をチェーンに集約
+  const chains: EssayChain[] = useMemo(() => {
+    const map = new Map<string, EssayHistoryItem[]>();
+    for (const item of history) {
+      const rootId = item.rootEssayId ?? item.id;
+      const arr = map.get(rootId) ?? [];
+      arr.push(item);
+      map.set(rootId, arr);
+    }
+    const out: EssayChain[] = [];
+    for (const [rootId, items] of map) {
+      // 古→新の順（attemptNumber 昇順、なければ submittedAt 昇順）
+      const sorted = [...items].sort((a, b) => {
+        const an = a.attemptNumber ?? 1;
+        const bn = b.attemptNumber ?? 1;
+        if (an !== bn) return an - bn;
+        return a.submittedAt.localeCompare(b.submittedAt);
+      });
+      out.push({ rootId, attempts: sorted, latest: sorted[sorted.length - 1] });
+    }
+    // 最新の submittedAt が新しいチェーン順
+    out.sort((a, b) => b.latest.submittedAt.localeCompare(a.latest.submittedAt));
+    return out;
+  }, [history]);
 
   if (loading) {
     return (
@@ -229,43 +274,167 @@ export function EssayHistory() {
       )}
 
       <div className="space-y-3">
-        {history.map((item) => (
-          <Card
-            key={item.id}
-            className="cursor-pointer hover:shadow-md transition-shadow"
-            onClick={() =>
-              item.status === "reviewed"
-                ? router.push(`/student/essay/${item.id}`)
-                : undefined
-            }
-          >
-            <CardContent className="p-3 lg:p-4 flex items-center justify-between gap-3">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-medium text-sm">{item.universityName}</span>
-                  <span className="text-muted-foreground text-sm">{item.facultyName}</span>
-                  {item.topic && (
-                    <span className="text-xs text-muted-foreground truncate">
-                      / {item.topic}
+        {chains.map((chain) => {
+          const isMultiAttempt = chain.attempts.length >= 2;
+          const isExpanded = expandedChains.has(chain.rootId);
+          const latest = chain.latest;
+          const earliest = chain.attempts[0];
+          const totalDelta =
+            isMultiAttempt && earliest.status === "reviewed" && latest.status === "reviewed"
+              ? latest.totalScore - earliest.totalScore
+              : null;
+          return (
+            <Card key={chain.rootId} className="overflow-hidden transition-shadow hover:shadow-md">
+              <CardContent
+                className="p-3 lg:p-4 flex items-center justify-between gap-3 cursor-pointer"
+                onClick={() =>
+                  latest.status === "reviewed"
+                    ? router.push(`/student/essay/${latest.id}`)
+                    : undefined
+                }
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-medium text-sm">{latest.universityName}</span>
+                    <span className="text-muted-foreground text-sm">{latest.facultyName}</span>
+                    {latest.topic && (
+                      <span className="text-xs text-muted-foreground truncate">
+                        / {latest.topic}
+                      </span>
+                    )}
+                    {isMultiAttempt && (
+                      <Badge
+                        variant="outline"
+                        className="bg-indigo-50 text-indigo-700 border-indigo-200 text-xs"
+                      >
+                        {chain.attempts.length}回挑戦
+                      </Badge>
+                    )}
+                    {totalDelta !== null && totalDelta !== 0 && (
+                      <span
+                        className={
+                          "inline-flex items-center gap-0.5 text-[11px] font-semibold tabular-nums px-1.5 py-0.5 rounded border " +
+                          (totalDelta > 0
+                            ? "text-emerald-700 bg-emerald-50 border-emerald-200"
+                            : "text-rose-700 bg-rose-50 border-rose-200")
+                        }
+                      >
+                        <ArrowUpRight className={"size-3 " + (totalDelta < 0 ? "rotate-90" : "")} />
+                        {totalDelta > 0 ? `+${totalDelta}` : totalDelta}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">{formatDateTime(latest.submittedAt)}</p>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  {latest.status === "reviewed" && (
+                    <span className="text-lg font-bold">
+                      {latest.totalScore}
+                      <span className="text-sm text-muted-foreground">/50</span>
                     </span>
                   )}
+                  <Badge variant={STATUS_VARIANT[latest.status]}>
+                    {STATUS_LABEL[latest.status]}
+                  </Badge>
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">{formatDateTime(item.submittedAt)}</p>
-              </div>
-              <div className="flex items-center gap-3 shrink-0">
-                {item.status === "reviewed" && (
-                  <span className="text-lg font-bold">
-                    {item.totalScore}
-                    <span className="text-sm text-muted-foreground">/50</span>
-                  </span>
+              </CardContent>
+              {/* チェーンアクション */}
+              <div className="px-3 pb-3 lg:px-4 lg:pb-4 flex items-center justify-between gap-2 flex-wrap">
+                {isMultiAttempt ? (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleChain(chain.rootId);
+                    }}
+                    className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+                  >
+                    {isExpanded ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />}
+                    {isExpanded ? "履歴を閉じる" : `${chain.attempts.length}回分の履歴を見る`}
+                  </button>
+                ) : (
+                  <span />
                 )}
-                <Badge variant={STATUS_VARIANT[item.status]}>
-                  {STATUS_LABEL[item.status]}
-                </Badge>
+                {latest.status === "reviewed" && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-xs"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      router.push(`/student/essay/new?retryFrom=${latest.id}`);
+                    }}
+                  >
+                    <RotateCcw className="size-3.5 mr-1" />
+                    同じテーマで再トライ
+                  </Button>
+                )}
               </div>
-            </CardContent>
-          </Card>
-        ))}
+              {/* 展開時: 各 attempt のタイムライン */}
+              {isExpanded && isMultiAttempt && (
+                <div className="border-t bg-slate-50/60 px-3 lg:px-4 py-3 space-y-2">
+                  {chain.attempts.map((a, i) => {
+                    const prev = i > 0 ? chain.attempts[i - 1] : null;
+                    const delta =
+                      prev && prev.status === "reviewed" && a.status === "reviewed"
+                        ? a.totalScore - prev.totalScore
+                        : null;
+                    return (
+                      <div
+                        key={a.id}
+                        className="flex items-center justify-between gap-2 rounded-md bg-white border border-slate-200 px-3 py-2 cursor-pointer hover:bg-slate-50"
+                        onClick={() =>
+                          a.status === "reviewed" ? router.push(`/student/essay/${a.id}`) : undefined
+                        }
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <HistoryIcon className="size-3.5 text-slate-400 shrink-0" />
+                          <span className="text-xs font-medium text-slate-700 tabular-nums">
+                            第{a.attemptNumber ?? i + 1}回
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {formatDateTime(a.submittedAt)}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {delta !== null && (
+                            <span
+                              className={
+                                "inline-flex items-center gap-0.5 text-[11px] font-semibold tabular-nums px-1.5 py-0.5 rounded border " +
+                                (delta > 0
+                                  ? "text-emerald-700 bg-emerald-50 border-emerald-200"
+                                  : delta < 0
+                                    ? "text-rose-700 bg-rose-50 border-rose-200"
+                                    : "text-slate-500 bg-slate-50 border-slate-200")
+                              }
+                            >
+                              {delta === 0 ? (
+                                <Minus className="size-3" />
+                              ) : (
+                                <ArrowUpRight className={"size-3 " + (delta < 0 ? "rotate-90" : "")} />
+                              )}
+                              {delta > 0 ? `+${delta}` : delta === 0 ? "±0" : delta}
+                            </span>
+                          )}
+                          {a.status === "reviewed" ? (
+                            <span className="text-sm font-bold tabular-nums">
+                              {a.totalScore}
+                              <span className="text-xs text-muted-foreground font-normal">/50</span>
+                            </span>
+                          ) : (
+                            <Badge variant={STATUS_VARIANT[a.status]} className="text-[10px]">
+                              {STATUS_LABEL[a.status]}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </Card>
+          );
+        })}
       </div>
     </div>
   );
