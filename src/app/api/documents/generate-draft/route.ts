@@ -52,13 +52,6 @@ export async function POST(request: NextRequest) {
       .collection(`users/${auth.uid}/activities`)
       .get();
 
-    if (activitiesSnap.empty) {
-      return NextResponse.json(
-        { error: "活動実績を先に登録してください" },
-        { status: 400 }
-      );
-    }
-
     const activities = activitiesSnap.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => {
       const data = doc.data();
       return {
@@ -66,6 +59,21 @@ export async function POST(request: NextRequest) {
         structuredData: data.structuredData,
       };
     });
+
+    // 活動実績が未登録の場合は AI を呼ばずに決定論的に雛形を組み立てる。
+    // 架空のエピソード捏造を避け、ユーザーが各セクションをガイディング質問に
+    // 沿って埋められる状態にする。AI による具体的な下書きは活動実績登録後に提供。
+    if (activities.length === 0) {
+      const result: DraftGenerateResponse = {
+        frameworkType: body.frameworkType,
+        draft: "",
+        sections: framework.sections.map((s) => ({
+          title: s.title,
+          content: `【${s.guidingQuestion}】\n${s.placeholder ?? "ここに記入してください。"}`,
+        })),
+      };
+      return NextResponse.json(result);
+    }
 
     const { default: Anthropic } = await import("@anthropic-ai/sdk");
     const client = new Anthropic({ apiKey });

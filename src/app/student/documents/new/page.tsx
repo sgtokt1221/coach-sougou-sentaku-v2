@@ -31,6 +31,7 @@ import { FRAMEWORKS } from "@/lib/templates/frameworks";
 import { DOCUMENT_TEMPLATES } from "@/lib/templates/document-templates";
 import { useAuthSWR } from "@/lib/api/swr";
 import { authFetch } from "@/lib/api/client";
+import { toast } from "sonner";
 import type { Activity } from "@/lib/types/activity";
 
 interface UniversityOption {
@@ -126,11 +127,15 @@ export default function NewDocumentPage() {
         body: JSON.stringify(req),
       });
 
-      if (!res.ok) throw new Error("生成に失敗しました");
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        throw new Error(payload?.error ?? "生成に失敗しました");
+      }
       const data: DraftGenerateResponse = await res.json();
       setDraftResult(data);
     } catch (err) {
       console.error("Draft generation failed:", err);
+      toast.error(err instanceof Error ? err.message : "生成に失敗しました");
     } finally {
       setGenerating(false);
     }
@@ -150,7 +155,10 @@ export default function NewDocumentPage() {
         }),
       });
 
-      if (!res.ok) throw new Error("自己分析下書きの生成に失敗しました");
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        throw new Error(payload?.error ?? "自己分析下書きの生成に失敗しました");
+      }
       const data = await res.json();
 
       // 既存のDraftGenerateResponse形式に変換
@@ -168,6 +176,7 @@ export default function NewDocumentPage() {
       });
     } catch (err) {
       console.error("Self-analysis draft generation failed:", err);
+      toast.error(err instanceof Error ? err.message : "自己分析下書きの生成に失敗しました");
     } finally {
       setGenerating(false);
     }
@@ -193,11 +202,15 @@ export default function NewDocumentPage() {
         }),
       });
 
-      if (!res.ok) throw new Error("保存に失敗しました");
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        throw new Error(payload?.error ?? "保存に失敗しました");
+      }
       const doc = await res.json();
       router.push(`/student/documents/${doc.id}`);
     } catch (err) {
       console.error("Save failed:", err);
+      toast.error(err instanceof Error ? err.message : "保存に失敗しました");
     } finally {
       setSaving(false);
     }
