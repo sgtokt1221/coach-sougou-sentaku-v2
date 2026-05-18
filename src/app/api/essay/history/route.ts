@@ -109,6 +109,10 @@ export async function GET(request: NextRequest) {
             originality: scores.originality ?? 0,
             total,
           },
+          rootEssayId: data.rootEssayId ?? d.id,
+          parentEssayId: data.parentEssayId ?? null,
+          attemptNumber: typeof data.attemptNumber === "number" ? data.attemptNumber : 1,
+          inputMode: data.inputMode ?? null,
         };
       })
     );

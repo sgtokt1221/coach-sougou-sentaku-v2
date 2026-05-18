@@ -14,6 +14,9 @@ export interface BigQueryEssayLog {
   topic: string;
   weakness_tags: string[];
   improvement_tags: string[];
+  attempt_number?: number;
+  root_essay_id?: string;
+  parent_essay_id?: string | null;
 }
 
 export interface BigQueryInterviewLog {

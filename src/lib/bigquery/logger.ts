@@ -96,6 +96,9 @@ export async function logEssaySubmission(data: BigQueryEssayLog): Promise<void> 
       ai_model: null,
       weakness_tags: data.weakness_tags ?? [],
       improvement_tags: data.improvement_tags ?? [],
+      attempt_number: data.attempt_number ?? null,
+      root_essay_id: data.root_essay_id ?? null,
+      parent_essay_id: data.parent_essay_id ?? null,
     },
     "logEssaySubmission"
   );

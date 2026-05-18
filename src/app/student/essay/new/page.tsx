@@ -33,6 +33,10 @@ import {
   History,
   Download,
   Sparkles,
+  RotateCcw,
+  Target,
+  Star,
+  AlertTriangle,
 } from "lucide-react";
 import { WeaknessReminderCard } from "@/components/growth/WeaknessReminderCard";
 import { ManuscriptEditor } from "@/components/essay/ManuscriptEditor";
@@ -115,6 +119,37 @@ export default function EssayNewPage() {
   // テーマ練習モード
   const themeId = searchParams?.get("theme");
   const [selectedTheme, setSelectedTheme] = useState<EssayTheme | null>(null);
+
+  // 再トライモード
+  const retryFromId = searchParams?.get("retryFrom");
+  type RetryParent = {
+    id: string;
+    universityName: string;
+    facultyName: string;
+    targetUniversity?: string;
+    targetFaculty?: string;
+    topic: string;
+    attemptNumber?: number;
+    inputMode?: "image" | "text" | "dictation" | null;
+    scores?: { total: number };
+    feedback?: {
+      overall?: string;
+      improvements?: string[];
+      priorityImprovement?: string | null;
+      nextChallenge?: string | null;
+      repeatedIssues?: Array<{ area: string; count?: number }>;
+    };
+    retryContext?: {
+      wordLimit?: number | null;
+      questionType?: "essay" | "english-reading" | "data-analysis" | "mixed" | "lecture" | null;
+      sourceText?: string | null;
+      chartDataSummary?: string | null;
+      pastQuestionFacultyName?: string | null;
+      lectureInfo?: string | null;
+    } | null;
+  };
+  const [retryParent, setRetryParent] = useState<RetryParent | null>(null);
+  const [retryParentLoading, setRetryParentLoading] = useState(false);
 
   // 過去問モード
   const pastQuestionId = searchParams?.get("pastQuestion");
@@ -207,6 +242,49 @@ export default function EssayNewPage() {
     }
   }, [pastQuestion?.wordLimit, selectedTheme?.wordLimit]);
 
+  // 再トライ: 親essayを取得して初期化
+  useEffect(() => {
+    if (!retryFromId) {
+      setRetryParent(null);
+      return;
+    }
+    let cancelled = false;
+    setRetryParentLoading(true);
+    (async () => {
+      try {
+        const res = await authFetch(`/api/essay/${retryFromId}`);
+        if (!res.ok) throw new Error("親エッセイの取得に失敗しました");
+        const data = await res.json();
+        if (cancelled) return;
+        const parent: RetryParent = {
+          id: data.id,
+          universityName: data.universityName ?? "",
+          facultyName: data.facultyName ?? "",
+          targetUniversity: data.targetUniversity,
+          targetFaculty: data.targetFaculty,
+          topic: data.topic ?? "",
+          attemptNumber: data.attemptNumber,
+          inputMode: data.inputMode ?? null,
+          scores: data.scores,
+          feedback: data.feedback,
+          retryContext: data.retryContext ?? null,
+        };
+        setRetryParent(parent);
+        if (parent.topic) setTopic(parent.topic);
+        if (parent.retryContext?.wordLimit) setCustomMaxLength(parent.retryContext.wordLimit);
+        if (parent.inputMode) setInputMode(parent.inputMode);
+      } catch {
+        if (!cancelled) setRetryParent(null);
+      } finally {
+        if (!cancelled) setRetryParentLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [retryFromId]);
+
+
   // 志望校解決
   const targetUniversities = (userProfile as Record<string, unknown> | null)?.targetUniversities as string[] | undefined ?? [];
   const [resolved, setResolved] = useState<ResolvedUniversity[]>([]);
@@ -275,11 +353,36 @@ export default function EssayNewPage() {
     }
   }, [resolved, pastQuestion]);
 
+  // 再トライ時: 解決済み志望校リストから親と一致するものを自動選択
+  useEffect(() => {
+    if (!retryParent || resolved.length === 0) return;
+    const match = resolved.find(
+      (r) =>
+        r.universityId === retryParent.targetUniversity &&
+        r.facultyId === retryParent.targetFaculty
+    );
+    if (match) {
+      setSelectedCompoundId(`${match.universityId}:${match.facultyId}`);
+    }
+  }, [retryParent, resolved]);
+
   const selectedUni = resolved.find(
     (r) => `${r.universityId}:${r.facultyId}` === selectedCompoundId
   );
-  const universityId = selectedUni?.universityId ?? "";
-  const facultyId = selectedUni?.facultyId ?? "";
+  // 再トライ時に親の志望校が現在の resolved に無い場合は親の情報で補完する。
+  // (生徒が志望校を変えた後でも前回テーマで再挑戦できるように。)
+  const retryParentUni: ResolvedUniversity | null =
+    retryParent && retryParent.targetUniversity && retryParent.targetFaculty && !selectedUni
+      ? {
+          universityId: retryParent.targetUniversity,
+          facultyId: retryParent.targetFaculty,
+          universityName: retryParent.universityName,
+          facultyName: retryParent.facultyName,
+        }
+      : null;
+  const effectiveUni = selectedUni ?? retryParentUni;
+  const universityId = effectiveUni?.universityId ?? "";
+  const facultyId = effectiveUni?.facultyId ?? "";
 
   // Step 2 — 複数画像対応
   const [images, setImages] = useState<Array<{ base64: string; preview: string }>>([]);
@@ -466,7 +569,9 @@ export default function EssayNewPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           essayId: id, ocrText: directText, universityId, facultyId, topic,
-          wordLimit: pastQuestion?.wordLimit ?? selectedTheme?.wordLimit,
+          wordLimit: customMaxLength || pastQuestion?.wordLimit || selectedTheme?.wordLimit || retryParent?.retryContext?.wordLimit,
+          inputMode,
+          ...(retryFromId && { parentEssayId: retryFromId }),
           ...(pastQuestion && {
             questionType: pastQuestion.questionType,
             sourceText: pastQuestion.sourceText ?? dynamicSourceText ?? undefined,
@@ -484,6 +589,14 @@ export default function EssayNewPage() {
               lectureInfo: `講義タイトル: ${selectedTheme.tedTalk.title}\n講演者: ${selectedTheme.tedTalk.speaker}\n講義時間: ${selectedTheme.tedTalk.durationMinutes}分`,
             }),
           }),
+          // 再トライ時、過去問/テーマが直接ない場合は親の retryContext を引き継ぐ
+          ...(retryParent?.retryContext && !pastQuestion && !selectedTheme && {
+            ...(retryParent.retryContext.questionType && { questionType: retryParent.retryContext.questionType }),
+            ...(retryParent.retryContext.sourceText && { sourceText: retryParent.retryContext.sourceText }),
+            ...(retryParent.retryContext.chartDataSummary && { chartDataSummary: retryParent.retryContext.chartDataSummary }),
+            ...(retryParent.retryContext.pastQuestionFacultyName && { pastQuestionFacultyName: retryParent.retryContext.pastQuestionFacultyName }),
+            ...(retryParent.retryContext.lectureInfo && { lectureInfo: retryParent.retryContext.lectureInfo }),
+          }),
         }),
         signal: controller.signal,
       });
@@ -493,8 +606,8 @@ export default function EssayNewPage() {
       sessionStorage.setItem("essayReviewResult", JSON.stringify({
         ...data,
         ocrText: directText,
-        universityName: selectedUni?.universityName ?? "",
-        facultyName: selectedUni?.facultyName ?? "",
+        universityName: effectiveUni?.universityName ?? "",
+        facultyName: effectiveUni?.facultyName ?? "",
         topic: topic ?? "",
         submittedAt: new Date().toISOString(),
       }));
@@ -522,7 +635,9 @@ export default function EssayNewPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           essayId, ocrText, universityId, facultyId, topic,
-          wordLimit: pastQuestion?.wordLimit ?? selectedTheme?.wordLimit,
+          wordLimit: pastQuestion?.wordLimit ?? selectedTheme?.wordLimit ?? retryParent?.retryContext?.wordLimit,
+          inputMode,
+          ...(retryFromId && { parentEssayId: retryFromId }),
           ...(pastQuestion && {
             questionType: pastQuestion.questionType,
             sourceText: pastQuestion.sourceText ?? dynamicSourceText ?? undefined,
@@ -540,6 +655,13 @@ export default function EssayNewPage() {
               lectureInfo: `講義タイトル: ${selectedTheme.tedTalk.title}\n講演者: ${selectedTheme.tedTalk.speaker}\n講義時間: ${selectedTheme.tedTalk.durationMinutes}分`,
             }),
           }),
+          ...(retryParent?.retryContext && !pastQuestion && !selectedTheme && {
+            ...(retryParent.retryContext.questionType && { questionType: retryParent.retryContext.questionType }),
+            ...(retryParent.retryContext.sourceText && { sourceText: retryParent.retryContext.sourceText }),
+            ...(retryParent.retryContext.chartDataSummary && { chartDataSummary: retryParent.retryContext.chartDataSummary }),
+            ...(retryParent.retryContext.pastQuestionFacultyName && { pastQuestionFacultyName: retryParent.retryContext.pastQuestionFacultyName }),
+            ...(retryParent.retryContext.lectureInfo && { lectureInfo: retryParent.retryContext.lectureInfo }),
+          }),
         }),
         signal: controller.signal,
       });
@@ -549,8 +671,8 @@ export default function EssayNewPage() {
       sessionStorage.setItem("essayReviewResult", JSON.stringify({
         ...data,
         ocrText,
-        universityName: selectedUni?.universityName ?? "",
-        facultyName: selectedUni?.facultyName ?? "",
+        universityName: effectiveUni?.universityName ?? "",
+        facultyName: effectiveUni?.facultyName ?? "",
         topic: topic ?? "",
         submittedAt: new Date().toISOString(),
       }));
@@ -629,6 +751,99 @@ export default function EssayNewPage() {
         <SelfAnalysisGuardCard />
 
         <WeaknessReminderCard />
+
+        {/* 再トライリマインダー */}
+        {retryParent && (
+          <Card className="mb-6 border-indigo-200 bg-gradient-to-br from-indigo-50 via-sky-50 to-purple-50">
+            <CardHeader className="pb-3">
+              <div className="flex items-start justify-between gap-2 flex-wrap">
+                <CardTitle className="text-lg text-indigo-900 flex items-center gap-2">
+                  <RotateCcw className="size-5 text-indigo-700" />
+                  第{(retryParent.attemptNumber ?? 1) + 1}回チャレンジ
+                </CardTitle>
+                <Link
+                  href={`/student/essay/${retryParent.id}`}
+                  className="text-xs text-indigo-700 hover:text-indigo-900 underline underline-offset-2"
+                >
+                  前回の添削を見る
+                </Link>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="rounded-lg bg-white/70 border border-indigo-100 p-3">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div>
+                    <p className="text-sm font-medium text-slate-800">
+                      {retryParent.universityName} {retryParent.facultyName}
+                    </p>
+                    {retryParent.topic && (
+                      <p className="text-xs text-slate-600 mt-0.5">テーマ: {retryParent.topic}</p>
+                    )}
+                  </div>
+                  {retryParent.scores && (
+                    <div className="text-right">
+                      <p className="text-xs text-muted-foreground">前回スコア</p>
+                      <p className="text-lg font-bold tabular-nums text-slate-800">
+                        {retryParent.scores.total}
+                        <span className="text-xs text-muted-foreground font-normal">/50</span>
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {retryParent.feedback?.priorityImprovement && (
+                <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 flex gap-2.5">
+                  <Star className="size-4 text-amber-700 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs font-semibold text-amber-900 mb-1">最優先で取り組むポイント</p>
+                    <p className="text-sm text-amber-900 leading-relaxed">
+                      {retryParent.feedback.priorityImprovement}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {retryParent.feedback?.improvements && retryParent.feedback.improvements.length > 0 && (
+                <div className="rounded-lg bg-white/60 border border-indigo-100 p-3">
+                  <p className="text-xs font-semibold text-indigo-900 mb-2 flex items-center gap-1">
+                    <AlertTriangle className="size-3.5" />
+                    前回の改善ポイント
+                  </p>
+                  <ul className="space-y-1.5">
+                    {retryParent.feedback.improvements.slice(0, 3).map((imp, i) => (
+                      <li key={i} className="text-sm text-slate-700 flex gap-2 leading-relaxed">
+                        <span className="text-indigo-500 shrink-0">•</span>
+                        <span>{imp}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {retryParent.feedback?.nextChallenge && (
+                <div className="rounded-lg bg-sky-50 border border-sky-200 p-3 flex gap-2.5">
+                  <Target className="size-4 text-sky-700 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs font-semibold text-sky-900 mb-1">今回のチャレンジ</p>
+                    <p className="text-sm text-sky-900 leading-relaxed">
+                      {retryParent.feedback.nextChallenge}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {retryParentLoading && (
+          <Card className="mb-6">
+            <CardContent className="p-4">
+              <Skeleton className="h-5 w-32" />
+              <Skeleton className="mt-2 h-20 w-full rounded-lg" />
+            </CardContent>
+          </Card>
+        )}
 
         {/* 過去問情報表示（読み取り専用） */}
         {pastQuestion && (
@@ -717,16 +932,16 @@ export default function EssayNewPage() {
           </button>
         </div>
 
-        {/* 過去問選択時: 志望校・テーマは自動設定済み → 次へボタンのみ */}
-        {pastQuestion ? (
+        {/* 過去問選択時 or 再トライ時: 志望校・テーマは自動設定済み → 次へボタンのみ */}
+        {(pastQuestion || retryParent) ? (
           <Card className="mt-4">
             <CardContent className="p-3 lg:p-4 space-y-4">
-              {selectedUni && (
+              {effectiveUni && (
                 <div className="flex items-center gap-3 rounded-lg border border-primary bg-primary/5 p-3">
                   <GraduationCap className="size-5 text-primary shrink-0" />
                   <div>
-                    <p className="text-sm font-medium">{selectedUni.universityName}</p>
-                    <p className="text-xs text-muted-foreground">{selectedUni.facultyName}</p>
+                    <p className="text-sm font-medium">{effectiveUni.universityName}</p>
+                    <p className="text-xs text-muted-foreground">{effectiveUni.facultyName}</p>
                   </div>
                 </div>
               )}
@@ -785,7 +1000,7 @@ export default function EssayNewPage() {
 
               <Button
                 className="w-full min-h-[44px] py-3"
-                disabled={!selectedCompoundId}
+                disabled={!universityId || !facultyId}
                 onClick={() => setStep(2)}
               >
                 次へ
@@ -1201,7 +1416,11 @@ export default function EssayNewPage() {
                     value={directText}
                     onChange={setDirectText}
                     maxLength={customMaxLength}
-                    placeholder="ここに小論文を入力してください..."
+                    placeholder={
+                      retryParent
+                        ? "前回の改善点を意識して書き直してみよう..."
+                        : "ここに小論文を入力してください..."
+                    }
                   />
                   {error && (
                     <p className="text-sm text-destructive">{error}</p>

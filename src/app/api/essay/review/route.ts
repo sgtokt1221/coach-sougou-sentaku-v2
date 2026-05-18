@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { jsonrepair } from "jsonrepair";
 import { buildEssayReviewPrompt } from "@/lib/ai/prompts/essay";
-import type { EssayReviewRequest, EssayScores, EssayFeedback, TopicInsights } from "@/lib/types/essay";
+import type { EssayReviewRequest, EssayScores, EssayFeedback, TopicInsights, RetryComparison } from "@/lib/types/essay";
 import { analyzeGrowth, updateWeaknessRecords } from "@/lib/growth/analyze";
 import type { WeaknessRecord } from "@/lib/types/growth";
 import { logEssaySubmission } from "@/lib/bigquery/logger";
+import { computeRetryComparison } from "@/lib/essay/retry-comparison";
 
 export const maxDuration = 120;
 
@@ -45,12 +46,58 @@ export async function POST(request: NextRequest) {
     let essayUserId: string | null = requestUserId;
     let existingWeaknesses: WeaknessRecord[] = [];
 
+    // 再トライチェーン情報
+    let rootEssayId: string = essayId;
+    let parentEssayIdResolved: string | null = null;
+    let attemptNumber = 1;
+    let parentSnapshot: {
+      id: string;
+      attemptNumber: number;
+      submittedAt: Date;
+      scores: EssayScores;
+      feedback: EssayFeedback;
+    } | null = null;
+
     const { adminDb } = await import("@/lib/firebase/admin");
     if (adminDb) {
       try {
+        // 親essayが指定されていれば取得して認可＋チェーン情報を組み立てる
+        if (body.parentEssayId) {
+          const parentDoc = await adminDb.doc(`essays/${body.parentEssayId}`).get();
+          if (parentDoc.exists) {
+            const pdata = parentDoc.data()!;
+            // 認可: 親と同じユーザーでなければ親リンクを無視 (横取り防止)
+            if (!requestUserId || pdata.userId === requestUserId) {
+              parentEssayIdResolved = body.parentEssayId;
+              rootEssayId = pdata.rootEssayId ?? body.parentEssayId;
+              const parentAttempt = typeof pdata.attemptNumber === "number" ? pdata.attemptNumber : 1;
+              attemptNumber = parentAttempt + 1;
+              if (pdata.scores && pdata.feedback) {
+                parentSnapshot = {
+                  id: body.parentEssayId,
+                  attemptNumber: parentAttempt,
+                  submittedAt: pdata.submittedAt?.toDate?.() ?? new Date(),
+                  scores: pdata.scores as EssayScores,
+                  feedback: pdata.feedback as EssayFeedback,
+                };
+              }
+            }
+          }
+        }
+
         // essayドキュメントが存在しなければ作成（初回保存）
         const existingEssay = await adminDb.doc(`essays/${essayId}`).get();
         if (!existingEssay.exists) {
+          const retryContext = parentEssayIdResolved
+            ? {
+                wordLimit: body.wordLimit ?? null,
+                questionType: body.questionType ?? null,
+                sourceText: body.sourceText ?? null,
+                chartDataSummary: body.chartDataSummary ?? null,
+                pastQuestionFacultyName: body.pastQuestionFacultyName ?? null,
+                lectureInfo: body.lectureInfo ?? null,
+              }
+            : null;
           await adminDb.doc(`essays/${essayId}`).set({
             userId: requestUserId,
             ocrText,
@@ -60,9 +107,43 @@ export async function POST(request: NextRequest) {
             imageUrl: "",
             status: "reviewing",
             submittedAt: new Date(),
+            rootEssayId,
+            parentEssayId: parentEssayIdResolved,
+            attemptNumber,
+            inputMode: body.inputMode ?? null,
+            ...(retryContext ? { retryContext } : {}),
           });
         } else {
           essayUserId = existingEssay.data()?.userId ?? requestUserId;
+          const existingData = existingEssay.data()!;
+          // 既存ドキュメントにチェーン情報が無い場合は補完
+          if (!existingData.rootEssayId || !existingData.attemptNumber) {
+            const retryContext = parentEssayIdResolved
+              ? {
+                  wordLimit: body.wordLimit ?? null,
+                  questionType: body.questionType ?? null,
+                  sourceText: body.sourceText ?? null,
+                  chartDataSummary: body.chartDataSummary ?? null,
+                  pastQuestionFacultyName: body.pastQuestionFacultyName ?? null,
+                  lectureInfo: body.lectureInfo ?? null,
+                }
+              : null;
+            await adminDb.doc(`essays/${essayId}`).set(
+              {
+                rootEssayId,
+                parentEssayId: parentEssayIdResolved,
+                attemptNumber,
+                inputMode: body.inputMode ?? existingData.inputMode ?? null,
+                ...(retryContext ? { retryContext } : {}),
+              },
+              { merge: true }
+            );
+          } else {
+            // 既存に値があればそちらを採用
+            rootEssayId = existingData.rootEssayId;
+            parentEssayIdResolved = existingData.parentEssayId ?? parentEssayIdResolved;
+            attemptNumber = existingData.attemptNumber;
+          }
         }
         // AP取得（過去問の場合は過去問の学部APを優先）
         const universityDoc = await adminDb.doc(`universities/${universityId}`).get();
@@ -256,6 +337,12 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // 親essayがあれば前回比を算出（Firestoreには保存しない）
+    let retryComparison: RetryComparison | undefined;
+    if (parentSnapshot) {
+      retryComparison = computeRetryComparison(parentSnapshot, { scores, feedback });
+    }
+
     // Firestoreに結果を保存
     if (adminDb) {
       try {
@@ -307,9 +394,22 @@ export async function POST(request: NextRequest) {
       topic: topic ?? "",
       weakness_tags: weaknessTags,
       improvement_tags: feedback.improvements,
+      attempt_number: attemptNumber,
+      root_essay_id: rootEssayId,
+      parent_essay_id: parentEssayIdResolved,
     });
 
-    const result = { essayId, ocrText, scores, feedback, growthEvents };
+    const result = {
+      essayId,
+      ocrText,
+      scores,
+      feedback,
+      growthEvents,
+      attemptNumber,
+      rootEssayId,
+      parentEssayId: parentEssayIdResolved,
+      ...(retryComparison ? { retryComparison } : {}),
+    };
     return NextResponse.json(result);
   } catch (error) {
     console.error("Essay review error:", error);

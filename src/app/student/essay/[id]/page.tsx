@@ -46,7 +46,8 @@ import {
 import { ScoreRing } from "@/components/shared/ScoreRing";
 import { RankBadge } from "@/components/shared/RankBadge";
 import { RedPenText } from "@/components/essay/RedPenText";
-import type { GrowthEvent, QuantitativeAnalysis } from "@/lib/types/essay";
+import { RetryComparisonCard } from "@/components/essay/RetryComparison";
+import type { GrowthEvent, QuantitativeAnalysis, RetryComparison } from "@/lib/types/essay";
 import { getRankFromPercentage, getScorePercentage } from "@/lib/score-rank";
 
 interface EssayScores {
@@ -109,6 +110,11 @@ interface EssayResult {
   growthEvents?: GrowthEvent[];
   targetUniversity?: string;
   targetFaculty?: string;
+  status?: string;
+  attemptNumber?: number;
+  rootEssayId?: string;
+  parentEssayId?: string | null;
+  retryComparison?: RetryComparison;
 }
 
 
@@ -161,6 +167,11 @@ export default function EssayResultPage() {
             scores: parsed.scores,
             feedback: parsed.feedback,
             growthEvents: parsed.growthEvents,
+            status: parsed.status ?? "reviewed",
+            attemptNumber: parsed.attemptNumber,
+            rootEssayId: parsed.rootEssayId,
+            parentEssayId: parsed.parentEssayId ?? null,
+            retryComparison: parsed.retryComparison,
           });
           return;
         }
@@ -234,9 +245,16 @@ export default function EssayResultPage() {
               <ArrowLeft className="size-4" />
             </Button>
             <div className="flex-1">
-              <h1 className="text-xl lg:text-2xl font-semibold tracking-tight text-slate-900">
-                小論文 添削結果
-              </h1>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-xl lg:text-2xl font-semibold tracking-tight text-slate-900">
+                  小論文 添削結果
+                </h1>
+                {result.attemptNumber !== undefined && result.attemptNumber >= 2 && (
+                  <Badge className="bg-indigo-100 text-indigo-800 border-indigo-200 hover:bg-indigo-100">
+                    第{result.attemptNumber}回チャレンジ
+                  </Badge>
+                )}
+              </div>
               <p className="text-sm text-muted-foreground mt-1">
                 {result.universityName} {result.facultyName}
                 {result.topic && (
@@ -247,6 +265,17 @@ export default function EssayResultPage() {
                 )}
               </p>
             </div>
+            {(result.status === undefined || result.status === "reviewed") && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="shrink-0 bg-white/70 hover:bg-white shadow-sm transition-all"
+                onClick={() => router.push(`/student/essay/new?retryFrom=${id}`)}
+              >
+                <RotateCcw className="size-4 mr-1" />
+                同じテーマで再トライ
+              </Button>
+            )}
           </div>
         </div>
 
@@ -333,6 +362,13 @@ export default function EssayResultPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* 前回比サマリー (再トライ時のみ) */}
+        {result.retryComparison && (
+          <div className="mb-8">
+            <RetryComparisonCard comparison={result.retryComparison} />
+          </div>
+        )}
 
         {/* Sticky サマリーバー (モバイルのみ) */}
         <div className="lg:hidden sticky top-0 z-30 backdrop-blur-md bg-white/80 border-b border-slate-200 px-4 py-3 mb-6 shadow-sm">

@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { computeRetryComparison } from "@/lib/essay/retry-comparison";
+import type { EssayFeedback, EssayScores, RetryComparison } from "@/lib/types/essay";
 
 export async function GET(
   _request: NextRequest,
@@ -38,8 +40,36 @@ export async function GET(
       } catch {}
     }
 
-    const scores = data.scores ?? {};
-    const feedback = data.feedback ?? {};
+    const scores = (data.scores ?? {}) as EssayScores;
+    const feedback = (data.feedback ?? {}) as EssayFeedback;
+    const attemptNumber = typeof data.attemptNumber === "number" ? data.attemptNumber : 1;
+    const rootEssayId: string = data.rootEssayId ?? essayDoc.id;
+    const parentEssayId: string | null = data.parentEssayId ?? null;
+
+    // 親essayがあれば前回比を毎回算出
+    let retryComparison: RetryComparison | undefined;
+    if (parentEssayId && data.scores && data.feedback) {
+      try {
+        const parentDoc = await adminDb.doc(`essays/${parentEssayId}`).get();
+        if (parentDoc.exists) {
+          const pdata = parentDoc.data()!;
+          if (pdata.scores && pdata.feedback) {
+            retryComparison = computeRetryComparison(
+              {
+                id: parentDoc.id,
+                attemptNumber: typeof pdata.attemptNumber === "number" ? pdata.attemptNumber : 1,
+                submittedAt: pdata.submittedAt?.toDate?.() ?? new Date(),
+                scores: pdata.scores as EssayScores,
+                feedback: pdata.feedback as EssayFeedback,
+              },
+              { scores, feedback }
+            );
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to compute retry comparison:", err);
+      }
+    }
 
     return NextResponse.json({
       id: essayDoc.id,
@@ -48,6 +78,7 @@ export async function GET(
       topic: data.topic ?? "",
       submittedAt: data.submittedAt?.toDate?.()?.toISOString() ?? new Date().toISOString(),
       ocrText: data.ocrText ?? "",
+      status: data.status ?? "reviewed",
       scores,
       feedback: {
         overall: feedback.overall ?? "",
@@ -64,6 +95,12 @@ export async function GET(
       },
       targetUniversity: data.targetUniversity,
       targetFaculty: data.targetFaculty,
+      attemptNumber,
+      rootEssayId,
+      parentEssayId,
+      inputMode: data.inputMode ?? null,
+      retryContext: data.retryContext ?? null,
+      ...(retryComparison ? { retryComparison } : {}),
     });
   } catch (error) {
     console.error("Essay get error:", error);
