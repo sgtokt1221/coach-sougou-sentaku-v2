@@ -22,6 +22,8 @@ import {
 import { CHART_COLORS, SCORE_COLORS, CHART_ANIMATION, GRID_STYLE } from "@/components/charts/theme";
 import { CustomTooltip } from "@/components/charts/CustomTooltip";
 import { CustomDot, CustomActiveDot } from "@/components/charts/CustomDot";
+import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
+import { scoreToSkillRank } from "@/lib/history-rank";
 
 /** ISO 文字列 → "M/D" (グラフ x 軸ラベル用) */
 function formatDate(iso: string): string {
@@ -328,10 +330,17 @@ export function EssayHistory() {
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
                   {latest.status === "reviewed" && (
-                    <span className="text-lg font-bold">
-                      {latest.totalScore}
-                      <span className="text-sm text-muted-foreground">/50</span>
-                    </span>
+                    <>
+                      <SkillRankBadge
+                        rank={scoreToSkillRank(latest.totalScore, 50)}
+                        size="sm"
+                        animate={false}
+                      />
+                      <span className="text-lg font-bold">
+                        {latest.totalScore}
+                        <span className="text-sm text-muted-foreground">/50</span>
+                      </span>
+                    </>
                   )}
                   <Badge variant={STATUS_VARIANT[latest.status]}>
                     {STATUS_LABEL[latest.status]}
@@ -417,10 +426,17 @@ export function EssayHistory() {
                             </span>
                           )}
                           {a.status === "reviewed" ? (
-                            <span className="text-sm font-bold tabular-nums">
-                              {a.totalScore}
-                              <span className="text-xs text-muted-foreground font-normal">/50</span>
-                            </span>
+                            <>
+                              <SkillRankBadge
+                                rank={scoreToSkillRank(a.totalScore, 50)}
+                                size="sm"
+                                animate={false}
+                              />
+                              <span className="text-sm font-bold tabular-nums">
+                                {a.totalScore}
+                                <span className="text-xs text-muted-foreground font-normal">/50</span>
+                              </span>
+                            </>
                           ) : (
                             <Badge variant={STATUS_VARIANT[a.status]} className="text-[10px]">
                               {STATUS_LABEL[a.status]}
