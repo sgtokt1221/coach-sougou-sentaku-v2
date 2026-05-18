@@ -518,16 +518,19 @@
         },
         "selectionMethods": [
           {
+            "stage": 1,
             "type": "documents",
-            "description": "志望理由書、自己推薦書、調査書"
+            "details": "志望理由書、自己推薦書、調査書"
           },
           {
+            "stage": 2,
             "type": "essay",
-            "description": "A方式: 論述力試験（45分×2）"
+            "details": "A方式: 論述力試験（45分×2）"
           },
           {
+            "stage": 3,
             "type": "interview",
-            "description": "A方式: 口頭試問 / B方式: 面接"
+            "details": "A方式: 口頭試問 / B方式: 面接"
           }
         ],
         "schedule": {
@@ -595,16 +598,19 @@
         },
         "selectionMethods": [
           {
+            "stage": 1,
             "type": "documents",
-            "description": "志望理由書、研究概要書、調査書"
+            "details": "志望理由書、研究概要書、調査書"
           },
           {
+            "stage": 2,
             "type": "other",
-            "description": "総合審査（筆記・記述）"
+            "details": "総合審査（筆記・記述）"
           },
           {
+            "stage": 3,
             "type": "interview",
-            "description": "面接"
+            "details": "面接"
           }
         ],
         "schedule": {
@@ -637,16 +643,19 @@
         },
         "selectionMethods": [
           {
+            "stage": 1,
             "type": "documents",
-            "description": "志望理由書、自己推薦書"
+            "details": "志望理由書、自己推薦書"
           },
           {
+            "stage": 2,
             "type": "essay",
-            "description": "論述（120分）"
+            "details": "論述（120分）"
           },
           {
+            "stage": 3,
             "type": "interview",
-            "description": "面接（20分）"
+            "details": "面接（20分）"
           }
         ],
         "schedule": {
@@ -670,12 +679,14 @@
         },
         "selectionMethods": [
           {
+            "stage": 1,
             "type": "documents",
-            "description": "志望理由書、活動記録報告書"
+            "details": "志望理由書、活動記録報告書"
           },
           {
+            "stage": 2,
             "type": "essay",
-            "description": "Critical Writing"
+            "details": "Critical Writing"
           }
         ],
         "schedule": {
@@ -699,16 +710,19 @@
         },
         "selectionMethods": [
           {
+            "stage": 1,
             "type": "documents",
-            "description": "自己PR資料、志望理由書"
+            "details": "自己PR資料、志望理由書"
           },
           {
+            "stage": 2,
             "type": "other",
-            "description": "ドローイング（鉛筆デッサン・空間表現）"
+            "details": "ドローイング（鉛筆デッサン・空間表現）"
           },
           {
+            "stage": 3,
             "type": "interview",
-            "description": "面接（建築学科のみ）"
+            "details": "面接（建築学科のみ）"
           }
         ],
         "schedule": {
@@ -732,16 +746,19 @@
         },
         "selectionMethods": [
           {
+            "stage": 1,
             "type": "documents",
-            "description": "課題レポート、志望理由書"
+            "details": "課題レポート、志望理由書"
           },
           {
+            "stage": 2,
             "type": "other",
-            "description": "総合試験（120分）"
+            "details": "総合試験（120分）"
           },
           {
+            "stage": 3,
             "type": "test",
-            "description": "共通テスト"
+            "details": "共通テスト"
           }
         ],
         "schedule": {
@@ -765,12 +782,14 @@
         },
         "selectionMethods": [
           {
+            "stage": 1,
             "type": "documents",
-            "description": "志望理由エッセイ、書類審査"
+            "details": "志望理由エッセイ、書類審査"
           },
           {
+            "stage": 2,
             "type": "essay",
-            "description": "Critical Writing（英語）"
+            "details": "Critical Writing（英語）"
           }
         ],
         "schedule": {
@@ -794,12 +813,14 @@
         },
         "selectionMethods": [
           {
+            "stage": 1,
             "type": "documents",
-            "description": "活動実績証明書、志望理由書"
+            "details": "活動実績証明書、志望理由書"
           },
           {
+            "stage": 2,
             "type": "interview",
-            "description": "面接（口頭試問含む）"
+            "details": "面接（口頭試問含む）"
           }
         ],
         "schedule": {
@@ -863,16 +884,19 @@
         },
         "selectionMethods": [
           {
+            "stage": 1,
             "type": "documents",
-            "description": "課題レポート、志望理由書"
+            "details": "課題レポート、志望理由書"
           },
           {
+            "stage": 2,
             "type": "other",
-            "description": "総合試験（120分）"
+            "details": "総合試験（120分）"
           },
           {
+            "stage": 3,
             "type": "test",
-            "description": "共通テスト（300点中240点以上）"
+            "details": "共通テスト（300点中240点以上）"
           }
         ],
         "schedule": {
@@ -896,16 +920,19 @@
         },
         "selectionMethods": [
           {
+            "stage": 1,
             "type": "documents",
-            "description": "課題レポート、志望理由書"
+            "details": "課題レポート、志望理由書"
           },
           {
+            "stage": 2,
             "type": "other",
-            "description": "総合試験（120分）"
+            "details": "総合試験（120分）"
           },
           {
+            "stage": 3,
             "type": "test",
-            "description": "共通テスト"
+            "details": "共通テスト"
           }
         ],
         "schedule": {

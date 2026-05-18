@@ -5,12 +5,13 @@
   "scripts": {
     "dev": "next dev",
     "dev:https": "next dev --experimental-https --experimental-https-cert certs/cert.pem --experimental-https-key certs/key.pem",
-    "build": "rm -rf .next && NODE_OPTIONS='--max-old-space-size=4096' next build",
+    "build": "rm -rf .next && npm run validate:data && NODE_OPTIONS='--max-old-space-size=4096' next build",
     "start": "next start",
     "lint": "eslint",
     "format": "prettier --write \"src/**/*.{ts,tsx,css,json}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css,json}\"",
     "check-env": "tsx scripts/check-env.ts",
+    "validate:data": "tsx scripts/validate-university-data.ts",
     "seed:universities": "tsx scripts/seed-universities.ts",
     "seed:superadmin": "tsx scripts/seed-superadmin.ts"
   },

@@ -64,24 +64,30 @@ export async function GET(request: NextRequest) {
     // 大学名解決用キャッシュ
     const universityCache = new Map<string, { name: string; faculties: Array<{ id: string; name: string }> }>();
 
+    // 旧データの universityId/facultyId 表記揺れに対する alias 辞書。
+    // 過去問データやFirestoreの古いユーザーデータが旧 ID で保存されている場合に
+    // 現行 ID に寄せて表示を救済する。
+    const universityIdAliases: Record<string, string> = {
+      "kwansei-gakuin-u": "kwansei-u",
+    };
+    const facultyIdAliases: Record<string, string> = {
+      "global-communications": "global-comm",
+    };
+
     async function resolveNames(universityId: string, facultyId: string) {
-      if (!universityCache.has(universityId)) {
-        const uniDoc = await adminDb!.doc(`universities/${universityId}`).get();
+      const resolvedUniversityId = universityIdAliases[universityId] ?? universityId;
+      if (!universityCache.has(resolvedUniversityId)) {
+        const uniDoc = await adminDb!.doc(`universities/${resolvedUniversityId}`).get();
         if (uniDoc.exists) {
           const d = uniDoc.data()!;
-          universityCache.set(universityId, { name: d.name, faculties: d.faculties ?? [] });
+          universityCache.set(resolvedUniversityId, { name: d.name, faculties: d.faculties ?? [] });
         }
       }
-      const uni = universityCache.get(universityId);
-      // 旧データの facultyId typo に対する alias 辞書
-      // 過去データが誤った id で保存されている場合に正しい id にマップして表示を綺麗にする
-      const facultyIdAliases: Record<string, string> = {
-        "global-communications": "global-comm",
-      };
+      const uni = universityCache.get(resolvedUniversityId);
       const resolvedFacultyId = facultyIdAliases[facultyId] ?? facultyId;
       const faculty = uni?.faculties.find((f) => f.id === resolvedFacultyId);
       // 学部名が見つからない場合は facultyId を表示せず空文字にする
-      return { universityName: uni?.name ?? universityId, facultyName: faculty?.name ?? "" };
+      return { universityName: uni?.name ?? resolvedUniversityId, facultyName: faculty?.name ?? "" };
     }
 
     const essays = await Promise.all(
