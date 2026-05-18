@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
 import { MOCK_UNIVERSITIES } from "@/lib/matching/mockData";
-import type { University } from "@/lib/types/university";
+import { UniversitySchema } from "@/lib/types/university-schema";
 
 export async function GET(
   request: NextRequest,
@@ -48,9 +48,24 @@ export async function PUT(
 
   try {
     const { id } = await params;
-    const body = (await request.json()) as Partial<University>;
+    const body = await request.json();
 
-    if (!body.name || !body.shortName) {
+    const parsed = UniversitySchema.partial().safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        {
+          error: "Invalid university data",
+          issues: parsed.error.issues.map((i) => ({
+            path: i.path.join("."),
+            message: i.message,
+          })),
+        },
+        { status: 400 }
+      );
+    }
+    const data = parsed.data;
+
+    if (!data.name || !data.shortName) {
       return NextResponse.json(
         { error: "name と shortName は必須です" },
         { status: 400 }
@@ -58,13 +73,13 @@ export async function PUT(
     }
 
     if (!adminDb) {
-      return NextResponse.json({ id, ...body });
+      return NextResponse.json({ id, ...data });
     }
 
     const docRef = adminDb.doc(`universities/${id}`);
-    await docRef.set({ ...body, updatedAt: new Date() }, { merge: true });
+    await docRef.set({ ...data, updatedAt: new Date() }, { merge: true });
 
-    return NextResponse.json({ id, ...body });
+    return NextResponse.json({ id, ...data });
   } catch (error) {
     console.error("Admin university PUT error:", error);
     return NextResponse.json(
