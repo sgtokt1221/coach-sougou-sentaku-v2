@@ -40,7 +40,7 @@ export interface DraftGenerateRequest {
 export interface DraftGenerateResponse {
   draft: string;
   frameworkType?: FrameworkType;
-  sections: { title: string; content: string }[];
+  sections: { id: string; title: string; content: string }[];
   wordCount?: number;
   evaluationScores?: {
     apAlignment?: number;

@@ -28,6 +28,7 @@ import type {
 } from "@/lib/types/template";
 import { FRAMEWORK_TYPE_LABELS } from "@/lib/types/template";
 import { FRAMEWORKS } from "@/lib/templates/frameworks";
+import { DocumentSectionCoachPanel } from "@/components/documents/DocumentSectionCoachPanel";
 import { DOCUMENT_TEMPLATES } from "@/lib/templates/document-templates";
 import { useAuthSWR } from "@/lib/api/swr";
 import { authFetch } from "@/lib/api/client";
@@ -84,6 +85,38 @@ export default function NewDocumentPage() {
   const [generating, setGenerating] = useState(false);
   const [draftResult, setDraftResult] = useState<DraftGenerateResponse | null>(null);
   const [saving, setSaving] = useState(false);
+  const [focusedSectionId, setFocusedSectionId] = useState<string | null>(null);
+
+  const framework = frameworkType
+    ? FRAMEWORKS.find((f) => f.type === frameworkType)
+    : null;
+
+  const focusedSection = (() => {
+    if (!focusedSectionId || !draftResult || !framework) return null;
+    const idx = draftResult.sections.findIndex((s) => s.id === focusedSectionId);
+    if (idx < 0) return null;
+    const fwSection = framework.sections.find((s) => s.id === focusedSectionId);
+    return {
+      id: focusedSectionId,
+      title: draftResult.sections[idx].title,
+      guidingQuestion: fwSection?.guidingQuestion ?? "",
+      content: draftResult.sections[idx].content,
+    };
+  })();
+
+  const handleApplySuggestion = (sectionId: string, text: string) => {
+    if (!draftResult) return;
+    const idx = draftResult.sections.findIndex((s) => s.id === sectionId);
+    if (idx < 0) return;
+    const updated = [...draftResult.sections];
+    updated[idx] = { ...updated[idx], content: text };
+    setDraftResult({
+      ...draftResult,
+      sections: updated,
+      draft: updated.map((s) => `${s.title}\n\n${s.content}`).join("\n\n"),
+    });
+    toast.success(`「${updated[idx].title}」を更新しました`);
+  };
 
   const { data: activitiesData } = useAuthSWR<{ activities: Activity[] }>("/api/activities");
   const activities = activitiesData?.activities || [];
@@ -165,10 +198,10 @@ export default function NewDocumentPage() {
       setDraftResult({
         draft: data.draft,
         sections: [
-          { title: "導入", content: data.structure.intro },
-          { title: "志望理由", content: data.structure.body },
-          { title: "自己の強みと貢献", content: data.structure.strengths },
-          { title: "将来への展開", content: data.structure.conclusion },
+          { id: "intro", title: "導入", content: data.structure.intro },
+          { id: "body", title: "志望理由", content: data.structure.body },
+          { id: "strengths", title: "自己の強みと貢献", content: data.structure.strengths },
+          { id: "conclusion", title: "将来への展開", content: data.structure.conclusion },
         ],
         wordCount: data.draft.length,
         evaluationScores: data.evaluationScores,
@@ -508,53 +541,71 @@ export default function NewDocumentPage() {
           )}
 
           {draftResult && (
-            <div className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">生成された下書き</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {draftResult.sections.map((section, i) => (
-                    <div key={i} className="space-y-1">
-                      <h3 className="font-medium text-sm text-primary">
-                        {section.title}
-                      </h3>
-                      <Textarea
-                        value={section.content}
-                        onChange={(e) => {
-                          const updated = [...draftResult.sections];
-                          updated[i] = { ...updated[i], content: e.target.value };
-                          setDraftResult({
-                            ...draftResult,
-                            sections: updated,
-                            draft: updated.map((s) => `${s.title}\n\n${s.content}`).join("\n\n"),
-                          });
-                        }}
-                        rows={4}
-                        className="text-sm"
-                      />
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
+            <div className="lg:grid lg:grid-cols-[minmax(22rem,28rem)_minmax(0,1fr)] lg:gap-6 lg:items-start">
+              {/* 左: AI コーチパネル */}
+              {frameworkType && (
+                <DocumentSectionCoachPanel
+                  frameworkType={frameworkType}
+                  focusedSection={focusedSection}
+                  documentType={documentType ?? undefined}
+                  universityId={selectedUniversity?.universityId}
+                  facultyId={selectedUniversity?.facultyId}
+                  docId={null}
+                  onApplySuggestion={handleApplySuggestion}
+                />
+              )}
 
-              <div className="flex gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setDraftResult(null);
-                  }}
-                >
-                  再生成
-                </Button>
-                <Button onClick={handleSave} disabled={saving} className="gap-2">
-                  {saving ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <CheckCircle className="h-4 w-4" />
-                  )}
-                  書類として保存
-                </Button>
+              {/* 右: セクション編集 + アクション */}
+              <div className="space-y-4 lg:min-w-0">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">生成された下書き</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {draftResult.sections.map((section, i) => (
+                      <div key={section.id ?? i} className="space-y-1">
+                        <h3 className="font-medium text-sm text-primary">
+                          {section.title}
+                        </h3>
+                        <Textarea
+                          value={section.content}
+                          onFocus={() => setFocusedSectionId(section.id)}
+                          onChange={(e) => {
+                            const updated = [...draftResult.sections];
+                            updated[i] = { ...updated[i], content: e.target.value };
+                            setDraftResult({
+                              ...draftResult,
+                              sections: updated,
+                              draft: updated.map((s) => `${s.title}\n\n${s.content}`).join("\n\n"),
+                            });
+                          }}
+                          rows={4}
+                          className="text-sm"
+                        />
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setDraftResult(null);
+                      setFocusedSectionId(null);
+                    }}
+                  >
+                    再生成
+                  </Button>
+                  <Button onClick={handleSave} disabled={saving} className="gap-2">
+                    {saving ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <CheckCircle className="h-4 w-4" />
+                    )}
+                    書類として保存
+                  </Button>
+                </div>
               </div>
             </div>
           )}

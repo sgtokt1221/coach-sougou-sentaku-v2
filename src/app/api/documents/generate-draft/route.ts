@@ -68,6 +68,7 @@ export async function POST(request: NextRequest) {
         frameworkType: body.frameworkType,
         draft: "",
         sections: framework.sections.map((s) => ({
+          id: s.id,
           title: s.title,
           content: `【${s.guidingQuestion}】\n${s.placeholder ?? "ここに記入してください。"}`,
         })),
@@ -106,10 +107,19 @@ export async function POST(request: NextRequest) {
     if (jsonMatch) {
       const jsonStr = jsonMatch[1] || jsonMatch[0];
       const parsed = JSON.parse(jsonStr);
+      // AI 出力の sections には id がないため framework 定義の順序で付与する
+      const aiSections: Array<{ title?: string; content?: string }> = Array.isArray(parsed.sections)
+        ? parsed.sections
+        : [];
+      const sections = framework.sections.map((s, i) => ({
+        id: s.id,
+        title: aiSections[i]?.title ?? s.title,
+        content: aiSections[i]?.content ?? "",
+      }));
       const result: DraftGenerateResponse = {
         draft: parsed.draft || "",
         frameworkType: body.frameworkType,
-        sections: parsed.sections || [],
+        sections,
       };
       return NextResponse.json(result);
     }
