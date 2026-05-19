@@ -17,11 +17,27 @@ import {
 } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import { useAuthSWR } from "@/lib/api/swr";
+import { toast } from "sonner";
 import type { GrowthReportSummary, GrowthReport } from "@/lib/types/growth-report";
 import {
   ReportDetailCard,
   ScoreChangeIndicator,
 } from "@/components/admin/ReportDetailCard";
+
+/**
+ * 5xx レスポンスから {error, detail, step} を取り出して人間向け文字列にする。
+ */
+async function readApiError(res: Response): Promise<string> {
+  const payload = (await res.json().catch(() => ({}))) as {
+    error?: string;
+    detail?: string;
+    step?: string;
+  };
+  if (payload.detail) {
+    return `[${payload.step ?? "?"}] ${payload.detail}`;
+  }
+  return payload.error ?? `HTTP ${res.status}`;
+}
 
 export default function AdminReportsPage() {
   const [period, setPeriod] = useState<"weekly" | "monthly">("weekly");
@@ -45,14 +61,17 @@ export default function AdminReportsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ period }),
       });
-      if (res.ok) {
-        const data: GrowthReportSummary[] = await res.json();
-        setReports(data);
-        setExpandedId(null);
-        setExpandedReports({});
+      if (!res.ok) {
+        const msg = await readApiError(res);
+        throw new Error(msg);
       }
+      const data: GrowthReportSummary[] = await res.json();
+      setReports(data);
+      setExpandedId(null);
+      setExpandedReports({});
     } catch (error) {
       console.error("Failed to generate reports:", error);
+      toast.error(error instanceof Error ? error.message : "レポート生成に失敗しました");
     } finally {
       setGenerating(false);
     }
@@ -83,12 +102,15 @@ export default function AdminReportsPage() {
             }),
           }
         );
-        if (res.ok) {
-          const detail: GrowthReport = await res.json();
-          setExpandedReports((prev) => ({ ...prev, [summary.id]: detail }));
+        if (!res.ok) {
+          const msg = await readApiError(res);
+          throw new Error(msg);
         }
+        const detail: GrowthReport = await res.json();
+        setExpandedReports((prev) => ({ ...prev, [summary.id]: detail }));
       } catch (error) {
         console.error("Failed to fetch report detail:", error);
+        toast.error(error instanceof Error ? error.message : "レポート取得に失敗しました");
       } finally {
         setLoadingDetail(null);
       }

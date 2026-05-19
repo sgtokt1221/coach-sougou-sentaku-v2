@@ -52,8 +52,15 @@ export function GrowthReportsSection({ studentId }: Props) {
         body: JSON.stringify({ studentId, period }),
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error ?? "生成失敗");
+        const data = (await res.json().catch(() => ({}))) as {
+          error?: string;
+          detail?: string;
+          step?: string;
+        };
+        const msg = data.detail
+          ? `[${data.step ?? "?"}] ${data.detail}`
+          : data.error ?? `HTTP ${res.status}`;
+        throw new Error(msg);
       }
       await mutate();
     } catch (err) {

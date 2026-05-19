@@ -50,12 +50,36 @@ function generateMockReport(studentId: string, period: "weekly" | "monthly"): Gr
   };
 }
 
+/**
+ * オブジェクトから undefined 値のフィールドを再帰的に取り除く。
+ * Firestore は undefined を拒否するため、ペイロード書き込み前に通す。
+ */
+function stripUndefined<T>(obj: T): T {
+  if (obj === null || obj === undefined) return obj;
+  if (Array.isArray(obj)) {
+    return obj.map((item) => stripUndefined(item)) as unknown as T;
+  }
+  if (typeof obj === "object") {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(obj as Record<string, unknown>)) {
+      if (v === undefined) continue;
+      out[k] = stripUndefined(v);
+    }
+    return out as T;
+  }
+  return obj;
+}
+
 export async function POST(request: NextRequest) {
   const authResult = await requireRole(request, ["admin", "teacher", "superadmin"]);
   if (authResult instanceof NextResponse) return authResult;
   const { uid, role } = authResult;
 
+  // step ラベルで失敗箇所を可視化する
+  let step = "start";
+
   try {
+    step = "parse_body";
     const body: GenerateReportRequest = await request.json();
     const { studentId, period } = body;
 
@@ -70,17 +94,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(generateMockReport(studentId, period));
     }
 
-    // Verify student exists and is managed by caller
+    step = "fetch_student";
     const studentDoc = await adminDb.doc(`users/${studentId}`).get();
     if (!studentDoc.exists) {
       return NextResponse.json({ error: "生徒が見つかりません" }, { status: 404 });
     }
 
     const studentData = studentDoc.data()!;
+    step = "check_permission";
     if (role !== "superadmin" && studentData.managedBy !== uid) {
       return NextResponse.json({ error: "権限がありません" }, { status: 403 });
     }
 
+    step = "compute_period";
     const { start, end } = getPeriodRange(period);
     const prevStart = new Date(start);
     if (period === "weekly") {
@@ -90,6 +116,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Fetch essays for current and previous period
+    step = "fetch_essays_and_interviews";
     const [periodEssaysSnap, prevEssaysSnap, periodInterviewsSnap, prevInterviewsSnap, weaknessesSnap] =
       await Promise.all([
         adminDb
@@ -99,7 +126,10 @@ export async function POST(request: NextRequest) {
           .where("submittedAt", "<=", end)
           .orderBy("submittedAt", "desc")
           .get()
-          .catch(() => ({ docs: [] })),
+          .catch((e) => {
+            console.warn("[reports/generate] periodEssays query failed:", e);
+            return { docs: [] };
+          }),
         adminDb
           .collection("essays")
           .where("userId", "==", studentId)
@@ -107,7 +137,10 @@ export async function POST(request: NextRequest) {
           .where("submittedAt", "<", start)
           .orderBy("submittedAt", "desc")
           .get()
-          .catch(() => ({ docs: [] })),
+          .catch((e) => {
+            console.warn("[reports/generate] prevEssays query failed:", e);
+            return { docs: [] };
+          }),
         adminDb
           .collection("interviews")
           .where("userId", "==", studentId)
@@ -115,7 +148,10 @@ export async function POST(request: NextRequest) {
           .where("startedAt", "<=", end)
           .orderBy("startedAt", "desc")
           .get()
-          .catch(() => ({ docs: [] })),
+          .catch((e) => {
+            console.warn("[reports/generate] periodInterviews query failed:", e);
+            return { docs: [] };
+          }),
         adminDb
           .collection("interviews")
           .where("userId", "==", studentId)
@@ -123,14 +159,20 @@ export async function POST(request: NextRequest) {
           .where("startedAt", "<", start)
           .orderBy("startedAt", "desc")
           .get()
-          .catch(() => ({ docs: [] })),
+          .catch((e) => {
+            console.warn("[reports/generate] prevInterviews query failed:", e);
+            return { docs: [] };
+          }),
         adminDb
           .collection(`users/${studentId}/weaknesses`)
           .get()
-          .catch(() => ({ docs: [] })),
+          .catch((e) => {
+            console.warn("[reports/generate] weaknesses query failed:", e);
+            return { docs: [] };
+          }),
       ]);
 
-    // 期間内セッション取得
+    step = "fetch_sessions";
     const sessionsSnap = await adminDb
       .collection("sessions")
       .where("studentId", "==", studentId)
@@ -138,7 +180,10 @@ export async function POST(request: NextRequest) {
       .where("scheduledAt", "<=", end.toISOString())
       .orderBy("scheduledAt", "desc")
       .get()
-      .catch(() => ({ docs: [] }));
+      .catch((e) => {
+        console.warn("[reports/generate] sessions query failed:", e);
+        return { docs: [] };
+      });
     const sessions = sessionsSnap.docs.map((d) => d.data()) as Array<{
       status?: string;
       prepPlan?: { goal?: string };
@@ -152,6 +197,7 @@ export async function POST(request: NextRequest) {
     const sessionSummary = buildSessionSummaryDraft(sessions);
 
     // debrief が 2 件以上あれば AI で観察キーポイント抽出
+    step = "ai_observation";
     const debriefNotes = sessions
       .filter((s) => s.status === "completed" && s.debrief?.notes)
       .map((s) => s.debrief!.notes!)
@@ -187,6 +233,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    step = "map_docs";
     const toEssayData = (doc: FirebaseFirestore.QueryDocumentSnapshot) => {
       const d = doc.data();
       return {
@@ -205,6 +252,7 @@ export async function POST(request: NextRequest) {
       };
     };
 
+    step = "generate_report";
     const report = generateGrowthReport({
       studentId,
       studentName: studentData.displayName ?? "",
@@ -226,26 +274,36 @@ export async function POST(request: NextRequest) {
     });
 
     // Save the report to Firestore
+    step = "save_to_firestore";
+    const payload = stripUndefined({
+      ...report,
+      generatedAt: new Date(),
+      startDate: new Date(report.startDate),
+      endDate: new Date(report.endDate),
+      generatedBy: uid,
+    });
     await adminDb
       .collection(`users/${studentId}/growthReports`)
       .doc(report.id)
-      .set({
-        ...report,
-        generatedAt: new Date(),
-        startDate: new Date(report.startDate),
-        endDate: new Date(report.endDate),
-        generatedBy: uid,
-      })
-      .catch(() => {
+      .set(payload)
+      .catch((e) => {
         // Non-critical: log but don't fail
-        console.warn("Failed to save growth report to Firestore");
+        console.warn("[reports/generate] Firestore save failed:", e);
       });
 
+    step = "done";
     return NextResponse.json(report);
   } catch (error) {
-    console.error("Report generation error:", error);
+    console.error(`[reports/generate] step=${step} error:`, error);
+    const message = error instanceof Error ? error.message : String(error);
+    const stack = error instanceof Error ? error.stack : undefined;
     return NextResponse.json(
-      { error: "レポート生成中にエラーが発生しました" },
+      {
+        error: "レポート生成中にエラーが発生しました",
+        detail: message,
+        step,
+        stack: process.env.NODE_ENV === "production" ? undefined : stack,
+      },
       { status: 500 }
     );
   }
