@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { TrendingUp, Loader2, Sparkles } from "lucide-react";
+import { TrendingUp, Loader2, Sparkles, Printer } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -119,11 +119,18 @@ export function GrowthReportsSection({ studentId }: Props) {
         ) : (
           <div className="space-y-2">
             {reports.map((r) => (
-              <button
+              <div
                 key={r.id}
-                type="button"
+                role="button"
+                tabIndex={0}
                 onClick={() => setOpen(r)}
-                className="w-full text-left rounded-lg border bg-card p-3 transition-colors hover:bg-muted/40 cursor-pointer"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setOpen(r);
+                  }
+                }}
+                className="w-full cursor-pointer text-left rounded-lg border bg-card p-3 transition-colors hover:bg-muted/40"
               >
                 <div className="flex items-center justify-between gap-2">
                   <div>
@@ -139,8 +146,24 @@ export function GrowthReportsSection({ studentId }: Props) {
                       {r.overallAssessment}
                     </p>
                   </div>
-                  <div className="text-xs text-muted-foreground shrink-0">
-                    {formatDate(r.generatedAt)}
+                  <div className="flex items-center gap-2 shrink-0">
+                    <div className="text-xs text-muted-foreground">
+                      {formatDate(r.generatedAt)}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        window.open(
+                          `/admin/reports/print?studentId=${studentId}&reportId=${r.id}`,
+                          "_blank",
+                        );
+                      }}
+                      aria-label="PDF として保存"
+                    >
+                      <Printer className="size-4" />
+                    </Button>
                   </div>
                 </div>
                 {r.sessionSummary && r.sessionSummary.totalCount > 0 && (
@@ -150,7 +173,7 @@ export function GrowthReportsSection({ studentId }: Props) {
                       ` / 新発見弱点 ${r.sessionSummary.newWeaknessAreas.length}`}
                   </div>
                 )}
-              </button>
+              </div>
             ))}
           </div>
         )}
