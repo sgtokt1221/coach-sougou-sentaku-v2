@@ -14,7 +14,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Mic, ChevronRight, ChevronDown, MessageSquare, ThumbsUp, Lightbulb } from "lucide-react";
-import { useAuthSWR } from "@/lib/api/swr";
+import { useAuthSWR, type ApiError } from "@/lib/api/swr";
 import { authFetch } from "@/lib/api/client";
 import type { InterviewMode, InterviewMessage, InterviewScores, InterviewFeedback } from "@/lib/types/interview";
 import { INTERVIEW_MODE_LABELS } from "@/lib/types/interview";
@@ -84,9 +84,10 @@ function interviewScoreColor(total: number): string {
 }
 
 export function InterviewsSection({ studentId }: { studentId: string }) {
-  const { data: interviews, isLoading } = useAuthSWR<InterviewListItem[]>(
+  const { data: interviews, isLoading, error } = useAuthSWR<InterviewListItem[]>(
     `/api/admin/students/${studentId}/interviews`
   );
+  const apiError = error as ApiError | undefined;
 
   const [open, setOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -144,6 +145,13 @@ export function InterviewsSection({ studentId }: { studentId: string }) {
             <div className="space-y-3">
               <Skeleton className="h-16 w-full" />
               <Skeleton className="h-12 w-full" />
+            </div>
+          ) : apiError ? (
+            <div className="space-y-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-xs">
+              <p className="font-medium text-destructive">面接履歴の取得に失敗しました</p>
+              <p className="text-destructive/90">
+                [{apiError.step ?? "?"}] {apiError.detail ?? apiError.message}
+              </p>
             </div>
           ) : items.length === 0 ? (
             <div className="py-8 text-center text-sm text-muted-foreground">

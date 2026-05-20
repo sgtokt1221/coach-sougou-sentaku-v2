@@ -3,9 +3,31 @@ import { authFetch } from "@/lib/api/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { getTutorialMock, isTutorialActive } from "@/lib/tutorial/mocks";
 
+/**
+ * fetch エラー時、サーバーから返ってきた {error, detail, step} を
+ * Error オブジェクトのプロパティに格納する。SWR の `error` 経由で
+ * 呼び出し側がエラー詳細を表示できるようにするため。
+ */
+export interface ApiError extends Error {
+  status: number;
+  detail?: string;
+  step?: string;
+}
+
 const fetcher = async (url: string) => {
   const res = await authFetch(url);
-  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as {
+      error?: string;
+      detail?: string;
+      step?: string;
+    };
+    const err = new Error(body.error ?? `API error: ${res.status}`) as ApiError;
+    err.status = res.status;
+    err.detail = body.detail;
+    err.step = body.step;
+    throw err;
+  }
   return res.json();
 };
 

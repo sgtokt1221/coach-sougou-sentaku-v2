@@ -74,20 +74,38 @@ export async function GET(
   if (authResult instanceof NextResponse) return authResult;
   const { uid, role } = authResult;
 
-  const { id } = await params;
-
-  if (!adminDb) {
-    return NextResponse.json(mockInterviews);
-  }
+  let step = "start";
 
   try {
-    // managedByスコーピング
+    step = "resolve_params";
+    const { id } = await params;
+
+    step = "init_check";
+    if (!adminDb) {
+      if (process.env.NODE_ENV === "development") {
+        console.warn(
+          "[admin/interviews] adminDb missing — returning mock for local dev",
+        );
+        return NextResponse.json(mockInterviews);
+      }
+      return NextResponse.json(
+        {
+          error: "Firestore に接続できません",
+          detail: "adminDb is not initialized",
+          step,
+        },
+        { status: 500 }
+      );
+    }
+
+    step = "fetch_student";
     const userDoc = await adminDb.doc(`users/${id}`).get();
     if (!userDoc.exists) {
       return NextResponse.json({ error: "生徒が見つかりません" }, { status: 404 });
     }
     const userData = userDoc.data()!;
 
+    step = "check_permission";
     const { searchParams } = new URL(request.url);
     const viewAs = searchParams.get("viewAs");
     const effectiveUid = (role === "superadmin" && viewAs) ? viewAs : uid;
@@ -97,6 +115,7 @@ export async function GET(
     }
 
     // 採点まで完了した面接のみ表示 (中断データは除外)
+    step = "query_interviews";
     const snapshot = await adminDb
       .collection("interviews")
       .where("userId", "==", id)
@@ -104,6 +123,7 @@ export async function GET(
       .orderBy("startedAt", "desc")
       .get();
 
+    step = "map_results";
     const interviews: InterviewListItem[] = snapshot.docs.map((doc) => {
       const data = doc.data();
       const resolved = resolveUniName(data.targetUniversity ?? "", data.targetFaculty ?? "");
@@ -120,7 +140,18 @@ export async function GET(
     });
 
     return NextResponse.json(interviews);
-  } catch {
-    return NextResponse.json(mockInterviews);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    const stack = error instanceof Error ? error.stack : undefined;
+    console.error(`[admin/interviews] step=${step} error:`, error);
+    return NextResponse.json(
+      {
+        error: "面接履歴の取得に失敗しました",
+        detail,
+        step,
+        stack: process.env.NODE_ENV === "production" ? undefined : stack,
+      },
+      { status: 500 }
+    );
   }
 }
