@@ -116,12 +116,24 @@ export async function GET(
 
     // 採点まで完了した面接のみ表示 (中断データは除外)
     step = "query_interviews";
-    const snapshot = await adminDb
-      .collection("interviews")
-      .where("userId", "==", id)
-      .where("status", "==", "completed")
-      .orderBy("startedAt", "desc")
-      .get();
+    let snapshot;
+    try {
+      // composite index がある場合の高速経路
+      snapshot = await adminDb
+        .collection("interviews")
+        .where("userId", "==", id)
+        .where("status", "==", "completed")
+        .orderBy("startedAt", "desc")
+        .get();
+    } catch (indexErr) {
+      // インデックス未作成時のフォールバック: orderBy なしで取得 → JS ソート
+      console.warn("[admin/interviews] index missing, fallback to JS sort:", indexErr);
+      snapshot = await adminDb
+        .collection("interviews")
+        .where("userId", "==", id)
+        .where("status", "==", "completed")
+        .get();
+    }
 
     step = "map_results";
     const interviews: InterviewListItem[] = snapshot.docs.map((doc) => {
@@ -134,10 +146,15 @@ export async function GET(
         targetFaculty: resolved.facName,
         scores: data.scores ?? null,
         feedbackSummary: data.feedback?.overall ?? null,
-        createdAt: data.startedAt?.toDate?.()?.toISOString() ?? new Date().toISOString(),
+        // startedAt 欠損ドキュメントは Epoch (1970) として末尾に沈める。
+        // 現在時刻 fallback だと欠損データが常に「最新」を装ってしまうため。
+        createdAt: data.startedAt?.toDate?.()?.toISOString() ?? new Date(0).toISOString(),
         duration: data.duration ?? 0,
       };
     });
+
+    // 高速経路は既に降順だが、フォールバック経路も含めて常に JS ソート (降順)
+    interviews.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
     return NextResponse.json(interviews);
   } catch (error) {
