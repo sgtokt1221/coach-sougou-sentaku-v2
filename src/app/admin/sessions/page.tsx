@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const SessionMasterContent = lazy(() => import("./master/page"));
 import { useAuthSWR } from "@/lib/api/swr";
+import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
 import { authFetch } from "@/lib/api/client";
 import { useAuth } from "@/contexts/AuthContext";
 import SessionCalendar from "@/components/admin/SessionCalendar";
@@ -63,15 +64,15 @@ export default function AdminSessionsPage() {
   }, []);
 
   // データ取得
-  const { data: allSessions = [], mutate: mutateSessions } = useAuthSWR<Session[]>('/api/sessions');
-  const { data: unplacedData } = useAuthSWR<{ students: UnplacedStudent[] } | UnplacedStudent[]>(
+  const { data: allSessions = [], mutate: mutateSessions, error: sessionsError } = useAuthSWR<Session[]>('/api/sessions');
+  const { data: unplacedData, error: unplacedError } = useAuthSWR<{ students: UnplacedStudent[] } | UnplacedStudent[]>(
     `/api/admin/sessions/unplaced?month=${currentMonth}`
   );
   const unplacedStudents: UnplacedStudent[] = Array.isArray(unplacedData)
     ? unplacedData
     : unplacedData?.students ?? [];
-  const { data: teachers = [] } = useAuthSWR<Teacher[]>('/api/admin/teachers/all');
-  const { data: availabilityData = {} } = useAuthSWR('/api/admin/schedule/availability');
+  const { data: teachers = [], error: teachersError } = useAuthSWR<Teacher[]>('/api/admin/teachers/all');
+  const { data: availabilityData = {}, error: availabilityError } = useAuthSWR('/api/admin/schedule/availability');
 
   // 週範囲内のセッションをフィルタリング
   const weekSessions = useMemo(() => {
@@ -248,6 +249,14 @@ export default function AdminSessionsPage() {
     <div className="flex h-[calc(100vh-64px)]">
       {/* メインコンテンツ */}
       <div className="flex-1 overflow-auto p-4">
+        {(sessionsError || unplacedError || teachersError || availabilityError) && (
+          <div className="mb-4 space-y-2">
+            {sessionsError && <ApiErrorBanner error={sessionsError} title="セッション一覧の取得に失敗しました" />}
+            {unplacedError && <ApiErrorBanner error={unplacedError} title="未配置生徒の取得に失敗しました" />}
+            {teachersError && <ApiErrorBanner error={teachersError} title="講師一覧の取得に失敗しました" />}
+            {availabilityError && <ApiErrorBanner error={availabilityError} title="シフト情報の取得に失敗しました" />}
+          </div>
+        )}
         {/* タブ切替 + ヘッダー */}
         <div className="flex items-center justify-between mb-4">
           <div>

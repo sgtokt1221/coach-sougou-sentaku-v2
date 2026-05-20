@@ -11,6 +11,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthSWR } from "@/lib/api/swr";
+import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
 import type { Session, SessionType } from "@/lib/types/session";
 
 const TYPE_LABEL: Record<SessionType, string> = {
@@ -48,7 +49,7 @@ interface Props {
 
 export function SessionsHistorySection({ studentId }: Props) {
   const router = useRouter();
-  const { data, isLoading } = useAuthSWR<{ sessions: Session[] }>(
+  const { data, isLoading, error } = useAuthSWR<{ sessions: Session[] }>(
     `/api/admin/students/${studentId}/sessions?limit=10`,
   );
   const sessions = data?.sessions ?? [];
@@ -67,7 +68,9 @@ export function SessionsHistorySection({ studentId }: Props) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {isLoading ? (
+        {error ? (
+          <ApiErrorBanner error={error} title="セッション履歴の取得に失敗しました" />
+        ) : isLoading ? (
           <div className="space-y-2">
             <Skeleton className="h-14 w-full" />
             <Skeleton className="h-14 w-full" />

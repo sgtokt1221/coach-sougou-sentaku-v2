@@ -16,6 +16,7 @@ import {
 import { FileText, Eye, Loader2 } from "lucide-react";
 import { useAuthSWR } from "@/lib/api/swr";
 import { authFetch } from "@/lib/api/client";
+import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
 import { InlineFeedbackButton } from "@/components/admin/InlineFeedbackButton";
 import type { DocumentStatus } from "@/lib/types/document";
 
@@ -82,7 +83,7 @@ function getDeadlineBadge(deadline?: string) {
 }
 
 export function DocumentsSection({ studentId }: { studentId: string }) {
-  const { data, isLoading } = useAuthSWR<DocumentListItem[]>(
+  const { data, isLoading, error } = useAuthSWR<DocumentListItem[]>(
     `/api/admin/students/${studentId}/documents`
   );
   const documents = data ?? [];
@@ -117,7 +118,11 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          {isLoading ? (
+          {error ? (
+            <div className="p-4">
+              <ApiErrorBanner error={error} title="出願書類の取得に失敗しました" />
+            </div>
+          ) : isLoading ? (
             <div className="space-y-3 p-6">
               {Array.from({ length: 3 }).map((_, i) => (
                 <Skeleton key={i} className="h-10 w-full" />

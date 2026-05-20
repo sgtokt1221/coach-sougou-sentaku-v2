@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Briefcase, CheckCircle2 } from "lucide-react";
 import { useAuthSWR } from "@/lib/api/swr";
+import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
 import { ACTIVITY_CATEGORY_LABELS, type ActivityCategory } from "@/lib/types/activity";
 import { InlineFeedbackButton } from "@/components/admin/InlineFeedbackButton";
 
@@ -29,7 +30,7 @@ const CATEGORY_COLORS: Record<ActivityCategory, string> = {
 };
 
 export function ActivitiesSection({ studentId }: { studentId: string }) {
-  const { data, isLoading } = useAuthSWR<ActivityListItem[]>(
+  const { data, isLoading, error } = useAuthSWR<ActivityListItem[]>(
     `/api/admin/students/${studentId}/activities`
   );
   const activities = data ?? [];
@@ -49,7 +50,9 @@ export function ActivitiesSection({ studentId }: { studentId: string }) {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4 p-6 pt-0">
-        {isLoading ? (
+        {error ? (
+          <ApiErrorBanner error={error} title="活動実績の取得に失敗しました" />
+        ) : isLoading ? (
           <div className="space-y-3">
             {Array.from({ length: 3 }).map((_, i) => (
               <Skeleton key={i} className="h-16 w-full" />

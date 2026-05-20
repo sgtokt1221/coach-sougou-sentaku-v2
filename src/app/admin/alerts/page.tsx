@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthSWR } from "@/lib/api/swr";
+import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
 import type { AlertItem } from "@/lib/types/admin";
 
 type FilterType =
@@ -107,7 +108,7 @@ function severityBadgeVariant(severity: AlertItem["severity"]): "destructive" | 
 }
 
 export default function AdminAlertsPage() {
-  const { data: fetchedAlerts, isLoading: loading } = useAuthSWR<AlertItem[]>("/api/admin/alerts");
+  const { data: fetchedAlerts, isLoading: loading, error: alertsError } = useAuthSWR<AlertItem[]>("/api/admin/alerts");
   const [localAlerts, setLocalAlerts] = useState<AlertItem[] | null>(null);
   const [filter, setFilter] = useState<FilterType>("all");
 
@@ -193,6 +194,10 @@ export default function AdminAlertsPage() {
           );
         })}
       </div>
+
+      {alertsError && (
+        <ApiErrorBanner error={alertsError} title="アラートの取得に失敗しました" />
+      )}
 
       {/* Alert List */}
       {loading ? (

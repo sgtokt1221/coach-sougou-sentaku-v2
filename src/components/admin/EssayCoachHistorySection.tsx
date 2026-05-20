@@ -18,6 +18,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { useAuthSWR } from "@/lib/api/swr";
+import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
 import { authFetch } from "@/lib/api/client";
 import type {
   CoachThread,
@@ -43,7 +44,7 @@ function formatDate(iso: string | undefined): string {
 }
 
 export function EssayCoachHistorySection({ studentId }: Props) {
-  const { data, isLoading } = useAuthSWR<{ threads: CoachThreadSummary[] }>(
+  const { data, isLoading, error } = useAuthSWR<{ threads: CoachThreadSummary[] }>(
     `/api/admin/students/${studentId}/essay-coach-threads`
   );
   const [openThread, setOpenThread] = useState<CoachThread | null>(null);
@@ -83,7 +84,9 @@ export function EssayCoachHistorySection({ studentId }: Props) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {isLoading ? (
+        {error ? (
+          <ApiErrorBanner error={error} title="AIコーチ履歴の取得に失敗しました" />
+        ) : isLoading ? (
           <div className="space-y-2">
             <Skeleton className="h-12 w-full" />
             <Skeleton className="h-12 w-full" />

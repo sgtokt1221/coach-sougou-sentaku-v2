@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { FileText, ChevronDown, TrendingUp } from "lucide-react";
 import { useAuthSWR } from "@/lib/api/swr";
+import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
 import type { SummaryDrillListItem } from "@/app/api/admin/students/[id]/summary-drills/route";
 import { FACULTY_REGISTRY } from "@/data/faculty-topics/registry";
 
@@ -35,13 +36,16 @@ function scoreColor(total: number): string {
 }
 
 export function SummaryDrillsSection({ studentId }: { studentId: string }) {
-  const { data: drills, isLoading } = useAuthSWR<SummaryDrillListItem[]>(
+  const { data: drills, isLoading, error } = useAuthSWR<SummaryDrillListItem[]>(
     `/api/admin/students/${studentId}/summary-drills`
   );
 
   const [expanded, setExpanded] = useState(false);
   const [selectedDrill, setSelectedDrill] = useState<SummaryDrillListItem | null>(null);
 
+  if (error) {
+    return <ApiErrorBanner error={error} title="要約ドリル履歴の取得に失敗しました" />;
+  }
   if (isLoading) {
     return <Skeleton className="h-32 w-full" />;
   }

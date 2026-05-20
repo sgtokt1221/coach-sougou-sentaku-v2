@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { CountUp } from "@/components/shared/CountUp";
 import { AnimatedList } from "@/components/shared/AnimatedList";
 import { useAuthSWR } from "@/lib/api/swr";
+import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
 import type { StudentListItem, AlertItem } from "@/lib/types/admin";
 import { StudentStatusPie } from "@/components/admin/StudentStatusPie";
 import { AdminCalendar } from "@/components/admin/AdminCalendar";
@@ -36,8 +37,8 @@ function alertFlagLabel(flag: string): { label: string; variant: "destructive" |
 export default function AdminDashboard() {
   const { userProfile } = useAuth();
   const isSuperadmin = userProfile?.role === "superadmin";
-  const { data: rawData, isLoading } = useAuthSWR<StudentListItem[]>("/api/admin/students?limit=500");
-  const { data: alertsData } = useAuthSWR<AlertItem[]>("/api/admin/alerts");
+  const { data: rawData, isLoading, error: studentsError } = useAuthSWR<StudentListItem[]>("/api/admin/students?limit=500");
+  const { data: alertsData, error: alertsError } = useAuthSWR<AlertItem[]>("/api/admin/alerts");
   const students = rawData ?? [];
   const loading = isLoading;
 
@@ -79,6 +80,13 @@ export default function AdminDashboard() {
         <h1 className="text-2xl font-bold">管理者ダッシュボード</h1>
         <p className="text-sm text-muted-foreground">生徒全体の状況を把握できます</p>
       </div>
+
+      {studentsError && (
+        <ApiErrorBanner error={studentsError} title="生徒データの取得に失敗しました" />
+      )}
+      {alertsError && (
+        <ApiErrorBanner error={alertsError} title="アラートの取得に失敗しました" />
+      )}
 
       {/* Stats Cards - superadmin only */}
       {isSuperadmin && (

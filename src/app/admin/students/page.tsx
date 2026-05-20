@@ -18,6 +18,7 @@ import { Search, ArrowUpDown, Users, UserPlus, Filter, TrendingUp, TrendingDown,
 import { EmptyState } from "@/components/shared/EmptyState";
 import { motion, useReducedMotion } from "framer-motion";
 import { useAuthSWR } from "@/lib/api/swr";
+import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
 import type { StudentListItem } from "@/lib/types/admin";
 import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
 import { StudentStatusLamps } from "@/components/admin/StudentStatusLamps";
@@ -56,7 +57,7 @@ export default function AdminStudentsPage() {
   if (search) params.set("search", search);
   params.set("sort", sortKey);
   if (universityFilter) params.set("university", universityFilter);
-  const { data: rawData, isLoading } = useAuthSWR<StudentListItem[]>(
+  const { data: rawData, isLoading, error: studentsError } = useAuthSWR<StudentListItem[]>(
     `/api/admin/students?${params.toString()}`
   );
 
@@ -221,6 +222,9 @@ export default function AdminStudentsPage() {
       </div>
 
       {/* Table */}
+      {studentsError && (
+        <ApiErrorBanner error={studentsError} title="生徒一覧の取得に失敗しました" />
+      )}
       <Card>
         <CardContent className="p-0">
           {loading ? (

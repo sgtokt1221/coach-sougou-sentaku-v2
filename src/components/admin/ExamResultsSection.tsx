@@ -37,6 +37,7 @@ import {
 } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import { useAuthSWR } from "@/lib/api/swr";
+import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
 import type { ExamResult, ExamResultInput } from "@/lib/types/exam-result";
 
 const STATUS_CONFIG = {
@@ -73,6 +74,7 @@ export function ExamResultsSection({ studentId }: ExamResultsSectionProps) {
     data: results,
     mutate,
     isLoading,
+    error,
   } = useAuthSWR<ExamResult[]>(
     `/api/admin/students/${studentId}/exam-results`
   );
@@ -310,7 +312,9 @@ export function ExamResultsSection({ studentId }: ExamResultsSectionProps) {
         </div>
       </CardHeader>
       <CardContent>
-        {isLoading ? (
+        {error ? (
+          <ApiErrorBanner error={error} title="受験結果の取得に失敗しました" />
+        ) : isLoading ? (
           <div className="space-y-3">
             {[1, 2].map((i) => (
               <div
