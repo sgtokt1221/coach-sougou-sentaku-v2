@@ -71,14 +71,21 @@ export async function GET(request: NextRequest) {
     const period = searchParams.get("period") ?? "all";
 
     if (!adminDb) {
-      const response: ScoreDistributionResponse = {
-        essay: type !== "interview" ? MOCK_ESSAY_DIST : [],
-        interview: type !== "essay" ? MOCK_INTERVIEW_DIST : [],
-        type,
-        period,
-        generatedAt: new Date().toISOString(),
-      };
-      return NextResponse.json(response);
+      if (process.env.NODE_ENV === "development") {
+        console.warn("[analytics/score-distribution] adminDb missing — dev mock");
+        const response: ScoreDistributionResponse = {
+          essay: type !== "interview" ? MOCK_ESSAY_DIST : [],
+          interview: type !== "essay" ? MOCK_INTERVIEW_DIST : [],
+          type,
+          period,
+          generatedAt: new Date().toISOString(),
+        };
+        return NextResponse.json(response);
+      }
+      return NextResponse.json(
+        { error: "Firestore に接続できません", detail: "adminDb is not initialized" },
+        { status: 500 }
+      );
     }
 
     const cutoff = getPeriodCutoff(period);
@@ -113,9 +120,7 @@ export async function GET(request: NextRequest) {
       if (cutoff) {
         essayQuery = essayQuery.where("submittedAt", ">=", cutoff);
       }
-      const essaysSnap = await essayQuery
-        .get()
-        .catch(() => ({ docs: [] as Array<{ data: () => Record<string, unknown> }> }));
+      const essaysSnap = await essayQuery.get();
       let essayScores = essaysSnap.docs
         .map((d: { data: () => Record<string, unknown> }) => {
           const data = d.data();
@@ -142,9 +147,7 @@ export async function GET(request: NextRequest) {
       if (cutoff) {
         interviewQuery = interviewQuery.where("startedAt", ">=", cutoff);
       }
-      const interviewsSnap = await interviewQuery
-        .get()
-        .catch(() => ({ docs: [] as Array<{ data: () => Record<string, unknown> }> }));
+      const interviewsSnap = await interviewQuery.get();
       let interviewScores = interviewsSnap.docs
         .map((d: { data: () => Record<string, unknown> }) => {
           const data = d.data();

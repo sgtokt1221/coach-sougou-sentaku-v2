@@ -287,12 +287,17 @@ export async function GET(request: NextRequest) {
         const studentUid = docSnap.id;
 
         // Essays: top-level collection with userId field (not subcollection)
+        // 失敗時は console.warn で痕跡を残しつつ、その生徒だけ「essays なし」扱いに
+        // (1 生徒の query 失敗で全 alerts 検出が落ちないようにする)
         const essaysSnap = await adminDb!
           .collection("essays")
           .where("userId", "==", studentUid)
           .orderBy("submittedAt", "desc")
           .get()
-          .catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] }));
+          .catch((e) => {
+            console.warn(`[admin/alerts] essays query failed for ${studentUid}:`, e);
+            return { docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] };
+          });
 
         // 全活動タイプの最新日時を集計して lastActivityAt を算出
         const activityDates: number[] = [];

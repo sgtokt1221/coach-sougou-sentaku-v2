@@ -128,12 +128,22 @@ export async function GET(request: NextRequest) {
         const data = docSnap.data();
         const uid = docSnap.id;
 
-        const [essaysSnap, weaknessesSnap, documentsSnap, sessionsSnap] = await Promise.all([
-          adminDb!.collection("essays").where("userId", "==", uid).orderBy("submittedAt", "desc").get().catch(() => ({ size: 0, docs: [] })),
-          adminDb!.collection(`users/${uid}/weaknesses`).get().catch(() => ({ size: 0, docs: [] })),
-          adminDb!.collection(`users/${uid}/documents`).get().catch(() => ({ size: 0, docs: [] })),
-          adminDb!.collection("sessions").where("studentUid", "==", uid).orderBy("scheduledAt", "desc").limit(1).get().catch(() => ({ size: 0, docs: [] })),
-        ]) as [FirebaseFirestore.QuerySnapshot, FirebaseFirestore.QuerySnapshot, FirebaseFirestore.QuerySnapshot, FirebaseFirestore.QuerySnapshot];
+        // Promise.allSettled で部分成功を許容 (1 コレクションの失敗で全体を落とさない)。
+        // silent fallback と異なり console.warn で痕跡を残す。
+        const subResults = await Promise.allSettled([
+          adminDb!.collection("essays").where("userId", "==", uid).orderBy("submittedAt", "desc").get(),
+          adminDb!.collection(`users/${uid}/weaknesses`).get(),
+          adminDb!.collection(`users/${uid}/documents`).get(),
+          adminDb!.collection("sessions").where("studentUid", "==", uid).orderBy("scheduledAt", "desc").limit(1).get(),
+        ]);
+        const subQueryNames = ["essays", "weaknesses", "documents", "sessions"];
+        const [essaysSnap, weaknessesSnap, documentsSnap, sessionsSnap] = subResults.map((r, i) => {
+          if (r.status === "rejected") {
+            console.warn(`[admin/students] subquery '${subQueryNames[i]}' failed for ${uid}:`, r.reason);
+            return { size: 0, docs: [] } as unknown as FirebaseFirestore.QuerySnapshot;
+          }
+          return r.value;
+        }) as [FirebaseFirestore.QuerySnapshot, FirebaseFirestore.QuerySnapshot, FirebaseFirestore.QuerySnapshot, FirebaseFirestore.QuerySnapshot];
 
         const essayCount = essaysSnap.size;
         const latestEssay = essaysSnap.docs[0]?.data();

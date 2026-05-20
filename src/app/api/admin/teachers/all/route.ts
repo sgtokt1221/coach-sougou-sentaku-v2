@@ -33,7 +33,14 @@ export async function GET(request: Request) {
   if (authResult instanceof NextResponse) return authResult;
 
   if (!adminDb) {
-    return NextResponse.json(mockTeachers);
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[teachers/all] adminDb missing — dev mock");
+      return NextResponse.json(mockTeachers);
+    }
+    return NextResponse.json(
+      { error: "Firestore に接続できません", detail: "adminDb is not initialized" },
+      { status: 500 }
+    );
   }
 
   try {
@@ -64,7 +71,16 @@ export async function GET(request: Request) {
     );
 
     return NextResponse.json(teachers);
-  } catch {
-    return NextResponse.json(mockTeachers);
+  } catch (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[teachers/all] dev mock fallback for error:", error);
+      return NextResponse.json(mockTeachers);
+    }
+    const detail = error instanceof Error ? error.message : String(error);
+    console.error("[teachers/all] error:", error);
+    return NextResponse.json(
+      { error: "講師一覧の取得に失敗しました", detail },
+      { status: 500 }
+    );
   }
 }

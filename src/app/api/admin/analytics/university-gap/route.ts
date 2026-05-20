@@ -108,11 +108,18 @@ export async function GET(request: NextRequest) {
 
   try {
     if (!adminDb) {
-      const response: UniversityGapResponse = {
-        gaps: MOCK_GAPS,
-        generatedAt: new Date().toISOString(),
-      };
-      return NextResponse.json(response);
+      if (process.env.NODE_ENV === "development") {
+        console.warn("[analytics/university-gap] adminDb missing — dev mock");
+        const response: UniversityGapResponse = {
+          gaps: MOCK_GAPS,
+          generatedAt: new Date().toISOString(),
+        };
+        return NextResponse.json(response);
+      }
+      return NextResponse.json(
+        { error: "Firestore に接続できません", detail: "adminDb is not initialized" },
+        { status: 500 }
+      );
     }
 
     // Fetch students with scoping
@@ -152,14 +159,12 @@ export async function GET(request: NextRequest) {
       const essaysSnap = await adminDb
         .collection("essays")
         .where("userId", "==", studentId)
-        .get()
-        .catch(() => ({ docs: [] as Array<{ data: () => Record<string, unknown> }> }));
+        .get();
 
       const interviewsSnap = await adminDb
         .collection("interviews")
         .where("userId", "==", studentId)
-        .get()
-        .catch(() => ({ docs: [] as Array<{ data: () => Record<string, unknown> }> }));
+        .get();
 
       for (const target of targets) {
         const [uniId, facId] = target.split(":");

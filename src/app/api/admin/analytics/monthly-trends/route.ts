@@ -36,11 +36,18 @@ export async function GET(request: NextRequest) {
     );
 
     if (!adminDb) {
-      const response: MonthlyTrendsResponse = {
-        trends: generateMockTrends(months),
-        generatedAt: new Date().toISOString(),
-      };
-      return NextResponse.json(response);
+      if (process.env.NODE_ENV === "development") {
+        console.warn("[analytics/monthly-trends] adminDb missing — dev mock");
+        const response: MonthlyTrendsResponse = {
+          trends: generateMockTrends(months),
+          generatedAt: new Date().toISOString(),
+        };
+        return NextResponse.json(response);
+      }
+      return NextResponse.json(
+        { error: "Firestore に接続できません", detail: "adminDb is not initialized" },
+        { status: 500 }
+      );
     }
 
     // Scoping
@@ -67,14 +74,12 @@ export async function GET(request: NextRequest) {
     const essaysSnap = await adminDb
       .collection("essays")
       .where("submittedAt", ">=", cutoffDate)
-      .get()
-      .catch(() => ({ docs: [] as Array<{ data: () => Record<string, unknown> }> }));
+      .get();
 
     const interviewsSnap = await adminDb
       .collection("interviews")
       .where("startedAt", ">=", cutoffDate)
-      .get()
-      .catch(() => ({ docs: [] as Array<{ data: () => Record<string, unknown> }> }));
+      .get();
 
     const monthMap = new Map<
       string,
