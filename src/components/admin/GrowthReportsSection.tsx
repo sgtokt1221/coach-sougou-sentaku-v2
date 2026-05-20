@@ -20,6 +20,8 @@ import {
 } from "@/components/ui/dialog";
 import { useAuthSWR } from "@/lib/api/swr";
 import { authFetch } from "@/lib/api/client";
+import { toast } from "sonner";
+import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
 import type { GrowthReport } from "@/lib/types/growth-report";
 
 interface Props {
@@ -36,38 +38,45 @@ function formatDate(iso?: string): string {
 }
 
 export function GrowthReportsSection({ studentId }: Props) {
-  const { data, isLoading, mutate } = useAuthSWR<{ reports: GrowthReport[] }>(
+  // API は GrowthReport[] を直接返すため、ラップせず配列で受ける
+  const { data, isLoading, mutate, error } = useAuthSWR<GrowthReport[]>(
     `/api/admin/reports/${studentId}?limit=10`,
   );
-  const reports = data?.reports ?? [];
+  const reports = data ?? [];
   const [generating, setGenerating] = useState<"weekly" | "monthly" | null>(null);
   const [open, setOpen] = useState<GrowthReport | null>(null);
 
   const generate = async (period: "weekly" | "monthly") => {
+    console.log("[GrowthReports] generate() start", { period, studentId });
     setGenerating(period);
     try {
+      console.log("[GrowthReports] calling authFetch");
       const res = await authFetch("/api/admin/reports/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ studentId, period }),
       });
+      console.log("[GrowthReports] response received", { status: res.status, ok: res.ok });
       if (!res.ok) {
-        const data = (await res.json().catch(() => ({}))) as {
+        const payload = (await res.json().catch(() => ({}))) as {
           error?: string;
           detail?: string;
           step?: string;
         };
-        const msg = data.detail
-          ? `[${data.step ?? "?"}] ${data.detail}`
-          : data.error ?? `HTTP ${res.status}`;
+        const msg = payload.detail
+          ? `[${payload.step ?? "?"}] ${payload.detail}`
+          : payload.error ?? `HTTP ${res.status}`;
         throw new Error(msg);
       }
       await mutate();
+      console.log("[GrowthReports] success, mutate done");
+      toast.success(`${period === "weekly" ? "週次" : "月次"}レポートを生成しました`);
     } catch (err) {
-      console.error(err);
-      alert(err instanceof Error ? err.message : "レポート生成に失敗しました");
+      console.error("[GrowthReports] caught error:", err);
+      toast.error(err instanceof Error ? err.message : "レポート生成に失敗しました");
     } finally {
       setGenerating(null);
+      console.log("[GrowthReports] generate() finally");
     }
   };
 
@@ -115,7 +124,9 @@ export function GrowthReportsSection({ studentId }: Props) {
         </div>
       </CardHeader>
       <CardContent>
-        {isLoading ? (
+        {error ? (
+          <ApiErrorBanner error={error} title="成長レポート一覧の取得に失敗しました" />
+        ) : isLoading ? (
           <div className="space-y-2">
             <Skeleton className="h-14 w-full" />
           </div>
