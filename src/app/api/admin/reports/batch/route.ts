@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
+import { queryWithRangeFilter } from "@/lib/admin/firestore-range-query";
 import { generateGrowthReport, getPeriodRange } from "@/lib/growth/report";
 import type { BatchReportRequest, GrowthReportSummary } from "@/lib/types/growth-report";
 
@@ -51,7 +52,14 @@ export async function POST(request: NextRequest) {
     }
 
     if (!adminDb) {
-      return NextResponse.json(generateMockBatchReports(period));
+      if (process.env.NODE_ENV === "development") {
+        console.warn("[reports/batch] adminDb missing — dev mock");
+        return NextResponse.json(generateMockBatchReports(period));
+      }
+      return NextResponse.json(
+        { error: "Firestore に接続できません", detail: "adminDb is not initialized" },
+        { status: 500 }
+      );
     }
 
     // Fetch all managed students
@@ -78,44 +86,43 @@ export async function POST(request: NextRequest) {
         const studentId = studentDoc.id;
         const studentData = studentDoc.data();
 
+        // 各クエリは「高速経路 → JS フィルタ fallback」で silent fallback を回避。
+        // 失敗時は throw されて呼び出し側 catch で 500 に昇格する。
         const [periodEssaysSnap, prevEssaysSnap, periodInterviewsSnap, prevInterviewsSnap, weaknessesSnap] =
           await Promise.all([
-            adminDb!
-              .collection("essays")
-              .where("userId", "==", studentId)
-              .where("submittedAt", ">=", start)
-              .where("submittedAt", "<=", end)
-              .orderBy("submittedAt", "desc")
-              .get()
-              .catch(() => ({ docs: [] })),
-            adminDb!
-              .collection("essays")
-              .where("userId", "==", studentId)
-              .where("submittedAt", ">=", prevStart)
-              .where("submittedAt", "<", start)
-              .orderBy("submittedAt", "desc")
-              .get()
-              .catch(() => ({ docs: [] })),
-            adminDb!
-              .collection("interviews")
-              .where("userId", "==", studentId)
-              .where("startedAt", ">=", start)
-              .where("startedAt", "<=", end)
-              .orderBy("startedAt", "desc")
-              .get()
-              .catch(() => ({ docs: [] })),
-            adminDb!
-              .collection("interviews")
-              .where("userId", "==", studentId)
-              .where("startedAt", ">=", prevStart)
-              .where("startedAt", "<", start)
-              .orderBy("startedAt", "desc")
-              .get()
-              .catch(() => ({ docs: [] })),
-            adminDb!
-              .collection(`users/${studentId}/weaknesses`)
-              .get()
-              .catch(() => ({ docs: [] })),
+            queryWithRangeFilter(
+              adminDb!.collection("essays"),
+              "userId",
+              studentId,
+              "submittedAt",
+              start,
+              end,
+            ),
+            queryWithRangeFilter(
+              adminDb!.collection("essays"),
+              "userId",
+              studentId,
+              "submittedAt",
+              prevStart,
+              start,
+            ),
+            queryWithRangeFilter(
+              adminDb!.collection("interviews"),
+              "userId",
+              studentId,
+              "startedAt",
+              start,
+              end,
+            ),
+            queryWithRangeFilter(
+              adminDb!.collection("interviews"),
+              "userId",
+              studentId,
+              "startedAt",
+              prevStart,
+              start,
+            ),
+            adminDb!.collection(`users/${studentId}/weaknesses`).get(),
           ]);
 
         const toEssayData = (doc: FirebaseFirestore.QueryDocumentSnapshot) => {

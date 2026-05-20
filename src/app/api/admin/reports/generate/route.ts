@@ -3,6 +3,7 @@ import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
 import { generateGrowthReport, getPeriodRange, buildSessionSummaryDraft } from "@/lib/growth/report";
 import { buildLessonObservationSummaryPrompt } from "@/lib/ai/prompts/lesson-summary";
+import { queryWithRangeFilter } from "@/lib/admin/firestore-range-query";
 import type { GenerateReportRequest, GrowthReport } from "@/lib/types/growth-report";
 
 // Mock data for dev mode
@@ -90,8 +91,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    step = "init_check";
     if (!adminDb) {
-      return NextResponse.json(generateMockReport(studentId, period));
+      if (process.env.NODE_ENV === "development") {
+        console.warn("[reports/generate] adminDb missing — dev mock");
+        return NextResponse.json(generateMockReport(studentId, period));
+      }
+      return NextResponse.json(
+        {
+          error: "Firestore に接続できません",
+          detail: "adminDb is not initialized",
+          step,
+        },
+        { status: 500 }
+      );
     }
 
     step = "fetch_student";
@@ -115,75 +128,85 @@ export async function POST(request: NextRequest) {
       prevStart.setMonth(prevStart.getMonth() - 1);
     }
 
-    // Fetch essays for current and previous period
-    step = "fetch_essays_and_interviews";
-    const [periodEssaysSnap, prevEssaysSnap, periodInterviewsSnap, prevInterviewsSnap, weaknessesSnap] =
-      await Promise.all([
-        adminDb
-          .collection("essays")
-          .where("userId", "==", studentId)
-          .where("submittedAt", ">=", start)
-          .where("submittedAt", "<=", end)
-          .orderBy("submittedAt", "desc")
-          .get()
-          .catch((e) => {
-            console.warn("[reports/generate] periodEssays query failed:", e);
-            return { docs: [] };
-          }),
-        adminDb
-          .collection("essays")
-          .where("userId", "==", studentId)
-          .where("submittedAt", ">=", prevStart)
-          .where("submittedAt", "<", start)
-          .orderBy("submittedAt", "desc")
-          .get()
-          .catch((e) => {
-            console.warn("[reports/generate] prevEssays query failed:", e);
-            return { docs: [] };
-          }),
-        adminDb
-          .collection("interviews")
-          .where("userId", "==", studentId)
-          .where("startedAt", ">=", start)
-          .where("startedAt", "<=", end)
-          .orderBy("startedAt", "desc")
-          .get()
-          .catch((e) => {
-            console.warn("[reports/generate] periodInterviews query failed:", e);
-            return { docs: [] };
-          }),
-        adminDb
-          .collection("interviews")
-          .where("userId", "==", studentId)
-          .where("startedAt", ">=", prevStart)
-          .where("startedAt", "<", start)
-          .orderBy("startedAt", "desc")
-          .get()
-          .catch((e) => {
-            console.warn("[reports/generate] prevInterviews query failed:", e);
-            return { docs: [] };
-          }),
-        adminDb
-          .collection(`users/${studentId}/weaknesses`)
-          .get()
-          .catch((e) => {
-            console.warn("[reports/generate] weaknesses query failed:", e);
-            return { docs: [] };
-          }),
-      ]);
+    // 各クエリは「composite index 高速経路 → JS フィルタ fallback」パターン。
+    // 失敗が起きたら catch で 500 に昇格させ、silent に 0 件レポートを返さない。
 
+    step = "fetch_essays_current";
+    const periodEssaysSnap = await queryWithRangeFilter(
+      adminDb.collection("essays"),
+      "userId",
+      studentId,
+      "submittedAt",
+      start,
+      end,
+    );
+
+    step = "fetch_essays_prev";
+    const prevEssaysSnap = await queryWithRangeFilter(
+      adminDb.collection("essays"),
+      "userId",
+      studentId,
+      "submittedAt",
+      prevStart,
+      start,
+    );
+
+    step = "fetch_interviews_current";
+    const periodInterviewsSnap = await queryWithRangeFilter(
+      adminDb.collection("interviews"),
+      "userId",
+      studentId,
+      "startedAt",
+      start,
+      end,
+    );
+
+    step = "fetch_interviews_prev";
+    const prevInterviewsSnap = await queryWithRangeFilter(
+      adminDb.collection("interviews"),
+      "userId",
+      studentId,
+      "startedAt",
+      prevStart,
+      start,
+    );
+
+    step = "fetch_weaknesses";
+    const weaknessesSnap = await adminDb
+      .collection(`users/${studentId}/weaknesses`)
+      .get();
+
+    // sessions は scheduledAt が ISO 文字列のため、queryWithRangeFilter
+    // (Date 比較前提) ではなく文字列比較版の inline fallback を採用
     step = "fetch_sessions";
-    const sessionsSnap = await adminDb
-      .collection("sessions")
-      .where("studentId", "==", studentId)
-      .where("scheduledAt", ">=", start.toISOString())
-      .where("scheduledAt", "<=", end.toISOString())
-      .orderBy("scheduledAt", "desc")
-      .get()
-      .catch((e) => {
-        console.warn("[reports/generate] sessions query failed:", e);
-        return { docs: [] };
+    let sessionsSnap: { docs: FirebaseFirestore.QueryDocumentSnapshot[] };
+    try {
+      sessionsSnap = await adminDb
+        .collection("sessions")
+        .where("studentId", "==", studentId)
+        .where("scheduledAt", ">=", start.toISOString())
+        .where("scheduledAt", "<=", end.toISOString())
+        .orderBy("scheduledAt", "desc")
+        .get();
+    } catch (indexErr) {
+      console.warn("[reports/generate] sessions index missing, fallback to JS filter:", indexErr);
+      const all = await adminDb
+        .collection("sessions")
+        .where("studentId", "==", studentId)
+        .get();
+      const startIso = start.toISOString();
+      const endIso = end.toISOString();
+      const filtered = all.docs.filter((d) => {
+        const at = d.data().scheduledAt as string | undefined;
+        return typeof at === "string" && at >= startIso && at <= endIso;
       });
+      filtered.sort((a, b) =>
+        ((b.data().scheduledAt as string) ?? "").localeCompare(
+          (a.data().scheduledAt as string) ?? "",
+        ),
+      );
+      sessionsSnap = { docs: filtered };
+    }
     const sessions = sessionsSnap.docs.map((d) => d.data()) as Array<{
       status?: string;
       prepPlan?: { goal?: string };

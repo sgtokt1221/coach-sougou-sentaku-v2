@@ -83,7 +83,14 @@ export async function GET(
     const limit = Math.min(parseInt(searchParams.get("limit") ?? "10", 10), 50);
 
     if (!adminDb) {
-      return NextResponse.json(generateMockReportHistory(studentId, period, limit));
+      if (process.env.NODE_ENV === "development") {
+        console.warn("[reports/[studentId]] adminDb missing — dev mock");
+        return NextResponse.json(generateMockReportHistory(studentId, period, limit));
+      }
+      return NextResponse.json(
+        { error: "Firestore に接続できません", detail: "adminDb is not initialized" },
+        { status: 500 }
+      );
     }
 
     // Verify student is managed by caller
