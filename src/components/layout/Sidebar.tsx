@@ -312,7 +312,10 @@ export function Sidebar() {
   })();
 
   return (
-    <aside className="hidden h-full w-64 flex-col border-r border-sidebar-border bg-sidebar lg:flex">
+    <aside
+      data-app-chrome="sidebar"
+      className="hidden h-full w-64 flex-col border-r border-sidebar-border bg-sidebar lg:flex"
+    >
       {/* Logo */}
       <div className="flex h-16 items-center border-b border-sidebar-border px-5 hover:bg-sidebar-accent/10 transition-all duration-200 group">
         <Link href="/" className="relative">

@@ -59,7 +59,10 @@ export function Header() {
   };
 
   return (
-    <header className="relative flex h-14 items-center justify-between border-b border-border/60 bg-background px-4 gap-2">
+    <header
+      data-app-chrome="header"
+      className="relative flex h-14 items-center justify-between border-b border-border/60 bg-background px-4 gap-2"
+    >
       <Button
         variant="ghost"
         size="icon"

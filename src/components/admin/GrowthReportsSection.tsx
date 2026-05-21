@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { TrendingUp, Loader2, Sparkles, Printer } from "lucide-react";
 import {
   Card,
@@ -11,17 +12,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { useAuthSWR } from "@/lib/api/swr";
 import { authFetch } from "@/lib/api/client";
 import { toast } from "sonner";
 import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
-import { ReportDetailCard } from "@/components/admin/ReportDetailCard";
 import type { GrowthReport } from "@/lib/types/growth-report";
 
 interface Props {
@@ -44,7 +38,6 @@ export function GrowthReportsSection({ studentId }: Props) {
   );
   const reports = data ?? [];
   const [generating, setGenerating] = useState<"weekly" | "monthly" | null>(null);
-  const [open, setOpen] = useState<GrowthReport | null>(null);
 
   const generate = async (period: "weekly" | "monthly") => {
     console.log("[GrowthReports] generate() start", { period, studentId });
@@ -139,19 +132,13 @@ export function GrowthReportsSection({ studentId }: Props) {
             {reports.map((r) => (
               <div
                 key={r.id}
-                role="button"
-                tabIndex={0}
-                onClick={() => setOpen(r)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    setOpen(r);
-                  }
-                }}
-                className="w-full cursor-pointer text-left rounded-lg border bg-card p-3 transition-colors hover:bg-muted/40"
+                className="rounded-lg border bg-card transition-colors hover:bg-muted/40"
               >
-                <div className="flex items-center justify-between gap-2">
-                  <div>
+                <div className="flex items-center justify-between gap-2 p-3">
+                  <Link
+                    href={`/admin/reports/${studentId}/${r.id}`}
+                    className="min-w-0 flex-1"
+                  >
                     <div className="flex items-center gap-2">
                       <Badge variant="outline" className="text-[10px]">
                         {r.period === "weekly" ? "週次" : "月次"}
@@ -160,63 +147,41 @@ export function GrowthReportsSection({ studentId }: Props) {
                         {formatDate(r.startDate)} - {formatDate(r.endDate)}
                       </span>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                    <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
                       {r.overallAssessment}
                     </p>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
+                    {r.sessionSummary && r.sessionSummary.totalCount > 0 && (
+                      <div className="mt-2 text-[10px] text-muted-foreground">
+                        期間内授業 {r.sessionSummary.totalCount} 回
+                        {r.sessionSummary.newWeaknessAreas.length > 0 &&
+                          ` / 新発見弱点 ${r.sessionSummary.newWeaknessAreas.length}`}
+                      </div>
+                    )}
+                  </Link>
+                  <div className="flex shrink-0 items-center gap-2">
                     <div className="text-xs text-muted-foreground">
                       {formatDate(r.generatedAt)}
                     </div>
                     <Button
+                      asChild
                       variant="ghost"
                       size="icon"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        window.open(
-                          `/admin/reports/print?studentId=${studentId}&reportId=${r.id}`,
-                          "_blank",
-                        );
-                      }}
-                      aria-label="PDF として保存"
+                      aria-label="印刷 (新規タブで開く)"
                     >
-                      <Printer className="size-4" />
+                      <Link
+                        href={`/admin/reports/${studentId}/${r.id}?print=1`}
+                        target="_blank"
+                      >
+                        <Printer className="size-4" />
+                      </Link>
                     </Button>
                   </div>
                 </div>
-                {r.sessionSummary && r.sessionSummary.totalCount > 0 && (
-                  <div className="mt-2 text-[10px] text-muted-foreground">
-                    期間内授業 {r.sessionSummary.totalCount} 回
-                    {r.sessionSummary.newWeaknessAreas.length > 0 &&
-                      ` / 新発見弱点 ${r.sessionSummary.newWeaknessAreas.length}`}
-                  </div>
-                )}
               </div>
             ))}
           </div>
         )}
       </CardContent>
-
-      <Dialog open={!!open} onOpenChange={(o) => !o && setOpen(null)}>
-        <DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto">
-          {open && (
-            <>
-              <DialogHeader>
-                <DialogTitle>
-                  {open.period === "weekly" ? "週次" : "月次"}成長レポート
-                </DialogTitle>
-              </DialogHeader>
-              <ReportDetailCard
-                report={open}
-                onUpdated={(updated) => {
-                  setOpen(updated);
-                  mutate();
-                }}
-              />
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
     </Card>
   );
 }

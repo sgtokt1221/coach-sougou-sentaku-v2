@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,7 @@ import {
   Mic,
   Loader2,
   Printer,
+  ExternalLink,
 } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import { useAuthSWR } from "@/lib/api/swr";
@@ -281,18 +283,18 @@ export default function AdminReportsPage() {
                       </div>
 
                       <Button
+                        asChild
                         variant="ghost"
                         size="icon"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          window.open(
-                            `/admin/reports/print?studentId=${report.studentId}&reportId=${report.id}`,
-                            "_blank",
-                          );
-                        }}
-                        aria-label="PDF として保存"
+                        onClick={(e) => e.stopPropagation()}
+                        aria-label="印刷 (新規タブで開く)"
                       >
-                        <Printer className="size-4" />
+                        <Link
+                          href={`/admin/reports/${report.studentId}/${report.id}?print=1`}
+                          target="_blank"
+                        >
+                          <Printer className="size-4" />
+                        </Link>
                       </Button>
 
                       {isExpanded ? (
@@ -312,7 +314,19 @@ export default function AdminReportsPage() {
                           <Skeleton className="h-24 w-full" />
                         </div>
                       ) : detail ? (
-                        <ReportDetailCard report={detail} />
+                        <>
+                          <div className="mb-3 flex justify-end">
+                            <Button asChild variant="outline" size="sm">
+                              <Link
+                                href={`/admin/reports/${report.studentId}/${report.id}`}
+                              >
+                                <ExternalLink className="mr-1.5 size-3.5" />
+                                詳細を開く
+                              </Link>
+                            </Button>
+                          </div>
+                          <ReportDetailCard report={detail} />
+                        </>
                       ) : (
                         <p className="py-4 text-center text-sm text-muted-foreground">
                           詳細の読み込みに失敗しました

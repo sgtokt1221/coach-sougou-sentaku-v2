@@ -105,6 +105,8 @@ interface Props {
   readOnly?: boolean;
   /** 編集 PATCH が成功した時に呼ばれる。親で mutate を回す等に使う */
   onUpdated?: (next: GrowthReport) => void;
+  /** true なら期間・生成日メタヘッダーを表示しない (詳細画面側で大きく出す場合用) */
+  hideMetaHeader?: boolean;
 }
 
 /**
@@ -119,7 +121,12 @@ interface Props {
  * 管理者・講師向けには編集モードを提供。
  * 編集可能項目: overallAssessment / recommendations / teacherComment / sharedWithStudent
  */
-export function ReportDetailCard({ report, readOnly, onUpdated }: Props) {
+export function ReportDetailCard({
+  report,
+  readOnly,
+  onUpdated,
+  hideMetaHeader,
+}: Props) {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [assessment, setAssessment] = useState(report.overallAssessment ?? "");
@@ -264,24 +271,26 @@ export function ReportDetailCard({ report, readOnly, onUpdated }: Props) {
         </div>
       )}
 
-      {/* 期間・生成日 メタヘッダー */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-md border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
-        <Badge variant="outline" className="text-[10px]">
-          {report.period === "weekly" ? "週次" : "月次"}
-        </Badge>
-        <div className="inline-flex items-center gap-1">
-          <Calendar className="size-3.5" />
-          <span>期間:</span>
-          <span className="font-medium text-foreground">
-            {formatDate(report.startDate)} 〜 {formatDate(report.endDate)}
-          </span>
+      {/* 期間・生成日 メタヘッダー (詳細画面で先出しする場合は非表示) */}
+      {!hideMetaHeader && (
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-md border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+          <Badge variant="outline" className="text-[10px]">
+            {report.period === "weekly" ? "週次" : "月次"}
+          </Badge>
+          <div className="inline-flex items-center gap-1">
+            <Calendar className="size-3.5" />
+            <span>期間:</span>
+            <span className="font-medium text-foreground">
+              {formatDate(report.startDate)} 〜 {formatDate(report.endDate)}
+            </span>
+          </div>
+          <div className="inline-flex items-center gap-1">
+            <Clock className="size-3.5" />
+            <span>生成日:</span>
+            <span className="font-medium text-foreground">{formatDate(report.generatedAt)}</span>
+          </div>
         </div>
-        <div className="inline-flex items-center gap-1">
-          <Clock className="size-3.5" />
-          <span>生成日:</span>
-          <span className="font-medium text-foreground">{formatDate(report.generatedAt)}</span>
-        </div>
-      </div>
+      )}
 
       {/* 学力サマリ 2 カラム */}
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">

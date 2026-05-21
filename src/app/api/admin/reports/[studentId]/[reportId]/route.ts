@@ -1,7 +1,90 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
-import type { PracticeQuestion } from "@/lib/types/growth-report";
+import type { GrowthReport, PracticeQuestion } from "@/lib/types/growth-report";
+
+/**
+ * GET /api/admin/reports/[studentId]/[reportId]
+ *
+ * 成長レポートを単体取得する。詳細画面 (新ルート) で利用。
+ *
+ * 認可: admin / teacher / superadmin + managedBy スコープ
+ */
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ studentId: string; reportId: string }> }
+) {
+  const authResult = await requireRole(request, ["admin", "teacher", "superadmin"]);
+  if (authResult instanceof NextResponse) return authResult;
+  const { uid, role } = authResult;
+
+  try {
+    const { studentId, reportId } = await params;
+
+    if (!adminDb) {
+      return NextResponse.json(
+        { error: "Firestore に接続できません", detail: "adminDb is not initialized" },
+        { status: 500 }
+      );
+    }
+
+    const userDoc = await adminDb.doc(`users/${studentId}`).get();
+    if (!userDoc.exists) {
+      return NextResponse.json({ error: "生徒が見つかりません" }, { status: 404 });
+    }
+    const userData = userDoc.data()!;
+    if (role !== "superadmin" && userData.managedBy !== uid) {
+      return NextResponse.json(
+        { error: "この生徒へのアクセス権がありません" },
+        { status: 403 }
+      );
+    }
+
+    const reportSnap = await adminDb
+      .doc(`users/${studentId}/growthReports/${reportId}`)
+      .get();
+    if (!reportSnap.exists) {
+      return NextResponse.json({ error: "レポートが見つかりません" }, { status: 404 });
+    }
+
+    const data = reportSnap.data()!;
+    const report: GrowthReport = {
+      id: reportSnap.id,
+      studentId: data.studentId ?? studentId,
+      studentName: data.studentName ?? "",
+      period: data.period ?? "weekly",
+      startDate: data.startDate?.toDate?.()?.toISOString() ?? "",
+      endDate: data.endDate?.toDate?.()?.toISOString() ?? "",
+      generatedAt: data.generatedAt?.toDate?.()?.toISOString() ?? "",
+      essayStats: data.essayStats ?? {
+        count: 0,
+        avgScore: 0,
+        scoreChange: 0,
+        bestCategory: "-",
+        worstCategory: "-",
+      },
+      interviewStats: data.interviewStats ?? { count: 0, avgScore: 0, scoreChange: 0 },
+      weaknessProgress: data.weaknessProgress ?? [],
+      recommendations: data.recommendations ?? [],
+      overallAssessment: data.overallAssessment ?? "",
+      sessionSummary: data.sessionSummary,
+      practiceQuestions: data.practiceQuestions,
+      teacherComment: data.teacherComment,
+      editedBy: data.editedBy,
+      editedAt: data.editedAt,
+      sharedWithStudent: data.sharedWithStudent,
+    };
+
+    return NextResponse.json(report);
+  } catch (error) {
+    console.error("[reports/[studentId]/[reportId]] GET error:", error);
+    const detail = error instanceof Error ? error.message : String(error);
+    return NextResponse.json(
+      { error: "レポートの取得に失敗しました", detail },
+      { status: 500 }
+    );
+  }
+}
 
 /**
  * PATCH /api/admin/reports/[studentId]/[reportId]
