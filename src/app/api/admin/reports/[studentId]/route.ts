@@ -130,6 +130,12 @@ export async function GET(
         weaknessProgress: data.weaknessProgress ?? [],
         recommendations: data.recommendations ?? [],
         overallAssessment: data.overallAssessment ?? "",
+        sessionSummary: data.sessionSummary,
+        practiceQuestions: data.practiceQuestions,
+        teacherComment: data.teacherComment,
+        editedBy: data.editedBy,
+        editedAt: data.editedAt,
+        sharedWithStudent: data.sharedWithStudent,
       };
     });
 
