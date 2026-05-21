@@ -91,7 +91,7 @@ function PrintBody() {
 
   return (
     <>
-      {/* A4 縦・余白固定 (印刷時のみ効く) */}
+      {/* A4 縦・余白固定 (印刷時のみ効く) + admin chrome を非表示にする */}
       <style jsx global>{`
         @page {
           size: A4 portrait;
@@ -102,10 +102,32 @@ function PrintBody() {
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
           }
+          /* admin の sidebar / bottom nav 等を印刷対象から除外 */
+          body * {
+            visibility: hidden;
+          }
+          .print-root,
+          .print-root * {
+            visibility: visible;
+          }
+          .print-root {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+          }
+          /* カード単位でページまたぎを避ける */
+          .print-root .rounded-lg,
+          .print-root .rounded-md,
+          .print-root section,
+          .print-root header {
+            break-inside: avoid;
+            page-break-inside: avoid;
+          }
         }
       `}</style>
 
-      <div className="mx-auto max-w-3xl bg-white p-6 text-foreground print:p-0">
+      <div className="print-root mx-auto max-w-3xl bg-white p-6 text-foreground print:p-0">
         {/* ヘッダー */}
         <header className="mb-4 border-b pb-3">
           <h1 className="text-xl font-bold">
@@ -129,9 +151,9 @@ function PrintBody() {
           </div>
         </header>
 
-        {/* 詳細カード */}
+        {/* 詳細カード — 印刷物に編集ツールバーを出さないため readOnly */}
         <main>
-          <ReportDetailCard report={report} />
+          <ReportDetailCard report={report} readOnly />
         </main>
 
         {/* 操作ボタン (印刷時は非表示) */}
