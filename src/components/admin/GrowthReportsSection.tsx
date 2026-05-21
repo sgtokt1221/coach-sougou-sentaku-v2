@@ -14,7 +14,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -22,6 +21,7 @@ import { useAuthSWR } from "@/lib/api/swr";
 import { authFetch } from "@/lib/api/client";
 import { toast } from "sonner";
 import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
+import { ReportDetailCard } from "@/components/admin/ReportDetailCard";
 import type { GrowthReport } from "@/lib/types/growth-report";
 
 interface Props {
@@ -198,87 +198,21 @@ export function GrowthReportsSection({ studentId }: Props) {
       </CardContent>
 
       <Dialog open={!!open} onOpenChange={(o) => !o && setOpen(null)}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
           {open && (
             <>
               <DialogHeader>
                 <DialogTitle>
-                  {open.period === "weekly" ? "週次" : "月次"} レポート
+                  {open.period === "weekly" ? "週次" : "月次"}成長レポート
                 </DialogTitle>
-                <DialogDescription>
-                  {formatDate(open.startDate)} - {formatDate(open.endDate)}
-                </DialogDescription>
               </DialogHeader>
-              <div className="space-y-4 text-sm">
-                <div>
-                  <div className="text-xs font-medium text-muted-foreground mb-1">
-                    総合評価
-                  </div>
-                  <p className="whitespace-pre-wrap">{open.overallAssessment}</p>
-                </div>
-                {open.sessionSummary && open.sessionSummary.totalCount > 0 && (
-                  <div className="rounded-lg border bg-muted/30 p-3 space-y-2">
-                    <div className="text-xs font-medium">授業サマリー</div>
-                    <div className="text-xs">
-                      期間内 {open.sessionSummary.totalCount} 回実施
-                    </div>
-                    {open.sessionSummary.mainTopics.length > 0 && (
-                      <div>
-                        <div className="text-[11px] text-muted-foreground">扱ったテーマ</div>
-                        <ul className="list-disc list-inside text-xs">
-                          {open.sessionSummary.mainTopics.map((t, i) => (
-                            <li key={i}>{t}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    {open.sessionSummary.teacherObservations.length > 0 && (
-                      <div>
-                        <div className="text-[11px] text-muted-foreground">講師の観察</div>
-                        <ul className="list-disc list-inside text-xs">
-                          {open.sessionSummary.teacherObservations.map((o, i) => (
-                            <li key={i}>{o}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    {open.sessionSummary.newWeaknessAreas.length > 0 && (
-                      <div>
-                        <div className="text-[11px] text-muted-foreground">授業で新発見の弱点</div>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {open.sessionSummary.newWeaknessAreas.map((a) => (
-                            <Badge
-                              key={a}
-                              variant="outline"
-                              className="text-[10px] border-rose-200 bg-rose-50 text-rose-700"
-                            >
-                              {a}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {open.sessionSummary.latestNextAgenda && (
-                      <div>
-                        <div className="text-[11px] text-muted-foreground">次回に向けて</div>
-                        <p className="text-xs">{open.sessionSummary.latestNextAgenda}</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-                {open.recommendations.length > 0 && (
-                  <div>
-                    <div className="text-xs font-medium text-muted-foreground mb-1">
-                      推奨アクション
-                    </div>
-                    <ul className="list-disc list-inside text-xs">
-                      {open.recommendations.map((r, i) => (
-                        <li key={i}>{r}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
+              <ReportDetailCard
+                report={open}
+                onUpdated={(updated) => {
+                  setOpen(updated);
+                  mutate();
+                }}
+              />
             </>
           )}
         </DialogContent>

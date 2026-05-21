@@ -492,32 +492,6 @@ export function ReportDetailCard({ report, readOnly, onUpdated }: Props) {
           </div>
         )}
 
-      {/* 印刷用: readOnly + 類題なし のとき「次回までの宿題」記入欄 */}
-      {readOnly && (report.practiceQuestions?.length ?? 0) === 0 && (
-        <div className="rounded-lg border-2 border-dashed border-emerald-200 bg-emerald-50/30 p-4 dark:border-emerald-900 dark:bg-emerald-950/20">
-          <h4 className="mb-3 flex items-center gap-1.5 text-sm font-semibold">
-            <Sparkles className="size-4 text-emerald-600" />
-            次回までの宿題 (先生記入欄)
-          </h4>
-          <div className="space-y-3">
-            <div>
-              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                小論文テーマ
-              </div>
-              <div className="mt-1 h-6 border-b border-slate-300" />
-              <div className="mt-2 h-6 border-b border-slate-300" />
-            </div>
-            <div>
-              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                面接練習
-              </div>
-              <div className="mt-1 h-6 border-b border-slate-300" />
-              <div className="mt-2 h-6 border-b border-slate-300" />
-            </div>
-          </div>
-        </div>
-      )}
-
       {(editing || (report.practiceQuestions?.length ?? 0) > 0) && (
         <div>
           <h4 className="mb-2 flex items-center gap-1.5 text-sm font-semibold">
