@@ -37,6 +37,17 @@ export interface GrowthReport {
     newWeaknessAreas: string[];
     latestNextAgenda?: string;
   };
+
+  // ---- 講師編集対応の拡張 (すべて任意、後方互換) ----
+
+  /** 講師の独自コメント。AI 生成内容とは別レイヤーで表示 */
+  teacherComment?: string;
+  /** 最終編集者の uid (admin/teacher) */
+  editedBy?: string;
+  /** 最終編集日時 (ISO8601) */
+  editedAt?: string;
+  /** 生徒に公開するか (デフォルト true、false なら生徒の成長タブに出ない) */
+  sharedWithStudent?: boolean;
 }
 
 export interface GrowthReportSummary {

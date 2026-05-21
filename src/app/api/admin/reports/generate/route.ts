@@ -304,6 +304,8 @@ export async function POST(request: NextRequest) {
       startDate: new Date(report.startDate),
       endDate: new Date(report.endDate),
       generatedBy: uid,
+      // デフォルトで生徒に公開。管理者が後から PATCH で false に変更可能
+      sharedWithStudent: true,
     });
     await adminDb
       .collection(`users/${studentId}/growthReports`)

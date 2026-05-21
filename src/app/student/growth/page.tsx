@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { ScoresTrendChart } from "@/components/growth/ScoresTrendChart";
+import { TeacherReportsSection } from "@/components/student/TeacherReportsSection";
 import { SegmentControl } from "@/components/shared/SegmentControl";
 import { TrendingUp, AlertCircle, AlertTriangle, CheckCircle2, Sparkles, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { WeaknessRecord, WeaknessReminderLevel, getWeaknessReminderLevel } from "@/lib/types/growth";
@@ -203,6 +204,9 @@ export default function GrowthPage() {
         <h1 className="text-xl lg:text-2xl font-bold">成長トラッキング</h1>
         <p className="text-sm text-muted-foreground">あなたの学習成長を可視化します</p>
       </div>
+
+      {/* 先生からのレポート (講師作成・公開分のみ) */}
+      <TeacherReportsSection />
 
       {/* AI成長レポート */}
       <section>
