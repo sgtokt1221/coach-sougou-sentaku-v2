@@ -58,10 +58,17 @@ function generateMockReport(studentId: string, period: "weekly" | "monthly"): Gr
  */
 function stripUndefined<T>(obj: T): T {
   if (obj === null || obj === undefined) return obj;
+  // Date は再帰展開せず素通し
+  // (Object.entries(new Date()) が空配列を返す仕様で {} に潰される問題を回避)
+  if (obj instanceof Date) return obj;
   if (Array.isArray(obj)) {
     return obj.map((item) => stripUndefined(item)) as unknown as T;
   }
   if (typeof obj === "object") {
+    // Firestore Timestamp など toDate を持つオブジェクトも素通し
+    if (typeof (obj as { toDate?: unknown }).toDate === "function") {
+      return obj;
+    }
     const out: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(obj as Record<string, unknown>)) {
       if (v === undefined) continue;

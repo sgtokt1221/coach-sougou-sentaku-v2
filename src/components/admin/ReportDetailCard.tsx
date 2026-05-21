@@ -22,12 +22,20 @@ import {
   MessageSquare,
   EyeOff,
   Sparkles,
+  Calendar,
 } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import { toast } from "sonner";
 import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
 import { scoreToSkillRank } from "@/lib/history-rank";
 import type { GrowthReport, PracticeQuestion } from "@/lib/types/growth-report";
+
+function formatDate(iso?: string): string {
+  if (!iso) return "-";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "-";
+  return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}`;
+}
 
 /**
  * スコア増減を矢印付きで表示する。
@@ -224,6 +232,25 @@ export function ReportDetailCard({ report, readOnly, onUpdated }: Props) {
           )}
         </div>
       )}
+
+      {/* 期間・生成日 メタヘッダー */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-md border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+        <Badge variant="outline" className="text-[10px]">
+          {report.period === "weekly" ? "週次" : "月次"}
+        </Badge>
+        <div className="inline-flex items-center gap-1">
+          <Calendar className="size-3.5" />
+          <span>期間:</span>
+          <span className="font-medium text-foreground">
+            {formatDate(report.startDate)} 〜 {formatDate(report.endDate)}
+          </span>
+        </div>
+        <div className="inline-flex items-center gap-1">
+          <Clock className="size-3.5" />
+          <span>生成日:</span>
+          <span className="font-medium text-foreground">{formatDate(report.generatedAt)}</span>
+        </div>
+      </div>
 
       {/* 学力サマリ 2 カラム */}
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
