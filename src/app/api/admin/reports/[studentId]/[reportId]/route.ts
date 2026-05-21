@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
+import type { PracticeQuestion } from "@/lib/types/growth-report";
 
 /**
  * PATCH /api/admin/reports/[studentId]/[reportId]
@@ -58,6 +59,7 @@ export async function PATCH(
       recommendations?: string[];
       teacherComment?: string;
       sharedWithStudent?: boolean;
+      practiceQuestions?: PracticeQuestion[];
     };
 
     // 編集対象の白リスト方式で update を組み立てる
@@ -78,6 +80,16 @@ export async function PATCH(
     }
     if (typeof body.sharedWithStudent === "boolean") {
       update.sharedWithStudent = body.sharedWithStudent;
+    }
+    if (Array.isArray(body.practiceQuestions)) {
+      update.practiceQuestions = body.practiceQuestions.filter(
+        (q): q is PracticeQuestion =>
+          !!q &&
+          typeof q.id === "string" &&
+          (q.type === "essay" || q.type === "interview") &&
+          typeof q.title === "string" &&
+          q.title.trim().length > 0,
+      );
     }
 
     step = "fetch_report";

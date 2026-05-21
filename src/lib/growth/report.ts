@@ -276,6 +276,8 @@ export function generateGrowthReport(params: {
   weaknesses: WeaknessData[];
   /** 期間内のセッションから事前に集計されたサマリー (null/undefined で非表示) */
   sessionSummary?: GrowthReport["sessionSummary"];
+  /** AI が生成した類題 (弱点・過去テーマから派生)。生成失敗時は undefined */
+  practiceQuestions?: GrowthReport["practiceQuestions"];
 }): GrowthReport {
   const { start, end } = getPeriodRange(params.period);
 
@@ -311,6 +313,7 @@ export function generateGrowthReport(params: {
     recommendations,
     overallAssessment,
     sessionSummary: params.sessionSummary,
+    practiceQuestions: params.practiceQuestions,
   };
 }
 

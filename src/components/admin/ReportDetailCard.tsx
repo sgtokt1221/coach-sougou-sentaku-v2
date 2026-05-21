@@ -21,12 +21,13 @@ import {
   Loader2,
   MessageSquare,
   EyeOff,
+  Sparkles,
 } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import { toast } from "sonner";
 import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
 import { scoreToSkillRank } from "@/lib/history-rank";
-import type { GrowthReport } from "@/lib/types/growth-report";
+import type { GrowthReport, PracticeQuestion } from "@/lib/types/growth-report";
 
 /**
  * スコア増減を矢印付きで表示する。
@@ -119,12 +120,16 @@ export function ReportDetailCard({ report, readOnly, onUpdated }: Props) {
   const [shared, setShared] = useState<boolean>(
     report.sharedWithStudent !== false
   );
+  const [practiceQs, setPracticeQs] = useState<PracticeQuestion[]>(
+    report.practiceQuestions ?? []
+  );
 
   const startEdit = () => {
     setAssessment(report.overallAssessment ?? "");
     setRecs(report.recommendations ?? []);
     setComment(report.teacherComment ?? "");
     setShared(report.sharedWithStudent !== false);
+    setPracticeQs(report.practiceQuestions ?? []);
     setEditing(true);
   };
 
@@ -145,6 +150,7 @@ export function ReportDetailCard({ report, readOnly, onUpdated }: Props) {
             recommendations: recs.filter((r) => r.trim().length > 0),
             teacherComment: comment,
             sharedWithStudent: shared,
+            practiceQuestions: practiceQs.filter((q) => q.title.trim().length > 0),
           }),
         }
       );
@@ -396,6 +402,123 @@ export function ReportDetailCard({ report, readOnly, onUpdated }: Props) {
           </div>
         )}
       </div>
+
+      {/* 次に取り組む類題 (AI 生成、講師編集可) */}
+      {(editing || (report.practiceQuestions?.length ?? 0) > 0) && (
+        <div>
+          <h4 className="mb-2 flex items-center gap-1.5 text-sm font-semibold">
+            <Sparkles className="size-4 text-emerald-600" />
+            次に取り組む類題
+          </h4>
+          {editing ? (
+            <div className="space-y-2">
+              {practiceQs.map((q, i) => (
+                <div
+                  key={q.id}
+                  className="rounded-md border bg-white p-3 dark:bg-card"
+                >
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={q.type}
+                      onChange={(e) => {
+                        const next = [...practiceQs];
+                        next[i] = {
+                          ...next[i],
+                          type: e.target.value as "essay" | "interview",
+                        };
+                        setPracticeQs(next);
+                      }}
+                      className="rounded border px-2 py-1 text-xs"
+                    >
+                      <option value="essay">小論文</option>
+                      <option value="interview">面接</option>
+                    </select>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() =>
+                        setPracticeQs(practiceQs.filter((_, idx) => idx !== i))
+                      }
+                      aria-label="この類題を削除"
+                      className="ml-auto"
+                    >
+                      <X className="size-4" />
+                    </Button>
+                  </div>
+                  <Textarea
+                    value={q.title}
+                    onChange={(e) => {
+                      const next = [...practiceQs];
+                      next[i] = { ...next[i], title: e.target.value };
+                      setPracticeQs(next);
+                    }}
+                    rows={2}
+                    placeholder="題目 / 質問文 (短く)"
+                    className="mt-2 text-sm"
+                  />
+                  <Textarea
+                    value={q.relatedWeakness ?? ""}
+                    onChange={(e) => {
+                      const next = [...practiceQs];
+                      next[i] = { ...next[i], relatedWeakness: e.target.value };
+                      setPracticeQs(next);
+                    }}
+                    rows={1}
+                    placeholder="関連弱点 (なぜこれを薦めるか)"
+                    className="mt-1 text-xs"
+                  />
+                </div>
+              ))}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setPracticeQs([
+                    ...practiceQs,
+                    {
+                      id: `pq_${Date.now()}_${practiceQs.length}`,
+                      type: "essay",
+                      title: "",
+                    },
+                  ])
+                }
+              >
+                ＋ 類題を追加
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {report.practiceQuestions!.map((pq) => (
+                <div
+                  key={pq.id}
+                  className={`rounded-lg border p-3 ${
+                    pq.type === "essay"
+                      ? "border-sky-200 bg-gradient-to-br from-sky-50 to-cyan-50 dark:border-sky-900 dark:from-sky-950/30 dark:to-cyan-950/30"
+                      : "border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50 dark:border-emerald-900 dark:from-emerald-950/30 dark:to-teal-950/30"
+                  }`}
+                >
+                  <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    {pq.type === "essay" ? (
+                      <FileText className="size-3" />
+                    ) : (
+                      <Mic className="size-3" />
+                    )}
+                    {pq.type === "essay" ? "小論文" : "面接"}
+                  </div>
+                  <p className="mt-1 text-sm font-medium leading-snug">
+                    {pq.title}
+                  </p>
+                  {pq.relatedWeakness && (
+                    <p className="mt-1 text-[10px] text-muted-foreground">
+                      関連: {pq.relatedWeakness}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* 総合評価 */}
       <div className="rounded-lg border-2 border-teal-200 bg-gradient-to-br from-teal-50 to-cyan-50 p-4 dark:border-teal-900 dark:from-teal-950/30 dark:to-cyan-950/30">

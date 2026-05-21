@@ -3,8 +3,9 @@ import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
 import { generateGrowthReport, getPeriodRange, buildSessionSummaryDraft } from "@/lib/growth/report";
 import { buildLessonObservationSummaryPrompt } from "@/lib/ai/prompts/lesson-summary";
+import { buildPracticeQuestionsPrompt } from "@/lib/ai/prompts/practice-questions";
 import { queryWithRangeFilter } from "@/lib/admin/firestore-range-query";
-import type { GenerateReportRequest, GrowthReport } from "@/lib/types/growth-report";
+import type { GenerateReportRequest, GrowthReport, PracticeQuestion } from "@/lib/types/growth-report";
 
 // Mock data for dev mode
 function generateMockReport(studentId: string, period: "weekly" | "monthly"): GrowthReport {
@@ -275,6 +276,90 @@ export async function POST(request: NextRequest) {
       };
     };
 
+    // 弱点・過去問から類題を AI 生成 (失敗してもレポート本体は完成させる)
+    step = "generate_practice_questions";
+    let practiceQuestions: PracticeQuestion[] | undefined;
+    if (process.env.ANTHROPIC_API_KEY) {
+      try {
+        const weaknessAreas = weaknessesSnap.docs
+          .map((d) => (d.data() as { area?: string }).area)
+          .filter((a): a is string => !!a && a.length > 0)
+          .slice(0, 5);
+
+        const pastEssayTopics = [
+          ...periodEssaysSnap.docs,
+          ...prevEssaysSnap.docs,
+        ]
+          .map((d) => {
+            const data = d.data() as { topic?: string };
+            return data.topic;
+          })
+          .filter((t): t is string => !!t && t.length > 0)
+          .slice(0, 10);
+
+        const pastInterviewQuestions: string[] = [];
+        [...periodInterviewsSnap.docs, ...prevInterviewsSnap.docs].forEach(
+          (d) => {
+            const data = d.data() as {
+              messages?: Array<{ role?: string; content?: string }>;
+            };
+            data.messages
+              ?.filter((m) => m?.role === "assistant" || m?.role === "ai")
+              .forEach((m) => {
+                const q = m.content?.split("\n")[0]?.slice(0, 80);
+                if (q) pastInterviewQuestions.push(q);
+              });
+          }
+        );
+
+        const Anthropic = (await import("@anthropic-ai/sdk")).default;
+        const client = new Anthropic();
+        const systemPrompt = buildPracticeQuestionsPrompt({
+          studentName: studentData.displayName ?? "生徒",
+          weaknesses: weaknessAreas,
+          pastEssayTopics,
+          pastInterviewQuestions: pastInterviewQuestions.slice(0, 10),
+        });
+        const resp = await client.messages.create({
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 1200,
+          system: systemPrompt,
+          messages: [{ role: "user", content: "JSON のみを出力してください。" }],
+        });
+        const text =
+          resp.content[0]?.type === "text" ? resp.content[0].text : "";
+        const match = text.match(/\{[\s\S]*\}/);
+        if (match) {
+          const parsed = JSON.parse(match[0]) as {
+            essayQuestions?: Array<Partial<PracticeQuestion>>;
+            interviewQuestions?: Array<Partial<PracticeQuestion>>;
+          };
+          const now = Date.now();
+          const combined: PracticeQuestion[] = [
+            ...(parsed.essayQuestions ?? []).map((q, i) => ({
+              id: q.id || `pq_e_${now}_${i}`,
+              type: "essay" as const,
+              title: q.title ?? "",
+              relatedWeakness: q.relatedWeakness,
+              relatedPastTopic: q.relatedPastTopic,
+            })),
+            ...(parsed.interviewQuestions ?? []).map((q, i) => ({
+              id: q.id || `pq_i_${now}_${i}`,
+              type: "interview" as const,
+              title: q.title ?? "",
+              relatedWeakness: q.relatedWeakness,
+              relatedPastTopic: q.relatedPastTopic,
+            })),
+          ]
+            .filter((q) => q.title.length > 0)
+            .slice(0, 8);
+          if (combined.length > 0) practiceQuestions = combined;
+        }
+      } catch (err) {
+        console.warn("[reports/generate] practice questions failed:", err);
+      }
+    }
+
     step = "generate_report";
     const report = generateGrowthReport({
       studentId,
@@ -294,6 +379,7 @@ export async function POST(request: NextRequest) {
         };
       }),
       sessionSummary: sessionSummary.totalCount > 0 ? sessionSummary : undefined,
+      practiceQuestions,
     });
 
     // Save the report to Firestore
