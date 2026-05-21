@@ -354,312 +354,419 @@ export function ReportDetailCard({ report, readOnly, onUpdated }: Props) {
         </div>
       </div>
 
-      {/* 弱点の進捗 (CSS 横棒グラフ) */}
-      {report.weaknessProgress.length > 0 && (
-        <div>
-          <h4 className="mb-2 text-sm font-semibold">弱点の進捗</h4>
-          <div className="space-y-2">
-            {report.weaknessProgress.map((w) => {
-              const prevPct = Math.max(0, Math.min(100, (w.previousScore / 10) * 100));
-              const currPct = Math.max(0, Math.min(100, (w.currentScore / 10) * 100));
-              const barColor =
-                w.status === "improved"
-                  ? "bg-emerald-400"
-                  : w.status === "declined"
-                    ? "bg-rose-400"
-                    : "bg-amber-400";
-              return (
-                <div
-                  key={w.weakness}
-                  className="rounded-md border bg-white p-3 dark:bg-card"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">{w.weakness}</span>
-                    <WeaknessStatusBadge status={w.status} />
-                  </div>
-                  <div className="mt-2 flex items-center gap-3">
-                    <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
-                      <div
-                        className={`absolute inset-y-0 left-0 ${barColor}`}
-                        style={{ width: `${currPct}%` }}
-                      />
-                      <div
-                        className="absolute inset-y-0 w-px bg-slate-400"
-                        style={{ left: `${prevPct}%` }}
-                        aria-label="前回スコア位置"
-                      />
+      {/* 2 カラム本文 (lg 以上のみ。print 時は 1 カラム維持) */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 print:grid-cols-1 print:gap-3">
+        {/* 左カラム: 弱点進捗 + 類題 */}
+        <div className="space-y-4">
+          {report.weaknessProgress.length > 0 && (
+            <div>
+              <h4 className="mb-2 text-sm font-semibold">弱点の進捗</h4>
+              <div className="space-y-2">
+                {report.weaknessProgress.map((w) => {
+                  const prevPct = Math.max(0, Math.min(100, (w.previousScore / 10) * 100));
+                  const currPct = Math.max(0, Math.min(100, (w.currentScore / 10) * 100));
+                  const barColor =
+                    w.status === "improved"
+                      ? "bg-emerald-400"
+                      : w.status === "declined"
+                        ? "bg-rose-400"
+                        : "bg-amber-400";
+                  return (
+                    <div
+                      key={w.weakness}
+                      className="rounded-md border bg-white p-3 dark:bg-card"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">{w.weakness}</span>
+                        <WeaknessStatusBadge status={w.status} />
+                      </div>
+                      <div className="mt-2 flex items-center gap-3">
+                        <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                          <div
+                            className={`absolute inset-y-0 left-0 ${barColor}`}
+                            style={{ width: `${currPct}%` }}
+                          />
+                          <div
+                            className="absolute inset-y-0 w-px bg-slate-400"
+                            style={{ left: `${prevPct}%` }}
+                            aria-label="前回スコア位置"
+                          />
+                        </div>
+                        <span className="text-xs font-medium tabular-nums">
+                          {w.previousScore} → {w.currentScore}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-[10px] text-muted-foreground">
+                        {w.attempts} 回指摘
+                      </p>
                     </div>
-                    <span className="text-xs font-medium tabular-nums">
-                      {w.previousScore} → {w.currentScore}
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* 類題 (priority で表示分岐) */}
+          {!editing &&
+            !readOnly &&
+            (report.practiceQuestions?.length ?? 0) === 0 && (
+              <div className="rounded-md border border-dashed bg-muted/30 p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 text-sm">
+                    <Sparkles className="size-4 text-emerald-600" />
+                    <span className="font-medium">次に取り組む類題</span>
+                    <span className="text-xs text-muted-foreground">
+                      (まだ生成されていません)
                     </span>
                   </div>
-                  <p className="mt-1 text-[10px] text-muted-foreground">
-                    {w.attempts} 回指摘
-                  </p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={generatePracticeQuestions}
+                    disabled={generatingPq}
+                  >
+                    {generatingPq ? (
+                      <Loader2 className="mr-1 size-3.5 animate-spin" />
+                    ) : (
+                      <Sparkles className="mr-1 size-3.5" />
+                    )}
+                    類題を生成する
+                  </Button>
                 </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* 推奨アクション */}
-      <div>
-        <h4 className="mb-2 flex items-center gap-1.5 text-sm font-semibold">
-          <Lightbulb className="size-4 text-amber-600" />
-          推奨アクション
-        </h4>
-        {editing ? (
-          <div className="space-y-2">
-            {recs.map((r, i) => (
-              <div key={i} className="flex gap-2">
-                <Textarea
-                  value={r}
-                  onChange={(e) => {
-                    const next = [...recs];
-                    next[i] = e.target.value;
-                    setRecs(next);
-                  }}
-                  rows={2}
-                  className="text-sm"
-                />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setRecs(recs.filter((_, idx) => idx !== i))}
-                  aria-label="この項目を削除"
-                >
-                  <X className="size-4" />
-                </Button>
               </div>
-            ))}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setRecs([...recs, ""])}
-            >
-              ＋ 項目を追加
-            </Button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            {report.recommendations.map((r, i) => (
-              <div
-                key={i}
-                className="rounded-lg border border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 p-3 dark:border-amber-900 dark:from-amber-950/30 dark:to-orange-950/30"
-              >
-                <Lightbulb className="mb-1 size-4 text-amber-600 dark:text-amber-400" />
-                <p className="text-xs leading-relaxed">{r}</p>
-              </div>
-            ))}
-            {report.recommendations.length === 0 && (
-              <p className="text-xs text-muted-foreground">
-                推奨アクションは記録されていません
-              </p>
             )}
-          </div>
-        )}
-      </div>
 
-      {/* 次に取り組む類題: 編集中 or 既存類題ありで通常表示。
-           編集中でない & 類題なしの場合は (admin) 生成ボタン / (印刷) 記入欄 */}
-      {!editing &&
-        !readOnly &&
-        (report.practiceQuestions?.length ?? 0) === 0 && (
-          <div className="rounded-md border border-dashed bg-muted/30 p-3">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-1.5 text-sm">
+          {(editing || (report.practiceQuestions?.length ?? 0) > 0) && (
+            <div>
+              <h4 className="mb-2 flex items-center gap-1.5 text-sm font-semibold">
                 <Sparkles className="size-4 text-emerald-600" />
-                <span className="font-medium">次に取り組む類題</span>
-                <span className="text-xs text-muted-foreground">
-                  (まだ生成されていません)
+                次に取り組む類題
+                <span className="text-[10px] font-normal text-muted-foreground">
+                  (今週の弱点克服用)
                 </span>
-              </div>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={generatePracticeQuestions}
-                disabled={generatingPq}
-              >
-                {generatingPq ? (
-                  <Loader2 className="mr-1 size-3.5 animate-spin" />
-                ) : (
-                  <Sparkles className="mr-1 size-3.5" />
-                )}
-                類題を生成する
-              </Button>
-            </div>
-          </div>
-        )}
-
-      {(editing || (report.practiceQuestions?.length ?? 0) > 0) && (
-        <div>
-          <h4 className="mb-2 flex items-center gap-1.5 text-sm font-semibold">
-            <Sparkles className="size-4 text-emerald-600" />
-            次に取り組む類題
-          </h4>
-          {editing ? (
-            <div className="space-y-2">
-              {practiceQs.map((q, i) => (
-                <div
-                  key={q.id}
-                  className="rounded-md border bg-white p-3 dark:bg-card"
-                >
-                  <div className="flex items-center gap-2">
-                    <select
-                      value={q.type}
-                      onChange={(e) => {
-                        const next = [...practiceQs];
-                        next[i] = {
-                          ...next[i],
-                          type: e.target.value as "essay" | "interview",
-                        };
-                        setPracticeQs(next);
-                      }}
-                      className="rounded border px-2 py-1 text-xs"
+              </h4>
+              {editing ? (
+                <div className="space-y-2">
+                  {practiceQs.map((q, i) => (
+                    <div
+                      key={q.id}
+                      className="rounded-md border bg-white p-3 dark:bg-card"
                     >
-                      <option value="essay">小論文</option>
-                      <option value="interview">面接</option>
-                    </select>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <select
+                          value={q.type}
+                          onChange={(e) => {
+                            const next = [...practiceQs];
+                            next[i] = {
+                              ...next[i],
+                              type: e.target.value as "essay" | "interview",
+                            };
+                            setPracticeQs(next);
+                          }}
+                          className="rounded border px-2 py-1 text-xs"
+                        >
+                          <option value="essay">小論文</option>
+                          <option value="interview">面接</option>
+                        </select>
+                        <select
+                          value={q.priority ?? "secondary"}
+                          onChange={(e) => {
+                            const next = [...practiceQs];
+                            next[i] = {
+                              ...next[i],
+                              priority: e.target.value as "primary" | "secondary",
+                            };
+                            setPracticeQs(next);
+                          }}
+                          className="rounded border px-2 py-1 text-xs"
+                        >
+                          <option value="primary">授業中 (必須)</option>
+                          <option value="secondary">宿題 (補助)</option>
+                        </select>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() =>
+                            setPracticeQs(practiceQs.filter((_, idx) => idx !== i))
+                          }
+                          aria-label="この類題を削除"
+                          className="ml-auto"
+                        >
+                          <X className="size-4" />
+                        </Button>
+                      </div>
+                      <Textarea
+                        value={q.title}
+                        onChange={(e) => {
+                          const next = [...practiceQs];
+                          next[i] = { ...next[i], title: e.target.value };
+                          setPracticeQs(next);
+                        }}
+                        rows={2}
+                        placeholder="題目 / 質問文 (短く)"
+                        className="mt-2 text-sm"
+                      />
+                      <Textarea
+                        value={q.relatedWeakness ?? ""}
+                        onChange={(e) => {
+                          const next = [...practiceQs];
+                          next[i] = { ...next[i], relatedWeakness: e.target.value };
+                          setPracticeQs(next);
+                        }}
+                        rows={1}
+                        placeholder="関連弱点 (今週の論理性が X 点だったので、など)"
+                        className="mt-1 text-xs"
+                      />
+                      <Textarea
+                        value={q.modelAnswer ?? ""}
+                        onChange={(e) => {
+                          const next = [...practiceQs];
+                          next[i] = { ...next[i], modelAnswer: e.target.value };
+                          setPracticeQs(next);
+                        }}
+                        rows={4}
+                        placeholder="解答例 (小論文: 400-500 字 / 面接: 80-150 字)"
+                        className="mt-1 text-xs"
+                      />
+                    </div>
+                  ))}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setPracticeQs([
+                        ...practiceQs,
+                        {
+                          id: `pq_${Date.now()}_${practiceQs.length}`,
+                          type: "essay",
+                          priority: "primary",
+                          title: "",
+                          relatedWeakness: "",
+                        },
+                      ])
+                    }
+                  >
+                    ＋ 類題を追加
+                  </Button>
+                </div>
+              ) : (
+                <PracticeQuestionsList questions={report.practiceQuestions ?? []} />
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* 右カラム: 推奨アクション + 総合評価 + 講師コメント */}
+        <div className="space-y-4">
+          <div>
+            <h4 className="mb-2 flex items-center gap-1.5 text-sm font-semibold">
+              <Lightbulb className="size-4 text-amber-600" />
+              推奨アクション
+            </h4>
+            {editing ? (
+              <div className="space-y-2">
+                {recs.map((r, i) => (
+                  <div key={i} className="flex gap-2">
+                    <Textarea
+                      value={r}
+                      onChange={(e) => {
+                        const next = [...recs];
+                        next[i] = e.target.value;
+                        setRecs(next);
+                      }}
+                      rows={2}
+                      className="text-sm"
+                    />
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() =>
-                        setPracticeQs(practiceQs.filter((_, idx) => idx !== i))
-                      }
-                      aria-label="この類題を削除"
-                      className="ml-auto"
+                      onClick={() => setRecs(recs.filter((_, idx) => idx !== i))}
+                      aria-label="この項目を削除"
                     >
                       <X className="size-4" />
                     </Button>
                   </div>
-                  <Textarea
-                    value={q.title}
-                    onChange={(e) => {
-                      const next = [...practiceQs];
-                      next[i] = { ...next[i], title: e.target.value };
-                      setPracticeQs(next);
-                    }}
-                    rows={2}
-                    placeholder="題目 / 質問文 (短く)"
-                    className="mt-2 text-sm"
-                  />
-                  <Textarea
-                    value={q.relatedWeakness ?? ""}
-                    onChange={(e) => {
-                      const next = [...practiceQs];
-                      next[i] = { ...next[i], relatedWeakness: e.target.value };
-                      setPracticeQs(next);
-                    }}
-                    rows={1}
-                    placeholder="関連弱点 (なぜこれを薦めるか)"
-                    className="mt-1 text-xs"
-                  />
-                </div>
-              ))}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  setPracticeQs([
-                    ...practiceQs,
-                    {
-                      id: `pq_${Date.now()}_${practiceQs.length}`,
-                      type: "essay",
-                      title: "",
-                    },
-                  ])
-                }
-              >
-                ＋ 類題を追加
-              </Button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {report.practiceQuestions!.map((pq) => (
-                <div
-                  key={pq.id}
-                  className={`rounded-lg border p-3 ${
-                    pq.type === "essay"
-                      ? "border-sky-200 bg-gradient-to-br from-sky-50 to-cyan-50 dark:border-sky-900 dark:from-sky-950/30 dark:to-cyan-950/30"
-                      : "border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50 dark:border-emerald-900 dark:from-emerald-950/30 dark:to-teal-950/30"
-                  }`}
+                ))}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setRecs([...recs, ""])}
                 >
-                  <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                    {pq.type === "essay" ? (
-                      <FileText className="size-3" />
-                    ) : (
-                      <Mic className="size-3" />
-                    )}
-                    {pq.type === "essay" ? "小論文" : "面接"}
+                  ＋ 項目を追加
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {report.recommendations.map((r, i) => (
+                  <div
+                    key={i}
+                    className="rounded-lg border border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 p-3 dark:border-amber-900 dark:from-amber-950/30 dark:to-orange-950/30"
+                  >
+                    <Lightbulb className="mb-1 size-4 text-amber-600 dark:text-amber-400" />
+                    <p className="text-xs leading-relaxed">{r}</p>
                   </div>
-                  <p className="mt-1 text-sm font-medium leading-snug">
-                    {pq.title}
+                ))}
+                {report.recommendations.length === 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    推奨アクションは記録されていません
                   </p>
-                  {pq.relatedWeakness && (
-                    <p className="mt-1 text-[10px] text-muted-foreground">
-                      関連: {pq.relatedWeakness}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* 総合評価 */}
-      <div className="rounded-lg border-2 border-teal-200 bg-gradient-to-br from-teal-50 to-cyan-50 p-4 dark:border-teal-900 dark:from-teal-950/30 dark:to-cyan-950/30">
-        <div className="mb-2 flex items-center gap-2">
-          <Award className="size-5 text-teal-600 dark:text-teal-400" />
-          <span className="font-semibold">総合評価</span>
-        </div>
-        {editing ? (
-          <Textarea
-            value={assessment}
-            onChange={(e) => setAssessment(e.target.value)}
-            rows={4}
-            className="bg-white text-sm"
-          />
-        ) : (
-          <p className="whitespace-pre-wrap text-sm leading-relaxed">
-            {report.overallAssessment}
-          </p>
-        )}
-      </div>
-
-      {/* 講師コメント (新規) */}
-      {(editing || report.teacherComment) && (
-        <div className="rounded-lg border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-violet-50 p-4 dark:border-purple-900 dark:from-purple-950/30 dark:to-violet-950/30">
-          <div className="mb-2 flex items-center gap-2">
-            <MessageSquare className="size-5 text-purple-600 dark:text-purple-400" />
-            <span className="font-semibold">講師コメント</span>
+                )}
+              </div>
+            )}
           </div>
-          {editing ? (
-            <>
+
+          {/* 総合評価 */}
+          <div className="rounded-lg border-2 border-teal-200 bg-gradient-to-br from-teal-50 to-cyan-50 p-4 dark:border-teal-900 dark:from-teal-950/30 dark:to-cyan-950/30">
+            <div className="mb-2 flex items-center gap-2">
+              <Award className="size-5 text-teal-600 dark:text-teal-400" />
+              <span className="font-semibold">総合評価</span>
+            </div>
+            {editing ? (
               <Textarea
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
+                value={assessment}
+                onChange={(e) => setAssessment(e.target.value)}
                 rows={4}
-                placeholder="授業で観察した内容や、生徒・親に直接伝えたいことを書いてください"
                 className="bg-white text-sm"
               />
-              <label className="mt-3 flex items-center gap-2 text-xs">
-                <input
-                  type="checkbox"
-                  checked={shared}
-                  onChange={(e) => setShared(e.target.checked)}
-                />
-                <span>生徒の成長タブに公開する</span>
-              </label>
-            </>
-          ) : (
-            <p className="whitespace-pre-wrap text-sm leading-relaxed">
-              {report.teacherComment}
-            </p>
+            ) : (
+              <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                {report.overallAssessment}
+              </p>
+            )}
+          </div>
+
+          {/* 講師コメント */}
+          {(editing || report.teacherComment) && (
+            <div className="rounded-lg border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-violet-50 p-4 dark:border-purple-900 dark:from-purple-950/30 dark:to-violet-950/30">
+              <div className="mb-2 flex items-center gap-2">
+                <MessageSquare className="size-5 text-purple-600 dark:text-purple-400" />
+                <span className="font-semibold">講師コメント</span>
+              </div>
+              {editing ? (
+                <>
+                  <Textarea
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    rows={4}
+                    placeholder="授業で観察した内容や、生徒・親に直接伝えたいことを書いてください"
+                    className="bg-white text-sm"
+                  />
+                  <label className="mt-3 flex items-center gap-2 text-xs">
+                    <input
+                      type="checkbox"
+                      checked={shared}
+                      onChange={(e) => setShared(e.target.checked)}
+                    />
+                    <span>生徒の成長タブに公開する</span>
+                  </label>
+                </>
+              ) : (
+                <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                  {report.teacherComment}
+                </p>
+              )}
+            </div>
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * 類題リスト表示 (read-only)。
+ * - primary (授業中必須): 強調表示 + modelAnswer 常時展開
+ * - secondary (宿題用): 控えめ表示 + modelAnswer は <details> で折り畳み
+ * - priority 未設定の旧データは secondary 扱い
+ */
+function PracticeQuestionsList({ questions }: { questions: PracticeQuestion[] }) {
+  const primary = questions.filter((q) => q.priority === "primary");
+  const secondary = questions.filter((q) => q.priority !== "primary");
+
+  return (
+    <div className="space-y-3">
+      {primary.length > 0 && (
+        <div className="space-y-2">
+          {primary.map((pq) => (
+            <PracticeQuestionCard key={pq.id} pq={pq} variant="primary" />
+          ))}
+        </div>
       )}
+      {secondary.length > 0 && (
+        <div className="space-y-2">
+          {primary.length > 0 && (
+            <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              宿題用 (補助)
+            </div>
+          )}
+          {secondary.map((pq) => (
+            <PracticeQuestionCard key={pq.id} pq={pq} variant="secondary" />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PracticeQuestionCard({
+  pq,
+  variant,
+}: {
+  pq: PracticeQuestion;
+  variant: "primary" | "secondary";
+}) {
+  const isPrimary = variant === "primary";
+  const isEssay = pq.type === "essay";
+
+  return (
+    <div
+      className={`rounded-lg border p-3 ${
+        isPrimary
+          ? isEssay
+            ? "border-sky-300 bg-gradient-to-br from-sky-50 to-cyan-50 shadow-sm dark:border-sky-800 dark:from-sky-950/40 dark:to-cyan-950/40"
+            : "border-emerald-300 bg-gradient-to-br from-emerald-50 to-teal-50 shadow-sm dark:border-emerald-800 dark:from-emerald-950/40 dark:to-teal-950/40"
+          : "border-slate-200 bg-white dark:border-slate-800 dark:bg-card"
+      }`}
+    >
+      <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+        {isEssay ? <FileText className="size-3" /> : <Mic className="size-3" />}
+        <span>{isEssay ? "小論文" : "面接"}</span>
+        {isPrimary ? (
+          <Badge className="bg-emerald-600 text-[10px] text-white hover:bg-emerald-600">
+            授業中
+          </Badge>
+        ) : (
+          <Badge variant="outline" className="text-[10px]">
+            宿題
+          </Badge>
+        )}
+      </div>
+      <p className="mt-1 text-sm font-medium leading-snug">{pq.title}</p>
+      {pq.relatedWeakness && (
+        <p className="mt-1 text-[10px] text-muted-foreground">
+          関連: {pq.relatedWeakness}
+        </p>
+      )}
+      {pq.modelAnswer &&
+        (isPrimary ? (
+          <div className="mt-2 rounded bg-white/70 p-2 dark:bg-black/20">
+            <div className="mb-1 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400">
+              解答例
+            </div>
+            <p className="whitespace-pre-wrap text-xs leading-relaxed">
+              {pq.modelAnswer}
+            </p>
+          </div>
+        ) : (
+          <details className="mt-2">
+            <summary className="cursor-pointer text-[10px] font-semibold text-emerald-700 dark:text-emerald-400">
+              解答例を見る
+            </summary>
+            <p className="mt-1 whitespace-pre-wrap rounded bg-muted/50 p-2 text-xs leading-relaxed">
+              {pq.modelAnswer}
+            </p>
+          </details>
+        ))}
     </div>
   );
 }

@@ -4,6 +4,11 @@ import { adminDb } from "@/lib/firebase/admin";
 import { generateGrowthReport, getPeriodRange, buildSessionSummaryDraft } from "@/lib/growth/report";
 import { buildLessonObservationSummaryPrompt } from "@/lib/ai/prompts/lesson-summary";
 import { buildPracticeQuestionsPrompt } from "@/lib/ai/prompts/practice-questions";
+import {
+  computeThisWeekWeakItems,
+  extractInterviewAssistantQuestions,
+  buildPracticeQuestionsFromJson,
+} from "@/lib/growth/practice-questions-helpers";
 import { queryWithRangeFilter } from "@/lib/admin/firestore-range-query";
 import type { GenerateReportRequest, GrowthReport, PracticeQuestion } from "@/lib/types/growth-report";
 
@@ -291,51 +296,48 @@ export async function POST(request: NextRequest) {
     }
     if (process.env.ANTHROPIC_API_KEY) {
       try {
-        const weaknessAreas = weaknessesSnap.docs
+        // 今週/過去をデータソースで明確に分離。プロンプトに別フィールドで渡す。
+        const chronicWeaknesses = weaknessesSnap.docs
           .map((d) => (d.data() as { area?: string }).area)
           .filter((a): a is string => !!a && a.length > 0)
           .slice(0, 5);
 
-        const pastEssayTopics = [
-          ...periodEssaysSnap.docs,
-          ...prevEssaysSnap.docs,
-        ]
-          .map((d) => {
-            const data = d.data() as { topic?: string };
-            return data.topic;
-          })
+        const thisWeekEssayTopics = periodEssaysSnap.docs
+          .map((d) => (d.data() as { topic?: string }).topic)
           .filter((t): t is string => !!t && t.length > 0)
-          .slice(0, 10);
+          .slice(0, 5);
 
-        const pastInterviewQuestions: string[] = [];
-        [...periodInterviewsSnap.docs, ...prevInterviewsSnap.docs].forEach(
-          (d) => {
-            const data = d.data() as {
-              messages?: Array<{ role?: string; content?: string }>;
-            };
-            data.messages
-              ?.filter((m) => m?.role === "assistant" || m?.role === "ai")
-              .forEach((m) => {
-                const q = m.content?.split("\n")[0]?.slice(0, 80);
-                if (q) pastInterviewQuestions.push(q);
-              });
-          }
+        const pastEssayTopics = prevEssaysSnap.docs
+          .map((d) => (d.data() as { topic?: string }).topic)
+          .filter((t): t is string => !!t && t.length > 0)
+          .slice(0, 5);
+
+        const thisWeekInterviewQuestions = extractInterviewAssistantQuestions(
+          periodInterviewsSnap.docs,
+          5,
+        );
+
+        const thisWeekWeakItems = computeThisWeekWeakItems(
+          periodEssaysSnap.docs,
         );
 
         console.log(
-          `[reports/generate] practice context: weaknesses=${weaknessAreas.length} essayTopics=${pastEssayTopics.length} interviewQs=${pastInterviewQuestions.length}`,
+          `[reports/generate] practice context: thisWeekWeakItems=${thisWeekWeakItems.length} thisWeekTopics=${thisWeekEssayTopics.length} thisWeekInterviews=${thisWeekInterviewQuestions.length} chronicWeaknesses=${chronicWeaknesses.length} pastTopics=${pastEssayTopics.length}`,
         );
+
         const Anthropic = (await import("@anthropic-ai/sdk")).default;
         const client = new Anthropic();
         const systemPrompt = buildPracticeQuestionsPrompt({
           studentName: studentData.displayName ?? "生徒",
-          weaknesses: weaknessAreas,
+          thisWeekWeakItems,
+          thisWeekEssayTopics,
+          thisWeekInterviewQuestions,
+          chronicWeaknesses,
           pastEssayTopics,
-          pastInterviewQuestions: pastInterviewQuestions.slice(0, 10),
         });
         const resp = await client.messages.create({
           model: "claude-haiku-4-5-20251001",
-          max_tokens: 1200,
+          max_tokens: 2400,
           system: systemPrompt,
           messages: [{ role: "user", content: "JSON のみを出力してください。" }],
         });
@@ -353,33 +355,12 @@ export async function POST(request: NextRequest) {
         }
         if (match) {
           const parsed = JSON.parse(match[0]) as {
-            essayQuestions?: Array<Partial<PracticeQuestion>>;
-            interviewQuestions?: Array<Partial<PracticeQuestion>>;
+            primaryQuestions?: Array<Partial<PracticeQuestion> & { type?: string }>;
+            secondaryQuestions?: Array<Partial<PracticeQuestion> & { type?: string }>;
           };
-          const now = Date.now();
-          const buildQuestion = (
-            q: Partial<PracticeQuestion>,
-            type: "essay" | "interview",
-            idPrefix: string,
-            i: number,
-          ): PracticeQuestion => {
-            const obj: PracticeQuestion = {
-              id: q.id || `${idPrefix}_${now}_${i}`,
-              type,
-              title: q.title ?? "",
-            };
-            if (q.relatedWeakness) obj.relatedWeakness = q.relatedWeakness;
-            if (q.relatedPastTopic) obj.relatedPastTopic = q.relatedPastTopic;
-            return obj;
-          };
-          const combined: PracticeQuestion[] = [
-            ...(parsed.essayQuestions ?? []).map((q, i) => buildQuestion(q, "essay", "pq_e", i)),
-            ...(parsed.interviewQuestions ?? []).map((q, i) => buildQuestion(q, "interview", "pq_i", i)),
-          ]
-            .filter((q) => q.title.length > 0)
-            .slice(0, 8);
+          const combined = buildPracticeQuestionsFromJson(parsed);
           console.log(
-            `[reports/generate] practice parsed=${combined.length} (essay=${parsed.essayQuestions?.length ?? 0}, interview=${parsed.interviewQuestions?.length ?? 0})`,
+            `[reports/generate] practice parsed=${combined.length} (primary=${parsed.primaryQuestions?.length ?? 0}, secondary=${parsed.secondaryQuestions?.length ?? 0})`,
           );
           if (combined.length > 0) practiceQuestions = combined;
         }

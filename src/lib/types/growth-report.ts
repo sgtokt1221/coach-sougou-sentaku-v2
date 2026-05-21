@@ -14,12 +14,22 @@ export interface WeaknessProgress {
 export interface PracticeQuestion {
   id: string;
   type: "essay" | "interview";
+  /**
+   * 優先度。primary は授業中に取り組む必須類題、secondary は宿題用の補助。
+   * 既存類題には未設定がありえるため optional 扱い (UI 側で undefined を secondary 扱い)。
+   */
+  priority?: "primary" | "secondary";
   /** 題目 / 質問文 (30〜50 字程度の短文) */
   title: string;
-  /** 関連弱点 (なぜこれを薦めるかの 1 文) */
+  /** 関連弱点 (なぜこれを薦めるかの 1 文)。新仕様では必須だが、既存類題互換のため optional */
   relatedWeakness?: string;
   /** 関連する過去のテーマ・質問 (任意) */
   relatedPastTopic?: string;
+  /**
+   * 解答例。primary は必須生成、secondary は省略可。
+   * 小論文: 400-500 字 (主張 / 理由 / 具体例 / 結論)、面接: 80-150 字
+   */
+  modelAnswer?: string;
 }
 
 export interface GrowthReport {

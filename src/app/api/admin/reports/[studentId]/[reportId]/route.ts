@@ -82,14 +82,36 @@ export async function PATCH(
       update.sharedWithStudent = body.sharedWithStudent;
     }
     if (Array.isArray(body.practiceQuestions)) {
-      update.practiceQuestions = body.practiceQuestions.filter(
-        (q): q is PracticeQuestion =>
-          !!q &&
-          typeof q.id === "string" &&
-          (q.type === "essay" || q.type === "interview") &&
-          typeof q.title === "string" &&
-          q.title.trim().length > 0,
-      );
+      // 各類題から undefined フィールドを除外して Firestore エラーを防ぐ
+      update.practiceQuestions = body.practiceQuestions
+        .filter(
+          (q): q is PracticeQuestion =>
+            !!q &&
+            typeof q.id === "string" &&
+            (q.type === "essay" || q.type === "interview") &&
+            typeof q.title === "string" &&
+            q.title.trim().length > 0,
+        )
+        .map((q) => {
+          const cleaned: PracticeQuestion = {
+            id: q.id,
+            type: q.type,
+            title: q.title,
+          };
+          if (q.priority === "primary" || q.priority === "secondary") {
+            cleaned.priority = q.priority;
+          }
+          if (typeof q.relatedWeakness === "string" && q.relatedWeakness.length > 0) {
+            cleaned.relatedWeakness = q.relatedWeakness;
+          }
+          if (typeof q.relatedPastTopic === "string" && q.relatedPastTopic.length > 0) {
+            cleaned.relatedPastTopic = q.relatedPastTopic;
+          }
+          if (typeof q.modelAnswer === "string" && q.modelAnswer.length > 0) {
+            cleaned.modelAnswer = q.modelAnswer;
+          }
+          return cleaned;
+        });
     }
 
     step = "fetch_report";

@@ -3,6 +3,13 @@ import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
 import { buildPracticeQuestionsPrompt } from "@/lib/ai/prompts/practice-questions";
 import type { PracticeQuestion } from "@/lib/types/growth-report";
+import {
+  computeThisWeekWeakItems,
+  extractInterviewAssistantQuestions,
+  buildPracticeQuestionsFromJson,
+} from "@/lib/growth/practice-questions-helpers";
+import { getPeriodRange } from "@/lib/growth/report";
+import { Timestamp } from "firebase-admin/firestore";
 
 /**
  * POST /api/admin/reports/[studentId]/[reportId]/generate-practice-questions
@@ -73,47 +80,81 @@ export async function POST(
     }
 
     step = "collect_context";
-    // 弱点 / 過去テーマ / 過去面接質問を Firestore から収集
+    // 既存レポートから期間を再構築 (today を基準にすると古いレポートでは今週がズレるため)
+    const reportData = reportSnap.data() as {
+      period?: "weekly" | "monthly";
+      startDate?: FirebaseFirestore.Timestamp;
+      endDate?: FirebaseFirestore.Timestamp;
+    };
+    const period = reportData.period ?? "weekly";
+    let startDate: Date;
+    let endDate: Date;
+    if (reportData.startDate && reportData.endDate) {
+      startDate = reportData.startDate.toDate();
+      endDate = reportData.endDate.toDate();
+    } else {
+      const range = getPeriodRange(period);
+      startDate = range.start;
+      endDate = range.end;
+    }
+
     const weaknessesSnap = await adminDb
       .collection(`users/${studentId}/weaknesses`)
       .get();
-    const weaknessAreas = weaknessesSnap.docs
+    const chronicWeaknesses = weaknessesSnap.docs
       .map((d) => (d.data() as { area?: string }).area)
       .filter((a): a is string => !!a && a.length > 0)
       .slice(0, 5);
 
-    const essaysSnap = await adminDb
+    // 今週 essay (期間内のみ)
+    const periodEssaysSnap = await adminDb
+      .collection("essays")
+      .where("userId", "==", studentId)
+      .where("createdAt", ">=", Timestamp.fromDate(startDate))
+      .where("createdAt", "<=", Timestamp.fromDate(endDate))
+      .get()
+      .catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] }));
+
+    // 過去 essay (期間外、重複回避用)
+    const allEssaysSnap = await adminDb
       .collection("essays")
       .where("userId", "==", studentId)
       .limit(30)
       .get()
       .catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] }));
-    const pastEssayTopics = essaysSnap.docs
-      .map((d) => (d.data() as { topic?: string }).topic)
-      .filter((t): t is string => !!t && t.length > 0)
-      .slice(0, 10);
-
-    const interviewsSnap = await adminDb
-      .collection("interviews")
-      .where("userId", "==", studentId)
-      .limit(20)
-      .get()
-      .catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] }));
-    const pastInterviewQuestions: string[] = [];
-    interviewsSnap.docs.forEach((d) => {
-      const data = d.data() as {
-        messages?: Array<{ role?: string; content?: string }>;
-      };
-      data.messages
-        ?.filter((m) => m?.role === "assistant" || m?.role === "ai")
-        .forEach((m) => {
-          const q = m.content?.split("\n")[0]?.slice(0, 80);
-          if (q) pastInterviewQuestions.push(q);
-        });
+    const startMs = startDate.getTime();
+    const pastEssayDocs = allEssaysSnap.docs.filter((d) => {
+      const data = d.data() as { createdAt?: FirebaseFirestore.Timestamp };
+      const ts = data.createdAt?.toMillis?.();
+      return typeof ts === "number" && ts < startMs;
     });
 
+    const thisWeekEssayTopics = periodEssaysSnap.docs
+      .map((d) => (d.data() as { topic?: string }).topic)
+      .filter((t): t is string => !!t && t.length > 0)
+      .slice(0, 5);
+    const pastEssayTopics = pastEssayDocs
+      .map((d) => (d.data() as { topic?: string }).topic)
+      .filter((t): t is string => !!t && t.length > 0)
+      .slice(0, 5);
+
+    const thisWeekWeakItems = computeThisWeekWeakItems(periodEssaysSnap.docs);
+
+    // 今週 interview
+    const periodInterviewsSnap = await adminDb
+      .collection("interviews")
+      .where("userId", "==", studentId)
+      .where("createdAt", ">=", Timestamp.fromDate(startDate))
+      .where("createdAt", "<=", Timestamp.fromDate(endDate))
+      .get()
+      .catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] }));
+    const thisWeekInterviewQuestions = extractInterviewAssistantQuestions(
+      periodInterviewsSnap.docs,
+      5,
+    );
+
     console.log(
-      `[reports/generate-practice-questions] context for ${studentId}: weaknesses=${weaknessAreas.length} essayTopics=${pastEssayTopics.length} interviewQs=${pastInterviewQuestions.length}`,
+      `[reports/generate-practice-questions] context for ${studentId}: thisWeekWeakItems=${thisWeekWeakItems.length} thisWeekTopics=${thisWeekEssayTopics.length} thisWeekInterviews=${thisWeekInterviewQuestions.length} chronicWeaknesses=${chronicWeaknesses.length} pastTopics=${pastEssayTopics.length}`,
     );
 
     step = "call_ai";
@@ -121,13 +162,15 @@ export async function POST(
     const client = new Anthropic();
     const systemPrompt = buildPracticeQuestionsPrompt({
       studentName: userData.displayName ?? "生徒",
-      weaknesses: weaknessAreas,
+      thisWeekWeakItems,
+      thisWeekEssayTopics,
+      thisWeekInterviewQuestions,
+      chronicWeaknesses,
       pastEssayTopics,
-      pastInterviewQuestions: pastInterviewQuestions.slice(0, 10),
     });
     const resp = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 1200,
+      max_tokens: 2400,
       system: systemPrompt,
       messages: [{ role: "user", content: "JSON のみを出力してください。" }],
     });
@@ -147,34 +190,11 @@ export async function POST(
       );
     }
     const parsed = JSON.parse(match[0]) as {
-      essayQuestions?: Array<Partial<PracticeQuestion>>;
-      interviewQuestions?: Array<Partial<PracticeQuestion>>;
-    };
-    const now = Date.now();
-
-    // undefined フィールドを Firestore に渡さないよう、条件付きで構築する
-    const buildQuestion = (
-      q: Partial<PracticeQuestion>,
-      type: "essay" | "interview",
-      idPrefix: string,
-      i: number,
-    ): PracticeQuestion => {
-      const obj: PracticeQuestion = {
-        id: q.id || `${idPrefix}_${now}_${i}`,
-        type,
-        title: q.title ?? "",
-      };
-      if (q.relatedWeakness) obj.relatedWeakness = q.relatedWeakness;
-      if (q.relatedPastTopic) obj.relatedPastTopic = q.relatedPastTopic;
-      return obj;
+      primaryQuestions?: Array<Partial<PracticeQuestion> & { type?: string }>;
+      secondaryQuestions?: Array<Partial<PracticeQuestion> & { type?: string }>;
     };
 
-    const combined: PracticeQuestion[] = [
-      ...(parsed.essayQuestions ?? []).map((q, i) => buildQuestion(q, "essay", "pq_e", i)),
-      ...(parsed.interviewQuestions ?? []).map((q, i) => buildQuestion(q, "interview", "pq_i", i)),
-    ]
-      .filter((q) => q.title.length > 0)
-      .slice(0, 8);
+    const combined = buildPracticeQuestionsFromJson(parsed);
 
     if (combined.length === 0) {
       return NextResponse.json(

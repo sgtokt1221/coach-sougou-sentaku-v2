@@ -124,6 +124,16 @@ function PrintBody() {
             break-inside: avoid;
             page-break-inside: avoid;
           }
+          /* details を強制展開 (ブラウザ依存しない確実な展開) */
+          .print-root details {
+            display: block !important;
+          }
+          .print-root details > summary {
+            display: none !important;
+          }
+          .print-root details > *:not(summary) {
+            display: block !important;
+          }
         }
       `}</style>
 
