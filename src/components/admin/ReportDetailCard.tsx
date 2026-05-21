@@ -131,6 +131,37 @@ export function ReportDetailCard({ report, readOnly, onUpdated }: Props) {
   const [practiceQs, setPracticeQs] = useState<PracticeQuestion[]>(
     report.practiceQuestions ?? []
   );
+  const [generatingPq, setGeneratingPq] = useState(false);
+
+  const generatePracticeQuestions = async () => {
+    setGeneratingPq(true);
+    try {
+      const res = await authFetch(
+        `/api/admin/reports/${report.studentId}/${report.id}/generate-practice-questions`,
+        { method: "POST" }
+      );
+      if (!res.ok) {
+        const payload = (await res.json().catch(() => ({}))) as {
+          error?: string;
+          detail?: string;
+          step?: string;
+        };
+        throw new Error(
+          payload.detail
+            ? `[${payload.step ?? "?"}] ${payload.detail}`
+            : payload.error ?? "類題の生成に失敗しました"
+        );
+      }
+      const updated = (await res.json()) as GrowthReport;
+      toast.success(`類題を ${updated.practiceQuestions?.length ?? 0} 件生成しました`);
+      onUpdated?.(updated);
+    } catch (err) {
+      console.error("[ReportDetailCard] generate practice questions failed:", err);
+      toast.error(err instanceof Error ? err.message : "類題の生成に失敗しました");
+    } finally {
+      setGeneratingPq(false);
+    }
+  };
 
   const startEdit = () => {
     setAssessment(report.overallAssessment ?? "");
@@ -430,7 +461,63 @@ export function ReportDetailCard({ report, readOnly, onUpdated }: Props) {
         )}
       </div>
 
-      {/* 次に取り組む類題 (AI 生成、講師編集可) */}
+      {/* 次に取り組む類題: 編集中 or 既存類題ありで通常表示。
+           編集中でない & 類題なしの場合は (admin) 生成ボタン / (印刷) 記入欄 */}
+      {!editing &&
+        !readOnly &&
+        (report.practiceQuestions?.length ?? 0) === 0 && (
+          <div className="rounded-md border border-dashed bg-muted/30 p-3">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5 text-sm">
+                <Sparkles className="size-4 text-emerald-600" />
+                <span className="font-medium">次に取り組む類題</span>
+                <span className="text-xs text-muted-foreground">
+                  (まだ生成されていません)
+                </span>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={generatePracticeQuestions}
+                disabled={generatingPq}
+              >
+                {generatingPq ? (
+                  <Loader2 className="mr-1 size-3.5 animate-spin" />
+                ) : (
+                  <Sparkles className="mr-1 size-3.5" />
+                )}
+                類題を生成する
+              </Button>
+            </div>
+          </div>
+        )}
+
+      {/* 印刷用: readOnly + 類題なし のとき「次回までの宿題」記入欄 */}
+      {readOnly && (report.practiceQuestions?.length ?? 0) === 0 && (
+        <div className="rounded-lg border-2 border-dashed border-emerald-200 bg-emerald-50/30 p-4 dark:border-emerald-900 dark:bg-emerald-950/20">
+          <h4 className="mb-3 flex items-center gap-1.5 text-sm font-semibold">
+            <Sparkles className="size-4 text-emerald-600" />
+            次回までの宿題 (先生記入欄)
+          </h4>
+          <div className="space-y-3">
+            <div>
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                小論文テーマ
+              </div>
+              <div className="mt-1 h-6 border-b border-slate-300" />
+              <div className="mt-2 h-6 border-b border-slate-300" />
+            </div>
+            <div>
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                面接練習
+              </div>
+              <div className="mt-1 h-6 border-b border-slate-300" />
+              <div className="mt-2 h-6 border-b border-slate-300" />
+            </div>
+          </div>
+        </div>
+      )}
+
       {(editing || (report.practiceQuestions?.length ?? 0) > 0) && (
         <div>
           <h4 className="mb-2 flex items-center gap-1.5 text-sm font-semibold">

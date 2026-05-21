@@ -286,6 +286,9 @@ export async function POST(request: NextRequest) {
     // 弱点・過去問から類題を AI 生成 (失敗してもレポート本体は完成させる)
     step = "generate_practice_questions";
     let practiceQuestions: PracticeQuestion[] | undefined;
+    if (!process.env.ANTHROPIC_API_KEY) {
+      console.warn("[reports/generate] practice questions skipped: ANTHROPIC_API_KEY not set");
+    }
     if (process.env.ANTHROPIC_API_KEY) {
       try {
         const weaknessAreas = weaknessesSnap.docs
@@ -319,6 +322,9 @@ export async function POST(request: NextRequest) {
           }
         );
 
+        console.log(
+          `[reports/generate] practice context: weaknesses=${weaknessAreas.length} essayTopics=${pastEssayTopics.length} interviewQs=${pastInterviewQuestions.length}`,
+        );
         const Anthropic = (await import("@anthropic-ai/sdk")).default;
         const client = new Anthropic();
         const systemPrompt = buildPracticeQuestionsPrompt({
@@ -335,7 +341,16 @@ export async function POST(request: NextRequest) {
         });
         const text =
           resp.content[0]?.type === "text" ? resp.content[0].text : "";
+        console.log(
+          `[reports/generate] practice raw response length=${text.length}`,
+        );
         const match = text.match(/\{[\s\S]*\}/);
+        if (!match) {
+          console.warn(
+            "[reports/generate] practice questions: no JSON found in response",
+            text.slice(0, 200),
+          );
+        }
         if (match) {
           const parsed = JSON.parse(match[0]) as {
             essayQuestions?: Array<Partial<PracticeQuestion>>;
@@ -360,12 +375,18 @@ export async function POST(request: NextRequest) {
           ]
             .filter((q) => q.title.length > 0)
             .slice(0, 8);
+          console.log(
+            `[reports/generate] practice parsed=${combined.length} (essay=${parsed.essayQuestions?.length ?? 0}, interview=${parsed.interviewQuestions?.length ?? 0})`,
+          );
           if (combined.length > 0) practiceQuestions = combined;
         }
       } catch (err) {
         console.warn("[reports/generate] practice questions failed:", err);
       }
     }
+    console.log(
+      `[reports/generate] practice final count=${practiceQuestions?.length ?? 0}`,
+    );
 
     step = "generate_report";
     const report = generateGrowthReport({
