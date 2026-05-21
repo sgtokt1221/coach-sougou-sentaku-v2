@@ -151,21 +151,27 @@ export async function POST(
       interviewQuestions?: Array<Partial<PracticeQuestion>>;
     };
     const now = Date.now();
+
+    // undefined フィールドを Firestore に渡さないよう、条件付きで構築する
+    const buildQuestion = (
+      q: Partial<PracticeQuestion>,
+      type: "essay" | "interview",
+      idPrefix: string,
+      i: number,
+    ): PracticeQuestion => {
+      const obj: PracticeQuestion = {
+        id: q.id || `${idPrefix}_${now}_${i}`,
+        type,
+        title: q.title ?? "",
+      };
+      if (q.relatedWeakness) obj.relatedWeakness = q.relatedWeakness;
+      if (q.relatedPastTopic) obj.relatedPastTopic = q.relatedPastTopic;
+      return obj;
+    };
+
     const combined: PracticeQuestion[] = [
-      ...(parsed.essayQuestions ?? []).map((q, i) => ({
-        id: q.id || `pq_e_${now}_${i}`,
-        type: "essay" as const,
-        title: q.title ?? "",
-        relatedWeakness: q.relatedWeakness,
-        relatedPastTopic: q.relatedPastTopic,
-      })),
-      ...(parsed.interviewQuestions ?? []).map((q, i) => ({
-        id: q.id || `pq_i_${now}_${i}`,
-        type: "interview" as const,
-        title: q.title ?? "",
-        relatedWeakness: q.relatedWeakness,
-        relatedPastTopic: q.relatedPastTopic,
-      })),
+      ...(parsed.essayQuestions ?? []).map((q, i) => buildQuestion(q, "essay", "pq_e", i)),
+      ...(parsed.interviewQuestions ?? []).map((q, i) => buildQuestion(q, "interview", "pq_i", i)),
     ]
       .filter((q) => q.title.length > 0)
       .slice(0, 8);

@@ -198,7 +198,7 @@ export function GrowthReportsSection({ studentId }: Props) {
       </CardContent>
 
       <Dialog open={!!open} onOpenChange={(o) => !o && setOpen(null)}>
-        <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
+        <DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto">
           {open && (
             <>
               <DialogHeader>
