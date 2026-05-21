@@ -1,11 +1,20 @@
 "use client";
 
-import { useEffect, useRef, Suspense } from "react";
+import { useEffect, useRef, useState, Suspense } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Calendar, Clock, Loader2, Printer } from "lucide-react";
+import {
+  ArrowLeft,
+  Calendar,
+  Clock,
+  Loader2,
+  Printer,
+  Sparkles,
+} from "lucide-react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { authFetch } from "@/lib/api/client";
 import { useAuthSWR } from "@/lib/api/swr";
 import { ReportDetailCard } from "@/components/admin/ReportDetailCard";
 import type { GrowthReport } from "@/lib/types/growth-report";
@@ -65,6 +74,43 @@ function Body() {
     }
   }, [autoPrint, report]);
 
+  // 「類題を再生成」状態
+  const [regenerating, setRegenerating] = useState(false);
+  const regeneratePracticeQuestions = async () => {
+    if (regenerating) return;
+    setRegenerating(true);
+    try {
+      const res = await authFetch(
+        `/api/admin/reports/${studentId}/${reportId}/generate-practice-questions`,
+        { method: "POST" },
+      );
+      if (!res.ok) {
+        const payload = (await res.json().catch(() => ({}))) as {
+          error?: string;
+          detail?: string;
+          step?: string;
+        };
+        throw new Error(
+          payload.detail
+            ? `[${payload.step ?? "?"}] ${payload.detail}`
+            : payload.error ?? "類題の再生成に失敗しました",
+        );
+      }
+      const updated = (await res.json()) as GrowthReport;
+      toast.success(
+        `類題を ${updated.practiceQuestions?.length ?? 0} 件再生成しました`,
+      );
+      mutate(updated, { revalidate: false });
+    } catch (err) {
+      console.error("[AdminReportDetailPage] regenerate failed:", err);
+      toast.error(
+        err instanceof Error ? err.message : "類題の再生成に失敗しました",
+      );
+    } finally {
+      setRegenerating(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center text-sm text-muted-foreground">
@@ -98,8 +144,17 @@ function Body() {
           [data-app-chrome] {
             display: none !important;
           }
+          /* AppLayout の h-dvh + overflow-hidden を印刷時に解除し全ページ出力を可能にする */
+          [data-app-layout],
+          [data-app-scroll] {
+            height: auto !important;
+            overflow: visible !important;
+            display: block !important;
+          }
           main {
             overflow: visible !important;
+            height: auto !important;
+            padding-bottom: 0 !important;
           }
           /* details を確実に展開 */
           details {
@@ -150,7 +205,21 @@ function Body() {
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-2 print:hidden">
+            <div className="flex flex-wrap items-center gap-2 print:hidden">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={regeneratePracticeQuestions}
+                disabled={regenerating}
+                title="解答例付きの最新ロジックで類題を再生成します (古いレポートの修復用)"
+              >
+                {regenerating ? (
+                  <Loader2 className="mr-1.5 size-4 animate-spin" />
+                ) : (
+                  <Sparkles className="mr-1.5 size-4" />
+                )}
+                類題を再生成
+              </Button>
               <Button
                 variant="outline"
                 size="sm"

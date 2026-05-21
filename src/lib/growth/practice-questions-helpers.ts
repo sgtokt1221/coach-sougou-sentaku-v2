@@ -102,6 +102,10 @@ export function normalizePracticeQuestion(
 /**
  * AI 応答 JSON から PracticeQuestion[] を組み立てる共通ロジック。
  * primaryQuestions / secondaryQuestions の 2 つに分かれた応答に対応。
+ *
+ * fallback: AI が primaryQuestions を空 or 省略した場合、
+ * secondaryQuestions の先頭 3 件を primary に昇格させる
+ * (「全件 secondary バッジ」になる UX 問題を救済)。
  */
 export function buildPracticeQuestionsFromJson(parsed: {
   primaryQuestions?: Array<Partial<PracticeQuestion> & { type?: string }>;
@@ -111,11 +115,23 @@ export function buildPracticeQuestionsFromJson(parsed: {
   const toType = (t: string | undefined): "essay" | "interview" =>
     t === "interview" ? "interview" : "essay";
 
+  let primarySource = parsed.primaryQuestions ?? [];
+  let secondarySource = parsed.secondaryQuestions ?? [];
+
+  // primary 0 件 + secondary に複数あるなら、先頭 3 件を primary に昇格
+  if (primarySource.length === 0 && secondarySource.length >= 1) {
+    console.warn(
+      "[practice-questions] AI returned 0 primaryQuestions; promoting first 3 of secondaryQuestions to primary",
+    );
+    primarySource = secondarySource.slice(0, 3);
+    secondarySource = secondarySource.slice(3);
+  }
+
   return [
-    ...(parsed.primaryQuestions ?? []).map((q, i) =>
+    ...primarySource.map((q, i) =>
       normalizePracticeQuestion(q, toType(q.type), "primary", "pq_p", i, now),
     ),
-    ...(parsed.secondaryQuestions ?? []).map((q, i) =>
+    ...secondarySource.map((q, i) =>
       normalizePracticeQuestion(q, toType(q.type), "secondary", "pq_s", i, now),
     ),
   ]

@@ -337,7 +337,7 @@ export async function POST(request: NextRequest) {
         });
         const resp = await client.messages.create({
           model: "claude-haiku-4-5-20251001",
-          max_tokens: 2400,
+          max_tokens: 3500,
           system: systemPrompt,
           messages: [{ role: "user", content: "JSON のみを出力してください。" }],
         });

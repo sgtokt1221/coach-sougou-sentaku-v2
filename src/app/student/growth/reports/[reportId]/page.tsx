@@ -89,8 +89,17 @@ function Body() {
           [data-app-chrome] {
             display: none !important;
           }
+          /* AppLayout の h-dvh + overflow-hidden を印刷時に解除し全ページ出力を可能にする */
+          [data-app-layout],
+          [data-app-scroll] {
+            height: auto !important;
+            overflow: visible !important;
+            display: block !important;
+          }
           main {
             overflow: visible !important;
+            height: auto !important;
+            padding-bottom: 0 !important;
           }
           details {
             display: block !important;
