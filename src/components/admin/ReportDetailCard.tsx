@@ -37,7 +37,7 @@ import {
 import { authFetch } from "@/lib/api/client";
 import { useAuthSWR } from "@/lib/api/swr";
 import { toast } from "sonner";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SegmentControl } from "@/components/shared/SegmentControl";
 import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
 import { AssignHomeworkButton } from "@/components/admin/AssignHomeworkButton";
 import { scoreToSkillRank } from "@/lib/history-rank";
@@ -790,50 +790,44 @@ function PracticeQuestionsList({
     (u) => grouped[u].length > 0,
   );
 
+  const [tab, setTab] = useState<"lesson" | "homework" | "extra" | "all">(
+    "lesson",
+  );
+
   return (
     <>
-      {/* 画面用: タブ UI (印刷時は非表示) */}
-      <Tabs defaultValue="lesson" className="w-full print:hidden">
-        <TabsList>
-          {(["lesson", "homework", "extra", "all"] as const).map((key) => {
-            const count =
-              key === "all" ? questions.length : grouped[key].length;
-            return (
-              <TabsTrigger key={key} value={key} className="gap-1.5">
-                {key === "all" ? "すべて" : usageLabel[key]}
-                <Badge
-                  variant="outline"
-                  className={`text-[10px] ${count === 0 ? "opacity-50" : ""}`}
-                >
-                  {count}
-                </Badge>
-              </TabsTrigger>
-            );
-          })}
-        </TabsList>
-
-        <TabsContent value="lesson" className="mt-3">
-          {renderList("lesson")}
-        </TabsContent>
-        <TabsContent value="homework" className="mt-3">
-          {renderList("homework")}
-        </TabsContent>
-        <TabsContent value="extra" className="mt-3">
-          {renderList("extra")}
-        </TabsContent>
-        <TabsContent value="all" className="mt-3">
-          <div className="space-y-4">
-            {allByUsage.map((usage) => (
-              <div key={usage}>
-                <h5 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  {usageLabel[usage]} ({grouped[usage].length})
-                </h5>
-                {renderList(usage)}
-              </div>
-            ))}
-          </div>
-        </TabsContent>
-      </Tabs>
+      {/* 画面用: SegmentControl + 条件分岐 (印刷時非表示) */}
+      <div className="print:hidden">
+        <SegmentControl
+          value={tab}
+          onChange={setTab}
+          options={[
+            { id: "lesson", label: "授業中", count: grouped.lesson.length },
+            { id: "homework", label: "宿題", count: grouped.homework.length },
+            { id: "extra", label: "予備", count: grouped.extra.length },
+            { id: "all", label: "すべて", count: questions.length },
+          ]}
+          size="sm"
+          defaultAccent="emerald"
+        />
+        <div className="mt-3">
+          {tab === "lesson" && renderList("lesson")}
+          {tab === "homework" && renderList("homework")}
+          {tab === "extra" && renderList("extra")}
+          {tab === "all" && (
+            <div className="space-y-4">
+              {allByUsage.map((usage) => (
+                <div key={usage}>
+                  <h5 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {usageLabel[usage]} ({grouped[usage].length})
+                  </h5>
+                  {renderList(usage)}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
 
       {/*
         印刷用: タブ枠なしで全件直接表示 (lesson → homework → extra の順)。
