@@ -18,6 +18,11 @@ interface InterviewData {
   startedAt: Date;
   scores: {
     total: number;
+    clarity?: number;
+    apAlignment?: number;
+    enthusiasm?: number;
+    specificity?: number;
+    bodyLanguage?: number;
   } | null;
 }
 
@@ -98,14 +103,31 @@ function computeEssayStats(
   const bestCategory = ESSAY_CATEGORIES.find((c) => c.key === bestKey)?.label ?? "-";
   const worstCategory = ESSAY_CATEGORIES.find((c) => c.key === worstKey)?.label ?? "-";
 
+  const round1 = (n: number) => Math.round(n * 10) / 10;
+
   return {
     count: periodEssays.length,
     avgScore,
     scoreChange,
     bestCategory,
     worstCategory,
+    categoryAverages: {
+      structure: round1(categoryAvgs.structure ?? 0),
+      logic: round1(categoryAvgs.logic ?? 0),
+      expression: round1(categoryAvgs.expression ?? 0),
+      apAlignment: round1(categoryAvgs.apAlignment ?? 0),
+      originality: round1(categoryAvgs.originality ?? 0),
+    },
   };
 }
+
+const INTERVIEW_CATEGORIES = [
+  "clarity",
+  "apAlignment",
+  "enthusiasm",
+  "specificity",
+  "bodyLanguage",
+] as const;
 
 function computeInterviewStats(
   periodInterviews: InterviewData[],
@@ -132,10 +154,36 @@ function computeInterviewStats(
 
   const scoreChange = prevScored.length > 0 ? Math.round((avgScore - prevAvg) * 10) / 10 : 0;
 
+  // 項目別平均 (レーダーチャート用)
+  const catSums: Record<string, { sum: number; count: number }> = {};
+  for (const i of scored) {
+    const s = i.scores as Record<string, number> | null | undefined;
+    if (!s) continue;
+    for (const k of INTERVIEW_CATEGORIES) {
+      const v = s[k];
+      if (typeof v === "number") {
+        catSums[k] = catSums[k] ?? { sum: 0, count: 0 };
+        catSums[k].sum += v;
+        catSums[k].count += 1;
+      }
+    }
+  }
+  const avgOf = (k: string): number =>
+    catSums[k]?.count
+      ? Math.round((catSums[k].sum / catSums[k].count) * 10) / 10
+      : 0;
+
   return {
     count: periodInterviews.length,
     avgScore,
     scoreChange,
+    categoryAverages: {
+      clarity: avgOf("clarity"),
+      apAlignment: avgOf("apAlignment"),
+      enthusiasm: avgOf("enthusiasm"),
+      specificity: avgOf("specificity"),
+      bodyLanguage: avgOf("bodyLanguage"),
+    },
   };
 }
 

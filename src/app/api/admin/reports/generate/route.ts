@@ -286,10 +286,24 @@ export async function POST(request: NextRequest) {
 
     const toInterviewData = (doc: FirebaseFirestore.QueryDocumentSnapshot) => {
       const d = doc.data();
+      const s = d.scores;
       return {
         id: doc.id,
         startedAt: d.startedAt?.toDate?.() ?? new Date(),
-        scores: d.scores ? { total: d.scores.total ?? 0 } : null,
+        scores: s
+          ? {
+              total: typeof s.total === "number" ? s.total : 0,
+              clarity: typeof s.clarity === "number" ? s.clarity : undefined,
+              apAlignment:
+                typeof s.apAlignment === "number" ? s.apAlignment : undefined,
+              enthusiasm:
+                typeof s.enthusiasm === "number" ? s.enthusiasm : undefined,
+              specificity:
+                typeof s.specificity === "number" ? s.specificity : undefined,
+              bodyLanguage:
+                typeof s.bodyLanguage === "number" ? s.bodyLanguage : undefined,
+            }
+          : null,
       };
     };
 

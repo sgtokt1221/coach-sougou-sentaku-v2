@@ -1,6 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import {
+  PolarAngleAxis,
+  PolarGrid,
+  PolarRadiusAxis,
+  Radar,
+  RadarChart,
+  ResponsiveContainer,
+} from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -1013,6 +1021,7 @@ function StatsSummaryCard({
     scoreChange: number;
     bestCategory?: string;
     worstCategory?: string;
+    categoryAverages?: Record<string, number>;
   };
   max: number;
 }) {
@@ -1022,6 +1031,28 @@ function StatsSummaryCard({
   const prevAvg = Math.max(0, stats.avgScore - stats.scoreChange);
   const prevRank = scoreToSkillRank(prevAvg, max);
   const rankChanged = currentRank !== prevRank && stats.count > 0;
+
+  // レーダーチャート用データ (5 軸)
+  const radarData = useMemo(() => {
+    const c = stats.categoryAverages;
+    if (!c) return null;
+    if (isEssay) {
+      return [
+        { subject: "構成", value: c.structure ?? 0 },
+        { subject: "論理性", value: c.logic ?? 0 },
+        { subject: "表現力", value: c.expression ?? 0 },
+        { subject: "AP合致度", value: c.apAlignment ?? 0 },
+        { subject: "独自性", value: c.originality ?? 0 },
+      ];
+    }
+    return [
+      { subject: "明確さ", value: c.clarity ?? 0 },
+      { subject: "AP合致度", value: c.apAlignment ?? 0 },
+      { subject: "熱意", value: c.enthusiasm ?? 0 },
+      { subject: "具体性", value: c.specificity ?? 0 },
+      { subject: "ボディランゲージ", value: c.bodyLanguage ?? 0 },
+    ];
+  }, [isEssay, stats.categoryAverages]);
 
   return (
     <div
@@ -1091,6 +1122,31 @@ function StatsSummaryCard({
               </div>
             </div>
           )}
+        </div>
+      )}
+      {radarData && stats.count > 0 && (
+        <div className="mx-auto mt-3 aspect-square w-full max-w-[240px] print:max-w-[180px] print:break-inside-avoid">
+          <ResponsiveContainer width="100%" height="100%">
+            <RadarChart data={radarData} outerRadius="75%">
+              <PolarGrid gridType="polygon" stroke="#e2e8f0" />
+              <PolarAngleAxis
+                dataKey="subject"
+                tick={{ fill: "#475569", fontSize: 10 }}
+              />
+              <PolarRadiusAxis
+                domain={[0, 10]}
+                tickCount={6}
+                tick={{ fill: "#94a3b8", fontSize: 9 }}
+              />
+              <Radar
+                dataKey="value"
+                stroke={isEssay ? "#0d9488" : "#e11d48"}
+                fill={isEssay ? "#14b8a6" : "#fb7185"}
+                fillOpacity={0.25}
+                isAnimationActive={false}
+              />
+            </RadarChart>
+          </ResponsiveContainer>
         </div>
       )}
     </div>

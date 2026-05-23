@@ -127,7 +127,6 @@ const studentPrimary: PrimaryAction[] = [
 ];
 
 const studentSecondary: ListItem[] = [
-  { label: "今週のまとめ", href: "/student/weekly-digest", icon: CalendarCheck },
   { label: "ネタインプット", href: "/student/topic-input", icon: BookMarked },
   { label: "テーマ・過去問", href: "/student/essay/themes", icon: BookOpen },
   { label: "要約ドリル", href: "/student/essay/summary-drill", icon: ClipboardList },

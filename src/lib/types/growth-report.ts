@@ -75,11 +75,27 @@ export interface GrowthReport {
     scoreChange: number;
     bestCategory: string;
     worstCategory: string;
+    /** 期間内 essays の項目別平均 (各 0-10、レーダーチャート用)。古いレポートには無い */
+    categoryAverages?: {
+      structure: number;
+      logic: number;
+      expression: number;
+      apAlignment: number;
+      originality: number;
+    };
   };
   interviewStats: {
     count: number;
     avgScore: number;
     scoreChange: number;
+    /** 期間内 interviews の項目別平均 (各 0-10、レーダーチャート用)。古いレポートには無い */
+    categoryAverages?: {
+      clarity: number;
+      apAlignment: number;
+      enthusiasm: number;
+      specificity: number;
+      bodyLanguage: number;
+    };
   };
   weaknessProgress: WeaknessProgress[];
   recommendations: string[];
