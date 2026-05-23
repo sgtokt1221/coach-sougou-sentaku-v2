@@ -51,19 +51,43 @@ export async function GET(
       }
     }
 
+    // composite index (userId + status + startedAt) が無い環境でも JS filter で
+    // 履歴を確実に拾う。 silent catch で空配列にすると面接側が永遠に出ない問題を回避
+    const fetchCompletedInterviews = async () => {
+      try {
+        return await adminDb!
+          .collection("interviews")
+          .where("userId", "==", id)
+          .where("status", "==", "completed")
+          .orderBy("startedAt", "desc")
+          .get();
+      } catch (indexErr) {
+        console.warn(
+          "[admin/students] interviews composite index missing, fallback to JS filter:",
+          indexErr,
+        );
+        const snap = await adminDb!
+          .collection("interviews")
+          .where("userId", "==", id)
+          .get();
+        const docs = snap.docs
+          .filter((d) => d.data().status === "completed")
+          .sort((a, b) => {
+            const ta = a.data().startedAt?.toDate?.()?.getTime() ?? 0;
+            const tb = b.data().startedAt?.toDate?.()?.getTime() ?? 0;
+            return tb - ta;
+          });
+        return { docs };
+      }
+    };
+
     const [essaysSnap, interviewsSnap, weaknessesSnap] = await Promise.all([
       adminDb
         .collection("essays")
         .where("userId", "==", id)
         .orderBy("submittedAt", "desc")
         .get(),
-      adminDb
-        .collection("interviews")
-        .where("userId", "==", id)
-        .where("status", "==", "completed")
-        .orderBy("startedAt", "desc")
-        .get()
-        .catch(() => ({ docs: [] })),
+      fetchCompletedInterviews(),
       adminDb
         .collection(`users/${id}/weaknesses`)
         .get(),
