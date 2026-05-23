@@ -137,6 +137,42 @@ export async function GET(
       .filter((i): i is { date: string; total: number } => i.total != null)
       .reverse();
 
+    // スキル俯瞰レーダー用: 直近 3 件の 5 軸平均
+    const avg = (xs: number[]) =>
+      xs.length > 0
+        ? Math.round((xs.reduce((s, n) => s + n, 0) / xs.length) * 10) / 10
+        : 0;
+
+    const recentEssayScores = essays
+      .filter((e) => e.scores)
+      .slice(0, 3)
+      .map((e) => e.scores!);
+    const essayCategoryAverages =
+      recentEssayScores.length > 0
+        ? {
+            structure: avg(recentEssayScores.map((s) => s.structure ?? 0)),
+            logic: avg(recentEssayScores.map((s) => s.logic ?? 0)),
+            expression: avg(recentEssayScores.map((s) => s.expression ?? 0)),
+            apAlignment: avg(recentEssayScores.map((s) => s.apAlignment ?? 0)),
+            originality: avg(recentEssayScores.map((s) => s.originality ?? 0)),
+          }
+        : undefined;
+
+    const recentInterviewScores = interviewsSnap.docs
+      .slice(0, 3)
+      .map((d) => d.data().scores)
+      .filter((s): s is Record<string, number> => s != null);
+    const interviewCategoryAverages =
+      recentInterviewScores.length > 0
+        ? {
+            clarity: avg(recentInterviewScores.map((s) => s.clarity ?? 0)),
+            apAlignment: avg(recentInterviewScores.map((s) => s.apAlignment ?? 0)),
+            enthusiasm: avg(recentInterviewScores.map((s) => s.enthusiasm ?? 0)),
+            specificity: avg(recentInterviewScores.map((s) => s.specificity ?? 0)),
+            bodyLanguage: avg(recentInterviewScores.map((s) => s.bodyLanguage ?? 0)),
+          }
+        : undefined;
+
     // 最終活動日を計算（添削・面接の最新日時）
     const dates: string[] = [];
     if (essays.length > 0) dates.push(essays[0].submittedAt);
@@ -179,6 +215,8 @@ export async function GET(
       essays,
       essayScoreTrend,
       interviewScoreTrend,
+      ...(essayCategoryAverages ? { essayCategoryAverages } : {}),
+      ...(interviewCategoryAverages ? { interviewCategoryAverages } : {}),
       lastActivityAt,
       realtimeUnlocked: userData.realtimeUnlocked === true,
     };

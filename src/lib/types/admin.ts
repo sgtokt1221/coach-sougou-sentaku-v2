@@ -52,6 +52,22 @@ export interface StudentDetail {
   scoreTrend?: ScoreTrendPoint[];
   essayScoreTrend?: { date: string; total: number }[];
   interviewScoreTrend?: { date: string; total: number }[];
+  /** 直近 essays の 5 軸平均 (0-10)。スキル俯瞰レーダー用 */
+  essayCategoryAverages?: {
+    structure: number;
+    logic: number;
+    expression: number;
+    apAlignment: number;
+    originality: number;
+  };
+  /** 直近 interviews (個人面接モード) の 5 軸平均 (0-10)。スキル俯瞰レーダー用 */
+  interviewCategoryAverages?: {
+    clarity: number;
+    apAlignment: number;
+    enthusiasm: number;
+    specificity: number;
+    bodyLanguage: number;
+  };
   lastActivityAt?: string | null;
   realtimeUnlocked?: boolean;
   skillCheck?: SkillCheckStatus;
