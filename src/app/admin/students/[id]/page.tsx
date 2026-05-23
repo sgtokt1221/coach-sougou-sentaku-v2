@@ -95,6 +95,7 @@ import { InlineFeedbackButton } from "@/components/admin/InlineFeedbackButton";
 import { CoachMemo } from "@/components/admin/CoachMemo";
 import { ActivityHeatmap } from "@/components/admin/ActivityHeatmap";
 import { WeaknessTopChart } from "@/components/admin/WeaknessTopChart";
+import { HomeworkStatusSection } from "@/components/admin/HomeworkStatusSection";
 import { buildActivityHeatmapData } from "@/lib/utils/activity-heatmap";
 import { useAuthSWR } from "@/lib/api/swr";
 
@@ -225,8 +226,8 @@ function PinnedSummary({ detail }: { detail: StudentDetail }) {
   );
 }
 
-type TabKey = "overview" | "performance" | "activity" | "reports";
-const VALID_TABS: TabKey[] = ["overview", "performance", "activity", "reports"];
+type TabKey = "overview" | "performance" | "activity" | "reports" | "homework";
+const VALID_TABS: TabKey[] = ["overview", "performance", "activity", "reports", "homework"];
 
 function AdminStudentDetailPageInner() {
   const router = useRouter();
@@ -872,6 +873,7 @@ function AdminStudentDetailPageInner() {
             <TabsTrigger value="performance">成績・弱点</TabsTrigger>
             <TabsTrigger value="activity">活動・書類</TabsTrigger>
             <TabsTrigger value="reports">レポート</TabsTrigger>
+            <TabsTrigger value="homework">宿題</TabsTrigger>
           </TabsList>
         </div>
 
@@ -896,6 +898,12 @@ function AdminStudentDetailPageInner() {
         <TabsContent value="reports">
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
             {renderReportsTab()}
+          </motion.div>
+        </TabsContent>
+
+        <TabsContent value="homework">
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
+            <HomeworkStatusSection studentId={id} />
           </motion.div>
         </TabsContent>
       </Tabs>

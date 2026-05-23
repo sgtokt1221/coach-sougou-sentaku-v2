@@ -49,10 +49,14 @@ export default function AdminReportsPage() {
   const [expandedReports, setExpandedReports] = useState<Record<string, GrowthReport>>({});
   const [loadingDetail, setLoadingDetail] = useState<string | null>(null);
 
-  // Load latest batch reports on mount
-  const { data: latestReports } =
-    useAuthSWR<GrowthReportSummary[]>(null); // We don't auto-load; only on generate
+  // 担当生徒それぞれの最新 1 件を mount 時にロード (生徒詳細から個別生成したものもここに出る)
+  const {
+    data: latestReports,
+    isLoading: loadingLatest,
+    mutate: mutateLatest,
+  } = useAuthSWR<GrowthReportSummary[]>("/api/admin/reports/latest");
 
+  // 一括生成直後はその結果を優先表示。それ以外は API の最新一覧
   const displayReports = reports ?? latestReports ?? [];
 
   const handleGenerate = useCallback(async () => {
@@ -71,13 +75,15 @@ export default function AdminReportsPage() {
       setReports(data);
       setExpandedId(null);
       setExpandedReports({});
+      // SWR キャッシュも最新化 (バックグラウンドで再取得)
+      mutateLatest();
     } catch (error) {
       console.error("Failed to generate reports:", error);
       toast.error(error instanceof Error ? error.message : "レポート生成に失敗しました");
     } finally {
       setGenerating(false);
     }
-  }, [period]);
+  }, [period, mutateLatest]);
 
   const handleExpand = useCallback(
     async (summary: GrowthReportSummary) => {
@@ -93,16 +99,10 @@ export default function AdminReportsPage() {
 
       setLoadingDetail(summary.id);
       try {
+        // 既存レポートの取得 (POST=generate にすると毎回新規生成されてしまうので GET にする)
         const res = await authFetch(
-          `/api/admin/reports/generate`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              studentId: summary.studentId,
-              period: summary.period,
-            }),
-          }
+          `/api/admin/reports/${summary.studentId}/${summary.id}`,
+          { method: "GET" }
         );
         if (!res.ok) {
           const msg = await readApiError(res);
@@ -209,7 +209,7 @@ export default function AdminReportsPage() {
       )}
 
       {/* Reports List */}
-      {generating ? (
+      {generating || (loadingLatest && !reports) ? (
         <div className="space-y-3">
           {Array.from({ length: 4 }).map((_, i) => (
             <Skeleton key={i} className="h-20 w-full" />
@@ -220,7 +220,7 @@ export default function AdminReportsPage() {
           <CardContent className="py-12 text-center">
             <FileBarChart className="mx-auto mb-4 size-12 text-muted-foreground/30" />
             <p className="text-sm text-muted-foreground">
-              レポートがまだ生成されていません。「一括生成」ボタンをクリックして生成してください。
+              まだレポートが 1 件もありません。生徒詳細ページから個別に生成するか、上の「一括生成」ボタンから作成してください。
             </p>
           </CardContent>
         </Card>
@@ -253,6 +253,15 @@ export default function AdminReportsPage() {
                         <Badge variant="outline" className="text-[10px]">
                           {report.period === "weekly" ? "週次" : "月次"}
                         </Badge>
+                        {report.hasPracticeQuestions === false && (
+                          <Badge
+                            variant="outline"
+                            className="border-amber-300 bg-amber-50 text-[10px] text-amber-700 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-400"
+                            title="類題は一括生成では作られません。展開して個別に生成してください。"
+                          >
+                            類題未生成
+                          </Badge>
+                        )}
                       </div>
                       <p className="text-xs text-muted-foreground line-clamp-1">
                         {report.overallAssessment}

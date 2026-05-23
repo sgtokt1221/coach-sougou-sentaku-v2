@@ -32,6 +32,7 @@ function generateMockBatchReports(period: "weekly" | "monthly"): GrowthReportSum
         : s.essayChange > 0
           ? "安定した学習ペースを維持しています。"
           : "もう少し学習量を増やすことをお勧めします。",
+    hasPracticeQuestions: false,
   }));
 }
 
@@ -190,6 +191,8 @@ export async function POST(request: NextRequest) {
           essayScoreChange: report.essayStats.scoreChange,
           interviewScoreChange: report.interviewStats.scoreChange,
           overallAssessment: report.overallAssessment,
+          // 一括生成では類題を作らないので常に false
+          hasPracticeQuestions: false,
         } satisfies GrowthReportSummary;
       })
     );

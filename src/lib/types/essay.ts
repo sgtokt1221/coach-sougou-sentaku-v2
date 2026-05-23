@@ -15,6 +15,10 @@ export interface Essay {
   attemptNumber?: number;
   inputMode?: "image" | "text" | "dictation";
   retryContext?: EssayRetryContext;
+  /** Phase 6: 出典 (manual=通常提出, homework=宿題提出, skill_check=スキルチェック) */
+  sourceType?: "manual" | "homework" | "skill_check";
+  /** Phase 6: 宿題から提出された場合の HomeworkAssignment ID */
+  homeworkAssignmentId?: string;
 }
 
 export interface EssayRetryContext {

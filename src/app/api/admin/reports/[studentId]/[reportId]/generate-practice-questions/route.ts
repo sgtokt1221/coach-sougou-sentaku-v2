@@ -9,7 +9,8 @@ import {
   buildPracticeQuestionsFromJson,
 } from "@/lib/growth/practice-questions-helpers";
 import { getPeriodRange } from "@/lib/growth/report";
-import { Timestamp } from "firebase-admin/firestore";
+import { queryWithRangeFilter } from "@/lib/admin/firestore-range-query";
+import { loadStudentContext } from "@/lib/growth/student-context";
 
 /**
  * POST /api/admin/reports/[studentId]/[reportId]/generate-practice-questions
@@ -106,16 +107,17 @@ export async function POST(
       .filter((a): a is string => !!a && a.length > 0)
       .slice(0, 5);
 
-    // 今週 essay (期間内のみ)
-    const periodEssaysSnap = await adminDb
-      .collection("essays")
-      .where("userId", "==", studentId)
-      .where("createdAt", ">=", Timestamp.fromDate(startDate))
-      .where("createdAt", "<=", Timestamp.fromDate(endDate))
-      .get()
-      .catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] }));
+    // 今週 essay (期間内のみ): submittedAt で抽出して通常生成 (generate/route.ts) と揃える
+    const periodEssaysSnap = await queryWithRangeFilter(
+      adminDb.collection("essays"),
+      "userId",
+      studentId,
+      "submittedAt",
+      startDate,
+      endDate,
+    );
 
-    // 過去 essay (期間外、重複回避用)
+    // 過去 essay (期間外、重複回避用) — 同様に submittedAt 基準で「期間外」を判定
     const allEssaysSnap = await adminDb
       .collection("essays")
       .where("userId", "==", studentId)
@@ -124,8 +126,8 @@ export async function POST(
       .catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] }));
     const startMs = startDate.getTime();
     const pastEssayDocs = allEssaysSnap.docs.filter((d) => {
-      const data = d.data() as { createdAt?: FirebaseFirestore.Timestamp };
-      const ts = data.createdAt?.toMillis?.();
+      const data = d.data() as { submittedAt?: FirebaseFirestore.Timestamp };
+      const ts = data.submittedAt?.toMillis?.();
       return typeof ts === "number" && ts < startMs;
     });
 
@@ -140,21 +142,25 @@ export async function POST(
 
     const thisWeekWeakItems = computeThisWeekWeakItems(periodEssaysSnap.docs);
 
-    // 今週 interview
-    const periodInterviewsSnap = await adminDb
-      .collection("interviews")
-      .where("userId", "==", studentId)
-      .where("createdAt", ">=", Timestamp.fromDate(startDate))
-      .where("createdAt", "<=", Timestamp.fromDate(endDate))
-      .get()
-      .catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] }));
+    // 今週 interview: startedAt で抽出して通常生成 (generate/route.ts) と揃える
+    const periodInterviewsSnap = await queryWithRangeFilter(
+      adminDb.collection("interviews"),
+      "userId",
+      studentId,
+      "startedAt",
+      startDate,
+      endDate,
+    );
     const thisWeekInterviewQuestions = extractInterviewAssistantQuestions(
       periodInterviewsSnap.docs,
       5,
     );
 
+    step = "load_student_context";
+    const studentContext = await loadStudentContext(adminDb, studentId);
+
     console.log(
-      `[reports/generate-practice-questions] context for ${studentId}: thisWeekWeakItems=${thisWeekWeakItems.length} thisWeekTopics=${thisWeekEssayTopics.length} thisWeekInterviews=${thisWeekInterviewQuestions.length} chronicWeaknesses=${chronicWeaknesses.length} pastTopics=${pastEssayTopics.length}`,
+      `[reports/generate-practice-questions] context for ${studentId}: thisWeekWeakItems=${thisWeekWeakItems.length} thisWeekTopics=${thisWeekEssayTopics.length} thisWeekInterviews=${thisWeekInterviewQuestions.length} chronicWeaknesses=${chronicWeaknesses.length} pastTopics=${pastEssayTopics.length} targets=${studentContext.primaryTargets.length} hasSelfAnalysis=${!!studentContext.selfAnalysis} mbti=${studentContext.mbtiType ?? "none"} activities=${studentContext.recentActivities.length} certs=${studentContext.englishCerts.length}`,
     );
 
     step = "call_ai";
@@ -167,6 +173,7 @@ export async function POST(
       thisWeekInterviewQuestions,
       chronicWeaknesses,
       pastEssayTopics,
+      studentContext,
     });
     const resp = await client.messages.create({
       model: "claude-haiku-4-5-20251001",

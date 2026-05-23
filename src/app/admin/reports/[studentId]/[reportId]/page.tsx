@@ -6,6 +6,7 @@ import Link from "next/link";
 import {
   ArrowLeft,
   Calendar,
+  ClipboardList,
   Clock,
   Loader2,
   Printer,
@@ -134,12 +135,13 @@ function Body() {
       <style jsx global>{`
         @page {
           size: A4 portrait;
-          margin: 15mm;
+          margin: 10mm 12mm;
         }
         @media print {
           body {
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
+            font-size: 10.5pt;
           }
           [data-app-chrome] {
             display: none !important;
@@ -156,22 +158,20 @@ function Body() {
             height: auto !important;
             padding-bottom: 0 !important;
           }
-          /* details を確実に展開 */
-          details {
-            display: block !important;
+          /* 中見出しの直後に改ページしない */
+          h1,
+          h2,
+          h3,
+          h4 {
+            page-break-after: avoid;
           }
-          details > summary {
-            display: none !important;
-          }
-          details > *:not(summary) {
-            display: block !important;
-          }
+          /* details は印刷時は閉じたままにする (Primary 解答例等は print:hidden で別管理) */
         }
       `}</style>
 
-      <div className="mx-auto max-w-5xl space-y-6 p-4 lg:p-8 print:p-0">
+      <div className="mx-auto max-w-5xl space-y-6 p-4 lg:p-8 print:max-w-none print:space-y-3 print:p-0">
         {/* サマリーヘッダー */}
-        <header className="rounded-lg border bg-card p-4 lg:p-5">
+        <header className="rounded-lg border bg-card p-4 lg:p-5 print:rounded-none print:border-0 print:border-b print:border-gray-400 print:p-0 print:pb-2">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="flex items-start gap-3">
               <Button
@@ -185,7 +185,7 @@ function Body() {
               </Button>
               <div>
                 <div className="flex items-center gap-2">
-                  <h1 className="text-lg font-bold lg:text-xl">
+                  <h1 className="text-lg font-bold lg:text-xl print:text-[12pt]">
                     {report.studentName || "生徒"} さんの
                     {report.period === "weekly" ? "週次" : "月次"}成長レポート
                   </h1>
@@ -220,6 +220,32 @@ function Body() {
                 )}
                 類題を再生成
               </Button>
+              {(report.practiceQuestions?.length ?? 0) > 0 ? (
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  title="問題用紙の後に講師用解答シートも自動で出力されます (生徒には問題部分のみ渡してください)"
+                >
+                  <Link
+                    href={`/admin/reports/${studentId}/${reportId}/practice-sheet?print=1`}
+                    target="_blank"
+                  >
+                    <ClipboardList className="mr-1.5 size-4" />
+                    問題用紙を印刷
+                  </Link>
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled
+                  title="先に類題を生成してください"
+                >
+                  <ClipboardList className="mr-1.5 size-4" />
+                  問題用紙を印刷
+                </Button>
+              )}
               <Button
                 variant="outline"
                 size="sm"

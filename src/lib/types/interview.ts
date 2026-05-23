@@ -56,6 +56,10 @@ export interface Interview {
   feedback?: InterviewFeedback;
   status: "in_progress" | "completed";
   aiModel: string;
+  /** Phase 6: 出典 (manual=通常面接, homework=宿題提出) */
+  sourceType?: "manual" | "homework" | "skill_check";
+  /** Phase 6: 宿題から提出された場合の HomeworkAssignment ID */
+  homeworkAssignmentId?: string;
 }
 
 export interface InterviewStartRequest {

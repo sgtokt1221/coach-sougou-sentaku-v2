@@ -32,6 +32,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { FeedbackBadge } from "@/components/student/FeedbackBadge";
 import { SelfAnalysisBadge, MatchingBadge } from "@/components/student/IncompleteStepBadge";
+import { HomeworkBadge } from "@/components/student/HomeworkBadge";
 
 interface NavItem {
   label: string;
@@ -77,6 +78,12 @@ const studentNavGroups: NavGroup[] = [
         children: [
           { label: "テーマ別ドリル演習", href: "/student/interview/drill", icon: ClipboardList },
         ],
+      },
+      {
+        label: "宿題",
+        href: "/student/homework",
+        icon: ClipboardList,
+        badge: HomeworkBadge,
       },
     ],
   },

@@ -9,6 +9,7 @@ import {
   extractInterviewAssistantQuestions,
   buildPracticeQuestionsFromJson,
 } from "@/lib/growth/practice-questions-helpers";
+import { loadStudentContext } from "@/lib/growth/student-context";
 import { queryWithRangeFilter } from "@/lib/admin/firestore-range-query";
 import type { GenerateReportRequest, GrowthReport, PracticeQuestion } from "@/lib/types/growth-report";
 
@@ -321,8 +322,11 @@ export async function POST(request: NextRequest) {
           periodEssaysSnap.docs,
         );
 
+        // Phase 2: 生徒の個別文脈 (志望校・自己分析・MBTI・活動・資格) を取得
+        const studentContext = await loadStudentContext(adminDb, studentId);
+
         console.log(
-          `[reports/generate] practice context: thisWeekWeakItems=${thisWeekWeakItems.length} thisWeekTopics=${thisWeekEssayTopics.length} thisWeekInterviews=${thisWeekInterviewQuestions.length} chronicWeaknesses=${chronicWeaknesses.length} pastTopics=${pastEssayTopics.length}`,
+          `[reports/generate] practice context: thisWeekWeakItems=${thisWeekWeakItems.length} thisWeekTopics=${thisWeekEssayTopics.length} thisWeekInterviews=${thisWeekInterviewQuestions.length} chronicWeaknesses=${chronicWeaknesses.length} pastTopics=${pastEssayTopics.length} targets=${studentContext.primaryTargets.length} hasSelfAnalysis=${!!studentContext.selfAnalysis} mbti=${studentContext.mbtiType ?? "none"} activities=${studentContext.recentActivities.length} certs=${studentContext.englishCerts.length}`,
         );
 
         const Anthropic = (await import("@anthropic-ai/sdk")).default;
@@ -334,6 +338,7 @@ export async function POST(request: NextRequest) {
           thisWeekInterviewQuestions,
           chronicWeaknesses,
           pastEssayTopics,
+          studentContext,
         });
         const resp = await client.messages.create({
           model: "claude-haiku-4-5-20251001",

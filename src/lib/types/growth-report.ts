@@ -17,6 +17,7 @@ export interface PracticeQuestion {
   /**
    * 優先度。primary は授業中に取り組む必須類題、secondary は宿題用の補助。
    * 既存類題には未設定がありえるため optional 扱い (UI 側で undefined を secondary 扱い)。
+   * Phase 2 以降は `usage` を使う。`priority` は旧データ互換のため残す。
    */
   priority?: "primary" | "secondary";
   /** 題目 / 質問文 (30〜50 字程度の短文) */
@@ -30,6 +31,34 @@ export interface PracticeQuestion {
    * 小論文: 400-500 字 (主張 / 理由 / 具体例 / 結論)、面接: 80-150 字
    */
   modelAnswer?: string;
+
+  // ---- Phase 2 拡張 (すべて optional / 後方互換) ----
+
+  /**
+   * 用途分類。lesson=授業中、homework=宿題、extra=予備。
+   * 旧データは priority から resolveUsage() で推定する。
+   */
+  usage?: "lesson" | "homework" | "extra";
+  /** 難易度 (AI 判定)。生徒スコア・資格レベルから推定される */
+  difficulty?: "basic" | "standard" | "advanced";
+  /** 目安取り組み時間 (分)。授業中の時間配分に使う */
+  estimatedMinutes?: number;
+  /** この問題で何を鍛えるかの目的 (1 文) */
+  objective?: string;
+  /** 評価観点 / 採点ルブリック (3-5 項目) */
+  rubric?: string[];
+  /** 足場かけ / ヒント (生徒に与える誘導) */
+  hints?: string[];
+  /** 講師向けメモ (授業中の問いかけ・注意点) */
+  teacherNotes?: string;
+  /**
+   * 解答例の公開範囲。サーバー側で usage から固定設定 (Phase 2 では AI 判定させない)。
+   * - lesson / extra → teacher_only
+   * - homework → after_submission
+   */
+  answerVisibility?: "teacher_only" | "after_submission" | "student_visible";
+  /** 表示順序。サーバー側で生成時に連番付与 */
+  order?: number;
 }
 
 export interface GrowthReport {
@@ -92,6 +121,13 @@ export interface GrowthReportSummary {
   essayScoreChange: number;
   interviewScoreChange: number;
   overallAssessment: string;
+  /**
+   * 類題 (practiceQuestions) が 1 件以上保存されているか。
+   * - 一括生成 (batch) は AI コスト抑制のため類題を生成しないので常に false
+   * - latest API は Firestore 上の保存内容から判定
+   * - 未設定 (undefined) のレガシー summary は UI 上はバッジを出さない
+   */
+  hasPracticeQuestions?: boolean;
 }
 
 export interface GenerateReportRequest {

@@ -18,6 +18,7 @@ import {
 import { toast } from "sonner";
 import { ArrowLeft, Save, Trash2, GraduationCap, FileText } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
+import { HomeworkStatusSection } from "@/components/admin/HomeworkStatusSection";
 import type { AdminListItem } from "@/lib/types/admin";
 
 interface StudentDetailData {
@@ -258,6 +259,12 @@ export default function SuperadminStudentDetailPage({
           </div>
         </CardContent>
       </Card>
+
+      {/* 宿題セクション (タブUIなしの superadmin ページでも宿題管理を可能にする) */}
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold">宿題</h2>
+        <HomeworkStatusSection studentId={id} />
+      </section>
     </div>
   );
 }

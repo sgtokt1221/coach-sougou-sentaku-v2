@@ -181,6 +181,7 @@ export async function PATCH(
             type: q.type,
             title: q.title,
           };
+          // 既存フィールド
           if (q.priority === "primary" || q.priority === "secondary") {
             cleaned.priority = q.priority;
           }
@@ -192,6 +193,48 @@ export async function PATCH(
           }
           if (typeof q.modelAnswer === "string" && q.modelAnswer.length > 0) {
             cleaned.modelAnswer = q.modelAnswer;
+          }
+          // Phase 2 拡張フィールド
+          if (q.usage === "lesson" || q.usage === "homework" || q.usage === "extra") {
+            cleaned.usage = q.usage;
+          }
+          if (
+            q.difficulty === "basic" ||
+            q.difficulty === "standard" ||
+            q.difficulty === "advanced"
+          ) {
+            cleaned.difficulty = q.difficulty;
+          }
+          if (typeof q.estimatedMinutes === "number" && q.estimatedMinutes > 0) {
+            cleaned.estimatedMinutes = Math.round(q.estimatedMinutes);
+          }
+          if (typeof q.objective === "string" && q.objective.length > 0) {
+            cleaned.objective = q.objective;
+          }
+          if (Array.isArray(q.rubric)) {
+            const rubric = q.rubric.filter(
+              (r): r is string => typeof r === "string" && r.length > 0,
+            );
+            if (rubric.length > 0) cleaned.rubric = rubric;
+          }
+          if (Array.isArray(q.hints)) {
+            const hints = q.hints.filter(
+              (h): h is string => typeof h === "string" && h.length > 0,
+            );
+            if (hints.length > 0) cleaned.hints = hints;
+          }
+          if (typeof q.teacherNotes === "string" && q.teacherNotes.length > 0) {
+            cleaned.teacherNotes = q.teacherNotes;
+          }
+          if (
+            q.answerVisibility === "teacher_only" ||
+            q.answerVisibility === "after_submission" ||
+            q.answerVisibility === "student_visible"
+          ) {
+            cleaned.answerVisibility = q.answerVisibility;
+          }
+          if (typeof q.order === "number") {
+            cleaned.order = q.order;
           }
           return cleaned;
         });

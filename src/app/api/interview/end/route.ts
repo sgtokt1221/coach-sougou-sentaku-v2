@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
-import { buildInterviewEvaluationPrompt } from "@/lib/ai/prompts/interview";
 import type {
   InterviewEndRequest,
-  InterviewEndResponse,
   InterviewScores,
   InterviewFeedback,
 } from "@/lib/types/interview";
@@ -11,6 +8,10 @@ import { analyzeGrowth, updateWeaknessRecords } from "@/lib/growth/analyze";
 import type { WeaknessRecord } from "@/lib/types/growth";
 import { logInterviewSession } from "@/lib/bigquery/logger";
 import { logActivity } from "@/lib/firebase/activity-log";
+import {
+  scoreInterviewCore,
+  InterviewScoreParseError,
+} from "@/lib/interview/score-core";
 
 export const maxDuration = 120;
 
@@ -45,14 +46,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "sessionId, messages, duration は必須です" },
         { status: 400 }
-      );
-    }
-
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: "ANTHROPIC_API_KEYが設定されていません" },
-        { status: 500 }
       );
     }
 
@@ -130,72 +123,45 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const client = new Anthropic();
-
-    // 会話をテキスト形式に変換
-    const conversationText = messages
-      .map((m) => `${m.role === "ai" ? "面接官" : "受験生"}: ${m.content}`)
-      .join("\n");
-
-    const evaluationPrompt = buildInterviewEvaluationPrompt(universityName, facultyName, admissionPolicy, mode, presentationContent);
-
-    const selfAnalysisSection = selfAnalysisContext
-      ? `\n\n## この生徒の自己分析データ（面接前に本人が整理した内容）\n${selfAnalysisContext}\n\n※ 上記の自己分析を踏まえて、「面接でこう答えるべきだった」「自己分析のこの強みをもっと活かすべきだった」等の具体的なアドバイスをimprovementsに含めてください。`
-      : "";
-
-    const response = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 4096,
-      messages: [
-        {
-          role: "user",
-          content: `${evaluationPrompt}${selfAnalysisSection}\n\n## 面接会話記録\n\n${conversationText}`,
-        },
-      ],
-    });
-
-    const rawText =
-      response.content[0].type === "text" ? response.content[0].text : "";
-
-    const jsonMatch =
-      rawText.match(/```json\s*([\s\S]*?)\s*```/) ||
-      rawText.match(/(\{[\s\S]*\})/);
-
-    if (!jsonMatch) {
-      console.error("Could not parse AI evaluation response:", rawText);
-      return NextResponse.json(
-        { error: "AI評価結果のパースに失敗しました", rawResponse: rawText.slice(0, 500) },
-        { status: 500 }
-      );
+    // 面接スコアリングをコア関数経由で呼ぶ (宿題提出フローからも同じ関数を呼ぶ)
+    let scores: InterviewScores;
+    let feedback: InterviewFeedback;
+    let conversationSummary: {
+      keyWeaknesses: string[];
+      strongPoints: string[];
+      criticalMoments: string[];
+      nextFocusAreas: string[];
+    };
+    try {
+      const coreResult = await scoreInterviewCore({
+        messages,
+        universityName,
+        facultyName,
+        admissionPolicy,
+        mode,
+        presentationContent,
+        selfAnalysisContext,
+        videoAnalysis,
+      });
+      scores = coreResult.scores;
+      feedback = coreResult.feedback;
+      conversationSummary = coreResult.conversationSummary;
+    } catch (coreErr) {
+      if (coreErr instanceof InterviewScoreParseError) {
+        console.error("Interview score parse failed. rawText head:", coreErr.rawText.slice(0, 800));
+        return NextResponse.json(
+          { error: "AI評価結果のパースに失敗しました", rawResponse: coreErr.rawText.slice(0, 500) },
+          { status: 500 }
+        );
+      }
+      if (coreErr instanceof Error && coreErr.message.includes("ANTHROPIC_API_KEY")) {
+        return NextResponse.json(
+          { error: "ANTHROPIC_API_KEYが設定されていません" },
+          { status: 500 }
+        );
+      }
+      throw coreErr;
     }
-
-    const parsed = JSON.parse(jsonMatch[1]);
-
-    const bodyLanguageScore = videoAnalysis?.overallVideoScore ?? 0;
-    const scores: InterviewScores = {
-      clarity: parsed.scores.clarity,
-      apAlignment: parsed.scores.apAlignment,
-      enthusiasm: parsed.scores.enthusiasm,
-      specificity: parsed.scores.specificity,
-      bodyLanguage: Math.round(bodyLanguageScore * 10) / 10,
-      total: parsed.scores.clarity + parsed.scores.apAlignment + parsed.scores.enthusiasm + parsed.scores.specificity + Math.round(bodyLanguageScore * 10) / 10,
-    };
-
-    const feedback: InterviewFeedback = {
-      overall: parsed.feedback.overall,
-      goodPoints: parsed.feedback.goodPoints ?? [],
-      improvements: parsed.feedback.improvements ?? [],
-      repeatedIssues: parsed.feedback.repeatedIssues ?? [],
-      improvementsSinceLast: parsed.feedback.improvementsSinceLast ?? [],
-    };
-
-    // 会話分析サマリー
-    const conversationSummary = parsed.conversationSummary ?? {
-      keyWeaknesses: [],
-      strongPoints: [],
-      criticalMoments: [],
-      nextFocusAreas: [],
-    };
 
     // 弱点タグを抽出（会話内容）
     const weaknessTags: string[] = [

@@ -68,13 +68,48 @@ export function extractInterviewAssistantQuestions(
 }
 
 /**
+ * 旧 priority を新 usage に解釈する。usage が明示されていればそれを優先。
+ * UI / 表示ロジックは `q.usage` を直接読まず必ずこれを経由する。
+ */
+export function resolveUsage(
+  q: Pick<PracticeQuestion, "usage" | "priority">,
+): "lesson" | "homework" | "extra" {
+  if (q.usage) return q.usage;
+  return q.priority === "primary" ? "lesson" : "homework";
+}
+
+/**
+ * usage から answerVisibility の既定値を導出する。
+ * - lesson / extra → teacher_only (授業中・予備は講師のみ)
+ * - homework → after_submission (生徒が提出後に解答例公開)
+ */
+export function defaultAnswerVisibility(
+  usage: "lesson" | "homework" | "extra",
+): "teacher_only" | "after_submission" {
+  return usage === "homework" ? "after_submission" : "teacher_only";
+}
+
+function validateDifficulty(
+  d: unknown,
+): "basic" | "standard" | "advanced" | undefined {
+  return d === "basic" || d === "standard" || d === "advanced" ? d : undefined;
+}
+
+function validateUsage(
+  u: unknown,
+  fallback: "lesson" | "homework",
+): "lesson" | "homework" | "extra" {
+  return u === "lesson" || u === "homework" || u === "extra" ? u : fallback;
+}
+
+/**
  * AI が出力した PracticeQuestion オブジェクトを正規化するヘルパー。
  *
  * - id 未指定なら自動付与
  * - 必須フィールドの default
  * - undefined フィールドは Firestore に渡さない (削除)
- *
- * priority は呼び出し側で primary / secondary を渡す。
+ * - usage はサーバー側で fallback (primary→lesson, secondary→homework)
+ * - answerVisibility はサーバー固定 (AI 判定させない)
  */
 export function normalizePracticeQuestion(
   q: Partial<PracticeQuestion>,
@@ -84,18 +119,49 @@ export function normalizePracticeQuestion(
   index: number,
   now: number,
 ): PracticeQuestion {
+  const fallbackUsage: "lesson" | "homework" =
+    priority === "primary" ? "lesson" : "homework";
+  const usage = validateUsage(q.usage, fallbackUsage);
+
   const obj: PracticeQuestion = {
     id: q.id || `${idPrefix}_${now}_${index}`,
     type,
     priority,
+    usage,
     title: q.title ?? "",
     relatedWeakness:
       q.relatedWeakness && q.relatedWeakness.trim().length > 0
         ? q.relatedWeakness
         : "弱点情報なし",
+    answerVisibility: defaultAnswerVisibility(usage),
+    order: index,
   };
   if (q.relatedPastTopic) obj.relatedPastTopic = q.relatedPastTopic;
   if (q.modelAnswer) obj.modelAnswer = q.modelAnswer;
+
+  const difficulty = validateDifficulty(q.difficulty);
+  if (difficulty) obj.difficulty = difficulty;
+
+  if (typeof q.estimatedMinutes === "number" && q.estimatedMinutes > 0) {
+    obj.estimatedMinutes = Math.round(q.estimatedMinutes);
+  }
+  if (q.objective && q.objective.trim().length > 0) obj.objective = q.objective;
+  if (Array.isArray(q.rubric)) {
+    const rubric = q.rubric
+      .filter((r): r is string => typeof r === "string" && r.trim().length > 0)
+      .slice(0, 5);
+    if (rubric.length > 0) obj.rubric = rubric;
+  }
+  if (Array.isArray(q.hints)) {
+    const hints = q.hints
+      .filter((h): h is string => typeof h === "string" && h.trim().length > 0)
+      .slice(0, 5);
+    if (hints.length > 0) obj.hints = hints;
+  }
+  if (q.teacherNotes && q.teacherNotes.trim().length > 0) {
+    obj.teacherNotes = q.teacherNotes;
+  }
+
   return obj;
 }
 

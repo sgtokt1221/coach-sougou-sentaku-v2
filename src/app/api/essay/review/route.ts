@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
-import { jsonrepair } from "jsonrepair";
-import { buildEssayReviewPrompt } from "@/lib/ai/prompts/essay";
-import type { EssayReviewRequest, EssayScores, EssayFeedback, TopicInsights, RetryComparison } from "@/lib/types/essay";
+import type { EssayReviewRequest, EssayFeedback, RetryComparison, EssayScores } from "@/lib/types/essay";
 import { analyzeGrowth, updateWeaknessRecords } from "@/lib/growth/analyze";
 import type { WeaknessRecord } from "@/lib/types/growth";
 import { logEssaySubmission } from "@/lib/bigquery/logger";
 import { computeRetryComparison } from "@/lib/essay/retry-comparison";
+import { reviewEssayCore, EssayReviewParseError } from "@/lib/essay/review-core";
+import type { EssaySelfAnalysisContext } from "@/lib/ai/prompts/essay";
 
 export const maxDuration = 120;
 
@@ -199,16 +198,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: "ANTHROPIC_API_KEYが設定されていません" },
-        { status: 500 }
-      );
-    }
-
     // 自己分析データがあれば取得 (小論文にも生徒の価値観・強みを反映)
-    let essaySelfAnalysis: import("@/lib/ai/prompts/essay").EssaySelfAnalysisContext | undefined;
+    let essaySelfAnalysis: EssaySelfAnalysisContext | undefined;
     if (adminDb && essayUserId) {
       try {
         const saDoc = await adminDb.doc(`selfAnalysis/${essayUserId}`).get();
@@ -226,98 +217,47 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const client = new Anthropic();
-    const questionContext = questionType && questionType !== "essay"
-      ? { questionType: questionType as "english-reading" | "data-analysis" | "mixed" | "lecture", sourceText, chartDataSummary, lectureInfo: body.lectureInfo }
-      : undefined;
-    const systemPrompt = buildEssayReviewPrompt(admissionPolicy, weaknessList, essaySelfAnalysis, questionContext, body.wordLimit);
-
-    let userMessage = "";
-    if (topic) userMessage += `【テーマ】${topic}\n\n`;
-    if (sourceText) userMessage += `【出題資料（英文）】\n${sourceText}\n\n`;
-    if (chartDataSummary) userMessage += `【資料データ】\n${chartDataSummary}\n\n`;
-    userMessage += `【小論文本文】\n${ocrText}`;
-
-    const response = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 4096,
-      system: systemPrompt,
-      messages: [{ role: "user", content: userMessage }],
-    });
-
-    const rawText =
-      response.content[0].type === "text" ? response.content[0].text : "";
-
-    // JSONを抽出してパース
-    const jsonMatch = rawText.match(/```json\s*([\s\S]*?)\s*```/) ||
-      rawText.match(/(\{[\s\S]*\})/);
-
-    if (!jsonMatch) {
-      console.error("Could not parse AI response:", rawText);
-      return NextResponse.json(
-        { error: "AI添削結果のパースに失敗しました", rawResponse: rawText.slice(0, 500) },
-        { status: 500 }
-      );
-    }
-
-    // AI が languageCorrections の original / suggestion などに生改行や未エスケープ
-    // " を含む小論文本文を埋め込むため、JSON 構文が頻繁に壊れる (line 127 col 6 付近)。
-    // まず素の parse を試み、失敗したら jsonrepair で構文修復後に再 parse。
-    let parsed: ReturnType<typeof JSON.parse>;
+    // AI 添削をコア関数経由で呼ぶ (宿題提出フローからも同じ関数を呼ぶ)
+    let scores: EssayScores;
+    let feedback: EssayFeedback;
     try {
-      parsed = JSON.parse(jsonMatch[1]);
-    } catch (parseErr) {
-      console.warn("JSON.parse failed, retrying with jsonrepair:", (parseErr as Error).message);
-      try {
-        parsed = JSON.parse(jsonrepair(jsonMatch[1]));
-      } catch (repairErr) {
-        console.error("JSON parse + repair both failed. rawText head:", rawText.slice(0, 800));
+      const coreResult = await reviewEssayCore({
+        ocrText,
+        topic,
+        questionType,
+        sourceText,
+        chartDataSummary,
+        lectureInfo: body.lectureInfo,
+        wordLimit: body.wordLimit,
+        admissionPolicy,
+        weaknessList,
+        essaySelfAnalysis,
+      });
+      scores = coreResult.scores;
+      feedback = coreResult.feedback;
+    } catch (coreErr) {
+      if (coreErr instanceof EssayReviewParseError) {
+        console.error("Essay review parse failed. rawText head:", coreErr.rawText.slice(0, 800));
         return NextResponse.json(
           {
             error: "AI添削結果のパースに失敗しました",
-            rawResponse: rawText.slice(0, 500),
+            rawResponse: coreErr.rawText.slice(0, 500),
             ...(process.env.NODE_ENV === "development" && {
-              parseError: (parseErr as Error).message,
-              repairError: (repairErr as Error).message,
+              parseError: coreErr.parseError,
+              repairError: coreErr.repairError,
             }),
           },
           { status: 500 }
         );
       }
+      if (coreErr instanceof Error && coreErr.message.includes("ANTHROPIC_API_KEY")) {
+        return NextResponse.json(
+          { error: "ANTHROPIC_API_KEYが設定されていません" },
+          { status: 500 }
+        );
+      }
+      throw coreErr;
     }
-
-    const scores: EssayScores = {
-      structure: parsed.scores.structure,
-      logic: parsed.scores.logic,
-      expression: parsed.scores.expression,
-      apAlignment: parsed.scores.apAlignment,
-      originality: parsed.scores.originality,
-      total: parsed.scores.total,
-    };
-
-    const topicInsights: TopicInsights | undefined = parsed.feedback.topicInsights
-      ? {
-          background: parsed.feedback.topicInsights.background ?? "",
-          relatedThemes: parsed.feedback.topicInsights.relatedThemes ?? [],
-          deepDivePoints: parsed.feedback.topicInsights.deepDivePoints ?? [],
-          recommendedAngle: parsed.feedback.topicInsights.recommendedAngle ?? "",
-        }
-      : undefined;
-
-    // Firestore は undefined を許可しないため、optional フィールドは
-    // 値があるときだけ key を含める (条件付き spread)。
-    // これを忘れると set() が reject されて catch でくくられ、
-    // status: reviewed への更新が走らず → 履歴 API で取得できなくなる事故になる。
-    const feedback: EssayFeedback = {
-      overall: parsed.feedback.overall,
-      goodPoints: parsed.feedback.goodPoints ?? [],
-      improvements: parsed.feedback.improvements ?? [],
-      repeatedIssues: parsed.feedback.repeatedIssues ?? [],
-      improvementsSinceLast: parsed.feedback.improvementsSinceLast ?? [],
-      ...(topicInsights ? { topicInsights } : {}),
-      ...(parsed.feedback.brushedUpText ? { brushedUpText: parsed.feedback.brushedUpText } : {}),
-      languageCorrections: parsed.feedback.languageCorrections ?? [],
-    };
 
     // 弱点タグを抽出
     const weaknessTags: string[] = [
