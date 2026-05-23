@@ -84,8 +84,9 @@ export async function GET(
       sharedWithStudent: data.sharedWithStudent,
     };
 
-    // categoryAverages のバックフィル (古いレポート対応)
-    await backfillCategoryAverages(auth.uid, report).catch((e) =>
+    // バックフィル: startDate/endDate (空なら generatedAt から推定) と
+    // categoryAverages (count > 0 なら essays/interviews 集計) を一度に補完
+    await backfillReport(auth.uid, report).catch((e) =>
       console.warn(
         `[student/reports/id] backfill failed for ${report.id}:`,
         e instanceof Error ? e.message : e,
@@ -104,15 +105,36 @@ export async function GET(
 }
 
 /**
- * categoryAverages が未保存の古いレポートに対して、期間内 essays/interviews から
- * 動的に計算し、`report` を mutate しつつ Firestore にも書き戻す。
- * (list API と同じロジックのコピー。共通化するなら別タスクで)
+ * 古いレポートのバックフィル:
+ * - startDate / endDate が空なら generatedAt から推定 (週次=7日前、月次=1ヶ月前)
+ * - count > 0 かつ categoryAverages 未設定なら期間内 essays/interviews を集計
+ *
+ * `report` を mutate しつつ Firestore に書き戻し (fire-and-forget)。
+ * 一度補完されたら次回からは Firestore キャッシュからそのまま読まれる。
+ * (list API と同じロジック。共通化は別タスク)
  */
-async function backfillCategoryAverages(
+async function backfillReport(
   userId: string,
   report: GrowthReport,
 ): Promise<void> {
   if (!adminDb) return;
+
+  let startDate = toDateSafe(report.startDate);
+  let endDate = toDateSafe(report.endDate);
+  const needsPeriod = !startDate || !endDate;
+  if (needsPeriod) {
+    const generatedAt = toDateSafe(report.generatedAt) ?? new Date();
+    endDate = generatedAt;
+    startDate = new Date(generatedAt);
+    if (report.period === "monthly") {
+      startDate.setMonth(startDate.getMonth() - 1);
+    } else {
+      startDate.setDate(startDate.getDate() - 7);
+    }
+    report.startDate = startDate.toISOString();
+    report.endDate = endDate.toISOString();
+  }
+
   const needsEssay =
     report.essayStats &&
     report.essayStats.count > 0 &&
@@ -121,13 +143,15 @@ async function backfillCategoryAverages(
     report.interviewStats &&
     report.interviewStats.count > 0 &&
     !report.interviewStats.categoryAverages;
-  if (!needsEssay && !needsInterview) return;
 
-  const startDate = toDateSafe(report.startDate);
-  const endDate = toDateSafe(report.endDate);
+  if (!needsPeriod && !needsEssay && !needsInterview) return;
   if (!startDate || !endDate) return;
 
   const update: Record<string, unknown> = {};
+  if (needsPeriod) {
+    update.startDate = startDate;
+    update.endDate = endDate;
+  }
 
   if (needsEssay) {
     try {

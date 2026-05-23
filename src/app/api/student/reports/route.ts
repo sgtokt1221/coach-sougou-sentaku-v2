@@ -108,12 +108,12 @@ export async function GET(request: NextRequest) {
       // 公開オフは除外。undefined は「未設定 = デフォルト公開」とみなす
       .filter((r) => r.sharedWithStudent !== false);
 
-    // categoryAverages のバックフィル (古いレポート対応)
-    // 期間内 essays/interviews から動的計算し、結果を Firestore に書き戻す
-    // (一度書き戻したら次回は skip されるのでコストは初回のみ)
-    step = "backfill_category_averages";
+    // バックフィル: 古いレポートの startDate/endDate と categoryAverages を補完
+    // 期間が空ならば generatedAt から推定。期間が確定したら essays/interviews を集計。
+    // 結果は Firestore にも書き戻し (次回からキャッシュ)
+    step = "backfill_report";
     await Promise.all(
-      reports.map((r) => backfillCategoryAverages(auth.uid, r).catch((e) => {
+      reports.map((r) => backfillReport(auth.uid, r).catch((e) => {
         console.warn(
           `[student/reports] backfill failed for ${r.id}:`,
           e instanceof Error ? e.message : e,
@@ -133,20 +133,39 @@ export async function GET(request: NextRequest) {
 }
 
 /**
- * categoryAverages が未保存の古いレポートに対して、期間内 essays/interviews から
- * 動的に計算し、`report` を mutate しつつ Firestore にも書き戻す。
+ * 古いレポートに対するバックフィル:
+ * - startDate / endDate が空なら generatedAt から推定して補完
+ * - count > 0 かつ categoryAverages 未設定なら期間内 essays/interviews を集計
  *
- * 計算が必要なフィールド (essay / interview それぞれ) について個別に処理:
- * - count > 0 かつ categoryAverages 未設定なら計算
- * - 失敗時は呼び出し側で catch するので、UI 表示には影響しない
+ * `report` を mutate しつつ Firestore にも書き戻す (fire-and-forget)。
+ * 一度補完されたら次回以降はキャッシュから読まれるので計算ゼロ。
  *
- * mutate しているので呼び出し側はそのまま `reports` を返却すれば最新値を返せる。
+ * 失敗時は呼び出し側で catch されるので UI 表示には影響しない。
  */
-async function backfillCategoryAverages(
+async function backfillReport(
   userId: string,
   report: GrowthReport,
 ): Promise<void> {
   if (!adminDb) return;
+
+  // 1. 期間を確定 (Firestore 値 → なければ generatedAt から推定)
+  let startDate = toDateSafe(report.startDate);
+  let endDate = toDateSafe(report.endDate);
+  const needsPeriod = !startDate || !endDate;
+  if (needsPeriod) {
+    const generatedAt = toDateSafe(report.generatedAt) ?? new Date();
+    endDate = generatedAt;
+    startDate = new Date(generatedAt);
+    if (report.period === "monthly") {
+      startDate.setMonth(startDate.getMonth() - 1);
+    } else {
+      startDate.setDate(startDate.getDate() - 7);
+    }
+    // レスポンス用にも反映
+    report.startDate = startDate.toISOString();
+    report.endDate = endDate.toISOString();
+  }
+
   const needsEssay =
     report.essayStats &&
     report.essayStats.count > 0 &&
@@ -155,13 +174,15 @@ async function backfillCategoryAverages(
     report.interviewStats &&
     report.interviewStats.count > 0 &&
     !report.interviewStats.categoryAverages;
-  if (!needsEssay && !needsInterview) return;
 
-  const startDate = toDateSafe(report.startDate);
-  const endDate = toDateSafe(report.endDate);
-  if (!startDate || !endDate) return;
+  if (!needsPeriod && !needsEssay && !needsInterview) return;
+  if (!startDate || !endDate) return; // 型ガード (上で必ず設定済みのはず)
 
   const update: Record<string, unknown> = {};
+  if (needsPeriod) {
+    update.startDate = startDate;
+    update.endDate = endDate;
+  }
 
   if (needsEssay) {
     try {
