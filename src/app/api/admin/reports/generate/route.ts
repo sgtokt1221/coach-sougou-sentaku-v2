@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
 import { generateGrowthReport, getPeriodRange, buildSessionSummaryDraft } from "@/lib/growth/report";
+import {
+  collectWeaknessTags,
+  mergeCountMaps,
+} from "@/lib/growth/weakness-aggregate";
 import { buildLessonObservationSummaryPrompt } from "@/lib/ai/prompts/lesson-summary";
 import { buildPracticeQuestionsPrompt } from "@/lib/ai/prompts/practice-questions";
 import {
@@ -378,6 +382,15 @@ export async function POST(request: NextRequest) {
     );
 
     step = "generate_report";
+    // 期間別 weaknessTags 集計 (悪化/改善判定で使用)
+    const periodWeaknessCounts = mergeCountMaps(
+      collectWeaknessTags(periodEssaysSnap.docs),
+      collectWeaknessTags(periodInterviewsSnap.docs),
+    );
+    const previousWeaknessCounts = mergeCountMaps(
+      collectWeaknessTags(prevEssaysSnap.docs),
+      collectWeaknessTags(prevInterviewsSnap.docs),
+    );
     const report = generateGrowthReport({
       studentId,
       studentName: studentData.displayName ?? "",
@@ -395,6 +408,8 @@ export async function POST(request: NextRequest) {
           resolved: wData.resolved ?? false,
         };
       }),
+      periodWeaknessCounts,
+      previousWeaknessCounts,
       sessionSummary: sessionSummary.totalCount > 0 ? sessionSummary : undefined,
       practiceQuestions,
     });

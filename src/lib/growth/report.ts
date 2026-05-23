@@ -139,29 +139,55 @@ function computeInterviewStats(
   };
 }
 
-function computeWeaknessProgress(weaknesses: WeaknessData[]): WeaknessProgress[] {
+/**
+ * 弱点の進捗を「今期間と前期間の指摘頻度比較」で判定する。
+ *
+ * - periodCounts: 今期間に各弱点が essays/interviews で何回指摘されたか
+ * - previousCounts: 前期間の同様
+ *
+ * 判定ロジック:
+ * - 今期間 0 かつ 前期間 > 0 → improved (完全改善)
+ * - 今期間 < 前期間 → improved (頻度減少)
+ * - 今期間 > 前期間 → declined (頻度増加 = 悪化)
+ * - 上記以外 (== / 両方 0) → stable
+ *
+ * `currentScore` / `previousScore` は実頻度の逆指標 (10 - 指摘回数、clip 0〜10) で
+ * UI バー描画が実値ベースになる。
+ *
+ * 後方互換: periodCounts/previousCounts を渡さない場合は全て 0 とみなして stable に
+ * なる (旧呼び出し元が壊れない)。
+ */
+function computeWeaknessProgress(
+  weaknesses: WeaknessData[],
+  periodCounts: Record<string, number> = {},
+  previousCounts: Record<string, number> = {},
+): WeaknessProgress[] {
   return weaknesses
     .filter((w) => !w.resolved)
     .map((w) => {
+      const periodCount = periodCounts[w.area] ?? 0;
+      const previousCount = previousCounts[w.area] ?? 0;
+
       let status: "improved" | "stable" | "declined";
-      if (w.improving) {
+      if (periodCount === 0 && previousCount > 0) {
         status = "improved";
-      } else if (w.count >= 5) {
+      } else if (periodCount < previousCount) {
+        status = "improved";
+      } else if (periodCount > previousCount) {
         status = "declined";
       } else {
         status = "stable";
       }
 
-      // Use count as a proxy for score (higher count = lower score)
-      const currentScore = Math.max(0, 10 - w.count);
-      const previousScore = w.improving ? currentScore - 1 : currentScore + 1;
+      const currentScore = 10 - Math.min(periodCount, 10);
+      const previousScore = 10 - Math.min(previousCount, 10);
 
       return {
         weakness: w.area,
-        previousScore: Math.max(0, Math.min(10, previousScore)),
-        currentScore: Math.max(0, Math.min(10, currentScore)),
+        previousScore,
+        currentScore,
         status,
-        attempts: w.count,
+        attempts: w.count, // 累積回数は補助情報として維持
       };
     })
     .sort((a, b) => a.currentScore - b.currentScore);
@@ -274,6 +300,13 @@ export function generateGrowthReport(params: {
   periodInterviews: InterviewData[];
   previousInterviews: InterviewData[];
   weaknesses: WeaknessData[];
+  /**
+   * 今期間の essays/interviews の `weaknessTags` を集計したもの。
+   * 期間比較で「悪化/改善」を判定するために使う。未指定なら旧挙動 (stable のみ)。
+   */
+  periodWeaknessCounts?: Record<string, number>;
+  /** 前期間の同様の集計 */
+  previousWeaknessCounts?: Record<string, number>;
   /** 期間内のセッションから事前に集計されたサマリー (null/undefined で非表示) */
   sessionSummary?: GrowthReport["sessionSummary"];
   /** AI が生成した類題 (弱点・過去テーマから派生)。生成失敗時は undefined */
@@ -283,7 +316,11 @@ export function generateGrowthReport(params: {
 
   const essayStats = computeEssayStats(params.periodEssays, params.previousEssays);
   const interviewStats = computeInterviewStats(params.periodInterviews, params.previousInterviews);
-  const weaknessProgress = computeWeaknessProgress(params.weaknesses);
+  const weaknessProgress = computeWeaknessProgress(
+    params.weaknesses,
+    params.periodWeaknessCounts,
+    params.previousWeaknessCounts,
+  );
   const recommendations = generateRecommendations(essayStats, interviewStats, weaknessProgress);
   let overallAssessment = generateOverallAssessment(essayStats, interviewStats, weaknessProgress);
 

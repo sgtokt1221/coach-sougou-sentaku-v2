@@ -3,6 +3,10 @@ import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
 import { queryWithRangeFilter } from "@/lib/admin/firestore-range-query";
 import { generateGrowthReport, getPeriodRange } from "@/lib/growth/report";
+import {
+  collectWeaknessTags,
+  mergeCountMaps,
+} from "@/lib/growth/weakness-aggregate";
 import type { BatchReportRequest, GrowthReportSummary } from "@/lib/types/growth-report";
 
 function generateMockBatchReports(period: "weekly" | "monthly"): GrowthReportSummary[] {
@@ -144,6 +148,16 @@ export async function POST(request: NextRequest) {
           };
         };
 
+        // 期間別の weaknessTags 集計 (悪化/改善判定で使用)
+        const periodWeaknessCounts = mergeCountMaps(
+          collectWeaknessTags(periodEssaysSnap.docs),
+          collectWeaknessTags(periodInterviewsSnap.docs),
+        );
+        const previousWeaknessCounts = mergeCountMaps(
+          collectWeaknessTags(prevEssaysSnap.docs),
+          collectWeaknessTags(prevInterviewsSnap.docs),
+        );
+
         const report = generateGrowthReport({
           studentId,
           studentName: studentData.displayName ?? "",
@@ -161,6 +175,8 @@ export async function POST(request: NextRequest) {
               resolved: wData.resolved ?? false,
             };
           }),
+          periodWeaknessCounts,
+          previousWeaknessCounts,
         });
 
         // Save to Firestore (non-critical)
