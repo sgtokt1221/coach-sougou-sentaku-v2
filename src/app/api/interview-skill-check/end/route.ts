@@ -167,15 +167,22 @@ export async function POST(request: NextRequest) {
   }
 
   // 補助書き込み: user doc (失敗しても続行)
+  // SC 原値は lastInterviewCheckScore に保持、currentInterviewScore/Rank は aggregate で更新
   try {
     await adminDb.doc(`users/${userId}`).set(
       {
         interviewSkillCheckCompleted: true,
         lastInterviewCheckedAt: FieldValue.serverTimestamp(),
-        currentInterviewRank: rank,
-        currentInterviewScore: scores.total,
+        lastInterviewCheckScore: scores.total,
+        lastInterviewCheckRank: rank,
       },
       { merge: true },
+    );
+    const { refreshInterviewAggregateCache } = await import(
+      "@/lib/skill-check/aggregate"
+    );
+    void refreshInterviewAggregateCache(userId).catch((e) =>
+      console.warn("[interview-skill-check/end] aggregate refresh failed:", e),
     );
   } catch (err) {
     console.error("[interview-skill-check/end] Failed to update user doc:", err);

@@ -238,6 +238,18 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // スキル aggregate cache 更新 (fire-and-forget)
+    if (userId) {
+      const userIdForAggregate = userId;
+      void import("@/lib/skill-check/aggregate")
+        .then(({ refreshInterviewAggregateCache }) =>
+          refreshInterviewAggregateCache(userIdForAggregate),
+        )
+        .catch((e) =>
+          console.warn("[interview/end] aggregate refresh failed:", e),
+        );
+    }
+
     // BigQueryログ（非同期 fire-and-forget）
     void logInterviewSession({
       interview_id: sessionId,

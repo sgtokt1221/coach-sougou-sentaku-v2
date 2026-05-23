@@ -178,3 +178,71 @@ export async function computeInterviewAggregate(
 }
 
 export { emptyBreakdown };
+
+/**
+ * 指定ユーザーの essay aggregate を再計算し、Firestore `users/{uid}` の
+ * `currentSkillScore` / `currentSkillRank` (デノーマライズ値) を更新する。
+ *
+ * SC 原値は `lastSkillCheckScore` から取得。未設定の旧データは `currentSkillScore`
+ * を SC 原値とみなす (後方互換)。
+ *
+ * essay/review や skill-check/submit 完了時に fire-and-forget で呼び出す想定。
+ * 失敗してもユーザーレスポンスには影響させない。
+ */
+export async function refreshEssayAggregateCache(userId: string): Promise<void> {
+  const { adminDb } = await import("@/lib/firebase/admin");
+  if (!adminDb) return;
+  const userRef = adminDb.doc(`users/${userId}`);
+  const snap = await userRef.get();
+  if (!snap.exists) return;
+  const data = snap.data() as {
+    lastSkillCheckScore?: number;
+    currentSkillScore?: number;
+  };
+  // lastSkillCheckScore があればそれを SC 原値に使う。
+  // なければ旧データとみなして currentSkillScore を使う (後方互換)。
+  const scTotal =
+    typeof data.lastSkillCheckScore === "number"
+      ? data.lastSkillCheckScore
+      : typeof data.currentSkillScore === "number"
+        ? data.currentSkillScore
+        : null;
+  const result = await computeEssayAggregate(userId, scTotal);
+  if (result.compositeScore !== null && result.compositeRank !== null) {
+    await userRef.update({
+      currentSkillScore: result.compositeScore,
+      currentSkillRank: result.compositeRank,
+    });
+  }
+}
+
+/**
+ * 指定ユーザーの interview aggregate を再計算し、Firestore `users/{uid}` の
+ * `currentInterviewScore` / `currentInterviewRank` を更新する。
+ */
+export async function refreshInterviewAggregateCache(
+  userId: string,
+): Promise<void> {
+  const { adminDb } = await import("@/lib/firebase/admin");
+  if (!adminDb) return;
+  const userRef = adminDb.doc(`users/${userId}`);
+  const snap = await userRef.get();
+  if (!snap.exists) return;
+  const data = snap.data() as {
+    lastInterviewCheckScore?: number;
+    currentInterviewScore?: number;
+  };
+  const scTotal =
+    typeof data.lastInterviewCheckScore === "number"
+      ? data.lastInterviewCheckScore
+      : typeof data.currentInterviewScore === "number"
+        ? data.currentInterviewScore
+        : null;
+  const result = await computeInterviewAggregate(userId, scTotal);
+  if (result.compositeScore !== null && result.compositeRank !== null) {
+    await userRef.update({
+      currentInterviewScore: result.compositeScore,
+      currentInterviewRank: result.compositeRank,
+    });
+  }
+}

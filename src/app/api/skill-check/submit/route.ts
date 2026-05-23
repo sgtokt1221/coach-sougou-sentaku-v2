@@ -121,16 +121,24 @@ export async function POST(request: NextRequest) {
   }
 
   // 補助書き込み: user doc + 弱点 (失敗しても skillCheck 自体は保存済みなので続行)
+  // SC 原値は lastSkillCheckScore に保持、currentSkillScore/Rank は後で aggregate で更新
   try {
     await adminDb.doc(`users/${userId}`).set(
       {
         skillCheckCompleted: true,
         lastSkillCheckedAt: FieldValue.serverTimestamp(),
-        currentSkillRank: rank,
-        currentSkillScore: scores.total,
+        lastSkillCheckScore: scores.total,
+        lastSkillCheckRank: rank,
         academicCategory: category,
       },
       { merge: true },
+    );
+    // aggregate 再計算: 直近30日 essays と SC 原値の合成で currentSkillScore/Rank を更新
+    const { refreshEssayAggregateCache } = await import(
+      "@/lib/skill-check/aggregate"
+    );
+    void refreshEssayAggregateCache(userId).catch((e) =>
+      console.warn("[skill-check/submit] aggregate refresh failed:", e),
     );
   } catch (err) {
     console.error("[skill-check/submit] Failed to update user doc:", err);

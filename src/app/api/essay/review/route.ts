@@ -317,6 +317,18 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // スキル aggregate cache 更新 (fire-and-forget)
+    if (essayUserId) {
+      const userIdForAggregate = essayUserId;
+      void import("@/lib/skill-check/aggregate")
+        .then(({ refreshEssayAggregateCache }) =>
+          refreshEssayAggregateCache(userIdForAggregate),
+        )
+        .catch((e) =>
+          console.warn("[essay/review] aggregate refresh failed:", e),
+        );
+    }
+
     // BigQueryログ（非同期 fire-and-forget）
     void logEssaySubmission({
       essay_id: essayId,

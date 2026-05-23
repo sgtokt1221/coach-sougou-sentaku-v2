@@ -49,20 +49,34 @@ export interface StudentProfile extends UserProfile {
   skillCheckCompleted?: boolean;
   /** 最後にスキルチェックを受けた日時。30日経過でリマインド表示 */
   lastSkillCheckedAt?: Date;
-  /** 現在の総合スキルランク（デノーマライズ、一覧・ダッシュボード表示用） */
+  /**
+   * 現在の総合スキルランク (デノーマライズ、一覧・ダッシュボード表示用)。
+   * SC 原値そのものではなく **aggregate 後の合成ランク** (SC × 0.7 + 直近30日練習 × 0.3)。
+   * essay/review や interview/end でも更新される。
+   */
   currentSkillRank?: SkillRank;
-  /** 現在の総合スキルスコア 0-50（デノーマライズ） */
+  /** 現在の総合スキルスコア 0-50 (aggregate 後合成スコア、デノーマライズ) */
   currentSkillScore?: number;
+  /**
+   * SC を受験した時点の原値 (aggregate 計算の入力として保持)。
+   * 普段の添削/面接完了時に aggregate を再計算する際に、この値を SC 入力として使う。
+   * 未設定の旧データは currentSkillScore を SC 原値とみなす (後方互換)。
+   */
+  lastSkillCheckScore?: number;
+  lastSkillCheckRank?: SkillRank;
   /** 受験する系統（志望学部から自動導出→生徒・管理者が変更可） */
   academicCategory?: AcademicCategory;
   /** 面接スキルチェックを一度でも完了したか */
   interviewSkillCheckCompleted?: boolean;
   /** 最後に面接スキルチェックを受けた日時 */
   lastInterviewCheckedAt?: Date;
-  /** 現在の面接スキルランク */
+  /** 現在の面接スキルランク (aggregate 後合成、面接 SC × 0.7 + 直近30日練習 × 0.3) */
   currentInterviewRank?: SkillRank;
-  /** 現在の面接スキルスコア 0-40 */
+  /** 現在の面接スキルスコア 0-40 (aggregate 後合成) */
   currentInterviewScore?: number;
+  /** 面接 SC を受験した時点の原値 (aggregate 計算の入力) */
+  lastInterviewCheckScore?: number;
+  lastInterviewCheckRank?: SkillRank;
 }
 
 export interface EnglishCert {
