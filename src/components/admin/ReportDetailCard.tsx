@@ -318,73 +318,16 @@ export function ReportDetailCard({
 
       {/* 学力サマリ 2 カラム */}
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 print:grid-cols-2 print:gap-2 print:break-inside-avoid">
-        {/* 小論文 */}
-        <div className="rounded-lg border border-teal-200 bg-gradient-to-br from-teal-50 to-sky-50 p-4 dark:border-teal-900 dark:from-teal-950/30 dark:to-sky-950/30 print:border-gray-300 print:bg-white print:p-2 print:break-inside-avoid">
-          <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-teal-700 dark:text-teal-300">
-            <FileText className="size-4" />
-            小論文 ({report.essayStats.count}件)
-          </div>
-          <div className="flex items-center gap-3">
-            <SkillRankBadge
-              rank={scoreToSkillRank(report.essayStats.avgScore, 50)}
-              size="lg"
-              animate={false}
-            />
-            <div>
-              <div className="text-3xl font-bold tabular-nums">
-                {report.essayStats.avgScore}
-                <span className="ml-1 text-sm text-muted-foreground">/50</span>
-              </div>
-              <div className="mt-1 text-sm">
-                <ScoreChangeIndicator change={report.essayStats.scoreChange} />
-              </div>
-            </div>
-          </div>
-          {(report.essayStats.bestCategory || report.essayStats.worstCategory) && (
-            <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-              {report.essayStats.bestCategory && (
-                <div className="rounded bg-white/60 p-2 dark:bg-black/20">
-                  <div className="text-muted-foreground">得意</div>
-                  <div className="font-medium text-emerald-700 dark:text-emerald-400">
-                    {report.essayStats.bestCategory}
-                  </div>
-                </div>
-              )}
-              {report.essayStats.worstCategory && (
-                <div className="rounded bg-white/60 p-2 dark:bg-black/20">
-                  <div className="text-muted-foreground">課題</div>
-                  <div className="font-medium text-rose-700 dark:text-rose-400">
-                    {report.essayStats.worstCategory}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* 面接 */}
-        <div className="rounded-lg border border-rose-200 bg-gradient-to-br from-rose-50 to-amber-50 p-4 dark:border-rose-900 dark:from-rose-950/30 dark:to-amber-950/30 print:border-gray-300 print:bg-white print:p-2 print:break-inside-avoid">
-          <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-rose-700 dark:text-rose-300">
-            <Mic className="size-4" />
-            面接 ({report.interviewStats.count}件)
-          </div>
-          <div className="flex items-center gap-3">
-            <SkillRankBadge
-              rank={scoreToSkillRank(report.interviewStats.avgScore, 40)}
-              size="lg"
-              animate={false}
-            />
-            <div>
-              <div className="text-3xl font-bold tabular-nums">
-                {report.interviewStats.avgScore}
-                <span className="ml-1 text-sm text-muted-foreground">/40</span>
-              </div>
-              <div className="mt-1 text-sm">
-                <ScoreChangeIndicator change={report.interviewStats.scoreChange} />
-              </div>
-            </div>
-          </div>
-        </div>
+        <StatsSummaryCard
+          kind="essay"
+          stats={report.essayStats}
+          max={50}
+        />
+        <StatsSummaryCard
+          kind="interview"
+          stats={report.interviewStats}
+          max={40}
+        />
       </div>
 
       {/* 2 カラム本文 (lg 以上 / 印刷時も 2 カラム維持) */}
@@ -1042,6 +985,112 @@ function PracticeQuestionCard({
             existing={assignmentControl.existing}
             onMutated={assignmentControl.onMutated}
           />
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * 学力サマリーカード (小論文 or 面接)。
+ *
+ * 表示:
+ * - 種別アイコン + 「今期 N 件」バッジ
+ * - 大きく平均スコア + SkillRankBadge
+ * - 先期比 +X.X 点 (ScoreChangeIndicator)
+ * - ランクが変動した場合は「ランク {prev} → {current}」バッジ
+ * - 得意 / 課題 (essay のみ、bestCategory / worstCategory がある時)
+ */
+function StatsSummaryCard({
+  kind,
+  stats,
+  max,
+}: {
+  kind: "essay" | "interview";
+  stats: {
+    count: number;
+    avgScore: number;
+    scoreChange: number;
+    bestCategory?: string;
+    worstCategory?: string;
+  };
+  max: number;
+}) {
+  const isEssay = kind === "essay";
+  const currentRank = scoreToSkillRank(stats.avgScore, max);
+  // 先期スコアは 0 未満にならないよう clamp
+  const prevAvg = Math.max(0, stats.avgScore - stats.scoreChange);
+  const prevRank = scoreToSkillRank(prevAvg, max);
+  const rankChanged = currentRank !== prevRank && stats.count > 0;
+
+  return (
+    <div
+      className={`rounded-lg border p-4 print:p-2 print:break-inside-avoid ${
+        isEssay
+          ? "border-teal-200 bg-gradient-to-br from-teal-50 to-sky-50 dark:border-teal-900 dark:from-teal-950/30 dark:to-sky-950/30 print:border-gray-300 print:bg-white"
+          : "border-rose-200 bg-gradient-to-br from-rose-50 to-amber-50 dark:border-rose-900 dark:from-rose-950/30 dark:to-amber-950/30 print:border-gray-300 print:bg-white"
+      }`}
+    >
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <div
+          className={`flex items-center gap-2 text-sm font-semibold ${
+            isEssay
+              ? "text-teal-700 dark:text-teal-300"
+              : "text-rose-700 dark:text-rose-300"
+          }`}
+        >
+          {isEssay ? (
+            <FileText className="size-4" />
+          ) : (
+            <Mic className="size-4" />
+          )}
+          {isEssay ? "小論文" : "面接"}
+        </div>
+        <Badge variant="secondary" className="text-[10px]">
+          今期 {stats.count} 件
+        </Badge>
+      </div>
+      <div className="flex items-center gap-3">
+        <SkillRankBadge rank={currentRank} size="lg" animate={false} />
+        <div>
+          <div className="text-3xl font-bold tabular-nums">
+            {stats.avgScore}
+            <span className="ml-1 text-sm text-muted-foreground">/{max}</span>
+          </div>
+          <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs">
+            <span className="text-muted-foreground">先期比</span>
+            <ScoreChangeIndicator change={stats.scoreChange} />
+            <span className="text-muted-foreground">点</span>
+            {rankChanged && (
+              <Badge
+                variant="outline"
+                className="ml-0.5 gap-0.5 text-[10px]"
+                title={`スコアランクが ${prevRank} から ${currentRank} に変動`}
+              >
+                ランク {prevRank} → {currentRank}
+              </Badge>
+            )}
+          </div>
+        </div>
+      </div>
+      {isEssay && (stats.bestCategory || stats.worstCategory) && (
+        <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+          {stats.bestCategory && (
+            <div className="rounded bg-white/60 p-2 dark:bg-black/20">
+              <div className="text-muted-foreground">得意</div>
+              <div className="font-medium text-emerald-700 dark:text-emerald-400">
+                {stats.bestCategory}
+              </div>
+            </div>
+          )}
+          {stats.worstCategory && (
+            <div className="rounded bg-white/60 p-2 dark:bg-black/20">
+              <div className="text-muted-foreground">課題</div>
+              <div className="font-medium text-rose-700 dark:text-rose-400">
+                {stats.worstCategory}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

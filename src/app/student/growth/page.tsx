@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ScoresTrendChart } from "@/components/growth/ScoresTrendChart";
 import { TeacherReportsSection } from "@/components/student/TeacherReportsSection";
 import { SegmentControl } from "@/components/shared/SegmentControl";
-import { StudentGrowthReportView } from "@/components/student/StudentGrowthReportView";
+import { ReportDetailCard } from "@/components/admin/ReportDetailCard";
 import { TrendingUp, AlertCircle, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { WeaknessRecord, WeaknessReminderLevel, getWeaknessReminderLevel } from "@/lib/types/growth";
 import type { GrowthReport as AdminGrowthReport } from "@/lib/types/growth-report";
@@ -167,7 +167,7 @@ export default function GrowthPage() {
   }, [interviewList]);
 
   // メインタブ切替 (画面トップ)
-  const [mainTab, setMainTab] = useState<"report" | "trend" | "weakness" | "history">("report");
+  const [mainTab, setMainTab] = useState<"report" | "history" | "trend" | "weakness">("report");
   // レポート内側の週次/月次切替
   const [reportPeriod, setReportPeriod] = useState<"weekly" | "monthly">("weekly");
   // 総合スコア推移のタブ切替
@@ -227,19 +227,19 @@ export default function GrowthPage() {
         </p>
       </div>
 
-      {/* 画面トップのメインタブ: レポート / スコア推移 / 弱点 / 履歴 */}
+      {/* 画面トップのメインタブ: レポート / 履歴 / スコア推移 / 弱点 */}
       <SegmentControl
         value={mainTab}
         onChange={(v) =>
-          setMainTab(v as "report" | "trend" | "weakness" | "history")
+          setMainTab(v as "report" | "history" | "trend" | "weakness")
         }
         defaultAccent="blue"
         size="md"
         options={[
           { id: "report", label: "レポート" },
+          { id: "history", label: "履歴" },
           { id: "trend", label: "スコア推移" },
           { id: "weakness", label: "弱点" },
-          { id: "history", label: "履歴" },
         ]}
       />
 
@@ -262,7 +262,7 @@ export default function GrowthPage() {
               />
               {reportPeriod === "weekly" &&
                 (reportsByPeriod.weekly ? (
-                  <StudentGrowthReportView report={reportsByPeriod.weekly} />
+                  <ReportDetailCard report={reportsByPeriod.weekly} readOnly />
                 ) : (
                   <Card>
                     <CardContent className="py-10 text-center text-sm text-muted-foreground">
@@ -272,7 +272,7 @@ export default function GrowthPage() {
                 ))}
               {reportPeriod === "monthly" &&
                 (reportsByPeriod.monthly ? (
-                  <StudentGrowthReportView report={reportsByPeriod.monthly} />
+                  <ReportDetailCard report={reportsByPeriod.monthly} readOnly />
                 ) : (
                   <Card>
                     <CardContent className="py-10 text-center text-sm text-muted-foreground">
