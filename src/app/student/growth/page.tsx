@@ -4,12 +4,11 @@ import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScoresTrendChart } from "@/components/growth/ScoresTrendChart";
 import { TeacherReportsSection } from "@/components/student/TeacherReportsSection";
 import { SegmentControl } from "@/components/shared/SegmentControl";
 import { StudentGrowthReportView } from "@/components/student/StudentGrowthReportView";
-import { TrendingUp, AlertCircle, AlertTriangle, CheckCircle2, Award, Clock } from "lucide-react";
+import { TrendingUp, AlertCircle, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { WeaknessRecord, WeaknessReminderLevel, getWeaknessReminderLevel } from "@/lib/types/growth";
 import type { GrowthReport as AdminGrowthReport } from "@/lib/types/growth-report";
 import type { InterviewScores, InterviewMode } from "@/lib/types/interview";
@@ -167,6 +166,10 @@ export default function GrowthPage() {
       .reverse(); // 新しい順 → 古い順にして時系列グラフに
   }, [interviewList]);
 
+  // メインタブ切替 (画面トップ)
+  const [mainTab, setMainTab] = useState<"report" | "trend" | "weakness" | "history">("report");
+  // レポート内側の週次/月次切替
+  const [reportPeriod, setReportPeriod] = useState<"weekly" | "monthly">("weekly");
   // 総合スコア推移のタブ切替
   const [trendTab, setTrendTab] = useState<"combined" | "essay" | "interview">("combined");
 
@@ -225,38 +228,40 @@ export default function GrowthPage() {
       </div>
 
       {/* 画面トップのメインタブ: レポート / スコア推移 / 弱点 / 履歴 */}
-      <Tabs defaultValue="report" className="w-full">
-        <TabsList className="w-full justify-start overflow-x-auto sm:w-fit">
-          <TabsTrigger value="report" className="gap-1.5">
-            <Award className="size-4" />
-            レポート
-          </TabsTrigger>
-          <TabsTrigger value="trend" className="gap-1.5">
-            <TrendingUp className="size-4" />
-            スコア推移
-          </TabsTrigger>
-          <TabsTrigger value="weakness" className="gap-1.5">
-            <AlertCircle className="size-4" />
-            弱点
-          </TabsTrigger>
-          <TabsTrigger value="history" className="gap-1.5">
-            <Clock className="size-4" />
-            履歴
-          </TabsTrigger>
-        </TabsList>
+      <SegmentControl
+        value={mainTab}
+        onChange={(v) =>
+          setMainTab(v as "report" | "trend" | "weakness" | "history")
+        }
+        defaultAccent="blue"
+        size="md"
+        options={[
+          { id: "report", label: "レポート" },
+          { id: "trend", label: "スコア推移" },
+          { id: "weakness", label: "弱点" },
+          { id: "history", label: "履歴" },
+        ]}
+      />
 
-        {/* レポートタブ (内側に週次/月次タブ) */}
-        <TabsContent value="report" className="mt-4 space-y-4">
+      {/* レポートタブ (内側に週次/月次切替) */}
+      {mainTab === "report" && (
+        <div className="space-y-4">
           {loadingAdminReports ? (
             <Skeleton className="h-48 w-full" />
           ) : (
-            <Tabs defaultValue="weekly" className="w-full">
-              <TabsList className="w-fit">
-                <TabsTrigger value="weekly">週次</TabsTrigger>
-                <TabsTrigger value="monthly">月次</TabsTrigger>
-              </TabsList>
-              <TabsContent value="weekly" className="mt-4">
-                {reportsByPeriod.weekly ? (
+            <>
+              <SegmentControl
+                value={reportPeriod}
+                onChange={(v) => setReportPeriod(v as "weekly" | "monthly")}
+                defaultAccent="emerald"
+                size="sm"
+                options={[
+                  { id: "weekly", label: "週次" },
+                  { id: "monthly", label: "月次" },
+                ]}
+              />
+              {reportPeriod === "weekly" &&
+                (reportsByPeriod.weekly ? (
                   <StudentGrowthReportView report={reportsByPeriod.weekly} />
                 ) : (
                   <Card>
@@ -264,10 +269,9 @@ export default function GrowthPage() {
                       今週分の成長レポートはまだ届いていません。
                     </CardContent>
                   </Card>
-                )}
-              </TabsContent>
-              <TabsContent value="monthly" className="mt-4">
-                {reportsByPeriod.monthly ? (
+                ))}
+              {reportPeriod === "monthly" &&
+                (reportsByPeriod.monthly ? (
                   <StudentGrowthReportView report={reportsByPeriod.monthly} />
                 ) : (
                   <Card>
@@ -275,82 +279,83 @@ export default function GrowthPage() {
                       今月分の成長レポートはまだ届いていません。
                     </CardContent>
                   </Card>
-                )}
-              </TabsContent>
-            </Tabs>
+                ))}
+            </>
           )}
-        </TabsContent>
+        </div>
+      )}
 
-        {/* スコア推移タブ */}
-        <TabsContent value="trend" className="mt-4">
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  合計スコア (0〜50 点)
-                </CardTitle>
-                <SegmentControl
-                  value={trendTab}
-                  onChange={(v) =>
-                    setTrendTab(v as "combined" | "essay" | "interview")
-                  }
-                  size="sm"
-                  defaultAccent="blue"
-                  options={[
-                    { id: "combined", label: "総合" },
-                    {
-                      id: "essay",
-                      label: "小論文",
-                      count: essaySeries.length,
-                    },
-                    {
-                      id: "interview",
-                      label: "面接",
-                      count: interviewTrendData.length,
-                    },
-                  ]}
-                />
+      {/* スコア推移タブ */}
+      {mainTab === "trend" && (
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                合計スコア (0〜50 点)
+              </CardTitle>
+              <SegmentControl
+                value={trendTab}
+                onChange={(v) =>
+                  setTrendTab(v as "combined" | "essay" | "interview")
+                }
+                size="sm"
+                defaultAccent="blue"
+                options={[
+                  { id: "combined", label: "総合" },
+                  {
+                    id: "essay",
+                    label: "小論文",
+                    count: essaySeries.length,
+                  },
+                  {
+                    id: "interview",
+                    label: "面接",
+                    count: interviewTrendData.length,
+                  },
+                ]}
+              />
+            </div>
+          </CardHeader>
+          <CardContent>
+            {loadingTrend || loadingInterviews ? (
+              <Skeleton className="h-[220px] w-full lg:h-[280px]" />
+            ) : !hasCombined ? (
+              <p className="py-8 text-center text-sm text-muted-foreground">
+                まだデータがありません
+              </p>
+            ) : (
+              <div className="h-[260px] lg:h-[300px]">
+                {trendTab === "combined" && (
+                  <ScoresTrendChart
+                    essayData={essaySeries}
+                    interviewData={interviewTrendData}
+                  />
+                )}
+                {trendTab === "essay" &&
+                  (essaySeries.length === 0 ? (
+                    <p className="py-16 text-center text-sm text-muted-foreground">
+                      小論文のデータがありません
+                    </p>
+                  ) : (
+                    <ScoresTrendChart essayData={essaySeries} />
+                  ))}
+                {trendTab === "interview" &&
+                  (interviewTrendData.length === 0 ? (
+                    <p className="py-16 text-center text-sm text-muted-foreground">
+                      面接のデータがありません
+                    </p>
+                  ) : (
+                    <ScoresTrendChart interviewData={interviewTrendData} />
+                  ))}
               </div>
-            </CardHeader>
-            <CardContent>
-              {loadingTrend || loadingInterviews ? (
-                <Skeleton className="h-[220px] w-full lg:h-[280px]" />
-              ) : !hasCombined ? (
-                <p className="py-8 text-center text-sm text-muted-foreground">
-                  まだデータがありません
-                </p>
-              ) : (
-                <div className="h-[260px] lg:h-[300px]">
-                  {trendTab === "combined" && (
-                    <ScoresTrendChart
-                      essayData={essaySeries}
-                      interviewData={interviewTrendData}
-                    />
-                  )}
-                  {trendTab === "essay" &&
-                    (essaySeries.length === 0 ? (
-                      <p className="py-16 text-center text-sm text-muted-foreground">
-                        小論文のデータがありません
-                      </p>
-                    ) : (
-                      <ScoresTrendChart essayData={essaySeries} />
-                    ))}
-                  {trendTab === "interview" &&
-                    (interviewTrendData.length === 0 ? (
-                      <p className="py-16 text-center text-sm text-muted-foreground">
-                        面接のデータがありません
-                      </p>
-                    ) : (
-                      <ScoresTrendChart interviewData={interviewTrendData} />
-                    ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
-        {/* 弱点タブ */}
-        <TabsContent value="weakness" className="mt-4">
+      {/* 弱点タブ */}
+      {mainTab === "weakness" && (
+        <>
           {loadingWeaknesses ? (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
               <Skeleton className="h-40 w-full" />
@@ -395,13 +400,11 @@ export default function GrowthPage() {
               })()}
             </div>
           )}
-        </TabsContent>
+        </>
+      )}
 
-        {/* 履歴タブ (過去のレポート一覧) */}
-        <TabsContent value="history" className="mt-4">
-          <TeacherReportsSection />
-        </TabsContent>
-      </Tabs>
+      {/* 履歴タブ (過去のレポート一覧) */}
+      {mainTab === "history" && <TeacherReportsSection />}
     </div>
   );
 }
