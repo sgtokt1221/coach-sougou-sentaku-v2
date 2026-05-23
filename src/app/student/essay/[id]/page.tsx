@@ -140,6 +140,42 @@ export default function EssayResultPage() {
   const [showBrushedUp, setShowBrushedUp] = useState(false);
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
   const [tab, setTab] = useState<"overview"|"redpen"|"weaknesses"|"brushup"|"insights">("overview");
+  const [generatingBrushup, setGeneratingBrushup] = useState(false);
+
+  const generateBrushup = async () => {
+    if (generatingBrushup) return;
+    setGeneratingBrushup(true);
+    try {
+      const { authFetch } = await import("@/lib/api/client");
+      const res = await authFetch(`/api/essay/${id}/brushup`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        const payload = (await res.json().catch(() => ({}))) as {
+          error?: string;
+          detail?: string;
+        };
+        throw new Error(payload.detail ?? payload.error ?? "生成に失敗しました");
+      }
+      const json = (await res.json()) as { brushedUpText: string };
+      setResult((prev) =>
+        prev
+          ? {
+              ...prev,
+              feedback: { ...prev.feedback, brushedUpText: json.brushedUpText },
+            }
+          : prev,
+      );
+      setShowBrushedUp(true);
+    } catch (err) {
+      const { toast } = await import("sonner");
+      toast.error(
+        err instanceof Error ? err.message : "ブラッシュアップ版の生成に失敗しました",
+      );
+    } finally {
+      setGeneratingBrushup(false);
+    }
+  };
 
   function copyToClipboard(text: string, section: string) {
     navigator.clipboard.writeText(text).then(() => {
@@ -819,6 +855,47 @@ export default function EssayResultPage() {
 
               {tab === "brushup" && (
                 <div id="brushup-section">
+                  {/* ブラッシュアップ版が未生成: オンデマンド生成ボタン */}
+                  {!result.feedback.brushedUpText && (
+                    <Card className="border-0 bg-gradient-to-br from-emerald-50 via-emerald-50 to-teal-50 shadow-lg">
+                      <CardHeader className="pb-4">
+                        <CardTitle className="text-xl tracking-tight flex items-center gap-2 text-emerald-700">
+                          <PenTool className="size-6" />
+                          ブラッシュアップ版
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-center py-8">
+                          <div className="inline-flex items-center justify-center size-16 rounded-full bg-emerald-100 mb-4">
+                            <Zap className="size-8 text-emerald-600" />
+                          </div>
+                          <h3 className="text-lg font-semibold tracking-tight text-emerald-800 mb-2">
+                            ブラッシュアップ版を生成しますか？
+                          </h3>
+                          <p className="text-sm text-emerald-700 mb-4 max-w-md mx-auto">
+                            AIがあなたの本文を、 添削の改善ポイントに沿って磨いた全文を作成します。 一度作ると保存されるので次回からはすぐ表示されます。
+                          </p>
+                          <Button
+                            onClick={generateBrushup}
+                            disabled={generatingBrushup}
+                            className="bg-emerald-600 hover:bg-emerald-700"
+                          >
+                            {generatingBrushup ? (
+                              <>
+                                <Zap className="size-4 mr-1 animate-pulse" />
+                                生成中…
+                              </>
+                            ) : (
+                              <>
+                                <PenTool className="size-4 mr-1" />
+                                ブラッシュアップ版を生成する
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
                   {/* ブラッシュアップ版 */}
                   {result.feedback.brushedUpText && (
                     <Card className="border-0 bg-gradient-to-br from-emerald-50 via-emerald-50 to-teal-50 shadow-lg">

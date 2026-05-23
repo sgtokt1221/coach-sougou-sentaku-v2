@@ -289,3 +289,45 @@ export function buildOcrRestorationPrompt(
   const dirLabel = writingDirection === "vertical" ? "縦書き（右→左）" : "横書き（左→右）";
   return OCR_RESTORATION_PROMPT.replace(/{{WRITING_DIRECTION}}/g, dirLabel);
 }
+
+/**
+ * ブラッシュアップ版 (生徒の本文を改善した全文) をオンデマンドで生成するプロンプト。
+ * 添削の本処理 (review) からは独立し、 必要時のみ短いプロンプトで呼ぶ。
+ * 出力は JSON ではなくプレーンテキスト本文のみ。
+ */
+export function buildEssayBrushupPrompt(
+  ocrText: string,
+  feedback: {
+    improvements?: string[];
+    repeatedIssues?: { area: string; example?: string }[];
+  },
+): string {
+  const improvementsBlock = (feedback.improvements ?? []).length
+    ? feedback.improvements!.map((s) => `- ${s}`).join("\n")
+    : "- （特になし）";
+  const issuesBlock = (feedback.repeatedIssues ?? []).length
+    ? feedback
+        .repeatedIssues!.map(
+          (i) => `- ${i.area}${i.example ? `（例: ${i.example}）` : ""}`,
+        )
+        .join("\n")
+    : "- （特になし）";
+
+  return `あなたは総合型選抜の小論文添削者です。以下の生徒の本文を、AI が指摘した改善点に沿ってブラッシュアップしてください。
+
+## 生徒の本文
+${ocrText}
+
+## 改善ポイント
+${improvementsBlock}
+
+## 繰り返し指摘されている弱点
+${issuesBlock}
+
+## ルール
+- 生徒の意図・主張・具体例を最大限尊重する。書き直しではなく「磨く」姿勢で。
+- 元の文章の個性・視点・経験は必ず残す。
+- 構成・論理展開・表現力のみ改善する。新しい主張や事実は追加しない。
+- 字数は元本文と同程度（±20%）に収める。
+- 出力は本文のみ。タイトル・前置き・解説・JSON囲み等は一切不要。`;
+}
