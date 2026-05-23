@@ -3,6 +3,41 @@ import { verifyAuthToken, adminDb } from "@/lib/firebase/admin";
 import type { GrowthReport } from "@/lib/types/growth-report";
 
 /**
+ * Firestore Timestamp / Date instance / 既に string / { _seconds } 形式の
+ * いずれも受け取り、ISO 文字列に正規化する。
+ *
+ * これがないと:
+ * - data.generatedAt が Timestamp 由来でも plain object として来る経路があり、
+ *   その object が JSON 化されて client に届く
+ * - client 側で `(v ?? "").localeCompare(...)` 等を呼ぶと TypeError になる
+ * - React で `{report.generatedAt}` を render しようとすると #31 になる
+ */
+function toIsoString(v: unknown): string | undefined {
+  if (!v) return undefined;
+  if (typeof v === "string") return v;
+  if (v instanceof Date) return v.toISOString();
+  if (typeof v === "object") {
+    const obj = v as {
+      _seconds?: number;
+      seconds?: number;
+      toDate?: () => Date;
+    };
+    if (typeof obj.toDate === "function") {
+      try {
+        return obj.toDate().toISOString();
+      } catch {
+        // toDate が壊れてる場合は次の経路で
+      }
+    }
+    const sec = obj._seconds ?? obj.seconds;
+    if (typeof sec === "number") {
+      return new Date(sec * 1000).toISOString();
+    }
+  }
+  return undefined;
+}
+
+/**
  * GET /api/student/reports
  *
  * 認証ユーザー自身の成長レポート一覧を返す。
@@ -66,28 +101,35 @@ export async function GET(request: NextRequest) {
     const reports: GrowthReport[] = snap.docs
       .map((d) => {
         const data = d.data();
+        const editedAtIso = toIsoString(data.editedAt);
         return {
           id: d.id,
           studentId: auth.uid,
-          studentName: data.studentName ?? "",
+          studentName: typeof data.studentName === "string" ? data.studentName : "",
           period: data.period,
-          startDate:
-            data.startDate?.toDate?.()?.toISOString?.() ?? data.startDate ?? "",
-          endDate:
-            data.endDate?.toDate?.()?.toISOString?.() ?? data.endDate ?? "",
-          generatedAt:
-            data.generatedAt?.toDate?.()?.toISOString?.() ??
-            data.generatedAt ??
-            new Date().toISOString(),
+          startDate: toIsoString(data.startDate) ?? "",
+          endDate: toIsoString(data.endDate) ?? "",
+          generatedAt: toIsoString(data.generatedAt) ?? new Date().toISOString(),
           essayStats: data.essayStats,
           interviewStats: data.interviewStats,
-          weaknessProgress: data.weaknessProgress ?? [],
-          recommendations: data.recommendations ?? [],
-          overallAssessment: data.overallAssessment ?? "",
+          weaknessProgress: Array.isArray(data.weaknessProgress)
+            ? data.weaknessProgress
+            : [],
+          recommendations: Array.isArray(data.recommendations)
+            ? data.recommendations.filter(
+                (r: unknown): r is string => typeof r === "string",
+              )
+            : [],
+          overallAssessment:
+            typeof data.overallAssessment === "string" ? data.overallAssessment : "",
           sessionSummary: data.sessionSummary,
-          teacherComment: data.teacherComment,
-          editedBy: data.editedBy,
-          editedAt: data.editedAt,
+          teacherComment:
+            typeof data.teacherComment === "string" ? data.teacherComment : undefined,
+          practiceQuestions: Array.isArray(data.practiceQuestions)
+            ? data.practiceQuestions
+            : undefined,
+          editedBy: typeof data.editedBy === "string" ? data.editedBy : undefined,
+          ...(editedAtIso ? { editedAt: editedAtIso } : {}),
           sharedWithStudent: data.sharedWithStudent,
         } as GrowthReport;
       })

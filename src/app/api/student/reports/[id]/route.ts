@@ -2,6 +2,30 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyAuthToken, adminDb } from "@/lib/firebase/admin";
 import type { GrowthReport } from "@/lib/types/growth-report";
 
+/** Firestore Timestamp / Date / string / { _seconds } を ISO 文字列に統一 */
+function toIsoString(v: unknown): string | undefined {
+  if (!v) return undefined;
+  if (typeof v === "string") return v;
+  if (v instanceof Date) return v.toISOString();
+  if (typeof v === "object") {
+    const obj = v as {
+      _seconds?: number;
+      seconds?: number;
+      toDate?: () => Date;
+    };
+    if (typeof obj.toDate === "function") {
+      try {
+        return obj.toDate().toISOString();
+      } catch {
+        // fallthrough
+      }
+    }
+    const sec = obj._seconds ?? obj.seconds;
+    if (typeof sec === "number") return new Date(sec * 1000).toISOString();
+  }
+  return undefined;
+}
+
 /**
  * GET /api/student/reports/[id]
  *
@@ -47,28 +71,35 @@ export async function GET(
       );
     }
 
+    const editedAtIso = toIsoString(data.editedAt);
     const report: GrowthReport = {
       id: docSnap.id,
       studentId: auth.uid,
-      studentName: data.studentName ?? "",
+      studentName: typeof data.studentName === "string" ? data.studentName : "",
       period: data.period,
-      startDate:
-        data.startDate?.toDate?.()?.toISOString?.() ?? data.startDate ?? "",
-      endDate:
-        data.endDate?.toDate?.()?.toISOString?.() ?? data.endDate ?? "",
-      generatedAt:
-        data.generatedAt?.toDate?.()?.toISOString?.() ??
-        data.generatedAt ??
-        new Date().toISOString(),
+      startDate: toIsoString(data.startDate) ?? "",
+      endDate: toIsoString(data.endDate) ?? "",
+      generatedAt: toIsoString(data.generatedAt) ?? new Date().toISOString(),
       essayStats: data.essayStats,
       interviewStats: data.interviewStats,
-      weaknessProgress: data.weaknessProgress ?? [],
-      recommendations: data.recommendations ?? [],
-      overallAssessment: data.overallAssessment ?? "",
+      weaknessProgress: Array.isArray(data.weaknessProgress)
+        ? data.weaknessProgress
+        : [],
+      recommendations: Array.isArray(data.recommendations)
+        ? data.recommendations.filter(
+            (r: unknown): r is string => typeof r === "string",
+          )
+        : [],
+      overallAssessment:
+        typeof data.overallAssessment === "string" ? data.overallAssessment : "",
       sessionSummary: data.sessionSummary,
-      teacherComment: data.teacherComment,
-      editedBy: data.editedBy,
-      editedAt: data.editedAt,
+      teacherComment:
+        typeof data.teacherComment === "string" ? data.teacherComment : undefined,
+      practiceQuestions: Array.isArray(data.practiceQuestions)
+        ? data.practiceQuestions
+        : undefined,
+      editedBy: typeof data.editedBy === "string" ? data.editedBy : undefined,
+      ...(editedAtIso ? { editedAt: editedAtIso } : {}),
       sharedWithStudent: data.sharedWithStudent,
     };
 

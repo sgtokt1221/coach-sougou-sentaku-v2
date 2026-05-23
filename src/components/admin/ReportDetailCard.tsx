@@ -254,7 +254,7 @@ export function ReportDetailCard({
       {!readOnly && (
         <div className="flex items-center justify-between gap-2 print:hidden">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            {report.editedAt && (
+            {typeof report.editedAt === "string" && report.editedAt.length > 0 && (
               <span>
                 最終編集: {new Date(report.editedAt).toLocaleString("ja-JP")}
               </span>

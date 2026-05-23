@@ -133,9 +133,15 @@ export default function GrowthPage() {
 
   // 講師が作成した成長レポートを period 別に最新 1 件ずつ取り出す
   const reportsByPeriod = useMemo(() => {
+    // defensive: generatedAt が string 以外で来ても落ちないようにする
+    const keyOf = (v: unknown): string => {
+      if (typeof v === "string") return v;
+      if (v instanceof Date) return v.toISOString();
+      return "";
+    };
     const list = adminReports ?? [];
     const sortedDesc = [...list].sort((a, b) =>
-      (b.generatedAt ?? "").localeCompare(a.generatedAt ?? ""),
+      keyOf(b.generatedAt).localeCompare(keyOf(a.generatedAt)),
     );
     return {
       weekly: sortedDesc.find((r) => r.period === "weekly") ?? null,
