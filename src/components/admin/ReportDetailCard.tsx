@@ -1125,28 +1125,46 @@ function StatsSummaryCard({
         </div>
       )}
       {radarData && stats.count > 0 && (
-        <div className="mx-auto mt-3 aspect-square w-full max-w-[240px] print:max-w-[180px] print:break-inside-avoid">
-          <ResponsiveContainer width="100%" height="100%">
-            <RadarChart data={radarData} outerRadius="75%">
-              <PolarGrid gridType="polygon" stroke="#e2e8f0" />
-              <PolarAngleAxis
-                dataKey="subject"
-                tick={{ fill: "#475569", fontSize: 10 }}
-              />
-              <PolarRadiusAxis
-                domain={[0, 10]}
-                tickCount={6}
-                tick={{ fill: "#94a3b8", fontSize: 9 }}
-              />
-              <Radar
-                dataKey="value"
-                stroke={isEssay ? "#0d9488" : "#e11d48"}
-                fill={isEssay ? "#14b8a6" : "#fb7185"}
-                fillOpacity={0.25}
-                isAnimationActive={false}
-              />
-            </RadarChart>
-          </ResponsiveContainer>
+        <div className="mt-3 grid grid-cols-1 items-center gap-3 sm:grid-cols-[minmax(0,1fr)_auto] print:grid-cols-[minmax(0,1fr)_auto] print:break-inside-avoid">
+          <div className="mx-auto aspect-square w-full max-w-[200px] print:max-w-[150px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart data={radarData} outerRadius="75%">
+                <PolarGrid gridType="polygon" stroke="#e2e8f0" />
+                <PolarAngleAxis
+                  dataKey="subject"
+                  tick={{ fill: "#475569", fontSize: 10 }}
+                />
+                <PolarRadiusAxis
+                  domain={[0, 10]}
+                  tick={false}
+                  axisLine={false}
+                />
+                <Radar
+                  dataKey="value"
+                  stroke={isEssay ? "#0d9488" : "#e11d48"}
+                  fill={isEssay ? "#14b8a6" : "#fb7185"}
+                  fillOpacity={0.25}
+                  isAnimationActive={false}
+                />
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
+          <ul className="min-w-[110px] space-y-1 text-xs">
+            {radarData.map((item) => (
+              <li
+                key={item.subject}
+                className="flex items-center justify-between gap-2 rounded bg-white/60 px-2 py-1 dark:bg-black/20"
+              >
+                <span className="text-muted-foreground">{item.subject}</span>
+                <span className="font-medium tabular-nums">
+                  {item.value.toFixed(1)}
+                  <span className="ml-0.5 text-[10px] text-muted-foreground">
+                    /10
+                  </span>
+                </span>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </div>
