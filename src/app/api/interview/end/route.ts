@@ -57,6 +57,7 @@ export async function POST(request: NextRequest) {
     let sessionUniversityId = "";
     let sessionFacultyId = "";
     let sessionMode = mode ?? "";
+    let homeworkAssignmentIdFromSession: string | undefined;
 
     const { adminDb } = await import("@/lib/firebase/admin");
     if (adminDb) {
@@ -68,6 +69,9 @@ export async function POST(request: NextRequest) {
           sessionUniversityId = sessionData.universityId ?? "";
           sessionFacultyId = sessionData.facultyId ?? "";
           if (!sessionMode) sessionMode = sessionData.mode ?? "";
+          if (typeof sessionData.homeworkAssignmentId === "string") {
+            homeworkAssignmentIdFromSession = sessionData.homeworkAssignmentId;
+          }
           const ctx = sessionData.universityContext;
           if (ctx) {
             universityName = ctx.universityName ?? universityName;
@@ -215,6 +219,23 @@ export async function POST(request: NextRequest) {
           ...(videoAnalysis ? { videoAnalysis } : {}),
           ...(appearanceAnalysis ? { appearanceAnalysis } : {}),
         });
+
+        // 宿題経由のセッションなら HomeworkAssignment を submitted に更新
+        if (userId && homeworkAssignmentIdFromSession) {
+          await adminDb
+            .doc(`users/${userId}/homeworkAssignments/${homeworkAssignmentIdFromSession}`)
+            .update({
+              status: "submitted",
+              submittedInterviewId: sessionId,
+              submittedAt: FieldValue.serverTimestamp(),
+            })
+            .catch((e) =>
+              console.warn(
+                `[interview/end] homework update failed (${homeworkAssignmentIdFromSession}):`,
+                e,
+              ),
+            );
+        }
 
         if (userId) {
           for (const weakness of updatedWeaknesses) {

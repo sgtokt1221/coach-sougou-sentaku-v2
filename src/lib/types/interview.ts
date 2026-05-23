@@ -67,6 +67,14 @@ export interface InterviewStartRequest {
   facultyId: string;
   mode: InterviewMode;
   userId?: string;
+  inputMode?: InterviewInputMode;
+  presentationContent?: string;
+  /** 任意のお題を最初の質問として固定 (宿題提出時など) */
+  customOpeningQuestion?: string;
+  /** 宿題経由のセッションなら "homework"、それ以外は省略可 */
+  sourceType?: "manual" | "homework" | "skill_check";
+  /** sourceType === "homework" の時に紐付ける HomeworkAssignment ID */
+  homeworkAssignmentId?: string;
 }
 
 export interface InterviewStartResponse {

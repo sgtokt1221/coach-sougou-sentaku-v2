@@ -53,10 +53,54 @@ export default function HomeworkDetailPage() {
 
   const [text, setText] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [startingInterview, setStartingInterview] = useState(false);
   const [result, setResult] = useState<{
     targetId: string;
     type: "essay" | "interview";
   } | null>(null);
+
+  const startInterviewSession = async () => {
+    if (!data) return;
+    const universityId = data.snapshot.targetUniversity;
+    const facultyId = data.snapshot.targetFaculty;
+    if (!universityId || !facultyId) {
+      toast.error(
+        "志望校が未設定のため模擬面接を開始できません。プロフィールから設定してください。",
+      );
+      return;
+    }
+    setStartingInterview(true);
+    try {
+      const res = await authFetch("/api/interview/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          universityId,
+          facultyId,
+          mode: "individual",
+          inputMode: "text",
+          customOpeningQuestion: data.snapshot.title,
+          sourceType: "homework",
+          homeworkAssignmentId: data.id,
+        }),
+      });
+      if (!res.ok) {
+        const detail = (await res.json().catch(() => ({}))) as {
+          error?: string;
+          detail?: string;
+        };
+        throw new Error(detail.detail ?? detail.error ?? "面接を開始できません");
+      }
+      const json = (await res.json()) as { sessionId?: string };
+      if (!json.sessionId) throw new Error("セッション ID が取得できません");
+      router.push(`/student/interview/session/${json.sessionId}`);
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "面接の開始に失敗しました",
+      );
+      setStartingInterview(false);
+    }
+  };
 
   const minLength = useMemo(() => (data?.snapshot.type === "essay" ? 20 : 10), [data]);
   const canSubmit = text.trim().length >= minLength && !submitting && !result;
@@ -214,28 +258,20 @@ export default function HomeworkDetailPage() {
             この宿題は既に提出済みです。添削結果は履歴ページから確認できます。
           </CardContent>
         </Card>
-      ) : (
+      ) : isEssay ? (
         <Card>
           <CardContent className="space-y-3 p-4">
-            <label className="block text-sm font-semibold">
-              {isEssay ? "本文を書いてください" : "回答を書いてください"}
-            </label>
+            <label className="block text-sm font-semibold">本文を書いてください</label>
             <Textarea
               value={text}
               onChange={(e) => setText(e.target.value)}
-              rows={isEssay ? 16 : 8}
-              placeholder={
-                isEssay
-                  ? "ここに本文を書いてください (目安: 400〜600 字)"
-                  : "ここに回答を書いてください (目安: 80〜150 字)"
-              }
+              rows={16}
+              placeholder="ここに本文を書いてください (目安: 400〜600 字)"
               disabled={submitting}
             />
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>{text.length} 文字</span>
-              <span>
-                提出には {minLength} 文字以上必要です
-              </span>
+              <span>提出には {minLength} 文字以上必要です</span>
             </div>
             <div className="flex justify-end">
               <Button onClick={handleSubmit} disabled={!canSubmit}>
@@ -245,6 +281,27 @@ export default function HomeworkDetailPage() {
                   <Send className="mr-1.5 size-4" />
                 )}
                 提出してAI添削を受ける
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardContent className="space-y-3 p-4">
+            <p className="text-sm text-muted-foreground">
+              模擬面接 UI で AI 面接官と対話しながら回答します。 会話を終えると自動的に宿題が提出され、 スコアとフィードバックが表示されます。
+            </p>
+            <div className="flex justify-end">
+              <Button
+                onClick={startInterviewSession}
+                disabled={startingInterview}
+              >
+                {startingInterview ? (
+                  <Loader2 className="mr-1.5 size-4 animate-spin" />
+                ) : (
+                  <Mic className="mr-1.5 size-4" />
+                )}
+                {startingInterview ? "準備中…" : "模擬面接で回答する"}
               </Button>
             </div>
           </CardContent>

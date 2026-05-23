@@ -7,8 +7,17 @@ import type { InterviewTendency } from "@/lib/types/university";
 
 export async function POST(request: NextRequest) {
   try {
-    const body: InterviewStartRequest & { inputMode?: string; presentationContent?: string } = await request.json();
-    const { universityId, facultyId, mode, inputMode, presentationContent } = body;
+    const body: InterviewStartRequest = await request.json();
+    const {
+      universityId,
+      facultyId,
+      mode,
+      inputMode,
+      presentationContent,
+      customOpeningQuestion,
+      sourceType,
+      homeworkAssignmentId,
+    } = body;
     const resolvedInputMode = inputMode ?? "text";
 
     // IDトークンからuserIdを取得（クライアントから送られたuserIdより安全）
@@ -98,11 +107,17 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // 宿題提出など固定のお題で開始したい場合は Claude を呼ばず、お題をそのまま冒頭発話にする
+    const fixedOpening =
+      typeof customOpeningQuestion === "string" && customOpeningQuestion.trim().length > 0
+        ? customOpeningQuestion.trim()
+        : null;
+
     // 音声モード (個人/プレゼン/口頭試問/GD すべて) は Realtime API が自分で挨拶を生成するので
     // Claude での openingMessage 生成はスキップして爆速化する
-    const skipClaudeOpening = resolvedInputMode === "voice";
+    const skipClaudeOpening = resolvedInputMode === "voice" || fixedOpening !== null;
 
-    let openingMessage = "";
+    let openingMessage = fixedOpening ?? "";
     if (!skipClaudeOpening) {
       const apiKey = process.env.ANTHROPIC_API_KEY;
       if (!apiKey) {
@@ -145,6 +160,9 @@ export async function POST(request: NextRequest) {
           startedAt: FieldValue.serverTimestamp(),
           universityContext: { universityName, facultyName, admissionPolicy },
           inputMode: resolvedInputMode,
+          sourceType: sourceType ?? "manual",
+          ...(homeworkAssignmentId ? { homeworkAssignmentId } : {}),
+          ...(fixedOpening ? { openingMessage: fixedOpening } : {}),
         });
       } catch (err) {
         console.warn("Failed to create interview session in Firestore:", err);
