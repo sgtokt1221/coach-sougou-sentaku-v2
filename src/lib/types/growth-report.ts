@@ -59,6 +59,12 @@ export interface PracticeQuestion {
   answerVisibility?: "teacher_only" | "after_submission" | "student_visible";
   /** 表示順序。サーバー側で生成時に連番付与 */
   order?: number;
+  /**
+   * 宿題として配布できるか。 admin が手動で判定する。
+   * 未設定 (undefined) は default で true 扱い (= 配布可、 後方互換)。
+   * 短答系 (例: 「30秒で述べ直して」) など模擬面接や小論文として成立しないものは false。
+   */
+  homeworkAssignable?: boolean;
 }
 
 export interface GrowthReport {

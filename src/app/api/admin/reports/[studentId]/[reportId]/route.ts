@@ -236,6 +236,9 @@ export async function PATCH(
           if (typeof q.order === "number") {
             cleaned.order = q.order;
           }
+          if (typeof q.homeworkAssignable === "boolean") {
+            cleaned.homeworkAssignable = q.homeworkAssignable;
+          }
           return cleaned;
         });
     }

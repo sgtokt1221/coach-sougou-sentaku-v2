@@ -108,6 +108,11 @@ export async function POST(
         skipped.push(pqId);
         continue;
       }
+      // 配布不可フラグが明示的に false の類題はサーバー側でも弾く
+      if (pq.homeworkAssignable === false) {
+        skipped.push(pqId);
+        continue;
+      }
 
       const assignmentId = `hw_${Date.now()}_${pqId}`;
       const snapshot: HomeworkAssignment["snapshot"] = {

@@ -20,6 +20,7 @@ export function AssignHomeworkButton({
   practiceQuestionId,
   existing,
   onMutated,
+  assignable = true,
 }: {
   studentId: string;
   reportId: string;
@@ -28,6 +29,11 @@ export function AssignHomeworkButton({
   existing?: HomeworkAssignment;
   /** 配布 / 取消後に親コンポーネントへ通知 (SWR mutate 等) */
   onMutated?: () => void;
+  /**
+   * 宿題として配布可能か。 false なら「短答系のため配布不可」と表示してボタンを disable。
+   * default true で後方互換 (homeworkAssignable === false の類題のみブロック)。
+   */
+  assignable?: boolean;
 }) {
   const [busy, setBusy] = useState(false);
 
@@ -114,6 +120,20 @@ export function AssignHomeworkButton({
           </Button>
         )}
       </div>
+    );
+  }
+
+  if (!assignable) {
+    return (
+      <Button
+        variant="outline"
+        size="sm"
+        disabled
+        className="h-7 px-2 text-[11px]"
+        title="この類題は短答系のため、模擬面接 / 小論文として成立しません。 編集で「宿題として配布可」をオンにすると配布できます。"
+      >
+        配布不可
+      </Button>
     );
   }
 

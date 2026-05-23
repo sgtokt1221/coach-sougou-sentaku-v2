@@ -546,6 +546,27 @@ export function ReportDetailCard({
                         placeholder="解答例 (小論文: 400-500 字 / 面接: 80-150 字)"
                         className="mt-1 text-xs"
                       />
+                      <label className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                        <input
+                          type="checkbox"
+                          checked={q.homeworkAssignable !== false}
+                          onChange={(e) => {
+                            const next = [...practiceQs];
+                            next[i] = {
+                              ...next[i],
+                              homeworkAssignable: e.target.checked,
+                            };
+                            setPracticeQs(next);
+                          }}
+                          className="size-3.5"
+                        />
+                        <span>
+                          宿題として配布可
+                          <span className="ml-1 text-[10px]">
+                            (短答系など模擬面接 / 小論文として成立しないものは外す)
+                          </span>
+                        </span>
+                      </label>
                     </div>
                   ))}
                   <Button
@@ -562,6 +583,7 @@ export function ReportDetailCard({
                           title: "",
                           relatedWeakness: "",
                           order: practiceQs.length,
+                          homeworkAssignable: true,
                         },
                       ])
                     }
@@ -986,6 +1008,7 @@ function PracticeQuestionCard({
             practiceQuestionId={pq.id}
             existing={assignmentControl.existing}
             onMutated={assignmentControl.onMutated}
+            assignable={pq.homeworkAssignable !== false}
           />
         </div>
       )}
