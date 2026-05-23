@@ -1,18 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
+import { toIsoString } from "@/lib/firebase/timestamp";
 import type { GrowthReportSummary } from "@/lib/types/growth-report";
 
-/**
- * Firestore Timestamp / Date / ISO string を ISO 文字列に正規化する。
- */
+/** 共通 toIsoString が undefined を返すケース (= 未設定) は現在時刻にフォールバック */
 function toIso(value: unknown): string {
-  if (!value) return new Date().toISOString();
-  if (typeof value === "string") return value;
-  if (value instanceof Date) return value.toISOString();
-  const maybeTs = value as { toDate?: () => Date };
-  if (typeof maybeTs.toDate === "function") return maybeTs.toDate().toISOString();
-  return new Date().toISOString();
+  return toIsoString(value) ?? new Date().toISOString();
 }
 
 /**

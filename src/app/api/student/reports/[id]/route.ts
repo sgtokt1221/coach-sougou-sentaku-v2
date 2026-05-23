@@ -1,30 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAuthToken, adminDb } from "@/lib/firebase/admin";
+import { toIsoString } from "@/lib/firebase/timestamp";
 import type { GrowthReport } from "@/lib/types/growth-report";
-
-/** Firestore Timestamp / Date / string / { _seconds } を ISO 文字列に統一 */
-function toIsoString(v: unknown): string | undefined {
-  if (!v) return undefined;
-  if (typeof v === "string") return v;
-  if (v instanceof Date) return v.toISOString();
-  if (typeof v === "object") {
-    const obj = v as {
-      _seconds?: number;
-      seconds?: number;
-      toDate?: () => Date;
-    };
-    if (typeof obj.toDate === "function") {
-      try {
-        return obj.toDate().toISOString();
-      } catch {
-        // fallthrough
-      }
-    }
-    const sec = obj._seconds ?? obj.seconds;
-    if (typeof sec === "number") return new Date(sec * 1000).toISOString();
-  }
-  return undefined;
-}
 
 /**
  * GET /api/student/reports/[id]

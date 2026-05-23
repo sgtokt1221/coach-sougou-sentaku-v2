@@ -11,6 +11,7 @@ import {
 import { getPeriodRange } from "@/lib/growth/report";
 import { queryWithRangeFilter } from "@/lib/admin/firestore-range-query";
 import { loadStudentContext } from "@/lib/growth/student-context";
+import { toDateSafe } from "@/lib/firebase/timestamp";
 
 /**
  * POST /api/admin/reports/[studentId]/[reportId]/generate-practice-questions
@@ -82,17 +83,21 @@ export async function POST(
 
     step = "collect_context";
     // 既存レポートから期間を再構築 (today を基準にすると古いレポートでは今週がズレるため)
+    // startDate / endDate の保存形式は Firestore Timestamp / Date / ISO string が混在しうるため
+    // toDateSafe 経由で全形式に対応する。
     const reportData = reportSnap.data() as {
       period?: "weekly" | "monthly";
-      startDate?: FirebaseFirestore.Timestamp;
-      endDate?: FirebaseFirestore.Timestamp;
+      startDate?: unknown;
+      endDate?: unknown;
     };
     const period = reportData.period ?? "weekly";
+    const sd = toDateSafe(reportData.startDate);
+    const ed = toDateSafe(reportData.endDate);
     let startDate: Date;
     let endDate: Date;
-    if (reportData.startDate && reportData.endDate) {
-      startDate = reportData.startDate.toDate();
-      endDate = reportData.endDate.toDate();
+    if (sd && ed) {
+      startDate = sd;
+      endDate = ed;
     } else {
       const range = getPeriodRange(period);
       startDate = range.start;
