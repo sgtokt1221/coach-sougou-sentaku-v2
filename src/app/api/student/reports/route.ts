@@ -5,6 +5,7 @@ import {
   computeEssayStats,
   computeInterviewStats,
 } from "@/lib/growth/report";
+import { queryWithRangeFilter } from "@/lib/admin/firestore-range-query";
 import type { GrowthReport } from "@/lib/types/growth-report";
 
 /**
@@ -186,12 +187,14 @@ async function backfillReport(
 
   if (needsEssay) {
     try {
-      const snap = await adminDb
-        .collection("essays")
-        .where("userId", "==", userId)
-        .where("submittedAt", ">=", startDate)
-        .where("submittedAt", "<=", endDate)
-        .get();
+      const snap = await queryWithRangeFilter(
+        adminDb.collection("essays"),
+        "userId",
+        userId,
+        "submittedAt",
+        startDate,
+        endDate,
+      );
       const mapped = snap.docs.map((d) => {
         const data = d.data();
         return {
@@ -212,12 +215,14 @@ async function backfillReport(
 
   if (needsInterview) {
     try {
-      const snap = await adminDb
-        .collection("interviews")
-        .where("userId", "==", userId)
-        .where("startedAt", ">=", startDate)
-        .where("startedAt", "<=", endDate)
-        .get();
+      const snap = await queryWithRangeFilter(
+        adminDb.collection("interviews"),
+        "userId",
+        userId,
+        "startedAt",
+        startDate,
+        endDate,
+      );
       const mapped = snap.docs.map((d) => {
         const data = d.data();
         return {
