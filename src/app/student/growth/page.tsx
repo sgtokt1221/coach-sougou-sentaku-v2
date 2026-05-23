@@ -4,13 +4,12 @@ import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScoresTrendChart } from "@/components/growth/ScoresTrendChart";
 import { TeacherReportsSection } from "@/components/student/TeacherReportsSection";
 import { SegmentControl } from "@/components/shared/SegmentControl";
-import { ReportDetailCard } from "@/components/admin/ReportDetailCard";
-import { TrendingUp, AlertCircle, AlertTriangle, CheckCircle2, Award } from "lucide-react";
+import { StudentGrowthReportView } from "@/components/student/StudentGrowthReportView";
+import { TrendingUp, AlertCircle, AlertTriangle, CheckCircle2, Award, Clock } from "lucide-react";
 import { WeaknessRecord, WeaknessReminderLevel, getWeaknessReminderLevel } from "@/lib/types/growth";
 import type { GrowthReport as AdminGrowthReport } from "@/lib/types/growth-report";
 import type { InterviewScores, InterviewMode } from "@/lib/types/interview";
@@ -217,140 +216,192 @@ export default function GrowthPage() {
   const improvingWeaknesses = weaknesses.filter((w) => w.level === "improving");
 
   return (
-    <div className="space-y-5 lg:space-y-8 px-4 py-5 lg:px-8 lg:py-8">
+    <div className="space-y-5 px-4 py-5 lg:space-y-6 lg:px-8 lg:py-8">
       <div>
-        <h1 className="text-xl lg:text-2xl font-bold">成長トラッキング</h1>
-        <p className="text-sm text-muted-foreground">あなたの学習成長を可視化します</p>
+        <h1 className="text-xl lg:text-2xl font-bold">成長</h1>
+        <p className="text-sm text-muted-foreground">
+          あなたの学習成長を可視化します
+        </p>
       </div>
 
-      {/* 先生からの成長レポート (週次 / 月次タブ切替で最新 1 件ずつ表示) */}
-      <section>
-        <h2 className="mb-3 flex items-center gap-2 text-sm lg:text-lg font-semibold">
-          <Award className="size-5" />
-          先生からの成長レポート
-        </h2>
-        {loadingAdminReports ? (
-          <Skeleton className="h-48 w-full" />
-        ) : (
-          <Tabs defaultValue="weekly" className="w-full">
-            <TabsList>
-              <TabsTrigger value="weekly">週次</TabsTrigger>
-              <TabsTrigger value="monthly">月次</TabsTrigger>
-            </TabsList>
-            <TabsContent value="weekly" className="mt-3">
-              {reportsByPeriod.weekly ? (
-                <ReportDetailCard report={reportsByPeriod.weekly} readOnly />
-              ) : (
-                <Card>
-                  <CardContent className="py-8 text-center text-sm text-muted-foreground">
-                    今週分の成長レポートはまだ届いていません。
-                  </CardContent>
-                </Card>
-              )}
-            </TabsContent>
-            <TabsContent value="monthly" className="mt-3">
-              {reportsByPeriod.monthly ? (
-                <ReportDetailCard report={reportsByPeriod.monthly} readOnly />
-              ) : (
-                <Card>
-                  <CardContent className="py-8 text-center text-sm text-muted-foreground">
-                    今月分の成長レポートはまだ届いていません。
-                  </CardContent>
-                </Card>
-              )}
-            </TabsContent>
-          </Tabs>
-        )}
-      </section>
+      {/* 画面トップのメインタブ: レポート / スコア推移 / 弱点 / 履歴 */}
+      <Tabs defaultValue="report" className="w-full">
+        <TabsList className="w-full justify-start overflow-x-auto sm:w-fit">
+          <TabsTrigger value="report" className="gap-1.5">
+            <Award className="size-4" />
+            レポート
+          </TabsTrigger>
+          <TabsTrigger value="trend" className="gap-1.5">
+            <TrendingUp className="size-4" />
+            スコア推移
+          </TabsTrigger>
+          <TabsTrigger value="weakness" className="gap-1.5">
+            <AlertCircle className="size-4" />
+            弱点
+          </TabsTrigger>
+          <TabsTrigger value="history" className="gap-1.5">
+            <Clock className="size-4" />
+            履歴
+          </TabsTrigger>
+        </TabsList>
 
-      <Separator />
-
-      {/* 過去のレポート一覧 (上の最新タブと重複しないよう、リスト表示用) */}
-      <TeacherReportsSection />
-
-      <Separator />
-
-      {/* 総合スコア推移 */}
-      <section>
-        <h2 className="mb-3 flex items-center gap-2 text-sm lg:text-lg font-semibold">
-          <TrendingUp className="size-5" />
-          総合スコア推移
-        </h2>
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between gap-3 flex-wrap">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                合計スコア(0〜50点)
-              </CardTitle>
-              <SegmentControl
-                value={trendTab}
-                onChange={(v) => setTrendTab(v as "combined" | "essay" | "interview")}
-                size="sm"
-                defaultAccent="blue"
-                options={[
-                  { id: "combined", label: "総合" },
-                  { id: "essay", label: "小論文", count: essaySeries.length },
-                  { id: "interview", label: "面接", count: interviewTrendData.length },
-                ]}
-              />
-            </div>
-          </CardHeader>
-          <CardContent>
-            {loadingTrend || loadingInterviews ? (
-              <Skeleton className="h-[220px] lg:h-[280px] w-full" />
-            ) : !hasCombined ? (
-              <p className="text-sm text-muted-foreground text-center py-8">まだデータがありません</p>
-            ) : (
-              <div className="h-[260px] lg:h-[300px]">
-                {trendTab === "combined" && (
-                  <ScoresTrendChart essayData={essaySeries} interviewData={interviewTrendData} />
+        {/* レポートタブ (内側に週次/月次タブ) */}
+        <TabsContent value="report" className="mt-4 space-y-4">
+          {loadingAdminReports ? (
+            <Skeleton className="h-48 w-full" />
+          ) : (
+            <Tabs defaultValue="weekly" className="w-full">
+              <TabsList className="w-fit">
+                <TabsTrigger value="weekly">週次</TabsTrigger>
+                <TabsTrigger value="monthly">月次</TabsTrigger>
+              </TabsList>
+              <TabsContent value="weekly" className="mt-4">
+                {reportsByPeriod.weekly ? (
+                  <StudentGrowthReportView report={reportsByPeriod.weekly} />
+                ) : (
+                  <Card>
+                    <CardContent className="py-10 text-center text-sm text-muted-foreground">
+                      今週分の成長レポートはまだ届いていません。
+                    </CardContent>
+                  </Card>
                 )}
-                {trendTab === "essay" && (
-                  essaySeries.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-16">小論文のデータがありません</p>
-                  ) : (
-                    <ScoresTrendChart essayData={essaySeries} />
-                  )
+              </TabsContent>
+              <TabsContent value="monthly" className="mt-4">
+                {reportsByPeriod.monthly ? (
+                  <StudentGrowthReportView report={reportsByPeriod.monthly} />
+                ) : (
+                  <Card>
+                    <CardContent className="py-10 text-center text-sm text-muted-foreground">
+                      今月分の成長レポートはまだ届いていません。
+                    </CardContent>
+                  </Card>
                 )}
-                {trendTab === "interview" && (
-                  interviewTrendData.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-16">面接のデータがありません</p>
-                  ) : (
-                    <ScoresTrendChart interviewData={interviewTrendData} />
-                  )
-                )}
+              </TabsContent>
+            </Tabs>
+          )}
+        </TabsContent>
+
+        {/* スコア推移タブ */}
+        <TabsContent value="trend" className="mt-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  合計スコア (0〜50 点)
+                </CardTitle>
+                <SegmentControl
+                  value={trendTab}
+                  onChange={(v) =>
+                    setTrendTab(v as "combined" | "essay" | "interview")
+                  }
+                  size="sm"
+                  defaultAccent="blue"
+                  options={[
+                    { id: "combined", label: "総合" },
+                    {
+                      id: "essay",
+                      label: "小論文",
+                      count: essaySeries.length,
+                    },
+                    {
+                      id: "interview",
+                      label: "面接",
+                      count: interviewTrendData.length,
+                    },
+                  ]}
+                />
               </div>
-            )}
-          </CardContent>
-        </Card>
-      </section>
+            </CardHeader>
+            <CardContent>
+              {loadingTrend || loadingInterviews ? (
+                <Skeleton className="h-[220px] w-full lg:h-[280px]" />
+              ) : !hasCombined ? (
+                <p className="py-8 text-center text-sm text-muted-foreground">
+                  まだデータがありません
+                </p>
+              ) : (
+                <div className="h-[260px] lg:h-[300px]">
+                  {trendTab === "combined" && (
+                    <ScoresTrendChart
+                      essayData={essaySeries}
+                      interviewData={interviewTrendData}
+                    />
+                  )}
+                  {trendTab === "essay" &&
+                    (essaySeries.length === 0 ? (
+                      <p className="py-16 text-center text-sm text-muted-foreground">
+                        小論文のデータがありません
+                      </p>
+                    ) : (
+                      <ScoresTrendChart essayData={essaySeries} />
+                    ))}
+                  {trendTab === "interview" &&
+                    (interviewTrendData.length === 0 ? (
+                      <p className="py-16 text-center text-sm text-muted-foreground">
+                        面接のデータがありません
+                      </p>
+                    ) : (
+                      <ScoresTrendChart interviewData={interviewTrendData} />
+                    ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      <Separator />
+        {/* 弱点タブ */}
+        <TabsContent value="weakness" className="mt-4">
+          {loadingWeaknesses ? (
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+              <Skeleton className="h-40 w-full" />
+              <Skeleton className="h-40 w-full" />
+              <Skeleton className="h-40 w-full" />
+            </div>
+          ) : weaknesses.length === 0 ? (
+            <Card>
+              <CardContent className="py-10 text-center text-sm text-muted-foreground">
+                まだ弱点が記録されていません。小論文や面接に取り組むと、ここに集計されます。
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+              {(() => {
+                const maxCount = Math.max(
+                  ...weaknesses.map((w) => w.count),
+                  1,
+                );
+                return (
+                  <>
+                    <WeaknessColumn
+                      title="要注意・警告"
+                      items={activeWeaknesses}
+                      level="critical"
+                      maxCount={maxCount}
+                    />
+                    <WeaknessColumn
+                      title="改善中"
+                      items={improvingWeaknesses}
+                      level="improving"
+                      maxCount={maxCount}
+                    />
+                    <WeaknessColumn
+                      title="解決済み"
+                      items={resolvedWeaknesses}
+                      level="resolved"
+                      maxCount={maxCount}
+                    />
+                  </>
+                );
+              })()}
+            </div>
+          )}
+        </TabsContent>
 
-      {/* 弱点マップ */}
-      <section>
-        <h2 className="mb-4 text-sm lg:text-lg font-semibold">弱点マップ</h2>
-        {loadingWeaknesses ? (
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            <Skeleton className="h-40 w-full" />
-            <Skeleton className="h-40 w-full" />
-            <Skeleton className="h-40 w-full" />
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            {(() => {
-              const maxCount = Math.max(...weaknesses.map(w => w.count), 1);
-              return (
-                <>
-                  <WeaknessColumn title="要注意・警告" items={activeWeaknesses} level="critical" maxCount={maxCount} />
-                  <WeaknessColumn title="改善中" items={improvingWeaknesses} level="improving" maxCount={maxCount} />
-                  <WeaknessColumn title="解決済み" items={resolvedWeaknesses} level="resolved" maxCount={maxCount} />
-                </>
-              );
-            })()}
-          </div>
-        )}
-      </section>
+        {/* 履歴タブ (過去のレポート一覧) */}
+        <TabsContent value="history" className="mt-4">
+          <TeacherReportsSection />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
