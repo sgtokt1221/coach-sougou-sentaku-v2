@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAuthToken, adminDb } from "@/lib/firebase/admin";
-import { toIsoString } from "@/lib/firebase/timestamp";
+import { toDateSafe, toIsoString } from "@/lib/firebase/timestamp";
+import {
+  computeEssayStats,
+  computeInterviewStats,
+} from "@/lib/growth/report";
 import type { GrowthReport } from "@/lib/types/growth-report";
 
 /**
@@ -80,6 +84,14 @@ export async function GET(
       sharedWithStudent: data.sharedWithStudent,
     };
 
+    // categoryAverages のバックフィル (古いレポート対応)
+    await backfillCategoryAverages(auth.uid, report).catch((e) =>
+      console.warn(
+        `[student/reports/id] backfill failed for ${report.id}:`,
+        e instanceof Error ? e.message : e,
+      ),
+    );
+
     return NextResponse.json(report);
   } catch (error) {
     console.error("[student/reports GET id] error:", error);
@@ -88,5 +100,93 @@ export async function GET(
       { error: "レポートの取得に失敗しました", detail },
       { status: 500 }
     );
+  }
+}
+
+/**
+ * categoryAverages が未保存の古いレポートに対して、期間内 essays/interviews から
+ * 動的に計算し、`report` を mutate しつつ Firestore にも書き戻す。
+ * (list API と同じロジックのコピー。共通化するなら別タスクで)
+ */
+async function backfillCategoryAverages(
+  userId: string,
+  report: GrowthReport,
+): Promise<void> {
+  if (!adminDb) return;
+  const needsEssay =
+    report.essayStats &&
+    report.essayStats.count > 0 &&
+    !report.essayStats.categoryAverages;
+  const needsInterview =
+    report.interviewStats &&
+    report.interviewStats.count > 0 &&
+    !report.interviewStats.categoryAverages;
+  if (!needsEssay && !needsInterview) return;
+
+  const startDate = toDateSafe(report.startDate);
+  const endDate = toDateSafe(report.endDate);
+  if (!startDate || !endDate) return;
+
+  const update: Record<string, unknown> = {};
+
+  if (needsEssay) {
+    try {
+      const snap = await adminDb
+        .collection("essays")
+        .where("userId", "==", userId)
+        .where("submittedAt", ">=", startDate)
+        .where("submittedAt", "<=", endDate)
+        .get();
+      const mapped = snap.docs.map((d) => {
+        const data = d.data();
+        return {
+          id: d.id,
+          submittedAt: data.submittedAt?.toDate?.() ?? new Date(),
+          scores: data.scores ?? null,
+        };
+      });
+      const stats = computeEssayStats(mapped, []);
+      if (stats.categoryAverages) {
+        report.essayStats.categoryAverages = stats.categoryAverages;
+        update["essayStats.categoryAverages"] = stats.categoryAverages;
+      }
+    } catch (e) {
+      console.warn("[backfill] essay categoryAverages failed:", e);
+    }
+  }
+
+  if (needsInterview) {
+    try {
+      const snap = await adminDb
+        .collection("interviews")
+        .where("userId", "==", userId)
+        .where("startedAt", ">=", startDate)
+        .where("startedAt", "<=", endDate)
+        .get();
+      const mapped = snap.docs.map((d) => {
+        const data = d.data();
+        return {
+          id: d.id,
+          startedAt: data.startedAt?.toDate?.() ?? new Date(),
+          scores: data.scores ?? null,
+        };
+      });
+      const stats = computeInterviewStats(mapped, []);
+      if (stats.categoryAverages) {
+        report.interviewStats.categoryAverages = stats.categoryAverages;
+        update["interviewStats.categoryAverages"] = stats.categoryAverages;
+      }
+    } catch (e) {
+      console.warn("[backfill] interview categoryAverages failed:", e);
+    }
+  }
+
+  if (Object.keys(update).length > 0) {
+    void adminDb
+      .doc(`users/${userId}/growthReports/${report.id}`)
+      .update(update)
+      .catch((e) =>
+        console.warn("[backfill] write back failed:", e),
+      );
   }
 }

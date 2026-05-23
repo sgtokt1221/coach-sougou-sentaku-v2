@@ -1,6 +1,6 @@
 import type { GrowthReport, WeaknessProgress } from "@/lib/types/growth-report";
 
-interface EssayData {
+export interface EssayData {
   id: string;
   submittedAt: Date;
   scores: {
@@ -13,7 +13,7 @@ interface EssayData {
   } | null;
 }
 
-interface InterviewData {
+export interface InterviewData {
   id: string;
   startedAt: Date;
   scores: {
@@ -52,7 +52,7 @@ function getPeriodRange(period: "weekly" | "monthly"): { start: Date; end: Date 
   return { start, end };
 }
 
-function computeEssayStats(
+export function computeEssayStats(
   periodEssays: EssayData[],
   previousEssays: EssayData[]
 ): GrowthReport["essayStats"] {
@@ -129,7 +129,7 @@ const INTERVIEW_CATEGORIES = [
   "bodyLanguage",
 ] as const;
 
-function computeInterviewStats(
+export function computeInterviewStats(
   periodInterviews: InterviewData[],
   previousInterviews: InterviewData[]
 ): GrowthReport["interviewStats"] {

@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAuthToken, adminDb } from "@/lib/firebase/admin";
-import { toIsoString } from "@/lib/firebase/timestamp";
+import { toDateSafe, toIsoString } from "@/lib/firebase/timestamp";
+import {
+  computeEssayStats,
+  computeInterviewStats,
+} from "@/lib/growth/report";
 import type { GrowthReport } from "@/lib/types/growth-report";
 
 /**
@@ -55,9 +59,11 @@ export async function GET(request: NextRequest) {
       const all = await adminDb
         .collection(`users/${auth.uid}/growthReports`)
         .get();
+      // toDateSafe で全形式 (Date / string / Timestamp / { _seconds }) を正規化
+      // 古いレポートで toDate() が失敗して 0 にフォールバックして順序が崩れていた
       const docs = all.docs.slice().sort((a, b) => {
-        const ta = (a.data().generatedAt?.toDate?.()?.getTime?.() ?? 0) as number;
-        const tb = (b.data().generatedAt?.toDate?.()?.getTime?.() ?? 0) as number;
+        const ta = toDateSafe(a.data().generatedAt)?.getTime() ?? 0;
+        const tb = toDateSafe(b.data().generatedAt)?.getTime() ?? 0;
         return tb - ta;
       }).slice(0, limit);
       snap = { docs };
@@ -102,6 +108,19 @@ export async function GET(request: NextRequest) {
       // 公開オフは除外。undefined は「未設定 = デフォルト公開」とみなす
       .filter((r) => r.sharedWithStudent !== false);
 
+    // categoryAverages のバックフィル (古いレポート対応)
+    // 期間内 essays/interviews から動的計算し、結果を Firestore に書き戻す
+    // (一度書き戻したら次回は skip されるのでコストは初回のみ)
+    step = "backfill_category_averages";
+    await Promise.all(
+      reports.map((r) => backfillCategoryAverages(auth.uid, r).catch((e) => {
+        console.warn(
+          `[student/reports] backfill failed for ${r.id}:`,
+          e instanceof Error ? e.message : e,
+        );
+      })),
+    );
+
     return NextResponse.json(reports);
   } catch (error) {
     console.error(`[student/reports GET] step=${step} error:`, error);
@@ -110,5 +129,99 @@ export async function GET(request: NextRequest) {
       { error: "レポート一覧の取得に失敗しました", detail, step },
       { status: 500 }
     );
+  }
+}
+
+/**
+ * categoryAverages が未保存の古いレポートに対して、期間内 essays/interviews から
+ * 動的に計算し、`report` を mutate しつつ Firestore にも書き戻す。
+ *
+ * 計算が必要なフィールド (essay / interview それぞれ) について個別に処理:
+ * - count > 0 かつ categoryAverages 未設定なら計算
+ * - 失敗時は呼び出し側で catch するので、UI 表示には影響しない
+ *
+ * mutate しているので呼び出し側はそのまま `reports` を返却すれば最新値を返せる。
+ */
+async function backfillCategoryAverages(
+  userId: string,
+  report: GrowthReport,
+): Promise<void> {
+  if (!adminDb) return;
+  const needsEssay =
+    report.essayStats &&
+    report.essayStats.count > 0 &&
+    !report.essayStats.categoryAverages;
+  const needsInterview =
+    report.interviewStats &&
+    report.interviewStats.count > 0 &&
+    !report.interviewStats.categoryAverages;
+  if (!needsEssay && !needsInterview) return;
+
+  const startDate = toDateSafe(report.startDate);
+  const endDate = toDateSafe(report.endDate);
+  if (!startDate || !endDate) return;
+
+  const update: Record<string, unknown> = {};
+
+  if (needsEssay) {
+    try {
+      const snap = await adminDb
+        .collection("essays")
+        .where("userId", "==", userId)
+        .where("submittedAt", ">=", startDate)
+        .where("submittedAt", "<=", endDate)
+        .get();
+      const mapped = snap.docs.map((d) => {
+        const data = d.data();
+        return {
+          id: d.id,
+          submittedAt: data.submittedAt?.toDate?.() ?? new Date(),
+          scores: data.scores ?? null,
+        };
+      });
+      const stats = computeEssayStats(mapped, []);
+      if (stats.categoryAverages) {
+        report.essayStats.categoryAverages = stats.categoryAverages;
+        update["essayStats.categoryAverages"] = stats.categoryAverages;
+      }
+    } catch (e) {
+      console.warn("[backfill] essay categoryAverages failed:", e);
+    }
+  }
+
+  if (needsInterview) {
+    try {
+      const snap = await adminDb
+        .collection("interviews")
+        .where("userId", "==", userId)
+        .where("startedAt", ">=", startDate)
+        .where("startedAt", "<=", endDate)
+        .get();
+      const mapped = snap.docs.map((d) => {
+        const data = d.data();
+        return {
+          id: d.id,
+          startedAt: data.startedAt?.toDate?.() ?? new Date(),
+          scores: data.scores ?? null,
+        };
+      });
+      const stats = computeInterviewStats(mapped, []);
+      if (stats.categoryAverages) {
+        report.interviewStats.categoryAverages = stats.categoryAverages;
+        update["interviewStats.categoryAverages"] = stats.categoryAverages;
+      }
+    } catch (e) {
+      console.warn("[backfill] interview categoryAverages failed:", e);
+    }
+  }
+
+  if (Object.keys(update).length > 0) {
+    // fire-and-forget で書き戻し。失敗してもユーザーレスポンスには影響させない
+    void adminDb
+      .doc(`users/${userId}/growthReports/${report.id}`)
+      .update(update)
+      .catch((e) =>
+        console.warn("[backfill] write back failed:", e),
+      );
   }
 }
