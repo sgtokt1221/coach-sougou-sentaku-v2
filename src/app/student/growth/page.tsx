@@ -5,12 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScoresTrendChart } from "@/components/growth/ScoresTrendChart";
 import { TeacherReportsSection } from "@/components/student/TeacherReportsSection";
 import { SegmentControl } from "@/components/shared/SegmentControl";
-import { TrendingUp, AlertCircle, AlertTriangle, CheckCircle2, Sparkles, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { ReportDetailCard } from "@/components/admin/ReportDetailCard";
+import { TrendingUp, AlertCircle, AlertTriangle, CheckCircle2, Award } from "lucide-react";
 import { WeaknessRecord, WeaknessReminderLevel, getWeaknessReminderLevel } from "@/lib/types/growth";
-import type { GrowthReport } from "@/lib/types/analytics";
+import type { GrowthReport as AdminGrowthReport } from "@/lib/types/growth-report";
 import type { InterviewScores, InterviewMode } from "@/lib/types/interview";
 import { useAuthSWR } from "@/lib/api/swr";
 import { WeaknessSourceBadge, sourceLeftBorder } from "@/components/growth/WeaknessSourceBadge";
@@ -126,8 +128,20 @@ function WeaknessColumn({
 export default function GrowthPage() {
   const { data: essayData, isLoading: loadingTrend } = useAuthSWR<{ essays: { submittedAt: string; status: string; scores?: { total: number; structure: number; logic: number; expression: number; apAlignment: number; originality: number } }[] }>("/api/essay/history?userId=current");
   const { data: interviewData, isLoading: loadingInterviews } = useAuthSWR<{ interviews: InterviewHistoryItem[] }>("/api/interview/history?userId=current");
-  const { data: reportData, isLoading: loadingReport } = useAuthSWR<GrowthReport>("/api/growth/report");
+  const { data: adminReports, isLoading: loadingAdminReports } = useAuthSWR<AdminGrowthReport[]>("/api/student/reports");
   const { data: weaknessData, isLoading: loadingWeaknesses } = useAuthSWR<{ weaknesses: WeaknessRecord[] }>("/api/growth/weaknesses?context=dashboard");
+
+  // 講師が作成した成長レポートを period 別に最新 1 件ずつ取り出す
+  const reportsByPeriod = useMemo(() => {
+    const list = adminReports ?? [];
+    const sortedDesc = [...list].sort((a, b) =>
+      (b.generatedAt ?? "").localeCompare(a.generatedAt ?? ""),
+    );
+    return {
+      weekly: sortedDesc.find((r) => r.period === "weekly") ?? null,
+      monthly: sortedDesc.find((r) => r.period === "monthly") ?? null,
+    };
+  }, [adminReports]);
 
   const interviewList = useMemo(() => {
     const list = interviewData?.interviews ?? [];
@@ -147,8 +161,6 @@ export default function GrowthPage() {
       })
       .reverse(); // 新しい順 → 古い順にして時系列グラフに
   }, [interviewList]);
-
-  const report = reportData ?? null;
 
   // 総合スコア推移のタブ切替
   const [trendTab, setTrendTab] = useState<"combined" | "essay" | "interview">("combined");
@@ -205,72 +217,50 @@ export default function GrowthPage() {
         <p className="text-sm text-muted-foreground">あなたの学習成長を可視化します</p>
       </div>
 
-      {/* 先生からのレポート (講師作成・公開分のみ) */}
-      <TeacherReportsSection />
-
-      {/* AI成長レポート */}
+      {/* 先生からの成長レポート (週次 / 月次タブ切替で最新 1 件ずつ表示) */}
       <section>
         <h2 className="mb-3 flex items-center gap-2 text-sm lg:text-lg font-semibold">
-          <Sparkles className="size-5" />
-          AI成長レポート
+          <Award className="size-5" />
+          先生からの成長レポート
         </h2>
-        {loadingReport ? (
+        {loadingAdminReports ? (
           <Skeleton className="h-48 w-full" />
-        ) : report ? (
-          <div className="space-y-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">AI総評</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm leading-relaxed">{report.summary}</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">全体平均との比較</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
-                  {report.comparisonToAvg.map((c) => (
-                    <div key={c.area} className="rounded-lg border p-3 text-center">
-                      <p className="text-xs text-muted-foreground">{c.area}</p>
-                      <p className="text-lg font-bold">{c.myScore}</p>
-                      <div className="flex items-center justify-center gap-1 text-xs">
-                        {c.myScore >= c.avgScore ? (
-                          <ArrowUpRight className="size-3 text-emerald-500" />
-                        ) : (
-                          <ArrowDownRight className="size-3 text-rose-500" />
-                        )}
-                        <span className="text-muted-foreground">平均 {c.avgScore}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">改善提案</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2">
-                  {report.recommendations.map((rec, i) => (
-                    <li key={i} className="flex gap-2 text-sm">
-                      <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-sky-100 text-xs font-bold text-sky-600">
-                        {i + 1}
-                      </span>
-                      {rec}
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-          </div>
-        ) : null}
+        ) : (
+          <Tabs defaultValue="weekly" className="w-full">
+            <TabsList>
+              <TabsTrigger value="weekly">週次</TabsTrigger>
+              <TabsTrigger value="monthly">月次</TabsTrigger>
+            </TabsList>
+            <TabsContent value="weekly" className="mt-3">
+              {reportsByPeriod.weekly ? (
+                <ReportDetailCard report={reportsByPeriod.weekly} readOnly />
+              ) : (
+                <Card>
+                  <CardContent className="py-8 text-center text-sm text-muted-foreground">
+                    今週分の成長レポートはまだ届いていません。
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+            <TabsContent value="monthly" className="mt-3">
+              {reportsByPeriod.monthly ? (
+                <ReportDetailCard report={reportsByPeriod.monthly} readOnly />
+              ) : (
+                <Card>
+                  <CardContent className="py-8 text-center text-sm text-muted-foreground">
+                    今月分の成長レポートはまだ届いていません。
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+          </Tabs>
+        )}
       </section>
+
+      <Separator />
+
+      {/* 過去のレポート一覧 (上の最新タブと重複しないよう、リスト表示用) */}
+      <TeacherReportsSection />
 
       <Separator />
 
