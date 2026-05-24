@@ -9,6 +9,8 @@ import { SegmentControl } from "@/components/shared/SegmentControl";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BookOpen, Star, Clock, ArrowRight, ChevronDown, ChevronUp, BarChart3, Lightbulb } from "lucide-react";
 import { PastQuestionChart } from "@/components/essay/PastQuestionChart";
+import { HelpfulContextPanel } from "@/components/essay/HelpfulContextPanel";
+import type { HelpfulContext } from "@/data/essay-past-questions";
 import { EssayTheme } from "@/data/essay-themes";
 import { getRelatedFaculties } from "@/lib/essay-topic-mapping";
 
@@ -80,6 +82,7 @@ interface PastQuestion {
     durationMinutes: number;
     language: string;
   };
+  helpfulContext?: HelpfulContext;
 }
 
 export default function EssayThemesPage() {
@@ -341,6 +344,9 @@ export default function EssayThemesPage() {
                           <p className="text-xs font-medium text-muted-foreground mb-2">出題資料</p>
                           <p className="text-xs whitespace-pre-wrap leading-relaxed">{pq.sourceText}</p>
                         </div>
+                      )}
+                      {pq.helpfulContext && (
+                        <HelpfulContextPanel context={pq.helpfulContext} />
                       )}
                       {pq.chartData && pq.chartData.length > 0 && (
                         <PastQuestionChart charts={pq.chartData} />

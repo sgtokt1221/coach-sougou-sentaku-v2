@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PastQuestionChart } from "./PastQuestionChart";
+import { HelpfulContextPanel } from "./HelpfulContextPanel";
 import type { PastQuestion } from "@/data/essay-past-questions";
 
 interface PastQuestionTopicCardProps {
@@ -69,6 +70,11 @@ export function PastQuestionTopicCard({
           {pastQuestion.timeLimit && <span>制限時間: {pastQuestion.timeLimit}分</span>}
           <Badge variant="outline" className="text-xs">{pastQuestion.field}</Badge>
         </div>
+
+        {/* 論述のための背景知識 (helpfulContext) */}
+        {pastQuestion.helpfulContext && (
+          <HelpfulContextPanel context={pastQuestion.helpfulContext} />
+        )}
 
         {/* 参考資料プレビュー (静的 sourceText / 動的取得 / chartData) */}
         {(pastQuestion.sourceText || dynamicSourceText || pastQuestion.chartData || sourceTextLoading || sourceTextError) && (

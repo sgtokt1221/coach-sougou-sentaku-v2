@@ -3,6 +3,21 @@
  * ソース: 河合塾Kei-Net, ベネッセマナビジョン, ホワイトアカデミー高等部, 各大学公式
  */
 
+/**
+ * 練習用に補完した「論述のための前提知識・論点」。
+ * 設問だけでは生徒が手を動かせない難度高めの過去問に、 解くための足場として同梱する。
+ */
+export interface HelpfulContext {
+  /** 題材の概要 (例: こども基本法とは / 2023.4 施行 / 基本原則 4 つ ...) */
+  backgroundKnowledge?: string;
+  /** 関連する主要トピックと簡潔な事実データ (児童虐待相談件数 等)。 リスト形式 */
+  keyFacts?: string[];
+  /** 論述に使える視点・対立軸 (例: 権利保障 vs 自助 / 教育の役割) */
+  argumentAngles?: string[];
+  /** 推奨される構成例 (序論で○○を整理 → 本論で○○を論じ → 結論で○○を提案) */
+  suggestedStructure?: string;
+}
+
 export interface PastQuestion {
   id: string;
   universityId: string;
@@ -32,6 +47,8 @@ export interface PastQuestion {
     durationMinutes: number;
     language: "ja" | "en";
   };
+  /** 論述するための背景知識・論点・構成ヒント。生徒画面で折りたたみ表示。 */
+  helpfulContext?: HelpfulContext;
 }
 
 export const PAST_QUESTIONS: PastQuestion[] = [
@@ -2719,7 +2736,38 @@ B市は逆の選択をした。路線バスを維持しつつ、運営費の不�
     sourceText: `[Read the passage below and answer the questions that follow.]\n\nThe notion of "global citizenship" has become increasingly prominent in educational policy, corporate communication, and international development discourse. UNESCO's Global Citizenship Education (GCED) framework, adopted in 2015, urges schools to cultivate in young people "a sense of belonging to a broader community and common humanity." Yet what exactly a global citizen is, and what duties follow from this identity, remain contested. Some commentators argue that, because binding political institutions above the nation-state are weak, talk of global citizenship is largely aspirational—more a moral sentiment than a legal status. Others insist that the very existence of transnational challenges, from climate change to pandemics to refugee flows, makes the cultivation of global civic responsibility a practical necessity.\n\nThe tension between global and local commitments is especially acute in an aging, interconnected Japan. On the one hand, Japanese universities, corporations, and municipalities compete to produce "global jinzai" (globally capable personnel), and Japanese NGOs are active in disaster relief and development projects throughout Asia and Africa. On the other hand, many Japanese regions face acute depopulation, elderly isolation, and erosion of traditional industries. Graduates who study or work abroad often find that returning to rural hometowns involves a painful calibration of ambition and responsibility. Is the educated young person's duty first to the global community, to the nation-state, or to the specific place that raised her?\n\nCosmopolitan philosophers such as Kwame Anthony Appiah argue that these loyalties need not compete: one can be rooted in a particular place while also recognizing that every other person, everywhere, merits moral consideration. Skeptics counter that moral attention is finite; commitments diffused across the whole world are commitments to no one in particular. Recent empirical studies on civic engagement in Japan suggest that the most durable community involvement often comes from people who have lived abroad and returned with both global networks and reinforced appreciation of their hometowns.\n\n**Questions**\n(1) In approximately 400 English words, explain your understanding of "global citizenship" and evaluate whether the concept is meaningful in a world still organized around nation-states. Draw on the passage and your own experience.\n(2) In approximately 400 Japanese characters, 「グローバル市民としての責任」と「地域社会への貢献」は両立しうるか。日本の地域社会の具体的状況を踏まえて自分の考えを述べなさい。` },
 
   // ===== 大阪公立大学 =====
-  { id: "pq-omu-sys-1", universityId: "omu", universityName: "大阪公立大学", facultyName: "現代システム科学域（学校推薦型選抜）", year: 2024, theme: "こども基本法と子どもの権利", description: "学校推薦型選抜。2023年4月施行の「こども基本法」を題材に、児童虐待・ヤングケアラー・子どもの貧困など社会背景を読み解き論述。課題文はやや長め。", type: "past", wordLimit: 1000, timeLimit: 90, field: "社会" },
+  {
+    id: "pq-omu-sys-1",
+    universityId: "omu",
+    universityName: "大阪公立大学",
+    facultyName: "現代システム科学域（学校推薦型選抜）",
+    year: 2024,
+    theme: "こども基本法と子どもの権利",
+    description: "学校推薦型選抜。2023年4月施行の「こども基本法」を題材に、現代社会における子どもをめぐる問題（児童虐待・ヤングケアラー・子どもの貧困など）の背景を整理したうえで、「子どもの権利を守るために大学で学びたいこと」を1000字以内で論じなさい。",
+    type: "past",
+    wordLimit: 1000,
+    timeLimit: 90,
+    field: "社会",
+    helpfulContext: {
+      backgroundKnowledge:
+        "こども基本法は2023年4月施行。国連「児童の権利に関する条約」（1989採択、1994日本批准）の理念を国内法に位置付けたもので、基本理念として「差別の禁止」「最善の利益」「意見表明と尊重」「生命・生存・発達の権利」を掲げる。こども施策にあたって子どもの意見表明機会を確保することを国・自治体に義務付けている。同年4月にはこども家庭庁が発足し、内閣府・厚労省にまたがっていた子ども政策が一元化された。",
+      keyFacts: [
+        "児童虐待相談対応件数は2022年度で約21.9万件（過去最多、こども家庭庁公表）。心理的虐待が約6割を占める。",
+        "ヤングケアラー（家族の介護・世話を日常的に行う18歳未満の子）は中学2年生で約5.7%、全日制高校2年生で約4.1%に達する（2020厚労省全国調査）。",
+        "子どもの相対的貧困率は11.5%（2021国民生活基礎調査）。ひとり親世帯では44.5%とOECD平均を大きく上回る。",
+        "不登校の小中学生は2022年度で約30万人と過去最多。背景に発達特性・家庭環境・学校への不適応など複合要因がある。",
+      ],
+      argumentAngles: [
+        "「子どもの意見表明権」の実効性: 法律で保障されても、学校・家庭・施策の現場で子どもの声を聴く仕組みが整っていない",
+        "貧困・虐待・ヤングケアラーは互いに連関する社会構造問題で、法整備だけでは解決しない",
+        "大学で学ぶべき分野: 法学・社会福祉・心理学・教育学を統合した「こども学」アプローチ",
+        "国際比較の視点: 北欧型（普遍主義）vs 日本型（選別主義）の福祉モデル",
+        "デジタル化と子どもの権利: SNS被害・ネット依存・情報格差など新しい論点",
+      ],
+      suggestedStructure:
+        "序論で「こども基本法」の意義と現代社会における子どもをめぐる課題を提示 → 本論で代表的な問題（虐待・ヤングケアラー・貧困のうち1〜2つ）を具体的な数字とともに取り上げ、法整備だけでは不十分な構造的要因を分析 → 結論で「子どもの権利を守るために大学で学びたいこと」を自分の関心領域と結び付けて述べる。",
+    },
+  },
   { id: "pq-omu-sys-2", universityId: "omu", universityName: "大阪公立大学", facultyName: "現代システム科学域 環境社会システム学類（学校推薦型選抜）", year: 2024, theme: "持続可能な社会と人の暮らし", description: "学校推薦型選抜。「持続可能な社会と人の暮らし」をテーマとした出典から出題。地震をハザードとした場合のエンドポイントの例を挙げる問題等。", type: "past", questionType: "data-analysis", wordLimit: 800, timeLimit: 90, field: "環境",
     sourceText: `【資料】持続可能な社会と人の暮らし──ハザード・リスク・エンドポイント\n出典: 国連「Sustainable Development Report 2024」、内閣府「防災白書 令和6年版」、環境省「環境リスク評価の技術的手引き」、IPCC「Sixth Assessment Report」\n\n「持続可能な社会（Sustainable Society）」とは、将来世代のニーズを損なうことなく、現在世代のニーズを満たす社会である（ブルントラント委員会, 1987）。この理念は2015年の「持続可能な開発目標（SDGs）」として具体化され、17目標169ターゲットのもとで進捗が毎年測定されている。2024年版のSDG Index Reportによれば、日本は17の目標のうちG1（貧困）、G3（健康と福祉）は達成レベル（99、95）に達している一方、G5（ジェンダー平等63）、G12（つくる責任つかう責任58）、G14（海の豊かさ52）、G13（気候変動対策69）では深刻な課題を抱える。\n\n「ハザード」とは人間や生態系に被害をもたらしうる潜在的要因を指し、自然ハザード（地震・津波・豪雨・火山噴火）、技術ハザード（化学物質漏洩・放射能・サイバー攻撃）、生物ハザード（感染症・害虫・侵略的外来種）に大別される。これに対して「リスク」は、ハザードの発生確率と影響度（脆弱性・曝露）の積として定量化される。「エンドポイント」は、リスク評価において具体的に守るべき対象や状態を指す概念で、環境リスク評価では「個体の死亡」「個体群の存続」「生態系機能」「人間の生命・健康」「財産」「文化遺産」「景観」などが典型的に設定される。\n\n例えば、地震をハザードとした場合のエンドポイントの例としては、（1）人命（死者数・負傷者数）、（2）建物の倒壊・機能喪失、（3）交通・電力・通信・上下水道などのライフライン停止、（4）医療機関の機能喪失、（5）産業活動の停滞と経済損失、（6）文化財や歴史的街並みの損失、（7）生態系や水源への二次被害、（8）心理社会的影響（PTSD、コミュニティ崩壊）などが挙げられる。2024年元日の能登半島地震では、これら複数のエンドポイントが複合的に現れ、「複合災害」としての性格が明確になった。\n\n2018年の日本政府「第五次環境基本計画」では、「地域循環共生圏」という概念が打ち出され、各地域が自然・物質・人材・資金を地域内で循環させつつ、地域外とも連携する分散型の社会モデルが提唱されている。気候変動適応、自然災害リスク軽減、脱炭素、生物多様性保全、地域経済の自立、少子高齢化対応など、複合的な課題を同時に解決することが求められる。\n\n【設問】\n上記の資料を踏まえ、(1) 地震をハザードとした場合のエンドポイントを3つ以上挙げ、それぞれについて定量化の方法と守るための政策を説明しなさい。(2) 「持続可能な社会と人の暮らし」を実現するために、地域循環共生圏の考え方をどのように具体化できるか、800字以内で論述しなさい。`,
     chartData: [
