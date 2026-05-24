@@ -376,33 +376,6 @@ function AdminStudentDetailPageInner() {
     }
   }
 
-  async function handleToggleRealtime() {
-    if (!detail) return;
-    const isUnlocked = detail.realtimeUnlocked;
-    const msg = isUnlocked
-      ? `${detail.profile.displayName} さんの音声面接を 7 日制限に戻しますか？`
-      : `${detail.profile.displayName} さんの音声面接を無制限に解除しますか？`;
-    if (!confirm(msg)) return;
-    setUnlockingRealtime(true);
-    try {
-      const res = await authFetch(`/api/admin/students/${id}/unlock-realtime`, {
-        method: isUnlocked ? "DELETE" : "POST",
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || `HTTP ${res.status}`);
-      }
-      // ローカル状態を更新
-      setDetail((prev) => prev ? { ...prev, realtimeUnlocked: !isUnlocked } : prev);
-      toast.success(isUnlocked ? "音声面接を 7 日制限に戻しました" : "音声面接を無制限に解除しました");
-    } catch (err) {
-      console.error("toggle-realtime failed", err);
-      toast.error(err instanceof Error ? err.message : "操作に失敗しました");
-    } finally {
-      setUnlockingRealtime(false);
-    }
-  }
-
   function openEditDialog() {
     if (!detail) return;
     setEditName(detail.profile.displayName);
@@ -503,18 +476,6 @@ function AdminStudentDetailPageInner() {
               プロフィール
             </CardTitle>
             <div className="flex gap-2">
-              <Button
-                variant={detail?.realtimeUnlocked ? "default" : "outline"}
-                size="sm"
-                onClick={handleToggleRealtime}
-                disabled={unlockingRealtime}
-              >
-                {detail?.realtimeUnlocked ? (
-                  <><Mic className="mr-1 size-3" />{unlockingRealtime ? "処理中..." : "音声無制限 ON"}</>
-                ) : (
-                  <><MicOff className="mr-1 size-3" />{unlockingRealtime ? "処理中..." : "音声制限を解除"}</>
-                )}
-              </Button>
               <Button variant="outline" size="sm" onClick={openEditDialog}>
                 <Pencil className="mr-1 size-3" />
                 編集
@@ -583,10 +544,7 @@ function AdminStudentDetailPageInner() {
       </Card>
 
       {/* Subscription Management (手動付与 / 剥奪) */}
-      <SubscriptionManagementSection
-        studentId={id}
-        studentName={profile.displayName}
-      />
+      <SubscriptionManagementSection studentId={id} />
 
       {/* Skill Ranks: 小論文 + 面接 */}
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">

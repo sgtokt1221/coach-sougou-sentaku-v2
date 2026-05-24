@@ -33,6 +33,11 @@ interface PatchBody {
    * 指定されたキーだけ既存 features に merge する。プラン側は変えない。
    */
   features?: Partial<FeatureFlags>;
+  /**
+   * 音声面接の無制限利用フラグ (rate-limit ロジック側で読まれる別フィールド)。
+   * true なら 7 日 cooldown を無視、 false / undefined なら通常制限。
+   */
+  realtimeUnlocked?: boolean;
 }
 
 export async function PATCH(
@@ -50,10 +55,11 @@ export async function PATCH(
     if (
       body.standard === undefined &&
       body.documentPackage === undefined &&
+      body.realtimeUnlocked === undefined &&
       (!body.features || Object.keys(body.features).length === 0)
     ) {
       return NextResponse.json(
-        { error: "standard / documentPackage / features のいずれかを指定してください" },
+        { error: "standard / documentPackage / features / realtimeUnlocked のいずれかを指定してください" },
         { status: 400 }
       );
     }
@@ -195,12 +201,27 @@ export async function PATCH(
       update.documentPackage = nextDocPackage;
     }
 
+    // 音声面接の無制限利用フラグ (rate-limit ロジック側で参照される独立フィールド)
+    let nextRealtimeUnlocked: boolean | undefined;
+    if (body.realtimeUnlocked === true) {
+      const { FieldValue } = await import("firebase-admin/firestore");
+      update.realtimeUnlocked = true;
+      update.lastRealtimeAt = FieldValue.delete();
+      nextRealtimeUnlocked = true;
+    } else if (body.realtimeUnlocked === false) {
+      const { FieldValue } = await import("firebase-admin/firestore");
+      update.realtimeUnlocked = FieldValue.delete();
+      nextRealtimeUnlocked = false;
+    }
+
     await userRef.update(update);
 
     return NextResponse.json({
       ok: true,
       subscriptionPlan: update.subscriptionPlan,
       features,
+      realtimeUnlocked:
+        nextRealtimeUnlocked ?? userData.realtimeUnlocked === true,
       hasStripeSubscription: !!userData.stripeSubscriptionId,
     });
   } catch (error) {
@@ -275,6 +296,7 @@ export async function GET(
       documentPackagePurchased: documentPackage.purchased === true,
       documentPackage,
       features,
+      realtimeUnlocked: userData.realtimeUnlocked === true,
       hasStripeSubscription: !!userData.stripeSubscriptionId,
       stripeSubscriptionId: userData.stripeSubscriptionId ?? null,
     });
