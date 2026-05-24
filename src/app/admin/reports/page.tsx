@@ -268,27 +268,55 @@ export default function AdminReportsPage() {
                       </p>
                     </div>
 
-                    <div className="flex shrink-0 items-center gap-6">
-                      {/* Essay score change */}
-                      <div className="text-center">
-                        <div className="flex items-center gap-1 text-sm font-medium">
-                          <FileText className="size-3.5 text-muted-foreground" />
-                          <ScoreChangeIndicator change={report.essayScoreChange} />
+                    <div className="flex shrink-0 items-center gap-5">
+                      {/* Essay summary: 件数 + 先期比 */}
+                      <div
+                        className="min-w-[88px] rounded-md bg-muted/40 px-2.5 py-1.5 text-center"
+                        title={`小論文: 今期 ${report.essayCount} 件、 先期比 ${report.essayScoreChange >= 0 ? "+" : ""}${report.essayScoreChange} 点`}
+                      >
+                        <div className="flex items-center justify-center gap-1 text-[10px] text-muted-foreground">
+                          <FileText className="size-3" />
+                          小論文
                         </div>
-                        <p className="text-[10px] text-muted-foreground">
-                          {report.essayCount}件
-                        </p>
+                        {report.essayCount > 0 ? (
+                          <div className="mt-0.5 flex items-center justify-center gap-1 text-sm font-medium">
+                            <span className="tabular-nums">{report.essayCount}件</span>
+                            <span className="text-muted-foreground">/</span>
+                            <ScoreChangeIndicator
+                              change={report.essayScoreChange}
+                            />
+                          </div>
+                        ) : (
+                          <div className="mt-0.5 text-xs text-muted-foreground">
+                            未受験
+                          </div>
+                        )}
                       </div>
 
-                      {/* Interview score change */}
-                      <div className="text-center">
-                        <div className="flex items-center gap-1 text-sm font-medium">
-                          <Mic className="size-3.5 text-muted-foreground" />
-                          <ScoreChangeIndicator change={report.interviewScoreChange} />
+                      {/* Interview summary: 件数 + 先期比 */}
+                      <div
+                        className="min-w-[88px] rounded-md bg-muted/40 px-2.5 py-1.5 text-center"
+                        title={`面接: 今期 ${report.interviewCount} 件、 先期比 ${report.interviewScoreChange >= 0 ? "+" : ""}${report.interviewScoreChange} 点`}
+                      >
+                        <div className="flex items-center justify-center gap-1 text-[10px] text-muted-foreground">
+                          <Mic className="size-3" />
+                          面接
                         </div>
-                        <p className="text-[10px] text-muted-foreground">
-                          {report.interviewCount}件
-                        </p>
+                        {report.interviewCount > 0 ? (
+                          <div className="mt-0.5 flex items-center justify-center gap-1 text-sm font-medium">
+                            <span className="tabular-nums">
+                              {report.interviewCount}件
+                            </span>
+                            <span className="text-muted-foreground">/</span>
+                            <ScoreChangeIndicator
+                              change={report.interviewScoreChange}
+                            />
+                          </div>
+                        ) : (
+                          <div className="mt-0.5 text-xs text-muted-foreground">
+                            未受験
+                          </div>
+                        )}
                       </div>
 
                       <Button
