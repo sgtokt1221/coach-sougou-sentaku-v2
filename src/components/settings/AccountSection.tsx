@@ -191,7 +191,7 @@ export function AccountSection() {
               className="hidden"
             />
             <p className="mt-1 text-[10px] text-muted-foreground">
-              2MB 以下 / jpg, png, webp
+              jpg / png / webp。 2MB を超える場合は自動で縮小されます
             </p>
           </div>
         </div>

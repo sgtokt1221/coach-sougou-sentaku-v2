@@ -82,8 +82,69 @@ export async function reauthenticateUser(currentPassword: string): Promise<void>
   await reauthenticateWithCredential(user, credential);
 }
 
+const AVATAR_MAX_BYTES = 2 * 1024 * 1024;
+const AVATAR_MAX_DIMENSION = 1024;
+
+function readAsDataURL(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(new Error("画像の読み込みに失敗しました"));
+    reader.readAsDataURL(file);
+  });
+}
+
+function loadImageElement(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error("画像の読み込みに失敗しました"));
+    img.src = src;
+  });
+}
+
+/**
+ * 2MB 超 / 大きすぎる画像を Canvas で縮小 + JPEG 再エンコードして 2MB 以下に収める。
+ * 既に条件を満たすファイルはそのまま返す。
+ * ブラウザ環境のみで動作 (Canvas API)。
+ */
+async function compressImageIfNeeded(file: File): Promise<File> {
+  if (typeof window === "undefined") return file;
+  if (file.size <= AVATAR_MAX_BYTES) return file;
+
+  const dataUrl = await readAsDataURL(file);
+  const img = await loadImageElement(dataUrl);
+
+  const longest = Math.max(img.width, img.height);
+  const scale = longest > AVATAR_MAX_DIMENSION ? AVATAR_MAX_DIMENSION / longest : 1;
+  const w = Math.max(1, Math.floor(img.width * scale));
+  const h = Math.max(1, Math.floor(img.height * scale));
+
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas が使えません");
+  ctx.drawImage(img, 0, 0, w, h);
+
+  const toBlob = (quality: number): Promise<Blob | null> =>
+    new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
+
+  for (const q of [0.9, 0.8, 0.7, 0.6, 0.5, 0.4]) {
+    const blob = await toBlob(q);
+    if (blob && blob.size <= AVATAR_MAX_BYTES) {
+      return new File([blob], file.name.replace(/\.\w+$/, "") + ".jpg", {
+        type: "image/jpeg",
+        lastModified: Date.now(),
+      });
+    }
+  }
+  throw new Error("画像サイズを 2MB 以下に圧縮できませんでした");
+}
+
 /**
  * プロフィール画像をアップロードして photoURL を Auth + Firestore に反映。
+ * 2MB 超の画像は自動で縮小 + JPEG 再エンコードしてから保存する。
  * ファイルは Firebase Storage の `users/{uid}/avatar/{ts}.{ext}` に保存。
  */
 export async function uploadAvatar(file: File): Promise<string> {
@@ -92,13 +153,11 @@ export async function uploadAvatar(file: File): Promise<string> {
   if (!/^image\//.test(file.type)) {
     throw new Error("画像ファイルを選択してください");
   }
-  if (file.size > 2 * 1024 * 1024) {
-    throw new Error("画像サイズは 2MB 以下にしてください");
-  }
-  const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
+  const compressed = await compressImageIfNeeded(file);
+  const ext = (compressed.type.split("/")[1] ?? "jpg").toLowerCase();
   const path = `users/${user.uid}/avatar/${Date.now()}.${ext}`;
   const r = ref(storage, path);
-  await uploadBytes(r, file, { contentType: file.type });
+  await uploadBytes(r, compressed, { contentType: compressed.type });
   const url = await getDownloadURL(r);
   await fbUpdateProfile(user, { photoURL: url });
   if (db) {
