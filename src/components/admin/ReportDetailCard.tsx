@@ -734,14 +734,16 @@ function WeaknessProgressByCategory({
                 {grouped[cat].length} 件
               </span>
             </div>
-            <ul className="space-y-1 text-xs print:space-y-0.5 print:text-[9pt]">
+            <ul className="space-y-1.5 text-xs print:space-y-1 print:text-[9pt]">
               {grouped[cat].map((w) => (
                 <li
                   key={w.weakness}
-                  className="flex items-center justify-between gap-2"
+                  className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between"
                 >
-                  <span className="truncate">{w.weakness}</span>
-                  <div className="flex shrink-0 items-center gap-1.5">
+                  <span className="flex-1 whitespace-pre-wrap break-words leading-relaxed">
+                    {w.weakness}
+                  </span>
+                  <div className="flex shrink-0 flex-wrap items-center gap-1.5 sm:pt-0.5">
                     <span className="tabular-nums text-muted-foreground">
                       {w.previousScore}→{w.currentScore}
                     </span>
