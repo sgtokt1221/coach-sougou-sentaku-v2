@@ -32,12 +32,22 @@ interface MatchingResponse {
   };
 }
 
+/** 生徒が /student/universities で「適合度を診断する」 を押した結果のキャッシュ */
+interface FitCacheResponse {
+  results: MatchResult[] | null;
+  source: "cache" | "none";
+  computedAt?: string;
+  preferences?: string;
+}
+
 export function DiscoverSection({ studentId }: DiscoverSectionProps) {
   const [selfAnalysis, setSelfAnalysis] = useState<SelfAnalysis | null>(null);
   const [saError, setSaError] = useState<string | null>(null);
   const [matching, setMatching] = useState<MatchingResponse | null>(null);
+  const [fitCache, setFitCache] = useState<FitCacheResponse | null>(null);
   const [loadingSa, setLoadingSa] = useState(true);
   const [loadingMatch, setLoadingMatch] = useState(true);
+  const [loadingFit, setLoadingFit] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
@@ -69,6 +79,22 @@ export function DiscoverSection({ studentId }: DiscoverSectionProps) {
         console.warn("[DiscoverSection] matching fetch failed", err);
       } finally {
         if (!cancelled) setLoadingMatch(false);
+      }
+    })();
+    // AI 適合度キャッシュ (生徒が compute-fit を実施済なら apFitScore が入る)
+    (async () => {
+      try {
+        const res = await authFetch(
+          `/api/admin/students/${studentId}/matching-fit-cache`,
+        );
+        if (!cancelled && res.ok) {
+          const data = await res.json();
+          setFitCache(data);
+        }
+      } catch (err) {
+        console.warn("[DiscoverSection] fit-cache fetch failed", err);
+      } finally {
+        if (!cancelled) setLoadingFit(false);
       }
     })();
     return () => {
@@ -181,10 +207,75 @@ export function DiscoverSection({ studentId }: DiscoverSectionProps) {
                 </div>
               )}
 
-              {/* マッチ度の高い Top 5 */}
+              {/* AI 適合度診断 未実施案内 (キャッシュなし) */}
+              {!loadingFit && fitCache?.source === "none" && (
+                <div className="mb-3 rounded-md border border-sky-200 bg-sky-50 p-2.5 text-xs text-sky-800">
+                  <p className="font-medium mb-0.5">
+                    AI 適合度診断 (AP 合致) はまだ未実施です
+                  </p>
+                  <p>
+                    生徒に <code>/student/universities</code> から 「適合度を診断する」 ボタンを押してもらうと、 自己分析・希望に基づいた適合度ランキングが見られます。
+                  </p>
+                </div>
+              )}
+
+              {/* AI 適合度ランキング (キャッシュあり) */}
+              {!loadingFit && fitCache?.source === "cache" && fitCache.results && fitCache.results.length > 0 && (
+                <div className="mb-3">
+                  <p className="text-xs font-medium text-muted-foreground mb-2 flex items-center justify-between">
+                    <span>AI 適合度ランキング Top 5</span>
+                    {fitCache.computedAt && (
+                      <span className="text-[10px] text-muted-foreground">
+                        診断日: {new Date(fitCache.computedAt).toLocaleDateString("ja-JP")}
+                      </span>
+                    )}
+                  </p>
+                  <div className="space-y-2">
+                    {[...fitCache.results]
+                      .filter((r) => typeof r.apFitScore === "number")
+                      .sort((a, b) => (b.apFitScore ?? 0) - (a.apFitScore ?? 0))
+                      .slice(0, 5)
+                      .map((r, i) => (
+                        <div
+                          key={`fit-${r.universityId}-${r.facultyId}`}
+                          className="flex items-center gap-3 rounded-md border border-emerald-200 bg-emerald-50/40 p-2.5"
+                        >
+                          <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-[11px] font-bold text-emerald-700">
+                            {i + 1}
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium truncate">
+                              {r.universityName} {r.facultyName}
+                            </p>
+                            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                              {r.fitRecommendation && (
+                                <Badge variant="outline" className="text-[10px] py-0 border-emerald-300 text-emerald-800">
+                                  {r.fitRecommendation}
+                                </Badge>
+                              )}
+                              {r.apFitReason && (
+                                <span className="text-[11px] text-emerald-900 truncate">
+                                  {r.apFitReason}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <Star className="size-3.5 text-emerald-500" />
+                            <span className="text-sm font-semibold tabular-nums text-emerald-700">
+                              {r.apFitScore}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 出願要件マッチ (GPA / 英語資格ベース) */}
               <div>
                 <p className="text-xs font-medium text-muted-foreground mb-2">
-                  マッチ度トップ 5
+                  出願要件マッチ Top 5 (GPA / 英語資格)
                 </p>
                 {matching.profileCompleteness &&
                   (!matching.profileCompleteness.hasGpa ||
