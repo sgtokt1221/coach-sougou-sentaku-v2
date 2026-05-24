@@ -12,7 +12,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
-import { getPastQuestionById, needsSourceText } from "@/data/essay-past-questions";
+import { getEnrichedPastQuestionById, needsSourceText } from "@/data/essay-past-questions";
 import {
   SOURCE_TEXT_SYSTEM_PROMPT,
   buildSourceTextUserPrompt,
@@ -56,7 +56,7 @@ export async function GET(
   }
 
   // --- 静的データから該当エントリを取得 ---
-  const question = getPastQuestionById(id);
+  const question = getEnrichedPastQuestionById(id);
   if (!question) {
     return NextResponse.json({ error: "過去問が見つかりません" }, { status: 404 });
   }

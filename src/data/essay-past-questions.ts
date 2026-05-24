@@ -3610,3 +3610,29 @@ export function summarizeChartData(
     })
     .join("\n\n");
 }
+
+import { PAST_QUESTION_HELPFUL_CONTEXTS } from "./past-question-helpful-contexts";
+
+/**
+ * PAST_QUESTIONS の各要素に外部マップ (PAST_QUESTION_HELPFUL_CONTEXTS) を
+ * 必要に応じて merge した版を返す。
+ *
+ * 優先順位: inline (essay-past-questions.ts に直書き) > external (past-question-helpful-contexts.ts)
+ * → 手作業実装分は外部マップで上書きされない。
+ */
+export function getEnrichedPastQuestions(): PastQuestion[] {
+  return PAST_QUESTIONS.map((pq) => {
+    if (pq.helpfulContext) return pq;
+    const external = PAST_QUESTION_HELPFUL_CONTEXTS[pq.id];
+    return external ? { ...pq, helpfulContext: external } : pq;
+  });
+}
+
+/** id 指定で enriched 版を 1 件取得 (利便ヘルパー)。 */
+export function getEnrichedPastQuestionById(id: string): PastQuestion | undefined {
+  const pq = PAST_QUESTIONS.find((q) => q.id === id);
+  if (!pq) return undefined;
+  if (pq.helpfulContext) return pq;
+  const external = PAST_QUESTION_HELPFUL_CONTEXTS[pq.id];
+  return external ? { ...pq, helpfulContext: external } : pq;
+}

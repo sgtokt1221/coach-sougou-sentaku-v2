@@ -48,7 +48,7 @@ import { PastQuestionChart } from "@/components/essay/PastQuestionChart";
 import { PastQuestionTopicCard } from "@/components/essay/PastQuestionTopicCard";
 import { SegmentControl } from "@/components/shared/SegmentControl";
 import { getThemeById, EssayTheme } from "@/data/essay-themes";
-import { getPastQuestionById, needsSourceText, summarizeChartData, PastQuestion } from "@/data/essay-past-questions";
+import { getEnrichedPastQuestionById, needsSourceText, summarizeChartData, PastQuestion } from "@/data/essay-past-questions";
 import type { PastQuestionSourceTextResponse } from "@/lib/types/past-question-source";
 
 interface ResolvedUniversity {
@@ -175,7 +175,7 @@ export default function EssayNewPage() {
   // 過去問IDからデータ取得
   useEffect(() => {
     if (pastQuestionId) {
-      const pq = getPastQuestionById(pastQuestionId);
+      const pq = getEnrichedPastQuestionById(pastQuestionId);
       setPastQuestion(pq || null);
       if (pq) {
         setTopic(pq.theme);
