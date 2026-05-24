@@ -176,14 +176,14 @@ function PinnedSummary({ detail }: { detail: StudentDetail }) {
       label: "平均添削スコア",
       value: avgEssayScore !== null ? `${avgEssayScore.toFixed(1)}/50` : "—",
       color: avgEssayScore !== null ? scoreColor(avgEssayScore) : "text-gray-400",
-      monogram: avgEssayScore !== null ? `Avg n=${essayTotals.length}` : null,
+      monogram: null,
     },
     {
       label: "平均面接スコア",
       value: avgInterviewScore !== null ? `${avgInterviewScore.toFixed(1)}/40` : "—",
       // scoreColor は 0-50 想定。40 点満点を 50 換算 (×1.25) で色判定
       color: avgInterviewScore !== null ? scoreColor(avgInterviewScore * 1.25) : "text-gray-400",
-      monogram: avgInterviewScore !== null ? `Avg n=${interviewTotals.length}` : null,
+      monogram: null,
     },
     {
       label: "未解決弱点数",
