@@ -108,8 +108,16 @@ function daysAgo(n: number): Date {
   return d;
 }
 
+/** 30 日内に履歴がない場合の fallback: 全期間の直近 N 件 */
+const FALLBACK_RECENT_LIMIT = 10;
+
 /**
- * 小論文SC + 直近30日の essay 添削スコアから合成ランクを算出。
+ * 小論文SC + essay 添削スコアから合成ランクを算出。
+ *
+ * 練習スコアは原則「直近 30 日の essays」 を使うが、 30 日以内に履歴が
+ * ない生徒には fallback として「全期間の直近 10 件」 を使う。 これにより
+ * 「テスト未受験 + 直近サボり中だが過去に取り組み履歴ありの生徒」 にも
+ * ランクが付与される (ユーザー仕様)。
  */
 export async function computeEssayAggregate(
   userId: string,
@@ -120,14 +128,27 @@ export async function computeEssayAggregate(
 
   try {
     const cutoff = daysAgo(SKILL_CHECK_REFRESH_DAYS);
-    const snap = await adminDb
+    const recentSnap = await adminDb
       .collection("essays")
       .where("userId", "==", userId)
       .where("submittedAt", ">=", cutoff)
       .get();
-    const scores = snap.docs
+    let scores = recentSnap.docs
       .map((d) => d.data()?.scores?.total)
       .filter((s): s is number => typeof s === "number");
+
+    if (scores.length === 0) {
+      const fallbackSnap = await adminDb
+        .collection("essays")
+        .where("userId", "==", userId)
+        .orderBy("submittedAt", "desc")
+        .limit(FALLBACK_RECENT_LIMIT)
+        .get();
+      scores = fallbackSnap.docs
+        .map((d) => d.data()?.scores?.total)
+        .filter((s): s is number => typeof s === "number");
+    }
+
     const practiceAvg =
       scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : null;
     return blend(scTotal, practiceAvg, scores.length, calculateRank);
@@ -138,8 +159,12 @@ export async function computeEssayAggregate(
 }
 
 /**
- * 面接SC + 直近30日の interview 練習スコアから合成ランクを算出。
+ * 面接SC + interview 練習スコアから合成ランクを算出。
  * 面接SC(0-40)と面接練習(0-50)のスケール差を吸収するため練習側を正規化。
+ *
+ * 練習スコアは原則「直近 30 日の interviews」 を使うが、 30 日以内に
+ * 履歴がない生徒には fallback として「全期間の直近 10 件 (completed のみ)」
+ * を使う。 これによりテスト未受験 / 直近サボり中の生徒にもランクが付く。
  */
 export async function computeInterviewAggregate(
   userId: string,
@@ -148,20 +173,36 @@ export async function computeInterviewAggregate(
   const { adminDb } = await import("@/lib/firebase/admin");
   if (!adminDb) return blend(scTotal, null, 0, calculateInterviewRank);
 
-  try {
-    const cutoff = daysAgo(SKILL_CHECK_REFRESH_DAYS);
-    const snap = await adminDb
-      .collection("interviews")
-      .where("userId", "==", userId)
-      .where("startedAt", ">=", cutoff)
-      .get();
-    const rawScores = snap.docs
+  const extractScores = (
+    docs: FirebaseFirestore.QueryDocumentSnapshot[],
+  ): number[] =>
+    docs
       .map((d) => {
         const data = d.data();
         if (data?.status !== "completed") return null;
         return typeof data?.scores?.total === "number" ? data.scores.total : null;
       })
       .filter((s): s is number => s !== null);
+
+  try {
+    const cutoff = daysAgo(SKILL_CHECK_REFRESH_DAYS);
+    const recentSnap = await adminDb
+      .collection("interviews")
+      .where("userId", "==", userId)
+      .where("startedAt", ">=", cutoff)
+      .get();
+    let rawScores = extractScores(recentSnap.docs);
+
+    if (rawScores.length === 0) {
+      const fallbackSnap = await adminDb
+        .collection("interviews")
+        .where("userId", "==", userId)
+        .orderBy("startedAt", "desc")
+        .limit(FALLBACK_RECENT_LIMIT)
+        .get();
+      rawScores = extractScores(fallbackSnap.docs);
+    }
+
     // 練習側(0-50) → 面接SCスケール(0-40) に正規化
     const normalized = rawScores.map(
       (s) => (s * INTERVIEW_SC_MAX) / INTERVIEW_PRACTICE_MAX,

@@ -276,7 +276,7 @@ function SkillCard({
           </div>
         </div>
         <div className="rounded bg-white/60 p-2 dark:bg-black/20">
-          <div className="text-muted-foreground">練習 (30日)</div>
+          <div className="text-muted-foreground">練習</div>
           <div className="mt-0.5 font-medium tabular-nums">
             {aggregate.practiceAvg !== null ? (
               <>
