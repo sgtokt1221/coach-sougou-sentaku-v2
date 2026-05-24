@@ -69,9 +69,9 @@ export function SubscriptionManagementSection({ studentId, studentName }: Props)
     `/api/admin/students/${studentId}/subscription`
   );
 
-  const [pending, setPending] = useState<null | "standard" | "documentPackage">(
-    null
-  );
+  const [pending, setPending] = useState<
+    null | "standard" | "documentPackage" | keyof FeatureFlags
+  >(null);
   const [dialog, setDialog] = useState<{
     open: boolean;
     target: "standard" | "documentPackage";
@@ -103,6 +103,30 @@ export function SubscriptionManagementSection({ studentId, studentName }: Props)
     } finally {
       setPending(null);
       setDialog(null);
+    }
+  };
+
+  const toggleFeature = async (key: keyof FeatureFlags, nextValue: boolean) => {
+    setPending(key);
+    try {
+      const res = await authFetch(
+        `/api/admin/students/${studentId}/subscription`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ features: { [key]: nextValue } }),
+        },
+      );
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson?.error ?? `更新に失敗しました (${res.status})`);
+      }
+      await mutate();
+    } catch (e) {
+      console.error("Feature toggle failed:", e);
+      alert(e instanceof Error ? e.message : "更新に失敗しました");
+    } finally {
+      setPending(null);
     }
   };
 
@@ -231,36 +255,47 @@ export function SubscriptionManagementSection({ studentId, studentName }: Props)
             />
           </div>
 
-          {/* 機能フラグの可視化 */}
+          {/* 機能ごとに個別 ON/OFF (プラン一括変更とは独立) */}
           {data.features && (
-            <div>
-              <p className="mb-2 text-xs font-medium text-muted-foreground">
-                解放中の機能
+            <div className="rounded-md border bg-muted/30 p-3">
+              <p className="mb-2 flex items-center justify-between text-xs font-medium text-muted-foreground">
+                <span>機能ごとに個別設定</span>
+                <span className="text-[10px]">プラン一括 ON/OFF とは独立に変更可</span>
               </p>
-              <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {FEATURE_LABELS.map(({ key, label }) => {
                   const on = data.features![key];
                   return (
-                    <div
+                    <label
                       key={key}
-                      className="flex items-center gap-1.5 text-xs"
+                      className="flex items-center justify-between gap-2 rounded border bg-card px-2.5 py-1.5 text-xs"
                     >
-                      {on ? (
-                        <CheckCircle2 className="size-3.5 text-emerald-600" />
-                      ) : (
-                        <XCircle className="size-3.5 text-muted-foreground/40" />
-                      )}
-                      <span
-                        className={
-                          on ? "text-foreground" : "text-muted-foreground/60"
-                        }
-                      >
-                        {label}
+                      <span className="flex items-center gap-1.5">
+                        {on ? (
+                          <CheckCircle2 className="size-3.5 text-emerald-600" />
+                        ) : (
+                          <XCircle className="size-3.5 text-muted-foreground/40" />
+                        )}
+                        <span
+                          className={
+                            on ? "text-foreground" : "text-muted-foreground/60"
+                          }
+                        >
+                          {label}
+                        </span>
                       </span>
-                    </div>
+                      <Switch
+                        checked={on}
+                        disabled={pending !== null}
+                        onCheckedChange={(next) => toggleFeature(key, next)}
+                      />
+                    </label>
                   );
                 })}
               </div>
+              <p className="mt-2 text-[10px] text-muted-foreground">
+                プラン (スタンダード / ドキュメントパッケージ) を変更すると、 こちらの個別設定はプラン既定値で上書きされます。
+              </p>
             </div>
           )}
 

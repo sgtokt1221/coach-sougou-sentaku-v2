@@ -28,6 +28,11 @@ interface PatchBody {
   standard?: boolean;
   /** true = document_package 付与, false = 剥奪 */
   documentPackage?: boolean;
+  /**
+   * 機能別の個別 ON/OFF (admin が機能単位でカスタム制御)。
+   * 指定されたキーだけ既存 features に merge する。プラン側は変えない。
+   */
+  features?: Partial<FeatureFlags>;
 }
 
 export async function PATCH(
@@ -42,9 +47,13 @@ export async function PATCH(
     const { id } = await params;
     const body = (await request.json()) as PatchBody;
 
-    if (body.standard === undefined && body.documentPackage === undefined) {
+    if (
+      body.standard === undefined &&
+      body.documentPackage === undefined &&
+      (!body.features || Object.keys(body.features).length === 0)
+    ) {
       return NextResponse.json(
-        { error: "standard または documentPackage を指定してください" },
+        { error: "standard / documentPackage / features のいずれかを指定してください" },
         { status: 400 }
       );
     }
@@ -129,7 +138,7 @@ export async function PATCH(
       nextDocPackage = { ...currentDocPackage, purchased: false };
     }
 
-    // 確定状態から features を再計算
+    // 確定状態から features を再計算 (plan ベースの基本セット)
     const isStandardActive =
       nextStandard === "unchanged"
         ? currentStandard?.status === "active"
@@ -138,10 +147,36 @@ export async function PATCH(
       nextDocPackage === "unchanged"
         ? currentDocPackage.purchased === true
         : nextDocPackage.purchased === true;
-    const features: FeatureFlags = getFeaturesByPlan(
-      isStandardActive ? "standard" : "free",
-      hasDocPackage
-    );
+
+    // 個別 features の変更がある場合は、 既存 features に merge する形にする
+    // (= プラン変更時は plan ベースで再計算、 individual features 変更時は既存に上書き)
+    const isPlanChange =
+      body.standard !== undefined || body.documentPackage !== undefined;
+    const currentFeatures = (userData.features as FeatureFlags | undefined) ?? null;
+    let features: FeatureFlags;
+    if (isPlanChange) {
+      // プラン変更時はプランベースで再計算 (個別フラグはリセット)
+      features = getFeaturesByPlan(
+        isStandardActive ? "standard" : "free",
+        hasDocPackage,
+      );
+    } else if (body.features) {
+      // 個別フラグ変更時は既存 features に merge
+      const baseFeatures =
+        currentFeatures ??
+        getFeaturesByPlan(
+          isStandardActive ? "standard" : "free",
+          hasDocPackage,
+        );
+      features = { ...baseFeatures, ...body.features };
+    } else {
+      features =
+        currentFeatures ??
+        getFeaturesByPlan(
+          isStandardActive ? "standard" : "free",
+          hasDocPackage,
+        );
+    }
 
     // Firestore 更新ペイロード組み立て (plan フィールドは触らない)
     const update: Record<string, unknown> = {
