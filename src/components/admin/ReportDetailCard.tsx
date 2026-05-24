@@ -1066,7 +1066,7 @@ function PracticeQuestionCard({
  * - ランクが変動した場合は「ランク {prev} → {current}」バッジ
  * - 得意 / 課題 (essay のみ、bestCategory / worstCategory がある時)
  */
-function StatsSummaryCard({
+export function StatsSummaryCard({
   kind,
   stats,
   max,

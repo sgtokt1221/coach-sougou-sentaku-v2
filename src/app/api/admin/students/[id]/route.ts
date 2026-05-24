@@ -197,6 +197,92 @@ export async function GET(
           }
         : undefined;
 
+    // スキル俯瞰の StatsSummaryCard 用サマリ (count / avgScore / scoreChange / best/worst category)
+    const ESSAY_CATEGORY_LABELS: Record<string, string> = {
+      structure: "構成",
+      logic: "論理性",
+      expression: "表現力",
+      apAlignment: "AP合致度",
+      originality: "独自性",
+    };
+    const INTERVIEW_CATEGORY_LABELS: Record<string, string> = {
+      clarity: "明確さ",
+      apAlignment: "AP合致度",
+      enthusiasm: "熱意",
+      specificity: "具体性",
+      bodyLanguage: "ボディランゲージ",
+    };
+
+    function pickBestWorst(
+      cat: Record<string, number> | undefined,
+      labels: Record<string, string>,
+    ): { bestCategory?: string; worstCategory?: string } {
+      if (!cat) return {};
+      const entries = Object.entries(cat);
+      if (entries.length === 0) return {};
+      const best = entries.reduce((a, b) => (b[1] > a[1] ? b : a));
+      const worst = entries.reduce((a, b) => (b[1] < a[1] ? b : a));
+      return {
+        bestCategory: labels[best[0]] ?? best[0],
+        worstCategory: labels[worst[0]] ?? worst[0],
+      };
+    }
+
+    // 先期比: 直近 3 件平均 - その前 3 件平均
+    const prevEssayScores = essays
+      .filter((e) => e.scores)
+      .slice(3, 6)
+      .map((e) => e.scores!);
+    const essayAvgCurrent =
+      recentEssayScores.length > 0
+        ? recentEssayScores.reduce((s, x) => s + (x.total ?? 0), 0) /
+          recentEssayScores.length
+        : 0;
+    const essayAvgPrev =
+      prevEssayScores.length > 0
+        ? prevEssayScores.reduce((s, x) => s + (x.total ?? 0), 0) /
+          prevEssayScores.length
+        : 0;
+    const essayStatsSummary =
+      recentEssayScores.length > 0
+        ? {
+            count: recentEssayScores.length,
+            avgScore: Math.round(essayAvgCurrent * 10) / 10,
+            scoreChange:
+              prevEssayScores.length > 0
+                ? Math.round((essayAvgCurrent - essayAvgPrev) * 10) / 10
+                : 0,
+            ...pickBestWorst(essayCategoryAverages, ESSAY_CATEGORY_LABELS),
+          }
+        : undefined;
+
+    const prevInterviewScores = interviewsSnap.docs
+      .slice(3, 6)
+      .map((d) => d.data().scores)
+      .filter((s): s is Record<string, number> => s != null);
+    const interviewAvgCurrent =
+      recentInterviewScores.length > 0
+        ? recentInterviewScores.reduce((s, x) => s + (x.total ?? 0), 0) /
+          recentInterviewScores.length
+        : 0;
+    const interviewAvgPrev =
+      prevInterviewScores.length > 0
+        ? prevInterviewScores.reduce((s, x) => s + (x.total ?? 0), 0) /
+          prevInterviewScores.length
+        : 0;
+    const interviewStatsSummary =
+      recentInterviewScores.length > 0
+        ? {
+            count: recentInterviewScores.length,
+            avgScore: Math.round(interviewAvgCurrent * 10) / 10,
+            scoreChange:
+              prevInterviewScores.length > 0
+                ? Math.round((interviewAvgCurrent - interviewAvgPrev) * 10) / 10
+                : 0,
+            ...pickBestWorst(interviewCategoryAverages, INTERVIEW_CATEGORY_LABELS),
+          }
+        : undefined;
+
     // 最終活動日を計算（添削・面接の最新日時）
     const dates: string[] = [];
     if (essays.length > 0) dates.push(essays[0].submittedAt);
@@ -240,6 +326,8 @@ export async function GET(
       essayScoreTrend,
       interviewScoreTrend,
       ...(essayCategoryAverages ? { essayCategoryAverages } : {}),
+      ...(essayStatsSummary ? { essayStatsSummary } : {}),
+      ...(interviewStatsSummary ? { interviewStatsSummary } : {}),
       ...(interviewCategoryAverages ? { interviewCategoryAverages } : {}),
       lastActivityAt,
       realtimeUnlocked: userData.realtimeUnlocked === true,

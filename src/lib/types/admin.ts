@@ -68,6 +68,22 @@ export interface StudentDetail {
     specificity: number;
     bodyLanguage: number;
   };
+  /** スキル俯瞰用 essay 統計サマリ (StatsSummaryCard と同じ shape) */
+  essayStatsSummary?: {
+    count: number;
+    avgScore: number;
+    scoreChange: number;
+    bestCategory?: string;
+    worstCategory?: string;
+  };
+  /** スキル俯瞰用 interview 統計サマリ */
+  interviewStatsSummary?: {
+    count: number;
+    avgScore: number;
+    scoreChange: number;
+    bestCategory?: string;
+    worstCategory?: string;
+  };
   lastActivityAt?: string | null;
   realtimeUnlocked?: boolean;
   skillCheck?: SkillCheckStatus;
