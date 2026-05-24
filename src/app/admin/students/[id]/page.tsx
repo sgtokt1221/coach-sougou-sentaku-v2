@@ -68,6 +68,7 @@ import { SkillRankPanel } from "@/components/skill-check/SkillRankPanel";
 import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
 import { CategorySelector } from "@/components/skill-check/CategorySelector";
 import type { SkillCheckStatus, AcademicCategory } from "@/lib/types/skill-check";
+import type { AggregateBreakdown } from "@/lib/skill-check/aggregate";
 import type { InterviewSkillCheckStatus } from "@/lib/types/interview-skill-check";
 import { StudentSkillRadar } from "@/components/admin/StudentSkillRadar";
 
@@ -135,6 +136,55 @@ function scoreColor(total: number): string {
 }
 
 /** 数値配列の平均を小数点 1 桁文字列で返す。空配列は null。 */
+/**
+ * ヘッダー用スキルバッジ。 専用テスト (SC) + 直近 30 日練習の合成スコア
+ * (= ユーザー仕様の「動的に変化するランク」) を表示する。
+ *
+ * mode 別の補足ラベル:
+ * - none → 「未受験」 + Badge
+ * - sc_only → SC 単独 (バッジ + 「テストのみ」 ラベル)
+ * - practice_only → 練習のみ (バッジ + 「練習のみ」 ラベル、 SC 未受験)
+ * - weighted → 通常合成 (バッジのみ)
+ */
+function SkillBadgeWithMode({
+  label,
+  aggregate,
+  maxScore,
+}: {
+  label: string;
+  aggregate: AggregateBreakdown | undefined;
+  maxScore: number;
+}) {
+  if (!aggregate || aggregate.mode === "none" || aggregate.compositeRank === null) {
+    return (
+      <Badge variant="secondary" className="text-xs">
+        {label}未受験
+      </Badge>
+    );
+  }
+  const modeLabel =
+    aggregate.mode === "sc_only"
+      ? "テストのみ"
+      : aggregate.mode === "practice_only"
+        ? "練習のみ"
+        : null;
+  return (
+    <div className="flex flex-col items-center gap-0.5">
+      <SkillRankBadge
+        rank={aggregate.compositeRank}
+        score={aggregate.compositeScore ?? 0}
+        maxScore={maxScore}
+        size="md"
+        showScore
+      />
+      <span className="text-[10px] text-muted-foreground">
+        {label}
+        {modeLabel ? ` (${modeLabel})` : ""}
+      </span>
+    </div>
+  );
+}
+
 function avgOrNull(nums: number[]): number | null {
   if (nums.length === 0) return null;
   return nums.reduce((a, b) => a + b, 0) / nums.length;
@@ -173,13 +223,13 @@ function PinnedSummary({ detail }: { detail: StudentDetail }) {
 
   const cells = [
     {
-      label: "平均添削スコア",
+      label: "添削スコア (履歴平均)",
       value: avgEssayScore !== null ? `${avgEssayScore.toFixed(1)}/50` : "—",
       color: avgEssayScore !== null ? scoreColor(avgEssayScore) : "text-gray-400",
       monogram: null,
     },
     {
-      label: "平均面接スコア",
+      label: "面接スコア (履歴平均)",
       value: avgInterviewScore !== null ? `${avgInterviewScore.toFixed(1)}/40` : "—",
       // scoreColor は 0-50 想定。40 点満点を 50 換算 (×1.25) で色判定
       color: avgInterviewScore !== null ? scoreColor(avgInterviewScore * 1.25) : "text-gray-400",
@@ -465,7 +515,11 @@ function AdminStudentDetailPageInner() {
   // タブコンテンツ関数
   const renderOverviewTab = () => (
     <div className="space-y-6">
-      <StudentSkillRadar detail={detail} />
+      <StudentSkillRadar
+        detail={detail}
+        skillCheck={skillCheck}
+        interviewSkillCheck={interviewSkillCheck}
+      />
 
       {/* Profile Card */}
       <Card>
@@ -785,30 +839,18 @@ function AdminStudentDetailPageInner() {
             <p className="text-sm text-muted-foreground">生徒詳細</p>
           </div>
 
-          {/* スキルランクバッヂ2つ */}
-          <div className="flex items-center gap-2">
-            {skillCheck?.latestResult ? (
-              <SkillRankBadge
-                rank={skillCheck.latestResult.rank}
-                score={skillCheck.latestResult.scores.total}
-                maxScore={50}
-                size="md"
-                showScore
-              />
-            ) : (
-              <Badge variant="secondary" className="text-xs">小論文未受験</Badge>
-            )}
-            {interviewSkillCheck?.latestResult ? (
-              <SkillRankBadge
-                rank={interviewSkillCheck.latestResult.rank}
-                score={interviewSkillCheck.latestResult.scores.total}
-                maxScore={40}
-                size="md"
-                showScore
-              />
-            ) : (
-              <Badge variant="secondary" className="text-xs">面接未受験</Badge>
-            )}
+          {/* スキルランクバッヂ2つ (SC + 直近30日練習の合成スコア) */}
+          <div className="flex items-center gap-3">
+            <SkillBadgeWithMode
+              label="小論文"
+              aggregate={skillCheck?.aggregate}
+              maxScore={50}
+            />
+            <SkillBadgeWithMode
+              label="面接"
+              aggregate={interviewSkillCheck?.aggregate}
+              maxScore={40}
+            />
           </div>
 
           {/* 活動ステータス */}
