@@ -42,6 +42,12 @@ import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
 import { AssignHomeworkButton } from "@/components/admin/AssignHomeworkButton";
 import { scoreToSkillRank } from "@/lib/history-rank";
 import { resolveUsage } from "@/lib/growth/practice-questions-helpers";
+import {
+  categorizeWeakness,
+  ESSAY_CATEGORY_LABELS,
+  ESSAY_CATEGORY_ORDER,
+  type EssayCategoryKey,
+} from "@/lib/growth/weakness-category";
 import type { GrowthReport, PracticeQuestion } from "@/lib/types/growth-report";
 import type { HomeworkAssignment } from "@/lib/types/homework";
 
@@ -343,51 +349,7 @@ export function ReportDetailCard({
         {/* 左カラム: 弱点進捗 + 類題 */}
         <div className="space-y-4 print:space-y-2">
           {report.weaknessProgress.length > 0 && (
-            <div className="print:break-inside-avoid">
-              <h4 className="mb-2 text-sm font-semibold">弱点の進捗</h4>
-              <div className="space-y-2 print:space-y-1">
-                {report.weaknessProgress.map((w) => {
-                  const prevPct = Math.max(0, Math.min(100, (w.previousScore / 10) * 100));
-                  const currPct = Math.max(0, Math.min(100, (w.currentScore / 10) * 100));
-                  const barColor =
-                    w.status === "improved"
-                      ? "bg-emerald-400"
-                      : w.status === "declined"
-                        ? "bg-rose-400"
-                        : "bg-amber-400";
-                  return (
-                    <div
-                      key={w.weakness}
-                      className="rounded-md border bg-white p-3 dark:bg-card print:break-inside-avoid print:p-2"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">{w.weakness}</span>
-                        <WeaknessStatusBadge status={w.status} />
-                      </div>
-                      <div className="mt-2 flex items-center gap-3">
-                        <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
-                          <div
-                            className={`absolute inset-y-0 left-0 ${barColor}`}
-                            style={{ width: `${currPct}%` }}
-                          />
-                          <div
-                            className="absolute inset-y-0 w-px bg-slate-400"
-                            style={{ left: `${prevPct}%` }}
-                            aria-label="前回スコア位置"
-                          />
-                        </div>
-                        <span className="text-xs font-medium tabular-nums">
-                          {w.previousScore} → {w.currentScore}
-                        </span>
-                      </div>
-                      <p className="mt-1 text-[10px] text-muted-foreground">
-                        {w.attempts} 回指摘
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+            <WeaknessProgressByCategory items={report.weaknessProgress} />
           )}
 
           {/* 類題 (priority で表示分岐) */}
@@ -715,6 +677,84 @@ export function ReportDetailCard({
             </div>
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * 弱点進捗を essay 5 軸カテゴリ (構成 / 論証 / 表現力 / AP合致 / 独自性) +
+ * その他 でグルーピングして表示。 印刷時もコンパクトに収まる 1 行リスト形式。
+ *
+ * カテゴリ判定は `categorizeWeakness` (キーワードマッチング)。
+ * 件数 0 のカテゴリは表示しない。
+ */
+function WeaknessProgressByCategory({
+  items,
+}: {
+  items: GrowthReport["weaknessProgress"];
+}) {
+  const grouped = useMemo(() => {
+    const out: Record<EssayCategoryKey, typeof items> = {
+      structure: [],
+      logic: [],
+      expression: [],
+      apAlignment: [],
+      originality: [],
+      other: [],
+    };
+    for (const w of items) {
+      out[categorizeWeakness(w.weakness)].push(w);
+    }
+    const statusRank = (s: string) =>
+      s === "declined" ? 0 : s === "stable" ? 1 : 2;
+    for (const k of Object.keys(out) as EssayCategoryKey[]) {
+      out[k].sort((a, b) => {
+        const sd = statusRank(a.status) - statusRank(b.status);
+        return sd !== 0 ? sd : b.attempts - a.attempts;
+      });
+    }
+    return out;
+  }, [items]);
+
+  const visible = ESSAY_CATEGORY_ORDER.filter((c) => grouped[c].length > 0);
+
+  return (
+    <div className="print:break-inside-avoid">
+      <h4 className="mb-2 text-sm font-semibold">弱点の進捗 (分野別)</h4>
+      <div className="space-y-2 print:space-y-1.5">
+        {visible.map((cat) => (
+          <div
+            key={cat}
+            className="rounded-md border bg-white p-2.5 dark:bg-card print:break-inside-avoid print:border-gray-300 print:p-1.5"
+          >
+            <div className="mb-1.5 flex items-center justify-between text-xs font-semibold print:mb-1 print:text-[10pt]">
+              <span>{ESSAY_CATEGORY_LABELS[cat]}</span>
+              <span className="text-[10px] text-muted-foreground print:text-[8pt]">
+                {grouped[cat].length} 件
+              </span>
+            </div>
+            <ul className="space-y-1 text-xs print:space-y-0.5 print:text-[9pt]">
+              {grouped[cat].map((w) => (
+                <li
+                  key={w.weakness}
+                  className="flex items-center justify-between gap-2"
+                >
+                  <span className="truncate">{w.weakness}</span>
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    <span className="tabular-nums text-muted-foreground">
+                      {w.previousScore}→{w.currentScore}
+                    </span>
+                    <WeaknessStatusBadge status={w.status} />
+                    <span className="text-[10px] text-muted-foreground print:text-[8pt]">
+                      {w.attempts}回
+                    </span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -1142,8 +1182,9 @@ function StatsSummaryCard({
         </div>
       )}
       {radarData && stats.count > 0 && (
-        <div className="mt-3 grid grid-cols-1 items-center gap-3 sm:grid-cols-[minmax(0,1fr)_auto] print:grid-cols-[minmax(0,1fr)_auto] print:break-inside-avoid">
-          <div className="mx-auto aspect-square w-full max-w-[200px] print:max-w-[150px]">
+        <div className="mt-3 grid grid-cols-1 items-center gap-3 sm:grid-cols-[minmax(0,1fr)_auto] print:grid-cols-[minmax(0,1fr)_auto] print:gap-2 print:break-inside-avoid">
+          {/* 印刷時に aspect-square だと高さ 0 になりやすいので w/h を同値で明示 */}
+          <div className="mx-auto h-[200px] w-full max-w-[200px] print:h-[130px] print:max-w-[130px]">
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart data={radarData} outerRadius="75%">
                 <PolarGrid gridType="polygon" stroke="#e2e8f0" />
@@ -1166,16 +1207,16 @@ function StatsSummaryCard({
               </RadarChart>
             </ResponsiveContainer>
           </div>
-          <ul className="min-w-[110px] space-y-1 text-xs">
+          <ul className="min-w-[110px] space-y-1 text-xs print:min-w-0 print:max-w-[110px] print:space-y-0.5 print:text-[9pt]">
             {radarData.map((item) => (
               <li
                 key={item.subject}
-                className="flex items-center justify-between gap-2 rounded bg-white/60 px-2 py-1 dark:bg-black/20"
+                className="flex items-center justify-between gap-2 rounded bg-white/60 px-2 py-1 dark:bg-black/20 print:bg-white print:px-1 print:py-0.5"
               >
                 <span className="text-muted-foreground">{item.subject}</span>
                 <span className="font-medium tabular-nums">
                   {item.value.toFixed(1)}
-                  <span className="ml-0.5 text-[10px] text-muted-foreground">
+                  <span className="ml-0.5 text-[10px] text-muted-foreground print:text-[8pt]">
                     /10
                   </span>
                 </span>
