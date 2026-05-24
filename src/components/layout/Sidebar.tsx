@@ -130,7 +130,6 @@ const adminNavGroups: NavGroup[] = [
   {
     title: "",
     items: [
-      { label: "通知管理", href: "/admin/settings/notifications", icon: Bell },
       { label: "設定", href: "/admin/settings", icon: Settings },
     ],
   },
