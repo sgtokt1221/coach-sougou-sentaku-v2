@@ -71,22 +71,33 @@ function matchFaculty(
     detail: "手動で確認してください",
   }));
 
-  // 学部側にも生徒側にも GPA/英語資格の手掛かりが全くない場合、スコア計算は意味を持たない
+  // 学部側に GPA/英語資格 の要件が一切無い場合、 スコア軸が無いので unscored 扱いにする。
+  // (以前は 100 にフォールバックしていたが、 全 681 学部中 70% が要件未公開のため
+  //  全生徒で Top 5 が固定化される問題を起こしていた。 詳細未公開の学部は
+  //  ソート対象から外し、 要件公開済みの学部だけで生徒差別化する)
+  const noFacultyRequirements =
+    faculty.requirements.gpa == null && faculty.requirements.englishCert == null;
   const noScoringSignal =
-    faculty.requirements.gpa == null &&
-    faculty.requirements.englishCert == null &&
+    noFacultyRequirements &&
     profile.gpa == null &&
     (!profile.englishCerts || profile.englishCerts.length === 0);
 
   let matchScore: number | null = null;
   let scoreStatus: "calculated" | "insufficient_data" = "insufficient_data";
-  if (!noScoringSignal) {
+  if (!noScoringSignal && !noFacultyRequirements) {
+    // 学部側に何かしらの要件がある場合のみスコア計算
     const gpaScore = gpaCheck.met
       ? 100
       : profile.gpa && faculty.requirements.gpa
         ? (profile.gpa / faculty.requirements.gpa) * 100
-        : 100;
-    const certScore = certCheck.met ? 100 : faculty.requirements.englishCert ? 0 : 100;
+        : faculty.requirements.gpa == null
+          ? 100 // 学部側 GPA 要件無し → GPA 軸は満点扱い
+          : 0; // 生徒側 GPA 未設定 + 学部側要件あり → 0 点
+    const certScore = certCheck.met
+      ? 100
+      : faculty.requirements.englishCert == null
+        ? 100 // 学部側英語要件無し → 英語軸は満点扱い
+        : 0; // 学部側要件あり + 生徒側未取得 → 0 点
     const total = Math.round(gpaScore * 0.5 + certScore * 0.5);
     matchScore = Math.min(100, Math.max(0, total));
     scoreStatus = "calculated";
