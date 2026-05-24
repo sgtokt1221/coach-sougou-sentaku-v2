@@ -1,11 +1,11 @@
 /**
  * BigQuery client initialisation.
  *
- * Environment variables:
- *  - GOOGLE_CLOUD_PROJECT          – GCP project ID (required for BQ)
- *  - BQ_DATASET                    – Dataset name (default: "coach_analytics")
- *  - GOOGLE_APPLICATION_CREDENTIALS – Path to service-account key file (optional
- *                                     if running inside GCP with default credentials)
+ * Environment variables (新旧どちらの名前でも読める):
+ *  - GOOGLE_CLOUD_PROJECT_ID / GOOGLE_CLOUD_PROJECT – GCP project ID
+ *  - BIGQUERY_DATASET / BQ_DATASET                  – Dataset name (default: "coach_analytics")
+ *  - GOOGLE_APPLICATION_CREDENTIALS                 – Path to service-account key file
+ *                                                     (GCP 環境では default credentials が自動採用される)
  *
  * In development without credentials the getter returns null and all
  * downstream code falls back to console logging.
@@ -17,7 +17,13 @@ let bigQueryClient: BigQuery | null = null;
 let bigQueryDataset: Dataset | null = null;
 let initWarned = false;
 
-export const BQ_DATASET_NAME = process.env.BQ_DATASET || "coach_analytics";
+export const BQ_DATASET_NAME =
+  process.env.BIGQUERY_DATASET || process.env.BQ_DATASET || "coach_analytics";
+
+/** GCP project ID を環境変数から取得 (新旧両名対応) */
+export function getBigQueryProjectId(): string | undefined {
+  return process.env.GOOGLE_CLOUD_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT;
+}
 
 /**
  * Return a configured BigQuery client, or null if credentials are unavailable.
@@ -26,13 +32,13 @@ export const BQ_DATASET_NAME = process.env.BQ_DATASET || "coach_analytics";
 export function getBigQueryClient(): BigQuery | null {
   if (bigQueryClient) return bigQueryClient;
 
-  const projectId = process.env.GOOGLE_CLOUD_PROJECT;
+  const projectId = getBigQueryProjectId();
 
   if (!projectId) {
     if (!initWarned) {
       console.warn(
-        "[BigQuery] GOOGLE_CLOUD_PROJECT is not set. " +
-          "BigQuery logging is disabled – data will be logged to console instead."
+        "[BigQuery] GOOGLE_CLOUD_PROJECT_ID / GOOGLE_CLOUD_PROJECT is not set. " +
+          "BigQuery logging is disabled – data will be logged to console instead.",
       );
       initWarned = true;
     }

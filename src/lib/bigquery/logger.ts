@@ -9,7 +9,7 @@
  *   void logEssaySubmission({ ... });
  */
 
-import { getBigQueryDataset } from "./client";
+import { getBigQueryDataset, BQ_DATASET_NAME } from "./client";
 import { TABLE_NAMES } from "./schema";
 import type { BigQueryEssayLog, BigQueryInterviewLog } from "@/lib/types/analytics";
 
@@ -38,8 +38,6 @@ export interface BigQueryStudentSnapshotRow {
 // Internal helpers
 // ---------------------------------------------------------------------------
 
-const DATASET = process.env.BQ_DATASET || "coach_analytics";
-
 /**
  * Generic row insert with error handling.
  * Falls back to console.log when BigQuery is unavailable.
@@ -62,7 +60,7 @@ async function insertRow(
   } catch (err) {
     // BigQuery streaming insert can fail with partial errors.
     // Log but never throw so the caller is unaffected.
-    console.error(`[BQ] Failed to insert into ${DATASET}.${tableName}:`, err);
+    console.error(`[BQ] Failed to insert into ${BQ_DATASET_NAME}.${tableName}:`, err);
   }
 }
 
