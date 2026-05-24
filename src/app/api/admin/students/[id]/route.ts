@@ -3,6 +3,10 @@ import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
 import { MOCK_UNIVERSITIES } from "@/lib/matching/mockData";
 import type { StudentDetail } from "@/lib/types/admin";
+import {
+  computeEssayAggregateFromList,
+  computeInterviewAggregateFromList,
+} from "@/lib/skill-check/aggregate";
 
 export async function GET(
   request: NextRequest,
@@ -309,6 +313,30 @@ export async function GET(
       };
     });
 
+    // スキル合成スコア (= ユーザー仕様の「動的に変化するランク」)
+    // 取得済みの essays / interviews から純粋関数で計算 (Firestore 再クエリ不要)
+    const essayAggregate = computeEssayAggregateFromList(
+      typeof userData.lastSkillCheckScore === "number"
+        ? userData.lastSkillCheckScore
+        : null,
+      essays,
+    );
+    const interviewsForAggregate = interviewsSnap.docs.map((d) => {
+      const data = d.data();
+      return {
+        startedAt:
+          data.startedAt?.toDate?.()?.toISOString() ?? new Date().toISOString(),
+        status: data.status as string | undefined,
+        scores: data.scores as { total?: number } | undefined,
+      };
+    });
+    const interviewAggregate = computeInterviewAggregateFromList(
+      typeof userData.lastInterviewCheckScore === "number"
+        ? userData.lastInterviewCheckScore
+        : null,
+      interviewsForAggregate,
+    );
+
     const detail: StudentDetail = {
       profile: {
         uid: id,
@@ -329,6 +357,8 @@ export async function GET(
       ...(essayStatsSummary ? { essayStatsSummary } : {}),
       ...(interviewStatsSummary ? { interviewStatsSummary } : {}),
       ...(interviewCategoryAverages ? { interviewCategoryAverages } : {}),
+      essayAggregate,
+      interviewAggregate,
       lastActivityAt,
       realtimeUnlocked: userData.realtimeUnlocked === true,
     };

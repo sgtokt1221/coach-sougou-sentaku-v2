@@ -112,6 +112,89 @@ function daysAgo(n: number): Date {
 const FALLBACK_RECENT_LIMIT = 10;
 
 /**
+ * 既に取得済みの essay 履歴リストから aggregate を計算する純粋関数版。
+ *
+ * Firestore を再クエリせず、 呼び出し元が手元に持っている essays から
+ * 直近 30 日 → fallback 直近 N 件の練習平均を出す。
+ * 主に `/api/admin/students/[id]` のように essays を既に取得済みの
+ * エンドポイントで使う (= 重複クエリとインデックス依存を避ける)。
+ */
+export function computeEssayAggregateFromList(
+  scTotal: number | null,
+  essays: { submittedAt: string | Date; scores?: { total?: number } | null }[],
+): AggregateBreakdown {
+  const cutoff = daysAgo(SKILL_CHECK_REFRESH_DAYS);
+  const toDate = (v: string | Date) => (v instanceof Date ? v : new Date(v));
+  const toScore = (e: (typeof essays)[number]) =>
+    typeof e.scores?.total === "number" ? e.scores.total : null;
+
+  let scores = essays
+    .filter((e) => toDate(e.submittedAt) >= cutoff)
+    .map(toScore)
+    .filter((s): s is number => s !== null);
+
+  if (scores.length === 0) {
+    scores = [...essays]
+      .sort(
+        (a, b) =>
+          toDate(b.submittedAt).getTime() - toDate(a.submittedAt).getTime(),
+      )
+      .slice(0, FALLBACK_RECENT_LIMIT)
+      .map(toScore)
+      .filter((s): s is number => s !== null);
+  }
+
+  const practiceAvg =
+    scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : null;
+  return blend(scTotal, practiceAvg, scores.length, calculateRank);
+}
+
+/**
+ * interview 履歴リストから aggregate を計算する純粋関数版。
+ * 練習スコア (0-50) を面接 SC スケール (0-40) に正規化する。
+ */
+export function computeInterviewAggregateFromList(
+  scTotal: number | null,
+  interviews: {
+    startedAt: string | Date;
+    status?: string;
+    scores?: { total?: number } | null;
+  }[],
+): AggregateBreakdown {
+  const cutoff = daysAgo(SKILL_CHECK_REFRESH_DAYS);
+  const toDate = (v: string | Date) => (v instanceof Date ? v : new Date(v));
+  const toScore = (i: (typeof interviews)[number]) => {
+    if (i.status !== "completed") return null;
+    return typeof i.scores?.total === "number" ? i.scores.total : null;
+  };
+
+  let rawScores = interviews
+    .filter((i) => toDate(i.startedAt) >= cutoff)
+    .map(toScore)
+    .filter((s): s is number => s !== null);
+
+  if (rawScores.length === 0) {
+    rawScores = [...interviews]
+      .sort(
+        (a, b) => toDate(b.startedAt).getTime() - toDate(a.startedAt).getTime(),
+      )
+      .slice(0, FALLBACK_RECENT_LIMIT)
+      .map(toScore)
+      .filter((s): s is number => s !== null);
+  }
+
+  // 練習側 (0-50) → 面接 SC スケール (0-40) に正規化
+  const normalized = rawScores.map(
+    (s) => (s * INTERVIEW_SC_MAX) / INTERVIEW_PRACTICE_MAX,
+  );
+  const practiceAvg =
+    normalized.length > 0
+      ? normalized.reduce((a, b) => a + b, 0) / normalized.length
+      : null;
+  return blend(scTotal, practiceAvg, normalized.length, calculateInterviewRank);
+}
+
+/**
  * 小論文SC + essay 添削スコアから合成ランクを算出。
  *
  * 練習スコアは原則「直近 30 日の essays」 を使うが、 30 日以内に履歴が

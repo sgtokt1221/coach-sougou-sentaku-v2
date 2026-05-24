@@ -84,6 +84,10 @@ export interface StudentDetail {
     bestCategory?: string;
     worstCategory?: string;
   };
+  /** 小論文スキル合成スコア (SC × 0.4 + 練習 × 0.6、 練習が直近 30 日内 0 件なら全期間直近 10 件 fallback) */
+  essayAggregate?: import("@/lib/skill-check/aggregate").AggregateBreakdown;
+  /** 面接スキル合成スコア (同上 + 面接 SC スケールに正規化) */
+  interviewAggregate?: import("@/lib/skill-check/aggregate").AggregateBreakdown;
   lastActivityAt?: string | null;
   realtimeUnlocked?: boolean;
   skillCheck?: SkillCheckStatus;

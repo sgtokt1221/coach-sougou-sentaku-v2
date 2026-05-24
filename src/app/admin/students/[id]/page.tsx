@@ -839,16 +839,16 @@ function AdminStudentDetailPageInner() {
             <p className="text-sm text-muted-foreground">生徒詳細</p>
           </div>
 
-          {/* スキルランクバッヂ2つ (SC + 直近30日練習の合成スコア) */}
+          {/* スキルランクバッヂ2つ (SC + 直近練習の合成スコア) */}
           <div className="flex items-center gap-3">
             <SkillBadgeWithMode
               label="小論文"
-              aggregate={skillCheck?.aggregate}
+              aggregate={detail.essayAggregate}
               maxScore={50}
             />
             <SkillBadgeWithMode
               label="面接"
-              aggregate={interviewSkillCheck?.aggregate}
+              aggregate={detail.interviewAggregate}
               maxScore={40}
             />
           </div>

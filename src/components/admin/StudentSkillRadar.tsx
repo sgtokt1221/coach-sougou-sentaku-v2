@@ -50,6 +50,8 @@ export function StudentSkillRadar({
     interviewScoreTrend,
     essayCategoryAverages,
     interviewCategoryAverages,
+    essayAggregate,
+    interviewAggregate,
   } = detail;
 
   const resolvedCount = weaknesses.filter((w) => w.resolved).length;
@@ -141,14 +143,14 @@ export function StudentSkillRadar({
         >
           <SkillCard
             kind="essay"
-            aggregate={skillCheck?.aggregate}
+            aggregate={essayAggregate}
             maxScore={50}
             radar={essayRadar}
             radarSource={essayRadarSource}
           />
           <SkillCard
             kind="interview"
-            aggregate={interviewSkillCheck?.aggregate}
+            aggregate={interviewAggregate}
             maxScore={40}
             radar={interviewRadar}
             radarSource={interviewRadarSource}
