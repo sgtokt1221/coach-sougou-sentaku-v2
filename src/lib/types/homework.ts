@@ -9,6 +9,13 @@
  */
 export type HomeworkStatus = "assigned" | "in_progress" | "submitted" | "reviewed";
 
+export const HOMEWORK_STATUS_LABELS: Record<HomeworkStatus, string> = {
+  assigned: "未提出",
+  in_progress: "取組中",
+  submitted: "提出済",
+  reviewed: "確認済",
+};
+
 export interface HomeworkAssignment {
   id: string;
   studentId: string;

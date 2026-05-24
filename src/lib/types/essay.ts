@@ -1,3 +1,12 @@
+export type EssayStatus = "uploaded" | "ocr_confirmed" | "reviewing" | "reviewed";
+
+export const ESSAY_STATUS_LABELS: Record<string, string> = {
+  uploaded: "OCR待ち",
+  ocr_confirmed: "OCR確認済",
+  reviewing: "添削中",
+  reviewed: "添削完了",
+};
+
 export interface Essay {
   id: string;
   userId: string;
@@ -9,7 +18,7 @@ export interface Essay {
   submittedAt: Date;
   scores?: EssayScores;
   feedback?: EssayFeedback;
-  status: "uploaded" | "ocr_confirmed" | "reviewing" | "reviewed";
+  status: EssayStatus;
   rootEssayId?: string;
   parentEssayId?: string | null;
   attemptNumber?: number;

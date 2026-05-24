@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { authFetch } from "@/lib/api/client";
 import { toast } from "sonner";
-import type { HomeworkAssignment } from "@/lib/types/homework";
+import { HOMEWORK_STATUS_LABELS, type HomeworkAssignment } from "@/lib/types/homework";
 
 /**
  * 類題カードに表示する「宿題として配布」ボタン。
@@ -100,7 +100,7 @@ export function AssignHomeworkButton({
     return (
       <div className="flex items-center gap-1.5">
         <Badge variant="outline" className="border-emerald-300 bg-emerald-50 text-[10px] text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40">
-          配布済 ({statusLabel(existing.status)})
+          配布済 ({HOMEWORK_STATUS_LABELS[existing.status]})
         </Badge>
         {canCancel && (
           <Button
@@ -155,15 +155,3 @@ export function AssignHomeworkButton({
   );
 }
 
-function statusLabel(status: HomeworkAssignment["status"]): string {
-  switch (status) {
-    case "assigned":
-      return "未提出";
-    case "in_progress":
-      return "取組中";
-    case "submitted":
-      return "提出済";
-    case "reviewed":
-      return "確認済";
-  }
-}

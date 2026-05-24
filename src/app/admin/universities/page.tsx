@@ -114,7 +114,11 @@ export default function AdminUniversitiesPage() {
           onValueChange={(v) => setGroupFilter(v as Group)}
         >
           <SelectTrigger className="w-48">
-            <SelectValue placeholder="グループで絞り込み" />
+            <SelectValue placeholder="グループで絞り込み">
+              {groupFilter === "all"
+                ? "すべて"
+                : (GROUP_LABELS[groupFilter as University["group"]] ?? groupFilter)}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">すべて</SelectItem>

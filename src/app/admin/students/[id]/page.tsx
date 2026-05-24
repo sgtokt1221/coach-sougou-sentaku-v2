@@ -59,7 +59,7 @@ import { authFetch } from "@/lib/api/client";
 import { ScoresTrendChart } from "@/components/growth/ScoresTrendChart";
 import { WeaknessSourceBadge } from "@/components/growth/WeaknessSourceBadge";
 import type { StudentDetail } from "@/lib/types/admin";
-import type { Essay } from "@/lib/types/essay";
+import { ESSAY_STATUS_LABELS, type Essay } from "@/lib/types/essay";
 import type { WeaknessRecord } from "@/lib/types/growth";
 import { getWeaknessReminderLevel } from "@/lib/types/growth";
 import { UniversitySelectStep } from "@/components/onboarding/UniversitySelectStep";
@@ -770,7 +770,7 @@ function AdminStudentDetailPageInner() {
                           </>
                         ) : (
                           <Badge variant="secondary" className="text-xs">
-                            {essay.status === "uploaded" ? "OCR待ち" : essay.status}
+                            {ESSAY_STATUS_LABELS[essay.status] ?? essay.status}
                           </Badge>
                         )}
                       </div>
