@@ -59,6 +59,7 @@ import { authFetch } from "@/lib/api/client";
 import { ScoresTrendChart } from "@/components/growth/ScoresTrendChart";
 import { WeaknessSourceBadge } from "@/components/growth/WeaknessSourceBadge";
 import type { StudentDetail } from "@/lib/types/admin";
+import { getDisplayGrade } from "@/lib/utils/grade";
 import { ESSAY_STATUS_LABELS, type Essay } from "@/lib/types/essay";
 import type { WeaknessRecord } from "@/lib/types/growth";
 import { getWeaknessReminderLevel } from "@/lib/types/growth";
@@ -466,10 +467,12 @@ function AdminStudentDetailPageInner() {
                 <span>{profile.school}</span>
               </div>
             )}
-            {profile.grade && (
+            {profile.grade != null && (
               <div className="flex items-center gap-2 text-sm">
                 <GraduationCap className="size-4 text-muted-foreground" />
-                <span>{profile.grade}年生</span>
+                <span>
+                  {getDisplayGrade(profile.grade, profile.gradeUpdatedAt).label}
+                </span>
               </div>
             )}
             {profile.gpa != null && (

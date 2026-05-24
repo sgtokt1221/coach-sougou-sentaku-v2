@@ -21,7 +21,11 @@ export async function updateProfile(data: {
   if (data.targetUniversities !== undefined) updateData.targetUniversities = data.targetUniversities;
   if (data.gpa !== undefined) updateData.gpa = data.gpa;
   if (data.englishCerts !== undefined) updateData.englishCerts = data.englishCerts;
-  if (data.grade !== undefined) updateData.grade = data.grade;
+  if (data.grade !== undefined) {
+    updateData.grade = data.grade;
+    // 学年自動加算用: 4/1 を境に経過年度分を表示時に加算するため、 入力日時を記録
+    updateData.gradeUpdatedAt = new Date().toISOString();
+  }
   if (data.school !== undefined) updateData.school = data.school;
   if (data.onboardingCompleted !== undefined) updateData.onboardingCompleted = data.onboardingCompleted;
   if (data.academicCategory !== undefined) updateData.academicCategory = data.academicCategory;

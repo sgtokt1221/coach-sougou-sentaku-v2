@@ -33,7 +33,11 @@ export async function PUT(request: NextRequest) {
       updateData.targetUniversities = targetUniversities;
     if (gpa !== undefined) updateData.gpa = gpa;
     if (englishCerts !== undefined) updateData.englishCerts = englishCerts;
-    if (grade !== undefined) updateData.grade = grade;
+    if (grade !== undefined) {
+      updateData.grade = grade;
+      // 学年自動加算用: 入力日時を ISO で記録 (4/1 経過で表示時に +1)
+      updateData.gradeUpdatedAt = new Date().toISOString();
+    }
     if (school !== undefined) updateData.school = school;
     if (onboardingCompleted !== undefined)
       updateData.onboardingCompleted = onboardingCompleted;

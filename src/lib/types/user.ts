@@ -31,6 +31,8 @@ export interface StudentProfile extends UserProfile {
   role: "student";
   school?: string;
   grade?: number;
+  /** grade を最後に入力した日時 (ISO)。 4/1 経過で表示時に grade を自動加算するための基準点 */
+  gradeUpdatedAt?: string;
   gpa?: number;
   englishCerts?: EnglishCert[];
   activities?: string[];

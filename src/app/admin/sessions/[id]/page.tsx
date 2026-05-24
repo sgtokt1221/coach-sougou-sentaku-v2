@@ -50,6 +50,7 @@ import { CoachMemo } from "@/components/admin/CoachMemo";
 import { LessonPrepSection } from "@/components/admin/LessonPrepSection";
 import { LessonDebriefSection } from "@/components/admin/LessonDebriefSection";
 import { SessionLifecycleBar } from "@/components/admin/SessionLifecycleBar";
+import { getDisplayGrade } from "@/lib/utils/grade";
 
 const STATUS_VARIANT: Record<
   SessionStatus,
@@ -834,10 +835,12 @@ function StudentInfoPanelInner({
                     <span>{profile.school}</span>
                   </div>
                 )}
-                {profile.grade && (
+                {profile.grade != null && (
                   <div className="flex items-center gap-2">
                     <GraduationCap className="size-4 text-muted-foreground" />
-                    <span>{profile.grade}年生</span>
+                    <span>
+                      {getDisplayGrade(profile.grade, profile.gradeUpdatedAt).label}
+                    </span>
                   </div>
                 )}
                 <div className="flex items-start gap-2 sm:col-span-2">

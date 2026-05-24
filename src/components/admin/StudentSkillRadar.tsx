@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo } from "react";
-import Link from "next/link";
 import {
   PolarAngleAxis,
   PolarGrid,
@@ -12,7 +11,6 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { FileText, Mic, RefreshCw, Calendar } from "lucide-react";
 import type { StudentDetail } from "@/lib/types/admin";
@@ -158,10 +156,6 @@ function SkillCard({
 }) {
   const isEssay = kind === "essay";
   const label = isEssay ? "小論文" : "面接";
-  const checkPath = isEssay
-    ? "/student/skill-check/new"
-    : "/student/interview-skill-check/new";
-
   const bgClass = isEssay
     ? "border-teal-200 bg-gradient-to-br from-teal-50 to-sky-50 dark:border-teal-900 dark:from-teal-950/30 dark:to-sky-950/30"
     : "border-rose-200 bg-gradient-to-br from-rose-50 to-amber-50 dark:border-rose-900 dark:from-rose-950/30 dark:to-amber-950/30";
@@ -276,16 +270,6 @@ function SkillCard({
         </div>
       )}
 
-      {meta?.needsRefresh && (
-        <div className="mt-3">
-          <Button asChild size="sm" variant="outline" className="w-full">
-            <Link href={checkPath}>
-              <RefreshCw className="mr-1 size-3.5" />
-              スキルチェックを再受験する
-            </Link>
-          </Button>
-        </div>
-      )}
     </div>
   );
 }

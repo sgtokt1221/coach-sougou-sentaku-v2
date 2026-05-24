@@ -41,6 +41,8 @@ export interface StudentDetail {
     email: string;
     school?: string;
     grade?: number;
+    /** grade 入力日時 (ISO)。 表示時の自動加算基準 */
+    gradeUpdatedAt?: string;
     gpa?: number;
     englishCerts?: EnglishCert[];
     targetUniversities: string[];

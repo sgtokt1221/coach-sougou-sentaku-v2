@@ -375,6 +375,7 @@ export async function GET(
         email: userData.email ?? "",
         school: userData.school,
         grade: userData.grade,
+        gradeUpdatedAt: userData.gradeUpdatedAt,
         gpa: userData.gpa ?? undefined,
         englishCerts: userData.englishCerts ?? undefined,
         targetUniversities: targetUnis,
@@ -426,6 +427,10 @@ export async function PUT(
     if (field in body) {
       updates[field] = body[field];
     }
+  }
+  // 学年が更新されたら gradeUpdatedAt も同時記録 (4/1 自動加算用)
+  if ("grade" in body) {
+    updates.gradeUpdatedAt = new Date().toISOString();
   }
 
   if (Object.keys(updates).length === 0) {
