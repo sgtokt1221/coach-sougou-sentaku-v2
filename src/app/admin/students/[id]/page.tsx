@@ -910,7 +910,7 @@ function AdminStudentDetailPageInner() {
 
       {/* Profile Edit Dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>プロフィール編集</DialogTitle>
             <DialogDescription>
