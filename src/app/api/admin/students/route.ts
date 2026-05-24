@@ -243,6 +243,12 @@ export async function GET(request: NextRequest) {
           displayName: data.displayName ?? "",
           email: data.email ?? "",
           targetUniversities: data.targetUniversities ?? [],
+          grade: typeof data.grade === "number" ? data.grade : undefined,
+          gradeUpdatedAt:
+            typeof data.gradeUpdatedAt === "string"
+              ? data.gradeUpdatedAt
+              : undefined,
+          isRonin: data.isRonin === true,
           latestScore,
           essayCount,
           lastActivityAt,

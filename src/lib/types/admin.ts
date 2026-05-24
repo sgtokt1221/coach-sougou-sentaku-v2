@@ -8,6 +8,12 @@ export interface StudentListItem {
   displayName: string;
   email: string;
   targetUniversities: string[];
+  /** 学年 (高 1=1, 2=2, 3=3)、 fiscalYear 加算前の生値 */
+  grade?: number;
+  /** grade 入力日時 (ISO)。 卒業生判定 + 「現役に戻す」 ボタンの表示用 */
+  gradeUpdatedAt?: string;
+  /** 浪人フラグ */
+  isRonin?: boolean;
   latestScore: number | null;
   essayCount: number;
   lastActivityAt: string | null;
@@ -43,6 +49,8 @@ export interface StudentDetail {
     grade?: number;
     /** grade 入力日時 (ISO)。 表示時の自動加算基準 */
     gradeUpdatedAt?: string;
+    /** 浪人フラグ */
+    isRonin?: boolean;
     gpa?: number;
     englishCerts?: EnglishCert[];
     targetUniversities: string[];

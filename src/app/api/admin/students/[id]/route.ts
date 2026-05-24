@@ -376,6 +376,7 @@ export async function GET(
         school: userData.school,
         grade: userData.grade,
         gradeUpdatedAt: userData.gradeUpdatedAt,
+        isRonin: userData.isRonin === true,
         gpa: userData.gpa ?? undefined,
         englishCerts: userData.englishCerts ?? undefined,
         targetUniversities: targetUnis,
@@ -408,7 +409,7 @@ export async function GET(
   }
 }
 
-const ALLOWED_FIELDS = ["displayName", "school", "grade", "gpa", "englishCerts", "targetUniversities", "sessionsPerMonth"] as const;
+const ALLOWED_FIELDS = ["displayName", "school", "grade", "gpa", "englishCerts", "targetUniversities", "sessionsPerMonth", "isRonin"] as const;
 
 export async function PUT(
   request: NextRequest,
@@ -430,6 +431,10 @@ export async function PUT(
   }
   // 学年が更新されたら gradeUpdatedAt も同時記録 (4/1 自動加算用)
   if ("grade" in body) {
+    updates.gradeUpdatedAt = new Date().toISOString();
+  }
+  // 浪人切替: 浪人開始日記録 (= gradeUpdatedAt を「今」 にして加算を停止 / リセット)
+  if ("isRonin" in body) {
     updates.gradeUpdatedAt = new Date().toISOString();
   }
 

@@ -33,6 +33,8 @@ export interface StudentProfile extends UserProfile {
   grade?: number;
   /** grade を最後に入力した日時 (ISO)。 4/1 経過で表示時に grade を自動加算するための基準点 */
   gradeUpdatedAt?: string;
+  /** 浪人フラグ。 true なら grade 自動加算は停止し、 表示は「浪人」 固定 */
+  isRonin?: boolean;
   gpa?: number;
   englishCerts?: EnglishCert[];
   activities?: string[];

@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, ArrowUpDown, Users, UserPlus, Filter, TrendingUp, TrendingDown, Minus, CheckCircle2, AlertCircle } from "lucide-react";
+import { Search, ArrowUpDown, Users, UserPlus, Filter, TrendingUp, TrendingDown, Minus, CheckCircle2, AlertCircle, GraduationCap, RotateCcw } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { motion, useReducedMotion } from "framer-motion";
 import { useAuthSWR } from "@/lib/api/swr";
@@ -22,9 +22,13 @@ import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
 import type { StudentListItem } from "@/lib/types/admin";
 import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
 import { StudentStatusLamps } from "@/components/admin/StudentStatusLamps";
+import { isGraduated } from "@/lib/utils/grade";
+import { authFetch } from "@/lib/api/client";
+import { toast } from "sonner";
+import { useSWRConfig } from "swr";
 
 type SortKey = "lastActivity" | "score" | "name" | "rank" | "interviewRank";
-type StatusFilter = "all" | "attention" | "healthy";
+type StatusFilter = "all" | "attention" | "healthy" | "graduated";
 
 function scoreColor(total: number): string {
   if (total >= 40) return "text-emerald-600 dark:text-emerald-400";
@@ -48,10 +52,31 @@ function scoreTrendIcon(trend: StudentListItem["scoreTrend"]) {
 export default function AdminStudentsPage() {
   const router = useRouter();
   const shouldReduceMotion = useReducedMotion();
+  const { mutate } = useSWRConfig();
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("lastActivity");
   const [universityFilter, setUniversityFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+
+  /** 卒業生 → 浪人 切替 (= 「現役に戻す」 ボタン) */
+  const markAsRonin = async (uid: string, displayName: string) => {
+    if (!confirm(`${displayName} を浪人として現役リストに戻しますか?`)) return;
+    try {
+      const res = await authFetch(`/api/admin/students/${uid}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isRonin: true }),
+      });
+      if (!res.ok) throw new Error("更新に失敗しました");
+      toast.success(`${displayName} を浪人として復帰させました`);
+      await mutate(
+        (key) => typeof key === "string" && key.startsWith("/api/admin/students"),
+      );
+    } catch (err) {
+      console.error(err);
+      toast.error("操作に失敗しました");
+    }
+  };
 
   const params = new URLSearchParams();
   if (search) params.set("search", search);
@@ -62,11 +87,18 @@ export default function AdminStudentsPage() {
   );
 
   // ステータスフィルタをクライアントサイドで適用
+  // 「卒業生」 タブ以外では卒業生を非表示にし、 通常リストを汚さない
   const filteredStudents = useMemo(() => {
     if (!rawData) return [];
-    if (statusFilter === "all") return rawData;
 
-    return rawData.filter((student) => {
+    const visible =
+      statusFilter === "graduated"
+        ? rawData.filter((s) => isGraduated(s.grade, s.gradeUpdatedAt, s.isRonin))
+        : rawData.filter((s) => !isGraduated(s.grade, s.gradeUpdatedAt, s.isRonin));
+
+    if (statusFilter === "all" || statusFilter === "graduated") return visible;
+
+    return visible.filter((student) => {
       const hasAlerts = student.alertFlags.length > 0;
       const hasCriticalOrHighAlerts = student.alertFlags.some(flag =>
         ["inactive", "document_deadline", "declining", "weakness_stuck", "ap_struggle", "deadline_risk"].includes(flag)
@@ -217,6 +249,15 @@ export default function AdminStudentsPage() {
               <CheckCircle2 className="size-3" />
               順調
             </Button>
+            <Button
+              variant={statusFilter === "graduated" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setStatusFilter("graduated")}
+              className="h-7 gap-1.5"
+            >
+              <GraduationCap className="size-3" />
+              卒業生
+            </Button>
           </div>
         </div>
       </div>
@@ -341,11 +382,25 @@ export default function AdminStudentsPage() {
                           )}
                         </td>
                         <td className="px-4 py-3 text-center">
-                          <div className="flex justify-center">
+                          <div className="flex items-center justify-center gap-2">
                             <StudentStatusLamps
                               alertFlags={s.alertFlags}
                               lastActivityAt={s.lastActivityAt}
                             />
+                            {statusFilter === "graduated" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 gap-1 text-xs"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  void markAsRonin(s.uid, s.displayName);
+                                }}
+                              >
+                                <RotateCcw className="size-3" />
+                                現役に戻す
+                              </Button>
+                            )}
                           </div>
                         </td>
                       </motion.tr>

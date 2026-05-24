@@ -835,11 +835,17 @@ function StudentInfoPanelInner({
                     <span>{profile.school}</span>
                   </div>
                 )}
-                {profile.grade != null && (
+                {(profile.grade != null || profile.isRonin) && (
                   <div className="flex items-center gap-2">
                     <GraduationCap className="size-4 text-muted-foreground" />
                     <span>
-                      {getDisplayGrade(profile.grade, profile.gradeUpdatedAt).label}
+                      {
+                        getDisplayGrade(
+                          profile.grade,
+                          profile.gradeUpdatedAt,
+                          profile.isRonin,
+                        ).label
+                      }
                     </span>
                   </div>
                 )}
