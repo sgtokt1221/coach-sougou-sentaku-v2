@@ -19,6 +19,8 @@ import {
 import { cn } from "@/lib/utils";
 import { useAuthSWR } from "@/lib/api/swr";
 import { authFetch } from "@/lib/api/client";
+import { useAuth } from "@/contexts/AuthContext";
+import type { StudentProfile } from "@/lib/types/user";
 import type { StoryCheckReport, AxisScore, ContradictionItem } from "@/lib/types/story-check";
 
 interface UniversityOption {
@@ -147,22 +149,29 @@ export default function StoryCheckPage() {
   const [checking, setChecking] = useState(false);
   const [reportMeta, setReportMeta] = useState<{ universityName: string; facultyName: string } | null>(null);
 
-  // Fetch target universities from matching results
-  const { data: matchingData } = useAuthSWR<{
-    results: {
+  // 生徒の志望校 (targetUniversities) を /api/universities/resolve で解決して候補リストにする
+  const { userProfile } = useAuth();
+  const targetIds =
+    (userProfile as StudentProfile | null)?.targetUniversities ?? [];
+  const { data: resolvedData } = useAuthSWR<{
+    resolved: {
       universityId: string;
-      universityName: string;
       facultyId: string;
+      universityName: string;
       facultyName: string;
     }[];
-  }>("/api/matching");
+  }>(
+    targetIds.length > 0
+      ? `/api/universities/resolve?ids=${targetIds.join(",")}`
+      : null,
+  );
 
-  const targets: UniversityOption[] = matchingData?.results?.slice(0, 10).map((r) => ({
+  const targets: UniversityOption[] = (resolvedData?.resolved ?? []).slice(0, 10).map((r) => ({
     universityId: r.universityId,
     universityName: r.universityName,
     facultyId: r.facultyId,
     facultyName: r.facultyName,
-  })) || [];
+  }));
 
   async function runCheck() {
     if (!selectedTarget) return;

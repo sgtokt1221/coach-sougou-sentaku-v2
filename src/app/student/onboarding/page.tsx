@@ -9,8 +9,7 @@ import { UniversitySelectStep } from "@/components/onboarding/UniversitySelectSt
 import { ProfileStep, type ProfileData } from "@/components/onboarding/ProfileStep";
 import { ConfirmStep } from "@/components/onboarding/ConfirmStep";
 import { SkillCheckStep } from "@/components/onboarding/SkillCheckStep";
-import { ArrowLeft, ArrowRight, Loader2, Search, HelpCircle } from "lucide-react";
-import { SuggestPanel } from "@/components/shared/SuggestPanel";
+import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
 import { updateProfile } from "@/lib/firebase/profile";
 import { useTutorial } from "@/contexts/TutorialContext";
 import type { StudentProfile } from "@/lib/types/user";
@@ -22,7 +21,6 @@ export default function OnboardingPage() {
   const { userProfile, refreshProfile } = useAuth();
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
-  const [step0Mode, setStep0Mode] = useState<"select" | "suggest">("select");
   const [initialized, setInitialized] = useState(false);
   const { start: startTutorial } = useTutorial();
 
@@ -160,51 +158,10 @@ export default function OnboardingPage() {
           </CardHeader>
           <CardContent>
             {step === 0 && (
-              <>
-                <div className="flex rounded-lg border p-1 mb-4">
-                  <button
-                    type="button"
-                    onClick={() => setStep0Mode("select")}
-                    className={`flex-1 flex items-center justify-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                      step0Mode === "select"
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    <Search className="size-3.5" />
-                    大学を選ぶ
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setStep0Mode("suggest")}
-                    className={`flex-1 flex items-center justify-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                      step0Mode === "suggest"
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    <HelpCircle className="size-3.5" />
-                    質問で探す
-                  </button>
-                </div>
-
-                {step0Mode === "select" ? (
-                  <UniversitySelectStep
-                    selected={selectedUniversities}
-                    onChange={setSelectedUniversities}
-                  />
-                ) : (
-                  <SuggestPanel
-                    onSelectUniversity={(universityId, facultyId) => {
-                      const key = `${universityId}:${facultyId}`;
-                      if (!selectedUniversities.includes(key)) {
-                        setSelectedUniversities((prev) => [...prev, key]);
-                      }
-                      setStep0Mode("select");
-                    }}
-                  />
-                )}
-              </>
+              <UniversitySelectStep
+                selected={selectedUniversities}
+                onChange={setSelectedUniversities}
+              />
             )}
             {step === 1 && (
               <ProfileStep data={profileData} onChange={setProfileData} />

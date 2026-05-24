@@ -1,53 +1,27 @@
 "use client";
 
 /**
- * 管理者の生徒詳細ページに埋め込む Discover (自己分析 + 志望校マッチング) 閲覧セクション。
- * 読み取り専用。GrowthTree をクリック無効で表示し、マッチング結果はコンパクトに並べる。
+ * 管理者の生徒詳細ページに埋め込む Discover (自己分析) 閲覧セクション。
+ * 旧名は「自己分析 + 志望校マッチング」 だったが、 AI マッチング機能の廃止に
+ * 伴い 自己分析の木 単体に縮小。 GrowthTree をクリック無効で読み取り表示する。
  */
 
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
-import { Lightbulb, GraduationCap, Star, Target } from "lucide-react";
+import { Lightbulb, Target } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
-import { MOCK_UNIVERSITIES } from "@/lib/matching/mockData";
 import { GrowthTree } from "@/components/self-analysis/GrowthTree";
 import type { SelfAnalysis } from "@/lib/types/self-analysis";
-import type { MatchResult } from "@/lib/types/matching";
 
 interface DiscoverSectionProps {
   studentId: string;
 }
 
-interface MatchingResponse {
-  results: MatchResult[];
-  totalUniversities: number;
-  matchedCount: number;
-  targetUniversities: string[];
-  /** プロフィール完成度。未入力フィールドがあるとマッチ度が同点になりやすい。 */
-  profileCompleteness?: {
-    hasGpa: boolean;
-    hasEnglishCert: boolean;
-  };
-}
-
-/** 生徒が /student/universities で「適合度を診断する」 を押した結果のキャッシュ */
-interface FitCacheResponse {
-  results: MatchResult[] | null;
-  source: "cache" | "none";
-  computedAt?: string;
-  preferences?: string;
-}
-
 export function DiscoverSection({ studentId }: DiscoverSectionProps) {
   const [selfAnalysis, setSelfAnalysis] = useState<SelfAnalysis | null>(null);
   const [saError, setSaError] = useState<string | null>(null);
-  const [matching, setMatching] = useState<MatchingResponse | null>(null);
-  const [fitCache, setFitCache] = useState<FitCacheResponse | null>(null);
   const [loadingSa, setLoadingSa] = useState(true);
-  const [loadingMatch, setLoadingMatch] = useState(true);
-  const [loadingFit, setLoadingFit] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
@@ -66,35 +40,6 @@ export function DiscoverSection({ studentId }: DiscoverSectionProps) {
         if (!cancelled) setSaError(err instanceof Error ? err.message : "取得失敗");
       } finally {
         if (!cancelled) setLoadingSa(false);
-      }
-    })();
-    (async () => {
-      try {
-        const res = await authFetch(`/api/admin/students/${studentId}/matching`);
-        if (!cancelled && res.ok) {
-          const data = await res.json();
-          setMatching(data);
-        }
-      } catch (err) {
-        console.warn("[DiscoverSection] matching fetch failed", err);
-      } finally {
-        if (!cancelled) setLoadingMatch(false);
-      }
-    })();
-    // AI 適合度キャッシュ (生徒が compute-fit を実施済なら apFitScore が入る)
-    (async () => {
-      try {
-        const res = await authFetch(
-          `/api/admin/students/${studentId}/matching-fit-cache`,
-        );
-        if (!cancelled && res.ok) {
-          const data = await res.json();
-          setFitCache(data);
-        }
-      } catch (err) {
-        console.warn("[DiscoverSection] fit-cache fetch failed", err);
-      } finally {
-        if (!cancelled) setLoadingFit(false);
       }
     })();
     return () => {
@@ -126,10 +71,9 @@ export function DiscoverSection({ studentId }: DiscoverSectionProps) {
     <section className="space-y-6">
       <h2 className="flex items-center gap-2 text-base font-semibold">
         <Lightbulb className="size-4 text-amber-500" />
-        Discover — 自己分析 / 志望校マッチング
+        Discover — 自己分析
       </h2>
 
-      {/* 自己分析の木 */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -157,217 +101,6 @@ export function DiscoverSection({ studentId }: DiscoverSectionProps) {
             <p className="text-sm text-muted-foreground py-8 text-center">
               まだ自己分析を始めていません
             </p>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* 志望校マッチング */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-            <GraduationCap className="size-3.5" />
-            志望校マッチング
-            {matching && (
-              <span className="ml-auto text-xs text-muted-foreground">
-                {matching.matchedCount}/{matching.totalUniversities} 校マッチ
-              </span>
-            )}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loadingMatch ? (
-            <Skeleton className="h-32 w-full" />
-          ) : !matching || matching.results.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4 text-center">
-              マッチング結果がありません
-            </p>
-          ) : (
-            <div className="space-y-4">
-              {/* 生徒が選択済みの志望校 */}
-              {matching.targetUniversities.length > 0 && (
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground mb-2">
-                    この生徒が選んでいる志望校 ({matching.targetUniversities.length})
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {matching.targetUniversities.map((compoundId) => {
-                      const [uniId, facId] = compoundId.split(":");
-                      let uni = MOCK_UNIVERSITIES.find((u) => u.id === uniId);
-                      if (!uni) uni = MOCK_UNIVERSITIES.find((u) => uniId.startsWith(u.id) || u.id.startsWith(uniId));
-                      let fac = uni?.faculties?.find((f) => f.id === facId);
-                      if (!fac && uni?.faculties) fac = uni.faculties.find((f) => facId?.startsWith(f.id) || f.id.startsWith(facId ?? ""));
-                      const label = uni ? `${uni.name} ${fac?.name ?? facId ?? ""}` : compoundId;
-                      return (
-                        <Badge key={compoundId} variant="secondary" className="text-xs">
-                          {label}
-                        </Badge>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* AI 適合度診断 未実施案内 (キャッシュなし) */}
-              {!loadingFit && fitCache?.source === "none" && (
-                <div className="mb-3 rounded-md border border-sky-200 bg-sky-50 p-2.5 text-xs text-sky-800">
-                  <p className="font-medium mb-0.5">
-                    AI 適合度診断 (AP 合致) はまだ未実施です
-                  </p>
-                  <p>
-                    生徒に <code>/student/universities</code> から 「適合度を診断する」 ボタンを押してもらうと、 自己分析・希望に基づいた適合度ランキングが見られます。
-                  </p>
-                </div>
-              )}
-
-              {/* AI 適合度ランキング (キャッシュあり) */}
-              {!loadingFit && fitCache?.source === "cache" && fitCache.results && fitCache.results.length > 0 && (
-                <div className="mb-3">
-                  <p className="text-xs font-medium text-muted-foreground mb-2 flex items-center justify-between">
-                    <span>AI 適合度ランキング Top 5</span>
-                    {fitCache.computedAt && (
-                      <span className="text-[10px] text-muted-foreground">
-                        診断日: {new Date(fitCache.computedAt).toLocaleDateString("ja-JP")}
-                      </span>
-                    )}
-                  </p>
-                  <div className="space-y-2">
-                    {[...fitCache.results]
-                      .filter((r) => typeof r.apFitScore === "number")
-                      .sort((a, b) => (b.apFitScore ?? 0) - (a.apFitScore ?? 0))
-                      .slice(0, 5)
-                      .map((r, i) => (
-                        <div
-                          key={`fit-${r.universityId}-${r.facultyId}`}
-                          className="flex items-center gap-3 rounded-md border border-emerald-200 bg-emerald-50/40 p-2.5"
-                        >
-                          <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-[11px] font-bold text-emerald-700">
-                            {i + 1}
-                          </span>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-medium truncate">
-                              {r.universityName} {r.facultyName}
-                            </p>
-                            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                              {r.fitRecommendation && (
-                                <Badge variant="outline" className="text-[10px] py-0 border-emerald-300 text-emerald-800">
-                                  {r.fitRecommendation}
-                                </Badge>
-                              )}
-                              {r.apFitReason && (
-                                <span className="text-[11px] text-emerald-900 truncate">
-                                  {r.apFitReason}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-1 shrink-0">
-                            <Star className="size-3.5 text-emerald-500" />
-                            <span className="text-sm font-semibold tabular-nums text-emerald-700">
-                              {r.apFitScore}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                </div>
-              )}
-
-              {/* 出願要件マッチ (GPA / 英語資格ベース) */}
-              <div>
-                <p className="text-xs font-medium text-muted-foreground mb-2">
-                  出願要件マッチ Top 5 (GPA / 英語資格)
-                </p>
-                {matching.profileCompleteness &&
-                  (!matching.profileCompleteness.hasGpa ||
-                    !matching.profileCompleteness.hasEnglishCert) && (
-                    <div className="mb-2 rounded-md border border-amber-200 bg-amber-50 p-2.5 text-xs text-amber-800">
-                      <p className="font-medium mb-0.5">
-                        プロフィール未完成のためマッチ度は参考値
-                      </p>
-                      <p>
-                        {!matching.profileCompleteness.hasGpa && "GPA"}
-                        {!matching.profileCompleteness.hasGpa &&
-                          !matching.profileCompleteness.hasEnglishCert &&
-                          " と "}
-                        {!matching.profileCompleteness.hasEnglishCert && "英語資格"}
-                        が未入力のため、選考要件と照合できず全大学が同点になる場合があります。
-                      </p>
-                    </div>
-                  )}
-                <div className="space-y-2">
-                  {matching.results.slice(0, 5).map((r, i) => {
-                    const unmet = [
-                      ...(r.gpaCheck && !r.gpaCheck.met ? [r.gpaCheck.requirement] : []),
-                      ...(r.certCheck && !r.certCheck.met ? [r.certCheck.requirement] : []),
-                      ...(r.requirementChecks ?? [])
-                        .filter((c) => !c.met)
-                        .map((c) => c.requirement),
-                    ];
-                    const notes = r.notes ?? [];
-                    const isUnscored = r.scoreStatus === "insufficient_data";
-                    const recommendationLabel =
-                      r.recommendation === "unscored" ? "マッチ度算出不能" : r.recommendation;
-                    return (
-                      <div
-                        key={`${r.universityId}-${r.facultyId}`}
-                        className="flex items-center gap-3 rounded-md border border-border/50 p-2.5"
-                      >
-                        <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-bold text-muted-foreground">
-                          {i + 1}
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium truncate">
-                            {r.universityName} {r.facultyName}
-                          </p>
-                          <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                            <Badge variant="outline" className="text-[10px] py-0">
-                              {recommendationLabel}
-                            </Badge>
-                            {unmet.length > 0 && (
-                              <span className="text-[11px] text-rose-600 truncate">
-                                不足: {unmet.slice(0, 2).join(", ")}
-                                {unmet.length > 2 ? ` 他${unmet.length - 2}件` : ""}
-                              </span>
-                            )}
-                            {notes.length > 0 && (
-                              <span className="text-[11px] text-amber-700 truncate">
-                                条件: {notes.slice(0, 2).join(", ")}
-                                {notes.length > 2 ? ` 他${notes.length - 2}件` : ""}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1 shrink-0">
-                          {isUnscored ? (
-                            <>
-                              <Star className="size-3.5 text-slate-300" />
-                              <span className="text-sm font-semibold tabular-nums text-muted-foreground">
-                                —
-                              </span>
-                            </>
-                          ) : (
-                            <>
-                              <Star
-                                className={`size-3.5 ${
-                                  (r.matchScore ?? 0) >= 80
-                                    ? "text-emerald-500"
-                                    : (r.matchScore ?? 0) >= 60
-                                      ? "text-amber-500"
-                                      : "text-slate-400"
-                                }`}
-                              />
-                              <span className="text-sm font-semibold tabular-nums">
-                                {r.matchScore}
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
           )}
         </CardContent>
       </Card>
