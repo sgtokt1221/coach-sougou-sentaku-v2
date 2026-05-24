@@ -85,7 +85,13 @@ export async function GET(
       }
     };
 
-    const [essaysSnap, interviewsSnap, weaknessesSnap] = await Promise.all([
+    const [
+      essaysSnap,
+      interviewsSnap,
+      weaknessesSnap,
+      skillChecksSnap,
+      interviewSkillChecksSnap,
+    ] = await Promise.all([
       adminDb
         .collection("essays")
         .where("userId", "==", id)
@@ -94,6 +100,16 @@ export async function GET(
       fetchCompletedInterviews(),
       adminDb
         .collection(`users/${id}/weaknesses`)
+        .get(),
+      adminDb
+        .collection(`users/${id}/skillChecks`)
+        .orderBy("takenAt", "desc")
+        .limit(1)
+        .get(),
+      adminDb
+        .collection(`users/${id}/interviewSkillChecks`)
+        .orderBy("takenAt", "desc")
+        .limit(1)
         .get(),
     ]);
 
@@ -313,29 +329,44 @@ export async function GET(
       };
     });
 
-    // スキル合成スコア (= ユーザー仕様の「動的に変化するランク」)
-    // 取得済みの essays / interviews から純粋関数で計算 (Firestore 再クエリ不要)
-    const essayAggregate = computeEssayAggregateFromList(
-      typeof userData.lastSkillCheckScore === "number"
-        ? userData.lastSkillCheckScore
-        : null,
-      essays,
-    );
-    const interviewsForAggregate = interviewsSnap.docs.map((d) => {
-      const data = d.data();
-      return {
-        startedAt:
-          data.startedAt?.toDate?.()?.toISOString() ?? new Date().toISOString(),
-        status: data.status as string | undefined,
-        scores: data.scores as { total?: number } | undefined,
-      };
-    });
+    // スキル指標 = 最新スキルチェックテスト結果のみ。
+    // 練習履歴 (essays / interviews) は合成しない (= 月 1 リマインド再受験で更新)
+    const latestEssaySc = skillChecksSnap.docs[0]?.data();
+    const latestInterviewSc = interviewSkillChecksSnap.docs[0]?.data();
+
+    const essayScTotal =
+      typeof latestEssaySc?.scores?.total === "number"
+        ? latestEssaySc.scores.total
+        : null;
+    const interviewScTotal =
+      typeof latestInterviewSc?.scores?.total === "number"
+        ? latestInterviewSc.scores.total
+        : null;
+
+    // 空配列を渡すと blend() が sc_only / none に自動分岐 (純粋関数を再利用)
+    const essayAggregate = computeEssayAggregateFromList(essayScTotal, []);
     const interviewAggregate = computeInterviewAggregateFromList(
-      typeof userData.lastInterviewCheckScore === "number"
-        ? userData.lastInterviewCheckScore
-        : null,
-      interviewsForAggregate,
+      interviewScTotal,
+      [],
     );
+
+    // SC 受験メタ (リマインド UI 用)
+    const buildSkillCheckMeta = (
+      doc: FirebaseFirestore.DocumentData | undefined,
+    ):
+      | { takenAt: string; daysSinceLast: number; needsRefresh: boolean }
+      | undefined => {
+      const taken = doc?.takenAt?.toDate?.() as Date | undefined;
+      if (!taken) return undefined;
+      const days = Math.floor((Date.now() - taken.getTime()) / 86400000);
+      return {
+        takenAt: taken.toISOString(),
+        daysSinceLast: days,
+        needsRefresh: days >= 30,
+      };
+    };
+    const essaySkillCheckMeta = buildSkillCheckMeta(latestEssaySc);
+    const interviewSkillCheckMeta = buildSkillCheckMeta(latestInterviewSc);
 
     const detail: StudentDetail = {
       profile: {
@@ -359,6 +390,8 @@ export async function GET(
       ...(interviewCategoryAverages ? { interviewCategoryAverages } : {}),
       essayAggregate,
       interviewAggregate,
+      ...(essaySkillCheckMeta ? { essaySkillCheckMeta } : {}),
+      ...(interviewSkillCheckMeta ? { interviewSkillCheckMeta } : {}),
       lastActivityAt,
       realtimeUnlocked: userData.realtimeUnlocked === true,
     };

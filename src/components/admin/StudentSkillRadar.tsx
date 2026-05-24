@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import Link from "next/link";
 import {
   PolarAngleAxis,
   PolarGrid,
@@ -11,8 +12,9 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { FileText, Mic } from "lucide-react";
+import { FileText, Mic, RefreshCw, Calendar } from "lucide-react";
 import type { StudentDetail } from "@/lib/types/admin";
 import type { SkillCheckStatus } from "@/lib/types/skill-check";
 import type { InterviewSkillCheckStatus } from "@/lib/types/interview-skill-check";
@@ -25,19 +27,18 @@ interface Props {
   interviewSkillCheck?: InterviewSkillCheckStatus | null;
 }
 
+type SkillCheckMeta = {
+  takenAt: string;
+  daysSinceLast: number;
+  needsRefresh: boolean;
+};
+
 /**
- * 生徒スキルカード。 ユーザー仕様:
- * 「最初にスキルチェックテストを受け、 そこからは普段の取り組み + 再度の
- *  チェックテストで動的にランクが変化する合成スコア」 を可視化する。
+ * 生徒スキルカード。 仕様:
+ * 「スキル = 最新のスキルチェックテスト結果のみ」 (月 1 リマインド再受験)
  *
- * 表示:
- * - メインスコア = aggregate.compositeScore + compositeRank (= SC × 0.4 + 練習 × 0.6)
- * - 内訳: テスト (SC) + 練習 (直近 30 日履歴) の各スコア
- * - レーダー: 小論文は SC の 5 軸スコア (構成 / 論理性 / 表現力 / AP 合致 / 独自性)、
- *   面接は SC の 4 軸 (言語能力 / 論理能力 / 思考の深さ / 面接態度)。
- *   SC 未受験で aggregate.mode === "practice_only" なら履歴のカテゴリ平均 fallback
- *
- * 弱点改善率 / 直近 30 日活動量バッジはヘッダー右側で維持。
+ * 練習履歴は合成に含めず、 SC 単独で動的に変化させる。
+ * 30 日経過で needsRefresh = true → 再受験推奨バッジを表示。
  */
 export function StudentSkillRadar({
   detail,
@@ -48,10 +49,10 @@ export function StudentSkillRadar({
     essays,
     weaknesses,
     interviewScoreTrend,
-    essayCategoryAverages,
-    interviewCategoryAverages,
     essayAggregate,
     interviewAggregate,
+    essaySkillCheckMeta,
+    interviewSkillCheckMeta,
   } = detail;
 
   const resolvedCount = weaknesses.filter((w) => w.resolved).length;
@@ -70,54 +71,29 @@ export function StudentSkillRadar({
     : 0;
   const totalRecentActivity = recentEssayActivity + recentInterviewActivity;
 
-  // 小論文レーダー: SC latestResult の 5 軸を優先、 SC 未受験なら履歴 5 軸 fallback
+  // レーダー: SC latestResult のカテゴリ別スコア (essay 5 軸 / interview 4 軸)
   const essayLatest = skillCheck?.latestResult?.scores;
   const essayRadar = useMemo(() => {
-    if (essayLatest) {
-      return [
-        { subject: "構成", value: essayLatest.structure ?? 0 },
-        { subject: "論理性", value: essayLatest.logic ?? 0 },
-        { subject: "表現力", value: essayLatest.expression ?? 0 },
-        { subject: "AP合致度", value: essayLatest.apAlignment ?? 0 },
-        { subject: "独自性", value: essayLatest.originality ?? 0 },
-      ];
-    }
-    if (essayCategoryAverages) {
-      return [
-        { subject: "構成", value: essayCategoryAverages.structure ?? 0 },
-        { subject: "論理性", value: essayCategoryAverages.logic ?? 0 },
-        { subject: "表現力", value: essayCategoryAverages.expression ?? 0 },
-        { subject: "AP合致度", value: essayCategoryAverages.apAlignment ?? 0 },
-        { subject: "独自性", value: essayCategoryAverages.originality ?? 0 },
-      ];
-    }
-    return null;
-  }, [essayLatest, essayCategoryAverages]);
-  const essayRadarSource = essayLatest ? "test" : "history";
+    if (!essayLatest) return null;
+    return [
+      { subject: "構成", value: essayLatest.structure ?? 0 },
+      { subject: "論理性", value: essayLatest.logic ?? 0 },
+      { subject: "表現力", value: essayLatest.expression ?? 0 },
+      { subject: "AP合致度", value: essayLatest.apAlignment ?? 0 },
+      { subject: "独自性", value: essayLatest.originality ?? 0 },
+    ];
+  }, [essayLatest]);
 
-  // 面接レーダー: SC 4 軸が優先、 SC 未受験なら履歴の 5 軸 fallback
   const interviewLatest = interviewSkillCheck?.latestResult?.scores;
   const interviewRadar = useMemo(() => {
-    if (interviewLatest) {
-      return [
-        { subject: "言語能力", value: interviewLatest.verbal ?? 0 },
-        { subject: "論理能力", value: interviewLatest.logical ?? 0 },
-        { subject: "思考の深さ", value: interviewLatest.depth ?? 0 },
-        { subject: "面接態度", value: interviewLatest.demeanor ?? 0 },
-      ];
-    }
-    if (interviewCategoryAverages) {
-      return [
-        { subject: "明確さ", value: interviewCategoryAverages.clarity ?? 0 },
-        { subject: "AP合致度", value: interviewCategoryAverages.apAlignment ?? 0 },
-        { subject: "熱意", value: interviewCategoryAverages.enthusiasm ?? 0 },
-        { subject: "具体性", value: interviewCategoryAverages.specificity ?? 0 },
-        { subject: "ボディランゲージ", value: interviewCategoryAverages.bodyLanguage ?? 0 },
-      ];
-    }
-    return null;
-  }, [interviewLatest, interviewCategoryAverages]);
-  const interviewRadarSource = interviewLatest ? "test" : "history";
+    if (!interviewLatest) return null;
+    return [
+      { subject: "言語能力", value: interviewLatest.verbal ?? 0 },
+      { subject: "論理能力", value: interviewLatest.logical ?? 0 },
+      { subject: "思考の深さ", value: interviewLatest.depth ?? 0 },
+      { subject: "面接態度", value: interviewLatest.demeanor ?? 0 },
+    ];
+  }, [interviewLatest]);
 
   return (
     <Card className="rounded-2xl shadow-sm">
@@ -144,16 +120,16 @@ export function StudentSkillRadar({
           <SkillCard
             kind="essay"
             aggregate={essayAggregate}
+            meta={essaySkillCheckMeta}
             maxScore={50}
             radar={essayRadar}
-            radarSource={essayRadarSource}
           />
           <SkillCard
             kind="interview"
             aggregate={interviewAggregate}
+            meta={interviewSkillCheckMeta}
             maxScore={40}
             radar={interviewRadar}
-            radarSource={interviewRadarSource}
           />
         </motion.div>
       </CardContent>
@@ -162,63 +138,59 @@ export function StudentSkillRadar({
 }
 
 /**
- * 小論文 / 面接 スキルカード本体。
+ * 小論文 / 面接 スキルカード本体 (SC 専用)。
  *
- * - aggregate なし / mode "none" → 「未受験」 表示のみ
- * - それ以外: メインスコア + 内訳 (テスト + 練習) + レーダー
+ * - aggregate.mode === "none" → 「未受験」 メッセージ + 受験促し
+ * - それ以外 → SC ランク + スコア + 受験日 + リマインドバッジ + レーダー
  */
 function SkillCard({
   kind,
   aggregate,
+  meta,
   maxScore,
   radar,
-  radarSource,
 }: {
   kind: "essay" | "interview";
   aggregate: AggregateBreakdown | undefined;
+  meta: SkillCheckMeta | undefined;
   maxScore: number;
   radar: { subject: string; value: number }[] | null;
-  radarSource: "test" | "history";
 }) {
   const isEssay = kind === "essay";
   const label = isEssay ? "小論文" : "面接";
+  const checkPath = isEssay
+    ? "/student/skill-check/new"
+    : "/student/interview-skill-check/new";
 
-  // 未受験 (aggregate なし or mode "none")
+  const bgClass = isEssay
+    ? "border-teal-200 bg-gradient-to-br from-teal-50 to-sky-50 dark:border-teal-900 dark:from-teal-950/30 dark:to-sky-950/30"
+    : "border-rose-200 bg-gradient-to-br from-rose-50 to-amber-50 dark:border-rose-900 dark:from-rose-950/30 dark:to-amber-950/30";
+
+  // 未受験
   if (!aggregate || aggregate.mode === "none" || aggregate.compositeRank === null) {
     return (
-      <div
-        className={`rounded-lg border p-4 ${
-          isEssay
-            ? "border-teal-200 bg-gradient-to-br from-teal-50 to-sky-50 dark:border-teal-900 dark:from-teal-950/30 dark:to-sky-950/30"
-            : "border-rose-200 bg-gradient-to-br from-rose-50 to-amber-50 dark:border-rose-900 dark:from-rose-950/30 dark:to-amber-950/30"
-        }`}
-      >
+      <div className={`rounded-lg border p-4 ${bgClass}`}>
         <div className="flex items-center gap-2 text-sm font-semibold">
           {isEssay ? <FileText className="size-4" /> : <Mic className="size-4" />}
           {label}
         </div>
-        <p className="mt-2 text-sm text-muted-foreground">
-          まだスキルチェックも履歴もありません
+        <p className="mt-3 text-sm text-muted-foreground">
+          スキルチェックテストを受けるとランクが付きます。
+        </p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          月 1 回の受験でスキルを最新に保ちましょう。
         </p>
       </div>
     );
   }
 
-  const modeNote =
-    aggregate.mode === "sc_only"
-      ? "テストのみ (練習履歴なし)"
-      : aggregate.mode === "practice_only"
-        ? "練習のみ (テスト未受験 / 履歴から推定)"
-        : "テスト + 練習の合成";
+  const takenAtDate = meta?.takenAt ? new Date(meta.takenAt) : null;
+  const takenAtLabel = takenAtDate
+    ? `${takenAtDate.getFullYear()}/${String(takenAtDate.getMonth() + 1).padStart(2, "0")}/${String(takenAtDate.getDate()).padStart(2, "0")} 受験`
+    : null;
 
   return (
-    <div
-      className={`rounded-lg border p-4 ${
-        isEssay
-          ? "border-teal-200 bg-gradient-to-br from-teal-50 to-sky-50 dark:border-teal-900 dark:from-teal-950/30 dark:to-sky-950/30"
-          : "border-rose-200 bg-gradient-to-br from-rose-50 to-amber-50 dark:border-rose-900 dark:from-rose-950/30 dark:to-amber-950/30"
-      }`}
-    >
+    <div className={`rounded-lg border p-4 ${bgClass}`}>
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <div
           className={`flex items-center gap-2 text-sm font-semibold ${
@@ -230,12 +202,15 @@ function SkillCard({
           {isEssay ? <FileText className="size-4" /> : <Mic className="size-4" />}
           {label}
         </div>
-        <Badge variant="secondary" className="text-[10px]">
-          {modeNote}
-        </Badge>
+        {meta?.needsRefresh && (
+          <Badge variant="destructive" className="gap-1 text-[10px]">
+            <RefreshCw className="size-3" />
+            再受験推奨 ({meta.daysSinceLast}日経過)
+          </Badge>
+        )}
       </div>
 
-      {/* メインスコア: 合成ランク + composite score */}
+      {/* メインスコア + ランク */}
       <div className="flex items-center gap-3">
         <SkillRankBadge
           rank={aggregate.compositeRank}
@@ -245,55 +220,18 @@ function SkillCard({
         <div>
           <div className="text-3xl font-bold tabular-nums">
             {aggregate.compositeScore !== null
-              ? aggregate.compositeScore.toFixed(1)
+              ? aggregate.compositeScore
               : "—"}
-            <span className="ml-1 text-sm text-muted-foreground">/{maxScore}</span>
+            <span className="ml-1 text-sm text-muted-foreground">
+              /{maxScore}
+            </span>
           </div>
-          <div className="mt-0.5 text-[11px] text-muted-foreground">
-            総合スキル
-          </div>
-        </div>
-      </div>
-
-      {/* 内訳: テスト + 練習 */}
-      <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-        <div className="rounded bg-white/60 p-2 dark:bg-black/20">
-          <div className="text-muted-foreground">テスト</div>
-          <div className="mt-0.5 font-medium tabular-nums">
-            {aggregate.scScore !== null ? (
-              <>
-                {aggregate.scScore}
-                <span className="text-[10px] text-muted-foreground">
-                  /{maxScore}
-                </span>
-                {aggregate.scRank && (
-                  <span className="ml-1 text-[10px] text-muted-foreground">
-                    {aggregate.scRank}
-                  </span>
-                )}
-              </>
-            ) : (
-              <span className="text-muted-foreground">未受験</span>
-            )}
-          </div>
-        </div>
-        <div className="rounded bg-white/60 p-2 dark:bg-black/20">
-          <div className="text-muted-foreground">練習</div>
-          <div className="mt-0.5 font-medium tabular-nums">
-            {aggregate.practiceAvg !== null ? (
-              <>
-                {aggregate.practiceAvg.toFixed(1)}
-                <span className="text-[10px] text-muted-foreground">
-                  /{maxScore}
-                </span>
-                <span className="ml-1 text-[10px] text-muted-foreground">
-                  {aggregate.practiceCount}件
-                </span>
-              </>
-            ) : (
-              <span className="text-muted-foreground">履歴なし</span>
-            )}
-          </div>
+          {takenAtLabel && (
+            <div className="mt-0.5 flex items-center gap-1 text-[11px] text-muted-foreground">
+              <Calendar className="size-3" />
+              {takenAtLabel}
+            </div>
+          )}
         </div>
       </div>
 
@@ -337,11 +275,17 @@ function SkillCard({
           </ul>
         </div>
       )}
-      <p className="mt-2 text-[10px] text-muted-foreground">
-        {radarSource === "test"
-          ? "レーダー: 直近のスキルチェック結果"
-          : "レーダー: 直近の練習履歴 (テスト未受験)"}
-      </p>
+
+      {meta?.needsRefresh && (
+        <div className="mt-3">
+          <Button asChild size="sm" variant="outline" className="w-full">
+            <Link href={checkPath}>
+              <RefreshCw className="mr-1 size-3.5" />
+              スキルチェックを再受験する
+            </Link>
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
