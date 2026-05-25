@@ -17,12 +17,21 @@ let bigQueryClient: BigQuery | null = null;
 let bigQueryDataset: Dataset | null = null;
 let initWarned = false;
 
-export const BQ_DATASET_NAME =
-  process.env.BIGQUERY_DATASET || process.env.BQ_DATASET || "coach_analytics";
+/** 環境変数から値を取得し、 改行や空白を除去 (Secret Manager 経由で末尾改行が
+ *  混入するケースを吸収する) */
+function envTrim(name: string): string | undefined {
+  const v = process.env[name];
+  if (!v) return undefined;
+  const trimmed = v.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
 
-/** GCP project ID を環境変数から取得 (新旧両名対応) */
+export const BQ_DATASET_NAME =
+  envTrim("BIGQUERY_DATASET") ?? envTrim("BQ_DATASET") ?? "coach_analytics";
+
+/** GCP project ID を環境変数から取得 (新旧両名対応 + trim) */
 export function getBigQueryProjectId(): string | undefined {
-  return process.env.GOOGLE_CLOUD_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT;
+  return envTrim("GOOGLE_CLOUD_PROJECT_ID") ?? envTrim("GOOGLE_CLOUD_PROJECT");
 }
 
 /**
