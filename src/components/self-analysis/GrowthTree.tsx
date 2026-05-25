@@ -373,13 +373,24 @@ export function GrowthTree({
     { scope: scopeRef, dependencies: [completedSteps, currentStep, allDone] },
   );
 
+  // ツールチップへの移動猶予 (150ms) を与え、 すぐに消えないようにする
+  const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const handleFruitHover = (step: number) => {
+    if (leaveTimerRef.current) {
+      clearTimeout(leaveTimerRef.current);
+      leaveTimerRef.current = null;
+    }
     setHoveredStep(step);
     hoverTlsRef.current.get(step)?.play();
   };
   const handleFruitLeave = (step: number) => {
-    setHoveredStep(null);
-    hoverTlsRef.current.get(step)?.reverse();
+    if (leaveTimerRef.current) clearTimeout(leaveTimerRef.current);
+    leaveTimerRef.current = setTimeout(() => {
+      setHoveredStep(null);
+      hoverTlsRef.current.get(step)?.reverse();
+      leaveTimerRef.current = null;
+    }, 150);
   };
 
   const titleChars = "自己分析の木".split("");
@@ -705,15 +716,17 @@ export function GrowthTree({
           )}
         </svg>
 
-        {/* ホバー時のツールチップ */}
+        {/* ホバー時のツールチップ (= ツールチップ自体にも hover 維持ロジック付き) */}
         {hoveredStep != null && hoveredMeta && hoveredPosInfo && (
           <div
-            className="pointer-events-none absolute z-10 w-[280px] -translate-x-1/2 rounded-lg border bg-background/95 p-3 shadow-xl backdrop-blur-sm"
+            className="pointer-events-auto absolute z-10 w-[280px] -translate-x-1/2 rounded-lg border bg-background/95 p-3 shadow-xl backdrop-blur-sm"
             style={{
               left: `${(hoveredPosInfo.x / 360) * 100}%`,
               top: `${(hoveredPosInfo.y / 300) * 100}%`,
               marginTop: "26px",
             }}
+            onMouseEnter={() => handleFruitHover(hoveredStep)}
+            onMouseLeave={() => handleFruitLeave(hoveredStep)}
           >
             <div className="flex items-center gap-2 mb-1.5">
               <span
@@ -724,9 +737,16 @@ export function GrowthTree({
                 }}
               />
               <p className="text-xs font-semibold text-foreground">{hoveredMeta.title}</p>
-              <span className="ml-auto text-[10px] text-muted-foreground">
-                クリックで編集
-              </span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onFruitClick?.(hoveredStep);
+                }}
+                className="ml-auto rounded bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+              >
+                編集
+              </button>
             </div>
             {hoveredData.length > 0 ? (
               <ul className="space-y-1">
