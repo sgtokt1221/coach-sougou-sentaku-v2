@@ -4,7 +4,8 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, RefreshCw, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
+import { Loader2, RefreshCw, CheckCircle2, XCircle, Wrench } from "lucide-react";
+import { toast } from "sonner";
 import { authFetch } from "@/lib/api/client";
 
 type StatusResponse = {
@@ -27,6 +28,7 @@ type StatusResponse = {
 export default function BigQueryStatusPage() {
   const [data, setData] = useState<StatusResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const [setupLoading, setSetupLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchStatus = async () => {
@@ -43,6 +45,28 @@ export default function BigQueryStatusPage() {
     }
   };
 
+  /** dataset + 3 テーブルを冪等に作成 (superadmin 限定) */
+  const runSetup = async () => {
+    if (
+      !confirm(
+        "BigQuery dataset と 3 テーブルを作成します (既存リソースは触りません)。 実行しますか?",
+      )
+    )
+      return;
+    setSetupLoading(true);
+    try {
+      const res = await authFetch("/api/admin/bigquery-setup", { method: "POST" });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
+      toast.success("セットアップ完了。 ステータスを再確認します");
+      await fetchStatus();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "セットアップに失敗しました");
+    } finally {
+      setSetupLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
@@ -52,14 +76,24 @@ export default function BigQueryStatusPage() {
             BigQuery 接続 / dataset / テーブル / 直近 24h 件数を確認
           </p>
         </div>
-        <Button onClick={fetchStatus} disabled={loading}>
-          {loading ? (
-            <Loader2 className="mr-2 size-4 animate-spin" />
-          ) : (
-            <RefreshCw className="mr-2 size-4" />
-          )}
-          確認する
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={fetchStatus} disabled={loading} variant="outline">
+            {loading ? (
+              <Loader2 className="mr-2 size-4 animate-spin" />
+            ) : (
+              <RefreshCw className="mr-2 size-4" />
+            )}
+            確認する
+          </Button>
+          <Button onClick={runSetup} disabled={setupLoading}>
+            {setupLoading ? (
+              <Loader2 className="mr-2 size-4 animate-spin" />
+            ) : (
+              <Wrench className="mr-2 size-4" />
+            )}
+            セットアップ実行
+          </Button>
+        </div>
       </div>
 
       {error && (
