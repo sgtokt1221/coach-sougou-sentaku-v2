@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, RefreshCw, CheckCircle2, XCircle, Wrench } from "lucide-react";
+import { Loader2, RefreshCw, CheckCircle2, XCircle, Wrench, Upload, Camera } from "lucide-react";
 import { toast } from "sonner";
 import { authFetch } from "@/lib/api/client";
 
@@ -29,6 +29,10 @@ export default function BigQueryStatusPage() {
   const [data, setData] = useState<StatusResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [setupLoading, setSetupLoading] = useState(false);
+  const [backfillLoading, setBackfillLoading] = useState(false);
+  const [backfillResult, setBackfillResult] = useState<unknown>(null);
+  const [snapshotLoading, setSnapshotLoading] = useState(false);
+  const [snapshotResult, setSnapshotResult] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
 
   const fetchStatus = async () => {
@@ -42,6 +46,55 @@ export default function BigQueryStatusPage() {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
+    }
+  };
+
+  /** 過去 essays / interviews を BQ に流す移行バッチ (superadmin) */
+  const runBackfill = async (dryRun: boolean) => {
+    if (
+      !dryRun &&
+      !confirm(
+        "Firestore の essays / interviews 全件を BigQuery に投入します。 実行?",
+      )
+    )
+      return;
+    setBackfillLoading(true);
+    setBackfillResult(null);
+    try {
+      const qs = dryRun ? "?dryRun=true" : "";
+      const res = await authFetch(`/api/admin/bigquery-backfill${qs}`, {
+        method: "POST",
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
+      setBackfillResult(body);
+      toast.success(
+        dryRun ? "ドライラン完了 (件数のみ計算)" : "移行完了",
+      );
+      if (!dryRun) await fetchStatus();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "移行に失敗しました");
+    } finally {
+      setBackfillLoading(false);
+    }
+  };
+
+  /** 日次スナップショットを手動実行 (= Cloud Scheduler の代替) */
+  const runSnapshot = async () => {
+    if (!confirm("全生徒の本日分スナップショットを student_snapshots に書き出します。 実行?")) return;
+    setSnapshotLoading(true);
+    setSnapshotResult(null);
+    try {
+      const res = await authFetch("/api/admin/bigquery-snapshot", { method: "POST" });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
+      setSnapshotResult(body);
+      toast.success("スナップショット完了");
+      await fetchStatus();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "スナップショット失敗");
+    } finally {
+      setSnapshotLoading(false);
     }
   };
 
@@ -85,16 +138,70 @@ export default function BigQueryStatusPage() {
             )}
             確認する
           </Button>
-          <Button onClick={runSetup} disabled={setupLoading}>
+          <Button onClick={runSetup} disabled={setupLoading} variant="outline">
             {setupLoading ? (
               <Loader2 className="mr-2 size-4 animate-spin" />
             ) : (
               <Wrench className="mr-2 size-4" />
             )}
-            セットアップ実行
+            セットアップ
+          </Button>
+          <Button
+            onClick={() => runBackfill(true)}
+            disabled={backfillLoading}
+            variant="outline"
+          >
+            {backfillLoading ? (
+              <Loader2 className="mr-2 size-4 animate-spin" />
+            ) : (
+              <Upload className="mr-2 size-4" />
+            )}
+            移行 (件数のみ)
+          </Button>
+          <Button onClick={() => runBackfill(false)} disabled={backfillLoading}>
+            {backfillLoading ? (
+              <Loader2 className="mr-2 size-4 animate-spin" />
+            ) : (
+              <Upload className="mr-2 size-4" />
+            )}
+            移行 実行
+          </Button>
+          <Button onClick={runSnapshot} disabled={snapshotLoading} variant="outline">
+            {snapshotLoading ? (
+              <Loader2 className="mr-2 size-4 animate-spin" />
+            ) : (
+              <Camera className="mr-2 size-4" />
+            )}
+            日次スナップショット
           </Button>
         </div>
       </div>
+
+      {snapshotResult !== null && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">スナップショット 結果</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <pre className="overflow-x-auto rounded bg-muted p-3 text-[11px]">
+              {JSON.stringify(snapshotResult, null, 2)}
+            </pre>
+          </CardContent>
+        </Card>
+      )}
+
+      {backfillResult !== null && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">過去データ移行 結果</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <pre className="overflow-x-auto rounded bg-muted p-3 text-[11px]">
+              {JSON.stringify(backfillResult, null, 2)}
+            </pre>
+          </CardContent>
+        </Card>
+      )}
 
       {error && (
         <Card className="border-rose-300 bg-rose-50">

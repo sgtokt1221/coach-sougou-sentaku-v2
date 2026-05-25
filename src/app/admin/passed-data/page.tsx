@@ -67,10 +67,21 @@ export default function AdminPassedDataPage() {
   return (
     <div className="space-y-6 p-6">
       <div>
-        <h1 className="text-2xl font-bold">合格者データ管理</h1>
-        <p className="text-sm text-muted-foreground">
-          大学別の合格者データ収集状況
-        </p>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-bold">合格者データ管理</h1>
+            <p className="text-sm text-muted-foreground">
+              大学別の合格者データ収集状況
+            </p>
+          </div>
+          <a
+            href="/admin/passed-data/explore"
+            className="inline-flex items-center gap-1.5 rounded-md border px-3 py-2 text-sm font-medium hover:bg-accent"
+          >
+            <BarChart3 className="size-4" />
+            統計エクスプローラ
+          </a>
+        </div>
       </div>
 
       {/* Summary Cards */}
