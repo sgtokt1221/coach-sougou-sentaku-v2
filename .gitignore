@@ -45,3 +45,10 @@ firebase-debug.log
 # claude code
 .claude/
 *.bak
+
+# codex (AI agent tooling)
+.codex/
+
+# 個人メモ / 内部ブレスト (= 公開リポジトリには含めない)
+AGENTS.md
+docs/individual-tutor-operations-brainstorm.md
