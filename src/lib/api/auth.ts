@@ -35,3 +35,47 @@ export async function requireRole(
 
   return authResult;
 }
+
+/**
+ * 生徒データへのアクセスを「自分の管轄 (managedBy) または同じ塾の admin」 で許可。
+ *
+ * 既存の `managedBy` チェックを置き換えるのではなく拡張:
+ *   - superadmin → 常に OK
+ *   - 生徒自身 (uid === studentUid) → OK
+ *   - studentData.managedBy === requesterUid → 既存の挙動 OK
+ *   - 同じ organizationId のメンバー admin → 新たに OK
+ *
+ * 戻り値: NextResponse (403) なら拒否、 null なら OK。
+ */
+export async function scopeByOrganization(opts: {
+  requesterUid: string;
+  requesterRole: string;
+  studentUid: string;
+  studentData: {
+    managedBy?: string;
+    organizationId?: string;
+  };
+}): Promise<NextResponse | null> {
+  const { requesterUid, requesterRole, studentUid, studentData } = opts;
+
+  if (requesterRole === "superadmin") return null;
+  if (requesterUid === studentUid) return null;
+  if (studentData.managedBy === requesterUid) return null;
+
+  // 同じ organization のメンバーかチェック (親 admin / 子 admin 関係)
+  const studentOrgId = studentData.organizationId;
+  if (studentOrgId) {
+    try {
+      const { adminDb } = await import("@/lib/firebase/admin");
+      if (adminDb) {
+        const requesterDoc = await adminDb.doc(`users/${requesterUid}`).get();
+        const requesterOrgId = requesterDoc.data()?.organizationId;
+        if (requesterOrgId && requesterOrgId === studentOrgId) return null;
+      }
+    } catch (err) {
+      console.warn("[scopeByOrganization] org check failed:", err);
+    }
+  }
+
+  return NextResponse.json({ error: "担当外の生徒です" }, { status: 403 });
+}

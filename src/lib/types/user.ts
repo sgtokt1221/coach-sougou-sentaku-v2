@@ -23,6 +23,8 @@ export interface UserProfile {
   documentPackage?: DocumentPackage;
   features?: FeatureFlags;
   subscriptionPlan?: SubscriptionPlan;
+  /** 所属塾 ID。 organizations/{orgId} を参照。 全ロール共通フィールド */
+  organizationId?: string;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -87,6 +87,13 @@ export async function POST(request: Request) {
       displayName,
     });
 
+    // 担当 admin の organizationId を生徒にも継承
+    let organizationId: string | null = null;
+    if (managedBy) {
+      const adminDocSnap = await adminDb.doc(`users/${managedBy}`).get();
+      organizationId = adminDocSnap.data()?.organizationId ?? null;
+    }
+
     await adminDb.doc(`users/${userRecord.uid}`).set({
       email,
       displayName,
@@ -94,6 +101,7 @@ export async function POST(request: Request) {
       school: school ?? "",
       grade: grade ?? null,
       managedBy: managedBy ?? "",
+      ...(organizationId ? { organizationId } : {}),
       targetUniversities: [],
       onboardingCompleted: false,
       createdAt: new Date(),

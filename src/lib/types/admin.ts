@@ -14,6 +14,8 @@ export interface StudentListItem {
   gradeUpdatedAt?: string;
   /** 浪人フラグ */
   isRonin?: boolean;
+  /** 所属塾 ID */
+  organizationId?: string;
   latestScore: number | null;
   essayCount: number;
   lastActivityAt: string | null;
@@ -51,6 +53,8 @@ export interface StudentDetail {
     gradeUpdatedAt?: string;
     /** 浪人フラグ */
     isRonin?: boolean;
+    /** 所属塾 ID */
+    organizationId?: string;
     gpa?: number;
     englishCerts?: EnglishCert[];
     targetUniversities: string[];

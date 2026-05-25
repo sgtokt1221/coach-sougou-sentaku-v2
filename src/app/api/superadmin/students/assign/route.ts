@@ -26,12 +26,18 @@ export async function POST(request: Request) {
   }
 
   try {
+    // 担当 admin の organizationId を生徒にも継承
+    const adminDocBefore = await adminDb.doc(`users/${adminUid}`).get();
+    const adminOrgId = adminDocBefore.data()?.organizationId ?? null;
+
     const batch = adminDb.batch();
     for (const uid of studentUids) {
-      batch.update(adminDb.doc(`users/${uid}`), {
+      const updates: Record<string, unknown> = {
         managedBy: adminUid,
         updatedAt: new Date(),
-      });
+      };
+      if (adminOrgId) updates.organizationId = adminOrgId;
+      batch.update(adminDb.doc(`users/${uid}`), updates);
     }
     await batch.commit();
 
