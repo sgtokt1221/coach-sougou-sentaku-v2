@@ -16,6 +16,8 @@ export interface StudentListItem {
   isRonin?: boolean;
   /** 所属塾 ID */
   organizationId?: string;
+  /** サービス加入日時 (ISO) */
+  createdAt?: string;
   latestScore: number | null;
   essayCount: number;
   lastActivityAt: string | null;
@@ -55,6 +57,8 @@ export interface StudentDetail {
     isRonin?: boolean;
     /** 所属塾 ID */
     organizationId?: string;
+    /** サービス加入日時 (ISO) */
+    createdAt?: string;
     gpa?: number;
     englishCerts?: EnglishCert[];
     targetUniversities: string[];

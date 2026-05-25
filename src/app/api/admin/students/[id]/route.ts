@@ -377,6 +377,9 @@ export async function GET(
         grade: userData.grade,
         gradeUpdatedAt: userData.gradeUpdatedAt,
         isRonin: userData.isRonin === true,
+        createdAt:
+          userData.createdAt?.toDate?.()?.toISOString() ??
+          (typeof userData.createdAt === "string" ? userData.createdAt : undefined),
         gpa: userData.gpa ?? undefined,
         englishCerts: userData.englishCerts ?? undefined,
         targetUniversities: targetUnis,

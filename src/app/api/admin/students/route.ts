@@ -249,6 +249,9 @@ export async function GET(request: NextRequest) {
               ? data.gradeUpdatedAt
               : undefined,
           isRonin: data.isRonin === true,
+          createdAt:
+            data.createdAt?.toDate?.()?.toISOString() ??
+            (typeof data.createdAt === "string" ? data.createdAt : undefined),
           latestScore,
           essayCount,
           lastActivityAt,

@@ -52,6 +52,7 @@ import {
   ChevronDown,
   Clock,
   Activity,
+  Calendar,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -461,6 +462,23 @@ function AdminStudentDetailPageInner() {
               <Mail className="size-4 text-muted-foreground" />
               <span>{profile.email}</span>
             </div>
+            {profile.createdAt && (
+              <div
+                className="flex items-center gap-2 text-sm"
+                title={new Date(profile.createdAt).toLocaleString("ja-JP")}
+              >
+                <Calendar className="size-4 text-muted-foreground" />
+                <span>
+                  加入: {new Date(profile.createdAt).toLocaleDateString("ja-JP")}{" "}
+                  <span className="text-xs text-muted-foreground">
+                    ({Math.floor(
+                      (Date.now() - new Date(profile.createdAt).getTime()) /
+                        86400000,
+                    )}日前)
+                  </span>
+                </span>
+              </div>
+            )}
             {profile.school && (
               <div className="flex items-center gap-2 text-sm">
                 <School className="size-4 text-muted-foreground" />

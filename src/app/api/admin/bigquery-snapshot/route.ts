@@ -129,6 +129,16 @@ export async function POST(request: NextRequest) {
       };
     });
 
+    // signup 関連
+    const signupDateRaw = userData.createdAt;
+    const signupDate =
+      signupDateRaw?.toDate?.() ??
+      (typeof signupDateRaw === "string" ? new Date(signupDateRaw) : null);
+    const signupDateStr = signupDate ? signupDate.toISOString().slice(0, 10) : null;
+    const daysSinceSignup = signupDate
+      ? Math.max(0, Math.floor((Date.now() - signupDate.getTime()) / 86400000))
+      : null;
+
     rows.push({
       user_id: uid,
       snapshot_date: snapshotDate,
@@ -142,6 +152,13 @@ export async function POST(request: NextRequest) {
       avg_interview_score: Math.round(avg(interviewTotals) * 10) / 10,
       top_weaknesses: topWeaknesses,
       overall_trend: overallTrend,
+      signup_date: signupDateStr,
+      days_since_signup: daysSinceSignup,
+      school: typeof userData.school === "string" ? userData.school : null,
+      organization_id:
+        typeof userData.organizationId === "string"
+          ? userData.organizationId
+          : null,
       admission_results: admissionResults,
     });
   }

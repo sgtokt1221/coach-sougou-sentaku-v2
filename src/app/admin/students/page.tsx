@@ -30,6 +30,20 @@ import { useSWRConfig } from "swr";
 type SortKey = "lastActivity" | "score" | "name" | "rank" | "interviewRank";
 type StatusFilter = "all" | "attention" | "healthy" | "graduated";
 
+/** 加入からの経過を「3 日前 / 2 週間前 / 5 ヶ月前 / 1 年 2 ヶ月前」 の形で返す */
+function formatJoinElapsed(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  const days = Math.floor((Date.now() - d.getTime()) / 86400000);
+  if (days < 1) return "今日";
+  if (days < 14) return `${days}日前`;
+  if (days < 60) return `${Math.floor(days / 7)}週間前`;
+  if (days < 365) return `${Math.floor(days / 30)}ヶ月前`;
+  const years = Math.floor(days / 365);
+  const months = Math.floor((days % 365) / 30);
+  return months > 0 ? `${years}年${months}ヶ月前` : `${years}年前`;
+}
+
 function scoreColor(total: number): string {
   if (total >= 40) return "text-emerald-600 dark:text-emerald-400";
   if (total >= 30) return "text-amber-600 dark:text-amber-400";
@@ -316,6 +330,11 @@ export default function AdminStudentsPage() {
                           <div>
                             <p className="font-medium">{s.displayName}</p>
                             <p className="text-xs text-muted-foreground">{s.email}</p>
+                            {s.createdAt && (
+                              <p className="mt-0.5 text-[10px] text-muted-foreground">
+                                加入 {formatJoinElapsed(s.createdAt)}
+                              </p>
+                            )}
                           </div>
                         </td>
                         <td className="px-4 py-3 hidden sm:table-cell">

@@ -117,6 +117,13 @@ export const STUDENT_SNAPSHOTS_SCHEMA: TableSchema = {
     { name: "avg_interview_score", type: "FLOAT64", mode: "NULLABLE" },
     { name: "top_weaknesses", type: "STRING", mode: "REPEATED" },
     { name: "overall_trend", type: "STRING", mode: "NULLABLE" },
+    // 加入日関連 (= 「加入から N 日目の状態」 等の時系列分析用)
+    { name: "signup_date", type: "DATE", mode: "NULLABLE" },
+    { name: "days_since_signup", type: "INT64", mode: "NULLABLE" },
+    // 高校別集計用
+    { name: "school", type: "STRING", mode: "NULLABLE" },
+    // 塾別集計用
+    { name: "organization_id", type: "STRING", mode: "NULLABLE" },
     {
       name: "admission_results",
       type: "RECORD",
