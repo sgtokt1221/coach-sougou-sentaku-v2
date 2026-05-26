@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireRole } from "@/lib/api/auth";
+import { requireRole, scopeByOrganization } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
 import { MOCK_UNIVERSITIES } from "@/lib/matching/mockData";
 import type { StudentDetail } from "@/lib/types/admin";
@@ -37,21 +37,24 @@ export async function GET(
     const viewAs = searchParams.get("viewAs");
     const effectiveUid = (role === "superadmin" && viewAs) ? viewAs : uid;
 
-    if (role !== "superadmin" && userData.managedBy !== effectiveUid) {
+    // スコープ判定: superadmin / 自分の管轄 / 同じ塾の admin のいずれか
+    const orgDenied = await scopeByOrganization({
+      requesterUid: effectiveUid,
+      requesterRole: role,
+      studentUid: id,
+      studentData: {
+        managedBy: userData.managedBy as string | undefined,
+        organizationId: userData.organizationId as string | undefined,
+      },
+    });
+    if (orgDenied) {
+      // teacher の場合は session 経由アクセスを最後に許可
       if (role === "teacher") {
         const { hasActiveSessionAccess } = await import("@/lib/api/session-access");
         const hasAccess = await hasActiveSessionAccess(effectiveUid, id);
-        if (!hasAccess) {
-          return NextResponse.json(
-            { error: "この生徒へのアクセス権がありません" },
-            { status: 403 }
-          );
-        }
+        if (!hasAccess) return orgDenied;
       } else {
-        return NextResponse.json(
-          { error: "この生徒へのアクセス権がありません" },
-          { status: 403 }
-        );
+        return orgDenied;
       }
     }
 
@@ -468,21 +471,23 @@ export async function PUT(
     const viewAs = searchParams.get("viewAs");
     const effectiveUid = (role === "superadmin" && viewAs) ? viewAs : uid;
 
-    if (role !== "superadmin" && userData.managedBy !== effectiveUid) {
+    // スコープ判定: superadmin / 自分の管轄 / 同じ塾の admin のいずれか
+    const orgDenied = await scopeByOrganization({
+      requesterUid: effectiveUid,
+      requesterRole: role,
+      studentUid: id,
+      studentData: {
+        managedBy: userData.managedBy as string | undefined,
+        organizationId: userData.organizationId as string | undefined,
+      },
+    });
+    if (orgDenied) {
       if (role === "teacher") {
         const { hasActiveSessionAccess } = await import("@/lib/api/session-access");
         const hasAccess = await hasActiveSessionAccess(effectiveUid, id);
-        if (!hasAccess) {
-          return NextResponse.json(
-            { error: "この生徒の編集権限がありません" },
-            { status: 403 }
-          );
-        }
+        if (!hasAccess) return orgDenied;
       } else {
-        return NextResponse.json(
-          { error: "この生徒の編集権限がありません" },
-          { status: 403 }
-        );
+        return orgDenied;
       }
     }
 

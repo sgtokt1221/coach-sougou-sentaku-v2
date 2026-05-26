@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { requireRole } from "@/lib/api/auth";
+import { requireRole, scopeByOrganization } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
 
 async function verifyAccess(uid: string, role: string, studentId: string) {
@@ -21,8 +21,17 @@ async function verifyAccess(uid: string, role: string, studentId: string) {
 
   const userData = userDoc.data()!;
 
-  // managedBy スコーピング (admin/teacher は担当生徒のみ)
-  if (role !== "superadmin" && userData.managedBy !== uid) {
+  // スコープ判定: superadmin / 自分の管轄 / 同じ塾の admin / teacher session
+  const orgDenied = await scopeByOrganization({
+    requesterUid: uid,
+    requesterRole: role,
+    studentUid: studentId,
+    studentData: {
+      managedBy: userData.managedBy as string | undefined,
+      organizationId: userData.organizationId as string | undefined,
+    },
+  });
+  if (orgDenied) {
     if (role === "teacher") {
       const { hasActiveSessionAccess } = await import("@/lib/api/session-access");
       const hasAccess = await hasActiveSessionAccess(uid, studentId);

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireRole } from "@/lib/api/auth";
+import { requireRole, scopeByOrganization } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
 import type { AdminFeedback, FeedbackCreateRequest } from "@/lib/types/feedback";
 
@@ -40,12 +40,16 @@ export async function GET(
     const viewAs = searchParams.get("viewAs");
     const effectiveUid = role === "superadmin" && viewAs ? viewAs : uid;
 
-    if (role !== "superadmin" && userData?.managedBy !== effectiveUid) {
-      return NextResponse.json(
-        { error: "この生徒へのアクセス権がありません" },
-        { status: 403 }
-      );
-    }
+    const orgDenied = await scopeByOrganization({
+      requesterUid: effectiveUid,
+      requesterRole: role,
+      studentUid: id,
+      studentData: {
+        managedBy: userData?.managedBy as string | undefined,
+        organizationId: userData?.organizationId as string | undefined,
+      },
+    });
+    if (orgDenied) return orgDenied;
 
     // クエリ構築
     let q: FirebaseFirestore.Query = adminDb
@@ -133,12 +137,16 @@ export async function POST(
     const viewAs = searchParams.get("viewAs");
     const effectiveUid = role === "superadmin" && viewAs ? viewAs : uid;
 
-    if (role !== "superadmin" && userData?.managedBy !== effectiveUid) {
-      return NextResponse.json(
-        { error: "この生徒へのアクセス権がありません" },
-        { status: 403 }
-      );
-    }
+    const orgDenied = await scopeByOrganization({
+      requesterUid: effectiveUid,
+      requesterRole: role,
+      studentUid: id,
+      studentData: {
+        managedBy: userData?.managedBy as string | undefined,
+        organizationId: userData?.organizationId as string | undefined,
+      },
+    });
+    if (orgDenied) return orgDenied;
 
     // 管理者の表示名を取得
     const adminDoc = await adminDb.doc(`users/${uid}`).get();

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
-import { requireRole } from "@/lib/api/auth";
+import { requireRole, scopeByOrganization } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
 import type { HomeworkAssignment } from "@/lib/types/homework";
 
@@ -30,12 +30,16 @@ export async function GET(
       return NextResponse.json({ error: "生徒が見つかりません" }, { status: 404 });
     }
     const userData = userDoc.data()!;
-    if (role !== "superadmin" && userData.managedBy !== uid) {
-      return NextResponse.json(
-        { error: "この生徒へのアクセス権がありません" },
-        { status: 403 },
-      );
-    }
+    const orgDenied = await scopeByOrganization({
+      requesterUid: uid,
+      requesterRole: role,
+      studentUid: studentId,
+      studentData: {
+        managedBy: userData.managedBy as string | undefined,
+        organizationId: userData.organizationId as string | undefined,
+      },
+    });
+    if (orgDenied) return orgDenied;
 
     const snap = await adminDb
       .collection(`users/${studentId}/homeworkAssignments`)
@@ -118,12 +122,16 @@ export async function POST(
       return NextResponse.json({ error: "生徒が見つかりません" }, { status: 404 });
     }
     const userData = userDoc.data()!;
-    if (role !== "superadmin" && userData.managedBy !== uid) {
-      return NextResponse.json(
-        { error: "この生徒へのアクセス権がありません" },
-        { status: 403 },
-      );
-    }
+    const orgDenied = await scopeByOrganization({
+      requesterUid: uid,
+      requesterRole: role,
+      studentUid: studentId,
+      studentData: {
+        managedBy: userData.managedBy as string | undefined,
+        organizationId: userData.organizationId as string | undefined,
+      },
+    });
+    if (orgDenied) return orgDenied;
 
     const body = (await request.json()) as {
       type?: "essay" | "interview";

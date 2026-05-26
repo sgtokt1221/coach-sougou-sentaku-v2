@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireRole } from "@/lib/api/auth";
+import { requireRole, scopeByOrganization } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
 
 export interface SummaryDrillListItem {
@@ -39,15 +39,24 @@ export async function GET(
     }
     const userData = userDoc.data()!;
 
-    if (role !== "superadmin" && userData.managedBy !== uid) {
+    const orgDenied = await scopeByOrganization({
+      requesterUid: uid,
+      requesterRole: role,
+      studentUid: id,
+      studentData: {
+        managedBy: userData.managedBy as string | undefined,
+        organizationId: userData.organizationId as string | undefined,
+      },
+    });
+    if (orgDenied) {
       if (role === "teacher") {
         const { hasActiveSessionAccess } = await import("@/lib/api/session-access");
         const hasAccess = await hasActiveSessionAccess(uid, id);
         if (!hasAccess) {
-          return NextResponse.json({ error: "アクセス権がありません" }, { status: 403 });
+          return orgDenied;
         }
       } else {
-        return NextResponse.json({ error: "アクセス権がありません" }, { status: 403 });
+        return orgDenied;
       }
     }
 

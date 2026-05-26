@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireRole } from "@/lib/api/auth";
+import { requireRole, scopeByOrganization } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
 import { getFeaturesByPlan } from "@/lib/stripe/plans";
 import type {
@@ -86,12 +86,16 @@ export async function PATCH(
     const { searchParams } = new URL(request.url);
     const viewAs = searchParams.get("viewAs");
     const effectiveUid = role === "superadmin" && viewAs ? viewAs : uid;
-    if (role !== "superadmin" && userData.managedBy !== effectiveUid) {
-      return NextResponse.json(
-        { error: "この生徒へのアクセス権がありません" },
-        { status: 403 }
-      );
-    }
+    const orgDenied = await scopeByOrganization({
+      requesterUid: effectiveUid,
+      requesterRole: role,
+      studentUid: id,
+      studentData: {
+        managedBy: userData.managedBy as string | undefined,
+        organizationId: userData.organizationId as string | undefined,
+      },
+    });
+    if (orgDenied) return orgDenied;
 
     const nowIso = new Date().toISOString();
 
@@ -272,12 +276,16 @@ export async function GET(
     const { searchParams } = new URL(request.url);
     const viewAs = searchParams.get("viewAs");
     const effectiveUid = role === "superadmin" && viewAs ? viewAs : uid;
-    if (role !== "superadmin" && userData.managedBy !== effectiveUid) {
-      return NextResponse.json(
-        { error: "この生徒へのアクセス権がありません" },
-        { status: 403 }
-      );
-    }
+    const orgDenied = await scopeByOrganization({
+      requesterUid: effectiveUid,
+      requesterRole: role,
+      studentUid: id,
+      studentData: {
+        managedBy: userData.managedBy as string | undefined,
+        organizationId: userData.organizationId as string | undefined,
+      },
+    });
+    if (orgDenied) return orgDenied;
 
     const standardSubscription = userData.standardSubscription as
       | StandardSubscription

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireRole } from "@/lib/api/auth";
+import { requireRole, scopeByOrganization } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
 
 export async function GET(
@@ -28,9 +28,16 @@ export async function GET(
     const viewAs = searchParams.get("viewAs");
     const effectiveUid = (role === "superadmin" && viewAs) ? viewAs : uid;
 
-    if (role !== "superadmin" && userData.managedBy !== effectiveUid) {
-      return NextResponse.json({ error: "アクセス権がありません" }, { status: 403 });
-    }
+    const orgDenied = await scopeByOrganization({
+      requesterUid: effectiveUid,
+      requesterRole: role,
+      studentUid: id,
+      studentData: {
+        managedBy: userData.managedBy as string | undefined,
+        organizationId: userData.organizationId as string | undefined,
+      },
+    });
+    if (orgDenied) return orgDenied;
 
     // interviews/{interviewId} コレクションから取得
     const interviewDoc = await adminDb.doc(`interviews/${interviewId}`).get();

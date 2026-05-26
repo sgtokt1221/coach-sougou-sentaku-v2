@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { requireRole } from "@/lib/api/auth";
+import { requireRole, scopeByOrganization } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
 
 export async function GET(
@@ -21,19 +21,29 @@ export async function GET(
     return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
   }
 
-  // managedBy スコーピング
-  if (role !== "superadmin") {
+  // スコープ判定: superadmin / 自分の管轄 / 同じ塾の admin / teacher session
+  {
     const studentDoc = await adminDb.doc(`users/${studentId}`).get();
+    if (!studentDoc.exists) {
+      return NextResponse.json({ error: "生徒が見つかりません" }, { status: 404 });
+    }
     const userData = studentDoc.data();
-    if (!studentDoc.exists || userData?.managedBy !== callerUid) {
+    const orgDenied = await scopeByOrganization({
+      requesterUid: callerUid,
+      requesterRole: role,
+      studentUid: studentId,
+      studentData: {
+        managedBy: userData?.managedBy as string | undefined,
+        organizationId: userData?.organizationId as string | undefined,
+      },
+    });
+    if (orgDenied) {
       if (role === "teacher") {
         const { hasActiveSessionAccess } = await import("@/lib/api/session-access");
         const hasAccess = await hasActiveSessionAccess(callerUid, studentId);
-        if (!hasAccess) {
-          return NextResponse.json({ error: "権限がありません" }, { status: 403 });
-        }
+        if (!hasAccess) return orgDenied;
       } else {
-        return NextResponse.json({ error: "権限がありません" }, { status: 403 });
+        return orgDenied;
       }
     }
   }
