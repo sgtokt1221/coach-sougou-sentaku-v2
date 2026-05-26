@@ -47,7 +47,6 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
-  Cell,
 } from "recharts";
 import { CHART_COLORS, CHART_ANIMATION, GRID_STYLE } from "@/components/charts/theme";
 import { CustomTooltip } from "@/components/charts/CustomTooltip";
@@ -63,33 +62,36 @@ type AnalyticsTab =
 
 export default function AnalyticsPage() {
   const { userProfile } = useAuth();
-  const isSuperadmin = userProfile?.role === "superadmin";
+  const role = userProfile?.role;
+  const isSuperadmin = role === "superadmin";
+  const canViewAnalytics =
+    role === "admin" || role === "teacher" || role === "superadmin";
   const [activeTab, setActiveTab] = useState<AnalyticsTab>("overview");
 
   const { data: overview, isLoading: loadingOverview } = useAuthSWR<AnalyticsOverview>(
-    isSuperadmin ? "/api/admin/analytics/overview" : null
+    canViewAnalytics ? "/api/admin/analytics/overview" : null
   );
   const { data: weaknesses, isLoading: loadingWeaknesses } = useAuthSWR<WeaknessAnalytics>(
-    isSuperadmin ? "/api/admin/analytics/weaknesses" : null
+    canViewAnalytics ? "/api/admin/analytics/weaknesses" : null
   );
   const { data: universityGap, isLoading: loadingGap } = useAuthSWR<UniversityGapResponse>(
-    isSuperadmin ? "/api/admin/analytics/university-gap" : null
+    canViewAnalytics ? "/api/admin/analytics/university-gap" : null
   );
   const { data: monthlyTrends, isLoading: loadingTrends } = useAuthSWR<MonthlyTrendsResponse>(
-    isSuperadmin ? "/api/admin/analytics/monthly-trends" : null
+    canViewAnalytics ? "/api/admin/analytics/monthly-trends" : null
   );
   const { data: weaknessPatterns, isLoading: loadingPatterns } =
     useAuthSWR<WeaknessPatternsResponse>(
-      isSuperadmin ? "/api/admin/analytics/weakness-patterns" : null
+      canViewAnalytics ? "/api/admin/analytics/weakness-patterns" : null
     );
 
-  if (!isSuperadmin) {
+  if (!canViewAnalytics) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 p-12">
         <ShieldAlert className="size-12 text-muted-foreground" />
         <h2 className="text-xl font-semibold">アクセス権限がありません</h2>
         <p className="text-sm text-muted-foreground">
-          このページはスーパー管理者のみアクセスできます。
+          このページは管理者・講師のみアクセスできます。
         </p>
       </div>
     );
@@ -98,9 +100,13 @@ export default function AnalyticsPage() {
   return (
     <div className="space-y-6 p-4 sm:p-6">
       <div>
-        <h1 className="text-2xl font-bold">分析ダッシュボード</h1>
+        <h1 className="text-2xl font-bold">
+          {isSuperadmin ? "全体分析" : "塾の分析"}
+        </h1>
         <p className="text-sm text-muted-foreground">
-          生徒全体の学習傾向と弱点パターンを分析します
+          {isSuperadmin
+            ? "全生徒の学習傾向 + 弱点パターン (全テナント横断)"
+            : "同じ塾の生徒の学習傾向 + 弱点パターンを分析"}
         </p>
       </div>
 
@@ -671,46 +677,32 @@ function UniversityGapContent({ data }: { data: UniversityGapResponse }) {
 
 /* ========================================
  * Score Distribution Tab
+ *
+ * 抜本リデザイン: essay (max 50) と interview (max 40) を
+ * 完全に別カードで常時表示。 種別 toggle は廃止 (= 一覧性 ↑)。
+ * 色テーマもスキル UI と一貫 (essay = teal, interview = rose)。
  * ======================================== */
 function ScoreDistributionContent() {
-  const [scoreType, setScoreType] = useState<string>("both");
   const [period, setPeriod] = useState<string>("all");
 
-  const params = new URLSearchParams({ type: scoreType, period });
+  const params = new URLSearchParams({ type: "both", period });
   const { data, isLoading } = useAuthSWR<ScoreDistributionResponse>(
-    `/api/admin/analytics/score-distribution?${params.toString()}`
+    `/api/admin/analytics/score-distribution?${params.toString()}`,
   );
-
-  const DIST_COLORS = [
-    "oklch(var(--chart-5))", // red-ish for 0-20
-    "oklch(var(--chart-4))", // orange for 21-40
-    "oklch(var(--chart-2))", // yellow for 41-60
-    "oklch(var(--chart-3))", // blue for 61-80
-    "oklch(var(--chart-1))", // green for 81-100
-  ];
 
   return (
     <>
-      <div className="flex flex-wrap gap-3">
-        <Select value={scoreType} onValueChange={(v: string | null) => setScoreType(v ?? "both")}>
-          <SelectTrigger>
-            <SelectValue placeholder="タイプ" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="both">添削 + 面接</SelectItem>
-            <SelectItem value="essay">添削のみ</SelectItem>
-            <SelectItem value="interview">面接のみ</SelectItem>
-          </SelectContent>
-        </Select>
+      <div className="flex flex-wrap items-center gap-3">
+        <span className="text-sm text-muted-foreground">期間:</span>
         <Select value={period} onValueChange={(v: string | null) => setPeriod(v ?? "all")}>
-          <SelectTrigger>
+          <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="期間" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">全期間</SelectItem>
-            <SelectItem value="30d">直近30日</SelectItem>
-            <SelectItem value="90d">直近90日</SelectItem>
-            <SelectItem value="180d">直近180日</SelectItem>
+            <SelectItem value="30d">直近 30 日</SelectItem>
+            <SelectItem value="90d">直近 90 日</SelectItem>
+            <SelectItem value="180d">直近 180 日</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -719,96 +711,114 @@ function ScoreDistributionContent() {
         <Skeleton className="h-80" />
       ) : data ? (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {(scoreType === "both" || scoreType === "essay") && data.essay.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <FileText className="size-4" />
-                  添削スコア分布
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={280}>
-                  <BarChart data={data.essay}>
-                    <CartesianGrid
-                      strokeDasharray={GRID_STYLE.strokeDasharray}
-                      stroke={GRID_STYLE.stroke}
-                      opacity={GRID_STYLE.opacity}
-                    />
-                    <XAxis dataKey="range" tickLine={false} axisLine={false} fontSize={12} />
-                    <YAxis tickLine={false} axisLine={false} fontSize={12} />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Bar
-                      dataKey="count"
-                      name="件数"
-                      radius={[4, 4, 0, 0]}
-                      isAnimationActive={true}
-                      animationDuration={CHART_ANIMATION.duration}
-                      animationEasing={CHART_ANIMATION.easing}
-                    >
-                      {data.essay.map((_, index) => (
-                        <Cell key={index} fill={DIST_COLORS[index]} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-                <div className="mt-2 flex flex-wrap justify-center gap-3 text-xs text-muted-foreground">
-                  {data.essay.map((d) => (
-                    <span key={d.range}>
-                      {d.range}: {d.percentage}%
-                    </span>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {(scoreType === "both" || scoreType === "interview") && data.interview.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <Mic className="size-4" />
-                  面接スコア分布
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={280}>
-                  <BarChart data={data.interview}>
-                    <CartesianGrid
-                      strokeDasharray={GRID_STYLE.strokeDasharray}
-                      stroke={GRID_STYLE.stroke}
-                      opacity={GRID_STYLE.opacity}
-                    />
-                    <XAxis dataKey="range" tickLine={false} axisLine={false} fontSize={12} />
-                    <YAxis tickLine={false} axisLine={false} fontSize={12} />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Bar
-                      dataKey="count"
-                      name="件数"
-                      radius={[4, 4, 0, 0]}
-                      isAnimationActive={true}
-                      animationDuration={CHART_ANIMATION.duration}
-                      animationEasing={CHART_ANIMATION.easing}
-                    >
-                      {data.interview.map((_, index) => (
-                        <Cell key={index} fill={DIST_COLORS[index]} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-                <div className="mt-2 flex flex-wrap justify-center gap-3 text-xs text-muted-foreground">
-                  {data.interview.map((d) => (
-                    <span key={d.range}>
-                      {d.range}: {d.percentage}%
-                    </span>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+          <ScoreDistributionCard
+            kind="essay"
+            data={data.essay}
+            total={data.essay.reduce((s, d) => s + d.count, 0)}
+          />
+          <ScoreDistributionCard
+            kind="interview"
+            data={data.interview}
+            total={data.interview.reduce((s, d) => s + d.count, 0)}
+          />
         </div>
       ) : null}
     </>
+  );
+}
+
+/**
+ * 小論文 / 面接 別のスコア分布カード。
+ * - 種別 icon + 「小論文」 「面接」 をヘッダーに明示
+ * - 最大スコア (/50 or /40) を併記
+ * - 色テーマで一目で区別可 (teal / rose)
+ * - データなしのときは「データなし」 表示
+ */
+function ScoreDistributionCard({
+  kind,
+  data,
+  total,
+}: {
+  kind: "essay" | "interview";
+  data: { range: string; count: number; percentage: number }[];
+  total: number;
+}) {
+  const isEssay = kind === "essay";
+  const label = isEssay ? "小論文" : "面接";
+  const maxScore = isEssay ? 50 : 40;
+  const Icon = isEssay ? FileText : Mic;
+  const barColor = isEssay ? "#0d9488" : "#e11d48";
+
+  return (
+    <Card
+      className={
+        isEssay
+          ? "border-teal-200 dark:border-teal-900/50"
+          : "border-rose-200 dark:border-rose-900/50"
+      }
+    >
+      <CardHeader>
+        <CardTitle
+          className={`flex flex-wrap items-center gap-2 text-base ${
+            isEssay
+              ? "text-teal-700 dark:text-teal-300"
+              : "text-rose-700 dark:text-rose-300"
+          }`}
+        >
+          <Icon className="size-4" />
+          <span>{label} スコア分布</span>
+          <span className="text-xs font-normal text-muted-foreground">
+            (最大 {maxScore} 点)
+          </span>
+          <span className="ml-auto text-xs font-normal text-muted-foreground">
+            {total} 件
+          </span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {total === 0 ? (
+          <div className="flex h-[280px] items-center justify-center text-sm text-muted-foreground">
+            この期間のデータはありません
+          </div>
+        ) : (
+          <>
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={data}>
+                <CartesianGrid
+                  strokeDasharray={GRID_STYLE.strokeDasharray}
+                  stroke={GRID_STYLE.stroke}
+                  opacity={GRID_STYLE.opacity}
+                />
+                <XAxis
+                  dataKey="range"
+                  tickLine={false}
+                  axisLine={false}
+                  fontSize={12}
+                />
+                <YAxis tickLine={false} axisLine={false} fontSize={12} />
+                <Tooltip content={<CustomTooltip />} />
+                <Bar
+                  dataKey="count"
+                  name="件数"
+                  fill={barColor}
+                  radius={[4, 4, 0, 0]}
+                  isAnimationActive={true}
+                  animationDuration={CHART_ANIMATION.duration}
+                  animationEasing={CHART_ANIMATION.easing}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+            <div className="mt-2 flex flex-wrap justify-center gap-3 text-xs text-muted-foreground">
+              {data.map((d) => (
+                <span key={d.range}>
+                  {d.range}: {d.percentage}%
+                </span>
+              ))}
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
