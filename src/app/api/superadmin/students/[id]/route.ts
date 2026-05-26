@@ -30,6 +30,15 @@ export async function GET(
       managedByName = managerDoc.data()?.displayName ?? "";
     }
 
+    // Get organization name
+    const orgId =
+      typeof data.organizationId === "string" ? data.organizationId : undefined;
+    let organizationName: string | undefined;
+    if (orgId) {
+      const orgDoc = await adminDb.doc(`organizations/${orgId}`).get();
+      if (orgDoc.exists) organizationName = orgDoc.data()?.name ?? undefined;
+    }
+
     // Get essay count and latest score
     const essaysSnap = await adminDb
       .collection("users")
@@ -56,6 +65,8 @@ export async function GET(
       grade: data.grade ?? null,
       managedBy: data.managedBy ?? "",
       managedByName,
+      organizationId: orgId,
+      organizationName,
       targetUniversities: data.targetUniversities ?? [],
       createdAt: data.createdAt?.toDate?.()?.toISOString() ?? new Date().toISOString(),
       latestScore,
@@ -79,12 +90,25 @@ export async function PATCH(
   if (body.displayName !== undefined) updates.displayName = body.displayName;
   if (body.school !== undefined) updates.school = body.school;
   if (body.grade !== undefined) updates.grade = body.grade;
-  if (body.managedBy !== undefined) updates.managedBy = body.managedBy;
   if (body.targetUniversities !== undefined) updates.targetUniversities = body.targetUniversities;
   updates.updatedAt = new Date();
 
   if (!adminDb) {
     return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
+  }
+
+  // managedBy 変更時はその admin の organizationId を生徒にも継承
+  if (body.managedBy !== undefined) {
+    updates.managedBy = body.managedBy;
+    if (body.managedBy) {
+      const adminDocSnap = await adminDb.doc(`users/${body.managedBy}`).get();
+      if (adminDocSnap.exists && adminDocSnap.data()?.role === "admin") {
+        const orgId = adminDocSnap.data()?.organizationId;
+        if (typeof orgId === "string") {
+          updates.organizationId = orgId;
+        }
+      }
+    }
   }
 
   try {

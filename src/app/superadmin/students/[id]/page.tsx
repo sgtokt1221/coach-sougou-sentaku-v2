@@ -19,7 +19,14 @@ import { toast } from "sonner";
 import { ArrowLeft, Save, Trash2, GraduationCap, FileText } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import { HomeworkStatusSection } from "@/components/admin/HomeworkStatusSection";
-import type { AdminListItem } from "@/lib/types/admin";
+import type { AdminListItem, TeacherListItem } from "@/lib/types/admin";
+
+type ManagerOpt = {
+  uid: string;
+  displayName: string;
+  role: "admin" | "teacher";
+  organizationName?: string;
+};
 
 interface StudentDetailData {
   uid: string;
@@ -29,6 +36,8 @@ interface StudentDetailData {
   grade: number | null;
   managedBy: string;
   managedByName: string;
+  organizationId?: string;
+  organizationName?: string;
   targetUniversities: string[];
   createdAt: string;
   latestScore: number | null;
@@ -45,7 +54,7 @@ export default function SuperadminStudentDetailPage({
   const [student, setStudent] = useState<StudentDetailData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [admins, setAdmins] = useState<AdminListItem[]>([]);
+  const [managers, setManagers] = useState<ManagerOpt[]>([]);
   const [resolvedUnis, setResolvedUnis] = useState<string[]>([]);
 
   // Editable fields
@@ -57,9 +66,10 @@ export default function SuperadminStudentDetailPage({
   useEffect(() => {
     async function fetchData() {
       try {
-        const [studentRes, adminsRes] = await Promise.all([
+        const [studentRes, adminsRes, teachersRes] = await Promise.all([
           authFetch(`/api/superadmin/students/${id}`),
           authFetch("/api/superadmin/admins"),
+          authFetch("/api/superadmin/teachers"),
         ]);
         if (studentRes.ok) {
           const data: StudentDetailData = await studentRes.json();
@@ -69,10 +79,30 @@ export default function SuperadminStudentDetailPage({
           setGrade(data.grade?.toString() ?? "");
           setManagedBy(data.managedBy || "__none__");
         }
+        const opts: ManagerOpt[] = [];
         if (adminsRes.ok) {
-          const data = await adminsRes.json();
-          setAdmins(Array.isArray(data) ? data : []);
+          const data: AdminListItem[] = await adminsRes.json();
+          for (const a of Array.isArray(data) ? data : []) {
+            opts.push({
+              uid: a.uid,
+              displayName: a.displayName,
+              role: "admin",
+              organizationName: a.organizationName,
+            });
+          }
         }
+        if (teachersRes.ok) {
+          const data: TeacherListItem[] = await teachersRes.json();
+          for (const t of Array.isArray(data) ? data : []) {
+            opts.push({
+              uid: t.uid,
+              displayName: t.displayName,
+              role: "teacher",
+              organizationName: t.organizationName,
+            });
+          }
+        }
+        setManagers(opts);
       } catch {
         // handled by API
       } finally {
@@ -187,6 +217,16 @@ export default function SuperadminStudentDetailPage({
         </Card>
         <Card>
           <CardContent className="pt-4">
+            <p className="text-xs text-muted-foreground">所属塾</p>
+            <p className="text-sm font-medium">
+              {student.organizationName || (
+                <Badge variant="secondary" className="text-xs">未割当</Badge>
+              )}
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-4">
             <div className="flex items-center gap-1">
               <GraduationCap className="size-3 text-muted-foreground" />
               <p className="text-xs text-muted-foreground">志望校</p>
@@ -231,20 +271,26 @@ export default function SuperadminStudentDetailPage({
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium">担当管理者/講師</Label>
+              <Label className="text-xs font-medium">
+                担当管理者/講師 (= 所属塾)
+              </Label>
               <Select value={managedBy} onValueChange={(v) => { if (v) setManagedBy(v); }}>
                 <SelectTrigger>
                   <SelectValue placeholder="担当を選択" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__none__">未割当</SelectItem>
-                  {admins.map((a) => (
-                    <SelectItem key={a.uid} value={a.uid}>
-                      {a.displayName}（{a.role === "admin" ? "管理者" : "講師"}）
+                  {managers.map((m) => (
+                    <SelectItem key={m.uid} value={m.uid}>
+                      {m.organizationName ? `${m.organizationName} / ` : ""}
+                      {m.displayName} ({m.role === "admin" ? "管理者" : "講師"})
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              <p className="text-[10px] text-muted-foreground">
+                変更すると、 その担当の塾 (organizationId) に自動で移ります
+              </p>
             </div>
           </div>
           <div className="flex gap-3 pt-2">
