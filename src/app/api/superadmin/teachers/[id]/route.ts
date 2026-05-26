@@ -44,12 +44,24 @@ export async function GET(
       email: doc.data().email ?? "",
     }));
 
+    // 所属塾情報を解決
+    const orgId =
+      typeof data.organizationId === "string" ? data.organizationId : undefined;
+    let organizationName: string | undefined;
+    if (orgId) {
+      const orgDoc = await adminDb.doc(`organizations/${orgId}`).get();
+      if (orgDoc.exists) organizationName = orgDoc.data()?.name ?? undefined;
+    }
+
     return NextResponse.json({
       uid: id,
       displayName: data.displayName ?? "",
       email: data.email ?? "",
       role: data.role,
       createdAt: data.createdAt?.toDate?.()?.toISOString() ?? new Date().toISOString(),
+      organizationId: orgId,
+      organizationName,
+      managedBy: typeof data.managedBy === "string" ? data.managedBy : undefined,
       students,
     });
   } catch {
@@ -69,6 +81,25 @@ export async function PATCH(
   const updates: Record<string, unknown> = {};
   if (body.displayName) updates.displayName = body.displayName;
   if (body.role) updates.role = body.role;
+  // 所属塾変更: managedBy (= 代表 admin) を指定すると、 その admin の
+  // organizationId を講師に継承
+  if (typeof body.managedBy === "string") {
+    if (adminDb) {
+      const adminDocSnap = await adminDb.doc(`users/${body.managedBy}`).get();
+      if (adminDocSnap.exists && adminDocSnap.data()?.role === "admin") {
+        updates.managedBy = body.managedBy;
+        const orgId = adminDocSnap.data()?.organizationId;
+        if (typeof orgId === "string") {
+          updates.organizationId = orgId;
+        }
+      } else {
+        return NextResponse.json(
+          { error: "managedBy は admin ロールのユーザーである必要があります" },
+          { status: 400 },
+        );
+      }
+    }
+  }
   updates.updatedAt = new Date();
 
   if (!adminDb) {

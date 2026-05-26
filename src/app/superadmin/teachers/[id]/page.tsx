@@ -13,9 +13,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { ArrowLeft, Users, UserPlus, Trash2 } from "lucide-react";
+import { ArrowLeft, Users, UserPlus, Trash2, Building2 } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
-import type { StudentListItem } from "@/lib/types/admin";
+import { useAuthSWR } from "@/lib/api/swr";
+import type { StudentListItem, AdminListItem } from "@/lib/types/admin";
 
 interface TeacherDetail {
   uid: string;
@@ -23,6 +24,9 @@ interface TeacherDetail {
   email: string;
   role: string;
   createdAt: string;
+  organizationId?: string;
+  organizationName?: string;
+  managedBy?: string;
   students: { uid: string; displayName: string; email: string }[];
 }
 
@@ -39,6 +43,10 @@ export default function SuperadminTeacherDetailPage({
   const [unassignedStudents, setUnassignedStudents] = useState<StudentListItem[]>([]);
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const [assigning, setAssigning] = useState(false);
+  const [orgChanging, setOrgChanging] = useState(false);
+  const [selectedAdmin, setSelectedAdmin] = useState("");
+  // 所属塾変更用: 全 admin 候補 (= organizationId を持つもの)
+  const { data: admins } = useAuthSWR<AdminListItem[]>("/api/superadmin/admins");
 
   useEffect(() => {
     async function fetchData() {
@@ -64,6 +72,30 @@ export default function SuperadminTeacherDetailPage({
     }
     fetchData();
   }, [id]);
+
+  async function handleOrgChange() {
+    if (!selectedAdmin) return;
+    setOrgChanging(true);
+    try {
+      const res = await authFetch(`/api/superadmin/teachers/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ managedBy: selectedAdmin }),
+      });
+      if (!res.ok) {
+        const body = await res.json();
+        throw new Error(body.error || "塾の変更に失敗しました");
+      }
+      toast.success("所属塾を変更しました");
+      const teacherRes = await authFetch(`/api/superadmin/teachers/${id}`);
+      if (teacherRes.ok) setTeacher(await teacherRes.json());
+      setSelectedAdmin("");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "塾の変更に失敗しました");
+    } finally {
+      setOrgChanging(false);
+    }
+  }
 
   async function handleRoleChange(newRole: string | null) {
     if (!newRole) return;
@@ -180,6 +212,52 @@ export default function SuperadminTeacherDetailPage({
             <Trash2 className="size-4" />
             アカウント無効化
           </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Building2 className="size-4" />
+            所属塾
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="text-sm">
+            現在の所属:{" "}
+            {teacher.organizationName ? (
+              <span className="font-medium">{teacher.organizationName}</span>
+            ) : (
+              <span className="text-muted-foreground">未割当</span>
+            )}
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm text-muted-foreground">塾を変更:</span>
+            <select
+              value={selectedAdmin}
+              onChange={(e) => setSelectedAdmin(e.target.value)}
+              className="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
+            >
+              <option value="">— 代表 admin を選択 —</option>
+              {(admins ?? [])
+                .filter((a) => a.organizationId)
+                .map((a) => (
+                  <option key={a.uid} value={a.uid}>
+                    {a.organizationName} / {a.displayName}
+                  </option>
+                ))}
+            </select>
+            <Button
+              onClick={handleOrgChange}
+              disabled={!selectedAdmin || orgChanging}
+              size="sm"
+            >
+              {orgChanging ? "変更中..." : "変更を保存"}
+            </Button>
+          </div>
+          <p className="text-[10px] text-muted-foreground">
+            選んだ admin と同じ塾の講師として登録されます (= managedBy + organizationId)
+          </p>
         </CardContent>
       </Card>
 
