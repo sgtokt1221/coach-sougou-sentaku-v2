@@ -75,17 +75,30 @@ export async function POST(request: NextRequest) {
     const userData = userDoc.data();
     const uid = userDoc.id;
 
-    const [essaysSnap, interviewsSnap, weaknessesSnap, examResultsSnap] =
-      await Promise.all([
-        adminDb.collection("essays").where("userId", "==", uid).get(),
-        adminDb
-          .collection("interviews")
-          .where("userId", "==", uid)
-          .where("status", "==", "completed")
-          .get(),
-        adminDb.collection(`users/${uid}/weaknesses`).get(),
-        adminDb.collection(`users/${uid}/examResults`).get(),
-      ]);
+    // documents / sessions / activities / selfAnalysis / skillChecks も並列取得
+    const [
+      essaysSnap,
+      interviewsSnap,
+      weaknessesSnap,
+      examResultsSnap,
+      documentsSnap,
+      sessionsSnap,
+      activitiesSnap,
+      selfAnalysisDoc,
+    ] = await Promise.all([
+      adminDb.collection("essays").where("userId", "==", uid).get(),
+      adminDb
+        .collection("interviews")
+        .where("userId", "==", uid)
+        .where("status", "==", "completed")
+        .get(),
+      adminDb.collection(`users/${uid}/weaknesses`).get(),
+      adminDb.collection(`users/${uid}/examResults`).get(),
+      adminDb.collection(`users/${uid}/documents`).get(),
+      adminDb.collection("sessions").where("studentUid", "==", uid).get(),
+      adminDb.collection(`users/${uid}/activities`).get(),
+      adminDb.doc(`selfAnalysis/${uid}`).get(),
+    ]);
 
     const essayTotals = essaysSnap.docs
       .map((d) => d.data().scores?.total)
@@ -139,6 +152,56 @@ export async function POST(request: NextRequest) {
       ? Math.max(0, Math.floor((Date.now() - signupDate.getTime()) / 86400000))
       : null;
 
+    // documents 集計 (完成 = final / 進行中 = draft|reviewing)
+    const docs = documentsSnap.docs.map((d) => d.data());
+    const documentsCompletedCount = docs.filter(
+      (d) => d.status === "final" || d.status === "completed",
+    ).length;
+    const documentsInProgressCount = docs.filter(
+      (d) => d.status === "draft" || d.status === "reviewing",
+    ).length;
+
+    // 自己分析完成度 (7 ステップ)
+    const SELF_ANALYSIS_KEYS = [
+      "values",
+      "strengths",
+      "weaknesses",
+      "interests",
+      "vision",
+      "identity",
+      "experiences",
+    ];
+    const saData = selfAnalysisDoc.exists ? selfAnalysisDoc.data() : null;
+    const completedSelfAnalysisSteps = saData
+      ? SELF_ANALYSIS_KEYS.filter((k) => {
+          const v = (saData as Record<string, unknown>)[k];
+          return v && (Array.isArray(v) ? v.length > 0 : typeof v === "object");
+        }).length
+      : 0;
+    const selfAnalysisCompletionPct = Math.round(
+      (completedSelfAnalysisSteps / SELF_ANALYSIS_KEYS.length) * 100,
+    );
+
+    // 第一志望
+    const targetUnis: string[] = Array.isArray(userData.targetUniversities)
+      ? userData.targetUniversities
+      : [];
+    const firstTarget = targetUnis[0] ?? "";
+    const [targetUniTop, targetFacTop] = firstTarget.includes(":")
+      ? firstTarget.split(":")
+      : [firstTarget, ""];
+
+    // 英検等 最上位スコア (= 簡易、 値を文字列化)
+    const certs: Array<{ type?: string; score?: string }> = Array.isArray(
+      userData.englishCerts,
+    )
+      ? userData.englishCerts
+      : [];
+    const englishCertTopScore =
+      certs.length > 0
+        ? `${certs[0].type ?? ""} ${certs[0].score ?? ""}`.trim()
+        : null;
+
     rows.push({
       user_id: uid,
       snapshot_date: snapshotDate,
@@ -159,6 +222,23 @@ export async function POST(request: NextRequest) {
         typeof userData.organizationId === "string"
           ? userData.organizationId
           : null,
+      // Phase B 拡張
+      activity_count: activitiesSnap.size,
+      documents_completed_count: documentsCompletedCount,
+      documents_in_progress_count: documentsInProgressCount,
+      session_count: sessionsSnap.size,
+      self_analysis_completion_pct: selfAnalysisCompletionPct,
+      sc_essay_score:
+        typeof userData.lastSkillCheckScore === "number"
+          ? userData.lastSkillCheckScore
+          : null,
+      sc_interview_score:
+        typeof userData.lastInterviewCheckScore === "number"
+          ? userData.lastInterviewCheckScore
+          : null,
+      english_cert_top_score: englishCertTopScore,
+      target_university_top: targetUniTop || null,
+      target_faculty_top: targetFacTop || null,
       admission_results: admissionResults,
     });
   }

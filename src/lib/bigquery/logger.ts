@@ -97,6 +97,11 @@ export async function logEssaySubmission(data: BigQueryEssayLog): Promise<void> 
       attempt_number: data.attempt_number ?? null,
       root_essay_id: data.root_essay_id ?? null,
       parent_essay_id: data.parent_essay_id ?? null,
+      application_period: data.application_period ?? null,
+      attempt_sequence: data.attempt_sequence ?? null,
+      essay_type: data.essay_type ?? null,
+      ai_good_points: data.ai_good_points ?? [],
+      ai_improvement_points: data.ai_improvement_points ?? [],
     },
     "logEssaySubmission"
   );
@@ -133,6 +138,9 @@ export async function logInterviewSession(
       audio_duration_seconds: null,
       transcription_confidence: null,
       summary_generated: null,
+      filler_count: data.filler_count ?? null,
+      speaking_speed_wpm: data.speaking_speed_wpm ?? null,
+      voice_clarity_score: data.voice_clarity_score ?? null,
     },
     "logInterviewSession"
   );

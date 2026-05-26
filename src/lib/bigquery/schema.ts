@@ -41,6 +41,13 @@ export const ESSAY_SUBMISSIONS_SCHEMA: TableSchema = {
     // tags
     { name: "weakness_tags", type: "STRING", mode: "REPEATED" },
     { name: "improvement_tags", type: "STRING", mode: "REPEATED" },
+
+    // 総合型選抜分析用 (= Phase B 追加)
+    { name: "application_period", type: "STRING", mode: "NULLABLE" },
+    { name: "attempt_sequence", type: "INT64", mode: "NULLABLE" },
+    { name: "essay_type", type: "STRING", mode: "NULLABLE" },
+    { name: "ai_good_points", type: "STRING", mode: "REPEATED" },
+    { name: "ai_improvement_points", type: "STRING", mode: "REPEATED" },
   ],
 };
 
@@ -88,6 +95,11 @@ export const INTERVIEW_SESSIONS_SCHEMA: TableSchema = {
     { name: "audio_duration_seconds", type: "INT64", mode: "NULLABLE" },
     { name: "transcription_confidence", type: "FLOAT64", mode: "NULLABLE" },
     { name: "summary_generated", type: "BOOL", mode: "NULLABLE" },
+
+    // 音声分析詳細 (= Phase B 追加)
+    { name: "filler_count", type: "INT64", mode: "NULLABLE" },
+    { name: "speaking_speed_wpm", type: "INT64", mode: "NULLABLE" },
+    { name: "voice_clarity_score", type: "FLOAT64", mode: "NULLABLE" },
   ],
 };
 
@@ -124,6 +136,18 @@ export const STUDENT_SNAPSHOTS_SCHEMA: TableSchema = {
     { name: "school", type: "STRING", mode: "NULLABLE" },
     // 塾別集計用
     { name: "organization_id", type: "STRING", mode: "NULLABLE" },
+
+    // 総合型選抜活動量 (= Phase B 追加)
+    { name: "activity_count", type: "INT64", mode: "NULLABLE" },
+    { name: "documents_completed_count", type: "INT64", mode: "NULLABLE" },
+    { name: "documents_in_progress_count", type: "INT64", mode: "NULLABLE" },
+    { name: "session_count", type: "INT64", mode: "NULLABLE" },
+    { name: "self_analysis_completion_pct", type: "INT64", mode: "NULLABLE" },
+    { name: "sc_essay_score", type: "INT64", mode: "NULLABLE" },
+    { name: "sc_interview_score", type: "INT64", mode: "NULLABLE" },
+    { name: "english_cert_top_score", type: "STRING", mode: "NULLABLE" },
+    { name: "target_university_top", type: "STRING", mode: "NULLABLE" },
+    { name: "target_faculty_top", type: "STRING", mode: "NULLABLE" },
     {
       name: "admission_results",
       type: "RECORD",

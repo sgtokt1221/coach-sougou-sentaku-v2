@@ -101,14 +101,27 @@ export async function GET(request: NextRequest) {
 
     let totalRecords = 0;
 
+    let skippedNoUid = 0;
     for (const doc of weaknessesSnap.docs) {
       const data = doc.data() as Record<string, unknown>;
       const recordSource = (data.source as string) ?? "essay";
       if (!sourceFilter.has(recordSource)) continue;
 
-      const pathParts = doc.ref.path.split("/");
-      const uid = pathParts[1];
-      if (!uid) continue;
+      // uid 抽出を堅牢化: 親ドキュメント (= users/{uid}) から取る
+      // 旧来の pathParts[1] は失敗ケースが見えにくいので doc.ref.parent.parent を使う
+      const uid =
+        doc.ref.parent.parent?.id ?? doc.ref.path.split("/")[1] ?? null;
+      if (!uid) {
+        skippedNoUid++;
+        if (skippedNoUid <= 5) {
+          console.warn(
+            "[weaknesses] uid 抽出失敗:",
+            doc.ref.path,
+            "→ スキップ",
+          );
+        }
+        continue;
+      }
 
       const area = (data.area as string) ?? "unknown";
       const count =

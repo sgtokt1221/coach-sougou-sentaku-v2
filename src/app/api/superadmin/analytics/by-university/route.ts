@@ -18,6 +18,10 @@ interface UniversityPaceResponse {
   facultyName: string;
   totalStudents: number;       // この大学/学部を志望している全生徒数
   totalSubmissions: number;
+  /** status 制約なしの interview 総数 (透明化メタ) */
+  totalInterviewsAllStatuses?: number;
+  /** 分析に使った completed interview の数 */
+  completedInterviewsAnalyzed?: number;
   monthly: MonthlyPoint[];     // 月別の活動推移 (直近 12 ヶ月)
 }
 
@@ -77,15 +81,18 @@ export async function GET(request: NextRequest) {
   const essayDocs: { date: Date; total: number; uid: string }[] = [];
   const interviewDocs: { date: Date; total: number; uid: string }[] = [];
 
+  let totalInterviewsCount = 0; // status 制約なしの interviews 総数 (透明化用)
   for (const chunk of chunks) {
-    const [essaysSnap, interviewsSnap] = await Promise.all([
+    const [essaysSnap, interviewsSnap, allInterviewsSnap] = await Promise.all([
       adminDb.collection("essays").where("userId", "in", chunk).get(),
       adminDb
         .collection("interviews")
         .where("userId", "in", chunk)
         .where("status", "==", "completed")
         .get(),
+      adminDb.collection("interviews").where("userId", "in", chunk).get(),
     ]);
+    totalInterviewsCount += allInterviewsSnap.size;
     for (const d of essaysSnap.docs) {
       const data = d.data();
       const date = data.submittedAt?.toDate?.();
@@ -152,6 +159,8 @@ export async function GET(request: NextRequest) {
     facultyName: faculty?.name ?? facultyId,
     totalStudents: targetUids.length,
     totalSubmissions: essayDocs.length + interviewDocs.length,
+    totalInterviewsAllStatuses: totalInterviewsCount,
+    completedInterviewsAnalyzed: interviewDocs.length,
     monthly,
   };
 

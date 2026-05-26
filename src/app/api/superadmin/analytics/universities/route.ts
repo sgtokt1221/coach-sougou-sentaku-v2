@@ -30,21 +30,20 @@ export async function GET(request: NextRequest) {
       .where("role", "==", "student")
       .get();
 
-    type CompoundKey = string; // "univId:facId"
+    type CompoundKey = string; // "univId:facId" or "_unset_"
     const bucket = new Map<
       CompoundKey,
       { students: UniversityAggregateStudent[] }
     >();
     const studentsWithTargets = new Set<string>();
+    const studentsWithoutTargets = new Set<string>();
+    const UNSET_KEY: CompoundKey = "_unset_:_unset_";
 
     for (const doc of studentsSnap.docs) {
       const data = doc.data();
       const targets = Array.isArray(data.targetUniversities)
         ? (data.targetUniversities as string[])
         : [];
-      if (targets.length === 0) continue;
-      studentsWithTargets.add(doc.id);
-
       const studentEntry: UniversityAggregateStudent = {
         uid: doc.id,
         displayName:
@@ -53,6 +52,15 @@ export async function GET(request: NextRequest) {
           "(名称未設定)",
         email: (data.email as string) ?? "",
       };
+
+      // 志望校未設定の生徒も「未設定」 として集計に含める (= 漏れ防止)
+      if (targets.length === 0) {
+        studentsWithoutTargets.add(doc.id);
+        if (!bucket.has(UNSET_KEY)) bucket.set(UNSET_KEY, { students: [] });
+        bucket.get(UNSET_KEY)!.students.push(studentEntry);
+        continue;
+      }
+      studentsWithTargets.add(doc.id);
 
       for (const target of targets) {
         if (typeof target !== "string" || !target.includes(":")) continue;
@@ -67,6 +75,7 @@ export async function GET(request: NextRequest) {
     // 大学・学部名を解決 (Firestore の universities を優先、なければ MOCK)
     const neededUniIds = new Set<string>();
     for (const key of bucket.keys()) {
+      if (key === UNSET_KEY) continue;
       neededUniIds.add(key.split(":")[0]);
     }
     const nameMap = new Map<string, ResolvedName>();
@@ -112,17 +121,21 @@ export async function GET(request: NextRequest) {
     const aggregates: UniversityAggregate[] = Array.from(bucket.entries())
       .map(([key, { students }]) => {
         const [universityId, facultyId] = key.split(":");
-        const names = nameMap.get(key);
+        const isUnset = key === UNSET_KEY;
+        const names = isUnset ? null : nameMap.get(key);
         return {
-          universityId,
-          facultyId,
-          universityName: names?.universityName ?? universityId,
-          facultyName: names?.facultyName ?? facultyId,
+          universityId: isUnset ? "_unset_" : universityId,
+          facultyId: isUnset ? "_unset_" : facultyId,
+          universityName: isUnset ? "志望校未設定" : (names?.universityName ?? universityId),
+          facultyName: isUnset ? "—" : (names?.facultyName ?? facultyId),
           studentCount: students.length,
           students: students.slice(0, MAX_STUDENTS_PER_ROW),
         };
       })
       .sort((a, b) => {
+        // 未設定は最下部
+        if (a.universityId === "_unset_") return 1;
+        if (b.universityId === "_unset_") return -1;
         if (b.studentCount !== a.studentCount)
           return b.studentCount - a.studentCount;
         return a.universityName.localeCompare(b.universityName, "ja");
@@ -130,7 +143,7 @@ export async function GET(request: NextRequest) {
 
     const response: UniversityAggregateResponse = {
       aggregates,
-      totalStudents: studentsWithTargets.size,
+      totalStudents: studentsWithTargets.size + studentsWithoutTargets.size,
       generatedAt: new Date().toISOString(),
     };
     return NextResponse.json(response);

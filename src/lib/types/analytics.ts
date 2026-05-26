@@ -17,6 +17,12 @@ export interface BigQueryEssayLog {
   attempt_number?: number;
   root_essay_id?: string;
   parent_essay_id?: string | null;
+  // Phase B: 総合型選抜分析用
+  application_period?: string;
+  attempt_sequence?: number;
+  essay_type?: string;
+  ai_good_points?: string[];
+  ai_improvement_points?: string[];
 }
 
 export interface BigQueryInterviewLog {
@@ -34,6 +40,10 @@ export interface BigQueryInterviewLog {
   score_total: number;
   weakness_tags: string[];
   question_count: number;
+  // Phase B: 音声分析詳細
+  filler_count?: number;
+  speaking_speed_wpm?: number;
+  voice_clarity_score?: number;
 }
 
 export interface AnalyticsOverview {
