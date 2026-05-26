@@ -62,36 +62,33 @@ type AnalyticsTab =
 
 export default function AnalyticsPage() {
   const { userProfile } = useAuth();
-  const role = userProfile?.role;
-  const isSuperadmin = role === "superadmin";
-  const canViewAnalytics =
-    role === "admin" || role === "teacher" || role === "superadmin";
+  const isSuperadmin = userProfile?.role === "superadmin";
   const [activeTab, setActiveTab] = useState<AnalyticsTab>("overview");
 
   const { data: overview, isLoading: loadingOverview } = useAuthSWR<AnalyticsOverview>(
-    canViewAnalytics ? "/api/admin/analytics/overview" : null
+    isSuperadmin ? "/api/admin/analytics/overview" : null
   );
   const { data: weaknesses, isLoading: loadingWeaknesses } = useAuthSWR<WeaknessAnalytics>(
-    canViewAnalytics ? "/api/admin/analytics/weaknesses" : null
+    isSuperadmin ? "/api/admin/analytics/weaknesses" : null
   );
   const { data: universityGap, isLoading: loadingGap } = useAuthSWR<UniversityGapResponse>(
-    canViewAnalytics ? "/api/admin/analytics/university-gap" : null
+    isSuperadmin ? "/api/admin/analytics/university-gap" : null
   );
   const { data: monthlyTrends, isLoading: loadingTrends } = useAuthSWR<MonthlyTrendsResponse>(
-    canViewAnalytics ? "/api/admin/analytics/monthly-trends" : null
+    isSuperadmin ? "/api/admin/analytics/monthly-trends" : null
   );
   const { data: weaknessPatterns, isLoading: loadingPatterns } =
     useAuthSWR<WeaknessPatternsResponse>(
-      canViewAnalytics ? "/api/admin/analytics/weakness-patterns" : null
+      isSuperadmin ? "/api/admin/analytics/weakness-patterns" : null
     );
 
-  if (!canViewAnalytics) {
+  if (!isSuperadmin) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 p-12">
         <ShieldAlert className="size-12 text-muted-foreground" />
         <h2 className="text-xl font-semibold">アクセス権限がありません</h2>
         <p className="text-sm text-muted-foreground">
-          このページは管理者・講師のみアクセスできます。
+          このページはスーパー管理者のみアクセスできます。
         </p>
       </div>
     );
@@ -100,13 +97,9 @@ export default function AnalyticsPage() {
   return (
     <div className="space-y-6 p-4 sm:p-6">
       <div>
-        <h1 className="text-2xl font-bold">
-          {isSuperadmin ? "全体分析" : "塾の分析"}
-        </h1>
+        <h1 className="text-2xl font-bold">全体分析</h1>
         <p className="text-sm text-muted-foreground">
-          {isSuperadmin
-            ? "全生徒の学習傾向 + 弱点パターン (全テナント横断)"
-            : "同じ塾の生徒の学習傾向 + 弱点パターンを分析"}
+          全生徒の学習傾向と弱点パターンを分析 (全テナント横断)
         </p>
       </div>
 
