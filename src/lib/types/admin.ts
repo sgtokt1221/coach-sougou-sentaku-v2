@@ -151,6 +151,12 @@ export interface AdminListItem {
   role: "admin" | "teacher";
   studentCount: number;
   createdAt: string;
+  /** 所属塾 ID (organizations コレクション) */
+  organizationId?: string;
+  /** 所属塾名 (表示用、 API で解決済み) */
+  organizationName?: string;
+  /** true なら塾の代表 (= organization.ownerAdminUid と一致) */
+  isOwner?: boolean;
 }
 
 export interface AdminPerformance {

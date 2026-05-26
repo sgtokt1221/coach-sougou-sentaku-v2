@@ -40,10 +40,25 @@ export async function GET(request: Request) {
   }
 
   try {
+    // 管理者 (= admin ロール) のみ取得。 講師は /api/superadmin/teachers で別管理
     const snapshot = await adminDb
       .collection("users")
-      .where("role", "in", ["admin", "teacher"])
+      .where("role", "==", "admin")
       .get();
+
+    // 各 admin の所属塾を解決するため、 organizations を一括取得
+    const orgsSnap = await adminDb.collection("organizations").get();
+    const orgById = new Map<
+      string,
+      { name: string; ownerAdminUid: string }
+    >();
+    for (const orgDoc of orgsSnap.docs) {
+      const od = orgDoc.data();
+      orgById.set(orgDoc.id, {
+        name: od.name ?? "",
+        ownerAdminUid: od.ownerAdminUid ?? "",
+      });
+    }
 
     const admins: AdminListItem[] = await Promise.all(
       snapshot.docs.map(async (doc) => {
@@ -54,20 +69,28 @@ export async function GET(request: Request) {
           .where("managedBy", "==", doc.id)
           .count()
           .get();
+        const orgId =
+          typeof data.organizationId === "string" ? data.organizationId : undefined;
+        const orgInfo = orgId ? orgById.get(orgId) : undefined;
         return {
           uid: doc.id,
           displayName: data.displayName ?? "",
           email: data.email ?? "",
-          role: data.role as "admin" | "teacher",
+          role: "admin" as const,
           studentCount: studentsSnap.data().count,
-          createdAt: data.createdAt?.toDate?.()?.toISOString() ?? new Date().toISOString(),
+          createdAt:
+            data.createdAt?.toDate?.()?.toISOString() ?? new Date().toISOString(),
+          organizationId: orgId,
+          organizationName: orgInfo?.name,
+          isOwner: orgInfo ? orgInfo.ownerAdminUid === doc.id : false,
         };
-      })
+      }),
     );
 
     return NextResponse.json(admins);
-  } catch {
-    return NextResponse.json(mockAdmins);
+  } catch (err) {
+    console.warn("[admins] fetch failed:", err);
+    return NextResponse.json(mockAdmins.filter((a) => a.role === "admin"));
   }
 }
 
