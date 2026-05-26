@@ -3,9 +3,9 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ユーザー: 自分のデータのみ読み書き可能、管理者は読み取り可
+    // ユーザー: 自分のデータ + 担当 admin + 同じ塾の admin + superadmin
     match /users/{userId} {
-      allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
+      allow read: if request.auth != null && canManageUser(userId);
       allow write: if request.auth != null && (
         request.auth.uid == userId ||
         isSuperAdmin() ||
@@ -14,7 +14,7 @@ service cloud.firestore {
 
       // 弱点サブコレクション
       match /weaknesses/{weaknessId} {
-        allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
+        allow read: if request.auth != null && canManageUser(userId);
         allow write: if request.auth != null && (
           request.auth.uid == userId || isSuperAdmin() || isManagerOf(userId)
         );
@@ -22,7 +22,7 @@ service cloud.firestore {
 
       // 小論文サブコレクション
       match /essays/{essayId} {
-        allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
+        allow read: if request.auth != null && canManageUser(userId);
         allow write: if request.auth != null && (
           request.auth.uid == userId || isSuperAdmin() || isManagerOf(userId)
         );
@@ -30,7 +30,7 @@ service cloud.firestore {
 
       // 面接サブコレクション
       match /interviews/{interviewId} {
-        allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
+        allow read: if request.auth != null && canManageUser(userId);
         allow write: if request.auth != null && (
           request.auth.uid == userId || isSuperAdmin() || isManagerOf(userId)
         );
@@ -38,7 +38,7 @@ service cloud.firestore {
 
       // 出願書類
       match /documents/{docId} {
-        allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
+        allow read: if request.auth != null && canManageUser(userId);
         allow write: if request.auth != null && (
           request.auth.uid == userId || isSuperAdmin() || isManagerOf(userId)
         );
@@ -46,7 +46,7 @@ service cloud.firestore {
 
       // 活動実績
       match /activities/{activityId} {
-        allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
+        allow read: if request.auth != null && canManageUser(userId);
         allow write: if request.auth != null && (
           request.auth.uid == userId || isSuperAdmin() || isManagerOf(userId)
         );
@@ -54,7 +54,7 @@ service cloud.firestore {
 
       // スキルチェック履歴
       match /skillChecks/{resultId} {
-        allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
+        allow read: if request.auth != null && canManageUser(userId);
         allow write: if request.auth != null && (
           request.auth.uid == userId || isSuperAdmin() || isManagerOf(userId)
         );
@@ -62,7 +62,7 @@ service cloud.firestore {
 
       // 面接スキルチェック履歴
       match /interviewSkillChecks/{resultId} {
-        allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
+        allow read: if request.auth != null && canManageUser(userId);
         allow write: if request.auth != null && (
           request.auth.uid == userId || isSuperAdmin() || isManagerOf(userId)
         );
@@ -70,8 +70,10 @@ service cloud.firestore {
 
       // フィードバック
       match /feedback/{feedbackId} {
-        allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
-        allow create: if request.auth != null && isAdmin();
+        allow read: if request.auth != null && canManageUser(userId);
+        allow create: if request.auth != null && (
+          isSuperAdmin() || isManagerOf(userId) || isSameOrg(userId)
+        );
         allow update: if request.auth != null && request.auth.uid == userId;
       }
     }
@@ -89,11 +91,13 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // 面接セッション（トップレベル）: 参加者 + admin/superadmin のみ
+    // 面接セッション（トップレベル）: 参加者 + 担当 admin / 同塾 admin / superadmin
     match /interviews/{interviewId} {
       allow read: if request.auth != null && (
         resource.data.userId == request.auth.uid ||
-        isAdmin()
+        isSuperAdmin() ||
+        isManagerOf(resource.data.userId) ||
+        isSameOrg(resource.data.userId)
       );
       allow write: if request.auth != null && (
         resource.data.userId == request.auth.uid ||
@@ -101,7 +105,8 @@ service cloud.firestore {
       );
       allow create: if request.auth != null && (
         request.resource.data.userId == request.auth.uid ||
-        isAdmin()
+        isSuperAdmin() ||
+        isManagerOf(request.resource.data.userId)
       );
     }
 
@@ -146,6 +151,14 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // organizations: superadmin のみ書き込み、 メンバーは read 可
+    match /organizations/{orgId} {
+      allow read: if request.auth != null && (
+        isSuperAdmin() || request.auth.uid in resource.data.memberAdminUids
+      );
+      allow write: if isSuperAdmin();
+    }
+
     // スーパー管理者チェック関数
     function isSuperAdmin() {
       return request.auth != null &&
@@ -162,6 +175,23 @@ service cloud.firestore {
     function isManagerOf(userId) {
       return isAdmin() &&
         get(/databases/$(database)/documents/users/$(userId)).data.managedBy == request.auth.uid;
+    }
+
+    // 同じ塾 (organization) のメンバーか確認 (= 親 admin / 子 admin 関係)
+    function isSameOrg(userId) {
+      return isAdmin() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationId != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationId ==
+        get(/databases/$(database)/documents/users/$(userId)).data.organizationId;
+    }
+
+    // 「対象ユーザーを管理する権限」 を一元判定:
+    // - 自分自身 / superadmin / 担当 admin / 同じ塾の admin のいずれか
+    function canManageUser(userId) {
+      return request.auth.uid == userId ||
+        isSuperAdmin() ||
+        isManagerOf(userId) ||
+        isSameOrg(userId);
     }
   }
 }

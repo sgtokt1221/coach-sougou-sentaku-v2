@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireRole } from "@/lib/api/auth";
+import { requireRole, scopeByOrganization } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
 
 /**
@@ -15,6 +15,23 @@ export async function GET(
 
   const { id } = await context.params;
   if (!adminDb) return NextResponse.json([], { status: 200 });
+
+  // スコープチェック: 自分の管轄 or 同じ塾の admin のみ
+  const userDoc = await adminDb.doc(`users/${id}`).get();
+  if (!userDoc.exists) {
+    return NextResponse.json({ error: "生徒が見つかりません" }, { status: 404 });
+  }
+  const userData = userDoc.data() ?? {};
+  const denied = await scopeByOrganization({
+    requesterUid: authResult.uid,
+    requesterRole: authResult.role,
+    studentUid: id,
+    studentData: {
+      managedBy: userData.managedBy as string | undefined,
+      organizationId: userData.organizationId as string | undefined,
+    },
+  });
+  if (denied) return denied;
 
   try {
     const since = new Date();

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireRole } from "@/lib/api/auth";
+import { requireRole, scopeByOrganization } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
 
 export async function PUT(
@@ -36,6 +36,19 @@ export async function PUT(
         { status: 404 }
       );
     }
+
+    // スコープチェック: 自分の管轄 (managedBy) or 同じ塾の admin のみ
+    const userData = userDoc.data() ?? {};
+    const denied = await scopeByOrganization({
+      requesterUid: auth.uid,
+      requesterRole: auth.role,
+      studentUid: studentId,
+      studentData: {
+        managedBy: userData.managedBy as string | undefined,
+        organizationId: userData.organizationId as string | undefined,
+      },
+    });
+    if (denied) return denied;
 
     await userRef.update({
       plan,
