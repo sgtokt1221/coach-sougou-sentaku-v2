@@ -207,6 +207,12 @@ export interface TeacherListItem {
   email: string;
   studentCount: number;
   createdAt: string;
+  /** 所属塾 ID */
+  organizationId?: string;
+  /** 所属塾名 (表示用) */
+  organizationName?: string;
+  /** 紐付け先 admin の uid (= 担当 admin) */
+  managedBy?: string;
 }
 
 export interface AdminDashboardStats {

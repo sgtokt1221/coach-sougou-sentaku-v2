@@ -9,6 +9,8 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
+import { useAuthSWR } from "@/lib/api/swr";
+import type { AdminListItem } from "@/lib/types/admin";
 
 export default function NewTeacherPage() {
   const router = useRouter();
@@ -16,6 +18,10 @@ export default function NewTeacherPage() {
   const [email, setEmail] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
+  const [managedBy, setManagedBy] = useState("");
+
+  // 担当 admin (= 紐付け先塾) 候補
+  const { data: admins } = useAuthSWR<AdminListItem[]>("/api/superadmin/admins");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -27,13 +33,17 @@ export default function NewTeacherPage() {
       toast.error("パスワードは6文字以上で入力してください");
       return;
     }
+    if (!managedBy) {
+      toast.error("所属塾の代表 admin を選択してください");
+      return;
+    }
 
     setLoading(true);
     try {
       const res = await authFetch("/api/superadmin/teachers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, displayName, password }),
+        body: JSON.stringify({ email, displayName, password, managedBy }),
       });
       if (!res.ok) {
         const data = await res.json();
@@ -104,6 +114,30 @@ export default function NewTeacherPage() {
                 minLength={6}
                 placeholder="6文字以上"
               />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="managedBy" className="text-xs font-medium">
+                所属塾 (代表 admin を選択 → 塾を自動継承)
+              </Label>
+              <select
+                id="managedBy"
+                value={managedBy}
+                onChange={(e) => setManagedBy(e.target.value)}
+                required
+                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
+              >
+                <option value="">— 選択してください —</option>
+                {(admins ?? [])
+                  .filter((a) => a.organizationId)
+                  .map((a) => (
+                    <option key={a.uid} value={a.uid}>
+                      {a.organizationName} / {a.displayName}
+                    </option>
+                  ))}
+              </select>
+              <p className="text-[10px] text-muted-foreground">
+                選んだ admin と同じ塾の講師として登録されます
+              </p>
             </div>
             <div className="flex gap-3 pt-2">
               <Button type="submit" disabled={loading} className="gap-2">

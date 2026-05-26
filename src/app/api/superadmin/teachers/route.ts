@@ -34,6 +34,14 @@ export async function GET(request: Request) {
       .where("role", "==", "teacher")
       .get();
 
+    // 組織情報を一括取得して解決マップを構築
+    const orgsSnap = await adminDb.collection("organizations").get();
+    const orgById = new Map<string, { name: string }>();
+    for (const orgDoc of orgsSnap.docs) {
+      const od = orgDoc.data();
+      orgById.set(orgDoc.id, { name: od.name ?? "" });
+    }
+
     const teachers: TeacherListItem[] = await Promise.all(
       snapshot.docs.map(async (doc) => {
         const data = doc.data();
@@ -43,14 +51,22 @@ export async function GET(request: Request) {
           .where("managedBy", "==", doc.id)
           .count()
           .get();
+        const orgId =
+          typeof data.organizationId === "string" ? data.organizationId : undefined;
+        const orgInfo = orgId ? orgById.get(orgId) : undefined;
         return {
           uid: doc.id,
           displayName: data.displayName ?? "",
           email: data.email ?? "",
           studentCount: studentsSnap.data().count,
-          createdAt: data.createdAt?.toDate?.()?.toISOString() ?? new Date().toISOString(),
+          createdAt:
+            data.createdAt?.toDate?.()?.toISOString() ?? new Date().toISOString(),
+          organizationId: orgId,
+          organizationName: orgInfo?.name,
+          managedBy:
+            typeof data.managedBy === "string" ? data.managedBy : undefined,
         };
-      })
+      }),
     );
 
     return NextResponse.json(teachers);
@@ -64,10 +80,12 @@ export async function POST(request: Request) {
   if (authResult instanceof NextResponse) return authResult;
 
   const body = await request.json();
-  const { email, displayName, password } = body as {
+  const { email, displayName, password, managedBy } = body as {
     email: string;
     displayName: string;
     password: string;
+    /** 紐付け先 admin の uid。 organizationId はそこから継承 */
+    managedBy?: string;
   };
 
   if (!email || !displayName || !password) {
@@ -91,10 +109,21 @@ export async function POST(request: Request) {
       displayName,
     });
 
+    // 担当 admin の organizationId を継承
+    let organizationId: string | null = null;
+    if (managedBy) {
+      const adminDocSnap = await adminDb.doc(`users/${managedBy}`).get();
+      if (adminDocSnap.exists && adminDocSnap.data()?.role === "admin") {
+        organizationId = adminDocSnap.data()?.organizationId ?? null;
+      }
+    }
+
     await adminDb.doc(`users/${userRecord.uid}`).set({
       email,
       displayName,
       role: "teacher",
+      ...(managedBy ? { managedBy } : {}),
+      ...(organizationId ? { organizationId } : {}),
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -105,6 +134,8 @@ export async function POST(request: Request) {
       displayName,
       studentCount: 0,
       createdAt: new Date().toISOString(),
+      organizationId,
+      managedBy: managedBy ?? null,
     });
   } catch (err) {
     return NextResponse.json(
