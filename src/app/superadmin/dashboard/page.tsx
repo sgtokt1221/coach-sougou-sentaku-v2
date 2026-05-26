@@ -49,8 +49,33 @@ const mockStats: SuperadminDashboardStats = {
 };
 
 export default function SuperadminDashboard() {
-  const { data: rawStats, isLoading: loading } = useAuthSWR<SuperadminDashboardStats>("/api/superadmin/stats");
+  const {
+    data: rawStats,
+    isLoading: loading,
+    error: statsError,
+  } = useAuthSWR<SuperadminDashboardStats>("/api/superadmin/stats");
   const stats = rawStats ?? mockStats;
+
+  // 集計エラー時は誤魔化さず明示 (= 0 値で表示しない)
+  if (statsError && !loading) {
+    return (
+      <div className="space-y-4 p-6">
+        <h1 className="text-2xl font-bold">スーパー管理者ダッシュボード</h1>
+        <div className="rounded-lg border border-rose-300 bg-rose-50 p-6 dark:border-rose-900 dark:bg-rose-950/20">
+          <h2 className="text-base font-semibold text-rose-700 dark:text-rose-300">
+            集計の取得に失敗しました
+          </h2>
+          <p className="mt-2 text-sm text-rose-700/80 dark:text-rose-300/80">
+            ダッシュボード値を 0 で表示すると誤解を生むため、 ここで停止しています。
+            ページをリロードしても回復しない場合は、 サーバーログを確認してください。
+          </p>
+          <pre className="mt-3 overflow-x-auto rounded bg-white/50 p-2 text-[11px] text-rose-900 dark:bg-black/30 dark:text-rose-200">
+            {statsError instanceof Error ? statsError.message : String(statsError)}
+          </pre>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
