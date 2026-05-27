@@ -98,6 +98,15 @@ export interface RepeatedIssue {
   area: string;
   count: number;
   message: string;
+  /** AI が直接付与するカテゴリ。 未指定なら表示時 / 書き込み時に
+   *  categorizeWeakness で fallback 分類 */
+  category?:
+    | "structure"
+    | "logic"
+    | "expression"
+    | "apAlignment"
+    | "originality"
+    | "other";
 }
 
 export interface Improvement {

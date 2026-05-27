@@ -14,6 +14,8 @@ export interface BigQueryEssayLog {
   topic: string;
   weakness_tags: string[];
   improvement_tags: string[];
+  /** weakness_tags と同 index で対応する categoryId */
+  weakness_categories?: string[];
   attempt_number?: number;
   root_essay_id?: string;
   parent_essay_id?: string | null;
@@ -39,6 +41,7 @@ export interface BigQueryInterviewLog {
   score_specificity: number;
   score_total: number;
   weakness_tags: string[];
+  weakness_categories?: string[];
   question_count: number;
   // Phase B: 音声分析詳細
   filler_count?: number;

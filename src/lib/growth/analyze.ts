@@ -58,10 +58,15 @@ export function analyzeGrowth(
 export function updateWeaknessRecords(
   existingWeaknesses: WeaknessRecord[],
   currentWeaknessTags: string[],
-  newSource: "essay" | "interview" | "skill_check" | "interview_skill_check" = "essay"
+  newSource: "essay" | "interview" | "skill_check" | "interview_skill_check" = "essay",
+  /** AI が直接出力した area → categoryId のヒント。 未指定なら
+   *  categorizeWeakness() で fallback 分類 */
+  categoryHints?: Map<string, WeaknessRecord["categoryId"]>,
 ): WeaknessRecord[] {
   const currentSet = new Set(currentWeaknessTags);
   const now = new Date();
+  const resolveCategory = (area: string): WeaknessRecord["categoryId"] =>
+    categoryHints?.get(area) ?? categorizeWeakness(area);
 
   const updated = existingWeaknesses.map((w): WeaknessRecord => {
     if (currentSet.has(w.area)) {
@@ -77,13 +82,13 @@ export function updateWeaknessRecords(
         resolved: false,
         source: mergedSource,
         // 既存レコードに categoryId が無ければ自動付与 (= 漸進的 backfill)
-        categoryId: w.categoryId ?? categorizeWeakness(w.area),
+        categoryId: w.categoryId ?? resolveCategory(w.area),
       };
     } else {
       return {
         ...w,
         improving: true,
-        categoryId: w.categoryId ?? categorizeWeakness(w.area),
+        categoryId: w.categoryId ?? resolveCategory(w.area),
       };
     }
   });
@@ -100,7 +105,7 @@ export function updateWeaknessRecords(
         resolved: false,
         source: newSource,
         reminderDismissedAt: null,
-        categoryId: categorizeWeakness(tag),
+        categoryId: resolveCategory(tag),
       });
     }
   }

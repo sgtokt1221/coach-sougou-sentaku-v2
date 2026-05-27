@@ -5,6 +5,7 @@ import type {
   InterviewFeedback,
 } from "@/lib/types/interview";
 import { analyzeGrowth, updateWeaknessRecords } from "@/lib/growth/analyze";
+import { categorizeWeakness } from "@/lib/growth/weakness-category";
 import type { WeaknessRecord } from "@/lib/types/growth";
 import { logInterviewSession } from "@/lib/bigquery/logger";
 import { logActivity } from "@/lib/firebase/activity-log";
@@ -191,7 +192,28 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const updatedWeaknesses = updateWeaknessRecords(existingWeaknesses, weaknessTags, "interview");
+    // AI が出力した category を hint として伝播
+    const categoryHints = new Map<string, "structure" | "logic" | "expression" | "apAlignment" | "originality" | "other">();
+    for (const issue of feedback.repeatedIssues ?? []) {
+      const cat = (issue as { category?: string }).category;
+      if (
+        cat === "structure" ||
+        cat === "logic" ||
+        cat === "expression" ||
+        cat === "apAlignment" ||
+        cat === "originality" ||
+        cat === "other"
+      ) {
+        categoryHints.set(issue.area, cat);
+      }
+    }
+
+    const updatedWeaknesses = updateWeaknessRecords(
+      existingWeaknesses,
+      weaknessTags,
+      "interview",
+      categoryHints,
+    );
     const growthEvents = analyzeGrowth(weaknessTags, existingWeaknesses);
 
     if (scores.total >= 40) {
@@ -287,6 +309,9 @@ export async function POST(request: NextRequest) {
       score_specificity: scores.specificity,
       score_total: scores.total,
       weakness_tags: weaknessTags,
+      weakness_categories: weaknessTags.map(
+        (tag) => categoryHints.get(tag) ?? categorizeWeakness(tag),
+      ),
       question_count: messages.filter((m) => m.role === "ai").length,
     });
 

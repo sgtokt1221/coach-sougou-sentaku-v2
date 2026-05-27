@@ -41,6 +41,10 @@ export const ESSAY_SUBMISSIONS_SCHEMA: TableSchema = {
     // tags
     { name: "weakness_tags", type: "STRING", mode: "REPEATED" },
     { name: "improvement_tags", type: "STRING", mode: "REPEATED" },
+    /** weakness_tags と同 index で対応する categoryId (= structure / logic /
+     *  expression / apAlignment / originality / other)。 SQL では
+     *  UNNEST OFFSET で結合可能 */
+    { name: "weakness_categories", type: "STRING", mode: "REPEATED" },
 
     // 総合型選抜分析用 (= Phase B 追加)
     { name: "application_period", type: "STRING", mode: "NULLABLE" },
@@ -85,6 +89,8 @@ export const INTERVIEW_SESSIONS_SCHEMA: TableSchema = {
     // tags
     { name: "weakness_tags", type: "STRING", mode: "REPEATED" },
     { name: "improvement_tags", type: "STRING", mode: "REPEATED" },
+    /** weakness_tags と同 index で対応する categoryId */
+    { name: "weakness_categories", type: "STRING", mode: "REPEATED" },
 
     // metadata
     { name: "question_count", type: "INT64", mode: "NULLABLE" },

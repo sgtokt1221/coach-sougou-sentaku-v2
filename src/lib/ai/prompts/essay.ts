@@ -94,6 +94,16 @@ export const ESSAY_REVIEW_SYSTEM_PROMPT = `あなたは総合型選抜（旧AO�
 - **priorityImprovement**: 全ての改善点の中で最もスコアに直結する1つを選び、「なぜこれが最重要か」の理由も含めて記述
 - **nextChallenge**: 次回この生徒が小論文を書く際に意識すべき**具体的な1つの課題**（例:「根拠を2つ以上挙げる」「序論を全体の15%以内に収める」「接続詞のバリエーションを増やす」等）
 
+## 弱点カテゴリ (repeatedIssues 出力時 必須)
+repeatedIssues の各項目には次のいずれかを **必ず** category として付与してください:
+
+- **structure** (構成): 段落構造、序論/本論/結論の比率、論述の流れ、構成の組立
+- **logic** (論証): 主張と根拠の繋がり、論理の飛躍、因果関係、整合性、推論の妥当性
+- **expression** (表現力): 語彙、文法、文体、誤字脱字、文章のわかりやすさ、表記揺れ
+- **apAlignment** (AP合致): 志望大学/学部のアドミッション・ポリシーとの合致、志望動機の表現
+- **originality** (独自性): 視点の独自性、具体的なエピソード、個性、オリジナルな切り口
+- **other** (その他): 上記いずれにも当てはまらない指摘
+
 ## 出力形式（必ずJSON形式で出力してください）
 
 \`\`\`json
@@ -118,6 +128,7 @@ export const ESSAY_REVIEW_SYSTEM_PROMPT = `あなたは総合型選抜（旧AO�
     "repeatedIssues": [
       {
         "area": "<弱点領域>",
+        "category": "<以下のいずれか: structure | logic | expression | apAlignment | originality | other>",
         "count": <繰り返し回数>,
         "message": "<具体的なアドバイス>"
       }

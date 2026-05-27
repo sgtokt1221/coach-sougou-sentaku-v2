@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { EssayReviewRequest, EssayFeedback, RetryComparison, EssayScores } from "@/lib/types/essay";
 import { analyzeGrowth, updateWeaknessRecords } from "@/lib/growth/analyze";
+import { categorizeWeakness } from "@/lib/growth/weakness-category";
 import type { WeaknessRecord } from "@/lib/types/growth";
 import { logEssaySubmission } from "@/lib/bigquery/logger";
 import { computeRetryComparison } from "@/lib/essay/retry-comparison";
@@ -265,8 +266,19 @@ export async function POST(request: NextRequest) {
       ...feedback.improvements,
     ];
 
+    // AI が出力した category を hint として伝播 (= 未出力なら fallback)
+    const categoryHints = new Map<string, "structure" | "logic" | "expression" | "apAlignment" | "originality" | "other">();
+    for (const issue of feedback.repeatedIssues) {
+      if (issue.category) categoryHints.set(issue.area, issue.category);
+    }
+
     // 弱点レコードを更新し成長イベントを生成
-    const updatedWeaknesses = updateWeaknessRecords(existingWeaknesses, weaknessTags);
+    const updatedWeaknesses = updateWeaknessRecords(
+      existingWeaknesses,
+      weaknessTags,
+      "essay",
+      categoryHints,
+    );
     const growthEvents = analyzeGrowth(weaknessTags, existingWeaknesses);
 
     if (scores.total >= 40) {
@@ -347,6 +359,10 @@ export async function POST(request: NextRequest) {
       topic: topic ?? "",
       weakness_tags: weaknessTags,
       improvement_tags: feedback.improvements,
+      // 同 index でカテゴリ。 AI hint または categorize fallback
+      weakness_categories: weaknessTags.map(
+        (tag) => categoryHints.get(tag) ?? categorizeWeakness(tag),
+      ),
       attempt_number: attemptNumber,
       root_essay_id: rootEssayId,
       parent_essay_id: parentEssayIdResolved,

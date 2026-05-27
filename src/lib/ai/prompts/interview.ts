@@ -362,7 +362,7 @@ ${presSection}
     "goodPoints": ["<良かった点1>", "<良かった点2>"],
     "improvements": ["<改善点1>", "<改善点2>"],
     "personalizedAdvice": ["<個別アドバイス1>", "<個別アドバイス2>"],
-    "repeatedIssues": [{ "area": "<弱点>", "count": 0, "message": "<アドバイス>" }],
+    "repeatedIssues": [{ "area": "<弱点>", "category": "<structure|logic|expression|apAlignment|originality|other>", "count": 0, "message": "<アドバイス>" }],
     "improvementsSinceLast": [{ "area": "<領域>", "before": "<前>", "after": "<後>", "message": "<コメント>" }]
   },
   "weaknessUpdates": [{ "area": "<領域>", "action": "add", "message": "<詳細>" }],
@@ -374,6 +374,15 @@ ${presSection}
   }
 }
 \`\`\`
+
+## 弱点カテゴリ (repeatedIssues 出力時 必須)
+repeatedIssues 各項目には次のいずれかを category として **必ず** 付与:
+- structure (構成): 回答の組立 / 順序 / 序論-本論-結論
+- logic (論証): 主張と根拠 / 論理の飛躍 / 因果
+- expression (表現力): 言葉遣い / 話速 / フィラー / 明瞭さ
+- apAlignment (AP合致): 志望大学/学部 ポリシーとの合致 / 志望動機
+- originality (独自性): 具体的な経験 / エピソード / 個性
+- other (その他): 上記以外
 
 JSON以外のテキストは出力しないでください。`;
 }
