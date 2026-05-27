@@ -1,6 +1,7 @@
 import { WeaknessRecord, getWeaknessReminderLevel } from "@/lib/types/growth";
 import { GrowthEvent } from "@/lib/types/essay";
 import { categorizeWeakness } from "@/lib/growth/weakness-category";
+import { findSimilarArea } from "@/lib/growth/weakness-similarity";
 
 export function analyzeGrowth(
   currentWeaknessTags: string[],
@@ -95,19 +96,52 @@ export function updateWeaknessRecords(
 
   const existingAreas = new Set(existingWeaknesses.map((w) => w.area));
   for (const tag of currentWeaknessTags) {
-    if (!existingAreas.has(tag)) {
-      updated.push({
-        area: tag,
-        count: 1,
-        firstOccurred: now,
-        lastOccurred: now,
-        improving: false,
-        resolved: false,
-        source: newSource,
-        reminderDismissedAt: null,
-        categoryId: resolveCategory(tag),
-      });
+    if (existingAreas.has(tag)) continue;
+
+    // Phase 3: 同義語マージ
+    // 完全一致しないなら、 同じ categoryId 内で類似度を見て既存にマージ
+    const newCategory = resolveCategory(tag);
+    const sameCatExistingAreas = updated
+      .filter((w) => (w.categoryId ?? categorizeWeakness(w.area)) === newCategory)
+      .map((w) => w.area);
+    const match = findSimilarArea(tag, sameCatExistingAreas);
+    if (match) {
+      const idx = updated.findIndex((w) => w.area === match.area);
+      if (idx !== -1) {
+        const w = updated[idx];
+        const mergedSource: WeaknessRecord["source"] =
+          w.source === newSource ? w.source : "both";
+        updated[idx] = {
+          ...w,
+          count: w.count + 1,
+          lastOccurred: now,
+          improving: false,
+          resolved: false,
+          source: mergedSource,
+          categoryId: w.categoryId ?? newCategory,
+        };
+        if (process.env.NODE_ENV !== "production") {
+          console.log(
+            `[weakness merge] "${tag}" → "${w.area}" (similarity=${match.score.toFixed(2)}, category=${newCategory})`,
+          );
+        }
+        continue;
+      }
     }
+
+    // マージ先なし → 新規作成
+    updated.push({
+      area: tag,
+      count: 1,
+      firstOccurred: now,
+      lastOccurred: now,
+      improving: false,
+      resolved: false,
+      source: newSource,
+      reminderDismissedAt: null,
+      categoryId: newCategory,
+    });
+    existingAreas.add(tag);
   }
 
   return updated;
