@@ -51,12 +51,16 @@ function WeaknessTooltip({ active, payload, label }: any) {
   };
 
   return (
-    <div className="rounded-lg border bg-white px-3 py-2 shadow-md">
-      <p className="font-medium">{data.area}</p>
-      <p className="text-sm">指摘回数: {data.count}回</p>
-      <p className="text-sm">出所: {sourceLabels[data.source] || data.source}</p>
+    <div className="min-w-[200px] max-w-[320px] rounded-lg border bg-white px-3 py-2 shadow-md dark:bg-card">
+      <p className="break-words font-medium leading-snug">{data.area}</p>
+      <p className="mt-1 text-sm text-muted-foreground">
+        指摘回数: <span className="font-medium text-foreground">{data.count}回</span>
+      </p>
+      <p className="text-sm text-muted-foreground">
+        出所: <span className="text-foreground">{sourceLabels[data.source] || data.source}</span>
+      </p>
       {data.count >= 5 && (
-        <p className="text-sm font-medium text-rose-600">要注意</p>
+        <p className="mt-1 text-sm font-medium text-rose-600">要注意</p>
       )}
     </div>
   );
@@ -137,7 +141,11 @@ export function WeaknessTopChart({ weaknesses }: WeaknessTopChartProps) {
                 tickLine={false}
                 width={140}
               />
-              <Tooltip content={<WeaknessTooltip />} />
+              <Tooltip
+                content={<WeaknessTooltip />}
+                wrapperStyle={{ zIndex: 50, pointerEvents: "none" }}
+                allowEscapeViewBox={{ x: false, y: true }}
+              />
               <Bar dataKey="count" radius={[0, 4, 4, 0]}>
                 {chartData.map((entry, i) => (
                   <Cell key={i} fill={SOURCE_COLORS[entry.source] ?? "#6366f1"} />
