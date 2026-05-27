@@ -1,5 +1,6 @@
 import { WeaknessRecord, getWeaknessReminderLevel } from "@/lib/types/growth";
 import { GrowthEvent } from "@/lib/types/essay";
+import { categorizeWeakness } from "@/lib/growth/weakness-category";
 
 export function analyzeGrowth(
   currentWeaknessTags: string[],
@@ -75,11 +76,14 @@ export function updateWeaknessRecords(
         improving: false,
         resolved: false,
         source: mergedSource,
+        // 既存レコードに categoryId が無ければ自動付与 (= 漸進的 backfill)
+        categoryId: w.categoryId ?? categorizeWeakness(w.area),
       };
     } else {
       return {
         ...w,
         improving: true,
+        categoryId: w.categoryId ?? categorizeWeakness(w.area),
       };
     }
   });
@@ -96,6 +100,7 @@ export function updateWeaknessRecords(
         resolved: false,
         source: newSource,
         reminderDismissedAt: null,
+        categoryId: categorizeWeakness(tag),
       });
     }
   }

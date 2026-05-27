@@ -249,6 +249,7 @@ export async function POST(request: NextRequest) {
                 resolved: weakness.resolved,
                 source: weakness.source,
                 reminderDismissedAt: weakness.reminderDismissedAt,
+                ...(weakness.categoryId ? { categoryId: weakness.categoryId } : {}),
               },
               { merge: true }
             );

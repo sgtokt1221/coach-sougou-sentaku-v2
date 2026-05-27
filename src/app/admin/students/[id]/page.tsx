@@ -61,6 +61,12 @@ import { ScoresTrendChart } from "@/components/growth/ScoresTrendChart";
 import { WeaknessSourceBadge } from "@/components/growth/WeaknessSourceBadge";
 import type { StudentDetail } from "@/lib/types/admin";
 import { getDisplayGrade } from "@/lib/utils/grade";
+import {
+  categorizeWeakness,
+  ESSAY_CATEGORY_LABELS,
+  ESSAY_CATEGORY_ORDER,
+  type EssayCategoryKey,
+} from "@/lib/growth/weakness-category";
 import { ESSAY_STATUS_LABELS, type Essay } from "@/lib/types/essay";
 import type { WeaknessRecord } from "@/lib/types/growth";
 import { getWeaknessReminderLevel } from "@/lib/types/growth";
@@ -99,6 +105,127 @@ import { HomeworkStatusSection } from "@/components/admin/HomeworkStatusSection"
 import { buildActivityHeatmapData } from "@/lib/utils/activity-heatmap";
 import { useAuthSWR } from "@/lib/api/swr";
 
+
+/**
+ * 弱点一覧をカテゴリ別アコーディオン形式で表示。
+ * 細分化問題対策 Phase 2-B: フラットな table を categoryId で grouping。
+ * categoryId 未保存のレガシーレコードは categorizeWeakness で fallback 分類。
+ */
+function WeaknessesByCategoryList({
+  weaknesses,
+  studentId,
+}: {
+  weaknesses: WeaknessRecord[];
+  studentId: string;
+}) {
+  const [openCategories, setOpenCategories] = useState<Set<EssayCategoryKey>>(
+    () => new Set(["structure", "logic", "expression", "apAlignment", "originality", "other"] as EssayCategoryKey[]),
+  );
+
+  // 未解決優先、 categoryId で grouping。 unresolved/resolved 別表示
+  const grouped = useMemo(() => {
+    const out: Record<EssayCategoryKey, WeaknessRecord[]> = {
+      structure: [],
+      logic: [],
+      expression: [],
+      apAlignment: [],
+      originality: [],
+      other: [],
+    };
+    for (const w of weaknesses) {
+      const cat = w.categoryId ?? categorizeWeakness(w.area);
+      out[cat as EssayCategoryKey].push(w);
+    }
+    // 各カテゴリ内: unresolved を上に、 count 降順
+    for (const k of Object.keys(out) as EssayCategoryKey[]) {
+      out[k].sort((a, b) => {
+        if (a.resolved !== b.resolved) return a.resolved ? 1 : -1;
+        return (b.count ?? 0) - (a.count ?? 0);
+      });
+    }
+    return out;
+  }, [weaknesses]);
+
+  const visible = ESSAY_CATEGORY_ORDER.filter((c) => grouped[c].length > 0);
+
+  const toggle = (c: EssayCategoryKey) => {
+    setOpenCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(c)) next.delete(c);
+      else next.add(c);
+      return next;
+    });
+  };
+
+  return (
+    <div className="divide-y">
+      {visible.map((cat) => {
+        const items = grouped[cat];
+        const unresolvedCount = items.filter((w) => !w.resolved).length;
+        const isOpen = openCategories.has(cat);
+        return (
+          <div key={cat}>
+            <button
+              type="button"
+              onClick={() => toggle(cat)}
+              className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-accent"
+            >
+              <div className="flex items-center gap-2 text-sm">
+                <ChevronDown
+                  className={`size-4 text-muted-foreground transition-transform ${
+                    isOpen ? "" : "-rotate-90"
+                  }`}
+                />
+                <span className="font-semibold">{ESSAY_CATEGORY_LABELS[cat]}</span>
+                <span className="text-xs text-muted-foreground">
+                  {unresolvedCount}件 / 全{items.length}件
+                </span>
+              </div>
+            </button>
+            {isOpen && (
+              <div className="bg-muted/20">
+                <table className="w-full text-sm">
+                  <tbody>
+                    {items.map((w) => (
+                      <tr
+                        key={w.area}
+                        className={`border-t ${w.resolved ? "opacity-60" : ""}`}
+                      >
+                        <td className="px-4 py-2.5">
+                          <p className="break-words leading-snug">{w.area}</p>
+                        </td>
+                        <td className="px-2 py-2.5 text-center">
+                          <WeaknessSourceBadge
+                            source={w.source as "essay" | "interview" | "both"}
+                          />
+                        </td>
+                        <td className="px-2 py-2.5 text-center text-xs tabular-nums">
+                          {w.count}回
+                        </td>
+                        <td className="px-2 py-2.5 text-center">
+                          {weaknessBadge(w)}
+                        </td>
+                        <td className="px-2 py-2.5 text-center">
+                          <InlineFeedbackButton
+                            studentId={studentId}
+                            type="weakness"
+                            targetId={w.area}
+                            targetLabel={w.area}
+                            compact
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 function weaknessBadge(w: WeaknessRecord) {
   const level = getWeaknessReminderLevel(w);
@@ -615,40 +742,10 @@ function AdminStudentDetailPageInner() {
                 弱点データなし
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b bg-muted/50">
-                      <th className="px-4 py-3 text-left font-medium">弱点項目</th>
-                      <th className="px-4 py-3 text-center font-medium">出所</th>
-                      <th className="px-4 py-3 text-center font-medium">指摘回数</th>
-                      <th className="px-4 py-3 text-center font-medium">ステータス</th>
-                      <th className="px-4 py-3 text-center font-medium w-12">FB</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {weaknesses.map((w) => (
-                      <tr key={w.area} className="border-b">
-                        <td className="px-4 py-3">{w.area}</td>
-                        <td className="px-4 py-3 text-center">
-                          <WeaknessSourceBadge source={w.source as "essay" | "interview" | "both"} />
-                        </td>
-                        <td className="px-4 py-3 text-center">{w.count}回</td>
-                        <td className="px-4 py-3 text-center">{weaknessBadge(w)}</td>
-                        <td className="px-4 py-3 text-center">
-                          <InlineFeedbackButton
-                            studentId={id}
-                            type="weakness"
-                            targetId={w.area}
-                            targetLabel={w.area}
-                            compact
-                          />
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <WeaknessesByCategoryList
+                weaknesses={weaknesses}
+                studentId={id}
+              />
             )}
           </CardContent>
         )}
