@@ -108,6 +108,7 @@ export async function POST(
       .collection(`users/${studentId}/weaknesses`)
       .get();
     const chronicWeaknesses = weaknessesSnap.docs
+      .filter((d) => !(d.data() as { archivedAt?: unknown }).archivedAt) // Phase 4: archive 除外
       .map((d) => (d.data() as { area?: string }).area)
       .filter((a): a is string => !!a && a.length > 0)
       .slice(0, 5);

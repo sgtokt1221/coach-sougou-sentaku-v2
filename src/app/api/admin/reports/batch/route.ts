@@ -180,15 +180,17 @@ export async function POST(request: NextRequest) {
           previousEssays: prevEssaysSnap.docs.map(toEssayData),
           periodInterviews: periodInterviewsSnap.docs.map(toInterviewData),
           previousInterviews: prevInterviewsSnap.docs.map(toInterviewData),
-          weaknesses: weaknessesSnap.docs.map((d) => {
-            const wData = d.data();
-            return {
-              area: wData.area ?? "",
-              count: wData.count ?? 0,
-              improving: wData.improving ?? false,
-              resolved: wData.resolved ?? false,
-            };
-          }),
+          weaknesses: weaknessesSnap.docs
+            .filter((d) => !d.data().archivedAt) // Phase 4: archive 除外
+            .map((d) => {
+              const wData = d.data();
+              return {
+                area: wData.area ?? "",
+                count: wData.count ?? 0,
+                improving: wData.improving ?? false,
+                resolved: wData.resolved ?? false,
+              };
+            }),
           periodWeaknessCounts,
           previousWeaknessCounts,
         });

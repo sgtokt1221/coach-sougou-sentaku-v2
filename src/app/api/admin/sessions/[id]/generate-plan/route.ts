@@ -62,10 +62,11 @@ export async function POST(
   const [saSnap, weakSnap, essaysSnap, coachThreadsSnap, prevSession] =
     await Promise.all([
       adminDb.doc(`selfAnalysis/${studentId}`).get(),
+      // Phase 4: archive を考慮して多めに取り、 後段で filter + slice
       adminDb
         .collection(`users/${studentId}/weaknesses`)
         .orderBy("count", "desc")
-        .limit(5)
+        .limit(15)
         .get(),
       adminDb
         .collection(`users/${studentId}/essays`)
@@ -83,14 +84,17 @@ export async function POST(
     ]);
 
   const sa = saSnap.exists ? saSnap.data() : null;
-  const topWeaknesses = weakSnap.docs.map((d) => {
-    const w = d.data() as WeaknessRecord;
-    return {
-      area: w.area ?? d.id,
-      count: typeof w.count === "number" ? w.count : 1,
-      source: w.source ?? "unknown",
-    };
-  });
+  const topWeaknesses = weakSnap.docs
+    .filter((d) => !(d.data() as { archivedAt?: unknown }).archivedAt) // Phase 4: archive 除外
+    .slice(0, 5)
+    .map((d) => {
+      const w = d.data() as WeaknessRecord;
+      return {
+        area: w.area ?? d.id,
+        count: typeof w.count === "number" ? w.count : 1,
+        source: w.source ?? "unknown",
+      };
+    });
   const recentEssayFeedback: string[] = essaysSnap
     ? essaysSnap.docs.map((d) => {
         const data = d.data() as { feedback?: string; overallComment?: string };

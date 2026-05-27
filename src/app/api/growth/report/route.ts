@@ -91,15 +91,17 @@ export async function GET(request: NextRequest) {
         const weakSnap = await adminDb
           .collection(`users/${userId}/weaknesses`)
           .get();
-        const wItems = weakSnap.docs.map((d) => {
-          const data = d.data() as {
-            area?: string;
-            count?: number;
-            resolved?: boolean;
-            improving?: boolean;
-          };
-          return data;
-        });
+        const wItems = weakSnap.docs
+          .filter((d) => !(d.data() as { archivedAt?: unknown }).archivedAt) // Phase 4: archive 除外
+          .map((d) => {
+            const data = d.data() as {
+              area?: string;
+              count?: number;
+              resolved?: boolean;
+              improving?: boolean;
+            };
+            return data;
+          });
         if (wItems.length > 0) {
           weaknessList = wItems
             .map((w) => {

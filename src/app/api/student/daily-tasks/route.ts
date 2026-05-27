@@ -47,8 +47,14 @@ export async function GET(request: NextRequest) {
     const tasks: DailyTask[] = [];
     const now = new Date();
 
+    // Phase 4: archive 済みは弱点としてカウントしない
+    const activeWeaknessDocs = weaknessSnap.docs.filter(
+      (d) => !d.data().archivedAt,
+    );
+    const hasActiveWeakness = activeWeaknessDocs.length > 0;
+
     // Unresolved weaknesses → essay practice
-    if (!weaknessSnap.empty) {
+    if (hasActiveWeakness) {
       tasks.push({
         type: "essay",
         title: "小論文の練習を1本提出しよう",
@@ -98,7 +104,7 @@ export async function GET(request: NextRequest) {
           priority: "medium",
         });
       }
-    } else if (essaysSnap.empty && !weaknessSnap.empty) {
+    } else if (essaysSnap.empty && hasActiveWeakness) {
       // No essays at all but has weakness data — suggest practice
       tasks.push({
         type: "essay",
