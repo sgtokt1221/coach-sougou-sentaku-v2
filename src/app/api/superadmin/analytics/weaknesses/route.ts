@@ -111,6 +111,7 @@ export async function GET(request: NextRequest) {
     let skippedNoUid = 0;
     for (const doc of weaknessesSnap.docs) {
       const data = doc.data() as Record<string, unknown>;
+      if (data.archivedAt) continue; // Phase 4: archive 済みは集計対象外
       const recordSource = (data.source as string) ?? "essay";
       if (!sourceFilter.has(recordSource)) continue;
 

@@ -195,7 +195,7 @@ export async function GET(request: NextRequest) {
         }
 
         const repeatedCount = weaknessesSnap.docs.filter(
-          (d) => (d.data().count ?? 0) >= 5
+          (d) => (d.data().count ?? 0) >= 5 && !d.data().archivedAt // Phase 4: archive 除外
         ).length;
         if (repeatedCount > 0) alertFlags.push("repeated_weakness");
 
@@ -211,9 +211,9 @@ export async function GET(request: NextRequest) {
         // スコア推移（直近3回）
         const scoreTrend = computeScoreTrend(recentScores);
 
-        // アクティブ弱点数（dismissedでないもの）
+        // アクティブ弱点数（dismissedでない + archive されていないもの）
         const activeWeaknessCount = weaknessesSnap.docs.filter(
-          (d) => !d.data().dismissed
+          (d) => !d.data().dismissed && !d.data().archivedAt
         ).length;
 
         // 書類完了度

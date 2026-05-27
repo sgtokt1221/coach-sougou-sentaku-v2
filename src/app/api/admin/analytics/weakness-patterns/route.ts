@@ -174,6 +174,7 @@ export async function GET(request: NextRequest) {
       if (studentIdSet && !studentIdSet.has(userId)) continue;
 
       const data = doc.data();
+      if (data.archivedAt) continue; // Phase 4: archive 済みは集計対象外
       const area = (data.area as string) ?? "unknown";
       const count = (data.count as number) ?? 1;
       const resolved = data.resolved === true || data.dismissed === true;

@@ -84,19 +84,23 @@ export async function POST(request: NextRequest) {
             .where("resolved", "==", false)
             .get();
           if (!weaknessDocs.empty) {
-            existingWeaknesses = weaknessDocs.docs.map((d) => {
-              const w = d.data();
-              return {
-                area: w.area,
-                count: w.count,
-                firstOccurred: w.firstOccurred?.toDate() ?? new Date(),
-                lastOccurred: w.lastOccurred?.toDate() ?? new Date(),
-                improving: w.improving ?? false,
-                resolved: w.resolved ?? false,
-                source: w.source ?? "interview",
-                reminderDismissedAt: w.reminderDismissedAt?.toDate() ?? null,
-              } satisfies WeaknessRecord;
-            });
+            existingWeaknesses = weaknessDocs.docs
+              .filter((d) => !d.data().archivedAt) // Phase 4: archive 済みは AI コンテキストから除外
+              .map((d) => {
+                const w = d.data();
+                return {
+                  area: w.area,
+                  count: w.count,
+                  firstOccurred: w.firstOccurred?.toDate() ?? new Date(),
+                  lastOccurred: w.lastOccurred?.toDate() ?? new Date(),
+                  improving: w.improving ?? false,
+                  resolved: w.resolved ?? false,
+                  source: w.source ?? "interview",
+                  reminderDismissedAt: w.reminderDismissedAt?.toDate() ?? null,
+                  categoryId: w.categoryId,
+                  archivedAt: w.archivedAt?.toDate?.() ?? w.archivedAt ?? null,
+                } satisfies WeaknessRecord;
+              });
             weaknessList = existingWeaknesses
               .map((w) => `- ${w.area}（${w.count}回指摘）`)
               .join("\n");

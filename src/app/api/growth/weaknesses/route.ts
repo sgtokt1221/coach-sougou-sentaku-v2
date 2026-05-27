@@ -51,6 +51,8 @@ export async function GET(request: NextRequest) {
         resolved: data.resolved ?? false,
         source: data.source ?? "essay",
         reminderDismissedAt: data.reminderDismissedAt?.toDate() ?? null,
+        categoryId: data.categoryId,
+        archivedAt: data.archivedAt?.toDate?.() ?? data.archivedAt ?? null,
       } satisfies WeaknessRecord;
     });
 

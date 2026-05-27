@@ -149,19 +149,22 @@ export async function GET(
       };
     });
 
-    const weaknesses = weaknessesSnap.docs.map((d) => {
-      const data = d.data();
-      return {
-        area: data.area ?? "",
-        count: data.count ?? 0,
-        firstOccurred: data.firstOccurred?.toDate() ?? new Date(),
-        lastOccurred: data.lastOccurred?.toDate() ?? new Date(),
-        improving: data.improving ?? false,
-        resolved: data.resolved ?? false,
-        source: data.source ?? "essay",
-        reminderDismissedAt: data.reminderDismissedAt?.toDate() ?? null,
-      };
-    });
+    const weaknesses = weaknessesSnap.docs
+      .filter((d) => !d.data().archivedAt) // Phase 4: archive 済みは一覧から除外
+      .map((d) => {
+        const data = d.data();
+        return {
+          area: data.area ?? "",
+          count: data.count ?? 0,
+          firstOccurred: data.firstOccurred?.toDate() ?? new Date(),
+          lastOccurred: data.lastOccurred?.toDate() ?? new Date(),
+          improving: data.improving ?? false,
+          resolved: data.resolved ?? false,
+          source: data.source ?? "essay",
+          reminderDismissedAt: data.reminderDismissedAt?.toDate() ?? null,
+          categoryId: data.categoryId,
+        };
+      });
 
     // 添削スコア推移
     const essayScoreTrend = essays

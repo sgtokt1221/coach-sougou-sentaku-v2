@@ -144,7 +144,43 @@ export function updateWeaknessRecords(
     existingAreas.add(tag);
   }
 
-  return updated;
+  return archiveOldWeaknesses(updated, now);
+}
+
+/** Phase 4: 自動アーカイブ閾値 (日) */
+export const ARCHIVE_DAYS_IMPROVING = 60;
+export const ARCHIVE_DAYS_RESOLVED = 30;
+
+/**
+ * 古い弱点を archive 扱いにする。
+ * - resolved=true で lastOccurred から 30日経過 → archive
+ * - improving=true で lastOccurred から 60日経過 → archive
+ * - 既に archivedAt が立っているものは無視
+ */
+export function archiveOldWeaknesses(
+  weaknesses: WeaknessRecord[],
+  now: Date = new Date(),
+): WeaknessRecord[] {
+  const ms = now.getTime();
+  return weaknesses.map((w) => {
+    if (w.archivedAt) return w;
+    if (!w.lastOccurred) return w;
+    const lastMs =
+      w.lastOccurred instanceof Date ? w.lastOccurred.getTime() : new Date(w.lastOccurred).getTime();
+    const elapsedDays = (ms - lastMs) / (1000 * 60 * 60 * 24);
+    if (w.resolved && elapsedDays >= ARCHIVE_DAYS_RESOLVED) {
+      return { ...w, archivedAt: now };
+    }
+    if (w.improving && elapsedDays >= ARCHIVE_DAYS_IMPROVING) {
+      return { ...w, archivedAt: now };
+    }
+    return w;
+  });
+}
+
+/** アクティブな弱点 (= archive されていないもの) だけを返す */
+export function getActiveWeaknesses(weaknesses: WeaknessRecord[]): WeaknessRecord[] {
+  return weaknesses.filter((w) => !w.archivedAt);
 }
 
 const SEVERITY_ORDER: Record<string, number> = {
@@ -158,7 +194,7 @@ export function getRemindableWeaknesses(
   weaknesses: WeaknessRecord[],
   context: "dashboard" | "essay_new" | "essay_result"
 ): WeaknessRecord[] {
-  let filtered = weaknesses.filter((w) => getWeaknessReminderLevel(w) !== null);
+  let filtered = weaknesses.filter((w) => !w.archivedAt && getWeaknessReminderLevel(w) !== null);
 
   if (context === "essay_new") {
     filtered = filtered.filter((w) => w.source === "essay" || w.source === "both");

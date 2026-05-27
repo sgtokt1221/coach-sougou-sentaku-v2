@@ -317,6 +317,7 @@ export async function POST(request: NextRequest) {
       try {
         // 今週/過去をデータソースで明確に分離。プロンプトに別フィールドで渡す。
         const chronicWeaknesses = weaknessesSnap.docs
+          .filter((d) => !(d.data() as { archivedAt?: unknown }).archivedAt) // Phase 4: archive 除外
           .map((d) => (d.data() as { area?: string }).area)
           .filter((a): a is string => !!a && a.length > 0)
           .slice(0, 5);
@@ -413,15 +414,17 @@ export async function POST(request: NextRequest) {
       previousEssays: prevEssaysSnap.docs.map(toEssayData),
       periodInterviews: periodInterviewsSnap.docs.map(toInterviewData),
       previousInterviews: prevInterviewsSnap.docs.map(toInterviewData),
-      weaknesses: weaknessesSnap.docs.map((d) => {
-        const wData = d.data();
-        return {
-          area: wData.area ?? "",
-          count: wData.count ?? 0,
-          improving: wData.improving ?? false,
-          resolved: wData.resolved ?? false,
-        };
-      }),
+      weaknesses: weaknessesSnap.docs
+        .filter((d) => !d.data().archivedAt) // Phase 4: archive 除外
+        .map((d) => {
+          const wData = d.data();
+          return {
+            area: wData.area ?? "",
+            count: wData.count ?? 0,
+            improving: wData.improving ?? false,
+            resolved: wData.resolved ?? false,
+          };
+        }),
       periodWeaknessCounts,
       previousWeaknessCounts,
       sessionSummary: sessionSummary.totalCount > 0 ? sessionSummary : undefined,

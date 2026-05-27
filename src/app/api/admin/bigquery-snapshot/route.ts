@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
     // 弱点 Top 5 (= count 降順)
     const weaknesses = weaknessesSnap.docs.map((d) => d.data());
     const topWeaknesses = [...weaknesses]
-      .filter((w) => !w.resolved)
+      .filter((w) => !w.resolved && !w.archivedAt) // Phase 4: archive 除外
       .sort((a, b) => (b.count ?? 0) - (a.count ?? 0))
       .slice(0, 5)
       .map((w) => w.area ?? "")

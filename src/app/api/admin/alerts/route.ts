@@ -353,14 +353,16 @@ export async function GET(request: NextRequest) {
           .doc(studentUid)
           .collection("weaknesses")
           .get();
-        const weaknesses = weaknessesSnap.docs.map((d) => {
-          const wData = d.data();
-          return {
-            area: wData.area ?? "",
-            count: wData.count ?? 0,
-            improving: wData.improving ?? false,
-          };
-        });
+        const weaknesses = weaknessesSnap.docs
+          .filter((d) => !d.data().archivedAt) // Phase 4: archive 済みはアラート対象外
+          .map((d) => {
+            const wData = d.data();
+            return {
+              area: wData.area ?? "",
+              count: wData.count ?? 0,
+              improving: wData.improving ?? false,
+            };
+          });
 
         // Document data
         const documentsSnap = await adminDb!

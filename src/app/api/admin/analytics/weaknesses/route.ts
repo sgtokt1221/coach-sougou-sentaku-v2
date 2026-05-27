@@ -44,6 +44,7 @@ export async function GET(request: NextRequest) {
 
       for (const docSnap of weaknessesSnap.docs) {
         const w = docSnap.data();
+        if (w.archivedAt) continue; // Phase 4: archive 済みは集計対象外
         const area = w.area ?? "unknown";
         const cat: EssayCategoryKey = (w.categoryId as EssayCategoryKey) ?? categorizeWeakness(area);
         const uid = docSnap.ref.parent.parent?.id ?? "";

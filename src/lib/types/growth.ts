@@ -19,6 +19,12 @@ export interface WeaknessRecord {
     | "apAlignment"
     | "originality"
     | "other";
+  /**
+   * Phase 4: アーカイブ済みタイムスタンプ。
+   * null/undefined ならアクティブ。 値が入っているものは一覧 / 集計から除外される。
+   * 自動付与: improving=true で 60日 / resolved=true で 30日 lastOccurred から経過。
+   */
+  archivedAt?: Date | null;
 }
 
 export type WeaknessReminderLevel = "critical" | "warning" | "improving" | "resolved";
