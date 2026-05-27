@@ -57,7 +57,33 @@ export interface AnalyticsOverview {
 }
 
 export interface WeaknessAnalytics {
-  topWeaknesses: { area: string; count: number; improvementRate: number }[];
+  topWeaknesses: {
+    area: string;
+    count: number;
+    improvementRate: number;
+    /** Phase 2-C: 弱点カテゴリ (= structure / logic / expression / apAlignment / originality / other) */
+    categoryId?:
+      | "structure"
+      | "logic"
+      | "expression"
+      | "apAlignment"
+      | "originality"
+      | "other";
+  }[];
+  /** Phase 2-C: カテゴリ別集計 (= 重点弱点 Top 5 と同じ系統) */
+  byCategory?: Array<{
+    categoryId:
+      | "structure"
+      | "logic"
+      | "expression"
+      | "apAlignment"
+      | "originality"
+      | "other";
+    label: string;
+    totalCount: number;
+    studentCount: number;
+    topItems: { area: string; count: number; improvementRate: number }[];
+  }>;
   avgDaysToResolve: number;
   universityGap: { universityName: string; requiredSkills: string[]; studentGap: string[] }[];
   improvementPatterns: {

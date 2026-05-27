@@ -5,6 +5,12 @@ import type {
   WeaknessAggregateResponse,
   WeaknessSource,
 } from "@/lib/types/superadmin-analytics";
+import {
+  categorizeWeakness,
+  ESSAY_CATEGORY_LABELS,
+  ESSAY_CATEGORY_ORDER,
+  type EssayCategoryKey,
+} from "@/lib/growth/weakness-category";
 
 const MAX_STUDENTS_PER_AREA = 20;
 const MAX_AREAS = 50;
@@ -92,6 +98,7 @@ export async function GET(request: NextRequest) {
     };
     type AreaEntry = {
       area: string;
+      categoryId: EssayCategoryKey;
       totalOccurrences: number;
       resolvedCount: number;
       studentMap: Map<string, StudentAgg>;
@@ -132,8 +139,11 @@ export async function GET(request: NextRequest) {
       totalRecords++;
 
       if (!areaMap.has(area)) {
+        const categoryId =
+          (data.categoryId as EssayCategoryKey) ?? categorizeWeakness(area);
         areaMap.set(area, {
           area,
+          categoryId,
           totalOccurrences: 0,
           resolvedCount: 0,
           studentMap: new Map(),
@@ -206,12 +216,47 @@ export async function GET(request: NextRequest) {
           weeklyTrend: entry.weeklyTrend,
           trendRatio: Math.round(trendRatio * 100) / 100,
           students: resolvedForNames,
+          categoryId: entry.categoryId,
         };
       }),
     );
 
+    // カテゴリ別サマリー (= ダッシュボード上部のカード用)
+    const catSummary = new Map<
+      EssayCategoryKey,
+      { totalOccurrences: number; uniqueAreas: number; studentSet: Set<string> }
+    >();
+    for (const entry of areaMap.values()) {
+      const cat = entry.categoryId;
+      if (!catSummary.has(cat)) {
+        catSummary.set(cat, {
+          totalOccurrences: 0,
+          uniqueAreas: 0,
+          studentSet: new Set(),
+        });
+      }
+      const s = catSummary.get(cat)!;
+      s.totalOccurrences += entry.totalOccurrences;
+      s.uniqueAreas++;
+      for (const uid of entry.studentMap.keys()) s.studentSet.add(uid);
+    }
+    const byCategory = ESSAY_CATEGORY_ORDER.flatMap((cat) => {
+      const s = catSummary.get(cat);
+      if (!s) return [];
+      return [
+        {
+          categoryId: cat,
+          label: ESSAY_CATEGORY_LABELS[cat],
+          totalOccurrences: s.totalOccurrences,
+          uniqueAreas: s.uniqueAreas,
+          affectedStudents: s.studentSet.size,
+        },
+      ];
+    }).sort((a, b) => b.totalOccurrences - a.totalOccurrences);
+
     const response: WeaknessAggregateResponse = {
       aggregates,
+      byCategory,
       source,
       totalRecords,
       generatedAt: new Date().toISOString(),

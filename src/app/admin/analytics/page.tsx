@@ -403,10 +403,46 @@ function WeaknessContent({ weaknesses }: { weaknesses: WeaknessAnalytics }) {
         </Card>
       </div>
 
+      {/* Phase 2-C: カテゴリ別サマリーカード */}
+      {weaknesses.byCategory && weaknesses.byCategory.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">弱点カテゴリ別 集計</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
+              {weaknesses.byCategory.map((c) => (
+                <div
+                  key={c.categoryId}
+                  className="rounded-lg border bg-card p-3"
+                >
+                  <div className="text-xs text-muted-foreground">{c.label}</div>
+                  <div className="mt-1 text-xl font-bold tabular-nums">
+                    {c.totalCount}
+                    <span className="ml-1 text-xs font-normal text-muted-foreground">
+                      回 / {c.studentCount}名
+                    </span>
+                  </div>
+                  {c.topItems.length > 0 && (
+                    <ul className="mt-2 space-y-0.5 text-[10px] text-muted-foreground">
+                      {c.topItems.slice(0, 3).map((it) => (
+                        <li key={it.area} className="truncate">
+                          ・{it.area} ({it.count}回)
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Top Weaknesses Table */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">弱点TOP10</CardTitle>
+          <CardTitle className="text-base">弱点TOP10 (フラット)</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -415,6 +451,7 @@ function WeaknessContent({ weaknesses }: { weaknesses: WeaknessAnalytics }) {
                 <tr className="border-b text-left">
                   <th className="pb-3 font-medium text-muted-foreground">#</th>
                   <th className="pb-3 font-medium text-muted-foreground">弱点エリア</th>
+                  <th className="pb-3 font-medium text-muted-foreground">カテゴリ</th>
                   <th className="pb-3 font-medium text-muted-foreground">指摘回数</th>
                   <th className="pb-3 font-medium text-muted-foreground">改善率</th>
                 </tr>
@@ -424,6 +461,17 @@ function WeaknessContent({ weaknesses }: { weaknesses: WeaknessAnalytics }) {
                   <tr key={w.area} className="border-b last:border-0">
                     <td className="py-3 font-medium">{i + 1}</td>
                     <td className="py-3">{w.area}</td>
+                    <td className="py-3">
+                      <span className="rounded bg-muted px-2 py-0.5 text-[10px]">
+                        {w.categoryId === "structure" && "構成"}
+                        {w.categoryId === "logic" && "論証"}
+                        {w.categoryId === "expression" && "表現力"}
+                        {w.categoryId === "apAlignment" && "AP合致"}
+                        {w.categoryId === "originality" && "独自性"}
+                        {w.categoryId === "other" && "その他"}
+                        {!w.categoryId && "—"}
+                      </span>
+                    </td>
                     <td className="py-3">{w.count}回</td>
                     <td className="py-3">
                       <div className="flex items-center gap-2">

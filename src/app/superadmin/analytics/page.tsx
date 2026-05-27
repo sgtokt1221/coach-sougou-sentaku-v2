@@ -122,17 +122,46 @@ function WeaknessTab({ source }: { source: "essay" | "interview" }) {
     );
   }
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <WeaknessAggregateTable
-          aggregates={data?.aggregates ?? []}
-          totalRecords={data?.totalRecords ?? 0}
-          emptyLabel={emptyLabel}
-        />
-      </CardContent>
-    </Card>
+    <div className="space-y-4">
+      {/* Phase 2-C: カテゴリ別サマリーカード */}
+      {data?.byCategory && data.byCategory.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">カテゴリ別 集計</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
+              {data.byCategory.map((c) => (
+                <div key={c.categoryId} className="rounded-lg border bg-card p-3">
+                  <div className="text-xs text-muted-foreground">{c.label}</div>
+                  <div className="mt-1 text-xl font-bold tabular-nums">
+                    {c.totalOccurrences}
+                    <span className="ml-1 text-xs font-normal text-muted-foreground">
+                      回
+                    </span>
+                  </div>
+                  <div className="mt-0.5 text-[10px] text-muted-foreground">
+                    {c.uniqueAreas} 種 / {c.affectedStudents} 名
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">{title}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <WeaknessAggregateTable
+            aggregates={data?.aggregates ?? []}
+            totalRecords={data?.totalRecords ?? 0}
+            emptyLabel={emptyLabel}
+          />
+        </CardContent>
+      </Card>
+    </div>
   );
 }

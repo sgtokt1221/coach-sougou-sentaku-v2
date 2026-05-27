@@ -50,10 +50,35 @@ export interface WeaknessAggregate {
   trendRatio: number;
   /** 対象生徒 (先頭 20 件まで、occurrences 降順) */
   students: WeaknessAggregateStudent[];
+  /** Phase 2-C: 弱点カテゴリ */
+  categoryId?:
+    | "structure"
+    | "logic"
+    | "expression"
+    | "apAlignment"
+    | "originality"
+    | "other";
+}
+
+/** カテゴリ別サマリー (= ダッシュボード上部のカード用) */
+export interface WeaknessByCategorySummary {
+  categoryId:
+    | "structure"
+    | "logic"
+    | "expression"
+    | "apAlignment"
+    | "originality"
+    | "other";
+  label: string;
+  totalOccurrences: number;
+  uniqueAreas: number;
+  affectedStudents: number;
 }
 
 export interface WeaknessAggregateResponse {
   aggregates: WeaknessAggregate[];
+  /** Phase 2-C: カテゴリ別 サマリー */
+  byCategory?: WeaknessByCategorySummary[];
   source: WeaknessSource;
   totalRecords: number;
   generatedAt: string;
