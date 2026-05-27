@@ -1,17 +1,7 @@
 "use client";
 
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-} from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, FileText, Mic, Award, Layers } from "lucide-react";
 import type { WeaknessRecord } from "@/lib/types/growth";
 import { getWeaknessReminderLevel } from "@/lib/types/growth";
 
@@ -27,68 +17,42 @@ interface WeaknessChartData {
 }
 
 /**
- * source別の色マッピング
+ * source別の色 + アイコン マッピング
  */
-const SOURCE_COLORS: Record<string, string> = {
-  essay: "#0ea5e9",      // blue
-  interview: "#6366f1",  // indigo
-  skill_check: "#10b981", // emerald
-  both: "#8b5cf6",       // purple
+const SOURCE_META: Record<
+  string,
+  { color: string; bg: string; label: string; icon: React.ComponentType<{ className?: string }> }
+> = {
+  essay: { color: "#0ea5e9", bg: "bg-sky-500", label: "小論文", icon: FileText },
+  interview: { color: "#6366f1", bg: "bg-indigo-500", label: "面接", icon: Mic },
+  skill_check: { color: "#10b981", bg: "bg-emerald-500", label: "スキルチェック", icon: Award },
+  both: { color: "#8b5cf6", bg: "bg-violet-500", label: "複数", icon: Layers },
 };
 
 /**
- * カスタムツールチップ
+ * 重点弱点 Top 5 表示。
+ *
+ * BarChart を撤去して div ベースのランキングリストに変更。
+ * 旧実装は recharts Tooltip が画面右端で見切れて弱点名 (= 長文) が
+ * 読めない問題があった。 新実装は弱点名を **常時 全文表示** し、
+ * 横棒は count の比率バーとして横に並べる。 ホバー不要で一目で
+ * 内容と件数が分かる。
  */
-function WeaknessTooltip({ active, payload, label }: any) {
-  if (!active || !payload || !payload.length) return null;
-
-  const data = payload[0].payload as WeaknessChartData;
-  const sourceLabels: Record<string, string> = {
-    essay: "小論文",
-    interview: "面接",
-    skill_check: "スキルチェック",
-    both: "複数",
-  };
-
-  return (
-    <div className="min-w-[200px] max-w-[320px] rounded-lg border bg-white px-3 py-2 shadow-md dark:bg-card">
-      <p className="break-words font-medium leading-snug">{data.area}</p>
-      <p className="mt-1 text-sm text-muted-foreground">
-        指摘回数: <span className="font-medium text-foreground">{data.count}回</span>
-      </p>
-      <p className="text-sm text-muted-foreground">
-        出所: <span className="text-foreground">{sourceLabels[data.source] || data.source}</span>
-      </p>
-      {data.count >= 5 && (
-        <p className="mt-1 text-sm font-medium text-rose-600">要注意</p>
-      )}
-    </div>
-  );
-}
-
-/**
- * Y軸ラベルを短縮表示。
- * width=140 では概ね 18 文字程度まで表示できる。
- */
-function formatYAxisLabel(value: string) {
-  if (value.length <= 18) return value;
-  return value.substring(0, 18) + "...";
-}
-
 export function WeaknessTopChart({ weaknesses }: WeaknessTopChartProps) {
   // 未解決弱点のみフィルタ → count降順ソート → Top5
-  const unresolvedWeaknesses = weaknesses.filter(w => !w.resolved);
+  const unresolvedWeaknesses = weaknesses.filter((w) => !w.resolved);
   const sortedWeaknesses = unresolvedWeaknesses.sort((a, b) => b.count - a.count);
   const top5 = sortedWeaknesses.slice(0, 5);
   const remainingCount = Math.max(0, unresolvedWeaknesses.length - 5);
 
-  // チャート用データ作成
-  const chartData: WeaknessChartData[] = top5.map(w => ({
+  const chartData: WeaknessChartData[] = top5.map((w) => ({
     area: w.area,
     count: w.count,
     source: w.source,
     severity: getWeaknessReminderLevel(w),
   }));
+
+  const maxCount = Math.max(1, ...chartData.map((d) => d.count));
 
   if (unresolvedWeaknesses.length === 0) {
     return (
@@ -117,65 +81,55 @@ export function WeaknessTopChart({ weaknesses }: WeaknessTopChartProps) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-[240px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              layout="vertical"
-              data={chartData}
-              margin={{ top: 8, right: 16, left: 8, bottom: 8 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" opacity={0.5} horizontal={false} />
-              <XAxis
-                type="number"
-                tick={{ fontSize: 11 }}
-                axisLine={false}
-                tickLine={false}
-                allowDecimals={false}
-              />
-              <YAxis
-                type="category"
-                dataKey="area"
-                tick={{ fontSize: 11 }}
-                tickFormatter={formatYAxisLabel}
-                axisLine={false}
-                tickLine={false}
-                width={140}
-              />
-              <Tooltip
-                content={<WeaknessTooltip />}
-                wrapperStyle={{ zIndex: 50, pointerEvents: "none" }}
-                allowEscapeViewBox={{ x: false, y: true }}
-              />
-              <Bar dataKey="count" radius={[0, 4, 4, 0]}>
-                {chartData.map((entry, i) => (
-                  <Cell key={i} fill={SOURCE_COLORS[entry.source] ?? "#6366f1"} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+        <ul className="space-y-3">
+          {chartData.map((item, idx) => {
+            const meta = SOURCE_META[item.source] ?? SOURCE_META.both;
+            const Icon = meta.icon;
+            const ratio = (item.count / maxCount) * 100;
+            return (
+              <li key={`${item.area}-${idx}`} className="space-y-1.5">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex min-w-0 items-start gap-2">
+                    <span className="mt-0.5 inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-bold text-muted-foreground">
+                      {idx + 1}
+                    </span>
+                    <p className="break-words text-sm leading-snug">{item.area}</p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2 text-xs">
+                    <Icon className="size-3 text-muted-foreground" />
+                    <span className="tabular-nums">{item.count}回</span>
+                  </div>
+                </div>
+                <div className="ml-7 h-1.5 overflow-hidden rounded-full bg-muted">
+                  <div
+                    className={`h-full ${meta.bg} transition-all`}
+                    style={{ width: `${ratio}%` }}
+                  />
+                </div>
+              </li>
+            );
+          })}
+        </ul>
 
         {/* 残りの弱点数表示 */}
         {remainingCount > 0 && (
-          <div className="mt-3 pt-3 border-t">
-            <p className="text-sm text-muted-foreground text-center">
+          <div className="mt-4 border-t pt-3">
+            <p className="text-center text-sm text-muted-foreground">
               他 {remainingCount} 件の弱点があります
             </p>
           </div>
         )}
 
         {/* 出所別凡例 */}
-        <div className="mt-3 pt-3 border-t">
-          <div className="flex flex-wrap gap-x-3 gap-y-1 justify-center text-[11px] text-muted-foreground">
-            {[
-              { color: SOURCE_COLORS.essay, label: "小論文" },
-              { color: SOURCE_COLORS.interview, label: "面接" },
-              { color: SOURCE_COLORS.skill_check, label: "スキルチェック" },
-              { color: SOURCE_COLORS.both, label: "複数" },
-            ].map((item) => (
-              <div key={item.label} className="flex items-center gap-1">
-                <span className="inline-block size-2 rounded-sm" style={{ backgroundColor: item.color }} />
-                {item.label}
+        <div className="mt-3 border-t pt-3">
+          <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+            {Object.entries(SOURCE_META).map(([key, m]) => (
+              <div key={key} className="flex items-center gap-1">
+                <span
+                  className="inline-block size-2 rounded-sm"
+                  style={{ backgroundColor: m.color }}
+                />
+                {m.label}
               </div>
             ))}
           </div>
