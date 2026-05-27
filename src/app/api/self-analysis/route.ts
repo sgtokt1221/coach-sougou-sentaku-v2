@@ -56,10 +56,24 @@ export async function POST(request: NextRequest) {
 
     const resolvedId = await resolveUserId(request, body.userId);
 
-    // リセットリクエスト
+    // リセットリクエスト (= 削除)。 監査ログを残してから delete
     if (body.reset) {
       const { adminDb } = await import("@/lib/firebase/admin");
       if (adminDb) {
+        // 削除前の中身をログに保存 (= 復元可能性 + 「いつ何を削除したか」 追跡)
+        try {
+          const prevDoc = await adminDb.doc(`selfAnalysis/${resolvedId}`).get();
+          await adminDb
+            .collection(`users/${resolvedId}/activityLogs`)
+            .add({
+              type: "self_analysis_reset",
+              description: "自己分析データをリセットしました",
+              createdAt: new Date(),
+              snapshot: prevDoc.exists ? prevDoc.data() : null,
+            });
+        } catch (err) {
+          console.warn("[self-analysis reset] ログ記録失敗:", err);
+        }
         await adminDb.doc(`selfAnalysis/${resolvedId}`).delete();
       }
       return NextResponse.json({ success: true, reset: true });

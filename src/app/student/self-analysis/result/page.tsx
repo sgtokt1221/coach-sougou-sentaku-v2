@@ -40,6 +40,10 @@ export default function SelfAnalysisResultPage() {
   }
 
   async function handleReset() {
+    const ok = confirm(
+      "これまでの自己分析データがすべて削除されます。\n本当に最初からやり直しますか?\n\n(この操作は取り消せません)",
+    );
+    if (!ok) return;
     await authFetch("/api/self-analysis", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
