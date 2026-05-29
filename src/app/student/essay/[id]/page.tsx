@@ -1202,6 +1202,47 @@ export default function EssayResultPage() {
 
             {/* ブラッシュアップセクション */}
             <section id="brushup-section" className="scroll-mt-8">
+              {/* 未生成: オンデマンド生成ボタン */}
+              {!result.feedback.brushedUpText && (
+                <Card className="border-0 bg-gradient-to-br from-emerald-50 via-emerald-50 to-teal-50 shadow-lg">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="text-xl tracking-tight flex items-center gap-2 text-emerald-700">
+                      <PenTool className="size-6" />
+                      ブラッシュアップ版
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center py-8">
+                      <div className="inline-flex items-center justify-center size-16 rounded-full bg-emerald-100 mb-4">
+                        <Zap className="size-8 text-emerald-600" />
+                      </div>
+                      <h3 className="text-lg font-semibold tracking-tight text-emerald-800 mb-2">
+                        ブラッシュアップ版を生成しますか？
+                      </h3>
+                      <p className="text-sm text-emerald-700 mb-4 max-w-md mx-auto">
+                        AIがあなたの本文を、 添削の改善ポイントに沿って磨いた全文を作成します。 一度作ると保存されるので次回からはすぐ表示されます。
+                      </p>
+                      <Button
+                        onClick={generateBrushup}
+                        disabled={generatingBrushup}
+                        className="bg-emerald-600 hover:bg-emerald-700"
+                      >
+                        {generatingBrushup ? (
+                          <>
+                            <Zap className="size-4 mr-1 animate-pulse" />
+                            生成中…
+                          </>
+                        ) : (
+                          <>
+                            <PenTool className="size-4 mr-1" />
+                            ブラッシュアップ版を生成する
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
               {result.feedback.brushedUpText && (
                 <Card className="border-0 bg-gradient-to-br from-emerald-50 via-emerald-50 to-teal-50 shadow-lg">
                   <CardHeader className="flex flex-row items-center justify-between pb-4">
