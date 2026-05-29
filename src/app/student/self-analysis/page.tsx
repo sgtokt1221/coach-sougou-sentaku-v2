@@ -8,7 +8,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, PartyPopper, Sparkles, Pencil, AlertTriangle } from "lucide-react";
 import { StepIndicator } from "@/components/self-analysis/StepIndicator";
 import { WorkshopChat } from "@/components/self-analysis/WorkshopChat";
-import { SegmentControl } from "@/components/shared/SegmentControl";
 import { GrowthTree } from "@/components/self-analysis/GrowthTree";
 import { useAuthSWR } from "@/lib/api/swr";
 import { authFetch } from "@/lib/api/client";
@@ -27,7 +26,6 @@ export default function SelfAnalysisPage() {
   const [allComplete, setAllComplete] = useState(false);
   const [restored, setRestored] = useState(false);
   const [saveFailed, setSaveFailed] = useState(false);
-  const [view, setView] = useState<"tree" | "workshop">("tree");
   // 編集中の step: 完了済みの果実をクリックで編集モードに入ったときに記録
   const [editingStep, setEditingStep] = useState<number | null>(null);
 
@@ -139,25 +137,17 @@ export default function SelfAnalysisPage() {
   const currentMessages =
     chatHistories.find((h) => h.step === currentStep)?.messages ?? [];
 
-  // 「分析を始める」ボタンのハンドラ
-  const handleStartAnalysis = useCallback(() => {
-    if (allComplete) {
-      router.push("/student/self-analysis/result");
-      return;
-    }
-    // 次の未入力 step に移動
-    const nextStep = Math.min(completedSteps + 1, 7);
-    setCurrentStep(nextStep);
-    setEditingStep(null);
-    setView("workshop");
-  }, [allComplete, completedSteps, router]);
-
-  // 果実クリックで編集モードに入る
+  // 果実クリックで編集モードに入る（木は常時表示なので view 切替は不要）
   const handleFruitClick = useCallback((step: number) => {
     setCurrentStep(step);
     setEditingStep(step);
-    setView("workshop");
   }, []);
+
+  // 編集モードを抜けて、次の未入力 step に戻る
+  const handleExitEditing = useCallback(() => {
+    setEditingStep(null);
+    setCurrentStep(Math.min(completedSteps + 1, 7));
+  }, [completedSteps]);
 
   // If already complete, redirect to result
   useEffect(() => {
@@ -180,56 +170,44 @@ export default function SelfAnalysisPage() {
     );
   }
 
-  const ctaLabel = allComplete
-    ? "結果を見る"
-    : completedSteps === 0
-      ? "分析を始める"
-      : `続きから再開 (Step ${Math.min(completedSteps + 1, 7)})`;
-
   return (
-    <div className="max-w-3xl mx-auto px-4 py-5 lg:py-6 space-y-4 lg:space-y-6">
-      <div className="flex items-center gap-3">
+    <div className="max-w-5xl mx-auto px-4 py-5 lg:py-6">
+      <div className="flex items-center gap-3 mb-4 lg:mb-6">
         <Button variant="ghost" size="sm" onClick={() => router.back()}>
           <ArrowLeft className="size-4" />
         </Button>
         <h1 className="text-xl lg:text-2xl font-bold">AI自己分析ワークショップ</h1>
       </div>
 
-      <SegmentControl
-        value={view}
-        onChange={(v) => setView(v as "tree" | "workshop")}
-        fullWidth
-        defaultAccent="emerald"
-        options={[
-          { id: "tree", label: "自己分析の木" },
-          { id: "workshop", label: "ワークショップ", count: completedSteps },
-        ]}
-      />
-
-      {view === "tree" ? (
-        <>
+      {/* 左: 自己分析の木（常時表示） / 右: 入力（ワークショップ） */}
+      <div className="flex flex-col gap-4 lg:flex-row lg:gap-6 lg:items-start">
+        {/* 左カラム: 木 */}
+        <div className="w-full space-y-3 lg:w-[300px] lg:shrink-0 lg:sticky lg:top-6">
           <GrowthTree
+            compact
             completedSteps={completedSteps}
             currentStep={currentStep}
             stepsData={stepsData}
             onFruitClick={handleFruitClick}
           />
-
-          {/* 分析を始める CTA */}
-          <div className="flex flex-col items-center gap-2">
-            <Button size="lg" onClick={handleStartAnalysis} className="min-w-[240px] gap-2">
+          {completedSteps > 0 && !allComplete && (
+            <p className="text-center text-xs text-muted-foreground">
+              木の実をクリックすると過去の内容を編集できます
+            </p>
+          )}
+          {allComplete && (
+            <Button
+              onClick={() => router.push("/student/self-analysis/result")}
+              className="w-full gap-2"
+            >
               <Sparkles className="size-4" />
-              {ctaLabel}
+              結果を見る
             </Button>
-            {completedSteps > 0 && !allComplete && (
-              <p className="text-xs text-muted-foreground">
-                木の実をクリックすると過去の内容を編集できます
-              </p>
-            )}
-          </div>
-        </>
-      ) : (
-        <>
+          )}
+        </div>
+
+        {/* 右カラム: 入力 */}
+        <div className="flex-1 min-w-0 space-y-4">
           <StepIndicator
             currentStep={currentStep}
             completedSteps={completedSteps}
@@ -260,15 +238,8 @@ export default function SelfAnalysisPage() {
                   Step {editingStep} を編集中
                 </span>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setEditingStep(null);
-                  setView("tree");
-                }}
-              >
-                木に戻る
+              <Button variant="ghost" size="sm" onClick={handleExitEditing}>
+                編集をやめる
               </Button>
             </div>
           )}
@@ -295,8 +266,8 @@ export default function SelfAnalysisPage() {
               onStepComplete={handleStepComplete}
             />
           )}
-        </>
-      )}
+        </div>
+      </div>
     </div>
   );
 }
