@@ -92,13 +92,13 @@ const studentNavGroups: NavGroup[] = [
     items: [
       { label: "自己分析", href: "/student/self-analysis", icon: Lightbulb, badge: SelfAnalysisBadge },
       { label: "志望校探索", href: "/student/universities/explore", icon: Compass },
+      { label: "活動実績", href: "/student/activities", icon: Award },
     ],
   },
   {
     title: "Prepare",
     items: [
       { label: "出願書類", href: "/student/documents", icon: FolderOpen },
-      { label: "活動実績", href: "/student/activities", icon: Award },
       { label: "面談記録", href: "/student/sessions", icon: CalendarCheck, coachOnly: true },
     ],
   },

@@ -1,15 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb, verifyAuthToken } from "@/lib/firebase/admin";
-import { requireFeature } from "@/lib/api/subscription";
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const gate = await requireFeature(request, "activityManager");
-    if (gate) return gate;
-
     const { id } = await params;
 
     if (!adminDb) {
@@ -36,9 +32,6 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const gate = await requireFeature(request, "activityManager");
-    if (gate) return gate;
-
     const { id } = await params;
 
     if (!adminDb) {
@@ -69,9 +62,6 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const gate = await requireFeature(request, "activityManager");
-    if (gate) return gate;
-
     const { id } = await params;
 
     if (!adminDb) {

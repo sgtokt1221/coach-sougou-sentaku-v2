@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb, verifyAuthToken } from "@/lib/firebase/admin";
-import { requireFeature } from "@/lib/api/subscription";
-import type { Activity, ActivityCreateRequest, ActivityCategory } from "@/lib/types/activity";
+import type {
+  Activity,
+  ActivityCreateRequest,
+  ActivityCategory,
+  StructuredActivityData,
+} from "@/lib/types/activity";
 
 export async function GET(request: NextRequest) {
   try {
-    const gate = await requireFeature(request, "activityManager");
-    if (gate) return gate;
-
     const auth = await verifyAuthToken(request);
     const uid = auth?.uid ?? (process.env.NODE_ENV === "development" ? "dev-user" : null);
 
@@ -41,9 +42,6 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const gate = await requireFeature(request, "activityManager");
-    if (gate) return gate;
-
     const auth = await verifyAuthToken(request);
     const uid = auth?.uid ?? (process.env.NODE_ENV === "development" ? "dev-user" : null);
 
@@ -54,8 +52,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }
 
-    const body: ActivityCreateRequest = await request.json();
-    const { title, category, period, description } = body;
+    const body: ActivityCreateRequest & { structuredData?: StructuredActivityData } =
+      await request.json();
+    const { title, category, period, description, structuredData } = body;
 
     if (!title || !category || !period?.start || !description) {
       return NextResponse.json(
@@ -71,6 +70,7 @@ export async function POST(request: NextRequest) {
       category,
       period,
       description,
+      ...(structuredData ? { structuredData } : {}),
       optimizations: [],
       createdAt: now,
       updatedAt: now,

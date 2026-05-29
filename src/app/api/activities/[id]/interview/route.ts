@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireFeature } from "@/lib/api/subscription";
 import { buildActivityInterviewPrompt } from "@/lib/ai/prompts/activity";
 
 interface InterviewRequest {
@@ -12,9 +11,6 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const gate = await requireFeature(request, "activityManager");
-    if (gate) return gate;
-
     await params;
     const body: InterviewRequest = await request.json();
     const { message, history } = body;
