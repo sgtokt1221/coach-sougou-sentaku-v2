@@ -27,6 +27,7 @@ import {
   MessageSquare,
   FileBarChart,
   Crown,
+  Compass,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -90,7 +91,7 @@ const studentNavGroups: NavGroup[] = [
     title: "Discover",
     items: [
       { label: "自己分析", href: "/student/self-analysis", icon: Lightbulb, badge: SelfAnalysisBadge },
-      { label: "入試スケジュール", href: "/student/universities/schedule", icon: GraduationCap },
+      { label: "志望校探索", href: "/student/universities/explore", icon: Compass },
     ],
   },
   {
