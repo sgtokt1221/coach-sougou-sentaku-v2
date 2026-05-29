@@ -18,6 +18,16 @@ const OPENING_MESSAGE: CoachMessage = {
   at: new Date(0).toISOString(),
 };
 
+/** クイック質問サジェスト (= 何を聞けばよいか分からない生徒の足場) */
+const QUICK_PROMPTS = [
+  "ここから何を書けばいい?",
+  "この段落、 どう続ければいい?",
+  "具体例が思いつかない",
+  "結論をどうまとめる?",
+  "主張をもっと強くしたい",
+  "書き出しの例を教えて",
+];
+
 interface EssayCoachChatProps {
   topic: string;
   draft: string;
@@ -155,7 +165,20 @@ export function EssayCoachChat({
           </div>
         )}
       </div>
-      <div className="border-t p-3">
+      <div className="border-t p-3 space-y-2">
+        <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
+          {QUICK_PROMPTS.map((p) => (
+            <button
+              key={p}
+              type="button"
+              onClick={() => setInput(p)}
+              disabled={sending}
+              className="shrink-0 rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-xs text-teal-800 hover:bg-teal-100 disabled:opacity-50 cursor-pointer whitespace-nowrap"
+            >
+              {p}
+            </button>
+          ))}
+        </div>
         <div className="flex items-end gap-2">
           <Textarea
             value={input}
