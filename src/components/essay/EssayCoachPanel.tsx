@@ -10,6 +10,8 @@ import {
   Sprout,
   FileText,
   BarChart3,
+  Search,
+  ExternalLink,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -95,7 +97,7 @@ const FACULTY_TOPIC_DATA: Record<string, FacultyTopicData> = {
   "art-sports": artSportsTopics,
 };
 
-type TabId = "reference" | "coach" | "ap" | "neta" | "self";
+type TabId = "reference" | "coach" | "ap" | "neta" | "self" | "search";
 
 // PastQuestionChart の chart data type (既存モデルに合わせる、詳細は chart コンポーネントに委ねる)
 type PastQuestionChartData = Parameters<typeof PastQuestionChart>[0]["charts"];
@@ -156,6 +158,7 @@ const SECONDARY_TABS: TabDef[] = [
   { id: "ap", label: "AP", Icon: Target },
   { id: "neta", label: "ネタ", Icon: BookOpen },
   { id: "self", label: "自己分析", Icon: Sprout },
+  { id: "search", label: "検索", Icon: Search },
 ];
 
 export function EssayCoachPanel(props: EssayCoachPanelProps) {
@@ -268,8 +271,72 @@ function PanelBody({
           <NetaReference universityId={universityId} facultyId={facultyId} />
         )}
         {active === "self" && <SelfAnalysisReference />}
+        {active === "search" && <GoogleSearchPanel />}
       </div>
     </Card>
+  );
+}
+
+/** Google 検索フォーム (= 別タブで google.com を開く)。
+ *  iframe 埋め込みは X-Frame-Options で拒否されるため新規タブ起動方式 */
+function GoogleSearchPanel() {
+  const [query, setQuery] = useState("");
+
+  const open = (q: string) => {
+    const trimmed = q.trim();
+    if (!trimmed) return;
+    window.open(
+      `https://www.google.com/search?q=${encodeURIComponent(trimmed)}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
+  };
+
+  return (
+    <div className="h-full overflow-y-auto p-4 space-y-3">
+      <div className="flex items-center gap-2">
+        <Search className="size-4 text-teal-600" />
+        <span className="text-sm font-semibold">Google検索</span>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        ネタ集めや出典確認に。検索結果は新しいタブで開きます。
+      </p>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          open(query);
+        }}
+        className="flex items-center gap-2"
+      >
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="キーワードを入力"
+          className="flex-1 rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+        />
+        <Button type="submit" size="sm" className="gap-1">
+          <Search className="size-4" />
+          検索
+        </Button>
+      </form>
+      {query.trim() && (
+        <button
+          type="button"
+          onClick={() =>
+            window.open(
+              `https://scholar.google.com/scholar?q=${encodeURIComponent(query.trim())}`,
+              "_blank",
+              "noopener,noreferrer",
+            )
+          }
+          className="text-xs text-teal-700 hover:underline flex items-center gap-1"
+        >
+          <ExternalLink className="size-3" />
+          Google Scholarで論文検索
+        </button>
+      )}
+    </div>
   );
 }
 
