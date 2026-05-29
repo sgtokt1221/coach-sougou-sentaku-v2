@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import Script from "next/script";
 import {
   MessageSquare,
   Target,
@@ -277,34 +278,75 @@ function PanelBody({
   );
 }
 
-/** Google 検索フォーム (= 別タブで google.com を開く)。
- *  iframe 埋め込みは X-Frame-Options で拒否されるため新規タブ起動方式 */
+/**
+ * Google Programmable Search Engine (PSE) 埋め込み検索パネル。
+ *
+ * - 環境変数 NEXT_PUBLIC_GOOGLE_PSE_CX に PSE の Search Engine ID を設定すると
+ *   パネル内に検索ボックス + 結果一覧を直接描画する (= サイト内ブラウジング体験)
+ * - 未設定時は fallback として新規タブ起動方式の入力フォームを表示
+ * - 個別リンク先サイトは各社の X-Frame-Options により iframe 化不可なので、
+ *   結果リンクは別タブで開かれる仕様 (= PSE デフォルト挙動)
+ */
 function GoogleSearchPanel() {
-  const [query, setQuery] = useState("");
+  const cx = process.env.NEXT_PUBLIC_GOOGLE_PSE_CX;
+  if (!cx) return <GoogleSearchFallback />;
+  return <GoogleSearchEmbedded cx={cx} />;
+}
 
-  const open = (q: string) => {
+function GoogleSearchEmbedded({ cx }: { cx: string }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // タブ切り替えで再マウントされたとき gcse が DOM を取り直すように
+  // 明示的に div を空にしてから PSE スクリプトに rerender を促す
+  useEffect(() => {
+    const w = window as unknown as {
+      google?: { search?: { cse?: { element?: { go?: () => void } } } };
+    };
+    w.google?.search?.cse?.element?.go?.();
+  }, []);
+
+  return (
+    <div className="h-full overflow-y-auto p-3 space-y-2">
+      <div className="flex items-center gap-2">
+        <Search className="size-4 text-teal-600" />
+        <span className="text-sm font-semibold">Google検索</span>
+      </div>
+      <Script
+        src={`https://cse.google.com/cse.js?cx=${encodeURIComponent(cx)}`}
+        strategy="afterInteractive"
+      />
+      <div ref={containerRef} className="gcse-search" />
+    </div>
+  );
+}
+
+function GoogleSearchFallback() {
+  const [query, setQuery] = useState("");
+  const open = (q: string, target: "google" | "scholar") => {
     const trimmed = q.trim();
     if (!trimmed) return;
-    window.open(
-      `https://www.google.com/search?q=${encodeURIComponent(trimmed)}`,
-      "_blank",
-      "noopener,noreferrer",
-    );
+    const url =
+      target === "scholar"
+        ? `https://scholar.google.com/scholar?q=${encodeURIComponent(trimmed)}`
+        : `https://www.google.com/search?q=${encodeURIComponent(trimmed)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
   };
-
   return (
     <div className="h-full overflow-y-auto p-4 space-y-3">
       <div className="flex items-center gap-2">
         <Search className="size-4 text-teal-600" />
         <span className="text-sm font-semibold">Google検索</span>
       </div>
-      <p className="text-xs text-muted-foreground">
-        ネタ集めや出典確認に。検索結果は新しいタブで開きます。
+      <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded p-2 leading-relaxed">
+        パネル内ブラウジングを有効にするには Google Programmable Search Engine
+        (PSE) の Search Engine ID を環境変数{" "}
+        <code className="font-mono text-xs">NEXT_PUBLIC_GOOGLE_PSE_CX</code>{" "}
+        に設定してください。 設定までは別タブ起動方式で動作します。
       </p>
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          open(query);
+          open(query, "google");
         }}
         className="flex items-center gap-2"
       >
@@ -323,13 +365,7 @@ function GoogleSearchPanel() {
       {query.trim() && (
         <button
           type="button"
-          onClick={() =>
-            window.open(
-              `https://scholar.google.com/scholar?q=${encodeURIComponent(query.trim())}`,
-              "_blank",
-              "noopener,noreferrer",
-            )
-          }
+          onClick={() => open(query, "scholar")}
           className="text-xs text-teal-700 hover:underline flex items-center gap-1"
         >
           <ExternalLink className="size-3" />
