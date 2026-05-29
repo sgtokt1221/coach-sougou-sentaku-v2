@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { extractFromHtml } from "@extractus/article-extractor";
 import { requireRole } from "@/lib/api/auth";
+import dns from "node:dns";
+import { Agent } from "undici";
 
 /**
  * リーダー API。
@@ -17,9 +19,32 @@ import { requireRole } from "@/lib/api/auth";
 
 const MAX_BYTES = 3_000_000;
 const FETCH_TIMEOUT_MS = 9000;
-const MAX_REDIRECTS = 5;
 
-/** プライベート/内部向けホストを遮断 (SSRF 対策) */
+/** IP アドレス(文字列)がプライベート/ループバック/リンクローカル/マルチキャスト等か */
+function isBlockedIp(ip: string): boolean {
+  const h = ip.toLowerCase().replace(/^\[|\]$/g, "");
+  // IPv4-mapped IPv6 (::ffff:127.0.0.1 等) は内側の IPv4 で判定
+  const mapped = /^::ffff:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/.exec(h);
+  if (mapped) return isBlockedIp(mapped[1]);
+  const m = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(h);
+  if (m) {
+    const a = Number(m[1]);
+    const b = Number(m[2]);
+    if (a === 0 || a === 10 || a === 127) return true;
+    if (a === 169 && b === 254) return true; // link-local + 169.254.169.254 (cloud metadata)
+    if (a === 172 && b >= 16 && b <= 31) return true;
+    if (a === 192 && b === 168) return true;
+    if (a === 100 && b >= 64 && b <= 127) return true; // CGNAT
+    if (a >= 224) return true; // multicast / reserved
+    return false;
+  }
+  // IPv6 ループバック/未指定/リンクローカル/ULA
+  if (h === "::1" || h === "::") return true;
+  if (h.startsWith("fe80:") || h.startsWith("fc") || h.startsWith("fd")) return true;
+  return false;
+}
+
+/** ホスト名の早期遮断 (内部向けの名前・IP リテラル)。DNS 解決後の検証は safeLookup で行う */
 function isBlockedHost(hostname: string): boolean {
   const h = hostname.toLowerCase().replace(/^\[|\]$/g, "");
   if (
@@ -30,24 +55,52 @@ function isBlockedHost(hostname: string): boolean {
   ) {
     return true;
   }
-  // IPv4 リテラル
-  const m = h.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
-  if (m) {
-    const a = Number(m[1]);
-    const b = Number(m[2]);
-    if (a === 0 || a === 10 || a === 127) return true;
-    if (a === 169 && b === 254) return true; // link-local + 169.254.169.254 (cloud metadata)
-    if (a === 172 && b >= 16 && b <= 31) return true;
-    if (a === 192 && b === 168) return true;
-    if (a === 100 && b >= 64 && b <= 127) return true; // CGNAT
-    if (a >= 224) return true; // multicast / reserved
-  }
-  // IPv6 ループバック/リンクローカル/ULA
-  if (h === "::1" || h === "::" || h.startsWith("fe80:") || h.startsWith("fc") || h.startsWith("fd")) {
-    return true;
-  }
+  // IP リテラル(IPv4 / IPv6)はその場で判定
+  if (/^[\d.]+$/.test(h) || h.includes(":")) return isBlockedIp(h);
   return false;
 }
+
+/**
+ * undici の connect で使う DNS lookup。
+ * 解決した全 IP を検証し、1つでもプライベート等なら接続を拒否する。
+ * 接続は検証済み IP に固定されるため、DNS リバインディング(解決後の再解決)も防げる。
+ * リダイレクトの各ホップでもこの lookup が走る。
+ */
+function safeLookup(
+  hostname: string,
+  options: dns.LookupOptions,
+  callback: (
+    err: NodeJS.ErrnoException | null,
+    address: string | dns.LookupAddress[],
+    family?: number
+  ) => void
+): void {
+  // 検証のため常に全アドレスを取得する
+  dns.lookup(hostname, { ...options, all: true, verbatim: true }, (err, addresses) => {
+    if (err) return callback(err, "");
+    const list = addresses as dns.LookupAddress[];
+    if (!list || list.length === 0) {
+      return callback(new Error("名前解決に失敗しました") as NodeJS.ErrnoException, "");
+    }
+    for (const a of list) {
+      if (isBlockedIp(a.address)) {
+        return callback(
+          new Error("内部アドレスへの接続は許可されていません") as NodeJS.ErrnoException,
+          ""
+        );
+      }
+    }
+    // 呼び出し側 (net.connect) が期待する形で返す
+    if (options.all) {
+      callback(null, list);
+    } else {
+      callback(null, list[0].address, list[0].family);
+    }
+  });
+}
+
+/** 接続時に解決 IP を検証する dispatcher (SSRF / DNS リバインディング対策) */
+const safeAgent = new Agent({ connect: { lookup: safeLookup } });
 
 function validateTarget(raw: string): URL | { error: string; status: number } {
   let parsed: URL;
@@ -65,48 +118,37 @@ function validateTarget(raw: string): URL | { error: string; status: number } {
   return parsed;
 }
 
-/** リダイレクトを手動追跡し、各ホップのホストを検証して SSRF を防ぐ */
+/**
+ * SSRF 安全な取得。
+ * 接続時に解決 IP を検証する dispatcher (safeAgent) を使うため、最初の URL だけでなく
+ * リダイレクト先の各ホップも接続時に検証される（プライベート IP に解決される名前・
+ * DNS リバインディングを遮断）。
+ */
 async function safeFetch(start: URL): Promise<Response | { error: string; status: number }> {
-  let current = start;
-  for (let i = 0; i <= MAX_REDIRECTS; i++) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-    let res: Response;
-    try {
-      res = await fetch(current.toString(), {
-        signal: controller.signal,
-        redirect: "manual",
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (compatible; CoachReader/1.0; +https://coach-app--coach-sougou-sentaku.asia-east1.hosted.app)",
-          Accept: "text/html,application/xhtml+xml",
-          "Accept-Language": "ja,en;q=0.8",
-        },
-      });
-    } catch {
-      clearTimeout(timer);
-      return { error: "ページの取得に失敗しました（タイムアウトまたは接続エラー）", status: 502 };
-    }
-    clearTimeout(timer);
-
-    // リダイレクト
-    if (res.status >= 300 && res.status < 400) {
-      const loc = res.headers.get("location");
-      if (!loc) return res;
-      let next: URL;
-      try {
-        next = new URL(loc, current);
-      } catch {
-        return { error: "リダイレクト先が不正です", status: 502 };
-      }
-      const v = validateTarget(next.toString());
-      if ("error" in v) return v;
-      current = next;
-      continue;
-    }
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
+    const res = await fetch(start.toString(), {
+      signal: controller.signal,
+      redirect: "follow",
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (compatible; CoachReader/1.0; +https://coach-app--coach-sougou-sentaku.asia-east1.hosted.app)",
+        Accept: "text/html,application/xhtml+xml",
+        "Accept-Language": "ja,en;q=0.8",
+      },
+      // undici 拡張: 接続する IP を検証する dispatcher
+      dispatcher: safeAgent,
+    } as RequestInit & { dispatcher: Agent });
     return res;
+  } catch {
+    return {
+      error: "ページの取得に失敗しました（タイムアウト・接続エラー・または許可されないアドレス）",
+      status: 502,
+    };
+  } finally {
+    clearTimeout(timer);
   }
-  return { error: "リダイレクトが多すぎます", status: 502 };
 }
 
 /** content-type ヘッダ → meta の順で charset を判定 (日本語 Shift_JIS 等に対応) */
