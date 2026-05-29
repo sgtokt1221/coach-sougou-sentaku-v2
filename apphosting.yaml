@@ -45,3 +45,7 @@ env:
     secret: STRIPE_WEBHOOK_SECRET
   - variable: STRIPE_PRO_PRICE_ID
     secret: STRIPE_PRO_PRICE_ID
+  # Google Programmable Search Engine の検索エンジン ID (cx)。
+  # クライアントに露出する非機密値のため Secret ではなく平文 value で設定。
+  - variable: NEXT_PUBLIC_GOOGLE_PSE_CX
+    value: b3859904ace8b4d96

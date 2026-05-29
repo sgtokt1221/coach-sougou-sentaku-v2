@@ -2,9 +2,10 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, PartyPopper, Sparkles, Pencil } from "lucide-react";
+import { ArrowLeft, PartyPopper, Sparkles, Pencil, AlertTriangle } from "lucide-react";
 import { StepIndicator } from "@/components/self-analysis/StepIndicator";
 import { WorkshopChat } from "@/components/self-analysis/WorkshopChat";
 import { SegmentControl } from "@/components/shared/SegmentControl";
@@ -25,6 +26,7 @@ export default function SelfAnalysisPage() {
   const [stepsData, setStepsData] = useState<Record<number, Record<string, unknown>>>({});
   const [allComplete, setAllComplete] = useState(false);
   const [restored, setRestored] = useState(false);
+  const [saveFailed, setSaveFailed] = useState(false);
   const [view, setView] = useState<"tree" | "workshop">("tree");
   // 編集中の step: 完了済みの果実をクリックで編集モードに入ったときに記録
   const [editingStep, setEditingStep] = useState<number | null>(null);
@@ -37,7 +39,7 @@ export default function SelfAnalysisPage() {
       setCompletedSteps(saved);
       setCurrentStep(saved + 1 <= 7 ? saved + 1 : 7);
       const restoredData: Record<number, Record<string, unknown>> = {};
-      const STEP_KEYS = ["values", "strengths", "weaknesses", "interests", "vision", "identity"] as const;
+      const STEP_KEYS = ["values", "strengths", "weaknesses", "interests", "vision", "identity", "synthesis"] as const;
       STEP_KEYS.forEach((key, i) => {
         const val = data[key];
         if (val && typeof val === "object" && Object.keys(val as object).length > 0) {
@@ -53,7 +55,12 @@ export default function SelfAnalysisPage() {
   }, [data, restored]);
 
   const saveProgress = useCallback(
-    (updatedStepsData: Record<number, Record<string, unknown>>, updatedChatHistories: StepChatHistory[], newCompleted: number, isComplete: boolean) => {
+    async (
+      updatedStepsData: Record<number, Record<string, unknown>>,
+      updatedChatHistories: StepChatHistory[],
+      newCompleted: number,
+      isComplete: boolean
+    ): Promise<boolean> => {
       const payload = {
         userId: "me",
         values: updatedStepsData[1] ?? {},
@@ -62,17 +69,50 @@ export default function SelfAnalysisPage() {
         interests: updatedStepsData[4] ?? {},
         vision: updatedStepsData[5] ?? {},
         identity: updatedStepsData[6] ?? {},
+        synthesis: updatedStepsData[7] ?? {},
         completedSteps: newCompleted,
         isComplete,
         chatHistory: updatedChatHistories,
       };
-      authFetch("/api/self-analysis", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      }).catch(() => {});
+      try {
+        const res = await authFetch("/api/self-analysis", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        return res.ok;
+      } catch {
+        return false;
+      }
     },
     []
+  );
+
+  // 保存に成功したときだけ state を進める。失敗時は進めず、再試行できるようにする
+  // （以前は保存失敗を握り潰したまま step を進めていたため、リロードで「データが消えた」ように見えた）。
+  const persistAndAdvance = useCallback(
+    async (
+      updatedStepsData: Record<number, Record<string, unknown>>,
+      updatedChatHistories: StepChatHistory[],
+      fromStep: number
+    ) => {
+      const newCompleted = Math.max(completedSteps, fromStep);
+      const isLast = fromStep >= 7;
+      const ok = await saveProgress(updatedStepsData, updatedChatHistories, newCompleted, isLast);
+      if (!ok) {
+        setSaveFailed(true);
+        toast.error("保存に失敗しました。通信環境を確認して「保存を再試行」を押してください。");
+        return;
+      }
+      setSaveFailed(false);
+      setCompletedSteps(newCompleted);
+      if (isLast) {
+        setAllComplete(true);
+      } else {
+        setCurrentStep(fromStep + 1);
+      }
+    },
+    [completedSteps, saveProgress]
   );
 
   const handleStepComplete = useCallback(
@@ -86,19 +126,15 @@ export default function SelfAnalysisPage() {
       ];
       setChatHistories(updatedChatHistories);
 
-      const newCompleted = Math.max(completedSteps, currentStep);
-      setCompletedSteps(newCompleted);
-
-      if (currentStep >= 7) {
-        setAllComplete(true);
-        saveProgress(updatedStepsData, updatedChatHistories, 7, true);
-      } else {
-        saveProgress(updatedStepsData, updatedChatHistories, newCompleted, false);
-        setCurrentStep(currentStep + 1);
-      }
+      void persistAndAdvance(updatedStepsData, updatedChatHistories, currentStep);
     },
-    [currentStep, completedSteps, stepsData, chatHistories, saveProgress]
+    [currentStep, stepsData, chatHistories, persistAndAdvance]
   );
+
+  // 保存失敗時の再試行: メモリ上の最新 state を使って同じ step を再保存する
+  const handleRetrySave = useCallback(() => {
+    void persistAndAdvance(stepsData, chatHistories, currentStep);
+  }, [stepsData, chatHistories, currentStep, persistAndAdvance]);
 
   const currentMessages =
     chatHistories.find((h) => h.step === currentStep)?.messages ?? [];
@@ -199,6 +235,21 @@ export default function SelfAnalysisPage() {
             completedSteps={completedSteps}
             onStepClick={(step) => setCurrentStep(step)}
           />
+
+          {/* 保存失敗の警告 + 再試行 */}
+          {saveFailed && (
+            <div className="flex items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50/80 dark:border-red-900 dark:bg-red-950/30 px-3 py-2">
+              <div className="flex items-center gap-2 text-xs">
+                <AlertTriangle className="size-3.5 text-red-600 dark:text-red-400" />
+                <span className="font-medium text-red-800 dark:text-red-200">
+                  保存に失敗しました。通信環境を確認してください。
+                </span>
+              </div>
+              <Button variant="outline" size="sm" onClick={handleRetrySave}>
+                保存を再試行
+              </Button>
+            </div>
+          )}
 
           {/* 編集モード表示 */}
           {editingStep != null && (

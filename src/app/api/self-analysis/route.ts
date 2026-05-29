@@ -1,13 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 
-async function resolveUserId(request: NextRequest, rawId: string): Promise<string> {
+/**
+ * "me" を実 uid に解決する。トークン検証に失敗した場合、以前は rawId ("me") に
+ * フォールバックして `selfAnalysis/me` という共有ドキュメントに書き込んでいたため、
+ * 別ユーザーのデータと混線・行方不明になる原因になっていた。
+ * 解決できない場合は null を返し、呼び出し側で 401 を返す。
+ * dev モードのみ requireRole と同様に "dev-user" にフォールバックする。
+ */
+async function resolveUserId(
+  request: NextRequest,
+  rawId: string
+): Promise<string | null> {
   if (rawId !== "me") return rawId;
   try {
     const { verifyAuthToken } = await import("@/lib/firebase/admin");
     const decoded = await verifyAuthToken(request);
     if (decoded?.uid) return decoded.uid;
   } catch {}
-  return rawId;
+  if (process.env.NODE_ENV === "development") return "dev-user";
+  return null;
 }
 
 export async function GET(request: NextRequest) {
@@ -22,7 +33,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    userId = await resolveUserId(request, userId);
+    const resolvedUserId = await resolveUserId(request, userId);
+    if (!resolvedUserId) {
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+    }
+    userId = resolvedUserId;
 
     const { adminDb } = await import("@/lib/firebase/admin");
     if (adminDb) {
@@ -55,6 +70,9 @@ export async function POST(request: NextRequest) {
     }
 
     const resolvedId = await resolveUserId(request, body.userId);
+    if (!resolvedId) {
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+    }
 
     // リセットリクエスト (= 削除)。 監査ログを残してから delete
     if (body.reset) {
@@ -92,6 +110,7 @@ export async function POST(request: NextRequest) {
           interests: body.interests ?? null,
           vision: body.vision ?? null,
           identity: body.identity ?? null,
+          synthesis: body.synthesis ?? null,
           completedSteps: body.completedSteps ?? 0,
           isComplete: body.isComplete ?? false,
           chatHistory: body.chatHistory ?? [],

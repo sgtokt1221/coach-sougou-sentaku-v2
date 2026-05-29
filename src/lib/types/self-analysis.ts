@@ -7,6 +7,7 @@ export interface SelfAnalysis {
   interests: InterestAnalysis;
   vision: VisionAnalysis;
   identity: IdentityAnalysis;
+  synthesis: SynthesisAnalysis;
   completedSteps: number;
   isComplete: boolean;
   chatHistory: StepChatHistory[];
@@ -49,6 +50,19 @@ export interface IdentityAnalysis {
   selfStatement: string;
   uniqueNarrative: string;
   apConnection: string;
+}
+
+/**
+ * Step 7「統合・言語化」: 全ステップを統合した最終的な「自分ストーリー」。
+ * Step 6 (大学接続) とはフィールドを分離し、独立した成果物として保存・表示する。
+ */
+export interface SynthesisAnalysis {
+  /** 200字程度の自己紹介文 */
+  selfStatement: string;
+  /** 300字程度の自分ストーリー（価値観〜将来像を貫く一貫した物語） */
+  coreNarrative: string;
+  /** 大学・APとの接続を含む200字程度のまとめ */
+  apSummary: string;
 }
 
 export interface StepChatHistory {

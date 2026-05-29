@@ -61,6 +61,9 @@ const KEY_LABELS: Record<string, string> = {
   selfStatement: "自己紹介文",
   uniqueNarrative: "自分だけのストーリー",
   apConnection: "APとのつながり",
+  // Step 7: 統合・言語化
+  coreNarrative: "自分ストーリー",
+  apSummary: "大学・APとのまとめ",
 };
 
 /**

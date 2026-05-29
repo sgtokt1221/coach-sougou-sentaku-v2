@@ -247,8 +247,8 @@ const STEP_PROMPTS: Record<number, string> = {
   "isComplete": true,
   "stepData": {
     "selfStatement": "200字程度の自己紹介文",
-    "uniqueNarrative": "300字程度の自分ストーリー",
-    "apConnection": "大学・APとの接続を含む200字程度のまとめ"
+    "coreNarrative": "300字程度の自分ストーリー（価値観〜将来像を貫く一貫した物語）",
+    "apSummary": "大学・APとの接続を含む200字程度のまとめ"
   }
 }
 \`\`\``,
