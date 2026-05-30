@@ -1,8 +1,7 @@
 "use client";
 
-import { useMemo, useState, useEffect, useRef, useCallback } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import Script from "next/script";
 import {
   MessageSquare,
   Target,
@@ -11,12 +10,7 @@ import {
   Sprout,
   FileText,
   BarChart3,
-  Search,
-  ExternalLink,
-  ArrowLeft,
-  Loader2,
 } from "lucide-react";
-import { authFetch } from "@/lib/api/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -101,7 +95,7 @@ const FACULTY_TOPIC_DATA: Record<string, FacultyTopicData> = {
   "art-sports": artSportsTopics,
 };
 
-type TabId = "reference" | "coach" | "ap" | "neta" | "self" | "search";
+type TabId = "reference" | "coach" | "ap" | "neta" | "self";
 
 // PastQuestionChart の chart data type (既存モデルに合わせる、詳細は chart コンポーネントに委ねる)
 type PastQuestionChartData = Parameters<typeof PastQuestionChart>[0]["charts"];
@@ -162,7 +156,6 @@ const SECONDARY_TABS: TabDef[] = [
   { id: "ap", label: "AP", Icon: Target },
   { id: "neta", label: "ネタ", Icon: BookOpen },
   { id: "self", label: "自己分析", Icon: Sprout },
-  { id: "search", label: "検索", Icon: Search },
 ];
 
 export function EssayCoachPanel(props: EssayCoachPanelProps) {
@@ -275,265 +268,8 @@ function PanelBody({
           <NetaReference universityId={universityId} facultyId={facultyId} />
         )}
         {active === "self" && <SelfAnalysisReference />}
-        {active === "search" && <GoogleSearchPanel />}
       </div>
     </Card>
-  );
-}
-
-/**
- * Google Programmable Search Engine (PSE) 埋め込み検索パネル。
- *
- * - 環境変数 NEXT_PUBLIC_GOOGLE_PSE_CX に PSE の Search Engine ID を設定すると
- *   パネル内に検索ボックス + 結果一覧を直接描画する (= サイト内ブラウジング体験)
- * - 未設定時は fallback として新規タブ起動方式の入力フォームを表示
- * - 個別リンク先サイトは各社の X-Frame-Options により iframe 化不可なので、
- *   結果リンクは別タブで開かれる仕様 (= PSE デフォルト挙動)
- */
-function GoogleSearchPanel() {
-  const cx = process.env.NEXT_PUBLIC_GOOGLE_PSE_CX;
-  if (!cx) return <GoogleSearchFallback />;
-  return <GoogleSearchEmbedded cx={cx} />;
-}
-
-interface ReaderArticle {
-  title: string;
-  content: string;
-  author: string | null;
-  source: string;
-  url: string;
-}
-
-function escapeAttr(s: string): string {
-  return s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
-}
-
-/** 抽出した本文を、スタイル隔離した sandbox iframe 用の HTML 文書に整形 */
-function buildReaderDoc(a: ReaderArticle): string {
-  return `<!doctype html><html lang="ja"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<base href="${escapeAttr(a.url)}" target="_blank">
-<style>
-  :root { color-scheme: light dark; }
-  body { margin:0; padding:16px 18px 40px; font-family: system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif; line-height:1.85; color:#1f2937; background:#fff; -webkit-text-size-adjust:100%; word-break:break-word; }
-  .r-article { max-width:720px; margin:0 auto; font-size:15px; }
-  .r-article img,.r-article figure img,.r-article video { max-width:100%; height:auto; border-radius:8px; }
-  .r-article h1,.r-article h2,.r-article h3 { line-height:1.45; margin:1.4em 0 .5em; }
-  .r-article p { margin:0 0 1em; }
-  .r-article a { color:#0d9488; }
-  .r-article code { background:#f3f4f6; border-radius:6px; padding:.1em .3em; }
-  .r-article pre { background:#f3f4f6; border-radius:6px; padding:12px; overflow:auto; }
-  .r-article blockquote { margin:1em 0; padding:.2em 1em; border-left:3px solid #14b8a6; color:#4b5563; }
-  .r-article figure { margin:1em 0; }
-  .r-article table { border-collapse:collapse; display:block; max-width:100%; overflow:auto; }
-  .r-article td,.r-article th { border:1px solid #e5e7eb; padding:6px 8px; }
-  @media (prefers-color-scheme: dark){ body{background:#0b0f17;color:#e5e7eb;} .r-article a{color:#2dd4bf;} .r-article code,.r-article pre{background:#1f2937;} .r-article blockquote{color:#9ca3af;} }
-</style></head>
-<body><div class="r-article">${a.content}</div></body></html>`;
-}
-
-function GoogleSearchEmbedded({ cx }: { cx: string }) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [reader, setReader] = useState<{ url: string } | null>(null);
-  const [article, setArticle] = useState<ReaderArticle | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // PSE の初期化（タブ切替後の再描画を促す）
-  useEffect(() => {
-    const w = window as unknown as {
-      google?: { search?: { cse?: { element?: { go?: () => void } } } };
-    };
-    w.google?.search?.cse?.element?.go?.();
-  }, []);
-
-  const loadReader = useCallback(async (url: string) => {
-    setReader({ url });
-    setArticle(null);
-    setError(null);
-    setLoading(true);
-    try {
-      const res = await authFetch(`/api/reader?url=${encodeURIComponent(url)}`);
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data?.content) {
-        setError(data?.error || "このページはパネル内で表示できませんでした。");
-      } else {
-        setArticle(data as ReaderArticle);
-      }
-    } catch {
-      setError("通信エラーが発生しました。");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // 検索結果リンクのクリックを横取りし、別タブ/オーバーレイの代わりにパネル内リーダーで開く。
-  // document の capture phase で受けることで PSE 自身のハンドラより先に処理する。
-  useEffect(() => {
-    const onClick = (e: MouseEvent) => {
-      const container = containerRef.current;
-      if (!container) return;
-      const a = (e.target as HTMLElement | null)?.closest?.("a");
-      if (!a || !container.contains(a)) return;
-      const href = a.getAttribute("href") || "";
-      if (!/^https?:\/\//i.test(href)) return;
-      let host = "";
-      try {
-        host = new URL(href).hostname;
-      } catch {
-        return;
-      }
-      // PSE 自身の UI リンク（google 系）は通常どおり動作させる
-      if (
-        /(^|\.)google\.com$/i.test(host) ||
-        host.includes("cse.google") ||
-        host.includes("googleusercontent")
-      ) {
-        return;
-      }
-      e.preventDefault();
-      e.stopPropagation();
-      loadReader(href);
-    };
-    document.addEventListener("click", onClick, true);
-    return () => document.removeEventListener("click", onClick, true);
-  }, [loadReader]);
-
-  return (
-    <div className="relative h-full">
-      {/* 検索ビュー（常時マウント。リーダー表示中は非表示にして状態を保持） */}
-      <div className={reader ? "hidden" : "h-full overflow-y-auto p-3 space-y-2"}>
-        <div className="flex items-center gap-2">
-          <Search className="size-4 text-teal-600" />
-          <span className="text-sm font-semibold">Google検索</span>
-        </div>
-        <Script
-          src={`https://cse.google.com/cse.js?cx=${encodeURIComponent(cx)}`}
-          strategy="afterInteractive"
-        />
-        <div ref={containerRef} className="gcse-search" />
-      </div>
-
-      {/* リーダービュー */}
-      {reader && (
-        <div className="flex h-full flex-col">
-          <div className="flex items-center gap-2 border-b px-3 py-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="gap-1"
-              onClick={() => {
-                setReader(null);
-                setArticle(null);
-                setError(null);
-              }}
-            >
-              <ArrowLeft className="size-4" />
-              検索に戻る
-            </Button>
-            <span className="flex-1 truncate text-xs text-muted-foreground">
-              {article?.title || reader.url}
-            </span>
-            <a
-              href={reader.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex shrink-0 items-center gap-1 text-xs text-teal-700 hover:underline"
-            >
-              <ExternalLink className="size-3.5" />
-              元ページ
-            </a>
-          </div>
-
-          <div className="min-h-0 flex-1">
-            {loading && (
-              <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                <Loader2 className="mr-2 size-4 animate-spin" />
-                読み込み中…
-              </div>
-            )}
-            {!loading && error && (
-              <div className="space-y-3 p-4 text-sm">
-                <p className="text-muted-foreground">{error}</p>
-                <a
-                  href={reader.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-teal-700 hover:underline"
-                >
-                  <ExternalLink className="size-3.5" />
-                  元のページを新しいタブで開く
-                </a>
-              </div>
-            )}
-            {!loading && !error && article && (
-              <iframe
-                title={article.title || "リーダー"}
-                sandbox="allow-popups allow-popups-to-escape-sandbox"
-                srcDoc={buildReaderDoc(article)}
-                className="h-full w-full border-0"
-              />
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function GoogleSearchFallback() {
-  const [query, setQuery] = useState("");
-  const open = (q: string, target: "google" | "scholar") => {
-    const trimmed = q.trim();
-    if (!trimmed) return;
-    const url =
-      target === "scholar"
-        ? `https://scholar.google.com/scholar?q=${encodeURIComponent(trimmed)}`
-        : `https://www.google.com/search?q=${encodeURIComponent(trimmed)}`;
-    window.open(url, "_blank", "noopener,noreferrer");
-  };
-  return (
-    <div className="h-full overflow-y-auto p-4 space-y-3">
-      <div className="flex items-center gap-2">
-        <Search className="size-4 text-teal-600" />
-        <span className="text-sm font-semibold">Google検索</span>
-      </div>
-      <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded p-2 leading-relaxed">
-        パネル内ブラウジングを有効にするには Google Programmable Search Engine
-        (PSE) の Search Engine ID を環境変数{" "}
-        <code className="font-mono text-xs">NEXT_PUBLIC_GOOGLE_PSE_CX</code>{" "}
-        に設定してください。 設定までは別タブ起動方式で動作します。
-      </p>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          open(query, "google");
-        }}
-        className="flex items-center gap-2"
-      >
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="キーワードを入力"
-          className="flex-1 rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-        />
-        <Button type="submit" size="sm" className="gap-1">
-          <Search className="size-4" />
-          検索
-        </Button>
-      </form>
-      {query.trim() && (
-        <button
-          type="button"
-          onClick={() => open(query, "scholar")}
-          className="text-xs text-teal-700 hover:underline flex items-center gap-1"
-        >
-          <ExternalLink className="size-3" />
-          Google Scholarで論文検索
-        </button>
-      )}
-    </div>
   );
 }
 

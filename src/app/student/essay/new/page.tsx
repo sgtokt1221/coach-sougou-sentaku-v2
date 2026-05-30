@@ -252,6 +252,7 @@ export default function EssayNewPage() {
         if (draft.selectedCompoundId)
           setSelectedCompoundId(draft.selectedCompoundId);
         setSavedDraftId(draftIdParam);
+        setActiveTab("new");
         setStep(2);
       } catch {
         // 復元失敗時は新規作成として続行
