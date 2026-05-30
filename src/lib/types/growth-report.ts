@@ -65,6 +65,11 @@ export interface PracticeQuestion {
    * 短答系 (例: 「30秒で述べ直して」) など模擬面接や小論文として成立しないものは false。
    */
   homeworkAssignable?: boolean;
+  /**
+   * 面接の想定深掘り質問 (2-3 件)。type==="interview" のときに生成され、
+   * 講師用「面接台本」として深掘りの流れを示す。
+   */
+  followUpQuestions?: string[];
 }
 
 export interface GrowthReport {

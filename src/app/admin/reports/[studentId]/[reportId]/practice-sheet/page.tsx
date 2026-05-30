@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useMemo, useRef } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Loader2, Printer } from "lucide-react";
+import { ArrowLeft, Loader2, Printer, AlertTriangle, ArrowUpRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAuthSWR } from "@/lib/api/swr";
@@ -159,6 +159,10 @@ function Body() {
             page-break-after: avoid;
             break-after: avoid;
           }
+          .weakness-box {
+            page-break-inside: avoid;
+            break-inside: avoid;
+          }
         }
       `}</style>
 
@@ -196,6 +200,56 @@ function Body() {
             印刷
           </Button>
         </div>
+
+        {/* この生徒の克服すべき弱点 (問題ページの冒頭に表示・印刷対応) */}
+        {showProblems && report.weaknessProgress.length > 0 && (
+          <section className="weakness-box rounded-lg border border-amber-300 bg-amber-50/60 p-4 print:border-gray-400 print:bg-transparent">
+            <h2 className="mb-2 flex items-center gap-2 text-sm font-bold text-amber-800 print:text-foreground print:text-[12pt]">
+              <AlertTriangle className="size-4 print:hidden" />
+              今回の重点弱点（苦手なところ）
+            </h2>
+            <div className="grid gap-1.5 sm:grid-cols-2 print:grid-cols-2">
+              {[...report.weaknessProgress]
+                .sort((a, b) => a.currentScore - b.currentScore)
+                .slice(0, 6)
+                .map((w) => {
+                  const statusLabel =
+                    w.status === "improved"
+                      ? "改善中"
+                      : w.status === "declined"
+                        ? "悪化"
+                        : "横ばい";
+                  const statusCls =
+                    w.status === "improved"
+                      ? "text-emerald-700"
+                      : w.status === "declined"
+                        ? "text-rose-700"
+                        : "text-muted-foreground";
+                  return (
+                    <div
+                      key={w.weakness}
+                      className="rounded border border-amber-200 bg-white p-2 text-xs print:border-gray-300 print:text-[10pt]"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="font-semibold">{w.weakness}</span>
+                        <span className={`shrink-0 font-medium ${statusCls} print:text-foreground`}>
+                          {statusLabel}
+                        </span>
+                      </div>
+                      <div className="mt-1 flex items-center gap-2 text-[11px] text-muted-foreground print:text-foreground/70 print:text-[9pt]">
+                        <span className="inline-flex items-center gap-0.5 tabular-nums">
+                          {w.previousScore.toFixed(1)}
+                          <ArrowUpRight className="size-3" />
+                          {w.currentScore.toFixed(1)} / 10
+                        </span>
+                        <span>・指摘 {w.attempts} 回</span>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          </section>
+        )}
 
         {/* 空状態 */}
         {questions.length === 0 ? (
@@ -250,16 +304,22 @@ function Body() {
                         </div>
                       )}
 
-                      {/* 書き込み欄: 罫線あり 12 行 */}
-                      <div className="mt-4">
-                        {Array.from({ length: 12 }).map((_, j) => (
-                          <div
-                            key={j}
-                            className="h-7 border-b border-gray-300"
-                            aria-hidden
-                          />
-                        ))}
-                      </div>
+                      {/* 小論文: 罫線書き込み欄 12 行 / 面接: 口頭回答の体裁 */}
+                      {isEssay ? (
+                        <div className="mt-4">
+                          {Array.from({ length: 12 }).map((_, j) => (
+                            <div
+                              key={j}
+                              className="h-7 border-b border-gray-300"
+                              aria-hidden
+                            />
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="mt-3 text-xs text-muted-foreground print:text-[10pt]">
+                          ※ この質問は面接形式です。口頭で回答してください。
+                        </p>
+                      )}
                     </section>
                   );
                 })}
@@ -324,6 +384,20 @@ function Body() {
                           <p className="mt-1 text-[11px] text-muted-foreground print:text-[9.5pt]">
                             <span className="font-semibold">関連弱点:</span> {q.relatedWeakness}
                           </p>
+                        )}
+
+                        {/* 面接台本: 想定される深掘り質問 */}
+                        {!isEssay && q.followUpQuestions && q.followUpQuestions.length > 0 && (
+                          <div className="mt-3 rounded border border-indigo-200 bg-indigo-50/40 p-2 print:bg-transparent print:border-gray-300">
+                            <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-indigo-700 dark:text-indigo-400 print:text-foreground">
+                              想定される深掘り質問（面接台本）
+                            </div>
+                            <ol className="list-decimal space-y-0.5 pl-5 text-[11px] text-muted-foreground print:text-foreground/80 print:text-[10pt]">
+                              {q.followUpQuestions.map((f, j) => (
+                                <li key={j}>{f}</li>
+                              ))}
+                            </ol>
+                          </div>
                         )}
 
                         {/* 解答例 (メインコンテンツ。空でも枠は残す) */}

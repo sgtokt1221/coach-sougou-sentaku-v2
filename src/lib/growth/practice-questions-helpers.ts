@@ -161,6 +161,13 @@ export function normalizePracticeQuestion(
   if (q.teacherNotes && q.teacherNotes.trim().length > 0) {
     obj.teacherNotes = q.teacherNotes;
   }
+  // 面接の想定深掘り質問 (面接台本用)
+  if (type === "interview" && Array.isArray(q.followUpQuestions)) {
+    const fus = q.followUpQuestions
+      .filter((f): f is string => typeof f === "string" && f.trim().length > 0)
+      .slice(0, 4);
+    if (fus.length > 0) obj.followUpQuestions = fus;
+  }
 
   return obj;
 }

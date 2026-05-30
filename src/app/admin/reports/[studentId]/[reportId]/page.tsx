@@ -225,14 +225,13 @@ function Body() {
                   asChild
                   variant="outline"
                   size="sm"
-                  title="問題用紙の後に講師用解答シートも自動で出力されます (生徒には問題部分のみ渡してください)"
+                  title="問題用紙ページを開きます。内容を確認してから印刷してください (生徒には問題部分のみ渡してください)"
                 >
                   <Link
-                    href={`/admin/reports/${studentId}/${reportId}/practice-sheet?print=1`}
-                    target="_blank"
+                    href={`/admin/reports/${studentId}/${reportId}/practice-sheet`}
                   >
                     <ClipboardList className="mr-1.5 size-4" />
-                    問題用紙を印刷
+                    問題用紙を作成
                   </Link>
                 </Button>
               ) : (
