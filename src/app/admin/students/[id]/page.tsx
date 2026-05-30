@@ -81,6 +81,7 @@ import { CategorySelector } from "@/components/skill-check/CategorySelector";
 import type { SkillCheckStatus, AcademicCategory } from "@/lib/types/skill-check";
 import type { InterviewSkillCheckStatus } from "@/lib/types/interview-skill-check";
 import { StudentSkillRadar } from "@/components/admin/StudentSkillRadar";
+import { CategoryAverageRadar } from "@/components/admin/CategoryAverageRadar";
 
 const CERT_TYPES: { value: EnglishCert["type"]; label: string }[] = [
   { value: "EIKEN", label: "英検" },
@@ -564,6 +565,34 @@ function AdminStudentDetailPageInner() {
     date: p.date.slice(5, 10).replace("-", "/"),
   }));
 
+  // 日々の取り組みの項目別平均（全提出から算出）
+  const avgOf = (nums: number[]) =>
+    nums.length ? nums.reduce((a, b) => a + b, 0) / nums.length : 0;
+  const essayScoresList = essays
+    .map((e) => e.scores)
+    .filter((s): s is NonNullable<typeof s> => !!s);
+  const essayCategoryAvg =
+    essayScoresList.length > 0
+      ? {
+          structure: avgOf(essayScoresList.map((s) => s.structure)),
+          logic: avgOf(essayScoresList.map((s) => s.logic)),
+          expression: avgOf(essayScoresList.map((s) => s.expression)),
+          apAlignment: avgOf(essayScoresList.map((s) => s.apAlignment)),
+          originality: avgOf(essayScoresList.map((s) => s.originality)),
+        }
+      : undefined;
+  const ivTrend = interviewScoreTrend ?? [];
+  const interviewCategoryAvg =
+    ivTrend.length > 0
+      ? {
+          clarity: avgOf(ivTrend.map((p) => p.clarity)),
+          apAlignment: avgOf(ivTrend.map((p) => p.apAlignment)),
+          enthusiasm: avgOf(ivTrend.map((p) => p.enthusiasm)),
+          specificity: avgOf(ivTrend.map((p) => p.specificity)),
+          bodyLanguage: avgOf(ivTrend.map((p) => p.bodyLanguage)),
+        }
+      : undefined;
+
   // タブコンテンツ関数
   const renderOverviewTab = () => (
     <div className="space-y-6">
@@ -754,6 +783,26 @@ function AdminStudentDetailPageInner() {
           )}
         </CardContent>
       </Card>
+
+      {/* 項目別の平均（日々の取り組み） */}
+      {(essayCategoryAvg || interviewCategoryAvg) && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <BarChart3 className="size-4" />
+              項目別の平均（日々の取り組み）
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CategoryAverageRadar
+              essayAverages={essayCategoryAvg}
+              interviewAverages={interviewCategoryAvg}
+              essayCount={essayScoresList.length}
+              interviewCount={ivTrend.length}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Weaknesses Table — Accordion */}
       <Card>
