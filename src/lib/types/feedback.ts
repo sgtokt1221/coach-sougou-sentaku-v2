@@ -12,6 +12,24 @@ export interface ChatAttachment {
   contentType?: string;
 }
 
+/** チャットで参照する「問題」の種別 */
+export type ChatReferenceKind =
+  | 'essay-theme'
+  | 'past-question'
+  | 'interview-drill'
+  | 'summary-drill'
+  | 'custom'
+  | 'homework';
+
+/** メッセージに添える問題参照（カード表示） */
+export interface ChatReference {
+  kind: ChatReferenceKind;
+  label: string;
+  /** 生徒の遷移先。必ず "/student/..." の内部パス */
+  href: string;
+  description?: string;
+}
+
 export interface AdminFeedback {
   id: string;
   type: FeedbackType;
@@ -26,6 +44,8 @@ export interface AdminFeedback {
   attachments?: ChatAttachment[];
   /** 一斉送信で作成されたメッセージか */
   broadcast?: boolean;
+  /** 問題参照カード (任意) */
+  reference?: ChatReference;
 }
 
 export interface FeedbackCreateRequest {
@@ -34,6 +54,7 @@ export interface FeedbackCreateRequest {
   targetLabel: string;
   message: string;
   attachments?: ChatAttachment[];
+  reference?: ChatReference;
 }
 
 /** スレッド表示用: AdminFeedback に送信者種別を付与したもの */

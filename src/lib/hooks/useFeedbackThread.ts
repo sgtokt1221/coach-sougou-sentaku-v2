@@ -59,6 +59,7 @@ export function useFeedbackThread(
             read: data.read ?? false,
             attachments: data.attachments ?? undefined,
             broadcast: data.broadcast ?? undefined,
+            reference: data.reference ?? undefined,
             senderRole: createdBy === studentUid ? "student" : "coach",
           };
         });

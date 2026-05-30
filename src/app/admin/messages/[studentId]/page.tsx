@@ -12,7 +12,11 @@ import { PageTransition } from "@/components/shared/PageTransition";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils/avatar";
-import type { ChatAttachment, ConversationListItem } from "@/lib/types/feedback";
+import type {
+  ChatAttachment,
+  ChatReference,
+  ConversationListItem,
+} from "@/lib/types/feedback";
 
 export default function AdminThreadPage() {
   const params = useParams<{ studentId: string }>();
@@ -39,7 +43,11 @@ export default function AdminThreadPage() {
       .catch(() => {});
   }, [studentId, loading]);
 
-  async function handleSend(text: string, attachments: ChatAttachment[]) {
+  async function handleSend(
+    text: string,
+    attachments: ChatAttachment[],
+    reference?: ChatReference
+  ) {
     const res = await authFetch(`/api/admin/students/${studentId}/feedback`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -49,6 +57,7 @@ export default function AdminThreadPage() {
         targetLabel: "メッセージ",
         message: text,
         attachments,
+        reference,
       }),
     });
     if (!res.ok) throw new Error("send failed");
@@ -84,6 +93,7 @@ export default function AdminThreadPage() {
             loading={loading}
             otherName={studentName}
             otherPhotoURL={studentPhotoURL}
+            referenceStudentId={item?.role === "teacher" ? undefined : studentId}
             emptyText="この生徒へのメッセージやコメントがここに表示されます"
           />
         </div>

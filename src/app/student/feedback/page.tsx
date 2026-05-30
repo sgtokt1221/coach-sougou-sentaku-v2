@@ -24,7 +24,10 @@ export default function StudentFeedbackPage() {
     authFetch("/api/student/feedback/read", { method: "POST" }).catch(() => {});
   }, [uid, messages, loading]);
 
-  async function handleSend(text: string, attachments: ChatAttachment[]) {
+  async function handleSend(
+    text: string,
+    attachments: ChatAttachment[]
+  ) {
     const res = await authFetch("/api/student/feedback", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

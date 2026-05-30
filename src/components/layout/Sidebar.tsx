@@ -119,13 +119,13 @@ const adminNavGroups: NavGroup[] = [
       { label: "ダッシュボード", href: "/admin/dashboard", icon: LayoutDashboard },
       { label: "アラート", href: "/admin/alerts", icon: Bell },
       { label: "レポート", href: "/admin/reports", icon: FileBarChart },
+      { label: "メッセージ", href: "/admin/messages", icon: MessageSquare, badge: AdminMessagesBadge },
     ],
   },
   {
     title: "Manage",
     items: [
       { label: "生徒管理", href: "/admin/students", icon: Users },
-      { label: "メッセージ", href: "/admin/messages", icon: MessageSquare, badge: AdminMessagesBadge },
       { label: "講師管理", href: "/admin/teachers", icon: GraduationCap },
       { label: "大学データ", href: "/admin/universities", icon: Database },
       { label: "セッション", href: "/admin/sessions", icon: ClipboardList },

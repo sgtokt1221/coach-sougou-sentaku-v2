@@ -4,6 +4,7 @@ import { adminDb } from "@/lib/firebase/admin";
 import {
   updateConversationSummary,
   sanitizeAttachments,
+  sanitizeReference,
 } from "@/lib/chat/conversation";
 import type { AdminFeedback, FeedbackCreateRequest } from "@/lib/types/feedback";
 
@@ -116,9 +117,16 @@ export async function POST(
     const { id } = await params;
     const body: FeedbackCreateRequest = await request.json();
 
-    if (!body.message || !body.type) {
+    const attachmentsEarly = sanitizeAttachments(body.attachments);
+    const referenceEarly = sanitizeReference(body.reference);
+    if (
+      !body.type ||
+      (!body.message?.trim() &&
+        attachmentsEarly.length === 0 &&
+        !referenceEarly)
+    ) {
       return NextResponse.json(
-        { error: "type と message は必須です" },
+        { error: "type とメッセージ（または添付/問題）が必要です" },
         { status: 400 }
       );
     }
@@ -157,17 +165,19 @@ export async function POST(
     const adminName = adminDoc.data()?.displayName ?? "管理者";
 
     const now = new Date();
-    const attachments = sanitizeAttachments(body.attachments);
+    const attachments = attachmentsEarly;
+    const reference = referenceEarly;
     const feedbackData = {
       type: body.type,
       targetId: body.targetId ?? "",
       targetLabel: body.targetLabel ?? "",
-      message: body.message,
+      message: body.message ?? "",
       createdBy: uid,
       createdByName: adminName,
       createdAt: now,
       read: false,
       ...(attachments.length > 0 ? { attachments } : {}),
+      ...(reference ? { reference } : {}),
     };
 
     const docRef = await adminDb
@@ -181,7 +191,10 @@ export async function POST(
       studentPhotoURL: (userData?.photoURL as string | undefined) ?? null,
       coachId: (userData?.managedBy as string | undefined) ?? undefined,
       organizationId: (userData?.organizationId as string | undefined) ?? undefined,
-      lastMessageText: body.message || (attachments.length > 0 ? "[添付ファイル]" : ""),
+      lastMessageText:
+        body.message ||
+        reference?.label ||
+        (attachments.length > 0 ? "[添付ファイル]" : ""),
       senderRole: "coach",
     });
 
@@ -196,9 +209,12 @@ export async function POST(
 
       if (!tokensSnap.empty) {
         const tokens = tokensSnap.docs.map((d) => d.data().token as string);
-        const truncatedBody = body.message.length > 50
-          ? body.message.slice(0, 50) + "…"
-          : body.message;
+        const preview =
+          (body.message?.trim() ||
+            (reference ? `📝 ${reference.label}` : "") ||
+            (attachments.length > 0 ? "[添付ファイル]" : "")) ?? "";
+        const truncatedBody =
+          preview.length > 50 ? preview.slice(0, 50) + "…" : preview;
 
         await messaging.sendEachForMulticast({
           tokens,
@@ -221,12 +237,13 @@ export async function POST(
       type: body.type,
       targetId: body.targetId ?? "",
       targetLabel: body.targetLabel ?? "",
-      message: body.message,
+      message: body.message ?? "",
       createdBy: uid,
       createdByName: adminName,
       createdAt: now.toISOString(),
       read: false,
       ...(attachments.length > 0 ? { attachments } : {}),
+      ...(reference ? { reference } : {}),
     };
 
     return NextResponse.json(newFeedback, { status: 201 });

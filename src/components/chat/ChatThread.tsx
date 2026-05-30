@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import {
   Send,
   Loader2,
@@ -8,6 +9,7 @@ import {
   X,
   FileText,
   Megaphone,
+  BookOpen,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -15,9 +17,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils/avatar";
 import { authFetch } from "@/lib/api/client";
+import { ProblemPickerDialog } from "@/components/admin/ProblemPickerDialog";
 import type {
   ChatAttachment,
   ChatMessage,
+  ChatReference,
   FeedbackType,
   SenderRole,
 } from "@/lib/types/feedback";
@@ -34,13 +38,19 @@ interface ChatThreadProps {
   messages: ChatMessage[];
   /** 自分の立場。これと一致する senderRole のメッセージを右側に表示 */
   currentRole: SenderRole;
-  onSend: (text: string, attachments: ChatAttachment[]) => Promise<void>;
+  onSend: (
+    text: string,
+    attachments: ChatAttachment[],
+    reference?: ChatReference
+  ) => Promise<void>;
   loading?: boolean;
   emptyText?: string;
   disabled?: boolean;
   /** 相手の表示名・アイコン（相手バブルの横に表示） */
   otherName?: string;
   otherPhotoURL?: string | null;
+  /** コーチ→生徒スレッドで「問題」ボタンを出す場合の生徒UID */
+  referenceStudentId?: string;
 }
 
 function readFileAsBase64(file: File): Promise<string> {
@@ -99,6 +109,39 @@ function AttachmentView({ att }: { att: ChatAttachment }) {
   );
 }
 
+/** 内部パス("/student/...")のみ許可（外部URL/スキーム注入を描画前に弾く） */
+function isSafeInternalPath(href: string): boolean {
+  return href.startsWith("/student/") && !href.startsWith("//");
+}
+
+function ReferenceCard({ reference }: { reference: ChatReference }) {
+  const safe = isSafeInternalPath(reference.href);
+  return (
+    <div className="mt-1.5 rounded-lg border border-primary/30 bg-primary/5 p-2.5">
+      <div className="flex items-center gap-1.5 text-[11px] font-semibold text-primary">
+        <BookOpen className="size-3.5" />
+        {reference.kind === "homework" ? "宿題" : "問題"}
+      </div>
+      <p className="mt-0.5 text-sm font-medium text-foreground">
+        {reference.label}
+      </p>
+      {reference.description && (
+        <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
+          {reference.description}
+        </p>
+      )}
+      {safe && (
+        <Link
+          href={reference.href}
+          className="mt-1.5 inline-flex items-center gap-1 rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground hover:opacity-90"
+        >
+          {reference.kind === "homework" ? "取り組む" : "解く"}
+        </Link>
+      )}
+    </div>
+  );
+}
+
 export function ChatThread({
   messages,
   currentRole,
@@ -108,9 +151,11 @@ export function ChatThread({
   disabled,
   otherName,
   otherPhotoURL,
+  referenceStudentId,
 }: ChatThreadProps) {
   const [text, setText] = useState("");
   const [pending, setPending] = useState<ChatAttachment[]>([]);
+  const [pendingRef, setPendingRef] = useState<ChatReference | null>(null);
   const [sending, setSending] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -151,12 +196,13 @@ export function ChatThread({
   }
 
   async function handleSend() {
-    if ((!text.trim() && pending.length === 0) || sending) return;
+    if ((!text.trim() && pending.length === 0 && !pendingRef) || sending) return;
     setSending(true);
     try {
-      await onSend(text.trim(), pending);
+      await onSend(text.trim(), pending, pendingRef ?? undefined);
       setText("");
       setPending([]);
+      setPendingRef(null);
     } catch {
       toast.error("送信に失敗しました");
     } finally {
@@ -219,26 +265,33 @@ export function ChatThread({
                       )}
                     </div>
                   )}
-                  <div
-                    className={`rounded-2xl px-3 py-2 text-sm ${
-                      mine
-                        ? "rounded-br-sm bg-primary text-primary-foreground"
-                        : "rounded-bl-sm bg-muted text-foreground"
-                    }`}
-                  >
-                    {m.message && (
-                      <p className="whitespace-pre-wrap break-words">
-                        {m.message}
-                      </p>
-                    )}
-                    {m.attachments && m.attachments.length > 0 && (
-                      <div className={`space-y-1.5 ${m.message ? "mt-1.5" : ""}`}>
-                        {m.attachments.map((att, i) => (
-                          <AttachmentView key={i} att={att} />
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  {(m.message || (m.attachments && m.attachments.length > 0)) && (
+                    <div
+                      className={`rounded-2xl px-3 py-2 text-sm ${
+                        mine
+                          ? "rounded-br-sm bg-primary text-primary-foreground"
+                          : "rounded-bl-sm bg-muted text-foreground"
+                      }`}
+                    >
+                      {m.message && (
+                        <p className="whitespace-pre-wrap break-words">
+                          {m.message}
+                        </p>
+                      )}
+                      {m.attachments && m.attachments.length > 0 && (
+                        <div className={`space-y-1.5 ${m.message ? "mt-1.5" : ""}`}>
+                          {m.attachments.map((att, i) => (
+                            <AttachmentView key={i} att={att} />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {m.reference && (
+                    <div className="w-full max-w-[20rem]">
+                      <ReferenceCard reference={m.reference} />
+                    </div>
+                  )}
                   <span className="px-1 text-[10px] text-muted-foreground">
                     {!mine && m.createdByName ? `${m.createdByName}・` : ""}
                     {formatTime(m.createdAt)}
@@ -276,6 +329,22 @@ export function ChatThread({
               ))}
             </div>
           )}
+          {pendingRef && (
+            <div className="mb-2 flex items-center gap-1 rounded-md border border-primary/30 bg-primary/5 py-1 pl-2 pr-1 text-xs">
+              <BookOpen className="size-3.5 shrink-0 text-primary" />
+              <span className="max-w-[220px] truncate">
+                {pendingRef.kind === "homework" ? "宿題: " : "問題: "}
+                {pendingRef.label}
+              </span>
+              <button
+                type="button"
+                onClick={() => setPendingRef(null)}
+                className="rounded p-0.5 hover:bg-muted"
+              >
+                <X className="size-3" />
+              </button>
+            </div>
+          )}
           <div className="flex items-end gap-2">
             <input
               ref={fileRef}
@@ -299,6 +368,12 @@ export function ChatThread({
                 <Paperclip className="size-4" />
               )}
             </Button>
+            {referenceStudentId && (
+              <ProblemPickerDialog
+                studentId={referenceStudentId}
+                onPick={(ref) => setPendingRef(ref)}
+              />
+            )}
             <Textarea
               value={text}
               onChange={(e) => setText(e.target.value)}
@@ -316,7 +391,9 @@ export function ChatThread({
               type="button"
               size="icon"
               className="shrink-0"
-              disabled={sending || (!text.trim() && pending.length === 0)}
+              disabled={
+                sending || (!text.trim() && pending.length === 0 && !pendingRef)
+              }
               onClick={handleSend}
               aria-label="送信"
             >

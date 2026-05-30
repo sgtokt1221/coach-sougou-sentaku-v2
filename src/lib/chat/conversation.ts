@@ -1,6 +1,43 @@
 import { adminDb } from "@/lib/firebase/admin";
 import { FieldValue } from "firebase-admin/firestore";
-import type { ChatAttachment, SenderRole } from "@/lib/types/feedback";
+import type {
+  ChatAttachment,
+  ChatReference,
+  ChatReferenceKind,
+  SenderRole,
+} from "@/lib/types/feedback";
+
+const REFERENCE_KINDS: ChatReferenceKind[] = [
+  "essay-theme",
+  "past-question",
+  "interview-drill",
+  "summary-drill",
+  "custom",
+  "homework",
+];
+
+/**
+ * クライアントから送られた問題参照を検証する。
+ * href は "/student/" で始まる内部相対パスのみ許可（外部URL/スキーム注入を拒否）。
+ */
+export function sanitizeReference(raw: unknown): ChatReference | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const r = raw as Record<string, unknown>;
+  if (typeof r.kind !== "string" || !REFERENCE_KINDS.includes(r.kind as ChatReferenceKind))
+    return undefined;
+  if (typeof r.label !== "string" || !r.label.trim()) return undefined;
+  if (typeof r.href !== "string") return undefined;
+  // 内部パスのみ: "/student/" 始まり、"//" やスキームを拒否
+  if (!r.href.startsWith("/student/") || r.href.startsWith("//")) return undefined;
+  return {
+    kind: r.kind as ChatReferenceKind,
+    label: r.label.slice(0, 200),
+    href: r.href.slice(0, 500),
+    ...(typeof r.description === "string"
+      ? { description: r.description.slice(0, 2000) }
+      : {}),
+  };
+}
 
 /** 添付 URL として許可する Cloud Storage ホスト */
 const ALLOWED_ATTACHMENT_HOSTS = new Set([
