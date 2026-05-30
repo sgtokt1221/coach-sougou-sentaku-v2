@@ -9,7 +9,9 @@ import kankandouritsuData from "@/data/universities/kankandouritsu.json";
 import sankinkohryuData from "@/data/universities/sankinkohryu.json";
 import nittoukomasenData from "@/data/universities/nittoukomasen.json";
 import seiseimeidokuData from "@/data/universities/seiseimeidoku.json";
+import sesshintsuitouData from "@/data/universities/sesshintsuitou.json";
 import privateData from "@/data/universities/private.json";
+import kansaiPrivateData from "@/data/universities/kansai-private.json";
 
 export const MOCK_UNIVERSITIES: University[] = [
   ...(kyuteiData as University[]),
@@ -21,5 +23,7 @@ export const MOCK_UNIVERSITIES: University[] = [
   ...(sankinkohryuData as University[]),
   ...(nittoukomasenData as University[]),
   ...(seiseimeidokuData as University[]),
+  ...(sesshintsuitouData as University[]),
   ...(privateData as University[]),
+  ...(kansaiPrivateData as University[]),
 ];

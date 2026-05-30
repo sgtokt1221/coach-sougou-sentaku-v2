@@ -55,6 +55,7 @@ const GROUP_LABELS: Record<string, string> = {
   sankinkohryu: "産近甲龍",
   nittoukomasen: "日東駒専",
   seiseimeidoku: "成成明獨國武",
+  sesshintsuitou: "摂神追桃",
   national: "国立大学",
   public: "公立大学",
   private: "その他私立",

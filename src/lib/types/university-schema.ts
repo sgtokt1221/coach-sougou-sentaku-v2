@@ -55,6 +55,7 @@ export const UniversitySchema = z.object({
     "sankinkohryu",
     "nittoukomasen",
     "seiseimeidoku",
+    "sesshintsuitou",
     "national",
     "public",
     "private",

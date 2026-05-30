@@ -60,9 +60,11 @@ const JSON_FILES = [
   "sankinkohryu.json",
   "nittoukomasen.json",
   "seiseimeidoku.json",
+  "sesshintsuitou.json",
   "national.json",
   "public.json",
   "private.json",
+  "kansai-private.json",
 ];
 
 function initFirebase() {

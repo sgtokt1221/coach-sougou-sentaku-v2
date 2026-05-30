@@ -10,6 +10,7 @@ export interface University {
     | "sankinkohryu"
     | "nittoukomasen"
     | "seiseimeidoku"
+    | "sesshintsuitou"
     | "national"
     | "public"
     | "private";

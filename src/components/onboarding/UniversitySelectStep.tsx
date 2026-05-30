@@ -25,6 +25,7 @@ const GROUP_TABS = [
   { key: "sankinkohryu", label: "産近甲龍" },
   { key: "nittoukomasen", label: "日東駒専" },
   { key: "seiseimeidoku", label: "成成明獨國武" },
+  { key: "sesshintsuitou", label: "摂神追桃" },
   { key: "national", label: "国立" },
   { key: "public", label: "公立" },
   { key: "private", label: "その他私立" },

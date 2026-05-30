@@ -1,0 +1,596 @@
+[
+  {
+    "id": "setsunan-u",
+    "name": "摂南大学",
+    "shortName": "摂南",
+    "group": "sesshintsuitou",
+    "officialUrl": "https://www.setsunan.ac.jp/",
+    "faculties": [
+      {
+        "id": "law",
+        "name": "法学部",
+        "admissionPolicy": "法学部では、法的なものの考え方を身につけ、社会の課題やルールに関心を持って主体的に学び、地域や社会に貢献しようとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書・志望理由書等による書類審査" },
+          { "stage": 2, "type": "interview", "details": "面接（口頭試問・プレゼンテーションを含む場合あり）" }
+        ],
+        "schedule": { "applicationStart": "2025-09-30", "applicationEnd": "2025-10-08", "examDate": "2025-10-19", "resultDate": "2025-11-01" },
+        "admissionUrl": "https://www.setsunan.ac.jp/admission/",
+        "academicField": "法学",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "international",
+        "name": "国際学部",
+        "admissionPolicy": "国際学部では、語学力と異文化理解への意欲を持ち、グローバルな視野で多様な人々と協働しようとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書・志望理由書等による書類審査" },
+          { "stage": 2, "type": "interview", "details": "面接（口頭試問・プレゼンテーションを含む場合あり）" }
+        ],
+        "schedule": { "applicationStart": "2025-09-30", "applicationEnd": "2025-10-08", "examDate": "2025-10-19", "resultDate": "2025-11-01" },
+        "admissionUrl": "https://www.setsunan.ac.jp/admission/",
+        "academicField": "国際・外国語",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "economics",
+        "name": "経済学部",
+        "admissionPolicy": "経済学部では、社会や経済の仕組みに関心を持ち、データや論理に基づいて課題を考察し、地域経済の発展に寄与しようとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書・志望理由書等による書類審査" },
+          { "stage": 2, "type": "interview", "details": "面接（口頭試問・プレゼンテーションを含む場合あり）" }
+        ],
+        "schedule": { "applicationStart": "2025-09-30", "applicationEnd": "2025-10-08", "examDate": "2025-10-19", "resultDate": "2025-11-01" },
+        "admissionUrl": "https://www.setsunan.ac.jp/admission/",
+        "academicField": "経済学",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "business",
+        "name": "経営学部",
+        "admissionPolicy": "経営学部では、企業や組織の活動に関心を持ち、マーケティングや会計などの実践的知識を活かして課題解決に取り組もうとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書・志望理由書等による書類審査" },
+          { "stage": 2, "type": "interview", "details": "面接（口頭試問・プレゼンテーションを含む場合あり）" }
+        ],
+        "schedule": { "applicationStart": "2025-09-30", "applicationEnd": "2025-10-08", "examDate": "2025-10-19", "resultDate": "2025-11-01" },
+        "admissionUrl": "https://www.setsunan.ac.jp/admission/",
+        "academicField": "経営・商学",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "contemporary-society",
+        "name": "現代社会学部",
+        "admissionPolicy": "現代社会学部では、社会の多様な課題に関心を持ち、フィールドワークやデータをもとに地域社会の課題解決に主体的に取り組もうとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書・志望理由書等による書類審査" },
+          { "stage": 2, "type": "interview", "details": "面接（口頭試問・プレゼンテーションを含む場合あり）" }
+        ],
+        "schedule": { "applicationStart": "2025-09-30", "applicationEnd": "2025-10-08", "examDate": "2025-10-19", "resultDate": "2025-11-01" },
+        "admissionUrl": "https://www.setsunan.ac.jp/admission/",
+        "academicField": "社会学",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "science-engineering",
+        "name": "理工学部",
+        "admissionPolicy": "理工学部では、数学・理科や科学技術に関心を持ち、ものづくりや環境・情報分野で探究し社会に貢献しようとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書・志望理由書等による書類審査" },
+          { "stage": 2, "type": "interview", "details": "面接（口頭試問・プレゼンテーションを含む場合あり）" }
+        ],
+        "schedule": { "applicationStart": "2025-09-30", "applicationEnd": "2025-10-08", "examDate": "2025-10-19", "resultDate": "2025-11-01" },
+        "admissionUrl": "https://www.setsunan.ac.jp/admission/",
+        "academicField": "理工学",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "pharmacy",
+        "name": "薬学部",
+        "admissionPolicy": "薬学部では、生命や医療に関心を持ち、薬の専門家として地域医療に貢献しようとする倫理観と探究心を備えた人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書・志望理由書等による書類審査" },
+          { "stage": 2, "type": "interview", "details": "面接（口頭試問を含む場合あり）" }
+        ],
+        "schedule": { "applicationStart": "2025-09-30", "applicationEnd": "2025-10-08", "examDate": "2025-10-19", "resultDate": "2025-11-01" },
+        "admissionUrl": "https://www.setsunan.ac.jp/admission/",
+        "academicField": "薬学",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "nursing",
+        "name": "看護学部",
+        "admissionPolicy": "看護学部では、人を支えることに関心と思いやりを持ち、看護専門職として地域の健康に貢献しようとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書・志望理由書等による書類審査" },
+          { "stage": 2, "type": "interview", "details": "面接（口頭試問を含む場合あり）" }
+        ],
+        "schedule": { "applicationStart": "2025-09-30", "applicationEnd": "2025-10-08", "examDate": "2025-10-19", "resultDate": "2025-11-01" },
+        "admissionUrl": "https://www.setsunan.ac.jp/admission/",
+        "academicField": "看護・医療",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "agriculture",
+        "name": "農学部",
+        "admissionPolicy": "農学部では、食・農・環境・生命に関心を持ち、科学的探究を通じて持続可能な社会づくりに貢献しようとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "調査書・志望理由書等による書類審査" },
+          { "stage": 2, "type": "interview", "details": "面接（口頭試問・プレゼンテーションを含む場合あり）" }
+        ],
+        "schedule": { "applicationStart": "2025-09-30", "applicationEnd": "2025-10-08", "examDate": "2025-10-19", "resultDate": "2025-11-01" },
+        "admissionUrl": "https://www.setsunan.ac.jp/admission/",
+        "academicField": "農学・生命科学",
+        "selectionType": "comprehensive"
+      }
+    ]
+  },
+  {
+    "id": "kobe-gakuin-u",
+    "name": "神戸学院大学",
+    "shortName": "神戸学院",
+    "group": "sesshintsuitou",
+    "officialUrl": "https://www.kobegakuin.ac.jp/",
+    "faculties": [
+      {
+        "id": "law",
+        "name": "法学部",
+        "admissionPolicy": "法学部では、社会のルールや権利に関心を持ち、論理的に考え、地域社会に貢献しようとする主体性のある人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "第1次選考：出願書類による審査" },
+          { "stage": 1, "type": "test", "details": "基礎的な学力・適性の確認" },
+          { "stage": 2, "type": "interview", "details": "第2次選考：面接" }
+        ],
+        "schedule": { "applicationStart": "2025-09-17", "applicationEnd": "2025-09-30", "examDate": "2025-10-18", "resultDate": "2025-11-04" },
+        "admissionUrl": "https://www.kobegakuin.ac.jp/admission/",
+        "academicField": "法学",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "economics",
+        "name": "経済学部",
+        "admissionPolicy": "経済学部では、社会や経済の動きに関心を持ち、データと論理に基づいて課題を考察しようとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "第1次選考：出願書類による審査" },
+          { "stage": 1, "type": "test", "details": "基礎的な学力・適性の確認" },
+          { "stage": 2, "type": "interview", "details": "第2次選考：面接" }
+        ],
+        "schedule": { "applicationStart": "2025-09-17", "applicationEnd": "2025-09-30", "examDate": "2025-10-18", "resultDate": "2025-11-04" },
+        "admissionUrl": "https://www.kobegakuin.ac.jp/admission/",
+        "academicField": "経済学",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "business",
+        "name": "経営学部",
+        "admissionPolicy": "経営学部では、企業や組織の活動に関心を持ち、実践的な知識を活かして課題解決に取り組もうとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "第1次選考：出願書類による審査" },
+          { "stage": 1, "type": "test", "details": "基礎的な学力・適性の確認" },
+          { "stage": 2, "type": "interview", "details": "第2次選考：面接" }
+        ],
+        "schedule": { "applicationStart": "2025-09-17", "applicationEnd": "2025-09-30", "examDate": "2025-10-18", "resultDate": "2025-11-04" },
+        "admissionUrl": "https://www.kobegakuin.ac.jp/admission/",
+        "academicField": "経営・商学",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "humanities",
+        "name": "人文学部",
+        "admissionPolicy": "人文学部では、人間や文化・歴史・言語に関心を持ち、幅広い教養と探究心で学び続けようとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "第1次選考：出願書類による審査" },
+          { "stage": 1, "type": "test", "details": "基礎的な学力・適性の確認" },
+          { "stage": 2, "type": "interview", "details": "第2次選考：面接" }
+        ],
+        "schedule": { "applicationStart": "2025-09-17", "applicationEnd": "2025-09-30", "examDate": "2025-10-18", "resultDate": "2025-11-04" },
+        "admissionUrl": "https://www.kobegakuin.ac.jp/admission/",
+        "academicField": "人文学",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "psychology",
+        "name": "心理学部",
+        "admissionPolicy": "心理学部では、人の心や行動に関心を持ち、科学的な視点で人を理解し支えようとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "第1次選考：出願書類による審査" },
+          { "stage": 1, "type": "test", "details": "基礎的な学力・適性の確認" },
+          { "stage": 2, "type": "interview", "details": "第2次選考：面接" }
+        ],
+        "schedule": { "applicationStart": "2025-09-17", "applicationEnd": "2025-09-30", "examDate": "2025-10-18", "resultDate": "2025-11-04" },
+        "admissionUrl": "https://www.kobegakuin.ac.jp/admission/",
+        "academicField": "心理学",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "contemporary-social",
+        "name": "現代社会学部",
+        "admissionPolicy": "現代社会学部では、社会の課題に関心を持ち、フィールドワークや多角的な視点で地域・社会に貢献しようとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "第1次選考：出願書類による審査" },
+          { "stage": 1, "type": "test", "details": "基礎的な学力・適性の確認" },
+          { "stage": 2, "type": "interview", "details": "第2次選考：面接" }
+        ],
+        "schedule": { "applicationStart": "2025-09-17", "applicationEnd": "2025-09-30", "examDate": "2025-10-18", "resultDate": "2025-11-04" },
+        "admissionUrl": "https://www.kobegakuin.ac.jp/admission/",
+        "academicField": "社会学",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "global-communication",
+        "name": "グローバル・コミュニケーション学部",
+        "admissionPolicy": "グローバル・コミュニケーション学部では、語学力と異文化理解への意欲を持ち、国際社会で多様な人々と協働しようとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "第1次選考：出願書類による審査" },
+          { "stage": 1, "type": "test", "details": "基礎的な学力・適性の確認" },
+          { "stage": 2, "type": "interview", "details": "第2次選考：面接" }
+        ],
+        "schedule": { "applicationStart": "2025-09-17", "applicationEnd": "2025-09-30", "examDate": "2025-10-18", "resultDate": "2025-11-04" },
+        "admissionUrl": "https://www.kobegakuin.ac.jp/admission/",
+        "academicField": "国際・外国語",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "rehabilitation",
+        "name": "総合リハビリテーション学部",
+        "admissionPolicy": "総合リハビリテーション学部では、人を支える医療・福祉に関心と思いやりを持ち、専門職として地域に貢献しようとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "第1次選考：出願書類による審査" },
+          { "stage": 1, "type": "test", "details": "基礎的な学力・適性の確認" },
+          { "stage": 2, "type": "interview", "details": "第2次選考：面接" }
+        ],
+        "schedule": { "applicationStart": "2025-09-17", "applicationEnd": "2025-09-30", "examDate": "2025-10-18", "resultDate": "2025-11-04" },
+        "admissionUrl": "https://www.kobegakuin.ac.jp/admission/",
+        "academicField": "看護・医療",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "nutrition",
+        "name": "栄養学部",
+        "admissionPolicy": "栄養学部では、食と健康に関心を持ち、科学的根拠に基づいて人々の健康づくりに貢献しようとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "第1次選考：出願書類による審査" },
+          { "stage": 1, "type": "test", "details": "基礎的な学力・適性の確認" },
+          { "stage": 2, "type": "interview", "details": "第2次選考：面接" }
+        ],
+        "schedule": { "applicationStart": "2025-09-17", "applicationEnd": "2025-09-30", "examDate": "2025-10-18", "resultDate": "2025-11-04" },
+        "admissionUrl": "https://www.kobegakuin.ac.jp/admission/",
+        "academicField": "栄養・食",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "pharmacy",
+        "name": "薬学部",
+        "admissionPolicy": "薬学部では、生命や医療に関心を持ち、薬の専門家として地域医療に貢献しようとする倫理観と探究心を備えた人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "第1次選考：出願書類による審査" },
+          { "stage": 1, "type": "test", "details": "基礎的な学力・適性の確認" },
+          { "stage": 2, "type": "interview", "details": "第2次選考：面接" }
+        ],
+        "schedule": { "applicationStart": "2025-09-17", "applicationEnd": "2025-09-30", "examDate": "2025-10-18", "resultDate": "2025-11-04" },
+        "admissionUrl": "https://www.kobegakuin.ac.jp/admission/",
+        "academicField": "薬学",
+        "selectionType": "comprehensive"
+      }
+    ]
+  },
+  {
+    "id": "otemon-u",
+    "name": "追手門学院大学",
+    "shortName": "追手門",
+    "group": "sesshintsuitou",
+    "officialUrl": "https://www.otemon.ac.jp/",
+    "faculties": [
+      {
+        "id": "letters",
+        "name": "文学部",
+        "admissionPolicy": "文学部では、言語・文学・歴史など人間文化に関心を持ち、深く読み考え表現しようとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": ["原則専願"] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "アサーティブガイダンス受講＋出願書類審査" },
+          { "stage": 1, "type": "test", "details": "基礎学力（MANABOSS等）の確認" },
+          { "stage": 2, "type": "interview", "details": "面接" }
+        ],
+        "schedule": { "applicationStart": "2025-09-10", "applicationEnd": "2025-09-18", "examDate": "2025-10-03", "resultDate": "2025-11-02" },
+        "admissionUrl": "https://nyushi.otemon.ac.jp/admission/",
+        "academicField": "人文学",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "international",
+        "name": "国際学部",
+        "admissionPolicy": "国際学部では、語学力と異文化理解への意欲を持ち、グローバルな視野で多様な人々と協働しようとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": ["原則専願"] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "アサーティブガイダンス受講＋出願書類審査" },
+          { "stage": 1, "type": "test", "details": "基礎学力（MANABOSS等）の確認" },
+          { "stage": 2, "type": "interview", "details": "面接" }
+        ],
+        "schedule": { "applicationStart": "2025-09-10", "applicationEnd": "2025-09-18", "examDate": "2025-10-03", "resultDate": "2025-11-02" },
+        "admissionUrl": "https://nyushi.otemon.ac.jp/admission/",
+        "academicField": "国際・外国語",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "psychology",
+        "name": "心理学部",
+        "admissionPolicy": "心理学部では、人の心や行動、人工知能・認知科学に関心を持ち、科学的に人を理解しようとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": ["原則専願"] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "アサーティブガイダンス受講＋出願書類審査" },
+          { "stage": 1, "type": "test", "details": "基礎学力（MANABOSS等）の確認" },
+          { "stage": 2, "type": "interview", "details": "面接" }
+        ],
+        "schedule": { "applicationStart": "2025-09-10", "applicationEnd": "2025-09-18", "examDate": "2025-10-03", "resultDate": "2025-11-02" },
+        "admissionUrl": "https://nyushi.otemon.ac.jp/admission/",
+        "academicField": "心理学",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "sociology",
+        "name": "社会学部",
+        "admissionPolicy": "社会学部では、現代社会の課題に関心を持ち、調査や対話を通じて社会の理解と課題解決に取り組もうとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": ["原則専願"] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "アサーティブガイダンス受講＋出願書類審査" },
+          { "stage": 1, "type": "test", "details": "基礎学力（MANABOSS等）の確認" },
+          { "stage": 2, "type": "interview", "details": "面接" }
+        ],
+        "schedule": { "applicationStart": "2025-09-10", "applicationEnd": "2025-09-18", "examDate": "2025-10-03", "resultDate": "2025-11-02" },
+        "admissionUrl": "https://nyushi.otemon.ac.jp/admission/",
+        "academicField": "社会学",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "law",
+        "name": "法学部",
+        "admissionPolicy": "法学部では、社会のルールや公共の課題に関心を持ち、論理的に考え地域社会に貢献しようとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": ["原則専願"] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "アサーティブガイダンス受講＋出願書類審査" },
+          { "stage": 1, "type": "test", "details": "基礎学力（MANABOSS等）の確認" },
+          { "stage": 2, "type": "interview", "details": "面接" }
+        ],
+        "schedule": { "applicationStart": "2025-09-10", "applicationEnd": "2025-09-18", "examDate": "2025-10-03", "resultDate": "2025-11-02" },
+        "admissionUrl": "https://nyushi.otemon.ac.jp/admission/",
+        "academicField": "法学",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "economics",
+        "name": "経済学部",
+        "admissionPolicy": "経済学部では、社会や経済の仕組みに関心を持ち、データと論理に基づいて課題を考察しようとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": ["原則専願"] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "アサーティブガイダンス受講＋出願書類審査" },
+          { "stage": 1, "type": "test", "details": "基礎学力（MANABOSS等）の確認" },
+          { "stage": 2, "type": "interview", "details": "面接" }
+        ],
+        "schedule": { "applicationStart": "2025-09-10", "applicationEnd": "2025-09-18", "examDate": "2025-10-03", "resultDate": "2025-11-02" },
+        "admissionUrl": "https://nyushi.otemon.ac.jp/admission/",
+        "academicField": "経済学",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "management",
+        "name": "経営学部",
+        "admissionPolicy": "経営学部では、ビジネスや組織の活動に関心を持ち、実践的な学びを通じて課題解決に取り組もうとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": ["原則専願"] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "アサーティブガイダンス受講＋出願書類審査" },
+          { "stage": 1, "type": "test", "details": "基礎学力（MANABOSS等）の確認" },
+          { "stage": 2, "type": "interview", "details": "面接" }
+        ],
+        "schedule": { "applicationStart": "2025-09-10", "applicationEnd": "2025-09-18", "examDate": "2025-10-03", "resultDate": "2025-11-02" },
+        "admissionUrl": "https://nyushi.otemon.ac.jp/admission/",
+        "academicField": "経営・商学",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "regional-development",
+        "name": "地域創造学部",
+        "admissionPolicy": "地域創造学部では、地域や観光・まちづくりに関心を持ち、現場での実践を通じて地域の活性化に貢献しようとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": ["原則専願"] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "アサーティブガイダンス受講＋出願書類審査" },
+          { "stage": 1, "type": "test", "details": "基礎学力（MANABOSS等）の確認" },
+          { "stage": 2, "type": "interview", "details": "面接" }
+        ],
+        "schedule": { "applicationStart": "2025-09-10", "applicationEnd": "2025-09-18", "examDate": "2025-10-03", "resultDate": "2025-11-02" },
+        "admissionUrl": "https://nyushi.otemon.ac.jp/admission/",
+        "academicField": "社会学",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "science-engineering",
+        "name": "理工学部",
+        "admissionPolicy": "理工学部では、数理・情報・テクノロジーに関心を持ち、ものづくりやデータ活用で社会課題の解決に挑もうとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": ["原則専願"] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "出願書類審査" },
+          { "stage": 2, "type": "interview", "details": "面接（学部独自方式）" }
+        ],
+        "schedule": { "applicationStart": "2025-09-25", "applicationEnd": "2025-10-02", "examDate": "2025-10-17", "resultDate": "2025-11-02" },
+        "admissionUrl": "https://nyushi.otemon.ac.jp/admission/",
+        "academicField": "理工学",
+        "selectionType": "comprehensive"
+      }
+    ]
+  },
+  {
+    "id": "momoyama-gakuin-u",
+    "name": "桃山学院大学",
+    "shortName": "桃山学院",
+    "group": "sesshintsuitou",
+    "officialUrl": "https://www.andrew.ac.jp/",
+    "faculties": [
+      {
+        "id": "economics",
+        "name": "経済学部",
+        "admissionPolicy": "経済学部では、社会や経済の動きに関心を持ち、論理的に考え、課題解決に主体的に取り組もうとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "essay", "details": "小論文" },
+          { "stage": 1, "type": "interview", "details": "面接" }
+        ],
+        "schedule": { "applicationStart": "2025-09-16", "applicationEnd": "2025-10-09", "examDate": "2025-10-25", "resultDate": "2025-11-01" },
+        "admissionUrl": "https://www.andrew.ac.jp/nyushi/",
+        "academicField": "経済学",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "management",
+        "name": "経営学部",
+        "admissionPolicy": "経営学部では、企業や組織の活動に関心を持ち、実践的な学びを通じて課題解決に取り組もうとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "essay", "details": "小論文" },
+          { "stage": 1, "type": "interview", "details": "面接" }
+        ],
+        "schedule": { "applicationStart": "2025-09-16", "applicationEnd": "2025-10-09", "examDate": "2025-10-25", "resultDate": "2025-11-01" },
+        "admissionUrl": "https://www.andrew.ac.jp/nyushi/",
+        "academicField": "経営・商学",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "business-design",
+        "name": "ビジネスデザイン学部",
+        "admissionPolicy": "ビジネスデザイン学部では、新しい価値の創造に関心を持ち、起業家精神とデザイン思考で課題に挑もうとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "essay", "details": "小論文" },
+          { "stage": 1, "type": "interview", "details": "面接" }
+        ],
+        "schedule": { "applicationStart": "2025-09-16", "applicationEnd": "2025-10-09", "examDate": "2025-10-25", "resultDate": "2025-11-01" },
+        "admissionUrl": "https://www.andrew.ac.jp/nyushi/",
+        "academicField": "経営・商学",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "sociology",
+        "name": "社会学部",
+        "admissionPolicy": "社会学部では、現代社会や福祉の課題に関心を持ち、調査や実践を通じて人と社会を支えようとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "essay", "details": "小論文" },
+          { "stage": 1, "type": "interview", "details": "面接" }
+        ],
+        "schedule": { "applicationStart": "2025-09-16", "applicationEnd": "2025-10-09", "examDate": "2025-10-25", "resultDate": "2025-11-01" },
+        "admissionUrl": "https://www.andrew.ac.jp/nyushi/",
+        "academicField": "社会学",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "law",
+        "name": "法学部",
+        "admissionPolicy": "法学部では、社会のルールや公共の課題に関心を持ち、論理的に考え地域社会に貢献しようとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "essay", "details": "小論文" },
+          { "stage": 1, "type": "interview", "details": "面接" }
+        ],
+        "schedule": { "applicationStart": "2025-09-16", "applicationEnd": "2025-10-09", "examDate": "2025-10-25", "resultDate": "2025-11-01" },
+        "admissionUrl": "https://www.andrew.ac.jp/nyushi/",
+        "academicField": "法学",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "international-liberal-arts",
+        "name": "国際教養学部",
+        "admissionPolicy": "国際教養学部では、語学力と幅広い教養、異文化理解への意欲を持ち、国際社会で活躍しようとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "essay", "details": "小論文" },
+          { "stage": 1, "type": "interview", "details": "面接" }
+        ],
+        "schedule": { "applicationStart": "2025-09-16", "applicationEnd": "2025-10-09", "examDate": "2025-10-25", "resultDate": "2025-11-01" },
+        "admissionUrl": "https://www.andrew.ac.jp/nyushi/",
+        "academicField": "国際・外国語",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "human-education",
+        "name": "人間教育学部",
+        "admissionPolicy": "人間教育学部では、教育や子どもの成長に関心と情熱を持ち、教員・指導者として人を育てようとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "essay", "details": "小論文" },
+          { "stage": 1, "type": "interview", "details": "面接" }
+        ],
+        "schedule": { "applicationStart": "2025-09-16", "applicationEnd": "2025-10-09", "examDate": "2025-10-25", "resultDate": "2025-11-01" },
+        "admissionUrl": "https://www.andrew.ac.jp/nyushi/",
+        "academicField": "教育学",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "engineering",
+        "name": "工学部",
+        "admissionPolicy": "工学部では、ものづくりや先端技術に関心を持ち、数理と実践を通じて社会課題の解決に挑もうとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "essay", "details": "小論文" },
+          { "stage": 1, "type": "interview", "details": "面接" }
+        ],
+        "schedule": { "applicationStart": "2025-09-16", "applicationEnd": "2025-10-09", "examDate": "2025-10-25", "resultDate": "2025-11-01" },
+        "admissionUrl": "https://www.andrew.ac.jp/nyushi/",
+        "academicField": "理工学",
+        "selectionType": "comprehensive"
+      }
+    ]
+  }
+]

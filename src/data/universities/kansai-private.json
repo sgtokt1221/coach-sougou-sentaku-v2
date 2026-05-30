@@ -1,0 +1,506 @@
+[
+  {
+    "id": "kansai-gaidai-u",
+    "name": "関西外国語大学",
+    "shortName": "関西外大",
+    "group": "private",
+    "officialUrl": "https://www.kansaigaidai.ac.jp/",
+    "faculties": [
+      {
+        "id": "foreign-studies",
+        "name": "外国語学部",
+        "admissionPolicy": "外国語学部では、高い語学力の習得と異文化理解への強い意欲を持ち、国際社会で多様な人々と協働しようとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "志望理由書等の書類審査" },
+          { "stage": 2, "type": "interview", "details": "面接（英語による質疑を含む場合あり）" }
+        ],
+        "schedule": { "applicationStart": "2025-09-22", "applicationEnd": "2025-10-01", "examDate": "2025-10-19", "resultDate": "2025-11-01" },
+        "admissionUrl": "https://envision.kansaigaidai.ac.jp/exam/",
+        "academicField": "国際・外国語",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "english-career",
+        "name": "英語キャリア学部",
+        "admissionPolicy": "英語キャリア学部では、英語運用力と国際的なキャリア形成への意欲を持ち、グローバルに活躍しようとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "志望理由書等の書類審査" },
+          { "stage": 2, "type": "interview", "details": "面接（英語による質疑を含む場合あり）" }
+        ],
+        "schedule": { "applicationStart": "2025-09-22", "applicationEnd": "2025-10-01", "examDate": "2025-10-19", "resultDate": "2025-11-01" },
+        "admissionUrl": "https://envision.kansaigaidai.ac.jp/exam/",
+        "academicField": "国際・外国語",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "international-symbiosis",
+        "name": "国際共生学部",
+        "admissionPolicy": "国際共生学部では、語学力と地球規模の課題への関心を持ち、多文化共生社会の実現に貢献しようとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "志望理由書等の書類審査（グローバルチャレンジ入試）" },
+          { "stage": 2, "type": "interview", "details": "面接（英語による質疑を含む場合あり）" }
+        ],
+        "schedule": { "applicationStart": "2025-09-22", "applicationEnd": "2025-10-01", "examDate": "2025-10-19", "resultDate": "2025-11-01" },
+        "admissionUrl": "https://envision.kansaigaidai.ac.jp/exam/",
+        "academicField": "国際・外国語",
+        "selectionType": "comprehensive"
+      }
+    ]
+  },
+  {
+    "id": "kyoto-women-u",
+    "name": "京都女子大学",
+    "shortName": "京女",
+    "group": "private",
+    "officialUrl": "https://www.kyoto-wu.ac.jp/",
+    "faculties": [
+      {
+        "id": "letters",
+        "name": "文学部",
+        "admissionPolicy": "文学部では、言語・文学・歴史など人間文化に関心を持ち、深く読み考え表現しようとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": ["女子のみ"] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "志望理由書・調査書等の書類審査" },
+          { "stage": 2, "type": "interview", "details": "面接（小論文を課す場合あり）" }
+        ],
+        "schedule": { "applicationStart": "2025-09-16", "applicationEnd": "2025-10-01", "examDate": "2025-10-19", "resultDate": "2025-11-01" },
+        "admissionUrl": "https://www.kyoto-wu.ac.jp/nyushi/",
+        "academicField": "人文学",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "development-education",
+        "name": "発達教育学部",
+        "admissionPolicy": "発達教育学部では、教育や子どもの発達に関心と情熱を持ち、教育・保育の専門家として人を育てようとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": ["女子のみ"] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "志望理由書・調査書等の書類審査" },
+          { "stage": 2, "type": "interview", "details": "面接（小論文を課す場合あり）" }
+        ],
+        "schedule": { "applicationStart": "2025-09-16", "applicationEnd": "2025-10-01", "examDate": "2025-10-19", "resultDate": "2025-11-01" },
+        "admissionUrl": "https://www.kyoto-wu.ac.jp/nyushi/",
+        "academicField": "教育学",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "psychology-symbiosis",
+        "name": "心理共生学部",
+        "admissionPolicy": "心理共生学部では、人の心と多様な人々の共生に関心を持ち、心理学の視点で人を理解し支えようとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": ["女子のみ"] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "志望理由書・調査書等の書類審査" },
+          { "stage": 2, "type": "interview", "details": "面接（小論文を課す場合あり）" }
+        ],
+        "schedule": { "applicationStart": "2025-09-16", "applicationEnd": "2025-10-01", "examDate": "2025-10-19", "resultDate": "2025-11-01" },
+        "admissionUrl": "https://www.kyoto-wu.ac.jp/nyushi/",
+        "academicField": "心理学",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "home-economics",
+        "name": "家政学部",
+        "admissionPolicy": "家政学部では、食・被服・住環境など生活科学に関心を持ち、人々の暮らしの質の向上に貢献しようとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": ["女子のみ"] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "志望理由書・調査書等の書類審査" },
+          { "stage": 2, "type": "interview", "details": "面接（小論文を課す場合あり）" }
+        ],
+        "schedule": { "applicationStart": "2025-09-16", "applicationEnd": "2025-10-01", "examDate": "2025-10-19", "resultDate": "2025-11-01" },
+        "admissionUrl": "https://www.kyoto-wu.ac.jp/nyushi/",
+        "academicField": "生活科学・栄養",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "contemporary-society",
+        "name": "現代社会学部",
+        "admissionPolicy": "現代社会学部では、社会の課題に関心を持ち、多角的な視点と行動力で地域・社会に貢献しようとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": ["女子のみ"] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "志望理由書・調査書等の書類審査" },
+          { "stage": 2, "type": "interview", "details": "面接（小論文を課す場合あり）" }
+        ],
+        "schedule": { "applicationStart": "2025-09-16", "applicationEnd": "2025-10-01", "examDate": "2025-10-19", "resultDate": "2025-11-01" },
+        "admissionUrl": "https://www.kyoto-wu.ac.jp/nyushi/",
+        "academicField": "社会学",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "law",
+        "name": "法学部",
+        "admissionPolicy": "法学部では、社会のルールや人々の権利に関心を持ち、論理的に考え社会に貢献しようとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": ["女子のみ"] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "志望理由書・調査書等の書類審査" },
+          { "stage": 2, "type": "interview", "details": "面接（小論文を課す場合あり）" }
+        ],
+        "schedule": { "applicationStart": "2025-09-16", "applicationEnd": "2025-10-01", "examDate": "2025-10-19", "resultDate": "2025-11-01" },
+        "admissionUrl": "https://www.kyoto-wu.ac.jp/nyushi/",
+        "academicField": "法学",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "data-science",
+        "name": "データサイエンス学部",
+        "admissionPolicy": "データサイエンス学部では、数理・情報やデータ分析に関心を持ち、データを用いて社会の課題解決に挑もうとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": ["女子のみ"] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "志望理由書・調査書等の書類審査" },
+          { "stage": 2, "type": "interview", "details": "面接（小論文・課題を課す場合あり）" }
+        ],
+        "schedule": { "applicationStart": "2025-09-16", "applicationEnd": "2025-10-01", "examDate": "2025-10-19", "resultDate": "2025-11-01" },
+        "admissionUrl": "https://www.kyoto-wu.ac.jp/nyushi/",
+        "academicField": "情報・データサイエンス",
+        "selectionType": "comprehensive"
+      }
+    ]
+  },
+  {
+    "id": "osaka-ue",
+    "name": "大阪経済大学",
+    "shortName": "大経大",
+    "group": "private",
+    "officialUrl": "https://www.osaka-ue.ac.jp/",
+    "faculties": [
+      {
+        "id": "economics",
+        "name": "経済学部",
+        "admissionPolicy": "経済学部では、社会や経済の動きに関心を持ち、論理的に考え、地域経済の発展に貢献しようとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "志望理由書・調査書等の書類審査" },
+          { "stage": 2, "type": "interview", "details": "面接（口頭試問・プレゼンテーションを含む場合あり）" }
+        ],
+        "schedule": { "applicationStart": "2025-09-16", "applicationEnd": "2025-10-01", "examDate": "2025-10-19", "resultDate": "2025-11-01" },
+        "admissionUrl": "https://www.osaka-ue.ac.jp/entrance/admissions/",
+        "academicField": "経済学",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "business",
+        "name": "経営学部",
+        "admissionPolicy": "経営学部では、企業や組織の活動に関心を持ち、実践的な学びを通じてビジネスの課題解決に取り組もうとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "志望理由書・調査書等の書類審査" },
+          { "stage": 2, "type": "interview", "details": "面接（口頭試問・プレゼンテーションを含む場合あり）" }
+        ],
+        "schedule": { "applicationStart": "2025-09-16", "applicationEnd": "2025-10-01", "examDate": "2025-10-19", "resultDate": "2025-11-01" },
+        "admissionUrl": "https://www.osaka-ue.ac.jp/entrance/admissions/",
+        "academicField": "経営・商学",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "information-society",
+        "name": "情報社会学部",
+        "admissionPolicy": "情報社会学部では、情報や社会の仕組みに関心を持ち、情報技術と社会的視点を活かして課題解決に取り組もうとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "志望理由書・調査書等の書類審査（学部AO入試）" },
+          { "stage": 2, "type": "interview", "details": "面接（口頭試問・プレゼンテーションを含む場合あり）" }
+        ],
+        "schedule": { "applicationStart": "2025-09-16", "applicationEnd": "2025-10-01", "examDate": "2025-10-19", "resultDate": "2025-11-01" },
+        "admissionUrl": "https://www.osaka-ue.ac.jp/entrance/admissions/",
+        "academicField": "情報・データサイエンス",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "human-sciences",
+        "name": "人間科学部",
+        "admissionPolicy": "人間科学部では、人間や社会・心理に関心を持ち、人を理解し支える視点で課題解決に取り組もうとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "志望理由書・調査書等の書類審査（学部AO入試）" },
+          { "stage": 2, "type": "interview", "details": "面接（口頭試問・プレゼンテーションを含む場合あり）" }
+        ],
+        "schedule": { "applicationStart": "2025-09-16", "applicationEnd": "2025-10-01", "examDate": "2025-10-19", "resultDate": "2025-11-01" },
+        "admissionUrl": "https://www.osaka-ue.ac.jp/entrance/admissions/",
+        "academicField": "人間科学・社会学",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "international-co-creation",
+        "name": "国際共創学部",
+        "admissionPolicy": "国際共創学部では、語学力と国際的な視野を持ち、多様な人々と協働して新たな価値を共に創ろうとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "志望理由書・調査書等の書類審査（学部AO入試）" },
+          { "stage": 2, "type": "interview", "details": "面接（口頭試問・プレゼンテーションを含む場合あり）" }
+        ],
+        "schedule": { "applicationStart": "2025-09-16", "applicationEnd": "2025-10-01", "examDate": "2025-10-19", "resultDate": "2025-11-01" },
+        "admissionUrl": "https://www.osaka-ue.ac.jp/entrance/admissions/",
+        "academicField": "国際・外国語",
+        "selectionType": "comprehensive"
+      }
+    ]
+  },
+  {
+    "id": "kyoto-gaidai-u",
+    "name": "京都外国語大学",
+    "shortName": "京都外大",
+    "group": "private",
+    "officialUrl": "https://www.kufs.ac.jp/",
+    "faculties": [
+      {
+        "id": "foreign-studies",
+        "name": "外国語学部",
+        "admissionPolicy": "外国語学部では、高度な語学力の習得と異文化理解への強い意欲を持ち、言語を通じて国際社会に貢献しようとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "志望理由書等の書類審査（探究入学試験）" },
+          { "stage": 2, "type": "interview", "details": "面接・口頭試問（プレゼンテーションを含む場合あり）" }
+        ],
+        "schedule": { "applicationStart": "2025-09-16", "applicationEnd": "2025-10-01", "examDate": "2025-10-19", "resultDate": "2025-11-01" },
+        "admissionUrl": "https://www.kufs.ac.jp/admissions/",
+        "academicField": "国際・外国語",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "global-engagement",
+        "name": "国際貢献学部",
+        "admissionPolicy": "国際貢献学部では、語学力と国際協力・観光への関心を持ち、多文化共生社会の実現とグローバルな課題解決に貢献しようとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "志望理由書等の書類審査（探究入学試験）" },
+          { "stage": 2, "type": "interview", "details": "面接・口頭試問（プレゼンテーションを含む場合あり）" }
+        ],
+        "schedule": { "applicationStart": "2025-09-16", "applicationEnd": "2025-10-01", "examDate": "2025-10-19", "resultDate": "2025-11-01" },
+        "admissionUrl": "https://www.kufs.ac.jp/admissions/",
+        "academicField": "国際・外国語",
+        "selectionType": "comprehensive"
+      }
+    ]
+  },
+  {
+    "id": "osaka-sangyo-u",
+    "name": "大阪産業大学",
+    "shortName": "大産大",
+    "group": "private",
+    "officialUrl": "https://www.osaka-sandai.ac.jp/",
+    "faculties": [
+      {
+        "id": "international",
+        "name": "国際学部",
+        "admissionPolicy": "国際学部では、語学力と国際的な視野を持ち、多様な人々と協働してグローバル社会に貢献しようとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "志望理由書・調査書等の書類審査（AO入学試験）" },
+          { "stage": 2, "type": "interview", "details": "面接（プレゼンテーション・口頭試問を含む場合あり）" }
+        ],
+        "schedule": { "applicationStart": "2025-09-16", "applicationEnd": "2025-10-01", "examDate": "2025-10-19", "resultDate": "2025-11-01" },
+        "admissionUrl": "https://www.osaka-sandai.ac.jp/admission/",
+        "academicField": "国際・外国語",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "sport-health",
+        "name": "スポーツ健康学部",
+        "admissionPolicy": "スポーツ健康学部では、スポーツや健康づくりに関心を持ち、科学的視点で人々の心身の健康に貢献しようとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "志望理由書・調査書等の書類審査（AO入学試験）" },
+          { "stage": 2, "type": "interview", "details": "面接（プレゼンテーション・口頭試問を含む場合あり）" }
+        ],
+        "schedule": { "applicationStart": "2025-09-16", "applicationEnd": "2025-10-01", "examDate": "2025-10-19", "resultDate": "2025-11-01" },
+        "admissionUrl": "https://www.osaka-sandai.ac.jp/admission/",
+        "academicField": "スポーツ・健康科学",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "business",
+        "name": "経営学部",
+        "admissionPolicy": "経営学部では、企業や組織の活動に関心を持ち、実践的な学びを通じてビジネスの課題解決に取り組もうとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "志望理由書・調査書等の書類審査（AO入学試験）" },
+          { "stage": 2, "type": "interview", "details": "面接（プレゼンテーション・口頭試問を含む場合あり）" }
+        ],
+        "schedule": { "applicationStart": "2025-09-16", "applicationEnd": "2025-10-01", "examDate": "2025-10-19", "resultDate": "2025-11-01" },
+        "admissionUrl": "https://www.osaka-sandai.ac.jp/admission/",
+        "academicField": "経営・商学",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "economics",
+        "name": "経済学部",
+        "admissionPolicy": "経済学部では、社会や経済の動きに関心を持ち、論理的に考え地域経済の発展に貢献しようとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "志望理由書・調査書等の書類審査（AO入学試験）" },
+          { "stage": 2, "type": "interview", "details": "面接（プレゼンテーション・口頭試問を含む場合あり）" }
+        ],
+        "schedule": { "applicationStart": "2025-09-16", "applicationEnd": "2025-10-01", "examDate": "2025-10-19", "resultDate": "2025-11-01" },
+        "admissionUrl": "https://www.osaka-sandai.ac.jp/admission/",
+        "academicField": "経済学",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "information-design",
+        "name": "情報デザイン学部",
+        "admissionPolicy": "情報デザイン学部では、情報技術やデザインに関心を持ち、創造的な発想で人と社会に役立つ仕組みを生み出そうとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "志望理由書・調査書等の書類審査（AO入学試験）" },
+          { "stage": 2, "type": "interview", "details": "面接（プレゼンテーション・口頭試問を含む場合あり）" }
+        ],
+        "schedule": { "applicationStart": "2025-09-16", "applicationEnd": "2025-10-01", "examDate": "2025-10-19", "resultDate": "2025-11-01" },
+        "admissionUrl": "https://www.osaka-sandai.ac.jp/admission/",
+        "academicField": "情報・データサイエンス",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "architecture-environmental-design",
+        "name": "建築・環境デザイン学部",
+        "admissionPolicy": "建築・環境デザイン学部では、建築や環境・まちづくりに関心を持ち、デザインの力で快適で持続可能な空間を創造しようとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "志望理由書・調査書等の書類審査（AO入学試験）" },
+          { "stage": 2, "type": "interview", "details": "面接（プレゼンテーション・口頭試問を含む場合あり）" }
+        ],
+        "schedule": { "applicationStart": "2025-09-16", "applicationEnd": "2025-10-01", "examDate": "2025-10-19", "resultDate": "2025-11-01" },
+        "admissionUrl": "https://www.osaka-sandai.ac.jp/admission/",
+        "academicField": "建築・デザイン",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "system-engineering",
+        "name": "システム工学部",
+        "admissionPolicy": "システム工学部では、ものづくりや先端技術に関心を持ち、工学の知識を活かして社会の課題解決に挑もうとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "志望理由書・調査書等の書類審査（AO入学試験）" },
+          { "stage": 2, "type": "interview", "details": "面接（プレゼンテーション・口頭試問を含む場合あり）" }
+        ],
+        "schedule": { "applicationStart": "2025-09-16", "applicationEnd": "2025-10-01", "examDate": "2025-10-19", "resultDate": "2025-11-01" },
+        "admissionUrl": "https://www.osaka-sandai.ac.jp/admission/",
+        "academicField": "工学",
+        "selectionType": "comprehensive"
+      }
+    ]
+  },
+  {
+    "id": "yamato-u",
+    "name": "大和大学",
+    "shortName": "大和大",
+    "group": "private",
+    "officialUrl": "https://www.yamato-u.ac.jp/",
+    "faculties": [
+      {
+        "id": "informatics",
+        "name": "情報学部",
+        "admissionPolicy": "情報学部では、情報技術や数理に関心を持ち、論理的思考と創造力でデータ社会の課題解決に挑もうとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "一次選考エントリー（書類審査）（Ambition入試/AO入試）" },
+          { "stage": 2, "type": "interview", "details": "二次選考（面接・小論文・プレゼンテーション等）" }
+        ],
+        "schedule": { "applicationStart": "2025-09-03", "applicationEnd": "2025-09-16", "examDate": "2025-10-25", "resultDate": "2025-11-04" },
+        "admissionUrl": "https://www.yamato-u.ac.jp/entrance/",
+        "academicField": "情報・データサイエンス",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "sociology",
+        "name": "社会学部",
+        "admissionPolicy": "社会学部では、現代社会の課題に関心を持ち、多角的な視点と行動力で地域・社会に貢献しようとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "一次選考エントリー（書類審査）（Ambition入試/AO入試）" },
+          { "stage": 2, "type": "interview", "details": "二次選考（面接・小論文・プレゼンテーション等）" }
+        ],
+        "schedule": { "applicationStart": "2025-09-03", "applicationEnd": "2025-09-16", "examDate": "2025-10-25", "resultDate": "2025-11-04" },
+        "admissionUrl": "https://www.yamato-u.ac.jp/entrance/",
+        "academicField": "社会学",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "science-engineering",
+        "name": "理工学部",
+        "admissionPolicy": "理工学部では、科学技術やものづくりに関心を持ち、探究心と論理的思考で社会の発展に貢献しようとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "一次選考エントリー（書類審査）（Ambition入試/AO入試）" },
+          { "stage": 2, "type": "interview", "details": "二次選考（面接・小論文・プレゼンテーション等）" }
+        ],
+        "schedule": { "applicationStart": "2025-09-03", "applicationEnd": "2025-09-16", "examDate": "2025-10-25", "resultDate": "2025-11-04" },
+        "admissionUrl": "https://www.yamato-u.ac.jp/entrance/",
+        "academicField": "工学",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "politics-economics",
+        "name": "政治経済学部",
+        "admissionPolicy": "政治経済学部では、政治や経済の仕組みに関心を持ち、論理的に考え社会のリーダーとして活躍しようとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "一次選考エントリー（書類審査）（Ambition入試/AO入試）" },
+          { "stage": 2, "type": "interview", "details": "二次選考（面接・小論文・プレゼンテーション等）" }
+        ],
+        "schedule": { "applicationStart": "2025-09-03", "applicationEnd": "2025-09-16", "examDate": "2025-10-25", "resultDate": "2025-11-04" },
+        "admissionUrl": "https://www.yamato-u.ac.jp/entrance/",
+        "academicField": "経済学",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "education",
+        "name": "教育学部",
+        "admissionPolicy": "教育学部では、教育や子どもの成長に関心と情熱を持ち、教育の専門家として人を育てようとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "一次選考エントリー（書類審査）（Ambition入試/AO入試）" },
+          { "stage": 2, "type": "interview", "details": "二次選考（面接・小論文・プレゼンテーション等）" }
+        ],
+        "schedule": { "applicationStart": "2025-09-03", "applicationEnd": "2025-09-16", "examDate": "2025-10-25", "resultDate": "2025-11-04" },
+        "admissionUrl": "https://www.yamato-u.ac.jp/entrance/",
+        "academicField": "教育学",
+        "selectionType": "comprehensive"
+      },
+      {
+        "id": "health-medicine",
+        "name": "保健医療学部",
+        "admissionPolicy": "保健医療学部では、医療や看護・リハビリテーションに関心を持ち、人を支える使命感と専門性で地域医療に貢献しようとする人材を求めています。",
+        "capacity": 5,
+        "requirements": { "gpa": null, "englishCert": null, "otherReqs": [] },
+        "selectionMethods": [
+          { "stage": 1, "type": "documents", "details": "一次選考エントリー（書類審査）（Ambition入試/AO入試）" },
+          { "stage": 2, "type": "interview", "details": "二次選考（面接・小論文・プレゼンテーション等）" }
+        ],
+        "schedule": { "applicationStart": "2025-09-03", "applicationEnd": "2025-09-16", "examDate": "2025-10-25", "resultDate": "2025-11-04" },
+        "admissionUrl": "https://www.yamato-u.ac.jp/entrance/",
+        "academicField": "医療・看護",
+        "selectionType": "comprehensive"
+      }
+    ]
+  }
+]
