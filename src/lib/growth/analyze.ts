@@ -2,18 +2,40 @@ import { WeaknessRecord, getWeaknessReminderLevel } from "@/lib/types/growth";
 import { GrowthEvent } from "@/lib/types/essay";
 import { categorizeWeakness } from "@/lib/growth/weakness-category";
 import { findSimilarArea } from "@/lib/growth/weakness-similarity";
+import { resolveCanonical, canonicalLabel } from "@/lib/growth/weakness-taxonomy";
+
+/**
+ * 弱点の統合キーを求める。正規タクソノミーに解決できればその ID、
+ * できなければ素の area 文字列を返す (= 従来挙動の後方互換)。
+ */
+function weaknessKey(
+  text: string,
+  opts?: { categoryHint?: WeaknessRecord["categoryId"]; canonicalId?: string | null },
+): string {
+  if (opts?.canonicalId) return opts.canonicalId;
+  const entry = resolveCanonical(text, {
+    categoryHint: opts?.categoryHint,
+    aiCanonicalId: opts?.canonicalId ?? null,
+  });
+  return entry ? entry.id : text;
+}
 
 export function analyzeGrowth(
   currentWeaknessTags: string[],
   existingWeaknesses: WeaknessRecord[]
 ): GrowthEvent[] {
   const events: GrowthEvent[] = [];
-  const currentSet = new Set(currentWeaknessTags);
+  // 今回の弱点を正規キーへ畳んで比較する (表記ゆれを吸収)
+  const currentKeys = new Set(currentWeaknessTags.map((t) => weaknessKey(t)));
 
   for (const weakness of existingWeaknesses) {
     if (weakness.resolved) continue;
 
-    const isInCurrent = currentSet.has(weakness.area);
+    const key = weaknessKey(weakness.area, {
+      categoryHint: weakness.categoryId,
+      canonicalId: weakness.canonicalId,
+    });
+    const isInCurrent = currentKeys.has(key);
 
     if (!isInCurrent && weakness.count >= 2) {
       events.push({
@@ -42,18 +64,115 @@ export function analyzeGrowth(
     }
   }
 
+  const existingKeys = new Set(
+    existingWeaknesses.map((w) =>
+      weaknessKey(w.area, { categoryHint: w.categoryId, canonicalId: w.canonicalId }),
+    ),
+  );
+  const seenNew = new Set<string>();
   for (const tag of currentWeaknessTags) {
-    const exists = existingWeaknesses.some((w) => w.area === tag);
-    if (!exists) {
-      events.push({
-        type: "new_weakness",
-        area: tag,
-        message: `「${tag}」が新しい課題として検出されました。`,
-      });
-    }
+    const key = weaknessKey(tag);
+    if (existingKeys.has(key) || seenNew.has(key)) continue;
+    seenNew.add(key);
+    events.push({
+      type: "new_weakness",
+      area: tag,
+      message: `「${tag}」が新しい課題として検出されました。`,
+    });
   }
 
   return events;
+}
+
+/** lastOccurred を比較可能な ms に正規化する小ヘルパー */
+function lastMs(w: WeaknessRecord): number {
+  if (!w.lastOccurred) return 0;
+  return w.lastOccurred instanceof Date
+    ? w.lastOccurred.getTime()
+    : new Date(w.lastOccurred).getTime();
+}
+
+function firstMs(w: WeaknessRecord): number {
+  if (!w.firstOccurred) return lastMs(w);
+  return w.firstOccurred instanceof Date
+    ? w.firstOccurred.getTime()
+    : new Date(w.firstOccurred).getTime();
+}
+
+/**
+ * 同一 canonicalId を持つ既存レコード群を 1 本に畳む。
+ * count は合算、firstOccurred=最古、lastOccurred=最新、improving/resolved は
+ * 最新 lastOccurred 側の状態を採用、source は異なれば "both"。
+ * 全レコードが archive 済みのときのみ archive を維持する。
+ */
+function mergeGroup(group: WeaknessRecord[], canonicalId: string, label: string): WeaknessRecord {
+  const latest = group.reduce((a, b) => (lastMs(b) >= lastMs(a) ? b : a));
+  const totalCount = group.reduce((sum, w) => sum + (w.count || 0), 0);
+  const sources = new Set(group.map((w) => w.source));
+  const mergedSource: WeaknessRecord["source"] =
+    sources.size === 1 ? [...sources][0] : "both";
+  const allArchived = group.every((w) => !!w.archivedAt);
+  const dismissed = group
+    .map((w) => w.reminderDismissedAt)
+    .filter((d): d is Date => !!d)
+    .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0] ?? null;
+
+  return {
+    ...latest,
+    area: label,
+    canonicalId,
+    categoryId: latest.categoryId,
+    count: totalCount,
+    firstOccurred: new Date(Math.min(...group.map(firstMs))),
+    lastOccurred: new Date(Math.max(...group.map(lastMs))),
+    improving: latest.improving,
+    resolved: latest.resolved,
+    source: mergedSource,
+    reminderDismissedAt: dismissed,
+    archivedAt: allArchived ? latest.archivedAt : undefined,
+  };
+}
+
+/**
+ * 既存レコードに canonicalId を backfill し、同一 canonicalId を統合する。
+ * 正規化できない (resolveCanonical=null) レコードはそのまま残す。
+ */
+function consolidateExisting(
+  existing: WeaknessRecord[],
+  categoryHints?: Map<string, WeaknessRecord["categoryId"]>,
+): WeaknessRecord[] {
+  const groups = new Map<string, WeaknessRecord[]>();
+  const passthrough: WeaknessRecord[] = [];
+
+  for (const w of existing) {
+    const entry = resolveCanonical(w.area, {
+      categoryHint: categoryHints?.get(w.area) ?? w.categoryId,
+      aiCanonicalId: w.canonicalId ?? null,
+    });
+    if (!entry) {
+      passthrough.push(w);
+      continue;
+    }
+    const list = groups.get(entry.id) ?? [];
+    list.push({ ...w, categoryId: w.categoryId ?? entry.category });
+    groups.set(entry.id, list);
+  }
+
+  const merged: WeaknessRecord[] = [];
+  for (const [id, group] of groups) {
+    const label = canonicalLabel(id);
+    if (group.length === 1) {
+      merged.push({ ...group[0], canonicalId: id, area: label });
+    } else {
+      merged.push(mergeGroup(group, id, label));
+      if (process.env.NODE_ENV !== "production") {
+        console.log(
+          `[weakness consolidate] ${group.length}件 → "${label}" (canonicalId=${id})`,
+        );
+      }
+    }
+  }
+  return [...merged, ...passthrough];
 }
 
 export function updateWeaknessRecords(
@@ -63,66 +182,105 @@ export function updateWeaknessRecords(
   /** AI が直接出力した area → categoryId のヒント。 未指定なら
    *  categorizeWeakness() で fallback 分類 */
   categoryHints?: Map<string, WeaknessRecord["categoryId"]>,
+  /** AI が直接出力した area → 正規 canonicalId のヒント (最優先で採用) */
+  canonicalHints?: Map<string, string>,
 ): WeaknessRecord[] {
-  const currentSet = new Set(currentWeaknessTags);
   const now = new Date();
   const resolveCategory = (area: string): WeaknessRecord["categoryId"] =>
     categoryHints?.get(area) ?? categorizeWeakness(area);
 
-  const updated = existingWeaknesses.map((w): WeaknessRecord => {
-    if (currentSet.has(w.area)) {
-      // 既存の弱点が今回も指摘された → sourceを適切に更新
-      // 異なるsource同士の合流は "both" に統合（essay/interview/skill_check を跨ぐ場合）
-      const mergedSource: WeaknessRecord["source"] =
-        w.source === newSource ? w.source : "both";
-      return {
-        ...w,
-        count: w.count + 1,
+  // (a) 既存レコードを canonicalId で backfill + 統合 (散らばった弱点を集約)
+  const updated = consolidateExisting(existingWeaknesses, categoryHints);
+
+  // 正規 ID / area で既存を引けるよう索引化
+  const byCanonical = new Map<string, number>();
+  const byArea = new Map<string, number>();
+  updated.forEach((w, i) => {
+    if (w.canonicalId) byCanonical.set(w.canonicalId, i);
+    byArea.set(w.area, i);
+  });
+
+  const touched = new Set<number>(); // 今回 count++ したレコード index
+  const seenCanonical = new Set<string>(); // 提出内デデュープ (canonical)
+  const seenArea = new Set<string>(); // 提出内デデュープ (fallback)
+
+  /** 既存レコードを今回分でインクリメント */
+  const bump = (idx: number, fallbackCategory: WeaknessRecord["categoryId"]) => {
+    const w = updated[idx];
+    const mergedSource: WeaknessRecord["source"] =
+      w.source === newSource ? w.source : "both";
+    updated[idx] = {
+      ...w,
+      count: w.count + 1,
+      lastOccurred: now,
+      improving: false,
+      resolved: false,
+      archivedAt: undefined, // 再指摘されたので復活
+      source: mergedSource,
+      categoryId: w.categoryId ?? fallbackCategory,
+    };
+    touched.add(idx);
+  };
+
+  for (const tag of currentWeaknessTags) {
+    const entry = resolveCanonical(tag, {
+      categoryHint: resolveCategory(tag),
+      aiCanonicalId: canonicalHints?.get(tag) ?? null,
+    });
+
+    if (entry) {
+      // --- 正規化できた弱点: canonicalId で完全一致統合 ---
+      if (seenCanonical.has(entry.id)) continue; // 同一提出内は 1 回だけ
+      seenCanonical.add(entry.id);
+
+      const idx = byCanonical.get(entry.id);
+      if (idx !== undefined) {
+        bump(idx, entry.category);
+        continue;
+      }
+      // 新規 (正規ラベルで作成)
+      const rec: WeaknessRecord = {
+        area: entry.label,
+        canonicalId: entry.id,
+        count: 1,
+        firstOccurred: now,
         lastOccurred: now,
         improving: false,
         resolved: false,
-        source: mergedSource,
-        // 既存レコードに categoryId が無ければ自動付与 (= 漸進的 backfill)
-        categoryId: w.categoryId ?? resolveCategory(w.area),
+        source: newSource,
+        reminderDismissedAt: null,
+        categoryId: entry.category,
       };
-    } else {
-      return {
-        ...w,
-        improving: true,
-        categoryId: w.categoryId ?? resolveCategory(w.area),
-      };
+      updated.push(rec);
+      const newIdx = updated.length - 1;
+      byCanonical.set(entry.id, newIdx);
+      byArea.set(entry.label, newIdx);
+      touched.add(newIdx);
+      continue;
     }
-  });
 
-  const existingAreas = new Set(existingWeaknesses.map((w) => w.area));
-  for (const tag of currentWeaknessTags) {
-    if (existingAreas.has(tag)) continue;
+    // --- 正規化不能: 従来の area 一致 + 類似度フォールバック ---
+    if (seenArea.has(tag)) continue;
+    seenArea.add(tag);
 
-    // Phase 3: 同義語マージ
-    // 完全一致しないなら、 同じ categoryId 内で類似度を見て既存にマージ
+    const exactIdx = byArea.get(tag);
+    if (exactIdx !== undefined) {
+      bump(exactIdx, resolveCategory(tag));
+      continue;
+    }
+
     const newCategory = resolveCategory(tag);
     const sameCatExistingAreas = updated
-      .filter((w) => (w.categoryId ?? categorizeWeakness(w.area)) === newCategory)
+      .filter((w) => !w.canonicalId && (w.categoryId ?? categorizeWeakness(w.area)) === newCategory)
       .map((w) => w.area);
     const match = findSimilarArea(tag, sameCatExistingAreas);
     if (match) {
       const idx = updated.findIndex((w) => w.area === match.area);
       if (idx !== -1) {
-        const w = updated[idx];
-        const mergedSource: WeaknessRecord["source"] =
-          w.source === newSource ? w.source : "both";
-        updated[idx] = {
-          ...w,
-          count: w.count + 1,
-          lastOccurred: now,
-          improving: false,
-          resolved: false,
-          source: mergedSource,
-          categoryId: w.categoryId ?? newCategory,
-        };
+        bump(idx, newCategory);
         if (process.env.NODE_ENV !== "production") {
           console.log(
-            `[weakness merge] "${tag}" → "${w.area}" (similarity=${match.score.toFixed(2)}, category=${newCategory})`,
+            `[weakness merge] "${tag}" → "${updated[idx].area}" (similarity=${match.score.toFixed(2)}, category=${newCategory})`,
           );
         }
         continue;
@@ -141,10 +299,19 @@ export function updateWeaknessRecords(
       reminderDismissedAt: null,
       categoryId: newCategory,
     });
-    existingAreas.add(tag);
+    const newIdx = updated.length - 1;
+    byArea.set(tag, newIdx);
+    touched.add(newIdx);
   }
 
-  return archiveOldWeaknesses(updated, now);
+  // 今回触れられなかった未解決レコードは improving 扱い (従来挙動)
+  const result = updated.map((w, i) => {
+    if (touched.has(i)) return w;
+    if (w.resolved) return w;
+    return { ...w, improving: true };
+  });
+
+  return archiveOldWeaknesses(result, now);
 }
 
 /** Phase 4: 自動アーカイブ閾値 (日) */

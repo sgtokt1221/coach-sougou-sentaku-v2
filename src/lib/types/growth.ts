@@ -20,6 +20,13 @@ export interface WeaknessRecord {
     | "originality"
     | "other";
   /**
+   * Phase 5: 正規タクソノミー ID (例: "logic.leap")。
+   * これが一致する弱点は表記ゆれに関わらず 1 本に統合される。
+   * 旧データには無いため optional。書き込み時に resolveCanonical() で
+   * 自動付与・統合される (= 漸進的 backfill)。null 解決の弱点には付かない。
+   */
+  canonicalId?: string;
+  /**
    * Phase 4: アーカイブ済みタイムスタンプ。
    * null/undefined ならアクティブ。 値が入っているものは一覧 / 集計から除外される。
    * 自動付与: improving=true で 60日 / resolved=true で 30日 lastOccurred から経過。
