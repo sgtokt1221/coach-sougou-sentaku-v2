@@ -15,6 +15,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { authFetch } from "@/lib/api/client";
+import {
+  HomeworkFormFields,
+  buildHomeworkBody,
+  emptyHomeworkForm,
+  type HomeworkFormValue,
+} from "@/components/admin/HomeworkForm";
 import type { ChatReference } from "@/lib/types/feedback";
 
 const DRILL_CATEGORIES = [
@@ -71,8 +77,19 @@ export function ProblemPickerDialog({
   const [customTitle, setCustomTitle] = useState("");
   const [customBody, setCustomBody] = useState("");
   const [asHomework, setAsHomework] = useState(false);
-  const [dueDays, setDueDays] = useState(7);
+  const [hwForm, setHwForm] = useState<HomeworkFormValue>(emptyHomeworkForm());
   const [submitting, setSubmitting] = useState(false);
+
+  // 宿題モードで問題を選んだら、共通フォームに自動入力（種別/タイトル/目的）
+  useEffect(() => {
+    if (!asHomework || tab === "custom" || !selection) return;
+    setHwForm((f) => ({
+      ...f,
+      type: selection.homeworkType,
+      title: selection.label,
+      objective: selection.description ?? "",
+    }));
+  }, [asHomework, selection, tab]);
 
   useEffect(() => {
     if (!open || loaded) return;
@@ -96,7 +113,7 @@ export function ProblemPickerDialog({
     setCustomTitle("");
     setCustomBody("");
     setAsHomework(false);
-    setDueDays(7);
+    setHwForm(emptyHomeworkForm());
     setSearch("");
   }
 
@@ -148,41 +165,37 @@ export function ProblemPickerDialog({
   }
 
   async function handleConfirm() {
-    const sel = tab === "custom" ? buildCustom() : selection;
-    if (!sel) {
-      toast.error("問題を選択してください");
-      return;
-    }
     setSubmitting(true);
     try {
       let ref: ChatReference;
       if (asHomework) {
-        // 宿題として登録 → そのIDを参照先に
-        const dueDate = new Date(
-          Date.now() + dueDays * 24 * 60 * 60 * 1000
-        ).toISOString();
+        // 宿題として登録（共通フォームの内容で作成）→ そのIDを参照先に
+        if (!hwForm.title.trim()) {
+          toast.error("タイトルを入力してください");
+          return;
+        }
         const res = await authFetch(
           `/api/admin/students/${studentId}/homework`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              type: sel.homeworkType,
-              title: sel.label,
-              objective: sel.description,
-              dueDate,
-            }),
+            body: JSON.stringify(buildHomeworkBody(hwForm)),
           }
         );
         if (!res.ok) throw new Error("homework failed");
         const hw = await res.json();
         ref = {
           kind: "homework",
-          label: sel.label,
+          label: hwForm.title.trim(),
           href: `/student/homework/${hw.id}`,
-          description: sel.description,
+          description: hwForm.objective.trim() || undefined,
         };
       } else {
+        const sel = tab === "custom" ? buildCustom() : selection;
+        if (!sel) {
+          toast.error("問題を選択してください");
+          return;
+        }
         ref = {
           kind: sel.kind,
           label: sel.label,
@@ -349,7 +362,7 @@ export function ProblemPickerDialog({
             </Button>
           )}
 
-          {tab === "custom" && (
+          {tab === "custom" && !asHomework && (
             <div className="space-y-2">
               <Input
                 value={customTitle}
@@ -363,6 +376,11 @@ export function ProblemPickerDialog({
                 rows={4}
               />
             </div>
+          )}
+          {tab === "custom" && asHomework && (
+            <p className="text-xs text-muted-foreground">
+              下の宿題フォームに直接入力してください。
+            </p>
           )}
         </div>
 
@@ -387,17 +405,9 @@ export function ProblemPickerDialog({
             </Button>
           </div>
           {asHomework && (
-            <label className="flex items-center gap-2 text-xs text-muted-foreground">
-              締切まで
-              <Input
-                type="number"
-                min={1}
-                value={dueDays}
-                onChange={(e) => setDueDays(Math.max(1, Number(e.target.value) || 1))}
-                className="h-8 w-20"
-              />
-              日
-            </label>
+            <div className="border-t pt-3">
+              <HomeworkFormFields value={hwForm} onChange={setHwForm} />
+            </div>
           )}
         </div>
 
