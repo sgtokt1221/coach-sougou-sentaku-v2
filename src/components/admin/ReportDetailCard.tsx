@@ -7,7 +7,6 @@ import {
   PolarRadiusAxis,
   Radar,
   RadarChart,
-  ResponsiveContainer,
 } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -1184,32 +1183,36 @@ export function StatsSummaryCard({
         </div>
       )}
       {radarData && stats.count > 0 && (
-        <div className="mt-3 grid grid-cols-1 items-center gap-3 sm:grid-cols-[minmax(0,1fr)_auto] print:grid-cols-[minmax(0,1fr)_auto] print:gap-2 print:break-inside-avoid">
-          {/* 印刷時に aspect-square だと高さ 0 になりやすいので w/h を同値で明示 */}
-          <div className="mx-auto h-[200px] w-full max-w-[200px] print:h-[130px] print:max-w-[130px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart data={radarData} outerRadius="75%">
-                <PolarGrid gridType="polygon" stroke="#e2e8f0" />
-                <PolarAngleAxis
-                  dataKey="subject"
-                  tick={{ fill: "#475569", fontSize: 10 }}
-                />
-                <PolarRadiusAxis
-                  domain={[0, 10]}
-                  tick={false}
-                  axisLine={false}
-                />
-                <Radar
-                  dataKey="value"
-                  stroke={isEssay ? "#0d9488" : "#e11d48"}
-                  fill={isEssay ? "#14b8a6" : "#fb7185"}
-                  fillOpacity={0.25}
-                  isAnimationActive={false}
-                />
-              </RadarChart>
-            </ResponsiveContainer>
+        <div className="mt-3 grid grid-cols-1 items-center gap-3 sm:grid-cols-[minmax(0,1fr)_auto] print:grid-cols-1 print:gap-2 print:break-inside-avoid">
+          {/*
+            印刷で ResponsiveContainer はサイズ測定が不整合になり、SVG/軸ラベルが
+            箱を超えてはみ出すため、固定サイズの RadarChart を中央寄せで使う。
+            margin で軸ラベルが SVG 内に収まるようにする。
+          */}
+          <div className="mx-auto w-[200px] max-w-full overflow-hidden">
+            <RadarChart
+              data={radarData}
+              width={200}
+              height={180}
+              outerRadius="68%"
+              margin={{ top: 18, right: 28, bottom: 18, left: 28 }}
+            >
+              <PolarGrid gridType="polygon" stroke="#e2e8f0" />
+              <PolarAngleAxis
+                dataKey="subject"
+                tick={{ fill: "#475569", fontSize: 10 }}
+              />
+              <PolarRadiusAxis domain={[0, 10]} tick={false} axisLine={false} />
+              <Radar
+                dataKey="value"
+                stroke={isEssay ? "#0d9488" : "#e11d48"}
+                fill={isEssay ? "#14b8a6" : "#fb7185"}
+                fillOpacity={0.25}
+                isAnimationActive={false}
+              />
+            </RadarChart>
           </div>
-          <ul className="min-w-[110px] space-y-1 text-xs print:min-w-0 print:max-w-[110px] print:space-y-0.5 print:text-[9pt]">
+          <ul className="grid grid-cols-1 gap-1 text-xs print:grid-cols-2 print:gap-x-3 print:gap-y-0.5 print:text-[9pt]">
             {radarData.map((item) => (
               <li
                 key={item.subject}
