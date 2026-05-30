@@ -58,7 +58,11 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { authFetch } from "@/lib/api/client";
 import { ScoresTrendChart } from "@/components/growth/ScoresTrendChart";
+import { DetailedScoresTrendChart } from "@/components/growth/DetailedScoresTrendChart";
 import { WeaknessSourceBadge } from "@/components/growth/WeaknessSourceBadge";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { getInitials } from "@/lib/utils/avatar";
+import { SegmentControl } from "@/components/shared/SegmentControl";
 import type { StudentDetail } from "@/lib/types/admin";
 import { getDisplayGrade } from "@/lib/utils/grade";
 import {
@@ -345,6 +349,7 @@ function AdminStudentDetailPageInner() {
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [openSections, setOpenSections] = useState({ weaknesses: false, essays: false });
+  const [perfTab, setPerfTab] = useState<"total" | "detailed">("total");
   const [skillCheck, setSkillCheck] = useState<SkillCheckStatus | null>(null);
   const [interviewSkillCheck, setInterviewSkillCheck] = useState<InterviewSkillCheckStatus | null>(null);
   const [savingCategory, setSavingCategory] = useState(false);
@@ -710,13 +715,33 @@ function AdminStudentDetailPageInner() {
       {/* Score Trend Chart */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <BarChart3 className="size-4" />
-            スコア推移（小論文・面接）
-          </CardTitle>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <BarChart3 className="size-4" />
+              スコア推移
+            </CardTitle>
+            <SegmentControl
+              value={perfTab}
+              onChange={(v) => setPerfTab(v as "total" | "detailed")}
+              size="sm"
+              defaultAccent="blue"
+              options={[
+                { id: "total", label: "総合（小論文・面接）" },
+                { id: "detailed", label: "項目別（小論文）" },
+              ]}
+            />
+          </div>
         </CardHeader>
         <CardContent>
-          <ScoresTrendChart essayData={essayChartData} interviewData={interviewChartData} />
+          {perfTab === "total" ? (
+            <ScoresTrendChart essayData={essayChartData} interviewData={interviewChartData} />
+          ) : essayChartData.length > 0 ? (
+            <DetailedScoresTrendChart data={essayChartData} />
+          ) : (
+            <p className="py-12 text-center text-sm text-muted-foreground">
+              小論文の添削データがありません
+            </p>
+          )}
         </CardContent>
       </Card>
 
@@ -850,6 +875,10 @@ function AdminStudentDetailPageInner() {
           戻る
         </Button>
         <div className="flex items-center gap-3">
+          <Avatar size="lg">
+            <AvatarImage src={profile.photoURL ?? undefined} alt={profile.displayName} />
+            <AvatarFallback>{getInitials(profile.displayName)}</AvatarFallback>
+          </Avatar>
           <div>
             <h1 className="text-2xl font-bold">{profile.displayName}</h1>
             <p className="text-sm text-muted-foreground">生徒詳細</p>

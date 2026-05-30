@@ -22,6 +22,8 @@ import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
 import type { StudentListItem } from "@/lib/types/admin";
 import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
 import { StudentStatusLamps } from "@/components/admin/StudentStatusLamps";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { getInitials } from "@/lib/utils/avatar";
 import { isGraduated } from "@/lib/utils/grade";
 import { authFetch } from "@/lib/api/client";
 import { toast } from "sonner";
@@ -327,14 +329,20 @@ export default function AdminStudentsPage() {
                         onClick={() => router.push(`/admin/students/${s.uid}`)}
                       >
                         <td className="px-4 py-3">
-                          <div>
-                            <p className="font-medium">{s.displayName}</p>
-                            <p className="text-xs text-muted-foreground">{s.email}</p>
-                            {s.createdAt && (
-                              <p className="mt-0.5 text-[10px] text-muted-foreground">
-                                加入 {formatJoinElapsed(s.createdAt)}
-                              </p>
-                            )}
+                          <div className="flex items-center gap-2.5">
+                            <Avatar size="sm">
+                              <AvatarImage src={s.photoURL ?? undefined} alt={s.displayName} />
+                              <AvatarFallback>{getInitials(s.displayName)}</AvatarFallback>
+                            </Avatar>
+                            <div className="min-w-0">
+                              <p className="font-medium">{s.displayName}</p>
+                              <p className="text-xs text-muted-foreground">{s.email}</p>
+                              {s.createdAt && (
+                                <p className="mt-0.5 text-[10px] text-muted-foreground">
+                                  加入 {formatJoinElapsed(s.createdAt)}
+                                </p>
+                              )}
+                            </div>
                           </div>
                         </td>
                         <td className="px-4 py-3 hidden sm:table-cell">

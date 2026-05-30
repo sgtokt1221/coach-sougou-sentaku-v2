@@ -166,13 +166,18 @@ export async function GET(
         };
       });
 
-    // 添削スコア推移
+    // 添削スコア推移（総合 + 構成要素別）
     const essayScoreTrend = essays
       .filter((e) => e.scores)
       .reverse()
       .map((e) => ({
         date: e.submittedAt,
         total: e.scores!.total,
+        structure: e.scores!.structure ?? 0,
+        logic: e.scores!.logic ?? 0,
+        expression: e.scores!.expression ?? 0,
+        apAlignment: e.scores!.apAlignment ?? 0,
+        originality: e.scores!.originality ?? 0,
       }));
 
     // 面接スコア推移
@@ -379,6 +384,7 @@ export async function GET(
         uid: id,
         displayName: userData.displayName ?? "",
         email: userData.email ?? "",
+        photoURL: userData.photoURL ?? null,
         school: userData.school,
         grade: userData.grade,
         gradeUpdatedAt: userData.gradeUpdatedAt,

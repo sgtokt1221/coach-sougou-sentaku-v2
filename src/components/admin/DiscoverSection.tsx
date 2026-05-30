@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Lightbulb, Target } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import { GrowthTree } from "@/components/self-analysis/GrowthTree";
+import { AnalysisResultCard } from "@/components/self-analysis/AnalysisResultCard";
 import type { SelfAnalysis } from "@/lib/types/self-analysis";
 
 interface DiscoverSectionProps {
@@ -58,6 +59,7 @@ export function DiscoverSection({ studentId }: DiscoverSectionProps) {
       "interests",
       "vision",
       "identity",
+      "synthesis",
     ] as const;
     STEP_KEYS.forEach((key, i) => {
       const val = (selfAnalysis as unknown as Record<string, unknown>)[key];
@@ -91,6 +93,7 @@ export function DiscoverSection({ studentId }: DiscoverSectionProps) {
             <GrowthTree
               completedSteps={saCompletedSteps}
               stepsData={saStepsData}
+              interactive={false}
             />
           ) : saError ? (
             <div className="py-8 text-center">
@@ -104,6 +107,11 @@ export function DiscoverSection({ studentId }: DiscoverSectionProps) {
           )}
         </CardContent>
       </Card>
+
+      {/* 自己分析の本文（統合・言語化を含む全項目）を読み取り専用で表示 */}
+      {selfAnalysis?.isComplete && (
+        <AnalysisResultCard analysis={selfAnalysis} readOnly />
+      )}
     </section>
   );
 }

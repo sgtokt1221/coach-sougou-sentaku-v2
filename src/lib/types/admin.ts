@@ -7,6 +7,8 @@ export interface StudentListItem {
   uid: string;
   displayName: string;
   email: string;
+  /** プロフィール画像 URL（未設定は null） */
+  photoURL?: string | null;
   targetUniversities: string[];
   /** 学年 (高 1=1, 2=2, 3=3)、 fiscalYear 加算前の生値 */
   grade?: number;
@@ -49,6 +51,8 @@ export interface StudentDetail {
     uid: string;
     displayName: string;
     email: string;
+    /** プロフィール画像 URL（未設定は null） */
+    photoURL?: string | null;
     school?: string;
     grade?: number;
     /** grade 入力日時 (ISO)。 表示時の自動加算基準 */
@@ -68,7 +72,7 @@ export interface StudentDetail {
   essays: EssayListItem[];
   /** @deprecated Use essayScoreTrend + interviewScoreTrend */
   scoreTrend?: ScoreTrendPoint[];
-  essayScoreTrend?: { date: string; total: number }[];
+  essayScoreTrend?: ScoreTrendPoint[];
   interviewScoreTrend?: { date: string; total: number }[];
   /** 直近 essays の 5 軸平均 (0-10)。スキル俯瞰レーダー用 */
   essayCategoryAverages?: {

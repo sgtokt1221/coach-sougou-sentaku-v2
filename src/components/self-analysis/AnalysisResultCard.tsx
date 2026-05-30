@@ -22,6 +22,8 @@ import type { SelfAnalysis } from "@/lib/types/self-analysis";
 interface AnalysisResultCardProps {
   analysis: SelfAnalysis;
   onUpdate?: (updated: SelfAnalysis) => void;
+  /** true で編集UI（鉛筆）を隠し、読み取り専用にする（管理者閲覧など） */
+  readOnly?: boolean;
 }
 
 /** 編集内容を書き戻せる SelfAnalysis 上のセクション（オブジェクト型のフィールドのみ） */
@@ -53,10 +55,12 @@ function EditableField({
   label,
   value,
   onSave,
+  editable = true,
 }: {
   label: string;
   value: string | string[];
   onSave: (val: string | string[]) => void;
+  editable?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
   const isArray = Array.isArray(value);
@@ -67,7 +71,7 @@ function EditableField({
     setEditing(false);
   }
 
-  if (editing) {
+  if (editing && editable) {
     return (
       <div className="space-y-2">
         <p className="text-xs font-medium text-muted-foreground">{label}</p>
@@ -101,14 +105,16 @@ function EditableField({
     <div className="group">
       <div className="flex items-center justify-between">
         <p className="text-xs font-medium text-muted-foreground">{label}</p>
-        <Button
-          size="sm"
-          variant="ghost"
-          className="opacity-0 group-hover:opacity-100 transition-opacity h-6 px-2"
-          onClick={() => setEditing(true)}
-        >
-          <Pencil className="size-3" />
-        </Button>
+        {editable && (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="opacity-0 group-hover:opacity-100 transition-opacity h-6 px-2"
+            onClick={() => setEditing(true)}
+          >
+            <Pencil className="size-3" />
+          </Button>
+        )}
       </div>
       {isArray ? (
         <ul className="text-sm space-y-1 mt-1">
@@ -128,6 +134,7 @@ function EditableField({
 export function AnalysisResultCard({
   analysis,
   onUpdate,
+  readOnly = false,
 }: AnalysisResultCardProps) {
   const sections: SectionConfig[] = [
     {
@@ -215,6 +222,7 @@ export function AnalysisResultCard({
                 key={field.label}
                 label={field.label}
                 value={field.value}
+                editable={!readOnly}
                 onSave={(val) => {
                   if (!onUpdate) return;
                   const updated: SelfAnalysis = {

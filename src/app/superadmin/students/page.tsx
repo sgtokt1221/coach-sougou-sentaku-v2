@@ -19,6 +19,8 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { authFetch } from "@/lib/api/client";
 import { useAuthSWR } from "@/lib/api/swr";
 import type { StudentListItem, AdminListItem } from "@/lib/types/admin";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { getInitials } from "@/lib/utils/avatar";
 
 type Filter = "all" | "unassigned" | string;
 
@@ -207,7 +209,13 @@ export default function SuperadminStudentsPage() {
                         className="px-4 py-3"
                         onClick={() => router.push(`/superadmin/students/${s.uid}`)}
                       >
-                        <p className="font-medium hover:underline">{s.displayName}</p>
+                        <div className="flex items-center gap-2.5">
+                          <Avatar size="sm">
+                            <AvatarImage src={s.photoURL ?? undefined} alt={s.displayName} />
+                            <AvatarFallback>{getInitials(s.displayName)}</AvatarFallback>
+                          </Avatar>
+                          <p className="font-medium hover:underline">{s.displayName}</p>
+                        </div>
                       </td>
                       <td
                         className="px-4 py-3 hidden sm:table-cell"

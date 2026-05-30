@@ -242,6 +242,7 @@ export async function GET(request: NextRequest) {
           uid,
           displayName: data.displayName ?? "",
           email: data.email ?? "",
+          photoURL: data.photoURL ?? null,
           targetUniversities: data.targetUniversities ?? [],
           grade: typeof data.grade === "number" ? data.grade : undefined,
           gradeUpdatedAt:
