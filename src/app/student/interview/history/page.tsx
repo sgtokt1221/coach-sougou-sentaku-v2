@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,9 +17,11 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { CHART_COLORS, CHART_ANIMATION, GRID_STYLE } from "@/components/charts/theme";
+import { CHART_COLORS, CHART_ANIMATION, GRID_STYLE, INTERVIEW_SCORE_LINES } from "@/components/charts/theme";
 import { CustomTooltip } from "@/components/charts/CustomTooltip";
 import { CustomDot, CustomActiveDot } from "@/components/charts/CustomDot";
+import { SegmentControl } from "@/components/shared/SegmentControl";
+import { DetailedScoresTrendChart } from "@/components/growth/DetailedScoresTrendChart";
 import type { InterviewMode } from "@/lib/types/interview";
 import { INTERVIEW_MODE_LABELS } from "@/lib/types/interview";
 import { useAuthSWR } from "@/lib/api/swr";
@@ -30,6 +33,11 @@ interface InterviewHistoryItem {
   mode: InterviewMode;
   practicedAt: string;
   totalScore: number;
+  clarity: number;
+  apAlignment: number;
+  enthusiasm: number;
+  specificity: number;
+  bodyLanguage: number;
 }
 
 
@@ -45,6 +53,7 @@ const MODE_VARIANT: Record<
 
 export default function InterviewHistoryPage() {
   const router = useRouter();
+  const [chartTab, setChartTab] = useState<"total" | "detailed">("total");
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: rawData, isLoading: loading } = useAuthSWR<{ interviews: any[] }>("/api/interview/history?userId=current");
@@ -65,16 +74,31 @@ export default function InterviewHistoryPage() {
           ? new Date(item.startedAt).toISOString().slice(0, 10)
           : ""),
       totalScore: item.totalScore ?? item.scores?.total ?? 0,
+      clarity: item.scores?.clarity ?? 0,
+      apAlignment: item.scores?.apAlignment ?? 0,
+      enthusiasm: item.scores?.enthusiasm ?? 0,
+      specificity: item.scores?.specificity ?? 0,
+      bodyLanguage: item.scores?.bodyLanguage ?? 0,
     })
   );
   const historyToShow = history;
 
-  const chartData = [...historyToShow]
-    .sort((a, b) => a.practicedAt.localeCompare(b.practicedAt))
-    .map((item) => ({
-      date: item.practicedAt,
-      score: item.totalScore,
-    }));
+  const sortedAsc = [...historyToShow].sort((a, b) =>
+    a.practicedAt.localeCompare(b.practicedAt),
+  );
+  const chartData = sortedAsc.map((item) => ({
+    date: item.practicedAt,
+    score: item.totalScore,
+  }));
+  const detailedChartData = sortedAsc.map((item) => ({
+    date: item.practicedAt,
+    total: item.totalScore,
+    clarity: item.clarity,
+    apAlignment: item.apAlignment,
+    enthusiasm: item.enthusiasm,
+    specificity: item.specificity,
+    bodyLanguage: item.bodyLanguage,
+  }));
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-5 lg:px-6 lg:py-8 space-y-4 lg:space-y-6">
@@ -111,34 +135,50 @@ export default function InterviewHistoryPage() {
           {/* スコア推移グラフ */}
           {historyToShow.length > 0 && (
             <Card>
-              <CardHeader>
-                <CardTitle className="text-base">スコア推移</CardTitle>
+              <CardHeader className="pb-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <CardTitle className="text-base">スコア推移</CardTitle>
+                  <SegmentControl
+                    value={chartTab}
+                    onChange={(v) => setChartTab(v as "total" | "detailed")}
+                    size="sm"
+                    defaultAccent="blue"
+                    options={[
+                      { id: "total", label: "総合" },
+                      { id: "detailed", label: "項目別" },
+                    ]}
+                  />
+                </div>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={200}>
-                  <LineChart data={chartData}>
-                    <CartesianGrid
-                      strokeDasharray={GRID_STYLE.strokeDasharray}
-                      stroke={GRID_STYLE.stroke}
-                      opacity={GRID_STYLE.opacity}
-                    />
-                    <XAxis dataKey="date" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-                    <YAxis domain={[0, 40]} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Line
-                      type="monotone"
-                      dataKey="score"
-                      name="総合スコア"
-                      stroke={CHART_COLORS.primary}
-                      strokeWidth={2.5}
-                      dot={<CustomDot />}
-                      activeDot={<CustomActiveDot />}
-                      isAnimationActive={true}
-                      animationDuration={CHART_ANIMATION.duration}
-                      animationEasing={CHART_ANIMATION.easing}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+                {chartTab === "total" ? (
+                  <ResponsiveContainer width="100%" height={240}>
+                    <LineChart data={chartData}>
+                      <CartesianGrid
+                        strokeDasharray={GRID_STYLE.strokeDasharray}
+                        stroke={GRID_STYLE.stroke}
+                        opacity={GRID_STYLE.opacity}
+                      />
+                      <XAxis dataKey="date" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                      <YAxis domain={[0, 40]} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Line
+                        type="monotone"
+                        dataKey="score"
+                        name="総合スコア"
+                        stroke={CHART_COLORS.primary}
+                        strokeWidth={2.5}
+                        dot={<CustomDot />}
+                        activeDot={<CustomActiveDot />}
+                        isAnimationActive={true}
+                        animationDuration={CHART_ANIMATION.duration}
+                        animationEasing={CHART_ANIMATION.easing}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <DetailedScoresTrendChart data={detailedChartData} lines={INTERVIEW_SCORE_LINES} />
+                )}
               </CardContent>
             </Card>
           )}

@@ -16,19 +16,24 @@ import { CustomDot, CustomActiveDot } from "@/components/charts/CustomDot";
 
 interface TrendDataPoint {
   date: string;
-  total: number;
-  structure: number;
-  logic: number;
-  expression: number;
-  apAlignment: number;
-  originality: number;
+  [key: string]: number | string;
+}
+
+interface LineDef {
+  key: string;
+  label: string;
+  color: string;
 }
 
 interface DetailedScoresTrendChartProps {
   data: TrendDataPoint[];
+  /** 描画する系列。未指定は小論文5項目（SCORE_LINES） */
+  lines?: readonly LineDef[];
 }
 
-export function DetailedScoresTrendChart({ data }: DetailedScoresTrendChartProps) {
+export function DetailedScoresTrendChart({ data, lines }: DetailedScoresTrendChartProps) {
+  const lineDefs = lines ?? SCORE_LINES;
+
   if (data.length === 0) {
     return (
       <div className="flex h-[280px] items-center justify-center text-sm text-muted-foreground">
@@ -38,9 +43,11 @@ export function DetailedScoresTrendChart({ data }: DetailedScoresTrendChartProps
   }
 
   // 1データ点の場合、前後にダミー点を追加して中央に表示
-  const chartData = data.length === 1
-    ? [{ date: "", total: 0, structure: 0, logic: 0, expression: 0, apAlignment: 0, originality: 0 }, data[0], { date: " ", total: 0, structure: 0, logic: 0, expression: 0, apAlignment: 0, originality: 0 }]
-    : data;
+  const zero: Record<string, number> = Object.fromEntries(lineDefs.map((l) => [l.key, 0]));
+  const chartData =
+    data.length === 1
+      ? [{ date: "", ...zero }, data[0], { date: " ", ...zero }]
+      : data;
 
   return (
     <ResponsiveContainer width="100%" height={280}>
@@ -65,7 +72,7 @@ export function DetailedScoresTrendChart({ data }: DetailedScoresTrendChartProps
         />
         <Tooltip content={<CustomTooltip />} />
         <Legend wrapperStyle={{ fontSize: 12 }} />
-        {SCORE_LINES.map((line) => (
+        {lineDefs.map((line) => (
           <Line
             key={line.key}
             type="monotone"

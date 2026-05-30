@@ -73,7 +73,7 @@ export interface StudentDetail {
   /** @deprecated Use essayScoreTrend + interviewScoreTrend */
   scoreTrend?: ScoreTrendPoint[];
   essayScoreTrend?: ScoreTrendPoint[];
-  interviewScoreTrend?: { date: string; total: number }[];
+  interviewScoreTrend?: InterviewScoreTrendPoint[];
   /** 直近 essays の 5 軸平均 (0-10)。スキル俯瞰レーダー用 */
   essayCategoryAverages?: {
     structure: number;
@@ -146,6 +146,17 @@ export interface ScoreTrendPoint {
   expression: number;
   apAlignment: number;
   originality: number;
+}
+
+/** 面接スコア推移（総合 + 共通5軸） */
+export interface InterviewScoreTrendPoint {
+  date: string;
+  total: number;
+  clarity: number;
+  apAlignment: number;
+  enthusiasm: number;
+  specificity: number;
+  bodyLanguage: number;
 }
 
 export interface AdminListItem {

@@ -35,6 +35,15 @@ export const SCORE_LINES = [
   { key: "originality", label: "独自性", color: SCORE_COLORS.originality },
 ] as const;
 
+/** 面接スコアの共通5軸（全モード必須項目）の系列定義 */
+export const INTERVIEW_SCORE_LINES = [
+  { key: "clarity", label: "明確さ", color: "var(--chart-1)" },
+  { key: "apAlignment", label: "AP合致度", color: "var(--chart-5)" },
+  { key: "enthusiasm", label: "熱意", color: "var(--chart-2)" },
+  { key: "specificity", label: "具体性", color: "var(--chart-3)" },
+  { key: "bodyLanguage", label: "ボディランゲージ", color: "var(--chart-4)" },
+] as const;
+
 export const CHART_ANIMATION = {
   duration: 800,
   easing: "ease-out" as const,

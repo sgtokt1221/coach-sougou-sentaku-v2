@@ -180,16 +180,32 @@ export async function GET(
         originality: e.scores!.originality ?? 0,
       }));
 
-    // 面接スコア推移
+    // 面接スコア推移（総合 + 共通5軸）
     const interviewScoreTrend = interviewsSnap.docs
       .map((d) => {
         const data = d.data();
+        const s = data.scores;
         return {
           date: data.startedAt?.toDate().toISOString() ?? new Date().toISOString(),
-          total: data.scores?.total ?? null,
+          total: s?.total ?? null,
+          clarity: s?.clarity ?? 0,
+          apAlignment: s?.apAlignment ?? 0,
+          enthusiasm: s?.enthusiasm ?? 0,
+          specificity: s?.specificity ?? 0,
+          bodyLanguage: s?.bodyLanguage ?? 0,
         };
       })
-      .filter((i): i is { date: string; total: number } => i.total != null)
+      .filter(
+        (i): i is {
+          date: string;
+          total: number;
+          clarity: number;
+          apAlignment: number;
+          enthusiasm: number;
+          specificity: number;
+          bodyLanguage: number;
+        } => i.total != null,
+      )
       .reverse();
 
     // スキル俯瞰レーダー用: 直近 3 件の 5 軸平均

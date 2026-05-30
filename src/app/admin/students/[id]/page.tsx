@@ -59,6 +59,7 @@ import { toast } from "sonner";
 import { authFetch } from "@/lib/api/client";
 import { ScoresTrendChart } from "@/components/growth/ScoresTrendChart";
 import { DetailedScoresTrendChart } from "@/components/growth/DetailedScoresTrendChart";
+import { INTERVIEW_SCORE_LINES } from "@/components/charts/theme";
 import { WeaknessSourceBadge } from "@/components/growth/WeaknessSourceBadge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils/avatar";
@@ -349,7 +350,7 @@ function AdminStudentDetailPageInner() {
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [openSections, setOpenSections] = useState({ weaknesses: false, essays: false });
-  const [perfTab, setPerfTab] = useState<"total" | "detailed">("total");
+  const [perfTab, setPerfTab] = useState<"total" | "essay" | "interview">("total");
   const [skillCheck, setSkillCheck] = useState<SkillCheckStatus | null>(null);
   const [interviewSkillCheck, setInterviewSkillCheck] = useState<InterviewSkillCheckStatus | null>(null);
   const [savingCategory, setSavingCategory] = useState(false);
@@ -722,12 +723,13 @@ function AdminStudentDetailPageInner() {
             </CardTitle>
             <SegmentControl
               value={perfTab}
-              onChange={(v) => setPerfTab(v as "total" | "detailed")}
+              onChange={(v) => setPerfTab(v as "total" | "essay" | "interview")}
               size="sm"
               defaultAccent="blue"
               options={[
-                { id: "total", label: "総合（小論文・面接）" },
-                { id: "detailed", label: "項目別（小論文）" },
+                { id: "total", label: "総合" },
+                { id: "essay", label: "項目別（小論文）" },
+                { id: "interview", label: "項目別（面接）" },
               ]}
             />
           </div>
@@ -735,11 +737,19 @@ function AdminStudentDetailPageInner() {
         <CardContent>
           {perfTab === "total" ? (
             <ScoresTrendChart essayData={essayChartData} interviewData={interviewChartData} />
-          ) : essayChartData.length > 0 ? (
-            <DetailedScoresTrendChart data={essayChartData} />
+          ) : perfTab === "essay" ? (
+            essayChartData.length > 0 ? (
+              <DetailedScoresTrendChart data={essayChartData} />
+            ) : (
+              <p className="py-12 text-center text-sm text-muted-foreground">
+                小論文の添削データがありません
+              </p>
+            )
+          ) : interviewChartData.length > 0 ? (
+            <DetailedScoresTrendChart data={interviewChartData} lines={INTERVIEW_SCORE_LINES} />
           ) : (
             <p className="py-12 text-center text-sm text-muted-foreground">
-              小論文の添削データがありません
+              面接の練習データがありません
             </p>
           )}
         </CardContent>
