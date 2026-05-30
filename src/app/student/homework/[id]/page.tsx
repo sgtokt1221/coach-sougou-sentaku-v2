@@ -1,22 +1,20 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft,
   Calendar,
-  CheckCircle2,
   Clock,
   FileText,
   Loader2,
   Mic,
-  Send,
+  PencilLine,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { authFetch } from "@/lib/api/client";
 import { useAuthSWR } from "@/lib/api/swr";
@@ -31,33 +29,22 @@ function formatDate(iso?: string): string {
 }
 
 /**
- * 生徒向け宿題詳細・提出ページ。
+ * 生徒向け宿題詳細・取り組みページ。
  *
- * 構成:
- * - スナップショット表示 (タイトル / ヒント / 関連弱点 / 締切)
- * - textarea で回答入力 (小論文も面接も初版はテキストのみ。画像アップロード/録音は将来対応)
- * - 提出ボタン → AI 添削 → 既存履歴 (essays/interviews) に書き込み + homeworkAssignment.status 更新
- *
- * MVP 上の割り切り:
- * - 画像アップロードからの OCR (既存の `/api/essay/upload`) は使わず、テキスト直書きのみ
- * - 録音による単発面接も将来対応 (初版はテキスト回答)
+ * - 小論文宿題: 「小論文添削で取り組む」CTA → /student/essay/new にリッチ添削フローで誘導。
+ *   テーマ/過去問が紐づいていれば出題資料つき、自作はお題=タイトルで入る。提出すると宿題は提出済みになる。
+ * - 面接宿題: 既存どおり /api/interview/start で模擬面接を開始（homeworkAssignmentId 連携済み）。
  */
 export default function HomeworkDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const homeworkId = params?.id ?? "";
 
-  const { data, error, isLoading, mutate } = useAuthSWR<HomeworkAssignment>(
+  const { data, error, isLoading } = useAuthSWR<HomeworkAssignment>(
     homeworkId ? `/api/student/homework/${homeworkId}` : null,
   );
 
-  const [text, setText] = useState("");
-  const [submitting, setSubmitting] = useState(false);
   const [startingInterview, setStartingInterview] = useState(false);
-  const [result, setResult] = useState<{
-    targetId: string;
-    type: "essay" | "interview";
-  } | null>(null);
 
   const startInterviewSession = async () => {
     if (!data) return;
@@ -102,47 +89,6 @@ export default function HomeworkDetailPage() {
     }
   };
 
-  const minLength = useMemo(() => (data?.snapshot.type === "essay" ? 20 : 10), [data]);
-  const canSubmit = text.trim().length >= minLength && !submitting && !result;
-
-  const handleSubmit = async () => {
-    if (!data) return;
-    setSubmitting(true);
-    try {
-      const payload =
-        data.snapshot.type === "essay"
-          ? { type: "essay", body: text }
-          : { type: "interview", answer: text };
-      const res = await authFetch(
-        `/api/student/homework/${homeworkId}/submit`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        },
-      );
-      if (!res.ok) {
-        const detail = (await res.json().catch(() => ({}))) as {
-          error?: string;
-          detail?: string;
-        };
-        throw new Error(detail.detail ?? detail.error ?? "提出に失敗しました");
-      }
-      const json = (await res.json()) as {
-        essayId?: string;
-        interviewId?: string;
-      };
-      const targetId = json.essayId ?? json.interviewId ?? "";
-      setResult({ targetId, type: data.snapshot.type });
-      mutate();
-      toast.success("提出しました！AI添削が完了しました。");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "提出に失敗しました");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="mx-auto max-w-3xl space-y-4 p-6">
@@ -161,35 +107,15 @@ export default function HomeworkDetailPage() {
     );
   }
 
-  if (result) {
-    const historyHref =
-      result.type === "essay"
-        ? `/student/essay/${result.targetId}`
-        : `/student/interview/${result.targetId}/result`;
-    return (
-      <div className="mx-auto max-w-2xl space-y-6 p-6 text-center">
-        <CheckCircle2 className="mx-auto size-16 text-emerald-500" />
-        <h1 className="text-2xl font-bold">提出が完了しました</h1>
-        <p className="text-sm text-muted-foreground">
-          AI 添削の結果は履歴ページから確認できます。スコア推移グラフにも反映されています。
-        </p>
-        <div className="flex justify-center gap-2">
-          <Button asChild variant="outline">
-            <Link href="/student/homework">
-              <ArrowLeft className="mr-1.5 size-4" />
-              宿題一覧へ
-            </Link>
-          </Button>
-          <Button asChild>
-            <Link href={historyHref}>添削結果を見る</Link>
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   const isEssay = data.snapshot.type === "essay";
   const isSubmitted = data.status === "submitted" || data.status === "reviewed";
+
+  // 小論文添削フローへの遷移先（テーマ/過去問つきはリッチ資料、自作はお題=タイトル）
+  const essayHref = data.snapshot.essayThemeId
+    ? `/student/essay/new?theme=${encodeURIComponent(data.snapshot.essayThemeId)}&homeworkId=${data.id}`
+    : data.snapshot.pastQuestionId
+      ? `/student/essay/new?pastQuestion=${encodeURIComponent(data.snapshot.pastQuestionId)}&homeworkId=${data.id}`
+      : `/student/essay/new?homeworkId=${data.id}`;
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 p-6">
@@ -231,6 +157,12 @@ export default function HomeworkDetailPage() {
             {data.snapshot.title}
           </p>
 
+          {data.snapshot.objective && (
+            <p className="text-xs text-muted-foreground">
+              <span className="font-semibold">目的:</span> {data.snapshot.objective}
+            </p>
+          )}
+
           {data.snapshot.relatedWeakness && (
             <p className="text-xs text-muted-foreground">
               <span className="font-semibold">関連:</span> {data.snapshot.relatedWeakness}
@@ -261,26 +193,15 @@ export default function HomeworkDetailPage() {
       ) : isEssay ? (
         <Card>
           <CardContent className="space-y-3 p-4">
-            <label className="block text-sm font-semibold">本文を書いてください</label>
-            <Textarea
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              rows={16}
-              placeholder="ここに本文を書いてください (目安: 400〜600 字)"
-              disabled={submitting}
-            />
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>{text.length} 文字</span>
-              <span>提出には {minLength} 文字以上必要です</span>
-            </div>
+            <p className="text-sm text-muted-foreground">
+              小論文添削の画面で取り組みます。出題資料や志望校に合わせたヒントを見ながら本文を書き、提出するとAI添削が受けられます。提出すると、この宿題は自動的に提出済みになります。
+            </p>
             <div className="flex justify-end">
-              <Button onClick={handleSubmit} disabled={!canSubmit}>
-                {submitting ? (
-                  <Loader2 className="mr-1.5 size-4 animate-spin" />
-                ) : (
-                  <Send className="mr-1.5 size-4" />
-                )}
-                提出してAI添削を受ける
+              <Button asChild>
+                <Link href={essayHref}>
+                  <PencilLine className="mr-1.5 size-4" />
+                  小論文添削で取り組む
+                </Link>
               </Button>
             </div>
           </CardContent>

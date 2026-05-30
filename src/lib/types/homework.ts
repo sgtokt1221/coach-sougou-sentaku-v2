@@ -44,6 +44,10 @@ export interface HomeworkAssignment {
     /** 添削時に AP として渡す大学・学部情報。配布時に確定 */
     targetUniversity?: string;
     targetFaculty?: string;
+    /** 元の小論文テーマ ID。あれば生徒は /student/essay/new?theme=ID のリッチ添削で取り組む */
+    essayThemeId?: string;
+    /** 元の過去問 ID。あれば生徒は /student/essay/new?pastQuestion=ID のリッチ添削で取り組む */
+    pastQuestionId?: string;
   };
   status: HomeworkStatus;
   assignedAt: string;

@@ -57,6 +57,9 @@ interface Selection {
   description?: string;
   /** 宿題化時の種別 */
   homeworkType: "essay" | "interview";
+  /** 宿題化時に snapshot へ保存する元問題ID（リッチ添削フロー誘導用） */
+  essayThemeId?: string;
+  pastQuestionId?: string;
 }
 
 export function ProblemPickerDialog({
@@ -124,6 +127,7 @@ export function ProblemPickerDialog({
       href: `/student/essay/new?theme=${encodeURIComponent(t.id)}`,
       description: t.description,
       homeworkType: "essay",
+      essayThemeId: t.id,
     });
   }
   function selectPast(p: PastItem) {
@@ -133,6 +137,7 @@ export function ProblemPickerDialog({
       href: `/student/essay/new?pastQuestion=${encodeURIComponent(p.id)}`,
       description: p.description,
       homeworkType: "essay",
+      pastQuestionId: p.id,
     });
   }
   function selectInterview(cat: string) {
@@ -179,7 +184,15 @@ export function ProblemPickerDialog({
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(buildHomeworkBody(hwForm)),
+            body: JSON.stringify({
+              ...buildHomeworkBody(hwForm),
+              ...(selection?.essayThemeId
+                ? { essayThemeId: selection.essayThemeId }
+                : {}),
+              ...(selection?.pastQuestionId
+                ? { pastQuestionId: selection.pastQuestionId }
+                : {}),
+            }),
           }
         );
         if (!res.ok) throw new Error("homework failed");

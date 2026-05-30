@@ -130,6 +130,8 @@ export interface EssayReviewRequest {
   lectureInfo?: string;
   parentEssayId?: string;
   inputMode?: "image" | "text" | "dictation";
+  /** 宿題から取り組んだ場合の homeworkAssignment ID。提出時に宿題を提出済みにする */
+  homeworkId?: string;
 }
 
 export interface EssayReviewResponse {

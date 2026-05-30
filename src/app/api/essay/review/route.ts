@@ -13,7 +13,7 @@ export const maxDuration = 120;
 export async function POST(request: NextRequest) {
   try {
     const body: EssayReviewRequest = await request.json();
-    const { essayId, ocrText, universityId, facultyId, topic, questionType, sourceText, chartDataSummary, pastQuestionFacultyName } = body;
+    const { essayId, ocrText, universityId, facultyId, topic, questionType, sourceText, chartDataSummary, pastQuestionFacultyName, homeworkId } = body;
 
     if (!essayId || !ocrText || !universityId || !facultyId) {
       return NextResponse.json(
@@ -309,7 +309,26 @@ export async function POST(request: NextRequest) {
           weaknessTags,
           status: "reviewed",
           reviewedAt: FieldValue.serverTimestamp(),
+          ...(homeworkId
+            ? { sourceType: "homework", homeworkAssignmentId: homeworkId }
+            : {}),
         }, { merge: true });
+
+        // 宿題から取り組んだ場合は宿題を提出済みにする
+        if (essayUserId && homeworkId) {
+          try {
+            await adminDb
+              .doc(`users/${essayUserId}/homeworkAssignments/${homeworkId}`)
+              .update({
+                status: "submitted",
+                submittedEssayId: essayId,
+                submittedAt: FieldValue.serverTimestamp(),
+              });
+          } catch (hwErr) {
+            // 宿題が存在しない場合等は無視
+            console.warn("Failed to update homework status:", hwErr);
+          }
+        }
 
         if (essayUserId) {
           for (const weakness of updatedWeaknesses) {

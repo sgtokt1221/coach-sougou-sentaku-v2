@@ -151,6 +151,9 @@ export default function EssayNewPage() {
   const [retryParent, setRetryParent] = useState<RetryParent | null>(null);
   const [retryParentLoading, setRetryParentLoading] = useState(false);
 
+  // 宿題から取り組むモード（提出時に宿題を提出済みにする）
+  const homeworkId = searchParams?.get("homeworkId");
+
   // 過去問モード
   const pastQuestionId = searchParams?.get("pastQuestion");
   const [pastQuestion, setPastQuestion] = useState<PastQuestion | null>(null);
@@ -182,6 +185,36 @@ export default function EssayNewPage() {
       }
     }
   }, [pastQuestionId]);
+
+  // 自作宿題（テーマ/過去問なし）から来た場合: お題=問題文・志望校をプリセット
+  useEffect(() => {
+    if (!homeworkId || themeId || pastQuestionId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await authFetch(`/api/student/homework/${homeworkId}`);
+        if (!res.ok) return;
+        const hw = (await res.json()) as {
+          snapshot?: {
+            title?: string;
+            targetUniversity?: string;
+            targetFaculty?: string;
+          };
+        };
+        const snap = hw?.snapshot;
+        if (cancelled || !snap) return;
+        if (snap.title) setTopic(snap.title);
+        if (snap.targetUniversity && snap.targetFaculty) {
+          setSelectedCompoundId(`${snap.targetUniversity}:${snap.targetFaculty}`);
+        }
+      } catch {
+        // 取得失敗時は通常の新規作成として続行
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [homeworkId, themeId, pastQuestionId]);
 
   // 過去問が「本文必須だが sourceText 未登録」なら API で動的取得
   useEffect(() => {
@@ -571,6 +604,7 @@ export default function EssayNewPage() {
           essayId: id, ocrText: directText, universityId, facultyId, topic,
           wordLimit: customMaxLength || pastQuestion?.wordLimit || selectedTheme?.wordLimit || retryParent?.retryContext?.wordLimit,
           inputMode,
+          ...(homeworkId ? { homeworkId } : {}),
           ...(retryFromId && { parentEssayId: retryFromId }),
           ...(pastQuestion && {
             questionType: pastQuestion.questionType,
@@ -637,6 +671,7 @@ export default function EssayNewPage() {
           essayId, ocrText, universityId, facultyId, topic,
           wordLimit: pastQuestion?.wordLimit ?? selectedTheme?.wordLimit ?? retryParent?.retryContext?.wordLimit,
           inputMode,
+          ...(homeworkId ? { homeworkId } : {}),
           ...(retryFromId && { parentEssayId: retryFromId }),
           ...(pastQuestion && {
             questionType: pastQuestion.questionType,
