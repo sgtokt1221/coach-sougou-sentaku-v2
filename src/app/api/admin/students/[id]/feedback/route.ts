@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole, scopeByOrganization } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
+import { updateConversationSummary } from "@/lib/chat/conversation";
 import type { AdminFeedback, FeedbackCreateRequest } from "@/lib/types/feedback";
 
 /**
@@ -153,6 +154,7 @@ export async function POST(
     const adminName = adminDoc.data()?.displayName ?? "管理者";
 
     const now = new Date();
+    const attachments = Array.isArray(body.attachments) ? body.attachments : [];
     const feedbackData = {
       type: body.type,
       targetId: body.targetId ?? "",
@@ -162,11 +164,23 @@ export async function POST(
       createdByName: adminName,
       createdAt: now,
       read: false,
+      ...(attachments.length > 0 ? { attachments } : {}),
     };
 
     const docRef = await adminDb
       .collection(`users/${id}/feedback`)
       .add(feedbackData);
+
+    // インボックス用サマリ更新 (コーチ→生徒)
+    await updateConversationSummary({
+      studentId: id,
+      studentName: (userData?.displayName as string) ?? "",
+      studentPhotoURL: (userData?.photoURL as string | undefined) ?? null,
+      coachId: (userData?.managedBy as string | undefined) ?? undefined,
+      organizationId: (userData?.organizationId as string | undefined) ?? undefined,
+      lastMessageText: body.message || (attachments.length > 0 ? "[添付ファイル]" : ""),
+      senderRole: "coach",
+    });
 
     // Push通知送信（失敗しても無視）
     try {
@@ -209,6 +223,7 @@ export async function POST(
       createdByName: adminName,
       createdAt: now.toISOString(),
       read: false,
+      ...(attachments.length > 0 ? { attachments } : {}),
     };
 
     return NextResponse.json(newFeedback, { status: 201 });

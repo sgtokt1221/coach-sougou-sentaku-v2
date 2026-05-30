@@ -4,10 +4,12 @@ import type { ReactNode } from "react";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 import { BottomNav } from "./BottomNav";
+import { ForegroundNotifier } from "@/components/notifications/ForegroundNotifier";
 
 export function AppLayout({ children }: { children: ReactNode }) {
   return (
     <div data-app-layout className="flex h-dvh overflow-hidden">
+      <ForegroundNotifier />
       <Sidebar />
       <div data-app-scroll className="flex flex-1 flex-col overflow-hidden">
         <Header />

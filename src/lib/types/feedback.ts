@@ -1,5 +1,17 @@
 export type FeedbackType = 'essay' | 'weakness' | 'document' | 'activity' | 'general';
 
+/** メッセージの送信者種別。表示/API で createdBy から導出する */
+export type SenderRole = 'coach' | 'student';
+
+/** チャット添付ファイル */
+export interface ChatAttachment {
+  type: 'image' | 'file';
+  url: string;
+  name: string;
+  size?: number;
+  contentType?: string;
+}
+
 export interface AdminFeedback {
   id: string;
   type: FeedbackType;
@@ -10,6 +22,10 @@ export interface AdminFeedback {
   createdByName: string;
   createdAt: string;
   read: boolean;
+  /** 添付ファイル (任意) */
+  attachments?: ChatAttachment[];
+  /** 一斉送信で作成されたメッセージか */
+  broadcast?: boolean;
 }
 
 export interface FeedbackCreateRequest {
@@ -17,4 +33,41 @@ export interface FeedbackCreateRequest {
   targetId: string;
   targetLabel: string;
   message: string;
+  attachments?: ChatAttachment[];
+}
+
+/** スレッド表示用: AdminFeedback に送信者種別を付与したもの */
+export type ChatMessage = AdminFeedback & { senderRole: SenderRole };
+
+/** conversations/{studentId} サマリ (インボックス/未読集計用・サーバー専用) */
+export interface ConversationSummary {
+  studentId: string;
+  studentName: string;
+  studentPhotoURL?: string | null;
+  coachId?: string;
+  organizationId?: string;
+  lastMessageText: string;
+  lastMessageAt: string;
+  lastSenderRole: SenderRole;
+  unreadByStudent: number;
+  unreadByCoach: number;
+  updatedAt: string;
+}
+
+/** 管理者インボックスの 1 行 */
+export interface ConversationListItem {
+  studentId: string;
+  studentName: string;
+  studentPhotoURL?: string | null;
+  lastMessageText: string;
+  lastMessageAt: string | null;
+  lastSenderRole: SenderRole | null;
+  unreadByCoach: number;
+}
+
+/** 一斉送信リクエスト */
+export interface BroadcastRequest {
+  message: string;
+  attachments?: ChatAttachment[];
+  target: 'all_managed' | { studentIds: string[] };
 }

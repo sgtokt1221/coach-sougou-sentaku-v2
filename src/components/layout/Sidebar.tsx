@@ -34,6 +34,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { FeedbackBadge } from "@/components/student/FeedbackBadge";
 import { SelfAnalysisBadge } from "@/components/student/IncompleteStepBadge";
 import { HomeworkBadge } from "@/components/student/HomeworkBadge";
+import { AdminMessagesBadge } from "@/components/admin/AdminMessagesBadge";
 
 interface NavItem {
   label: string;
@@ -55,7 +56,7 @@ const studentNavGroups: NavGroup[] = [
     items: [
       { label: "ダッシュボード", href: "/student/dashboard", icon: LayoutDashboard },
       { label: "成長", href: "/student/growth", icon: TrendingUp },
-      { label: "フィードバック", href: "/student/feedback", icon: MessageSquare, badge: FeedbackBadge },
+      { label: "メッセージ", href: "/student/feedback", icon: MessageSquare, badge: FeedbackBadge },
     ],
   },
   {
@@ -123,6 +124,7 @@ const adminNavGroups: NavGroup[] = [
     title: "Manage",
     items: [
       { label: "生徒管理", href: "/admin/students", icon: Users },
+      { label: "メッセージ", href: "/admin/messages", icon: MessageSquare, badge: AdminMessagesBadge },
       { label: "講師管理", href: "/admin/teachers", icon: GraduationCap },
       { label: "大学データ", href: "/admin/universities", icon: Database },
       { label: "セッション", href: "/admin/sessions", icon: ClipboardList },
@@ -148,6 +150,7 @@ const teacherNavGroups: NavGroup[] = [
     items: [
       { label: "シフト入力", href: "/teacher/schedule", icon: CalendarCheck },
       { label: "担当生徒", href: "/teacher/students", icon: Users },
+      { label: "メッセージ", href: "/admin/messages", icon: MessageSquare, badge: AdminMessagesBadge },
       { label: "セッション履歴", href: "/teacher/sessions", icon: ClipboardList },
     ],
   },
