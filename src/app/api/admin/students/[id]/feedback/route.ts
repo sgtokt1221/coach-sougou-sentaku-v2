@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole, scopeByOrganization } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
-import { updateConversationSummary } from "@/lib/chat/conversation";
+import {
+  updateConversationSummary,
+  sanitizeAttachments,
+} from "@/lib/chat/conversation";
 import type { AdminFeedback, FeedbackCreateRequest } from "@/lib/types/feedback";
 
 /**
@@ -154,7 +157,7 @@ export async function POST(
     const adminName = adminDoc.data()?.displayName ?? "管理者";
 
     const now = new Date();
-    const attachments = Array.isArray(body.attachments) ? body.attachments : [];
+    const attachments = sanitizeAttachments(body.attachments);
     const feedbackData = {
       type: body.type,
       targetId: body.targetId ?? "",

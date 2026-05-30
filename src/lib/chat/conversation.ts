@@ -1,6 +1,46 @@
 import { adminDb } from "@/lib/firebase/admin";
 import { FieldValue } from "firebase-admin/firestore";
-import type { SenderRole } from "@/lib/types/feedback";
+import type { ChatAttachment, SenderRole } from "@/lib/types/feedback";
+
+/** 添付 URL として許可する Cloud Storage ホスト */
+const ALLOWED_ATTACHMENT_HOSTS = new Set([
+  "storage.googleapis.com",
+  "firebasestorage.googleapis.com",
+]);
+
+/**
+ * クライアントから送られた attachments を検証し、安全なものだけを返す。
+ * URL は https かつ許可ホスト (アップロード先の Cloud Storage) に限定する。
+ * これにより javascript: スキームや外部ホストの注入による Stored XSS を防ぐ。
+ */
+export function sanitizeAttachments(raw: unknown): ChatAttachment[] {
+  if (!Array.isArray(raw)) return [];
+  const result: ChatAttachment[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== "object") continue;
+    const a = item as Record<string, unknown>;
+    if (typeof a.url !== "string" || typeof a.name !== "string") continue;
+    if (a.type !== "image" && a.type !== "file") continue;
+    let parsed: URL;
+    try {
+      parsed = new URL(a.url);
+    } catch {
+      continue;
+    }
+    if (parsed.protocol !== "https:") continue;
+    if (!ALLOWED_ATTACHMENT_HOSTS.has(parsed.hostname)) continue;
+    result.push({
+      type: a.type,
+      url: a.url,
+      name: a.name.slice(0, 200),
+      ...(typeof a.size === "number" ? { size: a.size } : {}),
+      ...(typeof a.contentType === "string"
+        ? { contentType: a.contentType }
+        : {}),
+    });
+  }
+  return result;
+}
 
 /**
  * conversations/{studentId} サマリを更新する。

@@ -4,6 +4,7 @@ import { adminDb } from "@/lib/firebase/admin";
 import {
   updateConversationSummary,
   sendFcmToUser,
+  sanitizeAttachments,
 } from "@/lib/chat/conversation";
 import type {
   AdminFeedback,
@@ -92,9 +93,7 @@ export async function POST(request: NextRequest) {
   try {
     const body: Pick<FeedbackCreateRequest, "message" | "attachments"> =
       await request.json();
-    const attachments: ChatAttachment[] = Array.isArray(body.attachments)
-      ? body.attachments
-      : [];
+    const attachments: ChatAttachment[] = sanitizeAttachments(body.attachments);
 
     if (!body.message?.trim() && attachments.length === 0) {
       return NextResponse.json(

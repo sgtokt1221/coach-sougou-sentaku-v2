@@ -57,7 +57,18 @@ function formatTime(iso: string): string {
   });
 }
 
+/** http(s) 以外のスキーム (javascript: 等) を描画前に弾く防御 */
+function isSafeUrl(url: string): boolean {
+  try {
+    const p = new URL(url);
+    return p.protocol === "https:" || p.protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
 function AttachmentView({ att }: { att: ChatAttachment }) {
+  if (!isSafeUrl(att.url)) return null;
   if (att.type === "image") {
     return (
       <a href={att.url} target="_blank" rel="noopener noreferrer">

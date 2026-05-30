@@ -3,6 +3,7 @@ import { requireRole, scopeByOrganization } from "@/lib/api/auth";
 import {
   updateConversationSummary,
   sendFcmToUser,
+  sanitizeAttachments,
 } from "@/lib/chat/conversation";
 import type { BroadcastRequest, ChatAttachment } from "@/lib/types/feedback";
 
@@ -22,9 +23,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body: BroadcastRequest = await request.json();
-    const attachments: ChatAttachment[] = Array.isArray(body.attachments)
-      ? body.attachments
-      : [];
+    const attachments: ChatAttachment[] = sanitizeAttachments(body.attachments);
     const message = (body.message ?? "").trim();
 
     if (!message && attachments.length === 0) {
