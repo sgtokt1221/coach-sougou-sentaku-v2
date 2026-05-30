@@ -34,6 +34,18 @@ export interface InterviewMessage {
   responseId?: string;
 }
 
+/** 未完了（進行中）面接の一覧表示用 */
+export interface InProgressInterview {
+  id: string;
+  universityName: string;
+  facultyName: string;
+  mode: InterviewMode;
+  inputMode: "text" | "voice";
+  startedAt: string;
+  lastActiveAt?: string;
+  messageCount: number;
+}
+
 export interface InterviewFeedback {
   overall: string;
   goodPoints: string[];

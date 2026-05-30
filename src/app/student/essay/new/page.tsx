@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { authFetch } from "@/lib/api/client";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -154,6 +155,11 @@ export default function EssayNewPage() {
   // 宿題から取り組むモード（提出時に宿題を提出済みにする）
   const homeworkId = searchParams?.get("homeworkId");
 
+  // 下書き（途中保存）モード
+  const draftIdParam = searchParams?.get("draft");
+  const [savedDraftId, setSavedDraftId] = useState<string | null>(null);
+  const [savingDraft, setSavingDraft] = useState(false);
+
   // 過去問モード
   const pastQuestionId = searchParams?.get("pastQuestion");
   const [pastQuestion, setPastQuestion] = useState<PastQuestion | null>(null);
@@ -188,7 +194,7 @@ export default function EssayNewPage() {
 
   // 自作宿題（テーマ/過去問なし）から来た場合: お題=問題文・志望校をプリセット
   useEffect(() => {
-    if (!homeworkId || themeId || pastQuestionId) return;
+    if (!homeworkId || themeId || pastQuestionId || draftIdParam) return;
     let cancelled = false;
     (async () => {
       try {
@@ -214,7 +220,42 @@ export default function EssayNewPage() {
     return () => {
       cancelled = true;
     };
-  }, [homeworkId, themeId, pastQuestionId]);
+  }, [homeworkId, themeId, pastQuestionId, draftIdParam]);
+
+  // 下書き復元: ?draft=ID なら本文・お題・志望校等を戻して入力画面へ
+  useEffect(() => {
+    if (!draftIdParam) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await authFetch(`/api/student/essay-drafts/${draftIdParam}`);
+        if (!res.ok) return;
+        const draft = (await res.json()) as {
+          directText?: string;
+          topic?: string;
+          customMaxLength?: number;
+          writingDirection?: "vertical" | "horizontal";
+          selectedCompoundId?: string;
+        };
+        if (cancelled) return;
+        setInputMode("text");
+        setDirectText(draft.directText ?? "");
+        if (draft.topic) setTopic(draft.topic);
+        if (typeof draft.customMaxLength === "number")
+          setCustomMaxLength(draft.customMaxLength);
+        if (draft.writingDirection) setWritingDirection(draft.writingDirection);
+        if (draft.selectedCompoundId)
+          setSelectedCompoundId(draft.selectedCompoundId);
+        setSavedDraftId(draftIdParam);
+        setStep(2);
+      } catch {
+        // 復元失敗時は新規作成として続行
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [draftIdParam]);
 
   // 過去問が「本文必須だが sourceText 未登録」なら API で動的取得
   useEffect(() => {
@@ -589,6 +630,43 @@ export default function EssayNewPage() {
     }
   }
 
+  async function handleSaveDraft() {
+    if (!directText.trim() && !topic.trim()) {
+      toast.error("保存する内容がありません");
+      return;
+    }
+    setSavingDraft(true);
+    try {
+      const res = await authFetch("/api/student/essay-drafts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...(savedDraftId ? { draftId: savedDraftId } : {}),
+          directText,
+          topic,
+          universityId,
+          facultyId,
+          selectedCompoundId,
+          customMaxLength,
+          writingDirection,
+          universityName: effectiveUni?.universityName ?? "",
+          facultyName: effectiveUni?.facultyName ?? "",
+          ...(selectedTheme ? { themeId: selectedTheme.id } : {}),
+          ...(pastQuestion ? { pastQuestionId: pastQuestion.id } : {}),
+          ...(homeworkId ? { homeworkId } : {}),
+        }),
+      });
+      if (!res.ok) throw new Error();
+      const { draftId } = (await res.json()) as { draftId: string };
+      setSavedDraftId(draftId);
+      toast.success("下書きを保存しました");
+    } catch {
+      toast.error("下書きの保存に失敗しました");
+    } finally {
+      setSavingDraft(false);
+    }
+  }
+
   async function handleDirectSubmit() {
     if (!directText.trim()) return;
     setIsSubmitting(true);
@@ -637,6 +715,12 @@ export default function EssayNewPage() {
       clearTimeout(timeout);
       if (!res.ok) throw new Error("添削リクエストに失敗しました");
       const data = await res.json();
+      // 提出できた下書きは削除（fire-and-forget）
+      if (savedDraftId) {
+        void authFetch(`/api/student/essay-drafts/${savedDraftId}`, {
+          method: "DELETE",
+        }).catch(() => {});
+      }
       sessionStorage.setItem("essayReviewResult", JSON.stringify({
         ...data,
         ocrText: directText,
@@ -1390,6 +1474,18 @@ export default function EssayNewPage() {
                   </CardContent>
                 </Card>
               )}
+              {inputMode === "text" && !pastQuestion && !selectedTheme && topic.trim() && (
+                <Card className="mb-4 border-amber-200 bg-amber-50">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm text-amber-900">お題</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <p className="whitespace-pre-wrap text-sm leading-relaxed text-amber-900">
+                      {topic}
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
               <Card>
                 <CardHeader>
                   <CardTitle className="text-sm lg:text-base">小論文を入力</CardTitle>
@@ -1460,14 +1556,23 @@ export default function EssayNewPage() {
                   {error && (
                     <p className="text-sm text-destructive">{error}</p>
                   )}
-                  <Button
-                    className="w-full"
-                    onClick={handleDirectSubmit}
-                    disabled={isSubmitting || !directText.trim()}
-                  >
-                    {isSubmitting ? "添削中..." : "添削する"}
-                    <ChevronRight className="size-4 ml-1" />
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={handleSaveDraft}
+                      disabled={savingDraft || (!directText.trim() && !topic.trim())}
+                    >
+                      {savingDraft ? "保存中..." : "下書き保存"}
+                    </Button>
+                    <Button
+                      className="flex-1"
+                      onClick={handleDirectSubmit}
+                      disabled={isSubmitting || !directText.trim()}
+                    >
+                      {isSubmitting ? "添削中..." : "添削する"}
+                      <ChevronRight className="size-4 ml-1" />
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             </div>

@@ -134,6 +134,26 @@ export interface EssayReviewRequest {
   homeworkId?: string;
 }
 
+/** 小論文の途中保存（下書き）。テキスト入力モード専用。users/{uid}/essayDrafts/{id} */
+export interface EssayDraft {
+  id: string;
+  directText: string;
+  topic: string;
+  universityId: string;
+  facultyId: string;
+  selectedCompoundId: string;
+  customMaxLength?: number;
+  writingDirection?: "vertical" | "horizontal";
+  inputMode?: "text";
+  universityName?: string;
+  facultyName?: string;
+  themeId?: string;
+  pastQuestionId?: string;
+  homeworkId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface EssayReviewResponse {
   essayId: string;
   scores: EssayScores;

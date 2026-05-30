@@ -23,6 +23,7 @@ import { scoreToSkillRank } from "@/lib/history-rank";
 import type { InterviewMode } from "@/lib/types/interview";
 import { INTERVIEW_MODE_LABELS } from "@/lib/types/interview";
 import { useAuthSWR } from "@/lib/api/swr";
+import { InterviewInProgressSection } from "@/components/interview/InterviewInProgressSection";
 
 interface InterviewHistoryItem {
   id: string;
@@ -87,20 +88,24 @@ export function InterviewHistory() {
 
   if (history.length === 0) {
     return (
-      <Card>
-        <CardContent>
-          <EmptyState
-            icon={Mic}
-            title="まだ面接練習がありません"
-            description="最初の模擬面接を始めましょう！"
-          />
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        <InterviewInProgressSection />
+        <Card>
+          <CardContent>
+            <EmptyState
+              icon={Mic}
+              title="まだ面接練習がありません"
+              description="最初の模擬面接を始めましょう！"
+            />
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
   return (
     <div className="space-y-4">
+      <InterviewInProgressSection />
       {history.length > 0 && (
         <Card>
           <CardHeader>

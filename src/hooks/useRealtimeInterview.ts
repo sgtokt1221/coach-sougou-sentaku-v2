@@ -230,7 +230,9 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
     };
   }, [stop]);
 
-  const start = useCallback(async (): Promise<RealtimeStartResult> => {
+  const start = useCallback(async (
+    startOpts?: { priorMessages?: InterviewMessage[] }
+  ): Promise<RealtimeStartResult> => {
     setError(null);
     setStatus("requesting_token");
     // 前回セッションの残骸防止: currentSpeaker を null に明示リセット
@@ -488,7 +490,21 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
       await session.connect();
       sessionRef.current = session;
 
-      // 接続後、AI 側から挨拶を始めるよう指示
+      // 履歴から再開した場合: 過去の会話を新セッションに流し込んで文脈継続
+      const prior = startOpts?.priorMessages?.filter((m) => m.content?.trim()) ?? [];
+      if (prior.length > 0) {
+        session.addConversationItem(
+          "system",
+          "これは前回の面接の続きです。挨拶し直さず、これまでの会話を踏まえて自然に続けてください。",
+        );
+        for (const m of prior) {
+          session.addConversationItem(m.role === "ai" ? "assistant" : "user", m.content);
+        }
+        // UI 側にも過去会話を表示
+        setMessages(prior.map((m) => ({ role: m.role, content: m.content })));
+      }
+
+      // 接続後、AI 側から（再開時は文脈を踏まえて）応答を始めるよう指示
       session.triggerResponse();
 
       setStatus("connected");

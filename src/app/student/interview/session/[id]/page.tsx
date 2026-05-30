@@ -115,6 +115,10 @@ export default function InterviewSessionPage() {
   const [cheatExpanded, setCheatExpanded] = useState(false);
   /** Realtime API を試したか (成功/失敗問わず 1 回だけ試行) */
   const realtimeTriedRef = useRef(false);
+  /** 履歴から再開した場合の過去メッセージ（音声 seed / テキスト復元に使用） */
+  const resumeMessagesRef = useRef<InterviewMessage[] | null>(null);
+  /** 終了処理に入ったら自動保存を止めるフラグ */
+  const endedRef = useRef(false);
   /** Realtime 経路が有効 (true なら従来 Claude 経路は使わない) */
   const [realtimeActive, setRealtimeActive] = useState(false);
   const realtime = useRealtimeInterview({
@@ -185,38 +189,72 @@ export default function InterviewSessionPage() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Load session info from sessionStorage
+  // セッション情報・会話の初期化。sessionStorage 優先、無ければ Firestore から再開復元。
   useEffect(() => {
+    if (!sessionId) return;
     const stored = sessionStorage.getItem(`interview_session_${sessionId}`);
-    if (!stored) return;
-
-    const info: SessionInfo = JSON.parse(stored);
-    setSessionInfo(info);
-
-    // 音声モードは Realtime API が transcript を append するので pre-insert しない
-    // テキストモードは Claude 生成の openingMessage を初期表示
-    if (info.inputMode === "voice") {
-      setMessages([]);
-    } else {
-      setMessages([{ role: "ai", content: info.openingMessage }]);
-    }
-
-    // 音声モードはカメラを自動有効化 (顔認識・視線指導)
-    if (info.inputMode === "voice") {
-      setCameraEnabled(true);
-    }
-  }, [sessionId]);
-
-  // Restore messages from sessionStorage backup
-  useEffect(() => {
-    const backup = sessionStorage.getItem(`interview_messages_${sessionId}`);
-    if (backup) {
-      const parsed: InterviewMessage[] = JSON.parse(backup);
+    if (stored) {
+      const info: SessionInfo = JSON.parse(stored);
+      setSessionInfo(info);
+      // sessionStorage に会話バックアップがあれば復元
+      const backup = sessionStorage.getItem(`interview_messages_${sessionId}`);
+      const parsed: InterviewMessage[] =
+        backup ? JSON.parse(backup) : [];
       if (parsed.length > 0) {
         setMessages(parsed);
+        resumeMessagesRef.current = parsed;
+      } else if (info.inputMode === "voice") {
+        setMessages([]);
+      } else {
+        setMessages([{ role: "ai", content: info.openingMessage }]);
       }
+      if (info.inputMode === "voice") setCameraEnabled(true);
+      return;
     }
-  }, [sessionId]);
+
+    // sessionStorage 無し（履歴からの再開）→ Firestore から復元
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await authFetch(`/api/interview/${sessionId}/messages`);
+        if (!res.ok || cancelled) return;
+        const doc = await res.json();
+        if (doc.status === "completed") {
+          router.replace(`/student/interview/${sessionId}/result`);
+          return;
+        }
+        const info: SessionInfo = {
+          universityId: doc.universityId ?? "",
+          facultyId: doc.facultyId ?? "",
+          mode: doc.mode ?? "individual",
+          inputMode: doc.inputMode ?? "text",
+          universityContext: doc.universityContext ?? {
+            universityName: "",
+            facultyName: "",
+            admissionPolicy: "",
+          },
+          openingMessage: doc.openingMessage ?? "",
+        };
+        if (cancelled) return;
+        setSessionInfo(info);
+        const msgs: InterviewMessage[] = Array.isArray(doc.messages) ? doc.messages : [];
+        resumeMessagesRef.current = msgs;
+        if (msgs.length > 0) {
+          setMessages(msgs);
+        } else if (info.inputMode === "voice") {
+          setMessages([]);
+        } else {
+          setMessages([{ role: "ai", content: info.openingMessage }]);
+        }
+        if (info.inputMode === "voice") setCameraEnabled(true);
+      } catch {
+        /* 復元失敗は無視 */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionId, router]);
 
   // Camera initialization
   useEffect(() => {
@@ -299,7 +337,10 @@ export default function InterviewSessionPage() {
 
     realtimeTriedRef.current = true;
     (async () => {
-      const result = await realtime.start();
+      const prior = resumeMessagesRef.current;
+      const result = await realtime.start(
+        prior && prior.length > 0 ? { priorMessages: prior } : undefined
+      );
       if (result.success) {
         setRealtimeActive(true);
         setCameraEnabled(true); // カメラ分析は引き続き有効
@@ -350,6 +391,45 @@ export default function InterviewSessionPage() {
     }
   }, [messages, sessionId]);
 
+  // 会話を Firestore に自動保存（履歴からの再開用）。終了処理中は保存しない。
+  useEffect(() => {
+    if (!sessionId || endedRef.current) return;
+    const real = messages.filter((m) => !m.isThinking && m.content?.trim());
+    if (real.length === 0) return;
+    const timer = setTimeout(() => {
+      authFetch(`/api/interview/${sessionId}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: real }),
+      }).catch(() => {});
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, [messages, sessionId]);
+
+  // タブ非表示/離脱時に最新会話を即時 flush（ブラウザを閉じても残す）
+  useEffect(() => {
+    function flush() {
+      if (endedRef.current) return;
+      const real = messages.filter((m) => !m.isThinking && m.content?.trim());
+      if (real.length === 0) return;
+      authFetch(`/api/interview/${sessionId}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: real }),
+        keepalive: true,
+      }).catch(() => {});
+    }
+    function onVisibility() {
+      if (document.visibilityState === "hidden") flush();
+    }
+    window.addEventListener("pagehide", flush);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("pagehide", flush);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [messages, sessionId]);
+
   // テキストモード専用の送信ハンドラ (Claude 経由)
   // 音声モードは Realtime API が直接音声をやり取りするため、このフローは使わない
   const sendMessage = useCallback(async () => {
@@ -393,6 +473,7 @@ export default function InterviewSessionPage() {
   }, [input, isLoading, messages, sessionId, sessionInfo, elapsed]);
 
   async function handleEnd() {
+    endedRef.current = true;
     setIsEnding(true);
     try {
       console.log("[handleEnd] Sending messages:", messages.length, "turns, duration:", elapsed);

@@ -22,6 +22,7 @@ import {
 import { CHART_COLORS, SCORE_COLORS, CHART_ANIMATION, GRID_STYLE } from "@/components/charts/theme";
 import { CustomTooltip } from "@/components/charts/CustomTooltip";
 import { CustomDot, CustomActiveDot } from "@/components/charts/CustomDot";
+import { EssayDraftsSection } from "@/components/essay/EssayDraftsSection";
 
 interface EssayHistoryItem {
   id: string;
@@ -131,6 +132,8 @@ export default function EssayHistoryPage() {
           新規提出
         </Button>
       </div>
+
+      <EssayDraftsSection />
 
       {loading ? (
         <div className="space-y-4">

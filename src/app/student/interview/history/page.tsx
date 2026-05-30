@@ -25,6 +25,7 @@ import { DetailedScoresTrendChart } from "@/components/growth/DetailedScoresTren
 import type { InterviewMode } from "@/lib/types/interview";
 import { INTERVIEW_MODE_LABELS } from "@/lib/types/interview";
 import { useAuthSWR } from "@/lib/api/swr";
+import { InterviewInProgressSection } from "@/components/interview/InterviewInProgressSection";
 
 interface InterviewHistoryItem {
   id: string;
@@ -112,6 +113,8 @@ export default function InterviewHistoryPage() {
           新規練習
         </Button>
       </div>
+
+      <InterviewInProgressSection />
 
       {loading ? (
         <div className="space-y-4">

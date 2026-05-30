@@ -24,6 +24,7 @@ import { CustomTooltip } from "@/components/charts/CustomTooltip";
 import { CustomDot, CustomActiveDot } from "@/components/charts/CustomDot";
 import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
 import { scoreToSkillRank } from "@/lib/history-rank";
+import { EssayDraftsSection } from "@/components/essay/EssayDraftsSection";
 
 /** ISO 文字列 → "M/D" (グラフ x 軸ラベル用) */
 function formatDate(iso: string): string {
@@ -179,20 +180,24 @@ export function EssayHistory() {
 
   if (history.length === 0) {
     return (
-      <Card>
-        <CardContent>
-          <EmptyState
-            icon={FileText}
-            title="まだ添削履歴がありません"
-            description="最初の小論文を提出しましょう！"
-          />
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        <EssayDraftsSection />
+        <Card>
+          <CardContent>
+            <EmptyState
+              icon={FileText}
+              title="まだ添削履歴がありません"
+              description="最初の小論文を提出しましょう！"
+            />
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
   return (
     <div className="space-y-4">
+      <EssayDraftsSection />
       {reviewedHistory.length > 0 && (
         <Card>
           <CardHeader>
