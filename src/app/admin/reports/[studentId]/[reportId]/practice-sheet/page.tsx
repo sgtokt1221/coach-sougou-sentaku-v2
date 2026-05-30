@@ -120,9 +120,13 @@ function Body() {
           margin: 15mm;
         }
         @media print {
+          html,
+          body,
+          * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
           body {
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
             font-size: 11pt;
           }
           [data-app-chrome] {
@@ -203,8 +207,8 @@ function Body() {
 
         {/* この生徒の克服すべき弱点 (問題ページの冒頭に表示・印刷対応) */}
         {showProblems && report.weaknessProgress.length > 0 && (
-          <section className="weakness-box rounded-lg border border-amber-300 bg-amber-50/60 p-4 print:border-gray-400 print:bg-transparent">
-            <h2 className="mb-2 flex items-center gap-2 text-sm font-bold text-amber-800 print:text-foreground print:text-[12pt]">
+          <section className="weakness-box rounded-lg border border-amber-300 bg-amber-50/60 p-4">
+            <h2 className="mb-2 flex items-center gap-2 text-sm font-bold text-amber-800 print:text-[12pt]">
               <AlertTriangle className="size-4 print:hidden" />
               今回の重点弱点（苦手なところ）
             </h2>
@@ -228,11 +232,11 @@ function Body() {
                   return (
                     <div
                       key={w.weakness}
-                      className="rounded border border-amber-200 bg-white p-2 text-xs print:border-gray-300 print:text-[10pt]"
+                      className="rounded border border-amber-200 bg-white p-2 text-xs print:text-[10pt]"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <span className="font-semibold">{w.weakness}</span>
-                        <span className={`shrink-0 font-medium ${statusCls} print:text-foreground`}>
+                        <span className={`shrink-0 font-medium ${statusCls}`}>
                           {statusLabel}
                         </span>
                       </div>
@@ -294,7 +298,7 @@ function Body() {
                       </p>
 
                       {q.hints && q.hints.length > 0 && (
-                        <div className="mt-3 rounded border border-amber-200 bg-amber-50/50 p-2 text-xs print:bg-transparent print:text-[10pt]">
+                        <div className="mt-3 rounded border border-amber-200 bg-amber-50/50 p-2 text-xs print:text-[10pt]">
                           <div className="mb-1 font-semibold">取り組みのヒント</div>
                           <ul className="list-disc space-y-0.5 pl-5 text-muted-foreground print:text-foreground/80">
                             {q.hints.map((h, j) => (
@@ -330,11 +334,11 @@ function Body() {
             {showAnswers && (
               <>
                 <section className="answer-sheet-header">
-                  <div className="rounded border-2 border-rose-400 bg-rose-50 p-4 print:bg-white">
+                  <div className="rounded border-2 border-rose-400 bg-rose-50 p-4">
                     <p className="text-lg font-bold text-rose-700 print:text-[13pt]">
                       ⚠ 講師用解答シート (生徒配布禁止)
                     </p>
-                    <p className="mt-1 text-xs text-rose-700/80 print:text-[9pt] print:text-foreground">
+                    <p className="mt-1 text-xs text-rose-700/80 print:text-[9pt]">
                       授業準備・採点用です。生徒には問題ページのみ渡してください。
                     </p>
                   </div>
@@ -388,8 +392,8 @@ function Body() {
 
                         {/* 面接台本: 想定される深掘り質問 */}
                         {!isEssay && q.followUpQuestions && q.followUpQuestions.length > 0 && (
-                          <div className="mt-3 rounded border border-indigo-200 bg-indigo-50/40 p-2 print:bg-transparent print:border-gray-300">
-                            <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-indigo-700 dark:text-indigo-400 print:text-foreground">
+                          <div className="mt-3 rounded border border-indigo-200 bg-indigo-50/40 p-2">
+                            <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-indigo-700 dark:text-indigo-400">
                               想定される深掘り質問（面接台本）
                             </div>
                             <ol className="list-decimal space-y-0.5 pl-5 text-[11px] text-muted-foreground print:text-foreground/80 print:text-[10pt]">
@@ -402,7 +406,7 @@ function Body() {
 
                         {/* 解答例 (メインコンテンツ。空でも枠は残す) */}
                         <div className="mt-3 rounded border border-gray-300 bg-white p-3 dark:bg-card print:bg-white print:p-2">
-                          <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400 print:text-foreground">
+                          <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">
                             解答例
                           </div>
                           {q.modelAnswer && q.modelAnswer.trim().length > 0 ? (
@@ -417,8 +421,8 @@ function Body() {
                         </div>
 
                         {q.rubric && q.rubric.length > 0 && (
-                          <div className="mt-3 rounded border border-sky-200 bg-sky-50/40 p-2 print:bg-transparent print:border-gray-300">
-                            <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-sky-700 dark:text-sky-400 print:text-foreground">
+                          <div className="mt-3 rounded border border-sky-200 bg-sky-50/40 p-2">
+                            <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-sky-700 dark:text-sky-400">
                               評価観点
                             </div>
                             <ul className="list-disc space-y-0.5 pl-5 text-[11px] text-muted-foreground print:text-foreground/80 print:text-[10pt]">
@@ -430,8 +434,8 @@ function Body() {
                         )}
 
                         {q.teacherNotes && (
-                          <div className="mt-3 rounded border border-purple-300 bg-purple-50/40 p-2 print:bg-transparent print:border-gray-400">
-                            <p className="whitespace-pre-wrap text-[11px] leading-relaxed text-purple-900 dark:text-purple-300 print:text-foreground print:text-[10pt]">
+                          <div className="mt-3 rounded border border-purple-300 bg-purple-50/40 p-2">
+                            <p className="whitespace-pre-wrap text-[11px] leading-relaxed text-purple-900 dark:text-purple-300 print:text-[10pt]">
                               <span className="font-semibold">[講師メモ]</span>{" "}
                               {q.teacherNotes}
                             </p>
