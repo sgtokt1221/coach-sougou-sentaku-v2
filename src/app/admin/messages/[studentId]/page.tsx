@@ -10,6 +10,8 @@ import { useFeedbackThread } from "@/lib/hooks/useFeedbackThread";
 import { ChatThread } from "@/components/chat/ChatThread";
 import { PageTransition } from "@/components/shared/PageTransition";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { getInitials } from "@/lib/utils/avatar";
 import type { ChatAttachment, ConversationListItem } from "@/lib/types/feedback";
 
 export default function AdminThreadPage() {
@@ -22,8 +24,9 @@ export default function AdminThreadPage() {
   );
   const readRef = useRef(false);
 
-  const studentName =
-    list?.find((s) => s.studentId === studentId)?.studentName ?? "生徒";
+  const item = list?.find((s) => s.studentId === studentId);
+  const studentName = item?.studentName ?? "生徒";
+  const studentPhotoURL = item?.studentPhotoURL ?? null;
 
   // スレッドを開いたら未読をクリア
   useEffect(() => {
@@ -64,9 +67,10 @@ export default function AdminThreadPage() {
           >
             <ArrowLeft className="size-4" />
           </Button>
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-            {studentName.charAt(0).toUpperCase()}
-          </div>
+          <Avatar size="default" className="shrink-0">
+            <AvatarImage src={studentPhotoURL ?? undefined} alt={studentName} />
+            <AvatarFallback>{getInitials(studentName)}</AvatarFallback>
+          </Avatar>
           <div>
             <h1 className="text-base font-bold">{studentName}</h1>
             <p className="text-[11px] text-muted-foreground">メッセージ</p>
@@ -78,6 +82,8 @@ export default function AdminThreadPage() {
             currentRole="coach"
             onSend={handleSend}
             loading={loading}
+            otherName={studentName}
+            otherPhotoURL={studentPhotoURL}
             emptyText="この生徒へのメッセージやコメントがここに表示されます"
           />
         </div>

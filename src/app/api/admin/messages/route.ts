@@ -28,23 +28,25 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
     }
 
-    // 担当生徒
-    let studentsRef = adminDb
-      .collection("users")
-      .where("role", "==", "student");
-    if (effectiveRole !== "superadmin") {
-      studentsRef = studentsRef.where("managedBy", "==", effectiveUid);
-    }
-    const snapshot = await studentsRef.get();
+    // 担当する生徒・講師（管理者から見た連絡相手）。
+    // 複合インデックス回避のため単一フィルタで取得し role をコード側で絞る。
+    const usersRef =
+      effectiveRole === "superadmin"
+        ? adminDb.collection("users").where("role", "in", ["student", "teacher"])
+        : adminDb.collection("users").where("managedBy", "==", effectiveUid);
+    const snapshot = await usersRef.get();
 
-    if (snapshot.empty) {
+    const docs = snapshot.docs.filter((d) => {
+      const r = d.data().role;
+      return r === "student" || r === "teacher";
+    });
+
+    if (docs.length === 0) {
       return NextResponse.json(countOnly ? { unreadCount: 0 } : []);
     }
 
     // conversations サマリをバッチ取得
-    const convRefs = snapshot.docs.map((d) =>
-      adminDb.doc(`conversations/${d.id}`)
-    );
+    const convRefs = docs.map((d) => adminDb.doc(`conversations/${d.id}`));
     const convSnaps = await adminDb.getAll(...convRefs);
     const convById = new Map<string, FirebaseFirestore.DocumentData>();
     convSnaps.forEach((c) => {
@@ -59,7 +61,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ unreadCount: total });
     }
 
-    const items: ConversationListItem[] = snapshot.docs.map((d) => {
+    const items: ConversationListItem[] = docs.map((d) => {
       const data = d.data();
       const conv = convById.get(d.id);
       const lastMessageAt =
@@ -69,6 +71,7 @@ export async function GET(request: NextRequest) {
         studentId: d.id,
         studentName: (data.displayName as string) ?? "",
         studentPhotoURL: (data.photoURL as string | undefined) ?? null,
+        role: (data.role as "student" | "teacher") ?? "student",
         lastMessageText: (conv?.lastMessageText as string) ?? "",
         lastMessageAt,
         lastSenderRole: (conv?.lastSenderRole as "coach" | "student") ?? null,

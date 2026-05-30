@@ -59,15 +59,22 @@ export interface ConversationListItem {
   studentId: string;
   studentName: string;
   studentPhotoURL?: string | null;
+  /** 相手のロール（生徒 or 講師） */
+  role: 'student' | 'teacher';
   lastMessageText: string;
   lastMessageAt: string | null;
   lastSenderRole: SenderRole | null;
   unreadByCoach: number;
 }
 
+/** 一斉送信の宛先 */
+export type BroadcastAudience =
+  | { role: 'student' | 'teacher'; scope: 'all' }
+  | { ids: string[] };
+
 /** 一斉送信リクエスト */
 export interface BroadcastRequest {
   message: string;
   attachments?: ChatAttachment[];
-  target: 'all_managed' | { studentIds: string[] };
+  audience: BroadcastAudience;
 }

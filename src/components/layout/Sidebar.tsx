@@ -35,6 +35,7 @@ import { FeedbackBadge } from "@/components/student/FeedbackBadge";
 import { SelfAnalysisBadge } from "@/components/student/IncompleteStepBadge";
 import { HomeworkBadge } from "@/components/student/HomeworkBadge";
 import { AdminMessagesBadge } from "@/components/admin/AdminMessagesBadge";
+import { TeacherMessagesBadge } from "@/components/teacher/TeacherMessagesBadge";
 
 interface NavItem {
   label: string;
@@ -150,7 +151,8 @@ const teacherNavGroups: NavGroup[] = [
     items: [
       { label: "シフト入力", href: "/teacher/schedule", icon: CalendarCheck },
       { label: "担当生徒", href: "/teacher/students", icon: Users },
-      { label: "メッセージ", href: "/admin/messages", icon: MessageSquare, badge: AdminMessagesBadge },
+      { label: "生徒メッセージ", href: "/admin/messages", icon: MessageSquare, badge: AdminMessagesBadge },
+      { label: "管理者に連絡", href: "/teacher/messages", icon: MessageSquare, badge: TeacherMessagesBadge },
       { label: "セッション履歴", href: "/teacher/sessions", icon: ClipboardList },
     ],
   },

@@ -29,13 +29,14 @@ function readFileAsBase64(file: File): Promise<string> {
 }
 
 export function BroadcastDialog({
-  students,
+  recipients,
   onSent,
 }: {
-  students: ConversationListItem[];
+  recipients: ConversationListItem[];
   onSent?: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [category, setCategory] = useState<"student" | "teacher">("student");
   const [mode, setMode] = useState<"all" | "select">("all");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [message, setMessage] = useState("");
@@ -43,6 +44,8 @@ export function BroadcastDialog({
   const [sending, setSending] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const candidates = recipients.filter((r) => r.role === category);
 
   function toggle(id: string) {
     setSelected((prev) => {
@@ -87,14 +90,18 @@ export function BroadcastDialog({
     }
     setSending(true);
     try {
-      const target =
+      const audience =
         mode === "all"
-          ? "all_managed"
-          : { studentIds: Array.from(selected) };
+          ? { role: category, scope: "all" as const }
+          : { ids: Array.from(selected) };
       const res = await authFetch("/api/admin/messages/broadcast", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: message.trim(), attachments: pending, target }),
+        body: JSON.stringify({
+          message: message.trim(),
+          attachments: pending,
+          audience,
+        }),
       });
       if (!res.ok) throw new Error("broadcast failed");
       const { sent, skipped } = await res.json();
@@ -131,6 +138,30 @@ export function BroadcastDialog({
         </DialogHeader>
 
         <div className="space-y-3">
+          {/* カテゴリ */}
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant={category === "student" ? "default" : "outline"}
+              onClick={() => {
+                setCategory("student");
+                setSelected(new Set());
+              }}
+            >
+              生徒
+            </Button>
+            <Button
+              size="sm"
+              variant={category === "teacher" ? "default" : "outline"}
+              onClick={() => {
+                setCategory("teacher");
+                setSelected(new Set());
+              }}
+            >
+              講師
+            </Button>
+          </div>
+
           {/* 宛先モード */}
           <div className="flex gap-2">
             <Button
@@ -138,7 +169,7 @@ export function BroadcastDialog({
               variant={mode === "all" ? "default" : "outline"}
               onClick={() => setMode("all")}
             >
-              全担当生徒（{students.length}名）
+              全員（{candidates.length}名）
             </Button>
             <Button
               size="sm"
@@ -151,7 +182,12 @@ export function BroadcastDialog({
 
           {mode === "select" && (
             <div className="max-h-40 space-y-1 overflow-y-auto rounded-lg border p-2">
-              {students.map((s) => {
+              {candidates.length === 0 && (
+                <p className="px-2 py-1 text-xs text-muted-foreground">
+                  該当する{category === "teacher" ? "講師" : "生徒"}がいません
+                </p>
+              )}
+              {candidates.map((s) => {
                 const on = selected.has(s.studentId);
                 return (
                   <button

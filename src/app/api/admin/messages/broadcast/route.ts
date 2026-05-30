@@ -46,21 +46,29 @@ export async function POST(request: NextRequest) {
     const adminDoc = await adminDb.doc(`users/${uid}`).get();
     const adminName = (adminDoc.data()?.displayName as string) ?? "管理者";
 
-    // 対象生徒を解決
+    // 宛先を解決
+    const audience = body.audience;
     let targetIds: string[] = [];
-    if (body.target === "all_managed") {
-      let ref = adminDb.collection("users").where("role", "==", "student");
-      if (effectiveRole !== "superadmin") {
-        ref = ref.where("managedBy", "==", effectiveUid);
+    if (audience && "scope" in audience && audience.scope === "all") {
+      const role = audience.role === "teacher" ? "teacher" : "student";
+      if (effectiveRole === "superadmin") {
+        const snap = await adminDb
+          .collection("users")
+          .where("role", "==", role)
+          .get();
+        targetIds = snap.docs.map((d) => d.id);
+      } else {
+        // managedBy==uid を取得して role をコード側で絞る（複合インデックス回避）
+        const snap = await adminDb
+          .collection("users")
+          .where("managedBy", "==", effectiveUid)
+          .get();
+        targetIds = snap.docs
+          .filter((d) => d.data().role === role)
+          .map((d) => d.id);
       }
-      const snap = await ref.get();
-      targetIds = snap.docs.map((d) => d.id);
-    } else if (
-      body.target &&
-      typeof body.target === "object" &&
-      Array.isArray(body.target.studentIds)
-    ) {
-      targetIds = body.target.studentIds;
+    } else if (audience && "ids" in audience && Array.isArray(audience.ids)) {
+      targetIds = audience.ids;
     }
 
     if (targetIds.length === 0) {

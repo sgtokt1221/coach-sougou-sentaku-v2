@@ -46,6 +46,22 @@ export async function POST(
     if (orgDenied) return orgDenied;
 
     await resetUnread(id, "coach");
+
+    // 相手(=managee, createdBy===id)の発言を read=true に一括更新（既読表示用）
+    const unreadSnap = await adminDb
+      .collection(`users/${id}/feedback`)
+      .where("read", "==", false)
+      .get();
+    const batch = adminDb.batch();
+    let n = 0;
+    unreadSnap.docs.forEach((d) => {
+      if ((d.data().createdBy as string) === id) {
+        batch.update(d.ref, { read: true });
+        n++;
+      }
+    });
+    if (n > 0) await batch.commit();
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Coach feedback read error:", error);

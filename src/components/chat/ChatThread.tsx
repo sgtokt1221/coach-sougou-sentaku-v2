@@ -12,6 +12,8 @@ import {
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { getInitials } from "@/lib/utils/avatar";
 import { authFetch } from "@/lib/api/client";
 import type {
   ChatAttachment,
@@ -36,6 +38,9 @@ interface ChatThreadProps {
   loading?: boolean;
   emptyText?: string;
   disabled?: boolean;
+  /** 相手の表示名・アイコン（相手バブルの横に表示） */
+  otherName?: string;
+  otherPhotoURL?: string | null;
 }
 
 function readFileAsBase64(file: File): Promise<string> {
@@ -101,6 +106,8 @@ export function ChatThread({
   loading,
   emptyText = "まだメッセージはありません",
   disabled,
+  otherName,
+  otherPhotoURL,
 }: ChatThreadProps) {
   const [text, setText] = useState("");
   const [pending, setPending] = useState<ChatAttachment[]>([]);
@@ -176,8 +183,21 @@ export function ChatThread({
             return (
               <div
                 key={m.id}
-                className={`flex flex-col ${mine ? "items-end" : "items-start"}`}
+                className={`flex items-end gap-2 ${
+                  mine ? "justify-end" : "justify-start"
+                }`}
               >
+                {!mine && (
+                  <Avatar size="sm" className="shrink-0">
+                    <AvatarImage
+                      src={otherPhotoURL ?? undefined}
+                      alt={otherName ?? m.createdByName}
+                    />
+                    <AvatarFallback>
+                      {getInitials(otherName ?? m.createdByName)}
+                    </AvatarFallback>
+                  </Avatar>
+                )}
                 <div
                   className={`flex max-w-[80%] flex-col gap-1 ${
                     mine ? "items-end" : "items-start"
@@ -222,6 +242,7 @@ export function ChatThread({
                   <span className="px-1 text-[10px] text-muted-foreground">
                     {!mine && m.createdByName ? `${m.createdByName}・` : ""}
                     {formatTime(m.createdAt)}
+                    {mine && m.read ? "・既読" : ""}
                   </span>
                 </div>
               </div>

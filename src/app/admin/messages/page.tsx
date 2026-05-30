@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { BroadcastDialog } from "@/components/admin/BroadcastDialog";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { getInitials } from "@/lib/utils/avatar";
 import type { ConversationListItem } from "@/lib/types/feedback";
 
 function formatRelative(iso: string | null): string {
@@ -39,6 +41,8 @@ export default function AdminMessagesPage() {
   const items = (data ?? []).filter((s) =>
     s.studentName.toLowerCase().includes(search.toLowerCase())
   );
+  const studentItems = items.filter((s) => s.role !== "teacher");
+  const teacherItems = items.filter((s) => s.role === "teacher");
 
   return (
     <PageTransition>
@@ -49,7 +53,7 @@ export default function AdminMessagesPage() {
             <h1 className="text-xl font-bold">メッセージ</h1>
           </div>
           <BroadcastDialog
-            students={data ?? []}
+            recipients={data ?? []}
             onSent={() => mutate("/api/admin/messages")}
           />
         </div>
@@ -75,49 +79,83 @@ export default function AdminMessagesPage() {
         {!isLoading && items.length === 0 && (
           <EmptyState
             icon={MessageSquare}
-            title="担当生徒がいません"
-            description="担当生徒が登録されるとここでやり取りできます"
+            title="担当する生徒・講師がいません"
+            description="担当が登録されるとここでやり取りできます"
           />
         )}
 
-        {!isLoading && items.length > 0 && (
-          <div className="space-y-1">
-            {items.map((s) => (
-              <button
-                key={s.studentId}
-                type="button"
-                onClick={() => router.push(`/admin/messages/${s.studentId}`)}
-                className="flex w-full items-center gap-3 rounded-xl border bg-card p-3 text-left transition-colors hover:bg-muted/50"
-              >
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-                  {(s.studentName || "?").charAt(0).toUpperCase()}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="truncate text-sm font-medium">
-                      {s.studentName || s.studentId}
-                    </span>
-                    <span className="ml-auto shrink-0 text-[11px] text-muted-foreground">
-                      {formatRelative(s.lastMessageAt)}
-                    </span>
-                  </div>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {s.lastSenderRole === "coach" && s.lastMessageText
-                      ? "自分: "
-                      : ""}
-                    {s.lastMessageText || "メッセージはまだありません"}
-                  </p>
-                </div>
-                {s.unreadByCoach > 0 && (
-                  <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-destructive px-1.5 text-[10px] font-bold text-destructive-foreground">
-                    {s.unreadByCoach > 99 ? "99+" : s.unreadByCoach}
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
+        {!isLoading && studentItems.length > 0 && (
+          <Section
+            title="生徒"
+            items={studentItems}
+            onOpen={(id) => router.push(`/admin/messages/${id}`)}
+          />
+        )}
+        {!isLoading && teacherItems.length > 0 && (
+          <Section
+            title="講師"
+            items={teacherItems}
+            onOpen={(id) => router.push(`/admin/messages/${id}`)}
+          />
         )}
       </div>
     </PageTransition>
+  );
+}
+
+function Section({
+  title,
+  items,
+  onOpen,
+}: {
+  title: string;
+  items: ConversationListItem[];
+  onOpen: (id: string) => void;
+}) {
+  return (
+    <div>
+      <p className="mb-1 px-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+        {title}（{items.length}）
+      </p>
+      <div className="space-y-1">
+        {items.map((s) => (
+          <button
+            key={s.studentId}
+            type="button"
+            onClick={() => onOpen(s.studentId)}
+            className="flex w-full items-center gap-3 rounded-xl border bg-card p-3 text-left transition-colors hover:bg-muted/50"
+          >
+            <Avatar size="lg" className="shrink-0">
+              <AvatarImage
+                src={s.studentPhotoURL ?? undefined}
+                alt={s.studentName}
+              />
+              <AvatarFallback>{getInitials(s.studentName)}</AvatarFallback>
+            </Avatar>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <span className="truncate text-sm font-medium">
+                  {s.studentName || s.studentId}
+                </span>
+                <span className="ml-auto shrink-0 text-[11px] text-muted-foreground">
+                  {formatRelative(s.lastMessageAt)}
+                </span>
+              </div>
+              <p className="truncate text-xs text-muted-foreground">
+                {s.lastSenderRole === "coach" && s.lastMessageText
+                  ? "自分: "
+                  : ""}
+                {s.lastMessageText || "メッセージはまだありません"}
+              </p>
+            </div>
+            {s.unreadByCoach > 0 && (
+              <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-destructive px-1.5 text-[10px] font-bold text-destructive-foreground">
+                {s.unreadByCoach > 99 ? "99+" : s.unreadByCoach}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }

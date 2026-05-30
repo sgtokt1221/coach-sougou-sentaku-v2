@@ -10,6 +10,7 @@ function getAdminApp(): App | null {
 
   const privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY;
   const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
+  const storageBucket = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
 
   if (privateKey && clientEmail) {
     return initializeApp({
@@ -18,11 +19,12 @@ function getAdminApp(): App | null {
         privateKey: privateKey.replace(/\\n/g, "\n"),
         clientEmail,
       }),
+      storageBucket,
     });
   }
 
   // fallback: ADC or emulator
-  return initializeApp({ projectId });
+  return initializeApp({ projectId, storageBucket });
 }
 
 const adminApp = getAdminApp();
