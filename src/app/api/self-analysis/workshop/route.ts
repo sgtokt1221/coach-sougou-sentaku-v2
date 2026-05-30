@@ -74,7 +74,9 @@ export async function POST(request: NextRequest) {
 
     const response = await client.messages.create({
       model: "claude-sonnet-4-6",
-      max_tokens: 1024,
+      // Step7「統合・言語化」は自己紹介文+自分ストーリー+志望校ごとのまとめを JSON で返すため、
+      // 1024 では複数志望校で途中で切れて JSON 解析に失敗する。十分なトークンを確保する。
+      max_tokens: step === 7 ? 4096 : 1024,
       system: systemPrompt,
       messages,
     });

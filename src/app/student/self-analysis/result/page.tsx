@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -23,9 +23,7 @@ const STEP_KEYS = [
   "synthesis",
 ] as const;
 
-function buildStepsData(
-  data: SelfAnalysis
-): Record<number, Record<string, unknown>> {
+function buildStepsData(data: SelfAnalysis): Record<number, Record<string, unknown>> {
   const stepsData: Record<number, Record<string, unknown>> = {};
   STEP_KEYS.forEach((key, i) => {
     const val = data[key] as unknown;
@@ -53,7 +51,74 @@ export default function SelfAnalysisResultPage() {
   const { data, isLoading, mutate } = useAuthSWR<SelfAnalysis>(
     "/api/self-analysis?userId=me"
   );
-  const [regenerating, setRegenerating] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const autoAttempted = useRef(false);
+
+  // 保存済みの Step1〜6 ＋ 志望校AP から「統合・言語化」(synthesis) を生成して保存する。
+  const generateSynthesis = useCallback(
+    async (current: SelfAnalysis) => {
+      setGenerating(true);
+      try {
+        const previousStepsData = buildStepsData(current);
+        const wres = await authFetch("/api/self-analysis/workshop", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            step: 7,
+            forceComplete: true,
+            message:
+              "これまでの各ステップの分析結果（上記データ）を統合して、自己紹介文・自分ストーリー・志望校ごとの大学APとのまとめを作成してください。",
+            previousStepsData,
+          }),
+        });
+        const wdata = await wres.json().catch(() => ({}));
+        if (!wres.ok || !wdata.stepData) {
+          toast.error(wdata?.error || "統合・言語化の生成に失敗しました");
+          return false;
+        }
+        // 既存の各ステップは保持し、synthesis のみ差し替えて保存
+        const sres = await authFetch("/api/self-analysis", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: "me",
+            id: current.id,
+            values: current.values ?? {},
+            strengths: current.strengths ?? {},
+            weaknesses: current.weaknesses ?? {},
+            interests: current.interests ?? {},
+            vision: current.vision ?? {},
+            identity: current.identity ?? {},
+            synthesis: wdata.stepData,
+            completedSteps: current.completedSteps ?? 7,
+            isComplete: true,
+            chatHistory: current.chatHistory ?? [],
+          }),
+        });
+        if (!sres.ok) {
+          toast.error("生成結果の保存に失敗しました");
+          return false;
+        }
+        await mutate();
+        return true;
+      } catch {
+        toast.error("通信エラーが発生しました");
+        return false;
+      } finally {
+        setGenerating(false);
+      }
+    },
+    [mutate]
+  );
+
+  // 入力完了済みなのに synthesis が空（旧データ等）なら、表示時に自動生成（1回だけ）
+  useEffect(() => {
+    if (!data || autoAttempted.current || generating) return;
+    if (!isSynthesisEmpty(data)) return;
+    if (!data.isComplete && (data.completedSteps ?? 0) < 6) return; // 生成材料が足りない
+    autoAttempted.current = true;
+    void generateSynthesis(data);
+  }, [data, generating, generateSynthesis]);
 
   if (isLoading) {
     return (
@@ -93,47 +158,6 @@ export default function SelfAnalysisResultPage() {
     router.push("/student/self-analysis");
   }
 
-  // 保存済みの Step1〜6 ＋ 志望校AP から「統合・言語化」(synthesis) を生成して保存する。
-  // 既存データ（旧仕様で synthesis 未保存）を消さずに後付けで埋めるためのもの。
-  async function handleRegenerate() {
-    if (!data || regenerating) return;
-    setRegenerating(true);
-    try {
-      const previousStepsData = buildStepsData(data);
-      const wres = await authFetch("/api/self-analysis/workshop", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          step: 7,
-          forceComplete: true,
-          message:
-            "これまでの各ステップの分析結果（上記データ）を統合して、自己紹介文・自分ストーリー・志望校ごとの大学APとのまとめを作成してください。",
-          previousStepsData,
-        }),
-      });
-      const wdata = await wres.json().catch(() => ({}));
-      if (!wres.ok || !wdata.stepData) {
-        toast.error(wdata?.error || "統合・言語化の生成に失敗しました");
-        return;
-      }
-      const sres = await authFetch("/api/self-analysis", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, synthesis: wdata.stepData }),
-      });
-      if (!sres.ok) {
-        toast.error("生成結果の保存に失敗しました");
-        return;
-      }
-      toast.success("統合・言語化を生成しました");
-      mutate();
-    } catch {
-      toast.error("通信エラーが発生しました");
-    } finally {
-      setRegenerating(false);
-    }
-  }
-
   const stepsData = buildStepsData(data);
   const completedSteps = data.completedSteps ?? 7;
   const synthesisEmpty = isSynthesisEmpty(data);
@@ -148,19 +172,22 @@ export default function SelfAnalysisResultPage() {
           <h1 className="text-xl lg:text-2xl font-bold">自己分析結果</h1>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant={synthesisEmpty ? "default" : "outline"}
-            size="sm"
-            onClick={handleRegenerate}
-            disabled={regenerating}
-          >
-            {regenerating ? (
-              <Loader2 className="size-4 mr-1 animate-spin" />
-            ) : (
-              <Sparkles className="size-4 mr-1" />
-            )}
-            統合・言語化を{synthesisEmpty ? "生成" : "再生成"}
-          </Button>
+          {/* 志望校を後から登録した場合などに、AP反映で作り直すための手動ボタン */}
+          {!synthesisEmpty && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => generateSynthesis(data)}
+              disabled={generating}
+            >
+              {generating ? (
+                <Loader2 className="size-4 mr-1 animate-spin" />
+              ) : (
+                <Sparkles className="size-4 mr-1" />
+              )}
+              統合を再生成
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={handleReset}>
             <RotateCcw className="size-4 mr-1" />
             やり直す
@@ -168,20 +195,17 @@ export default function SelfAnalysisResultPage() {
         </div>
       </div>
 
-      {synthesisEmpty && (
-        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50/80 dark:border-amber-900 dark:bg-amber-950/30 px-3 py-2 text-xs text-amber-800 dark:text-amber-200">
-          「統合・言語化」がまだ生成されていません（旧バージョンで作成したデータです）。上の「統合・言語化を生成」を押すと、これまでの分析と志望校のAPから自動生成します。
+      {generating && (
+        <div className="mb-4 flex items-center gap-2 rounded-lg border border-teal-200 bg-teal-50/80 dark:border-teal-900 dark:bg-teal-950/30 px-3 py-2 text-xs text-teal-800 dark:text-teal-200">
+          <Loader2 className="size-3.5 animate-spin" />
+          統合・言語化を生成しています…
         </div>
       )}
 
       {/* 左: 自己分析の木 / 右: 結果 */}
       <div className="flex flex-col gap-4 lg:flex-row lg:gap-6 lg:items-start">
         <div className="w-full lg:w-[300px] lg:shrink-0 lg:sticky lg:top-6">
-          <GrowthTree
-            compact
-            completedSteps={completedSteps}
-            stepsData={stepsData}
-          />
+          <GrowthTree compact completedSteps={completedSteps} stepsData={stepsData} />
         </div>
 
         <div className="flex-1 min-w-0">
