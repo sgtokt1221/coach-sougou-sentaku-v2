@@ -14,7 +14,9 @@ import { FluidLoader } from "@/components/shared/FluidLoader";
 import { toast } from "sonner";
 import { authFetch } from "@/lib/api/client";
 import { InterviewHistory } from "@/components/interview/InterviewHistory";
+import { UniversityPicker } from "@/components/essay/UniversityPicker";
 import type { InterviewMode } from "@/lib/types/interview";
+import type { University } from "@/lib/types/university";
 import {
   INTERVIEW_MODE_LABELS,
   INTERVIEW_MODE_DESCRIPTIONS,
@@ -25,6 +27,8 @@ interface ResolvedUniversity {
   facultyId: string;
   universityName: string;
   facultyName: string;
+  group?: University["group"];
+  prefecture?: string;
 }
 
 const MODE_ICONS: Record<InterviewMode, React.ComponentType<{ className?: string }>> = {
@@ -81,7 +85,7 @@ export default function InterviewNewPage() {
         const unis: ResolvedUniversity[] = [];
         for (const u of data.universities ?? []) {
           for (const f of u.faculties ?? []) {
-            unis.push({ universityId: u.id, facultyId: f.id, universityName: u.name, facultyName: f.name });
+            unis.push({ universityId: u.id, facultyId: f.id, universityName: u.name, facultyName: f.name, group: u.group, prefecture: u.prefecture });
           }
         }
         setAllUniversities(unis);
@@ -257,9 +261,9 @@ export default function InterviewNewPage() {
               <GraduationCap className="size-6 text-muted-foreground" />
             </div>
             <div className="flex-1">
-              <p className="font-medium">志望校が未設定です</p>
+              <p className="font-medium">アドミッションポリシー参照先が未設定です</p>
               <p className="text-sm text-muted-foreground mt-1">
-                設定画面で志望校を登録してください
+                設定画面で志望校を登録してください（面接の基準になります）
               </p>
               <Link href="/student/settings">
                 <Button variant="outline" size="sm" className="mt-3">
@@ -273,7 +277,7 @@ export default function InterviewNewPage() {
       ) : resolved.length === 1 ? (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">志望校</CardTitle>
+            <CardTitle className="text-base">アドミッションポリシー参照先</CardTitle>
           </CardHeader>
           <CardContent className="p-3 lg:p-4">
             <div className="flex items-center gap-3 rounded-lg border border-primary bg-primary/5 p-3">
@@ -288,7 +292,7 @@ export default function InterviewNewPage() {
       ) : (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">志望校を選択</CardTitle>
+            <CardTitle className="text-base">アドミッションポリシー参照先を選択</CardTitle>
           </CardHeader>
           <CardContent className="p-3 lg:p-4 space-y-2">
             {resolved.map((item) => {
@@ -344,24 +348,14 @@ export default function InterviewNewPage() {
         ) : (
           <Card>
             <CardContent className="p-3 lg:p-4 space-y-2">
-              <Label className="text-xs">他の大学・学部</Label>
-              <select
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-                value={selectedCompoundId ?? ""}
-                onChange={(e) => {
-                  if (e.target.value) setSelectedCompoundId(e.target.value);
-                }}
-              >
-                <option value="">選択してください</option>
-                {allUniversities.map((u) => {
-                  const cid = `${u.universityId}:${u.facultyId}`;
-                  return (
-                    <option key={cid} value={cid}>
-                      {u.universityName} — {u.facultyName}
-                    </option>
-                  );
-                })}
-              </select>
+              <Label className="text-xs">
+                他の大学・学部（検索・都道府県別・グループ別）
+              </Label>
+              <UniversityPicker
+                items={allUniversities}
+                selectedCompoundId={selectedCompoundId}
+                onSelect={setSelectedCompoundId}
+              />
             </CardContent>
           </Card>
         )}
