@@ -439,7 +439,8 @@
         "admissionUrl": "https://www.kyushu-u.ac.jp/ja/admission/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "福岡県"
   },
   {
     "id": "kyoto-u",
@@ -861,7 +862,8 @@
         "admissionUrl": "https://www.kyoto-u.ac.jp/ja/admissions/tokusyoku",
         "selectionType": "school_recommendation"
       }
-    ]
+    ],
+    "prefecture": "京都府"
   },
   {
     "id": "hokkaido-u",
@@ -1394,7 +1396,8 @@
         "admissionUrl": "https://www.hokudai.ac.jp/admission/faculty/ao/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "北海道"
   },
   {
     "id": "nagoya-u",
@@ -1479,7 +1482,8 @@
         "admissionUrl": "https://www.nagoya-u.ac.jp/admissions/exam/us-exam/cat3/index.html",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
     "id": "osaka-u",
@@ -1913,7 +1917,8 @@
         "admissionUrl": "https://www.osaka-u.ac.jp/ja/admissions/faculty/n4boz8",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "大阪府"
   },
   {
     "id": "tokyo-u",
@@ -2165,7 +2170,8 @@
         "admissionUrl": "https://www.u-tokyo.ac.jp/ja/admissions/undergraduate/e01_26.html",
         "selectionType": "school_recommendation"
       }
-    ]
+    ],
+    "prefecture": "東京都"
   },
   {
     "id": "tohoku-u",
@@ -2559,6 +2565,7 @@
         "admissionUrl": "https://admissions.tohoku.ac.jp/ja/entrance-info/undergraduate-info/ao/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "宮城県"
   }
 ]

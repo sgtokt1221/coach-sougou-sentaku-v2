@@ -195,7 +195,8 @@
         "admissionUrl": "https://www.fun.ac.jp/admission/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "北海道"
   },
   {
     "id": "chitose-u",
@@ -242,7 +243,8 @@
         "admissionUrl": "https://www.chitose.ac.jp/admissions/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "北海道"
   },
   {
     "id": "nagoya-cu",
@@ -945,7 +947,8 @@
         "admissionUrl": "https://www.nagoya-cu.ac.jp/admissions/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
     "id": "nayoro-u",
@@ -992,7 +995,8 @@
         "admissionUrl": "https://www.nayoro.ac.jp/admission/",
         "selectionType": "school_recommendation"
       }
-    ]
+    ],
+    "prefecture": "北海道"
   },
   {
     "id": "aichi-pu",
@@ -1175,7 +1179,8 @@
         "admissionUrl": "https://www.aichi-pu.ac.jp/admissions/",
         "selectionType": "school_recommendation"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
     "id": "aichi-fam-u",
@@ -1240,7 +1245,8 @@
         "admissionUrl": "https://www.aichi-fam-u.ac.jp/admission/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
     "id": "asahikawa-cu",
@@ -1315,7 +1321,8 @@
         "admissionUrl": "https://www.asahikawa-u.ac.jp/admission/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "北海道"
   },
   {
     "id": "sapmed-u",
@@ -1392,7 +1399,8 @@
         "admissionUrl": "https://www.sapmed.ac.jp/admission/",
         "selectionType": "school_recommendation"
       }
-    ]
+    ],
+    "prefecture": "北海道"
   },
   {
     "id": "scu",
@@ -1472,7 +1480,8 @@
         "admissionUrl": "https://www.scu.ac.jp/admission/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "北海道"
   },
   {
     "id": "tmu",
@@ -1750,7 +1759,8 @@
         "admissionUrl": "https://www.tmu.ac.jp/entrance/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "東京都"
   },
   {
     "id": "kushiro-pu",
@@ -1787,7 +1797,8 @@
         "admissionUrl": "https://www.kushiro-pu.ac.jp/admission/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "北海道"
   },
   {
     "id": "aomori-pu",
@@ -1829,7 +1840,8 @@
         "admissionUrl": "https://www.nebuta.ac.jp/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "青森県"
   },
   {
     "id": "iwate-pu",
@@ -1904,7 +1916,8 @@
         "admissionUrl": "https://www.iwate-pu.ac.jp/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "岩手県"
   },
   {
     "id": "akita-pu",
@@ -1979,7 +1992,8 @@
         "admissionUrl": "https://www.akita-pu.ac.jp/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "秋田県"
   },
   {
     "id": "miyagi-u",
@@ -2054,7 +2068,8 @@
         "admissionUrl": "https://www.myu.ac.jp/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "宮城県"
   },
   {
     "id": "yamagata-health-u",
@@ -2096,7 +2111,8 @@
         "admissionUrl": "https://www.yachts.ac.jp/",
         "selectionType": "school_recommendation"
       }
-    ]
+    ],
+    "prefecture": "山形県"
   },
   {
     "id": "fmu",
@@ -2139,7 +2155,8 @@
         "admissionUrl": "https://www.fmu.ac.jp/",
         "selectionType": "school_recommendation"
       }
-    ]
+    ],
+    "prefecture": "福島県"
   },
   {
     "id": "kuhs",
@@ -2181,7 +2198,8 @@
         "admissionUrl": "https://www.kuhs.ac.jp/",
         "selectionType": "school_recommendation"
       }
-    ]
+    ],
+    "prefecture": "神奈川県"
   },
   {
     "id": "gpwu",
@@ -2258,7 +2276,8 @@
         "admissionUrl": "https://www.gpwu.ac.jp/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "群馬県"
   },
   {
     "id": "tsuru-u",
@@ -2333,7 +2352,8 @@
         "admissionUrl": "https://www.tsuru.ac.jp/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "山梨県"
   },
   {
     "id": "maebashi-it",
@@ -2375,7 +2395,8 @@
         "admissionUrl": "https://www.maebashi-it.ac.jp/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "群馬県"
   },
   {
     "id": "niigata-pu",
@@ -2417,7 +2438,8 @@
         "admissionUrl": "https://www.unii.ac.jp/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "新潟県"
   },
   {
     "id": "nagano-u",
@@ -2492,7 +2514,8 @@
         "admissionUrl": "https://www.nagano.ac.jp/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "長野県"
   },
   {
     "id": "nagano-kenritsu-u",
@@ -2567,7 +2590,8 @@
         "admissionUrl": "https://www.u-nagano.ac.jp/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "長野県"
   },
   {
     "id": "fukui-pu",
@@ -2642,7 +2666,8 @@
         "admissionUrl": "https://www.fpu.ac.jp/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "福井県"
   },
   {
     "id": "kobe-cufs",
@@ -2684,7 +2709,8 @@
         "admissionUrl": "https://www.kobe-cufs.ac.jp/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "兵庫県"
   },
   {
     "id": "u-hyogo",
@@ -2726,7 +2752,8 @@
         "admissionUrl": "https://www.u-hyogo.ac.jp/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "兵庫県"
   },
   {
     "id": "narapu",
@@ -2768,7 +2795,8 @@
         "admissionUrl": "https://www.narapu.ac.jp/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "奈良県"
   },
   {
     "id": "fukuchiyama-u",
@@ -2843,7 +2871,8 @@
         "admissionUrl": "https://www.fukuchiyama.ac.jp/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "京都府"
   },
   {
     "id": "shimane-prefectural-u",
@@ -2918,7 +2947,8 @@
         "admissionUrl": "https://www.u-shimane.ac.jp/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "島根県"
   },
   {
     "id": "okayama-prefectural-u",
@@ -2993,7 +3023,8 @@
         "admissionUrl": "https://www.oka-pu.ac.jp/",
         "selectionType": "school_recommendation"
       }
-    ]
+    ],
+    "prefecture": "岡山県"
   },
   {
     "id": "hiroshima-city-u",
@@ -3068,7 +3099,8 @@
         "admissionUrl": "https://www.hiroshima-cu.ac.jp/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "広島県"
   },
   {
     "id": "prefectural-hiroshima-u",
@@ -3143,7 +3175,8 @@
         "admissionUrl": "https://www.pu-hiroshima.ac.jp/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "広島県"
   },
   {
     "id": "yamaguchi-prefectural-u",
@@ -3218,7 +3251,8 @@
         "admissionUrl": "https://www.yamaguchi-pu.ac.jp/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "山口県"
   },
   {
     "id": "tottori-kankyo-u",
@@ -3293,7 +3327,8 @@
         "admissionUrl": "https://www.kankyo-u.ac.jp/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "鳥取県"
   },
   {
     "id": "kochi-tech",
@@ -3368,7 +3403,8 @@
         "admissionUrl": "https://www.kochi-tech.ac.jp/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "高知県"
   },
   {
     "id": "kitakyushu-u",
@@ -3443,7 +3479,8 @@
         "admissionUrl": "https://www.kitakyu-u.ac.jp/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "福岡県"
   },
   {
     "id": "fwu",
@@ -3486,7 +3523,8 @@
         "admissionUrl": "https://www.fwu.ac.jp/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "福岡県"
   },
   {
     "id": "nagasaki-pu",
@@ -3561,7 +3599,8 @@
         "admissionUrl": "https://sun.ac.jp/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "長崎県"
   },
   {
     "id": "kumamoto-pu",
@@ -3636,7 +3675,8 @@
         "admissionUrl": "https://www.pu-kumamoto.ac.jp/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "熊本県"
   },
   {
     "id": "meio-u",
@@ -3711,7 +3751,8 @@
         "admissionUrl": "https://www.meio-u.ac.jp/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "沖縄県"
   },
   {
     "id": "okigei-u",
@@ -3786,6 +3827,7 @@
         "admissionUrl": "https://www.okigei.ac.jp/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "沖縄県"
   }
 ]

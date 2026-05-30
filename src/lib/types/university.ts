@@ -15,6 +15,8 @@ export interface University {
     | "public"
     | "private";
   officialUrl: string;
+  /** 所在都道府県（例: "東京都"）。検索・都道府県別表示に使用 */
+  prefecture: string;
   updatedAt?: Date;
   faculties: Faculty[];
 }

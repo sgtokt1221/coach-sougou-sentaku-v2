@@ -432,7 +432,8 @@
         "admissionUrl": "https://www.kyoto-su.ac.jp/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "京都府"
   },
   {
     "id": "konan-u",
@@ -769,7 +770,8 @@
         "admissionUrl": "https://ch.konan-u.ac.jp/admission/other/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "兵庫県"
   },
   {
     "id": "kindai-u",
@@ -1461,7 +1463,8 @@
         "admissionUrl": "https://www.kindai.ac.jp/admissions/",
         "selectionType": "school_recommendation"
       }
-    ]
+    ],
+    "prefecture": "大阪府"
   },
   {
     "id": "ryukoku-u",
@@ -1865,6 +1868,7 @@
         "admissionUrl": "https://www.ryukoku.ac.jp/admission/nyushi/about/sogo.html",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "京都府"
   }
 ]

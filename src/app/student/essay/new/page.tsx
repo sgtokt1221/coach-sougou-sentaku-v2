@@ -47,6 +47,8 @@ import { ReviewProgress } from "@/components/essay/ReviewProgress";
 import { EssayHistory } from "@/components/essay/EssayHistory";
 import { PastQuestionChart } from "@/components/essay/PastQuestionChart";
 import { PastQuestionTopicCard } from "@/components/essay/PastQuestionTopicCard";
+import { UniversityPicker } from "@/components/essay/UniversityPicker";
+import type { University } from "@/lib/types/university";
 import { SegmentControl } from "@/components/shared/SegmentControl";
 import { getThemeById, EssayTheme } from "@/data/essay-themes";
 import { getEnrichedPastQuestionById, needsSourceText, summarizeChartData, PastQuestion } from "@/data/essay-past-questions";
@@ -57,6 +59,8 @@ interface ResolvedUniversity {
   facultyId: string;
   universityName: string;
   facultyName: string;
+  group?: University["group"];
+  prefecture?: string;
 }
 
 interface StepIndicatorProps {
@@ -406,7 +410,7 @@ export default function EssayNewPage() {
         const unis: ResolvedUniversity[] = [];
         for (const u of data.universities ?? []) {
           for (const f of u.faculties ?? []) {
-            unis.push({ universityId: u.id, facultyId: f.id, universityName: u.name, facultyName: f.name });
+            unis.push({ universityId: u.id, facultyId: f.id, universityName: u.name, facultyName: f.name, group: u.group, prefecture: u.prefecture });
           }
         }
         setAllUniversities(unis);
@@ -1249,24 +1253,14 @@ export default function EssayNewPage() {
                   </button>
                 ) : (
                   <div className="space-y-2">
-                    <Label className="text-xs">他の大学・学部</Label>
-                    <select
-                      className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-                      value={selectedCompoundId ?? ""}
-                      onChange={(e) => {
-                        if (e.target.value) setSelectedCompoundId(e.target.value);
-                      }}
-                    >
-                      <option value="">選択してください</option>
-                      {allUniversities.map((u) => {
-                        const cid = `${u.universityId}:${u.facultyId}`;
-                        return (
-                          <option key={cid} value={cid}>
-                            {u.universityName} — {u.facultyName}
-                          </option>
-                        );
-                      })}
-                    </select>
+                    <Label className="text-xs">
+                      他の大学・学部（検索・都道府県別・グループ別）
+                    </Label>
+                    <UniversityPicker
+                      items={allUniversities}
+                      selectedCompoundId={selectedCompoundId}
+                      onSelect={setSelectedCompoundId}
+                    />
                   </div>
                 )}
               </div>

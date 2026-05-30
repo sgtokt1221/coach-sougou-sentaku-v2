@@ -1,52 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Search, Building2, GraduationCap, ExternalLink } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { authFetch } from "@/lib/api/client";
 import type { University } from "@/lib/types/university";
+import { GROUP_LABELS, GROUP_COLORS, GROUP_ORDER } from "@/lib/constants/university";
 import { SelectionTypeBadge } from "@/components/shared/SelectionTypeBadge";
-
-type Group = University["group"] | "all";
-
-const GROUP_LABELS: Record<University["group"], string> = {
-  kyutei: "旧帝大",
-  soukeijochi: "早慶上智",
-  march: "MARCH",
-  kankandouritsu: "関関同立",
-  sankinkohryu: "産近甲龍",
-  nittoukomasen: "日東駒専",
-  seiseimeidoku: "成成明獨國武",
-  sesshintsuitou: "摂神追桃",
-  national: "国立大学",
-  public: "公立大学",
-  private: "その他私立",
-};
-
-const GROUP_COLORS: Record<University["group"], string> = {
-  kyutei: "bg-rose-500/15 text-rose-400 border-rose-500/30",
-  soukeijochi: "bg-sky-500/15 text-sky-400 border-sky-500/30",
-  march: "bg-amber-500/15 text-amber-400 border-amber-500/30",
-  kankandouritsu: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
-  sankinkohryu: "bg-purple-500/15 text-purple-400 border-purple-500/30",
-  nittoukomasen: "bg-amber-500/15 text-amber-400 border-amber-500/30",
-  seiseimeidoku: "bg-cyan-500/15 text-cyan-400 border-cyan-500/30",
-  sesshintsuitou: "bg-orange-500/15 text-orange-400 border-orange-500/30",
-  national: "bg-rose-500/15 text-rose-400 border-rose-500/30",
-  public: "bg-teal-500/15 text-teal-400 border-teal-500/30",
-  private: "bg-slate-500/15 text-slate-400 border-slate-500/30",
-};
 
 function GroupBadge({ group }: { group: University["group"] }) {
   return (
@@ -65,7 +29,6 @@ export default function AdminUniversitiesPage() {
   const [universities, setUniversities] = useState<University[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [groupFilter, setGroupFilter] = useState<Group>("all");
 
   useEffect(() => {
     async function fetchUniversities() {
@@ -86,10 +49,11 @@ export default function AdminUniversitiesPage() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  const filtered =
-    groupFilter === "all"
-      ? universities
-      : universities.filter((u) => u.group === groupFilter);
+  // グループ別セクション（GROUP_ORDER 順、空グループは非表示）
+  const sections = GROUP_ORDER.map((g) => ({
+    group: g,
+    items: universities.filter((u) => u.group === g),
+  })).filter((s) => s.items.length > 0);
 
   return (
     <div className="space-y-6 p-6">
@@ -100,37 +64,15 @@ export default function AdminUniversitiesPage() {
         </p>
       </div>
 
-      {/* Search & Filter */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="大学名で検索..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        <Select
-          value={groupFilter}
-          onValueChange={(v) => setGroupFilter(v as Group)}
-        >
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="グループで絞り込み">
-              {groupFilter === "all"
-                ? "すべて"
-                : (GROUP_LABELS[groupFilter as University["group"]] ?? groupFilter)}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">すべて</SelectItem>
-            {(Object.keys(GROUP_LABELS) as University["group"][]).map((key) => (
-              <SelectItem key={key} value={key}>
-                {GROUP_LABELS[key]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      {/* Search */}
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          placeholder="大学名で検索..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-10"
+        />
       </div>
 
       {/* Table */}
@@ -142,11 +84,11 @@ export default function AdminUniversitiesPage() {
                 <Skeleton key={i} className="h-12 w-full" />
               ))}
             </div>
-          ) : filtered.length === 0 ? (
+          ) : sections.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-16 text-muted-foreground">
               <Building2 className="size-8" />
               <p className="text-sm">
-                {search || groupFilter !== "all"
+                {search
                   ? "該当する大学が見つかりません"
                   : "大学がまだ登録されていません"}
               </p>
@@ -176,7 +118,17 @@ export default function AdminUniversitiesPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((u) => (
+                  {sections.map((sec) => (
+                    <Fragment key={sec.group}>
+                      <tr className="border-b bg-muted/40">
+                        <td
+                          colSpan={7}
+                          className="px-4 py-2 text-xs font-semibold text-muted-foreground"
+                        >
+                          {GROUP_LABELS[sec.group]}（{sec.items.length}校）
+                        </td>
+                      </tr>
+                      {sec.items.map((u) => (
                     <tr
                       key={u.id}
                       className="cursor-pointer border-b transition-colors hover:bg-accent"
@@ -237,6 +189,8 @@ export default function AdminUniversitiesPage() {
                         })()}
                       </td>
                     </tr>
+                      ))}
+                    </Fragment>
                   ))}
                 </tbody>
               </table>

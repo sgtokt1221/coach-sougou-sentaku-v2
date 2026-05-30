@@ -311,7 +311,8 @@
         "admissionUrl": "https://www.chuo-u.ac.jp/connect/admission/special/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "東京都"
   },
   {
     "id": "meiji-u",
@@ -611,7 +612,8 @@
         "admissionUrl": "https://www.meiji.ac.jp/exam/reference/tgansho.html",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "東京都"
   },
   {
     "id": "hosei-u",
@@ -1126,7 +1128,8 @@
         "admissionUrl": "https://nyushi.hosei.ac.jp/nyushi/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "東京都"
   },
   {
     "id": "rikkyo-u",
@@ -1640,7 +1643,8 @@
         "admissionUrl": "https://www.rikkyo.ac.jp/admissions/undergraduate/free_selection.html",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "東京都"
   },
   {
     "id": "aoyama-u",
@@ -2083,6 +2087,7 @@
         "admissionUrl": "https://www.aoyama.ac.jp/admission/undergraduate/examination/",
         "selectionType": "school_recommendation"
       }
-    ]
+    ],
+    "prefecture": "東京都"
   }
 ]

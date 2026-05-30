@@ -592,7 +592,8 @@
         "admissionUrl": "https://www.doshisha.ac.jp/admissions_undergrad/preferred_application/index.html",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "京都府"
   },
   {
     "id": "ritsumeikan-u",
@@ -1279,7 +1280,8 @@
         "admissionUrl": "https://admission.ritsumei.ac.jp/",
         "selectionType": "school_recommendation"
       }
-    ]
+    ],
+    "prefecture": "京都府"
   },
   {
     "id": "kansai-u",
@@ -1801,7 +1803,8 @@
         "admissionUrl": "https://www.nyusi.kansai-u.ac.jp/admission/ao/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "大阪府"
   },
   {
     "id": "kwansei-u",
@@ -2314,6 +2317,7 @@
         "admissionUrl": "https://www.kwansei.ac.jp/admissions/faq/comprehensive.html",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "兵庫県"
   }
 ]

@@ -47,6 +47,7 @@ interface UniversityData {
   shortName: string;
   group: string;
   officialUrl: string;
+  prefecture?: string;
   faculties: FacultyData[];
 }
 
@@ -132,6 +133,7 @@ async function seedUniversities() {
             shortName: uni.shortName,
             group: uni.group,
             officialUrl: uni.officialUrl,
+            ...(uni.prefecture ? { prefecture: uni.prefecture } : {}),
             faculties: uni.faculties,
             updatedAt: new Date(),
           },

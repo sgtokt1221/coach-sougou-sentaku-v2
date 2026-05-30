@@ -358,7 +358,8 @@
         "admissionUrl": "https://adm.sophia.ac.jp/jpn/gakubu_tokubetsu_ad/koubo/",
         "selectionType": "school_recommendation"
       }
-    ]
+    ],
+    "prefecture": "東京都"
   },
   {
     "id": "keio-u",
@@ -622,7 +623,8 @@
         "admissionUrl": "https://www.keio.ac.jp/ja/admissions/examinations/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "東京都"
   },
   {
     "id": "waseda-u",
@@ -988,6 +990,7 @@
         "admissionUrl": "https://www.waseda.jp/inst/admission/undergraduate/system/ao/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "東京都"
   }
 ]

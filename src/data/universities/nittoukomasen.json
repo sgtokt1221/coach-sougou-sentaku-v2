@@ -191,7 +191,8 @@
         "admissionUrl": "https://www.senshu-u.ac.jp/admission/shikenseido/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "東京都"
   },
   {
     "id": "nihon-u",
@@ -854,7 +855,8 @@
         "admissionUrl": "https://www.nihon-u.ac.jp/admission_info/application/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "東京都"
   },
   {
     "id": "toyo-u",
@@ -1402,7 +1404,8 @@
         "admissionUrl": "https://www.toyo.ac.jp/nyushi/admission/admission-data/requirements-special/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "東京都"
   },
   {
     "id": "komazawa-u",
@@ -1653,6 +1656,7 @@
         "admissionUrl": "https://think.komazawa-u.ac.jp/admission/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "東京都"
   }
 ]

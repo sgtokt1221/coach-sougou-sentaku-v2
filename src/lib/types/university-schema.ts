@@ -61,6 +61,7 @@ export const UniversitySchema = z.object({
     "private",
   ]),
   officialUrl: z.string(),
+  prefecture: z.string().min(1),
   faculties: z.array(FacultySchema),
 });
 

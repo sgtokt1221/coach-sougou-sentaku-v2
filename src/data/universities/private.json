@@ -1,6 +1,6 @@
 [
   {
-    "id": "-u",
+    "id": "ichinomiya-kenshin-u",
     "name": "一宮研伸大学",
     "shortName": "一宮研伸",
     "group": "private",
@@ -39,7 +39,8 @@
         "admissionUrl": "https://www.ikensen.ac.jp/admission/",
         "selectionType": "school_recommendation"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
     "id": "chukyo-u",
@@ -431,7 +432,8 @@
         "admissionUrl": "https://nc.chukyo-u.ac.jp/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
     "id": "chubu-u",
@@ -859,10 +861,11 @@
         "admissionUrl": "https://www.chubu.ac.jp/admissions/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
-    "id": "-u",
+    "id": "ningen-kankyo-u",
     "name": "人間環境大学",
     "shortName": "人間環境",
     "group": "private",
@@ -1052,10 +1055,11 @@
         "admissionUrl": "https://www.uhe.ac.jp/admissions/",
         "selectionType": "school_recommendation"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
-    "id": "-u",
+    "id": "shubun-u",
     "name": "修文大学",
     "shortName": "修文",
     "group": "private",
@@ -1148,10 +1152,11 @@
         "admissionUrl": "https://www.shubun.ac.jp/admissions/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
-    "id": "-u",
+    "id": "hyogo-med-u",
     "name": "兵庫医科大学",
     "shortName": "兵庫医科",
     "group": "private",
@@ -1313,7 +1318,8 @@
         "admissionUrl": "https://www.corp.hyo-med.ac.jp/admissions/",
         "selectionType": "school_recommendation"
       }
-    ]
+    ],
+    "prefecture": "兵庫県"
   },
   {
     "id": "hakodate-u",
@@ -1348,7 +1354,8 @@
         "admissionUrl": "https://www.hakodate-u.ac.jp/admission/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "北海道"
   },
   {
     "id": "hokusei-u",
@@ -1473,7 +1480,8 @@
         "admissionUrl": "https://entry.hokusei.ac.jp/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "北海道"
   },
   {
     "id": "hokkai-u",
@@ -1622,7 +1630,8 @@
         "admissionUrl": "https://www.hgu.jp/admissions/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "北海道"
   },
   {
     "id": "nanzan-u",
@@ -1948,10 +1957,11 @@
         "admissionUrl": "https://www.nanzan-u.ac.jp/admission/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
-    "id": "-u",
+    "id": "doho-u",
     "name": "同朋大学",
     "shortName": "同朋",
     "group": "private",
@@ -2017,10 +2027,11 @@
         "admissionUrl": "https://www.doho.ac.jp/admission/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
-    "id": "-u",
+    "id": "nagoya-shoka-u",
     "name": "名古屋商科大学",
     "shortName": "名古屋商科",
     "group": "private",
@@ -2142,10 +2153,11 @@
         "admissionUrl": "https://www.nucba.ac.jp/admissions/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
-    "id": "-u",
+    "id": "nagoya-kokusai-kouka-u",
     "name": "名古屋国際工科専門職大学",
     "shortName": "名古屋国際工科専門職",
     "group": "private",
@@ -2179,10 +2191,11 @@
         "admissionUrl": "https://www.iput.ac.jp/nagoya/admissions/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
-    "id": "-u",
+    "id": "nagoya-gaigo-u",
     "name": "名古屋外国語大学",
     "shortName": "名古屋外国語",
     "group": "private",
@@ -2355,10 +2368,11 @@
         "admissionUrl": "https://www.nufs.ac.jp/admissions/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
-    "id": "-u",
+    "id": "nagoya-gakugei-u",
     "name": "名古屋学芸大学",
     "shortName": "名古屋学芸",
     "group": "private",
@@ -2481,10 +2495,11 @@
         "admissionUrl": "https://www.nuas.ac.jp/admissions/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
-    "id": "-u",
+    "id": "nagoya-gakuin-u",
     "name": "名古屋学院大学",
     "shortName": "名古屋学院",
     "group": "private",
@@ -2886,10 +2901,11 @@
         "admissionUrl": "https://www.ngu.jp/admissions/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
-    "id": "-u",
+    "id": "nagoya-bunri-u",
     "name": "名古屋文理大学",
     "shortName": "名古屋文理",
     "group": "private",
@@ -2955,10 +2971,11 @@
         "admissionUrl": "https://www.nagoya-bunri.ac.jp/admission/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
-    "id": "-u",
+    "id": "nagoya-sangyo-u",
     "name": "名古屋産業大学",
     "shortName": "名古屋産業",
     "group": "private",
@@ -2993,10 +3010,11 @@
         "admissionUrl": "https://www.nagoya-su.ac.jp/admission/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
-    "id": "-u",
+    "id": "nagoya-keizai-u",
     "name": "名古屋経済大学",
     "shortName": "名古屋経済",
     "group": "private",
@@ -3118,10 +3136,11 @@
         "admissionUrl": "https://www.nagoya-ku.ac.jp/admission/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
-    "id": "-u",
+    "id": "nagoya-geijutsu-u",
     "name": "名古屋芸術大学",
     "shortName": "名古屋芸術",
     "group": "private",
@@ -3223,10 +3242,11 @@
         "admissionUrl": "https://www.nua.ac.jp/admissions/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
-    "id": "-u",
+    "id": "nagoya-aoi-u",
     "name": "名古屋葵大学",
     "shortName": "名古屋葵",
     "group": "private",
@@ -3384,10 +3404,11 @@
         "admissionUrl": "https://www.owari.ac.jp/admission/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
-    "id": "-u",
+    "id": "nagoya-zokei-u",
     "name": "名古屋造形大学",
     "shortName": "名古屋造形",
     "group": "private",
@@ -3567,10 +3588,11 @@
         "admissionUrl": "https://www.nzu.ac.jp/admissions/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
-    "id": "-u",
+    "id": "nagoya-ongaku-u",
     "name": "名古屋音楽大学",
     "shortName": "名古屋音楽",
     "group": "private",
@@ -3634,7 +3656,8 @@
         "admissionUrl": "https://www.meion.ac.jp/admissions/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
     "id": "meijo-u",
@@ -3988,7 +4011,8 @@
         "admissionUrl": "https://www.meijo-u.ac.jp/admissions/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
     "id": "icu",
@@ -4023,10 +4047,11 @@
         "admissionUrl": "https://www.icu.ac.jp/admissions/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "東京都"
   },
   {
-    "id": "-u",
+    "id": "saitama-med-u",
     "name": "埼玉医科大学",
     "shortName": "埼玉医科",
     "group": "private",
@@ -4114,10 +4139,11 @@
         "admissionUrl": "https://www.saitama-med.ac.jp/admission/",
         "selectionType": "school_recommendation"
       }
-    ]
+    ],
+    "prefecture": "埼玉県"
   },
   {
-    "id": "-u",
+    "id": "daido-u",
     "name": "大同大学",
     "shortName": "大同",
     "group": "private",
@@ -4210,7 +4236,8 @@
         "admissionUrl": "https://www.daido-it.ac.jp/admissions/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
     "id": "gakushuin-u",
@@ -4453,10 +4480,11 @@
         "admissionUrl": "https://www.univ.gakushuin.ac.jp/admissions/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "東京都"
   },
   {
-    "id": "-u",
+    "id": "okazaki-women-u",
     "name": "岡崎女子大学",
     "shortName": "岡崎女子",
     "group": "private",
@@ -4491,7 +4519,8 @@
         "admissionUrl": "https://www.okazaki-u.ac.jp/admission/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
     "id": "teikyo-u",
@@ -4900,10 +4929,11 @@
         "admissionUrl": "https://www.teikyo-u.ac.jp/admissions/",
         "selectionType": "school_recommendation"
       }
-    ]
+    ],
+    "prefecture": "東京都"
   },
   {
-    "id": "-u",
+    "id": "aichi-mizuho-u",
     "name": "愛知みずほ大学",
     "shortName": "愛知みずほ",
     "group": "private",
@@ -4942,10 +4972,11 @@
         "admissionUrl": "https://www.mizuho-c.ac.jp/admission/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
-    "id": "-u",
+    "id": "aichi-iryo-gakuin-u",
     "name": "愛知医療学院大学",
     "shortName": "愛知医療学院",
     "group": "private",
@@ -4980,10 +5011,11 @@
         "admissionUrl": "https://www.yuai.ac.jp/admission/",
         "selectionType": "school_recommendation"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
-    "id": "-u",
+    "id": "aichi-med-u",
     "name": "愛知医科大学",
     "shortName": "愛知医科",
     "group": "private",
@@ -5070,7 +5102,8 @@
         "admissionUrl": "https://www.aichi-med-u.ac.jp/admission/",
         "selectionType": "school_recommendation"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
     "id": "aichi-u",
@@ -5354,10 +5387,11 @@
         "admissionUrl": "https://www.aichi-u.ac.jp/admission/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
-    "id": "-u",
+    "id": "aichi-gakusen-u",
     "name": "愛知学泉大学",
     "shortName": "愛知学泉",
     "group": "private",
@@ -5411,7 +5445,8 @@
         "admissionUrl": "https://www.gakusen.ac.jp/admission/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
     "id": "agu",
@@ -5808,7 +5843,8 @@
         "admissionUrl": "https://navi.agu.ac.jp/admission/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
     "id": "aitech-u",
@@ -5961,10 +5997,11 @@
         "admissionUrl": "https://www.ait.ac.jp/admission/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
-    "id": "-u",
+    "id": "aichi-koka-u",
     "name": "愛知工科大学",
     "shortName": "愛知工科",
     "group": "private",
@@ -5999,10 +6036,11 @@
         "admissionUrl": "https://www.aut.ac.jp/admission/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
-    "id": "-u",
+    "id": "aichi-bunkyo-u",
     "name": "愛知文教大学",
     "shortName": "愛知文教",
     "group": "private",
@@ -6041,10 +6079,11 @@
         "admissionUrl": "https://www.abu.ac.jp/admission/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
-    "id": "-u",
+    "id": "aichi-toho-u",
     "name": "愛知東邦大学",
     "shortName": "愛知東邦",
     "group": "private",
@@ -6137,7 +6176,8 @@
         "admissionUrl": "https://www.aichi-toho.ac.jp/admissions/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
     "id": "aasa-u",
@@ -6558,10 +6598,11 @@
         "admissionUrl": "https://www.aasa.ac.jp/admission/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
-    "id": "-u",
+    "id": "aichi-sangyo-u",
     "name": "愛知産業大学",
     "shortName": "愛知産業",
     "group": "private",
@@ -6625,10 +6666,11 @@
         "admissionUrl": "https://www.asu.ac.jp/admission/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
-    "id": "-u",
+    "id": "nippon-med-u",
     "name": "日本医科大学",
     "shortName": "日本医科",
     "group": "private",
@@ -6678,7 +6720,8 @@
         "admissionUrl": "https://www.nms.ac.jp/college/admission/",
         "selectionType": "school_recommendation"
       }
-    ]
+    ],
+    "prefecture": "東京都"
   },
   {
     "id": "jwu",
@@ -6959,10 +7002,11 @@
         "admissionUrl": "https://www.jwu.ac.jp/admissions/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "東京都"
   },
   {
-    "id": "-u",
+    "id": "nihon-fukushi-u",
     "name": "日本福祉大学",
     "shortName": "日本福祉",
     "group": "private",
@@ -7286,10 +7330,11 @@
         "admissionUrl": "https://www.n-fukushi.ac.jp/admissions/",
         "selectionType": "school_recommendation"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
-    "id": "-u",
+    "id": "nisseki-toyota-nursing-u",
     "name": "日本赤十字豊田看護大学",
     "shortName": "日本赤十字豊田看護",
     "group": "private",
@@ -7323,10 +7368,11 @@
         "admissionUrl": "https://www.rctoyota.ac.jp/admission/",
         "selectionType": "school_recommendation"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
-    "id": "-u",
+    "id": "seijoh-u",
     "name": "星城大学",
     "shortName": "星城",
     "group": "private",
@@ -7408,10 +7454,11 @@
         "admissionUrl": "https://www.seijoh.ac.jp/admission/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
-    "id": "-u",
+    "id": "showa-med-u",
     "name": "昭和医科大学",
     "shortName": "昭和医科",
     "group": "private",
@@ -7586,7 +7633,8 @@
         "admissionUrl": "https://www.showa-u.ac.jp/admissions/",
         "selectionType": "school_recommendation"
       }
-    ]
+    ],
+    "prefecture": "東京都"
   },
   {
     "id": "sapporo-u",
@@ -7621,7 +7669,8 @@
         "admissionUrl": "https://www.sapporo-u.ac.jp/admissions/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "北海道"
   },
   {
     "id": "sgu",
@@ -7746,10 +7795,11 @@
         "admissionUrl": "https://www.sgu.ac.jp/admission/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "北海道"
   },
   {
-    "id": "-u",
+    "id": "tokyo-med-u",
     "name": "東京医科大学",
     "shortName": "東京医科",
     "group": "private",
@@ -7799,10 +7849,11 @@
         "admissionUrl": "https://www.tokyo-med.ac.jp/med/admissions/",
         "selectionType": "school_recommendation"
       }
-    ]
+    ],
+    "prefecture": "東京都"
   },
   {
-    "id": "-u",
+    "id": "tokyo-women-med-u",
     "name": "東京女子医科大学",
     "shortName": "東京女子医科",
     "group": "private",
@@ -7896,7 +7947,8 @@
         "admissionUrl": "https://www.twmu.ac.jp/admissions/",
         "selectionType": "school_recommendation"
       }
-    ]
+    ],
+    "prefecture": "東京都"
   },
   {
     "id": "twcu",
@@ -7959,10 +8011,11 @@
         "admissionUrl": "https://www.twcu.ac.jp/admissions/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "東京都"
   },
   {
-    "id": "-u",
+    "id": "jikei-med-u",
     "name": "東京慈恵会医科大学",
     "shortName": "東京慈恵会医科",
     "group": "private",
@@ -8007,7 +8060,8 @@
         "admissionUrl": "https://www.jikei.ac.jp/admissions/",
         "selectionType": "school_recommendation"
       }
-    ]
+    ],
+    "prefecture": "東京都"
   },
   {
     "id": "tus-u",
@@ -8330,7 +8384,8 @@
         "admissionUrl": "https://www.tus.ac.jp/admissions/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "東京都"
   },
   {
     "id": "tokai-u",
@@ -9176,10 +9231,11 @@
         "admissionUrl": "https://www.u-tokai.ac.jp/admissions/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "東京都"
   },
   {
-    "id": "-u",
+    "id": "tokai-gakuen-u",
     "name": "東海学園大学",
     "shortName": "東海学園",
     "group": "private",
@@ -9359,10 +9415,11 @@
         "admissionUrl": "https://www.tokaigakuen-u.ac.jp/admissions/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
-    "id": "-u",
+    "id": "toho-u",
     "name": "東邦大学",
     "shortName": "東邦",
     "group": "private",
@@ -9564,10 +9621,11 @@
         "admissionUrl": "https://www.toho-u.ac.jp/admissions/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "東京都"
   },
   {
-    "id": "-u",
+    "id": "ohka-gakuen-u",
     "name": "桜花学園大学",
     "shortName": "桜花学園",
     "group": "private",
@@ -9649,10 +9707,11 @@
         "admissionUrl": "https://www.ohkagakuen-u.ac.jp/admission/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
-    "id": "-u",
+    "id": "sugiyama-jogakuen-u",
     "name": "椙山女学園大学",
     "shortName": "椙山女学園",
     "group": "private",
@@ -10016,7 +10075,8 @@
         "admissionUrl": "https://www.sugiyama-u.ac.jp/admissions/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
     "id": "musashino-u",
@@ -10658,7 +10718,8 @@
         "admissionUrl": "https://www.musashino-u.ac.jp/admissions/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "東京都"
   },
   {
     "id": "tsuda-u",
@@ -10738,7 +10799,8 @@
         "admissionUrl": "https://www.tsuda.ac.jp/admissions/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "東京都"
   },
   {
     "id": "seisen-u",
@@ -10818,7 +10880,8 @@
         "admissionUrl": "https://www.seisen-u.ac.jp/admissions/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "東京都"
   },
   {
     "id": "tamagawa-u",
@@ -11099,7 +11162,8 @@
         "admissionUrl": "https://www.tamagawa.ac.jp/admissions/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "東京都"
   },
   {
     "id": "shirayuri-u",
@@ -11186,7 +11250,8 @@
         "admissionUrl": "https://www.shirayuri.ac.jp/admissions/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "東京都"
   },
   {
     "id": "kanagawa-u",
@@ -11569,7 +11634,8 @@
         "admissionUrl": "https://www.kanagawa-u.ac.jp/admissions/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "神奈川県"
   },
   {
     "id": "fukuoka-u",
@@ -11967,7 +12033,8 @@
         "admissionUrl": "https://www.fukuoka-u.ac.jp/admission/",
         "selectionType": "school_recommendation"
       }
-    ]
+    ],
+    "prefecture": "福岡県"
   },
   {
     "id": "u-sacred-heart",
@@ -12015,10 +12082,11 @@
         "admissionUrl": "https://www.u-sacred-heart.ac.jp/admissions/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "東京都"
   },
   {
-    "id": "-u",
+    "id": "shigakkan-u",
     "name": "至学館大学",
     "shortName": "至学館",
     "group": "private",
@@ -12062,7 +12130,8 @@
         "admissionUrl": "https://www.sgk.ac.jp/admissions/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
     "id": "fuji-wu",
@@ -12127,7 +12196,8 @@
         "admissionUrl": "https://www.fujijoshi.ac.jp/admission/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "北海道"
   },
   {
     "id": "fujita-hu",
@@ -12246,7 +12316,8 @@
         "admissionUrl": "https://www.fujita-hu.ac.jp/admissions/",
         "selectionType": "school_recommendation"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
     "id": "seinan-u",
@@ -12520,10 +12591,11 @@
         "admissionUrl": "https://www.seinan-gu.ac.jp/admission/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "福岡県"
   },
   {
-    "id": "-u",
+    "id": "toyohashi-sozo-u",
     "name": "豊橋創造大学",
     "shortName": "豊橋創造",
     "group": "private",
@@ -12614,10 +12686,11 @@
         "admissionUrl": "https://www.sozo.ac.jp/admission/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
-    "id": "-u",
+    "id": "toyota-tech-u",
     "name": "豊田工業大学",
     "shortName": "豊田工業",
     "group": "private",
@@ -12671,7 +12744,8 @@
         "admissionUrl": "https://www.toyota-ti.ac.jp/admission/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
     "id": "kinjo-u",
@@ -12961,10 +13035,11 @@
         "admissionUrl": "https://www.kinjo-u.ac.jp/admissions/",
         "selectionType": "school_recommendation"
       }
-    ]
+    ],
+    "prefecture": "愛知県"
   },
   {
-    "id": "-u",
+    "id": "kansai-med-u",
     "name": "関西医科大学",
     "shortName": "関西医科",
     "group": "private",
@@ -13098,7 +13173,8 @@
         "admissionUrl": "https://www.kmu.ac.jp/admissions/",
         "selectionType": "school_recommendation"
       }
-    ]
+    ],
+    "prefecture": "大阪府"
   },
   {
     "id": "juntendo-u",
@@ -13467,6 +13543,7 @@
         "admissionUrl": "https://www.juntendo.ac.jp/admissions/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "東京都"
   }
 ]

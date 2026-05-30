@@ -246,7 +246,8 @@
         "admissionUrl": "https://www.kokugakuin.ac.jp/admission/admissions/p2/p2",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "東京都"
   },
   {
     "id": "seijo-u",
@@ -406,7 +407,8 @@
         "admissionUrl": "https://admission.seijo.ac.jp/admission/sogo",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "東京都"
   },
   {
     "id": "seikei-u",
@@ -632,7 +634,8 @@
         "admissionUrl": "https://www.seikei.ac.jp/university/s-net/admissions/comprehensive/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "東京都"
   },
   {
     "id": "meigaku-u",
@@ -919,7 +922,8 @@
         "admissionUrl": "https://www.meijigakuin.ac.jp/admission/information/ao/",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "東京都"
   },
   {
     "id": "musashi-u",
@@ -1079,7 +1083,8 @@
         "admissionUrl": "https://www.musashi.ac.jp/admissions/sogotokubetsu/AO.html",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "東京都"
   },
   {
     "id": "dokkyo-u",
@@ -1229,6 +1234,7 @@
         "admissionUrl": "https://nyushi.dokkyo.ac.jp/nyushi/gakubu-seido/system_other",
         "selectionType": "comprehensive"
       }
-    ]
+    ],
+    "prefecture": "埼玉県"
   }
 ]
