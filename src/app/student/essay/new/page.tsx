@@ -203,13 +203,18 @@ export default function EssayNewPage() {
         const hw = (await res.json()) as {
           snapshot?: {
             title?: string;
+            objective?: string;
             targetUniversity?: string;
             targetFaculty?: string;
           };
         };
         const snap = hw?.snapshot;
         if (cancelled || !snap) return;
-        if (snap.title) setTopic(snap.title);
+        // お題には問題文(title)に加え、目的(objective)も併記して設問を完全にする
+        const parts = [snap.title, snap.objective].filter(
+          (s): s is string => typeof s === "string" && s.trim().length > 0
+        );
+        if (parts.length > 0) setTopic(parts.join("\n\n"));
         if (snap.targetUniversity && snap.targetFaculty) {
           setSelectedCompoundId(`${snap.targetUniversity}:${snap.targetFaculty}`);
         }
