@@ -14,6 +14,7 @@ import type { StudentProfile } from "@/lib/types/user";
 import { useAuthSWR } from "@/lib/api/swr";
 import { NotificationPermissionBanner } from "@/components/notifications/NotificationPermissionBanner";
 import { UpcomingSessionCard } from "@/components/student/UpcomingSessionCard";
+import { EssayDraftsSection } from "@/components/essay/EssayDraftsSection";
 import { GrowthTree } from "@/components/self-analysis/GrowthTree";
 import type { SelfAnalysis } from "@/lib/types/self-analysis";
 import { SkillCheckRefreshBanner } from "@/components/skill-check/SkillCheckRefreshBanner";
@@ -113,6 +114,8 @@ export default function StudentDashboard() {
       <div data-tour="upcoming-session">
         <UpcomingSessionCard />
       </div>
+
+      <EssayDraftsSection />
 
       {/* Mobile: 志望校を一番上に大きく（フル版） */}
       <section className="lg:hidden">
