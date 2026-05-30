@@ -393,9 +393,10 @@ export default function EssayNewPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetUniversities.join(",")]);
 
-  // 全大学リスト取得（他の大学選択用）
+  // 全大学リスト取得（他の大学選択用 + 過去問のAP参照先解決用）
   useEffect(() => {
-    if (!showAllUniversities || allUniversities.length > 0) return;
+    // 「他大学から選ぶ」時、または過去問が選ばれている時（志望校外の可能性）に先読み
+    if ((!showAllUniversities && !pastQuestion) || allUniversities.length > 0) return;
     async function fetchAll() {
       try {
         const res = await fetch("/api/universities");
@@ -411,26 +412,41 @@ export default function EssayNewPage() {
       } catch {}
     }
     fetchAll();
-  }, [showAllUniversities, allUniversities.length]);
+  }, [showAllUniversities, allUniversities.length, pastQuestion]);
 
   // Step 1: 志望校選択
   const [selectedCompoundId, setSelectedCompoundId] = useState<string | null>(null);
   const [topic, setTopic] = useState("");
   const [writingDirection, setWritingDirection] = useState<"vertical" | "horizontal">("horizontal");
 
-  // 1校の場合は自動選択、過去問選択時はuniversityIdでマッチ
+  // 過去問の大学を AP 参照先として解決（志望校でなくても、その大学APで採点するため）。
+  const problemUni: ResolvedUniversity | null = pastQuestion
+    ? (resolved.find((r) => r.universityId === pastQuestion.universityId) ??
+        allUniversities.find(
+          (u) =>
+            u.universityId === pastQuestion.universityId &&
+            u.facultyName === pastQuestion.facultyName
+        ) ??
+        allUniversities.find((u) => u.universityId === pastQuestion.universityId) ??
+        {
+          universityId: pastQuestion.universityId,
+          facultyId: "",
+          universityName: pastQuestion.universityName,
+          facultyName: pastQuestion.facultyName,
+        })
+    : null;
+
+  // 1校の場合は自動選択、過去問選択時はその大学（志望校外なら problemUni）をAP参照先に
   useEffect(() => {
-    if (pastQuestion && resolved.length > 0) {
-      const match = resolved.find((r) => r.universityId === pastQuestion.universityId);
-      if (match) {
-        setSelectedCompoundId(`${match.universityId}:${match.facultyId}`);
-      } else if (resolved.length > 0) {
-        setSelectedCompoundId(`${resolved[0].universityId}:${resolved[0].facultyId}`);
+    if (pastQuestion) {
+      if (problemUni) {
+        setSelectedCompoundId(`${problemUni.universityId}:${problemUni.facultyId}`);
       }
     } else if (resolved.length === 1) {
       setSelectedCompoundId(`${resolved[0].universityId}:${resolved[0].facultyId}`);
     }
-  }, [resolved, pastQuestion]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resolved, pastQuestion, problemUni?.universityId, problemUni?.facultyId]);
 
   // 再トライ時: 解決済み志望校リストから親と一致するものを自動選択
   useEffect(() => {
@@ -445,9 +461,10 @@ export default function EssayNewPage() {
     }
   }, [retryParent, resolved]);
 
-  const selectedUni = resolved.find(
-    (r) => `${r.universityId}:${r.facultyId}` === selectedCompoundId
-  );
+  // 志望校＋（読み込まれていれば）全大学から選択中の大学を解決
+  const selectedUni =
+    resolved.find((r) => `${r.universityId}:${r.facultyId}` === selectedCompoundId) ??
+    allUniversities.find((r) => `${r.universityId}:${r.facultyId}` === selectedCompoundId);
   // 再トライ時に親の志望校が現在の resolved に無い場合は親の情報で補完する。
   // (生徒が志望校を変えた後でも前回テーマで再挑戦できるように。)
   const retryParentUni: ResolvedUniversity | null =
@@ -459,7 +476,7 @@ export default function EssayNewPage() {
           facultyName: retryParent.facultyName,
         }
       : null;
-  const effectiveUni = selectedUni ?? retryParentUni;
+  const effectiveUni = selectedUni ?? problemUni ?? retryParentUni;
   const universityId = effectiveUni?.universityId ?? "";
   const facultyId = effectiveUni?.facultyId ?? "";
 
@@ -1146,9 +1163,9 @@ export default function EssayNewPage() {
                 <GraduationCap className="size-6 text-muted-foreground" />
               </div>
               <div className="flex-1">
-                <p className="font-medium">志望校が未設定です</p>
+                <p className="font-medium">アドミッションポリシー参照先が未設定です</p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  設定画面で志望校を登録してください
+                  設定画面で志望校を登録してください（添削の採点基準になります）
                 </p>
                 <Link href="/student/settings">
                   <Button variant="outline" size="sm" className="mt-3">
@@ -1163,7 +1180,7 @@ export default function EssayNewPage() {
           <Card className="mt-4">
             <CardHeader>
               <CardTitle className="text-sm lg:text-base">
-                {resolved.length === 1 ? "志望校・テーマ" : "志望校を選択してテーマを入力"}
+                {resolved.length === 1 ? "アドミッションポリシー参照先・テーマ" : "アドミッションポリシー参照先を選択してテーマを入力"}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-3 lg:p-4 space-y-4">
@@ -1177,7 +1194,7 @@ export default function EssayNewPage() {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <Label>志望校を選択</Label>
+                  <Label>アドミッションポリシー参照先を選択</Label>
                   <div className="grid gap-2 grid-cols-1 lg:grid-cols-2">
                     {resolved.map((item) => {
                       const compoundId = `${item.universityId}:${item.facultyId}`;
