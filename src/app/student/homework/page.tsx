@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
   ArrowRight,
@@ -9,12 +10,15 @@ import {
   ClipboardList,
   Clock,
   FileText,
+  Loader2,
   Mic,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { authFetch } from "@/lib/api/client";
 import { useAuthSWR } from "@/lib/api/swr";
 import type { HomeworkAssignment } from "@/lib/types/homework";
 
@@ -98,12 +102,68 @@ export default function StudentHomeworkPage() {
 }
 
 function HomeworkCard({ hw }: { hw: HomeworkAssignment }) {
+  const router = useRouter();
   const isEssay = hw.snapshot.type === "essay";
   const days = daysUntil(hw.dueDate);
   const isOverdue = days !== null && days < 0;
   const isUrgent = days !== null && days >= 0 && days <= 2;
 
-  const targetHref = `/student/homework/${encodeURIComponent(hw.id)}`;
+  // 小論文宿題の遷移先（テーマ/過去問つきはリッチ資料、自作はお題=タイトル）。
+  // 中間の宿題詳細ページを経由せず、一覧から直接小論文添削フローへ入る。
+  const essayHref = hw.snapshot.essayThemeId
+    ? `/student/essay/new?theme=${encodeURIComponent(hw.snapshot.essayThemeId)}&homeworkId=${hw.id}`
+    : hw.snapshot.pastQuestionId
+      ? `/student/essay/new?pastQuestion=${encodeURIComponent(hw.snapshot.pastQuestionId)}&homeworkId=${hw.id}`
+      : `/student/essay/new?homeworkId=${hw.id}`;
+
+  const [startingInterview, setStartingInterview] = useState(false);
+
+  /**
+   * 面接宿題の「取り組む」: その場で模擬面接セッションを開始し、
+   * 中間ページを経由せず直接セッション画面へ遷移する。
+   * 志望校が未設定の宿題は開始できないためトーストで通知する。
+   */
+  const startInterviewSession = async () => {
+    const universityId = hw.snapshot.targetUniversity;
+    const facultyId = hw.snapshot.targetFaculty;
+    if (!universityId || !facultyId) {
+      toast.error(
+        "志望校が未設定のため模擬面接を開始できません。プロフィールから設定してください。",
+      );
+      return;
+    }
+    setStartingInterview(true);
+    try {
+      const res = await authFetch("/api/interview/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          universityId,
+          facultyId,
+          mode: "individual",
+          inputMode: "text",
+          customOpeningQuestion: hw.snapshot.title,
+          sourceType: "homework",
+          homeworkAssignmentId: hw.id,
+        }),
+      });
+      if (!res.ok) {
+        const detail = (await res.json().catch(() => ({}))) as {
+          error?: string;
+          detail?: string;
+        };
+        throw new Error(detail.detail ?? detail.error ?? "面接を開始できません");
+      }
+      const json = (await res.json()) as { sessionId?: string };
+      if (!json.sessionId) throw new Error("セッション ID が取得できません");
+      router.push(`/student/interview/session/${json.sessionId}`);
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "面接の開始に失敗しました",
+      );
+      setStartingInterview(false);
+    }
+  };
 
   return (
     <Card
@@ -171,12 +231,32 @@ function HomeworkCard({ hw }: { hw: HomeworkAssignment }) {
         )}
 
         <div className="flex justify-end">
-          <Button asChild size="sm">
-            <Link href={targetHref}>
-              取り組む
-              <ArrowRight className="ml-1.5 size-4" />
-            </Link>
-          </Button>
+          {isEssay ? (
+            <Button asChild size="sm">
+              <Link href={essayHref}>
+                取り組む
+                <ArrowRight className="ml-1.5 size-4" />
+              </Link>
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              onClick={startInterviewSession}
+              disabled={startingInterview}
+            >
+              {startingInterview ? (
+                <>
+                  <Loader2 className="mr-1.5 size-4 animate-spin" />
+                  準備中…
+                </>
+              ) : (
+                <>
+                  取り組む
+                  <ArrowRight className="ml-1.5 size-4" />
+                </>
+              )}
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>
