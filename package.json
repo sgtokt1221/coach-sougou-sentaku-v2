@@ -13,7 +13,8 @@
     "check-env": "tsx scripts/check-env.ts",
     "validate:data": "tsx scripts/validate-university-data.ts",
     "seed:universities": "tsx scripts/seed-universities.ts",
-    "seed:superadmin": "tsx scripts/seed-superadmin.ts"
+    "seed:superadmin": "tsx scripts/seed-superadmin.ts",
+    "consolidate:weaknesses": "tsx scripts/consolidate-weaknesses-taxonomy.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",
