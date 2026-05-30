@@ -39,6 +39,27 @@ async function getUniversities(): Promise<University[]> {
   return MOCK_UNIVERSITIES;
 }
 
+/**
+ * 志望校（"uniId:facId" 複合キー）から、各学部のアドミッションポリシー(AP)本文を整形して返す。
+ * 自己分析 Step 7「統合・言語化」で実APをプロンプトに注入するために使う。
+ */
+export async function getAdmissionPolicies(compoundKeys: string[]): Promise<string> {
+  if (!compoundKeys || compoundKeys.length === 0) return "";
+  const universities = await getUniversities();
+  const byId = new Map(universities.map((u) => [u.id, u]));
+  const blocks: string[] = [];
+  for (const key of compoundKeys) {
+    const [universityId, facultyId] = key.split(":");
+    const u = byId.get(universityId);
+    if (!u) continue;
+    const f = u.faculties?.find((x) => x.id === facultyId);
+    if (!f) continue;
+    const ap = (f.admissionPolicy ?? "").trim();
+    blocks.push(`■ ${u.name} ${f.name}\n${ap || "（APテキスト未登録）"}`);
+  }
+  return blocks.join("\n\n");
+}
+
 /** 総合型/学校推薦型の学部のみを CatalogEntry[] に展開 */
 export async function getExplorerCatalog(): Promise<CatalogEntry[]> {
   const universities = await getUniversities();

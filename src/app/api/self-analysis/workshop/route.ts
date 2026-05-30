@@ -34,7 +34,27 @@ export async function POST(request: NextRequest) {
     const Anthropic = (await import("@anthropic-ai/sdk")).default;
     const client = new Anthropic();
 
-    let systemPrompt = buildSelfAnalysisPrompt(step, previousStepsData);
+    // Step 7「統合・言語化」では、登録済み志望校の実AP本文をプロンプトに注入する。
+    // 認証・志望校が無い場合は従来どおり（対話内容ベース）にフォールバックする。
+    let targetApText: string | undefined;
+    if (step === 7) {
+      try {
+        const { verifyAuthToken, adminDb } = await import("@/lib/firebase/admin");
+        const auth = await verifyAuthToken(request);
+        if (auth?.uid && adminDb) {
+          const userSnap = await adminDb.doc(`users/${auth.uid}`).get();
+          const targets = (userSnap.data()?.targetUniversities ?? []) as string[];
+          if (targets.length) {
+            const { getAdmissionPolicies } = await import("@/lib/universities/catalog");
+            targetApText = await getAdmissionPolicies(targets);
+          }
+        }
+      } catch (e) {
+        console.warn("[self-analysis/workshop] AP 解決に失敗:", e);
+      }
+    }
+
+    let systemPrompt = buildSelfAnalysisPrompt(step, previousStepsData, targetApText);
     if (forceComplete) {
       systemPrompt += `\n\n## 重要: 即時完了モード
 ここまでの history を踏まえ、追加質問はせず直ちに stepData を抽出して JSON で返してください。

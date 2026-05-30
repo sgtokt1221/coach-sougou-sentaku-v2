@@ -52,6 +52,14 @@ export interface IdentityAnalysis {
   apConnection: string;
 }
 
+/** 志望校1校ごとの「大学・APとのまとめ」 */
+export interface ApSummaryEntry {
+  universityName: string;
+  facultyName: string;
+  /** その大学のAPと自己分析を結びつけた150〜200字程度のまとめ */
+  summary: string;
+}
+
 /**
  * Step 7「統合・言語化」: 全ステップを統合した最終的な「自分ストーリー」。
  * Step 6 (大学接続) とはフィールドを分離し、独立した成果物として保存・表示する。
@@ -61,8 +69,10 @@ export interface SynthesisAnalysis {
   selfStatement: string;
   /** 300字程度の自分ストーリー（価値観〜将来像を貫く一貫した物語） */
   coreNarrative: string;
-  /** 大学・APとの接続を含む200字程度のまとめ */
-  apSummary: string;
+  /** 志望校ごとの大学・APとのまとめ（複数校対応） */
+  apSummaries?: ApSummaryEntry[];
+  /** @deprecated 旧: 単一まとめ。後方互換のため残置 */
+  apSummary?: string;
 }
 
 export interface StepChatHistory {

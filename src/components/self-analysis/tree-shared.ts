@@ -64,6 +64,7 @@ const KEY_LABELS: Record<string, string> = {
   // Step 7: 統合・言語化
   coreNarrative: "自分ストーリー",
   apSummary: "大学・APとのまとめ",
+  apSummaries: "大学・APとのまとめ",
 };
 
 /**
@@ -82,7 +83,17 @@ export function formatStepDataForTooltip(
     if (Array.isArray(v)) {
       valueStr = v
         .filter(Boolean)
-        .map((x) => (typeof x === "string" ? x : JSON.stringify(x)))
+        .map((x) => {
+          if (typeof x === "string") return x;
+          // apSummaries 等のオブジェクト配列は summary / 大学名を抽出
+          if (x && typeof x === "object") {
+            const o = x as Record<string, unknown>;
+            if (typeof o.summary === "string") {
+              return o.universityName ? `${o.universityName}: ${o.summary}` : o.summary;
+            }
+          }
+          return JSON.stringify(x);
+        })
         .join("、");
     } else if (typeof v === "object") {
       valueStr = Object.values(v as Record<string, unknown>)

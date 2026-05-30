@@ -225,11 +225,16 @@ const STEP_PROMPTS: Record<number, string> = {
 ## これまでの分析データ
 {{PREVIOUS_DATA}}
 
+## 志望校のアドミッションポリシー（実データ）
+{{TARGET_AP}}
+
 ## 進め方
 - まず、これまでの分析を総括し、一貫したストーリーを提示してください
 - 「この理解で合っていますか？」と確認してください
 - 修正があれば反映してください
 - 最終的な自己分析ストーリーを完成させてください
+- apSummaries は、上記「志望校のアドミッションポリシー（実データ）」に挙がっている**志望校1校ごとに1要素**を作成してください。各要素は、その大学のAPの語彙・求める人物像と、生徒の価値観・強み・ビジョンの接点を具体的に結びつけた150〜200字のまとめ（summary）と、universityName・facultyName を含めてください。
+- 実データが「（志望校が未登録...）」の場合は、apSummaries を1要素だけにし、universityName と facultyName を空文字 "" にして、これまでの対話内容（大学との接続ステップ）を基にした汎用的なまとめを summary に入れてください。
 
 ## 出力形式
 通常の応答時:
@@ -248,7 +253,9 @@ const STEP_PROMPTS: Record<number, string> = {
   "stepData": {
     "selfStatement": "200字程度の自己紹介文",
     "coreNarrative": "300字程度の自分ストーリー（価値観〜将来像を貫く一貫した物語）",
-    "apSummary": "大学・APとの接続を含む200字程度のまとめ"
+    "apSummaries": [
+      { "universityName": "○○大学", "facultyName": "△△学部", "summary": "その大学のAPと自分の接点を結んだ150〜200字" }
+    ]
   }
 }
 \`\`\``,
@@ -256,16 +263,24 @@ const STEP_PROMPTS: Record<number, string> = {
 
 export function buildSelfAnalysisPrompt(
   step: number,
-  previousStepsData?: Record<string, unknown>
+  previousStepsData?: Record<string, unknown>,
+  targetApText?: string
 ): string {
   const prompt = STEP_PROMPTS[step] ?? STEP_PROMPTS[1];
 
-  if (step === 7 && previousStepsData) {
-    return prompt.replace(
-      "{{PREVIOUS_DATA}}",
-      JSON.stringify(previousStepsData, null, 2)
+  let out =
+    step === 7 && previousStepsData
+      ? prompt.replace("{{PREVIOUS_DATA}}", JSON.stringify(previousStepsData, null, 2))
+      : prompt.replace("{{PREVIOUS_DATA}}", "（まだデータがありません）");
+
+  if (step === 7) {
+    out = out.replace(
+      "{{TARGET_AP}}",
+      targetApText && targetApText.trim()
+        ? targetApText
+        : "（志望校が未登録、または登録大学のAPが取得できませんでした。これまでの対話内容を基にまとめてください）"
     );
   }
 
-  return prompt.replace("{{PREVIOUS_DATA}}", "（まだデータがありません）");
+  return out;
 }

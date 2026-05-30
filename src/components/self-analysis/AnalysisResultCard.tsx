@@ -12,6 +12,7 @@ import {
   Telescope,
   User,
   Sparkles,
+  GraduationCap,
   Pencil,
   Check,
   X,
@@ -190,10 +191,13 @@ export function AnalysisResultCard({
       fields: [
         { label: "自己紹介文", section: "synthesis", key: "selfStatement", value: analysis.synthesis?.selfStatement ?? "" },
         { label: "自分ストーリー", section: "synthesis", key: "coreNarrative", value: analysis.synthesis?.coreNarrative ?? "" },
-        { label: "大学・APとのまとめ", section: "synthesis", key: "apSummary", value: analysis.synthesis?.apSummary ?? "" },
       ],
     },
   ];
+
+  // 大学・APとのまとめ（志望校ごと）。新形式 apSummaries 優先、旧 apSummary はフォールバック表示。
+  const apSummaries = analysis.synthesis?.apSummaries ?? [];
+  const legacyApSummary = analysis.synthesis?.apSummary;
 
   return (
     <div className="space-y-4">
@@ -227,6 +231,34 @@ export function AnalysisResultCard({
           </CardContent>
         </Card>
       ))}
+
+      {(apSummaries.length > 0 || legacyApSummary) && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <GraduationCap className="size-4 text-teal-600" />
+              大学・APとのまとめ
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {apSummaries.length > 0 ? (
+              apSummaries.map((ap, i) => (
+                <div key={i} className="space-y-1">
+                  {(ap.universityName || ap.facultyName) && (
+                    <p className="text-xs font-semibold text-foreground">
+                      {ap.universityName}
+                      {ap.facultyName ? ` ${ap.facultyName}` : ""}
+                    </p>
+                  )}
+                  <p className="text-sm leading-relaxed">{ap.summary}</p>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm leading-relaxed">{legacyApSummary}</p>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
