@@ -204,8 +204,17 @@ export default function SelfAnalysisResultPage() {
 
       {/* 左: 自己分析の木 / 右: 結果 */}
       <div className="flex flex-col gap-4 lg:flex-row lg:gap-6 lg:items-start">
-        <div className="w-full lg:w-[300px] lg:shrink-0 lg:sticky lg:top-6">
-          <GrowthTree compact completedSteps={completedSteps} stepsData={stepsData} />
+        <div className="w-full space-y-2 lg:w-[300px] lg:shrink-0 lg:sticky lg:top-6">
+          <GrowthTree
+            compact
+            interactive={false}
+            showLabels
+            completedSteps={completedSteps}
+            stepsData={stepsData}
+          />
+          <p className="text-center text-xs text-muted-foreground">
+            全{Math.min(completedSteps, 7)}ステップ完了
+          </p>
         </div>
 
         <div className="flex-1 min-w-0">

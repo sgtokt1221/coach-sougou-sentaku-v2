@@ -36,6 +36,10 @@ interface GrowthTreeProps {
   className?: string;
   /** compact 版: 下部ステップラベル省略、max-width と padding を縮小 */
   compact?: boolean;
+  /** false にすると果実のホバー/クリック/ツールチップを無効化（装飾表示）。既定 true */
+  interactive?: boolean;
+  /** 下部のステップ名凡例の表示。未指定時は !compact に従う */
+  showLabels?: boolean;
 }
 
 // viewBox 360x300 にリマッピングした果実座標
@@ -96,8 +100,11 @@ export function GrowthTree({
   onFruitClick,
   className,
   compact = false,
+  interactive = true,
+  showLabels,
 }: GrowthTreeProps) {
   const allDone = completedSteps >= 7;
+  const labelsVisible = showLabels ?? !compact;
   const [hoveredStep, setHoveredStep] = useState<number | null>(null);
   const scopeRef = useRef<HTMLDivElement>(null);
   const hoverTlsRef = useRef<Map<number, gsap.core.Timeline>>(new Map());
@@ -606,23 +613,29 @@ export function GrowthTree({
                 )}
                 style={{
                   transformOrigin: `${pos.x}px ${pos.y}px`,
-                  cursor: isDone ? "pointer" : "default",
+                  cursor: interactive && isDone ? "pointer" : "default",
                   opacity: isDone ? 1 : 0.2,
                 }}
-                onMouseEnter={() => isDone && handleFruitHover(stepNum)}
-                onMouseLeave={() => isDone && handleFruitLeave(stepNum)}
-                onFocus={() => isDone && handleFruitHover(stepNum)}
-                onBlur={() => isDone && handleFruitLeave(stepNum)}
-                onClick={() => isDone && onFruitClick?.(stepNum)}
-                onKeyDown={(e) => {
-                  if (isDone && (e.key === "Enter" || e.key === " ")) {
-                    e.preventDefault();
-                    onFruitClick?.(stepNum);
-                  }
-                }}
-                tabIndex={isDone ? 0 : -1}
-                role={isDone ? "button" : undefined}
-                aria-label={isDone ? `${SELF_ANALYSIS_STEPS[i].title}を編集` : undefined}
+                onMouseEnter={interactive ? () => isDone && handleFruitHover(stepNum) : undefined}
+                onMouseLeave={interactive ? () => isDone && handleFruitLeave(stepNum) : undefined}
+                onFocus={interactive ? () => isDone && handleFruitHover(stepNum) : undefined}
+                onBlur={interactive ? () => isDone && handleFruitLeave(stepNum) : undefined}
+                onClick={interactive ? () => isDone && onFruitClick?.(stepNum) : undefined}
+                onKeyDown={
+                  interactive
+                    ? (e) => {
+                        if (isDone && (e.key === "Enter" || e.key === " ")) {
+                          e.preventDefault();
+                          onFruitClick?.(stepNum);
+                        }
+                      }
+                    : undefined
+                }
+                tabIndex={interactive && isDone ? 0 : -1}
+                role={interactive && isDone ? "button" : undefined}
+                aria-label={
+                  interactive && isDone ? `${SELF_ANALYSIS_STEPS[i].title}を編集` : undefined
+                }
               >
                 {isDone && (
                   <ellipse
@@ -717,7 +730,7 @@ export function GrowthTree({
         </svg>
 
         {/* ホバー時のツールチップ (= ツールチップ自体にも hover 維持ロジック付き) */}
-        {hoveredStep != null && hoveredMeta && hoveredPosInfo && (
+        {interactive && hoveredStep != null && hoveredMeta && hoveredPosInfo && (
           <div
             className="pointer-events-auto absolute z-10 w-[280px] -translate-x-1/2 rounded-lg border bg-background/95 p-3 shadow-xl backdrop-blur-sm"
             style={{
@@ -766,8 +779,8 @@ export function GrowthTree({
         )}
       </div>
 
-      {/* 下部: 完了したセクションのラベル (compact では省略) */}
-      {!compact && (
+      {/* 下部: 完了したセクションのラベル */}
+      {labelsVisible && (
       <div className="relative mt-2 px-4 pb-4 flex flex-wrap gap-1 justify-center">
         {SELF_ANALYSIS_STEPS.map((s, i) => {
           const isDone = s.step <= completedSteps;
