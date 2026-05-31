@@ -46,6 +46,8 @@ import {
 import { ScoreRing } from "@/components/shared/ScoreRing";
 import { RankBadge } from "@/components/shared/RankBadge";
 import { RedPenText } from "@/components/essay/RedPenText";
+import { CommentableEssayText } from "@/components/essay/CommentableEssayText";
+import type { EssayInlineComment } from "@/lib/types/essay";
 import { RetryComparisonCard } from "@/components/essay/RetryComparison";
 import type { GrowthEvent, QuantitativeAnalysis, RetryComparison } from "@/lib/types/essay";
 import { getRankFromPercentage, getScorePercentage } from "@/lib/score-rank";
@@ -115,6 +117,7 @@ interface EssayResult {
   rootEssayId?: string;
   parentEssayId?: string | null;
   retryComparison?: RetryComparison;
+  inlineComments?: EssayInlineComment[];
 }
 
 
@@ -224,6 +227,18 @@ export default function EssayResultPage() {
     }
     if (id) load();
   }, [id]);
+
+  // インラインコメントに未読があれば既読化
+  const hasUnreadComments = (result?.inlineComments ?? []).some((c) => !c.read);
+  useEffect(() => {
+    if (!id || !hasUnreadComments) return;
+    (async () => {
+      const { authFetch } = await import("@/lib/api/client");
+      await authFetch(`/api/essay/${id}/comments/read`, { method: "POST" }).catch(
+        () => {}
+      );
+    })();
+  }, [id, hasUnreadComments]);
 
   if (loading) {
     return (
@@ -462,6 +477,25 @@ export default function EssayResultPage() {
                   </div>
                 );
               })}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* 講師・管理者からのインラインコメント */}
+        {(result.inlineComments?.length ?? 0) > 0 && (
+          <Card className="mb-6 border-teal-200 bg-teal-50/30">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base text-teal-800">
+                <MessageSquare className="size-5" />
+                講師・管理者からのコメント
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CommentableEssayText
+                text={result.ocrText ?? ""}
+                comments={result.inlineComments ?? []}
+                mode="view"
+              />
             </CardContent>
           </Card>
         )}

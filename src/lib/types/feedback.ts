@@ -19,7 +19,8 @@ export type ChatReferenceKind =
   | 'interview-drill'
   | 'summary-drill'
   | 'custom'
-  | 'homework';
+  | 'homework'
+  | 'essay-comment';
 
 /** メッセージに添える問題参照（カード表示） */
 export interface ChatReference {

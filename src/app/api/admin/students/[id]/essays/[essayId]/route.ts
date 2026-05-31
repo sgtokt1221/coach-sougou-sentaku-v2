@@ -55,6 +55,7 @@ export async function GET(
       status: data.status || "uploaded",
       scores: data.scores || undefined,
       feedback: data.feedback || undefined,
+      inlineComments: data.inlineComments || [],
     };
 
     return NextResponse.json(essay);

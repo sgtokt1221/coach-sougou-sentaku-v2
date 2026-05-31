@@ -116,11 +116,22 @@ function isSafeInternalPath(href: string): boolean {
 
 function ReferenceCard({ reference }: { reference: ChatReference }) {
   const safe = isSafeInternalPath(reference.href);
+  const isComment = reference.kind === "essay-comment";
+  const headerLabel = isComment
+    ? "コメント"
+    : reference.kind === "homework"
+      ? "宿題"
+      : "問題";
+  const buttonLabel = isComment
+    ? "コメントを読む"
+    : reference.kind === "homework"
+      ? "取り組む"
+      : "解く";
   return (
     <div className="mt-1.5 rounded-lg border border-primary/30 bg-primary/5 p-2.5">
       <div className="flex items-center gap-1.5 text-[11px] font-semibold text-primary">
         <BookOpen className="size-3.5" />
-        {reference.kind === "homework" ? "宿題" : "問題"}
+        {headerLabel}
       </div>
       <p className="mt-0.5 text-sm font-medium text-foreground">
         {reference.label}
@@ -135,7 +146,7 @@ function ReferenceCard({ reference }: { reference: ChatReference }) {
           href={reference.href}
           className="mt-1.5 inline-flex items-center gap-1 rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground hover:opacity-90"
         >
-          {reference.kind === "homework" ? "取り組む" : "解く"}
+          {buttonLabel}
         </Link>
       )}
     </div>

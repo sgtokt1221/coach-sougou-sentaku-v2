@@ -14,6 +14,7 @@ const REFERENCE_KINDS: ChatReferenceKind[] = [
   "summary-drill",
   "custom",
   "homework",
+  "essay-comment",
 ];
 
 /**

@@ -65,6 +65,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils/avatar";
 import { SegmentControl } from "@/components/shared/SegmentControl";
 import { TeacherAssignmentSection } from "@/components/admin/TeacherAssignmentSection";
+import { CommentableEssayText } from "@/components/essay/CommentableEssayText";
 import type { StudentDetail } from "@/lib/types/admin";
 import { getDisplayGrade } from "@/lib/utils/grade";
 import {
@@ -340,7 +341,7 @@ function AdminStudentDetailPageInner() {
   const id = params?.id as string;
   // 講師が担当生徒の学習状況を見る目的でこのページを開く場合は、
   // 管理者専用の操作（プロフィール編集・課金管理・担当講師割当）を隠す。
-  const { userProfile } = useAuth();
+  const { user, userProfile } = useAuth();
   const isTeacherViewer = userProfile?.role === "teacher";
 
   // タブ状態とURL同期
@@ -407,6 +408,44 @@ function AdminStudentDetailPageInner() {
     } finally {
       setEssayLoading(false);
     }
+  }
+
+  // インラインコメント追加/削除後に essay を再取得 (フリッカーなし)
+  async function refreshEssayDetail(essayId: string) {
+    try {
+      const res = await authFetch(`/api/admin/students/${id}/essays/${essayId}`);
+      if (res.ok) setEssayDetail(await res.json());
+    } catch {
+      // ignore
+    }
+  }
+
+  async function addEssayComment(
+    essayId: string,
+    range: { start: number; end: number; quote: string; comment?: string },
+  ) {
+    const res = await authFetch(`/api/essay/${essayId}/comments`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(range),
+    });
+    if (!res.ok) {
+      const b = (await res.json().catch(() => ({}))) as { error?: string };
+      throw new Error(b.error ?? "コメントの保存に失敗しました");
+    }
+    await refreshEssayDetail(essayId);
+  }
+
+  async function deleteEssayComment(essayId: string, commentId: string) {
+    const res = await authFetch(
+      `/api/essay/${essayId}/comments?commentId=${encodeURIComponent(commentId)}`,
+      { method: "DELETE" },
+    );
+    if (!res.ok) {
+      const b = (await res.json().catch(() => ({}))) as { error?: string };
+      throw new Error(b.error ?? "削除に失敗しました");
+    }
+    await refreshEssayDetail(essayId);
   }
 
   // Profile edit state
@@ -1232,16 +1271,21 @@ function AdminStudentDetailPageInner() {
 
               <Separator />
 
-              {/* Original text */}
+              {/* Original text + インラインコメント */}
               <div className="space-y-2">
-                <h3 className="text-sm font-semibold text-foreground">元テキスト</h3>
-                <div className="max-h-60 overflow-y-auto rounded-lg border bg-white p-4 font-mono text-sm leading-7 tracking-wide text-gray-800 dark:bg-gray-950 dark:text-gray-200">
-                  {essayDetail.ocrText.split("\n").map((line, i) => (
-                    <p key={i} className={line.trim() === "" ? "h-4" : ""}>
-                      {line || "\u00A0"}
-                    </p>
-                  ))}
-                </div>
+                <h3 className="text-sm font-semibold text-foreground">
+                  元テキスト（ドラッグでコメント可）
+                </h3>
+                <CommentableEssayText
+                  text={essayDetail.ocrText}
+                  comments={essayDetail.inlineComments ?? []}
+                  mode="edit"
+                  onAdd={(range) => addEssayComment(essayDetail.id, range)}
+                  onDelete={(cid) => deleteEssayComment(essayDetail.id, cid)}
+                  canDelete={(c) =>
+                    userProfile?.role !== "teacher" || c.createdBy === user?.uid
+                  }
+                />
               </div>
 
               {/* Feedback */}

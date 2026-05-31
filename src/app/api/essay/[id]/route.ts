@@ -79,6 +79,7 @@ export async function GET(
       submittedAt: data.submittedAt?.toDate?.()?.toISOString() ?? new Date().toISOString(),
       ocrText: data.ocrText ?? "",
       status: data.status ?? "reviewed",
+      inlineComments: data.inlineComments ?? [],
       scores,
       feedback: {
         overall: feedback.overall ?? "",

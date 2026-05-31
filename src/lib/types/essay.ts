@@ -28,6 +28,30 @@ export interface Essay {
   sourceType?: "manual" | "homework" | "skill_check";
   /** Phase 6: 宿題から提出された場合の HomeworkAssignment ID */
   homeworkAssignmentId?: string;
+  /** 管理者/講師による範囲指定インラインコメント */
+  inlineComments?: EssayInlineComment[];
+}
+
+/**
+ * 小論文本文の特定範囲に対する、管理者/講師の手動コメント。
+ * range は ocrText の文字オフセット。quote は当時の選択テキスト(表示/フォールバック用)。
+ */
+export interface EssayInlineComment {
+  id: string;
+  /** ocrText 中の開始/終了 文字オフセット */
+  start: number;
+  end: number;
+  /** 選択時の本文スナップショット */
+  quote: string;
+  /** コメント本文 */
+  comment: string;
+  createdBy: string;
+  createdByName: string;
+  createdByRole: "admin" | "teacher" | "superadmin";
+  /** ISO8601 */
+  createdAt: string;
+  /** 生徒が読んだか */
+  read: boolean;
 }
 
 export interface EssayRetryContext {
