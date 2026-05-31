@@ -229,9 +229,9 @@ const teacherPrimary: PrimaryAction[] = [
     iconColor: "text-sky-700 dark:text-sky-300",
   },
   {
-    label: "担当生徒",
+    label: "メッセージ",
     href: "/teacher/students",
-    icon: Users,
+    icon: MessageSquare,
     iconBg: "bg-emerald-100 dark:bg-emerald-950/40",
     iconColor: "text-emerald-700 dark:text-emerald-300",
   },

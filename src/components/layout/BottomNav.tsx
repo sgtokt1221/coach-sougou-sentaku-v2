@@ -14,6 +14,7 @@ import {
   BookMarked,
   BookOpen,
   ClipboardList,
+  MessageSquare,
   Users,
   Bell,
   FileBarChart,
@@ -147,7 +148,7 @@ const adminTabs: TabDef[] = [
 const teacherTabs: TabDef[] = [
   { label: "ホーム", href: "/teacher/dashboard", icon: LayoutDashboard },
   { label: "シフト", href: "/teacher/schedule", icon: CalendarCheck },
-  { label: "生徒", href: "/teacher/students", icon: Users },
+  { label: "メッセージ", href: "/teacher/students", icon: MessageSquare },
   { label: "セッション", href: "/teacher/sessions", icon: ClipboardList },
 ];
 

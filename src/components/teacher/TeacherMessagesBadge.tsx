@@ -3,17 +3,30 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuthSWR } from "@/lib/api/swr";
 
+interface TeacherStudentUnread {
+  unreadByTeacher?: number;
+}
+
 /**
- * TeacherMessagesBadge - 講師が管理者から受け取った未読数バッジ。
- * Sidebar の「管理者に連絡」ナビ右側に表示する。
+ * TeacherMessagesBadge - 講師のメッセージ未読数バッジ（統合）。
+ * 「管理者に連絡」の未読 + 担当生徒スレッドの未読を合算して表示する。
+ * Sidebar の「メッセージ」ナビ右側に表示する。
  */
 export function TeacherMessagesBadge() {
-  const { data } = useAuthSWR<{ unreadCount: number }>(
+  const { data: adminData } = useAuthSWR<{ unreadCount: number }>(
     "/api/teacher/feedback?countOnly=true",
     { refreshInterval: 60000 }
   );
+  const { data: students } = useAuthSWR<TeacherStudentUnread[]>(
+    "/api/teacher/students",
+    { refreshInterval: 60000 }
+  );
 
-  const count = data?.unreadCount ?? 0;
+  const studentUnread = (students ?? []).reduce(
+    (sum, s) => sum + (s.unreadByTeacher ?? 0),
+    0
+  );
+  const count = (adminData?.unreadCount ?? 0) + studentUnread;
 
   return (
     <AnimatePresence>

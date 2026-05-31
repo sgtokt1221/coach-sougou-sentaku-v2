@@ -345,7 +345,9 @@ function AdminStudentDetailPageInner() {
 
   // タブ状態とURL同期
   const rawTab = searchParams?.get("tab") ?? "overview";
-  const tab: TabKey = VALID_TABS.includes(rawTab as TabKey) ? (rawTab as TabKey) : "overview";
+  let tab: TabKey = VALID_TABS.includes(rawTab as TabKey) ? (rawTab as TabKey) : "overview";
+  // 講師にはメッセージタブを出さない (直リンク時は概要へ)
+  if (isTeacherViewer && tab === "messages") tab = "overview";
 
   const handleTabChange = (next: string) => {
     const sp = new URLSearchParams(searchParams?.toString() ?? "");
@@ -972,7 +974,9 @@ function AdminStudentDetailPageInner() {
             <TabsTrigger value="activity">活動・書類</TabsTrigger>
             <TabsTrigger value="reports">レポート</TabsTrigger>
             <TabsTrigger value="homework">宿題</TabsTrigger>
-            <TabsTrigger value="messages">メッセージ</TabsTrigger>
+            {!isTeacherViewer && (
+              <TabsTrigger value="messages">メッセージ</TabsTrigger>
+            )}
           </TabsList>
         </div>
 
@@ -1008,11 +1012,13 @@ function AdminStudentDetailPageInner() {
 
         <TabsContent value="messages">
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
+            {!isTeacherViewer && (
             <TeacherAssignmentSection
               studentId={id}
               studentName={detail.profile.displayName || "生徒"}
               initialAssignedTeacherIds={detail.profile.assignedTeacherIds}
             />
+            )}
           </motion.div>
         </TabsContent>
       </Tabs>
