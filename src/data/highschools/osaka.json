@@ -30,7 +30,8 @@
     "id": "osaka-0005",
     "name": "大阪府立咲くやこの花中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 54
   },
   {
     "id": "osaka-0006",
@@ -263,7 +264,8 @@
     "id": "osaka-0039",
     "name": "大阪府立水都国際中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 58
   },
   {
     "id": "osaka-0040",
@@ -762,7 +764,8 @@
     "id": "osaka-0111",
     "name": "大阪府立富田林中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 63
   },
   {
     "id": "osaka-0112",
@@ -1006,7 +1009,8 @@
     "id": "osaka-0147",
     "name": "昇陽中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 42
   },
   {
     "id": "osaka-0148",
@@ -1019,7 +1023,8 @@
     "id": "osaka-0149",
     "name": "四天王寺中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 73
   },
   {
     "id": "osaka-0150",
@@ -1032,7 +1037,8 @@
     "id": "osaka-0151",
     "name": "清風中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 71
   },
   {
     "id": "osaka-0152",
@@ -1045,7 +1051,8 @@
     "id": "osaka-0153",
     "name": "大阪星光学院中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 75
   },
   {
     "id": "osaka-0154",
@@ -1070,7 +1077,8 @@
     "id": "osaka-0157",
     "name": "関西大学北陽中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 64
   },
   {
     "id": "osaka-0158",
@@ -1083,7 +1091,8 @@
     "id": "osaka-0159",
     "name": "プール学院中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 60
   },
   {
     "id": "osaka-0160",
@@ -1103,19 +1112,22 @@
     "id": "osaka-0162",
     "name": "常翔学園中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 65
   },
   {
     "id": "osaka-0163",
     "name": "大阪信愛学院幼稚園・小学校・中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 57
   },
   {
     "id": "osaka-0164",
     "name": "開明中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 66
   },
   {
     "id": "osaka-0165",
@@ -1128,7 +1140,8 @@
     "id": "osaka-0166",
     "name": "桃山学院中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 72
   },
   {
     "id": "osaka-0167",
@@ -1148,7 +1161,8 @@
     "id": "osaka-0169",
     "name": "帝塚山学院中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 61
   },
   {
     "id": "osaka-0170",
@@ -1167,7 +1181,8 @@
     "id": "osaka-0172",
     "name": "城南学園中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 56
   },
   {
     "id": "osaka-0173",
@@ -1180,7 +1195,8 @@
     "id": "osaka-0174",
     "name": "大阪金剛インターナショナル小学校・中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 39
   },
   {
     "id": "osaka-0175",
@@ -1192,7 +1208,8 @@
     "id": "osaka-0176",
     "name": "金蘭会中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 49
   },
   {
     "id": "osaka-0177",
@@ -1216,19 +1233,22 @@
     "id": "osaka-0180",
     "name": "大阪女学院中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 65
   },
   {
     "id": "osaka-0181",
     "name": "相愛中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 53
   },
   {
     "id": "osaka-0182",
     "name": "追手門学院大手前中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 61
   },
   {
     "id": "osaka-0183",
@@ -1247,13 +1267,15 @@
     "id": "osaka-0185",
     "name": "賢明学院幼稚園・小学校・中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 58
   },
   {
     "id": "osaka-0186",
     "name": "堺リベラル中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 51
   },
   {
     "id": "osaka-0187",
@@ -1292,7 +1314,8 @@
     "id": "osaka-0192",
     "name": "帝塚山学院泉ヶ丘中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 66
   },
   {
     "id": "osaka-0193",
@@ -1311,7 +1334,8 @@
     "id": "osaka-0195",
     "name": "梅花中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 56
   },
   {
     "id": "osaka-0196",
@@ -1324,13 +1348,15 @@
     "id": "osaka-0197",
     "name": "履正社中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 66
   },
   {
     "id": "osaka-0198",
     "name": "箕面自由学園中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 62
   },
   {
     "id": "osaka-0199",
@@ -1343,7 +1369,8 @@
     "id": "osaka-0200",
     "name": "関西大学第一中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 67
   },
   {
     "id": "osaka-0201",
@@ -1362,13 +1389,15 @@
     "id": "osaka-0203",
     "name": "金光大阪中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 58
   },
   {
     "id": "osaka-0204",
     "name": "大阪青凌中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 65
   },
   {
     "id": "osaka-0205",
@@ -1380,7 +1409,8 @@
     "id": "osaka-0206",
     "name": "大阪国際中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 67
   },
   {
     "id": "osaka-0207",
@@ -1393,7 +1423,8 @@
     "id": "osaka-0208",
     "name": "常翔啓光学園中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 63
   },
   {
     "id": "osaka-0209",
@@ -1405,13 +1436,15 @@
     "id": "osaka-0210",
     "name": "関西大倉中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 72
   },
   {
     "id": "osaka-0211",
     "name": "追手門学院中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 67
   },
   {
     "id": "osaka-0212",
@@ -1430,13 +1463,15 @@
     "id": "osaka-0214",
     "name": "金光八尾中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 62
   },
   {
     "id": "osaka-0215",
     "name": "PL学園中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 53
   },
   {
     "id": "osaka-0216",
@@ -1448,13 +1483,15 @@
     "id": "osaka-0217",
     "name": "香里ヌヴェール学院中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 58
   },
   {
     "id": "osaka-0218",
     "name": "同志社香里中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 63
   },
   {
     "id": "osaka-0219",
@@ -1467,7 +1504,8 @@
     "id": "osaka-0220",
     "name": "清教学園中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 72
   },
   {
     "id": "osaka-0221",
@@ -1480,19 +1518,22 @@
     "id": "osaka-0222",
     "name": "四條畷学園小学校・中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 52
   },
   {
     "id": "osaka-0223",
     "name": "太成学院大学中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 46
   },
   {
     "id": "osaka-0224",
     "name": "大阪桐蔭中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 70
   },
   {
     "id": "osaka-0225",
@@ -1505,7 +1546,8 @@
     "id": "osaka-0226",
     "name": "アサンプション国際小学校・中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 56
   },
   {
     "id": "osaka-0227",
@@ -1525,19 +1567,22 @@
     "id": "osaka-0229",
     "name": "大阪薫英女学院中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 58
   },
   {
     "id": "osaka-0230",
     "name": "羽衣学園中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 58
   },
   {
     "id": "osaka-0231",
     "name": "清風南海中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 73
   },
   {
     "id": "osaka-0232",
@@ -1550,13 +1595,15 @@
     "id": "osaka-0233",
     "name": "四天王寺東中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 59
   },
   {
     "id": "osaka-0234",
     "name": "樟蔭中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 55
   },
   {
     "id": "osaka-0235",
@@ -1583,7 +1630,8 @@
     "id": "osaka-0238",
     "name": "関西創価中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 68
   },
   {
     "id": "osaka-0239",
@@ -1602,6 +1650,7 @@
     "id": "osaka-0241",
     "name": "大阪体育大学浪商中学校・高等学校",
     "prefecture": "大阪府",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 55
   }
 ]

@@ -39,6 +39,9 @@ function normalize(name) {
   for (const pn of PREF_NAMES) {
     if (n.startsWith(pn)) n = n.slice(pn.length);
   }
+  // 中高一貫等の表記ゆれ: 「○○(幼稚園・小学校・中学校・)高等学校」→「○○高等学校」
+  // 高等学校の直前に連続する 幼稚園・/小学校・/中学校・ のみを畳む（別名の高校名は触らない）
+  n = n.replace(/(?:幼稚園・|小学校・|中学校・)+高等学校/, "高等学校");
   return n.trim();
 }
 
@@ -83,9 +86,15 @@ async function fetchDeviationMap(slug) {
 }
 
 async function main() {
+  // --pref <romaji> で対象府県を限定（省略時は全府県）
+  const pi = process.argv.indexOf("--pref");
+  const only = pi >= 0 ? process.argv[pi + 1] : null;
+  const targets = only ? PREFECTURES.filter((p) => p.romaji === only) : PREFECTURES;
+  if (only && targets.length === 0) throw new Error(`Unknown pref '${only}'`);
+
   let grandMatched = 0;
   let grandTotal = 0;
-  for (const pref of PREFECTURES) {
+  for (const pref of targets) {
     const file = join(DATA_DIR, `${pref.romaji}.json`);
     const schools = JSON.parse(readFileSync(file, "utf-8"));
 
