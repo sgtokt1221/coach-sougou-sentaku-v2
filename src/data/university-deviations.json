@@ -1,0 +1,2092 @@
+{
+  "doshisha-u": {
+    "min": 55,
+    "max": 60,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "law": 60,
+      "commerce": 60,
+      "letters": 60,
+      "general": 57.5,
+      "science-eng": 57.5,
+      "social": 60,
+      "general-2": 55,
+      "lettersinformation": 57.5,
+      "globalregionalletters": 60,
+      "science": 60,
+      "global-comm": 60,
+      "economics": 60
+    }
+  },
+  "ritsumeikan-u": {
+    "min": 50,
+    "max": 60,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "general-psychology": 57.5,
+      "business": 57.5,
+      "foodmanagement": 50,
+      "international-relations": 60,
+      "general-2": 52.5,
+      "informationscience-eng": 57.5,
+      "letters": 57.5,
+      "global-liberal-arts": 60,
+      "science-eng": 52.5,
+      "pharmacy": 55,
+      "social": 55,
+      "economics": 55,
+      "law": 55
+    }
+  },
+  "kansai-u": {
+    "min": 50,
+    "max": 57.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "letters": 57.5,
+      "social": 55,
+      "commerce": 55,
+      "science-eng": 52.5,
+      "general-info": 50,
+      "economics": 55,
+      "businessdata-science": 50,
+      "law": 55,
+      "social-safety": 52.5,
+      "policy-creation": 55,
+      "engineering": 52.5,
+      "foreign-languages": 55,
+      "human-health": 52.5,
+      "engineering-2": 52.5
+    }
+  },
+  "kwansei-u": {
+    "min": 50,
+    "max": 57.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "commerce": 55,
+      "life-environment": 52.5,
+      "economics": 52.5,
+      "engineering": 52.5,
+      "policy": 50,
+      "architecture": 52.5,
+      "education": 52.5,
+      "science": 52.5,
+      "general": 50,
+      "international": 55,
+      "law": 52.5,
+      "letters": 57.5,
+      "human-welfare": 50,
+      "social": 52.5
+    }
+  },
+  "kansai-gaidai-u": {
+    "min": 40,
+    "max": 55,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "foreign-studies": 40,
+      "english-career": 40,
+      "international-symbiosis": 55
+    }
+  },
+  "kyoto-women-u": {
+    "min": 40,
+    "max": 47.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "letters": 42.5,
+      "development-education": 42.5,
+      "psychology-symbiosis": 47.5,
+      "home-economics": 45,
+      "contemporary-society": 42.5,
+      "law": 40,
+      "data-science": 45
+    }
+  },
+  "osaka-ue": {
+    "min": 40,
+    "max": 42.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "economics": 42.5,
+      "business": 40,
+      "information-society": 42.5,
+      "international-co-creation": 40
+    }
+  },
+  "yamato-u": {
+    "min": 42.5,
+    "max": 50,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "informatics": 45,
+      "sociology": 47.5,
+      "science-engineering": 42.5,
+      "politics-economics": 45,
+      "education": 50,
+      "health-medicine": 45
+    }
+  },
+  "kyushu-u": {
+    "min": 55,
+    "max": 67.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "medicine": 67.5,
+      "economics": 60,
+      "general": 57.5,
+      "law": 60,
+      "artsengineering": 60,
+      "letters": 60,
+      "pharmacy": 60,
+      "agriculture": 57.5,
+      "science": 57.5,
+      "education": 60,
+      "dentistry": 60,
+      "engineering": 57.5
+    }
+  },
+  "kyoto-u": {
+    "min": 62.5,
+    "max": 70,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "medicine": 70,
+      "economics": 67.5,
+      "law": 67.5,
+      "education": 65,
+      "generalhuman": 67.5,
+      "science": 67.5,
+      "letters": 67.5,
+      "agriculture": 65,
+      "engineering": 67.5,
+      "pharmacy": 65
+    }
+  },
+  "hokkaido-u": {
+    "min": 55,
+    "max": 67.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "letters": 62.5,
+      "engineering": 62.5,
+      "dentistry": 57.5,
+      "pharmacy": 65,
+      "science": 65,
+      "medicine-2": 67.5,
+      "agriculture": 62.5,
+      "general": 57.5,
+      "economics": 60
+    }
+  },
+  "nagoya-u": {
+    "min": 55,
+    "max": 67.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "letters": 62.5,
+      "science": 60
+    }
+  },
+  "osaka-u": {
+    "min": 57.5,
+    "max": 70,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "pharmacy": 62.5,
+      "letters": 65,
+      "foreign-languages": 60,
+      "engineering": 62.5,
+      "science": 62.5,
+      "engineering-2": 62.5,
+      "human": 62.5,
+      "law": 65,
+      "dentistry": 60,
+      "economics": 62.5
+    }
+  },
+  "tokyo-u": {
+    "min": 67.5,
+    "max": 72.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "tohoku-u": {
+    "min": 55,
+    "max": 67.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "engineering": 60,
+      "law": 60,
+      "science": 62.5,
+      "agriculture": 60,
+      "education": 60,
+      "pharmacy": 62.5,
+      "economics": 62.5,
+      "medicine": 67.5,
+      "dentistry": 57.5,
+      "letters": 60
+    }
+  },
+  "chuo-u": {
+    "min": 55,
+    "max": 60,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "policy": 57.5,
+      "law": 60,
+      "internationalbusiness": 57.5,
+      "letters": 60,
+      "internationalinformation": 57.5,
+      "economics": 60,
+      "commerce": 57.5
+    }
+  },
+  "meiji-u": {
+    "min": 57.5,
+    "max": 62.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "letters": 62.5,
+      "international-japan": 60,
+      "agriculture": 57.5,
+      "law": 60,
+      "science-eng": 60,
+      "math-science": 60,
+      "political-economy": 60,
+      "commerce": 60
+    }
+  },
+  "hosei-u": {
+    "min": 52.5,
+    "max": 60,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "letters": 57.5,
+      "business": 57.5,
+      "information": 55,
+      "international-culture": 60,
+      "human-environment": 55,
+      "design-eng": 55,
+      "global-liberal-arts": 60,
+      "law": 57.5,
+      "general": 55,
+      "modern-welfare": 55,
+      "careerdesign": 57.5,
+      "social": 55,
+      "economics": 55,
+      "sports": 52.5,
+      "science-eng": 55
+    }
+  },
+  "rikkyo-u": {
+    "min": 55,
+    "max": 65,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "science": 60,
+      "sports": 55,
+      "economics": 60,
+      "glap": 60,
+      "tourism": 57.5,
+      "letters": 60,
+      "general": 60,
+      "letters-2": 62.5,
+      "social": 62.5,
+      "community-welfare": 55,
+      "business": 65,
+      "law": 60,
+      "science-2": 60
+    }
+  },
+  "aoyama-u": {
+    "min": 55,
+    "max": 62.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "socialinformation": 57.5,
+      "letters": 60,
+      "economics": 60,
+      "business": 57.5,
+      "science-eng": 57.5,
+      "social": 57.5,
+      "international-political-economy": 60,
+      "law": 57.5,
+      "cultural-policy": 62.5
+    }
+  },
+  "ochanomizu-u": {
+    "min": 55,
+    "max": 62.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "letterseducation": 62.5,
+      "engineering": 62.5,
+      "science": 57.5
+    }
+  },
+  "saga-u": {
+    "min": 45,
+    "max": 62.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "medicine": 62.5,
+      "artsregionaldesign": 50,
+      "science-eng": 47.5,
+      "education": 50,
+      "agriculture": 50,
+      "general": 47.5
+    }
+  },
+  "chiba-u": {
+    "min": 52.5,
+    "max": 67.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "nursing": 52.5,
+      "pharmacy": 62.5,
+      "international-liberal-arts": 57.5,
+      "education": 57.5,
+      "science": 60,
+      "general": 55,
+      "law": 60,
+      "engineering": 60,
+      "letters": 60
+    }
+  },
+  "saitama-u": {
+    "min": 50,
+    "max": 57.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "economics": 55,
+      "engineering": 52.5,
+      "science": 55,
+      "general": 57.5
+    }
+  },
+  "omu": {
+    "min": 52.5,
+    "max": 67.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "agriculture": 55,
+      "nursing": 55,
+      "engineering": 55,
+      "economics": 57.5,
+      "commerce": 57.5,
+      "general": 57.5,
+      "medicine-2": 60,
+      "letters": 60,
+      "science": 55,
+      "law": 57.5
+    }
+  },
+  "utsunomiya-u": {
+    "min": 47.5,
+    "max": 55,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "education": 50,
+      "engineering": 50,
+      "international": 55,
+      "agriculture": 50,
+      "data-sciencebusiness": 50
+    }
+  },
+  "gifu-u": {
+    "min": 47.5,
+    "max": 62.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "engineering": 52.5,
+      "medicine": 62.5,
+      "general": 60,
+      "regional": 52.5,
+      "education": 47.5,
+      "socialbusiness": 55
+    }
+  },
+  "okayama-u": {
+    "min": 50,
+    "max": 65,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "dentistry": 57.5,
+      "agriculture": 52.5,
+      "economics": 55,
+      "law": 55,
+      "letters": 57.5,
+      "science": 52.5,
+      "education": 52.5,
+      "pharmacy": 57.5,
+      "engineering": 50,
+      "medicine": 65
+    }
+  },
+  "hiroshima-u": {
+    "min": 47.5,
+    "max": 65,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "education": 55,
+      "letters": 57.5,
+      "pharmacy": 57.5,
+      "medicine": 65,
+      "science": 52.5,
+      "law": 57.5,
+      "dentistry": 57.5,
+      "economics": 55,
+      "general": 50,
+      "engineering": 52.5,
+      "general-2": 57.5
+    }
+  },
+  "niigata-u": {
+    "min": 47.5,
+    "max": 65,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "letters": 52.5,
+      "economics": 50,
+      "engineering": 47.5,
+      "science": 50,
+      "medicine": 65,
+      "general": 50,
+      "education": 47.5,
+      "dentistry": 57.5,
+      "law": 52.5,
+      "agriculture": 47.5
+    }
+  },
+  "tufs-u": {
+    "min": 57.5,
+    "max": 60,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "international-japan": 60,
+      "internationalsocial": 60,
+      "letters": 57.5
+    }
+  },
+  "gakugei-u": {
+    "min": 55,
+    "max": 57.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "education": 57.5
+    }
+  },
+  "tumsat-u": {
+    "min": 50,
+    "max": 57.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "general": 55,
+      "general-2": 57.5,
+      "engineering": 52.5
+    }
+  },
+  "tuat-u": {
+    "min": 55,
+    "max": 57.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "engineering": 55,
+      "agriculture": 57.5
+    }
+  },
+  "yokohama-national-u": {
+    "min": 57.5,
+    "max": 65,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "business": 65,
+      "science-eng": 57.5,
+      "economics": 62.5
+    }
+  },
+  "yokohama-cu": {
+    "min": 55,
+    "max": 67.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "medicine": 67.5,
+      "international-liberal-arts": 62.5,
+      "internationalcommerce": 62.5,
+      "science": 55,
+      "data-science": 55
+    }
+  },
+  "kumamoto-u": {
+    "min": 50,
+    "max": 65,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "pharmacy": 55,
+      "medicine": 65,
+      "information": 55,
+      "engineering": 50,
+      "education": 50,
+      "letters": 55,
+      "law": 55,
+      "science": 52.5
+    }
+  },
+  "tsukuba-u": {
+    "min": 55,
+    "max": 67.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "life-environment": 57.5,
+      "medicine": 67.5,
+      "social-international": 65,
+      "information": 60,
+      "human": 62.5,
+      "letters-letters": 62.5,
+      "science-eng": 57.5
+    }
+  },
+  "gunma-u": {
+    "min": 45,
+    "max": 65,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "medicine": 65,
+      "information": 50,
+      "education": 47.5,
+      "science-eng": 45
+    }
+  },
+  "ibaraki-u": {
+    "min": 45,
+    "max": 52.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "letterssocial": 52.5,
+      "science": 52.5,
+      "engineering": 47.5,
+      "education": 50,
+      "agriculture": 47.5
+    }
+  },
+  "nagasaki-u": {
+    "min": 47.5,
+    "max": 65,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "engineering": 47.5,
+      "dentistry": 60,
+      "general": 50,
+      "letterssocial": 52.5,
+      "medicine-2": 65,
+      "education": 47.5,
+      "pharmacy": 60,
+      "economics": 47.5
+    }
+  },
+  "uec-u": {
+    "min": 57.5,
+    "max": 57.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "informationscience-eng": 57.5
+    }
+  },
+  "shizuoka-u": {
+    "min": 50,
+    "max": 55,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "education": 50,
+      "science": 52.5,
+      "letterssocial": 55,
+      "information": 52.5,
+      "engineering": 52.5,
+      "agriculture": 52.5
+    }
+  },
+  "kagoshima-u": {
+    "min": 45,
+    "max": 65,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "agriculture": 47.5,
+      "medicine": 65,
+      "engineering": 45,
+      "medicine-2": 62.5,
+      "science": 47.5,
+      "lawletters": 50,
+      "education": 47.5,
+      "general": 45,
+      "dentistry": 60
+    }
+  },
+  "hirosaki-u": {
+    "min": 42.5,
+    "max": 65,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "humanities-social": 50,
+      "education": 45
+    }
+  },
+  "iwate-u": {
+    "min": 45,
+    "max": 60,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "education": 45,
+      "agriculture": 47.5
+    }
+  },
+  "akita-u": {
+    "min": 40,
+    "max": 62.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "international-resource": 45,
+      "education-culture": 45
+    }
+  },
+  "yamagata-u": {
+    "min": 42.5,
+    "max": 62.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "humanities-social": 50,
+      "engineering": 50
+    }
+  },
+  "fukushima-u": {
+    "min": 42.5,
+    "max": 47.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "science-tokyo": {
+    "min": 50,
+    "max": 70,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "toyama-u": {
+    "min": 45,
+    "max": 65,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "education": 47.5,
+      "urban-design": 47.5
+    }
+  },
+  "kanazawa-u": {
+    "min": 47.5,
+    "max": 65,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "human-social": 52.5,
+      "fusion": 50
+    }
+  },
+  "fukui-u": {
+    "min": 45,
+    "max": 65,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "education": 47.5,
+      "engineering": 45
+    }
+  },
+  "yamanashi-u": {
+    "min": 45,
+    "max": 70,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "engineering": 45,
+      "life-environment": 50
+    }
+  },
+  "shinshu-u": {
+    "min": 47.5,
+    "max": 65,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "education": 50,
+      "engineering": 50
+    }
+  },
+  "mie-u": {
+    "min": 50,
+    "max": 65,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "education": 50,
+      "bioresources": 50
+    }
+  },
+  "kobe-u": {
+    "min": 55,
+    "max": 67.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "literature": 62.5,
+      "international-human": 62.5,
+      "law": 62.5,
+      "science": 57.5,
+      "engineering": 60,
+      "agriculture": 57.5,
+      "maritime-policy": 57.5
+    }
+  },
+  "shiga-u": {
+    "min": 47.5,
+    "max": 57.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "data-science": 52.5,
+      "economics": 57.5
+    }
+  },
+  "kit-u": {
+    "min": 55,
+    "max": 55,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "nara-wu": {
+    "min": 50,
+    "max": 57.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "nara-edu": {
+    "min": 50,
+    "max": 50,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "education": 50
+    }
+  },
+  "wakayama-u": {
+    "min": 45,
+    "max": 52.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "tourism": 52.5
+    }
+  },
+  "hyogo-edu": {
+    "min": 47.5,
+    "max": 47.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "school-education": 47.5
+    }
+  },
+  "yamaguchi-u": {
+    "min": 45,
+    "max": 65,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "education": 47.5
+    }
+  },
+  "tokushima-u": {
+    "min": 45,
+    "max": 62.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "ehime-u": {
+    "min": 42.5,
+    "max": 65,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "social-cocreation": 45,
+      "law-letters": 50
+    }
+  },
+  "kochi-u": {
+    "min": 40,
+    "max": 65,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "regional-collaboration": 40
+    }
+  },
+  "hitotsubashi-u": {
+    "min": 65,
+    "max": 70,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "commerce": 65,
+      "economics": 67.5,
+      "law": 65,
+      "sociology": 67.5,
+      "social-data-science": 70
+    }
+  },
+  "senshu-u": {
+    "min": 42.5,
+    "max": 50,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "information": 42.5,
+      "commerce": 47.5,
+      "business": 47.5,
+      "economics": 47.5,
+      "international-comm": 47.5
+    }
+  },
+  "nihon-u": {
+    "min": 37.5,
+    "max": 65,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "science": 42.5,
+      "sports": 40,
+      "economics": 47.5,
+      "pharmacy": 42.5,
+      "lettersscience": 47.5,
+      "engineering": 40,
+      "law": 47.5,
+      "commerce": 45,
+      "medicine": 65,
+      "dentistry": 37.5,
+      "arts": 50,
+      "engineering-2": 37.5,
+      "general": 42.5,
+      "international-relations": 37.5,
+      "science-eng": 45
+    }
+  },
+  "toyo-u": {
+    "min": 45,
+    "max": 52.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "welfaresocialdesign": 45,
+      "general": 45,
+      "internationaltourism": 50,
+      "info-networking": 45,
+      "social": 50,
+      "economics": 50,
+      "law": 50,
+      "international": 50,
+      "business": 52.5,
+      "letters": 50,
+      "general-info": 45,
+      "science-eng": 45
+    }
+  },
+  "komazawa-u": {
+    "min": 47.5,
+    "max": 50,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "medicine": 47.5,
+      "economics": 47.5,
+      "law": 47.5,
+      "letters": 50,
+      "global": 47.5,
+      "buddhism": 47.5,
+      "business": 50
+    }
+  },
+  "icu": {
+    "min": 65,
+    "max": 67.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "general": 67.5
+    }
+  },
+  "gakushuin-u": {
+    "min": 52.5,
+    "max": 57.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "law": 55,
+      "international-culture": 52.5,
+      "letters": 57.5,
+      "economics": 57.5,
+      "science": 57.5
+    }
+  },
+  "teikyo-u": {
+    "min": 37.5,
+    "max": 65,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "foreign-languages": 40,
+      "science-eng": 37.5,
+      "letters": 42.5,
+      "pharmacy": 40,
+      "medicine": 37.5,
+      "economics": 37.5,
+      "law": 37.5,
+      "medicine-2": 42.5,
+      "education": 40,
+      "medicine-3": 65
+    }
+  },
+  "nippon-med-u": {
+    "min": 52.5,
+    "max": 70,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "medicine": 70
+    }
+  },
+  "jwu": {
+    "min": 47.5,
+    "max": 57.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "international-culture": 52.5,
+      "human-social": 52.5,
+      "science": 50,
+      "general": 47.5,
+      "letters": 50,
+      "architecturedesign": 50
+    }
+  },
+  "showa-med-u": {
+    "min": 42.5,
+    "max": 67.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "dentistry": 52.5,
+      "medicine": 47.5,
+      "medicine-2": 67.5,
+      "pharmacy": 42.5
+    }
+  },
+  "tokyo-med-u": {
+    "min": 47.5,
+    "max": 67.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "medicine": 67.5
+    }
+  },
+  "tokyo-women-med-u": {
+    "min": 40,
+    "max": 60,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "medicine": 60,
+      "nursing": 40
+    }
+  },
+  "twcu": {
+    "min": 45,
+    "max": 50,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "general": 50
+    }
+  },
+  "jikei-med-u": {
+    "min": 52.5,
+    "max": 70,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "medicine": 70
+    }
+  },
+  "tus-u": {
+    "min": 45,
+    "max": 60,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "science-eng": 57.5,
+      "science": 60,
+      "science-2": 45,
+      "pharmacy": 60,
+      "business": 57.5,
+      "engineering": 57.5,
+      "engineering-2": 60
+    }
+  },
+  "tokai-u": {
+    "min": 35,
+    "max": 65,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "engineering": 40,
+      "lettersscience": 35,
+      "letters": 40,
+      "law": 37.5,
+      "tourism": 40,
+      "informationscience-eng": 40,
+      "letters-2": 37.5,
+      "general": 40,
+      "agriculture": 37.5,
+      "business": 40,
+      "science": 37.5,
+      "letterssocial": 40,
+      "international-culture": 40,
+      "medicine": 65,
+      "international": 40,
+      "information": 40,
+      "architecture": 37.5,
+      "general-2": 40,
+      "general-3": 37.5,
+      "political-economy": 37.5,
+      "sports": 40,
+      "general-4": 40
+    }
+  },
+  "toho-u": {
+    "min": 42.5,
+    "max": 67.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "pharmacy": 50,
+      "nursing": 42.5,
+      "medicine": 67.5,
+      "science": 42.5
+    }
+  },
+  "musashino-u": {
+    "min": 40,
+    "max": 47.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "human": 40,
+      "education": 42.5,
+      "data-science": 45,
+      "pharmacy": 45,
+      "global": 40,
+      "nursing": 42.5,
+      "law": 40,
+      "economics": 42.5,
+      "letters": 42.5,
+      "engineering": 40,
+      "general": 45,
+      "business": 42.5,
+      "general-2": 47.5
+    }
+  },
+  "tsuda-u": {
+    "min": 45,
+    "max": 50,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "general": 45,
+      "policy": 50
+    }
+  },
+  "shirayuri-u": {
+    "min": 37.5,
+    "max": 40,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "humangeneral": 40,
+      "letters": 37.5
+    }
+  },
+  "kanagawa-u": {
+    "min": 42.5,
+    "max": 47.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "law": 42.5,
+      "science": 45,
+      "economics": 45,
+      "information": 42.5,
+      "general": 45,
+      "international-japan": 47.5,
+      "business": 45,
+      "foreign-languages": 45,
+      "engineering": 42.5,
+      "architecture": 45
+    }
+  },
+  "fukuoka-u": {
+    "min": 37.5,
+    "max": 65,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "commerce": 45,
+      "engineering": 40,
+      "letters": 47.5,
+      "medicine": 65,
+      "law": 45,
+      "science": 45,
+      "economics": 42.5,
+      "pharmacy": 50
+    }
+  },
+  "u-sacred-heart": {
+    "min": 40,
+    "max": 40,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "general": 40
+    }
+  },
+  "seinan-u": {
+    "min": 47.5,
+    "max": 50,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "commerce": 47.5,
+      "human": 47.5,
+      "foreign-languages": 50,
+      "law": 50,
+      "economics": 47.5,
+      "general": 47.5,
+      "international-culture": 50
+    }
+  },
+  "kansai-med-u": {
+    "min": 47.5,
+    "max": 70,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "medicine": 70,
+      "nursing": 52.5,
+      "general": 47.5
+    }
+  },
+  "juntendo-u": {
+    "min": 42.5,
+    "max": 70,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "international-liberal-arts": 45,
+      "medicine": 50,
+      "medicinenursing": 50,
+      "pharmacy": 52.5,
+      "medicine-2": 70,
+      "nursing": 45,
+      "data-science": 47.5
+    }
+  },
+  "nagoya-cu": {
+    "min": 50,
+    "max": 65,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "generalscience": 55,
+      "medicine": 65,
+      "economics": 57.5,
+      "pharmacy": 62.5,
+      "letterssocial": 57.5,
+      "artsengineering": 55,
+      "data-science": 52.5
+    }
+  },
+  "tmu": {
+    "min": 52.5,
+    "max": 60,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "law": 60,
+      "letterssocial": 60,
+      "welfare": 52.5,
+      "science": 57.5,
+      "economics-business": 57.5,
+      "urban-environment": 57.5,
+      "design": 57.5
+    }
+  },
+  "kuhs": {
+    "min": 47.5,
+    "max": 52.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "health-welfare": 52.5
+    }
+  },
+  "gpwu": {
+    "min": 42.5,
+    "max": 50,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "letters": 50,
+      "international-communication": 42.5
+    }
+  },
+  "niigata-pu": {
+    "min": 47.5,
+    "max": 50,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "international-economics": 47.5
+    }
+  },
+  "kobe-cufs": {
+    "min": 55,
+    "max": 57.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "foreign-languages": 57.5
+    }
+  },
+  "u-hyogo": {
+    "min": 50,
+    "max": 55,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "environment-human": 55
+    }
+  },
+  "kitakyushu-u": {
+    "min": 47.5,
+    "max": 52.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "foreign-languages": 50,
+      "regional-creation": 52.5
+    }
+  },
+  "kyoto-sangyo-u": {
+    "min": 40,
+    "max": 45,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "international-relations": 42.5,
+      "business": 42.5,
+      "economics": 42.5,
+      "informationscience-eng": 45,
+      "letters": 42.5,
+      "general-2": 45,
+      "law": 40,
+      "science": 45,
+      "foreign-languages": 40,
+      "social": 42.5
+    }
+  },
+  "konan-u": {
+    "min": 45,
+    "max": 52.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "business": 47.5,
+      "management": 47.5,
+      "law": 47.5,
+      "information": 47.5,
+      "economics": 47.5,
+      "letters": 50,
+      "global-liberal-arts": 52.5,
+      "science-eng": 45,
+      "general": 47.5
+    }
+  },
+  "kindai-u": {
+    "min": 35,
+    "max": 65,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "science-eng": 35,
+      "literary-arts": 47.5,
+      "science-eng-2": 35,
+      "law": 47.5,
+      "pharmacy": 52.5,
+      "information": 50,
+      "science-eng-3": 47.5,
+      "economics": 50,
+      "architecture": 50,
+      "business": 47.5,
+      "general-social": 50,
+      "engineering": 37.5,
+      "agriculture": 45,
+      "international": 42.5,
+      "nursing": 47.5,
+      "medicine": 65
+    }
+  },
+  "ryukoku-u": {
+    "min": 40,
+    "max": 47.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "social": 47.5,
+      "science": 47.5,
+      "agriculture": 40,
+      "general": 45,
+      "letters": 45,
+      "law": 45,
+      "economics": 45,
+      "business": 45,
+      "science-eng": 42.5,
+      "international": 42.5
+    }
+  },
+  "seijo-u": {
+    "min": 50,
+    "max": 52.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "social": 50,
+      "law": 52.5,
+      "literary-arts": 50,
+      "economics": 52.5
+    }
+  },
+  "seikei-u": {
+    "min": 47.5,
+    "max": 55,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "law": 52.5,
+      "letters": 52.5,
+      "international": 52.5,
+      "science-eng": 47.5,
+      "business": 55,
+      "economics": 52.5
+    }
+  },
+  "meigaku-u": {
+    "min": 47.5,
+    "max": 52.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "letters": 50,
+      "international": 52.5,
+      "economics": 52.5,
+      "science": 52.5,
+      "social": 52.5,
+      "law": 50
+    }
+  },
+  "musashi-u": {
+    "min": 50,
+    "max": 52.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "economics": 52.5,
+      "international-liberal-arts": 50,
+      "social": 52.5,
+      "letters": 50
+    }
+  },
+  "dokkyo-u": {
+    "min": 47.5,
+    "max": 50,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "law": 47.5,
+      "economics": 47.5,
+      "foreign-languages": 47.5,
+      "international-liberal-arts": 50
+    }
+  },
+  "sophia-u": {
+    "min": 50,
+    "max": 65,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "letters": 62.5,
+      "science-eng": 62.5,
+      "law": 65,
+      "generalhuman": 65,
+      "generalglobal": 62.5,
+      "international-liberal-arts": 65,
+      "economics": 65,
+      "general": 55,
+      "foreign-languages": 62.5
+    }
+  },
+  "keio-u": {
+    "min": 57.5,
+    "max": 72.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "environment-info": 70,
+      "letters": 65,
+      "policy": 70,
+      "nursingmedicine": 57.5,
+      "law": 67.5,
+      "medicine": 72.5,
+      "science-eng": 65
+    }
+  },
+  "waseda-u": {
+    "min": 57.5,
+    "max": 70,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {
+      "human": 67.5,
+      "culture-media": 67.5,
+      "creative-science-eng": 65,
+      "law": 67.5,
+      "international-liberal-arts": 70,
+      "advanced-science-eng": 67.5,
+      "social": 70,
+      "education": 67.5,
+      "letters": 67.5,
+      "sports": 57.5
+    }
+  },
+  "kyoto-gaidai-u": {
+    "min": 35,
+    "max": 42.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "osaka-sangyo-u": {
+    "min": 35,
+    "max": 35,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "kyutech-u": {
+    "min": 50,
+    "max": 55,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "hokkaido-edu-u": {
+    "min": 37.5,
+    "max": 50,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "kitami-u": {
+    "min": 40,
+    "max": 40,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "nitech-u": {
+    "min": 55,
+    "max": 57.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "aiu": {
+    "min": 62.5,
+    "max": 62.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "oita-u": {
+    "min": 37.5,
+    "max": 62.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "muroran-u": {
+    "min": 35,
+    "max": 40,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "otaru-u": {
+    "min": 52.5,
+    "max": 52.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "obihiro-u": {
+    "min": 45,
+    "max": 60,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "aichi-edu-u": {
+    "min": 42.5,
+    "max": 55,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "asahikawa-med-u": {
+    "min": 45,
+    "max": 62.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "fukuoka-edu-u": {
+    "min": 40,
+    "max": 52.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "tut-u": {
+    "min": 47.5,
+    "max": 47.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "nifs-u": {
+    "min": 35,
+    "max": 45,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "miyakyo-u": {
+    "min": 45,
+    "max": 50,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "joetsu-edu-u": {
+    "min": 47.5,
+    "max": 47.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "tottori-u": {
+    "min": 42.5,
+    "max": 62.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "shimane-u": {
+    "min": 40,
+    "max": 62.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "kagawa-u": {
+    "min": 45,
+    "max": 65,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "miyazaki-u": {
+    "min": 42.5,
+    "max": 65,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "ryukyu-u": {
+    "min": 40,
+    "max": 65,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "ichinomiya-kenshin-u": {
+    "min": 35,
+    "max": 35,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "chukyo-u": {
+    "min": 37.5,
+    "max": 47.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "chubu-u": {
+    "min": 35,
+    "max": 47.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "ningen-kankyo-u": {
+    "min": 35,
+    "max": 40,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "shubun-u": {
+    "min": 35,
+    "max": 35,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "hyogo-med-u": {
+    "min": 37.5,
+    "max": 65,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "hokusei-u": {
+    "min": 37.5,
+    "max": 45,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "hokkai-u": {
+    "min": 35,
+    "max": 45,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "nanzan-u": {
+    "min": 45,
+    "max": 55,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "doho-u": {
+    "min": 35,
+    "max": 35,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "nagoya-shoka-u": {
+    "min": 35,
+    "max": 37.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "nagoya-gaigo-u": {
+    "min": 40,
+    "max": 47.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "nagoya-gakugei-u": {
+    "min": 40,
+    "max": 50,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "nagoya-gakuin-u": {
+    "min": 35,
+    "max": 40,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "nagoya-bunri-u": {
+    "min": 35,
+    "max": 37.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "nagoya-keizai-u": {
+    "min": 35,
+    "max": 35,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "nagoya-geijutsu-u": {
+    "min": 35,
+    "max": 42.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "nagoya-aoi-u": {
+    "min": 35,
+    "max": 35,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "nagoya-zokei-u": {
+    "min": 37.5,
+    "max": 50,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "meijo-u": {
+    "min": 42.5,
+    "max": 52.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "saitama-med-u": {
+    "min": 35,
+    "max": 62.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "daido-u": {
+    "min": 35,
+    "max": 40,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "aichi-mizuho-u": {
+    "min": 37.5,
+    "max": 37.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "aichi-iryo-gakuin-u": {
+    "min": 35,
+    "max": 37.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "aichi-med-u": {
+    "min": 45,
+    "max": 65,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "aichi-u": {
+    "min": 40,
+    "max": 47.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "aichi-gakusen-u": {
+    "min": 35,
+    "max": 35,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "agu": {
+    "min": 35,
+    "max": 45,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "aitech-u": {
+    "min": 35,
+    "max": 50,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "aichi-koka-u": {
+    "min": 35,
+    "max": 35,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "aichi-bunkyo-u": {
+    "min": 35,
+    "max": 35,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "aichi-toho-u": {
+    "min": 35,
+    "max": 35,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "aasa-u": {
+    "min": 35,
+    "max": 47.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "nihon-fukushi-u": {
+    "min": 35,
+    "max": 42.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "nisseki-toyota-nursing-u": {
+    "min": 37.5,
+    "max": 37.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "seijoh-u": {
+    "min": 35,
+    "max": 40,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "sapporo-u": {
+    "min": 35,
+    "max": 35,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "sgu": {
+    "min": 35,
+    "max": 40,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "tokai-gakuen-u": {
+    "min": 35,
+    "max": 35,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "ohka-gakuen-u": {
+    "min": 35,
+    "max": 40,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "sugiyama-jogakuen-u": {
+    "min": 35,
+    "max": 42.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "seisen-u": {
+    "min": 35,
+    "max": 37.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "tamagawa-u": {
+    "min": 35,
+    "max": 52.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "shigakkan-u": {
+    "min": 35,
+    "max": 37.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "fuji-wu": {
+    "min": 35,
+    "max": 37.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "fujita-hu": {
+    "min": 42.5,
+    "max": 65,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "toyohashi-sozo-u": {
+    "min": 37.5,
+    "max": 37.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "toyota-tech-u": {
+    "min": 57.5,
+    "max": 57.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "kinjo-u": {
+    "min": 35,
+    "max": 40,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "fun-u": {
+    "min": 42.5,
+    "max": 42.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "chitose-u": {
+    "min": 47.5,
+    "max": 47.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "nayoro-u": {
+    "min": 35,
+    "max": 45,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "aichi-pu": {
+    "min": 50,
+    "max": 55,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "aichi-fam-u": {
+    "min": 37.5,
+    "max": 57.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "asahikawa-cu": {
+    "min": 42.5,
+    "max": 47.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "sapmed-u": {
+    "min": 50,
+    "max": 62.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "scu": {
+    "min": 45,
+    "max": 47.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "kushiro-pu": {
+    "min": 37.5,
+    "max": 37.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "aomori-pu": {
+    "min": 40,
+    "max": 42.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "iwate-pu": {
+    "min": 42.5,
+    "max": 45,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "akita-pu": {
+    "min": 40,
+    "max": 45,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "miyagi-u": {
+    "min": 45,
+    "max": 47.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "yamagata-health-u": {
+    "min": 42.5,
+    "max": 47.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "fmu": {
+    "min": 45,
+    "max": 62.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "tsuru-u": {
+    "min": 50,
+    "max": 52.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "maebashi-it": {
+    "min": 42.5,
+    "max": 45,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "nagano-u": {
+    "min": 45,
+    "max": 47.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "nagano-kenritsu-u": {
+    "min": 45,
+    "max": 50,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "fukui-pu": {
+    "min": 45,
+    "max": 52.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "narapu": {
+    "min": 50,
+    "max": 50,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "fukuchiyama-u": {
+    "min": 40,
+    "max": 47.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "shimane-prefectural-u": {
+    "min": 42.5,
+    "max": 47.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "okayama-prefectural-u": {
+    "min": 42.5,
+    "max": 50,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "hiroshima-city-u": {
+    "min": 37.5,
+    "max": 50,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "prefectural-hiroshima-u": {
+    "min": 42.5,
+    "max": 52.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "yamaguchi-prefectural-u": {
+    "min": 37.5,
+    "max": 50,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "tottori-kankyo-u": {
+    "min": 42.5,
+    "max": 45,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "kochi-tech": {
+    "min": 42.5,
+    "max": 45,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "fwu": {
+    "min": 45,
+    "max": 52.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "nagasaki-pu": {
+    "min": 42.5,
+    "max": 47.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "kumamoto-pu": {
+    "min": 45,
+    "max": 50,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "meio-u": {
+    "min": 35,
+    "max": 45,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "okigei-u": {
+    "min": 35,
+    "max": 45,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "kokugakuin-u": {
+    "min": 47.5,
+    "max": 55,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "setsunan-u": {
+    "min": 37.5,
+    "max": 45,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "kobe-gakuin-u": {
+    "min": 35,
+    "max": 42.5,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "otemon-u": {
+    "min": 35,
+    "max": 45,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  },
+  "momoyama-gakuin-u": {
+    "min": 35,
+    "max": 45,
+    "source": "河合塾 Kei-Net 2026",
+    "faculties": {}
+  }
+}

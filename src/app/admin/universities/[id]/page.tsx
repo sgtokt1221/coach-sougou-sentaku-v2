@@ -41,6 +41,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { authFetch } from "@/lib/api/client";
 import type { University, Faculty, SelectionMethod } from "@/lib/types/university";
+import { getUniversityDeviation } from "@/lib/data/university-deviations";
 import { Badge } from "@/components/ui/badge";
 import { PAST_QUESTIONS, needsSourceText, type PastQuestion } from "@/data/essay-past-questions";
 import { PastQuestionTopicCard } from "@/components/essay/PastQuestionTopicCard";
@@ -95,9 +96,11 @@ interface FacultyFormProps {
   faculty: Faculty;
   onChange: (updated: Faculty) => void;
   canEdit: boolean;
+  /** 偏差値（河合塾 Kei-Net 2026、一致した学部のみ） */
+  deviation?: number;
 }
 
-function FacultyForm({ faculty, onChange, canEdit }: FacultyFormProps) {
+function FacultyForm({ faculty, onChange, canEdit, deviation }: FacultyFormProps) {
   function update<K extends keyof Faculty>(key: K, value: Faculty[K]) {
     onChange({ ...faculty, [key]: value });
   }
@@ -128,7 +131,17 @@ function FacultyForm({ faculty, onChange, canEdit }: FacultyFormProps) {
       {/* Basic info */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label>学部名</Label>
+          <div className="flex items-center gap-2">
+            <Label>学部名</Label>
+            {typeof deviation === "number" && (
+              <span
+                className="inline-flex items-center rounded bg-sky-500/10 px-2 py-0.5 text-xs font-medium text-sky-600 dark:text-sky-300"
+                title="偏差値（河合塾 Kei-Net 2026）"
+              >
+                偏差値 {deviation}
+              </span>
+            )}
+          </div>
           <Input
             value={faculty.name}
             onChange={(e) => update("name", e.target.value)}
@@ -802,6 +815,7 @@ export default function AdminUniversityEditPage() {
                       faculty={activeFaculty}
                       onChange={(updated) => updateFaculty(activeIdx, updated)}
                       canEdit={canEdit}
+                      deviation={getUniversityDeviation(university.id)?.faculties[activeFaculty.id]}
                     />
                   </div>
                 )}
