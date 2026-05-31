@@ -131,6 +131,10 @@ export interface StudentDetail {
     needsRefresh: boolean;
   };
   lastActivityAt?: string | null;
+  /** 最終活動の種別と日時 (小論文添削 / 模擬面接) */
+  lastActivity?: { type: "essay" | "interview"; at: string } | null;
+  /** 最終ログイン (users.lastSeenAt) */
+  lastSeenAt?: string | null;
   realtimeUnlocked?: boolean;
   skillCheck?: SkillCheckStatus;
   interviewSkillCheck?: import("./interview-skill-check").InterviewSkillCheckStatus;

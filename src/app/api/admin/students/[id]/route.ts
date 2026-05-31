@@ -333,18 +333,28 @@ export async function GET(
           }
         : undefined;
 
-    // 最終活動日を計算（添削・面接の最新日時）
-    const dates: string[] = [];
-    if (essays.length > 0) dates.push(essays[0].submittedAt);
+    // 最終活動（添削・面接の最新を、種別つきで特定）
+    const activityCandidates: { type: "essay" | "interview"; at: string }[] = [];
+    if (essays.length > 0) {
+      activityCandidates.push({ type: "essay", at: essays[0].submittedAt });
+    }
     if (interviewsSnap.docs.length > 0) {
       const latestInterview = interviewsSnap.docs[0].data();
       if (latestInterview.startedAt) {
-        dates.push(latestInterview.startedAt.toDate().toISOString());
+        activityCandidates.push({
+          type: "interview",
+          at: latestInterview.startedAt.toDate().toISOString(),
+        });
       }
     }
-    const lastActivityAt = dates.length > 0
-      ? dates.sort().reverse()[0]
-      : null;
+    activityCandidates.sort((a, b) => (a.at < b.at ? 1 : -1));
+    const lastActivity = activityCandidates[0] ?? null;
+    const lastActivityAt = lastActivity?.at ?? null;
+
+    // 最終ログイン (ハートビートで更新される users.lastSeenAt)
+    const lastSeenAt =
+      userData.lastSeenAt?.toDate?.()?.toISOString() ??
+      (typeof userData.lastSeenAt === "string" ? userData.lastSeenAt : null);
 
     // 志望校のcompound IDを日本語名に解決
     const targetUnis = userData.targetUniversities ?? [];
@@ -430,6 +440,8 @@ export async function GET(
       ...(essaySkillCheckMeta ? { essaySkillCheckMeta } : {}),
       ...(interviewSkillCheckMeta ? { interviewSkillCheckMeta } : {}),
       lastActivityAt,
+      lastActivity,
+      lastSeenAt,
       realtimeUnlocked: userData.realtimeUnlocked === true,
     };
 

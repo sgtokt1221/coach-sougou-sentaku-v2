@@ -275,34 +275,52 @@ function scoreColor(total: number): string {
  * スキル指標は StudentSkillRadar (スキルカード) に集約済み。
  */
 function PinnedSummary({ detail }: { detail: StudentDetail }) {
-  const { weaknesses, lastActivityAt } = detail;
+  const { lastActivity, lastSeenAt } = detail;
 
-  // 未解決弱点数
-  const unresolvedWeaknessCount = weaknesses.filter((w) => !w.resolved).length;
+  // 相対表記 + 色 (7日以内=緑 / 14日以内=黄 / それ以上=赤)
+  const relative = (iso?: string | null) => {
+    if (!iso) return { text: "なし", days: null as number | null };
+    const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+    return { text: days <= 0 ? "今日" : `${days}日前`, days };
+  };
+  const colorFor = (days: number | null) =>
+    days === null
+      ? "text-gray-500"
+      : days <= 7
+        ? "text-green-600"
+        : days <= 14
+          ? "text-yellow-600"
+          : "text-red-600";
 
-  // 最終活動（N日前）
-  const lastActivityInfo = (() => {
-    if (!lastActivityAt) return { text: "なし", color: "text-gray-500" };
-    const days = Math.floor((Date.now() - new Date(lastActivityAt).getTime()) / 86400000);
-    if (days <= 7) return { text: `${days}日前`, color: "text-green-600" };
-    if (days <= 14) return { text: `${days}日前`, color: "text-yellow-600" };
-    return { text: `${days}日前`, color: "text-red-600" };
-  })();
+  // 最終活動（何を・いつ）
+  const ACTIVITY_LABEL: Record<string, string> = {
+    essay: "小論文添削",
+    interview: "模擬面接",
+  };
+  const act = relative(lastActivity?.at);
+  const activityValue = lastActivity
+    ? `${ACTIVITY_LABEL[lastActivity.type] ?? "活動"} ・ ${act.text}`
+    : "なし";
+
+  // 最終ログイン
+  const seen = relative(lastSeenAt);
 
   const cells = [
     {
-      label: "未解決弱点数",
-      value: unresolvedWeaknessCount.toString(),
-      color: unresolvedWeaknessCount >= 3 ? "text-amber-600" : "text-gray-600",
-      pulse: unresolvedWeaknessCount >= 3,
-      monogram: null,
-    },
-    {
       label: "最終活動",
-      value: lastActivityInfo.text,
-      color: lastActivityInfo.color,
+      value: activityValue,
+      color: colorFor(act.days),
       icon: Activity,
       monogram: null,
+      pulse: false,
+    },
+    {
+      label: "最終ログイン",
+      value: seen.text,
+      color: colorFor(seen.days),
+      icon: Clock,
+      monogram: null,
+      pulse: false,
     },
   ];
 
