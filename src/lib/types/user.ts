@@ -45,6 +45,18 @@ export interface StudentProfile extends UserProfile {
   interests?: string[];
   targetUniversities?: string[];
   onboardingCompleted?: boolean;
+  /** 進学先大学 ID（合格大学登録/退会時に確定）。高校→進学先 集計に使用 */
+  enrolledUniversityId?: string;
+  /** 進学先大学名（表示用） */
+  enrolledUniversityName?: string;
+  /** 進路（合格大学 or 進学しない理由）を登録済みか。卒業生催促の停止判定に使用 */
+  graduationOutcomeRecorded?: boolean;
+  /** 進学しない場合の理由（浪人/就職/未定 等）。enrolled が無い outcome */
+  graduationOutcomeReason?: string;
+  /** 退会日時 (ISO)。role:"disabled" と併用 */
+  withdrawnAt?: string;
+  /** 卒業生への進路催促を最後に送った日時 (ISO)。頻度制御用 */
+  lastGraduationReminderAt?: string;
   managedBy?: string;
   /**
    * @deprecated 単一講師時代の名残。複数対応後は assignedTeacherIds を使う。

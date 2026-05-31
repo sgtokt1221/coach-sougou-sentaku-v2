@@ -5,6 +5,7 @@ import { LearningProfileSection } from "@/components/settings/LearningProfileSec
 import { NotificationSettingsSection } from "@/components/settings/NotificationSettingsSection";
 import { PlanSummarySection } from "@/components/settings/PlanSummarySection";
 import { SupportSection } from "@/components/settings/SupportSection";
+import { WithdrawSection } from "@/components/settings/WithdrawSection";
 
 /**
  * 生徒ポータル「設定」ページ。
@@ -34,6 +35,7 @@ export default function SettingsPage() {
       <NotificationSettingsSection />
       <PlanSummarySection />
       <SupportSection />
+      <WithdrawSection />
     </div>
   );
 }

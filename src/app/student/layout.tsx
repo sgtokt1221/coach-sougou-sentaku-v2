@@ -5,6 +5,7 @@ import { RoleGuard } from "@/components/auth/RoleGuard";
 import { OnboardingGuard } from "@/components/onboarding/OnboardingGuard";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
+import { GraduationReminder } from "@/components/student/GraduationReminder";
 
 export default function StudentLayout({
   children,
@@ -16,6 +17,7 @@ export default function StudentLayout({
       <RoleGuard allowedRoles={["student"]}>
         <OnboardingGuard>
           <AppLayout>
+            <GraduationReminder />
             <ErrorBoundary fallbackUrl="/student/dashboard">
               {children}
             </ErrorBoundary>

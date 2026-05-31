@@ -11,6 +11,8 @@ export interface ExamResult {
   facultyId: string;
   facultyName: string;
   status: "applied" | "passed" | "failed" | "withdrawn";
+  /** 進学先（実際に進学する1校）フラグ。高校→進学先 集計の基準 */
+  enrolled?: boolean;
   examDate?: string;
   resultDate?: string;
   notes?: string;
