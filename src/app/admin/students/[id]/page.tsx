@@ -111,6 +111,7 @@ import { WeaknessTopChart } from "@/components/admin/WeaknessTopChart";
 import { HomeworkStatusSection } from "@/components/admin/HomeworkStatusSection";
 import { buildActivityHeatmapData } from "@/lib/utils/activity-heatmap";
 import { useAuthSWR } from "@/lib/api/swr";
+import { useAuth } from "@/contexts/AuthContext";
 
 
 /**
@@ -337,6 +338,10 @@ function AdminStudentDetailPageInner() {
   const params = useParams();
   const searchParams = useSearchParams();
   const id = params?.id as string;
+  // 講師が担当生徒の学習状況を見る目的でこのページを開く場合は、
+  // 管理者専用の操作（プロフィール編集・課金管理・担当講師割当）を隠す。
+  const { userProfile } = useAuth();
+  const isTeacherViewer = userProfile?.role === "teacher";
 
   // タブ状態とURL同期
   const rawTab = searchParams?.get("tab") ?? "overview";
@@ -611,12 +616,14 @@ function AdminStudentDetailPageInner() {
               <User className="size-4" />
               プロフィール
             </CardTitle>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={openEditDialog}>
-                <Pencil className="mr-1 size-3" />
-                編集
-              </Button>
-            </div>
+            {!isTeacherViewer && (
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={openEditDialog}>
+                  <Pencil className="mr-1 size-3" />
+                  編集
+                </Button>
+              </div>
+            )}
           </div>
         </CardHeader>
         <CardContent>
@@ -704,8 +711,8 @@ function AdminStudentDetailPageInner() {
         </CardContent>
       </Card>
 
-      {/* Subscription Management (手動付与 / 剥奪) */}
-      <SubscriptionManagementSection studentId={id} />
+      {/* Subscription Management (手動付与 / 剥奪) — 管理者専用 */}
+      {!isTeacherViewer && <SubscriptionManagementSection studentId={id} />}
 
       {/* 系統変更（管理者操作） */}
       {skillCheck && (

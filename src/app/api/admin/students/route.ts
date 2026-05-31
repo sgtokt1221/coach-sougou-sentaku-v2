@@ -118,7 +118,10 @@ export async function GET(request: NextRequest) {
     }
 
     let studentsRef = adminDb.collection("users").where("role", "==", "student");
-    if (effectiveRole !== "superadmin") {
+    if (effectiveRole === "teacher") {
+      // 講師の担当生徒は assignedTeacherId で統一 (managedBy は管理者用)
+      studentsRef = studentsRef.where("assignedTeacherId", "==", effectiveUid);
+    } else if (effectiveRole !== "superadmin") {
       studentsRef = studentsRef.where("managedBy", "==", effectiveUid);
     }
     const snapshot = await studentsRef.get();

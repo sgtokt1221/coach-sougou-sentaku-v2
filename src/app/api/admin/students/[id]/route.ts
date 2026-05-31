@@ -45,7 +45,9 @@ export async function GET(
       studentData: {
         managedBy: userData.managedBy as string | undefined,
         organizationId: userData.organizationId as string | undefined,
+        assignedTeacherId: userData.assignedTeacherId as string | undefined,
       },
+      allowAssignedTeacher: true,
     });
     if (orgDenied) {
       // teacher の場合は session 経由アクセスを最後に許可

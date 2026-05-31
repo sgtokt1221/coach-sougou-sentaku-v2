@@ -43,6 +43,13 @@ export async function GET(request: NextRequest) {
           .get();
         studentIds = studentsSnap.docs.map((d) => d.id);
       }
+    } else if (role === "teacher") {
+      // 講師の担当生徒は assignedTeacherId で統一
+      const studentsSnap = await adminDb
+        .collection("users")
+        .where("assignedTeacherId", "==", uid)
+        .get();
+      studentIds = studentsSnap.docs.map((d) => d.id);
     } else {
       const studentsSnap = await adminDb
         .collection("users")

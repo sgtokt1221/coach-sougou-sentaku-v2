@@ -54,13 +54,31 @@ export async function scopeByOrganization(opts: {
   studentData: {
     managedBy?: string;
     organizationId?: string;
+    /** 担当講師 uid。allowAssignedTeacher=true のとき許可判定に使う */
+    assignedTeacherId?: string;
   };
+  /**
+   * true のとき「担当講師 (assignedTeacherId === requester)」も許可する。
+   * 学習データ取得 API でのみ true にする。管理者↔生徒の private チャットや
+   * 課金・割当など admin 限定 API では false のまま（プライバシー/権限保護）。
+   */
+  allowAssignedTeacher?: boolean;
 }): Promise<NextResponse | null> {
   const { requesterUid, requesterRole, studentUid, studentData } = opts;
 
   if (requesterRole === "superadmin") return null;
   if (requesterUid === studentUid) return null;
   if (studentData.managedBy === requesterUid) return null;
+
+  // 担当講師による学習データ閲覧 (opt-in)
+  if (
+    opts.allowAssignedTeacher &&
+    requesterRole === "teacher" &&
+    studentData.assignedTeacherId &&
+    studentData.assignedTeacherId === requesterUid
+  ) {
+    return null;
+  }
 
   // 同じ organization のメンバーかチェック (親 admin / 子 admin 関係)
   const studentOrgId = studentData.organizationId;

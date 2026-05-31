@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { authFetch } from "@/lib/api/client";
 import { useAuthSWR } from "@/lib/api/swr";
+import { useAuth } from "@/contexts/AuthContext";
 import { useFeedbackThread } from "@/lib/hooks/useFeedbackThread";
 import { ChatThread } from "@/components/chat/ChatThread";
 import type { TeacherListItem } from "@/lib/types/admin";
@@ -33,7 +34,12 @@ export function TeacherAssignmentSection({
   studentName: string;
   initialAssignedTeacherId?: string;
 }) {
-  const { data: teachers } = useAuthSWR<TeacherListItem[]>("/api/admin/teachers");
+  const { userProfile } = useAuth();
+  // 担当講師の割当は管理者専用。講師が閲覧している場合はセレクタを出さない。
+  const canAssign = userProfile?.role !== "teacher";
+  const { data: teachers } = useAuthSWR<TeacherListItem[]>(
+    canAssign ? "/api/admin/teachers" : null
+  );
   const [assignedTeacherId, setAssignedTeacherId] = useState<string | undefined>(
     initialAssignedTeacherId
   );
@@ -70,39 +76,41 @@ export function TeacherAssignmentSection({
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <UserCog className="size-4" />
-            担当講師
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <div className="flex items-center gap-2">
-            <Select
-              value={assignedTeacherId ?? UNASSIGNED}
-              onValueChange={(v) => handleChange(v ?? UNASSIGNED)}
-              disabled={saving}
-            >
-              <SelectTrigger className="w-full max-w-xs">
-                <SelectValue placeholder="講師を選択" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={UNASSIGNED}>未割当</SelectItem>
-                {(teachers ?? []).map((t) => (
-                  <SelectItem key={t.uid} value={t.uid}>
-                    {t.displayName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {saving && <Loader2 className="size-4 animate-spin text-muted-foreground" />}
-          </div>
-          <p className="text-xs text-muted-foreground">
-            割り当てると、生徒の「講師」タブで担当講師とメッセージできるようになります。
-          </p>
-        </CardContent>
-      </Card>
+      {canAssign && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <UserCog className="size-4" />
+              担当講師
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Select
+                value={assignedTeacherId ?? UNASSIGNED}
+                onValueChange={(v) => handleChange(v ?? UNASSIGNED)}
+                disabled={saving}
+              >
+                <SelectTrigger className="w-full max-w-xs">
+                  <SelectValue placeholder="講師を選択" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={UNASSIGNED}>未割当</SelectItem>
+                  {(teachers ?? []).map((t) => (
+                    <SelectItem key={t.uid} value={t.uid}>
+                      {t.displayName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {saving && <Loader2 className="size-4 animate-spin text-muted-foreground" />}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              割り当てると、生徒の「講師」タブで担当講師とメッセージできるようになります。
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {assignedTeacherId ? (
         <TeacherThreadMonitor studentId={studentId} studentName={studentName} />

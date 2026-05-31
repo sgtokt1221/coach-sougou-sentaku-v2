@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, LineChart } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import { useFeedbackThread } from "@/lib/hooks/useFeedbackThread";
 import { ChatThread } from "@/components/chat/ChatThread";
@@ -73,10 +73,17 @@ function Body() {
           >
             <ArrowLeft className="size-5 text-muted-foreground" />
           </Link>
-          <div>
+          <div className="flex-1">
             <h1 className="text-xl font-bold">{studentName} さん</h1>
             <p className="text-xs text-muted-foreground">担当生徒とのやり取り</p>
           </div>
+          <Link
+            href={`/admin/students/${studentId}`}
+            className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-accent"
+          >
+            <LineChart className="size-4" />
+            学習状況を見る
+          </Link>
         </div>
         <div className="flex-1 overflow-hidden rounded-xl border bg-card px-3">
           <ChatThread

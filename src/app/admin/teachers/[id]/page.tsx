@@ -266,40 +266,11 @@ export default function AdminTeacherDetailPage() {
             </div>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="size-4" />
-              担当生徒
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {teacher.managedStudents.length === 0 ? (
-              <p className="text-sm text-muted-foreground">担当生徒はいません</p>
-            ) : (
-              <div className="space-y-2">
-                {teacher.managedStudents.map((student) => (
-                  <div
-                    key={student.uid}
-                    className="flex items-center gap-3 rounded-md px-3 py-2 text-sm border"
-                  >
-                    <User className="size-4 text-muted-foreground" />
-                    <div className="flex-1">
-                      <p className="font-medium">{student.displayName}</p>
-                      <p className="text-xs text-muted-foreground">{student.email}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
       </div>
 
       <Separator />
 
-      {/* メッセージ担当生徒の割り当て */}
+      {/* 担当生徒の割り当て（メッセージ・学習状況閲覧が有効になる） */}
       <TeacherStudentAssignment
         teacherId={teacherId}
         teacherName={teacher.profile.displayName}

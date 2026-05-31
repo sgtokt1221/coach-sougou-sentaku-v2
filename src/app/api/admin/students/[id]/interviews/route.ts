@@ -117,7 +117,9 @@ export async function GET(
       studentData: {
         managedBy: userData.managedBy as string | undefined,
         organizationId: userData.organizationId as string | undefined,
+        assignedTeacherId: userData.assignedTeacherId as string | undefined,
       },
+      allowAssignedTeacher: true,
     });
     if (orgDenied) return orgDenied;
 
