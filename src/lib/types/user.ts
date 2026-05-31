@@ -45,10 +45,15 @@ export interface StudentProfile extends UserProfile {
   onboardingCompleted?: boolean;
   managedBy?: string;
   /**
-   * 担当講師の uid。managedBy(管理者)とは独立した「やりとりする講師」。
-   * 管理者が割り当てる。生徒↔講師の直接メッセージ(teacherFeedback)の宛先判定に使う。
+   * @deprecated 単一講師時代の名残。複数対応後は assignedTeacherIds を使う。
+   * 後方互換のため getAssignedTeacherIds() で吸収する。
    */
   assignedTeacherId?: string;
+  /**
+   * 担当講師の uid 配列。managedBy(管理者)とは独立した「やりとりする講師」。
+   * 1生徒を複数講師が担当できる。学習状況閲覧・生徒↔講師メッセージの宛先判定に使う。
+   */
+  assignedTeacherIds?: string[];
   selfAnalysisId?: string;
   /** 月あたりのセッション回数（デフォルト1） */
   sessionsPerMonth?: number;

@@ -44,8 +44,10 @@ export interface StudentListItem {
   currentInterviewScore: number | null;
   /** 最後に面接スキルチェックを受けた日時 */
   lastInterviewCheckedAt: string | null;
-  /** 担当講師の uid (生徒↔講師メッセージの割当先) */
+  /** @deprecated 単一講師時代の名残。assignedTeacherIds を使う */
   assignedTeacherId?: string;
+  /** 担当講師の uid 配列 (複数講師対応) */
+  assignedTeacherIds?: string[];
 }
 
 export interface StudentDetail {
@@ -69,8 +71,10 @@ export interface StudentDetail {
     englishCerts?: EnglishCert[];
     targetUniversities: string[];
     resolvedUniversities?: { compoundId: string; universityName: string; facultyName: string }[];
-    /** 担当講師の uid (生徒↔講師メッセージの割当先) */
+    /** @deprecated 単一講師時代の名残。assignedTeacherIds を使う */
     assignedTeacherId?: string;
+    /** 担当講師の uid 配列 (複数講師対応) */
+    assignedTeacherIds?: string[];
   };
   weaknesses: WeaknessRecord[];
   essays: EssayListItem[];

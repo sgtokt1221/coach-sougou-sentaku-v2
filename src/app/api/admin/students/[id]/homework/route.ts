@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { requireRole, scopeByOrganization } from "@/lib/api/auth";
+import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
 import { adminDb } from "@/lib/firebase/admin";
 import type { HomeworkAssignment } from "@/lib/types/homework";
 
@@ -37,7 +38,7 @@ export async function GET(
       studentData: {
         managedBy: userData.managedBy as string | undefined,
         organizationId: userData.organizationId as string | undefined,
-        assignedTeacherId: userData.assignedTeacherId as string | undefined,
+        assignedTeacherIds: getAssignedTeacherIds(userData),
       },
       allowAssignedTeacher: true,
     });

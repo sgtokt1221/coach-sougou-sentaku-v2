@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
+import {
+  collection,
+  onSnapshot,
+  orderBy,
+  query,
+  where,
+} from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
 import type { ChatMessage } from "@/lib/types/feedback";
 
@@ -24,9 +30,17 @@ interface UseFeedbackThreadResult {
  */
 export function useFeedbackThread(
   studentUid: string | null | undefined,
-  opts?: { subcollection?: "feedback" | "teacherFeedback" }
+  opts?: {
+    subcollection?: "feedback" | "teacherFeedback";
+    /**
+     * teacherFeedback で特定講師のスレッドのみ購読する場合に指定。
+     * クエリに where("teacherId","==",teacherId) を付与する(ルールの講師隔離を満たす)。
+     */
+    teacherId?: string;
+  }
 ): UseFeedbackThreadResult {
   const subcollection = opts?.subcollection ?? "feedback";
+  const teacherId = opts?.teacherId;
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState<boolean>(Boolean(studentUid));
   const [error, setError] = useState<Error | null>(null);
@@ -38,10 +52,16 @@ export function useFeedbackThread(
     }
     setLoading(true);
     setError(null);
-    const q = query(
-      collection(db, "users", studentUid, subcollection),
-      orderBy("createdAt", "asc")
-    );
+    const q = teacherId
+      ? query(
+          collection(db, "users", studentUid, subcollection),
+          where("teacherId", "==", teacherId),
+          orderBy("createdAt", "asc")
+        )
+      : query(
+          collection(db, "users", studentUid, subcollection),
+          orderBy("createdAt", "asc")
+        );
     const unsub = onSnapshot(
       q,
       (snap) => {
@@ -65,6 +85,7 @@ export function useFeedbackThread(
             attachments: data.attachments ?? undefined,
             broadcast: data.broadcast ?? undefined,
             reference: data.reference ?? undefined,
+            teacherId: data.teacherId ?? undefined,
             senderRole: createdBy === studentUid ? "student" : "coach",
           };
         });
@@ -78,7 +99,7 @@ export function useFeedbackThread(
       }
     );
     return () => unsub();
-  }, [studentUid, subcollection]);
+  }, [studentUid, subcollection, teacherId]);
 
   return { messages, loading, error };
 }

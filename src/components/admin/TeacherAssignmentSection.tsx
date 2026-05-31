@@ -2,15 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Loader2, UserCog, Eye } from "lucide-react";
+import { UserCog, Eye } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { authFetch } from "@/lib/api/client";
 import { useAuthSWR } from "@/lib/api/swr";
 import { useAuth } from "@/contexts/AuthContext";
@@ -18,21 +12,19 @@ import { useFeedbackThread } from "@/lib/hooks/useFeedbackThread";
 import { ChatThread } from "@/components/chat/ChatThread";
 import type { TeacherListItem } from "@/lib/types/admin";
 
-const UNASSIGNED = "__none__";
-
 /**
  * 管理者の生徒詳細「メッセージ」タブ。
- * - 担当講師(assignedTeacherId)の割り当て/解除
+ * - 担当講師(assignedTeacherIds)の複数割り当て/解除
  * - 生徒↔講師スレッドの読み取り専用モニタ(監視)
  */
 export function TeacherAssignmentSection({
   studentId,
   studentName,
-  initialAssignedTeacherId,
+  initialAssignedTeacherIds,
 }: {
   studentId: string;
   studentName: string;
-  initialAssignedTeacherId?: string;
+  initialAssignedTeacherIds?: string[];
 }) {
   const { userProfile } = useAuth();
   // 担当講師の割当は管理者専用。講師が閲覧している場合はセレクタを出さない。
@@ -40,37 +32,37 @@ export function TeacherAssignmentSection({
   const { data: teachers } = useAuthSWR<TeacherListItem[]>(
     canAssign ? "/api/admin/teachers" : null
   );
-  const [assignedTeacherId, setAssignedTeacherId] = useState<string | undefined>(
-    initialAssignedTeacherId
+  const [assigned, setAssigned] = useState<string[]>(
+    initialAssignedTeacherIds ?? []
   );
-  const [saving, setSaving] = useState(false);
+  const [savingUid, setSavingUid] = useState<string | null>(null);
 
   useEffect(() => {
-    setAssignedTeacherId(initialAssignedTeacherId);
-  }, [initialAssignedTeacherId]);
+    setAssigned(initialAssignedTeacherIds ?? []);
+  }, [initialAssignedTeacherIds]);
 
-  async function handleChange(value: string) {
-    const teacherId = value === UNASSIGNED ? null : value;
-    setSaving(true);
+  async function toggle(teacherId: string, assign: boolean) {
+    setSavingUid(teacherId);
     try {
       const res = await authFetch(
         `/api/admin/students/${studentId}/assign-teacher`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ teacherId }),
+          body: JSON.stringify({ teacherId, assigned: assign }),
         }
       );
       if (!res.ok) {
         const body = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(body.error ?? "割り当てに失敗しました");
       }
-      setAssignedTeacherId(teacherId ?? undefined);
-      toast.success(teacherId ? "担当講師を割り当てました" : "担当講師を解除しました");
+      const data = (await res.json()) as { assignedTeacherIds?: string[] };
+      setAssigned(data.assignedTeacherIds ?? []);
+      toast.success(assign ? "担当講師を割り当てました" : "担当講師を解除しました");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "割り当てに失敗しました");
     } finally {
-      setSaving(false);
+      setSavingUid(null);
     }
   }
 
@@ -83,43 +75,41 @@ export function TeacherAssignmentSection({
               <UserCog className="size-4" />
               担当講師
             </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Select
-                value={assignedTeacherId ?? UNASSIGNED}
-                onValueChange={(v) => handleChange(v ?? UNASSIGNED)}
-                disabled={saving}
-              >
-                <SelectTrigger className="w-full max-w-xs">
-                  <SelectValue placeholder="講師を選択">
-                    {(value: string) =>
-                      value === UNASSIGNED
-                        ? "未割当"
-                        : (teachers ?? []).find((t) => t.uid === value)
-                            ?.displayName ?? "講師を選択"
-                    }
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={UNASSIGNED}>未割当</SelectItem>
-                  {(teachers ?? []).map((t) => (
-                    <SelectItem key={t.uid} value={t.uid}>
-                      {t.displayName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {saving && <Loader2 className="size-4 animate-spin text-muted-foreground" />}
-            </div>
             <p className="text-xs text-muted-foreground">
-              割り当てると、生徒の「講師」タブで担当講師とメッセージできるようになります。
+              複数の講師を割り当てられます。割り当てた講師は学習状況の閲覧と、生徒の「講師」タブでのメッセージができます。
             </p>
+          </CardHeader>
+          <CardContent className="space-y-1">
+            {(teachers ?? []).length === 0 ? (
+              <p className="py-2 text-sm text-muted-foreground">
+                割り当て可能な講師がいません。
+              </p>
+            ) : (
+              (teachers ?? []).map((t) => {
+                const isOn = assigned.includes(t.uid);
+                return (
+                  <div
+                    key={t.uid}
+                    className="flex items-center justify-between gap-3 rounded-md border px-3 py-2"
+                  >
+                    <span className="truncate text-sm font-medium">
+                      {t.displayName}
+                    </span>
+                    <Switch
+                      checked={isOn}
+                      disabled={savingUid === t.uid}
+                      onCheckedChange={(c) => toggle(t.uid, c)}
+                      aria-label={`${t.displayName} を担当に`}
+                    />
+                  </div>
+                );
+              })
+            )}
           </CardContent>
         </Card>
       )}
 
-      {assignedTeacherId ? (
+      {assigned.length > 0 ? (
         <TeacherThreadMonitor studentId={studentId} studentName={studentName} />
       ) : (
         <Card>

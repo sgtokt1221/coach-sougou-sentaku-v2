@@ -55,7 +55,7 @@ export async function GET(request: Request) {
         const studentsSnap = await adminDb!
           .collection("users")
           .where("role", "==", "student")
-          .where("assignedTeacherId", "==", doc.id)
+          .where("assignedTeacherIds", "array-contains", doc.id)
           .count()
           .get();
         return {

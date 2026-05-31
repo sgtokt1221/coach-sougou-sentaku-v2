@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { ArrowLeft, LineChart } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { useFeedbackThread } from "@/lib/hooks/useFeedbackThread";
 import { ChatThread } from "@/components/chat/ChatThread";
 import { PageTransition } from "@/components/shared/PageTransition";
@@ -21,11 +22,15 @@ export default function TeacherStudentChatPage() {
 function Body() {
   const params = useParams<{ id: string }>();
   const search = useSearchParams();
+  const { user } = useAuth();
   const studentId = params?.id ?? "";
   const studentName = search.get("name") ?? "生徒";
+  const teacherId = user?.uid;
 
+  // 自分(講師)のスレッドのみ購読 (ルールの講師隔離を満たす)
   const { messages, loading } = useFeedbackThread(studentId, {
     subcollection: "teacherFeedback",
+    teacherId,
   });
   const markedRef = useRef(false);
 

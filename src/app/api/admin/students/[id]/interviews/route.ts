@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole, scopeByOrganization } from "@/lib/api/auth";
+import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
 import { adminDb } from "@/lib/firebase/admin";
 import { MOCK_UNIVERSITIES } from "@/lib/matching/mockData";
 import type { InterviewScores, InterviewMode } from "@/lib/types/interview";
@@ -117,7 +118,7 @@ export async function GET(
       studentData: {
         managedBy: userData.managedBy as string | undefined,
         organizationId: userData.organizationId as string | undefined,
-        assignedTeacherId: userData.assignedTeacherId as string | undefined,
+        assignedTeacherIds: getAssignedTeacherIds(userData),
       },
       allowAssignedTeacher: true,
     });

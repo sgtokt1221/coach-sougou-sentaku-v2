@@ -1011,7 +1011,7 @@ function AdminStudentDetailPageInner() {
             <TeacherAssignmentSection
               studentId={id}
               studentName={detail.profile.displayName || "生徒"}
-              initialAssignedTeacherId={detail.profile.assignedTeacherId}
+              initialAssignedTeacherIds={detail.profile.assignedTeacherIds}
             />
           </motion.div>
         </TabsContent>

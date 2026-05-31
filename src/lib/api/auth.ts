@@ -54,8 +54,8 @@ export async function scopeByOrganization(opts: {
   studentData: {
     managedBy?: string;
     organizationId?: string;
-    /** 担当講師 uid。allowAssignedTeacher=true のとき許可判定に使う */
-    assignedTeacherId?: string;
+    /** 担当講師 uid 配列。allowAssignedTeacher=true のとき許可判定に使う */
+    assignedTeacherIds?: string[];
   };
   /**
    * true のとき「担当講師 (assignedTeacherId === requester)」も許可する。
@@ -74,8 +74,8 @@ export async function scopeByOrganization(opts: {
   if (
     opts.allowAssignedTeacher &&
     requesterRole === "teacher" &&
-    studentData.assignedTeacherId &&
-    studentData.assignedTeacherId === requesterUid
+    Array.isArray(studentData.assignedTeacherIds) &&
+    studentData.assignedTeacherIds.includes(requesterUid)
   ) {
     return null;
   }

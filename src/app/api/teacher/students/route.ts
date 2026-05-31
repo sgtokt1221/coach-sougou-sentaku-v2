@@ -34,13 +34,14 @@ export async function GET(request: NextRequest) {
     const studentsSnap = await adminDb
       .collection("users")
       .where("role", "==", "student")
-      .where("assignedTeacherId", "==", uid)
+      .where("assignedTeacherIds", "array-contains", uid)
       .get();
 
     const items: TeacherStudentItem[] = await Promise.all(
       studentsSnap.docs.map(async (d) => {
         const data = d.data();
-        const conv = await adminDb!.doc(`teacherConversations/${d.id}`).get();
+        // 講師別スレッドのサマリ doc は `${studentId}__${teacherId}`
+        const conv = await adminDb!.doc(`teacherConversations/${d.id}__${uid}`).get();
         const c = conv.data();
         return {
           studentId: d.id,

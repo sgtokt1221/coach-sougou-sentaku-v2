@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
+import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
 import { adminDb } from "@/lib/firebase/admin";
 import {
   updateConversationSummary,
@@ -23,13 +24,21 @@ export async function POST(request: NextRequest) {
   const { uid } = authResult;
 
   try {
-    const body: Pick<FeedbackCreateRequest, "message" | "attachments"> =
-      await request.json();
+    const body: Pick<FeedbackCreateRequest, "message" | "attachments"> & {
+      teacherId?: string;
+    } = await request.json();
     const attachments: ChatAttachment[] = sanitizeAttachments(body.attachments);
+    const teacherId = body.teacherId;
 
     if (!body.message?.trim() && attachments.length === 0) {
       return NextResponse.json(
         { error: "メッセージまたは添付が必要です" },
+        { status: 400 }
+      );
+    }
+    if (!teacherId) {
+      return NextResponse.json(
+        { error: "送信先の講師(teacherId)が必要です" },
         { status: 400 }
       );
     }
@@ -41,12 +50,12 @@ export async function POST(request: NextRequest) {
     const userDoc = await adminDb.doc(`users/${uid}`).get();
     const userData = userDoc.data();
     const studentName = (userData?.displayName as string) ?? "生徒";
-    const assignedTeacherId = userData?.assignedTeacherId as string | undefined;
+    const assignedTeacherIds = getAssignedTeacherIds(userData);
 
-    if (!assignedTeacherId) {
+    if (!assignedTeacherIds.includes(teacherId)) {
       return NextResponse.json(
-        { error: "担当講師が割り当てられていません" },
-        { status: 400 }
+        { error: "担当講師ではありません" },
+        { status: 403 }
       );
     }
 
@@ -61,6 +70,7 @@ export async function POST(request: NextRequest) {
       createdByName: studentName,
       createdAt: now,
       read: false,
+      teacherId,
       ...(attachments.length > 0 ? { attachments } : {}),
     };
 
@@ -68,20 +78,22 @@ export async function POST(request: NextRequest) {
       .collection(`users/${uid}/teacherFeedback`)
       .add(feedbackData);
 
-    // 講師チャネルのインボックスサマリ更新 (生徒→講師)
+    // 講師別スレッドのサマリ更新 (生徒→講師)
     await updateConversationSummary({
       studentId: uid,
       studentName,
       studentPhotoURL: (userData?.photoURL as string | undefined) ?? null,
-      coachId: assignedTeacherId,
+      coachId: teacherId,
       organizationId: userData?.organizationId as string | undefined,
       lastMessageText: message || "[添付ファイル]",
       senderRole: "student",
       collection: "teacherConversations",
+      docId: `${uid}__${teacherId}`,
+      teacherId,
     });
 
     // 担当講師へプッシュ通知
-    await sendFcmToUser(assignedTeacherId, {
+    await sendFcmToUser(teacherId, {
       title: `${studentName}さんからメッセージ`,
       body: message || "[添付ファイル]",
       url: `/teacher/students/${uid}`,
@@ -97,6 +109,7 @@ export async function POST(request: NextRequest) {
       createdByName: studentName,
       createdAt: now.toISOString(),
       read: false,
+      teacherId,
       ...(attachments.length > 0 ? { attachments } : {}),
     };
 

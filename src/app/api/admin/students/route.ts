@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
+import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
 import type { StudentListItem } from "@/lib/types/admin";
 import {
   computeEssayAggregate,
@@ -119,8 +120,8 @@ export async function GET(request: NextRequest) {
 
     let studentsRef = adminDb.collection("users").where("role", "==", "student");
     if (effectiveRole === "teacher") {
-      // 講師の担当生徒は assignedTeacherId で統一 (managedBy は管理者用)
-      studentsRef = studentsRef.where("assignedTeacherId", "==", effectiveUid);
+      // 講師の担当生徒は assignedTeacherIds(配列) で統一 (managedBy は管理者用)
+      studentsRef = studentsRef.where("assignedTeacherIds", "array-contains", effectiveUid);
     } else if (effectiveRole !== "superadmin") {
       studentsRef = studentsRef.where("managedBy", "==", effectiveUid);
     }
@@ -271,7 +272,7 @@ export async function GET(request: NextRequest) {
           currentInterviewRank: interviewAgg.compositeRank,
           currentInterviewScore: interviewAgg.compositeScore,
           lastInterviewCheckedAt,
-          assignedTeacherId: data.assignedTeacherId as string | undefined,
+          assignedTeacherIds: getAssignedTeacherIds(data),
         };
       })
     );

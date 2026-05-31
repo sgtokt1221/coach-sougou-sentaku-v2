@@ -46,6 +46,11 @@ export interface AdminFeedback {
   broadcast?: boolean;
   /** 問題参照カード (任意) */
   reference?: ChatReference;
+  /**
+   * teacherFeedback スレッドで、どの講師との会話かを示す uid。
+   * 複数講師対応で講師別にスレッドを分離するために使う。
+   */
+  teacherId?: string;
 }
 
 export interface FeedbackCreateRequest {

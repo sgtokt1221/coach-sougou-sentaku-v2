@@ -46,7 +46,7 @@ export async function GET(request: Request) {
       const studentsSnap = await adminDb
         .collection("users")
         .where("role", "==", "student")
-        .where("assignedTeacherId", "==", authResult.uid)
+        .where("assignedTeacherIds", "array-contains", authResult.uid)
         .count()
         .get();
       const teacher: TeacherListItem = {
@@ -71,7 +71,7 @@ export async function GET(request: Request) {
         const studentsSnap = await adminDb!
           .collection("users")
           .where("role", "==", "student")
-          .where("assignedTeacherId", "==", doc.id)
+          .where("assignedTeacherIds", "array-contains", doc.id)
           .count()
           .get();
         return {

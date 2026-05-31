@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
+import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
 import { adminDb } from "@/lib/firebase/admin";
 import { resetUnread } from "@/lib/chat/conversation";
 
@@ -29,16 +30,17 @@ export async function POST(
     const studentDoc = await adminDb.doc(`users/${id}`).get();
     if (
       role !== "superadmin" &&
-      studentDoc.data()?.assignedTeacherId !== uid
+      !getAssignedTeacherIds(studentDoc.data()).includes(uid)
     ) {
       return NextResponse.json({ error: "担当外の生徒です" }, { status: 403 });
     }
 
-    await resetUnread(id, "coach", "teacherConversations");
+    await resetUnread(id, "coach", "teacherConversations", `${id}__${uid}`);
 
-    // 生徒発言 (createdBy === 生徒uid) の未読を read=true に一括更新
+    // 自分(講師)のスレッドの生徒発言 (createdBy === 生徒uid) の未読を read=true に
     const unreadSnap = await adminDb
       .collection(`users/${id}/teacherFeedback`)
+      .where("teacherId", "==", uid)
       .where("read", "==", false)
       .get();
     const batch = adminDb.batch();

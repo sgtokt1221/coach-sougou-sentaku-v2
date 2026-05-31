@@ -48,19 +48,20 @@ export function TeacherStudentAssignment({
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ teacherId: assign ? teacherId : null }),
+          body: JSON.stringify({ teacherId, assigned: assign }),
         }
       );
       if (!res.ok) {
         const body = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(body.error ?? "割り当てに失敗しました");
       }
-      // 楽観更新: ローカルキャッシュの assignedTeacherId を書き換え
+      const data = (await res.json()) as { assignedTeacherIds?: string[] };
+      // 楽観更新: ローカルキャッシュの assignedTeacherIds を書き換え
       mutate(
         (prev) =>
           (prev ?? []).map((s) =>
             s.uid === student.uid
-              ? { ...s, assignedTeacherId: assign ? teacherId : undefined }
+              ? { ...s, assignedTeacherIds: data.assignedTeacherIds ?? [] }
               : s
           ),
         { revalidate: false }
@@ -111,9 +112,9 @@ export function TeacherStudentAssignment({
         ) : (
           <div className="max-h-[420px] space-y-1 overflow-y-auto">
             {students.map((s) => {
-              const assignedHere = s.assignedTeacherId === teacherId;
-              const assignedElsewhere =
-                !!s.assignedTeacherId && s.assignedTeacherId !== teacherId;
+              const assignedHere = (s.assignedTeacherIds ?? []).includes(
+                teacherId
+              );
               return (
                 <div
                   key={s.uid}
@@ -123,11 +124,6 @@ export function TeacherStudentAssignment({
                     <p className="truncate text-sm font-medium">
                       {s.displayName}
                     </p>
-                    {assignedElsewhere && (
-                      <p className="text-[10px] text-amber-600 dark:text-amber-400">
-                        他の講師に割当済み（切り替えると移動します）
-                      </p>
-                    )}
                   </div>
                   <Switch
                     checked={assignedHere}

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
+import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
 import { adminDb } from "@/lib/firebase/admin";
 import {
   updateConversationSummary,
@@ -54,7 +55,10 @@ export async function POST(
     const studentData = studentDoc.data();
 
     // 担当講師チェック (superadmin はサポート目的で許可)
-    if (role !== "superadmin" && studentData?.assignedTeacherId !== uid) {
+    if (
+      role !== "superadmin" &&
+      !getAssignedTeacherIds(studentData).includes(uid)
+    ) {
       return NextResponse.json({ error: "担当外の生徒です" }, { status: 403 });
     }
 
@@ -72,6 +76,7 @@ export async function POST(
       createdByName: teacherName,
       createdAt: now,
       read: false,
+      teacherId: uid,
       ...(attachments.length > 0 ? { attachments } : {}),
       ...(reference ? { reference } : {}),
     };
@@ -80,7 +85,7 @@ export async function POST(
       .collection(`users/${id}/teacherFeedback`)
       .add(feedbackData);
 
-    // 講師チャネルのサマリ更新 (講師→生徒)
+    // 講師別スレッドのサマリ更新 (講師→生徒)
     await updateConversationSummary({
       studentId: id,
       studentName: (studentData?.displayName as string) ?? "",
@@ -93,6 +98,8 @@ export async function POST(
         (attachments.length > 0 ? "[添付ファイル]" : ""),
       senderRole: "coach",
       collection: "teacherConversations",
+      docId: `${id}__${uid}`,
+      teacherId: uid,
     });
 
     // 生徒へプッシュ通知
@@ -112,6 +119,7 @@ export async function POST(
       createdByName: teacherName,
       createdAt: now.toISOString(),
       read: false,
+      teacherId: uid,
       ...(attachments.length > 0 ? { attachments } : {}),
       ...(reference ? { reference } : {}),
     };

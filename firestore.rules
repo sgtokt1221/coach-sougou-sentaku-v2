@@ -81,8 +81,11 @@ service cloud.firestore {
       // read: 生徒本人/担当管理者/同org/superadmin(=監視) + 担当講師。
       // write は基本 server(Admin SDK) 経由だが、担当講師の購読・自己既読のため許可。
       match /teacherFeedback/{feedbackId} {
+        // 生徒本人/担当管理者/同org/superadmin は全件。講師は自分の teacherId スレッドのみ
+        // (複数講師が同サブコレクションを共有しても講師間で読めないよう隔離)
         allow read: if request.auth != null && (
-          canManageUser(userId) || isAssignedTeacherOf(userId)
+          canManageUser(userId) ||
+          (isAssignedTeacherOf(userId) && resource.data.teacherId == request.auth.uid)
         );
         allow create: if request.auth != null && (
           isSuperAdmin() || request.auth.uid == userId || isAssignedTeacherOf(userId)
@@ -192,10 +195,16 @@ service cloud.firestore {
         get(/databases/$(database)/documents/users/$(userId)).data.managedBy == request.auth.uid;
     }
 
-    // 担当講師チェック: 対象生徒の assignedTeacherId が自分(講師)のuidか確認
+    // 担当講師チェック: 対象生徒の assignedTeacherIds に自分(講師)が含まれるか確認
+    // (後方互換で旧 assignedTeacherId 単一フィールドも許可)
     function isAssignedTeacherOf(userId) {
       return isAdmin() &&
-        get(/databases/$(database)/documents/users/$(userId)).data.assignedTeacherId == request.auth.uid;
+        (
+          (get(/databases/$(database)/documents/users/$(userId)).data.assignedTeacherIds != null &&
+            request.auth.uid in get(/databases/$(database)/documents/users/$(userId)).data.assignedTeacherIds)
+          ||
+          get(/databases/$(database)/documents/users/$(userId)).data.assignedTeacherId == request.auth.uid
+        );
     }
 
     // 同じ塾 (organization) のメンバーか確認 (= 親 admin / 子 admin 関係)

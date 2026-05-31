@@ -14,15 +14,32 @@ export async function POST(request: NextRequest) {
   const { uid } = authResult;
 
   try {
+    const body = (await request.json().catch(() => ({}))) as {
+      teacherId?: string;
+    };
+    const teacherId = body.teacherId;
+    if (!teacherId) {
+      return NextResponse.json(
+        { error: "teacherId が必要です" },
+        { status: 400 }
+      );
+    }
+
     if (!adminDb) {
       return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
     }
 
-    await resetUnread(uid, "student", "teacherConversations");
+    await resetUnread(
+      uid,
+      "student",
+      "teacherConversations",
+      `${uid}__${teacherId}`
+    );
 
-    // 講師発言 (createdBy !== uid) の未読を read=true に一括更新
+    // その講師スレッドの講師発言 (createdBy !== uid) の未読を read=true に
     const unreadSnap = await adminDb
       .collection(`users/${uid}/teacherFeedback`)
+      .where("teacherId", "==", teacherId)
       .where("read", "==", false)
       .get();
     const batch = adminDb.batch();

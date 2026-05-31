@@ -53,11 +53,11 @@ export async function GET(
       );
     }
 
-    // 担当生徒を取得 (assignedTeacherId で統一)
+    // 担当生徒を取得 (assignedTeacherIds 配列で統一)
     const studentsQuery = adminDb
       .collection("users")
       .where("role", "==", "student")
-      .where("assignedTeacherId", "==", id);
+      .where("assignedTeacherIds", "array-contains", id);
 
     const studentsSnap = await studentsQuery.get();
     const managedStudents = studentsSnap.docs.map(doc => {
