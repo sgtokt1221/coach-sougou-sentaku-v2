@@ -21,7 +21,6 @@ import { useAuthSWR } from "@/lib/api/swr";
 import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
 import type { StudentListItem } from "@/lib/types/admin";
 import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
-import { StudentStatusLamps } from "@/components/admin/StudentStatusLamps";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils/avatar";
 import { isGraduated } from "@/lib/utils/grade";
@@ -95,6 +94,14 @@ const ACTIVITY_LABEL: Record<
   activity: "活動登録",
 };
 
+/**
+ * 要対応 判定。アラートが1件でもある、または締切超過の未提出宿題がある生徒。
+ * 「順調」はこの否定 (相補的) なので、卒業生以外は必ずどちらか一方に入る。
+ */
+function needsAttention(s: StudentListItem): boolean {
+  return s.alertFlags.length > 0 || s.hasOverdueHomework === true;
+}
+
 export default function AdminStudentsPage() {
   const router = useRouter();
   const shouldReduceMotion = useReducedMotion();
@@ -144,20 +151,25 @@ export default function AdminStudentsPage() {
 
     if (statusFilter === "all" || statusFilter === "graduated") return visible;
 
-    return visible.filter((student) => {
-      const hasAlerts = student.alertFlags.length > 0;
-      const hasCriticalOrHighAlerts = student.alertFlags.some(flag =>
-        ["inactive", "document_deadline", "declining", "weakness_stuck", "ap_struggle", "deadline_risk"].includes(flag)
-      );
-
-      if (statusFilter === "attention") {
-        return hasAlerts && hasCriticalOrHighAlerts;
-      } else if (statusFilter === "healthy") {
-        return !hasAlerts;
-      }
-      return true;
-    });
+    if (statusFilter === "attention") return visible.filter(needsAttention);
+    if (statusFilter === "healthy") return visible.filter((s) => !needsAttention(s));
+    return visible;
   }, [rawData, statusFilter]);
+
+  /** タブ別件数 (卒業生を除いた現役 + 卒業生数) */
+  const tabCounts = useMemo(() => {
+    const all = rawData ?? [];
+    const active = all.filter(
+      (s) => !isGraduated(s.grade, s.gradeUpdatedAt, s.isRonin),
+    );
+    const attention = active.filter(needsAttention).length;
+    return {
+      all: active.length,
+      attention,
+      healthy: active.length - attention,
+      graduated: all.length - active.length,
+    };
+  }, [rawData]);
 
   const students = filteredStudents;
   const loading = isLoading;
@@ -275,7 +287,7 @@ export default function AdminStudentsPage() {
               onClick={() => setStatusFilter("all")}
               className="h-7"
             >
-              全員
+              全員 ({tabCounts.all})
             </Button>
             <Button
               variant={statusFilter === "attention" ? "default" : "ghost"}
@@ -284,7 +296,7 @@ export default function AdminStudentsPage() {
               className="h-7 gap-1.5"
             >
               <AlertCircle className="size-3" />
-              要対応
+              要対応 ({tabCounts.attention})
             </Button>
             <Button
               variant={statusFilter === "healthy" ? "default" : "ghost"}
@@ -293,7 +305,7 @@ export default function AdminStudentsPage() {
               className="h-7 gap-1.5"
             >
               <CheckCircle2 className="size-3" />
-              順調
+              順調 ({tabCounts.healthy})
             </Button>
             <Button
               variant={statusFilter === "graduated" ? "default" : "ghost"}
@@ -302,7 +314,7 @@ export default function AdminStudentsPage() {
               className="h-7 gap-1.5"
             >
               <GraduationCap className="size-3" />
-              卒業生
+              卒業生 ({tabCounts.graduated})
             </Button>
           </div>
         </div>
@@ -344,7 +356,8 @@ export default function AdminStudentsPage() {
                     <th className="px-4 py-3 text-center font-medium">最新スコア</th>
                     <th className="px-4 py-3 text-center font-medium hidden lg:table-cell">推移</th>
                     <th className="px-4 py-3 text-center font-medium hidden lg:table-cell">弱点</th>
-                    <th className="px-4 py-3 text-center font-medium">ステータス</th>
+                    <th className="px-4 py-3 text-center font-medium">最終ログイン</th>
+                    <th className="px-4 py-3 text-center font-medium">最終活動</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -466,7 +479,12 @@ export default function AdminStudentsPage() {
                             <span className="text-muted-foreground">0</span>
                           )}
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3 text-center">
+                          <span className="text-xs text-muted-foreground">
+                            {s.lastSeenAt ? formatJoinElapsed(s.lastSeenAt) : "—"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-center">
                           <div className="flex flex-col items-center gap-1.5">
                             {s.hasOverdueHomework && (
                               <Badge
@@ -477,37 +495,32 @@ export default function AdminStudentsPage() {
                                 宿題提出期限切れ
                               </Badge>
                             )}
-                            <div className="flex flex-col gap-0.5 text-center text-[11px] text-muted-foreground">
-                              <span>
-                                ログイン: {s.lastSeenAt ? formatJoinElapsed(s.lastSeenAt) : "—"}
-                              </span>
-                              <span>
-                                活動:{" "}
-                                {s.lastActivity
-                                  ? `${ACTIVITY_LABEL[s.lastActivity.type]} ・ ${formatJoinElapsed(s.lastActivity.at)}`
-                                  : "—"}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <StudentStatusLamps
-                                alertFlags={s.alertFlags}
-                                lastActivityAt={s.lastActivityAt}
-                              />
-                              {statusFilter === "graduated" && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="h-7 gap-1 text-xs"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    void markAsRonin(s.uid, s.displayName);
-                                  }}
-                                >
-                                  <RotateCcw className="size-3" />
-                                  現役に戻す
-                                </Button>
-                              )}
-                            </div>
+                            {s.lastActivity ? (
+                              <div className="leading-tight">
+                                <span className="text-xs font-medium">
+                                  {ACTIVITY_LABEL[s.lastActivity.type]}
+                                </span>
+                                <span className="block text-[10px] text-muted-foreground">
+                                  {formatJoinElapsed(s.lastActivity.at)}
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">—</span>
+                            )}
+                            {statusFilter === "graduated" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 gap-1 text-xs"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  void markAsRonin(s.uid, s.displayName);
+                                }}
+                              >
+                                <RotateCcw className="size-3" />
+                                現役に戻す
+                              </Button>
+                            )}
                           </div>
                         </td>
                       </motion.tr>
