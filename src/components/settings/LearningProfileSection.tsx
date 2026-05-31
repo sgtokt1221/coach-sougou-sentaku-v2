@@ -53,6 +53,7 @@ export function LearningProfileSection() {
     englishCerts: [],
     grade: null,
     school: "",
+    schoolId: null,
   });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -67,6 +68,7 @@ export function LearningProfileSection() {
       englishCerts: profile.englishCerts ?? [],
       grade: profile.grade ?? null,
       school: profile.school ?? "",
+      schoolId: profile.schoolId ?? null,
     });
   }, [profile]);
 
@@ -117,6 +119,7 @@ export function LearningProfileSection() {
         englishCerts: profileData.englishCerts,
         grade: profileData.grade,
         school: profileData.school || undefined,
+        ...(profileData.schoolId ? { schoolId: profileData.schoolId } : {}),
       });
       localStorage.setItem(
         "targetUniversities",

@@ -11,6 +11,7 @@ export async function updateProfile(data: {
   englishCerts?: { type: string; score?: string }[];
   grade?: number | null;
   school?: string;
+  schoolId?: string;
   onboardingCompleted?: boolean;
   academicCategory?: string;
 }): Promise<boolean> {
@@ -27,6 +28,7 @@ export async function updateProfile(data: {
     updateData.gradeUpdatedAt = new Date().toISOString();
   }
   if (data.school !== undefined) updateData.school = data.school;
+  if (data.schoolId !== undefined) updateData.schoolId = data.schoolId;
   if (data.onboardingCompleted !== undefined) updateData.onboardingCompleted = data.onboardingCompleted;
   if (data.academicCategory !== undefined) updateData.academicCategory = data.academicCategory;
 

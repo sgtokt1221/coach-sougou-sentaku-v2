@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { HighSchoolSelect } from "@/components/shared/HighSchoolSelect";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -33,6 +34,7 @@ interface StudentDetailData {
   displayName: string;
   email: string;
   school: string;
+  schoolId?: string;
   grade: number | null;
   managedBy: string;
   managedByName: string;
@@ -60,6 +62,7 @@ export default function SuperadminStudentDetailPage({
   // Editable fields
   const [displayName, setDisplayName] = useState("");
   const [school, setSchool] = useState("");
+  const [schoolId, setSchoolId] = useState<string | null>(null);
   const [grade, setGrade] = useState<string>("");
   const [managedBy, setManagedBy] = useState("");
 
@@ -76,6 +79,7 @@ export default function SuperadminStudentDetailPage({
           setStudent(data);
           setDisplayName(data.displayName);
           setSchool(data.school);
+          setSchoolId(data.schoolId ?? null);
           setGrade(data.grade?.toString() ?? "");
           setManagedBy(data.managedBy || "__none__");
         }
@@ -130,6 +134,7 @@ export default function SuperadminStudentDetailPage({
         body: JSON.stringify({
           displayName,
           school,
+          schoolId,
           grade: grade ? parseInt(grade) : null,
           managedBy: managedBy === "__none__" ? "" : managedBy,
         }),
@@ -255,7 +260,13 @@ export default function SuperadminStudentDetailPage({
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs font-medium">学校</Label>
-              <Input value={school} onChange={(e) => setSchool(e.target.value)} placeholder="学校名" />
+              <HighSchoolSelect
+                value={{ schoolId, schoolName: school }}
+                onChange={(v) => {
+                  setSchool(v.schoolName);
+                  setSchoolId(v.schoolId);
+                }}
+              />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs font-medium">学年</Label>

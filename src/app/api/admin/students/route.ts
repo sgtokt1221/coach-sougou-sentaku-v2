@@ -28,11 +28,12 @@ export async function POST(request: NextRequest) {
   const { uid: callerUid } = authResult;
 
   const body = await request.json();
-  const { email, displayName, password, school, grade, gpa, englishCerts, targetUniversities } = body as {
+  const { email, displayName, password, school, schoolId, grade, gpa, englishCerts, targetUniversities } = body as {
     email: string;
     displayName: string;
     password: string;
     school?: string;
+    schoolId?: string;
     grade?: number;
     gpa?: number;
     englishCerts?: { type: string; score?: string }[];
@@ -66,6 +67,7 @@ export async function POST(request: NextRequest) {
       role: "student",
       plan: "coach",
       school: school ?? "",
+      ...(schoolId ? { schoolId } : {}),
       grade: grade ?? null,
       gpa: gpa ?? null,
       englishCerts: englishCerts ?? [],

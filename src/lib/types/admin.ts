@@ -68,6 +68,8 @@ export interface StudentDetail {
     /** プロフィール画像 URL（未設定は null） */
     photoURL?: string | null;
     school?: string;
+    /** 高校マスタ(highSchools)の ID。編集プリフィル用 */
+    schoolId?: string;
     grade?: number;
     /** grade 入力日時 (ISO)。 表示時の自動加算基準 */
     gradeUpdatedAt?: string;

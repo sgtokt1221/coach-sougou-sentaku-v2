@@ -63,11 +63,12 @@ export async function POST(request: Request) {
   if (authResult instanceof NextResponse) return authResult;
 
   const body = await request.json();
-  const { email, displayName, password, school, grade, managedBy } = body as {
+  const { email, displayName, password, school, schoolId, grade, managedBy } = body as {
     email: string;
     displayName: string;
     password: string;
     school?: string;
+    schoolId?: string;
     grade?: number;
     managedBy?: string;
   };
@@ -99,6 +100,7 @@ export async function POST(request: Request) {
       displayName,
       role: "student",
       school: school ?? "",
+      ...(schoolId ? { schoolId } : {}),
       grade: grade ?? null,
       managedBy: managedBy ?? "",
       ...(organizationId ? { organizationId } : {}),

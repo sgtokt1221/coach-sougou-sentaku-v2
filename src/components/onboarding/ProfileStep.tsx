@@ -14,6 +14,7 @@ import {
 import { Plus, X } from "lucide-react";
 import { useState } from "react";
 import type { EnglishCert } from "@/lib/types/user";
+import { HighSchoolSelect } from "@/components/shared/HighSchoolSelect";
 
 const CERT_TYPES: { value: EnglishCert["type"]; label: string }[] = [
   { value: "EIKEN", label: "英検" },
@@ -49,6 +50,8 @@ export interface ProfileData {
   englishCerts: EnglishCert[];
   grade: number | null;
   school: string;
+  /** 高校マスタの ID。自由入力時は null */
+  schoolId: string | null;
 }
 
 interface Props {
@@ -102,10 +105,11 @@ export function ProfileStep({ data, onChange }: Props) {
       {/* School */}
       <div className="space-y-2">
         <Label>高校名</Label>
-        <Input
-          placeholder="例: 開成高等学校"
-          value={data.school}
-          onChange={(e) => onChange({ ...data, school: e.target.value })}
+        <HighSchoolSelect
+          value={{ schoolId: data.schoolId, schoolName: data.school }}
+          onChange={(v) =>
+            onChange({ ...data, school: v.schoolName, schoolId: v.schoolId })
+          }
         />
       </div>
 

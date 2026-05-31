@@ -66,6 +66,7 @@ import { getInitials } from "@/lib/utils/avatar";
 import { SegmentControl } from "@/components/shared/SegmentControl";
 import { TeacherAssignmentSection } from "@/components/admin/TeacherAssignmentSection";
 import { FloatingStudentChat } from "@/components/chat/FloatingStudentChat";
+import { HighSchoolSelect } from "@/components/shared/HighSchoolSelect";
 import { CommentableEssayText } from "@/components/essay/CommentableEssayText";
 import type { StudentDetail } from "@/lib/types/admin";
 import { getDisplayGrade } from "@/lib/utils/grade";
@@ -471,6 +472,7 @@ function AdminStudentDetailPageInner() {
   const [editOpen, setEditOpen] = useState(false);
   const [editName, setEditName] = useState("");
   const [editSchool, setEditSchool] = useState("");
+  const [editSchoolId, setEditSchoolId] = useState<string | null>(null);
   const [editGrade, setEditGrade] = useState<string>("");
   const [editUniversities, setEditUniversities] = useState<string[]>([]);
   const [editGpa, setEditGpa] = useState("");
@@ -549,6 +551,7 @@ function AdminStudentDetailPageInner() {
     if (!detail) return;
     setEditName(detail.profile.displayName);
     setEditSchool(detail.profile.school ?? "");
+    setEditSchoolId(detail.profile.schoolId ?? null);
     setEditGrade(detail.profile.grade?.toString() ?? "");
     setEditUniversities([...detail.profile.targetUniversities]);
     setEditGpa(detail.profile.gpa?.toString() ?? "");
@@ -567,6 +570,7 @@ function AdminStudentDetailPageInner() {
         body: JSON.stringify({
           displayName: editName,
           school: editSchool || undefined,
+          schoolId: editSchoolId,
           grade: editGrade ? Number(editGrade) : undefined,
           gpa: editGpa ? Number(editGpa) : null,
           englishCerts: editEnglishCerts,
@@ -1102,11 +1106,13 @@ function AdminStudentDetailPageInner() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-school">学校名</Label>
-              <Input
+              <HighSchoolSelect
                 id="edit-school"
-                value={editSchool}
-                onChange={(e) => setEditSchool(e.target.value)}
-                placeholder="学校名を入力"
+                value={{ schoolId: editSchoolId, schoolName: editSchool }}
+                onChange={(v) => {
+                  setEditSchool(v.schoolName);
+                  setEditSchoolId(v.schoolId);
+                }}
               />
             </div>
             <div className="space-y-2">

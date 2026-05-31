@@ -1,0 +1,1448 @@
+[
+  {
+    "id": "osaka-0001",
+    "name": "大阪府立都島工業高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0002",
+    "name": "大阪府立東高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0003",
+    "name": "大阪府立桜宮高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0004",
+    "name": "大阪府立西野田工科高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0005",
+    "name": "大阪府立咲くやこの花中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0006",
+    "name": "大阪府立港高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0007",
+    "name": "大阪府立市岡高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0008",
+    "name": "大阪府立大正白稜高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0009",
+    "name": "大阪府立泉尾工業高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0010",
+    "name": "大阪府立清水谷高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0011",
+    "name": "大阪府立夕陽丘高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0012",
+    "name": "大阪府立高津高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0013",
+    "name": "大阪府立大阪ビジネスフロンティア高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0014",
+    "name": "大阪府立今宮高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0015",
+    "name": "大阪府立淀商業高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0016",
+    "name": "大阪府立柴島高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0017",
+    "name": "大阪府立淀川清流高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0018",
+    "name": "大阪府立大阪わかば高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0019",
+    "name": "大阪府立桃谷高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0020",
+    "name": "大阪府立生野工業高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0021",
+    "name": "大阪府立旭高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0022",
+    "name": "大阪府立淀川工科高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0023",
+    "name": "大阪府立成城高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0024",
+    "name": "大阪府立阿倍野高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0025",
+    "name": "大阪府立住吉高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0026",
+    "name": "大阪府立天王寺高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0027",
+    "name": "大阪府立工芸高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0028",
+    "name": "大阪府立阪南高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0029",
+    "name": "大阪府教育センター附属高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0030",
+    "name": "大阪府立今宮工科高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0031",
+    "name": "大阪府立西成高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0032",
+    "name": "大阪府立東淀川高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0033",
+    "name": "大阪府立北野高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0034",
+    "name": "大阪府立東淀工業高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0035",
+    "name": "大阪府立汎愛高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0036",
+    "name": "大阪府立鶴見商業高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0037",
+    "name": "大阪府立港南造形高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0038",
+    "name": "大阪府立住吉商業高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0039",
+    "name": "大阪府立水都国際中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0040",
+    "name": "大阪府立東住吉高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0041",
+    "name": "大阪府立東住吉総合高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0042",
+    "name": "大阪府立長吉高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0043",
+    "name": "大阪府立桜和高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0044",
+    "name": "大阪府立大手前高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0045",
+    "name": "大阪府立中央高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0046",
+    "name": "大阪府立泉陽高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0047",
+    "name": "大阪府立三国丘高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0048",
+    "name": "大阪府立堺工科高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0049",
+    "name": "堺市立堺高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0050",
+    "name": "大阪府立東百舌鳥高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0051",
+    "name": "大阪府立登美丘高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0052",
+    "name": "大阪府立堺上高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0053",
+    "name": "大阪府立福泉高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0054",
+    "name": "大阪府立鳳高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0055",
+    "name": "大阪府立堺西高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0056",
+    "name": "大阪府立泉北高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0057",
+    "name": "大阪府立堺東高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0058",
+    "name": "大阪府立成美高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0059",
+    "name": "大阪府立金岡高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0060",
+    "name": "大阪府立農芸高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0061",
+    "name": "大阪府立和泉高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0062",
+    "name": "大阪府立久米田高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0063",
+    "name": "大阪府立岸和田高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0064",
+    "name": "岸和田市立産業高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0065",
+    "name": "大阪府立桜塚高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0066",
+    "name": "大阪府立豊島高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0067",
+    "name": "大阪府立刀根山高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0068",
+    "name": "大阪府立豊中高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0069",
+    "name": "大阪府立千里青雲高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0070",
+    "name": "大阪府立池田高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0071",
+    "name": "大阪府立渋谷高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0072",
+    "name": "大阪府立園芸高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0073",
+    "name": "大阪府立北千里高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0074",
+    "name": "大阪府立吹田高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0075",
+    "name": "大阪府立吹田東高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0076",
+    "name": "大阪府立山田高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0077",
+    "name": "大阪府立千里高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0078",
+    "name": "大阪府立泉大津高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0079",
+    "name": "大阪府立芥川高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0080",
+    "name": "大阪府立阿武野高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0081",
+    "name": "大阪府立大冠高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0082",
+    "name": "大阪府立高槻北高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0083",
+    "name": "大阪府立三島高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0084",
+    "name": "大阪府立槻の木高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0085",
+    "name": "大阪府立貝塚南高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0086",
+    "name": "大阪府立貝塚高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0087",
+    "name": "大阪府立守口東高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0088",
+    "name": "大阪府立芦間高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0089",
+    "name": "大阪府立香里丘高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0090",
+    "name": "大阪府立長尾高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0091",
+    "name": "大阪府立枚方高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0092",
+    "name": "大阪府立枚方津田高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0093",
+    "name": "大阪府立枚方なぎさ高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0094",
+    "name": "大阪府立牧野高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0095",
+    "name": "大阪府立いちりつ高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0096",
+    "name": "大阪府立茨木西高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0097",
+    "name": "大阪府立春日丘高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0098",
+    "name": "大阪府立北摂つばさ高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0099",
+    "name": "大阪府立茨木工科高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0100",
+    "name": "大阪府立茨木高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0101",
+    "name": "大阪府立福井高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0102",
+    "name": "大阪府立八尾高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0103",
+    "name": "大阪府立八尾翠翔高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0104",
+    "name": "大阪府立山本高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0105",
+    "name": "大阪府立八尾北高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0106",
+    "name": "大阪府立佐野高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0107",
+    "name": "大阪府立日根野高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0108",
+    "name": "大阪府立佐野工科高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0109",
+    "name": "大阪府立河南高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0110",
+    "name": "大阪府立金剛高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0111",
+    "name": "大阪府立富田林中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0112",
+    "name": "大阪府立北かわち皐が丘高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0113",
+    "name": "大阪府立西寝屋川高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0114",
+    "name": "大阪府立寝屋川高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0115",
+    "name": "大阪府立長野高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0116",
+    "name": "大阪府立大塚高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0117",
+    "name": "大阪府立生野高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0118",
+    "name": "大阪府立松原高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0119",
+    "name": "大阪府立野崎高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0120",
+    "name": "大阪府立緑風冠高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0121",
+    "name": "大阪府立信太高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0122",
+    "name": "大阪府立伯太高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0123",
+    "name": "大阪府立和泉総合高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0124",
+    "name": "大阪府立箕面高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0125",
+    "name": "大阪府立箕面東高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0126",
+    "name": "大阪府立懐風館高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0127",
+    "name": "大阪府立門真西高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0128",
+    "name": "大阪府立門真なみはや高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0129",
+    "name": "大阪府立摂津高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0130",
+    "name": "大阪府立高石高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0131",
+    "name": "大阪府立藤井寺高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0132",
+    "name": "大阪府立藤井寺工科高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0133",
+    "name": "大阪府立花園高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0134",
+    "name": "大阪府立布施高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0135",
+    "name": "大阪府立みどり清朋高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0136",
+    "name": "大阪府立城東工科高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0137",
+    "name": "大阪府立布施工科高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0138",
+    "name": "大阪府立東大阪みらい工科高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0139",
+    "name": "大阪府立枚岡樟風高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0140",
+    "name": "大阪府立布施北高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0141",
+    "name": "東大阪市立日新高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0142",
+    "name": "大阪府立りんくう翔南高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0143",
+    "name": "大阪府立四條畷高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0144",
+    "name": "大阪府立交野高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0145",
+    "name": "大阪府立狭山高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0146",
+    "name": "大阪府立岬高等学校",
+    "prefecture": "大阪府",
+    "kind": "public"
+  },
+  {
+    "id": "osaka-0147",
+    "name": "昇陽中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0148",
+    "name": "上宮高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0149",
+    "name": "四天王寺中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0150",
+    "name": "興國高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0151",
+    "name": "清風中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0152",
+    "name": "大阪夕陽丘学園高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0153",
+    "name": "大阪星光学院中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0154",
+    "name": "YMCA学院高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0155",
+    "name": "東朋学園高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0156",
+    "name": "好文学園女子高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0157",
+    "name": "関西大学北陽中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0158",
+    "name": "大阪成蹊女子高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0159",
+    "name": "プール学院中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0160",
+    "name": "金光藤蔭高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0161",
+    "name": "大阪偕星学園高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0162",
+    "name": "常翔学園中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0163",
+    "name": "大阪信愛学院幼稚園・小学校・中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0164",
+    "name": "開明中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0165",
+    "name": "大阪産業大学附属高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0166",
+    "name": "桃山学院中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0167",
+    "name": "明浄学院高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0168",
+    "name": "あべの翔学高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0169",
+    "name": "帝塚山学院中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0170",
+    "name": "清明学院高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0171",
+    "name": "建国幼・小・中・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0172",
+    "name": "城南学園中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0173",
+    "name": "英真学園高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0174",
+    "name": "大阪金剛インターナショナル小学校・中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0175",
+    "name": "天王寺学館高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0176",
+    "name": "金蘭会中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0177",
+    "name": "ルネサンス大阪高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0178",
+    "name": "大阪つくば開成高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0179",
+    "name": "城星学園小学校・ヴェリタス城星学園高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0180",
+    "name": "大阪女学院中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0181",
+    "name": "相愛中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0182",
+    "name": "追手門学院大手前中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0183",
+    "name": "英風高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0184",
+    "name": "香ヶ丘リベルテ高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0185",
+    "name": "賢明学院幼稚園・小学校・中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0186",
+    "name": "堺リベラル中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0187",
+    "name": "精華高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0188",
+    "name": "大阪商業大学堺高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0189",
+    "name": "初芝立命館中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0190",
+    "name": "八洲学園高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0191",
+    "name": "東大谷高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0192",
+    "name": "帝塚山学院泉ヶ丘中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0193",
+    "name": "近畿大学泉州高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0194",
+    "name": "神須学園高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0195",
+    "name": "梅花中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0196",
+    "name": "大商学園高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0197",
+    "name": "履正社中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0198",
+    "name": "箕面自由学園中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0199",
+    "name": "宣真高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0200",
+    "name": "関西大学第一中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0201",
+    "name": "大阪学院大学高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0202",
+    "name": "高槻中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0203",
+    "name": "金光大阪中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0204",
+    "name": "大阪青凌中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0205",
+    "name": "秋桜高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0206",
+    "name": "大阪国際中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0207",
+    "name": "大阪電気通信大学高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0208",
+    "name": "常翔啓光学園中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0209",
+    "name": "長尾谷高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0210",
+    "name": "関西大倉中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0211",
+    "name": "追手門学院中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0212",
+    "name": "早稲田大阪高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0213",
+    "name": "向陽台高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0214",
+    "name": "金光八尾中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0215",
+    "name": "PL学園中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0216",
+    "name": "利晶学園中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0217",
+    "name": "香里ヌヴェール学院中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0218",
+    "name": "同志社香里中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0219",
+    "name": "大阪暁光高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0220",
+    "name": "清教学園中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0221",
+    "name": "阪南大学高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0222",
+    "name": "四條畷学園小学校・中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0223",
+    "name": "太成学院大学中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0224",
+    "name": "大阪桐蔭中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0225",
+    "name": "箕面学園高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0226",
+    "name": "アサンプション国際小学校・中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0227",
+    "name": "関西福祉科学大学高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0228",
+    "name": "東大阪大学柏原高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0229",
+    "name": "大阪薫英女学院中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0230",
+    "name": "羽衣学園中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0231",
+    "name": "清風南海中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0232",
+    "name": "大阪緑涼高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0233",
+    "name": "四天王寺東中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0234",
+    "name": "樟蔭中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0235",
+    "name": "大阪商業大学高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0236",
+    "name": "アナン学園高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0237",
+    "name": "東大阪大学敬愛高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0238",
+    "name": "関西創価中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0239",
+    "name": "上宮太子高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0240",
+    "name": "近畿大阪高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  },
+  {
+    "id": "osaka-0241",
+    "name": "大阪体育大学浪商中学校・高等学校",
+    "prefecture": "大阪府",
+    "kind": "private"
+  }
+]

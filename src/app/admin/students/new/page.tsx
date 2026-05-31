@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { HighSchoolSelect } from "@/components/shared/HighSchoolSelect";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -36,6 +37,7 @@ interface FormData {
   email: string;
   password: string;
   school: string;
+  schoolId: string | null;
   grade: string;
   gpa: string;
   englishCerts: EnglishCert[];
@@ -55,6 +57,7 @@ export default function AdminStudentNewPage() {
     email: "",
     password: "",
     school: "",
+    schoolId: null,
     grade: "",
     gpa: "",
     englishCerts: [],
@@ -99,6 +102,7 @@ export default function AdminStudentNewPage() {
           email: form.email.trim(),
           password: form.password,
           school: form.school.trim(),
+          ...(form.schoolId ? { schoolId: form.schoolId } : {}),
           grade: form.grade ? Number(form.grade) : undefined,
           gpa: form.gpa ? Number(form.gpa) : undefined,
           englishCerts: form.englishCerts.length > 0 ? form.englishCerts : undefined,
@@ -194,12 +198,15 @@ export default function AdminStudentNewPage() {
 
             <div className="space-y-2">
               <Label htmlFor="school">学校名</Label>
-              <Input
+              <HighSchoolSelect
                 id="school"
-                placeholder="例: 東京都立高校"
-                value={form.school}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, school: e.target.value }))
+                value={{ schoolId: form.schoolId, schoolName: form.school }}
+                onChange={(v) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    school: v.schoolName,
+                    schoolId: v.schoolId,
+                  }))
                 }
               />
             </div>

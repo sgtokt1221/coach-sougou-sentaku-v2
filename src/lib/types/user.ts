@@ -32,6 +32,8 @@ export interface UserProfile {
 export interface StudentProfile extends UserProfile {
   role: "student";
   school?: string;
+  /** 高校マスタ(highSchools)の ID。選択式入力で紐付く。自由入力時は未設定 */
+  schoolId?: string;
   grade?: number;
   /** grade を最後に入力した日時 (ISO)。 4/1 経過で表示時に grade を自動加算するための基準点 */
   gradeUpdatedAt?: string;

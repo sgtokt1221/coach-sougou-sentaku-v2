@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { HighSchoolSelect } from "@/components/shared/HighSchoolSelect";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -25,6 +26,7 @@ export default function NewStudentPage() {
   const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
   const [school, setSchool] = useState("");
+  const [schoolId, setSchoolId] = useState<string | null>(null);
   const [grade, setGrade] = useState("");
   const [managedBy, setManagedBy] = useState("__none__");
   const [admins, setAdmins] = useState<AdminListItem[]>([]);
@@ -65,6 +67,7 @@ export default function NewStudentPage() {
           displayName,
           password,
           school: school || undefined,
+          ...(schoolId ? { schoolId } : {}),
           grade: grade ? parseInt(grade) : undefined,
           managedBy: managedBy === "__none__" ? undefined : managedBy,
         }),
@@ -143,11 +146,13 @@ export default function NewStudentPage() {
               <Label htmlFor="school" className="text-xs font-medium">
                 学校名
               </Label>
-              <Input
+              <HighSchoolSelect
                 id="school"
-                value={school}
-                onChange={(e) => setSchool(e.target.value)}
-                placeholder="東京都立○○高校"
+                value={{ schoolId, schoolName: school }}
+                onChange={(v) => {
+                  setSchool(v.schoolName);
+                  setSchoolId(v.schoolId);
+                }}
               />
             </div>
             <div className="space-y-1.5">

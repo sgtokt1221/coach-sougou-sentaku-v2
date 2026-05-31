@@ -1,0 +1,266 @@
+[
+  {
+    "id": "wakayama-0001",
+    "name": "和歌山県立和歌山高等学校",
+    "prefecture": "和歌山県",
+    "kind": "public"
+  },
+  {
+    "id": "wakayama-0002",
+    "name": "和歌山県立星林高等学校",
+    "prefecture": "和歌山県",
+    "kind": "public"
+  },
+  {
+    "id": "wakayama-0003",
+    "name": "和歌山県立和歌山工業高等学校",
+    "prefecture": "和歌山県",
+    "kind": "public"
+  },
+  {
+    "id": "wakayama-0004",
+    "name": "和歌山県立和歌山商業高等学校",
+    "prefecture": "和歌山県",
+    "kind": "public"
+  },
+  {
+    "id": "wakayama-0005",
+    "name": "和歌山県立和歌山北高等学校",
+    "prefecture": "和歌山県",
+    "kind": "public"
+  },
+  {
+    "id": "wakayama-0006",
+    "name": "和歌山県立和歌山東高等学校",
+    "prefecture": "和歌山県",
+    "kind": "public"
+  },
+  {
+    "id": "wakayama-0007",
+    "name": "和歌山県立桐蔭中学校・高等学校",
+    "prefecture": "和歌山県",
+    "kind": "public"
+  },
+  {
+    "id": "wakayama-0008",
+    "name": "和歌山県立向陽中学校・高等学校",
+    "prefecture": "和歌山県",
+    "kind": "public"
+  },
+  {
+    "id": "wakayama-0009",
+    "name": "和歌山県立きのくに青雲高等学校",
+    "prefecture": "和歌山県",
+    "kind": "public"
+  },
+  {
+    "id": "wakayama-0010",
+    "name": "和歌山県立那賀高等学校",
+    "prefecture": "和歌山県",
+    "kind": "public"
+  },
+  {
+    "id": "wakayama-0011",
+    "name": "和歌山県立粉河高等学校",
+    "prefecture": "和歌山県",
+    "kind": "public"
+  },
+  {
+    "id": "wakayama-0012",
+    "name": "和歌山県立貴志川高等学校",
+    "prefecture": "和歌山県",
+    "kind": "public"
+  },
+  {
+    "id": "wakayama-0013",
+    "name": "和歌山県立古佐田丘中学校・橋本高等学校",
+    "prefecture": "和歌山県",
+    "kind": "public"
+  },
+  {
+    "id": "wakayama-0014",
+    "name": "和歌山県立紀北工業高等学校",
+    "prefecture": "和歌山県",
+    "kind": "public"
+  },
+  {
+    "id": "wakayama-0015",
+    "name": "和歌山県立伊都中央高等学校",
+    "prefecture": "和歌山県",
+    "kind": "public"
+  },
+  {
+    "id": "wakayama-0016",
+    "name": "和歌山県立笠田高等学校",
+    "prefecture": "和歌山県",
+    "kind": "public"
+  },
+  {
+    "id": "wakayama-0017",
+    "name": "和歌山県立紀北農芸高等学校",
+    "prefecture": "和歌山県",
+    "kind": "public"
+  },
+  {
+    "id": "wakayama-0018",
+    "name": "和歌山県立海南高等学校",
+    "prefecture": "和歌山県",
+    "kind": "public"
+  },
+  {
+    "id": "wakayama-0019",
+    "name": "和歌山県立大成高等学校",
+    "prefecture": "和歌山県",
+    "kind": "public"
+  },
+  {
+    "id": "wakayama-0020",
+    "name": "和歌山県立箕島高等学校",
+    "prefecture": "和歌山県",
+    "kind": "public"
+  },
+  {
+    "id": "wakayama-0021",
+    "name": "和歌山県立耐久高等学校",
+    "prefecture": "和歌山県",
+    "kind": "public"
+  },
+  {
+    "id": "wakayama-0022",
+    "name": "和歌山県立有田中央高等学校",
+    "prefecture": "和歌山県",
+    "kind": "public"
+  },
+  {
+    "id": "wakayama-0023",
+    "name": "和歌山県立吉備高等学校",
+    "prefecture": "和歌山県",
+    "kind": "public"
+  },
+  {
+    "id": "wakayama-0024",
+    "name": "和歌山県立紀央館高等学校",
+    "prefecture": "和歌山県",
+    "kind": "public"
+  },
+  {
+    "id": "wakayama-0025",
+    "name": "和歌山県立御坊商工高等学校",
+    "prefecture": "和歌山県",
+    "kind": "public"
+  },
+  {
+    "id": "wakayama-0026",
+    "name": "和歌山県立南部高等学校",
+    "prefecture": "和歌山県",
+    "kind": "public"
+  },
+  {
+    "id": "wakayama-0027",
+    "name": "和歌山県立田辺中学校・高等学校",
+    "prefecture": "和歌山県",
+    "kind": "public"
+  },
+  {
+    "id": "wakayama-0028",
+    "name": "和歌山県立田辺工業高等学校",
+    "prefecture": "和歌山県",
+    "kind": "public"
+  },
+  {
+    "id": "wakayama-0029",
+    "name": "和歌山県立南紀高等学校",
+    "prefecture": "和歌山県",
+    "kind": "public"
+  },
+  {
+    "id": "wakayama-0030",
+    "name": "和歌山県立神島高等学校",
+    "prefecture": "和歌山県",
+    "kind": "public"
+  },
+  {
+    "id": "wakayama-0031",
+    "name": "和歌山県立田辺商業高等学校",
+    "prefecture": "和歌山県",
+    "kind": "public"
+  },
+  {
+    "id": "wakayama-0032",
+    "name": "和歌山県立熊野高等学校",
+    "prefecture": "和歌山県",
+    "kind": "public"
+  },
+  {
+    "id": "wakayama-0033",
+    "name": "和歌山県立串本古座高等学校",
+    "prefecture": "和歌山県",
+    "kind": "public"
+  },
+  {
+    "id": "wakayama-0034",
+    "name": "和歌山県立新宮高等学校",
+    "prefecture": "和歌山県",
+    "kind": "public"
+  },
+  {
+    "id": "wakayama-0035",
+    "name": "和歌山県立新翔高等学校",
+    "prefecture": "和歌山県",
+    "kind": "public"
+  },
+  {
+    "id": "wakayama-0036",
+    "name": "和歌山県立新宮商業高等学校",
+    "prefecture": "和歌山県",
+    "kind": "public"
+  },
+  {
+    "id": "wakayama-0037",
+    "name": "和歌山市立和歌山高等学校",
+    "prefecture": "和歌山県",
+    "kind": "public"
+  },
+  {
+    "id": "wakayama-0038",
+    "name": "智辯学園和歌山小学校・中学校・高等学校",
+    "prefecture": "和歌山県",
+    "kind": "private"
+  },
+  {
+    "id": "wakayama-0039",
+    "name": "和歌山信愛中学校・高等学校",
+    "prefecture": "和歌山県",
+    "kind": "private"
+  },
+  {
+    "id": "wakayama-0040",
+    "name": "初芝橋本中学校・高等学校",
+    "prefecture": "和歌山県",
+    "kind": "private"
+  },
+  {
+    "id": "wakayama-0041",
+    "name": "高野山高等学校",
+    "prefecture": "和歌山県",
+    "kind": "private"
+  },
+  {
+    "id": "wakayama-0042",
+    "name": "慶風高等学校",
+    "prefecture": "和歌山県",
+    "kind": "private"
+  },
+  {
+    "id": "wakayama-0043",
+    "name": "りら創造芸術高等学校",
+    "prefecture": "和歌山県",
+    "kind": "private"
+  },
+  {
+    "id": "wakayama-0044",
+    "name": "和歌山南陵高等学校",
+    "prefecture": "和歌山県",
+    "kind": "private"
+  }
+]

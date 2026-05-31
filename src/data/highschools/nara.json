@@ -1,0 +1,500 @@
+[
+  {
+    "id": "nara-0001",
+    "name": "奈良女子大学附属中等教育学校",
+    "prefecture": "奈良県",
+    "kind": "national"
+  },
+  {
+    "id": "nara-0002",
+    "name": "十津川高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0003",
+    "name": "奈良県立奈良高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0004",
+    "name": "奈良県立高円芸術高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0005",
+    "name": "奈良県立奈良商工高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0006",
+    "name": "奈良県立山辺高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0007",
+    "name": "奈良県立国際中学校・高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0008",
+    "name": "奈良県立高田高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0009",
+    "name": "奈良県立郡山高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0010",
+    "name": "奈良県立大和中央高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0011",
+    "name": "奈良県立添上高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0012",
+    "name": "奈良県立二階堂高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0013",
+    "name": "奈良県立畝傍高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0014",
+    "name": "奈良県立橿原高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0015",
+    "name": "奈良県立桜井高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0016",
+    "name": "奈良県立商業高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0017",
+    "name": "奈良県立五條高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0018",
+    "name": "奈良県立御所実業高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0019",
+    "name": "奈良県立青翔中学校・高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0020",
+    "name": "奈良県立生駒高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0021",
+    "name": "奈良県立奈良北高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0022",
+    "name": "奈良県立香芝高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0023",
+    "name": "奈良県立宇陀高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0024",
+    "name": "奈良県立王寺工業高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0025",
+    "name": "奈良県立大和広陵高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0026",
+    "name": "奈良県立西和清陵高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0027",
+    "name": "奈良県立法隆寺国際高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0028",
+    "name": "奈良県立磯城野高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0029",
+    "name": "奈良県立高取国際高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0030",
+    "name": "奈良県立奈良南高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0031",
+    "name": "奈良県立十津川高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0032",
+    "name": "奈良市立一条高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0033",
+    "name": "大和高田市立高田商業高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0034",
+    "name": "五條市立西吉野農業高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0035",
+    "name": "奈良県立大学附属高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0036",
+    "name": "育英西中学校・高等学校",
+    "prefecture": "奈良県",
+    "kind": "private"
+  },
+  {
+    "id": "nara-0037",
+    "name": "関西文化芸術高等学校",
+    "prefecture": "奈良県",
+    "kind": "private"
+  },
+  {
+    "id": "nara-0038",
+    "name": "帝塚山中学校・高等学校",
+    "prefecture": "奈良県",
+    "kind": "private"
+  },
+  {
+    "id": "nara-0039",
+    "name": "東大寺学園中学校・高等学校",
+    "prefecture": "奈良県",
+    "kind": "private"
+  },
+  {
+    "id": "nara-0040",
+    "name": "奈良育英中学校・高等学校",
+    "prefecture": "奈良県",
+    "kind": "private"
+  },
+  {
+    "id": "nara-0041",
+    "name": "奈良学園登美ヶ丘中学校・高等学校",
+    "prefecture": "奈良県",
+    "kind": "private"
+  },
+  {
+    "id": "nara-0042",
+    "name": "奈良女子高等学校",
+    "prefecture": "奈良県",
+    "kind": "private"
+  },
+  {
+    "id": "nara-0043",
+    "name": "奈良大学附属高等学校",
+    "prefecture": "奈良県",
+    "kind": "private"
+  },
+  {
+    "id": "nara-0044",
+    "name": "奈良文化高等学校",
+    "prefecture": "奈良県",
+    "kind": "private"
+  },
+  {
+    "id": "nara-0045",
+    "name": "奈良学園中学校・高等学校",
+    "prefecture": "奈良県",
+    "kind": "private"
+  },
+  {
+    "id": "nara-0046",
+    "name": "飛鳥未来高等学校",
+    "prefecture": "奈良県",
+    "kind": "private"
+  },
+  {
+    "id": "nara-0047",
+    "name": "天理高等学校",
+    "prefecture": "奈良県",
+    "kind": "private"
+  },
+  {
+    "id": "nara-0048",
+    "name": "橿原学院高等学校",
+    "prefecture": "奈良県",
+    "kind": "private"
+  },
+  {
+    "id": "nara-0049",
+    "name": "聖心学園中等教育学校",
+    "prefecture": "奈良県",
+    "kind": "private"
+  },
+  {
+    "id": "nara-0050",
+    "name": "関西中央高等学校",
+    "prefecture": "奈良県",
+    "kind": "private"
+  },
+  {
+    "id": "nara-0051",
+    "name": "智辯学園中学校・高等学校",
+    "prefecture": "奈良県",
+    "kind": "private"
+  },
+  {
+    "id": "nara-0052",
+    "name": "日本教育学院高等学校",
+    "prefecture": "奈良県",
+    "kind": "private"
+  },
+  {
+    "id": "nara-0053",
+    "name": "西大和学園中学校・高等学校",
+    "prefecture": "奈良県",
+    "kind": "private"
+  },
+  {
+    "id": "nara-0054",
+    "name": "奈良県立耳成高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0055",
+    "name": "奈良県立城内高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0056",
+    "name": "奈良県立上牧高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0057",
+    "name": "奈良県立信貴ケ丘高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0058",
+    "name": "奈良県立榛原高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0059",
+    "name": "奈良県立室生高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0060",
+    "name": "奈良県立榛生昇陽高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0061",
+    "name": "奈良県立富雄高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0062",
+    "name": "奈良県立北大和高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0063",
+    "name": "奈良県立斑鳩高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0064",
+    "name": "奈良県立片桐高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0065",
+    "name": "奈良県立北和女子高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0066",
+    "name": "奈良県立田原本農業高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0067",
+    "name": "奈良県立桜井商業高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0068",
+    "name": "奈良県立志貴高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0069",
+    "name": "奈良県立奈良情報商業高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0070",
+    "name": "奈良県立広陵高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0071",
+    "name": "奈良県立高田東高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0072",
+    "name": "奈良県立奈良商業高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0073",
+    "name": "奈良県立奈良工業高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0074",
+    "name": "奈良県立奈良朱雀高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0075",
+    "name": "奈良県立御所工業高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0076",
+    "name": "奈良県立御所東高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0077",
+    "name": "奈良県立大淀高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0078",
+    "name": "奈良県立吉野高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0079",
+    "name": "奈良県立大宇陀高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0080",
+    "name": "奈良県立平城高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0081",
+    "name": "奈良県立登美ケ丘高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0082",
+    "name": "奈良県立西の京高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  },
+  {
+    "id": "nara-0083",
+    "name": "天理教校学園高等学校",
+    "prefecture": "奈良県",
+    "kind": "public"
+  }
+]

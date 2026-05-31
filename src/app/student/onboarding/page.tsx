@@ -32,6 +32,7 @@ export default function OnboardingPage() {
     englishCerts: [],
     grade: null,
     school: "",
+    schoolId: null,
   });
 
   // Pre-populate from existing profile (e.g. admin-set data)
@@ -44,6 +45,7 @@ export default function OnboardingPage() {
       englishCerts: profile.englishCerts?.length ? profile.englishCerts : prev.englishCerts,
       grade: profile.grade ?? prev.grade,
       school: profile.school || prev.school,
+      schoolId: profile.schoolId ?? prev.schoolId,
     }));
     if (profile.targetUniversities?.length) {
       setSelectedUniversities(profile.targetUniversities);
@@ -62,6 +64,7 @@ export default function OnboardingPage() {
         englishCerts: profileData.englishCerts,
         grade: profileData.grade,
         school: profileData.school || undefined,
+        ...(profileData.schoolId ? { schoolId: profileData.schoolId } : {}),
         onboardingCompleted: true,
       });
     } catch {
@@ -74,6 +77,7 @@ export default function OnboardingPage() {
       englishCerts: profileData.englishCerts,
       grade: profileData.grade,
       school: profileData.school,
+      schoolId: profileData.schoolId,
     }));
     refreshProfile();
     setSaving(false);

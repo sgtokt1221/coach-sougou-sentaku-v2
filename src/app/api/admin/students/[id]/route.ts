@@ -415,6 +415,7 @@ export async function GET(
         email: userData.email ?? "",
         photoURL: userData.photoURL ?? null,
         school: userData.school,
+        schoolId: userData.schoolId,
         grade: userData.grade,
         gradeUpdatedAt: userData.gradeUpdatedAt,
         isRonin: userData.isRonin === true,
@@ -456,7 +457,7 @@ export async function GET(
   }
 }
 
-const ALLOWED_FIELDS = ["displayName", "school", "grade", "gpa", "englishCerts", "targetUniversities", "sessionsPerMonth", "isRonin"] as const;
+const ALLOWED_FIELDS = ["displayName", "school", "schoolId", "grade", "gpa", "englishCerts", "targetUniversities", "sessionsPerMonth", "isRonin"] as const;
 
 export async function PUT(
   request: NextRequest,

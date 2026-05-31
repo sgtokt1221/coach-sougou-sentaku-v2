@@ -62,6 +62,7 @@ export async function GET(
       email: data.email ?? "",
       role: data.role,
       school: data.school ?? "",
+      schoolId: data.schoolId,
       grade: data.grade ?? null,
       managedBy: data.managedBy ?? "",
       managedByName,
@@ -89,6 +90,7 @@ export async function PATCH(
   const updates: Record<string, unknown> = {};
   if (body.displayName !== undefined) updates.displayName = body.displayName;
   if (body.school !== undefined) updates.school = body.school;
+  if (body.schoolId !== undefined) updates.schoolId = body.schoolId;
   if (body.grade !== undefined) updates.grade = body.grade;
   if (body.targetUniversities !== undefined) updates.targetUniversities = body.targetUniversities;
   updates.updatedAt = new Date();

@@ -1,0 +1,578 @@
+[
+  {
+    "id": "kyoto-0001",
+    "name": "京都教育大学附属高等学校",
+    "prefecture": "京都府",
+    "kind": "national"
+  },
+  {
+    "id": "kyoto-0002",
+    "name": "京都府立山城高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0003",
+    "name": "京都府立清明高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0004",
+    "name": "京都市立紫野高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0005",
+    "name": "京都府立鴨沂高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0006",
+    "name": "京都府立北稜高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0007",
+    "name": "京都府立朱雀高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0008",
+    "name": "京都市立堀川高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0009",
+    "name": "京都市立西京高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0010",
+    "name": "京都市立京都堀川音楽高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0011",
+    "name": "京都府立洛東高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0012",
+    "name": "京都市立日吉ヶ丘高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0013",
+    "name": "京都市立美術工芸高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0014",
+    "name": "京都府立鳥羽高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0015",
+    "name": "京都市立開建高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0016",
+    "name": "京都府立嵯峨野高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0017",
+    "name": "京都府立北嵯峨高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0018",
+    "name": "京都府立桂高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0019",
+    "name": "京都府立洛西高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0020",
+    "name": "京都府立桃山高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0021",
+    "name": "京都府立東稜高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0022",
+    "name": "京都府立洛水高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0023",
+    "name": "京都府立京都すばる高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0024",
+    "name": "京都市立京都工学院高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0025",
+    "name": "京都市立京都奏和高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0026",
+    "name": "京都府立向陽高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0027",
+    "name": "京都府立乙訓高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0028",
+    "name": "京都府立西乙訓高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0029",
+    "name": "京都府立城南菱創高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0030",
+    "name": "京都府立東宇治高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0031",
+    "name": "京都府立莵道高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0032",
+    "name": "京都府立城陽高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0033",
+    "name": "京都府立西城陽高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0034",
+    "name": "京都府立京都八幡高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0035",
+    "name": "京都府立久御山高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0036",
+    "name": "京都府立田辺高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0037",
+    "name": "京都府立木津高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0038",
+    "name": "京都府立北桑田高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0039",
+    "name": "京都府立亀岡高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0040",
+    "name": "京都府立南丹高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0041",
+    "name": "京都府立農芸高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0042",
+    "name": "京都府立須知高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0043",
+    "name": "京都府立綾部高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0044",
+    "name": "京都府立工業高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0045",
+    "name": "京都府立大江高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0046",
+    "name": "京都府立東舞鶴高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0047",
+    "name": "京都府立西舞鶴高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0048",
+    "name": "京都府立海洋高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0049",
+    "name": "京都府立峰山高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0050",
+    "name": "京都府立宮津天橋高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0051",
+    "name": "京都府立宮津高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0052",
+    "name": "京都府立加悦谷高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0053",
+    "name": "京都府立丹後緑風高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0054",
+    "name": "京都府立網野高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0055",
+    "name": "京都府立久美浜高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0056",
+    "name": "京都府立清新高等学校",
+    "prefecture": "京都府",
+    "kind": "public"
+  },
+  {
+    "id": "kyoto-0057",
+    "name": "一燈園小学校・中学校・高等学校",
+    "prefecture": "京都府",
+    "kind": "private"
+  },
+  {
+    "id": "kyoto-0058",
+    "name": "華頂女子高等学校",
+    "prefecture": "京都府",
+    "kind": "private"
+  },
+  {
+    "id": "kyoto-0059",
+    "name": "京都外大西高等学校",
+    "prefecture": "京都府",
+    "kind": "private"
+  },
+  {
+    "id": "kyoto-0060",
+    "name": "京都光華中学校・高等学校",
+    "prefecture": "京都府",
+    "kind": "private"
+  },
+  {
+    "id": "kyoto-0061",
+    "name": "京都国際中学校・高等学校",
+    "prefecture": "京都府",
+    "kind": "private"
+  },
+  {
+    "id": "kyoto-0062",
+    "name": "京都産業大学附属中学校・高等学校",
+    "prefecture": "京都府",
+    "kind": "private"
+  },
+  {
+    "id": "kyoto-0063",
+    "name": "京都女子中学校・高等学校",
+    "prefecture": "京都府",
+    "kind": "private"
+  },
+  {
+    "id": "kyoto-0064",
+    "name": "京都精華学園中学校・高等学校",
+    "prefecture": "京都府",
+    "kind": "private"
+  },
+  {
+    "id": "kyoto-0065",
+    "name": "京都成章高等学校",
+    "prefecture": "京都府",
+    "kind": "private"
+  },
+  {
+    "id": "kyoto-0066",
+    "name": "京都聖母学院中学校・高等学校",
+    "prefecture": "京都府",
+    "kind": "private"
+  },
+  {
+    "id": "kyoto-0067",
+    "name": "京都先端科学大学付属中学校・高等学校",
+    "prefecture": "京都府",
+    "kind": "private"
+  },
+  {
+    "id": "kyoto-0068",
+    "name": "京都橘中学校・高等学校",
+    "prefecture": "京都府",
+    "kind": "private"
+  },
+  {
+    "id": "kyoto-0069",
+    "name": "京都つくば開成高等学校",
+    "prefecture": "京都府",
+    "kind": "private"
+  },
+  {
+    "id": "kyoto-0070",
+    "name": "京都文教中学校・高等学校",
+    "prefecture": "京都府",
+    "kind": "private"
+  },
+  {
+    "id": "kyoto-0071",
+    "name": "京都長尾谷高等学校",
+    "prefecture": "京都府",
+    "kind": "private"
+  },
+  {
+    "id": "kyoto-0072",
+    "name": "京都美山高等学校",
+    "prefecture": "京都府",
+    "kind": "private"
+  },
+  {
+    "id": "kyoto-0073",
+    "name": "京都明徳高等学校",
+    "prefecture": "京都府",
+    "kind": "private"
+  },
+  {
+    "id": "kyoto-0074",
+    "name": "京都両洋高等学校",
+    "prefecture": "京都府",
+    "kind": "private"
+  },
+  {
+    "id": "kyoto-0075",
+    "name": "同志社中学校・高等学校",
+    "prefecture": "京都府",
+    "kind": "private"
+  },
+  {
+    "id": "kyoto-0076",
+    "name": "同志社女子中学校・高等学校",
+    "prefecture": "京都府",
+    "kind": "private"
+  },
+  {
+    "id": "kyoto-0077",
+    "name": "洛星ノートルダム女学院中学高等学校",
+    "prefecture": "京都府",
+    "kind": "private"
+  },
+  {
+    "id": "kyoto-0078",
+    "name": "花園中学校・高等学校",
+    "prefecture": "京都府",
+    "kind": "private"
+  },
+  {
+    "id": "kyoto-0079",
+    "name": "東山中学校・高等学校",
+    "prefecture": "京都府",
+    "kind": "private"
+  },
+  {
+    "id": "kyoto-0080",
+    "name": "平安女学院中学校・高等学校",
+    "prefecture": "京都府",
+    "kind": "private"
+  },
+  {
+    "id": "kyoto-0081",
+    "name": "洛星中学校・高等学校",
+    "prefecture": "京都府",
+    "kind": "private"
+  },
+  {
+    "id": "kyoto-0082",
+    "name": "洛陽総合高等学校",
+    "prefecture": "京都府",
+    "kind": "private"
+  },
+  {
+    "id": "kyoto-0083",
+    "name": "龍谷大学付属平安中学校・高等学校",
+    "prefecture": "京都府",
+    "kind": "private"
+  },
+  {
+    "id": "kyoto-0084",
+    "name": "京都芸術高等学校",
+    "prefecture": "京都府",
+    "kind": "private"
+  },
+  {
+    "id": "kyoto-0085",
+    "name": "京都翔英高等学校",
+    "prefecture": "京都府",
+    "kind": "private"
+  },
+  {
+    "id": "kyoto-0086",
+    "name": "立命館宇治中学校・高等学校",
+    "prefecture": "京都府",
+    "kind": "private"
+  },
+  {
+    "id": "kyoto-0087",
+    "name": "京都西山高等学校",
+    "prefecture": "京都府",
+    "kind": "private"
+  },
+  {
+    "id": "kyoto-0088",
+    "name": "立命館中学校・高等学校",
+    "prefecture": "京都府",
+    "kind": "private"
+  },
+  {
+    "id": "kyoto-0089",
+    "name": "同志社国際中学校・高等学校",
+    "prefecture": "京都府",
+    "kind": "private"
+  },
+  {
+    "id": "kyoto-0090",
+    "name": "京都廣学館高等学校",
+    "prefecture": "京都府",
+    "kind": "private"
+  },
+  {
+    "id": "kyoto-0091",
+    "name": "京都聖カタリナ高等学校",
+    "prefecture": "京都府",
+    "kind": "private"
+  },
+  {
+    "id": "kyoto-0092",
+    "name": "京都共栄学園中学校・高等学校",
+    "prefecture": "京都府",
+    "kind": "private"
+  },
+  {
+    "id": "kyoto-0093",
+    "name": "福知山成美高等学校",
+    "prefecture": "京都府",
+    "kind": "private"
+  },
+  {
+    "id": "kyoto-0094",
+    "name": "福知山淑徳高等学校",
+    "prefecture": "京都府",
+    "kind": "private"
+  },
+  {
+    "id": "kyoto-0095",
+    "name": "日星高等学校",
+    "prefecture": "京都府",
+    "kind": "private"
+  },
+  {
+    "id": "kyoto-0096",
+    "name": "京都暁星高等学校",
+    "prefecture": "京都府",
+    "kind": "private"
+  }
+]
