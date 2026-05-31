@@ -77,7 +77,7 @@ export default function TeacherDashboard() {
         </Card>
 
         <Card className="hover:bg-accent/50 transition-colors cursor-pointer"
-              onClick={() => router.push("/teacher/students")}>
+              onClick={() => router.push("/teacher/roster")}>
           <CardContent className="flex items-center p-6">
             <Users className="h-8 w-8 text-primary mr-4" />
             <div>
