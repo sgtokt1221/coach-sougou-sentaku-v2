@@ -242,7 +242,8 @@
     "id": "nara-0036",
     "name": "育英西中学校・高等学校",
     "prefecture": "奈良県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 64
   },
   {
     "id": "nara-0037",
@@ -254,7 +255,8 @@
     "id": "nara-0038",
     "name": "帝塚山中学校・高等学校",
     "prefecture": "奈良県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 72
   },
   {
     "id": "nara-0039",
@@ -266,7 +268,8 @@
     "id": "nara-0040",
     "name": "奈良育英中学校・高等学校",
     "prefecture": "奈良県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 61
   },
   {
     "id": "nara-0041",
@@ -299,7 +302,8 @@
     "id": "nara-0045",
     "name": "奈良学園中学校・高等学校",
     "prefecture": "奈良県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 70
   },
   {
     "id": "nara-0046",
@@ -337,7 +341,8 @@
     "id": "nara-0051",
     "name": "智辯学園中学校・高等学校",
     "prefecture": "奈良県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 62
   },
   {
     "id": "nara-0052",
@@ -349,7 +354,8 @@
     "id": "nara-0053",
     "name": "西大和学園中学校・高等学校",
     "prefecture": "奈良県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 75
   },
   {
     "id": "nara-0054",

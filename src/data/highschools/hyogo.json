@@ -928,7 +928,8 @@
     "id": "hyogo-0137",
     "name": "兵庫県立大学附属中学校・高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 58
   },
   {
     "id": "hyogo-0138",
@@ -1099,25 +1100,29 @@
     "id": "hyogo-0164",
     "name": "芦屋学園中学校・高等学校",
     "prefecture": "兵庫県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 50
   },
   {
     "id": "hyogo-0165",
     "name": "仁川学院中学校・高等学校",
     "prefecture": "兵庫県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 62
   },
   {
     "id": "hyogo-0166",
     "name": "雲雀丘学園中学校・高等学校",
     "prefecture": "兵庫県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 64
   },
   {
     "id": "hyogo-0167",
     "name": "園田学園中学校・高等学校",
     "prefecture": "兵庫県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 52
   },
   {
     "id": "hyogo-0168",
@@ -1130,13 +1135,15 @@
     "id": "hyogo-0169",
     "name": "啓明学院中学校・高等学校",
     "prefecture": "兵庫県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 61
   },
   {
     "id": "hyogo-0170",
     "name": "神戸学院大学附属中学校・高等学校",
     "prefecture": "兵庫県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 57
   },
   {
     "id": "hyogo-0171",
@@ -1177,13 +1184,15 @@
     "id": "hyogo-0176",
     "name": "神戸龍谷中学校・高等学校",
     "prefecture": "兵庫県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 59
   },
   {
     "id": "hyogo-0177",
     "name": "夙川中学校・高等学校",
     "prefecture": "兵庫県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 55
   },
   {
     "id": "hyogo-0178",
@@ -1196,19 +1205,22 @@
     "id": "hyogo-0179",
     "name": "須磨学園中学校・高等学校",
     "prefecture": "兵庫県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 70
   },
   {
     "id": "hyogo-0180",
     "name": "滝川第二中学校・高等学校",
     "prefecture": "兵庫県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 64
   },
   {
     "id": "hyogo-0181",
     "name": "滝川中学校・高等学校",
     "prefecture": "兵庫県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 64
   },
   {
     "id": "hyogo-0182",
@@ -1234,7 +1246,8 @@
     "id": "hyogo-0185",
     "name": "三田学園中学校・高等学校",
     "prefecture": "兵庫県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 61
   },
   {
     "id": "hyogo-0186",
@@ -1246,13 +1259,15 @@
     "id": "hyogo-0187",
     "name": "白陵中学校・高等学校",
     "prefecture": "兵庫県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 73
   },
   {
     "id": "hyogo-0188",
     "name": "東洋大学附属姫路中学校・高等学校",
     "prefecture": "兵庫県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 59
   },
   {
     "id": "hyogo-0189",
@@ -1277,7 +1292,8 @@
     "id": "hyogo-0192",
     "name": "甲南中学校・高等学校",
     "prefecture": "兵庫県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 60
   },
   {
     "id": "hyogo-0193",
@@ -1295,13 +1311,15 @@
     "id": "hyogo-0195",
     "name": "灘中学校・高等学校",
     "prefecture": "兵庫県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 78
   },
   {
     "id": "hyogo-0196",
     "name": "報徳学園中学校・高等学校",
     "prefecture": "兵庫県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 62
   },
   {
     "id": "hyogo-0197",
@@ -1313,19 +1331,22 @@
     "id": "hyogo-0198",
     "name": "愛徳学園中学校・高等学校",
     "prefecture": "兵庫県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 55
   },
   {
     "id": "hyogo-0199",
     "name": "賢明女子学院中学校・高等学校",
     "prefecture": "兵庫県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 57
   },
   {
     "id": "hyogo-0200",
     "name": "甲子園学院中学校・高等学校",
     "prefecture": "兵庫県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 51
   },
   {
     "id": "hyogo-0201",
@@ -1337,7 +1358,8 @@
     "id": "hyogo-0202",
     "name": "神戸国際中学校・高等学校",
     "prefecture": "兵庫県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 59
   },
   {
     "id": "hyogo-0203",
@@ -1369,19 +1391,22 @@
     "id": "hyogo-0207",
     "name": "姫路女学院中学校・高等学校",
     "prefecture": "兵庫県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 54
   },
   {
     "id": "hyogo-0208",
     "name": "武庫川女子大学附属中学校・高等学校",
     "prefecture": "兵庫県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 61
   },
   {
     "id": "hyogo-0209",
     "name": "百合学院中学校・高等学校",
     "prefecture": "兵庫県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 52
   },
   {
     "id": "hyogo-0210",
