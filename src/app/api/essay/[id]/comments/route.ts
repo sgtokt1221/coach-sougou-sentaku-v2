@@ -88,6 +88,7 @@ export async function POST(
 
     const callerDoc = await adminDb.doc(`users/${uid}`).get();
     const callerName = (callerDoc.data()?.displayName as string) ?? "担当者";
+    const callerPhotoURL = callerDoc.data()?.photoURL as string | undefined;
 
     const now = new Date();
     const newComment: EssayInlineComment = {
@@ -129,6 +130,7 @@ export async function POST(
       createdAt: now,
       read: false,
       reference,
+      ...(callerPhotoURL ? { createdByPhotoURL: callerPhotoURL } : {}),
       ...(isTeacher ? { teacherId: uid } : {}),
     };
     await adminDb.collection(`users/${studentId}/${subcollection}`).add(feedbackData);

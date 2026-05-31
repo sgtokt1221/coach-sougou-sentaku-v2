@@ -76,6 +76,7 @@ export function useFeedbackThread(
             message: data.message ?? "",
             createdBy,
             createdByName: data.createdByName ?? "",
+            createdByPhotoURL: data.createdByPhotoURL ?? undefined,
             createdAt:
               data.createdAt?.toDate?.()?.toISOString() ??
               (typeof data.createdAt === "string"

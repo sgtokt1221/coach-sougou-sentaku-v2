@@ -45,6 +45,7 @@ export async function POST(request: NextRequest) {
 
     const adminDoc = await adminDb.doc(`users/${uid}`).get();
     const adminName = (adminDoc.data()?.displayName as string) ?? "管理者";
+    const adminPhotoURL = adminDoc.data()?.photoURL as string | undefined;
 
     // 宛先を解決
     const audience = body.audience;
@@ -113,6 +114,7 @@ export async function POST(request: NextRequest) {
           createdAt: now,
           read: false,
           broadcast: true,
+          ...(adminPhotoURL ? { createdByPhotoURL: adminPhotoURL } : {}),
           ...(attachments.length > 0 ? { attachments } : {}),
         });
 

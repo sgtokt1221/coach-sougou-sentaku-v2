@@ -39,6 +39,8 @@ export interface AdminFeedback {
   message: string;
   createdBy: string;
   createdByName: string;
+  /** 送信者のアバター画像URL (デノーマライズ保存)。チャットの相手アイコン表示に使う */
+  createdByPhotoURL?: string;
   createdAt: string;
   read: boolean;
   /** 添付ファイル (任意) */

@@ -247,7 +247,7 @@ export function ChatThread({
                 {!mine && (
                   <Avatar size="sm" className="shrink-0">
                     <AvatarImage
-                      src={otherPhotoURL ?? undefined}
+                      src={m.createdByPhotoURL ?? otherPhotoURL ?? undefined}
                       alt={otherName ?? m.createdByName}
                     />
                     <AvatarFallback>

@@ -176,6 +176,9 @@ export async function POST(
       createdByName: adminName,
       createdAt: now,
       read: false,
+      ...(adminDoc.data()?.photoURL
+        ? { createdByPhotoURL: adminDoc.data()!.photoURL as string }
+        : {}),
       ...(attachments.length > 0 ? { attachments } : {}),
       ...(reference ? { reference } : {}),
     };

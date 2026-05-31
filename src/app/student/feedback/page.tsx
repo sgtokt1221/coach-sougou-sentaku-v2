@@ -148,7 +148,14 @@ function TeacherTab({
       )}
       {activeId && (
         <div className="min-h-0 flex-1">
-          <TeacherThread uid={uid} teacherId={activeId} />
+          <TeacherThread
+            uid={uid}
+            teacherId={activeId}
+            otherName={teachers.find((t) => t.teacherId === activeId)?.displayName}
+            otherPhotoURL={
+              teachers.find((t) => t.teacherId === activeId)?.photoURL ?? null
+            }
+          />
         </div>
       )}
     </div>
@@ -156,7 +163,17 @@ function TeacherTab({
 }
 
 /** 生徒↔特定講師のスレッド */
-function TeacherThread({ uid, teacherId }: { uid?: string; teacherId: string }) {
+function TeacherThread({
+  uid,
+  teacherId,
+  otherName,
+  otherPhotoURL,
+}: {
+  uid?: string;
+  teacherId: string;
+  otherName?: string;
+  otherPhotoURL?: string | null;
+}) {
   const { messages, loading } = useFeedbackThread(uid, {
     subcollection: "teacherFeedback",
     teacherId,
@@ -196,6 +213,8 @@ function TeacherThread({ uid, teacherId }: { uid?: string; teacherId: string }) 
         currentRole="student"
         onSend={handleSend}
         loading={loading}
+        otherName={otherName}
+        otherPhotoURL={otherPhotoURL}
         emptyText="担当講師とのやり取りがここに表示されます"
       />
     </div>

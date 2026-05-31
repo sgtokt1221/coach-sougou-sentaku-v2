@@ -76,6 +76,9 @@ export async function POST(
       createdByName: teacherName,
       createdAt: now,
       read: false,
+      ...(teacherDoc.data()?.photoURL
+        ? { createdByPhotoURL: teacherDoc.data()!.photoURL as string }
+        : {}),
       teacherId: uid,
       ...(attachments.length > 0 ? { attachments } : {}),
       ...(reference ? { reference } : {}),

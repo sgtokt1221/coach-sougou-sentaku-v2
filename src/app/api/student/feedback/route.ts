@@ -123,6 +123,9 @@ export async function POST(request: NextRequest) {
       createdByName: studentName,
       createdAt: now,
       read: false,
+      ...(userData?.photoURL
+        ? { createdByPhotoURL: userData.photoURL as string }
+        : {}),
       ...(attachments.length > 0 ? { attachments } : {}),
     };
 
