@@ -82,7 +82,7 @@ export function TeacherStudentAssignment({
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <Users className="size-4" />
-          担当生徒
+          担当生徒の割り当て
         </CardTitle>
         <p className="text-xs text-muted-foreground">
           割り当てた生徒は {teacherName} 先生が学習状況を閲覧でき、メッセージのやり取りもできるようになります。

@@ -92,7 +92,14 @@ export function TeacherAssignmentSection({
                 disabled={saving}
               >
                 <SelectTrigger className="w-full max-w-xs">
-                  <SelectValue placeholder="講師を選択" />
+                  <SelectValue placeholder="講師を選択">
+                    {(value: string) =>
+                      value === UNASSIGNED
+                        ? "未割当"
+                        : (teachers ?? []).find((t) => t.uid === value)
+                            ?.displayName ?? "講師を選択"
+                    }
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={UNASSIGNED}>未割当</SelectItem>

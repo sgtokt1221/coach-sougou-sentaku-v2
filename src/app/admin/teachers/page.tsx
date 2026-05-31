@@ -79,11 +79,16 @@ export default function AdminTeachersPage() {
     setExpandedTeacher(teacherUid);
     if (!studentsByTeacher[teacherUid]) {
       try {
-        const res = await authFetch(`/api/admin/students?managedBy=${teacherUid}`);
-        const data = await res.json();
-        const students = (data as { uid: string; displayName: string; email: string }[]).map(
-          (s) => ({ uid: s.uid, displayName: s.displayName, email: s.email })
-        );
+        // 担当生徒は assignedTeacherId ベース。講師詳細APIの managedStudents を使う
+        const res = await authFetch(`/api/admin/teachers/${teacherUid}`);
+        const data = (await res.json()) as {
+          managedStudents?: { uid: string; displayName: string; email: string }[];
+        };
+        const students = (data.managedStudents ?? []).map((s) => ({
+          uid: s.uid,
+          displayName: s.displayName,
+          email: s.email,
+        }));
         setStudentsByTeacher((prev) => ({ ...prev, [teacherUid]: students }));
       } catch {
         setStudentsByTeacher((prev) => ({ ...prev, [teacherUid]: [] }));
