@@ -134,58 +134,104 @@ export async function GET(request: NextRequest) {
 
         // Promise.allSettled で部分成功を許容 (1 コレクションの失敗で全体を落とさない)。
         // silent fallback と異なり console.warn で痕跡を残す。
+        // interviews は composite index 回避のため orderBy なしで取得し JS で並べ替える
         const subResults = await Promise.allSettled([
           adminDb!.collection("essays").where("userId", "==", uid).orderBy("submittedAt", "desc").get(),
           adminDb!.collection(`users/${uid}/weaknesses`).get(),
           adminDb!.collection(`users/${uid}/documents`).get(),
           adminDb!.collection("sessions").where("studentUid", "==", uid).orderBy("scheduledAt", "desc").limit(1).get(),
+          adminDb!.collection("interviews").where("userId", "==", uid).get(),
+          adminDb!.collection(`users/${uid}/homeworkAssignments`).get(),
         ]);
-        const subQueryNames = ["essays", "weaknesses", "documents", "sessions"];
-        const [essaysSnap, weaknessesSnap, documentsSnap, sessionsSnap] = subResults.map((r, i) => {
+        const subQueryNames = ["essays", "weaknesses", "documents", "sessions", "interviews", "homeworkAssignments"];
+        const [essaysSnap, weaknessesSnap, documentsSnap, sessionsSnap, interviewsSnap, homeworkSnap] = subResults.map((r, i) => {
           if (r.status === "rejected") {
             console.warn(`[admin/students] subquery '${subQueryNames[i]}' failed for ${uid}:`, r.reason);
             return { size: 0, docs: [] } as unknown as FirebaseFirestore.QuerySnapshot;
           }
           return r.value;
-        }) as [FirebaseFirestore.QuerySnapshot, FirebaseFirestore.QuerySnapshot, FirebaseFirestore.QuerySnapshot, FirebaseFirestore.QuerySnapshot];
+        }) as [FirebaseFirestore.QuerySnapshot, FirebaseFirestore.QuerySnapshot, FirebaseFirestore.QuerySnapshot, FirebaseFirestore.QuerySnapshot, FirebaseFirestore.QuerySnapshot, FirebaseFirestore.QuerySnapshot];
 
         const essayCount = essaysSnap.size;
         const latestEssay = essaysSnap.docs[0]?.data();
         const latestScore: number | null =
           latestEssay?.scores?.total ?? null;
 
-        // lastActivityAt は essay 以外 (面接・スキルチェック・要約ドリル・活動登録) も含める
-        const activityTimestamps: number[] = [];
-        if (latestEssay?.submittedAt?.toDate) {
-          activityTimestamps.push(latestEssay.submittedAt.toDate().getTime());
+        // 最終活動の候補 (種別つき)。ログイン(lastSeenAt)は活動には含めない
+        type ActivityType = NonNullable<StudentListItem["lastActivity"]>["type"];
+        const activityCandidates: Array<{ type: ActivityType; ts: number }> = [];
+        const latestEssayTs = latestEssay?.submittedAt?.toDate?.()?.getTime();
+        if (latestEssayTs) activityCandidates.push({ type: "essay", ts: latestEssayTs });
+
+        // 面接 (トップレベル interviews を JS で並べ替え。completed のみ。index 回避)
+        const completedInterviews = interviewsSnap.docs
+          .filter((d) => d.data().status === "completed")
+          .map((d) => ({
+            ts: d.data().startedAt?.toDate?.()?.getTime() ?? 0,
+            total: d.data().scores?.total as number | undefined,
+          }))
+          .filter((x) => x.ts > 0)
+          .sort((a, b) => b.ts - a.ts);
+        if (completedInterviews[0]) {
+          activityCandidates.push({ type: "interview", ts: completedInterviews[0].ts });
         }
-        const otherCollections: Array<{ name: string; field: string }> = [
-          { name: "interviews", field: "startedAt" },
-          { name: "skillChecks", field: "takenAt" },
-          { name: "interviewSkillChecks", field: "takenAt" },
-          { name: "summaryDrills", field: "completedAt" },
-          { name: "activityLogs", field: "createdAt" },
+
+        // 面接 最新スコア + 推移 (直近3回、古い順で computeScoreTrend)
+        const latestInterviewScore: number | null =
+          typeof completedInterviews[0]?.total === "number" ? completedInterviews[0].total : null;
+        const recentInterviewScores = completedInterviews
+          .slice(0, 3)
+          .map((x) => x.total)
+          .filter((s): s is number => typeof s === "number")
+          .reverse();
+        const interviewScoreTrend = computeScoreTrend(recentInterviewScores);
+
+        const otherCollections: Array<{ name: string; field: string; type: ActivityType }> = [
+          { name: "skillChecks", field: "takenAt", type: "skillCheck" },
+          { name: "interviewSkillChecks", field: "takenAt", type: "interviewSkillCheck" },
+          { name: "summaryDrills", field: "completedAt", type: "summaryDrill" },
+          { name: "activityLogs", field: "createdAt", type: "activity" },
         ];
-        for (const { name, field } of otherCollections) {
+        for (const { name, field, type } of otherCollections) {
           try {
             const snap = await adminDb!
               .collection(`users/${uid}/${name}`)
               .orderBy(field, "desc")
               .limit(1)
               .get();
-            const ts = snap.docs[0]?.data()?.[field]?.toDate?.();
-            if (ts) activityTimestamps.push(ts.getTime());
+            const ts = snap.docs[0]?.data()?.[field]?.toDate?.()?.getTime();
+            if (ts) activityCandidates.push({ type, ts });
           } catch {
             // スキップ
           }
         }
-        // users.lastSeenAt (ハートビート)
-        const lastSeenAt = data.lastSeenAt?.toDate?.();
-        if (lastSeenAt) activityTimestamps.push(lastSeenAt.getTime());
 
-        const lastActivityAt: string | null = activityTimestamps.length > 0
-          ? new Date(Math.max(...activityTimestamps)).toISOString()
+        // 最終活動 (何をいつ)
+        const lastActivityCandidate = [...activityCandidates].sort((a, b) => b.ts - a.ts)[0];
+        const lastActivity: StudentListItem["lastActivity"] = lastActivityCandidate
+          ? { type: lastActivityCandidate.type, at: new Date(lastActivityCandidate.ts).toISOString() }
           : null;
+
+        // 最終ログイン (users.lastSeenAt / ハートビート)
+        const lastSeenDate = data.lastSeenAt?.toDate?.();
+        const lastSeenAt: string | null = lastSeenDate ? lastSeenDate.toISOString() : null;
+
+        // lastActivityAt は従来通り活動 + ログインを conflate (inactive アラート / ソート互換)
+        const allTimestamps = activityCandidates.map((c) => c.ts);
+        if (lastSeenDate) allTimestamps.push(lastSeenDate.getTime());
+        const lastActivityAt: string | null = allTimestamps.length > 0
+          ? new Date(Math.max(...allTimestamps)).toISOString()
+          : null;
+
+        // 提出締切を過ぎた未提出 (assigned/in_progress) の宿題があるか
+        const nowMs = Date.now();
+        const hasOverdueHomework = homeworkSnap.docs.some((d) => {
+          const hw = d.data();
+          if (hw.status !== "assigned" && hw.status !== "in_progress") return false;
+          if (!hw.dueDate) return false;
+          const due = new Date(hw.dueDate).getTime();
+          return Number.isFinite(due) && due < nowMs;
+        });
 
         const alertFlags: StudentListItem["alertFlags"] = [];
 
@@ -258,10 +304,15 @@ export async function GET(request: NextRequest) {
             data.createdAt?.toDate?.()?.toISOString() ??
             (typeof data.createdAt === "string" ? data.createdAt : undefined),
           latestScore,
+          latestInterviewScore,
           essayCount,
           lastActivityAt,
+          lastSeenAt,
+          lastActivity,
+          hasOverdueHomework,
           alertFlags,
           scoreTrend,
+          interviewScoreTrend,
           activeWeaknessCount,
           documentProgress: { completed: completedDocs, total: totalDocs },
           lastSessionAt,

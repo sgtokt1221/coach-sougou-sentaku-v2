@@ -65,6 +65,36 @@ function scoreTrendIcon(trend: StudentListItem["scoreTrend"]) {
   }
 }
 
+/** 小論文 / 面接 を区別するモノグラムマーク */
+function Monogram({ kind }: { kind: "essay" | "interview" }) {
+  const isEssay = kind === "essay";
+  return (
+    <span
+      className={`inline-flex size-4 shrink-0 items-center justify-center rounded text-[10px] font-bold leading-none ${
+        isEssay
+          ? "bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300"
+          : "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300"
+      }`}
+      title={isEssay ? "小論文" : "面接"}
+    >
+      {isEssay ? "小" : "面"}
+    </span>
+  );
+}
+
+/** 最終活動の種別ラベル */
+const ACTIVITY_LABEL: Record<
+  NonNullable<StudentListItem["lastActivity"]>["type"],
+  string
+> = {
+  essay: "小論文添削",
+  interview: "模擬面接",
+  skillCheck: "小論文スキルチェック",
+  interviewSkillCheck: "面接スキルチェック",
+  summaryDrill: "要約ドリル",
+  activity: "活動登録",
+};
+
 export default function AdminStudentsPage() {
   const router = useRouter();
   const shouldReduceMotion = useReducedMotion();
@@ -325,7 +355,11 @@ export default function AdminStudentsPage() {
                         initial={shouldReduceMotion ? false : { opacity: 0, y: 12 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.25, ease: "easeOut", delay: i * 0.05 }}
-                        className="cursor-pointer border-b transition-colors hover:bg-accent"
+                        className={`cursor-pointer border-b transition-colors ${
+                          s.hasOverdueHomework
+                            ? "border-l-4 border-l-red-500 bg-red-50 hover:bg-red-100 dark:bg-red-950/30 dark:hover:bg-red-950/50"
+                            : "hover:bg-accent"
+                        }`}
                         onClick={() => router.push(`/admin/students/${s.uid}`)}
                       >
                         <td className="px-4 py-3">
@@ -381,17 +415,41 @@ export default function AdminStudentsPage() {
                             <span className="text-xs text-muted-foreground">未</span>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-center">
-                          {s.latestScore !== null ? (
-                            <span className={`font-bold ${scoreColor(s.latestScore)}`}>
-                              {s.latestScore}
+                        <td className="px-4 py-3">
+                          <div className="flex flex-col items-center gap-1 text-sm">
+                            <span className="inline-flex items-center gap-1">
+                              <Monogram kind="essay" />
+                              {s.latestScore !== null ? (
+                                <span className={`font-bold ${scoreColor(s.latestScore)}`}>
+                                  {s.latestScore}
+                                </span>
+                              ) : (
+                                <span className="text-muted-foreground">-</span>
+                              )}
                             </span>
-                          ) : (
-                            <span className="text-muted-foreground">-</span>
-                          )}
+                            <span className="inline-flex items-center gap-1">
+                              <Monogram kind="interview" />
+                              {s.latestInterviewScore != null ? (
+                                <span className={`font-bold ${scoreColor(s.latestInterviewScore)}`}>
+                                  {s.latestInterviewScore}
+                                </span>
+                              ) : (
+                                <span className="text-muted-foreground">-</span>
+                              )}
+                            </span>
+                          </div>
                         </td>
-                        <td className="px-4 py-3 text-center hidden lg:table-cell">
-                          <span className="inline-flex justify-center">{scoreTrendIcon(s.scoreTrend)}</span>
+                        <td className="px-4 py-3 hidden lg:table-cell">
+                          <div className="flex flex-col items-center gap-1">
+                            <span className="inline-flex items-center gap-1">
+                              <Monogram kind="essay" />
+                              {scoreTrendIcon(s.scoreTrend)}
+                            </span>
+                            <span className="inline-flex items-center gap-1">
+                              <Monogram kind="interview" />
+                              {scoreTrendIcon(s.interviewScoreTrend ?? null)}
+                            </span>
+                          </div>
                         </td>
                         <td className="px-4 py-3 text-center hidden lg:table-cell">
                           {s.activeWeaknessCount > 0 ? (
@@ -408,26 +466,48 @@ export default function AdminStudentsPage() {
                             <span className="text-muted-foreground">0</span>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-center">
-                          <div className="flex items-center justify-center gap-2">
-                            <StudentStatusLamps
-                              alertFlags={s.alertFlags}
-                              lastActivityAt={s.lastActivityAt}
-                            />
-                            {statusFilter === "graduated" && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-7 gap-1 text-xs"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  void markAsRonin(s.uid, s.displayName);
-                                }}
+                        <td className="px-4 py-3">
+                          <div className="flex flex-col items-center gap-1.5">
+                            {s.hasOverdueHomework && (
+                              <Badge
+                                variant="destructive"
+                                className="gap-1 text-[10px] font-bold animate-pulse"
                               >
-                                <RotateCcw className="size-3" />
-                                現役に戻す
-                              </Button>
+                                <AlertCircle className="size-3" />
+                                宿題提出期限切れ
+                              </Badge>
                             )}
+                            <div className="flex flex-col gap-0.5 text-center text-[11px] text-muted-foreground">
+                              <span>
+                                ログイン: {s.lastSeenAt ? formatJoinElapsed(s.lastSeenAt) : "—"}
+                              </span>
+                              <span>
+                                活動:{" "}
+                                {s.lastActivity
+                                  ? `${ACTIVITY_LABEL[s.lastActivity.type]} ・ ${formatJoinElapsed(s.lastActivity.at)}`
+                                  : "—"}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <StudentStatusLamps
+                                alertFlags={s.alertFlags}
+                                lastActivityAt={s.lastActivityAt}
+                              />
+                              {statusFilter === "graduated" && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 gap-1 text-xs"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    void markAsRonin(s.uid, s.displayName);
+                                  }}
+                                >
+                                  <RotateCcw className="size-3" />
+                                  現役に戻す
+                                </Button>
+                              )}
+                            </div>
                           </div>
                         </td>
                       </motion.tr>

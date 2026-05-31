@@ -21,12 +21,22 @@ export interface StudentListItem {
   /** サービス加入日時 (ISO) */
   createdAt?: string;
   latestScore: number | null;
+  /** 最新の面接スコア (直近 completed 面接の total、未受験 null) */
+  latestInterviewScore?: number | null;
   essayCount: number;
   lastActivityAt: string | null;
+  /** 最終ログイン (users.lastSeenAt)。ステータス表示用 */
+  lastSeenAt?: string | null;
+  /** 最終活動の種別と日時 (ログインとは別。何をいつやったか) */
+  lastActivity?: { type: "essay" | "interview" | "skillCheck" | "interviewSkillCheck" | "summaryDrill" | "activity"; at: string } | null;
+  /** 提出締切を過ぎた未提出 (assigned/in_progress) の宿題があるか */
+  hasOverdueHomework?: boolean;
   alertFlags: ("inactive" | "repeated_weakness" | "declining" | "document_deadline" | "ap_struggle" | "weakness_stuck" | "deadline_risk" | "score_plateau")[];
   managedBy?: string;
   plan?: "self" | "coach";
   scoreTrend: "up" | "down" | "flat" | null;
+  /** 面接スコア推移 (直近3回の completed 面接)。未受験 null */
+  interviewScoreTrend?: "up" | "down" | "flat" | null;
   activeWeaknessCount: number;
   documentProgress: { completed: number; total: number };
   lastSessionAt: string | null;
