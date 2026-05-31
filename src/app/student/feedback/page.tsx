@@ -8,7 +8,7 @@ import { useAuthSWR } from "@/lib/api/swr";
 import { useFeedbackThread } from "@/lib/hooks/useFeedbackThread";
 import { ChatThread } from "@/components/chat/ChatThread";
 import { PageTransition } from "@/components/shared/PageTransition";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { SegmentControl } from "@/components/shared/SegmentControl";
 import type { ChatAttachment } from "@/lib/types/feedback";
 
 interface StudentTeacherItem {
@@ -26,6 +26,8 @@ export default function StudentFeedbackPage() {
   );
   const teacherList = teachers ?? [];
   const hasTeacher = teacherList.length > 0;
+  const teacherUnread = teacherList.reduce((sum, t) => sum + (t.unread ?? 0), 0);
+  const [tab, setTab] = useState<"admin" | "teacher">("admin");
 
   return (
     <PageTransition>
@@ -41,18 +43,28 @@ export default function StudentFeedbackPage() {
         </div>
 
         {hasTeacher ? (
-          <Tabs defaultValue="admin" className="min-h-0 flex-1">
-            <TabsList>
-              <TabsTrigger value="admin">管理者</TabsTrigger>
-              <TabsTrigger value="teacher">講師</TabsTrigger>
-            </TabsList>
-            <TabsContent value="admin" className="min-h-0 flex-1">
-              <AdminThread uid={uid} />
-            </TabsContent>
-            <TabsContent value="teacher" className="min-h-0 flex-1">
-              <TeacherTab uid={uid} teachers={teacherList} />
-            </TabsContent>
-          </Tabs>
+          <div className="flex min-h-0 flex-1 flex-col">
+            <SegmentControl
+              value={tab}
+              onChange={(v) => setTab(v as "admin" | "teacher")}
+              fullWidth
+              options={[
+                { id: "admin", label: "管理者" },
+                {
+                  id: "teacher",
+                  label: "講師",
+                  count: teacherUnread || undefined,
+                },
+              ]}
+            />
+            <div className="mt-3 min-h-0 flex-1">
+              {tab === "admin" ? (
+                <AdminThread uid={uid} />
+              ) : (
+                <TeacherTab uid={uid} teachers={teacherList} />
+              )}
+            </div>
+          </div>
         ) : (
           <AdminThread uid={uid} />
         )}

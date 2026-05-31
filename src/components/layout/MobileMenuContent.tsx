@@ -229,11 +229,18 @@ const teacherPrimary: PrimaryAction[] = [
     iconColor: "text-sky-700 dark:text-sky-300",
   },
   {
+    label: "担当生徒",
+    href: "/teacher/roster",
+    icon: Users,
+    iconBg: "bg-emerald-100 dark:bg-emerald-950/40",
+    iconColor: "text-emerald-700 dark:text-emerald-300",
+  },
+  {
     label: "メッセージ",
     href: "/teacher/students",
     icon: MessageSquare,
-    iconBg: "bg-emerald-100 dark:bg-emerald-950/40",
-    iconColor: "text-emerald-700 dark:text-emerald-300",
+    iconBg: "bg-sky-100 dark:bg-sky-950/40",
+    iconColor: "text-sky-700 dark:text-sky-300",
   },
   {
     label: "セッション履歴",

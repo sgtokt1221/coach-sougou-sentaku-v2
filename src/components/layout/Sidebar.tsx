@@ -150,6 +150,7 @@ const teacherNavGroups: NavGroup[] = [
     title: "Work",
     items: [
       { label: "シフト入力", href: "/teacher/schedule", icon: CalendarCheck },
+      { label: "担当生徒", href: "/teacher/roster", icon: Users },
       { label: "メッセージ", href: "/teacher/students", icon: MessageSquare, badge: TeacherMessagesBadge },
       { label: "セッション履歴", href: "/teacher/sessions", icon: ClipboardList },
     ],
