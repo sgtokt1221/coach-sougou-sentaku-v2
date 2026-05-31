@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { MessageSquare, X } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
@@ -58,6 +59,11 @@ export function FloatingStudentChat({
   const shouldReduceMotion = useReducedMotion();
   const markedRef = useRef(false);
 
+  // body 直下へポータルし、スクロールコンテナ(<main overflow-y-auto>)の影響を受けず
+  // 常にビューポート右下に固定する (SSR では描画しない)
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   /** 未読 = 生徒発言で未読のもの */
   const unread = useMemo(
     () => messages.filter((m) => m.senderRole === "student" && !m.read).length,
@@ -97,7 +103,9 @@ export function FloatingStudentChat({
     if (!res.ok) throw new Error("send failed");
   }
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <>
       {/* 起動ボタン (FAB) */}
       <AnimatePresence>
@@ -171,6 +179,7 @@ export function FloatingStudentChat({
           </motion.div>
         )}
       </AnimatePresence>
-    </>
+    </>,
+    document.body,
   );
 }
