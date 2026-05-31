@@ -76,6 +76,21 @@ service cloud.firestore {
         );
         allow update: if request.auth != null && request.auth.uid == userId;
       }
+
+      // 生徒↔講師スレッド (管理者スレッド feedback とは別物)。
+      // read: 生徒本人/担当管理者/同org/superadmin(=監視) + 担当講師。
+      // write は基本 server(Admin SDK) 経由だが、担当講師の購読・自己既読のため許可。
+      match /teacherFeedback/{feedbackId} {
+        allow read: if request.auth != null && (
+          canManageUser(userId) || isAssignedTeacherOf(userId)
+        );
+        allow create: if request.auth != null && (
+          isSuperAdmin() || request.auth.uid == userId || isAssignedTeacherOf(userId)
+        );
+        allow update: if request.auth != null && (
+          request.auth.uid == userId || isAssignedTeacherOf(userId)
+        );
+      }
     }
 
     // 大学データ: 全員読み取り可、管理者のみ書き込み
@@ -175,6 +190,12 @@ service cloud.firestore {
     function isManagerOf(userId) {
       return isAdmin() &&
         get(/databases/$(database)/documents/users/$(userId)).data.managedBy == request.auth.uid;
+    }
+
+    // 担当講師チェック: 対象生徒の assignedTeacherId が自分(講師)のuidか確認
+    function isAssignedTeacherOf(userId) {
+      return isAdmin() &&
+        get(/databases/$(database)/documents/users/$(userId)).data.assignedTeacherId == request.auth.uid;
     }
 
     // 同じ塾 (organization) のメンバーか確認 (= 親 admin / 子 admin 関係)

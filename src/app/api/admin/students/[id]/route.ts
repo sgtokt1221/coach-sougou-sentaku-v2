@@ -412,6 +412,7 @@ export async function GET(
         englishCerts: userData.englishCerts ?? undefined,
         targetUniversities: targetUnis,
         resolvedUniversities,
+        assignedTeacherId: userData.assignedTeacherId as string | undefined,
       },
       weaknesses,
       essays,

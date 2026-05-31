@@ -12,16 +12,21 @@ interface UseFeedbackThreadResult {
 }
 
 /**
- * users/{studentUid}/feedback を createdAt 昇順で realtime 購読し、
+ * users/{studentUid}/{subcollection} を createdAt 昇順で realtime 購読し、
  * チャットメッセージ配列を返す。senderRole は createdBy から導出する
  * (createdBy === studentUid なら生徒、それ以外はコーチ。既存コメントは coach 扱い)。
  *
- * Firestore rules の canManageUser(studentUid) が読み取りを許可するため、
- * 生徒本人・担当コーチ・同 org・superadmin がそれぞれ購読できる。
+ * subcollection 既定は "feedback"(生徒↔管理者)。"teacherFeedback" を渡すと
+ * 生徒↔講師スレッドを購読する(管理者スレッドとは別物)。
+ *
+ * Firestore rules の canManageUser(studentUid) / isAssignedTeacherOf が読み取りを
+ * 許可するため、生徒本人・担当コーチ/講師・同 org・superadmin がそれぞれ購読できる。
  */
 export function useFeedbackThread(
-  studentUid: string | null | undefined
+  studentUid: string | null | undefined,
+  opts?: { subcollection?: "feedback" | "teacherFeedback" }
 ): UseFeedbackThreadResult {
+  const subcollection = opts?.subcollection ?? "feedback";
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState<boolean>(Boolean(studentUid));
   const [error, setError] = useState<Error | null>(null);
@@ -34,7 +39,7 @@ export function useFeedbackThread(
     setLoading(true);
     setError(null);
     const q = query(
-      collection(db, "users", studentUid, "feedback"),
+      collection(db, "users", studentUid, subcollection),
       orderBy("createdAt", "asc")
     );
     const unsub = onSnapshot(
@@ -73,7 +78,7 @@ export function useFeedbackThread(
       }
     );
     return () => unsub();
-  }, [studentUid]);
+  }, [studentUid, subcollection]);
 
   return { messages, loading, error };
 }

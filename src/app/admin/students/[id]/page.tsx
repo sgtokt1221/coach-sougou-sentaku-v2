@@ -64,6 +64,7 @@ import { WeaknessSourceBadge } from "@/components/growth/WeaknessSourceBadge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils/avatar";
 import { SegmentControl } from "@/components/shared/SegmentControl";
+import { TeacherAssignmentSection } from "@/components/admin/TeacherAssignmentSection";
 import type { StudentDetail } from "@/lib/types/admin";
 import { getDisplayGrade } from "@/lib/utils/grade";
 import {
@@ -964,6 +965,7 @@ function AdminStudentDetailPageInner() {
             <TabsTrigger value="activity">活動・書類</TabsTrigger>
             <TabsTrigger value="reports">レポート</TabsTrigger>
             <TabsTrigger value="homework">宿題</TabsTrigger>
+            <TabsTrigger value="messages">メッセージ</TabsTrigger>
           </TabsList>
         </div>
 
@@ -994,6 +996,16 @@ function AdminStudentDetailPageInner() {
         <TabsContent value="homework">
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
             <HomeworkStatusSection studentId={id} />
+          </motion.div>
+        </TabsContent>
+
+        <TabsContent value="messages">
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
+            <TeacherAssignmentSection
+              studentId={id}
+              studentName={detail.profile.displayName || "生徒"}
+              initialAssignedTeacherId={detail.profile.assignedTeacherId}
+            />
           </motion.div>
         </TabsContent>
       </Tabs>

@@ -44,6 +44,11 @@ export interface StudentProfile extends UserProfile {
   targetUniversities?: string[];
   onboardingCompleted?: boolean;
   managedBy?: string;
+  /**
+   * 担当講師の uid。managedBy(管理者)とは独立した「やりとりする講師」。
+   * 管理者が割り当てる。生徒↔講師の直接メッセージ(teacherFeedback)の宛先判定に使う。
+   */
+  assignedTeacherId?: string;
   selfAnalysisId?: string;
   /** 月あたりのセッション回数（デフォルト1） */
   sessionsPerMonth?: number;

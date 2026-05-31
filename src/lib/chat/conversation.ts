@@ -92,6 +92,11 @@ export async function updateConversationSummary(opts: {
   organizationId?: string;
   lastMessageText: string;
   senderRole: SenderRole;
+  /**
+   * サマリ保存先コレクション。既定は管理者チャネルの "conversations"。
+   * 生徒↔講師チャネルは "teacherConversations" を渡す(同じフィールド形状を流用)。
+   */
+  collection?: string;
 }): Promise<void> {
   if (!adminDb) return;
   const {
@@ -102,6 +107,7 @@ export async function updateConversationSummary(opts: {
     organizationId,
     lastMessageText,
     senderRole,
+    collection = "conversations",
   } = opts;
 
   const now = new Date();
@@ -121,7 +127,7 @@ export async function updateConversationSummary(opts: {
   if (organizationId !== undefined) data.organizationId = organizationId;
 
   try {
-    await adminDb.doc(`conversations/${studentId}`).set(data, { merge: true });
+    await adminDb.doc(`${collection}/${studentId}`).set(data, { merge: true });
   } catch (err) {
     console.warn("[conversation] summary update failed:", err);
   }
@@ -129,14 +135,16 @@ export async function updateConversationSummary(opts: {
 
 /**
  * 指定方向の未読カウンタを 0 にリセット (スレッド開封時)。
+ * collection で対象サマリ(conversations / teacherConversations)を切り替える。
  */
 export async function resetUnread(
   studentId: string,
-  side: "student" | "coach"
+  side: "student" | "coach",
+  collection = "conversations"
 ): Promise<void> {
   if (!adminDb) return;
   try {
-    await adminDb.doc(`conversations/${studentId}`).set(
+    await adminDb.doc(`${collection}/${studentId}`).set(
       {
         [side === "student" ? "unreadByStudent" : "unreadByCoach"]: 0,
         updatedAt: new Date(),

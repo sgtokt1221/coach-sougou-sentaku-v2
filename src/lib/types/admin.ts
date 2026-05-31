@@ -67,6 +67,8 @@ export interface StudentDetail {
     englishCerts?: EnglishCert[];
     targetUniversities: string[];
     resolvedUniversities?: { compoundId: string; universityName: string; facultyName: string }[];
+    /** 担当講師の uid (生徒↔講師メッセージの割当先) */
+    assignedTeacherId?: string;
   };
   weaknesses: WeaknessRecord[];
   essays: EssayListItem[];
