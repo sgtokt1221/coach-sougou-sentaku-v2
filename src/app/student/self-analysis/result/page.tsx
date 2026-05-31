@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, RotateCcw, Sparkles, Loader2 } from "lucide-react";
 import { AnalysisResultCard } from "@/components/self-analysis/AnalysisResultCard";
 import { GrowthTree } from "@/components/self-analysis/GrowthTree";
+import { StepEditModal } from "@/components/self-analysis/StepEditModal";
 import { useAuthSWR } from "@/lib/api/swr";
 import type { SelfAnalysis } from "@/lib/types/self-analysis";
 
@@ -53,6 +54,52 @@ export default function SelfAnalysisResultPage() {
   );
   const [generating, setGenerating] = useState(false);
   const autoAttempted = useRef(false);
+  // 木の果実クリックで開く編集モーダルの対象ステップ
+  const [editStep, setEditStep] = useState<number | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+
+  /**
+   * 編集モーダルの保存。編集したステップのトップレベルキー (values/strengths/…) のみ
+   * 差し替え、他フィールドは現データを保持したまま全体を再保存する。
+   */
+  const handleEditSave = useCallback(
+    async (updated: Record<string, unknown>): Promise<boolean> => {
+      if (!data || editStep == null) return false;
+      const key = STEP_KEYS[editStep - 1];
+      try {
+        const res = await authFetch("/api/self-analysis", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: "me",
+            id: data.id,
+            values: data.values ?? {},
+            strengths: data.strengths ?? {},
+            weaknesses: data.weaknesses ?? {},
+            interests: data.interests ?? {},
+            vision: data.vision ?? {},
+            identity: data.identity ?? {},
+            synthesis: data.synthesis ?? {},
+            [key]: updated,
+            completedSteps: data.completedSteps ?? 7,
+            isComplete: data.isComplete ?? true,
+            chatHistory: data.chatHistory ?? [],
+          }),
+        });
+        if (!res.ok) {
+          toast.error("保存に失敗しました");
+          return false;
+        }
+        await mutate();
+        toast.success("保存しました");
+        return true;
+      } catch {
+        toast.error("通信エラーが発生しました");
+        return false;
+      }
+    },
+    [data, editStep, mutate],
+  );
 
   // 保存済みの Step1〜6 ＋ 志望校AP から「統合・言語化」(synthesis) を生成して保存する。
   const generateSynthesis = useCallback(
@@ -207,13 +254,16 @@ export default function SelfAnalysisResultPage() {
         <div className="w-full space-y-2 lg:w-[300px] lg:shrink-0 lg:sticky lg:top-6">
           <GrowthTree
             compact
-            interactive={false}
             showLabels
             completedSteps={completedSteps}
             stepsData={stepsData}
+            onFruitClick={(step) => {
+              setEditStep(step);
+              setEditOpen(true);
+            }}
           />
           <p className="text-center text-xs text-muted-foreground">
-            全{Math.min(completedSteps, 7)}ステップ完了
+            木の実をクリックすると内容を編集できます
           </p>
         </div>
 
@@ -231,6 +281,14 @@ export default function SelfAnalysisResultPage() {
           />
         </div>
       </div>
+
+      <StepEditModal
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        step={editStep}
+        stepData={editStep != null ? (stepsData[editStep] ?? {}) : {}}
+        onSave={handleEditSave}
+      />
     </div>
   );
 }

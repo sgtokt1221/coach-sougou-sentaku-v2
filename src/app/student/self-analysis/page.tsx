@@ -5,10 +5,11 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, PartyPopper, Sparkles, Pencil, AlertTriangle } from "lucide-react";
+import { ArrowLeft, PartyPopper, Sparkles, AlertTriangle } from "lucide-react";
 import { StepIndicator } from "@/components/self-analysis/StepIndicator";
 import { WorkshopChat } from "@/components/self-analysis/WorkshopChat";
 import { GrowthTree } from "@/components/self-analysis/GrowthTree";
+import { StepEditModal } from "@/components/self-analysis/StepEditModal";
 import { useAuthSWR } from "@/lib/api/swr";
 import { authFetch } from "@/lib/api/client";
 import type { SelfAnalysis, ChatMessage, StepChatHistory } from "@/lib/types/self-analysis";
@@ -26,8 +27,9 @@ export default function SelfAnalysisPage() {
   const [allComplete, setAllComplete] = useState(false);
   const [restored, setRestored] = useState(false);
   const [saveFailed, setSaveFailed] = useState(false);
-  // 編集中の step: 完了済みの果実をクリックで編集モードに入ったときに記録
-  const [editingStep, setEditingStep] = useState<number | null>(null);
+  // 木の果実クリックで開く編集モーダルの対象ステップ
+  const [editStep, setEditStep] = useState<number | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
 
   // Restore progress from Firestore
   useEffect(() => {
@@ -137,17 +139,36 @@ export default function SelfAnalysisPage() {
   const currentMessages =
     chatHistories.find((h) => h.step === currentStep)?.messages ?? [];
 
-  // 果実クリックで編集モードに入る（木は常時表示なので view 切替は不要）
+  // 果実クリックで編集モーダルを開く（完了済みステップのみ GrowthTree 側で発火）
   const handleFruitClick = useCallback((step: number) => {
-    setCurrentStep(step);
-    setEditingStep(step);
+    setEditStep(step);
+    setEditOpen(true);
   }, []);
 
-  // 編集モードを抜けて、次の未入力 step に戻る
-  const handleExitEditing = useCallback(() => {
-    setEditingStep(null);
-    setCurrentStep(Math.min(completedSteps + 1, 7));
-  }, [completedSteps]);
+  /**
+   * 編集モーダルの保存。対象ステップの内容を差し替えて再保存する
+   * （completedSteps / isComplete は維持）。成功なら true。
+   */
+  const handleEditSave = useCallback(
+    async (updated: Record<string, unknown>): Promise<boolean> => {
+      if (editStep == null) return false;
+      const updatedStepsData = { ...stepsData, [editStep]: updated };
+      const ok = await saveProgress(
+        updatedStepsData,
+        chatHistories,
+        completedSteps,
+        allComplete,
+      );
+      if (ok) {
+        setStepsData(updatedStepsData);
+        toast.success("保存しました");
+      } else {
+        toast.error("保存に失敗しました");
+      }
+      return ok;
+    },
+    [editStep, stepsData, chatHistories, completedSteps, allComplete, saveProgress],
+  );
 
   // If already complete, redirect to result
   useEffect(() => {
@@ -229,22 +250,7 @@ export default function SelfAnalysisPage() {
             </div>
           )}
 
-          {/* 編集モード表示 */}
-          {editingStep != null && (
-            <div className="flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50/80 dark:border-amber-900 dark:bg-amber-950/30 px-3 py-2">
-              <div className="flex items-center gap-2 text-xs">
-                <Pencil className="size-3.5 text-amber-600 dark:text-amber-400" />
-                <span className="font-medium text-amber-800 dark:text-amber-200">
-                  Step {editingStep} を編集中
-                </span>
-              </div>
-              <Button variant="ghost" size="sm" onClick={handleExitEditing}>
-                編集をやめる
-              </Button>
-            </div>
-          )}
-
-          {allComplete && editingStep == null ? (
+          {allComplete ? (
             <div className="text-center py-12 space-y-4">
               <PartyPopper className="size-12 mx-auto text-primary" />
               <h2 className="text-xl font-bold">自己分析が完了しました</h2>
@@ -268,6 +274,14 @@ export default function SelfAnalysisPage() {
           )}
         </div>
       </div>
+
+      <StepEditModal
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        step={editStep}
+        stepData={editStep != null ? (stepsData[editStep] ?? {}) : {}}
+        onSave={handleEditSave}
+      />
     </div>
   );
 }

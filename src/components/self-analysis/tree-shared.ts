@@ -35,7 +35,7 @@ export const FRUIT_META: FruitMeta[] = [
 ];
 
 /** 英語キー → 日本語ラベルの辞書 */
-const KEY_LABELS: Record<string, string> = {
+export const KEY_LABELS: Record<string, string> = {
   // Step 1: 価値観
   coreValues: "大切にしている価値観",
   valueOrigins: "価値観の原体験",
