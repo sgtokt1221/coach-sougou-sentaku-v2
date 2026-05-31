@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
+import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
 import { adminDb } from "@/lib/firebase/admin";
 import type { ActivityCategory } from "@/lib/types/activity";
 
@@ -29,7 +30,12 @@ export async function GET(
   try {
     if (role !== "superadmin") {
       const studentDoc = await adminDb.doc(`users/${studentId}`).get();
-      if (!studentDoc.exists || studentDoc.data()?.managedBy !== callerUid) {
+      const sd = studentDoc.data();
+      if (
+        !studentDoc.exists ||
+        (sd?.managedBy !== callerUid &&
+          !getAssignedTeacherIds(sd).includes(callerUid))
+      ) {
         return NextResponse.json({ error: "権限がありません" }, { status: 403 });
       }
     }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
+import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
 import type { Session } from "@/lib/types/session";
 
 /**
@@ -26,7 +27,11 @@ export async function GET(
   if (!userDoc.exists) {
     return NextResponse.json({ error: "生徒が見つかりません" }, { status: 404 });
   }
-  if (role !== "superadmin" && userDoc.data()?.managedBy !== uid) {
+  if (
+    role !== "superadmin" &&
+    userDoc.data()?.managedBy !== uid &&
+    !getAssignedTeacherIds(userDoc.data()).includes(uid)
+  ) {
     return NextResponse.json(
       { error: "この生徒へのアクセス権がありません" },
       { status: 403 },
