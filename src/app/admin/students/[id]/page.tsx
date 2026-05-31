@@ -65,6 +65,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils/avatar";
 import { SegmentControl } from "@/components/shared/SegmentControl";
 import { TeacherAssignmentSection } from "@/components/admin/TeacherAssignmentSection";
+import { FloatingStudentChat } from "@/components/chat/FloatingStudentChat";
 import { CommentableEssayText } from "@/components/essay/CommentableEssayText";
 import type { StudentDetail } from "@/lib/types/admin";
 import { getDisplayGrade } from "@/lib/utils/grade";
@@ -1388,6 +1389,24 @@ function AdminStudentDetailPageInner() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* その生徒とのチャット (右下フローティング)。管理者↔生徒 / 講師↔生徒 を role で切替 */}
+      {user?.uid &&
+        (isTeacherViewer || userProfile?.role === "admin" || userProfile?.role === "superadmin") && (
+          <FloatingStudentChat
+            studentId={id}
+            studentName={profile.displayName || "生徒"}
+            studentPhotoURL={profile.photoURL}
+            viewerRole={
+              isTeacherViewer
+                ? "teacher"
+                : userProfile?.role === "superadmin"
+                  ? "superadmin"
+                  : "admin"
+            }
+            viewerUid={user.uid}
+          />
+        )}
     </div>
   );
 }

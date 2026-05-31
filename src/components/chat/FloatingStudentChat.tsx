@@ -1,0 +1,176 @@
+"use client";
+
+import { useState, useEffect, useRef, useMemo } from "react";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { MessageSquare, X } from "lucide-react";
+import { authFetch } from "@/lib/api/client";
+import { useFeedbackThread } from "@/lib/hooks/useFeedbackThread";
+import { ChatThread } from "@/components/chat/ChatThread";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { getInitials } from "@/lib/utils/avatar";
+import type { ChatAttachment, ChatReference } from "@/lib/types/feedback";
+
+interface FloatingStudentChatProps {
+  /** 対象生徒の uid */
+  studentId: string;
+  /** 対象生徒の表示名 */
+  studentName: string;
+  /** 対象生徒のプロフィール画像 URL */
+  studentPhotoURL?: string | null;
+  /** 閲覧者(コーチ側)のロール。スレッドと送信/既読 API を切り替える */
+  viewerRole: "admin" | "superadmin" | "teacher";
+  /** 閲覧者の uid。講師スレッドの teacherId に使用 */
+  viewerUid: string;
+}
+
+/**
+ * 生徒詳細画面の右下に常駐するフローティングチャット。
+ * クリックで右下に大きめのカードを展開し、その生徒とのメッセージを全件閲覧・送受信できる。
+ *
+ * - 管理者/superadmin: users/{studentId}/feedback スレッド (管理者↔生徒)
+ * - 講師: users/{studentId}/teacherFeedback で teacherId=自分 のスレッド (講師↔生徒)
+ *
+ * 送信 body は既存の講師チャットページと同形に揃え、URL のみ role で切り替える。
+ */
+export function FloatingStudentChat({
+  studentId,
+  studentName,
+  studentPhotoURL,
+  viewerRole,
+  viewerUid,
+}: FloatingStudentChatProps) {
+  const isTeacher = viewerRole === "teacher";
+  const { messages, loading } = useFeedbackThread(
+    studentId,
+    isTeacher
+      ? { subcollection: "teacherFeedback", teacherId: viewerUid }
+      : undefined,
+  );
+
+  const sendUrl = isTeacher
+    ? `/api/teacher/students/${studentId}/feedback`
+    : `/api/admin/students/${studentId}/feedback`;
+  const readUrl = isTeacher
+    ? `/api/teacher/students/${studentId}/feedback/read`
+    : `/api/admin/students/${studentId}/feedback/read`;
+
+  const [open, setOpen] = useState(false);
+  const shouldReduceMotion = useReducedMotion();
+  const markedRef = useRef(false);
+
+  /** 未読 = 生徒発言で未読のもの */
+  const unread = useMemo(
+    () => messages.filter((m) => m.senderRole === "student" && !m.read).length,
+    [messages],
+  );
+
+  // 開いている間に未読(生徒発言)を既読化 (1回だけ)
+  useEffect(() => {
+    if (!open || markedRef.current || loading || unread === 0) return;
+    markedRef.current = true;
+    authFetch(readUrl, { method: "POST" }).catch(() => {});
+  }, [open, unread, loading, readUrl]);
+
+  // 閉じたら既読フラグをリセット (次に開いたとき再度既読化できるように)
+  useEffect(() => {
+    if (!open) markedRef.current = false;
+  }, [open]);
+
+  /** 送信。既存チャットページと同じ body 形 (URL のみ role で切替) */
+  async function handleSend(
+    text: string,
+    attachments: ChatAttachment[],
+    reference?: ChatReference,
+  ) {
+    const res = await authFetch(sendUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type: "general",
+        targetId: "chat",
+        targetLabel: "メッセージ",
+        message: text,
+        attachments,
+        reference,
+      }),
+    });
+    if (!res.ok) throw new Error("send failed");
+  }
+
+  return (
+    <>
+      {/* 起動ボタン (FAB) */}
+      <AnimatePresence>
+        {!open && (
+          <motion.button
+            type="button"
+            initial={shouldReduceMotion ? false : { scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={shouldReduceMotion ? undefined : { scale: 0, opacity: 0 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            onClick={() => setOpen(true)}
+            aria-label={`${studentName} さんとのメッセージを開く`}
+            className="fixed bottom-6 right-6 z-40 flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-105"
+          >
+            <MessageSquare className="size-6" />
+            {unread > 0 && (
+              <span className="absolute -right-1 -top-1 flex min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[11px] font-bold text-white">
+                {unread > 99 ? "99+" : unread}
+              </span>
+            )}
+          </motion.button>
+        )}
+      </AnimatePresence>
+
+      {/* 展開カード */}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={shouldReduceMotion ? false : { scale: 0.92, opacity: 0, y: 16 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={shouldReduceMotion ? undefined : { scale: 0.92, opacity: 0, y: 16 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            style={{ transformOrigin: "bottom right" }}
+            className="fixed bottom-6 right-6 z-40 flex h-[min(78vh,760px)] w-[min(640px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border bg-card shadow-2xl"
+          >
+            {/* ヘッダ */}
+            <div className="flex items-center gap-2.5 border-b px-4 py-3">
+              <Avatar size="sm">
+                <AvatarImage src={studentPhotoURL ?? undefined} alt={studentName} />
+                <AvatarFallback>{getInitials(studentName)}</AvatarFallback>
+              </Avatar>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold">{studentName} さん</p>
+                <p className="text-[11px] text-muted-foreground">
+                  {isTeacher ? "担当生徒とのメッセージ" : "生徒とのメッセージ"}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                aria-label="閉じる"
+                className="rounded-md p-1.5 text-muted-foreground hover:bg-accent"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+
+            {/* 本文 */}
+            <div className="min-h-0 flex-1 px-3">
+              <ChatThread
+                messages={messages}
+                currentRole="coach"
+                onSend={handleSend}
+                loading={loading}
+                otherName={studentName}
+                otherPhotoURL={studentPhotoURL}
+                referenceStudentId={studentId}
+                emptyText="この生徒とのメッセージがここに表示されます"
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
+}
