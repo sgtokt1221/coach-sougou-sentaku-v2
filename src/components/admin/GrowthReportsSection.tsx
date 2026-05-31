@@ -14,7 +14,6 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthSWR } from "@/lib/api/swr";
 import { authFetch } from "@/lib/api/client";
-import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
 import type { GrowthReport } from "@/lib/types/growth-report";
@@ -38,9 +37,6 @@ export function GrowthReportsSection({ studentId }: Props) {
     `/api/admin/reports/${studentId}?limit=10`,
   );
   const reports = data ?? [];
-  const { userProfile } = useAuth();
-  // 生成は管理者専用。講師は閲覧のみ。
-  const canGenerate = userProfile?.role !== "teacher";
   const [generating, setGenerating] = useState<"weekly" | "monthly" | null>(null);
 
   const generate = async (period: "weekly" | "monthly") => {
@@ -89,38 +85,36 @@ export function GrowthReportsSection({ studentId }: Props) {
             </Badge>
           )}
         </CardTitle>
-        {canGenerate && (
-          <div className="flex gap-1">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => generate("weekly")}
-              disabled={generating !== null}
-              className="cursor-pointer"
-            >
-              {generating === "weekly" ? (
-                <Loader2 className="mr-1 size-3 animate-spin" />
-              ) : (
-                <Sparkles className="mr-1 size-3" />
-              )}
-              週次生成
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => generate("monthly")}
-              disabled={generating !== null}
-              className="cursor-pointer"
-            >
-              {generating === "monthly" ? (
-                <Loader2 className="mr-1 size-3 animate-spin" />
-              ) : (
-                <Sparkles className="mr-1 size-3" />
-              )}
-              月次生成
-            </Button>
-          </div>
-        )}
+        <div className="flex gap-1">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => generate("weekly")}
+            disabled={generating !== null}
+            className="cursor-pointer"
+          >
+            {generating === "weekly" ? (
+              <Loader2 className="mr-1 size-3 animate-spin" />
+            ) : (
+              <Sparkles className="mr-1 size-3" />
+            )}
+            週次生成
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => generate("monthly")}
+            disabled={generating !== null}
+            className="cursor-pointer"
+          >
+            {generating === "monthly" ? (
+              <Loader2 className="mr-1 size-3 animate-spin" />
+            ) : (
+              <Sparkles className="mr-1 size-3" />
+            )}
+            月次生成
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         {error ? (
@@ -131,9 +125,7 @@ export function GrowthReportsSection({ studentId }: Props) {
           </div>
         ) : reports.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            {canGenerate
-              ? "まだレポートがありません。上のボタンから生成してください。"
-              : "まだレポートがありません。"}
+            まだレポートがありません。上のボタンから生成してください。
           </p>
         ) : (
           <div className="space-y-2">

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
+import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
 import { adminDb } from "@/lib/firebase/admin";
 import { generateGrowthReport, getPeriodRange, buildSessionSummaryDraft } from "@/lib/growth/report";
 import {
@@ -133,7 +134,12 @@ export async function POST(request: NextRequest) {
 
     const studentData = studentDoc.data()!;
     step = "check_permission";
-    if (role !== "superadmin" && studentData.managedBy !== uid) {
+    // 管理者(managedBy)に加え、担当講師(assignedTeacherIds)もレポート生成可
+    if (
+      role !== "superadmin" &&
+      studentData.managedBy !== uid &&
+      !getAssignedTeacherIds(studentData).includes(uid)
+    ) {
       return NextResponse.json({ error: "権限がありません" }, { status: 403 });
     }
 
