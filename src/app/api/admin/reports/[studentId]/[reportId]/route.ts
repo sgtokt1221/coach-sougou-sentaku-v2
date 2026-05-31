@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
+import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
 import { adminDb } from "@/lib/firebase/admin";
 import type { GrowthReport, PracticeQuestion } from "@/lib/types/growth-report";
 
@@ -33,7 +34,12 @@ export async function GET(
       return NextResponse.json({ error: "生徒が見つかりません" }, { status: 404 });
     }
     const userData = userDoc.data()!;
-    if (role !== "superadmin" && userData.managedBy !== uid) {
+    // 管理者(managedBy)に加え、担当講師(assignedTeacherIds)も閲覧可 (GET のみ)
+    if (
+      role !== "superadmin" &&
+      userData.managedBy !== uid &&
+      !getAssignedTeacherIds(userData).includes(uid)
+    ) {
       return NextResponse.json(
         { error: "この生徒へのアクセス権がありません" },
         { status: 403 }
