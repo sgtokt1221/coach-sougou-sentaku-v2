@@ -3,19 +3,22 @@
     "id": "shiga-0001",
     "name": "滋賀県立石山高等学校",
     "prefecture": "滋賀県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 69
   },
   {
     "id": "shiga-0002",
     "name": "滋賀県立大津高等学校",
     "prefecture": "滋賀県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 57
   },
   {
     "id": "shiga-0003",
     "name": "滋賀県立大津商業高等学校",
     "prefecture": "滋賀県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 47
   },
   {
     "id": "shiga-0004",
@@ -27,31 +30,36 @@
     "id": "shiga-0005",
     "name": "滋賀県立堅田高等学校",
     "prefecture": "滋賀県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 42
   },
   {
     "id": "shiga-0006",
     "name": "滋賀県立北大津高等学校",
     "prefecture": "滋賀県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 38
   },
   {
     "id": "shiga-0007",
     "name": "滋賀県立瀬田工業高等学校",
     "prefecture": "滋賀県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 44
   },
   {
     "id": "shiga-0008",
     "name": "滋賀県立膳所高等学校",
     "prefecture": "滋賀県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 76
   },
   {
     "id": "shiga-0009",
     "name": "滋賀県立東大津高等学校",
     "prefecture": "滋賀県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 64
   },
   {
     "id": "shiga-0010",
@@ -63,91 +71,106 @@
     "id": "shiga-0011",
     "name": "滋賀県立彦根工業高等学校",
     "prefecture": "滋賀県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 43
   },
   {
     "id": "shiga-0012",
     "name": "滋賀県立彦根翔西館高等学校",
     "prefecture": "滋賀県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 49
   },
   {
     "id": "shiga-0013",
     "name": "滋賀県立彦根東高等学校",
     "prefecture": "滋賀県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 68
   },
   {
     "id": "shiga-0014",
     "name": "滋賀県立長浜北高等学校",
     "prefecture": "滋賀県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 55
   },
   {
     "id": "shiga-0015",
     "name": "滋賀県立長浜農業高等学校",
     "prefecture": "滋賀県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 37
   },
   {
     "id": "shiga-0016",
     "name": "滋賀県立長浜北星高等学校",
     "prefecture": "滋賀県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 47
   },
   {
     "id": "shiga-0017",
     "name": "滋賀県立虎姫高等学校",
     "prefecture": "滋賀県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 63
   },
   {
     "id": "shiga-0018",
     "name": "滋賀県立伊香高等学校",
     "prefecture": "滋賀県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 38
   },
   {
     "id": "shiga-0019",
     "name": "滋賀県立八幡高等学校",
     "prefecture": "滋賀県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 52
   },
   {
     "id": "shiga-0020",
     "name": "滋賀県立八幡工業高等学校",
     "prefecture": "滋賀県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 42
   },
   {
     "id": "shiga-0021",
     "name": "滋賀県立八幡商業高等学校",
     "prefecture": "滋賀県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 50
   },
   {
     "id": "shiga-0022",
     "name": "滋賀県立草津高等学校",
     "prefecture": "滋賀県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 44
   },
   {
     "id": "shiga-0023",
     "name": "滋賀県立草津東高等学校",
     "prefecture": "滋賀県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 62
   },
   {
     "id": "shiga-0024",
     "name": "滋賀県立湖南農業高等学校",
     "prefecture": "滋賀県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 38
   },
   {
     "id": "shiga-0025",
     "name": "滋賀県立玉川高等学校",
     "prefecture": "滋賀県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 55
   },
   {
     "id": "shiga-0026",
@@ -159,37 +182,43 @@
     "id": "shiga-0027",
     "name": "滋賀県立守山北高等学校",
     "prefecture": "滋賀県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 43
   },
   {
     "id": "shiga-0028",
     "name": "滋賀県立国際情報高等学校",
     "prefecture": "滋賀県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 48
   },
   {
     "id": "shiga-0029",
     "name": "滋賀県立栗東高等学校",
     "prefecture": "滋賀県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 42
   },
   {
     "id": "shiga-0030",
     "name": "滋賀県立甲南高等学校",
     "prefecture": "滋賀県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 39
   },
   {
     "id": "shiga-0031",
     "name": "滋賀県立信楽高等学校",
     "prefecture": "滋賀県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 36
   },
   {
     "id": "shiga-0032",
     "name": "滋賀県立水口高等学校",
     "prefecture": "滋賀県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 44
   },
   {
     "id": "shiga-0033",
@@ -201,79 +230,92 @@
     "id": "shiga-0034",
     "name": "滋賀県立野洲高等学校",
     "prefecture": "滋賀県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 37
   },
   {
     "id": "shiga-0035",
     "name": "滋賀県立石部高等学校",
     "prefecture": "滋賀県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 39
   },
   {
     "id": "shiga-0036",
     "name": "滋賀県立甲西高等学校",
     "prefecture": "滋賀県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 49
   },
   {
     "id": "shiga-0037",
     "name": "滋賀県立安曇川高等学校",
     "prefecture": "滋賀県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 40
   },
   {
     "id": "shiga-0038",
     "name": "滋賀県立高島高等学校",
     "prefecture": "滋賀県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 51
   },
   {
     "id": "shiga-0039",
     "name": "滋賀県立能登川高等学校",
     "prefecture": "滋賀県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 43
   },
   {
     "id": "shiga-0040",
     "name": "滋賀県立八日市高等学校",
     "prefecture": "滋賀県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 62
   },
   {
     "id": "shiga-0041",
     "name": "滋賀県立八日市南高等学校",
     "prefecture": "滋賀県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 38
   },
   {
     "id": "shiga-0042",
     "name": "滋賀県立伊吹高等学校",
     "prefecture": "滋賀県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 43
   },
   {
     "id": "shiga-0043",
     "name": "滋賀県立米原高等学校",
     "prefecture": "滋賀県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 63
   },
   {
     "id": "shiga-0044",
     "name": "滋賀県立日野高等学校",
     "prefecture": "滋賀県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 41
   },
   {
     "id": "shiga-0045",
     "name": "滋賀県立愛知高等学校",
     "prefecture": "滋賀県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 36
   },
   {
     "id": "shiga-0046",
     "name": "綾羽高等学校",
     "prefecture": "滋賀県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 41
   },
   {
     "id": "shiga-0047",
@@ -285,7 +327,8 @@
     "id": "shiga-0048",
     "name": "近江高等学校",
     "prefecture": "滋賀県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 57
   },
   {
     "id": "shiga-0049",
@@ -309,7 +352,8 @@
     "id": "shiga-0052",
     "name": "滋賀短期大学附属高等学校",
     "prefecture": "滋賀県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 47
   },
   {
     "id": "shiga-0053",
@@ -321,7 +365,8 @@
     "id": "shiga-0054",
     "name": "彦根総合高等学校",
     "prefecture": "滋賀県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 38
   },
   {
     "id": "shiga-0055",

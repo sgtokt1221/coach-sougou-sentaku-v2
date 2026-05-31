@@ -115,9 +115,16 @@ export function HighSchoolSelect({
                 className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-accent"
               >
                 <span className="truncate">{s.name}</span>
-                <span className="shrink-0 text-[10px] text-muted-foreground">
-                  {s.prefecture}
-                  {s.kind ? ` ・ ${KIND_LABEL[s.kind]}` : ""}
+                <span className="flex shrink-0 items-center gap-1.5 text-[10px] text-muted-foreground">
+                  <span>
+                    {s.prefecture}
+                    {s.kind ? ` ・ ${KIND_LABEL[s.kind]}` : ""}
+                  </span>
+                  {typeof s.deviation === "number" && (
+                    <span className="rounded bg-sky-100 px-1.5 py-0.5 font-medium text-sky-700 dark:bg-sky-900/40 dark:text-sky-300">
+                      偏差値 {s.deviation}
+                    </span>
+                  )}
                 </span>
               </button>
             </li>

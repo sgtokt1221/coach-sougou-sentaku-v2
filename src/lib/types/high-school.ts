@@ -11,4 +11,9 @@ export interface HighSchool {
   prefecture: string;
   /** 設置区分。取得できた範囲で付与 */
   kind?: "public" | "private" | "national";
+  /**
+   * 偏差値（学科により幅があるため校の代表値=最大）。出典: みんなの高校情報。
+   * マスタに無い/名称不一致の場合は未設定。
+   */
+  deviation?: number;
 }

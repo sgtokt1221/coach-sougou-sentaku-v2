@@ -9,13 +9,15 @@
     "id": "hyogo-0002",
     "name": "兵庫県立神戸高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 75
   },
   {
     "id": "hyogo-0003",
     "name": "兵庫県立御影高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 67
   },
   {
     "id": "hyogo-0004",
@@ -27,43 +29,50 @@
     "id": "hyogo-0005",
     "name": "神戸市立葺合高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 64
   },
   {
     "id": "hyogo-0006",
     "name": "神戸市立六甲アイランド高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 54
   },
   {
     "id": "hyogo-0007",
     "name": "神戸市立科学技術高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 50
   },
   {
     "id": "hyogo-0008",
     "name": "兵庫県立兵庫高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 71
   },
   {
     "id": "hyogo-0009",
     "name": "兵庫県立夢野台高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 61
   },
   {
     "id": "hyogo-0010",
     "name": "兵庫県立神戸鈴蘭台高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 56
   },
   {
     "id": "hyogo-0011",
     "name": "兵庫県立北神戸総合高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 40
   },
   {
     "id": "hyogo-0012",
@@ -81,37 +90,43 @@
     "id": "hyogo-0014",
     "name": "兵庫県立兵庫工業高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 49
   },
   {
     "id": "hyogo-0015",
     "name": "神戸市立神港橘高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 46
   },
   {
     "id": "hyogo-0016",
     "name": "兵庫県立長田高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 73
   },
   {
     "id": "hyogo-0017",
     "name": "兵庫県立星陵高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 65
   },
   {
     "id": "hyogo-0018",
     "name": "兵庫県立北須磨高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 59
   },
   {
     "id": "hyogo-0019",
     "name": "兵庫県立神戸学園都市高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 55
   },
   {
     "id": "hyogo-0020",
@@ -129,49 +144,57 @@
     "id": "hyogo-0022",
     "name": "兵庫県立須磨東高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 58
   },
   {
     "id": "hyogo-0023",
     "name": "兵庫県立須磨友が丘高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 57
   },
   {
     "id": "hyogo-0024",
     "name": "兵庫県立舞子高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 53
   },
   {
     "id": "hyogo-0025",
     "name": "兵庫県立神戸高塚高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 48
   },
   {
     "id": "hyogo-0026",
     "name": "兵庫県立神戸商業高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 53
   },
   {
     "id": "hyogo-0027",
     "name": "神戸市立須磨翔風高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 52
   },
   {
     "id": "hyogo-0028",
     "name": "兵庫県立芦屋高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 57
   },
   {
     "id": "hyogo-0029",
     "name": "兵庫県立国際高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 58
   },
   {
     "id": "hyogo-0030",
@@ -183,49 +206,57 @@
     "id": "hyogo-0031",
     "name": "兵庫県立洲本高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 57
   },
   {
     "id": "hyogo-0032",
     "name": "兵庫県立洲本実業高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 43
   },
   {
     "id": "hyogo-0033",
     "name": "兵庫県立津名高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 58
   },
   {
     "id": "hyogo-0034",
     "name": "兵庫県立淡路高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 39
   },
   {
     "id": "hyogo-0035",
     "name": "兵庫県立淡路三原高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 60
   },
   {
     "id": "hyogo-0036",
     "name": "兵庫県立尼崎稲園高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 62
   },
   {
     "id": "hyogo-0037",
     "name": "兵庫県立尼崎北高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 54
   },
   {
     "id": "hyogo-0038",
     "name": "兵庫県立尼崎小田高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 58
   },
   {
     "id": "hyogo-0039",
@@ -237,43 +268,50 @@
     "id": "hyogo-0040",
     "name": "兵庫県立尼崎西高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 41
   },
   {
     "id": "hyogo-0041",
     "name": "兵庫県立尼崎工業高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 43
   },
   {
     "id": "hyogo-0042",
     "name": "兵庫県立武庫荘総合高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 47
   },
   {
     "id": "hyogo-0043",
     "name": "尼崎市立尼崎高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 53
   },
   {
     "id": "hyogo-0044",
     "name": "尼崎市立尼崎双星高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 46
   },
   {
     "id": "hyogo-0045",
     "name": "西宮市立西宮高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 67
   },
   {
     "id": "hyogo-0046",
     "name": "西宮市立西宮東高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 66
   },
   {
     "id": "hyogo-0047",
@@ -285,13 +323,15 @@
     "id": "hyogo-0048",
     "name": "兵庫県立鳴尾高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 57
   },
   {
     "id": "hyogo-0049",
     "name": "兵庫県立西宮苦楽園高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 52
   },
   {
     "id": "hyogo-0050",
@@ -309,37 +349,43 @@
     "id": "hyogo-0052",
     "name": "兵庫県立西宮今津高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 45
   },
   {
     "id": "hyogo-0053",
     "name": "兵庫県立西宮南高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 44
   },
   {
     "id": "hyogo-0054",
     "name": "兵庫県立宝塚北高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 70
   },
   {
     "id": "hyogo-0055",
     "name": "兵庫県立宝塚西高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 56
   },
   {
     "id": "hyogo-0056",
     "name": "兵庫県立宝塚高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 45
   },
   {
     "id": "hyogo-0057",
     "name": "兵庫県立宝塚東高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 39
   },
   {
     "id": "hyogo-0058",
@@ -351,31 +397,36 @@
     "id": "hyogo-0059",
     "name": "兵庫県立伊丹北高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 54
   },
   {
     "id": "hyogo-0060",
     "name": "兵庫県立伊丹西高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 47
   },
   {
     "id": "hyogo-0061",
     "name": "伊丹市立伊丹高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 54
   },
   {
     "id": "hyogo-0062",
     "name": "兵庫県立川西緑台高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 63
   },
   {
     "id": "hyogo-0063",
     "name": "兵庫県立川西北陵高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 49
   },
   {
     "id": "hyogo-0064",
@@ -387,43 +438,50 @@
     "id": "hyogo-0065",
     "name": "兵庫県立猪名川高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 42
   },
   {
     "id": "hyogo-0066",
     "name": "兵庫県立北摂三田高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 63
   },
   {
     "id": "hyogo-0067",
     "name": "兵庫県立三田祥雲館高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 60
   },
   {
     "id": "hyogo-0068",
     "name": "兵庫県立三田西陵高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 47
   },
   {
     "id": "hyogo-0069",
     "name": "兵庫県立有馬高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 51
   },
   {
     "id": "hyogo-0070",
     "name": "兵庫県立篠山鳳鳴高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 60
   },
   {
     "id": "hyogo-0071",
     "name": "兵庫県立篠山産業高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 42
   },
   {
     "id": "hyogo-0072",
@@ -435,151 +493,176 @@
     "id": "hyogo-0073",
     "name": "兵庫県立柏原高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 60
   },
   {
     "id": "hyogo-0074",
     "name": "兵庫県立氷上高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 36
   },
   {
     "id": "hyogo-0075",
     "name": "兵庫県立氷上西高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 38
   },
   {
     "id": "hyogo-0076",
     "name": "兵庫県立明石北高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 69
   },
   {
     "id": "hyogo-0077",
     "name": "兵庫県立明石城西高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 60
   },
   {
     "id": "hyogo-0078",
     "name": "兵庫県立明石高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 53
   },
   {
     "id": "hyogo-0079",
     "name": "兵庫県立明石西高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 60
   },
   {
     "id": "hyogo-0080",
     "name": "兵庫県立明石清水高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 44
   },
   {
     "id": "hyogo-0081",
     "name": "兵庫県立明石南高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 48
   },
   {
     "id": "hyogo-0082",
     "name": "明石市立明石商業高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 42
   },
   {
     "id": "hyogo-0083",
     "name": "兵庫県立加古川東高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 70
   },
   {
     "id": "hyogo-0084",
     "name": "兵庫県立加古川西高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 61
   },
   {
     "id": "hyogo-0085",
     "name": "兵庫県立加古川北高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 56
   },
   {
     "id": "hyogo-0086",
     "name": "兵庫県立加古川南高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 50
   },
   {
     "id": "hyogo-0087",
     "name": "兵庫県立農業高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 50
   },
   {
     "id": "hyogo-0088",
     "name": "兵庫県立東播工業高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 44
   },
   {
     "id": "hyogo-0089",
     "name": "兵庫県立高砂南高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 50
   },
   {
     "id": "hyogo-0090",
     "name": "兵庫県立高砂高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 44
   },
   {
     "id": "hyogo-0091",
     "name": "兵庫県立松陽高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 45
   },
   {
     "id": "hyogo-0092",
     "name": "兵庫県立東播磨高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 58
   },
   {
     "id": "hyogo-0093",
     "name": "兵庫県立播磨南高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 43
   },
   {
     "id": "hyogo-0094",
     "name": "兵庫県立小野高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 70
   },
   {
     "id": "hyogo-0095",
     "name": "兵庫県立小野工業高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 43
   },
   {
     "id": "hyogo-0096",
     "name": "兵庫県立三木高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 53
   },
   {
     "id": "hyogo-0097",
     "name": "兵庫県立三木総合高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 45
   },
   {
     "id": "hyogo-0098",
@@ -603,31 +686,36 @@
     "id": "hyogo-0101",
     "name": "兵庫県立社高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 48
   },
   {
     "id": "hyogo-0102",
     "name": "兵庫県立北条高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 52
   },
   {
     "id": "hyogo-0103",
     "name": "兵庫県立播磨農業高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 39
   },
   {
     "id": "hyogo-0104",
     "name": "兵庫県立西脇高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 55
   },
   {
     "id": "hyogo-0105",
     "name": "兵庫県立西脇工業高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 46
   },
   {
     "id": "hyogo-0106",
@@ -639,19 +727,22 @@
     "id": "hyogo-0107",
     "name": "兵庫県立姫路西高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 72
   },
   {
     "id": "hyogo-0108",
     "name": "兵庫県立姫路東高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 67
   },
   {
     "id": "hyogo-0109",
     "name": "兵庫県立姫路飾西高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 62
   },
   {
     "id": "hyogo-0110",
@@ -681,31 +772,36 @@
     "id": "hyogo-0114",
     "name": "兵庫県立姫路別所高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 45
   },
   {
     "id": "hyogo-0115",
     "name": "兵庫県立香寺高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 49
   },
   {
     "id": "hyogo-0116",
     "name": "兵庫県立姫路商業高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 55
   },
   {
     "id": "hyogo-0117",
     "name": "兵庫県立姫路工業高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 55
   },
   {
     "id": "hyogo-0118",
     "name": "兵庫県立飾磨工業高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 49
   },
   {
     "id": "hyogo-0119",
@@ -717,19 +813,22 @@
     "id": "hyogo-0120",
     "name": "姫路市立姫路高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 63
   },
   {
     "id": "hyogo-0121",
     "name": "姫路市立琴丘高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 57
   },
   {
     "id": "hyogo-0122",
     "name": "姫路市立飾磨高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 49
   },
   {
     "id": "hyogo-0123",
@@ -753,43 +852,50 @@
     "id": "hyogo-0126",
     "name": "兵庫県立神崎高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 43
   },
   {
     "id": "hyogo-0127",
     "name": "兵庫県立龍野高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 66
   },
   {
     "id": "hyogo-0128",
     "name": "兵庫県立龍野北高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 53
   },
   {
     "id": "hyogo-0129",
     "name": "兵庫県立相生高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 58
   },
   {
     "id": "hyogo-0130",
     "name": "兵庫県立相生産業高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 42
   },
   {
     "id": "hyogo-0131",
     "name": "兵庫県立赤穂高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 47
   },
   {
     "id": "hyogo-0132",
     "name": "兵庫県立山崎高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 44
   },
   {
     "id": "hyogo-0133",
@@ -801,19 +907,22 @@
     "id": "hyogo-0134",
     "name": "兵庫県立千種高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 38
   },
   {
     "id": "hyogo-0135",
     "name": "兵庫県立太子高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 49
   },
   {
     "id": "hyogo-0136",
     "name": "兵庫県立上郡高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 39
   },
   {
     "id": "hyogo-0137",
@@ -831,55 +940,64 @@
     "id": "hyogo-0139",
     "name": "兵庫県立豊岡高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 60
   },
   {
     "id": "hyogo-0140",
     "name": "兵庫県立豊岡総合高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 46
   },
   {
     "id": "hyogo-0141",
     "name": "兵庫県立日高高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 50
   },
   {
     "id": "hyogo-0142",
     "name": "兵庫県立出石高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 41
   },
   {
     "id": "hyogo-0143",
     "name": "兵庫県立浜坂高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 42
   },
   {
     "id": "hyogo-0144",
     "name": "兵庫県立香住高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 39
   },
   {
     "id": "hyogo-0145",
     "name": "兵庫県立村岡高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 38
   },
   {
     "id": "hyogo-0146",
     "name": "兵庫県立八鹿高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 58
   },
   {
     "id": "hyogo-0147",
     "name": "兵庫県立但馬農業高等学校",
     "prefecture": "兵庫県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 37
   },
   {
     "id": "hyogo-0148",
@@ -1005,7 +1123,8 @@
     "id": "hyogo-0168",
     "name": "育英高等学校",
     "prefecture": "兵庫県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 55
   },
   {
     "id": "hyogo-0169",
@@ -1023,31 +1142,36 @@
     "id": "hyogo-0171",
     "name": "神戸弘陵学園高等学校",
     "prefecture": "兵庫県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 50
   },
   {
     "id": "hyogo-0172",
     "name": "神戸国際大学附属高等学校",
     "prefecture": "兵庫県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 45
   },
   {
     "id": "hyogo-0173",
     "name": "神戸星城高等学校",
     "prefecture": "兵庫県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 51
   },
   {
     "id": "hyogo-0174",
     "name": "神戸第一高等学校",
     "prefecture": "兵庫県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 42
   },
   {
     "id": "hyogo-0175",
     "name": "神戸野田高等学校",
     "prefecture": "兵庫県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 58
   },
   {
     "id": "hyogo-0176",
@@ -1065,7 +1189,8 @@
     "id": "hyogo-0178",
     "name": "神港学園高等学校",
     "prefecture": "兵庫県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 49
   },
   {
     "id": "hyogo-0179",
@@ -1095,13 +1220,15 @@
     "id": "hyogo-0183",
     "name": "彩星工科高等学校",
     "prefecture": "兵庫県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 43
   },
   {
     "id": "hyogo-0184",
     "name": "三田松聖高等学校",
     "prefecture": "兵庫県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 50
   },
   {
     "id": "hyogo-0185",
@@ -1131,7 +1258,8 @@
     "id": "hyogo-0189",
     "name": "日ノ本学園高等学校",
     "prefecture": "兵庫県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 47
   },
   {
     "id": "hyogo-0190",
@@ -1215,7 +1343,8 @@
     "id": "hyogo-0203",
     "name": "神戸常盤女子高等学校",
     "prefecture": "兵庫県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 51
   },
   {
     "id": "hyogo-0204",
@@ -1233,7 +1362,8 @@
     "id": "hyogo-0206",
     "name": "兵庫大学附属須磨ノ浦高等学校",
     "prefecture": "兵庫県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 52
   },
   {
     "id": "hyogo-0207",

@@ -75,6 +75,7 @@ async function seedHighSchools() {
             name: s.name,
             prefecture: s.prefecture,
             ...(s.kind ? { kind: s.kind } : {}),
+            ...(typeof s.deviation === "number" ? { deviation: s.deviation } : {}),
             updatedAt: new Date(),
           },
           { merge: true },

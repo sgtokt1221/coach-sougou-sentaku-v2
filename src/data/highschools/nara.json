@@ -9,31 +9,36 @@
     "id": "nara-0002",
     "name": "十津川高等学校",
     "prefecture": "奈良県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 35
   },
   {
     "id": "nara-0003",
     "name": "奈良県立奈良高等学校",
     "prefecture": "奈良県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 70
   },
   {
     "id": "nara-0004",
     "name": "奈良県立高円芸術高等学校",
     "prefecture": "奈良県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 51
   },
   {
     "id": "nara-0005",
     "name": "奈良県立奈良商工高等学校",
     "prefecture": "奈良県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 46
   },
   {
     "id": "nara-0006",
     "name": "奈良県立山辺高等学校",
     "prefecture": "奈良県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 34
   },
   {
     "id": "nara-0007",
@@ -45,13 +50,15 @@
     "id": "nara-0008",
     "name": "奈良県立高田高等学校",
     "prefecture": "奈良県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 62
   },
   {
     "id": "nara-0009",
     "name": "奈良県立郡山高等学校",
     "prefecture": "奈良県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 67
   },
   {
     "id": "nara-0010",
@@ -63,49 +70,57 @@
     "id": "nara-0011",
     "name": "奈良県立添上高等学校",
     "prefecture": "奈良県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 40
   },
   {
     "id": "nara-0012",
     "name": "奈良県立二階堂高等学校",
     "prefecture": "奈良県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 39
   },
   {
     "id": "nara-0013",
     "name": "奈良県立畝傍高等学校",
     "prefecture": "奈良県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 68
   },
   {
     "id": "nara-0014",
     "name": "奈良県立橿原高等学校",
     "prefecture": "奈良県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 58
   },
   {
     "id": "nara-0015",
     "name": "奈良県立桜井高等学校",
     "prefecture": "奈良県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 58
   },
   {
     "id": "nara-0016",
     "name": "奈良県立商業高等学校",
     "prefecture": "奈良県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 42
   },
   {
     "id": "nara-0017",
     "name": "奈良県立五條高等学校",
     "prefecture": "奈良県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 43
   },
   {
     "id": "nara-0018",
     "name": "奈良県立御所実業高等学校",
     "prefecture": "奈良県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 39
   },
   {
     "id": "nara-0019",
@@ -117,67 +132,78 @@
     "id": "nara-0020",
     "name": "奈良県立生駒高等学校",
     "prefecture": "奈良県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 55
   },
   {
     "id": "nara-0021",
     "name": "奈良県立奈良北高等学校",
     "prefecture": "奈良県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 59
   },
   {
     "id": "nara-0022",
     "name": "奈良県立香芝高等学校",
     "prefecture": "奈良県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 49
   },
   {
     "id": "nara-0023",
     "name": "奈良県立宇陀高等学校",
     "prefecture": "奈良県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 39
   },
   {
     "id": "nara-0024",
     "name": "奈良県立王寺工業高等学校",
     "prefecture": "奈良県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 43
   },
   {
     "id": "nara-0025",
     "name": "奈良県立大和広陵高等学校",
     "prefecture": "奈良県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 39
   },
   {
     "id": "nara-0026",
     "name": "奈良県立西和清陵高等学校",
     "prefecture": "奈良県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 41
   },
   {
     "id": "nara-0027",
     "name": "奈良県立法隆寺国際高等学校",
     "prefecture": "奈良県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 48
   },
   {
     "id": "nara-0028",
     "name": "奈良県立磯城野高等学校",
     "prefecture": "奈良県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 42
   },
   {
     "id": "nara-0029",
     "name": "奈良県立高取国際高等学校",
     "prefecture": "奈良県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 48
   },
   {
     "id": "nara-0030",
     "name": "奈良県立奈良南高等学校",
     "prefecture": "奈良県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 39
   },
   {
     "id": "nara-0031",
@@ -189,13 +215,15 @@
     "id": "nara-0032",
     "name": "奈良市立一条高等学校",
     "prefecture": "奈良県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 62
   },
   {
     "id": "nara-0033",
     "name": "大和高田市立高田商業高等学校",
     "prefecture": "奈良県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 51
   },
   {
     "id": "nara-0034",
@@ -207,7 +235,8 @@
     "id": "nara-0035",
     "name": "奈良県立大学附属高等学校",
     "prefecture": "奈良県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 54
   },
   {
     "id": "nara-0036",
@@ -249,19 +278,22 @@
     "id": "nara-0042",
     "name": "奈良女子高等学校",
     "prefecture": "奈良県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 42
   },
   {
     "id": "nara-0043",
     "name": "奈良大学附属高等学校",
     "prefecture": "奈良県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 54
   },
   {
     "id": "nara-0044",
     "name": "奈良文化高等学校",
     "prefecture": "奈良県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 45
   },
   {
     "id": "nara-0045",
@@ -279,13 +311,15 @@
     "id": "nara-0047",
     "name": "天理高等学校",
     "prefecture": "奈良県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 59
   },
   {
     "id": "nara-0048",
     "name": "橿原学院高等学校",
     "prefecture": "奈良県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 51
   },
   {
     "id": "nara-0049",

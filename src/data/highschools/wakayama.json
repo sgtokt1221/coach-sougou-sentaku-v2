@@ -9,19 +9,22 @@
     "id": "wakayama-0002",
     "name": "和歌山県立星林高等学校",
     "prefecture": "和歌山県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 58
   },
   {
     "id": "wakayama-0003",
     "name": "和歌山県立和歌山工業高等学校",
     "prefecture": "和歌山県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 46
   },
   {
     "id": "wakayama-0004",
     "name": "和歌山県立和歌山商業高等学校",
     "prefecture": "和歌山県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 46
   },
   {
     "id": "wakayama-0005",
@@ -57,13 +60,15 @@
     "id": "wakayama-0010",
     "name": "和歌山県立那賀高等学校",
     "prefecture": "和歌山県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 54
   },
   {
     "id": "wakayama-0011",
     "name": "和歌山県立粉河高等学校",
     "prefecture": "和歌山県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 47
   },
   {
     "id": "wakayama-0012",
@@ -81,7 +86,8 @@
     "id": "wakayama-0014",
     "name": "和歌山県立紀北工業高等学校",
     "prefecture": "和歌山県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 40
   },
   {
     "id": "wakayama-0015",
@@ -93,7 +99,8 @@
     "id": "wakayama-0016",
     "name": "和歌山県立笠田高等学校",
     "prefecture": "和歌山県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 42
   },
   {
     "id": "wakayama-0017",
@@ -117,13 +124,15 @@
     "id": "wakayama-0020",
     "name": "和歌山県立箕島高等学校",
     "prefecture": "和歌山県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 42
   },
   {
     "id": "wakayama-0021",
     "name": "和歌山県立耐久高等学校",
     "prefecture": "和歌山県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 50
   },
   {
     "id": "wakayama-0022",
@@ -141,7 +150,8 @@
     "id": "wakayama-0024",
     "name": "和歌山県立紀央館高等学校",
     "prefecture": "和歌山県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 44
   },
   {
     "id": "wakayama-0025",
@@ -165,7 +175,8 @@
     "id": "wakayama-0028",
     "name": "和歌山県立田辺工業高等学校",
     "prefecture": "和歌山県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 42
   },
   {
     "id": "wakayama-0029",
@@ -177,7 +188,8 @@
     "id": "wakayama-0030",
     "name": "和歌山県立神島高等学校",
     "prefecture": "和歌山県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 50
   },
   {
     "id": "wakayama-0031",
@@ -189,7 +201,8 @@
     "id": "wakayama-0032",
     "name": "和歌山県立熊野高等学校",
     "prefecture": "和歌山県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 41
   },
   {
     "id": "wakayama-0033",
@@ -201,7 +214,8 @@
     "id": "wakayama-0034",
     "name": "和歌山県立新宮高等学校",
     "prefecture": "和歌山県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 49
   },
   {
     "id": "wakayama-0035",
@@ -219,7 +233,8 @@
     "id": "wakayama-0037",
     "name": "和歌山市立和歌山高等学校",
     "prefecture": "和歌山県",
-    "kind": "public"
+    "kind": "public",
+    "deviation": 48
   },
   {
     "id": "wakayama-0038",
@@ -243,7 +258,8 @@
     "id": "wakayama-0041",
     "name": "高野山高等学校",
     "prefecture": "和歌山県",
-    "kind": "private"
+    "kind": "private",
+    "deviation": 55
   },
   {
     "id": "wakayama-0042",
