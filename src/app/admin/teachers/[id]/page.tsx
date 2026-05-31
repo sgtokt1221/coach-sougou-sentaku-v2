@@ -22,6 +22,7 @@ import {
 import { toast } from "sonner";
 import { authFetch } from "@/lib/api/client";
 import { TeacherShiftGrid } from "@/components/admin/TeacherShiftGrid";
+import { TeacherStudentAssignment } from "@/components/admin/TeacherStudentAssignment";
 import type { TeacherShift, ShiftSlot } from "@/lib/types/teacher-shift";
 
 interface TeacherProfile {
@@ -295,6 +296,14 @@ export default function AdminTeacherDetailPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Separator />
+
+      {/* メッセージ担当生徒の割り当て */}
+      <TeacherStudentAssignment
+        teacherId={teacherId}
+        teacherName={teacher.profile.displayName}
+      />
 
       <Separator />
 

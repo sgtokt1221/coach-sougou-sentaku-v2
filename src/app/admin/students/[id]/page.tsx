@@ -329,8 +329,8 @@ function PinnedSummary({ detail }: { detail: StudentDetail }) {
   );
 }
 
-type TabKey = "overview" | "performance" | "activity" | "reports" | "homework";
-const VALID_TABS: TabKey[] = ["overview", "performance", "activity", "reports", "homework"];
+type TabKey = "overview" | "performance" | "activity" | "reports" | "homework" | "messages";
+const VALID_TABS: TabKey[] = ["overview", "performance", "activity", "reports", "homework", "messages"];
 
 function AdminStudentDetailPageInner() {
   const router = useRouter();

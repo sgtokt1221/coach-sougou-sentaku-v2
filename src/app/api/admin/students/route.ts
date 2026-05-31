@@ -268,6 +268,7 @@ export async function GET(request: NextRequest) {
           currentInterviewRank: interviewAgg.compositeRank,
           currentInterviewScore: interviewAgg.compositeScore,
           lastInterviewCheckedAt,
+          assignedTeacherId: data.assignedTeacherId as string | undefined,
         };
       })
     );

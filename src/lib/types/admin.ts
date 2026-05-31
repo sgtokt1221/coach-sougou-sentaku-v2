@@ -44,6 +44,8 @@ export interface StudentListItem {
   currentInterviewScore: number | null;
   /** 最後に面接スキルチェックを受けた日時 */
   lastInterviewCheckedAt: string | null;
+  /** 担当講師の uid (生徒↔講師メッセージの割当先) */
+  assignedTeacherId?: string;
 }
 
 export interface StudentDetail {
