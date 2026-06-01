@@ -16,7 +16,6 @@ import {
   REGIONS,
   PREFECTURE_TO_REGION,
   DEVIATION_BANDS,
-  PREFECTURES,
 } from "@/lib/constants/university";
 import { getUniversityDeviation } from "@/lib/data/university-deviations";
 import { SelectionTypeBadge } from "@/components/shared/SelectionTypeBadge";
@@ -80,7 +79,6 @@ export default function AdminUniversitiesPage() {
   const [search, setSearch] = useState("");
   // ボタン絞り込み（各単一選択・既定 "all"）
   const [region, setRegion] = useState("all");
-  const [prefecture, setPrefecture] = useState("all");
   const [group, setGroup] = useState("all");
   const [band, setBand] = useState("all");
 
@@ -103,10 +101,9 @@ export default function AdminUniversitiesPage() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  // ボタン絞り込み（地域/都道府県/グループ/偏差値）を AND で適用
+  // ボタン絞り込み（地域/グループ/偏差値）を AND で適用
   const filtered = universities.filter((u) => {
     if (region !== "all" && PREFECTURE_TO_REGION[u.prefecture] !== region) return false;
-    if (prefecture !== "all" && u.prefecture !== prefecture) return false;
     if (group !== "all" && u.group !== group) return false;
     if (band !== "all") {
       const d = getUniversityDeviation(u.id);
@@ -117,12 +114,6 @@ export default function AdminUniversitiesPage() {
     return true;
   });
 
-  // 都道府県ボタン候補（データに存在する県のみ。地域選択時はその地域の県のみ）
-  const availablePrefectures = PREFECTURES.filter((p) =>
-    universities.some(
-      (u) => u.prefecture === p && (region === "all" || PREFECTURE_TO_REGION[p] === region),
-    ),
-  );
   // データに存在するグループのみ
   const availableGroups = GROUP_ORDER.filter((g) => universities.some((u) => u.group === g));
 
@@ -131,12 +122,6 @@ export default function AdminUniversitiesPage() {
     group: g,
     items: filtered.filter((u) => u.group === g),
   })).filter((s) => s.items.length > 0);
-
-  /** 地域変更時は都道府県選択をリセット */
-  function handleRegion(v: string) {
-    setRegion(v);
-    setPrefecture("all");
-  }
 
   return (
     <div className="space-y-6 p-6">
@@ -163,20 +148,9 @@ export default function AdminUniversitiesPage() {
         <PillRow
           label="地域"
           value={region}
-          onChange={handleRegion}
+          onChange={setRegion}
           options={[{ id: "all", label: "すべて" }, ...REGIONS.map((r) => ({ id: r, label: r }))]}
         />
-        {availablePrefectures.length > 0 && (
-          <PillRow
-            label="都道府県"
-            value={prefecture}
-            onChange={setPrefecture}
-            options={[
-              { id: "all", label: "すべて" },
-              ...availablePrefectures.map((p) => ({ id: p, label: p })),
-            ]}
-          />
-        )}
         <PillRow
           label="グループ"
           value={group}
@@ -213,7 +187,7 @@ export default function AdminUniversitiesPage() {
             <div className="flex flex-col items-center gap-2 py-16 text-muted-foreground">
               <Building2 className="size-8" />
               <p className="text-sm">
-                {search || region !== "all" || prefecture !== "all" || group !== "all" || band !== "all"
+                {search || region !== "all" || group !== "all" || band !== "all"
                   ? "該当する大学が見つかりません"
                   : "大学がまだ登録されていません"}
               </p>
