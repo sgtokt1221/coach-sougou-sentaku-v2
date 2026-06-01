@@ -50,10 +50,11 @@ SUBJECT_RE = re.compile(
     r"(英語|国語|数学|理科|地理|歴史|地歴|公民|外国語|物理|化学|生物|地学|科目|教科)"
 )
 PDF_HREF_RE = re.compile(r"href=[\"']([^\"']+\.pdf)", re.I)
-# 募集要項へ1階層深く辿るための HTML リンク優先語
-SUBPAGE_RE = re.compile(r"(総合型|公募|学校推薦|自己推薦|ao|suisen|募集要項|要項|出願|nyushi|admission)", re.I)
+# 総合型選抜の募集要項へ1階層深く辿るための HTML リンク優先語（公募/指定校は除外）
+SUBPAGE_RE = re.compile(r"(総合型|総合選抜|自己推薦|ao|募集要項|要項|出願|nyushi|admission)", re.I)
 HREF_RE = re.compile(r"href=[\"']([^\"'#]+)[\"']", re.I)
-PDF_PRIORITY = re.compile(r"(募集要項|要項|application|guide|総合型|公募|推薦|ao|suisen)", re.I)
+# 総合型選抜のみ（公募/指定校/学校推薦は方針1の floor を不当に下げうるので含めない）
+PDF_PRIORITY = re.compile(r"(募集要項|要項|application|guide|総合型|総合選抜|自己推薦|ao)", re.I)
 
 
 def fetch(url: str, timeout: int = 25) -> bytes | None:
@@ -240,10 +241,11 @@ def main() -> None:
                     cur = per_fac.get(fac["id"])
                     per_fac[fac["id"]] = line_min if cur is None else min(cur, line_min)
 
-        # 全学共通の単一値なら、行で拾えなかった対象学部も補完
-        if len(vals) == 1:
+        # 方針1(floor): 学部別の明示が無い対象学部は、大学の総合型 最低評定を適用
+        if vals:
+            uni_floor = min(vals)
             for fac in info["faculties"]:
-                per_fac.setdefault(fac["id"], next(iter(vals)))
+                per_fac.setdefault(fac["id"], uni_floor)
 
         if per_fac:
             result[uid] = per_fac

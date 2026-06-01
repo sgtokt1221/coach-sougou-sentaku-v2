@@ -172,7 +172,7 @@
         "admissionPolicy": "理工学部では、数学・理科や科学技術に関心を持ち、ものづくりや環境・情報分野で探究し社会に貢献しようとする人材を求めています。",
         "capacity": 5,
         "requirements": {
-          "gpa": null,
+          "gpa": 3,
           "englishCert": null,
           "otherReqs": []
         },
@@ -204,7 +204,7 @@
         "admissionPolicy": "薬学部では、生命や医療に関心を持ち、薬の専門家として地域医療に貢献しようとする倫理観と探究心を備えた人材を求めています。",
         "capacity": 5,
         "requirements": {
-          "gpa": null,
+          "gpa": 3,
           "englishCert": null,
           "otherReqs": []
         },
@@ -236,7 +236,7 @@
         "admissionPolicy": "看護学部では、人を支えることに関心と思いやりを持ち、看護専門職として地域の健康に貢献しようとする人材を求めています。",
         "capacity": 5,
         "requirements": {
-          "gpa": null,
+          "gpa": 3,
           "englishCert": null,
           "otherReqs": []
         },
@@ -268,7 +268,7 @@
         "admissionPolicy": "農学部では、食・農・環境・生命に関心を持ち、科学的探究を通じて持続可能な社会づくりに貢献しようとする人材を求めています。",
         "capacity": 5,
         "requirements": {
-          "gpa": null,
+          "gpa": 3,
           "englishCert": null,
           "otherReqs": []
         },

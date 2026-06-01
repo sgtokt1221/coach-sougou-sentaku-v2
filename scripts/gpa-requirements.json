@@ -1,23 +1,51 @@
 {
-  "kansai-u": {
-    "law": 3.5,
-    "policy-creation": 3.5,
-    "engineering": 3.5,
-    "engineering-2": 3.5
+  "doshisha-u": {
+    "commerce": 3.2,
+    "general": 3.2,
+    "social": 3.2,
+    "general-2": 3.2,
+    "science": 3.2,
+    "sports": 3.2,
+    "internationaleducation": 3.2,
+    "global-comm": 3.2,
+    "medicine": 3.2
   },
-  "kokugakuin-u": {
-    "letters": 3.0,
-    "tourism": 3.0,
-    "economics": 3.0,
-    "human": 3.0,
-    "letters-2": 3.0,
-    "law": 3.0
+  "kwansei-u": {
+    "commerce": 3.3,
+    "life-environment": 3.3,
+    "economics": 3.3,
+    "engineering": 3.3,
+    "policy": 3.3,
+    "architecture": 3.3,
+    "education": 3.3,
+    "science": 3.3,
+    "general": 3.3,
+    "international": 3.3,
+    "law": 3.3,
+    "letters": 3.3,
+    "human-welfare": 3.3,
+    "social": 3.3
+  },
+  "meiji-u": {
+    "agriculture": 3.5,
+    "law": 3.5,
+    "science-eng": 3.5,
+    "political-economy": 3.5
+  },
+  "konan-u": {
+    "law": 3.5,
+    "information": 3.5,
+    "letters": 3.5,
+    "general": 3.5
+  },
+  "meigaku-u": {
+    "international": 3.5,
+    "informationscience": 3.5
   },
   "setsunan-u": {
-    "law": 3.5,
-    "international": 3.5,
-    "economics": 3.5,
-    "business": 3.5,
-    "contemporary-society": 3.5
+    "science-engineering": 3.0,
+    "pharmacy": 3.0,
+    "nursing": 3.0,
+    "agriculture": 3.0
   }
 }
