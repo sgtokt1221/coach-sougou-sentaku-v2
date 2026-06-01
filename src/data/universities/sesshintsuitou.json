@@ -12,7 +12,7 @@
         "admissionPolicy": "法学部では、法的なものの考え方を身につけ、社会の課題やルールに関心を持って主体的に学び、地域や社会に貢献しようとする人材を求めています。",
         "capacity": 5,
         "requirements": {
-          "gpa": null,
+          "gpa": 3.5,
           "englishCert": null,
           "otherReqs": []
         },
@@ -44,7 +44,7 @@
         "admissionPolicy": "国際学部では、語学力と異文化理解への意欲を持ち、グローバルな視野で多様な人々と協働しようとする人材を求めています。",
         "capacity": 5,
         "requirements": {
-          "gpa": null,
+          "gpa": 3.5,
           "englishCert": null,
           "otherReqs": []
         },
@@ -76,7 +76,7 @@
         "admissionPolicy": "経済学部では、社会や経済の仕組みに関心を持ち、データや論理に基づいて課題を考察し、地域経済の発展に寄与しようとする人材を求めています。",
         "capacity": 5,
         "requirements": {
-          "gpa": null,
+          "gpa": 3.5,
           "englishCert": null,
           "otherReqs": []
         },
@@ -108,7 +108,7 @@
         "admissionPolicy": "経営学部では、企業や組織の活動に関心を持ち、マーケティングや会計などの実践的知識を活かして課題解決に取り組もうとする人材を求めています。",
         "capacity": 5,
         "requirements": {
-          "gpa": null,
+          "gpa": 3.5,
           "englishCert": null,
           "otherReqs": []
         },
@@ -140,7 +140,7 @@
         "admissionPolicy": "現代社会学部では、社会の多様な課題に関心を持ち、フィールドワークやデータをもとに地域社会の課題解決に主体的に取り組もうとする人材を求めています。",
         "capacity": 5,
         "requirements": {
-          "gpa": null,
+          "gpa": 3.5,
           "englishCert": null,
           "otherReqs": []
         },

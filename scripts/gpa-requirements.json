@@ -1,0 +1,23 @@
+{
+  "kansai-u": {
+    "law": 3.5,
+    "policy-creation": 3.5,
+    "engineering": 3.5,
+    "engineering-2": 3.5
+  },
+  "kokugakuin-u": {
+    "letters": 3.0,
+    "tourism": 3.0,
+    "economics": 3.0,
+    "human": 3.0,
+    "letters-2": 3.0,
+    "law": 3.0
+  },
+  "setsunan-u": {
+    "law": 3.5,
+    "international": 3.5,
+    "economics": 3.5,
+    "business": 3.5,
+    "contemporary-society": 3.5
+  }
+}
