@@ -1,3 +1,5 @@
+import { FACULTY_AGENCY_FOCUS_INTERVIEW } from "./shared";
+
 export const DRILL_CATEGORIES = ["志望理由", "自己PR", "学問関心", "将来ビジョン", "時事問題"] as const;
 export type DrillCategory = typeof DRILL_CATEGORIES[number];
 
@@ -15,6 +17,8 @@ const DRILL_QUESTION_PROMPT = `あなたは総合型選抜（旧AO入試）の�
 3. アドミッションポリシーに関連する内容を含める
 4. 受験生の本質的な考えや経験を引き出せる質問
 5. 短い練習に適した、具体的で答えやすい質問
+
+${FACULTY_AGENCY_FOCUS_INTERVIEW}
 
 ## カテゴリ別の観点
 ### 志望理由

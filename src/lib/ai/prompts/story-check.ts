@@ -1,3 +1,5 @@
+import { FACULTY_AGENCY_FOCUS_DOCUMENT } from "./shared";
+
 export function buildStoryCheckPrompt(
   universityName: string,
   facultyName: string,
@@ -74,6 +76,9 @@ ${selfAnalysisSection}
 5. **エピソード活用バランス** — 重複・欠落がないか
 6. **トーン・人物像の統一** — 人物像にブレがないか
 7. **時系列の整合性** — 活動時期と言及の矛盾がないか
+
+${FACULTY_AGENCY_FOCUS_DOCUMENT}
+- 特に「志望動機の一貫性」「将来ビジョンの整合性」では、この視点が一人称で貫かれているかを重視する。
 
 ## 出力形式（必ずJSON形式で出力してください）
 

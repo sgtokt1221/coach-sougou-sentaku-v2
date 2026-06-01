@@ -6,6 +6,8 @@
  * `---ここから振り込み候補---` 境界線を置き、その下に振り込み用テキストを書く。
  */
 
+import { FACULTY_AGENCY_FOCUS_DOCUMENT } from "./shared";
+
 export const SUGGESTION_DELIMITER = "---ここから振り込み候補---";
 
 export interface DocumentCoachContext {
@@ -80,6 +82,8 @@ ${ctx.sectionGuidingQuestion}
 - 生徒が「何を書けばいい?」と聞いてきたら、 まずガイディング質問を踏まえ何を伝えたいかを問う。 詰まっているようなら切り口の選択肢を 2-3 個提示する
 - 抽象的な答えが返ってきたら、 「具体的なエピソードは?」 「その時どう感じた?」 で掘り下げる
 - 現在の内容を読んで論の飛躍・根拠不足があれば、 「ここは○○の根拠が薄いです。 補強するならこういう要素が要ります」 のように具体的に指摘する
+
+${FACULTY_AGENCY_FOCUS_DOCUMENT}
 ${suggestionMode}
 
 ## 今回のコンテキスト

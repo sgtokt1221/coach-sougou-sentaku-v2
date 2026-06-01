@@ -10,6 +10,7 @@
 
 import type { InterviewMode } from "@/lib/types/interview";
 import type { InterviewTendency } from "@/lib/types/university";
+import { FACULTY_AGENCY_FOCUS_INTERVIEW } from "./shared";
 
 /**
  * 個人面接 / プレゼンテーション / 口頭試問用の instructions を生成。
@@ -70,7 +71,9 @@ export function buildRealtimeIndividualInstructions(
 - だからこそ「なぜそう考えたか」「具体的な体験は」「本学でなければならない理由は」を執拗に深掘りする
 - 知識テストではなく、**受験生の人物像と本学 AP の整合性を判定する面接** である
 - あなたは大学教員として、この入試で本学に迎え入れるべき学生かを見極める立場にある
-- 表層的な志望理由・模範解答的な美辞麗句は **本気度を疑って追及する** こと`;
+- 表層的な志望理由・模範解答的な美辞麗句は **本気度を疑って追及する** こと
+
+${FACULTY_AGENCY_FOCUS_INTERVIEW}`;
 
   const phaseGuide = (() => {
     switch (mode) {

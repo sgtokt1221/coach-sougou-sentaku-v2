@@ -1,6 +1,7 @@
 /**
  * 志望理由書自動下書き生成プロンプト
  */
+import { FACULTY_AGENCY_FOCUS_DOCUMENT } from "./shared";
 
 export interface SelfAnalysisData {
   values: string[];
@@ -37,6 +38,8 @@ AP接続ポイント: ${selfAnalysis.apConnection}
 2. 一貫性: 自己分析から志望理由への論理的な流れ（25点）
 3. 具体性: 実体験やエピソードの具体性（25点）
 4. 将来ビジョン: 大学での学びと将来目標の明確さ（20点）
+
+${FACULTY_AGENCY_FOCUS_DOCUMENT}
 
 ## 構成指針
 【導入部】 (150-200字)

@@ -1,5 +1,6 @@
 import type { InterviewMode } from "../../types/interview";
 import type { InterviewTendency } from "../../types/university";
+import { FACULTY_AGENCY_FOCUS_INTERVIEW } from "./shared";
 
 export const INTERVIEW_SYSTEM_PROMPTS: Record<InterviewMode, string> = {
   individual: `あなたは{{UNIVERSITY_NAME}}{{FACULTY_NAME}}の入学試験における面接官です。
@@ -10,6 +11,8 @@ export const INTERVIEW_SYSTEM_PROMPTS: Record<InterviewMode, string> = {
 
 ## この大学・学部の面接傾向
 {{INTERVIEW_TENDENCY}}
+
+${FACULTY_AGENCY_FOCUS_INTERVIEW}
 
 ## 面接の進め方（個人面接）
 - 受験生と1対1で面接を行います
@@ -58,6 +61,8 @@ export const INTERVIEW_SYSTEM_PROMPTS: Record<InterviewMode, string> = {
 
 ## この大学・学部の面接傾向
 {{INTERVIEW_TENDENCY}}
+
+${FACULTY_AGENCY_FOCUS_INTERVIEW}
 
 ## 🎭 登場人物（あなたが演じ分ける 5 役 + 実在のユーザー）
 
@@ -221,6 +226,8 @@ Phase 2 でユーザーに発言を振るときは、議論の **対立軸を 1 
 ## この大学・学部の面接傾向
 {{INTERVIEW_TENDENCY}}
 
+${FACULTY_AGENCY_FOCUS_INTERVIEW}
+
 {{PRESENTATION_CONTENT}}
 
 ## 面接の進め方（プレゼンテーション）
@@ -260,6 +267,8 @@ Phase 2 でユーザーに発言を振るときは、議論の **対立軸を 1 
 
 ## この大学・学部の面接傾向
 {{INTERVIEW_TENDENCY}}
+
+${FACULTY_AGENCY_FOCUS_INTERVIEW}
 
 ## 面接の進め方（口頭試問）
 - {{FACULTY_NAME}}の専門分野に関する知識・理解を問う試問を行います

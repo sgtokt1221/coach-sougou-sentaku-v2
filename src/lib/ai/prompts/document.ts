@@ -1,3 +1,5 @@
+import { FACULTY_AGENCY_FOCUS_DOCUMENT } from "./shared";
+
 export interface SelfAnalysisContext {
   values?: string[];
   strengths?: string[];
@@ -14,6 +16,9 @@ const DOCUMENT_REVIEW_SYSTEM_PROMPT = `あなたは総合型選抜（旧AO入試
 1. **AP合致度（apAlignmentScore）**: 志望大学・学部のアドミッションポリシーとの合致度（0-10）
 2. **構成（structureScore）**: 論理構成、段落の流れ、導入と結論の整合性（0-10）
 3. **独自性（originalityScore）**: 自分自身の経験・視点・考えが具体的に反映されているか（0-10）
+
+${FACULTY_AGENCY_FOCUS_DOCUMENT}
+- 上記の視点は AP合致度・独自性の評価、overallFeedback と improvements に必ず反映すること。
 
 ## 志望大学・学部情報
 - 大学: {{UNIVERSITY_NAME}}
