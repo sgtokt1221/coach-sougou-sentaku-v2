@@ -18,6 +18,8 @@ export interface University {
   /** 所在都道府県（例: "東京都"）。検索・都道府県別表示に使用 */
   prefecture: string;
   updatedAt?: Date;
+  /** 総合型選抜データの出典（公式募集要項PDF等）。検証・監査用 */
+  admissionSource?: { url: string; retrievedAt: string; note?: string };
   faculties: Faculty[];
 }
 
