@@ -77,33 +77,43 @@
         "capacity": 5,
         "requirements": {
           "gpa": null,
-          "englishCert": null,
+          "englishCert": "英検準1級 / TOEFL iBT 71 / TOEIC L&R 730 / IELTS 5.0 / GTEC 1189 / ケンブリッジ英検 159（いずれか）",
           "otherReqs": []
         },
         "selectionMethods": [
           {
             "stage": 1,
             "type": "documents",
-            "details": "志望理由書等の書類審査（グローバルチャレンジ入試）"
+            "details": "書類選考（調査書等・志望理由・学修計画書）"
           },
           {
-            "stage": 2,
-            "type": "interview",
-            "details": "面接（英語による質疑を含む場合あり）"
+            "stage": 1,
+            "type": "essay",
+            "details": "課題レポート（英語・日本語。提示テーマから1つ選択）"
+          },
+          {
+            "stage": 1,
+            "type": "presentation",
+            "details": "口頭試問（英語・日本語。課題レポートのプレゼン＋質疑応答・面接）"
           }
         ],
         "schedule": {
-          "applicationStart": "2025-09-22",
-          "applicationEnd": "2025-10-01",
-          "examDate": "2025-10-19",
-          "resultDate": "2025-11-01"
+          "applicationStart": "2026-09-24",
+          "applicationEnd": "2026-10-01",
+          "examDate": "2026-10-18",
+          "resultDate": "2026-10-24"
         },
         "admissionUrl": "https://envision.kansaigaidai.ac.jp/exam/",
         "academicField": "国際・外国語",
         "selectionType": "comprehensive"
       }
     ],
-    "prefecture": "大阪府"
+    "prefecture": "大阪府",
+    "admissionSource": {
+      "url": "https://envision.kansaigaidai.ac.jp/exam/outline/comprehensive-selection/",
+      "retrievedAt": "2026-06-02",
+      "note": "2027年度（Web公開。正式入学試験要項は2026年9月上旬発行予定）。総合型選抜=グローバルチャレンジ入試（募集は国際共生学部国際共生学科のみ）＋自己推薦入試（募集は短期大学部のみ＝当データ対象外）。外国語学部・英語キャリア学部は総合型選抜の募集なし＝null。国際共生は評定不問・英語資格必須。"
+    }
   },
   {
     "id": "kyoto-women-u",
@@ -948,17 +958,27 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "一次選考エントリー（書類審査）（Ambition入試/AO入試）"
+            "details": "1次=書類審査（志望理由書800字＋自己アピール書）"
           },
           {
             "stage": 2,
             "type": "interview",
-            "details": "二次選考（面接・小論文・プレゼンテーション等）"
+            "details": "2次=個人面接（約20分）"
+          },
+          {
+            "stage": 2,
+            "type": "presentation",
+            "details": "2次=探究活動型はプレゼンテーション（約10分）"
+          },
+          {
+            "stage": 2,
+            "type": "essay",
+            "details": "2次=英語資格利用型は小論文（1200字程度）"
           }
         ],
         "schedule": {
           "applicationStart": "2025-09-03",
-          "applicationEnd": "2025-09-16",
+          "applicationEnd": "2025-10-21",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-04"
         },
@@ -1012,17 +1032,27 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "一次選考エントリー（書類審査）（Ambition入試/AO入試）"
+            "details": "1次=書類審査（志望理由書800字＋自己アピール書800字）"
+          },
+          {
+            "stage": 2,
+            "type": "essay",
+            "details": "2次=小論文（400字程度。志望分野の資料を読み記述）"
+          },
+          {
+            "stage": 2,
+            "type": "presentation",
+            "details": "2次=プレゼンテーション（医療・リハビリに関する関心事 約10分）"
           },
           {
             "stage": 2,
             "type": "interview",
-            "details": "二次選考（面接・小論文・プレゼンテーション等）"
+            "details": "2次=質疑応答・面接（約10分）＋調査書"
           }
         ],
         "schedule": {
           "applicationStart": "2025-09-03",
-          "applicationEnd": "2025-09-16",
+          "applicationEnd": "2025-10-21",
           "examDate": "2025-10-25",
           "resultDate": "2025-11-04"
         },
@@ -1031,6 +1061,11 @@
         "selectionType": "comprehensive"
       }
     ],
-    "prefecture": "大阪府"
+    "prefecture": "大阪府",
+    "admissionSource": {
+      "url": "https://www.yamato-u.ac.jp/assets/pdf/entrance/ee_ao.pdf",
+      "retrievedAt": "2026-06-02",
+      "note": "2026年度確定要項（2027年度版は未公開のため日程は2025年実施分）。総合型選抜=AO入試（保健医療学部総合リハビリテーション学科）＋Ambition入試（政治経済学部経済経営学科・グローバルビジネス学科）の2方式。情報/社会/理工/教育学部は総合型選抜の実施なし＝null。両方式とも出願資格に評定基準なし＝null。"
+    }
   }
 ]

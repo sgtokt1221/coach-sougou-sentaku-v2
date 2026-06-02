@@ -12,7 +12,7 @@
         "admissionPolicy": "法学部では、法的なものの考え方を身につけ、社会の課題やルールに関心を持って主体的に学び、地域や社会に貢献しようとする人材を求めています。",
         "capacity": 5,
         "requirements": {
-          "gpa": 3.5,
+          "gpa": null,
           "englishCert": null,
           "otherReqs": []
         },
@@ -20,19 +20,29 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "調査書・志望理由書等による書類審査"
+            "details": "1次=書類審査（志望理由書・調査書）"
+          },
+          {
+            "stage": 2,
+            "type": "essay",
+            "details": "2次=小論文（600字60分）"
+          },
+          {
+            "stage": 2,
+            "type": "presentation",
+            "details": "2次=プレゼンテーション（自己PR・文化的活動評価 約10分）"
           },
           {
             "stage": 2,
             "type": "interview",
-            "details": "面接（口頭試問・プレゼンテーションを含む場合あり）"
+            "details": "2次=口頭試問（約15分）"
           }
         ],
         "schedule": {
-          "applicationStart": "2025-09-30",
-          "applicationEnd": "2025-10-08",
-          "examDate": "2025-10-19",
-          "resultDate": "2025-11-01"
+          "applicationStart": "2026-09-01",
+          "applicationEnd": "2026-09-29",
+          "examDate": "2026-10-10",
+          "resultDate": "2026-11-02"
         },
         "admissionUrl": "https://www.setsunan.ac.jp/admission/",
         "academicField": "法学",
@@ -44,7 +54,7 @@
         "admissionPolicy": "国際学部では、語学力と異文化理解への意欲を持ち、グローバルな視野で多様な人々と協働しようとする人材を求めています。",
         "capacity": 5,
         "requirements": {
-          "gpa": 3.5,
+          "gpa": null,
           "englishCert": null,
           "otherReqs": []
         },
@@ -52,19 +62,19 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "調査書・志望理由書等による書類審査"
+            "details": "1次=書類審査"
           },
           {
             "stage": 2,
-            "type": "interview",
-            "details": "面接（口頭試問・プレゼンテーションを含む場合あり）"
+            "type": "presentation",
+            "details": "2次=プレゼンテーション（英中西尼馬韓日から選択した言語で約10分）＋質疑応答"
           }
         ],
         "schedule": {
-          "applicationStart": "2025-09-30",
-          "applicationEnd": "2025-10-08",
-          "examDate": "2025-10-19",
-          "resultDate": "2025-11-01"
+          "applicationStart": "2026-09-01",
+          "applicationEnd": "2026-09-29",
+          "examDate": "2026-10-10",
+          "resultDate": "2026-11-02"
         },
         "admissionUrl": "https://www.setsunan.ac.jp/admission/",
         "academicField": "国際・外国語",
@@ -76,7 +86,7 @@
         "admissionPolicy": "経済学部では、社会や経済の仕組みに関心を持ち、データや論理に基づいて課題を考察し、地域経済の発展に寄与しようとする人材を求めています。",
         "capacity": 5,
         "requirements": {
-          "gpa": 3.5,
+          "gpa": null,
           "englishCert": null,
           "otherReqs": []
         },
@@ -84,19 +94,19 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "調査書・志望理由書等による書類審査"
+            "details": "1次=書類審査"
           },
           {
             "stage": 2,
-            "type": "interview",
-            "details": "面接（口頭試問・プレゼンテーションを含む場合あり）"
+            "type": "presentation",
+            "details": "2次=プレゼンテーション（自己PR＋関心のある経済問題）＋質疑応答"
           }
         ],
         "schedule": {
-          "applicationStart": "2025-09-30",
-          "applicationEnd": "2025-10-08",
-          "examDate": "2025-10-19",
-          "resultDate": "2025-11-01"
+          "applicationStart": "2026-09-01",
+          "applicationEnd": "2026-09-29",
+          "examDate": "2026-10-10",
+          "resultDate": "2026-11-02"
         },
         "admissionUrl": "https://www.setsunan.ac.jp/admission/",
         "academicField": "経済学",
@@ -108,7 +118,7 @@
         "admissionPolicy": "経営学部では、企業や組織の活動に関心を持ち、マーケティングや会計などの実践的知識を活かして課題解決に取り組もうとする人材を求めています。",
         "capacity": 5,
         "requirements": {
-          "gpa": 3.5,
+          "gpa": 3,
           "englishCert": null,
           "otherReqs": []
         },
@@ -116,19 +126,19 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "調査書・志望理由書等による書類審査"
+            "details": "1次=書類審査"
           },
           {
             "stage": 2,
-            "type": "interview",
-            "details": "面接（口頭試問・プレゼンテーションを含む場合あり）"
+            "type": "presentation",
+            "details": "2次=プレゼンテーション（課題『未来の自分と社会』）＋質疑応答。※floorは課外活動優秀者入試の全体3.0（AO入試は3.2、課外活動は競技/コンクール実績が必須ゲート）"
           }
         ],
         "schedule": {
-          "applicationStart": "2025-09-30",
-          "applicationEnd": "2025-10-08",
-          "examDate": "2025-10-19",
-          "resultDate": "2025-11-01"
+          "applicationStart": "2026-09-01",
+          "applicationEnd": "2026-09-29",
+          "examDate": "2026-10-10",
+          "resultDate": "2026-11-02"
         },
         "admissionUrl": "https://www.setsunan.ac.jp/admission/",
         "academicField": "経営・商学",
@@ -140,7 +150,7 @@
         "admissionPolicy": "現代社会学部では、社会の多様な課題に関心を持ち、フィールドワークやデータをもとに地域社会の課題解決に主体的に取り組もうとする人材を求めています。",
         "capacity": 5,
         "requirements": {
-          "gpa": 3.5,
+          "gpa": null,
           "englishCert": null,
           "otherReqs": []
         },
@@ -148,19 +158,24 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "調査書・志望理由書等による書類審査"
+            "details": "1次=書類審査"
           },
           {
             "stage": 2,
-            "type": "interview",
-            "details": "面接（口頭試問・プレゼンテーションを含む場合あり）"
+            "type": "other",
+            "details": "2次=個人ワーク（課題提示→アクションプラン作成30分→発表）"
+          },
+          {
+            "stage": 2,
+            "type": "other",
+            "details": "2次=グループワークと振り返り"
           }
         ],
         "schedule": {
-          "applicationStart": "2025-09-30",
-          "applicationEnd": "2025-10-08",
-          "examDate": "2025-10-19",
-          "resultDate": "2025-11-01"
+          "applicationStart": "2026-09-01",
+          "applicationEnd": "2026-09-29",
+          "examDate": "2026-10-10",
+          "resultDate": "2026-11-02"
         },
         "admissionUrl": "https://www.setsunan.ac.jp/admission/",
         "academicField": "社会学",
@@ -180,19 +195,24 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "調査書・志望理由書等による書類審査"
+            "details": "1次=書類審査"
+          },
+          {
+            "stage": 2,
+            "type": "other",
+            "details": "2次=学科別（事前課題＋プレゼン／小論文／実技（描画）等、学科による）"
           },
           {
             "stage": 2,
             "type": "interview",
-            "details": "面接（口頭試問・プレゼンテーションを含む場合あり）"
+            "details": "2次=口頭試問"
           }
         ],
         "schedule": {
-          "applicationStart": "2025-09-30",
-          "applicationEnd": "2025-10-08",
-          "examDate": "2025-10-19",
-          "resultDate": "2025-11-01"
+          "applicationStart": "2026-09-01",
+          "applicationEnd": "2026-09-29",
+          "examDate": "2026-10-10",
+          "resultDate": "2026-11-02"
         },
         "admissionUrl": "https://www.setsunan.ac.jp/admission/",
         "academicField": "理工学",
@@ -212,19 +232,29 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "調査書・志望理由書等による書類審査"
+            "details": "1次=書類審査。全体3.0以上かつ化学基礎・化学の評定平均いずれも3.0以上"
+          },
+          {
+            "stage": 2,
+            "type": "test",
+            "details": "2次=実技（化学実験）"
+          },
+          {
+            "stage": 2,
+            "type": "other",
+            "details": "2次=グループ討議"
           },
           {
             "stage": 2,
             "type": "interview",
-            "details": "面接（口頭試問を含む場合あり）"
+            "details": "2次=口頭試問（約20分）"
           }
         ],
         "schedule": {
-          "applicationStart": "2025-09-30",
-          "applicationEnd": "2025-10-08",
-          "examDate": "2025-10-19",
-          "resultDate": "2025-11-01"
+          "applicationStart": "2026-09-01",
+          "applicationEnd": "2026-09-29",
+          "examDate": "2026-10-10",
+          "resultDate": "2026-11-02"
         },
         "admissionUrl": "https://www.setsunan.ac.jp/admission/",
         "academicField": "薬学",
@@ -244,19 +274,24 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "調査書・志望理由書等による書類審査"
+            "details": "1次=書類審査"
           },
           {
             "stage": 2,
-            "type": "interview",
-            "details": "面接（口頭試問を含む場合あり）"
+            "type": "essay",
+            "details": "2次=小論文（600字60分）"
+          },
+          {
+            "stage": 2,
+            "type": "other",
+            "details": "2次=協働作業・グループ討議"
           }
         ],
         "schedule": {
-          "applicationStart": "2025-09-30",
-          "applicationEnd": "2025-10-08",
-          "examDate": "2025-10-19",
-          "resultDate": "2025-11-01"
+          "applicationStart": "2026-09-01",
+          "applicationEnd": "2026-09-29",
+          "examDate": "2026-10-10",
+          "resultDate": "2026-11-02"
         },
         "admissionUrl": "https://www.setsunan.ac.jp/admission/",
         "academicField": "看護・医療",
@@ -276,26 +311,36 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "調査書・志望理由書等による書類審査"
+            "details": "1次=書類審査"
+          },
+          {
+            "stage": 2,
+            "type": "essay",
+            "details": "2次=小論文（テーマ『食・農・環境』600字60分）"
           },
           {
             "stage": 2,
             "type": "interview",
-            "details": "面接（口頭試問・プレゼンテーションを含む場合あり）"
+            "details": "2次=口頭試問（約15分、個人またはグループ）"
           }
         ],
         "schedule": {
-          "applicationStart": "2025-09-30",
-          "applicationEnd": "2025-10-08",
-          "examDate": "2025-10-19",
-          "resultDate": "2025-11-01"
+          "applicationStart": "2026-09-01",
+          "applicationEnd": "2026-09-29",
+          "examDate": "2026-10-10",
+          "resultDate": "2026-11-02"
         },
         "admissionUrl": "https://www.setsunan.ac.jp/admission/",
         "academicField": "農学・生命科学",
         "selectionType": "comprehensive"
       }
     ],
-    "prefecture": "大阪府"
+    "prefecture": "大阪府",
+    "admissionSource": {
+      "url": "https://www.setsunan.ac.jp/admission/faculty/data/2027ao.pdf",
+      "retrievedAt": "2026-06-02",
+      "note": "2027年度入試ガイド（確定）。総合型選抜=AO入試／課外活動優秀者入試／専門学科・総合学科出身者入試／女子特別入試の4方式（いずれも公式に『総合型選抜』分類）。日程はAO入試。評定は方針1（全方式横断の最低全体評定、評定不問はnull）。法/国際/経済/現代社会はAO入試で評定不問のためnull、経営は課外活動優秀者入試の全体3.0、理工/薬/看護/農はAO入試の全体3.0。既存の3.5は専門学科・総合学科出身者入試の値の誤転記で是正。"
+    }
   },
   {
     "id": "kobe-gakuin-u",
@@ -318,24 +363,24 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "第1次選考：出願書類による審査"
+            "details": "書類審査（志望理由書）"
           },
           {
-            "stage": 1,
-            "type": "test",
-            "details": "基礎的な学力・適性の確認"
+            "stage": 2,
+            "type": "essay",
+            "details": "小論文（60分）"
           },
           {
             "stage": 2,
             "type": "interview",
-            "details": "第2次選考：面接"
+            "details": "グループ面接"
           }
         ],
         "schedule": {
           "applicationStart": "2025-09-17",
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-18",
-          "resultDate": "2025-11-04"
+          "resultDate": "2025-11-01"
         },
         "admissionUrl": "https://www.kobegakuin.ac.jp/admission/",
         "academicField": "法学",
@@ -355,24 +400,24 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "第1次選考：出願書類による審査"
+            "details": "書類審査（志望理由書）"
           },
           {
-            "stage": 1,
-            "type": "test",
-            "details": "基礎的な学力・適性の確認"
+            "stage": 2,
+            "type": "essay",
+            "details": "小論文（60分）"
           },
           {
             "stage": 2,
             "type": "interview",
-            "details": "第2次選考：面接"
+            "details": "グループ面接"
           }
         ],
         "schedule": {
           "applicationStart": "2025-09-17",
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-18",
-          "resultDate": "2025-11-04"
+          "resultDate": "2025-11-01"
         },
         "admissionUrl": "https://www.kobegakuin.ac.jp/admission/",
         "academicField": "経済学",
@@ -392,24 +437,24 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "第1次選考：出願書類による審査"
+            "details": "書類審査（志望理由書）"
           },
           {
-            "stage": 1,
-            "type": "test",
-            "details": "基礎的な学力・適性の確認"
+            "stage": 2,
+            "type": "essay",
+            "details": "小論文（60分）"
           },
           {
             "stage": 2,
             "type": "interview",
-            "details": "第2次選考：面接"
+            "details": "グループ面接"
           }
         ],
         "schedule": {
           "applicationStart": "2025-09-17",
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-18",
-          "resultDate": "2025-11-04"
+          "resultDate": "2025-11-01"
         },
         "admissionUrl": "https://www.kobegakuin.ac.jp/admission/",
         "academicField": "経営・商学",
@@ -429,24 +474,29 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "第1次選考：出願書類による審査"
+            "details": "書類審査（自己調査書・活動報告書）"
           },
           {
-            "stage": 1,
-            "type": "test",
-            "details": "基礎的な学力・適性の確認"
+            "stage": 2,
+            "type": "essay",
+            "details": "小論文（60分）"
           },
           {
             "stage": 2,
             "type": "interview",
-            "details": "第2次選考：面接"
+            "details": "個人面接（自己表現評価型）"
+          },
+          {
+            "stage": 2,
+            "type": "presentation",
+            "details": "実技演奏＋面接（吹奏楽・オーケストラ型）"
           }
         ],
         "schedule": {
           "applicationStart": "2025-09-17",
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-18",
-          "resultDate": "2025-11-04"
+          "resultDate": "2025-11-01"
         },
         "admissionUrl": "https://www.kobegakuin.ac.jp/admission/",
         "academicField": "人文学",
@@ -466,24 +516,24 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "第1次選考：出願書類による審査"
+            "details": "書類審査（自己調査書・活動報告書）"
           },
           {
-            "stage": 1,
-            "type": "test",
-            "details": "基礎的な学力・適性の確認"
+            "stage": 2,
+            "type": "essay",
+            "details": "小論文（60分）"
           },
           {
             "stage": 2,
             "type": "interview",
-            "details": "第2次選考：面接"
+            "details": "個人面接（自己表現評価型）"
           }
         ],
         "schedule": {
           "applicationStart": "2025-09-17",
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-18",
-          "resultDate": "2025-11-04"
+          "resultDate": "2025-11-01"
         },
         "admissionUrl": "https://www.kobegakuin.ac.jp/admission/",
         "academicField": "心理学",
@@ -503,24 +553,24 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "第1次選考：出願書類による審査"
+            "details": "第1次=書類審査（自己調査書・活動報告書）"
           },
           {
-            "stage": 1,
-            "type": "test",
-            "details": "基礎的な学力・適性の確認"
+            "stage": 2,
+            "type": "essay",
+            "details": "第2次=小論文（60分）"
           },
           {
             "stage": 2,
             "type": "interview",
-            "details": "第2次選考：面接"
+            "details": "第2次=個人面接（約15分）"
           }
         ],
         "schedule": {
-          "applicationStart": "2025-09-17",
+          "applicationStart": "2025-09-01",
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-18",
-          "resultDate": "2025-11-04"
+          "resultDate": "2025-11-01"
         },
         "admissionUrl": "https://www.kobegakuin.ac.jp/admission/",
         "academicField": "社会学",
@@ -540,24 +590,24 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "第1次選考：出願書類による審査"
+            "details": "書類審査（自己調査書・活動報告書）"
           },
           {
-            "stage": 1,
+            "stage": 2,
             "type": "test",
-            "details": "基礎的な学力・適性の確認"
+            "details": "筆記審査（60分。英語コースは英語題材・英語記述の場合あり）"
           },
           {
             "stage": 2,
             "type": "interview",
-            "details": "第2次選考：面接"
+            "details": "面接（英語コースは英語での応答を求める場合あり）"
           }
         ],
         "schedule": {
           "applicationStart": "2025-09-17",
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-18",
-          "resultDate": "2025-11-04"
+          "resultDate": "2025-11-01"
         },
         "admissionUrl": "https://www.kobegakuin.ac.jp/admission/",
         "academicField": "国際・外国語",
@@ -577,24 +627,24 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "第1次選考：出願書類による審査"
+            "details": "書類審査（自己調査書等）"
           },
           {
-            "stage": 1,
+            "stage": 2,
             "type": "test",
-            "details": "基礎的な学力・適性の確認"
+            "details": "筆記審査（理学療法・作業療法学科。社会リハビリテーション学科は小論文）"
           },
           {
             "stage": 2,
             "type": "interview",
-            "details": "第2次選考：面接"
+            "details": "個人面接"
           }
         ],
         "schedule": {
           "applicationStart": "2025-09-17",
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-18",
-          "resultDate": "2025-11-04"
+          "resultDate": "2025-11-01"
         },
         "admissionUrl": "https://www.kobegakuin.ac.jp/admission/",
         "academicField": "看護・医療",
@@ -614,24 +664,24 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "第1次選考：出願書類による審査"
+            "details": "書類審査（自己調査書・活動報告書）"
           },
           {
-            "stage": 1,
-            "type": "test",
-            "details": "基礎的な学力・適性の確認"
+            "stage": 2,
+            "type": "essay",
+            "details": "小論文（60分）"
           },
           {
             "stage": 2,
             "type": "interview",
-            "details": "第2次選考：面接"
+            "details": "個人面接（調査書を総合活用）"
           }
         ],
         "schedule": {
           "applicationStart": "2025-09-17",
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-18",
-          "resultDate": "2025-11-04"
+          "resultDate": "2025-11-01"
         },
         "admissionUrl": "https://www.kobegakuin.ac.jp/admission/",
         "academicField": "栄養・食",
@@ -651,31 +701,36 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "第1次選考：出願書類による審査"
+            "details": "書類審査（自己調査書）。化学/生物/物理のいずれか1つ履修要件あり"
           },
           {
-            "stage": 1,
-            "type": "test",
-            "details": "基礎的な学力・適性の確認"
+            "stage": 2,
+            "type": "essay",
+            "details": "小論文（60分）"
           },
           {
             "stage": 2,
             "type": "interview",
-            "details": "第2次選考：面接"
+            "details": "個人面接（自己推薦型／病院薬剤師志望特化型）"
           }
         ],
         "schedule": {
           "applicationStart": "2025-09-17",
           "applicationEnd": "2025-09-30",
           "examDate": "2025-10-18",
-          "resultDate": "2025-11-04"
+          "resultDate": "2025-11-01"
         },
         "admissionUrl": "https://www.kobegakuin.ac.jp/admission/",
         "academicField": "薬学",
         "selectionType": "comprehensive"
       }
     ],
-    "prefecture": "兵庫県"
+    "prefecture": "兵庫県",
+    "admissionSource": {
+      "url": "https://admission.kobegakuin.ac.jp/kobegakuin_cms/wp-content/uploads/2026sougougata.pdf",
+      "retrievedAt": "2026-06-02",
+      "note": "2026年度確定要項（2027年度版は近日公開予定で未公開のため日程は2025年実施分）。総合型選抜は単一要項に全方式（自己推薦型／自己表現評価型／吹奏楽・オーケストラ型／コミュニケーション力型／各適性評価型／病院薬剤師志望特化型）を収録。全学部とも出願資格に評定基準の記載なし＝null。現代社会学部のみ2段階選考。"
+    }
   },
   {
     "id": "otemon-u",
@@ -690,7 +745,7 @@
         "admissionPolicy": "文学部では、言語・文学・歴史など人間文化に関心を持ち、深く読み考え表現しようとする人材を求めています。",
         "capacity": 5,
         "requirements": {
-          "gpa": null,
+          "gpa": 3,
           "englishCert": null,
           "otherReqs": [
             "原則専願"
@@ -700,24 +755,24 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "アサーティブガイダンス受講＋出願書類審査"
+            "details": "出願=調査書・志望理由書・自己PR書・学習認定証明書（MANABOSS）"
           },
           {
             "stage": 1,
             "type": "test",
-            "details": "基礎学力（MANABOSS等）の確認"
+            "details": "1次=基礎学力適性検査（英・数・国 マーク式 90分）"
           },
           {
             "stage": 2,
             "type": "interview",
-            "details": "面接"
+            "details": "2次=面接（1次合格者のみ）"
           }
         ],
         "schedule": {
-          "applicationStart": "2025-09-10",
-          "applicationEnd": "2025-09-18",
-          "examDate": "2025-10-03",
-          "resultDate": "2025-11-02"
+          "applicationStart": "2026-09-10",
+          "applicationEnd": "2026-09-18",
+          "examDate": "2026-10-17",
+          "resultDate": "2026-11-02"
         },
         "admissionUrl": "https://nyushi.otemon.ac.jp/admission/",
         "academicField": "人文学",
@@ -729,7 +784,7 @@
         "admissionPolicy": "国際学部では、語学力と異文化理解への意欲を持ち、グローバルな視野で多様な人々と協働しようとする人材を求めています。",
         "capacity": 5,
         "requirements": {
-          "gpa": null,
+          "gpa": 3,
           "englishCert": null,
           "otherReqs": [
             "原則専願"
@@ -739,24 +794,24 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "アサーティブガイダンス受講＋出願書類審査"
+            "details": "出願=調査書・志望理由書・自己PR書・学習認定証明書（MANABOSS）"
           },
           {
             "stage": 1,
             "type": "test",
-            "details": "基礎学力（MANABOSS等）の確認"
+            "details": "1次=基礎学力適性検査（英・数・国 マーク式 90分）"
           },
           {
             "stage": 2,
             "type": "interview",
-            "details": "面接"
+            "details": "2次=面接"
           }
         ],
         "schedule": {
-          "applicationStart": "2025-09-10",
-          "applicationEnd": "2025-09-18",
-          "examDate": "2025-10-03",
-          "resultDate": "2025-11-02"
+          "applicationStart": "2026-09-10",
+          "applicationEnd": "2026-09-18",
+          "examDate": "2026-10-17",
+          "resultDate": "2026-11-02"
         },
         "admissionUrl": "https://nyushi.otemon.ac.jp/admission/",
         "academicField": "国際・外国語",
@@ -768,7 +823,7 @@
         "admissionPolicy": "心理学部では、人の心や行動、人工知能・認知科学に関心を持ち、科学的に人を理解しようとする人材を求めています。",
         "capacity": 5,
         "requirements": {
-          "gpa": null,
+          "gpa": 3,
           "englishCert": null,
           "otherReqs": [
             "原則専願"
@@ -778,24 +833,24 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "アサーティブガイダンス受講＋出願書類審査"
+            "details": "出願=調査書・志望理由書・自己PR書・学習認定証明書（MANABOSS）"
           },
           {
             "stage": 1,
             "type": "test",
-            "details": "基礎学力（MANABOSS等）の確認"
+            "details": "1次=基礎学力適性検査（英・数・国 マーク式 90分）"
           },
           {
             "stage": 2,
             "type": "interview",
-            "details": "面接"
+            "details": "2次=面接"
           }
         ],
         "schedule": {
-          "applicationStart": "2025-09-10",
-          "applicationEnd": "2025-09-18",
-          "examDate": "2025-10-03",
-          "resultDate": "2025-11-02"
+          "applicationStart": "2026-09-10",
+          "applicationEnd": "2026-09-18",
+          "examDate": "2026-10-17",
+          "resultDate": "2026-11-02"
         },
         "admissionUrl": "https://nyushi.otemon.ac.jp/admission/",
         "academicField": "心理学",
@@ -807,7 +862,7 @@
         "admissionPolicy": "社会学部では、現代社会の課題に関心を持ち、調査や対話を通じて社会の理解と課題解決に取り組もうとする人材を求めています。",
         "capacity": 5,
         "requirements": {
-          "gpa": null,
+          "gpa": 3,
           "englishCert": null,
           "otherReqs": [
             "原則専願"
@@ -817,24 +872,24 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "アサーティブガイダンス受講＋出願書類審査"
+            "details": "出願=調査書・志望理由書・自己PR書・学習認定証明書（MANABOSS）"
           },
           {
             "stage": 1,
             "type": "test",
-            "details": "基礎学力（MANABOSS等）の確認"
+            "details": "1次=基礎学力適性検査（英・数・国 マーク式 90分）"
           },
           {
             "stage": 2,
             "type": "interview",
-            "details": "面接"
+            "details": "2次=面接"
           }
         ],
         "schedule": {
-          "applicationStart": "2025-09-10",
-          "applicationEnd": "2025-09-18",
-          "examDate": "2025-10-03",
-          "resultDate": "2025-11-02"
+          "applicationStart": "2026-09-10",
+          "applicationEnd": "2026-09-18",
+          "examDate": "2026-10-17",
+          "resultDate": "2026-11-02"
         },
         "admissionUrl": "https://nyushi.otemon.ac.jp/admission/",
         "academicField": "社会学",
@@ -846,7 +901,7 @@
         "admissionPolicy": "法学部では、社会のルールや公共の課題に関心を持ち、論理的に考え地域社会に貢献しようとする人材を求めています。",
         "capacity": 5,
         "requirements": {
-          "gpa": null,
+          "gpa": 3,
           "englishCert": null,
           "otherReqs": [
             "原則専願"
@@ -856,24 +911,24 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "アサーティブガイダンス受講＋出願書類審査"
+            "details": "出願=調査書・志望理由書・自己PR書・学習認定証明書（MANABOSS）"
           },
           {
             "stage": 1,
             "type": "test",
-            "details": "基礎学力（MANABOSS等）の確認"
+            "details": "1次=基礎学力適性検査（英・数・国 マーク式 90分）"
           },
           {
             "stage": 2,
             "type": "interview",
-            "details": "面接"
+            "details": "2次=面接"
           }
         ],
         "schedule": {
-          "applicationStart": "2025-09-10",
-          "applicationEnd": "2025-09-18",
-          "examDate": "2025-10-03",
-          "resultDate": "2025-11-02"
+          "applicationStart": "2026-09-10",
+          "applicationEnd": "2026-09-18",
+          "examDate": "2026-10-17",
+          "resultDate": "2026-11-02"
         },
         "admissionUrl": "https://nyushi.otemon.ac.jp/admission/",
         "academicField": "法学",
@@ -885,7 +940,7 @@
         "admissionPolicy": "経済学部では、社会や経済の仕組みに関心を持ち、データと論理に基づいて課題を考察しようとする人材を求めています。",
         "capacity": 5,
         "requirements": {
-          "gpa": null,
+          "gpa": 3,
           "englishCert": null,
           "otherReqs": [
             "原則専願"
@@ -895,24 +950,24 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "アサーティブガイダンス受講＋出願書類審査"
+            "details": "出願=調査書・志望理由書・自己PR書・学習認定証明書（MANABOSS）"
           },
           {
             "stage": 1,
             "type": "test",
-            "details": "基礎学力（MANABOSS等）の確認"
+            "details": "1次=基礎学力適性検査（英・数・国 マーク式 90分）"
           },
           {
             "stage": 2,
             "type": "interview",
-            "details": "面接"
+            "details": "2次=面接"
           }
         ],
         "schedule": {
-          "applicationStart": "2025-09-10",
-          "applicationEnd": "2025-09-18",
-          "examDate": "2025-10-03",
-          "resultDate": "2025-11-02"
+          "applicationStart": "2026-09-10",
+          "applicationEnd": "2026-09-18",
+          "examDate": "2026-10-17",
+          "resultDate": "2026-11-02"
         },
         "admissionUrl": "https://nyushi.otemon.ac.jp/admission/",
         "academicField": "経済学",
@@ -924,7 +979,7 @@
         "admissionPolicy": "経営学部では、ビジネスや組織の活動に関心を持ち、実践的な学びを通じて課題解決に取り組もうとする人材を求めています。",
         "capacity": 5,
         "requirements": {
-          "gpa": null,
+          "gpa": 3,
           "englishCert": null,
           "otherReqs": [
             "原則専願"
@@ -934,24 +989,24 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "アサーティブガイダンス受講＋出願書類審査"
+            "details": "出願=調査書・志望理由書・自己PR書・学習認定証明書（MANABOSS）"
           },
           {
             "stage": 1,
             "type": "test",
-            "details": "基礎学力（MANABOSS等）の確認"
+            "details": "1次=基礎学力適性検査（英・数・国 マーク式 90分）"
           },
           {
             "stage": 2,
             "type": "interview",
-            "details": "面接"
+            "details": "2次=面接"
           }
         ],
         "schedule": {
-          "applicationStart": "2025-09-10",
-          "applicationEnd": "2025-09-18",
-          "examDate": "2025-10-03",
-          "resultDate": "2025-11-02"
+          "applicationStart": "2026-09-10",
+          "applicationEnd": "2026-09-18",
+          "examDate": "2026-10-17",
+          "resultDate": "2026-11-02"
         },
         "admissionUrl": "https://nyushi.otemon.ac.jp/admission/",
         "academicField": "経営・商学",
@@ -963,7 +1018,7 @@
         "admissionPolicy": "地域創造学部では、地域や観光・まちづくりに関心を持ち、現場での実践を通じて地域の活性化に貢献しようとする人材を求めています。",
         "capacity": 5,
         "requirements": {
-          "gpa": null,
+          "gpa": 3,
           "englishCert": null,
           "otherReqs": [
             "原則専願"
@@ -973,24 +1028,24 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "アサーティブガイダンス受講＋出願書類審査"
+            "details": "出願=調査書・志望理由書・自己PR書・学習認定証明書（MANABOSS）"
           },
           {
             "stage": 1,
             "type": "test",
-            "details": "基礎学力（MANABOSS等）の確認"
+            "details": "1次=基礎学力適性検査（英・数・国 マーク式 90分）"
           },
           {
             "stage": 2,
             "type": "interview",
-            "details": "面接"
+            "details": "2次=面接"
           }
         ],
         "schedule": {
-          "applicationStart": "2025-09-10",
-          "applicationEnd": "2025-09-18",
-          "examDate": "2025-10-03",
-          "resultDate": "2025-11-02"
+          "applicationStart": "2026-09-10",
+          "applicationEnd": "2026-09-18",
+          "examDate": "2026-10-17",
+          "resultDate": "2026-11-02"
         },
         "admissionUrl": "https://nyushi.otemon.ac.jp/admission/",
         "academicField": "社会学",
@@ -1002,7 +1057,7 @@
         "admissionPolicy": "理工学部では、数理・情報・テクノロジーに関心を持ち、ものづくりやデータ活用で社会課題の解決に挑もうとする人材を求めています。",
         "capacity": 5,
         "requirements": {
-          "gpa": null,
+          "gpa": 3,
           "englishCert": null,
           "otherReqs": [
             "原則専願"
@@ -1012,26 +1067,36 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "出願書類審査"
+            "details": "出願=調査書・志望理由書・自己PR書・学習認定証明書（MANABOSS）"
+          },
+          {
+            "stage": 1,
+            "type": "test",
+            "details": "1次=基礎学力適性検査（英50点・数学100点 マーク式 90分）"
           },
           {
             "stage": 2,
             "type": "interview",
-            "details": "面接（学部独自方式）"
+            "details": "2次=面接。※別途『理工学部独自入試』もあるが2027詳細は未公開"
           }
         ],
         "schedule": {
-          "applicationStart": "2025-09-25",
-          "applicationEnd": "2025-10-02",
-          "examDate": "2025-10-17",
-          "resultDate": "2025-11-02"
+          "applicationStart": "2026-09-10",
+          "applicationEnd": "2026-09-18",
+          "examDate": "2026-10-17",
+          "resultDate": "2026-11-02"
         },
         "admissionUrl": "https://nyushi.otemon.ac.jp/admission/",
         "academicField": "理工学",
         "selectionType": "comprehensive"
       }
     ],
-    "prefecture": "大阪府"
+    "prefecture": "大阪府",
+    "admissionSource": {
+      "url": "https://nyushi.otemon.ac.jp/guide/pdf/2027_guide-update.pdf",
+      "retrievedAt": "2026-06-02",
+      "note": "2027年度入試ガイド速報版（正式募集要項は2026年9月発行予定）。総合型選抜=アサーティブ入試（全学部・全体3.0以上）＋理工学部独自入試（理工のみ・2027詳細は本学HP6月公開予定で未公開）。スポーツ・文化型は公式分類『特別入試』で総合型外。日程・選抜方法はアサーティブ入試。"
+    }
   },
   {
     "id": "momoyama-gakuin-u",
@@ -1053,20 +1118,30 @@
         "selectionMethods": [
           {
             "stage": 1,
-            "type": "essay",
-            "details": "小論文"
+            "type": "test",
+            "details": "1次=基礎能力検査（英・国・数の3教科を解答し高得点2教科採用）"
           },
           {
             "stage": 1,
+            "type": "documents",
+            "details": "1次=志望理由書"
+          },
+          {
+            "stage": 2,
             "type": "interview",
-            "details": "面接"
+            "details": "2次=面接（個人面接約10分）"
+          },
+          {
+            "stage": 2,
+            "type": "test",
+            "details": "2次=学科別選考（事前学習動画を基にした筆記試験30分）"
           }
         ],
         "schedule": {
-          "applicationStart": "2025-09-16",
-          "applicationEnd": "2025-10-09",
-          "examDate": "2025-10-25",
-          "resultDate": "2025-11-01"
+          "applicationStart": "2026-09-16",
+          "applicationEnd": "2026-09-30",
+          "examDate": "2026-10-17",
+          "resultDate": "2026-11-01"
         },
         "admissionUrl": "https://www.andrew.ac.jp/nyushi/",
         "academicField": "経済学",
@@ -1085,20 +1160,30 @@
         "selectionMethods": [
           {
             "stage": 1,
-            "type": "essay",
-            "details": "小論文"
+            "type": "test",
+            "details": "1次=基礎能力検査（英語必須＋高得点2教科）"
           },
           {
             "stage": 1,
+            "type": "documents",
+            "details": "1次=志望理由書"
+          },
+          {
+            "stage": 2,
             "type": "interview",
-            "details": "面接"
+            "details": "2次=グループ面接（約15分）"
+          },
+          {
+            "stage": 2,
+            "type": "essay",
+            "details": "2次=学科別選考（小論文 50分800字）"
           }
         ],
         "schedule": {
-          "applicationStart": "2025-09-16",
-          "applicationEnd": "2025-10-09",
-          "examDate": "2025-10-25",
-          "resultDate": "2025-11-01"
+          "applicationStart": "2026-09-16",
+          "applicationEnd": "2026-09-30",
+          "examDate": "2026-10-17",
+          "resultDate": "2026-11-01"
         },
         "admissionUrl": "https://www.andrew.ac.jp/nyushi/",
         "academicField": "経営・商学",
@@ -1117,20 +1202,25 @@
         "selectionMethods": [
           {
             "stage": 1,
-            "type": "essay",
-            "details": "小論文"
+            "type": "test",
+            "details": "1次=基礎能力検査（高得点2教科）"
           },
           {
             "stage": 1,
-            "type": "interview",
-            "details": "面接"
+            "type": "documents",
+            "details": "1次=志望理由書"
+          },
+          {
+            "stage": 2,
+            "type": "presentation",
+            "details": "2次=学科別選考（グループワーク方式 または アイデアレポート方式のプレゼン）＋面接"
           }
         ],
         "schedule": {
-          "applicationStart": "2025-09-16",
-          "applicationEnd": "2025-10-09",
-          "examDate": "2025-10-25",
-          "resultDate": "2025-11-01"
+          "applicationStart": "2026-09-16",
+          "applicationEnd": "2026-09-30",
+          "examDate": "2026-10-17",
+          "resultDate": "2026-11-01"
         },
         "admissionUrl": "https://www.andrew.ac.jp/nyushi/",
         "academicField": "経営・商学",
@@ -1149,20 +1239,30 @@
         "selectionMethods": [
           {
             "stage": 1,
-            "type": "essay",
-            "details": "小論文"
+            "type": "test",
+            "details": "1次=基礎能力検査（高得点2教科）"
           },
           {
             "stage": 1,
+            "type": "documents",
+            "details": "1次=志望理由書"
+          },
+          {
+            "stage": 2,
+            "type": "essay",
+            "details": "2次=学科別選考（小論文。社会学科50分600字／社会福祉系は講義20分後40分800字）"
+          },
+          {
+            "stage": 2,
             "type": "interview",
-            "details": "面接"
+            "details": "2次=面接（口頭試問含む）"
           }
         ],
         "schedule": {
-          "applicationStart": "2025-09-16",
-          "applicationEnd": "2025-10-09",
-          "examDate": "2025-10-25",
-          "resultDate": "2025-11-01"
+          "applicationStart": "2026-09-16",
+          "applicationEnd": "2026-09-30",
+          "examDate": "2026-10-17",
+          "resultDate": "2026-11-01"
         },
         "admissionUrl": "https://www.andrew.ac.jp/nyushi/",
         "academicField": "社会学",
@@ -1181,20 +1281,30 @@
         "selectionMethods": [
           {
             "stage": 1,
-            "type": "essay",
-            "details": "小論文"
+            "type": "test",
+            "details": "1次=基礎能力検査（高得点2教科）"
           },
           {
             "stage": 1,
+            "type": "documents",
+            "details": "1次=志望理由書"
+          },
+          {
+            "stage": 2,
+            "type": "other",
+            "details": "2次=学科別選考（10月=ディベート＋課題小論文1000字／12月=課題小論文1500字）"
+          },
+          {
+            "stage": 2,
             "type": "interview",
-            "details": "面接"
+            "details": "2次=面接（個人面接約15分）"
           }
         ],
         "schedule": {
-          "applicationStart": "2025-09-16",
-          "applicationEnd": "2025-10-09",
-          "examDate": "2025-10-25",
-          "resultDate": "2025-11-01"
+          "applicationStart": "2026-09-16",
+          "applicationEnd": "2026-09-30",
+          "examDate": "2026-10-17",
+          "resultDate": "2026-11-01"
         },
         "admissionUrl": "https://www.andrew.ac.jp/nyushi/",
         "academicField": "法学",
@@ -1213,20 +1323,30 @@
         "selectionMethods": [
           {
             "stage": 1,
-            "type": "essay",
-            "details": "小論文"
+            "type": "test",
+            "details": "1次=基礎能力検査（英語必須＋高得点2教科）"
           },
           {
             "stage": 1,
+            "type": "documents",
+            "details": "1次=志望理由書"
+          },
+          {
+            "stage": 2,
+            "type": "presentation",
+            "details": "2次=学科別選考（オープンキャンパス参加方式の模擬授業レポート／プレゼン方式『異文化との共生』5〜10分）"
+          },
+          {
+            "stage": 2,
             "type": "interview",
-            "details": "面接"
+            "details": "2次=面接（個人面接約15分）"
           }
         ],
         "schedule": {
-          "applicationStart": "2025-09-16",
-          "applicationEnd": "2025-10-09",
-          "examDate": "2025-10-25",
-          "resultDate": "2025-11-01"
+          "applicationStart": "2026-09-16",
+          "applicationEnd": "2026-09-30",
+          "examDate": "2026-10-17",
+          "resultDate": "2026-11-01"
         },
         "admissionUrl": "https://www.andrew.ac.jp/nyushi/",
         "academicField": "国際・外国語",
@@ -1245,20 +1365,30 @@
         "selectionMethods": [
           {
             "stage": 1,
-            "type": "essay",
-            "details": "小論文"
+            "type": "test",
+            "details": "1次=基礎能力検査（高得点2教科）"
           },
           {
             "stage": 1,
+            "type": "documents",
+            "details": "1次=志望理由書"
+          },
+          {
+            "stage": 2,
+            "type": "other",
+            "details": "2次=学びのレポート＋グループディスカッション（20〜30分）"
+          },
+          {
+            "stage": 2,
             "type": "interview",
-            "details": "面接"
+            "details": "2次=面接（個人面接約15分）"
           }
         ],
         "schedule": {
-          "applicationStart": "2025-09-16",
-          "applicationEnd": "2025-10-09",
-          "examDate": "2025-10-25",
-          "resultDate": "2025-11-01"
+          "applicationStart": "2026-09-16",
+          "applicationEnd": "2026-09-30",
+          "examDate": "2026-10-17",
+          "resultDate": "2026-11-01"
         },
         "admissionUrl": "https://www.andrew.ac.jp/nyushi/",
         "academicField": "教育学",
@@ -1277,26 +1407,41 @@
         "selectionMethods": [
           {
             "stage": 1,
-            "type": "essay",
-            "details": "小論文"
+            "type": "test",
+            "details": "1次=基礎能力検査（英・国・数の3教科を解答し高得点2教科採用）"
           },
           {
             "stage": 1,
+            "type": "documents",
+            "details": "1次=志望理由書"
+          },
+          {
+            "stage": 2,
             "type": "interview",
-            "details": "面接"
+            "details": "2次=面接（個人面接約15分）"
+          },
+          {
+            "stage": 2,
+            "type": "test",
+            "details": "2次=学科別選考（筆記試験50分。数Ⅰ・A、数Ⅱ・B〔数列〕。12月は数Ⅲ・C範囲含む）"
           }
         ],
         "schedule": {
-          "applicationStart": "2025-09-16",
-          "applicationEnd": "2025-10-09",
-          "examDate": "2025-10-25",
-          "resultDate": "2025-11-01"
+          "applicationStart": "2026-09-16",
+          "applicationEnd": "2026-09-30",
+          "examDate": "2026-10-17",
+          "resultDate": "2026-11-01"
         },
         "admissionUrl": "https://www.andrew.ac.jp/nyushi/",
         "academicField": "理工学",
         "selectionType": "comprehensive"
       }
     ],
-    "prefecture": "大阪府"
+    "prefecture": "大阪府",
+    "admissionSource": {
+      "url": "https://www.andrew.ac.jp/nyushi/pdf/admission/guide_sogo.pdf",
+      "retrievedAt": "2026-06-02",
+      "note": "2027年度入試ガイド（確定）。総合型選抜=学科別選考入試（10月専願／11・12・3月併願）＋小論文型入試〔専門学科・総合学科対象／スポーツ・特別活動対象〕（いずれも公式に『総合型選抜』分類）。全学部とも出願資格に評定基準の記載なし＝null（小論文型は配点で評定平均値を使用するが出願floorではない）。日程は10月学科別選考（専願制）。"
+    }
   }
 ]
