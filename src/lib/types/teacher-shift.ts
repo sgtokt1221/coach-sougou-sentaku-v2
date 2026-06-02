@@ -14,23 +14,3 @@ export interface TeacherShift {
   confirmedAt?: string;
   status: "pending" | "submitted" | "confirmed";
 }
-
-/** セッションマスタ（月別テンプレート） */
-export interface SessionMaster {
-  id: string;
-  month: string;         // "2026-04"
-  studentId: string;
-  studentName: string;
-  frequency: number;     // 月あたり回数
-  preferredDay?: number; // 0-6（曜日）
-  preferredTime?: string; // "14:00"
-  teacherId?: string;
-  teacherName?: string;
-  type: "coaching" | "mock_interview" | "essay_review" | "general";
-  duration?: number;     // 分
-  /** 授業形式（オンライン/オフライン） */
-  format?: "online" | "offline";
-  notes?: string;
-  createdAt: string;
-  updatedAt: string;
-}

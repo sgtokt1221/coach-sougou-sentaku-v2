@@ -125,9 +125,9 @@ export default function UnplacedStudentsSidebar({
         {filtered.length === 0 ? (
           <p className="text-xs text-muted-foreground py-4">該当する生徒がいません</p>
         ) : (
-          filtered.map((student) => (
+          filtered.map((student, index) => (
           <Card
-            key={student.uid}
+            key={`${student.uid}-${index}`}
             className="p-3 cursor-grab active:cursor-grabbing hover:shadow-sm transition-all duration-200 border-l-4 border-l-amber-400"
             draggable
             onDragStart={(e) => handleDragStart(e, student)}

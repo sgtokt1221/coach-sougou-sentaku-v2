@@ -425,6 +425,7 @@ export async function GET(
         gpa: userData.gpa ?? undefined,
         englishCerts: userData.englishCerts ?? undefined,
         targetUniversities: targetUnis,
+        sessionsPerMonth: userData.sessionsPerMonth ?? 1,
         resolvedUniversities,
         assignedTeacherIds: getAssignedTeacherIds(userData),
       },

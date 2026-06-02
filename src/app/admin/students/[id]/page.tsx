@@ -474,6 +474,7 @@ function AdminStudentDetailPageInner() {
   const [editSchool, setEditSchool] = useState("");
   const [editSchoolId, setEditSchoolId] = useState<string | null>(null);
   const [editGrade, setEditGrade] = useState<string>("");
+  const [editSessionsPerMonth, setEditSessionsPerMonth] = useState<string>("1");
   const [editUniversities, setEditUniversities] = useState<string[]>([]);
   const [editGpa, setEditGpa] = useState("");
   const [editEnglishCerts, setEditEnglishCerts] = useState<EnglishCert[]>([]);
@@ -553,6 +554,7 @@ function AdminStudentDetailPageInner() {
     setEditSchool(detail.profile.school ?? "");
     setEditSchoolId(detail.profile.schoolId ?? null);
     setEditGrade(detail.profile.grade?.toString() ?? "");
+    setEditSessionsPerMonth((detail.profile.sessionsPerMonth ?? 1).toString());
     setEditUniversities([...detail.profile.targetUniversities]);
     setEditGpa(detail.profile.gpa?.toString() ?? "");
     setEditEnglishCerts([...(detail.profile.englishCerts ?? [])]);
@@ -572,6 +574,7 @@ function AdminStudentDetailPageInner() {
           school: editSchool || undefined,
           schoolId: editSchoolId,
           grade: editGrade ? Number(editGrade) : undefined,
+          sessionsPerMonth: Number(editSessionsPerMonth) || 1,
           gpa: editGpa ? Number(editGpa) : null,
           englishCerts: editEnglishCerts,
           targetUniversities: editUniversities,
@@ -1127,6 +1130,21 @@ function AdminStudentDetailPageInner() {
                   <SelectItem value="3">3年生</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-sessions">月のセッション回数</Label>
+              <Input
+                id="edit-sessions"
+                type="number"
+                min={1}
+                max={31}
+                step={1}
+                value={editSessionsPerMonth}
+                onChange={(e) => setEditSessionsPerMonth(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                スケジュールの未配置にこの枚数のカードが出ます（既定1）
+              </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-gpa">評定平均（GPA）</Label>

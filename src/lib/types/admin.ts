@@ -82,6 +82,8 @@ export interface StudentDetail {
     gpa?: number;
     englishCerts?: EnglishCert[];
     targetUniversities: string[];
+    /** 月あたりのセッション回数（未配置の生成枚数に使用）。既定1 */
+    sessionsPerMonth?: number;
     resolvedUniversities?: { compoundId: string; universityName: string; facultyName: string }[];
     /** @deprecated 単一講師時代の名残。assignedTeacherIds を使う */
     assignedTeacherId?: string;

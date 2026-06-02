@@ -12,8 +12,6 @@ export interface Session {
   status: SessionStatus;
   scheduledAt: string;
   duration?: number;
-  /** 授業形式（オンライン/オフライン） */
-  format?: "online" | "offline";
   meetLink?: string;
   notes?: string;
   summary?: SessionSummary;
