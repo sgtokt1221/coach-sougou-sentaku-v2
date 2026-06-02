@@ -7,8 +7,18 @@ import type { SessionMaster } from "@/lib/types/teacher-shift";
 
 interface SessionMasterCalendarProps {
   masters: SessionMaster[];
-  /** カードをセルに配置/移動したとき（preferredDay=null で未指定へ戻す） */
-  onPlaceMaster: (id: string, preferredDay: number | null, time: string) => void;
+  /** 既存マスターを別セルへ移動 */
+  onMoveMaster: (id: string, preferredDay: number, time: string) => void;
+  /** 未配置の生徒カードをセルへドロップ＝マスター新規作成 */
+  onCreateMaster: (
+    studentId: string,
+    studentName: string,
+    frequency: number,
+    preferredDay: number,
+    time: string,
+  ) => void;
+  /** マスター削除（生徒を未配置へ戻す） */
+  onDeleteMaster: (id: string) => void;
   /** カードクリックで編集 */
   onEditMaster: (master: SessionMaster) => void;
 }
@@ -23,7 +33,9 @@ const preferredDayToCol = (day: number) => (day + 6) % 7;
  */
 export default function SessionMasterCalendar({
   masters,
-  onPlaceMaster,
+  onMoveMaster,
+  onCreateMaster,
+  onDeleteMaster,
   onEditMaster,
 }: SessionMasterCalendarProps) {
   const [dragoverCell, setDragoverCell] = useState<string | null>(null);
@@ -78,12 +90,24 @@ export default function SessionMasterCalendar({
   ) => {
     e.preventDefault();
     setDragoverCell(null);
-    const masterId = e.dataTransfer.getData("masterId");
-    if (!masterId) return;
     const time = `${timeSlot.hour.toString().padStart(2, "0")}:${timeSlot.minute
       .toString()
       .padStart(2, "0")}`;
-    onPlaceMaster(masterId, colToPreferredDay(col), time);
+    const preferredDay = colToPreferredDay(col);
+
+    // 既存マスターの移動
+    const masterId = e.dataTransfer.getData("masterId");
+    if (masterId) {
+      onMoveMaster(masterId, preferredDay, time);
+      return;
+    }
+
+    // 未配置の生徒カード → マスター新規作成
+    const studentId = e.dataTransfer.getData("studentId");
+    if (!studentId) return;
+    const studentName = e.dataTransfer.getData("studentName");
+    const frequency = parseInt(e.dataTransfer.getData("frequency"), 10) || 1;
+    onCreateMaster(studentId, studentName, frequency, preferredDay, time);
   };
 
   const handleDragOver = (
@@ -129,11 +153,15 @@ export default function SessionMasterCalendar({
                 return (
                   <div
                     key={`${col}-${rowIndex}`}
-                    className={`bg-white border-r border-gray-300 relative ${
+                    className={`border-r border-gray-300 relative ${
                       !isFullHour
                         ? "border-t border-dashed border-gray-200"
                         : "border-t border-gray-300"
-                    } ${isDragover ? "bg-primary/10" : ""} hover:bg-gray-50 transition-colors cursor-crosshair`}
+                    } ${
+                      isDragover
+                        ? "bg-primary/20 ring-2 ring-inset ring-primary"
+                        : "bg-white hover:bg-gray-50"
+                    } transition-colors cursor-crosshair`}
                     onDragOver={(e) => handleDragOver(e, col, timeSlot)}
                     onDragLeave={() => setDragoverCell(null)}
                     onDrop={(e) => handleDrop(e, col, timeSlot)}
@@ -161,14 +189,14 @@ export default function SessionMasterCalendar({
             }}
             onClick={() => onEditMaster(master)}
           >
-            {/* 未指定に戻すボタン */}
+            {/* 未配置に戻す（マスター削除） */}
             <button
               className="absolute -top-1.5 -right-1.5 z-20 size-4 rounded-full bg-rose-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-[10px] leading-none hover:bg-rose-600"
               onClick={(e) => {
                 e.stopPropagation();
-                onPlaceMaster(master.id, null, master.preferredTime || "14:00");
+                onDeleteMaster(master.id);
               }}
-              title="未指定に戻す"
+              title="未配置に戻す"
             >
               ×
             </button>

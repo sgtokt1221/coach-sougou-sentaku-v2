@@ -220,9 +220,9 @@ export default function SessionCalendar({
                 return (
                   <div
                     key={`${dayIndex}-${rowIndex}`}
-                    className={`bg-white border-r border-gray-300 relative ${
+                    className={`border-r border-gray-300 relative ${
                       !isFullHour ? 'border-t border-dashed border-gray-200' : 'border-t border-gray-300'
-                    } ${isDragover ? 'bg-primary/10' : ''} hover:bg-gray-50 transition-colors cursor-crosshair`}
+                    } ${isDragover ? 'bg-primary/20 ring-2 ring-inset ring-primary' : 'bg-white hover:bg-gray-50'} transition-colors cursor-crosshair`}
                     onDragOver={(e) => handleDragOver(e, dayIndex, timeSlot)}
                     onDragLeave={handleDragLeave}
                     onDrop={(e) => handleDrop(e, dayIndex, timeSlot)}

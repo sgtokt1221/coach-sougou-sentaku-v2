@@ -142,6 +142,10 @@ function generateSessionsFromMaster(
       targetDate = new Date(year, month - 1, day);
     }
 
+    // preferredTime(HH:MM) を scheduledAt に反映（未反映だとスケジュールの時間軸に出ない）
+    const [ph, pm] = (master.preferredTime || "14:00").split(":");
+    targetDate.setHours(parseInt(ph, 10) || 0, parseInt(pm, 10) || 0, 0, 0);
+
     const session = {
       studentId: master.studentId,
       studentName: master.studentName,

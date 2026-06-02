@@ -4,12 +4,12 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Copy, CalendarPlus, GripVertical, Trash2 } from "lucide-react";
+import { Copy, CalendarPlus, GripVertical, Trash2 } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import SessionMasterCalendar from "@/components/admin/SessionMasterCalendar";
 import type { SessionMaster } from "@/lib/types/teacher-shift";
@@ -29,6 +29,9 @@ export default function SessionMasterPage() {
   });
 
   const [masters, setMasters] = useState<SessionMaster[]>([]);
+  const [unplacedStudents, setUnplacedStudents] = useState<
+    { uid: string; displayName: string; sessionsPerMonth: number; targetUniversities: string[] }[]
+  >([]);
   const [loading, setLoading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingMaster, setEditingMaster] = useState<SessionMaster | null>(null);
@@ -47,6 +50,7 @@ export default function SessionMasterPage() {
 
   useEffect(() => {
     loadMasters();
+    loadUnplaced();
   }, [currentMonth]);
 
   const loadMasters = async () => {
@@ -66,6 +70,20 @@ export default function SessionMasterPage() {
     }
   };
 
+  const loadUnplaced = async () => {
+    try {
+      const response = await authFetch(
+        `/api/admin/sessions/master-unplaced?month=${currentMonth}`,
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setUnplacedStudents(data.students ?? []);
+      }
+    } catch (error) {
+      console.error("未配置生徒取得エラー:", error);
+    }
+  };
+
   const handleSave = async () => {
     try {
       const payload = {
@@ -81,7 +99,7 @@ export default function SessionMasterPage() {
       });
 
       if (response.ok) {
-        await loadMasters();
+        await reload();
         setIsDialogOpen(false);
         resetForm();
       } else {
@@ -101,7 +119,7 @@ export default function SessionMasterPage() {
       });
 
       if (response.ok) {
-        await loadMasters();
+        await reload();
       } else {
         console.error("削除失敗");
       }
@@ -202,32 +220,67 @@ export default function SessionMasterPage() {
     }
   };
 
-  // D&D 配置: マスターの希望曜日・時間を更新（preferredDay=null で未指定へ戻す）
-  const handlePlaceMaster = async (
-    id: string,
-    preferredDay: number | null,
+  const reload = async () => {
+    await Promise.all([loadMasters(), loadUnplaced()]);
+  };
+
+  // 未配置の生徒カードをセルへドロップ＝マスター新規作成
+  const handleCreateMaster = async (
+    studentId: string,
+    studentName: string,
+    frequency: number,
+    preferredDay: number,
     time: string,
   ) => {
     try {
       const response = await authFetch("/api/admin/sessions/master", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, preferredDay, preferredTime: time }),
+        body: JSON.stringify({
+          month: currentMonth,
+          studentId,
+          studentName,
+          frequency,
+          preferredDay,
+          preferredTime: time,
+          type: "coaching",
+          duration: 60,
+        }),
       });
-      if (response.ok) {
-        await loadMasters();
-      } else {
-        console.error("配置の保存に失敗しました");
-      }
+      if (response.ok) await reload();
+      else console.error("マスター作成に失敗しました");
     } catch (error) {
-      console.error("配置エラー:", error);
+      console.error("マスター作成エラー:", error);
     }
   };
 
-  // 曜日未指定のマスター（サイドバー表示用）
-  const unplacedMasters = masters.filter(
-    (m) => m.preferredDay === undefined || m.preferredDay === null,
-  );
+  // 既存マスターを別セルへ移動
+  const handleMoveMaster = async (id: string, preferredDay: number, time: string) => {
+    try {
+      const response = await authFetch("/api/admin/sessions/master", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, preferredDay, preferredTime: time }),
+      });
+      if (response.ok) await loadMasters();
+      else console.error("マスター移動に失敗しました");
+    } catch (error) {
+      console.error("マスター移動エラー:", error);
+    }
+  };
+
+  // マスター削除（生徒を未配置へ戻す）
+  const handleDeleteMaster = async (id: string) => {
+    try {
+      const response = await authFetch(`/api/admin/sessions/master?id=${id}`, {
+        method: "DELETE",
+      });
+      if (response.ok) await reload();
+      else console.error("マスター削除に失敗しました");
+    } catch (error) {
+      console.error("マスター削除エラー:", error);
+    }
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -245,12 +298,6 @@ export default function SessionMasterPage() {
 
       <div className="flex flex-wrap gap-3">
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={resetForm}>
-              <Plus className="h-4 w-4 mr-2" />
-              新規作成
-            </Button>
-          </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>
@@ -413,52 +460,52 @@ export default function SessionMasterPage() {
           <div className="flex-1 min-w-0">
             <SessionMasterCalendar
               masters={masters}
-              onPlaceMaster={handlePlaceMaster}
+              onMoveMaster={handleMoveMaster}
+              onCreateMaster={handleCreateMaster}
+              onDeleteMaster={handleDeleteMaster}
               onEditMaster={handleEdit}
             />
           </div>
 
-          {/* 未指定マスター（ドラッグで配置） */}
+          {/* 未配置の生徒（ドラッグでグリッドに配置＝マスター作成） */}
           <div className="w-64 flex-shrink-0">
             <div className="flex items-center gap-2 mb-3">
-              <h3 className="font-semibold text-sm">未指定</h3>
+              <h3 className="font-semibold text-sm">未配置</h3>
               <Badge variant="secondary" className="text-xs">
-                {unplacedMasters.length}
+                {unplacedStudents.length}
               </Badge>
             </div>
             <div className="space-y-3 overflow-y-auto max-h-[calc(100vh-260px)]">
-              {unplacedMasters.length === 0 ? (
+              {unplacedStudents.length === 0 ? (
                 <p className="text-xs text-muted-foreground py-4">
-                  曜日未指定のマスターはありません
+                  未配置の生徒はいません
                 </p>
               ) : (
-                unplacedMasters.map((master) => (
+                unplacedStudents.map((student) => (
                   <Card
-                    key={master.id}
+                    key={student.uid}
                     className="p-3 cursor-grab active:cursor-grabbing hover:shadow-sm transition-all border-l-4 border-l-amber-400"
                     draggable
                     onDragStart={(e) => {
-                      e.dataTransfer.setData("masterId", master.id);
-                      e.dataTransfer.effectAllowed = "move";
+                      e.dataTransfer.setData("studentId", student.uid);
+                      e.dataTransfer.setData("studentName", student.displayName);
+                      e.dataTransfer.setData(
+                        "frequency",
+                        String(student.sessionsPerMonth ?? 1),
+                      );
+                      e.dataTransfer.effectAllowed = "copy";
                     }}
-                    onClick={() => handleEdit(master)}
                   >
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
                         <GripVertical className="size-4 text-muted-foreground flex-shrink-0" />
                         <span className="font-medium text-sm truncate">
-                          {master.studentName}
+                          {student.displayName}
                         </span>
                       </div>
-                      <div className="flex flex-wrap items-center gap-1">
-                        <Badge variant="outline" className="text-xs">
-                          {master.frequency}回/月
-                        </Badge>
-                        <Badge variant="secondary" className="text-xs">
-                          {SESSION_TYPES.find((t) => t.value === master.type)?.label ||
-                            master.type}
-                        </Badge>
-                      </div>
+                      <Badge variant="outline" className="text-xs">
+                        {student.sessionsPerMonth ?? 1}回/月
+                      </Badge>
                     </div>
                   </Card>
                 ))
