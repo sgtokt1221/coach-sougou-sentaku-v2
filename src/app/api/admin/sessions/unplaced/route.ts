@@ -8,6 +8,10 @@ interface UnplacedStudent {
   targetUniversities: string[];
   latestScore: number | null;
   lastSessionAt: string | null;
+  grade: number | null;
+  gradeUpdatedAt: string | null;
+  isRonin: boolean;
+  school: string | null;
 }
 
 export async function GET(request: NextRequest) {
@@ -43,7 +47,7 @@ export async function GET(request: NextRequest) {
     const allStudents = studentsSnap.docs
       .map((d) => ({
         uid: d.id,
-        ...(d.data() as { displayName: string; targetUniversities?: string[]; latestScore?: number; lastSessionAt?: string; role?: string }),
+        ...(d.data() as { displayName: string; targetUniversities?: string[]; latestScore?: number; lastSessionAt?: string; role?: string; grade?: number; gradeUpdatedAt?: string; isRonin?: boolean; school?: string }),
       }))
       // 講師・管理者が managedBy 経由で混入しないよう生徒のみに限定（superadmin分岐は既に role==student 済み）
       .filter((s) => s.role === undefined || s.role === "student");
@@ -78,6 +82,10 @@ export async function GET(request: NextRequest) {
           targetUniversities: s.targetUniversities ?? [],
           latestScore: s.latestScore ?? null,
           lastSessionAt: s.lastSessionAt ?? null,
+          grade: s.grade ?? null,
+          gradeUpdatedAt: s.gradeUpdatedAt ?? null,
+          isRonin: s.isRonin ?? false,
+          school: s.school ?? null,
         });
       }
     }

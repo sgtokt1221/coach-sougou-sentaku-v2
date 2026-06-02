@@ -7,6 +7,10 @@ interface MasterUnplacedStudent {
   displayName: string;
   sessionsPerMonth: number;
   targetUniversities: string[];
+  grade: number | null;
+  gradeUpdatedAt: string | null;
+  isRonin: boolean;
+  school: string | null;
 }
 
 /**
@@ -48,6 +52,10 @@ export async function GET(request: NextRequest) {
           targetUniversities?: string[];
           sessionsPerMonth?: number;
           role?: string;
+          grade?: number;
+          gradeUpdatedAt?: string;
+          isRonin?: boolean;
+          school?: string;
         }),
       }))
       .filter((s) => s.role === undefined || s.role === "student");
@@ -70,6 +78,10 @@ export async function GET(request: NextRequest) {
         displayName: s.displayName ?? "",
         sessionsPerMonth: s.sessionsPerMonth ?? 1,
         targetUniversities: s.targetUniversities ?? [],
+        grade: s.grade ?? null,
+        gradeUpdatedAt: s.gradeUpdatedAt ?? null,
+        isRonin: s.isRonin ?? false,
+        school: s.school ?? null,
       }));
 
     return NextResponse.json({ students });

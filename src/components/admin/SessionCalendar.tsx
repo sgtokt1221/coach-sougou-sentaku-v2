@@ -242,18 +242,17 @@ export default function SessionCalendar({
               e.dataTransfer.setData('sessionId', session.id);
               e.dataTransfer.effectAllowed = 'move';
             }}
-            className={`absolute z-10 rounded-md border text-xs p-1.5 cursor-grab active:cursor-grabbing shadow-sm hover:shadow-md transition-shadow group ${getSessionBgColor(session.type)}`}
+            className={`absolute inset-px z-10 overflow-hidden rounded-md border text-xs p-1 cursor-grab active:cursor-grabbing shadow-sm hover:shadow-md transition-shadow group ${getSessionBgColor(session.type)}`}
             style={{
               gridColumn: session.gridColumn,
               gridRow: `${session.gridRow} / ${session.gridRowEnd}`,
-              margin: '1px'
             }}
             onClick={() => onClickSession(session.id)}
           >
             {/* 未配置に戻すボタン */}
             {onRemoveSession && (
               <button
-                className="absolute -top-1.5 -right-1.5 z-20 size-4 rounded-full bg-rose-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-[10px] leading-none hover:bg-rose-600"
+                className="absolute top-0.5 right-0.5 z-20 size-4 rounded-full bg-rose-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-[10px] leading-none hover:bg-rose-600"
                 onClick={(e) => {
                   e.stopPropagation();
                   onRemoveSession(session.id);
@@ -263,7 +262,7 @@ export default function SessionCalendar({
                 ×
               </button>
             )}
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               {session.type === 'group_review' ? (
                 <>
                   <div className="font-medium">

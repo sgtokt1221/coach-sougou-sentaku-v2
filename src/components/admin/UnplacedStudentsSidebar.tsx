@@ -5,12 +5,21 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { GripVertical, CheckCircle } from "lucide-react";
+import UnplacedFilterBar, {
+  applyUnplacedFilters,
+  EMPTY_FILTER,
+  type UnplacedFilterValue,
+} from "@/components/admin/UnplacedFilterBar";
 
 interface UnplacedStudent {
   uid: string;
   displayName: string;
   targetUniversities: string[];
   latestScore: number | null;
+  grade?: number | null;
+  gradeUpdatedAt?: string | null;
+  isRonin?: boolean;
+  school?: string | null;
 }
 
 interface UnplacedStudentsSidebarProps {
@@ -40,6 +49,9 @@ export default function UnplacedStudentsSidebar({
     }
     return Array.from(set);
   }, [students]);
+
+  const [filter, setFilter] = useState<UnplacedFilterValue>(EMPTY_FILTER);
+  const filtered = useMemo(() => applyUnplacedFilters(students, filter), [students, filter]);
 
   const [nameMap, setNameMap] = useState<Record<string, string>>({});
   const idsKey = compoundIds.join(",");
@@ -103,12 +115,17 @@ export default function UnplacedStudentsSidebar({
       <div className="flex items-center gap-2">
         <h3 className="font-semibold text-sm">未配置</h3>
         <Badge variant="destructive" className="text-xs">
-          {students.length}
+          {filtered.length}
         </Badge>
       </div>
 
-      <div className="overflow-y-auto max-h-[calc(100vh-200px)] space-y-3">
-        {students.map((student) => (
+      <UnplacedFilterBar students={students} value={filter} onChange={setFilter} />
+
+      <div className="overflow-y-auto max-h-[calc(100vh-280px)] space-y-3">
+        {filtered.length === 0 ? (
+          <p className="text-xs text-muted-foreground py-4">該当する生徒がいません</p>
+        ) : (
+          filtered.map((student) => (
           <Card
             key={student.uid}
             className="p-3 cursor-grab active:cursor-grabbing hover:shadow-sm transition-all duration-200 border-l-4 border-l-amber-400"
@@ -161,7 +178,8 @@ export default function UnplacedStudentsSidebar({
               )}
             </div>
           </Card>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );

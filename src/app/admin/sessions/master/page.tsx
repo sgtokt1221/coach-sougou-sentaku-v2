@@ -12,6 +12,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Copy, CalendarPlus, GripVertical, Trash2 } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import SessionMasterCalendar from "@/components/admin/SessionMasterCalendar";
+import UnplacedFilterBar, {
+  applyUnplacedFilters,
+  EMPTY_FILTER,
+  type UnplacedFilterValue,
+} from "@/components/admin/UnplacedFilterBar";
 import type { SessionMaster } from "@/lib/types/teacher-shift";
 
 export default function SessionMasterPage() {
@@ -22,8 +27,18 @@ export default function SessionMasterPage() {
 
   const [masters, setMasters] = useState<SessionMaster[]>([]);
   const [unplacedStudents, setUnplacedStudents] = useState<
-    { uid: string; displayName: string; sessionsPerMonth: number; targetUniversities: string[] }[]
+    {
+      uid: string;
+      displayName: string;
+      sessionsPerMonth: number;
+      targetUniversities: string[];
+      grade?: number | null;
+      gradeUpdatedAt?: string | null;
+      isRonin?: boolean;
+      school?: string | null;
+    }[]
   >([]);
+  const [unplacedFilter, setUnplacedFilter] = useState<UnplacedFilterValue>(EMPTY_FILTER);
   const [teachers, setTeachers] = useState<{ uid: string; displayName: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -293,6 +308,8 @@ export default function SessionMasterPage() {
     }
   };
 
+  const filteredUnplaced = applyUnplacedFilters(unplacedStudents, unplacedFilter);
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -469,16 +486,25 @@ export default function SessionMasterPage() {
             <div className="flex items-center gap-2 mb-3">
               <h3 className="font-semibold text-sm">未配置</h3>
               <Badge variant="secondary" className="text-xs">
-                {unplacedStudents.length}
+                {filteredUnplaced.length}
               </Badge>
             </div>
-            <div className="space-y-3 overflow-y-auto max-h-[calc(100vh-260px)]">
-              {unplacedStudents.length === 0 ? (
+            <div className="mb-3">
+              <UnplacedFilterBar
+                students={unplacedStudents}
+                value={unplacedFilter}
+                onChange={setUnplacedFilter}
+              />
+            </div>
+            <div className="space-y-3 overflow-y-auto max-h-[calc(100vh-340px)]">
+              {filteredUnplaced.length === 0 ? (
                 <p className="text-xs text-muted-foreground py-4">
-                  未配置の生徒はいません
+                  {unplacedStudents.length === 0
+                    ? "未配置の生徒はいません"
+                    : "該当する生徒がいません"}
                 </p>
               ) : (
-                unplacedStudents.map((student) => (
+                filteredUnplaced.map((student) => (
                   <Card
                     key={student.uid}
                     className="p-3 cursor-grab active:cursor-grabbing hover:shadow-sm transition-all border-l-4 border-l-amber-400"

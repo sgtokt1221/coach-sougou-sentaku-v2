@@ -29,6 +29,10 @@ interface UnplacedStudent {
   displayName: string;
   targetUniversities: string[];
   latestScore: number | null;
+  grade?: number | null;
+  gradeUpdatedAt?: string | null;
+  isRonin?: boolean;
+  school?: string | null;
 }
 
 interface Teacher {
@@ -65,7 +69,7 @@ export default function AdminSessionsPage() {
 
   // データ取得
   const { data: allSessions = [], mutate: mutateSessions, error: sessionsError } = useAuthSWR<Session[]>('/api/sessions');
-  const { data: unplacedData, error: unplacedError } = useAuthSWR<{ students: UnplacedStudent[] } | UnplacedStudent[]>(
+  const { data: unplacedData, error: unplacedError, mutate: mutateUnplaced } = useAuthSWR<{ students: UnplacedStudent[] } | UnplacedStudent[]>(
     `/api/admin/sessions/unplaced?month=${currentMonth}`
   );
   const unplacedStudents: UnplacedStudent[] = Array.isArray(unplacedData)
@@ -148,8 +152,8 @@ export default function AdminSessionsPage() {
 
       const newSession = await response.json();
 
-      // SWRデータを更新
-      await mutateSessions();
+      // SWRデータを更新（未配置一覧も再取得して配置済みカードを消す）
+      await Promise.all([mutateSessions(), mutateUnplaced()]);
 
       // 作成されたセッションの講師選択ポップオーバーを表示
       setPickerSession(newSession);
@@ -181,7 +185,7 @@ export default function AdminSessionsPage() {
     try {
       const response = await authFetch(`/api/sessions/${sessionId}`, { method: 'DELETE' });
       if (!response.ok) throw new Error();
-      await mutateSessions();
+      await Promise.all([mutateSessions(), mutateUnplaced()]);
     } catch {
       console.error('セッション削除エラー');
     }

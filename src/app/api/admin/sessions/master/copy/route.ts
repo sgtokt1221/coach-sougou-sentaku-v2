@@ -16,6 +16,7 @@ interface CopyRequest {
 export async function POST(request: Request) {
   const authResult = await requireRole(request, ["admin", "superadmin"]);
   if (authResult instanceof NextResponse) return authResult;
+  const { uid: adminUid } = authResult;
 
   if (!adminDb) {
     return NextResponse.json({ error: "データベース接続エラー" }, { status: 500 });
@@ -88,7 +89,7 @@ export async function POST(request: Request) {
         const master = { id: doc.id, ...doc.data() } as SessionMaster;
 
         // frequencyに基づいてセッション日程を生成
-        const sessions = generateSessionsFromMaster(master, targetYear, targetMonthNum);
+        const sessions = generateSessionsFromMaster(master, targetYear, targetMonthNum, adminUid);
 
         for (const session of sessions) {
           const sessionRef = await adminDb.collection("sessions").add({
@@ -123,7 +124,8 @@ export async function POST(request: Request) {
 function generateSessionsFromMaster(
   master: SessionMaster,
   year: number,
-  month: number
+  month: number,
+  adminUid: string,
 ) {
   const sessions = [];
   const daysInMonth = new Date(year, month, 0).getDate();
@@ -147,6 +149,7 @@ function generateSessionsFromMaster(
     targetDate.setHours(parseInt(ph, 10) || 0, parseInt(pm, 10) || 0, 0, 0);
 
     const session = {
+      createdByAdminId: adminUid,
       studentId: master.studentId,
       studentName: master.studentName,
       teacherId: master.teacherId || "",
