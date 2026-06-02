@@ -35,6 +35,8 @@ export interface LessonPlanContext {
   };
   /** 前回の台本ゴール */
   previousPrepGoal?: string;
+  /** 前回セッション以降に生徒が作成した成果物のサマリー（面接/書類/活動/スキルチェック/レポート） */
+  recentArtifactsSummary?: string;
 }
 
 const SESSION_TYPE_LABEL: Record<SessionType, string> = {
@@ -87,6 +89,10 @@ export function buildLessonPlanPrompt(ctx: LessonPlanContext): string {
     ? `\n## 生徒が直近 AI コーチで相談した内容 (参考)\n${ctx.recentCoachDialogSnippet.slice(0, 500)}\n`
     : "";
 
+  const artifactsSection = ctx.recentArtifactsSummary
+    ? `\n## 前回のセッション以降に生徒が取り組んだもの (重要・これを踏まえて台本を作る)\n${ctx.recentArtifactsSummary.slice(0, 800)}\n`
+    : "";
+
   const regeneratedHint = ctx.currentPlan
     ? `\n## 既存の台本 (講師が再生成をリクエスト)
 講師は現在の台本を下敷きに、さらに良いものを望んでいます。特に questions と cautions は見直してください。
@@ -128,6 +134,6 @@ ${weakLines}
 
 ## 直近の小論文添削フィードバック (抜粋)
 ${essayLines}
-${coachSection}${prevSection}${regeneratedHint}
+${artifactsSection}${coachSection}${prevSection}${regeneratedHint}
 上記を踏まえ、若手講師がそのまま使える「今日の授業台本」を JSON で出力してください。`;
 }

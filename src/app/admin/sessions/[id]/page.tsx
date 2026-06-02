@@ -49,6 +49,7 @@ import { ActivitiesSection } from "@/components/admin/ActivitiesSection";
 import { CoachMemo } from "@/components/admin/CoachMemo";
 import { LessonPrepSection } from "@/components/admin/LessonPrepSection";
 import { LessonDebriefSection } from "@/components/admin/LessonDebriefSection";
+import SessionArtifactsPanel from "@/components/sessions/SessionArtifactsPanel";
 import { SessionLifecycleBar } from "@/components/admin/SessionLifecycleBar";
 import { getDisplayGrade } from "@/lib/utils/grade";
 
@@ -613,6 +614,11 @@ export default function AdminSessionDetailPage() {
           session={session}
           onSessionUpdate={(s) => setSession(s)}
         />
+      )}
+
+      {/* 前回〜今回の生徒の取り組み */}
+      {session.type !== "group_review" && (
+        <SessionArtifactsPanel endpoint={`/api/admin/sessions/${id}/artifacts`} />
       )}
 
       {/* レッスン台本 */}

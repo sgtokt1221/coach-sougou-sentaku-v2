@@ -4,6 +4,7 @@ import {
   assertSessionAccess,
   getPreviousSession,
 } from "@/lib/api/session-auth";
+import { getSessionPeriodArtifacts } from "@/lib/api/session-artifacts";
 import {
   buildLessonPlanPrompt,
   type LessonPlanContext,
@@ -68,10 +69,10 @@ export async function POST(
         .orderBy("count", "desc")
         .limit(15)
         .get(),
+      // essays はグローバル collection（userId で絞り込み）。subcollection は実体が無く空振りしていたため是正
       adminDb
-        .collection(`users/${studentId}/essays`)
-        .orderBy("createdAt", "desc")
-        .limit(3)
+        .collection("essays")
+        .where("userId", "==", studentId)
         .get()
         .catch(() => null),
       adminDb
@@ -96,11 +97,52 @@ export async function POST(
       };
     });
   const recentEssayFeedback: string[] = essaysSnap
-    ? essaysSnap.docs.map((d) => {
-        const data = d.data() as { feedback?: string; overallComment?: string };
-        return data.overallComment ?? data.feedback ?? "";
-      }).filter(Boolean)
+    ? essaysSnap.docs
+        .map((d) => d.data() as Record<string, unknown>)
+        .sort((a, b) => {
+          const ta = new Date(String(a.submittedAt ?? 0)).getTime();
+          const tb = new Date(String(b.submittedAt ?? 0)).getTime();
+          return tb - ta;
+        })
+        .slice(0, 3)
+        .map((data) => {
+          const oc = data.overallComment;
+          if (typeof oc === "string" && oc) return oc;
+          const fb = data.feedback as { overallComment?: string } | string | undefined;
+          if (typeof fb === "string") return fb;
+          if (fb && typeof fb === "object" && typeof fb.overallComment === "string") return fb.overallComment;
+          return "";
+        })
+        .filter(Boolean)
     : [];
+
+  // 前回〜今回の成果物サマリー（面接/書類/活動/スキルチェック/成長レポート）をAI入力に追加
+  let recentArtifactsSummary: string | undefined;
+  try {
+    const pa = await getSessionPeriodArtifacts(adminDb, studentId, session);
+    const lines: string[] = [];
+    if (pa.artifacts.interviews.length) {
+      lines.push(
+        `模擬面接 ${pa.artifacts.interviews.length}件（平均${pa.scoreSummary.interview.avg ?? "—"}点）: ` +
+          pa.artifacts.interviews.map((i) => i.label).join("、"),
+      );
+    }
+    if (pa.artifacts.documents.length) {
+      lines.push(`出願書類: ${pa.artifacts.documents.map((d) => `${d.label}(${d.status ?? "?"})`).join("、")}`);
+    }
+    if (pa.artifacts.activities.length) {
+      lines.push(`活動実績: ${pa.artifacts.activities.map((a) => a.label).join("、")}`);
+    }
+    if (pa.artifacts.skillChecks.length) {
+      lines.push(`スキルチェック: ${pa.artifacts.skillChecks.map((s) => `${s.label}${s.rank ? `(${s.rank})` : ""}`).join("、")}`);
+    }
+    if (pa.artifacts.reports.length) {
+      lines.push(`成長レポート: ${pa.artifacts.reports.map((r) => r.sub ?? r.label).join(" / ")}`);
+    }
+    recentArtifactsSummary = lines.length ? lines.join("\n") : undefined;
+  } catch (err) {
+    console.warn("[generate-plan] artifacts summary failed:", err);
+  }
   const recentCoachDialogSnippet =
     coachThreadsSnap && !coachThreadsSnap.empty
       ? (() => {
@@ -119,6 +161,7 @@ export async function POST(
     Boolean(sa) ||
     topWeaknesses.length > 0 ||
     recentEssayFeedback.length > 0 ||
+    Boolean(recentArtifactsSummary) ||
     Boolean(prevSession?.debrief);
 
   const ctx: LessonPlanContext = {
@@ -144,6 +187,7 @@ export async function POST(
         }
       : undefined,
     previousPrepGoal: prevSession?.prepPlan?.goal,
+    recentArtifactsSummary,
   };
 
   // 全データ空なら「新しい生徒モード」を示す

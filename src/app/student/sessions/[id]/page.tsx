@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, Video, ExternalLink, Lock, FileText, Clock, ThumbsUp, CheckCircle } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { StudentRecordingController } from "@/components/student/StudentRecordingController";
+import SessionArtifactsPanel from "@/components/sessions/SessionArtifactsPanel";
 import type { Session, SessionStatus, SessionSubmission } from "@/lib/types/session";
 import { SESSION_TYPE_LABELS, SESSION_STATUS_LABELS } from "@/lib/types/session";
 import { useAuth } from "@/contexts/AuthContext";
@@ -411,6 +412,14 @@ export default function StudentSessionDetailPage() {
             </Card>
           )}
         </>
+      )}
+
+      {/* 前回〜今回の取り組み（通常セッションのみ） */}
+      {session.type !== "group_review" && (
+        <SessionArtifactsPanel
+          endpoint={`/api/student/sessions/${id}/artifacts`}
+          studentView
+        />
       )}
 
       {/* Summary */}

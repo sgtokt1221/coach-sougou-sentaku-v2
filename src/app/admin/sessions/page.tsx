@@ -10,6 +10,7 @@ import { authFetch } from "@/lib/api/client";
 import { useAuth } from "@/contexts/AuthContext";
 import SessionCalendar from "@/components/admin/SessionCalendar";
 import UnplacedStudentsSidebar from "@/components/admin/UnplacedStudentsSidebar";
+import AdminSessionList from "@/components/admin/AdminSessionList";
 import type { Session } from "@/lib/types/session";
 
 // Monday取得ヘルパー
@@ -47,6 +48,7 @@ interface AvailableSlot {
 
 export default function AdminSessionsPage() {
   const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState<"schedule" | "list">("schedule");
   const [weekStart, setWeekStart] = useState<Date>(getMonday(new Date()));
   const [pickerSession, setPickerSession] = useState<Session | null>(null);
 
@@ -260,42 +262,70 @@ export default function AdminSessionsPage() {
         )}
         {/* ヘッダー */}
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold">セッション管理</h1>
-
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={goToPreviousWeek}>
-              <ChevronLeft className="size-4" />
-            </Button>
-            <Button variant="outline" size="sm" onClick={goToCurrentWeek}>
-              今週
-            </Button>
-            <Button variant="outline" size="sm" onClick={goToNextWeek}>
-              <ChevronRight className="size-4" />
-            </Button>
-            <div className="ml-4 text-sm font-medium">
-              {formatWeekRange()}
+          <div>
+            <h1 className="text-2xl font-bold">セッション管理</h1>
+            <div className="flex rounded-lg border p-1 mt-2 w-fit">
+              <button
+                onClick={() => setActiveTab("schedule")}
+                className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
+                  activeTab === "schedule" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                スケジュール
+              </button>
+              <button
+                onClick={() => setActiveTab("list")}
+                className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
+                  activeTab === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                一覧
+              </button>
             </div>
           </div>
+
+          {activeTab === "schedule" && (
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={goToPreviousWeek}>
+                <ChevronLeft className="size-4" />
+              </Button>
+              <Button variant="outline" size="sm" onClick={goToCurrentWeek}>
+                今週
+              </Button>
+              <Button variant="outline" size="sm" onClick={goToNextWeek}>
+                <ChevronRight className="size-4" />
+              </Button>
+              <div className="ml-4 text-sm font-medium">
+                {formatWeekRange()}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* セッションカレンダー */}
-        <SessionCalendar
-          weekStart={weekStart}
-          sessions={weekSessions}
-          onDropStudent={handleDropStudent}
-          onMoveSession={handleMoveSession}
-          onRemoveSession={handleRemoveSession}
-          onClickSession={handleSessionClick}
-        />
+        {activeTab === "schedule" ? (
+          /* セッションカレンダー */
+          <SessionCalendar
+            weekStart={weekStart}
+            sessions={weekSessions}
+            onDropStudent={handleDropStudent}
+            onMoveSession={handleMoveSession}
+            onRemoveSession={handleRemoveSession}
+            onClickSession={handleSessionClick}
+          />
+        ) : (
+          <AdminSessionList sessions={allSessions} />
+        )}
       </div>
 
-      {/* 未配置生徒サイドバー */}
-      <div className="w-64 border-l bg-gray-50/50">
-        <UnplacedStudentsSidebar
-          students={unplacedStudents}
-          loading={!unplacedStudents}
-        />
-      </div>
+      {/* 未配置生徒サイドバー（スケジュールタブのみ） */}
+      {activeTab === "schedule" && (
+        <div className="w-64 border-l bg-gray-50/50">
+          <UnplacedStudentsSidebar
+            students={unplacedStudents}
+            loading={!unplacedStudents}
+          />
+        </div>
+      )}
 
       {/* 講師選択ポップオーバー */}
       {pickerSession && (
