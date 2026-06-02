@@ -60,12 +60,14 @@ export async function GET(request: NextRequest) {
       .get();
 
     // 生徒ごとの配置済みセッション数をカウント
+    // /api/sessions(GET) と同じスコープに揃える: admin は自分が作成したセッションのみ計上
+    // （createdByAdminId 欠落の不正セッションを「配置済み」に数えず、表示との不整合を防ぐ）。
     const placedCountMap = new Map<string, number>();
     for (const doc of sessionsSnap.docs) {
       const data = doc.data();
-      if (data.type !== "group_review" && data.studentId) {
-        placedCountMap.set(data.studentId, (placedCountMap.get(data.studentId) ?? 0) + 1);
-      }
+      if (data.type === "group_review" || !data.studentId) continue;
+      if (role !== "superadmin" && data.createdByAdminId !== uid) continue;
+      placedCountMap.set(data.studentId, (placedCountMap.get(data.studentId) ?? 0) + 1);
     }
 
     // 月回数と配置済み数を比較して、残り分のカードを生成

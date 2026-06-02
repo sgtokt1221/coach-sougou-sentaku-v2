@@ -242,10 +242,12 @@ export default function SessionCalendar({
               e.dataTransfer.setData('sessionId', session.id);
               e.dataTransfer.effectAllowed = 'move';
             }}
-            className={`absolute inset-px z-10 overflow-hidden rounded-md border text-xs p-1 cursor-grab active:cursor-grabbing shadow-sm hover:shadow-md transition-shadow group ${getSessionBgColor(session.type)}`}
+            className={`absolute z-10 overflow-hidden rounded-md border text-xs p-1 cursor-grab active:cursor-grabbing shadow-sm hover:shadow-md transition-shadow group ${getSessionBgColor(session.type)}`}
             style={{
               gridColumn: session.gridColumn,
-              gridRow: `${session.gridRow} / ${session.gridRowEnd}`,
+              gridRow: session.gridRow,
+              height: `${31 * (session.gridRowEnd - session.gridRow) - 3}px`,
+              margin: '1px',
             }}
             onClick={() => onClickSession(session.id)}
           >
