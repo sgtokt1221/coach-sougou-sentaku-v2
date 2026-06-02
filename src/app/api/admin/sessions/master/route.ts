@@ -23,16 +23,18 @@ export async function GET(request: Request) {
   }
 
   try {
+    // orderBy は複合インデックスを要するため使わず、取得後に JS でソート
     const snapshot = await adminDb
       .collection("sessionMasters")
       .where("month", "==", month)
-      .orderBy("updatedAt", "desc")
       .get();
 
-    const masters: SessionMaster[] = snapshot.docs.map((doc) => ({
+    const masters: SessionMaster[] = (snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
-    })) as SessionMaster[];
+    })) as SessionMaster[]).sort((a, b) =>
+      (b.updatedAt ?? "").localeCompare(a.updatedAt ?? ""),
+    );
 
     return NextResponse.json(masters);
   } catch (error) {

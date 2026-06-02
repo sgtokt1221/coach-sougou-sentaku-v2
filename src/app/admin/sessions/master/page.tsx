@@ -455,7 +455,7 @@ export default function SessionMasterPage() {
       {loading ? (
         <div className="text-center py-8">読み込み中...</div>
       ) : (
-        <div className="flex gap-4">
+        <div className="flex gap-4 items-start">
           {/* 週テンプレート（曜日×時間）グリッド */}
           <div className="flex-1 min-w-0">
             <SessionMasterCalendar
@@ -468,7 +468,7 @@ export default function SessionMasterPage() {
           </div>
 
           {/* 未配置の生徒（ドラッグでグリッドに配置＝マスター作成） */}
-          <div className="w-64 flex-shrink-0">
+          <div className="w-64 flex-shrink-0 sticky top-4 self-start">
             <div className="flex items-center gap-2 mb-3">
               <h3 className="font-semibold text-sm">未配置</h3>
               <Badge variant="secondary" className="text-xs">
