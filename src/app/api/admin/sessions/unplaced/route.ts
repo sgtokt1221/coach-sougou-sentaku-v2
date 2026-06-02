@@ -40,10 +40,13 @@ export async function GET(request: NextRequest) {
       studentsSnap = await adminDb.collection("users").where("managedBy", "==", uid).get();
     }
 
-    const allStudents = studentsSnap.docs.map((d) => ({
-      uid: d.id,
-      ...(d.data() as { displayName: string; targetUniversities?: string[]; latestScore?: number; lastSessionAt?: string }),
-    }));
+    const allStudents = studentsSnap.docs
+      .map((d) => ({
+        uid: d.id,
+        ...(d.data() as { displayName: string; targetUniversities?: string[]; latestScore?: number; lastSessionAt?: string; role?: string }),
+      }))
+      // 講師・管理者が managedBy 経由で混入しないよう生徒のみに限定（superadmin分岐は既に role==student 済み）
+      .filter((s) => s.role === undefined || s.role === "student");
 
     // Get this month's 1:1 sessions
     const sessionsSnap = await adminDb

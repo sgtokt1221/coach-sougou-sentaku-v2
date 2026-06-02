@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -30,6 +31,34 @@ export default function UnplacedStudentsSidebar({
     e.dataTransfer.setData("studentName", student.displayName);
     e.dataTransfer.effectAllowed = "copy";
   };
+
+  // 志望校の複合ID（"uniId:facId"）を日本語名（"大学名 学部名"）に解決
+  const compoundIds = useMemo(() => {
+    const set = new Set<string>();
+    for (const s of students) {
+      for (const u of s.targetUniversities) set.add(u);
+    }
+    return Array.from(set);
+  }, [students]);
+
+  const [nameMap, setNameMap] = useState<Record<string, string>>({});
+  const idsKey = compoundIds.join(",");
+  useEffect(() => {
+    if (compoundIds.length === 0) return;
+    fetch(`/api/universities/resolve?ids=${encodeURIComponent(idsKey)}`)
+      .then((r) => r.json())
+      .then((d) => {
+        const map: Record<string, string> = {};
+        for (const r of d.resolved ?? []) {
+          map[`${r.universityId}:${r.facultyId}`] = `${r.universityName} ${r.facultyName}`;
+        }
+        setNameMap(map);
+      })
+      .catch(() => {
+        /* 解決失敗時は生IDをフォールバック表示 */
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idsKey]);
 
   if (loading) {
     return (
@@ -106,7 +135,7 @@ export default function UnplacedStudentsSidebar({
                         variant="outline"
                         className="text-xs text-muted-foreground"
                       >
-                        {university}
+                        {nameMap[university] ?? university}
                       </Badge>
                     ))}
                     {student.targetUniversities.length > 2 && (

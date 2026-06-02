@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -9,8 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Copy, CalendarPlus, Trash2, Edit } from "lucide-react";
+import { Plus, Copy, CalendarPlus, GripVertical, Trash2 } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
+import SessionMasterCalendar from "@/components/admin/SessionMasterCalendar";
 import type { SessionMaster } from "@/lib/types/teacher-shift";
 
 const DAYS_OF_WEEK = ["日", "月", "火", "水", "木", "金", "土"];
@@ -201,6 +202,33 @@ export default function SessionMasterPage() {
     }
   };
 
+  // D&D 配置: マスターの希望曜日・時間を更新（preferredDay=null で未指定へ戻す）
+  const handlePlaceMaster = async (
+    id: string,
+    preferredDay: number | null,
+    time: string,
+  ) => {
+    try {
+      const response = await authFetch("/api/admin/sessions/master", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, preferredDay, preferredTime: time }),
+      });
+      if (response.ok) {
+        await loadMasters();
+      } else {
+        console.error("配置の保存に失敗しました");
+      }
+    } catch (error) {
+      console.error("配置エラー:", error);
+    }
+  };
+
+  // 曜日未指定のマスター（サイドバー表示用）
+  const unplacedMasters = masters.filter(
+    (m) => m.preferredDay === undefined || m.preferredDay === null,
+  );
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -338,13 +366,30 @@ export default function SessionMasterPage() {
                 />
               </div>
             </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                キャンセル
-              </Button>
-              <Button onClick={handleSave}>
-                {editingMaster ? "更新" : "作成"}
-              </Button>
+            <div className="flex justify-between gap-2">
+              <div>
+                {editingMaster && (
+                  <Button
+                    variant="ghost"
+                    className="text-rose-600 hover:text-rose-700"
+                    onClick={async () => {
+                      await handleDelete(editingMaster.id);
+                      setIsDialogOpen(false);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    削除
+                  </Button>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                  キャンセル
+                </Button>
+                <Button onClick={handleSave}>
+                  {editingMaster ? "更新" : "作成"}
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>
@@ -360,96 +405,68 @@ export default function SessionMasterPage() {
         </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{currentMonth} セッションマスター一覧</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="text-center py-8">読み込み中...</div>
-          ) : masters.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              マスターが登録されていません
+      {loading ? (
+        <div className="text-center py-8">読み込み中...</div>
+      ) : (
+        <div className="flex gap-4">
+          {/* 週テンプレート（曜日×時間）グリッド */}
+          <div className="flex-1 min-w-0">
+            <SessionMasterCalendar
+              masters={masters}
+              onPlaceMaster={handlePlaceMaster}
+              onEditMaster={handleEdit}
+            />
+          </div>
+
+          {/* 未指定マスター（ドラッグで配置） */}
+          <div className="w-64 flex-shrink-0">
+            <div className="flex items-center gap-2 mb-3">
+              <h3 className="font-semibold text-sm">未指定</h3>
+              <Badge variant="secondary" className="text-xs">
+                {unplacedMasters.length}
+              </Badge>
             </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-3 px-2">生徒名</th>
-                    <th className="text-left py-3 px-2">講師名</th>
-                    <th className="text-left py-3 px-2">希望日時</th>
-                    <th className="text-left py-3 px-2">月回数</th>
-                    <th className="text-left py-3 px-2">種別</th>
-                    <th className="text-left py-3 px-2">操作</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {masters.map((master) => (
-                    <tr key={master.id} className="border-b hover:bg-muted/50">
-                      <td className="py-3 px-2">
-                        <div>
-                          <div className="font-medium">{master.studentName}</div>
-                          <div className="text-sm text-muted-foreground">{master.studentId}</div>
-                        </div>
-                      </td>
-                      <td className="py-3 px-2">
-                        {master.teacherName ? (
-                          <div>
-                            <div className="font-medium">{master.teacherName}</div>
-                            <div className="text-sm text-muted-foreground">{master.teacherId}</div>
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground">未割当</span>
-                        )}
-                      </td>
-                      <td className="py-3 px-2">
-                        {master.preferredDay !== undefined ? (
-                          <div>
-                            <div>{DAYS_OF_WEEK[master.preferredDay]}曜日</div>
-                            <div className="text-sm text-muted-foreground">{master.preferredTime}</div>
-                          </div>
-                        ) : (
-                          <div>
-                            <div>指定なし</div>
-                            <div className="text-sm text-muted-foreground">{master.preferredTime}</div>
-                          </div>
-                        )}
-                      </td>
-                      <td className="py-3 px-2">
-                        <Badge variant="outline">{master.frequency}回/月</Badge>
-                      </td>
-                      <td className="py-3 px-2">
-                        <Badge>
-                          {SESSION_TYPES.find(t => t.value === master.type)?.label || master.type}
+            <div className="space-y-3 overflow-y-auto max-h-[calc(100vh-260px)]">
+              {unplacedMasters.length === 0 ? (
+                <p className="text-xs text-muted-foreground py-4">
+                  曜日未指定のマスターはありません
+                </p>
+              ) : (
+                unplacedMasters.map((master) => (
+                  <Card
+                    key={master.id}
+                    className="p-3 cursor-grab active:cursor-grabbing hover:shadow-sm transition-all border-l-4 border-l-amber-400"
+                    draggable
+                    onDragStart={(e) => {
+                      e.dataTransfer.setData("masterId", master.id);
+                      e.dataTransfer.effectAllowed = "move";
+                    }}
+                    onClick={() => handleEdit(master)}
+                  >
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <GripVertical className="size-4 text-muted-foreground flex-shrink-0" />
+                        <span className="font-medium text-sm truncate">
+                          {master.studentName}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-1">
+                        <Badge variant="outline" className="text-xs">
+                          {master.frequency}回/月
                         </Badge>
-                      </td>
-                      <td className="py-3 px-2">
-                        <div className="flex gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEdit(master)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(master.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                        <Badge variant="secondary" className="text-xs">
+                          {SESSION_TYPES.find((t) => t.value === master.type)?.label ||
+                            master.type}
+                        </Badge>
+                      </div>
+                    </div>
+                  </Card>
+                ))
+              )}
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
