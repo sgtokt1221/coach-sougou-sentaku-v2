@@ -22,18 +22,8 @@
         "selectionMethods": [
           {
             "stage": 1,
-            "type": "documents",
-            "details": "•出願確認票、•調査書、•志望理由書、•資格を証明する書類"
-          },
-          {
-            "stage": 2,
             "type": "essay",
-            "details": "小論文"
-          },
-          {
-            "stage": 3,
-            "type": "interview",
-            "details": "面接"
+            "details": "出願書類審査・小論文・面接を同日一括実施し総合判断(段階分けなし)"
           }
         ],
         "schedule": {
@@ -61,17 +51,12 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "•出願確認票、•出願書類一覧表、•自己紹介書、•志望理由書、•ビジネスに関連したテーマによる日本語のエッセイ、•出身学校長が作成する調査書またはそれに代わるもの、•志願者をよく知る者による志願者評価書、•英語による自己PRの録画資料、•出願資格を証明する書類"
+            "details": "第1次審査：書類(調査書・自己紹介書・志望理由書・エッセイ等)"
           },
           {
             "stage": 2,
             "type": "essay",
-            "details": "小論文"
-          },
-          {
-            "stage": 3,
-            "type": "interview",
-            "details": "面接（プレゼンテーション）"
+            "details": "第2次審査：小論文(2時間)・面接(冒頭に英語5分プレゼン含む)"
           }
         ],
         "schedule": {
@@ -205,17 +190,12 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "•出願確認票、•調査書、•志望理由書、•レポート、•自己の活動内容を客観的に証明する資料、•志願者評価書、•外国語力を証明する書類"
+            "details": "第1次選考：書類選考(教育文化学科 自己推薦)"
           },
           {
             "stage": 2,
             "type": "essay",
-            "details": "小論文"
-          },
-          {
-            "stage": 3,
-            "type": "interview",
-            "details": "口頭試問（自身の活動に関するプレゼンテーションを含む）"
+            "details": "第2次選考：筆記試験(小論文、英語論述含む場合あり)・口頭試問(活動のプレゼン含む)"
           }
         ],
         "schedule": {
@@ -244,12 +224,12 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "•出願確認票、•調査書、•自己紹介書、•自己アピールを含む志望理由書、•自由テーマによる小論文、•修了した（修了見込みの）高等学校等に関する資料、•志願者をよく知る者による推薦書"
+            "details": "第1次選考：書類選考"
           },
           {
             "stage": 2,
             "type": "interview",
-            "details": "口頭試問"
+            "details": "第2次選考：口頭試問(任意提出の小論文は参考資料)"
           }
         ],
         "schedule": {
@@ -277,18 +257,8 @@
         "selectionMethods": [
           {
             "stage": 1,
-            "type": "documents",
-            "details": "•出願確認票、•調査書、またはそれに代わるもの、•学修計画、•資格を証明する書類"
-          },
-          {
-            "stage": 2,
             "type": "test",
-            "details": "模擬講義受講型試験"
-          },
-          {
-            "stage": 3,
-            "type": "test",
-            "details": "筆記試験（総合問題）"
+            "details": "出願書類・模擬講義受講型試験・筆記試験(総合問題)を一括実施し総合判断(横断的思考力評価型)"
           }
         ],
         "schedule": {
@@ -356,17 +326,12 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "•出願確認票、•調査書、•資格を証明する書類、•志望理由書、•自己アピールのための資料、•入学意思確認書"
+            "details": "第1次選考：書類選考"
           },
           {
             "stage": 2,
             "type": "essay",
-            "details": "小論文"
-          },
-          {
-            "stage": 3,
-            "type": "interview",
-            "details": "口頭試問"
+            "details": "第2次選考：筆記試験(小論文60分、英語含む場合あり)・口頭試問(20分、希望でプレゼン可)"
           }
         ],
         "schedule": {
@@ -482,38 +447,8 @@
         "selectionMethods": [
           {
             "stage": 1,
-            "type": "documents",
-            "details": "•出願確認票、•調査書、•志望理由書、•資格を証明する書類"
-          },
-          {
-            "stage": 2,
-            "type": "other",
-            "details": "【グローバル・コミュニケーション学科 英語コース】"
-          },
-          {
-            "stage": 3,
             "type": "essay",
-            "details": "•筆記試験（日本語による小論文）"
-          },
-          {
-            "stage": 4,
-            "type": "interview",
-            "details": "•日本語と英語による口頭試問"
-          },
-          {
-            "stage": 5,
-            "type": "other",
-            "details": "【グローバル・コミュニケーション学科 中国語コース】"
-          },
-          {
-            "stage": 6,
-            "type": "essay",
-            "details": "•筆記試験（日本語による小論文）"
-          },
-          {
-            "stage": 7,
-            "type": "interview",
-            "details": "•面接"
+            "details": "小論文(日本語)・口頭試問/面接(英語コース=日英口頭試問、中国語コース=面接)を出願書類とあわせ一括実施"
           }
         ],
         "schedule": {
@@ -542,12 +477,12 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "•出願確認票、•出願書類一覧表、•自己紹介書、•志望理由書、•自由テーマによる日本語のエッセイ、•出身学校長が作成する調査書、またはそれに代わるもの、•志願者をよく知る者による志願者評価書 2通、•自己アピールのための資料等"
+            "details": "第1次選考：書類選考"
           },
           {
             "stage": 2,
-            "type": "interview",
-            "details": "面接及び口頭試問"
+            "type": "test",
+            "details": "第2次選考：課題文読解試験(講義受講+設問)・口頭試問"
           }
         ],
         "schedule": {
@@ -575,12 +510,12 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "•出願確認票、•調査書、•志望理由書、•活動成果を客観的に証明する資料、•英語能力を証明する書類、•志願者紹介状"
+            "details": "第1次選考：書類選考"
           },
           {
             "stage": 2,
             "type": "essay",
-            "details": "小論文・面接"
+            "details": "第2次選考：筆記試験(小論文)・面接(出願書類とあわせ総合判断)"
           }
         ],
         "schedule": {
@@ -624,22 +559,12 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "入学志願書、調査書、志望理由書、競技成績証明書、運動能力測定証明書、写真貼付用紙、特別奨学金願書（該当者のみ）"
+            "details": "第1次選考：書類選考(エントリーシート・小論文等)"
           },
           {
             "stage": 2,
             "type": "essay",
-            "details": "小論文"
-          },
-          {
-            "stage": 3,
-            "type": "interview",
-            "details": "面接"
-          },
-          {
-            "stage": 4,
-            "type": "interview",
-            "details": "口頭試問"
+            "details": "第2次選考：課題論文(90分、約2000字)＋個人面接(約15分)"
           }
         ],
         "schedule": {
@@ -668,22 +593,12 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "入学志願書、調査書、志望理由書、競技成績証明書、運動能力測定証明書、写真貼付用紙、特別奨学金願書（該当者のみ）"
+            "details": "第1次選考：書類選考(志望理由書・申告書・語学外部資格/英語重視方式)"
           },
           {
             "stage": 2,
-            "type": "essay",
-            "details": "小論文"
-          },
-          {
-            "stage": 3,
             "type": "interview",
-            "details": "面接"
-          },
-          {
-            "stage": 4,
-            "type": "interview",
-            "details": "口頭試問"
+            "details": "第2次選考：個人面接(約15-20分、日英で質疑)"
           }
         ],
         "schedule": {
@@ -712,22 +627,12 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "入学志願書、調査書、志望理由書、競技成績証明書、運動能力測定証明書、写真貼付用紙、特別奨学金願書（該当者のみ）"
+            "details": "第1次選考：書類選考(エントリーシート・課題論文)"
           },
           {
             "stage": 2,
-            "type": "essay",
-            "details": "小論文"
-          },
-          {
-            "stage": 3,
-            "type": "interview",
-            "details": "面接"
-          },
-          {
-            "stage": 4,
-            "type": "interview",
-            "details": "口頭試問"
+            "type": "presentation",
+            "details": "第2次選考：プレゼンテーション試験(約20分)＋個人面接(約10分)"
           }
         ],
         "schedule": {
@@ -757,22 +662,12 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "入学志願書、調査書、志望理由書、競技成績証明書、運動能力測定証明書、写真貼付用紙、実用数学技能検定の合格証明書のコピー（該当者のみ）、特別奨学金願書（該当者のみ）"
+            "details": "書類選考(エントリーシート・志望理由書・活動実績報告書等/探究活動評価方式)"
           },
           {
             "stage": 2,
-            "type": "essay",
-            "details": "小論文"
-          },
-          {
-            "stage": 3,
-            "type": "interview",
-            "details": "面接"
-          },
-          {
-            "stage": 4,
-            "type": "interview",
-            "details": "口頭試問"
+            "type": "presentation",
+            "details": "プレゼンテーション(探究学習等 約10分)＋質疑応答(約15分)"
           }
         ],
         "schedule": {
@@ -801,22 +696,12 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "入学志願書、調査書、志望理由書、競技成績証明書、運動能力測定証明書、写真貼付用紙、特別奨学金願書（該当者のみ）"
+            "details": "第1次選考：書類選考(英語外部資格証明を含む)"
           },
           {
             "stage": 2,
-            "type": "essay",
-            "details": "小論文"
-          },
-          {
-            "stage": 3,
-            "type": "interview",
-            "details": "面接"
-          },
-          {
-            "stage": 4,
-            "type": "interview",
-            "details": "口頭試問"
+            "type": "test",
+            "details": "第2次選考：講義選抜(講義約20分受講後に小論文50分)"
           }
         ],
         "schedule": {
@@ -845,22 +730,12 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "入学志願書、調査書、志望理由書、活動成果等報告書、活動実績証明書、写真貼付用紙、特別奨学金願書（該当者のみ）"
+            "details": "第1次選考：書類選考(エントリーシート・課題(物語制作)等)"
           },
           {
             "stage": 2,
-            "type": "essay",
-            "details": "小論文"
-          },
-          {
-            "stage": 3,
-            "type": "interview",
-            "details": "面接"
-          },
-          {
-            "stage": 4,
-            "type": "interview",
-            "details": "口頭試問"
+            "type": "presentation",
+            "details": "第2次選考：映像撮影実技(午前120分)＋プレゼン・個人面接(午後20分)"
           }
         ],
         "schedule": {
@@ -890,22 +765,12 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "入学志願書、調査書、志望理由書、競技成績証明書、運動能力測定証明書、写真貼付用紙、実用数学技能検定の合格証明書のコピー（該当者のみ）、特別奨学金願書（該当者のみ）"
+            "details": "第1次選考：書類選考(課題論文・英語外部資格証明等/UNITE Program方式)"
           },
           {
             "stage": 2,
-            "type": "essay",
-            "details": "小論文"
-          },
-          {
-            "stage": 3,
-            "type": "interview",
-            "details": "面接"
-          },
-          {
-            "stage": 4,
-            "type": "interview",
-            "details": "口頭試問"
+            "type": "presentation",
+            "details": "第2次選考：プレゼン資料作成(60分)＋プレゼン(約5分)＋質疑(約5分)＋個人面接(約10分)"
           }
         ],
         "schedule": {
@@ -934,12 +799,12 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "•調査書（厳封）、•エントリーシート、•志望理由書、•写真、•語学外部資格試験の証明書"
+            "details": "第1次選考：書類選考(語学外部資格証明含む/国際方式)"
           },
           {
             "stage": 2,
             "type": "interview",
-            "details": "面接"
+            "details": "第2次選考：個人面接(学域により約15分、東アジア研究は約30分・選択言語の質疑含む)"
           }
         ],
         "schedule": {
@@ -968,7 +833,7 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "•調査書等、•ApplicationEssay、•写真、•英語外部資格試験の証明書"
+            "details": "書類選考のみ(個人面接なし/GLA総合評価方式)"
           }
         ],
         "schedule": {
@@ -997,23 +862,8 @@
         "selectionMethods": [
           {
             "stage": 1,
-            "type": "documents",
-            "details": "入学志願書、調査書、志望理由書、競技成績証明書、運動能力測定証明書、写真貼付用紙、実用数学技能検定の合格証明書のコピー（該当者のみ）、特別奨学金願書（該当者のみ）"
-          },
-          {
-            "stage": 2,
-            "type": "essay",
-            "details": "小論文"
-          },
-          {
-            "stage": 3,
-            "type": "interview",
-            "details": "面接"
-          },
-          {
-            "stage": 4,
-            "type": "interview",
-            "details": "口頭試問"
+            "type": "test",
+            "details": "1段階選考(理工セミナー方式)：数学・物理のセミナー(各60分)＋理解度筆記試験(各60分)＋書類選考＋面接(口頭試問は数理科学・物理科学科のみ)"
           }
         ],
         "schedule": {
@@ -1043,22 +893,12 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "入学志願書、調査書、志望理由書、競技成績証明書、運動能力測定証明書、写真貼付用紙、実用数学技能検定の合格証明書のコピー（該当者のみ）、特別奨学金願書（該当者のみ）"
+            "details": "第1次選考：書類選考(CREA方式 教員熱望型)"
           },
           {
             "stage": 2,
-            "type": "essay",
-            "details": "小論文"
-          },
-          {
-            "stage": 3,
-            "type": "interview",
-            "details": "面接"
-          },
-          {
-            "stage": 4,
-            "type": "interview",
-            "details": "口頭試問"
+            "type": "presentation",
+            "details": "第2次選考：プレゼン資料作成(60分、保健体育)＋プレゼン(5分)＋個人面接(約15分)"
           }
         ],
         "schedule": {
@@ -1086,23 +926,13 @@
         "selectionMethods": [
           {
             "stage": 1,
-            "type": "documents",
-            "details": "入学志願書、調査書、志望理由書、活動成果等報告書、活動実績証明書、写真貼付用紙、特別奨学金願書（該当者のみ）"
+            "type": "test",
+            "details": "第1次選考：書類選考＋政策科学セミナーⅠ(講義約50分＋質問約20分＋レポート60分)"
           },
           {
             "stage": 2,
-            "type": "essay",
-            "details": "小論文"
-          },
-          {
-            "stage": 3,
             "type": "interview",
-            "details": "面接"
-          },
-          {
-            "stage": 4,
-            "type": "interview",
-            "details": "口頭試問"
+            "details": "第2次選考：個人面接(約10分)＋政策科学セミナーⅡ(グループディスカッション)"
           }
         ],
         "schedule": {
@@ -1132,22 +962,12 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "入学志願書、調査書、志望理由書、競技成績証明書、運動能力測定証明書、写真貼付用紙、実用数学技能検定の合格証明書のコピー（該当者のみ）、特別奨学金願書（該当者のみ）"
+            "details": "第1次選考：書類選考(エントリーシート等/UNITE課題探究型)"
           },
           {
             "stage": 2,
             "type": "essay",
-            "details": "小論文"
-          },
-          {
-            "stage": 3,
-            "type": "interview",
-            "details": "面接"
-          },
-          {
-            "stage": 4,
-            "type": "interview",
-            "details": "口頭試問"
+            "details": "第2次選考：小論文(60分、約2000字)＋個人面接(約10分)"
           }
         ],
         "schedule": {
@@ -1174,18 +994,13 @@
         "selectionMethods": [
           {
             "stage": 1,
-            "type": "documents",
-            "details": "•調査書（厳封）、•エントリーシート、•課題論文、•写真"
+            "type": "test",
+            "details": "第1次選考：小論文(80分、現代社会の諸問題)＋書類選考"
           },
           {
             "stage": 2,
-            "type": "essay",
-            "details": "小論文"
-          },
-          {
-            "stage": 3,
             "type": "interview",
-            "details": "面接"
+            "details": "第2次選考：個人面接(約20分)"
           }
         ],
         "schedule": {
@@ -1214,22 +1029,12 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "入学志願書、調査書、志望理由書、活動成果等報告書、活動実績証明書、写真貼付用紙、特別奨学金願書（該当者のみ）"
+            "details": "第1次選考：書類選考(志望理由書・申告書等/英語重視方式)"
           },
           {
             "stage": 2,
-            "type": "essay",
-            "details": "小論文"
-          },
-          {
-            "stage": 3,
             "type": "interview",
-            "details": "面接"
-          },
-          {
-            "stage": 4,
-            "type": "interview",
-            "details": "口頭試問"
+            "details": "第2次選考：個人面接(約20-30分、一部英語)"
           }
         ],
         "schedule": {
@@ -1317,17 +1122,12 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "調査書（厳封）、卒業証明書、出願書類確認表、活動報告書、入学志望理由書、資料説明票、出願資格を証明する資料"
+            "details": "第1次選考：書類選考（活動報告書・入学志望理由書・調査書 等）"
           },
           {
             "stage": 2,
-            "type": "essay",
-            "details": "小論文"
-          },
-          {
-            "stage": 3,
             "type": "interview",
-            "details": "面接"
+            "details": "第2次選考：面接（口頭試問を含む）。一部学部は小論文・筆記（外国語長文読解 等）を併用"
           }
         ],
         "schedule": {
@@ -1356,12 +1156,12 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "調査書（厳封）、卒業証明書、出願書類確認表、活動報告書、入学志望理由書、専攻別課題レポート、資料説明票、出願資格を証明する資料、活動実績に関する推薦書"
+            "details": "第1次選考：書類選考（活動報告書・入学志望理由書・調査書 等）"
           },
           {
             "stage": 2,
             "type": "interview",
-            "details": "面接"
+            "details": "第2次選考：面接（口頭試問を含む）。一部学部は小論文・筆記（外国語長文読解 等）を併用"
           }
         ],
         "schedule": {
@@ -1390,12 +1190,12 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "調査書（厳封）、卒業証明書、出願書類確認表、活動報告書、入学志望理由書、資料説明票（該当者のみ）、出願資格を証明する資料（該当者のみ）、国際バカロレア資格取得見込み証明書兼最終成績予測スコア（該当者のみ）"
+            "details": "第1次選考：書類選考（活動報告書・入学志望理由書・調査書 等）"
           },
           {
             "stage": 2,
             "type": "interview",
-            "details": "面接"
+            "details": "第2次選考：面接（口頭試問を含む）。一部学部は小論文・筆記（外国語長文読解 等）を併用"
           }
         ],
         "schedule": {
@@ -1424,12 +1224,12 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "調査書（厳封）、卒業証明書、出願書類確認表、活動報告書、入学志望理由書、資料説明票、出願資格を証明する資料"
+            "details": "第1次選考：書類選考（活動報告書・入学志望理由書・調査書 等）"
           },
           {
             "stage": 2,
             "type": "interview",
-            "details": "面接"
+            "details": "第2次選考：面接（口頭試問を含む）。一部学部は小論文・筆記（外国語長文読解 等）を併用"
           }
         ],
         "schedule": {
@@ -1458,22 +1258,12 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "調査書（厳封）、卒業証明書、出願書類確認表、入学志望理由書、課題レポート"
+            "details": "第1次選考：書類選考（活動報告書・入学志望理由書・調査書 等）"
           },
           {
             "stage": 2,
-            "type": "presentation",
-            "details": "「情報リテラシーを問う課題」について、本学部の実習教室のパソコンで発表用資料の作成"
-          },
-          {
-            "stage": 3,
-            "type": "presentation",
-            "details": "プレゼンテーション"
-          },
-          {
-            "stage": 4,
-            "type": "other",
-            "details": "グループディスカッション"
+            "type": "interview",
+            "details": "第2次選考：面接（口頭試問を含む）。一部学部は小論文・筆記（外国語長文読解 等）を併用"
           }
         ],
         "schedule": {
@@ -1502,17 +1292,12 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "調査書（厳封）、卒業証明書、出願書類確認表、活動報告書、入学志望理由書、資料説明票、出願資格を証明する資料"
+            "details": "第1次選考：書類選考（活動報告書・入学志望理由書・調査書 等）"
           },
           {
             "stage": 2,
-            "type": "other",
-            "details": "課題エッセイ"
-          },
-          {
-            "stage": 3,
             "type": "interview",
-            "details": "面接"
+            "details": "第2次選考：面接（口頭試問を含む）。一部学部は小論文・筆記（外国語長文読解 等）を併用"
           }
         ],
         "schedule": {
@@ -1541,12 +1326,12 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "調査書（厳封）、志望理由書、競技成績証明書、競技成績説明票、競技成績添付用紙、補足調書"
+            "details": "第1次選考：書類選考（活動報告書・入学志望理由書・調査書 等）"
           },
           {
             "stage": 2,
             "type": "interview",
-            "details": "面接"
+            "details": "第2次選考：面接（口頭試問を含む）。一部学部は小論文・筆記（外国語長文読解 等）を併用"
           }
         ],
         "schedule": {
@@ -1575,17 +1360,12 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "調査書（厳封）、卒業証明書、その他証明書等、出願書類確認表、入学志望理由書、資料説明票、出願資格を証明する資料"
+            "details": "第1次選考：書類選考（活動報告書・入学志望理由書・調査書 等）"
           },
           {
             "stage": 2,
-            "type": "other",
-            "details": "英文資料の内容を理解する能力を問う問題"
-          },
-          {
-            "stage": 3,
             "type": "interview",
-            "details": "面接（口頭試問含む）"
+            "details": "第2次選考：面接（口頭試問を含む）。一部学部は小論文・筆記（外国語長文読解 等）を併用"
           }
         ],
         "schedule": {
@@ -1614,12 +1394,12 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "調査書（厳封）、志望理由書、競技成績証明書、競技成績説明票、競技成績添付用紙、補足調書"
+            "details": "第1次選考：書類選考（活動報告書・入学志望理由書・調査書 等）"
           },
           {
             "stage": 2,
             "type": "interview",
-            "details": "面接"
+            "details": "第2次選考：面接（口頭試問を含む）。一部学部は小論文・筆記（外国語長文読解 等）を併用"
           }
         ],
         "schedule": {
@@ -1648,12 +1428,12 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "調査書（厳封）、卒業証明書、出願書類確認表、活動報告書、入学志望理由書、課題小論文、資料説明票、出願資格を証明する資料"
+            "details": "第1次選考：書類選考（活動報告書・入学志望理由書・調査書 等）"
           },
           {
             "stage": 2,
             "type": "interview",
-            "details": "面接"
+            "details": "第2次選考：面接（口頭試問を含む）。一部学部は小論文・筆記（外国語長文読解 等）を併用"
           }
         ],
         "schedule": {
@@ -1683,17 +1463,12 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "調査書（厳封）、志望理由書、競技成績証明書、競技成績説明票、競技成績添付用紙、補足調書"
+            "details": "第1次選考：書類選考（活動報告書・入学志望理由書・調査書 等）"
           },
           {
             "stage": 2,
-            "type": "other",
-            "details": "総合問題"
-          },
-          {
-            "stage": 3,
             "type": "interview",
-            "details": "面接"
+            "details": "第2次選考：面接（口頭試問を含む）。一部学部は小論文・筆記（外国語長文読解 等）を併用"
           }
         ],
         "schedule": {
@@ -1723,17 +1498,12 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "調査書（厳封）、卒業証明書、出願書類確認表、活動報告書、入学志望理由書、推薦書、将来設計書、資料説明書、出願資格を証明する資料"
+            "details": "第1次選考：書類選考（活動報告書・入学志望理由書・調査書 等）"
           },
           {
             "stage": 2,
-            "type": "other",
-            "details": "課題エッセイ"
-          },
-          {
-            "stage": 3,
             "type": "interview",
-            "details": "面接"
+            "details": "第2次選考：面接（口頭試問を含む）。一部学部は小論文・筆記（外国語長文読解 等）を併用"
           }
         ],
         "schedule": {
@@ -1762,12 +1532,12 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "調査書（厳封）、志望理由書、競技成績証明書、競技成績説明票、競技成績添付用紙、補足調書"
+            "details": "第1次選考：書類選考（活動報告書・入学志望理由書・調査書 等）"
           },
           {
             "stage": 2,
             "type": "interview",
-            "details": "面接"
+            "details": "第2次選考：面接（口頭試問を含む）。一部学部は小論文・筆記（外国語長文読解 等）を併用"
           }
         ],
         "schedule": {
@@ -1796,12 +1566,12 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "調査書（厳封）、卒業証明書、出願書類確認表、活動報告書、入学志望理由書、資料説明票、出願資格を証明する資料"
+            "details": "第1次選考：書類選考（活動報告書・入学志望理由書・調査書 等）"
           },
           {
             "stage": 2,
             "type": "interview",
-            "details": "面接"
+            "details": "第2次選考：面接（口頭試問を含む）。一部学部は小論文・筆記（外国語長文読解 等）を併用"
           }
         ],
         "schedule": {
@@ -1842,17 +1612,12 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "志願理由書・活動報告書・調査書"
+            "details": "第一次審査：書類審査（探究活動の成果物を含む提出書類で総合評価）"
           },
           {
             "stage": 2,
-            "type": "essay",
-            "details": "筆記試験（小論文等）"
-          },
-          {
-            "stage": 3,
             "type": "interview",
-            "details": "面接・口頭試問"
+            "details": "第二次審査：面接審査（探究活動に関するプレゼンテーションを含む）"
           }
         ],
         "schedule": {
@@ -1878,17 +1643,12 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "志願理由書・活動報告書・調査書"
+            "details": "第一次審査：書類審査（探究活動の成果物を含む提出書類で総合評価）"
           },
           {
             "stage": 2,
-            "type": "essay",
-            "details": "筆記試験（小論文等）"
-          },
-          {
-            "stage": 3,
             "type": "interview",
-            "details": "面接・口頭試問"
+            "details": "第二次審査：面接審査（探究活動に関するプレゼンテーションを含む）"
           }
         ],
         "schedule": {
@@ -1914,17 +1674,12 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "志願理由書・活動報告書・調査書"
+            "details": "第一次審査：書類審査（探究活動の成果物を含む提出書類で総合評価）"
           },
           {
             "stage": 2,
-            "type": "essay",
-            "details": "筆記試験（小論文等）"
-          },
-          {
-            "stage": 3,
             "type": "interview",
-            "details": "面接・口頭試問"
+            "details": "第二次審査：面接審査（探究活動に関するプレゼンテーションを含む）"
           }
         ],
         "schedule": {
@@ -1950,17 +1705,12 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "志願理由書・活動報告書・調査書"
+            "details": "第一次審査：書類審査（探究活動の成果物を含む提出書類で総合評価）"
           },
           {
             "stage": 2,
-            "type": "essay",
-            "details": "筆記試験（小論文等）"
-          },
-          {
-            "stage": 3,
             "type": "interview",
-            "details": "面接・口頭試問"
+            "details": "第二次審査：面接審査（探究活動に関するプレゼンテーションを含む）"
           }
         ],
         "schedule": {
@@ -1986,17 +1736,12 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "志願理由書・活動報告書・調査書"
+            "details": "第一次審査：書類審査（探究活動の成果物を含む提出書類で総合評価）"
           },
           {
             "stage": 2,
-            "type": "essay",
-            "details": "筆記試験（小論文等）"
-          },
-          {
-            "stage": 3,
             "type": "interview",
-            "details": "面接・口頭試問"
+            "details": "第二次審査：面接審査（探究活動に関するプレゼンテーションを含む）"
           }
         ],
         "schedule": {
@@ -2022,17 +1767,12 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "志願理由書・活動報告書・調査書"
+            "details": "第一次審査：書類審査（探究活動の成果物を含む提出書類で総合評価）"
           },
           {
             "stage": 2,
-            "type": "essay",
-            "details": "筆記試験（小論文等）"
-          },
-          {
-            "stage": 3,
             "type": "interview",
-            "details": "面接・口頭試問"
+            "details": "第二次審査：面接審査（探究活動に関するプレゼンテーションを含む）"
           }
         ],
         "schedule": {
@@ -2058,17 +1798,12 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "志願理由書・活動報告書・調査書"
+            "details": "第一次審査：書類審査（探究活動の成果物を含む提出書類で総合評価）"
           },
           {
             "stage": 2,
-            "type": "essay",
-            "details": "筆記試験（小論文等）"
-          },
-          {
-            "stage": 3,
             "type": "interview",
-            "details": "面接・口頭試問"
+            "details": "第二次審査：面接審査（探究活動に関するプレゼンテーションを含む）"
           }
         ],
         "schedule": {
@@ -2094,17 +1829,12 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "志願理由書・活動報告書・調査書"
+            "details": "第一次審査：書類審査（探究活動の成果物を含む提出書類で総合評価）"
           },
           {
             "stage": 2,
-            "type": "essay",
-            "details": "筆記試験（小論文等）"
-          },
-          {
-            "stage": 3,
             "type": "interview",
-            "details": "面接・口頭試問"
+            "details": "第二次審査：面接審査（探究活動に関するプレゼンテーションを含む）"
           }
         ],
         "schedule": {
@@ -2130,17 +1860,12 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "志願理由書・活動報告書・調査書"
+            "details": "第一次審査：書類審査（探究活動の成果物を含む提出書類で総合評価）"
           },
           {
             "stage": 2,
-            "type": "essay",
-            "details": "筆記試験（小論文等）"
-          },
-          {
-            "stage": 3,
             "type": "interview",
-            "details": "面接・口頭試問"
+            "details": "第二次審査：面接審査（探究活動に関するプレゼンテーションを含む）"
           }
         ],
         "schedule": {
@@ -2166,17 +1891,12 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "志願理由書・活動報告書・調査書"
+            "details": "第一次審査：書類審査（探究活動の成果物を含む提出書類で総合評価）"
           },
           {
             "stage": 2,
-            "type": "essay",
-            "details": "筆記試験（小論文等）"
-          },
-          {
-            "stage": 3,
             "type": "interview",
-            "details": "面接・口頭試問"
+            "details": "第二次審査：面接審査（探究活動に関するプレゼンテーションを含む）"
           }
         ],
         "schedule": {
@@ -2202,17 +1922,12 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "志願理由書・活動報告書・調査書"
+            "details": "第一次審査：書類審査（探究活動の成果物を含む提出書類で総合評価）"
           },
           {
             "stage": 2,
-            "type": "essay",
-            "details": "筆記試験（小論文等）"
-          },
-          {
-            "stage": 3,
             "type": "interview",
-            "details": "面接・口頭試問"
+            "details": "第二次審査：面接審査（探究活動に関するプレゼンテーションを含む）"
           }
         ],
         "schedule": {
@@ -2238,17 +1953,12 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "志願理由書・活動報告書・調査書"
+            "details": "第一次審査：書類審査（探究活動の成果物を含む提出書類で総合評価）"
           },
           {
             "stage": 2,
-            "type": "essay",
-            "details": "筆記試験（小論文等）"
-          },
-          {
-            "stage": 3,
             "type": "interview",
-            "details": "面接・口頭試問"
+            "details": "第二次審査：面接審査（探究活動に関するプレゼンテーションを含む）"
           }
         ],
         "schedule": {
@@ -2274,17 +1984,12 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "志願理由書・活動報告書・調査書"
+            "details": "第一次審査：書類審査（探究活動の成果物を含む提出書類で総合評価）"
           },
           {
             "stage": 2,
-            "type": "essay",
-            "details": "筆記試験（小論文等）"
-          },
-          {
-            "stage": 3,
             "type": "interview",
-            "details": "面接・口頭試問"
+            "details": "第二次審査：面接審査（探究活動に関するプレゼンテーションを含む）"
           }
         ],
         "schedule": {
@@ -2310,17 +2015,12 @@
           {
             "stage": 1,
             "type": "documents",
-            "details": "志願理由書・活動報告書・調査書"
+            "details": "第一次審査：書類審査（探究活動の成果物を含む提出書類で総合評価）"
           },
           {
             "stage": 2,
-            "type": "essay",
-            "details": "筆記試験（小論文等）"
-          },
-          {
-            "stage": 3,
             "type": "interview",
-            "details": "面接・口頭試問"
+            "details": "第二次審査：面接審査（探究活動に関するプレゼンテーションを含む）"
           }
         ],
         "schedule": {
