@@ -18,8 +18,10 @@ import {
   Check,
   Clock,
   AlertCircle,
+  KeyRound,
 } from "lucide-react";
 import { toast } from "sonner";
+import { resetPassword } from "@/lib/firebase/auth";
 import { authFetch } from "@/lib/api/client";
 import { TeacherShiftGrid } from "@/components/admin/TeacherShiftGrid";
 import { TeacherStudentAssignment } from "@/components/admin/TeacherStudentAssignment";
@@ -57,6 +59,24 @@ export default function AdminTeacherDetailPage() {
   const [shiftData, setShiftData] = useState<TeacherShift | null>(null);
   const [shiftLoading, setShiftLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [sendingReset, setSendingReset] = useState(false);
+
+  async function handleSendResetEmail() {
+    if (!teacher?.profile.email) {
+      toast.error("メールアドレスが登録されていません");
+      return;
+    }
+    if (!confirm(`${teacher.profile.displayName} 宛にパスワードリセットメールを送信しますか？`)) return;
+    setSendingReset(true);
+    try {
+      await resetPassword(teacher.profile.email);
+      toast.success("パスワードリセットメールを送信しました");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "送信に失敗しました");
+    } finally {
+      setSendingReset(false);
+    }
+  }
 
   const loadTeacherDetail = async () => {
     try {
@@ -238,6 +258,16 @@ export default function AdminTeacherDetailPage() {
           <h1 className="text-2xl font-bold">{teacher.profile.displayName}</h1>
           <p className="text-sm text-muted-foreground">講師詳細</p>
         </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="ml-auto"
+          onClick={handleSendResetEmail}
+          disabled={sendingReset}
+        >
+          <KeyRound className="mr-1 size-3" />
+          パスワード再設定
+        </Button>
       </div>
 
       {/* Basic Info */}

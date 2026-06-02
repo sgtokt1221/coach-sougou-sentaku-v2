@@ -39,6 +39,7 @@ import {
   FileText,
   AlertCircle,
   Pencil,
+  KeyRound,
   X,
   Eye,
   ThumbsUp,
@@ -56,6 +57,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import { resetPassword } from "@/lib/firebase/auth";
 import { authFetch } from "@/lib/api/client";
 import { ScoresTrendChart } from "@/components/growth/ScoresTrendChart";
 import { DetailedScoresTrendChart } from "@/components/growth/DetailedScoresTrendChart";
@@ -468,6 +470,8 @@ function AdminStudentDetailPageInner() {
     await refreshEssayDetail(essayId);
   }
 
+  const [sendingReset, setSendingReset] = useState(false);
+
   // Profile edit state
   const [editOpen, setEditOpen] = useState(false);
   const [editName, setEditName] = useState("");
@@ -545,6 +549,23 @@ function AdminStudentDetailPageInner() {
       toast.error("通信エラー");
     } finally {
       setSavingCategory(false);
+    }
+  }
+
+  async function handleSendResetEmail() {
+    if (!detail?.profile.email) {
+      toast.error("メールアドレスが登録されていません");
+      return;
+    }
+    if (!confirm(`${detail.profile.displayName} 宛にパスワードリセットメールを送信しますか？`)) return;
+    setSendingReset(true);
+    try {
+      await resetPassword(detail.profile.email);
+      toast.success("パスワードリセットメールを送信しました");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "送信に失敗しました");
+    } finally {
+      setSendingReset(false);
     }
   }
 
@@ -688,6 +709,15 @@ function AdminStudentDetailPageInner() {
                 <Button variant="outline" size="sm" onClick={openEditDialog}>
                   <Pencil className="mr-1 size-3" />
                   編集
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSendResetEmail}
+                  disabled={sendingReset}
+                >
+                  <KeyRound className="mr-1 size-3" />
+                  パスワード再設定
                 </Button>
               </div>
             )}

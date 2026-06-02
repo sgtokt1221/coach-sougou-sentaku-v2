@@ -14,8 +14,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { ArrowLeft, Users, UserPlus, Trash2 } from "lucide-react";
+import { ArrowLeft, Users, UserPlus, Trash2, KeyRound } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
+import { resetPassword } from "@/lib/firebase/auth";
 import type { StudentListItem } from "@/lib/types/admin";
 
 interface AdminDetail {
@@ -40,6 +41,24 @@ export default function SuperadminAdminDetailPage({
   const [unassignedStudents, setUnassignedStudents] = useState<StudentListItem[]>([]);
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const [assigning, setAssigning] = useState(false);
+  const [sendingReset, setSendingReset] = useState(false);
+
+  async function handleSendResetEmail() {
+    if (!admin?.email) {
+      toast.error("メールアドレスが登録されていません");
+      return;
+    }
+    if (!confirm(`${admin.displayName} 宛にパスワードリセットメールを送信しますか？`)) return;
+    setSendingReset(true);
+    try {
+      await resetPassword(admin.email);
+      toast.success("パスワードリセットメールを送信しました");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "送信に失敗しました");
+    } finally {
+      setSendingReset(false);
+    }
+  }
 
   useEffect(() => {
     async function fetchData() {
@@ -157,6 +176,16 @@ export default function SuperadminAdminDetailPage({
           <h1 className="text-2xl font-bold">{admin.displayName}</h1>
           <p className="text-sm text-muted-foreground">{admin.email}</p>
         </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="ml-auto"
+          onClick={handleSendResetEmail}
+          disabled={sendingReset}
+        >
+          <KeyRound className="mr-1 size-3" />
+          パスワード再設定
+        </Button>
       </div>
 
       {/* Profile */}

@@ -20,6 +20,10 @@ function getFirebaseApp(): FirebaseApp | null {
 const app = getFirebaseApp();
 
 export const auth: Auth | null = app ? getAuth(app) : null;
+// Firebase が送信するメール（パスワードリセット・確認メール等）を日本語テンプレートにする
+if (auth) {
+  auth.languageCode = "ja";
+}
 export const db: Firestore | null = app ? getFirestore(app) : null;
 export const storage: FirebaseStorage | null = app ? getStorage(app) : null;
 export default app;
