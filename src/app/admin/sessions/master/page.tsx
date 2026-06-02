@@ -14,14 +14,6 @@ import { authFetch } from "@/lib/api/client";
 import SessionMasterCalendar from "@/components/admin/SessionMasterCalendar";
 import type { SessionMaster } from "@/lib/types/teacher-shift";
 
-const DAYS_OF_WEEK = ["日", "月", "火", "水", "木", "金", "土"];
-const SESSION_TYPES = [
-  { value: "coaching", label: "コーチング" },
-  { value: "mock_interview", label: "模擬面接" },
-  { value: "essay_review", label: "小論文添削" },
-  { value: "general", label: "一般指導" },
-];
-
 export default function SessionMasterPage() {
   const [currentMonth, setCurrentMonth] = useState(() => {
     const now = new Date();
@@ -32,6 +24,7 @@ export default function SessionMasterPage() {
   const [unplacedStudents, setUnplacedStudents] = useState<
     { uid: string; displayName: string; sessionsPerMonth: number; targetUniversities: string[] }[]
   >([]);
+  const [teachers, setTeachers] = useState<{ uid: string; displayName: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingMaster, setEditingMaster] = useState<SessionMaster | null>(null);
@@ -45,6 +38,7 @@ export default function SessionMasterPage() {
     teacherName: "",
     type: "coaching" as "coaching" | "mock_interview" | "essay_review" | "general",
     duration: 60,
+    format: "offline" as "online" | "offline",
     notes: "",
   });
 
@@ -52,6 +46,20 @@ export default function SessionMasterPage() {
     loadMasters();
     loadUnplaced();
   }, [currentMonth]);
+
+  useEffect(() => {
+    authFetch("/api/admin/teachers/all")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) =>
+        setTeachers(
+          (Array.isArray(data) ? data : []).map((t: { uid: string; displayName: string }) => ({
+            uid: t.uid,
+            displayName: t.displayName,
+          })),
+        ),
+      )
+      .catch(() => setTeachers([]));
+  }, []);
 
   const loadMasters = async () => {
     setLoading(true);
@@ -140,6 +148,7 @@ export default function SessionMasterPage() {
       teacherName: master.teacherName || "",
       type: master.type,
       duration: master.duration || 60,
+      format: master.format || "offline",
       notes: master.notes || "",
     });
     setIsDialogOpen(true);
@@ -157,6 +166,7 @@ export default function SessionMasterPage() {
       teacherName: "",
       type: "coaching",
       duration: 60,
+      format: "offline",
       notes: "",
     });
   };
@@ -245,6 +255,7 @@ export default function SessionMasterPage() {
           preferredTime: time,
           type: "coaching",
           duration: 60,
+          format: "offline",
         }),
       });
       if (response.ok) await reload();
@@ -304,107 +315,93 @@ export default function SessionMasterPage() {
                 {editingMaster ? "マスター編集" : "新規マスター作成"}
               </DialogTitle>
             </DialogHeader>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-4">
+              {/* 生徒（読み取り表示） */}
               <div>
-                <Label>生徒ID</Label>
-                <Input
-                  value={formData.studentId}
-                  onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
-                  placeholder="student123"
-                />
+                <Label>生徒</Label>
+                <p className="mt-1 text-sm font-medium">{formData.studentName}</p>
               </div>
-              <div>
-                <Label>生徒名</Label>
-                <Input
-                  value={formData.studentName}
-                  onChange={(e) => setFormData({ ...formData, studentName: e.target.value })}
-                  placeholder="田中太郎"
-                />
+
+              {/* 授業時間（開始時刻＋所要時間） */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>授業開始時刻</Label>
+                  <Input
+                    type="time"
+                    value={formData.preferredTime}
+                    onChange={(e) => setFormData({ ...formData, preferredTime: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label>所要時間（分）</Label>
+                  <Input
+                    type="number"
+                    min="15"
+                    max="180"
+                    step="5"
+                    value={formData.duration}
+                    onChange={(e) =>
+                      setFormData({ ...formData, duration: parseInt(e.target.value) || 60 })
+                    }
+                  />
+                </div>
               </div>
+
+              {/* 講師（プルダウン） */}
               <div>
-                <Label>月あたり回数</Label>
-                <Input
-                  type="number"
-                  min="1"
-                  max="20"
-                  value={formData.frequency}
-                  onChange={(e) => setFormData({ ...formData, frequency: parseInt(e.target.value) || 1 })}
-                />
-              </div>
-              <div>
-                <Label>希望曜日（任意）</Label>
+                <Label>講師</Label>
                 <Select
-                  value={formData.preferredDay?.toString() || ""}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, preferredDay: value ? parseInt(value) : undefined })
-                  }
+                  value={formData.teacherId || "__none__"}
+                  onValueChange={(value) => {
+                    if (!value || value === "__none__") {
+                      setFormData({ ...formData, teacherId: "", teacherName: "" });
+                    } else {
+                      const t = teachers.find((x) => x.uid === value);
+                      setFormData({
+                        ...formData,
+                        teacherId: value,
+                        teacherName: t?.displayName ?? "",
+                      });
+                    }
+                  }}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="指定しない" />
+                    <SelectValue placeholder="講師を選択" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">指定しない</SelectItem>
-                    {DAYS_OF_WEEK.map((day, index) => (
-                      <SelectItem key={index} value={index.toString()}>
-                        {day}曜日
+                    <SelectItem value="__none__">未割当</SelectItem>
+                    {teachers.map((t) => (
+                      <SelectItem key={t.uid} value={t.uid}>
+                        {t.displayName}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* 形式（オンライン/オフライン トグル） */}
               <div>
-                <Label>希望時間</Label>
-                <Input
-                  type="time"
-                  value={formData.preferredTime}
-                  onChange={(e) => setFormData({ ...formData, preferredTime: e.target.value })}
-                />
+                <Label>形式</Label>
+                <div className="mt-1 flex gap-2">
+                  <Button
+                    type="button"
+                    variant={formData.format === "offline" ? "default" : "outline"}
+                    onClick={() => setFormData({ ...formData, format: "offline" })}
+                  >
+                    オフライン
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={formData.format === "online" ? "default" : "outline"}
+                    onClick={() => setFormData({ ...formData, format: "online" })}
+                  >
+                    オンライン
+                  </Button>
+                </div>
               </div>
+
+              {/* 備考（任意） */}
               <div>
-                <Label>セッション種別</Label>
-                <Select
-                  value={formData.type}
-                  onValueChange={(value: any) => setFormData({ ...formData, type: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SESSION_TYPES.map((type) => (
-                      <SelectItem key={type.value} value={type.value}>
-                        {type.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>講師ID（任意）</Label>
-                <Input
-                  value={formData.teacherId}
-                  onChange={(e) => setFormData({ ...formData, teacherId: e.target.value })}
-                  placeholder="teacher123"
-                />
-              </div>
-              <div>
-                <Label>講師名（任意）</Label>
-                <Input
-                  value={formData.teacherName}
-                  onChange={(e) => setFormData({ ...formData, teacherName: e.target.value })}
-                  placeholder="山田先生"
-                />
-              </div>
-              <div>
-                <Label>時間（分）</Label>
-                <Input
-                  type="number"
-                  min="15"
-                  max="180"
-                  value={formData.duration}
-                  onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) || 60 })}
-                />
-              </div>
-              <div className="col-span-2">
                 <Label>備考</Label>
                 <Textarea
                   value={formData.notes}

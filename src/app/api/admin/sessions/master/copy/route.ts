@@ -153,6 +153,7 @@ function generateSessionsFromMaster(
       teacherName: master.teacherName || "",
       type: master.type,
       duration: master.duration || 60,
+      format: master.format || "offline",
       scheduledAt: targetDate.toISOString(),
       preferredTime: master.preferredTime || "14:00",
       status: "scheduled" as const,

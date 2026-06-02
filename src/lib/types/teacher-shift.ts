@@ -28,6 +28,8 @@ export interface SessionMaster {
   teacherName?: string;
   type: "coaching" | "mock_interview" | "essay_review" | "general";
   duration?: number;     // 分
+  /** 授業形式（オンライン/オフライン） */
+  format?: "online" | "offline";
   notes?: string;
   createdAt: string;
   updatedAt: string;
