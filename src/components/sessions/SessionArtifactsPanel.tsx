@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { authFetch } from "@/lib/api/client";
+import EssayDetailDialog from "@/components/sessions/EssayDetailDialog";
+import InterviewDetailDialog from "@/components/sessions/InterviewDetailDialog";
 import {
   TrendingUp,
   TrendingDown,
@@ -119,6 +121,12 @@ export default function SessionArtifactsPanel({ endpoint, studentView = false }:
   }, [endpoint]);
 
   const studentId = data?.studentId;
+  const [essayDialogId, setEssayDialogId] = useState<string | null>(null);
+  const [interviewDialogId, setInterviewDialogId] = useState<string | null>(null);
+
+  // 管理者ビューで、セッション内ダイアログで開く種別か
+  const dialogKindOf = (kind: string): "essays" | "interviews" | null =>
+    !studentView && (kind === "essays" || kind === "interviews") ? (kind as "essays" | "interviews") : null;
 
   const hrefOf = (kind: string, it: ArtifactItem): string | null => {
     const id = it.id;
@@ -142,7 +150,7 @@ export default function SessionArtifactsPanel({ endpoint, studentView = false }:
           return null;
       }
     }
-    // 管理者/講師
+    // 管理者/講師。essays/interviews はセッション内ダイアログで開くため null（下で onClick 処理）
     if (!studentId) return null;
     switch (kind) {
       case "reports":
@@ -151,10 +159,6 @@ export default function SessionArtifactsPanel({ endpoint, studentView = false }:
         return `/student/documents/${id}`;
       case "activities":
         return `/student/activities/${id}`;
-      case "essays":
-        return `/admin/students/${studentId}?tab=performance&essay=${id}`;
-      case "interviews":
-        return `/admin/students/${studentId}?tab=performance&interview=${id}`;
       case "skillChecks":
         return `/admin/students/${studentId}?tab=performance`;
       default:
@@ -176,6 +180,7 @@ export default function SessionArtifactsPanel({ endpoint, studentView = false }:
     : 0;
 
   return (
+    <>
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between gap-2">
@@ -228,10 +233,12 @@ export default function SessionArtifactsPanel({ endpoint, studentView = false }:
                       <div className="space-y-1">
                         {items.map((it) => {
                           const href = hrefOf(g.key, it);
+                          const dialogKind = dialogKindOf(g.key);
+                          const clickable = !!href || !!dialogKind;
                           const inner = (
                             <div
                               className={`flex items-center justify-between rounded-md border px-3 py-2 text-sm transition-colors ${
-                                href ? "hover:bg-accent hover:border-primary/40 cursor-pointer" : ""
+                                clickable ? "hover:bg-accent hover:border-primary/40 cursor-pointer" : ""
                               }`}
                             >
                               <div className="flex items-center gap-2 min-w-0">
@@ -254,17 +261,34 @@ export default function SessionArtifactsPanel({ endpoint, studentView = false }:
                                 {it.status && (
                                   <Badge variant="secondary" className="text-xs">{it.status}</Badge>
                                 )}
-                                {href && <ChevronRight className="size-4 text-muted-foreground" />}
+                                {clickable && <ChevronRight className="size-4 text-muted-foreground" />}
                               </div>
                             </div>
                           );
-                          return href ? (
-                            <Link key={it.id} href={href} className="block">
-                              {inner}
-                            </Link>
-                          ) : (
-                            <div key={it.id}>{inner}</div>
-                          );
+                          if (href) {
+                            return (
+                              <Link key={it.id} href={href} className="block">
+                                {inner}
+                              </Link>
+                            );
+                          }
+                          if (dialogKind) {
+                            return (
+                              <button
+                                key={it.id}
+                                type="button"
+                                className="block w-full text-left"
+                                onClick={() =>
+                                  dialogKind === "essays"
+                                    ? setEssayDialogId(it.id)
+                                    : setInterviewDialogId(it.id)
+                                }
+                              >
+                                {inner}
+                              </button>
+                            );
+                          }
+                          return <div key={it.id}>{inner}</div>;
                         })}
                       </div>
                     </div>
@@ -276,5 +300,23 @@ export default function SessionArtifactsPanel({ endpoint, studentView = false }:
         )}
       </CardContent>
     </Card>
+
+    {!studentView && studentId && (
+      <>
+        <EssayDetailDialog
+          studentId={studentId}
+          essayId={essayDialogId}
+          open={essayDialogId !== null}
+          onOpenChange={(o) => !o && setEssayDialogId(null)}
+        />
+        <InterviewDetailDialog
+          studentId={studentId}
+          interviewId={interviewDialogId}
+          open={interviewDialogId !== null}
+          onOpenChange={(o) => !o && setInterviewDialogId(null)}
+        />
+      </>
+    )}
+    </>
   );
 }
