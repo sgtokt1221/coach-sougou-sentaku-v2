@@ -14,10 +14,7 @@ import {
   Copy,
   ExternalLink,
   Check,
-  Sparkles,
   Share2,
-  Play,
-  Square,
   XCircle,
   Save,
   User,
@@ -108,7 +105,6 @@ export default function AdminSessionDetailPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
-  const [isCompleting, setIsCompleting] = useState(false);
   const [studentOpen, setStudentOpen] = useState(false);
 
   const [student, setStudent] = useState<StudentDetail | null>(null);
@@ -194,25 +190,6 @@ export default function AdminSessionDetailPage() {
       // silent
     } finally {
       setSaving(false);
-    }
-  }
-
-  async function completeSession() {
-    setIsCompleting(true);
-    try {
-      const res = await authFetch(`/api/sessions/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "completed" }),
-      });
-      if (!res.ok) throw new Error();
-      const data: Session = await res.json();
-      setSession(data);
-      setNotes(data.notes ?? "");
-    } catch {
-      // silent
-    } finally {
-      setIsCompleting(false);
     }
   }
 
@@ -398,43 +375,14 @@ export default function AdminSessionDetailPage() {
         <Separator />
         <div className="flex flex-wrap gap-2">
           {session.status === "scheduled" && (
-            <>
-              <Button
-                size="sm"
-                onClick={() => patchSession({ status: "in_progress" })}
-                disabled={saving}
-              >
-                <Play className="size-4 mr-1" />
-                開始
-              </Button>
-              <Button
-                size="sm"
-                variant="destructive"
-                onClick={() => patchSession({ status: "cancelled" })}
-                disabled={saving}
-              >
-                <XCircle className="size-4 mr-1" />
-                キャンセル
-              </Button>
-            </>
-          )}
-          {session.status === "in_progress" && (
             <Button
               size="sm"
-              onClick={completeSession}
-              disabled={saving || isCompleting}
+              variant="destructive"
+              onClick={() => patchSession({ status: "cancelled" })}
+              disabled={saving}
             >
-              {isCompleting ? (
-                <>
-                  <Sparkles className="size-4 mr-1 animate-spin" />
-                  サマリー生成中...
-                </>
-              ) : (
-                <>
-                  <Square className="size-4 mr-1" />
-                  完了
-                </>
-              )}
+              <XCircle className="size-4 mr-1" />
+              キャンセル
             </Button>
           )}
           <Button
@@ -492,30 +440,11 @@ export default function AdminSessionDetailPage() {
       </div>
 
       {session.type !== "group_review" ? (
-        /* 1 対 1: 2 カラム (左=授業フロー / 右=参照) */
+        /* 1 対 1: 2 カラム (左=参照 / 右=入力系) */
         <div className="grid items-start gap-6 lg:grid-cols-2">
-          {/* 左: 授業フロー (基本情報+操作 → 録音 → 台本 → 振り返り) */}
+          {/* 左: 参照 (基本情報+操作 → 取り組み → 生徒情報) */}
           <div className="space-y-6">
             {basicInfoCard}
-            <SessionLifecycleBar
-              sessionId={id}
-              session={session}
-              onSessionUpdate={(s) => setSession(s)}
-            />
-            <LessonPrepSection
-              sessionId={id}
-              initial={session.prepPlan}
-              onChange={(plan) => setSession({ ...session, prepPlan: plan })}
-            />
-            <LessonDebriefSection
-              sessionId={id}
-              initial={session.debrief}
-              existingWeaknessAreas={[]}
-              onChange={(d) => setSession({ ...session, debrief: d })}
-            />
-          </div>
-          {/* 右: 参照 (取り組み → 生徒情報 → メモ) */}
-          <div className="space-y-6">
             <SessionArtifactsPanel endpoint={`/api/admin/sessions/${id}/artifacts`} />
             {showStudentPanel && (
               <div className="space-y-3">
@@ -544,6 +473,25 @@ export default function AdminSessionDetailPage() {
                 )}
               </div>
             )}
+          </div>
+          {/* 右: 入力系 (録音 → 台本 → 振り返り → メモ) */}
+          <div className="space-y-6">
+            <SessionLifecycleBar
+              sessionId={id}
+              session={session}
+              onSessionUpdate={(s) => setSession(s)}
+            />
+            <LessonPrepSection
+              sessionId={id}
+              initial={session.prepPlan}
+              onChange={(plan) => setSession({ ...session, prepPlan: plan })}
+            />
+            <LessonDebriefSection
+              sessionId={id}
+              initial={session.debrief}
+              existingWeaknessAreas={[]}
+              onChange={(d) => setSession({ ...session, debrief: d })}
+            />
             {memoCard}
           </div>
         </div>
