@@ -81,18 +81,26 @@ export async function scopeByOrganization(opts: {
   }
 
   // 同じ organization のメンバーかチェック (親 admin / 子 admin 関係)
-  const studentOrgId = studentData.organizationId;
-  if (studentOrgId) {
-    try {
-      const { adminDb } = await import("@/lib/firebase/admin");
-      if (adminDb) {
+  // (1) 生徒に organizationId があれば requester の organizationId と一致で許可 (高速パス)
+  // (2) 生徒に organizationId が無くても、生徒の managedBy が requester の組織メンバー
+  //     (organizations.memberAdminUids) に含まれれば許可 (移行不要な共有)
+  try {
+    const { adminDb } = await import("@/lib/firebase/admin");
+    if (adminDb) {
+      const studentOrgId = studentData.organizationId;
+      if (studentOrgId) {
         const requesterDoc = await adminDb.doc(`users/${requesterUid}`).get();
         const requesterOrgId = requesterDoc.data()?.organizationId;
         if (requesterOrgId && requesterOrgId === studentOrgId) return null;
       }
-    } catch (err) {
-      console.warn("[scopeByOrganization] org check failed:", err);
+      if (studentData.managedBy) {
+        const { getOrgMemberAdminUids } = await import("@/lib/api/organization-scope");
+        const memberUids = await getOrgMemberAdminUids(adminDb, requesterUid);
+        if (memberUids.includes(studentData.managedBy)) return null;
+      }
     }
+  } catch (err) {
+    console.warn("[scopeByOrganization] org check failed:", err);
   }
 
   return NextResponse.json({ error: "担当外の生徒です" }, { status: 403 });

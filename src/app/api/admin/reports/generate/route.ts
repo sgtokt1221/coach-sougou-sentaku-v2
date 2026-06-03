@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireRole } from "@/lib/api/auth";
+import { requireRole, scopeByOrganization } from "@/lib/api/auth";
 import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
 import { adminDb } from "@/lib/firebase/admin";
 import { generateGrowthReport, getPeriodRange, buildSessionSummaryDraft } from "@/lib/growth/report";
@@ -134,14 +134,19 @@ export async function POST(request: NextRequest) {
 
     const studentData = studentDoc.data()!;
     step = "check_permission";
-    // 管理者(managedBy)に加え、担当講師(assignedTeacherIds)もレポート生成可
-    if (
-      role !== "superadmin" &&
-      studentData.managedBy !== uid &&
-      !getAssignedTeacherIds(studentData).includes(uid)
-    ) {
-      return NextResponse.json({ error: "権限がありません" }, { status: 403 });
-    }
+    // 管理者(managedBy / 同じ塾の組織メンバー) と担当講師(assignedTeacherIds)がレポート生成可
+    const denied = await scopeByOrganization({
+      requesterUid: uid,
+      requesterRole: role,
+      studentUid: studentId,
+      studentData: {
+        managedBy: studentData.managedBy as string | undefined,
+        organizationId: studentData.organizationId as string | undefined,
+        assignedTeacherIds: getAssignedTeacherIds(studentData),
+      },
+      allowAssignedTeacher: true,
+    });
+    if (denied) return denied;
 
     step = "compute_period";
     const { start, end } = getPeriodRange(period);

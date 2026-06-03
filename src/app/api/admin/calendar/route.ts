@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getHolidaysOf } from "japanese-holidays";
 import { requireRole } from "@/lib/api/auth";
+import { getOrgMemberAdminUids, chunk } from "@/lib/api/organization-scope";
 import { MOCK_UNIVERSITIES } from "@/lib/matching/mockData";
 import type { University } from "@/lib/types/university";
 import type {
@@ -94,7 +95,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // 1. 担当生徒取得
+    // 1. 担当生徒取得 (admin は自分の塾の組織メンバーが managedBy の生徒を共有)
     let studentDocs: FirebaseFirestore.QueryDocumentSnapshot[] = [];
     if (effectiveRole === "superadmin") {
       const snap = await adminDb
@@ -102,6 +103,18 @@ export async function GET(request: NextRequest) {
         .where("role", "==", "student")
         .get();
       studentDocs = snap.docs;
+    } else if (effectiveRole === "admin") {
+      const memberUids = await getOrgMemberAdminUids(adminDb, effectiveUid);
+      const byId = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
+      for (const part of chunk(memberUids, 30)) {
+        const snap = await adminDb
+          .collection("users")
+          .where("role", "==", "student")
+          .where("managedBy", "in", part)
+          .get();
+        snap.docs.forEach((d) => byId.set(d.id, d));
+      }
+      studentDocs = Array.from(byId.values());
     } else {
       const snap = await adminDb
         .collection("users")
@@ -140,19 +153,33 @@ export async function GET(request: NextRequest) {
 
     const events: CalendarEvent[] = [];
 
-    // 2. セッションイベント
+    // 2. セッションイベント (admin は組織メンバーが作成したセッションを共有)
     try {
-      let sessionQuery: FirebaseFirestore.Query =
-        adminDb.collection("sessions");
-      if (effectiveRole !== "superadmin") {
-        sessionQuery = sessionQuery.where(
-          "createdByAdminId",
-          "==",
-          effectiveUid
+      const sessionDocs: FirebaseFirestore.QueryDocumentSnapshot[] = [];
+      if (effectiveRole === "superadmin") {
+        sessionDocs.push(...(await adminDb.collection("sessions").get()).docs);
+      } else if (effectiveRole === "admin") {
+        const memberUids = await getOrgMemberAdminUids(adminDb, effectiveUid);
+        const byId = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
+        for (const part of chunk(memberUids, 30)) {
+          const snap = await adminDb
+            .collection("sessions")
+            .where("createdByAdminId", "in", part)
+            .get();
+          snap.docs.forEach((d) => byId.set(d.id, d));
+        }
+        sessionDocs.push(...byId.values());
+      } else {
+        sessionDocs.push(
+          ...(
+            await adminDb
+              .collection("sessions")
+              .where("createdByAdminId", "==", effectiveUid)
+              .get()
+          ).docs,
         );
       }
-      const sessionSnap = await sessionQuery.get();
-      for (const doc of sessionSnap.docs) {
+      for (const doc of sessionDocs) {
         const s = doc.data();
         if (s.status === "cancelled") continue;
         const scheduledAt = s.scheduledAt as string | undefined;

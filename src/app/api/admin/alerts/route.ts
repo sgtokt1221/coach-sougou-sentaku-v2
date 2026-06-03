@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
+import { getOrgMemberAdminUids, chunk } from "@/lib/api/organization-scope";
 import { adminDb } from "@/lib/firebase/admin";
 import type { AlertItem } from "@/lib/types/admin";
 
@@ -272,17 +273,37 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
     }
 
-    // Firestore: scan all students for alert generation
-    const studentsQuery = effectiveRole === "superadmin"
-      ? adminDb.collection("users").where("role", "==", "student")
-      : adminDb
+    // Firestore: scan students for alert generation
+    // admin は自分の塾(組織)メンバーが managedBy の生徒を共有。teacher は従来どおり自分の managedBy。
+    let studentDocs: FirebaseFirestore.QueryDocumentSnapshot[];
+    if (effectiveRole === "superadmin") {
+      studentDocs = (
+        await adminDb.collection("users").where("role", "==", "student").get()
+      ).docs;
+    } else if (effectiveRole === "admin") {
+      const memberUids = await getOrgMemberAdminUids(adminDb, effectiveUid);
+      const byId = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
+      for (const part of chunk(memberUids, 30)) {
+        const s = await adminDb
           .collection("users")
           .where("role", "==", "student")
-          .where("managedBy", "==", effectiveUid);
-    const snapshot = await studentsQuery.get();
+          .where("managedBy", "in", part)
+          .get();
+        s.docs.forEach((d) => byId.set(d.id, d));
+      }
+      studentDocs = Array.from(byId.values());
+    } else {
+      studentDocs = (
+        await adminDb
+          .collection("users")
+          .where("role", "==", "student")
+          .where("managedBy", "==", effectiveUid)
+          .get()
+      ).docs;
+    }
 
     const studentDataList: StudentAlertData[] = await Promise.all(
-      snapshot.docs.map(async (docSnap) => {
+      studentDocs.map(async (docSnap) => {
         const data = docSnap.data();
         const studentUid = docSnap.id;
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
+import { getOrgMemberAdminUids, chunk } from "@/lib/api/organization-scope";
 import { adminDb } from "@/lib/firebase/admin";
 
 interface UnplacedStudent {
@@ -36,15 +37,31 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Get managed students
-    let studentsSnap;
+    // Get managed students (admin は自分の塾の組織メンバーが managedBy の生徒を共有)
+    const studentDocs: FirebaseFirestore.QueryDocumentSnapshot[] = [];
     if (role === "superadmin") {
-      studentsSnap = await adminDb.collection("users").where("role", "==", "student").get();
+      studentDocs.push(
+        ...(await adminDb.collection("users").where("role", "==", "student").get()).docs,
+      );
+    } else if (role === "admin") {
+      const memberUids = await getOrgMemberAdminUids(adminDb, uid);
+      const byId = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
+      for (const part of chunk(memberUids, 30)) {
+        const s = await adminDb
+          .collection("users")
+          .where("role", "==", "student")
+          .where("managedBy", "in", part)
+          .get();
+        s.docs.forEach((d) => byId.set(d.id, d));
+      }
+      studentDocs.push(...byId.values());
     } else {
-      studentsSnap = await adminDb.collection("users").where("managedBy", "==", uid).get();
+      studentDocs.push(
+        ...(await adminDb.collection("users").where("managedBy", "==", uid).get()).docs,
+      );
     }
 
-    const allStudents = studentsSnap.docs
+    const allStudents = studentDocs
       .map((d) => ({
         uid: d.id,
         ...(d.data() as { displayName: string; targetUniversities?: string[]; latestScore?: number; lastSessionAt?: string; role?: string; grade?: number; gradeUpdatedAt?: string; isRonin?: boolean; school?: string }),

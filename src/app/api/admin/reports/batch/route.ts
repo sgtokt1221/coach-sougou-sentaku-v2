@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
+import { getOrgMemberAdminUids, chunk } from "@/lib/api/organization-scope";
 import { adminDb } from "@/lib/firebase/admin";
 import { queryWithRangeFilter } from "@/lib/admin/firestore-range-query";
 import { generateGrowthReport, getPeriodRange } from "@/lib/growth/report";
@@ -67,16 +68,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fetch all managed students
-    const studentsQuery =
-      role === "superadmin"
-        ? adminDb.collection("users").where("role", "==", "student")
-        : adminDb
+    // 対象生徒を取得 (admin は自分の塾の組織メンバーが managedBy の生徒を共有)
+    const studentDocs: FirebaseFirestore.QueryDocumentSnapshot[] = [];
+    if (role === "superadmin") {
+      studentDocs.push(
+        ...(await adminDb.collection("users").where("role", "==", "student").get()).docs,
+      );
+    } else if (role === "admin") {
+      const memberUids = await getOrgMemberAdminUids(adminDb, uid);
+      const byId = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
+      for (const part of chunk(memberUids, 30)) {
+        const s = await adminDb
+          .collection("users")
+          .where("role", "==", "student")
+          .where("managedBy", "in", part)
+          .get();
+        s.docs.forEach((d) => byId.set(d.id, d));
+      }
+      studentDocs.push(...byId.values());
+    } else {
+      studentDocs.push(
+        ...(
+          await adminDb
             .collection("users")
             .where("role", "==", "student")
-            .where("managedBy", "==", uid);
-
-    const studentsSnap = await studentsQuery.get();
+            .where("managedBy", "==", uid)
+            .get()
+        ).docs,
+      );
+    }
 
     const { start, end } = getPeriodRange(period);
     const prevStart = new Date(start);
@@ -87,7 +107,7 @@ export async function POST(request: NextRequest) {
     }
 
     const summaries: GrowthReportSummary[] = await Promise.all(
-      studentsSnap.docs.map(async (studentDoc) => {
+      studentDocs.map(async (studentDoc) => {
         const studentId = studentDoc.id;
         const studentData = studentDoc.data();
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
 import { resolveTargetUniversities } from "@/lib/universities/resolve";
+import { getOrgMemberAdminUids, chunk } from "@/lib/api/organization-scope";
 import type { StudentListItem } from "@/lib/types/admin";
 import {
   computeEssayAggregate,
@@ -62,6 +63,10 @@ export async function POST(request: NextRequest) {
       displayName,
     });
 
+    // 作成者(admin)の所属塾を生徒にも引き継ぐ (組織共有の高速パス用)
+    const callerOrgId = (await adminDb.doc(`users/${callerUid}`).get()).data()
+      ?.organizationId as string | undefined;
+
     await adminDb.doc(`users/${userRecord.uid}`).set({
       email,
       displayName,
@@ -73,6 +78,7 @@ export async function POST(request: NextRequest) {
       gpa: gpa ?? null,
       englishCerts: englishCerts ?? [],
       managedBy: callerUid,
+      ...(callerOrgId ? { organizationId: callerOrgId } : {}),
       targetUniversities: targetUniversities ?? [],
       onboardingCompleted: false,
       createdAt: new Date(),
@@ -121,17 +127,38 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
     }
 
-    let studentsRef = adminDb.collection("users").where("role", "==", "student");
+    // 生徒ドキュメント集合を取得 (admin は同じ塾のメンバーが managedBy の生徒を共有)
+    const studentDocsById = new Map<
+      string,
+      FirebaseFirestore.QueryDocumentSnapshot
+    >();
     if (effectiveRole === "teacher") {
       // 講師の担当生徒は assignedTeacherIds(配列) で統一 (managedBy は管理者用)
-      studentsRef = studentsRef.where("assignedTeacherIds", "array-contains", effectiveUid);
-    } else if (effectiveRole !== "superadmin") {
-      studentsRef = studentsRef.where("managedBy", "==", effectiveUid);
+      const snap = await adminDb
+        .collection("users")
+        .where("role", "==", "student")
+        .where("assignedTeacherIds", "array-contains", effectiveUid)
+        .get();
+      snap.docs.forEach((d) => studentDocsById.set(d.id, d));
+    } else if (effectiveRole === "superadmin") {
+      const snap = await adminDb.collection("users").where("role", "==", "student").get();
+      snap.docs.forEach((d) => studentDocsById.set(d.id, d));
+    } else {
+      // admin: 自分の塾(組織)メンバーが managedBy になっている生徒を共有
+      const memberUids = await getOrgMemberAdminUids(adminDb, effectiveUid);
+      for (const part of chunk(memberUids, 30)) {
+        const snap = await adminDb
+          .collection("users")
+          .where("role", "==", "student")
+          .where("managedBy", "in", part)
+          .get();
+        snap.docs.forEach((d) => studentDocsById.set(d.id, d));
+      }
     }
-    const snapshot = await studentsRef.get();
+    const studentDocs = Array.from(studentDocsById.values());
 
     const students: StudentListItem[] = await Promise.all(
-      snapshot.docs.map(async (docSnap) => {
+      studentDocs.map(async (docSnap) => {
         const data = docSnap.data();
         const uid = docSnap.id;
 

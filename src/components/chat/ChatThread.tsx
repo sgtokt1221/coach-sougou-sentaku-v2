@@ -304,7 +304,11 @@ export function ChatThread({
                     </div>
                   )}
                   <span className="px-1 text-[10px] text-muted-foreground">
-                    {!mine && m.createdByName ? `${m.createdByName}・` : ""}
+                    {/* coach(管理者/講師)発のメッセージは自分の送信でも送信者名を表示し、
+                        誰が送ったか分かるようにする (複数管理者で会話を共有するため) */}
+                    {(!mine || m.senderRole === "coach") && m.createdByName
+                      ? `${m.createdByName}・`
+                      : ""}
                     {formatTime(m.createdAt)}
                     {mine && m.read ? "・既読" : ""}
                   </span>

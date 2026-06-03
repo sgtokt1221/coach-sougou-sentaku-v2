@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
+import { getOrgMemberAdminUids } from "@/lib/api/organization-scope";
 import type { Session, SessionType } from "@/lib/types/session";
 
 const TYPE_LABEL: Record<SessionType, string> = {
@@ -97,7 +98,11 @@ export async function GET(request: NextRequest) {
   if (effectiveRole === "teacher") {
     sessions = sessions.filter((s) => s.teacherId === effectiveUid);
   } else if (effectiveRole === "admin") {
-    sessions = sessions.filter((s) => s.createdByAdminId === effectiveUid);
+    // admin は自分の塾(組織)メンバーが作成したセッションを共有
+    const memberUids = new Set(await getOrgMemberAdminUids(adminDb, effectiveUid));
+    sessions = sessions.filter(
+      (s) => s.createdByAdminId && memberUids.has(s.createdByAdminId)
+    );
   }
   // superadmin（viewAsなし）: 全件
 

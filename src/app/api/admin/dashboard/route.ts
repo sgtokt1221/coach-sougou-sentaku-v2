@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
+import { getOrgScopedStudentIds } from "@/lib/api/organization-scope";
 import type { ExamResultStats } from "@/lib/types/exam-result";
 
 interface DashboardResponse {
@@ -51,11 +52,8 @@ export async function GET(request: NextRequest) {
         .get();
       studentIds = studentsSnap.docs.map((d) => d.id);
     } else {
-      const studentsSnap = await adminDb
-        .collection("users")
-        .where("managedBy", "==", uid)
-        .get();
-      studentIds = studentsSnap.docs.map((d) => d.id);
+      // admin: 自分の塾(組織)メンバーが managedBy の生徒を共有
+      studentIds = await getOrgScopedStudentIds(adminDb, uid);
     }
 
     // 全担当生徒のexamResultsを集計

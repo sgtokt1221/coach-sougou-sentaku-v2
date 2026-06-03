@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
+import { getOrgMemberAdminUids, chunk } from "@/lib/api/organization-scope";
 import type { ConversationListItem } from "@/lib/types/feedback";
 
 /**
@@ -29,14 +30,34 @@ export async function GET(request: NextRequest) {
     }
 
     // 担当する生徒・講師（管理者から見た連絡相手）。
-    // 複合インデックス回避のため単一フィルタで取得し role をコード側で絞る。
-    const usersRef =
-      effectiveRole === "superadmin"
-        ? adminDb.collection("users").where("role", "in", ["student", "teacher"])
-        : adminDb.collection("users").where("managedBy", "==", effectiveUid);
-    const snapshot = await usersRef.get();
+    // admin は自分の塾(組織)メンバーが managedBy の相手を共有。teacher は従来どおり自分の managedBy。
+    const rawDocs: FirebaseFirestore.QueryDocumentSnapshot[] = [];
+    if (effectiveRole === "superadmin") {
+      const s = await adminDb
+        .collection("users")
+        .where("role", "in", ["student", "teacher"])
+        .get();
+      rawDocs.push(...s.docs);
+    } else if (effectiveRole === "admin") {
+      const memberUids = await getOrgMemberAdminUids(adminDb, effectiveUid);
+      const byId = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
+      for (const part of chunk(memberUids, 30)) {
+        const s = await adminDb
+          .collection("users")
+          .where("managedBy", "in", part)
+          .get();
+        s.docs.forEach((d) => byId.set(d.id, d));
+      }
+      rawDocs.push(...byId.values());
+    } else {
+      const s = await adminDb
+        .collection("users")
+        .where("managedBy", "==", effectiveUid)
+        .get();
+      rawDocs.push(...s.docs);
+    }
 
-    const docs = snapshot.docs.filter((d) => {
+    const docs = rawDocs.filter((d) => {
       const r = d.data().role;
       return r === "student" || r === "teacher";
     });
