@@ -295,8 +295,195 @@ export default function AdminSessionDetailPage() {
   const showStudentPanel =
     session.status === "scheduled" || session.status === "in_progress";
 
+  // 基本情報 + 操作 (1 対 1 は左カラム先頭、グループは単一カラム先頭で共用)
+  const basicInfoCard = (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base">基本情報</CardTitle>
+          <Badge variant={STATUS_VARIANT[session.status]}>
+            {SESSION_STATUS_LABELS[session.status]}
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="grid gap-3 sm:grid-cols-2 text-sm">
+          {session.type !== "group_review" && (
+            <div>
+              <span className="text-muted-foreground">生徒名:</span>{" "}
+              <Link
+                href={`/admin/students/${session.studentId}`}
+                className="font-medium text-primary hover:underline underline-offset-4"
+              >
+                {session.studentName}
+              </Link>
+            </div>
+          )}
+          <div>
+            <span className="text-muted-foreground">講師名:</span>{" "}
+            <span className="font-medium">{session.teacherName}</span>
+          </div>
+          <div>
+            <span className="text-muted-foreground">タイプ:</span>{" "}
+            <Badge variant="outline" className="text-xs ml-1">
+              {SESSION_TYPE_LABELS[session.type]}
+            </Badge>
+          </div>
+          <div>
+            <span className="text-muted-foreground">日時:</span>{" "}
+            <span className="font-medium">
+              {new Date(session.scheduledAt).toLocaleString("ja-JP")}
+            </span>
+          </div>
+          {session.duration && (
+            <div>
+              <span className="text-muted-foreground">時間:</span>{" "}
+              <span className="font-medium">{session.duration}分</span>
+            </div>
+          )}
+
+          {/* Group review specific fields */}
+          {session.type === "group_review" && (
+            <>
+              {(session as GroupSession).theme && (
+                <div>
+                  <span className="text-muted-foreground">テーマ:</span>{" "}
+                  <span className="font-medium">{(session as GroupSession).theme}</span>
+                </div>
+              )}
+              {(session as GroupSession).targetWeakness && (
+                <div>
+                  <span className="text-muted-foreground">対象の弱点:</span>{" "}
+                  <span className="font-medium">{(session as GroupSession).targetWeakness}</span>
+                </div>
+              )}
+              <div className="sm:col-span-2">
+                <span className="text-muted-foreground">提出期限:</span>{" "}
+                <span className="font-medium">
+                  {new Date((session as GroupSession).submissionDeadline).toLocaleString("ja-JP")}
+                </span>
+              </div>
+            </>
+          )}
+        </div>
+
+        {session.meetLink && (
+          <>
+            <Separator />
+            <div className="flex items-center gap-2">
+              <Video className="size-4 text-emerald-600" />
+              <span className="text-sm truncate flex-1">
+                {session.meetLink}
+              </span>
+              <Button variant="ghost" size="sm" onClick={copyMeetLink}>
+                {copied ? (
+                  <Check className="size-4 text-emerald-600" />
+                ) : (
+                  <Copy className="size-4" />
+                )}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open(session.meetLink, "_blank", "noopener,noreferrer")}
+              >
+                <ExternalLink className="size-4 mr-1" />
+                Meetに参加
+              </Button>
+            </div>
+          </>
+        )}
+
+        {/* 操作 (旧「ステータス変更」を統合) */}
+        <Separator />
+        <div className="flex flex-wrap gap-2">
+          {session.status === "scheduled" && (
+            <>
+              <Button
+                size="sm"
+                onClick={() => patchSession({ status: "in_progress" })}
+                disabled={saving}
+              >
+                <Play className="size-4 mr-1" />
+                開始
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={() => patchSession({ status: "cancelled" })}
+                disabled={saving}
+              >
+                <XCircle className="size-4 mr-1" />
+                キャンセル
+              </Button>
+            </>
+          )}
+          {session.status === "in_progress" && (
+            <Button
+              size="sm"
+              onClick={completeSession}
+              disabled={saving || isCompleting}
+            >
+              {isCompleting ? (
+                <>
+                  <Sparkles className="size-4 mr-1 animate-spin" />
+                  サマリー生成中...
+                </>
+              ) : (
+                <>
+                  <Square className="size-4 mr-1" />
+                  完了
+                </>
+              )}
+            </Button>
+          )}
+          <Button
+            size="sm"
+            variant={session.sharedWithStudent ? "secondary" : "outline"}
+            onClick={() =>
+              patchSession({ sharedWithStudent: !session.sharedWithStudent })
+            }
+            disabled={saving}
+          >
+            <Share2 className="size-4 mr-1" />
+            {session.sharedWithStudent ? "共有中" : "生徒に共有"}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  // メモ (1 対 1 は右カラム末尾、グループは単一カラム末尾で共用)
+  const memoCard = (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">メモ</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <textarea
+          className="flex min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          placeholder="メモを入力..."
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+        />
+        <AnimatedButton
+          size="sm"
+          status={saving ? "loading" : saved ? "success" : "idle"}
+          idleText="保存"
+          idleIcon={<Save className="size-4" />}
+          onStatusReset={() => setSaved(false)}
+          onClick={() => {
+            setSaved(false);
+            patchSession({ notes }).then(() => setSaved(true));
+          }}
+          disabled={saving || notes === (session.notes ?? "")}
+        />
+      </CardContent>
+    </Card>
+  );
+
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+    <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="sm" onClick={() => router.back()}>
           <ArrowLeft className="size-4" />
@@ -304,187 +491,67 @@ export default function AdminSessionDetailPage() {
         <h1 className="text-xl font-bold">セッション詳細</h1>
       </div>
 
-      {/* 基本情報 + 操作 */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base">基本情報</CardTitle>
-            <Badge variant={STATUS_VARIANT[session.status]}>
-              {SESSION_STATUS_LABELS[session.status]}
-            </Badge>
+      {session.type !== "group_review" ? (
+        /* 1 対 1: 2 カラム (左=授業フロー / 右=参照) */
+        <div className="grid items-start gap-6 lg:grid-cols-2">
+          {/* 左: 授業フロー (基本情報+操作 → 録音 → 台本 → 振り返り) */}
+          <div className="space-y-6">
+            {basicInfoCard}
+            <SessionLifecycleBar
+              sessionId={id}
+              session={session}
+              onSessionUpdate={(s) => setSession(s)}
+            />
+            <LessonPrepSection
+              sessionId={id}
+              initial={session.prepPlan}
+              onChange={(plan) => setSession({ ...session, prepPlan: plan })}
+            />
+            <LessonDebriefSection
+              sessionId={id}
+              initial={session.debrief}
+              existingWeaknessAreas={[]}
+              onChange={(d) => setSession({ ...session, debrief: d })}
+            />
           </div>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="grid gap-3 sm:grid-cols-2 text-sm">
-            {session.type !== "group_review" && (
-              <div>
-                <span className="text-muted-foreground">生徒名:</span>{" "}
-                <Link
-                  href={`/admin/students/${session.studentId}`}
-                  className="font-medium text-primary hover:underline underline-offset-4"
-                >
-                  {session.studentName}
-                </Link>
-              </div>
-            )}
-            <div>
-              <span className="text-muted-foreground">講師名:</span>{" "}
-              <span className="font-medium">{session.teacherName}</span>
-            </div>
-            <div>
-              <span className="text-muted-foreground">タイプ:</span>{" "}
-              <Badge variant="outline" className="text-xs ml-1">
-                {SESSION_TYPE_LABELS[session.type]}
-              </Badge>
-            </div>
-            <div>
-              <span className="text-muted-foreground">日時:</span>{" "}
-              <span className="font-medium">
-                {new Date(session.scheduledAt).toLocaleString("ja-JP")}
-              </span>
-            </div>
-            {session.duration && (
-              <div>
-                <span className="text-muted-foreground">時間:</span>{" "}
-                <span className="font-medium">{session.duration}分</span>
-              </div>
-            )}
-
-            {/* Group review specific fields */}
-            {session.type === "group_review" && (
-              <>
-                {(session as GroupSession).theme && (
-                  <div>
-                    <span className="text-muted-foreground">テーマ:</span>{" "}
-                    <span className="font-medium">{(session as GroupSession).theme}</span>
-                  </div>
-                )}
-                {(session as GroupSession).targetWeakness && (
-                  <div>
-                    <span className="text-muted-foreground">対象の弱点:</span>{" "}
-                    <span className="font-medium">{(session as GroupSession).targetWeakness}</span>
-                  </div>
-                )}
-                <div className="sm:col-span-2">
-                  <span className="text-muted-foreground">提出期限:</span>{" "}
-                  <span className="font-medium">
-                    {new Date((session as GroupSession).submissionDeadline).toLocaleString("ja-JP")}
-                  </span>
-                </div>
-              </>
-            )}
-          </div>
-
-          {session.meetLink && (
-            <>
-              <Separator />
-              <div className="flex items-center gap-2">
-                <Video className="size-4 text-emerald-600" />
-                <span className="text-sm truncate flex-1">
-                  {session.meetLink}
-                </span>
-                <Button variant="ghost" size="sm" onClick={copyMeetLink}>
-                  {copied ? (
-                    <Check className="size-4 text-emerald-600" />
-                  ) : (
-                    <Copy className="size-4" />
-                  )}
-                </Button>
+          {/* 右: 参照 (取り組み → 生徒情報 → メモ) */}
+          <div className="space-y-6">
+            <SessionArtifactsPanel endpoint={`/api/admin/sessions/${id}/artifacts`} />
+            {showStudentPanel && (
+              <div className="space-y-3">
                 <Button
                   variant="outline"
-                  size="sm"
-                  onClick={() => window.open(session.meetLink, "_blank", "noopener,noreferrer")}
+                  className="w-full justify-between"
+                  onClick={() => setStudentOpen((o) => !o)}
                 >
-                  <ExternalLink className="size-4 mr-1" />
-                  Meetに参加
+                  <span className="flex items-center gap-2">
+                    <User className="size-4" />
+                    生徒情報
+                  </span>
+                  <ChevronDown
+                    className={`size-4 transition-transform ${
+                      studentOpen ? "rotate-180" : ""
+                    }`}
+                  />
                 </Button>
-              </div>
-            </>
-          )}
-
-          {/* 操作 (旧「ステータス変更」を統合) */}
-          <Separator />
-          <div className="flex flex-wrap gap-2">
-            {session.status === "scheduled" && (
-              <>
-                <Button
-                  size="sm"
-                  onClick={() => patchSession({ status: "in_progress" })}
-                  disabled={saving}
-                >
-                  <Play className="size-4 mr-1" />
-                  開始
-                </Button>
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={() => patchSession({ status: "cancelled" })}
-                  disabled={saving}
-                >
-                  <XCircle className="size-4 mr-1" />
-                  キャンセル
-                </Button>
-              </>
-            )}
-            {session.status === "in_progress" && (
-              <Button
-                size="sm"
-                onClick={completeSession}
-                disabled={saving || isCompleting}
-              >
-                {isCompleting ? (
-                  <>
-                    <Sparkles className="size-4 mr-1 animate-spin" />
-                    サマリー生成中...
-                  </>
-                ) : (
-                  <>
-                    <Square className="size-4 mr-1" />
-                    完了
-                  </>
+                {studentOpen && (
+                  <StudentInfoPanel
+                    studentId={session.studentId}
+                    student={student}
+                    loading={studentLoading}
+                    error={studentError}
+                  />
                 )}
-              </Button>
+              </div>
             )}
-            <Button
-              size="sm"
-              variant={session.sharedWithStudent ? "secondary" : "outline"}
-              onClick={() =>
-                patchSession({ sharedWithStudent: !session.sharedWithStudent })
-              }
-              disabled={saving}
-            >
-              <Share2 className="size-4 mr-1" />
-              {session.sharedWithStudent ? "共有中" : "生徒に共有"}
-            </Button>
+            {memoCard}
           </div>
-        </CardContent>
-      </Card>
-
-      {/* 1 対 1: 授業の流れ順 (ライフサイクル → 台本 → 振り返り → 取り組み) */}
-      {session.type !== "group_review" && (
+        </div>
+      ) : (
+        /* グループ添削: 1 カラム */
         <>
-          <SessionLifecycleBar
-            sessionId={id}
-            session={session}
-            onSessionUpdate={(s) => setSession(s)}
-          />
-          <LessonPrepSection
-            sessionId={id}
-            initial={session.prepPlan}
-            onChange={(plan) => setSession({ ...session, prepPlan: plan })}
-          />
-          <LessonDebriefSection
-            sessionId={id}
-            initial={session.debrief}
-            existingWeaknessAreas={[]}
-            onChange={(d) => setSession({ ...session, debrief: d })}
-          />
-          <SessionArtifactsPanel endpoint={`/api/admin/sessions/${id}/artifacts`} />
-        </>
-      )}
-
-      {/* Group Review Submissions */}
-      {session.type === "group_review" && (
+          {basicInfoCard}
+          {/* Group Review Submissions */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base">提出された小論文</CardTitle>
@@ -589,62 +656,8 @@ export default function AdminSessionDetailPage() {
             )}
           </CardContent>
         </Card>
-      )}
-
-      {/* メモ (1 対 1・グループ共通。流れの最後に配置) */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">メモ</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <textarea
-            className="flex min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            placeholder="メモを入力..."
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-          />
-          <AnimatedButton
-            size="sm"
-            status={saving ? "loading" : saved ? "success" : "idle"}
-            idleText="保存"
-            idleIcon={<Save className="size-4" />}
-            onStatusReset={() => setSaved(false)}
-            onClick={() => {
-              setSaved(false);
-              patchSession({ notes }).then(() => setSaved(true));
-            }}
-            disabled={saving || notes === (session.notes ?? "")}
-          />
-        </CardContent>
-      </Card>
-
-      {/* 生徒情報 (折りたたみ。既定は閉じる) */}
-      {showStudentPanel && session.type !== "group_review" && (
-        <div className="space-y-3">
-          <Button
-            variant="outline"
-            className="w-full justify-between"
-            onClick={() => setStudentOpen((o) => !o)}
-          >
-            <span className="flex items-center gap-2">
-              <User className="size-4" />
-              生徒情報
-            </span>
-            <ChevronDown
-              className={`size-4 transition-transform ${
-                studentOpen ? "rotate-180" : ""
-              }`}
-            />
-          </Button>
-          {studentOpen && (
-            <StudentInfoPanel
-              studentId={session.studentId}
-              student={student}
-              loading={studentLoading}
-              error={studentError}
-            />
-          )}
-        </div>
+          {memoCard}
+        </>
       )}
     </div>
   );

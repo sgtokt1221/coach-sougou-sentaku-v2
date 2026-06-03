@@ -8,6 +8,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { authFetch } from "@/lib/api/client";
 import EssayDetailDialog from "@/components/sessions/EssayDetailDialog";
 import InterviewDetailDialog from "@/components/sessions/InterviewDetailDialog";
+import ReportDetailDialog from "@/components/sessions/ReportDetailDialog";
+import DocumentDetailDialog from "@/components/sessions/DocumentDetailDialog";
+import ActivityDetailDialog from "@/components/sessions/ActivityDetailDialog";
 import { SkillCheckDetailDialog } from "@/components/admin/SkillCheckDetailDialog";
 import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
 import type { SkillRank } from "@/lib/types/skill-check";
@@ -128,6 +131,9 @@ export default function SessionArtifactsPanel({ endpoint, studentView = false }:
   const studentId = data?.studentId;
   const [essayDialogId, setEssayDialogId] = useState<string | null>(null);
   const [interviewDialogId, setInterviewDialogId] = useState<string | null>(null);
+  const [reportDialogId, setReportDialogId] = useState<string | null>(null);
+  const [documentDialogId, setDocumentDialogId] = useState<string | null>(null);
+  const [activityDialogId, setActivityDialogId] = useState<string | null>(null);
   // スキルチェック詳細 (管理者ビュー)。result を取得してダイアログ表示
   const [skillDialog, setSkillDialog] = useState<
     | { kind: "essay"; result: SkillCheckResult }
@@ -183,19 +189,9 @@ export default function SessionArtifactsPanel({ endpoint, studentView = false }:
           return null;
       }
     }
-    // 管理者/講師。essays/interviews はセッション内ダイアログで開くため null（下で onClick 処理）
-    if (!studentId) return null;
-    switch (kind) {
-      case "reports":
-        return `/admin/reports/${studentId}/${id}`;
-      case "documents":
-        return `/student/documents/${id}`;
-      case "activities":
-        return `/student/activities/${id}`;
-      // skillChecks はセッション内ダイアログで開くため null（下で onClick 処理）
-      default:
-        return null;
-    }
+    // 管理者/講師。全グループをセッション内ダイアログで開くため null を返す（下で onClick 処理）。
+    // 録音中にページ遷移するとコンポーネントがアンマウントされ録音が破棄されるため、遷移させない。
+    return null;
   };
 
   const groups: { key: keyof ArtifactsResponse["artifacts"]; title: string }[] = [
@@ -267,7 +263,14 @@ export default function SessionArtifactsPanel({ endpoint, studentView = false }:
                           const href = hrefOf(g.key, it);
                           const dialogKind = dialogKindOf(g.key);
                           const isAdminSkill = !studentView && g.key === "skillChecks" && !!studentId;
-                          const clickable = !!href || !!dialogKind || isAdminSkill;
+                          // 管理者ビューで reports/documents/activities をセッション内ダイアログで開く
+                          const adminDialogKind =
+                            !studentView &&
+                            !!studentId &&
+                            (g.key === "reports" || g.key === "documents" || g.key === "activities")
+                              ? g.key
+                              : null;
+                          const clickable = !!href || !!dialogKind || isAdminSkill || !!adminDialogKind;
                           const inner = (
                             <div
                               className={`flex items-center justify-between rounded-md border px-3 py-2 text-sm transition-colors ${
@@ -340,6 +343,22 @@ export default function SessionArtifactsPanel({ endpoint, studentView = false }:
                               </button>
                             );
                           }
+                          if (adminDialogKind) {
+                            return (
+                              <button
+                                key={it.id}
+                                type="button"
+                                className="block w-full text-left"
+                                onClick={() => {
+                                  if (adminDialogKind === "reports") setReportDialogId(it.id);
+                                  else if (adminDialogKind === "documents") setDocumentDialogId(it.id);
+                                  else setActivityDialogId(it.id);
+                                }}
+                              >
+                                {inner}
+                              </button>
+                            );
+                          }
                           return <div key={it.id}>{inner}</div>;
                         })}
                       </div>
@@ -372,6 +391,24 @@ export default function SessionArtifactsPanel({ endpoint, studentView = false }:
           onOpenChange={(o) => !o && setSkillDialog(null)}
           kind={skillDialog?.kind ?? "essay"}
           result={skillDialog?.result ?? null}
+        />
+        <ReportDetailDialog
+          studentId={studentId}
+          reportId={reportDialogId}
+          open={reportDialogId !== null}
+          onOpenChange={(o) => !o && setReportDialogId(null)}
+        />
+        <DocumentDetailDialog
+          studentId={studentId}
+          documentId={documentDialogId}
+          open={documentDialogId !== null}
+          onOpenChange={(o) => !o && setDocumentDialogId(null)}
+        />
+        <ActivityDetailDialog
+          studentId={studentId}
+          activityId={activityDialogId}
+          open={activityDialogId !== null}
+          onOpenChange={(o) => !o && setActivityDialogId(null)}
         />
       </>
     )}
