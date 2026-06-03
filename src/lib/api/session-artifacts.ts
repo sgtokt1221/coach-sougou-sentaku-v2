@@ -1,6 +1,8 @@
 import type { Session } from "@/lib/types/session";
 import { getPreviousSession } from "@/lib/api/session-auth";
 import { toDateSafe, toIsoString } from "@/lib/firebase/timestamp";
+import { calculateRank } from "@/lib/skill-check/rank";
+import { calculateInterviewRank } from "@/lib/interview-skill-check/rank";
 
 /**
  * セッションの「前回〜今回」の期間に生徒が作成した成果物を集約する共通ロジック。
@@ -104,12 +106,16 @@ export async function getSessionPeriodArtifacts(
     const s = e.scores as { total?: number } | undefined;
     return typeof s?.total === "number" ? s.total : null;
   };
-  const essays: ArtifactItem[] = essayWindow.map((e) => ({
-    id: e.id as string,
-    at: toIsoString(e.submittedAt),
-    label: (e.theme as string) || (e.title as string) || "小論文",
-    score: essayTotal(e),
-  }));
+  const essays: ArtifactItem[] = essayWindow.map((e) => {
+    const total = essayTotal(e);
+    return {
+      id: e.id as string,
+      at: toIsoString(e.submittedAt),
+      label: (e.theme as string) || (e.title as string) || "小論文",
+      score: total,
+      rank: total !== null ? calculateRank(total) : null,
+    };
+  });
 
   // --- interviews ---
   const ivDocs = (interviewsSnap?.docs ?? [])
@@ -128,12 +134,16 @@ export async function getSessionPeriodArtifacts(
     const s = i.scores as { total?: number } | undefined;
     return typeof s?.total === "number" ? s.total : null;
   };
-  const interviews: ArtifactItem[] = ivWindow.map((i) => ({
-    id: i.id as string,
-    at: toIsoString(i.startedAt),
-    label: MODE_LABEL[i.mode as string] || "模擬面接",
-    score: ivTotal(i),
-  }));
+  const interviews: ArtifactItem[] = ivWindow.map((i) => {
+    const total = ivTotal(i);
+    return {
+      id: i.id as string,
+      at: toIsoString(i.startedAt),
+      label: MODE_LABEL[i.mode as string] || "模擬面接",
+      score: total,
+      rank: total !== null ? calculateInterviewRank(total) : null,
+    };
+  });
 
   // --- documents ---
   const documents: ArtifactItem[] = (docsSnap?.docs ?? [])

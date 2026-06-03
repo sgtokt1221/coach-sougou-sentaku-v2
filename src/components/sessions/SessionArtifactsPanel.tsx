@@ -8,6 +8,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { authFetch } from "@/lib/api/client";
 import EssayDetailDialog from "@/components/sessions/EssayDetailDialog";
 import InterviewDetailDialog from "@/components/sessions/InterviewDetailDialog";
+import { SkillCheckDetailDialog } from "@/components/admin/SkillCheckDetailDialog";
+import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
+import type { SkillRank } from "@/lib/types/skill-check";
+import type { SkillCheckResult } from "@/lib/types/skill-check";
+import type { InterviewSkillCheckResult } from "@/lib/types/interview-skill-check";
 import {
   TrendingUp,
   TrendingDown,
@@ -123,6 +128,34 @@ export default function SessionArtifactsPanel({ endpoint, studentView = false }:
   const studentId = data?.studentId;
   const [essayDialogId, setEssayDialogId] = useState<string | null>(null);
   const [interviewDialogId, setInterviewDialogId] = useState<string | null>(null);
+  // スキルチェック詳細 (管理者ビュー)。result を取得してダイアログ表示
+  const [skillDialog, setSkillDialog] = useState<
+    | { kind: "essay"; result: SkillCheckResult }
+    | { kind: "interview"; result: InterviewSkillCheckResult }
+    | null
+  >(null);
+  const [skillLoadingId, setSkillLoadingId] = useState<string | null>(null);
+
+  async function openSkillDetail(it: ArtifactItem) {
+    if (!studentId) return;
+    const kind = it.skillKind === "interview" ? "interview" : "essay";
+    const path = kind === "interview" ? "interview-skill-check" : "skill-check";
+    setSkillLoadingId(it.id);
+    try {
+      const res = await authFetch(`/api/admin/students/${studentId}/${path}/${it.id}`);
+      if (!res.ok) return;
+      const result = await res.json();
+      setSkillDialog(
+        kind === "interview"
+          ? { kind: "interview", result }
+          : { kind: "essay", result },
+      );
+    } catch {
+      // ignore
+    } finally {
+      setSkillLoadingId(null);
+    }
+  }
 
   // 管理者ビューで、セッション内ダイアログで開く種別か
   const dialogKindOf = (kind: string): "essays" | "interviews" | null =>
@@ -159,8 +192,7 @@ export default function SessionArtifactsPanel({ endpoint, studentView = false }:
         return `/student/documents/${id}`;
       case "activities":
         return `/student/activities/${id}`;
-      case "skillChecks":
-        return `/admin/students/${studentId}?tab=performance`;
+      // skillChecks はセッション内ダイアログで開くため null（下で onClick 処理）
       default:
         return null;
     }
@@ -234,7 +266,8 @@ export default function SessionArtifactsPanel({ endpoint, studentView = false }:
                         {items.map((it) => {
                           const href = hrefOf(g.key, it);
                           const dialogKind = dialogKindOf(g.key);
-                          const clickable = !!href || !!dialogKind;
+                          const isAdminSkill = !studentView && g.key === "skillChecks" && !!studentId;
+                          const clickable = !!href || !!dialogKind || isAdminSkill;
                           const inner = (
                             <div
                               className={`flex items-center justify-between rounded-md border px-3 py-2 text-sm transition-colors ${
@@ -254,7 +287,13 @@ export default function SessionArtifactsPanel({ endpoint, studentView = false }:
                                 )}
                               </div>
                               <div className="flex items-center gap-1.5 flex-shrink-0">
-                                {it.rank && <Badge variant="secondary" className="text-xs">{it.rank}</Badge>}
+                                {it.rank && (
+                                  <SkillRankBadge
+                                    rank={it.rank as SkillRank}
+                                    size="sm"
+                                    animate={false}
+                                  />
+                                )}
                                 {typeof it.score === "number" && (
                                   <Badge variant="outline" className="text-xs">{it.score}点</Badge>
                                 )}
@@ -288,6 +327,19 @@ export default function SessionArtifactsPanel({ endpoint, studentView = false }:
                               </button>
                             );
                           }
+                          if (isAdminSkill) {
+                            return (
+                              <button
+                                key={it.id}
+                                type="button"
+                                className="block w-full text-left"
+                                disabled={skillLoadingId === it.id}
+                                onClick={() => openSkillDetail(it)}
+                              >
+                                {inner}
+                              </button>
+                            );
+                          }
                           return <div key={it.id}>{inner}</div>;
                         })}
                       </div>
@@ -314,6 +366,12 @@ export default function SessionArtifactsPanel({ endpoint, studentView = false }:
           interviewId={interviewDialogId}
           open={interviewDialogId !== null}
           onOpenChange={(o) => !o && setInterviewDialogId(null)}
+        />
+        <SkillCheckDetailDialog
+          open={skillDialog !== null}
+          onOpenChange={(o) => !o && setSkillDialog(null)}
+          kind={skillDialog?.kind ?? "essay"}
+          result={skillDialog?.result ?? null}
         />
       </>
     )}
