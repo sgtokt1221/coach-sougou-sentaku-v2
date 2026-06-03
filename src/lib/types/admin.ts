@@ -205,6 +205,16 @@ export interface AdminListItem {
   isOwner?: boolean;
 }
 
+/** 塾(組織)内の管理者メンバー (メンバー管理画面用) */
+export interface MemberListItem {
+  uid: string;
+  displayName: string;
+  email: string;
+  role: "admin";
+  /** true なら塾の代表 (organization.ownerAdminUid と一致) */
+  isOwner: boolean;
+}
+
 export interface AdminPerformance {
   uid: string;
   displayName: string;

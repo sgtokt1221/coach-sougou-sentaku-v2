@@ -127,6 +127,7 @@ const adminNavGroups: NavGroup[] = [
     items: [
       { label: "生徒管理", href: "/admin/students", icon: Users },
       { label: "講師管理", href: "/admin/teachers", icon: GraduationCap },
+      { label: "メンバー管理", href: "/admin/members", icon: Shield },
       { label: "大学データ", href: "/admin/universities", icon: Database },
       { label: "セッション", href: "/admin/sessions", icon: ClipboardList },
     ],

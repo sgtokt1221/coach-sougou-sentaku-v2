@@ -41,6 +41,11 @@ export default function OrganizationDetailPage() {
   const [name, setName] = useState("");
   const [saving, setSaving] = useState(false);
   const [addingUid, setAddingUid] = useState("");
+  // 新規 admin 作成して追加
+  const [newEmail, setNewEmail] = useState("");
+  const [newName, setNewName] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [creating, setCreating] = useState(false);
 
   const saveName = async () => {
     if (!name.trim()) return;
@@ -79,6 +84,46 @@ export default function OrganizationDetailPage() {
       await mutate();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "追加失敗");
+    }
+  };
+
+  const createAndAddAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newEmail.trim() || !newName.trim() || !newPassword) {
+      toast.error("全ての項目を入力してください");
+      return;
+    }
+    if (newPassword.length < 6) {
+      toast.error("パスワードは6文字以上で入力してください");
+      return;
+    }
+    setCreating(true);
+    try {
+      const res = await authFetch(
+        `/api/superadmin/organizations/${orgId}/members`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: newEmail.trim(),
+            displayName: newName.trim(),
+            password: newPassword,
+          }),
+        },
+      );
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.error || `HTTP ${res.status}`);
+      }
+      toast.success("新規 admin を作成して追加しました");
+      setNewEmail("");
+      setNewName("");
+      setNewPassword("");
+      await mutate();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "作成失敗");
+    } finally {
+      setCreating(false);
     }
   };
 
@@ -225,6 +270,40 @@ export default function OrganizationDetailPage() {
               追加
             </Button>
           </div>
+
+          {/* 新規 admin を作成して追加 */}
+          <form onSubmit={createAndAddAdmin} className="space-y-2 border-t pt-3">
+            <p className="text-xs font-medium text-muted-foreground">
+              新規 admin を作成して追加
+            </p>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Input
+                type="email"
+                placeholder="メールアドレス"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+              />
+              <Input
+                placeholder="名前"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+              />
+              <Input
+                type="password"
+                placeholder="初期パスワード(6文字以上)"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
+              <Button type="submit" disabled={creating} className="shrink-0">
+                {creating ? (
+                  <Loader2 className="mr-1 size-4 animate-spin" />
+                ) : (
+                  <UserPlus className="mr-1 size-4" />
+                )}
+                作成
+              </Button>
+            </div>
+          </form>
         </CardContent>
       </Card>
     </div>
