@@ -58,6 +58,25 @@ function dateFromYmd(s: string): Date {
   return new Date(y, m - 1, d);
 }
 
+/** ISO文字列を "HH:MM" 形式に整形 */
+function hhmm(iso: string): string {
+  return new Date(iso).toLocaleTimeString("ja-JP", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+/**
+ * 予定の開始〜終了時刻を "HH:MM〜HH:MM" 形式で返す。
+ * 終了時刻が無効・開始と同一の場合は開始時刻のみ返す。
+ */
+function formatTimeRange(startAt: string, endAt?: string): string {
+  const start = hhmm(startAt);
+  if (!endAt) return start;
+  const end = hhmm(endAt);
+  return end && end !== start ? `${start}〜${end}` : start;
+}
+
 /** 月カレンダーグリッドに表示する全日付 (前月末 + 当月 + 翌月頭, 6週分) */
 function buildGrid(anchor: Date): Date[] {
   const start = startOfMonth(anchor);
@@ -544,11 +563,7 @@ function EventRow({ event: ev, onEdit, onDelete, deleting }: EventRowProps) {
         <div className="text-sm font-medium truncate">{ev.label}</div>
         <div className="text-xs text-muted-foreground">
           {CALENDAR_EVENT_LABELS[ev.type]}
-          {!ev.allDay &&
-            ` ・ ${new Date(ev.startAt).toLocaleTimeString("ja-JP", {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}`}
+          {!ev.allDay && ` ・ ${formatTimeRange(ev.startAt, ev.endAt)}`}
         </div>
         {ev.location && (
           <div className="text-xs text-muted-foreground truncate">
