@@ -38,6 +38,8 @@ export interface StudentListItem {
   /** 面接スコア推移 (直近3回の completed 面接)。未受験 null */
   interviewScoreTrend?: "up" | "down" | "flat" | null;
   activeWeaknessCount: number;
+  /** アクティブ弱点の改善傾向。improving=改善, declining=停滞/繰り返し, stable=横ばい。弱点0なら null */
+  weaknessTrend?: "improving" | "stable" | "declining" | null;
   documentProgress: { completed: number; total: number };
   lastSessionAt: string | null;
   /** スキルチェック総合ランク（未受験 null） */

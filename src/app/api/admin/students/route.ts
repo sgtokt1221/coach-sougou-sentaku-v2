@@ -264,9 +264,29 @@ export async function GET(request: NextRequest) {
         const scoreTrend = computeScoreTrend(recentScores);
 
         // アクティブ弱点数（dismissedでない + archive されていないもの）
-        const activeWeaknessCount = weaknessesSnap.docs.filter(
+        const activeWeaknessDocs = weaknessesSnap.docs.filter(
           (d) => !d.data().dismissed && !d.data().archivedAt
-        ).length;
+        );
+        const activeWeaknessCount = activeWeaknessDocs.length;
+
+        // 弱点の改善傾向: improving(改善中) と stuck(count>=3で未改善) を比較
+        // improving が多い→改善傾向、stuck が多い→停滞、それ以外→横ばい。弱点0は null
+        let weaknessTrend: "improving" | "stable" | "declining" | null = null;
+        if (activeWeaknessCount > 0) {
+          const improvingCount = activeWeaknessDocs.filter(
+            (d) => d.data().improving === true && !d.data().resolved
+          ).length;
+          const stuckCount = activeWeaknessDocs.filter(
+            (d) => !d.data().improving && !d.data().resolved && (d.data().count ?? 0) >= 3
+          ).length;
+          if (improvingCount > 0 && improvingCount >= stuckCount) {
+            weaknessTrend = "improving";
+          } else if (stuckCount > improvingCount) {
+            weaknessTrend = "declining";
+          } else {
+            weaknessTrend = "stable";
+          }
+        }
 
         // 書類完了度
         const totalDocs = documentsSnap.size;
@@ -316,6 +336,7 @@ export async function GET(request: NextRequest) {
           scoreTrend,
           interviewScoreTrend,
           activeWeaknessCount,
+          weaknessTrend,
           documentProgress: { completed: completedDocs, total: totalDocs },
           lastSessionAt,
           currentSkillRank: essayAgg.compositeRank,

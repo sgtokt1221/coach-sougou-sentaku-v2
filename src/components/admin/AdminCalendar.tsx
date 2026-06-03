@@ -345,8 +345,17 @@ export function AdminCalendar() {
                         <div
                           key={ev.id}
                           className={`flex items-center gap-1 rounded px-1 py-0.5 text-[10px] text-white truncate ${CALENDAR_EVENT_COLORS[ev.type]}`}
-                          title={ev.label}
+                          title={
+                            ev.allDay
+                              ? ev.label
+                              : `${formatTimeRange(ev.startAt, ev.endAt)} ${ev.label}`
+                          }
                         >
+                          {!ev.allDay && (
+                            <span className="shrink-0 font-semibold tabular-nums">
+                              {hhmm(ev.startAt)}
+                            </span>
+                          )}
                           <span className="truncate">{ev.label}</span>
                         </div>
                       ))}

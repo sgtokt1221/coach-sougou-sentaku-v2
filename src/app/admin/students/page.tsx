@@ -64,6 +64,44 @@ function scoreTrendIcon(trend: StudentListItem["scoreTrend"]) {
   }
 }
 
+/** 弱点の改善傾向インジケーター (生徒一覧用) */
+function weaknessTrendIndicator(trend: StudentListItem["weaknessTrend"]) {
+  switch (trend) {
+    case "improving":
+      return (
+        <span
+          title="弱点が改善傾向"
+          className="inline-flex items-center gap-0.5 text-[11px] font-medium text-emerald-600 dark:text-emerald-400"
+        >
+          <TrendingUp className="size-3" />
+          改善
+        </span>
+      );
+    case "declining":
+      return (
+        <span
+          title="弱点が停滞・繰り返し"
+          className="inline-flex items-center gap-0.5 text-[11px] font-medium text-rose-600 dark:text-rose-400"
+        >
+          <TrendingDown className="size-3" />
+          停滞
+        </span>
+      );
+    case "stable":
+      return (
+        <span
+          title="弱点は横ばい"
+          className="inline-flex items-center gap-0.5 text-[11px] text-muted-foreground"
+        >
+          <Minus className="size-3" />
+          横ばい
+        </span>
+      );
+    default:
+      return null;
+  }
+}
+
 /** 小論文 / 面接 を区別するモノグラムマーク */
 function Monogram({ kind }: { kind: "essay" | "interview" }) {
   const isEssay = kind === "essay";
@@ -465,19 +503,22 @@ export default function AdminStudentsPage() {
                           </div>
                         </td>
                         <td className="px-4 py-3 text-center hidden lg:table-cell">
-                          {s.activeWeaknessCount > 0 ? (
-                            <Badge
-                              variant={s.activeWeaknessCount >= 5 ? "destructive" : "secondary"}
-                              className={[
-                                "text-xs transition-transform hover:scale-110",
-                                s.activeWeaknessCount >= 5 ? "animate-pulse" : "",
-                              ].join(" ")}
-                            >
-                              {s.activeWeaknessCount}
-                            </Badge>
-                          ) : (
-                            <span className="text-muted-foreground">0</span>
-                          )}
+                          <div className="flex flex-col items-center gap-1">
+                            {s.activeWeaknessCount > 0 ? (
+                              <Badge
+                                variant={s.activeWeaknessCount >= 5 ? "destructive" : "secondary"}
+                                className={[
+                                  "text-xs transition-transform hover:scale-110",
+                                  s.activeWeaknessCount >= 5 ? "animate-pulse" : "",
+                                ].join(" ")}
+                              >
+                                {s.activeWeaknessCount}
+                              </Badge>
+                            ) : (
+                              <span className="text-muted-foreground">0</span>
+                            )}
+                            {weaknessTrendIndicator(s.weaknessTrend)}
+                          </div>
                         </td>
                         <td className="px-4 py-3 text-center">
                           <span className="text-xs text-muted-foreground">
