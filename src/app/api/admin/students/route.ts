@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
+import { resolveTargetUniversities } from "@/lib/universities/resolve";
 import type { StudentListItem } from "@/lib/types/admin";
 import {
   computeEssayAggregate,
@@ -316,6 +317,7 @@ export async function GET(request: NextRequest) {
           email: data.email ?? "",
           photoURL: data.photoURL ?? null,
           targetUniversities: data.targetUniversities ?? [],
+          resolvedUniversities: resolveTargetUniversities(data.targetUniversities),
           grade: typeof data.grade === "number" ? data.grade : undefined,
           gradeUpdatedAt:
             typeof data.gradeUpdatedAt === "string"

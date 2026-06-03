@@ -21,6 +21,16 @@ function scoreColor(total: number): string {
   return "text-rose-600 dark:text-rose-400";
 }
 
+/** 志望校を日本語名で表示 (サーバー解決済みの resolvedUniversities を優先、無ければ生値) */
+function targetUniversitiesLabel(s: StudentListItem): string {
+  if (s.resolvedUniversities && s.resolvedUniversities.length > 0) {
+    return s.resolvedUniversities
+      .map((u) => (u.facultyName ? `${u.universityName} ${u.facultyName}` : u.universityName))
+      .join("、");
+  }
+  return s.targetUniversities.join(", ") || "志望校未設定";
+}
+
 function alertFlagLabel(flag: string): { label: string; variant: "destructive" | "secondary" } {
   switch (flag) {
     case "inactive":
@@ -187,7 +197,7 @@ export default function AdminDashboard() {
                       <div>
                         <p className="font-medium">{s.displayName}</p>
                         <p className="text-xs text-muted-foreground">
-                          {s.targetUniversities.join(", ") || "志望校未設定"}
+                          {targetUniversitiesLabel(s)}
                         </p>
                       </div>
                       <div className="flex gap-1">

@@ -3,6 +3,7 @@ import { requireRole, scopeByOrganization } from "@/lib/api/auth";
 import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
 import { adminDb } from "@/lib/firebase/admin";
 import { MOCK_UNIVERSITIES } from "@/lib/matching/mockData";
+import { resolveTargetUniversities } from "@/lib/universities/resolve";
 import type { StudentDetail } from "@/lib/types/admin";
 import {
   computeEssayAggregateFromList,
@@ -358,16 +359,7 @@ export async function GET(
 
     // 志望校のcompound IDを日本語名に解決
     const targetUnis = userData.targetUniversities ?? [];
-    const resolvedUniversities = targetUnis.map((compoundId: string) => {
-      const [universityId, facultyId] = compoundId.split(":");
-      const uni = MOCK_UNIVERSITIES.find((u) => u.id === universityId);
-      const faculty = uni?.faculties?.find((f) => f.id === facultyId);
-      return {
-        compoundId,
-        universityName: uni?.name ?? universityId,
-        facultyName: faculty?.name ?? facultyId ?? "",
-      };
-    });
+    const resolvedUniversities = resolveTargetUniversities(targetUnis);
 
     // スキル指標 = 最新スキルチェックテスト結果のみ。
     // 練習履歴 (essays / interviews) は合成しない (= 月 1 リマインド再受験で更新)

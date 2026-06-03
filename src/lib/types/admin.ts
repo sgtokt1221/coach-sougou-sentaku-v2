@@ -9,7 +9,10 @@ export interface StudentListItem {
   email: string;
   /** プロフィール画像 URL（未設定は null） */
   photoURL?: string | null;
+  /** 志望校。"universityId:facultyId" 複合ID または自由入力名が混在。表示は resolvedUniversities を使う */
   targetUniversities: string[];
+  /** 志望校の解決済み名称 (サーバー側で複合ID→日本語に変換済み)。表示用 */
+  resolvedUniversities?: { compoundId: string; universityName: string; facultyName: string }[];
   /** 学年 (高 1=1, 2=2, 3=3)、 fiscalYear 加算前の生値 */
   grade?: number;
   /** grade 入力日時 (ISO)。 卒業生判定 + 「現役に戻す」 ボタンの表示用 */
