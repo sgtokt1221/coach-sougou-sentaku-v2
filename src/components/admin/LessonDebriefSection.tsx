@@ -1,15 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  ClipboardList,
-  Sparkles,
-  Save,
-  Loader2,
-  X,
-  Copy,
-  Check,
-} from "lucide-react";
+import { ClipboardList, Save, Loader2, X } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -34,7 +26,6 @@ interface Props {
 const EMPTY: LessonDebrief = {
   notes: "",
   newWeaknessAreas: [],
-  parentSummary: "",
   nextAgendaSeed: "",
   capturedAt: "",
 };
@@ -47,8 +38,7 @@ export function LessonDebriefSection({
 }: Props) {
   const [state, setState] = useState<LessonDebrief>(initial ?? EMPTY);
   const [newArea, setNewArea] = useState("");
-  const [busy, setBusy] = useState<"saving" | "parent" | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [busy, setBusy] = useState<"saving" | null>(null);
 
   const save = async (override?: Partial<LessonDebrief>) => {
     setBusy("saving");
@@ -74,41 +64,6 @@ export function LessonDebriefSection({
     }
   };
 
-  const generateParent = async () => {
-    if (!state.notes.trim()) {
-      alert("先に気づきメモを入力してください");
-      return;
-    }
-    // 未保存の notes を先に保存
-    if (initial?.notes !== state.notes) {
-      await save();
-    }
-    setBusy("parent");
-    try {
-      const res = await authFetch(
-        `/api/admin/sessions/${sessionId}/parent-summary`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({}),
-        },
-      );
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error ?? "生成に失敗");
-      }
-      const { parentSummary } = (await res.json()) as {
-        parentSummary: string;
-      };
-      setState((s) => ({ ...s, parentSummary }));
-    } catch (err) {
-      console.error(err);
-      alert(err instanceof Error ? err.message : "AI 生成に失敗しました");
-    } finally {
-      setBusy(null);
-    }
-  };
-
   const addWeakness = () => {
     const trimmed = newArea.trim();
     if (!trimmed) return;
@@ -128,17 +83,6 @@ export function LessonDebriefSection({
       ...s,
       newWeaknessAreas: s.newWeaknessAreas.filter((x) => x !== a),
     }));
-  };
-
-  const copy = async () => {
-    if (!state.parentSummary) return;
-    try {
-      await navigator.clipboard.writeText(state.parentSummary);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // ignore
-    }
   };
 
   const suggestions = existingWeaknessAreas.filter(
@@ -234,54 +178,6 @@ export function LessonDebriefSection({
               ))}
             </div>
           )}
-        </div>
-
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between">
-            <label className="text-xs font-medium text-muted-foreground">
-              保護者への一言
-            </label>
-            <div className="flex gap-1">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={generateParent}
-                disabled={busy !== null}
-                className="cursor-pointer"
-              >
-                {busy === "parent" ? (
-                  <Loader2 className="mr-1 size-3 animate-spin" />
-                ) : (
-                  <Sparkles className="mr-1 size-3" />
-                )}
-                AI で下書き
-              </Button>
-              {state.parentSummary && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={copy}
-                  className="cursor-pointer"
-                >
-                  {copied ? (
-                    <Check className="mr-1 size-3" />
-                  ) : (
-                    <Copy className="mr-1 size-3" />
-                  )}
-                  {copied ? "コピー済" : "コピー"}
-                </Button>
-              )}
-            </div>
-          </div>
-          <Textarea
-            value={state.parentSummary}
-            onChange={(e) =>
-              setState((s) => ({ ...s, parentSummary: e.target.value }))
-            }
-            rows={5}
-            maxLength={800}
-            placeholder="AI で下書きを生成 → 編集 → コピーして保護者に送信"
-          />
         </div>
 
         <div className="space-y-1.5">

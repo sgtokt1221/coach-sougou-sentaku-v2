@@ -60,29 +60,52 @@ export async function POST(
 
   // 並列取得
   const studentId = session.studentId;
-  const [saSnap, weakSnap, essaysSnap, coachThreadsSnap, prevSession] =
-    await Promise.all([
-      adminDb.doc(`selfAnalysis/${studentId}`).get(),
-      // Phase 4: archive を考慮して多めに取り、 後段で filter + slice
-      adminDb
-        .collection(`users/${studentId}/weaknesses`)
-        .orderBy("count", "desc")
-        .limit(15)
-        .get(),
-      // essays はグローバル collection（userId で絞り込み）。subcollection は実体が無く空振りしていたため是正
-      adminDb
-        .collection("essays")
-        .where("userId", "==", studentId)
-        .get()
-        .catch(() => null),
-      adminDb
-        .collection(`users/${studentId}/essayCoachThreads`)
-        .orderBy("updatedAt", "desc")
-        .limit(1)
-        .get()
-        .catch(() => null),
-      getPreviousSession(adminDb, studentId, session.scheduledAt),
-    ]);
+  const [
+    saSnap,
+    weakSnap,
+    essaysSnap,
+    coachThreadsSnap,
+    prevSession,
+    studentSnap,
+    essaySkillSnap,
+    interviewSkillSnap,
+  ] = await Promise.all([
+    adminDb.doc(`selfAnalysis/${studentId}`).get(),
+    // Phase 4: archive を考慮して多めに取り、 後段で filter + slice
+    adminDb
+      .collection(`users/${studentId}/weaknesses`)
+      .orderBy("count", "desc")
+      .limit(15)
+      .get(),
+    // essays はグローバル collection（userId で絞り込み）。subcollection は実体が無く空振りしていたため是正
+    adminDb
+      .collection("essays")
+      .where("userId", "==", studentId)
+      .get()
+      .catch(() => null),
+    adminDb
+      .collection(`users/${studentId}/essayCoachThreads`)
+      .orderBy("updatedAt", "desc")
+      .limit(1)
+      .get()
+      .catch(() => null),
+    getPreviousSession(adminDb, studentId, session.scheduledAt),
+    // 志望校解決用に生徒プロフィール
+    adminDb.doc(`users/${studentId}`).get().catch(() => null),
+    // 最新スキルチェック (小論文 / 面接)
+    adminDb
+      .collection(`users/${studentId}/skillChecks`)
+      .orderBy("takenAt", "desc")
+      .limit(1)
+      .get()
+      .catch(() => null),
+    adminDb
+      .collection(`users/${studentId}/interviewSkillChecks`)
+      .orderBy("takenAt", "desc")
+      .limit(1)
+      .get()
+      .catch(() => null),
+  ]);
 
   const sa = saSnap.exists ? saSnap.data() : null;
   const topWeaknesses = weakSnap.docs
@@ -157,6 +180,63 @@ export async function POST(
         })()
       : undefined;
 
+  // 志望校 AP (上位 3 校。compoundId = "universityId:facultyId")
+  let admissionPolicies: Array<{ name: string; ap: string }> | undefined;
+  try {
+    const targetUniversities =
+      (studentSnap?.exists
+        ? (studentSnap.data() as { targetUniversities?: string[] }).targetUniversities
+        : undefined) ?? [];
+    const compoundIds = targetUniversities.slice(0, 3);
+    const resolved = await Promise.all(
+      compoundIds.map(async (compoundId) => {
+        const [universityId, facultyId] = compoundId.split(":");
+        if (!universityId) return null;
+        const uniDoc = await adminDb.doc(`universities/${universityId}`).get();
+        if (!uniDoc.exists) return null;
+        const uni = uniDoc.data() as {
+          name?: string;
+          faculties?: Array<{ id: string; name: string; admissionPolicy?: string }>;
+        };
+        const faculty = uni.faculties?.find((f) => f.id === facultyId);
+        if (!faculty?.admissionPolicy) return null;
+        return {
+          name: `${uni.name ?? universityId} ${faculty.name}`,
+          ap: faculty.admissionPolicy,
+        };
+      }),
+    );
+    const filtered = resolved.filter(
+      (r): r is { name: string; ap: string } => r !== null,
+    );
+    admissionPolicies = filtered.length > 0 ? filtered : undefined;
+  } catch (err) {
+    console.warn("[generate-plan] AP resolution failed:", err);
+  }
+
+  // 最新スキルチェック (rank + total)
+  let latestSkill: LessonPlanContext["latestSkill"];
+  const essaySkill = essaySkillSnap && !essaySkillSnap.empty
+    ? (essaySkillSnap.docs[0].data() as {
+        rank?: string;
+        scores?: { total?: number };
+      })
+    : null;
+  const interviewSkill = interviewSkillSnap && !interviewSkillSnap.empty
+    ? (interviewSkillSnap.docs[0].data() as {
+        rank?: string;
+        scores?: { total?: number };
+      })
+    : null;
+  if (essaySkill || interviewSkill) {
+    latestSkill = {
+      essayRank: essaySkill?.rank,
+      essayScore: essaySkill?.scores?.total,
+      interviewRank: interviewSkill?.rank,
+      interviewScore: interviewSkill?.scores?.total,
+    };
+  }
+
   const hasAnyData =
     Boolean(sa) ||
     topWeaknesses.length > 0 ||
@@ -188,6 +268,8 @@ export async function POST(
       : undefined,
     previousPrepGoal: prevSession?.prepPlan?.goal,
     recentArtifactsSummary,
+    admissionPolicies,
+    latestSkill,
   };
 
   // 全データ空なら「新しい生徒モード」を示す

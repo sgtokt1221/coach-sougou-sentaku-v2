@@ -37,6 +37,15 @@ export interface LessonPlanContext {
   previousPrepGoal?: string;
   /** 前回セッション以降に生徒が作成した成果物のサマリー（面接/書類/活動/スキルチェック/レポート） */
   recentArtifactsSummary?: string;
+  /** 志望校のアドミッション・ポリシー (上位数校。AP 合致を意識した問い設計に使う) */
+  admissionPolicies?: Array<{ name: string; ap: string }>;
+  /** 最新スキルチェック結果 (ランク/スコア。弱点の裏付けに使う) */
+  latestSkill?: {
+    essayRank?: string;
+    essayScore?: number;
+    interviewRank?: string;
+    interviewScore?: number;
+  };
 }
 
 const SESSION_TYPE_LABEL: Record<SessionType, string> = {
@@ -93,6 +102,38 @@ export function buildLessonPlanPrompt(ctx: LessonPlanContext): string {
     ? `\n## 前回のセッション以降に生徒が取り組んだもの (重要・これを踏まえて台本を作る)\n${ctx.recentArtifactsSummary.slice(0, 800)}\n`
     : "";
 
+  const apSection =
+    ctx.admissionPolicies && ctx.admissionPolicies.length > 0
+      ? `\n## 志望校のアドミッション・ポリシー (AP 合致を意識して問いを設計する)\n${ctx.admissionPolicies
+          .map((p) => `- ${p.name}: ${p.ap.slice(0, 300)}`)
+          .join("\n")}\n`
+      : "";
+
+  const skillLines: string[] = [];
+  if (ctx.latestSkill?.essayRank || typeof ctx.latestSkill?.essayScore === "number") {
+    skillLines.push(
+      `小論文スキル: ランク ${ctx.latestSkill.essayRank ?? "—"} / スコア ${
+        ctx.latestSkill.essayScore ?? "—"
+      }`,
+    );
+  }
+  if (
+    ctx.latestSkill?.interviewRank ||
+    typeof ctx.latestSkill?.interviewScore === "number"
+  ) {
+    skillLines.push(
+      `面接スキル: ランク ${ctx.latestSkill.interviewRank ?? "—"} / スコア ${
+        ctx.latestSkill.interviewScore ?? "—"
+      }`,
+    );
+  }
+  const skillSection =
+    skillLines.length > 0
+      ? `\n## 最新スキルチェック (弱点の裏付け・到達度の参考)\n${skillLines
+          .map((l) => `- ${l}`)
+          .join("\n")}\n`
+      : "";
+
   const regeneratedHint = ctx.currentPlan
     ? `\n## 既存の台本 (講師が再生成をリクエスト)
 講師は現在の台本を下敷きに、さらに良いものを望んでいます。特に questions と cautions は見直してください。
@@ -134,6 +175,6 @@ ${weakLines}
 
 ## 直近の小論文添削フィードバック (抜粋)
 ${essayLines}
-${artifactsSection}${coachSection}${prevSection}${regeneratedHint}
+${apSection}${skillSection}${artifactsSection}${coachSection}${prevSection}${regeneratedHint}
 上記を踏まえ、若手講師がそのまま使える「今日の授業台本」を JSON で出力してください。`;
 }

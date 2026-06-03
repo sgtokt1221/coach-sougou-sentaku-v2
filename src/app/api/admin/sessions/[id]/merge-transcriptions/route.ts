@@ -201,7 +201,6 @@ export async function POST(
   const debrief = {
     notes: newNotes.slice(0, 8000),
     newWeaknessAreas: session.debrief?.newWeaknessAreas ?? [],
-    parentSummary: session.debrief?.parentSummary ?? "",
     nextAgendaSeed: session.debrief?.nextAgendaSeed ?? "",
     capturedAt: now,
   };

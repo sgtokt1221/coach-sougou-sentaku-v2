@@ -31,6 +31,7 @@ import {
   Briefcase,
   StickyNote,
   Loader2,
+  ChevronDown,
 } from "lucide-react";
 import Link from "next/link";
 import { AnimatedButton } from "@/components/shared/AnimatedButton";
@@ -108,6 +109,7 @@ export default function AdminSessionDetailPage() {
   const [saved, setSaved] = useState(false);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
+  const [studentOpen, setStudentOpen] = useState(false);
 
   const [student, setStudent] = useState<StudentDetail | null>(null);
   const [studentLoading, setStudentLoading] = useState(false);
@@ -302,7 +304,7 @@ export default function AdminSessionDetailPage() {
         <h1 className="text-xl font-bold">セッション詳細</h1>
       </div>
 
-      {/* Basic Info */}
+      {/* 基本情報 + 操作 */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -399,104 +401,86 @@ export default function AdminSessionDetailPage() {
               </div>
             </>
           )}
-        </CardContent>
-      </Card>
 
-      {/* Status Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">ステータス変更</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-wrap gap-2">
-          {session.status === "scheduled" && (
-            <>
+          {/* 操作 (旧「ステータス変更」を統合) */}
+          <Separator />
+          <div className="flex flex-wrap gap-2">
+            {session.status === "scheduled" && (
+              <>
+                <Button
+                  size="sm"
+                  onClick={() => patchSession({ status: "in_progress" })}
+                  disabled={saving}
+                >
+                  <Play className="size-4 mr-1" />
+                  開始
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => patchSession({ status: "cancelled" })}
+                  disabled={saving}
+                >
+                  <XCircle className="size-4 mr-1" />
+                  キャンセル
+                </Button>
+              </>
+            )}
+            {session.status === "in_progress" && (
               <Button
                 size="sm"
-                onClick={() => patchSession({ status: "in_progress" })}
-                disabled={saving}
+                onClick={completeSession}
+                disabled={saving || isCompleting}
               >
-                <Play className="size-4 mr-1" />
-                開始
+                {isCompleting ? (
+                  <>
+                    <Sparkles className="size-4 mr-1 animate-spin" />
+                    サマリー生成中...
+                  </>
+                ) : (
+                  <>
+                    <Square className="size-4 mr-1" />
+                    完了
+                  </>
+                )}
               </Button>
-              <Button
-                size="sm"
-                variant="destructive"
-                onClick={() => patchSession({ status: "cancelled" })}
-                disabled={saving}
-              >
-                <XCircle className="size-4 mr-1" />
-                キャンセル
-              </Button>
-            </>
-          )}
-          {session.status === "in_progress" && (
+            )}
             <Button
               size="sm"
-              onClick={completeSession}
-              disabled={saving || isCompleting}
+              variant={session.sharedWithStudent ? "secondary" : "outline"}
+              onClick={() =>
+                patchSession({ sharedWithStudent: !session.sharedWithStudent })
+              }
+              disabled={saving}
             >
-              {isCompleting ? (
-                <>
-                  <Sparkles className="size-4 mr-1 animate-spin" />
-                  サマリー生成中...
-                </>
-              ) : (
-                <>
-                  <Square className="size-4 mr-1" />
-                  完了
-                </>
-              )}
+              <Share2 className="size-4 mr-1" />
+              {session.sharedWithStudent ? "共有中" : "生徒に共有"}
             </Button>
-          )}
-          <Button
-            size="sm"
-            variant={session.sharedWithStudent ? "secondary" : "outline"}
-            onClick={() =>
-              patchSession({ sharedWithStudent: !session.sharedWithStudent })
-            }
-            disabled={saving}
-          >
-            <Share2 className="size-4 mr-1" />
-            {session.sharedWithStudent ? "共有中" : "生徒に共有"}
-          </Button>
+          </div>
         </CardContent>
       </Card>
 
-      {/* Notes */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">メモ</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <textarea
-            className="flex min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            placeholder="メモを入力..."
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
+      {/* 1 対 1: 授業の流れ順 (ライフサイクル → 台本 → 振り返り → 取り組み) */}
+      {session.type !== "group_review" && (
+        <>
+          <SessionLifecycleBar
+            sessionId={id}
+            session={session}
+            onSessionUpdate={(s) => setSession(s)}
           />
-          <AnimatedButton
-            size="sm"
-            status={saving ? "loading" : saved ? "success" : "idle"}
-            idleText="保存"
-            idleIcon={<Save className="size-4" />}
-            onStatusReset={() => setSaved(false)}
-            onClick={() => {
-              setSaved(false);
-              patchSession({ notes }).then(() => setSaved(true));
-            }}
-            disabled={saving || notes === (session.notes ?? "")}
+          <LessonPrepSection
+            sessionId={id}
+            initial={session.prepPlan}
+            onChange={(plan) => setSession({ ...session, prepPlan: plan })}
           />
-        </CardContent>
-      </Card>
-
-      {/* Student Info Panel - only for scheduled/in_progress */}
-      {showStudentPanel && session.type !== "group_review" && (
-        <StudentInfoPanel
-          studentId={session.studentId}
-          student={student}
-          loading={studentLoading}
-          error={studentError}
-        />
+          <LessonDebriefSection
+            sessionId={id}
+            initial={session.debrief}
+            existingWeaknessAreas={[]}
+            onChange={(d) => setSession({ ...session, debrief: d })}
+          />
+          <SessionArtifactsPanel endpoint={`/api/admin/sessions/${id}/artifacts`} />
+        </>
       )}
 
       {/* Group Review Submissions */}
@@ -607,119 +591,60 @@ export default function AdminSessionDetailPage() {
         </Card>
       )}
 
-      {/* 授業ライフサイクル (録音開始/終了) */}
-      {session.type !== "group_review" && (
-        <SessionLifecycleBar
-          sessionId={id}
-          session={session}
-          onSessionUpdate={(s) => setSession(s)}
-        />
-      )}
-
-      {/* 前回〜今回の生徒の取り組み */}
-      {session.type !== "group_review" && (
-        <SessionArtifactsPanel endpoint={`/api/admin/sessions/${id}/artifacts`} />
-      )}
-
-      {/* レッスン台本 */}
-      {session.type !== "group_review" && (
-        <LessonPrepSection
-          sessionId={id}
-          initial={session.prepPlan}
-          onChange={(plan) => setSession({ ...session, prepPlan: plan })}
-        />
-      )}
-
-      {/* 振り返り */}
-      {session.type !== "group_review" && (
-        <LessonDebriefSection
-          sessionId={id}
-          initial={session.debrief}
-          existingWeaknessAreas={[]}
-          onChange={(d) => setSession({ ...session, debrief: d })}
-        />
-      )}
-
-      {/* Summary (後方互換、既存データがある場合のみ表示) */}
-      {session.summary && (
+      {/* メモ (1 対 1・グループ共通。流れの最後に配置) */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">サマリー (旧)</CardTitle>
+          <CardTitle className="text-base">メモ</CardTitle>
         </CardHeader>
-        <CardContent>
-          {session.summary ? (
-            <div className="space-y-4 text-sm">
-              <div>
-                <p className="text-muted-foreground mb-1">概要</p>
-                <p>{session.summary.overview}</p>
-              </div>
-              <Separator />
-              <div>
-                <p className="text-muted-foreground mb-1">話題</p>
-                <div className="flex flex-wrap gap-1">
-                  {(session.summary.topicsDiscussed ?? []).map((t, i) => (
-                    <Badge key={i} variant="outline" className="text-xs">
-                      {t}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <p className="text-muted-foreground mb-1">強み</p>
-                  <ul className="list-disc list-inside space-y-1">
-                    {(session.summary.strengths ?? []).map((s, i) => (
-                      <li key={i}>{s}</li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <p className="text-muted-foreground mb-1">改善点</p>
-                  <ul className="list-disc list-inside space-y-1">
-                    {(session.summary.improvements ?? []).map((s, i) => (
-                      <li key={i}>{s}</li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-              <Separator />
-              <div>
-                <p className="text-muted-foreground mb-2">アクションアイテム</p>
-                <div className="space-y-2">
-                  {(session.summary.actionItems ?? []).map((item, i) => (
-                    <label
-                      key={i}
-                      className="flex items-start gap-2 cursor-pointer"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={item.completed}
-                        onChange={() => {
-                          const updated = [...(session.summary!.actionItems ?? [])];
-                          updated[i] = { ...updated[i], completed: !updated[i].completed };
-                          patchSession({
-                            summary: { ...session.summary!, actionItems: updated },
-                          });
-                        }}
-                        className="mt-1"
-                      />
-                      <div>
-                        <p className={item.completed ? "line-through text-muted-foreground" : ""}>
-                          {item.task}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {item.assignee === "student" ? "生徒" : "講師"}
-                          {item.deadline ? ` / 期限: ${item.deadline}` : ""}
-                        </p>
-                      </div>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            </div>
-          ) : null}
+        <CardContent className="space-y-3">
+          <textarea
+            className="flex min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            placeholder="メモを入力..."
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+          />
+          <AnimatedButton
+            size="sm"
+            status={saving ? "loading" : saved ? "success" : "idle"}
+            idleText="保存"
+            idleIcon={<Save className="size-4" />}
+            onStatusReset={() => setSaved(false)}
+            onClick={() => {
+              setSaved(false);
+              patchSession({ notes }).then(() => setSaved(true));
+            }}
+            disabled={saving || notes === (session.notes ?? "")}
+          />
         </CardContent>
       </Card>
+
+      {/* 生徒情報 (折りたたみ。既定は閉じる) */}
+      {showStudentPanel && session.type !== "group_review" && (
+        <div className="space-y-3">
+          <Button
+            variant="outline"
+            className="w-full justify-between"
+            onClick={() => setStudentOpen((o) => !o)}
+          >
+            <span className="flex items-center gap-2">
+              <User className="size-4" />
+              生徒情報
+            </span>
+            <ChevronDown
+              className={`size-4 transition-transform ${
+                studentOpen ? "rotate-180" : ""
+              }`}
+            />
+          </Button>
+          {studentOpen && (
+            <StudentInfoPanel
+              studentId={session.studentId}
+              student={student}
+              loading={studentLoading}
+              error={studentError}
+            />
+          )}
+        </div>
       )}
     </div>
   );

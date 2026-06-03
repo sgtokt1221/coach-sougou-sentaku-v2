@@ -30,7 +30,6 @@ export async function POST(
   const body = (await request.json().catch(() => null)) as {
     notes?: string;
     newWeaknessAreas?: string[];
-    parentSummary?: string;
     nextAgendaSeed?: string;
   } | null;
   if (!body) {
@@ -51,10 +50,6 @@ export async function POST(
   const patched: LessonDebrief = {
     notes: typeof body.notes === "string" ? body.notes.slice(0, 3000) : existing.notes ?? "",
     newWeaknessAreas: mergedAreas,
-    parentSummary:
-      typeof body.parentSummary === "string"
-        ? body.parentSummary.slice(0, 800)
-        : existing.parentSummary ?? "",
     nextAgendaSeed:
       typeof body.nextAgendaSeed === "string"
         ? body.nextAgendaSeed.slice(0, 1000)

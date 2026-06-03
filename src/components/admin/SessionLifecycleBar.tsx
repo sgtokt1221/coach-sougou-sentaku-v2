@@ -260,7 +260,6 @@ export function SessionLifecycleBar({ sessionId, session, onSessionUpdate }: Pro
           ...(session.debrief ?? {
             notes: "",
             newWeaknessAreas: [],
-            parentSummary: "",
             nextAgendaSeed: "",
             capturedAt: "",
           }),

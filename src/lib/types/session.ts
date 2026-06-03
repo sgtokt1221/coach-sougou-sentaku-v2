@@ -104,8 +104,6 @@ export interface LessonDebrief {
   notes: string;
   /** 授業で新たに発見した弱点の area 名 */
   newWeaknessAreas: string[];
-  /** 保護者向け文面 (AI 下書きを講師が編集) */
-  parentSummary: string;
   /** 次回セッションの台本生成に使うシード */
   nextAgendaSeed: string;
   /** 最終更新時刻 ISO */
