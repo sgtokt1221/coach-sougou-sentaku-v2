@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
+import { getOrgMemberAdminUids, chunk } from "@/lib/api/organization-scope";
 import { adminDb } from "@/lib/firebase/admin";
 import type {
   UniversityGapAnalysis,
@@ -122,14 +123,37 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Fetch students with scoping
-    let studentsQuery = adminDb.collection("users").where("role", "==", "student");
-    if (role !== "superadmin") {
-      studentsQuery = studentsQuery.where("managedBy", "==", uid);
+    // Fetch students with scoping (admin は自分の塾の組織メンバーが managedBy の生徒を共有)
+    const studentDocs: FirebaseFirestore.QueryDocumentSnapshot[] = [];
+    if (role === "superadmin") {
+      studentDocs.push(
+        ...(await adminDb.collection("users").where("role", "==", "student").get()).docs,
+      );
+    } else if (role === "admin") {
+      const memberUids = await getOrgMemberAdminUids(adminDb, uid);
+      const byId = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
+      for (const part of chunk(memberUids, 30)) {
+        const s = await adminDb
+          .collection("users")
+          .where("role", "==", "student")
+          .where("managedBy", "in", part)
+          .get();
+        s.docs.forEach((d) => byId.set(d.id, d));
+      }
+      studentDocs.push(...byId.values());
+    } else {
+      studentDocs.push(
+        ...(
+          await adminDb
+            .collection("users")
+            .where("role", "==", "student")
+            .where("managedBy", "==", uid)
+            .get()
+        ).docs,
+      );
     }
-    const studentsSnap = await studentsQuery.get();
 
-    if (studentsSnap.empty) {
+    if (studentDocs.length === 0) {
       return NextResponse.json({
         gaps: [],
         generatedAt: new Date().toISOString(),
@@ -151,7 +175,7 @@ export async function GET(request: NextRequest) {
       }
     >();
 
-    for (const studentDoc of studentsSnap.docs) {
+    for (const studentDoc of studentDocs) {
       const studentData = studentDoc.data();
       const studentId = studentDoc.id;
       const targets: string[] = studentData.targetUniversities ?? [];

@@ -36,6 +36,29 @@ export async function getOrgMemberAdminUids(
 }
 
 /**
+ * 分析(analytics)用の閲覧可能な生徒ID集合を返す。
+ * - superadmin: null（フィルタ無し＝全件）
+ * - admin: 自分の塾の組織メンバーが managedBy の生徒
+ * - teacher: 自分が managedBy の生徒（従来挙動）
+ */
+export async function getAnalyticsStudentIdSet(
+  adminDb: Firestore,
+  uid: string,
+  role: string,
+): Promise<Set<string> | null> {
+  if (role === "superadmin") return null;
+  if (role === "admin") {
+    return new Set(await getOrgScopedStudentIds(adminDb, uid));
+  }
+  const snap = await adminDb
+    .collection("users")
+    .where("role", "==", "student")
+    .where("managedBy", "==", uid)
+    .get();
+  return new Set(snap.docs.map((d) => d.id));
+}
+
+/**
  * admin が閲覧できる生徒の uid 集合（組織メンバーが managedBy の生徒）を返す。
  * Firestore の in は最大30要素なのでチャンク分割する。
  */

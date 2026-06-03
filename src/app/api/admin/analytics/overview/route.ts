@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
+import { getAnalyticsStudentIdSet } from "@/lib/api/organization-scope";
 import type { AnalyticsOverview } from "@/lib/types/analytics";
 
 export async function GET(request: NextRequest) {
   const authResult = await requireRole(request, ["admin", "superadmin", "teacher"]);
   if (authResult instanceof NextResponse) return authResult;
+  const { uid, role } = authResult;
 
   let step = "start";
 
@@ -27,8 +29,12 @@ export async function GET(request: NextRequest) {
     const interviewsSnap = await adminDb.collection("interviews").get();
 
     step = "aggregate";
-    const essays = essaysSnap.docs.map((d) => d.data());
-    const interviews = interviewsSnap.docs.map((d) => d.data());
+    // admin は自分の塾の生徒のみ集計 (superadmin は全件 = null)
+    const studentIdSet = await getAnalyticsStudentIdSet(adminDb, uid, role);
+    const inScope = (userId: unknown) =>
+      !studentIdSet || (typeof userId === "string" && studentIdSet.has(userId));
+    const essays = essaysSnap.docs.map((d) => d.data()).filter((e) => inScope(e.userId));
+    const interviews = interviewsSnap.docs.map((d) => d.data()).filter((i) => inScope(i.userId));
 
     const totalEssays = essays.length;
     const totalInterviews = interviews.length;

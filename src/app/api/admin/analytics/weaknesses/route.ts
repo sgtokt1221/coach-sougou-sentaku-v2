@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
+import { getAnalyticsStudentIdSet } from "@/lib/api/organization-scope";
 import { adminDb } from "@/lib/firebase/admin";
 import type { WeaknessAnalytics } from "@/lib/types/analytics";
 import {
@@ -20,6 +21,7 @@ type AreaEntry = {
 export async function GET(request: NextRequest) {
   const authResult = await requireRole(request, ["admin", "superadmin", "teacher"]);
   if (authResult instanceof NextResponse) return authResult;
+  const { uid: requesterUid, role } = authResult;
 
   try {
     if (!adminDb) {
@@ -27,6 +29,8 @@ export async function GET(request: NextRequest) {
     }
 
     try {
+      // admin は自分の塾の生徒のみ集計 (superadmin は全件 = null)
+      const studentIdSet = await getAnalyticsStudentIdSet(adminDb, requesterUid, role);
       const weaknessesSnap = await adminDb.collectionGroup("weaknesses").get();
       if (weaknessesSnap.empty) {
         return NextResponse.json<WeaknessAnalytics>({
@@ -48,6 +52,8 @@ export async function GET(request: NextRequest) {
         const area = w.area ?? "unknown";
         const cat: EssayCategoryKey = (w.categoryId as EssayCategoryKey) ?? categorizeWeakness(area);
         const uid = docSnap.ref.parent.parent?.id ?? "";
+        // 自分の塾の生徒以外は集計対象外 (superadmin は全件)
+        if (studentIdSet && !studentIdSet.has(uid)) continue;
 
         if (!byCat.has(cat)) byCat.set(cat, new Map());
         const inner = byCat.get(cat)!;

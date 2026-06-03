@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
+import { getAnalyticsStudentIdSet } from "@/lib/api/organization-scope";
 import { adminDb } from "@/lib/firebase/admin";
 import type { WeaknessPattern, WeaknessPatternsResponse } from "@/lib/types/analytics";
 
@@ -127,16 +128,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(response);
     }
 
-    // Scoping
-    const studentIdSet: Set<string> | null = await (async () => {
-      if (role === "superadmin") return null;
-      const studentsSnap = await adminDb
-        .collection("users")
-        .where("role", "==", "student")
-        .where("managedBy", "==", uid)
-        .get();
-      return new Set(studentsSnap.docs.map((d) => d.id));
-    })();
+    // Scoping (admin は自分の塾の組織メンバーが managedBy の生徒を共有)
+    const studentIdSet = await getAnalyticsStudentIdSet(adminDb, uid, role);
 
     if (studentIdSet && studentIdSet.size === 0) {
       return NextResponse.json({
