@@ -35,5 +35,5 @@ export async function GET(
   }
 
   const result = await getSessionPeriodArtifacts(adminDb, session.studentId, session);
-  return NextResponse.json(result);
+  return NextResponse.json({ studentId: session.studentId, ...result });
 }

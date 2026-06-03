@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, Suspense } from "react";
+import { useEffect, useRef, useState, useMemo, Suspense } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -431,6 +431,17 @@ function AdminStudentDetailPageInner() {
       setEssayLoading(false);
     }
   }
+
+  // deep-link: ?essay=[id] で該当小論文の添削モーダルを自動オープン（detail取得後・一度だけ）
+  const essayDeepLink = searchParams?.get("essay") ?? null;
+  const essayAutoOpenedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!essayDeepLink || !detail) return;
+    if (essayAutoOpenedRef.current === essayDeepLink) return;
+    essayAutoOpenedRef.current = essayDeepLink;
+    openEssayDetail(essayDeepLink);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [essayDeepLink, detail]);
 
   // インラインコメント追加/削除後に essay を再取得 (フリッカーなし)
   async function refreshEssayDetail(essayId: string) {
@@ -1008,7 +1019,7 @@ function AdminStudentDetailPageInner() {
         )}
       </Card>
 
-      <InterviewsSection studentId={id} />
+      <InterviewsSection studentId={id} autoOpenInterviewId={searchParams?.get("interview") ?? undefined} />
       <SummaryDrillsSection studentId={id} />
     </div>
   );

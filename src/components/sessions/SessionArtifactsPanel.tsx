@@ -6,7 +6,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { authFetch } from "@/lib/api/client";
-import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import {
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  ChevronRight,
+  FileText,
+  Mic,
+  FolderOpen,
+  Award,
+  ClipboardCheck,
+  FileBarChart,
+  type LucideIcon,
+} from "lucide-react";
 
 interface ArtifactItem {
   id: string;
@@ -16,6 +28,7 @@ interface ArtifactItem {
   score?: number | null;
   rank?: string | null;
   status?: string | null;
+  skillKind?: "essay" | "interview";
 }
 interface ScoreDelta {
   count: number;
@@ -24,6 +37,7 @@ interface ScoreDelta {
   delta: number | null;
 }
 interface ArtifactsResponse {
+  studentId?: string;
   window: { start: string | null; end: string };
   artifacts: {
     essays: ArtifactItem[];
@@ -48,24 +62,38 @@ const fmtDate = (iso?: string) => {
   return Number.isNaN(d.getTime()) ? "" : `${d.getMonth() + 1}/${d.getDate()}`;
 };
 
-function DeltaChip({ label, s }: { label: string; s: ScoreDelta }) {
+function ScoreTile({ label, s }: { label: string; s: ScoreDelta }) {
   if (s.count === 0 && s.avg === null) return null;
   const d = s.delta;
   const Icon = d === null || d === 0 ? Minus : d > 0 ? TrendingUp : TrendingDown;
   const color = d === null || d === 0 ? "text-muted-foreground" : d > 0 ? "text-emerald-600" : "text-rose-600";
   return (
-    <div className="flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs">
-      <span className="font-medium">{label}</span>
-      <span className="text-muted-foreground">平均 {s.avg ?? "—"}</span>
-      {d !== null && (
-        <span className={`flex items-center gap-0.5 ${color}`}>
-          <Icon className="size-3" />
-          {d > 0 ? `+${d}` : d}
-        </span>
-      )}
+    <div className="flex-1 min-w-[120px] rounded-lg border bg-muted/30 px-3 py-2">
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-muted-foreground">{label}（{s.count}件）</span>
+        {d !== null && (
+          <span className={`flex items-center gap-0.5 text-xs font-medium ${color}`}>
+            <Icon className="size-3" />
+            {d > 0 ? `+${d}` : d}
+          </span>
+        )}
+      </div>
+      <div className="mt-0.5 flex items-baseline gap-1">
+        <span className="text-xl font-bold">{s.avg ?? "—"}</span>
+        <span className="text-[11px] text-muted-foreground">平均点</span>
+      </div>
     </div>
   );
 }
+
+const GROUP_ICON: Record<string, LucideIcon> = {
+  essays: FileText,
+  interviews: Mic,
+  documents: FolderOpen,
+  activities: Award,
+  skillChecks: ClipboardCheck,
+  reports: FileBarChart,
+};
 
 export default function SessionArtifactsPanel({ endpoint, studentView = false }: Props) {
   const [data, setData] = useState<ArtifactsResponse | null>(null);
@@ -90,19 +118,45 @@ export default function SessionArtifactsPanel({ endpoint, studentView = false }:
     };
   }, [endpoint]);
 
-  const hrefOf = (kind: string, id: string): string | null => {
-    if (!studentView) return null;
+  const studentId = data?.studentId;
+
+  const hrefOf = (kind: string, it: ArtifactItem): string | null => {
+    const id = it.id;
+    if (studentView) {
+      switch (kind) {
+        case "essays":
+          return `/student/essay/${id}`;
+        case "interviews":
+          return `/student/interview/${id}/result`;
+        case "documents":
+          return `/student/documents/${id}`;
+        case "activities":
+          return `/student/activities/${id}`;
+        case "skillChecks":
+          return it.skillKind === "interview"
+            ? `/student/interview-skill-check/${id}`
+            : `/student/skill-check/${id}`;
+        case "reports":
+          return `/student/growth/reports/${id}`;
+        default:
+          return null;
+      }
+    }
+    // 管理者/講師
+    if (!studentId) return null;
     switch (kind) {
-      case "essays":
-        return `/student/essay/${id}`;
-      case "interviews":
-        return `/student/interview/${id}/result`;
+      case "reports":
+        return `/admin/reports/${studentId}/${id}`;
       case "documents":
         return `/student/documents/${id}`;
       case "activities":
         return `/student/activities/${id}`;
-      case "reports":
-        return `/student/growth`;
+      case "essays":
+        return `/admin/students/${studentId}?tab=performance&essay=${id}`;
+      case "interviews":
+        return `/admin/students/${studentId}?tab=performance&interview=${id}`;
+      case "skillChecks":
+        return `/admin/students/${studentId}?tab=performance`;
       default:
         return null;
     }
@@ -124,7 +178,17 @@ export default function SessionArtifactsPanel({ endpoint, studentView = false }:
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">前回のセッション以降の取り組み</CardTitle>
+        <div className="flex items-center justify-between gap-2">
+          <CardTitle className="text-base">前回のセッション以降の取り組み</CardTitle>
+          {!studentView && studentId && (
+            <Link
+              href={`/admin/students/${studentId}`}
+              className="text-xs text-primary hover:underline flex-shrink-0"
+            >
+              生徒の詳細・履歴を開く
+            </Link>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {loading ? (
@@ -138,32 +202,42 @@ export default function SessionArtifactsPanel({ endpoint, studentView = false }:
           <>
             {/* スコア変化 */}
             {(data.scoreSummary.essay.avg !== null || data.scoreSummary.interview.avg !== null) && (
-              <div className="flex flex-wrap gap-2">
-                <DeltaChip label="小論文" s={data.scoreSummary.essay} />
-                <DeltaChip label="面接" s={data.scoreSummary.interview} />
+              <div className="flex gap-2">
+                <ScoreTile label="小論文" s={data.scoreSummary.essay} />
+                <ScoreTile label="面接" s={data.scoreSummary.interview} />
               </div>
             )}
 
             {total === 0 ? (
-              <p className="text-sm text-muted-foreground">この期間の取り組みはありません</p>
+              <p className="py-6 text-center text-sm text-muted-foreground">
+                この期間の取り組みはありません
+              </p>
             ) : (
               <div className="space-y-3">
                 {groups.map((g) => {
                   const items = data.artifacts[g.key];
                   if (items.length === 0) return null;
+                  const GroupIcon = GROUP_ICON[g.key] ?? FileText;
                   return (
                     <div key={g.key} className="space-y-1.5">
-                      <p className="text-xs font-medium text-muted-foreground">
-                        {g.title}（{items.length}）
-                      </p>
+                      <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                        <GroupIcon className="size-3.5" />
+                        <span>{g.title}</span>
+                        <span className="text-[11px]">{items.length}</span>
+                      </div>
                       <div className="space-y-1">
                         {items.map((it) => {
-                          const href = hrefOf(g.key, it.id);
+                          const href = hrefOf(g.key, it);
                           const inner = (
-                            <div className="flex items-center justify-between rounded-md border px-3 py-1.5 text-sm hover:bg-accent/50 transition-colors">
+                            <div
+                              className={`flex items-center justify-between rounded-md border px-3 py-2 text-sm transition-colors ${
+                                href ? "hover:bg-accent hover:border-primary/40 cursor-pointer" : ""
+                              }`}
+                            >
                               <div className="flex items-center gap-2 min-w-0">
+                                <GroupIcon className="size-4 text-muted-foreground flex-shrink-0" />
                                 {it.at && (
-                                  <span className="text-xs text-muted-foreground flex-shrink-0">
+                                  <span className="text-xs text-muted-foreground flex-shrink-0 w-9">
                                     {fmtDate(it.at)}
                                   </span>
                                 )}
@@ -180,6 +254,7 @@ export default function SessionArtifactsPanel({ endpoint, studentView = false }:
                                 {it.status && (
                                   <Badge variant="secondary" className="text-xs">{it.status}</Badge>
                                 )}
+                                {href && <ChevronRight className="size-4 text-muted-foreground" />}
                               </div>
                             </div>
                           );

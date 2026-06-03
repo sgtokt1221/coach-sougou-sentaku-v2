@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -84,7 +84,13 @@ function interviewScoreColor(total: number): string {
   return "text-rose-600 dark:text-rose-400";
 }
 
-export function InterviewsSection({ studentId }: { studentId: string }) {
+export function InterviewsSection({
+  studentId,
+  autoOpenInterviewId,
+}: {
+  studentId: string;
+  autoOpenInterviewId?: string;
+}) {
   const { data: interviews, isLoading, error } = useAuthSWR<InterviewListItem[]>(
     `/api/admin/students/${studentId}/interviews`
   );
@@ -95,6 +101,18 @@ export function InterviewsSection({ studentId }: { studentId: string }) {
   const [detailLoading, setDetailLoading] = useState(false);
 
   const items = interviews ?? [];
+
+  // deep-link: ?interview=[id] で該当面接の詳細を自動オープン（一度だけ）
+  const autoOpenedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!autoOpenInterviewId) return;
+    if (autoOpenedRef.current === autoOpenInterviewId) return;
+    if (isLoading) return;
+    autoOpenedRef.current = autoOpenInterviewId;
+    setOpen(true);
+    openDetail(autoOpenInterviewId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoOpenInterviewId, isLoading]);
 
   // Statistics
   const completedInterviews = items.filter((i) => i.scores);

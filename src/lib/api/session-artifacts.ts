@@ -19,6 +19,8 @@ export interface ArtifactItem {
   score?: number | null;
   rank?: string | null;
   status?: string | null;
+  /** スキルチェックの種別（リンク先振り分け用） */
+  skillKind?: "essay" | "interview";
 }
 
 export interface ScoreDelta {
@@ -156,7 +158,11 @@ export async function getSessionPeriodArtifacts(
     }));
 
   // --- skill checks (essay + interview) ---
-  const skillItems = (snap: FirebaseFirestore.QuerySnapshot | null, kind: string): ArtifactItem[] =>
+  const skillItems = (
+    snap: FirebaseFirestore.QuerySnapshot | null,
+    kind: string,
+    skillKind: "essay" | "interview",
+  ): ArtifactItem[] =>
     (snap?.docs ?? [])
       .map((d) => ({ id: d.id, ...d.data() } as Record<string, unknown>))
       .filter((s) => inWindow(s.takenAt, lower, upper))
@@ -164,14 +170,15 @@ export async function getSessionPeriodArtifacts(
         id: s.id as string,
         at: toIsoString(s.takenAt),
         label: kind,
+        skillKind,
         rank: (s.rank as string) ?? null,
         score: typeof (s.scores as { total?: number } | undefined)?.total === "number"
           ? (s.scores as { total: number }).total
           : null,
       }));
   const skillChecks: ArtifactItem[] = [
-    ...skillItems(skillSnap, "小論文スキルチェック"),
-    ...skillItems(ivSkillSnap, "面接スキルチェック"),
+    ...skillItems(skillSnap, "小論文スキルチェック", "essay"),
+    ...skillItems(ivSkillSnap, "面接スキルチェック", "interview"),
   ];
 
   // --- growth reports (shared only) ---
