@@ -157,7 +157,10 @@ export async function GET(request: NextRequest) {
         if (s.status === "cancelled") continue;
         const scheduledAt = s.scheduledAt as string | undefined;
         if (!scheduledAt) continue;
-        const start = new Date(scheduledAt);
+        // scheduledAt は TZ 無しの JST-naive 文字列 ("2026-06-03T11:00")。
+        // サーバー(UTC)で誤解釈されないよう、他箇所と同様に JST として解釈する。
+        const hasTz = /[zZ]$|[+-]\d{2}:?\d{2}$/.test(scheduledAt);
+        const start = new Date(hasTz ? scheduledAt : `${scheduledAt}${JST_OFFSET}`);
         if (isNaN(start.getTime())) continue;
         if (!inRange(start)) continue;
         const durationMin = typeof s.duration === "number" ? s.duration : 60;
@@ -182,7 +185,8 @@ export async function GET(request: NextRequest) {
           startAt: start.toISOString(),
           endAt: end.toISOString(),
           allDay: false,
-          date: start.toISOString().slice(0, 10),
+          // セル振り分けキーは JST 暦日 (UTC日付だと早朝/深夜セッションが前後日にズレる)
+          date: start.toLocaleDateString("en-CA", { timeZone: "Asia/Tokyo" }),
           type: "session",
           label,
           description: s.notes || undefined,

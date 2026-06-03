@@ -5,6 +5,7 @@ import {
   buildDocumentSectionCoachSystemPrompt,
   extractSuggestion,
   stripSuggestion,
+  type DocumentCoachSelfAnalysisContext,
 } from "@/lib/ai/prompts/document-coach";
 import type {
   DocumentCoachMessage,
@@ -84,24 +85,47 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // 大学名取得 (任意)
+  // 大学名・学部名・AP取得 (任意)
   let universityName: string | undefined;
   let facultyName: string | undefined;
+  let admissionPolicy: string | undefined;
   if (body.universityId) {
     try {
       const uniSnap = await adminDb.doc(`universities/${body.universityId}`).get();
       if (uniSnap.exists) {
         const uni = uniSnap.data() as {
           name?: string;
-          faculties?: Array<{ id: string; name?: string }>;
+          faculties?: Array<{ id: string; name?: string; admissionPolicy?: string }>;
         };
         universityName = uni.name;
         const fac = uni.faculties?.find((f) => f.id === body.facultyId);
-        if (fac) facultyName = fac.name;
+        if (fac) {
+          facultyName = fac.name;
+          if (fac.admissionPolicy) admissionPolicy = fac.admissionPolicy;
+        }
       }
     } catch (err) {
       console.warn("[documents/section-coach] university fetch failed:", err);
     }
+  }
+
+  // 自己分析取得 (任意。認証済み uid のみ。/api/self-analysis と同じトップレベルパス)
+  // ※ admin/superadmin が呼んだ場合は本人=管理者の uid を見るため通常は未取得 (undefined) で続行する。
+  let selfAnalysis: DocumentCoachSelfAnalysisContext | undefined;
+  try {
+    const saDoc = await adminDb.doc(`selfAnalysis/${uid}`).get();
+    if (saDoc.exists) {
+      const sa = saDoc.data()!;
+      selfAnalysis = {
+        values: sa.values?.coreValues,
+        strengths: sa.strengths?.strengths,
+        vision: sa.vision?.longTermVision,
+        selfStatement: sa.identity?.selfStatement,
+        uniqueNarrative: sa.identity?.uniqueNarrative,
+      };
+    }
+  } catch (err) {
+    console.warn("[documents/section-coach] selfAnalysis fetch failed:", err);
   }
 
   const historyMessages: DocumentCoachMessage[] = existing?.messages ?? [];
@@ -116,6 +140,8 @@ export async function POST(request: NextRequest) {
     documentType: body.documentType,
     universityName,
     facultyName,
+    admissionPolicy,
+    selfAnalysis,
     turnCount,
   });
 

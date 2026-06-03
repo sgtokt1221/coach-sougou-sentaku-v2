@@ -10,6 +10,14 @@ import { FACULTY_AGENCY_FOCUS_DOCUMENT } from "./shared";
 
 export const SUGGESTION_DELIMITER = "---ここから振り込み候補---";
 
+export interface DocumentCoachSelfAnalysisContext {
+  values?: string[];
+  strengths?: string[];
+  vision?: string;
+  selfStatement?: string;
+  uniqueNarrative?: string;
+}
+
 export interface DocumentCoachContext {
   frameworkType: string;
   sectionTitle: string;
@@ -18,7 +26,29 @@ export interface DocumentCoachContext {
   documentType?: string;
   universityName?: string;
   facultyName?: string;
+  /** 志望学部のアドミッション・ポリシー本文 (背景知識として参照) */
+  admissionPolicy?: string;
+  /** 生徒の自己分析結果 (価値観・強み等。背景知識として参照) */
+  selfAnalysis?: DocumentCoachSelfAnalysisContext;
   turnCount: number;
+}
+
+/**
+ * 自己分析を背景知識セクションに整形する (essay.ts のスタイルを踏襲)。
+ */
+function buildDocumentSelfAnalysisSection(
+  sa?: DocumentCoachSelfAnalysisContext
+): string {
+  if (!sa) return "";
+  const lines: string[] = [];
+  if (sa.values?.length) lines.push(`- 価値観: ${sa.values.join("、")}`);
+  if (sa.strengths?.length) lines.push(`- 強み: ${sa.strengths.join("、")}`);
+  if (sa.vision) lines.push(`- 将来ビジョン: ${sa.vision.slice(0, 300)}`);
+  if (sa.selfStatement) lines.push(`- 自己宣言: ${sa.selfStatement.slice(0, 300)}`);
+  if (sa.uniqueNarrative)
+    lines.push(`- 自分だけのストーリー: ${sa.uniqueNarrative.slice(0, 300)}`);
+  if (lines.length === 0) return "";
+  return `\n## 生徒の自己分析結果 (背景知識として把握するだけ。露骨な引用は避け、内容との整合を引き出す問い返しに使う)\n${lines.join("\n")}\n`;
 }
 
 export function buildDocumentSectionCoachSystemPrompt(
@@ -30,6 +60,12 @@ export function buildDocumentSectionCoachSystemPrompt(
       : "志望校: (未選択)";
 
   const documentTypeLine = ctx.documentType ? `書類種別: ${ctx.documentType}` : "";
+
+  const apSection = ctx.admissionPolicy
+    ? `\n## 志望校のアドミッション・ポリシー (背景知識として把握するだけ。逐語引用は避け、整合性を引き出す問い返しに使う)\n${ctx.admissionPolicy}\n`
+    : "";
+
+  const selfAnalysisSection = buildDocumentSelfAnalysisSection(ctx.selfAnalysis);
 
   const currentContentSection = ctx.currentSectionContent.trim()
     ? `\n## このセクションに現在書かれている内容\n\`\`\`\n${ctx.currentSectionContent}\n\`\`\`\n`
@@ -90,7 +126,7 @@ ${suggestionMode}
 - フレームワーク: ${ctx.frameworkType}
 - セクション: ${ctx.sectionTitle}
 - ${targetLine}
-${documentTypeLine ? `- ${documentTypeLine}\n` : ""}
+${documentTypeLine ? `- ${documentTypeLine}\n` : ""}${apSection}${selfAnalysisSection}
 ${currentContentSection}
 以上を踏まえ、 生徒の発話に短く応答してください。 問い返しを基本としつつ、 必要なら例示や骨子を出して構いません。`;
 }

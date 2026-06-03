@@ -18,6 +18,7 @@
  */
 
 import { useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { DrawSVGPlugin } from "gsap/DrawSVGPlugin";
@@ -106,7 +107,11 @@ export function GrowthTree({
   const allDone = completedSteps >= 7;
   const labelsVisible = showLabels ?? !compact;
   const [hoveredStep, setHoveredStep] = useState<number | null>(null);
+  // ホバーツールチップは Portal で body 直下に固定座標表示する (祖先の overflow に
+  // クリップされず確実に枠外へ出すため)。tipPos はビューポート座標。
+  const [tipPos, setTipPos] = useState<{ left: number; top: number } | null>(null);
   const scopeRef = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
   const hoverTlsRef = useRef<Map<number, gsap.core.Timeline>>(new Map());
 
   // SVG の <defs> ID はインスタンス毎に一意化する。
@@ -428,11 +433,25 @@ export function GrowthTree({
   // ツールチップへの移動猶予 (150ms) を与え、 すぐに消えないようにする
   const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  /** 果実 (viewBox 座標) の画面座標を算出し、ツールチップ位置を更新する */
+  const updateTipPos = (step: number) => {
+    const svg = svgRef.current;
+    const pos = FRUIT_POS[step - 1];
+    if (!svg || !pos) return;
+    const rect = svg.getBoundingClientRect();
+    const rawLeft = rect.left + (pos.x / 360) * rect.width;
+    const top = rect.top + (pos.y / 300) * rect.height + 22;
+    // 280px 幅 (半幅 140) の左右はみ出しを防ぐ
+    const left = Math.min(Math.max(rawLeft, 148), window.innerWidth - 148);
+    setTipPos({ left, top });
+  };
+
   const handleFruitHover = (step: number) => {
     if (leaveTimerRef.current) {
       clearTimeout(leaveTimerRef.current);
       leaveTimerRef.current = null;
     }
+    updateTipPos(step);
     setHoveredStep(step);
     hoverTlsRef.current.get(step)?.play();
   };
@@ -481,6 +500,7 @@ export function GrowthTree({
       {/* SVG 木 */}
       <div className={cn("relative w-full flex justify-center", compact ? "px-2" : "px-4")}>
         <svg
+          ref={svgRef}
           viewBox="0 0 360 300"
           className={cn("w-full h-auto", compact ? "max-w-[260px]" : "max-w-[480px]")}
           aria-label={`自己分析の進捗 ${completedSteps}/7`}
@@ -774,54 +794,58 @@ export function GrowthTree({
           )}
         </svg>
 
-        {/* ホバー時のツールチップ (= ツールチップ自体にも hover 維持ロジック付き) */}
-        {interactive && hoveredStep != null && hoveredMeta && hoveredPosInfo && (
-          <div
-            className="pointer-events-auto absolute z-10 w-[280px] -translate-x-1/2 rounded-lg border bg-background/95 p-3 shadow-xl backdrop-blur-sm"
-            style={{
-              left: `${(hoveredPosInfo.x / 360) * 100}%`,
-              top: `${(hoveredPosInfo.y / 300) * 100}%`,
-              marginTop: "26px",
-            }}
-            onMouseEnter={() => handleFruitHover(hoveredStep)}
-            onMouseLeave={() => handleFruitLeave(hoveredStep)}
-          >
-            <div className="flex items-center gap-2 mb-1.5">
-              <span
-                className="inline-block size-2.5 rounded-full shadow-sm"
-                style={{
-                  backgroundColor: hoveredPosInfo.color,
-                  boxShadow: `0 0 8px ${hoveredPosInfo.color}`,
-                }}
-              />
-              <p className="text-xs font-semibold text-foreground">{hoveredMeta.title}</p>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onFruitClick?.(hoveredStep);
-                }}
-                className="ml-auto rounded bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-              >
-                編集
-              </button>
-            </div>
-            {hoveredData.length > 0 ? (
-              <ul className="space-y-1">
-                {hoveredData.map((entry, i) => (
-                  <li key={i} className="text-[11px] leading-snug">
-                    <span className="text-muted-foreground">{entry.key}: </span>
-                    <span className="text-foreground">
-                      {entry.value.length > 80 ? entry.value.slice(0, 80) + "…" : entry.value}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-[11px] text-muted-foreground">保存された内容はありません</p>
-            )}
-          </div>
-        )}
+        {/* ホバー時のツールチップは Portal で body 直下に固定配置 (祖先 overflow で
+            クリップされず確実に枠外へ出すため)。ツールチップ自体にも hover 維持ロジック付き */}
+        {interactive &&
+          hoveredStep != null &&
+          hoveredMeta &&
+          hoveredPosInfo &&
+          tipPos &&
+          typeof document !== "undefined" &&
+          createPortal(
+            <div
+              className="pointer-events-auto fixed z-50 w-[280px] -translate-x-1/2 rounded-lg border bg-background/95 p-3 shadow-xl backdrop-blur-sm"
+              style={{ left: tipPos.left, top: tipPos.top }}
+              onMouseEnter={() => handleFruitHover(hoveredStep)}
+              onMouseLeave={() => handleFruitLeave(hoveredStep)}
+            >
+              <div className="flex items-center gap-2 mb-1.5">
+                <span
+                  className="inline-block size-2.5 rounded-full shadow-sm"
+                  style={{
+                    backgroundColor: hoveredPosInfo.color,
+                    boxShadow: `0 0 8px ${hoveredPosInfo.color}`,
+                  }}
+                />
+                <p className="text-xs font-semibold text-foreground">{hoveredMeta.title}</p>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onFruitClick?.(hoveredStep);
+                  }}
+                  className="ml-auto rounded bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+                >
+                  編集
+                </button>
+              </div>
+              {hoveredData.length > 0 ? (
+                <ul className="space-y-1">
+                  {hoveredData.map((entry, i) => (
+                    <li key={i} className="text-[11px] leading-snug">
+                      <span className="text-muted-foreground">{entry.key}: </span>
+                      <span className="text-foreground">
+                        {entry.value.length > 80 ? entry.value.slice(0, 80) + "…" : entry.value}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-[11px] text-muted-foreground">保存された内容はありません</p>
+              )}
+            </div>,
+            document.body,
+          )}
       </div>
 
       {/* 下部: 完了したセクションのラベル */}
