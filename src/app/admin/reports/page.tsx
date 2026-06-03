@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +21,8 @@ import { authFetch } from "@/lib/api/client";
 import { useAuthSWR } from "@/lib/api/swr";
 import { toast } from "sonner";
 import type { GrowthReportSummary, GrowthReport } from "@/lib/types/growth-report";
+import type { StudentListItem } from "@/lib/types/admin";
+import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
 import {
   ReportDetailCard,
   ScoreChangeIndicator,
@@ -55,6 +57,21 @@ export default function AdminReportsPage() {
     isLoading: loadingLatest,
     mutate: mutateLatest,
   } = useAuthSWR<GrowthReportSummary[]>("/api/admin/reports/latest");
+
+  // 生徒のスキルランク (生徒一覧と同一キー → SWR が dedupe)。レポート行にバッヂ表示するため
+  const { data: studentsData } = useAuthSWR<StudentListItem[]>(
+    "/api/admin/students?limit=500"
+  );
+  const skillByStudent = useMemo(() => {
+    const m = new Map<
+      string,
+      { essay: StudentListItem["currentSkillRank"]; interview: StudentListItem["currentInterviewRank"] }
+    >();
+    (studentsData ?? []).forEach((s) =>
+      m.set(s.uid, { essay: s.currentSkillRank, interview: s.currentInterviewRank })
+    );
+    return m;
+  }, [studentsData]);
 
   // 一括生成直後はその結果を優先表示。それ以外は API の最新一覧
   const displayReports = reports ?? latestReports ?? [];
@@ -250,6 +267,24 @@ export default function AdminReportsPage() {
                     <div className="min-w-0 flex-1">
                       <div className="mb-1 flex items-center gap-2">
                         <p className="font-medium">{report.studentName}</p>
+                        {(() => {
+                          const sk = skillByStudent.get(report.studentId);
+                          if (!sk) return null;
+                          return (
+                            <span className="flex items-center gap-1">
+                              {sk.essay && (
+                                <span title="小論文スキル">
+                                  <SkillRankBadge rank={sk.essay} size="sm" animate={false} />
+                                </span>
+                              )}
+                              {sk.interview && (
+                                <span title="面接スキル">
+                                  <SkillRankBadge rank={sk.interview} size="sm" animate={false} />
+                                </span>
+                              )}
+                            </span>
+                          );
+                        })()}
                         <Badge variant="outline" className="text-[10px]">
                           {report.period === "weekly" ? "週次" : "月次"}
                         </Badge>
