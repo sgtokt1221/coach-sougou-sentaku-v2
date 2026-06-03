@@ -117,33 +117,68 @@ export function GrowthTree({
 
   useGSAP(
     () => {
+      // このインスタンス限定のスコープ付きセレクタ。
+      // 遅延実行される startLoops や matchMedia 内でも確実に自分の要素だけを
+      // 対象とし、ダッシュボードの 2 インスタンス間でのグローバル汚染を防ぐ。
+      const q = gsap.utils.selector(scopeRef);
+
+      /**
+       * 木を最終的な可視状態へ即座にスナップする。
+       * アニメを走らせられない/中断された場合でも「幹・枝が潰れたまま」残らないようにする保険。
+       * 幹・枝・樹皮は DrawSVG が書き込む dash を消して本来の完全表示ストロークへ戻す
+       * (getTotalLength()=0 で潰れていても確実に可視化される)。
+       */
+      const applyRestingState = () => {
+        gsap.set(
+          [...q(".gt-sky"), ...q(".gt-ground"), ...q(".gt-cloud"), ...q(".gt-leaf-highlight"), ...q(".gt-butterfly")],
+          { opacity: 1, clearProps: "transform" },
+        );
+        gsap.set([...q(".gt-trunk"), ...q(".gt-bark"), ...q(".gt-branch")], {
+          clearProps: "strokeDasharray,strokeDashoffset",
+        });
+        gsap.set(q(".gt-bark"), { opacity: 0.4 });
+        gsap.set([...q(".gt-leaf"), ...q(".gt-fruit")], { scale: 1, clearProps: "transform" });
+        gsap.set(q(".gt-title-char"), { y: 0, opacity: 1 });
+        gsap.set(q(".gt-seed"), { opacity: 0 });
+        if (allDone) {
+          gsap.set(q(".gt-sparkle"), { scale: 1, opacity: 1 });
+        }
+      };
+
       const mm = gsap.matchMedia();
 
       mm.add("(prefers-reduced-motion: no-preference)", () => {
+        // display:none 配下や未レイアウト状態では DrawSVG がパス長を測れず
+        // 幹・枝が潰れたまま固定される。アニメさせず最終可視状態にして抜ける。
+        if (!scopeRef.current || scopeRef.current.offsetParent === null) {
+          applyRestingState();
+          return;
+        }
+
         // ========================================
         // マスタータイムライン (生成アニメ)
         // ========================================
         const master = gsap.timeline({ defaults: { force3D: true } });
 
         // 0: 初期状態を設定
-        master.set([".gt-sky", ".gt-ground", ".gt-cloud"], { opacity: 0 });
-        master.set(".gt-trunk", { drawSVG: "50% 50%" });
-        master.set(".gt-bark", { drawSVG: "50% 50%", opacity: 0 });
-        master.set(".gt-branch", { drawSVG: "0%" });
-        master.set(".gt-leaf", { scale: 0, transformOrigin: "center center" });
-        master.set(".gt-leaf-highlight", { opacity: 0 });
-        master.set(".gt-fruit", { scale: 0, transformOrigin: "center center" });
-        master.set(".gt-seed", { y: -30, opacity: 0 });
-        master.set(".gt-title-char", { y: 20, opacity: 0 });
-        master.set(".gt-sparkle", { scale: 0, opacity: 0, transformOrigin: "center center" });
-        master.set(".gt-butterfly", { opacity: 0 });
+        master.set([...q(".gt-sky"), ...q(".gt-ground"), ...q(".gt-cloud")], { opacity: 0 });
+        master.set(q(".gt-trunk"), { drawSVG: "50% 50%" });
+        master.set(q(".gt-bark"), { drawSVG: "50% 50%", opacity: 0 });
+        master.set(q(".gt-branch"), { drawSVG: "0%" });
+        master.set(q(".gt-leaf"), { scale: 0, transformOrigin: "center center" });
+        master.set(q(".gt-leaf-highlight"), { opacity: 0 });
+        master.set(q(".gt-fruit"), { scale: 0, transformOrigin: "center center" });
+        master.set(q(".gt-seed"), { y: -30, opacity: 0 });
+        master.set(q(".gt-title-char"), { y: 20, opacity: 0 });
+        master.set(q(".gt-sparkle"), { scale: 0, opacity: 0, transformOrigin: "center center" });
+        master.set(q(".gt-butterfly"), { opacity: 0 });
 
         // 空 → 雲
-        master.to(".gt-sky", { opacity: 1, duration: 0.4, ease: "power2.out" }, 0);
-        master.to(".gt-cloud", { opacity: 0.78, duration: 0.5, stagger: 0.1 }, 0.1);
+        master.to(q(".gt-sky"), { opacity: 1, duration: 0.4, ease: "power2.out" }, 0);
+        master.to(q(".gt-cloud"), { opacity: 0.78, duration: 0.5, stagger: 0.1 }, 0.1);
 
         // タイトル文字 stagger
-        master.to(".gt-title-char", {
+        master.to(q(".gt-title-char"), {
           y: 0,
           opacity: 1,
           duration: 0.5,
@@ -152,10 +187,10 @@ export function GrowthTree({
         }, 0.1);
 
         // 地面
-        master.to(".gt-ground", { opacity: 1, duration: 0.4 }, 0.2);
+        master.to(q(".gt-ground"), { opacity: 1, duration: 0.4 }, 0.2);
 
         // 種が落ちる
-        master.to(".gt-seed", {
+        master.to(q(".gt-seed"), {
           y: 0,
           opacity: 1,
           duration: 0.4,
@@ -163,13 +198,13 @@ export function GrowthTree({
         }, 0.4);
 
         // 種が消えて幹が生える
-        master.to(".gt-seed", { opacity: 0, duration: 0.2 }, 0.75);
-        master.to(".gt-trunk", {
+        master.to(q(".gt-seed"), { opacity: 0, duration: 0.2 }, 0.75);
+        master.to(q(".gt-trunk"), {
           drawSVG: "0% 100%",
           duration: 0.7,
           ease: "power2.out",
         }, 0.6);
-        master.to(".gt-bark", {
+        master.to(q(".gt-bark"), {
           drawSVG: "0% 100%",
           opacity: 0.4,
           duration: 0.5,
@@ -177,27 +212,34 @@ export function GrowthTree({
         }, 0.9);
 
         // 枝が順に伸びる
-        master.to(".gt-branch", {
+        master.to(q(".gt-branch"), {
           drawSVG: "0% 100%",
           duration: 0.5,
           stagger: 0.08,
           ease: "power2.out",
         }, 1.2);
 
+        // 幹・枝の描き込み完了後、DrawSVG が書き込んだ dash を消す。
+        // 万一 getTotalLength()=0 で潰れていても、ここで本来の完全表示ストロークに戻り
+        // 「幹・枝が消える」状態を確実に防ぐ (通常時は見た目不変)。
+        master.set([...q(".gt-trunk"), ...q(".gt-bark"), ...q(".gt-branch")], {
+          clearProps: "strokeDasharray,strokeDashoffset",
+        }, 2.3);
+
         // 葉が pop-in
-        master.to(".gt-leaf", {
+        master.to(q(".gt-leaf"), {
           scale: 1,
           duration: 0.7,
           stagger: { each: 0.06, from: "random" },
           ease: "back.out(1.7)",
         }, 1.65);
-        master.to(".gt-leaf-highlight", {
+        master.to(q(".gt-leaf-highlight"), {
           opacity: 0.25,
           duration: 0.4,
         }, 2.1);
 
         // 果実が pop-in (完了済みのみ可視)
-        master.to(".gt-fruit", {
+        master.to(q(".gt-fruit"), {
           scale: 1,
           duration: 0.9,
           stagger: 0.12,
@@ -205,11 +247,11 @@ export function GrowthTree({
         }, 2.1);
 
         // 蝶が現れる
-        master.to(".gt-butterfly", { opacity: 1, duration: 0.5 }, 2.5);
+        master.to(q(".gt-butterfly"), { opacity: 1, duration: 0.5 }, 2.5);
 
         // 全完了時のキラキラ
         if (allDone) {
-          master.to(".gt-sparkle", {
+          master.to(q(".gt-sparkle"), {
             scale: 1,
             opacity: 1,
             duration: 0.6,
@@ -223,7 +265,7 @@ export function GrowthTree({
 
         function startLoops() {
           // 葉のゆらぎ
-          gsap.to(".gt-leaf", {
+          gsap.to(q(".gt-leaf"), {
             rotation: 2,
             transformOrigin: "center center",
             duration: 3.5,
@@ -234,7 +276,7 @@ export function GrowthTree({
           });
 
           // 雲の流れ
-          gsap.utils.toArray<SVGElement>(".gt-cloud").forEach((cloud, i) => {
+          gsap.utils.toArray<SVGElement>(q(".gt-cloud")).forEach((cloud, i) => {
             const baseCx = parseFloat(cloud.getAttribute("data-cx") || "0");
             gsap.fromTo(
               cloud,
@@ -250,7 +292,7 @@ export function GrowthTree({
           });
 
           // 完了済み果実のふわふわ
-          const doneFruits = gsap.utils.toArray<SVGElement>(".gt-fruit.is-done");
+          const doneFruits = gsap.utils.toArray<SVGElement>(q(".gt-fruit.is-done"));
           doneFruits.forEach((fruit, i) => {
             gsap.to(fruit, {
               y: "-=3",
@@ -263,7 +305,7 @@ export function GrowthTree({
           });
 
           // 現在ステップのオーラ pulse
-          gsap.to(".gt-aura-current", {
+          gsap.to(q(".gt-aura-current"), {
             scale: 1.3,
             opacity: 0.9,
             transformOrigin: "center center",
@@ -301,7 +343,7 @@ export function GrowthTree({
             });
           }
           // 蝶の羽ばたき
-          gsap.to(".gt-wing-left", {
+          gsap.to(q(".gt-wing-left"), {
             scaleX: 0.4,
             transformOrigin: "right center",
             duration: 0.2,
@@ -309,7 +351,7 @@ export function GrowthTree({
             repeat: -1,
             yoyo: true,
           });
-          gsap.to(".gt-wing-right", {
+          gsap.to(q(".gt-wing-right"), {
             scaleX: 0.4,
             transformOrigin: "left center",
             duration: 0.2,
@@ -320,7 +362,7 @@ export function GrowthTree({
 
           // キラキラ pulse (全完了時)
           if (allDone) {
-            gsap.to(".gt-sparkle", {
+            gsap.to(q(".gt-sparkle"), {
               scale: 1.5,
               opacity: 0.6,
               duration: 1.6,
@@ -357,6 +399,8 @@ export function GrowthTree({
         });
 
         return () => {
+          // 中断/replay 時に潰れたまま残らないよう、最終可視状態へスナップ。
+          applyRestingState();
           hoverTlsRef.current.forEach((tl) => tl.kill());
           hoverTlsRef.current.clear();
         };
@@ -364,17 +408,7 @@ export function GrowthTree({
 
       mm.add("(prefers-reduced-motion: reduce)", () => {
         // モーション抑制: 即最終状態
-        gsap.set(
-          [".gt-sky", ".gt-ground", ".gt-cloud", ".gt-leaf-highlight", ".gt-butterfly"],
-          { opacity: 1, clearProps: "transform" },
-        );
-        gsap.set([".gt-trunk", ".gt-bark", ".gt-branch"], { drawSVG: "0% 100%" });
-        gsap.set([".gt-leaf", ".gt-fruit"], { scale: 1, clearProps: "transform" });
-        gsap.set(".gt-title-char", { y: 0, opacity: 1 });
-        gsap.set(".gt-seed", { opacity: 0 });
-        if (allDone) {
-          gsap.set(".gt-sparkle", { scale: 1, opacity: 1 });
-        }
+        applyRestingState();
       });
     },
     { scope: scopeRef, dependencies: [completedSteps, currentStep, allDone] },

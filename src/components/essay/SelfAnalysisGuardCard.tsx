@@ -24,6 +24,9 @@ export function SelfAnalysisGuardCard() {
   const isReady = completed >= REQUIRED_STEPS;
   const pct = Math.round((completed / TOTAL_STEPS) * 100);
 
+  // 自己分析が全て完了している場合は、執筆画面に表示すべきアクションがないので何も出さない
+  if (completed >= TOTAL_STEPS) return null;
+
   if (isReady) {
     return (
       <div className="flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm dark:border-emerald-900 dark:bg-emerald-950/30">
