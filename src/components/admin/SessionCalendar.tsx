@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { SESSION_TYPE_LABELS } from '@/lib/types/session';
 
@@ -20,6 +20,8 @@ interface SessionCalendarProps {
   onDropStudent: (studentId: string, date: string, time: string) => void;
   onMoveSession?: (sessionId: string, date: string, time: string) => void;
   onRemoveSession?: (sessionId: string) => void;
+  /** ブロック下端ドラッグで所要時間(分)を変更したとき */
+  onResizeSession?: (sessionId: string, duration: number) => void;
   onClickSession: (sessionId: string) => void;
 }
 
@@ -33,9 +35,20 @@ export default function SessionCalendar({
   onDropStudent,
   onMoveSession,
   onRemoveSession,
+  onResizeSession,
   onClickSession
 }: SessionCalendarProps) {
   const [dragoverCell, setDragoverCell] = useState<string | null>(null);
+  // 下端ドラッグによる duration リサイズの状態 (span = 30分単位の行数)
+  const [resize, setResize] = useState<{
+    id: string;
+    startY: number;
+    startSpan: number;
+    previewSpan: number;
+    maxSpan: number;
+  } | null>(null);
+  // リサイズ中はネイティブの移動ドラッグを抑止するためのフラグ
+  const isResizingRef = useRef(false);
 
   // 今日の日付
   const today = useMemo(() => {
@@ -108,6 +121,14 @@ export default function SessionCalendar({
       };
     }).filter((s): s is NonNullable<typeof s> => s !== null);
   }, [sessions, weekStart]);
+
+  // リサイズ確定後、サーバー反映で sessions が新 duration になったらプレビューを解除
+  // (解除を即時にするとデータ反映までの一瞬で旧高さに戻りちらつくため)
+  useEffect(() => {
+    if (!resize) return;
+    const p = sessionPositions.find((s) => s.id === resize.id);
+    if (p && p.gridRowEnd - p.gridRow === resize.previewSpan) setResize(null);
+  }, [sessionPositions, resize]);
 
   // セッションタイプ別の背景色
   const getSessionBgColor = (type: string) => {
@@ -234,11 +255,20 @@ export default function SessionCalendar({
         })}
 
         {/* セッションカード（ドラッグ移動対応） */}
-        {sessionPositions.map((session) => (
+        {sessionPositions.map((session) => {
+          const baseSpan = session.gridRowEnd - session.gridRow;
+          // リサイズ中/確定待ちのブロックはプレビューの span で高さを描く
+          const span = resize?.id === session.id ? resize.previewSpan : baseSpan;
+          return (
           <div
             key={session.id}
             draggable
             onDragStart={(e) => {
+              // リサイズ操作中はネイティブの移動ドラッグを発火させない
+              if (isResizingRef.current) {
+                e.preventDefault();
+                return;
+              }
               e.dataTransfer.setData('sessionId', session.id);
               e.dataTransfer.effectAllowed = 'move';
             }}
@@ -246,7 +276,7 @@ export default function SessionCalendar({
             style={{
               gridColumn: session.gridColumn,
               gridRow: session.gridRow,
-              height: `${31 * (session.gridRowEnd - session.gridRow) - 3}px`,
+              height: `${31 * span - 3}px`,
               margin: '1px',
             }}
             onClick={() => onClickSession(session.id)}
@@ -288,8 +318,59 @@ export default function SessionCalendar({
                 </>
               )}
             </div>
+
+            {/* 下端リサイズハンドル: ドラッグで所要時間(duration)を伸び縮み */}
+            {onResizeSession && (
+              <div
+                className="absolute inset-x-0 bottom-0 h-1.5 cursor-ns-resize bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity"
+                title="ドラッグで時間を変更"
+                onClick={(e) => e.stopPropagation()}
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  isResizingRef.current = true;
+                  (e.target as Element).setPointerCapture(e.pointerId);
+                  const startSpan = session.gridRowEnd - session.gridRow;
+                  // 表示下端(22:30)を超えないよう最大 span を制限
+                  const maxSpan = timeSlots.length + 2 - session.gridRow;
+                  setResize({
+                    id: session.id,
+                    startY: e.clientY,
+                    startSpan,
+                    previewSpan: startSpan,
+                    maxSpan,
+                  });
+                }}
+                onPointerMove={(e) => {
+                  if (resize?.id !== session.id) return;
+                  const deltaRows = Math.round((e.clientY - resize.startY) / 31);
+                  const previewSpan = Math.min(
+                    Math.max(1, resize.startSpan + deltaRows),
+                    resize.maxSpan
+                  );
+                  if (previewSpan !== resize.previewSpan) {
+                    setResize({ ...resize, previewSpan });
+                  }
+                }}
+                onPointerUp={() => {
+                  if (resize?.id !== session.id) return;
+                  isResizingRef.current = false;
+                  if (resize.previewSpan === resize.startSpan) {
+                    setResize(null);
+                    return;
+                  }
+                  // 確定。プレビューはデータ反映まで保持 (上の useEffect で解除)
+                  onResizeSession(session.id, resize.previewSpan * 30);
+                }}
+                onPointerCancel={() => {
+                  isResizingRef.current = false;
+                  setResize(null);
+                }}
+              />
+            )}
           </div>
-        ))}
+          );
+        })}
 
         {/* 現在時刻インジケーター */}
         {currentTimePosition && (

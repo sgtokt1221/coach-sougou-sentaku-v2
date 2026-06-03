@@ -178,6 +178,22 @@ export default function AdminSessionsPage() {
     }
   };
 
+  // セッション所要時間リサイズ（ブロック下端ドラッグで duration を変更）
+  const handleResizeSession = async (sessionId: string, duration: number) => {
+    const safe = Math.min(Math.max(duration, 30), 600); // 念のためクランプ (30分〜10時間)
+    try {
+      const response = await authFetch(`/api/sessions/${sessionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ duration: safe }),
+      });
+      if (!response.ok) throw new Error();
+      await mutateSessions();
+    } catch {
+      console.error('セッション時間変更エラー');
+    }
+  };
+
   // セッション削除（未配置に戻す）
   const handleRemoveSession = async (sessionId: string) => {
     if (!confirm('このセッションを未配置に戻しますか？')) return;
@@ -310,6 +326,7 @@ export default function AdminSessionsPage() {
             onDropStudent={handleDropStudent}
             onMoveSession={handleMoveSession}
             onRemoveSession={handleRemoveSession}
+            onResizeSession={handleResizeSession}
             onClickSession={handleSessionClick}
           />
         ) : (
