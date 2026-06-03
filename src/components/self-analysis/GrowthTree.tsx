@@ -17,7 +17,7 @@
  * - force3D でトランスフォームを GPU 合成
  */
 
-import { useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { DrawSVGPlugin } from "gsap/DrawSVGPlugin";
@@ -52,16 +52,16 @@ const FRUIT_POS = FRUIT_META.map((m, i) => ({
   ring: m.ring,
 }));
 
-// 葉の塊 (viewBox 360x300)
+// 葉の塊 (viewBox 360x300)。fill はグラデーション名 (インスタンス毎に prefix を付与)
 const LEAVES = [
-  { cx: 180, cy: 90, r: 58, fill: "url(#gt-leaf1)" },
-  { cx: 122, cy: 122, r: 47, fill: "url(#gt-leaf2)" },
-  { cx: 238, cy: 120, r: 49, fill: "url(#gt-leaf2)" },
-  { cx: 90, cy: 165, r: 36, fill: "url(#gt-leaf3)" },
-  { cx: 270, cy: 167, r: 38, fill: "url(#gt-leaf3)" },
-  { cx: 152, cy: 178, r: 33, fill: "url(#gt-leaf1)" },
-  { cx: 214, cy: 190, r: 36, fill: "url(#gt-leaf1)" },
-  { cx: 180, cy: 146, r: 58, fill: "url(#gt-leaf1)" },
+  { cx: 180, cy: 90, r: 58, grad: "gt-leaf1" },
+  { cx: 122, cy: 122, r: 47, grad: "gt-leaf2" },
+  { cx: 238, cy: 120, r: 49, grad: "gt-leaf2" },
+  { cx: 90, cy: 165, r: 36, grad: "gt-leaf3" },
+  { cx: 270, cy: 167, r: 38, grad: "gt-leaf3" },
+  { cx: 152, cy: 178, r: 33, grad: "gt-leaf1" },
+  { cx: 214, cy: 190, r: 36, grad: "gt-leaf1" },
+  { cx: 180, cy: 146, r: 58, grad: "gt-leaf1" },
 ];
 
 // 葉のハイライト
@@ -108,6 +108,17 @@ export function GrowthTree({
   const [hoveredStep, setHoveredStep] = useState<number | null>(null);
   const scopeRef = useRef<HTMLDivElement>(null);
   const hoverTlsRef = useRef<Map<number, gsap.core.Timeline>>(new Map());
+
+  // SVG の <defs> ID はインスタンス毎に一意化する。
+  // ダッシュボードは GrowthTree を 2 つ (モバイル/デスクトップ) 同時描画するため、
+  // ID が重複すると url(#...) 参照が別インスタンス (display:none 側) の defs を指し、
+  // 幹・枝・葉のグラデーション/フィルタが解決できず描画されない不具合が起きる。
+  const rawUid = useId();
+  const uid = rawUid.replace(/:/g, "");
+  /** defs の id 属性用 */
+  const gid = (name: string) => `${uid}-${name}`;
+  /** fill/stroke/filter の url(#...) 参照用 */
+  const gurl = (name: string) => `url(#${uid}-${name})`;
 
   const hoveredData =
     hoveredStep != null ? formatStepDataForTooltip(stepsData?.[hoveredStep]) : [];
@@ -321,7 +332,7 @@ export function GrowthTree({
           if (butterflyA) {
             gsap.to(butterflyA, {
               motionPath: {
-                path: "#gt-butterfly-path-a",
+                path: `#${gid("gt-butterfly-path-a")}`,
                 alignOrigin: [0.5, 0.5],
                 autoRotate: 30,
               },
@@ -333,7 +344,7 @@ export function GrowthTree({
           if (butterflyB) {
             gsap.to(butterflyB, {
               motionPath: {
-                path: "#gt-butterfly-path-b",
+                path: `#${gid("gt-butterfly-path-b")}`,
                 alignOrigin: [0.5, 0.5],
                 autoRotate: -20,
               },
@@ -476,47 +487,47 @@ export function GrowthTree({
           role="img"
         >
           <defs>
-            <linearGradient id="gt-trunk-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <linearGradient id={gid("gt-trunk-grad")} x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor="#5a3416" />
               <stop offset="45%" stopColor="#8a5828" />
               <stop offset="100%" stopColor="#6b3d1c" />
             </linearGradient>
-            <linearGradient id="gt-ground-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <linearGradient id={gid("gt-ground-grad")} x1="0%" y1="0%" x2="0%" y2="100%">
               <stop offset="0%" stopColor="#86efac" />
               <stop offset="100%" stopColor="#4ade80" />
             </linearGradient>
-            <radialGradient id="gt-leaf1" cx="35%" cy="30%" r="70%">
+            <radialGradient id={gid("gt-leaf1")} cx="35%" cy="30%" r="70%">
               <stop offset="0%" stopColor="#86efac" />
               <stop offset="60%" stopColor="#4ade80" />
               <stop offset="100%" stopColor="#16a34a" />
             </radialGradient>
-            <radialGradient id="gt-leaf2" cx="40%" cy="35%" r="65%">
+            <radialGradient id={gid("gt-leaf2")} cx="40%" cy="35%" r="65%">
               <stop offset="0%" stopColor="#4ade80" />
               <stop offset="100%" stopColor="#15803d" />
             </radialGradient>
-            <radialGradient id="gt-leaf3" cx="30%" cy="25%" r="75%">
+            <radialGradient id={gid("gt-leaf3")} cx="30%" cy="25%" r="75%">
               <stop offset="0%" stopColor="#bbf7d0" />
               <stop offset="100%" stopColor="#22c55e" />
             </radialGradient>
             {FRUIT_POS.map((pos, i) => (
-              <radialGradient key={`fg-${i}`} id={`gt-fruit-grad-${i}`} cx="35%" cy="30%" r="70%">
+              <radialGradient key={`fg-${i}`} id={gid(`gt-fruit-grad-${i}`)} cx="35%" cy="30%" r="70%">
                 <stop offset="0%" stopColor="#ffffff" stopOpacity="0.95" />
                 <stop offset="30%" stopColor={pos.color} />
                 <stop offset="100%" stopColor={pos.color} />
               </radialGradient>
             ))}
-            <radialGradient id="gt-fruit-gray" cx="35%" cy="30%" r="70%">
+            <radialGradient id={gid("gt-fruit-gray")} cx="35%" cy="30%" r="70%">
               <stop offset="0%" stopColor="#f3f4f6" stopOpacity="0.9" />
               <stop offset="100%" stopColor="#9ca3af" />
             </radialGradient>
-            <filter id="gt-glow" x="-80%" y="-80%" width="260%" height="260%">
+            <filter id={gid("gt-glow")} x="-80%" y="-80%" width="260%" height="260%">
               <feGaussianBlur stdDeviation="3.5" result="blur" />
               <feMerge>
                 <feMergeNode in="blur" />
                 <feMergeNode in="SourceGraphic" />
               </feMerge>
             </filter>
-            <filter id="gt-glow-strong" x="-100%" y="-100%" width="300%" height="300%">
+            <filter id={gid("gt-glow-strong")} x="-100%" y="-100%" width="300%" height="300%">
               <feGaussianBlur stdDeviation="5" result="blur" />
               <feMerge>
                 <feMergeNode in="blur" />
@@ -524,17 +535,17 @@ export function GrowthTree({
                 <feMergeNode in="SourceGraphic" />
               </feMerge>
             </filter>
-            <filter id="gt-shadow" x="-30%" y="-30%" width="160%" height="160%">
+            <filter id={gid("gt-shadow")} x="-30%" y="-30%" width="160%" height="160%">
               <feDropShadow dx="0" dy="3" stdDeviation="3" floodOpacity="0.25" />
             </filter>
 
             {/* 蝶の飛行軌道 (非表示) */}
-            <path id="gt-butterfly-path-a" d="M 30 130 Q 90 60, 180 100 Q 270 140, 330 80 Q 280 180, 180 160 Q 80 140, 30 130 Z" />
-            <path id="gt-butterfly-path-b" d="M 340 200 Q 260 150, 180 210 Q 100 270, 40 180 Q 120 230, 200 220 Q 280 210, 340 200 Z" />
+            <path id={gid("gt-butterfly-path-a")} d="M 30 130 Q 90 60, 180 100 Q 270 140, 330 80 Q 280 180, 180 160 Q 80 140, 30 130 Z" />
+            <path id={gid("gt-butterfly-path-b")} d="M 340 200 Q 260 150, 180 210 Q 100 270, 40 180 Q 120 230, 200 220 Q 280 210, 340 200 Z" />
           </defs>
 
           {/* 空 */}
-          <rect className="gt-sky" x="0" y="0" width="360" height="300" fill="url(#gt-sky-grad)" opacity="0" />
+          <rect className="gt-sky" x="0" y="0" width="360" height="300" fill={gurl("gt-sky-grad")} opacity="0" />
 
           {/* 背景の雲 */}
           {[
@@ -559,7 +570,7 @@ export function GrowthTree({
             <ellipse cx="180" cy="272" rx="130" ry="8" fill="#000000" opacity="0.12" />
             <path
               d="M50 270 Q115 258 180 264 Q245 268 310 260 L310 278 L50 278 Z"
-              fill="url(#gt-ground-grad)"
+              fill={gurl("gt-ground-grad")}
               opacity="0.75"
             />
             <g stroke="#16a34a" strokeWidth="1" strokeLinecap="round" opacity="0.5">
@@ -574,11 +585,11 @@ export function GrowthTree({
           <circle className="gt-seed" cx="170" cy="270" r="4" fill="#4a2810" />
 
           {/* 幹 (DrawSVG 対象) */}
-          <g filter="url(#gt-shadow)">
+          <g filter={gurl("gt-shadow")}>
             <path
               className="gt-trunk"
               d="M168 272 C166 240 164 210 170 175 C172 150 169 130 176 108"
-              stroke="url(#gt-trunk-grad)"
+              stroke={gurl("gt-trunk-grad")}
               strokeWidth="15"
               strokeLinecap="round"
               fill="none"
@@ -599,7 +610,7 @@ export function GrowthTree({
             strokeWidth="4"
             strokeLinecap="round"
             fill="none"
-            filter="url(#gt-shadow)"
+            filter={gurl("gt-shadow")}
           >
             {BRANCHES.map((d, i) => (
               <path key={`branch-${i}`} className="gt-branch" d={d} />
@@ -616,7 +627,7 @@ export function GrowthTree({
                 cx={leaf.cx}
                 cy={leaf.cy}
                 r={leaf.r}
-                fill={leaf.fill}
+                fill={gurl(leaf.grad)}
               />
             ))}
             {LEAF_HIGHLIGHTS.map((h, i) => (
@@ -689,16 +700,16 @@ export function GrowthTree({
                     r="20"
                     fill={pos.ring}
                     opacity="0.55"
-                    filter="url(#gt-glow)"
+                    filter={gurl("gt-glow")}
                   />
                 )}
                 <circle
                   cx={pos.x}
                   cy={pos.y}
                   r="13"
-                  fill={isDone ? `url(#gt-fruit-grad-${i})` : "url(#gt-fruit-gray)"}
+                  fill={isDone ? gurl(`gt-fruit-grad-${i}`) : gurl("gt-fruit-gray")}
                   filter={
-                    isDone ? (isCurrent ? "url(#gt-glow-strong)" : "url(#gt-glow)") : undefined
+                    isDone ? (isCurrent ? gurl("gt-glow-strong") : gurl("gt-glow")) : undefined
                   }
                 />
                 {isDone && (
@@ -743,7 +754,7 @@ export function GrowthTree({
 
           {/* 全完了時のキラキラ */}
           {allDone && (
-            <g filter="url(#gt-glow)">
+            <g filter={gurl("gt-glow")}>
               {SPARKLE_POS.map((s, i) => (
                 <g
                   key={`sparkle-${i}`}
