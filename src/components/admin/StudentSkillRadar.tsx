@@ -23,6 +23,10 @@ interface Props {
   detail: StudentDetail;
   skillCheck?: SkillCheckStatus | null;
   interviewSkillCheck?: InterviewSkillCheckStatus | null;
+  /** 小論文スキルカードのクリック (最新スキルチェック詳細を開く) */
+  onSelectEssay?: () => void;
+  /** 面接スキルカードのクリック */
+  onSelectInterview?: () => void;
 }
 
 type SkillCheckMeta = {
@@ -42,6 +46,8 @@ export function StudentSkillRadar({
   detail,
   skillCheck,
   interviewSkillCheck,
+  onSelectEssay,
+  onSelectInterview,
 }: Props) {
   const {
     essays,
@@ -121,6 +127,7 @@ export function StudentSkillRadar({
             meta={essaySkillCheckMeta}
             maxScore={50}
             radar={essayRadar}
+            onClick={skillCheck?.latestResult ? onSelectEssay : undefined}
           />
           <SkillCard
             kind="interview"
@@ -128,6 +135,7 @@ export function StudentSkillRadar({
             meta={interviewSkillCheckMeta}
             maxScore={40}
             radar={interviewRadar}
+            onClick={interviewSkillCheck?.latestResult ? onSelectInterview : undefined}
           />
         </motion.div>
       </CardContent>
@@ -147,12 +155,14 @@ function SkillCard({
   meta,
   maxScore,
   radar,
+  onClick,
 }: {
   kind: "essay" | "interview";
   aggregate: AggregateBreakdown | undefined;
   meta: SkillCheckMeta | undefined;
   maxScore: number;
   radar: { subject: string; value: number }[] | null;
+  onClick?: () => void;
 }) {
   const isEssay = kind === "essay";
   const label = isEssay ? "小論文" : "面接";
@@ -184,7 +194,26 @@ function SkillCard({
     : null;
 
   return (
-    <div className={`rounded-lg border p-4 ${bgClass}`}>
+    <div
+      className={`rounded-lg border p-4 ${bgClass} ${
+        onClick
+          ? "cursor-pointer transition-shadow hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+          : ""
+      }`}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onClick={onClick}
+      onKeyDown={
+        onClick
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onClick();
+              }
+            }
+          : undefined
+      }
+    >
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <div
           className={`flex items-center gap-2 text-sm font-semibold ${
@@ -196,12 +225,17 @@ function SkillCard({
           {isEssay ? <FileText className="size-4" /> : <Mic className="size-4" />}
           {label}
         </div>
-        {meta?.needsRefresh && (
-          <Badge variant="destructive" className="gap-1 text-[10px]">
-            <RefreshCw className="size-3" />
-            再受験推奨 ({meta.daysSinceLast}日経過)
-          </Badge>
-        )}
+        <div className="flex items-center gap-1.5">
+          {meta?.needsRefresh && (
+            <Badge variant="destructive" className="gap-1 text-[10px]">
+              <RefreshCw className="size-3" />
+              再受験推奨 ({meta.daysSinceLast}日経過)
+            </Badge>
+          )}
+          {onClick && (
+            <span className="text-[10px] text-muted-foreground">詳細 ›</span>
+          )}
+        </div>
       </div>
 
       {/* メインスコア + ランク */}

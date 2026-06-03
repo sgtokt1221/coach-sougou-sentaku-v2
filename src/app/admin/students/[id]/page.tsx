@@ -86,7 +86,6 @@ import type { EnglishCert } from "@/lib/types/user";
 import { CategorySelector } from "@/components/skill-check/CategorySelector";
 import type { SkillCheckStatus, AcademicCategory, SkillCheckResult } from "@/lib/types/skill-check";
 import type { InterviewSkillCheckStatus, InterviewSkillCheckResult } from "@/lib/types/interview-skill-check";
-import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
 import { SkillCheckDetailDialog } from "@/components/admin/SkillCheckDetailDialog";
 import { StudentSkillRadar } from "@/components/admin/StudentSkillRadar";
 import { CategoryAverageRadar } from "@/components/admin/CategoryAverageRadar";
@@ -713,6 +712,14 @@ function AdminStudentDetailPageInner() {
         detail={detail}
         skillCheck={skillCheck}
         interviewSkillCheck={interviewSkillCheck}
+        onSelectEssay={() =>
+          skillCheck?.latestResult &&
+          setScDialog({ kind: "essay", result: skillCheck.latestResult })
+        }
+        onSelectInterview={() =>
+          interviewSkillCheck?.latestResult &&
+          setScDialog({ kind: "interview", result: interviewSkillCheck.latestResult })
+        }
       />
 
       {/* Profile Card */}
@@ -866,72 +873,6 @@ function AdminStudentDetailPageInner() {
 
   const renderPerformanceTab = () => (
     <div className="space-y-6">
-      {/* スキルチェック履歴 (クリックで詳細) */}
-      {(skillCheck?.history?.length || interviewSkillCheck?.history?.length) ? (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Activity className="size-4" />
-              スキルチェック履歴
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {skillCheck?.history?.length ? (
-              <div className="space-y-1.5">
-                <p className="text-xs font-medium text-muted-foreground">小論文</p>
-                {skillCheck.history.map((r) => (
-                  <div
-                    key={r.id}
-                    className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"
-                  >
-                    <div className="flex items-center gap-2">
-                      <SkillRankBadge rank={r.rank} size="sm" animate={false} />
-                      <span className="font-medium tabular-nums">{r.scores.total}/50</span>
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(r.takenAt).toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" })}
-                      </span>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setScDialog({ kind: "essay", result: r })}
-                    >
-                      詳細
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            ) : null}
-            {interviewSkillCheck?.history?.length ? (
-              <div className="space-y-1.5">
-                <p className="text-xs font-medium text-muted-foreground">面接</p>
-                {interviewSkillCheck.history.map((r) => (
-                  <div
-                    key={r.id}
-                    className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"
-                  >
-                    <div className="flex items-center gap-2">
-                      <SkillRankBadge rank={r.rank} size="sm" animate={false} />
-                      <span className="font-medium tabular-nums">{r.scores.total}/40</span>
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(r.takenAt).toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" })}
-                      </span>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setScDialog({ kind: "interview", result: r })}
-                    >
-                      詳細
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            ) : null}
-          </CardContent>
-        </Card>
-      ) : null}
-
       {/* Score Trend Chart */}
       <Card>
         <CardHeader className="pb-2">
