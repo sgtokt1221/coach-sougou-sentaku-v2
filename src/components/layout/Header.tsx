@@ -122,7 +122,7 @@ export function Header() {
           </span>
           <Avatar size="default">
             <AvatarImage
-              src={user?.photoURL ?? undefined}
+              src={userProfile?.photoURL ?? user?.photoURL ?? undefined}
               alt={userProfile?.displayName ?? "User"}
             />
             <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">

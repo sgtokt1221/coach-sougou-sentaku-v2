@@ -96,7 +96,7 @@ export default function AdminMembersPage() {
       <div className="flex items-center gap-2">
         <Users className="size-5 text-muted-foreground" />
         <div>
-          <h1 className="text-2xl font-bold">メンバー管理</h1>
+          <h1 className="text-2xl font-bold">管理者管理</h1>
           <p className="text-sm text-muted-foreground">
             この塾の管理者アカウントを追加・管理します。生徒やメッセージなどのデータは同じ塾の管理者で共有されます。
           </p>

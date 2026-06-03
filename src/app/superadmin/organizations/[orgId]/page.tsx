@@ -21,11 +21,6 @@ interface OrgDetail {
   createdAt: string | null;
 }
 
-interface AdminCandidate {
-  uid: string;
-  displayName: string;
-  email: string;
-}
 
 export default function OrganizationDetailPage() {
   const params = useParams();
@@ -33,14 +28,9 @@ export default function OrganizationDetailPage() {
   const { data, isLoading, mutate } = useAuthSWR<OrgDetail>(
     `/api/superadmin/organizations/${orgId}`,
   );
-  const { data: adminsData } = useAuthSWR<{ admins: AdminCandidate[] }>(
-    "/api/superadmin/admins",
-  );
-
   const [editingName, setEditingName] = useState(false);
   const [name, setName] = useState("");
   const [saving, setSaving] = useState(false);
-  const [addingUid, setAddingUid] = useState("");
   // 新規 admin 作成して追加
   const [newEmail, setNewEmail] = useState("");
   const [newName, setNewName] = useState("");
@@ -64,26 +54,6 @@ export default function OrganizationDetailPage() {
       toast.error(err instanceof Error ? err.message : "更新失敗");
     } finally {
       setSaving(false);
-    }
-  };
-
-  const addAdmin = async () => {
-    if (!addingUid) return;
-    try {
-      const res = await authFetch(
-        `/api/superadmin/organizations/${orgId}/members`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ adminUid: addingUid }),
-        },
-      );
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      toast.success("子 admin を追加しました");
-      setAddingUid("");
-      await mutate();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "追加失敗");
     }
   };
 
@@ -153,12 +123,6 @@ export default function OrganizationDetailPage() {
       </div>
     );
   if (!data) return <div className="p-6">組織が見つかりません</div>;
-
-  // 追加候補 = 現メンバー以外の admin
-  const memberUids = new Set(data.members.map((m) => m.uid));
-  const candidates = (adminsData?.admins ?? []).filter(
-    (a) => !memberUids.has(a.uid),
-  );
 
   return (
     <div className="space-y-6 p-6">
@@ -251,25 +215,6 @@ export default function OrganizationDetailPage() {
               </li>
             ))}
           </ul>
-
-          <div className="flex items-center gap-2 border-t pt-3">
-            <select
-              value={addingUid}
-              onChange={(e) => setAddingUid(e.target.value)}
-              className="flex h-9 flex-1 rounded-md border border-input bg-background px-3 py-1 text-sm"
-            >
-              <option value="">子 admin を追加…</option>
-              {candidates.map((a) => (
-                <option key={a.uid} value={a.uid}>
-                  {a.displayName} ({a.email})
-                </option>
-              ))}
-            </select>
-            <Button onClick={addAdmin} disabled={!addingUid}>
-              <UserPlus className="mr-1 size-4" />
-              追加
-            </Button>
-          </div>
 
           {/* 新規 admin を作成して追加 */}
           <form onSubmit={createAndAddAdmin} className="space-y-2 border-t pt-3">

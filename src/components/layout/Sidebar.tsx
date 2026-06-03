@@ -29,6 +29,7 @@ import {
   Crown,
   Compass,
 } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { FeedbackBadge } from "@/components/student/FeedbackBadge";
@@ -127,7 +128,7 @@ const adminNavGroups: NavGroup[] = [
     items: [
       { label: "生徒管理", href: "/admin/students", icon: Users },
       { label: "講師管理", href: "/admin/teachers", icon: GraduationCap },
-      { label: "メンバー管理", href: "/admin/members", icon: Shield },
+      { label: "管理者管理", href: "/admin/members", icon: Shield },
       { label: "大学データ", href: "/admin/universities", icon: Database },
       { label: "セッション", href: "/admin/sessions", icon: ClipboardList },
     ],
@@ -447,9 +448,12 @@ export function SidebarContent() {
         <div className="px-4 py-3 space-y-2">
           {userProfile && (
             <div className="flex items-center gap-2">
-              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
-                {userProfile.displayName?.charAt(0)?.toUpperCase() || userProfile.email?.charAt(0)?.toUpperCase() || "U"}
-              </div>
+              <Avatar className="size-6">
+                <AvatarImage src={userProfile.photoURL || undefined} alt={userProfile.displayName || ""} />
+                <AvatarFallback className="bg-primary text-[10px] font-medium text-primary-foreground">
+                  {userProfile.displayName?.charAt(0)?.toUpperCase() || userProfile.email?.charAt(0)?.toUpperCase() || "U"}
+                </AvatarFallback>
+              </Avatar>
               <div className="flex-1 min-w-0">
                 <p className="text-[11px] font-medium text-foreground/70 truncate">
                   {userProfile.displayName || userProfile.email}

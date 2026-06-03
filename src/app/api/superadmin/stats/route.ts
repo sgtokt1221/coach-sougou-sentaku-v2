@@ -47,28 +47,39 @@ export async function GET(request: Request) {
   }
 
   try {
-    const [adminsSnap, teachersSnap, studentsSnap] = await Promise.all([
-      adminDb.collection("users").where("role", "==", "admin").count().get(),
-      adminDb.collection("users").where("role", "==", "teacher").count().get(),
-      adminDb.collection("users").where("role", "==", "student").count().get(),
+    // 件数: count() 失敗時は .get().size にフォールバック (件数は正確性が必要なので
+    // ここだけ失敗したら 500=fail-loud、それ以外のセクションは個別に degrade する)
+    const usersCol = adminDb.collection("users");
+    const safeCount = async (
+      q: FirebaseFirestore.Query,
+    ): Promise<number> => {
+      try {
+        return (await q.count().get()).data().count;
+      } catch {
+        return (await q.get()).size;
+      }
+    };
+    const [totalAdmins, totalTeachers, totalStudents] = await Promise.all([
+      safeCount(usersCol.where("role", "==", "admin")),
+      safeCount(usersCol.where("role", "==", "teacher")),
+      safeCount(usersCol.where("role", "==", "student")),
     ]);
 
-    const allStudentsSnap = await adminDb
-      .collection("users")
-      .where("role", "==", "student")
-      .get();
-    const unassignedCount = allStudentsSnap.docs.filter(
-      (doc) => !doc.data().managedBy,
-    ).length;
+    // 以降は非必須セクション。失敗しても 0/空で degrade し、画面を落とさない。
+    let unassignedCount = 0;
+    let adminPerformance: AdminPerformance[] = [];
+    try {
+      const allStudentsSnap = await usersCol.where("role", "==", "student").get();
+      unassignedCount = allStudentsSnap.docs.filter(
+        (doc) => !doc.data().managedBy,
+      ).length;
 
-    // Admin performance
-    const adminTeacherSnap = await adminDb
-      .collection("users")
-      .where("role", "in", ["admin", "teacher"])
-      .get();
+      const adminTeacherSnap = await usersCol
+        .where("role", "in", ["admin", "teacher"])
+        .get();
 
-    const adminPerformance: AdminPerformance[] = await Promise.all(
-      adminTeacherSnap.docs.map(async (doc) => {
+      const perfSettled = await Promise.allSettled(
+        adminTeacherSnap.docs.map(async (doc) => {
         const data = doc.data();
         const managedStudents = allStudentsSnap.docs.filter(
           (s) => s.data().managedBy === doc.id,
@@ -130,7 +141,16 @@ export async function GET(request: Request) {
           alertStudentCount: alertCount,
         };
       }),
-    );
+      );
+      adminPerformance = perfSettled
+        .filter(
+          (r): r is PromiseFulfilledResult<AdminPerformance> =>
+            r.status === "fulfilled",
+        )
+        .map((r) => r.value);
+    } catch (err) {
+      console.warn("[stats] performance section failed:", err);
+    }
 
     // Invitation summary
     const invitationSummary: InvitationSummary = {
@@ -187,13 +207,19 @@ export async function GET(request: Request) {
     }
 
     // Recent essays (collectionGroup) - 60 件取って Top 10 で十分なので
-    // スコア推移にも使い回す
-    const recentEssays = await adminDb
-      .collectionGroup("essays")
-      .orderBy("submittedAt", "desc")
-      .limit(60)
-      .get();
-    for (const essayDoc of recentEssays.docs.slice(0, 10)) {
+    // スコア推移にも使い回す。collectionGroup の index 不足等で失敗しても degrade。
+    let recentEssaysDocs: FirebaseFirestore.QueryDocumentSnapshot[] = [];
+    try {
+      const recentEssays = await adminDb
+        .collectionGroup("essays")
+        .orderBy("submittedAt", "desc")
+        .limit(60)
+        .get();
+      recentEssaysDocs = recentEssays.docs;
+    } catch (err) {
+      console.warn("[stats] recent essays (collectionGroup) failed:", err);
+    }
+    for (const essayDoc of recentEssaysDocs.slice(0, 10)) {
       const data = essayDoc.data();
       const parentPath = essayDoc.ref.parent.parent;
       const studentDoc = parentPath ? await parentPath.get() : null;
@@ -220,7 +246,7 @@ export async function GET(request: Request) {
     thirtyDaysAgo.setHours(0, 0, 0, 0);
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
 
-    for (const doc of recentEssays.docs) {
+    for (const doc of recentEssaysDocs) {
       const data = doc.data();
       const score = data.scores?.total;
       const ts = toIsoOrNull(data.submittedAt);
@@ -251,9 +277,9 @@ export async function GET(request: Request) {
     }
 
     const stats: SuperadminDashboardStats = {
-      totalAdmins: adminsSnap.data().count,
-      totalTeachers: teachersSnap.data().count,
-      totalStudents: studentsSnap.data().count,
+      totalAdmins,
+      totalTeachers,
+      totalStudents,
       unassignedStudents: unassignedCount,
       adminPerformance,
       recentActivity,
