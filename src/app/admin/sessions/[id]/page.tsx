@@ -858,7 +858,13 @@ function StudentInfoPanelInner({
                 <div className="flex items-start gap-2 sm:col-span-2">
                   <TrendingUp className="mt-0.5 size-4 text-muted-foreground" />
                   <div className="flex flex-wrap gap-1">
-                    {profile.targetUniversities.length > 0 ? (
+                    {(profile.resolvedUniversities ?? []).length > 0 ? (
+                      profile.resolvedUniversities!.map((u, i) => (
+                        <Badge key={i} variant="outline" className="text-xs">
+                          {u.universityName} {u.facultyName}
+                        </Badge>
+                      ))
+                    ) : profile.targetUniversities.length > 0 ? (
                       profile.targetUniversities.map((u) => (
                         <Badge key={u} variant="outline" className="text-xs">
                           {u}
@@ -950,12 +956,9 @@ function StudentInfoPanelInner({
                         </div>
                         <div className="text-right">
                           {essay.scores ? (
-                            <>
-                              <p className={`text-lg font-bold ${scoreColor(essay.scores.total)}`}>
-                                {essay.scores.total}
-                              </p>
-                              <p className="text-xs text-muted-foreground">/50</p>
-                            </>
+                            <Badge variant="outline" className={`text-sm font-bold ${scoreColor(essay.scores.total)}`}>
+                              {essay.scores.total}/50
+                            </Badge>
                           ) : (
                             <Badge variant="secondary" className="text-xs">
                               {essay.status === "uploaded" ? "OCR待ち" : essay.status}
