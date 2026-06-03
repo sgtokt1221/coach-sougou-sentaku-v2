@@ -13,7 +13,6 @@ import {
   Plus,
   UserPlus,
   Ticket,
-  AlertTriangle,
   FileText,
   Mic,
   ArrowUpRight,
@@ -37,11 +36,23 @@ import { CustomTooltip } from "@/components/charts/CustomTooltip";
 import { useAuthSWR } from "@/lib/api/swr";
 import type { SuperadminDashboardStats } from "@/lib/types/admin";
 
+const emptyUsageItem = { count: 0, students: 0 };
 const mockStats: SuperadminDashboardStats = {
   totalAdmins: 0,
   totalTeachers: 0,
   totalStudents: 0,
   unassignedStudents: 0,
+  avgEssayScore: null,
+  activeStudents: 0,
+  featureUsage: {
+    essays: emptyUsageItem,
+    interviews: emptyUsageItem,
+    documents: emptyUsageItem,
+    activities: emptyUsageItem,
+    skillChecks: emptyUsageItem,
+    selfAnalysis: emptyUsageItem,
+  },
+  byOrganization: [],
   adminPerformance: [],
   recentActivity: [],
   scoreTrend: [],
@@ -94,11 +105,23 @@ export default function SuperadminDashboard() {
     );
   }
 
-  const statCards = [
+  const activeRate =
+    stats.totalStudents > 0
+      ? Math.round((stats.activeStudents / stats.totalStudents) * 100)
+      : 0;
+  const statCards: {
+    label: string;
+    value: string | number;
+    icon: typeof Shield;
+    color: string;
+    bg: string;
+  }[] = [
     { label: "管理者数", value: stats.totalAdmins, icon: Shield, color: "text-primary", bg: "bg-primary/10" },
     { label: "講師数", value: stats.totalTeachers, icon: Users, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-500/10" },
     { label: "生徒数", value: stats.totalStudents, icon: GraduationCap, color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-500/10" },
     { label: "未割当生徒", value: stats.unassignedStudents, icon: UserX, color: "text-rose-600 dark:text-rose-400", bg: "bg-rose-500/10" },
+    { label: "平均スコア", value: stats.avgEssayScore ?? "—", icon: TrendingUp, color: "text-sky-600 dark:text-sky-400", bg: "bg-sky-500/10" },
+    { label: "アクティブ率(30日)", value: `${activeRate}%`, icon: Clock, color: "text-violet-600 dark:text-violet-400", bg: "bg-violet-500/10" },
   ];
 
   const activityConfig: Record<string, { icon: React.ReactNode; border: string; bg: string }> = {
@@ -144,7 +167,6 @@ export default function SuperadminDashboard() {
     name: a.displayName.length > 6 ? a.displayName.slice(0, 6) + "…" : a.displayName,
     fullName: a.displayName,
     生徒数: a.studentCount,
-    要注意: a.alertStudentCount,
   }));
 
   return (
@@ -157,7 +179,7 @@ export default function SuperadminDashboard() {
       </div>
 
       {/* Stat Cards - Enhanced */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
         {statCards.map((stat) => (
           <Card key={stat.label}>
             <CardContent className="pt-6">
@@ -166,9 +188,11 @@ export default function SuperadminDashboard() {
                   <p className="text-sm text-muted-foreground">{stat.label}</p>
                   <div className="flex items-center gap-2">
                     <p className="text-3xl font-bold">{stat.value}</p>
-                    {stat.label === "未割当生徒" && stat.value > 0 && (
-                      <Badge variant="destructive" className="text-[10px]">要対応</Badge>
-                    )}
+                    {stat.label === "未割当生徒" &&
+                      typeof stat.value === "number" &&
+                      stat.value > 0 && (
+                        <Badge variant="destructive" className="text-[10px]">要対応</Badge>
+                      )}
                   </div>
                 </div>
                 <div className={`flex size-12 items-center justify-center rounded-full ${stat.bg}`}>
@@ -209,6 +233,59 @@ export default function SuperadminDashboard() {
         </Link>
       </div>
 
+      {/* 機能の利用状況＋採用率 */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <TrendingUp className="size-4" />
+            機能の利用状況（みんなが何を使っているか）
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
+            {(
+              [
+                { key: "essays", label: "小論文添削" },
+                { key: "interviews", label: "模擬面接" },
+                { key: "documents", label: "出願書類" },
+                { key: "activities", label: "活動実績" },
+                { key: "skillChecks", label: "スキルチェック" },
+                { key: "selfAnalysis", label: "自己分析" },
+              ] as const
+            ).map((f) => {
+              const item = stats.featureUsage[f.key];
+              const rate =
+                stats.totalStudents > 0
+                  ? Math.round((item.students / stats.totalStudents) * 100)
+                  : 0;
+              return (
+                <div key={f.key} className="rounded-lg border p-3">
+                  <p className="text-xs text-muted-foreground">{f.label}</p>
+                  <p className="mt-0.5 text-2xl font-bold tabular-nums">
+                    {item.count}
+                    <span className="ml-1 text-xs font-normal text-muted-foreground">件</span>
+                  </p>
+                  <div className="mt-1.5 flex items-center gap-1.5">
+                    <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full rounded-full bg-primary transition-all"
+                        style={{ width: `${rate}%` }}
+                      />
+                    </div>
+                    <span className="text-[10px] tabular-nums text-muted-foreground">
+                      {rate}%
+                    </span>
+                  </div>
+                  <p className="mt-0.5 text-[10px] text-muted-foreground">
+                    利用生徒 {item.students}名
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Admin Performance with BarChart */}
         <Card>
@@ -245,14 +322,6 @@ export default function SuperadminDashboard() {
                           animationDuration={CHART_ANIMATION.duration}
                           animationEasing={CHART_ANIMATION.easing}
                         />
-                        <Bar
-                          dataKey="要注意"
-                          fill={CHART_COLORS.quinary}
-                          radius={[4, 4, 0, 0]}
-                          isAnimationActive={true}
-                          animationDuration={CHART_ANIMATION.duration}
-                          animationEasing={CHART_ANIMATION.easing}
-                        />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -267,7 +336,6 @@ export default function SuperadminDashboard() {
                         <th className="px-4 py-2 text-center font-medium">ロール</th>
                         <th className="px-4 py-2 text-center font-medium">生徒数</th>
                         <th className="px-4 py-2 text-center font-medium">平均スコア</th>
-                        <th className="px-4 py-2 text-center font-medium">要注意</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -291,13 +359,6 @@ export default function SuperadminDashboard() {
                               <span className="text-muted-foreground">-</span>
                             )}
                           </td>
-                          <td className="px-4 py-2 text-center">
-                            {admin.alertStudentCount > 0 ? (
-                              <Badge variant="destructive">{admin.alertStudentCount}</Badge>
-                            ) : (
-                              <span className="text-muted-foreground">0</span>
-                            )}
-                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -308,37 +369,66 @@ export default function SuperadminDashboard() {
           </CardContent>
         </Card>
 
-        {/* Alert Students */}
+        {/* 塾別サマリー */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <AlertTriangle className="size-4 text-amber-500" />
-              要注意生徒（担当別）
+              <Users className="size-4" />
+              塾別サマリー
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {stats.adminPerformance.filter((a) => a.alertStudentCount > 0).length === 0 ? (
-              <p className="text-sm text-muted-foreground">要注意生徒はいません</p>
+            {stats.byOrganization.length === 0 ? (
+              <p className="text-sm text-muted-foreground">塾がありません</p>
             ) : (
-              <div className="space-y-3">
-                {stats.adminPerformance
-                  .filter((a) => a.alertStudentCount > 0)
-                  .sort((a, b) => b.alertStudentCount - a.alertStudentCount)
-                  .map((admin) => (
-                    <div key={admin.uid} className="flex items-center justify-between rounded-lg border p-3">
-                      <div>
-                        <p className="text-sm font-medium">{admin.displayName}</p>
-                        <p className="text-xs text-muted-foreground">
-                          担当 {admin.studentCount}名中 {admin.alertStudentCount}名が要注意
-                        </p>
-                      </div>
-                      <Link href={`/superadmin/admins/${admin.uid}`}>
-                        <Button variant="ghost" size="sm">
-                          詳細 <ArrowUpRight className="ml-1 size-3" />
-                        </Button>
-                      </Link>
-                    </div>
-                  ))}
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b bg-muted/50">
+                      <th className="px-3 py-2 text-left font-medium">塾</th>
+                      <th className="px-3 py-2 text-center font-medium">管理者</th>
+                      <th className="px-3 py-2 text-center font-medium">講師</th>
+                      <th className="px-3 py-2 text-center font-medium">生徒</th>
+                      <th className="px-3 py-2 text-center font-medium">平均</th>
+                      <th className="px-3 py-2 text-center font-medium">活動率</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {stats.byOrganization.map((o) => {
+                      const rate =
+                        o.studentCount > 0
+                          ? Math.round((o.activeStudentCount / o.studentCount) * 100)
+                          : 0;
+                      const nameCell =
+                        o.orgId === "__none__" ? (
+                          <span className="text-muted-foreground">{o.orgName}</span>
+                        ) : (
+                          <Link
+                            href={`/superadmin/organizations/${o.orgId}`}
+                            className="font-medium hover:underline"
+                          >
+                            {o.orgName}
+                          </Link>
+                        );
+                      return (
+                        <tr key={o.orgId} className="border-b hover:bg-accent/50">
+                          <td className="px-3 py-2">{nameCell}</td>
+                          <td className="px-3 py-2 text-center">{o.adminCount}</td>
+                          <td className="px-3 py-2 text-center">{o.teacherCount}</td>
+                          <td className="px-3 py-2 text-center">{o.studentCount}</td>
+                          <td className="px-3 py-2 text-center">
+                            {o.avgEssayScore !== null ? (
+                              <span className="font-bold">{o.avgEssayScore}</span>
+                            ) : (
+                              <span className="text-muted-foreground">-</span>
+                            )}
+                          </td>
+                          <td className="px-3 py-2 text-center">{rate}%</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             )}
           </CardContent>

@@ -38,6 +38,7 @@ export async function GET(request: NextRequest) {
       displayName: me.displayName ?? "",
       email: me.email ?? "",
       role: "admin",
+      photoURL: (me.photoURL as string | undefined) ?? null,
       isOwner: true,
     };
     return NextResponse.json({
@@ -59,6 +60,7 @@ export async function GET(request: NextRequest) {
         displayName: d.displayName ?? "",
         email: d.email ?? "",
         role: "admin" as const,
+        photoURL: (d.photoURL as string | undefined) ?? null,
         isOwner: org.ownerAdminUid === mUid,
       };
     }),

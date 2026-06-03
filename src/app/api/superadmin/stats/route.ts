@@ -7,6 +7,9 @@ import type {
   RecentActivity,
   ScoreTrendItem,
   InvitationSummary,
+  OrganizationStat,
+  FeatureUsageStat,
+  FeatureUsageItem,
 } from "@/lib/types/admin";
 
 /**
@@ -68,11 +71,42 @@ export async function GET(request: Request) {
     // 以降は非必須セクション。失敗しても 0/空で degrade し、画面を落とさない。
     let unassignedCount = 0;
     let adminPerformance: AdminPerformance[] = [];
+    let avgEssayScore: number | null = null;
+    let activeStudents = 0;
+    let byOrganization: OrganizationStat[] = [];
+    const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+    const isActive = (data: FirebaseFirestore.DocumentData): boolean => {
+      const iso = toIsoOrNull(
+        data.lastSeenAt ??
+          (data.lastActivity as { at?: unknown } | undefined)?.at,
+      );
+      return !!iso && Date.now() - new Date(iso).getTime() <= THIRTY_DAYS_MS;
+    };
     try {
       const allStudentsSnap = await usersCol.where("role", "==", "student").get();
       unassignedCount = allStudentsSnap.docs.filter(
         (doc) => !doc.data().managedBy,
       ).length;
+      activeStudents = allStudentsSnap.docs.filter((d) => isActive(d.data())).length;
+
+      // 組織マップ: adminUid → {orgId,orgName}、orgId → {name, adminCount}
+      const orgByAdmin = new Map<string, { orgId: string; orgName: string }>();
+      const orgMeta = new Map<string, { name: string; adminCount: number }>();
+      const orgsSnap = await adminDb.collection("organizations").get();
+      for (const orgDoc of orgsSnap.docs) {
+        const od = orgDoc.data();
+        const name = (od.name as string) ?? "";
+        const members: string[] = Array.isArray(od.memberAdminUids)
+          ? od.memberAdminUids
+          : [];
+        orgMeta.set(orgDoc.id, {
+          name,
+          adminCount: new Set(members).size,
+        });
+        members.forEach((uid) =>
+          orgByAdmin.set(uid, { orgId: orgDoc.id, orgName: name }),
+        );
+      }
 
       const adminTeacherSnap = await usersCol
         .where("role", "in", ["admin", "teacher"])
@@ -87,9 +121,11 @@ export async function GET(request: Request) {
         let totalScore = 0;
         let scoreCount = 0;
         let alertCount = 0;
+        let activeCount = 0;
 
         for (const student of managedStudents) {
           const studentData = student.data();
+          if (isActive(studentData)) activeCount++;
           const essaysSnap = await adminDb!
             .collection("users")
             .doc(student.id)
@@ -131,23 +167,104 @@ export async function GET(request: Request) {
           }
         }
 
+        const role = data.role as "admin" | "teacher";
+        // admin はメンバーシップ(memberAdminUids)、teacher は自身の organizationId で所属判定
+        const orgId =
+          (role === "admin"
+            ? orgByAdmin.get(doc.id)?.orgId
+            : typeof data.organizationId === "string"
+              ? data.organizationId
+              : undefined) ?? "__none__";
+
         return {
-          uid: doc.id,
-          displayName: data.displayName ?? "",
-          role: data.role as "admin" | "teacher",
+          perf: {
+            uid: doc.id,
+            displayName: data.displayName ?? "",
+            role,
+            studentCount: managedStudents.length,
+            averageScore:
+              scoreCount > 0 ? Math.round((totalScore / scoreCount) * 10) / 10 : null,
+            alertStudentCount: alertCount,
+          } as AdminPerformance,
+          orgId,
+          role,
+          scoreSum: totalScore,
+          scoreCount,
           studentCount: managedStudents.length,
-          averageScore:
-            scoreCount > 0 ? Math.round((totalScore / scoreCount) * 10) / 10 : null,
-          alertStudentCount: alertCount,
+          activeCount,
         };
       }),
       );
-      adminPerformance = perfSettled
-        .filter(
-          (r): r is PromiseFulfilledResult<AdminPerformance> =>
-            r.status === "fulfilled",
-        )
+      type PerfItem = {
+        perf: AdminPerformance;
+        orgId: string;
+        role: "admin" | "teacher";
+        scoreSum: number;
+        scoreCount: number;
+        studentCount: number;
+        activeCount: number;
+      };
+      const extended = perfSettled
+        .filter((r): r is PromiseFulfilledResult<PerfItem> => r.status === "fulfilled")
         .map((r) => r.value);
+      adminPerformance = extended.map((e) => e.perf);
+
+      // 全体平均スコア
+      let gSum = 0;
+      let gCnt = 0;
+      for (const e of extended) {
+        gSum += e.scoreSum;
+        gCnt += e.scoreCount;
+      }
+      avgEssayScore = gCnt > 0 ? Math.round((gSum / gCnt) * 10) / 10 : null;
+
+      // 塾別集計
+      const aggr = new Map<
+        string,
+        {
+          teacherCount: number;
+          adminCount: number;
+          studentCount: number;
+          scoreSum: number;
+          scoreCount: number;
+          activeCount: number;
+        }
+      >();
+      for (const e of extended) {
+        const cur =
+          aggr.get(e.orgId) ?? {
+            teacherCount: 0,
+            adminCount: 0,
+            studentCount: 0,
+            scoreSum: 0,
+            scoreCount: 0,
+            activeCount: 0,
+          };
+        if (e.role === "teacher") cur.teacherCount++;
+        else cur.adminCount++;
+        cur.studentCount += e.studentCount;
+        cur.scoreSum += e.scoreSum;
+        cur.scoreCount += e.scoreCount;
+        cur.activeCount += e.activeCount;
+        aggr.set(e.orgId, cur);
+      }
+      byOrganization = Array.from(aggr.entries())
+        .map(([orgId, a]) => ({
+          orgId,
+          orgName:
+            orgId === "__none__" ? "未所属" : orgMeta.get(orgId)?.name || orgId,
+          // 実塾は memberAdminUids 数を優先 (一覧と整合)、未所属は集計値
+          adminCount:
+            orgId === "__none__"
+              ? a.adminCount
+              : orgMeta.get(orgId)?.adminCount ?? a.adminCount,
+          teacherCount: a.teacherCount,
+          studentCount: a.studentCount,
+          avgEssayScore:
+            a.scoreCount > 0 ? Math.round((a.scoreSum / a.scoreCount) * 10) / 10 : null,
+          activeStudentCount: a.activeCount,
+        }))
+        .sort((x, y) => y.studentCount - x.studentCount);
     } catch (err) {
       console.warn("[stats] performance section failed:", err);
     }
@@ -276,11 +393,80 @@ export async function GET(request: Request) {
       });
     }
 
+    // 機能の利用状況＋採用率: 各機能の件数と、使った生徒の distinct 数。
+    // collectionGroup はフィルタ無しなので index 不要。失敗時は 0 で degrade。
+    const emptyUsage = (): FeatureUsageItem => ({ count: 0, students: 0 });
+    const featureUsage: FeatureUsageStat = {
+      essays: emptyUsage(),
+      interviews: emptyUsage(),
+      documents: emptyUsage(),
+      activities: emptyUsage(),
+      skillChecks: emptyUsage(),
+      selfAnalysis: emptyUsage(),
+    };
+    try {
+      // top-level (userId フィールドで distinct)
+      const usageFromTopLevel = async (
+        col: string,
+      ): Promise<FeatureUsageItem> => {
+        const snap = await adminDb!.collection(col).get();
+        const set = new Set<string>();
+        snap.docs.forEach((d) => {
+          const uid = d.data().userId;
+          if (typeof uid === "string") set.add(uid);
+        });
+        return { count: snap.size, students: set.size };
+      };
+      // collectionGroup (親ドキュメント=生徒uid で distinct)。set も返す
+      const groupUsage = async (
+        group: string,
+      ): Promise<{ count: number; set: Set<string> }> => {
+        const snap = await adminDb!.collectionGroup(group).get();
+        const set = new Set<string>();
+        snap.docs.forEach((d) => {
+          const uid = d.ref.parent.parent?.id;
+          if (uid) set.add(uid);
+        });
+        return { count: snap.size, set };
+      };
+
+      const [essays, interviews, documents, activities, scDocs, scInterview, selfSnap] =
+        await Promise.all([
+          usageFromTopLevel("essays"),
+          usageFromTopLevel("interviews"),
+          groupUsage("documents"),
+          groupUsage("activities"),
+          groupUsage("skillChecks"),
+          groupUsage("interviewSkillChecks"),
+          adminDb.collection("selfAnalysis").get(),
+        ]);
+      featureUsage.essays = essays;
+      featureUsage.interviews = interviews;
+      featureUsage.documents = { count: documents.count, students: documents.set.size };
+      featureUsage.activities = { count: activities.count, students: activities.set.size };
+      // スキルチェックは小論文/面接の両方を合算 (生徒は和集合で distinct)
+      const scUnion = new Set<string>([...scDocs.set, ...scInterview.set]);
+      featureUsage.skillChecks = {
+        count: scDocs.count + scInterview.count,
+        students: scUnion.size,
+      };
+      featureUsage.selfAnalysis = {
+        count: selfSnap.size,
+        students: selfSnap.size,
+      };
+    } catch (err) {
+      console.warn("[stats] feature usage failed:", err);
+    }
+
     const stats: SuperadminDashboardStats = {
       totalAdmins,
       totalTeachers,
       totalStudents,
       unassignedStudents: unassignedCount,
+      avgEssayScore,
+      activeStudents,
+      featureUsage,
+      byOrganization,
       adminPerformance,
       recentActivity,
       scoreTrend,

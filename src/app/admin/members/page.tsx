@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { Loader2, UserPlus, Trash2, Users } from "lucide-react";
@@ -125,7 +126,16 @@ export default function AdminMembersPage() {
                 const isMe = m.uid === myUid;
                 return (
                   <li key={m.uid} className="flex items-center justify-between gap-3 py-3">
-                    <div className="min-w-0">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <Avatar className="size-9 shrink-0">
+                        <AvatarImage src={m.photoURL || undefined} alt={m.displayName} />
+                        <AvatarFallback>
+                          {m.displayName?.charAt(0)?.toUpperCase() ||
+                            m.email?.charAt(0)?.toUpperCase() ||
+                            "?"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{m.displayName || "（名前未設定）"}</span>
                         {m.isOwner && (
@@ -140,6 +150,7 @@ export default function AdminMembersPage() {
                         )}
                       </div>
                       <p className="truncate text-xs text-muted-foreground">{m.email}</p>
+                      </div>
                     </div>
                     {!m.isOwner && !isMe && (
                       <Button

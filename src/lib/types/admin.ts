@@ -211,6 +211,7 @@ export interface MemberListItem {
   displayName: string;
   email: string;
   role: "admin";
+  photoURL?: string | null;
   /** true なら塾の代表 (organization.ownerAdminUid と一致) */
   isOwner: boolean;
 }
@@ -246,11 +247,46 @@ export interface InvitationSummary {
   expired: number;
 }
 
+/** 機能ごとの利用件数と、使った生徒の distinct 数 (採用率算出用) */
+export interface FeatureUsageItem {
+  count: number;
+  students: number;
+}
+
+export interface FeatureUsageStat {
+  essays: FeatureUsageItem;
+  interviews: FeatureUsageItem;
+  documents: FeatureUsageItem;
+  activities: FeatureUsageItem;
+  skillChecks: FeatureUsageItem;
+  selfAnalysis: FeatureUsageItem;
+}
+
+/** 塾(組織)別の集計 (要注意は含めない) */
+export interface OrganizationStat {
+  orgId: string;
+  orgName: string;
+  adminCount: number;
+  teacherCount: number;
+  studentCount: number;
+  avgEssayScore: number | null;
+  /** 直近30日に活動 (lastSeenAt) した生徒数 */
+  activeStudentCount: number;
+}
+
 export interface SuperadminDashboardStats {
   totalAdmins: number;
   totalTeachers: number;
   totalStudents: number;
   unassignedStudents: number;
+  /** 全生徒の最新essay平均スコア */
+  avgEssayScore: number | null;
+  /** 直近30日に活動した生徒数 (全体) */
+  activeStudents: number;
+  /** 機能ごとの利用件数・採用 */
+  featureUsage: FeatureUsageStat;
+  /** 塾別集計 */
+  byOrganization: OrganizationStat[];
   adminPerformance: AdminPerformance[];
   recentActivity: RecentActivity[];
   scoreTrend: ScoreTrendItem[];
