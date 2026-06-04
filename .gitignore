@@ -52,3 +52,7 @@ firebase-debug.log
 # 個人メモ / 内部ブレスト (= 公開リポジトリには含めない)
 AGENTS.md
 docs/individual-tutor-operations-brainstorm.md
+
+# Python cache
+__pycache__/
+*.pyc
