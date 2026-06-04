@@ -1,7 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { ClipboardList, Save, Loader2, X } from "lucide-react";
+import {
+  ClipboardList,
+  Save,
+  Loader2,
+  X,
+  Lightbulb,
+  Target,
+  AlertTriangle,
+  NotebookPen,
+  Trash2,
+} from "lucide-react";
 import {
   Card,
   CardContent,
@@ -12,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import { authFetch } from "@/lib/api/client";
 import type { LessonDebrief } from "@/lib/types/session";
 
@@ -120,58 +131,90 @@ export function LessonDebriefSection({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-5">
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">
-            反省点・課題 (録音からAIが下書き / 次回授業に表示・台本に反映)
-          </label>
-          <div className="space-y-1.5">
-            {reflectionPoints.map((r, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <Input
-                  value={r}
-                  onChange={(e) => updateReflection(i, e.target.value)}
-                  maxLength={300}
-                  className="flex-1"
-                  placeholder="この授業で見えた課題・反省点"
-                />
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => removeReflection(i)}
-                  className="text-muted-foreground cursor-pointer"
-                >
-                  削除
-                </Button>
-              </div>
-            ))}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={addReflection}
-              className="cursor-pointer"
-            >
-              反省点を追加
-            </Button>
+        <p className="text-xs text-muted-foreground">
+          録音して授業を終了すると、AIが反省点・次回課題・弱点を自動で下書きします。内容を確認・修正して保存してください。
+        </p>
+
+        {/* 反省点・課題 */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-1.5">
+            <Lightbulb className="size-4 text-amber-600" />
+            <span className="text-sm font-medium">反省点・課題</span>
+            <Badge variant="outline" className="text-[10px] font-normal">
+              AIが下書き
+            </Badge>
           </div>
+          {reflectionPoints.length === 0 ? (
+            <p className="text-xs text-muted-foreground py-1">
+              まだ反省点はありません（録音して授業を終了するとAIが下書きします）
+            </p>
+          ) : (
+            <div className="space-y-1.5">
+              {reflectionPoints.map((r, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <span className="w-5 shrink-0 text-right text-xs text-muted-foreground">
+                    {i + 1}.
+                  </span>
+                  <Input
+                    value={r}
+                    onChange={(e) => updateReflection(i, e.target.value)}
+                    maxLength={300}
+                    className="flex-1"
+                    placeholder="この授業で見えた課題・反省点"
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeReflection(i)}
+                    aria-label="この反省点を削除"
+                    className="size-7 shrink-0 text-muted-foreground cursor-pointer"
+                  >
+                    <Trash2 className="size-3.5" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={addReflection}
+            className="h-7 px-2 text-xs text-muted-foreground cursor-pointer"
+          >
+            ＋ 手動で追加
+          </Button>
         </div>
 
+        <Separator />
+
+        {/* 次回やること */}
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">
-            気づきメモ (講師の自由記述。次回の AI 台本作成の入力になります)
-          </label>
+          <div className="flex items-center gap-1.5">
+            <Target className="size-4 text-sky-600" />
+            <span className="text-sm font-medium">次回やること</span>
+            <span className="text-[10px] text-muted-foreground">
+              (次回のAI台本に反映)
+            </span>
+          </div>
           <Textarea
-            value={state.notes}
-            onChange={(e) => setState((s) => ({ ...s, notes: e.target.value }))}
-            rows={5}
-            maxLength={3000}
-            placeholder="今日の授業で印象的だったこと、生徒の反応、気づいたこと..."
+            value={state.nextAgendaSeed}
+            onChange={(e) =>
+              setState((s) => ({ ...s, nextAgendaSeed: e.target.value }))
+            }
+            rows={3}
+            maxLength={1000}
+            placeholder="次回はここを掘る / ここに注意 など"
           />
         </div>
 
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">
-            新発見の弱点
-          </label>
+        <Separator />
+
+        {/* 新発見の弱点 */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-1.5">
+            <AlertTriangle className="size-4 text-rose-600" />
+            <span className="text-sm font-medium">新発見の弱点</span>
+          </div>
           <div className="flex flex-wrap gap-1.5 min-h-[1.75rem]">
             {state.newWeaknessAreas.map((a) => (
               <Badge
@@ -237,20 +280,27 @@ export function LessonDebriefSection({
           )}
         </div>
 
+        <Separator />
+
+        {/* 気づきメモ */}
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">
-            次回議題シード (次回の AI 台本の主要入力)
-          </label>
+          <div className="flex items-center gap-1.5">
+            <NotebookPen className="size-4 text-muted-foreground" />
+            <span className="text-sm font-medium">気づきメモ</span>
+            <span className="text-[10px] text-muted-foreground">
+              (講師の自由記述)
+            </span>
+          </div>
           <Textarea
-            value={state.nextAgendaSeed}
-            onChange={(e) =>
-              setState((s) => ({ ...s, nextAgendaSeed: e.target.value }))
-            }
-            rows={3}
-            maxLength={1000}
-            placeholder="次回はここを掘る / ここに注意 など"
+            value={state.notes}
+            onChange={(e) => setState((s) => ({ ...s, notes: e.target.value }))}
+            rows={5}
+            maxLength={3000}
+            placeholder="今日の授業で印象的だったこと、生徒の反応、気づいたこと..."
           />
         </div>
+
+        <Separator />
 
         <div className="flex justify-between items-center">
           <div className="text-xs text-muted-foreground">
