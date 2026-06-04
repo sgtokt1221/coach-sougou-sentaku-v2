@@ -28,7 +28,6 @@ import { DocumentsSection } from "@/components/admin/DocumentsSection";
 import { ActivitiesSection } from "@/components/admin/ActivitiesSection";
 import { SessionsHistorySection } from "@/components/admin/SessionsHistorySection";
 import { ExamResultsSection } from "@/components/admin/ExamResultsSection";
-import { GrowthReportsSection } from "@/components/admin/GrowthReportsSection";
 import { EssayCoachHistorySection } from "@/components/admin/EssayCoachHistorySection";
 import { HomeworkStatusSection } from "@/components/admin/HomeworkStatusSection";
 import { CoachMemo } from "@/components/admin/CoachMemo";
@@ -49,7 +48,6 @@ type DossierTab =
   | "overview"
   | "performance"
   | "activity"
-  | "reports"
   | "homework"
   | "memos";
 
@@ -119,7 +117,6 @@ export function SessionStudentDossier({
               { id: "overview", label: "概要" },
               { id: "performance", label: "成績・弱点", accent: "violet" },
               { id: "activity", label: "活動・書類", accent: "amber" },
-              { id: "reports", label: "レポート", accent: "blue" },
               { id: "homework", label: "宿題", accent: "rose" },
               { id: "memos", label: "メモ", accent: "emerald" },
             ]}
@@ -325,21 +322,18 @@ export function SessionStudentDossier({
             </div>
           )}
 
-          {/* レポート */}
-          {activeTab === "reports" && (
-            <div className="space-y-6">
-              <GrowthReportsSection studentId={studentId} />
-              <EssayCoachHistorySection studentId={studentId} />
-            </div>
-          )}
-
           {/* 宿題 */}
           {activeTab === "homework" && (
             <HomeworkStatusSection studentId={studentId} />
           )}
 
           {/* メモ */}
-          {activeTab === "memos" && <CoachMemo studentId={studentId} />}
+          {activeTab === "memos" && (
+            <div className="space-y-6">
+              <CoachMemo studentId={studentId} />
+              <EssayCoachHistorySection studentId={studentId} />
+            </div>
+          )}
         </div>
       </CardContent>
 
