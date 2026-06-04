@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { SegmentControl } from "@/components/shared/SegmentControl";
 import {
   ArrowLeft,
   Video,
@@ -18,17 +17,10 @@ import {
   XCircle,
   Save,
   User,
-  GraduationCap,
-  School,
-  TrendingUp,
   AlertCircle,
   BarChart3,
   FileText,
-  Mic,
-  Briefcase,
-  StickyNote,
   Loader2,
-  ChevronDown,
   Printer,
   Pencil,
   Sparkles,
@@ -41,23 +33,15 @@ import { SESSION_TYPE_LABELS, SESSION_STATUS_LABELS } from "@/lib/types/session"
 import type { PracticeQuestion } from "@/lib/types/growth-report";
 
 type GroupSession = Session & GroupSessionFields;
-import type { StudentDetail, ScoreTrendPoint } from "@/lib/types/admin";
-import type { WeaknessRecord } from "@/lib/types/growth";
-import { getWeaknessReminderLevel } from "@/lib/types/growth";
-import { ScoresTrendChart } from "@/components/growth/ScoresTrendChart";
-import { InterviewsSection } from "@/components/admin/InterviewsSection";
-import { DocumentsSection } from "@/components/admin/DocumentsSection";
-import { ActivitiesSection } from "@/components/admin/ActivitiesSection";
-import { CoachMemo } from "@/components/admin/CoachMemo";
+import type { StudentDetail } from "@/lib/types/admin";
+import type { SkillCheckStatus } from "@/lib/types/skill-check";
+import type { InterviewSkillCheckStatus } from "@/lib/types/interview-skill-check";
 import { LessonPrepSection } from "@/components/admin/LessonPrepSection";
 import { PracticeQuestionsPanel } from "@/components/admin/PracticeQuestionsPanel";
 import { LessonDebriefSection } from "@/components/admin/LessonDebriefSection";
-import SessionArtifactsPanel from "@/components/sessions/SessionArtifactsPanel";
+import { SessionStudentDossier } from "@/components/admin/SessionStudentDossier";
 import { SessionLifecycleBar } from "@/components/admin/SessionLifecycleBar";
 import { SessionReportDialog } from "@/components/admin/SessionReportDialog";
-import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
-import { scoreToSkillRank } from "@/lib/history-rank";
-import { getDisplayGrade } from "@/lib/utils/grade";
 
 const STATUS_VARIANT: Record<
   SessionStatus,
@@ -68,34 +52,6 @@ const STATUS_VARIANT: Record<
   completed: "secondary",
   cancelled: "destructive",
 };
-
-function weaknessBadge(w: WeaknessRecord) {
-  const level = getWeaknessReminderLevel(w);
-  switch (level) {
-    case "critical":
-      return <Badge variant="destructive">要注意</Badge>;
-    case "warning":
-      return (
-        <Badge variant="outline" className="border-amber-400 bg-amber-50 text-amber-700">
-          警告
-        </Badge>
-      );
-    case "improving":
-      return (
-        <Badge variant="outline" className="border-sky-400 bg-sky-50 text-sky-700">
-          改善中
-        </Badge>
-      );
-    case "resolved":
-      return (
-        <Badge variant="outline" className="border-emerald-400 bg-emerald-50 text-emerald-700">
-          解決済み
-        </Badge>
-      );
-    default:
-      return <Badge variant="secondary">-</Badge>;
-  }
-}
 
 function scoreColor(total: number): string {
   if (total >= 40) return "text-emerald-600 dark:text-emerald-400";
@@ -113,7 +69,6 @@ export default function AdminSessionDetailPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
-  const [studentOpen, setStudentOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [pqEditing, setPqEditing] = useState(false);
   const [pqDraft, setPqDraft] = useState<PracticeQuestion[]>([]);
@@ -122,6 +77,9 @@ export default function AdminSessionDetailPage() {
   const [student, setStudent] = useState<StudentDetail | null>(null);
   const [studentLoading, setStudentLoading] = useState(false);
   const [studentError, setStudentError] = useState(false);
+  const [skillCheck, setSkillCheck] = useState<SkillCheckStatus | null>(null);
+  const [interviewSkillCheck, setInterviewSkillCheck] =
+    useState<InterviewSkillCheckStatus | null>(null);
 
   // Group review submissions
   const [submissions, setSubmissions] = useState<SessionSubmission[]>([]);
@@ -166,25 +124,31 @@ export default function AdminSessionDetailPage() {
   }, [session, id]);
 
   useEffect(() => {
-    if (!session?.studentId) return;
-    const isActive = session.status === "scheduled" || session.status === "in_progress";
-    if (!isActive) return;
+    const sid = session?.studentId;
+    if (!sid || session?.type === "group_review") return;
 
     setStudentLoading(true);
     setStudentError(false);
-    authFetch(`/api/admin/students/${session.studentId}`)
-      .then(async (res) => {
-        if (!res.ok) throw new Error();
-        const data: StudentDetail = await res.json();
-        setStudent(data);
-      })
-      .catch(() => {
+    // 生徒詳細・スキルチェックをまとめて取得 (status に依らず常時表示)
+    (async () => {
+      try {
+        const [detailRes, essaySkillRes, interviewSkillRes] = await Promise.all([
+          authFetch(`/api/admin/students/${sid}`),
+          authFetch(`/api/admin/students/${sid}/skill-check`),
+          authFetch(`/api/admin/students/${sid}/interview-skill-check`),
+        ]);
+        if (!detailRes.ok) throw new Error();
+        setStudent((await detailRes.json()) as StudentDetail);
+        if (essaySkillRes.ok) setSkillCheck(await essaySkillRes.json());
+        if (interviewSkillRes.ok)
+          setInterviewSkillCheck(await interviewSkillRes.json());
+      } catch {
         setStudentError(true);
-      })
-      .finally(() => {
+      } finally {
         setStudentLoading(false);
-      });
-  }, [session?.studentId, session?.status]);
+      }
+    })();
+  }, [session?.studentId, session?.type]);
 
   async function patchSession(updates: Partial<Session>) {
     setSaving(true);
@@ -308,9 +272,6 @@ export default function AdminSessionDetailPage() {
       </div>
     );
   }
-
-  const showStudentPanel =
-    session.status === "scheduled" || session.status === "in_progress";
 
   // 授業形態 (format 未設定の既存データは meetLink 有無でフォールバック判定)
   const isOnline = session.format
@@ -518,36 +479,45 @@ export default function AdminSessionDetailPage() {
       {session.type !== "group_review" ? (
         /* 1 対 1: 2 カラム (左=参照 / 右=入力系) */
         <div className="grid items-start gap-6 lg:grid-cols-2">
-          {/* 左: 参照 (基本情報+操作 → 取り組み → 生徒情報) */}
+          {/* 左: 参照 (基本情報+操作 → 生徒情報) */}
           <div className="space-y-6">
             {basicInfoCard}
-            <SessionArtifactsPanel endpoint={`/api/admin/sessions/${id}/artifacts`} />
-            {showStudentPanel && (
-              <div className="space-y-3">
-                <Button
-                  variant="outline"
-                  className="w-full justify-between"
-                  onClick={() => setStudentOpen((o) => !o)}
-                >
-                  <span className="flex items-center gap-2">
+            {studentLoading ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-base">
                     <User className="size-4" />
                     生徒情報
-                  </span>
-                  <ChevronDown
-                    className={`size-4 transition-transform ${
-                      studentOpen ? "rotate-180" : ""
-                    }`}
-                  />
-                </Button>
-                {studentOpen && (
-                  <StudentInfoPanel
-                    studentId={session.studentId}
-                    student={student}
-                    loading={studentLoading}
-                    error={studentError}
-                  />
-                )}
-              </div>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <Skeleton className="h-20 w-full" />
+                  <Skeleton className="h-[280px] w-full" />
+                  <Skeleton className="h-40 w-full" />
+                </CardContent>
+              </Card>
+            ) : studentError || !student ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <User className="size-4" />
+                    生徒情報
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-col items-center gap-2 py-8 text-sm text-muted-foreground">
+                    <AlertCircle className="size-8" />
+                    <p>生徒データの取得に失敗しました</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <SessionStudentDossier
+                studentId={session.studentId}
+                detail={student}
+                skillCheck={skillCheck}
+                interviewSkillCheck={interviewSkillCheck}
+              />
             )}
           </div>
           {/* 右: 入力系 (録音 → 台本 → 振り返り → メモ) */}
@@ -768,281 +738,5 @@ export default function AdminSessionDetailPage() {
         />
       )}
     </div>
-  );
-}
-
-function StudentInfoPanel({
-  studentId,
-  student,
-  loading,
-  error,
-}: {
-  studentId: string;
-  student: StudentDetail | null;
-  loading: boolean;
-  error: boolean;
-}) {
-  if (loading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <User className="size-4" />
-            生徒情報
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Skeleton className="h-20 w-full" />
-          <Skeleton className="h-[280px] w-full" />
-          <Skeleton className="h-40 w-full" />
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (error || !student) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <User className="size-4" />
-            生徒情報
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col items-center gap-2 py-8 text-sm text-muted-foreground">
-            <AlertCircle className="size-8" />
-            <p>生徒データの取得に失敗しました</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <StudentInfoPanelInner studentId={studentId} student={student} />
-  );
-}
-
-function StudentInfoPanelInner({
-  studentId,
-  student,
-}: {
-  studentId: string;
-  student: StudentDetail;
-}) {
-  const [activeTab, setActiveTab] = useState<
-    "overview" | "essays-interviews" | "docs-activities" | "memos"
-  >("overview");
-
-  const { profile, weaknesses, essays, essayScoreTrend, interviewScoreTrend } = student;
-
-  const essayChartData = (essayScoreTrend ?? []).map((p) => ({
-    ...p,
-    date: p.date.slice(5, 10).replace("-", "/"),
-  }));
-  const interviewChartData = (interviewScoreTrend ?? []).map((p) => ({
-    ...p,
-    date: p.date.slice(5, 10).replace("-", "/"),
-  }));
-
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <User className="size-4" />
-            生徒情報: {profile.displayName}
-          </CardTitle>
-          <Link href={`/admin/students/${studentId}`}>
-            <Button variant="outline" size="sm">
-              詳細ページ
-              <ExternalLink className="ml-1 size-3" />
-            </Button>
-          </Link>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <SegmentControl
-            value={activeTab}
-            onChange={(v) => setActiveTab(v as typeof activeTab)}
-            options={[
-              { id: "overview", label: "概要" },
-              { id: "essays-interviews", label: "添削・面接", accent: "violet" },
-              { id: "docs-activities", label: "書類・活動", accent: "amber" },
-              { id: "memos", label: "メモ", accent: "emerald" },
-            ]}
-            fullWidth
-          />
-
-          {/* Overview Tab */}
-          {activeTab === "overview" && (
-            <div className="space-y-6">
-              {/* Profile summary */}
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 text-sm">
-                {profile.school && (
-                  <div className="flex items-center gap-2">
-                    <School className="size-4 text-muted-foreground" />
-                    <span>{profile.school}</span>
-                  </div>
-                )}
-                {(profile.grade != null || profile.isRonin) && (
-                  <div className="flex items-center gap-2">
-                    <GraduationCap className="size-4 text-muted-foreground" />
-                    <span>
-                      {
-                        getDisplayGrade(
-                          profile.grade,
-                          profile.gradeUpdatedAt,
-                          profile.isRonin,
-                        ).label
-                      }
-                    </span>
-                  </div>
-                )}
-                <div className="flex items-start gap-2 sm:col-span-2">
-                  <TrendingUp className="mt-0.5 size-4 text-muted-foreground" />
-                  <div className="flex flex-wrap gap-1">
-                    {(profile.resolvedUniversities ?? []).length > 0 ? (
-                      profile.resolvedUniversities!.map((u, i) => (
-                        <Badge key={i} variant="outline" className="text-xs">
-                          {u.universityName} {u.facultyName}
-                        </Badge>
-                      ))
-                    ) : profile.targetUniversities.length > 0 ? (
-                      profile.targetUniversities.map((u) => (
-                        <Badge key={u} variant="outline" className="text-xs">
-                          {u}
-                        </Badge>
-                      ))
-                    ) : (
-                      <span className="text-muted-foreground">志望校未設定</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* Score trend */}
-              <div>
-                <p className="flex items-center gap-2 text-sm font-medium mb-2">
-                  <BarChart3 className="size-4" />
-                  スコア推移
-                </p>
-                <ScoresTrendChart essayData={essayChartData} interviewData={interviewChartData} />
-              </div>
-
-              <Separator />
-
-              {/* Weaknesses */}
-              <div>
-                <p className="text-sm font-medium mb-2">弱点一覧</p>
-                {weaknesses.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    弱点データなし
-                  </p>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b bg-muted/50">
-                          <th className="px-3 py-2 text-left font-medium">弱点項目</th>
-                          <th className="px-3 py-2 text-center font-medium">指摘回数</th>
-                          <th className="px-3 py-2 text-center font-medium">ステータス</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {weaknesses.map((w) => (
-                          <tr key={w.area} className="border-b">
-                            <td className="px-3 py-2">{w.area}</td>
-                            <td className="px-3 py-2 text-center">{w.count}回</td>
-                            <td className="px-3 py-2 text-center">{weaknessBadge(w)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Essays & Interviews Tab */}
-          {activeTab === "essays-interviews" && (
-            <div className="space-y-6">
-              {/* Essays */}
-              <div>
-                <p className="flex items-center gap-2 text-sm font-medium mb-3">
-                  <FileText className="size-4" />
-                  添削履歴
-                </p>
-                {essays.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    添削履歴なし
-                  </p>
-                ) : (
-                  <div className="space-y-2">
-                    {essays.map((essay) => (
-                      <div
-                        key={essay.id}
-                        className="flex items-center justify-between rounded-lg border p-3"
-                      >
-                        <div>
-                          <p className="font-medium text-sm">
-                            {essay.targetUniversity} {essay.targetFaculty}
-                          </p>
-                          {essay.topic && (
-                            <p className="text-xs text-muted-foreground">{essay.topic}</p>
-                          )}
-                          <p className="text-xs text-muted-foreground">
-                            {new Date(essay.submittedAt).toLocaleDateString("ja-JP")}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {essay.scores ? (
-                            <>
-                              <SkillRankBadge
-                                rank={scoreToSkillRank(essay.scores.total, 50)}
-                                size="sm"
-                                animate={false}
-                              />
-                              <Badge variant="outline" className={`text-sm font-bold ${scoreColor(essay.scores.total)}`}>
-                                {essay.scores.total}/50
-                              </Badge>
-                            </>
-                          ) : (
-                            <Badge variant="secondary" className="text-xs">
-                              {essay.status === "uploaded" ? "OCR待ち" : essay.status}
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <Separator />
-
-              {/* Interviews */}
-              <InterviewsSection studentId={studentId} />
-            </div>
-          )}
-
-          {/* Documents & Activities Tab */}
-          {activeTab === "docs-activities" && (
-            <div className="space-y-6">
-              <DocumentsSection studentId={studentId} />
-              <ActivitiesSection studentId={studentId} />
-            </div>
-          )}
-
-          {/* Memos Tab */}
-          {activeTab === "memos" && <CoachMemo studentId={studentId} />}
-        </div>
-      </CardContent>
-    </Card>
   );
 }
