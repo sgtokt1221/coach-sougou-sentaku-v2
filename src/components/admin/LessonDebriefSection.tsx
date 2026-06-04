@@ -160,7 +160,7 @@ export function LessonDebriefSection({
                     onChange={(e) => updateReflection(i, e.target.value)}
                     maxLength={300}
                     className="flex-1"
-                    placeholder="この授業で見えた課題・反省点"
+                    placeholder="授業終了後にAIが自動で下書きします（手動でも追記可）"
                   />
                   <Button
                     variant="ghost"
@@ -203,7 +203,7 @@ export function LessonDebriefSection({
             }
             rows={3}
             maxLength={1000}
-            placeholder="次回はここを掘る / ここに注意 など"
+            placeholder="授業終了後にAIが下書きします（手動で修正可）／例: 次回はここを掘る・ここに注意"
           />
         </div>
 
@@ -215,6 +215,11 @@ export function LessonDebriefSection({
             <AlertTriangle className="size-4 text-rose-600" />
             <span className="text-sm font-medium">新発見の弱点</span>
           </div>
+          {state.newWeaknessAreas.length === 0 && (
+            <p className="text-xs text-muted-foreground">
+              授業終了後にAIが自動で追加します（手動でも追加可）
+            </p>
+          )}
           <div className="flex flex-wrap gap-1.5 min-h-[1.75rem]">
             {state.newWeaknessAreas.map((a) => (
               <Badge
