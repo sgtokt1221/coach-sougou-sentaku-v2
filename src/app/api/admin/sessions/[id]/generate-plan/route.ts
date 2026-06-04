@@ -28,6 +28,23 @@ import type { WeaknessRecord } from "@/lib/types/growth";
 
 export const maxDuration = 60;
 
+/**
+ * AI 応答テキストから JSON オブジェクト文字列を堅牢に抽出する。
+ * 1) ```json ... ``` / ``` ... ``` フェンス
+ * 2) 最初の { から最後の } まで (フェンス無し・前後に説明文がある場合)
+ * 返り値は JSON.parse 前の文字列 (パース失敗は呼び出し側で扱う)。
+ */
+function extractJsonObject(text: string): string | null {
+  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+  if (fenced?.[1]?.trim()) return fenced[1].trim();
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+  if (start !== -1 && end !== -1 && end > start) {
+    return text.slice(start, end + 1);
+  }
+  return null;
+}
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -292,7 +309,7 @@ export async function POST(
     const client = new Anthropic();
     const resp = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 1200,
+      max_tokens: 2000,
       system: systemPrompt,
       messages: [
         {
@@ -307,21 +324,27 @@ export async function POST(
     return NextResponse.json({ error: "AI 生成に失敗しました" }, { status: 500 });
   }
 
-  // JSON 抽出
+  // JSON 抽出 (フェンス有無・前後の説明文・部分的な切れに耐性を持たせる)
   let parsed:
     | { theme?: string; goal?: string; questions?: string[]; cautions?: string[] }
     | null = null;
-  const jsonMatch = rawText.match(/```json\s*([\s\S]*?)\s*```/) ?? rawText.match(/\{[\s\S]*\}/);
-  if (jsonMatch) {
+  const jsonStr = extractJsonObject(rawText);
+  if (jsonStr) {
     try {
-      parsed = JSON.parse(jsonMatch[1] ?? jsonMatch[0]);
+      parsed = JSON.parse(jsonStr);
     } catch {
       parsed = null;
     }
   }
   if (!parsed || !parsed.goal || !Array.isArray(parsed.questions)) {
+    console.error(
+      `[generate-plan] 台本 JSON parse failed. rawLength=${rawText.length} snippet=${rawText.slice(0, 200)}`,
+    );
     return NextResponse.json(
-      { error: "AI レスポンスの解析に失敗しました" },
+      {
+        error: "AI レスポンスの解析に失敗しました",
+        detail: `rawLength=${rawText.length}`,
+      },
       { status: 500 },
     );
   }
@@ -411,9 +434,13 @@ export async function POST(
       messages: [{ role: "user", content: "JSON のみを出力してください。" }],
     });
     const pqText = pqResp.content[0]?.type === "text" ? pqResp.content[0].text : "";
-    const pqMatch = pqText.match(/\{[\s\S]*\}/);
-    if (pqMatch) {
-      practiceQuestions = buildPracticeQuestionsFromJson(JSON.parse(pqMatch[0]));
+    const pqJsonStr = extractJsonObject(pqText);
+    if (pqJsonStr) {
+      practiceQuestions = buildPracticeQuestionsFromJson(JSON.parse(pqJsonStr));
+    } else {
+      console.warn(
+        `[generate-plan] practice questions JSON not found. rawLength=${pqText.length}`,
+      );
     }
   } catch (err) {
     console.warn("[generate-plan] practice questions generation failed:", err);
