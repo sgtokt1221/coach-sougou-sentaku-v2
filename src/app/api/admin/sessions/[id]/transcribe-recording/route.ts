@@ -109,32 +109,31 @@ export async function POST(
       transcribedAt: new Date().toISOString(),
     };
 
-    // debrief.notes に挿入
-    const existingNotes = session.debrief?.notes ?? "";
-    const newNotes =
-      existingNotes.trim().length === 0
-        ? transcription.fullText
-        : `${existingNotes}\n\n--- 録音文字起こし ---\n${transcription.fullText}`;
-
-    const debrief = {
-      notes: newNotes.slice(0, 8000),
-      newWeaknessAreas: session.debrief?.newWeaknessAreas ?? [],
-      nextAgendaSeed: session.debrief?.nextAgendaSeed ?? "",
-      capturedAt: new Date().toISOString(),
+    // 文字起こしは授業記録 (lessonTranscript) として保存 (講師単独なので speaker=teacher)。
+    // debrief.notes は講師メモ専用とし触らない。
+    const now = new Date().toISOString();
+    const lessonTranscript = {
+      fullText: transcription.fullText,
+      segments: transcription.segments.map((s) => ({
+        speaker: "teacher" as const,
+        start: Math.max(0, Math.round(s.start)),
+        text: s.text.trim(),
+      })),
+      transcribedAt: now,
     };
 
     await ref.set(
       {
         transcription,
-        debrief,
-        updatedAt: new Date().toISOString(),
+        lessonTranscript,
+        updatedAt: now,
       },
       { merge: true },
     );
 
     return NextResponse.json({
       transcription,
-      debriefNotes: debrief.notes,
+      lessonTranscript,
     });
   } catch (err) {
     console.error("[transcribe] unexpected error:", err);

@@ -27,6 +27,7 @@ const EMPTY: LessonDebrief = {
   notes: "",
   newWeaknessAreas: [],
   nextAgendaSeed: "",
+  reflectionPoints: [],
   capturedAt: "",
 };
 
@@ -85,6 +86,27 @@ export function LessonDebriefSection({
     }));
   };
 
+  const reflectionPoints = state.reflectionPoints ?? [];
+  const updateReflection = (idx: number, value: string) => {
+    setState((s) => {
+      const next = [...(s.reflectionPoints ?? [])];
+      next[idx] = value;
+      return { ...s, reflectionPoints: next };
+    });
+  };
+  const addReflection = () => {
+    setState((s) => ({
+      ...s,
+      reflectionPoints: [...(s.reflectionPoints ?? []), ""],
+    }));
+  };
+  const removeReflection = (idx: number) => {
+    setState((s) => ({
+      ...s,
+      reflectionPoints: (s.reflectionPoints ?? []).filter((_, i) => i !== idx),
+    }));
+  };
+
   const suggestions = existingWeaknessAreas.filter(
     (a) => !state.newWeaknessAreas.includes(a),
   );
@@ -100,7 +122,42 @@ export function LessonDebriefSection({
       <CardContent className="space-y-5">
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-muted-foreground">
-            気づきメモ (次回の AI 台本作成の入力になります)
+            反省点・課題 (録音からAIが下書き / 次回授業に表示・台本に反映)
+          </label>
+          <div className="space-y-1.5">
+            {reflectionPoints.map((r, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <Input
+                  value={r}
+                  onChange={(e) => updateReflection(i, e.target.value)}
+                  maxLength={300}
+                  className="flex-1"
+                  placeholder="この授業で見えた課題・反省点"
+                />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => removeReflection(i)}
+                  className="text-muted-foreground cursor-pointer"
+                >
+                  削除
+                </Button>
+              </div>
+            ))}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={addReflection}
+              className="cursor-pointer"
+            >
+              反省点を追加
+            </Button>
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-muted-foreground">
+            気づきメモ (講師の自由記述。次回の AI 台本作成の入力になります)
           </label>
           <Textarea
             value={state.notes}

@@ -31,12 +31,19 @@ export async function POST(
     notes?: string;
     newWeaknessAreas?: string[];
     nextAgendaSeed?: string;
+    reflectionPoints?: string[];
   } | null;
   if (!body) {
     return NextResponse.json({ error: "入力が不正です" }, { status: 400 });
   }
 
   const existing: Partial<LessonDebrief> = session.debrief ?? {};
+  const reflectionPoints = Array.isArray(body.reflectionPoints)
+    ? body.reflectionPoints
+        .map((r) => String(r).trim())
+        .filter((r) => r.length > 0)
+        .slice(0, 10)
+    : existing.reflectionPoints ?? [];
   const mergedAreas = Array.isArray(body.newWeaknessAreas)
     ? Array.from(
         new Set(
@@ -54,6 +61,7 @@ export async function POST(
       typeof body.nextAgendaSeed === "string"
         ? body.nextAgendaSeed.slice(0, 1000)
         : existing.nextAgendaSeed ?? "",
+    reflectionPoints,
     capturedAt: new Date().toISOString(),
   };
 

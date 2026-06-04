@@ -40,6 +40,8 @@ import { LessonPrepSection } from "@/components/admin/LessonPrepSection";
 import { PracticeQuestionsPanel } from "@/components/admin/PracticeQuestionsPanel";
 import { LessonDebriefSection } from "@/components/admin/LessonDebriefSection";
 import { SessionStudentDossier } from "@/components/admin/SessionStudentDossier";
+import { SessionTranscriptCard } from "@/components/admin/SessionTranscriptCard";
+import { PreviousSessionDebriefCard } from "@/components/admin/PreviousSessionDebriefCard";
 import { SessionLifecycleBar } from "@/components/admin/SessionLifecycleBar";
 import { SessionReportDialog } from "@/components/admin/SessionReportDialog";
 
@@ -527,6 +529,7 @@ export default function AdminSessionDetailPage() {
               session={session}
               onSessionUpdate={(s) => setSession(s)}
             />
+            <PreviousSessionDebriefCard sessionId={id} />
             <LessonPrepSection
               sessionId={id}
               initial={session.prepPlan}
@@ -613,6 +616,7 @@ export default function AdminSessionDetailPage() {
               existingWeaknessAreas={[]}
               onChange={(d) => setSession({ ...session, debrief: d })}
             />
+            <SessionTranscriptCard transcript={session.lessonTranscript} />
             {memoCard}
           </div>
         </div>

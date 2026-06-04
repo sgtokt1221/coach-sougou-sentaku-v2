@@ -49,16 +49,24 @@ interface MergeSegment {
   speaker: "teacher" | "student";
 }
 
-function buildMergedNotes(
+/**
+ * 講師/生徒の文字起こしを絶対時刻でマージし、話者分離した授業記録を作る。
+ * fullText は [講師]/[生徒] ラベル付き (連続同一話者は結合)、segments は時系列ソート済み
+ * (start = 最初の発話からの相対秒)。片方のみでも可。
+ */
+function buildLessonTranscript(
   teacher: LessonTranscription | undefined,
   teacherStartAtMs: number,
   student: LessonTranscription | undefined,
   studentStartAtMs: number,
-): string {
-  const segments: MergeSegment[] = [];
+): {
+  fullText: string;
+  segments: Array<{ speaker: "teacher" | "student"; start: number; text: string }>;
+} {
+  const raw: MergeSegment[] = [];
   if (teacher) {
     for (const s of teacher.segments) {
-      segments.push({
+      raw.push({
         absStart: teacherStartAtMs + s.start * 1000,
         text: s.text.trim(),
         speaker: "teacher",
@@ -67,20 +75,28 @@ function buildMergedNotes(
   }
   if (student) {
     for (const s of student.segments) {
-      segments.push({
+      raw.push({
         absStart: studentStartAtMs + s.start * 1000,
         text: s.text.trim(),
         speaker: "student",
       });
     }
   }
-  segments.sort((a, b) => a.absStart - b.absStart);
+  raw.sort((a, b) => a.absStart - b.absStart);
+
+  const minAbs = raw.length > 0 ? raw[0].absStart : 0;
+  const segments = raw
+    .filter((s) => s.text)
+    .map((s) => ({
+      speaker: s.speaker,
+      start: Math.max(0, Math.round((s.absStart - minAbs) / 1000)),
+      text: s.text,
+    }));
 
   const lines: string[] = [];
   let lastSpeaker: "teacher" | "student" | null = null;
   let currentLine = "";
   for (const seg of segments) {
-    if (!seg.text) continue;
     if (seg.speaker !== lastSpeaker) {
       if (currentLine) lines.push(currentLine);
       currentLine = `[${seg.speaker === "teacher" ? "講師" : "生徒"}] ${seg.text}`;
@@ -91,7 +107,7 @@ function buildMergedNotes(
   }
   if (currentLine) lines.push(currentLine);
 
-  return lines.join("\n");
+  return { fullText: lines.join("\n"), segments };
 }
 
 /** POST /api/admin/sessions/[id]/merge-transcriptions
@@ -176,37 +192,19 @@ export async function POST(
   const studentStartedAt =
     session.recordingState?.studentStartedAt ?? teacherStartedAt;
 
-  let merged = "";
-  if (teacherTrans && studentTrans) {
-    merged = buildMergedNotes(
-      teacherTrans,
-      new Date(teacherStartedAt).getTime(),
-      studentTrans,
-      new Date(studentStartedAt).getTime(),
-    );
-  } else if (teacherTrans) {
-    merged = teacherTrans.fullText;
-  } else if (studentTrans) {
-    merged = studentTrans.fullText;
-  }
+  const { fullText, segments } = buildLessonTranscript(
+    teacherTrans,
+    new Date(teacherStartedAt).getTime(),
+    studentTrans,
+    new Date(studentStartedAt).getTime(),
+  );
 
-  // debrief.notes に挿入
-  const existingNotes = session.debrief?.notes ?? "";
-  const newNotes =
-    existingNotes.trim().length === 0
-      ? merged
-      : `${existingNotes}\n\n--- 録音文字起こし ---\n${merged}`;
-
+  // 文字起こしは授業記録 (lessonTranscript) として保存。debrief.notes は講師メモ専用とし触らない。
   const now = new Date().toISOString();
-  const debrief = {
-    notes: newNotes.slice(0, 8000),
-    newWeaknessAreas: session.debrief?.newWeaknessAreas ?? [],
-    nextAgendaSeed: session.debrief?.nextAgendaSeed ?? "",
-    capturedAt: now,
-  };
+  const lessonTranscript = { fullText, segments, transcribedAt: now };
 
   const update: Record<string, unknown> = {
-    debrief,
+    lessonTranscript,
     updatedAt: now,
   };
   if (teacherTrans) update.transcription = teacherTrans;
@@ -215,7 +213,7 @@ export async function POST(
   await ref.set(update, { merge: true });
 
   return NextResponse.json({
-    mergedNotes: debrief.notes,
+    lessonTranscript,
     hasTeacherTranscription: Boolean(teacherTrans),
     hasStudentTranscription: Boolean(studentTrans),
   });

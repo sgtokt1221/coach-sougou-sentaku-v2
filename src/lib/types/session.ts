@@ -48,6 +48,8 @@ export interface Session {
   studentRecordingSizeBytes?: number;
   /** Phase 2: 生徒側 Whisper 結果 (マージ前に保持) */
   studentTranscription?: LessonTranscription;
+  /** 話者分離した授業記録 (講師/生徒を時系列マージした文字起こし) */
+  lessonTranscript?: LessonTranscriptRecord;
   sharedWithStudent: boolean;
   // Group review fields
   theme?: string;
@@ -117,8 +119,22 @@ export interface LessonDebrief {
   newWeaknessAreas: string[];
   /** 次回セッションの台本生成に使うシード */
   nextAgendaSeed: string;
+  /** AI が文字起こしから抽出した反省点/課題 (次回授業の反省点として表示・台本に反映) */
+  reflectionPoints?: string[];
   /** 最終更新時刻 ISO */
   capturedAt: string;
+}
+
+/** 話者分離した授業記録 (録音文字起こし。講師/生徒の別ストリームを時系列マージ) */
+export interface LessonTranscriptRecord {
+  fullText: string;
+  segments: Array<{
+    speaker: "teacher" | "student";
+    /** 授業開始からの相対秒 (時系列ソート済み) */
+    start: number;
+    text: string;
+  }>;
+  transcribedAt: string;
 }
 
 export interface SessionCreateRequest {

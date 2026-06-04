@@ -32,6 +32,8 @@ export interface LessonPlanContext {
     notes: string;
     nextAgendaSeed: string;
     newWeaknessAreas: string[];
+    /** AI が文字起こしから抽出した前回の反省点/課題 */
+    reflectionPoints?: string[];
   };
   /** 前回の台本ゴール */
   previousPrepGoal?: string;
@@ -88,6 +90,7 @@ export function buildLessonPlanPrompt(ctx: LessonPlanContext): string {
   const prevSection = ctx.previousDebrief
     ? `\n## 前回の授業 (重要)
 前回のゴール: ${ctx.previousPrepGoal ?? "(不明)"}
+前回の反省点・課題: ${(ctx.previousDebrief.reflectionPoints ?? []).join("、") || "(記録なし)"}
 前回講師の観察: ${ctx.previousDebrief.notes.slice(0, 400)}
 次回やりたいこと (講師メモ): ${ctx.previousDebrief.nextAgendaSeed.slice(0, 300)}
 前回新発見の弱点: ${ctx.previousDebrief.newWeaknessAreas.join("、") || "なし"}

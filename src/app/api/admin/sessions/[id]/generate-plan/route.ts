@@ -18,6 +18,7 @@ import {
 import { getPeriodRange } from "@/lib/growth/report";
 import { queryWithRangeFilter } from "@/lib/admin/firestore-range-query";
 import { loadStudentContext } from "@/lib/growth/student-context";
+import { extractJsonObject } from "@/lib/ai/extract-json";
 import { toDateSafe } from "@/lib/firebase/timestamp";
 import type {
   Session,
@@ -27,23 +28,6 @@ import type { PracticeQuestion } from "@/lib/types/growth-report";
 import type { WeaknessRecord } from "@/lib/types/growth";
 
 export const maxDuration = 60;
-
-/**
- * AI 応答テキストから JSON オブジェクト文字列を堅牢に抽出する。
- * 1) ```json ... ``` / ``` ... ``` フェンス
- * 2) 最初の { から最後の } まで (フェンス無し・前後に説明文がある場合)
- * 返り値は JSON.parse 前の文字列 (パース失敗は呼び出し側で扱う)。
- */
-function extractJsonObject(text: string): string | null {
-  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-  if (fenced?.[1]?.trim()) return fenced[1].trim();
-  const start = text.indexOf("{");
-  const end = text.lastIndexOf("}");
-  if (start !== -1 && end !== -1 && end > start) {
-    return text.slice(start, end + 1);
-  }
-  return null;
-}
 
 export async function POST(
   request: NextRequest,
@@ -292,6 +276,7 @@ export async function POST(
           notes: prevSession.debrief.notes ?? "",
           nextAgendaSeed: prevSession.debrief.nextAgendaSeed ?? "",
           newWeaknessAreas: prevSession.debrief.newWeaknessAreas ?? [],
+          reflectionPoints: prevSession.debrief.reflectionPoints ?? [],
         }
       : undefined,
     previousPrepGoal: prevSession?.prepPlan?.goal,

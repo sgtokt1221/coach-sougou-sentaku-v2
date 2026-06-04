@@ -29,6 +29,7 @@ type PostFlowStep =
   | "stopping"
   | "uploading"
   | "transcribing"
+  | "analyzing"
   | "completed"
   | "error";
 
@@ -248,25 +249,37 @@ export function SessionLifecycleBar({ sessionId, session, onSessionUpdate }: Pro
         throw new Error(data.error ?? "文字起こし失敗");
       }
       const trData = (await tr.json()) as {
-        mergedNotes: string;
+        lessonTranscript?: Session["lessonTranscript"];
         hasTeacherTranscription: boolean;
         hasStudentTranscription: boolean;
       };
-      onSessionUpdate({
+      let next: Session = {
         ...session,
         status: "completed",
         endedAt: new Date().toISOString(),
-        debrief: {
-          ...(session.debrief ?? {
-            notes: "",
-            newWeaknessAreas: [],
-            nextAgendaSeed: "",
-            capturedAt: "",
-          }),
-          notes: trData.mergedNotes,
-          capturedAt: new Date().toISOString(),
-        },
-      });
+        lessonTranscript: trData.lessonTranscript ?? session.lessonTranscript,
+      };
+      onSessionUpdate(next);
+
+      // 文字起こしから反省点/課題を AI 抽出 (自動)。失敗しても記録は保存済み。
+      if (trData.lessonTranscript?.fullText?.trim()) {
+        setPostFlow("analyzing");
+        try {
+          const ex = await authFetch(
+            `/api/admin/sessions/${sessionId}/extract-reflection`,
+            { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" },
+          );
+          if (ex.ok) {
+            const exData = (await ex.json()) as { debrief: Session["debrief"] };
+            if (exData.debrief) {
+              next = { ...next, debrief: exData.debrief };
+              onSessionUpdate(next);
+            }
+          }
+        } catch (err) {
+          console.warn("[lifecycle] extract-reflection failed:", err);
+        }
+      }
     } catch (err) {
       console.error(err);
       setPostError(
@@ -409,6 +422,7 @@ export function SessionLifecycleBar({ sessionId, session, onSessionUpdate }: Pro
       { key: "stopping", label: "停止中" },
       { key: "uploading", label: "アップロード中" },
       { key: "transcribing", label: "文字起こし中" },
+      { key: "analyzing", label: "分析中" },
       { key: "completed", label: "完了" },
     ];
     const currentIdx = steps.findIndex((s) => s.key === postFlow);
