@@ -30,12 +30,15 @@ export async function PATCH(
     goal?: string;
     questions?: string[];
     cautions?: string[];
+    theme?: string;
   } | null;
   if (!body) {
     return NextResponse.json({ error: "入力が不正です" }, { status: 400 });
   }
 
   const existing: Partial<LessonPrepPlan> = session.prepPlan ?? {};
+  const theme =
+    typeof body.theme === "string" ? body.theme.slice(0, 200) : existing.theme;
   const patch: LessonPrepPlan = {
     goal: typeof body.goal === "string" ? body.goal.slice(0, 500) : existing.goal ?? "",
     questions: Array.isArray(body.questions)
@@ -47,6 +50,7 @@ export async function PATCH(
     generatedAt: existing.generatedAt ?? new Date().toISOString(),
     generatedBy: "ai_then_teacher",
   };
+  if (theme !== undefined) patch.theme = theme;
 
   await ref.set(
     { prepPlan: patch, updatedAt: new Date().toISOString() },

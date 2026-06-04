@@ -22,15 +22,23 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { authFetch } from "@/lib/api/client";
 import type { LessonPrepPlan } from "@/lib/types/session";
+import type { PracticeQuestion } from "@/lib/types/growth-report";
 
 interface Props {
   sessionId: string;
   initial?: LessonPrepPlan;
   onChange?: (plan: LessonPrepPlan) => void;
+  /** 台本とセット生成された類題を親へ伝播する (generate 時のみ) */
+  onPracticeQuestionsChange?: (qs: PracticeQuestion[]) => void;
 }
 
 /** セッション画面の「レッスン台本」セクション */
-export function LessonPrepSection({ sessionId, initial, onChange }: Props) {
+export function LessonPrepSection({
+  sessionId,
+  initial,
+  onChange,
+  onPracticeQuestionsChange,
+}: Props) {
   const [plan, setPlan] = useState<LessonPrepPlan | undefined>(initial);
   const [busy, setBusy] = useState<"generating" | "saving" | null>(null);
   const [editing, setEditing] = useState(false);
@@ -51,11 +59,15 @@ export function LessonPrepSection({ sessionId, initial, onChange }: Props) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error ?? "生成に失敗");
       }
-      const { prepPlan } = (await res.json()) as { prepPlan: LessonPrepPlan };
+      const { prepPlan, practiceQuestions } = (await res.json()) as {
+        prepPlan: LessonPrepPlan;
+        practiceQuestions?: PracticeQuestion[];
+      };
       setPlan(prepPlan);
       setDraft(prepPlan);
       setEditing(false);
       onChange?.(prepPlan);
+      onPracticeQuestionsChange?.(practiceQuestions ?? []);
     } catch (err) {
       console.error(err);
       alert(err instanceof Error ? err.message : "AI 生成に失敗しました");
@@ -77,6 +89,7 @@ export function LessonPrepSection({ sessionId, initial, onChange }: Props) {
             goal: draft.goal,
             questions: draft.questions,
             cautions: draft.cautions,
+            theme: draft.theme ?? "",
           }),
         },
       );
@@ -201,6 +214,14 @@ export function LessonPrepSection({ sessionId, initial, onChange }: Props) {
         )}
         {plan && !editing && (
           <div className="space-y-4">
+            {plan.theme && (
+              <div>
+                <div className="text-xs font-medium text-muted-foreground mb-1">
+                  今日のテーマ
+                </div>
+                <p className="text-sm font-semibold">{plan.theme}</p>
+              </div>
+            )}
             <div>
               <div className="text-xs font-medium text-muted-foreground mb-1">
                 今日のゴール
@@ -233,6 +254,17 @@ export function LessonPrepSection({ sessionId, initial, onChange }: Props) {
         )}
         {plan && editing && draft && (
           <div className="space-y-4">
+            <div>
+              <div className="text-xs font-medium text-muted-foreground mb-1">
+                今日のテーマ
+              </div>
+              <Input
+                value={draft.theme ?? ""}
+                onChange={(e) => setDraft({ ...draft, theme: e.target.value })}
+                maxLength={200}
+                placeholder="今日のテーマ (短く)"
+              />
+            </div>
             <div>
               <div className="text-xs font-medium text-muted-foreground mb-1">
                 今日のゴール

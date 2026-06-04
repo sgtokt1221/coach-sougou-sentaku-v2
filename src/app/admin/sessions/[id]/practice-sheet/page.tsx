@@ -3,12 +3,13 @@
 import { Suspense, useEffect, useMemo, useRef } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Loader2, Printer, AlertTriangle, ArrowUpRight } from "lucide-react";
+import { ArrowLeft, Loader2, Printer } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAuthSWR } from "@/lib/api/swr";
 import { resolveUsage } from "@/lib/growth/practice-questions-helpers";
-import type { GrowthReport, PracticeQuestion } from "@/lib/types/growth-report";
+import type { Session } from "@/lib/types/session";
+import type { PracticeQuestion } from "@/lib/types/growth-report";
 
 function formatDate(iso?: string): string {
   if (!iso) return "-";
@@ -29,19 +30,17 @@ function parseMode(value: string | null): SheetMode {
 }
 
 /**
- * 生徒配布用「練習問題シート」+ 講師用「解答シート」ページ。
+ * セッションの類題から生徒配布用「練習問題シート」+ 講師用「解答シート」を出力するページ。
  *
- * URL: `/admin/reports/[studentId]/[reportId]/practice-sheet`
+ * URL: `/admin/sessions/[id]/practice-sheet`
  * クエリ:
  *   - `?print=1`            ロード後に印刷ダイアログを自動起動
  *   - `?mode=both` (省略)   問題ページ + 講師用解答シート 両方
  *   - `?mode=problems`      問題ページのみ (生徒配布用)
  *   - `?mode=answers`       講師用解答シートのみ
  *
- * 含めるもの (問題ページ): タイトル / 種別 / 難易度 / 目安時間 / ヒント / 罫線書き込み欄
- * 含めるもの (解答ページ): タイトル (再掲) / 目的 / 関連弱点 / 解答例 / 評価観点 / 講師メモ
- * 番号は問題側と解答側で必ず一致させる (modelAnswer 欠落時もセクションは残す)。
- *
+ * レポート版 (reports/[studentId]/[reportId]/practice-sheet) と表示ロジックは同一。
+ * データ源を session.practiceQuestions に、ヘッダを「今日のテーマ」に差し替えている。
  * usage="extra" の予備問題は除外。lesson と homework のみ印刷対象。
  */
 export default function PracticeSheetPage() {
@@ -60,40 +59,37 @@ export default function PracticeSheetPage() {
 }
 
 function Body() {
-  const params = useParams<{ studentId: string; reportId: string }>();
+  const params = useParams<{ id: string }>();
   const search = useSearchParams();
-  const studentId = params?.studentId ?? "";
-  const reportId = params?.reportId ?? "";
+  const sessionId = params?.id ?? "";
   const autoPrint = search.get("print") === "1";
   const mode = parseMode(search.get("mode"));
   const showProblems = mode === "both" || mode === "problems";
   const showAnswers = mode === "both" || mode === "answers";
 
-  const { data: report, error, isLoading } = useAuthSWR<GrowthReport>(
-    studentId && reportId
-      ? `/api/admin/reports/${studentId}/${reportId}`
-      : null,
+  const { data: session, error, isLoading } = useAuthSWR<Session>(
+    sessionId ? `/api/sessions/${sessionId}` : null,
   );
 
   const questions = useMemo<PracticeQuestion[]>(() => {
-    const all = report?.practiceQuestions ?? [];
+    const all = session?.practiceQuestions ?? [];
     return all
       .filter((q) => {
         const usage = resolveUsage(q);
         return usage === "lesson" || usage === "homework";
       })
       .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-  }, [report]);
+  }, [session]);
 
   // ?print=1 のとき、データロードかつ問題が 1 件以上ある時だけ自動印刷
   const printedRef = useRef(false);
   useEffect(() => {
-    if (autoPrint && report && questions.length > 0 && !printedRef.current) {
+    if (autoPrint && session && questions.length > 0 && !printedRef.current) {
       printedRef.current = true;
       const t = setTimeout(() => window.print(), 400);
       return () => clearTimeout(t);
     }
-  }, [autoPrint, report, questions.length]);
+  }, [autoPrint, session, questions.length]);
 
   if (isLoading) {
     return (
@@ -104,13 +100,16 @@ function Body() {
     );
   }
 
-  if (error || !report) {
+  if (error || !session) {
     return (
       <div className="mx-auto max-w-2xl p-8 text-center text-sm text-destructive">
-        レポートが見つかりませんでした。
+        セッションが見つかりませんでした。
       </div>
     );
   }
+
+  const theme = session.prepPlan?.theme;
+  const cautions = session.prepPlan?.cautions ?? [];
 
   return (
     <>
@@ -163,7 +162,7 @@ function Body() {
             page-break-after: avoid;
             break-after: avoid;
           }
-          .weakness-box {
+          .theme-box {
             page-break-inside: avoid;
             break-inside: avoid;
           }
@@ -174,10 +173,10 @@ function Body() {
         {/* シートヘッダー (画面/印刷両方) */}
         <header className="border-b border-gray-300 pb-3 print:pb-2">
           <h1 className="text-xl font-bold print:text-[14pt]">
-            {report.studentName || "生徒"} さん用 練習問題
+            {session.studentName || "生徒"} さん用 練習問題
           </h1>
           <p className="mt-1 text-xs text-muted-foreground print:text-[9pt]">
-            期間: {formatDate(report.startDate)} 〜 {formatDate(report.endDate)} ・ 計 {questions.length} 問
+            授業日: {formatDate(session.scheduledAt)} ・ 計 {questions.length} 問
             {mode !== "both" && (
               <span className="ml-2 font-medium">
                 ({mode === "problems" ? "問題のみ" : "解答シートのみ"})
@@ -189,9 +188,9 @@ function Body() {
         {/* 操作ボタン (画面のみ) */}
         <div className="flex gap-2 print:hidden">
           <Button asChild variant="ghost" size="sm">
-            <Link href={`/admin/reports/${studentId}/${reportId}`}>
+            <Link href={`/admin/sessions/${sessionId}`}>
               <ArrowLeft className="mr-1.5 size-4" />
-              レポートに戻る
+              セッションに戻る
             </Link>
           </Button>
           <Button
@@ -205,60 +204,28 @@ function Body() {
           </Button>
         </div>
 
-        {/* この生徒の克服すべき弱点 (問題ページの冒頭に表示・印刷対応) */}
-        {showProblems && report.weaknessProgress.length > 0 && (
-          <section className="weakness-box rounded-lg border border-amber-300 bg-amber-50/60 p-4">
-            <h2 className="mb-2 flex items-center gap-2 text-sm font-bold text-amber-800 print:text-[12pt]">
-              <AlertTriangle className="size-4 print:hidden" />
-              今回の重点弱点（苦手なところ）
-            </h2>
-            <div className="grid gap-1.5 sm:grid-cols-2 print:grid-cols-2">
-              {[...report.weaknessProgress]
-                .sort((a, b) => a.currentScore - b.currentScore)
-                .slice(0, 6)
-                .map((w) => {
-                  const statusLabel =
-                    w.status === "improved"
-                      ? "改善中"
-                      : w.status === "declined"
-                        ? "悪化"
-                        : "横ばい";
-                  const statusCls =
-                    w.status === "improved"
-                      ? "text-emerald-700"
-                      : w.status === "declined"
-                        ? "text-rose-700"
-                        : "text-muted-foreground";
-                  return (
-                    <div
-                      key={w.weakness}
-                      className="rounded border border-amber-200 bg-white p-2 text-xs print:text-[10pt]"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <span className="font-semibold">{w.weakness}</span>
-                        <span className={`shrink-0 font-medium ${statusCls}`}>
-                          {statusLabel}
-                        </span>
-                      </div>
-                      <div className="mt-1 flex items-center gap-2 text-[11px] text-muted-foreground print:text-foreground/70 print:text-[9pt]">
-                        <span className="inline-flex items-center gap-0.5 tabular-nums">
-                          {w.previousScore.toFixed(1)}
-                          <ArrowUpRight className="size-3" />
-                          {w.currentScore.toFixed(1)} / 10
-                        </span>
-                        <span>・指摘 {w.attempts} 回</span>
-                      </div>
-                    </div>
-                  );
-                })}
-            </div>
+        {/* 今日のテーマ + 注意ポイント (問題ページの冒頭に表示・印刷対応) */}
+        {showProblems && (theme || cautions.length > 0) && (
+          <section className="theme-box rounded-lg border border-sky-300 bg-sky-50/60 p-4">
+            {theme && (
+              <h2 className="text-sm font-bold text-sky-800 print:text-[12pt]">
+                今日のテーマ: {theme}
+              </h2>
+            )}
+            {cautions.length > 0 && (
+              <ul className="mt-2 list-disc space-y-0.5 pl-5 text-xs text-muted-foreground print:text-foreground/80 print:text-[10pt]">
+                {cautions.map((c, i) => (
+                  <li key={i}>{c}</li>
+                ))}
+              </ul>
+            )}
           </section>
         )}
 
         {/* 空状態 */}
         {questions.length === 0 ? (
           <div className="rounded-lg border border-dashed bg-muted/30 p-8 text-center text-sm text-muted-foreground print:hidden">
-            類題がまだ生成されていません。レポート画面で「類題を生成」してから印刷してください。
+            類題がまだありません。セッション画面で台本 (と類題) を生成してから印刷してください。
           </div>
         ) : (
           <>

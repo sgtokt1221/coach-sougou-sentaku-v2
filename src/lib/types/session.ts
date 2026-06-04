@@ -1,3 +1,5 @@
+import type { PracticeQuestion } from "@/lib/types/growth-report";
+
 export type SessionStatus = "scheduled" | "in_progress" | "completed" | "cancelled";
 export type SessionType = "coaching" | "mock_interview" | "essay_review" | "general" | "group_review";
 
@@ -19,6 +21,8 @@ export interface Session {
   summary?: SessionSummary;
   /** 授業前の AI 生成台本 (講師編集可) */
   prepPlan?: LessonPrepPlan;
+  /** 授業前に AI 生成した「今日使う類題」(台本とセット生成、講師編集可) */
+  practiceQuestions?: PracticeQuestion[];
   /** 授業後の振り返り */
   debrief?: LessonDebrief;
   /** 授業実際開始時刻 (講師が「授業を開始」押下時) */
@@ -81,6 +85,8 @@ export interface LessonPrepPlan {
   goal: string;
   questions: string[];
   cautions: string[];
+  /** 今日のテーマ (短い見出し。AI 生成、講師編集可) */
+  theme?: string;
   generatedAt: string;
   generatedBy: "ai" | "teacher" | "ai_then_teacher";
 }

@@ -14,16 +14,35 @@ import { HOMEWORK_STATUS_LABELS, type HomeworkAssignment } from "@/lib/types/hom
  * 配布済みなら「配布済 (取消)」、未配布なら「配布」を表示。
  * `status === "assigned"` のみ取消可能。submitted 以降は取消ボタンを表示しない。
  */
+/**
+ * 配布元 (レポート or セッション) に応じた assign-homework API のベース URL を組み立てる。
+ * - report: /api/admin/reports/{studentId}/{contextId}/assign-homework
+ * - session: /api/admin/sessions/{contextId}/assign-homework
+ */
+export function homeworkApiBase(
+  contextType: "report" | "session",
+  studentId: string,
+  contextId: string,
+): string {
+  return contextType === "session"
+    ? `/api/admin/sessions/${contextId}/assign-homework`
+    : `/api/admin/reports/${studentId}/${contextId}/assign-homework`;
+}
+
 export function AssignHomeworkButton({
   studentId,
-  reportId,
+  contextType,
+  contextId,
   practiceQuestionId,
   existing,
   onMutated,
   assignable = true,
 }: {
   studentId: string;
-  reportId: string;
+  /** 配布元の種別 (レポート or セッション) */
+  contextType: "report" | "session";
+  /** 配布元 ID (reportId or sessionId) */
+  contextId: string;
   practiceQuestionId: string;
   /** 既存の配布レコード (この practiceQuestionId に紐づくもの)。なければ undefined */
   existing?: HomeworkAssignment;
@@ -36,6 +55,7 @@ export function AssignHomeworkButton({
   assignable?: boolean;
 }) {
   const [busy, setBusy] = useState(false);
+  const apiBase = homeworkApiBase(contextType, studentId, contextId);
 
   const handleAssign = async () => {
     setBusy(true);
@@ -45,7 +65,7 @@ export function AssignHomeworkButton({
       due.setDate(due.getDate() + 7);
 
       const res = await authFetch(
-        `/api/admin/reports/${studentId}/${reportId}/assign-homework`,
+        apiBase,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -76,7 +96,7 @@ export function AssignHomeworkButton({
     setBusy(true);
     try {
       const res = await authFetch(
-        `/api/admin/reports/${studentId}/${reportId}/assign-homework?practiceQuestionId=${encodeURIComponent(practiceQuestionId)}`,
+        `${apiBase}?practiceQuestionId=${encodeURIComponent(practiceQuestionId)}`,
         { method: "DELETE" },
       );
       if (!res.ok) {

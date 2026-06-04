@@ -29,12 +29,16 @@ import {
   StickyNote,
   Loader2,
   ChevronDown,
+  Printer,
+  Pencil,
+  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 import { AnimatedButton } from "@/components/shared/AnimatedButton";
 import { authFetch } from "@/lib/api/client";
 import type { Session, SessionStatus, SessionSubmission, GroupSessionFields } from "@/lib/types/session";
 import { SESSION_TYPE_LABELS, SESSION_STATUS_LABELS } from "@/lib/types/session";
+import type { PracticeQuestion } from "@/lib/types/growth-report";
 
 type GroupSession = Session & GroupSessionFields;
 import type { StudentDetail, ScoreTrendPoint } from "@/lib/types/admin";
@@ -46,6 +50,7 @@ import { DocumentsSection } from "@/components/admin/DocumentsSection";
 import { ActivitiesSection } from "@/components/admin/ActivitiesSection";
 import { CoachMemo } from "@/components/admin/CoachMemo";
 import { LessonPrepSection } from "@/components/admin/LessonPrepSection";
+import { PracticeQuestionsPanel } from "@/components/admin/PracticeQuestionsPanel";
 import { LessonDebriefSection } from "@/components/admin/LessonDebriefSection";
 import SessionArtifactsPanel from "@/components/sessions/SessionArtifactsPanel";
 import { SessionLifecycleBar } from "@/components/admin/SessionLifecycleBar";
@@ -110,6 +115,9 @@ export default function AdminSessionDetailPage() {
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const [studentOpen, setStudentOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [pqEditing, setPqEditing] = useState(false);
+  const [pqDraft, setPqDraft] = useState<PracticeQuestion[]>([]);
+  const [pqSaving, setPqSaving] = useState(false);
 
   const [student, setStudent] = useState<StudentDetail | null>(null);
   const [studentLoading, setStudentLoading] = useState(false);
@@ -202,6 +210,34 @@ export default function AdminSessionDetailPage() {
     navigator.clipboard.writeText(session.meetLink);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  }
+
+  function startPqEdit() {
+    setPqDraft(session?.practiceQuestions ?? []);
+    setPqEditing(true);
+  }
+
+  async function savePracticeQuestions() {
+    if (!session) return;
+    setPqSaving(true);
+    try {
+      const res = await authFetch(`/api/admin/sessions/${id}/practice-questions`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ practiceQuestions: pqDraft }),
+      });
+      if (!res.ok) throw new Error("保存失敗");
+      const { practiceQuestions } = (await res.json()) as {
+        practiceQuestions: PracticeQuestion[];
+      };
+      setSession({ ...session, practiceQuestions });
+      setPqEditing(false);
+    } catch (err) {
+      console.error("[session] save practice questions failed:", err);
+      alert("類題の保存に失敗しました");
+    } finally {
+      setPqSaving(false);
+    }
   }
 
   async function generateSummary() {
@@ -525,7 +561,82 @@ export default function AdminSessionDetailPage() {
               sessionId={id}
               initial={session.prepPlan}
               onChange={(plan) => setSession({ ...session, prepPlan: plan })}
+              onPracticeQuestionsChange={(qs) =>
+                setSession({ ...session, practiceQuestions: qs })
+              }
             />
+            {session.studentId && (
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0">
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Sparkles className="size-4 text-emerald-600" />
+                    今日使う類題
+                  </CardTitle>
+                  <div className="flex items-center gap-1">
+                    {!pqEditing && (session.practiceQuestions?.length ?? 0) > 0 && (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={startPqEdit}
+                          className="cursor-pointer"
+                        >
+                          <Pencil className="mr-1 size-3" />
+                          編集
+                        </Button>
+                        <Button asChild variant="outline" size="sm" className="cursor-pointer">
+                          <Link
+                            href={`/admin/sessions/${id}/practice-sheet?mode=both`}
+                            target="_blank"
+                          >
+                            <Printer className="mr-1 size-3" />
+                            問題用紙
+                          </Link>
+                        </Button>
+                      </>
+                    )}
+                    {pqEditing && (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setPqEditing(false)}
+                          disabled={pqSaving}
+                          className="cursor-pointer"
+                        >
+                          キャンセル
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={savePracticeQuestions}
+                          disabled={pqSaving}
+                          className="cursor-pointer"
+                        >
+                          {pqSaving ? (
+                            <Loader2 className="mr-1 size-3 animate-spin" />
+                          ) : (
+                            <Save className="mr-1 size-3" />
+                          )}
+                          保存
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <PracticeQuestionsPanel
+                    questions={session.practiceQuestions ?? []}
+                    studentId={session.studentId}
+                    contextType="session"
+                    contextId={id}
+                    canAssign
+                    editing={pqEditing}
+                    value={pqDraft}
+                    onChange={setPqDraft}
+                  />
+                </CardContent>
+              </Card>
+            )}
             <LessonDebriefSection
               sessionId={id}
               initial={session.debrief}

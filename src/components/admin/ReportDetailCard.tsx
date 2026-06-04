@@ -19,8 +19,6 @@ import {
   Mic,
   AlertTriangle,
   CheckCircle,
-  ChevronDown,
-  ChevronUp,
   Clock,
   Lightbulb,
   Award,
@@ -30,25 +28,19 @@ import {
   Loader2,
   MessageSquare,
   EyeOff,
-  Sparkles,
   Calendar,
 } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
-import { useAuthSWR } from "@/lib/api/swr";
 import { toast } from "sonner";
-import { SegmentControl } from "@/components/shared/SegmentControl";
 import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
-import { AssignHomeworkButton } from "@/components/admin/AssignHomeworkButton";
 import { scoreToSkillRank } from "@/lib/history-rank";
-import { resolveUsage } from "@/lib/growth/practice-questions-helpers";
 import {
   categorizeWeakness,
   ESSAY_CATEGORY_LABELS,
   ESSAY_CATEGORY_ORDER,
   type EssayCategoryKey,
 } from "@/lib/growth/weakness-category";
-import type { GrowthReport, PracticeQuestion } from "@/lib/types/growth-report";
-import type { HomeworkAssignment } from "@/lib/types/homework";
+import type { GrowthReport } from "@/lib/types/growth-report";
 
 function formatDate(iso?: string): string {
   if (!iso) return "-";
@@ -155,47 +147,12 @@ export function ReportDetailCard({
   const [shared, setShared] = useState<boolean>(
     report.sharedWithStudent !== false
   );
-  const [practiceQs, setPracticeQs] = useState<PracticeQuestion[]>(
-    report.practiceQuestions ?? []
-  );
-  const [generatingPq, setGeneratingPq] = useState(false);
-
-  const generatePracticeQuestions = async () => {
-    setGeneratingPq(true);
-    try {
-      const res = await authFetch(
-        `/api/admin/reports/${report.studentId}/${report.id}/generate-practice-questions`,
-        { method: "POST" }
-      );
-      if (!res.ok) {
-        const payload = (await res.json().catch(() => ({}))) as {
-          error?: string;
-          detail?: string;
-          step?: string;
-        };
-        throw new Error(
-          payload.detail
-            ? `[${payload.step ?? "?"}] ${payload.detail}`
-            : payload.error ?? "類題の生成に失敗しました"
-        );
-      }
-      const updated = (await res.json()) as GrowthReport;
-      toast.success(`類題を ${updated.practiceQuestions?.length ?? 0} 件生成しました`);
-      onUpdated?.(updated);
-    } catch (err) {
-      console.error("[ReportDetailCard] generate practice questions failed:", err);
-      toast.error(err instanceof Error ? err.message : "類題の生成に失敗しました");
-    } finally {
-      setGeneratingPq(false);
-    }
-  };
 
   const startEdit = () => {
     setAssessment(report.overallAssessment ?? "");
     setRecs(report.recommendations ?? []);
     setComment(report.teacherComment ?? "");
     setShared(report.sharedWithStudent !== false);
-    setPracticeQs(report.practiceQuestions ?? []);
     setEditing(true);
   };
 
@@ -216,10 +173,6 @@ export function ReportDetailCard({
             recommendations: recs.filter((r) => r.trim().length > 0),
             teacherComment: comment,
             sharedWithStudent: shared,
-            // 上下ボタンで並び替えた順序を確実に保存するため、配列 index で order を再付与
-            practiceQuestions: practiceQs
-              .filter((q) => q.title.trim().length > 0)
-              .map((q, idx) => ({ ...q, order: idx })),
           }),
         }
       );
@@ -345,222 +298,10 @@ export function ReportDetailCard({
 
       {/* 2 カラム本文 (lg 以上 / 印刷時も 2 カラム維持) */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 print:grid-cols-2 print:gap-3">
-        {/* 左カラム: 弱点進捗 + 類題 */}
+        {/* 左カラム: 弱点進捗 */}
         <div className="space-y-4 print:space-y-2">
           {report.weaknessProgress.length > 0 && (
             <WeaknessProgressByCategory items={report.weaknessProgress} />
-          )}
-
-          {/* 類題 (priority で表示分岐) */}
-          {!editing &&
-            !readOnly &&
-            (report.practiceQuestions?.length ?? 0) === 0 && (
-              <div className="rounded-md border border-dashed bg-muted/30 p-3 print:hidden">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-1.5 text-sm">
-                    <Sparkles className="size-4 text-emerald-600" />
-                    <span className="font-medium">次に取り組む類題</span>
-                    <span className="text-xs text-muted-foreground">
-                      (まだ生成されていません)
-                    </span>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={generatePracticeQuestions}
-                    disabled={generatingPq}
-                  >
-                    {generatingPq ? (
-                      <Loader2 className="mr-1 size-3.5 animate-spin" />
-                    ) : (
-                      <Sparkles className="mr-1 size-3.5" />
-                    )}
-                    類題を生成する
-                  </Button>
-                </div>
-              </div>
-            )}
-
-          {(editing || (report.practiceQuestions?.length ?? 0) > 0) && (
-            <div className="print:break-inside-avoid">
-              <h4 className="mb-2 flex items-center gap-1.5 text-sm font-semibold">
-                <Sparkles className="size-4 text-emerald-600" />
-                次に取り組む類題
-                <span className="text-[10px] font-normal text-muted-foreground">
-                  (今週の弱点克服用)
-                </span>
-              </h4>
-              {editing ? (
-                <div className="space-y-2">
-                  {practiceQs.map((q, i) => (
-                    <div
-                      key={q.id}
-                      className="rounded-md border bg-white p-3 dark:bg-card"
-                    >
-                      <div className="flex flex-wrap items-center gap-2">
-                        <select
-                          value={q.type}
-                          onChange={(e) => {
-                            const next = [...practiceQs];
-                            next[i] = {
-                              ...next[i],
-                              type: e.target.value as "essay" | "interview",
-                            };
-                            setPracticeQs(next);
-                          }}
-                          className="rounded border px-2 py-1 text-xs"
-                        >
-                          <option value="essay">小論文</option>
-                          <option value="interview">面接</option>
-                        </select>
-                        <select
-                          value={resolveUsage(q)}
-                          onChange={(e) => {
-                            const usage = e.target.value as
-                              | "lesson"
-                              | "homework"
-                              | "extra";
-                            const next = [...practiceQs];
-                            next[i] = {
-                              ...next[i],
-                              usage,
-                              // 互換維持: priority も同期更新
-                              priority:
-                                usage === "lesson" ? "primary" : "secondary",
-                            };
-                            setPracticeQs(next);
-                          }}
-                          className="rounded border px-2 py-1 text-xs"
-                        >
-                          <option value="lesson">授業中</option>
-                          <option value="homework">宿題</option>
-                          <option value="extra">予備</option>
-                        </select>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          disabled={i === 0}
-                          onClick={() => {
-                            const next = [...practiceQs];
-                            [next[i - 1], next[i]] = [next[i], next[i - 1]];
-                            setPracticeQs(next);
-                          }}
-                          aria-label="上に移動"
-                        >
-                          <ChevronUp className="size-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          disabled={i === practiceQs.length - 1}
-                          onClick={() => {
-                            const next = [...practiceQs];
-                            [next[i + 1], next[i]] = [next[i], next[i + 1]];
-                            setPracticeQs(next);
-                          }}
-                          aria-label="下に移動"
-                        >
-                          <ChevronDown className="size-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() =>
-                            setPracticeQs(practiceQs.filter((_, idx) => idx !== i))
-                          }
-                          aria-label="この類題を削除"
-                          className="ml-auto"
-                        >
-                          <X className="size-4" />
-                        </Button>
-                      </div>
-                      <Textarea
-                        value={q.title}
-                        onChange={(e) => {
-                          const next = [...practiceQs];
-                          next[i] = { ...next[i], title: e.target.value };
-                          setPracticeQs(next);
-                        }}
-                        rows={2}
-                        placeholder="題目 / 質問文 (短く)"
-                        className="mt-2 text-sm"
-                      />
-                      <Textarea
-                        value={q.relatedWeakness ?? ""}
-                        onChange={(e) => {
-                          const next = [...practiceQs];
-                          next[i] = { ...next[i], relatedWeakness: e.target.value };
-                          setPracticeQs(next);
-                        }}
-                        rows={1}
-                        placeholder="関連弱点 (今週の論理性が X 点だったので、など)"
-                        className="mt-1 text-xs"
-                      />
-                      <Textarea
-                        value={q.modelAnswer ?? ""}
-                        onChange={(e) => {
-                          const next = [...practiceQs];
-                          next[i] = { ...next[i], modelAnswer: e.target.value };
-                          setPracticeQs(next);
-                        }}
-                        rows={4}
-                        placeholder="解答例 (小論文: 400-500 字 / 面接: 80-150 字)"
-                        className="mt-1 text-xs"
-                      />
-                      <label className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-                        <input
-                          type="checkbox"
-                          checked={q.homeworkAssignable !== false}
-                          onChange={(e) => {
-                            const next = [...practiceQs];
-                            next[i] = {
-                              ...next[i],
-                              homeworkAssignable: e.target.checked,
-                            };
-                            setPracticeQs(next);
-                          }}
-                          className="size-3.5"
-                        />
-                        <span>
-                          宿題として配布可
-                          <span className="ml-1 text-[10px]">
-                            (短答系など模擬面接 / 小論文として成立しないものは外す)
-                          </span>
-                        </span>
-                      </label>
-                    </div>
-                  ))}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      setPracticeQs([
-                        ...practiceQs,
-                        {
-                          id: `pq_${Date.now()}_${practiceQs.length}`,
-                          type: "essay",
-                          usage: "lesson",
-                          priority: "primary",
-                          title: "",
-                          relatedWeakness: "",
-                          order: practiceQs.length,
-                          homeworkAssignable: true,
-                        },
-                      ])
-                    }
-                  >
-                    ＋ 類題を追加
-                  </Button>
-                </div>
-              ) : (
-                <PracticeQuestionsList
-                  questions={report.practiceQuestions ?? []}
-                  studentId={report.studentId}
-                  reportId={report.id}
-                  canAssign={!readOnly}
-                />
-              )}
-            </div>
           )}
         </div>
 
@@ -757,302 +498,6 @@ function WeaknessProgressByCategory({
           </div>
         ))}
       </div>
-    </div>
-  );
-}
-
-/**
- * 類題リスト表示 (read-only)。
- * Phase 4 から「問題バンク」UI に変更。タブで授業中/宿題/予備/すべてを切り替え。
- *
- * 分類は `resolveUsage(q)` 経由 (usage > priority 推定)。
- * 印刷時はタブ枠を隠し、「すべて」タブの中身だけが縦に並ぶように制御。
- * カード見た目は usage = "lesson" のみ強調 (sky/emerald 系)、それ以外は控えめ。
- *
- * Phase 6 から: 配布マップを取得し、PracticeQuestionCard に「宿題として配布」
- * ボタン (or 配布済バッジ) を表示する。
- */
-function PracticeQuestionsList({
-  questions,
-  studentId,
-  reportId,
-  canAssign,
-}: {
-  questions: PracticeQuestion[];
-  studentId?: string;
-  reportId?: string;
-  /** true なら配布ボタンを表示 (admin/teacher のみ) */
-  canAssign?: boolean;
-}) {
-  // 配布済みリストを取得 (admin/teacher のみ)
-  const { data: assignments, mutate: mutateAssignments } = useAuthSWR<HomeworkAssignment[]>(
-    canAssign && studentId && reportId
-      ? `/api/admin/reports/${studentId}/${reportId}/assign-homework`
-      : null,
-  );
-  const assignmentMap = useMemo(() => {
-    const map = new Map<string, HomeworkAssignment>();
-    for (const a of assignments ?? []) {
-      map.set(a.practiceQuestionId, a);
-    }
-    return map;
-  }, [assignments]);
-
-  const grouped = useMemo(() => {
-    const out: Record<"lesson" | "homework" | "extra", PracticeQuestion[]> = {
-      lesson: [],
-      homework: [],
-      extra: [],
-    };
-    for (const q of questions) {
-      out[resolveUsage(q)].push(q);
-    }
-    return out;
-  }, [questions]);
-
-  const usageLabel: Record<"lesson" | "homework" | "extra", string> = {
-    lesson: "授業中",
-    homework: "宿題",
-    extra: "予備",
-  };
-
-  const renderList = (usage: "lesson" | "homework" | "extra") => {
-    const list = grouped[usage];
-    if (list.length === 0) {
-      return (
-        <p className="py-4 text-center text-xs text-muted-foreground">
-          このカテゴリーには類題がありません
-        </p>
-      );
-    }
-    const variant = usage === "lesson" ? "primary" : "secondary";
-    return (
-      <div className="space-y-2">
-        {list.map((pq) => (
-          <PracticeQuestionCard
-            key={pq.id}
-            pq={pq}
-            variant={variant}
-            assignmentControl={
-              canAssign && studentId && reportId
-                ? {
-                    studentId,
-                    reportId,
-                    existing: assignmentMap.get(pq.id),
-                    onMutated: () => mutateAssignments(),
-                  }
-                : undefined
-            }
-          />
-        ))}
-      </div>
-    );
-  };
-
-  const allByUsage = (["lesson", "homework", "extra"] as const).filter(
-    (u) => grouped[u].length > 0,
-  );
-
-  const [tab, setTab] = useState<"lesson" | "homework" | "extra" | "all">(
-    "lesson",
-  );
-
-  return (
-    <>
-      {/* 画面用: SegmentControl + 条件分岐 (印刷時非表示) */}
-      <div className="print:hidden">
-        <SegmentControl
-          value={tab}
-          onChange={setTab}
-          options={[
-            { id: "lesson", label: "授業中", count: grouped.lesson.length },
-            { id: "homework", label: "宿題", count: grouped.homework.length },
-            { id: "extra", label: "予備", count: grouped.extra.length },
-            { id: "all", label: "すべて", count: questions.length },
-          ]}
-          size="sm"
-          defaultAccent="emerald"
-        />
-        <div className="mt-3">
-          {tab === "lesson" && renderList("lesson")}
-          {tab === "homework" && renderList("homework")}
-          {tab === "extra" && renderList("extra")}
-          {tab === "all" && (
-            <div className="space-y-4">
-              {allByUsage.map((usage) => (
-                <div key={usage}>
-                  <h5 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    {usageLabel[usage]} ({grouped[usage].length})
-                  </h5>
-                  {renderList(usage)}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/*
-        印刷用: タブ枠なしで全件直接表示 (lesson → homework → extra の順)。
-        TabsContent の forceMount 非対応に対応するため別途レンダリング。
-      */}
-      <div className="hidden print:block">
-        <div className="space-y-2">
-          {allByUsage.map((usage) => (
-            <div key={usage} className="print:break-inside-avoid">
-              <h5 className="mb-1 text-[10pt] font-semibold uppercase tracking-wide text-muted-foreground">
-                {usageLabel[usage]} ({grouped[usage].length})
-              </h5>
-              {renderList(usage)}
-            </div>
-          ))}
-        </div>
-      </div>
-    </>
-  );
-}
-
-function PracticeQuestionCard({
-  pq,
-  variant,
-  assignmentControl,
-}: {
-  pq: PracticeQuestion;
-  variant: "primary" | "secondary";
-  assignmentControl?: {
-    studentId: string;
-    reportId: string;
-    existing?: HomeworkAssignment;
-    onMutated?: () => void;
-  };
-}) {
-  const isPrimary = variant === "primary";
-  const isEssay = pq.type === "essay";
-
-  return (
-    <div
-      className={`rounded-lg border p-3 print:break-inside-avoid print:p-2 ${
-        isPrimary
-          ? isEssay
-            ? "border-sky-300 bg-gradient-to-br from-sky-50 to-cyan-50 shadow-sm dark:border-sky-800 dark:from-sky-950/40 dark:to-cyan-950/40 print:border-gray-300 print:bg-white print:shadow-none"
-            : "border-emerald-300 bg-gradient-to-br from-emerald-50 to-teal-50 shadow-sm dark:border-emerald-800 dark:from-emerald-950/40 dark:to-teal-950/40 print:border-gray-300 print:bg-white print:shadow-none"
-          : "border-slate-200 bg-white dark:border-slate-800 dark:bg-card"
-      }`}
-    >
-      <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-        {isEssay ? <FileText className="size-3" /> : <Mic className="size-3" />}
-        <span>{isEssay ? "小論文" : "面接"}</span>
-        {isPrimary ? (
-          <Badge className="bg-emerald-600 text-[10px] text-white hover:bg-emerald-600">
-            授業中
-          </Badge>
-        ) : (
-          <Badge variant="outline" className="text-[10px]">
-            宿題
-          </Badge>
-        )}
-        {pq.difficulty && (
-          <Badge
-            variant="outline"
-            className={`text-[10px] ${
-              pq.difficulty === "advanced"
-                ? "border-rose-300 text-rose-700 dark:border-rose-800 dark:text-rose-400"
-                : pq.difficulty === "basic"
-                  ? "border-emerald-300 text-emerald-700 dark:border-emerald-800 dark:text-emerald-400"
-                  : "border-amber-300 text-amber-700 dark:border-amber-800 dark:text-amber-400"
-            }`}
-          >
-            {pq.difficulty === "basic"
-              ? "基礎"
-              : pq.difficulty === "advanced"
-                ? "応用"
-                : "標準"}
-          </Badge>
-        )}
-        {typeof pq.estimatedMinutes === "number" && pq.estimatedMinutes > 0 && (
-          <Badge variant="outline" className="text-[10px]">
-            目安 {pq.estimatedMinutes} 分
-          </Badge>
-        )}
-      </div>
-      <p className="mt-1 text-sm font-medium leading-snug">{pq.title}</p>
-      {pq.objective && (
-        <p className="mt-1 text-[11px] text-muted-foreground">
-          <span className="font-semibold text-foreground/70">目的:</span>{" "}
-          {pq.objective}
-        </p>
-      )}
-      {pq.relatedWeakness && (
-        <p className="mt-1 text-[10px] text-muted-foreground">
-          関連: {pq.relatedWeakness}
-        </p>
-      )}
-      {pq.hints && pq.hints.length > 0 && (
-        <details className="mt-2 print:hidden">
-          <summary className="cursor-pointer text-[10px] font-semibold text-amber-700 dark:text-amber-400">
-            ヒント ({pq.hints.length})
-          </summary>
-          <ul className="mt-1 list-disc space-y-0.5 pl-4 text-[11px] text-muted-foreground">
-            {pq.hints.map((h, i) => (
-              <li key={i}>{h}</li>
-            ))}
-          </ul>
-        </details>
-      )}
-      {pq.rubric && pq.rubric.length > 0 && (
-        <details className="mt-2 print:hidden">
-          <summary className="cursor-pointer text-[10px] font-semibold text-sky-700 dark:text-sky-400">
-            評価観点 ({pq.rubric.length})
-          </summary>
-          <ul className="mt-1 list-disc space-y-0.5 pl-4 text-[11px] text-muted-foreground">
-            {pq.rubric.map((r, i) => (
-              <li key={i}>{r}</li>
-            ))}
-          </ul>
-        </details>
-      )}
-      {pq.teacherNotes && (
-        <details className="mt-2 print:hidden">
-          <summary className="cursor-pointer text-[10px] font-semibold text-purple-700 dark:text-purple-400">
-            講師メモ
-          </summary>
-          <p className="mt-1 whitespace-pre-wrap text-[11px] text-muted-foreground">
-            {pq.teacherNotes}
-          </p>
-        </details>
-      )}
-      {pq.modelAnswer &&
-        (isPrimary ? (
-          <div className="mt-2 rounded bg-white/70 p-2 dark:bg-black/20 print:hidden">
-            <div className="mb-1 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400">
-              解答例
-            </div>
-            <p className="whitespace-pre-wrap text-xs leading-relaxed">
-              {pq.modelAnswer}
-            </p>
-          </div>
-        ) : (
-          <details className="mt-2 print:hidden">
-            <summary className="cursor-pointer text-[10px] font-semibold text-emerald-700 dark:text-emerald-400">
-              解答例を見る
-            </summary>
-            <p className="mt-1 whitespace-pre-wrap rounded bg-muted/50 p-2 text-xs leading-relaxed">
-              {pq.modelAnswer}
-            </p>
-          </details>
-        ))}
-      {assignmentControl && (
-        <div className="mt-2 flex justify-end print:hidden">
-          <AssignHomeworkButton
-            studentId={assignmentControl.studentId}
-            reportId={assignmentControl.reportId}
-            practiceQuestionId={pq.id}
-            existing={assignmentControl.existing}
-            onMutated={assignmentControl.onMutated}
-            assignable={pq.homeworkAssignable !== false}
-          />
-        </div>
-      )}
     </div>
   );
 }

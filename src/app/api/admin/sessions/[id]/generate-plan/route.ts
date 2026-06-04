@@ -9,10 +9,21 @@ import {
   buildLessonPlanPrompt,
   type LessonPlanContext,
 } from "@/lib/ai/prompts/lesson-plan";
+import { buildPracticeQuestionsPrompt } from "@/lib/ai/prompts/practice-questions";
+import {
+  computeThisWeekWeakItems,
+  extractInterviewAssistantQuestions,
+  buildPracticeQuestionsFromJson,
+} from "@/lib/growth/practice-questions-helpers";
+import { getPeriodRange } from "@/lib/growth/report";
+import { queryWithRangeFilter } from "@/lib/admin/firestore-range-query";
+import { loadStudentContext } from "@/lib/growth/student-context";
+import { toDateSafe } from "@/lib/firebase/timestamp";
 import type {
   Session,
   LessonPrepPlan,
 } from "@/lib/types/session";
+import type { PracticeQuestion } from "@/lib/types/growth-report";
 import type { WeaknessRecord } from "@/lib/types/growth";
 
 export const maxDuration = 60;
@@ -297,7 +308,9 @@ export async function POST(
   }
 
   // JSON 抽出
-  let parsed: { goal?: string; questions?: string[]; cautions?: string[] } | null = null;
+  let parsed:
+    | { theme?: string; goal?: string; questions?: string[]; cautions?: string[] }
+    | null = null;
   const jsonMatch = rawText.match(/```json\s*([\s\S]*?)\s*```/) ?? rawText.match(/\{[\s\S]*\}/);
   if (jsonMatch) {
     try {
@@ -322,8 +335,96 @@ export async function POST(
     generatedAt: new Date().toISOString(),
     generatedBy: "ai",
   };
+  if (typeof parsed.theme === "string" && parsed.theme.trim()) {
+    prepPlan.theme = parsed.theme.slice(0, 200);
+  }
 
-  await adminDb.doc(`sessions/${id}`).set({ prepPlan, updatedAt: new Date().toISOString() }, { merge: true });
+  // 2 段階目: 「今日使う類題」を生成 (台本とセット)。
+  // 期間スコープは「前回セッション scheduledAt 〜 今回 scheduledAt」。
+  // 失敗しても台本は保存する (致命的でない)。
+  let practiceQuestions: PracticeQuestion[] = [];
+  try {
+    const endDate = new Date(session.scheduledAt);
+    const startDate = prevSession?.scheduledAt
+      ? new Date(prevSession.scheduledAt)
+      : getPeriodRange("weekly").start;
 
-  return NextResponse.json({ prepPlan });
+    const [periodEssaysSnap, periodInterviewsSnap] = await Promise.all([
+      queryWithRangeFilter(
+        adminDb.collection("essays"),
+        "userId",
+        studentId,
+        "submittedAt",
+        startDate,
+        endDate,
+      ),
+      queryWithRangeFilter(
+        adminDb.collection("interviews"),
+        "userId",
+        studentId,
+        "startedAt",
+        startDate,
+        endDate,
+      ),
+    ]);
+
+    const thisWeekWeakItems = computeThisWeekWeakItems(periodEssaysSnap.docs);
+    const thisWeekEssayTopics = periodEssaysSnap.docs
+      .map((d) => (d.data() as { topic?: string }).topic)
+      .filter((t): t is string => !!t && t.length > 0)
+      .slice(0, 5);
+    const thisWeekInterviewQuestions = extractInterviewAssistantQuestions(
+      periodInterviewsSnap.docs,
+      5,
+    );
+    // chronic は既取得の topWeaknesses (archive 除外済み上位 5) を流用
+    const chronicWeaknesses = topWeaknesses.map((w) => w.area);
+    // 過去テーマ (期間外) は既取得の essaysSnap から抽出
+    const startMs = startDate.getTime();
+    const pastEssayTopics = essaysSnap
+      ? essaysSnap.docs
+          .filter((d) => {
+            const ts = toDateSafe((d.data() as { submittedAt?: unknown }).submittedAt);
+            return ts ? ts.getTime() < startMs : false;
+          })
+          .map((d) => (d.data() as { topic?: string }).topic)
+          .filter((t): t is string => !!t && t.length > 0)
+          .slice(0, 5)
+      : [];
+    const studentContext = await loadStudentContext(adminDb, studentId);
+
+    const pqSystem = buildPracticeQuestionsPrompt({
+      studentName: session.studentName || "生徒",
+      thisWeekWeakItems,
+      thisWeekEssayTopics,
+      thisWeekInterviewQuestions,
+      chronicWeaknesses,
+      pastEssayTopics,
+      studentContext,
+    });
+    const Anthropic = (await import("@anthropic-ai/sdk")).default;
+    const client = new Anthropic();
+    const pqResp = await client.messages.create({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 3500,
+      system: pqSystem,
+      messages: [{ role: "user", content: "JSON のみを出力してください。" }],
+    });
+    const pqText = pqResp.content[0]?.type === "text" ? pqResp.content[0].text : "";
+    const pqMatch = pqText.match(/\{[\s\S]*\}/);
+    if (pqMatch) {
+      practiceQuestions = buildPracticeQuestionsFromJson(JSON.parse(pqMatch[0]));
+    }
+  } catch (err) {
+    console.warn("[generate-plan] practice questions generation failed:", err);
+  }
+
+  await adminDb
+    .doc(`sessions/${id}`)
+    .set(
+      { prepPlan, practiceQuestions, updatedAt: new Date().toISOString() },
+      { merge: true },
+    );
+
+  return NextResponse.json({ prepPlan, practiceQuestions });
 }
