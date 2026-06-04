@@ -17,6 +17,8 @@ import { Mic, ChevronRight, ChevronDown, MessageSquare, ThumbsUp, Lightbulb } fr
 import { useAuthSWR } from "@/lib/api/swr";
 import { authFetch } from "@/lib/api/client";
 import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
+import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
+import { scoreToSkillRank } from "@/lib/history-rank";
 import type { InterviewMode, InterviewMessage, InterviewScores, InterviewFeedback } from "@/lib/types/interview";
 import { INTERVIEW_MODE_LABELS } from "@/lib/types/interview";
 
@@ -209,9 +211,16 @@ export function InterviewsSection({
                     </div>
                     <div className="flex items-center gap-2">
                       {interview.scores ? (
-                        <span className={`text-lg font-bold ${interviewScoreColor(interview.scores.total)}`}>
-                          {interview.scores.total}
-                        </span>
+                        <>
+                          <SkillRankBadge
+                            rank={scoreToSkillRank(interview.scores.total, 40)}
+                            size="sm"
+                            animate={false}
+                          />
+                          <span className={`text-lg font-bold ${interviewScoreColor(interview.scores.total)}`}>
+                            {interview.scores.total}
+                          </span>
+                        </>
                       ) : (
                         <Badge variant="secondary" className="text-xs">進行中</Badge>
                       )}

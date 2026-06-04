@@ -49,6 +49,9 @@ import { LessonPrepSection } from "@/components/admin/LessonPrepSection";
 import { LessonDebriefSection } from "@/components/admin/LessonDebriefSection";
 import SessionArtifactsPanel from "@/components/sessions/SessionArtifactsPanel";
 import { SessionLifecycleBar } from "@/components/admin/SessionLifecycleBar";
+import { SessionReportDialog } from "@/components/admin/SessionReportDialog";
+import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
+import { scoreToSkillRank } from "@/lib/history-rank";
 import { getDisplayGrade } from "@/lib/utils/grade";
 
 const STATUS_VARIANT: Record<
@@ -106,6 +109,7 @@ export default function AdminSessionDetailPage() {
   const [saved, setSaved] = useState(false);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const [studentOpen, setStudentOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
 
   const [student, setStudent] = useState<StudentDetail | null>(null);
   const [studentLoading, setStudentLoading] = useState(false);
@@ -422,6 +426,16 @@ export default function AdminSessionDetailPage() {
             <Share2 className="size-4 mr-1" />
             {session.sharedWithStudent ? "共有中" : "生徒に共有"}
           </Button>
+          {session.type !== "group_review" && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setReportOpen(true)}
+            >
+              <BarChart3 className="size-4 mr-1" />
+              成長レポート
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>
@@ -632,6 +646,14 @@ export default function AdminSessionDetailPage() {
         </Card>
           {memoCard}
         </>
+      )}
+
+      {session.type !== "group_review" && session.studentId && (
+        <SessionReportDialog
+          studentId={session.studentId}
+          open={reportOpen}
+          onOpenChange={setReportOpen}
+        />
       )}
     </div>
   );
@@ -866,11 +888,18 @@ function StudentInfoPanelInner({
                             {new Date(essay.submittedAt).toLocaleDateString("ja-JP")}
                           </p>
                         </div>
-                        <div className="text-right">
+                        <div className="flex items-center gap-2">
                           {essay.scores ? (
-                            <Badge variant="outline" className={`text-sm font-bold ${scoreColor(essay.scores.total)}`}>
-                              {essay.scores.total}/50
-                            </Badge>
+                            <>
+                              <SkillRankBadge
+                                rank={scoreToSkillRank(essay.scores.total, 50)}
+                                size="sm"
+                                animate={false}
+                              />
+                              <Badge variant="outline" className={`text-sm font-bold ${scoreColor(essay.scores.total)}`}>
+                                {essay.scores.total}/50
+                              </Badge>
+                            </>
                           ) : (
                             <Badge variant="secondary" className="text-xs">
                               {essay.status === "uploaded" ? "OCR待ち" : essay.status}
