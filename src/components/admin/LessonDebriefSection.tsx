@@ -5,7 +5,6 @@ import {
   ClipboardList,
   Save,
   Loader2,
-  X,
   Lightbulb,
   Target,
   AlertTriangle,
@@ -25,6 +24,67 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { authFetch } from "@/lib/api/client";
 import type { LessonDebrief } from "@/lib/types/session";
+
+/**
+ * 配列(string[])項目の共通エディタ。番号付き入力欄 + 削除 + 手動追加。
+ * 反省点・課題 / 新発見の弱点 で同一UIを使う。
+ */
+function StringListEditor({
+  items,
+  onChange,
+  placeholder,
+  emptyHint,
+  maxLength = 300,
+}: {
+  items: string[];
+  onChange: (next: string[]) => void;
+  placeholder: string;
+  emptyHint: string;
+  maxLength?: number;
+}) {
+  return (
+    <div className="space-y-1.5">
+      {items.length === 0 && (
+        <p className="text-xs text-muted-foreground py-1">{emptyHint}</p>
+      )}
+      {items.map((v, i) => (
+        <div key={i} className="flex items-center gap-2">
+          <span className="w-5 shrink-0 text-right text-xs text-muted-foreground">
+            {i + 1}.
+          </span>
+          <Input
+            value={v}
+            onChange={(e) => {
+              const next = [...items];
+              next[i] = e.target.value;
+              onChange(next);
+            }}
+            maxLength={maxLength}
+            className="flex-1"
+            placeholder={placeholder}
+          />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onChange(items.filter((_, j) => j !== i))}
+            aria-label="削除"
+            className="size-7 shrink-0 text-muted-foreground cursor-pointer"
+          >
+            <Trash2 className="size-3.5" />
+          </Button>
+        </div>
+      ))}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => onChange([...items, ""])}
+        className="h-7 px-2 text-xs text-muted-foreground cursor-pointer"
+      >
+        ＋ 手動で追加
+      </Button>
+    </div>
+  );
+}
 
 interface Props {
   sessionId: string;
@@ -49,7 +109,6 @@ export function LessonDebriefSection({
   onChange,
 }: Props) {
   const [state, setState] = useState<LessonDebrief>(initial ?? EMPTY);
-  const [newArea, setNewArea] = useState("");
   const [busy, setBusy] = useState<"saving" | null>(null);
 
   const save = async (override?: Partial<LessonDebrief>) => {
@@ -76,48 +135,7 @@ export function LessonDebriefSection({
     }
   };
 
-  const addWeakness = () => {
-    const trimmed = newArea.trim();
-    if (!trimmed) return;
-    if (state.newWeaknessAreas.includes(trimmed)) {
-      setNewArea("");
-      return;
-    }
-    setState((s) => ({
-      ...s,
-      newWeaknessAreas: [...s.newWeaknessAreas, trimmed],
-    }));
-    setNewArea("");
-  };
-
-  const removeWeakness = (a: string) => {
-    setState((s) => ({
-      ...s,
-      newWeaknessAreas: s.newWeaknessAreas.filter((x) => x !== a),
-    }));
-  };
-
   const reflectionPoints = state.reflectionPoints ?? [];
-  const updateReflection = (idx: number, value: string) => {
-    setState((s) => {
-      const next = [...(s.reflectionPoints ?? [])];
-      next[idx] = value;
-      return { ...s, reflectionPoints: next };
-    });
-  };
-  const addReflection = () => {
-    setState((s) => ({
-      ...s,
-      reflectionPoints: [...(s.reflectionPoints ?? []), ""],
-    }));
-  };
-  const removeReflection = (idx: number) => {
-    setState((s) => ({
-      ...s,
-      reflectionPoints: (s.reflectionPoints ?? []).filter((_, i) => i !== idx),
-    }));
-  };
-
   const suggestions = existingWeaknessAreas.filter(
     (a) => !state.newWeaknessAreas.includes(a),
   );
@@ -144,45 +162,15 @@ export function LessonDebriefSection({
               AIが下書き
             </Badge>
           </div>
-          {reflectionPoints.length === 0 ? (
-            <p className="text-xs text-muted-foreground py-1">
-              まだ反省点はありません（録音して授業を終了するとAIが下書きします）
-            </p>
-          ) : (
-            <div className="space-y-1.5">
-              {reflectionPoints.map((r, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <span className="w-5 shrink-0 text-right text-xs text-muted-foreground">
-                    {i + 1}.
-                  </span>
-                  <Input
-                    value={r}
-                    onChange={(e) => updateReflection(i, e.target.value)}
-                    maxLength={300}
-                    className="flex-1"
-                    placeholder="授業終了後にAIが自動で下書きします（手動でも追記可）"
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removeReflection(i)}
-                    aria-label="この反省点を削除"
-                    className="size-7 shrink-0 text-muted-foreground cursor-pointer"
-                  >
-                    <Trash2 className="size-3.5" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={addReflection}
-            className="h-7 px-2 text-xs text-muted-foreground cursor-pointer"
-          >
-            ＋ 手動で追加
-          </Button>
+          <StringListEditor
+            items={reflectionPoints}
+            onChange={(next) =>
+              setState((s) => ({ ...s, reflectionPoints: next }))
+            }
+            placeholder="授業終了後にAIが自動で下書きします（手動でも追記可）"
+            emptyHint="まだ反省点はありません（録音して授業を終了するとAIが下書きします）"
+            maxLength={300}
+          />
         </div>
 
         <Separator />
@@ -215,52 +203,15 @@ export function LessonDebriefSection({
             <AlertTriangle className="size-4 text-rose-600" />
             <span className="text-sm font-medium">新発見の弱点</span>
           </div>
-          {state.newWeaknessAreas.length === 0 && (
-            <p className="text-xs text-muted-foreground">
-              授業終了後にAIが自動で追加します（手動でも追加可）
-            </p>
-          )}
-          <div className="flex flex-wrap gap-1.5 min-h-[1.75rem]">
-            {state.newWeaknessAreas.map((a) => (
-              <Badge
-                key={a}
-                variant="outline"
-                className="gap-1 pr-1 border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-300"
-              >
-                {a}
-                <button
-                  type="button"
-                  onClick={() => removeWeakness(a)}
-                  className="rounded-full hover:bg-rose-200 dark:hover:bg-rose-900"
-                  aria-label={`${a} を削除`}
-                >
-                  <X className="size-3" />
-                </button>
-              </Badge>
-            ))}
-          </div>
-          <div className="flex gap-2">
-            <Input
-              value={newArea}
-              onChange={(e) => setNewArea(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  addWeakness();
-                }
-              }}
-              placeholder="弱点を追加 (例: 具体例の深掘り不足)"
-              maxLength={100}
-            />
-            <Button
-              variant="outline"
-              onClick={addWeakness}
-              disabled={!newArea.trim()}
-              className="cursor-pointer"
-            >
-              追加
-            </Button>
-          </div>
+          <StringListEditor
+            items={state.newWeaknessAreas}
+            onChange={(next) =>
+              setState((s) => ({ ...s, newWeaknessAreas: next }))
+            }
+            placeholder="授業終了後にAIが自動で追加します（手動でも追加可）"
+            emptyHint="授業終了後にAIが自動で追加します（手動でも追加可）"
+            maxLength={100}
+          />
           {suggestions.length > 0 && (
             <div className="flex flex-wrap gap-1">
               <span className="text-[10px] text-muted-foreground mr-1 self-center">
