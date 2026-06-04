@@ -283,9 +283,15 @@ export default function AdminSessionDetailPage() {
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-base">基本情報</CardTitle>
-          <Badge variant={STATUS_VARIANT[session.status]}>
-            {SESSION_STATUS_LABELS[session.status]}
-          </Badge>
+          <div className="flex items-center gap-1.5">
+            {session.status === "cancelled" &&
+              session.absenceReportedBy === "student" && (
+                <span className="text-[11px] text-rose-600">生徒から連絡</span>
+              )}
+            <Badge variant={STATUS_VARIANT[session.status]}>
+              {SESSION_STATUS_LABELS[session.status]}
+            </Badge>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -402,7 +408,7 @@ export default function AdminSessionDetailPage() {
               disabled={saving}
             >
               <XCircle className="size-4 mr-1" />
-              キャンセル
+              欠席にする
             </Button>
           )}
           <Button

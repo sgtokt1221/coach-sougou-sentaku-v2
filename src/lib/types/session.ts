@@ -52,6 +52,9 @@ export interface Session {
   votingEnabled?: boolean;
   participantIds?: string[];
   maxParticipants?: number;
+  /** 欠席連絡の記録 (status=cancelled を欠席として運用) */
+  absenceReportedBy?: "student" | "admin" | "teacher";
+  absenceReportedAt?: string;
   // Standard fields
   createdAt: string;
   updatedAt: string;
@@ -179,5 +182,5 @@ export const SESSION_STATUS_LABELS: Record<SessionStatus, string> = {
   scheduled: "予定",
   in_progress: "実施中",
   completed: "完了",
-  cancelled: "キャンセル",
+  cancelled: "欠席",
 };

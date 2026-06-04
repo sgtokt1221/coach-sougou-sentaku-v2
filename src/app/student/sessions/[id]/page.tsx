@@ -8,7 +8,16 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Video, ExternalLink, Lock, FileText, Clock, ThumbsUp, CheckCircle } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { ArrowLeft, Video, ExternalLink, Lock, FileText, Clock, ThumbsUp, CheckCircle, CalendarX, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { StudentRecordingController } from "@/components/student/StudentRecordingController";
 import SessionArtifactsPanel from "@/components/sessions/SessionArtifactsPanel";
@@ -40,6 +49,27 @@ export default function StudentSessionDetailPage() {
   const [submitting, setSubmitting] = useState(false);
   const [userSubmission, setUserSubmission] = useState<SessionSubmission | null>(null);
   const [votedSubmissions, setVotedSubmissions] = useState<Set<string>>(new Set());
+  const [absentOpen, setAbsentOpen] = useState(false);
+  const [reporting, setReporting] = useState(false);
+
+  async function reportAbsence() {
+    setReporting(true);
+    try {
+      const res = await authFetch(`/api/sessions/${id}/absent`, { method: "PATCH" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error ?? "欠席連絡に失敗しました");
+      }
+      const updated: Session = await res.json();
+      setSession(updated);
+      setAbsentOpen(false);
+      toast.success("欠席を連絡しました");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "欠席連絡に失敗しました");
+    } finally {
+      setReporting(false);
+    }
+  }
 
   const load = useCallback(async () => {
     if (!isCoach) {
@@ -287,8 +317,58 @@ export default function StudentSessionDetailPage() {
               </div>
             </>
           )}
+
+          {/* 欠席連絡 (1 対 1・予定・未来のみ) */}
+          {session.type !== "group_review" && (
+            <>
+              <Separator />
+              {session.status === "cancelled" ? (
+                <p className="text-sm text-muted-foreground">欠席連絡済みです</p>
+              ) : session.status === "scheduled" &&
+                new Date(session.scheduledAt) > new Date() ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-rose-600 hover:text-rose-700"
+                  onClick={() => setAbsentOpen(true)}
+                >
+                  <CalendarX className="size-4 mr-1" />
+                  欠席連絡
+                </Button>
+              ) : null}
+            </>
+          )}
         </CardContent>
       </Card>
+
+      {/* 欠席連絡 確認ダイアログ */}
+      <Dialog open={absentOpen} onOpenChange={setAbsentOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>欠席を連絡しますか？</DialogTitle>
+            <DialogDescription>
+              {new Date(session.scheduledAt).toLocaleString("ja-JP")} のセッションを欠席として連絡します。担当の先生に通知されます。
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAbsentOpen(false)} disabled={reporting}>
+              キャンセル
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={reportAbsence}
+              disabled={reporting}
+            >
+              {reporting ? (
+                <Loader2 className="size-4 mr-1 animate-spin" />
+              ) : (
+                <CalendarX className="size-4 mr-1" />
+              )}
+              欠席を連絡する
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Group Review Sections */}
       {session.type === "group_review" && (
