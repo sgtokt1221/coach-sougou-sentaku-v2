@@ -762,6 +762,7 @@ export default function AdminSessionDetailPage() {
       {session.type !== "group_review" && session.studentId && (
         <SessionReportDialog
           studentId={session.studentId}
+          sessionId={id}
           open={reportOpen}
           onOpenChange={setReportOpen}
         />

@@ -115,18 +115,20 @@ export async function GET(
     });
     if (denied) return denied;
 
-    let query = adminDb
-      .collection(`users/${studentId}/growthReports`)
-      .orderBy("generatedAt", "desc")
-      .limit(limit);
+    // period 指定時は equality のみで取得し generatedAt はメモリ内ソートする。
+    // (where(period) + orderBy(generatedAt) は複合インデックスが必要になり、
+    //  未作成だと FAILED_PRECONDITION で空が返るため。生徒あたり件数は小さい)
+    const collectionRef = adminDb.collection(`users/${studentId}/growthReports`);
+    const query = period
+      ? collectionRef.where("period", "==", period).limit(50)
+      : collectionRef.orderBy("generatedAt", "desc").limit(limit);
 
-    if (period) {
-      query = query.where("period", "==", period);
-    }
+    const reportsSnap = await query.get().catch((err) => {
+      console.error("[reports/[studentId]] query failed:", err);
+      return { docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] };
+    });
 
-    const reportsSnap = await query.get().catch(() => ({ docs: [] }));
-
-    const reports: GrowthReport[] = reportsSnap.docs.map((doc) => {
+    let reports: GrowthReport[] = reportsSnap.docs.map((doc) => {
       const data = doc.data();
       return {
         id: doc.id,
@@ -149,6 +151,14 @@ export async function GET(
         sharedWithStudent: data.sharedWithStudent,
       };
     });
+
+    // period 指定時は Firestore 側で並べていないのでメモリ内で generatedAt 降順ソート
+    // (ISO 文字列の辞書順 = 時系列順)。その後 limit 件に絞る。
+    if (period) {
+      reports = reports
+        .sort((a, b) => (a.generatedAt < b.generatedAt ? 1 : -1))
+        .slice(0, limit);
+    }
 
     return NextResponse.json(reports);
   } catch (error) {

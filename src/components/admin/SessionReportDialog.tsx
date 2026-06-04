@@ -26,10 +26,13 @@ type Period = "weekly" | "monthly";
  */
 export function SessionReportDialog({
   studentId,
+  sessionId,
   open,
   onOpenChange,
 }: {
   studentId: string;
+  /** 問題用紙ボタンの遷移先 (セッションの「今日使う類題」を印刷) に使う */
+  sessionId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
@@ -119,7 +122,7 @@ export function SessionReportDialog({
                 </Button>
                 <Button variant="outline" size="sm" asChild>
                   <a
-                    href={`/admin/reports/${studentId}/${report.id}/practice-sheet?mode=both`}
+                    href={`/admin/sessions/${sessionId}/practice-sheet?mode=both`}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
