@@ -272,6 +272,11 @@ export default function AdminSessionDetailPage() {
   const showStudentPanel =
     session.status === "scheduled" || session.status === "in_progress";
 
+  // 授業形態 (format 未設定の既存データは meetLink 有無でフォールバック判定)
+  const isOnline = session.format
+    ? session.format === "online"
+    : !!session.meetLink;
+
   // 基本情報 + 操作 (1 対 1 は左カラム先頭、グループは単一カラム先頭で共用)
   const basicInfoCard = (
     <Card>
@@ -318,6 +323,21 @@ export default function AdminSessionDetailPage() {
               <span className="font-medium">{session.duration}分</span>
             </div>
           )}
+          {session.type !== "group_review" && (
+            <div>
+              <span className="text-muted-foreground">形態:</span>{" "}
+              <Badge
+                variant="outline"
+                className={`text-xs ml-1 ${
+                  isOnline
+                    ? "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-300"
+                    : "border-slate-300 bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300"
+                }`}
+              >
+                {isOnline ? "オンライン" : "対面"}
+              </Badge>
+            </div>
+          )}
 
           {/* Group review specific fields */}
           {session.type === "group_review" && (
@@ -344,7 +364,7 @@ export default function AdminSessionDetailPage() {
           )}
         </div>
 
-        {session.meetLink && (
+        {isOnline && session.meetLink && (
           <>
             <Separator />
             <div className="flex items-center gap-2">

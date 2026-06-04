@@ -10,6 +10,8 @@ export interface Session {
   createdByAdminId?: string;
   type: SessionType;
   status: SessionStatus;
+  /** 授業形態 (1 対 1 のみ。online=Meet 利用 / offline=対面)。未設定は meetLink 有無でフォールバック判定 */
+  format?: "online" | "offline";
   scheduledAt: string;
   duration?: number;
   meetLink?: string;
@@ -116,6 +118,7 @@ export interface SessionCreateRequest {
   teacherName: string;
   studentName: string;
   type: SessionType;
+  format?: "online" | "offline";
   scheduledAt: string;
   meetLink?: string;
   notes?: string;

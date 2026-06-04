@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Save, Loader2, UserPlus } from "lucide-react";
+import { ArrowLeft, Save, Loader2, UserPlus, Video, MapPin } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import { useAuthSWR } from "@/lib/api/swr";
 import { toast } from "sonner";
@@ -29,6 +29,7 @@ export default function NewSessionPage() {
   const [studentId, setStudentId] = useState("");
   const [teacherId, setTeacherId] = useState("");
   const [type, setType] = useState<SessionType | "">("");
+  const [format, setFormat] = useState<"online" | "offline">("offline");
   const [scheduledAt, setScheduledAt] = useState("");
   const [meetLink, setMeetLink] = useState("");
   const [autoCalendar, setAutoCalendar] = useState(true);
@@ -104,8 +105,10 @@ export default function NewSessionPage() {
           teacherName: selectedTeacher.displayName,
           studentName: selectedStudent!.displayName,
           type,
+          format,
           scheduledAt,
-          meetLink: meetLink || undefined,
+          // オフラインは Meet 不要
+          meetLink: format === "online" ? meetLink || undefined : undefined,
           notes: notes || undefined,
         };
       }
@@ -121,8 +124,14 @@ export default function NewSessionPage() {
       }
       const created = (await res.json()) as { id: string };
 
-      // Calendar event 自動作成 (トグル ON かつ連携済みかつ 1 対 1 のみ)
-      if (autoCalendar && googleConnected && type !== "group_review" && created.id) {
+      // Calendar event 自動作成 (オンライン + トグル ON + 連携済み + 1 対 1 のみ)
+      if (
+        format === "online" &&
+        autoCalendar &&
+        googleConnected &&
+        type !== "group_review" &&
+        created.id
+      ) {
         try {
           const ev = await authFetch(
             `/api/admin/sessions/${created.id}/calendar-event`,
@@ -272,6 +281,33 @@ export default function NewSessionPage() {
               </div>
             </div>
 
+            {/* 授業形態 (1 対 1 のみ) */}
+            {type !== "group_review" && (
+              <div className="space-y-2">
+                <Label>授業形態</Label>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant={format === "offline" ? "default" : "outline"}
+                    onClick={() => setFormat("offline")}
+                    className="flex-1"
+                  >
+                    <MapPin className="size-4 mr-1" />
+                    対面
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={format === "online" ? "default" : "outline"}
+                    onClick={() => setFormat("online")}
+                    className="flex-1"
+                  >
+                    <Video className="size-4 mr-1" />
+                    オンライン
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {/* Group review specific fields */}
             {type === "group_review" && (
               <>
@@ -307,7 +343,7 @@ export default function NewSessionPage() {
               </>
             )}
 
-            {type !== "group_review" && googleConnected && (
+            {type !== "group_review" && format === "online" && googleConnected && (
               <div className="flex items-start gap-3 rounded-lg border border-teal-200 bg-teal-50 p-3 dark:border-teal-900 dark:bg-teal-950/30">
                 <div className="flex-1">
                   <label className="flex items-center gap-2 cursor-pointer">
@@ -328,7 +364,7 @@ export default function NewSessionPage() {
               </div>
             )}
 
-            {type !== "group_review" && googleConnected === false && (
+            {type !== "group_review" && format === "online" && googleConnected === false && (
               <div className="flex items-start gap-2 rounded-lg border p-3 bg-muted/40">
                 <div className="flex-1 text-xs text-muted-foreground">
                   <Link
@@ -342,7 +378,8 @@ export default function NewSessionPage() {
               </div>
             )}
 
-            {(!(autoCalendar && googleConnected && type !== "group_review")) && (
+            {(type === "group_review" ||
+              (format === "online" && !(autoCalendar && googleConnected))) && (
               <div className="space-y-2">
                 <Label htmlFor="meetLink">Google Meetリンク (任意)</Label>
                 <Input
