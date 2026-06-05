@@ -1493,7 +1493,31 @@
             "将来像"
           ],
           "tips": "緑地環境科学科では小論文との組み合わせ。生命機能化学科・応用生物科学科は面接なし"
-        }
+        },
+        "distinctiveFeatures": [
+          {
+            "id": "agri-green",
+            "icon": "Sprout",
+            "title": "都市緑地を扱う緑地環境科学科",
+            "summary": "農地・自然地に加え、都市の緑地の保全・創成を学べる。大都市圏の持続可能性に貢献。",
+            "useForAdmissions": "「都市の緑地・環境」を地域性と結びつけ志望理由にできる。",
+            "source": {
+              "url": "https://www.omu.ac.jp/agri/about/philosophy/",
+              "retrievedAt": "2025-06"
+            }
+          },
+          {
+            "id": "agri-food",
+            "icon": "FlaskConical",
+            "title": "食品安全科学プログラム",
+            "summary": "生命機能化学科に、食の安全という社会課題を分子・栄養レベルで学ぶ専用プログラム。",
+            "useForAdmissions": "「食の安全」の関心を専用プログラムに紐づけられる。",
+            "source": {
+              "url": "https://www.omu.ac.jp/about/edu-data/purpose/policy_ug_agri/",
+              "retrievedAt": "2025-06"
+            }
+          }
+        ]
       },
       {
         "id": "medicine",
@@ -1552,7 +1576,31 @@
             "活動実績の深掘り"
           ],
           "tips": "点数に関わらず、面接でアドミッション・ポリシー不適合と判断された場合は不合格。論理性と医師適性の両面を問う"
-        }
+        },
+        "distinctiveFeatures": [
+          {
+            "id": "med-rinen",
+            "icon": "Compass",
+            "title": "基本理念「智・仁・勇」",
+            "summary": "智(向学心)・仁(博愛)・勇(決断)を柱に、自ら課題を設定して学ぶ医師・研究者を養成。",
+            "useForAdmissions": "三理念を自分の経験に紐づけて志望動機を構成できる。",
+            "source": {
+              "url": "https://www.omu.ac.jp/med/admissions/undergraduate/policy/",
+              "retrievedAt": "2025-06"
+            }
+          },
+          {
+            "id": "med-research",
+            "icon": "Microscope",
+            "title": "研究医養成「医学研究推進コース」",
+            "summary": "3年次に研究室配属で自らテーマを設定して研究。臨床と研究を架橋する。",
+            "useForAdmissions": "「臨床と研究を架橋する医師」を具体的な制度で語れる。",
+            "source": {
+              "url": "https://www.omu.ac.jp/med/undergraduate/about/",
+              "retrievedAt": "2025-06"
+            }
+          }
+        ]
       },
       {
         "id": "nursing",
@@ -1588,7 +1636,31 @@
         },
         "admissionUrl": "https://www.omu.ac.jp/admissions/assets/6_SR2026.pdf",
         "selectionType": "school_recommendation",
-        "academicField": "nursing"
+        "academicField": "nursing",
+        "distinctiveFeatures": [
+          {
+            "id": "nurs-models",
+            "icon": "Compass",
+            "title": "5つの履修モデルでキャリアデザイン",
+            "summary": "学生個々のキャリアに対応する5つの履修モデルを用意。",
+            "useForAdmissions": "「どの履修モデルでどんな看護職を目指すか」を具体化できる。",
+            "source": {
+              "url": "https://www.omu.ac.jp/nurs/undergraduate/about/",
+              "retrievedAt": "2025-06"
+            }
+          },
+          {
+            "id": "nurs-ds",
+            "icon": "Activity",
+            "title": "看護情報学・データサイエンスの研究力",
+            "summary": "科学的思考に基づく看護を学び、データで看護の質向上を図る研究分野を擁する。",
+            "useForAdmissions": "「根拠を実践に生かす」志向を示せる。",
+            "source": {
+              "url": "https://www.omu.ac.jp/nurs/about/faculty/",
+              "retrievedAt": "2025-06"
+            }
+          }
+        ]
       },
       {
         "id": "engineering",
@@ -1644,7 +1716,31 @@
             "都市学への興味"
           ],
           "tips": "海洋はグループワーク+適性検査あり、数学Iから数学Cまでの全範囲出題。都市は口述のみで1000点と配点が非常に大きい"
-        }
+        },
+        "distinctiveFeatures": [
+          {
+            "id": "eng-marine",
+            "icon": "Ship",
+            "title": "海洋システム工学科（国内でも希少）",
+            "summary": "船舶・海洋をメインに扱う総合工学の学科。前身は1942年の造船科。",
+            "useForAdmissions": "学科の希少性を志望動機に直結できる。",
+            "source": {
+              "url": "https://www.omu.ac.jp/eng/marine/candidates/",
+              "retrievedAt": "2025-06"
+            }
+          },
+          {
+            "id": "eng-aero",
+            "icon": "Rocket",
+            "title": "航空宇宙工学科（関西で数少ない）",
+            "summary": "流体・構造・推進・システム・制御・宇宙の6分野を体系的に学べる。",
+            "useForAdmissions": "関心分野を具体的に挙げ、目的意識の明確さを示せる。",
+            "source": {
+              "url": "https://www.omu.ac.jp/eng/all-eng/departments/aerospace-eng/",
+              "retrievedAt": "2025-06"
+            }
+          }
+        ]
       },
       {
         "id": "economics",
@@ -1680,7 +1776,31 @@
         },
         "admissionUrl": "https://www.omu.ac.jp/admissions/assets/6_SR2026.pdf",
         "selectionType": "school_recommendation",
-        "academicField": "economics"
+        "academicField": "economics",
+        "distinctiveFeatures": [
+          {
+            "id": "econ-age",
+            "icon": "Globe",
+            "title": "教育目標「Active Global Economist」",
+            "summary": "データ処理力・異文化対応力で、グローバルと地域の課題に能動的に解決策を出す人材を育成。",
+            "useForAdmissions": "求める学生像に自分の経験を合わせやすい。",
+            "source": {
+              "url": "https://www.omu.ac.jp/about/edu-data/purpose/policy_ug_econ/",
+              "retrievedAt": "2025-06"
+            }
+          },
+          {
+            "id": "econ-prog",
+            "icon": "LineChart",
+            "title": "進路直結の7履修プログラム＋データサイエンス",
+            "summary": "進路別の7プログラムを用意。経済データサイエンス演習やAI活用教育も。",
+            "useForAdmissions": "将来像を特定プログラムに紐づけ、学びの計画を具体化できる。",
+            "source": {
+              "url": "https://www.omu.ac.jp/econ/undergraduate/curriculum/",
+              "retrievedAt": "2025-06"
+            }
+          }
+        ]
       },
       {
         "id": "commerce",
@@ -1717,7 +1837,31 @@
         },
         "admissionUrl": "https://www.omu.ac.jp/admissions/assets/6_SR2026.pdf",
         "selectionType": "school_recommendation",
-        "academicField": "business"
+        "academicField": "business",
+        "distinctiveFeatures": [
+          {
+            "id": "bus-public",
+            "icon": "Building",
+            "title": "公共経営学科（地域×経営）",
+            "summary": "企業や経済の地域性・社会性、地方公共団体・NPOのマネジメントを学べる。",
+            "useForAdmissions": "「地域×経営」で他大に作れない志望理由を構成できる。",
+            "source": {
+              "url": "https://www.omu.ac.jp/about/edu-data/purpose/policy_ug_bus/",
+              "retrievedAt": "2025-06"
+            }
+          },
+          {
+            "id": "bus-rinen",
+            "icon": "Compass",
+            "title": "理念「考える実学」",
+            "summary": "理論と実務の統合をめざし、都市に基盤を置き世界的視野で学ぶ。",
+            "useForAdmissions": "「なぜ本学部か」の核に置ける。",
+            "source": {
+              "url": "https://www.omu.ac.jp/bus/about/philosophy/",
+              "retrievedAt": "2025-06"
+            }
+          }
+        ]
       },
       {
         "id": "general",
@@ -1772,7 +1916,20 @@
             "志望理由書の内容深掘り"
           ],
           "tips": "小論文と面接で合計300点。小論文は日英両文献を扱うため英語読解力も必要"
-        }
+        },
+        "distinctiveFeatures": [
+          {
+            "id": "sss-system",
+            "icon": "Network",
+            "title": "文理融合×システム的思考",
+            "summary": "4学類で領域横断的応用力とシステム的思考を学域共通に育成。異分野協働のPBL。",
+            "useForAdmissions": "「なぜ学部でなく学域か」を領域横断の必要性で語れる。",
+            "source": {
+              "url": "https://www.omu.ac.jp/about/edu-data/purpose/policy_ug_sss/",
+              "retrievedAt": "2025-06"
+            }
+          }
+        ]
       },
       {
         "id": "medicine-2",
@@ -1833,7 +1990,31 @@
             "高校での生物/化学学習"
           ],
           "tips": "獣医学への明確な志望と適性評価が重視される。合計点に関わらず適性で不合格となりうるため、動機の一貫性が重要"
-        }
+        },
+        "distinctiveFeatures": [
+          {
+            "id": "vet-only",
+            "icon": "GraduationCap",
+            "title": "関西唯一・欧州認証準拠の都市型獣医学",
+            "summary": "関西唯一の獣医学教育機関。欧州認証に準拠し、臨床・公衆衛生教育が充実。",
+            "useForAdmissions": "「関西唯一×国際認証×都市型」で強く差別化できる。",
+            "source": {
+              "url": "https://www.omu.ac.jp/vet/undergraduate/",
+              "retrievedAt": "2025-06"
+            }
+          },
+          {
+            "id": "vet-onehealth",
+            "icon": "Compass",
+            "title": "One Health の理念",
+            "summary": "動物・人・環境の共存共栄をめざし、人獣共通感染症や食の安全に貢献。",
+            "useForAdmissions": "One Health への共感を社会的動機にできる。",
+            "source": {
+              "url": "https://www.omu.ac.jp/about/edu-data/purpose/policy_ug_vet/",
+              "retrievedAt": "2025-06"
+            }
+          }
+        ]
       },
       {
         "id": "letters",
@@ -1864,7 +2045,31 @@
         },
         "admissionUrl": "",
         "selectionType": "school_recommendation",
-        "academicField": "humanities"
+        "academicField": "humanities",
+        "distinctiveFeatures": [
+          {
+            "id": "lit-small",
+            "icon": "Users",
+            "title": "コース数名〜十数名の少人数",
+            "summary": "1年次は概論、2年次にコース配属。少人数で専門を深める。",
+            "useForAdmissions": "「少人数で専門を深めたい」を制度と接続できる。",
+            "source": {
+              "url": "https://www.omu.ac.jp/lit/undergraduate/about/",
+              "retrievedAt": "2025-06"
+            }
+          },
+          {
+            "id": "lit-behavior",
+            "icon": "Users",
+            "title": "「人間行動学科」の独自編成",
+            "summary": "心理・教育・地理・社会学を社会科学的に束ねる学科構成。",
+            "useForAdmissions": "「人間行動を複合的に捉えたい」を学科名で裏づけられる。",
+            "source": {
+              "url": "https://www.omu.ac.jp/lit/undergraduate/about/",
+              "retrievedAt": "2025-06"
+            }
+          }
+        ]
       },
       {
         "id": "science",
@@ -1925,7 +2130,31 @@
             "高校での実験・探究活動"
           ],
           "tips": "物理学科のみ小論文も課される。口述試験では高校理科の基礎を幅広く問われる"
-        }
+        },
+        "distinctiveFeatures": [
+          {
+            "id": "sci-earth",
+            "icon": "Globe",
+            "title": "地球学科：講義・実習×学外調査",
+            "summary": "学内講義・実習と学外フィールド調査を有機的に結合した学際カリキュラム。",
+            "useForAdmissions": "野外調査で環境・防災に取り組む学習像を描ける。",
+            "source": {
+              "url": "https://www.omu.ac.jp/sci/undergraduate/department/",
+              "retrievedAt": "2025-06"
+            }
+          },
+          {
+            "id": "sci-chem",
+            "icon": "FlaskConical",
+            "title": "化学科：講義と実験を結ぶ物質創製",
+            "summary": "講義と実験を結びつけ、原子・分子レベルの物質理解と新物質創製を学ぶ。",
+            "useForAdmissions": "実験志向と物質創製への関心を学科方針に直結できる。",
+            "source": {
+              "url": "https://www.omu.ac.jp/sci/undergraduate/department/",
+              "retrievedAt": "2025-06"
+            }
+          }
+        ]
       },
       {
         "id": "general-2",
@@ -1981,7 +2210,31 @@
             "将来像"
           ],
           "tips": "居住環境・人間福祉は大阪府内枠優先選抜あり。食栄養学科は指定校推薦枠あり"
-        }
+        },
+        "distinctiveFeatures": [
+          {
+            "id": "life-cross",
+            "icon": "Home",
+            "title": "「健康・環境・福祉」を1学部で横断",
+            "summary": "食栄養・居住環境・人間福祉の3学科で生活科学を統合的に学ぶ。",
+            "useForAdmissions": "3分野の連関をどう生かすかを志望理由にできる。",
+            "source": {
+              "url": "https://www.omu.ac.jp/about/edu-data/purpose/policy_ug_life/",
+              "retrievedAt": "2025-06"
+            }
+          },
+          {
+            "id": "life-arch",
+            "icon": "Home",
+            "title": "居住環境学科で一級建築士受験資格",
+            "summary": "暮らしの視点から建築・居住環境を学び、一級建築士の受験資格に対応。",
+            "useForAdmissions": "「なぜ工学部建築でなく生活科学部か」に明確に答えられる。",
+            "source": {
+              "url": "https://www.omu.ac.jp/life/about/license/",
+              "retrievedAt": "2025-06"
+            }
+          }
+        ]
       },
       {
         "id": "medicine-rehab",
@@ -2036,7 +2289,31 @@
             "将来像"
           ],
           "tips": "医学科と異なりキャンパスは森之宮。人と関わる仕事への適性と思いやりが重視される"
-        }
+        },
+        "distinctiveFeatures": [
+          {
+            "id": "reha-link",
+            "icon": "Stethoscope",
+            "title": "医学科との連携教育",
+            "summary": "医学科との合同授業・共同研究でエビデンスに基づくリハを学ぶ。少人数制。",
+            "useForAdmissions": "「医学科連携で何を得たいか」を具体化できる。",
+            "source": {
+              "url": "https://www.omu.ac.jp/reha/undergraduate/about/",
+              "retrievedAt": "2025-06"
+            }
+          },
+          {
+            "id": "reha-qual",
+            "icon": "Activity",
+            "title": "PT・OTの国家資格に対応",
+            "summary": "理学療法学・作業療法学の2専攻。国際社会への貢献も理念に明記。",
+            "useForAdmissions": "資格＋国際的視野で志望動機を具体化できる。",
+            "source": {
+              "url": "https://www.omu.ac.jp/about/edu-data/purpose/policy_ug_reha/",
+              "retrievedAt": "2025-06"
+            }
+          }
+        ]
       },
       {
         "id": "law",
@@ -2066,11 +2343,92 @@
         },
         "admissionUrl": "https://www.omu.ac.jp/admissions/assets/law2027.pdf",
         "selectionType": "school_recommendation",
-        "academicField": "law"
+        "academicField": "law",
+        "distinctiveFeatures": [
+          {
+            "id": "law-clinic",
+            "icon": "Scale",
+            "title": "1951年開設「無料法律相談所」",
+            "summary": "学んだ法を市民の相談に生かす実践の場。",
+            "useForAdmissions": "「法を社会で役立てたい」を具体名で書ける。",
+            "source": {
+              "url": "https://www.omu.ac.jp/law/undergraduate/about/",
+              "retrievedAt": "2025-06"
+            }
+          },
+          {
+            "id": "law-models",
+            "icon": "Scale",
+            "title": "司法・行政・企業国際の3履修モデル",
+            "summary": "進路に応じた3モデルに、法曹養成プログラム・早期卒業制度も。",
+            "useForAdmissions": "進路に合うモデルを名指しで進路設計できる。",
+            "source": {
+              "url": "https://www.omu.ac.jp/law/undergraduate/about/",
+              "retrievedAt": "2025-06"
+            }
+          }
+        ]
       }
     ],
     "updatedAt": "2026-04-22T00:00:00Z",
-    "prefecture": "大阪府"
+    "prefecture": "大阪府",
+    "distinctiveFeatures": [
+      {
+        "id": "omu-scale",
+        "icon": "Building2",
+        "title": "日本最大級の公立総合大学",
+        "summary": "2022年に大阪市立大と大阪府立大が統合。学生約16,000人、12学部・学域＋大学院15研究科のフルラインナップ。",
+        "useForAdmissions": "「総合大学の幅広い学び」を志望理由の土台にできる。",
+        "source": {
+          "url": "https://www.omu.ac.jp/about/",
+          "retrievedAt": "2025-06"
+        }
+      },
+      {
+        "id": "omu-tuition",
+        "icon": "Wallet",
+        "title": "府民は学費が実質無償",
+        "summary": "大阪府の支援制度で家計の所得要件を撤廃。府内在住等の要件を満たせば授業料が支援される。",
+        "useForAdmissions": "公立ならではの学費支援。経済面の志望動機にも触れられる。",
+        "source": {
+          "url": "https://www.omu.ac.jp/campus-life/tuition/financial_aid/osaka-pref/",
+          "retrievedAt": "2025-06"
+        }
+      },
+      {
+        "id": "omu-morinomiya",
+        "icon": "MapPin",
+        "title": "森之宮 新メインキャンパス（2025年開設）",
+        "summary": "2025年9月開設。全学1年次の初年次教育を集約。産学官民共創の司令塔、地上13階・約6,000人規模。",
+        "useForAdmissions": "「最新環境で全学共通の初年次を学ぶ」入学後像を具体化できる。",
+        "source": {
+          "url": "https://www.omu.ac.jp/morinomiya/",
+          "retrievedAt": "2025-06"
+        }
+      },
+      {
+        "id": "omu-vet",
+        "icon": "GraduationCap",
+        "title": "獣医学部を擁する総合大学（公立で希少）",
+        "summary": "母体の府立大ルーツは1883年「獣医学講習所」。公立で獣医学部を持つ数少ない大学。",
+        "useForAdmissions": "分野の希少性を志望理由に結びつけられる。",
+        "source": {
+          "url": "https://www.omu.ac.jp/about/",
+          "retrievedAt": "2025-06"
+        }
+      },
+      {
+        "id": "omu-nobel",
+        "icon": "Award",
+        "title": "ノーベル賞 山中伸弥氏を輩出",
+        "summary": "旧大阪市立大学出身の山中伸弥氏（ノーベル医学・生理学賞）を輩出。",
+        "useForAdmissions": "実績への共感を志望動機の一要素にできる。",
+        "source": {
+          "url": "https://www.omu.ac.jp/about/",
+          "retrievedAt": "2025-06"
+        }
+      }
+    ]
   },
   {
     "id": "utsunomiya-u",
