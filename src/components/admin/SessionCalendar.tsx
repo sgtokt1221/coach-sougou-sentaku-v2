@@ -68,8 +68,8 @@ export default function SessionCalendar({
     };
   }, []);
 
-  // 曜日名
-  const dayNames = ['月', '火', '水', '木', '金', '土', '日'];
+  // 曜日名（getDay() に対応: 0=日 .. 6=土）。本日起点でも列の実曜日を表示するため日曜始まり配列。
+  const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
 
   // 週の日付配列を生成
   const weekDates = useMemo(() => {
@@ -218,7 +218,7 @@ export default function SessionCalendar({
                 isToday ? 'bg-primary/5' : ''
               }`}
             >
-              <div>{dayNames[index]}</div>
+              <div>{dayNames[date.getDay()]}</div>
               <div className="text-xs text-gray-600">
                 {date.getMonth() + 1}/{date.getDate()}
               </div>

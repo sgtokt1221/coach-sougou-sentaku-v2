@@ -14,12 +14,9 @@ import AdminSessionList from "@/components/admin/AdminSessionList";
 import type { Session } from "@/lib/types/session";
 import type { StudentListItem } from "@/lib/types/admin";
 
-// Monday取得ヘルパー
-function getMonday(d: Date): Date {
+// 指定日のローカル(=日本時間)0時を返すヘルパー。カレンダーは本日起点で表示する。
+function startOfDay(d: Date): Date {
   const date = new Date(d);
-  const day = date.getDay();
-  const diff = date.getDate() - day + (day === 0 ? -6 : 1);
-  date.setDate(diff);
   date.setHours(0, 0, 0, 0);
   return date;
 }
@@ -50,7 +47,7 @@ interface AvailableSlot {
 export default function AdminSessionsPage() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<"schedule" | "list">("schedule");
-  const [weekStart, setWeekStart] = useState<Date>(getMonday(new Date()));
+  const [weekStart, setWeekStart] = useState<Date>(startOfDay(new Date()));
   const [pickerSession, setPickerSession] = useState<Session | null>(null);
   // 空き枠クリックからの「直接予定追加」ダイアログ
   const [addSlot, setAddSlot] = useState<{ date: string; time: string } | null>(null);
@@ -117,7 +114,7 @@ export default function AdminSessionsPage() {
   };
 
   const goToCurrentWeek = () => {
-    setWeekStart(getMonday(new Date()));
+    setWeekStart(startOfDay(new Date()));
   };
 
   // 週表示フォーマット
@@ -316,7 +313,7 @@ export default function AdminSessionsPage() {
                 <ChevronLeft className="size-4" />
               </Button>
               <Button variant="outline" size="sm" onClick={goToCurrentWeek}>
-                今週
+                今日
               </Button>
               <Button variant="outline" size="sm" onClick={goToNextWeek}>
                 <ChevronRight className="size-4" />
