@@ -226,6 +226,8 @@ export async function POST(request: NextRequest) {
       createdByAdminId: session.createdByAdminId,
       type: session.type,
       status: session.status,
+      // 自己探究授業セッション（生徒が教える回）
+      isResearch: body.isResearch === true,
       // 授業形態 (1 対 1 のみ。既定は対面)
       format: body.format === "online" ? "online" : "offline",
       scheduledAt: session.scheduledAt,

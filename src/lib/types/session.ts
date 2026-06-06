@@ -12,6 +12,8 @@ export interface Session {
   createdByAdminId?: string;
   type: SessionType;
   status: SessionStatus;
+  /** 自己探究授業セッション（生徒が教える回）。true のとき生徒側で探究パネルを表示 */
+  isResearch?: boolean;
   /** 授業形態 (1 対 1 のみ。online=Meet 利用 / offline=対面)。未設定は meetLink 有無でフォールバック判定 */
   format?: "online" | "offline";
   scheduledAt: string;
@@ -147,6 +149,8 @@ export interface SessionCreateRequest {
   scheduledAt: string;
   meetLink?: string;
   notes?: string;
+  /** 自己探究授業セッションとして作成するか */
+  isResearch?: boolean;
 }
 
 export interface GroupSessionFields {

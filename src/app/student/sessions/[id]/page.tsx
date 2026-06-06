@@ -240,9 +240,16 @@ export default function StudentSessionDetailPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="text-base">基本情報</CardTitle>
-            <Badge variant={STATUS_VARIANT[session.status]}>
-              {SESSION_STATUS_LABELS[session.status]}
-            </Badge>
+            <div className="flex items-center gap-2">
+              {session.isResearch && (
+                <Badge className="border-teal-400 bg-teal-50 text-teal-700">
+                  探究
+                </Badge>
+              )}
+              <Badge variant={STATUS_VARIANT[session.status]}>
+                {SESSION_STATUS_LABELS[session.status]}
+              </Badge>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -342,8 +349,8 @@ export default function StudentSessionDetailPage() {
         </CardContent>
       </Card>
 
-      {/* 自己探究授業モード（探究履修＋保護者同意済みの生徒のみ表示。それ以外は null） */}
-      <ResearchSessionPanel embedded />
+      {/* 自己探究授業モード（探究セッション かつ 受講＋保護者同意済みの生徒のみ表示） */}
+      {session.isResearch && <ResearchSessionPanel embedded />}
 
       {/* 欠席連絡 確認ダイアログ */}
       <Dialog open={absentOpen} onOpenChange={setAbsentOpen}>

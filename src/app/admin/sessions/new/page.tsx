@@ -30,6 +30,7 @@ export default function NewSessionPage() {
   const [teacherId, setTeacherId] = useState("");
   const [type, setType] = useState<SessionType | "">("");
   const [format, setFormat] = useState<"online" | "offline">("offline");
+  const [isResearch, setIsResearch] = useState(false);
   const [scheduledAt, setScheduledAt] = useState("");
   const [meetLink, setMeetLink] = useState("");
   const [autoCalendar, setAutoCalendar] = useState(true);
@@ -110,6 +111,7 @@ export default function NewSessionPage() {
           // オフラインは Meet 不要
           meetLink: format === "online" ? meetLink || undefined : undefined,
           notes: notes || undefined,
+          isResearch,
         };
       }
 
@@ -306,6 +308,18 @@ export default function NewSessionPage() {
                   </Button>
                 </div>
               </div>
+            )}
+
+            {type !== "group_review" && (
+              <label className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
+                <input
+                  type="checkbox"
+                  className="size-4"
+                  checked={isResearch}
+                  onChange={(e) => setIsResearch(e.target.checked)}
+                />
+                <span>探究授業セッション（生徒が講師に教える回）</span>
+              </label>
             )}
 
             {/* Group review specific fields */}
