@@ -31,6 +31,9 @@ import {
   TreePine,
   Wheat,
   Presentation,
+  Library,
+  Bug,
+  Landmark,
   Sparkles,
   ExternalLink,
   type LucideIcon,
@@ -68,6 +71,9 @@ const ICON_MAP: Record<string, LucideIcon> = {
   TreePine,
   Wheat,
   Presentation,
+  Library,
+  Bug,
+  Landmark,
 };
 
 /** アイコン名を解決。未知名は Sparkles にフォールバックする。 */

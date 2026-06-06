@@ -3905,13 +3905,13 @@
             }
           },
           {
-            "id": "agri-genome",
-            "icon": "FlaskConical",
-            "title": "ゲノム編集・代謝制御の先端研究に取り組める",
-            "summary": "応用生物科学科でゲノム編集や代謝制御による有用生物創出を研究。3年後期から研究室所属、4年はマンツーマン指導。",
-            "useForAdmissions": "バイオ研究志向を具体的な研究環境で。",
+            "id": "agri-insect",
+            "icon": "Bug",
+            "title": "約43万点の昆虫標本コレクションで研究できる",
+            "summary": "昆虫標本室に約43万点(タイプ標本650点超)を所蔵。実物コレクションを使った分類・生態研究ができる。",
+            "useForAdmissions": "昆虫・生物多様性研究への関心を具体的な標本規模で。",
             "source": {
-              "url": "https://www.omu.ac.jp/agri/undergraduate/agribio/",
+              "url": "https://www.omu.ac.jp/agri/about/facility/",
               "retrievedAt": "2025-06"
             }
           },
@@ -3999,11 +3999,11 @@
         },
         "distinctiveFeatures": [
           {
-            "id": "med-cc",
-            "icon": "Stethoscope",
-            "title": "4週間×5クールの診療参加型臨床実習ができる",
-            "summary": "6年次に選択型クリニカルクラークシップを4週間×5クール。施設・診療科を自分で選べ、海外実習も可能。",
-            "useForAdmissions": "実践力を主体的に磨きたい志望に。",
+            "id": "med-research",
+            "icon": "Microscope",
+            "title": "3年次に研究室配属で研究医養成プログラムを受けられる",
+            "summary": "医学研究推進コースで段階的に基礎医学を学び、3年次は教室(研究室)に配属され特定テーマで研究に従事する。",
+            "useForAdmissions": "臨床と研究を架橋する医師を志す動機に。",
             "source": {
               "url": "https://www.omu.ac.jp/med/undergraduate/about/",
               "retrievedAt": "2025-06"
@@ -4012,20 +4012,20 @@
           {
             "id": "med-hospital",
             "icon": "Building2",
-            "title": "900床超の附属病院で実地経験できる",
-            "summary": "病床900床超・60超の診療部門を持つ附属病院で臨床実習を行う。",
-            "useForAdmissions": "多診療科の現場で幅広い症例に触れたい志望に。",
+            "title": "900床超の附属病院＋高齢者特化病院で実地経験できる",
+            "summary": "病床900床超・60超の診療部門を持つ附属病院に加え、高齢者・認知症に特化した健康長寿医科学センター病院とも連携。",
+            "useForAdmissions": "多診療科・高齢者医療の現場で幅広い症例に触れたい志望に。",
             "source": {
               "url": "https://www.omu.ac.jp/med/undergraduate/about/",
               "retrievedAt": "2025-06"
             }
           },
           {
-            "id": "med-research",
-            "icon": "Microscope",
-            "title": "医学研究推進コースで教室の一員として研究できる",
-            "summary": "段階的に基礎医学を学び、3年次は研究室の一員として研究に参加。早期臨床体験もある。",
-            "useForAdmissions": "研究マインドを持つ医師志望に。",
+            "id": "med-cc",
+            "icon": "Stethoscope",
+            "title": "4週間×5クールの診療参加型臨床実習ができる",
+            "summary": "6年次に選択型クリニカルクラークシップを4週間×5クール。施設・診療科を自分で選べ、海外実習も可能。",
+            "useForAdmissions": "実践力を主体的に磨きたい志望に。",
             "source": {
               "url": "https://www.omu.ac.jp/med/undergraduate/about/",
               "retrievedAt": "2025-06"
@@ -4070,6 +4070,17 @@
         "academicField": "nursing",
         "distinctiveFeatures": [
           {
+            "id": "nurs-center",
+            "icon": "Building2",
+            "title": "看護実践研究センター・附属病院・MedCity21で学べる",
+            "summary": "2022年開設の看護実践研究センター(府民健康支援・学術研究)を擁し、附属病院や予防医療クリニックMedCity21と連携した実習環境。",
+            "useForAdmissions": "治療＋予防＋研究まで視野の学習環境への志望に。",
+            "source": {
+              "url": "https://www.omu.ac.jp/nurs/institutions/about/",
+              "retrievedAt": "2025-06"
+            }
+          },
+          {
             "id": "nurs-kango",
             "icon": "Award",
             "title": "卒業時に看護師国家試験受験資格が得られる(全員)",
@@ -4081,33 +4092,11 @@
             }
           },
           {
-            "id": "nurs-yogo",
-            "icon": "GraduationCap",
-            "title": "養護教諭一種免許状が取得できる",
-            "summary": "所定科目の履修で養護教諭一種免許状を取得可能。",
-            "useForAdmissions": "学校保健・養護教諭への関心を免許で。",
-            "source": {
-              "url": "https://www.omu.ac.jp/nurs/undergraduate/about/",
-              "retrievedAt": "2025-06"
-            }
-          },
-          {
             "id": "nurs-models",
             "icon": "Compass",
             "title": "5つの履修モデルでキャリアパスを設計できる",
-            "summary": "5つの履修モデルでキャリア設計が可能。講義・演習・実習の関連性を重視。",
+            "summary": "5つの履修モデルでキャリア設計が可能。講義・演習・実習の関連性を重視。養護教諭一種免許状も取得可。",
             "useForAdmissions": "入学後の学びの道筋を具体的に描ける。",
-            "source": {
-              "url": "https://www.omu.ac.jp/nurs/undergraduate/about/",
-              "retrievedAt": "2025-06"
-            }
-          },
-          {
-            "id": "nurs-center",
-            "icon": "Building2",
-            "title": "看護実践研究センターや附属病院で学べる",
-            "summary": "府民健康支援・学術研究機能を持つ看護実践研究センターを擁し、臨床実習は医学部附属病院で実施。",
-            "useForAdmissions": "研究・地域健康支援も視野の学習環境への志望に。",
             "source": {
               "url": "https://www.omu.ac.jp/nurs/undergraduate/about/",
               "retrievedAt": "2025-06"
@@ -4172,22 +4161,22 @@
         },
         "distinctiveFeatures": [
           {
-            "id": "eng-robot",
-            "icon": "Bot",
-            "title": "検査ロボットの開発研究に取り組める(機械工学科)",
-            "summary": "ロボット工学研究Gで橋梁検査ロボット「BIREM」やコンクリート調査機「HORNET」など移動ロボットを開発。",
-            "useForAdmissions": "インフラ点検技術を支えたい志望に開発名で。",
+            "id": "eng-marine",
+            "icon": "Ship",
+            "title": "日本でも数少ない「船舶・海洋」の総合工学を学べる",
+            "summary": "海洋システム工学科は船舶・海洋をメインに扱う日本でも数少ない総合工学の学科（公式）。輻輳海域でのAI自動航行は世界初の試み。",
+            "useForAdmissions": "船舶・海洋を本格的に学べる全国でも限られた環境を志望理由に。",
             "source": {
-              "url": "https://www.omu.ac.jp/eng/undergraduate/mech-eng/",
+              "url": "https://www.omu.ac.jp/eng/marine/candidates/",
               "retrievedAt": "2025-06"
             }
           },
           {
             "id": "eng-space",
             "icon": "Rocket",
-            "title": "学生団体SSSRCで人工衛星・ロケット開発に挑戦できる(航空宇宙)",
+            "title": "学生団体SSSRCで人工衛星・ロケット開発に挑戦できる",
             "summary": "航空宇宙工作実習・実験に加え、学生団体SSSRCが人工衛星・ロケット開発に取り組む。",
-            "useForAdmissions": "宇宙への熱意を実機開発の参加意欲で表現。",
+            "useForAdmissions": "宇宙への熱意を実機開発の参加意欲で表現できる。",
             "source": {
               "url": "https://www.omu.ac.jp/eng/all-eng/departments/aerospace-eng/",
               "retrievedAt": "2025-06"
@@ -4205,13 +4194,13 @@
             }
           },
           {
-            "id": "eng-marine",
-            "icon": "Ship",
-            "title": "海洋システム工学科で洋上風力の実験に取り組める",
-            "summary": "3年次グループワークで洋上風車の安定性を測る実験。海洋輸送・資源利用・洋上風力・海洋空間利用を学ぶ。",
-            "useForAdmissions": "再生可能エネルギー・海洋分野への関心を実験テーマで。",
+            "id": "eng-robot",
+            "icon": "Bot",
+            "title": "検査ロボットの開発研究に取り組める(機械工学科)",
+            "summary": "ロボット工学研究Gで橋梁検査ロボット「BIREM」やコンクリート調査機「HORNET」など移動ロボットを開発。",
+            "useForAdmissions": "インフラ点検技術を支えたい志望に開発名で。",
             "source": {
-              "url": "https://www.omu.ac.jp/eng/all-eng/departments/marine-syst-eng/",
+              "url": "https://www.omu.ac.jp/eng/undergraduate/mech-eng/",
               "retrievedAt": "2025-06"
             }
           }
@@ -4254,11 +4243,22 @@
         "academicField": "economics",
         "distinctiveFeatures": [
           {
+            "id": "econ-small",
+            "icon": "Users",
+            "title": "教員1人あたり約7人の少人数教育を全学年で受けられる",
+            "summary": "1年次から卒業まで一貫した少人数演習体制。教員1人当たり学生数約7人と全国的にも恵まれた比率（公式）。",
+            "useForAdmissions": "大規模大学にない面倒見の良さ・ゼミ密度を選んだ理由に。",
+            "source": {
+              "url": "https://www.omu.ac.jp/econ/undergraduate/curriculum/",
+              "retrievedAt": "2025-06"
+            }
+          },
+          {
             "id": "econ-ds",
             "icon": "LineChart",
             "title": "世界各地の「生きたデータ」で分析演習ができる",
-            "summary": "経済データサイエンス演習で世界の地域の実データを統計ソフトで分析。少子高齢化や財政など自分のテーマを分析する。",
-            "useForAdmissions": "データから社会課題の構造を読み解きたい志望に。",
+            "summary": "経済データサイエンス演習で世界の地域の実データを統計ソフトで分析。旧府大の経済データサイエンス課程を統合した融合カリキュラム。",
+            "useForAdmissions": "文系でデータ・AIで経済を分析したい志望に。",
             "source": {
               "url": "https://www.omu.ac.jp/econ/features/data-science/",
               "retrievedAt": "2025-06"
@@ -4272,28 +4272,6 @@
             "useForAdmissions": "現場の実務を知りたい意欲を実在講座名で。",
             "source": {
               "url": "https://www.omu.ac.jp/econ/features/collaboration/",
-              "retrievedAt": "2025-06"
-            }
-          },
-          {
-            "id": "econ-region",
-            "icon": "MapPin",
-            "title": "ゼミの自治体連携で地方創生に関われる",
-            "summary": "徳島県三好市・牟岐町と連携した地域づくりゼミなど、フィールドワークで現実の課題に取り組む。",
-            "useForAdmissions": "地方創生に取り組みたい志望に実在連携を挙げて。",
-            "source": {
-              "url": "https://www.omu.ac.jp/econ/features/collaboration/",
-              "retrievedAt": "2025-06"
-            }
-          },
-          {
-            "id": "econ-global",
-            "icon": "Globe",
-            "title": "英語開講科目と海外協定校で国際経済を学べる",
-            "summary": "Global Economy 等の英語開講科目を履修可。上海・独ハンブルク・米アンドリュース大などと交流。",
-            "useForAdmissions": "グローバルに通用する経済人志望の補強に。",
-            "source": {
-              "url": "https://www.omu.ac.jp/econ/features/international/",
               "retrievedAt": "2025-06"
             }
           }
@@ -4337,24 +4315,24 @@
         "academicField": "business",
         "distinctiveFeatures": [
           {
-            "id": "bus-pitch",
-            "icon": "Presentation",
-            "title": "ゼミで実企業を分析し社会人へプレゼンできる",
-            "summary": "ゼミで実際の企業を分析し社会人相手に直接プレゼン。学生コンテストにも出場。「考える実学」が学風。",
-            "useForAdmissions": "実社会の課題解決力を身につけたい志望に。",
+            "id": "bus-sanshodai",
+            "icon": "Landmark",
+            "title": "日本「三商大」の一角で学べる（わが国初の市立大学）",
+            "summary": "一橋・神戸とともに「三商大」と呼ばれる伝統校。源流は1880年、五代友厚らが創設したわが国初の市立大学「大阪商科大学」（公式）。",
+            "useForAdmissions": "「日本三商大」「日本初の市立大学」という格・伝統を志望理由に。",
             "source": {
-              "url": "https://www.omu.ac.jp/bus/about/feature/",
+              "url": "https://www.omu.ac.jp/bus/about/history/",
               "retrievedAt": "2025-06"
             }
           },
           {
-            "id": "bus-sanshodai",
+            "id": "bus-discussion",
             "icon": "Trophy",
-            "title": "三商大ゼミ討論会で他大学と競い合える",
-            "summary": "商学科では一橋・神戸・大阪公立の伝統「三商大ゼミ討論会」に参加できる。",
-            "useForAdmissions": "学外で研究を発信・議論したい意欲を伝統行事で。",
+            "title": "75年続く「三商大ゼミ討論会」で一橋・神戸と競える",
+            "summary": "1951年開始、70年以上続く三大学合同の学生研究討論会。一橋・神戸の学生と研究を競い合える（公式）。",
+            "useForAdmissions": "学外で研究を発信・議論したい意欲を伝統行事で示せる。",
             "source": {
-              "url": "https://www.omu.ac.jp/bus/undergraduate/commerce/",
+              "url": "https://www.omu.ac.jp/bus/about/feature/",
               "retrievedAt": "2025-06"
             }
           },
@@ -4362,7 +4340,7 @@
             "id": "bus-public",
             "icon": "Building",
             "title": "公共経営学科で地域・公共の経営を学べる",
-            "summary": "公共経営学科で公益事業論・地域マーケティング論・公会計論など「社会性・地域性」を軸に学べる。",
+            "summary": "公益事業論・地域マーケティング論・公会計論など「社会性・地域性」を軸に学ぶ。設立時から「市政科」を持つ独自性。",
             "useForAdmissions": "行政・NPO・地域企業の経営に関わりたい志望に。",
             "source": {
               "url": "https://www.omu.ac.jp/bus/undergraduate/curriculum/",
@@ -4427,22 +4405,11 @@
         },
         "distinctiveFeatures": [
           {
-            "id": "sss-pbl",
-            "icon": "Network",
-            "title": "他学類の学生とPBL演習で課題解決に取り組める",
-            "summary": "全学類共通のPBLプログラムを履修し、最終科目「PBL演習」で他学類の学生と協働して課題を発見・解決する。",
-            "useForAdmissions": "「文理を超えた協働で社会課題を解決したい」の根拠に。",
-            "source": {
-              "url": "https://www.omu.ac.jp/sss/undergraduate/",
-              "retrievedAt": "2025-06"
-            }
-          },
-          {
             "id": "sss-ssw",
             "icon": "HeartHandshake",
-            "title": "スクールソーシャルワーク課程で社会福祉士・保育士を目指せる",
-            "summary": "教育福祉学類のスクールソーシャルワーク教育課程を履修し、社会福祉士・保育士の資格取得が可能。",
-            "useForAdmissions": "教育と福祉をつなぐ支援職の志望理由に課程名つきで。",
+            "title": "全国でも数少ない「スクールソーシャルワーク」課程で学べる",
+            "summary": "教育福祉学類は教育と福祉を融合した全国でも数少ない課程。社会福祉士は受験者30名以上で合格率100%を達成した全国2大学の一つ（公式）。",
+            "useForAdmissions": "資格を本気で目指す志望に、全国屈指の合格実績を選んだ理由として書ける。",
             "source": {
               "url": "https://www.omu.ac.jp/sss/undergraduate/welfare_education/attaractive_education/",
               "retrievedAt": "2025-06"
@@ -4460,13 +4427,13 @@
             }
           },
           {
-            "id": "sss-env",
-            "icon": "Globe",
-            "title": "環境を文理両面から学び社会調査士・自然再生士補が取れる",
-            "summary": "環境社会システム学類で自然・社会環境学を学び、社会調査士・自然再生士補などを取得可。",
-            "useForAdmissions": "環境問題に文理で取り組む意志を資格で裏づけ。",
+            "id": "sss-system",
+            "icon": "Network",
+            "title": "文理融合×システム思考で持続可能性を横断的に学べる",
+            "summary": "自然・社会・人間・情報の4システムを4学類で統合し、領域横断の応用力とシステム的思考を養う学域構成。",
+            "useForAdmissions": "「学部でなく学域」を選ぶ理由＝領域横断の必要性で語れる。",
             "source": {
-              "url": "https://www.omu.ac.jp/sss/undergraduate/environment/",
+              "url": "https://www.omu.ac.jp/sss/about/",
               "retrievedAt": "2025-06"
             }
           }
@@ -4534,6 +4501,17 @@
         },
         "distinctiveFeatures": [
           {
+            "id": "vet-only",
+            "icon": "GraduationCap",
+            "title": "関西で唯一の獣医学教育機関で学べる",
+            "summary": "関西唯一の獣医学教育機関として、近畿圏の動物診療機関・自治体と連携した参加型教育を受けられる（公式）。",
+            "useForAdmissions": "「関西で獣医師を目指すなら実質ここ」という最強の志望理由軸。",
+            "source": {
+              "url": "https://www.omu.ac.jp/vet/undergraduate/",
+              "retrievedAt": "2025-06"
+            }
+          },
+          {
             "id": "vet-center",
             "icon": "Stethoscope",
             "title": "獣医臨床センターで動物診療・先進獣医療研究ができる",
@@ -4545,24 +4523,13 @@
             }
           },
           {
-            "id": "vet-field",
-            "icon": "MapPin",
-            "title": "動物病院・食肉衛生検査所で参加型実習ができる",
-            "summary": "近畿の動物病院・大動物診療機関・食肉衛生検査所での参加型実習、検疫所などでの職場体験。",
-            "useForAdmissions": "伴侶動物・産業動物・公衆衛生いずれの進路でも実地意欲を。",
+            "id": "vet-onehealth",
+            "icon": "Compass",
+            "title": "大都市を活かした都市型獣医学・One Healthを学べる",
+            "summary": "大都市大阪の特性(伴侶動物・感染症防疫・食の安全)を活かす都市型獣医学教育、One Health/Zoobiquityを理念とする。",
+            "useForAdmissions": "感染症防疫や食の安全への社会的動機に。",
             "source": {
-              "url": "https://www.omu.ac.jp/vet/undergraduate/",
-              "retrievedAt": "2025-06"
-            }
-          },
-          {
-            "id": "vet-intl",
-            "icon": "GraduationCap",
-            "title": "欧州認証準拠の都市型獣医学を学べる",
-            "summary": "国際標準(欧州認証)準拠カリキュラムで、伴侶動物・感染症防疫・食の安全を扱う都市型獣医学を学ぶ。",
-            "useForAdmissions": "国際志向・都市型獣医学への関心を認証で裏づけ。",
-            "source": {
-              "url": "https://www.omu.ac.jp/vet/undergraduate/",
+              "url": "https://www.omu.ac.jp/vet/about/message/",
               "retrievedAt": "2025-06"
             }
           },
@@ -4611,13 +4578,13 @@
         "academicField": "humanities",
         "distinctiveFeatures": [
           {
-            "id": "lit-small",
-            "icon": "Users",
-            "title": "1学年数名〜十数名の少人数で探究できる",
-            "summary": "各コースが数名〜十数名の少人数編成で、教員と近い距離で専門研究を深められる。",
-            "useForAdmissions": "主体的に深く学びたい総合型らしい志望理由に。",
+            "id": "lit-library",
+            "icon": "Library",
+            "title": "国内最大規模・200万冊超の図書館で文献研究ができる",
+            "summary": "杉本キャンパスの学術情報総合センターは蔵書200万冊超、国内最大規模の大学図書館（公式）。一次資料に当たる研究ができる。",
+            "useForAdmissions": "「国内最大規模の蔵書で原典に当たりたい」と研究志向を具体化。",
             "source": {
-              "url": "https://www.omu.ac.jp/lit/undergraduate/about/",
+              "url": "https://www.omu.ac.jp/library/outline/intro/",
               "retrievedAt": "2025-06"
             }
           },
@@ -4629,17 +4596,6 @@
             "useForAdmissions": "現場で社会・地域を実証的に調べたい研究計画の根拠に。",
             "source": {
               "url": "https://www.omu.ac.jp/lit/undergraduate/human-behavioral-sciences/",
-              "retrievedAt": "2025-06"
-            }
-          },
-          {
-            "id": "lit-culture",
-            "icon": "Palette",
-            "title": "アートイベント企画や観光まちづくりを実習で体験できる",
-            "summary": "文化構想学科・文化資源コースでアートイベント企画・観光まちづくり・劇制作などの演習実習を実践。",
-            "useForAdmissions": "文化を「活用する」実践志向を具体的に示せる。",
-            "source": {
-              "url": "https://www.omu.ac.jp/lit/undergraduate/cultural-management/",
               "retrievedAt": "2025-06"
             }
           },
@@ -4718,11 +4674,22 @@
         },
         "distinctiveFeatures": [
           {
+            "id": "sci-biochem",
+            "icon": "FlaskConical",
+            "title": "化学と生物の境界を学ぶ「生物化学科」を独立学科として持つ",
+            "summary": "生命現象を分子レベルで解析し、創薬・疾病解明・有用物質開発を目指す生物化学科を独立学科として設置。",
+            "useForAdmissions": "化学×生物の境界領域で生命科学を学びたい志望に。",
+            "source": {
+              "url": "https://www.omu.ac.jp/sci/biochem/invitation.html",
+              "retrievedAt": "2025-06"
+            }
+          },
+          {
             "id": "sci-geos",
             "icon": "Globe",
             "title": "地球学科で講義・実験・学外調査を一体で学べる",
-            "summary": "講義・実習・学外調査実習を結合。岩石学・自然災害科学・地球物理学など7研究領域で学ぶ。",
-            "useForAdmissions": "フィールドで地球を学びたい志望を領域名で具体化。",
+            "summary": "講義・実習と学外調査実習を結合した学び。岩石学・自然災害科学・地球物理学など7研究領域。",
+            "useForAdmissions": "フィールドで地球・防災を学びたい志望を領域名で具体化。",
             "source": {
               "url": "https://www.omu.ac.jp/sci/geos/",
               "retrievedAt": "2025-06"
@@ -4736,28 +4703,6 @@
             "useForAdmissions": "素粒子・低温など先端実験物理への志望に研究室名で。",
             "source": {
               "url": "https://www.omu.ac.jp/sci/phys/",
-              "retrievedAt": "2025-06"
-            }
-          },
-          {
-            "id": "sci-chem",
-            "icon": "FlaskConical",
-            "title": "化学科で講義と実験を結合し物質の原理を解明できる",
-            "summary": "講義と実験を結合したカリキュラムで分子・原子レベルの物質理解と反応原理を学ぶ。",
-            "useForAdmissions": "実験で物質の本質に迫りたい志望に。",
-            "source": {
-              "url": "https://www.omu.ac.jp/sci/undergraduate/department/",
-              "retrievedAt": "2025-06"
-            }
-          },
-          {
-            "id": "sci-bio",
-            "icon": "Microscope",
-            "title": "生物学科で分子から生態系まで階層横断で解析できる",
-            "summary": "動植物・微生物を分子・細胞から生態系まで幅広い階層で解析する総合カリキュラム。",
-            "useForAdmissions": "生命をミクロからマクロまで学びたい志望に。",
-            "source": {
-              "url": "https://www.omu.ac.jp/sci/undergraduate/department/",
               "retrievedAt": "2025-06"
             }
           }
@@ -4822,11 +4767,11 @@
           {
             "id": "life-nut",
             "icon": "Award",
-            "title": "食栄養学科で管理栄養士国家試験受験資格が取れる",
-            "summary": "栄養士免許に加え管理栄養士国家試験受験資格。栄養教諭一種・中高教諭(家庭)も対象。",
-            "useForAdmissions": "管理栄養士を目標に養成課程を結べる。",
+            "title": "管理栄養士＋大学院で希少な臨床栄養師(Ph.D.)を目指せる",
+            "summary": "学部で管理栄養士国家試験受験資格。さらに大学院に、臨床栄養学で博士号を取る全国でも希少な臨床栄養師養成コースがある（公式）。",
+            "useForAdmissions": "資格取得に留まらず研究まで進むキャリアを描ける。",
             "source": {
-              "url": "https://www.omu.ac.jp/life/about/license/",
+              "url": "https://www.omu.ac.jp/life/features/rinshoeiyoshi_program/",
               "retrievedAt": "2025-06"
             }
           },
@@ -4844,11 +4789,11 @@
           {
             "id": "life-arch",
             "icon": "Home",
-            "title": "居住環境学科で建築士の受験資格が得られる",
-            "summary": "所定科目で一級・二級・木造建築士の受験資格、インテリアプランナーも。設計製図演習や学外発表の場も。",
-            "useForAdmissions": "建築士志望と設計演習・学外発表を結べる。",
+            "title": "生活科学の枠組みで建築を学び建築士受験資格が得られる",
+            "summary": "居住環境学科は文理を超え文化・芸術から技術・設計まで横断。一級・二級・木造建築士、インテリアプランナーに対応。",
+            "useForAdmissions": "「なぜ工学部建築でなく生活科学部か」に明確に答えられる。",
             "source": {
-              "url": "https://www.omu.ac.jp/life/about/license/",
+              "url": "https://www.omu.ac.jp/life/undergraduate/envi/",
               "retrievedAt": "2025-06"
             }
           },
@@ -4921,6 +4866,28 @@
         },
         "distinctiveFeatures": [
           {
+            "id": "reha-wfot",
+            "icon": "Globe",
+            "title": "作業療法は世界基準(WFOT認可)カリキュラムで学べる",
+            "summary": "作業療法学専攻は世界作業療法士連盟(WFOT)認可の世界基準カリキュラム。国際的に通用する専門教育を受けられる。",
+            "useForAdmissions": "国際的に活躍するセラピストを志す動機に。",
+            "source": {
+              "url": "https://www.omu.ac.jp/reha/undergraduate/occupational_therapy/",
+              "retrievedAt": "2025-06"
+            }
+          },
+          {
+            "id": "reha-hybrid",
+            "icon": "Stethoscope",
+            "title": "同じ学部の医学科と合同授業・相互研究で学べる",
+            "summary": "医学科との合同授業・相互研究でエビデンスに基づくリハを学ぶ。少人数制。学士・修士5年一貫プログラムも。",
+            "useForAdmissions": "エビデンスに基づくリハ・研究志向の根拠に。",
+            "source": {
+              "url": "https://www.omu.ac.jp/reha/undergraduate/about/",
+              "retrievedAt": "2025-06"
+            }
+          },
+          {
             "id": "reha-qual",
             "icon": "Award",
             "title": "卒業時にPTまたはOTの国家試験受験資格が得られる",
@@ -4939,28 +4906,6 @@
             "useForAdmissions": "生活密着の地域リハへの関心を科目名で。",
             "source": {
               "url": "https://www.omu.ac.jp/reha/undergraduate/physical_therapy/",
-              "retrievedAt": "2025-06"
-            }
-          },
-          {
-            "id": "reha-ot",
-            "icon": "HeartHandshake",
-            "title": "発達障害作業療法など多領域を実習で学べる(OT)",
-            "summary": "作業科学実習や発達障害作業療法学で身体・精神・発達領域を学ぶ。実習は病院・施設で実施。",
-            "useForAdmissions": "関心領域(発達/精神/身体)を具体科目で示せる。",
-            "source": {
-              "url": "https://www.omu.ac.jp/reha/undergraduate/occupational_therapy/",
-              "retrievedAt": "2025-06"
-            }
-          },
-          {
-            "id": "reha-hybrid",
-            "icon": "Stethoscope",
-            "title": "医学科との合同授業でエビデンスに基づくリハを学べる",
-            "summary": "医学科との合同授業・相互研究、少人数制。成績優秀者向けに学士・修士5年一貫プログラムも。",
-            "useForAdmissions": "エビデンスに基づくリハ・研究志向の根拠に。",
-            "source": {
-              "url": "https://www.omu.ac.jp/reha/undergraduate/about/",
               "retrievedAt": "2025-06"
             }
           }
@@ -4997,6 +4942,17 @@
         "academicField": "law",
         "distinctiveFeatures": [
           {
+            "id": "law-clinic",
+            "icon": "Scale",
+            "title": "70年をこえる伝統の無料法律相談所で実地経験できる",
+            "summary": "1951年開設、70年超の伝統を持つ学生主体の無料法律相談所で、市民の相談に応じる実地経験ができる（公式）。",
+            "useForAdmissions": "机上でなく実際の相談で市民の法的問題に向き合いたい、と実践志向を具体化。",
+            "source": {
+              "url": "https://www.omu.ac.jp/law/undergraduate/about/",
+              "retrievedAt": "2025-06"
+            }
+          },
+          {
             "id": "law-models",
             "icon": "Compass",
             "title": "司法・行政・企業国際の3履修モデルから選べる",
@@ -5011,19 +4967,8 @@
             "id": "law-semi",
             "icon": "Users",
             "title": "必修の専門演習(ゼミ)と演習論文で深く学べる",
-            "summary": "2年次以上で少人数の専門演習・演習論文を履修。成果発表の場として学生論文コンクールを開催。",
+            "summary": "2年次以上で少人数の専門演習・演習論文を履修。学生論文コンクールで成果を発表できる。",
             "useForAdmissions": "ゼミで研究し論文化したい姿勢を制度で裏づけ。",
-            "source": {
-              "url": "https://www.omu.ac.jp/law/undergraduate/about/",
-              "retrievedAt": "2025-06"
-            }
-          },
-          {
-            "id": "law-lawschool",
-            "icon": "Scale",
-            "title": "法曹養成プログラムで法科大学院の特別選抜につながる",
-            "summary": "法学部と法科大学院連携の法曹養成プログラム修了で本学法科大学院の特別選抜受験資格。大学院科目の先取りも。",
-            "useForAdmissions": "法曹志望者が学部からの一貫ルートを示せる。",
             "source": {
               "url": "https://www.omu.ac.jp/law/undergraduate/about/",
               "retrievedAt": "2025-06"
