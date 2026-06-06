@@ -23,6 +23,8 @@ interface SessionCalendarProps {
   /** ブロック下端ドラッグで所要時間(分)を変更したとき */
   onResizeSession?: (sessionId: string, duration: number) => void;
   onClickSession: (sessionId: string) => void;
+  /** 空き枠クリックで直接予定を追加する (生徒は呼び出し側のダイアログで選択) */
+  onClickEmptySlot?: (date: string, time: string) => void;
 }
 
 /**
@@ -36,7 +38,8 @@ export default function SessionCalendar({
   onMoveSession,
   onRemoveSession,
   onResizeSession,
-  onClickSession
+  onClickSession,
+  onClickEmptySlot
 }: SessionCalendarProps) {
   const [dragoverCell, setDragoverCell] = useState<string | null>(null);
   // 下端ドラッグによる duration リサイズの状態 (span = 30分単位の行数)
@@ -247,6 +250,16 @@ export default function SessionCalendar({
                     onDragOver={(e) => handleDragOver(e, dayIndex, timeSlot)}
                     onDragLeave={handleDragLeave}
                     onDrop={(e) => handleDrop(e, dayIndex, timeSlot)}
+                    onClick={() => {
+                      if (!onClickEmptySlot) return;
+                      const date = weekDates[dayIndex];
+                      const timeString = `${timeSlot.hour
+                        .toString()
+                        .padStart(2, "0")}:${timeSlot.minute
+                        .toString()
+                        .padStart(2, "0")}`;
+                      onClickEmptySlot(date.toISOString().split("T")[0], timeString);
+                    }}
                   />
                 );
               })}

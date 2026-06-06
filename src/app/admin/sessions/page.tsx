@@ -12,6 +12,7 @@ import SessionCalendar from "@/components/admin/SessionCalendar";
 import UnplacedStudentsSidebar from "@/components/admin/UnplacedStudentsSidebar";
 import AdminSessionList from "@/components/admin/AdminSessionList";
 import type { Session } from "@/lib/types/session";
+import type { StudentListItem } from "@/lib/types/admin";
 
 // Monday取得ヘルパー
 function getMonday(d: Date): Date {
@@ -51,6 +52,9 @@ export default function AdminSessionsPage() {
   const [activeTab, setActiveTab] = useState<"schedule" | "list">("schedule");
   const [weekStart, setWeekStart] = useState<Date>(getMonday(new Date()));
   const [pickerSession, setPickerSession] = useState<Session | null>(null);
+  // 空き枠クリックからの「直接予定追加」ダイアログ
+  const [addSlot, setAddSlot] = useState<{ date: string; time: string } | null>(null);
+  const [addStudentId, setAddStudentId] = useState("");
 
   // 週の範囲を計算
   const weekEnd = useMemo(() => {
@@ -68,6 +72,9 @@ export default function AdminSessionsPage() {
 
   // データ取得
   const { data: allSessions = [], mutate: mutateSessions, error: sessionsError } = useAuthSWR<Session[]>('/api/sessions');
+  // 直接予定追加の生徒選択肢: コーチプランの担当生徒全員
+  const { data: allStudentsData = [] } = useAuthSWR<StudentListItem[]>('/api/admin/students');
+  const coachStudents = allStudentsData.filter((s) => s.plan === "coach");
   const { data: unplacedData, error: unplacedError, mutate: mutateUnplaced } = useAuthSWR<{ students: UnplacedStudent[] } | UnplacedStudent[]>(
     `/api/admin/sessions/unplaced?month=${currentMonth}`
   );
@@ -124,43 +131,46 @@ export default function AdminSessionsPage() {
     return `${startStr} - ${endStr}`;
   };
 
-  // ドロップハンドラー
-  const handleDropStudent = async (studentId: string, date: string, time: string) => {
+  // セッション作成の共通処理（D&Dドロップ／空き枠からの直接追加 共通）。
+  // 生徒の指定方法が違うだけで、作成内容・後続の講師選択ポップオーバーは同一。
+  const createSessionAt = async (
+    studentId: string,
+    studentName: string,
+    date: string,
+    time: string,
+  ) => {
     try {
-      const studentData = unplacedStudents.find(s => s.uid === studentId);
-      if (!studentData) return;
-
       const response = await authFetch('/api/sessions', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: 'coaching',
           studentId,
-          studentName: studentData.displayName,
+          studentName,
           teacherId: '',
           teacherName: '',
           scheduledAt: `${date}T${time}:00`,
         }),
       });
-
       if (!response.ok) {
         throw new Error('セッションの作成に失敗しました');
       }
-
       const newSession = await response.json();
-
       // SWRデータを更新（未配置一覧も再取得して配置済みカードを消す）
       await Promise.all([mutateSessions(), mutateUnplaced()]);
-
       // 作成されたセッションの講師選択ポップオーバーを表示
       setPickerSession(newSession);
-
     } catch (error) {
       console.error('セッション作成エラー:', error);
       // TODO: トースト通知でエラーを表示
     }
+  };
+
+  // ドロップハンドラー（未配置カードを枠にドロップ）
+  const handleDropStudent = async (studentId: string, date: string, time: string) => {
+    const studentData = unplacedStudents.find(s => s.uid === studentId);
+    if (!studentData) return;
+    await createSessionAt(studentId, studentData.displayName, date, time);
   };
 
   // セッション移動ハンドラー（D&Dで別の時間帯に移動）
@@ -328,6 +338,10 @@ export default function AdminSessionsPage() {
             onRemoveSession={handleRemoveSession}
             onResizeSession={handleResizeSession}
             onClickSession={handleSessionClick}
+            onClickEmptySlot={(date, time) => {
+              setAddSlot({ date, time });
+              setAddStudentId("");
+            }}
           />
         ) : (
           <AdminSessionList sessions={allSessions} />
@@ -395,6 +409,52 @@ export default function AdminSessionsPage() {
               <div className="flex gap-2">
                 <Button variant="outline" onClick={() => setPickerSession(null)} className="flex-1">
                   キャンセル
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 直接予定を追加（空き枠クリック）。生徒選択以外は D&D と同じ */}
+      {addSlot && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" onClick={() => setAddSlot(null)}>
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <h3 className="font-semibold text-lg">予定を追加</h3>
+                <p className="text-sm text-muted-foreground">
+                  {addSlot.date} {addSlot.time} に予定を作成します。生徒を選択してください（講師は作成後に選択）。
+                </p>
+              </div>
+              <select
+                className="w-full rounded-md border px-3 py-2 text-sm"
+                value={addStudentId}
+                onChange={(e) => setAddStudentId(e.target.value)}
+              >
+                <option value="">-- 生徒を選択 --</option>
+                {coachStudents.map((s) => (
+                  <option key={s.uid} value={s.uid}>
+                    {s.displayName}
+                  </option>
+                ))}
+              </select>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setAddSlot(null)} className="flex-1">
+                  キャンセル
+                </Button>
+                <Button
+                  className="flex-1"
+                  disabled={!addStudentId}
+                  onClick={() => {
+                    const s = coachStudents.find((x) => x.uid === addStudentId);
+                    if (!s || !addSlot) return;
+                    const slot = addSlot;
+                    setAddSlot(null);
+                    void createSessionAt(s.uid, s.displayName, slot.date, slot.time);
+                  }}
+                >
+                  追加
                 </Button>
               </div>
             </div>
