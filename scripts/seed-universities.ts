@@ -48,6 +48,8 @@ interface UniversityData {
   group: string;
   officialUrl: string;
   prefecture?: string;
+  /** 大学レベルの特色カード（任意）。Firestore にもそのまま投入する。 */
+  distinctiveFeatures?: Record<string, unknown>[];
   faculties: FacultyData[];
 }
 
@@ -134,6 +136,9 @@ async function seedUniversities() {
             group: uni.group,
             officialUrl: uni.officialUrl,
             ...(uni.prefecture ? { prefecture: uni.prefecture } : {}),
+            ...(uni.distinctiveFeatures
+              ? { distinctiveFeatures: uni.distinctiveFeatures }
+              : {}),
             faculties: uni.faculties,
             updatedAt: new Date(),
           },
