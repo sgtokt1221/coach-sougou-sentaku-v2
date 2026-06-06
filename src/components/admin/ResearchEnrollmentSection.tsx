@@ -169,7 +169,7 @@ export function ResearchEnrollmentSection({
               )}
             </div>
             <p className="text-xs text-muted-foreground">
-              受講ON/OFFは上の「機能スイッチ」で。通常は保護者がWeb同意フォームから同意します。手動更新はパイロット等の例外運用向け。
+              受講ON/OFFは上の「機能スイッチ」で。スイッチONは保護者同意取得済みとして扱います（同意の取得・記録は教室側で管理してください）。
             </p>
           </div>
         )}

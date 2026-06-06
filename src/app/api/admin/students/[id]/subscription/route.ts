@@ -225,17 +225,17 @@ export async function PATCH(
     }
 
     // 自己探究授業の受講フラグ (top-level、探究ゲートが参照する独立フィールド)
+    // 運用方針: スイッチON＝保護者同意ありとみなす（同意取得・記録は教室側が担保）。
+    // よって ON で即 granted（録音・AI講評を解放）、OFF で revoked（再ロック）。
     let nextResearchEnrolled: boolean | undefined;
     if (body.researchEnrolled === true) {
       update.researchEnrolled = true;
       if (!userData.researchEnrolledAt) update.researchEnrolledAt = nowIso;
-      const curConsent = userData.researchConsentStatus as string | undefined;
-      if (!curConsent || curConsent === "none") {
-        update.researchConsentStatus = "pending";
-      }
+      update.researchConsentStatus = "granted";
       nextResearchEnrolled = true;
     } else if (body.researchEnrolled === false) {
       update.researchEnrolled = false;
+      update.researchConsentStatus = "revoked";
       nextResearchEnrolled = false;
     }
 
