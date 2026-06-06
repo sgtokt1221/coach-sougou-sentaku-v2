@@ -205,6 +205,8 @@ export interface VideoAnalysis {
 export interface VoiceAnalysis {
   speechRate: number;          // 文字/分
   recommendedRate: number;     // 推奨話速
+  /** 推定実発話秒（録音時間 − 無音>0.5秒の合計）。話速・フィラー率の分母に使う */
+  voicedSeconds?: number;
   fillerCount: number;
   fillerRate: number;          // フィラー/分
   fillerWords: Array<{ word: string; count: number; timestamps: number[] }>;

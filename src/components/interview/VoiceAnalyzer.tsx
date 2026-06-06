@@ -16,6 +16,8 @@ const RECOMMENDED_SPEECH_RATE = 300; // chars/min
 const FILLER_PATTERNS = [
   "えーと", "えっと", "えー", "あのー", "あの", "まあ", "まぁ",
   "なんか", "そのー", "その", "うーん", "うん", "ええと",
+  // 誤検出が少ない長めのフィラーを控えめに追加
+  "ええっと", "えっとー", "なんていうか", "あのう",
 ];
 
 /** 面接での相槌(面接官の発言を受けた応答) */
@@ -252,9 +254,16 @@ export default function VoiceAnalyzer({
 
       const feedback = generateFeedback(speechRate, fillerCount, fillerRate, { avgPauseDuration, longPauses }, volumeVariation);
 
+      // 実発話時間 ≒ 録音時間 − 無音(>0.5秒)合計。話速・フィラー率の分母に使う
+      const voicedSeconds = Math.max(
+        0,
+        durationSeconds - pauses.reduce((a, b) => a + b, 0)
+      );
+
       const analysis: VoiceAnalysis = {
         speechRate,
         recommendedRate: RECOMMENDED_SPEECH_RATE,
+        voicedSeconds: Math.round(voicedSeconds),
         fillerCount,
         fillerRate,
         fillerWords,
@@ -280,7 +289,11 @@ export function refineWithTranscription(
   text: string,
   durationSeconds: number
 ): VoiceAnalysis {
-  const durationMinutes = durationSeconds / 60;
+  // 話速・フィラー率は「実発話時間」を分母にする。
+  // セッション総時間(durationSeconds)だとAIの発話時間や沈黙が混ざり、話速が過小評価される。
+  const effectiveSeconds =
+    base.voicedSeconds && base.voicedSeconds > 0 ? base.voicedSeconds : durationSeconds;
+  const durationMinutes = effectiveSeconds / 60;
   const charCount = text.replace(/\s/g, "").length;
   const speechRate = durationMinutes > 0 ? Math.round(charCount / durationMinutes) : 0;
 
