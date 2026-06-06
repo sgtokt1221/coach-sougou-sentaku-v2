@@ -107,6 +107,18 @@ export interface StudentProfile extends UserProfile {
   /** 面接 SC を受験した時点の原値 (aggregate 計算の入力) */
   lastInterviewCheckScore?: number;
   lastInterviewCheckRank?: SkillRank;
+  /** 自己探究授業の受講登録フラグ。管理者が生徒詳細で付与する */
+  researchEnrolled?: boolean;
+  /** 探究受講を登録した日時 (ISO) */
+  researchEnrolledAt?: string;
+  /** 探究の受講ペース */
+  researchPlan?: "weekly" | "monthly";
+  /**
+   * 録音・AI処理に関する保護者同意の状態。
+   * none=未登録 / pending=登録済み同意待ち / granted=同意済み / revoked=撤回。
+   * granted のときだけ録音・AI評価機能を解放する（同意ゲート）。
+   */
+  researchConsentStatus?: "none" | "pending" | "granted" | "revoked";
 }
 
 export interface EnglishCert {
