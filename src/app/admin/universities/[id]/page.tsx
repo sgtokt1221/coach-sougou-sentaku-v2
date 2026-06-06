@@ -41,6 +41,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { authFetch } from "@/lib/api/client";
 import type { University, Faculty, SelectionMethod } from "@/lib/types/university";
+import { DistinctiveFeatureCards } from "@/components/university/DistinctiveFeatureCards";
 import { getUniversityDeviation } from "@/lib/data/university-deviations";
 import { Badge } from "@/components/ui/badge";
 import { PAST_QUESTIONS, needsSourceText, type PastQuestion } from "@/data/essay-past-questions";
@@ -388,6 +389,10 @@ function FacultyForm({ faculty, onChange, canEdit, deviation }: FacultyFormProps
           </div>
         </div>
       </div>
+      <DistinctiveFeatureCards
+        title="この学部の特色"
+        features={faculty.distinctiveFeatures}
+      />
     </div>
   );
 }
@@ -690,6 +695,11 @@ export default function AdminUniversityEditPage() {
           </div>
         </CardContent>
       </Card>
+
+      <DistinctiveFeatureCards
+        title="他大学にない特色"
+        features={university.distinctiveFeatures}
+      />
 
       {/* Faculties */}
       <Card>

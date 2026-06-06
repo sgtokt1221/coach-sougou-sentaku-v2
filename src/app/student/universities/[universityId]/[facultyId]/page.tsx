@@ -17,7 +17,6 @@ import {
 } from "lucide-react";
 import type { University, Faculty, SelectionMethod } from "@/lib/types/university";
 import { SelectionTypeBadge } from "@/components/shared/SelectionTypeBadge";
-import { DistinctiveFeatureCards } from "@/components/university/DistinctiveFeatureCards";
 
 function calcDaysLeft(dateStr: string): number {
   const today = new Date();
@@ -198,16 +197,6 @@ export default function FacultyDetailPage({
           </div>
         </div>
       </div>
-
-      <DistinctiveFeatureCards
-        title="他大学にない特色"
-        features={university.distinctiveFeatures}
-      />
-
-      <DistinctiveFeatureCards
-        title="この学部の特色（総合型選抜で使える）"
-        features={faculty.distinctiveFeatures}
-      />
 
       <Card>
         <CardHeader>
