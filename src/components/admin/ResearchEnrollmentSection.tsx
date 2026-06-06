@@ -109,19 +109,9 @@ export function ResearchEnrollmentSection({
         ) : !data ? (
           <p className="text-sm text-muted-foreground">取得できませんでした</p>
         ) : !data.researchEnrolled ? (
-          <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">
-              この生徒はまだ探究授業を受講していません。受講を付与すると保護者同意（Web）の待機状態になります。
-            </p>
-            <Button
-              size="sm"
-              disabled={saving}
-              onClick={() => patch({ researchEnrolled: true })}
-            >
-              {saving && <Loader2 className="mr-1 size-3 animate-spin" />}
-              探究授業の受講を付与
-            </Button>
-          </div>
+          <p className="text-sm text-muted-foreground">
+            上の「機能スイッチ」で探究授業をONにすると、ここに保護者同意の状況と受講ペースが表示されます。
+          </p>
         ) : (
           <div className="space-y-4">
             <div className="flex flex-wrap items-center gap-2">
@@ -177,17 +167,9 @@ export function ResearchEnrollmentSection({
                   同意を撤回扱いにする
                 </Button>
               )}
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={saving}
-                onClick={() => patch({ researchEnrolled: false })}
-              >
-                受講を解除
-              </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              通常は保護者がWeb同意フォームから同意します。手動更新はパイロット等の例外運用向け。
+              受講ON/OFFは上の「機能スイッチ」で。通常は保護者がWeb同意フォームから同意します。手動更新はパイロット等の例外運用向け。
             </p>
           </div>
         )}

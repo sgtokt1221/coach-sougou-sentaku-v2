@@ -20,6 +20,7 @@ interface SubscriptionStatus {
   documentPackage: DocumentPackage;
   features: FeatureFlags | null;
   realtimeUnlocked: boolean;
+  researchEnrolled: boolean;
   hasStripeSubscription: boolean;
   stripeSubscriptionId: string | null;
 }
@@ -30,10 +31,11 @@ interface Props {
 
 /** UI で表示するトグル一覧。 realtimeUnlocked は別フィールド (rate-limit 用) なので
  *  「key」 と「source」 で features と独立フィールドを区別して扱う。 */
-type SwitchSource = "feature" | "realtimeUnlocked";
+type SwitchSource = "feature" | "realtimeUnlocked" | "researchEnrolled";
+type SwitchKey = keyof FeatureFlags | "realtimeUnlocked" | "researchEnrolled";
 
 const TOGGLES: Array<{
-  key: keyof FeatureFlags | "realtimeUnlocked";
+  key: SwitchKey;
   label: string;
   source: SwitchSource;
 }> = [
@@ -46,6 +48,7 @@ const TOGGLES: Array<{
   { key: "activityManager", label: "活動実績管理", source: "feature" },
   { key: "apOptimization", label: "AP最適化", source: "feature" },
   { key: "realtimeUnlocked", label: "音声面接の無制限利用", source: "realtimeUnlocked" },
+  { key: "researchEnrolled", label: "探究授業", source: "researchEnrolled" },
 ];
 
 /**
@@ -62,17 +65,15 @@ export function SubscriptionManagementSection({ studentId }: Props) {
   );
   const [pending, setPending] = useState<string | null>(null);
 
-  const getCurrentValue = (
-    key: keyof FeatureFlags | "realtimeUnlocked",
-    source: SwitchSource,
-  ): boolean => {
+  const getCurrentValue = (key: SwitchKey, source: SwitchSource): boolean => {
     if (!data) return false;
     if (source === "realtimeUnlocked") return data.realtimeUnlocked === true;
+    if (source === "researchEnrolled") return data.researchEnrolled === true;
     return data.features?.[key as keyof FeatureFlags] === true;
   };
 
   const toggle = async (
-    key: keyof FeatureFlags | "realtimeUnlocked",
+    key: SwitchKey,
     source: SwitchSource,
     nextValue: boolean,
   ) => {
@@ -81,7 +82,9 @@ export function SubscriptionManagementSection({ studentId }: Props) {
       const body =
         source === "realtimeUnlocked"
           ? { realtimeUnlocked: nextValue }
-          : { features: { [key]: nextValue } };
+          : source === "researchEnrolled"
+            ? { researchEnrolled: nextValue }
+            : { features: { [key]: nextValue } };
       const res = await authFetch(
         `/api/admin/students/${studentId}/subscription`,
         {

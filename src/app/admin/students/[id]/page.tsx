@@ -838,6 +838,9 @@ function AdminStudentDetailPageInner() {
       {/* Subscription Management (手動付与 / 剥奪) — 管理者専用 */}
       {!isTeacherViewer && <SubscriptionManagementSection studentId={id} />}
 
+      {/* 自己探究授業の同意状況・受講ペース（受講ON/OFFは上の機能スイッチで） */}
+      {!isTeacherViewer && <ResearchEnrollmentSection studentId={id} />}
+
       {/* 系統変更（管理者操作） */}
       {skillCheck && (
         <Card>
@@ -1046,7 +1049,6 @@ function AdminStudentDetailPageInner() {
       <ActivitiesSection studentId={id} />
       <SessionsHistorySection studentId={id} />
       <ExamResultsSection studentId={id} />
-      <ResearchEnrollmentSection studentId={id} />
     </div>
   );
 

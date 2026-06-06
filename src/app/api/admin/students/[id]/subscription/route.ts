@@ -38,6 +38,11 @@ interface PatchBody {
    * true なら 7 日 cooldown を無視、 false / undefined なら通常制限。
    */
   realtimeUnlocked?: boolean;
+  /**
+   * 自己探究授業の受講フラグ (top-level、探究ゲートが参照)。
+   * true 化時、同意が未設定なら researchConsentStatus を pending にする。
+   */
+  researchEnrolled?: boolean;
 }
 
 export async function PATCH(
@@ -56,10 +61,11 @@ export async function PATCH(
       body.standard === undefined &&
       body.documentPackage === undefined &&
       body.realtimeUnlocked === undefined &&
+      body.researchEnrolled === undefined &&
       (!body.features || Object.keys(body.features).length === 0)
     ) {
       return NextResponse.json(
-        { error: "standard / documentPackage / features / realtimeUnlocked のいずれかを指定してください" },
+        { error: "standard / documentPackage / features / realtimeUnlocked / researchEnrolled のいずれかを指定してください" },
         { status: 400 }
       );
     }
@@ -218,6 +224,21 @@ export async function PATCH(
       nextRealtimeUnlocked = false;
     }
 
+    // 自己探究授業の受講フラグ (top-level、探究ゲートが参照する独立フィールド)
+    let nextResearchEnrolled: boolean | undefined;
+    if (body.researchEnrolled === true) {
+      update.researchEnrolled = true;
+      if (!userData.researchEnrolledAt) update.researchEnrolledAt = nowIso;
+      const curConsent = userData.researchConsentStatus as string | undefined;
+      if (!curConsent || curConsent === "none") {
+        update.researchConsentStatus = "pending";
+      }
+      nextResearchEnrolled = true;
+    } else if (body.researchEnrolled === false) {
+      update.researchEnrolled = false;
+      nextResearchEnrolled = false;
+    }
+
     await userRef.update(update);
 
     return NextResponse.json({
@@ -226,6 +247,8 @@ export async function PATCH(
       features,
       realtimeUnlocked:
         nextRealtimeUnlocked ?? userData.realtimeUnlocked === true,
+      researchEnrolled:
+        nextResearchEnrolled ?? userData.researchEnrolled === true,
       hasStripeSubscription: !!userData.stripeSubscriptionId,
     });
   } catch (error) {
@@ -305,6 +328,9 @@ export async function GET(
       documentPackage,
       features,
       realtimeUnlocked: userData.realtimeUnlocked === true,
+      researchEnrolled: userData.researchEnrolled === true,
+      researchConsentStatus: userData.researchConsentStatus ?? "none",
+      researchPlan: userData.researchPlan ?? null,
       hasStripeSubscription: !!userData.stripeSubscriptionId,
       stripeSubscriptionId: userData.stripeSubscriptionId ?? null,
     });
