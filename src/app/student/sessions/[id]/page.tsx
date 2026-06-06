@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { StudentRecordingController } from "@/components/student/StudentRecordingController";
 import SessionArtifactsPanel from "@/components/sessions/SessionArtifactsPanel";
+import { ResearchSessionPanel } from "@/components/research/ResearchSessionPanel";
 import type { Session, SessionStatus, SessionSubmission } from "@/lib/types/session";
 import { SESSION_TYPE_LABELS, SESSION_STATUS_LABELS } from "@/lib/types/session";
 import { useAuth } from "@/contexts/AuthContext";
@@ -340,6 +341,9 @@ export default function StudentSessionDetailPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* 自己探究授業モード（探究履修＋保護者同意済みの生徒のみ表示。それ以外は null） */}
+      <ResearchSessionPanel embedded />
 
       {/* 欠席連絡 確認ダイアログ */}
       <Dialog open={absentOpen} onOpenChange={setAbsentOpen}>
