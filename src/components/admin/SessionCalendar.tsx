@@ -292,6 +292,7 @@ export default function SessionCalendar({
           const baseSpan = session.gridRowEnd - session.gridRow;
           // リサイズ中/確定待ちのブロックはプレビューの span で高さを描く
           const span = resize?.id === session.id ? resize.previewSpan : baseSpan;
+          const cancelled = session.status === "cancelled";
           return (
           <div
             key={session.id}
@@ -305,7 +306,7 @@ export default function SessionCalendar({
               e.dataTransfer.setData('sessionId', session.id);
               e.dataTransfer.effectAllowed = 'move';
             }}
-            className={`absolute z-10 overflow-hidden rounded-md border text-xs p-1 cursor-grab active:cursor-grabbing shadow-sm hover:shadow-md transition-shadow group ${getSessionBgColor(session.type)}`}
+            className={`absolute z-10 overflow-hidden rounded-md border text-xs p-1 cursor-grab active:cursor-grabbing shadow-sm hover:shadow-md transition-shadow group ${cancelled ? 'bg-rose-100 border-rose-400 opacity-80' : getSessionBgColor(session.type)}`}
             style={{
               gridColumn: session.gridColumn,
               gridRow: session.gridRow,
@@ -327,7 +328,12 @@ export default function SessionCalendar({
                 ×
               </button>
             )}
-            <div className="space-y-0.5">
+            <div className={`space-y-0.5 ${cancelled ? 'line-through' : ''}`}>
+              {cancelled && (
+                <Badge className="border-rose-400 bg-rose-200 text-rose-800 text-[10px] no-underline">
+                  欠席
+                </Badge>
+              )}
               {session.type === 'group_review' ? (
                 <>
                   <div className="font-medium">

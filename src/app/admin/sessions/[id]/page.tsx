@@ -453,6 +453,23 @@ export default function AdminSessionDetailPage() {
               欠席にする
             </Button>
           )}
+          {session.status === "cancelled" && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() =>
+                patchSession({
+                  status: "scheduled",
+                  absenceReportedBy: null,
+                  absenceReportedAt: null,
+                } as unknown as Partial<Session>)
+              }
+              disabled={saving}
+            >
+              <Check className="size-4 mr-1" />
+              出席に戻す
+            </Button>
+          )}
           <Button
             size="sm"
             variant={session.sharedWithStudent ? "secondary" : "outline"}

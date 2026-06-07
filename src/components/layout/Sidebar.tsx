@@ -37,6 +37,7 @@ import { FeedbackBadge } from "@/components/student/FeedbackBadge";
 import { SelfAnalysisBadge } from "@/components/student/IncompleteStepBadge";
 import { HomeworkBadge } from "@/components/student/HomeworkBadge";
 import { AdminMessagesBadge } from "@/components/admin/AdminMessagesBadge";
+import { AdminAbsenceBadge } from "@/components/admin/AdminAbsenceBadge";
 import { TeacherMessagesBadge } from "@/components/teacher/TeacherMessagesBadge";
 
 interface NavItem {
@@ -134,7 +135,7 @@ const adminNavGroups: NavGroup[] = [
       { label: "講師管理", href: "/admin/teachers", icon: GraduationCap },
       { label: "管理者管理", href: "/admin/members", icon: Shield },
       { label: "大学データ", href: "/admin/universities", icon: Database },
-      { label: "セッション", href: "/admin/sessions", icon: ClipboardList },
+      { label: "セッション", href: "/admin/sessions", icon: ClipboardList, badge: AdminAbsenceBadge },
     ],
   },
   {

@@ -84,6 +84,24 @@ export default function StudentSessionDetailPage() {
     }
   }
 
+  async function restoreAttend() {
+    setReporting(true);
+    try {
+      const res = await authFetch(`/api/sessions/${id}/attend`, { method: "PATCH" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error ?? "出席への変更に失敗しました");
+      }
+      const updated: Session = await res.json();
+      setSession(updated);
+      toast.success("出席に戻しました");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "出席への変更に失敗しました");
+    } finally {
+      setReporting(false);
+    }
+  }
+
   const load = useCallback(async () => {
     if (!isCoach) {
       setLoading(false);
@@ -382,7 +400,26 @@ export default function StudentSessionDetailPage() {
             <>
               <Separator />
               {session.status === "cancelled" ? (
-                <p className="text-sm text-muted-foreground">欠席連絡済みです</p>
+                session.absenceReportedBy === "student" ? (
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm text-muted-foreground">欠席連絡済みです</p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={restoreAttend}
+                      disabled={reporting}
+                    >
+                      {reporting ? (
+                        <Loader2 className="size-4 mr-1 animate-spin" />
+                      ) : (
+                        <CheckCircle className="size-4 mr-1" />
+                      )}
+                      出席に戻す
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">欠席（教室で登録）</p>
+                )
               ) : session.status === "scheduled" &&
                 new Date(session.scheduledAt) > new Date() ? (
                 <Button
