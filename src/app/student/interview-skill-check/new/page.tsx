@@ -8,10 +8,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Timer } from "lucide-react";
+import { Loader2, Timer, Mic, MessageSquareText } from "lucide-react";
 import type { InterviewMessage } from "@/lib/types/interview";
 import { INTERVIEW_SKILL_CHECK_MAX_TURNS } from "@/lib/types/interview-skill-check";
 import { toast } from "sonner";
+import { RealtimeSkillCheck } from "@/components/interview-skill-check/RealtimeSkillCheck";
 
 /**
  * 面接スキルチェック受験UI（テキストチャット版）
@@ -20,6 +21,8 @@ import { toast } from "sonner";
  */
 export default function InterviewSkillCheckNew() {
   const router = useRouter();
+  // 受験モード選択（null=未選択で選択画面を表示）
+  const [mode, setMode] = useState<"voice" | "text" | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<InterviewMessage[]>([]);
   const [input, setInput] = useState("");
@@ -45,11 +48,11 @@ export default function InterviewSkillCheckNew() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length]);
 
-  // ページロード時に自動でセッション開始（1クリック化）
+  // テキストモード選択時にセッション開始（音声モードは RealtimeSkillCheck が自前で開始）
   useEffect(() => {
-    void handleStart();
+    if (mode === "text" && !sessionId) void handleStart();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [mode]);
 
   async function handleStart() {
     setStarting(true);
@@ -123,6 +126,59 @@ export default function InterviewSkillCheckNew() {
     } finally {
       setSubmitting(false);
     }
+  }
+
+  // モード選択画面
+  if (mode === null) {
+    return (
+      <div className="container mx-auto max-w-3xl space-y-4 p-6">
+        <div>
+          <h1 className="text-2xl font-bold">面接スキルチェック</h1>
+          <p className="text-sm text-muted-foreground">
+            受験方法を選んでください（5ターンの短い面接で、4つの観点を採点します）。
+          </p>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Card
+            className="cursor-pointer transition-shadow hover:shadow-md"
+            onClick={() => setMode("voice")}
+          >
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Mic className="size-5 text-primary" />
+                音声で受験
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground">
+              面接官と声で対話します（本番に近い）。マイクが必要です。7日に1回まで。
+            </CardContent>
+          </Card>
+          <Card
+            className="cursor-pointer transition-shadow hover:shadow-md"
+            onClick={() => setMode("text")}
+          >
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <MessageSquareText className="size-5 text-primary" />
+                テキストで受験
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground">
+              チャットで回答します。回数制限なく、いつでも練習できます。
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // 音声モード（Realtime）
+  if (mode === "voice") {
+    return (
+      <div className="container mx-auto max-w-3xl p-6">
+        <RealtimeSkillCheck />
+      </div>
+    );
   }
 
   const mm = String(Math.floor(elapsedSec / 60)).padStart(2, "0");

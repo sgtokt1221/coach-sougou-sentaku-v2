@@ -58,6 +58,8 @@ export type RealtimeStatus =
 
 interface UseRealtimeInterviewOptions {
   mode: InterviewMode;
+  /** トークン発行エンドポイント。既定は模擬面接用。スキルチェック等で差し替える */
+  tokenEndpoint?: string;
   universityId?: string;
   facultyId?: string;
   universityName: string;
@@ -252,7 +254,7 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
       error?: string;
     };
     try {
-      const res = await authFetch("/api/interview/realtime-session", {
+      const res = await authFetch(optsRef.current.tokenEndpoint ?? "/api/interview/realtime-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

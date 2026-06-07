@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
 import { RANK_META } from "@/lib/skill-check/rank";
 import type { InterviewSkillCheckResult } from "@/lib/types/interview-skill-check";
-import { CheckCircle2, Lightbulb, Target } from "lucide-react";
+import { CheckCircle2, Lightbulb, Target, Mic } from "lucide-react";
 
 export function InterviewSkillResultView({ result }: { result: InterviewSkillCheckResult }) {
   const { scores, feedback, rank } = result;
@@ -109,6 +109,20 @@ export function InterviewSkillResultView({ result }: { result: InterviewSkillChe
           </Card>
         )}
       </div>
+
+      {feedback.voiceNotes && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Mic className="size-4 text-sky-600" />
+              話し方メモ（音声分析）
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm leading-relaxed text-muted-foreground">
+            {feedback.voiceNotes}
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
