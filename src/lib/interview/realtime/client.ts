@@ -59,9 +59,20 @@ export interface RealtimeSessionOptions {
   onResponseStart?: () => void;
   /** AI が応答を完了したとき (response.done) — マイクのミュート解除用 */
   onResponseEnd?: () => void;
+  /**
+   * AI 出力音声が実際に鳴っているか/鳴り止んだかを通知する。
+   * active=true: スピーカーから音が出ている / active=false: 無音が継続して再生終了とみなせる。
+   * response.done (生成完了) は再生終了より早いため、ターン切替はこのコールバックを基準にする。
+   */
+  onOutputAudioActivity?: (active: boolean) => void;
   /** 接続エラー */
   onError?: (error: Error) => void;
 }
+
+/** 出力音声の鳴り止み判定: この RMS 未満が SILENCE_HOLD_MS 継続したら「無音」とみなす */
+const OUTPUT_RMS_THRESHOLD = 0.01;
+// 文末や文間の自然な「間」を誤って鳴り止みと判定しないよう、やや長めに保持する
+const OUTPUT_SILENCE_HOLD_MS = 600;
 
 export class RealtimeSession {
   private pc: RTCPeerConnection | null = null;
@@ -70,6 +81,14 @@ export class RealtimeSession {
   private isClosed = false;
   /** response_id ごとの transcript 累積バッファ。response.done で該当エントリを破棄 */
   private transcriptBuffers = new Map<string, string>();
+  /** 出力音声レベル監視用 (AI が鳴り止んだ瞬間の検出) */
+  private outputAudioCtx: AudioContext | null = null;
+  private outputAnalyser: AnalyserNode | null = null;
+  private outputRafId: number | null = null;
+  /** 直近に onOutputAudioActivity へ通知した状態 (重複通知防止) */
+  private outputActive = false;
+  /** 無音が始まった時刻 (ms)。null は「現在は音が鳴っている」 */
+  private outputSilenceSince: number | null = null;
 
   constructor(opts: RealtimeSessionOptions) {
     this.opts = opts;
@@ -89,6 +108,10 @@ export class RealtimeSession {
     pc.ontrack = (event) => {
       if (!this.isClosed) {
         this.opts.audioOutputElement.srcObject = event.streams[0];
+        // 出力音声レベル監視を開始 (AI が鳴り止んだ瞬間でターン切替するため)
+        if (this.opts.onOutputAudioActivity) {
+          this.startOutputMonitor(event.streams[0]);
+        }
       }
     };
 
@@ -240,10 +263,80 @@ export class RealtimeSession {
     this.sendEvent({ type: "response.cancel" });
   }
 
+  /**
+   * リモート出力音声(AI 音声)のレベルを監視し、鳴り止んだ瞬間を
+   * onOutputAudioActivity(false) で通知する。AnalyserNode が使えない環境では
+   * 静かに失敗し、呼び出し側のフォールバック(タイムアウト)に委ねる。
+   */
+  private startOutputMonitor(stream: MediaStream): void {
+    try {
+      const Ctx =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      if (!Ctx) return;
+      const ctx = new Ctx();
+      this.outputAudioCtx = ctx;
+      void ctx.resume?.();
+      const source = ctx.createMediaStreamSource(stream);
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 512;
+      source.connect(analyser); // destination には繋がない (二重再生防止)
+      this.outputAnalyser = analyser;
+
+      const buf = new Float32Array(analyser.fftSize);
+      const tick = () => {
+        if (this.isClosed || !this.outputAnalyser) return;
+        this.outputAnalyser.getFloatTimeDomainData(buf);
+        let sum = 0;
+        for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
+        const rms = Math.sqrt(sum / buf.length);
+        const now = performance.now();
+
+        if (rms >= OUTPUT_RMS_THRESHOLD) {
+          // 音が鳴っている
+          this.outputSilenceSince = null;
+          if (!this.outputActive) {
+            this.outputActive = true;
+            this.opts.onOutputAudioActivity?.(true);
+          }
+        } else {
+          // 無音。一定時間継続したら「鳴り止んだ」とみなす
+          if (this.outputSilenceSince === null) this.outputSilenceSince = now;
+          if (
+            this.outputActive &&
+            now - this.outputSilenceSince >= OUTPUT_SILENCE_HOLD_MS
+          ) {
+            this.outputActive = false;
+            this.opts.onOutputAudioActivity?.(false);
+          }
+        }
+        this.outputRafId = requestAnimationFrame(tick);
+      };
+      this.outputRafId = requestAnimationFrame(tick);
+    } catch (err) {
+      console.warn("[RealtimeSession] output monitor unavailable:", err);
+    }
+  }
+
+  private stopOutputMonitor(): void {
+    if (this.outputRafId !== null) {
+      cancelAnimationFrame(this.outputRafId);
+      this.outputRafId = null;
+    }
+    this.outputAnalyser = null;
+    try {
+      void this.outputAudioCtx?.close();
+    } catch { /* noop */ }
+    this.outputAudioCtx = null;
+    this.outputSilenceSince = null;
+    this.outputActive = false;
+  }
+
   /** 接続を破棄する */
   close(): void {
     if (this.isClosed) return;
     this.isClosed = true;
+    this.stopOutputMonitor();
     try {
       this.dc?.close();
     } catch { /* noop */ }

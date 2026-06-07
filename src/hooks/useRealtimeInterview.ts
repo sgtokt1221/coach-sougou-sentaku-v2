@@ -24,8 +24,20 @@ import type { ActiveSpeaker } from "@/lib/interview/realtime/gd-director";
 import { buildWhisperPrompt } from "@/lib/interview/whisper-context";
 import type { InterviewMessage, InterviewMode } from "@/lib/types/interview";
 
-/** AI 発話終了からマイクを再開するまでの待機時間 (末尾エコー対策) */
-const MIC_RESUME_DELAY_MS = 1000;
+/** AI 出力音声が鳴り止んだと確定してから、念のため置く追加バッファ (末尾エコー対策) */
+const RESUME_BUFFER_MS = 250;
+/**
+ * 保険のフォールバック: 出力音声 idle 通知が来ない/AnalyserNode 不可の環境で、
+ * response.done からこの時間が経ったら強制的にユーザーターンへ戻す (会話が止まらないこと優先)。
+ */
+const MAX_RESUME_FALLBACK_MS = 20000;
+
+/** ユーザーターン復帰時に戻す turn_detection (semantic_vad: 咳/息の誤検知を避ける) */
+const SEMANTIC_VAD_TURN_DETECTION = {
+  type: "semantic_vad",
+  eagerness: "low",
+  create_response: false,
+} as const;
 
 /**
  * transcript が transcription prompt の漏れ (echo + prompt hallucination) と思われる場合 true。
@@ -133,6 +145,12 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
    * 被り対策として AI 発話の自動進行を撤去した代わりの UI フック。
    */
   const [isAwaitingNext, setIsAwaitingNext] = useState(false);
+  /**
+   * 個人面接/スキルチェックで AI が発話中(音声再生中含む)か。
+   * true の間はマイク OFF＝入力不可。AI が鳴り止んだら false にしてユーザーターンへ。
+   * 初期 true: AI が先に挨拶/質問を話すため。
+   */
+  const [aiSpeaking, setAiSpeaking] = useState(true);
 
   const sessionRef = useRef<RealtimeSession | null>(null);
   const orchestratorRef = useRef<GdOrchestrator | null>(null);
@@ -150,6 +168,10 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
   const isAiStreamingRef = useRef(false);
   /** マイク再開予定の setTimeout ID (AI 応答終了後に再開) */
   const micResumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** response.done 済みでユーザーターン復帰待ちか (出力音声の鳴り止みを待っている) */
+  const pendingResumeRef = useRef(false);
+  /** 直近の出力音声アクティブ状態 (true=AI 音声が鳴っている) */
+  const outputAudioActiveRef = useRef(false);
   /**
    * 既に AI バブルを append 済みの responseId 集合。
    *
@@ -171,6 +193,28 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
       track.enabled = enabled;
     }
   }, []);
+
+  /**
+   * ユーザーターンへ復帰: マイク ON＋VAD(semantic_vad)再開＋aiSpeaking=false。
+   * response.done 済み (pendingResumeRef) のときのみ実行。多重呼び出しは無害 (フラグでガード)。
+   */
+  const resumeUserTurn = useCallback(() => {
+    if (!pendingResumeRef.current) return;
+    pendingResumeRef.current = false;
+    if (micResumeTimerRef.current) {
+      clearTimeout(micResumeTimerRef.current);
+      micResumeTimerRef.current = null;
+    }
+    setMicEnabled(true);
+    try {
+      sessionRef.current?.updateSession({
+        audio: { input: { turn_detection: SEMANTIC_VAD_TURN_DETECTION } },
+      });
+    } catch {
+      /* noop */
+    }
+    setAiSpeaking(false);
+  }, [setMicEnabled]);
 
   const appendMessage = useCallback((m: InterviewMessage) => {
     setMessages((prev) => [...prev, m]);
@@ -228,6 +272,8 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
     }
     isAiRespondingRef.current = false;
     isAiStreamingRef.current = false;
+    pendingResumeRef.current = false;
+    outputAudioActiveRef.current = false;
     seenResponseIdsRef.current.clear();
     setIsAwaitingNext(false);
     if (sessionRef.current) {
@@ -443,16 +489,27 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
           // 3) サーバー側の入力音声バッファを強制クリア (ミュート前の残留を破棄)
           // バブル生成は意図的に行わない (first-delta で 1 個だけ生やす)
           isAiRespondingRef.current = true;
+          // 新しい AI 発話が始まったらユーザーターン復帰待ちを取り消す
+          pendingResumeRef.current = false;
           if (micResumeTimerRef.current) {
             clearTimeout(micResumeTimerRef.current);
             micResumeTimerRef.current = null;
           }
+          setAiSpeaking(true);
           setMicEnabled(false);
           try {
             sessionRef.current?.updateSession({ audio: { input: { turn_detection: null } } });
             sessionRef.current?.sendEvent({ type: "input_audio_buffer.clear" });
           } catch {
             /* noop */
+          }
+        },
+        onOutputAudioActivity: (active) => {
+          // AI 出力音声の鳴り止みを検出してユーザーターンへ。
+          outputAudioActiveRef.current = active;
+          if (!active && pendingResumeRef.current) {
+            // response.done 済みで音も鳴り止んだ → 末尾エコー回避に少しだけ置いてから復帰
+            setTimeout(() => resumeUserTurn(), RESUME_BUFFER_MS);
           }
         },
         onAssistantTranscriptDelta: (cumulative, responseId) => {
@@ -482,33 +539,17 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
         onResponseEnd: () => {
           isAiRespondingRef.current = false;
           isAiStreamingRef.current = false;
-          // 末尾エコー回避のため少し待ってからマイク + VAD を再開。
-          // VAD を null にしていると次のユーザー発話を検知しないので、
-          // ここで元の server_vad 設定に戻す。
-          micResumeTimerRef.current = setTimeout(() => {
-            setMicEnabled(true);
-            try {
-              sessionRef.current?.updateSession({
-                audio: {
-                  input: {
-                    // semantic_vad: 咳/息などの非言語音で発話終了を誤検知しない。
-                    // create_response:false にして hook 側 onUserTranscript で
-                    // 明示的に triggerResponse を呼ぶ (多重 response 防止)。
-                    // ※ ルート初期設定と揃える。これを server_vad に戻すと
-                    //   AI 応答後だけ咳に反応する不整合が起きるため semantic_vad で統一。
-                    turn_detection: {
-                      type: "semantic_vad",
-                      eagerness: "low",
-                      create_response: false,
-                    },
-                  },
-                },
-              });
-            } catch {
-              /* noop */
-            }
-            micResumeTimerRef.current = null;
-          }, MIC_RESUME_DELAY_MS);
+          // AI の生成は完了したが、音声はまだスピーカーで鳴り続けている可能性が高い。
+          // ここでマイク/VAD を戻すと AI 自身の声がエコーで入り中断事故になるため、
+          // 「出力音声が実際に鳴り止む」まで待ってからユーザーターンへ復帰する。
+          pendingResumeRef.current = true;
+          if (micResumeTimerRef.current) clearTimeout(micResumeTimerRef.current);
+          // 保険: idle 通知が来ない/AnalyserNode 不可の環境向け最大待ち
+          micResumeTimerRef.current = setTimeout(() => resumeUserTurn(), MAX_RESUME_FALLBACK_MS);
+          // 既に鳴り止んでいる(極短応答等)なら少し置いて即復帰
+          if (!outputAudioActiveRef.current) {
+            setTimeout(() => resumeUserTurn(), RESUME_BUFFER_MS);
+          }
         },
         onError: (err) => {
           console.warn("[useRealtimeInterview] session error", err);
@@ -532,7 +573,10 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
         setMessages(prior.map((m) => ({ role: m.role, content: m.content })));
       }
 
-      // 接続後、AI 側から（再開時は文脈を踏まえて）応答を始めるよう指示
+      // 接続後、AI 側から（再開時は文脈を踏まえて）応答を始めるよう指示。
+      // AI が先に話すので、最初からマイクは OFF（入力不可）にしておく。
+      setAiSpeaking(true);
+      setMicEnabled(false);
       session.triggerResponse();
 
       setStatus("connected");
@@ -545,7 +589,7 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
       stop();
       return { success: false, fallback: "error" };
     }
-  }, [appendMessage, updateLastAiMessage, updateAiMessageByResponseId, setMicEnabled, stop]);
+  }, [appendMessage, updateLastAiMessage, updateAiMessageByResponseId, setMicEnabled, resumeUserTurn, stop]);
 
   return {
     status,
@@ -554,8 +598,13 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
     nextAvailableAt,
     micStream,
     currentSpeaker,
-    /** ユーザーが発話してよいタイミングか (GD は currentSpeaker === "user"、個人面接は常に true) */
-    isUserTurn: optsRef.current.mode === "group_discussion" ? currentSpeaker === "user" : status === "connected",
+    /** ユーザーが発話してよいタイミングか (GD は currentSpeaker === "user"、個人/スキルチェックは AI が話し終えたとき) */
+    isUserTurn:
+      optsRef.current.mode === "group_discussion"
+        ? currentSpeaker === "user"
+        : status === "connected" && !aiSpeaking,
+    /** 個人/スキルチェックで AI が発話中(音声再生中含む)か。UI の「面接官が話しています」表示に使う */
+    aiSpeaking,
     /** GD モードで AI 発話完了後の「次へ」ボタン待ち状態 (個人面接は常に false) */
     isAwaitingNext,
     /** GD モードで「次へ」ボタンが押されたときに呼ぶ */

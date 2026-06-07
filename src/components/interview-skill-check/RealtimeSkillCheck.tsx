@@ -199,6 +199,41 @@ export function RealtimeSkillCheck() {
         </Card>
       )}
 
+      {connected && !ended && (
+        <div
+          key={realtime.isUserTurn ? "your-turn" : "ai-turn"}
+          className={`rounded-lg border-2 p-3 shadow-sm transition-all duration-500 animate-in fade-in slide-in-from-top-1 ${
+            realtime.isUserTurn
+              ? "border-emerald-400 bg-emerald-50 dark:bg-emerald-950/40"
+              : "border-slate-300 bg-slate-50 dark:bg-slate-900/40"
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <span className="relative flex size-3.5">
+              {realtime.isUserTurn && (
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+              )}
+              <span
+                className={`relative inline-flex size-3.5 rounded-full ${
+                  realtime.isUserTurn ? "bg-emerald-500" : "bg-slate-400"
+                }`}
+              />
+            </span>
+            <p
+              className={`text-sm font-bold ${
+                realtime.isUserTurn
+                  ? "text-emerald-900 dark:text-emerald-200"
+                  : "text-slate-600 dark:text-slate-300"
+              }`}
+            >
+              {realtime.isUserTurn
+                ? "あなたのターンです — マイクが ON です"
+                : "面接官が話しています — お待ちください"}
+            </p>
+          </div>
+        </div>
+      )}
+
       {(connected || ended) && (
         <Card className="min-h-[45vh]">
           <CardContent className="space-y-4 py-4">
@@ -227,7 +262,9 @@ export function RealtimeSkillCheck() {
             <p className="text-sm text-muted-foreground">
               {reachedLimit
                 ? "面接は終了です。準備ができたら採点してください。"
-                : "面接官の質問に声で答えてください。"}
+                : realtime.isUserTurn
+                  ? "面接官の質問に声で答えてください。"
+                  : "面接官が話しています。お待ちください。"}
             </p>
             <Button disabled={!reachedLimit || submitting} onClick={handleFinish}>
               {submitting ? (

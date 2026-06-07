@@ -785,6 +785,45 @@ export default function InterviewSessionPage() {
           </div>
         )}
 
+        {/* ユーザーターンランプ (個人/プレゼン/口頭試問の音声面接): AI 発話中は入力不可、
+            喋り終わったら「あなたのターンです」がぬるっと出てマイク ON になる */}
+        {isVoiceMode &&
+          sessionInfo?.mode !== "group_discussion" &&
+          realtime.status === "connected" && (
+            <div
+              key={realtime.isUserTurn ? "your-turn" : "ai-turn"}
+              className={`sticky top-0 z-30 mb-3 rounded-lg border-2 p-3 shadow-md transition-all duration-500 animate-in fade-in slide-in-from-top-1 ${
+                realtime.isUserTurn
+                  ? "border-emerald-400 bg-emerald-50 dark:bg-emerald-950/40"
+                  : "border-slate-300 bg-slate-50 dark:bg-slate-900/40"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <span className="relative flex size-3.5">
+                  {realtime.isUserTurn && (
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                  )}
+                  <span
+                    className={`relative inline-flex size-3.5 rounded-full ${
+                      realtime.isUserTurn ? "bg-emerald-500" : "bg-slate-400"
+                    }`}
+                  />
+                </span>
+                <p
+                  className={`text-sm font-bold ${
+                    realtime.isUserTurn
+                      ? "text-emerald-900 dark:text-emerald-200"
+                      : "text-slate-600 dark:text-slate-300"
+                  }`}
+                >
+                  {realtime.isUserTurn
+                    ? "あなたのターンです — マイクが ON です"
+                    : "面接官が話しています — お待ちください"}
+                </p>
+              </div>
+            </div>
+          )}
+
         {sessionInfo?.mode === "group_discussion" && realtime.isAwaitingNext && (
           <div className="mb-3 flex flex-col items-center gap-2 rounded-lg border border-primary/40 bg-primary/5 p-3">
             <p className="text-xs text-muted-foreground">
