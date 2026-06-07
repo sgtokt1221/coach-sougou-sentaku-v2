@@ -3,6 +3,22 @@ import type { PracticeQuestion } from "@/lib/types/growth-report";
 export type SessionStatus = "scheduled" | "in_progress" | "completed" | "cancelled";
 export type SessionType = "coaching" | "mock_interview" | "essay_review" | "general" | "group_review";
 
+/** 探究授業中に生徒が入力する資料画像 1 件 (Storage のダウンロードURL参照) */
+export interface ResearchInputAttachment {
+  url: string;
+  mediaType: string;
+  name: string;
+}
+
+/** 探究授業中の生徒入力 (sessions/{id}.researchInputs)。講師画面へライブ反映する */
+export interface ResearchSessionInputs {
+  topic?: string;
+  sourceUrls?: string[];
+  memo?: string;
+  attachments?: ResearchInputAttachment[];
+  updatedAt?: string;
+}
+
 export interface Session {
   id: string;
   teacherId: string;
@@ -16,6 +32,8 @@ export interface Session {
   isResearch?: boolean;
   /** 探究セッションに対する講師の所見（自由コメント。生徒にも表示） */
   researchTeacherComment?: string;
+  /** 探究授業中に生徒が端末から入力する内容（講師セッションへライブ反映） */
+  researchInputs?: ResearchSessionInputs;
   /** 授業形態 (1 対 1 のみ。online=Meet 利用 / offline=対面)。未設定は meetLink 有無でフォールバック判定 */
   format?: "online" | "offline";
   scheduledAt: string;

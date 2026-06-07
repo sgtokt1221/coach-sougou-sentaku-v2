@@ -26,8 +26,26 @@ export interface ResearchEvaluateBody {
   mimeType?: string;
   transcriptText?: string;
   attachments?: ResearchAttachment[];
+  /** 生徒がアップロードした資料画像の URL（Storage ダウンロードURL）。サーバで取得して評価に含める */
+  attachmentUrls?: string[];
   sourceUrls?: string[];
   previousNextItems?: string[];
+}
+
+/** 画像URLを取得して base64＋mediaType に変換する（失敗は null） */
+async function fetchImageAsBase64(
+  url: string,
+): Promise<{ dataBase64: string; mediaType: string } | null> {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const ct = res.headers.get("content-type") || "image/jpeg";
+    if (!ct.startsWith("image/")) return null;
+    const buf = Buffer.from(await res.arrayBuffer());
+    return { dataBase64: buf.toString("base64"), mediaType: ct.split(";")[0] };
+  } catch {
+    return null;
+  }
 }
 
 export interface RunResearchEvaluationArgs {
@@ -114,6 +132,13 @@ export async function runResearchEvaluation(
 
   const topic = (body.topic ?? "").trim();
   const attachments = (body.attachments ?? []).slice(0, MAX_ATTACHMENTS);
+
+  // 生徒がアップロードした画像URLを取得して base64 化し attachments に合流
+  const urls = (body.attachmentUrls ?? []).slice(0, MAX_ATTACHMENTS - attachments.length);
+  for (const u of urls) {
+    const img = await fetchImageAsBase64(u);
+    if (img) attachments.push(img);
+  }
 
   // 1) 文字起こし（録音があれば優先）
   let transcript = (body.transcriptText ?? "").trim();

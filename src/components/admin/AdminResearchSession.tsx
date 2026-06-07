@@ -11,10 +11,12 @@ import { Loader2, Sparkles, Lightbulb, ImagePlus, X, Save } from "lucide-react";
 import VoiceRecorder from "@/components/interview/VoiceRecorder";
 import { ResearchEvalView } from "@/components/research/ResearchEvalView";
 import { authFetch } from "@/lib/api/client";
+import { useAuthSWR } from "@/lib/api/swr";
 import { toast } from "sonner";
 import type { ResearchEvalResult } from "@/lib/ai/prompts/research";
 import type { ResearchCurriculum, ResearchCurriculumUnit } from "@/lib/types/research";
 import { RESEARCH_MAX_UNITS } from "@/lib/types/research";
+import type { ResearchSessionInputs } from "@/lib/types/session";
 
 interface Attachment {
   dataBase64: string;
@@ -71,9 +73,21 @@ export function AdminResearchSession({
   const [currentUnit, setCurrentUnit] = useState<ResearchCurriculumUnit | null>(null);
   const [comment, setComment] = useState(initialComment ?? "");
 
+  // 生徒の授業中入力をポーリングでライブ取得（admin は sessions を client 購読できないため）
+  const { data: liveData } = useAuthSWR<{ researchInputs: ResearchSessionInputs | null }>(
+    `/api/admin/sessions/${sessionId}/research-input`,
+    { refreshInterval: 4000 }
+  );
+  const studentInputs = liveData?.researchInputs ?? null;
+
   useEffect(() => {
     setComment(initialComment ?? "");
   }, [initialComment]);
+
+  // 生徒テーマが届いたら、テーマ未入力のとき自動で補完
+  useEffect(() => {
+    if (studentInputs?.topic) setTopic((t) => (t ? t : studentInputs.topic!));
+  }, [studentInputs?.topic]);
 
   const loadExisting = useCallback(async () => {
     try {
@@ -162,16 +176,16 @@ export function AdminResearchSession({
   };
 
   const evaluate = async () => {
-    if (!audio && attachments.length === 0) {
+    const studentUrls = (studentInputs?.attachments ?? []).map((a) => a.url);
+    if (!audio && attachments.length === 0 && studentUrls.length === 0) {
       toast.error("録音または資料を用意してください");
       return;
     }
     setEvaluating(true);
     try {
-      const urls = sourceUrls
-        .split("\n")
-        .map((s) => s.trim())
-        .filter(Boolean);
+      // 講師の出典＋生徒の出典をマージ（重複除去）
+      const teacherUrls = sourceUrls.split("\n").map((s) => s.trim()).filter(Boolean);
+      const urls = Array.from(new Set([...teacherUrls, ...(studentInputs?.sourceUrls ?? [])]));
       const res = await authFetch(`/api/admin/sessions/${sessionId}/research-evaluate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -183,6 +197,7 @@ export function AdminResearchSession({
             dataBase64: a.dataBase64,
             mediaType: a.mediaType,
           })),
+          attachmentUrls: studentUrls,
           sourceUrls: urls,
           previousNextItems,
         }),
@@ -302,6 +317,53 @@ export function AdminResearchSession({
           </CardContent>
         </Card>
       )}
+
+      {studentInputs &&
+        (studentInputs.topic ||
+          studentInputs.memo ||
+          (studentInputs.sourceUrls?.length ?? 0) > 0 ||
+          (studentInputs.attachments?.length ?? 0) > 0) && (
+          <Card className="border-sky-200 bg-sky-50/40">
+            <CardHeader>
+              <CardTitle className="text-sm">生徒からの入力（ライブ）</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              {studentInputs.topic && (
+                <p>
+                  <span className="text-muted-foreground">テーマ:</span> {studentInputs.topic}
+                </p>
+              )}
+              {studentInputs.memo && (
+                <p>
+                  <span className="text-muted-foreground">メモ:</span> {studentInputs.memo}
+                </p>
+              )}
+              {(studentInputs.sourceUrls?.length ?? 0) > 0 && (
+                <div>
+                  <span className="text-muted-foreground">出典:</span>
+                  <ul className="list-disc space-y-0.5 pl-5 break-all">
+                    {studentInputs.sourceUrls!.map((u, i) => (
+                      <li key={i}>{u}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {(studentInputs.attachments?.length ?? 0) > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {studentInputs.attachments!.map((a, i) => (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      key={i}
+                      src={a.url}
+                      alt={a.name}
+                      className="size-20 rounded border object-cover"
+                    />
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
       <Card>
         <CardHeader>

@@ -23,6 +23,7 @@ import { StudentRecordingController } from "@/components/student/StudentRecordin
 import SessionArtifactsPanel from "@/components/sessions/SessionArtifactsPanel";
 import { ResearchEvalView } from "@/components/research/ResearchEvalView";
 import { StudentResearchDecide } from "@/components/research/StudentResearchDecide";
+import { StudentResearchLiveInput } from "@/components/research/StudentResearchLiveInput";
 import type { ResearchEvalResult } from "@/lib/ai/prompts/research";
 import type { ResearchCurriculum, ResearchCurriculumUnit } from "@/lib/types/research";
 import type { Session, SessionStatus, SessionSubmission } from "@/lib/types/session";
@@ -441,6 +442,11 @@ export default function StudentSessionDetailPage() {
       {session.isResearch && session.type !== "group_review" && (
         researchActive ? (
         <div className="space-y-4">
+          <StudentResearchLiveInput
+            sessionId={id}
+            studentUid={session.studentId}
+            initial={session.researchInputs}
+          />
           {researchUnit && (
             <Card className="border-teal-200 bg-teal-50/40">
               <CardHeader>
