@@ -479,7 +479,7 @@ export default function AdminSessionDetailPage() {
             disabled={saving}
           >
             <Share2 className="size-4 mr-1" />
-            {session.sharedWithStudent ? "共有中" : "生徒に共有"}
+            {session.sharedWithStudent ? "報告書を共有中" : "報告書を共有"}
           </Button>
           {session.type !== "group_review" && (
             <Button

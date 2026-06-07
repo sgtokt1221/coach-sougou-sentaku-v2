@@ -1,12 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { Session } from "@/lib/types/session";
 import { generateSessionSummary } from "@/lib/ai/generate-session-summary";
+import { requireRole } from "@/lib/api/auth";
+import { sanitizeForStudent } from "@/lib/api/session-sanitize";
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+
+  const authResult = await requireRole(request, [
+    "student",
+    "teacher",
+    "admin",
+    "superadmin",
+  ]);
+  if (authResult instanceof NextResponse) return authResult;
+  const { uid, role } = authResult;
 
   const { adminDb } = await import("@/lib/firebase/admin");
   if (!adminDb) {
@@ -19,6 +30,15 @@ export async function GET(
       return NextResponse.json({ error: "Session not found" }, { status: 404 });
     }
     const session = { id: snap.id, ...snap.data() } as Session;
+
+    // 生徒は自分のセッションのみ。講師専用フィールドと未共有 summary は除去して返す。
+    if (role === "student") {
+      if (session.studentId !== uid && session.teacherId !== uid) {
+        return NextResponse.json({ error: "権限がありません" }, { status: 403 });
+      }
+      return NextResponse.json(sanitizeForStudent(session));
+    }
+
     return NextResponse.json(session);
   } catch (error) {
     console.error("Failed to fetch session:", error);
@@ -56,7 +76,7 @@ export async function PATCH(
           type: prevData.type,
         });
         updatePayload.summary = summary;
-        updatePayload.sharedWithStudent = true;
+        // 自動公開はしない。講師がレビュー後「報告書を共有」を押して公開する。
       } catch (err) {
         console.warn("Auto summary generation failed:", err);
       }

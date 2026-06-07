@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 import { getOrgMemberAdminUids } from "@/lib/api/organization-scope";
+import { sanitizeForStudent } from "@/lib/api/session-sanitize";
 import type { Session, SessionType } from "@/lib/types/session";
 
 const TYPE_LABEL: Record<SessionType, string> = {
@@ -51,27 +52,6 @@ async function notifyStudentOfSession(
   } catch (err) {
     console.warn("[sessions] FCM notification failed:", err);
   }
-}
-
-/** 生徒に返す前に講師専用フィールドを落とす（summary は共有時のみ残す） */
-function sanitizeForStudent(s: Session): Partial<Session> {
-  const {
-    notes: _notes,
-    prepPlan: _prepPlan,
-    practiceQuestions: _pq,
-    debrief: _debrief,
-    lessonTranscript: _lt,
-    recordingUrl: _ru,
-    recordingPath: _rp,
-    recordingDurationSec: _rds,
-    recordingSizeBytes: _rsb,
-    createdByAdminId: _cba,
-    ...rest
-  } = s as Session & Record<string, unknown>;
-  void _notes; void _prepPlan; void _pq; void _debrief; void _lt;
-  void _ru; void _rp; void _rds; void _rsb; void _cba;
-  if (!s.sharedWithStudent) delete (rest as { summary?: unknown }).summary;
-  return rest as Partial<Session>;
 }
 
 export async function GET(request: NextRequest) {

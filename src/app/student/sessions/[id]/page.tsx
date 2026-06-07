@@ -109,7 +109,7 @@ export default function StudentSessionDetailPage() {
       return;
     }
     try {
-      const res = await fetch(`/api/sessions/${id}`);
+      const res = await authFetch(`/api/sessions/${id}`);
       if (!res.ok) throw new Error();
       const data: Session = await res.json();
       setSession(data);
@@ -677,8 +677,8 @@ export default function StudentSessionDetailPage() {
         />
       )}
 
-      {/* Summary */}
-      {session.summary && (
+      {/* Summary (講師が共有した指導報告書のみ表示) */}
+      {session.summary && session.sharedWithStudent && (
         <Card>
           <CardHeader>
             <CardTitle className="text-base">サマリー</CardTitle>
