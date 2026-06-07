@@ -180,6 +180,7 @@ export default function InterviewDrillPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "evaluate",
+          category: state.currentCategory,
           question: state.currentQuestion,
           answer: state.currentAnswer,
           // TODO: 志望校情報をcontextから取得

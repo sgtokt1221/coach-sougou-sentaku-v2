@@ -16,6 +16,7 @@ interface DrillQuestionRequest {
 
 interface DrillEvaluationRequest {
   action: "evaluate";
+  category?: DrillCategory;
   question: string;
   answer: string;
   universityId?: string;
@@ -48,6 +49,42 @@ async function logInterviewDrill(authHeader: string | null, metadata: Record<str
     });
   } catch (err) {
     console.warn("[interview-drill] log failed:", err);
+  }
+}
+
+/** ドリル採点結果を users/{uid}/interviewDrills に1件保存（管理者の生徒詳細で閲覧する） */
+async function saveInterviewDrill(
+  authHeader: string | null,
+  data: {
+    category?: DrillCategory;
+    question: string;
+    answer: string;
+    score: number;
+    feedback: string;
+    betterAnswer: string;
+    universityId?: string;
+    facultyId?: string;
+  },
+) {
+  if (!authHeader?.startsWith("Bearer ")) return;
+  try {
+    const { adminAuth, adminDb } = await import("@/lib/firebase/admin");
+    if (!adminAuth || !adminDb) return;
+    const decoded = await adminAuth.verifyIdToken(authHeader.slice(7));
+    const { FieldValue } = await import("firebase-admin/firestore");
+    await adminDb.collection(`users/${decoded.uid}/interviewDrills`).add({
+      category: data.category ?? null,
+      question: data.question,
+      answer: data.answer,
+      score: data.score,
+      feedback: data.feedback,
+      betterAnswer: data.betterAnswer,
+      universityId: data.universityId ?? null,
+      facultyId: data.facultyId ?? null,
+      createdAt: FieldValue.serverTimestamp(),
+    });
+  } catch (err) {
+    console.warn("[interview-drill] save failed:", err);
   }
 }
 
@@ -157,6 +194,16 @@ export async function POST(request: NextRequest) {
         };
 
         void logInterviewDrill(authHeader, { universityId: body.universityId, facultyId: body.facultyId });
+        await saveInterviewDrill(authHeader, {
+          category: body.category,
+          question,
+          answer,
+          score: result.score,
+          feedback: result.feedback,
+          betterAnswer: result.betterAnswer,
+          universityId: body.universityId,
+          facultyId: body.facultyId,
+        });
         return NextResponse.json(result);
       } catch (parseError) {
         console.error("JSON parse error:", parseError, responseText);
@@ -170,6 +217,16 @@ export async function POST(request: NextRequest) {
         };
 
         void logInterviewDrill(authHeader, { universityId: body.universityId, facultyId: body.facultyId });
+        await saveInterviewDrill(authHeader, {
+          category: body.category,
+          question,
+          answer,
+          score: result.score,
+          feedback: result.feedback,
+          betterAnswer: result.betterAnswer,
+          universityId: body.universityId,
+          facultyId: body.facultyId,
+        });
         return NextResponse.json(result);
       }
     }

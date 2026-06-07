@@ -111,6 +111,7 @@ import { GrowthReportsSection } from "@/components/admin/GrowthReportsSection";
 import { DocumentsSection } from "@/components/admin/DocumentsSection";
 import { InterviewsSection } from "@/components/admin/InterviewsSection";
 import { SummaryDrillsSection } from "@/components/admin/SummaryDrillsSection";
+import { InterviewDrillsSection } from "@/components/admin/InterviewDrillsSection";
 import { ActivitiesSection } from "@/components/admin/ActivitiesSection";
 import { DiscoverSection } from "@/components/admin/DiscoverSection";
 import { InlineFeedbackButton } from "@/components/admin/InlineFeedbackButton";
@@ -1052,6 +1053,7 @@ function AdminStudentDetailPageInner() {
 
       <InterviewsSection studentId={id} autoOpenInterviewId={searchParams?.get("interview") ?? undefined} />
       <SummaryDrillsSection studentId={id} />
+      <InterviewDrillsSection studentId={id} />
     </div>
   );
 
