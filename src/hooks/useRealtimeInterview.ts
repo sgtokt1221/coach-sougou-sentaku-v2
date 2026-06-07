@@ -26,11 +26,13 @@ import type { InterviewMessage, InterviewMode } from "@/lib/types/interview";
 
 /** AI 出力音声が鳴り止んだと確定してから、念のため置く追加バッファ (末尾エコー対策) */
 const RESUME_BUFFER_MS = 250;
-/**
- * 保険のフォールバック: 出力音声 idle 通知が来ない/AnalyserNode 不可の環境で、
- * response.done からこの時間が経ったら強制的にユーザーターンへ戻す (会話が止まらないこと優先)。
- */
+/** 絶対バックストップ: 何らかで idle 通知が来ないまま固まった時の最大待ち */
 const MAX_RESUME_FALLBACK_MS = 20000;
+/** 音声レベル取得不可な環境での固定遅延 (response.done からこの後に復帰) */
+const UNSUPPORTED_FALLBACK_MS = 1500;
+/** response.done 時にまだ音声が鳴っていない(極短/無音応答)場合に、音声開始を待つ猶予。
+ *  この間に音声が始まれば idle 検出で復帰、始まらなければこの後に復帰する。 */
+const NO_AUDIO_GRACE_MS = 2000;
 
 /** ユーザーターン復帰時に戻す turn_detection (semantic_vad: 咳/息の誤検知を避ける) */
 const SEMANTIC_VAD_TURN_DETECTION = {
@@ -172,6 +174,8 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
   const pendingResumeRef = useRef(false);
   /** 直近の出力音声アクティブ状態 (true=AI 音声が鳴っている) */
   const outputAudioActiveRef = useRef(false);
+  /** 出力音声レベル監視が使える環境か (false=固定遅延フォールバックへ) */
+  const outputLevelSupportedRef = useRef(true);
   /**
    * 既に AI バブルを append 済みの responseId 集合。
    *
@@ -274,6 +278,7 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
     isAiStreamingRef.current = false;
     pendingResumeRef.current = false;
     outputAudioActiveRef.current = false;
+    outputLevelSupportedRef.current = true;
     seenResponseIdsRef.current.clear();
     setIsAwaitingNext(false);
     if (sessionRef.current) {
@@ -505,11 +510,27 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
           }
         },
         onOutputAudioActivity: (active) => {
-          // AI 出力音声の鳴り止みを検出してユーザーターンへ。
+          // getStats(inbound-rtp) 由来の実音声レベルでターンを駆動する。
           outputAudioActiveRef.current = active;
-          if (!active && pendingResumeRef.current) {
-            // response.done 済みで音も鳴り止んだ → 末尾エコー回避に少しだけ置いてから復帰
-            setTimeout(() => resumeUserTurn(), RESUME_BUFFER_MS);
+          if (active) {
+            // 音声由来でも「AI 発話中」を担保 (マイク OFF を保つ)。
+            // 同値の setState は React が再描画を省くので無条件で呼んでよい。
+            setAiSpeaking(true);
+            setMicEnabled(false);
+          } else if (pendingResumeRef.current) {
+            // response.done 済みで音も鳴り止んだ → 末尾エコー回避に少し置いてから復帰
+            if (micResumeTimerRef.current) clearTimeout(micResumeTimerRef.current);
+            micResumeTimerRef.current = setTimeout(() => resumeUserTurn(), RESUME_BUFFER_MS);
+          }
+        },
+        onOutputLevelUnsupported: () => {
+          // 受信音声レベルが取れない環境 → 音声基準を諦め固定遅延に切替
+          outputLevelSupportedRef.current = false;
+          console.warn("[useRealtimeInterview] output audio level unsupported; using fixed-delay turn switch");
+          // 既に復帰待ちなら固定遅延で復帰させる
+          if (pendingResumeRef.current) {
+            if (micResumeTimerRef.current) clearTimeout(micResumeTimerRef.current);
+            micResumeTimerRef.current = setTimeout(() => resumeUserTurn(), UNSUPPORTED_FALLBACK_MS);
           }
         },
         onAssistantTranscriptDelta: (cumulative, responseId) => {
@@ -544,11 +565,21 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
           // 「出力音声が実際に鳴り止む」まで待ってからユーザーターンへ復帰する。
           pendingResumeRef.current = true;
           if (micResumeTimerRef.current) clearTimeout(micResumeTimerRef.current);
-          // 保険: idle 通知が来ない/AnalyserNode 不可の環境向け最大待ち
-          micResumeTimerRef.current = setTimeout(() => resumeUserTurn(), MAX_RESUME_FALLBACK_MS);
-          // 既に鳴り止んでいる(極短応答等)なら少し置いて即復帰
-          if (!outputAudioActiveRef.current) {
-            setTimeout(() => resumeUserTurn(), RESUME_BUFFER_MS);
+          // 通常はここでは復帰しない。実際の復帰は onOutputAudioActivity(false)＝
+          // 「音声が鳴り止んだ瞬間」に行う (END を音声基準にする)。
+          // ここで設定するのは状況別の保険タイマーのみ:
+          if (!outputLevelSupportedRef.current) {
+            // 音声レベル取得不可な環境: 固定遅延で復帰
+            micResumeTimerRef.current = setTimeout(() => resumeUserTurn(), UNSUPPORTED_FALLBACK_MS);
+          } else if (!outputAudioActiveRef.current) {
+            // done 時点でまだ音声が鳴っていない(極短/無音応答 or 再生未開始)。
+            // 猶予内に音声が始まれば idle 検出で復帰。始まらなければこの後に復帰。
+            micResumeTimerRef.current = setTimeout(() => {
+              if (!outputAudioActiveRef.current) resumeUserTurn();
+            }, NO_AUDIO_GRACE_MS);
+          } else {
+            // 音声再生中。idle 検出で復帰する。固まり対策の絶対バックストップのみ。
+            micResumeTimerRef.current = setTimeout(() => resumeUserTurn(), MAX_RESUME_FALLBACK_MS);
           }
         },
         onError: (err) => {

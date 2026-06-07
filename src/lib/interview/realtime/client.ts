@@ -61,18 +61,28 @@ export interface RealtimeSessionOptions {
   onResponseEnd?: () => void;
   /**
    * AI 出力音声が実際に鳴っているか/鳴り止んだかを通知する。
-   * active=true: スピーカーから音が出ている / active=false: 無音が継続して再生終了とみなせる。
+   * active=true: 受信音声にエネルギーがある / active=false: 無音が継続して再生終了とみなせる。
    * response.done (生成完了) は再生終了より早いため、ターン切替はこのコールバックを基準にする。
+   * 計測は getStats() の inbound-rtp totalAudioEnergy/audioLevel (デコード音声由来) で行う。
    */
   onOutputAudioActivity?: (active: boolean) => void;
+  /**
+   * 受信音声レベルが取得できない環境 (getStats に audio エネルギーが無い等) を通知する。
+   * 呼び出し側はこれを受けたら音声基準を諦め、固定遅延フォールバックに切替える。
+   */
+  onOutputLevelUnsupported?: () => void;
   /** 接続エラー */
   onError?: (error: Error) => void;
 }
 
-/** 出力音声の鳴り止み判定: この RMS 未満が SILENCE_HOLD_MS 継続したら「無音」とみなす */
-const OUTPUT_RMS_THRESHOLD = 0.01;
+/** 出力音声「鳴っている」判定の平均パワー(mean square)閾値 (rms~0.02 相当) */
+const OUTPUT_POWER_THRESHOLD = 5e-4;
 // 文末や文間の自然な「間」を誤って鳴り止みと判定しないよう、やや長めに保持する
 const OUTPUT_SILENCE_HOLD_MS = 600;
+/** getStats ポーリング間隔 */
+const OUTPUT_POLL_MS = 150;
+/** この回数連続でオーディオ統計が取れなければ「レベル取得不可」とみなす */
+const OUTPUT_UNSUPPORTED_AFTER = 8;
 
 export class RealtimeSession {
   private pc: RTCPeerConnection | null = null;
@@ -81,14 +91,19 @@ export class RealtimeSession {
   private isClosed = false;
   /** response_id ごとの transcript 累積バッファ。response.done で該当エントリを破棄 */
   private transcriptBuffers = new Map<string, string>();
-  /** 出力音声レベル監視用 (AI が鳴り止んだ瞬間の検出) */
-  private outputAudioCtx: AudioContext | null = null;
-  private outputAnalyser: AnalyserNode | null = null;
-  private outputRafId: number | null = null;
+  /** 出力音声レベル監視用 (getStats inbound-rtp。AI が鳴り止んだ瞬間の検出) */
+  private outputPollTimer: ReturnType<typeof setInterval> | null = null;
   /** 直近に onOutputAudioActivity へ通知した状態 (重複通知防止) */
   private outputActive = false;
   /** 無音が始まった時刻 (ms)。null は「現在は音が鳴っている」 */
   private outputSilenceSince: number | null = null;
+  /** 前回サンプルの totalAudioEnergy / totalSamplesDuration (区間平均パワー算出用) */
+  private prevAudioEnergy: number | null = null;
+  private prevSamplesDuration: number | null = null;
+  /** オーディオ統計が連続で取れなかった回数 (閾値超で unsupported 判定) */
+  private outputNoStatCount = 0;
+  /** unsupported を通知済みか (1 回だけ) */
+  private outputUnsupportedNotified = false;
 
   constructor(opts: RealtimeSessionOptions) {
     this.opts = opts;
@@ -110,7 +125,7 @@ export class RealtimeSession {
         this.opts.audioOutputElement.srcObject = event.streams[0];
         // 出力音声レベル監視を開始 (AI が鳴り止んだ瞬間でターン切替するため)
         if (this.opts.onOutputAudioActivity) {
-          this.startOutputMonitor(event.streams[0]);
+          this.startOutputMonitor();
         }
       }
     };
@@ -264,72 +279,93 @@ export class RealtimeSession {
   }
 
   /**
-   * リモート出力音声(AI 音声)のレベルを監視し、鳴り止んだ瞬間を
-   * onOutputAudioActivity(false) で通知する。AnalyserNode が使えない環境では
-   * 静かに失敗し、呼び出し側のフォールバック(タイムアウト)に委ねる。
+   * リモート出力音声(AI 音声)のレベルを getStats(inbound-rtp) で監視し、
+   * 鳴り止んだ瞬間を onOutputAudioActivity(false) で通知する。
+   * totalAudioEnergy/totalSamplesDuration はデコード音声サンプルから算出されるため
+   * RTP ヘッダ拡張に依存せず、リモート WebRTC 音声でも値が得られる (AnalyserNode は不可)。
+   * 統計が取れない環境では onOutputLevelUnsupported を通知し、呼び出し側の固定遅延に委ねる。
    */
-  private startOutputMonitor(stream: MediaStream): void {
+  private startOutputMonitor(): void {
+    if (this.outputPollTimer !== null) return;
+    this.outputPollTimer = setInterval(() => {
+      void this.sampleOutputLevel();
+    }, OUTPUT_POLL_MS);
+  }
+
+  /** getStats を1回サンプリングし、鳴っている/鳴り止んだを判定して通知する。 */
+  private async sampleOutputLevel(): Promise<void> {
+    const pc = this.pc;
+    if (this.isClosed || !pc) return;
+    let level: number | null = null; // mean square または audioLevel
     try {
-      const Ctx =
-        window.AudioContext ||
-        (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-      if (!Ctx) return;
-      const ctx = new Ctx();
-      this.outputAudioCtx = ctx;
-      void ctx.resume?.();
-      const source = ctx.createMediaStreamSource(stream);
-      const analyser = ctx.createAnalyser();
-      analyser.fftSize = 512;
-      source.connect(analyser); // destination には繋がない (二重再生防止)
-      this.outputAnalyser = analyser;
-
-      const buf = new Float32Array(analyser.fftSize);
-      const tick = () => {
-        if (this.isClosed || !this.outputAnalyser) return;
-        this.outputAnalyser.getFloatTimeDomainData(buf);
-        let sum = 0;
-        for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
-        const rms = Math.sqrt(sum / buf.length);
-        const now = performance.now();
-
-        if (rms >= OUTPUT_RMS_THRESHOLD) {
-          // 音が鳴っている
-          this.outputSilenceSince = null;
-          if (!this.outputActive) {
-            this.outputActive = true;
-            this.opts.onOutputAudioActivity?.(true);
+      const stats = await pc.getStats();
+      stats.forEach((report: Record<string, unknown> & { type?: string }) => {
+        if (level !== null) return;
+        const kind = (report.kind ?? report.mediaType) as string | undefined;
+        if (report.type !== "inbound-rtp" || kind !== "audio") return;
+        const energy = report.totalAudioEnergy as number | undefined;
+        const dur = report.totalSamplesDuration as number | undefined;
+        if (typeof energy === "number" && typeof dur === "number") {
+          if (this.prevAudioEnergy !== null && this.prevSamplesDuration !== null) {
+            const dE = energy - this.prevAudioEnergy;
+            const dT = dur - this.prevSamplesDuration;
+            level = dT > 0 ? Math.max(0, dE / dT) : 0; // 区間平均パワー(mean square)
+          } else {
+            level = 0; // 初回は基準のみ確立
           }
-        } else {
-          // 無音。一定時間継続したら「鳴り止んだ」とみなす
-          if (this.outputSilenceSince === null) this.outputSilenceSince = now;
-          if (
-            this.outputActive &&
-            now - this.outputSilenceSince >= OUTPUT_SILENCE_HOLD_MS
-          ) {
-            this.outputActive = false;
-            this.opts.onOutputAudioActivity?.(false);
-          }
+          this.prevAudioEnergy = energy;
+          this.prevSamplesDuration = dur;
+        } else if (typeof (report.audioLevel as number | undefined) === "number") {
+          // 平均パワーが無ければ audioLevel(0–1) を二乗してパワー相当に揃える
+          const al = report.audioLevel as number;
+          level = al * al;
         }
-        this.outputRafId = requestAnimationFrame(tick);
-      };
-      this.outputRafId = requestAnimationFrame(tick);
-    } catch (err) {
-      console.warn("[RealtimeSession] output monitor unavailable:", err);
+      });
+    } catch {
+      /* getStats 失敗は no-stat 扱い */
+    }
+
+    if (level === null) {
+      // オーディオ統計が取れない環境 → 一定回数で unsupported 通知
+      this.outputNoStatCount++;
+      if (
+        this.outputNoStatCount >= OUTPUT_UNSUPPORTED_AFTER &&
+        !this.outputUnsupportedNotified
+      ) {
+        this.outputUnsupportedNotified = true;
+        this.stopOutputMonitor();
+        this.opts.onOutputLevelUnsupported?.();
+      }
+      return;
+    }
+    this.outputNoStatCount = 0;
+
+    const now = performance.now();
+    const speaking = level >= OUTPUT_POWER_THRESHOLD;
+    if (speaking) {
+      this.outputSilenceSince = null;
+      if (!this.outputActive) {
+        this.outputActive = true;
+        this.opts.onOutputAudioActivity?.(true);
+      }
+    } else {
+      if (this.outputSilenceSince === null) this.outputSilenceSince = now;
+      if (this.outputActive && now - this.outputSilenceSince >= OUTPUT_SILENCE_HOLD_MS) {
+        this.outputActive = false;
+        this.opts.onOutputAudioActivity?.(false);
+      }
     }
   }
 
   private stopOutputMonitor(): void {
-    if (this.outputRafId !== null) {
-      cancelAnimationFrame(this.outputRafId);
-      this.outputRafId = null;
+    if (this.outputPollTimer !== null) {
+      clearInterval(this.outputPollTimer);
+      this.outputPollTimer = null;
     }
-    this.outputAnalyser = null;
-    try {
-      void this.outputAudioCtx?.close();
-    } catch { /* noop */ }
-    this.outputAudioCtx = null;
     this.outputSilenceSince = null;
     this.outputActive = false;
+    this.prevAudioEnergy = null;
+    this.prevSamplesDuration = null;
   }
 
   /** 接続を破棄する */
