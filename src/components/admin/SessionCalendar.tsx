@@ -4,6 +4,15 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { SESSION_TYPE_LABELS } from '@/lib/types/session';
 
+// ローカル(=日本時間)の年月日を YYYY-MM-DD で返す。
+// toISOString() はUTC化で日付が前日にズレるため使わない。
+function formatLocalDate(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 interface SessionCalendarProps {
   weekStart: Date;
   sessions: Array<{
@@ -160,14 +169,14 @@ export default function SessionCalendar({
     // セッション移動の場合
     const sessionId = e.dataTransfer.getData('sessionId');
     if (sessionId && onMoveSession) {
-      onMoveSession(sessionId, date.toISOString().split('T')[0], timeString);
+      onMoveSession(sessionId, formatLocalDate(date), timeString);
       return;
     }
 
     // 新規配置の場合
     const studentId = e.dataTransfer.getData('studentId');
     if (!studentId) return;
-    onDropStudent(studentId, date.toISOString().split('T')[0], timeString);
+    onDropStudent(studentId, formatLocalDate(date), timeString);
   };
 
   const handleDragOver = (e: React.DragEvent, dayIndex: number, timeSlot: { hour: number; minute: number }) => {
@@ -190,10 +199,13 @@ export default function SessionCalendar({
       return null;
     }
 
-    const gridRow = (currentTime.hour - 9) * 2 + currentTime.minute / 30 + 2;
+    // grid-row は整数ライン番号でないと CSS Grid が解釈できない（小数だと描画されない）。
+    // 30分スロットの整数行に置き、分の端数はピクセルのトップオフセットで表現する。
+    const gridRow = (currentTime.hour - 9) * 2 + Math.floor(currentTime.minute / 30) + 2;
+    const offsetPx = ((currentTime.minute % 30) / 30) * 31; // 行ピッチ31px (セッションカードと整合)
     const gridColumn = todayIndex + 2;
 
-    return { gridRow, gridColumn };
+    return { gridRow, gridColumn, offsetPx };
   };
 
   const currentTimePosition = getCurrentTimePosition();
@@ -266,7 +278,7 @@ export default function SessionCalendar({
                         .padStart(2, "0")}:${timeSlot.minute
                         .toString()
                         .padStart(2, "0")}`;
-                      onClickEmptySlot(date.toISOString().split("T")[0], timeString);
+                      onClickEmptySlot(formatLocalDate(date), timeString);
                     }}
                   />
                 );
@@ -402,7 +414,7 @@ export default function SessionCalendar({
               gridRow: currentTimePosition.gridRow,
               width: '100%',
               height: '2px',
-              marginTop: '-1px'
+              marginTop: `${currentTimePosition.offsetPx - 1}px`
             }}
           >
             <div className="w-2 h-2 bg-rose-500 rounded-full -mt-1 -ml-1"></div>
