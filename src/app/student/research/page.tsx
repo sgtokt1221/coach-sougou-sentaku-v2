@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,9 +10,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { Loader2, Sparkles, Lock, Send, RefreshCw, CheckCircle2, Circle, Pencil, Plus, Trash2, Save, X } from "lucide-react";
+import { Loader2, Sparkles, Lock, RefreshCw, CheckCircle2, Circle, Pencil, Plus, Trash2, Save, X } from "lucide-react";
 import { toast } from "sonner";
 import { authFetch } from "@/lib/api/client";
+import { ChatPanel } from "@/components/shared/ChatPanel";
 import type { ResearchCurriculum, ResearchCurriculumUnit } from "@/lib/types/research";
 import { RESEARCH_MAX_UNITS } from "@/lib/types/research";
 
@@ -48,8 +49,6 @@ export default function ResearchHubPage() {
   const [draftUnits, setDraftUnits] = useState<ResearchCurriculumUnit[]>([]);
   const [savingEdit, setSavingEdit] = useState(false);
 
-  const chatEndRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
     (async () => {
       try {
@@ -66,10 +65,6 @@ export default function ResearchHubPage() {
       }
     })();
   }, []);
-
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
 
   const send = async (text: string) => {
     const msg = text.trim();
@@ -447,34 +442,18 @@ export default function ResearchHubPage() {
         </Card>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">AIと相談して探究分野を決めよう</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-3 max-h-[50vh] overflow-y-auto">
-            {messages.length === 0 && (
-              <p className="text-sm text-muted-foreground">
-                最近「面白い」「気になる」と思ったことは何ですか？身近なことで大丈夫です。
-              </p>
-            )}
-            {messages.map((m, i) => (
-              <div
-                key={i}
-                className={`rounded-lg p-3 text-sm ${
-                  m.role === "user"
-                    ? "ml-8 bg-primary/10"
-                    : "mr-8 bg-muted/60"
-                }`}
-              >
-                {m.content}
-              </div>
-            ))}
-            {sending && <Loader2 className="size-4 animate-spin text-muted-foreground" />}
-            <div ref={chatEndRef} />
-          </div>
+      <p className="text-sm text-muted-foreground">AIと相談して探究分野を決めよう</p>
 
-          {suggested.length > 0 && (
+      <ChatPanel
+        className="h-[60vh]"
+        messages={messages}
+        loading={sending}
+        input={input}
+        onInputChange={setInput}
+        onSend={() => send(input)}
+        emptyHint="最近「面白い」「気になる」と思ったことは何ですか？身近なことで大丈夫です。"
+        footer={
+          suggested.length > 0 ? (
             <div className="flex flex-wrap gap-2">
               {suggested.map((d) => (
                 <Badge
@@ -487,24 +466,9 @@ export default function ResearchHubPage() {
                 </Badge>
               ))}
             </div>
-          )}
-
-          <div className="flex gap-2">
-            <Input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.nativeEvent.isComposing) send(input);
-              }}
-              placeholder="メッセージを入力"
-              disabled={sending}
-            />
-            <Button onClick={() => send(input)} disabled={sending || !input.trim()}>
-              <Send className="size-4" />
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+          ) : undefined
+        }
+      />
     </div>
   );
 }
