@@ -25,7 +25,7 @@ export default function StudentSessionsPage() {
   const router = useRouter();
   const { userProfile } = useAuth();
   const isCoach = userProfile?.plan === "coach";
-  const { data: rawData, isLoading: loading } = useAuthSWR<Session[] | { sessions: Session[] }>(isCoach ? "/api/sessions?sharedWithStudent=true" : null);
+  const { data: rawData, isLoading: loading } = useAuthSWR<Session[] | { sessions: Session[] }>(isCoach ? "/api/sessions" : null);
   const sessions = Array.isArray(rawData) ? rawData : (rawData as { sessions?: Session[] })?.sessions ?? [];
 
   if (!isCoach) {

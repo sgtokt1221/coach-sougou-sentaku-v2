@@ -53,8 +53,30 @@ async function notifyStudentOfSession(
   }
 }
 
+/** 生徒に返す前に講師専用フィールドを落とす（summary は共有時のみ残す） */
+function sanitizeForStudent(s: Session): Partial<Session> {
+  const {
+    notes: _notes,
+    prepPlan: _prepPlan,
+    practiceQuestions: _pq,
+    debrief: _debrief,
+    lessonTranscript: _lt,
+    recordingUrl: _ru,
+    recordingPath: _rp,
+    recordingDurationSec: _rds,
+    recordingSizeBytes: _rsb,
+    createdByAdminId: _cba,
+    ...rest
+  } = s as Session & Record<string, unknown>;
+  void _notes; void _prepPlan; void _pq; void _debrief; void _lt;
+  void _ru; void _rp; void _rds; void _rsb; void _cba;
+  if (!s.sharedWithStudent) delete (rest as { summary?: unknown }).summary;
+  return rest as Partial<Session>;
+}
+
 export async function GET(request: NextRequest) {
   const authResult = await requireRole(request, [
+    "student",
     "teacher",
     "admin",
     "superadmin",
@@ -95,6 +117,14 @@ export async function GET(request: NextRequest) {
   }
 
   // ロールベーススコーピング
+  if (effectiveRole === "student") {
+    // 生徒は自分の面談のみ（予定も含む）。講師専用フィールドは除去して返す。
+    const own = sessions.filter((s) => s.studentId === effectiveUid);
+    own.sort(
+      (a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime()
+    );
+    return NextResponse.json(own.map(sanitizeForStudent));
+  }
   if (effectiveRole === "teacher") {
     sessions = sessions.filter((s) => s.teacherId === effectiveUid);
   } else if (effectiveRole === "admin") {
