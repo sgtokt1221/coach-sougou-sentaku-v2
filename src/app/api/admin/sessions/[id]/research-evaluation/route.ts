@@ -3,6 +3,7 @@ import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
 import type { Session } from "@/lib/types/session";
 import type { ResearchEvalResult } from "@/lib/ai/prompts/research";
+import type { ResearchCurriculum, ResearchCurriculumUnit } from "@/lib/types/research";
 
 interface ResearchSessionDoc {
   id: string;
@@ -75,7 +76,26 @@ export async function GET(
     const prev = docs.find((d) => d.id !== current?.id);
     const previousNextItems = prev?.nextItems ?? [];
 
-    return NextResponse.json({ current, previousNextItems });
+    // カリキュラムの「今回のユニット」(最初の未完了。既に当該セッションに紐付くものがあればそれ)
+    let currentUnit: ResearchCurriculumUnit | null = null;
+    let curriculumTheme: string | null = null;
+    try {
+      const curSnap = await adminDb
+        .doc(`users/${studentId}/researchCurriculum/current`)
+        .get();
+      if (curSnap.exists) {
+        const cur = curSnap.data() as ResearchCurriculum;
+        curriculumTheme = cur.theme ?? null;
+        currentUnit =
+          cur.units?.find((u) => u.sessionId === id) ??
+          cur.units?.find((u) => u.status !== "done") ??
+          null;
+      }
+    } catch {
+      /* カリキュラム未作成は無視 */
+    }
+
+    return NextResponse.json({ current, previousNextItems, currentUnit, curriculumTheme });
   } catch (error) {
     console.error("Admin research evaluation GET error:", error);
     return NextResponse.json(

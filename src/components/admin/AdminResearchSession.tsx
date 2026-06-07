@@ -13,6 +13,7 @@ import { ResearchEvalView } from "@/components/research/ResearchEvalView";
 import { authFetch } from "@/lib/api/client";
 import { toast } from "sonner";
 import type { ResearchEvalResult } from "@/lib/ai/prompts/research";
+import type { ResearchCurriculumUnit } from "@/lib/types/research";
 
 interface Attachment {
   dataBase64: string;
@@ -58,6 +59,7 @@ export function AdminResearchSession({
   const [result, setResult] = useState<ResearchEvalResult | null>(null);
   const [resultTopic, setResultTopic] = useState("");
   const [previousNextItems, setPreviousNextItems] = useState<string[]>([]);
+  const [currentUnit, setCurrentUnit] = useState<ResearchCurriculumUnit | null>(null);
   const [comment, setComment] = useState(initialComment ?? "");
 
   useEffect(() => {
@@ -74,6 +76,11 @@ export function AdminResearchSession({
         setResultTopic(data.current.topic ?? "");
       }
       setPreviousNextItems(data.previousNextItems ?? []);
+      if (data.currentUnit) {
+        setCurrentUnit(data.currentUnit);
+        // テーマ未入力ならカリキュラムの今回ユニットで初期化
+        setTopic((t) => (t ? t : data.currentUnit.title ?? ""));
+      }
     } catch {
       /* noop */
     }
@@ -157,6 +164,35 @@ export function AdminResearchSession({
                 <li key={i}>{it}</li>
               ))}
             </ul>
+          </CardContent>
+        </Card>
+      )}
+
+      {currentUnit && (
+        <Card className="border-teal-200 bg-teal-50/40">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-sm">
+              <Sparkles className="size-4 text-teal-600" />
+              今回のユニット（第{currentUnit.order}回）: {currentUnit.title}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-1 text-sm">
+            <p>
+              <span className="text-muted-foreground">狙い:</span> {currentUnit.aim}
+            </p>
+            {currentUnit.research.length > 0 && (
+              <div>
+                <span className="text-muted-foreground">調べること:</span>
+                <ul className="list-disc space-y-0.5 pl-5">
+                  {currentUnit.research.map((r, i) => (
+                    <li key={i}>{r}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            <p>
+              <span className="text-muted-foreground">教えるアウトプット:</span> {currentUnit.output}
+            </p>
           </CardContent>
         </Card>
       )}

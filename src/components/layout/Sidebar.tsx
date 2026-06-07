@@ -28,6 +28,7 @@ import {
   FileBarChart,
   Crown,
   Compass,
+  Sparkles,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
@@ -43,6 +44,8 @@ interface NavItem {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   coachOnly?: boolean;
+  /** 探究授業の受講登録者のみ表示 */
+  researchOnly?: boolean;
   badge?: React.ComponentType;
   children?: NavItem[];
 }
@@ -94,6 +97,7 @@ const studentNavGroups: NavGroup[] = [
     title: "Discover",
     items: [
       { label: "自己分析", href: "/student/self-analysis", icon: Lightbulb, badge: SelfAnalysisBadge },
+      { label: "自己探究", href: "/student/research", icon: Sparkles, researchOnly: true },
       { label: "志望校探索", href: "/student/universities/explore", icon: Compass },
       { label: "活動実績", href: "/student/activities", icon: Award },
     ],
@@ -291,10 +295,15 @@ function ContentNavLink({ item, pathname, isChild = false }: { item: NavItem; pa
   );
 }
 
-function filterNavByPlan(groups: NavGroup[], plan: string | undefined): NavGroup[] {
+function filterNavByPlan(
+  groups: NavGroup[],
+  plan: string | undefined,
+  researchEnrolled: boolean
+): NavGroup[] {
   const isCoach = plan === "coach";
   const filterItem = (item: NavItem): NavItem | null => {
     if (item.coachOnly && !isCoach) return null;
+    if (item.researchOnly && !researchEnrolled) return null;
     if (item.children) {
       return { ...item, children: item.children.filter((c) => !c.coachOnly || isCoach) };
     }
@@ -318,7 +327,11 @@ export function Sidebar() {
     }
     if (userProfile?.role === "admin") return adminNavGroups;
     if (userProfile?.role === "teacher") return teacherNavGroups;
-    return filterNavByPlan(studentNavGroups, userProfile?.plan);
+    return filterNavByPlan(
+      studentNavGroups,
+      userProfile?.plan,
+      (userProfile as { researchEnrolled?: boolean })?.researchEnrolled === true
+    );
   })();
 
   return (
@@ -403,7 +416,11 @@ export function SidebarContent() {
     }
     if (userProfile?.role === "admin") return adminNavGroups;
     if (userProfile?.role === "teacher") return teacherNavGroups;
-    return filterNavByPlan(studentNavGroups, userProfile?.plan);
+    return filterNavByPlan(
+      studentNavGroups,
+      userProfile?.plan,
+      (userProfile as { researchEnrolled?: boolean })?.researchEnrolled === true
+    );
   })();
 
   return (

@@ -6,6 +6,7 @@ import {
   type ResearchEvaluateBody,
 } from "@/lib/ai/research-evaluate";
 import type { Session } from "@/lib/types/session";
+import type { ResearchCurriculum } from "@/lib/types/research";
 
 /**
  * POST /api/admin/sessions/[id]/research-evaluate
@@ -60,6 +61,32 @@ export async function POST(
       sessionId: id,
       evaluatedBy: "teacher",
     });
+
+    // カリキュラムの「今回のユニット」を done にして当該セッションに紐付ける
+    try {
+      const curRef = adminDb.doc(`users/${studentId}/researchCurriculum/current`);
+      const curSnap = await curRef.get();
+      if (curSnap.exists) {
+        const cur = curSnap.data() as ResearchCurriculum;
+        const units = cur.units ?? [];
+        const target =
+          units.find((u) => u.sessionId === id) ??
+          units.find((u) => u.status !== "done");
+        if (target) {
+          const updated = units.map((u) =>
+            u.order === target.order
+              ? { ...u, status: "done" as const, sessionId: id }
+              : u
+          );
+          await curRef.set(
+            { units: updated, updatedAt: new Date().toISOString() },
+            { merge: true }
+          );
+        }
+      }
+    } catch (e) {
+      console.warn("[research] curriculum unit update failed:", e);
+    }
 
     return NextResponse.json(result);
   } catch (error) {

@@ -23,6 +23,7 @@ import { StudentRecordingController } from "@/components/student/StudentRecordin
 import SessionArtifactsPanel from "@/components/sessions/SessionArtifactsPanel";
 import { ResearchEvalView } from "@/components/research/ResearchEvalView";
 import type { ResearchEvalResult } from "@/lib/ai/prompts/research";
+import type { ResearchCurriculum, ResearchCurriculumUnit } from "@/lib/types/research";
 import type { Session, SessionStatus, SessionSubmission } from "@/lib/types/session";
 import { SESSION_TYPE_LABELS, SESSION_STATUS_LABELS } from "@/lib/types/session";
 import { useAuth } from "@/contexts/AuthContext";
@@ -60,6 +61,7 @@ export default function StudentSessionDetailPage() {
     nextItems: string[];
   } | null>(null);
   const [researchPrevNext, setResearchPrevNext] = useState<string[]>([]);
+  const [researchUnit, setResearchUnit] = useState<ResearchCurriculumUnit | null>(null);
 
   async function reportAbsence() {
     setReporting(true);
@@ -113,6 +115,18 @@ export default function StudentSessionDetailPage() {
             );
             const prev = list.find((x) => x.sessionId !== id);
             setResearchPrevNext(prev?.nextItems ?? []);
+          }
+          // カリキュラムの今回ユニット（当該セッション紐付け or 最初の未完了）
+          const cr = await authFetch(`/api/research/curriculum`);
+          if (cr.ok) {
+            const cur = (await cr.json()) as ResearchCurriculum | null;
+            if (cur?.units) {
+              const unit =
+                cur.units.find((u) => u.sessionId === id) ??
+                cur.units.find((u) => u.status !== "done") ??
+                null;
+              setResearchUnit(unit);
+            }
           }
         } catch {
           /* noop */
@@ -386,6 +400,34 @@ export default function StudentSessionDetailPage() {
       {/* 探究授業セッション: 閲覧専用ビュー（録音は講師が実施） */}
       {session.isResearch && session.type !== "group_review" && (
         <div className="space-y-4">
+          {researchUnit && (
+            <Card className="border-teal-200 bg-teal-50/40">
+              <CardHeader>
+                <CardTitle className="text-base">
+                  今回のテーマ（第{researchUnit.order}回）: {researchUnit.title}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-1 text-sm">
+                <p>
+                  <span className="text-muted-foreground">狙い:</span> {researchUnit.aim}
+                </p>
+                {researchUnit.research.length > 0 && (
+                  <div>
+                    <span className="text-muted-foreground">調べてくること:</span>
+                    <ul className="list-disc space-y-0.5 pl-5">
+                      {researchUnit.research.map((r, i) => (
+                        <li key={i}>{r}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                <p>
+                  <span className="text-muted-foreground">教えるアウトプット:</span> {researchUnit.output}
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
           {researchPrevNext.length > 0 && (
             <Card className="border-sky-200 bg-sky-50/60">
               <CardHeader>
