@@ -311,7 +311,7 @@ export function AdminCalendar() {
                 const nonHolidayEvents = dayEvents.filter(
                   (e) => e.type !== "holiday"
                 );
-                const visible = nonHolidayEvents.slice(0, 2);
+                const visible = nonHolidayEvents.slice(0, 4);
                 const extraCount = nonHolidayEvents.length - visible.length;
                 const dateTextColor = !isCurrentMonth
                   ? "text-muted-foreground/50"
@@ -326,7 +326,7 @@ export function AdminCalendar() {
                   <button
                     key={dateStr}
                     onClick={() => setDialogDate(dateStr)}
-                    className="relative bg-card min-h-[4.5rem] p-1.5 text-left cursor-pointer transition-colors hover:bg-muted/40"
+                    className="relative bg-card min-h-[6rem] p-1.5 text-left cursor-pointer transition-colors hover:bg-muted/40"
                   >
                     <div className="flex items-center gap-1">
                       <div
