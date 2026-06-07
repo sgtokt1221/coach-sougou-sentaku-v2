@@ -72,7 +72,33 @@ interface CreateSessionParams {
    * 個別面接モードでは true (デフォルト) のまま、ユーザー発話に自動応答。
    */
   autoCreateResponse?: boolean;
+  /**
+   * turn_detection 設定の上書き。未指定なら従来の server_vad を使う。
+   * 個人面接は咳/息の誤検知を避けるため semantic_vad を渡す。
+   * GD は挙動を変えないためデフォルト (server_vad) のまま。
+   */
+  turnDetection?: Record<string, unknown>;
 }
+
+/** 既定の server_vad (GD 等で使用)。咳など高エネルギー音は素通りしやすい。 */
+const SERVER_VAD = {
+  type: "server_vad",
+  threshold: 0.6,
+  prefix_padding_ms: 300,
+  silence_duration_ms: 1500,
+  create_response: false,
+} as const;
+
+/**
+ * 個人面接用 semantic_vad。発話か否かをモデルが意味で判定するため、
+ * 咳払い・呼吸音などの非言語音で発話終了を誤検知しない。
+ * eagerness:"low" = 割り込みに消極的＝ユーザーが言い終わるまで待つ。
+ */
+const SEMANTIC_VAD = {
+  type: "semantic_vad",
+  eagerness: "low",
+  create_response: false,
+} as const;
 
 // GA レスポンスは { value, expires_at } を直接返すが、互換のため client_secret 形式も受ける。
 interface EphemeralTokenResponse {
@@ -139,15 +165,10 @@ async function issueEphemeralToken(
                 // を受けて明示的に triggerResponse を呼ぶ設計 (GD と同じパターン)。
                 // これで AI 応答完了直後の環境音 VAD 誤発火による多重 response を
                 // 原理的に防ぐ (= 音声が途中で別内容に切り替わる事故の根絶)。
-                // threshold/silence はフィラーや考える間でユーザー発話が途切れない
-                // よう緩めに設定。(echoCancellation/noiseSuppression は getUserMedia 側で on)
-                turn_detection: {
-                  type: "server_vad",
-                  threshold: 0.6,
-                  prefix_padding_ms: 300,
-                  silence_duration_ms: 1500,
-                  create_response: false,
-                },
+                // turn_detection: 個人面接は semantic_vad (咳/息の誤検知を回避)、
+                // GD 等は server_vad (params.turnDetection 未指定時の既定)。
+                // (echoCancellation/noiseSuppression は getUserMedia 側で on)
+                turn_detection: params.turnDetection ?? SERVER_VAD,
               },
               output: { voice: params.voice },
             },
@@ -379,7 +400,12 @@ export async function POST(request: NextRequest) {
     selfAnalysis,
   );
   const voice = "shimmer"; // 個人モードは shimmer (落ち着いた女性教員のトーン)
-  const issueResult = await issueEphemeralToken(apiKey, { instructions, voice, transcriptionPrompt });
+  const issueResult = await issueEphemeralToken(apiKey, {
+    instructions,
+    voice,
+    transcriptionPrompt,
+    turnDetection: SEMANTIC_VAD,
+  });
   if (!issueResult.token) {
     return NextResponse.json(
       {

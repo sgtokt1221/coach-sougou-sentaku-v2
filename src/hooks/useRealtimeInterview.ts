@@ -47,6 +47,26 @@ function isPromptEcho(transcript: string, prompt: string): boolean {
   return match / shorter.length >= 0.9 && shorter.length >= 30;
 }
 
+/** 文字起こし結果が咳/息などの非言語ノイズと思われる場合 true（実発話の誤破棄を避け保守的に判定）。 */
+const NOISE_HALLUCINATIONS = new Set([
+  "ご視聴ありがとうございました",
+  "ご視聴ありがとうございました。",
+  "ご清聴ありがとうございました",
+  "ご清聴ありがとうございました。",
+  "おやすみなさい",
+  "おやすみなさい。",
+]);
+function isLikelyNoise(text: string): boolean {
+  const t = text.trim();
+  if (!t) return true;
+  // 句読点・記号・空白を除去した実質文字数が 1 以下（咳→「ん」「。」「…」等）
+  const core = t.replace(/[\s。、，．,.!?！？…‥・「」『』（）()\[\]【】〜~ー-]/g, "");
+  if (core.length <= 1) return true;
+  // 無音区間で出やすい既知の定型ハルシネーション（面接で実際に言う表現は含めない）
+  if (NOISE_HALLUCINATIONS.has(t)) return true;
+  return false;
+}
+
 export type RealtimeStatus =
   | "idle"
   | "requesting_token"
@@ -403,6 +423,11 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
             console.warn("[useRealtimeInterview] dropping echoed transcription-prompt:", text.slice(0, 60));
             return;
           }
+          // semantic_vad をすり抜けた咳/息が文字化けして確定したケースを破棄（保険）
+          if (isLikelyNoise(text)) {
+            console.warn("[useRealtimeInterview] dropping noise-like transcript:", JSON.stringify(text).slice(0, 40));
+            return;
+          }
           // ユーザー発話が確定したら AI streaming 状態は強制リセット
           isAiStreamingRef.current = false;
           appendMessage({ role: "student", content: text });
@@ -466,13 +491,14 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
               sessionRef.current?.updateSession({
                 audio: {
                   input: {
+                    // semantic_vad: 咳/息などの非言語音で発話終了を誤検知しない。
+                    // create_response:false にして hook 側 onUserTranscript で
+                    // 明示的に triggerResponse を呼ぶ (多重 response 防止)。
+                    // ※ ルート初期設定と揃える。これを server_vad に戻すと
+                    //   AI 応答後だけ咳に反応する不整合が起きるため semantic_vad で統一。
                     turn_detection: {
-                      type: "server_vad",
-                      threshold: 0.6,
-                      prefix_padding_ms: 300,
-                      silence_duration_ms: 1500,
-                      // create_response: false にして hook 側 onUserTranscript で
-                      // 明示的に triggerResponse を呼ぶ (多重 response 防止)
+                      type: "semantic_vad",
+                      eagerness: "low",
                       create_response: false,
                     },
                   },

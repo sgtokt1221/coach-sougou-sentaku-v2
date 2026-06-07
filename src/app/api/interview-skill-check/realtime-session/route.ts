@@ -44,11 +44,11 @@ async function issueEphemeralToken(
             audio: {
               input: {
                 transcription: { model: "gpt-4o-mini-transcribe", language: "ja" },
+                // semantic_vad: 咳払い・呼吸音などの非言語音で発話終了を誤検知しない。
+                // eagerness:"low" = 割り込みに消極的＝ユーザーが言い終わるまで待つ。
                 turn_detection: {
-                  type: "server_vad",
-                  threshold: 0.6,
-                  prefix_padding_ms: 300,
-                  silence_duration_ms: 1500,
+                  type: "semantic_vad",
+                  eagerness: "low",
                   create_response: false,
                 },
               },
