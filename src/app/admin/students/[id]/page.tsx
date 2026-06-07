@@ -103,6 +103,7 @@ const CERT_TYPES: { value: EnglishCert["type"]; label: string }[] = [
 const EIKEN_GRADES = ["1級", "準1級", "2級", "準2級", "3級", "4級", "5級"];
 import { ExamResultsSection } from "@/components/admin/ExamResultsSection";
 import { ResearchEnrollmentSection } from "@/components/admin/ResearchEnrollmentSection";
+import { AdminResearchCurriculumSection } from "@/components/admin/AdminResearchCurriculumSection";
 import { SubscriptionManagementSection } from "@/components/admin/SubscriptionManagementSection";
 import { EssayCoachHistorySection } from "@/components/admin/EssayCoachHistorySection";
 import { SessionsHistorySection } from "@/components/admin/SessionsHistorySection";
@@ -849,6 +850,8 @@ function AdminStudentDetailPageInner() {
 
       {/* 自己探究授業の同意状況・受講ペース（受講ON/OFFは上の機能スイッチで） */}
       {!isTeacherViewer && <ResearchEnrollmentSection studentId={id} />}
+      {/* 探究カリキュラム全体(読み取り)。講師も担当生徒分は閲覧可(scopeはGET側で担保) */}
+      <AdminResearchCurriculumSection studentId={id} />
 
       {/* 系統変更（管理者操作） */}
       {skillCheck && (
