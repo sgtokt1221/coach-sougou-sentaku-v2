@@ -52,7 +52,7 @@ async function logInterviewDrill(authHeader: string | null, metadata: Record<str
   }
 }
 
-/** ドリル採点結果を users/{uid}/interviewDrills に1件保存（管理者の生徒詳細で閲覧する） */
+/** ドリル採点結果を users/{uid}/interviewDrills に1件保存し、doc id を返す（保存トグル用） */
 async function saveInterviewDrill(
   authHeader: string | null,
   data: {
@@ -65,26 +65,29 @@ async function saveInterviewDrill(
     universityId?: string;
     facultyId?: string;
   },
-) {
-  if (!authHeader?.startsWith("Bearer ")) return;
+): Promise<string | null> {
+  if (!authHeader?.startsWith("Bearer ")) return null;
   try {
     const { adminAuth, adminDb } = await import("@/lib/firebase/admin");
-    if (!adminAuth || !adminDb) return;
+    if (!adminAuth || !adminDb) return null;
     const decoded = await adminAuth.verifyIdToken(authHeader.slice(7));
     const { FieldValue } = await import("firebase-admin/firestore");
-    await adminDb.collection(`users/${decoded.uid}/interviewDrills`).add({
+    const ref = await adminDb.collection(`users/${decoded.uid}/interviewDrills`).add({
       category: data.category ?? null,
       question: data.question,
       answer: data.answer,
       score: data.score,
       feedback: data.feedback,
       betterAnswer: data.betterAnswer,
+      saved: false,
       universityId: data.universityId ?? null,
       facultyId: data.facultyId ?? null,
       createdAt: FieldValue.serverTimestamp(),
     });
+    return ref.id;
   } catch (err) {
     console.warn("[interview-drill] save failed:", err);
+    return null;
   }
 }
 
@@ -194,7 +197,7 @@ export async function POST(request: NextRequest) {
         };
 
         void logInterviewDrill(authHeader, { universityId: body.universityId, facultyId: body.facultyId });
-        await saveInterviewDrill(authHeader, {
+        const drillId = await saveInterviewDrill(authHeader, {
           category: body.category,
           question,
           answer,
@@ -204,7 +207,7 @@ export async function POST(request: NextRequest) {
           universityId: body.universityId,
           facultyId: body.facultyId,
         });
-        return NextResponse.json(result);
+        return NextResponse.json({ ...result, drillId });
       } catch (parseError) {
         console.error("JSON parse error:", parseError, responseText);
 
@@ -217,7 +220,7 @@ export async function POST(request: NextRequest) {
         };
 
         void logInterviewDrill(authHeader, { universityId: body.universityId, facultyId: body.facultyId });
-        await saveInterviewDrill(authHeader, {
+        const drillId = await saveInterviewDrill(authHeader, {
           category: body.category,
           question,
           answer,
@@ -227,7 +230,7 @@ export async function POST(request: NextRequest) {
           universityId: body.universityId,
           facultyId: body.facultyId,
         });
-        return NextResponse.json(result);
+        return NextResponse.json({ ...result, drillId });
       }
     }
 

@@ -22,6 +22,7 @@ import { FluidLoader } from "@/components/shared/FluidLoader";
 import VoiceAnalyzer, { refineWithTranscription } from "@/components/interview/VoiceAnalyzer";
 import VideoAnalyzer from "@/components/interview/VideoAnalyzer";
 import CameraPreview from "@/components/interview/CameraPreview";
+import { SavedDrillsReference } from "@/components/interview/SavedDrillsReference";
 import {
   splitIntoUtterances,
   DEFAULT_INTERVIEWER,
@@ -617,6 +618,8 @@ export default function InterviewSessionPage() {
             {sessionInfo.universityContext.admissionPolicy}
           </p>
         </div>
+        {/* 保存したテーマ別ドリルの問答（参考） */}
+        <SavedDrillsReference />
       </>
     );
   }

@@ -21,11 +21,13 @@ import {
   TrendingUp,
   Mic,
   Keyboard,
+  Bookmark,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { authFetch } from "@/lib/api/client";
 import { DRILL_CATEGORIES, type DrillCategory } from "@/lib/ai/prompts/interview-drill";
+import { SavedDrillsReference } from "@/components/interview/SavedDrillsReference";
 import VoiceRecorder from "@/components/interview/VoiceRecorder";
 
 interface DrillScore {
@@ -77,6 +79,34 @@ export default function InterviewDrillPage() {
 
   const [sessionScores, setSessionScores] = useState<DrillScore[]>([]);
   const [inputMode, setInputMode] = useState<"text" | "voice">("text");
+  // 直近採点の保存用 doc id と、保存済み id 集合
+  const [lastDrillId, setLastDrillId] = useState<string | null>(null);
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+  const [savingDrill, setSavingDrill] = useState(false);
+
+  const toggleSaveDrill = async () => {
+    if (!lastDrillId || savingDrill) return;
+    const next = !savedIds.has(lastDrillId);
+    setSavingDrill(true);
+    try {
+      const res = await authFetch("/api/interview/drill/saved", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ drillId: lastDrillId, saved: next }),
+      });
+      if (!res.ok) throw new Error();
+      setSavedIds((prev) => {
+        const s = new Set(prev);
+        if (next) s.add(lastDrillId);
+        else s.delete(lastDrillId);
+        return s;
+      });
+    } catch {
+      /* noop */
+    } finally {
+      setSavingDrill(false);
+    }
+  };
   const [transcribing, setTranscribing] = useState(false);
   const [transcribeError, setTranscribeError] = useState<string | null>(null);
 
@@ -193,6 +223,7 @@ export default function InterviewDrillPage() {
       }
 
       const evaluation = await response.json();
+      setLastDrillId(evaluation.drillId ?? null);
 
       const newScore: DrillScore = {
         category: state.currentCategory,
@@ -414,6 +445,9 @@ export default function InterviewDrillPage() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* 保存した問答（面接練習でも参照可。未保存なら何も出ない） */}
+            <SavedDrillsReference />
           </div>
         )}
 
@@ -585,6 +619,18 @@ export default function InterviewDrillPage() {
                   </p>
                 </div>
               </div>
+
+              {lastDrillId && (
+                <Button
+                  variant={savedIds.has(lastDrillId) ? "secondary" : "outline"}
+                  onClick={toggleSaveDrill}
+                  disabled={savingDrill}
+                  className="w-full"
+                >
+                  <Bookmark className="mr-2 h-4 w-4" />
+                  {savedIds.has(lastDrillId) ? "保存済み（面接練習で参照できます）" : "この問答を保存"}
+                </Button>
+              )}
 
               <div className="flex gap-3">
                 <Button onClick={handleNextQuestion} className="flex-1">
