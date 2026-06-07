@@ -199,13 +199,13 @@ export default function SessionCalendar({
       return null;
     }
 
-    // grid-row は整数ライン番号でないと CSS Grid が解釈できない（小数だと描画されない）。
-    // 30分スロットの整数行に置き、分の端数はピクセルのトップオフセットで表現する。
-    const gridRow = (currentTime.hour - 9) * 2 + Math.floor(currentTime.minute / 30) + 2;
-    const offsetPx = ((currentTime.minute % 30) / 30) * 31; // 行ピッチ31px (セッションカードと整合)
+    // 縦位置は本体グリッド内のピクセルで表現する。grid-row に小数を渡すと
+    // CSS Grid が解釈できず絶対要素がヘッダー先頭へ飛ぶため、列のみ grid 配置に頼る。
+    const minutesSince9 = (currentTime.hour - 9) * 60 + currentTime.minute;
+    const topPx = (minutesSince9 / 30) * 31; // 30分=31px ピッチ (セッションカードと整合)
     const gridColumn = todayIndex + 2;
 
-    return { gridRow, gridColumn, offsetPx };
+    return { gridColumn, topPx };
   };
 
   const currentTimePosition = getCurrentTimePosition();
@@ -405,19 +405,21 @@ export default function SessionCalendar({
           );
         })}
 
-        {/* 現在時刻インジケーター */}
+        {/* 現在時刻インジケーター。外側は本日列の本体行(2/-1)を占め、ヘッダーへ飛ばない */}
         {currentTimePosition && (
           <div
-            className="absolute z-20 border-t-2 border-rose-500"
+            className="absolute z-20 pointer-events-none"
             style={{
               gridColumn: `${currentTimePosition.gridColumn} / span 1`,
-              gridRow: currentTimePosition.gridRow,
-              width: '100%',
-              height: '2px',
-              marginTop: `${currentTimePosition.offsetPx - 1}px`
+              gridRow: '2 / -1'
             }}
           >
-            <div className="w-2 h-2 bg-rose-500 rounded-full -mt-1 -ml-1"></div>
+            <div
+              className="absolute left-0 right-0 border-t-2 border-rose-500"
+              style={{ top: `${currentTimePosition.topPx}px` }}
+            >
+              <div className="w-2 h-2 bg-rose-500 rounded-full -mt-1 -ml-1"></div>
+            </div>
           </div>
         )}
       </div>

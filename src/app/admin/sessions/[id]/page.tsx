@@ -28,7 +28,7 @@ import {
 import Link from "next/link";
 import { AnimatedButton } from "@/components/shared/AnimatedButton";
 import { authFetch } from "@/lib/api/client";
-import type { Session, SessionStatus, SessionSubmission, GroupSessionFields } from "@/lib/types/session";
+import type { Session, SessionStatus, SessionType, SessionSubmission, GroupSessionFields } from "@/lib/types/session";
 import { SESSION_TYPE_LABELS, SESSION_STATUS_LABELS } from "@/lib/types/session";
 import type { PracticeQuestion } from "@/lib/types/growth-report";
 
@@ -316,9 +316,26 @@ export default function AdminSessionDetailPage() {
           </div>
           <div>
             <span className="text-muted-foreground">タイプ:</span>{" "}
-            <Badge variant="outline" className="text-xs ml-1">
-              {SESSION_TYPE_LABELS[session.type]}
-            </Badge>
+            {session.type === "group_review" ? (
+              <Badge variant="outline" className="text-xs ml-1">
+                {SESSION_TYPE_LABELS[session.type]}
+              </Badge>
+            ) : (
+              <select
+                className="ml-1 rounded-md border px-2 py-1 text-xs"
+                value={session.type}
+                onChange={(e) => patchSession({ type: e.target.value as SessionType })}
+                disabled={saving}
+              >
+                {(Object.entries(SESSION_TYPE_LABELS) as [SessionType, string][])
+                  .filter(([t]) => t !== "group_review")
+                  .map(([t, label]) => (
+                    <option key={t} value={t}>
+                      {label}
+                    </option>
+                  ))}
+              </select>
+            )}
           </div>
           <div>
             <span className="text-muted-foreground">日時:</span>{" "}
@@ -345,6 +362,24 @@ export default function AdminSessionDetailPage() {
               >
                 {isOnline ? "オンライン" : "対面"}
               </Badge>
+            </div>
+          )}
+
+          {/* 探究授業フラグ (作成後も切替可) */}
+          {session.type !== "group_review" && (
+            <div className="sm:col-span-2">
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  className="size-4"
+                  checked={!!session.isResearch}
+                  onChange={(e) => patchSession({ isResearch: e.target.checked })}
+                  disabled={saving}
+                />
+                <span className="text-muted-foreground">
+                  探究授業セッション（生徒が講師に教える回）
+                </span>
+              </label>
             </div>
           )}
 

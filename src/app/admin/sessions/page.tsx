@@ -11,7 +11,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import SessionCalendar from "@/components/admin/SessionCalendar";
 import UnplacedStudentsSidebar from "@/components/admin/UnplacedStudentsSidebar";
 import AdminSessionList from "@/components/admin/AdminSessionList";
-import type { Session } from "@/lib/types/session";
+import { SESSION_TYPE_LABELS } from "@/lib/types/session";
+import type { Session, SessionType } from "@/lib/types/session";
 import type { StudentListItem } from "@/lib/types/admin";
 
 // 指定日のローカル(=日本時間)0時を返すヘルパー。カレンダーは本日起点で表示する。
@@ -49,9 +50,16 @@ export default function AdminSessionsPage() {
   const [activeTab, setActiveTab] = useState<"schedule" | "list">("schedule");
   const [weekStart, setWeekStart] = useState<Date>(startOfDay(new Date()));
   const [pickerSession, setPickerSession] = useState<Session | null>(null);
-  // 空き枠クリックからの「直接予定追加」ダイアログ
-  const [addSlot, setAddSlot] = useState<{ date: string; time: string } | null>(null);
-  const [addStudentId, setAddStudentId] = useState("");
+  // セッション作成モーダル（空き枠クリック＝生徒選択式 / D&Dドロップ＝生徒固定）。
+  // fixedStudent があれば D&D 由来で生徒は固定表示、無ければ select で選ぶ。
+  const [addDialog, setAddDialog] = useState<{
+    date: string;
+    time: string;
+    fixedStudent?: { uid: string; name: string };
+  } | null>(null);
+  const [formStudentId, setFormStudentId] = useState("");
+  const [formType, setFormType] = useState<SessionType>("coaching");
+  const [formIsResearch, setFormIsResearch] = useState(false);
 
   // 週の範囲を計算
   const weekEnd = useMemo(() => {
@@ -135,13 +143,16 @@ export default function AdminSessionsPage() {
     studentName: string,
     date: string,
     time: string,
+    type: SessionType,
+    isResearch: boolean,
   ) => {
     try {
       const response = await authFetch('/api/sessions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          type: 'coaching',
+          type,
+          isResearch,
           studentId,
           studentName,
           teacherId: '',
@@ -163,11 +174,13 @@ export default function AdminSessionsPage() {
     }
   };
 
-  // ドロップハンドラー（未配置カードを枠にドロップ）
-  const handleDropStudent = async (studentId: string, date: string, time: string) => {
+  // ドロップハンドラー（未配置カードを枠にドロップ）。即作成せず、生徒固定で作成モーダルを開く。
+  const handleDropStudent = (studentId: string, date: string, time: string) => {
     const studentData = unplacedStudents.find(s => s.uid === studentId);
     if (!studentData) return;
-    await createSessionAt(studentId, studentData.displayName, date, time);
+    setAddDialog({ date, time, fixedStudent: { uid: studentId, name: studentData.displayName } });
+    setFormType("coaching");
+    setFormIsResearch(false);
   };
 
   // セッション移動ハンドラー（D&Dで別の時間帯に移動）
@@ -336,8 +349,10 @@ export default function AdminSessionsPage() {
             onResizeSession={handleResizeSession}
             onClickSession={handleSessionClick}
             onClickEmptySlot={(date, time) => {
-              setAddSlot({ date, time });
-              setAddStudentId("");
+              setAddDialog({ date, time });
+              setFormStudentId("");
+              setFormType("coaching");
+              setFormIsResearch(false);
             }}
           />
         ) : (
@@ -413,42 +428,86 @@ export default function AdminSessionsPage() {
         </div>
       )}
 
-      {/* 直接予定を追加（空き枠クリック）。生徒選択以外は D&D と同じ */}
-      {addSlot && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" onClick={() => setAddSlot(null)}>
+      {/* セッション作成モーダル（空き枠クリック＝生徒選択 / D&Dドロップ＝生徒固定）。講師は作成後に選択 */}
+      {addDialog && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" onClick={() => setAddDialog(null)}>
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
             <div className="space-y-4">
               <div className="space-y-1">
                 <h3 className="font-semibold text-lg">予定を追加</h3>
                 <p className="text-sm text-muted-foreground">
-                  {addSlot.date} {addSlot.time} に予定を作成します。生徒を選択してください（講師は作成後に選択）。
+                  {addDialog.date} {addDialog.time} に予定を作成します（講師は作成後に選択）。
                 </p>
               </div>
-              <select
-                className="w-full rounded-md border px-3 py-2 text-sm"
-                value={addStudentId}
-                onChange={(e) => setAddStudentId(e.target.value)}
-              >
-                <option value="">-- 生徒を選択 --</option>
-                {coachStudents.map((s) => (
-                  <option key={s.uid} value={s.uid}>
-                    {s.displayName}
-                  </option>
-                ))}
-              </select>
+
+              {/* 生徒: D&D由来は固定表示、クリック由来は選択 */}
+              {addDialog.fixedStudent ? (
+                <div className="rounded-md border bg-gray-50 px-3 py-2 text-sm">
+                  生徒: <span className="font-medium">{addDialog.fixedStudent.name}</span>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">生徒</label>
+                  <select
+                    className="w-full rounded-md border px-3 py-2 text-sm"
+                    value={formStudentId}
+                    onChange={(e) => setFormStudentId(e.target.value)}
+                  >
+                    <option value="">-- 生徒を選択 --</option>
+                    {coachStudents.map((s) => (
+                      <option key={s.uid} value={s.uid}>
+                        {s.displayName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* 種別（group_review はカレンダーからは作成しない） */}
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">種別</label>
+                <select
+                  className="w-full rounded-md border px-3 py-2 text-sm"
+                  value={formType}
+                  onChange={(e) => setFormType(e.target.value as SessionType)}
+                >
+                  {(Object.entries(SESSION_TYPE_LABELS) as [SessionType, string][])
+                    .filter(([t]) => t !== "group_review")
+                    .map(([t, label]) => (
+                      <option key={t} value={t}>
+                        {label}
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              {/* 探究授業フラグ */}
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  className="size-4"
+                  checked={formIsResearch}
+                  onChange={(e) => setFormIsResearch(e.target.checked)}
+                />
+                探究授業セッション（生徒が講師に教える回）
+              </label>
+
               <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setAddSlot(null)} className="flex-1">
+                <Button variant="outline" onClick={() => setAddDialog(null)} className="flex-1">
                   キャンセル
                 </Button>
                 <Button
                   className="flex-1"
-                  disabled={!addStudentId}
+                  disabled={!addDialog.fixedStudent && !formStudentId}
                   onClick={() => {
-                    const s = coachStudents.find((x) => x.uid === addStudentId);
-                    if (!s || !addSlot) return;
-                    const slot = addSlot;
-                    setAddSlot(null);
-                    void createSessionAt(s.uid, s.displayName, slot.date, slot.time);
+                    const dialog = addDialog;
+                    const studentId = dialog.fixedStudent?.uid ?? formStudentId;
+                    const studentName =
+                      dialog.fixedStudent?.name ??
+                      coachStudents.find((x) => x.uid === formStudentId)?.displayName;
+                    if (!studentId || !studentName) return;
+                    setAddDialog(null);
+                    void createSessionAt(studentId, studentName, dialog.date, dialog.time, formType, formIsResearch);
                   }}
                 >
                   追加
