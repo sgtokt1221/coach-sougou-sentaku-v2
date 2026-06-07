@@ -342,6 +342,7 @@ export async function GET(request: NextRequest) {
           uid,
           displayName: data.displayName ?? "",
           email: data.email ?? "",
+          plan: (data.plan as "self" | "coach" | undefined) ?? "self",
           photoURL: data.photoURL ?? null,
           targetUniversities: data.targetUniversities ?? [],
           resolvedUniversities: resolveTargetUniversities(data.targetUniversities),

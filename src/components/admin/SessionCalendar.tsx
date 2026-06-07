@@ -214,14 +214,22 @@ export default function SessionCalendar({
           return (
             <div
               key={index}
-              className={`bg-white border-r border-gray-300 flex flex-col items-center justify-center text-sm font-medium ${
-                isToday ? 'bg-primary/5' : ''
+              className={`border-r border-gray-300 flex flex-col items-center justify-center gap-0.5 text-sm font-medium ${
+                isToday ? 'bg-primary/10' : 'bg-white'
               }`}
             >
-              <div>{dayNames[date.getDay()]}</div>
-              <div className="text-xs text-gray-600">
-                {date.getMonth() + 1}/{date.getDate()}
+              <div className={isToday ? 'text-primary font-bold' : ''}>
+                {dayNames[date.getDay()]}
               </div>
+              {isToday ? (
+                <div className="inline-flex items-center justify-center rounded-full bg-primary px-2 py-0.5 text-xs font-bold text-white">
+                  {date.getMonth() + 1}/{date.getDate()}
+                </div>
+              ) : (
+                <div className="text-xs text-gray-600">
+                  {date.getMonth() + 1}/{date.getDate()}
+                </div>
+              )}
             </div>
           );
         })}
