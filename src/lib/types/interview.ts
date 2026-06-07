@@ -200,6 +200,23 @@ export interface VideoAnalysis {
     postureAdvice: string;
     overallBodyLanguageAdvice: string;
   };
+  /**
+   * 表情・感情の印象 (MediaPipe blendshapes 由来)。0-10 はあくまで「印象の傾向」。
+   * blendshapes 非対応端末では undefined (後方互換のため optional)。
+   */
+  affect?: {
+    warmth: number;       // 明るさ・親しみやすさ 0-10
+    tension: number;      // 緊張度 0-10 (高いほど緊張)
+    composure: number;    // 落ち着き 0-10
+    engagement: number;   // 熱意・表情の豊かさ 0-10
+    blinkRate: number;    // まばたき/分
+    feedback: {
+      warmthAdvice: string;
+      tensionAdvice: string;
+      composureAdvice: string;
+      engagementAdvice: string;
+    };
+  };
 }
 
 export interface VoiceAnalysis {

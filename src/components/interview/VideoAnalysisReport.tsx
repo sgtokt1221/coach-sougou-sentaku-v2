@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Video, Eye, Smile, Move, CheckCircle, AlertCircle } from "lucide-react";
+import { Video, Eye, Smile, Move, CheckCircle, AlertCircle, Sparkles } from "lucide-react";
 import type { VideoAnalysis } from "@/lib/types/interview";
 
 interface VideoAnalysisReportProps {
@@ -109,6 +109,69 @@ export default function VideoAnalysisReport({ analysis }: VideoAnalysisReportPro
             {analysis.feedback.expressionAdvice}
           </p>
         </div>
+
+        {/* 表情・感情の印象 (傾向) */}
+        {analysis.affect && (
+          <div className="space-y-3 rounded-lg border p-3">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <Sparkles className="size-4 text-pink-500" />
+              表情・感情の印象（傾向）
+            </div>
+
+            {/* 明るさ */}
+            <div className="space-y-1">
+              <div className="flex justify-between text-sm">
+                <span>明るさ・親しみやすさ</span>
+                <span className={`font-medium ${ScoreColor(analysis.affect.warmth)}`}>
+                  {analysis.affect.warmth}/10
+                </span>
+              </div>
+              <RateBar value={analysis.affect.warmth} max={10} color={analysis.affect.warmth >= 5 ? "bg-pink-500" : "bg-amber-500"} />
+              <p className="text-xs text-muted-foreground">{analysis.affect.feedback.warmthAdvice}</p>
+            </div>
+
+            {/* 緊張度 (高いほど注意色) */}
+            <div className="space-y-1">
+              <div className="flex justify-between text-sm">
+                <span>緊張度</span>
+                <span className={`font-medium ${analysis.affect.tension >= 6 ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400"}`}>
+                  {analysis.affect.tension}/10
+                </span>
+              </div>
+              <RateBar value={analysis.affect.tension} max={10} color={analysis.affect.tension >= 6 ? "bg-rose-500" : "bg-emerald-500"} />
+              <p className="text-xs text-muted-foreground">{analysis.affect.feedback.tensionAdvice}</p>
+            </div>
+
+            {/* 落ち着き */}
+            <div className="space-y-1">
+              <div className="flex justify-between text-sm">
+                <span>落ち着き</span>
+                <span className={`font-medium ${ScoreColor(analysis.affect.composure)}`}>
+                  {analysis.affect.composure}/10
+                </span>
+              </div>
+              <RateBar value={analysis.affect.composure} max={10} color={analysis.affect.composure >= 5 ? "bg-sky-500" : "bg-amber-500"} />
+              <p className="text-xs text-muted-foreground">{analysis.affect.feedback.composureAdvice}</p>
+            </div>
+
+            {/* 熱意・表情の豊かさ */}
+            <div className="space-y-1">
+              <div className="flex justify-between text-sm">
+                <span>熱意・表情の豊かさ</span>
+                <span className={`font-medium ${ScoreColor(analysis.affect.engagement)}`}>
+                  {analysis.affect.engagement}/10
+                </span>
+              </div>
+              <RateBar value={analysis.affect.engagement} max={10} color={analysis.affect.engagement >= 5 ? "bg-violet-500" : "bg-amber-500"} />
+              <p className="text-xs text-muted-foreground">{analysis.affect.feedback.engagementAdvice}</p>
+            </div>
+
+            <div className="flex justify-between text-xs text-muted-foreground pt-1">
+              <span>まばたき: {analysis.affect.blinkRate}/分</span>
+              <span>※ AIによる印象の傾向です（断定ではありません）</span>
+            </div>
+          </div>
+        )}
 
         {/* Posture & Body Language */}
         <div className="space-y-2 rounded-lg border p-3">

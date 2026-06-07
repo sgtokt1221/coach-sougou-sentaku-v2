@@ -48,7 +48,19 @@ interface FrameData {
   isEyeContact: boolean;
   isSmiling: boolean;
   headTiltDeg: number;
+  // blendshapes 由来の表情係数 (0-1)。非対応端末では全て 0。
+  smile: number;     // mouthSmile L/R 平均
+  cheek: number;     // cheekSquint L/R 平均 (Duchenne 判定)
+  browDown: number;  // browDown L/R 平均 (眉間のしわ)
+  lipPress: number;  // mouthPress L/R 平均 (口の引き結び)
+  noseSneer: number; // noseSneer L/R 平均
+  browUp: number;    // browInnerUp + browOuterUp L/R 平均 (眉の動き)
+  jawOpen: number;   // jawOpen (発話)
+  blink: number;     // eyeBlink L/R 平均
 }
+
+/** blink 立ち上がり判定の閾値 */
+const BLINK_THRESHOLD = 0.5;
 
 function dist2d(
   x1: number, y1: number, x2: number, y2: number
@@ -109,6 +121,105 @@ function generateVideoFeedback(
   return { eyeContactAdvice, expressionAdvice, postureAdvice, overallBodyLanguageAdvice };
 }
 
+function scale10(x: number): number {
+  return Math.round(Math.max(0, Math.min(10, x)) * 10) / 10;
+}
+
+/** 傾向ベースの穏当なアドバイス (断定を避ける) */
+function generateAffectFeedback(
+  warmth: number,
+  tension: number,
+  composure: number,
+  engagement: number,
+): NonNullable<VideoAnalysis["affect"]>["feedback"] {
+  const warmthAdvice =
+    warmth >= 6
+      ? "やわらかい表情で、親しみやすい印象が出ています。"
+      : warmth >= 3
+        ? "もう少し口角を上げると、明るい印象になりやすいです。"
+        : "表情がやや硬めの傾向です。自然な笑顔を少し意識してみましょう。";
+  const tensionAdvice =
+    tension >= 6
+      ? "やや緊張が表情に出ている傾向です。深呼吸や間の取り方で和らげられます。"
+      : tension >= 3
+        ? "適度な緊張感です。落ち着いて話せています。"
+        : "リラックスして臨めている印象です。";
+  const composureAdvice =
+    composure >= 6
+      ? "落ち着いた佇まいで安定して見えます。"
+      : composure >= 3
+        ? "おおむね落ち着いていますが、間を意識するとより安定します。"
+        : "やや余裕がなく見える傾向です。ゆっくり話すと落ち着いて見えます。";
+  const engagementAdvice =
+    engagement >= 6
+      ? "表情に動きがあり、熱意が伝わりやすい話し方です。"
+      : engagement >= 3
+        ? "もう少し表情に変化をつけると、熱意がより伝わります。"
+        : "表情の変化が少なめの傾向です。大事な箇所で表情を添えてみましょう。";
+  return { warmthAdvice, tensionAdvice, composureAdvice, engagementAdvice };
+}
+
+/**
+ * blendshapes 由来の「面接向け感情指標」を算出 (印象の傾向, 0-10)。
+ * blendshapes が実質取得できていなければ undefined を返す (後方互換 degrade)。
+ */
+function buildAffect(
+  frames: FrameData[],
+  durationMinutes: number,
+  positionStability: number,
+): VideoAnalysis["affect"] {
+  const n = frames.length;
+  if (n === 0) return undefined;
+  // 全フレーム実質ゼロ = blendshapes 非対応とみなす
+  const hasData = frames.some(
+    (f) => f.smile > 0 || f.browUp > 0 || f.jawOpen > 0 || f.blink > 0,
+  );
+  if (!hasData) return undefined;
+
+  const mean = (sel: (f: FrameData) => number) =>
+    frames.reduce((a, f) => a + sel(f), 0) / n;
+  const smile = mean((f) => f.smile);
+  const cheek = mean((f) => f.cheek);
+  const browDown = mean((f) => f.browDown);
+  const lipPress = mean((f) => f.lipPress);
+  const noseSneer = mean((f) => f.noseSneer);
+
+  // blink rate: 立ち上がり(>=閾値)回数 / 分
+  let blinks = 0;
+  let prevBlink = false;
+  for (const f of frames) {
+    const b = f.blink >= BLINK_THRESHOLD;
+    if (b && !prevBlink) blinks++;
+    prevBlink = b;
+  }
+  const blinkRate = durationMinutes > 0 ? Math.round(blinks / durationMinutes) : 0;
+
+  // warmth: 笑顔 + Duchenne(頬も上がる本物の笑顔)ボーナス
+  const duchenne = smile > 0.2 ? Math.min(1, cheek * 1.5) : 0;
+  const warmth = scale10(smile * 12 + duchenne * 2);
+
+  // tension: 眉間/口の引き結び/鼻のこわばり + まばたき過多
+  const blinkTension = blinkRate > 25 ? Math.min(2, ((blinkRate - 25) / 15) * 2) : 0;
+  const tension = scale10((browDown * 0.5 + lipPress * 0.35 + noseSneer * 0.15) * 18 + blinkTension);
+
+  // engagement: 眉/口の動きの大きさ(時間変動) + 笑顔の有無
+  const browUpStd = stdDev(frames.map((f) => f.browUp));
+  const jawStd = stdDev(frames.map((f) => f.jawOpen));
+  const engagement = scale10(browUpStd * 30 + jawStd * 20 + (smile > 0.15 ? 2 : 0));
+
+  // composure: 低 tension + 姿勢安定
+  const composure = scale10((10 - tension) * 0.6 + positionStability * 10 * 0.4);
+
+  return {
+    warmth,
+    tension,
+    composure,
+    engagement,
+    blinkRate,
+    feedback: generateAffectFeedback(warmth, tension, composure, engagement),
+  };
+}
+
 function VideoAnalyzerInner(
   { mediaStream, isRecording, onAnalysisComplete, onGazeAlert }: VideoAnalyzerProps,
   ref: ForwardedRef<VideoAnalyzerHandle>,
@@ -122,6 +233,7 @@ function VideoAnalyzerInner(
   const eyeContactStreakRef = useRef<number[]>([]);
   const currentStreakRef = useRef<number>(0);
   const wasRecordingRef = useRef(false);
+  const blendshapeNamesLoggedRef = useRef(false);
   const initializingRef = useRef(false);
   const errorCountRef = useRef(0);
   const lastDetectTimeRef = useRef<number | null>(null);
@@ -192,7 +304,7 @@ function VideoAnalyzerInner(
                 },
                 runningMode: "VIDEO",
                 numFaces: 1,
-                outputFaceBlendshapes: false,
+                outputFaceBlendshapes: true,
                 outputFacialTransformationMatrixes: false,
               });
             } catch {
@@ -204,7 +316,7 @@ function VideoAnalyzerInner(
                 },
                 runningMode: "VIDEO",
                 numFaces: 1,
-                outputFaceBlendshapes: false,
+                outputFaceBlendshapes: true,
                 outputFacialTransformationMatrixes: false,
               });
             }
@@ -253,7 +365,10 @@ function VideoAnalyzerInner(
           const result = fl.detectForVideo(video, ts);
           if (result?.faceLandmarks && result.faceLandmarks.length > 0) {
             const landmarks = result.faceLandmarks[0];
-            processLandmarks(landmarks, now);
+            const blendshapes = (
+              result as { faceBlendshapes?: Array<{ categories?: Array<{ categoryName: string; score: number }> }> }
+            ).faceBlendshapes?.[0]?.categories;
+            processLandmarks(landmarks, now, blendshapes);
           }
           errorCountRef.current = 0;
         } catch {
@@ -272,9 +387,32 @@ function VideoAnalyzerInner(
 
     function processLandmarks(
       landmarks: Array<{ x: number; y: number; z: number }>,
-      timestamp: number
+      timestamp: number,
+      blendshapes?: Array<{ categoryName: string; score: number }>,
     ) {
       const nose = landmarks[NOSE_TIP];
+
+      // blendshapes (ARKit 52種, categoryName->score) を辞書化して参照
+      let bsMap: Record<string, number> | null = null;
+      if (blendshapes && blendshapes.length > 0) {
+        bsMap = {};
+        for (const c of blendshapes) bsMap[c.categoryName] = c.score;
+        // 初回のみ利用可能な categoryName を dev ログ (名前突合用)
+        if (process.env.NODE_ENV === "development" && !blendshapeNamesLoggedRef.current) {
+          blendshapeNamesLoggedRef.current = true;
+          console.log("[VideoAnalyzer] blendshape categories:", blendshapes.map((c) => c.categoryName).join(","));
+        }
+      }
+      const bs = (name: string) => (bsMap ? bsMap[name] ?? 0 : 0);
+      const avg2 = (a: string, b: string) => (bs(a) + bs(b)) / 2;
+      const frameSmile = avg2("mouthSmileLeft", "mouthSmileRight");
+      const frameCheek = avg2("cheekSquintLeft", "cheekSquintRight");
+      const frameBrowDown = avg2("browDownLeft", "browDownRight");
+      const frameLipPress = avg2("mouthPressLeft", "mouthPressRight");
+      const frameNoseSneer = avg2("noseSneerLeft", "noseSneerRight");
+      const frameBrowUp = (bs("browInnerUp") + avg2("browOuterUpLeft", "browOuterUpRight")) / 2;
+      const frameJawOpen = bs("jawOpen");
+      const frameBlink = avg2("eyeBlinkLeft", "eyeBlinkRight");
 
       // Eye contact detection using iris landmarks
       let isEyeContact = false;
@@ -348,6 +486,14 @@ function VideoAnalyzerInner(
         isEyeContact,
         isSmiling,
         headTiltDeg,
+        smile: frameSmile,
+        cheek: frameCheek,
+        browDown: frameBrowDown,
+        lipPress: frameLipPress,
+        noseSneer: frameNoseSneer,
+        browUp: frameBrowUp,
+        jawOpen: frameJawOpen,
+        blink: frameBlink,
       });
     }
 
@@ -447,6 +593,8 @@ function VideoAnalyzerInner(
       avgHeadTilt
     );
 
+    const affect = buildAffect(frames, durationMinutes, positionStability);
+
     return {
       eyeContactRate: Math.round(eyeContactRate * 10) / 10,
       eyeContactDuration: Math.round(eyeContactDuration * 10) / 10,
@@ -458,6 +606,7 @@ function VideoAnalyzerInner(
       nodRate: Math.round(nodRate * 10) / 10,
       overallVideoScore: Math.min(10, Math.max(0, overallVideoScore)),
       feedback,
+      ...(affect ? { affect } : {}),
     };
   }, []);
 
