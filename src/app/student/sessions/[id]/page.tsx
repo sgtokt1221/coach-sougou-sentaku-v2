@@ -21,7 +21,8 @@ import { toast } from "sonner";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { StudentRecordingController } from "@/components/student/StudentRecordingController";
 import SessionArtifactsPanel from "@/components/sessions/SessionArtifactsPanel";
-import { ResearchSessionPanel } from "@/components/research/ResearchSessionPanel";
+import { ResearchEvalView } from "@/components/research/ResearchEvalView";
+import type { ResearchEvalResult } from "@/lib/ai/prompts/research";
 import type { Session, SessionStatus, SessionSubmission } from "@/lib/types/session";
 import { SESSION_TYPE_LABELS, SESSION_STATUS_LABELS } from "@/lib/types/session";
 import { useAuth } from "@/contexts/AuthContext";
@@ -52,6 +53,13 @@ export default function StudentSessionDetailPage() {
   const [votedSubmissions, setVotedSubmissions] = useState<Set<string>>(new Set());
   const [absentOpen, setAbsentOpen] = useState(false);
   const [reporting, setReporting] = useState(false);
+  // 探究セッションの講評（このセッションの最新分）と前回の「次回やること」
+  const [researchCurrent, setResearchCurrent] = useState<{
+    topic: string;
+    feedback: ResearchEvalResult | null;
+    nextItems: string[];
+  } | null>(null);
+  const [researchPrevNext, setResearchPrevNext] = useState<string[]>([]);
 
   async function reportAbsence() {
     setReporting(true);
@@ -86,6 +94,29 @@ export default function StudentSessionDetailPage() {
       // For group_review sessions, load additional data
       if (data.type === "group_review") {
         await loadGroupReviewData();
+      }
+
+      // 探究セッション: このセッションの講評と前回の「次回やること」を取得
+      if (data.isResearch && data.type !== "group_review") {
+        try {
+          const r = await authFetch(`/api/research/sessions`);
+          if (r.ok) {
+            const list = (await r.json()) as Array<{
+              topic: string;
+              feedback: ResearchEvalResult | null;
+              nextItems: string[];
+              sessionId: string | null;
+            }>;
+            const cur = list.find((x) => x.sessionId === id) ?? null;
+            setResearchCurrent(
+              cur ? { topic: cur.topic, feedback: cur.feedback, nextItems: cur.nextItems } : null
+            );
+            const prev = list.find((x) => x.sessionId !== id);
+            setResearchPrevNext(prev?.nextItems ?? []);
+          }
+        } catch {
+          /* noop */
+        }
       }
     } catch {
       setSession(null);
@@ -223,10 +254,13 @@ export default function StudentSessionDetailPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-5 lg:py-8 space-y-4 lg:space-y-6">
-      <StudentRecordingController
-        sessionId={id}
-        teacherName={session.teacherName}
-      />
+      {/* 探究セッションは講師がその場で録音するため、生徒側の録音は出さない */}
+      {!session.isResearch && (
+        <StudentRecordingController
+          sessionId={id}
+          teacherName={session.teacherName}
+        />
+      )}
 
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="sm" onClick={() => router.back()}>
@@ -349,8 +383,46 @@ export default function StudentSessionDetailPage() {
         </CardContent>
       </Card>
 
-      {/* 自己探究授業モード（探究セッション かつ 受講＋保護者同意済みの生徒のみ表示） */}
-      {session.isResearch && <ResearchSessionPanel embedded />}
+      {/* 探究授業セッション: 閲覧専用ビュー（録音は講師が実施） */}
+      {session.isResearch && session.type !== "group_review" && (
+        <div className="space-y-4">
+          {researchPrevNext.length > 0 && (
+            <Card className="border-sky-200 bg-sky-50/60">
+              <CardHeader>
+                <CardTitle className="text-base">今回の準備（前回の「次回やること」）</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="list-disc space-y-1 pl-5 text-sm">
+                  {researchPrevNext.map((it, i) => (
+                    <li key={i}>{it}</li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+
+          {researchCurrent?.feedback ? (
+            <ResearchEvalView feedback={researchCurrent.feedback} topic={researchCurrent.topic} />
+          ) : (
+            <Card>
+              <CardContent className="py-8 text-center text-sm text-muted-foreground">
+                この回の講評はまだありません。授業で先生が発表を記録すると、ここに表示されます。
+              </CardContent>
+            </Card>
+          )}
+
+          {session.researchTeacherComment && (
+            <Card className="border-primary/30">
+              <CardHeader>
+                <CardTitle className="text-base">先生からのコメント</CardTitle>
+              </CardHeader>
+              <CardContent className="whitespace-pre-wrap text-sm">
+                {session.researchTeacherComment}
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
 
       {/* 欠席連絡 確認ダイアログ */}
       <Dialog open={absentOpen} onOpenChange={setAbsentOpen}>
@@ -505,8 +577,8 @@ export default function StudentSessionDetailPage() {
         </>
       )}
 
-      {/* 前回〜今回の取り組み（通常セッションのみ） */}
-      {session.type !== "group_review" && (
+      {/* 前回〜今回の取り組み（通常コーチングセッションのみ。探究・グループは出さない） */}
+      {session.type !== "group_review" && !session.isResearch && (
         <SessionArtifactsPanel
           endpoint={`/api/student/sessions/${id}/artifacts`}
           studentView

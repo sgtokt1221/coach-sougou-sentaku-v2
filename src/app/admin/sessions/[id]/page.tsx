@@ -44,6 +44,7 @@ import { SessionTranscriptCard } from "@/components/admin/SessionTranscriptCard"
 import { PreviousSessionDebriefCard } from "@/components/admin/PreviousSessionDebriefCard";
 import { SessionLifecycleBar } from "@/components/admin/SessionLifecycleBar";
 import { SessionReportDialog } from "@/components/admin/SessionReportDialog";
+import { AdminResearchSession } from "@/components/admin/AdminResearchSession";
 
 const STATUS_VARIANT: Record<
   SessionStatus,
@@ -280,6 +281,9 @@ export default function AdminSessionDetailPage() {
     ? session.format === "online"
     : !!session.meetLink;
 
+  // 探究授業セッション（生徒が講師に教える回）は専用レイアウトにする
+  const isResearchSession = !!session.isResearch && session.type !== "group_review";
+
   // 基本情報 + 操作 (1 対 1 は左カラム先頭、グループは単一カラム先頭で共用)
   const basicInfoCard = (
     <Card>
@@ -513,7 +517,20 @@ export default function AdminSessionDetailPage() {
         <h1 className="text-xl font-bold">セッション詳細</h1>
       </div>
 
-      {session.type !== "group_review" ? (
+      {isResearchSession ? (
+        /* 探究授業: 専用レイアウト（基本情報＋講師録音・AI講評＋所見＋メモ） */
+        <div className="space-y-6">
+          {basicInfoCard}
+          <AdminResearchSession
+            sessionId={id}
+            studentName={session.studentName}
+            initialComment={session.researchTeacherComment}
+            onSaveComment={(c) => patchSession({ researchTeacherComment: c })}
+            savingComment={saving}
+          />
+          {memoCard}
+        </div>
+      ) : session.type !== "group_review" ? (
         /* 1 対 1: 2 カラム (左=参照 / 右=入力系) */
         <div className="grid items-start gap-6 lg:grid-cols-2">
           {/* 左: 参照 (基本情報+操作 → 生徒情報) */}

@@ -14,6 +14,8 @@ export interface Session {
   status: SessionStatus;
   /** 自己探究授業セッション（生徒が教える回）。true のとき生徒側で探究パネルを表示 */
   isResearch?: boolean;
+  /** 探究セッションに対する講師の所見（自由コメント。生徒にも表示） */
+  researchTeacherComment?: string;
   /** 授業形態 (1 対 1 のみ。online=Meet 利用 / offline=対面)。未設定は meetLink 有無でフォールバック判定 */
   format?: "online" | "offline";
   scheduledAt: string;

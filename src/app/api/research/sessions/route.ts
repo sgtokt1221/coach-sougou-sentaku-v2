@@ -30,6 +30,7 @@ export async function GET(request: NextRequest) {
         topic: data.topic ?? "",
         feedback: data.feedback ?? null,
         nextItems: data.nextItems ?? [],
+        sessionId: data.sessionId ?? null,
         createdAt: data.createdAt?.toDate?.()?.toISOString() ?? null,
       };
     });
