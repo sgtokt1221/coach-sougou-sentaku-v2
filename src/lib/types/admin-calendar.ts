@@ -1,4 +1,4 @@
-import type { SessionType } from "./session";
+import type { SessionType, SessionStatus } from "./session";
 
 export type CalendarEventType =
   | "session"
@@ -34,6 +34,8 @@ export interface CalendarEvent {
   /** 管理ポータル内遷移先 */
   href?: string;
   sessionType?: SessionType;
+  /** セッションの状態 (session のみ)。cancelled=欠席 を赤表示するのに使う */
+  status?: SessionStatus;
   /** 管理者カスタムイベントの Firestore ID (custom のみ)。編集/削除時に使用 */
   adminEventId?: string;
 }

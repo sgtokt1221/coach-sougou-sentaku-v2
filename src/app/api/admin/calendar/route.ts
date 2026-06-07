@@ -181,7 +181,6 @@ export async function GET(request: NextRequest) {
       }
       for (const doc of sessionDocs) {
         const s = doc.data();
-        if (s.status === "cancelled") continue;
         const scheduledAt = s.scheduledAt as string | undefined;
         if (!scheduledAt) continue;
         // scheduledAt は TZ 無しの JST-naive 文字列 ("2026-06-03T11:00")。
@@ -221,6 +220,7 @@ export async function GET(request: NextRequest) {
           studentNames: studentName ? [studentName] : [],
           href: `/admin/sessions/${doc.id}`,
           sessionType: s.type,
+          status: s.status,
         });
       }
     } catch (err) {

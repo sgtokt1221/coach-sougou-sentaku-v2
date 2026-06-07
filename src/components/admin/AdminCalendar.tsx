@@ -341,14 +341,17 @@ export function AdminCalendar() {
                       )}
                     </div>
                     <div className="mt-0.5 space-y-0.5">
-                      {visible.map((ev) => (
+                      {visible.map((ev) => {
+                        const cancelled = ev.type === "session" && ev.status === "cancelled";
+                        return (
                         <div
                           key={ev.id}
-                          className={`flex items-center gap-1 rounded px-1 py-0.5 text-[10px] text-white truncate ${CALENDAR_EVENT_COLORS[ev.type]}`}
+                          className={`flex items-center gap-1 rounded px-1 py-0.5 text-[10px] text-white truncate ${cancelled ? "bg-rose-500 line-through opacity-80" : CALENDAR_EVENT_COLORS[ev.type]}`}
                           title={
-                            ev.allDay
+                            (cancelled ? "【欠席】" : "") +
+                            (ev.allDay
                               ? ev.label
-                              : `${formatTimeRange(ev.startAt, ev.endAt)} ${ev.label}`
+                              : `${formatTimeRange(ev.startAt, ev.endAt)} ${ev.label}`)
                           }
                         >
                           {!ev.allDay && (
@@ -358,7 +361,8 @@ export function AdminCalendar() {
                           )}
                           <span className="truncate">{ev.label}</span>
                         </div>
-                      ))}
+                        );
+                      })}
                       {extraCount > 0 && (
                         <div className="px-1 text-[10px] text-muted-foreground">
                           +{extraCount} 件
@@ -563,15 +567,18 @@ interface EventRowProps {
 }
 
 function EventRow({ event: ev, onEdit, onDelete, deleting }: EventRowProps) {
+  const cancelled = ev.type === "session" && ev.status === "cancelled";
   const body = (
     <div className="flex items-start gap-2 min-w-0 flex-1">
       <span
-        className={`mt-1 inline-block size-2 shrink-0 rounded-full ${CALENDAR_EVENT_COLORS[ev.type]}`}
+        className={`mt-1 inline-block size-2 shrink-0 rounded-full ${cancelled ? "bg-rose-500" : CALENDAR_EVENT_COLORS[ev.type]}`}
       />
       <div className="min-w-0 flex-1">
-        <div className="text-sm font-medium truncate">{ev.label}</div>
+        <div className={`text-sm font-medium truncate ${cancelled ? "line-through text-muted-foreground" : ""}`}>
+          {ev.label}
+        </div>
         <div className="text-xs text-muted-foreground">
-          {CALENDAR_EVENT_LABELS[ev.type]}
+          {cancelled ? "欠席" : CALENDAR_EVENT_LABELS[ev.type]}
           {!ev.allDay && ` ・ ${formatTimeRange(ev.startAt, ev.endAt)}`}
         </div>
         {ev.location && (
