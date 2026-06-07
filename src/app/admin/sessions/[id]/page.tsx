@@ -523,6 +523,7 @@ export default function AdminSessionDetailPage() {
           {basicInfoCard}
           <AdminResearchSession
             sessionId={id}
+            studentId={session.studentId}
             studentName={session.studentName}
             initialComment={session.researchTeacherComment}
             onSaveComment={(c) => patchSession({ researchTeacherComment: c })}

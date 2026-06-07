@@ -1,14 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
-import { loadResearchSelfContext } from "@/lib/ai/research-context";
-import {
-  buildCurriculumGeneratePrompt,
-  buildMockCurriculumUnits,
-  type GeneratedUnit,
-} from "@/lib/ai/prompts/research-curriculum";
-import type { ResearchCurriculum, ResearchCurriculumUnit } from "@/lib/types/research";
-import { RESEARCH_MAX_UNITS } from "@/lib/types/research";
+import { generateAndSaveCurriculum } from "@/lib/ai/research-curriculum-generate";
 
 interface GenerateBody {
   domain: string;
@@ -17,19 +10,10 @@ interface GenerateBody {
   unitCount: number;
 }
 
-function parseUnits(text: string): GeneratedUnit[] {
-  const m = text.match(/```json\s*([\s\S]*?)\s*```/) || text.match(/(\{[\s\S]*\})/);
-  if (!m) throw new Error("カリキュラムのパースに失敗");
-  const p = JSON.parse(m[1]);
-  const units = Array.isArray(p.units) ? p.units : [];
-  return units.map((u: Record<string, unknown>) => ({
-    title: String(u.title ?? ""),
-    aim: String(u.aim ?? ""),
-    research: Array.isArray(u.research) ? u.research.map(String) : [],
-    output: String(u.output ?? ""),
-  }));
-}
-
+/**
+ * 生徒自身によるカリキュラム生成（受講登録必須）。
+ * 現行フローでは生成は講師が行うため UI からは未使用だが、互換のため残置。
+ */
 export async function POST(request: NextRequest) {
   const auth = await requireRole(request, ["student"]);
   if (auth instanceof NextResponse) return auth;
@@ -45,59 +29,21 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = (await request.json()) as GenerateBody;
-    const domain = (body.domain ?? "").trim();
-    const theme = (body.theme ?? "").trim();
-    const goal = (body.goal ?? "").trim();
-    const unitCount = Math.min(RESEARCH_MAX_UNITS, Math.max(1, Math.round(body.unitCount || 0)));
-    if (!theme || !unitCount) {
-      return NextResponse.json({ error: "テーマと回数は必須です" }, { status: 400 });
-    }
-
-    const { text: selfContext } = await loadResearchSelfContext(uid);
-
-    let generated: GeneratedUnit[];
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      generated = buildMockCurriculumUnits(unitCount, theme || domain);
-    } else {
-      const Anthropic = (await import("@anthropic-ai/sdk")).default;
-      const client = new Anthropic();
-      const resp = await client.messages.create({
-        model: "claude-sonnet-4-6",
-        max_tokens: 4000,
-        system: buildCurriculumGeneratePrompt({ domain, theme, goal, unitCount, selfContext }),
-        messages: [{ role: "user", content: "上記の方針でカリキュラムを作成してください。" }],
-      });
-      const text = resp.content[0]?.type === "text" ? resp.content[0].text : "";
-      generated = parseUnits(text);
-    }
-
-    // order/status を付与（足りない/多い分は unitCount に合わせる）
-    const units: ResearchCurriculumUnit[] = generated.slice(0, unitCount).map((u, i) => ({
-      order: i + 1,
-      title: u.title,
-      aim: u.aim,
-      research: u.research,
-      output: u.output,
-      status: "todo",
-    }));
-
-    const now = new Date().toISOString();
-    const curriculum: ResearchCurriculum = {
-      domain,
-      theme,
-      goal,
-      totalUnits: unitCount,
-      units,
-      status: "active",
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    await adminDb.doc(`users/${uid}/researchCurriculum/current`).set(curriculum);
+    const curriculum = await generateAndSaveCurriculum({
+      studentUid: uid,
+      domain: body.domain,
+      theme: body.theme,
+      goal: body.goal,
+      unitCount: body.unitCount,
+    });
     return NextResponse.json(curriculum);
   } catch (error) {
-    console.error("Research curriculum generate error:", error);
-    return NextResponse.json({ error: "カリキュラム生成中にエラーが発生しました" }, { status: 500 });
+    const message =
+      error instanceof Error && /必須です/.test(error.message)
+        ? error.message
+        : "カリキュラム生成中にエラーが発生しました";
+    const status = message === "カリキュラム生成中にエラーが発生しました" ? 500 : 400;
+    if (status === 500) console.error("Research curriculum generate error:", error);
+    return NextResponse.json({ error: message }, { status });
   }
 }

@@ -22,6 +22,7 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { StudentRecordingController } from "@/components/student/StudentRecordingController";
 import SessionArtifactsPanel from "@/components/sessions/SessionArtifactsPanel";
 import { ResearchEvalView } from "@/components/research/ResearchEvalView";
+import { StudentResearchDecide } from "@/components/research/StudentResearchDecide";
 import type { ResearchEvalResult } from "@/lib/ai/prompts/research";
 import type { ResearchCurriculum, ResearchCurriculumUnit } from "@/lib/types/research";
 import type { Session, SessionStatus, SessionSubmission } from "@/lib/types/session";
@@ -62,6 +63,7 @@ export default function StudentSessionDetailPage() {
   } | null>(null);
   const [researchPrevNext, setResearchPrevNext] = useState<string[]>([]);
   const [researchUnit, setResearchUnit] = useState<ResearchCurriculumUnit | null>(null);
+  const [researchActive, setResearchActive] = useState(false);
 
   async function reportAbsence() {
     setReporting(true);
@@ -120,6 +122,7 @@ export default function StudentSessionDetailPage() {
           const cr = await authFetch(`/api/research/curriculum`);
           if (cr.ok) {
             const cur = (await cr.json()) as ResearchCurriculum | null;
+            setResearchActive(cur?.status === "active");
             if (cur?.units) {
               const unit =
                 cur.units.find((u) => u.sessionId === id) ??
@@ -397,8 +400,9 @@ export default function StudentSessionDetailPage() {
         </CardContent>
       </Card>
 
-      {/* 探究授業セッション: 閲覧専用ビュー（録音は講師が実施） */}
+      {/* 探究授業セッション: カリキュラム未作成なら分野決め問答、作成済みなら閲覧ビュー */}
       {session.isResearch && session.type !== "group_review" && (
+        researchActive ? (
         <div className="space-y-4">
           {researchUnit && (
             <Card className="border-teal-200 bg-teal-50/40">
@@ -464,6 +468,9 @@ export default function StudentSessionDetailPage() {
             </Card>
           )}
         </div>
+        ) : (
+          <StudentResearchDecide />
+        )
       )}
 
       {/* 欠席連絡 確認ダイアログ */}

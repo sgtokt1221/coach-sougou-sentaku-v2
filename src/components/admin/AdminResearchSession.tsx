@@ -13,7 +13,8 @@ import { ResearchEvalView } from "@/components/research/ResearchEvalView";
 import { authFetch } from "@/lib/api/client";
 import { toast } from "sonner";
 import type { ResearchEvalResult } from "@/lib/ai/prompts/research";
-import type { ResearchCurriculumUnit } from "@/lib/types/research";
+import type { ResearchCurriculum, ResearchCurriculumUnit } from "@/lib/types/research";
+import { RESEARCH_MAX_UNITS } from "@/lib/types/research";
 
 interface Attachment {
   dataBase64: string;
@@ -32,6 +33,7 @@ function readAsBase64(file: File): Promise<string> {
 
 interface AdminResearchSessionProps {
   sessionId: string;
+  studentId: string;
   studentName: string;
   /** 講師コメント初期値（session.researchTeacherComment） */
   initialComment?: string;
@@ -46,11 +48,18 @@ interface AdminResearchSessionProps {
  */
 export function AdminResearchSession({
   sessionId,
+  studentId,
   studentName,
   initialComment,
   onSaveComment,
   savingComment = false,
 }: AdminResearchSessionProps) {
+  const [curriculum, setCurriculum] = useState<ResearchCurriculum | null>(null);
+  const [genDomain, setGenDomain] = useState("");
+  const [genTheme, setGenTheme] = useState("");
+  const [genGoal, setGenGoal] = useState("");
+  const [genCount, setGenCount] = useState(8);
+  const [generating, setGenerating] = useState(false);
   const [topic, setTopic] = useState("");
   const [audio, setAudio] = useState<{ base64: string; mimeType: string } | null>(null);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -89,6 +98,58 @@ export function AdminResearchSession({
   useEffect(() => {
     loadExisting();
   }, [loadExisting]);
+
+  const loadCurriculum = useCallback(async () => {
+    try {
+      const res = await authFetch(`/api/admin/students/${studentId}/research-curriculum`);
+      if (!res.ok) return;
+      const data = (await res.json()) as ResearchCurriculum | null;
+      setCurriculum(data);
+      if (data && data.status !== "active") {
+        // draft の決定をプレフィル
+        setGenDomain(data.domain ?? "");
+        setGenTheme(data.theme ?? "");
+        setGenGoal(data.goal ?? "");
+      }
+    } catch {
+      /* noop */
+    }
+  }, [studentId]);
+
+  useEffect(() => {
+    loadCurriculum();
+  }, [loadCurriculum]);
+
+  const generateCurriculum = async () => {
+    if (!genTheme.trim()) {
+      toast.error("テーマを入力してください");
+      return;
+    }
+    setGenerating(true);
+    try {
+      const res = await authFetch(`/api/admin/students/${studentId}/research-curriculum/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          domain: genDomain,
+          theme: genTheme,
+          goal: genGoal,
+          unitCount: genCount,
+        }),
+      });
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({}));
+        throw new Error(e.error ?? "");
+      }
+      setCurriculum(await res.json());
+      await loadExisting(); // 今回のユニットを取得
+      toast.success("カリキュラムを作成しました");
+    } catch (err) {
+      toast.error(err instanceof Error && err.message ? err.message : "カリキュラム生成に失敗しました");
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   const onPickImages = async (files: FileList | null) => {
     if (!files) return;
@@ -149,6 +210,51 @@ export function AdminResearchSession({
         <Sparkles className="size-5 text-primary" />
         探究セッション（{studentName}が教える）
       </h2>
+
+      {!curriculum || curriculum.status !== "active" ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">カリキュラムを作成</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-xs text-muted-foreground">
+              {curriculum
+                ? "生徒が決めた分野・テーマを確認し、回数を決めて作成してください（編集可）。"
+                : "生徒がまだ分野を決めていません。生徒のセッション画面で分野が決まるとここに反映されます（手動入力でも作成できます）。"}
+            </p>
+            <div className="space-y-1">
+              <Label className="text-xs">分野</Label>
+              <Input value={genDomain} onChange={(e) => setGenDomain(e.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">テーマ</Label>
+              <Input value={genTheme} onChange={(e) => setGenTheme(e.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">ゴール／問い</Label>
+              <Input value={genGoal} onChange={(e) => setGenGoal(e.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">回数（1〜{RESEARCH_MAX_UNITS}）</Label>
+              <Input
+                type="number"
+                min={1}
+                max={RESEARCH_MAX_UNITS}
+                value={genCount}
+                onChange={(e) =>
+                  setGenCount(Math.min(RESEARCH_MAX_UNITS, Math.max(1, Number(e.target.value) || 1)))
+                }
+                className="w-24"
+              />
+            </div>
+            <Button onClick={generateCurriculum} disabled={generating || !genTheme.trim()}>
+              {generating && <Loader2 className="mr-1 size-4 animate-spin" />}
+              カリキュラムを生成
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <>
 
       {previousNextItems.length > 0 && (
         <Card className="border-sky-200 bg-sky-50/60">
@@ -298,6 +404,8 @@ export function AdminResearchSession({
           </Button>
         </CardContent>
       </Card>
+        </>
+      )}
     </div>
   );
 }
