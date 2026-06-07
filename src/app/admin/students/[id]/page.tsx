@@ -88,6 +88,7 @@ import type { SkillCheckStatus, AcademicCategory, SkillCheckResult } from "@/lib
 import type { InterviewSkillCheckStatus, InterviewSkillCheckResult } from "@/lib/types/interview-skill-check";
 import { SkillCheckDetailDialog } from "@/components/admin/SkillCheckDetailDialog";
 import { StudentSkillRadar } from "@/components/admin/StudentSkillRadar";
+import { SkillCheckHistorySection } from "@/components/admin/SkillCheckHistorySection";
 import { CategoryAverageRadar } from "@/components/admin/CategoryAverageRadar";
 
 const CERT_TYPES: { value: EnglishCert["type"]; label: string }[] = [
@@ -721,6 +722,14 @@ function AdminStudentDetailPageInner() {
           interviewSkillCheck?.latestResult &&
           setScDialog({ kind: "interview", result: interviewSkillCheck.latestResult })
         }
+      />
+
+      {/* スキルチェック履歴（過去回の原文＝対話ログ/答案を各回開ける） */}
+      <SkillCheckHistorySection
+        essayHistory={skillCheck?.history ?? []}
+        interviewHistory={interviewSkillCheck?.history ?? []}
+        onOpenEssay={(r) => setScDialog({ kind: "essay", result: r })}
+        onOpenInterview={(r) => setScDialog({ kind: "interview", result: r })}
       />
 
       {/* Profile Card */}
