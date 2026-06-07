@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, forwardRef, useImperativeHandle, type ForwardedRef } from "react";
 import type { VideoAnalysis } from "@/lib/types/interview";
 import type { FaceLandmarkerInstance } from "@mediapipe/tasks-vision";
 
@@ -10,6 +10,12 @@ interface VideoAnalyzerProps {
   onAnalysisComplete: (analysis: VideoAnalysis) => void;
   /** 視線が一定時間外れた時にリアルタイム警告を出すコールバック */
   onGazeAlert?: (message: string) => void;
+}
+
+/** 親から flush() を呼ぶための ref ハンドル。終了時のレース回避に使う */
+export interface VideoAnalyzerHandle {
+  /** 現時点の蓄積フレームから解析結果を同期的に算出して返す (副作用なし。データ不足は null) */
+  flush: () => VideoAnalysis | null;
 }
 
 /** 視線外れが続いたと見なす閾値(秒) */
@@ -103,12 +109,10 @@ function generateVideoFeedback(
   return { eyeContactAdvice, expressionAdvice, postureAdvice, overallBodyLanguageAdvice };
 }
 
-export default function VideoAnalyzer({
-  mediaStream,
-  isRecording,
-  onAnalysisComplete,
-  onGazeAlert,
-}: VideoAnalyzerProps) {
+function VideoAnalyzerInner(
+  { mediaStream, isRecording, onAnalysisComplete, onGazeAlert }: VideoAnalyzerProps,
+  ref: ForwardedRef<VideoAnalyzerHandle>,
+) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const faceLandmarkerRef = useRef<FaceLandmarkerInstance | null>(null);
@@ -357,125 +361,118 @@ export default function VideoAnalyzer({
     };
   }, [isRecording, mediaStream, cleanup]);
 
+  // 蓄積フレームから解析結果を算出する純関数 (ref を破壊しない＝flush と stop-effect の
+  // 二重呼びでも結果が変わらない。cleanup もしない)。フレーム不足は null。
+  const computeAnalysis = useCallback((): VideoAnalysis | null => {
+    const frames = frameDataRef.current;
+    if (frames.length < 5) return null;
+
+    const totalFrames = frames.length;
+    const durationMs = frames[totalFrames - 1].timestamp - frames[0].timestamp;
+    const durationMinutes = durationMs / 60000;
+
+    // Eye contact rate
+    const eyeContactFrames = frames.filter((f) => f.isEyeContact).length;
+    const eyeContactRate = (eyeContactFrames / totalFrames) * 100;
+
+    // Finalize current streak (ローカルで合算。ref は変更しない)
+    const streaks =
+      currentStreakRef.current > 0
+        ? [...eyeContactStreakRef.current, currentStreakRef.current]
+        : eyeContactStreakRef.current;
+    const eyeContactDuration =
+      streaks.length > 0 ? streaks.reduce((a, b) => a + b, 0) / streaks.length : 0;
+
+    // Smile rate
+    const smileFrames = frames.filter((f) => f.isSmiling).length;
+    const smileRate = (smileFrames / totalFrames) * 100;
+
+    // Expression variation (how often smile state changes)
+    let expressionChanges = 0;
+    for (let i = 1; i < totalFrames; i++) {
+      if (frames[i].isSmiling !== frames[i - 1].isSmiling) expressionChanges++;
+    }
+    const expressionVariation = Math.min(1, expressionChanges / (totalFrames * 0.1));
+
+    // Position stability (inverse of nose position standard deviation)
+    const noseXValues = frames.map((f) => f.noseX);
+    const noseYValues = frames.map((f) => f.noseY);
+    const stdDevX = stdDev(noseXValues);
+    const stdDevY = stdDev(noseYValues);
+    const movementMagnitude = Math.sqrt(stdDevX ** 2 + stdDevY ** 2);
+    const positionStability = Math.max(0, Math.min(1, 1 - movementMagnitude * 10));
+
+    // Average head tilt
+    const avgHeadTilt = frames.reduce((sum, f) => sum + f.headTiltDeg, 0) / totalFrames;
+
+    // Nod detection (peak detection on nose Y)
+    let nodCount = 0;
+    const smoothWindow = 3;
+    const smoothedY: number[] = [];
+    for (let i = 0; i < totalFrames; i++) {
+      const start = Math.max(0, i - smoothWindow);
+      const end = Math.min(totalFrames, i + smoothWindow + 1);
+      let sum = 0;
+      for (let j = start; j < end; j++) sum += frames[j].noseY;
+      smoothedY.push(sum / (end - start));
+    }
+    for (let i = 2; i < smoothedY.length - 2; i++) {
+      if (
+        smoothedY[i] > smoothedY[i - 1] &&
+        smoothedY[i] > smoothedY[i - 2] &&
+        smoothedY[i] > smoothedY[i + 1] &&
+        smoothedY[i] > smoothedY[i + 2]
+      ) {
+        const localMin = Math.min(smoothedY[i - 2], smoothedY[i + 2]);
+        if (smoothedY[i] - localMin > NOD_AMPLITUDE_THRESHOLD) nodCount++;
+      }
+    }
+    const nodRate = durationMinutes > 0 ? nodCount / durationMinutes : 0;
+
+    // Score calculation
+    const eyeContactScore = eyeContactRate >= 70 ? 9 : eyeContactRate >= 40 ? 6 : 3;
+    const smileScore = smileRate >= 30 ? 9 : smileRate >= 10 ? 6 : 3;
+    const stabilityScore = positionStability >= 0.8 ? 9 : positionStability >= 0.5 ? 6 : 3;
+    const nodScore = nodRate >= 3 && nodRate <= 15 ? 9 : nodRate >= 1 ? 6 : 3;
+
+    const overallVideoScore = Math.round(
+      (eyeContactScore * 0.35 + smileScore * 0.2 + stabilityScore * 0.25 + nodScore * 0.2) * 10
+    ) / 10;
+
+    const feedback = generateVideoFeedback(
+      eyeContactRate,
+      smileRate,
+      positionStability,
+      nodRate,
+      avgHeadTilt
+    );
+
+    return {
+      eyeContactRate: Math.round(eyeContactRate * 10) / 10,
+      eyeContactDuration: Math.round(eyeContactDuration * 10) / 10,
+      smileRate: Math.round(smileRate * 10) / 10,
+      expressionVariation: Math.round(expressionVariation * 100) / 100,
+      positionStability: Math.round(positionStability * 100) / 100,
+      avgHeadTilt: Math.round(avgHeadTilt * 10) / 10,
+      nodCount,
+      nodRate: Math.round(nodRate * 10) / 10,
+      overallVideoScore: Math.min(10, Math.max(0, overallVideoScore)),
+      feedback,
+    };
+  }, []);
+
+  // 親が終了時に flush() を呼んで確定値を同期取得できるようにする (state 反映待ちのレース回避)
+  useImperativeHandle(ref, () => ({ flush: () => computeAnalysis() }), [computeAnalysis]);
+
   // When recording stops, compute and emit results
   useEffect(() => {
     if (wasRecordingRef.current && !isRecording) {
-      const frames = frameDataRef.current;
-
-      if (frames.length < 5) {
-        // Not enough data, skip analysis
-        wasRecordingRef.current = isRecording;
-        cleanup();
-        return;
-      }
-
-      const totalFrames = frames.length;
-      const durationMs = frames[totalFrames - 1].timestamp - frames[0].timestamp;
-      const durationMinutes = durationMs / 60000;
-
-      // Eye contact rate
-      const eyeContactFrames = frames.filter((f) => f.isEyeContact).length;
-      const eyeContactRate = (eyeContactFrames / totalFrames) * 100;
-
-      // Finalize current streak
-      if (currentStreakRef.current > 0) {
-        eyeContactStreakRef.current.push(currentStreakRef.current);
-      }
-      const streaks = eyeContactStreakRef.current;
-      const eyeContactDuration =
-        streaks.length > 0
-          ? streaks.reduce((a, b) => a + b, 0) / streaks.length
-          : 0;
-
-      // Smile rate
-      const smileFrames = frames.filter((f) => f.isSmiling).length;
-      const smileRate = (smileFrames / totalFrames) * 100;
-
-      // Expression variation (how often smile state changes)
-      let expressionChanges = 0;
-      for (let i = 1; i < totalFrames; i++) {
-        if (frames[i].isSmiling !== frames[i - 1].isSmiling) {
-          expressionChanges++;
-        }
-      }
-      const expressionVariation = Math.min(1, expressionChanges / (totalFrames * 0.1));
-
-      // Position stability (inverse of nose position standard deviation)
-      const noseXValues = frames.map((f) => f.noseX);
-      const noseYValues = frames.map((f) => f.noseY);
-      const stdDevX = stdDev(noseXValues);
-      const stdDevY = stdDev(noseYValues);
-      const movementMagnitude = Math.sqrt(stdDevX ** 2 + stdDevY ** 2);
-      const positionStability = Math.max(0, Math.min(1, 1 - movementMagnitude * 10));
-
-      // Average head tilt
-      const avgHeadTilt =
-        frames.reduce((sum, f) => sum + f.headTiltDeg, 0) / totalFrames;
-
-      // Nod detection (peak detection on nose Y)
-      let nodCount = 0;
-      const smoothWindow = 3;
-      const smoothedY: number[] = [];
-      for (let i = 0; i < totalFrames; i++) {
-        const start = Math.max(0, i - smoothWindow);
-        const end = Math.min(totalFrames, i + smoothWindow + 1);
-        let sum = 0;
-        for (let j = start; j < end; j++) sum += frames[j].noseY;
-        smoothedY.push(sum / (end - start));
-      }
-      // Find peaks (local maxima in Y = downward movement)
-      for (let i = 2; i < smoothedY.length - 2; i++) {
-        if (
-          smoothedY[i] > smoothedY[i - 1] &&
-          smoothedY[i] > smoothedY[i - 2] &&
-          smoothedY[i] > smoothedY[i + 1] &&
-          smoothedY[i] > smoothedY[i + 2]
-        ) {
-          // Check amplitude
-          const localMin = Math.min(smoothedY[i - 2], smoothedY[i + 2]);
-          if (smoothedY[i] - localMin > NOD_AMPLITUDE_THRESHOLD) {
-            nodCount++;
-          }
-        }
-      }
-      const nodRate = durationMinutes > 0 ? nodCount / durationMinutes : 0;
-
-      // Score calculation
-      const eyeContactScore = eyeContactRate >= 70 ? 9 : eyeContactRate >= 40 ? 6 : 3;
-      const smileScore = smileRate >= 30 ? 9 : smileRate >= 10 ? 6 : 3;
-      const stabilityScore = positionStability >= 0.8 ? 9 : positionStability >= 0.5 ? 6 : 3;
-      const nodScore = nodRate >= 3 && nodRate <= 15 ? 9 : nodRate >= 1 ? 6 : 3;
-
-      const overallVideoScore = Math.round(
-        (eyeContactScore * 0.35 + smileScore * 0.2 + stabilityScore * 0.25 + nodScore * 0.2) * 10
-      ) / 10;
-
-      const feedback = generateVideoFeedback(
-        eyeContactRate,
-        smileRate,
-        positionStability,
-        nodRate,
-        avgHeadTilt
-      );
-
-      const analysis: VideoAnalysis = {
-        eyeContactRate: Math.round(eyeContactRate * 10) / 10,
-        eyeContactDuration: Math.round(eyeContactDuration * 10) / 10,
-        smileRate: Math.round(smileRate * 10) / 10,
-        expressionVariation: Math.round(expressionVariation * 100) / 100,
-        positionStability: Math.round(positionStability * 100) / 100,
-        avgHeadTilt: Math.round(avgHeadTilt * 10) / 10,
-        nodCount,
-        nodRate: Math.round(nodRate * 10) / 10,
-        overallVideoScore: Math.min(10, Math.max(0, overallVideoScore)),
-        feedback,
-      };
-
-      onAnalysisComplete(analysis);
+      const analysis = computeAnalysis();
+      if (analysis) onAnalysisComplete(analysis);
       cleanup();
     }
     wasRecordingRef.current = isRecording;
-  }, [isRecording, onAnalysisComplete, cleanup]);
+  }, [isRecording, onAnalysisComplete, cleanup, computeAnalysis]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -498,3 +495,6 @@ function stdDev(values: number[]): number {
   const variance = values.reduce((a, b) => a + (b - mean) ** 2, 0) / values.length;
   return Math.sqrt(variance);
 }
+
+const VideoAnalyzer = forwardRef(VideoAnalyzerInner);
+export default VideoAnalyzer;

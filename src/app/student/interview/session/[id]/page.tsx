@@ -19,8 +19,8 @@ import { getWeaknessReminderLevel, type WeaknessRecord } from "@/lib/types/growt
 import { useRealtimeInterview } from "@/hooks/useRealtimeInterview";
 import { INTERVIEW_MODE_LABELS } from "@/lib/types/interview";
 import { FluidLoader } from "@/components/shared/FluidLoader";
-import VoiceAnalyzer, { refineWithTranscription } from "@/components/interview/VoiceAnalyzer";
-import VideoAnalyzer from "@/components/interview/VideoAnalyzer";
+import VoiceAnalyzer, { refineWithTranscription, type VoiceAnalyzerHandle } from "@/components/interview/VoiceAnalyzer";
+import VideoAnalyzer, { type VideoAnalyzerHandle } from "@/components/interview/VideoAnalyzer";
 import CameraPreview from "@/components/interview/CameraPreview";
 import { SavedDrillsReference } from "@/components/interview/SavedDrillsReference";
 import {
@@ -105,6 +105,9 @@ export default function InterviewSessionPage() {
   const [memo, setMemo] = useState("");
   const [voiceAnalysis, setVoiceAnalysis] = useState<VoiceAnalysis | null>(null);
   const [videoAnalysis, setVideoAnalysis] = useState<VideoAnalysis | null>(null);
+  // 終了時に確定値を同期取得するための ref (state 反映待ちのレース回避)
+  const voiceAnalyzerRef = useRef<VoiceAnalyzerHandle | null>(null);
+  const videoAnalyzerRef = useRef<VideoAnalyzerHandle | null>(null);
   const [appearanceAnalysis, setAppearanceAnalysis] = useState<AppearanceAnalysis | null>(null);
   const [appearanceAlert, setAppearanceAlert] = useState<string | null>(null);
   const [gazeAlert, setGazeAlert] = useState<string | null>(null);
@@ -480,16 +483,22 @@ export default function InterviewSessionPage() {
       console.log("[handleEnd] Sending messages:", messages.length, "turns, duration:", elapsed);
       console.log("[handleEnd] Messages:", JSON.stringify(messages.map(m => ({ role: m.role, content: m.content.slice(0, 50) }))));
 
+      // 終了時は flush() で蓄積データから確定値を同期取得する。
+      // (アナライザの stop 時 emit→setState は handleEnd の後に反映されるため、
+      //  state を読むと毎回 null になり「分析されませんでした」になる=レース回避)
+      const finalVoice = voiceAnalyzerRef.current?.flush() ?? voiceAnalysis;
+      const finalVideo = videoAnalyzerRef.current?.flush() ?? videoAnalysis;
+
       // フィラー・相槌検出のため、ユーザー発言の文字起こしを集約して refineWithTranscription を呼ぶ
-      let refinedVoiceAnalysis = voiceAnalysis;
-      if (voiceAnalysis) {
+      let refinedVoiceAnalysis = finalVoice;
+      if (finalVoice) {
         const studentTexts = messages
           .filter((m) => m.role === "student")
           .map((m) => m.content)
           .join(" ");
         if (studentTexts.length > 0) {
           refinedVoiceAnalysis = refineWithTranscription(
-            voiceAnalysis,
+            finalVoice,
             studentTexts,
             elapsed,
           );
@@ -504,7 +513,7 @@ export default function InterviewSessionPage() {
           mode: sessionInfo?.mode,
           presentationContent: sessionInfo?.presentationContent,
           ...(refinedVoiceAnalysis ? { voiceAnalysis: refinedVoiceAnalysis } : {}),
-          ...(videoAnalysis ? { videoAnalysis } : {}),
+          ...(finalVideo ? { videoAnalysis: finalVideo } : {}),
           ...(appearanceAnalysis ? { appearanceAnalysis } : {}),
         }),
       });
@@ -1073,6 +1082,7 @@ export default function InterviewSessionPage() {
       {videoStream && <CameraPreview mediaStream={videoStream} />}
       {videoStream && (
         <VideoAnalyzer
+          ref={videoAnalyzerRef}
           mediaStream={videoStream}
           isRecording={!isEnding && elapsed > 0}
           onAnalysisComplete={setVideoAnalysis}
@@ -1087,8 +1097,10 @@ export default function InterviewSessionPage() {
       {/* Voice Analyzer (音声モード時のみ、Realtime のマイクストリームを共有) */}
       {isVoiceMode && realtime.micStream && (
         <VoiceAnalyzer
+          ref={voiceAnalyzerRef}
           mediaStream={realtime.micStream}
           isRecording={realtimeActive && !isEnding}
+          paused={!realtime.isUserTurn}
           onAnalysisComplete={setVoiceAnalysis}
         />
       )}

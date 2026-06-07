@@ -1,12 +1,20 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, forwardRef, useImperativeHandle, type ForwardedRef } from "react";
 import type { VoiceAnalysis } from "@/lib/types/interview";
 
 interface VoiceAnalyzerProps {
   mediaStream: MediaStream | null;
   isRecording: boolean;
   onAnalysisComplete: (analysis: VoiceAnalysis) => void;
+  /** true の間は解析を一時停止 (AI 発話中はマイク OFF で無音が混ざるため除外) */
+  paused?: boolean;
+}
+
+/** 親から flush() を呼ぶための ref ハンドル。終了時のレース回避に使う */
+export interface VoiceAnalyzerHandle {
+  /** 現時点の蓄積データから解析結果を同期的に算出して返す (副作用なし。データ無しは null) */
+  flush: () => VoiceAnalysis | null;
 }
 
 const SILENCE_THRESHOLD = 0.02;
@@ -107,17 +115,20 @@ function generateFeedback(
   return { speechRateAdvice, fillerAdvice, deliveryAdvice };
 }
 
-export default function VoiceAnalyzer({
-  mediaStream,
-  isRecording,
-  onAnalysisComplete,
-}: VoiceAnalyzerProps) {
+function VoiceAnalyzerInner(
+  { mediaStream, isRecording, onAnalysisComplete, paused }: VoiceAnalyzerProps,
+  ref: ForwardedRef<VoiceAnalyzerHandle>,
+) {
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const animFrameRef = useRef<number | null>(null);
   const rmsHistoryRef = useRef<number[]>([]);
   const startTimeRef = useRef<number>(0);
   const silenceStartRef = useRef<number | null>(null);
+  const pausedRef = useRef<boolean>(false);
+  useEffect(() => {
+    pausedRef.current = !!paused;
+  }, [paused]);
   const pauseDurationsRef = useRef<number[]>([]);
   const wasRecordingRef = useRef(false);
 
@@ -158,6 +169,11 @@ export default function VoiceAnalyzer({
 
         function analyze() {
           if (!analyserRef.current) return;
+          // 一時停止中(AI 発話中=マイク OFF)は蓄積をスキップ。無音を解析に混ぜない。
+          if (pausedRef.current) {
+            animFrameRef.current = requestAnimationFrame(analyze);
+            return;
+          }
           analyserRef.current.getFloatTimeDomainData(dataArray);
 
           // Calculate RMS
@@ -200,88 +216,88 @@ export default function VoiceAnalyzer({
     };
   }, [isRecording, mediaStream, stopAnalysis]);
 
+  // 蓄積データから解析結果を算出する純関数 (ref を破壊しない＝flush と stop-effect の
+  // 二重呼びでも結果が変わらない)。データが無ければ null。
+  const computeAnalysis = useCallback((): VoiceAnalysis | null => {
+    const rmsValues = rmsHistoryRef.current;
+    if (rmsValues.length === 0) return null;
+
+    const durationSeconds = (Date.now() - startTimeRef.current) / 1000;
+    const durationMinutes = durationSeconds / 60;
+
+    // open silence をローカルで合算 (ref は変更しない)
+    const pauses = [...pauseDurationsRef.current];
+    if (silenceStartRef.current !== null) {
+      const silenceDuration = (Date.now() - silenceStartRef.current) / 1000;
+      if (silenceDuration > 0.5) pauses.push(silenceDuration);
+    }
+
+    // Volume variation (std dev of RMS)
+    let volumeVariation = 0;
+    const mean = rmsValues.reduce((a, b) => a + b, 0) / rmsValues.length;
+    const variance = rmsValues.reduce((a, b) => a + (b - mean) ** 2, 0) / rmsValues.length;
+    volumeVariation = Math.min(1, Math.sqrt(variance));
+
+    // Pause analysis
+    const longPauses = pauses.filter((p) => p >= LONG_PAUSE_THRESHOLD).length;
+    const avgPauseDuration =
+      pauses.length > 0 ? pauses.reduce((a, b) => a + b, 0) / pauses.length : 0;
+
+    // Estimate speech rate from duration (actual text analysis done externally)
+    const estimatedChars = Math.round(durationMinutes * RECOMMENDED_SPEECH_RATE * 0.9);
+    const speechRate = durationMinutes > 0 ? Math.round(estimatedChars / durationMinutes) : 0;
+
+    // Filler detection placeholder (needs transcribed text)
+    const fillerWords: Array<{ word: string; count: number; timestamps: number[] }> = [];
+    const fillerCount = 0;
+    const fillerRate = 0;
+
+    const speechRateScore = speechRate >= 200 && speechRate <= 400 ? 8 : speechRate >= 150 && speechRate <= 450 ? 6 : 4;
+    const fillerScore = fillerRate < 2 ? 9 : fillerRate < 5 ? 6 : 3;
+    const pauseScore = longPauses <= 2 ? 8 : longPauses <= 5 ? 5 : 3;
+    const volumeScore = volumeVariation >= 0.1 && volumeVariation <= 0.5 ? 8 : 5;
+    const overallVoiceScore = Math.round(
+      (speechRateScore * 0.3 + fillerScore * 0.25 + pauseScore * 0.2 + volumeScore * 0.25) * 10
+    ) / 10;
+
+    const feedback = generateFeedback(speechRate, fillerCount, fillerRate, { avgPauseDuration, longPauses }, volumeVariation);
+
+    // 実発話時間 ≒ 録音時間 − 無音(>0.5秒)合計
+    const voicedSeconds = Math.max(0, durationSeconds - pauses.reduce((a, b) => a + b, 0));
+
+    return {
+      speechRate,
+      recommendedRate: RECOMMENDED_SPEECH_RATE,
+      voicedSeconds: Math.round(voicedSeconds),
+      fillerCount,
+      fillerRate,
+      fillerWords,
+      pauseAnalysis: { avgPauseDuration: Math.round(avgPauseDuration * 10) / 10, longPauses },
+      volumeVariation: Math.round(volumeVariation * 100) / 100,
+      overallVoiceScore: Math.min(10, Math.max(0, overallVoiceScore)),
+      feedback,
+    };
+  }, []);
+
+  // 親が終了時に flush() を呼んで確定値を同期取得できるようにする (state 反映待ちのレース回避)
+  useImperativeHandle(ref, () => ({ flush: () => computeAnalysis() }), [computeAnalysis]);
+
   // When recording stops, compute and emit results
   useEffect(() => {
     if (wasRecordingRef.current && !isRecording) {
-      const durationSeconds = (Date.now() - startTimeRef.current) / 1000;
-      const durationMinutes = durationSeconds / 60;
-
-      // Finalize any open silence
-      if (silenceStartRef.current !== null) {
-        const silenceDuration = (Date.now() - silenceStartRef.current) / 1000;
-        if (silenceDuration > 0.5) {
-          pauseDurationsRef.current.push(silenceDuration);
-        }
-        silenceStartRef.current = null;
-      }
-
-      const rmsValues = rmsHistoryRef.current;
-
-      // Volume variation (std dev of RMS)
-      let volumeVariation = 0;
-      if (rmsValues.length > 0) {
-        const mean = rmsValues.reduce((a, b) => a + b, 0) / rmsValues.length;
-        const variance = rmsValues.reduce((a, b) => a + (b - mean) ** 2, 0) / rmsValues.length;
-        volumeVariation = Math.min(1, Math.sqrt(variance));
-      }
-
-      // Pause analysis
-      const pauses = pauseDurationsRef.current;
-      const longPauses = pauses.filter((p) => p >= LONG_PAUSE_THRESHOLD).length;
-      const avgPauseDuration =
-        pauses.length > 0
-          ? pauses.reduce((a, b) => a + b, 0) / pauses.length
-          : 0;
-
-      // Estimate speech rate from duration (actual text analysis done externally)
-      // Use a placeholder; the session page can refine with actual transcription
-      const estimatedChars = Math.round(durationMinutes * RECOMMENDED_SPEECH_RATE * 0.9);
-      const speechRate = durationMinutes > 0 ? Math.round(estimatedChars / durationMinutes) : 0;
-
-      // Filler detection placeholder (needs transcribed text)
-      const fillerWords: Array<{ word: string; count: number; timestamps: number[] }> = [];
-      const fillerCount = 0;
-      const fillerRate = 0;
-
-      // Overall score calculation
-      const speechRateScore = speechRate >= 200 && speechRate <= 400 ? 8 : speechRate >= 150 && speechRate <= 450 ? 6 : 4;
-      const fillerScore = fillerRate < 2 ? 9 : fillerRate < 5 ? 6 : 3;
-      const pauseScore = longPauses <= 2 ? 8 : longPauses <= 5 ? 5 : 3;
-      const volumeScore = volumeVariation >= 0.1 && volumeVariation <= 0.5 ? 8 : 5;
-      const overallVoiceScore = Math.round(
-        (speechRateScore * 0.3 + fillerScore * 0.25 + pauseScore * 0.2 + volumeScore * 0.25) * 10
-      ) / 10;
-
-      const feedback = generateFeedback(speechRate, fillerCount, fillerRate, { avgPauseDuration, longPauses }, volumeVariation);
-
-      // 実発話時間 ≒ 録音時間 − 無音(>0.5秒)合計。話速・フィラー率の分母に使う
-      const voicedSeconds = Math.max(
-        0,
-        durationSeconds - pauses.reduce((a, b) => a + b, 0)
-      );
-
-      const analysis: VoiceAnalysis = {
-        speechRate,
-        recommendedRate: RECOMMENDED_SPEECH_RATE,
-        voicedSeconds: Math.round(voicedSeconds),
-        fillerCount,
-        fillerRate,
-        fillerWords,
-        pauseAnalysis: { avgPauseDuration: Math.round(avgPauseDuration * 10) / 10, longPauses },
-        volumeVariation: Math.round(volumeVariation * 100) / 100,
-        overallVoiceScore: Math.min(10, Math.max(0, overallVoiceScore)),
-        feedback,
-      };
-
-      onAnalysisComplete(analysis);
+      const analysis = computeAnalysis();
+      if (analysis) onAnalysisComplete(analysis);
       stopAnalysis();
     }
     wasRecordingRef.current = isRecording;
-  }, [isRecording, onAnalysisComplete, stopAnalysis]);
+  }, [isRecording, onAnalysisComplete, stopAnalysis, computeAnalysis]);
 
   // This component renders nothing — it's an analysis engine only
   return null;
 }
+
+const VoiceAnalyzer = forwardRef(VoiceAnalyzerInner);
+export default VoiceAnalyzer;
 
 // Utility to refine analysis with transcribed text
 export function refineWithTranscription(
