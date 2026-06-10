@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef, Suspense } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,7 +23,7 @@ import {
   Keyboard,
   Bookmark,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { authFetch } from "@/lib/api/client";
 import { DRILL_CATEGORIES, type DrillCategory } from "@/lib/ai/prompts/interview-drill";
@@ -64,8 +64,9 @@ const CATEGORY_COLORS = {
   "時事問題": "bg-rose-500",
 } as const;
 
-export default function InterviewDrillPage() {
+function InterviewDrillInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [state, setState] = useState<DrillState>({
     step: "category",
     currentCategory: null,
@@ -76,6 +77,30 @@ export default function InterviewDrillPage() {
     sessionStarted: false,
     error: null,
   });
+  /** 宿題から指定設問で起動した場合の宿題 ID (完了時に提出済みにする) */
+  const homeworkIdRef = useRef<string | null>(null);
+
+  // 宿題から ?category=&q=設問文&homeworkId=... で来たら、その設問で直接開始する
+  useEffect(() => {
+    const q = searchParams.get("q");
+    const cat = searchParams.get("category");
+    const hw = searchParams.get("homeworkId");
+    if (hw) homeworkIdRef.current = hw;
+    if (q) {
+      const category = (DRILL_CATEGORIES as readonly string[]).includes(cat ?? "")
+        ? (cat as DrillCategory)
+        : "志望理由";
+      setState((prev) => ({
+        ...prev,
+        step: "question",
+        currentCategory: category,
+        currentQuestion: q,
+        currentAnswer: "",
+        sessionStarted: true,
+      }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [sessionScores, setSessionScores] = useState<DrillScore[]>([]);
   const [inputMode, setInputMode] = useState<"text" | "voice">("text");
@@ -224,6 +249,17 @@ export default function InterviewDrillPage() {
 
       const evaluation = await response.json();
       setLastDrillId(evaluation.drillId ?? null);
+
+      // 宿題から来た場合は提出済みにする
+      if (homeworkIdRef.current) {
+        const hwId = homeworkIdRef.current;
+        homeworkIdRef.current = null;
+        authFetch(`/api/student/homework/${hwId}/complete`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ drillId: evaluation.drillId }),
+        }).catch(() => {});
+      }
 
       const newScore: DrillScore = {
         category: state.currentCategory,
@@ -714,5 +750,13 @@ export default function InterviewDrillPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function InterviewDrillPage() {
+  return (
+    <Suspense fallback={null}>
+      <InterviewDrillInner />
+    </Suspense>
   );
 }

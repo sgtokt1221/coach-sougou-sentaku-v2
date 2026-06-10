@@ -109,6 +109,14 @@ export default function HomeworkDetailPage() {
 
   const isEssay = data.snapshot.type === "essay";
   const isSubmitted = data.status === "submitted" || data.status === "reviewed";
+  const isSummaryDrill = data.snapshot.drillKind === "summary";
+  const isInterviewDrill = data.snapshot.drillKind === "interview";
+  const summaryDrillHref = `/student/essay/summary-drill?passage=${encodeURIComponent(
+    data.snapshot.summaryPassageId ?? "",
+  )}&homeworkId=${data.id}`;
+  const interviewDrillHref = `/student/interview/drill?category=${encodeURIComponent(
+    data.snapshot.drillCategory ?? "",
+  )}&q=${encodeURIComponent(data.snapshot.title)}&homeworkId=${data.id}`;
 
   // 小論文添削フローへの遷移先（テーマ/過去問つきはリッチ資料、自作はお題=タイトル）
   const essayHref = data.snapshot.essayThemeId
@@ -188,6 +196,38 @@ export default function HomeworkDetailPage() {
         <Card>
           <CardContent className="py-8 text-center text-sm text-muted-foreground">
             この宿題は既に提出済みです。添削結果は履歴ページから確認できます。
+          </CardContent>
+        </Card>
+      ) : isSummaryDrill ? (
+        <Card>
+          <CardContent className="space-y-3 p-4">
+            <p className="text-sm text-muted-foreground">
+              指定された長文を読み、制限時間内に要約します。提出するとAIが採点し、この宿題は提出済みになります。
+            </p>
+            <div className="flex justify-end">
+              <Button asChild>
+                <Link href={summaryDrillHref}>
+                  <PencilLine className="mr-1.5 size-4" />
+                  要約ドリルで取り組む
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : isInterviewDrill ? (
+        <Card>
+          <CardContent className="space-y-3 p-4">
+            <p className="text-sm text-muted-foreground">
+              指定された設問に面接ドリルで回答します。回答するとAIが採点し、この宿題は提出済みになります。
+            </p>
+            <div className="flex justify-end">
+              <Button asChild>
+                <Link href={interviewDrillHref}>
+                  <Mic className="mr-1.5 size-4" />
+                  面接ドリルで取り組む
+                </Link>
+              </Button>
+            </div>
           </CardContent>
         </Card>
       ) : isEssay ? (

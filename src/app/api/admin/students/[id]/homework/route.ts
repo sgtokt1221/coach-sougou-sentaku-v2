@@ -146,6 +146,9 @@ export async function POST(
       dueDate?: string;
       essayThemeId?: string;
       pastQuestionId?: string;
+      drillKind?: "interview" | "summary";
+      drillCategory?: string;
+      summaryPassageId?: string;
     };
 
     if (body.type !== "essay" && body.type !== "interview") {
@@ -200,6 +203,15 @@ export async function POST(
     }
     if (typeof body.pastQuestionId === "string" && body.pastQuestionId.trim()) {
       snapshot.pastQuestionId = body.pastQuestionId.trim();
+    }
+    if (body.drillKind === "interview" || body.drillKind === "summary") {
+      snapshot.drillKind = body.drillKind;
+    }
+    if (typeof body.drillCategory === "string" && body.drillCategory.trim()) {
+      snapshot.drillCategory = body.drillCategory.trim();
+    }
+    if (typeof body.summaryPassageId === "string" && body.summaryPassageId.trim()) {
+      snapshot.summaryPassageId = body.summaryPassageId.trim();
     }
     if (defaultUniversity) snapshot.targetUniversity = defaultUniversity;
     if (defaultFaculty) snapshot.targetFaculty = defaultFaculty;

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,7 +19,7 @@ import {
 import Link from "next/link";
 import { ManuscriptEditor } from "@/components/essay/ManuscriptEditor";
 import { FACULTY_REGISTRY, type FacultyEntry } from "@/data/faculty-topics/registry";
-import { getAllPassages, getPassagesByFaculty } from "@/data/summary-passages";
+import { getPassagesByFaculty, getPassageById } from "@/data/summary-passages";
 import type { PassageLanguage, SummaryPassage } from "@/data/summary-passages/types";
 import { authFetch } from "@/lib/api/client";
 import { toast } from "sonner";
@@ -69,7 +70,8 @@ const SCORE_LABELS: Record<PassageLanguage, Record<string, string>> = {
   },
 };
 
-export default function SummaryDrillPage() {
+function SummaryDrillInner() {
+  const searchParams = useSearchParams();
   const [step, setStep] = useState<Step>("select");
   const [language, setLanguage] = useState<PassageLanguage>("ja");
   const [selectedFaculty, setSelectedFaculty] = useState<FacultyEntry | null>(null);
@@ -80,6 +82,23 @@ export default function SummaryDrillPage() {
   const [result, setResult] = useState<EvalResult | null>(null);
   const [mobileTab, setMobileTab] = useState<"read" | "write">("read");
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  /** 宿題から指定長文で起動した場合の宿題 ID (完了時に提出済みにする) */
+  const homeworkIdRef = useRef<string | null>(null);
+
+  // 宿題から ?passage=ID&homeworkId=... で来たら、その長文で直接開始する
+  useEffect(() => {
+    const passageId = searchParams.get("passage");
+    const hw = searchParams.get("homeworkId");
+    if (hw) homeworkIdRef.current = hw;
+    if (passageId) {
+      const p = getPassageById(passageId);
+      if (p) {
+        setLanguage(p.language ?? "ja");
+        startDrillWithPassage(p);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // タイマー
   useEffect(() => {
@@ -169,6 +188,18 @@ export default function SummaryDrillPage() {
       const data = await res.json();
       setResult(data);
       setStep("result");
+      // 宿題から来た場合は提出済みにする
+      if (homeworkIdRef.current) {
+        const hwId = homeworkIdRef.current;
+        homeworkIdRef.current = null;
+        authFetch(`/api/student/homework/${hwId}/complete`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ drillId: data?.id }),
+        })
+          .then(() => toast.success("宿題を提出済みにしました"))
+          .catch(() => {});
+      }
     } catch (err) {
       console.error("summary-drill evaluate failed", err);
       toast.error("評価に失敗しました");
@@ -590,5 +621,20 @@ export default function SummaryDrillPage() {
       <Skeleton className="h-8 w-48" />
       <Skeleton className="h-64 w-full" />
     </div>
+  );
+}
+
+export default function SummaryDrillPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="mx-auto max-w-4xl space-y-4 p-4">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-64 w-full" />
+        </div>
+      }
+    >
+      <SummaryDrillInner />
+    </Suspense>
   );
 }

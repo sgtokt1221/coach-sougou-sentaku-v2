@@ -73,6 +73,9 @@ export function CreateHomeworkDialog({
           ...buildHomeworkBody(form),
           ...(selected?.essayThemeId ? { essayThemeId: selected.essayThemeId } : {}),
           ...(selected?.pastQuestionId ? { pastQuestionId: selected.pastQuestionId } : {}),
+          ...(selected?.drillKind ? { drillKind: selected.drillKind } : {}),
+          ...(selected?.drillCategory ? { drillCategory: selected.drillCategory } : {}),
+          ...(selected?.summaryPassageId ? { summaryPassageId: selected.summaryPassageId } : {}),
         }),
       });
       if (!res.ok) {

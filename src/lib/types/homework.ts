@@ -48,6 +48,15 @@ export interface HomeworkAssignment {
     essayThemeId?: string;
     /** 元の過去問 ID。あれば生徒は /student/essay/new?pastQuestion=ID のリッチ添削で取り組む */
     pastQuestionId?: string;
+    /**
+     * ドリル指定。あれば生徒は該当ドリル画面で「特定の問題」を実施する。
+     * "summary" → 要約ドリル(summaryPassageId の長文)、"interview" → 面接ドリル(title=設問文 + drillCategory)
+     */
+    drillKind?: "interview" | "summary";
+    /** 面接ドリルのカテゴリ (志望理由/自己PR 等) */
+    drillCategory?: string;
+    /** 要約ドリルの長文 ID (例: summary-pharmacy-01) */
+    summaryPassageId?: string;
   };
   status: HomeworkStatus;
   assignedAt: string;
@@ -56,6 +65,8 @@ export interface HomeworkAssignment {
   /** 提出時に作成した essay/interview の ID。type に応じてどちらかが入る */
   submittedEssayId?: string;
   submittedInterviewId?: string;
+  /** ドリル宿題の完了時に紐づく interviewDrills/summaryDrills の doc ID */
+  submittedDrillId?: string;
   submittedAt?: string;
   /** 講師確認済みフラグ。解答開示には関与せず、管理ステータスとしてのみ使用 */
   reviewedAt?: string;
