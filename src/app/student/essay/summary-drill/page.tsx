@@ -15,6 +15,7 @@ import {
   Star,
   ChevronRight,
   RotateCcw,
+  History,
 } from "lucide-react";
 import Link from "next/link";
 import { ManuscriptEditor } from "@/components/essay/ManuscriptEditor";
@@ -254,6 +255,12 @@ function SummaryDrillInner() {
                 : "長文を読んで400字以内で要約する練習（制限時間15分）"}
             </p>
           </div>
+          <Link href="/student/essay/summary-drill/history">
+            <Button variant="outline" size="sm">
+              <History className="size-4 mr-1.5" />
+              {language === "en" ? "History" : "履歴"}
+            </Button>
+          </Link>
         </div>
 
         {/* 言語トグル */}
