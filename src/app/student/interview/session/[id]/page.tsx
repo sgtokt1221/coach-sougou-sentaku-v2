@@ -17,6 +17,8 @@ import { authFetch } from "@/lib/api/client";
 import type { InterviewMessage, InterviewMode, InterviewInputMode, VoiceAnalysis, VideoAnalysis, AppearanceAnalysis } from "@/lib/types/interview";
 import { getWeaknessReminderLevel, type WeaknessRecord } from "@/lib/types/growth";
 import { useRealtimeInterview } from "@/hooks/useRealtimeInterview";
+import type { VoiceProvider } from "@/lib/interview/realtime/voice-session-factory";
+import { resolveVoiceProvider } from "@/lib/interview/voice-provider";
 import { INTERVIEW_MODE_LABELS } from "@/lib/types/interview";
 import { FluidLoader } from "@/components/shared/FluidLoader";
 import VoiceAnalyzer, { refineWithTranscription, type VoiceAnalyzerHandle } from "@/components/interview/VoiceAnalyzer";
@@ -41,6 +43,8 @@ interface SessionInfo {
   };
   openingMessage: string;
   presentationContent?: string;
+  /** 音声プロバイダ（/new で選択。未指定なら resolveVoiceProvider で解決） */
+  voiceProvider?: VoiceProvider;
 }
 
 function formatTime(seconds: number): string {
@@ -127,6 +131,9 @@ export default function InterviewSessionPage() {
   const [realtimeActive, setRealtimeActive] = useState(false);
   const realtime = useRealtimeInterview({
     mode: sessionInfo?.mode ?? "individual",
+    // 音声プロバイダ: /new の選択 → なければ localStorage 上書き/env で解決（既定 openai）。
+    // GD は当面 openai 固定（hook 側で吸収）。
+    provider: sessionInfo?.voiceProvider ?? resolveVoiceProvider(),
     universityId: sessionInfo?.universityId,
     facultyId: sessionInfo?.facultyId,
     universityName: sessionInfo?.universityContext.universityName ?? "",

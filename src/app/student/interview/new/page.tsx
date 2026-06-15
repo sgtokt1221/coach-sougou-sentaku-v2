@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
+import type { VoiceProvider } from "@/lib/interview/realtime/voice-session-factory";
+import { resolveVoiceProvider, setVoiceProviderOverride } from "@/lib/interview/voice-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -43,6 +45,16 @@ const MODES: InterviewMode[] = ["individual", "group_discussion", "presentation"
 export default function InterviewNewPage() {
   const router = useRouter();
   const { userProfile } = useAuth();
+
+  // 音声プロバイダ（dev/admin のみ切替可能。一般生徒には出さない）
+  const role = (userProfile as { role?: string } | null)?.role;
+  const canChooseProvider =
+    role === "admin" || role === "superadmin" || role === "teacher" ||
+    process.env.NODE_ENV === "development";
+  const [voiceProvider, setVoiceProviderState] = useState<VoiceProvider>("openai");
+  useEffect(() => {
+    setVoiceProviderState(resolveVoiceProvider());
+  }, []);
 
   // 志望校解決
   const targetUniversities = (userProfile as Record<string, unknown> | null)?.targetUniversities as string[] | undefined ?? [];
@@ -174,6 +186,8 @@ export default function InterviewNewPage() {
           universityContext: data.universityContext,
           openingMessage: data.openingMessage,
           presentationContent: selectedMode === "presentation" ? presentationContent : undefined,
+          // 音声モードのみプロバイダを引き継ぐ（テキストは無関係）
+          voiceProvider: inputMode === "voice" ? voiceProvider : undefined,
         })
       );
       router.push(`/student/interview/session/${data.sessionId}`);
@@ -481,6 +495,37 @@ export default function InterviewNewPage() {
                 <p className="text-xs text-muted-foreground bg-muted/40 rounded-md p-2 leading-relaxed">
                   音声モードの面接は 7 日に 1 回までです。それまではテキストモードで練習できます。
                 </p>
+              </div>
+            )}
+            {/* 音声プロバイダ切替（dev/admin のみ・音声モード時） */}
+            {canChooseProvider && inputMode === "voice" && (
+              <div className="px-4 pb-4">
+                <Label className="text-xs text-muted-foreground">音声プロバイダ（管理者）</Label>
+                <div className="mt-1 inline-flex rounded-lg border p-1">
+                  {(["openai", "gemini"] as VoiceProvider[]).map((p) => (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => {
+                        setVoiceProviderState(p);
+                        setVoiceProviderOverride(p);
+                      }}
+                      className={[
+                        "rounded-md px-3 py-1 text-xs font-medium transition-colors",
+                        voiceProvider === p
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:text-foreground",
+                      ].join(" ")}
+                    >
+                      {p === "openai" ? "OpenAI Realtime" : "Gemini Live"}
+                    </button>
+                  ))}
+                </div>
+                {voiceProvider === "gemini" && (
+                  <p className="mt-1 text-[11px] text-amber-600">
+                    集団討論は当面 OpenAI 固定です（Gemini GD は検証中）。
+                  </p>
+                )}
               </div>
             )}
           </Card>

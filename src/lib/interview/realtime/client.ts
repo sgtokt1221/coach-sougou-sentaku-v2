@@ -10,6 +10,8 @@
  * - モデルは ephemeral token (client_secret) のセッション設定に含まれるため query param 不要
  */
 
+import type { InterviewVoiceSession } from "./voice-session";
+
 export type RealtimeEvent =
   | { type: "session.created"; session: unknown }
   | { type: "session.updated"; session: unknown }
@@ -75,6 +77,18 @@ export interface RealtimeSessionOptions {
   onError?: (error: Error) => void;
 }
 
+/**
+ * ユーザーターン復帰時に戻す turn_detection。
+ * semantic_vad: 咳/息の誤検知を避け、ユーザーが言い終わるまで待つ。
+ * create_response: false にして、AI 応答は明示的な triggerResponse() で発火させる
+ * （VAD 誤発火による response 多重生成を防ぐ）。
+ */
+const SEMANTIC_VAD_TURN_DETECTION = {
+  type: "semantic_vad",
+  eagerness: "low",
+  create_response: false,
+} as const;
+
 /** 出力音声「鳴っている」判定の平均パワー(mean square)閾値 (rms~0.02 相当) */
 const OUTPUT_POWER_THRESHOLD = 5e-4;
 // 文末や文間の自然な「間」を誤って鳴り止みと判定しないよう、やや長めに保持する
@@ -84,7 +98,7 @@ const OUTPUT_POLL_MS = 150;
 /** この回数連続でオーディオ統計が取れなければ「レベル取得不可」とみなす */
 const OUTPUT_UNSUPPORTED_AFTER = 8;
 
-export class RealtimeSession {
+export class RealtimeSession implements InterviewVoiceSession {
   private pc: RTCPeerConnection | null = null;
   private dc: RTCDataChannel | null = null;
   private opts: RealtimeSessionOptions;
@@ -256,6 +270,23 @@ export class RealtimeSession {
   /** AI に応答生成を指示する */
   triggerResponse(): void {
     this.sendEvent({ type: "response.create" });
+  }
+
+  /**
+   * ユーザー入力を一時停止する（AI 応答開始時用）。
+   * 1) サーバー VAD を完全停止 → AI 自身の音声エコーで誤検知 → 新たな response が
+   *    auto-create される事故を根絶
+   * 2) サーバー側の入力音声バッファを強制クリア（ミュート前の残留を破棄）
+   * マイク track 自体の enable/disable は呼び出し側（hook）が担当する。
+   */
+  pauseInput(): void {
+    this.updateSession({ audio: { input: { turn_detection: null } } });
+    this.sendEvent({ type: "input_audio_buffer.clear" });
+  }
+
+  /** ユーザー入力を再開する（ユーザーターン復帰時用）。semantic_vad に戻す。 */
+  resumeInput(): void {
+    this.updateSession({ audio: { input: { turn_detection: SEMANTIC_VAD_TURN_DETECTION } } });
   }
 
   /** 会話履歴にテキストアイテムを追加 (user / assistant / system) */

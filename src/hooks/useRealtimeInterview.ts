@@ -18,7 +18,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { authFetch } from "@/lib/api/client";
-import { RealtimeSession } from "@/lib/interview/realtime/client";
+import type { InterviewVoiceSession } from "@/lib/interview/realtime/voice-session";
+import { createVoiceSession, type VoiceProvider } from "@/lib/interview/realtime/voice-session-factory";
 import { GdOrchestrator, type GdOrchestratorTokens } from "@/lib/interview/realtime/gd-orchestrator";
 import type { ActiveSpeaker } from "@/lib/interview/realtime/gd-director";
 import { buildWhisperPrompt } from "@/lib/interview/whisper-context";
@@ -33,13 +34,6 @@ const UNSUPPORTED_FALLBACK_MS = 1500;
 /** response.done 時にまだ音声が鳴っていない(極短/無音応答)場合に、音声開始を待つ猶予。
  *  この間に音声が始まれば idle 検出で復帰、始まらなければこの後に復帰する。 */
 const NO_AUDIO_GRACE_MS = 2000;
-
-/** ユーザーターン復帰時に戻す turn_detection (semantic_vad: 咳/息の誤検知を避ける) */
-const SEMANTIC_VAD_TURN_DETECTION = {
-  type: "semantic_vad",
-  eagerness: "low",
-  create_response: false,
-} as const;
 
 /**
  * transcript が transcription prompt の漏れ (echo + prompt hallucination) と思われる場合 true。
@@ -92,6 +86,12 @@ export type RealtimeStatus =
 
 interface UseRealtimeInterviewOptions {
   mode: InterviewMode;
+  /**
+   * 音声プロバイダ。"openai"（既定）= OpenAI Realtime、"gemini" = Gemini Live。
+   * 集団討論(GD)は当面 OpenAI 固定（Phase C で Gemini 対応予定）のため、
+   * gemini 指定でも GD のときは openai にフォールバックする。
+   */
+  provider?: VoiceProvider;
   /** トークン発行エンドポイント。既定は模擬面接用。スキルチェック等で差し替える */
   tokenEndpoint?: string;
   universityId?: string;
@@ -154,7 +154,7 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
    */
   const [aiSpeaking, setAiSpeaking] = useState(true);
 
-  const sessionRef = useRef<RealtimeSession | null>(null);
+  const sessionRef = useRef<InterviewVoiceSession | null>(null);
   const orchestratorRef = useRef<GdOrchestrator | null>(null);
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
   const micStreamRef = useRef<MediaStream | null>(null);
@@ -211,9 +211,7 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
     }
     setMicEnabled(true);
     try {
-      sessionRef.current?.updateSession({
-        audio: { input: { turn_detection: SEMANTIC_VAD_TURN_DETECTION } },
-      });
+      sessionRef.current?.resumeInput();
     } catch {
       /* noop */
     }
@@ -315,6 +313,16 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
     // 前回セッションの seen responseId をクリア (新セッションで再利用される ID は無いが念のため)
     seenResponseIdsRef.current.clear();
 
+    // プロバイダ解決: GD は当面 OpenAI 固定（Gemini GD は Phase C）
+    const requestedProvider: VoiceProvider = optsRef.current.provider ?? "openai";
+    const effectiveProvider: VoiceProvider =
+      optsRef.current.mode === "group_discussion" ? "openai" : requestedProvider;
+    const tokenEndpoint =
+      optsRef.current.tokenEndpoint ??
+      (effectiveProvider === "gemini"
+        ? "/api/interview/gemini-live-session"
+        : "/api/interview/realtime-session");
+
     // 1. ephemeral token を取得
     let tokenData: {
       mode?: string;
@@ -325,7 +333,7 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
       error?: string;
     };
     try {
-      const res = await authFetch(optsRef.current.tokenEndpoint ?? "/api/interview/realtime-session", {
+      const res = await authFetch(tokenEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -367,7 +375,8 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
           noiseSuppression: true,
           autoGainControl: true,
           channelCount: 1,
-          sampleRate: 24000, // Realtime API は 24kHz mono pcm16
+          // OpenAI Realtime は 24kHz、Gemini Live は 16kHz mono pcm16
+          sampleRate: effectiveProvider === "gemini" ? 16000 : 24000,
         },
       });
       micStreamRef.current = micStream;
@@ -392,6 +401,7 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
           token: t.token,
         }));
         const orch = new GdOrchestrator({
+          provider: effectiveProvider,
           tokens: gdTokens,
           model,
           micStream,
@@ -462,7 +472,8 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
         optsRef.current.universityName,
       );
 
-      const session = new RealtimeSession({
+      const session = createVoiceSession({
+        provider: effectiveProvider,
         ephemeralToken: tokenData.tokens[0].token,
         model,
         audioOutputElement: audioElementRef.current,
@@ -503,8 +514,7 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
           setAiSpeaking(true);
           setMicEnabled(false);
           try {
-            sessionRef.current?.updateSession({ audio: { input: { turn_detection: null } } });
-            sessionRef.current?.sendEvent({ type: "input_audio_buffer.clear" });
+            sessionRef.current?.pauseInput();
           } catch {
             /* noop */
           }

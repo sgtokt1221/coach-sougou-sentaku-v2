@@ -14,6 +14,8 @@
  */
 
 import { RealtimeSession } from "./client";
+import type { InterviewVoiceSession } from "./voice-session";
+import { createVoiceSession, type VoiceProvider } from "./voice-session-factory";
 import { pickNextSpeaker, type ActiveSpeaker } from "./gd-director";
 import { GD_SPEAKERS } from "@/lib/interview/speakers";
 import type { InterviewMessage } from "@/lib/types/interview";
@@ -25,9 +27,14 @@ export interface GdOrchestratorTokens {
 }
 
 export interface GdOrchestratorOptions {
-  /** 3 話者分の ephemeral token */
+  /**
+   * 音声プロバイダ。"openai" は従来どおり。"gemini" は実験的（ターン制御の
+   * 検証が必要なため、確定運用は OpenAI を推奨）。
+   */
+  provider: VoiceProvider;
+  /** 話者分の ephemeral token */
   tokens: GdOrchestratorTokens[];
-  /** OpenAI モデル ID */
+  /** モデル ID */
   model: string;
   /** ユーザーマイク (moderator に割り当てる) */
   micStream: MediaStream;
@@ -76,7 +83,7 @@ const SPEAKERS_ORDER: Exclude<ActiveSpeaker, "user">[] = [
 ];
 
 export class GdOrchestrator {
-  private sessions = new Map<ActiveSpeaker, RealtimeSession>();
+  private sessions = new Map<ActiveSpeaker, InterviewVoiceSession>();
   private audioElements = new Map<ActiveSpeaker, HTMLAudioElement>();
   private turnCount = 0;
   private startedAt = 0;
@@ -134,7 +141,8 @@ export class GdOrchestrator {
       if (!tokenEntry) throw new Error(`missing token for ${speaker}`);
       const audioEl = this.audioElements.get(speaker)!;
 
-      const session = new RealtimeSession({
+      const session = createVoiceSession({
+        provider: this.opts.provider,
         ephemeralToken: tokenEntry.token,
         model: this.opts.model,
         audioOutputElement: audioEl,
@@ -157,34 +165,39 @@ export class GdOrchestrator {
 
     await Promise.all(connectPromises);
 
-    // moderator は VAD で発話終了は検知するが、自動応答はさせない
-    // (orchestrator が director 経由で response.create を制御するため)
-    const moderator = this.sessions.get("moderator");
-    if (moderator) {
-      moderator.updateSession({
-        audio: {
-          input: {
-            turn_detection: {
-              type: "server_vad",
-              threshold: 0.6,
-              prefix_padding_ms: 300,
-              silence_duration_ms: 1500,
-              create_response: false,
+    // 以下の VAD/transcription 微調整は OpenAI Realtime 固有
+    // (updateSession 生イベント)。Gemini Live は同等設定を ephemeral token の
+    // liveConnectConstraints.config に封入済みのためスキップする。
+    if (this.opts.provider === "openai") {
+      // moderator は VAD で発話終了は検知するが、自動応答はさせない
+      // (orchestrator が director 経由で response.create を制御するため)
+      const moderator = this.sessions.get("moderator");
+      if (moderator) {
+        (moderator as RealtimeSession).updateSession({
+          audio: {
+            input: {
+              turn_detection: {
+                type: "server_vad",
+                threshold: 0.6,
+                prefix_padding_ms: 300,
+                silence_duration_ms: 1500,
+                create_response: false,
+              },
+              transcription: { model: "gpt-4o-mini-transcribe", language: "ja" },
             },
-            transcription: { model: "gpt-4o-mini-transcribe", language: "ja" },
           },
-        },
-      });
-    }
-
-    // moderator 以外のセッションは input audio を一切受け取らないので VAD を無効化
-    for (const speaker of SPEAKERS_ORDER) {
-      if (speaker === "moderator") continue;
-      const sess = this.sessions.get(speaker);
-      if (sess) {
-        sess.updateSession({
-          audio: { input: { turn_detection: null } },
         });
+      }
+
+      // moderator 以外のセッションは input audio を一切受け取らないので VAD を無効化
+      for (const speaker of SPEAKERS_ORDER) {
+        if (speaker === "moderator") continue;
+        const sess = this.sessions.get(speaker);
+        if (sess) {
+          (sess as RealtimeSession).updateSession({
+            audio: { input: { turn_detection: null } },
+          });
+        }
       }
     }
 
@@ -319,11 +332,20 @@ export class GdOrchestrator {
     if (this.isClosed) return;
     this.opts.onAiRespondingChange?.(true);
     // moderator セッションだけがマイクを持つので、moderator の入力バッファをクリア
+    // (OpenAI Realtime 固有。Gemini は pauseInput でマイク送信を止める設計)
     const moderator = this.sessions.get("moderator");
-    try {
-      moderator?.sendEvent({ type: "input_audio_buffer.clear" });
-    } catch {
-      /* noop */
+    if (this.opts.provider === "openai") {
+      try {
+        (moderator as RealtimeSession).sendEvent({ type: "input_audio_buffer.clear" });
+      } catch {
+        /* noop */
+      }
+    } else {
+      try {
+        moderator?.pauseInput();
+      } catch {
+        /* noop */
+      }
     }
     const audioEl = this.audioElements.get(speaker);
     if (audioEl && audioEl.paused) {
