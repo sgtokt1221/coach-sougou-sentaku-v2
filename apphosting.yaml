@@ -27,12 +27,9 @@ env:
     secret: ANTHROPIC_API_KEY
   - variable: OPENAI_API_KEY
     secret: OPENAI_API_KEY
-  # Gemini Live を音声面接プロバイダに使う場合のみ有効化する。
-  # 手順: (1) `gcloud secrets create GEMINI_API_KEY --data-file=-` でシークレット作成
-  #       (2) 下記2行のコメントを外す
-  # 注意: シークレット未作成のまま下記を有効化すると App Hosting デプロイが失敗する。
-  # - variable: GEMINI_API_KEY
-  #   secret: GEMINI_API_KEY
+  # Gemini Live 音声面接プロバイダ用（Secret Manager: GEMINI_API_KEY、backend coach-app に権限付与済み）
+  - variable: GEMINI_API_KEY
+    secret: GEMINI_API_KEY
   - variable: FIREBASE_ADMIN_CLIENT_EMAIL
     secret: FIREBASE_ADMIN_CLIENT_EMAIL
   - variable: FIREBASE_ADMIN_PRIVATE_KEY
