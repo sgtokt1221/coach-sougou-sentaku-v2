@@ -11,7 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import SessionCalendar from "@/components/admin/SessionCalendar";
 import UnplacedStudentsSidebar from "@/components/admin/UnplacedStudentsSidebar";
 import AdminSessionList from "@/components/admin/AdminSessionList";
-import { SESSION_TYPE_LABELS } from "@/lib/types/session";
+import { SESSION_TYPE_LABELS, SESSION_TYPE_CREATE_OPTIONS } from "@/lib/types/session";
 import type { Session, SessionType } from "@/lib/types/session";
 import type { StudentListItem } from "@/lib/types/admin";
 
@@ -58,7 +58,7 @@ export default function AdminSessionsPage() {
     fixedStudent?: { uid: string; name: string };
   } | null>(null);
   const [formStudentId, setFormStudentId] = useState("");
-  const [formType, setFormType] = useState<SessionType>("coaching");
+  const [formType, setFormType] = useState<SessionType>("general");
   const [formIsResearch, setFormIsResearch] = useState(false);
 
   // 週の範囲を計算
@@ -179,7 +179,7 @@ export default function AdminSessionsPage() {
     const studentData = unplacedStudents.find(s => s.uid === studentId);
     if (!studentData) return;
     setAddDialog({ date, time, fixedStudent: { uid: studentId, name: studentData.displayName } });
-    setFormType("coaching");
+    setFormType("general");
     setFormIsResearch(false);
   };
 
@@ -351,7 +351,7 @@ export default function AdminSessionsPage() {
             onClickEmptySlot={(date, time) => {
               setAddDialog({ date, time });
               setFormStudentId("");
-              setFormType("coaching");
+              setFormType("general");
               setFormIsResearch(false);
             }}
           />
@@ -471,13 +471,13 @@ export default function AdminSessionsPage() {
                   value={formType}
                   onChange={(e) => setFormType(e.target.value as SessionType)}
                 >
-                  {(Object.entries(SESSION_TYPE_LABELS) as [SessionType, string][])
-                    .filter(([t]) => t !== "group_review")
-                    .map(([t, label]) => (
+                  {SESSION_TYPE_CREATE_OPTIONS.filter((t) => t !== "group_review").map(
+                    (t) => (
                       <option key={t} value={t}>
-                        {label}
+                        {SESSION_TYPE_LABELS[t]}
                       </option>
-                    ))}
+                    ),
+                  )}
                 </select>
               </div>
 

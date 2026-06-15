@@ -220,9 +220,20 @@ export const SESSION_TYPE_LABELS: Record<SessionType, string> = {
   coaching: "コーチング",
   mock_interview: "模擬面接",
   essay_review: "小論文レビュー",
-  general: "一般面談",
+  general: "面談",
   group_review: "グループ添削",
 };
+
+/**
+ * 作成フォームで選べる種別。
+ * coaching / essay_review は「面談 (general)」に統合済みだが、過去に作成された
+ * セッションの表示用に SESSION_TYPE_LABELS のキー自体は残してある（後方互換）。
+ */
+export const SESSION_TYPE_CREATE_OPTIONS: SessionType[] = [
+  "general", // 面談（1対1全般）
+  "mock_interview", // 模擬面接（サマリーが面接特化）
+  "group_review", // グループ添削（別フロー）
+];
 
 export const SESSION_STATUS_LABELS: Record<SessionStatus, string> = {
   scheduled: "予定",

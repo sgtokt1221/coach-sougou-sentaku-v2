@@ -20,7 +20,7 @@ import { authFetch } from "@/lib/api/client";
 import { useAuthSWR } from "@/lib/api/swr";
 import { toast } from "sonner";
 import type { SessionType, GroupSessionCreateRequest } from "@/lib/types/session";
-import { SESSION_TYPE_LABELS } from "@/lib/types/session";
+import { SESSION_TYPE_LABELS, SESSION_TYPE_CREATE_OPTIONS } from "@/lib/types/session";
 import type { StudentListItem, TeacherListItem } from "@/lib/types/admin";
 
 export default function NewSessionPage() {
@@ -259,14 +259,9 @@ export default function NewSessionPage() {
                     <SelectValue placeholder="タイプを選択" />
                   </SelectTrigger>
                   <SelectContent>
-                    {(
-                      Object.entries(SESSION_TYPE_LABELS) as [
-                        SessionType,
-                        string,
-                      ][]
-                    ).map(([key, label]) => (
+                    {SESSION_TYPE_CREATE_OPTIONS.map((key) => (
                       <SelectItem key={key} value={key}>
-                        {label}
+                        {SESSION_TYPE_LABELS[key]}
                       </SelectItem>
                     ))}
                   </SelectContent>
