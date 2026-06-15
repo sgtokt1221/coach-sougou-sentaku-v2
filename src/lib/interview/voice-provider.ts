@@ -11,12 +11,22 @@ import type { VoiceProvider } from "@/lib/interview/realtime/voice-session-facto
 
 const OVERRIDE_KEY = "interviewVoiceProvider";
 
+/**
+ * 既定プロバイダ。
+ * ※【一時的・テスト中】Gemini Live を既定にしている。OpenAI に戻すには
+ *   この値を "openai" に変えるだけ（端末ごとなら localStorage で上書き可）。
+ */
+const DEFAULT_PROVIDER: VoiceProvider = "gemini";
+
 export function resolveVoiceProvider(): VoiceProvider {
   if (typeof window !== "undefined") {
     const o = window.localStorage.getItem(OVERRIDE_KEY);
     if (o === "gemini" || o === "openai") return o;
   }
-  return process.env.NEXT_PUBLIC_INTERVIEW_VOICE_PROVIDER === "gemini" ? "gemini" : "openai";
+  // env で明示されていればそれを優先、無ければ DEFAULT_PROVIDER
+  const env = process.env.NEXT_PUBLIC_INTERVIEW_VOICE_PROVIDER;
+  if (env === "gemini" || env === "openai") return env;
+  return DEFAULT_PROVIDER;
 }
 
 export function setVoiceProviderOverride(p: VoiceProvider | null): void {

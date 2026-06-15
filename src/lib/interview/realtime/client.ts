@@ -214,7 +214,9 @@ export class RealtimeSession implements InterviewVoiceSession {
 
   /** session.update イベントで session 設定を上書き */
   updateSession(config: Record<string, unknown>): void {
-    this.sendEvent({ type: "session.update", session: config });
+    // GA API は session.update の session オブジェクトに type:"realtime" を要求する
+    // (未指定だと "Missing required parameter: 'session.type'" で reject される)。
+    this.sendEvent({ type: "session.update", session: { type: "realtime", ...config } });
   }
 
   private handleEvent(event: RealtimeEvent) {

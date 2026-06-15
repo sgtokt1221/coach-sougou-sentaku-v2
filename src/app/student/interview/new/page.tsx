@@ -46,15 +46,21 @@ export default function InterviewNewPage() {
   const router = useRouter();
   const { userProfile } = useAuth();
 
-  // 音声プロバイダ（dev/admin のみ切替可能。一般生徒には出さない）
+  // 音声プロバイダ切替トグルの表示条件:
+  //  - staff ロール、または dev、または localStorage の opt-in フラグ
+  //    (生徒ロールでもテスト時に `localStorage.showVoiceProviderToggle='1'` で出せる)
+  // 一般生徒には出さない。
   const role = (userProfile as { role?: string } | null)?.role;
-  const canChooseProvider =
-    role === "admin" || role === "superadmin" || role === "teacher" ||
-    process.env.NODE_ENV === "development";
   const [voiceProvider, setVoiceProviderState] = useState<VoiceProvider>("openai");
+  const [canChooseProvider, setCanChooseProvider] = useState(false);
   useEffect(() => {
     setVoiceProviderState(resolveVoiceProvider());
-  }, []);
+    const optIn =
+      typeof window !== "undefined" &&
+      window.localStorage.getItem("showVoiceProviderToggle") === "1";
+    const isStaff = role === "admin" || role === "superadmin" || role === "teacher";
+    setCanChooseProvider(optIn || isStaff || process.env.NODE_ENV === "development");
+  }, [role]);
 
   // 志望校解決
   const targetUniversities = (userProfile as Record<string, unknown> | null)?.targetUniversities as string[] | undefined ?? [];
