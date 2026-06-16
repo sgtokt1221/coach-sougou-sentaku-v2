@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Timer, Mic } from "lucide-react";
 import { toast } from "sonner";
 import { useRealtimeInterview } from "@/hooks/useRealtimeInterview";
+import { resolveVoiceProvider } from "@/lib/interview/voice-provider";
 import VoiceAnalyzer, { refineWithTranscription } from "@/components/interview/VoiceAnalyzer";
 import { INTERVIEW_SKILL_CHECK_MAX_TURNS } from "@/lib/types/interview-skill-check";
 import type { VoiceAnalysis } from "@/lib/types/interview";
@@ -36,9 +37,16 @@ function buildVoiceSummary(a: VoiceAnalysis): string {
  */
 export function RealtimeSkillCheck() {
   const router = useRouter();
+  // プロバイダ（openai / gemini）に応じてトークンエンドポイントを切替
+  const providerRef = useRef(resolveVoiceProvider());
+  const provider = providerRef.current;
   const realtime = useRealtimeInterview({
     mode: "individual",
-    tokenEndpoint: "/api/interview-skill-check/realtime-session",
+    provider,
+    tokenEndpoint:
+      provider === "gemini"
+        ? "/api/interview-skill-check/gemini-live-session"
+        : "/api/interview-skill-check/realtime-session",
     universityName: "-",
     facultyName: "-",
     admissionPolicy: "-",

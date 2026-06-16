@@ -11,8 +11,13 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenAI, Modality } from "@google/genai";
 import { requireRole } from "@/lib/api/auth";
+import {
+  GEMINI_LIVE_MODEL,
+  GEMINI_INDIVIDUAL_VOICE,
+  getGeminiClient,
+  issueGeminiLiveToken,
+} from "@/lib/interview/gemini-live-token";
 import { checkRealtimeRateLimit } from "@/lib/interview/rate-limit";
 import {
   buildRealtimeIndividualInstructions,
@@ -23,13 +28,6 @@ import {
 } from "@/lib/ai/prompts/interview-realtime";
 import type { InterviewMode } from "@/lib/types/interview";
 import type { InterviewTendency } from "@/lib/types/university";
-
-/** ネイティブ音声モデル（env で差し替え可）。プレビュー系のため ID 変動前提。 */
-const GEMINI_LIVE_MODEL =
-  process.env.GEMINI_LIVE_MODEL ?? "gemini-2.5-flash-native-audio-preview-12-2025";
-
-/** 個人モードの音声 */
-const INDIVIDUAL_VOICE = "Kore";
 
 /**
  * GD 6 話者構成（OpenAI 版の GD_SPEAKERS と同じ役割割当、voice は Gemini の prebuilt 名）。
@@ -43,48 +41,6 @@ const GD_SPEAKERS: { key: GdSpeakerKey; voice: string }[] = [
   { key: "peer_careful", voice: "Aoede" },
   { key: "peer_creative", voice: "Zephyr" },
 ];
-
-/**
- * 1 トークンを発行する。session config（systemInstruction/voice/transcription/
- * resumption/compression）は liveConnectConstraints.config にサーバー側で封入する。
- */
-async function issueGeminiToken(
-  ai: GoogleGenAI,
-  instructions: string,
-  voice: string,
-): Promise<{ value: string; expiresAt: number } | null> {
-  const now = Date.now();
-  const expireTime = new Date(now + 30 * 60 * 1000).toISOString();
-  const newSessionExpireTime = new Date(now + 2 * 60 * 1000).toISOString();
-
-  const token = await ai.authTokens.create({
-    config: {
-      uses: 1,
-      expireTime,
-      newSessionExpireTime,
-      liveConnectConstraints: {
-        model: GEMINI_LIVE_MODEL,
-        config: {
-          responseModalities: [Modality.AUDIO],
-          systemInstruction: { parts: [{ text: instructions }] },
-          speechConfig: {
-            languageCode: "ja-JP",
-            voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } },
-          },
-          // 採点（Claude）が会話テキスト依存なので入出力とも文字起こしを有効化
-          inputAudioTranscription: {},
-          outputAudioTranscription: {},
-          // 長時間面接対策: 接続10分/音声15分の上限を resumption + 圧縮で吸収
-          sessionResumption: {},
-          contextWindowCompression: { slidingWindow: {} },
-        },
-      },
-      httpOptions: { apiVersion: "v1alpha" },
-    },
-  });
-  if (!token.name) return null;
-  return { value: token.name, expiresAt: Date.parse(expireTime) };
-}
 
 export async function POST(request: NextRequest) {
   const authResult = await requireRole(request, ["student", "admin", "superadmin"]);
@@ -190,7 +146,7 @@ export async function POST(request: NextRequest) {
   if (!apiKey) {
     return NextResponse.json({ error: "GEMINI_API_KEY が設定されていません" }, { status: 503 });
   }
-  const ai = new GoogleGenAI({ apiKey, httpOptions: { apiVersion: "v1alpha" } });
+  const ai = getGeminiClient(apiKey);
 
   const gdContextMessage =
     mode === "group_discussion"
@@ -208,7 +164,7 @@ export async function POST(request: NextRequest) {
       const results = await Promise.all(
         GD_SPEAKERS.map(async ({ key, voice }) => {
           const instructions = buildRealtimeGdSpeakerInstructions(key);
-          const token = await issueGeminiToken(ai, instructions, voice);
+          const token = await issueGeminiLiveToken(ai, instructions, voice);
           return { speaker: key, voice, token };
         }),
       );
@@ -245,7 +201,7 @@ export async function POST(request: NextRequest) {
       presentationContent,
       selfAnalysis,
     );
-    const token = await issueGeminiToken(ai, instructions, INDIVIDUAL_VOICE);
+    const token = await issueGeminiLiveToken(ai, instructions, GEMINI_INDIVIDUAL_VOICE);
     if (!token) {
       return NextResponse.json(
         { provider: "gemini", error: "Gemini Live セッションの確立に失敗しました" },
@@ -259,7 +215,7 @@ export async function POST(request: NextRequest) {
       provider: "gemini",
       mode,
       model: GEMINI_LIVE_MODEL,
-      tokens: [{ speaker: "interviewer", voice: INDIVIDUAL_VOICE, token: token.value, expiresAt: token.expiresAt }],
+      tokens: [{ speaker: "interviewer", voice: GEMINI_INDIVIDUAL_VOICE, token: token.value, expiresAt: token.expiresAt }],
     });
   } catch (err) {
     console.error("[gemini-live-session] token creation failed", err);
