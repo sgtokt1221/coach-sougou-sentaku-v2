@@ -84,6 +84,8 @@ import { getWeaknessReminderLevel } from "@/lib/types/growth";
 import { UniversitySelectStep } from "@/components/onboarding/UniversitySelectStep";
 import type { EnglishCert } from "@/lib/types/user";
 import { CategorySelector } from "@/components/skill-check/CategorySelector";
+import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
+import { scoreToSkillRank } from "@/lib/history-rank";
 import type { SkillCheckStatus, AcademicCategory, SkillCheckResult } from "@/lib/types/skill-check";
 import type { InterviewSkillCheckStatus, InterviewSkillCheckResult } from "@/lib/types/interview-skill-check";
 import { SkillCheckDetailDialog } from "@/components/admin/SkillCheckDetailDialog";
@@ -1020,13 +1022,20 @@ function AdminStudentDetailPageInner() {
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
-                      <div className="text-right">
+                      <div className="flex items-center gap-2">
                         {essay.scores ? (
                           <>
-                            <p className={`text-lg font-bold ${scoreColor(essay.scores.total)}`}>
-                              {essay.scores.total}
-                            </p>
-                            <p className="text-xs text-muted-foreground">/50</p>
+                            <SkillRankBadge
+                              rank={scoreToSkillRank(essay.scores.total, 50)}
+                              size="sm"
+                              animate={false}
+                            />
+                            <div className="text-right">
+                              <p className={`text-lg font-bold ${scoreColor(essay.scores.total)}`}>
+                                {essay.scores.total}
+                              </p>
+                              <p className="text-xs text-muted-foreground">/50</p>
+                            </div>
                           </>
                         ) : (
                           <Badge variant="secondary" className="text-xs">

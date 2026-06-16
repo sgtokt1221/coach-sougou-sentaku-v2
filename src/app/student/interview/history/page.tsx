@@ -26,6 +26,8 @@ import type { InterviewMode } from "@/lib/types/interview";
 import { INTERVIEW_MODE_LABELS } from "@/lib/types/interview";
 import { useAuthSWR } from "@/lib/api/swr";
 import { InterviewInProgressSection } from "@/components/interview/InterviewInProgressSection";
+import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
+import { scoreToSkillRank } from "@/lib/history-rank";
 
 interface InterviewHistoryItem {
   id: string;
@@ -205,7 +207,14 @@ export default function InterviewHistoryPage() {
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">{item.practicedAt}</p>
                   </div>
-                  <div className="shrink-0">
+                  <div className="shrink-0 flex items-center gap-2">
+                    {item.totalScore > 0 && (
+                      <SkillRankBadge
+                        rank={scoreToSkillRank(item.totalScore, 40)}
+                        size="sm"
+                        animate={false}
+                      />
+                    )}
                     <span className="text-lg font-bold">
                       {item.totalScore}
                       <span className="text-sm text-muted-foreground">/40</span>

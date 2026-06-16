@@ -23,6 +23,8 @@ import { CHART_COLORS, SCORE_COLORS, CHART_ANIMATION, GRID_STYLE } from "@/compo
 import { CustomTooltip } from "@/components/charts/CustomTooltip";
 import { CustomDot, CustomActiveDot } from "@/components/charts/CustomDot";
 import { EssayDraftsSection } from "@/components/essay/EssayDraftsSection";
+import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
+import { scoreToSkillRank } from "@/lib/history-rank";
 
 interface EssayHistoryItem {
   id: string;
@@ -264,10 +266,17 @@ export default function EssayHistoryPage() {
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
                     {item.status === "reviewed" && (
-                      <span className="text-lg font-bold">
-                        {item.totalScore}
-                        <span className="text-sm text-muted-foreground">/50</span>
-                      </span>
+                      <>
+                        <SkillRankBadge
+                          rank={scoreToSkillRank(item.totalScore, 50)}
+                          size="sm"
+                          animate={false}
+                        />
+                        <span className="text-lg font-bold">
+                          {item.totalScore}
+                          <span className="text-sm text-muted-foreground">/50</span>
+                        </span>
+                      </>
                     )}
                     <Badge variant={STATUS_VARIANT[item.status]}>
                       {STATUS_LABEL[item.status]}
