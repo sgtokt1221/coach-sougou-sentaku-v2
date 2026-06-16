@@ -20,6 +20,7 @@ import { useAuthSWR } from "@/lib/api/swr";
 import type { OrganizationListItem } from "@/lib/types/organization";
 
 const NO_ORG = "__none__";
+const NEW_ORG = "__new__";
 
 export default function NewAdminPage() {
   const router = useRouter();
@@ -29,8 +30,9 @@ export default function NewAdminPage() {
   const [role, setRole] = useState<"admin" | "teacher">("admin");
   const [password, setPassword] = useState("");
   const [orgId, setOrgId] = useState<string>(NO_ORG);
+  const [newOrgName, setNewOrgName] = useState("");
 
-  const { data: orgs } = useAuthSWR<{ items: OrganizationListItem[] }>(
+  const { data: orgs, mutate: mutateOrgs } = useAuthSWR<{ items: OrganizationListItem[] }>(
     "/api/superadmin/organizations",
   );
 
@@ -44,31 +46,48 @@ export default function NewAdminPage() {
       toast.error("パスワードは6文字以上で入力してください");
       return;
     }
+    if (role === "admin" && orgId === NEW_ORG && !newOrgName.trim()) {
+      toast.error("新しい塾の名前を入力してください");
+      return;
+    }
 
     setLoading(true);
     try {
-      // role=admin かつ塾選択時は塾のメンバーとして作成(organizationId が付与される)
-      const useOrg = role === "admin" && orgId !== NO_ORG;
-      const res = await authFetch(
-        useOrg
-          ? `/api/superadmin/organizations/${orgId}/members`
-          : "/api/superadmin/admins",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(
-            useOrg
-              ? { email, displayName, password }
-              : { email, displayName, role, password },
-          ),
-        },
-      );
+      // 3パターン:
+      //  A) 新しい塾を作成 → この管理者を代表(owner)にして塾ごと作成
+      //  B) 既存の塾を選択 → その塾のメンバー管理者として作成
+      //  C) 未所属 or 講師 → 単独の管理者/講師として作成
+      let endpoint: string;
+      let payload: Record<string, unknown>;
+      let createdOrg = false;
+      if (role === "admin" && orgId === NEW_ORG) {
+        endpoint = "/api/superadmin/organizations";
+        payload = { name: newOrgName.trim(), owner: { email, displayName, password } };
+        createdOrg = true;
+      } else if (role === "admin" && orgId !== NO_ORG) {
+        endpoint = `/api/superadmin/organizations/${orgId}/members`;
+        payload = { email, displayName, password };
+      } else {
+        endpoint = "/api/superadmin/admins";
+        payload = { email, displayName, role, password };
+      }
+
+      const res = await authFetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const data = await res.json();
         throw new Error(data.error || "作成に失敗しました");
       }
-      toast.success("管理者を作成しました");
-      router.push("/superadmin/admins");
+      toast.success(createdOrg ? "塾と代表管理者を作成しました" : "管理者を作成しました");
+      if (createdOrg && data.id) {
+        await mutateOrgs();
+        router.push(`/superadmin/organizations/${data.id}`);
+      } else {
+        router.push("/superadmin/admins");
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "作成に失敗しました");
     } finally {
@@ -83,8 +102,10 @@ export default function NewAdminPage() {
           <ArrowLeft className="size-4" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold">新規管理者追加</h1>
-          <p className="text-sm text-muted-foreground">新しい管理者・講師アカウントを作成します</p>
+          <h1 className="text-2xl font-bold">管理者・塾の追加</h1>
+          <p className="text-sm text-muted-foreground">
+            管理者/講師を作成。新しい塾もこの画面から作成できます（代表管理者ごと）
+          </p>
         </div>
       </div>
 
@@ -139,6 +160,7 @@ export default function NewAdminPage() {
                     <SelectValue placeholder="塾を選択（任意）" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value={NEW_ORG}>＋ 新しい塾を作成…</SelectItem>
                     <SelectItem value={NO_ORG}>未所属</SelectItem>
                     {(orgs?.items ?? []).map((o) => (
                       <SelectItem key={o.id} value={o.id}>
@@ -147,9 +169,26 @@ export default function NewAdminPage() {
                     ))}
                   </SelectContent>
                 </Select>
-                <p className="text-[11px] text-muted-foreground">
-                  塾を選ぶと、その塾に所属する管理者として作成されます（同じ塾の生徒を共有）。
-                </p>
+                {orgId === NEW_ORG ? (
+                  <div className="space-y-1.5 rounded-md border bg-muted/30 p-2">
+                    <Label htmlFor="newOrgName" className="text-xs font-medium">
+                      新しい塾の名前
+                    </Label>
+                    <Input
+                      id="newOrgName"
+                      value={newOrgName}
+                      onChange={(e) => setNewOrgName(e.target.value)}
+                      placeholder="例: つくばゼミナール"
+                    />
+                    <p className="text-[11px] text-muted-foreground">
+                      この管理者を<strong>代表</strong>として新しい塾を作成します。
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-muted-foreground">
+                    塾を選ぶとその塾の管理者として作成（生徒を共有）。「未所属」も選べます。
+                  </p>
+                )}
               </div>
             )}
             <div className="space-y-1.5">
