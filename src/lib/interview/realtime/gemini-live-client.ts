@@ -355,7 +355,13 @@ export class GeminiLiveSession implements InterviewVoiceSession {
     if (this.started) return; // 2 回目以降は自動 VAD に任せる
     this.started = true;
     try {
-      this.session?.sendClientContent({ turnComplete: true });
+      // 空の turnComplete:true は 1007 "invalid argument" で即クローズされる。
+      // テキスト付きの user ターンで AI に口火を切らせる（systemInstruction に従って挨拶/質問）。
+      // この nudge はテキストなので inputTranscription を生まず、UI には表示されない。
+      this.session?.sendClientContent({
+        turns: [{ role: "user", parts: [{ text: "面接を始めてください。" }] }],
+        turnComplete: true,
+      });
     } catch {
       /* noop */
     }
