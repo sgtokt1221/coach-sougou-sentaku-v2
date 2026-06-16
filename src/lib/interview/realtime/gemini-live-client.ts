@@ -131,8 +131,11 @@ export class GeminiLiveSession implements InterviewVoiceSession {
   constructor(opts: GeminiLiveSessionOptions) {
     this.opts = opts;
     // ephemeral token を apiKey として使う。v1alpha が Live API ＋ token 必須。
+    // ブラウザでは httpOptions.apiVersion だけだと WS URL に効かず即クローズする
+    // 既知の不具合があるため、トップレベル apiVersion も指定する（同値）。
     this.ai = new GoogleGenAI({
       apiKey: opts.ephemeralToken,
+      apiVersion: "v1alpha",
       httpOptions: { apiVersion: "v1alpha" },
     });
   }
@@ -160,10 +163,20 @@ export class GeminiLiveSession implements InterviewVoiceSession {
         onmessage: (msg: LiveServerMessage) => this.handleMessage(msg),
         onerror: (e: ErrorEvent) => {
           if (this.isClosed) return;
+          console.warn("[GeminiLive] error", e?.message);
           this.opts.onError?.(new Error(e.message ?? "gemini live error"));
         },
-        onclose: () => {
-          if (process.env.NODE_ENV === "development") console.log("[GeminiLive] close");
+        onclose: (e: CloseEvent) => {
+          const code = e?.code;
+          const reason = e?.reason;
+          if (this.isClosed) {
+            if (process.env.NODE_ENV === "development") console.log("[GeminiLive] close(self)", code, reason);
+            return;
+          }
+          // 予期しないクローズ: マイク送信を止めて(スパム防止)、理由を通知
+          this.inputActive = false;
+          console.warn(`[GeminiLive] unexpected close code=${code} reason=${reason ?? ""}`);
+          this.opts.onError?.(new Error(`gemini closed: ${code} ${reason ?? ""}`));
         },
       },
       config: {
