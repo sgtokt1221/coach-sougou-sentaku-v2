@@ -142,6 +142,11 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
    */
   const [currentSpeaker, setCurrentSpeaker] = useState<ActiveSpeaker | null>(null);
   /**
+   * GD モードの討論テーマ (サーバーが選定して返す)。司会が開幕で読み上げるのと
+   * 同じ値で、UI 上部に表示する。GD 以外/未取得時は null。
+   */
+  const [gdTheme, setGdTheme] = useState<string | null>(null);
+  /**
    * GD モードで AI 発話完了後、「次へ」ボタン待ちかどうか。
    * true の間はユーザーが advanceGdTurn() を呼ぶまで次の話者は話し始めない。
    * 被り対策として AI 発話の自動進行を撤去した代わりの UI フック。
@@ -279,6 +284,7 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
     outputLevelSupportedRef.current = true;
     seenResponseIdsRef.current.clear();
     setIsAwaitingNext(false);
+    setGdTheme(null);
     if (sessionRef.current) {
       sessionRef.current.close();
       sessionRef.current = null;
@@ -394,6 +400,10 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
       const model = tokenData.model ?? "gpt-4o-mini-realtime-preview-2024-12-17";
 
       if (optsRef.current.mode === "group_discussion") {
+        // 討論テーマを UI 表示用に保持 (司会が開幕で読み上げるのと同じ値)
+        const themeVal = (tokenData as { theme?: string | null }).theme;
+        setGdTheme(typeof themeVal === "string" && themeVal.trim() ? themeVal : null);
+
         // GD: 3 並列セッションを GdOrchestrator で束ねる
         const gdTokens: GdOrchestratorTokens[] = tokenData.tokens.map((t) => ({
           speaker: t.speaker as ActiveSpeaker,
@@ -640,6 +650,8 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
     nextAvailableAt,
     micStream,
     currentSpeaker,
+    /** GD モードの討論テーマ (司会が開幕で読み上げる値)。UI 上部に表示。GD 以外は null */
+    gdTheme,
     /** ユーザーが発話してよいタイミングか (GD は currentSpeaker === "user"、個人/スキルチェックは AI が話し終えたとき) */
     isUserTurn:
       optsRef.current.mode === "group_discussion"

@@ -752,10 +752,22 @@ export default function InterviewSessionPage() {
         ref={scrollRef}
         className="flex-1 overflow-y-auto px-4 py-4 space-y-3"
       >
+        {/* 討論テーマ: 司会が開幕で読み上げるのと同じテーマを常時表示 */}
+        {sessionInfo?.mode === "group_discussion" && (
+          <div className="sticky top-0 z-40 mb-3 rounded-lg border-2 border-primary/40 bg-primary/5 p-3 shadow-md">
+            <p className="text-[11px] font-bold uppercase tracking-wide text-primary">
+              本日のテーマ
+            </p>
+            <p className="mt-0.5 text-sm font-bold leading-snug text-foreground">
+              {realtime.gdTheme ?? "テーマを準備しています…"}
+            </p>
+          </div>
+        )}
+
         {/* ユーザーターンランプ: GD で自分の発話タイミングを明示 */}
         {sessionInfo?.mode === "group_discussion" && (
           <div
-            className={`sticky top-0 z-30 mb-3 rounded-lg border-2 p-3 shadow-md transition-all ${
+            className={`sticky top-12 z-30 mb-3 rounded-lg border-2 p-3 shadow-md transition-all ${
               realtime.isUserTurn
                 ? "border-emerald-400 bg-emerald-50 dark:bg-emerald-950/40"
                 : "border-slate-300 bg-slate-50 dark:bg-slate-900/40"

@@ -205,7 +205,9 @@ const GD_CHARACTER_PROMPTS: Record<GdSpeakerKey, string> = {
 - もし自分が既に挨拶を済ませた後にもう一度発話を求められたら、議論の交通整理 (発言が滞った人に振る・論点をまとめる) を行うこと
 
 開幕の台詞 (1 回限り):
-「皆さん、本日は本学部の総合型選抜、集団討論にお越しいただきありがとうございます。私は本学部の教員で、本日の進行を務めます。これから約15分間、あるテーマについて皆さんで議論していただきます。正解はありませんので、自由に意見を出し合ってください。それではテーマを発表します。」
+「皆さん、本日は本学部の総合型選抜、集団討論にお越しいただきありがとうございます。私は本学部の教員で、本日の進行を務めます。これから約15分間、あるテーマについて皆さんで議論していただきます。正解はありませんので、自由に意見を出し合ってください。それではテーマを発表します。{{THEME_ANNOUNCEMENT}}」
+
+- **テーマは必ず開幕で声に出して発表すること。無言でテーマを飛ばして議論に入ってはならない。** 上記台詞のテーマ部分（『…』の中身）を省略せずそのまま読み上げる。
 
 ## 2 ターン目以降の役割 (議論進行モード)
 - **総合型選抜は学力ではなく、受験生の人物像と本学 AP の整合性を見る入試** である。あなたはその試験官として教員視点で議論を観察する
@@ -282,8 +284,20 @@ function formatInterviewTendency(t: InterviewTendency | undefined): string {
  * それらは `buildRealtimeGdSpeakerContextMessage` で別経路 (conversation.item.create)
  * から hidden な user role メッセージとして注入する。
  */
-export function buildRealtimeGdSpeakerInstructions(speaker: GdSpeakerKey): string {
-  const characterPrompt = GD_CHARACTER_PROMPTS[speaker];
+export function buildRealtimeGdSpeakerInstructions(
+  speaker: GdSpeakerKey,
+  theme?: string,
+): string {
+  let characterPrompt = GD_CHARACTER_PROMPTS[speaker];
+
+  // moderator の開幕台詞にテーマを差し込む。theme 未指定時は placeholder を空に。
+  if (speaker === "moderator") {
+    const announcement =
+      theme && theme.trim()
+        ? `本日のテーマは『${theme.trim()}』です。それでは、どなたからでも結構ですので、ご意見をお願いします。`
+        : "";
+    characterPrompt = characterPrompt.replace("{{THEME_ANNOUNCEMENT}}", announcement);
+  }
 
   return `${characterPrompt}
 
@@ -331,6 +345,7 @@ export function buildRealtimeGdSpeakerContextMessage(
   admissionPolicy: string,
   weaknessList: string,
   interviewTendency?: InterviewTendency,
+  theme?: string,
 ): string {
   const tendencyText = formatInterviewTendency(interviewTendency);
   const lines: string[] = [
@@ -340,10 +355,19 @@ export function buildRealtimeGdSpeakerContextMessage(
     "※ 自分の言葉で噛み砕いて、議論の中で必要な部分だけを反映してください。",
     "",
     `[討論の文脈] ${universityName} ${facultyName} の入学試験における集団討論`,
+  ];
+  if (theme && theme.trim()) {
+    lines.push(
+      "",
+      "[討論テーマ] (司会が開幕で発表するテーマ。議論はこのテーマに沿って行う)",
+      theme.trim(),
+    );
+  }
+  lines.push(
     "",
     "[アドミッションポリシー]",
     admissionPolicy,
-  ];
+  );
   if (tendencyText) {
     lines.push("", "[この学部の面接傾向]", tendencyText);
   }

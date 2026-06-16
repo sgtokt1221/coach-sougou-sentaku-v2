@@ -21,6 +21,7 @@ import {
   type GdSpeakerKey,
 } from "@/lib/ai/prompts/interview-realtime";
 import { buildWhisperPrompt } from "@/lib/interview/whisper-context";
+import { pickGdTheme } from "@/data/gd-themes";
 import type { InterviewMode } from "@/lib/types/interview";
 import type { InterviewTendency } from "@/lib/types/university";
 
@@ -319,6 +320,9 @@ export async function POST(request: NextRequest) {
   // 学部文脈の転写ヒント (大学名・学部名・学部別専門用語を列挙)
   const transcriptionPrompt = buildWhisperPrompt(facultyName, universityName);
 
+  // GD のテーマを1回だけ選定し、司会台詞・全話者context・レスポンスへ同じ値を流す
+  const gdTheme = mode === "group_discussion" ? pickGdTheme({ facultyName }) : null;
+
   // GD で各セッションに後から conversation.item.create で注入する背景情報
   // (instructions に埋め込まず別経路で渡すことで発話漏れを防ぐ)
   const gdContextMessage =
@@ -329,6 +333,7 @@ export async function POST(request: NextRequest) {
           admissionPolicy,
           weaknessList,
           interviewTendency,
+          gdTheme?.theme,
         )
       : null;
 
@@ -338,7 +343,10 @@ export async function POST(request: NextRequest) {
     const results = await Promise.all(
       GD_SPEAKERS.map(async ({ key, voice }) => {
         // instructions はキャラ + 発話ルールのみに圧縮 (背景情報は contextMessage で別注入)
-        const instructions = buildRealtimeGdSpeakerInstructions(key);
+        const instructions = buildRealtimeGdSpeakerInstructions(
+          key,
+          key === "moderator" ? gdTheme?.theme : undefined,
+        );
         const issueResult = await issueEphemeralToken(
           apiKey,
           {
@@ -385,6 +393,8 @@ export async function POST(request: NextRequest) {
       model: usedModel,
       tokens: successful,
       contextMessage: gdContextMessage,
+      theme: gdTheme?.theme ?? null,
+      themeDescription: gdTheme?.description ?? null,
     });
   }
 

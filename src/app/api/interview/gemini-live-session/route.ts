@@ -28,6 +28,7 @@ import {
 } from "@/lib/ai/prompts/interview-realtime";
 import type { InterviewMode } from "@/lib/types/interview";
 import type { InterviewTendency } from "@/lib/types/university";
+import { pickGdTheme } from "@/data/gd-themes";
 
 /**
  * GD 6 話者構成（OpenAI 版の GD_SPEAKERS と同じ役割割当、voice は Gemini の prebuilt 名）。
@@ -148,6 +149,9 @@ export async function POST(request: NextRequest) {
   }
   const ai = getGeminiClient(apiKey);
 
+  // GD のテーマを1回だけ選定し、司会台詞・全話者context・レスポンスへ同じ値を流す
+  const gdTheme = mode === "group_discussion" ? pickGdTheme({ facultyName }) : null;
+
   const gdContextMessage =
     mode === "group_discussion"
       ? buildRealtimeGdSpeakerContextMessage(
@@ -156,6 +160,7 @@ export async function POST(request: NextRequest) {
           admissionPolicy,
           weaknessList,
           interviewTendency,
+          gdTheme?.theme,
         )
       : null;
 
@@ -168,7 +173,10 @@ export async function POST(request: NextRequest) {
       const [results, earsToken] = await Promise.all([
         Promise.all(
           GD_SPEAKERS.map(async ({ key, voice }) => {
-            const instructions = buildRealtimeGdSpeakerInstructions(key);
+            const instructions = buildRealtimeGdSpeakerInstructions(
+              key,
+              key === "moderator" ? gdTheme?.theme : undefined,
+            );
             const token = await issueGeminiLiveToken(ai, instructions, voice);
             return { speaker: key, voice, token };
           }),
@@ -195,6 +203,8 @@ export async function POST(request: NextRequest) {
         tokens: successful,
         earsToken: { token: earsToken.value, expiresAt: earsToken.expiresAt },
         contextMessage: gdContextMessage,
+        theme: gdTheme?.theme ?? null,
+        themeDescription: gdTheme?.description ?? null,
       });
     }
 
