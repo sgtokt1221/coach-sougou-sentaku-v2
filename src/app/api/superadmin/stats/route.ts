@@ -74,6 +74,9 @@ export async function GET(request: Request) {
     let avgEssayScore: number | null = null;
     let activeStudents = 0;
     let byOrganization: OrganizationStat[] = [];
+    // 生徒uid → 所属塾orgId ("__none__"=未所属)。塾別スコア推移の集計に使う。
+    // perf セクションで構築。degrade 時は空のまま (= scoreTrendByOrg 空、全体は従来通り)。
+    const studentOrgMap = new Map<string, string>();
     const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
     const isActive = (data: FirebaseFirestore.DocumentData): boolean => {
       const iso = toIsoOrNull(
@@ -88,6 +91,15 @@ export async function GET(request: Request) {
         (doc) => !doc.data().managedBy,
       ).length;
       activeStudents = allStudentsSnap.docs.filter((d) => isActive(d.data())).length;
+
+      // 生徒 → 所属塾 マップ (継承された organizationId、無ければ "__none__")
+      for (const sDoc of allStudentsSnap.docs) {
+        const orgId = sDoc.data().organizationId;
+        studentOrgMap.set(
+          sDoc.id,
+          typeof orgId === "string" && orgId ? orgId : "__none__",
+        );
+      }
 
       // 組織マップ: adminUid → {orgId,orgName}、orgId → {name, adminCount}
       const orgByAdmin = new Map<string, { orgId: string; orgName: string }>();
@@ -185,6 +197,7 @@ export async function GET(request: Request) {
             averageScore:
               scoreCount > 0 ? Math.round((totalScore / scoreCount) * 10) / 10 : null,
             alertStudentCount: alertCount,
+            organizationId: orgId,
           } as AdminPerformance,
           orgId,
           role,
@@ -323,14 +336,16 @@ export async function GET(request: Request) {
       console.warn("[stats] activities not available:", err);
     }
 
-    // Recent essays (collectionGroup) - 60 件取って Top 10 で十分なので
-    // スコア推移にも使い回す。collectionGroup の index 不足等で失敗しても degrade。
+    // Recent essays (collectionGroup) - Top 10 はアクティビティ用、全件は30日スコア推移
+    // (全体 + 塾別) の集計に使い回す。塾別では日次が疎になりやすいので 300 件取得し、
+    // 30日窓は in-memory で絞る (admin 専用画面なので読み取りコスト増は許容)。
+    // collectionGroup の index 不足等で失敗しても degrade。
     let recentEssaysDocs: FirebaseFirestore.QueryDocumentSnapshot[] = [];
     try {
       const recentEssays = await adminDb
         .collectionGroup("essays")
         .orderBy("submittedAt", "desc")
-        .limit(60)
+        .limit(300)
         .get();
       recentEssaysDocs = recentEssays.docs;
     } catch (err) {
@@ -357,11 +372,25 @@ export async function GET(request: Request) {
     );
     recentActivity.splice(10);
 
-    // Score trend (B 修正: 30 日分埋め)
-    const dailyScores = new Map<string, { total: number; count: number }>();
+    // Score trend (B 修正: 30 日分埋め)。全体と塾別を同時に集計する。
+    type DayBucket = { total: number; count: number };
+    const dailyScores = new Map<string, DayBucket>();
+    // orgId → (dateKey → bucket)。塾別スコア推移用。
+    const dailyScoresByOrg = new Map<string, Map<string, DayBucket>>();
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setHours(0, 0, 0, 0);
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
+
+    const addToBucket = (
+      map: Map<string, DayBucket>,
+      key: string,
+      score: number,
+    ) => {
+      const existing = map.get(key) ?? { total: 0, count: 0 };
+      existing.total += score;
+      existing.count++;
+      map.set(key, existing);
+    };
 
     for (const doc of recentEssaysDocs) {
       const data = doc.data();
@@ -371,26 +400,44 @@ export async function GET(request: Request) {
       const date = new Date(ts);
       if (date < thirtyDaysAgo) continue;
       const key = ts.slice(0, 10);
-      const existing = dailyScores.get(key) ?? { total: 0, count: 0 };
-      existing.total += score;
-      existing.count++;
-      dailyScores.set(key, existing);
+      addToBucket(dailyScores, key, score);
+
+      // 塾別: essay 著者の生徒uid (= 親ドキュメント) から所属塾を引く
+      const authorUid = doc.ref.parent.parent?.id;
+      const orgId = authorUid ? studentOrgMap.get(authorUid) : undefined;
+      if (orgId) {
+        let orgMap = dailyScoresByOrg.get(orgId);
+        if (!orgMap) {
+          orgMap = new Map<string, DayBucket>();
+          dailyScoresByOrg.set(orgId, orgMap);
+        }
+        addToBucket(orgMap, key, score);
+      }
     }
 
     // 30 日分のカレンダーを生成し、 データない日は count=0 で埋める
-    const scoreTrend: ScoreTrendItem[] = [];
-    for (let i = 0; i < 30; i++) {
-      const d = new Date(thirtyDaysAgo);
-      d.setDate(d.getDate() + i);
-      const key = d.toISOString().slice(0, 10);
-      const entry = dailyScores.get(key);
-      scoreTrend.push({
-        date: key,
-        averageScore: entry
-          ? Math.round((entry.total / entry.count) * 10) / 10
-          : 0,
-        count: entry?.count ?? 0,
-      });
+    const buildTrend = (map: Map<string, DayBucket>): ScoreTrendItem[] => {
+      const trend: ScoreTrendItem[] = [];
+      for (let i = 0; i < 30; i++) {
+        const d = new Date(thirtyDaysAgo);
+        d.setDate(d.getDate() + i);
+        const key = d.toISOString().slice(0, 10);
+        const entry = map.get(key);
+        trend.push({
+          date: key,
+          averageScore: entry
+            ? Math.round((entry.total / entry.count) * 10) / 10
+            : 0,
+          count: entry?.count ?? 0,
+        });
+      }
+      return trend;
+    };
+
+    const scoreTrend = buildTrend(dailyScores);
+    const scoreTrendByOrg: Record<string, ScoreTrendItem[]> = {};
+    for (const [orgId, orgMap] of dailyScoresByOrg) {
+      scoreTrendByOrg[orgId] = buildTrend(orgMap);
     }
 
     // 機能の利用状況＋採用率: 各機能の件数と、使った生徒の distinct 数。
@@ -470,6 +517,7 @@ export async function GET(request: Request) {
       adminPerformance,
       recentActivity,
       scoreTrend,
+      scoreTrendByOrg,
       invitationSummary,
     };
 

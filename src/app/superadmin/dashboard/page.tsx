@@ -1,10 +1,18 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Shield,
   Users,
@@ -56,8 +64,12 @@ const mockStats: SuperadminDashboardStats = {
   adminPerformance: [],
   recentActivity: [],
   scoreTrend: [],
+  scoreTrendByOrg: {},
   invitationSummary: { total: 0, pending: 0, used: 0, expired: 0 },
 };
+
+/** 全塾を表すドロップダウンのセンチネル値 */
+const ALL_ORGS = "__all__";
 
 export default function SuperadminDashboard() {
   const {
@@ -66,6 +78,9 @@ export default function SuperadminDashboard() {
     error: statsError,
   } = useAuthSWR<SuperadminDashboardStats>("/api/superadmin/stats");
   const stats = rawStats ?? mockStats;
+
+  // 塾フィルタ。ALL_ORGS = 全塾 (従来の全体ビュー)。
+  const [selectedOrg, setSelectedOrg] = useState<string>(ALL_ORGS);
 
   // 集計エラー時は誤魔化さず明示 (= 0 値で表示しない)
   if (statsError && !loading) {
@@ -105,9 +120,30 @@ export default function SuperadminDashboard() {
     );
   }
 
+  // 塾フィルタの適用: 全塾なら全体値、特定塾なら byOrganization の該当行から KPI を引く
+  const isAllOrgs = selectedOrg === ALL_ORGS;
+  const selectedOrgStat = isAllOrgs
+    ? null
+    : stats.byOrganization.find((o) => o.orgId === selectedOrg) ?? null;
+  const view = isAllOrgs
+    ? {
+        totalAdmins: stats.totalAdmins,
+        totalTeachers: stats.totalTeachers,
+        totalStudents: stats.totalStudents,
+        avgEssayScore: stats.avgEssayScore,
+        activeStudents: stats.activeStudents,
+      }
+    : {
+        totalAdmins: selectedOrgStat?.adminCount ?? 0,
+        totalTeachers: selectedOrgStat?.teacherCount ?? 0,
+        totalStudents: selectedOrgStat?.studentCount ?? 0,
+        avgEssayScore: selectedOrgStat?.avgEssayScore ?? null,
+        activeStudents: selectedOrgStat?.activeStudentCount ?? 0,
+      };
+
   const activeRate =
-    stats.totalStudents > 0
-      ? Math.round((stats.activeStudents / stats.totalStudents) * 100)
+    view.totalStudents > 0
+      ? Math.round((view.activeStudents / view.totalStudents) * 100)
       : 0;
   const statCards: {
     label: string;
@@ -116,11 +152,22 @@ export default function SuperadminDashboard() {
     color: string;
     bg: string;
   }[] = [
-    { label: "管理者数", value: stats.totalAdmins, icon: Shield, color: "text-primary", bg: "bg-primary/10" },
-    { label: "講師数", value: stats.totalTeachers, icon: Users, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-500/10" },
-    { label: "生徒数", value: stats.totalStudents, icon: GraduationCap, color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-500/10" },
-    { label: "未割当生徒", value: stats.unassignedStudents, icon: UserX, color: "text-rose-600 dark:text-rose-400", bg: "bg-rose-500/10" },
-    { label: "平均スコア", value: stats.avgEssayScore ?? "—", icon: TrendingUp, color: "text-sky-600 dark:text-sky-400", bg: "bg-sky-500/10" },
+    { label: "管理者数", value: view.totalAdmins, icon: Shield, color: "text-primary", bg: "bg-primary/10" },
+    { label: "講師数", value: view.totalTeachers, icon: Users, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-500/10" },
+    { label: "生徒数", value: view.totalStudents, icon: GraduationCap, color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-500/10" },
+    // 未割当生徒は全塾ビューのみ意味を持つ (特定塾選択時は非表示)
+    ...(isAllOrgs
+      ? [
+          {
+            label: "未割当生徒",
+            value: stats.unassignedStudents,
+            icon: UserX,
+            color: "text-rose-600 dark:text-rose-400",
+            bg: "bg-rose-500/10",
+          },
+        ]
+      : []),
+    { label: "平均スコア", value: view.avgEssayScore ?? "—", icon: TrendingUp, color: "text-sky-600 dark:text-sky-400", bg: "bg-sky-500/10" },
     { label: "アクティブ率(30日)", value: `${activeRate}%`, icon: Clock, color: "text-violet-600 dark:text-violet-400", bg: "bg-violet-500/10" },
   ];
 
@@ -162,20 +209,53 @@ export default function SuperadminDashboard() {
     return `${days}日前`;
   }
 
+  // 管理者別パフォーマンス: 特定塾選択時はその塾の管理者/講師だけに絞る
+  const shownPerformance = isAllOrgs
+    ? stats.adminPerformance
+    : stats.adminPerformance.filter((a) => a.organizationId === selectedOrg);
+
   // BarChart data for admin performance
-  const barData = stats.adminPerformance.map((a) => ({
+  const barData = shownPerformance.map((a) => ({
     name: a.displayName.length > 6 ? a.displayName.slice(0, 6) + "…" : a.displayName,
     fullName: a.displayName,
     生徒数: a.studentCount,
   }));
 
+  // スコア推移: 全塾なら全体、特定塾ならその塾の推移 (なければ空)
+  const shownScoreTrend = isAllOrgs
+    ? stats.scoreTrend
+    : stats.scoreTrendByOrg[selectedOrg] ?? [];
+  const scoreTrendTitle = isAllOrgs
+    ? "全体スコア推移（直近30日）"
+    : `${selectedOrgStat?.orgName ?? "選択塾"}のスコア推移（直近30日）`;
+
   return (
     <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">Superadmin ダッシュボード</h1>
-          <p className="text-sm text-muted-foreground">システム全体の管理状況を確認できます</p>
+          <p className="text-sm text-muted-foreground">
+            {isAllOrgs
+              ? "システム全体の管理状況を確認できます"
+              : `「${selectedOrgStat?.orgName ?? "選択塾"}」の状況を表示中`}
+          </p>
         </div>
+        <Select
+          value={selectedOrg}
+          onValueChange={(v) => setSelectedOrg(v ?? ALL_ORGS)}
+        >
+          <SelectTrigger className="w-56">
+            <SelectValue placeholder="塾を選択" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL_ORGS}>全塾</SelectItem>
+            {stats.byOrganization.map((o) => (
+              <SelectItem key={o.orgId} value={o.orgId}>
+                {o.orgName}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Stat Cards - Enhanced */}
@@ -238,7 +318,7 @@ export default function SuperadminDashboard() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <TrendingUp className="size-4" />
-            機能の利用状況（みんなが何を使っているか）
+            機能の利用状況（全体・みんなが何を使っているか）
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -296,7 +376,7 @@ export default function SuperadminDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {stats.adminPerformance.length === 0 ? (
+            {shownPerformance.length === 0 ? (
               <p className="text-sm text-muted-foreground">データがありません</p>
             ) : (
               <>
@@ -339,7 +419,7 @@ export default function SuperadminDashboard() {
                       </tr>
                     </thead>
                     <tbody>
-                      {stats.adminPerformance.map((admin) => (
+                      {shownPerformance.map((admin) => (
                         <tr key={admin.uid} className="border-b hover:bg-accent/50">
                           <td className="px-4 py-2">
                             <Link href={`/superadmin/admins/${admin.uid}`} className="font-medium hover:underline">
@@ -439,7 +519,7 @@ export default function SuperadminDashboard() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Clock className="size-4" />
-              最近のアクティビティ
+              最近のアクティビティ（全体）
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -482,16 +562,16 @@ export default function SuperadminDashboard() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
                 <TrendingUp className="size-4" />
-                全体スコア推移（直近30日）
+                {scoreTrendTitle}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {stats.scoreTrend.length === 0 ? (
+              {shownScoreTrend.length === 0 ? (
                 <p className="text-sm text-muted-foreground">データがありません</p>
               ) : (
                 <div className="h-48">
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={stats.scoreTrend} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
+                    <AreaChart data={shownScoreTrend} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
                       <defs>
                         <linearGradient id="scoreFill" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor={CHART_COLORS.primary} stopOpacity={0.3} />

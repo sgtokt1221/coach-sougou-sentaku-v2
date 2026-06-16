@@ -223,6 +223,8 @@ export interface AdminPerformance {
   studentCount: number;
   averageScore: number | null;
   alertStudentCount: number;
+  /** 所属塾 ID ("__none__" = 未所属)。塾フィルタでの絞り込みに使用 */
+  organizationId: string;
 }
 
 export interface RecentActivity {
@@ -290,6 +292,8 @@ export interface SuperadminDashboardStats {
   adminPerformance: AdminPerformance[];
   recentActivity: RecentActivity[];
   scoreTrend: ScoreTrendItem[];
+  /** 塾(組織)別の30日スコア推移。キー = orgId / "__none__" */
+  scoreTrendByOrg: Record<string, ScoreTrendItem[]>;
   invitationSummary: InvitationSummary;
 }
 
