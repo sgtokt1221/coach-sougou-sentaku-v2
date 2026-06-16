@@ -64,8 +64,19 @@ export interface GeminiLiveSessionOptions extends VoiceSessionCallbacks {
   /**
    * オープニングで AI に口火を切らせる nudge テキスト（triggerResponse 初回）。
    * 用途に応じて差し替える。未指定なら面接向けの既定文言。
+   * repeatableTrigger=true のときは毎ターンこの文言で発話を促す。
    */
   openingNudge?: string;
+  /**
+   * 出力音声を再生しない（GD の「耳」セッション用）。
+   * 文字起こし（onUserTranscript）だけ使い、AI の返答音声は破棄する。
+   */
+  muteOutput?: boolean;
+  /**
+   * triggerResponse を毎回発火させる（GD の話者セッション用）。
+   * 既定(false)は初回のみ（個別面接：以降は自動VADに任せる）。
+   */
+  repeatableTrigger?: boolean;
 }
 
 const INPUT_SAMPLE_RATE = 16000; // Gemini Live 入力は 16kHz mono PCM16
@@ -299,6 +310,7 @@ export class GeminiLiveSession implements InterviewVoiceSession {
 
   private enqueueAudio(b64: string): void {
     if (this.isClosed) return;
+    if (this.opts.muteOutput) return; // 耳セッション: 返答音声は鳴らさない
     if (!this.outputCtx) {
       this.outputCtx = new AudioContext({ sampleRate: OUTPUT_SAMPLE_RATE });
       this.playheadTime = this.outputCtx.currentTime;
@@ -357,7 +369,8 @@ export class GeminiLiveSession implements InterviewVoiceSession {
    * 最初の 1 回（オープニング）だけ、systemInstruction に沿って AI に話し始めさせる。
    */
   triggerResponse(): void {
-    if (this.started) return; // 2 回目以降は自動 VAD に任せる
+    // 既定は初回のみ（以降は自動VAD）。repeatableTrigger=true（GD話者）は毎回発火。
+    if (this.started && !this.opts.repeatableTrigger) return;
     this.started = true;
     try {
       // 空の turnComplete:true は 1007 "invalid argument" で即クローズされる。

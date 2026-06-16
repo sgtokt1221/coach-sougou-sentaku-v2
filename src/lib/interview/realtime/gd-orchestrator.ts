@@ -34,9 +34,15 @@ export interface GdOrchestratorOptions {
   provider: VoiceProvider;
   /** 話者分の ephemeral token */
   tokens: GdOrchestratorTokens[];
+  /**
+   * Gemini 用「耳」セッションの token。
+   * Gemini は全話者を no-mic にし、ユーザー音声はこの耳セッション
+   * (mic あり・出力ミュート・文字起こし専用) で拾う。OpenAI では未使用。
+   */
+  earsToken?: string;
   /** モデル ID */
   model: string;
-  /** ユーザーマイク (moderator に割り当てる) */
+  /** ユーザーマイク (OpenAI=moderator / Gemini=耳セッション に割り当てる) */
   micStream: MediaStream;
   /**
    * 接続後に各セッションに hidden 注入する背景情報メッセージ。
@@ -82,9 +88,15 @@ const SPEAKERS_ORDER: Exclude<ActiveSpeaker, "user">[] = [
   "peer_creative",
 ];
 
+/** Gemini 話者を毎ターン喋らせる nudge（テキストなのでUI非表示） */
+const GD_SPEAKER_NUDGE =
+  "あなたの番です。これまでの議論を踏まえて、あなたの立場で簡潔に発言してください。";
+
 export class GdOrchestrator {
   private sessions = new Map<ActiveSpeaker, InterviewVoiceSession>();
   private audioElements = new Map<ActiveSpeaker, HTMLAudioElement>();
+  /** Gemini: ユーザー音声の文字起こし専用セッション（mic あり・出力ミュート） */
+  private earsSession: InterviewVoiceSession | null = null;
   private turnCount = 0;
   private startedAt = 0;
   private lastSpeaker: ActiveSpeaker | null = null;
@@ -135,7 +147,11 @@ export class GdOrchestrator {
       this.audioElements.set(speaker, el);
     }
 
-    // 3 セッションを並列接続
+    const isGemini = this.opts.provider === "gemini";
+
+    // 話者セッションを並列接続。
+    // OpenAI: moderator だけ mic 所有（VAD で文字起こし）。
+    // Gemini: 全話者 no-mic ＋ 毎ターン明示トリガ（ユーザー音声は耳セッションで拾う）。
     const connectPromises = SPEAKERS_ORDER.map(async (speaker) => {
       const tokenEntry = tokenByKey.get(speaker);
       if (!tokenEntry) throw new Error(`missing token for ${speaker}`);
@@ -147,10 +163,14 @@ export class GdOrchestrator {
         model: this.opts.model,
         audioOutputElement: audioEl,
         micStream: this.opts.micStream,
-        withMic: speaker === "moderator", // moderator だけマイク所有
-        onUserTranscript: speaker === "moderator"
-          ? (text) => this.onUserTranscript(text)
-          : undefined,
+        withMic: isGemini ? false : speaker === "moderator",
+        repeatableTrigger: isGemini, // Gemini: triggerResponse を毎ターン発火
+        openingNudge: isGemini ? GD_SPEAKER_NUDGE : undefined,
+        // OpenAI は moderator が文字起こし。Gemini は耳セッションが担当するので話者側は受けない。
+        onUserTranscript:
+          !isGemini && speaker === "moderator"
+            ? (text) => this.onUserTranscript(text)
+            : undefined,
         onResponseStart: () => this.onResponseStart(speaker),
         onAssistantTranscriptDelta: (cumulative, responseId) =>
           this.onAssistantTranscriptDelta(speaker, cumulative, responseId),
@@ -164,6 +184,26 @@ export class GdOrchestrator {
     });
 
     await Promise.all(connectPromises);
+
+    // Gemini: 耳セッション（mic あり・出力ミュート・文字起こし専用）を接続
+    if (isGemini) {
+      if (!this.opts.earsToken) throw new Error("missing earsToken for gemini GD");
+      const earsEl = document.createElement("audio"); // 使わない（muteOutput）
+      earsEl.style.display = "none";
+      const ears = createVoiceSession({
+        provider: "gemini",
+        ephemeralToken: this.opts.earsToken,
+        model: this.opts.model,
+        audioOutputElement: earsEl,
+        micStream: this.opts.micStream,
+        withMic: true,
+        muteOutput: true, // 耳の返答音声は鳴らさない
+        onUserTranscript: (text) => this.onUserTranscript(text),
+        onError: (err) => this.opts.onError?.(err),
+      });
+      await ears.connect();
+      this.earsSession = ears;
+    }
 
     // 以下の VAD/transcription 微調整は OpenAI Realtime 固有
     // (updateSession 生イベント)。Gemini Live は同等設定を ephemeral token の
@@ -309,6 +349,12 @@ export class GdOrchestrator {
 
     if (nextSpeaker === "user") {
       // user ターン: AI 側は何もせず、マイク入力を待つ
+      // Gemini は耳セッションのマイク送信を再開してユーザー発話を拾う
+      try {
+        this.earsSession?.resumeInput();
+      } catch {
+        /* noop */
+      }
       this.lastSpeaker = "user";
       this.currentResponseSpeaker = null;
       return;
@@ -341,8 +387,9 @@ export class GdOrchestrator {
         /* noop */
       }
     } else {
+      // Gemini: 耳セッションのマイク送信を止める（AI 発話中の取り込み/誤応答を防ぐ）
       try {
-        moderator?.pauseInput();
+        this.earsSession?.pauseInput();
       } catch {
         /* noop */
       }
@@ -452,6 +499,12 @@ export class GdOrchestrator {
       }
     }
     this.sessions.clear();
+    try {
+      this.earsSession?.close();
+    } catch {
+      /* noop */
+    }
+    this.earsSession = null;
     for (const el of this.audioElements.values()) {
       try {
         el.srcObject = null;

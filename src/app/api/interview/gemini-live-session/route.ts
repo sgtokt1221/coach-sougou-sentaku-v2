@@ -161,18 +161,25 @@ export async function POST(request: NextRequest) {
 
   try {
     if (mode === "group_discussion") {
-      const results = await Promise.all(
-        GD_SPEAKERS.map(async ({ key, voice }) => {
-          const instructions = buildRealtimeGdSpeakerInstructions(key);
-          const token = await issueGeminiLiveToken(ai, instructions, voice);
-          return { speaker: key, voice, token };
-        }),
-      );
+      // 6話者（no-mic・明示トリガで発話）＋「耳」セッション（mic・文字起こし専用）
+      // 耳の instructions は最小限（返答音声は破棄するため何でもよいが、暴走しないよう端的に）
+      const EARS_INSTRUCTIONS =
+        "あなたは書記です。参加者の発言を聞き取るだけでよく、返答は不要です。求められたら「はい」とだけ言ってください。";
+      const [results, earsToken] = await Promise.all([
+        Promise.all(
+          GD_SPEAKERS.map(async ({ key, voice }) => {
+            const instructions = buildRealtimeGdSpeakerInstructions(key);
+            const token = await issueGeminiLiveToken(ai, instructions, voice);
+            return { speaker: key, voice, token };
+          }),
+        ),
+        issueGeminiLiveToken(ai, EARS_INSTRUCTIONS, GEMINI_INDIVIDUAL_VOICE),
+      ]);
       const successful = results
         .filter((r) => r.token !== null)
         .map((r) => ({ speaker: r.speaker, voice: r.voice, token: r.token!.value, expiresAt: r.token!.expiresAt }));
 
-      if (successful.length < GD_SPEAKERS.length) {
+      if (successful.length < GD_SPEAKERS.length || !earsToken) {
         return NextResponse.json(
           { provider: "gemini", error: "Gemini Live セッションの確立に失敗しました", partial: successful.length },
           { status: 502 },
@@ -186,6 +193,7 @@ export async function POST(request: NextRequest) {
         mode: "group_discussion",
         model: GEMINI_LIVE_MODEL,
         tokens: successful,
+        earsToken: { token: earsToken.value, expiresAt: earsToken.expiresAt },
         contextMessage: gdContextMessage,
       });
     }

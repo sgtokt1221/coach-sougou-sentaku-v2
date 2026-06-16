@@ -20,6 +20,10 @@ export interface CreateVoiceSessionParams extends VoiceSessionCallbacks {
   withMic?: boolean;
   /** Gemini のオープニング nudge（OpenAI では無視される） */
   openingNudge?: string;
+  /** Gemini: 出力音声を鳴らさない（GDの耳セッション）。OpenAI では無視 */
+  muteOutput?: boolean;
+  /** Gemini: triggerResponse を毎回発火（GDの話者）。OpenAI では無視 */
+  repeatableTrigger?: boolean;
 }
 
 export function createVoiceSession(params: CreateVoiceSessionParams): InterviewVoiceSession {

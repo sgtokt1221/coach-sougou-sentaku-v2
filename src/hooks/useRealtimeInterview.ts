@@ -313,10 +313,9 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
     // 前回セッションの seen responseId をクリア (新セッションで再利用される ID は無いが念のため)
     seenResponseIdsRef.current.clear();
 
-    // プロバイダ解決: GD は当面 OpenAI 固定（Gemini GD は Phase C）
+    // プロバイダ解決（GD も含め要求 provider を使う。Gemini GD は耳セッション方式）
     const requestedProvider: VoiceProvider = optsRef.current.provider ?? "openai";
-    const effectiveProvider: VoiceProvider =
-      optsRef.current.mode === "group_discussion" ? "openai" : requestedProvider;
+    const effectiveProvider: VoiceProvider = requestedProvider;
     const tokenEndpoint =
       optsRef.current.tokenEndpoint ??
       (effectiveProvider === "gemini"
@@ -328,6 +327,7 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
       mode?: string;
       model?: string;
       tokens?: { speaker: string; voice: string; token: string; expiresAt: number }[];
+      earsToken?: { token: string; expiresAt: number };
       rateLimited?: boolean;
       nextAvailableAt?: string;
       error?: string;
@@ -403,6 +403,7 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
         const orch = new GdOrchestrator({
           provider: effectiveProvider,
           tokens: gdTokens,
+          earsToken: tokenData.earsToken?.token,
           model,
           micStream,
           // 接続後に各セッションに hidden 注入する背景情報 (instructions 分離化)
