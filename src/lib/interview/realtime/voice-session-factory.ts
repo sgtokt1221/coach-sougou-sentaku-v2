@@ -18,6 +18,8 @@ export interface CreateVoiceSessionParams extends VoiceSessionCallbacks {
   audioOutputElement: HTMLAudioElement;
   micStream: MediaStream | null;
   withMic?: boolean;
+  /** Gemini のオープニング nudge（OpenAI では無視される） */
+  openingNudge?: string;
 }
 
 export function createVoiceSession(params: CreateVoiceSessionParams): InterviewVoiceSession {

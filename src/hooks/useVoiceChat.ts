@@ -17,7 +17,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { authFetch } from "@/lib/api/client";
-import { RealtimeSession } from "@/lib/interview/realtime/client";
+import type { InterviewVoiceSession } from "@/lib/interview/realtime/voice-session";
+import { createVoiceSession } from "@/lib/interview/realtime/voice-session-factory";
+import { resolveVoiceProvider } from "@/lib/interview/voice-provider";
 
 export type VoiceChatStatus =
   | "idle"
@@ -42,7 +44,7 @@ export function useVoiceChat() {
   const [status, setStatus] = useState<VoiceChatStatus>("idle");
   const [error, setError] = useState<string | null>(null);
 
-  const sessionRef = useRef<RealtimeSession | null>(null);
+  const sessionRef = useRef<InterviewVoiceSession | null>(null);
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
   const micStreamRef = useRef<MediaStream | null>(null);
 
@@ -68,10 +70,15 @@ export function useVoiceChat() {
     setError(null);
     setStatus("requesting_token");
 
+    // プロバイダ解決（openai / gemini）
+    const provider = resolveVoiceProvider();
+
     // 1. ephemeral token 取得
     let tokenData: { model?: string; token?: string; error?: string };
     try {
-      const res = await authFetch("/api/realtime/session", {
+      const endpoint =
+        provider === "gemini" ? "/api/realtime/gemini-session" : "/api/realtime/session";
+      const res = await authFetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -100,7 +107,8 @@ export function useVoiceChat() {
           noiseSuppression: true,
           autoGainControl: true,
           channelCount: 1,
-          sampleRate: 24000,
+          // OpenAI 24kHz / Gemini 16kHz
+          sampleRate: provider === "gemini" ? 16000 : 24000,
         },
       });
       micStreamRef.current = micStream;
@@ -125,12 +133,15 @@ export function useVoiceChat() {
     // 4. WebRTC 接続
     setStatus("connecting");
     try {
-      const session = new RealtimeSession({
+      const session = createVoiceSession({
+        provider,
         ephemeralToken: tokenData.token,
         model: tokenData.model ?? "gpt-4o-mini-realtime-preview-2024-12-17",
         audioOutputElement: audioElementRef.current,
         micStream,
         withMic: true,
+        // 汎用チャットなので面接固定の文言ではなく中立の口火に
+        openingNudge: "よろしくお願いします。始めてください。",
         onUserTranscript: opts.onUserTranscript,
         onAssistantTranscript: opts.onAssistantTranscript,
         onError: (err) => {

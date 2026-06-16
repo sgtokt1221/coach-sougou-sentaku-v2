@@ -61,6 +61,11 @@ export interface GeminiLiveSessionOptions extends VoiceSessionCallbacks {
    * false: 送らない（GD でリスナー以外を text 同期する用途）。
    */
   withMic?: boolean;
+  /**
+   * オープニングで AI に口火を切らせる nudge テキスト（triggerResponse 初回）。
+   * 用途に応じて差し替える。未指定なら面接向けの既定文言。
+   */
+  openingNudge?: string;
 }
 
 const INPUT_SAMPLE_RATE = 16000; // Gemini Live 入力は 16kHz mono PCM16
@@ -358,8 +363,9 @@ export class GeminiLiveSession implements InterviewVoiceSession {
       // 空の turnComplete:true は 1007 "invalid argument" で即クローズされる。
       // テキスト付きの user ターンで AI に口火を切らせる（systemInstruction に従って挨拶/質問）。
       // この nudge はテキストなので inputTranscription を生まず、UI には表示されない。
+      const nudge = this.opts.openingNudge ?? "面接を始めてください。";
       this.session?.sendClientContent({
-        turns: [{ role: "user", parts: [{ text: "面接を始めてください。" }] }],
+        turns: [{ role: "user", parts: [{ text: nudge }] }],
         turnComplete: true,
       });
     } catch {
