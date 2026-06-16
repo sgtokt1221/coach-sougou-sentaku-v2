@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
-import { adminDb } from "@/lib/firebase/admin";
+import { adminAuth, adminDb } from "@/lib/firebase/admin";
 import type { OrganizationListItem } from "@/lib/types/organization";
 
 /**
@@ -59,11 +59,54 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json();
   const name: string = body.name?.trim();
-  const ownerAdminUid: string = body.ownerAdminUid?.trim();
 
-  if (!name || !ownerAdminUid) {
+  if (!name) {
+    return NextResponse.json({ error: "name は必須" }, { status: 400 });
+  }
+
+  // owner の指定方法は2通り:
+  //   A) ownerAdminUid: 既存 admin を代表にする
+  //   B) owner: { email, displayName, password }: 代表 admin を新規作成する(鶏卵解消)
+  let ownerAdminUid: string = body.ownerAdminUid?.trim() ?? "";
+  const owner = body.owner as
+    | { email?: string; displayName?: string; password?: string }
+    | undefined;
+
+  if (!ownerAdminUid && owner) {
+    const email = owner.email?.trim();
+    const displayName = owner.displayName?.trim();
+    const password = owner.password;
+    if (!email || !displayName || !password) {
+      return NextResponse.json(
+        { error: "代表管理者の email / displayName / password は必須です" },
+        { status: 400 },
+      );
+    }
+    if (typeof password !== "string" || password.length < 6) {
+      return NextResponse.json({ error: "パスワードは6文字以上にしてください" }, { status: 400 });
+    }
+    if (!adminAuth) return NextResponse.json({ error: "Auth 未初期化" }, { status: 500 });
+    try {
+      const userRecord = await adminAuth.createUser({ email, password, displayName });
+      await adminDb.doc(`users/${userRecord.uid}`).set({
+        email,
+        displayName,
+        role: "admin",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      ownerAdminUid = userRecord.uid;
+    } catch (err) {
+      return NextResponse.json(
+        { error: err instanceof Error ? err.message : "代表管理者の作成に失敗しました" },
+        { status: 400 },
+      );
+    }
+  }
+
+  if (!ownerAdminUid) {
     return NextResponse.json(
-      { error: "name + ownerAdminUid は必須" },
+      { error: "ownerAdminUid または owner(email/displayName/password) が必要です" },
       { status: 400 },
     );
   }

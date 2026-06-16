@@ -16,6 +16,10 @@ import {
 import { toast } from "sonner";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
+import { useAuthSWR } from "@/lib/api/swr";
+import type { OrganizationListItem } from "@/lib/types/organization";
+
+const NO_ORG = "__none__";
 
 export default function NewAdminPage() {
   const router = useRouter();
@@ -24,6 +28,11 @@ export default function NewAdminPage() {
   const [displayName, setDisplayName] = useState("");
   const [role, setRole] = useState<"admin" | "teacher">("admin");
   const [password, setPassword] = useState("");
+  const [orgId, setOrgId] = useState<string>(NO_ORG);
+
+  const { data: orgs } = useAuthSWR<{ items: OrganizationListItem[] }>(
+    "/api/superadmin/organizations",
+  );
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -38,11 +47,22 @@ export default function NewAdminPage() {
 
     setLoading(true);
     try {
-      const res = await authFetch("/api/superadmin/admins", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, displayName, role, password }),
-      });
+      // role=admin かつ塾選択時は塾のメンバーとして作成(organizationId が付与される)
+      const useOrg = role === "admin" && orgId !== NO_ORG;
+      const res = await authFetch(
+        useOrg
+          ? `/api/superadmin/organizations/${orgId}/members`
+          : "/api/superadmin/admins",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(
+            useOrg
+              ? { email, displayName, password }
+              : { email, displayName, role, password },
+          ),
+        },
+      );
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || "作成に失敗しました");
@@ -111,6 +131,27 @@ export default function NewAdminPage() {
                 </SelectContent>
               </Select>
             </div>
+            {role === "admin" && (
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium">所属塾</Label>
+                <Select value={orgId} onValueChange={(v) => { if (v) setOrgId(v); }}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="塾を選択（任意）" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={NO_ORG}>未所属</SelectItem>
+                    {(orgs?.items ?? []).map((o) => (
+                      <SelectItem key={o.id} value={o.id}>
+                        {o.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[11px] text-muted-foreground">
+                  塾を選ぶと、その塾に所属する管理者として作成されます（同じ塾の生徒を共有）。
+                </p>
+              </div>
+            )}
             <div className="space-y-1.5">
               <Label htmlFor="password" className="text-xs font-medium">
                 パスワード

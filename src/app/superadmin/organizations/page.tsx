@@ -2,21 +2,70 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, RefreshCw, Building2, Users, GraduationCap, Wrench } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Loader2, Building2, Users, GraduationCap, Wrench, Plus } from "lucide-react";
 import { useAuthSWR } from "@/lib/api/swr";
 import { authFetch } from "@/lib/api/client";
 import { toast } from "sonner";
 import type { OrganizationListItem } from "@/lib/types/organization";
 
 export default function SuperadminOrganizationsPage() {
+  const router = useRouter();
   const { data, isLoading, mutate } = useAuthSWR<{ items: OrganizationListItem[] }>(
     "/api/superadmin/organizations",
   );
   const [backfilling, setBackfilling] = useState(false);
   const [backfillResult, setBackfillResult] = useState<unknown>(null);
+
+  // 新規塾作成ダイアログ
+  const [createOpen, setCreateOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [form, setForm] = useState({ name: "", email: "", displayName: "", password: "" });
+
+  const canCreate =
+    form.name.trim() && form.email.trim() && form.displayName.trim() && form.password.length >= 6;
+
+  const createOrg = async () => {
+    if (!canCreate || creating) return;
+    setCreating(true);
+    try {
+      const res = await authFetch("/api/superadmin/organizations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: form.name.trim(),
+          owner: {
+            email: form.email.trim(),
+            displayName: form.displayName.trim(),
+            password: form.password,
+          },
+        }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
+      toast.success("塾を作成しました");
+      setCreateOpen(false);
+      setForm({ name: "", email: "", displayName: "", password: "" });
+      await mutate();
+      if (body.id) router.push(`/superadmin/organizations/${body.id}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "作成に失敗しました");
+    } finally {
+      setCreating(false);
+    }
+  };
 
   const runBackfill = async () => {
     if (
@@ -52,15 +101,79 @@ export default function SuperadminOrganizationsPage() {
             塾単位での admin / teacher / student 管理
           </p>
         </div>
-        <Button onClick={runBackfill} disabled={backfilling}>
-          {backfilling ? (
-            <Loader2 className="mr-2 size-4 animate-spin" />
-          ) : (
-            <Wrench className="mr-2 size-4" />
-          )}
-          既存データ移行
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button onClick={() => setCreateOpen(true)}>
+            <Plus className="mr-2 size-4" />
+            新規塾作成
+          </Button>
+          <Button variant="outline" onClick={runBackfill} disabled={backfilling}>
+            {backfilling ? (
+              <Loader2 className="mr-2 size-4 animate-spin" />
+            ) : (
+              <Wrench className="mr-2 size-4" />
+            )}
+            既存データ移行
+          </Button>
+        </div>
       </div>
+
+      {/* 新規塾作成ダイアログ */}
+      <Dialog open={createOpen} onOpenChange={(o) => !creating && setCreateOpen(o)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>新規塾作成</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <Label htmlFor="org-name">塾名</Label>
+              <Input
+                id="org-name"
+                placeholder="例: つくばゼミナール"
+                value={form.name}
+                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+              />
+            </div>
+            <p className="pt-1 text-xs font-medium text-muted-foreground">代表管理者（この塾の管理者アカウント）</p>
+            <div className="space-y-1">
+              <Label htmlFor="org-owner-name">代表者名</Label>
+              <Input
+                id="org-owner-name"
+                placeholder="例: 山田 太郎"
+                value={form.displayName}
+                onChange={(e) => setForm((f) => ({ ...f, displayName: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="org-owner-email">メールアドレス</Label>
+              <Input
+                id="org-owner-email"
+                type="email"
+                placeholder="admin@example.com"
+                value={form.email}
+                onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="org-owner-pw">パスワード（6文字以上）</Label>
+              <Input
+                id="org-owner-pw"
+                type="password"
+                value={form.password}
+                onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateOpen(false)} disabled={creating}>
+              キャンセル
+            </Button>
+            <Button onClick={createOrg} disabled={!canCreate || creating}>
+              {creating && <Loader2 className="mr-2 size-4 animate-spin" />}
+              作成
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {backfillResult !== null && (
         <Card>
@@ -84,7 +197,7 @@ export default function SuperadminOrganizationsPage() {
       ) : (data?.items ?? []).length === 0 ? (
         <Card>
           <CardContent className="p-8 text-center text-muted-foreground">
-            まだ組織がありません。 「既存データ移行」 を押すと既存 admin から自動作成されます。
+            まだ塾がありません。 「新規塾作成」 で塾を追加するか、 「既存データ移行」 で既存 admin から自動作成できます。
           </CardContent>
         </Card>
       ) : (
