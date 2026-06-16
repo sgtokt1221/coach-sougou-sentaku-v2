@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 import { checkRealtimeRateLimit } from "@/lib/interview/rate-limit";
 import { buildRealtimeSkillCheckInstructions } from "@/lib/ai/prompts/interview-skill-check-realtime";
+import { pickOneInterviewContent } from "@/lib/interview/content-store";
 import {
   GEMINI_LIVE_MODEL,
   GEMINI_INDIVIDUAL_VOICE,
@@ -50,9 +51,11 @@ export async function POST(request: NextRequest) {
 
   try {
     const ai = getGeminiClient(apiKey);
+    // バンクから社会テーマを1つ選ぶ（無ければ従来どおり受験生に挙げさせる）
+    const scTheme = await pickOneInterviewContent("skill_check");
     const token = await issueGeminiLiveToken(
       ai,
-      buildRealtimeSkillCheckInstructions(),
+      buildRealtimeSkillCheckInstructions(scTheme?.title),
       GEMINI_INDIVIDUAL_VOICE,
     );
     if (!token) {

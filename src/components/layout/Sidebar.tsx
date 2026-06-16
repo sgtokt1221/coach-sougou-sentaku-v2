@@ -184,6 +184,7 @@ const superadminNavGroups: NavGroup[] = [
     title: "Data",
     items: [
       { label: "大学データ", href: "/admin/universities", icon: Database },
+      { label: "面接コンテンツ", href: "/superadmin/interview-content", icon: Mic },
     ],
   },
   {

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { buildInterviewSystemPrompt } from "@/lib/ai/prompts/interview";
+import { getInterviewContent } from "@/lib/interview/content-store";
+import type { ContentMode } from "@/lib/types/interview-content";
 import type { InterviewStartRequest, InterviewStartResponse } from "@/lib/types/interview";
 import type { WeaknessRecord } from "@/lib/types/growth";
 import type { InterviewTendency } from "@/lib/types/university";
@@ -132,7 +134,10 @@ export async function POST(request: NextRequest) {
       }
 
       const client = new Anthropic();
-      const systemPrompt = buildInterviewSystemPrompt(mode, universityName, facultyName, admissionPolicy, weaknessList, interviewTendency, presentationContent);
+      // バンク(superadmin管理)から優先候補を取得して system prompt に渡す
+      const bankItems = await getInterviewContent(mode as ContentMode, { facultyName });
+      const contentCandidates = bankItems.slice(0, 6).map((i) => i.title);
+      const systemPrompt = buildInterviewSystemPrompt(mode, universityName, facultyName, admissionPolicy, weaknessList, interviewTendency, presentationContent, contentCandidates);
 
       // GD の導入は 司会→健太→美咲→翔太→司会(締め) の 5 発話を一度に返すため長めに
       const maxTokens = mode === "group_discussion" ? 1800 : 512;

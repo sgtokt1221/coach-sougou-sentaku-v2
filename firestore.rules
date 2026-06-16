@@ -109,6 +109,12 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // 面接コンテンツ・バンク。読み書きは superadmin のみ (実際の CRUD は API/Admin SDK 経由)
+    match /interviewContent/{itemId} {
+      allow read: if isSuperAdmin();
+      allow write: if isSuperAdmin();
+    }
+
     // 面接セッション（トップレベル）: 参加者 + 担当 admin / 同塾 admin / superadmin
     match /interviews/{interviewId} {
       allow read: if request.auth != null && (

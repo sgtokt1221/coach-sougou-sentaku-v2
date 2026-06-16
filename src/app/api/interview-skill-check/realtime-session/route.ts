@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 import { checkRealtimeRateLimit } from "@/lib/interview/rate-limit";
 import { buildRealtimeSkillCheckInstructions } from "@/lib/ai/prompts/interview-skill-check-realtime";
+import { pickOneInterviewContent } from "@/lib/interview/content-store";
 
 const REALTIME_MODEL_CANDIDATES = ["gpt-realtime-2", "gpt-realtime", "gpt-realtime-mini"];
 
@@ -106,9 +107,11 @@ export async function POST(request: NextRequest) {
   }
 
   const voice = "shimmer";
+  // バンクから社会テーマを1つ選ぶ（無ければ従来どおり受験生に挙げさせる）
+  const scTheme = await pickOneInterviewContent("skill_check");
   const { token, model } = await issueEphemeralToken(
     apiKey,
-    buildRealtimeSkillCheckInstructions(),
+    buildRealtimeSkillCheckInstructions(scTheme?.title),
     voice,
   );
   if (!token) {

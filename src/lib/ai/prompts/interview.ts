@@ -411,7 +411,8 @@ export function buildInterviewSystemPrompt(
   admissionPolicy: string,
   weaknessList: string,
   interviewTendency?: InterviewTendency,
-  presentationContent?: string
+  presentationContent?: string,
+  contentCandidates?: string[]
 ): string {
   const tendencyText = interviewTendency
     ? `- 面接形式: ${interviewTendency.format}\n- 所要時間: ${interviewTendency.duration}\n- 面接官: ${interviewTendency.interviewers}\n- 雰囲気: ${pressureLabel(interviewTendency.pressure)}\n- 配点傾向: ${interviewTendency.weight}\n- 頻出テーマ: ${interviewTendency.frequentTopics.join("、")}\n- 対策ポイント: ${interviewTendency.tips}`
@@ -421,13 +422,23 @@ export function buildInterviewSystemPrompt(
     ? `## 受験生の発表資料（事前提出済み）\n以下の資料内容を把握した上で、内容に基づいた質疑応答を行ってください。\n\n${presentationContent}`
     : "";
 
-  return INTERVIEW_SYSTEM_PROMPTS[mode]
+  const base = INTERVIEW_SYSTEM_PROMPTS[mode]
     .replace(/{{UNIVERSITY_NAME}}/g, universityName)
     .replace(/{{FACULTY_NAME}}/g, facultyName)
     .replace("{{ADMISSION_POLICY}}", admissionPolicy)
     .replace("{{WEAKNESS_LIST}}", weaknessList)
     .replace("{{INTERVIEW_TENDENCY}}", tendencyText)
     .replace("{{PRESENTATION_CONTENT}}", presContent);
+
+  // バンク(superadmin管理の想定質問/お題)を優先候補として付与。AP動的生成も維持。
+  if (contentCandidates && contentCandidates.length > 0) {
+    return `${base}
+
+## 優先的に扱う想定質問・お題（管理者が用意したもの）
+以下をこの面接で優先的に取り上げること。ただし機械的に読み上げず、AP や受験生の回答に合わせて自然に組み込む。候補が合わなければ AP に基づき自分で質問を作ってよい。
+${contentCandidates.map((c) => `- ${c}`).join("\n")}`;
+  }
+  return base;
 }
 
 export function buildInterviewEvaluationPrompt(

@@ -28,7 +28,8 @@ import {
 } from "@/lib/ai/prompts/interview-realtime";
 import type { InterviewMode } from "@/lib/types/interview";
 import type { InterviewTendency } from "@/lib/types/university";
-import { pickGdTheme } from "@/data/gd-themes";
+import { pickOneInterviewContent, getInterviewContent } from "@/lib/interview/content-store";
+import type { ContentMode } from "@/lib/types/interview-content";
 
 /**
  * GD 6 話者構成（OpenAI 版の GD_SPEAKERS と同じ役割割当、voice は Gemini の prebuilt 名）。
@@ -150,7 +151,11 @@ export async function POST(request: NextRequest) {
   const ai = getGeminiClient(apiKey);
 
   // GD のテーマを1回だけ選定し、司会台詞・全話者context・レスポンスへ同じ値を流す
-  const gdTheme = mode === "group_discussion" ? pickGdTheme({ facultyName }) : null;
+  // (バンク = Firestore優先・未設定時は静的seedにフォールバック)
+  const gdTheme =
+    mode === "group_discussion"
+      ? await pickOneInterviewContent("group_discussion", { facultyName })
+      : null;
 
   const gdContextMessage =
     mode === "group_discussion"
@@ -160,7 +165,7 @@ export async function POST(request: NextRequest) {
           admissionPolicy,
           weaknessList,
           interviewTendency,
-          gdTheme?.theme,
+          gdTheme?.title,
         )
       : null;
 
@@ -175,7 +180,7 @@ export async function POST(request: NextRequest) {
           GD_SPEAKERS.map(async ({ key, voice }) => {
             const instructions = buildRealtimeGdSpeakerInstructions(
               key,
-              key === "moderator" ? gdTheme?.theme : undefined,
+              key === "moderator" ? gdTheme?.title : undefined,
             );
             const token = await issueGeminiLiveToken(ai, instructions, voice);
             return { speaker: key, voice, token };
@@ -203,12 +208,14 @@ export async function POST(request: NextRequest) {
         tokens: successful,
         earsToken: { token: earsToken.value, expiresAt: earsToken.expiresAt },
         contextMessage: gdContextMessage,
-        theme: gdTheme?.theme ?? null,
+        theme: gdTheme?.title ?? null,
         themeDescription: gdTheme?.description ?? null,
       });
     }
 
-    // 個人 / プレゼン / 口頭試問
+    // 個人 / プレゼン / 口頭試問: バンクから優先候補を数件取得して渡す
+    const bankItems = await getInterviewContent(mode as ContentMode, { facultyName });
+    const contentCandidates = bankItems.slice(0, 6).map((i) => i.title);
     const instructions = buildRealtimeIndividualInstructions(
       mode,
       universityName,
@@ -218,6 +225,7 @@ export async function POST(request: NextRequest) {
       interviewTendency,
       presentationContent,
       selfAnalysis,
+      contentCandidates,
     );
     const token = await issueGeminiLiveToken(ai, instructions, GEMINI_INDIVIDUAL_VOICE);
     if (!token) {

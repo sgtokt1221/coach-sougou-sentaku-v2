@@ -32,7 +32,18 @@ export function buildRealtimeIndividualInstructions(
   interviewTendency?: InterviewTendency,
   presentationContent?: string,
   selfAnalysis?: SelfAnalysisContext,
+  contentCandidates?: string[],
 ): string {
+  // バンク(superadmin管理の想定質問/お題)。優先候補として提示しつつ AP 動的生成も維持。
+  const candidatesBlock =
+    contentCandidates && contentCandidates.length > 0
+      ? `## 優先的に扱う想定質問・お題 (管理者が用意したもの)
+以下を**この面接で優先的に取り上げる**こと。ただし機械的に読み上げず、AP や受験生の回答に
+合わせて自然に組み込む。候補が話題に合わなければ AP に基づき自分で質問を作ってよい。
+${contentCandidates.map((c) => `- ${c}`).join("\n")}
+`
+      : "";
+
   const modeIntro = (() => {
     switch (mode) {
       case "individual":
@@ -158,6 +169,7 @@ ${interviewTendency ? `## 面接傾向\n${typeof interviewTendency === "string" 
 
 ${phaseGuide}
 
+${candidatesBlock}
 ## 受験生の弱点 (重点的に確認すべき領域)
 ${weaknessList}
 

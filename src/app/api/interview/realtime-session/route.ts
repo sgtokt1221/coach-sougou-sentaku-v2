@@ -21,7 +21,8 @@ import {
   type GdSpeakerKey,
 } from "@/lib/ai/prompts/interview-realtime";
 import { buildWhisperPrompt } from "@/lib/interview/whisper-context";
-import { pickGdTheme } from "@/data/gd-themes";
+import { pickOneInterviewContent, getInterviewContent } from "@/lib/interview/content-store";
+import type { ContentMode } from "@/lib/types/interview-content";
 import type { InterviewMode } from "@/lib/types/interview";
 import type { InterviewTendency } from "@/lib/types/university";
 
@@ -321,7 +322,11 @@ export async function POST(request: NextRequest) {
   const transcriptionPrompt = buildWhisperPrompt(facultyName, universityName);
 
   // GD のテーマを1回だけ選定し、司会台詞・全話者context・レスポンスへ同じ値を流す
-  const gdTheme = mode === "group_discussion" ? pickGdTheme({ facultyName }) : null;
+  // (バンク = Firestore優先・未設定時は静的seedにフォールバック)
+  const gdTheme =
+    mode === "group_discussion"
+      ? await pickOneInterviewContent("group_discussion", { facultyName })
+      : null;
 
   // GD で各セッションに後から conversation.item.create で注入する背景情報
   // (instructions に埋め込まず別経路で渡すことで発話漏れを防ぐ)
@@ -333,7 +338,7 @@ export async function POST(request: NextRequest) {
           admissionPolicy,
           weaknessList,
           interviewTendency,
-          gdTheme?.theme,
+          gdTheme?.title,
         )
       : null;
 
@@ -345,7 +350,7 @@ export async function POST(request: NextRequest) {
         // instructions はキャラ + 発話ルールのみに圧縮 (背景情報は contextMessage で別注入)
         const instructions = buildRealtimeGdSpeakerInstructions(
           key,
-          key === "moderator" ? gdTheme?.theme : undefined,
+          key === "moderator" ? gdTheme?.title : undefined,
         );
         const issueResult = await issueEphemeralToken(
           apiKey,
@@ -393,12 +398,14 @@ export async function POST(request: NextRequest) {
       model: usedModel,
       tokens: successful,
       contextMessage: gdContextMessage,
-      theme: gdTheme?.theme ?? null,
+      theme: gdTheme?.title ?? null,
       themeDescription: gdTheme?.description ?? null,
     });
   }
 
-  // 個人 / プレゼン / 口頭試問: 1 セッション
+  // 個人 / プレゼン / 口頭試問: 1 セッション。バンクから優先候補を数件渡す
+  const bankItems = await getInterviewContent(mode as ContentMode, { facultyName });
+  const contentCandidates = bankItems.slice(0, 6).map((i) => i.title);
   const instructions = buildRealtimeIndividualInstructions(
     mode,
     universityName,
@@ -408,6 +415,7 @@ export async function POST(request: NextRequest) {
     interviewTendency,
     presentationContent,
     selfAnalysis,
+    contentCandidates,
   );
   const voice = "shimmer"; // 個人モードは shimmer (落ち着いた女性教員のトーン)
   const issueResult = await issueEphemeralToken(apiKey, {
