@@ -26,6 +26,7 @@ import {
   Compass,
   Sparkles,
   Settings,
+  TrendingUp,
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -36,7 +37,7 @@ import { MobileMenuContent } from "./MobileMenuContent";
 /**
  * ボトムナブ（モバイル専用）
  * ロール別にタブを切り替え:
- * - student:    ホーム / Action!(FAB) / チャット
+ * - student:    ホーム / Action!(FAB) / チャット / 成長
  * - admin:      ホーム / 生徒管理 / アラート / レポート / メニュー
  * - teacher:    ホーム / シフト / 担当生徒 / セッション / メニュー
  * - superadmin: ホーム / 管理者 / 生徒 / 講師 / メニュー
@@ -225,6 +226,7 @@ export function BottomNav() {
 
   /* ─── student: ホーム / Action!(FAB) / チャット の3タブ ─── */
   const chatActive = pathname.startsWith("/student/feedback");
+  const growthActive = pathname.startsWith("/student/growth");
   const isCoach = userProfile?.plan === "coach";
   const researchEnrolled =
     (userProfile as { researchEnrolled?: boolean })?.researchEnrolled === true;
@@ -264,6 +266,7 @@ export function BottomNav() {
           </button>
 
           <TabLink label="チャット" href="/student/feedback" Icon={MessageSquare} active={chatActive} />
+          <TabLink label="成長" href="/student/growth" Icon={TrendingUp} active={growthActive} />
         </div>
       </nav>
 
