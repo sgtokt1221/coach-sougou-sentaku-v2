@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
@@ -11,7 +12,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ArrowLeft, FileText, TrendingUp } from "lucide-react";
+import { ArrowLeft, FileText, TrendingUp, RotateCcw } from "lucide-react";
+import { getPassageById } from "@/data/summary-passages";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { useAuthSWR } from "@/lib/api/swr";
 import {
@@ -219,9 +221,45 @@ export default function SummaryDrillHistoryPage() {
                 </div>
               )}
 
+              {/* 問題文 (passageId から静的データを復元) */}
+              {(() => {
+                const passage = selectedDrill.passageId
+                  ? getPassageById(selectedDrill.passageId)
+                  : undefined;
+                if (!passage) return null;
+                return (
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground mb-1">問題文</p>
+                    <p className="max-h-48 overflow-y-auto whitespace-pre-wrap rounded-md border bg-muted/30 p-3 text-sm leading-relaxed">
+                      {passage.passage}
+                    </p>
+                  </div>
+                );
+              })()}
+
+              {/* 自分の答案 */}
+              {selectedDrill.summaryText && (
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-1">自分の答案</p>
+                  <p className="whitespace-pre-wrap rounded-md border p-3 text-sm leading-relaxed">
+                    {selectedDrill.summaryText}
+                  </p>
+                </div>
+              )}
+
               <p className="text-xs text-muted-foreground">
                 {new Date(selectedDrill.completedAt).toLocaleString("ja-JP")}
               </p>
+
+              {/* 同じ長文で再トライ (passageId がある時のみ) */}
+              {selectedDrill.passageId && (
+                <Button asChild variant="outline" className="w-full">
+                  <Link href={`/student/essay/summary-drill?passage=${selectedDrill.passageId}`}>
+                    <RotateCcw className="mr-2 size-4" />
+                    この長文をもう一度
+                  </Link>
+                </Button>
+              )}
             </div>
           )}
         </DialogContent>

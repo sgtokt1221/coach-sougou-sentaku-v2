@@ -6,8 +6,10 @@ import { NextRequest, NextResponse } from "next/server";
  */
 export interface SummaryDrillHistoryItem {
   id: string;
+  passageId: string | null;
   passageTitle: string | null;
   facultyId: string | null;
+  summaryText: string;
   scores: {
     comprehension: number;
     conciseness: number;
@@ -72,8 +74,10 @@ export async function GET(request: NextRequest) {
       const data = doc.data();
       return {
         id: doc.id,
+        passageId: data.passageId ?? null,
         passageTitle: data.passageTitle ?? null,
         facultyId: data.facultyId ?? null,
+        summaryText: data.summaryText ?? "",
         scores: data.scores ?? {
           comprehension: 0,
           conciseness: 0,

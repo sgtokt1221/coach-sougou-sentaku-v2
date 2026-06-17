@@ -573,6 +573,18 @@ function SummaryDrillInner() {
           </Card>
         )}
 
+        {/* 問題文 (原文) */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">{isEn ? "Passage" : "問題文"}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="max-h-60 overflow-y-auto whitespace-pre-wrap text-sm leading-relaxed">
+              {passage.passage}
+            </p>
+          </CardContent>
+        </Card>
+
         {/* あなたの要約 vs 改善例 */}
         <div className="grid gap-4 md:grid-cols-2">
           <Card>
