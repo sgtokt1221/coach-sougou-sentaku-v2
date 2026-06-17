@@ -73,6 +73,7 @@ const studentNavGroups: NavGroup[] = [
         href: "/student/essay/new",
         icon: FileText,
         children: [
+          { label: "小論文講座", href: "/student/essay/lectures", icon: GraduationCap },
           { label: "ネタインプット", href: "/student/topic-input", icon: BookMarked },
           { label: "テーマ・過去問", href: "/student/essay/themes", icon: BookOpen },
           { label: "要約ドリル", href: "/student/essay/summary-drill", icon: ClipboardList },

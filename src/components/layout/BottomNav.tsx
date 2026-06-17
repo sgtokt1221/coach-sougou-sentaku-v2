@@ -58,6 +58,14 @@ const essaySubMenu: SubMenuItem[] = [
     iconColor: "text-sky-700 dark:text-sky-300",
   },
   {
+    label: "小論文講座",
+    description: "書き方を基礎から学ぶ講義＋問題",
+    href: "/student/essay/lectures",
+    icon: GraduationCap,
+    iconBg: "bg-indigo-100 dark:bg-indigo-950/40",
+    iconColor: "text-indigo-700 dark:text-indigo-300",
+  },
+  {
     label: "ネタインプット",
     description: "小論文のネタを整理・蓄積",
     href: "/student/topic-input",
