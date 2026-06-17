@@ -37,7 +37,7 @@ import { MobileMenuContent } from "./MobileMenuContent";
 /**
  * ボトムナブ（モバイル専用）
  * ロール別にタブを切り替え:
- * - student:    ホーム / Action!(FAB) / チャット / 成長
+ * - student:    ホーム / 成長 / Action!(FAB) / チャット / 宿題
  * - admin:      ホーム / 生徒管理 / アラート / レポート / メニュー
  * - teacher:    ホーム / シフト / 担当生徒 / セッション / メニュー
  * - superadmin: ホーム / 管理者 / 生徒 / 講師 / メニュー
@@ -227,6 +227,7 @@ export function BottomNav() {
   /* ─── student: ホーム / Action!(FAB) / チャット の3タブ ─── */
   const chatActive = pathname.startsWith("/student/feedback");
   const growthActive = pathname.startsWith("/student/growth");
+  const homeworkActive = pathname.startsWith("/student/homework");
   const isCoach = userProfile?.plan === "coach";
   const researchEnrolled =
     (userProfile as { researchEnrolled?: boolean })?.researchEnrolled === true;
@@ -240,6 +241,7 @@ export function BottomNav() {
       >
         <div className="flex h-[60px] items-center justify-around px-2">
           <TabLink label="ホーム" href="/student/dashboard" Icon={LayoutDashboard} active={pathname.startsWith("/student/dashboard")} />
+          <TabLink label="成長" href="/student/growth" Icon={TrendingUp} active={growthActive} />
 
           {/* 中央 "Action!" ボタン */}
           <button
@@ -266,7 +268,7 @@ export function BottomNav() {
           </button>
 
           <TabLink label="チャット" href="/student/feedback" Icon={MessageSquare} active={chatActive} />
-          <TabLink label="成長" href="/student/growth" Icon={TrendingUp} active={growthActive} />
+          <TabLink label="宿題" href="/student/homework" Icon={ClipboardList} active={homeworkActive} />
         </div>
       </nav>
 
