@@ -15,6 +15,7 @@ export default function SkillCheckResultPage({
   const { resultId } = use(params);
   const [result, setResult] = useState<SkillCheckResult | null>(null);
   const [loading, setLoading] = useState(true);
+  const [inChain, setInChain] = useState(false);
 
   useEffect(() => {
     void (async () => {
@@ -44,6 +45,10 @@ export default function SkillCheckResultPage({
     })();
   }, [resultId]);
 
+  useEffect(() => {
+    setInChain(localStorage.getItem("onboardingChain") === "1");
+  }, []);
+
   if (loading) {
     return (
       <div className="container mx-auto max-w-4xl p-6">
@@ -65,6 +70,20 @@ export default function SkillCheckResultPage({
 
   return (
     <div className="container mx-auto max-w-4xl space-y-4 p-6">
+      {inChain && (
+        <div className="flex flex-col gap-3 rounded-xl border border-primary/30 bg-primary/5 p-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm font-medium">
+            セットアップ完了！ダッシュボードへ進みましょう。
+          </p>
+          <Link
+            href="/student/dashboard"
+            onClick={() => localStorage.removeItem("onboardingChain")}
+            className="shrink-0 rounded-md bg-primary px-3 py-1.5 text-center text-sm font-semibold text-primary-foreground hover:opacity-90"
+          >
+            ダッシュボードへ
+          </Link>
+        </div>
+      )}
       <div>
         <Link
           href="/student/skill-check"

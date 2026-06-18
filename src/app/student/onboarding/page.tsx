@@ -8,13 +8,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UniversitySelectStep } from "@/components/onboarding/UniversitySelectStep";
 import { ProfileStep, type ProfileData } from "@/components/onboarding/ProfileStep";
 import { ConfirmStep } from "@/components/onboarding/ConfirmStep";
+import { SelfAnalysisStep } from "@/components/onboarding/SelfAnalysisStep";
 import { SkillCheckStep } from "@/components/onboarding/SkillCheckStep";
 import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
 import { updateProfile } from "@/lib/firebase/profile";
 import { useTutorial } from "@/contexts/TutorialContext";
 import type { StudentProfile } from "@/lib/types/user";
 
-const STEPS = ["志望校選択", "基礎情報", "確認", "スキルチェック"] as const;
+const STEPS = ["志望校選択", "基礎情報", "確認", "自己分析", "スキルチェック"] as const;
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -92,6 +93,13 @@ export default function OnboardingPage() {
   const handleConfirmNext = async () => {
     await saveAndComplete();
     setStep(3);
+  };
+
+  const handleSelfAnalysisSkip = () => setStep(4);
+  const handleSelfAnalysisTake = () => {
+    // オンボーディングのチェーン進行フラグ（自己分析→スキルチェック→ダッシュボード）
+    localStorage.setItem("onboardingChain", "1");
+    router.push("/student/self-analysis");
   };
 
   const handleSkillCheckSkip = async () => {
@@ -177,6 +185,12 @@ export default function OnboardingPage() {
               />
             )}
             {step === 3 && (
+              <SelfAnalysisStep
+                onSkip={handleSelfAnalysisSkip}
+                onTake={handleSelfAnalysisTake}
+              />
+            )}
+            {step === 4 && (
               <SkillCheckStep
                 onSkip={handleSkillCheckSkip}
                 onTake={handleSkillCheckTake}

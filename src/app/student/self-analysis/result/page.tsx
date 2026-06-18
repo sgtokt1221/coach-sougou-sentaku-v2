@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { authFetch } from "@/lib/api/client";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, RotateCcw, Sparkles, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, RotateCcw, Sparkles, Loader2 } from "lucide-react";
 import { AnalysisResultCard } from "@/components/self-analysis/AnalysisResultCard";
 import { GrowthTree } from "@/components/self-analysis/GrowthTree";
 import { StepEditModal } from "@/components/self-analysis/StepEditModal";
@@ -167,6 +167,15 @@ export default function SelfAnalysisResultPage() {
     void generateSynthesis(data);
   }, [data, generating, generateSynthesis]);
 
+  // オンボーディングのチェーン中なら、結果確認後に「スキルチェックへ」導線を出す
+  const [inChain, setInChain] = useState(false);
+  useEffect(() => {
+    setInChain(
+      typeof window !== "undefined" &&
+        localStorage.getItem("onboardingChain") === "1",
+    );
+  }, []);
+
   if (isLoading) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-5 lg:py-6 space-y-4">
@@ -211,6 +220,21 @@ export default function SelfAnalysisResultPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-5 lg:py-6">
+      {inChain && (
+        <div className="mb-4 flex flex-col gap-3 rounded-xl border border-primary/30 bg-primary/5 p-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm font-medium">
+            セットアップ：あと1ステップ。次はスキルチェックです。
+          </p>
+          <Button
+            size="sm"
+            className="shrink-0"
+            onClick={() => router.push("/student/skill-check/new")}
+          >
+            スキルチェックへ
+            <ArrowRight className="ml-1 size-4" />
+          </Button>
+        </div>
+      )}
       <div className="flex items-center justify-between gap-2 mb-4 lg:mb-6">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" onClick={() => router.back()}>
