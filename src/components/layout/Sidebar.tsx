@@ -49,6 +49,8 @@ interface NavItem {
   researchOnly?: boolean;
   badge?: React.ComponentType;
   children?: NavItem[];
+  /** href 以外で active 扱いにするパス接頭辞（セクション全体をハイライトする用） */
+  match?: string[];
 }
 
 interface NavGroup {
@@ -72,6 +74,7 @@ const studentNavGroups: NavGroup[] = [
         label: "小論文添削",
         href: "/student/essay/new",
         icon: FileText,
+        match: ["/student/essay", "/student/topic-input"],
         children: [
           { label: "小論文講座", href: "/student/essay/lectures", icon: GraduationCap },
           { label: "ネタインプット", href: "/student/topic-input", icon: BookMarked },
@@ -83,6 +86,7 @@ const studentNavGroups: NavGroup[] = [
         label: "模擬面接",
         href: "/student/interview/new",
         icon: Mic,
+        match: ["/student/interview"],
         children: [
           { label: "テーマ別ドリル演習", href: "/student/interview/drill", icon: ClipboardList },
         ],
@@ -206,7 +210,11 @@ const superadminNavGroups: NavGroup[] = [
 
 function NavLink({ item, pathname, isChild = false }: { item: NavItem; pathname: string; isChild?: boolean }) {
   // 子アイテムを持つ場合、子のいずれかが active なときは親も "親 active" 状態にする
-  const isActive = pathname === item.href || pathname.startsWith(item.href + "/") || pathname.startsWith(item.href + "?");
+  const isActive =
+    pathname === item.href ||
+    pathname.startsWith(item.href + "/") ||
+    pathname.startsWith(item.href + "?") ||
+    (item.match?.some((m) => pathname === m || pathname.startsWith(m + "/")) ?? false);
   const Badge = item.badge;
   return (
     <>
@@ -263,7 +271,11 @@ function getSuperadminNavGroups(pathname: string) {
 }
 
 function ContentNavLink({ item, pathname, isChild = false }: { item: NavItem; pathname: string; isChild?: boolean }) {
-  const isActive = pathname === item.href || pathname.startsWith(item.href + "/") || pathname.startsWith(item.href + "?");
+  const isActive =
+    pathname === item.href ||
+    pathname.startsWith(item.href + "/") ||
+    pathname.startsWith(item.href + "?") ||
+    (item.match?.some((m) => pathname === m || pathname.startsWith(m + "/")) ?? false);
   const Badge = item.badge;
   return (
     <>

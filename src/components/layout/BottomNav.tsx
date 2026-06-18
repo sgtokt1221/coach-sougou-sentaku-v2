@@ -31,6 +31,7 @@ import {
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAuthSWR } from "@/lib/api/swr";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { MobileMenuContent } from "./MobileMenuContent";
 
@@ -70,13 +71,7 @@ const primaryActions: PrimaryAction[] = [
     icon: Mic,
     gradient: "from-indigo-500 to-indigo-600",
   },
-  {
-    label: "志望理由書を書く",
-    description: "AIと一緒に出願書類を作成",
-    href: "/student/documents",
-    icon: PenLine,
-    gradient: "from-amber-500 to-amber-600",
-  },
+  // 3つ目は自己分析の完了状態で出し分け（コンポーネント内で組み立て）
 ];
 
 /** Action! 下部のカテゴリ別項目（PC版サイドバー studentNavGroups に準拠） */
@@ -172,6 +167,12 @@ export function BottomNav() {
   const { userProfile } = useAuth();
   const role = userProfile?.role ?? "student";
 
+  // 自己分析の完了状態 (生徒のみ取得)。Action! の3つ目の出し分けに使う。
+  const { data: selfAnalysisDoc } = useAuthSWR<{ isComplete?: boolean } | null>(
+    role === "student" ? "/api/self-analysis?userId=me" : null,
+  );
+  const selfAnalysisDone = selfAnalysisDoc?.isComplete === true;
+
   const [menuOpen, setMenuOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
 
@@ -232,6 +233,24 @@ export function BottomNav() {
   const researchEnrolled =
     (userProfile as { researchEnrolled?: boolean })?.researchEnrolled === true;
 
+  // Action! の3つ目: 自己分析が未完了なら「自己分析」、完了後は「志望理由書を書く」
+  const thirdAction: PrimaryAction = selfAnalysisDone
+    ? {
+        label: "志望理由書を書く",
+        description: "AIと一緒に出願書類を作成",
+        href: "/student/documents",
+        icon: PenLine,
+        gradient: "from-amber-500 to-amber-600",
+      }
+    : {
+        label: "自己分析",
+        description: "価値観・強みを言語化（まず最初に）",
+        href: "/student/self-analysis",
+        icon: Lightbulb,
+        gradient: "from-amber-500 to-amber-600",
+      };
+  const actions = [...primaryActions, thirdAction];
+
   return (
     <>
       <nav
@@ -285,7 +304,7 @@ export function BottomNav() {
           <div className="flex-1 overflow-y-auto overscroll-contain px-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
             {/* 3大アクション（クイックスタート） */}
             <div className="space-y-2.5">
-              {primaryActions.map((a) => (
+              {actions.map((a) => (
                 <Link
                   key={a.href}
                   href={a.href}
