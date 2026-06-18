@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, ArrowUpDown, Users, UserPlus, Filter, TrendingUp, TrendingDown, Minus, CheckCircle2, AlertCircle, GraduationCap, RotateCcw } from "lucide-react";
+import { Search, ArrowUpDown, Users, UserPlus, Filter, TrendingUp, TrendingDown, Minus, CheckCircle2, AlertCircle, GraduationCap, RotateCcw, ChevronRight } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { motion, useReducedMotion } from "framer-motion";
 import { useAuthSWR } from "@/lib/api/swr";
@@ -377,7 +377,109 @@ export default function AdminStudentsPage() {
               description={search ? "検索条件を変更してお試しください" : undefined}
             />
           ) : (
-            <div className="overflow-x-auto">
+            <>
+              {/* スマホ: カード表示（横長テーブルは見切れるため切替） */}
+              <div className="divide-y sm:hidden">
+                {students.map((s) => (
+                  <div
+                    key={s.uid}
+                    onClick={() => router.push(`/admin/students/${s.uid}`)}
+                    className={`cursor-pointer p-3 ${
+                      s.hasOverdueHomework
+                        ? "border-l-4 border-l-red-500 bg-red-50 dark:bg-red-950/30"
+                        : "active:bg-accent"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Avatar size="sm">
+                        <AvatarImage src={s.photoURL ?? undefined} alt={s.displayName} />
+                        <AvatarFallback>{getInitials(s.displayName)}</AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-medium">{s.displayName}</p>
+                        <p className="truncate text-xs text-muted-foreground">{s.email}</p>
+                      </div>
+                      <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                    </div>
+
+                    {s.targetUniversities.length > 0 && (
+                      <p className="mt-2 truncate text-xs text-muted-foreground">
+                        志望: {resolveUniName(s.targetUniversities[0])}
+                        {s.targetUniversities.length > 1 ? ` 他${s.targetUniversities.length - 1}校` : ""}
+                      </p>
+                    )}
+
+                    <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs">
+                      <span className="inline-flex items-center gap-1">
+                        <span className="text-[10px] text-muted-foreground">小論</span>
+                        {s.currentSkillRank ? (
+                          <SkillRankBadge rank={s.currentSkillRank} size="sm" animate={false} />
+                        ) : (
+                          <span className="text-muted-foreground">未</span>
+                        )}
+                        {s.latestScore !== null && (
+                          <span className={`font-bold ${scoreColor(s.latestScore)}`}>{s.latestScore}</span>
+                        )}
+                      </span>
+                      <span className="inline-flex items-center gap-1">
+                        <span className="text-[10px] text-muted-foreground">面接</span>
+                        {s.currentInterviewRank ? (
+                          <SkillRankBadge rank={s.currentInterviewRank} size="sm" animate={false} />
+                        ) : (
+                          <span className="text-muted-foreground">未</span>
+                        )}
+                        {s.latestInterviewScore != null && (
+                          <span className={`font-bold ${scoreColor(s.latestInterviewScore)}`}>{s.latestInterviewScore}</span>
+                        )}
+                      </span>
+                      {s.activeWeaknessCount > 0 && (
+                        <span className="inline-flex items-center gap-1">
+                          <span className="text-[10px] text-muted-foreground">弱点</span>
+                          <Badge
+                            variant={s.activeWeaknessCount >= 5 ? "destructive" : "secondary"}
+                            className="px-1.5 py-0 text-[10px]"
+                          >
+                            {s.activeWeaknessCount}
+                          </Badge>
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="mt-2 flex flex-wrap items-center gap-x-3 text-[11px] text-muted-foreground">
+                      <span>ログイン {s.lastSeenAt ? formatJoinElapsed(s.lastSeenAt) : "—"}</span>
+                      {s.lastActivity && (
+                        <span>
+                          {ACTIVITY_LABEL[s.lastActivity.type]} {formatJoinElapsed(s.lastActivity.at)}
+                        </span>
+                      )}
+                    </div>
+
+                    {s.hasOverdueHomework && (
+                      <Badge variant="destructive" className="mt-2 gap-1 text-[10px] font-bold">
+                        <AlertCircle className="size-3" />
+                        宿題提出期限切れ
+                      </Badge>
+                    )}
+                    {statusFilter === "graduated" && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="mt-2 h-7 gap-1 text-xs"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void markAsRonin(s.uid, s.displayName);
+                        }}
+                      >
+                        <RotateCcw className="size-3" />
+                        現役に戻す
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* タブレット以上: テーブル */}
+              <div className="hidden sm:block overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b bg-muted/50">
@@ -569,7 +671,8 @@ export default function AdminStudentsPage() {
                   })}
                 </tbody>
               </table>
-            </div>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
