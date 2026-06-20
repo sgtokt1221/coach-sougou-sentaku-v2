@@ -255,7 +255,7 @@ export default function AdminReportsPage() {
                   <div
                     role="button"
                     tabIndex={0}
-                    className="flex w-full cursor-pointer items-center gap-4 p-4 text-left transition-colors hover:bg-accent/50"
+                    className="flex w-full cursor-pointer flex-col gap-3 p-4 text-left transition-colors hover:bg-accent/50 sm:flex-row sm:items-center sm:gap-4"
                     onClick={() => handleExpand(report)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
@@ -265,7 +265,7 @@ export default function AdminReportsPage() {
                     }}
                   >
                     <div className="min-w-0 flex-1">
-                      <div className="mb-1 flex items-center gap-2">
+                      <div className="mb-1 flex flex-wrap items-center gap-2">
                         <p className="font-medium">{report.studentName}</p>
                         {(() => {
                           const sk = skillByStudent.get(report.studentId);
@@ -303,7 +303,7 @@ export default function AdminReportsPage() {
                       </p>
                     </div>
 
-                    <div className="flex shrink-0 items-center gap-5">
+                    <div className="flex shrink-0 flex-wrap items-center gap-3 sm:gap-5">
                       {/* Essay summary: 件数 + 先期比 */}
                       <div
                         className="min-w-[88px] rounded-md bg-muted/40 px-2.5 py-1.5 text-center"

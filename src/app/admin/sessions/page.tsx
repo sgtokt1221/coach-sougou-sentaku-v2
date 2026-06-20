@@ -321,7 +321,7 @@ export default function AdminSessionsPage() {
           </div>
 
           {activeTab === "schedule" && (
-            <div className="flex items-center gap-2">
+            <div className="hidden items-center gap-2 lg:flex">
               <Button variant="outline" size="sm" onClick={goToPreviousWeek}>
                 <ChevronLeft className="size-4" />
               </Button>
@@ -339,22 +339,32 @@ export default function AdminSessionsPage() {
         </div>
 
         {activeTab === "schedule" ? (
-          /* セッションカレンダー */
-          <SessionCalendar
-            weekStart={weekStart}
-            sessions={weekSessions}
-            onDropStudent={handleDropStudent}
-            onMoveSession={handleMoveSession}
-            onRemoveSession={handleRemoveSession}
-            onResizeSession={handleResizeSession}
-            onClickSession={handleSessionClick}
-            onClickEmptySlot={(date, time) => {
-              setAddDialog({ date, time });
-              setFormStudentId("");
-              setFormType("general");
-              setFormIsResearch(false);
-            }}
-          />
+          <>
+            {/* カレンダー(D&D)はPC専用。モバイルは一覧で代替 */}
+            <div className="hidden lg:block">
+              <SessionCalendar
+                weekStart={weekStart}
+                sessions={weekSessions}
+                onDropStudent={handleDropStudent}
+                onMoveSession={handleMoveSession}
+                onRemoveSession={handleRemoveSession}
+                onResizeSession={handleResizeSession}
+                onClickSession={handleSessionClick}
+                onClickEmptySlot={(date, time) => {
+                  setAddDialog({ date, time });
+                  setFormStudentId("");
+                  setFormType("general");
+                  setFormIsResearch(false);
+                }}
+              />
+            </div>
+            <div className="lg:hidden">
+              <p className="mb-3 rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">
+                カレンダー編集はPCでご利用ください。スマホでは一覧を表示します。
+              </p>
+              <AdminSessionList sessions={allSessions} />
+            </div>
+          </>
         ) : (
           <AdminSessionList sessions={allSessions} />
         )}
@@ -362,7 +372,7 @@ export default function AdminSessionsPage() {
 
       {/* 未配置生徒サイドバー（スケジュールタブのみ） */}
       {activeTab === "schedule" && (
-        <div className="w-64 border-l bg-gray-50/50">
+        <div className="hidden w-64 border-l bg-gray-50/50 lg:block">
           <UnplacedStudentsSidebar
             students={unplacedStudents}
             loading={!unplacedStudents}
