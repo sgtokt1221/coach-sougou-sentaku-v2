@@ -392,7 +392,7 @@ function TabLink({
     <Link
       href={href}
       className={cn(
-        "flex flex-1 flex-col items-center justify-center gap-0.5 py-1 rounded-lg transition-all duration-200",
+        "flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-0.5 py-1 rounded-lg transition-all duration-200",
         active
           ? "bg-indigo-50 text-indigo-700"
           : "text-muted-foreground",
@@ -403,7 +403,7 @@ function TabLink({
         active ? "text-indigo-600 scale-105" : "",
       )} />
       <span className={cn(
-        "text-[10px] leading-none",
+        "max-w-full truncate text-[10px] leading-none",
         active ? "font-semibold" : "font-medium",
       )}>{label}</span>
     </Link>

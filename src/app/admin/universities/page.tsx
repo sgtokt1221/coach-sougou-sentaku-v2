@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Building2, GraduationCap, ExternalLink } from "lucide-react";
+import { Search, Building2, GraduationCap, ExternalLink, ChevronRight } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { authFetch } from "@/lib/api/client";
 import type { University } from "@/lib/types/university";
@@ -193,7 +193,56 @@ export default function AdminUniversitiesPage() {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <>
+              {/* スマホ: カード表示（8列テーブルは横に見切れるため） */}
+              <div className="space-y-4 p-3 sm:hidden">
+                {sections.map((sec) => (
+                  <div key={sec.group}>
+                    <p className="mb-2 px-1 text-xs font-semibold text-muted-foreground">
+                      {GROUP_LABELS[sec.group]}（{sec.items.length}校）
+                    </p>
+                    <div className="space-y-2">
+                      {sec.items.map((u) => {
+                        const dev = deviationLabel(u.id);
+                        const types = new Set(
+                          u.faculties.map((f) => f.selectionType).filter(Boolean) as string[],
+                        );
+                        return (
+                          <div
+                            key={u.id}
+                            onClick={() => router.push(`/admin/universities/${u.id}`)}
+                            className="cursor-pointer rounded-xl border bg-card p-3 transition-colors active:bg-accent"
+                          >
+                            <div className="flex items-center gap-2">
+                              <GraduationCap className="size-4 shrink-0 text-muted-foreground" />
+                              <span className="min-w-0 flex-1 truncate font-medium">{u.name}</span>
+                              <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                            </div>
+                            <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                              <GroupBadge group={u.group} />
+                              {dev !== "-" && (
+                                <span className="inline-flex items-center rounded bg-sky-500/10 px-2 py-0.5 font-medium text-sky-600 dark:text-sky-300">
+                                  偏差 {dev}
+                                </span>
+                              )}
+                              <span className="text-muted-foreground">学部 {u.faculties.length}</span>
+                              {types.has("comprehensive") && (
+                                <SelectionTypeBadge type="comprehensive" size="sm" />
+                              )}
+                              {types.has("school_recommendation") && (
+                                <SelectionTypeBadge type="school_recommendation" size="sm" />
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* sm以上: テーブル */}
+              <div className="hidden sm:block overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b bg-muted/50">
@@ -306,7 +355,8 @@ export default function AdminUniversitiesPage() {
                   ))}
                 </tbody>
               </table>
-            </div>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

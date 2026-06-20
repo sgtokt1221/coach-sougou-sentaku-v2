@@ -1116,7 +1116,25 @@ function AdminStudentDetailPageInner() {
       <Tabs value={tab} onValueChange={handleTabChange} className="flex-col">
         <div className="sticky top-0 z-20 -mx-6 px-6 pt-2 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/70 border-b">
           <PinnedSummary detail={detail} />
-          <TabsList className="mt-3 w-full justify-start overflow-x-auto">
+          {/* モバイル: タブをドロップダウンで切替（横あふれで宿題/メッセージが見切れるため） */}
+          <div className="mt-3 sm:hidden">
+            <Select value={tab} onValueChange={(v) => v && handleTabChange(v)}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="overview">概要</SelectItem>
+                <SelectItem value="performance">成績・弱点</SelectItem>
+                <SelectItem value="activity">活動・書類</SelectItem>
+                <SelectItem value="reports">レポート</SelectItem>
+                <SelectItem value="homework">宿題</SelectItem>
+                {!isTeacherViewer && (
+                  <SelectItem value="messages">メッセージ</SelectItem>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+          <TabsList className="mt-3 hidden w-full justify-start overflow-x-auto sm:flex">
             <TabsTrigger value="overview">概要</TabsTrigger>
             <TabsTrigger value="performance">成績・弱点</TabsTrigger>
             <TabsTrigger value="activity">活動・書類</TabsTrigger>
