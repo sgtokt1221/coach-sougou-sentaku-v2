@@ -12,6 +12,7 @@ import {
   Trophy,
   FileEdit,
   ScrollText,
+  ChevronDown,
 } from "lucide-react";
 
 interface ResolvedUniversity {
@@ -19,12 +20,33 @@ interface ResolvedUniversity {
   facultyId: string;
   universityName: string;
   facultyName: string;
-  schedule: {
+  admissionPolicy?: string;
+  schedule?: {
     applicationStart: string;
     applicationEnd: string;
     examDate: string;
     resultDate: string;
   };
+}
+
+/** ISO 日付(YYYY-MM-DD)を和暦無しの日本語表記に。無ければ「—」。 */
+function formatScheduleDate(d?: string): string {
+  if (!d) return "—";
+  return new Date(d + "T00:00:00").toLocaleDateString("ja-JP", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+/** 展開部の入試日程4項目（出願開始/締切/試験日/合格発表）。 */
+function scheduleRows(schedule?: ResolvedUniversity["schedule"]) {
+  return [
+    { label: "出願開始", date: formatScheduleDate(schedule?.applicationStart), icon: FileEdit },
+    { label: "出願締切", date: formatScheduleDate(schedule?.applicationEnd), icon: ScrollText },
+    { label: "試験日", date: formatScheduleDate(schedule?.examDate), icon: CalendarClock },
+    { label: "合格発表", date: formatScheduleDate(schedule?.resultDate), icon: Trophy },
+  ];
 }
 
 interface EventInfo {
@@ -102,6 +124,8 @@ interface Props {
 export function TargetUniversityCards({ targetUniversities, compact = false }: Props) {
   const [resolved, setResolved] = useState<ResolvedUniversity[]>([]);
   const [loading, setLoading] = useState(true);
+  /** 展開中のカード（compound id）。null は全て折りたたみ。 */
+  const [expandedKey, setExpandedKey] = useState<string | null>(null);
 
   useEffect(() => {
     if (targetUniversities.length === 0) {
@@ -220,22 +244,30 @@ export function TargetUniversityCards({ targetUniversities, compact = false }: P
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-5">
       {resolved.map((item) => {
+        const key = `${item.universityId}:${item.facultyId}`;
         const nextEvent = getNextEvent(item.schedule);
         const cd = nextEvent ? countdownStyle(nextEvent.daysLeft) : null;
         const NextIcon = nextEvent?.icon ?? CalendarClock;
+        const isOpen = expandedKey === key;
+        const detailHref = `/student/universities/${item.universityId}/${item.facultyId}`;
 
         return (
-          <Link
-            key={`${item.universityId}:${item.facultyId}`}
-            href={`/student/universities/${item.universityId}/${item.facultyId}`}
-            className="block group"
+          <Card
+            key={key}
+            className="relative overflow-hidden rounded-3xl border-border/60 transition-all duration-300"
           >
-            <Card className="relative overflow-hidden rounded-3xl border-border/60 group-hover:border-primary/40 group-hover:shadow-2xl transition-all duration-300">
-              {/* 背景の装飾グラデーション */}
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.03] via-transparent to-primary/[0.06] pointer-events-none" />
-              <div className="absolute top-0 right-0 size-64 bg-gradient-to-bl from-primary/[0.1] to-transparent rounded-full blur-3xl pointer-events-none" />
-              <div className="absolute -bottom-20 -left-20 size-52 bg-gradient-to-tr from-primary/[0.06] to-transparent rounded-full blur-3xl pointer-events-none" />
+            {/* 背景の装飾グラデーション */}
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.03] via-transparent to-primary/[0.06] pointer-events-none" />
+            <div className="absolute top-0 right-0 size-64 bg-gradient-to-bl from-primary/[0.1] to-transparent rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-20 -left-20 size-52 bg-gradient-to-tr from-primary/[0.06] to-transparent rounded-full blur-3xl pointer-events-none" />
 
+            {/* ヘッダー（タップで AP・日程を展開） */}
+            <button
+              type="button"
+              onClick={() => setExpandedKey(isOpen ? null : key)}
+              aria-expanded={isOpen}
+              className="relative w-full text-left cursor-pointer"
+            >
               <CardContent className="relative p-6 lg:p-10">
                 <div className="flex flex-col lg:flex-row lg:items-center gap-6 lg:gap-10">
                   {/* 左: 大学名 */}
@@ -303,10 +335,57 @@ export function TargetUniversityCards({ targetUniversities, compact = false }: P
                   )}
                 </div>
 
-                <ArrowRight className="absolute bottom-5 right-5 size-5 text-muted-foreground/30 group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                <span className="absolute bottom-4 right-5 flex items-center gap-1 text-xs text-muted-foreground/70">
+                  {isOpen ? "閉じる" : "AP・日程"}
+                  <ChevronDown className={`size-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                </span>
               </CardContent>
-            </Card>
-          </Link>
+            </button>
+
+            {/* 展開部: AP要旨 + 入試日程 + 詳細リンク */}
+            {isOpen && (
+              <div className="relative border-t border-border/60 px-6 lg:px-10 py-5 space-y-4">
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+                    アドミッションポリシー
+                  </p>
+                  {item.admissionPolicy ? (
+                    <p className="text-sm leading-relaxed line-clamp-4">{item.admissionPolicy}</p>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">未登録</p>
+                  )}
+                </div>
+
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
+                    入試日程
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {scheduleRows(item.schedule).map((r) => (
+                      <div
+                        key={r.label}
+                        className="flex items-center gap-2 rounded-lg border border-border/50 px-3 py-2"
+                      >
+                        <r.icon className="size-3.5 text-muted-foreground shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-[11px] text-muted-foreground leading-none mb-0.5">{r.label}</p>
+                          <p className="text-sm font-medium tabular-nums truncate">{r.date}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <Link
+                  href={detailHref}
+                  className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
+                >
+                  詳細を見る
+                  <ArrowRight className="size-4" />
+                </Link>
+              </div>
+            )}
+          </Card>
         );
       })}
     </div>
