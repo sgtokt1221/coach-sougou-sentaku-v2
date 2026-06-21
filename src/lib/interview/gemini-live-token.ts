@@ -4,7 +4,7 @@
  * session config の定義を一元化する。
  */
 
-import { GoogleGenAI, Modality, EndSensitivity } from "@google/genai";
+import { GoogleGenAI, Modality } from "@google/genai";
 
 /** ネイティブ音声モデル（env で差し替え可）。プレビュー系のため ID 変動前提。 */
 export const GEMINI_LIVE_MODEL =
@@ -46,19 +46,8 @@ export async function issueGeminiLiveToken(
             languageCode: "ja-JP",
             voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } },
           },
-          // ※languageCodes は SDK 型には存在するが Live API バックエンド未対応で、
-          //   token 発行が弾かれる（接続失敗の原因）。空 {} に戻す。
           inputAudioTranscription: {},
           outputAudioTranscription: {},
-          // ターン検出: 話の途中の間で勝手にターンが切れないよう、無音許容を長めにし
-          // 終話判定を鈍く(LOW)する。考えながら話す受験生が言い切る前に遮られるのを防ぐ。
-          realtimeInputConfig: {
-            automaticActivityDetection: {
-              endOfSpeechSensitivity: EndSensitivity.END_SENSITIVITY_LOW,
-              prefixPaddingMs: 300,
-              silenceDurationMs: 1200,
-            },
-          },
           sessionResumption: {},
           contextWindowCompression: { slidingWindow: {} },
         },
