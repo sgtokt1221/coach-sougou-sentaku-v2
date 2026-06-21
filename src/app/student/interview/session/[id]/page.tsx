@@ -22,6 +22,7 @@ import { useRealtimeInterview } from "@/hooks/useRealtimeInterview";
 import type { VoiceProvider } from "@/lib/interview/realtime/voice-session-factory";
 import { resolveVoiceProvider } from "@/lib/interview/voice-provider";
 import { stripFillers } from "@/lib/interview/transcript";
+import { transcribeTurnViaStt } from "@/lib/interview/stt-client";
 import { INTERVIEW_MODE_LABELS } from "@/lib/types/interview";
 import { FluidLoader } from "@/components/shared/FluidLoader";
 import VoiceAnalyzer, { refineWithTranscription, type VoiceAnalyzerHandle } from "@/components/interview/VoiceAnalyzer";
@@ -154,27 +155,13 @@ export default function InterviewSessionPage() {
         finalize(fallbackText);
         return;
       }
-      try {
-        const res = await authFetch("/api/interview/stt-turn", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            audioWavBase64,
-            universityName: sessionInfo?.universityContext.universityName,
-            facultyName: sessionInfo?.universityContext.facultyName,
-            studentName: userProfile?.displayName,
-            highSchoolName: (userProfile as StudentProfile | null)?.school,
-          }),
-        });
-        const data = await res.json().catch(() => null);
-        const text =
-          data && typeof data.text === "string" && data.text.trim()
-            ? data.text
-            : fallbackText;
-        finalize(text);
-      } catch {
-        finalize(fallbackText);
-      }
+      const text = await transcribeTurnViaStt(audioWavBase64, {
+        universityName: sessionInfo?.universityContext.universityName,
+        facultyName: sessionInfo?.universityContext.facultyName,
+        studentName: userProfile?.displayName,
+        highSchoolName: (userProfile as StudentProfile | null)?.school,
+      });
+      finalize(text ?? fallbackText);
     },
     [sessionInfo, userProfile],
   );

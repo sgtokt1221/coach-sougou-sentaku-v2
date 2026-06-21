@@ -52,7 +52,7 @@ export interface GdOrchestratorOptions {
    */
   contextMessage?: string | null;
   /** メッセージ追加コールバック (UI 同期) */
-  onMessageAppend?: (message: InterviewMessage) => void;
+  onMessageAppend?: (message: InterviewMessage, audioWavBase64?: string) => void;
   /** 直近 AI メッセージの content / isThinking を更新 (考え中バブル + delta ストリーム) */
   onMessageUpdateLast?: (patch: { content?: string; isThinking?: boolean }) => void;
   /** AI 発話中フラグ通知 (上位 hook がマイクをミュートするため) */
@@ -198,7 +198,8 @@ export class GdOrchestrator {
         micStream: this.opts.micStream,
         withMic: true,
         muteOutput: true, // 耳の返答音声は鳴らさない
-        onUserTranscript: (text) => this.onUserTranscript(text),
+        // 耳セッションは生徒音声(wav)も拾うので上位へ通し、専用STTで差し替えてもらう
+        onUserTranscript: (text, wav) => this.onUserTranscript(text, wav),
         onError: (err) => this.opts.onError?.(err),
       });
       await ears.connect();
@@ -268,15 +269,15 @@ export class GdOrchestrator {
     if (moderator) moderator.triggerResponse();
   }
 
-  /** moderator からの transcription を受けて全セッションに broadcast + 次話者を trigger */
-  private onUserTranscript(text: string): void {
+  /** moderator/耳セッションからの transcription を受けて全セッションに broadcast + 次話者を trigger */
+  private onUserTranscript(text: string, audioWavBase64?: string): void {
     if (this.isClosed || !text.trim()) return;
 
     // ユーザー発話確定: AI streaming 状態をリセット (次の AI 応答は新バブル)
     this.streamingKey = null;
 
-    // UI にユーザーメッセージを表示
-    this.opts.onMessageAppend?.({ role: "student", content: text });
+    // UI にユーザーメッセージを表示（wav があればページ側が専用STTで差し替える）
+    this.opts.onMessageAppend?.({ role: "student", content: text }, audioWavBase64);
 
     // moderator 以外のセッションに user 発言を注入 (moderator は自分で発話を聞いている)
     // prefix で「ユーザー (もう一人の受験生) の発言」と明示し、誰の発言か

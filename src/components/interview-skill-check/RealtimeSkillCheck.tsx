@@ -1,9 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { mutate } from "swr";
 import { authFetch } from "@/lib/api/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { transcribeTurnViaStt } from "@/lib/interview/stt-client";
+import { stripFillers } from "@/lib/interview/transcript";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +16,8 @@ import { useRealtimeInterview } from "@/hooks/useRealtimeInterview";
 import { resolveVoiceProvider } from "@/lib/interview/voice-provider";
 import VoiceAnalyzer, { refineWithTranscription } from "@/components/interview/VoiceAnalyzer";
 import { INTERVIEW_SKILL_CHECK_MAX_TURNS } from "@/lib/types/interview-skill-check";
-import type { VoiceAnalysis } from "@/lib/types/interview";
+import type { VoiceAnalysis, InterviewMessage } from "@/lib/types/interview";
+import type { StudentProfile } from "@/lib/types/user";
 
 /** VoiceAnalysis を /end に渡す日本語サマリー文字列に整形 */
 function buildVoiceSummary(a: VoiceAnalysis): string {
@@ -37,9 +41,38 @@ function buildVoiceSummary(a: VoiceAnalysis): string {
  */
 export function RealtimeSkillCheck() {
   const router = useRouter();
+  const { userProfile } = useAuth();
   // プロバイダ（openai / gemini）に応じてトークンエンドポイントを切替
   const providerRef = useRef(resolveVoiceProvider());
   const provider = providerRef.current;
+
+  // 文字起こしはローカル messages で管理（「認識中…」→専用STT差し替えのため）
+  const [messages, setMessages] = useState<InterviewMessage[]>([]);
+  const studentMsgIdRef = useRef(0);
+
+  /**
+   * 生徒の発話音声(wav)を専用STTに通し「認識中…」を差し替える。
+   * 音声なし/失敗時は Gemini 内蔵文字起こし(fallbackText)にフォールバック。
+   */
+  const sttSkillTurn = useCallback(
+    async (id: string, audioWavBase64: string | undefined, fallbackText: string) => {
+      const finalize = (content: string) =>
+        setMessages((prev) =>
+          prev.map((m) => (m.id === id ? { ...m, content, correcting: false } : m)),
+        );
+      if (!audioWavBase64) {
+        finalize(fallbackText);
+        return;
+      }
+      const text = await transcribeTurnViaStt(audioWavBase64, {
+        studentName: userProfile?.displayName,
+        highSchoolName: (userProfile as StudentProfile | null)?.school,
+      });
+      finalize(text ?? fallbackText);
+    },
+    [userProfile],
+  );
+
   const realtime = useRealtimeInterview({
     mode: "individual",
     provider,
@@ -50,6 +83,20 @@ export function RealtimeSkillCheck() {
     universityName: "-",
     facultyName: "-",
     admissionPolicy: "-",
+    onMessageAppend: (m, audioWavBase64) => {
+      if (m.role === "student") {
+        const fallback = stripFillers(m.content);
+        const id = `s${studentMsgIdRef.current++}`;
+        // 誤変換を見せないよう即「認識中…」表示 → 裏でSTT → 差し替え
+        setMessages((prev) => [
+          ...prev,
+          { role: "student", content: "認識中…", id, correcting: true },
+        ]);
+        void sttSkillTurn(id, audioWavBase64, fallback);
+      } else {
+        setMessages((prev) => [...prev, m]);
+      }
+    },
   });
 
   const [elapsedSec, setElapsedSec] = useState(0);
@@ -60,7 +107,7 @@ export function RealtimeSkillCheck() {
   const startTimeRef = useRef(0);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  const studentTurns = realtime.messages.filter((m) => m.role === "student").length;
+  const studentTurns = messages.filter((m) => m.role === "student").length;
   const reachedLimit = studentTurns >= INTERVIEW_SKILL_CHECK_MAX_TURNS;
   const connected = realtime.status === "connected";
 
@@ -83,7 +130,7 @@ export function RealtimeSkillCheck() {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [realtime.messages.length]);
+  }, [messages.length]);
 
   async function handleFinish() {
     if (submitting) return;
@@ -91,8 +138,8 @@ export function RealtimeSkillCheck() {
     setEnded(true);
     realtime.stop();
 
-    const cleanMessages = realtime.messages
-      .filter((m) => m.content?.trim())
+    const cleanMessages = messages
+      .filter((m) => !m.correcting && m.content?.trim())
       .map((m) => ({ role: m.role, content: m.content }));
 
     let voiceSummary: string | undefined;
@@ -245,12 +292,12 @@ export function RealtimeSkillCheck() {
       {(connected || ended) && (
         <Card className="min-h-[45vh]">
           <CardContent className="space-y-4 py-4">
-            {realtime.messages.map((m, i) => (
+            {messages.map((m, i) => (
               <div key={i} className={`flex ${m.role === "student" ? "justify-end" : "justify-start"}`}>
                 <div
                   className={`max-w-[80%] rounded-lg px-3 py-2 text-sm leading-relaxed ${
                     m.role === "student" ? "bg-primary text-primary-foreground" : "bg-muted"
-                  }`}
+                  } ${m.correcting ? "italic opacity-60 animate-pulse" : ""}`}
                 >
                   <Badge variant="outline" className="mb-1 text-[10px]">
                     {m.role === "student" ? "あなた" : "面接官"}
