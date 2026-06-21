@@ -46,8 +46,10 @@ export async function issueGeminiLiveToken(
             languageCode: "ja-JP",
             voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } },
           },
-          inputAudioTranscription: {},
-          outputAudioTranscription: {},
+          // 入力文字起こしの言語を日本語に固定（自動判定だと言語取り違えで誤変換が増える）。
+          // ※固有名詞・語彙ヒントは Gemini Live に該当APIが無く steer 不可。
+          inputAudioTranscription: { languageCodes: ["ja-JP"] },
+          outputAudioTranscription: { languageCodes: ["ja-JP"] },
           // ターン検出: 話の途中の間で勝手にターンが切れないよう、無音許容を長めにし
           // 終話判定を鈍く(LOW)する。考えながら話す受験生が言い切る前に遮られるのを防ぐ。
           realtimeInputConfig: {
