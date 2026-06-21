@@ -19,6 +19,7 @@ import { getWeaknessReminderLevel, type WeaknessRecord } from "@/lib/types/growt
 import { useRealtimeInterview } from "@/hooks/useRealtimeInterview";
 import type { VoiceProvider } from "@/lib/interview/realtime/voice-session-factory";
 import { resolveVoiceProvider } from "@/lib/interview/voice-provider";
+import { stripFillers } from "@/lib/interview/transcript";
 import { INTERVIEW_MODE_LABELS } from "@/lib/types/interview";
 import { FluidLoader } from "@/components/shared/FluidLoader";
 import VoiceAnalyzer, { refineWithTranscription, type VoiceAnalyzerHandle } from "@/components/interview/VoiceAnalyzer";
@@ -101,6 +102,8 @@ export default function InterviewSessionPage() {
 
   const [sessionInfo, setSessionInfo] = useState<SessionInfo | null>(null);
   const [messages, setMessages] = useState<InterviewMessage[]>([]);
+  // フィラー件数分析用に、除去前の生の生徒発話を保持（表示/保存は除去済みを使う）
+  const rawStudentTextsRef = useRef<string[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [elapsed, setElapsed] = useState(0);
@@ -143,7 +146,13 @@ export default function InterviewSessionPage() {
     weaknessList: weaknesses.map((w) => `- ${w.area}(${w.count}回)`).join("\n") || "（過去の弱点なし）",
     presentationContent: sessionInfo?.presentationContent,
     onMessageAppend: (m) => {
-      setMessages((prev) => [...prev, m]);
+      if (m.role === "student") {
+        // 生テキストは件数分析用に保持し、表示/保存はフィラー除去版を使う
+        rawStudentTextsRef.current.push(m.content);
+        setMessages((prev) => [...prev, { ...m, content: stripFillers(m.content) }]);
+      } else {
+        setMessages((prev) => [...prev, m]);
+      }
     },
     onMessageUpdateLast: (patch) => {
       setMessages((prev) => {
@@ -500,10 +509,8 @@ export default function InterviewSessionPage() {
       // フィラー・相槌検出のため、ユーザー発言の文字起こしを集約して refineWithTranscription を呼ぶ
       let refinedVoiceAnalysis = finalVoice;
       if (finalVoice) {
-        const studentTexts = messages
-          .filter((m) => m.role === "student")
-          .map((m) => m.content)
-          .join(" ");
+        // フィラー件数は除去前の生テキストから数える（表示/保存は除去済み）
+        const studentTexts = rawStudentTextsRef.current.join(" ");
         if (studentTexts.length > 0) {
           refinedVoiceAnalysis = refineWithTranscription(
             finalVoice,

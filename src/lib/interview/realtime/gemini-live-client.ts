@@ -22,6 +22,7 @@
 import { GoogleGenAI, Modality } from "@google/genai";
 import type { LiveServerMessage, Session, UsageMetadata } from "@google/genai";
 import type { InterviewVoiceSession, VoiceSessionCallbacks } from "./voice-session";
+import { normalizeTranscript } from "@/lib/interview/transcript";
 
 /**
  * usageMetadata から概算コスト(USD)を出す（簡易・ログ用）。
@@ -272,7 +273,7 @@ export class GeminiLiveSession implements InterviewVoiceSession {
     // 出力トランスクリプト（delta）
     if (sc.outputTranscription?.text && this.currentResponseId) {
       this.aiTranscriptBuf += sc.outputTranscription.text;
-      this.opts.onAssistantTranscriptDelta?.(this.aiTranscriptBuf, this.currentResponseId);
+      this.opts.onAssistantTranscriptDelta?.(normalizeTranscript(this.aiTranscriptBuf), this.currentResponseId);
     }
 
     // 割り込み: 再生中の出力を破棄
@@ -283,7 +284,7 @@ export class GeminiLiveSession implements InterviewVoiceSession {
     // ターン完了 → AI 発話確定 + onResponseEnd（実際の鳴り止みは出力監視で通知）
     if (sc.turnComplete) {
       if (this.currentResponseId) {
-        this.opts.onAssistantTranscript?.(this.aiTranscriptBuf, this.currentResponseId);
+        this.opts.onAssistantTranscript?.(normalizeTranscript(this.aiTranscriptBuf), this.currentResponseId);
       }
       this.currentResponseId = null;
       this.aiTranscriptBuf = "";
@@ -292,7 +293,7 @@ export class GeminiLiveSession implements InterviewVoiceSession {
   }
 
   private flushUserTranscript(): void {
-    const text = this.userTranscriptBuf.trim();
+    const text = normalizeTranscript(this.userTranscriptBuf);
     this.userTranscriptBuf = "";
     if (text) this.opts.onUserTranscript?.(text);
   }
