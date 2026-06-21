@@ -107,9 +107,7 @@ export default function InterviewSessionPage() {
   const [messages, setMessages] = useState<InterviewMessage[]>([]);
   // フィラー件数分析用に、除去前の生の生徒発話を保持（表示/保存は除去済みを使う）
   const rawStudentTextsRef = useRef<string[]>([]);
-  // 補正の文脈（直前のAI質問）取得用に最新 messages をミラー
-  const messagesRef = useRef<InterviewMessage[]>([]);
-  // 生徒バブルの識別子採番（「認識中…」→補正済みの差し替え対象特定用）
+  // 生徒バブルの識別子採番（「認識中…」→STT結果の差し替え対象特定用）
   const studentMsgIdRef = useRef(0);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -142,32 +140,26 @@ export default function InterviewSessionPage() {
   const [realtimeActive, setRealtimeActive] = useState(false);
 
   /**
-   * 生徒の音声発言（フィラー除去済み）を Claude で誤変換補正し、「認識中…」バブルを
-   * 補正済みテキストへ差し替える。文脈に直前のAI質問・大学/学部・氏名/高校を渡す。
-   * 失敗時はフィラー除去版にフォールバック（面接を止めない）。
+   * 生徒の発話音声(WAV)を専用STT(gpt-4o-transcribe + 語彙ヒント)に通し、「認識中…」
+   * バブルを高精度テキストへ差し替える。語彙ヒントに大学/学部・氏名/高校を渡す。
+   * 音声なし/STT失敗/空のときは Gemini 内蔵文字起こし(fallbackText)にフォールバック。
    */
-  const correctStudentTurn = useCallback(
-    async (id: string, filledText: string) => {
-      // 直近の会話の流れ（面接官・受験生のやり取り）を文脈に渡す。
-      // ※この時点で messagesRef は「認識中…」プレースホルダ追加前の状態（effect 未反映）。
-      const msgs = messagesRef.current;
-      const recent = msgs
-        .filter((m) => !m.isThinking && !m.correcting && m.content?.trim())
-        .slice(-6)
-        .map((m) => `${m.role === "ai" ? "面接官" : "受験生"}: ${m.content}`)
-        .join("\n");
-      const conversationContext = recent.length > 1800 ? recent.slice(-1800) : recent;
+  const sttStudentTurn = useCallback(
+    async (id: string, audioWavBase64: string | undefined, fallbackText: string) => {
       const finalize = (content: string) =>
         setMessages((prev) =>
           prev.map((m) => (m.id === id ? { ...m, content, correcting: false } : m)),
         );
+      if (!audioWavBase64) {
+        finalize(fallbackText);
+        return;
+      }
       try {
-        const res = await authFetch("/api/interview/correct-turn", {
+        const res = await authFetch("/api/interview/stt-turn", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            text: filledText,
-            conversationContext,
+            audioWavBase64,
             universityName: sessionInfo?.universityContext.universityName,
             facultyName: sessionInfo?.universityContext.facultyName,
             studentName: userProfile?.displayName,
@@ -175,13 +167,13 @@ export default function InterviewSessionPage() {
           }),
         });
         const data = await res.json().catch(() => null);
-        const corrected =
-          data && typeof data.corrected === "string" && data.corrected.trim()
-            ? data.corrected
-            : filledText;
-        finalize(corrected);
+        const text =
+          data && typeof data.text === "string" && data.text.trim()
+            ? data.text
+            : fallbackText;
+        finalize(text);
       } catch {
-        finalize(filledText);
+        finalize(fallbackText);
       }
     },
     [sessionInfo, userProfile],
@@ -199,19 +191,19 @@ export default function InterviewSessionPage() {
     admissionPolicy: sessionInfo?.universityContext.admissionPolicy ?? "",
     weaknessList: weaknesses.map((w) => `- ${w.area}(${w.count}回)`).join("\n") || "（過去の弱点なし）",
     presentationContent: sessionInfo?.presentationContent,
-    onMessageAppend: (m) => {
+    onMessageAppend: (m, audioWavBase64) => {
       if (m.role === "student") {
         // 生テキストは件数分析用に保持
         rawStudentTextsRef.current.push(m.content);
-        const filled = stripFillers(m.content);
+        const fallback = stripFillers(m.content);
         const id = `s${studentMsgIdRef.current++}`;
         // 誤変換を見せないよう、まず「認識中…」で表示（順序保持のため即 append）→
-        // 裏で Claude 補正し、返ったら差し替え（失敗時は filled にフォールバック）。
+        // 裏で専用STTに通し、返ったら差し替え（音声なし/失敗時は fallback を採用）。
         setMessages((prev) => [
           ...prev,
           { role: "student", content: "認識中…", id, correcting: true },
         ]);
-        void correctStudentTurn(id, filled);
+        void sttStudentTurn(id, audioWavBase64, fallback);
       } else {
         setMessages((prev) => [...prev, m]);
       }
@@ -461,11 +453,6 @@ export default function InterviewSessionPage() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // 補正の文脈取得（直前のAI質問）用に最新 messages をミラー
-  useEffect(() => {
-    messagesRef.current = messages;
-  }, [messages]);
 
   // Auto-scroll
   useEffect(() => {

@@ -101,8 +101,12 @@ interface UseRealtimeInterviewOptions {
   admissionPolicy: string;
   weaknessList?: string;
   presentationContent?: string;
-  /** 毎メッセージ追加時に呼ばれる (会話履歴を上位コンポーネントにシンクしたい場合) */
-  onMessageAppend?: (message: InterviewMessage) => void;
+  /**
+   * 毎メッセージ追加時に呼ばれる (会話履歴を上位コンポーネントにシンクしたい場合)。
+   * student 発話のときは第2引数にその発話のマイク音声 WAV(base64) が入ることがある
+   * (Gemini 経路)。上位は専用STTに通して高精度テキストへ差し替える。
+   */
+  onMessageAppend?: (message: InterviewMessage, audioWavBase64?: string) => void;
   /**
    * 直近の AI メッセージの content / isThinking を更新するときに呼ばれる。
    * 考え中バブルの差し替えなど「最後の AI バブル」を扱う場面で使う。
@@ -223,9 +227,9 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
     setAiSpeaking(false);
   }, [setMicEnabled]);
 
-  const appendMessage = useCallback((m: InterviewMessage) => {
+  const appendMessage = useCallback((m: InterviewMessage, audioWavBase64?: string) => {
     setMessages((prev) => [...prev, m]);
-    optsRef.current.onMessageAppend?.(m);
+    optsRef.current.onMessageAppend?.(m, audioWavBase64);
   }, []);
 
   const updateLastAiMessage = useCallback((patch: { content?: string; isThinking?: boolean }) => {
@@ -491,7 +495,7 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
         audioOutputElement: audioElementRef.current,
         micStream,
         withMic: true,
-        onUserTranscript: (text) => {
+        onUserTranscript: (text, audioWavBase64) => {
           // エコーが whisper に拾われ prompt がリークしたケースを破棄
           if (isPromptEcho(text, transcriptionPrompt)) {
             console.warn("[useRealtimeInterview] dropping echoed transcription-prompt:", text.slice(0, 60));
@@ -504,7 +508,8 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
           }
           // ユーザー発話が確定したら AI streaming 状態は強制リセット
           isAiStreamingRef.current = false;
-          appendMessage({ role: "student", content: text });
+          // 音声(wav)があれば上位へ渡し、専用STTで高精度テキストへ差し替えてもらう
+          appendMessage({ role: "student", content: text }, audioWavBase64);
           // create_response: false にしたため、AI 応答を明示的に triggerResponse で発火させる。
           // これにより VAD 誤発火 (環境音・呼吸) による自動 response 多重発火を防ぐ。
           sessionRef.current?.triggerResponse();

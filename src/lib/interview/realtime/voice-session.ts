@@ -17,8 +17,13 @@
 export interface VoiceSessionCallbacks {
   /** 生イベント受信（デバッグ/拡張用。プロバイダ固有の形が入る） */
   onEvent?: (event: { type: string; [key: string]: unknown }) => void;
-  /** ユーザーの発話が確定したとき（入力音声の文字起こし完了） */
-  onUserTranscript?: (text: string) => void;
+  /**
+   * ユーザーの発話が確定したとき（入力音声の文字起こし完了）。
+   * 第1引数: プロバイダ内蔵の文字起こし（フォールバック用）/
+   * 第2引数(任意): その発話のマイク音声 WAV(base64)。Gemini 経路のみ付与し、
+   * 上位は専用STTに通して高精度テキストへ差し替える（OpenAI 経路は未付与）。
+   */
+  onUserTranscript?: (text: string, audioWavBase64?: string) => void;
   /**
    * AI の発話 transcript が部分的に届くたび。
    * 第1引数: 同一 response 内で累積された部分テキスト / 第2引数: responseId（無ければ undefined）

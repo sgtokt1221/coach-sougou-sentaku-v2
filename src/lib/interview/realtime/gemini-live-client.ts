@@ -23,6 +23,7 @@ import { GoogleGenAI, Modality } from "@google/genai";
 import type { LiveServerMessage, Session, UsageMetadata } from "@google/genai";
 import type { InterviewVoiceSession, VoiceSessionCallbacks } from "./voice-session";
 import { normalizeTranscript } from "@/lib/interview/transcript";
+import { encodeWav16 } from "@/lib/interview/wav";
 
 /**
  * usageMetadata から概算コスト(USD)を出す（簡易・ログ用）。
@@ -96,13 +97,18 @@ function base64ToBytes(b64: string): Uint8Array {
   return bytes;
 }
 
-/** Float32 PCM(-1..1) → base64(PCM16 LE) */
-function float32ToPcm16Base64(float32: Float32Array): string {
+/** Float32 PCM(-1..1) → Int16Array(PCM16) */
+function float32ToInt16(float32: Float32Array): Int16Array {
   const pcm = new Int16Array(float32.length);
   for (let i = 0; i < float32.length; i++) {
     const s = Math.max(-1, Math.min(1, float32[i]));
     pcm[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
   }
+  return pcm;
+}
+
+/** Int16 PCM → base64(PCM16 LE)。Gemini への送信に使う。 */
+function int16ToBase64(pcm: Int16Array): string {
   const bytes = new Uint8Array(pcm.buffer);
   let bin = "";
   for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
@@ -157,6 +163,12 @@ export class GeminiLiveSession implements InterviewVoiceSession {
   private turnCounter = 0;
   private userTranscriptBuf = "";
   private aiTranscriptBuf = "";
+  /**
+   * 現ユーザーターンのマイク音声(16k mono Int16)を蓄積。ターン確定時に WAV 化して
+   * 専用STTへ渡す（Gemini 内蔵文字起こしより高精度な源流テキストを得るため）。
+   */
+  private userPcmChunks: Int16Array[] = [];
+  private userPcmLen = 0;
 
   // 長時間対策（再接続）
   private resumptionHandle: string | null = null;
@@ -295,7 +307,27 @@ export class GeminiLiveSession implements InterviewVoiceSession {
   private flushUserTranscript(): void {
     const text = normalizeTranscript(this.userTranscriptBuf);
     this.userTranscriptBuf = "";
-    if (text) this.opts.onUserTranscript?.(text);
+    const wav = this.takeUserAudioWav();
+    if (text) this.opts.onUserTranscript?.(text, wav);
+  }
+
+  /**
+   * 現ユーザーターンの蓄積PCMを WAV(base64) にして取り出し、バッファをリセットする。
+   * 極端に短い音声（<0.6秒）は STT に値しないため undefined を返す。
+   */
+  private takeUserAudioWav(): string | undefined {
+    const chunks = this.userPcmChunks;
+    const total = this.userPcmLen;
+    this.userPcmChunks = [];
+    this.userPcmLen = 0;
+    if (total < INPUT_SAMPLE_RATE * 0.6) return undefined;
+    const merged = new Int16Array(total);
+    let off = 0;
+    for (const c of chunks) {
+      merged.set(c, off);
+      off += c.length;
+    }
+    return encodeWav16(merged, INPUT_SAMPLE_RATE);
   }
 
   // ---- マイク入力 ----
@@ -321,10 +353,15 @@ export class GeminiLiveSession implements InterviewVoiceSession {
       if (!this.inputActive || this.isClosed || !this.session) return;
       const input = ev.inputBuffer.getChannelData(0);
       const pcm = downsampleTo16k(input, inRate);
-      const data = float32ToPcm16Base64(pcm);
+      const int16 = float32ToInt16(pcm);
+      // 専用STT用にユーザーターンの音声を蓄積（90秒上限で暴走防止）。
+      if (this.userPcmLen < INPUT_SAMPLE_RATE * 90) {
+        this.userPcmChunks.push(int16);
+        this.userPcmLen += int16.length;
+      }
       try {
         this.session.sendRealtimeInput({
-          audio: { data, mimeType: `audio/pcm;rate=${INPUT_SAMPLE_RATE}` },
+          audio: { data: int16ToBase64(int16), mimeType: `audio/pcm;rate=${INPUT_SAMPLE_RATE}` },
         });
       } catch {
         /* 送信失敗は無視（再接続中など） */
