@@ -25,6 +25,7 @@ import VoiceAnalyzer, { refineWithTranscription, type VoiceAnalyzerHandle } from
 import VideoAnalyzer, { type VideoAnalyzerHandle } from "@/components/interview/VideoAnalyzer";
 import CameraPreview from "@/components/interview/CameraPreview";
 import { SavedDrillsReference } from "@/components/interview/SavedDrillsReference";
+import { BestAnswersReference } from "@/components/interview/BestAnswersReference";
 import {
   splitIntoUtterances,
   DEFAULT_INTERVIEWER,
@@ -634,6 +635,11 @@ export default function InterviewSessionPage() {
             {sessionInfo.universityContext.admissionPolicy}
           </p>
         </div>
+        {/* ドリルで磨いたベスト回答（参考） */}
+        <BestAnswersReference
+          universityId={sessionInfo.universityId}
+          facultyId={sessionInfo.facultyId}
+        />
         {/* 保存したテーマ別ドリルの問答（参考） */}
         <SavedDrillsReference />
       </>

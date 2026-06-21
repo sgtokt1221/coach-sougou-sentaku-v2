@@ -6,10 +6,24 @@ import {
   DRILL_CATEGORIES,
   type DrillCategory
 } from "@/lib/ai/prompts/interview-drill";
+import { getInterviewContent } from "@/lib/interview/content-store";
+
+/** ドリルcategory → 面接コンテンツ・バンク(individual)のcategory 対応 */
+const DRILL_TO_BANK_CATEGORY: Record<DrillCategory, string> = {
+  "志望理由": "志望理由",
+  "自己PR": "自己PR",
+  "学問関心": "学問への関心",
+  "将来ビジョン": "将来像",
+  "時事問題": "時事",
+};
 
 interface DrillQuestionRequest {
   action: "question";
   category: DrillCategory;
+  /** 指定すると同一質問を再出題（再挑戦） */
+  questionId?: string;
+  /** 指定すると別の質問を選ぶ（直前を回避） */
+  excludeId?: string;
   universityId?: string;
   facultyId?: string;
 }
@@ -19,6 +33,8 @@ interface DrillEvaluationRequest {
   category?: DrillCategory;
   question: string;
   answer: string;
+  /** バンク質問のID（前回回答/ベストの突合キー）。自由質問はnull */
+  questionId?: string;
   universityId?: string;
   facultyId?: string;
 }
@@ -27,6 +43,8 @@ type DrillRequest = DrillQuestionRequest | DrillEvaluationRequest;
 
 interface DrillQuestionResponse {
   question: string;
+  questionId: string | null;
+  category: DrillCategory;
 }
 
 interface DrillEvaluationResponse {
@@ -62,6 +80,7 @@ async function saveInterviewDrill(
     score: number;
     feedback: string;
     betterAnswer: string;
+    questionId?: string | null;
     universityId?: string;
     facultyId?: string;
   },
@@ -79,6 +98,7 @@ async function saveInterviewDrill(
       score: data.score,
       feedback: data.feedback,
       betterAnswer: data.betterAnswer,
+      questionId: data.questionId ?? null,
       saved: false,
       universityId: data.universityId ?? null,
       facultyId: data.facultyId ?? null,
@@ -137,7 +157,7 @@ export async function POST(request: NextRequest) {
     const client = new Anthropic();
 
     if (action === "question") {
-      const { category } = body as DrillQuestionRequest;
+      const { category, questionId, excludeId } = body as DrillQuestionRequest;
 
       if (!DRILL_CATEGORIES.includes(category)) {
         return NextResponse.json(
@@ -146,20 +166,37 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const prompt = buildDrillQuestionPrompt(category, universityName, facultyName, admissionPolicy);
+      // 固定の面接コンテンツ・バンク(individual)から出題（同一問題の突合のためID付き）
+      const bankCat = DRILL_TO_BANK_CATEGORY[category];
+      const all = await getInterviewContent("individual", { facultyName });
+      const inCat = all.filter((i) => (i.category ?? "") === bankCat);
 
+      // 再挑戦: 同一 questionId を再出題
+      if (questionId) {
+        const exact = all.find((i) => i.id === questionId);
+        if (exact) {
+          return NextResponse.json({ question: exact.title, questionId: exact.id, category } satisfies DrillQuestionResponse);
+        }
+      }
+      // 通常: カテゴリ内から1問（直前を回避）
+      if (inCat.length > 0) {
+        const pool = excludeId ? inCat.filter((i) => i.id !== excludeId) : inCat;
+        const list = pool.length > 0 ? pool : inCat;
+        const pick = list[Math.floor(Math.random() * list.length)];
+        return NextResponse.json({ question: pick.title, questionId: pick.id, category } satisfies DrillQuestionResponse);
+      }
+
+      // バンクが空の場合のみ従来どおりAI生成（questionId なし）
+      const prompt = buildDrillQuestionPrompt(category, universityName, facultyName, admissionPolicy);
       const response = await client.messages.create({
         model: "claude-sonnet-4-6",
         max_tokens: 512,
         messages: [{ role: "user", content: prompt }],
       });
-
       const question = response.content[0].type === "text"
         ? response.content[0].text.trim()
         : `${category}について教えてください。`;
-
-      const result: DrillQuestionResponse = { question };
-      return NextResponse.json(result);
+      return NextResponse.json({ question, questionId: null, category } satisfies DrillQuestionResponse);
 
     } else if (action === "evaluate") {
       const { question, answer } = body as DrillEvaluationRequest;
@@ -204,6 +241,7 @@ export async function POST(request: NextRequest) {
           score: result.score,
           feedback: result.feedback,
           betterAnswer: result.betterAnswer,
+          questionId: body.questionId,
           universityId: body.universityId,
           facultyId: body.facultyId,
         });
@@ -227,6 +265,7 @@ export async function POST(request: NextRequest) {
           score: result.score,
           feedback: result.feedback,
           betterAnswer: result.betterAnswer,
+          questionId: body.questionId,
           universityId: body.universityId,
           facultyId: body.facultyId,
         });

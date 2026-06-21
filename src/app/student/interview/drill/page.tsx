@@ -28,7 +28,10 @@ import { cn } from "@/lib/utils";
 import { authFetch } from "@/lib/api/client";
 import { DRILL_CATEGORIES, type DrillCategory } from "@/lib/ai/prompts/interview-drill";
 import { SavedDrillsReference } from "@/components/interview/SavedDrillsReference";
+import { QuestionAttempts } from "@/components/interview/QuestionAttempts";
 import VoiceRecorder from "@/components/interview/VoiceRecorder";
+import Link from "next/link";
+import { History, Star } from "lucide-react";
 
 interface DrillScore {
   category: DrillCategory;
@@ -41,6 +44,7 @@ interface DrillState {
   step: "category" | "question" | "result" | "summary";
   currentCategory: DrillCategory | null;
   currentQuestion: string;
+  currentQuestionId: string | null;
   currentAnswer: string;
   scores: { score: number; feedback: string; betterAnswer: string }[];
   loading: boolean;
@@ -71,6 +75,7 @@ function InterviewDrillInner() {
     step: "category",
     currentCategory: null,
     currentQuestion: "",
+    currentQuestionId: null,
     currentAnswer: "",
     scores: [],
     loading: false,
@@ -95,6 +100,7 @@ function InterviewDrillInner() {
         step: "question",
         currentCategory: category,
         currentQuestion: q,
+        currentQuestionId: null,
         currentAnswer: "",
         sessionStarted: true,
       }));
@@ -108,6 +114,22 @@ function InterviewDrillInner() {
   const [lastDrillId, setLastDrillId] = useState<string | null>(null);
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [savingDrill, setSavingDrill] = useState(false);
+  const [bestMarked, setBestMarked] = useState(false);
+
+  // この回答を手動でベストに指定
+  const markBest = async () => {
+    if (!lastDrillId || bestMarked) return;
+    try {
+      const res = await authFetch("/api/interview/drill/saved", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ drillId: lastDrillId, isBest: true }),
+      });
+      if (res.ok) setBestMarked(true);
+    } catch {
+      /* noop */
+    }
+  };
 
   const toggleSaveDrill = async () => {
     if (!lastDrillId || savingDrill) return;
@@ -169,58 +191,78 @@ function InterviewDrillInner() {
     }
   }, []);
 
-  // カテゴリ選択
-  const handleCategorySelect = useCallback(async (category: DrillCategory) => {
-    setState(prev => ({ ...prev, loading: true, currentCategory: category, error: null }));
-
-    try {
-      const response = await authFetch("/api/interview/drill", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "question",
-          category,
-          // TODO: 志望校情報をcontextから取得
-          // universityId: "...",
-          // facultyId: "..."
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: "不明な エラー" }));
-        throw new Error(errorData.error || "質問生成に失敗しました");
+  // 質問を取得（バンク出題。questionId=再挑戦, excludeId=別の質問）
+  const loadQuestion = useCallback(
+    async (
+      category: DrillCategory,
+      opts?: { questionId?: string | null; excludeId?: string | null },
+    ) => {
+      setState(prev => ({ ...prev, loading: true, currentCategory: category, error: null }));
+      try {
+        const response = await authFetch("/api/interview/drill", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "question",
+            category,
+            ...(opts?.questionId ? { questionId: opts.questionId } : {}),
+            ...(opts?.excludeId ? { excludeId: opts.excludeId } : {}),
+          }),
+        });
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ error: "不明なエラー" }));
+          throw new Error(errorData.error || "質問の取得に失敗しました");
+        }
+        const data = await response.json();
+        setState(prev => ({
+          ...prev,
+          step: "question",
+          currentCategory: category,
+          currentQuestion: data.question || `${category}について、あなたの考えや経験を教えてください。`,
+          currentQuestionId: data.questionId ?? null,
+          currentAnswer: "",
+          loading: false,
+          sessionStarted: true,
+        }));
+      } catch (error) {
+        console.error("Question load error:", error);
+        const fallbackQuestions = {
+          "志望理由": "なぜこの大学・学部を志望されたのですか？具体的なきっかけがあれば教えてください。",
+          "自己PR": "あなたが最も力を入れて取り組んできたことについて教えてください。",
+          "学問関心": "志望する分野に興味を持ったきっかけや、深めたい領域について教えてください。",
+          "将来ビジョン": "大学卒業後、どのような分野で活躍したいと考えていますか？",
+          "時事問題": "最近気になっているニュースや社会問題について、あなたの意見を聞かせてください。",
+        };
+        setState(prev => ({
+          ...prev,
+          step: "question",
+          currentCategory: category,
+          currentQuestion: fallbackQuestions[category],
+          currentQuestionId: null,
+          currentAnswer: "",
+          loading: false,
+          sessionStarted: true,
+          error: error instanceof Error ? error.message : "質問取得でエラーが発生しましたが、フォールバック質問を表示しています。",
+        }));
       }
+    },
+    [],
+  );
 
-      const data = await response.json();
-      setState(prev => ({
-        ...prev,
-        step: "question",
-        currentQuestion: data.question || `${category}について、あなたの考えや経験を教えてください。`,
-        currentAnswer: "",
-        loading: false,
-        sessionStarted: true,
-      }));
-    } catch (error) {
-      console.error("Question generation error:", error);
-      // フォールバック質問を設定
-      const fallbackQuestions = {
-        "志望理由": "なぜこの大学・学部を志望されたのですか？具体的なきっかけがあれば教えてください。",
-        "自己PR": "あなたが最も力を入れて取り組んできたことについて教えてください。",
-        "学問関心": "志望する分野に興味を持ったきっかけや、深めたい領域について教えてください。",
-        "将来ビジョン": "大学卒業後、どのような分野で活躍したいと考えていますか？",
-        "時事問題": "最近気になっているニュースや社会問題について、あなたの意見を聞かせてください。"
-      };
+  // カテゴリ選択
+  const handleCategorySelect = useCallback(
+    (category: DrillCategory) => loadQuestion(category),
+    [loadQuestion],
+  );
 
-      setState(prev => ({
-        ...prev,
-        step: "question",
-        currentQuestion: fallbackQuestions[category],
-        currentAnswer: "",
-        loading: false,
-        sessionStarted: true,
-        error: error instanceof Error ? error.message : "質問生成でエラーが発生しましたが、フォールバック質問を表示しています。",
-      }));
+  // 履歴からの再挑戦 ?retry=questionId&category=...
+  useEffect(() => {
+    const retry = searchParams.get("retry");
+    const cat = searchParams.get("category");
+    if (retry && (DRILL_CATEGORIES as readonly string[]).includes(cat ?? "")) {
+      loadQuestion(cat as DrillCategory, { questionId: retry });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 回答送信
@@ -238,7 +280,7 @@ function InterviewDrillInner() {
           category: state.currentCategory,
           question: state.currentQuestion,
           answer: state.currentAnswer,
-          // TODO: 志望校情報をcontextから取得
+          ...(state.currentQuestionId ? { questionId: state.currentQuestionId } : {}),
         }),
       });
 
@@ -249,6 +291,7 @@ function InterviewDrillInner() {
 
       const evaluation = await response.json();
       setLastDrillId(evaluation.drillId ?? null);
+      setBestMarked(false);
 
       // 宿題から来た場合は提出済みにする
       if (homeworkIdRef.current) {
@@ -308,7 +351,7 @@ function InterviewDrillInner() {
         error: error instanceof Error ? error.message : "評価でエラーが発生しましたが、基本的な採点を行いました。",
       }));
     }
-  }, [state.currentAnswer, state.currentQuestion, state.currentCategory, sessionScores]);
+  }, [state.currentAnswer, state.currentQuestion, state.currentQuestionId, state.currentCategory, sessionScores]);
 
   // 次の問題
   const handleNextQuestion = useCallback(() => {
@@ -320,6 +363,7 @@ function InterviewDrillInner() {
         step: "category",
         currentCategory: null,
         currentQuestion: "",
+        currentQuestionId: null,
         currentAnswer: "",
         scores: [],
       }));
@@ -332,6 +376,7 @@ function InterviewDrillInner() {
       step: "category",
       currentCategory: null,
       currentQuestion: "",
+      currentQuestionId: null,
       currentAnswer: "",
       scores: [],
       loading: false,
@@ -517,6 +562,9 @@ function InterviewDrillInner() {
                 </p>
               </div>
 
+              {/* この質問の前回回答・ベストを参照（ベスト超えを狙う） */}
+              <QuestionAttempts questionId={state.currentQuestionId} />
+
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <label className="text-sm font-medium text-slate-700">
@@ -594,6 +642,16 @@ function InterviewDrillInner() {
                     "回答を送信"
                   )}
                 </Button>
+                {state.currentQuestionId && state.currentCategory && (
+                  <Button
+                    variant="outline"
+                    onClick={() => loadQuestion(state.currentCategory!, { excludeId: state.currentQuestionId })}
+                    disabled={state.loading}
+                  >
+                    <RotateCcw className="mr-1 h-4 w-4" />
+                    別の質問
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   onClick={() => setState(prev => ({ ...prev, step: "category" }))}
@@ -657,24 +715,48 @@ function InterviewDrillInner() {
               </div>
 
               {lastDrillId && (
-                <Button
-                  variant={savedIds.has(lastDrillId) ? "secondary" : "outline"}
-                  onClick={toggleSaveDrill}
-                  disabled={savingDrill}
-                  className="w-full"
-                >
-                  <Bookmark className="mr-2 h-4 w-4" />
-                  {savedIds.has(lastDrillId) ? "保存済み（面接練習で参照できます）" : "この問答を保存"}
-                </Button>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  {state.currentQuestionId && (
+                    <Button
+                      variant={bestMarked ? "secondary" : "outline"}
+                      onClick={markBest}
+                      disabled={bestMarked}
+                      className="flex-1"
+                    >
+                      <Star className={cn("mr-2 h-4 w-4", bestMarked && "fill-amber-400 text-amber-500")} />
+                      {bestMarked ? "ベストに設定済み" : "この回答をベストにする"}
+                    </Button>
+                  )}
+                  <Button
+                    variant={savedIds.has(lastDrillId) ? "secondary" : "outline"}
+                    onClick={toggleSaveDrill}
+                    disabled={savingDrill}
+                    className="flex-1"
+                  >
+                    <Bookmark className="mr-2 h-4 w-4" />
+                    {savedIds.has(lastDrillId) ? "保存済み" : "この問答を保存"}
+                  </Button>
+                </div>
               )}
 
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-3">
                 <Button onClick={handleNextQuestion} className="flex-1">
                   {sessionScores.length >= 4 ? "結果を見る" : "次の問題"}
                 </Button>
-                <Button variant="outline" onClick={() => handleCategorySelect(state.currentCategory!)}>
-                  <RotateCcw className="mr-2 h-4 w-4" />
-                  同じカテゴリをもう一度
+                {state.currentQuestionId && state.currentCategory && (
+                  <Button
+                    variant="outline"
+                    onClick={() => loadQuestion(state.currentCategory!, { questionId: state.currentQuestionId })}
+                  >
+                    <RotateCcw className="mr-2 h-4 w-4" />
+                    この質問をもう一度
+                  </Button>
+                )}
+                <Button variant="outline" asChild>
+                  <Link href="/student/interview/drill/history">
+                    <History className="mr-2 h-4 w-4" />
+                    履歴
+                  </Link>
                 </Button>
               </div>
             </CardContent>

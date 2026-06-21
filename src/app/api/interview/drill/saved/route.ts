@@ -58,7 +58,11 @@ export async function PATCH(request: NextRequest) {
   }
 
   try {
-    const { drillId, saved } = (await request.json()) as { drillId?: string; saved?: boolean };
+    const { drillId, saved, isBest } = (await request.json()) as {
+      drillId?: string;
+      saved?: boolean;
+      isBest?: boolean;
+    };
     if (!drillId) {
       return NextResponse.json({ error: "drillId は必須です" }, { status: 400 });
     }
@@ -67,6 +71,27 @@ export async function PATCH(request: NextRequest) {
     if (!snap.exists) {
       return NextResponse.json({ error: "対象が見つかりません" }, { status: 404 });
     }
+
+    // ベスト手動指定（1問1ベスト: 同一 questionId の他docを下ろす）
+    if (typeof isBest === "boolean") {
+      if (isBest) {
+        const qId = (snap.data()?.questionId as string | null) ?? null;
+        if (qId) {
+          const sib = await adminDb
+            .collection(`users/${uid}/interviewDrills`)
+            .where("questionId", "==", qId)
+            .get();
+          const batch = adminDb.batch();
+          sib.docs.forEach((d) => {
+            if (d.id !== drillId) batch.set(d.ref, { isBest: false }, { merge: true });
+          });
+          await batch.commit();
+        }
+      }
+      await ref.set({ isBest }, { merge: true });
+      return NextResponse.json({ id: drillId, isBest });
+    }
+
     await ref.set({ saved: saved === true }, { merge: true });
     return NextResponse.json({ id: drillId, saved: saved === true });
   } catch (err) {
