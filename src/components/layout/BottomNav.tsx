@@ -96,7 +96,8 @@ const sheetSections: SheetSection[] = [
     title: "Practice",
     subtitle: "練習",
     items: [
-      { label: "小論文講座", href: "/student/essay/lectures", icon: GraduationCap, iconBg: "bg-indigo-100 dark:bg-indigo-950/40", iconColor: "text-indigo-700 dark:text-indigo-300" },
+      // 小論文講座は WIP のため非公開（公開時にこの行を戻す）
+      // { label: "小論文講座", href: "/student/essay/lectures", icon: GraduationCap, iconBg: "bg-indigo-100 dark:bg-indigo-950/40", iconColor: "text-indigo-700 dark:text-indigo-300" },
       { label: "ネタインプット", href: "/student/topic-input", icon: BookMarked, iconBg: "bg-amber-100 dark:bg-amber-950/40", iconColor: "text-amber-700 dark:text-amber-300" },
       { label: "テーマ・過去問", href: "/student/essay/themes", icon: BookOpen, iconBg: "bg-emerald-100 dark:bg-emerald-950/40", iconColor: "text-emerald-700 dark:text-emerald-300" },
       { label: "要約ドリル", href: "/student/essay/summary-drill", icon: ClipboardList, iconBg: "bg-teal-100 dark:bg-teal-950/40", iconColor: "text-teal-700 dark:text-teal-300" },

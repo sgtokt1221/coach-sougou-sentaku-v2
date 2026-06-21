@@ -76,7 +76,8 @@ const studentNavGroups: NavGroup[] = [
         icon: FileText,
         match: ["/student/essay", "/student/topic-input"],
         children: [
-          { label: "小論文講座", href: "/student/essay/lectures", icon: GraduationCap },
+          // 小論文講座は WIP のため非公開（公開時にこの行を戻す）
+          // { label: "小論文講座", href: "/student/essay/lectures", icon: GraduationCap },
           { label: "ネタインプット", href: "/student/topic-input", icon: BookMarked },
           { label: "テーマ・過去問", href: "/student/essay/themes", icon: BookOpen },
           { label: "要約ドリル", href: "/student/essay/summary-drill", icon: ClipboardList },
