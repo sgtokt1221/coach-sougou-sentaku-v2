@@ -22,7 +22,8 @@ import { recordAiTrace } from "@/lib/ai/trace";
 const MODEL = "claude-haiku-4-5-20251001";
 
 export interface CorrectTranscriptCtx {
-  lastAiQuestion?: string;
+  /** 直近の会話の流れ（面接官・受験生のやり取り）。話題を踏まえた補正に使う。 */
+  conversationContext?: string;
   universityName?: string;
   facultyName?: string;
   studentName?: string;

@@ -36,25 +36,29 @@ export const TRANSCRIPT_CORRECT_SYSTEM_PROMPT = `あなたは日本語の音声�
 export function buildTurnCorrectPrompt(
   utterance: string,
   ctx: {
-    lastAiQuestion?: string;
+    /** 直近の会話の流れ（面接官・受験生のやり取り）。話題を踏まえた補正に使う。 */
+    conversationContext?: string;
     universityName?: string;
     facultyName?: string;
     studentName?: string;
     highSchoolName?: string;
   },
 ): string {
-  const lines: string[] = ["# 文脈（正しい固有名詞・直前の質問）"];
+  const lines: string[] = ["# 正しい固有名詞"];
   if (ctx.universityName) lines.push(`- 志望大学: ${ctx.universityName}`);
   if (ctx.facultyName) lines.push(`- 志望学部: ${ctx.facultyName}`);
   if (ctx.studentName) lines.push(`- 受験生の氏名: ${ctx.studentName}`);
   if (ctx.highSchoolName) lines.push(`- 出身高校: ${ctx.highSchoolName}`);
-  if (ctx.lastAiQuestion) lines.push(`- 直前の面接官の質問: ${ctx.lastAiQuestion}`);
   if (lines.length === 1) lines.push("- （特になし）");
 
-  return `${lines.join("\n")}
+  const convoSection = ctx.conversationContext
+    ? `\n\n# 直近の会話の流れ（話題の手がかり。補正には使うが、ここは出力しない）\n${ctx.conversationContext}`
+    : "";
 
-# 補正対象（受験生の発言の文字起こし）
+  return `${lines.join("\n")}${convoSection}
+
+# 補正対象（直近の受験生の発言の文字起こし。これだけを補正する）
 ${utterance}
 
-上記の発言の誤変換だけを直し、補正後のテキストのみを出力してください。`;
+上の「会話の流れ」と固有名詞を手がかりに、補正対象の発言の誤変換だけを直し、補正後のテキストのみを出力してください。`;
 }

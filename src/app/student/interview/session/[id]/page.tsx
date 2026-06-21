@@ -148,14 +148,15 @@ export default function InterviewSessionPage() {
    */
   const correctStudentTurn = useCallback(
     async (id: string, filledText: string) => {
+      // 直近の会話の流れ（面接官・受験生のやり取り）を文脈に渡す。
+      // ※この時点で messagesRef は「認識中…」プレースホルダ追加前の状態（effect 未反映）。
       const msgs = messagesRef.current;
-      let lastAiQuestion: string | undefined;
-      for (let k = msgs.length - 1; k >= 0; k--) {
-        if (msgs[k].role === "ai" && !msgs[k].isThinking && msgs[k].content?.trim()) {
-          lastAiQuestion = msgs[k].content;
-          break;
-        }
-      }
+      const recent = msgs
+        .filter((m) => !m.isThinking && !m.correcting && m.content?.trim())
+        .slice(-6)
+        .map((m) => `${m.role === "ai" ? "面接官" : "受験生"}: ${m.content}`)
+        .join("\n");
+      const conversationContext = recent.length > 1800 ? recent.slice(-1800) : recent;
       const finalize = (content: string) =>
         setMessages((prev) =>
           prev.map((m) => (m.id === id ? { ...m, content, correcting: false } : m)),
@@ -166,7 +167,7 @@ export default function InterviewSessionPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             text: filledText,
-            lastAiQuestion,
+            conversationContext,
             universityName: sessionInfo?.universityContext.universityName,
             facultyName: sessionInfo?.universityContext.facultyName,
             studentName: userProfile?.displayName,

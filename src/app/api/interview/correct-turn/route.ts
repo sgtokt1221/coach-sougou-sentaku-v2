@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     }
 
     const corrected = await correctTranscriptTurn(text, {
-      lastAiQuestion: typeof body.lastAiQuestion === "string" ? body.lastAiQuestion : undefined,
+      conversationContext: typeof body.conversationContext === "string" ? body.conversationContext : undefined,
       universityName: typeof body.universityName === "string" ? body.universityName : undefined,
       facultyName: typeof body.facultyName === "string" ? body.facultyName : undefined,
       studentName: typeof body.studentName === "string" ? body.studentName : undefined,
