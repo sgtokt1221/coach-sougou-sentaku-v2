@@ -108,6 +108,26 @@ function float32ToPcm16Base64(float32: Float32Array): string {
   return btoa(bin);
 }
 
+/**
+ * float32 PCM を inRate → 16000Hz に線形補間でリサンプルする。
+ * ブラウザが AudioContext のレート指定を無視する場合でも、Gemini に送る前に
+ * 確実に 16k へ整合させる（rate=16000 と申告するため）。
+ */
+function downsampleTo16k(input: Float32Array, inRate: number): Float32Array {
+  if (inRate === INPUT_SAMPLE_RATE) return input;
+  const ratio = inRate / INPUT_SAMPLE_RATE;
+  const outLen = Math.max(1, Math.floor(input.length / ratio));
+  const out = new Float32Array(outLen);
+  for (let i = 0; i < outLen; i++) {
+    const pos = i * ratio;
+    const i0 = Math.floor(pos);
+    const i1 = Math.min(i0 + 1, input.length - 1);
+    const frac = pos - i0;
+    out[i] = input[i0] * (1 - frac) + input[i1] * frac;
+  }
+  return out;
+}
+
 export class GeminiLiveSession implements InterviewVoiceSession {
   private opts: GeminiLiveSessionOptions;
   private ai: GoogleGenAI;
@@ -282,8 +302,15 @@ export class GeminiLiveSession implements InterviewVoiceSession {
   private startMicCapture(): void {
     const stream = this.opts.micStream;
     if (!stream) return;
-    const ctx = new AudioContext({ sampleRate: INPUT_SAMPLE_RATE });
+    // 16k固定にしない: ネイティブレートで取り込み、送る直前に 16k へリサンプルする。
+    // （sampleRate 制約を外して AEC を有効化したため、実レートは 48k 等になる）
+    const ctx = new AudioContext();
     this.inputCtx = ctx;
+    const inRate = ctx.sampleRate;
+    if (process.env.NODE_ENV !== "production") {
+      const s = stream.getAudioTracks()[0]?.getSettings?.();
+      console.debug("[gemini-live] mic capture", { ctxSampleRate: inRate, trackSettings: s });
+    }
     this.micSource = ctx.createMediaStreamSource(stream);
     // NOTE: ScriptProcessorNode は deprecated だが全ブラウザで動作。
     // 将来 AudioWorklet へ移行可能（別モジュールファイルが必要になる）。
@@ -292,7 +319,8 @@ export class GeminiLiveSession implements InterviewVoiceSession {
     processor.onaudioprocess = (ev) => {
       if (!this.inputActive || this.isClosed || !this.session) return;
       const input = ev.inputBuffer.getChannelData(0);
-      const data = float32ToPcm16Base64(input);
+      const pcm = downsampleTo16k(input, inRate);
+      const data = float32ToPcm16Base64(pcm);
       try {
         this.session.sendRealtimeInput({
           audio: { data, mimeType: `audio/pcm;rate=${INPUT_SAMPLE_RATE}` },

@@ -381,8 +381,9 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
           noiseSuppression: true,
           autoGainControl: true,
           channelCount: 1,
-          // OpenAI Realtime は 24kHz、Gemini Live は 16kHz mono pcm16
-          sampleRate: effectiveProvider === "gemini" ? 16000 : 24000,
+          // sampleRate は制約しない: Chrome の echo cancellation は内部48kで動くため、
+          // 低レート(16k/24k)を制約指定すると AEC が無効化され、AI出力音声がマイクに
+          // 回り込んで誤認識される。送信レート整合は各クライアントの AudioContext 側で行う。
         },
       });
       micStreamRef.current = micStream;
