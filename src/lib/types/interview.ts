@@ -25,6 +25,14 @@ export type InterviewMode = "individual" | "group_discussion" | "presentation" |
 export interface InterviewMessage {
   role: "ai" | "student";
   content: string;
+  /**
+   * 生徒バブルのクライアント内識別子。音声文字起こしを Claude で後処理補正する際、
+   * 「認識中…」プレースホルダを補正済みテキストへ差し替える対象を特定するのに使う。
+   * 保存時は {role, content} のみ写すため Firestore へは出力されない。
+   */
+  id?: string;
+  /** 文字起こしの Claude 補正待ち（true の間は「認識中…」表示）。表示専用、保存しない。 */
+  correcting?: boolean;
   /** AI が応答開始～最初の transcript delta が届くまでの「考え中」プレースホルダー */
   isThinking?: boolean;
   /**

@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/dialog";
 import { Send, StopCircle, ChevronDown, ChevronUp, Video, VideoOff, Pencil, Check, X, BookOpenCheck, TrendingUp, TrendingDown, ArrowRight } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
+import { useAuth } from "@/contexts/AuthContext";
+import type { StudentProfile } from "@/lib/types/user";
 import type { InterviewMessage, InterviewMode, InterviewInputMode, VoiceAnalysis, VideoAnalysis, AppearanceAnalysis } from "@/lib/types/interview";
 import { getWeaknessReminderLevel, type WeaknessRecord } from "@/lib/types/growth";
 import { useRealtimeInterview } from "@/hooks/useRealtimeInterview";
@@ -99,11 +101,16 @@ export default function InterviewSessionPage() {
   const router = useRouter();
   const params = useParams();
   const sessionId = params?.id as string;
+  const { userProfile } = useAuth();
 
   const [sessionInfo, setSessionInfo] = useState<SessionInfo | null>(null);
   const [messages, setMessages] = useState<InterviewMessage[]>([]);
   // フィラー件数分析用に、除去前の生の生徒発話を保持（表示/保存は除去済みを使う）
   const rawStudentTextsRef = useRef<string[]>([]);
+  // 補正の文脈（直前のAI質問）取得用に最新 messages をミラー
+  const messagesRef = useRef<InterviewMessage[]>([]);
+  // 生徒バブルの識別子採番（「認識中…」→補正済みの差し替え対象特定用）
+  const studentMsgIdRef = useRef(0);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [elapsed, setElapsed] = useState(0);
@@ -133,6 +140,52 @@ export default function InterviewSessionPage() {
   const endedRef = useRef(false);
   /** Realtime 経路が有効 (true なら従来 Claude 経路は使わない) */
   const [realtimeActive, setRealtimeActive] = useState(false);
+
+  /**
+   * 生徒の音声発言（フィラー除去済み）を Claude で誤変換補正し、「認識中…」バブルを
+   * 補正済みテキストへ差し替える。文脈に直前のAI質問・大学/学部・氏名/高校を渡す。
+   * 失敗時はフィラー除去版にフォールバック（面接を止めない）。
+   */
+  const correctStudentTurn = useCallback(
+    async (id: string, filledText: string) => {
+      const msgs = messagesRef.current;
+      let lastAiQuestion: string | undefined;
+      for (let k = msgs.length - 1; k >= 0; k--) {
+        if (msgs[k].role === "ai" && !msgs[k].isThinking && msgs[k].content?.trim()) {
+          lastAiQuestion = msgs[k].content;
+          break;
+        }
+      }
+      const finalize = (content: string) =>
+        setMessages((prev) =>
+          prev.map((m) => (m.id === id ? { ...m, content, correcting: false } : m)),
+        );
+      try {
+        const res = await authFetch("/api/interview/correct-turn", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            text: filledText,
+            lastAiQuestion,
+            universityName: sessionInfo?.universityContext.universityName,
+            facultyName: sessionInfo?.universityContext.facultyName,
+            studentName: userProfile?.displayName,
+            highSchoolName: (userProfile as StudentProfile | null)?.school,
+          }),
+        });
+        const data = await res.json().catch(() => null);
+        const corrected =
+          data && typeof data.corrected === "string" && data.corrected.trim()
+            ? data.corrected
+            : filledText;
+        finalize(corrected);
+      } catch {
+        finalize(filledText);
+      }
+    },
+    [sessionInfo, userProfile],
+  );
+
   const realtime = useRealtimeInterview({
     mode: sessionInfo?.mode ?? "individual",
     // 音声プロバイダ: /new の選択 → なければ localStorage 上書き/env で解決（既定 openai）。
@@ -147,9 +200,17 @@ export default function InterviewSessionPage() {
     presentationContent: sessionInfo?.presentationContent,
     onMessageAppend: (m) => {
       if (m.role === "student") {
-        // 生テキストは件数分析用に保持し、表示/保存はフィラー除去版を使う
+        // 生テキストは件数分析用に保持
         rawStudentTextsRef.current.push(m.content);
-        setMessages((prev) => [...prev, { ...m, content: stripFillers(m.content) }]);
+        const filled = stripFillers(m.content);
+        const id = `s${studentMsgIdRef.current++}`;
+        // 誤変換を見せないよう、まず「認識中…」で表示（順序保持のため即 append）→
+        // 裏で Claude 補正し、返ったら差し替え（失敗時は filled にフォールバック）。
+        setMessages((prev) => [
+          ...prev,
+          { role: "student", content: "認識中…", id, correcting: true },
+        ]);
+        void correctStudentTurn(id, filled);
       } else {
         setMessages((prev) => [...prev, m]);
       }
@@ -400,6 +461,11 @@ export default function InterviewSessionPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // 補正の文脈取得（直前のAI質問）用に最新 messages をミラー
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
+
   // Auto-scroll
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -415,7 +481,7 @@ export default function InterviewSessionPage() {
   // 会話を Firestore に自動保存（履歴からの再開用）。終了処理中は保存しない。
   useEffect(() => {
     if (!sessionId || endedRef.current) return;
-    const real = messages.filter((m) => !m.isThinking && m.content?.trim());
+    const real = messages.filter((m) => !m.isThinking && !m.correcting && m.content?.trim());
     if (real.length === 0) return;
     const timer = setTimeout(() => {
       authFetch(`/api/interview/${sessionId}/messages`, {
@@ -431,7 +497,7 @@ export default function InterviewSessionPage() {
   useEffect(() => {
     function flush() {
       if (endedRef.current) return;
-      const real = messages.filter((m) => !m.isThinking && m.content?.trim());
+      const real = messages.filter((m) => !m.isThinking && !m.correcting && m.content?.trim());
       if (real.length === 0) return;
       authFetch(`/api/interview/${sessionId}/messages`, {
         method: "POST",
@@ -954,6 +1020,10 @@ export default function InterviewSessionPage() {
                         </button>
                       </div>
                     </div>
+                  </div>
+                ) : msg.correcting ? (
+                  <div className="max-w-[85%] lg:max-w-[75%] rounded-2xl rounded-tr-sm bg-primary/50 text-primary-foreground px-4 py-2 text-sm italic animate-pulse">
+                    {msg.content}
                   </div>
                 ) : (
                   <div className="flex items-end gap-1">
