@@ -11,8 +11,6 @@ import { buildSelfAnalysisVoiceInstructions } from "@/lib/ai/prompts/voice-chat-
 
 interface WorkshopChatProps {
   step: number;
-  /** ドラフト保存キーに使う uid。未指定時はドラフト無効。 */
-  userId?: string;
   initialMessages: ChatMessage[];
   previousStepsData?: Record<string, unknown>;
   onStepComplete: (stepData: Record<string, unknown>, messages: ChatMessage[]) => void;
@@ -20,15 +18,16 @@ interface WorkshopChatProps {
 
 export function WorkshopChat({
   step,
-  userId,
   initialMessages,
   previousStepsData,
   onStepComplete,
 }: WorkshopChatProps) {
-  // 途中入力のドラフト保存キー（ステップ単位）。再レンダー/リロード/タブ復帰で消えないように。
-  const draftKey = userId ? `sa-draft:${userId}:${step}` : null;
+  // 途中入力のドラフト保存キー（ステップ単位・端末ローカル）。
+  // ※uid に依存させない: スマホは認証解決が遅く uid 未取得の瞬間があり、uid 必須だと
+  //   その間ドラフトが無効化→リロード/背景復帰で会話が消える原因になっていた。
+  const draftKey = `sa-draft:${step}`;
   const readDraft = (): { messages?: ChatMessage[]; input?: string } | null => {
-    if (!draftKey || typeof window === "undefined") return null;
+    if (typeof window === "undefined") return null;
     try {
       const raw = window.localStorage.getItem(draftKey);
       return raw ? JSON.parse(raw) : null;
@@ -68,7 +67,7 @@ export function WorkshopChat({
 
   // 途中入力(会話＋入力中テキスト)をドラフト保存
   useEffect(() => {
-    if (!draftKey || doneRef.current || typeof window === "undefined") return;
+    if (doneRef.current || typeof window === "undefined") return;
     try {
       if (messages.length > 0 || input.trim()) {
         window.localStorage.setItem(draftKey, JSON.stringify({ messages, input }));
@@ -83,7 +82,7 @@ export function WorkshopChat({
   const completeWith = useCallback(
     (sd: Record<string, unknown>, msgs: ChatMessage[]) => {
       doneRef.current = true;
-      if (draftKey && typeof window !== "undefined") {
+      if (typeof window !== "undefined") {
         try {
           window.localStorage.removeItem(draftKey);
         } catch {
