@@ -11,6 +11,8 @@ import { buildSelfAnalysisVoiceInstructions } from "@/lib/ai/prompts/voice-chat-
 
 interface WorkshopChatProps {
   step: number;
+  /** ドラフト保存キーに使う uid。未指定時はドラフト無効。 */
+  userId?: string;
   initialMessages: ChatMessage[];
   previousStepsData?: Record<string, unknown>;
   onStepComplete: (stepData: Record<string, unknown>, messages: ChatMessage[]) => void;
@@ -18,28 +20,80 @@ interface WorkshopChatProps {
 
 export function WorkshopChat({
   step,
+  userId,
   initialMessages,
   previousStepsData,
   onStepComplete,
 }: WorkshopChatProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
-  const [input, setInput] = useState("");
+  // 途中入力のドラフト保存キー（ステップ単位）。再レンダー/リロード/タブ復帰で消えないように。
+  const draftKey = userId ? `sa-draft:${userId}:${step}` : null;
+  const readDraft = (): { messages?: ChatMessage[]; input?: string } | null => {
+    if (!draftKey || typeof window === "undefined") return null;
+    try {
+      const raw = window.localStorage.getItem(draftKey);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    const d = readDraft();
+    return Array.isArray(d?.messages) && d.messages.length > 0 ? d.messages : initialMessages;
+  });
+  const [input, setInput] = useState<string>(() => {
+    const d = readDraft();
+    return typeof d?.input === "string" ? d.input : "";
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [stepData, setStepData] = useState<Record<string, unknown> | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const voiceChat = useVoiceChat();
+  // 完了後はドラフト保存を止める（完了→ページ再レンダーで再保存され復活するのを防ぐ）
+  const doneRef = useRef(false);
 
   const stepInfo = SELF_ANALYSIS_STEPS.find((s) => s.step === step);
 
+  // このステップのコンポーネントが破棄される時(ステップ切替/離脱)に音声を止める。
+  // ※以前は [step, initialMessages] 依存で messages を reset していたが、initialMessages が
+  //   毎レンダー新しい [] になるため、ページ再レンダーのたびに会話が消える原因だった。
+  //   状態は key 再マウント＋上のドラフト初期化で扱うので、ここでは音声停止のみ。
   useEffect(() => {
-    setMessages(initialMessages);
-    setStepData(null);
-    setInput("");
-    // ステップが変わったら音声セッションを終了 (新しいステップ用の instructions に差し替えが必要)
-    voiceChat.stop();
+    return () => {
+      voiceChat.stop();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step, initialMessages]);
+  }, []);
+
+  // 途中入力(会話＋入力中テキスト)をドラフト保存
+  useEffect(() => {
+    if (!draftKey || doneRef.current || typeof window === "undefined") return;
+    try {
+      if (messages.length > 0 || input.trim()) {
+        window.localStorage.setItem(draftKey, JSON.stringify({ messages, input }));
+      } else {
+        window.localStorage.removeItem(draftKey);
+      }
+    } catch {
+      /* localStorage 不可環境は無視 */
+    }
+  }, [messages, input, draftKey]);
+
+  const completeWith = useCallback(
+    (sd: Record<string, unknown>, msgs: ChatMessage[]) => {
+      doneRef.current = true;
+      if (draftKey && typeof window !== "undefined") {
+        try {
+          window.localStorage.removeItem(draftKey);
+        } catch {
+          /* noop */
+        }
+      }
+      onStepComplete(sd, msgs);
+    },
+    [draftKey, onStepComplete],
+  );
 
   useEffect(() => {
     scrollRef.current?.scrollTo({
@@ -127,7 +181,7 @@ export function WorkshopChat({
 
   function handleCompleteStep() {
     if (stepData) {
-      onStepComplete(stepData, messages);
+      completeWith(stepData, messages);
       return;
     }
     // 音声モードで会話を終わらせた後: messages を Claude API に送って stepData 抽出
@@ -152,7 +206,7 @@ export function WorkshopChat({
           if (res.ok) {
             const data = await res.json();
             if (data.stepData) {
-              onStepComplete(data.stepData, messages);
+              completeWith(data.stepData, messages);
               return;
             }
           }

@@ -12,10 +12,12 @@ import { GrowthTree } from "@/components/self-analysis/GrowthTree";
 import { StepEditModal } from "@/components/self-analysis/StepEditModal";
 import { useAuthSWR } from "@/lib/api/swr";
 import { authFetch } from "@/lib/api/client";
+import { useAuth } from "@/contexts/AuthContext";
 import type { SelfAnalysis, ChatMessage, StepChatHistory } from "@/lib/types/self-analysis";
 
 export default function SelfAnalysisPage() {
   const router = useRouter();
+  const { userProfile } = useAuth();
   const { data, isLoading } = useAuthSWR<SelfAnalysis | null>(
     "/api/self-analysis?userId=me"
   );
@@ -265,6 +267,7 @@ export default function SelfAnalysisPage() {
             <WorkshopChat
               key={currentStep}
               step={currentStep}
+              userId={userProfile?.uid}
               initialMessages={currentMessages}
               previousStepsData={
                 Object.keys(stepsData).length > 0 ? stepsData : undefined

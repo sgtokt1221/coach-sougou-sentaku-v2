@@ -101,24 +101,61 @@ export async function POST(request: NextRequest) {
     if (adminDb) {
       const { FieldValue } = await import("firebase-admin/firestore");
       const docId = resolvedId;
-      await adminDb.doc(`selfAnalysis/${docId}`).set(
-        {
-          userId: body.userId,
-          values: body.values ?? null,
-          strengths: body.strengths ?? null,
-          weaknesses: body.weaknesses ?? null,
-          interests: body.interests ?? null,
-          vision: body.vision ?? null,
-          identity: body.identity ?? null,
-          synthesis: body.synthesis ?? null,
-          completedSteps: body.completedSteps ?? 0,
-          isComplete: body.isComplete ?? false,
-          chatHistory: body.chatHistory ?? [],
-          updatedAt: FieldValue.serverTimestamp(),
-          ...(!body.id ? { createdAt: FieldValue.serverTimestamp() } : {}),
-        },
-        { merge: true }
-      );
+      const ref = adminDb.doc(`selfAnalysis/${docId}`);
+
+      // 既存を読み、非破壊にマージする。
+      // ※以前は7ステップ全体を毎回上書きしていたため、クライアントの stepsData が
+      //   未復元(空)のまま保存されると既存入力を {} で潰し「全部消える」事故が起きていた。
+      const existingSnap = await ref.get();
+      const existing = existingSnap.exists ? (existingSnap.data() as Record<string, unknown>) : null;
+
+      const STEP_KEYS = [
+        "values", "strengths", "weaknesses", "interests", "vision", "identity", "synthesis",
+      ] as const;
+
+      const update: Record<string, unknown> = {
+        userId: body.userId,
+        updatedAt: FieldValue.serverTimestamp(),
+      };
+      if (!existing) update.createdAt = FieldValue.serverTimestamp();
+
+      // ステップは「非空で送られたものだけ」書き込む（空 {}/null で既存を潰さない）
+      for (const key of STEP_KEYS) {
+        const v = body[key];
+        if (v && typeof v === "object" && Object.keys(v).length > 0) {
+          update[key] = v;
+        }
+      }
+
+      // completedSteps は下げない（単調増加）
+      const existingCompleted =
+        typeof existing?.completedSteps === "number" ? (existing.completedSteps as number) : 0;
+      const bodyCompleted = typeof body.completedSteps === "number" ? body.completedSteps : 0;
+      update.completedSteps = Math.max(existingCompleted, bodyCompleted);
+
+      // isComplete は true から false に戻さない
+      update.isComplete = Boolean(body.isComplete) || Boolean(existing?.isComplete);
+
+      // chatHistory は step 単位でマージ（body 優先）。partial な body で他ステップを失わない
+      if (Array.isArray(body.chatHistory)) {
+        const merged = new Map<number, unknown>();
+        const existingHist = existing?.chatHistory;
+        if (Array.isArray(existingHist)) {
+          for (const h of existingHist) {
+            if (h && typeof (h as { step?: number }).step === "number") {
+              merged.set((h as { step: number }).step, h);
+            }
+          }
+        }
+        for (const h of body.chatHistory) {
+          if (h && typeof (h as { step?: number }).step === "number") {
+            merged.set((h as { step: number }).step, h);
+          }
+        }
+        update.chatHistory = Array.from(merged.values());
+      }
+
+      await ref.set(update, { merge: true });
       return NextResponse.json({ success: true, id: docId });
     }
 
