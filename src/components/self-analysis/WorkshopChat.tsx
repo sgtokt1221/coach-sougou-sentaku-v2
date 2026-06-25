@@ -303,12 +303,13 @@ export function WorkshopChat({
 
           {!stepData && (
             <div className="px-4 py-3 border-t">
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2">
                 <input
                   ref={inputRef}
                   type="text"
-                  // text-base(16px): iOS でフォーカス時に自動ズーム→表示ずれが起きるのを防ぐ(16px未満で発生)
-                  className="flex-1 rounded-lg border bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-ring"
+                  // min-w-0: flex の既定 min-width:auto だと入力欄が縮まず送信ボタンが
+                  //   はみ出して見切れる。text-base(16px): iOS のフォーカス自動ズーム防止。
+                  className="min-w-0 flex-1 rounded-lg border bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-ring"
                   placeholder="回答を入力 (Cmd/Ctrl+Enter で送信)"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
@@ -317,6 +318,7 @@ export function WorkshopChat({
                 />
                 <Button
                   size="sm"
+                  className="shrink-0"
                   onClick={handleSend}
                   disabled={!input.trim() || isLoading}
                 >
