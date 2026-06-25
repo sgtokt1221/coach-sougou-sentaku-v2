@@ -94,6 +94,7 @@ export function DiscoverSection({ studentId }: DiscoverSectionProps) {
               completedSteps={saCompletedSteps}
               stepsData={saStepsData}
               interactive={false}
+              showDetailsOnHover
             />
           ) : saError ? (
             <div className="py-8 text-center">

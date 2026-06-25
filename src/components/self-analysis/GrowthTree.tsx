@@ -37,8 +37,13 @@ interface GrowthTreeProps {
   className?: string;
   /** compact 版: 下部ステップラベル省略、max-width と padding を縮小 */
   compact?: boolean;
-  /** false にすると果実のホバー/クリック/ツールチップを無効化（装飾表示）。既定 true */
+  /** false にすると果実のクリック編集を無効化（装飾/読み取り表示）。既定 true */
   interactive?: boolean;
+  /**
+   * 果実ホバー時の内容ツールチップ表示。未指定時は interactive に従う。
+   * 管理者の読み取り表示など「編集はさせないが内容は読ませたい」場合に true 単独で使う。
+   */
+  showDetailsOnHover?: boolean;
   /** 下部のステップ名凡例の表示。未指定時は !compact に従う */
   showLabels?: boolean;
 }
@@ -102,8 +107,11 @@ export function GrowthTree({
   className,
   compact = false,
   interactive = true,
+  showDetailsOnHover,
   showLabels,
 }: GrowthTreeProps) {
+  // ホバーでの内容表示は interactive(クリック編集)と分離。未指定なら interactive に従う。
+  const hoverEnabled = showDetailsOnHover ?? interactive;
   const allDone = completedSteps >= 7;
   const labelsVisible = showLabels ?? !compact;
   const [hoveredStep, setHoveredStep] = useState<number | null>(null);
@@ -678,13 +686,18 @@ export function GrowthTree({
                 )}
                 style={{
                   transformOrigin: `${pos.x}px ${pos.y}px`,
-                  cursor: interactive && isDone ? "pointer" : "default",
+                  cursor:
+                    interactive && isDone
+                      ? "pointer"
+                      : hoverEnabled && isDone
+                        ? "help"
+                        : "default",
                   opacity: isDone ? 1 : 0.2,
                 }}
-                onMouseEnter={interactive ? () => isDone && handleFruitHover(stepNum) : undefined}
-                onMouseLeave={interactive ? () => isDone && handleFruitLeave(stepNum) : undefined}
-                onFocus={interactive ? () => isDone && handleFruitHover(stepNum) : undefined}
-                onBlur={interactive ? () => isDone && handleFruitLeave(stepNum) : undefined}
+                onMouseEnter={hoverEnabled ? () => isDone && handleFruitHover(stepNum) : undefined}
+                onMouseLeave={hoverEnabled ? () => isDone && handleFruitLeave(stepNum) : undefined}
+                onFocus={hoverEnabled ? () => isDone && handleFruitHover(stepNum) : undefined}
+                onBlur={hoverEnabled ? () => isDone && handleFruitLeave(stepNum) : undefined}
                 onClick={interactive ? () => isDone && onFruitClick?.(stepNum) : undefined}
                 onKeyDown={
                   interactive
@@ -696,7 +709,7 @@ export function GrowthTree({
                       }
                     : undefined
                 }
-                tabIndex={interactive && isDone ? 0 : -1}
+                tabIndex={(interactive || hoverEnabled) && isDone ? 0 : -1}
                 role={interactive && isDone ? "button" : undefined}
                 aria-label={
                   interactive && isDone ? `${SELF_ANALYSIS_STEPS[i].title}を編集` : undefined
@@ -796,7 +809,7 @@ export function GrowthTree({
 
         {/* ホバー時のツールチップは Portal で body 直下に固定配置 (祖先 overflow で
             クリップされず確実に枠外へ出すため)。ツールチップ自体にも hover 維持ロジック付き */}
-        {interactive &&
+        {hoverEnabled &&
           hoveredStep != null &&
           hoveredMeta &&
           hoveredPosInfo &&
@@ -818,16 +831,18 @@ export function GrowthTree({
                   }}
                 />
                 <p className="text-xs font-semibold text-foreground">{hoveredMeta.title}</p>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onFruitClick?.(hoveredStep);
-                  }}
-                  className="ml-auto rounded bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-                >
-                  編集
-                </button>
+                {interactive && onFruitClick && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onFruitClick?.(hoveredStep);
+                    }}
+                    className="ml-auto rounded bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+                  >
+                    編集
+                  </button>
+                )}
               </div>
               {hoveredData.length > 0 ? (
                 <ul className="space-y-1">
