@@ -105,6 +105,15 @@ export default function SelfAnalysisPage() {
         return;
       }
       setSaveFailed(false);
+      // 新規にステップが進んだ時だけ活動ログを記録（編集/再試行では二重記録しない）。
+      // 管理者の「活動状況」ヒートマップに自己分析を出すための fire-and-forget。
+      if (newCompleted > completedSteps) {
+        void authFetch("/api/student/activity-log", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type: "selfAnalysis", metadata: { step: fromStep } }),
+        }).catch(() => {});
+      }
       setCompletedSteps(newCompleted);
       if (isLast) {
         setAllComplete(true);

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const ALLOWED_TYPES = ["topicInput", "interviewDrill"] as const;
+const ALLOWED_TYPES = ["topicInput", "interviewDrill", "selfAnalysis"] as const;
 type ActivityLogType = typeof ALLOWED_TYPES[number];
 
 export async function POST(request: NextRequest) {

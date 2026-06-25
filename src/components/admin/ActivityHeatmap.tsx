@@ -30,6 +30,7 @@ function ActivityTooltip({ active, payload, label }: any) {
     drill: "要約ドリル",
     topicInput: "ネタインプット",
     interviewDrill: "面接ドリル",
+    selfAnalysis: "自己分析",
   };
 
   const total = payload.reduce((sum: number, entry: any) => sum + (entry.value || 0), 0);
@@ -66,7 +67,7 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
   // 全期間で活動があるかチェック
   const hasAnyActivity = data.some(day =>
     day.essay > 0 || day.interview > 0 || day.skillCheck > 0 ||
-    day.drill > 0 || day.topicInput > 0 || day.interviewDrill > 0
+    day.drill > 0 || day.topicInput > 0 || day.interviewDrill > 0 || day.selfAnalysis > 0
   );
 
   // 合計回数 (30日間)
@@ -78,13 +79,14 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
       drill: acc.drill + d.drill,
       topicInput: acc.topicInput + d.topicInput,
       interviewDrill: acc.interviewDrill + d.interviewDrill,
+      selfAnalysis: acc.selfAnalysis + d.selfAnalysis,
     }),
-    { essay: 0, interview: 0, skillCheck: 0, drill: 0, topicInput: 0, interviewDrill: 0 },
+    { essay: 0, interview: 0, skillCheck: 0, drill: 0, topicInput: 0, interviewDrill: 0, selfAnalysis: 0 },
   );
   // 直近7日にアクティブだった日の数
   const activeDaysRecent = data.slice(-7).filter(d =>
     d.essay > 0 || d.interview > 0 || d.skillCheck > 0 ||
-    d.drill > 0 || d.topicInput > 0 || d.interviewDrill > 0
+    d.drill > 0 || d.topicInput > 0 || d.interviewDrill > 0 || d.selfAnalysis > 0
   ).length;
 
   const summaryItems = [
@@ -94,6 +96,7 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
     { label: "要約ドリル", value: totals.drill, color: "#f59e0b" },
     { label: "ネタインプット", value: totals.topicInput, color: "#0ea5e9" },
     { label: "面接ドリル", value: totals.interviewDrill, color: "#f43f5e" },
+    { label: "自己分析", value: totals.selfAnalysis, color: "#14b8a6" },
   ];
 
   return (
@@ -111,7 +114,7 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
       </CardHeader>
       <CardContent>
         {/* 合計サマリーストリップ */}
-        <div className="grid grid-cols-3 md:grid-cols-6 gap-2 mb-4">
+        <div className="grid grid-cols-4 md:grid-cols-7 gap-2 mb-4">
           {summaryItems.map((item) => (
             <div key={item.label} className="rounded-lg border border-border/40 bg-slate-50 p-2 text-center">
               <div className="flex items-center justify-center gap-1 text-[10px] text-muted-foreground mb-0.5">
@@ -192,6 +195,13 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
                   stackId="activity"
                   name="面接ドリル"
                   fill="#f43f5e"
+                  radius={[0, 0, 0, 0]}
+                />
+                <Bar
+                  dataKey="selfAnalysis"
+                  stackId="activity"
+                  name="自己分析"
+                  fill="#14b8a6"
                   radius={[2, 2, 0, 0]}
                 />
               </BarChart>

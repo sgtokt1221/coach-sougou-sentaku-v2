@@ -65,10 +65,11 @@ export interface ActivityHeatmapData {
   drill: number;          // 要約ドリル
   topicInput: number;     // ネタインプット
   interviewDrill: number; // 面接ドリル
+  selfAnalysis: number;   // 自己分析（ステップ完了）
 }
 
 export interface ActivityLog {
-  type: "topicInput" | "interviewDrill";
+  type: "topicInput" | "interviewDrill" | "selfAnalysis";
   createdAt: string;
 }
 
@@ -85,6 +86,7 @@ export function buildActivityHeatmapData(sources: ActivityDataSources): Activity
   const last30Days = buildLast30Days();
   const topicInputLogs = (sources.activityLogs ?? []).filter(l => l.type === "topicInput");
   const interviewDrillLogs = (sources.activityLogs ?? []).filter(l => l.type === "interviewDrill");
+  const selfAnalysisLogs = (sources.activityLogs ?? []).filter(l => l.type === "selfAnalysis");
   // 面接は「提出 = 完了したセッション」のみカウント。startedAt と createdAt のダブルカウントを廃止。
   const completedInterviews = (sources.interviews ?? []).filter(i => i.status === "completed");
 
@@ -98,5 +100,6 @@ export function buildActivityHeatmapData(sources: ActivityDataSources): Activity
            countByDay(sources.summaryDrills ?? [], 'createdAt', day),
     topicInput: countByDay(topicInputLogs, 'createdAt', day),
     interviewDrill: countByDay(interviewDrillLogs, 'createdAt', day),
+    selfAnalysis: countByDay(selfAnalysisLogs, 'createdAt', day),
   }));
 }
