@@ -394,7 +394,8 @@ export function ChatThread({
               onChange={(e) => setText(e.target.value)}
               placeholder="メッセージを入力..."
               rows={1}
-              className="max-h-32 min-h-[40px] flex-1 resize-none text-sm"
+              // text-base(16px): iOS でフォーカス時の自動ズーム(16px未満で発生)を防ぐ
+              className="max-h-32 min-h-[40px] flex-1 resize-none text-base"
               onKeyDown={(e) => {
                 if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
                   e.preventDefault();

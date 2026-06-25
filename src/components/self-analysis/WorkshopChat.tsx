@@ -305,7 +305,8 @@ export function WorkshopChat({
                 <input
                   ref={inputRef}
                   type="text"
-                  className="flex-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  // text-base(16px): iOS でフォーカス時に自動ズーム→表示ずれが起きるのを防ぐ(16px未満で発生)
+                  className="flex-1 rounded-lg border bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-ring"
                   placeholder="回答を入力 (Cmd/Ctrl+Enter で送信)"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
