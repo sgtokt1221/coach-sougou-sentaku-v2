@@ -31,7 +31,7 @@ export default function StudentFeedbackPage() {
 
   return (
     <PageTransition>
-      <div className="flex h-[calc(100dvh-7rem)] flex-col lg:h-[calc(100dvh-9rem)]">
+      <div className="flex h-[calc(var(--vvh,100dvh)-7rem)] flex-col lg:h-[calc(100dvh-9rem)]">
         <div className="flex items-center gap-2 pb-2">
           <MessageSquare className="size-5 text-muted-foreground" />
           <div>

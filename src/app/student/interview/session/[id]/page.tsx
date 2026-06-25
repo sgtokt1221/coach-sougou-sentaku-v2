@@ -695,7 +695,7 @@ export default function InterviewSessionPage() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100dvh-3.5rem-76px)] lg:h-[calc(100dvh-3.5rem)] w-full">
+    <div className="flex flex-col h-[calc(var(--vvh,100dvh)-3.5rem-76px)] lg:h-[calc(100dvh-3.5rem)] w-full">
       {/* 採点中ローディング */}
       <FluidLoader
         visible={isEnding}
