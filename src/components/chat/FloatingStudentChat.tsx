@@ -118,8 +118,8 @@ export function FloatingStudentChat({
             transition={{ duration: 0.2, ease: "easeOut" }}
             onClick={() => setOpen(true)}
             aria-label={`${studentName} さんとのメッセージを開く`}
-            // モバイルは下部ナビ(z-50)に隠れるため右上に表示。PC は従来どおり右下。
-            className="fixed right-3 top-2 z-50 flex size-11 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-105 lg:top-auto lg:bottom-6 lg:right-6 lg:size-14"
+            // 右下のまま最前面(z-[60] > 下部ナビ z-50)に。モバイルは下部ナビに被らないよう少し持ち上げる。
+            className="fixed right-4 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-[60] flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-105 lg:bottom-6 lg:right-6"
           >
             <MessageSquare className="size-6" />
             {unread > 0 && (
@@ -140,8 +140,8 @@ export function FloatingStudentChat({
             exit={shouldReduceMotion ? undefined : { scale: 0.92, opacity: 0, y: 16 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
             style={{ transformOrigin: "bottom right" }}
-            // モバイルは下部ナビ(z-50)を避けて上に持ち上げ、z-50 で前面に。PC は従来どおり右下。
-            className="fixed z-50 flex flex-col overflow-hidden rounded-2xl border bg-card shadow-2xl right-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] h-[min(70vh,760px)] w-[calc(100vw-1.5rem)] lg:right-6 lg:bottom-6 lg:h-[min(78vh,760px)] lg:w-[min(640px,calc(100vw-2rem))]"
+            // 最前面(z-[60])。モバイルは下部ナビを避けて持ち上げ、入力欄が隠れないように。PC は右下。
+            className="fixed z-[60] flex flex-col overflow-hidden rounded-2xl border bg-card shadow-2xl right-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] h-[min(70vh,760px)] w-[calc(100vw-1.5rem)] lg:right-6 lg:bottom-6 lg:h-[min(78vh,760px)] lg:w-[min(640px,calc(100vw-2rem))]"
           >
             {/* ヘッダ */}
             <div className="flex items-center gap-2.5 border-b px-4 py-3">

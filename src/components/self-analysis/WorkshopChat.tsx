@@ -267,7 +267,9 @@ export function WorkshopChat({
         <CardContent className="p-0">
           <div
             ref={scrollRef}
-            className="h-[400px] lg:h-[450px] overflow-y-auto px-4 py-4 space-y-3"
+            // モバイルは画面に対し可変高にして入力欄が見切れないように(固定400pxだと
+            // キーボード表示時に送信ボタンが画面外へ出る)。PCは従来の固定高。
+            className="h-[min(48vh,400px)] lg:h-[450px] overflow-y-auto px-4 py-4 space-y-3"
           >
             {messages.map((msg, i) => (
               <div
