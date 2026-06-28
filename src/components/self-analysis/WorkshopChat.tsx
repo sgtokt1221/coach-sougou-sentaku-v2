@@ -3,11 +3,9 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Send, CheckCircle, Loader2, Mic, MicOff } from "lucide-react";
+import { Send, CheckCircle, Loader2 } from "lucide-react";
 import { SELF_ANALYSIS_STEPS } from "@/lib/types/self-analysis";
 import type { ChatMessage } from "@/lib/types/self-analysis";
-import { useVoiceChat } from "@/hooks/useVoiceChat";
-import { buildSelfAnalysisVoiceInstructions } from "@/lib/ai/prompts/voice-chat-realtime";
 
 interface WorkshopChatProps {
   step: number;
@@ -48,22 +46,10 @@ export function WorkshopChat({
   const [stepData, setStepData] = useState<Record<string, unknown> | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const voiceChat = useVoiceChat();
   // 完了後はドラフト保存を止める（完了→ページ再レンダーで再保存され復活するのを防ぐ）
   const doneRef = useRef(false);
 
   const stepInfo = SELF_ANALYSIS_STEPS.find((s) => s.step === step);
-
-  // このステップのコンポーネントが破棄される時(ステップ切替/離脱)に音声を止める。
-  // ※以前は [step, initialMessages] 依存で messages を reset していたが、initialMessages が
-  //   毎レンダー新しい [] になるため、ページ再レンダーのたびに会話が消える原因だった。
-  //   状態は key 再マウント＋上のドラフト初期化で扱うので、ここでは音声停止のみ。
-  useEffect(() => {
-    return () => {
-      voiceChat.stop();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // 途中入力(会話＋入力中テキスト)をドラフト保存
   useEffect(() => {
@@ -181,60 +167,8 @@ export function WorkshopChat({
   function handleCompleteStep() {
     if (stepData) {
       completeWith(stepData, messages);
-      return;
-    }
-    // 音声モードで会話を終わらせた後: messages を Claude API に送って stepData 抽出
-    if (voiceChat.isActive || messages.length >= 2) {
-      voiceChat.stop();
-      (async () => {
-        setIsLoading(true);
-        try {
-          const history = messages.map((m) => ({ role: m.role === "user" ? "user" : "assistant", content: m.content }));
-          // 強制的に完了を促すマーカーを末尾に付けて Claude に投げる
-          const res = await fetch("/api/self-analysis/workshop", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              step,
-              message: "(音声会話ここまで。これまでの内容から stepData を抽出してください。)",
-              history,
-              previousStepsData,
-              forceComplete: true,
-            }),
-          });
-          if (res.ok) {
-            const data = await res.json();
-            if (data.stepData) {
-              completeWith(data.stepData, messages);
-              return;
-            }
-          }
-        } finally {
-          setIsLoading(false);
-        }
-      })();
     }
   }
-
-  const toggleVoice = useCallback(async () => {
-    if (voiceChat.isActive) {
-      voiceChat.stop();
-      return;
-    }
-    const instructions = buildSelfAnalysisVoiceInstructions(step);
-    await voiceChat.start({
-      instructions,
-      voice: "alloy",
-      // 受験語彙ヒント (誤変換対策)
-      transcriptionHint: "総合型選抜、アドミッションポリシー、志望理由、探究学習、自己分析、価値観、強み、弱み、興味関心、将来ビジョン、社会貢献、高校生活、原体験、小論文、面接",
-      onUserTranscript: (text) => {
-        if (text.trim()) setMessages((prev) => [...prev, { role: "user", content: text }]);
-      },
-      onAssistantTranscript: (text) => {
-        if (text.trim()) setMessages((prev) => [...prev, { role: "assistant", content: text }]);
-      },
-    });
-  }, [voiceChat, step]);
 
   return (
     <div className="space-y-4">
@@ -243,24 +177,6 @@ export function WorkshopChat({
           Step {step}: {stepInfo?.title}
         </h2>
         <p className="text-sm text-muted-foreground">{stepInfo?.description}</p>
-        <div className="mt-3 flex items-center justify-center gap-2">
-          <Button
-            size="sm"
-            variant={voiceChat.isActive ? "default" : "outline"}
-            onClick={toggleVoice}
-            disabled={voiceChat.status === "requesting_token" || voiceChat.status === "connecting"}
-          >
-            {voiceChat.isActive ? <Mic className="size-4 mr-1" /> : <MicOff className="size-4 mr-1" />}
-            {voiceChat.status === "requesting_token" || voiceChat.status === "connecting"
-              ? "接続中..."
-              : voiceChat.isActive
-                ? "音声会話中 (タップで停止)"
-                : "音声で話す"}
-          </Button>
-          {voiceChat.error && (
-            <span className="text-xs text-rose-600">{voiceChat.error.slice(0, 80)}</span>
-          )}
-        </div>
       </div>
 
       <Card>
