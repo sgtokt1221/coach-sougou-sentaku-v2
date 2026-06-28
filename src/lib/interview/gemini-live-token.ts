@@ -56,12 +56,16 @@ export async function issueGeminiLiveToken(
   opts?: { strictTurnTaking?: boolean },
 ): Promise<{ value: string; expiresAt: number } | null> {
   const now = Date.now();
+  // ネイティブ音声セッションは寿命があり goAway→sessionResumption で再接続する。
+  // 再接続は同じ ephemeral token を再利用するため、uses は複数回（=初回＋多数の再接続）、
+  // newSessionExpireTime は面接が続く間ずっと再接続できるよう長め(=expireTime近く)にする。
+  // uses:1 / 2分 のままだと最初の goAway で再接続に失敗し「時間制限のように」会話が切れる。
   const expireTime = new Date(now + 30 * 60 * 1000).toISOString();
-  const newSessionExpireTime = new Date(now + 2 * 60 * 1000).toISOString();
+  const newSessionExpireTime = new Date(now + 25 * 60 * 1000).toISOString();
 
   const token = await ai.authTokens.create({
     config: {
-      uses: 1,
+      uses: 50,
       expireTime,
       newSessionExpireTime,
       liveConnectConstraints: {

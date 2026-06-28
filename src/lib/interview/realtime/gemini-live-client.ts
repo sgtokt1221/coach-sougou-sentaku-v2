@@ -585,7 +585,15 @@ export class GeminiLiveSession implements InterviewVoiceSession {
 
   /** 切断予告 / 接続寿命対策の自動再接続（会話文脈は resumption handle で維持） */
   private async reconnect(): Promise<void> {
-    if (this.isClosed || this.reconnecting || !this.resumptionHandle) return;
+    if (this.isClosed || this.reconnecting || !this.resumptionHandle) {
+      if (isVoiceDebug()) {
+        console.warn(
+          "[GeminiLive][diag] reconnect skipped",
+          JSON.stringify({ closed: this.isClosed, reconnecting: this.reconnecting, hasHandle: !!this.resumptionHandle }),
+        );
+      }
+      return;
+    }
     this.reconnecting = true;
     try {
       try {
@@ -594,7 +602,9 @@ export class GeminiLiveSession implements InterviewVoiceSession {
         /* noop */
       }
       await this.openSession();
+      if (isVoiceDebug()) console.info("[GeminiLive][diag] reconnect OK");
     } catch (err) {
+      if (isVoiceDebug()) console.warn("[GeminiLive][diag] reconnect FAILED", (err as Error)?.message);
       this.opts.onError?.(err instanceof Error ? err : new Error("gemini reconnect failed"));
     } finally {
       this.reconnecting = false;
