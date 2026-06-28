@@ -41,6 +41,11 @@ export interface GdOrchestratorOptions {
   /** ユーザーマイク (OpenAI=moderator / Gemini=耳セッション に割り当てる) */
   micStream: MediaStream;
   /**
+   * push-to-talk（手動ターン）。耳セッションの自動VADを無効化し、ユーザー発話の
+   * 開始/終了を userStartSpeaking()/userFinishSpeaking() で明示する。
+   */
+  manualTurn?: boolean;
+  /**
    * 接続後に各セッションに hidden 注入する背景情報メッセージ。
    * `buildRealtimeGdSpeakerContextMessage` の出力を渡す。
    * 渡されたら connect() 内で全セッションに addConversationItem("user", contextMessage)
@@ -194,6 +199,7 @@ export class GdOrchestrator {
         micStream: this.opts.micStream,
         withMic: true,
         muteOutput: true, // 耳の返答音声は鳴らさない
+        manualTurn: this.opts.manualTurn, // push-to-talk: 耳の自動VAD無効化
         // 耳セッションは生徒音声(wav)も拾うので上位へ通し、専用STTで差し替えてもらう
         onUserTranscript: (text, wav) => this.onUserTranscript(text, wav),
         onError: (err) => this.opts.onError?.(err),
@@ -236,6 +242,12 @@ export class GdOrchestrator {
   private onUserTranscript(text: string, audioWavBase64?: string): void {
     if (this.isClosed || !text.trim()) return;
 
+    // 自然 flush が来たので PTT の強制 flush フォールバックは不要
+    if (this.userFlushTimer) {
+      clearTimeout(this.userFlushTimer);
+      this.userFlushTimer = null;
+    }
+
     // ユーザー発話確定: AI streaming 状態をリセット (次の AI 応答は新バブル)
     this.streamingKey = null;
 
@@ -266,6 +278,8 @@ export class GdOrchestrator {
 
   /** advanceTurn の debounce 用タイマー (多重発火対策) */
   private advanceTurnTimer: ReturnType<typeof setTimeout> | null = null;
+  /** push-to-talk: 「送信」後、耳の自然 flush が来ないときの強制 flush タイマー */
+  private userFlushTimer: ReturnType<typeof setTimeout> | null = null;
 
   /**
    * 次の発話者を決定し、AI ターンなら triggerResponse、user ターンならマイクを ON にして待機。
@@ -302,6 +316,45 @@ export class GdOrchestrator {
     this.advanceTurn();
   }
 
+  /**
+   * push-to-talk: ユーザーが「話す」を押した。耳セッションの送信を開始する。
+   * （manualTurn のときのみ意味を持つ。自動VAD時は no-op 相当。）
+   */
+  userStartSpeaking(): void {
+    if (this.isClosed) return;
+    try {
+      this.earsSession?.startUserActivity?.();
+      this.earsSession?.resumeInput();
+    } catch {
+      /* noop */
+    }
+  }
+
+  /**
+   * push-to-talk: ユーザーが「送信」を押した。耳セッションの送信を止め、発話を確定する。
+   * 耳(muteOutput)はモデル出力 trigger の自然 flush が来ないことがあるため、
+   * ~1.2s 以内に onUserTranscript が走らなければ強制 flush して確実に次へ進める。
+   */
+  userFinishSpeaking(): void {
+    if (this.isClosed) return;
+    try {
+      this.earsSession?.endUserActivity?.();
+      this.earsSession?.pauseInput();
+    } catch {
+      /* noop */
+    }
+    if (this.userFlushTimer) clearTimeout(this.userFlushTimer);
+    this.userFlushTimer = setTimeout(() => {
+      this.userFlushTimer = null;
+      // 自然 flush(onUserTranscript) が来ていればバッファは空なので no-op。
+      try {
+        this.earsSession?.flushPendingUserTranscript?.();
+      } catch {
+        /* noop */
+      }
+    }, 1200);
+  }
+
   private executeAdvanceTurn(): void {
     if (this.isClosed) return;
     const nextSpeaker = pickNextSpeaker({
@@ -312,12 +365,15 @@ export class GdOrchestrator {
     this.opts.onTurnChange?.(nextSpeaker);
 
     if (nextSpeaker === "user") {
-      // user ターン: AI 側は何もせず、マイク入力を待つ
-      // Gemini は耳セッションのマイク送信を再開してユーザー発話を拾う
-      try {
-        this.earsSession?.resumeInput();
-      } catch {
-        /* noop */
+      // user ターン: AI 側は何もせず、マイク入力を待つ。
+      // push-to-talk では「話す」を押すまで耳のマイクは開けない（自動で進めない）。
+      // 自動VADモードのときだけ耳の送信を再開してユーザー発話を拾う。
+      if (!this.opts.manualTurn) {
+        try {
+          this.earsSession?.resumeInput();
+        } catch {
+          /* noop */
+        }
       }
       this.lastSpeaker = "user";
       this.currentResponseSpeaker = null;
@@ -443,6 +499,10 @@ export class GdOrchestrator {
     if (this.advanceTurnTimer) {
       clearTimeout(this.advanceTurnTimer);
       this.advanceTurnTimer = null;
+    }
+    if (this.userFlushTimer) {
+      clearTimeout(this.userFlushTimer);
+      this.userFlushTimer = null;
     }
     for (const sess of this.sessions.values()) {
       try {
