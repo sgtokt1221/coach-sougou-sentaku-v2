@@ -38,7 +38,9 @@ export async function POST(request: NextRequest) {
   try {
     const ai = getGeminiClient(apiKey);
     // voice は Gemini の prebuilt 名に固定（OpenAI の alloy 等は無関係）
-    const token = await issueGeminiLiveToken(ai, instructions, GEMINI_INDIVIDUAL_VOICE);
+    const token = await issueGeminiLiveToken(ai, instructions, GEMINI_INDIVIDUAL_VOICE, {
+      strictTurnTaking: true,
+    });
     if (!token) {
       return NextResponse.json(
         { provider: "gemini", error: "Gemini Live セッションの確立に失敗しました" },

@@ -13,7 +13,6 @@
  * - 応答の text を他 2 セッションに「他者の発言」として broadcast
  */
 
-import { RealtimeSession } from "./client";
 import type { InterviewVoiceSession } from "./voice-session";
 import { createVoiceSession, type VoiceProvider } from "./voice-session-factory";
 import { pickNextSpeaker, type ActiveSpeaker } from "./gd-director";
@@ -27,10 +26,7 @@ export interface GdOrchestratorTokens {
 }
 
 export interface GdOrchestratorOptions {
-  /**
-   * 音声プロバイダ。"openai" は従来どおり。"gemini" は実験的（ターン制御の
-   * 検証が必要なため、確定運用は OpenAI を推奨）。
-   */
+  /** 音声プロバイダ（Gemini Live に一本化）。 */
   provider: VoiceProvider;
   /** 話者分の ephemeral token */
   tokens: GdOrchestratorTokens[];
@@ -206,41 +202,8 @@ export class GdOrchestrator {
       this.earsSession = ears;
     }
 
-    // 以下の VAD/transcription 微調整は OpenAI Realtime 固有
-    // (updateSession 生イベント)。Gemini Live は同等設定を ephemeral token の
-    // liveConnectConstraints.config に封入済みのためスキップする。
-    if (this.opts.provider === "openai") {
-      // moderator は VAD で発話終了は検知するが、自動応答はさせない
-      // (orchestrator が director 経由で response.create を制御するため)
-      const moderator = this.sessions.get("moderator");
-      if (moderator) {
-        (moderator as RealtimeSession).updateSession({
-          audio: {
-            input: {
-              turn_detection: {
-                type: "server_vad",
-                threshold: 0.6,
-                prefix_padding_ms: 300,
-                silence_duration_ms: 1500,
-                create_response: false,
-              },
-              transcription: { model: "gpt-4o-mini-transcribe", language: "ja" },
-            },
-          },
-        });
-      }
-
-      // moderator 以外のセッションは input audio を一切受け取らないので VAD を無効化
-      for (const speaker of SPEAKERS_ORDER) {
-        if (speaker === "moderator") continue;
-        const sess = this.sessions.get(speaker);
-        if (sess) {
-          (sess as RealtimeSession).updateSession({
-            audio: { input: { turn_detection: null } },
-          });
-        }
-      }
-    }
+    // VAD/transcription 設定は Gemini ephemeral token の
+    // liveConnectConstraints.config に封入済みのため、ここでの個別調整は不要。
 
     // 背景情報メッセージを全セッションに hidden 注入
     // (instructions に含めると AI が末尾を発話に漏らすため、conversation 履歴側で渡す)
@@ -378,22 +341,11 @@ export class GdOrchestrator {
   private onResponseStart(speaker: ActiveSpeaker): void {
     if (this.isClosed) return;
     this.opts.onAiRespondingChange?.(true);
-    // moderator セッションだけがマイクを持つので、moderator の入力バッファをクリア
-    // (OpenAI Realtime 固有。Gemini は pauseInput でマイク送信を止める設計)
-    const moderator = this.sessions.get("moderator");
-    if (this.opts.provider === "openai") {
-      try {
-        (moderator as RealtimeSession).sendEvent({ type: "input_audio_buffer.clear" });
-      } catch {
-        /* noop */
-      }
-    } else {
-      // Gemini: 耳セッションのマイク送信を止める（AI 発話中の取り込み/誤応答を防ぐ）
-      try {
-        this.earsSession?.pauseInput();
-      } catch {
-        /* noop */
-      }
+    // Gemini: 耳セッションのマイク送信を止める（AI 発話中の取り込み/誤応答を防ぐ）
+    try {
+      this.earsSession?.pauseInput();
+    } catch {
+      /* noop */
     }
     const audioEl = this.audioElements.get(speaker);
     if (audioEl && audioEl.paused) {

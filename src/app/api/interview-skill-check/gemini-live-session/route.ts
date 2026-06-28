@@ -57,6 +57,7 @@ export async function POST(request: NextRequest) {
       ai,
       buildRealtimeSkillCheckInstructions(scTheme?.title),
       GEMINI_INDIVIDUAL_VOICE,
+      { strictTurnTaking: true },
     );
     if (!token) {
       return NextResponse.json(

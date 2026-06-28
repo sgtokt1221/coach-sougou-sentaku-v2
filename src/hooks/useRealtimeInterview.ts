@@ -86,11 +86,7 @@ export type RealtimeStatus =
 
 interface UseRealtimeInterviewOptions {
   mode: InterviewMode;
-  /**
-   * 音声プロバイダ。"openai"（既定）= OpenAI Realtime、"gemini" = Gemini Live。
-   * 集団討論(GD)は当面 OpenAI 固定（Phase C で Gemini 対応予定）のため、
-   * gemini 指定でも GD のときは openai にフォールバックする。
-   */
+  /** 音声プロバイダ（Gemini Live に一本化）。 */
   provider?: VoiceProvider;
   /** トークン発行エンドポイント。既定は模擬面接用。スキルチェック等で差し替える */
   tokenEndpoint?: string;
@@ -323,14 +319,10 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
     // 前回セッションの seen responseId をクリア (新セッションで再利用される ID は無いが念のため)
     seenResponseIdsRef.current.clear();
 
-    // プロバイダ解決（GD も含め要求 provider を使う。Gemini GD は耳セッション方式）
-    const requestedProvider: VoiceProvider = optsRef.current.provider ?? "openai";
-    const effectiveProvider: VoiceProvider = requestedProvider;
+    // 音声面接は Gemini Live に一本化（GD は耳セッション方式）
+    const effectiveProvider: VoiceProvider = optsRef.current.provider ?? "gemini";
     const tokenEndpoint =
-      optsRef.current.tokenEndpoint ??
-      (effectiveProvider === "gemini"
-        ? "/api/interview/gemini-live-session"
-        : "/api/interview/realtime-session");
+      optsRef.current.tokenEndpoint ?? "/api/interview/gemini-live-session";
 
     // 1. ephemeral token を取得
     let tokenData: {
@@ -504,6 +496,13 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
           // semantic_vad をすり抜けた咳/息が文字化けして確定したケースを破棄（保険）
           if (isLikelyNoise(text)) {
             console.warn("[useRealtimeInterview] dropping noise-like transcript:", JSON.stringify(text).slice(0, 40));
+            return;
+          }
+          // AI 応答中に確定する文字起こしは、AI 音声のエコー/環境音由来の「幻の発話」が大半。
+          // マイクは AI 発話中ミュート＆サーバーは NO_INTERRUPTION のため、ここで握りつぶして
+          // 相槌の二重発火・幻バブル（無関係な話題への応答）を防ぐ。
+          if (isAiRespondingRef.current) {
+            console.warn("[useRealtimeInterview] dropping transcript during AI turn:", JSON.stringify(text).slice(0, 40));
             return;
           }
           // ユーザー発話が確定したら AI streaming 状態は強制リセット

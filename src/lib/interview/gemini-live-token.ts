@@ -4,7 +4,32 @@
  * session config の定義を一元化する。
  */
 
-import { GoogleGenAI, Modality } from "@google/genai";
+import {
+  ActivityHandling,
+  EndSensitivity,
+  GoogleGenAI,
+  Modality,
+  StartSensitivity,
+} from "@google/genai";
+
+/**
+ * 1対1面接（個人/プレゼン/口頭試問・スキルチェック）の音声ターン制御設定。
+ * 未指定だと既定VADが過敏で、考え中の「間」を発話終了と誤検知して相槌が割り込む／
+ * 物音でAIが中断される（barge-in）。集団討論(GD)はクライアント側で進行制御するため適用しない。
+ * - silenceDurationMs: 終話確定までに必要な無音長。長めにして「間」を許容する。
+ * - start/endSensitivity: LOW（雑音を発話と誤検知しにくく、終話を急がない）。
+ * - activityHandling NO_INTERRUPTION: AI発話中はユーザーの物音で中断されない
+ *   （マイクはAI発話中ミュートしているため1往復ずつの交代になる）。
+ */
+const INTERVIEW_REALTIME_INPUT_CONFIG = {
+  automaticActivityDetection: {
+    startOfSpeechSensitivity: StartSensitivity.START_SENSITIVITY_LOW,
+    endOfSpeechSensitivity: EndSensitivity.END_SENSITIVITY_LOW,
+    prefixPaddingMs: 300,
+    silenceDurationMs: 1200,
+  },
+  activityHandling: ActivityHandling.NO_INTERRUPTION,
+};
 
 /** ネイティブ音声モデル（env で差し替え可）。プレビュー系のため ID 変動前提。 */
 export const GEMINI_LIVE_MODEL =
@@ -27,6 +52,8 @@ export async function issueGeminiLiveToken(
   ai: GoogleGenAI,
   instructions: string,
   voice: string,
+  /** 1対1面接の厳しめターン制御(VAD/割り込み)を適用する。GDでは渡さない。 */
+  opts?: { strictTurnTaking?: boolean },
 ): Promise<{ value: string; expiresAt: number } | null> {
   const now = Date.now();
   const expireTime = new Date(now + 30 * 60 * 1000).toISOString();
@@ -50,6 +77,9 @@ export async function issueGeminiLiveToken(
           outputAudioTranscription: {},
           sessionResumption: {},
           contextWindowCompression: { slidingWindow: {} },
+          ...(opts?.strictTurnTaking
+            ? { realtimeInputConfig: INTERVIEW_REALTIME_INPUT_CONFIG }
+            : {}),
         },
       },
       httpOptions: { apiVersion: "v1alpha" },

@@ -70,15 +70,13 @@ export function useVoiceChat() {
     setError(null);
     setStatus("requesting_token");
 
-    // プロバイダ解決（openai / gemini）
+    // 音声チャットは Gemini Live に一本化
     const provider = resolveVoiceProvider();
 
     // 1. ephemeral token 取得
     let tokenData: { model?: string; token?: string; error?: string };
     try {
-      const endpoint =
-        provider === "gemini" ? "/api/realtime/gemini-session" : "/api/realtime/session";
-      const res = await authFetch(endpoint, {
+      const res = await authFetch("/api/realtime/gemini-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -107,8 +105,8 @@ export function useVoiceChat() {
           noiseSuppression: true,
           autoGainControl: true,
           channelCount: 1,
-          // OpenAI 24kHz / Gemini 16kHz
-          sampleRate: provider === "gemini" ? 16000 : 24000,
+          // Gemini Live 16kHz
+          sampleRate: 16000,
         },
       });
       micStreamRef.current = micStream;

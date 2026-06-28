@@ -42,7 +42,7 @@ function buildVoiceSummary(a: VoiceAnalysis): string {
 export function RealtimeSkillCheck() {
   const router = useRouter();
   const { userProfile } = useAuth();
-  // プロバイダ（openai / gemini）に応じてトークンエンドポイントを切替
+  // 音声スキルチェックは Gemini Live に一本化
   const providerRef = useRef(resolveVoiceProvider());
   const provider = providerRef.current;
 
@@ -76,10 +76,7 @@ export function RealtimeSkillCheck() {
   const realtime = useRealtimeInterview({
     mode: "individual",
     provider,
-    tokenEndpoint:
-      provider === "gemini"
-        ? "/api/interview-skill-check/gemini-live-session"
-        : "/api/interview-skill-check/realtime-session",
+    tokenEndpoint: "/api/interview-skill-check/gemini-live-session",
     universityName: "-",
     facultyName: "-",
     admissionPolicy: "-",
