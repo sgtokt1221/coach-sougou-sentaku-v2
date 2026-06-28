@@ -19,11 +19,37 @@
  * （API キー本体はサーバーに留め、ブラウザには出さない）。
  */
 
-import { GoogleGenAI, Modality } from "@google/genai";
+import {
+  ActivityHandling,
+  EndSensitivity,
+  GoogleGenAI,
+  Modality,
+  StartSensitivity,
+} from "@google/genai";
 import type { LiveServerMessage, Session, UsageMetadata } from "@google/genai";
 import type { InterviewVoiceSession, VoiceSessionCallbacks } from "./voice-session";
 import { normalizeTranscript } from "@/lib/interview/transcript";
 import { encodeWav16 } from "@/lib/interview/wav";
+
+/**
+ * 1対1面接の音声ターン制御。サーバ自動VADの「割り込み(barge-in)」を止め、
+ * AI発話が文の途中で切れないようにする。ephemeralトークン側だけでは適用が
+ * 不確実なため、クライアントの live.connect config に直接渡して確実に効かせる。
+ */
+const STRICT_REALTIME_INPUT_CONFIG = {
+  automaticActivityDetection: {
+    startOfSpeechSensitivity: StartSensitivity.START_SENSITIVITY_LOW,
+    endOfSpeechSensitivity: EndSensitivity.END_SENSITIVITY_LOW,
+    prefixPaddingMs: 300,
+    silenceDurationMs: 1200,
+  },
+  activityHandling: ActivityHandling.NO_INTERRUPTION,
+};
+
+/** `?debugVoice=1` のとき音声セッションの診断ログを出す（原因切り分け用）。 */
+const DEBUG_VOICE =
+  typeof window !== "undefined" &&
+  new URLSearchParams(window.location.search).get("debugVoice") === "1";
 
 /**
  * usageMetadata から概算コスト(USD)を出す（簡易・ログ用）。
@@ -79,6 +105,11 @@ export interface GeminiLiveSessionOptions extends VoiceSessionCallbacks {
    * 既定(false)は初回のみ（個別面接：以降は自動VADに任せる）。
    */
   repeatableTrigger?: boolean;
+  /**
+   * 1対1面接の厳しめターン制御(VAD/NO_INTERRUPTION)を connect config に適用する。
+   * AI発話を割り込みで途切れさせないため。GD では渡さない（進行はオーケストレータ制御）。
+   */
+  strictTurnTaking?: boolean;
 }
 
 const INPUT_SAMPLE_RATE = 16000; // Gemini Live 入力は 16kHz mono PCM16
@@ -233,8 +264,22 @@ export class GeminiLiveSession implements InterviewVoiceSession {
         ...(this.resumptionHandle
           ? { sessionResumption: { handle: this.resumptionHandle } }
           : {}),
+        // 1対1面接: 割り込み(barge-in)で面接官の発話が途切れないよう、
+        // VAD/NO_INTERRUPTION をクライアント側 config に直接適用（確実に効かせる）。
+        ...(this.opts.strictTurnTaking
+          ? { realtimeInputConfig: STRICT_REALTIME_INPUT_CONFIG }
+          : {}),
       },
     });
+    if (DEBUG_VOICE) {
+      console.info(
+        "[GeminiLive][diag] connect requested",
+        JSON.stringify({
+          strictTurnTaking: !!this.opts.strictTurnTaking,
+          reconnect: !!this.resumptionHandle,
+        }),
+      );
+    }
   }
 
   private handleMessage(msg: LiveServerMessage): void {
@@ -244,8 +289,18 @@ export class GeminiLiveSession implements InterviewVoiceSession {
     // コスト計測用に最新の usageMetadata を保持
     if (msg.usageMetadata) this.lastUsage = msg.usageMetadata;
 
+    if (DEBUG_VOICE && msg.setupComplete) {
+      console.info("[GeminiLive][diag] setupComplete (session established)");
+    }
+
     // 切断予告 → resumption handle で自動再接続
     if (msg.goAway) {
+      if (DEBUG_VOICE) {
+        console.info(
+          "[GeminiLive][diag] goAway → reconnect",
+          JSON.stringify({ aiResponding: this.currentResponseId !== null }),
+        );
+      }
       void this.reconnect();
       return;
     }
@@ -290,11 +345,27 @@ export class GeminiLiveSession implements InterviewVoiceSession {
 
     // 割り込み: 再生中の出力を破棄
     if (sc.interrupted) {
+      // 決定的な診断: AI発話中(currentResponseId!=null)に interrupted が来る＝バージインで途切れている。
+      if (DEBUG_VOICE) {
+        console.warn(
+          "[GeminiLive][diag] INTERRUPTED",
+          JSON.stringify({
+            aiResponding: this.currentResponseId !== null,
+            tail: normalizeTranscript(this.aiTranscriptBuf).slice(-40),
+          }),
+        );
+      }
       this.clearOutputQueue();
     }
 
     // ターン完了 → AI 発話確定 + onResponseEnd（実際の鳴り止みは出力監視で通知）
     if (sc.turnComplete) {
+      if (DEBUG_VOICE) {
+        console.info(
+          "[GeminiLive][diag] turnComplete",
+          JSON.stringify({ tail: normalizeTranscript(this.aiTranscriptBuf).slice(-40) }),
+        );
+      }
       if (this.currentResponseId) {
         this.opts.onAssistantTranscript?.(normalizeTranscript(this.aiTranscriptBuf), this.currentResponseId);
       }

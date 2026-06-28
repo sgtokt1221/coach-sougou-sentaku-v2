@@ -24,6 +24,8 @@ export interface CreateVoiceSessionParams extends VoiceSessionCallbacks {
   muteOutput?: boolean;
   /** triggerResponse を毎回発火（GDの話者） */
   repeatableTrigger?: boolean;
+  /** 1対1面接の厳しめターン制御(VAD/NO_INTERRUPTION)を適用。GDでは渡さない。 */
+  strictTurnTaking?: boolean;
 }
 
 export function createVoiceSession(params: CreateVoiceSessionParams): InterviewVoiceSession {

@@ -487,6 +487,9 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
         audioOutputElement: audioElementRef.current,
         micStream,
         withMic: true,
+        // 個人系モード(個人/プレゼン/口頭試問)の単一セッション。GDは上で return 済み。
+        // 割り込みで面接官が途切れないよう厳しめターン制御を有効化。
+        strictTurnTaking: true,
         onUserTranscript: (text, audioWavBase64) => {
           // エコーが whisper に拾われ prompt がリークしたケースを破棄
           if (isPromptEcho(text, transcriptionPrompt)) {
