@@ -26,8 +26,6 @@ export interface CreateVoiceSessionParams extends VoiceSessionCallbacks {
   repeatableTrigger?: boolean;
   /** 1対1面接の厳しめターン制御(VAD/NO_INTERRUPTION)を適用。GDでは渡さない。 */
   strictTurnTaking?: boolean;
-  /** push-to-talk（手動ターン・自動VAD無効）。strictTurnTaking より優先。 */
-  manualTurn?: boolean;
 }
 
 export function createVoiceSession(params: CreateVoiceSessionParams): InterviewVoiceSession {

@@ -12,7 +12,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Send, StopCircle, ChevronDown, ChevronUp, Video, VideoOff, Pencil, Check, X, BookOpenCheck, TrendingUp, TrendingDown, ArrowRight, Mic } from "lucide-react";
+import { Send, StopCircle, ChevronDown, ChevronUp, Video, VideoOff, Pencil, Check, X, BookOpenCheck, TrendingUp, TrendingDown, ArrowRight } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import { useAuth } from "@/contexts/AuthContext";
 import type { StudentProfile } from "@/lib/types/user";
@@ -168,10 +168,9 @@ export default function InterviewSessionPage() {
 
   const realtime = useRealtimeInterview({
     mode: sessionInfo?.mode ?? "individual",
-    // 音声プロバイダ: Gemini Live に一本化。
+    // 音声プロバイダ: /new の選択 → なければ localStorage 上書き/env で解決（既定 openai）。
+    // GD は当面 openai 固定（hook 側で吸収）。
     provider: sessionInfo?.voiceProvider ?? resolveVoiceProvider(),
-    // 音声面接は push-to-talk（タップで開始→送信で確定）。個人・GD 両方に適用。
-    manualTurn: true,
     universityId: sessionInfo?.universityId,
     facultyId: sessionInfo?.facultyId,
     universityName: sessionInfo?.universityContext.universityName ?? "",
@@ -847,7 +846,7 @@ export default function InterviewSessionPage() {
                 }`}
               >
                 {realtime.isUserTurn
-                  ? "あなたの番です — 下の「話す」を押して回答"
+                  ? "あなたの番です — マイクが ON です"
                   : `${
                       realtime.currentSpeaker === "moderator"
                         ? "司会"
@@ -868,65 +867,44 @@ export default function InterviewSessionPage() {
           </div>
         )}
 
-        {/* push-to-talk コントロール (個人/プレゼン/口頭試問 ＋ GD 共通)。
-            自分のターンで「話す」→録音中は「送信」。AI/他話者の発話中は待機表示。 */}
-        {isVoiceMode && realtime.status === "connected" && (
-          <div
-            key={realtime.isUserTurn ? "your-turn" : "ai-turn"}
-            className={`sticky top-0 z-30 mb-3 rounded-lg border-2 p-3 shadow-md transition-all duration-500 animate-in fade-in slide-in-from-top-1 ${
-              realtime.isUserTurn
-                ? "border-emerald-400 bg-emerald-50 dark:bg-emerald-950/40"
-                : "border-slate-300 bg-slate-50 dark:bg-slate-900/40"
-            }`}
-          >
-            {realtime.isUserTurn ? (
-              <div className="flex flex-col items-center gap-2">
-                {realtime.isRecording ? (
-                  <>
-                    <div className="flex items-center gap-2 text-sm font-bold text-rose-700 dark:text-rose-300">
-                      <span className="relative flex size-3">
-                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75" />
-                        <span className="relative inline-flex size-3 rounded-full bg-rose-500" />
-                      </span>
-                      録音中… 話し終えたら送信
-                    </div>
-                    <Button
-                      size="lg"
-                      onClick={realtime.finishSpeaking}
-                      className="gap-2 bg-emerald-600 hover:bg-emerald-700"
-                    >
-                      <Send className="size-5" />
-                      送信
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <p className="text-sm font-bold text-emerald-900 dark:text-emerald-200">
-                      あなたのターンです
-                    </p>
-                    <Button
-                      size="lg"
-                      onClick={realtime.startSpeaking}
-                      className="gap-2 bg-emerald-600 hover:bg-emerald-700"
-                    >
-                      <Mic className="size-5" />
-                      話す
-                    </Button>
-                  </>
-                )}
+        {/* ユーザーターンランプ (個人/プレゼン/口頭試問の音声面接): AI 発話中は入力不可、
+            喋り終わったら「あなたのターンです」がぬるっと出てマイク ON になる */}
+        {isVoiceMode &&
+          sessionInfo?.mode !== "group_discussion" &&
+          realtime.status === "connected" && (
+            <div
+              key={realtime.isUserTurn ? "your-turn" : "ai-turn"}
+              className={`sticky top-0 z-30 mb-3 rounded-lg border-2 p-3 shadow-md transition-all duration-500 animate-in fade-in slide-in-from-top-1 ${
+                realtime.isUserTurn
+                  ? "border-emerald-400 bg-emerald-50 dark:bg-emerald-950/40"
+                  : "border-slate-300 bg-slate-50 dark:bg-slate-900/40"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <span className="relative flex size-3.5">
+                  {realtime.isUserTurn && (
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                  )}
+                  <span
+                    className={`relative inline-flex size-3.5 rounded-full ${
+                      realtime.isUserTurn ? "bg-emerald-500" : "bg-slate-400"
+                    }`}
+                  />
+                </span>
+                <p
+                  className={`text-sm font-bold ${
+                    realtime.isUserTurn
+                      ? "text-emerald-900 dark:text-emerald-200"
+                      : "text-slate-600 dark:text-slate-300"
+                  }`}
+                >
+                  {realtime.isUserTurn
+                    ? "あなたのターンです — マイクが ON です"
+                    : "面接官が話しています — お待ちください"}
+                </p>
               </div>
-            ) : (
-              sessionInfo?.mode !== "group_discussion" && (
-                <div className="flex items-center gap-3">
-                  <span className="relative inline-flex size-3.5 rounded-full bg-slate-400" />
-                  <p className="text-sm font-bold text-slate-600 dark:text-slate-300">
-                    面接官が話しています — お待ちください
-                  </p>
-                </div>
-              )
-            )}
-          </div>
-        )}
+            </div>
+          )}
 
         {sessionInfo?.mode === "group_discussion" && realtime.isAwaitingNext && (
           <div className="mb-3 flex flex-col items-center gap-2 rounded-lg border border-primary/40 bg-primary/5 p-3">
@@ -1104,6 +1082,23 @@ export default function InterviewSessionPage() {
               <span className="size-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:-0.15s]" />
               <span className="size-1.5 rounded-full bg-muted-foreground animate-bounce" />
             </div>
+          </div>
+        )}
+
+        {/* 保険ボタン: 自動VADが終話を取りこぼして会話が止まったとき、押すと前へ進む。
+            会話末尾・右寄せ（自分のコメント位置）に控えめに表示。普段はハンズフリー。 */}
+        {isVoiceMode && realtime.status === "connected" && realtime.isUserTurn && (
+          <div className="flex flex-col items-end gap-0.5 animate-in fade-in slide-in-from-bottom-1">
+            <span className="text-[11px] text-muted-foreground pr-1">進まないときに</span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={realtime.forceEndTurn}
+              className="gap-1.5 rounded-2xl rounded-tr-sm border-emerald-300 text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300"
+            >
+              <Send className="size-4" />
+              話し終わった
+            </Button>
           </div>
         )}
       </div>

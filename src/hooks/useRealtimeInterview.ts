@@ -98,11 +98,6 @@ interface UseRealtimeInterviewOptions {
   weaknessList?: string;
   presentationContent?: string;
   /**
-   * push-to-talk（手動ターン）。自動VADを使わず、ユーザーが startSpeaking()/
-   * finishSpeaking() でターンを確定する。個人面接・GD 両方に適用（音声面接の既定）。
-   */
-  manualTurn?: boolean;
-  /**
    * 毎メッセージ追加時に呼ばれる (会話履歴を上位コンポーネントにシンクしたい場合)。
    * student 発話のときは第2引数にその発話のマイク音声 WAV(base64) が入ることがある
    * (Gemini 経路)。上位は専用STTに通して高精度テキストへ差し替える。
@@ -163,11 +158,6 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
    * 初期 true: AI が先に挨拶/質問を話すため。
    */
   const [aiSpeaking, setAiSpeaking] = useState(true);
-  /**
-   * push-to-talk: ユーザーが現在録音中（「話す」を押して「送信」前）か。
-   * true の間は UI に「送信」ボタンを出す。false かつ isUserTurn なら「話す」ボタン。
-   */
-  const [isRecording, setIsRecording] = useState(false);
 
   const sessionRef = useRef<InterviewVoiceSession | null>(null);
   const orchestratorRef = useRef<GdOrchestrator | null>(null);
@@ -224,12 +214,6 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
       clearTimeout(micResumeTimerRef.current);
       micResumeTimerRef.current = null;
     }
-    // push-to-talk: AI が話し終えたら「ユーザーのターン」にするだけ。マイクは
-    // ユーザーが「話す」を押すまで OFF のまま（自動で送信しない＝勝手に進まない）。
-    if (optsRef.current.manualTurn) {
-      setAiSpeaking(false);
-      return;
-    }
     setMicEnabled(true);
     try {
       sessionRef.current?.resumeInput();
@@ -237,43 +221,6 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
       /* noop */
     }
     setAiSpeaking(false);
-  }, [setMicEnabled]);
-
-  /**
-   * push-to-talk: ユーザーが「話す」を押した。activityStart→マイクON。
-   * GD は耳セッション(orchestrator)経由、個人は単一セッション。
-   */
-  const startSpeaking = useCallback(() => {
-    setIsRecording(true);
-    if (optsRef.current.mode === "group_discussion") {
-      orchestratorRef.current?.userStartSpeaking();
-    } else {
-      try {
-        sessionRef.current?.startUserActivity?.();
-        sessionRef.current?.resumeInput();
-      } catch {
-        /* noop */
-      }
-    }
-    setMicEnabled(true);
-  }, [setMicEnabled]);
-
-  /**
-   * push-to-talk: ユーザーが「送信」を押した。activityEnd→マイクOFF→AI/次話者へ。
-   */
-  const finishSpeaking = useCallback(() => {
-    setIsRecording(false);
-    setMicEnabled(false);
-    if (optsRef.current.mode === "group_discussion") {
-      orchestratorRef.current?.userFinishSpeaking();
-    } else {
-      try {
-        sessionRef.current?.endUserActivity?.();
-        sessionRef.current?.pauseInput();
-      } catch {
-        /* noop */
-      }
-    }
   }, [setMicEnabled]);
 
   const appendMessage = useCallback((m: InterviewMessage, audioWavBase64?: string) => {
@@ -323,6 +270,22 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
    */
   const advanceGdTurn = useCallback(() => {
     orchestratorRef.current?.advanceTurnManually();
+  }, []);
+
+  /**
+   * 「話し終わった」ボタン: 自動VADが終話を取りこぼして会話が止まったときの保険。
+   * 個人系は単一セッション、GD は耳セッション経由でターンを強制確定する。
+   */
+  const forceEndTurn = useCallback(() => {
+    if (optsRef.current.mode === "group_discussion") {
+      orchestratorRef.current?.forceUserTurnEnd();
+    } else {
+      try {
+        sessionRef.current?.endUserTurn?.();
+      } catch {
+        /* noop */
+      }
+    }
   }, []);
 
   const stop = useCallback(() => {
@@ -466,8 +429,6 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
           earsToken: tokenData.earsToken?.token,
           model,
           micStream,
-          // push-to-talk: 耳セッションを手動ターン化（自動VAD無効）
-          manualTurn: !!optsRef.current.manualTurn,
           // 接続後に各セッションに hidden 注入する背景情報 (instructions 分離化)
           contextMessage:
             typeof (tokenData as { contextMessage?: string }).contextMessage === "string"
@@ -488,14 +449,12 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
             // 注: AI 終了時は何もしない。マイクの ON/OFF は onTurnChange に委ねる
           },
           onTurnChange: (nextSpeaker) => {
+            // user ターンなら mic ON、それ以外 (moderator / peer) は OFF を維持
             if (micResumeTimerRef.current) {
               clearTimeout(micResumeTimerRef.current);
               micResumeTimerRef.current = null;
             }
-            // push-to-talk: user ターンでも自動でマイクを開けない（「話す」を押すまで OFF）。
-            // 非PTTなら従来どおり user ターンで mic ON。
-            setMicEnabled(optsRef.current.manualTurn ? false : nextSpeaker === "user");
-            setIsRecording(false);
+            setMicEnabled(nextSpeaker === "user");
             // UI のランプ表示用に現在ターンを公開
             setCurrentSpeaker(nextSpeaker);
             // 次の話者に進んだので「次へ」ボタンは隠す
@@ -545,9 +504,8 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
         micStream,
         withMic: true,
         // 個人系モード(個人/プレゼン/口頭試問)の単一セッション。GDは上で return 済み。
-        // manualTurn(push-to-talk)優先。非manual(skill-check)は自動VAD+NO_INTERRUPTION。
-        manualTurn: !!optsRef.current.manualTurn,
-        strictTurnTaking: !optsRef.current.manualTurn,
+        // 割り込みで面接官が途切れないよう厳しめターン制御を有効化。
+        strictTurnTaking: true,
         onUserTranscript: (text, audioWavBase64) => {
           // エコーが whisper に拾われ prompt がリークしたケースを破棄
           if (isPromptEcho(text, transcriptionPrompt)) {
@@ -729,12 +687,8 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
     isAwaitingNext,
     /** GD モードで「次へ」ボタンが押されたときに呼ぶ */
     advanceGdTurn,
-    /** push-to-talk: ユーザーが録音中（「話す」押下後〜「送信」前）か */
-    isRecording,
-    /** push-to-talk: 「話す」を押したときに呼ぶ（録音開始） */
-    startSpeaking,
-    /** push-to-talk: 「送信」を押したときに呼ぶ（発話確定→AI/次話者へ） */
-    finishSpeaking,
+    /** 「話し終わった」ボタン用: 止まったときターンを強制確定して前へ進める */
+    forceEndTurn,
     start,
     stop,
     isActive: status === "connected",

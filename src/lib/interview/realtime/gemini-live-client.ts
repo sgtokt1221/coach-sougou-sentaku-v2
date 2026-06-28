@@ -47,16 +47,6 @@ const STRICT_REALTIME_INPUT_CONFIG = {
 };
 
 /**
- * push-to-talk（手動ターン）用。サーバ自動VADを完全に無効化し、ターンの開始/終了は
- * クライアントが activityStart/activityEnd で明示する。VADの推測が無いので
- * 途切れ・停止・誤区切りが原理的に起きない。
- */
-const MANUAL_REALTIME_INPUT_CONFIG = {
-  automaticActivityDetection: { disabled: true },
-  activityHandling: ActivityHandling.NO_INTERRUPTION,
-};
-
-/**
  * 音声セッションの診断ログを出すか（原因切り分け用）。
  * `?debugVoice=1`（URL）または localStorage.debugVoice='1' で有効。
  * SPA 内遷移でも効くよう、モジュール定数ではなく呼び出し時に判定する。
@@ -130,11 +120,6 @@ export interface GeminiLiveSessionOptions extends VoiceSessionCallbacks {
    * AI発話を割り込みで途切れさせないため。GD では渡さない（進行はオーケストレータ制御）。
    */
   strictTurnTaking?: boolean;
-  /**
-   * push-to-talk（手動ターン）。サーバ自動VADを無効化し、ターンの開始/終了を
-   * startUserActivity()/endUserActivity() で明示する。strictTurnTaking より優先。
-   */
-  manualTurn?: boolean;
 }
 
 const INPUT_SAMPLE_RATE = 16000; // Gemini Live 入力は 16kHz mono PCM16
@@ -289,20 +274,17 @@ export class GeminiLiveSession implements InterviewVoiceSession {
         ...(this.resumptionHandle
           ? { sessionResumption: { handle: this.resumptionHandle } }
           : {}),
-        // ターン制御。manualTurn(push-to-talk)が最優先（自動VAD無効）。
-        // strictTurnTaking は自動VAD＋NO_INTERRUPTION（skill-check 用）。
-        ...(this.opts.manualTurn
-          ? { realtimeInputConfig: MANUAL_REALTIME_INPUT_CONFIG }
-          : this.opts.strictTurnTaking
-            ? { realtimeInputConfig: STRICT_REALTIME_INPUT_CONFIG }
-            : {}),
+        // 1対1面接: 割り込み(barge-in)で面接官の発話が途切れないよう、
+        // VAD/NO_INTERRUPTION をクライアント側 config に直接適用（確実に効かせる）。
+        ...(this.opts.strictTurnTaking
+          ? { realtimeInputConfig: STRICT_REALTIME_INPUT_CONFIG }
+          : {}),
       },
     });
     if (isVoiceDebug()) {
       console.info(
         "[GeminiLive][diag] connect requested",
         JSON.stringify({
-          manualTurn: !!this.opts.manualTurn,
           strictTurnTaking: !!this.opts.strictTurnTaking,
           reconnect: !!this.resumptionHandle,
         }),
@@ -579,23 +561,13 @@ export class GeminiLiveSession implements InterviewVoiceSession {
   }
 
   /**
-   * push-to-talk: ユーザーの発話開始を明示通知（自動VAD無効時）。
-   * activityStart の後にマイク音声を送ること（順序が逆だと先頭が落ちる）。
+   * 「話し終わった」明示通知でターンを強制確定する（自動VADが終話を取りこぼした時の保険）。
+   * 自動VAD有効時の正規プリミティブ audioStreamEnd を送る → モデルが応答 / 耳が確定。
    */
-  startUserActivity(): void {
+  endUserTurn(): void {
     try {
-      this.session?.sendRealtimeInput({ activityStart: {} });
-      if (isVoiceDebug()) console.info("[GeminiLive][diag] activityStart");
-    } catch {
-      /* noop */
-    }
-  }
-
-  /** push-to-talk: ユーザーの発話終了を明示通知（→モデルが応答/耳が確定）。 */
-  endUserActivity(): void {
-    try {
-      this.session?.sendRealtimeInput({ activityEnd: {} });
-      if (isVoiceDebug()) console.info("[GeminiLive][diag] activityEnd");
+      this.session?.sendRealtimeInput({ audioStreamEnd: true });
+      if (isVoiceDebug()) console.info("[GeminiLive][diag] audioStreamEnd (forced)");
     } catch {
       /* noop */
     }
@@ -603,8 +575,8 @@ export class GeminiLiveSession implements InterviewVoiceSession {
 
   /**
    * 蓄積済みのユーザー文字起こしを即時確定して onUserTranscript に流す。
-   * GD の耳セッション(muteOutput)で「モデル出力 trigger の自然 flush」が来ない場合の
-   * フォールバック。通常経路(flushUserTranscript)と二重に流れないよう buf を消費する。
+   * GD の耳セッション(muteOutput)で「モデル出力 trigger の自然 flush」が来ない場合の保険。
+   * 通常経路(flushUserTranscript)と二重に流れないよう buf を消費する。
    */
   flushPendingUserTranscript(): void {
     if (!this.userTranscriptBuf.trim()) return;

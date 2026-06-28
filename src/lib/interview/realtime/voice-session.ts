@@ -71,10 +71,8 @@ export interface InterviewVoiceSession {
    * OpenAI: semantic_vad へ復帰 / Gemini: 自動 VAD 再開。
    */
   resumeInput(): void;
-  /** push-to-talk（手動ターン）: ユーザー発話の開始を明示通知。未対応実装は省略可。 */
-  startUserActivity?(): void;
-  /** push-to-talk（手動ターン）: ユーザー発話の終了を明示通知。未対応実装は省略可。 */
-  endUserActivity?(): void;
+  /** 「話し終わった」明示通知でターンを強制確定する（自動VADの取りこぼし保険）。任意。 */
+  endUserTurn?(): void;
   /** 蓄積済みユーザー文字起こしを即時確定（GD 耳セッションの flush フォールバック）。任意。 */
   flushPendingUserTranscript?(): void;
   /** 接続を破棄する */
