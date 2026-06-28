@@ -169,6 +169,7 @@ export function ChatThread({
   const [pendingRef, setPendingRef] = useState<ChatReference | null>(null);
   const [sending, setSending] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -176,34 +177,71 @@ export function ChatThread({
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length]);
 
-  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file) return;
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("ファイルサイズは10MBまでです");
-      return;
-    }
+  // ファイル選択ボタンと D&D で共通利用するアップロード処理。
+  // 画像/PDF 以外・10MB 超は弾く（D&D は input の accept 属性が効かないため明示チェック）。
+  async function uploadFiles(files: File[]) {
+    const valid = files.filter((file) => {
+      if (!(file.type.startsWith("image/") || file.type === "application/pdf")) {
+        toast.error(`${file.name}: 画像またはPDFのみ添付できます`);
+        return false;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error(`${file.name}: ファイルサイズは10MBまでです`);
+        return false;
+      }
+      return true;
+    });
+    if (valid.length === 0) return;
     setUploading(true);
     try {
-      const base64 = await readFileAsBase64(file);
-      const res = await authFetch("/api/chat/upload", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fileBase64: base64,
-          fileName: file.name,
-          contentType: file.type,
-        }),
-      });
-      if (!res.ok) throw new Error("upload failed");
-      const att: ChatAttachment = await res.json();
-      setPending((p) => [...p, att]);
+      for (const file of valid) {
+        const base64 = await readFileAsBase64(file);
+        const res = await authFetch("/api/chat/upload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            fileBase64: base64,
+            fileName: file.name,
+            contentType: file.type,
+          }),
+        });
+        if (!res.ok) throw new Error("upload failed");
+        const att: ChatAttachment = await res.json();
+        setPending((p) => [...p, att]);
+      }
     } catch {
       toast.error("アップロードに失敗しました");
     } finally {
       setUploading(false);
     }
+  }
+
+  function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.target.files ? Array.from(e.target.files) : [];
+    e.target.value = "";
+    void uploadFiles(files);
+  }
+
+  function handleDragOver(e: React.DragEvent) {
+    if (disabled || uploading) return;
+    // ファイルのドラッグのみ受け付ける
+    if (!Array.from(e.dataTransfer.types).includes("Files")) return;
+    e.preventDefault();
+    if (!dragOver) setDragOver(true);
+  }
+
+  function handleDragLeave(e: React.DragEvent) {
+    // 子要素間の移動ではオーバーレイを消さない
+    if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
+    setDragOver(false);
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    if (disabled || uploading) return;
+    e.preventDefault();
+    setDragOver(false);
+    const files = e.dataTransfer.files ? Array.from(e.dataTransfer.files) : [];
+    void uploadFiles(files);
   }
 
   async function handleSend() {
@@ -222,7 +260,21 @@ export function ChatThread({
   }
 
   return (
-    <div className="flex h-full flex-col">
+    <div
+      className="relative flex h-full flex-col"
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      {/* D&D 中のドロップ案内オーバーレイ */}
+      {dragOver && !disabled && (
+        <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center rounded-lg border-2 border-dashed border-primary bg-primary/10 backdrop-blur-[1px]">
+          <div className="flex flex-col items-center gap-2 text-primary">
+            <Paperclip className="size-6" />
+            <p className="text-sm font-medium">ここにドロップして添付</p>
+          </div>
+        </div>
+      )}
       {/* メッセージリスト */}
       <div className="flex-1 space-y-3 overflow-y-auto px-1 py-4">
         {loading ? (
