@@ -46,10 +46,20 @@ const STRICT_REALTIME_INPUT_CONFIG = {
   activityHandling: ActivityHandling.NO_INTERRUPTION,
 };
 
-/** `?debugVoice=1` のとき音声セッションの診断ログを出す（原因切り分け用）。 */
-const DEBUG_VOICE =
-  typeof window !== "undefined" &&
-  new URLSearchParams(window.location.search).get("debugVoice") === "1";
+/**
+ * 音声セッションの診断ログを出すか（原因切り分け用）。
+ * `?debugVoice=1`（URL）または localStorage.debugVoice='1' で有効。
+ * SPA 内遷移でも効くよう、モジュール定数ではなく呼び出し時に判定する。
+ */
+function isVoiceDebug(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    if (new URLSearchParams(window.location.search).get("debugVoice") === "1") return true;
+    return window.localStorage.getItem("debugVoice") === "1";
+  } catch {
+    return false;
+  }
+}
 
 /**
  * usageMetadata から概算コスト(USD)を出す（簡易・ログ用）。
@@ -271,7 +281,7 @@ export class GeminiLiveSession implements InterviewVoiceSession {
           : {}),
       },
     });
-    if (DEBUG_VOICE) {
+    if (isVoiceDebug()) {
       console.info(
         "[GeminiLive][diag] connect requested",
         JSON.stringify({
@@ -289,13 +299,13 @@ export class GeminiLiveSession implements InterviewVoiceSession {
     // コスト計測用に最新の usageMetadata を保持
     if (msg.usageMetadata) this.lastUsage = msg.usageMetadata;
 
-    if (DEBUG_VOICE && msg.setupComplete) {
+    if (isVoiceDebug() && msg.setupComplete) {
       console.info("[GeminiLive][diag] setupComplete (session established)");
     }
 
     // 切断予告 → resumption handle で自動再接続
     if (msg.goAway) {
-      if (DEBUG_VOICE) {
+      if (isVoiceDebug()) {
         console.info(
           "[GeminiLive][diag] goAway → reconnect",
           JSON.stringify({ aiResponding: this.currentResponseId !== null }),
@@ -346,7 +356,7 @@ export class GeminiLiveSession implements InterviewVoiceSession {
     // 割り込み: 再生中の出力を破棄
     if (sc.interrupted) {
       // 決定的な診断: AI発話中(currentResponseId!=null)に interrupted が来る＝バージインで途切れている。
-      if (DEBUG_VOICE) {
+      if (isVoiceDebug()) {
         console.warn(
           "[GeminiLive][diag] INTERRUPTED",
           JSON.stringify({
@@ -360,7 +370,7 @@ export class GeminiLiveSession implements InterviewVoiceSession {
 
     // ターン完了 → AI 発話確定 + onResponseEnd（実際の鳴り止みは出力監視で通知）
     if (sc.turnComplete) {
-      if (DEBUG_VOICE) {
+      if (isVoiceDebug()) {
         console.info(
           "[GeminiLive][diag] turnComplete",
           JSON.stringify({ tail: normalizeTranscript(this.aiTranscriptBuf).slice(-40) }),
