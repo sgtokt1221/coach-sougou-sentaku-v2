@@ -138,6 +138,10 @@ export function useVoiceChat() {
         audioOutputElement: audioElementRef.current,
         micStream,
         withMic: true,
+        // 1対1の単一セッション(自己分析・マッチング等)。割り込み(barge-in)で
+        // AIの発話が途中で途切れないよう、面接と同じ厳しめターン制御を有効化。
+        // トークン側 liveConnectConstraints だけでは効かないため client config に直接渡す。
+        strictTurnTaking: true,
         // 汎用チャットなので面接固定の文言ではなく中立の口火に
         openingNudge: "よろしくお願いします。始めてください。",
         onUserTranscript: opts.onUserTranscript,
