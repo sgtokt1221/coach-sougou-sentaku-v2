@@ -576,7 +576,13 @@
           "resultDate": ""
         },
         "admissionUrl": "https://www.ritsumei.ac.jp/uniteprogram/",
-        "selectionType": "comprehensive"
+        "selectionType": "comprehensive",
+        "scheduleLastYear": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-08",
+          "examDate": "2025-10-19",
+          "resultDate": "2025-11-05"
+        }
       },
       {
         "id": "business",
@@ -646,7 +652,13 @@
           "resultDate": ""
         },
         "admissionUrl": "https://www.ritsumei.ac.jp/uniteprogram/admission/gast/",
-        "selectionType": "comprehensive"
+        "selectionType": "comprehensive",
+        "scheduleLastYear": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-08",
+          "examDate": "2025-10-19",
+          "resultDate": "2025-11-05"
+        }
       },
       {
         "id": "general",
@@ -682,7 +694,13 @@
           "resultDate": ""
         },
         "admissionUrl": "https://www.ritsumei.ac.jp/uniteprogram/",
-        "selectionType": "comprehensive"
+        "selectionType": "comprehensive",
+        "scheduleLastYear": {
+          "applicationStart": "2025-10-17",
+          "applicationEnd": "2025-10-24",
+          "examDate": "2025-11-30",
+          "resultDate": "2025-12-10"
+        }
       },
       {
         "id": "international-relations",
@@ -786,7 +804,13 @@
           "resultDate": ""
         },
         "admissionUrl": "https://www.ritsumei.ac.jp/uniteprogram/",
-        "selectionType": "comprehensive"
+        "selectionType": "comprehensive",
+        "scheduleLastYear": {
+          "applicationStart": "2025-10-17",
+          "applicationEnd": "2025-10-24",
+          "examDate": "2025-11-30",
+          "resultDate": "2025-12-10"
+        }
       },
       {
         "id": "letters",
@@ -915,7 +939,13 @@
           "resultDate": ""
         },
         "admissionUrl": "https://www.ritsumei.ac.jp/uniteprogram/",
-        "selectionType": "comprehensive"
+        "selectionType": "comprehensive",
+        "scheduleLastYear": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-08",
+          "examDate": "2025-10-19",
+          "resultDate": "2025-11-05"
+        }
       },
       {
         "id": "general-3",
@@ -951,7 +981,13 @@
           "resultDate": ""
         },
         "admissionUrl": "https://www.ritsumei.ac.jp/uniteprogram/",
-        "selectionType": "comprehensive"
+        "selectionType": "comprehensive",
+        "scheduleLastYear": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-08",
+          "examDate": "2025-10-19",
+          "resultDate": "2025-11-05"
+        }
       },
       {
         "id": "pharmacy",
@@ -987,7 +1023,13 @@
           "resultDate": ""
         },
         "admissionUrl": "https://www.ritsumei.ac.jp/uniteprogram/admission/ph/",
-        "selectionType": "comprehensive"
+        "selectionType": "comprehensive",
+        "scheduleLastYear": {
+          "applicationStart": "2025-10-17",
+          "applicationEnd": "2025-10-24",
+          "examDate": "2025-11-30",
+          "resultDate": "2025-12-10"
+        }
       },
       {
         "id": "social",
@@ -1023,7 +1065,13 @@
           "resultDate": ""
         },
         "admissionUrl": "https://www.ritsumei.ac.jp/uniteprogram/",
-        "selectionType": "comprehensive"
+        "selectionType": "comprehensive",
+        "scheduleLastYear": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-08",
+          "examDate": "2025-09-28",
+          "resultDate": "2025-11-05"
+        }
       },
       {
         "id": "economics",
@@ -1059,7 +1107,13 @@
           "resultDate": ""
         },
         "admissionUrl": "https://www.ritsumei.ac.jp/uniteprogram/",
-        "selectionType": "comprehensive"
+        "selectionType": "comprehensive",
+        "scheduleLastYear": {
+          "applicationStart": "2025-09-01",
+          "applicationEnd": "2025-09-08",
+          "examDate": "2025-10-19",
+          "resultDate": "2025-11-05"
+        }
       },
       {
         "id": "law",

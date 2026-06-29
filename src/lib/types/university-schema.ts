@@ -37,6 +37,7 @@ export const FacultySchema = z.object({
   requirements: RequirementsSchema,
   selectionMethods: z.array(SelectionMethodSchema),
   schedule: ScheduleSchema,
+  scheduleLastYear: ScheduleSchema.optional(),
   interviewTendency: InterviewTendencySchema.optional(),
   academicField: z.string().optional(),
   admissionUrl: z.string().optional(),

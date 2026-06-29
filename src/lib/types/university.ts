@@ -64,6 +64,11 @@ export interface Faculty {
   requirements: Requirements;
   selectionMethods: SelectionMethod[];
   schedule: Schedule;
+  /**
+   * 前年度（昨年）の入試日程。今年度分が未発表（schedule の該当項目が空）のとき、
+   * 志望校カードで「未発表（昨年: X）」と参考表示するための値。任意。
+   */
+  scheduleLastYear?: Schedule;
   interviewTendency?: InterviewTendency;
   academicField?: string;
   /** 総合型選抜の募集要項・入試情報ページURL */

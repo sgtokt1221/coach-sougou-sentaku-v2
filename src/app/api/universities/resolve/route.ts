@@ -47,6 +47,7 @@ export async function GET(request: NextRequest) {
     facultyName: string;
     admissionPolicy?: string;
     schedule?: University["faculties"][number]["schedule"];
+    scheduleLastYear?: University["faculties"][number]["scheduleLastYear"];
   }[] = [];
 
   for (const compoundId of compoundIds) {
@@ -61,6 +62,7 @@ export async function GET(request: NextRequest) {
       facultyName: faculty?.name ?? "全学部",
       admissionPolicy: faculty?.admissionPolicy,
       schedule: faculty?.schedule,
+      scheduleLastYear: faculty?.scheduleLastYear,
     });
   }
 

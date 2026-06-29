@@ -27,6 +27,13 @@ interface ResolvedUniversity {
     examDate: string;
     resultDate: string;
   };
+  /** 前年度の入試日程（今年度が未発表のときの参考表示用） */
+  scheduleLastYear?: {
+    applicationStart: string;
+    applicationEnd: string;
+    examDate: string;
+    resultDate: string;
+  };
 }
 
 /** ISO 日付(YYYY-MM-DD)を和暦無しの日本語表記に。無ければ「—」。 */
@@ -39,13 +46,38 @@ function formatScheduleDate(d?: string): string {
   });
 }
 
+/** 「昨年: 2025/10/19」用の短縮日付（カード幅に収めるため数字表記）。 */
+function formatLastYearDate(d?: string): string {
+  if (!d) return "";
+  return new Date(d + "T00:00:00").toLocaleDateString("ja-JP", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+}
+
+/**
+ * 入試日程1項目の表示文字列を決める。
+ * - 今年度の値あり → その日付
+ * - 今年度が空 & 前年度あり → 「未発表（昨年: X）」
+ * - どちらも空 → 「未発表」
+ */
+function resolveScheduleCell(current?: string, lastYear?: string): string {
+  if (current) return formatScheduleDate(current);
+  if (lastYear) return `未発表（昨年: ${formatLastYearDate(lastYear)}）`;
+  return "未発表";
+}
+
 /** 展開部の入試日程4項目（出願開始/締切/試験日/合格発表）。 */
-function scheduleRows(schedule?: ResolvedUniversity["schedule"]) {
+function scheduleRows(
+  schedule?: ResolvedUniversity["schedule"],
+  scheduleLastYear?: ResolvedUniversity["scheduleLastYear"],
+) {
   return [
-    { label: "出願開始", date: formatScheduleDate(schedule?.applicationStart), icon: FileEdit },
-    { label: "出願締切", date: formatScheduleDate(schedule?.applicationEnd), icon: ScrollText },
-    { label: "試験日", date: formatScheduleDate(schedule?.examDate), icon: CalendarClock },
-    { label: "合格発表", date: formatScheduleDate(schedule?.resultDate), icon: Trophy },
+    { label: "出願開始", date: resolveScheduleCell(schedule?.applicationStart, scheduleLastYear?.applicationStart), icon: FileEdit },
+    { label: "出願締切", date: resolveScheduleCell(schedule?.applicationEnd, scheduleLastYear?.applicationEnd), icon: ScrollText },
+    { label: "試験日", date: resolveScheduleCell(schedule?.examDate, scheduleLastYear?.examDate), icon: CalendarClock },
+    { label: "合格発表", date: resolveScheduleCell(schedule?.resultDate, scheduleLastYear?.resultDate), icon: Trophy },
   ];
 }
 
@@ -361,18 +393,27 @@ export function TargetUniversityCards({ targetUniversities, compact = false }: P
                     入試日程
                   </p>
                   <div className="grid grid-cols-2 gap-2">
-                    {scheduleRows(item.schedule).map((r) => (
-                      <div
-                        key={r.label}
-                        className="flex items-center gap-2 rounded-lg border border-border/50 px-3 py-2"
-                      >
-                        <r.icon className="size-3.5 text-muted-foreground shrink-0" />
-                        <div className="min-w-0">
-                          <p className="text-[11px] text-muted-foreground leading-none mb-0.5">{r.label}</p>
-                          <p className="text-sm font-medium tabular-nums truncate">{r.date}</p>
+                    {scheduleRows(item.schedule, item.scheduleLastYear).map((r) => {
+                      const unannounced = r.date.startsWith("未発表");
+                      return (
+                        <div
+                          key={r.label}
+                          className="flex items-center gap-2 rounded-lg border border-border/50 px-3 py-2"
+                        >
+                          <r.icon className="size-3.5 text-muted-foreground shrink-0" />
+                          <div className="min-w-0">
+                            <p className="text-[11px] text-muted-foreground leading-none mb-0.5">{r.label}</p>
+                            <p
+                              className={`text-sm font-medium leading-tight ${
+                                unannounced ? "text-muted-foreground" : "tabular-nums truncate"
+                              }`}
+                            >
+                              {r.date}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
 
