@@ -28,6 +28,7 @@ import { FluidLoader } from "@/components/shared/FluidLoader";
 import VoiceAnalyzer, { refineWithTranscription, type VoiceAnalyzerHandle } from "@/components/interview/VoiceAnalyzer";
 import VideoAnalyzer, { type VideoAnalyzerHandle } from "@/components/interview/VideoAnalyzer";
 import CameraPreview from "@/components/interview/CameraPreview";
+import InterviewPreflight from "@/components/interview/InterviewPreflight";
 import { SavedDrillsReference } from "@/components/interview/SavedDrillsReference";
 import { BestAnswersReference } from "@/components/interview/BestAnswersReference";
 import {
@@ -220,6 +221,8 @@ export default function InterviewSessionPage() {
   const appearanceCheckCount = useRef(0);
   const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
   const [cameraEnabled, setCameraEnabled] = useState(false);
+  // 面接開始前の身だしなみチェック（音声面接の新規開始時のみ）。完了/スキップで false。
+  const [showPreflight, setShowPreflight] = useState(false);
   /** 編集中のメッセージインデックス。null なら編集していない */
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [editDraft, setEditDraft] = useState("");
@@ -270,7 +273,9 @@ export default function InterviewSessionPage() {
       } else {
         setMessages([{ role: "ai", content: info.openingMessage }]);
       }
-      if (info.inputMode === "voice") setCameraEnabled(true);
+      // 音声面接の新規開始時のみ、開始前に身だしなみチェックを挟む（カメラ取得もここで判定）。
+      // 再開（会話履歴あり）の場合はスキップしてそのまま再接続。
+      if (info.inputMode === "voice" && parsed.length === 0) setShowPreflight(true);
       return;
     }
 
@@ -308,7 +313,7 @@ export default function InterviewSessionPage() {
         } else {
           setMessages([{ role: "ai", content: info.openingMessage }]);
         }
-        if (info.inputMode === "voice") setCameraEnabled(true);
+        if (info.inputMode === "voice" && msgs.length === 0) setShowPreflight(true);
       } catch {
         /* 復元失敗は無視 */
       }
@@ -344,13 +349,16 @@ export default function InterviewSessionPage() {
     try {
       const video = document.querySelector("video");
       if (!video) return;
+      // 身だしなみ判定の精度確保のため取得解像度(640x480)のまま送る(従来は320x240に圧縮していた)
+      const w = video.videoWidth || 640;
+      const h = video.videoHeight || 480;
       const canvas = document.createElement("canvas");
-      canvas.width = 320;
-      canvas.height = 240;
+      canvas.width = w;
+      canvas.height = h;
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
-      ctx.drawImage(video, 0, 0, 320, 240);
-      const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
+      ctx.drawImage(video, 0, 0, w, h);
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
       const imageBase64 = dataUrl.split(",")[1];
 
       const res = await authFetch("/api/interview/appearance-check", {
@@ -396,6 +404,8 @@ export default function InterviewSessionPage() {
   useEffect(() => {
     if (!sessionInfo || realtimeTriedRef.current) return;
     if (sessionInfo.inputMode !== "voice") return;
+    // 身だしなみチェック中は面接（音声接続）を開始しない
+    if (showPreflight) return;
 
     realtimeTriedRef.current = true;
     (async () => {
@@ -408,7 +418,7 @@ export default function InterviewSessionPage() {
         setCameraEnabled(true); // カメラ分析は引き続き有効
       }
     })();
-  }, [sessionInfo, realtime]);
+  }, [sessionInfo, realtime, showPreflight]);
 
   // カンペ用: 自分の弱点を取得
   useEffect(() => {
@@ -710,6 +720,11 @@ export default function InterviewSessionPage() {
         stageInterval={2200}
         subtitle="通常 10〜20 秒かかります"
       />
+
+      {/* 面接開始前の身だしなみチェック（音声面接の新規開始時のみ） */}
+      {showPreflight && (
+        <InterviewPreflight onStart={() => setShowPreflight(false)} />
+      )}
 
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b bg-background shrink-0">
