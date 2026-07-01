@@ -21,9 +21,11 @@ export function AppLayout({ children }: { children: ReactNode }) {
       <Sidebar />
       <div data-app-scroll className="flex flex-1 flex-col overflow-hidden">
         <Header />
-        {/* scrollbar-gutter: stable でスクロールバー分の溝を常時確保し、
-            縦スクロール発生時に中身が横へズレるのを防ぐ（webkitの固定幅バー対策） */}
-        <main className="flex-1 overflow-y-auto [scrollbar-gutter:stable] bg-mesh pb-[max(0px,calc(5rem+env(safe-area-inset-bottom)-var(--kb,0px)))] lg:pb-8">
+        {/* overflow-y-scroll でスクロールバー領域を常時確保（出現/消失させない）し、
+            縦スクロール発生時にページ全体が横へズレるのを防ぐ。
+            globals.css が ::-webkit-scrollbar{width:4px} で「幅を取るクラシック型」に
+            固定しているため、scrollbar-gutter だけでは効かず overflow-y-scroll で確実化。 */}
+        <main className="flex-1 overflow-y-scroll [scrollbar-gutter:stable] bg-mesh pb-[max(0px,calc(5rem+env(safe-area-inset-bottom)-var(--kb,0px)))] lg:pb-8">
           {children}
         </main>
       </div>
