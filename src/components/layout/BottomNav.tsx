@@ -153,7 +153,6 @@ const teacherTabs: TabDef[] = [
   { label: "シフト", href: "/teacher/schedule", icon: CalendarCheck },
   { label: "担当生徒", href: "/teacher/roster", icon: Users },
   { label: "メッセージ", href: "/teacher/students", icon: MessageSquare },
-  { label: "セッション", href: "/teacher/sessions", icon: ClipboardList },
 ];
 
 const superadminTabs: TabDef[] = [

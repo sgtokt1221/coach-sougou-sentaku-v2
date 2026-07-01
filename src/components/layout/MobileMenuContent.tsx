@@ -242,13 +242,6 @@ const teacherPrimary: PrimaryAction[] = [
     iconBg: "bg-sky-100 dark:bg-sky-950/40",
     iconColor: "text-sky-700 dark:text-sky-300",
   },
-  {
-    label: "セッション履歴",
-    href: "/teacher/sessions",
-    icon: ClipboardList,
-    iconBg: "bg-violet-100 dark:bg-violet-950/40",
-    iconColor: "text-violet-700 dark:text-violet-300",
-  },
 ];
 
 export function MobileMenuContent({ onNavigate }: { onNavigate?: () => void }) {
