@@ -23,7 +23,28 @@ export function SessionTranscriptCard({
 }) {
   const [open, setOpen] = useState(false);
 
-  if (!transcript || transcript.segments.length === 0) return null;
+  // 文字起こし自体が未実行なら何も出さない。
+  if (!transcript) return null;
+
+  // 文字起こしは実行されたがセグメントが空 (録音が短い/無音等) の場合は、
+  // 黙って消さずに理由を伝える。
+  if (transcript.segments.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <FileText className="size-4" />
+            授業記録 (文字起こし)
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">
+            録音が短い、または無音だったため、文字起こしできる音声がありませんでした。
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>

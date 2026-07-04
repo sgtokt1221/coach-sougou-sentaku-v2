@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { authFetch } from "@/lib/api/client";
 import { useSessionRealtime } from "@/lib/hooks/useSessionRealtime";
 import { useSessionRecorder } from "@/lib/audio/useSessionRecorder";
+import { MIN_RECORDING_SEC } from "@/lib/audio/recording-limits";
 import { StudentRecordingJoinModal } from "./StudentRecordingJoinModal";
 import { StudentRecordingBanner } from "./StudentRecordingBanner";
 
@@ -62,6 +63,11 @@ export function StudentRecordingController({ sessionId, teacherName }: Props) {
       try {
         const blob = await recorder.stop();
         if (!blob) throw new Error("録音停止に失敗");
+        // 短すぎる録音 (講師が誤って即終了した等) は保存せず静かに終える。
+        if (recorder.durationSec < MIN_RECORDING_SEC) {
+          if (!isUnmountedRef.current) setPhase("idle");
+          return;
+        }
         const form = new FormData();
         form.append(
           "file",

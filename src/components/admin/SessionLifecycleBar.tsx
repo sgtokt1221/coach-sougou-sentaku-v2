@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { authFetch } from "@/lib/api/client";
 import { useSessionRecorder } from "@/lib/audio/useSessionRecorder";
+import { MIN_RECORDING_SEC } from "@/lib/audio/recording-limits";
 import type { Session } from "@/lib/types/session";
 
 interface Props {
@@ -178,6 +179,13 @@ export function SessionLifecycleBar({ sessionId, session, onSessionUpdate }: Pro
     const blob = await recorder.stop();
     if (!blob) {
       setPostError("録音停止に失敗しました");
+      setPostFlow("error");
+      return;
+    }
+    if (recorder.durationSec < MIN_RECORDING_SEC) {
+      setPostError(
+        `録音が短すぎます (${recorder.durationSec}秒)。${MIN_RECORDING_SEC}秒以上録音してください。マイクを確認して録音し直してください。`,
+      );
       setPostFlow("error");
       return;
     }

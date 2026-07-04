@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 import { assertSessionAccess } from "@/lib/api/session-auth";
+import { MIN_RECORDING_SEC } from "@/lib/audio/recording-limits";
 import type { Session } from "@/lib/types/session";
 
 export const maxDuration = 60;
@@ -63,6 +64,16 @@ export async function POST(
 
   const durationSec =
     typeof durationSecRaw === "string" ? parseInt(durationSecRaw, 10) : 0;
+
+  // 短すぎる録音 (誤タップ等) は保存しない。0/不明のときは判定できないので通す。
+  if (durationSec > 0 && durationSec < MIN_RECORDING_SEC) {
+    return NextResponse.json(
+      {
+        error: `録音が短すぎます (${durationSec}秒)。${MIN_RECORDING_SEC}秒以上録音してください。`,
+      },
+      { status: 400 },
+    );
+  }
 
   // Storage upload
   let recordingUrl = "";

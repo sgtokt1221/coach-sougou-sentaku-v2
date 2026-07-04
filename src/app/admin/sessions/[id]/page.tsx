@@ -41,6 +41,7 @@ import { PracticeQuestionsPanel } from "@/components/admin/PracticeQuestionsPane
 import { LessonDebriefSection } from "@/components/admin/LessonDebriefSection";
 import { SessionStudentDossier } from "@/components/admin/SessionStudentDossier";
 import { SessionTranscriptCard } from "@/components/admin/SessionTranscriptCard";
+import { SessionRecordingCard } from "@/components/admin/SessionRecordingCard";
 import { PreviousSessionDebriefCard } from "@/components/admin/PreviousSessionDebriefCard";
 import { SessionLifecycleBar } from "@/components/admin/SessionLifecycleBar";
 import { SessionReportDialog } from "@/components/admin/SessionReportDialog";
@@ -686,6 +687,7 @@ export default function AdminSessionDetailPage() {
               existingWeaknessAreas={[]}
               onChange={(d) => setSession({ ...session, debrief: d })}
             />
+            <SessionRecordingCard session={session} />
             <SessionTranscriptCard transcript={session.lessonTranscript} />
             {memoCard}
           </div>
