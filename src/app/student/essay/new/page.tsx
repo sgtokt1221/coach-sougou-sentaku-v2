@@ -41,8 +41,10 @@ import {
 } from "lucide-react";
 import { WeaknessReminderCard } from "@/components/growth/WeaknessReminderCard";
 import { ManuscriptEditor } from "@/components/essay/ManuscriptEditor";
+import { CharLimitSelector } from "@/components/essay/CharLimitSelector";
 import { EssayCoachPanel } from "@/components/essay/EssayCoachPanel";
 import { SelfAnalysisGuardCard } from "@/components/essay/SelfAnalysisGuardCard";
+import { FeatureHero } from "@/components/shared/FeatureHero";
 import { ReviewProgress } from "@/components/essay/ReviewProgress";
 import { EssayHistory } from "@/components/essay/EssayHistory";
 import { PastQuestionChart } from "@/components/essay/PastQuestionChart";
@@ -780,7 +782,7 @@ export default function EssayNewPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           essayId, ocrText, universityId, facultyId, topic,
-          wordLimit: pastQuestion?.wordLimit ?? selectedTheme?.wordLimit ?? retryParent?.retryContext?.wordLimit,
+          wordLimit: customMaxLength || pastQuestion?.wordLimit || selectedTheme?.wordLimit || retryParent?.retryContext?.wordLimit,
           inputMode,
           ...(homeworkId ? { homeworkId } : {}),
           ...(retryFromId && { parentEssayId: retryFromId }),
@@ -894,6 +896,14 @@ export default function EssayNewPage() {
 
       {step === 1 && (
         <>
+        <FeatureHero
+          eyebrow="画像・テキストからAI添削"
+          title="小論文添削"
+          description="書いた小論文を提出すると、AIが観点別に採点し、赤ペンと改善アドバイスを返します。"
+          Icon={FileText}
+          accent="indigo"
+          className="mb-4"
+        />
         <SelfAnalysisGuardCard />
 
         <WeaknessReminderCard />
@@ -1508,44 +1518,7 @@ export default function EssayNewPage() {
                   <CardTitle className="text-sm lg:text-base">小論文を入力</CardTitle>
                 </CardHeader>
                 <CardContent className="p-3 lg:p-4 space-y-4">
-                  <div className="flex items-center justify-between gap-2 flex-wrap">
-                    <div className="flex items-center gap-2 text-sm">
-                      <label htmlFor="char-limit" className="text-muted-foreground">
-                        字数制限
-                      </label>
-                      <input
-                        id="char-limit"
-                        type="number"
-                        min={50}
-                        max={5000}
-                        step={50}
-                        value={customMaxLength}
-                        onChange={(e) => {
-                          const n = parseInt(e.target.value, 10);
-                          if (!Number.isFinite(n)) return;
-                          setCustomMaxLength(Math.min(5000, Math.max(50, n)));
-                        }}
-                        className="w-20 rounded border bg-background px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                      />
-                      <span className="text-muted-foreground">字</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      {[400, 600, 800, 1200, 2000].map((n) => (
-                        <button
-                          key={n}
-                          type="button"
-                          onClick={() => setCustomMaxLength(n)}
-                          className={`text-xs rounded px-2 py-1 border transition-colors cursor-pointer ${
-                            customMaxLength === n
-                              ? "bg-primary text-primary-foreground border-primary"
-                              : "bg-background text-muted-foreground hover:bg-muted"
-                          }`}
-                        >
-                          {n}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                  <CharLimitSelector value={customMaxLength} onChange={setCustomMaxLength} />
                   {directText.trim() === "" && (
                     <div className="rounded-lg border border-amber-200 bg-amber-50/60 dark:border-amber-900 dark:bg-amber-950/20 p-3 flex gap-2.5">
                       <Sparkles className="size-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
@@ -1675,11 +1648,13 @@ export default function EssayNewPage() {
               </div>
             )}
 
+            <CharLimitSelector value={customMaxLength} onChange={setCustomMaxLength} />
+
             {/* OCRテキスト表示エリア */}
             <ManuscriptEditor
               value={ocrText}
               onChange={setOcrText}
-              maxLength={2000}
+              maxLength={customMaxLength}
               placeholder="認識されたテキストがここに表示されます"
               highlights={dictationHighlights}
               onHighlightsChange={setDictationHighlights}
@@ -1893,10 +1868,12 @@ export default function EssayNewPage() {
               </details>
             )}
 
+            <CharLimitSelector value={customMaxLength} onChange={setCustomMaxLength} />
+
             <ManuscriptEditor
               value={ocrText}
               onChange={setOcrText}
-              maxLength={800}
+              maxLength={customMaxLength}
               placeholder="OCRで認識されたテキストがここに表示されます"
             />
 

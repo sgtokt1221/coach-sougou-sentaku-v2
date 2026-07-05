@@ -21,6 +21,7 @@ import {
   INTERVIEW_MODE_LABELS,
   INTERVIEW_MODE_DESCRIPTIONS,
 } from "@/lib/types/interview";
+import { FeatureHero } from "@/components/shared/FeatureHero";
 
 interface ResolvedUniversity {
   universityId: string;
@@ -204,6 +205,14 @@ export default function InterviewNewPage() {
         stages={loadingMessages}
         stageInterval={1800}
         subtitle="通常 3〜5 秒かかります"
+      />
+
+      <FeatureHero
+        eyebrow="AIと本番さながらの面接練習"
+        title="模擬面接"
+        description="志望校・学部に合わせてAIが面接官に。テキストでも音声でも練習でき、後で講評が届きます。"
+        Icon={Mic}
+        accent="rose"
       />
 
       <div className="flex items-center gap-2">

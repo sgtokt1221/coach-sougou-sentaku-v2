@@ -23,6 +23,7 @@ import { FACULTY_REGISTRY, type FacultyEntry } from "@/data/faculty-topics/regis
 import { getPassagesByFaculty, getPassageById } from "@/data/summary-passages";
 import type { PassageLanguage, SummaryPassage } from "@/data/summary-passages/types";
 import { authFetch } from "@/lib/api/client";
+import { FeatureHero } from "@/components/shared/FeatureHero";
 import { toast } from "sonner";
 
 type Step = "select" | "menu" | "drill" | "result";
@@ -239,6 +240,13 @@ function SummaryDrillInner() {
 
     return (
       <div className="mx-auto max-w-4xl space-y-6 p-4">
+        <FeatureHero
+          eyebrow="要約力トレーニング"
+          title="要約ドリル"
+          description="本文を読んで、要点を自分の言葉で短くまとめる練習。読解力と、伝わる表現の土台をつくります。"
+          Icon={BookOpen}
+          accent="emerald"
+        />
         <div className="flex items-center gap-3">
           <Link href="/student/essay/themes">
             <Button variant="ghost" size="icon">

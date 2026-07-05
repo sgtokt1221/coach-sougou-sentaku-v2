@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Lock } from "lucide-react";
+import { ArrowRight, Lock, Lightbulb } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { FeatureHero } from "@/components/shared/FeatureHero";
 import { Badge } from "@/components/ui/badge";
 import {
   FACULTY_REGISTRY,
@@ -78,15 +79,16 @@ export default function TopicInputIndexPage() {
 
   return (
     <div className="w-full max-w-5xl mx-auto px-4 py-5 lg:py-8 space-y-6">
-      <div>
-        <h1 className="text-xl lg:text-2xl font-bold">ネタインプット</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          学部系統別に必須の背景知識を学べます。志望する学部のカードを選んでください。
-        </p>
-        <p className="text-xs text-muted-foreground mt-1">
-          現在 <span className="font-semibold">{availableCount}学部</span> が利用可能。他の学部は順次追加予定。
-        </p>
-      </div>
+      <FeatureHero
+        eyebrow="学部別の背景知識"
+        title="ネタインプット"
+        description="学部系統別に、小論文で使える背景知識を学べます。志望する学部のカードを選んでください。"
+        Icon={Lightbulb}
+        accent="amber"
+      />
+      <p className="text-xs text-muted-foreground">
+        現在 <span className="font-semibold">{availableCount}学部</span> が利用可能。他の学部は順次追加予定。
+      </p>
 
       {grouped.map((group) => (
         <section key={group.category} className="space-y-3">

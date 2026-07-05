@@ -13,6 +13,7 @@ import { HelpfulContextPanel } from "@/components/essay/HelpfulContextPanel";
 import type { HelpfulContext } from "@/data/essay-past-questions";
 import { EssayTheme } from "@/data/essay-themes";
 import { getRelatedFaculties } from "@/lib/essay-topic-mapping";
+import { FeatureHero } from "@/components/shared/FeatureHero";
 
 interface ThemeWithScore extends EssayTheme {
   recommendationScore?: number;
@@ -197,17 +198,14 @@ export default function EssayThemesPage() {
     <div className="container mx-auto max-w-7xl px-4 py-8">
       {/* ヘッダー */}
       <div className="mb-8">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 rounded-lg bg-gradient-to-br from-sky-50 to-sky-100 border border-sky-200">
-            <BookOpen className="w-6 h-6 text-sky-600" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">テーマ・過去問</h1>
-            <p className="text-gray-600 mt-1">
-              分野別テーマや大学別過去問で小論文を練習しましょう
-            </p>
-          </div>
-        </div>
+        <FeatureHero
+          eyebrow="テーマ別・大学別で練習"
+          title="テーマ・過去問"
+          description="分野別テーマや、志望大学の過去問で小論文を練習しましょう。"
+          Icon={BookOpen}
+          accent="sky"
+          className="mb-4"
+        />
 
         {hasRecommendations && (
           <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
