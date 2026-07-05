@@ -98,6 +98,7 @@ const studentPrimary: PrimaryAction[] = [
       { label: "ネタインプット", href: "/student/topic-input", icon: BookMarked },
       { label: "テーマ・過去問", href: "/student/essay/themes", icon: BookOpen },
       { label: "要約ドリル", href: "/student/essay/summary-drill", icon: ClipboardList },
+      { label: "ちょこ添削", href: "/student/essay/choco", icon: ClipboardList },
     ],
   },
   {
@@ -130,6 +131,7 @@ const studentSecondary: ListItem[] = [
   { label: "ネタインプット", href: "/student/topic-input", icon: BookMarked },
   { label: "テーマ・過去問", href: "/student/essay/themes", icon: BookOpen },
   { label: "要約ドリル", href: "/student/essay/summary-drill", icon: ClipboardList },
+  { label: "ちょこ添削", href: "/student/essay/choco", icon: ClipboardList },
   { label: "テーマ別ドリル演習", href: "/student/interview/drill", icon: ClipboardList },
   { label: "志望校マッチング", href: "/student/universities", icon: GraduationCap },
   { label: "出願書類", href: "/student/documents", icon: FolderOpen },

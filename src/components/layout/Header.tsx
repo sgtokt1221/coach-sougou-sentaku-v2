@@ -35,6 +35,7 @@ export function Header() {
 
   // 簡易パンくず生成
   const getPageTitle = (pathname: string): string => {
+    if (pathname.startsWith("/student/essay/choco")) return "小論文 / ちょこ添削";
     if (pathname.startsWith("/student/essay/new")) return "小論文 / 新規作成";
     if (pathname.startsWith("/student/essay")) return "小論文";
     if (pathname.startsWith("/student/interview/new")) return "面接 / 新規作成";
