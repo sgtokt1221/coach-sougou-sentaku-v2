@@ -207,23 +207,27 @@ export default function InterviewNewPage() {
         subtitle="通常 3〜5 秒かかります"
       />
 
-      <FeatureHero
-        eyebrow="AIと本番さながらの面接練習"
-        title="模擬面接"
-        description="志望校・学部に合わせてAIが面接官に。テキストでも音声でも練習でき、後で講評が届きます。"
-        Icon={Mic}
-        accent="rose"
-      />
+      {activeTab === "new" && (
+        <FeatureHero
+          eyebrow="AIと本番さながらの面接練習"
+          title="模擬面接"
+          description="志望校・学部に合わせてAIが面接官に。テキストでも音声でも練習でき、後で講評が届きます。"
+          Icon={Mic}
+          accent="rose"
+        />
+      )}
 
       <div className="flex items-center gap-2">
         <Button variant="ghost" size="sm" onClick={() => router.back()}>
           <ArrowLeft className="size-4 mr-1" />
           戻る
         </Button>
-        <h1 className="text-lg lg:text-xl font-bold flex items-center gap-2">
-          <Mic className="size-5" />
-          模擬面接
-        </h1>
+        {activeTab !== "new" && (
+          <h1 className="text-lg lg:text-xl font-bold flex items-center gap-2">
+            <Mic className="size-5" />
+            模擬面接
+          </h1>
+        )}
       </div>
 
       <div className="flex rounded-lg border bg-muted p-1">

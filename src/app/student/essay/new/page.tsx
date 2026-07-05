@@ -850,6 +850,16 @@ export default function EssayNewPage() {
     <div
       className={`mx-auto px-4 py-5 lg:px-6 lg:py-8 ${useSideBySide ? "max-w-7xl" : "max-w-2xl"}`}
     >
+      {activeTab === "new" && step === 1 && (
+        <FeatureHero
+          eyebrow="画像・テキストからAI添削"
+          title="小論文添削"
+          description="書いた小論文を提出すると、AIが観点別に採点し、赤ペンと改善アドバイスを返します。"
+          Icon={FileText}
+          accent="indigo"
+          className="mb-4"
+        />
+      )}
       <div className="flex items-center gap-2 mb-4">
         <Button
           variant="ghost"
@@ -859,10 +869,12 @@ export default function EssayNewPage() {
           <ArrowLeft className="size-4 mr-1" />
           戻る
         </Button>
-        <h1 className="text-lg lg:text-xl font-bold flex items-center gap-2">
-          <FileText className="size-5" />
-          小論文添削
-        </h1>
+        {!(activeTab === "new" && step === 1) && (
+          <h1 className="text-lg lg:text-xl font-bold flex items-center gap-2">
+            <FileText className="size-5" />
+            小論文添削
+          </h1>
+        )}
       </div>
 
       <SegmentControl
@@ -896,14 +908,6 @@ export default function EssayNewPage() {
 
       {step === 1 && (
         <>
-        <FeatureHero
-          eyebrow="画像・テキストからAI添削"
-          title="小論文添削"
-          description="書いた小論文を提出すると、AIが観点別に採点し、赤ペンと改善アドバイスを返します。"
-          Icon={FileText}
-          accent="indigo"
-          className="mb-4"
-        />
         <SelfAnalysisGuardCard />
 
         <WeaknessReminderCard />
