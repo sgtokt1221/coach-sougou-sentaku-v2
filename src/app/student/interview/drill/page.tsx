@@ -30,6 +30,7 @@ import { DRILL_CATEGORIES, type DrillCategory } from "@/lib/ai/prompts/interview
 import { SavedDrillsReference } from "@/components/interview/SavedDrillsReference";
 import { QuestionAttempts } from "@/components/interview/QuestionAttempts";
 import VoiceRecorder from "@/components/interview/VoiceRecorder";
+import { FeatureHero } from "@/components/shared/FeatureHero";
 import Link from "next/link";
 import { History, Star } from "lucide-react";
 
@@ -394,6 +395,15 @@ function InterviewDrillInner() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4">
       <div className="mx-auto max-w-4xl space-y-6">
+        {!state.sessionStarted && (
+          <FeatureHero
+            eyebrow="1問ずつ・すきま時間に"
+            title="ちょこ面接"
+            description="面接でよく聞かれる質問に1問ずつ答えると、AIがその場で講評。気軽に反復練習できます。"
+            Icon={Mic}
+            accent="sky"
+          />
+        )}
         {/* ヘッダー */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -406,10 +416,12 @@ function InterviewDrillInner() {
               <ArrowLeft className="mr-2 h-4 w-4" />
               戻る
             </Button>
-            <div>
-              <h1 className="text-2xl font-bold text-slate-900">ちょこ面接</h1>
-              <p className="text-sm text-slate-600">短時間で反復練習できる軽い練習モード</p>
-            </div>
+            {state.sessionStarted && (
+              <div>
+                <h1 className="text-2xl font-bold text-slate-900">ちょこ面接</h1>
+                <p className="text-sm text-slate-600">短時間で反復練習できる軽い練習モード</p>
+              </div>
+            )}
           </div>
 
           {/* セッション情報 */}
