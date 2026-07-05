@@ -14,6 +14,7 @@ import type { StudentProfile } from "@/lib/types/user";
 import { useAuthSWR } from "@/lib/api/swr";
 import { NotificationPermissionBanner } from "@/components/notifications/NotificationPermissionBanner";
 import { UpcomingSessionCard } from "@/components/student/UpcomingSessionCard";
+import { ChocoSeriesAnnouncement } from "@/components/student/ChocoSeriesAnnouncement";
 import { EssayDraftsSection } from "@/components/essay/EssayDraftsSection";
 import { GrowthTree } from "@/components/self-analysis/GrowthTree";
 import type { SelfAnalysis } from "@/lib/types/self-analysis";
@@ -110,6 +111,8 @@ export default function StudentDashboard() {
       {skillCheckStatus?.needsRefresh && skillCheckStatus.daysSinceLast !== null && (
         <SkillCheckRefreshBanner daysSinceLast={skillCheckStatus.daysSinceLast} />
       )}
+
+      <ChocoSeriesAnnouncement />
 
       <div data-tour="upcoming-session">
         <UpcomingSessionCard />
