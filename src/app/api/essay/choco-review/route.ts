@@ -17,6 +17,9 @@ export async function POST(request: NextRequest) {
   if (typeof passageId !== "string" || typeof blankIndex !== "number" || !studentText?.trim()) {
     return NextResponse.json({ error: "passageId / blankIndex / studentText が必要です" }, { status: 400 });
   }
+  if (studentText.length > 2000) {
+    return NextResponse.json({ error: "文章が長すぎます（2000字以内）" }, { status: 400 });
+  }
 
   const passage = getChocoPassageById(passageId);
   if (!passage || blankIndex < 0 || blankIndex >= passage.paragraphs.length) {
@@ -63,9 +66,13 @@ export async function POST(request: NextRequest) {
     };
     await ref.set(doc);
 
-    void applyChocoWeaknesses(uid, evaluation.feedback.weaknessTags).catch((e) =>
-      console.warn("[choco-review] weakness apply failed:", e),
-    );
+    // 弱点DB反映は応答前に await する（fire-and-forget だと応答後にインスタンスが凍結して
+    // 反映が失われうるため）。失敗しても catch して結果は返す。
+    try {
+      await applyChocoWeaknesses(uid, evaluation.feedback.weaknessTags);
+    } catch (e) {
+      console.warn("[choco-review] weakness apply failed:", e);
+    }
     void import("@/lib/skill-check/aggregate")
       .then(({ refreshEssayAggregateCache }) => refreshEssayAggregateCache(uid))
       .catch((e) => console.warn("[choco-review] aggregate refresh failed:", e));
