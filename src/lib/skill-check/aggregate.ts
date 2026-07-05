@@ -3,6 +3,10 @@ import { calculateRank } from "./rank";
 import { calculateInterviewRank } from "@/lib/interview-skill-check/rank";
 import { SKILL_CHECK_REFRESH_DAYS } from "@/lib/types/skill-check";
 import { SC_WEIGHT, PRACTICE_WEIGHT } from "./weights";
+import { blendPracticeScores } from "@/lib/choco/blend";
+
+/** ちょこ添削1回 = 本添削0.5回分 */
+export const CHOCO_WEIGHT = 0.5;
 
 // Client component から参照しやすいよう re-export (旧 import パス互換)
 export { SC_WEIGHT, PRACTICE_WEIGHT } from "./weights";
@@ -211,30 +215,50 @@ export async function computeEssayAggregate(
 
   try {
     const cutoff = daysAgo(SKILL_CHECK_REFRESH_DAYS);
-    const recentSnap = await adminDb
+
+    const essayRecent = await adminDb
       .collection("essays")
       .where("userId", "==", userId)
       .where("submittedAt", ">=", cutoff)
       .get();
-    let scores = recentSnap.docs
+    let essayTotals = essayRecent.docs
       .map((d) => d.data()?.scores?.total)
       .filter((s): s is number => typeof s === "number");
 
-    if (scores.length === 0) {
-      const fallbackSnap = await adminDb
+    // ちょこ添削の submittedAt は ISO 文字列保存なので cutoff も文字列で比較する
+    // (ISO 文字列は辞書順 == 時系列順)。essays 側は Timestamp なので Date で比較。
+    const chocoRecent = await adminDb
+      .collection(`users/${userId}/chokoReviews`)
+      .where("submittedAt", ">=", cutoff.toISOString())
+      .get();
+    let chocoTotals = chocoRecent.docs
+      .map((d) => d.data()?.scores?.total)
+      .filter((s): s is number => typeof s === "number");
+
+    if (essayTotals.length === 0 && chocoTotals.length === 0) {
+      const fb = await adminDb
         .collection("essays")
         .where("userId", "==", userId)
         .orderBy("submittedAt", "desc")
         .limit(FALLBACK_RECENT_LIMIT)
         .get();
-      scores = fallbackSnap.docs
+      essayTotals = fb.docs
         .map((d) => d.data()?.scores?.total)
         .filter((s): s is number => typeof s === "number");
+      if (essayTotals.length === 0) {
+        const cfb = await adminDb
+          .collection(`users/${userId}/chokoReviews`)
+          .orderBy("submittedAt", "desc")
+          .limit(FALLBACK_RECENT_LIMIT)
+          .get();
+        chocoTotals = cfb.docs
+          .map((d) => d.data()?.scores?.total)
+          .filter((s): s is number => typeof s === "number");
+      }
     }
 
-    const practiceAvg =
-      scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : null;
-    return blend(scTotal, practiceAvg, scores.length, calculateRank);
+    const { avg, count } = blendPracticeScores(essayTotals, chocoTotals, CHOCO_WEIGHT);
+    return blend(scTotal, avg, count, calculateRank);
   } catch (err) {
     console.warn("essay aggregate failed:", err);
     return blend(scTotal, null, 0, calculateRank);
