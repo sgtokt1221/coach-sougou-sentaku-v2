@@ -14,7 +14,9 @@
     "validate:data": "tsx scripts/validate-university-data.ts",
     "seed:universities": "tsx scripts/seed-universities.ts",
     "seed:superadmin": "tsx scripts/seed-superadmin.ts",
-    "consolidate:weaknesses": "tsx scripts/consolidate-weaknesses-taxonomy.ts"
+    "consolidate:weaknesses": "tsx scripts/consolidate-weaknesses-taxonomy.ts",
+    "verify:choco": "tsx scripts/verify-choco-logic.ts",
+    "validate:choco": "tsx scripts/validate-choco-passages.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",
