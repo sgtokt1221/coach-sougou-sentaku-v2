@@ -218,13 +218,13 @@ export default function HomeworkDetailPage() {
         <Card>
           <CardContent className="space-y-3 p-4">
             <p className="text-sm text-muted-foreground">
-              指定された設問に面接ドリルで回答します。回答するとAIが採点し、この宿題は提出済みになります。
+              指定された設問にちょこ面接で回答します。回答するとAIが採点し、この宿題は提出済みになります。
             </p>
             <div className="flex justify-end">
               <Button asChild>
                 <Link href={interviewDrillHref}>
                   <Mic className="mr-1.5 size-4" />
-                  面接ドリルで取り組む
+                  ちょこ面接で取り組む
                 </Link>
               </Button>
             </div>

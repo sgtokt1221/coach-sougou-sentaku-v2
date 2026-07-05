@@ -407,7 +407,7 @@ function InterviewDrillInner() {
               戻る
             </Button>
             <div>
-              <h1 className="text-2xl font-bold text-slate-900">面接ドリル練習</h1>
+              <h1 className="text-2xl font-bold text-slate-900">ちょこ面接</h1>
               <p className="text-sm text-slate-600">短時間で反復練習できる軽い練習モード</p>
             </div>
           </div>

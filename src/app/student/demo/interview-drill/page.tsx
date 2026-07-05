@@ -11,7 +11,7 @@ export default function DemoInterviewDrillPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">面接ドリル</h1>
+        <h1 className="text-2xl font-bold">ちょこ面接</h1>
         <p className="text-sm text-muted-foreground">
           カテゴリを選んで短時間トレーニング
         </p>

@@ -90,7 +90,7 @@ const studentNavGroups: NavGroup[] = [
         icon: Mic,
         match: ["/student/interview"],
         children: [
-          { label: "テーマ別ドリル演習", href: "/student/interview/drill", icon: ClipboardList },
+          { label: "ちょこ面接", href: "/student/interview/drill", icon: ClipboardList },
         ],
       },
       {

@@ -28,7 +28,7 @@ export default function DrillHistoryPage() {
       <div className="flex items-center justify-between">
         <h1 className="flex items-center gap-2 text-lg font-bold lg:text-xl">
           <ClipboardList className="size-5" />
-          面接ドリル 履歴
+          ちょこ面接 履歴
         </h1>
         <Link
           href="/student/interview/drill"

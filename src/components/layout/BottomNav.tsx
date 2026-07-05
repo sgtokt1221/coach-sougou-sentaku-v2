@@ -102,7 +102,7 @@ const sheetSections: SheetSection[] = [
       { label: "テーマ・過去問", href: "/student/essay/themes", icon: BookOpen, iconBg: "bg-emerald-100 dark:bg-emerald-950/40", iconColor: "text-emerald-700 dark:text-emerald-300" },
       { label: "要約ドリル", href: "/student/essay/summary-drill", icon: ClipboardList, iconBg: "bg-teal-100 dark:bg-teal-950/40", iconColor: "text-teal-700 dark:text-teal-300" },
       { label: "ちょこ添削", href: "/student/essay/choco", icon: ClipboardList, iconBg: "bg-teal-100 dark:bg-teal-950/40", iconColor: "text-teal-700 dark:text-teal-300" },
-      { label: "テーマ別ドリル演習", href: "/student/interview/drill", icon: ClipboardList, iconBg: "bg-sky-100 dark:bg-sky-950/40", iconColor: "text-sky-700 dark:text-sky-300" },
+      { label: "ちょこ面接", href: "/student/interview/drill", icon: ClipboardList, iconBg: "bg-sky-100 dark:bg-sky-950/40", iconColor: "text-sky-700 dark:text-sky-300" },
       { label: "宿題", href: "/student/homework", icon: ClipboardList, iconBg: "bg-rose-100 dark:bg-rose-950/40", iconColor: "text-rose-700 dark:text-rose-300" },
     ],
   },
