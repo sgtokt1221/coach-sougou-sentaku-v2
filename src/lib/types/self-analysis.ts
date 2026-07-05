@@ -94,3 +94,27 @@ export const SELF_ANALYSIS_STEPS = [
   { step: 6, title: "大学との接続", description: "なぜこの大学・学部か、APとの合致点" },
   { step: 7, title: "統合・言語化", description: "上記を統合した「自分ストーリー」構築" },
 ] as const;
+
+/** 自己分析のセクション（=コメント/承認の対象）キー */
+export type SelfAnalysisStepKey =
+  | "values"
+  | "strengths"
+  | "weaknesses"
+  | "interests"
+  | "vision"
+  | "identity"
+  | "synthesis";
+
+/** 1ステップ分の管理者承認状態 */
+export interface StepApproval {
+  approved: boolean;
+  /** 承認/取消した管理者の uid・表示名・日時(ISO) */
+  by: string;
+  byName: string;
+  at: string;
+}
+
+/** selfAnalysisApprovals/{studentId} ドキュメント */
+export interface SelfAnalysisApproval {
+  steps: Partial<Record<SelfAnalysisStepKey, StepApproval>>;
+}

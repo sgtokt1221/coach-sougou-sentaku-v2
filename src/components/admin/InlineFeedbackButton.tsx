@@ -7,7 +7,7 @@ import { MessageSquare, Send, Loader2 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import { authFetch } from "@/lib/api/client";
-import type { FeedbackType, AdminFeedback } from "@/lib/types/feedback";
+import type { FeedbackType, AdminFeedback, ChatReference } from "@/lib/types/feedback";
 
 interface InlineFeedbackButtonProps {
   studentId: string;
@@ -15,6 +15,8 @@ interface InlineFeedbackButtonProps {
   targetId: string;
   targetLabel: string;
   compact?: boolean;
+  /** 送信するコメントに添える参照カード（生徒がタップで該当画面へ飛べる） */
+  reference?: ChatReference;
 }
 
 export function InlineFeedbackButton({
@@ -23,6 +25,7 @@ export function InlineFeedbackButton({
   targetId,
   targetLabel,
   compact = false,
+  reference,
 }: InlineFeedbackButtonProps) {
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState("");
@@ -53,7 +56,7 @@ export function InlineFeedbackButton({
       const res = await authFetch(`/api/admin/students/${studentId}/feedback`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type, targetId, targetLabel, message: message.trim() }),
+        body: JSON.stringify({ type, targetId, targetLabel, message: message.trim(), ...(reference ? { reference } : {}) }),
       });
       if (!res.ok) throw new Error("送信失敗");
       const created: AdminFeedback = await res.json();

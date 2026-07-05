@@ -10,8 +10,10 @@ import { ArrowLeft, ArrowRight, RotateCcw, Sparkles, Loader2 } from "lucide-reac
 import { AnalysisResultCard } from "@/components/self-analysis/AnalysisResultCard";
 import { GrowthTree } from "@/components/self-analysis/GrowthTree";
 import { StepEditModal } from "@/components/self-analysis/StepEditModal";
+import { SelfAnalysisComments } from "@/components/self-analysis/SelfAnalysisComments";
 import { useAuthSWR } from "@/lib/api/swr";
-import type { SelfAnalysis } from "@/lib/types/self-analysis";
+import type { SelfAnalysis, SelfAnalysisStepKey, StepApproval } from "@/lib/types/self-analysis";
+import type { AdminFeedback } from "@/lib/types/feedback";
 
 /** SelfAnalysis ドキュメントを GrowthTree 用の stepsData (step番号→内容) に変換 */
 const STEP_KEYS = [
@@ -52,6 +54,20 @@ export default function SelfAnalysisResultPage() {
   const { data, isLoading, mutate } = useAuthSWR<SelfAnalysis>(
     "/api/self-analysis?userId=me"
   );
+  // コーチからのコメント（自己分析宛）と承認状況をステップ別に取得
+  const { data: feedbackList } = useAuthSWR<AdminFeedback[]>("/api/student/feedback");
+  const { data: approvalData } = useAuthSWR<{
+    steps: Partial<Record<SelfAnalysisStepKey, StepApproval>>;
+  }>("/api/student/self-analysis/approvals");
+
+  // targetId(ステップキー)別にコメントを集約
+  const commentsByStep: Partial<Record<string, AdminFeedback[]>> = {};
+  for (const f of feedbackList ?? []) {
+    if (f.type !== "self-analysis") continue;
+    (commentsByStep[f.targetId] ??= []).push(f);
+  }
+  const approvalsByStep = approvalData?.steps ?? {};
+
   const [generating, setGenerating] = useState(false);
   const autoAttempted = useRef(false);
   // 木の果実クリックで開く編集モーダルの対象ステップ
@@ -302,6 +318,12 @@ export default function SelfAnalysisResultPage() {
               }).catch(() => {});
               mutate();
             }}
+            renderSectionExtra={(sectionKey) => (
+              <SelfAnalysisComments
+                comments={commentsByStep[sectionKey] ?? []}
+                approval={approvalsByStep[sectionKey]}
+              />
+            )}
           />
         </div>
       </div>

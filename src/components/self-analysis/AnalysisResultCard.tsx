@@ -24,6 +24,11 @@ interface AnalysisResultCardProps {
   onUpdate?: (updated: SelfAnalysis) => void;
   /** true で編集UI（鉛筆）を隠し、読み取り専用にする（管理者閲覧など） */
   readOnly?: boolean;
+  /**
+   * 各セクション（=自己分析ステップ）末尾に差し込む追加描画。
+   * 管理者はコメント投稿＋承認トグル、生徒はコメント一覧＋承認バッジを描画する用途。
+   */
+  renderSectionExtra?: (sectionKey: EditableSection, sectionTitle: string) => React.ReactNode;
 }
 
 /** 編集内容を書き戻せる SelfAnalysis 上のセクション（オブジェクト型のフィールドのみ） */
@@ -47,6 +52,8 @@ interface FieldConfig {
 
 interface SectionConfig {
   title: string;
+  /** セクション（=自己分析ステップ）のキー。コメント/承認の targetId に使う */
+  section: EditableSection;
   icon: React.ReactNode;
   fields: FieldConfig[];
 }
@@ -135,69 +142,86 @@ export function AnalysisResultCard({
   analysis,
   onUpdate,
   readOnly = false,
+  renderSectionExtra,
 }: AnalysisResultCardProps) {
+  // 未完了ステップは欠損していることがあるため全て null 安全に読む
+  const v = analysis.values ?? ({} as SelfAnalysis["values"]);
+  const st = analysis.strengths ?? ({} as SelfAnalysis["strengths"]);
+  const w = analysis.weaknesses ?? ({} as SelfAnalysis["weaknesses"]);
+  const it = analysis.interests ?? ({} as SelfAnalysis["interests"]);
+  const vi = analysis.vision ?? ({} as SelfAnalysis["vision"]);
+  const id = analysis.identity ?? ({} as SelfAnalysis["identity"]);
+  const sy = analysis.synthesis ?? ({} as NonNullable<SelfAnalysis["synthesis"]>);
+
   const sections: SectionConfig[] = [
     {
       title: "価値観",
+      section: "values",
       icon: <Heart className="size-4 text-rose-500" />,
       fields: [
-        { label: "核となる価値観", section: "values", key: "coreValues", value: analysis.values.coreValues },
-        { label: "価値観の原体験", section: "values", key: "valueOrigins", value: analysis.values.valueOrigins },
-        { label: "優先順位", section: "values", key: "priorityOrder", value: analysis.values.priorityOrder },
+        { label: "核となる価値観", section: "values", key: "coreValues", value: v.coreValues ?? [] },
+        { label: "価値観の原体験", section: "values", key: "valueOrigins", value: v.valueOrigins ?? [] },
+        { label: "優先順位", section: "values", key: "priorityOrder", value: v.priorityOrder ?? [] },
       ],
     },
     {
       title: "強み",
+      section: "strengths",
       icon: <Zap className="size-4 text-amber-500" />,
       fields: [
-        { label: "強み", section: "strengths", key: "strengths", value: analysis.strengths.strengths },
-        { label: "根拠・エビデンス", section: "strengths", key: "evidences", value: analysis.strengths.evidences },
-        { label: "強みの独自な組み合わせ", section: "strengths", key: "uniqueCombo", value: analysis.strengths.uniqueCombo },
+        { label: "強み", section: "strengths", key: "strengths", value: st.strengths ?? [] },
+        { label: "根拠・エビデンス", section: "strengths", key: "evidences", value: st.evidences ?? [] },
+        { label: "強みの独自な組み合わせ", section: "strengths", key: "uniqueCombo", value: st.uniqueCombo ?? "" },
       ],
     },
     {
       title: "弱みと成長",
+      section: "weaknesses",
       icon: <TrendingUp className="size-4 text-emerald-500" />,
       fields: [
-        { label: "弱み", section: "weaknesses", key: "weaknesses", value: analysis.weaknesses.weaknesses },
-        { label: "成長エピソード", section: "weaknesses", key: "growthStories", value: analysis.weaknesses.growthStories },
-        { label: "克服から得た教訓", section: "weaknesses", key: "overcomeLessons", value: analysis.weaknesses.overcomeLessons },
+        { label: "弱み", section: "weaknesses", key: "weaknesses", value: w.weaknesses ?? [] },
+        { label: "成長エピソード", section: "weaknesses", key: "growthStories", value: w.growthStories ?? [] },
+        { label: "克服から得た教訓", section: "weaknesses", key: "overcomeLessons", value: w.overcomeLessons ?? [] },
       ],
     },
     {
       title: "興味関心",
+      section: "interests",
       icon: <BookOpen className="size-4 text-sky-500" />,
       fields: [
-        { label: "興味のある分野", section: "interests", key: "fields", value: analysis.interests.fields },
-        { label: "興味を持った理由", section: "interests", key: "reasons", value: analysis.interests.reasons },
-        { label: "深掘りしたテーマ", section: "interests", key: "deepDiveTopics", value: analysis.interests.deepDiveTopics },
+        { label: "興味のある分野", section: "interests", key: "fields", value: it.fields ?? [] },
+        { label: "興味を持った理由", section: "interests", key: "reasons", value: it.reasons ?? [] },
+        { label: "深掘りしたテーマ", section: "interests", key: "deepDiveTopics", value: it.deepDiveTopics ?? [] },
       ],
     },
     {
       title: "将来ビジョン",
+      section: "vision",
       icon: <Telescope className="size-4 text-purple-500" />,
       fields: [
-        { label: "短期目標", section: "vision", key: "shortTermGoal", value: analysis.vision.shortTermGoal },
-        { label: "長期ビジョン", section: "vision", key: "longTermVision", value: analysis.vision.longTermVision },
-        { label: "社会貢献", section: "vision", key: "socialContribution", value: analysis.vision.socialContribution },
-        { label: "この分野を選ぶ理由", section: "vision", key: "whyThisField", value: analysis.vision.whyThisField },
+        { label: "短期目標", section: "vision", key: "shortTermGoal", value: vi.shortTermGoal ?? "" },
+        { label: "長期ビジョン", section: "vision", key: "longTermVision", value: vi.longTermVision ?? "" },
+        { label: "社会貢献", section: "vision", key: "socialContribution", value: vi.socialContribution ?? "" },
+        { label: "この分野を選ぶ理由", section: "vision", key: "whyThisField", value: vi.whyThisField ?? "" },
       ],
     },
     {
       title: "アイデンティティ",
+      section: "identity",
       icon: <User className="size-4 text-indigo-500" />,
       fields: [
-        { label: "自己紹介文", section: "identity", key: "selfStatement", value: analysis.identity.selfStatement },
-        { label: "自分ストーリー", section: "identity", key: "uniqueNarrative", value: analysis.identity.uniqueNarrative },
-        { label: "AP接続ポイント", section: "identity", key: "apConnection", value: analysis.identity.apConnection },
+        { label: "自己紹介文", section: "identity", key: "selfStatement", value: id.selfStatement ?? "" },
+        { label: "自分ストーリー", section: "identity", key: "uniqueNarrative", value: id.uniqueNarrative ?? "" },
+        { label: "AP接続ポイント", section: "identity", key: "apConnection", value: id.apConnection ?? "" },
       ],
     },
     {
       title: "統合・言語化",
+      section: "synthesis",
       icon: <Sparkles className="size-4 text-red-500" />,
       fields: [
-        { label: "自己紹介文", section: "synthesis", key: "selfStatement", value: analysis.synthesis?.selfStatement ?? "" },
-        { label: "自分ストーリー", section: "synthesis", key: "coreNarrative", value: analysis.synthesis?.coreNarrative ?? "" },
+        { label: "自己紹介文", section: "synthesis", key: "selfStatement", value: sy.selfStatement ?? "" },
+        { label: "自分ストーリー", section: "synthesis", key: "coreNarrative", value: sy.coreNarrative ?? "" },
       ],
     },
   ];
@@ -236,6 +260,11 @@ export function AnalysisResultCard({
                 }}
               />
             ))}
+            {renderSectionExtra && (
+              <div className="border-t pt-3">
+                {renderSectionExtra(section.section, section.title)}
+              </div>
+            )}
           </CardContent>
         </Card>
       ))}

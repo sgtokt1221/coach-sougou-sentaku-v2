@@ -2,18 +2,20 @@
 
 /**
  * 管理者の生徒詳細ページに埋め込む Discover (自己分析) 閲覧セクション。
- * 旧名は「自己分析 + 志望校マッチング」 だったが、 AI マッチング機能の廃止に
- * 伴い 自己分析の木 単体に縮小。 GrowthTree をクリック無効で読み取り表示する。
+ * GrowthTree を読み取り表示しつつ、各ステップの全文表示＋ステップ別コメント/承認を提供する。
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Lightbulb, Target } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Lightbulb, Target, CheckCircle2, Circle, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { authFetch } from "@/lib/api/client";
 import { GrowthTree } from "@/components/self-analysis/GrowthTree";
 import { AnalysisResultCard } from "@/components/self-analysis/AnalysisResultCard";
-import type { SelfAnalysis } from "@/lib/types/self-analysis";
+import { InlineFeedbackButton } from "@/components/admin/InlineFeedbackButton";
+import type { SelfAnalysis, SelfAnalysisStepKey, StepApproval } from "@/lib/types/self-analysis";
 
 interface DiscoverSectionProps {
   studentId: string;
@@ -23,6 +25,8 @@ export function DiscoverSection({ studentId }: DiscoverSectionProps) {
   const [selfAnalysis, setSelfAnalysis] = useState<SelfAnalysis | null>(null);
   const [saError, setSaError] = useState<string | null>(null);
   const [loadingSa, setLoadingSa] = useState(true);
+  const [approvals, setApprovals] = useState<Partial<Record<SelfAnalysisStepKey, StepApproval>>>({});
+  const [togglingStep, setTogglingStep] = useState<SelfAnalysisStepKey | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -48,6 +52,46 @@ export function DiscoverSection({ studentId }: DiscoverSectionProps) {
     };
   }, [studentId]);
 
+  // 承認状況を取得
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await authFetch(`/api/admin/students/${studentId}/self-analysis/approval`);
+        if (!res.ok || cancelled) return;
+        const data = await res.json();
+        if (!cancelled) setApprovals(data.steps ?? {});
+      } catch {
+        /* 承認取得失敗は無視 */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [studentId]);
+
+  const toggleApproval = useCallback(
+    async (step: SelfAnalysisStepKey, next: boolean) => {
+      setTogglingStep(step);
+      try {
+        const res = await authFetch(`/api/admin/students/${studentId}/self-analysis/approval`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ step, approved: next }),
+        });
+        if (!res.ok) throw new Error();
+        const entry: StepApproval = await res.json();
+        setApprovals((prev) => ({ ...prev, [step]: entry }));
+        toast.success(next ? "承認しました" : "承認を取り消しました");
+      } catch {
+        toast.error("承認の更新に失敗しました");
+      } finally {
+        setTogglingStep(null);
+      }
+    },
+    [studentId],
+  );
+
   // 自己分析の完了状況と step データを GrowthTree 用に整形
   const saCompletedSteps = selfAnalysis?.completedSteps ?? 0;
   const saStepsData: Record<number, Record<string, unknown>> = {};
@@ -68,6 +112,8 @@ export function DiscoverSection({ studentId }: DiscoverSectionProps) {
       }
     });
   }
+
+  const hasSaData = !!selfAnalysis && saCompletedSteps > 0;
 
   return (
     <section className="space-y-6">
@@ -109,9 +155,54 @@ export function DiscoverSection({ studentId }: DiscoverSectionProps) {
         </CardContent>
       </Card>
 
-      {/* 自己分析の本文（統合・言語化を含む全項目）を読み取り専用で表示 */}
-      {selfAnalysis?.isComplete && (
-        <AnalysisResultCard analysis={selfAnalysis} readOnly />
+      {/* 各ステップの全文＋ステップ別コメント/承認（入力があれば未完了でも表示） */}
+      {hasSaData && (
+        <AnalysisResultCard
+          analysis={selfAnalysis!}
+          readOnly
+          renderSectionExtra={(sectionKey, sectionTitle) => {
+            const ap = approvals[sectionKey];
+            const approved = ap?.approved === true;
+            const busy = togglingStep === sectionKey;
+            return (
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  size="sm"
+                  variant={approved ? "outline" : "default"}
+                  disabled={busy}
+                  onClick={() => toggleApproval(sectionKey, !approved)}
+                  className={approved ? "gap-1 text-emerald-700 dark:text-emerald-300" : "gap-1"}
+                >
+                  {busy ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : approved ? (
+                    <CheckCircle2 className="size-3.5" />
+                  ) : (
+                    <Circle className="size-3.5" />
+                  )}
+                  {approved ? "承認済み（取消）" : "承認する"}
+                </Button>
+                {approved && ap?.at && (
+                  <span className="text-[11px] text-muted-foreground">
+                    {ap.byName || "コーチ"} が承認
+                  </span>
+                )}
+                <InlineFeedbackButton
+                  studentId={studentId}
+                  type="self-analysis"
+                  targetId={sectionKey}
+                  targetLabel={`自己分析: ${sectionTitle}`}
+                  compact
+                  reference={{
+                    kind: "self-analysis",
+                    label: `自己分析: ${sectionTitle}`,
+                    href: "/student/self-analysis/result",
+                  }}
+                />
+              </div>
+            );
+          }}
+        />
       )}
     </section>
   );
