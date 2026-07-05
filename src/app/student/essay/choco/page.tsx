@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Sparkles,
   FileText,
@@ -9,6 +9,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { ManuscriptEditor } from "@/components/essay/ManuscriptEditor";
 import { ChocoPassagePanel } from "@/components/essay/ChocoPassagePanel";
@@ -27,6 +28,14 @@ type Result = {
 };
 
 type LeftView = "passage" | "coach";
+
+/** 志望校解決結果（/api/universities/resolve は faculty 単位で flatten 済み） */
+type ResolvedUni = {
+  universityId: string;
+  facultyId: string;
+  universityName: string;
+  facultyName: string;
+};
 
 function pickRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
@@ -47,6 +56,34 @@ export default function ChocoPage() {
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [leftView, setLeftView] = useState<LeftView>("passage");
+
+  // 志望校を解決し、AIコーチ/AP参照へ universityId/facultyId を渡す（essay/new と同じ経路）
+  const { userProfile } = useAuth();
+  const targetUniversities =
+    ((userProfile as Record<string, unknown> | null)?.targetUniversities as string[] | undefined) ?? [];
+  const [resolved, setResolved] = useState<ResolvedUni[]>([]);
+  const [selectedCompoundId, setSelectedCompoundId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (targetUniversities.length === 0) return;
+    let active = true;
+    fetch(`/api/universities/resolve?ids=${targetUniversities.join(",")}`)
+      .then((r) => (r.ok ? r.json() : { resolved: [] }))
+      .then((d) => { if (active) setResolved(d.resolved ?? []); })
+      .catch(() => { if (active) setResolved([]); });
+    return () => { active = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [targetUniversities.join(",")]);
+
+  useEffect(() => {
+    if (!selectedCompoundId && resolved.length > 0) {
+      setSelectedCompoundId(`${resolved[0].universityId}:${resolved[0].facultyId}`);
+    }
+  }, [resolved, selectedCompoundId]);
+
+  const selectedUni = resolved.find(
+    (r) => `${r.universityId}:${r.facultyId}` === selectedCompoundId,
+  );
 
   const candidates = useMemo(() => {
     const byFaculty = getChocoPassagesByFaculty(facultyKey);
@@ -130,8 +167,28 @@ export default function ChocoPage() {
             {leftView === "passage" ? (
               <ChocoPassagePanel paragraphs={passage.paragraphs} blankIndex={blankIndex} />
             ) : (
-              <div className="h-[70vh]">
-                <EssayCoachPanelBody topic={passage.themeTitle} draft={text} />
+              <div className="flex h-[70vh] flex-col">
+                {resolved.length > 0 && (
+                  <select
+                    className="mb-2 w-full rounded-lg border bg-background p-2 text-xs"
+                    value={selectedCompoundId ?? ""}
+                    onChange={(e) => setSelectedCompoundId(e.target.value)}
+                  >
+                    {resolved.map((r) => (
+                      <option key={`${r.universityId}:${r.facultyId}`} value={`${r.universityId}:${r.facultyId}`}>
+                        {r.universityName} {r.facultyName}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                <div className="min-h-0 flex-1">
+                  <EssayCoachPanelBody
+                    topic={passage.themeTitle}
+                    draft={text}
+                    universityId={selectedUni?.universityId}
+                    facultyId={selectedUni?.facultyId}
+                  />
+                </div>
               </div>
             )}
           </div>
