@@ -1,11 +1,19 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import {
+  Sparkles,
+  FileText,
+  PenLine,
+  MessageSquare,
+  ArrowRight,
+} from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import { Button } from "@/components/ui/button";
 import { ManuscriptEditor } from "@/components/essay/ManuscriptEditor";
 import { ChocoPassagePanel } from "@/components/essay/ChocoPassagePanel";
 import { ChocoResultView } from "@/components/essay/ChocoResultView";
+import { EssayCoachPanelBody } from "@/components/essay/EssayCoachPanel";
 import { CHOCO_FACULTIES, getChocoPassagesByFaculty, ALL_CHOCO_PASSAGES } from "@/data/choco-passages";
 import type { ChocoPassage, ChocoScores, ChocoFeedback, ChocoRole } from "@/lib/types/choco";
 
@@ -18,9 +26,17 @@ type Result = {
   blankIndex: number;
 };
 
+type LeftView = "passage" | "coach";
+
 function pickRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
+
+const HOW_IT_WORKS: { Icon: typeof FileText; title: string; desc: string }[] = [
+  { Icon: FileText, title: "本文が出る", desc: "800字の小論文" },
+  { Icon: PenLine, title: "1段落書く", desc: "空いた段落だけ" },
+  { Icon: MessageSquare, title: "AIが添削", desc: "3軸＋赤ペン" },
+];
 
 export default function ChocoPage() {
   const [facultyKey, setFacultyKey] = useState(CHOCO_FACULTIES[0].key);
@@ -30,6 +46,7 @@ export default function ChocoPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [leftView, setLeftView] = useState<LeftView>("passage");
 
   const candidates = useMemo(() => {
     const byFaculty = getChocoPassagesByFaculty(facultyKey);
@@ -43,6 +60,7 @@ export default function ChocoPage() {
     setText("");
     setResult(null);
     setError(null);
+    setLeftView("passage");
   }
 
   async function submit() {
@@ -67,24 +85,62 @@ export default function ChocoPage() {
     }
   }
 
+  // 結果
   if (result && passage) {
     return (
       <div className="max-w-3xl mx-auto p-4 space-y-4">
         <h1 className="text-lg font-bold">ちょこ添削の結果</h1>
         <ChocoResultView {...result} />
-        <div className="flex gap-2"><Button onClick={startNew}>もう一問やる</Button></div>
+        <div className="flex gap-2">
+          <Button onClick={startNew}>もう一問やる</Button>
+        </div>
       </div>
     );
   }
 
+  // 記入（2カラム: 左=本文/AIコーチ切替 / 右=入力）
   if (passage) {
     return (
       <div className="max-w-7xl mx-auto p-4">
         <div className="lg:grid lg:grid-cols-[minmax(22rem,28rem)_minmax(0,1fr)] lg:gap-6 lg:items-start">
-          <ChocoPassagePanel paragraphs={passage.paragraphs} blankIndex={blankIndex} sticky />
+          {/* 左: 本文 ⇄ AIコーチ を切り替え */}
+          <div className="lg:sticky lg:top-4">
+            <div className="mb-2 inline-flex rounded-lg border bg-muted/40 p-1">
+              {(
+                [
+                  { id: "passage" as const, label: "本文", Icon: FileText },
+                  { id: "coach" as const, label: "AIコーチ", Icon: MessageSquare },
+                ]
+              ).map(({ id, label, Icon }) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setLeftView(id)}
+                  className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors cursor-pointer ${
+                    leftView === id
+                      ? "bg-teal-500 text-white shadow-sm"
+                      : "text-muted-foreground hover:bg-background/60"
+                  }`}
+                >
+                  <Icon className="size-4" />
+                  {label}
+                </button>
+              ))}
+            </div>
+            {leftView === "passage" ? (
+              <ChocoPassagePanel paragraphs={passage.paragraphs} blankIndex={blankIndex} />
+            ) : (
+              <div className="h-[70vh]">
+                <EssayCoachPanelBody topic={passage.themeTitle} draft={text} />
+              </div>
+            )}
+          </div>
+
+          {/* 右: 入力 */}
           <div className="lg:min-w-0 space-y-3 mt-4 lg:mt-0">
             <p className="text-sm text-muted-foreground">
               左の本文の空欄（{passage.paragraphs.length}段落中 {blankIndex + 1}段落目）を書いてみよう。
+              困ったら「AIコーチ」に切り替えて相談できます。
             </p>
             <ManuscriptEditor value={text} onChange={setText} maxLength={300} placeholder="この段落を書いてみよう..." />
             {error && <p className="text-sm text-rose-600">{error}</p>}
@@ -100,19 +156,68 @@ export default function ChocoPage() {
     );
   }
 
+  // 開始
   return (
-    <div className="max-w-xl mx-auto p-4 space-y-4">
-      <h1 className="text-lg font-bold">ちょこ添削</h1>
-      <p className="text-sm text-muted-foreground">
-        完成した小論文のうち、1段落だけを書いてみる練習です。前後の文章がお手本になります。
-      </p>
-      <div>
-        <label className="text-sm font-medium">分野</label>
-        <select className="mt-1 w-full rounded-lg border p-2 text-sm bg-background" value={facultyKey} onChange={(e) => setFacultyKey(e.target.value)}>
-          {CHOCO_FACULTIES.map((f) => <option key={f.key} value={f.key}>{f.label}</option>)}
-        </select>
+    <div className="max-w-2xl mx-auto p-4 sm:p-6">
+      {/* ヒーロー */}
+      <div className="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-teal-500 to-emerald-600 p-6 sm:p-8 text-white shadow-sm">
+        <div className="relative z-10">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-medium backdrop-blur">
+            <Sparkles className="size-3.5" />
+            1段落だけの小論文練習
+          </div>
+          <h1 className="mt-3 text-2xl sm:text-3xl font-bold tracking-tight">ちょこ添削</h1>
+          <p className="mt-2 max-w-md text-sm sm:text-base leading-relaxed text-white/85">
+            完成した小論文のうち、空いた1段落だけをあなたが書きます。前後の文章がそのままお手本。
+            気軽に、でもしっかり力がつきます。
+          </p>
+        </div>
+        <div className="pointer-events-none absolute -right-10 -top-10 size-44 rounded-full bg-white/10" />
+        <div className="pointer-events-none absolute -right-2 bottom-0 size-24 rounded-full bg-white/10" />
       </div>
-      <Button onClick={startNew}>はじめる</Button>
+
+      {/* 使い方3ステップ */}
+      <div className="mt-4 grid grid-cols-3 gap-2 sm:gap-3">
+        {HOW_IT_WORKS.map(({ Icon, title, desc }, i) => (
+          <div key={i} className="rounded-xl border bg-card p-3 text-center">
+            <div className="mx-auto flex size-9 items-center justify-center rounded-full bg-teal-50 text-teal-600 dark:bg-teal-950/40 dark:text-teal-300">
+              <Icon className="size-4" />
+            </div>
+            <div className="mt-2 text-sm font-medium">{title}</div>
+            <div className="text-[11px] text-muted-foreground">{desc}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* 分野えらび */}
+      <div className="mt-6">
+        <div className="text-sm font-medium">分野をえらぶ</div>
+        <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {CHOCO_FACULTIES.map((f) => (
+            <button
+              key={f.key}
+              type="button"
+              onClick={() => setFacultyKey(f.key)}
+              className={`rounded-xl border px-3 py-3 text-sm font-medium transition-colors cursor-pointer ${
+                facultyKey === f.key
+                  ? "border-teal-500 bg-teal-50 text-teal-800 ring-1 ring-teal-500 dark:bg-teal-950/40 dark:text-teal-200"
+                  : "bg-card hover:border-teal-300 hover:bg-teal-50/40"
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <Button
+        onClick={startNew}
+        size="lg"
+        className="mt-6 w-full gap-2 bg-teal-500 hover:bg-teal-600 text-white"
+      >
+        はじめる
+        <ArrowRight className="size-4" />
+      </Button>
     </div>
   );
 }

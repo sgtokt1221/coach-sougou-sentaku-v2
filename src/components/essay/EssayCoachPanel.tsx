@@ -165,7 +165,7 @@ export function EssayCoachPanel(props: EssayCoachPanelProps) {
     <>
       {/* デスクトップ: 左列として常設 (2 カラムレイアウトの左) */}
       <div className="hidden lg:flex lg:flex-col lg:sticky lg:top-4 lg:h-[calc(100vh-2rem)] lg:min-h-0">
-        <PanelBody {...props} />
+        <EssayCoachPanelBody {...props} />
       </div>
 
       {/* モバイル: FAB + Sheet (lg 未満) */}
@@ -186,7 +186,7 @@ export function EssayCoachPanel(props: EssayCoachPanelProps) {
             <SheetTitle>執筆サポート</SheetTitle>
           </SheetHeader>
           <div className="flex-1 min-h-0 flex flex-col">
-            <PanelBody {...props} />
+            <EssayCoachPanelBody {...props} />
           </div>
         </SheetContent>
       </Sheet>
@@ -194,7 +194,7 @@ export function EssayCoachPanel(props: EssayCoachPanelProps) {
   );
 }
 
-function PanelBody({
+export function EssayCoachPanelBody({
   topic,
   draft,
   universityId,
