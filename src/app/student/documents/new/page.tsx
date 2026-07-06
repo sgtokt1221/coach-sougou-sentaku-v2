@@ -569,6 +569,7 @@ export default function NewDocumentPage() {
                         </h3>
                         <Textarea
                           value={section.content}
+                          placeholder={section.placeholder}
                           onFocus={() => setFocusedSectionId(section.id)}
                           onChange={(e) => {
                             const updated = [...draftResult.sections];

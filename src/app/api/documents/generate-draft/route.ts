@@ -70,7 +70,9 @@ export async function POST(request: NextRequest) {
         sections: framework.sections.map((s) => ({
           id: s.id,
           title: s.title,
-          content: `【${s.guidingQuestion}】\n${s.placeholder ?? "ここに記入してください。"}`,
+          // 例文は value ではなく placeholder に置き、入力を始めたら消えるようにする
+          content: "",
+          placeholder: `【${s.guidingQuestion}】\n${s.placeholder ?? "ここに記入してください。"}`,
         })),
       };
       return NextResponse.json(result);
@@ -115,6 +117,7 @@ export async function POST(request: NextRequest) {
         id: s.id,
         title: aiSections[i]?.title ?? s.title,
         content: aiSections[i]?.content ?? "",
+        placeholder: `【${s.guidingQuestion}】\n${s.placeholder ?? "ここに記入してください。"}`,
       }));
       const result: DraftGenerateResponse = {
         draft: parsed.draft || "",
