@@ -119,20 +119,25 @@ function ReferenceCard({ reference }: { reference: ChatReference }) {
   const safe = isSafeInternalPath(reference.href);
   const isComment = reference.kind === "essay-comment";
   const isSelfAnalysis = reference.kind === "self-analysis";
-  const headerLabel = isSelfAnalysis
-    ? "自己分析"
-    : isComment
-      ? "コメント"
-      : reference.kind === "homework"
-        ? "宿題"
-        : "問題";
-  const buttonLabel = isSelfAnalysis
-    ? "自己分析を見る"
-    : isComment
-      ? "コメントを読む"
-      : reference.kind === "homework"
-        ? "取り組む"
-        : "解く";
+  const isDocument = reference.kind === "document";
+  const headerLabel = isDocument
+    ? "出願書類"
+    : isSelfAnalysis
+      ? "自己分析"
+      : isComment
+        ? "コメント"
+        : reference.kind === "homework"
+          ? "宿題"
+          : "問題";
+  const buttonLabel = isDocument
+    ? "書類を見る"
+    : isSelfAnalysis
+      ? "自己分析を見る"
+      : isComment
+        ? "コメントを読む"
+        : reference.kind === "homework"
+          ? "取り組む"
+          : "解く";
   return (
     <div className="mt-1.5 rounded-lg border border-primary/30 bg-primary/5 p-2.5">
       <div className="flex items-center gap-1.5 text-[11px] font-semibold text-primary">

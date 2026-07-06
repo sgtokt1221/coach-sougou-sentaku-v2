@@ -31,12 +31,16 @@ export async function GET(
       }
     }
 
-    const docRef = await adminDb.doc(`users/${studentId}/documents/${docId}`).get();
+    // 実データはグローバル `documents`。userId が対象生徒と一致することを確認。
+    const docRef = await adminDb.doc(`documents/${docId}`).get();
     if (!docRef.exists) {
       return NextResponse.json({ error: "書類が見つかりません" }, { status: 404 });
     }
 
     const data = docRef.data()!;
+    if (data.userId !== studentId) {
+      return NextResponse.json({ error: "書類が見つかりません" }, { status: 404 });
+    }
     const latestVersion = data.versions?.length > 0
       ? data.versions[data.versions.length - 1]
       : null;
@@ -51,6 +55,7 @@ export async function GET(
       wordCount: data.wordCount ?? 0,
       targetWordCount: data.targetWordCount ?? undefined,
       status: data.status ?? "draft",
+      review: data.review ?? undefined,
       aiScore: feedback
         ? {
             apAlignment: feedback.apAlignmentScore,

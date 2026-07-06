@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import type { Document, DocumentFeedback, DocumentStatus } from "@/lib/types/document";
 import { DOCUMENT_STATUS_LABELS } from "@/lib/types/document";
+import { DocumentReviewBadge } from "@/components/documents/DocumentReviewBadge";
 
 const STATUS_VARIANT: Record<DocumentStatus, "default" | "secondary" | "outline" | "destructive"> = {
   draft: "outline",
@@ -190,12 +191,25 @@ export default function DocumentEditorPage() {
             <Badge variant={STATUS_VARIANT[doc.status]}>
               {DOCUMENT_STATUS_LABELS[doc.status]}
             </Badge>
+            <DocumentReviewBadge state={doc.review?.state} />
             <span className="text-xs text-muted-foreground">
               {doc.universityName} {doc.facultyName}
             </span>
           </div>
         </div>
       </div>
+
+      {/* 差し戻し時の案内バナー（差し戻し理由の本文はチャットに届く） */}
+      {doc.review?.state === "revision_requested" && (
+        <div className="rounded-lg border border-rose-300 bg-rose-50 p-3 text-sm text-rose-800 dark:border-rose-800 dark:bg-rose-950/30 dark:text-rose-200">
+          コーチから差し戻されました。チャットのコメントを確認して修正しましょう。修正・保存すると自動で「再確認待ち」になります。
+        </div>
+      )}
+      {doc.review?.state === "approved" && (
+        <div className="rounded-lg border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200">
+          この書類はコーチに承認されました。
+        </div>
+      )}
 
       {/* Main content - responsive layout (mobile only) */}
       <div className="lg:hidden space-y-4">

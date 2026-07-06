@@ -10,6 +10,7 @@ import { FileText, Plus, Clock, CheckCircle, AlertTriangle, FolderOpen, ChevronD
 import { EmptyState } from "@/components/shared/EmptyState";
 import type { Document, DocumentStatus } from "@/lib/types/document";
 import { DOCUMENT_STATUS_LABELS } from "@/lib/types/document";
+import { DocumentReviewBadge } from "@/components/documents/DocumentReviewBadge";
 import { useAuthSWR } from "@/lib/api/swr";
 
 const STATUS_VARIANT: Record<DocumentStatus, "default" | "secondary" | "outline" | "destructive"> = {
@@ -167,6 +168,7 @@ export default function DocumentsPage() {
                               <Badge variant={STATUS_VARIANT[doc.status]}>
                                 {DOCUMENT_STATUS_LABELS[doc.status]}
                               </Badge>
+                              <DocumentReviewBadge state={doc.review?.state} />
                             </div>
                             <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
                               <span>

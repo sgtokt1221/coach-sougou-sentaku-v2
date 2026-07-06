@@ -13,12 +13,15 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { FileText, Eye, Loader2 } from "lucide-react";
+import { FileText, Eye, Loader2, CheckCircle2, RotateCcw } from "lucide-react";
+import { toast } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
 import { useAuthSWR } from "@/lib/api/swr";
 import { authFetch } from "@/lib/api/client";
 import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
 import { InlineFeedbackButton } from "@/components/admin/InlineFeedbackButton";
-import type { DocumentStatus } from "@/lib/types/document";
+import { DocumentReviewBadge } from "@/components/documents/DocumentReviewBadge";
+import type { DocumentStatus, DocumentReview } from "@/lib/types/document";
 
 interface DocumentListItem {
   id: string;
@@ -28,6 +31,7 @@ interface DocumentListItem {
   wordCount: number;
   targetWordCount?: number;
   status: DocumentStatus;
+  review?: DocumentReview;
   deadline?: string;
   updatedAt: string;
   aiScore?: {
@@ -46,6 +50,7 @@ interface DocumentDetail {
   wordCount: number;
   targetWordCount?: number;
   status: DocumentStatus;
+  review?: DocumentReview;
   aiScore?: {
     apAlignment: number;
     structure: number;
@@ -83,7 +88,7 @@ function getDeadlineBadge(deadline?: string) {
 }
 
 export function DocumentsSection({ studentId }: { studentId: string }) {
-  const { data, isLoading, error } = useAuthSWR<DocumentListItem[]>(
+  const { data, isLoading, error, mutate } = useAuthSWR<DocumentListItem[]>(
     `/api/admin/students/${studentId}/documents`
   );
   const documents = data ?? [];
@@ -91,6 +96,57 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailDoc, setDetailDoc] = useState<DocumentDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [reviewMsg, setReviewMsg] = useState("");
+  const [reviewBusy, setReviewBusy] = useState<"approved" | "revision_requested" | null>(null);
+
+  async function submitReview(state: "approved" | "revision_requested") {
+    if (!detailDoc) return;
+    if (state === "revision_requested" && !reviewMsg.trim()) {
+      toast.error("差し戻しにはコメント（理由）を入力してください");
+      return;
+    }
+    setReviewBusy(state);
+    try {
+      const message =
+        reviewMsg.trim() || (state === "approved" ? "この書類を承認しました。" : "");
+      const targetLabel = `${detailDoc.universityName} ${detailDoc.type}`;
+      // 1) コメントを送信（チャット＋通知）
+      await authFetch(`/api/admin/students/${studentId}/feedback`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "document",
+          targetId: detailDoc.id,
+          targetLabel,
+          message,
+          reference: {
+            kind: "document",
+            label: targetLabel,
+            href: `/student/documents/${detailDoc.id}`,
+          },
+        }),
+      });
+      // 2) レビュー状態を更新
+      const res = await authFetch(
+        `/api/admin/students/${studentId}/documents/${detailDoc.id}/review`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ state }),
+        },
+      );
+      if (!res.ok) throw new Error();
+      const review: DocumentReview = await res.json();
+      setDetailDoc({ ...detailDoc, review });
+      setReviewMsg("");
+      mutate();
+      toast.success(state === "approved" ? "承認しました" : "差し戻しました");
+    } catch {
+      toast.error("処理に失敗しました");
+    } finally {
+      setReviewBusy(null);
+    }
+  }
 
   async function openDetail(docId: string) {
     setDetailOpen(true);
@@ -190,9 +246,12 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
                           {new Date(doc.updatedAt).toLocaleDateString("ja-JP")}
                         </td>
                         <td className="px-4 py-3 text-center">
-                          <Badge variant={statusCfg.variant} className="text-[10px]">
-                            {statusCfg.label}
-                          </Badge>
+                          <div className="flex flex-col items-center gap-1">
+                            <Badge variant={statusCfg.variant} className="text-[10px]">
+                              {statusCfg.label}
+                            </Badge>
+                            <DocumentReviewBadge state={doc.review?.state} />
+                          </div>
                         </td>
                         <td className="px-4 py-3 text-center">
                           <Button
@@ -268,7 +327,53 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
 
               <Separator />
 
-              {/* Feedback */}
+              {/* レビュー: 承認 / 差し戻し（コメント付き→生徒チャットへ通知） */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-semibold">レビュー</h3>
+                  <DocumentReviewBadge state={detailDoc.review?.state} />
+                </div>
+                <Textarea
+                  value={reviewMsg}
+                  onChange={(e) => setReviewMsg(e.target.value)}
+                  placeholder="コメント（差し戻しは必須・承認は任意）。生徒のチャットに届きます。"
+                  rows={3}
+                  className="text-sm"
+                />
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    className="gap-1"
+                    disabled={reviewBusy !== null}
+                    onClick={() => submitReview("approved")}
+                  >
+                    {reviewBusy === "approved" ? (
+                      <Loader2 className="size-3.5 animate-spin" />
+                    ) : (
+                      <CheckCircle2 className="size-3.5" />
+                    )}
+                    承認
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1 text-rose-600 dark:text-rose-400"
+                    disabled={reviewBusy !== null}
+                    onClick={() => submitReview("revision_requested")}
+                  >
+                    {reviewBusy === "revision_requested" ? (
+                      <Loader2 className="size-3.5 animate-spin" />
+                    ) : (
+                      <RotateCcw className="size-3.5" />
+                    )}
+                    差し戻し
+                  </Button>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* 自由コメント（レビューと無関係な連絡用） */}
               <InlineFeedbackButton
                 studentId={studentId}
                 type="document"

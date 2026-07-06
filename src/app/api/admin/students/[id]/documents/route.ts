@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
 import { adminDb } from "@/lib/firebase/admin";
-import type { DocumentStatus } from "@/lib/types/document";
+import type { DocumentStatus, DocumentReview } from "@/lib/types/document";
 
 interface DocumentListItem {
   id: string;
@@ -12,6 +12,7 @@ interface DocumentListItem {
   wordCount: number;
   targetWordCount?: number;
   status: DocumentStatus;
+  review?: DocumentReview;
   deadline?: string;
   updatedAt: string;
   aiScore?: {
@@ -48,8 +49,11 @@ export async function GET(
       }
     }
 
+    // 書類の実データはグローバル `documents` に存在する（userId で絞る。
+    // 生徒側 /api/documents と同一クエリ＝複合インデックスは既存）。
     const snapshot = await adminDb
-      .collection(`users/${studentId}/documents`)
+      .collection("documents")
+      .where("userId", "==", studentId)
       .orderBy("updatedAt", "desc")
       .get();
 
@@ -68,8 +72,12 @@ export async function GET(
         wordCount: data.wordCount ?? 0,
         targetWordCount: data.targetWordCount ?? undefined,
         status: data.status ?? "draft",
+        review: (data.review as DocumentReview) ?? undefined,
         deadline: data.deadline ?? undefined,
-        updatedAt: data.updatedAt?.toDate?.()?.toISOString() ?? new Date().toISOString(),
+        updatedAt:
+          typeof data.updatedAt === "string"
+            ? data.updatedAt
+            : data.updatedAt?.toDate?.()?.toISOString() ?? new Date().toISOString(),
         aiScore: feedback
           ? {
               apAlignment: feedback.apAlignmentScore,

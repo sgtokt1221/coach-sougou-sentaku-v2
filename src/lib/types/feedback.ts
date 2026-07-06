@@ -21,7 +21,8 @@ export type ChatReferenceKind =
   | 'custom'
   | 'homework'
   | 'essay-comment'
-  | 'self-analysis';
+  | 'self-analysis'
+  | 'document';
 
 /** メッセージに添える問題参照（カード表示） */
 export interface ChatReference {

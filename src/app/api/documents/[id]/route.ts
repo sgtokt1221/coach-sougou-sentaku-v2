@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireFeature } from "@/lib/api/subscription";
 import { adminDb, verifyAuthToken } from "@/lib/firebase/admin";
 import { FieldValue } from "firebase-admin/firestore";
+import type { DocumentReview } from "@/lib/types/document";
 
 /**
  * 指定書類の詳細を取得する。
@@ -119,6 +120,15 @@ export async function PUT(
     if (body.targetWordCount !== undefined)
       updates.targetWordCount = body.targetWordCount;
     if (body.deadline !== undefined) updates.deadline = body.deadline;
+
+    // 本文を修正したら、承認/差し戻し済みのレビュー状態は「再確認待ち」に戻す
+    // （管理者が承認↔差し戻しを繰り返せるようにするため）。
+    if (body.content !== undefined) {
+      const existingReview = existing.data()?.review as DocumentReview | undefined;
+      if (existingReview && existingReview.state !== "resubmitted") {
+        updates.review = { state: "resubmitted", at: now };
+      }
+    }
 
     if (newVersion) {
       updates.versions = FieldValue.arrayUnion(newVersion);
