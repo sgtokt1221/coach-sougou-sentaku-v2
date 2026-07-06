@@ -272,8 +272,8 @@ export default function AdminStudentsPage() {
       {/* Search, Filter & Sort */}
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-1 items-center gap-3 max-w-2xl">
-            <div className="relative flex-1 max-w-md">
+          <div className="flex flex-1 flex-wrap items-center gap-3 max-w-2xl min-w-0">
+            <div className="relative flex-1 max-w-md min-w-0">
               <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="名前・メールで検索..."
@@ -300,8 +300,8 @@ export default function AdminStudentsPage() {
               </SelectContent>
             </Select>
           </div>
-          <div className="flex items-center gap-2">
-            <ArrowUpDown className="size-4 text-muted-foreground" />
+          <div className="flex flex-wrap items-center gap-2">
+            <ArrowUpDown className="size-4 shrink-0 text-muted-foreground" />
             {sortOptions.map((opt) => (
               <Button
                 key={opt.key}
@@ -316,9 +316,9 @@ export default function AdminStudentsPage() {
         </div>
 
         {/* Status Filter */}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-medium text-muted-foreground">ステータス:</span>
-          <div className="flex items-center gap-1 p-1 bg-muted rounded-lg">
+          <div className="flex max-w-full items-center gap-1 overflow-x-auto p-1 bg-muted rounded-lg">
             <Button
               variant={statusFilter === "all" ? "default" : "ghost"}
               size="sm"
