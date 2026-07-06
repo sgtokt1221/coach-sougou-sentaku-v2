@@ -29,7 +29,24 @@ function getAdminApp(): App | null {
 
 const adminApp = getAdminApp();
 export const adminAuth = adminApp ? getAuth(adminApp) : null;
-export const adminDb = adminApp ? getFirestore(adminApp) : null;
+
+/**
+ * Firestore を取得しつつ ignoreUndefinedProperties を有効化する。
+ * これを設定しないと、書き込みデータに undefined フィールドが1つでもあると
+ * Firestore が例外を投げ、API が 500 になる（例: 任意項目 deadline 未指定での書類作成）。
+ */
+function initAdminDb(app: App | null) {
+  if (!app) return null;
+  const db = getFirestore(app);
+  try {
+    db.settings({ ignoreUndefinedProperties: true });
+  } catch {
+    // 既に settings 済み（ホットリロード等）なら無視
+  }
+  return db;
+}
+
+export const adminDb = initAdminDb(adminApp);
 
 export async function verifyAuthToken(
   request: Request
