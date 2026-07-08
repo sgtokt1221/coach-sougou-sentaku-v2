@@ -46,6 +46,12 @@ function todayStr(): string {
 const TYPE_META: Record<LogicDrillType, { icon: typeof ScanSearch; tagline: string }> = {
   flaw_finder: { icon: ScanSearch, tagline: "意見文の欠陥（飛躍・すり替え等）を見抜いて直す" },
   quick_logic: { icon: Timer, tagline: "お題に賛否＋理由3つを制限時間で組み立てる" },
+  skeleton: { icon: ClipboardList, tagline: "主張・根拠・具体例・反論応答の4枠で骨組みを作る" },
+  abstraction: { icon: ArrowRight, tagline: "抽象と具体を行き来して言い換える" },
+  rebuttal: { icon: PenLine, tagline: "最強の反論を想定し、それに応答する" },
+  compare: { icon: ScanSearch, tagline: "2つの選択肢を対比して理由つきで選ぶ" },
+  question_framing: { icon: Sparkles, tagline: "曖昧なテーマから論じるべき問いを立てる" },
+  alexandra: { icon: Timer, tagline: "係り受けを正確に読み取る4択問題" },
 };
 
 const HOW_IT_WORKS: { Icon: typeof ClipboardList; title: string; desc: string }[] = [
