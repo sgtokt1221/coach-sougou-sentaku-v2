@@ -3,6 +3,7 @@ import type { Session } from "@/lib/types/session";
 import { shouldMarkEnded } from "@/lib/types/session";
 import { generateSessionSummary } from "@/lib/ai/generate-session-summary";
 import { requireRole } from "@/lib/api/auth";
+import { assertSessionAccess } from "@/lib/api/session-auth";
 import { sanitizeForStudent } from "@/lib/api/session-sanitize";
 
 export async function GET(
@@ -63,6 +64,9 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireRole(request, ["admin", "teacher", "superadmin"]);
+  if (auth instanceof NextResponse) return auth;
+
   const { id } = await params;
   const updates = await request.json();
 
@@ -79,6 +83,13 @@ export async function PATCH(
     }
 
     const prevData = snap.data() as Session;
+    // 認可: 自塾の担当/管理者のみ編集可（管理者は自塾内なら代行可）
+    const denied = await assertSessionAccess(
+      adminDb,
+      { ...prevData, id: snap.id } as Session,
+      auth,
+    );
+    if (denied) return denied;
     const updatePayload: Record<string, unknown> = { ...updates, updatedAt: new Date().toISOString() };
 
     // セッション完了時にサマリーを自動生成
