@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 import { getOrgMemberAdminUids } from "@/lib/api/organization-scope";
 import { sanitizeForStudent } from "@/lib/api/session-sanitize";
+import { shouldMarkEnded } from "@/lib/types/session";
 import type { Session, SessionType } from "@/lib/types/session";
 
 const TYPE_LABEL: Record<SessionType, string> = {
@@ -94,6 +95,30 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Failed to fetch sessions:", error);
     return NextResponse.json({ error: "セッションの取得に失敗しました" }, { status: 500 });
+  }
+
+  // 終了予定時刻を過ぎた予定/実施中は「終了(ended)」へ遅延更新（実データも書き換え）。
+  // スコープ/フィルタより前に行うことで status=scheduled 等のフィルタからも正しく外れる。
+  {
+    const nowMs = Date.now();
+    const toEnd = sessions.filter((s) => shouldMarkEnded(s, nowMs));
+    if (toEnd.length > 0) {
+      const nowIso = new Date().toISOString();
+      const batch = adminDb.batch();
+      for (const s of toEnd) {
+        batch.update(adminDb.collection("sessions").doc(s.id), {
+          status: "ended",
+          updatedAt: nowIso,
+        });
+        s.status = "ended";
+        s.updatedAt = nowIso;
+      }
+      try {
+        await batch.commit();
+      } catch (e) {
+        console.warn("[sessions] ended 遷移の保存に失敗:", e);
+      }
+    }
   }
 
   // ロールベーススコーピング
