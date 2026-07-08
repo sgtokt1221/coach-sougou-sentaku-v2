@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
+import { assertSessionAccess } from "@/lib/api/session-auth";
 import { adminDb } from "@/lib/firebase/admin";
 import type { Session } from "@/lib/types/session";
 import type { ResearchEvalResult } from "@/lib/ai/prompts/research";
@@ -43,13 +44,9 @@ export async function GET(
       return NextResponse.json({ current: null, previousNextItems: [] });
     }
 
-    const studentSnap = await adminDb.doc(`users/${studentId}`).get();
-    if (role !== "superadmin" && studentSnap.data()?.managedBy !== uid) {
-      return NextResponse.json(
-        { error: "この生徒のセッションを閲覧する権限がありません" },
-        { status: 403 }
-      );
-    }
+    // セッション認可（自塾の admin は代行可、superadmin は全許可）
+    const denied = await assertSessionAccess(adminDb, session, { uid, role });
+    if (denied) return denied;
 
     const snap = await adminDb
       .collection("users")

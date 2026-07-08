@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireRole } from "@/lib/api/auth";
+import { requireRole, scopeByOrganization } from "@/lib/api/auth";
 import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
 import { adminDb } from "@/lib/firebase/admin";
 import type { Activity } from "@/lib/types/activity";
@@ -24,17 +24,22 @@ export async function GET(
   }
 
   try {
-    if (role !== "superadmin") {
-      const studentDoc = await adminDb.doc(`users/${studentId}`).get();
-      const sd = studentDoc.data();
-      if (
-        !studentDoc.exists ||
-        (sd?.managedBy !== callerUid &&
-          !getAssignedTeacherIds(sd).includes(callerUid))
-      ) {
-        return NextResponse.json({ error: "権限がありません" }, { status: 403 });
-      }
+    const studentDoc = await adminDb.doc(`users/${studentId}`).get();
+    if (!studentDoc.exists) {
+      return NextResponse.json({ error: "生徒が見つかりません" }, { status: 404 });
     }
+    const denied = await scopeByOrganization({
+      requesterUid: callerUid,
+      requesterRole: role,
+      studentUid: studentId,
+      studentData: {
+        managedBy: studentDoc.data()?.managedBy,
+        organizationId: studentDoc.data()?.organizationId,
+        assignedTeacherIds: getAssignedTeacherIds(studentDoc.data()),
+      },
+      allowAssignedTeacher: true,
+    });
+    if (denied) return denied;
 
     const docRef = await adminDb
       .doc(`users/${studentId}/activities/${activityId}`)

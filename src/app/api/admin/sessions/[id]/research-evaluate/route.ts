@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
+import { assertSessionAccess } from "@/lib/api/session-auth";
 import { adminDb } from "@/lib/firebase/admin";
 import {
   runResearchEvaluation,
@@ -37,15 +38,12 @@ export async function POST(
       return NextResponse.json({ error: "生徒が設定されていません" }, { status: 400 });
     }
 
+    // セッション認可（自塾の admin は代行可、superadmin は全許可）
+    const denied = await assertSessionAccess(adminDb, session, { uid, role });
+    if (denied) return denied;
+
     const studentSnap = await adminDb.doc(`users/${studentId}`).get();
     const studentData = studentSnap.data();
-    // 担当生徒のみ（superadmin は全許可）
-    if (role !== "superadmin" && studentData?.managedBy !== uid) {
-      return NextResponse.json(
-        { error: "この生徒のセッションを評価する権限がありません" },
-        { status: 403 }
-      );
-    }
     // 録音・AI評価は保護者同意が前提
     if (studentData?.researchConsentStatus !== "granted") {
       return NextResponse.json(

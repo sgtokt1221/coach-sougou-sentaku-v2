@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireRole } from "@/lib/api/auth";
+import { requireRole, scopeByOrganization } from "@/lib/api/auth";
+import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
 import type {
   InterviewSkillCheckResult,
   InterviewSkillCheckStatus,
@@ -27,12 +28,22 @@ export async function GET(
   const { adminDb } = await import("@/lib/firebase/admin");
   if (!adminDb) return NextResponse.json(empty);
 
-  if (role !== "superadmin") {
-    const studentDoc = await adminDb.doc(`users/${studentId}`).get();
-    if (!studentDoc.exists || studentDoc.data()?.managedBy !== requesterUid) {
-      return NextResponse.json({ error: "担当外の生徒です" }, { status: 403 });
-    }
+  const scopeDoc = await adminDb.doc(`users/${studentId}`).get();
+  if (!scopeDoc.exists) {
+    return NextResponse.json({ error: "生徒が見つかりません" }, { status: 404 });
   }
+  const denied = await scopeByOrganization({
+    requesterUid,
+    requesterRole: role,
+    studentUid: studentId,
+    studentData: {
+      managedBy: scopeDoc.data()?.managedBy,
+      organizationId: scopeDoc.data()?.organizationId,
+      assignedTeacherIds: getAssignedTeacherIds(scopeDoc.data()),
+    },
+    allowAssignedTeacher: true,
+  });
+  if (denied) return denied;
 
   try {
     const [userDoc, historySnap] = await Promise.all([

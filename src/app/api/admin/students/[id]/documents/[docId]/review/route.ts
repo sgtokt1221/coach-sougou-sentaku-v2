@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { requireRole } from "@/lib/api/auth";
+import { requireRole, scopeByOrganization } from "@/lib/api/auth";
 import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
 import { adminDb } from "@/lib/firebase/admin";
 import type { DocumentReview, DocumentReviewState } from "@/lib/types/document";
@@ -34,17 +34,23 @@ export async function POST(
   }
 
   try {
-    // 生徒スコープ（managedBy / 担当講師 / superadmin）
-    if (role !== "superadmin") {
-      const studentDoc = await adminDb.doc(`users/${studentId}`).get();
-      const sd = studentDoc.data();
-      if (
-        !studentDoc.exists ||
-        (sd?.managedBy !== callerUid && !getAssignedTeacherIds(sd).includes(callerUid))
-      ) {
-        return NextResponse.json({ error: "権限がありません" }, { status: 403 });
-      }
+    // 組織スコープ（自塾の admin は代行可、担当講師も許可）
+    const studentDoc = await adminDb.doc(`users/${studentId}`).get();
+    if (!studentDoc.exists) {
+      return NextResponse.json({ error: "生徒が見つかりません" }, { status: 404 });
     }
+    const denied = await scopeByOrganization({
+      requesterUid: callerUid,
+      requesterRole: role,
+      studentUid: studentId,
+      studentData: {
+        managedBy: studentDoc.data()?.managedBy,
+        organizationId: studentDoc.data()?.organizationId,
+        assignedTeacherIds: getAssignedTeacherIds(studentDoc.data()),
+      },
+      allowAssignedTeacher: true,
+    });
+    if (denied) return denied;
 
     // 書類はグローバル。userId が対象生徒と一致することを確認。
     const ref = adminDb.doc(`documents/${docId}`);

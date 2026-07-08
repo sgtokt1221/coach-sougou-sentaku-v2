@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireRole } from "@/lib/api/auth";
+import { requireRole, scopeByOrganization } from "@/lib/api/auth";
 import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
 import type { Session } from "@/lib/types/session";
 
@@ -22,21 +22,23 @@ export async function GET(
     return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
   }
 
-  // managedBy スコーピング
+  // 組織スコーピング（自塾の admin は代行可、担当講師も許可）
   const userDoc = await adminDb.doc(`users/${id}`).get();
   if (!userDoc.exists) {
     return NextResponse.json({ error: "生徒が見つかりません" }, { status: 404 });
   }
-  if (
-    role !== "superadmin" &&
-    userDoc.data()?.managedBy !== uid &&
-    !getAssignedTeacherIds(userDoc.data()).includes(uid)
-  ) {
-    return NextResponse.json(
-      { error: "この生徒へのアクセス権がありません" },
-      { status: 403 },
-    );
-  }
+  const denied = await scopeByOrganization({
+    requesterUid: uid,
+    requesterRole: role,
+    studentUid: id,
+    studentData: {
+      managedBy: userDoc.data()?.managedBy,
+      organizationId: userDoc.data()?.organizationId,
+      assignedTeacherIds: getAssignedTeacherIds(userDoc.data()),
+    },
+    allowAssignedTeacher: true,
+  });
+  if (denied) return denied;
 
   const { searchParams } = new URL(request.url);
   const limit = Math.min(
