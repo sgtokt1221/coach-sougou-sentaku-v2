@@ -63,6 +63,7 @@ export interface ActivityHeatmapData {
   interview: number;
   skillCheck: number;
   drill: number;          // 要約ドリル
+  logicDrill: number;     // 論理ドリル
   topicInput: number;     // ネタインプット
   interviewDrill: number; // 面接ドリル
   selfAnalysis: number;   // 自己分析（ステップ完了）
@@ -79,6 +80,7 @@ export interface ActivityDataSources {
   // SkillCheckResult.takenAt が Date 型のため string | Date 両対応にする
   skillChecks?: Array<{ takenAt?: string | Date; createdAt?: string | Date }>;
   summaryDrills?: Array<{ completedAt?: string; createdAt?: string }>;
+  logicDrills?: Array<{ completedAt?: string; createdAt?: string }>;
   activityLogs?: ActivityLog[];
 }
 
@@ -98,6 +100,8 @@ export function buildActivityHeatmapData(sources: ActivityDataSources): Activity
                 countByDay(sources.skillChecks ?? [], 'createdAt', day),
     drill: countByDay(sources.summaryDrills ?? [], 'completedAt', day) +
            countByDay(sources.summaryDrills ?? [], 'createdAt', day),
+    logicDrill: countByDay(sources.logicDrills ?? [], 'completedAt', day) +
+                countByDay(sources.logicDrills ?? [], 'createdAt', day),
     topicInput: countByDay(topicInputLogs, 'createdAt', day),
     interviewDrill: countByDay(interviewDrillLogs, 'createdAt', day),
     selfAnalysis: countByDay(selfAnalysisLogs, 'createdAt', day),
