@@ -39,6 +39,7 @@ import type { InterviewSkillCheckStatus } from "@/lib/types/interview-skill-chec
 import { LessonPrepSection } from "@/components/admin/LessonPrepSection";
 import { PracticeQuestionsPanel } from "@/components/admin/PracticeQuestionsPanel";
 import { LessonDebriefSection } from "@/components/admin/LessonDebriefSection";
+import { ManualSummaryCard } from "@/components/admin/ManualSummaryCard";
 import { SessionStudentDossier } from "@/components/admin/SessionStudentDossier";
 import { SessionTranscriptCard } from "@/components/admin/SessionTranscriptCard";
 import { PreviousSessionDebriefCard } from "@/components/admin/PreviousSessionDebriefCard";
@@ -686,6 +687,11 @@ export default function AdminSessionDetailPage() {
               initial={session.debrief}
               existingWeaknessAreas={[]}
               onChange={(d) => setSession({ ...session, debrief: d })}
+            />
+            <ManualSummaryCard
+              sessionId={id}
+              initial={session.summary}
+              onSaved={(summary) => setSession({ ...session, summary })}
             />
             <SessionTranscriptCard transcript={session.lessonTranscript} />
             {memoCard}
