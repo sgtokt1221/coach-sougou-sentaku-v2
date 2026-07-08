@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireRole } from "@/lib/api/auth";
+import { requireRole, scopeByOrganization } from "@/lib/api/auth";
 import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
 import { adminDb } from "@/lib/firebase/admin";
 import type { GrowthReport, PracticeQuestion } from "@/lib/types/growth-report";
@@ -33,18 +33,18 @@ export async function GET(
     if (!userDoc.exists) {
       return NextResponse.json({ error: "生徒が見つかりません" }, { status: 404 });
     }
-    const userData = userDoc.data()!;
-    // 管理者(managedBy)に加え、担当講師(assignedTeacherIds)も閲覧可 (GET のみ)
-    if (
-      role !== "superadmin" &&
-      userData.managedBy !== uid &&
-      !getAssignedTeacherIds(userData).includes(uid)
-    ) {
-      return NextResponse.json(
-        { error: "この生徒へのアクセス権がありません" },
-        { status: 403 }
-      );
-    }
+    const denied = await scopeByOrganization({
+      requesterUid: uid,
+      requesterRole: role,
+      studentUid: studentId,
+      studentData: {
+        managedBy: userDoc.data()?.managedBy,
+        organizationId: userDoc.data()?.organizationId,
+        assignedTeacherIds: getAssignedTeacherIds(userDoc.data()),
+      },
+      allowAssignedTeacher: true,
+    });
+    if (denied) return denied;
 
     const reportSnap = await adminDb
       .doc(`users/${studentId}/growthReports/${reportId}`)
@@ -134,13 +134,18 @@ export async function PATCH(
     if (!userDoc.exists) {
       return NextResponse.json({ error: "生徒が見つかりません" }, { status: 404 });
     }
-    const userData = userDoc.data()!;
-    if (role !== "superadmin" && userData.managedBy !== uid) {
-      return NextResponse.json(
-        { error: "この生徒へのアクセス権がありません" },
-        { status: 403 }
-      );
-    }
+    const denied = await scopeByOrganization({
+      requesterUid: uid,
+      requesterRole: role,
+      studentUid: studentId,
+      studentData: {
+        managedBy: userDoc.data()?.managedBy,
+        organizationId: userDoc.data()?.organizationId,
+        assignedTeacherIds: getAssignedTeacherIds(userDoc.data()),
+      },
+      allowAssignedTeacher: true,
+    });
+    if (denied) return denied;
 
     step = "parse_body";
     const body = (await request.json()) as {

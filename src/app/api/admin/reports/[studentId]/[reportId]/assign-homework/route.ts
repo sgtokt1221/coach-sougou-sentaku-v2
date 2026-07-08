@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
-import { requireRole } from "@/lib/api/auth";
+import { requireRole, scopeByOrganization } from "@/lib/api/auth";
+import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
 import { adminDb } from "@/lib/firebase/admin";
 import type {
   HomeworkAssignment,
@@ -45,12 +46,18 @@ export async function POST(
       return NextResponse.json({ error: "生徒が見つかりません" }, { status: 404 });
     }
     const userData = userDoc.data()!;
-    if (role !== "superadmin" && userData.managedBy !== uid) {
-      return NextResponse.json(
-        { error: "この生徒へのアクセス権がありません" },
-        { status: 403 },
-      );
-    }
+    const denied = await scopeByOrganization({
+      requesterUid: uid,
+      requesterRole: role,
+      studentUid: studentId,
+      studentData: {
+        managedBy: userData.managedBy,
+        organizationId: userData.organizationId,
+        assignedTeacherIds: getAssignedTeacherIds(userData),
+      },
+      allowAssignedTeacher: true,
+    });
+    if (denied) return denied;
 
     // リクエスト解析
     const body = (await request.json()) as AssignHomeworkRequest;
@@ -195,13 +202,18 @@ export async function DELETE(
     if (!userDoc.exists) {
       return NextResponse.json({ error: "生徒が見つかりません" }, { status: 404 });
     }
-    const userData = userDoc.data()!;
-    if (role !== "superadmin" && userData.managedBy !== uid) {
-      return NextResponse.json(
-        { error: "この生徒へのアクセス権がありません" },
-        { status: 403 },
-      );
-    }
+    const denied = await scopeByOrganization({
+      requesterUid: uid,
+      requesterRole: role,
+      studentUid: studentId,
+      studentData: {
+        managedBy: userDoc.data()?.managedBy,
+        organizationId: userDoc.data()?.organizationId,
+        assignedTeacherIds: getAssignedTeacherIds(userDoc.data()),
+      },
+      allowAssignedTeacher: true,
+    });
+    if (denied) return denied;
 
     const matches = await adminDb
       .collection(`users/${studentId}/homeworkAssignments`)
@@ -259,13 +271,18 @@ export async function GET(
     if (!userDoc.exists) {
       return NextResponse.json({ error: "生徒が見つかりません" }, { status: 404 });
     }
-    const userData = userDoc.data()!;
-    if (role !== "superadmin" && userData.managedBy !== uid) {
-      return NextResponse.json(
-        { error: "この生徒へのアクセス権がありません" },
-        { status: 403 },
-      );
-    }
+    const denied = await scopeByOrganization({
+      requesterUid: uid,
+      requesterRole: role,
+      studentUid: studentId,
+      studentData: {
+        managedBy: userDoc.data()?.managedBy,
+        organizationId: userDoc.data()?.organizationId,
+        assignedTeacherIds: getAssignedTeacherIds(userDoc.data()),
+      },
+      allowAssignedTeacher: true,
+    });
+    if (denied) return denied;
 
     const snap = await adminDb
       .collection(`users/${studentId}/homeworkAssignments`)

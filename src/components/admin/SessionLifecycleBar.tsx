@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import {
   Play,
   Square,
@@ -10,6 +10,8 @@ import {
   Mic,
   MicOff,
   AlertTriangle,
+  Upload,
+  Download,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -305,6 +307,69 @@ export function SessionLifecycleBar({ sessionId, session, onSessionUpdate }: Pro
     setPostFlow("completed");
   };
 
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  /**
+   * 端末に保存済みの録音ファイル（.webm 等）をこのセッションに入れ戻す。
+   * アップロード失敗で救出した録音の復旧や、事前録音の取り込みに使う。
+   * 録音エンドポイントは録音停止時と同一。成功後は completed にする。
+   */
+  const handleUploadFile = async (file: File) => {
+    if (file.size > MAX_SIZE_BYTES) {
+      setPostError(
+        `ファイルが 25MB を超えています (${Math.round(file.size / 1024 / 1024)}MB)。分割してください。`,
+      );
+      setPostFlow("error");
+      return;
+    }
+    setPostError(null);
+    setPostFlow("uploading");
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("durationSec", "0");
+      const up = await authFetch(`/api/admin/sessions/${sessionId}/recording`, {
+        method: "POST",
+        body: form,
+      });
+      if (!up.ok) {
+        const data = await up.json().catch(() => ({}));
+        throw new Error(data.error ?? "アップロード失敗");
+      }
+      const upData = (await up.json()) as {
+        recordingUrl: string;
+        recordingPath: string;
+        recordingSizeBytes: number;
+        recordingDurationSec: number;
+      };
+      onSessionUpdate({
+        ...session,
+        ...upData,
+        status: "completed",
+        endedAt: new Date().toISOString(),
+      });
+      setPostFlow("completed");
+    } catch (err) {
+      console.error(err);
+      setPostError(err instanceof Error ? err.message : "アップロード失敗");
+      setPostFlow("error");
+    }
+  };
+
+  /** メモリ上の録音（recorder.blob）を端末にダウンロードする（アップロード失敗時の保全）。 */
+  const handleDownloadRecording = () => {
+    const b = recorder.blob;
+    if (!b) return;
+    const t = b.type || "";
+    const ext = t.includes("ogg") ? "ogg" : t.includes("mp4") ? "m4a" : t.includes("wav") ? "wav" : "webm";
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(b);
+    a.download = `session-recording.${ext}`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
+
   const renderMicBar = () => {
     if (permissionIssue) {
       return (
@@ -362,15 +427,38 @@ export function SessionLifecycleBar({ sessionId, session, onSessionUpdate }: Pro
         <div className="text-sm text-muted-foreground">
           準備ができたら授業を開始してください
         </div>
-        <Button
-          onClick={handleStart}
-          disabled={recorder.state !== "ready"}
-          size="lg"
-          className="cursor-pointer gap-2 bg-teal-500 hover:bg-teal-600 text-white"
-        >
-          <Play className="size-5" />
-          授業を開始
-        </Button>
+        <div className="flex items-center gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="audio/*,video/webm,video/mp4"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void handleUploadFile(f);
+              e.target.value = "";
+            }}
+          />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => fileInputRef.current?.click()}
+            className="cursor-pointer gap-1.5 text-muted-foreground"
+            title="端末に保存済みの録音ファイルをこのセッションに取り込む"
+          >
+            <Upload className="size-4" />
+            録音ファイルを取り込む
+          </Button>
+          <Button
+            onClick={handleStart}
+            disabled={recorder.state !== "ready"}
+            size="lg"
+            className="cursor-pointer gap-2 bg-teal-500 hover:bg-teal-600 text-white"
+          >
+            <Play className="size-5" />
+            授業を開始
+          </Button>
+        </div>
       </div>
     </div>
   );
@@ -494,18 +582,32 @@ export function SessionLifecycleBar({ sessionId, session, onSessionUpdate }: Pro
         {postFlow === "error" && (
           <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-200">
             {postError}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setPostFlow("idle");
-                setPostError(null);
-                recorder.reset();
-              }}
-              className="ml-2 cursor-pointer"
-            >
-              やり直す
-            </Button>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {recorder.blob && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDownloadRecording}
+                  className="cursor-pointer gap-1.5"
+                  title="録音を端末に保存（やり直すと消えるため、先に保存を推奨）"
+                >
+                  <Download className="size-4" />
+                  録音をダウンロード
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setPostFlow("idle");
+                  setPostError(null);
+                  recorder.reset();
+                }}
+                className="cursor-pointer"
+              >
+                やり直す
+              </Button>
+            </div>
           </div>
         )}
         {postFlow === "idle" && (
