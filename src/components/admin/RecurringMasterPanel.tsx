@@ -30,6 +30,9 @@ import type { StudentListItem, TeacherListItem } from "@/lib/types/admin";
 /** 曜日ラベル（0=日 .. 6=土） */
 const WEEKDAY_LABELS = ["日", "月", "火", "水", "木", "金", "土"];
 
+/** 週グリッドの列順（月〜日） */
+const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0];
+
 /** 生成ソース種別 */
 type GenSource = "master" | "previous-month";
 
@@ -326,64 +329,81 @@ export default function RecurringMasterPanel({ coachStudents }: Props) {
         </div>
       </Card>
 
-      {/* テンプレ一覧 */}
-      <Card className="p-0">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b text-left text-xs text-muted-foreground">
-                <th className="px-3 py-2 font-medium">生徒名</th>
-                <th className="px-3 py-2 font-medium">担当講師名</th>
-                <th className="px-3 py-2 font-medium">種別</th>
-                <th className="px-3 py-2 font-medium">曜日</th>
-                <th className="px-3 py-2 font-medium">時刻</th>
-                <th className="px-3 py-2 font-medium">有効</th>
-                <th className="px-3 py-2 font-medium">削除</th>
-              </tr>
-            </thead>
-            <tbody>
-              {templates.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={7}
-                    className="px-3 py-8 text-center text-muted-foreground"
-                  >
-                    定期授業テンプレがありません
-                  </td>
-                </tr>
-              ) : (
-                templates.map((t) => (
-                  <tr key={t.id} className="border-b last:border-0">
-                    <td className="px-3 py-2">{t.studentName}</td>
-                    <td className="px-3 py-2">{t.teacherName}</td>
-                    <td className="px-3 py-2">
-                      <Badge variant="outline" className="text-xs">
-                        {SESSION_TYPE_LABELS[t.type] ?? t.type}
-                      </Badge>
-                    </td>
-                    <td className="px-3 py-2">{WEEKDAY_LABELS[t.weekday]}</td>
-                    <td className="px-3 py-2">{t.startTime}</td>
-                    <td className="px-3 py-2">
-                      <Switch
-                        checked={t.active}
-                        onCheckedChange={() => handleToggleActive(t)}
-                      />
-                    </td>
-                    <td className="px-3 py-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(t)}
-                      >
-                        削除
-                      </Button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+      {/* テンプレ週グリッド（月〜日の時間割） */}
+      <Card className="p-3">
+        <div className="mb-2 flex items-center justify-between">
+          <h2 className="text-sm font-semibold">定期授業マスタ（週の時間割）</h2>
+          <span className="text-xs text-muted-foreground">{templates.length}件</span>
         </div>
+        {templates.length === 0 ? (
+          <p className="py-8 text-center text-sm text-muted-foreground">
+            定期授業テンプレがありません。上のフォームから追加してください。
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <div className="grid min-w-[840px] grid-cols-7 gap-2">
+              {WEEK_ORDER.map((wd) => {
+                const dayTemplates = templates
+                  .filter((t) => t.weekday === wd)
+                  .sort((a, b) => a.startTime.localeCompare(b.startTime));
+                const isWeekend = wd === 0 || wd === 6;
+                return (
+                  <div key={wd} className="overflow-hidden rounded-lg border bg-muted/20">
+                    <div
+                      className={`border-b px-2 py-1.5 text-center text-xs font-semibold ${
+                        isWeekend ? "text-rose-500" : ""
+                      }`}
+                    >
+                      {WEEKDAY_LABELS[wd]}
+                    </div>
+                    <div className="min-h-[88px] space-y-1.5 p-1.5">
+                      {dayTemplates.length === 0 ? (
+                        <p className="pt-5 text-center text-[10px] text-muted-foreground/40">
+                          —
+                        </p>
+                      ) : (
+                        dayTemplates.map((t) => (
+                          <div
+                            key={t.id}
+                            className={`rounded-md border p-2 text-xs transition-colors ${
+                              t.active ? "bg-card" : "bg-muted/40 opacity-60"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between gap-1">
+                              <span className="font-mono font-semibold tabular-nums">
+                                {t.startTime}
+                              </span>
+                              <Badge variant="outline" className="px-1 py-0 text-[9px]">
+                                {SESSION_TYPE_LABELS[t.type] ?? t.type}
+                              </Badge>
+                            </div>
+                            <p className="mt-0.5 truncate font-medium">{t.studentName}</p>
+                            <p className="truncate text-[10px] text-muted-foreground">
+                              {t.teacherName}
+                            </p>
+                            <div className="mt-1 flex items-center justify-between">
+                              <Switch
+                                checked={t.active}
+                                onCheckedChange={() => handleToggleActive(t)}
+                                className="origin-left scale-75"
+                              />
+                              <button
+                                onClick={() => handleDelete(t)}
+                                className="text-[10px] text-rose-600 hover:underline"
+                              >
+                                削除
+                              </button>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </Card>
 
       {/* 生成ダイアログ（月選択 → プレビュー → 確定） */}
