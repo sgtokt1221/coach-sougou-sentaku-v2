@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -81,6 +81,29 @@ export default function SuperadminStudentsPage() {
 
   const adminName = (uid: string) =>
     admins.find((a) => a.uid === uid)?.displayName ?? uid;
+
+  // 生徒の所属塾ラベル。managedBy(担当管理者)の所属塾名から解決する。
+  const orgLabel = (s: StudentListItem): string => {
+    if (!s.managedBy) return "未割当";
+    const admin = admins.find((a) => a.uid === s.managedBy);
+    return admin?.organizationName?.trim() || "所属塾未設定";
+  };
+
+  // 塾別にグループ化。名前付きの塾を先に、「所属塾未設定」「未割当」を末尾に並べる。
+  const groupedStudents = (() => {
+    const map = new Map<string, StudentListItem[]>();
+    for (const s of filteredStudents) {
+      const label = orgLabel(s);
+      const list = map.get(label);
+      if (list) list.push(s);
+      else map.set(label, [s]);
+    }
+    const rank = (l: string) => (l === "未割当" ? 2 : l === "所属塾未設定" ? 1 : 0);
+    return Array.from(map.entries()).sort(([a], [b]) => {
+      if (rank(a) !== rank(b)) return rank(a) - rank(b);
+      return a.localeCompare(b, "ja");
+    });
+  })();
 
   return (
     <div className="space-y-6 p-6">
@@ -193,58 +216,70 @@ export default function SuperadminStudentsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredStudents.map((s) => (
-                    <tr
-                      key={s.uid}
-                      className="border-b hover:bg-accent/50 cursor-pointer"
-                    >
-                      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                        <input
-                          type="checkbox"
-                          checked={selectedStudents.includes(s.uid)}
-                          onChange={() => toggleStudent(s.uid)}
-                        />
-                      </td>
-                      <td
-                        className="px-4 py-3"
-                        onClick={() => router.push(`/superadmin/students/${s.uid}`)}
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <Avatar size="sm">
-                            <AvatarImage src={s.photoURL ?? undefined} alt={s.displayName} />
-                            <AvatarFallback>{getInitials(s.displayName)}</AvatarFallback>
-                          </Avatar>
-                          <p className="font-medium hover:underline">{s.displayName}</p>
-                        </div>
-                      </td>
-                      <td
-                        className="px-4 py-3 hidden sm:table-cell"
-                        onClick={() => router.push(`/superadmin/students/${s.uid}`)}
-                      >
-                        <p className="text-xs text-muted-foreground">{s.email}</p>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        {s.managedBy ? (
-                          <Badge variant="secondary" className="text-xs">
-                            {adminName(s.managedBy)}
-                          </Badge>
-                        ) : (
-                          <Badge variant="destructive" className="text-xs">
-                            未割当
-                          </Badge>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-center hidden md:table-cell">
-                        {s.latestScore !== null ? (
-                          <span className="font-bold">{s.latestScore}</span>
-                        ) : (
-                          <span className="text-muted-foreground">-</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-center hidden md:table-cell">
-                        {s.essayCount}
-                      </td>
-                    </tr>
+                  {groupedStudents.map(([label, list]) => (
+                    <Fragment key={label}>
+                      <tr className="border-b bg-muted/40">
+                        <td colSpan={6} className="px-4 py-2 text-xs font-semibold">
+                          {label}
+                          <span className="ml-1 font-normal text-muted-foreground">
+                            （{list.length}名）
+                          </span>
+                        </td>
+                      </tr>
+                      {list.map((s) => (
+                        <tr
+                          key={s.uid}
+                          className="border-b hover:bg-accent/50 cursor-pointer"
+                        >
+                          <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                            <input
+                              type="checkbox"
+                              checked={selectedStudents.includes(s.uid)}
+                              onChange={() => toggleStudent(s.uid)}
+                            />
+                          </td>
+                          <td
+                            className="px-4 py-3"
+                            onClick={() => router.push(`/admin/students/${s.uid}`)}
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <Avatar size="sm">
+                                <AvatarImage src={s.photoURL ?? undefined} alt={s.displayName} />
+                                <AvatarFallback>{getInitials(s.displayName)}</AvatarFallback>
+                              </Avatar>
+                              <p className="font-medium hover:underline">{s.displayName}</p>
+                            </div>
+                          </td>
+                          <td
+                            className="px-4 py-3 hidden sm:table-cell"
+                            onClick={() => router.push(`/admin/students/${s.uid}`)}
+                          >
+                            <p className="text-xs text-muted-foreground">{s.email}</p>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            {s.managedBy ? (
+                              <Badge variant="secondary" className="text-xs">
+                                {adminName(s.managedBy)}
+                              </Badge>
+                            ) : (
+                              <Badge variant="destructive" className="text-xs">
+                                未割当
+                              </Badge>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-center hidden md:table-cell">
+                            {s.latestScore !== null ? (
+                              <span className="font-bold">{s.latestScore}</span>
+                            ) : (
+                              <span className="text-muted-foreground">-</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-center hidden md:table-cell">
+                            {s.essayCount}
+                          </td>
+                        </tr>
+                      ))}
+                    </Fragment>
                   ))}
                 </tbody>
               </table>
