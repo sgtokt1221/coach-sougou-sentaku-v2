@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { authFetch } from "@/lib/api/client";
 import { GrowthTree } from "@/components/self-analysis/GrowthTree";
 import { AnalysisResultCard } from "@/components/self-analysis/AnalysisResultCard";
+import { SelfAnalysisChatLog } from "@/components/self-analysis/SelfAnalysisChatLog";
 import { InlineFeedbackButton } from "@/components/admin/InlineFeedbackButton";
 import type { SelfAnalysis, SelfAnalysisStepKey, StepApproval } from "@/lib/types/self-analysis";
 
@@ -204,6 +205,8 @@ export function DiscoverSection({ studentId }: DiscoverSectionProps) {
           }}
         />
       )}
+
+      {hasSaData && <SelfAnalysisChatLog chatHistory={selfAnalysis?.chatHistory} />}
     </section>
   );
 }

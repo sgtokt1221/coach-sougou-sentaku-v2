@@ -1,6 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 
 /**
+ * キー順に依存しない安定した JSON 文字列化。
+ * セクション内容の変更検知（承認取消の判定）に使う。
+ */
+function stableStringify(value: unknown): string {
+  if (value === null || typeof value !== "object") return JSON.stringify(value);
+  if (Array.isArray(value)) return "[" + value.map(stableStringify).join(",") + "]";
+  const obj = value as Record<string, unknown>;
+  const keys = Object.keys(obj).sort();
+  return "{" + keys.map((k) => JSON.stringify(k) + ":" + stableStringify(obj[k])).join(",") + "}";
+}
+
+/**
  * "me" を実 uid に解決する。トークン検証に失敗した場合、以前は rawId ("me") に
  * フォールバックして `selfAnalysis/me` という共有ドキュメントに書き込んでいたため、
  * 別ユーザーのデータと混線・行方不明になる原因になっていた。
@@ -156,6 +168,38 @@ export async function POST(request: NextRequest) {
       }
 
       await ref.set(update, { merge: true });
+
+      // 承認済みセクションを生徒が書き換えたら、その承認を取り消す（未承認へ戻す）。
+      // update に載った（= 非空で送られた）ステップのうち、既存と内容が変わったものだけが対象。
+      // 初回入力（existing に無い）は承認自体が無いので対象外。
+      try {
+        const changedKeys = STEP_KEYS.filter((key) => {
+          if (!(key in update)) return false;
+          const before = existing?.[key];
+          if (!before) return false;
+          return stableStringify(before) !== stableStringify(update[key]);
+        });
+        if (changedKeys.length > 0) {
+          const apprRef = adminDb.doc(`selfAnalysisApprovals/${docId}`);
+          const apprSnap = await apprRef.get();
+          const steps =
+            (apprSnap.exists
+              ? (apprSnap.data()?.steps as Record<string, { approved?: boolean }> | undefined)
+              : undefined) ?? {};
+          const toClear: Record<string, unknown> = {};
+          for (const key of changedKeys) {
+            if (steps[key]?.approved === true) {
+              toClear[`steps.${key}`] = FieldValue.delete();
+            }
+          }
+          if (Object.keys(toClear).length > 0) {
+            await apprRef.update(toClear);
+          }
+        }
+      } catch (err) {
+        console.warn("[self-analysis] 承認リセット失敗:", err);
+      }
+
       return NextResponse.json({ success: true, id: docId });
     }
 

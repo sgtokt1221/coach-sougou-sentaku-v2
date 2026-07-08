@@ -11,6 +11,7 @@ import { AnalysisResultCard } from "@/components/self-analysis/AnalysisResultCar
 import { GrowthTree } from "@/components/self-analysis/GrowthTree";
 import { StepEditModal } from "@/components/self-analysis/StepEditModal";
 import { SelfAnalysisComments } from "@/components/self-analysis/SelfAnalysisComments";
+import { SelfAnalysisChatLog } from "@/components/self-analysis/SelfAnalysisChatLog";
 import { useAuthSWR } from "@/lib/api/swr";
 import type { SelfAnalysis, SelfAnalysisStepKey, StepApproval } from "@/lib/types/self-analysis";
 import type { AdminFeedback } from "@/lib/types/feedback";
@@ -56,7 +57,7 @@ export default function SelfAnalysisResultPage() {
   );
   // コーチからのコメント（自己分析宛）と承認状況をステップ別に取得
   const { data: feedbackList } = useAuthSWR<AdminFeedback[]>("/api/student/feedback");
-  const { data: approvalData } = useAuthSWR<{
+  const { data: approvalData, mutate: mutateApprovals } = useAuthSWR<{
     steps: Partial<Record<SelfAnalysisStepKey, StepApproval>>;
   }>("/api/student/self-analysis/approvals");
 
@@ -107,6 +108,9 @@ export default function SelfAnalysisResultPage() {
           return false;
         }
         await mutate();
+        // 承認済みセクションを編集した場合はサーバ側で承認が取り消されるため、
+        // バッジ表示を即時反映するために承認状況も再取得する。
+        await mutateApprovals();
         toast.success("保存しました");
         return true;
       } catch {
@@ -114,7 +118,7 @@ export default function SelfAnalysisResultPage() {
         return false;
       }
     },
-    [data, editStep, mutate],
+    [data, editStep, mutate, mutateApprovals],
   );
 
   // 保存済みの Step1〜6 ＋ 志望校AP から「統合・言語化」(synthesis) を生成して保存する。
@@ -317,6 +321,8 @@ export default function SelfAnalysisResultPage() {
                 body: JSON.stringify(updated),
               }).catch(() => {});
               mutate();
+              // 編集で承認が取り消される場合があるので承認状況も再取得
+              mutateApprovals();
             }}
             renderSectionExtra={(sectionKey) => (
               <SelfAnalysisComments
@@ -325,6 +331,10 @@ export default function SelfAnalysisResultPage() {
               />
             )}
           />
+
+          <div className="mt-4">
+            <SelfAnalysisChatLog chatHistory={data.chatHistory} />
+          </div>
         </div>
       </div>
 
