@@ -7,7 +7,17 @@ import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Loader2, History } from "lucide-react";
+import {
+  ArrowLeft,
+  Loader2,
+  History,
+  Sparkles,
+  ScanSearch,
+  Timer,
+  ArrowRight,
+  ClipboardList,
+  PenLine,
+} from "lucide-react";
 import { toast } from "sonner";
 import { authFetch } from "@/lib/api/client";
 import {
@@ -31,6 +41,18 @@ function todayStr(): string {
   const day = String(d.getDate()).padStart(2, "0");
   return `${d.getFullYear()}-${m}-${day}`;
 }
+
+/** 問題型ごとのアイコンと一言説明（入口ヒーロー用） */
+const TYPE_META: Record<LogicDrillType, { icon: typeof ScanSearch; tagline: string }> = {
+  flaw_finder: { icon: ScanSearch, tagline: "意見文の欠陥（飛躍・すり替え等）を見抜いて直す" },
+  quick_logic: { icon: Timer, tagline: "お題に賛否＋理由3つを制限時間で組み立てる" },
+};
+
+const HOW_IT_WORKS: { Icon: typeof ClipboardList; title: string; desc: string }[] = [
+  { Icon: ClipboardList, title: "お題が出る", desc: "日替わりの型" },
+  { Icon: PenLine, title: "自分で組む", desc: "主張と根拠を言語化" },
+  { Icon: Sparkles, title: "AIが採点", desc: "論理3軸＋赤ペン" },
+];
 
 type Step = "select" | "drill" | "result";
 
@@ -148,17 +170,80 @@ function LogicDrillInner() {
       </div>
 
       {step === "select" && (
-        <div className="space-y-3">
-          <p className="text-sm text-muted-foreground">
-            今日のおすすめ: <b>{LOGIC_DRILL_TYPE_LABELS[getRotatedLogicDrillType(date)]}</b>
+        <div className="space-y-4">
+          {/* 入口ヒーロー */}
+          <section className="relative isolate overflow-hidden rounded-[22px] p-5 text-white shadow-[0_16px_44px_-22px_rgba(79,70,229,0.6)]">
+            <div className="absolute inset-0 -z-20 bg-[linear-gradient(120deg,#4f46e5_0%,#6366f1_45%,#0891b2_115%)]" />
+            <div className="absolute -right-8 -top-12 -z-10 size-48 rounded-full bg-cyan-300/30 blur-3xl" />
+            <div className="absolute -bottom-16 -left-6 -z-10 size-48 rounded-full bg-indigo-300/30 blur-3xl" />
+            <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-white/70">
+              <Sparkles className="size-3.5" />
+              Logic Drill
+            </div>
+            <h2 className="mt-1 text-2xl font-bold tracking-tight">論理ドリル</h2>
+            <p className="mt-1.5 max-w-md text-[13px] leading-relaxed text-white/85">
+              主張を筋道立てて言葉にする力を、短時間の反復で鍛えます。
+            </p>
+            <div className="mt-4 grid grid-cols-3 gap-2">
+              {HOW_IT_WORKS.map((s) => (
+                <div
+                  key={s.title}
+                  className="rounded-xl bg-white/10 p-2.5 text-center ring-1 ring-white/15 backdrop-blur-sm"
+                >
+                  <s.Icon className="mx-auto size-4 text-white/90" />
+                  <p className="mt-1 text-[11.5px] font-semibold leading-tight">{s.title}</p>
+                  <p className="text-[10px] leading-tight text-white/70">{s.desc}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* 型の選択（今日のおすすめを強調） */}
+          <p className="px-1 text-xs font-medium text-muted-foreground">
+            今日のおすすめから、または好きな型で始めましょう
           </p>
-          {LOGIC_DRILL_TYPES.map((t) => (
-            <Card key={t} className="cursor-pointer hover:bg-accent/40" onClick={() => start(t)}>
-              <CardContent className="py-4">
-                <p className="font-medium">{LOGIC_DRILL_TYPE_LABELS[t]}</p>
-              </CardContent>
-            </Card>
-          ))}
+          <div className="space-y-2.5">
+            {LOGIC_DRILL_TYPES.map((t) => {
+              const meta = TYPE_META[t];
+              const Icon = meta.icon;
+              const recommended = t === getRotatedLogicDrillType(date);
+              return (
+                <button
+                  key={t}
+                  onClick={() => start(t)}
+                  className={`group flex w-full items-center gap-3 rounded-2xl border p-3.5 text-left transition-all hover:-translate-y-0.5 hover:shadow-md ${
+                    recommended
+                      ? "border-teal-300 bg-gradient-to-br from-teal-50 to-emerald-50/60 dark:border-teal-800 dark:from-teal-950/30 dark:to-emerald-950/20"
+                      : "border-border/60 bg-card hover:border-teal-200"
+                  }`}
+                >
+                  <span
+                    className={`flex size-11 shrink-0 items-center justify-center rounded-xl ${
+                      recommended
+                        ? "bg-teal-500 text-white"
+                        : "bg-muted text-muted-foreground group-hover:bg-teal-100 group-hover:text-teal-700 dark:group-hover:bg-teal-950/40"
+                    }`}
+                  >
+                    <Icon className="size-5" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-1.5">
+                      <span className="font-semibold">{LOGIC_DRILL_TYPE_LABELS[t]}</span>
+                      {recommended && (
+                        <span className="rounded-full bg-teal-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                          今日のおすすめ
+                        </span>
+                      )}
+                    </span>
+                    <span className="mt-0.5 block text-xs text-muted-foreground">
+                      {meta.tagline}
+                    </span>
+                  </span>
+                  <ArrowRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
 
