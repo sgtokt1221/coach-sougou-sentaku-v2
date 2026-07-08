@@ -24,6 +24,7 @@ import { getPassagesByFaculty, getPassageById } from "@/data/summary-passages";
 import type { PassageLanguage, SummaryPassage } from "@/data/summary-passages/types";
 import { authFetch } from "@/lib/api/client";
 import { FeatureHero } from "@/components/shared/FeatureHero";
+import { TourNextButton } from "@/components/student/TourNextButton";
 import { toast } from "sonner";
 
 type Step = "select" | "menu" | "drill" | "result";
@@ -638,6 +639,8 @@ function SummaryDrillInner() {
             {isEn ? "Choose another faculty" : "別の学部を選ぶ"}
           </Button>
         </div>
+
+        <TourNextButton />
       </div>
     );
   }

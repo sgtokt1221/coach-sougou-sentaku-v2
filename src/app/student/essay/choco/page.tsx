@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import {
   Sparkles,
   FileText,
@@ -16,6 +16,7 @@ import { ChocoPassagePanel } from "@/components/essay/ChocoPassagePanel";
 import { ChocoResultView } from "@/components/essay/ChocoResultView";
 import { EssayCoachPanelBody } from "@/components/essay/EssayCoachPanel";
 import { CHOCO_FACULTIES, getChocoPassagesByFaculty, ALL_CHOCO_PASSAGES } from "@/data/choco-passages";
+import { TourNextButton } from "@/components/student/TourNextButton";
 import type { ChocoPassage, ChocoScores, ChocoFeedback, ChocoRole } from "@/lib/types/choco";
 
 type Result = {
@@ -131,6 +132,9 @@ export default function ChocoPage() {
         <div className="flex gap-2">
           <Button onClick={startNew}>もう一問やる</Button>
         </div>
+        <Suspense fallback={null}>
+          <TourNextButton />
+        </Suspense>
       </div>
     );
   }
