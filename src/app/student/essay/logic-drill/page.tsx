@@ -22,6 +22,7 @@ import {
   type FlawKind,
 } from "@/lib/types/logic-drill";
 import { getRotatedLogicDrillType, pickLogicDrillItem } from "@/lib/logic-drill/rotation";
+import { TourNextButton } from "@/components/student/TourNextButton";
 
 /** "YYYY-MM-DD"（ローカル日付）。SSRとの齟齬を避けクライアントで確定する。 */
 function todayStr(): string {
@@ -239,6 +240,7 @@ function LogicDrillInner() {
             <Button variant="outline" className="flex-1" onClick={() => start(drillType)}>もう一度</Button>
             <Link href="/student/essay/logic-drill/history" className="flex-1"><Button variant="outline" className="w-full">履歴</Button></Link>
           </div>
+          <TourNextButton />
         </div>
       )}
     </div>
