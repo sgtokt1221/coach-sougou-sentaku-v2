@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireRole } from "@/lib/api/auth";
+import { requireRole, scopeByOrganization } from "@/lib/api/auth";
 import { getOrgMemberAdminUids, chunk } from "@/lib/api/organization-scope";
 import { adminDb } from "@/lib/firebase/admin";
 import type { AlertItem } from "@/lib/types/admin";
@@ -12,6 +12,17 @@ interface StudentAlertData {
   apAlignmentScores: number[];
   weaknesses: { area: string; count: number; improving: boolean }[];
   documents: DocumentAlertData[];
+  /** users/{uid}/alertAcks に保存済みの確認済みキー集合 */
+  acknowledgedKeys: Set<string>;
+}
+
+/**
+ * アラートの決定的キー (= 確認状態の保存 doc id / 安定 id)。
+ * 種別＋discriminator。Firestore doc id 安全化のため `/` を `_` に置換。
+ */
+function alertKey(type: string, discriminator?: string): string {
+  const base = discriminator ? `${type}__${discriminator}` : type;
+  return base.replace(/\//g, "_").slice(0, 300);
 }
 
 interface DocumentAlertData {
@@ -45,37 +56,44 @@ function hasLowVariance(scores: number[], threshold: number): boolean {
 
 function detectAlerts(students: StudentAlertData[]): AlertItem[] {
   const alerts: AlertItem[] = [];
-  let alertId = 1;
+
+  /** 安定キーで AlertItem を組み立てて push (acknowledged は保存状態から復元) */
+  const add = (
+    student: StudentAlertData,
+    discriminator: string | undefined,
+    base: Pick<AlertItem, "type" | "severity" | "message" | "detectedAt" | "recommendedAction">,
+  ) => {
+    const id = alertKey(base.type, discriminator);
+    alerts.push({
+      id,
+      studentUid: student.uid,
+      studentName: student.displayName,
+      acknowledged: student.acknowledgedKeys.has(id),
+      ...base,
+    });
+  };
 
   for (const student of students) {
     // === EXISTING ALERTS ===
 
     // inactive: 7+ days without activity or no activity at all
     if (!student.lastActivityAt) {
-      alerts.push({
-        id: `alert_${String(alertId++).padStart(3, "0")}`,
-        studentUid: student.uid,
-        studentName: student.displayName,
+      add(student, undefined, {
         type: "inactive",
         severity: "critical",
         message: "登録後一度も添削を提出していません",
         detectedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-        acknowledged: false,
         recommendedAction: "生徒に連絡を取り、学習開始を促しましょう。",
       });
     } else {
       const daysSince =
         (Date.now() - new Date(student.lastActivityAt).getTime()) / (1000 * 60 * 60 * 24);
       if (daysSince >= 7) {
-        alerts.push({
-          id: `alert_${String(alertId++).padStart(3, "0")}`,
-          studentUid: student.uid,
-          studentName: student.displayName,
+        add(student, undefined, {
           type: "inactive",
           severity: daysSince >= 14 ? "critical" : "warning",
           message: `最終活動から${Math.floor(daysSince)}日経過しています`,
           detectedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-          acknowledged: false,
           recommendedAction: "フォローアップの連絡を入れ、モチベーション向上を図りましょう。",
         });
       }
@@ -87,15 +105,11 @@ function detectAlerts(students: StudentAlertData[]): AlertItem[] {
       const recent = scores.slice(-3);
       if (recent[0] > recent[1] && recent[1] > recent[2]) {
         const drop = recent[0] - recent[2];
-        alerts.push({
-          id: `alert_${String(alertId++).padStart(3, "0")}`,
-          studentUid: student.uid,
-          studentName: student.displayName,
+        add(student, undefined, {
           type: "declining",
           severity: drop >= 10 ? "critical" : "warning",
           message: `直近3回のスコアが連続で下降しています（${recent[0]}→${recent[1]}→${recent[2]}）`,
           detectedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-          acknowledged: false,
           recommendedAction: "添削結果を一緒に振り返り、基礎的な課題を特定しましょう。",
         });
       }
@@ -104,15 +118,11 @@ function detectAlerts(students: StudentAlertData[]): AlertItem[] {
     // repeated_weakness: same weakness 5+ times
     for (const w of student.weaknesses) {
       if (w.count >= 5) {
-        alerts.push({
-          id: `alert_${String(alertId++).padStart(3, "0")}`,
-          studentUid: student.uid,
-          studentName: student.displayName,
+        add(student, w.area, {
           type: "repeated_weakness",
           severity: w.count >= 7 ? "critical" : "warning",
           message: `「${w.area}」が${w.count}回以上繰り返し指摘されています`,
           detectedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-          acknowledged: false,
           recommendedAction: `「${w.area}」に特化した個別指導やサンプル小論文の提供を検討しましょう。`,
         });
       }
@@ -141,15 +151,11 @@ function detectAlerts(students: StudentAlertData[]): AlertItem[] {
         message = `${student.displayName}の「${doc.title}」（${doc.universityName}）の期限が${daysUntil}日後です`;
       }
 
-      alerts.push({
-        id: `alert_${String(alertId++).padStart(3, "0")}`,
-        studentUid: student.uid,
-        studentName: student.displayName,
+      add(student, `${doc.universityName}_${doc.title}`, {
         type: "document_deadline",
         severity,
         message,
         detectedAt: new Date().toISOString(),
-        acknowledged: false,
         recommendedAction: "書類の完成状況を確認し、期限内の提出を支援しましょう。",
       });
     }
@@ -162,15 +168,11 @@ function detectAlerts(students: StudentAlertData[]): AlertItem[] {
       const allBelow = recent5.every((s) => s < 5);
       if (allBelow) {
         const avg = Math.round((recent5.reduce((s, v) => s + v, 0) / recent5.length) * 10) / 10;
-        alerts.push({
-          id: `alert_${String(alertId++).padStart(3, "0")}`,
-          studentUid: student.uid,
-          studentName: student.displayName,
+        add(student, undefined, {
           type: "ap_struggle",
           severity: avg < 3 ? "critical" : "warning",
           message: `直近5回のAP合致度スコアが全て50%未満です（平均${avg}/10）。志望校のAPへの理解が不足している可能性があります`,
           detectedAt: new Date().toISOString(),
-          acknowledged: false,
           recommendedAction: "志望校のアドミッション・ポリシーを一緒に読み直し、出題意図への理解を深めましょう。",
         });
       }
@@ -181,15 +183,11 @@ function detectAlerts(students: StudentAlertData[]): AlertItem[] {
       if (w.count >= 3 && !w.improving) {
         // Only generate this if not already covered by repeated_weakness
         if (w.count < 5) {
-          alerts.push({
-            id: `alert_${String(alertId++).padStart(3, "0")}`,
-            studentUid: student.uid,
-            studentName: student.displayName,
+          add(student, w.area, {
             type: "weakness_stuck",
             severity: w.count >= 4 ? "high" : "warning",
             message: `「${w.area}」が${w.count}回指摘されていますが改善が見られません`,
             detectedAt: new Date().toISOString(),
-            acknowledged: false,
             recommendedAction: `「${w.area}」について別のアプローチ（例文提示、個別解説）を試みましょう。`,
           });
         }
@@ -214,15 +212,11 @@ function detectAlerts(students: StudentAlertData[]): AlertItem[] {
       const incompleteRate = totalWithDeadline > 0 ? incompleteCount / totalWithDeadline : 0;
 
       if (incompleteRate >= 0.5 && incompleteCount >= 2) {
-        alerts.push({
-          id: `alert_${String(alertId++).padStart(3, "0")}`,
-          studentUid: student.uid,
-          studentName: student.displayName,
+        add(student, undefined, {
           type: "deadline_risk",
           severity: "high",
           message: `14日以内に期限を迎える未完成書類が${incompleteCount}件あります（全書類の${Math.round(incompleteRate * 100)}%が未完成）`,
           detectedAt: new Date().toISOString(),
-          acknowledged: false,
           recommendedAction: "書類作成の優先順位を生徒と一緒に整理し、集中的に取り組むスケジュールを立てましょう。",
         });
       }
@@ -232,15 +226,11 @@ function detectAlerts(students: StudentAlertData[]): AlertItem[] {
     if (hasLowVariance(scores, 3)) {
       const recent4 = scores.slice(-4);
       const avg = Math.round((recent4.reduce((s, v) => s + v, 0) / recent4.length) * 10) / 10;
-      alerts.push({
-        id: `alert_${String(alertId++).padStart(3, "0")}`,
-        studentUid: student.uid,
-        studentName: student.displayName,
+      add(student, undefined, {
         type: "score_plateau",
         severity: avg < 30 ? "high" : "warning",
         message: `直近4回のスコアが横ばいです（平均${avg}点）。成長が停滞している可能性があります`,
         detectedAt: new Date().toISOString(),
-        acknowledged: false,
         recommendedAction: "現在の学習方法を見直し、新しいテーマや形式の小論文に挑戦させましょう。",
       });
     }
@@ -401,6 +391,18 @@ export async function GET(request: NextRequest) {
           };
         });
 
+        // 確認済みアラートのキー集合 (doc id = alertKey)。未作成なら空集合。
+        const acksSnap = await adminDb!
+          .collection("users")
+          .doc(studentUid)
+          .collection("alertAcks")
+          .get()
+          .catch((e) => {
+            console.warn(`[admin/alerts] alertAcks query failed for ${studentUid}:`, e);
+            return { docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] };
+          });
+        const acknowledgedKeys = new Set(acksSnap.docs.map((d) => d.id));
+
         return {
           uid: studentUid,
           displayName: data.displayName ?? "",
@@ -409,6 +411,7 @@ export async function GET(request: NextRequest) {
           apAlignmentScores,
           weaknesses,
           documents,
+          acknowledgedKeys,
         };
       })
     );
@@ -419,4 +422,70 @@ export async function GET(request: NextRequest) {
     console.error("Admin alerts error:", error);
     return NextResponse.json({ error: "データの取得中にエラーが発生しました" }, { status: 500 });
   }
+}
+
+/**
+ * アラートの「確認済み」状態を永続化する。
+ * doc id = alertKey（GET が復元に使う users/{studentUid}/alertAcks/{alertKey}）。
+ * acknowledged=true でドキュメント作成、false で削除。
+ * 権限は GET と同じ組織/managedBy スコープ（対象生徒にアクセスできる管理者のみ）。
+ */
+export async function POST(request: NextRequest) {
+  const authResult = await requireRole(request, ["admin", "teacher", "superadmin"]);
+  if (authResult instanceof NextResponse) return authResult;
+  const { uid, role } = authResult;
+
+  if (!adminDb) {
+    return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
+  }
+
+  let body: { studentUid?: string; alertKey?: string; acknowledged?: boolean };
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "リクエストボディが不正です" }, { status: 400 });
+  }
+
+  const studentUid = body.studentUid?.trim();
+  const rawKey = body.alertKey?.trim();
+  if (!studentUid || !rawKey) {
+    return NextResponse.json({ error: "studentUid と alertKey は必須です" }, { status: 400 });
+  }
+  // GET の alertKey() と同じ正規化（doc id 安全化）。フロントは正規化済み id を送るため通常は no-op。
+  const ackKey = rawKey.replace(/\//g, "_").slice(0, 300);
+  const acknowledged = body.acknowledged === true;
+
+  // 対象生徒へのアクセス権（GET と同じ組織/managedBy スコープ）
+  const studentSnap = await adminDb.doc(`users/${studentUid}`).get();
+  if (!studentSnap.exists) {
+    return NextResponse.json({ error: "生徒が見つかりません" }, { status: 404 });
+  }
+  const sdata = studentSnap.data() ?? {};
+  const denied = await scopeByOrganization({
+    requesterUid: uid,
+    requesterRole: role,
+    studentUid,
+    studentData: {
+      managedBy: sdata.managedBy as string | undefined,
+      organizationId: sdata.organizationId as string | undefined,
+    },
+  });
+  if (denied) return denied;
+
+  const ackRef = adminDb.doc(`users/${studentUid}/alertAcks/${ackKey}`);
+  if (acknowledged) {
+    const { FieldValue } = await import("firebase-admin/firestore");
+    let byName = "";
+    try {
+      const me = await adminDb.doc(`users/${uid}`).get();
+      byName = (me.data()?.displayName as string | undefined)?.trim() || "";
+    } catch {
+      /* noop */
+    }
+    await ackRef.set({ ackedBy: uid, ackedByName: byName, ackedAt: FieldValue.serverTimestamp() });
+  } else {
+    await ackRef.delete();
+  }
+
+  return NextResponse.json({ studentUid, alertKey: ackKey, acknowledged });
 }
