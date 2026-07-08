@@ -27,6 +27,7 @@ import {
   Sparkles,
   Settings,
   TrendingUp,
+  Scale,
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -101,6 +102,7 @@ const sheetSections: SheetSection[] = [
       { label: "ネタインプット", href: "/student/topic-input", icon: BookMarked, iconBg: "bg-amber-100 dark:bg-amber-950/40", iconColor: "text-amber-700 dark:text-amber-300" },
       { label: "テーマ・過去問", href: "/student/essay/themes", icon: BookOpen, iconBg: "bg-emerald-100 dark:bg-emerald-950/40", iconColor: "text-emerald-700 dark:text-emerald-300" },
       { label: "要約ドリル", href: "/student/essay/summary-drill", icon: ClipboardList, iconBg: "bg-teal-100 dark:bg-teal-950/40", iconColor: "text-teal-700 dark:text-teal-300" },
+      { label: "論理ドリル", href: "/student/essay/logic-drill", icon: Scale, iconBg: "bg-lime-100 dark:bg-lime-950/40", iconColor: "text-lime-700 dark:text-lime-300" },
       { label: "ちょこ添削", href: "/student/essay/choco", icon: PenLine, iconBg: "bg-indigo-100 dark:bg-indigo-950/40", iconColor: "text-indigo-700 dark:text-indigo-300" },
       { label: "ちょこ面接", href: "/student/interview/drill", icon: Mic, iconBg: "bg-sky-100 dark:bg-sky-950/40", iconColor: "text-sky-700 dark:text-sky-300" },
       { label: "宿題", href: "/student/homework", icon: ClipboardList, iconBg: "bg-rose-100 dark:bg-rose-950/40", iconColor: "text-rose-700 dark:text-rose-300" },
