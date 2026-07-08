@@ -28,30 +28,25 @@ const EMPTY_SCORES: LogicDrillScores = {
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    let userId = searchParams.get("userId");
-
-    // "current" は「現在のログインユーザー」のエイリアス。トークン / dev role から解決する。
-    // (/api/essay/summary-drill/history と同じ userId 解決ロジック)
-    if (!userId || userId === "current") {
-      userId = null;
-      const authHeader = request.headers.get("Authorization");
-      if (authHeader?.startsWith("Bearer ")) {
-        try {
-          const { adminAuth } = await import("@/lib/firebase/admin");
-          if (adminAuth) {
-            const decoded = await adminAuth.verifyIdToken(authHeader.slice(7));
-            userId = decoded.uid;
-          }
-        } catch (e) {
-          console.error("Logic drill history: auth token verification failed:", e);
+    // セキュリティ: 履歴は常に「呼び出し元自身」のものだけを返す。
+    // クエリの userId は信頼せず、必ずトークン(dev時のみ X-Dev-Role)から uid を解決する。
+    let userId: string | null = null;
+    const authHeader = request.headers.get("Authorization");
+    if (authHeader?.startsWith("Bearer ")) {
+      try {
+        const { adminAuth } = await import("@/lib/firebase/admin");
+        if (adminAuth) {
+          const decoded = await adminAuth.verifyIdToken(authHeader.slice(7));
+          userId = decoded.uid;
         }
+      } catch (e) {
+        console.error("Logic drill history: auth token verification failed:", e);
       }
-      // dev mode fallback
-      if (!userId && process.env.NODE_ENV === "development") {
-        const devRole = request.headers.get("X-Dev-Role");
-        if (devRole) userId = "dev-user";
-      }
+    }
+    // dev mode fallback
+    if (!userId && process.env.NODE_ENV === "development") {
+      const devRole = request.headers.get("X-Dev-Role");
+      if (devRole) userId = "dev-user";
     }
 
     if (!userId) {
