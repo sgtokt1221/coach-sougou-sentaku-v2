@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import SessionCalendar from "@/components/admin/SessionCalendar";
 import UnplacedStudentsSidebar from "@/components/admin/UnplacedStudentsSidebar";
 import AdminSessionList from "@/components/admin/AdminSessionList";
+import RecurringMasterPanel from "@/components/admin/RecurringMasterPanel";
 import { SESSION_TYPE_LABELS, SESSION_TYPE_CREATE_OPTIONS } from "@/lib/types/session";
 import type { Session, SessionType } from "@/lib/types/session";
 import type { StudentListItem } from "@/lib/types/admin";
@@ -47,7 +48,7 @@ interface AvailableSlot {
 
 export default function AdminSessionsPage() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<"schedule" | "list">("schedule");
+  const [activeTab, setActiveTab] = useState<"schedule" | "list" | "master">("schedule");
   const [weekStart, setWeekStart] = useState<Date>(startOfDay(new Date()));
   const [pickerSession, setPickerSession] = useState<Session | null>(null);
   // セッション作成モーダル（空き枠クリック＝生徒選択式 / D&Dドロップ＝生徒固定）。
@@ -317,6 +318,14 @@ export default function AdminSessionsPage() {
               >
                 一覧
               </button>
+              <button
+                onClick={() => setActiveTab("master")}
+                className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
+                  activeTab === "master" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                マスタ
+              </button>
             </div>
           </div>
 
@@ -365,6 +374,8 @@ export default function AdminSessionsPage() {
               <AdminSessionList sessions={allSessions} />
             </div>
           </>
+        ) : activeTab === "master" ? (
+          <RecurringMasterPanel coachStudents={coachStudents} />
         ) : (
           <AdminSessionList sessions={allSessions} />
         )}
