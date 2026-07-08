@@ -314,7 +314,7 @@ export function SessionLifecycleBar({ sessionId, session, onSessionUpdate }: Pro
    * アップロード失敗で救出した録音の復旧や、事前録音の取り込みに使う。
    * 録音エンドポイントは録音停止時と同一。成功後は completed にする。
    */
-  const handleUploadFile = async (file: File) => {
+  const handleUploadFile = async (file: File, durationSec = 0) => {
     if (file.size > MAX_SIZE_BYTES) {
       setPostError(
         `ファイルが 25MB を超えています (${Math.round(file.size / 1024 / 1024)}MB)。分割してください。`,
@@ -327,7 +327,7 @@ export function SessionLifecycleBar({ sessionId, session, onSessionUpdate }: Pro
     try {
       const form = new FormData();
       form.append("file", file);
-      form.append("durationSec", "0");
+      form.append("durationSec", String(durationSec));
       const up = await authFetch(`/api/admin/sessions/${sessionId}/recording`, {
         method: "POST",
         body: form,
@@ -368,6 +368,14 @@ export function SessionLifecycleBar({ sessionId, session, onSessionUpdate }: Pro
     document.body.appendChild(a);
     a.click();
     a.remove();
+  };
+
+  /** メモリ上の録音（recorder.blob）をそのままサーバへ送り直す（失敗時の再送。録音し直し不要）。 */
+  const handleReuploadRecording = () => {
+    const b = recorder.blob;
+    if (!b) return;
+    const file = new File([b], "recording.webm", { type: b.type || "audio/webm" });
+    void handleUploadFile(file, recorder.durationSec);
   };
 
   const renderMicBar = () => {
@@ -585,25 +593,44 @@ export function SessionLifecycleBar({ sessionId, session, onSessionUpdate }: Pro
             <div className="mt-2 flex flex-wrap gap-2">
               {recorder.blob && (
                 <Button
+                  size="sm"
+                  onClick={handleReuploadRecording}
+                  className="cursor-pointer gap-1.5"
+                  title="録音し直さず、同じ録音をもう一度サーバへ送ります"
+                >
+                  <Upload className="size-4" />
+                  この録音を再アップロード
+                </Button>
+              )}
+              {recorder.blob && (
+                <Button
                   variant="outline"
                   size="sm"
                   onClick={handleDownloadRecording}
                   className="cursor-pointer gap-1.5"
-                  title="録音を端末に保存（やり直すと消えるため、先に保存を推奨）"
+                  title="録音を端末に保存（やり直すと消えるため保全用）"
                 >
                   <Download className="size-4" />
                   録音をダウンロード
                 </Button>
               )}
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
                 onClick={() => {
+                  if (
+                    recorder.blob &&
+                    !window.confirm(
+                      "この録音を破棄してやり直しますか？録音は削除され、元に戻せません。",
+                    )
+                  ) {
+                    return;
+                  }
                   setPostFlow("idle");
                   setPostError(null);
                   recorder.reset();
                 }}
-                className="cursor-pointer"
+                className="cursor-pointer text-muted-foreground"
               >
                 やり直す
               </Button>
