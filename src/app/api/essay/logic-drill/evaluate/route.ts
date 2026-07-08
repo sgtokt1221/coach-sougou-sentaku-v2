@@ -4,7 +4,39 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 import { buildLogicDrillPrompt } from "@/lib/ai/prompts/logic-drill";
 import { getLogicDrillItemById } from "@/lib/logic-drill/rotation";
-import type { LogicDrillAnswer, LogicDrillType } from "@/lib/types/logic-drill";
+import type {
+  LogicDrillAnswer,
+  LogicDrillResult,
+  LogicDrillType,
+} from "@/lib/types/logic-drill";
+
+/** users/{uid}/logicDrills に採点結果を1件保存する（保存失敗は握りつぶす）。 */
+async function saveLogicDrillResult(
+  uid: string,
+  drillType: LogicDrillType,
+  itemId: string,
+  answer: LogicDrillAnswer,
+  result: LogicDrillResult,
+): Promise<void> {
+  try {
+    const { adminDb } = await import("@/lib/firebase/admin");
+    const { FieldValue } = await import("firebase-admin/firestore");
+    if (adminDb) {
+      const docRef = adminDb.collection(`users/${uid}/logicDrills`).doc();
+      await docRef.set({
+        id: docRef.id,
+        drillType,
+        itemId,
+        answer,
+        scores: result.scores,
+        feedback: result.feedback,
+        completedAt: FieldValue.serverTimestamp(),
+      });
+    }
+  } catch (err) {
+    console.warn("[logic-drill] failed to save result", err);
+  }
+}
 
 export async function POST(request: NextRequest) {
   const authResult = await requireRole(request, ["student", "admin", "teacher", "superadmin"]);
@@ -29,6 +61,24 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "itemId/drillType/answer が不整合です" }, { status: 400 });
   }
 
+  // alexandra（係り受け4択）はAIを使わず決定的に採点する。
+  if (drillType === "alexandra" && item.type === "alexandra" && answer.type === "alexandra") {
+    const correct = answer.selectedIndex === item.answerIndex;
+    const result: LogicDrillResult = {
+      scores: correct
+        ? { consistency: 5, validity: 5, structure: 5 }
+        : { consistency: 0, validity: 0, structure: 0 },
+      feedback: {
+        good: correct ? "係り受けを正確に読み取れています。" : "",
+        improve: correct ? "" : "修飾語がどの語に係るかを丁寧に追ってみましょう。",
+        mcqCorrect: correct,
+        modelAnswer: item.explanation,
+      },
+    };
+    await saveLogicDrillResult(uid, drillType, itemId, answer, result);
+    return NextResponse.json(result);
+  }
+
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     return NextResponse.json({ error: "ANTHROPIC_API_KEYが設定されていません" }, { status: 503 });
@@ -46,26 +96,9 @@ export async function POST(request: NextRequest) {
   try {
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error("JSON not found");
-    const result = JSON.parse(jsonMatch[0]);
+    const result = JSON.parse(jsonMatch[0]) as LogicDrillResult;
 
-    try {
-      const { adminDb } = await import("@/lib/firebase/admin");
-      const { FieldValue } = await import("firebase-admin/firestore");
-      if (adminDb) {
-        const docRef = adminDb.collection(`users/${uid}/logicDrills`).doc();
-        await docRef.set({
-          id: docRef.id,
-          drillType,
-          itemId,
-          answer,
-          scores: result.scores,
-          feedback: result.feedback,
-          completedAt: FieldValue.serverTimestamp(),
-        });
-      }
-    } catch (err) {
-      console.warn("[logic-drill] failed to save result", err);
-    }
+    await saveLogicDrillResult(uid, drillType, itemId, answer, result);
 
     return NextResponse.json(result);
   } catch {
