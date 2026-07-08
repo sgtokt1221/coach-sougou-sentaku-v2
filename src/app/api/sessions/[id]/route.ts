@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { Session } from "@/lib/types/session";
+import { shouldMarkEnded } from "@/lib/types/session";
 import { generateSessionSummary } from "@/lib/ai/generate-session-summary";
 import { requireRole } from "@/lib/api/auth";
 import { sanitizeForStudent } from "@/lib/api/session-sanitize";
@@ -30,6 +31,18 @@ export async function GET(
       return NextResponse.json({ error: "Session not found" }, { status: 404 });
     }
     const session = { id: snap.id, ...snap.data() } as Session;
+
+    // 終了予定時刻を過ぎた予定/実施中は「終了(ended)」へ遅延更新（実データも書き換え）。
+    if (shouldMarkEnded(session)) {
+      const nowIso = new Date().toISOString();
+      try {
+        await adminDb.doc(`sessions/${id}`).update({ status: "ended", updatedAt: nowIso });
+        session.status = "ended";
+        session.updatedAt = nowIso;
+      } catch (e) {
+        console.warn("[sessions] ended 遷移の保存に失敗:", e);
+      }
+    }
 
     // 生徒は自分のセッションのみ。講師専用フィールドと未共有 summary は除去して返す。
     if (role === "student") {

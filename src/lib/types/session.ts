@@ -1,6 +1,6 @@
 import type { PracticeQuestion } from "@/lib/types/growth-report";
 
-export type SessionStatus = "scheduled" | "in_progress" | "completed" | "cancelled";
+export type SessionStatus = "scheduled" | "in_progress" | "completed" | "cancelled" | "ended";
 export type SessionType = "coaching" | "mock_interview" | "essay_review" | "general" | "group_review";
 
 /** 探究授業中に生徒が入力する資料画像 1 件 (Storage のダウンロードURL参照) */
@@ -240,4 +240,35 @@ export const SESSION_STATUS_LABELS: Record<SessionStatus, string> = {
   in_progress: "実施中",
   completed: "完了",
   cancelled: "欠席",
+  ended: "終了",
 };
+
+/** duration 未設定セッションの既定所要時間（分）。終了判定に使う。 */
+export const SESSION_DEFAULT_DURATION_MIN = 60;
+
+/** セッションの終了予定時刻(ms)。duration 未設定は既定 60 分で計算。 */
+export function sessionEndTime(session: {
+  scheduledAt: string;
+  duration?: number | null;
+}): number {
+  const start = new Date(session.scheduledAt).getTime();
+  const mins =
+    typeof session.duration === "number" && session.duration > 0
+      ? session.duration
+      : SESSION_DEFAULT_DURATION_MIN;
+  return start + mins * 60_000;
+}
+
+/**
+ * 予定/実施中のまま終了予定時刻を過ぎていて、「終了(ended)」へ遷移すべきか。
+ * completed / cancelled / ended は対象外（手動確定・終了済みは尊重）。
+ */
+export function shouldMarkEnded(
+  session: { status: SessionStatus; scheduledAt: string; duration?: number | null },
+  now: number = Date.now(),
+): boolean {
+  if (session.status !== "scheduled" && session.status !== "in_progress") return false;
+  const start = new Date(session.scheduledAt).getTime();
+  if (Number.isNaN(start)) return false;
+  return sessionEndTime(session) <= now;
+}

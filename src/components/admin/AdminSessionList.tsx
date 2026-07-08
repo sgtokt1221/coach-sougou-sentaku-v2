@@ -27,6 +27,7 @@ const STATUS_VARIANT: Record<SessionStatus, "default" | "secondary" | "outline" 
   in_progress: "default",
   completed: "secondary",
   cancelled: "destructive",
+  ended: "secondary",
 };
 
 /**

@@ -54,6 +54,7 @@ const STATUS_VARIANT: Record<
   in_progress: "default",
   completed: "secondary",
   cancelled: "destructive",
+  ended: "secondary",
 };
 
 function scoreColor(total: number): string {
