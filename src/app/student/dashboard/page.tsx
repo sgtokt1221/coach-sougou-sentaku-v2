@@ -14,6 +14,7 @@ import type { StudentProfile } from "@/lib/types/user";
 import { useAuthSWR } from "@/lib/api/swr";
 import { NotificationPermissionBanner } from "@/components/notifications/NotificationPermissionBanner";
 import { UpcomingSessionCard } from "@/components/student/UpcomingSessionCard";
+import { LogicalTourHero } from "@/components/student/LogicalTourHero";
 import { ChocoSeriesAnnouncement } from "@/components/student/ChocoSeriesAnnouncement";
 import { EssayDraftsSection } from "@/components/essay/EssayDraftsSection";
 import { GrowthTree } from "@/components/self-analysis/GrowthTree";
@@ -113,6 +114,8 @@ export default function StudentDashboard() {
       )}
 
       <ChocoSeriesAnnouncement />
+
+      <LogicalTourHero />
 
       <div data-tour="upcoming-session">
         <UpcomingSessionCard />
