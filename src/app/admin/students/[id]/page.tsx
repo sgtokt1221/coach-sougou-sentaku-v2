@@ -405,6 +405,7 @@ function AdminStudentDetailPageInner() {
   const { data: interviewsData } = useAuthSWR<any[]>(`/api/admin/students/${id}/interviews`);
   const { data: summaryDrillsData } = useAuthSWR<any[]>(`/api/admin/students/${id}/summary-drills`);
   const { data: logicDrillsData } = useAuthSWR<any[]>(`/api/admin/students/${id}/logic-drills`);
+  const { data: chocoReviewsData } = useAuthSWR<any[]>(`/api/admin/students/${id}/choco-reviews`);
   const { data: activityLogsData } = useAuthSWR<any[]>(`/api/admin/students/${id}/activity-logs`);
 
   // 活動ヒートマップ用データ生成
@@ -417,9 +418,10 @@ function AdminStudentDetailPageInner() {
       skillChecks: skillCheck?.latestResult ? [skillCheck.latestResult] : [],
       summaryDrills: summaryDrillsData,
       logicDrills: logicDrillsData,
+      chocoReviews: chocoReviewsData,
       activityLogs: activityLogsData,
     });
-  }, [detail, interviewsData, summaryDrillsData, logicDrillsData, activityLogsData, skillCheck]);
+  }, [detail, interviewsData, summaryDrillsData, logicDrillsData, chocoReviewsData, activityLogsData, skillCheck]);
 
   // 弱点Top5データ
   const topWeaknesses = useMemo(() => {
