@@ -46,6 +46,12 @@ function todayStr(): string {
 const TYPE_META: Record<LogicDrillType, { icon: typeof ScanSearch; tagline: string }> = {
   flaw_finder: { icon: ScanSearch, tagline: "意見文の欠陥（飛躍・すり替え等）を見抜いて直す" },
   quick_logic: { icon: Timer, tagline: "お題に賛否＋理由3つを制限時間で組み立てる" },
+  skeleton: { icon: ClipboardList, tagline: "主張・根拠・具体例・反論応答の4枠で骨組みを作る" },
+  abstraction: { icon: ArrowRight, tagline: "抽象と具体を行き来して言い換える" },
+  rebuttal: { icon: PenLine, tagline: "最強の反論を想定し、それに応答する" },
+  compare: { icon: ScanSearch, tagline: "2つの選択肢を対比して理由つきで選ぶ" },
+  question_framing: { icon: Sparkles, tagline: "曖昧なテーマから論じるべき問いを立てる" },
+  alexandra: { icon: Timer, tagline: "係り受けを正確に読み取る4択問題" },
 };
 
 const HOW_IT_WORKS: { Icon: typeof ClipboardList; title: string; desc: string }[] = [
@@ -79,6 +85,25 @@ function LogicDrillInner() {
   const [stance, setStance] = useState<"agree" | "disagree" | null>(null);
   const [reasons, setReasons] = useState<string[]>(["", "", ""]);
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  // skeleton の回答
+  const [skClaim, setSkClaim] = useState("");
+  const [skGrounds, setSkGrounds] = useState("");
+  const [skExample, setSkExample] = useState("");
+  const [skRebuttal, setSkRebuttal] = useState("");
+  // abstraction の回答
+  const [absText, setAbsText] = useState("");
+  // rebuttal の回答
+  const [rebCounter, setRebCounter] = useState("");
+  const [rebResponse, setRebResponse] = useState("");
+  // compare の回答
+  const [cmpContrast, setCmpContrast] = useState("");
+  const [cmpChoice, setCmpChoice] = useState<"A" | "B" | null>(null);
+  const [cmpReason, setCmpReason] = useState("");
+  // question_framing の回答
+  const [qfQuestion, setQfQuestion] = useState("");
+  const [qfWhy, setQfWhy] = useState("");
+  // alexandra の回答
+  const [alexIndex, setAlexIndex] = useState<number | null>(null);
 
   // ?type= 指定時は select を飛ばして即開始
   useEffect(() => {
@@ -102,6 +127,19 @@ function LogicDrillInner() {
     setFlawFix("");
     setStance(null);
     setReasons(["", "", ""]);
+    setSkClaim("");
+    setSkGrounds("");
+    setSkExample("");
+    setSkRebuttal("");
+    setAbsText("");
+    setRebCounter("");
+    setRebResponse("");
+    setCmpContrast("");
+    setCmpChoice(null);
+    setCmpReason("");
+    setQfQuestion("");
+    setQfWhy("");
+    setAlexIndex(null);
     if (picked.type === "quick_logic") {
       setTimeLeft(picked.timeLimitSec ?? DEFAULT_QUICK_LOGIC_SEC);
     } else {
@@ -128,9 +166,54 @@ function LogicDrillInner() {
       if (!selectedFlaw) return null;
       return { type: "flaw_finder", selectedFlaw, explanation: flawExplanation, fix: flawFix };
     }
-    if (stance === null) return null;
-    return { type: "quick_logic", stance, reasons };
-  }, [item, selectedFlaw, flawExplanation, flawFix, stance, reasons]);
+    if (item.type === "quick_logic") {
+      if (stance === null) return null;
+      return { type: "quick_logic", stance, reasons };
+    }
+    if (item.type === "skeleton") {
+      if (!skClaim.trim() || !skGrounds.trim() || !skExample.trim() || !skRebuttal.trim()) return null;
+      return { type: "skeleton", claim: skClaim, grounds: skGrounds, example: skExample, rebuttal: skRebuttal };
+    }
+    if (item.type === "abstraction") {
+      if (!absText.trim()) return null;
+      return { type: "abstraction", text: absText };
+    }
+    if (item.type === "rebuttal") {
+      if (!rebCounter.trim() || !rebResponse.trim()) return null;
+      return { type: "rebuttal", counterArgument: rebCounter, response: rebResponse };
+    }
+    if (item.type === "compare") {
+      if (!cmpContrast.trim() || cmpChoice === null || !cmpReason.trim()) return null;
+      return { type: "compare", contrast: cmpContrast, choice: cmpChoice, reason: cmpReason };
+    }
+    if (item.type === "question_framing") {
+      if (!qfQuestion.trim() || !qfWhy.trim()) return null;
+      return { type: "question_framing", question: qfQuestion, why: qfWhy };
+    }
+    // alexandra
+    if (alexIndex === null) return null;
+    return { type: "alexandra", selectedIndex: alexIndex };
+  }, [
+    item,
+    selectedFlaw,
+    flawExplanation,
+    flawFix,
+    stance,
+    reasons,
+    skClaim,
+    skGrounds,
+    skExample,
+    skRebuttal,
+    absText,
+    rebCounter,
+    rebResponse,
+    cmpContrast,
+    cmpChoice,
+    cmpReason,
+    qfQuestion,
+    qfWhy,
+    alexIndex,
+  ]);
 
   async function submit() {
     if (!item || !answer || evaluating) return;
@@ -301,26 +384,210 @@ function LogicDrillInner() {
         </div>
       )}
 
-      {step === "result" && result && (
+      {step === "drill" && item?.type === "skeleton" && (
         <div className="space-y-4">
-          <div className="grid grid-cols-3 gap-2 text-center">
-            {([["consistency", "一貫性"], ["validity", "妥当性"], ["structure", "構成"]] as const).map(([key, label]) => (
-              <Card key={key}><CardContent className="py-3">
-                <p className="text-xs text-muted-foreground">{label}</p>
-                <p className="text-lg font-bold">{result.scores[key]}<span className="text-xs">/5</span></p>
-              </CardContent></Card>
+          <Card><CardContent className="py-4 text-sm leading-relaxed">
+            <p className="mb-1 text-xs font-medium text-muted-foreground">テーマ</p>
+            {item.prompt}
+          </CardContent></Card>
+          <div className="space-y-3">
+            <div>
+              <p className="mb-1 text-xs font-medium text-muted-foreground">主張</p>
+              <Textarea placeholder="このテーマに対する自分の主張" value={skClaim} onChange={(e) => setSkClaim(e.target.value)} />
+            </div>
+            <div>
+              <p className="mb-1 text-xs font-medium text-muted-foreground">根拠</p>
+              <Textarea placeholder="主張を支える根拠" value={skGrounds} onChange={(e) => setSkGrounds(e.target.value)} />
+            </div>
+            <div>
+              <p className="mb-1 text-xs font-medium text-muted-foreground">具体例</p>
+              <Textarea placeholder="根拠を裏づける具体例" value={skExample} onChange={(e) => setSkExample(e.target.value)} />
+            </div>
+            <div>
+              <p className="mb-1 text-xs font-medium text-muted-foreground">反論への応答</p>
+              <Textarea placeholder="想定される反論と、それへの応答" value={skRebuttal} onChange={(e) => setSkRebuttal(e.target.value)} />
+            </div>
+          </div>
+          <Button className="w-full" disabled={!answer || evaluating} onClick={() => submit()}>
+            {evaluating ? <Loader2 className="size-4 animate-spin" /> : "採点する"}
+          </Button>
+        </div>
+      )}
+
+      {step === "drill" && item?.type === "abstraction" && (
+        <div className="space-y-4">
+          <p className="font-medium">
+            {item.direction === "concretize"
+              ? "この抽象的な主張を、具体例で説明してみましょう"
+              : "この具体例を一般化して、主張にしてみましょう"}
+          </p>
+          <Card><CardContent className="py-4 text-sm leading-relaxed">{item.prompt}</CardContent></Card>
+          <Textarea
+            placeholder={item.direction === "concretize" ? "具体例で説明" : "一般化した主張"}
+            value={absText}
+            onChange={(e) => setAbsText(e.target.value)}
+          />
+          <Button className="w-full" disabled={!answer || evaluating} onClick={() => submit()}>
+            {evaluating ? <Loader2 className="size-4 animate-spin" /> : "採点する"}
+          </Button>
+        </div>
+      )}
+
+      {step === "drill" && item?.type === "rebuttal" && (
+        <div className="space-y-4">
+          <Card><CardContent className="py-4 text-sm leading-relaxed">
+            <p className="mb-1 text-xs font-medium text-muted-foreground">自分の主張／テーマ</p>
+            {item.prompt}
+          </CardContent></Card>
+          <div>
+            <p className="mb-1 text-xs font-medium text-muted-foreground">最強の反論</p>
+            <Textarea placeholder="自説に対する最も強い反論を想定して書く" value={rebCounter} onChange={(e) => setRebCounter(e.target.value)} />
+          </div>
+          <div>
+            <p className="mb-1 text-xs font-medium text-muted-foreground">それへの応答</p>
+            <Textarea placeholder="その反論への応答（再反論）" value={rebResponse} onChange={(e) => setRebResponse(e.target.value)} />
+          </div>
+          <Button className="w-full" disabled={!answer || evaluating} onClick={() => submit()}>
+            {evaluating ? <Loader2 className="size-4 animate-spin" /> : "採点する"}
+          </Button>
+        </div>
+      )}
+
+      {step === "drill" && item?.type === "compare" && (
+        <div className="space-y-4">
+          <Card><CardContent className="py-4 text-sm leading-relaxed">
+            <p className="mb-1 text-xs font-medium text-muted-foreground">問い</p>
+            {item.prompt}
+          </CardContent></Card>
+          <div className="grid grid-cols-2 gap-2 text-sm">
+            <Card><CardContent className="py-3">
+              <p className="mb-1 text-xs font-medium text-muted-foreground">A</p>
+              {item.optionA}
+            </CardContent></Card>
+            <Card><CardContent className="py-3">
+              <p className="mb-1 text-xs font-medium text-muted-foreground">B</p>
+              {item.optionB}
+            </CardContent></Card>
+          </div>
+          <div>
+            <p className="mb-1 text-xs font-medium text-muted-foreground">対比</p>
+            <Textarea placeholder="2つの選択肢を軸を立てて対比する" value={cmpContrast} onChange={(e) => setCmpContrast(e.target.value)} />
+          </div>
+          <div>
+            <p className="mb-1 text-xs font-medium text-muted-foreground">どちらを選ぶか</p>
+            <div className="flex gap-2">
+              <Button size="sm" variant={cmpChoice === "A" ? "default" : "outline"} onClick={() => setCmpChoice("A")}>Aを選ぶ</Button>
+              <Button size="sm" variant={cmpChoice === "B" ? "default" : "outline"} onClick={() => setCmpChoice("B")}>Bを選ぶ</Button>
+            </div>
+          </div>
+          <div>
+            <p className="mb-1 text-xs font-medium text-muted-foreground">理由</p>
+            <Textarea placeholder="なぜそちらを選ぶのか" value={cmpReason} onChange={(e) => setCmpReason(e.target.value)} />
+          </div>
+          <Button className="w-full" disabled={!answer || evaluating} onClick={() => submit()}>
+            {evaluating ? <Loader2 className="size-4 animate-spin" /> : "採点する"}
+          </Button>
+        </div>
+      )}
+
+      {step === "drill" && item?.type === "question_framing" && (
+        <div className="space-y-4">
+          <Card><CardContent className="py-4 text-sm leading-relaxed">
+            <p className="mb-1 text-xs font-medium text-muted-foreground">曖昧なテーマ</p>
+            {item.prompt}
+          </CardContent></Card>
+          <div>
+            <p className="mb-1 text-xs font-medium text-muted-foreground">立てた問い</p>
+            <Textarea placeholder="このテーマから論じるべき問い（論点）を立てる" value={qfQuestion} onChange={(e) => setQfQuestion(e.target.value)} />
+          </div>
+          <div>
+            <p className="mb-1 text-xs font-medium text-muted-foreground">なぜその問いか</p>
+            <Textarea placeholder="その問いを立てた理由" value={qfWhy} onChange={(e) => setQfWhy(e.target.value)} />
+          </div>
+          <Button className="w-full" disabled={!answer || evaluating} onClick={() => submit()}>
+            {evaluating ? <Loader2 className="size-4 animate-spin" /> : "採点する"}
+          </Button>
+        </div>
+      )}
+
+      {step === "drill" && item?.type === "alexandra" && (
+        <div className="space-y-4">
+          <Card><CardContent className="py-4 text-sm leading-relaxed">{item.prompt}</CardContent></Card>
+          <div className="space-y-2">
+            {item.choices.map((choice, i) => (
+              <button
+                key={i}
+                onClick={() => setAlexIndex(i)}
+                className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left text-sm transition-all ${
+                  alexIndex === i
+                    ? "border-teal-400 bg-teal-50 dark:border-teal-700 dark:bg-teal-950/30"
+                    : "border-border/60 bg-card hover:border-teal-200"
+                }`}
+              >
+                <span
+                  className={`flex size-5 shrink-0 items-center justify-center rounded-full border text-[11px] font-semibold ${
+                    alexIndex === i ? "border-teal-500 bg-teal-500 text-white" : "border-muted-foreground/40 text-muted-foreground"
+                  }`}
+                >
+                  {String.fromCharCode(65 + i)}
+                </span>
+                <span className="min-w-0 flex-1">{choice}</span>
+              </button>
             ))}
           </div>
-          {result.feedback.flawCorrect !== undefined && (
-            <p className={`text-sm font-medium ${result.feedback.flawCorrect ? "text-emerald-600" : "text-rose-600"}`}>
-              欠陥の同定: {result.feedback.flawCorrect ? "正解" : "不正解"}
-            </p>
+          <Button className="w-full" disabled={!answer || evaluating} onClick={() => submit()}>
+            {evaluating ? <Loader2 className="size-4 animate-spin" /> : "採点する"}
+          </Button>
+        </div>
+      )}
+
+      {step === "result" && result && (
+        <div className="space-y-4">
+          {result.feedback.mcqCorrect !== undefined ? (
+            <Card
+              className={
+                result.feedback.mcqCorrect
+                  ? "border-emerald-300 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/30"
+                  : "border-rose-300 bg-rose-50 dark:border-rose-800 dark:bg-rose-950/30"
+              }
+            >
+              <CardContent className="py-5 text-center">
+                <p
+                  className={`text-2xl font-bold ${
+                    result.feedback.mcqCorrect ? "text-emerald-600" : "text-rose-600"
+                  }`}
+                >
+                  {result.feedback.mcqCorrect ? "正解" : "不正解"}
+                </p>
+                {result.feedback.modelAnswer && (
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                    {result.feedback.modelAnswer}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              <div className="grid grid-cols-3 gap-2 text-center">
+                {([["consistency", "一貫性"], ["validity", "妥当性"], ["structure", "構成"]] as const).map(([key, label]) => (
+                  <Card key={key}><CardContent className="py-3">
+                    <p className="text-xs text-muted-foreground">{label}</p>
+                    <p className="text-lg font-bold">{result.scores[key]}<span className="text-xs">/5</span></p>
+                  </CardContent></Card>
+                ))}
+              </div>
+              {result.feedback.flawCorrect !== undefined && (
+                <p className={`text-sm font-medium ${result.feedback.flawCorrect ? "text-emerald-600" : "text-rose-600"}`}>
+                  欠陥の同定: {result.feedback.flawCorrect ? "正解" : "不正解"}
+                </p>
+              )}
+              <Card><CardContent className="py-4 space-y-2 text-sm">
+                <p><b>良い点:</b> {result.feedback.good}</p>
+                <p><b>改善:</b> {result.feedback.improve}</p>
+                {result.feedback.modelAnswer && <p className="text-muted-foreground"><b>模範:</b> {result.feedback.modelAnswer}</p>}
+              </CardContent></Card>
+            </>
           )}
-          <Card><CardContent className="py-4 space-y-2 text-sm">
-            <p><b>良い点:</b> {result.feedback.good}</p>
-            <p><b>改善:</b> {result.feedback.improve}</p>
-            {result.feedback.modelAnswer && <p className="text-muted-foreground"><b>模範:</b> {result.feedback.modelAnswer}</p>}
-          </CardContent></Card>
           <div className="flex gap-2">
             <Button variant="outline" className="flex-1" onClick={() => start(drillType)}>もう一度</Button>
             <Link href="/student/essay/logic-drill/history" className="flex-1"><Button variant="outline" className="w-full">履歴</Button></Link>

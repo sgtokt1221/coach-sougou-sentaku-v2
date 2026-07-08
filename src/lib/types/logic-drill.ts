@@ -1,13 +1,36 @@
 // src/lib/types/logic-drill.ts
 
-/** v1は2型。v2で "skeleton" | "abstraction" を追加予定。 */
-export type LogicDrillType = "flaw_finder" | "quick_logic";
+/** v2で全8型（記述5型＋4択1型を追加）。 */
+export type LogicDrillType =
+  | "flaw_finder"
+  | "quick_logic"
+  | "skeleton"
+  | "abstraction"
+  | "rebuttal"
+  | "compare"
+  | "question_framing"
+  | "alexandra";
 
-export const LOGIC_DRILL_TYPES: LogicDrillType[] = ["flaw_finder", "quick_logic"];
+export const LOGIC_DRILL_TYPES: LogicDrillType[] = [
+  "flaw_finder",
+  "quick_logic",
+  "skeleton",
+  "abstraction",
+  "rebuttal",
+  "compare",
+  "question_framing",
+  "alexandra",
+];
 
 export const LOGIC_DRILL_TYPE_LABELS: Record<LogicDrillType, string> = {
   flaw_finder: "論理の穴さがし",
   quick_logic: "即興ロジック",
+  skeleton: "骨組み穴埋め",
+  abstraction: "具体↔抽象変換",
+  rebuttal: "反論想定と応答",
+  compare: "比較・対比して選ぶ",
+  question_framing: "問いの明確化",
+  alexandra: "アレクサンドラ構文",
 };
 
 /** 論理的欠陥の種類（flaw_finder の選択肢/正解ラベル） */
@@ -40,6 +63,42 @@ export type LogicDrillItem =
       type: "quick_logic";
       prompt: string; // 賛否が割れるお題
       timeLimitSec?: number; // 未指定は DEFAULT_QUICK_LOGIC_SEC
+    }
+  | {
+      id: string;
+      type: "skeleton";
+      prompt: string; // 論じるテーマ
+    }
+  | {
+      id: string;
+      type: "abstraction";
+      prompt: string; // 変換対象の記述
+      direction: "concretize" | "abstract"; // 抽象→具体 / 具体→抽象
+    }
+  | {
+      id: string;
+      type: "rebuttal";
+      prompt: string; // 自分の主張／テーマ
+    }
+  | {
+      id: string;
+      type: "compare";
+      prompt: string; // 問い
+      optionA: string; // 選択肢A
+      optionB: string; // 選択肢B
+    }
+  | {
+      id: string;
+      type: "question_framing";
+      prompt: string; // 曖昧なテーマ
+    }
+  | {
+      id: string;
+      type: "alexandra";
+      prompt: string; // 係り受けが紛らわしい文＋空欄設問
+      choices: string[]; // 4択
+      answerIndex: number; // 正解の選択肢インデックス（0-3）
+      explanation: string; // 解説
     };
 
 export const DEFAULT_QUICK_LOGIC_SEC = 300; // 5分
@@ -56,6 +115,37 @@ export type LogicDrillAnswer =
       type: "quick_logic";
       stance: "agree" | "disagree";
       reasons: string[];
+    }
+  | {
+      type: "skeleton";
+      claim: string; // 主張
+      grounds: string; // 根拠
+      example: string; // 具体例
+      rebuttal: string; // 反論応答
+    }
+  | {
+      type: "abstraction";
+      text: string;
+    }
+  | {
+      type: "rebuttal";
+      counterArgument: string; // 最強の反論
+      response: string; // それへの再反論
+    }
+  | {
+      type: "compare";
+      contrast: string; // 対比
+      choice: "A" | "B"; // 選択
+      reason: string; // 理由
+    }
+  | {
+      type: "question_framing";
+      question: string; // 立てた問い
+      why: string; // なぜその問いか
+    }
+  | {
+      type: "alexandra";
+      selectedIndex: number;
     };
 
 export interface LogicDrillScores {
@@ -68,6 +158,7 @@ export interface LogicDrillFeedback {
   good: string; // 良かった点
   improve: string; // 改善点（赤ペン）
   flawCorrect?: boolean; // flaw_finder 専用: 欠陥同定が正解か
+  mcqCorrect?: boolean; // alexandra 専用: 4択が正解か
   modelAnswer?: string; // 模範例（任意）
 }
 
