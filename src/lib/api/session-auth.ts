@@ -2,13 +2,18 @@ import { NextResponse } from "next/server";
 import type { Session } from "@/lib/types/session";
 
 /**
- * セッション API の認可ロジック (4 つの新 endpoint 共通)
+ * セッション API の認可ロジック (session 系 endpoint 共通)
  *
  * 許可条件 (OR):
  *  - role === "superadmin"
- *  - session.teacherId === auth.uid
- *  - session.createdByAdminId === auth.uid
- *  - users/{session.studentId}.managedBy === auth.uid
+ *  - session.teacherId === auth.uid              （担当講師本人）
+ *  - session.createdByAdminId === auth.uid        （作成者本人）
+ *  - role === "admin" かつ session が自塾(組織)のもの（管理者は自塾内なら常に代行可）
+ *  - users/{session.studentId}.managedBy === auth.uid（その生徒の担当）
+ *
+ * ※ 管理者の代行は「自塾(organization)内」に限定する。越境(他塾のセッション)は
+ *   マルチテナント保護のため不可。判定は createdByAdminId / 生徒の managedBy が
+ *   自塾の admin メンバーに含まれるかで行う（sessions 一覧 GET の組織スコープと同基準）。
  */
 export async function assertSessionAccess(
   adminDb: FirebaseFirestore.Firestore,
@@ -18,6 +23,24 @@ export async function assertSessionAccess(
   if (auth.role === "superadmin") return null;
   if (session.teacherId === auth.uid) return null;
   if (session.createdByAdminId === auth.uid) return null;
+
+  // 管理者は自塾(組織)のセッションなら常に代行できる。
+  if (auth.role === "admin") {
+    try {
+      const { getOrgMemberAdminUids } = await import("@/lib/api/organization-scope");
+      const memberUids = new Set(await getOrgMemberAdminUids(adminDb, auth.uid));
+      if (session.createdByAdminId && memberUids.has(session.createdByAdminId)) {
+        return null;
+      }
+      if (session.studentId) {
+        const sdoc = await adminDb.doc(`users/${session.studentId}`).get();
+        const mb = sdoc.exists ? (sdoc.data()?.managedBy as string | undefined) : undefined;
+        if (mb && memberUids.has(mb)) return null;
+      }
+    } catch {
+      // 組織解決に失敗した場合は下の既定判定にフォールバック
+    }
+  }
 
   if (!session.studentId) {
     return NextResponse.json(
