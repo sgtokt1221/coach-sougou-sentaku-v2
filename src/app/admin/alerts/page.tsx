@@ -20,8 +20,10 @@ import {
   Activity,
   Lightbulb,
 } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useAuthSWR } from "@/lib/api/swr";
+import { authFetch } from "@/lib/api/client";
 import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
 import type { AlertItem } from "@/lib/types/admin";
 
@@ -130,12 +132,34 @@ export default function AdminAlertsPage() {
       !a.acknowledged
   ).length;
 
-  function toggleAcknowledged(id: string) {
-    setLocalAlerts((prev) =>
-      (prev ?? fetchedAlerts ?? []).map((a) =>
-        a.id === id ? { ...a, acknowledged: !a.acknowledged } : a
-      )
-    );
+  // 確認状態をサーバへ永続化。alert.id（=安定キー）は生徒間で重複しうるため
+  // studentUid と id の両方で対象を突合する。楽観更新→失敗時ロールバック。
+  async function toggleAcknowledged(alert: AlertItem) {
+    const next = !alert.acknowledged;
+    const flip = (value: boolean) =>
+      setLocalAlerts((prev) =>
+        (prev ?? fetchedAlerts ?? []).map((a) =>
+          a.id === alert.id && a.studentUid === alert.studentUid
+            ? { ...a, acknowledged: value }
+            : a
+        )
+      );
+    flip(next);
+    try {
+      const res = await authFetch("/api/admin/alerts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          studentUid: alert.studentUid,
+          alertKey: alert.id,
+          acknowledged: next,
+        }),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      flip(alert.acknowledged); // ロールバック
+      toast.error("確認状態の保存に失敗しました");
+    }
   }
 
   return (
@@ -221,7 +245,7 @@ export default function AdminAlertsPage() {
             const TypeIcon = config.icon;
             return (
               <Card
-                key={alert.id}
+                key={`${alert.studentUid}:${alert.id}`}
                 className={cn(
                   "transition-all",
                   alert.acknowledged && "opacity-60",
@@ -286,7 +310,7 @@ export default function AdminAlertsPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => toggleAcknowledged(alert.id)}
+                      onClick={() => toggleAcknowledged(alert)}
                     >
                       {alert.acknowledged ? "未確認に戻す" : "確認済みにする"}
                     </Button>

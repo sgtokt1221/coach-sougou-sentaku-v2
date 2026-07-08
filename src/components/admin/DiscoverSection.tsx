@@ -93,6 +93,39 @@ export function DiscoverSection({ studentId }: DiscoverSectionProps) {
     [studentId],
   );
 
+  // 管理者による自己分析セクションの編集を保存する（楽観更新→失敗時ロールバック）。
+  // 承認状態はこの経路では変更しない（未承認へ戻すのは生徒本人の編集のみ）。
+  const handleSelfAnalysisUpdate = useCallback(
+    async (updated: SelfAnalysis) => {
+      let prev: SelfAnalysis | null = null;
+      setSelfAnalysis((cur) => {
+        prev = cur;
+        return updated;
+      });
+      try {
+        const res = await authFetch(`/api/admin/students/${studentId}/self-analysis`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            values: updated.values,
+            strengths: updated.strengths,
+            weaknesses: updated.weaknesses,
+            interests: updated.interests,
+            vision: updated.vision,
+            identity: updated.identity,
+            synthesis: updated.synthesis,
+          }),
+        });
+        if (!res.ok) throw new Error();
+        toast.success("保存しました");
+      } catch {
+        setSelfAnalysis(prev);
+        toast.error("保存に失敗しました");
+      }
+    },
+    [studentId],
+  );
+
   // 自己分析の完了状況と step データを GrowthTree 用に整形
   const saCompletedSteps = selfAnalysis?.completedSteps ?? 0;
   const saStepsData: Record<number, Record<string, unknown>> = {};
@@ -160,7 +193,7 @@ export function DiscoverSection({ studentId }: DiscoverSectionProps) {
       {hasSaData && (
         <AnalysisResultCard
           analysis={selfAnalysis!}
-          readOnly
+          onUpdate={handleSelfAnalysisUpdate}
           renderSectionExtra={(sectionKey, sectionTitle) => {
             const ap = approvals[sectionKey];
             const approved = ap?.approved === true;
