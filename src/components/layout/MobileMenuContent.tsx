@@ -30,6 +30,7 @@ import {
   ExternalLink,
   BookMarked,
   BookOpen,
+  Scale,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -98,6 +99,7 @@ const studentPrimary: PrimaryAction[] = [
       { label: "ネタインプット", href: "/student/topic-input", icon: BookMarked },
       { label: "テーマ・過去問", href: "/student/essay/themes", icon: BookOpen },
       { label: "要約ドリル", href: "/student/essay/summary-drill", icon: ClipboardList },
+  { label: "論理ドリル", href: "/student/essay/logic-drill", icon: Scale },
       { label: "ちょこ添削", href: "/student/essay/choco", icon: ClipboardList },
     ],
   },
@@ -131,6 +133,7 @@ const studentSecondary: ListItem[] = [
   { label: "ネタインプット", href: "/student/topic-input", icon: BookMarked },
   { label: "テーマ・過去問", href: "/student/essay/themes", icon: BookOpen },
   { label: "要約ドリル", href: "/student/essay/summary-drill", icon: ClipboardList },
+  { label: "論理ドリル", href: "/student/essay/logic-drill", icon: Scale },
   { label: "ちょこ添削", href: "/student/essay/choco", icon: ClipboardList },
   { label: "ちょこ面接", href: "/student/interview/drill", icon: ClipboardList },
   { label: "志望校マッチング", href: "/student/universities", icon: GraduationCap },

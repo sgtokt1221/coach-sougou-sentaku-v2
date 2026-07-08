@@ -113,6 +113,7 @@ import { GrowthReportsSection } from "@/components/admin/GrowthReportsSection";
 import { DocumentsSection } from "@/components/admin/DocumentsSection";
 import { InterviewsSection } from "@/components/admin/InterviewsSection";
 import { SummaryDrillsSection } from "@/components/admin/SummaryDrillsSection";
+import { LogicDrillsSection } from "@/components/admin/LogicDrillsSection";
 import { InterviewDrillsSection } from "@/components/admin/InterviewDrillsSection";
 import { ActivitiesSection } from "@/components/admin/ActivitiesSection";
 import { DiscoverSection } from "@/components/admin/DiscoverSection";
@@ -403,6 +404,7 @@ function AdminStudentDetailPageInner() {
   // ヒートマップ用データ取得
   const { data: interviewsData } = useAuthSWR<any[]>(`/api/admin/students/${id}/interviews`);
   const { data: summaryDrillsData } = useAuthSWR<any[]>(`/api/admin/students/${id}/summary-drills`);
+  const { data: logicDrillsData } = useAuthSWR<any[]>(`/api/admin/students/${id}/logic-drills`);
   const { data: activityLogsData } = useAuthSWR<any[]>(`/api/admin/students/${id}/activity-logs`);
 
   // 活動ヒートマップ用データ生成
@@ -414,9 +416,10 @@ function AdminStudentDetailPageInner() {
       interviews: interviewsData,
       skillChecks: skillCheck?.latestResult ? [skillCheck.latestResult] : [],
       summaryDrills: summaryDrillsData,
+      logicDrills: logicDrillsData,
       activityLogs: activityLogsData,
     });
-  }, [detail, interviewsData, summaryDrillsData, activityLogsData, skillCheck]);
+  }, [detail, interviewsData, summaryDrillsData, logicDrillsData, activityLogsData, skillCheck]);
 
   // 弱点Top5データ
   const topWeaknesses = useMemo(() => {
@@ -1062,6 +1065,7 @@ function AdminStudentDetailPageInner() {
 
       <InterviewsSection studentId={id} autoOpenInterviewId={searchParams?.get("interview") ?? undefined} />
       <SummaryDrillsSection studentId={id} />
+      <LogicDrillsSection studentId={id} />
       <InterviewDrillsSection studentId={id} />
     </div>
   );

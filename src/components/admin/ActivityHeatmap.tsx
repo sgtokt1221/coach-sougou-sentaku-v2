@@ -28,6 +28,7 @@ function ActivityTooltip({ active, payload, label }: any) {
     interview: "面接",
     skillCheck: "スキルチェック",
     drill: "要約ドリル",
+    logicDrill: "論理ドリル",
     topicInput: "ネタインプット",
     interviewDrill: "面接ドリル",
     selfAnalysis: "自己分析",
@@ -67,7 +68,7 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
   // 全期間で活動があるかチェック
   const hasAnyActivity = data.some(day =>
     day.essay > 0 || day.interview > 0 || day.skillCheck > 0 ||
-    day.drill > 0 || day.topicInput > 0 || day.interviewDrill > 0 || day.selfAnalysis > 0
+    day.drill > 0 || day.logicDrill > 0 || day.topicInput > 0 || day.interviewDrill > 0 || day.selfAnalysis > 0
   );
 
   // 合計回数 (30日間)
@@ -77,16 +78,17 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
       interview: acc.interview + d.interview,
       skillCheck: acc.skillCheck + d.skillCheck,
       drill: acc.drill + d.drill,
+      logicDrill: acc.logicDrill + d.logicDrill,
       topicInput: acc.topicInput + d.topicInput,
       interviewDrill: acc.interviewDrill + d.interviewDrill,
       selfAnalysis: acc.selfAnalysis + d.selfAnalysis,
     }),
-    { essay: 0, interview: 0, skillCheck: 0, drill: 0, topicInput: 0, interviewDrill: 0, selfAnalysis: 0 },
+    { essay: 0, interview: 0, skillCheck: 0, drill: 0, logicDrill: 0, topicInput: 0, interviewDrill: 0, selfAnalysis: 0 },
   );
   // 直近7日にアクティブだった日の数
   const activeDaysRecent = data.slice(-7).filter(d =>
     d.essay > 0 || d.interview > 0 || d.skillCheck > 0 ||
-    d.drill > 0 || d.topicInput > 0 || d.interviewDrill > 0 || d.selfAnalysis > 0
+    d.drill > 0 || d.logicDrill > 0 || d.topicInput > 0 || d.interviewDrill > 0 || d.selfAnalysis > 0
   ).length;
 
   const summaryItems = [
@@ -94,6 +96,7 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
     { label: "面接", value: totals.interview, color: "#6366f1" },
     { label: "スキル", value: totals.skillCheck, color: "#8b5cf6" },
     { label: "要約ドリル", value: totals.drill, color: "#f59e0b" },
+    { label: "論理ドリル", value: totals.logicDrill, color: "#84cc16" },
     { label: "ネタインプット", value: totals.topicInput, color: "#0ea5e9" },
     { label: "面接ドリル", value: totals.interviewDrill, color: "#f43f5e" },
     { label: "自己分析", value: totals.selfAnalysis, color: "#14b8a6" },
@@ -181,6 +184,13 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
                   stackId="activity"
                   name="要約ドリル"
                   fill="#f59e0b"
+                  radius={[0, 0, 0, 0]}
+                />
+                <Bar
+                  dataKey="logicDrill"
+                  stackId="activity"
+                  name="論理ドリル"
+                  fill="#84cc16"
                   radius={[0, 0, 0, 0]}
                 />
                 <Bar

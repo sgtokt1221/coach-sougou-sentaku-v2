@@ -1,26 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
+import type {
+  LogicDrillType,
+  LogicDrillAnswer,
+  LogicDrillScores,
+  LogicDrillFeedback,
+} from "@/lib/types/logic-drill";
 
 /**
- * 生徒自身の要約ドリル履歴。
- * 管理者ルート (/api/admin/students/[id]/summary-drills) と同じ shape を返す。
+ * 生徒自身の論理ドリル履歴。
+ * 管理者ルート (/api/admin/students/[id]/logic-drills) と同じ shape を返す。
  */
-export interface SummaryDrillHistoryItem {
+export interface LogicDrillHistoryItem {
   id: string;
-  passageId: string | null;
-  passageTitle: string | null;
-  facultyId: string | null;
-  summaryText: string;
-  scores: {
-    comprehension: number;
-    conciseness: number;
-    keyPoints: number;
-    structure: number;
-    expression: number;
-  };
-  total: number;
-  feedback: string | null;
+  drillType: LogicDrillType;
+  itemId: string;
+  answer: LogicDrillAnswer | null;
+  scores: LogicDrillScores;
+  feedback: LogicDrillFeedback | null;
   completedAt: string;
 }
+
+const EMPTY_SCORES: LogicDrillScores = {
+  consistency: 0,
+  validity: 0,
+  structure: 0,
+};
 
 export async function GET(request: NextRequest) {
   try {
@@ -36,7 +40,7 @@ export async function GET(request: NextRequest) {
           userId = decoded.uid;
         }
       } catch (e) {
-        console.error("Summary drill history: auth token verification failed:", e);
+        console.error("Logic drill history: auth token verification failed:", e);
       }
     }
     // dev mode fallback
@@ -57,30 +61,22 @@ export async function GET(request: NextRequest) {
     let snapshot;
     try {
       snapshot = await adminDb
-        .collection(`users/${userId}/summaryDrills`)
+        .collection(`users/${userId}/logicDrills`)
         .orderBy("completedAt", "desc")
         .get();
     } catch {
       // Fallback: インデックス未作成等で orderBy が失敗したら JS 側でソート
-      snapshot = await adminDb.collection(`users/${userId}/summaryDrills`).get();
+      snapshot = await adminDb.collection(`users/${userId}/logicDrills`).get();
     }
 
-    const items: SummaryDrillHistoryItem[] = snapshot.docs.map((doc) => {
+    const items: LogicDrillHistoryItem[] = snapshot.docs.map((doc) => {
       const data = doc.data();
       return {
         id: doc.id,
-        passageId: data.passageId ?? null,
-        passageTitle: data.passageTitle ?? null,
-        facultyId: data.facultyId ?? null,
-        summaryText: data.summaryText ?? "",
-        scores: data.scores ?? {
-          comprehension: 0,
-          conciseness: 0,
-          keyPoints: 0,
-          structure: 0,
-          expression: 0,
-        },
-        total: data.total ?? 0,
+        drillType: data.drillType,
+        itemId: data.itemId ?? "",
+        answer: data.answer ?? null,
+        scores: data.scores ?? EMPTY_SCORES,
         feedback: data.feedback ?? null,
         completedAt:
           data.completedAt?.toDate?.()?.toISOString() ?? new Date().toISOString(),
@@ -92,7 +88,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(items);
   } catch (error) {
-    console.error("Summary drill history error:", error);
+    console.error("Logic drill history error:", error);
     return NextResponse.json([]);
   }
 }
