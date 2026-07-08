@@ -3,7 +3,11 @@ import {
   ALL_LOGIC_DRILL_ITEMS,
   getLogicDrillItemsByType,
 } from "../src/data/logic-drills";
-import { FLAW_KIND_LABELS, type FlawKind } from "../src/lib/types/logic-drill";
+import {
+  FLAW_KIND_LABELS,
+  LOGIC_DRILL_TYPES,
+  type FlawKind,
+} from "../src/lib/types/logic-drill";
 import { getRotatedLogicDrillType, pickLogicDrillItem } from "../src/lib/logic-drill/rotation";
 
 let errors = 0;
@@ -20,10 +24,33 @@ for (const it of ALL_LOGIC_DRILL_ITEMS) {
   if (!it.prompt || it.prompt.length < 10) fail(`short prompt: ${it.id}`);
 }
 
-// 2) 各型10問以上
-for (const type of ["flaw_finder", "quick_logic"] as const) {
+// 2) 全8型が10問以上
+for (const type of LOGIC_DRILL_TYPES) {
   const n = getLogicDrillItemsByType(type).length;
   if (n < 10) fail(`type ${type} has ${n} items (need >=10)`);
+}
+
+// 2b) alexandra: choices 4つ・answerIndex 0-3・explanation 非空
+for (const it of getLogicDrillItemsByType("alexandra")) {
+  if (it.type !== "alexandra") continue;
+  if (it.choices.length !== 4) fail(`alexandra needs 4 choices: ${it.id}`);
+  if (!Number.isInteger(it.answerIndex) || it.answerIndex < 0 || it.answerIndex >= 4)
+    fail(`alexandra answerIndex out of range: ${it.id}`);
+  if (!it.explanation || it.explanation.length < 10)
+    fail(`alexandra short explanation: ${it.id}`);
+}
+
+// 2c) abstraction: direction が concretize|abstract
+for (const it of getLogicDrillItemsByType("abstraction")) {
+  if (it.type !== "abstraction") continue;
+  if (it.direction !== "concretize" && it.direction !== "abstract")
+    fail(`abstraction bad direction: ${it.id}`);
+}
+
+// 2d) compare: optionA/optionB 非空
+for (const it of getLogicDrillItemsByType("compare")) {
+  if (it.type !== "compare") continue;
+  if (!it.optionA || !it.optionB) fail(`compare empty option: ${it.id}`);
 }
 
 // 3) flaw_finder は answerFlaw が全種を最低1問カバー
