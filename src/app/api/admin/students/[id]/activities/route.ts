@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireRole, scopeByOrganization } from "@/lib/api/auth";
 import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
 import { adminDb } from "@/lib/firebase/admin";
-import type { ActivityCategory } from "@/lib/types/activity";
+import type { ActivityCategory, StructuredActivityData } from "@/lib/types/activity";
 
 interface ActivityListItem {
   id: string;
@@ -11,6 +11,7 @@ interface ActivityListItem {
   period: { start: string; end: string };
   description: string;
   isStructured: boolean;
+  structuredData: StructuredActivityData | null;
   updatedAt: string;
 }
 
@@ -59,6 +60,7 @@ export async function GET(
         period: data.period ?? { start: "", end: "" },
         description: data.description ?? "",
         isStructured: !!data.structuredData,
+        structuredData: (data.structuredData as StructuredActivityData | undefined) ?? null,
         updatedAt: data.updatedAt?.toDate?.()?.toISOString() ?? new Date().toISOString(),
       };
     });
