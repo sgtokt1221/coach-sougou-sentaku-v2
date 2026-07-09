@@ -9,6 +9,7 @@ import {
   Save,
   Pencil,
   Check,
+  AlertTriangle,
 } from "lucide-react";
 import {
   Card,
@@ -43,6 +44,7 @@ export function LessonPrepSection({
   const [busy, setBusy] = useState<"generating" | "saving" | null>(null);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<LessonPrepPlan | undefined>(initial);
+  const [pqWarning, setPqWarning] = useState<string | null>(null);
 
   const generate = async (regenerate = false) => {
     setBusy("generating");
@@ -59,15 +61,23 @@ export function LessonPrepSection({
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error ?? "生成に失敗");
       }
-      const { prepPlan, practiceQuestions } = (await res.json()) as {
-        prepPlan: LessonPrepPlan;
-        practiceQuestions?: PracticeQuestion[];
-      };
+      const { prepPlan, practiceQuestions, practiceQuestionsError } =
+        (await res.json()) as {
+          prepPlan: LessonPrepPlan;
+          practiceQuestions?: PracticeQuestion[];
+          practiceQuestionsError?: string;
+        };
       setPlan(prepPlan);
       setDraft(prepPlan);
       setEditing(false);
       onChange?.(prepPlan);
       onPracticeQuestionsChange?.(practiceQuestions ?? []);
+      // 台本は保存済みだが類題が生成できなかった場合は握り潰さず警告する
+      setPqWarning(
+        practiceQuestionsError && (practiceQuestions?.length ?? 0) === 0
+          ? practiceQuestionsError
+          : null,
+      );
     } catch (err) {
       console.error(err);
       alert(err instanceof Error ? err.message : "AI 生成に失敗しました");
@@ -191,6 +201,20 @@ export function LessonPrepSection({
         </div>
       </CardHeader>
       <CardContent>
+        {pqWarning && (
+          <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 p-2.5 text-xs text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+            <AlertTriangle className="size-4 shrink-0" />
+            <span className="flex-1">{pqWarning}（台本は保存済みです）</span>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => generate(true)}
+              disabled={busy !== null}
+            >
+              類題を再生成
+            </Button>
+          </div>
+        )}
         {!plan && !busy && (
           <div className="text-center py-8 space-y-3">
             <p className="text-sm text-muted-foreground">

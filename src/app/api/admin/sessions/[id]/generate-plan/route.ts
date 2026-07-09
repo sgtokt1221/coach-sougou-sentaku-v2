@@ -351,6 +351,7 @@ export async function POST(
   // 期間スコープは「前回セッション scheduledAt 〜 今回 scheduledAt」。
   // 失敗しても台本は保存する (致命的でない)。
   let practiceQuestions: PracticeQuestion[] = [];
+  let practiceQuestionsError: string | undefined;
   try {
     const endDate = new Date(session.scheduledAt);
     const startDate = prevSession?.scheduledAt
@@ -414,21 +415,30 @@ export async function POST(
     const client = new Anthropic();
     const pqResp = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 3500,
+      max_tokens: 8000,
       system: pqSystem,
       messages: [{ role: "user", content: "JSON のみを出力してください。" }],
     });
+    // stop_reason が max_tokens の場合、JSON が途中で切れている可能性が高い
+    const truncated = pqResp.stop_reason === "max_tokens";
     const pqText = pqResp.content[0]?.type === "text" ? pqResp.content[0].text : "";
     const pqJsonStr = extractJsonObject(pqText);
     if (pqJsonStr) {
       practiceQuestions = buildPracticeQuestionsFromJson(JSON.parse(pqJsonStr));
+      if (practiceQuestions.length === 0) {
+        practiceQuestionsError = "AIが有効な類題を返しませんでした。再生成をお試しください。";
+      }
     } else {
       console.warn(
-        `[generate-plan] practice questions JSON not found. rawLength=${pqText.length}`,
+        `[generate-plan] practice questions JSON not found. rawLength=${pqText.length} truncated=${truncated}`,
       );
+      practiceQuestionsError = truncated
+        ? "類題の生成が長すぎて途中で切れました。再生成をお試しください。"
+        : "類題データの解析に失敗しました。再生成をお試しください。";
     }
   } catch (err) {
     console.warn("[generate-plan] practice questions generation failed:", err);
+    practiceQuestionsError = "類題の生成に失敗しました。再生成をお試しください。";
   }
 
   await adminDb
@@ -438,5 +448,5 @@ export async function POST(
       { merge: true },
     );
 
-  return NextResponse.json({ prepPlan, practiceQuestions });
+  return NextResponse.json({ prepPlan, practiceQuestions, practiceQuestionsError });
 }
