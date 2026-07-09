@@ -1,12 +1,17 @@
 "use client";
 
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Briefcase, CheckCircle2 } from "lucide-react";
+import { Briefcase, CheckCircle2, ChevronDown } from "lucide-react";
 import { useAuthSWR } from "@/lib/api/swr";
 import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
-import { ACTIVITY_CATEGORY_LABELS, type ActivityCategory } from "@/lib/types/activity";
+import {
+  ACTIVITY_CATEGORY_LABELS,
+  type ActivityCategory,
+  type StructuredActivityData,
+} from "@/lib/types/activity";
 import { InlineFeedbackButton } from "@/components/admin/InlineFeedbackButton";
 
 interface ActivityListItem {
@@ -16,7 +21,37 @@ interface ActivityListItem {
   period: { start: string; end: string };
   description: string;
   isStructured: boolean;
+  structuredData: StructuredActivityData | null;
   updatedAt: string;
+}
+
+/** 構造化データの1項目（本文） */
+function StructField({ label, value }: { label: string; value?: string }) {
+  if (!value || !value.trim()) return null;
+  return (
+    <div>
+      <p className="text-[11px] font-semibold text-muted-foreground">{label}</p>
+      <p className="whitespace-pre-wrap text-xs leading-relaxed">{value}</p>
+    </div>
+  );
+}
+
+/** 構造化データの1項目（箇条書き） */
+function StructList({ label, items }: { label: string; items?: string[] }) {
+  if (!items || items.length === 0) return null;
+  return (
+    <div>
+      <p className="text-[11px] font-semibold text-muted-foreground">{label}</p>
+      <ul className="mt-0.5 space-y-0.5 text-xs leading-relaxed">
+        {items.map((it, i) => (
+          <li key={i} className="flex gap-1">
+            <span className="text-muted-foreground">・</span>
+            <span className="whitespace-pre-wrap">{it}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 }
 
 const CATEGORY_COLORS: Record<ActivityCategory, string> = {
@@ -34,6 +69,14 @@ export function ActivitiesSection({ studentId }: { studentId: string }) {
     `/api/admin/students/${studentId}/activities`
   );
   const activities = data ?? [];
+  const [openIds, setOpenIds] = useState<Set<string>>(new Set());
+  const toggle = (id: string) =>
+    setOpenIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
 
   // カテゴリ別集計
   const categoryCounts = activities.reduce<Record<string, number>>((acc, a) => {
@@ -78,54 +121,82 @@ export function ActivitiesSection({ studentId }: { studentId: string }) {
               ))}
             </div>
 
-            {/* Activity cards */}
+            {/* Activity cards（クリックで全文＋構造化データを展開） */}
             <div className="space-y-2">
-              {activities.map((act) => (
-                <div
-                  key={act.id}
-                  className="flex items-start justify-between rounded-lg border p-3"
-                >
-                  <div className="space-y-1 flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium text-sm truncate">{act.title}</p>
-                      <Badge
-                        variant="outline"
-                        className={`shrink-0 text-[10px] ${CATEGORY_COLORS[act.category]}`}
+              {activities.map((act) => {
+                const open = openIds.has(act.id);
+                const sd = act.structuredData;
+                return (
+                  <div key={act.id} className="rounded-lg border">
+                    <div className="flex items-start justify-between p-3">
+                      <button
+                        type="button"
+                        onClick={() => toggle(act.id)}
+                        className="min-w-0 flex-1 space-y-1 text-left"
+                        aria-expanded={open}
                       >
-                        {ACTIVITY_CATEGORY_LABELS[act.category]}
-                      </Badge>
+                        <div className="flex items-center gap-2">
+                          <ChevronDown
+                            className={`size-3.5 shrink-0 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`}
+                          />
+                          <p className="truncate text-sm font-medium">{act.title}</p>
+                          <Badge
+                            variant="outline"
+                            className={`shrink-0 text-[10px] ${CATEGORY_COLORS[act.category]}`}
+                          >
+                            {ACTIVITY_CATEGORY_LABELS[act.category]}
+                          </Badge>
+                        </div>
+                        {!open && (
+                          <p className="pl-5 text-xs text-muted-foreground line-clamp-1">
+                            {act.description}
+                          </p>
+                        )}
+                        <p className="pl-5 text-xs text-muted-foreground">
+                          {act.period.start} ~ {act.period.end}
+                        </p>
+                      </button>
+                      <div className="ml-3 flex shrink-0 items-center gap-2">
+                        {act.isStructured ? (
+                          <Badge
+                            variant="outline"
+                            className="gap-1 border-emerald-400 bg-emerald-50 text-[10px] text-emerald-700"
+                          >
+                            <CheckCircle2 className="size-3" />
+                            AI構造化済み
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary" className="text-[10px]">
+                            未構造化
+                          </Badge>
+                        )}
+                        <InlineFeedbackButton
+                          studentId={studentId}
+                          type="activity"
+                          targetId={act.id}
+                          targetLabel={act.title}
+                          compact
+                        />
+                      </div>
                     </div>
-                    <p className="text-xs text-muted-foreground line-clamp-1">
-                      {act.description}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {act.period.start} ~ {act.period.end}
-                    </p>
-                  </div>
-                  <div className="shrink-0 ml-3 flex items-center gap-2">
-                    {act.isStructured ? (
-                      <Badge
-                        variant="outline"
-                        className="border-emerald-400 bg-emerald-50 text-emerald-700 text-[10px] gap-1"
-                      >
-                        <CheckCircle2 className="size-3" />
-                        AI構造化済み
-                      </Badge>
-                    ) : (
-                      <Badge variant="secondary" className="text-[10px]">
-                        未構造化
-                      </Badge>
+
+                    {open && (
+                      <div className="space-y-3 border-t px-3 py-3 pl-8">
+                        <StructField label="説明（全文）" value={act.description} />
+                        {sd && (
+                          <>
+                            <StructField label="動機・きっかけ" value={sd.motivation} />
+                            <StructList label="取り組んだこと" items={sd.actions} />
+                            <StructList label="成果" items={sd.results} />
+                            <StructList label="学んだこと" items={sd.learnings} />
+                            <StructField label="自己PR・APとの接続" value={sd.connection} />
+                          </>
+                        )}
+                      </div>
                     )}
-                    <InlineFeedbackButton
-                      studentId={studentId}
-                      type="activity"
-                      targetId={act.id}
-                      targetLabel={act.title}
-                      compact
-                    />
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </>
         )}
