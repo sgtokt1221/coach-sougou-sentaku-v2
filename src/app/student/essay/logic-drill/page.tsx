@@ -51,7 +51,7 @@ const TYPE_META: Record<LogicDrillType, { icon: typeof ScanSearch; tagline: stri
   rebuttal: { icon: PenLine, tagline: "最強の反論を想定し、それに応答する" },
   compare: { icon: ScanSearch, tagline: "2つの選択肢を対比して理由つきで選ぶ" },
   question_framing: { icon: Sparkles, tagline: "曖昧なテーマから論じるべき問いを立てる" },
-  alexandra: { icon: Timer, tagline: "係り受けを正確に読み取る4択問題" },
+  alexandra: { icon: Timer, tagline: "複数の条件・否定・係り受けを解く上級4択" },
 };
 
 const HOW_IT_WORKS: { Icon: typeof ClipboardList; title: string; desc: string }[] = [
