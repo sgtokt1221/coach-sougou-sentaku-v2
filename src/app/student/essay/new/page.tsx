@@ -55,6 +55,32 @@ import { SegmentControl } from "@/components/shared/SegmentControl";
 import { getThemeById, EssayTheme } from "@/data/essay-themes";
 import { getEnrichedPastQuestionById, needsSourceText, summarizeChartData, PastQuestion } from "@/data/essay-past-questions";
 import type { PastQuestionSourceTextResponse } from "@/lib/types/past-question-source";
+import type { ReportMaterial } from "@/data/essay-report-materials";
+import { ReportSourcePane } from "@/components/essay/ReportSourcePane";
+
+/** レポートモードで選べる9系統（essay-themes と同一の分類）。 */
+const REPORT_FIELDS: Array<{ field: string; label: string }> = [
+  { field: "society", label: "社会" },
+  { field: "economy", label: "経済" },
+  { field: "education", label: "教育" },
+  { field: "environment", label: "環境" },
+  { field: "international", label: "国際" },
+  { field: "law", label: "法律" },
+  { field: "medical", label: "医療" },
+  { field: "politics", label: "政治" },
+  { field: "technology", label: "科学技術" },
+];
+
+/** レポート課題文一覧の軽量項目（本文 body を含まない）。 */
+type ReportMaterialListItem = {
+  id: string;
+  title: string;
+  field: string;
+  fieldLabel: string;
+  focusPoints: string[];
+  recommendedWordLimit: number;
+  difficulty: number;
+};
 
 interface ResolvedUniversity {
   universityId: string;
@@ -148,7 +174,7 @@ export default function EssayNewPage() {
     };
     retryContext?: {
       wordLimit?: number | null;
-      questionType?: "essay" | "english-reading" | "data-analysis" | "mixed" | "lecture" | null;
+      questionType?: "essay" | "english-reading" | "data-analysis" | "mixed" | "lecture" | "report" | null;
       sourceText?: string | null;
       chartDataSummary?: string | null;
       pastQuestionFacultyName?: string | null;
@@ -178,6 +204,15 @@ export default function EssayNewPage() {
   const [sourceTextLoading, setSourceTextLoading] = useState<boolean>(false);
   /** sourceText 取得エラー */
   const [sourceTextError, setSourceTextError] = useState<string | null>(null);
+
+  // レポートモード（課題文を読んで書く）
+  const [reportMode, setReportMode] = useState(false);
+  const [reportField, setReportField] = useState<string | null>(null);
+  const [reportMaterialList, setReportMaterialList] = useState<ReportMaterialListItem[]>([]);
+  const [reportMaterial, setReportMaterial] = useState<ReportMaterial | null>(null);
+  /** 課題文が1件以上ある系統（準備中判定用）。 */
+  const [reportAvailableFields, setReportAvailableFields] = useState<string[]>([]);
+  const [reportFieldsLoading, setReportFieldsLoading] = useState(false);
 
   // テーマIDからテーマデータを取得
   useEffect(() => {
@@ -369,6 +404,29 @@ export default function EssayNewPage() {
       cancelled = true;
     };
   }, [retryFromId]);
+
+  // レポートモード: 課題文が存在する系統を先読み（準備中判定用）
+  useEffect(() => {
+    if (!reportMode || reportAvailableFields.length > 0) return;
+    let cancelled = false;
+    setReportFieldsLoading(true);
+    (async () => {
+      try {
+        const res = await authFetch("/api/essay/report/materials");
+        if (!res.ok) return;
+        const data = (await res.json()) as { materials: Array<{ field: string }> };
+        if (cancelled) return;
+        setReportAvailableFields(Array.from(new Set(data.materials.map((m) => m.field))));
+      } catch {
+        // 取得失敗時は全系統を準備中扱いのままにする
+      } finally {
+        if (!cancelled) setReportFieldsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [reportMode, reportAvailableFields.length]);
 
 
   // 志望校解決
@@ -696,6 +754,43 @@ export default function EssayNewPage() {
     }
   }
 
+  /** レポートモードの ON/OFF。ON時はテキスト入力に固定し、選択状態を初期化する。 */
+  function handleToggleReportMode(next: boolean) {
+    setReportMode(next);
+    setReportField(null);
+    setReportMaterial(null);
+    setReportMaterialList([]);
+    if (next) setInputMode("text");
+  }
+
+  /** 系統を選び、その系統の課題文一覧を取得する。 */
+  async function handleSelectReportField(field: string) {
+    setReportField(field);
+    setReportMaterial(null);
+    setReportMaterialList([]);
+    try {
+      const res = await authFetch(`/api/essay/report/materials?field=${field}`);
+      if (!res.ok) return;
+      const data = (await res.json()) as { materials: ReportMaterialListItem[] };
+      setReportMaterialList(data.materials);
+    } catch {
+      // 取得失敗時は空一覧のまま（準備中表示）
+    }
+  }
+
+  /** 課題文の全文を取得し、推奨字数を反映する。 */
+  async function handleSelectReportMaterial(id: string) {
+    try {
+      const res = await authFetch(`/api/essay/report/materials/${id}`);
+      if (!res.ok) return;
+      const material = (await res.json()) as ReportMaterial;
+      setReportMaterial(material);
+      setCustomMaxLength(material.recommendedWordLimit);
+    } catch {
+      // 取得失敗時は選択なしのまま
+    }
+  }
+
   async function handleDirectSubmit() {
     if (!directText.trim()) return;
     setIsSubmitting(true);
@@ -713,6 +808,12 @@ export default function EssayNewPage() {
           inputMode,
           ...(homeworkId ? { homeworkId } : {}),
           ...(retryFromId && { parentEssayId: retryFromId }),
+          ...(reportMode && reportMaterial && {
+            questionType: "report" as const,
+            sourceText: reportMaterial.body,
+            topic: reportMaterial.title,
+            wordLimit: reportMaterial.recommendedWordLimit,
+          }),
           ...(pastQuestion && {
             questionType: pastQuestion.questionType,
             sourceText: pastQuestion.sourceText ?? dynamicSourceText ?? undefined,
@@ -1064,7 +1165,38 @@ export default function EssayNewPage() {
           </Card>
         )}
 
-        {/* Input mode toggle */}
+        {/* 通常/レポート 切替（通常の新規提出のみ表示） */}
+        {!pastQuestion && !retryParent && !selectedTheme && (
+          <div className="flex rounded-lg border p-1 mb-4">
+            <button
+              type="button"
+              onClick={() => handleToggleReportMode(false)}
+              className={`flex-1 flex items-center justify-center gap-1.5 rounded-md px-3 py-2 h-11 text-sm font-medium transition-colors ${
+                !reportMode
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <FileText className="size-3.5" />
+              通常の小論文
+            </button>
+            <button
+              type="button"
+              onClick={() => handleToggleReportMode(true)}
+              className={`flex-1 flex items-center justify-center gap-1.5 rounded-md px-3 py-2 h-11 text-sm font-medium transition-colors ${
+                reportMode
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <FileText className="size-3.5" />
+              レポート（課題文を読んで書く）
+            </button>
+          </div>
+        )}
+
+        {/* Input mode toggle（レポート中はテキスト固定のため非表示） */}
+        {!reportMode && (
         <div className="flex rounded-lg border p-1 mb-4">
           <button
             type="button"
@@ -1091,6 +1223,91 @@ export default function EssayNewPage() {
             手書き＋音読
           </button>
         </div>
+        )}
+
+        {/* レポート課題文の選択（系統 → 課題文） */}
+        {reportMode && (
+          <Card className="mb-4">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm lg:text-base">課題文を選ぶ</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>分野を選択</Label>
+                {reportFieldsLoading ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {Array.from({ length: 9 }).map((_, i) => (
+                      <Skeleton key={i} className="h-11 w-full rounded-lg" />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {REPORT_FIELDS.map((f) => {
+                      const available = reportAvailableFields.includes(f.field);
+                      const isSelected = reportField === f.field;
+                      return (
+                        <button
+                          key={f.field}
+                          type="button"
+                          disabled={!available}
+                          onClick={() => handleSelectReportField(f.field)}
+                          className={[
+                            "rounded-lg border p-2 min-h-[44px] text-sm text-center transition-colors",
+                            !available
+                              ? "border-dashed border-border text-muted-foreground/60 cursor-not-allowed"
+                              : isSelected
+                                ? "border-primary bg-primary/5 text-primary font-medium"
+                                : "border-border hover:border-primary/50",
+                          ].join(" ")}
+                        >
+                          {f.label}
+                          {!available && (
+                            <span className="block text-[10px] text-muted-foreground/60">準備中</span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {reportField && (
+                <div className="space-y-2">
+                  <Label>課題文を選択</Label>
+                  {reportMaterialList.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">この分野の課題文は準備中です。</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {reportMaterialList.map((m) => {
+                        const isSelected = reportMaterial?.id === m.id;
+                        return (
+                          <button
+                            key={m.id}
+                            type="button"
+                            onClick={() => handleSelectReportMaterial(m.id)}
+                            className={[
+                              "w-full text-left rounded-lg border p-3 transition-colors",
+                              isSelected
+                                ? "border-primary bg-primary/5"
+                                : "border-border hover:bg-muted/50",
+                            ].join(" ")}
+                          >
+                            <p className={`text-sm font-medium ${isSelected ? "text-primary" : ""}`}>
+                              {m.title}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              推奨字数: {m.recommendedWordLimit}字
+                            </p>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* 過去問選択時 or 再トライ時: 志望校・テーマは自動設定済み → 次へボタンのみ */}
         {(pastQuestion || retryParent) ? (
@@ -1279,7 +1496,7 @@ export default function EssayNewPage() {
                 )}
               </div>
 
-              {!selectedTheme && !pastQuestion && (
+              {!selectedTheme && !pastQuestion && !reportMode && (
                 <div className="space-y-2">
                   <Label htmlFor="topic">
                     テーマ
@@ -1350,7 +1567,7 @@ export default function EssayNewPage() {
 
               <Button
                 className="w-full min-h-[44px] py-3"
-                disabled={!selectedCompoundId}
+                disabled={!selectedCompoundId || (reportMode && !reportMaterial)}
                 onClick={() => setStep(2)}
               >
                 次へ
@@ -1449,6 +1666,16 @@ export default function EssayNewPage() {
 
             {/* 右列: 小論文入力 (常に最大幅) */}
             <div className={useSideBySide ? "lg:min-w-0" : ""}>
+              {/* レポートモード: 課題文の読解ペインを入力欄の直上に表示 */}
+              {reportMode && reportMaterial && (
+                <div className="mb-4">
+                  <ReportSourcePane
+                    title={reportMaterial.title}
+                    body={reportMaterial.body}
+                    focusPoints={reportMaterial.focusPoints}
+                  />
+                </div>
+              )}
               {/* 過去問選択時はお題カードを入力欄の直上に表示（執筆中の参照用） */}
               {inputMode === "text" && pastQuestion && (
                 <PastQuestionTopicCard
@@ -1551,17 +1778,20 @@ export default function EssayNewPage() {
                     <p className="text-sm text-destructive">{error}</p>
                   )}
                   <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={handleSaveDraft}
-                      disabled={savingDraft || (!directText.trim() && !topic.trim())}
-                    >
-                      {savingDraft ? "保存中..." : "下書き保存"}
-                    </Button>
+                    {/* レポートモードでは下書き保存を無効（非表示） */}
+                    {!reportMode && (
+                      <Button
+                        variant="outline"
+                        onClick={handleSaveDraft}
+                        disabled={savingDraft || (!directText.trim() && !topic.trim())}
+                      >
+                        {savingDraft ? "保存中..." : "下書き保存"}
+                      </Button>
+                    )}
                     <Button
                       className="flex-1"
                       onClick={handleDirectSubmit}
-                      disabled={isSubmitting || !directText.trim()}
+                      disabled={isSubmitting || !directText.trim() || (reportMode && !reportMaterial)}
                     >
                       {isSubmitting ? "添削中..." : "添削する"}
                       <ChevronRight className="size-4 ml-1" />
