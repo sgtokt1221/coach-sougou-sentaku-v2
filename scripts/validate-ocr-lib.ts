@@ -5,6 +5,7 @@ import {
   flattenCells,
   diffSpans,
 } from "@/lib/ocr/text";
+import { computeHomography, warpToRect } from "@/lib/ocr/geometry";
 import type { OcrCell } from "@/lib/types/ocr";
 
 function testText() {
@@ -41,4 +42,29 @@ function testText() {
   console.log("[validate-ocr-lib] text: OK");
 }
 
+function testGeometry() {
+  // 恒等: src==dst なら H は単位行列に比例（h[0]≈h[4]≈1, オフ対角≈0）
+  const unit = computeHomography(
+    [[0, 0], [10, 0], [10, 10], [0, 10]],
+    [[0, 0], [10, 0], [10, 10], [0, 10]]
+  );
+  assert.ok(unit, "homography should solve");
+  if (!unit) return;
+  assert.ok(Math.abs(unit[0] - 1) < 1e-6 && Math.abs(unit[4] - 1) < 1e-6);
+  assert.ok(Math.abs(unit[1]) < 1e-6 && Math.abs(unit[3]) < 1e-6);
+
+  // 恒等ワープ: 縦グラデーション画像を同サイズへ正対化 → ほぼ不変
+  const w = 8, h = 8;
+  const gray = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) gray[y * w + x] = y * 30;
+  const out = warpToRect(gray, w, h, [[0, 0], [w - 1, 0], [w - 1, h - 1], [0, h - 1]], w, h);
+  assert.ok(out, "warp should produce output");
+  if (!out) return;
+  // 中央付近の値が入力とほぼ一致
+  assert.ok(Math.abs(out[3 * w + 3] - gray[3 * w + 3]) <= 1);
+
+  console.log("[validate-ocr-lib] geometry: OK");
+}
+
 testText();
+testGeometry();
