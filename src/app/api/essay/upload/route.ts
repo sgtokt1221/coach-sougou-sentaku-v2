@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
       const recordId = essayId;
       images = await saveOcrImages({ orgId, studentId, recordId, originalBase64: original, normalizedBase64: normalized });
       await upsertOcrRecord({
-        orgId, studentId, essaySubmissionId: essaySubmissionId ?? null,
+        recordId, orgId, studentId, essaySubmissionId: essaySubmissionId ?? null,
         qc, template, engines, proposedText, images, status: "ocr_proposed",
       });
       // 表示用 signed URL（原画像）

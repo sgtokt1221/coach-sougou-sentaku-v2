@@ -31,9 +31,11 @@ export async function saveOcrImages(opts: {
 /**
  * ocrRecords を作成 or 更新（essaySubmissionId をキーに冪等）。
  * 同一提出の再アップロードは既存 record を上書きし増殖を防ぐ。
+ * recordId を doc ID の既定値に使う（essaySubmissionId 一致時のみ既存docへ上書き）。
  * @returns 保存された recordId
  */
 export async function upsertOcrRecord(opts: {
+  recordId: string;
   orgId: string; studentId: string; essaySubmissionId: string | null;
   qc: OcrQuality; template: TemplateInfo; engines: OcrEngineRecord[];
   proposedText: string; images: { originalPath: string; normalizedPath: string | null };
@@ -42,8 +44,8 @@ export async function upsertOcrRecord(opts: {
   if (!adminDb) throw new Error("adminDb not configured");
   const col = adminDb.collection("ocrRecords");
 
-  // 冪等: 既存を検索
-  let ref = col.doc();
+  // 冪等: 既定は呼び出し側の recordId を doc ID に使う。essaySubmissionId 一致時のみ既存docを更新
+  let ref = col.doc(opts.recordId);
   if (opts.essaySubmissionId) {
     const existing = await col
       .where("essaySubmissionId", "==", opts.essaySubmissionId)
