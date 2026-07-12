@@ -27,6 +27,7 @@ import type { Document, DocumentFeedback, DocumentStatus } from "@/lib/types/doc
 import { DOCUMENT_STATUS_LABELS } from "@/lib/types/document";
 import { DocumentReviewBadge } from "@/components/documents/DocumentReviewBadge";
 import { useAutosave, type AutosaveStatus } from "@/hooks/useAutosave";
+import { authFetch } from "@/lib/api/client";
 
 const STATUS_VARIANT: Record<DocumentStatus, "default" | "secondary" | "outline" | "destructive"> = {
   draft: "outline",
@@ -70,7 +71,7 @@ export default function DocumentEditorPage() {
   const loadDocument = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/documents/${id}`);
+      const res = await authFetch(`/api/documents/${id}`);
       if (!res.ok) throw new Error();
       const data: Document = await res.json();
       setDoc(data);
@@ -97,7 +98,7 @@ export default function DocumentEditorPage() {
     if (!doc) return;
     setSaving(true);
     try {
-      const res = await fetch(`/api/documents/${id}`, {
+      const res = await authFetch(`/api/documents/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content }),
@@ -119,7 +120,7 @@ export default function DocumentEditorPage() {
    */
   const saveContent = useCallback(
     async (v: string) => {
-      const res = await fetch(`/api/documents/${id}`, {
+      const res = await authFetch(`/api/documents/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: v, autosave: true }),
@@ -151,7 +152,7 @@ export default function DocumentEditorPage() {
     if (!doc || !content.trim()) return;
     setReviewing(true);
     try {
-      const res = await fetch(`/api/documents/${id}/review`, {
+      const res = await authFetch(`/api/documents/${id}/review`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -177,7 +178,7 @@ export default function DocumentEditorPage() {
   async function handleStatusChange(status: DocumentStatus) {
     if (!doc) return;
     try {
-      await fetch(`/api/documents/${id}`, {
+      await authFetch(`/api/documents/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
