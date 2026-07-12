@@ -41,6 +41,7 @@ import {
 } from "lucide-react";
 import { WeaknessReminderCard } from "@/components/growth/WeaknessReminderCard";
 import { ManuscriptEditor } from "@/components/essay/ManuscriptEditor";
+import { checkImageQuality } from "@/components/essay/CaptureQualityCheck";
 import { CharLimitSelector } from "@/components/essay/CharLimitSelector";
 import { EssayCoachPanel } from "@/components/essay/EssayCoachPanel";
 import { SelfAnalysisGuardCard } from "@/components/essay/SelfAnalysisGuardCard";
@@ -559,12 +560,19 @@ export default function EssayNewPage() {
 
       for (let i = 0; i < images.length; i++) {
         setUploadProgress(`${i + 1}/${images.length}枚目を解析中...`);
+        // 送信前にブラウザ内QCで撮影品質を判定（不合格なら撮り直しを促し中断）
+        const qc = await checkImageQuality(images[i].base64);
+        if (!qc.ok) {
+          setError(`${i + 1}枚目: ${qc.reason ?? "画像の品質を確認できませんでした"}`);
+          return;
+        }
         const res = await authFetch("/api/essay/upload", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             imageBase64: images[i].base64,
             universityId, facultyId, topic, writingDirection,
+            consent: true, // consent: 利用規約の保存同意に基づく
           }),
         });
         if (!res.ok) throw new Error(`${i + 1}枚目のアップロードに失敗しました`);
@@ -594,12 +602,19 @@ export default function EssayNewPage() {
       let firstEssayId = "";
       for (let i = 0; i < images.length; i++) {
         setUploadProgress(`${i + 1}/${images.length}枚目を解析中...`);
+        // 送信前にブラウザ内QCで撮影品質を判定（不合格なら撮り直しを促し中断）
+        const qc = await checkImageQuality(images[i].base64);
+        if (!qc.ok) {
+          setError(`${i + 1}枚目: ${qc.reason ?? "画像の品質を確認できませんでした"}`);
+          return;
+        }
         const res = await authFetch("/api/essay/upload", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             imageBase64: images[i].base64,
             universityId, facultyId, topic, writingDirection,
+            consent: true, // consent: 利用規約の保存同意に基づく
           }),
         });
         if (!res.ok) throw new Error();
