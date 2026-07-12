@@ -36,13 +36,22 @@ export async function runOcr(base64: string, template: TemplateInfo): Promise<Or
   }
   const engines = await Promise.all(tasks);
 
-  let proposedText = engines.find((e) => e.engineId === primaryEngine.id)?.text ?? "";
-  // primary が空 → claude-plain へ縮退（既に plain が primary の場合は GCV, さらに空なら空のまま）
+  const primaryRec = engines.find((e) => e.engineId === primaryEngine.id);
+  let proposedText = primaryRec?.text ?? "";
+  let primaryId: string = primaryEngine.id;
+
+  // primary が空 → フォールバック: grid→claude-plain / claude-plain→gcv。
+  // 既に併走で結果があるエンジンは再実行せず再利用する。
   if (!proposedText.trim()) {
-    const fallback = await claudePlainEngine.run({ base64, template });
-    const rec = toRecord(claudePlainEngine, fallback);
-    if (!engines.some((e) => e.engineId === "claude-plain")) engines.push(rec);
-    proposedText = fallback.text;
+    const fallbackEngine = primaryEngine.id === "claude-plain" ? gcvEngine : claudePlainEngine;
+    let rec = engines.find((e) => e.engineId === fallbackEngine.id);
+    if (!rec) {
+      rec = toRecord(fallbackEngine, await fallbackEngine.run({ base64, template }));
+      engines.push(rec);
+    }
+    proposedText = rec.text;
+    primaryId = rec.engineId;
   }
-  return { engines, proposedText, primaryId: primaryEngine.id };
+
+  return { engines, proposedText, primaryId };
 }
