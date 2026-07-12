@@ -34,6 +34,7 @@ export function useAutosave<T>(
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const savedSnapshotRef = useRef<string>(JSON.stringify(value));
+  const armedRef = useRef(false);
   const saveFnRef = useRef(saveFn);
   const valueRef = useRef(value);
   // 最新の value / saveFn を ref に同期（render 中ではなく commit 後に更新）。
@@ -66,7 +67,19 @@ export function useAutosave<T>(
   }, [doSave]);
 
   useEffect(() => {
-    if (!enabled) return;
+    // 無効中: value をベースラインに同期するだけ（保存しない）。
+    if (!enabled) {
+      armedRef.current = false;
+      savedSnapshotRef.current = JSON.stringify(value);
+      return;
+    }
+    // 初めて有効化されたレンダ: 現在値をベースラインにして保存はしない
+    // （ロードで入った初期値を「変更」とみなさないため）。
+    if (!armedRef.current) {
+      armedRef.current = true;
+      savedSnapshotRef.current = JSON.stringify(value);
+      return;
+    }
     const snapshot = JSON.stringify(value);
     if (snapshot === savedSnapshotRef.current) return; // 変化なし
     if (timerRef.current) clearTimeout(timerRef.current);
