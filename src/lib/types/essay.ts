@@ -24,8 +24,8 @@ export interface Essay {
   attemptNumber?: number;
   inputMode?: "image" | "text" | "dictation";
   retryContext?: EssayRetryContext;
-  /** Phase 6: 出典 (manual=通常提出, homework=宿題提出, skill_check=スキルチェック, lecture=小論文講座) */
-  sourceType?: "manual" | "homework" | "skill_check" | "lecture";
+  /** Phase 6: 出典 (manual=通常提出, homework=宿題提出, skill_check=スキルチェック, lecture=小論文講座, report=レポート課題) */
+  sourceType?: "manual" | "homework" | "skill_check" | "lecture" | "report";
   /** Phase 6: 宿題から提出された場合の HomeworkAssignment ID */
   homeworkAssignmentId?: string;
   /** 小論文講座の関連問題から提出された場合の講義 ID (sourceType="lecture") */
@@ -106,6 +106,16 @@ export interface QuantitativeAnalysis {
   gapToPass: number;
 }
 
+/** レポート課題（課題文を読んで書く）専用の講評。questionType="report" のときのみ生成。 */
+export interface ReportInsights {
+  sourceComprehension: string; // 課題文の理解度・要点把握
+  summaryAccuracy: string; // 要約・言い換えの正確さ
+  citationAppropriateness: string; // 引用/参照の妥当性
+  analysisDepth: string; // 自分の考察の深さ・独自性
+  sourceConnection: string; // 課題文と自論の接続
+  misreadings: string[]; // 課題文の誤読・事実誤認の指摘
+}
+
 export interface EssayFeedback {
   overall: string;
   goodPoints: string[];
@@ -118,6 +128,8 @@ export interface EssayFeedback {
   priorityImprovement?: string;
   nextChallenge?: string;
   quantitativeAnalysis?: QuantitativeAnalysis;
+  /** レポート課題専用の講評（report のときのみ） */
+  reportInsights?: ReportInsights;
 }
 
 export interface RepeatedIssue {
@@ -149,7 +161,7 @@ export interface EssayReviewRequest {
   facultyId: string;
   topic?: string;
   wordLimit?: number;
-  questionType?: "essay" | "english-reading" | "data-analysis" | "mixed" | "lecture";
+  questionType?: "essay" | "english-reading" | "data-analysis" | "mixed" | "lecture" | "report";
   sourceText?: string;
   chartDataSummary?: string;
   pastQuestionFacultyName?: string;
