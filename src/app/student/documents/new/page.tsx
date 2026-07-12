@@ -132,6 +132,8 @@ export default function NewDocumentPage() {
   const [docId, setDocId] = useState<string | null>(null);
   /** 早期作成 POST の多重送信ガード。 */
   const [creating, setCreating] = useState(false);
+  /** resume 復元 GET が失敗したか。true の場合は通常の新規作成として早期作成を許可する。 */
+  const [resumeFailed, setResumeFailed] = useState(false);
 
   /**
    * ウィザード進行状態を自動保存する（版を積まない autosave）。
@@ -268,7 +270,7 @@ export default function NewDocumentPage() {
   const handleNext = async () => {
     if (
       step === 1 &&
-      !resumeId &&
+      (!resumeId || resumeFailed) &&
       !docId &&
       !creating &&
       documentType &&
@@ -327,7 +329,8 @@ export default function NewDocumentPage() {
         if (typeof ws?.currentStep === "number") setStep(ws.currentStep);
       } catch (err) {
         console.error("Resume load failed:", err);
-        toast.error("下書きの復元に失敗しました");
+        setResumeFailed(true);
+        toast.error("下書きの復元に失敗しました。新規作成として続行します。");
       }
     })();
   }, [resumeId]);
