@@ -41,6 +41,7 @@ interface EssayHistoryItem {
     apAlignment: number;
     originality: number;
   };
+  sourceType?: "manual" | "homework" | "skill_check" | "lecture" | "report" | null;
 }
 
 
@@ -256,6 +257,11 @@ export default function EssayHistoryPage() {
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-medium text-sm">{item.universityName}</span>
                       <span className="text-muted-foreground text-sm">{item.facultyName}</span>
+                      {item.sourceType === "report" && (
+                        <Badge variant="outline" className="text-xs border-indigo-300 text-indigo-700">
+                          レポート
+                        </Badge>
+                      )}
                       {item.topic && (
                         <span className="text-xs text-muted-foreground truncate">
                           / {item.topic}
