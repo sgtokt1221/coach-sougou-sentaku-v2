@@ -10,6 +10,7 @@ import { serverQualityCheck } from "@/lib/ocr/quality";
 import { detectTemplate } from "@/lib/ocr/detect";
 import { normalizeByCorners, deskewByAngle } from "@/lib/ocr/geometry";
 import { runOcr } from "@/lib/ocr/orchestrator";
+import { finishPreprocess } from "@/lib/ocr/preprocess";
 import { characterErrorRate } from "@/lib/ocr/text";
 
 const ROOT = path.resolve("evalset");
@@ -30,7 +31,8 @@ async function main() {
     let corrected = base64;
     if (template.kind === "genko" && template.corners) corrected = (await normalizeByCorners(base64, template.corners)) ?? base64;
     else if (template.skewAngle) corrected = await deskewByAngle(base64, template.skewAngle);
-    const { engines, proposedText } = await runOcr(corrected, template);
+    const normalized = await finishPreprocess(corrected);
+    const { engines, proposedText } = await runOcr(normalized, template);
     const cer = characterErrorRate(truth.text, proposedText);
     sumCer += cer; n++;
     if (truth.expectedKind && truth.expectedKind !== template.kind) templateMiss++;

@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import sharp from "sharp";
 import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
 import { serverQualityCheck } from "@/lib/ocr/quality";
@@ -7,25 +6,7 @@ import { detectTemplate } from "@/lib/ocr/detect";
 import { normalizeByCorners, deskewByAngle } from "@/lib/ocr/geometry";
 import { runOcr } from "@/lib/ocr/orchestrator";
 import { saveOcrImages, upsertOcrRecord } from "@/lib/ocr/record";
-
-/**
- * 補正後画像に既存の仕上げ前処理（グレースケール/シャープ/リサイズ）を適用。
- */
-async function finishPreprocess(base64Data: string): Promise<string> {
-  try {
-    const out = await sharp(Buffer.from(base64Data, "base64"))
-      .rotate()
-      .resize({ width: 2000, height: 2000, fit: "inside", withoutEnlargement: true })
-      .grayscale()
-      .normalize()
-      .sharpen({ sigma: 1.0 })
-      .jpeg({ quality: 92 })
-      .toBuffer();
-    return out.toString("base64");
-  } catch {
-    return base64Data;
-  }
-}
+import { finishPreprocess } from "@/lib/ocr/preprocess";
 
 export async function POST(request: NextRequest) {
   try {
