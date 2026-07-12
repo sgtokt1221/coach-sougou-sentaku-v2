@@ -1749,7 +1749,14 @@ export default function EssayNewPage() {
                   <CardTitle className="text-sm lg:text-base">小論文を入力</CardTitle>
                 </CardHeader>
                 <CardContent className="p-3 lg:p-4 space-y-4">
-                  <CharLimitSelector value={customMaxLength} onChange={setCustomMaxLength} />
+                  {/* レポートモードでは字数を課題文の推奨値に固定（提出時に上書きされ、編集不可） */}
+                  {reportMode ? (
+                    <p className="text-sm text-muted-foreground">
+                      推奨字数: {reportMaterial?.recommendedWordLimit}字
+                    </p>
+                  ) : (
+                    <CharLimitSelector value={customMaxLength} onChange={setCustomMaxLength} />
+                  )}
                   {directText.trim() === "" && (
                     <div className="rounded-lg border border-amber-200 bg-amber-50/60 dark:border-amber-900 dark:bg-amber-950/20 p-3 flex gap-2.5">
                       <Sparkles className="size-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
