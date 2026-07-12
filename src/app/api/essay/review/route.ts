@@ -309,9 +309,12 @@ export async function POST(request: NextRequest) {
           weaknessTags,
           status: "reviewed",
           reviewedAt: FieldValue.serverTimestamp(),
+          // sourceType の優先順位: 宿題 > レポート > (既定: manual 等)
           ...(homeworkId
             ? { sourceType: "homework", homeworkAssignmentId: homeworkId }
-            : {}),
+            : questionType === "report"
+              ? { sourceType: "report" }
+              : {}),
         }, { merge: true });
 
         // 宿題から取り組んだ場合は宿題を提出済みにする
