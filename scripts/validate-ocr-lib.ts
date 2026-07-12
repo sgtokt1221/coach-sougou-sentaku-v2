@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import sharp from "sharp";
 import {
   levenshtein,
   characterErrorRate,
@@ -6,6 +7,7 @@ import {
   diffSpans,
 } from "@/lib/ocr/text";
 import { computeHomography, warpToRect } from "@/lib/ocr/geometry";
+import { serverQualityCheck } from "@/lib/ocr/quality";
 import type { OcrCell } from "@/lib/types/ocr";
 
 function testText() {
@@ -66,5 +68,26 @@ function testGeometry() {
   console.log("[validate-ocr-lib] geometry: OK");
 }
 
-testText();
-testGeometry();
+async function testQuality() {
+  // 真っ黒画像 → 暗すぎで不合格
+  const black = (await sharp({ create: { width: 1000, height: 1200, channels: 3, background: "#000000" } }).jpeg().toBuffer()).toString("base64");
+  const q1 = await serverQualityCheck(black);
+  assert.equal(q1.passed, false);
+  assert.equal(q1.reason, "画像が暗すぎます");
+
+  // 小さすぎ画像 → 解像度で不合格
+  const small = (await sharp({ create: { width: 300, height: 300, channels: 3, background: "#808080" } }).jpeg().toBuffer()).toString("base64");
+  const q2 = await serverQualityCheck(small);
+  assert.equal(q2.passed, false);
+  assert.equal(q2.reason, "解像度が低すぎます");
+
+  console.log("[validate-ocr-lib] quality: OK");
+}
+
+async function main() {
+  testText();
+  testGeometry();
+  await testQuality();
+}
+
+main();
