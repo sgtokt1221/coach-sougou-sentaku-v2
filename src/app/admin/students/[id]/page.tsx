@@ -1546,6 +1546,46 @@ function AdminStudentDetailPageInner() {
             viewerUid={user.uid}
           />
         )}
+
+        {!isTeacherViewer && (
+          <Card className="border-rose-200 dark:border-rose-900/50">
+            <CardHeader>
+              <CardTitle className="text-base text-rose-700 dark:text-rose-300">
+                生徒アカウントの削除
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-muted-foreground">
+                無効化するとログインできなくなります。データは保持され、復元は運営への依頼が必要です。
+              </p>
+              <Button
+                variant="destructive"
+                className="shrink-0"
+                onClick={async () => {
+                  if (
+                    !window.confirm(
+                      "この生徒アカウントを無効化しますか？\nログインできなくなります（データは保持されます）。取り消しには運営への依頼が必要です。",
+                    )
+                  ) {
+                    return;
+                  }
+                  try {
+                    const res = await authFetch(`/api/admin/students/${id}`, {
+                      method: "DELETE",
+                    });
+                    if (!res.ok) throw new Error();
+                    toast.success("生徒を無効化しました");
+                    router.push("/admin/students");
+                  } catch {
+                    toast.error("無効化に失敗しました");
+                  }
+                }}
+              >
+                生徒を削除（無効化）
+              </Button>
+            </CardContent>
+          </Card>
+        )}
     </div>
   );
 }
