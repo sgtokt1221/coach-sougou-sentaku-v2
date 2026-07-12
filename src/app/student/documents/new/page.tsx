@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import type { StudentProfile } from "@/lib/types/user";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,7 @@ import type { DocumentType } from "@/lib/types/document";
 import { DOCUMENT_TYPE_LABELS } from "@/lib/types/document";
 import type {
   FrameworkType,
+  FrameworkDefinition,
   DraftGenerateRequest,
   DraftGenerateResponse,
 } from "@/lib/types/template";
@@ -32,6 +33,7 @@ import { DocumentSectionCoachPanel } from "@/components/documents/DocumentSectio
 import { DOCUMENT_TEMPLATES } from "@/lib/templates/document-templates";
 import { useAuthSWR } from "@/lib/api/swr";
 import { authFetch } from "@/lib/api/client";
+import { useAutosave } from "@/hooks/useAutosave";
 import { toast } from "sonner";
 import type { Activity } from "@/lib/types/activity";
 
@@ -42,6 +44,42 @@ interface UniversityOption {
   facultyName: string;
 }
 
+/**
+ * 復元した本文を DraftGenerateResponse 形状へ戻す（best-effort）。
+ * フレームワークの各セクション見出しで本文を分割する。分割できない場合は単一セクションにフォールバックする。
+ * @param content 保存済み本文
+ * @param framework 対象フレームワーク定義（不明なら null）
+ * @returns 再構成した下書き結果
+ */
+function reconstructDraftResult(
+  content: string,
+  framework: FrameworkDefinition | null
+): DraftGenerateResponse {
+  if (framework) {
+    const positions = framework.sections.map((s) => ({
+      id: s.id,
+      title: s.title,
+      idx: content.indexOf(s.title),
+    }));
+    if (positions.every((p) => p.idx >= 0)) {
+      const sections = positions.map((p, i) => {
+        const start = p.idx + p.title.length;
+        const end = i + 1 < positions.length ? positions[i + 1].idx : content.length;
+        return {
+          id: p.id,
+          title: p.title,
+          content: content.slice(start, end).replace(/^\n+|\n+$/g, ""),
+        };
+      });
+      return { draft: content, sections, wordCount: content.length };
+    }
+  }
+  return {
+    draft: content,
+    sections: [{ id: "restored", title: "", content }],
+    wordCount: content.length,
+  };
+}
 
 const STEPS = ["書類タイプ", "志望校", "フレームワーク", "活動実績", "下書き生成"];
 
@@ -86,6 +124,227 @@ export default function NewDocumentPage() {
   const [draftResult, setDraftResult] = useState<DraftGenerateResponse | null>(null);
   const [saving, setSaving] = useState(false);
   const [focusedSectionId, setFocusedSectionId] = useState<string | null>(null);
+
+  // --- 途中保存・再開（Task 5） ---
+  const searchParams = useSearchParams();
+  const resumeId = searchParams.get("resume");
+  /** 早期作成された（または再開した）書類の Firestore ID。null の間は自動保存を行わない。 */
+  const [docId, setDocId] = useState<string | null>(null);
+  /** 早期作成 POST の多重送信ガード。 */
+  const [creating, setCreating] = useState(false);
+
+  /**
+   * ウィザード進行状態を自動保存する（版を積まない autosave）。
+   * @param v useAutosave が渡す監視値
+   */
+  const saveWizardState = useCallback(
+    async (v: {
+      currentStep: number;
+      frameworkType?: string;
+      selectedActivityIds: string[];
+      targetWordCount: number;
+    }) => {
+      if (!docId) return;
+      const res = await authFetch(`/api/documents/${docId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          wizardState: { ...v, completed: false },
+          autosave: true,
+        }),
+      });
+      if (!res.ok) throw new Error("ウィザード状態の自動保存に失敗しました");
+    },
+    [docId]
+  );
+
+  const { status: saveStatus, lastSavedAt, flush } = useAutosave(
+    {
+      currentStep: step,
+      frameworkType: frameworkType ?? undefined,
+      selectedActivityIds,
+      targetWordCount,
+    },
+    saveWizardState,
+    { enabled: !!docId }
+  );
+
+  /**
+   * 志望校・書類タイプを後から変更した場合に基本項目を同期する。
+   * 初回セット（早期作成・再開直後）はスキップして冗長な PUT を避ける。
+   */
+  const lastSyncedBasicsRef = useRef<string>("");
+  useEffect(() => {
+    if (!docId || !selectedUniversity || !documentType) return;
+    const key = JSON.stringify({
+      u: selectedUniversity.universityId,
+      f: selectedUniversity.facultyId,
+      t: documentType,
+    });
+    if (lastSyncedBasicsRef.current === "") {
+      lastSyncedBasicsRef.current = key;
+      return;
+    }
+    if (lastSyncedBasicsRef.current === key) return;
+    lastSyncedBasicsRef.current = key;
+    void authFetch(`/api/documents/${docId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        universityId: selectedUniversity.universityId,
+        facultyId: selectedUniversity.facultyId,
+        universityName: selectedUniversity.universityName,
+        facultyName: selectedUniversity.facultyName,
+        type: documentType,
+        autosave: true,
+      }),
+    }).catch((err) => console.error("Basics sync failed:", err));
+  }, [docId, selectedUniversity, documentType]);
+
+  /**
+   * 生成した本文を書類に保存する（版を積む＝autosave なし）。
+   * @param content 保存する本文
+   */
+  const persistContent = useCallback(
+    async (content: string) => {
+      if (!docId) return;
+      try {
+        const res = await authFetch(`/api/documents/${docId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content }),
+        });
+        if (!res.ok) throw new Error();
+      } catch {
+        toast.error("下書きの保存に失敗しました");
+      }
+    },
+    [docId]
+  );
+
+  /**
+   * 志望校が確定した時点で書類を1回だけ早期作成する（冪等）。
+   * 二重 POST は creating フラグで防ぐ。
+   */
+  const createDraftDocument = useCallback(async () => {
+    if (!documentType || !selectedUniversity) return;
+    setCreating(true);
+    try {
+      const res = await authFetch("/api/documents", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: documentType,
+          universityId: selectedUniversity.universityId,
+          facultyId: selectedUniversity.facultyId,
+          universityName: selectedUniversity.universityName,
+          facultyName: selectedUniversity.facultyName,
+          targetWordCount,
+          initialContent: "",
+          wizardState: {
+            currentStep: 2,
+            frameworkType: frameworkType ?? undefined,
+            selectedActivityIds,
+            targetWordCount,
+            completed: false,
+          },
+        }),
+      });
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        throw new Error(payload?.error ?? "下書きの作成に失敗しました");
+      }
+      const doc = await res.json();
+      setDocId(doc.id);
+    } catch (err) {
+      console.error("Draft create failed:", err);
+      toast.error(err instanceof Error ? err.message : "下書きの作成に失敗しました");
+    } finally {
+      setCreating(false);
+    }
+  }, [documentType, selectedUniversity, targetWordCount, frameworkType, selectedActivityIds]);
+
+  /** 次のステップへ。志望校ステップ(1)を抜けるとき早期作成し、保留中の自動保存を確定する。 */
+  const handleNext = async () => {
+    if (
+      step === 1 &&
+      !resumeId &&
+      !docId &&
+      !creating &&
+      documentType &&
+      selectedUniversity
+    ) {
+      await createDraftDocument();
+    }
+    void flush();
+    setStep((s) => Math.min(4, s + 1));
+  };
+
+  /** 前のステップへ。保留中の自動保存を確定してから戻る。 */
+  const handleBack = () => {
+    void flush();
+    setStep((s) => Math.max(0, s - 1));
+  };
+
+  /**
+   * ?resume=ID で開いたとき、保存済み書類から state を1回だけ復元する。
+   * 大学・活動データの初期ロードは既存フローを流用し、志望校は書類の基本項目から直接組み立てる。
+   */
+  const resumeLoadedRef = useRef(false);
+  useEffect(() => {
+    if (!resumeId || resumeLoadedRef.current) return;
+    resumeLoadedRef.current = true;
+    (async () => {
+      try {
+        const res = await authFetch(`/api/documents/${resumeId}`);
+        if (!res.ok) throw new Error();
+        const doc = await res.json();
+        setDocId(doc.id ?? resumeId);
+        if (doc.type) setDocumentType(doc.type as DocumentType);
+        if (doc.universityId) {
+          setSelectedUniversity({
+            universityId: doc.universityId,
+            facultyId: doc.facultyId,
+            universityName: doc.universityName,
+            facultyName: doc.facultyName,
+          });
+        }
+        const ws = doc.wizardState;
+        const fwType: string | undefined = ws?.frameworkType;
+        if (fwType) setFrameworkType(fwType as FrameworkType);
+        if (Array.isArray(ws?.selectedActivityIds)) {
+          setSelectedActivityIds(ws.selectedActivityIds);
+        }
+        if (typeof ws?.targetWordCount === "number") {
+          setTargetWordCount(ws.targetWordCount);
+        }
+        if (doc.content) {
+          const fw = fwType
+            ? FRAMEWORKS.find((f) => f.type === fwType) ?? null
+            : null;
+          setDraftResult(reconstructDraftResult(doc.content, fw));
+        }
+        if (typeof ws?.currentStep === "number") setStep(ws.currentStep);
+      } catch (err) {
+        console.error("Resume load failed:", err);
+        toast.error("下書きの復元に失敗しました");
+      }
+    })();
+  }, [resumeId]);
+
+  /**
+   * タブを離れる（非表示になる）際に保留中の自動保存を確定する。
+   * beforeunload + keepalive は authFetch のトークン取得が非同期で信頼できないため、
+   * より確実に発火する visibilitychange を採用する。
+   */
+  useEffect(() => {
+    if (!docId) return;
+    const onHide = () => {
+      if (document.visibilityState === "hidden") void flush();
+    };
+    document.addEventListener("visibilitychange", onHide);
+    return () => document.removeEventListener("visibilitychange", onHide);
+  }, [docId, flush]);
 
   const framework = frameworkType
     ? FRAMEWORKS.find((f) => f.type === frameworkType)
@@ -166,6 +425,7 @@ export default function NewDocumentPage() {
       }
       const data: DraftGenerateResponse = await res.json();
       setDraftResult(data);
+      await persistContent(data.draft);
     } catch (err) {
       console.error("Draft generation failed:", err);
       toast.error(err instanceof Error ? err.message : "生成に失敗しました");
@@ -207,6 +467,7 @@ export default function NewDocumentPage() {
         evaluationScores: data.evaluationScores,
         improvementSuggestions: data.improvementSuggestions,
       });
+      await persistContent(data.draft);
     } catch (err) {
       console.error("Self-analysis draft generation failed:", err);
       toast.error(err instanceof Error ? err.message : "自己分析下書きの生成に失敗しました");
@@ -215,23 +476,27 @@ export default function NewDocumentPage() {
     }
   };
 
+  /**
+   * ウィザードを完了扱いにして編集画面へ遷移する。
+   * 早期作成済みの書類へ最終本文とウィザード完了状態(completed:true)を保存する。
+   */
   const handleSave = async () => {
-    if (!documentType || !selectedUniversity || !draftResult) return;
+    if (!docId || !draftResult) return;
     setSaving(true);
 
     try {
-      const res = await authFetch("/api/documents", {
-        method: "POST",
+      const res = await authFetch(`/api/documents/${docId}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          type: documentType,
-          universityId: selectedUniversity.universityId,
-          facultyId: selectedUniversity.facultyId,
-          universityName: selectedUniversity.universityName,
-          facultyName: selectedUniversity.facultyName,
-          targetWordCount,
-          frameworkType,
-          initialContent: draftResult.draft,
+          content: draftResult.draft,
+          wizardState: {
+            currentStep: 4,
+            frameworkType: frameworkType ?? undefined,
+            selectedActivityIds,
+            targetWordCount,
+            completed: true,
+          },
         }),
       });
 
@@ -239,8 +504,7 @@ export default function NewDocumentPage() {
         const payload = await res.json().catch(() => ({}));
         throw new Error(payload?.error ?? "保存に失敗しました");
       }
-      const doc = await res.json();
-      router.push(`/student/documents/${doc.id}`);
+      router.push(`/student/documents/${docId}`);
     } catch (err) {
       console.error("Save failed:", err);
       toast.error(err instanceof Error ? err.message : "保存に失敗しました");
@@ -263,6 +527,18 @@ export default function NewDocumentPage() {
           戻る
         </Button>
         <h1 className="text-2xl font-bold">新しい書類を作成</h1>
+        {docId && (
+          <span className="ml-auto text-xs text-muted-foreground whitespace-nowrap">
+            {saveStatus === "saving" && "保存中…"}
+            {saveStatus === "saved" &&
+              lastSavedAt &&
+              `保存済み ${lastSavedAt.toLocaleTimeString("ja-JP", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}`}
+            {saveStatus === "error" && "保存に失敗（自動再試行）"}
+          </span>
+        )}
       </div>
 
       {/* Step indicator */}
@@ -550,7 +826,7 @@ export default function NewDocumentPage() {
                   documentType={documentType ?? undefined}
                   universityId={selectedUniversity?.universityId}
                   facultyId={selectedUniversity?.facultyId}
-                  docId={null}
+                  docId={docId}
                   onApplySuggestion={handleApplySuggestion}
                 />
               )}
@@ -618,15 +894,15 @@ export default function NewDocumentPage() {
         <div className="flex justify-between">
           <Button
             variant="outline"
-            onClick={() => setStep((s) => Math.max(0, s - 1))}
+            onClick={handleBack}
             disabled={step === 0}
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             前へ
           </Button>
           <Button
-            onClick={() => setStep((s) => Math.min(4, s + 1))}
-            disabled={!canProceed()}
+            onClick={handleNext}
+            disabled={!canProceed() || creating}
           >
             次へ
             <ArrowRight className="ml-2 h-4 w-4" />
