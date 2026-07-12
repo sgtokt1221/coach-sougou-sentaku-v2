@@ -538,3 +538,61 @@ export async function PUT(
     );
   }
 }
+
+/**
+ * 生徒アカウントの無効化（ソフト削除）。
+ * role を "disabled" にしてログイン後のアクセスを不可にする（データは保持・復元は運営）。
+ * admin/superadmin のみ。admin は自塾の生徒のみ（assigned teacher は不可＝管理操作）。
+ */
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const authResult = await requireRole(request, ["admin", "superadmin"]);
+  if (authResult instanceof NextResponse) return authResult;
+  const { uid, role } = authResult;
+  const { id } = await params;
+
+  if (!adminDb) {
+    return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
+  }
+
+  try {
+    const studentDoc = await adminDb.doc(`users/${id}`).get();
+    if (!studentDoc.exists) {
+      return NextResponse.json({ error: "生徒が見つかりません" }, { status: 404 });
+    }
+    const userData = studentDoc.data();
+    // 生徒以外（admin/teacher/superadmin）はこのエンドポイントで無効化させない
+    if (userData?.role !== "student") {
+      return NextResponse.json(
+        { error: "対象は生徒アカウントではありません" },
+        { status: 400 },
+      );
+    }
+    // 自塾スコープ（担当講師の代理無効化は不可＝allowAssignedTeacher:false）
+    const orgDenied = await scopeByOrganization({
+      requesterUid: uid,
+      requesterRole: role,
+      studentUid: id,
+      studentData: {
+        managedBy: userData?.managedBy,
+        organizationId: userData?.organizationId,
+      },
+    });
+    if (orgDenied) return orgDenied;
+
+    await adminDb.doc(`users/${id}`).update({
+      role: "disabled",
+      disabledAt: new Date().toISOString(),
+      updatedAt: new Date(),
+    });
+    return NextResponse.json({ success: true, uid: id, role: "disabled" });
+  } catch (error) {
+    console.error("Admin student disable error:", error);
+    return NextResponse.json(
+      { error: "生徒の無効化に失敗しました" },
+      { status: 500 },
+    );
+  }
+}
