@@ -30,7 +30,14 @@ export async function POST(request: NextRequest) {
 
     // 既存 essays 更新（後方互換, クライアントSDK経路は廃し admin SDK に統一）
     if (adminDb) {
-      await adminDb.doc(`essays/${essayId}`).set(
+      const essayRef = adminDb.doc(`essays/${essayId}`);
+      const essaySnap = await essayRef.get();
+      // 所有者チェック（IDOR防止）: 本人 or 職員(teacher/admin/superadmin)のみ更新可
+      const isStaff = ["teacher", "admin", "superadmin"].includes(auth.role);
+      if (essaySnap.exists && essaySnap.data()?.userId !== auth.uid && !isStaff) {
+        return NextResponse.json({ error: "権限がありません" }, { status: 403 });
+      }
+      await essayRef.set(
         { ocrText, status: "ocr_confirmed", updatedAt: Timestamp.now() },
         { merge: true }
       );
