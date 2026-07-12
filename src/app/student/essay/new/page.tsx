@@ -790,6 +790,18 @@ export default function EssayNewPage() {
     setIsSubmitting(true);
     setError(null);
     try {
+      // OCR確定内容を記録（finalText/correctedSpans蓄積。失敗しても添削は続行）
+      // 複数枚アップロード時は先頭 essayId のみ対応（残りは将来対応）
+      try {
+        await authFetch("/api/essay/confirm-ocr", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ essayId, ocrText }),
+        });
+      } catch (e) {
+        console.warn("confirm-ocr failed (non-blocking):", e);
+      }
+
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 100000);
       const res = await authFetch("/api/essay/review", {
