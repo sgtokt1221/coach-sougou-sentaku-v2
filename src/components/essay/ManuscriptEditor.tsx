@@ -149,7 +149,7 @@ export function ManuscriptEditor({
   return (
     <div className="space-y-2">
       {/* Character count bar */}
-      <div className="flex items-center justify-between text-sm">
+      <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
         <div className="flex items-center gap-2">
           <span className={isOver ? "text-destructive font-bold" : "text-muted-foreground"}>
             {charCount}
@@ -240,7 +240,7 @@ export function ManuscriptEditor({
       {editingHl && (
         <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 space-y-2 animate-in fade-in slide-in-from-top-1 duration-150">
           <p className="text-xs font-medium text-amber-700">音読補正箇所を修正</p>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <input
               ref={editInputRef}
               type="text"
@@ -250,19 +250,19 @@ export function ManuscriptEditor({
                 if (e.key === "Enter") applyEdit(editingHl);
                 if (e.key === "Escape") cancelEdit();
               }}
-              className="flex-1 rounded-md border border-amber-300 bg-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+              className="flex-1 min-h-11 lg:min-h-0 rounded-md border border-amber-300 bg-white px-3 py-1.5 text-base lg:text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
             />
             <button
               type="button"
               onClick={() => applyEdit(editingHl)}
-              className="size-8 rounded-md bg-amber-500 text-white flex items-center justify-center hover:bg-amber-600"
+              className="min-h-11 min-w-11 lg:size-8 rounded-md bg-amber-500 text-white flex items-center justify-center hover:bg-amber-600"
             >
               <Check className="size-4" />
             </button>
             <button
               type="button"
               onClick={cancelEdit}
-              className="size-8 rounded-md bg-muted text-muted-foreground flex items-center justify-center hover:bg-muted/80"
+              className="min-h-11 min-w-11 lg:size-8 rounded-md bg-muted text-muted-foreground flex items-center justify-center hover:bg-muted/80"
             >
               <X className="size-4" />
             </button>
