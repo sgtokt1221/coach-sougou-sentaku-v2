@@ -8,6 +8,7 @@ import { useAuthSWR } from "@/lib/api/swr";
 import { authFetch } from "@/lib/api/client";
 import { useFeedbackThread } from "@/lib/hooks/useFeedbackThread";
 import { ChatThread } from "@/components/chat/ChatThread";
+import { FullHeightPage } from "@/components/layout/FullHeightPage";
 import { PageTransition } from "@/components/shared/PageTransition";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -66,8 +67,8 @@ export default function AdminThreadPage() {
 
   return (
     <PageTransition>
-      <div className="flex h-[calc(var(--vvh,100dvh)-7rem)] flex-col lg:h-[calc(100dvh-9rem)]">
-        <div className="flex items-center gap-2 pb-2">
+      <FullHeightPage>
+        <div className="flex shrink-0 items-center gap-2 pb-2">
           <Button
             size="icon"
             variant="ghost"
@@ -80,12 +81,12 @@ export default function AdminThreadPage() {
             <AvatarImage src={studentPhotoURL ?? undefined} alt={studentName} />
             <AvatarFallback>{getInitials(studentName)}</AvatarFallback>
           </Avatar>
-          <div>
-            <h1 className="text-base font-bold">{studentName}</h1>
+          <div className="min-w-0">
+            <h1 className="truncate text-base font-bold">{studentName}</h1>
             <p className="text-[11px] text-muted-foreground">メッセージ</p>
           </div>
         </div>
-        <div className="flex-1 overflow-hidden rounded-xl border bg-card px-3">
+        <div className="min-h-0 flex-1 overflow-hidden rounded-xl border bg-card px-3">
           <ChatThread
             messages={messages}
             currentRole="coach"
@@ -97,7 +98,7 @@ export default function AdminThreadPage() {
             emptyText="この生徒へのメッセージやコメントがここに表示されます"
           />
         </div>
-      </div>
+      </FullHeightPage>
     </PageTransition>
   );
 }
