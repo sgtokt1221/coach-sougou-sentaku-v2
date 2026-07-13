@@ -18,7 +18,6 @@ import {
   MessageSquare,
   Users,
   Bell,
-  FileBarChart,
   CalendarCheck,
   Shield,
   GraduationCap,
@@ -148,7 +147,8 @@ const adminTabs: TabDef[] = [
   { label: "ホーム", href: "/admin/dashboard", icon: LayoutDashboard },
   { label: "生徒", href: "/admin/students", icon: Users },
   { label: "通知", href: "/admin/alerts", icon: Bell },
-  { label: "レポート", href: "/admin/reports", icon: FileBarChart },
+  // チャット（インボックス）。生徒からの未読は下でバッジ表示。レポートはモバイルメニューに残存。
+  { label: "チャット", href: "/admin/messages", icon: MessageSquare },
 ];
 
 const teacherTabs: TabDef[] = [
@@ -175,6 +175,12 @@ export function BottomNav() {
     role === "student" ? "/api/self-analysis?userId=me" : null,
   );
   const selfAnalysisDone = selfAnalysisDoc?.isComplete === true;
+
+  // 管理者チャットの未読件数（生徒/講師からの連絡）。チャットタブのバッジに使う。
+  const { data: adminUnread } = useAuthSWR<{ unreadCount: number }>(
+    role === "admin" ? "/api/admin/messages?countOnly=true" : null,
+  );
+  const chatUnread = adminUnread?.unreadCount ?? 0;
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
@@ -203,6 +209,7 @@ export function BottomNav() {
                 href={href}
                 Icon={Icon}
                 active={pathname.startsWith(href)}
+                badge={href === "/admin/messages" ? chatUnread : 0}
               />
             ))}
             <button
@@ -385,11 +392,14 @@ function TabLink({
   href,
   Icon,
   active,
+  badge = 0,
 }: {
   label: string;
   href: string;
   Icon: React.ComponentType<{ className?: string }>;
   active: boolean;
+  /** アイコン右上に出す未読バッジ数（0 で非表示） */
+  badge?: number;
 }) {
   return (
     <Link
@@ -401,10 +411,17 @@ function TabLink({
           : "text-muted-foreground",
       )}
     >
-      <Icon className={cn(
-        "size-5 transition-transform duration-200",
-        active ? "text-indigo-600 scale-105" : "",
-      )} />
+      <span className="relative">
+        <Icon className={cn(
+          "size-5 transition-transform duration-200",
+          active ? "text-indigo-600 scale-105" : "",
+        )} />
+        {badge > 0 && (
+          <span className="absolute -top-1.5 -right-2 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-bold leading-none text-white">
+            {badge > 99 ? "99+" : badge}
+          </span>
+        )}
+      </span>
       <span className={cn(
         "max-w-full truncate text-[10px] leading-none",
         active ? "font-semibold" : "font-medium",
