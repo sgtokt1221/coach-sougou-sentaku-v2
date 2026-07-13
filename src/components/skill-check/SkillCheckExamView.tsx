@@ -172,7 +172,7 @@ export function SkillCheckExamView({
               type="button"
               onClick={() => setInputMode("text")}
               className={cn(
-                "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                "flex min-h-11 items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors lg:min-h-0",
                 inputMode === "text"
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:text-foreground",
@@ -185,7 +185,7 @@ export function SkillCheckExamView({
               type="button"
               onClick={() => setInputMode("image")}
               className={cn(
-                "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                "flex min-h-11 items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors lg:min-h-0",
                 inputMode === "image"
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:text-foreground",
@@ -203,7 +203,7 @@ export function SkillCheckExamView({
                 value={essay}
                 onChange={(e) => setEssay(e.target.value)}
                 placeholder="ここに論述を書いてください..."
-                className="min-h-[320px] font-mono text-sm leading-relaxed"
+                className="min-h-[320px] font-mono text-base leading-relaxed lg:text-sm"
                 disabled={submitting}
               />
               {wordCount > 0 && wordCount < 100 && (

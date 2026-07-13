@@ -45,8 +45,8 @@ export function SkillCheckResultView({ result }: { result: SkillCheckResult }) {
                 { k: "系統適合", v: scores.apAlignment },
                 { k: "独自性", v: scores.originality },
               ].map((s) => (
-                <div key={s.k}>
-                  <dt className="text-muted-foreground">{s.k}</dt>
+                <div key={s.k} className="min-w-0">
+                  <dt className="min-w-0 break-words text-muted-foreground">{s.k}</dt>
                   <dd className="font-semibold tabular-nums">{s.v}/10</dd>
                 </div>
               ))}
