@@ -155,7 +155,7 @@ export default function SchedulePage() {
 
       {/* Selectors */}
       <div className="flex flex-wrap gap-4">
-        <div className="flex-1 min-w-[200px]">
+        <div className="w-full sm:flex-1 sm:min-w-[200px]">
           <label className="mb-1 block text-xs font-medium text-muted-foreground">
             講師を選択
           </label>
@@ -172,7 +172,7 @@ export default function SchedulePage() {
             ))}
           </select>
         </div>
-        <div className="flex-1 min-w-[200px]">
+        <div className="w-full sm:flex-1 sm:min-w-[200px]">
           <label className="mb-1 block text-xs font-medium text-muted-foreground">
             生徒を選択（Proプランのみ）
           </label>
@@ -218,7 +218,7 @@ export default function SchedulePage() {
             アサインがありません
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" data-allow-x-scroll>
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/20">

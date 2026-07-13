@@ -160,7 +160,7 @@ export default function AdminTeachersPage() {
               description="「講師を追加」ボタンから講師を登録してください"
             />
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto" data-allow-x-scroll>
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b bg-muted/50">
