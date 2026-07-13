@@ -286,7 +286,7 @@ export default function AdminStudentsPage() {
               value={universityFilter}
               onValueChange={(v) => setUniversityFilter(v === "all" ? "" : (v ?? ""))}
             >
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger className="w-full sm:w-[200px]">
                 <Filter className="mr-2 size-4 text-muted-foreground" />
                 <SelectValue placeholder="志望校で絞り込み" />
               </SelectTrigger>
