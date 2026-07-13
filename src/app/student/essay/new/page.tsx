@@ -1226,8 +1226,7 @@ export default function EssayNewPage() {
                     setInputMode(v as "text" | "image" | "dictation")
                   }
                   options={[
-                    { id: "text", label: "テキスト" },
-                    { id: "image", label: "画像" },
+                    { id: "text", label: "テキスト入力" },
                     { id: "dictation", label: "手書き＋音読" },
                   ]}
                 />
