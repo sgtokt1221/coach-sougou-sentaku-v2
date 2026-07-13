@@ -550,7 +550,8 @@ export default function AdminSessionDetailPage() {
         /* 1 対 1: 2 カラム (左=参照 / 右=入力系) */
         <div className="grid items-start gap-6 lg:grid-cols-2">
           {/* 左: 参照 (基本情報+操作 → 生徒情報) */}
-          <div className="space-y-6">
+          {/* min-w-0: グリッド子の min-width:auto を打ち消し、内部の Recharts/長文が右へはみ出すのを防ぐ */}
+          <div className="min-w-0 space-y-6">
             {basicInfoCard}
             {studentLoading ? (
               <Card>
@@ -591,7 +592,8 @@ export default function AdminSessionDetailPage() {
             )}
           </div>
           {/* 右: 入力系 (録音 → 台本 → 振り返り → メモ) */}
-          <div className="space-y-6">
+          {/* min-w-0: 同上。グリッド子が内部コンテンツで膨らむのを防ぐ */}
+          <div className="min-w-0 space-y-6">
             <SessionLifecycleBar
               sessionId={id}
               session={session}
