@@ -12,6 +12,12 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { Send, StopCircle, ChevronDown, ChevronUp, Video, VideoOff, Pencil, Check, X, BookOpenCheck, TrendingUp, TrendingDown, ArrowRight, ArrowLeft } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -819,14 +825,18 @@ export default function InterviewSessionPage() {
         </div>
       )}
 
-      {/* カンペ: 弱点 + アドミッションポリシー (モバイル: 上部ドロワー / PC: 左サイドバー) */}
-      {cheatSheetOpen && sessionInfo && (
-        <div className="lg:hidden mx-4 mt-2 rounded-lg border border-sky-300 bg-sky-50/60 dark:border-sky-700 dark:bg-sky-950/20 shrink-0 animate-in fade-in slide-in-from-top-2">
-          <div className="max-h-[38vh] overflow-y-auto px-3 py-2.5 space-y-3">
-            {renderCheatSheet()}
+      {/* カンペ: 弱点 + アドミッションポリシー (モバイル: bottom Sheet オーバーレイ / PC: 左サイドバー)
+          Sheet はメッセージ領域を押し下げずオーバーレイ表示する。開閉は cheatSheetOpen と同期。 */}
+      <Sheet open={cheatSheetOpen} onOpenChange={setCheatSheetOpen}>
+        <SheetContent side="bottom" className="lg:hidden">
+          <SheetHeader className="pb-0">
+            <SheetTitle>弱点とアドミッションポリシー</SheetTitle>
+          </SheetHeader>
+          <div className="px-4 pb-2 space-y-3">
+            {sessionInfo && renderCheatSheet()}
           </div>
-        </div>
-      )}
+        </SheetContent>
+      </Sheet>
 
       {/* Messages */}
       <div
