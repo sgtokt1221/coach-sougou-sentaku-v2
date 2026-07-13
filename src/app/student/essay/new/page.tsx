@@ -24,7 +24,6 @@ import {
   FileText,
   GraduationCap,
   Settings,
-  Keyboard,
   ImageIcon,
   Mic,
   Loader2,
@@ -1192,75 +1191,53 @@ export default function EssayNewPage() {
           </Card>
         )}
 
-        {/* 通常/レポート 切替（通常の新規提出のみ表示） */}
-        {!pastQuestion && !retryParent && !selectedTheme && (
-          <div className="flex rounded-lg border p-1 mb-4">
-            <button
-              type="button"
-              onClick={() => handleToggleReportMode(false)}
-              className={`flex-1 flex items-center justify-center gap-1.5 rounded-md px-3 py-2 h-11 text-sm font-medium transition-colors ${
-                !reportMode
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <FileText className="size-3.5" />
-              通常の小論文
-            </button>
-            <button
-              type="button"
-              onClick={() => handleToggleReportMode(true)}
-              className={`flex-1 flex items-center justify-center gap-1.5 rounded-md px-3 py-2 h-11 text-sm font-medium transition-colors ${
-                reportMode
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <FileText className="size-3.5" />
-              レポート（課題文を読んで書く）
-            </button>
-          </div>
-        )}
-
-        {/* Input mode toggle（レポート中はテキスト固定のため非表示） */}
-        {!reportMode && (
-        <div className="flex rounded-lg border p-1 mb-4">
-          <button
-            type="button"
-            onClick={() => setInputMode("text")}
-            className={`flex-1 flex items-center justify-center gap-1.5 rounded-md px-3 py-2 h-11 text-sm font-medium transition-colors ${
-              inputMode === "text"
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Keyboard className="size-3.5" />
-            テキスト入力
-          </button>
-          <button
-            type="button"
-            onClick={() => setInputMode("dictation")}
-            className={`flex-1 flex items-center justify-center gap-1.5 rounded-md px-3 py-2 h-11 text-sm font-medium transition-colors ${
-              inputMode === "dictation"
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Mic className="size-3.5" />
-            手書き＋音読
-          </button>
-        </div>
-        )}
-
-        {/* レポート課題文の選択（系統 → 課題文） */}
-        {reportMode && (
-          <Card className="mb-4">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm lg:text-base">課題文を選ぶ</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+        {/* 情報入力（統合カード）: 種類 / 提出方法 / AP参照先 / テーマ / レポート課題文 / 書き方向 / 次へ */}
+        <Card className="mt-4">
+          <CardHeader>
+            <CardTitle className="text-sm lg:text-base">情報入力</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-5 p-3 lg:p-4">
+            {/* 小論文の種類（通常の新規提出のみ表示） */}
+            {!pastQuestion && !retryParent && !selectedTheme && (
               <div className="space-y-2">
-                <Label>分野を選択</Label>
+                <Label>小論文の種類</Label>
+                <SegmentControl
+                  fullWidth
+                  size="sm"
+                  value={reportMode ? "report" : "normal"}
+                  onChange={(v) => handleToggleReportMode(v === "report")}
+                  options={[
+                    { id: "normal", label: "通常の小論文" },
+                    { id: "report", label: "レポート（課題文を読んで書く）" },
+                  ]}
+                />
+              </div>
+            )}
+
+            {/* 提出方法（レポート中はテキスト固定のため非表示） */}
+            {!reportMode && (
+              <div className="space-y-2">
+                <Label>提出方法</Label>
+                <SegmentControl
+                  fullWidth
+                  size="sm"
+                  value={inputMode}
+                  onChange={(v) =>
+                    setInputMode(v as "text" | "image" | "dictation")
+                  }
+                  options={[
+                    { id: "text", label: "テキスト入力" },
+                    { id: "dictation", label: "手書き" },
+                  ]}
+                />
+              </div>
+            )}
+
+            {/* レポート課題文の選択（系統 → 課題文） */}
+            {reportMode && (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>分野を選択</Label>
                 {reportFieldsLoading ? (
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     {Array.from({ length: 9 }).map((_, i) => (
@@ -1332,14 +1309,12 @@ export default function EssayNewPage() {
                   )}
                 </div>
               )}
-            </CardContent>
-          </Card>
-        )}
+              </div>
+            )}
 
-        {/* 過去問選択時 or 再トライ時: 志望校・テーマは自動設定済み → 次へボタンのみ */}
-        {(pastQuestion || retryParent) ? (
-          <Card className="mt-4">
-            <CardContent className="p-3 lg:p-4 space-y-4">
+            {/* アドミッションポリシー参照先 / 過去問・再トライ時は自動設定 */}
+            {(pastQuestion || retryParent) ? (
+              <>
               {effectiveUni && (
                 <div className="flex items-center gap-3 rounded-lg border border-primary bg-primary/5 p-3">
                   <GraduationCap className="size-5 text-primary shrink-0" />
@@ -1353,30 +1328,18 @@ export default function EssayNewPage() {
               {(inputMode === "image" || inputMode === "dictation") && (
                 <div className="space-y-2">
                   <Label>原稿の書き方向</Label>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setWritingDirection("vertical")}
-                      className={`flex-1 rounded-lg border p-3 text-sm text-center transition-colors ${
-                        writingDirection === "vertical"
-                          ? "border-primary bg-primary/5 text-primary font-medium"
-                          : "border-border text-muted-foreground hover:border-primary/50"
-                      }`}
-                    >
-                      縦書き（原稿用紙）
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setWritingDirection("horizontal")}
-                      className={`flex-1 rounded-lg border p-3 text-sm text-center transition-colors ${
-                        writingDirection === "horizontal"
-                          ? "border-primary bg-primary/5 text-primary font-medium"
-                          : "border-border text-muted-foreground hover:border-primary/50"
-                      }`}
-                    >
-                      横書き
-                    </button>
-                  </div>
+                  <SegmentControl
+                    fullWidth
+                    size="sm"
+                    value={writingDirection}
+                    onChange={(v) =>
+                      setWritingDirection(v as "vertical" | "horizontal")
+                    }
+                    options={[
+                      { id: "vertical", label: "縦書き（原稿用紙）" },
+                      { id: "horizontal", label: "横書き" },
+                    ]}
+                  />
                   {writingDirection === "horizontal" && (
                     <a
                       href="/api/essay/template"
@@ -1410,44 +1373,33 @@ export default function EssayNewPage() {
                 次へ
                 <ChevronRight className="size-4 ml-1" />
               </Button>
-            </CardContent>
-          </Card>
-        ) : loadingUniversities ? (
-          <Card className="mt-4">
-            <CardContent className="p-4 space-y-3">
-              <Skeleton className="h-5 w-32" />
-              <Skeleton className="h-20 w-full rounded-lg" />
-            </CardContent>
-          </Card>
-        ) : targetUniversities.length === 0 ? (
-          <Card className="mt-4 border-dashed">
-            <CardContent className="flex items-center gap-4 py-8">
-              <div className="flex size-12 items-center justify-center rounded-lg bg-muted">
-                <GraduationCap className="size-6 text-muted-foreground" />
+              </>
+            ) : loadingUniversities ? (
+              <>
+                <Skeleton className="h-5 w-32" />
+                <Skeleton className="h-20 w-full rounded-lg" />
+              </>
+            ) : targetUniversities.length === 0 ? (
+              <div className="flex items-center gap-4 py-8">
+                <div className="flex size-12 items-center justify-center rounded-lg bg-muted">
+                  <GraduationCap className="size-6 text-muted-foreground" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium">アドミッションポリシー参照先が未設定です</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    設定画面で志望校を登録してください（添削の採点基準になります）
+                  </p>
+                  <Link href="/student/settings">
+                    <Button variant="outline" size="sm" className="mt-3">
+                      <Settings className="size-4 mr-1" />
+                      設定画面へ
+                    </Button>
+                  </Link>
+                </div>
               </div>
-              <div className="flex-1">
-                <p className="font-medium">アドミッションポリシー参照先が未設定です</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  設定画面で志望校を登録してください（添削の採点基準になります）
-                </p>
-                <Link href="/student/settings">
-                  <Button variant="outline" size="sm" className="mt-3">
-                    <Settings className="size-4 mr-1" />
-                    設定画面へ
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card className="mt-4">
-            <CardHeader>
-              <CardTitle className="text-sm lg:text-base">
-                {resolved.length === 1 ? "アドミッションポリシー参照先・テーマ" : "アドミッションポリシー参照先を選択してテーマを入力"}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-3 lg:p-4 space-y-4">
-              {resolved.length === 1 ? (
+            ) : (
+              <>
+                {resolved.length === 1 ? (
                 <div className="flex items-center gap-3 rounded-lg border border-primary bg-primary/5 p-3">
                   <GraduationCap className="size-5 text-primary shrink-0" />
                   <div>
@@ -1543,30 +1495,18 @@ export default function EssayNewPage() {
               {(inputMode === "image" || inputMode === "dictation") && (
                 <div className="space-y-2">
                   <Label>原稿の書き方向</Label>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setWritingDirection("vertical")}
-                      className={`flex-1 rounded-lg border p-3 text-sm text-center transition-colors ${
-                        writingDirection === "vertical"
-                          ? "border-primary bg-primary/5 text-primary font-medium"
-                          : "border-border text-muted-foreground hover:border-primary/50"
-                      }`}
-                    >
-                      縦書き（原稿用紙）
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setWritingDirection("horizontal")}
-                      className={`flex-1 rounded-lg border p-3 text-sm text-center transition-colors ${
-                        writingDirection === "horizontal"
-                          ? "border-primary bg-primary/5 text-primary font-medium"
-                          : "border-border text-muted-foreground hover:border-primary/50"
-                      }`}
-                    >
-                      横書き
-                    </button>
-                  </div>
+                  <SegmentControl
+                    fullWidth
+                    size="sm"
+                    value={writingDirection}
+                    onChange={(v) =>
+                      setWritingDirection(v as "vertical" | "horizontal")
+                    }
+                    options={[
+                      { id: "vertical", label: "縦書き（原稿用紙）" },
+                      { id: "horizontal", label: "横書き" },
+                    ]}
+                  />
                   {writingDirection === "horizontal" && (
                     <a
                       href="/api/essay/template"
@@ -1600,9 +1540,10 @@ export default function EssayNewPage() {
                 次へ
                 <ChevronRight className="size-4 ml-1" />
               </Button>
-            </CardContent>
-          </Card>
-        )}
+              </>
+            )}
+          </CardContent>
+        </Card>
         </>
       )}
 
@@ -1845,6 +1786,10 @@ export default function EssayNewPage() {
             <CardTitle className="text-sm lg:text-base">手書き小論文を撮影</CardTitle>
           </CardHeader>
           <CardContent className="p-3 lg:p-4 space-y-4">
+            {/* 画像保存の告知（インフォームド・コンセント）: アップロード画像は精度改善のため保存される */}
+            <p className="rounded-md bg-muted/50 px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
+              アップロードした答案画像とOCR結果は、添削精度の改善のために保存・利用されます。
+            </p>
             <div className="space-y-3">
               <p className="text-sm text-muted-foreground">
                 原稿用紙の写真を撮影してください。複数枚の場合はページ順に追加してください。
@@ -2031,10 +1976,6 @@ export default function EssayNewPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-3 lg:p-4 space-y-4">
-            {/* 画像保存の告知（インフォームド・コンセント）: アップロード画像は精度改善のため保存される */}
-            <p className="rounded-md bg-muted/50 px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
-              アップロードした答案画像とOCR結果は、添削精度の改善のために保存・利用されます。
-            </p>
             {/* 確認済み画像一覧 */}
             {images.length > 0 && (
               <div className="space-y-3">
