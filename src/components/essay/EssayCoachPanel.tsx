@@ -171,7 +171,7 @@ export function EssayCoachPanel(props: EssayCoachPanelProps) {
       {/* モバイル: FAB + Sheet (lg 未満) */}
       <Button
         onClick={() => setMobileOpen(true)}
-        className="lg:hidden fixed bottom-6 left-6 z-40 h-14 rounded-full shadow-lg cursor-pointer px-5 gap-2"
+        className="lg:hidden fixed bottom-[calc(var(--app-bottom-nav-height)+0.75rem+env(safe-area-inset-bottom))] lg:bottom-6 left-6 z-40 h-14 rounded-full shadow-lg cursor-pointer px-5 gap-2"
         aria-label="執筆サポートを開く"
       >
         <MessageSquare className="size-5" />
