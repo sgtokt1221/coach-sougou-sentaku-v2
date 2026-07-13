@@ -98,6 +98,10 @@ export async function POST(request: NextRequest) {
       updatedAt: now,
     };
 
+    if (body.wizardState !== undefined) {
+      (docData as Record<string, unknown>).wizardState = body.wizardState;
+    }
+
     const docRef = await adminDb.collection("documents").add(docData);
 
     const newDoc: Document = {

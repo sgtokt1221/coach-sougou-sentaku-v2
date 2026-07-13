@@ -15,6 +15,17 @@ export interface DocumentReview {
   at: string;
 }
 
+/** 未完了ウィザードの復元用進行状態。ウィザード完走後は completed:true。 */
+export interface DocumentWizardState {
+  /** 0-4（書類タイプ/志望校/フレームワーク/活動実績/下書き生成） */
+  currentStep: number;
+  frameworkType?: string;
+  selectedActivityIds: string[];
+  targetWordCount: number;
+  /** true以降は編集画面が主。false=ウィザード再開対象 */
+  completed: boolean;
+}
+
 export interface Document {
   id: string;
   userId: string;
@@ -35,6 +46,8 @@ export interface Document {
   linkedActivities: string[];
   createdAt: string;
   updatedAt: string;
+  /** 未完了ウィザードの復元用。完走後は completed:true（または省略）。 */
+  wizardState?: DocumentWizardState;
 }
 
 export interface DocumentVersion {
@@ -65,6 +78,8 @@ export interface DocumentCreateRequest {
   frameworkType?: string;
   templateId?: string;
   initialContent?: string;
+  /** 早期作成時のウィザード進行状態 */
+  wizardState?: DocumentWizardState;
 }
 
 export const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {

@@ -26,6 +26,8 @@ import {
 import type { Document, DocumentFeedback, DocumentStatus } from "@/lib/types/document";
 import { DOCUMENT_STATUS_LABELS } from "@/lib/types/document";
 import { DocumentReviewBadge } from "@/components/documents/DocumentReviewBadge";
+import { useAutosave, type AutosaveStatus } from "@/hooks/useAutosave";
+import { authFetch } from "@/lib/api/client";
 
 const STATUS_VARIANT: Record<DocumentStatus, "default" | "secondary" | "outline" | "destructive"> = {
   draft: "outline",
@@ -69,7 +71,7 @@ export default function DocumentEditorPage() {
   const loadDocument = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/documents/${id}`);
+      const res = await authFetch(`/api/documents/${id}`);
       if (!res.ok) throw new Error();
       const data: Document = await res.json();
       setDoc(data);
@@ -96,7 +98,7 @@ export default function DocumentEditorPage() {
     if (!doc) return;
     setSaving(true);
     try {
-      const res = await fetch(`/api/documents/${id}`, {
+      const res = await authFetch(`/api/documents/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content }),
@@ -111,11 +113,46 @@ export default function DocumentEditorPage() {
     }
   }
 
+  /**
+   * 本文を自動保存する（版を積まない autosave）。
+   * 明示保存の handleSave は content のみを送って版を積む一方、こちらは autosave:true を付与する。
+   * @param v useAutosave が渡す最新の本文
+   */
+  const saveContent = useCallback(
+    async (v: string) => {
+      const res = await authFetch(`/api/documents/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: v, autosave: true }),
+      });
+      if (!res.ok) throw new Error("本文の自動保存に失敗しました");
+    },
+    [id]
+  );
+
+  const { status: saveStatus, lastSavedAt, flush } = useAutosave(content, saveContent, {
+    delay: 1500,
+    enabled: !loading && !!doc,
+  });
+
+  /**
+   * タブを離れる（非表示になる）際に保留中の自動保存を確定する。
+   * beforeunload + keepalive は認証トークン取得が非同期で信頼できないため、
+   * より確実に発火する visibilitychange を採用する（ウィザードと同方式）。
+   */
+  useEffect(() => {
+    const onHide = () => {
+      if (document.visibilityState === "hidden") void flush();
+    };
+    document.addEventListener("visibilitychange", onHide);
+    return () => document.removeEventListener("visibilitychange", onHide);
+  }, [flush]);
+
   async function handleReview() {
     if (!doc || !content.trim()) return;
     setReviewing(true);
     try {
-      const res = await fetch(`/api/documents/${id}/review`, {
+      const res = await authFetch(`/api/documents/${id}/review`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -141,7 +178,7 @@ export default function DocumentEditorPage() {
   async function handleStatusChange(status: DocumentStatus) {
     if (!doc) return;
     try {
-      await fetch(`/api/documents/${id}`, {
+      await authFetch(`/api/documents/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
@@ -232,6 +269,8 @@ export default function DocumentEditorPage() {
             onStatusChange={handleStatusChange}
             onSave={handleSave}
             saving={saving}
+            saveStatus={saveStatus}
+            lastSavedAt={lastSavedAt}
           />
         ) : (
           <ReviewPanel
@@ -258,6 +297,8 @@ export default function DocumentEditorPage() {
             onStatusChange={handleStatusChange}
             onSave={handleSave}
             saving={saving}
+            saveStatus={saveStatus}
+            lastSavedAt={lastSavedAt}
           />
         </div>
         <div>
@@ -285,6 +326,8 @@ function EditorPanel({
   onStatusChange,
   onSave,
   saving,
+  saveStatus,
+  lastSavedAt,
 }: {
   content: string;
   setContent: (v: string) => void;
@@ -294,6 +337,8 @@ function EditorPanel({
   onStatusChange: (s: DocumentStatus) => void;
   onSave: () => void;
   saving: boolean;
+  saveStatus: AutosaveStatus;
+  lastSavedAt: Date | null;
 }) {
   return (
     <Card>
@@ -314,6 +359,16 @@ function EditorPanel({
             ) : null}
           </div>
           <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground whitespace-nowrap">
+              {saveStatus === "saving" && "保存中…"}
+              {saveStatus === "saved" &&
+                lastSavedAt &&
+                `保存済み ${lastSavedAt.toLocaleTimeString("ja-JP", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}`}
+              {saveStatus === "error" && "保存に失敗（自動再試行）"}
+            </span>
             <Select value={status} onValueChange={(v) => onStatusChange(v as DocumentStatus)}>
               <SelectTrigger className="w-[140px] h-8 text-xs">
                 <SelectValue />
