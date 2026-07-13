@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -89,7 +90,7 @@ export function SessionReportDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-3xl">
+      <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileBarChart className="size-5" />
@@ -97,7 +98,7 @@ export function SessionReportDialog({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <DialogBody className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <SegmentControl<Period>
               value={period}
@@ -161,7 +162,7 @@ export function SessionReportDialog({
               </Button>
             </div>
           )}
-        </div>
+        </DialogBody>
       </DialogContent>
     </Dialog>
   );

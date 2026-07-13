@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  ArrowLeft,
   Video,
   Copy,
   ExternalLink,
@@ -27,6 +26,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { AnimatedButton } from "@/components/shared/AnimatedButton";
+import { PageHeader } from "@/components/shared/PageHeader";
 import { authFetch } from "@/lib/api/client";
 import type { Session, SessionStatus, SessionKind, SessionSubmission, GroupSessionFields } from "@/lib/types/session";
 import {
@@ -417,12 +417,12 @@ export default function AdminSessionDetailPage() {
         {isOnline && session.meetLink && (
           <>
             <Separator />
-            <div className="flex items-center gap-2">
-              <Video className="size-4 text-emerald-600" />
-              <span className="text-sm truncate flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <Video className="size-4 shrink-0 text-emerald-600" />
+              <span className="text-sm truncate flex-1 min-w-0">
                 {session.meetLink}
               </span>
-              <Button variant="ghost" size="sm" onClick={copyMeetLink}>
+              <Button variant="ghost" size="sm" onClick={copyMeetLink} className="shrink-0">
                 {copied ? (
                   <Check className="size-4 text-emerald-600" />
                 ) : (
@@ -432,6 +432,7 @@ export default function AdminSessionDetailPage() {
               <Button
                 variant="outline"
                 size="sm"
+                className="shrink-0"
                 onClick={() => window.open(session.meetLink, "_blank", "noopener,noreferrer")}
               >
                 <ExternalLink className="size-4 mr-1" />
@@ -529,12 +530,7 @@ export default function AdminSessionDetailPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="sm" onClick={() => router.back()}>
-          <ArrowLeft className="size-4" />
-        </Button>
-        <h1 className="text-xl font-bold">セッション詳細</h1>
-      </div>
+      <PageHeader title="セッション詳細" backAction={() => router.back()} />
 
       {isResearchSession ? (
         /* 探究授業: 専用レイアウト（基本情報＋講師録音・AI講評＋所見＋メモ） */
