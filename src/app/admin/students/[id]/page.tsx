@@ -364,6 +364,15 @@ function PinnedSummary({ detail }: { detail: StudentDetail }) {
 
 type TabKey = "overview" | "performance" | "activity" | "reports" | "homework" | "messages";
 const VALID_TABS: TabKey[] = ["overview", "performance", "activity", "reports", "homework", "messages"];
+/** タブ value → 日本語ラベル。Base UI の SelectValue は value を生表示するため、モバイルの選択表示に使う。 */
+const TAB_LABELS: Record<TabKey, string> = {
+  overview: "概要",
+  performance: "成績・弱点",
+  activity: "活動・書類",
+  reports: "レポート",
+  homework: "宿題",
+  messages: "メッセージ",
+};
 
 function AdminStudentDetailPageInner() {
   const router = useRouter();
@@ -1127,7 +1136,7 @@ function AdminStudentDetailPageInner() {
           <div className="mt-3 sm:hidden">
             <Select value={tab} onValueChange={(v) => v && handleTabChange(v)}>
               <SelectTrigger className="w-full">
-                <SelectValue />
+                <SelectValue>{(v) => (v ? TAB_LABELS[v as TabKey] : "")}</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="overview">概要</SelectItem>
