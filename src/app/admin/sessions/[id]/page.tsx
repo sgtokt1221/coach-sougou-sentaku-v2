@@ -28,8 +28,15 @@ import {
 import Link from "next/link";
 import { AnimatedButton } from "@/components/shared/AnimatedButton";
 import { authFetch } from "@/lib/api/client";
-import type { Session, SessionStatus, SessionType, SessionSubmission, GroupSessionFields } from "@/lib/types/session";
-import { SESSION_TYPE_LABELS, SESSION_STATUS_LABELS } from "@/lib/types/session";
+import type { Session, SessionStatus, SessionKind, SessionSubmission, GroupSessionFields } from "@/lib/types/session";
+import {
+  SESSION_TYPE_LABELS,
+  SESSION_STATUS_LABELS,
+  SESSION_KIND_LABELS,
+  SESSION_KIND_CREATE_OPTIONS,
+  kindToTypeResearch,
+  typeResearchToKind,
+} from "@/lib/types/session";
 import type { PracticeQuestion } from "@/lib/types/growth-report";
 
 type GroupSession = Session & GroupSessionFields;
@@ -286,6 +293,14 @@ export default function AdminSessionDetailPage() {
   // 探究授業セッション（生徒が講師に教える回）は専用レイアウトにする
   const isResearchSession = !!session.isResearch && session.type !== "group_review";
 
+  // UI 上の種別（type + isResearch を1軸に射影）。レガシー type は面談へ寄せて非表示にする。
+  const currentKind = typeResearchToKind(session.type, session.isResearch);
+  // group_review は作成対象外だが、既存セッションの表示・保持のため選択肢に加える。
+  const kindOptions: SessionKind[] =
+    currentKind === "group_review"
+      ? [...SESSION_KIND_CREATE_OPTIONS, "group_review"]
+      : SESSION_KIND_CREATE_OPTIONS;
+
   // 基本情報 + 操作 (1 対 1 は左カラム先頭、グループは単一カラム先頭で共用)
   const basicInfoCard = (
     <Card>
@@ -324,22 +339,25 @@ export default function AdminSessionDetailPage() {
             <span className="text-muted-foreground">タイプ:</span>{" "}
             {session.type === "group_review" ? (
               <Badge variant="outline" className="text-xs ml-1">
-                {SESSION_TYPE_LABELS[session.type]}
+                {session.isResearch ? "探究授業" : SESSION_TYPE_LABELS[session.type]}
               </Badge>
             ) : (
               <select
                 className="ml-1 rounded-md border px-2 py-1 text-xs"
-                value={session.type}
-                onChange={(e) => patchSession({ type: e.target.value as SessionType })}
+                value={currentKind}
+                onChange={(e) => {
+                  const { type, isResearch } = kindToTypeResearch(
+                    e.target.value as SessionKind,
+                  );
+                  patchSession({ type, isResearch });
+                }}
                 disabled={saving}
               >
-                {(Object.entries(SESSION_TYPE_LABELS) as [SessionType, string][])
-                  .filter(([t]) => t !== "group_review")
-                  .map(([t, label]) => (
-                    <option key={t} value={t}>
-                      {label}
-                    </option>
-                  ))}
+                {kindOptions.map((k) => (
+                  <option key={k} value={k}>
+                    {SESSION_KIND_LABELS[k]}
+                  </option>
+                ))}
               </select>
             )}
           </div>
@@ -368,24 +386,6 @@ export default function AdminSessionDetailPage() {
               >
                 {isOnline ? "オンライン" : "対面"}
               </Badge>
-            </div>
-          )}
-
-          {/* 探究授業フラグ (作成後も切替可) */}
-          {session.type !== "group_review" && (
-            <div className="sm:col-span-2">
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  className="size-4"
-                  checked={!!session.isResearch}
-                  onChange={(e) => patchSession({ isResearch: e.target.checked })}
-                  disabled={saving}
-                />
-                <span className="text-muted-foreground">
-                  探究授業セッション（生徒が講師に教える回）
-                </span>
-              </label>
             </div>
           )}
 

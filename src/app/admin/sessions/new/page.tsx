@@ -19,8 +19,13 @@ import { ArrowLeft, Save, Loader2, UserPlus, Video, MapPin } from "lucide-react"
 import { authFetch } from "@/lib/api/client";
 import { useAuthSWR } from "@/lib/api/swr";
 import { toast } from "sonner";
-import type { SessionType, GroupSessionCreateRequest } from "@/lib/types/session";
-import { SESSION_TYPE_LABELS, SESSION_TYPE_CREATE_OPTIONS } from "@/lib/types/session";
+import type { SessionKind, GroupSessionCreateRequest } from "@/lib/types/session";
+import {
+  SESSION_KIND_LABELS,
+  SESSION_KIND_DESCRIPTIONS,
+  SESSION_KIND_CREATE_OPTIONS,
+  kindToTypeResearch,
+} from "@/lib/types/session";
 import type { StudentListItem, TeacherListItem } from "@/lib/types/admin";
 
 export default function NewSessionPage() {
@@ -28,9 +33,8 @@ export default function NewSessionPage() {
   const [saving, setSaving] = useState(false);
   const [studentId, setStudentId] = useState("");
   const [teacherId, setTeacherId] = useState("");
-  const [type, setType] = useState<SessionType | "">("");
+  const [kind, setKind] = useState<SessionKind | "">("");
   const [format, setFormat] = useState<"online" | "offline">("offline");
-  const [isResearch, setIsResearch] = useState(false);
   const [scheduledAt, setScheduledAt] = useState("");
   const [meetLink, setMeetLink] = useState("");
   const [autoCalendar, setAutoCalendar] = useState(true);
@@ -71,18 +75,18 @@ export default function NewSessionPage() {
   const isExternalTeacher =
     selectedTeacher && !myTeachers?.some((t) => t.uid === teacherId);
 
-  const canSubmit = teacherId && type && scheduledAt &&
-    (type !== "group_review" ? studentId : submissionDeadline);
+  const canSubmit = teacherId && kind && scheduledAt &&
+    (kind !== "group_review" ? studentId : submissionDeadline);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!canSubmit || !selectedTeacher) return;
-    if (type !== "group_review" && (!selectedStudent)) return;
+    if (kind !== "group_review" && (!selectedStudent)) return;
     setSaving(true);
     try {
       let requestBody: any;
 
-      if (type === "group_review") {
+      if (kind === "group_review") {
         // Group review session
         const groupRequest: GroupSessionCreateRequest = {
           teacherId,
@@ -99,7 +103,8 @@ export default function NewSessionPage() {
         };
         requestBody = groupRequest;
       } else {
-        // Regular session
+        // Regular session (kind → 保存用の type/isResearch へ射影)
+        const { type, isResearch } = kindToTypeResearch(kind);
         requestBody = {
           teacherId,
           studentId,
@@ -131,7 +136,7 @@ export default function NewSessionPage() {
         format === "online" &&
         autoCalendar &&
         googleConnected &&
-        type !== "group_review" &&
+        kind !== "group_review" &&
         created.id
       ) {
         try {
@@ -179,7 +184,7 @@ export default function NewSessionPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
-              {type !== "group_review" && (
+              {kind !== "group_review" && (
                 <div className="space-y-2">
                   <Label htmlFor="student">生徒</Label>
                   {studentsLoading ? (
@@ -250,22 +255,29 @@ export default function NewSessionPage() {
               <div className="space-y-2">
                 <Label htmlFor="type">セッションタイプ</Label>
                 <Select
-                  value={type}
+                  value={kind}
                   onValueChange={(v: string | null) =>
-                    setType((v ?? "") as SessionType | "")
+                    setKind((v ?? "") as SessionKind | "")
                   }
                 >
                   <SelectTrigger id="type">
                     <SelectValue placeholder="タイプを選択" />
                   </SelectTrigger>
                   <SelectContent>
-                    {SESSION_TYPE_CREATE_OPTIONS.map((key) => (
-                      <SelectItem key={key} value={key}>
-                        {SESSION_TYPE_LABELS[key]}
-                      </SelectItem>
-                    ))}
+                    {[...SESSION_KIND_CREATE_OPTIONS, "group_review" as const].map(
+                      (key) => (
+                        <SelectItem key={key} value={key}>
+                          {SESSION_KIND_LABELS[key]}
+                        </SelectItem>
+                      ),
+                    )}
                   </SelectContent>
                 </Select>
+                {kind && (
+                  <p className="text-xs text-muted-foreground">
+                    {SESSION_KIND_DESCRIPTIONS[kind]}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="scheduledAt">日時</Label>
@@ -279,7 +291,7 @@ export default function NewSessionPage() {
             </div>
 
             {/* 授業形態 (1 対 1 のみ) */}
-            {type !== "group_review" && (
+            {kind !== "group_review" && (
               <div className="space-y-2">
                 <Label>授業形態</Label>
                 <div className="flex gap-2">
@@ -305,20 +317,8 @@ export default function NewSessionPage() {
               </div>
             )}
 
-            {type !== "group_review" && (
-              <label className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
-                <input
-                  type="checkbox"
-                  className="size-4"
-                  checked={isResearch}
-                  onChange={(e) => setIsResearch(e.target.checked)}
-                />
-                <span>探究授業セッション（生徒が講師に教える回）</span>
-              </label>
-            )}
-
             {/* Group review specific fields */}
-            {type === "group_review" && (
+            {kind === "group_review" && (
               <>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
@@ -352,7 +352,7 @@ export default function NewSessionPage() {
               </>
             )}
 
-            {type !== "group_review" && format === "online" && googleConnected && (
+            {kind !== "group_review" && format === "online" && googleConnected && (
               <div className="flex items-start gap-3 rounded-lg border border-teal-200 bg-teal-50 p-3 dark:border-teal-900 dark:bg-teal-950/30">
                 <div className="flex-1">
                   <label className="flex items-center gap-2 cursor-pointer">
@@ -373,7 +373,7 @@ export default function NewSessionPage() {
               </div>
             )}
 
-            {type !== "group_review" && format === "online" && googleConnected === false && (
+            {kind !== "group_review" && format === "online" && googleConnected === false && (
               <div className="flex items-start gap-2 rounded-lg border p-3 bg-muted/40">
                 <div className="flex-1 text-xs text-muted-foreground">
                   <Link
@@ -387,7 +387,7 @@ export default function NewSessionPage() {
               </div>
             )}
 
-            {(type === "group_review" ||
+            {(kind === "group_review" ||
               (format === "online" && !(autoCalendar && googleConnected))) && (
               <div className="space-y-2">
                 <Label htmlFor="meetLink">Google Meetリンク (任意)</Label>
