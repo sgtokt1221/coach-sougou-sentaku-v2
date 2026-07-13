@@ -2031,6 +2031,10 @@ export default function EssayNewPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-3 lg:p-4 space-y-4">
+            {/* 画像保存の告知（インフォームド・コンセント）: アップロード画像は精度改善のため保存される */}
+            <p className="rounded-md bg-muted/50 px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
+              アップロードした答案画像とOCR結果は、添削精度の改善のために保存・利用されます。
+            </p>
             {/* 確認済み画像一覧 */}
             {images.length > 0 && (
               <div className="space-y-3">
