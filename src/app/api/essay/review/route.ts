@@ -88,7 +88,8 @@ export async function POST(request: NextRequest) {
         // essayドキュメントが存在しなければ作成（初回保存）
         const existingEssay = await adminDb.doc(`essays/${essayId}`).get();
         if (!existingEssay.exists) {
-          const retryContext = parentEssayIdResolved
+          // report は初回提出でも retryContext を残す（無いとリトライ時に通常小論文化して復帰不能になるため）
+          const retryContext = parentEssayIdResolved || questionType === "report"
             ? {
                 wordLimit: body.wordLimit ?? null,
                 questionType: body.questionType ?? null,
@@ -309,9 +310,12 @@ export async function POST(request: NextRequest) {
           weaknessTags,
           status: "reviewed",
           reviewedAt: FieldValue.serverTimestamp(),
+          // sourceType の優先順位: 宿題 > レポート > (既定: manual 等)
           ...(homeworkId
             ? { sourceType: "homework", homeworkAssignmentId: homeworkId }
-            : {}),
+            : questionType === "report"
+              ? { sourceType: "report" }
+              : {}),
         }, { merge: true });
 
         // 宿題から取り組んだ場合は宿題を提出済みにする

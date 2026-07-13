@@ -330,10 +330,19 @@ export interface AlertItem {
     | "ap_struggle"
     | "weakness_stuck"
     | "deadline_risk"
-    | "score_plateau";
-  severity: "critical" | "warning" | "high";
+    | "score_plateau"
+    // 活動系（通知）タイプ
+    | "essay_reviewed" // 添削を提出・完了
+    | "self_analysis_done" // 自己分析の進捗・完了
+    | "document_submitted" // 書類の提出・再提出
+    | "interview_done" // 模擬面接 完了
+    | "skill_check_done"; // スキルチェック 完了
+  // info=活動系のお知らせ
+  severity: "critical" | "warning" | "high" | "info";
   message: string;
   detectedAt: string;
   acknowledged: boolean;
   recommendedAction?: string;
+  /** クリックで遷移する先（例 /admin/students/{uid}?tab=activity）。省略時は非リンク。 */
+  link?: string;
 }

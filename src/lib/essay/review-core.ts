@@ -8,6 +8,7 @@ import type {
   EssayScores,
   EssayFeedback,
   TopicInsights,
+  ReportInsights,
 } from "@/lib/types/essay";
 
 /**
@@ -66,8 +67,9 @@ export async function reviewEssayCore(
   }
 
   const client = new Anthropic();
+  const isReport = input.questionType === "report";
   const questionContext =
-    input.questionType && input.questionType !== "essay"
+    input.questionType && input.questionType !== "essay" && !isReport
       ? {
           questionType: input.questionType as
             | "english-reading"
@@ -90,13 +92,26 @@ export async function reviewEssayCore(
 
   let userMessage = "";
   if (input.topic) userMessage += `【テーマ】${input.topic}\n\n`;
-  if (input.sourceText) userMessage += `【出題資料(英文)】\n${input.sourceText}\n\n`;
+  if (input.sourceText) {
+    const label = isReport ? "【課題文】" : "【出題資料(英文)】";
+    userMessage += `${label}\n${input.sourceText}\n\n`;
+  }
   if (input.chartDataSummary) userMessage += `【資料データ】\n${input.chartDataSummary}\n\n`;
   userMessage += `【小論文本文】\n${input.ocrText}`;
 
+  if (isReport) {
+    userMessage +=
+      "\n\nこれは上記【課題文】を読んで書く『レポート』です。5観点スコアと通常の feedback に加えて、" +
+      "JSON の feedback に必ず \"reportInsights\" を含めてください。reportInsights は次のキーを持つオブジェクトです: " +
+      "sourceComprehension(課題文の理解度・要点把握), summaryAccuracy(要約・言い換えの正確さ), " +
+      "citationAppropriateness(引用/参照の妥当さ), analysisDepth(自分の考察の深さ・独自性), " +
+      "sourceConnection(課題文と自論の接続), misreadings(課題文の誤読・事実誤認を指摘する文字列配列)。" +
+      "各文字列は具体的な講評にしてください。";
+  }
+
   const response = await client.messages.create({
     model: "claude-sonnet-4-6",
-    max_tokens: 4096,
+    max_tokens: isReport ? 6000 : 4096,
     system: systemPrompt,
     messages: [{ role: "user", content: userMessage }],
   });
@@ -148,6 +163,20 @@ export async function reviewEssayCore(
       }
     : undefined;
 
+  const reportInsights: ReportInsights | undefined = parsed.feedback
+    ?.reportInsights
+    ? {
+        sourceComprehension:
+          parsed.feedback.reportInsights.sourceComprehension ?? "",
+        summaryAccuracy: parsed.feedback.reportInsights.summaryAccuracy ?? "",
+        citationAppropriateness:
+          parsed.feedback.reportInsights.citationAppropriateness ?? "",
+        analysisDepth: parsed.feedback.reportInsights.analysisDepth ?? "",
+        sourceConnection: parsed.feedback.reportInsights.sourceConnection ?? "",
+        misreadings: parsed.feedback.reportInsights.misreadings ?? [],
+      }
+    : undefined;
+
   // Firestore は undefined を許可しないため、optional フィールドは
   // 値があるときだけ key を含める (条件付き spread)。
   const feedback: EssayFeedback = {
@@ -157,6 +186,7 @@ export async function reviewEssayCore(
     repeatedIssues: parsed.feedback.repeatedIssues ?? [],
     improvementsSinceLast: parsed.feedback.improvementsSinceLast ?? [],
     ...(topicInsights ? { topicInsights } : {}),
+    ...(reportInsights ? { reportInsights } : {}),
     ...(parsed.feedback.brushedUpText
       ? { brushedUpText: parsed.feedback.brushedUpText }
       : {}),

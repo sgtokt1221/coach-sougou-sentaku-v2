@@ -49,7 +49,7 @@ import { RedPenText } from "@/components/essay/RedPenText";
 import { CommentableEssayText } from "@/components/essay/CommentableEssayText";
 import type { EssayInlineComment } from "@/lib/types/essay";
 import { RetryComparisonCard } from "@/components/essay/RetryComparison";
-import type { GrowthEvent, QuantitativeAnalysis, RetryComparison } from "@/lib/types/essay";
+import type { GrowthEvent, QuantitativeAnalysis, RetryComparison, ReportInsights } from "@/lib/types/essay";
 import { getRankFromPercentage, getScorePercentage } from "@/lib/score-rank";
 
 interface EssayScores {
@@ -98,6 +98,7 @@ interface EssayFeedback {
   priorityImprovement?: string;
   nextChallenge?: string;
   quantitativeAnalysis?: QuantitativeAnalysis;
+  reportInsights?: ReportInsights;
 }
 
 interface EssayResult {
@@ -129,6 +130,60 @@ function ScoreSkeleton() {
       <Skeleton className="h-4 w-full" />
       <Skeleton className="h-4 w-3/4" />
     </div>
+  );
+}
+
+/**
+ * レポート課題（課題文を読んで書く）専用の講評ブロック。
+ * sourceType="report" で reportInsights が生成されているときのみ表示する。
+ * 課題文の理解度など5観点の講評と、誤読の指摘を一覧する。
+ * @param insights レポート課題専用の講評データ
+ */
+function ReportInsightsCard({ insights }: { insights: ReportInsights }) {
+  const items: { label: string; body: string }[] = [
+    { label: "課題文の理解度", body: insights.sourceComprehension },
+    { label: "要約の正確さ", body: insights.summaryAccuracy },
+    { label: "引用の妥当性", body: insights.citationAppropriateness },
+    { label: "考察の深さ", body: insights.analysisDepth },
+    { label: "課題文との接続", body: insights.sourceConnection },
+  ];
+  return (
+    <Card className="border-0 bg-gradient-to-br from-indigo-50 via-sky-50 to-white shadow-md">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-lg tracking-tight flex items-center gap-2 text-indigo-700">
+          <FileText className="size-5" />
+          レポート観点
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {items.map((item) => (
+          <div key={item.label} className="rounded-xl bg-white/60 border border-indigo-200 p-4">
+            <h3 className="text-sm font-semibold tracking-tight text-indigo-800 mb-1">{item.label}</h3>
+            <p className="text-sm leading-relaxed text-slate-800">{item.body}</p>
+          </div>
+        ))}
+        <div className="rounded-xl bg-white/60 border border-indigo-200 p-4">
+          <h3 className="text-sm font-semibold tracking-tight text-indigo-800 mb-2 flex items-center gap-1">
+            <AlertTriangle className="size-4" />
+            誤読の指摘
+          </h3>
+          {insights.misreadings.length > 0 ? (
+            <ul className="space-y-2">
+              {insights.misreadings.map((m, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <div className="rounded-full bg-amber-200 p-1 mt-0.5">
+                    <AlertTriangle className="size-3 text-amber-700" />
+                  </div>
+                  <span className="text-sm leading-relaxed text-slate-800">{m}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted-foreground">特になし</p>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -788,6 +843,11 @@ export default function EssayResultPage() {
                     </div>
                   </div>
 
+                  {/* レポート観点 (sourceType="report" のときのみ) */}
+                  {result.feedback.reportInsights && (
+                    <ReportInsightsCard insights={result.feedback.reportInsights} />
+                  )}
+
                   {/* 改善点（成長を褒める） */}
                   {(result.feedback.improvementsSinceLast ?? []).length > 0 && (
                     <Card className="border-0 bg-gradient-to-br from-emerald-50 via-emerald-50 to-teal-50 shadow-md border-emerald-200">
@@ -1230,6 +1290,13 @@ export default function EssayResultPage() {
                   )}
                 </div>
               </div>
+
+              {/* レポート観点 (sourceType="report" のときのみ) */}
+              {result.feedback.reportInsights && (
+                <div className="mt-6">
+                  <ReportInsightsCard insights={result.feedback.reportInsights} />
+                </div>
+              )}
             </section>
 
             <Separator className="my-8 opacity-30" />

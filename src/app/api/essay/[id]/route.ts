@@ -88,6 +88,7 @@ export async function GET(
         repeatedIssues: feedback.repeatedIssues ?? [],
         improvementsSinceLast: feedback.improvementsSinceLast ?? [],
         topicInsights: feedback.topicInsights ?? null,
+        reportInsights: feedback.reportInsights ?? null,
         brushedUpText: feedback.brushedUpText ?? null,
         languageCorrections: feedback.languageCorrections ?? null,
         priorityImprovement: feedback.priorityImprovement ?? null,

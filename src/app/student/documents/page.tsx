@@ -6,12 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FileText, Plus, Clock, CheckCircle, AlertTriangle, FolderOpen, ChevronDown, ChevronUp } from "lucide-react";
+import { FileText, Plus, Clock, CheckCircle, AlertTriangle, FolderOpen, ChevronDown, ChevronUp, Trash2 } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import type { Document, DocumentStatus } from "@/lib/types/document";
 import { DOCUMENT_STATUS_LABELS } from "@/lib/types/document";
 import { DocumentReviewBadge } from "@/components/documents/DocumentReviewBadge";
 import { useAuthSWR } from "@/lib/api/swr";
+import { authFetch } from "@/lib/api/client";
 
 const STATUS_VARIANT: Record<DocumentStatus, "default" | "secondary" | "outline" | "destructive"> = {
   draft: "outline",
@@ -36,9 +37,40 @@ interface UniversityGroup {
 
 export default function DocumentsPage() {
   const router = useRouter();
-  const { data: rawData, isLoading: loading } = useAuthSWR<{ documents: Document[] }>("/api/documents");
+  const { data: rawData, isLoading: loading, mutate } = useAuthSWR<{ documents: Document[] }>("/api/documents");
   const documents = rawData?.documents ?? [];
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  const [confirmingDiscardId, setConfirmingDiscardId] = useState<string | null>(null);
+  const [discardingId, setDiscardingId] = useState<string | null>(null);
+
+  /** content が空 かつ ウィザード未完了 = 作成途中（ウィザード再開対象） */
+  const isWizardIncomplete = (d: Document) =>
+    d.content === "" && d.wizardState !== undefined && d.wizardState.completed === false;
+
+  /** カードのリンク先。作成途中はウィザード再開、それ以外は書類詳細へ。 */
+  const hrefFor = (d: Document) =>
+    isWizardIncomplete(d) ? `/student/documents/new?resume=${d.id}` : `/student/documents/${d.id}`;
+
+  /**
+   * 作成途中書類を破棄する。DELETE 成功後は SWR キャッシュから当該書類を除外する。
+   * @param id 破棄対象の書類 ID
+   */
+  const handleDiscard = async (id: string) => {
+    setDiscardingId(id);
+    try {
+      const res = await authFetch(`/api/documents/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("破棄に失敗しました");
+      await mutate(
+        (prev) => (prev ? { documents: prev.documents.filter((d) => d.id !== id) } : prev),
+        { revalidate: false }
+      );
+      setConfirmingDiscardId(null);
+    } catch {
+      // 失敗時は確認状態を保持し、ユーザーが再試行できるようにする
+    } finally {
+      setDiscardingId(null);
+    }
+  };
 
   const universityGroups: UniversityGroup[] = [];
   const groupMap = new Map<string, Document[]>();
@@ -160,11 +192,14 @@ export default function DocumentsPage() {
                         <div
                           key={doc.id}
                           className="flex items-center justify-between p-3 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors"
-                          onClick={() => router.push(`/student/documents/${doc.id}`)}
+                          onClick={() => router.push(hrefFor(doc))}
                         >
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               <span className="font-medium text-sm">{doc.type}</span>
+                              {isWizardIncomplete(doc) && (
+                                <Badge variant="outline">作成途中</Badge>
+                              )}
                               <Badge variant={STATUS_VARIANT[doc.status]}>
                                 {DOCUMENT_STATUS_LABELS[doc.status]}
                               </Badge>
@@ -192,6 +227,53 @@ export default function DocumentsPage() {
                           {doc.status === "final" && (
                             <CheckCircle className="size-5 text-emerald-500 shrink-0" />
                           )}
+                          {isWizardIncomplete(doc) &&
+                            (confirmingDiscardId === doc.id ? (
+                              <div
+                                className="flex items-center gap-1 shrink-0"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <span className="text-xs text-muted-foreground">破棄しますか？</span>
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  disabled={discardingId === doc.id}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    void handleDiscard(doc.id);
+                                  }}
+                                >
+                                  {discardingId === doc.id ? "破棄中..." : "破棄する"}
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  disabled={discardingId === doc.id}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setConfirmingDiscardId(null);
+                                  }}
+                                >
+                                  キャンセル
+                                </Button>
+                              </div>
+                            ) : (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="shrink-0 text-muted-foreground hover:text-destructive"
+                                aria-label="破棄"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  setConfirmingDiscardId(doc.id);
+                                }}
+                              >
+                                <Trash2 className="size-4" />
+                              </Button>
+                            ))}
                         </div>
                       );
                     })}
