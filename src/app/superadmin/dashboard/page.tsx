@@ -382,7 +382,7 @@ export default function SuperadminDashboard() {
               <>
                 {/* BarChart */}
                 {barData.length > 0 && (
-                  <div className="h-48">
+                  <div className="h-48 min-w-0">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={barData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
                         <CartesianGrid
@@ -408,7 +408,7 @@ export default function SuperadminDashboard() {
                 )}
 
                 {/* Table */}
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto" data-allow-x-scroll>
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b bg-muted/50">
@@ -461,7 +461,7 @@ export default function SuperadminDashboard() {
             {stats.byOrganization.length === 0 ? (
               <p className="text-sm text-muted-foreground">塾がありません</p>
             ) : (
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto" data-allow-x-scroll>
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b bg-muted/50">
@@ -569,7 +569,7 @@ export default function SuperadminDashboard() {
               {shownScoreTrend.length === 0 ? (
                 <p className="text-sm text-muted-foreground">データがありません</p>
               ) : (
-                <div className="h-48">
+                <div className="h-48 min-w-0">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={shownScoreTrend} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
                       <defs>

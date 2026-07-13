@@ -229,7 +229,7 @@ export default function SuperadminAdminDetailPage({
           {admin.students.length === 0 ? (
             <p className="text-sm text-muted-foreground">担当生徒はいません</p>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto" data-allow-x-scroll>
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b bg-muted/50">
@@ -264,7 +264,7 @@ export default function SuperadminAdminDetailPage({
             <p className="text-sm text-muted-foreground">未割当の生徒はいません</p>
           ) : (
             <div className="space-y-4">
-              <div className="max-h-60 overflow-y-auto rounded border">
+              <div className="max-h-60 overflow-y-auto overflow-x-auto rounded border" data-allow-x-scroll>
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b bg-muted/50 sticky top-0">

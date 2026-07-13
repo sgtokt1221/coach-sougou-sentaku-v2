@@ -124,7 +124,7 @@ export default function AdminPassedDataPage() {
       {/* Data Table */}
       <Card>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" data-allow-x-scroll>
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b bg-muted/50">
