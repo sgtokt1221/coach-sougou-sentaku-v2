@@ -15,6 +15,7 @@ import {
   Dialog,
   DialogContent,
   DialogHeader,
+  DialogBody,
   DialogTitle,
   DialogDescription,
   DialogFooter,
@@ -1197,14 +1198,14 @@ function AdminStudentDetailPageInner() {
 
       {/* Profile Edit Dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>プロフィール編集</DialogTitle>
             <DialogDescription>
               生徒の基本情報を編集します
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
+          <DialogBody className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="edit-name">氏名</Label>
               <Input
@@ -1348,7 +1349,7 @@ function AdminStudentDetailPageInner() {
                 onChange={setEditUniversities}
               />
             </div>
-          </div>
+          </DialogBody>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditOpen(false)}>
               キャンセル
@@ -1371,7 +1372,7 @@ function AdminStudentDetailPageInner() {
 
       {/* Essay Detail Dialog */}
       <Dialog open={essayDetailOpen} onOpenChange={setEssayDetailOpen}>
-        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-3xl">
+        <DialogContent className="sm:max-w-3xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FileText className="size-5" />
@@ -1385,6 +1386,7 @@ function AdminStudentDetailPageInner() {
             )}
           </DialogHeader>
 
+          <DialogBody>
           {essayLoading ? (
             <div className="space-y-4 py-4">
               <Skeleton className="h-6 w-48" />
@@ -1526,6 +1528,7 @@ function AdminStudentDetailPageInner() {
               エッセイデータの取得に失敗しました
             </div>
           )}
+          </DialogBody>
         </DialogContent>
       </Dialog>
 
