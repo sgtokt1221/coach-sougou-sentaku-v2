@@ -235,6 +235,53 @@ export const SESSION_TYPE_CREATE_OPTIONS: SessionType[] = [
   "group_review", // グループ添削（別フロー）
 ];
 
+/** UI上の種別（type + isResearch を1軸に射影）。データは従来の type/isResearch で保存。 */
+export type SessionKind = "general" | "mock_interview" | "research" | "group_review";
+
+/** SessionKind の表示ラベル。 */
+export const SESSION_KIND_LABELS: Record<SessionKind, string> = {
+  general: "面談",
+  mock_interview: "模擬面接",
+  research: "探究授業",
+  group_review: "グループ添削",
+};
+
+/** 各種別の1行補足（違いの明示）。 */
+export const SESSION_KIND_DESCRIPTIONS: Record<SessionKind, string> = {
+  general: "1対1の全般セッション",
+  mock_interview: "面接練習（要約・振り返りが面接特化）",
+  research: "生徒が講師に教える回（探究授業）",
+  group_review: "グループ添削（別フロー）",
+};
+
+/** カレンダー/1対1作成で選べる種別（group_review は別経路）。 */
+export const SESSION_KIND_CREATE_OPTIONS: SessionKind[] = ["general", "mock_interview", "research"];
+
+/**
+ * SessionKind → 保存用の { type, isResearch }。
+ * research は type=general + isResearch=true に射影（探究は専用レイアウトで扱う）。
+ * @param kind UI種別
+ * @returns 保存用の type と isResearch
+ */
+export function kindToTypeResearch(kind: SessionKind): { type: SessionType; isResearch: boolean } {
+  if (kind === "research") return { type: "general", isResearch: true };
+  return { type: kind as SessionType, isResearch: false };
+}
+
+/**
+ * 保存済み { type, isResearch } → UI種別。
+ * isResearch 優先。レガシー(coaching/essay_review)は面談(general)へ寄せる。
+ * @param type 保存済みの SessionType
+ * @param isResearch 探究フラグ
+ * @returns UI種別
+ */
+export function typeResearchToKind(type: SessionType, isResearch?: boolean): SessionKind {
+  if (isResearch) return "research";
+  if (type === "mock_interview") return "mock_interview";
+  if (type === "group_review") return "group_review";
+  return "general";
+}
+
 export const SESSION_STATUS_LABELS: Record<SessionStatus, string> = {
   scheduled: "予定",
   in_progress: "実施中",
