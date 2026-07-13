@@ -384,7 +384,19 @@ export default function AdminSessionsPage() {
               <p className="mb-3 rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">
                 カレンダー編集はPCでご利用ください。スマホでは一覧を表示します。
               </p>
-              <AdminSessionList sessions={allSessions} />
+              <AdminSessionList
+                sessions={allSessions}
+                onAddClick={() => {
+                  // モバイル簡易追加: 今日・既定時刻(10:00)で作成モーダルを開く（講師/種別/生徒はモーダルで選択）。
+                  const now = new Date();
+                  const today = `${now.getFullYear()}-${(now.getMonth() + 1)
+                    .toString()
+                    .padStart(2, "0")}-${now.getDate().toString().padStart(2, "0")}`;
+                  setAddDialog({ date: today, time: "10:00" });
+                  setFormStudentId("");
+                  setFormKind("general");
+                }}
+              />
             </div>
           </div>
 
