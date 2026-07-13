@@ -1227,7 +1227,7 @@ export default function EssayNewPage() {
                   }
                   options={[
                     { id: "text", label: "テキスト入力" },
-                    { id: "dictation", label: "手書き＋音読" },
+                    { id: "dictation", label: "手書き" },
                   ]}
                 />
               </div>
@@ -1786,6 +1786,10 @@ export default function EssayNewPage() {
             <CardTitle className="text-sm lg:text-base">手書き小論文を撮影</CardTitle>
           </CardHeader>
           <CardContent className="p-3 lg:p-4 space-y-4">
+            {/* 画像保存の告知（インフォームド・コンセント）: アップロード画像は精度改善のため保存される */}
+            <p className="rounded-md bg-muted/50 px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
+              アップロードした答案画像とOCR結果は、添削精度の改善のために保存・利用されます。
+            </p>
             <div className="space-y-3">
               <p className="text-sm text-muted-foreground">
                 原稿用紙の写真を撮影してください。複数枚の場合はページ順に追加してください。
@@ -1972,10 +1976,6 @@ export default function EssayNewPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-3 lg:p-4 space-y-4">
-            {/* 画像保存の告知（インフォームド・コンセント）: アップロード画像は精度改善のため保存される */}
-            <p className="rounded-md bg-muted/50 px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
-              アップロードした答案画像とOCR結果は、添削精度の改善のために保存・利用されます。
-            </p>
             {/* 確認済み画像一覧 */}
             {images.length > 0 && (
               <div className="space-y-3">
