@@ -62,6 +62,20 @@ function DialogOverlay({
   )
 }
 
+/**
+ * ダイアログ本体。可視領域(--vvh、なければ 100dvh)から上下の余白(2rem)と
+ * safe area を差し引いた最大高を持ち、内部は縦フレックス(header/body/footer)に
+ * 積める構造。
+ *
+ * 互換方針: 既定は `overflow-y-auto`。`DialogBody` を使わない従来のダイアログ
+ * (children をベタ置き)でも、本文が可視領域を超えたら DialogContent 全体が
+ * スクロールするため内容がクリップされない。`DialogBody` を併用した場合は
+ * header/footer が `shrink-0`、body が `flex-1 min-h-0` となり、children が
+ * ちょうど最大高に収まるので DialogContent 自体はスクロールせず、本文だけが
+ * スクロールする(close ボタンも固定されたまま残る)。個別ページが
+ * `max-h-*`/`overflow-*` を className で指定している場合は tailwind-merge により
+ * そちらが優先される。
+ */
 function DialogContent({
   className,
   children,
@@ -76,7 +90,7 @@ function DialogContent({
       <DialogPrimitive.Popup
         data-slot="dialog-content"
         className={cn(
-          "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-background p-4 text-sm ring-1 ring-foreground/10 duration-100 outline-none sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+          "fixed top-1/2 left-1/2 z-50 flex max-h-[calc(var(--vvh,100dvh)-2rem-var(--app-safe-top)-var(--app-safe-bottom))] w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col gap-4 overflow-y-auto rounded-xl bg-background p-4 text-sm ring-1 ring-foreground/10 duration-100 outline-none sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
           className
         )}
         {...props}
@@ -107,7 +121,26 @@ function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="dialog-header"
-      className={cn("flex flex-col gap-2", className)}
+      className={cn("flex shrink-0 flex-col gap-2", className)}
+      {...props}
+    />
+  )
+}
+
+/**
+ * ダイアログ本文のスクロール所有者。DialogHeader と DialogFooter の間に置き、
+ * 長い本文をここに入れると本文だけがスクロールする(header/footer は固定)。
+ * `flex-1 min-h-0` で DialogContent の残り高さを占有し、`overflow-y-auto`
+ * `overscroll-contain` で内側スクロールを閉じ込める。
+ *
+ * padding は DialogContent 側の `p-4` に委ねているため、ここでは付与しない
+ * (二重の余白を避ける)。DialogHeader/DialogFooter と併用する前提。
+ */
+function DialogBody({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="dialog-body"
+      className={cn("min-h-0 flex-1 overflow-y-auto overscroll-contain", className)}
       {...props}
     />
   )
@@ -125,7 +158,7 @@ function DialogFooter({
     <div
       data-slot="dialog-footer"
       className={cn(
-        "-mx-4 -mb-4 flex flex-col-reverse gap-2 rounded-b-xl border-t bg-muted/50 p-4 sm:flex-row sm:justify-end",
+        "-mx-4 -mb-4 flex shrink-0 flex-col-reverse gap-2 rounded-b-xl border-t bg-muted/50 p-4 sm:flex-row sm:justify-end [&>button]:w-full sm:[&>button]:w-auto",
         className
       )}
       {...props}
@@ -171,6 +204,7 @@ function DialogDescription({
 
 export {
   Dialog,
+  DialogBody,
   DialogClose,
   DialogContent,
   DialogDescription,
