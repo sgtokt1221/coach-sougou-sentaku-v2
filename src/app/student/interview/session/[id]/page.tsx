@@ -12,7 +12,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Send, StopCircle, ChevronDown, ChevronUp, Video, VideoOff, Pencil, Check, X, BookOpenCheck, TrendingUp, TrendingDown, ArrowRight } from "lucide-react";
+import { Send, StopCircle, ChevronDown, ChevronUp, Video, VideoOff, Pencil, Check, X, BookOpenCheck, TrendingUp, TrendingDown, ArrowRight, ArrowLeft } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import { useAuth } from "@/contexts/AuthContext";
 import type { StudentProfile } from "@/lib/types/user";
@@ -25,6 +25,7 @@ import { stripFillers } from "@/lib/interview/transcript";
 import { transcribeTurnViaStt } from "@/lib/interview/stt-client";
 import { INTERVIEW_MODE_LABELS } from "@/lib/types/interview";
 import { FluidLoader } from "@/components/shared/FluidLoader";
+import { FullHeightPage } from "@/components/layout/FullHeightPage";
 import VoiceAnalyzer, { refineWithTranscription, type VoiceAnalyzerHandle } from "@/components/interview/VoiceAnalyzer";
 import VideoAnalyzer, { type VideoAnalyzerHandle } from "@/components/interview/VideoAnalyzer";
 import CameraPreview from "@/components/interview/CameraPreview";
@@ -705,7 +706,7 @@ export default function InterviewSessionPage() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(var(--vvh,100dvh)-3.5rem-76px)] lg:h-[calc(100dvh-3.5rem)] w-full">
+    <FullHeightPage className="w-full">
       {/* 採点中ローディング */}
       <FluidLoader
         visible={isEnding}
@@ -727,21 +728,32 @@ export default function InterviewSessionPage() {
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b bg-background shrink-0">
-        <div>
-          <p className="font-semibold text-sm">
-            {sessionInfo
-              ? `${sessionInfo.universityContext.universityName} ${sessionInfo.universityContext.facultyName}`
-              : "面接セッション"}
-          </p>
-          <p className="text-xs text-muted-foreground">
-            {modeLabel}
-            {sessionInfo?.mode === "group_discussion" && " — 教員3名 + 他受験生3名が参加"}
-            {sessionInfo?.mode === "presentation" && " — プレゼン後に質疑応答"}
-            {sessionInfo?.mode === "oral_exam" && " — 専門知識を問う試問"}
-          </p>
+      <div className="flex items-center justify-between gap-2 px-4 py-3 border-b bg-background shrink-0">
+        <div className="flex items-center gap-1.5 min-w-0">
+          {/* モバイルは共通ヘッダー非表示のため、内部ヘッダーに戻る導線を置く（44pxタップ領域）。PC は共通ヘッダーがあるため非表示。 */}
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="lg:hidden -ml-2 inline-flex min-h-11 min-w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground"
+            aria-label="戻る"
+          >
+            <ArrowLeft className="size-5" />
+          </button>
+          <div className="min-w-0">
+            <p className="font-semibold text-sm truncate">
+              {sessionInfo
+                ? `${sessionInfo.universityContext.universityName} ${sessionInfo.universityContext.facultyName}`
+                : "面接セッション"}
+            </p>
+            <p className="text-xs text-muted-foreground truncate">
+              {modeLabel}
+              {sessionInfo?.mode === "group_discussion" && " — 教員3名 + 他受験生3名が参加"}
+              {sessionInfo?.mode === "presentation" && " — プレゼン後に質疑応答"}
+              {sessionInfo?.mode === "oral_exam" && " — 専門知識を問う試問"}
+            </p>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 shrink-0">
           <button
             onClick={() => setCameraEnabled((v) => !v)}
             className={`p-1.5 rounded-md transition-colors cursor-pointer ${cameraEnabled ? "text-emerald-600 bg-emerald-50" : "text-muted-foreground hover:text-foreground"}`}
@@ -790,7 +802,7 @@ export default function InterviewSessionPage() {
         )}
 
         {/* 右カラム: alerts / messages / memo / input */}
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col min-w-0 min-h-0">
 
       {/* Appearance alert */}
       {appearanceAlert && (
@@ -1247,6 +1259,6 @@ export default function InterviewSessionPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </FullHeightPage>
   );
 }

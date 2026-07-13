@@ -23,9 +23,9 @@ export function getAppLayoutMode(pathname: string): AppLayoutMode {
   // 生徒フィードバック / 管理者メッセージ詳細
   if (pathname === "/student/feedback") return { scrollOwner: "page" };
   if (/^\/admin\/messages\/[^/]+$/.test(pathname)) return { scrollOwner: "page" };
-  // P0 残り（ページ変換後にコメント解除）:
   // 面接セッション: 内部でスクロール、モバイルは共通ヘッダー非表示（内部ヘッダー使用）
-  // if (/^\/student\/interview\/session\//.test(pathname)) return { scrollOwner: "page", hideMobileHeader: true };
+  if (/^\/student\/interview\/session\//.test(pathname)) return { scrollOwner: "page", hideMobileHeader: true };
+  // P0 残り（ページ変換後にコメント解除）:
   // 講師の生徒メッセージ詳細（複雑な詳細ページのため未変換）
   // if (/^\/teacher\/students\/[^/]+$/.test(pathname)) return { scrollOwner: "page" };
   return { scrollOwner: "main" };
