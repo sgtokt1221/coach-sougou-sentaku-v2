@@ -8,11 +8,14 @@ import { ScoresTrendChart } from "@/components/growth/ScoresTrendChart";
 import { TeacherReportsSection } from "@/components/student/TeacherReportsSection";
 import { SegmentControl } from "@/components/shared/SegmentControl";
 import { ReportDetailCard } from "@/components/admin/ReportDetailCard";
-import { TrendingUp, AlertCircle, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { TrendingUp, AlertCircle, AlertTriangle, CheckCircle2, Calendar, ChevronRight } from "lucide-react";
 import { WeaknessRecord, WeaknessReminderLevel, getWeaknessReminderLevel } from "@/lib/types/growth";
 import type { GrowthReport as AdminGrowthReport } from "@/lib/types/growth-report";
 import type { InterviewScores, InterviewMode } from "@/lib/types/interview";
 import { useAuthSWR } from "@/lib/api/swr";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
+import { SESSION_TYPE_LABELS, type Session } from "@/lib/types/session";
 import { WeaknessSourceBadge, sourceLeftBorder } from "@/components/growth/WeaknessSourceBadge";
 
 interface InterviewHistoryItem {
@@ -129,6 +132,23 @@ export default function GrowthPage() {
   const { data: adminReports, isLoading: loadingAdminReports } = useAuthSWR<AdminGrowthReport[]>("/api/student/reports");
   const { data: weaknessData, isLoading: loadingWeaknesses } = useAuthSWR<{ weaknesses: WeaknessRecord[] }>("/api/growth/weaknesses?context=dashboard");
 
+  const router = useRouter();
+  const { userProfile } = useAuth();
+  const isCoach = userProfile?.plan === "coach";
+  // 面談セッション（コーチプランのみ取得）。共有済みの報告書のみ成長タブに表示する。
+  const { data: rawSessions, isLoading: loadingSessions } = useAuthSWR<
+    Session[] | { sessions: Session[] }
+  >(isCoach ? "/api/sessions" : null);
+  const reportedSessions = useMemo(() => {
+    const list = Array.isArray(rawSessions)
+      ? rawSessions
+      : rawSessions?.sessions ?? [];
+    // sharedWithStudent かつ summary があるもの＝生徒に共有された報告書。新しい順。
+    return list
+      .filter((s) => s.sharedWithStudent && s.summary)
+      .sort((a, b) => +new Date(b.scheduledAt) - +new Date(a.scheduledAt));
+  }, [rawSessions]);
+
   // 講師が作成した成長レポートを period 別に最新 1 件ずつ取り出す
   const reportsByPeriod = useMemo(() => {
     // defensive: generatedAt が string 以外で来ても落ちないようにする
@@ -167,7 +187,7 @@ export default function GrowthPage() {
   }, [interviewList]);
 
   // メインタブ切替 (画面トップ)
-  const [mainTab, setMainTab] = useState<"report" | "history" | "trend" | "weakness">("report");
+  const [mainTab, setMainTab] = useState<"report" | "history" | "trend" | "weakness" | "session">("report");
   // レポート内側の週次/月次切替
   const [reportPeriod, setReportPeriod] = useState<"weekly" | "monthly">("weekly");
   // 総合スコア推移のタブ切替
@@ -231,7 +251,7 @@ export default function GrowthPage() {
       <SegmentControl
         value={mainTab}
         onChange={(v) =>
-          setMainTab(v as "report" | "history" | "trend" | "weakness")
+          setMainTab(v as "report" | "history" | "trend" | "weakness" | "session")
         }
         defaultAccent="blue"
         size="md"
@@ -240,6 +260,7 @@ export default function GrowthPage() {
           { id: "history", label: "履歴" },
           { id: "trend", label: "スコア推移" },
           { id: "weakness", label: "弱点" },
+          ...(isCoach ? [{ id: "session", label: "面談" }] : []),
         ]}
       />
 
@@ -405,6 +426,55 @@ export default function GrowthPage() {
 
       {/* 履歴タブ (過去のレポート一覧) */}
       {mainTab === "history" && <TeacherReportsSection />}
+
+      {/* 面談タブ (講師が共有した指導報告書。タップで詳細へ) */}
+      {mainTab === "session" && (
+        <div className="space-y-3">
+          {loadingSessions ? (
+            <div className="space-y-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-24 w-full" />
+              ))}
+            </div>
+          ) : reportedSessions.length === 0 ? (
+            <Card>
+              <CardContent className="py-10 text-center text-sm text-muted-foreground">
+                共有された面談報告書はまだありません。面談後に講師が報告書を共有すると、ここに表示されます。
+              </CardContent>
+            </Card>
+          ) : (
+            reportedSessions.map((s) => (
+              <Card
+                key={s.id}
+                className="cursor-pointer transition-shadow hover:shadow-md"
+                onClick={() => router.push(`/student/sessions/${s.id}`)}
+              >
+                <CardContent className="py-4">
+                  <div className="flex items-center gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Calendar className="size-4 text-muted-foreground" />
+                        <span className="text-sm font-medium">
+                          {new Date(s.scheduledAt).toLocaleDateString("ja-JP")}
+                        </span>
+                        <Badge variant="outline" className="text-xs">
+                          {SESSION_TYPE_LABELS[s.type]}
+                        </Badge>
+                      </div>
+                      {s.summary?.overview && (
+                        <p className="mt-1.5 line-clamp-2 text-sm text-muted-foreground">
+                          {s.summary.overview}
+                        </p>
+                      )}
+                    </div>
+                    <ChevronRight className="size-5 shrink-0 text-muted-foreground" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
+      )}
     </div>
   );
 }
