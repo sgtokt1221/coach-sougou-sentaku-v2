@@ -4,6 +4,9 @@ import { getOrgMemberAdminUids, chunk } from "@/lib/api/organization-scope";
 import { adminDb } from "@/lib/firebase/admin";
 import type { AlertItem } from "@/lib/types/admin";
 
+/** 活動系 info 通知の「直近」とみなす日数。 */
+const NEW_WINDOW_DAYS = 3;
+
 interface StudentAlertData {
   uid: string;
   displayName: string;
@@ -14,6 +17,14 @@ interface StudentAlertData {
   documents: DocumentAlertData[];
   /** users/{uid}/alertAcks に保存済みの確認済みキー集合 */
   acknowledgedKeys: Set<string>;
+  /** 直近(3日以内)の活動。info 通知の元。 */
+  recentActivities: {
+    type: "essay_reviewed" | "self_analysis_done" | "document_submitted" | "interview_done" | "skill_check_done";
+    itemId: string;
+    at: string;
+    message: string;
+    link: string;
+  }[];
 }
 
 /**
@@ -61,7 +72,7 @@ function detectAlerts(students: StudentAlertData[]): AlertItem[] {
   const add = (
     student: StudentAlertData,
     discriminator: string | undefined,
-    base: Pick<AlertItem, "type" | "severity" | "message" | "detectedAt" | "recommendedAction">,
+    base: Pick<AlertItem, "type" | "severity" | "message" | "detectedAt" | "recommendedAction" | "link">,
   ) => {
     const id = alertKey(base.type, discriminator);
     alerts.push({
@@ -70,6 +81,8 @@ function detectAlerts(students: StudentAlertData[]): AlertItem[] {
       studentName: student.displayName,
       acknowledged: student.acknowledgedKeys.has(id),
       ...base,
+      // 既存警告系も生徒詳細へクリック遷移可能に (link 未指定時のフォールバック)
+      link: base.link ?? `/admin/students/${student.uid}`,
     });
   };
 
@@ -234,10 +247,21 @@ function detectAlerts(students: StudentAlertData[]): AlertItem[] {
         recommendedAction: "現在の学習方法を見直し、新しいテーマや形式の小論文に挑戦させましょう。",
       });
     }
+
+    // === ACTIVITY NOTIFICATIONS (info) ===
+    for (const act of student.recentActivities) {
+      add(student, act.itemId, {
+        type: act.type,
+        severity: "info",
+        message: act.message,
+        detectedAt: act.at,
+        link: act.link,
+      });
+    }
   }
 
   // Sort by severity priority (critical > high > warning), then by most recent
-  const severityOrder: Record<string, number> = { critical: 0, high: 1, warning: 2 };
+  const severityOrder: Record<string, number> = { critical: 0, high: 1, warning: 2, info: 3 };
   alerts.sort((a, b) => {
     const sA = severityOrder[a.severity] ?? 9;
     const sB = severityOrder[b.severity] ?? 9;
@@ -376,11 +400,17 @@ export async function GET(request: NextRequest) {
           });
 
         // Document data
+        // 実データはグローバル documents/{docId}（userId で紐付け）。
+        // essays 同様に collection + userId where で取得（orderBy なし＝複合インデックス不要）。
+        // 失敗時は console.warn で痕跡を残しつつ、その生徒だけ「documents なし」扱いに。
         const documentsSnap = await adminDb!
-          .collection("users")
-          .doc(studentUid)
           .collection("documents")
-          .get();
+          .where("userId", "==", studentUid)
+          .get()
+          .catch((e) => {
+            console.warn(`[admin/alerts] documents query failed for ${studentUid}:`, e);
+            return { docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] };
+          });
         const documents: DocumentAlertData[] = documentsSnap.docs.map((d) => {
           const dData = d.data();
           return {
@@ -403,6 +433,112 @@ export async function GET(request: NextRequest) {
           });
         const acknowledgedKeys = new Set(acksSnap.docs.map((d) => d.id));
 
+        // 直近(NEW_WINDOW_DAYS 以内)の活動を集めて info 通知の元にする
+        const nowMs = Date.now();
+        const isRecent = (ms: number) => (nowMs - ms) / (1000 * 60 * 60 * 24) <= NEW_WINDOW_DAYS;
+        const sName = data.displayName ?? "";
+        const recentActivities: StudentAlertData["recentActivities"] = [];
+
+        // 添削 (top-level essays, submittedAt desc の先頭)
+        const eDoc0 = essaysSnap.docs[0];
+        const eAt = eDoc0?.data()?.submittedAt?.toDate?.();
+        if (eDoc0 && eAt && isRecent(eAt.getTime())) {
+          recentActivities.push({
+            type: "essay_reviewed",
+            itemId: eDoc0.id,
+            at: eAt.toISOString(),
+            message: `${sName}さんが添削を提出しました`,
+            link: `/admin/students/${studentUid}?tab=activity`,
+          });
+        }
+
+        // 自己分析 (top-level selfAnalysis/{uid}, updatedAt)
+        try {
+          const saSnap = await adminDb!.doc(`selfAnalysis/${studentUid}`).get();
+          const saAt = saSnap.data()?.updatedAt?.toDate?.();
+          if (saSnap.exists && saAt && isRecent(saAt.getTime())) {
+            recentActivities.push({
+              type: "self_analysis_done",
+              itemId: saAt.toISOString().slice(0, 10),
+              at: saAt.toISOString(),
+              message: `${sName}さんが自己分析を更新しました`,
+              link: `/admin/students/${studentUid}?tab=activity`,
+            });
+          }
+        } catch {
+          /* skip */
+        }
+
+        // 模擬面接 — 実データはグローバル interviews/{id}（userId で紐付け、startedAt は Timestamp）。
+        // userId where のみで取得し JS 側で最新 startedAt を選ぶ（複合インデックス不要）。
+        try {
+          const iSnap = await adminDb!
+            .collection("interviews")
+            .where("userId", "==", studentUid)
+            .get();
+          let latestInterview: FirebaseFirestore.QueryDocumentSnapshot | null = null;
+          let latestMs = -1;
+          for (const d of iSnap.docs) {
+            const ts = d.data()?.startedAt?.toDate?.();
+            if (ts && ts.getTime() > latestMs) {
+              latestMs = ts.getTime();
+              latestInterview = d;
+            }
+          }
+          if (latestInterview && isRecent(latestMs)) {
+            recentActivities.push({
+              type: "interview_done",
+              itemId: latestInterview.id,
+              at: new Date(latestMs).toISOString(),
+              message: `${sName}さんが模擬面接を実施しました`,
+              link: `/admin/students/${studentUid}?tab=activity`,
+            });
+          }
+        } catch {
+          /* skip */
+        }
+
+        // スキルチェック (users/{uid}/skillChecks, takenAt desc の先頭)
+        try {
+          const scSnap = await adminDb!
+            .collection(`users/${studentUid}/skillChecks`)
+            .orderBy("takenAt", "desc")
+            .limit(1)
+            .get();
+          const scDoc = scSnap.docs[0];
+          const scAt = scDoc?.data()?.takenAt?.toDate?.();
+          if (scDoc && scAt && isRecent(scAt.getTime())) {
+            recentActivities.push({
+              type: "skill_check_done",
+              itemId: scDoc.id,
+              at: scAt.toISOString(),
+              message: `${sName}さんがスキルチェックを完了しました`,
+              link: `/admin/students/${studentUid}?tab=performance`,
+            });
+          }
+        } catch {
+          /* skip */
+        }
+
+        // 書類 (提出・再提出) — 既存の documentsSnap を再利用し直近1件を捕捉
+        // グローバル documents の updatedAt は ISO 文字列なので new Date() でパースする（.toDate() は無効）
+        for (const dSnap of documentsSnap.docs) {
+          const dd = dSnap.data();
+          const uMs = dd.updatedAt ? new Date(dd.updatedAt).getTime() : NaN;
+          const resubmitted = dd.review?.state === "resubmitted";
+          const submitted = dd.status && dd.status !== "draft";
+          if (!Number.isNaN(uMs) && isRecent(uMs) && (resubmitted || submitted)) {
+            recentActivities.push({
+              type: "document_submitted",
+              itemId: dSnap.id,
+              at: new Date(uMs).toISOString(),
+              message: `${sName}さんが「${dd.title ?? dd.type ?? "書類"}」を${resubmitted ? "再提出" : "提出"}しました`,
+              link: `/admin/students/${studentUid}?tab=reports`,
+            });
+            break;
+          }
+        }
+
         return {
           uid: studentUid,
           displayName: data.displayName ?? "",
@@ -412,6 +548,7 @@ export async function GET(request: NextRequest) {
           weaknesses,
           documents,
           acknowledgedKeys,
+          recentActivities,
         };
       })
     );

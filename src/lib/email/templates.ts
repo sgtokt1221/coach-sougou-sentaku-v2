@@ -160,23 +160,23 @@ export function alertDigestTemplate(alerts: AlertItem[]): string {
   }
 
   if (!alertsHtml) {
-    alertsHtml = `<p style="color: #16a34a; font-size: 14px;">現在、要注意のアラートはありません。</p>`;
+    alertsHtml = `<p style="color: #16a34a; font-size: 14px;">現在、要注意の通知はありません。</p>`;
   }
 
   const body = `
     <p style="margin: 0 0 16px; font-size: 14px; color: #475569;">
-      現在のアラート状況をお知らせします。合計 <strong>${alerts.length}件</strong> のアラートがあります。
+      現在の通知状況をお知らせします。合計 <strong>${alerts.length}件</strong> の通知があります。
     </p>
     ${alertsHtml}
     <div style="margin-top: 24px; text-align: center;">
       <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://app.coachfor.jp"}/admin/alerts"
          style="display: inline-block; padding: 10px 24px; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: 600;">
-        アラート一覧を確認する
+        通知一覧を確認する
       </a>
     </div>
   `;
 
-  return wrapHtml("アラートダイジェスト", body);
+  return wrapHtml("通知ダイジェスト", body);
 }
 
 // ───────────────────────────────────────────────

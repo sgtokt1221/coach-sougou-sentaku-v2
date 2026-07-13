@@ -159,7 +159,7 @@ const adminPrimary: PrimaryAction[] = [
     iconColor: "text-sky-700 dark:text-sky-300",
   },
   {
-    label: "アラート",
+    label: "通知",
     href: "/admin/alerts",
     icon: Bell,
     iconBg: "bg-rose-100 dark:bg-rose-950/40",

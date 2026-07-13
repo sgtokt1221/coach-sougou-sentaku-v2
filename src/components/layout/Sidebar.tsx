@@ -132,7 +132,7 @@ const adminNavGroups: NavGroup[] = [
     title: "Overview",
     items: [
       { label: "ダッシュボード", href: "/admin/dashboard", icon: LayoutDashboard },
-      { label: "アラート", href: "/admin/alerts", icon: Bell },
+      { label: "通知", href: "/admin/alerts", icon: Bell },
       { label: "レポート", href: "/admin/reports", icon: FileBarChart },
       { label: "メッセージ", href: "/admin/messages", icon: MessageSquare, badge: AdminMessagesBadge },
     ],
