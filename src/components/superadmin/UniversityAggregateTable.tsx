@@ -93,6 +93,7 @@ export function UniversityAggregateTable({ aggregates, totalStudents }: Props) {
       </div>
 
       <div className="rounded-xl border bg-card overflow-hidden">
+        <div className="overflow-x-auto" data-allow-x-scroll>
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b bg-muted/50 text-xs">
@@ -176,6 +177,7 @@ export function UniversityAggregateTable({ aggregates, totalStudents }: Props) {
             })}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

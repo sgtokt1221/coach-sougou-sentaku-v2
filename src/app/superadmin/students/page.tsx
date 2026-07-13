@@ -190,7 +190,7 @@ export default function SuperadminStudentsPage() {
               description="フィルタ条件を変更してお試しください"
             />
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto" data-allow-x-scroll>
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b bg-muted/50">

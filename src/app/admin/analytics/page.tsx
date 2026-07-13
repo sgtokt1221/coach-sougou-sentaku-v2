@@ -238,7 +238,7 @@ function OverviewContent({ overview }: { overview: AnalyticsOverview }) {
         <CardHeader>
           <CardTitle className="text-base">月次推移</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="min-w-0">
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={monthlyData}>
               <CartesianGrid
@@ -302,7 +302,7 @@ function OverviewContent({ overview }: { overview: AnalyticsOverview }) {
           <CardHeader>
             <CardTitle className="text-base">スコア分布</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="min-w-0">
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={overview.scoreDistribution}>
                 <CartesianGrid
@@ -445,7 +445,7 @@ function WeaknessContent({ weaknesses }: { weaknesses: WeaknessAnalytics }) {
           <CardTitle className="text-base">弱点TOP10 (フラット)</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" data-allow-x-scroll>
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b text-left">
@@ -665,7 +665,7 @@ function UniversityGapContent({ data }: { data: UniversityGapResponse }) {
               </Badge>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto" data-allow-x-scroll>
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b text-left">
@@ -816,7 +816,7 @@ function ScoreDistributionCard({
           </span>
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="min-w-0">
         {total === 0 ? (
           <div className="flex h-[280px] items-center justify-center text-sm text-muted-foreground">
             この期間のデータはありません
@@ -931,7 +931,7 @@ function MonthlyTrendsContent({ data }: { data: MonthlyTrendsResponse }) {
         <CardHeader>
           <CardTitle className="text-base">スコア月次推移</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="min-w-0">
           <ResponsiveContainer width="100%" height={350}>
             <LineChart data={chartData}>
               <CartesianGrid
@@ -1095,7 +1095,7 @@ function WeaknessPatternsContent({ data }: { data: WeaknessPatternsResponse }) {
           <CardTitle className="text-base">弱点パターン一覧</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" data-allow-x-scroll>
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b text-left">

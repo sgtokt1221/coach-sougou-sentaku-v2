@@ -107,6 +107,7 @@ export function WeaknessAggregateTable({
         指摘レコード総数: <strong className="text-foreground">{totalRecords}</strong> 件
       </p>
       <div className="rounded-xl border bg-card overflow-hidden">
+        <div className="overflow-x-auto" data-allow-x-scroll>
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b bg-muted/50 text-xs">
@@ -208,6 +209,7 @@ export function WeaknessAggregateTable({
             })}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

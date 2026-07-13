@@ -329,7 +329,7 @@ export default function PricingPage() {
           <CardTitle className="text-base">機能比較</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" data-allow-x-scroll>
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b">
