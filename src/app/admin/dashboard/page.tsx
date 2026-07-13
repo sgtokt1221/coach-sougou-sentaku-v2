@@ -95,7 +95,7 @@ export default function AdminDashboard() {
         <ApiErrorBanner error={studentsError} title="生徒データの取得に失敗しました" />
       )}
       {alertsError && (
-        <ApiErrorBanner error={alertsError} title="アラートの取得に失敗しました" />
+        <ApiErrorBanner error={alertsError} title="通知の取得に失敗しました" />
       )}
 
       {/* Stats Cards - superadmin only */}
@@ -148,7 +148,7 @@ export default function AdminDashboard() {
               </div>
               <div>
                 <p className="font-medium">
-                  書類期限アラート: {deadlineAlertCount}件
+                  書類期限通知: {deadlineAlertCount}件
                 </p>
                 <p className="text-sm text-muted-foreground">
                   期限が迫っている未完成書類があります

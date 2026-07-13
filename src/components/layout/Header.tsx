@@ -47,7 +47,7 @@ export function Header() {
     if (pathname.startsWith("/student/pricing")) return "プラン";
     if (pathname.startsWith("/student/dashboard")) return "ダッシュボード";
     if (pathname.startsWith("/admin/students")) return "生徒管理";
-    if (pathname.startsWith("/admin/alerts")) return "アラート";
+    if (pathname.startsWith("/admin/alerts")) return "通知";
     if (pathname.startsWith("/admin/reports")) return "レポート";
     if (pathname.startsWith("/admin/sessions")) return "セッション";
     if (pathname.startsWith("/admin/universities")) return "大学管理";

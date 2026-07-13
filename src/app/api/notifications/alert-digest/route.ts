@@ -68,6 +68,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // 活動系（info）は通知ダイジェストの対象外。警告系のみをメールで送る。
+    alerts = alerts.filter((a) => a.severity !== "info");
+
     // 管理者のメールアドレスを取得
     let adminEmail = "";
     if (adminDb) {
@@ -90,7 +93,7 @@ export async function POST(request: NextRequest) {
     const html = alertDigestTemplate(alerts);
     const result = await sendEmail({
       to: adminEmail,
-      subject: `【CoachFor】アラートダイジェスト（${alerts.length}件）`,
+      subject: `【CoachFor】通知ダイジェスト（${alerts.length}件）`,
       html,
     });
 
@@ -116,7 +119,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Alert digest error:", error);
     return NextResponse.json(
-      { error: "アラートダイジェストの送信に失敗しました" },
+      { error: "通知ダイジェストの送信に失敗しました" },
       { status: 500 }
     );
   }

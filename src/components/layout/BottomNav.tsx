@@ -40,7 +40,7 @@ import { MobileMenuContent } from "./MobileMenuContent";
  * ボトムナブ（モバイル専用）
  * ロール別にタブを切り替え:
  * - student:    ホーム / 成長 / Action!(FAB) / チャット / 宿題
- * - admin:      ホーム / 生徒管理 / アラート / レポート / メニュー
+ * - admin:      ホーム / 生徒管理 / 通知 / レポート / メニュー
  * - teacher:    ホーム / シフト / 担当生徒 / セッション / メニュー
  * - superadmin: ホーム / 管理者 / 生徒 / 講師 / メニュー
  */
@@ -147,7 +147,7 @@ type TabDef = {
 const adminTabs: TabDef[] = [
   { label: "ホーム", href: "/admin/dashboard", icon: LayoutDashboard },
   { label: "生徒", href: "/admin/students", icon: Users },
-  { label: "アラート", href: "/admin/alerts", icon: Bell },
+  { label: "通知", href: "/admin/alerts", icon: Bell },
   { label: "レポート", href: "/admin/reports", icon: FileBarChart },
 ];
 
