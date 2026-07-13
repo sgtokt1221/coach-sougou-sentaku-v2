@@ -10,20 +10,22 @@ export type AppLayoutMode = {
 };
 
 /**
- * pathname から表示モードを判定する（exact / prefix match）。
- * page モード＝ページ内部がスクロールを所有する没入画面。
+ * pathname から表示モードを判定する。
+ * NOTE: page モード（没入画面: 面接セッション/チャット詳細）は、対象ページを
+ * FullHeightPage 化し内部戻る導線を整備する P0（Task 6/7）で有効化する。
+ * それまでは全ルート main を返し、Foundation 単独でも既存スクロール挙動を壊さない。
  *
  * @param pathname - `usePathname()` が返す現在のパス
  * @returns スクロール所有者とモバイルヘッダー表示の設定
  */
 export function getAppLayoutMode(pathname: string): AppLayoutMode {
+  // P0 で有効化予定（ページ変換後にコメント解除）:
   // 面接セッション: 内部でスクロール、モバイルは共通ヘッダー非表示（内部ヘッダー使用）
-  if (/^\/student\/interview\/session\//.test(pathname)) {
-    return { scrollOwner: "page", hideMobileHeader: true };
-  }
+  // if (/^\/student\/interview\/session\//.test(pathname)) return { scrollOwner: "page", hideMobileHeader: true };
   // チャット系（生徒フィードバック / 管理者メッセージ詳細 / 講師の生徒メッセージ詳細）
-  if (pathname === "/student/feedback") return { scrollOwner: "page" };
-  if (/^\/admin\/messages\/[^/]+$/.test(pathname)) return { scrollOwner: "page" };
-  if (/^\/teacher\/students\/[^/]+$/.test(pathname)) return { scrollOwner: "page" };
+  // if (pathname === "/student/feedback") return { scrollOwner: "page" };
+  // if (/^\/admin\/messages\/[^/]+$/.test(pathname)) return { scrollOwner: "page" };
+  // if (/^\/teacher\/students\/[^/]+$/.test(pathname)) return { scrollOwner: "page" };
+  void pathname;
   return { scrollOwner: "main" };
 }
