@@ -58,6 +58,24 @@
   /* Accent gold */
   --gold: oklch(0.75 0.16 75);
   --gold-foreground: oklch(0.25 0.04 75);
+
+  /* App chrome tokens (Header/BottomNav 実寸と一致させる。60px/5rem/76px を直書きしない) */
+  --app-header-height: 3.5rem; /* Header.tsx = h-14 */
+  --app-bottom-nav-height: 3.75rem; /* BottomNav.tsx = h-[60px] */
+  --app-safe-top: env(safe-area-inset-top, 0px);
+  --app-safe-bottom: env(safe-area-inset-bottom, 0px);
+  /* モバイル: BottomNav + safe area 分を確保しつつ、キーボード表示時(--kb)は差し引く */
+  --app-mobile-bottom-inset: max(
+    0px,
+    calc(var(--app-bottom-nav-height) + var(--app-safe-bottom) - var(--kb, 0px))
+  );
+}
+
+@media (min-width: 1024px) {
+  :root {
+    /* PC は BottomNav 非表示。下部インセット不要 */
+    --app-mobile-bottom-inset: 0px;
+  }
 }
 
 .dark {
