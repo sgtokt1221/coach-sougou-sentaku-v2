@@ -3,8 +3,8 @@
 import { useEffect, useState, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Search, X, ChevronDown, ChevronUp, Check, FileText, Users, ClipboardList } from "lucide-react";
+import { SegmentControl } from "@/components/shared/SegmentControl";
 import type { University } from "@/lib/types/university";
 
 const SELECTION_TYPE_LABELS: Record<string, string> = {
@@ -123,31 +123,26 @@ export function UniversitySelectStep({ selected, onChange }: Props) {
         </div>
       )}
 
-      {/* Group tabs */}
-      <div className="flex flex-wrap gap-1.5">
-        {GROUP_TABS.map((tab) => (
-          <Button
-            key={tab.key}
-            type="button"
-            variant={activeGroup === tab.key ? "default" : "outline"}
-            size="sm"
-            className="text-xs"
-            onClick={() => setActiveGroup(tab.key)}
-          >
-            {tab.label}
-          </Button>
-        ))}
-      </div>
-
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-        <Input
-          placeholder="大学名で検索..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-9"
+      {/* Group tabs + search: リストスクロール時に上部固定する */}
+      <div className="sticky top-0 z-10 space-y-3 bg-background pb-1">
+        {/* Group tabs: タブ数が多いため fullWidth なしで横スクロール（SegmentControl 側で active を可視化） */}
+        <SegmentControl<string>
+          value={activeGroup}
+          onChange={(v) => setActiveGroup(v)}
+          options={GROUP_TABS.map((tab) => ({ id: tab.key, label: tab.label }))}
+          size="sm"
         />
+
+        {/* Search */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+          <Input
+            placeholder="大学名で検索..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
       </div>
 
       {/* University list */}
@@ -162,11 +157,11 @@ export function UniversitySelectStep({ selected, onChange }: Props) {
             <div key={uni.id} className="rounded-lg border">
               <button
                 type="button"
-                className="flex w-full items-center justify-between p-3 text-left hover:bg-muted/50 transition-colors"
+                className="flex min-h-11 w-full items-center justify-between gap-2 p-3 text-left hover:bg-muted/50 transition-colors"
                 onClick={() => setExpandedUni(isExpanded ? null : uni.id)}
               >
-                <div className="flex items-center gap-2">
-                  <span className="font-medium text-sm">{uni.name}</span>
+                <div className="flex min-w-0 items-center gap-2">
+                  <span className="truncate font-medium text-sm">{uni.name}</span>
                   {selectedCount > 0 && (
                     <Badge variant="default" className="text-[10px] px-1.5 py-0">
                       {selectedCount}
@@ -197,7 +192,7 @@ export function UniversitySelectStep({ selected, onChange }: Props) {
                       >
                         <button
                           type="button"
-                          className="flex w-full items-center gap-2 px-3 py-2.5 text-sm"
+                          className="flex min-h-11 w-full items-center gap-2 px-3 py-2.5 text-sm"
                           onClick={() => toggleFaculty(uni.id, fac.id)}
                         >
                           <div
@@ -209,9 +204,9 @@ export function UniversitySelectStep({ selected, onChange }: Props) {
                           >
                             {isSelected && <Check className="size-3" />}
                           </div>
-                          <span className="font-medium">{fac.name}</span>
+                          <span className="min-w-0 truncate font-medium">{fac.name}</span>
                           {fac.capacity > 0 && (
-                            <span className="ml-auto text-xs text-muted-foreground">
+                            <span className="ml-auto shrink-0 text-xs text-muted-foreground">
                               定員{fac.capacity}名
                             </span>
                           )}
