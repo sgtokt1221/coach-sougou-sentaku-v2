@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+
 import { cn } from "@/lib/utils";
 
 export type SegmentAccent =
@@ -88,8 +90,28 @@ export function SegmentControl<T extends string = string>({
   const padY = size === "sm" ? "py-1.5" : "py-2";
   const fontSize = size === "sm" ? "text-xs" : "text-sm";
 
+  /**
+   * アクティブなタブを保持し、value 変化時に可視範囲へスクロールする。
+   * options が溢れてアクティブタブが隠れた場合でも見えるようにする。
+   */
+  const activeTabRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    const el = activeTabRef.current;
+    if (!el) return;
+    const prefersReducedMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    el.scrollIntoView({
+      block: "nearest",
+      inline: "nearest",
+      behavior: prefersReducedMotion ? "auto" : "smooth",
+    });
+  }, [value]);
+
   return (
     <div
+      data-allow-x-scroll
       className={cn(
         "w-full overflow-x-auto -mx-1 px-1 scrollbar-none",
         className,
@@ -108,12 +130,14 @@ export function SegmentControl<T extends string = string>({
           return (
             <button
               key={opt.id}
+              ref={isActive ? activeTabRef : undefined}
               type="button"
               role="tab"
               aria-selected={isActive}
               onClick={() => onChange(opt.id)}
               className={cn(
-                "group relative inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg font-medium transition-all duration-200",
+                // モバイルは min-h-11(44px)でタップ領域を確保し、lg 以上で既存密度に戻す。
+                "group relative inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-lg font-medium transition-all duration-200 lg:min-h-0",
                 padX,
                 padY,
                 fontSize,
