@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,10 @@ import {
   CalendarClock,
   Activity,
   Lightbulb,
+  FileText,
+  FileCheck,
+  Sparkles,
+  Mic,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -50,6 +55,12 @@ const filterOptions: { value: FilterType; label: string }[] = [
   { value: "score_plateau", label: "成長停滞" },
 ];
 
+/**
+ * 通知タイプごとの表示設定（ラベル・アイコン・アイコン色）を返す。
+ * 未知のタイプでも既定値を返すため、戻り値が undefined になることはない。
+ * @param type 通知タイプ
+ * @returns ラベル・アイコン・色を含む表示設定
+ */
 function alertTypeConfig(type: AlertItem["type"]) {
   switch (type) {
     case "inactive":
@@ -68,6 +79,20 @@ function alertTypeConfig(type: AlertItem["type"]) {
       return { label: "期限リスク", icon: CalendarClock, color: "text-indigo-600 dark:text-indigo-400" };
     case "score_plateau":
       return { label: "成長停滞", icon: Activity, color: "text-cyan-600 dark:text-cyan-400" };
+    // 活動系（お知らせ）タイプ — 控えめな青系
+    case "essay_reviewed":
+      return { label: "添削提出", icon: FileText, color: "text-sky-600 dark:text-sky-400" };
+    case "self_analysis_done":
+      return { label: "自己分析更新", icon: Sparkles, color: "text-sky-600 dark:text-sky-400" };
+    case "document_submitted":
+      return { label: "書類提出", icon: FileCheck, color: "text-sky-600 dark:text-sky-400" };
+    case "interview_done":
+      return { label: "模擬面接", icon: Mic, color: "text-sky-600 dark:text-sky-400" };
+    case "skill_check_done":
+      return { label: "スキルチェック", icon: CheckCircle, color: "text-sky-600 dark:text-sky-400" };
+    default:
+      // 想定外のタイプでも undefined を返さず、控えめな既定表示にフォールバック。
+      return { label: "通知", icon: Bell, color: "text-slate-600 dark:text-slate-400" };
   }
 }
 
@@ -80,6 +105,8 @@ function severityBgClass(severity: AlertItem["severity"], acknowledged: boolean)
       return "border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/20";
     case "warning":
       return "border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/20";
+    case "info":
+      return "border-sky-200 bg-sky-50/40 dark:border-sky-900 dark:bg-sky-950/20";
   }
 }
 
@@ -91,6 +118,8 @@ function severityIconBgClass(severity: AlertItem["severity"]) {
       return "bg-amber-100 dark:bg-amber-900/30";
     case "warning":
       return "bg-amber-100 dark:bg-amber-900/30";
+    case "info":
+      return "bg-sky-100 dark:bg-sky-900/30";
   }
 }
 
@@ -102,6 +131,8 @@ function severityLabel(severity: AlertItem["severity"]) {
       return "重要";
     case "warning":
       return "注意";
+    case "info":
+      return "お知らせ";
   }
 }
 
@@ -110,6 +141,7 @@ function severityBadgeVariant(severity: AlertItem["severity"]): "destructive" | 
 }
 
 export default function AdminAlertsPage() {
+  const router = useRouter();
   const { data: fetchedAlerts, isLoading: loading, error: alertsError } = useAuthSWR<AlertItem[]>("/api/admin/alerts");
   const [localAlerts, setLocalAlerts] = useState<AlertItem[] | null>(null);
   const [filter, setFilter] = useState<FilterType>("all");
@@ -118,6 +150,11 @@ export default function AdminAlertsPage() {
 
   const filteredAlerts =
     filter === "all" ? alerts : alerts.filter((a) => a.type === filter);
+
+  // severity で「要注意」(critical/high/warning) と「お知らせ」(info) に区分。
+  // route 側で既にソート済みのため、filter で分割して順に描画する。
+  const warningAlerts = filteredAlerts.filter((a) => a.severity !== "info");
+  const infoAlerts = filteredAlerts.filter((a) => a.severity === "info");
 
   const unacknowledgedCount = alerts.filter((a) => !a.acknowledged).length;
   const criticalCount = alerts.filter(
@@ -162,6 +199,106 @@ export default function AdminAlertsPage() {
     }
   }
 
+  /**
+   * 通知カードを1件描画する。alert.link があればカード全体をクリックで遷移可能にする。
+   * 確認トグル・詳細リンクはカード遷移と競合しないよう伝播を止める。
+   * @param alert 描画対象の通知
+   * @returns 通知カードの JSX
+   */
+  function renderAlert(alert: AlertItem) {
+    const config = alertTypeConfig(alert.type);
+    const TypeIcon = config.icon;
+    const hasLink = Boolean(alert.link);
+    return (
+      <Card
+        key={`${alert.studentUid}:${alert.id}`}
+        role={hasLink ? "link" : undefined}
+        tabIndex={hasLink ? 0 : undefined}
+        onClick={hasLink ? () => router.push(alert.link!) : undefined}
+        className={cn(
+          "transition-all",
+          hasLink && "cursor-pointer hover:shadow-sm",
+          alert.acknowledged && "opacity-60",
+          !alert.acknowledged && severityBgClass(alert.severity, alert.acknowledged)
+        )}
+      >
+        <CardContent className="flex items-start gap-4 py-4">
+          <div
+            className={cn(
+              "mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-full",
+              severityIconBgClass(alert.severity)
+            )}
+          >
+            <TypeIcon className={cn("size-5", config.color)} />
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <div className="mb-1 flex flex-wrap items-center gap-2">
+              <Badge
+                variant={severityBadgeVariant(alert.severity)}
+                className="text-xs"
+              >
+                {severityLabel(alert.severity)}
+              </Badge>
+              <Badge variant="outline" className="text-xs">
+                {config.label}
+              </Badge>
+              {alert.acknowledged && (
+                <Badge
+                  variant="outline"
+                  className="border-emerald-300 dark:border-emerald-700 text-xs text-emerald-600 dark:text-emerald-400"
+                >
+                  <CheckCircle className="mr-1 size-3" />
+                  確認済み
+                </Badge>
+              )}
+            </div>
+            <p className="font-medium">{alert.studentName}</p>
+            <p className="text-sm text-muted-foreground">{alert.message}</p>
+
+            {/* Recommended Action */}
+            {alert.recommendedAction && !alert.acknowledged && (
+              <div className="mt-2 flex items-start gap-1.5 rounded-md bg-sky-50/60 dark:bg-sky-950/20 px-2.5 py-1.5">
+                <Lightbulb className="mt-0.5 size-3.5 shrink-0 text-sky-500" />
+                <p className="text-xs text-sky-700 dark:text-sky-400">
+                  {alert.recommendedAction}
+                </p>
+              </div>
+            )}
+
+            <p className="mt-1 text-xs text-muted-foreground/70">
+              検出日時:{" "}
+              {new Date(alert.detectedAt).toLocaleString("ja-JP")}
+            </p>
+          </div>
+
+          <div className="flex shrink-0 flex-col gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                // カードのリンク遷移と競合させない
+                e.stopPropagation();
+                toggleAcknowledged(alert);
+              }}
+            >
+              {alert.acknowledged ? "未確認に戻す" : "確認済みにする"}
+            </Button>
+            <Link
+              href={`/admin/students/${alert.studentUid}`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Button variant="outline" size="sm" className="w-full">
+                <ExternalLink className="mr-1 size-3" />
+                詳細
+              </Button>
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
@@ -169,10 +306,10 @@ export default function AdminAlertsPage() {
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold">
             <Bell className="size-6" />
-            アラート管理
+            通知
           </h1>
           <p className="text-sm text-muted-foreground">
-            要注意生徒のアラートを確認・管理できます
+            生徒の状況と活動の通知を確認できます
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -220,10 +357,10 @@ export default function AdminAlertsPage() {
       </div>
 
       {alertsError && (
-        <ApiErrorBanner error={alertsError} title="アラートの取得に失敗しました" />
+        <ApiErrorBanner error={alertsError} title="通知の取得に失敗しました" />
       )}
 
-      {/* Alert List */}
+      {/* Notification List */}
       {loading ? (
         <div className="space-y-3">
           {Array.from({ length: 4 }).map((_, i) => (
@@ -234,97 +371,31 @@ export default function AdminAlertsPage() {
         <Card>
           <CardContent className="py-12 text-center text-sm text-muted-foreground">
             {filter === "all"
-              ? "現在アラートはありません"
-              : "該当するアラートはありません"}
+              ? "現在通知はありません"
+              : "該当する通知はありません"}
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-3">
-          {filteredAlerts.map((alert) => {
-            const config = alertTypeConfig(alert.type);
-            const TypeIcon = config.icon;
-            return (
-              <Card
-                key={`${alert.studentUid}:${alert.id}`}
-                className={cn(
-                  "transition-all",
-                  alert.acknowledged && "opacity-60",
-                  !alert.acknowledged && severityBgClass(alert.severity, alert.acknowledged)
-                )}
-              >
-                <CardContent className="flex items-start gap-4 py-4">
-                  <div
-                    className={cn(
-                      "mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-full",
-                      severityIconBgClass(alert.severity)
-                    )}
-                  >
-                    <TypeIcon
-                      className={cn("size-5", config.color)}
-                    />
-                  </div>
+        <div className="space-y-6">
+          {/* 要注意 */}
+          {warningAlerts.length > 0 && (
+            <div className="space-y-3">
+              <h2 className="text-sm font-semibold text-muted-foreground">
+                要注意
+              </h2>
+              {warningAlerts.map((alert) => renderAlert(alert))}
+            </div>
+          )}
 
-                  <div className="min-w-0 flex-1">
-                    <div className="mb-1 flex flex-wrap items-center gap-2">
-                      <Badge
-                        variant={severityBadgeVariant(alert.severity)}
-                        className="text-xs"
-                      >
-                        {severityLabel(alert.severity)}
-                      </Badge>
-                      <Badge variant="outline" className="text-xs">
-                        {config.label}
-                      </Badge>
-                      {alert.acknowledged && (
-                        <Badge
-                          variant="outline"
-                          className="border-emerald-300 dark:border-emerald-700 text-xs text-emerald-600 dark:text-emerald-400"
-                        >
-                          <CheckCircle className="mr-1 size-3" />
-                          確認済み
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="font-medium">{alert.studentName}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {alert.message}
-                    </p>
-
-                    {/* Recommended Action */}
-                    {alert.recommendedAction && !alert.acknowledged && (
-                      <div className="mt-2 flex items-start gap-1.5 rounded-md bg-sky-50/60 dark:bg-sky-950/20 px-2.5 py-1.5">
-                        <Lightbulb className="mt-0.5 size-3.5 shrink-0 text-sky-500" />
-                        <p className="text-xs text-sky-700 dark:text-sky-400">
-                          {alert.recommendedAction}
-                        </p>
-                      </div>
-                    )}
-
-                    <p className="mt-1 text-xs text-muted-foreground/70">
-                      検出日時:{" "}
-                      {new Date(alert.detectedAt).toLocaleString("ja-JP")}
-                    </p>
-                  </div>
-
-                  <div className="flex shrink-0 flex-col gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => toggleAcknowledged(alert)}
-                    >
-                      {alert.acknowledged ? "未確認に戻す" : "確認済みにする"}
-                    </Button>
-                    <Link href={`/admin/students/${alert.studentUid}`}>
-                      <Button variant="outline" size="sm" className="w-full">
-                        <ExternalLink className="mr-1 size-3" />
-                        詳細
-                      </Button>
-                    </Link>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+          {/* お知らせ */}
+          {infoAlerts.length > 0 && (
+            <div className="space-y-3">
+              <h2 className="text-sm font-semibold text-muted-foreground">
+                お知らせ
+              </h2>
+              {infoAlerts.map((alert) => renderAlert(alert))}
+            </div>
+          )}
         </div>
       )}
     </div>
