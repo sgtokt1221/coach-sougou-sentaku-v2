@@ -62,7 +62,7 @@ export function Header() {
   return (
     <header
       data-app-chrome="header"
-      className="relative flex h-14 items-center justify-between border-b border-border/60 bg-background px-4 gap-2"
+      className="relative flex h-[var(--app-header-height)] items-center justify-between border-b border-border/60 bg-background px-4 gap-2"
     >
       <Button
         variant="ghost"
@@ -98,8 +98,8 @@ export function Header() {
       </Link>
 
       {/* PC以上: タイトル領域 */}
-      <div className="hidden md:flex flex-1 items-center justify-center">
-        <h1 className="text-lg font-semibold text-foreground">
+      <div className="hidden md:flex min-w-0 flex-1 items-center justify-center">
+        <h1 className="truncate text-lg font-semibold text-foreground">
           {getPageTitle(pathname)}
         </h1>
       </div>
@@ -118,7 +118,7 @@ export function Header() {
             <button className="flex items-center gap-2.5 rounded-full px-2 py-1 min-h-[44px] min-w-[44px] outline-none transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring" />
           }
         >
-          <span className="hidden text-sm font-medium sm:block">
+          <span className="hidden max-w-[9rem] truncate text-sm font-medium sm:block">
             {userProfile?.displayName ?? "User"}
           </span>
           <Avatar size="default">
