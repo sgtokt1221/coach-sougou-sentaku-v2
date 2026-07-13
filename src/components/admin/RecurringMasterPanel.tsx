@@ -214,13 +214,19 @@ export default function RecurringMasterPanel({ coachStudents }: Props) {
 
       {/* 生成アクション */}
       <div className="flex flex-wrap items-center gap-2">
-        <Button onClick={() => openGenerate("master")}>今月分を生成</Button>
-        <Button variant="outline" onClick={() => openGenerate("previous-month")}>
+        <Button className="w-full sm:w-auto" onClick={() => openGenerate("master")}>
+          今月分を生成
+        </Button>
+        <Button
+          variant="outline"
+          className="w-full sm:w-auto"
+          onClick={() => openGenerate("previous-month")}
+        >
           前月をコピー
         </Button>
         <Link
           href="/admin/settings/closure-days"
-          className="ml-auto text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
+          className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground sm:ml-auto"
         >
           休校日設定
         </Link>
@@ -340,69 +346,132 @@ export default function RecurringMasterPanel({ coachStudents }: Props) {
             定期授業テンプレがありません。上のフォームから追加してください。
           </p>
         ) : (
-          <div className="overflow-x-auto">
-            <div className="grid min-w-[840px] grid-cols-7 gap-2">
+          <>
+            {/* PC(lg): 月〜日の週グリッド（横スクロール） */}
+            <div className="hidden overflow-x-auto lg:block">
+              <div className="grid min-w-[840px] grid-cols-7 gap-2">
+                {WEEK_ORDER.map((wd) => {
+                  const dayTemplates = templates
+                    .filter((t) => t.weekday === wd)
+                    .sort((a, b) => a.startTime.localeCompare(b.startTime));
+                  const isWeekend = wd === 0 || wd === 6;
+                  return (
+                    <div key={wd} className="overflow-hidden rounded-lg border bg-muted/20">
+                      <div
+                        className={`border-b px-2 py-1.5 text-center text-xs font-semibold ${
+                          isWeekend ? "text-rose-500" : ""
+                        }`}
+                      >
+                        {WEEKDAY_LABELS[wd]}
+                      </div>
+                      <div className="min-h-[88px] space-y-1.5 p-1.5">
+                        {dayTemplates.length === 0 ? (
+                          <p className="pt-5 text-center text-[10px] text-muted-foreground/40">
+                            —
+                          </p>
+                        ) : (
+                          dayTemplates.map((t) => (
+                            <div
+                              key={t.id}
+                              className={`rounded-md border p-2 text-xs transition-colors ${
+                                t.active ? "bg-card" : "bg-muted/40 opacity-60"
+                              }`}
+                            >
+                              <div className="flex items-center justify-between gap-1">
+                                <span className="font-mono font-semibold tabular-nums">
+                                  {t.startTime}
+                                </span>
+                                <Badge variant="outline" className="px-1 py-0 text-[9px]">
+                                  {SESSION_TYPE_LABELS[t.type] ?? t.type}
+                                </Badge>
+                              </div>
+                              <p className="mt-0.5 truncate font-medium">{t.studentName}</p>
+                              <p className="truncate text-[10px] text-muted-foreground">
+                                {t.teacherName}
+                              </p>
+                              <div className="mt-1 flex items-center justify-between">
+                                <Switch
+                                  checked={t.active}
+                                  onCheckedChange={() => handleToggleActive(t)}
+                                  className="origin-left scale-75"
+                                />
+                                <button
+                                  onClick={() => handleDelete(t)}
+                                  className="text-[10px] text-rose-600 hover:underline"
+                                >
+                                  削除
+                                </button>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* モバイル: 曜日別の縦積みセクション */}
+            <div className="space-y-4 lg:hidden">
               {WEEK_ORDER.map((wd) => {
                 const dayTemplates = templates
                   .filter((t) => t.weekday === wd)
                   .sort((a, b) => a.startTime.localeCompare(b.startTime));
+                if (dayTemplates.length === 0) return null;
                 const isWeekend = wd === 0 || wd === 6;
                 return (
-                  <div key={wd} className="overflow-hidden rounded-lg border bg-muted/20">
-                    <div
-                      className={`border-b px-2 py-1.5 text-center text-xs font-semibold ${
-                        isWeekend ? "text-rose-500" : ""
+                  <div key={wd}>
+                    <h3
+                      className={`mb-1.5 text-xs font-semibold ${
+                        isWeekend ? "text-rose-500" : "text-muted-foreground"
                       }`}
                     >
-                      {WEEKDAY_LABELS[wd]}
-                    </div>
-                    <div className="min-h-[88px] space-y-1.5 p-1.5">
-                      {dayTemplates.length === 0 ? (
-                        <p className="pt-5 text-center text-[10px] text-muted-foreground/40">
-                          —
-                        </p>
-                      ) : (
-                        dayTemplates.map((t) => (
-                          <div
-                            key={t.id}
-                            className={`rounded-md border p-2 text-xs transition-colors ${
-                              t.active ? "bg-card" : "bg-muted/40 opacity-60"
-                            }`}
-                          >
-                            <div className="flex items-center justify-between gap-1">
-                              <span className="font-mono font-semibold tabular-nums">
-                                {t.startTime}
-                              </span>
-                              <Badge variant="outline" className="px-1 py-0 text-[9px]">
-                                {SESSION_TYPE_LABELS[t.type] ?? t.type}
-                              </Badge>
-                            </div>
-                            <p className="mt-0.5 truncate font-medium">{t.studentName}</p>
-                            <p className="truncate text-[10px] text-muted-foreground">
-                              {t.teacherName}
-                            </p>
-                            <div className="mt-1 flex items-center justify-between">
+                      {WEEKDAY_LABELS[wd]}曜日
+                    </h3>
+                    <div className="space-y-2">
+                      {dayTemplates.map((t) => (
+                        <div
+                          key={t.id}
+                          className={`rounded-md border p-3 transition-colors ${
+                            t.active ? "bg-card" : "bg-muted/40 opacity-60"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-mono text-sm font-semibold tabular-nums">
+                              {t.startTime}
+                            </span>
+                            <Badge variant="outline" className="text-xs">
+                              {SESSION_TYPE_LABELS[t.type] ?? t.type}
+                            </Badge>
+                          </div>
+                          <p className="mt-1 font-medium">{t.studentName}</p>
+                          <p className="text-xs text-muted-foreground">{t.teacherName}</p>
+                          <div className="mt-2 flex items-center justify-between">
+                            <label className="flex items-center gap-2 text-xs text-muted-foreground">
                               <Switch
                                 checked={t.active}
                                 onCheckedChange={() => handleToggleActive(t)}
-                                className="origin-left scale-75"
                               />
-                              <button
-                                onClick={() => handleDelete(t)}
-                                className="text-[10px] text-rose-600 hover:underline"
-                              >
-                                削除
-                              </button>
-                            </div>
+                              {t.active ? "有効" : "無効"}
+                            </label>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-rose-600 hover:text-rose-700"
+                              onClick={() => handleDelete(t)}
+                            >
+                              削除
+                            </Button>
                           </div>
-                        ))
-                      )}
+                        </div>
+                      ))}
                     </div>
                   </div>
                 );
               })}
             </div>
-          </div>
+          </>
         )}
       </Card>
 
