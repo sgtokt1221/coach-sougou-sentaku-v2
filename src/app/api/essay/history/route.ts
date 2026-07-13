@@ -119,6 +119,7 @@ export async function GET(request: NextRequest) {
           parentEssayId: data.parentEssayId ?? null,
           attemptNumber: typeof data.attemptNumber === "number" ? data.attemptNumber : 1,
           inputMode: data.inputMode ?? null,
+          sourceType: data.sourceType ?? null,
         };
       })
     );
