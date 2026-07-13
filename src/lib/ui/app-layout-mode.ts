@@ -19,13 +19,14 @@ export type AppLayoutMode = {
  * @returns スクロール所有者とモバイルヘッダー表示の設定
  */
 export function getAppLayoutMode(pathname: string): AppLayoutMode {
-  // P0 で有効化予定（ページ変換後にコメント解除）:
+  // 純チャット2ページ（Task 7）は内部スクロール（page モード）に変換済み。
+  // 生徒フィードバック / 管理者メッセージ詳細
+  if (pathname === "/student/feedback") return { scrollOwner: "page" };
+  if (/^\/admin\/messages\/[^/]+$/.test(pathname)) return { scrollOwner: "page" };
   // 面接セッション: 内部でスクロール、モバイルは共通ヘッダー非表示（内部ヘッダー使用）
-  // if (/^\/student\/interview\/session\//.test(pathname)) return { scrollOwner: "page", hideMobileHeader: true };
-  // チャット系（生徒フィードバック / 管理者メッセージ詳細 / 講師の生徒メッセージ詳細）
-  // if (pathname === "/student/feedback") return { scrollOwner: "page" };
-  // if (/^\/admin\/messages\/[^/]+$/.test(pathname)) return { scrollOwner: "page" };
+  if (/^\/student\/interview\/session\//.test(pathname)) return { scrollOwner: "page", hideMobileHeader: true };
+  // P0 残り（ページ変換後にコメント解除）:
+  // 講師の生徒メッセージ詳細（複雑な詳細ページのため未変換）
   // if (/^\/teacher\/students\/[^/]+$/.test(pathname)) return { scrollOwner: "page" };
-  void pathname;
   return { scrollOwner: "main" };
 }

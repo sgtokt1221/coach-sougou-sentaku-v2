@@ -105,7 +105,7 @@ function AttachmentView({ att }: { att: ChatAttachment }) {
       className="flex items-center gap-2 rounded-lg border bg-background/60 px-3 py-2 text-xs hover:bg-background"
     >
       <FileText className="size-4 shrink-0" />
-      <span className="truncate">{att.name}</span>
+      <span className="min-w-0 truncate">{att.name}</span>
     </a>
   );
 }
@@ -144,7 +144,7 @@ function ReferenceCard({ reference }: { reference: ChatReference }) {
         <BookOpen className="size-3.5" />
         {headerLabel}
       </div>
-      <p className="mt-0.5 text-sm font-medium text-foreground">
+      <p className="mt-0.5 min-w-0 truncate text-sm font-medium text-foreground">
         {reference.label}
       </p>
       {reference.description && (
@@ -286,8 +286,8 @@ export function ChatThread({
           </div>
         </div>
       )}
-      {/* メッセージリスト */}
-      <div className="flex-1 space-y-3 overflow-y-auto px-1 py-4">
+      {/* メッセージリスト（親が縮んでもここだけがスクロールする所有者。min-h-0 必須） */}
+      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-1 py-4">
         {loading ? (
           <p className="py-8 text-center text-sm text-muted-foreground">
             読み込み中...
@@ -383,9 +383,9 @@ export function ChatThread({
         <div ref={bottomRef} />
       </div>
 
-      {/* 入力エリア */}
+      {/* 入力エリア（スクロールで縮まないよう固定。下部インセットは main の padding が確保） */}
       {!disabled && (
-        <div className="border-t bg-background/80 px-1 pt-3">
+        <div className="shrink-0 border-t bg-background/80 px-1 pt-3">
           {pending.length > 0 && (
             <div className="mb-2 flex flex-wrap gap-2">
               {pending.map((att, i) => (

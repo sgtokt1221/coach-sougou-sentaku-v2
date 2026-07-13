@@ -4,10 +4,22 @@ import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
+import { cn } from "@/lib/utils";
 import { useAuthSWR } from "@/lib/api/swr";
 import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
 import { authFetch } from "@/lib/api/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { PageHeader } from "@/components/shared/PageHeader";
+import { SegmentControl } from "@/components/shared/SegmentControl";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import SessionCalendar from "@/components/admin/SessionCalendar";
 import UnplacedStudentsSidebar from "@/components/admin/UnplacedStudentsSidebar";
 import AdminSessionList from "@/components/admin/AdminSessionList";
@@ -51,9 +63,12 @@ interface AvailableSlot {
   endTime: string;
 }
 
+/** セッション管理画面のタブ種別。 */
+type SessionTab = "schedule" | "list" | "master";
+
 export default function AdminSessionsPage() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<"schedule" | "list" | "master">("schedule");
+  const [activeTab, setActiveTab] = useState<SessionTab>("schedule");
   const [weekStart, setWeekStart] = useState<Date>(startOfDay(new Date()));
   const [pickerSession, setPickerSession] = useState<Session | null>(null);
   // セッション作成モーダル（空き枠クリック＝生徒選択式 / D&Dドロップ＝生徒固定）。
@@ -288,51 +303,32 @@ export default function AdminSessionsPage() {
     return { dayOfWeek, time };
   };
 
-  return (
-    <div className="flex h-[calc(100vh-64px)]">
-      {/* メインコンテンツ */}
-      <div className="flex-1 overflow-auto p-4">
-        {(sessionsError || unplacedError || teachersError || availabilityError) && (
-          <div className="mb-4 space-y-2">
-            {sessionsError && <ApiErrorBanner error={sessionsError} title="セッション一覧の取得に失敗しました" />}
-            {unplacedError && <ApiErrorBanner error={unplacedError} title="未配置生徒の取得に失敗しました" />}
-            {teachersError && <ApiErrorBanner error={teachersError} title="講師一覧の取得に失敗しました" />}
-            {availabilityError && <ApiErrorBanner error={availabilityError} title="シフト情報の取得に失敗しました" />}
-          </div>
-        )}
-        {/* ヘッダー */}
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="text-2xl font-bold">セッション管理</h1>
-            <div className="flex rounded-lg border p-1 mt-2 w-fit">
-              <button
-                onClick={() => setActiveTab("schedule")}
-                className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
-                  activeTab === "schedule" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                スケジュール
-              </button>
-              <button
-                onClick={() => setActiveTab("list")}
-                className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
-                  activeTab === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                一覧
-              </button>
-              <button
-                onClick={() => setActiveTab("master")}
-                className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
-                  activeTab === "master" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                マスタ
-              </button>
-            </div>
-          </div>
+  const isSchedule = activeTab === "schedule";
 
-          {activeTab === "schedule" && (
+  return (
+    // scrollOwner="main" のため、ページは自前高さ・自前 overflow を持たない縦フロー。
+    // スケジュールタブのみ PC(lg) でビューポート高に収め、カレンダーD&D領域と
+    // 未配置サイドバーを内部スクロールさせて既存のPC体験を維持する。
+    <div
+      className={cn(
+        "p-4 lg:p-6",
+        isSchedule && "lg:flex lg:h-full lg:min-h-0 lg:flex-col lg:overflow-hidden",
+      )}
+    >
+      {(sessionsError || unplacedError || teachersError || availabilityError) && (
+        <div className="mb-4 space-y-2">
+          {sessionsError && <ApiErrorBanner error={sessionsError} title="セッション一覧の取得に失敗しました" />}
+          {unplacedError && <ApiErrorBanner error={unplacedError} title="未配置生徒の取得に失敗しました" />}
+          {teachersError && <ApiErrorBanner error={teachersError} title="講師一覧の取得に失敗しました" />}
+          {availabilityError && <ApiErrorBanner error={availabilityError} title="シフト情報の取得に失敗しました" />}
+        </div>
+      )}
+
+      <PageHeader
+        title="セッション管理"
+        actions={
+          isSchedule ? (
+            // 週ナビゲーションはPCのカレンダー操作用。モバイルは一覧表示のため非表示。
             <div className="hidden items-center gap-2 lg:flex">
               <Button variant="outline" size="sm" onClick={goToPreviousWeek}>
                 <ChevronLeft className="size-4" />
@@ -343,15 +339,30 @@ export default function AdminSessionsPage() {
               <Button variant="outline" size="sm" onClick={goToNextWeek}>
                 <ChevronRight className="size-4" />
               </Button>
-              <div className="ml-4 text-sm font-medium">
-                {formatWeekRange()}
-              </div>
+              <div className="ml-2 text-sm font-medium">{formatWeekRange()}</div>
             </div>
-          )}
-        </div>
+          ) : undefined
+        }
+      />
 
-        {activeTab === "schedule" ? (
-          <>
+      <SegmentControl<SessionTab>
+        value={activeTab}
+        onChange={setActiveTab}
+        options={[
+          { id: "schedule", label: "スケジュール" },
+          { id: "list", label: "一覧" },
+          { id: "master", label: "定期授業" },
+        ]}
+        fullWidth
+        size="sm"
+        className="mb-4"
+      />
+
+      {isSchedule ? (
+        // PC(lg): カレンダー + 未配置サイドバーを横並びにし、行内で内部スクロール。
+        // モバイル: 通常の縦フロー（共通 main がスクロール）。
+        <div className="lg:flex lg:min-h-0 lg:flex-1 lg:overflow-hidden">
+          <div className="lg:min-w-0 lg:flex-1 lg:overflow-auto">
             {/* カレンダー(D&D)はPC専用。モバイルは一覧で代替 */}
             <div className="hidden lg:block">
               <SessionCalendar
@@ -375,94 +386,98 @@ export default function AdminSessionsPage() {
               </p>
               <AdminSessionList sessions={allSessions} />
             </div>
-          </>
-        ) : activeTab === "master" ? (
-          <RecurringMasterPanel coachStudents={coachStudents} />
-        ) : (
-          <AdminSessionList sessions={allSessions} />
-        )}
-      </div>
+          </div>
 
-      {/* 未配置生徒サイドバー（スケジュールタブのみ） */}
-      {activeTab === "schedule" && (
-        <div className="hidden w-64 border-l bg-gray-50/50 lg:block">
-          <UnplacedStudentsSidebar
-            students={unplacedStudents}
-            loading={!unplacedStudents}
-          />
-        </div>
-      )}
-
-      {/* 講師選択ポップオーバー */}
-      {pickerSession && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" onClick={() => setPickerSession(null)}>
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <h3 className="font-semibold text-lg">講師を選択</h3>
-                <p className="text-sm text-muted-foreground">
-                  {pickerSession.studentName}のセッション講師を選択してください
-                </p>
-              </div>
-
-              <div className="space-y-2 max-h-60 overflow-y-auto">
-                {teachers.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">講師が登録されていません</p>
-                ) : teachers
-                  .map((teacher) => {
-                    const { dayOfWeek, time } = getSessionDayAndTime(pickerSession);
-                    const slots = availabilities.get(teacher.uid) || [];
-                    const targetMinutes = parseInt(time.split(':')[0]) * 60 + parseInt(time.split(':')[1]);
-                    const isAvailable = slots.some(slot => {
-                      if (slot.dayOfWeek !== dayOfWeek) return false;
-                      const startMinutes = parseInt(slot.startTime.split(':')[0]) * 60 + parseInt(slot.startTime.split(':')[1]);
-                      const endMinutes = parseInt(slot.endTime.split(':')[0]) * 60 + parseInt(slot.endTime.split(':')[1]);
-                      return targetMinutes >= startMinutes && targetMinutes < endMinutes;
-                    });
-                    return { teacher, isAvailable };
-                  })
-                  .sort((a, b) => (a.isAvailable === b.isAvailable ? 0 : a.isAvailable ? -1 : 1))
-                  .map(({ teacher, isAvailable }) => (
-                    <div
-                      key={teacher.uid}
-                      className={`flex items-center gap-3 p-3 rounded-md hover:bg-accent cursor-pointer transition-colors border ${!isAvailable ? "opacity-60" : ""}`}
-                      onClick={() => handleTeacherSelect(teacher.uid, teacher.displayName)}
-                    >
-                      <div className={`w-3 h-3 rounded-full flex-shrink-0 ${isAvailable ? "bg-emerald-500" : "bg-gray-300"}`}></div>
-                      <div className="flex-1">
-                        <div className="font-medium">{teacher.displayName}</div>
-                        <div className="text-xs text-muted-foreground">
-                          担当: {teacher.studentCount}名
-                          {!isAvailable && " · この時間帯は未登録"}
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                }
-              </div>
-
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setPickerSession(null)} className="flex-1">
-                  キャンセル
-                </Button>
-              </div>
-            </div>
+          {/* 未配置生徒サイドバー（PC専用） */}
+          <div className="hidden w-64 shrink-0 border-l bg-gray-50/50 lg:block lg:overflow-y-auto">
+            <UnplacedStudentsSidebar
+              students={unplacedStudents}
+              loading={!unplacedStudents}
+            />
           </div>
         </div>
+      ) : activeTab === "master" ? (
+        <RecurringMasterPanel coachStudents={coachStudents} />
+      ) : (
+        <AdminSessionList sessions={allSessions} />
       )}
 
-      {/* セッション作成モーダル（空き枠クリック＝生徒選択 / D&Dドロップ＝生徒固定）。講師は作成後に選択 */}
-      {addDialog && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" onClick={() => setAddDialog(null)}>
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
-            <div className="space-y-4">
-              <div className="space-y-1">
-                <h3 className="font-semibold text-lg">予定を追加</h3>
-                <p className="text-sm text-muted-foreground">
-                  {addDialog.date} {addDialog.time} に予定を作成します（講師は作成後に選択）。
-                </p>
-              </div>
+      {/* 講師選択ダイアログ */}
+      <Dialog
+        open={pickerSession !== null}
+        onOpenChange={(open) => {
+          if (!open) setPickerSession(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>講師を選択</DialogTitle>
+            <DialogDescription>
+              {pickerSession?.studentName}のセッション講師を選択してください
+            </DialogDescription>
+          </DialogHeader>
+          <DialogBody className="space-y-2">
+            {!pickerSession ? null : teachers.length === 0 ? (
+              <p className="py-4 text-center text-sm text-muted-foreground">講師が登録されていません</p>
+            ) : (
+              teachers
+                .map((teacher) => {
+                  const { dayOfWeek, time } = getSessionDayAndTime(pickerSession);
+                  const slots = availabilities.get(teacher.uid) || [];
+                  const targetMinutes = parseInt(time.split(':')[0]) * 60 + parseInt(time.split(':')[1]);
+                  const isAvailable = slots.some(slot => {
+                    if (slot.dayOfWeek !== dayOfWeek) return false;
+                    const startMinutes = parseInt(slot.startTime.split(':')[0]) * 60 + parseInt(slot.startTime.split(':')[1]);
+                    const endMinutes = parseInt(slot.endTime.split(':')[0]) * 60 + parseInt(slot.endTime.split(':')[1]);
+                    return targetMinutes >= startMinutes && targetMinutes < endMinutes;
+                  });
+                  return { teacher, isAvailable };
+                })
+                .sort((a, b) => (a.isAvailable === b.isAvailable ? 0 : a.isAvailable ? -1 : 1))
+                .map(({ teacher, isAvailable }) => (
+                  <div
+                    key={teacher.uid}
+                    className={`flex items-center gap-3 p-3 rounded-md hover:bg-accent cursor-pointer transition-colors border ${!isAvailable ? "opacity-60" : ""}`}
+                    onClick={() => handleTeacherSelect(teacher.uid, teacher.displayName)}
+                  >
+                    <div className={`w-3 h-3 rounded-full flex-shrink-0 ${isAvailable ? "bg-emerald-500" : "bg-gray-300"}`}></div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium truncate">{teacher.displayName}</div>
+                      <div className="text-xs text-muted-foreground">
+                        担当: {teacher.studentCount}名
+                        {!isAvailable && " · この時間帯は未登録"}
+                      </div>
+                    </div>
+                  </div>
+                ))
+            )}
+          </DialogBody>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPickerSession(null)}>
+              キャンセル
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
+      {/* セッション作成ダイアログ（空き枠クリック＝生徒選択 / D&Dドロップ＝生徒固定）。講師は作成後に選択 */}
+      <Dialog
+        open={addDialog !== null}
+        onOpenChange={(open) => {
+          if (!open) setAddDialog(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>予定を追加</DialogTitle>
+            <DialogDescription>
+              {addDialog
+                ? `${addDialog.date} ${addDialog.time} に予定を作成します（講師は作成後に選択）。`
+                : null}
+            </DialogDescription>
+          </DialogHeader>
+          {addDialog && (
+            <DialogBody className="space-y-4">
               {/* 生徒: D&D由来は固定表示、クリック由来は選択 */}
               {addDialog.fixedStudent ? (
                 <div className="rounded-md border bg-gray-50 px-3 py-2 text-sm">
@@ -502,33 +517,32 @@ export default function AdminSessionsPage() {
                 </select>
                 <p className="text-xs text-muted-foreground">{SESSION_KIND_DESCRIPTIONS[formKind]}</p>
               </div>
-
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setAddDialog(null)} className="flex-1">
-                  キャンセル
-                </Button>
-                <Button
-                  className="flex-1"
-                  disabled={!addDialog.fixedStudent && !formStudentId}
-                  onClick={() => {
-                    const dialog = addDialog;
-                    const studentId = dialog.fixedStudent?.uid ?? formStudentId;
-                    const studentName =
-                      dialog.fixedStudent?.name ??
-                      coachStudents.find((x) => x.uid === formStudentId)?.displayName;
-                    if (!studentId || !studentName) return;
-                    setAddDialog(null);
-                    const { type, isResearch } = kindToTypeResearch(formKind);
-                    void createSessionAt(studentId, studentName, dialog.date, dialog.time, type, isResearch);
-                  }}
-                >
-                  追加
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+            </DialogBody>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddDialog(null)}>
+              キャンセル
+            </Button>
+            <Button
+              disabled={!addDialog?.fixedStudent && !formStudentId}
+              onClick={() => {
+                if (!addDialog) return;
+                const dialog = addDialog;
+                const studentId = dialog.fixedStudent?.uid ?? formStudentId;
+                const studentName =
+                  dialog.fixedStudent?.name ??
+                  coachStudents.find((x) => x.uid === formStudentId)?.displayName;
+                if (!studentId || !studentName) return;
+                setAddDialog(null);
+                const { type, isResearch } = kindToTypeResearch(formKind);
+                void createSessionAt(studentId, studentName, dialog.date, dialog.time, type, isResearch);
+              }}
+            >
+              追加
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

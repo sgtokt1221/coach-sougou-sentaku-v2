@@ -20,7 +20,7 @@ export default function CameraPreview({ mediaStream }: CameraPreviewProps) {
   if (!visible || !mediaStream) return null;
 
   return (
-    <div className="fixed bottom-24 right-4 z-50">
+    <div className="fixed bottom-[calc(var(--app-bottom-nav-height)+1rem+env(safe-area-inset-bottom))] right-4 z-50 lg:bottom-24">
       <div className="relative w-[120px] h-[90px] rounded-lg overflow-hidden border-2 border-white/50 shadow-lg bg-black">
         <video
           ref={videoRef}

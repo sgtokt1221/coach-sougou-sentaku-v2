@@ -7,6 +7,7 @@ import { authFetch } from "@/lib/api/client";
 import { useAuthSWR } from "@/lib/api/swr";
 import { useFeedbackThread } from "@/lib/hooks/useFeedbackThread";
 import { ChatThread } from "@/components/chat/ChatThread";
+import { FullHeightPage } from "@/components/layout/FullHeightPage";
 import { PageTransition } from "@/components/shared/PageTransition";
 import { SegmentControl } from "@/components/shared/SegmentControl";
 import type { ChatAttachment } from "@/lib/types/feedback";
@@ -31,8 +32,8 @@ export default function StudentFeedbackPage() {
 
   return (
     <PageTransition>
-      <div className="flex h-[calc(var(--vvh,100dvh)-7rem)] flex-col lg:h-[calc(100dvh-9rem)]">
-        <div className="flex items-center gap-2 pb-2">
+      <FullHeightPage>
+        <div className="flex shrink-0 items-center gap-2 pb-2">
           <MessageSquare className="size-5 text-muted-foreground" />
           <div>
             <h1 className="text-xl font-bold">メッセージ</h1>
@@ -66,9 +67,11 @@ export default function StudentFeedbackPage() {
             </div>
           </div>
         ) : (
-          <AdminThread uid={uid} />
+          <div className="min-h-0 flex-1">
+            <AdminThread uid={uid} />
+          </div>
         )}
-      </div>
+      </FullHeightPage>
     </PageTransition>
   );
 }

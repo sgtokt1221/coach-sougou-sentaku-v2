@@ -224,12 +224,12 @@ export default function DocumentEditorPage() {
         </Button>
         <div className="flex-1 min-w-0">
           <h1 className="text-lg font-bold truncate">{doc.title}</h1>
-          <div className="flex items-center gap-2 mt-1">
-            <Badge variant={STATUS_VARIANT[doc.status]}>
+          <div className="flex items-center gap-2 mt-1 min-w-0">
+            <Badge variant={STATUS_VARIANT[doc.status]} className="shrink-0">
               {DOCUMENT_STATUS_LABELS[doc.status]}
             </Badge>
             <DocumentReviewBadge state={doc.review?.state} />
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-muted-foreground truncate min-w-0">
               {doc.universityName} {doc.facultyName}
             </span>
           </div>
@@ -344,22 +344,23 @@ function EditorPanel({
     <Card>
       <CardContent className="p-4 space-y-3">
         <textarea
-          className="w-full min-h-[400px] p-3 rounded-md border bg-background text-sm resize-y focus:outline-none focus:ring-2 focus:ring-ring"
+          className="w-full min-h-[clamp(16rem,45dvh,28rem)] lg:min-h-[400px] p-3 rounded-md border bg-background text-sm resize-y focus:outline-none focus:ring-2 focus:ring-ring"
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder="書類の内容を入力してください..."
         />
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-muted-foreground">
-            {wordCount} 文字
-            {targetWordCount ? (
-              <span className={wordCount > targetWordCount ? " text-amber-500" : ""}>
-                {" "}/ {targetWordCount} 文字
-              </span>
-            ) : null}
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground whitespace-nowrap">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          {/* 情報行: 文字数・保存状態（モバイルでは1段目、長い状態文でも横溢れしない） */}
+          <div className="flex items-center gap-3 min-w-0 text-sm text-muted-foreground">
+            <span className="shrink-0">
+              {wordCount} 文字
+              {targetWordCount ? (
+                <span className={wordCount > targetWordCount ? " text-amber-500" : ""}>
+                  {" "}/ {targetWordCount} 文字
+                </span>
+              ) : null}
+            </span>
+            <span className="text-xs text-muted-foreground truncate min-w-0">
               {saveStatus === "saving" && "保存中…"}
               {saveStatus === "saved" &&
                 lastSavedAt &&
@@ -369,8 +370,11 @@ function EditorPanel({
                 })}`}
               {saveStatus === "error" && "保存に失敗（自動再試行）"}
             </span>
+          </div>
+          {/* 操作行: ステータスSelect・保存ボタン（モバイルでは2段目・全幅） */}
+          <div className="flex items-center gap-2">
             <Select value={status} onValueChange={(v) => onStatusChange(v as DocumentStatus)}>
-              <SelectTrigger className="w-[140px] h-8 text-xs">
+              <SelectTrigger className="flex-1 sm:flex-none w-auto sm:w-[140px] h-8 text-xs">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -380,7 +384,7 @@ function EditorPanel({
                 <SelectItem value="final">完成</SelectItem>
               </SelectContent>
             </Select>
-            <Button size="sm" onClick={onSave} disabled={saving}>
+            <Button size="sm" onClick={onSave} disabled={saving} className="shrink-0">
               <Save className="size-4 mr-1" />
               {saving ? "保存中..." : "保存"}
             </Button>
