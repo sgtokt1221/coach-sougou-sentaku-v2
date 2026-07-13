@@ -234,7 +234,9 @@ export function WorkshopChat({
                 />
                 <Button
                   size="sm"
-                  className="shrink-0"
+                  // アイコンのみの送信ボタン。sm は min-h-11(44px) だが幅は狭いので
+                  // モバイルは min-w-11 で 44px の正方タップ領域を確保、lg では戻す。
+                  className="min-w-11 shrink-0 lg:min-w-0"
                   onClick={handleSend}
                   disabled={!input.trim() || isLoading}
                 >

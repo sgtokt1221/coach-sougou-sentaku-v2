@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Loader2, Plus, X } from "lucide-react";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -180,7 +181,7 @@ export function StepEditModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{title}を編集</DialogTitle>
           <DialogDescription>
@@ -188,7 +189,7 @@ export function StepEditModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-5">
+        <DialogBody className="space-y-5">
           {fields.map((f) => {
             const label = KEY_LABELS[f.key] ?? f.key;
 
@@ -267,7 +268,7 @@ export function StepEditModal({
               </div>
             );
           })}
-        </div>
+        </DialogBody>
 
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={saving}>
