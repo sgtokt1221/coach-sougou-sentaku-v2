@@ -12,8 +12,13 @@ import SessionCalendar from "@/components/admin/SessionCalendar";
 import UnplacedStudentsSidebar from "@/components/admin/UnplacedStudentsSidebar";
 import AdminSessionList from "@/components/admin/AdminSessionList";
 import RecurringMasterPanel from "@/components/admin/RecurringMasterPanel";
-import { SESSION_TYPE_LABELS, SESSION_TYPE_CREATE_OPTIONS } from "@/lib/types/session";
-import type { Session, SessionType } from "@/lib/types/session";
+import {
+  SESSION_KIND_LABELS,
+  SESSION_KIND_DESCRIPTIONS,
+  SESSION_KIND_CREATE_OPTIONS,
+  kindToTypeResearch,
+} from "@/lib/types/session";
+import type { Session, SessionType, SessionKind } from "@/lib/types/session";
 import type { StudentListItem } from "@/lib/types/admin";
 
 // 指定日のローカル(=日本時間)0時を返すヘルパー。カレンダーは本日起点で表示する。
@@ -59,8 +64,7 @@ export default function AdminSessionsPage() {
     fixedStudent?: { uid: string; name: string };
   } | null>(null);
   const [formStudentId, setFormStudentId] = useState("");
-  const [formType, setFormType] = useState<SessionType>("general");
-  const [formIsResearch, setFormIsResearch] = useState(false);
+  const [formKind, setFormKind] = useState<SessionKind>("general");
 
   // 週の範囲を計算
   const weekEnd = useMemo(() => {
@@ -180,8 +184,7 @@ export default function AdminSessionsPage() {
     const studentData = unplacedStudents.find(s => s.uid === studentId);
     if (!studentData) return;
     setAddDialog({ date, time, fixedStudent: { uid: studentId, name: studentData.displayName } });
-    setFormType("general");
-    setFormIsResearch(false);
+    setFormKind("general");
   };
 
   // セッション移動ハンドラー（D&Dで別の時間帯に移動）
@@ -362,8 +365,7 @@ export default function AdminSessionsPage() {
                 onClickEmptySlot={(date, time) => {
                   setAddDialog({ date, time });
                   setFormStudentId("");
-                  setFormType("general");
-                  setFormIsResearch(false);
+                  setFormKind("general");
                 }}
               />
             </div>
@@ -484,34 +486,22 @@ export default function AdminSessionsPage() {
                 </div>
               )}
 
-              {/* 種別（group_review はカレンダーからは作成しない） */}
+              {/* 種別（面談 / 模擬面接 / 探究授業。group_review はカレンダーからは作成しない） */}
               <div className="space-y-1">
                 <label className="text-xs font-medium text-muted-foreground">種別</label>
                 <select
                   className="w-full rounded-md border px-3 py-2 text-sm"
-                  value={formType}
-                  onChange={(e) => setFormType(e.target.value as SessionType)}
+                  value={formKind}
+                  onChange={(e) => setFormKind(e.target.value as SessionKind)}
                 >
-                  {SESSION_TYPE_CREATE_OPTIONS.filter((t) => t !== "group_review").map(
-                    (t) => (
-                      <option key={t} value={t}>
-                        {SESSION_TYPE_LABELS[t]}
-                      </option>
-                    ),
-                  )}
+                  {SESSION_KIND_CREATE_OPTIONS.map((k) => (
+                    <option key={k} value={k}>
+                      {SESSION_KIND_LABELS[k]}
+                    </option>
+                  ))}
                 </select>
+                <p className="text-xs text-muted-foreground">{SESSION_KIND_DESCRIPTIONS[formKind]}</p>
               </div>
-
-              {/* 探究授業フラグ */}
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  className="size-4"
-                  checked={formIsResearch}
-                  onChange={(e) => setFormIsResearch(e.target.checked)}
-                />
-                探究授業セッション（生徒が講師に教える回）
-              </label>
 
               <div className="flex gap-2">
                 <Button variant="outline" onClick={() => setAddDialog(null)} className="flex-1">
@@ -528,7 +518,8 @@ export default function AdminSessionsPage() {
                       coachStudents.find((x) => x.uid === formStudentId)?.displayName;
                     if (!studentId || !studentName) return;
                     setAddDialog(null);
-                    void createSessionAt(studentId, studentName, dialog.date, dialog.time, formType, formIsResearch);
+                    const { type, isResearch } = kindToTypeResearch(formKind);
+                    void createSessionAt(studentId, studentName, dialog.date, dialog.time, type, isResearch);
                   }}
                 >
                   追加
