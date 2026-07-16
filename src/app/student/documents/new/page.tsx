@@ -375,7 +375,7 @@ export default function NewDocumentPage() {
     setDraftResult({
       ...draftResult,
       sections: updated,
-      draft: updated.map((s) => `${s.title}\n\n${s.content}`).join("\n\n"),
+      draft: updated.map((s) => s.content).filter((c) => c.trim()).join("\n\n"),
     });
     toast.success(`「${updated[idx].title}」を更新しました`);
   };
@@ -856,7 +856,7 @@ export default function NewDocumentPage() {
                             setDraftResult({
                               ...draftResult,
                               sections: updated,
-                              draft: updated.map((s) => `${s.title}\n\n${s.content}`).join("\n\n"),
+                              draft: updated.map((s) => s.content).filter((c) => c.trim()).join("\n\n"),
                             });
                           }}
                           rows={4}
