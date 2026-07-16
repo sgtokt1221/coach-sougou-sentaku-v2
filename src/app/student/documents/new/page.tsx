@@ -145,6 +145,7 @@ export default function NewDocumentPage() {
       frameworkType?: string;
       selectedActivityIds: string[];
       targetWordCount: number;
+      sections?: { id: string; content: string }[];
     }) => {
       if (!docId) return;
       const res = await authFetch(`/api/documents/${docId}`, {
@@ -166,6 +167,7 @@ export default function NewDocumentPage() {
       frameworkType: frameworkType ?? undefined,
       selectedActivityIds,
       targetWordCount,
+      sections: draftResult?.sections.map((s) => ({ id: s.id, content: s.content })) ?? [],
     },
     saveWizardState,
     { enabled: !!docId }
@@ -320,10 +322,27 @@ export default function NewDocumentPage() {
         if (typeof ws?.targetWordCount === "number") {
           setTargetWordCount(ws.targetWordCount);
         }
-        if (doc.content) {
-          const fw = fwType
-            ? FRAMEWORKS.find((f) => f.type === fwType) ?? null
-            : null;
+        const fw = fwType
+          ? FRAMEWORKS.find((f) => f.type === fwType) ?? null
+          : null;
+        if (Array.isArray(ws?.sections) && ws.sections.length > 0 && fw) {
+          // 保存済みセクションから復元（本文の見出し分割に依存しない）
+          const byId = new Map(
+            (ws.sections as { id: string; content: string }[]).map((s) => [s.id, s.content]),
+          );
+          const sections = fw.sections.map((s) => ({
+            id: s.id,
+            title: s.title,
+            content: byId.get(s.id) ?? "",
+            placeholder: `【${s.guidingQuestion}】\n${s.placeholder ?? "ここに記入してください。"}`,
+          }));
+          setDraftResult({
+            frameworkType: fwType as FrameworkType,
+            sections,
+            draft: sections.map((s) => s.content).filter((c) => c.trim()).join("\n\n"),
+          });
+        } else if (doc.content) {
+          // 旧データ（見出し入り本文）は従来ロジックで分割復元
           setDraftResult(reconstructDraftResult(doc.content, fw));
         }
         if (typeof ws?.currentStep === "number") setStep(ws.currentStep);
@@ -375,7 +394,7 @@ export default function NewDocumentPage() {
     setDraftResult({
       ...draftResult,
       sections: updated,
-      draft: updated.map((s) => `${s.title}\n\n${s.content}`).join("\n\n"),
+      draft: updated.map((s) => s.content).filter((c) => c.trim()).join("\n\n"),
     });
     toast.success(`「${updated[idx].title}」を更新しました`);
   };
@@ -856,7 +875,7 @@ export default function NewDocumentPage() {
                             setDraftResult({
                               ...draftResult,
                               sections: updated,
-                              draft: updated.map((s) => `${s.title}\n\n${s.content}`).join("\n\n"),
+                              draft: updated.map((s) => s.content).filter((c) => c.trim()).join("\n\n"),
                             });
                           }}
                           rows={4}

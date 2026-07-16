@@ -24,6 +24,8 @@ export interface DocumentWizardState {
   targetWordCount: number;
   /** true以降は編集画面が主。false=ウィザード再開対象 */
   completed: boolean;
+  /** 下書きの各セクション本文。再開時に本文(見出しなし)から復元できないため、ここから復元する。 */
+  sections?: { id: string; content: string }[];
 }
 
 export interface Document {

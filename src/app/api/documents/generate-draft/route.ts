@@ -120,7 +120,9 @@ export async function POST(request: NextRequest) {
         placeholder: `【${s.guidingQuestion}】\n${s.placeholder ?? "ここに記入してください。"}`,
       }));
       const result: DraftGenerateResponse = {
-        draft: parsed.draft || "",
+        // 本文はセクション見出し(結論(Point)等)を含めず content のみ連結する。
+        // 出願書類にフレームワークの見出しをそのまま残さないため。
+        draft: sections.map((s) => s.content).filter((c) => c.trim()).join("\n\n"),
         frameworkType: body.frameworkType,
         sections,
       };
