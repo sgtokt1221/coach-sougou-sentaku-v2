@@ -19,7 +19,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuthSWR } from "@/lib/api/swr";
 import { authFetch } from "@/lib/api/client";
 import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
-import { InlineFeedbackButton } from "@/components/admin/InlineFeedbackButton";
 import { DocumentReviewBadge } from "@/components/documents/DocumentReviewBadge";
 import type { DocumentStatus, DocumentReview } from "@/lib/types/document";
 
@@ -370,16 +369,6 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
                   </Button>
                 </div>
               </div>
-
-              <Separator />
-
-              {/* 自由コメント（レビューと無関係な連絡用） */}
-              <InlineFeedbackButton
-                studentId={studentId}
-                type="document"
-                targetId={detailDoc.id}
-                targetLabel={`${detailDoc.universityName} ${detailDoc.type}`}
-              />
             </div>
           ) : (
             <div className="py-8 text-center text-sm text-muted-foreground">
