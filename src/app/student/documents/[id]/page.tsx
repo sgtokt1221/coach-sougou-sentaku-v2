@@ -22,12 +22,21 @@ import {
   History,
   ChevronDown,
   ChevronUp,
+  ShieldCheck,
 } from "lucide-react";
-import type { Document, DocumentFeedback, DocumentStatus } from "@/lib/types/document";
-import { DOCUMENT_STATUS_LABELS } from "@/lib/types/document";
+import type { Document, DocumentFeedback, DocumentStatus, DocumentAiLikeness } from "@/lib/types/document";
+import { DOCUMENT_STATUS_LABELS, AI_LIKENESS_LEVEL_LABELS, AI_LIKENESS_SUBMIT_THRESHOLD } from "@/lib/types/document";
 import { DocumentReviewBadge } from "@/components/documents/DocumentReviewBadge";
 import { useAutosave, type AutosaveStatus } from "@/hooks/useAutosave";
 import { authFetch } from "@/lib/api/client";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 const STATUS_VARIANT: Record<DocumentStatus, "default" | "secondary" | "outline" | "destructive"> = {
   draft: "outline",
@@ -67,6 +76,10 @@ export default function DocumentEditorPage() {
   const [feedback, setFeedback] = useState<DocumentFeedback | null>(null);
   const [showVersions, setShowVersions] = useState(false);
   const [mobileTab, setMobileTab] = useState<"editor" | "review">("editor");
+  const [aiLikeness, setAiLikeness] = useState<DocumentAiLikeness | null>(null);
+  const [aiChecking, setAiChecking] = useState(false);
+  const [submitGateOpen, setSubmitGateOpen] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState<DocumentStatus | null>(null);
 
   const loadDocument = useCallback(async () => {
     setLoading(true);
@@ -76,6 +89,7 @@ export default function DocumentEditorPage() {
       const data: Document = await res.json();
       setDoc(data);
       setContent(data.content);
+      setAiLikeness(data.aiLikeness ?? null);
       // Load latest feedback if available
       const latestWithFeedback = [...(data.versions || [])]
         .reverse()
@@ -175,7 +189,27 @@ export default function DocumentEditorPage() {
     }
   }
 
-  async function handleStatusChange(status: DocumentStatus) {
+  async function handleAiCheck() {
+    if (!doc || !content.trim()) return;
+    setAiChecking(true);
+    try {
+      const res = await authFetch(`/api/documents/${id}/ai-check`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAiLikeness(data.aiLikeness);
+      }
+    } catch {
+      // silent
+    } finally {
+      setAiChecking(false);
+    }
+  }
+
+  async function commitStatus(status: DocumentStatus) {
     if (!doc) return;
     try {
       await authFetch(`/api/documents/${id}`, {
@@ -187,6 +221,24 @@ export default function DocumentEditorPage() {
     } catch {
       // silent
     }
+  }
+
+  /**
+   * ステータス変更。draft→in_review（提出）のときだけ AIっぽさをソフト警告する。
+   * 未チェック / 本文がチェック後に変わった / スコアが閾値以上 のいずれかで確認ダイアログを出す。
+   */
+  async function handleStatusChange(next: DocumentStatus) {
+    if (!doc) return;
+    if (doc.status === "draft" && next === "in_review") {
+      const stale = aiLikeness != null && aiLikeness.checkedWordCount !== content.length;
+      const risky = aiLikeness == null || stale || aiLikeness.score >= AI_LIKENESS_SUBMIT_THRESHOLD;
+      if (risky) {
+        setPendingStatus(next);
+        setSubmitGateOpen(true);
+        return;
+      }
+    }
+    await commitStatus(next);
   }
 
   if (loading) {
@@ -281,6 +333,10 @@ export default function DocumentEditorPage() {
             versions={doc.versions}
             showVersions={showVersions}
             setShowVersions={setShowVersions}
+            aiLikeness={aiLikeness}
+            aiChecking={aiChecking}
+            onAiCheck={handleAiCheck}
+            currentWordCount={wordCount}
           />
         )}
       </div>
@@ -310,9 +366,44 @@ export default function DocumentEditorPage() {
             versions={doc.versions}
             showVersions={showVersions}
             setShowVersions={setShowVersions}
+            aiLikeness={aiLikeness}
+            aiChecking={aiChecking}
+            onAiCheck={handleAiCheck}
+            currentWordCount={wordCount}
           />
         </div>
       </div>
+
+      <Dialog open={submitGateOpen} onOpenChange={setSubmitGateOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>このまま提出しますか？</DialogTitle>
+            <DialogDescription>
+              AIっぽさが高いまま、または未チェックです。自分の体験や言葉を加えてから提出することをおすすめします。
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setSubmitGateOpen(false);
+                setPendingStatus(null);
+              }}
+            >
+              戻って直す
+            </Button>
+            <Button
+              onClick={() => {
+                setSubmitGateOpen(false);
+                if (pendingStatus) void commitStatus(pendingStatus);
+                setPendingStatus(null);
+              }}
+            >
+              このまま提出
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -403,6 +494,10 @@ function ReviewPanel({
   versions,
   showVersions,
   setShowVersions,
+  aiLikeness,
+  aiChecking,
+  onAiCheck,
+  currentWordCount,
 }: {
   feedback: DocumentFeedback | null;
   reviewing: boolean;
@@ -411,6 +506,10 @@ function ReviewPanel({
   versions: Document["versions"];
   showVersions: boolean;
   setShowVersions: (v: boolean) => void;
+  aiLikeness: DocumentAiLikeness | null;
+  aiChecking: boolean;
+  onAiCheck: () => void;
+  currentWordCount: number;
 }) {
   return (
     <div className="space-y-4">
@@ -470,6 +569,93 @@ function ReviewPanel({
                   <div className="space-y-2">
                     <p className="text-sm font-medium">APに関する注意</p>
                     <p className="text-sm text-muted-foreground">{feedback.apSpecificNotes}</p>
+                  </div>
+                </>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* AIっぽさチェック */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <ShieldCheck className="size-4" />
+            AIっぽさチェック
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Button
+            className="w-full"
+            variant="outline"
+            onClick={onAiCheck}
+            disabled={aiChecking || contentEmpty}
+          >
+            <ShieldCheck className="size-4 mr-2" />
+            {aiChecking ? "チェック中..." : "AIっぽさをチェック"}
+          </Button>
+
+          {aiLikeness && (
+            <>
+              <Separator />
+              {aiLikeness.checkedWordCount !== currentWordCount && (
+                <p className="text-xs text-amber-600 dark:text-amber-400">
+                  本文が変わりました。もう一度チェックしてください。
+                </p>
+              )}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-sm">
+                  <span>AIっぽさ</span>
+                  <span className="font-medium">
+                    {aiLikeness.score}/100（{AI_LIKENESS_LEVEL_LABELS[aiLikeness.level]}）
+                  </span>
+                </div>
+                <div className="w-full bg-muted rounded-full h-2">
+                  <div
+                    className={
+                      "rounded-full h-2 transition-all " +
+                      (aiLikeness.level === "high"
+                        ? "bg-rose-500"
+                        : aiLikeness.level === "medium"
+                          ? "bg-amber-500"
+                          : "bg-emerald-500")
+                    }
+                    style={{ width: `${aiLikeness.score}%` }}
+                  />
+                </div>
+              </div>
+
+              {aiLikeness.reasons.length > 0 && (
+                <>
+                  <Separator />
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium">AIっぽいと判定した理由</p>
+                    <ul className="space-y-1">
+                      {aiLikeness.reasons.map((item, i) => (
+                        <li key={i} className="text-sm text-muted-foreground flex gap-2">
+                          <span className="text-rose-500 shrink-0">-</span>
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </>
+              )}
+
+              {aiLikeness.suggestions.length > 0 && (
+                <>
+                  <Separator />
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium">人間らしくする直し方</p>
+                    <ul className="space-y-1">
+                      {aiLikeness.suggestions.map((item, i) => (
+                        <li key={i} className="text-sm text-muted-foreground flex gap-2">
+                          <span className="text-emerald-500 shrink-0">+</span>
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 </>
               )}
