@@ -3970,17 +3970,17 @@
           {
             "stage": 3,
             "type": "other",
-            "details": "口述試験・面接 100点 (2026/2/8 9:05〜、阿倍野キャンパス)。論理性・読解力・思考力・判断力・表現力、医師/研究者としての適性を評価"
+            "details": "口述試験・面接 100点 (2027/2/7 9:05〜、阿倍野キャンパス)。論理性・読解力・思考力・判断力・表現力、医師/研究者としての適性を評価"
           }
         ],
         "schedule": {
-          "applicationStart": "2026-01-19",
-          "applicationEnd": "2026-01-22",
-          "examDate": "2026-02-08",
-          "resultDate": "2026-02-13"
+          "applicationStart": "2027-01-18",
+          "applicationEnd": "2027-01-21",
+          "examDate": "2027-02-07",
+          "resultDate": "2027-02-09"
         },
-        "admissionUrl": "https://www.omu.ac.jp/admissions/assets/4_Sougou_SR_med2026.pdf",
-        "selectionType": "school_recommendation",
+        "admissionUrl": "https://www.omu.ac.jp/admissions/assets/4_Sougou_SR_med2027.pdf",
+        "selectionType": "comprehensive",
         "academicField": "medicine",
         "interviewTendency": {
           "format": "口述試験 + 個人面接",
@@ -4031,7 +4031,13 @@
               "retrievedAt": "2025-06"
             }
           }
-        ]
+        ],
+        "scheduleLastYear": {
+          "applicationStart": "2026-01-19",
+          "applicationEnd": "2026-01-22",
+          "examDate": "2026-02-08",
+          "resultDate": "2026-02-13"
+        }
       },
       {
         "id": "nursing",
@@ -4128,7 +4134,7 @@
           {
             "stage": 2,
             "type": "other",
-            "details": "第2次選考: 口述試験 (海洋400点/都市1000点) + 面接 (海洋200点) + 英検 (海洋100点)。海洋は2025/10/4-5、都市は2025/10/4 実施"
+            "details": "第2次選考: 口述試験 (海洋400点/都市1000点) + 面接 (海洋200点) + 英検 (海洋100点)。海洋は2026/10/3-4 実施(都市学科は別日程・学生募集要項参照)"
           },
           {
             "stage": 3,
@@ -4137,12 +4143,12 @@
           }
         ],
         "schedule": {
-          "applicationStart": "2025-09-04",
-          "applicationEnd": "2025-09-08",
-          "examDate": "2025-10-04",
-          "resultDate": "2025-11-04"
+          "applicationStart": "2026-09-03",
+          "applicationEnd": "2026-09-07",
+          "examDate": "2026-10-03",
+          "resultDate": "2026-11-02"
         },
-        "admissionUrl": "https://www.omu.ac.jp/admissions/assets/3_Sougou_Engineering2026.pdf",
+        "admissionUrl": "https://www.omu.ac.jp/admissions/assets/3_Sougou_Engineering2027.pdf",
         "selectionType": "comprehensive",
         "academicField": "engineering",
         "interviewTendency": {
@@ -4204,7 +4210,13 @@
               "retrievedAt": "2025-06"
             }
           }
-        ]
+        ],
+        "scheduleLastYear": {
+          "applicationStart": "2025-09-04",
+          "applicationEnd": "2025-09-08",
+          "examDate": "2025-10-04",
+          "resultDate": "2025-11-04"
+        }
       },
       {
         "id": "economics",
@@ -4377,16 +4389,16 @@
           {
             "stage": 3,
             "type": "interview",
-            "details": "志望理由書等に基づく面接 100点 (12:30〜)。2025/11/22 中百舌鳥キャンパス"
+            "details": "志望理由書等に基づく面接 100点 (12:30〜)。2026/11/21 中百舌鳥キャンパス"
           }
         ],
         "schedule": {
-          "applicationStart": "2025-10-06",
-          "applicationEnd": "2025-10-09",
-          "examDate": "2025-11-22",
-          "resultDate": "2025-12-05"
+          "applicationStart": "2026-10-05",
+          "applicationEnd": "2026-10-08",
+          "examDate": "2026-11-21",
+          "resultDate": "2026-12-04"
         },
-        "admissionUrl": "https://www.omu.ac.jp/admissions/assets/2_Sougou_SSS2026.pdf",
+        "admissionUrl": "https://www.omu.ac.jp/admissions/assets/2_Sougou_SSS2027.pdf",
         "selectionType": "comprehensive",
         "academicField": "interdisciplinary",
         "interviewTendency": {
@@ -4437,7 +4449,13 @@
               "retrievedAt": "2025-06"
             }
           }
-        ]
+        ],
+        "scheduleLastYear": {
+          "applicationStart": "2025-10-06",
+          "applicationEnd": "2025-10-09",
+          "examDate": "2025-11-22",
+          "resultDate": "2025-12-05"
+        }
       },
       {
         "id": "medicine-2",
@@ -5035,7 +5053,12 @@
           "retrievedAt": "2025-06"
         }
       }
-    ]
+    ],
+    "admissionSource": {
+      "url": "https://www.omu.ac.jp/admissions/ug/exam_info/special/integrate/",
+      "retrievedAt": "2026-07",
+      "note": "2027年度 総合型選抜の主要3学部(現代システム科学域 教育福祉学類/工学部 海洋システム工学科/医学部医学科)を学部別 学生募集要項(2_Sougou_SSS2027・3_Sougou_Engineering2027・4_Sougou_SR_med2027、いずれも2026年7月公表)に基づき2027年度へ更新。applicationStart/End=出願書類の郵送提出期間(簡易書留速達・必着)。examDate=第2次選考日、resultDate=第2次(最終)合格発表日。工学部は海洋システム工学科の日程(都市学科は別日程=要項参照)。医学部医学科の総合型選抜は1月出願・2月選考(11月出願の学校推薦型とは別日程)。既存の医学科は学校推薦型ラベルだが日程は総合型のため comprehensive に是正。その他の学部および学校推薦型選抜は2026年度データのまま(未更新)。旧年度日程は scheduleLastYear に退避。"
+    }
   },
   {
     "id": "yokohama-cu",
