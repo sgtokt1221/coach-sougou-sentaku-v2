@@ -67,8 +67,8 @@ export default function DocumentsPage() {
     isWizardIncomplete(d) ? `/student/documents/new?resume=${d.id}` : `/student/documents/${d.id}`;
 
   /**
-   * 作成途中書類を破棄する。DELETE 成功後は SWR キャッシュから当該書類を除外する。
-   * @param id 破棄対象の書類 ID
+   * 書類を削除する。DELETE 成功後は SWR キャッシュから当該書類を除外する。
+   * @param id 削除対象の書類 ID
    */
   const handleDiscard = async (id: string) => {
     setDiscardingId(id);
@@ -203,6 +203,7 @@ export default function DocumentsPage() {
                   <CardContent className="space-y-2">
                     {group.documents.map((doc) => {
                       const days = doc.deadline ? daysUntil(doc.deadline) : null;
+                      const labels = deleteLabels(doc);
                       return (
                         <div
                           key={doc.id}
@@ -242,55 +243,52 @@ export default function DocumentsPage() {
                           {doc.status === "final" && (
                             <CheckCircle className="size-5 text-emerald-500 shrink-0" />
                           )}
-                          {(() => {
-                            const labels = deleteLabels(doc);
-                            return confirmingDiscardId === doc.id ? (
-                              <div
-                                className="flex items-center gap-1 shrink-0"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <span className="text-xs text-muted-foreground">{labels.confirm}</span>
-                                <Button
-                                  variant="destructive"
-                                  size="sm"
-                                  disabled={discardingId === doc.id}
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    void handleDiscard(doc.id);
-                                  }}
-                                >
-                                  {discardingId === doc.id ? labels.running : `${labels.action}する`}
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  disabled={discardingId === doc.id}
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    setConfirmingDiscardId(null);
-                                  }}
-                                >
-                                  キャンセル
-                                </Button>
-                              </div>
-                            ) : (
+                          {confirmingDiscardId === doc.id ? (
+                            <div
+                              className="flex items-center gap-1 shrink-0"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <span className="text-xs text-muted-foreground">{labels.confirm}</span>
                               <Button
-                                variant="ghost"
+                                variant="destructive"
                                 size="sm"
-                                className="shrink-0 text-muted-foreground hover:text-destructive"
-                                aria-label={labels.action}
+                                disabled={discardingId === doc.id}
                                 onClick={(e) => {
                                   e.preventDefault();
                                   e.stopPropagation();
-                                  setConfirmingDiscardId(doc.id);
+                                  void handleDiscard(doc.id);
                                 }}
                               >
-                                <Trash2 className="size-4" />
+                                {discardingId === doc.id ? labels.running : `${labels.action}する`}
                               </Button>
-                            );
-                          })()}
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={discardingId === doc.id}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  setConfirmingDiscardId(null);
+                                }}
+                              >
+                                キャンセル
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="shrink-0 text-muted-foreground hover:text-destructive"
+                              aria-label={labels.action}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setConfirmingDiscardId(doc.id);
+                              }}
+                            >
+                              <Trash2 className="size-4" />
+                            </Button>
+                          )}
                         </div>
                       );
                     })}
