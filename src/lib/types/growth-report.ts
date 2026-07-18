@@ -120,6 +120,30 @@ export interface GrowthReport {
     latestNextAgenda?: string;
   };
 
+  /** 面談セッションの反映（要約・アクションアイテム・次回アジェンダ）。個別生成で付与。 */
+  sessionDigest?: {
+    totalCount: number;
+    sessions: {
+      date: string;
+      goal?: string;
+      summaryPoints: string[];
+      actionItems: string[];
+      nextAgenda?: string;
+    }[];
+  };
+  /** 活動実績の集計（直近分）。 */
+  activitySummary?: {
+    totalCount: number;
+    highlights: string[];
+  };
+  /** 出願書類の状況。 */
+  documentSummary?: {
+    total: number;
+    completed: number;
+    inProgress: number;
+    upcomingDeadlines: { title: string; deadline: string }[];
+  };
+
   // ---- 講師編集対応の拡張 (すべて任意、後方互換) ----
 
   /** AI が弱点・過去問から生成した類題 (講師編集可) */
