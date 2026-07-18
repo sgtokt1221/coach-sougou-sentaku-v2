@@ -62,12 +62,14 @@
   /* App chrome tokens (Header/BottomNav 実寸と一致させる。60px/5rem/76px を直書きしない) */
   --app-header-height: 3.5rem; /* Header.tsx = h-14 */
   --app-bottom-nav-height: 3.75rem; /* BottomNav.tsx = h-[60px] */
+  /* AppLayout が作業集中画面だけ 0px に上書きする、現在有効な下部ナビ高 */
+  --app-bottom-nav-offset: var(--app-bottom-nav-height);
   --app-safe-top: env(safe-area-inset-top, 0px);
   --app-safe-bottom: env(safe-area-inset-bottom, 0px);
   /* モバイル: BottomNav + safe area 分を確保しつつ、キーボード表示時(--kb)は差し引く */
   --app-mobile-bottom-inset: max(
     0px,
-    calc(var(--app-bottom-nav-height) + var(--app-safe-bottom) - var(--kb, 0px))
+    calc(var(--app-bottom-nav-offset) + var(--app-safe-bottom) - var(--kb, 0px))
   );
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
@@ -19,8 +19,16 @@ export function AppLayout({ children }: { children: ReactNode }) {
     // チャット入力欄が可視領域(キーボード直上)に収まる。未対応/PCは 100dvh フォールバック。
     <div
       data-app-layout
+      data-mobile-bottom-nav={mode.hideMobileBottomNav ? "hidden" : "visible"}
       className="flex overflow-hidden"
-      style={{ height: "var(--vvh, 100dvh)" }}
+      style={
+        {
+          height: "var(--vvh, 100dvh)",
+          "--app-bottom-nav-offset": mode.hideMobileBottomNav
+            ? "0px"
+            : "var(--app-bottom-nav-height)",
+        } as CSSProperties
+      }
     >
       <KeyboardInsetManager />
       <ForegroundNotifier />
@@ -47,7 +55,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           {children}
         </main>
       </div>
-      <BottomNav />
+      {!mode.hideMobileBottomNav && <BottomNav />}
     </div>
   );
 }

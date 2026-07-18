@@ -1782,7 +1782,7 @@ export default function EssayNewPage() {
                           左の <span className="font-medium">AIコーチ</span> に「お題から何を書けばいい?」と話しかけてみよう。気になる論点や書きたい方向を伝えると、一緒に整理してくれます。
                         </p>
                         <p className="lg:hidden text-amber-800 dark:text-amber-200">
-                          左下の <span className="font-medium">サポート</span> ボタンから AIコーチ を開いて「お題から何を書けばいい?」と話しかけてみよう。
+                          入力欄の上にある <span className="font-medium">執筆サポート</span> から AIコーチ を開いて「お題から何を書けばいい?」と話しかけてみよう。
                         </p>
                       </div>
                     </div>

@@ -7,6 +7,7 @@ import {
   Loader2,
   Sparkles,
   CornerDownLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -73,15 +74,26 @@ export function DocumentSectionCoachPanel(props: Props) {
         <PanelBody {...props} />
       </div>
 
-      {/* モバイル FAB */}
+      {/* モバイル: 編集フロー上端へ追従。入力中も常に開け、保存ボタンとは競合させない。 */}
       <Button
         type="button"
         onClick={() => setMobileOpen(true)}
-        className="lg:hidden fixed bottom-[calc(var(--app-bottom-nav-height)+0.75rem+env(safe-area-inset-bottom))] lg:bottom-6 left-6 z-40 h-14 rounded-full shadow-lg px-5 gap-2"
+        variant="outline"
+        className="sticky top-2 z-30 mb-3 flex min-h-11 w-full items-center justify-between gap-3 rounded-xl border-indigo-200 bg-indigo-50/95 px-4 text-indigo-900 shadow-md backdrop-blur hover:bg-indigo-100 dark:border-indigo-900 dark:bg-indigo-950/90 dark:text-indigo-100 dark:hover:bg-indigo-950 lg:hidden"
         aria-label="AIコーチを開く"
       >
-        <MessageSquare className="size-5" />
-        コーチ
+        <span className="flex min-w-0 items-center gap-3">
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-indigo-600 text-white">
+            <MessageSquare className="size-4" />
+          </span>
+          <span className="min-w-0 text-left">
+            <span className="block text-sm font-semibold">AIコーチに相談</span>
+            <span className="block truncate text-xs font-normal text-indigo-700 dark:text-indigo-300">
+              選択中のセクションを一緒に整理
+            </span>
+          </span>
+        </span>
+        <ChevronRight className="size-4 shrink-0" />
       </Button>
 
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>

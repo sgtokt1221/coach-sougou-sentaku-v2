@@ -7,7 +7,39 @@ export type AppLayoutMode = {
   scrollOwner: "main" | "page";
   /** モバイルで共通 Header を隠す（内部ヘッダーを使う画面用）。PC では常に表示 */
   hideMobileHeader?: boolean;
+  /** モバイルで BottomNav を隠す（作成・編集・練習など、作業に集中する画面用） */
+  hideMobileBottomNav?: boolean;
 };
+
+/**
+ * モバイル下部ナビを表示しない、作業集中型のルート。
+ *
+ * 一覧・履歴・結果ページではナビを維持し、文字入力や提出操作が主目的の
+ * 専用画面だけを明示的に列挙する。動的詳細ページは、実際に編集機能を持つ
+ * 書類・活動・宿題などに限定する。
+ */
+const MOBILE_FOCUS_ROUTE_PATTERNS = [
+  // 各ポータルの専用作成フロー
+  /^\/(?:student|admin|superadmin)\/.+\/new$/,
+  // 生徒の小論文・面接・スキル練習
+  /^\/student\/essay\/(?:choco|logic-drill|summary-drill)$/,
+  /^\/student\/essay\/lectures\/[^/]+$/,
+  /^\/student\/interview\/drill$/,
+  /^\/student\/interview\/session\/[^/]+$/,
+  // 生徒の編集・入力ワーク
+  /^\/student\/documents\/(?!checklist$|new$)[^/]+$/,
+  /^\/student\/activities\/[^/]+$/,
+  /^\/student\/homework\/[^/]+$/,
+  /^\/student\/(?:self-analysis|mbti|story-check)$/,
+  /^\/student\/research\/(?:consent|session)$/,
+  /^\/student\/universities\/explore$/,
+  // 管理者の専用編集画面
+  /^\/admin\/universities\/[^/]+$/,
+] as const;
+
+function hidesMobileBottomNav(pathname: string): boolean {
+  return MOBILE_FOCUS_ROUTE_PATTERNS.some((pattern) => pattern.test(pathname));
+}
 
 /**
  * pathname から表示モードを判定する。
@@ -19,14 +51,22 @@ export type AppLayoutMode = {
  * @returns スクロール所有者とモバイルヘッダー表示の設定
  */
 export function getAppLayoutMode(pathname: string): AppLayoutMode {
+  const hideMobileBottomNav = hidesMobileBottomNav(pathname);
+
   // 純チャット2ページ（Task 7）は内部スクロール（page モード）に変換済み。
   // 生徒フィードバック / 管理者メッセージ詳細
   if (pathname === "/student/feedback") return { scrollOwner: "page" };
   if (/^\/admin\/messages\/[^/]+$/.test(pathname)) return { scrollOwner: "page" };
   // 面接セッション: 内部でスクロール、モバイルは共通ヘッダー非表示（内部ヘッダー使用）
-  if (/^\/student\/interview\/session\//.test(pathname)) return { scrollOwner: "page", hideMobileHeader: true };
+  if (/^\/student\/interview\/session\//.test(pathname)) {
+    return {
+      scrollOwner: "page",
+      hideMobileHeader: true,
+      hideMobileBottomNav: true,
+    };
+  }
   // P0 残り（ページ変換後にコメント解除）:
   // 講師の生徒メッセージ詳細（複雑な詳細ページのため未変換）
   // if (/^\/teacher\/students\/[^/]+$/.test(pathname)) return { scrollOwner: "page" };
-  return { scrollOwner: "main" };
+  return { scrollOwner: "main", hideMobileBottomNav };
 }

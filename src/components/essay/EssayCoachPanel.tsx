@@ -168,14 +168,26 @@ export function EssayCoachPanel(props: EssayCoachPanelProps) {
         <EssayCoachPanelBody {...props} />
       </div>
 
-      {/* モバイル: FAB + Sheet (lg 未満) */}
+      {/* モバイル: 入力フロー上端へ追従。執筆中も常に開け、下部の保存・添削操作とは競合させない。 */}
       <Button
+        type="button"
         onClick={() => setMobileOpen(true)}
-        className="lg:hidden fixed bottom-[calc(var(--app-bottom-nav-height)+0.75rem+env(safe-area-inset-bottom))] lg:bottom-6 left-6 z-40 h-14 rounded-full shadow-lg cursor-pointer px-5 gap-2"
+        variant="outline"
+        className="sticky top-2 z-30 mb-3 flex min-h-11 w-full items-center justify-between gap-3 rounded-xl border-teal-200 bg-teal-50/95 px-4 text-teal-900 shadow-md backdrop-blur hover:bg-teal-100 dark:border-teal-900 dark:bg-teal-950/90 dark:text-teal-100 dark:hover:bg-teal-950 lg:hidden"
         aria-label="執筆サポートを開く"
       >
-        <MessageSquare className="size-5" />
-        <span className="hidden sm:inline text-sm">サポート</span>
+        <span className="flex min-w-0 items-center gap-3">
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-teal-600 text-white">
+            <MessageSquare className="size-4" />
+          </span>
+          <span className="min-w-0 text-left">
+            <span className="block text-sm font-semibold">執筆サポート</span>
+            <span className="block truncate text-xs font-normal text-teal-700 dark:text-teal-300">
+              AI相談・資料・APを確認
+            </span>
+          </span>
+        </span>
+        <ChevronRight className="size-4 shrink-0" />
       </Button>
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
         <SheetContent
