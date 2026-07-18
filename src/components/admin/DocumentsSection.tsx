@@ -244,6 +244,9 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
                               }
                             >
                               AI度:{doc.aiLikeness.score}（{AI_LIKENESS_LEVEL_LABELS[doc.aiLikeness.level]}）
+                              {doc.aiLikeness.checkedWordCount !== doc.wordCount && (
+                                <span className="text-muted-foreground">（要再チェック）</span>
+                              )}
                             </span>
                           )}
                         </td>
