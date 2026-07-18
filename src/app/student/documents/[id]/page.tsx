@@ -212,12 +212,14 @@ export default function DocumentEditorPage() {
   async function commitStatus(status: DocumentStatus) {
     if (!doc) return;
     try {
-      await authFetch(`/api/documents/${id}`, {
+      const res = await authFetch(`/api/documents/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
       });
-      setDoc({ ...doc, status });
+      if (res.ok) {
+        setDoc({ ...doc, status });
+      }
     } catch {
       // silent
     }
