@@ -42,6 +42,8 @@ export interface Document {
   targetWordCount?: number;
   versions: DocumentVersion[];
   status: DocumentStatus;
+  /** AIっぽさ判定の最新結果 */
+  aiLikeness?: DocumentAiLikeness;
   /** 管理者による承認/差し戻しレビュー状態 */
   review?: DocumentReview;
   deadline?: string;
@@ -103,4 +105,41 @@ export const DOCUMENT_REVIEW_LABELS: Record<DocumentReviewState, string> = {
   approved: "承認済み",
   revision_requested: "差し戻し（要修正）",
   resubmitted: "再確認待ち",
+};
+
+export type DocumentAiLikenessLevel = "low" | "medium" | "high";
+
+/**
+ * 下書きの「AIっぽさ」判定結果（最新1件のみ保持）。
+ * score が高いほどAIっぽい。level は score から機械的に導出する。
+ */
+export interface DocumentAiLikeness {
+  /** 0-100。高いほどAIっぽい */
+  score: number;
+  /** low 0-39 / medium 40-69 / high 70-100 */
+  level: DocumentAiLikenessLevel;
+  /** AIっぽいと判定した根拠（生徒向けの平易な日本語） */
+  reasons: string[];
+  /** 人間らしくする具体的な直し方 */
+  suggestions: string[];
+  /** 判定実行時刻（ISO文字列） */
+  checkedAt: string;
+  /** 判定時の本文文字数。現在の wordCount と異なれば「再チェック推奨」を出す */
+  checkedWordCount: number;
+}
+
+/** score から AIっぽさ level を導出する。境界: 40, 70。 */
+export function aiLikenessLevel(score: number): DocumentAiLikenessLevel {
+  if (score >= 70) return "high";
+  if (score >= 40) return "medium";
+  return "low";
+}
+
+/** 提出（draft→in_review）時にソフト警告を出す AIっぽさスコアの閾値。 */
+export const AI_LIKENESS_SUBMIT_THRESHOLD = 60;
+
+export const AI_LIKENESS_LEVEL_LABELS: Record<DocumentAiLikenessLevel, string> = {
+  low: "人間らしい",
+  medium: "要改善",
+  high: "AIっぽい",
 };
