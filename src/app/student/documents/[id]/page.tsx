@@ -29,6 +29,7 @@ import { DOCUMENT_STATUS_LABELS, AI_LIKENESS_LEVEL_LABELS, AI_LIKENESS_SUBMIT_TH
 import { DocumentReviewBadge } from "@/components/documents/DocumentReviewBadge";
 import { useAutosave, type AutosaveStatus } from "@/hooks/useAutosave";
 import { authFetch } from "@/lib/api/client";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -181,9 +182,12 @@ export default function DocumentEditorPage() {
       if (res.ok) {
         const data = await res.json();
         setFeedback(data.feedback);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        toast.error(err?.error || "AI添削に失敗しました");
       }
     } catch {
-      // silent
+      toast.error("AI添削に失敗しました");
     } finally {
       setReviewing(false);
     }
@@ -201,9 +205,12 @@ export default function DocumentEditorPage() {
       if (res.ok) {
         const data = await res.json();
         setAiLikeness(data.aiLikeness);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        toast.error(err?.error || "AIっぽさチェックに失敗しました");
       }
     } catch {
-      // silent
+      toast.error("AIっぽさチェックに失敗しました");
     } finally {
       setAiChecking(false);
     }

@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
 import { requireFeature } from "@/lib/api/subscription";
 import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
-import { buildAiLikenessPrompt } from "@/lib/ai/prompts/ai-likeness";
-import { aiLikenessLevel } from "@/lib/types/document";
-import type { DocumentAiLikeness } from "@/lib/types/document";
+import { checkAiLikeness } from "@/lib/ai/ai-likeness";
 
 /**
  * 指定書類の本文の「AIっぽさ」を判定し、結果を documents/{id}.aiLikeness に保存して返す。
@@ -51,46 +48,11 @@ export async function POST(
       );
     }
 
-    const client = new Anthropic();
-    const systemPrompt = buildAiLikenessPrompt(
-      data?.type ?? "出願書類",
-      data?.universityName ?? "未指定",
-      data?.facultyName ?? "未指定"
-    );
-
-    const response = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 2048,
-      system: systemPrompt,
-      messages: [{ role: "user", content }],
+    const aiLikeness = await checkAiLikeness(content, {
+      documentType: data?.type ?? "出願書類",
+      universityName: data?.universityName ?? "未指定",
+      facultyName: data?.facultyName ?? "未指定",
     });
-
-    const rawText = response.content[0].type === "text" ? response.content[0].text : "";
-    const jsonMatch =
-      rawText.match(/```json\s*([\s\S]*?)\s*```/) || rawText.match(/(\{[\s\S]*\})/);
-    if (!jsonMatch) {
-      console.error("Could not parse AI likeness response:", rawText);
-      return NextResponse.json({ error: "AIレスポンスの解析に失敗しました" }, { status: 500 });
-    }
-
-    const parsed = JSON.parse(jsonMatch[1]);
-    const rawScore = Number(parsed.score);
-    if (!Number.isFinite(rawScore)) {
-      console.error("AI likeness score missing/invalid:", rawText);
-      return NextResponse.json(
-        { error: "AIっぽさの判定結果を取得できませんでした" },
-        { status: 500 }
-      );
-    }
-    const score = Math.max(0, Math.min(100, Math.round(rawScore)));
-    const aiLikeness: DocumentAiLikeness = {
-      score,
-      level: aiLikenessLevel(score),
-      reasons: Array.isArray(parsed.reasons) ? parsed.reasons.slice(0, 8).map(String) : [],
-      suggestions: Array.isArray(parsed.suggestions) ? parsed.suggestions.slice(0, 8).map(String) : [],
-      checkedAt: new Date().toISOString(),
-      checkedWordCount: content.length,
-    };
 
     await docRef.update({ aiLikeness });
 
