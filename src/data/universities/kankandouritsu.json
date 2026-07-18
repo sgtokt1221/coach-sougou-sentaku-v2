@@ -570,10 +570,10 @@
           }
         ],
         "schedule": {
-          "applicationStart": "2026-04-10",
-          "applicationEnd": "2026-08-04",
-          "examDate": "",
-          "resultDate": ""
+          "applicationStart": "2026-09-01",
+          "applicationEnd": "2026-09-07",
+          "examDate": "2026-10-18",
+          "resultDate": "2026-11-04"
         },
         "admissionUrl": "https://www.ritsumei.ac.jp/uniteprogram/",
         "selectionType": "comprehensive",
@@ -610,13 +610,19 @@
           }
         ],
         "schedule": {
+          "applicationStart": "2026-09-01",
+          "applicationEnd": "2026-09-07",
+          "examDate": "2026-10-18",
+          "resultDate": "2026-11-04"
+        },
+        "admissionUrl": "https://admission.ritsumei.ac.jp/",
+        "selectionType": "comprehensive",
+        "scheduleLastYear": {
           "applicationStart": "2025-09-01",
           "applicationEnd": "2025-09-08",
           "examDate": "2025-10-19",
           "resultDate": "2025-11-05"
-        },
-        "admissionUrl": "https://admission.ritsumei.ac.jp/",
-        "selectionType": "comprehensive"
+        }
       },
       {
         "id": "foodmanagement",
@@ -646,10 +652,10 @@
           }
         ],
         "schedule": {
-          "applicationStart": "2026-04-10",
-          "applicationEnd": "2026-08-04",
-          "examDate": "",
-          "resultDate": ""
+          "applicationStart": "2026-09-01",
+          "applicationEnd": "2026-09-07",
+          "examDate": "2026-10-18",
+          "resultDate": "2026-11-04"
         },
         "admissionUrl": "https://www.ritsumei.ac.jp/uniteprogram/admission/gast/",
         "selectionType": "comprehensive",
@@ -688,10 +694,10 @@
           }
         ],
         "schedule": {
-          "applicationStart": "2026-04-10",
-          "applicationEnd": "2026-09-08",
-          "examDate": "",
-          "resultDate": ""
+          "applicationStart": "2026-10-16",
+          "applicationEnd": "2026-10-23",
+          "examDate": "2026-11-29",
+          "resultDate": "2026-12-10"
         },
         "admissionUrl": "https://www.ritsumei.ac.jp/uniteprogram/",
         "selectionType": "comprehensive",
@@ -728,13 +734,19 @@
           }
         ],
         "schedule": {
+          "applicationStart": "2026-09-01",
+          "applicationEnd": "2026-09-07",
+          "examDate": "2026-10-18",
+          "resultDate": "2026-11-04"
+        },
+        "admissionUrl": "https://admission.ritsumei.ac.jp/",
+        "selectionType": "comprehensive",
+        "scheduleLastYear": {
           "applicationStart": "2025-09-01",
           "applicationEnd": "2025-09-08",
           "examDate": "2025-10-19",
           "resultDate": "2025-11-05"
-        },
-        "admissionUrl": "https://admission.ritsumei.ac.jp/",
-        "selectionType": "comprehensive"
+        }
       },
       {
         "id": "general-2",
@@ -762,13 +774,19 @@
           }
         ],
         "schedule": {
+          "applicationStart": "2026-09-01",
+          "applicationEnd": "2026-09-07",
+          "examDate": "2026-10-18",
+          "resultDate": "2026-11-04"
+        },
+        "admissionUrl": "https://admission.ritsumei.ac.jp/",
+        "selectionType": "comprehensive",
+        "scheduleLastYear": {
           "applicationStart": "2025-09-01",
           "applicationEnd": "2025-09-08",
           "examDate": "2025-10-19",
           "resultDate": "2025-11-05"
-        },
-        "admissionUrl": "https://admission.ritsumei.ac.jp/",
-        "selectionType": "comprehensive"
+        }
       },
       {
         "id": "informationscience-eng",
@@ -798,10 +816,10 @@
           }
         ],
         "schedule": {
-          "applicationStart": "2026-04-10",
-          "applicationEnd": "2026-09-08",
-          "examDate": "",
-          "resultDate": ""
+          "applicationStart": "2026-10-16",
+          "applicationEnd": "2026-10-23",
+          "examDate": "2026-11-29",
+          "resultDate": "2026-12-10"
         },
         "admissionUrl": "https://www.ritsumei.ac.jp/uniteprogram/",
         "selectionType": "comprehensive",
@@ -838,13 +856,19 @@
           }
         ],
         "schedule": {
+          "applicationStart": "2026-09-01",
+          "applicationEnd": "2026-09-07",
+          "examDate": "2026-10-18",
+          "resultDate": "2026-11-04"
+        },
+        "admissionUrl": "https://admission.ritsumei.ac.jp/",
+        "selectionType": "comprehensive",
+        "scheduleLastYear": {
           "applicationStart": "2025-09-01",
           "applicationEnd": "2025-09-08",
           "examDate": "2025-10-18",
           "resultDate": "2025-11-05"
-        },
-        "admissionUrl": "https://admission.ritsumei.ac.jp/",
-        "selectionType": "comprehensive"
+        }
       },
       {
         "id": "global-liberal-arts",
@@ -867,13 +891,19 @@
           }
         ],
         "schedule": {
+          "applicationStart": "2026-09-18",
+          "applicationEnd": "2026-09-28",
+          "examDate": "",
+          "resultDate": "2026-11-04"
+        },
+        "admissionUrl": "https://admission.ritsumei.ac.jp/",
+        "selectionType": "comprehensive",
+        "scheduleLastYear": {
           "applicationStart": "2025-09-22",
           "applicationEnd": "2025-09-29",
           "examDate": "",
           "resultDate": "2025-11-05"
-        },
-        "admissionUrl": "https://admission.ritsumei.ac.jp/",
-        "selectionType": "comprehensive"
+        }
       },
       {
         "id": "science-eng",
@@ -897,13 +927,19 @@
           }
         ],
         "schedule": {
+          "applicationStart": "2026-10-16",
+          "applicationEnd": "2026-10-23",
+          "examDate": "2026-11-29",
+          "resultDate": "2026-12-10"
+        },
+        "admissionUrl": "https://admission.ritsumei.ac.jp/",
+        "selectionType": "comprehensive",
+        "scheduleLastYear": {
           "applicationStart": "2025-10-17",
           "applicationEnd": "2025-10-24",
           "examDate": "2025-11-30",
           "resultDate": "2025-12-10"
-        },
-        "admissionUrl": "https://admission.ritsumei.ac.jp/",
-        "selectionType": "comprehensive"
+        }
       },
       {
         "id": "sports",
@@ -933,10 +969,10 @@
           }
         ],
         "schedule": {
-          "applicationStart": "2026-04-10",
-          "applicationEnd": "2026-08-04",
-          "examDate": "",
-          "resultDate": ""
+          "applicationStart": "2026-09-01",
+          "applicationEnd": "2026-09-07",
+          "examDate": "2026-10-18",
+          "resultDate": "2026-11-04"
         },
         "admissionUrl": "https://www.ritsumei.ac.jp/uniteprogram/",
         "selectionType": "comprehensive",
@@ -975,10 +1011,10 @@
           }
         ],
         "schedule": {
-          "applicationStart": "2026-04-10",
-          "applicationEnd": "2026-08-04",
-          "examDate": "",
-          "resultDate": ""
+          "applicationStart": "2026-09-01",
+          "applicationEnd": "2026-09-07",
+          "examDate": "2026-10-18",
+          "resultDate": "2026-11-04"
         },
         "admissionUrl": "https://www.ritsumei.ac.jp/uniteprogram/",
         "selectionType": "comprehensive",
@@ -1017,10 +1053,10 @@
           }
         ],
         "schedule": {
-          "applicationStart": "2026-04-10",
-          "applicationEnd": "2026-09-08",
-          "examDate": "",
-          "resultDate": ""
+          "applicationStart": "2026-10-16",
+          "applicationEnd": "2026-10-23",
+          "examDate": "2026-11-29",
+          "resultDate": "2026-12-10"
         },
         "admissionUrl": "https://www.ritsumei.ac.jp/uniteprogram/admission/ph/",
         "selectionType": "comprehensive",
@@ -1059,10 +1095,10 @@
           }
         ],
         "schedule": {
-          "applicationStart": "2026-04-10",
-          "applicationEnd": "2026-08-04",
-          "examDate": "",
-          "resultDate": ""
+          "applicationStart": "2026-09-01",
+          "applicationEnd": "2026-09-07",
+          "examDate": "2026-10-18",
+          "resultDate": "2026-11-04"
         },
         "admissionUrl": "https://www.ritsumei.ac.jp/uniteprogram/",
         "selectionType": "comprehensive",
@@ -1101,10 +1137,10 @@
           }
         ],
         "schedule": {
-          "applicationStart": "2026-04-10",
-          "applicationEnd": "2026-08-04",
-          "examDate": "",
-          "resultDate": ""
+          "applicationStart": "2026-09-01",
+          "applicationEnd": "2026-09-07",
+          "examDate": "2026-10-18",
+          "resultDate": "2026-11-04"
         },
         "admissionUrl": "https://www.ritsumei.ac.jp/uniteprogram/",
         "selectionType": "comprehensive",
@@ -1187,10 +1223,10 @@
           }
         ],
         "schedule": {
-          "applicationStart": "2026-04-10",
-          "applicationEnd": "2026-09-08",
-          "examDate": "",
-          "resultDate": ""
+          "applicationStart": "2026-09-01",
+          "applicationEnd": "2026-09-07",
+          "examDate": "2026-10-18",
+          "resultDate": "2026-11-04"
         },
         "admissionUrl": "https://www.ritsumei.ac.jp/uniteprogram/",
         "selectionType": "comprehensive"
@@ -1198,9 +1234,9 @@
     ],
     "prefecture": "京都府",
     "admissionSource": {
-      "url": "https://www.ritsumei.ac.jp/uniteprogram/assets/file/2026uniteprogram_youkou.pdf",
-      "retrievedAt": "2026-06",
-      "note": "2026年度 立命館大学 UNITE Program®(学部指定単元AI学習プログラム)出願要項より。UNITE対象10学部を総合型選抜(AO選抜/UNITE Program方式)に正規化。募集人員・選考方法は要項上『現時点での予定』値。AO選抜の最終的な試験日程・詳細は2026年6月頃公開の入学試験要項で要確認(本データの examDate/resultDate は未公表のため空)。applicationEnd は UNITE Program 出願期限(指定単元の学習修了が AO 出願資格)。"
+      "url": "https://admission.ritsumei.ac.jp/assets/file/2027/admission/ao/schedule/ao-date-2027.pdf",
+      "retrievedAt": "2026-07",
+      "note": "2027年度(2027年4月入学) AO選抜入学試験 日程一覧(公式PDF)より各学部を代表方式で正規化。examDate=最終選考日(2次含む)、resultDate=合格発表日。9月出願グループ(出願9/1-9/7・試験10/18・発表11/4): 産業社会/国際関係/文/経営/政策科学/総合心理/映像/経済/スポーツ健康/食マネジメント/デザインアート。10月出願グループ(出願10/16-10/23・試験11/29・発表12/10): 理工/生命科学/薬/情報理工。グローバル教養は書類選考のみ(試験日なし・発表11/4)。法学部はAO日程未掲載のため据置。旧年度日程は scheduleLastYear に退避。募集人員・評定・方式詳細は入学試験要項で要確認。"
     }
   },
   {
