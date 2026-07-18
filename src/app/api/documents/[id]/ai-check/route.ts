@@ -74,7 +74,15 @@ export async function POST(
     }
 
     const parsed = JSON.parse(jsonMatch[1]);
-    const score = Math.max(0, Math.min(100, Math.round(Number(parsed.score) || 0)));
+    const rawScore = Number(parsed.score);
+    if (!Number.isFinite(rawScore)) {
+      console.error("AI likeness score missing/invalid:", rawText);
+      return NextResponse.json(
+        { error: "AIっぽさの判定結果を取得できませんでした" },
+        { status: 500 }
+      );
+    }
+    const score = Math.max(0, Math.min(100, Math.round(rawScore)));
     const aiLikeness: DocumentAiLikeness = {
       score,
       level: aiLikenessLevel(score),
