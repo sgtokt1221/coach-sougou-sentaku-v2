@@ -73,6 +73,18 @@
   );
 }
 
+/* --app-mobile-bottom-inset は :root で定義すると、式内の var(--app-bottom-nav-offset)
+   が :root の既定値(ナビ高)で固定計算され、AppLayout が要素に載せる 0px 上書き
+   (作業集中/没入=ナビ非表示ページ)が効かない。ここで、offset を上書きする張本人の
+   [data-app-layout] 上で inset を再計算し、要素ローカルの offset を参照させる。
+   これでナビ非表示ページはカード下の余分な下余白(ナビ高ぶん)が消え、safe-area のみになる。 */
+[data-app-layout] {
+  --app-mobile-bottom-inset: max(
+    0px,
+    calc(var(--app-bottom-nav-offset) + var(--app-safe-bottom) - var(--kb, 0px))
+  );
+}
+
 @media (min-width: 1024px) {
   :root {
     /* PC は BottomNav 非表示。下部インセット不要 */
