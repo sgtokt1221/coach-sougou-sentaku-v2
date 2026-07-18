@@ -47,6 +47,21 @@ export default function DocumentsPage() {
   const isWizardIncomplete = (d: Document) =>
     d.content === "" && d.wizardState !== undefined && d.wizardState.completed === false;
 
+  /** 削除ボタン・確認文の文言を書類の状態で出し分ける。 */
+  const deleteLabels = (d: Document) => {
+    if (isWizardIncomplete(d)) {
+      return { action: "破棄", confirm: "破棄しますか？", running: "破棄中..." };
+    }
+    if (d.status === "in_review" || d.status === "reviewed" || d.status === "final") {
+      return {
+        action: "削除",
+        confirm: "提出済みの書類です。削除すると元に戻せません。削除しますか？",
+        running: "削除中...",
+      };
+    }
+    return { action: "削除", confirm: "削除しますか？", running: "削除中..." };
+  };
+
   /** カードのリンク先。作成途中はウィザード再開、それ以外は書類詳細へ。 */
   const hrefFor = (d: Document) =>
     isWizardIncomplete(d) ? `/student/documents/new?resume=${d.id}` : `/student/documents/${d.id}`;
@@ -227,13 +242,14 @@ export default function DocumentsPage() {
                           {doc.status === "final" && (
                             <CheckCircle className="size-5 text-emerald-500 shrink-0" />
                           )}
-                          {isWizardIncomplete(doc) &&
-                            (confirmingDiscardId === doc.id ? (
+                          {(() => {
+                            const labels = deleteLabels(doc);
+                            return confirmingDiscardId === doc.id ? (
                               <div
                                 className="flex items-center gap-1 shrink-0"
                                 onClick={(e) => e.stopPropagation()}
                               >
-                                <span className="text-xs text-muted-foreground">破棄しますか？</span>
+                                <span className="text-xs text-muted-foreground">{labels.confirm}</span>
                                 <Button
                                   variant="destructive"
                                   size="sm"
@@ -244,7 +260,7 @@ export default function DocumentsPage() {
                                     void handleDiscard(doc.id);
                                   }}
                                 >
-                                  {discardingId === doc.id ? "破棄中..." : "破棄する"}
+                                  {discardingId === doc.id ? labels.running : `${labels.action}する`}
                                 </Button>
                                 <Button
                                   variant="outline"
@@ -264,7 +280,7 @@ export default function DocumentsPage() {
                                 variant="ghost"
                                 size="sm"
                                 className="shrink-0 text-muted-foreground hover:text-destructive"
-                                aria-label="破棄"
+                                aria-label={labels.action}
                                 onClick={(e) => {
                                   e.preventDefault();
                                   e.stopPropagation();
@@ -273,7 +289,8 @@ export default function DocumentsPage() {
                               >
                                 <Trash2 className="size-4" />
                               </Button>
-                            ))}
+                            );
+                          })()}
                         </div>
                       );
                     })}
