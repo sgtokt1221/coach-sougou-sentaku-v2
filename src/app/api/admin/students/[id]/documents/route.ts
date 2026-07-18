@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireRole, scopeByOrganization } from "@/lib/api/auth";
 import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
 import { adminDb } from "@/lib/firebase/admin";
-import type { DocumentStatus, DocumentReview } from "@/lib/types/document";
+import type { DocumentStatus, DocumentReview, DocumentAiLikeness } from "@/lib/types/document";
 
 interface DocumentListItem {
   id: string;
@@ -20,6 +20,7 @@ interface DocumentListItem {
     structure: number;
     originality: number;
   };
+  aiLikeness?: DocumentAiLikeness;
 }
 
 export async function GET(
@@ -90,6 +91,7 @@ export async function GET(
               originality: feedback.originalityScore,
             }
           : undefined,
+        aiLikeness: (data.aiLikeness as DocumentAiLikeness) ?? undefined,
       };
     });
 

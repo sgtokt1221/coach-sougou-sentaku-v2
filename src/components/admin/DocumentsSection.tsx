@@ -20,7 +20,8 @@ import { useAuthSWR } from "@/lib/api/swr";
 import { authFetch } from "@/lib/api/client";
 import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
 import { DocumentReviewBadge } from "@/components/documents/DocumentReviewBadge";
-import type { DocumentStatus, DocumentReview } from "@/lib/types/document";
+import type { DocumentStatus, DocumentReview, DocumentAiLikeness } from "@/lib/types/document";
+import { AI_LIKENESS_LEVEL_LABELS } from "@/lib/types/document";
 
 interface DocumentListItem {
   id: string;
@@ -38,6 +39,7 @@ interface DocumentListItem {
     structure: number;
     originality: number;
   };
+  aiLikeness?: DocumentAiLikeness;
 }
 
 interface DocumentDetail {
@@ -229,6 +231,20 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
                             </span>
                           ) : (
                             <span className="text-xs text-muted-foreground">-</span>
+                          )}
+                          {doc.aiLikeness && (
+                            <span
+                              className={
+                                "block text-[10px] mt-0.5 " +
+                                (doc.aiLikeness.level === "high"
+                                  ? "text-rose-500"
+                                  : doc.aiLikeness.level === "medium"
+                                    ? "text-amber-500"
+                                    : "text-emerald-500")
+                              }
+                            >
+                              AI度:{doc.aiLikeness.score}（{AI_LIKENESS_LEVEL_LABELS[doc.aiLikeness.level]}）
+                            </span>
                           )}
                         </td>
                         <td className="px-4 py-3 text-center hidden md:table-cell">
