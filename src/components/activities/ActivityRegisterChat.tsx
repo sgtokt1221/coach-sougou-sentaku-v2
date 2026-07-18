@@ -17,10 +17,22 @@ import {
 import { Send, Loader2, CheckCircle, RotateCcw } from "lucide-react";
 import type { ActivityCategory, StructuredActivityData } from "@/lib/types/activity";
 import { ACTIVITY_CATEGORY_LABELS } from "@/lib/types/activity";
+import { usePersistentDraft } from "@/hooks/usePersistentDraft";
+import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
 
 interface ChatMessage {
   role: "user" | "ai";
   content: string;
+}
+
+interface ActivityInterviewDraft {
+  messages: ChatMessage[];
+  input: string;
+  structuredData: StructuredActivityData | null;
+  title: string;
+  category: ActivityCategory | "";
+  periodStart: string;
+  periodEnd: string;
 }
 
 const GREETING =
@@ -40,6 +52,27 @@ export function ActivityRegisterChat({ onSaved }: { onSaved?: () => void }) {
   const [periodStart, setPeriodStart] = useState("");
   const [periodEnd, setPeriodEnd] = useState("");
   const [saving, setSaving] = useState(false);
+
+  const draftValue: ActivityInterviewDraft = {
+    messages, input, structuredData, title, category, periodStart, periodEnd,
+  };
+  const { status, restored, lastSavedAt, saveNow, clearDraft } = usePersistentDraft({
+    key: "activity-interview-new",
+    value: draftValue,
+    onRestore: (draft) => {
+      setMessages(draft.messages);
+      setInput(draft.input);
+      setStructuredData(draft.structuredData);
+      setTitle(draft.title);
+      setCategory(draft.category);
+      setPeriodStart(draft.periodStart);
+      setPeriodEnd(draft.periodEnd);
+    },
+    hasContent: (draft) => draft.messages.length > 0 || Boolean(
+      draft.input.trim() || draft.structuredData || draft.title.trim() ||
+      draft.category || draft.periodStart || draft.periodEnd
+    ),
+  });
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -95,6 +128,7 @@ export function ActivityRegisterChat({ onSaved }: { onSaved?: () => void }) {
     setCategory("");
     setPeriodStart("");
     setPeriodEnd("");
+    void clearDraft();
   }
 
   async function handleSave() {
@@ -133,6 +167,12 @@ export function ActivityRegisterChat({ onSaved }: { onSaved?: () => void }) {
   if (structuredData) {
     return (
       <div className="space-y-4">
+        <DraftSaveIndicator
+          status={status}
+          restored={restored}
+          lastSavedAt={lastSavedAt}
+          onSaveNow={() => void saveNow()}
+        />
         <Card>
           <CardContent className="space-y-4 p-4">
             <p className="flex items-center gap-2 text-sm font-semibold">
@@ -227,8 +267,15 @@ export function ActivityRegisterChat({ onSaved }: { onSaved?: () => void }) {
 
   // ── チャットビュー ──
   return (
-    <Card>
-      <CardContent className="p-0">
+    <div className="space-y-2">
+      <DraftSaveIndicator
+        status={status}
+        restored={restored}
+        lastSavedAt={lastSavedAt}
+        onSaveNow={() => void saveNow()}
+      />
+      <Card>
+        <CardContent className="p-0">
         <div ref={scrollRef} className="h-[420px] overflow-y-auto px-4 py-4 space-y-3">
           <div className="flex justify-start">
             <div className="max-w-[85%] rounded-2xl rounded-tl-sm bg-muted px-4 py-2.5 text-sm leading-relaxed">
@@ -280,7 +327,8 @@ export function ActivityRegisterChat({ onSaved }: { onSaved?: () => void }) {
             </Button>
           </div>
         </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

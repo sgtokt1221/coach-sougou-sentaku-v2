@@ -13,6 +13,8 @@ import type { InterviewMessage } from "@/lib/types/interview";
 import { INTERVIEW_SKILL_CHECK_MAX_TURNS } from "@/lib/types/interview-skill-check";
 import { toast } from "sonner";
 import { RealtimeSkillCheck } from "@/components/interview-skill-check/RealtimeSkillCheck";
+import { usePersistentDraft } from "@/hooks/usePersistentDraft";
+import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
 
 /**
  * 面接スキルチェック受験UI（テキストチャット版）
@@ -28,11 +30,27 @@ export default function InterviewSkillCheckNew() {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [starting, setStarting] = useState(false);
   const [isFinal, setIsFinal] = useState(false);
   const [elapsedSec, setElapsedSec] = useState(0);
   const startedRef = useRef<number>(0);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  const { status, ready, restored, lastSavedAt, saveNow, clearDraft } = usePersistentDraft({
+    key: "interview-skill-check-text",
+    value: { mode, sessionId, messages, input, isFinal },
+    onRestore: (draft) => {
+      if (draft.mode !== "text" || !draft.sessionId) return;
+      setMode("text");
+      setSessionId(draft.sessionId);
+      setMessages(draft.messages);
+      setInput(draft.input);
+      setIsFinal(draft.isFinal);
+      startedRef.current = Date.now();
+    },
+    hasContent: (draft) => draft.mode === "text" && Boolean(
+      draft.sessionId && (draft.messages.length > 0 || draft.input.trim())
+    ),
+  });
 
   const studentTurns = messages.filter((m) => m.role === "student").length;
 
@@ -50,12 +68,11 @@ export default function InterviewSkillCheckNew() {
 
   // テキストモード選択時にセッション開始（音声モードは RealtimeSkillCheck が自前で開始）
   useEffect(() => {
-    if (mode === "text" && !sessionId) void handleStart();
+    if (ready && mode === "text" && !sessionId) void handleStart();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode]);
+  }, [mode, ready]);
 
   async function handleStart() {
-    setStarting(true);
     try {
       const res = await authFetch("/api/interview-skill-check/start", { method: "POST" });
       if (!res.ok) throw new Error("開始失敗");
@@ -65,8 +82,6 @@ export default function InterviewSkillCheckNew() {
       startedRef.current = Date.now();
     } catch {
       toast.error("セッション開始に失敗しました");
-    } finally {
-      setStarting(false);
     }
   }
 
@@ -111,6 +126,7 @@ export default function InterviewSkillCheckNew() {
         throw new Error(body.error ?? "採点失敗");
       }
       const data = await res.json();
+      await clearDraft();
       toast.success("採点が完了しました");
       try {
         sessionStorage.setItem("interviewSkillCheckResult", JSON.stringify(data.result));
@@ -216,6 +232,13 @@ export default function InterviewSkillCheckNew() {
           </span>
         </div>
       </div>
+
+      <DraftSaveIndicator
+        status={status}
+        restored={restored}
+        lastSavedAt={lastSavedAt}
+        onSaveNow={() => void saveNow()}
+      />
 
       <Card className="min-h-[50vh]">
         <CardContent className="space-y-4 py-4">

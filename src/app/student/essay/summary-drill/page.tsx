@@ -26,6 +26,8 @@ import { authFetch } from "@/lib/api/client";
 import { FeatureHero } from "@/components/shared/FeatureHero";
 import { TourNextButton } from "@/components/student/TourNextButton";
 import { toast } from "sonner";
+import { usePersistentDraft } from "@/hooks/usePersistentDraft";
+import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
 
 type Step = "select" | "menu" | "drill" | "result";
 
@@ -87,13 +89,40 @@ function SummaryDrillInner() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   /** 宿題から指定長文で起動した場合の宿題 ID (完了時に提出済みにする) */
   const homeworkIdRef = useRef<string | null>(null);
+  const draftKey = `essay-summary:${searchParams.get("homeworkId") ?? "free"}`;
+
+  const { status, ready, restored, lastSavedAt, saveNow, clearDraft } = usePersistentDraft({
+    key: draftKey,
+    value: {
+      passageId: passage?.id ?? null,
+      selectedFacultyId: selectedFaculty?.id ?? null,
+      language,
+      summaryText,
+    },
+    onRestore: (draft) => {
+      const savedPassage = draft.passageId ? getPassageById(draft.passageId) : null;
+      if (!savedPassage) return;
+      setPassage(savedPassage);
+      setSelectedFaculty(
+        draft.selectedFacultyId
+          ? FACULTY_REGISTRY.find((faculty) => faculty.id === draft.selectedFacultyId) ?? null
+          : null
+      );
+      setLanguage(draft.language);
+      setSummaryText(draft.summaryText);
+      setTimeLeft(TIME_LIMIT);
+      setStep("drill");
+    },
+    hasContent: (draft) => Boolean(draft.passageId && draft.summaryText.trim()),
+  });
 
   // 宿題から ?passage=ID&homeworkId=... で来たら、その長文で直接開始する
   useEffect(() => {
+    if (!ready) return;
     const passageId = searchParams.get("passage");
     const hw = searchParams.get("homeworkId");
     if (hw) homeworkIdRef.current = hw;
-    if (passageId) {
+    if (passageId && !restored) {
       const p = getPassageById(passageId);
       if (p) {
         setLanguage(p.language ?? "ja");
@@ -101,7 +130,7 @@ function SummaryDrillInner() {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [ready, restored]);
 
   // タイマー
   useEffect(() => {
@@ -191,6 +220,7 @@ function SummaryDrillInner() {
       const data = await res.json();
       setResult(data);
       setStep("result");
+      await clearDraft();
       // 宿題から来た場合は提出済みにする
       if (homeworkIdRef.current) {
         const hwId = homeworkIdRef.current;
@@ -209,7 +239,7 @@ function SummaryDrillInner() {
     } finally {
       setIsEvaluating(false);
     }
-  }, [passage, summaryText]);
+  }, [clearDraft, language, passage, summaryText]);
 
   function handleRetry() {
     if (passage) startDrillWithPassage(passage);
@@ -430,6 +460,14 @@ function SummaryDrillInner() {
             {formatTime(timeLeft)}
           </div>
         </div>
+
+        <DraftSaveIndicator
+          status={status}
+          restored={restored}
+          lastSavedAt={lastSavedAt}
+          onSaveNow={() => void saveNow()}
+          className="mb-3"
+        />
 
         {/* モバイルタブ */}
         <div className="mb-3 flex gap-2 md:hidden">

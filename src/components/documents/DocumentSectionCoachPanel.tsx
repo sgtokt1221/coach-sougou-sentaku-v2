@@ -24,6 +24,8 @@ import type {
   DocumentSectionCoachResponse,
   DocumentSectionCoachThread,
 } from "@/lib/types/document-coach";
+import { usePersistentDraft } from "@/hooks/usePersistentDraft";
+import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
 
 const OPENING_MESSAGE: DocumentCoachMessage = {
   role: "assistant",
@@ -31,6 +33,10 @@ const OPENING_MESSAGE: DocumentCoachMessage = {
     "このセクションについて一緒に考えていきましょう。まずは、ここで伝えたいことや浮かんでいるイメージを聞かせてください。",
   at: new Date(0).toISOString(),
 };
+
+function draftKeyPart(value: string): string {
+  return value.replace(/[^a-zA-Z0-9_-]/g, "-").slice(0, 48) || "new";
+}
 
 export interface FocusedSection {
   id: string;
@@ -129,6 +135,21 @@ function PanelBody({
   useEffect(() => {
     if (currentKey) ensureSlot(currentKey);
   }, [currentKey, ensureSlot]);
+
+  useEffect(() => {
+    setInput("");
+  }, [currentKey]);
+
+  const restoreInputDraft = useCallback((saved: string) => {
+    setInput(saved);
+  }, []);
+  const inputDraft = usePersistentDraft({
+    key: `document-coach-${draftKeyPart(docId ?? "new")}-${draftKeyPart(currentKey ?? "none")}`,
+    value: input,
+    onRestore: restoreInputDraft,
+    hasContent: (saved) => saved.trim().length > 0,
+    enabled: Boolean(currentKey),
+  });
 
   // 末尾スクロール
   useEffect(() => {
@@ -403,6 +424,15 @@ function PanelBody({
             )}
           </Button>
         </div>
+        {focusedSection && (
+          <DraftSaveIndicator
+            status={inputDraft.status}
+            lastSavedAt={inputDraft.lastSavedAt}
+            restored={inputDraft.restored}
+            onSaveNow={inputDraft.saveNow}
+            className="mt-2 px-1"
+          />
+        )}
       </div>
     </div>
   );

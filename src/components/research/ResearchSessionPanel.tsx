@@ -13,6 +13,8 @@ import VoiceRecorder from "@/components/interview/VoiceRecorder";
 import { authFetch } from "@/lib/api/client";
 import { toast } from "sonner";
 import type { ResearchEvalResult } from "@/lib/ai/prompts/research";
+import { usePersistentDraft } from "@/hooks/usePersistentDraft";
+import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
 
 interface SessionItem {
   id: string;
@@ -61,6 +63,21 @@ export function ResearchSessionPanel({ embedded = false }: ResearchSessionPanelP
   const [sourceUrls, setSourceUrls] = useState("");
   const [evaluating, setEvaluating] = useState(false);
   const [result, setResult] = useState<ResearchEvalResult | null>(null);
+
+  const restoreDraft = useCallback(
+    (saved: { topic: string; sourceUrls: string }) => {
+      setTopic(saved.topic);
+      setSourceUrls(saved.sourceUrls);
+    },
+    []
+  );
+  const researchDraft = usePersistentDraft({
+    key: "research-session",
+    value: { topic, sourceUrls },
+    onRestore: restoreDraft,
+    hasContent: (saved) =>
+      saved.topic.trim().length > 0 || saved.sourceUrls.trim().length > 0,
+  });
 
   const loadSessions = useCallback(async () => {
     try {
@@ -129,6 +146,7 @@ export function ResearchSessionPanel({ embedded = false }: ResearchSessionPanelP
       setResult(data.feedback);
       toast.success("講評を作成しました");
       loadSessions();
+      await researchDraft.clearDraft();
     } catch (err) {
       toast.error(
         err instanceof Error && err.message ? err.message : "講評の作成に失敗しました"
@@ -264,6 +282,12 @@ export function ResearchSessionPanel({ embedded = false }: ResearchSessionPanelP
             {evaluating && <Loader2 className="mr-1 size-4 animate-spin" />}
             AIに講評してもらう
           </Button>
+          <DraftSaveIndicator
+            status={researchDraft.status}
+            lastSavedAt={researchDraft.lastSavedAt}
+            restored={researchDraft.restored}
+            onSaveNow={researchDraft.saveNow}
+          />
         </CardContent>
       </Card>
 

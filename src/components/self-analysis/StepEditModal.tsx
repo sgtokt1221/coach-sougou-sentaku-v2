@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Loader2, Plus, X } from "lucide-react";
 import {
   Dialog,
@@ -16,6 +16,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { KEY_LABELS } from "@/components/self-analysis/tree-shared";
 import { SELF_ANALYSIS_STEPS, type ApSummaryEntry } from "@/lib/types/self-analysis";
+import { usePersistentDraft } from "@/hooks/usePersistentDraft";
+import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
 
 /** 各フィールドの編集 UI 種別 */
 type FieldKind = "text" | "list" | "apSummaries";
@@ -112,13 +114,30 @@ export function StepEditModal({
 }: StepEditModalProps) {
   const [draft, setDraft] = useState<Record<string, unknown>>({});
   const [saving, setSaving] = useState(false);
+  const [dirty, setDirty] = useState(false);
 
   // モーダルを開く / 対象が変わるたびに編集ドラフトを初期化
   useEffect(() => {
     if (open && step != null) {
       setDraft({ ...stepData });
+      setDirty(false);
     }
   }, [open, step, stepData]);
+
+  const restoreEditDraft = useCallback(
+    (saved: { data: Record<string, unknown>; dirty: boolean }) => {
+      setDraft(saved.data);
+      setDirty(saved.dirty);
+    },
+    []
+  );
+  const editDraft = usePersistentDraft({
+    key: `self-analysis-edit-${step ?? 0}`,
+    value: { data: draft, dirty },
+    onRestore: restoreEditDraft,
+    hasContent: (saved) => saved.dirty,
+    enabled: open && step != null,
+  });
 
   if (step == null) return null;
 
@@ -126,6 +145,7 @@ export function StepEditModal({
   const title = SELF_ANALYSIS_STEPS.find((s) => s.step === step)?.title ?? `Step ${step}`;
 
   const setListItem = (key: string, idx: number, value: string) => {
+    setDirty(true);
     setDraft((prev) => {
       const list = toStringList(prev[key]);
       const next = [...list];
@@ -134,18 +154,22 @@ export function StepEditModal({
     });
   };
   const addListItem = (key: string) => {
+    setDirty(true);
     setDraft((prev) => ({ ...prev, [key]: [...toStringList(prev[key]), ""] }));
   };
   const removeListItem = (key: string, idx: number) => {
+    setDirty(true);
     setDraft((prev) => ({
       ...prev,
       [key]: toStringList(prev[key]).filter((_, i) => i !== idx),
     }));
   };
   const setText = (key: string, value: string) => {
+    setDirty(true);
     setDraft((prev) => ({ ...prev, [key]: value }));
   };
   const setApSummary = (idx: number, value: string) => {
+    setDirty(true);
     setDraft((prev) => {
       const list = toApSummaries(prev.apSummaries);
       const next = list.map((e, i) => (i === idx ? { ...e, summary: value } : e));
@@ -173,7 +197,10 @@ export function StepEditModal({
     setSaving(true);
     try {
       const ok = await onSave(buildPayload());
-      if (ok) onOpenChange(false);
+      if (ok) {
+        await editDraft.clearDraft();
+        onOpenChange(false);
+      }
     } finally {
       setSaving(false);
     }
@@ -271,6 +298,13 @@ export function StepEditModal({
         </DialogBody>
 
         <DialogFooter>
+          <DraftSaveIndicator
+            status={editDraft.status}
+            lastSavedAt={editDraft.lastSavedAt}
+            restored={editDraft.restored}
+            onSaveNow={editDraft.saveNow}
+            className="mr-auto"
+          />
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={saving}>
             キャンセル
           </Button>

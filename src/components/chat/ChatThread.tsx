@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   Send,
@@ -25,6 +25,8 @@ import type {
   FeedbackType,
   SenderRole,
 } from "@/lib/types/feedback";
+import { usePersistentDraft } from "@/hooks/usePersistentDraft";
+import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
 
 /** 非 general タイプに付けるラベル */
 const TYPE_LABEL: Partial<Record<FeedbackType, string>> = {
@@ -52,6 +54,8 @@ interface ChatThreadProps {
   otherPhotoURL?: string | null;
   /** コーチ→生徒スレッドで「問題」ボタンを出す場合の生徒UID */
   referenceStudentId?: string;
+  /** 生徒画面で未送信メッセージを保存するときの一意なキー。 */
+  draftKey?: string;
 }
 
 function readFileAsBase64(file: File): Promise<string> {
@@ -174,6 +178,7 @@ export function ChatThread({
   otherName,
   otherPhotoURL,
   referenceStudentId,
+  draftKey,
 }: ChatThreadProps) {
   const [text, setText] = useState("");
   const [pending, setPending] = useState<ChatAttachment[]>([]);
@@ -183,6 +188,29 @@ export function ChatThread({
   const [dragOver, setDragOver] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  const restoreMessageDraft = useCallback(
+    (saved: {
+      text: string;
+      pending: ChatAttachment[];
+      pendingRef: ChatReference | null;
+    }) => {
+      setText(saved.text);
+      setPending(saved.pending);
+      setPendingRef(saved.pendingRef);
+    },
+    []
+  );
+  const messageDraft = usePersistentDraft({
+    key: draftKey ?? "message-disabled",
+    value: { text, pending, pendingRef },
+    onRestore: restoreMessageDraft,
+    hasContent: (saved) =>
+      saved.text.trim().length > 0 ||
+      saved.pending.length > 0 ||
+      saved.pendingRef != null,
+    enabled: Boolean(draftKey),
+  });
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -486,6 +514,15 @@ export function ChatThread({
           <p className="px-1 pb-1 pt-1 text-[10px] text-muted-foreground">
             Cmd+Enter で送信
           </p>
+          {draftKey && (
+            <DraftSaveIndicator
+              status={messageDraft.status}
+              lastSavedAt={messageDraft.lastSavedAt}
+              restored={messageDraft.restored}
+              onSaveNow={messageDraft.saveNow}
+              className="px-1 pb-1"
+            />
+          )}
         </div>
       )}
     </div>

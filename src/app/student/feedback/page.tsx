@@ -104,6 +104,7 @@ function AdminThread({ uid }: { uid?: string }) {
         messages={messages}
         currentRole="student"
         onSend={handleSend}
+        draftKey="student-feedback-admin"
         loading={loading}
         emptyText="管理者からのメッセージや、あなたからの相談がここに表示されます"
       />
@@ -215,6 +216,7 @@ function TeacherThread({
         messages={messages}
         currentRole="student"
         onSend={handleSend}
+        draftKey={`student-feedback-teacher-${teacherId}`}
         loading={loading}
         otherName={otherName}
         otherPhotoURL={otherPhotoURL}

@@ -14,6 +14,8 @@ import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
 import { updateProfile } from "@/lib/firebase/profile";
 import { useTutorial } from "@/contexts/TutorialContext";
 import type { StudentProfile } from "@/lib/types/user";
+import { usePersistentDraft } from "@/hooks/usePersistentDraft";
+import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
 
 const STEPS = ["志望校選択", "基礎情報", "確認", "自己分析", "スキルチェック"] as const;
 
@@ -36,9 +38,36 @@ export default function OnboardingPage() {
     schoolId: null,
   });
 
+  const {
+    status: draftStatus,
+    ready: draftReady,
+    restored: draftRestored,
+    lastSavedAt,
+    saveNow,
+    clearDraft,
+  } = usePersistentDraft({
+    key: "onboarding",
+    value: { step, selectedUniversities, profileData },
+    onRestore: (draft) => {
+      setStep(draft.step);
+      setSelectedUniversities(draft.selectedUniversities);
+      setProfileData(draft.profileData);
+    },
+    hasContent: (draft) => draft.step > 0 || draft.selectedUniversities.length > 0 || Boolean(
+      draft.profileData.gpa !== null || draft.profileData.englishCerts.length > 0 ||
+      draft.profileData.grade !== null || draft.profileData.school.trim()
+    ),
+  });
+
   // Pre-populate from existing profile (e.g. admin-set data)
+  // Both profile and draft are external snapshots; hydrate the controlled form here intentionally.
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    if (initialized) return;
+    if (initialized || !draftReady) return;
+    if (draftRestored) {
+      setInitialized(true);
+      return;
+    }
     const profile = userProfile as StudentProfile | null;
     if (!profile) return;
     setProfileData((prev) => ({
@@ -52,7 +81,8 @@ export default function OnboardingPage() {
       setSelectedUniversities(profile.targetUniversities);
     }
     setInitialized(true);
-  }, [userProfile, initialized]);
+  }, [draftReady, draftRestored, userProfile, initialized]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const canNext = true;
 
@@ -80,6 +110,7 @@ export default function OnboardingPage() {
       school: profileData.school,
       schoolId: profileData.schoolId,
     }));
+    await clearDraft();
     refreshProfile();
     setSaving(false);
   };
@@ -164,6 +195,12 @@ export default function OnboardingPage() {
         </div>
 
         {/* Content */}
+        <DraftSaveIndicator
+          status={draftStatus}
+          restored={draftRestored}
+          lastSavedAt={lastSavedAt}
+          onSaveNow={() => void saveNow()}
+        />
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">{STEPS[step]}</CardTitle>

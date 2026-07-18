@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,8 @@ import { toast } from "sonner";
 import { authFetch } from "@/lib/api/client";
 import { ChatPanel, type ChatPanelMessage } from "@/components/shared/ChatPanel";
 import type { ResearchCurriculum } from "@/lib/types/research";
+import { usePersistentDraft } from "@/hooks/usePersistentDraft";
+import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
 
 interface Decided {
   domain: string;
@@ -27,6 +29,26 @@ export function StudentResearchDecide() {
   const [sending, setSending] = useState(false);
   const [suggested, setSuggested] = useState<string[]>([]);
   const [decided, setDecided] = useState<Decided | null>(null);
+
+  const restoreDraft = useCallback(
+    (saved: {
+      messages: ChatPanelMessage[];
+      input: string;
+      suggested: string[];
+    }) => {
+      setMessages(saved.messages);
+      setInput(saved.input);
+      setSuggested(saved.suggested);
+    },
+    []
+  );
+  const decisionDraft = usePersistentDraft({
+    key: "research-theme-decision",
+    value: { messages, input, suggested },
+    onRestore: restoreDraft,
+    hasContent: (saved) =>
+      saved.input.trim().length > 0 || saved.messages.length > 0,
+  });
 
   // 既に draft があれば「決定済み」を表示
   useEffect(() => {
@@ -81,6 +103,7 @@ export function StudentResearchDecide() {
       });
       if (!res.ok) throw new Error();
       setDecided(d);
+      await decisionDraft.clearDraft();
       toast.success("探究テーマが決まりました");
     } catch {
       toast.error("保存に失敗しました");
@@ -127,6 +150,12 @@ export function StudentResearchDecide() {
   return (
     <div className="space-y-2">
       <p className="text-sm font-medium">AIと相談して探究するテーマを決めよう</p>
+      <DraftSaveIndicator
+        status={decisionDraft.status}
+        lastSavedAt={decisionDraft.lastSavedAt}
+        restored={decisionDraft.restored}
+        onSaveNow={decisionDraft.saveNow}
+      />
       <ChatPanel
         className="h-[55vh]"
         messages={messages}

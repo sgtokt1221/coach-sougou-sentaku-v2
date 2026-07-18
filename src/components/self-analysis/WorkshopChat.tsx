@@ -6,6 +6,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Send, CheckCircle, Loader2 } from "lucide-react";
 import { SELF_ANALYSIS_STEPS } from "@/lib/types/self-analysis";
 import type { ChatMessage } from "@/lib/types/self-analysis";
+import { usePersistentDraft } from "@/hooks/usePersistentDraft";
+import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
 
 interface WorkshopChatProps {
   step: number;
@@ -49,21 +51,29 @@ export function WorkshopChat({
   // 完了後はドラフト保存を止める（完了→ページ再レンダーで再保存され復活するのを防ぐ）
   const doneRef = useRef(false);
 
+  const { status, ready, restored, lastSavedAt, saveNow, clearDraft } = usePersistentDraft({
+    key: `self-analysis-step:${step}`,
+    value: { messages, input, stepData },
+    onRestore: (draft) => {
+      if (Array.isArray(draft.messages)) setMessages(draft.messages);
+      if (typeof draft.input === "string") setInput(draft.input);
+      if (draft.stepData && typeof draft.stepData === "object") setStepData(draft.stepData);
+    },
+    hasContent: (draft) =>
+      draft.messages.length > 0 || Boolean(draft.input.trim() || draft.stepData),
+  });
+
   const stepInfo = SELF_ANALYSIS_STEPS.find((s) => s.step === step);
 
-  // 途中入力(会話＋入力中テキスト)をドラフト保存
+  // 旧形式の端末ドラフトを新しいユーザー別・クラウド同期形式へ移行する。
   useEffect(() => {
-    if (doneRef.current || typeof window === "undefined") return;
+    if (!ready || typeof window === "undefined") return;
     try {
-      if (messages.length > 0 || input.trim()) {
-        window.localStorage.setItem(draftKey, JSON.stringify({ messages, input }));
-      } else {
-        window.localStorage.removeItem(draftKey);
-      }
+      window.localStorage.removeItem(draftKey);
     } catch {
       /* localStorage 不可環境は無視 */
     }
-  }, [messages, input, draftKey]);
+  }, [draftKey, ready]);
 
   const completeWith = useCallback(
     (sd: Record<string, unknown>, msgs: ChatMessage[]) => {
@@ -75,9 +85,10 @@ export function WorkshopChat({
           /* noop */
         }
       }
+      void clearDraft();
       onStepComplete(sd, msgs);
     },
-    [draftKey, onStepComplete],
+    [clearDraft, draftKey, onStepComplete],
   );
 
   useEffect(() => {
@@ -178,6 +189,13 @@ export function WorkshopChat({
         </h2>
         <p className="text-sm text-muted-foreground">{stepInfo?.description}</p>
       </div>
+
+      <DraftSaveIndicator
+        status={status}
+        restored={restored}
+        lastSavedAt={lastSavedAt}
+        onSaveNow={() => void saveNow()}
+      />
 
       <Card>
         <CardContent className="p-0">

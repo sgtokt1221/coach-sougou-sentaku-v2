@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,18 +19,14 @@ import {
   CheckCircle,
   ArrowLeft,
   ChevronRight,
-  ChevronUp,
-  ChevronDown,
   FileText,
   GraduationCap,
   Settings,
-  ImageIcon,
   Mic,
   Loader2,
   Square,
   Trash2,
   Plus,
-  History,
   Download,
   Sparkles,
   RotateCcw,
@@ -57,6 +53,9 @@ import { getEnrichedPastQuestionById, needsSourceText, summarizeChartData, PastQ
 import type { PastQuestionSourceTextResponse } from "@/lib/types/past-question-source";
 import type { ReportMaterial } from "@/data/essay-report-materials";
 import { ReportSourcePane } from "@/components/essay/ReportSourcePane";
+import { useAutosave } from "@/hooks/useAutosave";
+import { usePersistentDraft } from "@/hooks/usePersistentDraft";
+import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
 
 /** レポートモードで選べる9系統（essay-themes と同一の分類）。 */
 const REPORT_FIELDS: Array<{ field: string; label: string }> = [
@@ -146,8 +145,6 @@ export default function EssayNewPage() {
   const [customMaxLength, setCustomMaxLength] = useState(800);
   const [isRecording, setIsRecording] = useState(false);
   const [isDictating, setIsDictating] = useState(false);
-  const [ocrWords, setOcrWords] = useState<Array<{ text: string; polygon: number[]; confidence: number }>>([]);
-  const [pageSize, setPageSize] = useState({ width: 0, height: 0 });
 
   // テーマ練習モード
   const themeId = searchParams?.get("theme");
@@ -189,13 +186,12 @@ export default function EssayNewPage() {
 
   // 下書き（途中保存）モード
   const draftIdParam = searchParams?.get("draft");
-  const [savedDraftId, setSavedDraftId] = useState<string | null>(null);
+  const savedDraftIdRef = useRef<string | null>(null);
   const [savingDraft, setSavingDraft] = useState(false);
 
   // 過去問モード
   const pastQuestionId = searchParams?.get("pastQuestion");
   const [pastQuestion, setPastQuestion] = useState<PastQuestion | null>(null);
-  const [showRefMaterial, setShowRefMaterial] = useState(true);
   /** 動的取得した sourceText (本文が静的データに無い過去問用) */
   const [dynamicSourceText, setDynamicSourceText] = useState<string | null>(null);
   /** dynamicSourceText が AI 生成サンプルか (true=サンプル, false=実問題文) */
@@ -292,7 +288,7 @@ export default function EssayNewPage() {
         if (draft.writingDirection) setWritingDirection(draft.writingDirection);
         if (draft.selectedCompoundId)
           setSelectedCompoundId(draft.selectedCompoundId);
-        setSavedDraftId(draftIdParam);
+        savedDraftIdRef.current = draftIdParam;
         setActiveTab("new");
         setStep(2);
       } catch {
@@ -559,9 +555,95 @@ export default function EssayNewPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // 後方互換用
-  const imageBase64 = images[0]?.base64 ?? null;
-  const imagePreview = images[0]?.preview ?? null;
+  const essayContext = (
+    draftIdParam ?? themeId ?? pastQuestionId ?? homeworkId ?? retryFromId ?? "free"
+  ).replace(/[^a-zA-Z0-9:_-]/g, "_").slice(0, 120);
+  const {
+    status: ocrDraftStatus,
+    restored: ocrDraftRestored,
+    lastSavedAt: ocrDraftSavedAt,
+    saveNow: saveOcrDraft,
+    clearDraft: clearOcrDraft,
+  } = usePersistentDraft({
+    key: `essay-ocr:${essayContext}`,
+    value: {
+      inputMode, essayId, ocrText, topic, selectedCompoundId,
+      customMaxLength, writingDirection,
+    },
+    onRestore: (draft) => {
+      if (!draft.essayId || !draft.ocrText) return;
+      setInputMode(draft.inputMode);
+      setEssayId(draft.essayId);
+      setOcrText(draft.ocrText);
+      setTopic(draft.topic);
+      setSelectedCompoundId(draft.selectedCompoundId);
+      setCustomMaxLength(draft.customMaxLength);
+      setWritingDirection(draft.writingDirection);
+      setStep(3);
+    },
+    hasContent: (draft) =>
+      draft.inputMode !== "text" && Boolean(draft.essayId && draft.ocrText.trim()),
+  });
+
+  const essayDraftSnapshot = {
+    directText,
+    topic,
+    universityId,
+    facultyId,
+    selectedCompoundId,
+    customMaxLength,
+    writingDirection,
+    universityName: effectiveUni?.universityName ?? "",
+    facultyName: effectiveUni?.facultyName ?? "",
+    themeId: selectedTheme?.id,
+    pastQuestionId: pastQuestion?.id,
+    homeworkId: homeworkId ?? undefined,
+  };
+
+  const {
+    status: textDraftStatus,
+    restored: textDraftRestored,
+    lastSavedAt: textDraftSavedAt,
+    saveNow: saveTextDraft,
+    clearDraft: clearTextDraft,
+  } = usePersistentDraft({
+    key: `essay-text:${essayContext}`,
+    value: essayDraftSnapshot,
+    onRestore: (draft) => {
+      setDirectText(draft.directText);
+      setTopic(draft.topic);
+      setSelectedCompoundId(draft.selectedCompoundId);
+      setCustomMaxLength(draft.customMaxLength);
+      setWritingDirection(draft.writingDirection);
+      setInputMode("text");
+      setStep(2);
+    },
+    hasContent: (draft) => Boolean(draft.directText.trim() || draft.topic.trim()),
+  });
+
+  const saveEssayDraft = useCallback(async (draft: typeof essayDraftSnapshot) => {
+    if (!draft.directText.trim() && !draft.topic.trim()) return;
+    const res = await authFetch("/api/student/essay-drafts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...(savedDraftIdRef.current ? { draftId: savedDraftIdRef.current } : {}),
+        ...draft,
+      }),
+    });
+    if (!res.ok) throw new Error("下書きの保存に失敗しました");
+    const { draftId } = (await res.json()) as { draftId: string };
+    savedDraftIdRef.current = draftId;
+  }, []);
+
+  const {
+    status: essayDraftStatus,
+    lastSavedAt: essayDraftSavedAt,
+    flush: flushEssayDraft,
+  } = useAutosave(essayDraftSnapshot, saveEssayDraft, {
+    delay: 1200,
+    enabled: inputMode === "text" && !isSubmitting,
+  });
 
   function handleImageFile(file: File) {
     const reader = new FileReader();
@@ -595,16 +677,6 @@ export default function EssayNewPage() {
 
   function removeImage(index: number) {
     setImages((prev) => prev.filter((_, i) => i !== index));
-  }
-
-  function moveImage(index: number, direction: "up" | "down") {
-    setImages((prev) => {
-      const next = [...prev];
-      const target = direction === "up" ? index - 1 : index + 1;
-      if (target < 0 || target >= next.length) return prev;
-      [next[index], next[target]] = [next[target], next[index]];
-      return next;
-    });
   }
 
   async function handleUpload() {
@@ -678,8 +750,6 @@ export default function EssayNewPage() {
         const data = await res.json();
         if (i === 0) {
           firstEssayId = data.essayId;
-          setOcrWords(data.ocrWords ?? []);
-          setPageSize({ width: data.pageWidth ?? 0, height: data.pageHeight ?? 0 });
         }
         if (data.ocrText) ocrResults.push(data.ocrText);
       }
@@ -738,28 +808,7 @@ export default function EssayNewPage() {
     }
     setSavingDraft(true);
     try {
-      const res = await authFetch("/api/student/essay-drafts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...(savedDraftId ? { draftId: savedDraftId } : {}),
-          directText,
-          topic,
-          universityId,
-          facultyId,
-          selectedCompoundId,
-          customMaxLength,
-          writingDirection,
-          universityName: effectiveUni?.universityName ?? "",
-          facultyName: effectiveUni?.facultyName ?? "",
-          ...(selectedTheme ? { themeId: selectedTheme.id } : {}),
-          ...(pastQuestion ? { pastQuestionId: pastQuestion.id } : {}),
-          ...(homeworkId ? { homeworkId } : {}),
-        }),
-      });
-      if (!res.ok) throw new Error();
-      const { draftId } = (await res.json()) as { draftId: string };
-      setSavedDraftId(draftId);
+      await Promise.all([saveEssayDraft(essayDraftSnapshot), saveTextDraft()]);
       toast.success("下書きを保存しました");
     } catch {
       toast.error("下書きの保存に失敗しました");
@@ -859,9 +908,10 @@ export default function EssayNewPage() {
       clearTimeout(timeout);
       if (!res.ok) throw new Error("添削リクエストに失敗しました");
       const data = await res.json();
+      await clearTextDraft();
       // 提出できた下書きは削除（fire-and-forget）
-      if (savedDraftId) {
-        void authFetch(`/api/student/essay-drafts/${savedDraftId}`, {
+      if (savedDraftIdRef.current) {
+        void authFetch(`/api/student/essay-drafts/${savedDraftIdRef.current}`, {
           method: "DELETE",
         }).catch(() => {});
       }
@@ -943,6 +993,7 @@ export default function EssayNewPage() {
       clearTimeout(timeout);
       if (!res.ok) throw new Error("添削リクエストに失敗しました");
       const data = await res.json();
+      await clearOcrDraft();
       sessionStorage.setItem("essayReviewResult", JSON.stringify({
         ...data,
         ocrText,
@@ -967,9 +1018,6 @@ export default function EssayNewPage() {
     return <ReviewProgress />;
   }
 
-  const hasReference = Boolean(
-    pastQuestion && (pastQuestion.sourceText || dynamicSourceText || pastQuestion.chartData),
-  );
   // Step 2 テキスト執筆中は常に 2 カラム (左=参照/コーチ、右=入力)
   const useSideBySide = step >= 2 && inputMode === "text";
 
@@ -1747,7 +1795,16 @@ export default function EssayNewPage() {
                       retryParent
                         ? "前回の改善点を意識して書き直してみよう..."
                         : "ここに小論文を入力してください..."
-                    }
+                      }
+                  />
+                  <DraftSaveIndicator
+                    status={textDraftStatus === "error" ? essayDraftStatus : textDraftStatus}
+                    restored={textDraftRestored}
+                    lastSavedAt={textDraftSavedAt ?? essayDraftSavedAt}
+                    onSaveNow={() => {
+                      void flushEssayDraft();
+                      void saveTextDraft();
+                    }}
                   />
                   {error && (
                     <p className="text-sm text-destructive">{error}</p>
@@ -1871,6 +1928,12 @@ export default function EssayNewPage() {
               placeholder="認識されたテキストがここに表示されます"
               highlights={dictationHighlights}
               onHighlightsChange={setDictationHighlights}
+            />
+            <DraftSaveIndicator
+              status={ocrDraftStatus}
+              restored={ocrDraftRestored}
+              lastSavedAt={ocrDraftSavedAt}
+              onSaveNow={() => void saveOcrDraft()}
             />
 
             {/* 添削ボタン */}
@@ -2088,6 +2151,12 @@ export default function EssayNewPage() {
               onChange={setOcrText}
               maxLength={customMaxLength}
               placeholder="OCRで認識されたテキストがここに表示されます"
+            />
+            <DraftSaveIndicator
+              status={ocrDraftStatus}
+              restored={ocrDraftRestored}
+              lastSavedAt={ocrDraftSavedAt}
+              onSaveNow={() => void saveOcrDraft()}
             />
 
             <Separator />

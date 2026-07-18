@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,10 +18,12 @@ import {
   X,
 } from "lucide-react";
 import type { SelfAnalysis } from "@/lib/types/self-analysis";
+import { usePersistentDraft } from "@/hooks/usePersistentDraft";
+import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
 
 interface AnalysisResultCardProps {
   analysis: SelfAnalysis;
-  onUpdate?: (updated: SelfAnalysis) => void;
+  onUpdate?: (updated: SelfAnalysis) => void | Promise<void>;
   /** true で編集UI（鉛筆）を隠し、読み取り専用にする（管理者閲覧など） */
   readOnly?: boolean;
   /**
@@ -29,6 +31,8 @@ interface AnalysisResultCardProps {
    * 管理者はコメント投稿＋承認トグル、生徒はコメント一覧＋承認バッジを描画する用途。
    */
   renderSectionExtra?: (sectionKey: EditableSection, sectionTitle: string) => React.ReactNode;
+  /** 生徒画面のインライン編集を途中保存するためのキー接頭辞。 */
+  draftKeyPrefix?: string;
 }
 
 /** 編集内容を書き戻せる SelfAnalysis 上のセクション（オブジェクト型のフィールドのみ） */
@@ -63,18 +67,43 @@ function EditableField({
   value,
   onSave,
   editable = true,
+  draftKey,
 }: {
   label: string;
   value: string | string[];
-  onSave: (val: string | string[]) => void;
+  onSave: (val: string | string[]) => void | Promise<void>;
   editable?: boolean;
+  draftKey?: string;
 }) {
   const [editing, setEditing] = useState(false);
   const isArray = Array.isArray(value);
   const [draft, setDraft] = useState(isArray ? value.join("\n") : value);
+  const [dirty, setDirty] = useState(false);
 
-  function handleSave() {
-    onSave(isArray ? draft.split("\n").filter(Boolean) : draft);
+  const restoreFieldDraft = useCallback(
+    (saved: { draft: string; dirty: boolean }) => {
+      setDraft(saved.draft);
+      setDirty(saved.dirty);
+      setEditing(true);
+    },
+    []
+  );
+  const fieldDraft = usePersistentDraft({
+    key: draftKey ?? "self-analysis-field-disabled",
+    value: { draft, dirty },
+    onRestore: restoreFieldDraft,
+    hasContent: (saved) => saved.dirty,
+    enabled: Boolean(draftKey) && editable,
+  });
+
+  async function handleSave() {
+    try {
+      await onSave(isArray ? draft.split("\n").filter(Boolean) : draft);
+    } catch {
+      return;
+    }
+    if (draftKey) await fieldDraft.clearDraft();
+    setDirty(false);
     setEditing(false);
   }
 
@@ -84,9 +113,20 @@ function EditableField({
         <p className="text-xs font-medium text-muted-foreground">{label}</p>
         <Textarea
           value={draft}
-          onChange={(e) => setDraft(e.target.value)}
+          onChange={(e) => {
+            setDraft(e.target.value);
+            setDirty(true);
+          }}
           className="min-h-[80px]"
         />
+        {draftKey && (
+          <DraftSaveIndicator
+            status={fieldDraft.status}
+            lastSavedAt={fieldDraft.lastSavedAt}
+            restored={fieldDraft.restored}
+            onSaveNow={fieldDraft.saveNow}
+          />
+        )}
         <div className="flex gap-2">
           <Button size="sm" variant="ghost" onClick={handleSave}>
             <Check className="size-3 mr-1" />
@@ -97,6 +137,8 @@ function EditableField({
             variant="ghost"
             onClick={() => {
               setDraft(isArray ? value.join("\n") : value);
+              setDirty(false);
+              if (draftKey) void fieldDraft.clearDraft();
               setEditing(false);
             }}
           >
@@ -117,7 +159,11 @@ function EditableField({
             size="sm"
             variant="ghost"
             className="opacity-0 group-hover:opacity-100 transition-opacity h-6 px-2"
-            onClick={() => setEditing(true)}
+            onClick={() => {
+              setDraft(isArray ? value.join("\n") : value);
+              setDirty(false);
+              setEditing(true);
+            }}
           >
             <Pencil className="size-3" />
           </Button>
@@ -143,6 +189,7 @@ export function AnalysisResultCard({
   onUpdate,
   readOnly = false,
   renderSectionExtra,
+  draftKeyPrefix,
 }: AnalysisResultCardProps) {
   // 未完了ステップは欠損していることがあるため全て null 安全に読む
   const v = analysis.values ?? ({} as SelfAnalysis["values"]);
@@ -247,6 +294,11 @@ export function AnalysisResultCard({
                 label={field.label}
                 value={field.value}
                 editable={!readOnly}
+                draftKey={
+                  draftKeyPrefix
+                    ? `${draftKeyPrefix}-${field.section}-${field.key}`
+                    : undefined
+                }
                 onSave={(val) => {
                   if (!onUpdate) return;
                   const updated: SelfAnalysis = {
@@ -256,7 +308,7 @@ export function AnalysisResultCard({
                       [field.key]: val,
                     },
                   };
-                  onUpdate(updated);
+                  return onUpdate(updated);
                 }}
               />
             ))}

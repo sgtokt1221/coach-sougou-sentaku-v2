@@ -314,12 +314,17 @@ export default function SelfAnalysisResultPage() {
         <div className="flex-1 min-w-0">
           <AnalysisResultCard
             analysis={data}
+            draftKeyPrefix="self-analysis-result"
             onUpdate={async (updated) => {
-              await authFetch("/api/self-analysis", {
+              const res = await authFetch("/api/self-analysis", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(updated),
-              }).catch(() => {});
+              });
+              if (!res.ok) {
+                toast.error("保存に失敗しました。入力内容は下書きに残っています。");
+                throw new Error("self-analysis update failed");
+              }
               mutate();
               // 編集で承認が取り消される場合があるので承認状況も再取得
               mutateApprovals();
