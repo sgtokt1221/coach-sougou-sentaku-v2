@@ -13,7 +13,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { FileText, Eye, Loader2, CheckCircle2, RotateCcw } from "lucide-react";
+import { FileText, Eye, Loader2, CheckCircle2, RotateCcw, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuthSWR } from "@/lib/api/swr";
@@ -57,6 +57,7 @@ interface DocumentDetail {
     structure: number;
     originality: number;
   };
+  aiLikeness?: DocumentAiLikeness;
 }
 
 const STATUS_CONFIG: Record<DocumentStatus, { label: string; variant: "default" | "secondary" | "outline" | "destructive" }> = {
@@ -99,6 +100,35 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
   const [detailLoading, setDetailLoading] = useState(false);
   const [reviewMsg, setReviewMsg] = useState("");
   const [reviewBusy, setReviewBusy] = useState<"approved" | "revision_requested" | null>(null);
+  const [aiCheckBusy, setAiCheckBusy] = useState(false);
+
+  /**
+   * 管理者から生徒書類のAIっぽさを判定する。結果は生徒と共有の aiLikeness に保存され、
+   * 生徒側にもそのまま反映される。判定対象は保存済みの本文。
+   */
+  async function runAiCheck() {
+    if (!detailDoc) return;
+    setAiCheckBusy(true);
+    try {
+      const res = await authFetch(
+        `/api/admin/students/${studentId}/documents/${detailDoc.id}/ai-check`,
+        { method: "POST" }
+      );
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        toast.error(err?.error || "AIっぽさチェックに失敗しました");
+        return;
+      }
+      const { aiLikeness } = await res.json();
+      setDetailDoc({ ...detailDoc, aiLikeness });
+      mutate();
+      toast.success("AIっぽさをチェックしました");
+    } catch {
+      toast.error("AIっぽさチェックに失敗しました");
+    } finally {
+      setAiCheckBusy(false);
+    }
+  }
 
   async function submitReview(state: "approved" | "revision_requested") {
     if (!detailDoc) return;
@@ -324,6 +354,79 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
                   </div>
                 </div>
               )}
+
+              {/* AIっぽさチェック（生徒と共有・管理者からも実行可） */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="text-sm font-semibold flex items-center gap-1.5">
+                    <ShieldCheck className="size-4" />
+                    AIっぽさ
+                  </h3>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1"
+                    disabled={aiCheckBusy}
+                    onClick={runAiCheck}
+                  >
+                    {aiCheckBusy ? (
+                      <Loader2 className="size-3.5 animate-spin" />
+                    ) : (
+                      <ShieldCheck className="size-3.5" />
+                    )}
+                    {detailDoc.aiLikeness ? "再チェック" : "AIっぽさをチェック"}
+                  </Button>
+                </div>
+                {detailDoc.aiLikeness ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm">
+                      <span
+                        className={
+                          "font-medium " +
+                          (detailDoc.aiLikeness.level === "high"
+                            ? "text-rose-500"
+                            : detailDoc.aiLikeness.level === "medium"
+                              ? "text-amber-500"
+                              : "text-emerald-500")
+                        }
+                      >
+                        {detailDoc.aiLikeness.score}/100（{AI_LIKENESS_LEVEL_LABELS[detailDoc.aiLikeness.level]}）
+                      </span>
+                      {detailDoc.aiLikeness.checkedWordCount !== detailDoc.wordCount && (
+                        <span className="text-xs text-muted-foreground">（本文が変わっています・要再チェック）</span>
+                      )}
+                    </div>
+                    {detailDoc.aiLikeness.reasons.length > 0 && (
+                      <div className="space-y-1">
+                        <p className="text-xs font-medium">AIっぽいと判定した理由</p>
+                        <ul className="space-y-0.5">
+                          {detailDoc.aiLikeness.reasons.map((item, i) => (
+                            <li key={i} className="text-xs text-muted-foreground flex gap-1.5">
+                              <span className="text-rose-500 shrink-0">-</span>
+                              {item}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {detailDoc.aiLikeness.suggestions.length > 0 && (
+                      <div className="space-y-1">
+                        <p className="text-xs font-medium">人間らしくする直し方</p>
+                        <ul className="space-y-0.5">
+                          {detailDoc.aiLikeness.suggestions.map((item, i) => (
+                            <li key={i} className="text-xs text-muted-foreground flex gap-1.5">
+                              <span className="text-emerald-500 shrink-0">+</span>
+                              {item}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">まだAIっぽさチェックは実行されていません。</p>
+                )}
+              </div>
 
               <Separator />
 
