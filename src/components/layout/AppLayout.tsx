@@ -20,7 +20,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
     <div
       data-app-layout
       data-mobile-bottom-nav={mode.hideMobileBottomNav ? "hidden" : "visible"}
-      className="flex overflow-hidden"
+      className="fixed inset-x-0 top-0 flex overflow-hidden lg:static"
       style={
         {
           height: "var(--vvh, 100dvh)",

@@ -175,6 +175,22 @@ export function WorkshopChat({
     }
   }
 
+  const scrollToLatest = useCallback(() => {
+    const list = scrollRef.current;
+    if (list) list.scrollTop = list.scrollHeight;
+  }, []);
+
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+    const handleResize = () => {
+      if (document.activeElement !== inputRef.current) return;
+      requestAnimationFrame(scrollToLatest);
+    };
+    viewport.addEventListener("resize", handleResize);
+    return () => viewport.removeEventListener("resize", handleResize);
+  }, [scrollToLatest]);
+
   function handleCompleteStep() {
     if (stepData) {
       completeWith(stepData, messages);
@@ -182,25 +198,28 @@ export function WorkshopChat({
   }
 
   return (
-    <div className="space-y-4">
-      <div className="text-center">
+    <div data-workshop-chat className="space-y-4">
+      <div data-keyboard-hide className="text-center">
         <h2 className="text-lg font-semibold">
           Step {step}: {stepInfo?.title}
         </h2>
         <p className="text-sm text-muted-foreground">{stepInfo?.description}</p>
       </div>
 
-      <DraftSaveIndicator
-        status={status}
-        restored={restored}
-        lastSavedAt={lastSavedAt}
-        onSaveNow={() => void saveNow()}
-      />
+      <div data-keyboard-hide>
+        <DraftSaveIndicator
+          status={status}
+          restored={restored}
+          lastSavedAt={lastSavedAt}
+          onSaveNow={() => void saveNow()}
+        />
+      </div>
 
-      <Card>
-        <CardContent className="p-0">
+      <Card data-workshop-card>
+        <CardContent data-workshop-card-content className="p-0">
           <div
             ref={scrollRef}
+            data-workshop-messages
             // モバイルは画面に対し可変高にして入力欄が見切れないように(固定400pxだと
             // キーボード表示時に送信ボタンが画面外へ出る)。PCは従来の固定高。
             className="h-[min(48vh,400px)] lg:h-[450px] overflow-y-auto px-4 py-4 space-y-3"
@@ -236,7 +255,7 @@ export function WorkshopChat({
           </div>
 
           {!stepData && (
-            <div className="px-4 py-3 border-t">
+            <div data-workshop-composer className="px-4 py-3 border-t">
               <div className="flex items-center gap-2">
                 <input
                   ref={inputRef}
@@ -244,9 +263,10 @@ export function WorkshopChat({
                   // min-w-0: flex の既定 min-width:auto だと入力欄が縮まず送信ボタンが
                   //   はみ出して見切れる。text-base(16px): iOS のフォーカス自動ズーム防止。
                   className="min-w-0 flex-1 rounded-lg border bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-ring"
-                  placeholder="回答を入力 (Cmd/Ctrl+Enter で送信)"
+                  placeholder="回答を入力…"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
+                  onFocus={scrollToLatest}
                   onKeyDown={handleKeyDown}
                   disabled={isLoading}
                 />

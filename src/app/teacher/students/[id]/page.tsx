@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useFeedbackThread } from "@/lib/hooks/useFeedbackThread";
 import { ChatThread } from "@/components/chat/ChatThread";
 import { PageTransition } from "@/components/shared/PageTransition";
+import { FullHeightPage } from "@/components/layout/FullHeightPage";
 import type { ChatAttachment, ChatReference } from "@/lib/types/feedback";
 
 export default function TeacherStudentChatPage() {
@@ -69,7 +70,7 @@ function Body() {
 
   return (
     <PageTransition>
-      <div className="flex h-[calc(100dvh-7rem)] flex-col lg:h-[calc(100dvh-9rem)]">
+      <FullHeightPage>
         <div className="flex items-center gap-2 pb-2">
           <Link
             href="/teacher/students"
@@ -101,7 +102,7 @@ function Body() {
             emptyText="担当生徒とのメッセージがここに表示されます"
           />
         </div>
-      </div>
+      </FullHeightPage>
     </PageTransition>
   );
 }

@@ -192,7 +192,7 @@ export default function SelfAnalysisPage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-5 lg:py-6 space-y-4">
+      <div className="max-w-2xl mx-auto h-full overflow-y-auto px-4 py-5 lg:py-6 space-y-4">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-12 w-full" />
         <Skeleton className="h-[400px] w-full" />
@@ -201,8 +201,11 @@ export default function SelfAnalysisPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-5 lg:py-6">
-      <div className="flex items-center gap-3 mb-4 lg:mb-6">
+    <div
+      data-self-analysis-page
+      className="max-w-5xl mx-auto h-full w-full overflow-y-auto px-4 py-5 lg:py-6"
+    >
+      <div data-keyboard-hide className="flex items-center gap-3 mb-4 lg:mb-6">
         <Button variant="ghost" size="sm" onClick={() => router.back()}>
           <ArrowLeft className="size-4" />
         </Button>
@@ -210,9 +213,15 @@ export default function SelfAnalysisPage() {
       </div>
 
       {/* 左: 自己分析の木（常時表示） / 右: 入力（ワークショップ） */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:gap-6 lg:items-start">
+      <div
+        data-self-analysis-columns
+        className="flex flex-col gap-4 lg:flex-row lg:gap-6 lg:items-start"
+      >
         {/* 左カラム: 木 */}
-        <div className="w-full space-y-3 lg:w-[300px] lg:shrink-0 lg:sticky lg:top-6">
+        <div
+          data-keyboard-hide
+          className="w-full space-y-3 lg:w-[300px] lg:shrink-0 lg:sticky lg:top-6"
+        >
           <GrowthTree
             compact
             completedSteps={completedSteps}
@@ -237,12 +246,14 @@ export default function SelfAnalysisPage() {
         </div>
 
         {/* 右カラム: 入力 */}
-        <div className="flex-1 min-w-0 space-y-4">
-          <StepIndicator
-            currentStep={currentStep}
-            completedSteps={completedSteps}
-            onStepClick={(step) => setCurrentStep(step)}
-          />
+        <div data-self-analysis-input className="flex-1 min-w-0 space-y-4">
+          <div data-keyboard-hide>
+            <StepIndicator
+              currentStep={currentStep}
+              completedSteps={completedSteps}
+              onStepClick={(step) => setCurrentStep(step)}
+            />
+          </div>
 
           {/* 保存失敗の警告 + 再試行 */}
           {saveFailed && (

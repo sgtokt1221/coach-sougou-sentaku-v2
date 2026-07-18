@@ -53,10 +53,32 @@ function hidesMobileBottomNav(pathname: string): boolean {
 export function getAppLayoutMode(pathname: string): AppLayoutMode {
   const hideMobileBottomNav = hidesMobileBottomNav(pathname);
 
-  // 純チャット2ページ（Task 7）は内部スクロール（page モード）に変換済み。
-  // 生徒フィードバック / 管理者メッセージ詳細
-  if (pathname === "/student/feedback") return { scrollOwner: "page" };
-  if (/^\/admin\/messages\/[^/]+$/.test(pathname)) return { scrollOwner: "page" };
+  // チャットは会話と入力だけに高さを使う。モバイルでは共通クロームを外し、
+  // ページ内の戻る導線・相手表示をヘッダーとして使う。
+  if (pathname === "/student/feedback" || pathname === "/teacher/students") {
+    return {
+      scrollOwner: "page",
+      hideMobileBottomNav: true,
+    };
+  }
+  if (/^\/(?:admin\/messages|teacher\/students)\/[^/]+$/.test(pathname)) {
+    return {
+      scrollOwner: "page",
+      hideMobileHeader: true,
+      hideMobileBottomNav: true,
+    };
+  }
+
+  // 自己分析ワークショップはキーボード表示中に会話部分だけを伸縮させるため、
+  // ページ自身がスクロールを所有する没入モードにする。内部に戻る導線あり。
+  if (pathname === "/student/self-analysis") {
+    return {
+      scrollOwner: "page",
+      hideMobileHeader: true,
+      hideMobileBottomNav: true,
+    };
+  }
+
   // 面接セッション: 内部でスクロール、モバイルは共通ヘッダー非表示（内部ヘッダー使用）
   if (/^\/student\/interview\/session\//.test(pathname)) {
     return {

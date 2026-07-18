@@ -33,7 +33,7 @@ export default function StudentFeedbackPage() {
   return (
     <PageTransition>
       <FullHeightPage>
-        <div className="flex shrink-0 items-center gap-2 pb-2">
+        <div data-keyboard-hide className="flex shrink-0 items-center gap-2 pb-2">
           <MessageSquare className="size-5 text-muted-foreground" />
           <div>
             <h1 className="text-xl font-bold">メッセージ</h1>

@@ -1103,3 +1103,75 @@
 @utility h-safe-bottom {
   height: env(safe-area-inset-bottom);
 }
+
+/* ─── Mobile visual viewport / keyboard composition ─── */
+@media (max-width: 1023px) {
+  /* iOS Safari は入力フォーカス時に visual viewport 自体を上へパンする。
+     shell をその可視領域へ追従させ、画面下半分に空白が残る状態を防ぐ。 */
+  [data-app-layout] {
+    transform: translate3d(0, var(--vv-offset-top, 0px), 0);
+  }
+
+  /* チャット入力中は補助情報を畳み、直近の会話に高さを戻す。 */
+  html[data-keyboard-open="true"] [data-keyboard-hide] {
+    display: none;
+  }
+
+  /* 作業集中ルートでは、入力中だけ共通ヘッダーも畳む。通常時のメニュー導線は残す。 */
+  html[data-keyboard-open="true"]
+    [data-app-layout][data-mobile-bottom-nav="hidden"]
+    [data-app-chrome="header"] {
+    display: none;
+  }
+
+  html[data-keyboard-open="true"] [data-chat-composer] {
+    padding-top: 0.5rem;
+  }
+
+  html[data-keyboard-open="true"] [data-chat-composer-meta] {
+    display: none;
+  }
+
+  /* 自己分析は通常時はページスクロール、入力時だけ会話領域を高さの所有者にする。 */
+  html[data-keyboard-open="true"] [data-self-analysis-page] {
+    display: flex;
+    min-height: 0;
+    flex-direction: column;
+    overflow: hidden;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+
+  html[data-keyboard-open="true"] [data-self-analysis-columns],
+  html[data-keyboard-open="true"] [data-self-analysis-input],
+  html[data-keyboard-open="true"] [data-workshop-chat],
+  html[data-keyboard-open="true"] [data-workshop-card],
+  html[data-keyboard-open="true"] [data-workshop-card-content] {
+    display: flex;
+    min-height: 0;
+    flex: 1 1 0%;
+    flex-direction: column;
+  }
+
+  html[data-keyboard-open="true"] [data-self-analysis-columns] {
+    gap: 0;
+  }
+
+  html[data-keyboard-open="true"] [data-workshop-chat] {
+    gap: 0.5rem;
+  }
+
+  html[data-keyboard-open="true"] [data-workshop-chat] > * {
+    margin-top: 0;
+  }
+
+  html[data-keyboard-open="true"] [data-workshop-messages] {
+    height: auto;
+    min-height: 4rem;
+    flex: 1 1 0%;
+  }
+
+  html[data-keyboard-open="true"] [data-workshop-composer] {
+    padding: 0.5rem 0.75rem;
+  }
+}

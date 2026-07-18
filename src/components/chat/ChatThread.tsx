@@ -187,7 +187,13 @@ export function ChatThread({
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const threadRef = useRef<HTMLDivElement>(null);
+  const messageListRef = useRef<HTMLDivElement>(null);
+
+  const scrollMessagesToBottom = useCallback(() => {
+    const list = messageListRef.current;
+    if (list) list.scrollTop = list.scrollHeight;
+  }, []);
 
   const restoreMessageDraft = useCallback(
     (saved: {
@@ -213,8 +219,20 @@ export function ChatThread({
   });
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages.length]);
+    scrollMessagesToBottom();
+  }, [messages.length, scrollMessagesToBottom]);
+
+  // ソフトキーボードで可視高が変わった後も、直近メッセージを入力欄の直上に保つ。
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+    const handleResize = () => {
+      if (!threadRef.current?.contains(document.activeElement)) return;
+      requestAnimationFrame(scrollMessagesToBottom);
+    };
+    viewport.addEventListener("resize", handleResize);
+    return () => viewport.removeEventListener("resize", handleResize);
+  }, [scrollMessagesToBottom]);
 
   // ファイル選択ボタンと D&D で共通利用するアップロード処理。
   // 画像/PDF 以外・10MB 超は弾く（D&D は input の accept 属性が効かないため明示チェック）。
@@ -300,6 +318,8 @@ export function ChatThread({
 
   return (
     <div
+      ref={threadRef}
+      data-chat-thread
       className="relative flex h-full flex-col"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -315,7 +335,10 @@ export function ChatThread({
         </div>
       )}
       {/* メッセージリスト（親が縮んでもここだけがスクロールする所有者。min-h-0 必須） */}
-      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-1 py-4">
+      <div
+        ref={messageListRef}
+        className="min-h-0 flex-1 space-y-3 overflow-y-auto px-1 py-4"
+      >
         {loading ? (
           <p className="py-8 text-center text-sm text-muted-foreground">
             読み込み中...
@@ -408,12 +431,15 @@ export function ChatThread({
             );
           })
         )}
-        <div ref={bottomRef} />
+        <div />
       </div>
 
       {/* 入力エリア（スクロールで縮まないよう固定。下部インセットは main の padding が確保） */}
       {!disabled && (
-        <div className="shrink-0 border-t bg-background/80 px-1 pt-3">
+        <div
+          data-chat-composer
+          className="shrink-0 border-t bg-background/80 px-1 pt-3"
+        >
           {pending.length > 0 && (
             <div className="mb-2 flex flex-wrap gap-2">
               {pending.map((att, i) => (
@@ -487,6 +513,7 @@ export function ChatThread({
               rows={1}
               // text-base(16px): iOS でフォーカス時の自動ズーム(16px未満で発生)を防ぐ
               className="max-h-32 min-h-[40px] flex-1 resize-none text-base"
+              onFocus={scrollMessagesToBottom}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
                   e.preventDefault();
@@ -511,17 +538,22 @@ export function ChatThread({
               )}
             </Button>
           </div>
-          <p className="px-1 pb-1 pt-1 text-[10px] text-muted-foreground">
+          <p
+            data-chat-composer-meta
+            className="px-1 pb-1 pt-1 text-[10px] text-muted-foreground"
+          >
             Cmd+Enter で送信
           </p>
           {draftKey && (
-            <DraftSaveIndicator
-              status={messageDraft.status}
-              lastSavedAt={messageDraft.lastSavedAt}
-              restored={messageDraft.restored}
-              onSaveNow={messageDraft.saveNow}
-              className="px-1 pb-1"
-            />
+            <div data-chat-composer-meta>
+              <DraftSaveIndicator
+                status={messageDraft.status}
+                lastSavedAt={messageDraft.lastSavedAt}
+                restored={messageDraft.restored}
+                onSaveNow={messageDraft.saveNow}
+                className="px-1 pb-1"
+              />
+            </div>
           )}
         </div>
       )}

@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { SegmentControl } from "@/components/shared/SegmentControl";
 import { PageTransition } from "@/components/shared/PageTransition";
+import { FullHeightPage } from "@/components/layout/FullHeightPage";
 import { getInitials } from "@/lib/utils/avatar";
 import type { ChatAttachment } from "@/lib/types/feedback";
 
@@ -53,8 +54,8 @@ export default function TeacherMessagesPage() {
 
   return (
     <PageTransition>
-      <div className="mx-auto flex h-[calc(100dvh-7rem)] max-w-2xl flex-col p-4 lg:h-[calc(100dvh-9rem)] lg:p-6">
-        <div className="mb-3 flex items-center gap-2">
+      <FullHeightPage className="mx-auto w-full max-w-2xl p-3 lg:p-6">
+        <div data-keyboard-hide className="mb-3 flex items-center gap-2">
           <MessageSquare className="size-5 text-muted-foreground" />
           <h1 className="text-xl font-bold">メッセージ</h1>
         </div>
@@ -76,7 +77,7 @@ export default function TeacherMessagesPage() {
             <AdminContact />
           )}
         </div>
-      </div>
+      </FullHeightPage>
     </PageTransition>
   );
 }
