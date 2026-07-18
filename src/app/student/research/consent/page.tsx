@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { CheckCircle2, Loader2, ShieldAlert } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import { toast } from "sonner";
+import { usePersistentDraft } from "@/hooks/usePersistentDraft";
+import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
 
 /** 同意項目（すべて必須チェック）。文面は法務レビュー前のドラフト。 */
 const CONSENT_ITEMS = [
@@ -40,6 +42,17 @@ export default function ResearchConsentPage() {
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [submitting, setSubmitting] = useState(false);
 
+  const { status, restored, lastSavedAt, saveNow, clearDraft } = usePersistentDraft({
+    key: "research-consent",
+    value: { parentName, checked },
+    onRestore: (draft) => {
+      setParentName(draft.parentName);
+      setChecked(draft.checked);
+    },
+    hasContent: (draft) =>
+      Boolean(draft.parentName.trim() || Object.values(draft.checked).some(Boolean)),
+  });
+
   useEffect(() => {
     (async () => {
       try {
@@ -70,6 +83,7 @@ export default function ResearchConsentPage() {
         const e = await res.json().catch(() => ({}));
         throw new Error(e.error ?? "");
       }
+      await clearDraft();
       setState((s) => (s ? { ...s, researchConsentStatus: "granted" } : s));
       toast.success("同意を受け付けました");
     } catch (err) {
@@ -117,11 +131,18 @@ export default function ResearchConsentPage() {
           </CardContent>
         </Card>
       ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">同意内容のご確認（保護者の方へ）</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <DraftSaveIndicator
+            status={status}
+            restored={restored}
+            lastSavedAt={lastSavedAt}
+            onSaveNow={() => void saveNow()}
+          />
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">同意内容のご確認（保護者の方へ）</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
             <ul className="space-y-3">
               {CONSENT_ITEMS.map((item) => (
                 <li key={item.id} className="flex items-start gap-3">
@@ -158,8 +179,9 @@ export default function ResearchConsentPage() {
             <p className="text-xs text-muted-foreground">
               すべての項目にチェックし、保護者氏名を入力すると送信できます。
             </p>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       )}
     </div>
   );

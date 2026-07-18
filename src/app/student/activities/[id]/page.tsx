@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useState, useEffect, use, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,6 +27,10 @@ import {
 import { toast } from "sonner";
 import type { Activity, ActivityOptimization } from "@/lib/types/activity";
 import { ACTIVITY_CATEGORY_LABELS } from "@/lib/types/activity";
+import { authFetch } from "@/lib/api/client";
+import { useAutosave } from "@/hooks/useAutosave";
+import { usePersistentDraft } from "@/hooks/usePersistentDraft";
+import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
 
 interface UniversityOption {
   id: string;
@@ -90,6 +94,39 @@ export default function ActivityDetailPage({
   const selectedUniData = universities.find((u) => u.id === selectedUni);
   const faculties = selectedUniData?.faculties ?? [];
 
+  const {
+    status: editDraftStatus,
+    restored: editDraftRestored,
+    lastSavedAt: editDraftSavedAt,
+    saveNow: saveEditDraft,
+    clearDraft: clearEditDraft,
+  } = usePersistentDraft({
+    key: `activity-edit:${id}`,
+    value: { description },
+    onRestore: (draft) => {
+      setDescription(draft.description);
+      setEditingDesc(true);
+    },
+    hasContent: (draft) => Boolean(draft.description.trim()),
+    enabled: !loading && Boolean(activity),
+  });
+
+  const saveDescription = useCallback(async (nextDescription: string) => {
+    const res = await authFetch(`/api/activities/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ description: nextDescription }),
+    });
+    if (!res.ok) throw new Error("活動実績の自動保存に失敗しました");
+  }, [id]);
+  const {
+    status: descriptionSaveStatus,
+    lastSavedAt: descriptionSavedAt,
+    flush: flushDescription,
+  } = useAutosave(description, saveDescription, {
+    enabled: !loading && Boolean(activity) && editingDesc,
+  });
+
   async function handleOptimize() {
     if (!selectedUni || !selectedFaculty) return;
     const uni = universities.find((u) => u.id === selectedUni);
@@ -121,15 +158,13 @@ export default function ActivityDetailPage({
   }
 
   async function handleDescriptionSave() {
-    setEditingDesc(false);
     try {
-      await fetch(`/api/activities/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ description }),
-      });
+      await saveDescription(description);
+      await clearEditDraft();
+      setEditingDesc(false);
+      toast.success("説明を保存しました");
     } catch {
-      // ignore
+      toast.error("説明の保存に失敗しました。入力内容は画面に残っています。");
     }
   }
 
@@ -246,11 +281,22 @@ export default function ActivityDetailPage({
         </CardHeader>
         <CardContent>
           {editingDesc ? (
-            <textarea
-              className="w-full min-h-[100px] rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-y"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
+            <div className="space-y-2">
+              <textarea
+                className="w-full min-h-[100px] rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-y"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+              <DraftSaveIndicator
+                status={descriptionSaveStatus === "error" ? editDraftStatus : descriptionSaveStatus}
+                restored={editDraftRestored}
+                lastSavedAt={descriptionSavedAt ?? editDraftSavedAt}
+                onSaveNow={() => {
+                  void flushDescription();
+                  void saveEditDraft();
+                }}
+              />
+            </div>
           ) : (
             <p className="text-sm whitespace-pre-wrap">{description}</p>
           )}

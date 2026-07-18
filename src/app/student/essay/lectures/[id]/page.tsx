@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,6 +20,8 @@ import { ManuscriptEditor } from "@/components/essay/ManuscriptEditor";
 import { authFetch } from "@/lib/api/client";
 import { getLectureById } from "@/data/essay-lectures";
 import type { EssayScores, EssayFeedback } from "@/lib/types/essay";
+import { usePersistentDraft } from "@/hooks/usePersistentDraft";
+import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
 
 type Step = "lecture" | "exercise" | "result";
 
@@ -52,6 +54,20 @@ export default function EssayLectureDetailPage() {
   const [answer, setAnswer] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<SubmitResult | null>(null);
+
+  const restoreExerciseDraft = useCallback(
+    (saved: { answer: string }) => {
+      setAnswer(saved.answer);
+      setStep("exercise");
+    },
+    []
+  );
+  const exerciseDraft = usePersistentDraft({
+    key: `essay-lecture-${params.id}`,
+    value: { answer },
+    onRestore: restoreExerciseDraft,
+    hasContent: (saved) => saved.answer.trim().length > 0,
+  });
 
   if (!lecture) {
     return (
@@ -86,6 +102,7 @@ export default function EssayLectureDetailPage() {
       }
       setResult(data as SubmitResult);
       setStep("result");
+      await exerciseDraft.clearDraft();
     } catch {
       toast.error("通信エラーが発生しました");
     } finally {
@@ -185,6 +202,13 @@ export default function EssayLectureDetailPage() {
         <p className="text-center text-xs text-muted-foreground">
           提出すると結果が添削履歴に保存されます
         </p>
+        <DraftSaveIndicator
+          status={exerciseDraft.status}
+          lastSavedAt={exerciseDraft.lastSavedAt}
+          restored={exerciseDraft.restored}
+          onSaveNow={exerciseDraft.saveNow}
+          className="justify-center"
+        />
       </div>
     );
   }

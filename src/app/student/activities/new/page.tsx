@@ -18,6 +18,8 @@ import {
 import { ArrowLeft, Bot, Loader2 } from "lucide-react";
 import type { ActivityCategory } from "@/lib/types/activity";
 import { ACTIVITY_CATEGORY_LABELS } from "@/lib/types/activity";
+import { usePersistentDraft } from "@/hooks/usePersistentDraft";
+import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
 
 /**
  * 活動実績の手動入力ページ。
@@ -31,6 +33,23 @@ export default function NewActivityManualPage() {
   const [periodEnd, setPeriodEnd] = useState("");
   const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
+
+  const activityDraft = { title, category, periodStart, periodEnd, description };
+  const { status, restored, lastSavedAt, saveNow, clearDraft } = usePersistentDraft({
+    key: "activity-manual-new",
+    value: activityDraft,
+    onRestore: (draft) => {
+      setTitle(draft.title);
+      setCategory(draft.category);
+      setPeriodStart(draft.periodStart);
+      setPeriodEnd(draft.periodEnd);
+      setDescription(draft.description);
+    },
+    hasContent: (draft) => Boolean(
+      draft.title.trim() || draft.category || draft.periodStart ||
+      draft.periodEnd || draft.description.trim()
+    ),
+  });
 
   async function handleSave() {
     if (!title || !category || !periodStart || !description) {
@@ -50,6 +69,7 @@ export default function NewActivityManualPage() {
         }),
       });
       if (!res.ok) throw new Error();
+      await clearDraft();
       toast.success("活動実績を登録しました");
       router.push("/student/activities");
     } catch {
@@ -127,6 +147,13 @@ export default function NewActivityManualPage() {
           </div>
         </CardContent>
       </Card>
+
+      <DraftSaveIndicator
+        status={status}
+        restored={restored}
+        lastSavedAt={lastSavedAt}
+        onSaveNow={() => void saveNow()}
+      />
 
       <div className="flex gap-3">
         <Button variant="outline" onClick={() => router.back()} className="flex-1">

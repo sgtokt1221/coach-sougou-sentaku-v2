@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -43,6 +42,8 @@ import {
   DEFAULT_INTERVIEWER,
   GD_SPEAKERS,
 } from "@/lib/interview/speakers";
+import { usePersistentDraft } from "@/hooks/usePersistentDraft";
+import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
 
 interface SessionInfo {
   universityId: string;
@@ -125,6 +126,21 @@ export default function InterviewSessionPage() {
   const [isEnding, setIsEnding] = useState(false);
   const [memoOpen, setMemoOpen] = useState(false);
   const [memo, setMemo] = useState("");
+  const {
+    status: inputDraftStatus,
+    restored: inputDraftRestored,
+    lastSavedAt: inputDraftSavedAt,
+    saveNow: saveInputDraft,
+    clearDraft: clearInputDraft,
+  } = usePersistentDraft({
+    key: `interview-session:${sessionId}`,
+    value: { input, memo },
+    onRestore: (draft) => {
+      setInput(draft.input);
+      setMemo(draft.memo);
+    },
+    hasContent: (draft) => Boolean(draft.input.trim() || draft.memo.trim()),
+  });
   const [voiceAnalysis, setVoiceAnalysis] = useState<VoiceAnalysis | null>(null);
   const [videoAnalysis, setVideoAnalysis] = useState<VideoAnalysis | null>(null);
   // 終了時に確定値を同期取得するための ref (state 反映待ちのレース回避)
@@ -604,6 +620,7 @@ export default function InterviewSessionPage() {
       }));
       sessionStorage.removeItem(`interview_session_${sessionId}`);
       sessionStorage.removeItem(`interview_messages_${sessionId}`);
+      await clearInputDraft();
       router.push(`/student/interview/${data.interviewId}/result`);
     } catch (err) {
       console.error("Interview end failed:", err);
@@ -1158,6 +1175,14 @@ export default function InterviewSessionPage() {
           />
         )}
       </div>
+
+      <DraftSaveIndicator
+        status={inputDraftStatus}
+        restored={inputDraftRestored}
+        lastSavedAt={inputDraftSavedAt}
+        onSaveNow={() => void saveInputDraft()}
+        className="shrink-0 border-t px-4"
+      />
 
       {/* Input: テキストモードは常時、音声モードはレート制限・エラー時のみ */}
       {(!isVoiceMode ||

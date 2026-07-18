@@ -18,6 +18,8 @@ import { EssayCoachPanelBody } from "@/components/essay/EssayCoachPanel";
 import { CHOCO_FACULTIES, getChocoPassagesByFaculty, ALL_CHOCO_PASSAGES } from "@/data/choco-passages";
 import { TourNextButton } from "@/components/student/TourNextButton";
 import type { ChocoPassage, ChocoScores, ChocoFeedback, ChocoRole } from "@/lib/types/choco";
+import { usePersistentDraft } from "@/hooks/usePersistentDraft";
+import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
 
 type Result = {
   scores: ChocoScores;
@@ -65,6 +67,28 @@ export default function ChocoPage() {
   const [resolved, setResolved] = useState<ResolvedUni[]>([]);
   const [selectedCompoundId, setSelectedCompoundId] = useState<string | null>(null);
 
+  const { status, restored, lastSavedAt, saveNow, clearDraft } = usePersistentDraft({
+    key: "essay-choco",
+    value: {
+      facultyKey,
+      passageId: passage?.id ?? null,
+      blankIndex,
+      text,
+      selectedCompoundId,
+    },
+    onRestore: (draft) => {
+      const savedPassage = draft.passageId
+        ? ALL_CHOCO_PASSAGES.find((item) => item.id === draft.passageId) ?? null
+        : null;
+      setFacultyKey(draft.facultyKey);
+      setPassage(savedPassage);
+      setBlankIndex(draft.blankIndex);
+      setText(draft.text);
+      setSelectedCompoundId(draft.selectedCompoundId);
+    },
+    hasContent: (draft) => Boolean(draft.passageId && draft.text.trim()),
+  });
+
   useEffect(() => {
     if (targetUniversities.length === 0) return;
     let active = true;
@@ -92,6 +116,7 @@ export default function ChocoPage() {
   }, [facultyKey]);
 
   function startNew() {
+    void clearDraft();
     const p = pickRandom(candidates);
     setPassage(p);
     setBlankIndex(Math.floor(Math.random() * p.paragraphs.length));
@@ -116,6 +141,7 @@ export default function ChocoPage() {
         throw new Error(d.error ?? "添削に失敗しました");
       }
       setResult(await res.json());
+      await clearDraft();
     } catch (e) {
       setError(e instanceof Error ? e.message : "添削に失敗しました");
     } finally {
@@ -143,6 +169,13 @@ export default function ChocoPage() {
   if (passage) {
     return (
       <div className="max-w-7xl mx-auto p-4">
+        <DraftSaveIndicator
+          status={status}
+          restored={restored}
+          lastSavedAt={lastSavedAt}
+          onSaveNow={() => void saveNow()}
+          className="mb-3"
+        />
         <div className="lg:grid lg:grid-cols-[minmax(22rem,28rem)_minmax(0,1fr)] lg:gap-6 lg:items-start">
           {/* 左: 本文 ⇄ AIコーチ を切り替え */}
           <div className="lg:sticky lg:top-4">

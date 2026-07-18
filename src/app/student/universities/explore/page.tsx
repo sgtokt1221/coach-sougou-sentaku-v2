@@ -21,6 +21,8 @@ import { authFetch } from "@/lib/api/client";
 import { updateProfile } from "@/lib/firebase/profile";
 import type { StudentProfile } from "@/lib/types/user";
 import type { EligibilityResult, EligibilityState } from "@/lib/universities/catalog";
+import { usePersistentDraft } from "@/hooks/usePersistentDraft";
+import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
 
 const GREETING =
   "志望校探しを一緒に進めましょう。まずは、通える地域（自宅から/下宿可など）、国公立か私立かの希望、学びたい分野があれば教えてください。特に決まっていなければ「おまかせ」でも大丈夫です。";
@@ -67,6 +69,20 @@ export default function UniversityExplorePage() {
   const [candidates, setCandidates] = useState<Record<string, Candidate>>({});
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
+
+  const { status, restored, lastSavedAt, saveNow } = usePersistentDraft({
+    key: "university-explore",
+    value: { messages, input, candidates, selected: Array.from(selected) },
+    onRestore: (draft) => {
+      setMessages(draft.messages);
+      setInput(draft.input);
+      setCandidates(draft.candidates);
+      setSelected(new Set(draft.selected));
+    },
+    hasContent: (draft) => draft.messages.length > 0 || Boolean(
+      draft.input.trim() || Object.keys(draft.candidates).length > 0
+    ),
+  });
 
   const scrollRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -164,6 +180,13 @@ export default function UniversityExplorePage() {
       <div className="flex flex-col gap-4 lg:flex-row lg:gap-6 lg:items-start">
         {/* 左: AI対話 */}
         <div className="flex-1 min-w-0">
+          <DraftSaveIndicator
+            status={status}
+            restored={restored}
+            lastSavedAt={lastSavedAt}
+            onSaveNow={() => void saveNow()}
+            className="mb-2"
+          />
           <Card>
             <CardContent className="p-0">
               <div

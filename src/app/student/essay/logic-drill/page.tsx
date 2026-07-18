@@ -33,6 +33,8 @@ import {
 } from "@/lib/types/logic-drill";
 import { getRotatedLogicDrillType, pickLogicDrillItem } from "@/lib/logic-drill/rotation";
 import { TourNextButton } from "@/components/student/TourNextButton";
+import { usePersistentDraft } from "@/hooks/usePersistentDraft";
+import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
 
 /** "YYYY-MM-DD"（ローカル日付）。SSRとの齟齬を避けクライアントで確定する。 */
 function todayStr(): string {
@@ -105,13 +107,53 @@ function LogicDrillInner() {
   // alexandra の回答
   const [alexIndex, setAlexIndex] = useState<number | null>(null);
 
+  const { status, ready, restored, lastSavedAt, saveNow, clearDraft } = usePersistentDraft({
+    key: `essay-logic:${forcedType ?? "free"}`,
+    value: {
+      step, drillType, item, selectedFlaw, flawExplanation, flawFix, stance, reasons,
+      skClaim, skGrounds, skExample, skRebuttal, absText, rebCounter, rebResponse,
+      cmpContrast, cmpChoice, cmpReason, qfQuestion, qfWhy, alexIndex,
+    },
+    onRestore: (draft) => {
+      if (!draft.item) return;
+      setStep("drill");
+      setDrillType(draft.drillType);
+      setItem(draft.item);
+      setSelectedFlaw(draft.selectedFlaw);
+      setFlawExplanation(draft.flawExplanation);
+      setFlawFix(draft.flawFix);
+      setStance(draft.stance);
+      setReasons(draft.reasons);
+      setSkClaim(draft.skClaim);
+      setSkGrounds(draft.skGrounds);
+      setSkExample(draft.skExample);
+      setSkRebuttal(draft.skRebuttal);
+      setAbsText(draft.absText);
+      setRebCounter(draft.rebCounter);
+      setRebResponse(draft.rebResponse);
+      setCmpContrast(draft.cmpContrast);
+      setCmpChoice(draft.cmpChoice);
+      setCmpReason(draft.cmpReason);
+      setQfQuestion(draft.qfQuestion);
+      setQfWhy(draft.qfWhy);
+      setAlexIndex(draft.alexIndex);
+      setTimeLeft(
+        draft.item.type === "quick_logic"
+          ? draft.item.timeLimitSec ?? DEFAULT_QUICK_LOGIC_SEC
+          : null
+      );
+    },
+    hasContent: (draft) => draft.step === "drill" && Boolean(draft.item),
+  });
+
   // ?type= 指定時は select を飛ばして即開始
   useEffect(() => {
-    if (forcedType && LOGIC_DRILL_TYPES.includes(forcedType)) {
+    if (!ready) return;
+    if (!restored && forcedType && LOGIC_DRILL_TYPES.includes(forcedType)) {
       start(forcedType);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [ready, restored]);
 
   function start(type: LogicDrillType) {
     const picked = pickLogicDrillItem(type, date);
@@ -228,6 +270,7 @@ function LogicDrillInner() {
       const data = (await res.json()) as LogicDrillResult;
       setResult(data);
       setStep("result");
+      await clearDraft();
     } catch (err) {
       console.error("logic-drill evaluate failed", err);
       toast.error("採点に失敗しました。時間をおいて再度お試しください。");
@@ -251,6 +294,16 @@ function LogicDrillInner() {
           </Button>
         </Link>
       </div>
+
+      {step === "drill" && (
+        <DraftSaveIndicator
+          status={status}
+          restored={restored}
+          lastSavedAt={lastSavedAt}
+          onSaveNow={() => void saveNow()}
+          className="mb-4"
+        />
+      )}
 
       {step === "select" && (
         <div className="space-y-4">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,6 +10,8 @@ import type {
   CoachRequestBody,
   CoachResponseBody,
 } from "@/lib/types/essay-coach";
+import { usePersistentDraft } from "@/hooks/usePersistentDraft";
+import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
 
 const OPENING_MESSAGE: CoachMessage = {
   role: "assistant",
@@ -27,6 +29,15 @@ const QUICK_PROMPTS = [
   "主張をもっと強くしたい",
   "書き出しの例を教えて",
 ];
+
+function stableDraftPart(value: string): string {
+  let hash = 2166136261;
+  for (let i = 0; i < value.length; i += 1) {
+    hash ^= value.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(36);
+}
 
 interface EssayCoachChatProps {
   topic: string;
@@ -58,6 +69,26 @@ export function EssayCoachChat({
     setInput("");
     setError(null);
   }, [resetKey]);
+
+  const restoreDraft = useCallback(
+    (saved: {
+      messages: CoachMessage[];
+      threadId: string | null;
+      input: string;
+    }) => {
+      setMessages(saved.messages);
+      setThreadId(saved.threadId);
+      setInput(saved.input);
+    },
+    []
+  );
+  const coachDraft = usePersistentDraft({
+    key: `essay-coach-${stableDraftPart(resetKey ?? topic)}`,
+    value: { messages, threadId, input },
+    onRestore: restoreDraft,
+    hasContent: (saved) =>
+      saved.input.trim().length > 0 || saved.messages.length > 1,
+  });
 
   // 新メッセージ時に末尾スクロール
   useEffect(() => {
@@ -203,6 +234,13 @@ export function EssayCoachChat({
             )}
           </Button>
         </div>
+        <DraftSaveIndicator
+          status={coachDraft.status}
+          lastSavedAt={coachDraft.lastSavedAt}
+          restored={coachDraft.restored}
+          onSaveNow={coachDraft.saveNow}
+          className="px-1"
+        />
       </div>
     </div>
   );

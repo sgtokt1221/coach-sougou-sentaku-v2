@@ -33,6 +33,8 @@ import VoiceRecorder from "@/components/interview/VoiceRecorder";
 import { FeatureHero } from "@/components/shared/FeatureHero";
 import Link from "next/link";
 import { History, Star } from "lucide-react";
+import { usePersistentDraft } from "@/hooks/usePersistentDraft";
+import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
 
 interface DrillScore {
   category: DrillCategory;
@@ -86,29 +88,6 @@ function InterviewDrillInner() {
   /** 宿題から指定設問で起動した場合の宿題 ID (完了時に提出済みにする) */
   const homeworkIdRef = useRef<string | null>(null);
 
-  // 宿題から ?category=&q=設問文&homeworkId=... で来たら、その設問で直接開始する
-  useEffect(() => {
-    const q = searchParams.get("q");
-    const cat = searchParams.get("category");
-    const hw = searchParams.get("homeworkId");
-    if (hw) homeworkIdRef.current = hw;
-    if (q) {
-      const category = (DRILL_CATEGORIES as readonly string[]).includes(cat ?? "")
-        ? (cat as DrillCategory)
-        : "志望理由";
-      setState((prev) => ({
-        ...prev,
-        step: "question",
-        currentCategory: category,
-        currentQuestion: q,
-        currentQuestionId: null,
-        currentAnswer: "",
-        sessionStarted: true,
-      }));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const [sessionScores, setSessionScores] = useState<DrillScore[]>([]);
   const [inputMode, setInputMode] = useState<"text" | "voice">("text");
   // 直近採点の保存用 doc id と、保存済み id 集合
@@ -157,6 +136,53 @@ function InterviewDrillInner() {
   };
   const [transcribing, setTranscribing] = useState(false);
   const [transcribeError, setTranscribeError] = useState<string | null>(null);
+
+  const {
+    status: draftStatus,
+    ready: draftReady,
+    restored: draftRestored,
+    lastSavedAt,
+    saveNow,
+    clearDraft,
+  } = usePersistentDraft({
+    key: `interview-drill:${searchParams.get("homeworkId") ?? "free"}`,
+    value: {
+      state: { ...state, loading: false, error: null },
+      sessionScores,
+      inputMode,
+    },
+    onRestore: (draft) => {
+      setState({ ...draft.state, loading: false, error: null });
+      setSessionScores(draft.sessionScores);
+      setInputMode(draft.inputMode);
+      homeworkIdRef.current = searchParams.get("homeworkId");
+    },
+    hasContent: (draft) => draft.state.sessionStarted && draft.state.step !== "summary",
+  });
+
+  // 宿題から起動した場合も、保存済みの同じ宿題があれば復元内容を優先する。
+  useEffect(() => {
+    if (!draftReady || draftRestored) return;
+    const q = searchParams.get("q");
+    const cat = searchParams.get("category");
+    const hw = searchParams.get("homeworkId");
+    if (hw) homeworkIdRef.current = hw;
+    if (q) {
+      const category = (DRILL_CATEGORIES as readonly string[]).includes(cat ?? "")
+        ? (cat as DrillCategory)
+        : "志望理由";
+      setState((prev) => ({
+        ...prev,
+        step: "question",
+        currentCategory: category,
+        currentQuestion: q,
+        currentQuestionId: null,
+        currentAnswer: "",
+        sessionStarted: true,
+      }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftReady, draftRestored]);
 
   // 音声録音完了時: Whisper で文字起こしして textarea に追記
   const handleVoiceRecorded = useCallback(async (audioBase64: string, mimeType: string) => {
@@ -358,6 +384,7 @@ function InterviewDrillInner() {
   const handleNextQuestion = useCallback(() => {
     if (sessionScores.length >= 5) {
       setState(prev => ({ ...prev, step: "summary" }));
+      void clearDraft();
     } else {
       setState(prev => ({
         ...prev,
@@ -369,7 +396,7 @@ function InterviewDrillInner() {
         scores: [],
       }));
     }
-  }, [sessionScores.length]);
+  }, [clearDraft, sessionScores.length]);
 
   // リセット
   const handleReset = useCallback(() => {
@@ -385,7 +412,8 @@ function InterviewDrillInner() {
       error: null,
     });
     setSessionScores([]);
-  }, []);
+    void clearDraft();
+  }, [clearDraft]);
 
   // 平均スコア計算
   const averageScore = sessionScores.length > 0
@@ -449,6 +477,15 @@ function InterviewDrillInner() {
             </div>
           )}
         </div>
+
+        {state.sessionStarted && state.step !== "summary" && (
+          <DraftSaveIndicator
+            status={draftStatus}
+            restored={draftRestored}
+            lastSavedAt={lastSavedAt}
+            onSaveNow={() => void saveNow()}
+          />
+        )}
 
         {/* 現在のスコア推移（小さいバー） */}
         {sessionScores.length > 0 && state.step !== "summary" && (
