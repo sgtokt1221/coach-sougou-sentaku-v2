@@ -2,18 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import type { DraftGenerateRequest, DraftGenerateResponse } from "@/lib/types/template";
 import { getFrameworkByType } from "@/lib/templates/frameworks";
 import { buildTemplateDraftPrompt } from "@/lib/ai/prompts/template-draft";
-import { adminDb, verifyAuthToken } from "@/lib/firebase/admin";
+import { adminDb } from "@/lib/firebase/admin";
 import { requireFeature } from "@/lib/api/subscription";
+import { requireRole } from "@/lib/api/auth";
 
 export async function POST(request: NextRequest) {
   try {
     const gate = await requireFeature(request, "documentEditor");
     if (gate) return gate;
 
-    const auth = await verifyAuthToken(request);
-    if (!auth) {
-      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
-    }
+    const auth = await requireRole(request, ["student"]);
+    if (auth instanceof NextResponse) return auth;
 
     const body: DraftGenerateRequest = await request.json();
 
@@ -52,31 +51,18 @@ export async function POST(request: NextRequest) {
       .collection(`users/${auth.uid}/activities`)
       .get();
 
-    const activities = activitiesSnap.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => {
-      const data = doc.data();
-      return {
-        title: data.title,
-        structuredData: data.structuredData,
-      };
-    });
-
-    // 活動実績が未登録の場合は AI を呼ばずに決定論的に雛形を組み立てる。
-    // 架空のエピソード捏造を避け、ユーザーが各セクションをガイディング質問に
-    // 沿って埋められる状態にする。AI による具体的な下書きは活動実績登録後に提供。
-    if (activities.length === 0) {
-      const result: DraftGenerateResponse = {
-        frameworkType: body.frameworkType,
-        draft: "",
-        sections: framework.sections.map((s) => ({
-          id: s.id,
-          title: s.title,
-          // 例文は value ではなく placeholder に置き、入力を始めたら消えるようにする
-          content: "",
-          placeholder: `【${s.guidingQuestion}】\n${s.placeholder ?? "ここに記入してください。"}`,
-        })),
-      };
-      return NextResponse.json(result);
-    }
+    const requestedIds = Array.isArray(body.activityIds)
+      ? new Set(body.activityIds.filter((id): id is string => typeof id === "string"))
+      : null;
+    const activities = activitiesSnap.docs
+      .filter((doc) => requestedIds === null || requestedIds.has(doc.id))
+      .map((doc) => {
+        const data = doc.data();
+        return {
+          title: typeof data.title === "string" ? data.title : "活動実績",
+          structuredData: data.structuredData,
+        };
+      });
 
     const { default: Anthropic } = await import("@anthropic-ai/sdk");
     const client = new Anthropic({ apiKey });

@@ -9,6 +9,103 @@ export interface SelfAnalysisData {
   vision: string;
   selfStatement: string;
   apConnection: string;
+  experiences: string[];
+}
+
+const DEFAULT_SELF_ANALYSIS: SelfAnalysisData = {
+  values: ["学び", "成長", "貢献"],
+  strengths: ["探究心", "協調性"],
+  vision: "大学での学びを通じて、関心のある社会課題に貢献したい",
+  selfStatement: "学びを深めながら、自分なりの形で社会に貢献したい学生です。",
+  apConnection: "自分の価値観と大学のアドミッションポリシーの接点を整理している段階です。",
+  experiences: [],
+};
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function asText(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function asTextList(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value
+        .filter((item): item is string => typeof item === "string")
+        .map((item) => item.trim())
+        .filter(Boolean)
+    : [];
+}
+
+function firstText(...values: unknown[]): string {
+  return values.map(asText).find(Boolean) ?? "";
+}
+
+/** 現行・旧形式どちらの自己分析データも、志望理由書生成用の安全な形へ変換する。 */
+export function normalizeSelfAnalysisData(raw: unknown): SelfAnalysisData {
+  const data = asRecord(raw);
+  const valuesSection = asRecord(data.values);
+  const strengthsSection = asRecord(data.strengths);
+  const weaknessesSection = asRecord(data.weaknesses);
+  const interestsSection = asRecord(data.interests);
+  const visionSection = asRecord(data.vision);
+  const identitySection = asRecord(data.identity);
+  const synthesisSection = asRecord(data.synthesis);
+
+  const values =
+    asTextList(data.values).length > 0
+      ? asTextList(data.values)
+      : asTextList(valuesSection.coreValues);
+  const strengths =
+    asTextList(data.strengths).length > 0
+      ? asTextList(data.strengths)
+      : asTextList(strengthsSection.strengths);
+
+  const apSummaries = Array.isArray(synthesisSection.apSummaries)
+    ? synthesisSection.apSummaries
+        .map((item) => asText(asRecord(item).summary))
+        .filter(Boolean)
+    : [];
+  const experiences = [
+    ...asTextList(valuesSection.valueOrigins),
+    ...asTextList(strengthsSection.evidences),
+    ...asTextList(weaknessesSection.growthStories),
+    ...asTextList(weaknessesSection.overcomeLessons),
+    ...asTextList(interestsSection.reasons),
+    ...asTextList(interestsSection.deepDiveTopics),
+    firstText(identitySection.uniqueNarrative),
+    firstText(synthesisSection.coreNarrative),
+  ].filter(Boolean);
+
+  return {
+    values: values.length > 0 ? values : DEFAULT_SELF_ANALYSIS.values,
+    strengths:
+      strengths.length > 0 ? strengths : DEFAULT_SELF_ANALYSIS.strengths,
+    vision:
+      firstText(
+        data.vision,
+        visionSection.longTermVision,
+        visionSection.socialContribution,
+        visionSection.shortTermGoal
+      ) || DEFAULT_SELF_ANALYSIS.vision,
+    selfStatement:
+      firstText(
+        data.selfStatement,
+        synthesisSection.selfStatement,
+        identitySection.selfStatement
+      ) || DEFAULT_SELF_ANALYSIS.selfStatement,
+    apConnection:
+      firstText(
+        data.apConnection,
+        identitySection.apConnection,
+        synthesisSection.apSummary,
+        apSummaries[0]
+      ) || DEFAULT_SELF_ANALYSIS.apConnection,
+    experiences: [...new Set(experiences)].slice(0, 12),
+  };
 }
 
 export function buildStatementDraftPrompt(
@@ -32,6 +129,8 @@ ${admissionPolicy}
 将来ビジョン: ${selfAnalysis.vision}
 自己紹介文: ${selfAnalysis.selfStatement}
 AP接続ポイント: ${selfAnalysis.apConnection}
+使える経験素材:
+${selfAnalysis.experiences.length > 0 ? selfAnalysis.experiences.map((item) => `- ${item}`).join("\n") : "（具体的な経験素材は未登録）"}
 
 ## 評価軸
 1. AP合致度: アドミッションポリシーとの整合性（30点）
@@ -64,6 +163,8 @@ ${FACULTY_AGENCY_FOCUS_DOCUMENT}
 - アドミッションポリシーのキーワードを自然に織り込む
 - 各段落が論理的に繋がるよう構成する
 - 文体は「である調」で統一する
+- 登録データにない活動、役職、受賞、成果、数値、固有名詞を捏造しない
+- 具体的な経験素材が不足する箇所は、架空の内容で埋めず「【原体験を入力】」のような編集用プレースホルダーを残す
 
 ## 出力形式
 JSON形式で以下の構造で出力してください：

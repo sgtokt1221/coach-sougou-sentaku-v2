@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireFeature } from "@/lib/api/subscription";
-import { adminDb, verifyAuthToken } from "@/lib/firebase/admin";
+import { requireRole } from "@/lib/api/auth";
+import { adminDb } from "@/lib/firebase/admin";
 import { FieldValue } from "firebase-admin/firestore";
 import type { DocumentReview } from "@/lib/types/document";
 
@@ -16,10 +17,8 @@ export async function GET(
     const gate = await requireFeature(request, "documentEditor");
     if (gate) return gate;
 
-    const auth = await verifyAuthToken(request);
-    if (!auth) {
-      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
-    }
+    const auth = await requireRole(request, ["student"]);
+    if (auth instanceof NextResponse) return auth;
 
     if (!adminDb) {
       return NextResponse.json(
@@ -68,10 +67,8 @@ export async function PUT(
     const gate = await requireFeature(request, "documentEditor");
     if (gate) return gate;
 
-    const auth = await verifyAuthToken(request);
-    if (!auth) {
-      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
-    }
+    const auth = await requireRole(request, ["student"]);
+    if (auth instanceof NextResponse) return auth;
 
     if (!adminDb) {
       return NextResponse.json(
@@ -170,10 +167,8 @@ export async function DELETE(
     const gate = await requireFeature(request, "documentEditor");
     if (gate) return gate;
 
-    const auth = await verifyAuthToken(request);
-    if (!auth) {
-      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
-    }
+    const auth = await requireRole(request, ["student"]);
+    if (auth instanceof NextResponse) return auth;
     if (!adminDb) {
       return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
     }

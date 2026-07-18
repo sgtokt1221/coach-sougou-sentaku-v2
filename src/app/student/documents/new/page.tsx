@@ -81,7 +81,8 @@ function reconstructDraftResult(
   };
 }
 
-const STEPS = ["書類タイプ", "志望校", "フレームワーク", "活動実績", "下書き生成"];
+const STEPS = ["書類タイプ", "志望校", "構成", "活動実績", "下書き作成"];
+type WritingMode = "framework" | "free";
 
 export default function NewDocumentPage() {
   const router = useRouter();
@@ -118,6 +119,7 @@ export default function NewDocumentPage() {
   const [documentType, setDocumentType] = useState<DocumentType | null>(null);
   const [selectedUniversity, setSelectedUniversity] = useState<UniversityOption | null>(null);
   const [frameworkType, setFrameworkType] = useState<FrameworkType | null>(null);
+  const [writingMode, setWritingMode] = useState<WritingMode | null>(null);
   const [selectedActivityIds, setSelectedActivityIds] = useState<string[]>([]);
   const [targetWordCount, setTargetWordCount] = useState(800);
   const [generating, setGenerating] = useState(false);
@@ -142,6 +144,7 @@ export default function NewDocumentPage() {
   const saveWizardState = useCallback(
     async (v: {
       currentStep: number;
+      writingMode?: WritingMode;
       frameworkType?: string;
       selectedActivityIds: string[];
       targetWordCount: number;
@@ -164,6 +167,7 @@ export default function NewDocumentPage() {
   const { status: saveStatus, lastSavedAt, flush } = useAutosave(
     {
       currentStep: step,
+      writingMode: writingMode ?? undefined,
       frameworkType: frameworkType ?? undefined,
       selectedActivityIds,
       targetWordCount,
@@ -247,6 +251,7 @@ export default function NewDocumentPage() {
           initialContent: "",
           wizardState: {
             currentStep: 2,
+            writingMode: writingMode ?? undefined,
             frameworkType: frameworkType ?? undefined,
             selectedActivityIds,
             targetWordCount,
@@ -266,7 +271,7 @@ export default function NewDocumentPage() {
     } finally {
       setCreating(false);
     }
-  }, [documentType, selectedUniversity, targetWordCount, frameworkType, selectedActivityIds]);
+  }, [documentType, selectedUniversity, targetWordCount, writingMode, frameworkType, selectedActivityIds]);
 
   /** 次のステップへ。志望校ステップ(1)を抜けるとき早期作成し、保留中の自動保存を確定する。 */
   const handleNext = async () => {
@@ -315,6 +320,13 @@ export default function NewDocumentPage() {
         }
         const ws = doc.wizardState;
         const fwType: string | undefined = ws?.frameworkType;
+        const restoredWritingMode: WritingMode | null =
+          ws?.writingMode === "free"
+            ? "free"
+            : fwType
+              ? "framework"
+              : null;
+        setWritingMode(restoredWritingMode);
         if (fwType) setFrameworkType(fwType as FrameworkType);
         if (Array.isArray(ws?.selectedActivityIds)) {
           setSelectedActivityIds(ws.selectedActivityIds);
@@ -325,7 +337,26 @@ export default function NewDocumentPage() {
         const fw = fwType
           ? FRAMEWORKS.find((f) => f.type === fwType) ?? null
           : null;
-        if (Array.isArray(ws?.sections) && ws.sections.length > 0 && fw) {
+        if (restoredWritingMode === "free") {
+          const freeContent = Array.isArray(ws?.sections)
+            ? ((ws.sections as { id: string; content: string }[]).find(
+                (section) => section.id === "free"
+              )?.content ?? doc.content ?? "")
+            : (doc.content ?? "");
+          setDraftResult({
+            draft: freeContent,
+            sections: [
+              {
+                id: "free",
+                title: "本文",
+                content: freeContent,
+                placeholder: "志望理由書の本文を自由に入力してください。",
+              },
+            ],
+            wordCount: freeContent.length,
+          });
+          setFocusedSectionId("free");
+        } else if (Array.isArray(ws?.sections) && ws.sections.length > 0 && fw) {
           // 保存済みセクションから復元（本文の見出し分割に依存しない）
           const byId = new Map(
             (ws.sections as { id: string; content: string }[]).map((s) => [s.id, s.content]),
@@ -373,14 +404,16 @@ export default function NewDocumentPage() {
     : null;
 
   const focusedSection = (() => {
-    if (!focusedSectionId || !draftResult || !framework) return null;
+    if (!focusedSectionId || !draftResult) return null;
     const idx = draftResult.sections.findIndex((s) => s.id === focusedSectionId);
     if (idx < 0) return null;
-    const fwSection = framework.sections.find((s) => s.id === focusedSectionId);
+    const fwSection = framework?.sections.find((s) => s.id === focusedSectionId);
     return {
       id: focusedSectionId,
       title: draftResult.sections[idx].title,
-      guidingQuestion: fwSection?.guidingQuestion ?? "",
+      guidingQuestion:
+        fwSection?.guidingQuestion ??
+        "この文章で最も伝えたい志望理由は何ですか？",
       content: draftResult.sections[idx].content,
     };
   })();
@@ -412,7 +445,7 @@ export default function NewDocumentPage() {
     switch (step) {
       case 0: return !!documentType;
       case 1: return !!selectedUniversity;
-      case 2: return !!frameworkType;
+      case 2: return writingMode !== null;
       case 3: return true;
       case 4: return !!draftResult;
       default: return false;
@@ -420,7 +453,12 @@ export default function NewDocumentPage() {
   };
 
   const handleGenerate = async () => {
-    if (!documentType || !frameworkType || !selectedUniversity) return;
+    if (
+      !documentType ||
+      writingMode !== "framework" ||
+      !frameworkType ||
+      !selectedUniversity
+    ) return;
     setGenerating(true);
 
     try {
@@ -476,15 +514,18 @@ export default function NewDocumentPage() {
       }
       const data = await res.json();
 
-      // 既存のDraftGenerateResponse形式に変換
+      const sections =
+        writingMode === "free"
+          ? [{ id: "free", title: "本文", content: data.draft }]
+          : [
+              { id: "intro", title: "導入", content: data.structure.intro },
+              { id: "body", title: "志望理由", content: data.structure.body },
+              { id: "strengths", title: "自己の強みと貢献", content: data.structure.strengths },
+              { id: "conclusion", title: "将来への展開", content: data.structure.conclusion },
+            ];
       setDraftResult({
         draft: data.draft,
-        sections: [
-          { id: "intro", title: "導入", content: data.structure.intro },
-          { id: "body", title: "志望理由", content: data.structure.body },
-          { id: "strengths", title: "自己の強みと貢献", content: data.structure.strengths },
-          { id: "conclusion", title: "将来への展開", content: data.structure.conclusion },
-        ],
+        sections,
         wordCount: data.draft.length,
         evaluationScores: data.evaluationScores,
         improvementSuggestions: data.improvementSuggestions,
@@ -496,6 +537,22 @@ export default function NewDocumentPage() {
     } finally {
       setGenerating(false);
     }
+  };
+
+  const handleStartFreeWriting = () => {
+    setDraftResult({
+      draft: "",
+      sections: [
+        {
+          id: "free",
+          title: "本文",
+          content: "",
+          placeholder: "志望理由書の本文を自由に入力してください。",
+        },
+      ],
+      wordCount: 0,
+    });
+    setFocusedSectionId("free");
   };
 
   /**
@@ -514,6 +571,7 @@ export default function NewDocumentPage() {
           content: draftResult.draft,
           wizardState: {
             currentStep: 4,
+            writingMode: writingMode ?? undefined,
             frameworkType: frameworkType ?? undefined,
             selectedActivityIds,
             targetWordCount,
@@ -688,6 +746,31 @@ export default function NewDocumentPage() {
             </p>
           )}
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <Card
+              className={`cursor-pointer transition-all hover:shadow-md ${
+                writingMode === "free"
+                  ? "ring-2 ring-primary border-primary"
+                  : ""
+              }`}
+              onClick={() => {
+                setWritingMode("free");
+                setFrameworkType(null);
+                setDraftResult(null);
+                setFocusedSectionId(null);
+              }}
+            >
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  自由記述
+                  <Badge variant="outline">フレームワークなし</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  構成を固定せず、白紙または自己分析AIの下書きから自由に書きます。
+                </p>
+              </CardContent>
+            </Card>
             {FRAMEWORKS.map((fw) => {
               const isRecommended = recommendedFrameworks.includes(fw.type);
               return (
@@ -698,7 +781,12 @@ export default function NewDocumentPage() {
                       ? "ring-2 ring-primary border-primary"
                       : ""
                   }`}
-                  onClick={() => setFrameworkType(fw.type)}
+                  onClick={() => {
+                    setWritingMode("framework");
+                    setFrameworkType(fw.type);
+                    setDraftResult(null);
+                    setFocusedSectionId(null);
+                  }}
                 >
                   <CardHeader className="pb-2">
                     <CardTitle className="text-base flex items-center gap-2">
@@ -801,7 +889,11 @@ export default function NewDocumentPage() {
                     {selectedUniversity?.facultyName}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    フレームワーク: {frameworkType && FRAMEWORK_TYPE_LABELS[frameworkType]}
+                    構成: {writingMode === "free"
+                      ? "自由記述"
+                      : frameworkType
+                        ? FRAMEWORK_TYPE_LABELS[frameworkType]
+                        : "未選択"}
                     {selectedActivityIds.length > 0 &&
                       ` / 活動実績: ${selectedActivityIds.length}件`}
                     {` / 目標: ${targetWordCount}字`}
@@ -820,10 +912,24 @@ export default function NewDocumentPage() {
                     </Button>
                   )}
 
-                  <Button onClick={handleGenerate} size="lg" className="gap-2" variant="outline">
-                    <Sparkles className="h-4 w-4" />
-                    フレームワーク形式で下書き生成
-                  </Button>
+                  {writingMode === "framework" && (
+                    <Button onClick={handleGenerate} size="lg" className="gap-2" variant="outline">
+                      <Sparkles className="h-4 w-4" />
+                      フレームワーク形式で下書き生成
+                    </Button>
+                  )}
+
+                  {writingMode === "free" && (
+                    <Button
+                      onClick={handleStartFreeWriting}
+                      size="lg"
+                      className="gap-2"
+                      variant="outline"
+                    >
+                      <FileText className="h-4 w-4" />
+                      白紙から自由に書き始める
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -841,9 +947,9 @@ export default function NewDocumentPage() {
           {draftResult && (
             <div className="lg:grid lg:grid-cols-[minmax(22rem,28rem)_minmax(0,1fr)] lg:gap-6 lg:items-start">
               {/* 左: AI コーチパネル */}
-              {frameworkType && (
+              {(frameworkType || writingMode === "free") && (
                 <DocumentSectionCoachPanel
-                  frameworkType={frameworkType}
+                  frameworkType={frameworkType ?? "free"}
                   focusedSection={focusedSection}
                   documentType={documentType ?? undefined}
                   universityId={selectedUniversity?.universityId}
@@ -857,7 +963,9 @@ export default function NewDocumentPage() {
               <div className="space-y-4 lg:min-w-0">
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">生成された下書き</CardTitle>
+                    <CardTitle className="text-lg">
+                      {writingMode === "free" ? "本文" : "生成された下書き"}
+                    </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {draftResult.sections.map((section, i) => (

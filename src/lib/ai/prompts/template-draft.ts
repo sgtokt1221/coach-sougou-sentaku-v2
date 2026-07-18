@@ -10,6 +10,9 @@ const TEMPLATE_DRAFT_SYSTEM_PROMPT = `あなたは総合型選抜（旧AO入試�
 - 志望大学のアドミッションポリシー（AP）を意識した表現にすること
 - 生徒自身の言葉で書いたように、自然で具体的な文章にすること
 - 抽象的な表現は避け、数値や固有名詞を含む具体的な記述を心がけること
+- 活動実績が未登録でも生成を中止しないこと
+- 登録データにない活動、役職、成果、数値、固有名詞は絶対に捏造しないこと
+- 材料がない箇所は「【原体験を入力】」のような編集用プレースホルダーを残すこと
 
 ## 志望大学・学部情報
 - 大学: {{UNIVERSITY_NAME}}
@@ -58,7 +61,9 @@ function formatSections(sections: FrameworkDefinition["sections"]): string {
 function formatActivityData(
   activities: { title: string; structuredData?: StructuredActivityData }[]
 ): string {
-  if (activities.length === 0) return "（活動実績データなし - 一般的な内容で下書きを生成してください）";
+  if (activities.length === 0) {
+    return "（活動実績は未登録です。活動を捏造せず、大学・学部への関心を軸に構成し、経験が必要な箇所には編集用プレースホルダーを残してください）";
+  }
 
   return activities
     .map((a, i) => {
