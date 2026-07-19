@@ -269,12 +269,31 @@ export default function DocumentEditorPage() {
     }
   }
 
-  /** プレビュー中の書き換え案を本文に適用する（保存は既存の自動保存に任せる）。 */
-  function applyRewrite() {
-    if (!rewritePreview) return;
-    setContent(rewritePreview);
+  /**
+   * プレビュー中の書き換え案を本文に適用する。
+   * デバウンス自動保存任せだと置換直後の離脱で未保存になりうるため、
+   * 明示的に保存（版も積む）し、トーストで結果を知らせる。
+   */
+  async function applyRewrite() {
+    if (!rewritePreview || !doc) return;
+    const next = rewritePreview;
+    setContent(next);
     setRewritePreview(null);
     setRewriteInstruction("");
+    try {
+      const res = await authFetch(`/api/documents/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: next }),
+      });
+      if (res.ok) {
+        toast.success("本文を書き換え案に置き換えました");
+      } else {
+        toast.error("置き換えの保存に失敗しました");
+      }
+    } catch {
+      toast.error("置き換えの保存に失敗しました");
+    }
   }
 
   /** プレビュー中の書き換え案を破棄する。本文には影響しない。 */
