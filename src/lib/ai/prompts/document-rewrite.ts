@@ -48,11 +48,13 @@ export function buildDocumentRewritePrompt(input: DocumentRewriteInput): string 
     ? `目標文字数は${input.targetWordCount}字。書き換え後の本文はその±10%の範囲に収めること。`
     : "目標文字数の指定はないので、元の本文の分量を大きく変えないこと。";
 
+  // 動的値は関数リプレーサで埋め込む。第2引数に生の文字列を渡すと、
+  // 入力に含まれる $&・$'・$` 等が特殊置換シーケンスとして解釈されプロンプトが壊れる。
   return DOCUMENT_REWRITE_SYSTEM_PROMPT
-    .replace("{{TARGET_WORD_COUNT_RULE}}", targetWordCountRule)
-    .replace("{{UNIVERSITY_NAME}}", input.universityName)
-    .replace("{{FACULTY_NAME}}", input.facultyName)
-    .replace("{{ADMISSION_POLICY}}", input.admissionPolicy || "（未設定）")
-    .replace("{{DOCUMENT_TYPE}}", input.documentType)
-    .replace("{{INSTRUCTION}}", input.instruction);
+    .replace("{{TARGET_WORD_COUNT_RULE}}", () => targetWordCountRule)
+    .replace("{{UNIVERSITY_NAME}}", () => input.universityName)
+    .replace("{{FACULTY_NAME}}", () => input.facultyName)
+    .replace("{{ADMISSION_POLICY}}", () => input.admissionPolicy || "（未設定）")
+    .replace("{{DOCUMENT_TYPE}}", () => input.documentType)
+    .replace("{{INSTRUCTION}}", () => input.instruction);
 }

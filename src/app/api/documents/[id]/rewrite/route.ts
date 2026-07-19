@@ -85,10 +85,22 @@ export async function POST(
 
     const response = await client.messages.create({
       model: "claude-sonnet-4-6",
-      max_tokens: 4096,
+      max_tokens: 8192,
       system: systemPrompt,
       messages: [{ role: "user", content }],
     });
+
+    // 本文全文をJSONで返すため出力が長くなりやすい。max_tokens で切れた場合は
+    // JSON.parse が失敗して汎用500になる前に、分かりやすいメッセージで返す。
+    if (response.stop_reason === "max_tokens") {
+      return NextResponse.json(
+        {
+          error:
+            "本文が長く、書き換え結果が途中で切れました。指示を分けるか目標文字数を下げてお試しください。",
+        },
+        { status: 500 }
+      );
+    }
 
     const rawText =
       response.content[0].type === "text" ? response.content[0].text : "";
