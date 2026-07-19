@@ -20,6 +20,7 @@ import { TourNextButton } from "@/components/student/TourNextButton";
 import type { ChocoPassage, ChocoScores, ChocoFeedback, ChocoRole } from "@/lib/types/choco";
 import { usePersistentDraft } from "@/hooks/usePersistentDraft";
 import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
+import { MobileSlideOverPanel } from "@/components/shared/MobileSlideOverPanel";
 
 type Result = {
   scores: ChocoScores;
@@ -177,64 +178,98 @@ export default function ChocoPage() {
           className="mb-3"
         />
         <div className="lg:grid lg:grid-cols-[minmax(22rem,28rem)_minmax(0,1fr)] lg:gap-6 lg:items-start">
-          {/* 左: 本文 ⇄ AIコーチ を切り替え */}
+          {/* 左: 本文 ⇄ AIコーチ を切り替え (PC のみ・現状維持) */}
           <div className="lg:sticky lg:top-4">
-            <div className="mb-2 inline-flex rounded-lg border bg-muted/40 p-1">
-              {(
-                [
-                  { id: "passage" as const, label: "本文", Icon: FileText },
-                  { id: "coach" as const, label: "AIコーチ", Icon: MessageSquare },
-                ]
-              ).map(({ id, label, Icon }) => (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => setLeftView(id)}
-                  className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors cursor-pointer ${
-                    leftView === id
-                      ? "bg-teal-500 text-white shadow-sm"
-                      : "text-muted-foreground hover:bg-background/60"
-                  }`}
-                >
-                  <Icon className="size-4" />
-                  {label}
-                </button>
-              ))}
-            </div>
-            {leftView === "passage" ? (
-              <ChocoPassagePanel paragraphs={passage.paragraphs} blankIndex={blankIndex} />
-            ) : (
-              <div className="flex h-[70vh] flex-col">
-                {resolved.length > 0 && (
-                  <select
-                    className="mb-2 w-full rounded-lg border bg-background p-2 text-xs"
-                    value={selectedCompoundId ?? ""}
-                    onChange={(e) => setSelectedCompoundId(e.target.value)}
+            <div className="hidden lg:block">
+              <div className="mb-2 inline-flex rounded-lg border bg-muted/40 p-1">
+                {(
+                  [
+                    { id: "passage" as const, label: "本文", Icon: FileText },
+                    { id: "coach" as const, label: "AIコーチ", Icon: MessageSquare },
+                  ]
+                ).map(({ id, label, Icon }) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setLeftView(id)}
+                    className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors cursor-pointer ${
+                      leftView === id
+                        ? "bg-teal-500 text-white shadow-sm"
+                        : "text-muted-foreground hover:bg-background/60"
+                    }`}
                   >
-                    {resolved.map((r) => (
-                      <option key={`${r.universityId}:${r.facultyId}`} value={`${r.universityId}:${r.facultyId}`}>
-                        {r.universityName} {r.facultyName}
-                      </option>
-                    ))}
-                  </select>
-                )}
-                <div className="min-h-0 flex-1">
-                  <EssayCoachPanelBody
-                    topic={passage.themeTitle}
-                    draft={text}
-                    universityId={selectedUni?.universityId}
-                    facultyId={selectedUni?.facultyId}
-                  />
-                </div>
+                    <Icon className="size-4" />
+                    {label}
+                  </button>
+                ))}
               </div>
-            )}
+              {leftView === "passage" ? (
+                <ChocoPassagePanel paragraphs={passage.paragraphs} blankIndex={blankIndex} />
+              ) : (
+                <div className="flex h-[70vh] flex-col">
+                  {resolved.length > 0 && (
+                    <select
+                      className="mb-2 w-full rounded-lg border bg-background p-2 text-xs"
+                      value={selectedCompoundId ?? ""}
+                      onChange={(e) => setSelectedCompoundId(e.target.value)}
+                    >
+                      {resolved.map((r) => (
+                        <option key={`${r.universityId}:${r.facultyId}`} value={`${r.universityId}:${r.facultyId}`}>
+                          {r.universityName} {r.facultyName}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  <div className="min-h-0 flex-1">
+                    <EssayCoachPanelBody
+                      topic={passage.themeTitle}
+                      draft={text}
+                      universityId={selectedUni?.universityId}
+                      facultyId={selectedUni?.facultyId}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* モバイル: 本文を常時表示。AIコーチは見ながら書けるスライドパネルへ */}
+            <div className="lg:hidden">
+              <ChocoPassagePanel paragraphs={passage.paragraphs} blankIndex={blankIndex} />
+            </div>
           </div>
+
+          {/* モバイル: AIコーチ (見ながら書ける段階スナップ式スライドパネル) */}
+          <MobileSlideOverPanel label="AIコーチ" title="AIコーチ">
+            <div className="flex h-full min-h-0 flex-col">
+              {resolved.length > 0 && (
+                <select
+                  className="mb-2 w-full shrink-0 rounded-lg border bg-background p-2 text-xs"
+                  value={selectedCompoundId ?? ""}
+                  onChange={(e) => setSelectedCompoundId(e.target.value)}
+                >
+                  {resolved.map((r) => (
+                    <option key={`${r.universityId}:${r.facultyId}`} value={`${r.universityId}:${r.facultyId}`}>
+                      {r.universityName} {r.facultyName}
+                    </option>
+                  ))}
+                </select>
+              )}
+              <div className="min-h-0 flex-1">
+                <EssayCoachPanelBody
+                  topic={passage.themeTitle}
+                  draft={text}
+                  universityId={selectedUni?.universityId}
+                  facultyId={selectedUni?.facultyId}
+                />
+              </div>
+            </div>
+          </MobileSlideOverPanel>
 
           {/* 右: 入力 */}
           <div className="lg:min-w-0 space-y-3 mt-4 lg:mt-0">
             <p className="text-sm text-muted-foreground">
-              左の本文の空欄（{passage.paragraphs.length}段落中 {blankIndex + 1}段落目）を書いてみよう。
-              困ったら「AIコーチ」に切り替えて相談できます。
+              本文の空欄（{passage.paragraphs.length}段落中 {blankIndex + 1}段落目）を書いてみよう。
+              困ったら「AIコーチ」に相談できます。
             </p>
             <ManuscriptEditor value={text} onChange={setText} maxLength={300} placeholder="この段落を書いてみよう..." />
             {error && <p className="text-sm text-rose-600">{error}</p>}
