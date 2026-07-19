@@ -1,9 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { createPortal } from "react-dom";
 import { useRouter, useParams } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -24,11 +22,11 @@ import {
   ChevronDown,
   ChevronUp,
   ShieldCheck,
-  X,
 } from "lucide-react";
 import type { Document, DocumentFeedback, DocumentStatus, DocumentAiLikeness } from "@/lib/types/document";
 import { documentStatusLabel2, AI_LIKENESS_LEVEL_LABELS, AI_LIKENESS_SUBMIT_THRESHOLD } from "@/lib/types/document";
 import { DocumentReviewBadge } from "@/components/documents/DocumentReviewBadge";
+import { MobileSlideOverPanel } from "@/components/shared/MobileSlideOverPanel";
 import { useAutosave, type AutosaveStatus } from "@/hooks/useAutosave";
 import { authFetch } from "@/lib/api/client";
 import { toast } from "sonner";
@@ -76,13 +74,7 @@ export default function DocumentEditorPage() {
   const [reviewing, setReviewing] = useState(false);
   const [feedback, setFeedback] = useState<DocumentFeedback | null>(null);
   const [showVersions, setShowVersions] = useState(false);
-  const [reviewOpen, setReviewOpen] = useState(false);
   const [aiLikeness, setAiLikeness] = useState<DocumentAiLikeness | null>(null);
-
-  // AI添削オーバーレイは body 直下へ portal する（親 PageTransition が transform/filter を持ち、
-  // position:fixed の基準がビューポートでなくなるため）。SSR では描画しない。
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
 
   const [aiChecking, setAiChecking] = useState(false);
   const [submitGateOpen, setSubmitGateOpen] = useState(false);
@@ -354,96 +346,22 @@ export default function DocumentEditorPage() {
         />
       </div>
 
-      {/* モバイル: AI添削オーバーレイ（ハンドル＋バックドロップ＋カード）。
-          親 PageTransition の transform/filter を避けるため body 直下へ portal する。 */}
-      {mounted &&
-        createPortal(
-          <div className="lg:hidden">
-            {/* AI添削を開くハンドル（タップ or 右スワイプ）。カードが開いている間は隠す。
-                textarea 左端中央での編集妨害を避けるため下寄せ(top-2/3)に置く。 */}
-            {!reviewOpen && (
-              <motion.button
-                type="button"
-                drag="x"
-                dragConstraints={{ left: 0, right: 0 }}
-                dragSnapToOrigin
-                onDragEnd={(_e, info) => {
-                  if (info.offset.x > 40 || info.velocity.x > 300) setReviewOpen(true);
-                }}
-                onClick={() => setReviewOpen(true)}
-                aria-label="AI添削を開く"
-                className="fixed left-0 top-2/3 z-[60] -translate-y-1/2 flex flex-col items-center gap-1 rounded-r-xl border border-l-0 bg-primary px-1.5 py-3 text-primary-foreground shadow-md"
-              >
-                <Sparkles className="size-4" />
-                <span className="text-[10px] leading-none [writing-mode:vertical-rl]">AI添削</span>
-              </motion.button>
-            )}
-
-            <AnimatePresence>
-              {reviewOpen && (
-                <motion.div
-                  key="backdrop"
-                  className="fixed inset-0 z-[60] bg-black/30"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  onClick={() => setReviewOpen(false)}
-                />
-              )}
-              {reviewOpen && (
-                <motion.div
-                  key="card"
-                  className="fixed left-0 top-0 z-[60] flex h-full w-[85%] max-w-sm flex-col rounded-r-2xl bg-background shadow-xl"
-                  initial={{ x: "-100%" }}
-                  animate={{ x: 0 }}
-                  exit={{ x: "-100%" }}
-                  transition={{ type: "spring", damping: 30, stiffness: 300 }}
-                  drag="x"
-                  dragDirectionLock
-                  dragConstraints={{ left: 0, right: 0 }}
-                  dragElastic={{ left: 0.6, right: 0 }}
-                  onDragEnd={(_e, info) => {
-                    if (info.offset.x < -80 || info.velocity.x < -400) setReviewOpen(false);
-                  }}
-                  style={{
-                    paddingTop: "var(--app-safe-top)",
-                    paddingBottom:
-                      "calc(var(--app-bottom-nav-height) + var(--app-safe-bottom))",
-                  }}
-                >
-                  <div className="flex shrink-0 items-center justify-between px-4 pt-4">
-                    <p className="text-sm font-semibold">AI添削</p>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setReviewOpen(false)}
-                      aria-label="閉じる"
-                    >
-                      <X className="size-4" />
-                    </Button>
-                  </div>
-                  {/* スクロール領域。背後エディタへのスクロール伝播を防ぐ(overscroll-contain)。 */}
-                  <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4">
-                    <ReviewPanel
-                      feedback={feedback}
-                      reviewing={reviewing}
-                      onReview={handleReview}
-                      contentEmpty={!content.trim()}
-                      versions={doc.versions}
-                      showVersions={showVersions}
-                      setShowVersions={setShowVersions}
-                      aiLikeness={aiLikeness}
-                      aiChecking={aiChecking}
-                      onAiCheck={handleAiCheck}
-                      currentWordCount={wordCount}
-                    />
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>,
-          document.body,
-        )}
+      {/* モバイル: AI添削（共通の段階スナップ式スライドパネル）。 */}
+      <MobileSlideOverPanel label="AI添削" title="AI添削">
+        <ReviewPanel
+          feedback={feedback}
+          reviewing={reviewing}
+          onReview={handleReview}
+          contentEmpty={!content.trim()}
+          versions={doc.versions}
+          showVersions={showVersions}
+          setShowVersions={setShowVersions}
+          aiLikeness={aiLikeness}
+          aiChecking={aiChecking}
+          onAiCheck={handleAiCheck}
+          currentWordCount={wordCount}
+        />
+      </MobileSlideOverPanel>
 
       {/* Desktop layout */}
       <div className="hidden lg:grid lg:grid-cols-3 gap-6">
