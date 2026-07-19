@@ -581,9 +581,6 @@ function EditorPanel({
   );
 }
 
-/** AIで書き換えカードのプリセット指示チップ。 */
-const REWRITE_PRESETS = ["簡潔に", "具体例を足す", "結論を強く", "流れを自然に"];
-
 function ReviewPanel({
   feedback,
   reviewing,
@@ -701,20 +698,6 @@ function ReviewPanel({
           <p className="text-sm text-muted-foreground">
             指示を伝えると、AIが本文の書き換え案を作成します。内容を確認してから置き換えるか選べます。
           </p>
-          <div className="flex flex-wrap gap-2">
-            {REWRITE_PRESETS.map((preset) => (
-              <Button
-                key={preset}
-                type="button"
-                size="sm"
-                variant="outline"
-                className="h-7 text-xs"
-                onClick={() => setRewriteInstruction(preset)}
-              >
-                {preset}
-              </Button>
-            ))}
-          </div>
           <Textarea
             placeholder="例: もっと具体的なエピソードを入れて簡潔にまとめて"
             value={rewriteInstruction}
