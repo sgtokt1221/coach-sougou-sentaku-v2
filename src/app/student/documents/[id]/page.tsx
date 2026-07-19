@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -22,6 +23,7 @@ import {
   ChevronDown,
   ChevronUp,
   ShieldCheck,
+  Wand2,
 } from "lucide-react";
 import type { Document, DocumentFeedback, DocumentStatus, DocumentAiLikeness } from "@/lib/types/document";
 import { documentStatusLabel2, AI_LIKENESS_LEVEL_LABELS, AI_LIKENESS_SUBMIT_THRESHOLD } from "@/lib/types/document";
@@ -79,6 +81,10 @@ export default function DocumentEditorPage() {
   const [aiChecking, setAiChecking] = useState(false);
   const [submitGateOpen, setSubmitGateOpen] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<DocumentStatus | null>(null);
+
+  const [rewriteInstruction, setRewriteInstruction] = useState("");
+  const [rewriting, setRewriting] = useState(false);
+  const [rewritePreview, setRewritePreview] = useState<string | null>(null);
 
   const loadDocument = useCallback(async () => {
     setLoading(true);
@@ -236,6 +242,46 @@ export default function DocumentEditorPage() {
     }
   }
 
+  /**
+   * 生徒の指示に従ってAIに本文の書き換え案を生成させる。
+   * いきなり本文を上書きせず、結果は rewritePreview に保持してプレビュー表示する。
+   */
+  async function handleRewrite() {
+    if (!doc || !content.trim() || !rewriteInstruction.trim()) return;
+    setRewriting(true);
+    try {
+      const res = await authFetch(`/api/documents/${id}/rewrite`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content, instruction: rewriteInstruction }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setRewritePreview(data.rewritten);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        toast.error(err?.error || "書き換えに失敗しました");
+      }
+    } catch {
+      toast.error("書き換えに失敗しました");
+    } finally {
+      setRewriting(false);
+    }
+  }
+
+  /** プレビュー中の書き換え案を本文に適用する（保存は既存の自動保存に任せる）。 */
+  function applyRewrite() {
+    if (!rewritePreview) return;
+    setContent(rewritePreview);
+    setRewritePreview(null);
+    setRewriteInstruction("");
+  }
+
+  /** プレビュー中の書き換え案を破棄する。本文には影響しない。 */
+  function discardRewrite() {
+    setRewritePreview(null);
+  }
+
   async function commitStatus(status: DocumentStatus) {
     if (!doc) return;
     try {
@@ -360,6 +406,13 @@ export default function DocumentEditorPage() {
           aiChecking={aiChecking}
           onAiCheck={handleAiCheck}
           currentWordCount={wordCount}
+          rewriteInstruction={rewriteInstruction}
+          setRewriteInstruction={setRewriteInstruction}
+          rewriting={rewriting}
+          rewritePreview={rewritePreview}
+          onRewrite={handleRewrite}
+          onApplyRewrite={applyRewrite}
+          onDiscardRewrite={discardRewrite}
         />
       </MobileSlideOverPanel>
 
@@ -393,6 +446,13 @@ export default function DocumentEditorPage() {
             aiChecking={aiChecking}
             onAiCheck={handleAiCheck}
             currentWordCount={wordCount}
+            rewriteInstruction={rewriteInstruction}
+            setRewriteInstruction={setRewriteInstruction}
+            rewriting={rewriting}
+            rewritePreview={rewritePreview}
+            onRewrite={handleRewrite}
+            onApplyRewrite={applyRewrite}
+            onDiscardRewrite={discardRewrite}
           />
         </div>
       </div>
@@ -521,6 +581,9 @@ function EditorPanel({
   );
 }
 
+/** AIで書き換えカードのプリセット指示チップ。 */
+const REWRITE_PRESETS = ["簡潔に", "具体例を足す", "結論を強く", "流れを自然に"];
+
 function ReviewPanel({
   feedback,
   reviewing,
@@ -533,6 +596,13 @@ function ReviewPanel({
   aiChecking,
   onAiCheck,
   currentWordCount,
+  rewriteInstruction,
+  setRewriteInstruction,
+  rewriting,
+  rewritePreview,
+  onRewrite,
+  onApplyRewrite,
+  onDiscardRewrite,
 }: {
   feedback: DocumentFeedback | null;
   reviewing: boolean;
@@ -545,6 +615,13 @@ function ReviewPanel({
   aiChecking: boolean;
   onAiCheck: () => void;
   currentWordCount: number;
+  rewriteInstruction: string;
+  setRewriteInstruction: (v: string) => void;
+  rewriting: boolean;
+  rewritePreview: string | null;
+  onRewrite: () => void;
+  onApplyRewrite: () => void;
+  onDiscardRewrite: () => void;
 }) {
   return (
     <div className="space-y-4">
@@ -607,6 +684,69 @@ function ReviewPanel({
                   </div>
                 </>
               )}
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* AIで書き換え */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Wand2 className="size-4" />
+            AIで書き換え
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            指示を伝えると、AIが本文の書き換え案を作成します。内容を確認してから置き換えるか選べます。
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {REWRITE_PRESETS.map((preset) => (
+              <Button
+                key={preset}
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-7 text-xs"
+                onClick={() => setRewriteInstruction(preset)}
+              >
+                {preset}
+              </Button>
+            ))}
+          </div>
+          <Textarea
+            placeholder="例: もっと具体的なエピソードを入れて簡潔にまとめて"
+            value={rewriteInstruction}
+            onChange={(e) => setRewriteInstruction(e.target.value)}
+            className="min-h-20"
+          />
+          <Button
+            className="w-full"
+            onClick={onRewrite}
+            disabled={rewriting || contentEmpty || !rewriteInstruction.trim()}
+          >
+            <Wand2 className="size-4 mr-2" />
+            {rewriting ? "書き換え中..." : "AIで書き換える"}
+          </Button>
+
+          {rewritePreview && (
+            <>
+              <Separator />
+              <div className="space-y-2">
+                <p className="text-sm font-medium">書き換え案</p>
+                <div className="max-h-64 overflow-y-auto rounded-md border bg-muted/30 p-3 text-sm whitespace-pre-wrap">
+                  {rewritePreview}
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" className="flex-1" onClick={onApplyRewrite}>
+                    この内容に置き換える
+                  </Button>
+                  <Button size="sm" variant="outline" className="flex-1" onClick={onDiscardRewrite}>
+                    破棄
+                  </Button>
+                </div>
+              </div>
             </>
           )}
         </CardContent>
