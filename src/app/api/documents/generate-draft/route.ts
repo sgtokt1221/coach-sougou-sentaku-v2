@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import type { DraftGenerateRequest, DraftGenerateResponse } from "@/lib/types/template";
 import { getFrameworkByType } from "@/lib/templates/frameworks";
 import { buildTemplateDraftPrompt } from "@/lib/ai/prompts/template-draft";
+import { fitToCharLimit } from "@/lib/ai/fit-char-limit";
 import { adminDb } from "@/lib/firebase/admin";
 import { requireFeature } from "@/lib/api/subscription";
 import { requireRole } from "@/lib/api/auth";
@@ -112,6 +113,12 @@ export async function POST(request: NextRequest) {
         frameworkType: body.frameworkType,
         sections,
       };
+      // 字数上限の強制（目標文字数の+10%以内）。LLM が超過して出しても
+      // サーバー側で数え直し、上限内に収める圧縮リライトを行う。
+      const limit = Math.round((body.targetWordCount || 800) * 1.1);
+      if (result.draft) {
+        result.draft = await fitToCharLimit(client, result.draft, limit);
+      }
       return NextResponse.json(result);
     }
 

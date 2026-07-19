@@ -4,16 +4,12 @@ import { requireFeature } from "@/lib/api/subscription";
 import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
 import { buildDocumentRewritePrompt } from "@/lib/ai/prompts/document-rewrite";
+import { cleanAiText, fitToCharLimit } from "@/lib/ai/fit-char-limit";
 
 /** 指示文から「N字以下 / N字以内 / N文字まで」等の上限文字数を抽出する。無ければ null。 */
 function extractCharLimit(instruction: string): number | null {
   const m = instruction.match(/(\d{2,4})\s*(?:文字|字)\s*(?:以下|以内|まで)/);
   return m ? parseInt(m[1], 10) : null;
-}
-
-/** Claude 応答テキストの前後空白とコードフェンスを取り除く。 */
-function cleanText(raw: string): string {
-  return raw.trim().replace(/^```[a-zA-Z]*\s*/, "").replace(/\s*```$/, "").trim();
 }
 
 /**
@@ -118,7 +114,7 @@ export async function POST(
 
     // 本文全文をプレーンテキストで返させる（多段落の本文をJSON化すると改行の
     // エスケープ漏れで JSON.parse が壊れやすいため）。万一コードフェンスが付いても剥がす。
-    let rewritten = cleanText(rawText);
+    let rewritten = cleanAiText(rawText);
     if (!rewritten) {
       console.error("Empty rewrite response:", rawText);
       return NextResponse.json(
@@ -128,8 +124,7 @@ export async function POST(
     }
 
     // 字数上限の強制。指示文の「N字以下」等を優先、無ければ目標文字数の+10%を上限とする。
-    // LLM は1回の指示では字数を守りきれないため、超過時はサーバー側で数えて
-    // 「上限内に収める」圧縮リライトを最大2回まで再実行する。
+    // LLM は1回の指示では字数を守りきれないため、超過時はサーバー側で数えて詰める。
     const explicitLimit = extractCharLimit(instruction);
     const limit =
       explicitLimit ??
@@ -137,25 +132,7 @@ export async function POST(
         ? Math.round(data.targetWordCount * 1.1)
         : null);
     if (limit) {
-      for (let i = 0; i < 2 && rewritten.length > limit; i++) {
-        try {
-          const compressResp = await client.messages.create({
-            model: "claude-sonnet-4-6",
-            max_tokens: 8192,
-            system: `次の文章を、意味・自然さ・段落構成を保ったまま、必ず${limit}字以内に収まるよう書き直してください。出力前に文字数を数え、${limit}字を超えないこと。本文だけを出力し、説明・見出し・コードブロック・JSONは一切付けないこと。`,
-            messages: [{ role: "user", content: rewritten }],
-          });
-          const compressed = cleanText(
-            compressResp.content[0]?.type === "text"
-              ? compressResp.content[0].text
-              : "",
-          );
-          if (compressed) rewritten = compressed;
-        } catch (err) {
-          console.warn("compress retry failed:", err);
-          break;
-        }
-      }
+      rewritten = await fitToCharLimit(client, rewritten, limit);
     }
 
     return NextResponse.json({ rewritten });

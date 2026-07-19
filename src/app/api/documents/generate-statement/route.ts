@@ -9,6 +9,7 @@ import {
   type SelfAnalysisData,
 } from "@/lib/ai/prompts/statement";
 import { extractJsonObject } from "@/lib/ai/extract-json";
+import { fitToCharLimit } from "@/lib/ai/fit-char-limit";
 
 export const maxDuration = 60;
 
@@ -139,6 +140,16 @@ export async function POST(request: NextRequest) {
       statementResponse = normalizeStatementResponse(
         JSON.parse(jsonrepair(jsonText))
       );
+      // 字数上限の強制（目標文字数の+10%以内）。LLM が超過して出しても
+      // サーバー側で数え直し、上限内に収める圧縮リライトを行う。
+      const limit = Math.round((body.targetWordCount || 800) * 1.1);
+      if (statementResponse.draft) {
+        statementResponse.draft = await fitToCharLimit(
+          client,
+          statementResponse.draft,
+          limit,
+        );
+      }
     }
 
     return NextResponse.json(statementResponse);
