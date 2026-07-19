@@ -16,7 +16,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import type { DocumentType, DocumentStatus } from "@/lib/types/document";
-import { DOCUMENT_STATUS_LABELS } from "@/lib/types/document";
+import { documentStatusLabel2, isDocumentComplete } from "@/lib/types/document";
 
 interface ChecklistItem {
   type: DocumentType;
@@ -32,19 +32,19 @@ interface UniversityChecklist {
   items: ChecklistItem[];
 }
 
-const STATUS_VARIANT: Record<DocumentStatus, "default" | "secondary" | "outline" | "destructive"> = {
-  draft: "outline",
-  in_review: "secondary",
-  reviewed: "default",
-  final: "default",
-};
+/** 2状態表示: draft=outline / それ以外(完成扱い)=default。 */
+function statusVariant2(status: DocumentStatus): "outline" | "default" {
+  return status === "draft" ? "outline" : "default";
+}
 
-const STATUS_ICON: Record<DocumentStatus, React.ReactNode> = {
-  draft: <FileText className="size-4 text-muted-foreground" />,
-  in_review: <Clock className="size-4 text-sky-500" />,
-  reviewed: <CheckCircle className="size-4 text-emerald-500" />,
-  final: <CheckCircle className="size-4 text-emerald-600" />,
-};
+/** 2状態アイコン: draft=書類アイコン / それ以外(完成扱い)=チェック。 */
+function statusIcon2(status: DocumentStatus): React.ReactNode {
+  return status === "draft" ? (
+    <FileText className="size-4 text-muted-foreground" />
+  ) : (
+    <CheckCircle className="size-4 text-emerald-500" />
+  );
+}
 
 function daysUntil(dateStr: string): number {
   const now = new Date();
@@ -101,8 +101,8 @@ export default function ChecklistPage() {
       ) : (
         <div className="space-y-4">
           {checklists.map((checklist) => {
-            const completedCount = checklist.items.filter(
-              (item) => item.status === "final" || item.status === "reviewed"
+            const completedCount = checklist.items.filter((item) =>
+              isDocumentComplete(item.status)
             ).length;
             const earliestDeadline = checklist.items
               .filter((item) => item.deadline)
@@ -141,7 +141,7 @@ export default function ChecklistPage() {
                       className="flex items-center justify-between p-3 rounded-lg border"
                     >
                       <div className="flex items-center gap-3">
-                        {STATUS_ICON[item.status]}
+                        {statusIcon2(item.status)}
                         <div>
                           <p className="text-sm font-medium">{item.type}</p>
                           {item.deadline && (
@@ -152,8 +152,8 @@ export default function ChecklistPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge variant={STATUS_VARIANT[item.status]}>
-                          {DOCUMENT_STATUS_LABELS[item.status]}
+                        <Badge variant={statusVariant2(item.status)}>
+                          {documentStatusLabel2(item.status)}
                         </Badge>
                         {item.documentId && (
                           <Button

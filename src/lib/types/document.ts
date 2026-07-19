@@ -101,6 +101,16 @@ export const DOCUMENT_STATUS_LABELS: Record<DocumentStatus, string> = {
   final: "完成",
 };
 
+/** 2状態表示ラベル: draft→下書き / それ以外(in_review/reviewed/final)→完成。 */
+export function documentStatusLabel2(status: DocumentStatus): string {
+  return status === "draft" ? "下書き" : "完成";
+}
+
+/** 2状態判定: 完成（＝下書きでない）か。旧 in_review/reviewed も完成扱い。 */
+export function isDocumentComplete(status: DocumentStatus): boolean {
+  return status !== "draft";
+}
+
 export const DOCUMENT_REVIEW_LABELS: Record<DocumentReviewState, string> = {
   approved: "承認済み",
   revision_requested: "差し戻し（要修正）",

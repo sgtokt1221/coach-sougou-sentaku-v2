@@ -21,7 +21,7 @@ import { authFetch } from "@/lib/api/client";
 import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
 import { DocumentReviewBadge } from "@/components/documents/DocumentReviewBadge";
 import type { DocumentStatus, DocumentReview, DocumentAiLikeness } from "@/lib/types/document";
-import { AI_LIKENESS_LEVEL_LABELS } from "@/lib/types/document";
+import { AI_LIKENESS_LEVEL_LABELS, documentStatusLabel2, isDocumentComplete } from "@/lib/types/document";
 
 interface DocumentListItem {
   id: string;
@@ -60,12 +60,12 @@ interface DocumentDetail {
   aiLikeness?: DocumentAiLikeness;
 }
 
-const STATUS_CONFIG: Record<DocumentStatus, { label: string; variant: "default" | "secondary" | "outline" | "destructive" }> = {
-  draft: { label: "下書き", variant: "secondary" },
-  in_review: { label: "添削中", variant: "outline" },
-  reviewed: { label: "添削済み", variant: "default" },
-  final: { label: "完成", variant: "default" },
-};
+/** 2状態表示: draft=下書き(secondary) / それ以外(旧値含む・完成扱い)=完成(default)。 */
+function statusConfig2(status: DocumentStatus): { label: string; variant: "default" | "secondary" } {
+  return isDocumentComplete(status)
+    ? { label: documentStatusLabel2(status), variant: "default" }
+    : { label: documentStatusLabel2(status), variant: "secondary" };
+}
 
 function getDeadlineBadge(deadline?: string) {
   if (!deadline) {
@@ -237,7 +237,7 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
                 </thead>
                 <tbody>
                   {documents.map((doc) => {
-                    const statusCfg = STATUS_CONFIG[doc.status] ?? STATUS_CONFIG.draft;
+                    const statusCfg = statusConfig2(doc.status);
                     const deadlineBadge = getDeadlineBadge(doc.deadline);
 
                     return (

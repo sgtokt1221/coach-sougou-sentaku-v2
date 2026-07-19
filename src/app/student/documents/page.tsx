@@ -9,17 +9,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { FileText, Plus, Clock, CheckCircle, AlertTriangle, FolderOpen, ChevronDown, ChevronUp, Trash2 } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import type { Document, DocumentStatus } from "@/lib/types/document";
-import { DOCUMENT_STATUS_LABELS } from "@/lib/types/document";
+import { documentStatusLabel2, isDocumentComplete } from "@/lib/types/document";
 import { DocumentReviewBadge } from "@/components/documents/DocumentReviewBadge";
 import { useAuthSWR } from "@/lib/api/swr";
 import { authFetch } from "@/lib/api/client";
 
-const STATUS_VARIANT: Record<DocumentStatus, "default" | "secondary" | "outline" | "destructive"> = {
-  draft: "outline",
-  in_review: "secondary",
-  reviewed: "default",
-  final: "default",
-};
+/** 2状態表示: draft=outline / それ以外(完成扱い)=default。 */
+function statusVariant2(status: DocumentStatus): "outline" | "default" {
+  return status === "draft" ? "outline" : "default";
+}
 
 function daysUntil(dateStr: string): number {
   const now = new Date();
@@ -52,7 +50,7 @@ export default function DocumentsPage() {
     if (isWizardIncomplete(d)) {
       return { action: "破棄", confirm: "破棄しますか？", running: "破棄中..." };
     }
-    if (d.status === "in_review" || d.status === "reviewed" || d.status === "final") {
+    if (isDocumentComplete(d.status)) {
       return {
         action: "削除",
         confirm: "提出済みの書類です。削除すると元に戻せません。削除しますか？",
@@ -98,7 +96,7 @@ export default function DocumentsPage() {
 
   for (const [, docs] of groupMap) {
     const first = docs[0];
-    const finalCount = docs.filter((d) => d.status === "final" || d.status === "reviewed").length;
+    const finalCount = docs.filter((d) => isDocumentComplete(d.status)).length;
     universityGroups.push({
       universityId: first.universityId,
       universityName: first.universityName,
@@ -216,8 +214,8 @@ export default function DocumentsPage() {
                               {isWizardIncomplete(doc) && (
                                 <Badge variant="outline">作成途中</Badge>
                               )}
-                              <Badge variant={STATUS_VARIANT[doc.status]}>
-                                {DOCUMENT_STATUS_LABELS[doc.status]}
+                              <Badge variant={statusVariant2(doc.status)}>
+                                {documentStatusLabel2(doc.status)}
                               </Badge>
                               <DocumentReviewBadge state={doc.review?.state} />
                             </div>
@@ -240,7 +238,7 @@ export default function DocumentsPage() {
                               )}
                             </div>
                           </div>
-                          {doc.status === "final" && (
+                          {isDocumentComplete(doc.status) && (
                             <CheckCircle className="size-5 text-emerald-500 shrink-0" />
                           )}
                           {confirmingDiscardId === doc.id ? (

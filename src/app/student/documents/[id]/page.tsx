@@ -25,7 +25,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import type { Document, DocumentFeedback, DocumentStatus, DocumentAiLikeness } from "@/lib/types/document";
-import { DOCUMENT_STATUS_LABELS, AI_LIKENESS_LEVEL_LABELS, AI_LIKENESS_SUBMIT_THRESHOLD } from "@/lib/types/document";
+import { documentStatusLabel2, AI_LIKENESS_LEVEL_LABELS, AI_LIKENESS_SUBMIT_THRESHOLD } from "@/lib/types/document";
 import { DocumentReviewBadge } from "@/components/documents/DocumentReviewBadge";
 import { useAutosave, type AutosaveStatus } from "@/hooks/useAutosave";
 import { authFetch } from "@/lib/api/client";
@@ -39,12 +39,10 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 
-const STATUS_VARIANT: Record<DocumentStatus, "default" | "secondary" | "outline" | "destructive"> = {
-  draft: "outline",
-  in_review: "secondary",
-  reviewed: "default",
-  final: "default",
-};
+/** 2状態表示: draft=outline / それ以外(完成扱い)=default。 */
+function statusVariant2(status: DocumentStatus): "outline" | "default" {
+  return status === "draft" ? "outline" : "default";
+}
 
 function ScoreBar({ label, score, max = 10 }: { label: string; score: number; max?: number }) {
   const pct = Math.round((score / max) * 100);
@@ -233,12 +231,12 @@ export default function DocumentEditorPage() {
   }
 
   /**
-   * ステータス変更。draft→in_review（提出）のときだけ AIっぽさをソフト警告する。
+   * ステータス変更。draft→final（完成）のときだけ AIっぽさをソフト警告する。
    * 未チェック / 本文がチェック後に変わった / スコアが閾値以上 のいずれかで確認ダイアログを出す。
    */
   async function handleStatusChange(next: DocumentStatus) {
     if (!doc) return;
-    if (doc.status === "draft" && next === "in_review") {
+    if (doc.status === "draft" && next === "final") {
       const stale = aiLikeness != null && aiLikeness.checkedWordCount !== content.length;
       const risky = aiLikeness == null || stale || aiLikeness.score >= AI_LIKENESS_SUBMIT_THRESHOLD;
       if (risky) {
@@ -286,8 +284,8 @@ export default function DocumentEditorPage() {
         <div className="flex-1 min-w-0">
           <h1 className="text-lg font-bold truncate">{doc.title}</h1>
           <div className="flex items-center gap-2 mt-1 min-w-0">
-            <Badge variant={STATUS_VARIANT[doc.status]} className="shrink-0">
-              {DOCUMENT_STATUS_LABELS[doc.status]}
+            <Badge variant={statusVariant2(doc.status)} className="shrink-0">
+              {documentStatusLabel2(doc.status)}
             </Badge>
             <DocumentReviewBadge state={doc.review?.state} />
             <span className="text-xs text-muted-foreground truncate min-w-0">
@@ -477,12 +475,10 @@ function EditorPanel({
               <SelectTrigger className="flex-1 sm:flex-none w-auto sm:w-[140px] h-8 text-xs">
                 {/* SelectContent は開くまで遅延マウントされ、SelectValue が項目テキストを拾えず
                     生値("draft")を表示するため、ラベルを明示的に子として描画する。 */}
-                <SelectValue>{DOCUMENT_STATUS_LABELS[status]}</SelectValue>
+                <SelectValue>{documentStatusLabel2(status)}</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="draft">下書き</SelectItem>
-                <SelectItem value="in_review">レビュー中</SelectItem>
-                <SelectItem value="reviewed">レビュー済み</SelectItem>
                 <SelectItem value="final">完成</SelectItem>
               </SelectContent>
             </Select>

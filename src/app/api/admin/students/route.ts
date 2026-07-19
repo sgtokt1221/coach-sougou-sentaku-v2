@@ -318,8 +318,9 @@ export async function GET(request: NextRequest) {
 
         // 書類完了度
         const totalDocs = documentsSnap.size;
+        // isDocumentComplete相当（draft以外は完成扱い。旧 in_review/reviewed も含む）
         const completedDocs = documentsSnap.docs.filter(
-          (d) => d.data().status === "final" || d.data().status === "reviewed"
+          (d) => d.data().status !== "draft"
         ).length;
 
         // 最終セッション日
