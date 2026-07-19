@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { SegmentControl } from "@/components/shared/SegmentControl";
 import {
   ArrowLeft,
   Save,
@@ -23,6 +23,7 @@ import {
   ChevronDown,
   ChevronUp,
   ShieldCheck,
+  X,
 } from "lucide-react";
 import type { Document, DocumentFeedback, DocumentStatus, DocumentAiLikeness } from "@/lib/types/document";
 import { documentStatusLabel2, AI_LIKENESS_LEVEL_LABELS, AI_LIKENESS_SUBMIT_THRESHOLD } from "@/lib/types/document";
@@ -74,7 +75,7 @@ export default function DocumentEditorPage() {
   const [reviewing, setReviewing] = useState(false);
   const [feedback, setFeedback] = useState<DocumentFeedback | null>(null);
   const [showVersions, setShowVersions] = useState(false);
-  const [mobileTab, setMobileTab] = useState<"editor" | "review">("editor");
+  const [reviewOpen, setReviewOpen] = useState(false);
   const [aiLikeness, setAiLikeness] = useState<DocumentAiLikeness | null>(null);
   const [aiChecking, setAiChecking] = useState(false);
   const [submitGateOpen, setSubmitGateOpen] = useState(false);
@@ -309,43 +310,89 @@ export default function DocumentEditorPage() {
 
       {/* Main content - responsive layout (mobile only) */}
       <div className="lg:hidden space-y-4">
-        <SegmentControl
-          value={mobileTab}
-          onChange={(v) => setMobileTab(v as "editor" | "review")}
-          options={[
-            { id: "editor", label: "エディタ" },
-            { id: "review", label: "AI添削", accent: "violet" },
-          ]}
-          fullWidth
+        <EditorPanel
+          content={content}
+          setContent={setContent}
+          wordCount={wordCount}
+          targetWordCount={doc.targetWordCount}
+          status={doc.status}
+          onStatusChange={handleStatusChange}
+          onSave={handleSave}
+          saving={saving}
+          saveStatus={saveStatus}
+          lastSavedAt={lastSavedAt}
         />
-        {mobileTab === "editor" ? (
-          <EditorPanel
-            content={content}
-            setContent={setContent}
-            wordCount={wordCount}
-            targetWordCount={doc.targetWordCount}
-            status={doc.status}
-            onStatusChange={handleStatusChange}
-            onSave={handleSave}
-            saving={saving}
-            saveStatus={saveStatus}
-            lastSavedAt={lastSavedAt}
-          />
-        ) : (
-          <ReviewPanel
-            feedback={feedback}
-            reviewing={reviewing}
-            onReview={handleReview}
-            contentEmpty={!content.trim()}
-            versions={doc.versions}
-            showVersions={showVersions}
-            setShowVersions={setShowVersions}
-            aiLikeness={aiLikeness}
-            aiChecking={aiChecking}
-            onAiCheck={handleAiCheck}
-            currentWordCount={wordCount}
-          />
+
+        {/* AI添削を開くハンドル（タップ or 右スワイプ）。カードが開いている間は隠す */}
+        {!reviewOpen && (
+          <motion.button
+            type="button"
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragSnapToOrigin
+            onDragEnd={(_e, info) => {
+              if (info.offset.x > 40 || info.velocity.x > 300) setReviewOpen(true);
+            }}
+            onClick={() => setReviewOpen(true)}
+            aria-label="AI添削を開く"
+            className="fixed left-0 top-1/2 z-40 -translate-y-1/2 flex flex-col items-center gap-1 rounded-r-xl border border-l-0 bg-primary px-1.5 py-3 text-primary-foreground shadow-md"
+          >
+            <Sparkles className="size-4" />
+            <span className="text-[10px] leading-none [writing-mode:vertical-rl]">AI添削</span>
+          </motion.button>
         )}
+
+        <AnimatePresence>
+          {reviewOpen && (
+            <>
+              <motion.div
+                className="fixed inset-0 z-40 bg-black/30"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setReviewOpen(false)}
+              />
+              <motion.div
+                className="fixed left-0 top-0 z-50 h-full w-[85%] max-w-sm overflow-y-auto rounded-r-2xl bg-background p-4 shadow-xl"
+                initial={{ x: "-100%" }}
+                animate={{ x: 0 }}
+                exit={{ x: "-100%" }}
+                transition={{ type: "spring", damping: 30, stiffness: 300 }}
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.15}
+                onDragEnd={(_e, info) => {
+                  if (info.offset.x < -80 || info.velocity.x < -400) setReviewOpen(false);
+                }}
+              >
+                <div className="mb-3 flex items-center justify-between">
+                  <p className="text-sm font-semibold">AI添削</p>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setReviewOpen(false)}
+                    aria-label="閉じる"
+                  >
+                    <X className="size-4" />
+                  </Button>
+                </div>
+                <ReviewPanel
+                  feedback={feedback}
+                  reviewing={reviewing}
+                  onReview={handleReview}
+                  contentEmpty={!content.trim()}
+                  versions={doc.versions}
+                  showVersions={showVersions}
+                  setShowVersions={setShowVersions}
+                  aiLikeness={aiLikeness}
+                  aiChecking={aiChecking}
+                  onAiCheck={handleAiCheck}
+                  currentWordCount={wordCount}
+                />
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Desktop layout */}
