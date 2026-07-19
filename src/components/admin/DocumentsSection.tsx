@@ -323,7 +323,7 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
 
       {/* Document Detail Dialog */}
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+        <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-4xl lg:max-w-6xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FileText className="size-5" />
@@ -342,7 +342,25 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
               <Skeleton className="h-40 w-full" />
             </div>
           ) : detailDoc ? (
-            <div className="space-y-4 py-2">
+            <div className="grid gap-6 py-2 lg:grid-cols-5">
+              {/* 左: 生徒の答案（本文）を大きく全表示 */}
+              <div className="space-y-2 lg:col-span-3">
+                <h3 className="text-sm font-semibold">生徒の答案（本文）</h3>
+                <div className="rounded-lg border bg-white p-4 text-sm leading-7 text-gray-800 dark:bg-gray-950 dark:text-gray-200 lg:max-h-[calc(92vh-9rem)] lg:overflow-y-auto">
+                  {detailDoc.content.split("\n").map((line, i) => (
+                    <p key={i} className={line.trim() === "" ? "h-4" : ""}>
+                      {line || " "}
+                    </p>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {detailDoc.wordCount}
+                  {detailDoc.targetWordCount ? `/${detailDoc.targetWordCount}` : ""}字
+                </p>
+              </div>
+
+              {/* 右: AIスコア / AIっぽさ / レビュー */}
+              <div className="space-y-4 lg:col-span-2">
               {/* AI Score */}
               {detailDoc.aiScore && (
                 <div className="space-y-2">
@@ -428,23 +446,6 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
                 )}
               </div>
 
-              <Separator />
-
-              {/* Content */}
-              <div className="space-y-2">
-                <h3 className="text-sm font-semibold">本文</h3>
-                <div className="max-h-60 overflow-y-auto rounded-lg border bg-white p-4 text-sm leading-7 text-gray-800 dark:bg-gray-950 dark:text-gray-200">
-                  {detailDoc.content.split("\n").map((line, i) => (
-                    <p key={i} className={line.trim() === "" ? "h-4" : ""}>
-                      {line || "\u00A0"}
-                    </p>
-                  ))}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {detailDoc.wordCount}
-                  {detailDoc.targetWordCount ? `/${detailDoc.targetWordCount}` : ""}字
-                </p>
-              </div>
 
               <Separator />
 
@@ -491,6 +492,7 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
                   </Button>
                 </div>
               </div>
+            </div>
             </div>
           ) : (
             <div className="py-8 text-center text-sm text-muted-foreground">
