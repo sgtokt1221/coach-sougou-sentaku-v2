@@ -135,6 +135,28 @@ export default function DocumentEditorPage() {
   }
 
   /**
+   * 目標文字数を変更して保存する。0 以下・非数値はクリア（未設定）扱い。
+   * @param next 入力された目標文字数
+   */
+  async function handleTargetChange(next: number) {
+    if (!doc) return;
+    const value = Number.isFinite(next) && next > 0 ? Math.round(next) : null;
+    if (value === (doc.targetWordCount ?? null)) return;
+    try {
+      const res = await authFetch(`/api/documents/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetWordCount: value }),
+      });
+      if (res.ok) {
+        setDoc({ ...doc, targetWordCount: value ?? undefined });
+      }
+    } catch {
+      // silent
+    }
+  }
+
+  /**
    * 本文を自動保存する（版を積まない autosave）。
    * 明示保存の handleSave は content のみを送って版を積む一方、こちらは autosave:true を付与する。
    * @param v useAutosave が渡す最新の本文
@@ -322,6 +344,7 @@ export default function DocumentEditorPage() {
           setContent={setContent}
           wordCount={wordCount}
           targetWordCount={doc.targetWordCount}
+          onTargetChange={handleTargetChange}
           status={doc.status}
           onStatusChange={handleStatusChange}
           onSave={handleSave}
@@ -430,6 +453,7 @@ export default function DocumentEditorPage() {
             setContent={setContent}
             wordCount={wordCount}
             targetWordCount={doc.targetWordCount}
+            onTargetChange={handleTargetChange}
             status={doc.status}
             onStatusChange={handleStatusChange}
             onSave={handleSave}
@@ -494,6 +518,7 @@ function EditorPanel({
   setContent,
   wordCount,
   targetWordCount,
+  onTargetChange,
   status,
   onStatusChange,
   onSave,
@@ -505,6 +530,7 @@ function EditorPanel({
   setContent: (v: string) => void;
   wordCount: number;
   targetWordCount?: number;
+  onTargetChange: (n: number) => void;
   status: DocumentStatus;
   onStatusChange: (s: DocumentStatus) => void;
   onSave: () => void;
@@ -524,13 +550,23 @@ function EditorPanel({
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           {/* 情報行: 文字数・保存状態（モバイルでは1段目、長い状態文でも横溢れしない） */}
           <div className="flex items-center gap-3 min-w-0 text-sm text-muted-foreground">
-            <span className="shrink-0">
-              {wordCount} 文字
-              {targetWordCount ? (
-                <span className={wordCount > targetWordCount ? " text-amber-500" : ""}>
-                  {" "}/ {targetWordCount} 文字
-                </span>
-              ) : null}
+            <span className="shrink-0 flex items-center gap-1">
+              <span className={targetWordCount && wordCount > targetWordCount ? "text-amber-500" : ""}>
+                {wordCount} 文字
+              </span>
+              <span>/ 目標</span>
+              {/* 目標文字数を編集（未設定可）。onBlur で保存。 */}
+              <input
+                type="number"
+                min={100}
+                step={100}
+                defaultValue={targetWordCount ?? ""}
+                placeholder="未設定"
+                aria-label="目標文字数"
+                className="w-16 h-6 rounded border bg-background px-1 text-xs"
+                onBlur={(e) => onTargetChange(Number(e.target.value))}
+              />
+              <span>字</span>
             </span>
             <span className="text-xs text-muted-foreground truncate min-w-0">
               {saveStatus === "saving" && "保存中…"}
