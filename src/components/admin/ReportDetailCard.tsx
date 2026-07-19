@@ -29,6 +29,9 @@ import {
   MessageSquare,
   EyeOff,
   Calendar,
+  Users,
+  Activity,
+  FileCheck2,
 } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import { toast } from "sonner";
@@ -418,6 +421,140 @@ export function ReportDetailCard({
           )}
         </div>
       </div>
+
+      {/* 面談・活動実績・出願書類の補助セクション (新フィールドがある場合のみ表示。旧レポートには無い) */}
+      {(report.sessionDigest || report.activitySummary || report.documentSummary) && (
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 print:grid-cols-2 print:gap-2">
+          {report.sessionDigest && report.sessionDigest.totalCount > 0 && (
+            <SessionDigestSection digest={report.sessionDigest} />
+          )}
+          {report.activitySummary && report.activitySummary.totalCount > 0 && (
+            <ActivitySummarySection summary={report.activitySummary} />
+          )}
+          {report.documentSummary && report.documentSummary.total > 0 && (
+            <DocumentSummarySection summary={report.documentSummary} />
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * 面談セッションの反映 (要約・アクションアイテム・次回アジェンダ) を表示する。
+ * `GrowthReport.sessionDigest` がある場合のみ呼ばれる。
+ */
+function SessionDigestSection({
+  digest,
+}: {
+  digest: NonNullable<GrowthReport["sessionDigest"]>;
+}) {
+  return (
+    <div className="rounded-lg border border-sky-200 bg-sky-50/40 p-3 dark:border-sky-900 dark:bg-sky-950/20 print:break-inside-avoid print:border-gray-300 print:bg-white print:p-2">
+      <h4 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-sky-800 dark:text-sky-300">
+        <Users className="size-4" />
+        面談 {digest.totalCount} 回
+      </h4>
+      <div className="space-y-2 print:space-y-1.5">
+        {digest.sessions.map((s, i) => (
+          <div
+            key={i}
+            className="rounded-md border bg-white p-2.5 text-xs dark:bg-card print:break-inside-avoid print:border-gray-300 print:p-1.5"
+          >
+            <div className="mb-1 flex flex-wrap items-center justify-between gap-1 font-medium">
+              <span>{formatDate(s.date)}</span>
+              {s.goal && (
+                <span className="text-muted-foreground">目標: {s.goal}</span>
+              )}
+            </div>
+            {s.summaryPoints.length > 0 && (
+              <ul className="list-disc space-y-0.5 pl-4 leading-relaxed">
+                {s.summaryPoints.map((p, j) => (
+                  <li key={j}>{p}</li>
+                ))}
+              </ul>
+            )}
+            {s.actionItems.length > 0 && (
+              <div className="mt-1.5">
+                <span className="font-medium text-amber-700 dark:text-amber-400">
+                  アクションアイテム:
+                </span>
+                <ul className="list-disc space-y-0.5 pl-4 leading-relaxed">
+                  {s.actionItems.map((a, j) => (
+                    <li key={j}>{a}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {s.nextAgenda && (
+              <div className="mt-1.5 text-muted-foreground">
+                次回アジェンダ: {s.nextAgenda}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * 活動実績の集計 (直近分のハイライト) を表示する。
+ * `GrowthReport.activitySummary` がある場合のみ呼ばれる。
+ */
+function ActivitySummarySection({
+  summary,
+}: {
+  summary: NonNullable<GrowthReport["activitySummary"]>;
+}) {
+  return (
+    <div className="rounded-lg border border-emerald-200 bg-emerald-50/40 p-3 dark:border-emerald-900 dark:bg-emerald-950/20 print:break-inside-avoid print:border-gray-300 print:bg-white print:p-2">
+      <h4 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-emerald-800 dark:text-emerald-300">
+        <Activity className="size-4" />
+        活動実績 {summary.totalCount} 件
+      </h4>
+      {summary.highlights.length > 0 ? (
+        <ul className="list-disc space-y-1 pl-4 text-xs leading-relaxed">
+          {summary.highlights.map((h, i) => (
+            <li key={i}>{h}</li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-xs text-muted-foreground">記録なし</p>
+      )}
+    </div>
+  );
+}
+
+/**
+ * 出願書類の状況 (完成/進行中件数と直近締切) を表示する。
+ * `GrowthReport.documentSummary` がある場合のみ呼ばれる。
+ */
+function DocumentSummarySection({
+  summary,
+}: {
+  summary: NonNullable<GrowthReport["documentSummary"]>;
+}) {
+  return (
+    <div className="rounded-lg border border-orange-200 bg-orange-50/40 p-3 dark:border-orange-900 dark:bg-orange-950/20 print:break-inside-avoid print:border-gray-300 print:bg-white print:p-2">
+      <h4 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-orange-800 dark:text-orange-300">
+        <FileCheck2 className="size-4" />
+        出願書類 完成 {summary.completed}/全 {summary.total} ・進行中 {summary.inProgress}
+      </h4>
+      {summary.upcomingDeadlines.length > 0 ? (
+        <ul className="space-y-1 text-xs leading-relaxed">
+          {summary.upcomingDeadlines.map((d, i) => (
+            <li key={i} className="flex items-center justify-between gap-2">
+              <span>{d.title}</span>
+              <span className="shrink-0 tabular-nums text-muted-foreground">
+                {formatDate(d.deadline)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-xs text-muted-foreground">直近の締切はありません</p>
+      )}
     </div>
   );
 }
