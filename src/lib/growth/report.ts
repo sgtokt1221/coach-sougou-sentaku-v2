@@ -359,6 +359,12 @@ export function generateGrowthReport(params: {
   sessionSummary?: GrowthReport["sessionSummary"];
   /** AI が生成した類題 (弱点・過去テーマから派生)。生成失敗時は undefined */
   practiceQuestions?: GrowthReport["practiceQuestions"];
+  /** 面談セッションの反映 (要約・アクションアイテム・次回アジェンダ)。ルート側で構築 */
+  sessionDigest?: GrowthReport["sessionDigest"];
+  /** 活動実績の集計 (直近分)。ルート側で構築 */
+  activitySummary?: GrowthReport["activitySummary"];
+  /** 出願書類の状況。ルート側で構築 */
+  documentSummary?: GrowthReport["documentSummary"];
 }): GrowthReport {
   const { start, end } = getPeriodRange(params.period);
 
@@ -399,6 +405,9 @@ export function generateGrowthReport(params: {
     overallAssessment,
     sessionSummary: params.sessionSummary,
     practiceQuestions: params.practiceQuestions,
+    sessionDigest: params.sessionDigest,
+    activitySummary: params.activitySummary,
+    documentSummary: params.documentSummary,
   };
 }
 

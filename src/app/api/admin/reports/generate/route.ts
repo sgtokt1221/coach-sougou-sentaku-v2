@@ -285,6 +285,82 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // 面談セッションの反映 (sessionDigest): 期間内セッションを直近10件に絞って要約・アクションアイテムを構築
+    step = "build_session_digest";
+    const sessionDigestEntries = sessionsSnap.docs.slice(0, 10).map((d) => {
+      const data = d.data() as {
+        scheduledAt?: string;
+        prepPlan?: { goal?: string };
+        summary?: {
+          topicsDiscussed?: string[];
+          actionItems?: Array<{ task?: string }>;
+        };
+        debrief?: { nextAgendaSeed?: string };
+      };
+      return {
+        date: data.scheduledAt ?? "",
+        goal: data.prepPlan?.goal,
+        summaryPoints: data.summary?.topicsDiscussed ?? [],
+        actionItems: (data.summary?.actionItems ?? [])
+          .map((a) => a.task)
+          .filter((t): t is string => typeof t === "string" && t.trim().length > 0),
+        nextAgenda: data.debrief?.nextAgendaSeed,
+      };
+    });
+    const sessionDigest: GrowthReport["sessionDigest"] =
+      sessionDigestEntries.length > 0
+        ? { totalCount: sessionsSnap.docs.length, sessions: sessionDigestEntries }
+        : undefined;
+
+    // Phase 2: 生徒の個別文脈 (志望校・自己分析・MBTI・活動・資格) を取得。
+    // AI キー有無に関わらず activitySummary の元データとして使うため、ここで常に呼ぶ。
+    step = "load_student_context";
+    const studentContext = await loadStudentContext(adminDb, studentId);
+
+    // 活動実績の集計 (activitySummary): loadStudentContext の直近活動から見出しを抽出
+    const activitySummary: GrowthReport["activitySummary"] =
+      studentContext.recentActivities.length > 0
+        ? {
+            totalCount: studentContext.recentActivities.length,
+            highlights: studentContext.recentActivities
+              .slice(0, 5)
+              .map((a) => a.title)
+              .filter((t) => t.length > 0),
+          }
+        : undefined;
+
+    // 出願書類の状況 (documentSummary): 失敗してもレポート本体は完成させる
+    step = "fetch_documents";
+    let documentSummary: GrowthReport["documentSummary"];
+    try {
+      const documentsSnap = await adminDb
+        .collection("documents")
+        .where("userId", "==", studentId)
+        .get();
+      const docs = documentsSnap.docs.map(
+        (d) =>
+          d.data() as {
+            status?: string;
+            title?: string;
+            deadline?: string;
+          },
+      );
+      const total = docs.length;
+      const completed = docs.filter((d) => d.status === "final").length;
+      const upcomingDeadlines = docs
+        .filter(
+          (d): d is { status?: string; title?: string; deadline: string } =>
+            d.status !== "final" && typeof d.deadline === "string" && d.deadline.length > 0,
+        )
+        .sort((a, b) => a.deadline.localeCompare(b.deadline))
+        .slice(0, 3)
+        .map((d) => ({ title: d.title ?? "", deadline: d.deadline }));
+      documentSummary = { total, completed, inProgress: total - completed, upcomingDeadlines };
+    } catch (err) {
+      console.warn("[reports/generate] documents fetch failed:", err);
+      documentSummary = undefined;
+    }
+
     step = "map_docs";
     const toEssayData = (doc: FirebaseFirestore.QueryDocumentSnapshot) => {
       const d = doc.data();
@@ -351,9 +427,6 @@ export async function POST(request: NextRequest) {
         const thisWeekWeakItems = computeThisWeekWeakItems(
           periodEssaysSnap.docs,
         );
-
-        // Phase 2: 生徒の個別文脈 (志望校・自己分析・MBTI・活動・資格) を取得
-        const studentContext = await loadStudentContext(adminDb, studentId);
 
         console.log(
           `[reports/generate] practice context: thisWeekWeakItems=${thisWeekWeakItems.length} thisWeekTopics=${thisWeekEssayTopics.length} thisWeekInterviews=${thisWeekInterviewQuestions.length} chronicWeaknesses=${chronicWeaknesses.length} pastTopics=${pastEssayTopics.length} targets=${studentContext.primaryTargets.length} hasSelfAnalysis=${!!studentContext.selfAnalysis} mbti=${studentContext.mbtiType ?? "none"} activities=${studentContext.recentActivities.length} certs=${studentContext.englishCerts.length}`,
@@ -440,6 +513,9 @@ export async function POST(request: NextRequest) {
       previousWeaknessCounts,
       sessionSummary: sessionSummary.totalCount > 0 ? sessionSummary : undefined,
       practiceQuestions,
+      sessionDigest,
+      activitySummary,
+      documentSummary,
     });
 
     // Save the report to Firestore
