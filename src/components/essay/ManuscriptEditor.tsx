@@ -199,7 +199,7 @@ export function ManuscriptEditor({
             ref={backdropRef}
             className="absolute inset-0 z-[1] p-4 lg:p-6 overflow-hidden pointer-events-none whitespace-pre-wrap break-words"
             style={{
-              fontSize: "15px",
+              fontSize: "16px",
               letterSpacing: "0.05em",
               lineHeight: "24px",
               color: "transparent",
@@ -221,7 +221,7 @@ export function ManuscriptEditor({
           className={`
             relative z-10 w-full min-h-[400px] resize-none
             p-4 lg:p-6
-            text-[15px] lg:text-base leading-[24px]
+            text-base leading-[24px]
             font-sans text-foreground
             placeholder:text-muted-foreground/50
             focus:outline-none

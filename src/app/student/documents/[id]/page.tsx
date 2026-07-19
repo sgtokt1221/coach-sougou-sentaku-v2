@@ -547,7 +547,7 @@ function EditorPanel({
     <Card>
       <CardContent className="p-4 space-y-3">
         <textarea
-          className="w-full min-h-[clamp(16rem,45dvh,28rem)] lg:min-h-[400px] p-3 rounded-md border bg-background text-sm resize-y focus:outline-none focus:ring-2 focus:ring-ring"
+          className="w-full min-h-[clamp(16rem,45dvh,28rem)] lg:min-h-[400px] p-3 rounded-md border bg-background text-base lg:text-sm resize-y focus:outline-none focus:ring-2 focus:ring-ring"
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder="書類の内容を入力してください..."
