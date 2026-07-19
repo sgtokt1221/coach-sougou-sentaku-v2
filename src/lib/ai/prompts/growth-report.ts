@@ -22,6 +22,8 @@ export interface ComprehensiveAssessmentInput {
   documentSummary?: GrowthReport["documentSummary"];
   /** 自己分析の要点・志望校・MBTI・資格等をまとめた文字列 (任意) */
   selfAnalysisNote?: string;
+  /** 講師の観察（debrief由来のAI要約。生徒安全な短文リスト、任意） */
+  sessionObservations?: string[];
 }
 
 /**
@@ -68,6 +70,11 @@ export function buildComprehensiveAssessmentPrompt(
       }`
     : "該当なし/未取得";
 
+  const sessionObservationsText =
+    input.sessionObservations && input.sessionObservations.length > 0
+      ? input.sessionObservations.map((o) => `- ${o}`).join("\n")
+      : "該当なし/未取得";
+
   const selfAnalysisText = input.selfAnalysisNote ?? "該当なし/未取得";
 
   return `あなたは総合型選抜（旧AO入試）専門の添削者・進路コーチです。評価軸は常に「自分の言葉で語れているか」「実体験に裏打ちされているか」「志望校のアドミッションポリシー(AP)に合致しているか」です。
@@ -85,6 +92,9 @@ ${input.weaknessSummary}
 
 ## 面談セッション（要約・アクションアイテム・次回アジェンダ）
 ${sessionDigestText}
+
+## 講師の観察（授業中の気づき）
+${sessionObservationsText}
 
 ## 活動実績
 ${activitySummaryText}
@@ -110,7 +120,7 @@ ${selfAnalysisText}
 
 注意:
 - 「該当なし/未取得」のセクションについては無理に言及せず、取得できているデータのみを根拠にする
-- 小論文/面接のスコアだけでなく、面談のアクションアイテムが実行されているか、活動実績が志望理由に活かされているか、出願書類の締切が近いのに進捗が遅れていないか、自己分析と志望校APが合致しているかを踏まえて評価する
+- 小論文/面接のスコアだけでなく、面談のアクションアイテムが実行されているか、講師が授業中に観察した気づき、活動実績が志望理由に活かされているか、出願書類の締切が近いのに進捗が遅れていないか、自己分析と志望校APが合致しているかを踏まえて評価する
 - recommendationsは3〜5件、それぞれ具体的で実行可能な内容にする
 - 出力は指定したJSON以外の文字を含めない`;
 }

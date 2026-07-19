@@ -340,29 +340,39 @@ export async function POST(request: NextRequest) {
 
     // 面談セッションの反映 (sessionDigest): 期間内セッションを直近10件に絞って要約・アクションアイテムを構築
     step = "build_session_digest";
-    const sessionDigestEntries = sessionsSnap.docs.slice(0, 10).map((d) => {
-      const data = d.data() as {
-        scheduledAt?: string;
-        prepPlan?: { goal?: string };
-        summary?: {
-          topicsDiscussed?: string[];
-          actionItems?: Array<{ task?: string }>;
+    const sessionDigestEntries = sessionsSnap.docs
+      .map((d) => {
+        const data = d.data() as {
+          scheduledAt?: string;
+          prepPlan?: { goal?: string };
+          summary?: {
+            topicsDiscussed?: string[];
+            actionItems?: Array<{ task?: string }>;
+          };
+          debrief?: { nextAgendaSeed?: string };
         };
-        debrief?: { nextAgendaSeed?: string };
-      };
-      return {
-        date: data.scheduledAt ?? "",
-        goal: data.prepPlan?.goal,
-        summaryPoints: data.summary?.topicsDiscussed ?? [],
-        actionItems: (data.summary?.actionItems ?? [])
-          .map((a) => a.task)
-          .filter((t): t is string => typeof t === "string" && t.trim().length > 0),
-        nextAgenda: data.debrief?.nextAgendaSeed,
-      };
-    });
+        return {
+          date: data.scheduledAt ?? "",
+          goal: data.prepPlan?.goal,
+          summaryPoints: data.summary?.topicsDiscussed ?? [],
+          actionItems: (data.summary?.actionItems ?? [])
+            .map((a) => a.task)
+            .filter((t): t is string => typeof t === "string" && t.trim().length > 0),
+          nextAgenda: data.debrief?.nextAgendaSeed,
+        };
+      })
+      // 日付だけの空/未実施セッションを除外し、内容のあるものだけを含める
+      .filter(
+        (e) =>
+          !!e.goal ||
+          e.summaryPoints.length > 0 ||
+          e.actionItems.length > 0 ||
+          !!e.nextAgenda,
+      )
+      .slice(0, 10);
     const sessionDigest: GrowthReport["sessionDigest"] =
       sessionDigestEntries.length > 0
-        ? { totalCount: sessionsSnap.docs.length, sessions: sessionDigestEntries }
+        ? { totalCount: sessionDigestEntries.length, sessions: sessionDigestEntries }
         : undefined;
 
     // Phase 2: 生徒の個別文脈 (志望校・自己分析・MBTI・活動・資格) を取得。
@@ -613,6 +623,11 @@ export async function POST(request: NextRequest) {
           activitySummary: report.activitySummary,
           documentSummary: report.documentSummary,
           selfAnalysisNote: formatSelfAnalysisNote(studentContext),
+          // debrief ノートから AI 抽出済みの生徒安全な観察のみを渡す (生の notes は渡さない)
+          sessionObservations:
+            sessionSummary && sessionSummary.teacherObservations.length > 0
+              ? sessionSummary.teacherObservations
+              : undefined,
         };
         const Anthropic = (await import("@anthropic-ai/sdk")).default;
         const client = new Anthropic();
