@@ -121,7 +121,8 @@ export function MobileSlideOverPanel({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
             onClick={() => setSnap("peek")}
-            className="fixed inset-0 z-[59] bg-black/30"
+            className="fixed inset-x-0 bottom-0 z-[59] bg-black/30"
+            style={{ top: "calc(var(--app-safe-top) + var(--app-header-height))" }}
           />
         )}
       </AnimatePresence>
@@ -138,10 +139,12 @@ export function MobileSlideOverPanel({
           width: panelWidth,
         }}
         transition={{ type: "spring", damping: 30, stiffness: 300 }}
-        className="fixed left-0 top-0 z-[60] flex h-full flex-col rounded-r-2xl bg-background shadow-xl"
+        className="fixed left-0 z-[60] flex flex-col rounded-r-2xl bg-background shadow-xl"
         style={{
-          paddingTop: "var(--app-safe-top)",
-          paddingBottom: "calc(var(--app-bottom-nav-height) + var(--app-safe-bottom))",
+          // ヘッダに被らないよう、ヘッダの直下から下端までに収める（top-0/h-full をやめる）
+          top: "calc(var(--app-safe-top) + var(--app-header-height))",
+          bottom: 0,
+          paddingBottom: "var(--app-safe-bottom)",
         }}
       >
         {/* 上部バー */}

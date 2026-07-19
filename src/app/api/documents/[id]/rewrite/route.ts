@@ -105,22 +105,17 @@ export async function POST(
     const rawText =
       response.content[0].type === "text" ? response.content[0].text : "";
 
-    const jsonMatch = rawText.match(/```json\s*([\s\S]*?)\s*```/) ||
-      rawText.match(/(\{[\s\S]*\})/);
-
-    if (!jsonMatch) {
-      console.error("Could not parse AI response:", rawText);
+    // 本文全文をプレーンテキストで返させる（多段落の本文をJSON化すると改行の
+    // エスケープ漏れで JSON.parse が壊れやすいため）。万一コードフェンスが付いても剥がす。
+    const rewritten = rawText
+      .trim()
+      .replace(/^```[a-zA-Z]*\s*/, "")
+      .replace(/\s*```$/, "")
+      .trim();
+    if (!rewritten) {
+      console.error("Empty rewrite response:", rawText);
       return NextResponse.json(
-        { error: "AIレスポンスの解析に失敗しました" },
-        { status: 500 }
-      );
-    }
-
-    const parsed = JSON.parse(jsonMatch[1]);
-    const rewritten: string = typeof parsed.rewritten === "string" ? parsed.rewritten : "";
-    if (!rewritten.trim()) {
-      return NextResponse.json(
-        { error: "AIレスポンスの解析に失敗しました" },
+        { error: "書き換え結果を取得できませんでした" },
         { status: 500 }
       );
     }
