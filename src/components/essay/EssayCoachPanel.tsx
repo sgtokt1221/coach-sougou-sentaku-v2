@@ -12,14 +12,8 @@ import {
   BarChart3,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { MobileSlideOverPanel } from "@/components/shared/MobileSlideOverPanel";
 import {
   Select,
   SelectContent,
@@ -159,8 +153,6 @@ const SECONDARY_TABS: TabDef[] = [
 ];
 
 export function EssayCoachPanel(props: EssayCoachPanelProps) {
-  const [mobileOpen, setMobileOpen] = useState(false);
-
   return (
     <>
       {/* デスクトップ: 左列として常設 (2 カラムレイアウトの左) */}
@@ -168,40 +160,10 @@ export function EssayCoachPanel(props: EssayCoachPanelProps) {
         <EssayCoachPanelBody {...props} />
       </div>
 
-      {/* モバイル: 入力フロー上端へ追従。執筆中も常に開け、下部の保存・添削操作とは競合させない。 */}
-      <Button
-        type="button"
-        onClick={() => setMobileOpen(true)}
-        variant="outline"
-        className="sticky top-2 z-30 mb-3 flex min-h-11 w-full items-center justify-between gap-3 rounded-xl border-teal-200 bg-teal-50/95 px-4 text-teal-900 shadow-md backdrop-blur hover:bg-teal-100 dark:border-teal-900 dark:bg-teal-950/90 dark:text-teal-100 dark:hover:bg-teal-950 lg:hidden"
-        aria-label="執筆サポートを開く"
-      >
-        <span className="flex min-w-0 items-center gap-3">
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-teal-600 text-white">
-            <MessageSquare className="size-4" />
-          </span>
-          <span className="min-w-0 text-left">
-            <span className="block text-sm font-semibold">執筆サポート</span>
-            <span className="block truncate text-xs font-normal text-teal-700 dark:text-teal-300">
-              AI相談・資料・APを確認
-            </span>
-          </span>
-        </span>
-        <ChevronRight className="size-4 shrink-0" />
-      </Button>
-      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetContent
-          side="left"
-          className="lg:hidden w-full p-0 sm:max-w-md"
-        >
-          <SheetHeader className="border-b">
-            <SheetTitle>執筆サポート</SheetTitle>
-          </SheetHeader>
-          <div className="flex-1 min-h-0 flex flex-col">
-            <EssayCoachPanelBody {...props} />
-          </div>
-        </SheetContent>
-      </Sheet>
+      {/* モバイル: 覗きモード(背景暗転なし)で後ろの小論文入力欄を操作しながら参照できる */}
+      <MobileSlideOverPanel label="執筆サポート" title="執筆サポート">
+        <EssayCoachPanelBody {...props} />
+      </MobileSlideOverPanel>
     </>
   );
 }
