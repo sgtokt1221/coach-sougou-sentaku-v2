@@ -15,6 +15,8 @@ export const maxDuration = 60;
 interface GenerateStatementRequest {
   universityId: string;
   facultyId: string;
+  /** 目標文字数。未指定時は 800 字。 */
+  targetWordCount?: number;
 }
 
 interface StatementDraftResponse {
@@ -118,7 +120,8 @@ export async function POST(request: NextRequest) {
         universityName,
         facultyName,
         faculty.admissionPolicy || "未設定",
-        selfAnalysis
+        selfAnalysis,
+        body.targetWordCount || 800
       );
       const Anthropic = (await import("@anthropic-ai/sdk")).default;
       const client = new Anthropic({ apiKey });

@@ -505,6 +505,7 @@ export default function NewDocumentPage() {
         body: JSON.stringify({
           universityId: selectedUniversity.universityId,
           facultyId: selectedUniversity.facultyId,
+          targetWordCount,
         }),
       });
 

@@ -112,8 +112,10 @@ export function buildStatementDraftPrompt(
   universityName: string,
   facultyName: string,
   admissionPolicy: string,
-  selfAnalysis: SelfAnalysisData
+  selfAnalysis: SelfAnalysisData,
+  targetWordCount: number = 800
 ): string {
+  const target = targetWordCount || 800;
   return `あなたは総合型選抜の志望理由書作成を支援するプロのコーチです。
 学生の自己分析データと志望校の情報を元に、質の高い志望理由書の下書きを生成してください。
 
@@ -164,14 +166,15 @@ ${FACULTY_AGENCY_FOCUS_DOCUMENT}
 - 各段落が論理的に繋がるよう構成する
 - 文体は「である調」で統一する
 - 登録データにない活動、役職、受賞、成果、数値、固有名詞を捏造しない
-- 具体的な経験素材が不足する箇所は、架空の内容で埋めず「【原体験を入力】」のような編集用プレースホルダーを残す
+- 具体的な経験素材が不足する箇所は、架空の内容で埋めず「【原体験を入力】」のような編集用プレースホルダーを残す（生徒が自分の実体験を書き足すための記入欄）
+- 全体の文字数は必ず ${target}字程度（±10%以内）に収める（プレースホルダー部分は生徒が後で置き換える前提の目安）。超過・不足のいずれも避け、出力前に文字数を確認して調整する
 
 ## 出力形式
 JSON形式で以下の構造で出力してください：
 
 \`\`\`json
 {
-  "draft": "完全な志望理由書のテキスト（800-1000字程度）",
+  "draft": "完全な志望理由書のテキスト（${target}字程度・±10%以内）",
   "structure": {
     "intro": "導入部のテキスト",
     "body": "志望理由の本体部分のテキスト",

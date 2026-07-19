@@ -475,7 +475,9 @@ function EditorPanel({
           <div className="flex items-center gap-2">
             <Select value={status} onValueChange={(v) => onStatusChange(v as DocumentStatus)}>
               <SelectTrigger className="flex-1 sm:flex-none w-auto sm:w-[140px] h-8 text-xs">
-                <SelectValue />
+                {/* SelectContent は開くまで遅延マウントされ、SelectValue が項目テキストを拾えず
+                    生値("draft")を表示するため、ラベルを明示的に子として描画する。 */}
+                <SelectValue>{DOCUMENT_STATUS_LABELS[status]}</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="draft">下書き</SelectItem>
