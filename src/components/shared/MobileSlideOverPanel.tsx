@@ -57,6 +57,17 @@ export function MobileSlideOverPanel({
     setMounted(true);
   }, []);
 
+  // 覗き幅を CSS 変数として公開する。エディタ側がこの分だけ左に余白を取り、
+  // パネルに隠れず右側で縮んで表示できる（見ながら書く・分割表示）。
+  // peek のときだけ幅ぶん、closed/full では 0。
+  useEffect(() => {
+    const offset = snap === "peek" ? `${peekVw}vw` : "0px";
+    document.documentElement.style.setProperty("--mobile-panel-offset", offset);
+    return () => {
+      document.documentElement.style.setProperty("--mobile-panel-offset", "0px");
+    };
+  }, [snap, peekVw]);
+
   /** ドラッグ終了時、offset/velocity から1段だけ開閉方向を判定してスナップする */
   function handleDragEnd(
     _event: MouseEvent | TouchEvent | PointerEvent,

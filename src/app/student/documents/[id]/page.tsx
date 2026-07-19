@@ -376,7 +376,15 @@ export default function DocumentEditorPage() {
       )}
 
       {/* Main content - responsive layout (mobile only) */}
-      <div className="lg:hidden space-y-4">
+      {/* モバイル: AI添削パネルが覗き表示のとき、その幅ぶん左に余白を取り
+          エディタを右側で縮めて表示する（パネルに隠れず見ながら書ける）。 */}
+      <div
+        className="lg:hidden space-y-4"
+        style={{
+          paddingLeft: "var(--mobile-panel-offset, 0px)",
+          transition: "padding-left 0.25s ease",
+        }}
+      >
         <EditorPanel
           content={content}
           setContent={setContent}
