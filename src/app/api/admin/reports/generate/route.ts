@@ -317,17 +317,37 @@ export async function POST(request: NextRequest) {
     step = "load_student_context";
     const studentContext = await loadStudentContext(adminDb, studentId);
 
-    // 活動実績の集計 (activitySummary): loadStudentContext の直近活動から見出しを抽出
-    const activitySummary: GrowthReport["activitySummary"] =
-      studentContext.recentActivities.length > 0
-        ? {
-            totalCount: studentContext.recentActivities.length,
-            highlights: studentContext.recentActivities
-              .slice(0, 5)
-              .map((a) => a.title)
-              .filter((t) => t.length > 0),
-          }
-        : undefined;
+    // 活動実績の集計 (activitySummary): 実件数を出すため活動サブコレクションを全件取得。
+    // recentActivities は loadStudentContext 内で limit(3) されるため totalCount 用には使わない。
+    // 取得失敗時は recentActivities ベースにフォールバック。
+    step = "fetch_activities";
+    let activitySummary: GrowthReport["activitySummary"];
+    try {
+      const activitiesSnap = await adminDb
+        .collection(`users/${studentId}/activities`)
+        .orderBy("createdAt", "desc")
+        .get();
+      const highlights = activitiesSnap.docs
+        .map((d) => (d.data() as { title?: string }).title)
+        .filter((t): t is string => typeof t === "string" && t.length > 0)
+        .slice(0, 5);
+      activitySummary =
+        activitiesSnap.size > 0
+          ? { totalCount: activitiesSnap.size, highlights }
+          : undefined;
+    } catch (err) {
+      console.warn("[reports/generate] activities fetch failed, fallback to recentActivities:", err);
+      activitySummary =
+        studentContext.recentActivities.length > 0
+          ? {
+              totalCount: studentContext.recentActivities.length,
+              highlights: studentContext.recentActivities
+                .slice(0, 5)
+                .map((a) => a.title)
+                .filter((t) => t.length > 0),
+            }
+          : undefined;
+    }
 
     // 出願書類の状況 (documentSummary): 失敗してもレポート本体は完成させる
     step = "fetch_documents";
@@ -355,7 +375,10 @@ export async function POST(request: NextRequest) {
         .sort((a, b) => a.deadline.localeCompare(b.deadline))
         .slice(0, 3)
         .map((d) => ({ title: d.title ?? "", deadline: d.deadline }));
-      documentSummary = { total, completed, inProgress: total - completed, upcomingDeadlines };
+      documentSummary =
+        total > 0
+          ? { total, completed, inProgress: total - completed, upcomingDeadlines }
+          : undefined;
     } catch (err) {
       console.warn("[reports/generate] documents fetch failed:", err);
       documentSummary = undefined;
