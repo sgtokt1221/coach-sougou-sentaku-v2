@@ -10,13 +10,22 @@ import {
 import { buildLessonObservationSummaryPrompt } from "@/lib/ai/prompts/lesson-summary";
 import { buildPracticeQuestionsPrompt } from "@/lib/ai/prompts/practice-questions";
 import {
+  buildComprehensiveAssessmentPrompt,
+  type ComprehensiveAssessmentInput,
+} from "@/lib/ai/prompts/growth-report";
+import {
   computeThisWeekWeakItems,
   extractInterviewAssistantQuestions,
   buildPracticeQuestionsFromJson,
 } from "@/lib/growth/practice-questions-helpers";
-import { loadStudentContext } from "@/lib/growth/student-context";
+import { loadStudentContext, type StudentContext } from "@/lib/growth/student-context";
 import { queryWithRangeFilter } from "@/lib/admin/firestore-range-query";
-import type { GenerateReportRequest, GrowthReport, PracticeQuestion } from "@/lib/types/growth-report";
+import type {
+  GenerateReportRequest,
+  GrowthReport,
+  PracticeQuestion,
+  WeaknessProgress,
+} from "@/lib/types/growth-report";
 
 // Mock data for dev mode
 function generateMockReport(studentId: string, period: "weekly" | "monthly"): GrowthReport {
@@ -88,6 +97,50 @@ function stripUndefined<T>(obj: T): T {
     return out as T;
   }
   return obj;
+}
+
+/** 小論文統計を AI 総合所見プロンプト向けの1〜数行の日本語要約に整形する。 */
+function formatEssaySummary(stats: GrowthReport["essayStats"]): string {
+  if (stats.count === 0) return "今期間の小論文提出なし";
+  const changeText = stats.scoreChange >= 0 ? `+${stats.scoreChange}` : `${stats.scoreChange}`;
+  return `件数${stats.count}件・平均${stats.avgScore}点（前期間比${changeText}点）。得意カテゴリ: ${stats.bestCategory}、弱点カテゴリ: ${stats.worstCategory}`;
+}
+
+/** 面接統計を AI 総合所見プロンプト向けの1〜数行の日本語要約に整形する。 */
+function formatInterviewSummary(stats: GrowthReport["interviewStats"]): string {
+  if (stats.count === 0) return "今期間の面接練習なし";
+  const changeText = stats.scoreChange >= 0 ? `+${stats.scoreChange}` : `${stats.scoreChange}`;
+  return `件数${stats.count}件・平均${stats.avgScore}点（前期間比${changeText}点）`;
+}
+
+/** 弱点推移を「改善/停滞/悪化」でグループ化した日本語要約に整形する。 */
+function formatWeaknessSummary(progress: WeaknessProgress[]): string {
+  if (progress.length === 0) return "登録されている弱点なし";
+  const improved = progress.filter((w) => w.status === "improved").map((w) => w.weakness);
+  const stable = progress.filter((w) => w.status === "stable").map((w) => w.weakness);
+  const declined = progress.filter((w) => w.status === "declined").map((w) => w.weakness);
+  const parts: string[] = [];
+  if (improved.length > 0) parts.push(`改善: ${improved.join("、")}`);
+  if (stable.length > 0) parts.push(`停滞: ${stable.join("、")}`);
+  if (declined.length > 0) parts.push(`悪化: ${declined.join("、")}`);
+  return parts.length > 0 ? parts.join(" / ") : "特筆すべき変化なし";
+}
+
+/** 生徒の個別文脈 (志望校・自己分析・MBTI・資格) を1〜数行の日本語要約に整形する。取得できていなければ undefined。 */
+function formatSelfAnalysisNote(ctx: StudentContext): string | undefined {
+  const parts: string[] = [];
+  if (ctx.primaryTargets.length > 0) {
+    parts.push(
+      `志望校: ${ctx.primaryTargets.map((t) => `${t.universityName}${t.facultyName}`).join("、")}`,
+    );
+  }
+  if (ctx.mbtiType) parts.push(`MBTI: ${ctx.mbtiType}`);
+  if (ctx.selfAnalysis?.apConnection) parts.push(`AP接続: ${ctx.selfAnalysis.apConnection}`);
+  if (ctx.selfAnalysis?.uniqueCombo) parts.push(`強み: ${ctx.selfAnalysis.uniqueCombo}`);
+  if (ctx.englishCerts.length > 0) {
+    parts.push(`資格: ${ctx.englishCerts.map((c) => `${c.type}${c.score}`).join("、")}`);
+  }
+  return parts.length > 0 ? parts.join(" / ") : undefined;
 }
 
 export async function POST(request: NextRequest) {
@@ -540,6 +593,72 @@ export async function POST(request: NextRequest) {
       activitySummary,
       documentSummary,
     });
+
+    // 全データ横断の AI 総合所見・推奨を生成 (失敗/キー無しならルールベース値を維持)
+    step = "ai_comprehensive_assessment";
+    if (!process.env.ANTHROPIC_API_KEY) {
+      console.warn(
+        "[reports/generate] comprehensive assessment skipped: ANTHROPIC_API_KEY not set",
+      );
+    }
+    if (process.env.ANTHROPIC_API_KEY) {
+      try {
+        const comprehensiveInput: ComprehensiveAssessmentInput = {
+          studentName: studentData.displayName ?? "生徒",
+          period,
+          essaySummary: formatEssaySummary(report.essayStats),
+          interviewSummary: formatInterviewSummary(report.interviewStats),
+          weaknessSummary: formatWeaknessSummary(report.weaknessProgress),
+          sessionDigest: report.sessionDigest,
+          activitySummary: report.activitySummary,
+          documentSummary: report.documentSummary,
+          selfAnalysisNote: formatSelfAnalysisNote(studentContext),
+        };
+        const Anthropic = (await import("@anthropic-ai/sdk")).default;
+        const client = new Anthropic();
+        const systemPrompt = buildComprehensiveAssessmentPrompt(comprehensiveInput);
+        const resp = await client.messages.create({
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 1500,
+          system: systemPrompt,
+          messages: [{ role: "user", content: "JSON のみを出力してください。" }],
+        });
+        const text = resp.content[0]?.type === "text" ? resp.content[0].text : "";
+        const match = text.match(/\{[\s\S]*\}/);
+        if (!match) {
+          console.warn(
+            "[reports/generate] comprehensive assessment: no JSON found in response",
+          );
+        } else {
+          const parsed = JSON.parse(match[0]) as {
+            overallAssessment?: unknown;
+            recommendations?: unknown;
+          };
+          const isValidAssessment =
+            typeof parsed.overallAssessment === "string" &&
+            parsed.overallAssessment.trim().length > 0;
+          const isValidRecommendations =
+            Array.isArray(parsed.recommendations) &&
+            parsed.recommendations.length > 0 &&
+            parsed.recommendations.every(
+              (r) => typeof r === "string" && r.trim().length > 0,
+            );
+          if (isValidAssessment && isValidRecommendations) {
+            report.overallAssessment = parsed.overallAssessment as string;
+            report.recommendations = parsed.recommendations as string[];
+          } else {
+            console.warn(
+              "[reports/generate] comprehensive assessment: invalid shape, keeping rule-based values",
+            );
+          }
+        }
+      } catch (err) {
+        console.warn(
+          "[reports/generate] comprehensive assessment failed, keeping rule-based values:",
+          err,
+        );
+      }
+    }
 
     // Save the report to Firestore
     step = "save_to_firestore";
