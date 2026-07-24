@@ -283,7 +283,7 @@ export default function ActivityDetailPage({
           {editingDesc ? (
             <div className="space-y-2">
               <textarea
-                className="w-full min-h-[100px] rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-y"
+                className="w-full min-h-[100px] rounded-md border bg-background px-3 py-2 text-base lg:text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-y"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
               />
