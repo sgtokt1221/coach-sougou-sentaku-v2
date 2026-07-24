@@ -81,7 +81,7 @@ export function DocumentSectionCoachPanel(props: Props) {
   return (
     <>
       {/* デスクトップ */}
-      <div className="hidden lg:sticky lg:top-[calc(var(--app-header-height,4rem)+0.75rem)] lg:flex lg:h-[calc(100dvh-var(--app-header-height,4rem)-1.5rem)] lg:min-h-0 lg:flex-col lg:rounded-lg lg:border lg:bg-card">
+      <div className="hidden lg:flex lg:h-full lg:min-h-0 lg:flex-col lg:rounded-lg lg:border lg:bg-card">
         <PanelBody {...props} />
       </div>
 

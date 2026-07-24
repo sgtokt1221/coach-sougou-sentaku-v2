@@ -946,8 +946,8 @@ export default function NewDocumentPage() {
           )}
 
           {draftResult && (
-            <div className="lg:grid lg:grid-cols-[minmax(22rem,28rem)_minmax(0,1fr)] lg:gap-6 lg:items-start">
-              {/* 左: AI コーチパネル */}
+            <div className="lg:grid lg:h-[calc(100dvh-var(--app-header-height,4rem)-10rem)] lg:grid-cols-[minmax(22rem,28rem)_minmax(0,1fr)] lg:gap-6 lg:overflow-hidden">
+              {/* 左: AI コーチパネル（列いっぱいの高さ。送信欄は下端固定） */}
               {(frameworkType || writingMode === "free") && (
                 <DocumentSectionCoachPanel
                   frameworkType={frameworkType ?? "free"}
@@ -960,18 +960,31 @@ export default function NewDocumentPage() {
                 />
               )}
 
-              {/* 右: セクション編集 + アクション */}
-              <div className="space-y-4 lg:min-w-0">
-                <Card>
-                  <CardHeader>
+              {/* 右: セクション編集 + アクション（本文は列内スクロール・保存ボタンは下端固定） */}
+              <div className="mt-4 space-y-4 lg:mt-0 lg:flex lg:h-full lg:min-h-0 lg:min-w-0 lg:flex-col">
+                <Card className="lg:flex lg:min-h-0 lg:flex-1 lg:flex-col lg:overflow-hidden">
+                  <CardHeader className="lg:shrink-0">
                     <CardTitle className="text-lg">
                       {writingMode === "free" ? "本文" : "生成された下書き"}
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-4">
+                  <CardContent
+                    className={
+                      writingMode === "free"
+                        ? "space-y-4 lg:flex lg:min-h-0 lg:flex-1 lg:flex-col"
+                        : "space-y-4 lg:min-h-0 lg:flex-1 lg:overflow-y-auto"
+                    }
+                  >
                     {draftResult.sections.map((section, i) => (
-                      <div key={section.id ?? i} className="space-y-1">
-                        <h3 className="font-medium text-sm text-primary">
+                      <div
+                        key={section.id ?? i}
+                        className={
+                          writingMode === "free"
+                            ? "space-y-1 lg:flex lg:min-h-0 lg:flex-1 lg:flex-col"
+                            : "space-y-1"
+                        }
+                      >
+                        <h3 className="font-medium text-sm text-primary lg:shrink-0">
                           {section.title}
                         </h3>
                         <Textarea
@@ -990,7 +1003,7 @@ export default function NewDocumentPage() {
                           rows={writingMode === "free" ? undefined : 4}
                           className={
                             writingMode === "free"
-                              ? "min-h-[50vh] resize-y text-base lg:min-h-[calc(100dvh-16rem)] lg:text-sm"
+                              ? "min-h-[50vh] resize-y text-base lg:min-h-0 lg:h-full lg:resize-none lg:text-sm"
                               : "min-h-[9rem] resize-y text-base lg:text-sm"
                           }
                         />
@@ -999,7 +1012,7 @@ export default function NewDocumentPage() {
                   </CardContent>
                 </Card>
 
-                <div className="flex gap-3">
+                <div className="flex gap-3 lg:shrink-0">
                   <Button
                     variant="outline"
                     onClick={() => {
