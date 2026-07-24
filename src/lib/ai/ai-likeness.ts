@@ -1,17 +1,26 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
+import { z } from "zod";
 import { buildAiLikenessPrompt } from "@/lib/ai/prompts/ai-likeness";
 import { aiLikenessLevel } from "@/lib/types/document";
 import type { DocumentAiLikeness } from "@/lib/types/document";
+import { AI_MODEL_SONNET, AI_PROMPT_VERSIONS } from "@/lib/ai/prompt-versions";
 
-/** AIっぽさ判定に必要な書類コンテキスト。 */
+/** 個別性・テンプレ表現チェックに必要な書類コンテキスト。 */
 export interface AiLikenessContext {
   documentType: string;
   universityName: string;
   facultyName: string;
 }
 
+const AiLikenessOutputSchema = z.object({
+  score: z.number().int().min(0).max(100),
+  reasons: z.array(z.string().max(1000)).min(1).max(5),
+  suggestions: z.array(z.string().max(1000)).min(1).max(5),
+});
+
 /**
- * Claude で本文の「AIっぽさ」を判定し {@link DocumentAiLikeness} を返す。
+ * Claude で本文の個別性・テンプレ表現を確認し {@link DocumentAiLikeness} を返す。
  * 認可・永続化・APIキー未設定チェックは呼び出し側の責務（この関数は判定のみ）。
  * 生徒用 API と管理者用 API の両方から呼ばれる共通ロジック。
  * @param content 判定対象の本文
@@ -29,35 +38,37 @@ export async function checkAiLikeness(
     ctx.facultyName
   );
 
-  const response = await client.messages.create({
-    model: "claude-sonnet-4-6",
+  const response = await client.messages.parse({
+    model: AI_MODEL_SONNET,
     max_tokens: 2048,
     system: systemPrompt,
-    messages: [{ role: "user", content }],
+    messages: [
+      {
+        role: "user",
+        content: `<document_under_check>\n${content}\n</document_under_check>`,
+      },
+    ],
+    output_config: {
+      format: zodOutputFormat(AiLikenessOutputSchema),
+    },
   });
 
-  const rawText = response.content[0]?.type === "text" ? response.content[0].text : "";
-  const jsonMatch =
-    rawText.match(/```json\s*([\s\S]*?)\s*```/) || rawText.match(/(\{[\s\S]*\})/);
-  if (!jsonMatch) {
-    console.error("Could not parse AI likeness response:", rawText);
+  if (response.stop_reason === "max_tokens" || !response.parsed_output) {
     throw new Error("AIレスポンスの解析に失敗しました");
   }
 
-  const parsed = JSON.parse(jsonMatch[1]);
-  const rawScore = Number(parsed.score);
-  if (!Number.isFinite(rawScore)) {
-    console.error("AI likeness score missing/invalid:", rawText);
-    throw new Error("AIっぽさの判定結果を取得できませんでした");
-  }
-
-  const score = Math.max(0, Math.min(100, Math.round(rawScore)));
+  const parsed = response.parsed_output;
+  const score = parsed.score;
   return {
     score,
     level: aiLikenessLevel(score),
-    reasons: Array.isArray(parsed.reasons) ? parsed.reasons.slice(0, 8).map(String) : [],
-    suggestions: Array.isArray(parsed.suggestions) ? parsed.suggestions.slice(0, 8).map(String) : [],
+    reasons: parsed.reasons,
+    suggestions: parsed.suggestions,
     checkedAt: new Date().toISOString(),
     checkedWordCount: content.length,
+    aiMetadata: {
+      ...AI_PROMPT_VERSIONS.individualityCheck,
+      model: AI_MODEL_SONNET,
+    },
   };
 }

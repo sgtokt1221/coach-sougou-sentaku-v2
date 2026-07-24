@@ -16,7 +16,8 @@
     "seed:superadmin": "tsx scripts/seed-superadmin.ts",
     "consolidate:weaknesses": "tsx scripts/consolidate-weaknesses-taxonomy.ts",
     "verify:choco": "tsx scripts/verify-choco-logic.ts",
-    "validate:choco": "tsx scripts/validate-choco-passages.ts"
+    "validate:choco": "tsx scripts/validate-choco-passages.ts",
+    "verify:ai-prompts": "tsx scripts/verify-ai-prompt-safety.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",

@@ -1,11 +1,21 @@
-export type DocumentType = "志望理由書" | "学業活動報告書" | "研究計画書" | "自己推薦書" | "学びの設計書";
+import type { AiGenerationMetadata } from "@/lib/types/ai";
+
+export type DocumentType =
+  | "志望理由書"
+  | "学業活動報告書"
+  | "研究計画書"
+  | "自己推薦書"
+  | "学びの設計書";
 export type DocumentStatus = "draft" | "in_review" | "reviewed" | "final";
 
 /**
  * 管理者主導のレビュー状態（生徒の status とは別軸）。
  * approved=承認済み / revision_requested=差し戻し(要修正) / resubmitted=再確認待ち(差し戻し後に生徒が修正)
  */
-export type DocumentReviewState = "approved" | "revision_requested" | "resubmitted";
+export type DocumentReviewState =
+  | "approved"
+  | "revision_requested"
+  | "resubmitted";
 
 export interface DocumentReview {
   state: DocumentReviewState;
@@ -42,7 +52,7 @@ export interface Document {
   targetWordCount?: number;
   versions: DocumentVersion[];
   status: DocumentStatus;
-  /** AIっぽさ判定の最新結果 */
+  /** 個別性・テンプレ表現チェックの最新結果（後方互換のフィールド名）。 */
   aiLikeness?: DocumentAiLikeness;
   /** 管理者による承認/差し戻しレビュー状態 */
   review?: DocumentReview;
@@ -63,12 +73,20 @@ export interface DocumentVersion {
 }
 
 export interface DocumentFeedback {
-  apAlignmentScore: number;
+  /** AP未取得時は採点せずnull。 */
+  apAlignmentScore: number | null;
+  apAlignmentAssessability: "assessable" | "insufficient_context";
   structureScore: number;
   originalityScore: number;
   overallFeedback: string;
   improvements: string[];
   apSpecificNotes: string;
+  scoreEvidence?: {
+    apAlignment: string[];
+    structure: string[];
+    originality: string[];
+  };
+  aiMetadata?: AiGenerationMetadata;
 }
 
 export interface DocumentCreateRequest {
@@ -87,11 +105,11 @@ export interface DocumentCreateRequest {
 }
 
 export const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
-  "志望理由書": "志望理由書",
-  "学業活動報告書": "学業活動報告書",
-  "研究計画書": "研究計画書",
-  "自己推薦書": "自己推薦書",
-  "学びの設計書": "学びの設計書",
+  志望理由書: "志望理由書",
+  学業活動報告書: "学業活動報告書",
+  研究計画書: "研究計画書",
+  自己推薦書: "自己推薦書",
+  学びの設計書: "学びの設計書",
 };
 
 export const DOCUMENT_STATUS_LABELS: Record<DocumentStatus, string> = {
@@ -120,15 +138,15 @@ export const DOCUMENT_REVIEW_LABELS: Record<DocumentReviewState, string> = {
 export type DocumentAiLikenessLevel = "low" | "medium" | "high";
 
 /**
- * 下書きの「AIっぽさ」判定結果（最新1件のみ保持）。
- * score が高いほどAIっぽい。level は score から機械的に導出する。
+ * 下書きの個別性・テンプレ表現チェック結果（最新1件のみ保持）。
+ * 後方互換のためフィールド名は aiLikeness のまま維持する。
  */
 export interface DocumentAiLikeness {
-  /** 0-100。高いほどAIっぽい */
+  /** 0-100。高いほど抽象的・定型的で、本人固有の情報が不足している。 */
   score: number;
   /** low 0-39 / medium 40-69 / high 70-100 */
   level: DocumentAiLikenessLevel;
-  /** AIっぽいと判定した根拠（生徒向けの平易な日本語） */
+  /** 個別性が不足していると判断した根拠（生徒向けの平易な日本語） */
   reasons: string[];
   /** 人間らしくする具体的な直し方 */
   suggestions: string[];
@@ -136,20 +154,22 @@ export interface DocumentAiLikeness {
   checkedAt: string;
   /** 判定時の本文文字数。現在の wordCount と異なれば「再チェック推奨」を出す */
   checkedWordCount: number;
+  aiMetadata?: AiGenerationMetadata;
 }
 
-/** score から AIっぽさ level を導出する。境界: 40, 70。 */
+/** score からテンプレ表現レベルを導出する。境界: 40, 70。 */
 export function aiLikenessLevel(score: number): DocumentAiLikenessLevel {
   if (score >= 70) return "high";
   if (score >= 40) return "medium";
   return "low";
 }
 
-/** 提出（draft→in_review）時にソフト警告を出す AIっぽさスコアの閾値。 */
+/** 提出時に個別性の見直しを促すスコア閾値。 */
 export const AI_LIKENESS_SUBMIT_THRESHOLD = 60;
 
-export const AI_LIKENESS_LEVEL_LABELS: Record<DocumentAiLikenessLevel, string> = {
-  low: "人間らしい",
-  medium: "要改善",
-  high: "AIっぽい",
-};
+export const AI_LIKENESS_LEVEL_LABELS: Record<DocumentAiLikenessLevel, string> =
+  {
+    low: "個別性あり",
+    medium: "要具体化",
+    high: "テンプレ表現が多い",
+  };

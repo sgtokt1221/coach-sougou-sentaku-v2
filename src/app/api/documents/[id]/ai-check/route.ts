@@ -5,7 +5,7 @@ import { adminDb } from "@/lib/firebase/admin";
 import { checkAiLikeness } from "@/lib/ai/ai-likeness";
 
 /**
- * 指定書類の本文の「AIっぽさ」を判定し、結果を documents/{id}.aiLikeness に保存して返す。
+ * 指定書類の本文の個別性を確認し、結果を documents/{id}.aiLikeness に保存して返す。
  * グローバル documents コレクション + userId 所有者チェック。
  */
 export async function POST(
@@ -20,24 +20,37 @@ export async function POST(
     if (auth instanceof NextResponse) return auth;
 
     if (!adminDb) {
-      return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
+      return NextResponse.json(
+        { error: "サーバー設定エラー" },
+        { status: 500 }
+      );
     }
 
     const { id } = await params;
     const docRef = adminDb.doc(`documents/${id}`);
     const existing = await docRef.get();
     if (!existing.exists) {
-      return NextResponse.json({ error: "書類が見つかりません" }, { status: 404 });
+      return NextResponse.json(
+        { error: "書類が見つかりません" },
+        { status: 404 }
+      );
     }
     const data = existing.data();
     if (data?.userId !== auth.uid) {
-      return NextResponse.json({ error: "この書類へのアクセス権がありません" }, { status: 403 });
+      return NextResponse.json(
+        { error: "この書類へのアクセス権がありません" },
+        { status: 403 }
+      );
     }
 
     const body = await request.json().catch(() => ({}));
-    const content: string = typeof body.content === "string" ? body.content : (data?.content ?? "");
+    const content: string =
+      typeof body.content === "string" ? body.content : (data?.content ?? "");
     if (!content.trim()) {
-      return NextResponse.json({ error: "content は必須です" }, { status: 400 });
+      return NextResponse.json(
+        { error: "content は必須です" },
+        { status: 400 }
+      );
     }
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -60,7 +73,7 @@ export async function POST(
   } catch (error) {
     console.error("Document ai-likeness error:", error);
     return NextResponse.json(
-      { error: "AIっぽさ判定中にエラーが発生しました" },
+      { error: "個別性チェック中にエラーが発生しました" },
       { status: 500 }
     );
   }

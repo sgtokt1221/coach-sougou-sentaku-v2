@@ -1,13 +1,45 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
-import { buildStoryCheckPrompt } from "@/lib/ai/prompts/story-check";
+import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
+import { requireRole } from "@/lib/api/auth";
+import { adminDb } from "@/lib/firebase/admin";
+import {
+  buildStoryCheckPrompt,
+  type StoryCheckMaterials,
+} from "@/lib/ai/prompts/story-check";
+import { StoryCheckOutputSchema } from "@/lib/ai/schemas/story-check";
 import type { StoryCheckReport } from "@/lib/types/story-check";
+import { prepareAdmissionPolicy } from "@/lib/ai/admission-policy";
+import { AI_MODEL_SONNET, AI_PROMPT_VERSIONS } from "@/lib/ai/prompt-versions";
+
+function text(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function textList(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value
+        .filter((item): item is string => typeof item === "string")
+        .map((item) => item.trim())
+        .filter(Boolean)
+    : [];
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { universityId, facultyId } = body;
+    const auth = await requireRole(request, ["student"]);
+    if (auth instanceof NextResponse) return auth;
+    if (!adminDb) {
+      return NextResponse.json(
+        { error: "データベースに接続できません" },
+        { status: 500 }
+      );
+    }
 
+    const body = await request.json().catch(() => ({}));
+    const universityId =
+      typeof body.universityId === "string" ? body.universityId : "";
+    const facultyId = typeof body.facultyId === "string" ? body.facultyId : "";
     if (!universityId || !facultyId) {
       return NextResponse.json(
         { error: "universityId と facultyId は必須です" },
@@ -15,133 +47,152 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fetch university/faculty data
-    let universityName = "サンプル大学";
-    let facultyName = "サンプル学部";
-    let admissionPolicy = "";
-
-    try {
-      const { db } = await import("@/lib/firebase/config");
-      if (db) {
-        const { doc, getDoc } = await import("firebase/firestore");
-        const uniDoc = await getDoc(doc(db, "universities", universityId));
-        if (uniDoc.exists()) {
-          const uniData = uniDoc.data();
-          universityName = uniData.name || universityName;
-          const faculty = uniData.faculties?.find(
-            (f: { id: string; admissionPolicy?: string; name?: string }) =>
-              f.id === facultyId
-          );
-          if (faculty) {
-            facultyName = faculty.name || facultyName;
-            admissionPolicy = faculty.admissionPolicy || "";
-          }
-        }
-      }
-    } catch {
-      // Firestore unavailable, use defaults
+    const universitySnap = await adminDb
+      .doc(`universities/${universityId}`)
+      .get();
+    if (!universitySnap.exists) {
+      return NextResponse.json(
+        { error: "大学が見つかりません" },
+        { status: 404 }
+      );
     }
+    const universityData = universitySnap.data()!;
+    const faculty = Array.isArray(universityData.faculties)
+      ? universityData.faculties.find(
+          (item: { id?: string }) => item.id === facultyId
+        )
+      : undefined;
+    if (!faculty) {
+      return NextResponse.json(
+        { error: "学部が見つかりません" },
+        { status: 404 }
+      );
+    }
+    const universityName = text(universityData.name) || "未指定";
+    const facultyName = text(faculty.name) || "未指定";
+    const admissionPolicy = prepareAdmissionPolicy(
+      faculty.admissionPolicy
+    ).text;
 
-    // Collect student materials (mock in dev mode)
-    const materials = {
-      documents: [] as { type: string; title: string; content: string }[],
-      essays: [] as { topic: string; content: string; score?: number }[],
-      interviews: [] as { mode: string; summary?: string }[],
-      activities: [] as {
-        title: string;
-        category: string;
-        description: string;
-        structuredData?: {
-          motivation: string;
-          actions: string[];
-          results: string[];
-          learnings: string[];
-          connection: string;
-        };
-      }[],
-      selfAnalysis: undefined as
-        | {
-            values: string[];
-            strengths: string[];
-            vision: string;
-            selfStatement: string;
-          }
-        | undefined,
+    const materials: StoryCheckMaterials = {
+      documents: [],
+      essays: [],
+      interviews: [],
+      activities: [],
     };
 
-    // Try fetching from Firestore
-    try {
-      const { adminDb } = await import("@/lib/firebase/admin");
-      if (adminDb) {
-        const userId = body.userId || "dev-user";
+    const documentsSnap = await adminDb
+      .collection("documents")
+      .where("userId", "==", auth.uid)
+      .get();
+    materials.documents = documentsSnap.docs
+      .filter((document) => {
+        const data = document.data();
+        return (
+          data.universityId === universityId && data.facultyId === facultyId
+        );
+      })
+      .slice(0, 10)
+      .map((document) => {
+        const data = document.data();
+        return {
+          id: document.id,
+          type: text(data.type) || "出願書類",
+          title: text(data.title) || "無題",
+          content: text(data.content).slice(0, 12000),
+        };
+      });
 
-        // Fetch documents for this university/faculty
-        const docsSnap = await adminDb
-          .collection(`users/${userId}/documents`)
-          .where("universityId", "==", universityId)
-          .where("facultyId", "==", facultyId)
-          .get();
-        docsSnap.forEach((d: FirebaseFirestore.QueryDocumentSnapshot) => {
-          const data = d.data();
-          materials.documents.push({
-            type: data.type,
-            title: data.title,
-            content: data.content,
-          });
-        });
+    const essaysSnap = await adminDb
+      .collection("essays")
+      .where("userId", "==", auth.uid)
+      .orderBy("submittedAt", "desc")
+      .limit(5)
+      .get();
+    materials.essays = essaysSnap.docs.map((essay) => {
+      const data = essay.data();
+      return {
+        id: essay.id,
+        topic: text(data.topic) || text(data.title) || "無題",
+        content: (text(data.ocrText) || text(data.content)).slice(0, 12000),
+        ...(typeof data.scores?.total === "number"
+          ? { score: data.scores.total }
+          : {}),
+      };
+    });
 
-        // Fetch recent essays (top-level collection)
-        const essaysSnap = await adminDb
-          .collection("essays")
-          .where("userId", "==", userId)
-          .orderBy("submittedAt", "desc")
-          .limit(5)
-          .get();
-        essaysSnap.forEach((d: FirebaseFirestore.QueryDocumentSnapshot) => {
-          const data = d.data();
-          materials.essays.push({
-            topic: data.topic || data.title || "無題",
-            content: data.ocrText || data.content || "",
-            score: data.scores?.total,
-          });
-        });
+    const interviewsSnap = await adminDb
+      .collection("interviews")
+      .where("userId", "==", auth.uid)
+      .orderBy("startedAt", "desc")
+      .limit(5)
+      .get();
+    materials.interviews = interviewsSnap.docs.map((interview) => {
+      const data = interview.data();
+      return {
+        id: interview.id,
+        mode: text(data.mode) || "個人面接",
+        ...(text(data.summary) ? { summary: text(data.summary) } : {}),
+      };
+    });
 
-        // Fetch recent interviews (top-level collection)
-        const interviewsSnap = await adminDb
-          .collection("interviews")
-          .where("userId", "==", userId)
-          .orderBy("startedAt", "desc")
-          .limit(5)
-          .get();
-        interviewsSnap.forEach((d: FirebaseFirestore.QueryDocumentSnapshot) => {
-          const data = d.data();
-          materials.interviews.push({
-            mode: data.mode || "個人面接",
-            summary: data.summary,
-          });
-        });
+    const activitiesSnap = await adminDb
+      .collection(`users/${auth.uid}/activities`)
+      .limit(20)
+      .get();
+    materials.activities = activitiesSnap.docs.map((activity) => {
+      const data = activity.data();
+      return {
+        id: activity.id,
+        title: text(data.title) || "活動実績",
+        category: text(data.category) || "未分類",
+        description: text(data.description).slice(0, 4000),
+        ...(data.structuredData && typeof data.structuredData === "object"
+          ? { structuredData: data.structuredData }
+          : {}),
+      };
+    });
 
-        // Fetch all activities
-        const activitiesSnap = await adminDb
-          .collection(`users/${userId}/activities`)
-          .get();
-        activitiesSnap.forEach((d: FirebaseFirestore.QueryDocumentSnapshot) => {
-          const data = d.data();
-          materials.activities.push({
-            title: data.title,
-            category: data.category,
-            description: data.description,
-            structuredData: data.structuredData,
-          });
-        });
+    let selfAnalysisSnap = await adminDb.doc(`selfAnalysis/${auth.uid}`).get();
+    if (!selfAnalysisSnap.exists) {
+      selfAnalysisSnap = await adminDb
+        .doc(`users/${auth.uid}/selfAnalysis/current`)
+        .get();
+    }
+    if (selfAnalysisSnap.exists) {
+      const data = selfAnalysisSnap.data()!;
+      const values =
+        data.values && typeof data.values === "object" ? data.values : {};
+      const strengths =
+        data.strengths && typeof data.strengths === "object"
+          ? data.strengths
+          : {};
+      const vision =
+        data.vision && typeof data.vision === "object" ? data.vision : {};
+      const identity =
+        data.identity && typeof data.identity === "object" ? data.identity : {};
+      const mapped = {
+        values: textList(values.coreValues),
+        strengths: textList(strengths.strengths),
+        vision: text(vision.longTermVision),
+        selfStatement: text(identity.selfStatement),
+      };
+      if (
+        mapped.values.length ||
+        mapped.strengths.length ||
+        mapped.vision ||
+        mapped.selfStatement
+      ) {
+        materials.selfAnalysis = mapped;
       }
-    } catch {
-      // Firestore unavailable
     }
 
     if (!process.env.ANTHROPIC_API_KEY) {
       return NextResponse.json(
-        { error: "ストーリーチェックにはAPIキーが必要です", available: false },
+        {
+          error: "ストーリーチェックにはAPIキーが必要です",
+          available: false,
+        },
         { status: 503 }
       );
     }
@@ -153,27 +204,38 @@ export async function POST(request: NextRequest) {
       admissionPolicy,
       materials
     );
-
-    const message = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
+    const message = await anthropic.messages.parse({
+      model: AI_MODEL_SONNET,
       max_tokens: 4096,
-      messages: [{ role: "user", content: prompt }],
+      system: prompt,
+      messages: [
+        {
+          role: "user",
+          content: "reference_dataに基づいて一貫性を評価してください。",
+        },
+      ],
+      output_config: {
+        format: zodOutputFormat(StoryCheckOutputSchema),
+      },
     });
 
-    const text =
-      message.content[0].type === "text" ? message.content[0].text : "";
-    const jsonMatch = text.match(/```json\s*([\s\S]*?)\s*```/) ||
-      text.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      const jsonStr = jsonMatch[1] || jsonMatch[0];
-      const report: StoryCheckReport = JSON.parse(jsonStr);
-      return NextResponse.json({ report, universityName, facultyName });
+    if (message.stop_reason === "max_tokens" || !message.parsed_output) {
+      return NextResponse.json(
+        { error: "AIからの応答を検証できませんでした" },
+        { status: 502 }
+      );
     }
 
-    return NextResponse.json(
-      { error: "AIからの応答を解析できませんでした" },
-      { status: 500 }
-    );
+    const report: StoryCheckReport = message.parsed_output;
+    return NextResponse.json({
+      report,
+      universityName,
+      facultyName,
+      aiMetadata: {
+        ...AI_PROMPT_VERSIONS.storyCheck,
+        model: AI_MODEL_SONNET,
+      },
+    });
   } catch (error) {
     console.error("Story check error:", error);
     return NextResponse.json(

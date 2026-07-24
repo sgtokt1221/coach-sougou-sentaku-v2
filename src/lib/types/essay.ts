@@ -1,4 +1,10 @@
-export type EssayStatus = "uploaded" | "ocr_confirmed" | "reviewing" | "reviewed";
+import type { AiGenerationMetadata } from "@/lib/types/ai";
+
+export type EssayStatus =
+  | "uploaded"
+  | "ocr_confirmed"
+  | "reviewing"
+  | "reviewed";
 
 export const ESSAY_STATUS_LABELS: Record<string, string> = {
   uploaded: "OCR待ち",
@@ -66,12 +72,12 @@ export interface EssayRetryContext {
 }
 
 export interface EssayScores {
-  structure: number;     // 構成 0-10
-  logic: number;         // 論理性 0-10
-  expression: number;    // 表現力 0-10
-  apAlignment: number;   // AP合致度 0-10
-  originality: number;   // 独自性 0-10
-  total: number;         // 合計 0-50
+  structure: number; // 構成 0-10
+  logic: number; // 論理性 0-10
+  expression: number; // 表現力 0-10
+  apAlignment: number; // AP合致度 0-10
+  originality: number; // 独自性 0-10
+  total: number; // 合計 0-50
 }
 
 export interface TopicInsights {
@@ -102,8 +108,14 @@ export interface QuantitativeAnalysis {
   };
   evidenceCount: number;
   connectorVariety: number;
-  passTarget: number;
-  gapToPass: number;
+  /** アプリ内ルーブリック上の学習目標。入試の合格最低点ではない。 */
+  appTargetScore: number;
+  /** アプリ内目標スコアとの差。 */
+  gapToTarget: number;
+  /** 旧保存データとの後方互換用。新規結果では保存しない。 */
+  passTarget?: number;
+  /** 旧保存データとの後方互換用。新規結果では保存しない。 */
+  gapToPass?: number;
 }
 
 /** レポート課題（課題文を読んで書く）専用の講評。questionType="report" のときのみ生成。 */
@@ -128,6 +140,11 @@ export interface EssayFeedback {
   priorityImprovement?: string;
   nextChallenge?: string;
   quantitativeAnalysis?: QuantitativeAnalysis;
+  /** APが取得できず、AP合致度を十分に評価できなかった場合はfalse。 */
+  apAlignmentAssessable?: boolean;
+  /** 今回評価できた軸の満点。通常50、AP未取得時は40。 */
+  scoreMaximum?: number;
+  aiMetadata?: AiGenerationMetadata;
   /** レポート課題専用の講評（report のときのみ） */
   reportInsights?: ReportInsights;
 }
@@ -161,7 +178,13 @@ export interface EssayReviewRequest {
   facultyId: string;
   topic?: string;
   wordLimit?: number;
-  questionType?: "essay" | "english-reading" | "data-analysis" | "mixed" | "lecture" | "report";
+  questionType?:
+    | "essay"
+    | "english-reading"
+    | "data-analysis"
+    | "mixed"
+    | "lecture"
+    | "report";
   sourceText?: string;
   chartDataSummary?: string;
   pastQuestionFacultyName?: string;

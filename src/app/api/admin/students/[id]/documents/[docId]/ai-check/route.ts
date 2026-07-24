@@ -5,7 +5,7 @@ import { adminDb } from "@/lib/firebase/admin";
 import { checkAiLikeness } from "@/lib/ai/ai-likeness";
 
 /**
- * 管理者（admin/teacher/superadmin）が生徒の出願書類の「AIっぽさ」を判定する API。
+ * 管理者（admin/teacher/superadmin）が生徒の出願書類の個別性を確認する API。
  * 判定対象は保存済みの本文（documents/{docId}.content）。結果は生徒と共有の
  * documents/{docId}.aiLikeness に保存するため、生徒側にもそのまま反映される。
  */
@@ -13,7 +13,11 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string; docId: string }> }
 ) {
-  const authResult = await requireRole(request, ["admin", "teacher", "superadmin"]);
+  const authResult = await requireRole(request, [
+    "admin",
+    "teacher",
+    "superadmin",
+  ]);
   if (authResult instanceof NextResponse) return authResult;
   const { uid: callerUid, role } = authResult;
   const { id: studentId, docId } = await params;
@@ -26,7 +30,10 @@ export async function POST(
     // 組織スコープ（自塾の admin は代行可、担当講師も許可）
     const studentDoc = await adminDb.doc(`users/${studentId}`).get();
     if (!studentDoc.exists) {
-      return NextResponse.json({ error: "生徒が見つかりません" }, { status: 404 });
+      return NextResponse.json(
+        { error: "生徒が見つかりません" },
+        { status: 404 }
+      );
     }
     const denied = await scopeByOrganization({
       requesterUid: callerUid,
@@ -46,12 +53,18 @@ export async function POST(
     const snap = await docRef.get();
     const data = snap.data();
     if (!snap.exists || data?.userId !== studentId) {
-      return NextResponse.json({ error: "書類が見つかりません" }, { status: 404 });
+      return NextResponse.json(
+        { error: "書類が見つかりません" },
+        { status: 404 }
+      );
     }
 
     const content: string = data?.content ?? "";
     if (!content.trim()) {
-      return NextResponse.json({ error: "本文が空のため判定できません" }, { status: 400 });
+      return NextResponse.json(
+        { error: "本文が空のため判定できません" },
+        { status: 400 }
+      );
     }
 
     if (!process.env.ANTHROPIC_API_KEY) {
@@ -73,7 +86,7 @@ export async function POST(
   } catch (error) {
     console.error("Admin document ai-likeness error:", error);
     return NextResponse.json(
-      { error: "AIっぽさ判定中にエラーが発生しました" },
+      { error: "個別性チェック中にエラーが発生しました" },
       { status: 500 }
     );
   }

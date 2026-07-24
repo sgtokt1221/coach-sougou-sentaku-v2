@@ -9,6 +9,7 @@ export interface LectureProgressItem {
   lectureId: string;
   essayId: string;
   total: number;
+  scoreMaximum: number;
   completedAt: string;
 }
 
@@ -59,7 +60,13 @@ export async function GET(request: NextRequest) {
         new Date().toISOString();
       const prev = best.get(d.lectureId);
       if (!prev || total > prev.total) {
-        best.set(d.lectureId, { lectureId: d.lectureId, essayId: doc.id, total, completedAt });
+        best.set(d.lectureId, {
+          lectureId: d.lectureId,
+          essayId: doc.id,
+          total,
+          scoreMaximum: d.feedback?.scoreMaximum ?? 50,
+          completedAt,
+        });
       }
     }
 

@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
-import { reviewEssayCore, EssayReviewParseError } from "@/lib/essay/review-core";
+import {
+  reviewEssayCore,
+  EssayReviewParseError,
+} from "@/lib/essay/review-core";
 import { analyzeGrowth, updateWeaknessRecords } from "@/lib/growth/analyze";
 import { getLectureById } from "@/data/essay-lectures";
 import type { WeaknessRecord } from "@/lib/types/growth";
@@ -25,28 +28,40 @@ interface LectureSubmitBody {
 }
 
 export async function POST(request: NextRequest) {
-  const authResult = await requireRole(request, ["student", "admin", "superadmin"]);
+  const authResult = await requireRole(request, [
+    "student",
+    "admin",
+    "superadmin",
+  ]);
   if (authResult instanceof NextResponse) return authResult;
   const { uid } = authResult;
 
   if (!adminDb) {
-    return NextResponse.json({ error: "Firestore に接続できません" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Firestore に接続できません" },
+      { status: 500 }
+    );
   }
 
   let step = "start";
   try {
     step = "parse_body";
-    const body = (await request.json().catch(() => null)) as LectureSubmitBody | null;
+    const body = (await request
+      .json()
+      .catch(() => null)) as LectureSubmitBody | null;
     if (!body?.lectureId || typeof body.answerText !== "string") {
       return NextResponse.json(
         { error: "lectureId と answerText は必須です" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
     const lecture = getLectureById(body.lectureId);
     if (!lecture) {
-      return NextResponse.json({ error: "講義が見つかりません" }, { status: 404 });
+      return NextResponse.json(
+        { error: "講義が見つかりません" },
+        { status: 404 }
+      );
     }
 
     const answerText = body.answerText.trim();
@@ -54,7 +69,7 @@ export async function POST(request: NextRequest) {
     if (answerText.length < minLength) {
       return NextResponse.json(
         { error: `回答が短すぎます (${minLength}文字以上書いてください)` },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -82,7 +97,9 @@ export async function POST(request: NextRequest) {
     }
     const weaknessList =
       existingWeaknesses.length > 0
-        ? existingWeaknesses.map((w) => `- ${w.area}(${w.count}回指摘)`).join("\n")
+        ? existingWeaknesses
+            .map((w) => `- ${w.area}(${w.count}回指摘)`)
+            .join("\n")
         : "(過去の弱点なし)";
 
     // 自己分析 (任意)
@@ -143,8 +160,8 @@ export async function POST(request: NextRequest) {
         questionType: "lecture",
         lectureInfo,
         wordLimit: lecture.exercise.wordLimit,
-        admissionPolicy:
-          "(基礎講座のため大学AP非依存。一般的な小論文の評価基準で採点してください)",
+        // 基礎講座は大学AP非依存。空値にしてAP軸を評価対象外にする。
+        admissionPolicy: "",
         weaknessList,
         essaySelfAnalysis,
       });
@@ -153,8 +170,11 @@ export async function POST(request: NextRequest) {
     } catch (err) {
       if (err instanceof EssayReviewParseError) {
         return NextResponse.json(
-          { error: "AI添削結果のパースに失敗しました", rawResponse: err.rawText.slice(0, 500) },
-          { status: 500 },
+          {
+            error: "AI添削結果のパースに失敗しました",
+            rawResponse: err.rawText.slice(0, 500),
+          },
+          { status: 500 }
         );
       }
       throw err;
@@ -164,7 +184,10 @@ export async function POST(request: NextRequest) {
       ...feedback.repeatedIssues.map((i) => i.area),
       ...feedback.improvements,
     ];
-    const updatedWeaknesses = updateWeaknessRecords(existingWeaknesses, weaknessTags);
+    const updatedWeaknesses = updateWeaknessRecords(
+      existingWeaknesses,
+      weaknessTags
+    );
     const growthEvents = analyzeGrowth(weaknessTags, existingWeaknesses);
 
     // 採点結果を essay に書き込み
@@ -177,7 +200,7 @@ export async function POST(request: NextRequest) {
         status: "reviewed",
         reviewedAt: FieldValue.serverTimestamp(),
       },
-      { merge: true },
+      { merge: true }
     );
 
     // 弱点 DB 更新
@@ -194,7 +217,7 @@ export async function POST(request: NextRequest) {
           source: w.source,
           reminderDismissedAt: w.reminderDismissedAt,
         },
-        { merge: true },
+        { merge: true }
       );
     }
 
@@ -207,7 +230,7 @@ export async function POST(request: NextRequest) {
         detail: error instanceof Error ? error.message : String(error),
         step,
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

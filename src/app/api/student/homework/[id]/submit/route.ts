@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
-import { reviewEssayCore, EssayReviewParseError } from "@/lib/essay/review-core";
+import {
+  reviewEssayCore,
+  EssayReviewParseError,
+} from "@/lib/essay/review-core";
 import {
   scoreInterviewCore,
   InterviewScoreParseError,
@@ -10,15 +13,13 @@ import {
 import { analyzeGrowth, updateWeaknessRecords } from "@/lib/growth/analyze";
 import type { WeaknessRecord } from "@/lib/types/growth";
 import type { HomeworkAssignment } from "@/lib/types/homework";
-import type {
-  EssayScores,
-  EssayFeedback,
-} from "@/lib/types/essay";
+import type { EssayScores, EssayFeedback } from "@/lib/types/essay";
 import type {
   InterviewScores,
   InterviewFeedback,
   InterviewMessage,
 } from "@/lib/types/interview";
+import { prepareAdmissionPolicy } from "@/lib/ai/admission-policy";
 
 /**
  * POST /api/student/homework/[id]/submit
@@ -52,7 +53,7 @@ type SubmitBody = EssaySubmitBody | InterviewSubmitBody;
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const authResult = await requireRole(request, ["student"]);
   if (authResult instanceof NextResponse) return authResult;
@@ -61,7 +62,7 @@ export async function POST(
   if (!adminDb) {
     return NextResponse.json(
       { error: "Firestore に接続できません" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 
@@ -74,14 +75,14 @@ export async function POST(
     if (!hwSnap.exists) {
       return NextResponse.json(
         { error: "宿題が見つかりません" },
-        { status: 404 },
+        { status: 404 }
       );
     }
     const hw = hwSnap.data() as HomeworkAssignment;
     if (hw.status === "submitted" || hw.status === "reviewed") {
       return NextResponse.json(
         { error: "この宿題は既に提出済みです" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -90,13 +91,13 @@ export async function POST(
     if (body.type !== hw.snapshot.type) {
       return NextResponse.json(
         { error: `宿題の種別 (${hw.snapshot.type}) と一致しません` },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
     // 大学・学部の AP コンテキストを取得 (snapshot に保存済み)
     step = "load_context";
-    let admissionPolicy = "(AP未設定)";
+    let admissionPolicy = "";
     let universityName = "(大学名未設定)";
     let facultyName = "(学部名未設定)";
     if (hw.snapshot.targetUniversity) {
@@ -107,12 +108,15 @@ export async function POST(
         const univData = univSnap.data()!;
         universityName = univData.name ?? universityName;
         const faculty = (univData.faculties ?? []).find(
-          (f: { id: string }) => f.id === hw.snapshot.targetFaculty,
+          (f: { id: string }) => f.id === hw.snapshot.targetFaculty
         );
         if (faculty) {
           facultyName = faculty.name ?? facultyName;
           if (faculty.admissionPolicy) {
-            admissionPolicy = `大学: ${universityName}\n学部: ${facultyName}\nAP: ${faculty.admissionPolicy}`;
+            const prepared = prepareAdmissionPolicy(faculty.admissionPolicy);
+            admissionPolicy = prepared.text
+              ? `大学: ${universityName}\n学部: ${facultyName}\nAP: ${prepared.text}`
+              : "";
           }
         }
       }
@@ -142,7 +146,9 @@ export async function POST(
     }
     const weaknessList =
       existingWeaknesses.length > 0
-        ? existingWeaknesses.map((w) => `- ${w.area}(${w.count}回指摘)`).join("\n")
+        ? existingWeaknesses
+            .map((w) => `- ${w.area}(${w.count}回指摘)`)
+            .join("\n")
         : "(過去の弱点なし)";
 
     // 種別ごとに処理
@@ -176,7 +182,7 @@ export async function POST(
         detail: error instanceof Error ? error.message : String(error),
         step,
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
@@ -190,12 +196,20 @@ async function submitEssay(args: {
   weaknessList: string;
   existingWeaknesses: WeaknessRecord[];
 }): Promise<NextResponse> {
-  const { uid, homework, homeworkRef, bodyText, admissionPolicy, weaknessList, existingWeaknesses } = args;
+  const {
+    uid,
+    homework,
+    homeworkRef,
+    bodyText,
+    admissionPolicy,
+    weaknessList,
+    existingWeaknesses,
+  } = args;
 
   if (!bodyText || bodyText.trim().length < 20) {
     return NextResponse.json(
       { error: "本文が短すぎます (20文字以上書いてください)" },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
@@ -256,8 +270,11 @@ async function submitEssay(args: {
   } catch (err) {
     if (err instanceof EssayReviewParseError) {
       return NextResponse.json(
-        { error: "AI添削結果のパースに失敗しました", rawResponse: err.rawText.slice(0, 500) },
-        { status: 500 },
+        {
+          error: "AI添削結果のパースに失敗しました",
+          rawResponse: err.rawText.slice(0, 500),
+        },
+        { status: 500 }
       );
     }
     throw err;
@@ -267,7 +284,10 @@ async function submitEssay(args: {
     ...feedback.repeatedIssues.map((i) => i.area),
     ...feedback.improvements,
   ];
-  const updatedWeaknesses = updateWeaknessRecords(existingWeaknesses, weaknessTags);
+  const updatedWeaknesses = updateWeaknessRecords(
+    existingWeaknesses,
+    weaknessTags
+  );
   const growthEvents = analyzeGrowth(weaknessTags, existingWeaknesses);
 
   // essay に結果を書き込み
@@ -279,7 +299,7 @@ async function submitEssay(args: {
       status: "reviewed",
       reviewedAt: FieldValue.serverTimestamp(),
     },
-    { merge: true },
+    { merge: true }
   );
 
   // 弱点 DB 更新
@@ -295,7 +315,7 @@ async function submitEssay(args: {
         source: w.source,
         reminderDismissedAt: w.reminderDismissedAt,
       },
-      { merge: true },
+      { merge: true }
     );
   }
 
@@ -338,7 +358,7 @@ async function submitInterview(args: {
   if (!answer || answer.trim().length < 10) {
     return NextResponse.json(
       { error: "回答が短すぎます (10文字以上書いてください)" },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
@@ -380,10 +400,14 @@ async function submitInterview(args: {
     if (saDoc.exists) {
       const sa = saDoc.data()!;
       const parts: string[] = [];
-      if (sa.values?.coreValues) parts.push(`価値観: ${sa.values.coreValues.join("、")}`);
-      if (sa.strengths?.strengths) parts.push(`強み: ${sa.strengths.strengths.join("、")}`);
-      if (sa.vision?.shortTermGoal) parts.push(`短期目標: ${sa.vision.shortTermGoal}`);
-      if (sa.identity?.selfStatement) parts.push(`自己像: ${sa.identity.selfStatement}`);
+      if (sa.values?.coreValues)
+        parts.push(`価値観: ${sa.values.coreValues.join("、")}`);
+      if (sa.strengths?.strengths)
+        parts.push(`強み: ${sa.strengths.strengths.join("、")}`);
+      if (sa.vision?.shortTermGoal)
+        parts.push(`短期目標: ${sa.vision.shortTermGoal}`);
+      if (sa.identity?.selfStatement)
+        parts.push(`自己像: ${sa.identity.selfStatement}`);
       if (parts.length > 0) selfAnalysisContext = parts.join("\n");
     }
   } catch {
@@ -409,8 +433,11 @@ async function submitInterview(args: {
   } catch (err) {
     if (err instanceof InterviewScoreParseError) {
       return NextResponse.json(
-        { error: "AI評価結果のパースに失敗しました", rawResponse: err.rawText.slice(0, 500) },
-        { status: 500 },
+        {
+          error: "AI評価結果のパースに失敗しました",
+          rawResponse: err.rawText.slice(0, 500),
+        },
+        { status: 500 }
       );
     }
     throw err;
@@ -420,7 +447,11 @@ async function submitInterview(args: {
     ...feedback.repeatedIssues.map((i) => i.area),
     ...feedback.improvements,
   ];
-  const updatedWeaknesses = updateWeaknessRecords(existingWeaknesses, weaknessTags, "interview");
+  const updatedWeaknesses = updateWeaknessRecords(
+    existingWeaknesses,
+    weaknessTags,
+    "interview"
+  );
   const growthEvents = analyzeGrowth(weaknessTags, existingWeaknesses);
 
   await interviewRef.update({
@@ -444,7 +475,7 @@ async function submitInterview(args: {
         source: w.source,
         reminderDismissedAt: w.reminderDismissedAt,
       },
-      { merge: true },
+      { merge: true }
     );
   }
 

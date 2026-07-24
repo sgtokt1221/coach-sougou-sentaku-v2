@@ -5,6 +5,7 @@ import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
 import { buildDocumentRewritePrompt } from "@/lib/ai/prompts/document-rewrite";
 import { cleanAiText, fitToCharLimit } from "@/lib/ai/fit-char-limit";
+import { prepareAdmissionPolicy } from "@/lib/ai/admission-policy";
 
 /** 指示文から「N字以下 / N字以内 / N文字まで」等の上限文字数を抽出する。無ければ null。 */
 function extractCharLimit(instruction: string): number | null {
@@ -29,23 +30,34 @@ export async function POST(
     if (auth instanceof NextResponse) return auth;
 
     if (!adminDb) {
-      return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
+      return NextResponse.json(
+        { error: "サーバー設定エラー" },
+        { status: 500 }
+      );
     }
 
     const { id } = await params;
     const docRef = adminDb.doc(`documents/${id}`);
     const existing = await docRef.get();
     if (!existing.exists) {
-      return NextResponse.json({ error: "書類が見つかりません" }, { status: 404 });
+      return NextResponse.json(
+        { error: "書類が見つかりません" },
+        { status: 404 }
+      );
     }
     const data = existing.data();
     if (data?.userId !== auth.uid) {
-      return NextResponse.json({ error: "この書類へのアクセス権がありません" }, { status: 403 });
+      return NextResponse.json(
+        { error: "この書類へのアクセス権がありません" },
+        { status: 403 }
+      );
     }
 
     const body = await request.json().catch(() => ({}));
-    const content: string = typeof body.content === "string" ? body.content : "";
-    const instruction: string = typeof body.instruction === "string" ? body.instruction : "";
+    const content: string =
+      typeof body.content === "string" ? body.content : "";
+    const instruction: string =
+      typeof body.instruction === "string" ? body.instruction : "";
     if (!content.trim() || !instruction.trim()) {
       return NextResponse.json(
         { error: "content と instruction は必須です" },
@@ -57,14 +69,19 @@ export async function POST(
     let admissionPolicy = "";
     if (data?.universityId) {
       try {
-        const uniDoc = await adminDb.doc(`universities/${data.universityId}`).get();
+        const uniDoc = await adminDb
+          .doc(`universities/${data.universityId}`)
+          .get();
         if (uniDoc.exists) {
           const uniData = uniDoc.data();
           const faculty = uniData?.faculties?.find(
-            (f: { id: string; admissionPolicy?: string }) => f.id === data.facultyId
+            (f: { id: string; admissionPolicy?: string }) =>
+              f.id === data.facultyId
           );
           if (faculty?.admissionPolicy) {
-            admissionPolicy = faculty.admissionPolicy;
+            admissionPolicy = prepareAdmissionPolicy(
+              faculty.admissionPolicy
+            ).text;
           }
         }
       } catch (err) {
@@ -94,11 +111,16 @@ export async function POST(
       model: "claude-sonnet-4-6",
       max_tokens: 8192,
       system: systemPrompt,
-      messages: [{ role: "user", content }],
+      messages: [
+        {
+          role: "user",
+          content: `<document_under_rewrite>\n${content}\n</document_under_rewrite>`,
+        },
+      ],
     });
 
-    // 本文全文をJSONで返すため出力が長くなりやすい。max_tokens で切れた場合は
-    // JSON.parse が失敗して汎用500になる前に、分かりやすいメッセージで返す。
+    // 本文全文は出力が長くなりやすい。max_tokens で切れた場合は、
+    // 不完全な本文を返さず分かりやすいメッセージにする。
     if (response.stop_reason === "max_tokens") {
       return NextResponse.json(
         {
@@ -112,14 +134,29 @@ export async function POST(
     const rawText =
       response.content[0].type === "text" ? response.content[0].text : "";
 
-    // 本文全文をプレーンテキストで返させる（多段落の本文をJSON化すると改行の
-    // エスケープ漏れで JSON.parse が壊れやすいため）。万一コードフェンスが付いても剥がす。
+    // 本文全文をプレーンテキストで返させる。万一コードフェンスが付いても剥がす。
     let rewritten = cleanAiText(rawText);
     if (!rewritten) {
       console.error("Empty rewrite response:", rawText);
       return NextResponse.json(
         { error: "書き換え結果を取得できませんでした" },
         { status: 500 }
+      );
+    }
+    const originalPlaceholders = [
+      ...content.matchAll(/【[^】]+】/g),
+    ].map((match) => match[0]);
+    if (
+      originalPlaceholders.some(
+        (placeholder) => !rewritten.includes(placeholder),
+      )
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "書き換えで未入力プレースホルダーが失われたため、結果を破棄しました。",
+        },
+        { status: 502 },
       );
     }
 
@@ -133,6 +170,15 @@ export async function POST(
         : null);
     if (limit) {
       rewritten = await fitToCharLimit(client, rewritten, limit);
+      if (rewritten.length > limit) {
+        return NextResponse.json(
+          {
+            error:
+              "書き換え結果を指定文字数内に収められませんでした。指示を分けてお試しください。",
+          },
+          { status: 502 }
+        );
+      }
     }
 
     return NextResponse.json({ rewritten });

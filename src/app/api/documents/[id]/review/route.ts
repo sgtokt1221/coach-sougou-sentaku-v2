@@ -1,9 +1,59 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { requireFeature } from "@/lib/api/subscription";
+import { requireRole } from "@/lib/api/auth";
+import { adminDb } from "@/lib/firebase/admin";
 import { buildDocumentReviewPrompt } from "@/lib/ai/prompts/document";
 import type { SelfAnalysisContext } from "@/lib/ai/prompts/document";
+import { DocumentReviewOutputSchema } from "@/lib/ai/schemas/document-review";
 import type { DocumentFeedback } from "@/lib/types/document";
+import { prepareAdmissionPolicy } from "@/lib/ai/admission-policy";
+import { AI_MODEL_SONNET, AI_PROMPT_VERSIONS } from "@/lib/ai/prompt-versions";
+
+function stringArray(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const result = value
+    .filter((item): item is string => typeof item === "string")
+    .map((item) => item.trim())
+    .filter(Boolean);
+  return result.length > 0 ? result : undefined;
+}
+
+function stringValue(value: unknown): string | undefined {
+  return typeof value === "string" && value.trim() ? value.trim() : undefined;
+}
+
+function mapSelfAnalysis(raw: Record<string, unknown>): SelfAnalysisContext {
+  const values =
+    raw.values && typeof raw.values === "object"
+      ? (raw.values as Record<string, unknown>)
+      : {};
+  const strengths =
+    raw.strengths && typeof raw.strengths === "object"
+      ? (raw.strengths as Record<string, unknown>)
+      : {};
+  const vision =
+    raw.vision && typeof raw.vision === "object"
+      ? (raw.vision as Record<string, unknown>)
+      : {};
+  const identity =
+    raw.identity && typeof raw.identity === "object"
+      ? (raw.identity as Record<string, unknown>)
+      : {};
+
+  return {
+    values: stringArray(values.coreValues),
+    strengths: stringArray(strengths.strengths),
+    vision: stringValue(vision.longTermVision),
+    selfStatement: stringValue(identity.selfStatement),
+    uniqueNarrative: stringValue(identity.uniqueNarrative),
+  };
+}
+
+function matchingEvidence(content: string, values: string[]): string[] {
+  return values.filter((value) => value.length > 0 && content.includes(value));
+}
 
 export async function POST(
   request: NextRequest,
@@ -13,71 +63,75 @@ export async function POST(
     const gate = await requireFeature(request, "documentEditor");
     if (gate) return gate;
 
-    const { id } = await params;
-    const body = await request.json();
-    const { content, universityName, facultyName, documentType } = body;
+    const auth = await requireRole(request, ["student"]);
+    if (auth instanceof NextResponse) return auth;
+    if (!adminDb) {
+      return NextResponse.json(
+        { error: "サーバー設定エラー" },
+        { status: 500 }
+      );
+    }
 
-    if (!content) {
+    const { id } = await params;
+    const documentSnap = await adminDb.doc(`documents/${id}`).get();
+    if (!documentSnap.exists) {
+      return NextResponse.json(
+        { error: "書類が見つかりません" },
+        { status: 404 }
+      );
+    }
+    const documentData = documentSnap.data()!;
+    if (documentData.userId !== auth.uid) {
+      return NextResponse.json(
+        { error: "この書類へのアクセス権がありません" },
+        { status: 403 }
+      );
+    }
+
+    const body = await request.json().catch(() => ({}));
+    const content =
+      typeof body.content === "string" ? body.content : documentData.content;
+    if (typeof content !== "string" || !content.trim()) {
       return NextResponse.json(
         { error: "content は必須です" },
         { status: 400 }
       );
     }
 
-    // AP取得
     let admissionPolicy = "";
-    if (body.universityId) {
-      const { db } = await import("@/lib/firebase/config");
-      if (db) {
-        try {
-          const { doc, getDoc } = await import("firebase/firestore");
-          const uniDoc = await getDoc(doc(db, "universities", body.universityId));
-          if (uniDoc.exists()) {
-            const uniData = uniDoc.data();
-            const faculty = uniData.faculties?.find(
-              (f: { id: string; admissionPolicy?: string }) => f.id === body.facultyId
-            );
-            if (faculty?.admissionPolicy) {
-              admissionPolicy = faculty.admissionPolicy;
-            }
-          }
-        } catch (err) {
-          console.warn("AP fetch failed:", err);
+    const universityId = documentData.universityId;
+    const facultyId = documentData.facultyId;
+    if (typeof universityId === "string" && universityId) {
+      const universitySnap = await adminDb
+        .doc(`universities/${universityId}`)
+        .get();
+      if (universitySnap.exists) {
+        const universityData = universitySnap.data()!;
+        const faculty = Array.isArray(universityData.faculties)
+          ? universityData.faculties.find(
+              (item: { id?: string }) => item.id === facultyId
+            )
+          : undefined;
+        if (typeof faculty?.admissionPolicy === "string") {
+          admissionPolicy = prepareAdmissionPolicy(
+            faculty.admissionPolicy
+          ).text;
         }
       }
     }
 
-    // Fetch self-analysis data if available
     let selfAnalysis: SelfAnalysisContext | undefined;
-    try {
-      const { db: saDb } = await import("@/lib/firebase/config");
-      if (saDb && body.userId) {
-        const { doc: saDoc, getDoc: saGetDoc, collection: saCollection, query: saQuery, getDocs: saGetDocs, limit: saLimit, orderBy: saOrderBy } = await import("firebase/firestore");
-        const saQueryRef = saQuery(
-          saCollection(saDb, `users/${body.userId}/selfAnalysis`),
-          saOrderBy("updatedAt", "desc"),
-          saLimit(1)
-        );
-        const saSnap = await saGetDocs(saQueryRef);
-        if (!saSnap.empty) {
-          const saData = saSnap.docs[0].data();
-          if (saData.isComplete) {
-            selfAnalysis = {
-              values: saData.values?.coreValues,
-              strengths: saData.strengths?.strengths,
-              vision: saData.vision?.longTermVision,
-              selfStatement: saData.identity?.selfStatement,
-              uniqueNarrative: saData.identity?.uniqueNarrative,
-            };
-          }
-        }
-      }
-    } catch {
-      // Self-analysis data unavailable, continue without it
+    let selfAnalysisSnap = await adminDb.doc(`selfAnalysis/${auth.uid}`).get();
+    if (!selfAnalysisSnap.exists) {
+      selfAnalysisSnap = await adminDb
+        .doc(`users/${auth.uid}/selfAnalysis/current`)
+        .get();
+    }
+    if (selfAnalysisSnap.exists) {
+      selfAnalysis = mapSelfAnalysis(selfAnalysisSnap.data()!);
     }
 
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
+    if (!process.env.ANTHROPIC_API_KEY) {
       return NextResponse.json(
         { error: "APIキーが設定されていません", available: false },
         { status: 503 }
@@ -85,44 +139,78 @@ export async function POST(
     }
 
     const client = new Anthropic();
-    const systemPrompt = buildDocumentReviewPrompt(
-      universityName || "未指定",
-      facultyName || "未指定",
-      admissionPolicy,
-      documentType || "出願書類",
-      selfAnalysis
-    );
+    const hasAdmissionPolicy = admissionPolicy.length > 0;
+    const systemPrompt = buildDocumentReviewPrompt({
+      hasAdmissionPolicy,
+    });
+    const referenceData = {
+      universityName: documentData.universityName ?? "未指定",
+      facultyName: documentData.facultyName ?? "未指定",
+      documentType: documentData.type ?? "出願書類",
+      admissionPolicy: hasAdmissionPolicy ? admissionPolicy : null,
+      selfAnalysis: selfAnalysis ?? null,
+    };
 
-    const response = await client.messages.create({
-      model: "claude-sonnet-4-6",
+    const response = await client.messages.parse({
+      model: AI_MODEL_SONNET,
       max_tokens: 4096,
       system: systemPrompt,
-      messages: [{ role: "user", content }],
+      messages: [
+        {
+          role: "user",
+          content: `<reference_data>
+${JSON.stringify(referenceData)}
+</reference_data>
+<document_under_review>
+${content}
+</document_under_review>`,
+        },
+      ],
+      output_config: {
+        format: zodOutputFormat(DocumentReviewOutputSchema),
+      },
     });
 
-    const rawText =
-      response.content[0].type === "text" ? response.content[0].text : "";
-
-    const jsonMatch = rawText.match(/```json\s*([\s\S]*?)\s*```/) ||
-      rawText.match(/(\{[\s\S]*\})/);
-
-    if (!jsonMatch) {
-      console.error("Could not parse AI response:", rawText);
+    if (response.stop_reason === "max_tokens" || !response.parsed_output) {
       return NextResponse.json(
-        { error: "AIレスポンスの解析に失敗しました" },
-        { status: 500 }
+        { error: "AIレスポンスの検証に失敗しました" },
+        { status: 502 }
       );
     }
 
-    const parsed = JSON.parse(jsonMatch[1]);
-
+    const parsed = response.parsed_output;
+    if (hasAdmissionPolicy && parsed.apAlignmentScore === null) {
+      return NextResponse.json(
+        { error: "AP合致度の評価結果を検証できませんでした" },
+        { status: 502 },
+      );
+    }
     const feedback: DocumentFeedback = {
-      apAlignmentScore: parsed.apAlignmentScore ?? 0,
-      structureScore: parsed.structureScore ?? 0,
-      originalityScore: parsed.originalityScore ?? 0,
-      overallFeedback: parsed.overallFeedback ?? "",
-      improvements: parsed.improvements ?? [],
-      apSpecificNotes: parsed.apSpecificNotes ?? "",
+      apAlignmentScore: hasAdmissionPolicy ? parsed.apAlignmentScore : null,
+      apAlignmentAssessability: hasAdmissionPolicy
+        ? "assessable"
+        : "insufficient_context",
+      structureScore: parsed.structureScore,
+      originalityScore: parsed.originalityScore,
+      overallFeedback: parsed.overallFeedback,
+      improvements: parsed.improvements,
+      apSpecificNotes: hasAdmissionPolicy
+        ? parsed.apSpecificNotes
+        : "アドミッションポリシーを取得できなかったため、AP合致度は評価していません。",
+      scoreEvidence: {
+        apAlignment: hasAdmissionPolicy
+          ? matchingEvidence(content, parsed.scoreEvidence.apAlignment)
+          : [],
+        structure: matchingEvidence(content, parsed.scoreEvidence.structure),
+        originality: matchingEvidence(
+          content,
+          parsed.scoreEvidence.originality
+        ),
+      },
+      aiMetadata: {
+        ...AI_PROMPT_VERSIONS.documentReview,
+        model: AI_MODEL_SONNET,
+      },
     };
 
     return NextResponse.json({ feedback, documentId: id });

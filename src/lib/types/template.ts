@@ -1,7 +1,13 @@
 import type { DocumentType } from "@/lib/types/document";
 import type { StructuredActivityData } from "@/lib/types/activity";
+import type { AiGenerationMetadata } from "@/lib/types/ai";
 
-export type FrameworkType = "STAR" | "PREP" | "kishoutenketsu" | "problem-solving" | "why-how-what";
+export type FrameworkType =
+  | "STAR"
+  | "PREP"
+  | "kishoutenketsu"
+  | "problem-solving"
+  | "why-how-what";
 
 export interface FrameworkSection {
   id: string;
@@ -40,7 +46,12 @@ export interface DraftGenerateRequest {
 export interface DraftGenerateResponse {
   draft: string;
   frameworkType?: FrameworkType;
-  sections: { id: string; title: string; content: string; placeholder?: string }[];
+  sections: {
+    id: string;
+    title: string;
+    content: string;
+    placeholder?: string;
+  }[];
   wordCount?: number;
   evaluationScores?: {
     apAlignment?: number;
@@ -49,6 +60,7 @@ export interface DraftGenerateResponse {
     futureVision?: number;
   };
   improvementSuggestions?: string[];
+  aiMetadata?: AiGenerationMetadata;
 }
 
 export const FRAMEWORK_TYPE_LABELS: Record<FrameworkType, string> = {

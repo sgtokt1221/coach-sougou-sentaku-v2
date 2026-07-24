@@ -62,7 +62,10 @@ export async function GET(request: NextRequest) {
     }
 
     // 大学名解決用キャッシュ
-    const universityCache = new Map<string, { name: string; faculties: Array<{ id: string; name: string }> }>();
+    const universityCache = new Map<
+      string,
+      { name: string; faculties: Array<{ id: string; name: string }> }
+    >();
 
     // 旧データの universityId/facultyId 表記揺れに対する alias 辞書。
     // 過去問データやFirestoreの古いユーザーデータが旧 ID で保存されている場合に
@@ -75,19 +78,28 @@ export async function GET(request: NextRequest) {
     };
 
     async function resolveNames(universityId: string, facultyId: string) {
-      const resolvedUniversityId = universityIdAliases[universityId] ?? universityId;
+      const resolvedUniversityId =
+        universityIdAliases[universityId] ?? universityId;
       if (!universityCache.has(resolvedUniversityId)) {
-        const uniDoc = await adminDb!.doc(`universities/${resolvedUniversityId}`).get();
+        const uniDoc = await adminDb!
+          .doc(`universities/${resolvedUniversityId}`)
+          .get();
         if (uniDoc.exists) {
           const d = uniDoc.data()!;
-          universityCache.set(resolvedUniversityId, { name: d.name, faculties: d.faculties ?? [] });
+          universityCache.set(resolvedUniversityId, {
+            name: d.name,
+            faculties: d.faculties ?? [],
+          });
         }
       }
       const uni = universityCache.get(resolvedUniversityId);
       const resolvedFacultyId = facultyIdAliases[facultyId] ?? facultyId;
       const faculty = uni?.faculties.find((f) => f.id === resolvedFacultyId);
       // 学部名が見つからない場合は facultyId を表示せず空文字にする
-      return { universityName: uni?.name ?? resolvedUniversityId, facultyName: faculty?.name ?? "" };
+      return {
+        universityName: uni?.name ?? resolvedUniversityId,
+        facultyName: faculty?.name ?? "",
+      };
     }
 
     const essays = await Promise.all(
@@ -97,16 +109,31 @@ export async function GET(request: NextRequest) {
           data.targetUniversity ?? "",
           data.targetFaculty ?? ""
         );
-        const scores = data.scores ?? { structure: 0, logic: 0, expression: 0, apAlignment: 0, originality: 0 };
-        const total = scores.total ?? ((scores.structure ?? 0) + (scores.logic ?? 0) + (scores.expression ?? 0) + (scores.apAlignment ?? 0) + (scores.originality ?? 0));
+        const scores = data.scores ?? {
+          structure: 0,
+          logic: 0,
+          expression: 0,
+          apAlignment: 0,
+          originality: 0,
+        };
+        const total =
+          scores.total ??
+          (scores.structure ?? 0) +
+            (scores.logic ?? 0) +
+            (scores.expression ?? 0) +
+            (scores.apAlignment ?? 0) +
+            (scores.originality ?? 0);
         return {
           id: d.id,
           universityName,
           facultyName,
           topic: data.topic ?? "",
-          submittedAt: data.submittedAt?.toDate?.()?.toISOString() ?? new Date().toISOString(),
+          submittedAt:
+            data.submittedAt?.toDate?.()?.toISOString() ??
+            new Date().toISOString(),
           status: data.status ?? "reviewed",
           totalScore: total,
+          scoreMaximum: data.feedback?.scoreMaximum ?? 50,
           scores: {
             structure: scores.structure ?? 0,
             logic: scores.logic ?? 0,
@@ -117,7 +144,8 @@ export async function GET(request: NextRequest) {
           },
           rootEssayId: data.rootEssayId ?? d.id,
           parentEssayId: data.parentEssayId ?? null,
-          attemptNumber: typeof data.attemptNumber === "number" ? data.attemptNumber : 1,
+          attemptNumber:
+            typeof data.attemptNumber === "number" ? data.attemptNumber : 1,
           inputMode: data.inputMode ?? null,
           sourceType: data.sourceType ?? null,
         };

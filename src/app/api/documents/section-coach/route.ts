@@ -13,6 +13,7 @@ import type {
   DocumentSectionCoachResponse,
   DocumentSectionCoachThread,
 } from "@/lib/types/document-coach";
+import { prepareAdmissionPolicy } from "@/lib/ai/admission-policy";
 
 export const maxDuration = 60;
 
@@ -48,7 +49,9 @@ export async function POST(request: NextRequest) {
     !body.sectionTitle
   ) {
     return NextResponse.json(
-      { error: "frameworkType, sectionId, sectionTitle, userMessage は必須です" },
+      {
+        error: "frameworkType, sectionId, sectionTitle, userMessage は必須です",
+      },
       { status: 400 }
     );
   }
@@ -77,7 +80,10 @@ export async function POST(request: NextRequest) {
     if (snap.exists) {
       existing = snap.data() as DocumentSectionCoachThread;
       if (existing.studentId && existing.studentId !== uid) {
-        return NextResponse.json({ error: "権限がありません" }, { status: 403 });
+        return NextResponse.json(
+          { error: "権限がありません" },
+          { status: 403 }
+        );
       }
     } else {
       threadDocRef = threadsCol.doc();
@@ -91,17 +97,25 @@ export async function POST(request: NextRequest) {
   let admissionPolicy: string | undefined;
   if (body.universityId) {
     try {
-      const uniSnap = await adminDb.doc(`universities/${body.universityId}`).get();
+      const uniSnap = await adminDb
+        .doc(`universities/${body.universityId}`)
+        .get();
       if (uniSnap.exists) {
         const uni = uniSnap.data() as {
           name?: string;
-          faculties?: Array<{ id: string; name?: string; admissionPolicy?: string }>;
+          faculties?: Array<{
+            id: string;
+            name?: string;
+            admissionPolicy?: string;
+          }>;
         };
         universityName = uni.name;
         const fac = uni.faculties?.find((f) => f.id === body.facultyId);
         if (fac) {
           facultyName = fac.name;
-          if (fac.admissionPolicy) admissionPolicy = fac.admissionPolicy;
+          if (fac.admissionPolicy) {
+            admissionPolicy = prepareAdmissionPolicy(fac.admissionPolicy).text;
+          }
         }
       }
     } catch (err) {

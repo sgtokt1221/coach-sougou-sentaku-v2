@@ -1,9 +1,12 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { jsonrepair } from "jsonrepair";
+import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import {
   buildEssayReviewPrompt,
   type EssaySelfAnalysisContext,
 } from "@/lib/ai/prompts/essay";
+import { EssayReviewOutputSchema } from "@/lib/ai/schemas/essay-review";
+import { calculateEssayMetrics } from "@/lib/essay/review-metrics";
+import { AI_MODEL_SONNET, AI_PROMPT_VERSIONS } from "@/lib/ai/prompt-versions";
 import type {
   EssayScores,
   EssayFeedback,
@@ -16,7 +19,8 @@ import type {
  *
  * 役割:
  * - Anthropic API を叩いてスコアとフィードバックを得る
- * - JSON のパース (jsonrepair フォールバック付き) を行う
+ * - Anthropic structured outputs と Zod で応答を検証する
+ * - 合計点・文字数等の決定的な値をサーバー側で計算する
  *
  * 役割外 (呼び出し側で扱うこと):
  * - Firestore I/O (essay ドキュメントの作成・更新、弱点 DB の更新)
@@ -35,9 +39,13 @@ export interface EssayReviewCoreInput {
   chartDataSummary?: string;
   lectureInfo?: string | null;
   wordLimit?: number;
-  admissionPolicy: string;
+  admissionPolicy?: string;
   weaknessList: string;
   essaySelfAnalysis?: EssaySelfAnalysisContext;
+  previousAttempt?: {
+    essayText: string;
+    feedbackSummary: string[];
+  };
 }
 
 export interface EssayReviewCoreOutput {
@@ -51,7 +59,7 @@ export class EssayReviewParseError extends Error {
     message: string,
     public readonly rawText: string,
     public readonly parseError?: string,
-    public readonly repairError?: string,
+    public readonly repairError?: string
   ) {
     super(message);
     this.name = "EssayReviewParseError";
@@ -59,7 +67,7 @@ export class EssayReviewParseError extends Error {
 }
 
 export async function reviewEssayCore(
-  input: EssayReviewCoreInput,
+  input: EssayReviewCoreInput
 ): Promise<EssayReviewCoreOutput> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
@@ -68,93 +76,81 @@ export async function reviewEssayCore(
 
   const client = new Anthropic();
   const isReport = input.questionType === "report";
-  const questionContext =
-    input.questionType && input.questionType !== "essay" && !isReport
-      ? {
-          questionType: input.questionType as
-            | "english-reading"
-            | "data-analysis"
-            | "mixed"
-            | "lecture",
-          sourceText: input.sourceText,
-          chartDataSummary: input.chartDataSummary,
-          lectureInfo: input.lectureInfo ?? undefined,
-        }
-      : undefined;
+  const admissionPolicy = input.admissionPolicy?.trim() ?? "";
+  const hasAdmissionPolicy = admissionPolicy.length > 0;
+  const systemPrompt = buildEssayReviewPrompt({
+    questionType: input.questionType,
+    hasAdmissionPolicy,
+    hasPreviousAttempt: Boolean(input.previousAttempt),
+    hasWordLimit: Boolean(input.wordLimit),
+  });
 
-  const systemPrompt = buildEssayReviewPrompt(
-    input.admissionPolicy,
-    input.weaknessList,
-    input.essaySelfAnalysis,
-    questionContext,
-    input.wordLimit,
-  );
+  const referenceData = {
+    topic: input.topic ?? null,
+    questionType: input.questionType ?? "essay",
+    wordLimit: input.wordLimit ?? null,
+    admissionPolicy: hasAdmissionPolicy ? admissionPolicy : null,
+    priorWeaknesses: input.weaknessList || null,
+    selfAnalysis: input.essaySelfAnalysis ?? null,
+    sourceText: input.sourceText ?? null,
+    chartDataSummary: input.chartDataSummary ?? null,
+    lectureInfo: input.lectureInfo ?? null,
+  };
+  const previousAttempt = input.previousAttempt ?? null;
+  const userMessage = `<reference_data>
+${JSON.stringify(referenceData)}
+</reference_data>
+<previous_attempt>
+${JSON.stringify(previousAttempt)}
+</previous_attempt>
+<essay_under_review>
+${input.ocrText}
+</essay_under_review>`;
 
-  let userMessage = "";
-  if (input.topic) userMessage += `【テーマ】${input.topic}\n\n`;
-  if (input.sourceText) {
-    const label = isReport ? "【課題文】" : "【出題資料(英文)】";
-    userMessage += `${label}\n${input.sourceText}\n\n`;
-  }
-  if (input.chartDataSummary) userMessage += `【資料データ】\n${input.chartDataSummary}\n\n`;
-  userMessage += `【小論文本文】\n${input.ocrText}`;
-
-  if (isReport) {
-    userMessage +=
-      "\n\nこれは上記【課題文】を読んで書く『レポート』です。5観点スコアと通常の feedback に加えて、" +
-      "JSON の feedback に必ず \"reportInsights\" を含めてください。reportInsights は次のキーを持つオブジェクトです: " +
-      "sourceComprehension(課題文の理解度・要点把握), summaryAccuracy(要約・言い換えの正確さ), " +
-      "citationAppropriateness(引用/参照の妥当さ), analysisDepth(自分の考察の深さ・独自性), " +
-      "sourceConnection(課題文と自論の接続), misreadings(課題文の誤読・事実誤認を指摘する文字列配列)。" +
-      "各文字列は具体的な講評にしてください。";
-  }
-
-  const response = await client.messages.create({
-    model: "claude-sonnet-4-6",
+  const response = await client.messages.parse({
+    model: AI_MODEL_SONNET,
     max_tokens: isReport ? 6000 : 4096,
     system: systemPrompt,
     messages: [{ role: "user", content: userMessage }],
+    output_config: {
+      format: zodOutputFormat(EssayReviewOutputSchema),
+    },
   });
 
   const rawText =
     response.content[0]?.type === "text" ? response.content[0].text : "";
-
-  const jsonMatch =
-    rawText.match(/```json\s*([\s\S]*?)\s*```/) ?? rawText.match(/(\{[\s\S]*\})/);
-
-  if (!jsonMatch) {
+  if (response.stop_reason === "max_tokens") {
     throw new EssayReviewParseError(
-      "AI 添削結果に JSON ブロックが含まれていません",
-      rawText,
+      "AI 添削結果が最大トークン数で途中終了しました",
+      rawText
+    );
+  }
+  const parsed = response.parsed_output;
+  if (!parsed) {
+    throw new EssayReviewParseError(
+      "AI 添削結果が構造化出力スキーマを満たしませんでした",
+      rawText
     );
   }
 
-  let parsed: ReturnType<typeof JSON.parse>;
-  try {
-    parsed = JSON.parse(jsonMatch[1]);
-  } catch (parseErr) {
-    try {
-      parsed = JSON.parse(jsonrepair(jsonMatch[1]));
-    } catch (repairErr) {
-      throw new EssayReviewParseError(
-        "AI 添削結果のパースに失敗しました (jsonrepair も失敗)",
-        rawText,
-        (parseErr as Error).message,
-        (repairErr as Error).message,
-      );
-    }
-  }
-
+  const scoreMaximum = hasAdmissionPolicy ? 50 : 40;
+  const total =
+    parsed.scores.structure +
+    parsed.scores.logic +
+    parsed.scores.expression +
+    parsed.scores.originality +
+    (hasAdmissionPolicy ? parsed.scores.apAlignment : 0);
   const scores: EssayScores = {
     structure: parsed.scores.structure,
     logic: parsed.scores.logic,
     expression: parsed.scores.expression,
-    apAlignment: parsed.scores.apAlignment,
+    apAlignment: hasAdmissionPolicy ? parsed.scores.apAlignment : 0,
     originality: parsed.scores.originality,
-    total: parsed.scores.total,
+    total,
   };
 
-  const topicInsights: TopicInsights | undefined = parsed.feedback?.topicInsights
+  const topicInsights: TopicInsights | undefined = parsed.feedback
+    ?.topicInsights
     ? {
         background: parsed.feedback.topicInsights.background ?? "",
         relatedThemes: parsed.feedback.topicInsights.relatedThemes ?? [],
@@ -164,7 +160,7 @@ export async function reviewEssayCore(
     : undefined;
 
   const reportInsights: ReportInsights | undefined = parsed.feedback
-    ?.reportInsights
+    .reportInsights
     ? {
         sourceComprehension:
           parsed.feedback.reportInsights.sourceComprehension ?? "",
@@ -177,20 +173,42 @@ export async function reviewEssayCore(
       }
     : undefined;
 
-  // Firestore は undefined を許可しないため、optional フィールドは
-  // 値があるときだけ key を含める (条件付き spread)。
+  const languageCorrections = parsed.feedback.languageCorrections.filter(
+    (correction) =>
+      correction.original.length > 0 &&
+      input.ocrText.includes(correction.original) &&
+      correction.original !== correction.suggestion
+  );
+  const appTargetScore = hasAdmissionPolicy ? 35 : 28;
+
+  // Firestore は undefined を許可しないため、optional フィールドは値があるときだけ含める。
   const feedback: EssayFeedback = {
     overall: parsed.feedback.overall,
-    goodPoints: parsed.feedback.goodPoints ?? [],
-    improvements: parsed.feedback.improvements ?? [],
-    repeatedIssues: parsed.feedback.repeatedIssues ?? [],
-    improvementsSinceLast: parsed.feedback.improvementsSinceLast ?? [],
+    goodPoints: parsed.feedback.goodPoints,
+    priorityImprovement: parsed.feedback.priorityImprovement,
+    improvements: parsed.feedback.improvements,
+    nextChallenge: parsed.feedback.nextChallenge,
+    repeatedIssues: parsed.feedback.repeatedIssues.filter(
+      (issue) => hasAdmissionPolicy || issue.category !== "apAlignment"
+    ),
+    improvementsSinceLast: input.previousAttempt
+      ? parsed.feedback.improvementsSinceLast
+      : [],
     ...(topicInsights ? { topicInsights } : {}),
     ...(reportInsights ? { reportInsights } : {}),
-    ...(parsed.feedback.brushedUpText
-      ? { brushedUpText: parsed.feedback.brushedUpText }
-      : {}),
-    languageCorrections: parsed.feedback.languageCorrections ?? [],
+    languageCorrections,
+    quantitativeAnalysis: calculateEssayMetrics(
+      input.ocrText,
+      input.wordLimit,
+      total,
+      appTargetScore
+    ),
+    apAlignmentAssessable: hasAdmissionPolicy,
+    scoreMaximum,
+    aiMetadata: {
+      ...AI_PROMPT_VERSIONS.essayReview,
+      model: AI_MODEL_SONNET,
+    },
   };
 
   return { scores, feedback, rawText };

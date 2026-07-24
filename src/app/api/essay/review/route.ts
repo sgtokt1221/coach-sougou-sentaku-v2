@@ -1,19 +1,43 @@
 import { NextRequest, NextResponse } from "next/server";
-import type { EssayReviewRequest, EssayFeedback, RetryComparison, EssayScores } from "@/lib/types/essay";
+import type {
+  EssayReviewRequest,
+  EssayFeedback,
+  RetryComparison,
+  EssayScores,
+} from "@/lib/types/essay";
 import { analyzeGrowth, updateWeaknessRecords } from "@/lib/growth/analyze";
 import { categorizeWeakness } from "@/lib/growth/weakness-category";
 import type { WeaknessRecord } from "@/lib/types/growth";
 import { logEssaySubmission } from "@/lib/bigquery/logger";
 import { computeRetryComparison } from "@/lib/essay/retry-comparison";
-import { reviewEssayCore, EssayReviewParseError } from "@/lib/essay/review-core";
+import {
+  reviewEssayCore,
+  EssayReviewParseError,
+} from "@/lib/essay/review-core";
 import type { EssaySelfAnalysisContext } from "@/lib/ai/prompts/essay";
+import { requireRole } from "@/lib/api/auth";
+import { prepareAdmissionPolicy } from "@/lib/ai/admission-policy";
 
 export const maxDuration = 120;
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireRole(request, ["student"]);
+    if (auth instanceof NextResponse) return auth;
+
     const body: EssayReviewRequest = await request.json();
-    const { essayId, ocrText, universityId, facultyId, topic, questionType, sourceText, chartDataSummary, pastQuestionFacultyName, homeworkId } = body;
+    const {
+      essayId,
+      ocrText,
+      universityId,
+      facultyId,
+      topic,
+      questionType,
+      sourceText,
+      chartDataSummary,
+      pastQuestionFacultyName,
+      homeworkId,
+    } = body;
 
     if (!essayId || !ocrText || !universityId || !facultyId) {
       return NextResponse.json(
@@ -22,26 +46,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // IDトークンからuserIdを取得
-    let requestUserId: string | null = null;
-    const authHeader = request.headers.get("Authorization");
-    if (authHeader?.startsWith("Bearer ")) {
-      try {
-        const { adminAuth } = await import("@/lib/firebase/admin");
-        if (adminAuth) {
-          const decoded = await adminAuth.verifyIdToken(authHeader.slice(7));
-          requestUserId = decoded.uid;
-        }
-      } catch {}
-    }
-    // dev mode fallback
-    if (!requestUserId && process.env.NODE_ENV === "development") {
-      const devRole = request.headers.get("X-Dev-Role");
-      if (devRole) requestUserId = "dev-user";
-    }
+    const requestUserId = auth.uid;
 
     // 大学・学部のAPを取得
-    let admissionPolicy = "（大学情報未設定）";
+    let admissionPolicy = "";
     let weaknessList = "（過去の弱点なし）";
     let essayUserId: string | null = requestUserId;
     let existingWeaknesses: WeaknessRecord[] = [];
@@ -54,6 +62,7 @@ export async function POST(request: NextRequest) {
       id: string;
       attemptNumber: number;
       submittedAt: Date;
+      ocrText: string;
       scores: EssayScores;
       feedback: EssayFeedback;
     } | null = null;
@@ -63,20 +72,27 @@ export async function POST(request: NextRequest) {
       try {
         // 親essayが指定されていれば取得して認可＋チェーン情報を組み立てる
         if (body.parentEssayId) {
-          const parentDoc = await adminDb.doc(`essays/${body.parentEssayId}`).get();
+          const parentDoc = await adminDb
+            .doc(`essays/${body.parentEssayId}`)
+            .get();
           if (parentDoc.exists) {
             const pdata = parentDoc.data()!;
             // 認可: 親と同じユーザーでなければ親リンクを無視 (横取り防止)
-            if (!requestUserId || pdata.userId === requestUserId) {
+            if (pdata.userId === requestUserId) {
               parentEssayIdResolved = body.parentEssayId;
               rootEssayId = pdata.rootEssayId ?? body.parentEssayId;
-              const parentAttempt = typeof pdata.attemptNumber === "number" ? pdata.attemptNumber : 1;
+              const parentAttempt =
+                typeof pdata.attemptNumber === "number"
+                  ? pdata.attemptNumber
+                  : 1;
               attemptNumber = parentAttempt + 1;
               if (pdata.scores && pdata.feedback) {
                 parentSnapshot = {
                   id: body.parentEssayId,
                   attemptNumber: parentAttempt,
                   submittedAt: pdata.submittedAt?.toDate?.() ?? new Date(),
+                  ocrText:
+                    typeof pdata.ocrText === "string" ? pdata.ocrText : "",
                   scores: pdata.scores as EssayScores,
                   feedback: pdata.feedback as EssayFeedback,
                 };
@@ -89,16 +105,17 @@ export async function POST(request: NextRequest) {
         const existingEssay = await adminDb.doc(`essays/${essayId}`).get();
         if (!existingEssay.exists) {
           // report は初回提出でも retryContext を残す（無いとリトライ時に通常小論文化して復帰不能になるため）
-          const retryContext = parentEssayIdResolved || questionType === "report"
-            ? {
-                wordLimit: body.wordLimit ?? null,
-                questionType: body.questionType ?? null,
-                sourceText: body.sourceText ?? null,
-                chartDataSummary: body.chartDataSummary ?? null,
-                pastQuestionFacultyName: body.pastQuestionFacultyName ?? null,
-                lectureInfo: body.lectureInfo ?? null,
-              }
-            : null;
+          const retryContext =
+            parentEssayIdResolved || questionType === "report"
+              ? {
+                  wordLimit: body.wordLimit ?? null,
+                  questionType: body.questionType ?? null,
+                  sourceText: body.sourceText ?? null,
+                  chartDataSummary: body.chartDataSummary ?? null,
+                  pastQuestionFacultyName: body.pastQuestionFacultyName ?? null,
+                  lectureInfo: body.lectureInfo ?? null,
+                }
+              : null;
           await adminDb.doc(`essays/${essayId}`).set({
             userId: requestUserId,
             ocrText,
@@ -115,6 +132,12 @@ export async function POST(request: NextRequest) {
             ...(retryContext ? { retryContext } : {}),
           });
         } else {
+          if (existingEssay.data()?.userId !== requestUserId) {
+            return NextResponse.json(
+              { error: "この小論文へのアクセス権がありません" },
+              { status: 403 }
+            );
+          }
           essayUserId = existingEssay.data()?.userId ?? requestUserId;
           const existingData = existingEssay.data()!;
           // 既存ドキュメントにチェーン情報が無い場合は補完
@@ -142,29 +165,37 @@ export async function POST(request: NextRequest) {
           } else {
             // 既存に値があればそちらを採用
             rootEssayId = existingData.rootEssayId;
-            parentEssayIdResolved = existingData.parentEssayId ?? parentEssayIdResolved;
+            parentEssayIdResolved =
+              existingData.parentEssayId ?? parentEssayIdResolved;
             attemptNumber = existingData.attemptNumber;
           }
         }
         // AP取得（過去問の場合は過去問の学部APを優先）
-        const universityDoc = await adminDb.doc(`universities/${universityId}`).get();
+        const universityDoc = await adminDb
+          .doc(`universities/${universityId}`)
+          .get();
         if (universityDoc.exists) {
           const universityData = universityDoc.data()!;
           // 過去問の学部名でマッチを試みる（過去問練習時はその学部のAPで添削）
           let faculty = pastQuestionFacultyName
             ? universityData.faculties?.find(
                 (f: { name: string; admissionPolicy?: string }) =>
-                  f.name === pastQuestionFacultyName || pastQuestionFacultyName.includes(f.name)
+                  f.name === pastQuestionFacultyName ||
+                  pastQuestionFacultyName.includes(f.name)
               )
             : null;
           // 過去問学部が見つからなければ生徒の志望学部IDでフォールバック
           if (!faculty) {
             faculty = universityData.faculties?.find(
-              (f: { id: string; admissionPolicy?: string }) => f.id === facultyId
+              (f: { id: string; admissionPolicy?: string }) =>
+                f.id === facultyId
             );
           }
           if (faculty?.admissionPolicy) {
-            admissionPolicy = `大学: ${universityData.name}\n学部: ${faculty.name}\nAP: ${faculty.admissionPolicy}`;
+            const prepared = prepareAdmissionPolicy(faculty.admissionPolicy);
+            admissionPolicy = prepared.text
+              ? `大学: ${universityData.name}\n学部: ${faculty.name}\nAP: ${prepared.text}`
+              : "";
           }
         }
 
@@ -174,7 +205,10 @@ export async function POST(request: NextRequest) {
           const essayData = essayDoc.data()!;
           essayUserId = essayData.userId ?? null;
           if (essayUserId) {
-            const weaknessDocs = await adminDb.collection(`users/${essayUserId}/weaknesses`).where("resolved", "==", false).get();
+            const weaknessDocs = await adminDb
+              .collection(`users/${essayUserId}/weaknesses`)
+              .where("resolved", "==", false)
+              .get();
             if (!weaknessDocs.empty) {
               existingWeaknesses = weaknessDocs.docs
                 .filter((d) => !d.data().archivedAt) // Phase 4: archive 済みは AI コンテキストから除外
@@ -188,9 +222,11 @@ export async function POST(request: NextRequest) {
                     improving: w.improving ?? false,
                     resolved: w.resolved ?? false,
                     source: w.source ?? "essay",
-                    reminderDismissedAt: w.reminderDismissedAt?.toDate() ?? null,
+                    reminderDismissedAt:
+                      w.reminderDismissedAt?.toDate() ?? null,
                     categoryId: w.categoryId,
-                    archivedAt: w.archivedAt?.toDate?.() ?? w.archivedAt ?? null,
+                    archivedAt:
+                      w.archivedAt?.toDate?.() ?? w.archivedAt ?? null,
                   } satisfies WeaknessRecord;
                 });
               weaknessList = existingWeaknesses
@@ -238,12 +274,26 @@ export async function POST(request: NextRequest) {
         admissionPolicy,
         weaknessList,
         essaySelfAnalysis,
+        ...(parentSnapshot
+          ? {
+              previousAttempt: {
+                essayText: parentSnapshot.ocrText,
+                feedbackSummary: [
+                  parentSnapshot.feedback.overall,
+                  ...parentSnapshot.feedback.improvements,
+                ].filter(Boolean),
+              },
+            }
+          : {}),
       });
       scores = coreResult.scores;
       feedback = coreResult.feedback;
     } catch (coreErr) {
       if (coreErr instanceof EssayReviewParseError) {
-        console.error("Essay review parse failed. rawText head:", coreErr.rawText.slice(0, 800));
+        console.error(
+          "Essay review parse failed. rawText head:",
+          coreErr.rawText.slice(0, 800)
+        );
         return NextResponse.json(
           {
             error: "AI添削結果のパースに失敗しました",
@@ -256,7 +306,10 @@ export async function POST(request: NextRequest) {
           { status: 500 }
         );
       }
-      if (coreErr instanceof Error && coreErr.message.includes("ANTHROPIC_API_KEY")) {
+      if (
+        coreErr instanceof Error &&
+        coreErr.message.includes("ANTHROPIC_API_KEY")
+      ) {
         return NextResponse.json(
           { error: "ANTHROPIC_API_KEYが設定されていません" },
           { status: 500 }
@@ -272,7 +325,15 @@ export async function POST(request: NextRequest) {
     ];
 
     // AI が出力した category を hint として伝播 (= 未出力なら fallback)
-    const categoryHints = new Map<string, "structure" | "logic" | "expression" | "apAlignment" | "originality" | "other">();
+    const categoryHints = new Map<
+      string,
+      | "structure"
+      | "logic"
+      | "expression"
+      | "apAlignment"
+      | "originality"
+      | "other"
+    >();
     for (const issue of feedback.repeatedIssues) {
       if (issue.category) categoryHints.set(issue.area, issue.category);
     }
@@ -282,41 +343,48 @@ export async function POST(request: NextRequest) {
       existingWeaknesses,
       weaknessTags,
       "essay",
-      categoryHints,
+      categoryHints
     );
     const growthEvents = analyzeGrowth(weaknessTags, existingWeaknesses);
 
-    if (scores.total >= 40) {
+    if (scores.total >= Math.round((feedback.scoreMaximum ?? 50) * 0.8)) {
       growthEvents.unshift({
         type: "praise",
         area: "overall",
-        message: "素晴らしい添削結果です！全体的に高いレベルの小論文が書けています。",
+        message:
+          "素晴らしい添削結果です！全体的に高いレベルの小論文が書けています。",
       });
     }
 
     // 親essayがあれば前回比を算出（Firestoreには保存しない）
     let retryComparison: RetryComparison | undefined;
     if (parentSnapshot) {
-      retryComparison = computeRetryComparison(parentSnapshot, { scores, feedback });
+      retryComparison = computeRetryComparison(parentSnapshot, {
+        scores,
+        feedback,
+      });
     }
 
     // Firestoreに結果を保存
     if (adminDb) {
       try {
         const { FieldValue } = await import("firebase-admin/firestore");
-        await adminDb.doc(`essays/${essayId}`).set({
-          scores,
-          feedback,
-          weaknessTags,
-          status: "reviewed",
-          reviewedAt: FieldValue.serverTimestamp(),
-          // sourceType の優先順位: 宿題 > レポート > (既定: manual 等)
-          ...(homeworkId
-            ? { sourceType: "homework", homeworkAssignmentId: homeworkId }
-            : questionType === "report"
-              ? { sourceType: "report" }
-              : {}),
-        }, { merge: true });
+        await adminDb.doc(`essays/${essayId}`).set(
+          {
+            scores,
+            feedback,
+            weaknessTags,
+            status: "reviewed",
+            reviewedAt: FieldValue.serverTimestamp(),
+            // sourceType の優先順位: 宿題 > レポート > (既定: manual 等)
+            ...(homeworkId
+              ? { sourceType: "homework", homeworkAssignmentId: homeworkId }
+              : questionType === "report"
+                ? { sourceType: "report" }
+                : {}),
+          },
+          { merge: true }
+        );
 
         // 宿題から取り組んだ場合は宿題を提出済みにする
         if (essayUserId && homeworkId) {
@@ -336,20 +404,24 @@ export async function POST(request: NextRequest) {
 
         if (essayUserId) {
           for (const weakness of updatedWeaknesses) {
-            await adminDb.doc(`users/${essayUserId}/weaknesses/${weakness.area}`).set(
-              {
-                area: weakness.area,
-                count: weakness.count,
-                firstOccurred: weakness.firstOccurred,
-                lastOccurred: weakness.lastOccurred,
-                improving: weakness.improving,
-                resolved: weakness.resolved,
-                source: weakness.source,
-                reminderDismissedAt: weakness.reminderDismissedAt,
-                ...(weakness.categoryId ? { categoryId: weakness.categoryId } : {}),
-              },
-              { merge: true }
-            );
+            await adminDb
+              .doc(`users/${essayUserId}/weaknesses/${weakness.area}`)
+              .set(
+                {
+                  area: weakness.area,
+                  count: weakness.count,
+                  firstOccurred: weakness.firstOccurred,
+                  lastOccurred: weakness.lastOccurred,
+                  improving: weakness.improving,
+                  resolved: weakness.resolved,
+                  source: weakness.source,
+                  reminderDismissedAt: weakness.reminderDismissedAt,
+                  ...(weakness.categoryId
+                    ? { categoryId: weakness.categoryId }
+                    : {}),
+                },
+                { merge: true }
+              );
           }
         }
       } catch (err) {
@@ -362,10 +434,10 @@ export async function POST(request: NextRequest) {
       const userIdForAggregate = essayUserId;
       void import("@/lib/skill-check/aggregate")
         .then(({ refreshEssayAggregateCache }) =>
-          refreshEssayAggregateCache(userIdForAggregate),
+          refreshEssayAggregateCache(userIdForAggregate)
         )
         .catch((e) =>
-          console.warn("[essay/review] aggregate refresh failed:", e),
+          console.warn("[essay/review] aggregate refresh failed:", e)
         );
     }
 
@@ -388,7 +460,7 @@ export async function POST(request: NextRequest) {
       improvement_tags: feedback.improvements,
       // 同 index でカテゴリ。 AI hint または categorize fallback
       weakness_categories: weaknessTags.map(
-        (tag) => categoryHints.get(tag) ?? categorizeWeakness(tag),
+        (tag) => categoryHints.get(tag) ?? categorizeWeakness(tag)
       ),
       attempt_number: attemptNumber,
       root_essay_id: rootEssayId,

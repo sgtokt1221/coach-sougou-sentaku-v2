@@ -19,7 +19,12 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { CHART_COLORS, SCORE_COLORS, CHART_ANIMATION, GRID_STYLE } from "@/components/charts/theme";
+import {
+  CHART_COLORS,
+  SCORE_COLORS,
+  CHART_ANIMATION,
+  GRID_STYLE,
+} from "@/components/charts/theme";
 import { CustomTooltip } from "@/components/charts/CustomTooltip";
 import { CustomDot, CustomActiveDot } from "@/components/charts/CustomDot";
 import { EssayDraftsSection } from "@/components/essay/EssayDraftsSection";
@@ -34,6 +39,7 @@ interface EssayHistoryItem {
   submittedAt: string;
   status: "reviewed" | "reviewing" | "pending" | "error";
   totalScore: number;
+  scoreMaximum?: number;
   scores: {
     structure: number;
     logic: number;
@@ -41,9 +47,14 @@ interface EssayHistoryItem {
     apAlignment: number;
     originality: number;
   };
-  sourceType?: "manual" | "homework" | "skill_check" | "lecture" | "report" | null;
+  sourceType?:
+    | "manual"
+    | "homework"
+    | "skill_check"
+    | "lecture"
+    | "report"
+    | null;
 }
-
 
 const STATUS_LABEL: Record<EssayHistoryItem["status"], string> = {
   reviewed: "添削完了",
@@ -71,7 +82,12 @@ const SCORE_LINE_COLORS = {
   originality: SCORE_COLORS.originality,
 };
 
-type LineKey = "structure" | "logic" | "expression" | "apAlignment" | "originality";
+type LineKey =
+  | "structure"
+  | "logic"
+  | "expression"
+  | "apAlignment"
+  | "originality";
 const DETAIL_LINES: { key: LineKey; label: string }[] = [
   { key: "structure", label: "構成" },
   { key: "logic", label: "論理性" },
@@ -92,9 +108,13 @@ function formatDateTime(iso: string): string {
 
 export default function EssayHistoryPage() {
   const router = useRouter();
-  const [visibleLines, setVisibleLines] = useState<Set<string>>(new Set(["total"]));
+  const [visibleLines, setVisibleLines] = useState<Set<string>>(
+    new Set(["total"])
+  );
 
-  const { data: rawData, isLoading: loading } = useAuthSWR<{ essays: EssayHistoryItem[] }>("/api/essay/history?userId=current");
+  const { data: rawData, isLoading: loading } = useAuthSWR<{
+    essays: EssayHistoryItem[];
+  }>("/api/essay/history?userId=current");
   const history = rawData?.essays ?? [];
 
   function toggleLine(key: string) {
@@ -124,14 +144,14 @@ export default function EssayHistoryPage() {
     }));
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-5 lg:px-6 lg:py-8 space-y-4 lg:space-y-6">
+    <div className="mx-auto max-w-3xl space-y-4 px-4 py-5 lg:space-y-6 lg:px-6 lg:py-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg lg:text-xl font-bold flex items-center gap-2">
+        <h1 className="flex items-center gap-2 text-lg font-bold lg:text-xl">
           <TrendingUp className="size-5" />
           添削履歴
         </h1>
         <Button onClick={() => router.push("/student/essay/new")}>
-          <Plus className="size-4 mr-2" />
+          <Plus className="mr-2 size-4" />
           新規提出
         </Button>
       </div>
@@ -162,11 +182,11 @@ export default function EssayHistoryPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">スコア推移</CardTitle>
-                <div className="flex flex-wrap gap-2 mt-2">
+                <div className="mt-2 flex flex-wrap gap-2">
                   <button
                     onClick={() => toggleLine("total")}
                     className={[
-                      "text-xs px-2 py-1 rounded border transition-colors",
+                      "rounded border px-2 py-1 text-xs transition-colors",
                       visibleLines.has("total")
                         ? "border-indigo-400 bg-indigo-50 text-indigo-700"
                         : "border-border text-muted-foreground",
@@ -179,12 +199,16 @@ export default function EssayHistoryPage() {
                       key={key}
                       onClick={() => toggleLine(key)}
                       className={[
-                        "text-xs px-2 py-1 rounded border transition-colors",
+                        "rounded border px-2 py-1 text-xs transition-colors",
                         visibleLines.has(key)
-                          ? "border-current bg-muted"
+                          ? "bg-muted border-current"
                           : "border-border text-muted-foreground",
                       ].join(" ")}
-                      style={visibleLines.has(key) ? { color: SCORE_LINE_COLORS[key] } : {}}
+                      style={
+                        visibleLines.has(key)
+                          ? { color: SCORE_LINE_COLORS[key] }
+                          : {}
+                      }
                     >
                       {label}
                     </button>
@@ -199,8 +223,18 @@ export default function EssayHistoryPage() {
                       stroke={GRID_STYLE.stroke}
                       opacity={GRID_STYLE.opacity}
                     />
-                    <XAxis dataKey="date" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-                    <YAxis domain={[0, 50]} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                    <XAxis
+                      dataKey="date"
+                      tick={{ fontSize: 11 }}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <YAxis
+                      domain={[0, 50]}
+                      tick={{ fontSize: 11 }}
+                      tickLine={false}
+                      axisLine={false}
+                    />
                     <Tooltip content={<CustomTooltip />} />
                     {visibleLines.has("total") && (
                       <Line
@@ -216,23 +250,23 @@ export default function EssayHistoryPage() {
                         animationEasing={CHART_ANIMATION.easing}
                       />
                     )}
-                    {DETAIL_LINES.filter(({ key }) => visibleLines.has(key)).map(
-                      ({ key, label }) => (
-                        <Line
-                          key={key}
-                          type="monotone"
-                          dataKey={key}
-                          name={label}
-                          stroke={SCORE_LINE_COLORS[key]}
-                          strokeWidth={1.5}
-                          dot={<CustomDot />}
-                          activeDot={<CustomActiveDot />}
-                          isAnimationActive={true}
-                          animationDuration={CHART_ANIMATION.duration}
-                          animationEasing={CHART_ANIMATION.easing}
-                        />
-                      )
-                    )}
+                    {DETAIL_LINES.filter(({ key }) =>
+                      visibleLines.has(key)
+                    ).map(({ key, label }) => (
+                      <Line
+                        key={key}
+                        type="monotone"
+                        dataKey={key}
+                        name={label}
+                        stroke={SCORE_LINE_COLORS[key]}
+                        strokeWidth={1.5}
+                        dot={<CustomDot />}
+                        activeDot={<CustomActiveDot />}
+                        isAnimationActive={true}
+                        animationDuration={CHART_ANIMATION.duration}
+                        animationEasing={CHART_ANIMATION.easing}
+                      />
+                    ))}
                     <Legend wrapperStyle={{ fontSize: 12 }} />
                   </LineChart>
                 </ResponsiveContainer>
@@ -245,42 +279,56 @@ export default function EssayHistoryPage() {
             {history.map((item) => (
               <Card
                 key={item.id}
-                className="cursor-pointer hover:shadow-md transition-shadow"
+                className="cursor-pointer transition-shadow hover:shadow-md"
                 onClick={() =>
                   item.status === "reviewed"
                     ? router.push(`/student/essay/${item.id}`)
                     : undefined
                 }
               >
-                <CardContent className="p-3 lg:p-4 flex items-center justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium text-sm">{item.universityName}</span>
-                      <span className="text-muted-foreground text-sm">{item.facultyName}</span>
+                <CardContent className="flex items-center justify-between gap-3 p-3 lg:p-4">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-sm font-medium">
+                        {item.universityName}
+                      </span>
+                      <span className="text-muted-foreground text-sm">
+                        {item.facultyName}
+                      </span>
                       {item.sourceType === "report" && (
-                        <Badge variant="outline" className="text-xs border-indigo-300 text-indigo-700">
+                        <Badge
+                          variant="outline"
+                          className="border-indigo-300 text-xs text-indigo-700"
+                        >
                           レポート
                         </Badge>
                       )}
                       {item.topic && (
-                        <span className="text-xs text-muted-foreground truncate">
+                        <span className="text-muted-foreground truncate text-xs">
                           / {item.topic}
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">{formatDateTime(item.submittedAt)}</p>
+                    <p className="text-muted-foreground mt-1 text-xs">
+                      {formatDateTime(item.submittedAt)}
+                    </p>
                   </div>
-                  <div className="flex items-center gap-3 shrink-0">
+                  <div className="flex shrink-0 items-center gap-3">
                     {item.status === "reviewed" && (
                       <>
                         <SkillRankBadge
-                          rank={scoreToSkillRank(item.totalScore, 50)}
+                          rank={scoreToSkillRank(
+                            item.totalScore,
+                            item.scoreMaximum ?? 50
+                          )}
                           size="sm"
                           animate={false}
                         />
                         <span className="text-lg font-bold">
                           {item.totalScore}
-                          <span className="text-sm text-muted-foreground">/50</span>
+                          <span className="text-muted-foreground text-sm">
+                            /{item.scoreMaximum ?? 50}
+                          </span>
                         </span>
                       </>
                     )}

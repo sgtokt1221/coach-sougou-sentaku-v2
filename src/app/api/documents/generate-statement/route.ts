@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { jsonrepair } from "jsonrepair";
 import { adminDb } from "@/lib/firebase/admin";
 import { requireRole } from "@/lib/api/auth";
 import { requireFeature } from "@/lib/api/subscription";
@@ -8,8 +7,12 @@ import {
   normalizeSelfAnalysisData,
   type SelfAnalysisData,
 } from "@/lib/ai/prompts/statement";
-import { extractJsonObject } from "@/lib/ai/extract-json";
 import { fitToCharLimit } from "@/lib/ai/fit-char-limit";
+import { StatementDraftOutputSchema } from "@/lib/ai/schemas/statement";
+import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
+import { prepareAdmissionPolicy } from "@/lib/ai/admission-policy";
+import { AI_MODEL_SONNET, AI_PROMPT_VERSIONS } from "@/lib/ai/prompt-versions";
+import type { AiGenerationMetadata } from "@/lib/types/ai";
 
 export const maxDuration = 60;
 
@@ -28,13 +31,8 @@ interface StatementDraftResponse {
     strengths: string;
     conclusion: string;
   };
-  evaluationScores: {
-    apAlignment: number;
-    consistency: number;
-    specificity: number;
-    futureVision: number;
-  };
   improvementSuggestions: string[];
+  aiMetadata: AiGenerationMetadata;
 }
 
 export async function POST(request: NextRequest) {
@@ -46,7 +44,10 @@ export async function POST(request: NextRequest) {
     if (auth instanceof NextResponse) return auth;
 
     if (!adminDb) {
-      return NextResponse.json({ error: "データベース接続エラー" }, { status: 500 });
+      return NextResponse.json(
+        { error: "データベース接続エラー" },
+        { status: 500 }
+      );
     }
 
     const body = (await request
@@ -61,14 +62,22 @@ export async function POST(request: NextRequest) {
     const { universityId, facultyId } = body;
 
     // 大学・学部情報を取得
-    const universityDoc = await adminDb.doc(`universities/${universityId}`).get();
+    const universityDoc = await adminDb
+      .doc(`universities/${universityId}`)
+      .get();
     if (!universityDoc.exists) {
-      return NextResponse.json({ error: "大学が見つかりません" }, { status: 404 });
+      return NextResponse.json(
+        { error: "大学が見つかりません" },
+        { status: 404 }
+      );
     }
 
     const universityData = universityDoc.data();
     if (!universityData) {
-      return NextResponse.json({ error: "大学データが取得できません" }, { status: 404 });
+      return NextResponse.json(
+        { error: "大学データが取得できません" },
+        { status: 404 }
+      );
     }
     const faculties = Array.isArray(universityData.faculties)
       ? (universityData.faculties as Array<{
@@ -79,13 +88,19 @@ export async function POST(request: NextRequest) {
       : [];
     const faculty = faculties.find((item) => item.id === facultyId);
     if (!faculty) {
-      return NextResponse.json({ error: "学部が見つかりません" }, { status: 404 });
+      return NextResponse.json(
+        { error: "学部が見つかりません" },
+        { status: 404 }
+      );
     }
     const universityName =
       typeof universityData.name === "string"
         ? universityData.name
         : "志望大学";
     const facultyName = faculty.name ?? "学部";
+    const admissionPolicy = prepareAdmissionPolicy(
+      faculty.admissionPolicy
+    ).text;
 
     // 現行の保存先を優先し、旧形式のサブコレクションも後方互換で読む。
     let selfAnalysisDoc = await adminDb.doc(`selfAnalysis/${auth.uid}`).get();
@@ -106,7 +121,7 @@ export async function POST(request: NextRequest) {
       statementResponse = generateMockStatement(
         universityName,
         facultyName,
-        faculty.admissionPolicy || "未設定",
+        admissionPolicy,
         selfAnalysis
       );
     } else {
@@ -120,36 +135,67 @@ export async function POST(request: NextRequest) {
       const prompt = buildStatementDraftPrompt(
         universityName,
         facultyName,
-        faculty.admissionPolicy || "未設定",
+        admissionPolicy,
         selfAnalysis,
         body.targetWordCount || 800
       );
       const Anthropic = (await import("@anthropic-ai/sdk")).default;
       const client = new Anthropic({ apiKey });
-      const response = await client.messages.create({
-        model: "claude-sonnet-4-6",
+      const response = await client.messages.parse({
+        model: AI_MODEL_SONNET,
         max_tokens: 4096,
-        messages: [{ role: "user", content: prompt }],
+        system: prompt,
+        messages: [
+          {
+            role: "user",
+            content: "reference_dataに基づいて志望理由書を生成してください。",
+          },
+        ],
+        output_config: {
+          format: zodOutputFormat(StatementDraftOutputSchema),
+        },
       });
-      const content =
-        response.content[0]?.type === "text" ? response.content[0].text : "";
-      const jsonText = extractJsonObject(content);
-      if (!jsonText) {
-        throw new Error("Claude APIの応答形式が不正です");
+      if (response.stop_reason === "max_tokens" || !response.parsed_output) {
+        throw new Error("Claude APIの構造化応答が不正です");
       }
-      statementResponse = normalizeStatementResponse(
-        JSON.parse(jsonrepair(jsonText))
-      );
-      // 字数上限の強制（目標文字数の+10%以内）。LLM が超過して出しても
-      // サーバー側で数え直し、上限内に収める圧縮リライトを行う。
+
+      const structure = { ...response.parsed_output.structure };
       const limit = Math.round((body.targetWordCount || 800) * 1.1);
-      if (statementResponse.draft) {
-        statementResponse.draft = await fitToCharLimit(
-          client,
-          statementResponse.draft,
-          limit,
+      let draft = joinStatementStructure(structure);
+      if (draft.length > limit) {
+        const entries = Object.entries(structure).filter(([, text]) =>
+          text.trim()
         );
+        const contentBudget = Math.max(1, limit - (entries.length - 1) * 2);
+        const originalLength = entries.reduce(
+          (sum, [, text]) => sum + text.length,
+          0
+        );
+        for (const [key, text] of entries) {
+          const sectionLimit = Math.max(
+            20,
+            Math.floor(contentBudget * (text.length / originalLength))
+          );
+          structure[key as keyof typeof structure] = await fitToCharLimit(
+            client,
+            text,
+            sectionLimit
+          );
+        }
+        draft = joinStatementStructure(structure);
       }
+      if (draft.length > limit) {
+        throw new Error("志望理由書を指定文字数内に収められませんでした");
+      }
+      statementResponse = {
+        draft,
+        structure,
+        improvementSuggestions: response.parsed_output.improvementSuggestions,
+        aiMetadata: {
+          ...AI_PROMPT_VERSIONS.statementDraft,
+          model: AI_MODEL_SONNET,
+        },
+      };
     }
 
     return NextResponse.json(statementResponse);
@@ -162,44 +208,13 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function normalizeStatementResponse(raw: unknown): StatementDraftResponse {
-  const data = raw && typeof raw === "object"
-    ? (raw as Record<string, unknown>)
-    : {};
-  const structure = data.structure && typeof data.structure === "object"
-    ? (data.structure as Record<string, unknown>)
-    : {};
-  const scores = data.evaluationScores && typeof data.evaluationScores === "object"
-    ? (data.evaluationScores as Record<string, unknown>)
-    : {};
-  const text = (value: unknown) =>
-    typeof value === "string" ? value.trim() : "";
-  const score = (value: unknown) => {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : 0;
-  };
-  const result: StatementDraftResponse = {
-    draft: text(data.draft),
-    structure: {
-      intro: text(structure.intro),
-      body: text(structure.body),
-      strengths: text(structure.strengths),
-      conclusion: text(structure.conclusion),
-    },
-    evaluationScores: {
-      apAlignment: score(scores.apAlignment),
-      consistency: score(scores.consistency),
-      specificity: score(scores.specificity),
-      futureVision: score(scores.futureVision),
-    },
-    improvementSuggestions: Array.isArray(data.improvementSuggestions)
-      ? data.improvementSuggestions.map(text).filter(Boolean)
-      : [],
-  };
-  if (!result.draft || Object.values(result.structure).every((item) => !item)) {
-    throw new Error("Claude APIの応答に下書きが含まれていません");
-  }
-  return result;
+function joinStatementStructure(
+  structure: StatementDraftResponse["structure"]
+): string {
+  return Object.values(structure)
+    .map((text) => text.trim())
+    .filter(Boolean)
+    .join("\n\n");
 }
 
 function generateMockStatement(
@@ -208,37 +223,34 @@ function generateMockStatement(
   admissionPolicy: string,
   selfAnalysis: SelfAnalysisData
 ): StatementDraftResponse {
-  const experience = selfAnalysis.experiences[0]
-    ? `${selfAnalysis.experiences[0]}という経験を振り返る中で`
-    : "【関心を持った原体験を入力】をきっかけに";
-  const intro = `私は${selfAnalysis.values[0]}を大切にし、${selfAnalysis.strengths[0]}を活かして社会に貢献したいと考えている。${experience}、${facultyName.replace("学部", "")}分野への関心を深めてきた。`;
-
-  const body = `${universityName}${facultyName}を志望する理由は、${admissionPolicy.substring(0, 50)}...という理念に強く共感するからである。特に、${selfAnalysis.apConnection}この点で、私の価値観と大学の方針が一致している。大学では、${selfAnalysis.vision}という目標に向けて、専門的な知識と実践的なスキルを身につけたい。`;
-
-  const strengths = `私の強みである${selfAnalysis.strengths.join("と")}を活かして、大学のコミュニティに貢献したい。具体的には、学習グループのリーダーシップや、学内プロジェクトへの積極的な参加を通じて、仲間と共に成長していきたい。`;
-
-  const conclusion = `${universityName}での学びを通じて、${selfAnalysis.vision}私は将来、${facultyName.replace("学部", "")}分野の専門家として、社会の課題解決に取り組んでいく所存である。`;
-
-  const draft = `${intro}\n\n${body}\n\n${strengths}\n\n${conclusion}`;
+  const value = selfAnalysis.values[0] || "【大切にしている価値観を入力】";
+  const strength = selfAnalysis.strengths[0] || "【自分の強みを入力】";
+  const experience =
+    selfAnalysis.experiences[0] || "【関心を持った原体験を入力】";
+  const vision = selfAnalysis.vision || "【将来実現したいことを入力】";
+  const apConnection = selfAnalysis.apConnection
+    ? selfAnalysis.apConnection
+    : admissionPolicy
+      ? "【自分の経験とAPの接点を入力】"
+      : "【AP確認後に接続を書く】";
+  const structure = {
+    intro: `私は${value}を大切にしている。${experience}を振り返る中で、${facultyName.replace("学部", "")}分野への関心を持った。`,
+    body: `${universityName}${facultyName}で、【大学で探究したい問いを入力】に取り組みたい。${apConnection}。`,
+    strengths: `${strength}を、${selfAnalysis.experiences[0] ? "上記の経験" : "【強みが表れた経験を入力】"}で培ってきた。この強みを大学でどのように生かすか、【具体的な行動を入力】。`,
+    conclusion: `大学での学びを通じて、${vision}。そのために、【入学後の行動計画を入力】。`,
+  };
+  const draft = joinStatementStructure(structure);
 
   return {
     draft,
-    structure: {
-      intro,
-      body,
-      strengths,
-      conclusion,
-    },
-    evaluationScores: {
-      apAlignment: 25,
-      consistency: 22,
-      specificity: 20,
-      futureVision: 18,
-    },
+    structure,
     improvementSuggestions: [
-      "より具体的なエピソードを追加してください",
-      "アドミッションポリシーとの関連をより明確にしてください",
-      "将来ビジョンをより詳細に記述してください",
+      "【】内を、実際の経験と自分の言葉で埋めてください。",
+      "大学固有の授業・研究内容は、公式情報を確認してから追加してください。",
     ],
+    aiMetadata: {
+      ...AI_PROMPT_VERSIONS.statementDraft,
+      model: "development-mock",
+    },
   };
 }
