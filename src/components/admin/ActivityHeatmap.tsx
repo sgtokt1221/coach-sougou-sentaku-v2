@@ -95,34 +95,43 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
     d.drill > 0 || d.logicDrill > 0 || d.choco > 0 || d.topicInput > 0 || d.interviewDrill > 0 || d.selfAnalysis > 0 || d.document > 0
   ).length;
 
-  // 系統別にグルーピングして見やすくする（添削系 / 面接系 / 提出書類系 / 自己分析系）
+  // 系統別にグルーピング。系統ごとに1つの色相で統一し、内訳は濃淡で区別する。
+  // color=系統のアクセント色 / tint=カード背景の淡色 / 各itemのfill=グラフ棒の濃淡
   const summaryGroups = [
     {
       title: "添削系",
+      color: "#059669",
+      tint: "rgba(16,185,129,0.08)",
       items: [
-        { label: "添削", value: totals.essay, color: "#10b981" },
-        { label: "要約ドリル", value: totals.drill, color: "#f59e0b" },
-        { label: "論理ドリル", value: totals.logicDrill, color: "#84cc16" },
-        { label: "ちょこ添削", value: totals.choco, color: "#ec4899" },
-        { label: "ネタインプット", value: totals.topicInput, color: "#0ea5e9" },
+        { key: "essay", label: "添削", value: totals.essay, fill: "#047857" },
+        { key: "drill", label: "要約ドリル", value: totals.drill, fill: "#059669" },
+        { key: "logicDrill", label: "論理ドリル", value: totals.logicDrill, fill: "#10b981" },
+        { key: "choco", label: "ちょこ添削", value: totals.choco, fill: "#34d399" },
+        { key: "topicInput", label: "ネタインプット", value: totals.topicInput, fill: "#6ee7b7" },
       ],
     },
     {
       title: "面接系",
+      color: "#4f46e5",
+      tint: "rgba(99,102,241,0.08)",
       items: [
-        { label: "面接", value: totals.interview, color: "#6366f1" },
-        { label: "面接ドリル", value: totals.interviewDrill, color: "#f43f5e" },
+        { key: "interview", label: "面接", value: totals.interview, fill: "#4f46e5" },
+        { key: "interviewDrill", label: "面接ドリル", value: totals.interviewDrill, fill: "#818cf8" },
       ],
     },
     {
       title: "提出書類系",
-      items: [{ label: "書類", value: totals.document, color: "#0891b2" }],
+      color: "#0891b2",
+      tint: "rgba(8,145,178,0.08)",
+      items: [{ key: "document", label: "書類", value: totals.document, fill: "#0891b2" }],
     },
     {
       title: "自己分析系",
+      color: "#d97706",
+      tint: "rgba(217,119,6,0.08)",
       items: [
-        { label: "自己分析", value: totals.selfAnalysis, color: "#14b8a6" },
-        { label: "スキル", value: totals.skillCheck, color: "#8b5cf6" },
+        { key: "selfAnalysis", label: "自己分析", value: totals.selfAnalysis, fill: "#d97706" },
+        { key: "skillCheck", label: "スキル", value: totals.skillCheck, fill: "#f59e0b" },
       ],
     },
   ];
@@ -141,24 +150,40 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {/* 合計サマリー（系統別グルーピングで見やすく） */}
-        <div className="space-y-3 mb-4">
-          {summaryGroups.map((group) => (
-            <div key={group.title}>
-              <div className="mb-1 text-xs font-semibold text-muted-foreground">{group.title}</div>
-              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-                {group.items.map((item) => (
-                  <div key={item.label} className="rounded-lg border border-border/40 bg-slate-50 p-2 text-center">
-                    <div className="flex items-center justify-center gap-1 text-[10px] text-muted-foreground mb-0.5">
-                      <span className="inline-block size-1.5 rounded-sm" style={{ backgroundColor: item.color }} />
-                      <span>{item.label}</span>
-                    </div>
-                    <div className="text-lg font-bold tabular-nums">{item.value}</div>
-                  </div>
-                ))}
+        {/* 合計サマリー（系統別4カード。系統合計を主役にし、内訳は小さく併記） */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-4">
+          {summaryGroups.map((group) => {
+            const groupTotal = group.items.reduce((s, i) => s + i.value, 0);
+            return (
+              <div
+                key={group.title}
+                className="rounded-lg border p-2.5"
+                style={{ borderColor: group.color, backgroundColor: group.tint }}
+              >
+                <div className="flex items-baseline justify-between gap-1">
+                  <span className="text-xs font-semibold" style={{ color: group.color }}>
+                    {group.title}
+                  </span>
+                  <span
+                    className="text-xl font-bold tabular-nums leading-none"
+                    style={{ color: group.color }}
+                  >
+                    {groupTotal}
+                  </span>
+                </div>
+                <div className="mt-1.5 flex flex-wrap gap-x-2 gap-y-0.5 text-[10px] text-muted-foreground">
+                  {group.items.map((item) => (
+                    <span key={item.key} className="whitespace-nowrap">
+                      {item.label}
+                      <span className="ml-0.5 font-semibold text-foreground tabular-nums">
+                        {item.value}
+                      </span>
+                    </span>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {!hasAnyActivity ? (
@@ -189,77 +214,17 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
                 />
                 <Tooltip content={<ActivityTooltip />} />
 
-                {/* スタック棒グラフ - 各活動タイプ */}
-                <Bar
-                  dataKey="essay"
-                  stackId="activity"
-                  name="添削"
-                  fill="#10b981"
-                  radius={[0, 0, 0, 0]}
-                />
-                <Bar
-                  dataKey="interview"
-                  stackId="activity"
-                  name="面接"
-                  fill="#6366f1"
-                  radius={[0, 0, 0, 0]}
-                />
-                <Bar
-                  dataKey="skillCheck"
-                  stackId="activity"
-                  name="スキルチェック"
-                  fill="#8b5cf6"
-                  radius={[0, 0, 0, 0]}
-                />
-                <Bar
-                  dataKey="drill"
-                  stackId="activity"
-                  name="要約ドリル"
-                  fill="#f59e0b"
-                  radius={[0, 0, 0, 0]}
-                />
-                <Bar
-                  dataKey="logicDrill"
-                  stackId="activity"
-                  name="論理ドリル"
-                  fill="#84cc16"
-                  radius={[0, 0, 0, 0]}
-                />
-                <Bar
-                  dataKey="choco"
-                  stackId="activity"
-                  name="ちょこ添削"
-                  fill="#ec4899"
-                  radius={[0, 0, 0, 0]}
-                />
-                <Bar
-                  dataKey="topicInput"
-                  stackId="activity"
-                  name="ネタインプット"
-                  fill="#0ea5e9"
-                  radius={[0, 0, 0, 0]}
-                />
-                <Bar
-                  dataKey="interviewDrill"
-                  stackId="activity"
-                  name="面接ドリル"
-                  fill="#f43f5e"
-                  radius={[0, 0, 0, 0]}
-                />
-                <Bar
-                  dataKey="selfAnalysis"
-                  stackId="activity"
-                  name="自己分析"
-                  fill="#14b8a6"
-                  radius={[0, 0, 0, 0]}
-                />
-                <Bar
-                  dataKey="document"
-                  stackId="activity"
-                  name="提出書類"
-                  fill="#0891b2"
-                  radius={[2, 2, 0, 0]}
-                />
+                {/* スタック棒グラフ。系統順に並べ、同系統は同色相の濃淡で表示 */}
+                {summaryGroups.flatMap((g) => g.items).map((item, i, arr) => (
+                  <Bar
+                    key={item.key}
+                    dataKey={item.key}
+                    stackId="activity"
+                    name={item.label}
+                    fill={item.fill}
+                    radius={i === arr.length - 1 ? [2, 2, 0, 0] : [0, 0, 0, 0]}
+                  />
+                ))}
               </BarChart>
             </ResponsiveContainer>
           </div>
