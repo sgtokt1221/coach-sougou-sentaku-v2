@@ -987,8 +987,12 @@ export default function NewDocumentPage() {
                               draft: updated.map((s) => s.content).filter((c) => c.trim()).join("\n\n"),
                             });
                           }}
-                          rows={4}
-                          className="text-sm"
+                          rows={writingMode === "free" ? undefined : 4}
+                          className={
+                            writingMode === "free"
+                              ? "min-h-[50vh] resize-y text-base lg:min-h-[calc(100dvh-16rem)] lg:text-sm"
+                              : "min-h-[9rem] resize-y text-base lg:text-sm"
+                          }
                         />
                       </div>
                     ))}

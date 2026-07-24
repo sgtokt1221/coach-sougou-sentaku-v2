@@ -8,6 +8,8 @@ import {
   Sparkles,
   CornerDownLeft,
   ChevronRight,
+  Target,
+  Sprout,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,6 +21,8 @@ import {
 } from "@/components/ui/sheet";
 import { authFetch } from "@/lib/api/client";
 import { stripSuggestion } from "@/lib/ai/prompts/document-coach";
+import { APReference } from "@/components/coach/APReference";
+import { SelfAnalysisReference } from "@/components/essay/SelfAnalysisReference";
 import type {
   DocumentCoachMessage,
   DocumentSectionCoachRequest,
@@ -38,6 +42,13 @@ const OPENING_MESSAGE: DocumentCoachMessage = {
 function draftKeyPart(value: string): string {
   return value.replace(/[^a-zA-Z0-9_-]/g, "-").slice(0, 48) || "new";
 }
+
+/** 参照タブ定義（コーチ対話 / AP / 自己分析）。小論文添削コーチと揃える。 */
+const TAB_DEFS = [
+  { id: "coach", label: "コーチ", Icon: MessageSquare },
+  { id: "ap", label: "AP", Icon: Target },
+  { id: "self", label: "自己分析", Icon: Sprout },
+] as const;
 
 export interface FocusedSection {
   id: string;
@@ -70,7 +81,7 @@ export function DocumentSectionCoachPanel(props: Props) {
   return (
     <>
       {/* デスクトップ */}
-      <div className="hidden lg:flex lg:flex-col lg:sticky lg:top-4 lg:h-[calc(100vh-2rem)] lg:min-h-0 lg:rounded-lg lg:border lg:bg-card">
+      <div className="hidden lg:sticky lg:top-[calc(var(--app-header-height,4rem)+0.75rem)] lg:flex lg:h-[calc(100dvh-var(--app-header-height,4rem)-1.5rem)] lg:min-h-0 lg:flex-col lg:rounded-lg lg:border lg:bg-card">
         <PanelBody {...props} />
       </div>
 
@@ -126,6 +137,8 @@ function PanelBody({
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // 参照タブ。コーチ(対話) / AP / 自己分析 を小論文添削コーチと同様に切り替える
+  const [activeTab, setActiveTab] = useState<"coach" | "ap" | "self">("coach");
   const [restoredKeys, setRestoredKeys] = useState<Set<string>>(new Set());
   // セクションごとの最新の振り込み候補 (AI が直前ターンで返したもの)
   const [suggestions, setSuggestions] = useState<Record<string, string>>({});
@@ -337,10 +350,44 @@ function PanelBody({
         )}
       </div>
 
-      {/* 会話エリア */}
+      {/* 参照タブ: コーチ / AP / 自己分析（小論文添削コーチと同様に切り替え） */}
+      <div className="flex items-center gap-1 border-b px-2 py-1.5 shrink-0">
+        {TAB_DEFS.map(({ id, label, Icon }) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setActiveTab(id)}
+            className={`flex-1 flex items-center justify-center gap-1 rounded px-2 py-1.5 text-xs font-medium transition-colors cursor-pointer ${
+              activeTab === id
+                ? "bg-teal-500 text-white shadow-sm"
+                : "text-muted-foreground hover:bg-muted"
+            }`}
+          >
+            <Icon className="size-3.5" />
+            <span className="truncate">{label}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* AP タブ */}
+      {activeTab === "ap" && (
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <APReference universityId={universityId} facultyId={facultyId} />
+        </div>
+      )}
+      {/* 自己分析タブ */}
+      {activeTab === "self" && (
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <SelfAnalysisReference />
+        </div>
+      )}
+
+      {/* 会話エリア（コーチタブ。切替時も状態保持のため hidden で退避） */}
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto space-y-3 px-3 py-3"
+        className={`flex-1 overflow-y-auto space-y-3 px-3 py-3 ${
+          activeTab === "coach" ? "" : "hidden"
+        }`}
       >
         {!focusedSection && (
           <div className="text-center text-xs text-muted-foreground py-8">
@@ -406,8 +453,12 @@ function PanelBody({
         )}
       </div>
 
-      {/* 入力エリア */}
-      <div className="border-t p-3 shrink-0">
+      {/* 入力エリア（コーチタブのみ表示。送信欄は常に最下部固定） */}
+      <div
+        className={`border-t p-3 shrink-0 ${
+          activeTab === "coach" ? "" : "hidden"
+        }`}
+      >
         <div className="flex items-end gap-2">
           <Textarea
             value={input}
