@@ -1,4 +1,13 @@
 export const AI_MODEL_SONNET = "claude-sonnet-4-6";
+export const AI_MODEL_STATEMENT = "claude-sonnet-5";
+
+/**
+ * 志望理由書は、AP・本人の経験・将来像を長距離で接続する必要があるため
+ * 最終生成・添削だけ上位モデルを使う。他の出願書類は標準モデルを維持する。
+ */
+export function selectDocumentModel(documentType: unknown): string {
+  return documentType === "志望理由書" ? AI_MODEL_STATEMENT : AI_MODEL_SONNET;
+}
 
 export const AI_PROMPT_VERSIONS = {
   essayReview: {

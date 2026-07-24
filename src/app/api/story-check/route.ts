@@ -10,7 +10,10 @@ import {
 import { StoryCheckOutputSchema } from "@/lib/ai/schemas/story-check";
 import type { StoryCheckReport } from "@/lib/types/story-check";
 import { prepareAdmissionPolicy } from "@/lib/ai/admission-policy";
-import { AI_MODEL_SONNET, AI_PROMPT_VERSIONS } from "@/lib/ai/prompt-versions";
+import {
+  AI_MODEL_STATEMENT,
+  AI_PROMPT_VERSIONS,
+} from "@/lib/ai/prompt-versions";
 
 function text(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
@@ -205,7 +208,7 @@ export async function POST(request: NextRequest) {
       materials
     );
     const message = await anthropic.messages.parse({
-      model: AI_MODEL_SONNET,
+      model: AI_MODEL_STATEMENT,
       max_tokens: 4096,
       system: prompt,
       messages: [
@@ -233,7 +236,7 @@ export async function POST(request: NextRequest) {
       facultyName,
       aiMetadata: {
         ...AI_PROMPT_VERSIONS.storyCheck,
-        model: AI_MODEL_SONNET,
+        model: AI_MODEL_STATEMENT,
       },
     });
   } catch (error) {

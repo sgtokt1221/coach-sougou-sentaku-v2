@@ -11,7 +11,10 @@ import { fitToCharLimit } from "@/lib/ai/fit-char-limit";
 import { StatementDraftOutputSchema } from "@/lib/ai/schemas/statement";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { prepareAdmissionPolicy } from "@/lib/ai/admission-policy";
-import { AI_MODEL_SONNET, AI_PROMPT_VERSIONS } from "@/lib/ai/prompt-versions";
+import {
+  AI_MODEL_STATEMENT,
+  AI_PROMPT_VERSIONS,
+} from "@/lib/ai/prompt-versions";
 import type { AiGenerationMetadata } from "@/lib/types/ai";
 
 export const maxDuration = 60;
@@ -142,7 +145,7 @@ export async function POST(request: NextRequest) {
       const Anthropic = (await import("@anthropic-ai/sdk")).default;
       const client = new Anthropic({ apiKey });
       const response = await client.messages.parse({
-        model: AI_MODEL_SONNET,
+        model: AI_MODEL_STATEMENT,
         max_tokens: 4096,
         system: prompt,
         messages: [
@@ -193,7 +196,7 @@ export async function POST(request: NextRequest) {
         improvementSuggestions: response.parsed_output.improvementSuggestions,
         aiMetadata: {
           ...AI_PROMPT_VERSIONS.statementDraft,
-          model: AI_MODEL_SONNET,
+          model: AI_MODEL_STATEMENT,
         },
       };
     }

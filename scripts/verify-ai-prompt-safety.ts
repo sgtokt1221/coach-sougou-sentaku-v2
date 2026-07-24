@@ -10,10 +10,20 @@ import {
   normalizeSelfAnalysisData,
 } from "../src/lib/ai/prompts/statement";
 import { buildTemplateDraftPrompt } from "../src/lib/ai/prompts/template-draft";
+import {
+  AI_MODEL_SONNET,
+  AI_MODEL_STATEMENT,
+  selectDocumentModel,
+} from "../src/lib/ai/prompt-versions";
 import { DocumentReviewOutputSchema } from "../src/lib/ai/schemas/document-review";
 import { EssayReviewOutputSchema } from "../src/lib/ai/schemas/essay-review";
 import { calculateEssayMetrics } from "../src/lib/essay/review-metrics";
 import type { FrameworkDefinition } from "../src/lib/types/template";
+
+assert.equal(AI_MODEL_SONNET, "claude-sonnet-4-6");
+assert.equal(AI_MODEL_STATEMENT, "claude-sonnet-5");
+assert.equal(selectDocumentModel("志望理由書"), AI_MODEL_STATEMENT);
+assert.equal(selectDocumentModel("研究計画書"), AI_MODEL_SONNET);
 
 const emptySelfAnalysis = normalizeSelfAnalysisData(null);
 assert.deepEqual(emptySelfAnalysis.values, []);

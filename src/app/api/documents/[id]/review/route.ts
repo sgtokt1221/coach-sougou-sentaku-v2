@@ -9,7 +9,10 @@ import type { SelfAnalysisContext } from "@/lib/ai/prompts/document";
 import { DocumentReviewOutputSchema } from "@/lib/ai/schemas/document-review";
 import type { DocumentFeedback } from "@/lib/types/document";
 import { prepareAdmissionPolicy } from "@/lib/ai/admission-policy";
-import { AI_MODEL_SONNET, AI_PROMPT_VERSIONS } from "@/lib/ai/prompt-versions";
+import {
+  AI_PROMPT_VERSIONS,
+  selectDocumentModel,
+} from "@/lib/ai/prompt-versions";
 
 function stringArray(value: unknown): string[] | undefined {
   if (!Array.isArray(value)) return undefined;
@@ -140,6 +143,7 @@ export async function POST(
 
     const client = new Anthropic();
     const hasAdmissionPolicy = admissionPolicy.length > 0;
+    const reviewModel = selectDocumentModel(documentData.type);
     const systemPrompt = buildDocumentReviewPrompt({
       hasAdmissionPolicy,
     });
@@ -152,7 +156,7 @@ export async function POST(
     };
 
     const response = await client.messages.parse({
-      model: AI_MODEL_SONNET,
+      model: reviewModel,
       max_tokens: 4096,
       system: systemPrompt,
       messages: [
@@ -182,7 +186,7 @@ ${content}
     if (hasAdmissionPolicy && parsed.apAlignmentScore === null) {
       return NextResponse.json(
         { error: "AP合致度の評価結果を検証できませんでした" },
-        { status: 502 },
+        { status: 502 }
       );
     }
     const feedback: DocumentFeedback = {
@@ -209,7 +213,7 @@ ${content}
       },
       aiMetadata: {
         ...AI_PROMPT_VERSIONS.documentReview,
-        model: AI_MODEL_SONNET,
+        model: reviewModel,
       },
     };
 

@@ -12,7 +12,10 @@ import { requireFeature } from "@/lib/api/subscription";
 import { requireRole } from "@/lib/api/auth";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { prepareAdmissionPolicy } from "@/lib/ai/admission-policy";
-import { AI_MODEL_SONNET, AI_PROMPT_VERSIONS } from "@/lib/ai/prompt-versions";
+import {
+  AI_PROMPT_VERSIONS,
+  selectDocumentModel,
+} from "@/lib/ai/prompt-versions";
 
 export async function POST(request: NextRequest) {
   try {
@@ -116,6 +119,7 @@ export async function POST(request: NextRequest) {
 
     const { default: Anthropic } = await import("@anthropic-ai/sdk");
     const client = new Anthropic({ apiKey });
+    const generationModel = selectDocumentModel(body.documentType);
 
     const systemPrompt = buildTemplateDraftPrompt(
       framework,
@@ -128,7 +132,7 @@ export async function POST(request: NextRequest) {
     );
 
     const message = await client.messages.parse({
-      model: AI_MODEL_SONNET,
+      model: generationModel,
       max_tokens: 4096,
       system: systemPrompt,
       messages: [
@@ -211,7 +215,7 @@ export async function POST(request: NextRequest) {
       wordCount: draft.length,
       aiMetadata: {
         ...AI_PROMPT_VERSIONS.templateDraft,
-        model: AI_MODEL_SONNET,
+        model: generationModel,
       },
     };
     return NextResponse.json(result);
