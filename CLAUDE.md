@@ -77,6 +77,7 @@
 - Claude Vision APIのOCR精度: 手書きの崩し字は誤認識しやすい → 生徒に確認ステップ必須
 - 大学データの鮮度: 毎年募集要項が変わるため、年次更新フローが必要
 - BigQueryコスト: スキャン量に注意、パーティション設定必須
+- App Hostingはpushで自動デプロイされるが、Firestoreインデックスは `firebase deploy --only firestore:indexes` を別途実行しないと反映されない（複合インデックス欠落は空表示の沈黙失敗になる）
 
 ## 8. Current State / Known Issues
 - Phase: Phase 1-5 全完了 + Superadmin/スコーピング実装完了

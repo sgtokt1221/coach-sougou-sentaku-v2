@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
+import { recordAiTrace } from "@/lib/ai/trace";
 import {
   buildEssayCoachSystemPrompt,
   type CoachSelfAnalysis,
@@ -17,6 +18,7 @@ export const maxDuration = 60;
 const MAX_DRAFT_CHARS = 8000;
 const MAX_HISTORY_TURNS = 10;
 const MAX_ACTIVITIES = 5;
+const COACH_MODEL = "claude-haiku-4-5-20251001";
 
 function truncateDraft(s: string): string {
   if (!s) return "";
@@ -192,13 +194,14 @@ export async function POST(request: NextRequest) {
     turnCount,
   });
 
-  // Claude 呼び出し
+  // Claude 呼び出し (LLMOps: レイテンシ・トークン・コストをトレース記録)
   let reply = "";
+  const traceStart = Date.now();
   try {
     const Anthropic = (await import("@anthropic-ai/sdk")).default;
     const client = new Anthropic();
     const response = await client.messages.create({
-      model: "claude-haiku-4-5-20251001",
+      model: COACH_MODEL,
       max_tokens: 600,
       system: systemPrompt,
       messages: [
@@ -211,8 +214,26 @@ export async function POST(request: NextRequest) {
     });
     reply =
       response.content[0]?.type === "text" ? response.content[0].text : "";
+    void recordAiTrace({
+      feature: "essay-coach",
+      model: COACH_MODEL,
+      startedAt: traceStart,
+      usage: response.usage,
+      uid,
+      ok: true,
+      meta: { turnCount },
+    });
   } catch (err) {
     console.error("[essay/coach] Claude call failed:", err);
+    void recordAiTrace({
+      feature: "essay-coach",
+      model: COACH_MODEL,
+      startedAt: traceStart,
+      uid,
+      ok: false,
+      errorMessage: err instanceof Error ? err.message : String(err),
+      meta: { turnCount },
+    });
     return NextResponse.json(
       { error: "AI 応答に失敗しました" },
       { status: 500 }

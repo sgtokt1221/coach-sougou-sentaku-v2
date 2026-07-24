@@ -115,6 +115,12 @@ service cloud.firestore {
       allow write: if isSuperAdmin();
     }
 
+    // AI トレース (LLMOps)。書き込みは Admin SDK 経由のみ、閲覧は superadmin のみ。
+    match /aiTraces/{traceId} {
+      allow read: if isSuperAdmin();
+      allow write: if false;
+    }
+
     // 面接セッション（トップレベル）: 参加者 + 担当 admin / 同塾 admin / superadmin
     match /interviews/{interviewId} {
       allow read: if request.auth != null && (
