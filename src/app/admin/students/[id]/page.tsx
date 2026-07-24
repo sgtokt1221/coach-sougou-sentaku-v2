@@ -417,6 +417,7 @@ function AdminStudentDetailPageInner() {
   const { data: logicDrillsData } = useAuthSWR<any[]>(`/api/admin/students/${id}/logic-drills`);
   const { data: chocoReviewsData } = useAuthSWR<any[]>(`/api/admin/students/${id}/choco-reviews`);
   const { data: activityLogsData } = useAuthSWR<any[]>(`/api/admin/students/${id}/activity-logs`);
+  const { data: documentsData } = useAuthSWR<any[]>(`/api/admin/students/${id}/documents`);
 
   // 活動ヒートマップ用データ生成
   const activityHeatmapData = useMemo(() => {
@@ -430,8 +431,9 @@ function AdminStudentDetailPageInner() {
       logicDrills: logicDrillsData,
       chocoReviews: chocoReviewsData,
       activityLogs: activityLogsData,
+      documents: documentsData,
     });
-  }, [detail, interviewsData, summaryDrillsData, logicDrillsData, chocoReviewsData, activityLogsData, skillCheck]);
+  }, [detail, interviewsData, summaryDrillsData, logicDrillsData, chocoReviewsData, activityLogsData, documentsData, skillCheck]);
 
   // 弱点Top5データ
   const topWeaknesses = useMemo(() => {

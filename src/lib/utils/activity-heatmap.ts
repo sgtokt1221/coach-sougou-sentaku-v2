@@ -68,6 +68,7 @@ export interface ActivityHeatmapData {
   topicInput: number;     // ネタインプット
   interviewDrill: number; // 面接ドリル
   selfAnalysis: number;   // 自己分析（ステップ完了）
+  document: number;       // 提出書類（その日に更新された書類数）
 }
 
 export interface ActivityLog {
@@ -84,6 +85,8 @@ export interface ActivityDataSources {
   logicDrills?: Array<{ completedAt?: string; createdAt?: string }>;
   chocoReviews?: Array<{ createdAt?: string }>;
   activityLogs?: ActivityLog[];
+  // 提出書類。更新日時(updatedAt)をその日の活動としてカウント。
+  documents?: Array<{ updatedAt?: string; createdAt?: string }>;
 }
 
 export function buildActivityHeatmapData(sources: ActivityDataSources): ActivityHeatmapData[] {
@@ -108,5 +111,6 @@ export function buildActivityHeatmapData(sources: ActivityDataSources): Activity
     topicInput: countByDay(topicInputLogs, 'createdAt', day),
     interviewDrill: countByDay(interviewDrillLogs, 'createdAt', day),
     selfAnalysis: countByDay(selfAnalysisLogs, 'createdAt', day),
+    document: countByDay(sources.documents ?? [], 'updatedAt', day),
   }));
 }

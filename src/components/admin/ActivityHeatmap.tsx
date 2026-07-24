@@ -33,6 +33,7 @@ function ActivityTooltip({ active, payload, label }: any) {
     topicInput: "ネタインプット",
     interviewDrill: "面接ドリル",
     selfAnalysis: "自己分析",
+    document: "提出書類",
   };
 
   const total = payload.reduce((sum: number, entry: any) => sum + (entry.value || 0), 0);
@@ -69,7 +70,7 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
   // 全期間で活動があるかチェック
   const hasAnyActivity = data.some(day =>
     day.essay > 0 || day.interview > 0 || day.skillCheck > 0 ||
-    day.drill > 0 || day.logicDrill > 0 || day.choco > 0 || day.topicInput > 0 || day.interviewDrill > 0 || day.selfAnalysis > 0
+    day.drill > 0 || day.logicDrill > 0 || day.choco > 0 || day.topicInput > 0 || day.interviewDrill > 0 || day.selfAnalysis > 0 || day.document > 0
   );
 
   // 合計回数 (30日間)
@@ -84,25 +85,46 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
       topicInput: acc.topicInput + d.topicInput,
       interviewDrill: acc.interviewDrill + d.interviewDrill,
       selfAnalysis: acc.selfAnalysis + d.selfAnalysis,
+      document: acc.document + d.document,
     }),
-    { essay: 0, interview: 0, skillCheck: 0, drill: 0, logicDrill: 0, choco: 0, topicInput: 0, interviewDrill: 0, selfAnalysis: 0 },
+    { essay: 0, interview: 0, skillCheck: 0, drill: 0, logicDrill: 0, choco: 0, topicInput: 0, interviewDrill: 0, selfAnalysis: 0, document: 0 },
   );
   // 直近7日にアクティブだった日の数
   const activeDaysRecent = data.slice(-7).filter(d =>
     d.essay > 0 || d.interview > 0 || d.skillCheck > 0 ||
-    d.drill > 0 || d.logicDrill > 0 || d.choco > 0 || d.topicInput > 0 || d.interviewDrill > 0 || d.selfAnalysis > 0
+    d.drill > 0 || d.logicDrill > 0 || d.choco > 0 || d.topicInput > 0 || d.interviewDrill > 0 || d.selfAnalysis > 0 || d.document > 0
   ).length;
 
-  const summaryItems = [
-    { label: "添削", value: totals.essay, color: "#10b981" },
-    { label: "面接", value: totals.interview, color: "#6366f1" },
-    { label: "スキル", value: totals.skillCheck, color: "#8b5cf6" },
-    { label: "要約ドリル", value: totals.drill, color: "#f59e0b" },
-    { label: "論理ドリル", value: totals.logicDrill, color: "#84cc16" },
-    { label: "ちょこ添削", value: totals.choco, color: "#ec4899" },
-    { label: "ネタインプット", value: totals.topicInput, color: "#0ea5e9" },
-    { label: "面接ドリル", value: totals.interviewDrill, color: "#f43f5e" },
-    { label: "自己分析", value: totals.selfAnalysis, color: "#14b8a6" },
+  // 系統別にグルーピングして見やすくする（添削系 / 面接系 / 提出書類系 / 自己分析系）
+  const summaryGroups = [
+    {
+      title: "添削系",
+      items: [
+        { label: "添削", value: totals.essay, color: "#10b981" },
+        { label: "要約ドリル", value: totals.drill, color: "#f59e0b" },
+        { label: "論理ドリル", value: totals.logicDrill, color: "#84cc16" },
+        { label: "ちょこ添削", value: totals.choco, color: "#ec4899" },
+        { label: "ネタインプット", value: totals.topicInput, color: "#0ea5e9" },
+      ],
+    },
+    {
+      title: "面接系",
+      items: [
+        { label: "面接", value: totals.interview, color: "#6366f1" },
+        { label: "面接ドリル", value: totals.interviewDrill, color: "#f43f5e" },
+      ],
+    },
+    {
+      title: "提出書類系",
+      items: [{ label: "書類", value: totals.document, color: "#0891b2" }],
+    },
+    {
+      title: "自己分析系",
+      items: [
+        { label: "自己分析", value: totals.selfAnalysis, color: "#14b8a6" },
+        { label: "スキル", value: totals.skillCheck, color: "#8b5cf6" },
+      ],
+    },
   ];
 
   return (
@@ -119,15 +141,22 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {/* 合計サマリーストリップ */}
-        <div className="grid grid-cols-4 md:grid-cols-7 gap-2 mb-4">
-          {summaryItems.map((item) => (
-            <div key={item.label} className="rounded-lg border border-border/40 bg-slate-50 p-2 text-center">
-              <div className="flex items-center justify-center gap-1 text-[10px] text-muted-foreground mb-0.5">
-                <span className="inline-block size-1.5 rounded-sm" style={{ backgroundColor: item.color }} />
-                <span>{item.label}</span>
+        {/* 合計サマリー（系統別グルーピングで見やすく） */}
+        <div className="space-y-3 mb-4">
+          {summaryGroups.map((group) => (
+            <div key={group.title}>
+              <div className="mb-1 text-xs font-semibold text-muted-foreground">{group.title}</div>
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                {group.items.map((item) => (
+                  <div key={item.label} className="rounded-lg border border-border/40 bg-slate-50 p-2 text-center">
+                    <div className="flex items-center justify-center gap-1 text-[10px] text-muted-foreground mb-0.5">
+                      <span className="inline-block size-1.5 rounded-sm" style={{ backgroundColor: item.color }} />
+                      <span>{item.label}</span>
+                    </div>
+                    <div className="text-lg font-bold tabular-nums">{item.value}</div>
+                  </div>
+                ))}
               </div>
-              <div className="text-lg font-bold tabular-nums">{item.value}</div>
             </div>
           ))}
         </div>
@@ -222,6 +251,13 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
                   stackId="activity"
                   name="自己分析"
                   fill="#14b8a6"
+                  radius={[0, 0, 0, 0]}
+                />
+                <Bar
+                  dataKey="document"
+                  stackId="activity"
+                  name="提出書類"
+                  fill="#0891b2"
                   radius={[2, 2, 0, 0]}
                 />
               </BarChart>
