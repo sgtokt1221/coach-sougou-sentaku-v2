@@ -470,15 +470,6 @@ export async function PUT(
       updates[field] = body[field];
     }
   }
-  // 学年が更新されたら gradeUpdatedAt も同時記録 (4/1 自動加算用)
-  if ("grade" in body) {
-    updates.gradeUpdatedAt = new Date().toISOString();
-  }
-  // 浪人切替: 浪人開始日記録 (= gradeUpdatedAt を「今」 にして加算を停止 / リセット)
-  if ("isRonin" in body) {
-    updates.gradeUpdatedAt = new Date().toISOString();
-  }
-
   if (Object.keys(updates).length === 0) {
     return NextResponse.json(
       { error: "更新するフィールドがありません" },
@@ -524,6 +515,17 @@ export async function PUT(
       } else {
         return orgDenied;
       }
+    }
+
+    // 学年 / 浪人フラグが「実際に変わったとき」だけ gradeUpdatedAt を更新する。
+    // 値が同じでも毎回更新すると 4/1 自動加算（getDisplayGrade）の起点がリセットされ、
+    // 学年を触っていない編集でも表示学年が1年巻き戻る。
+    const gradeChanged =
+      "grade" in body && (body.grade ?? null) !== (userData.grade ?? null);
+    const roninChanged =
+      "isRonin" in body && !!body.isRonin !== !!userData.isRonin;
+    if (gradeChanged || roninChanged) {
+      updates.gradeUpdatedAt = new Date().toISOString();
     }
 
     updates.updatedAt = new Date();

@@ -9,6 +9,7 @@ import {
 } from "@/lib/universities/catalog";
 import { buildExplorerSystem } from "@/lib/ai/prompts/university-explorer";
 import type { EnglishCert } from "@/lib/types/user";
+import { getDisplayGrade } from "@/lib/utils/grade";
 
 interface ExploreRequest {
   message: string;
@@ -37,7 +38,13 @@ async function gatherStudent(uid: string): Promise<StudentInfo> {
     gpa = typeof u.gpa === "number" ? u.gpa : null;
     englishCerts = Array.isArray(u.englishCerts) ? u.englishCerts : [];
     const prof: string[] = [];
-    if (u.grade) prof.push(`学年: ${u.grade}`);
+    // DB の grade は入力時の値なので、 4/1 自動加算後の学年をAIに渡す
+    const displayGrade = getDisplayGrade(
+      typeof u.grade === "number" ? u.grade : undefined,
+      typeof u.gradeUpdatedAt === "string" ? u.gradeUpdatedAt : undefined,
+      u.isRonin === true,
+    );
+    if (displayGrade.label !== "未設定") prof.push(`学年: ${displayGrade.label}`);
     if (u.school) prof.push(`高校: ${u.school}`);
     if (gpa != null) prof.push(`評定平均(GPA): ${gpa}`);
     if (englishCerts.length) {

@@ -33,16 +33,22 @@ export async function PUT(request: NextRequest) {
       updateData.targetUniversities = targetUniversities;
     if (gpa !== undefined) updateData.gpa = gpa;
     if (englishCerts !== undefined) updateData.englishCerts = englishCerts;
+    const userRef = adminDb.doc(`users/${authResult.uid}`);
     if (grade !== undefined) {
       updateData.grade = grade;
-      // 学年自動加算用: 入力日時を ISO で記録 (4/1 経過で表示時に +1)
-      updateData.gradeUpdatedAt = new Date().toISOString();
+      // 学年自動加算用: 入力日時を ISO で記録 (4/1 経過で表示時に +1)。
+      // 値が変わったときだけ記録する。同じ値で毎回更新すると加算の起点が
+      // リセットされ、学年を触っていない保存でも表示学年が巻き戻る。
+      const current = await userRef.get();
+      if ((current.data()?.grade ?? null) !== (grade ?? null)) {
+        updateData.gradeUpdatedAt = new Date().toISOString();
+      }
     }
     if (school !== undefined) updateData.school = school;
     if (onboardingCompleted !== undefined)
       updateData.onboardingCompleted = onboardingCompleted;
 
-    await adminDb.doc(`users/${authResult.uid}`).update(updateData);
+    await userRef.update(updateData);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Profile update error:", error);

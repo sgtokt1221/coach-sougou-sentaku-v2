@@ -615,7 +615,19 @@ function AdminStudentDetailPageInner() {
     setEditName(detail.profile.displayName);
     setEditSchool(detail.profile.school ?? "");
     setEditSchoolId(detail.profile.schoolId ?? null);
-    setEditGrade(detail.profile.grade?.toString() ?? "");
+    // 一覧・詳細の表示は 4/1 自動加算後の学年なので、 編集ダイアログも同じ値を初期表示する
+    // （DB の生値のままだと「高2」表示なのにダイアログは「高1」になる）。
+    // 卒業生（加算後 > 3）は選択肢に無いため未選択にする。
+    const currentGrade = getDisplayGrade(
+      detail.profile.grade,
+      detail.profile.gradeUpdatedAt,
+      detail.profile.isRonin,
+    );
+    setEditGrade(
+      currentGrade.value != null && currentGrade.value <= 3
+        ? String(currentGrade.value)
+        : "",
+    );
     setEditSessionsPerMonth((detail.profile.sessionsPerMonth ?? 1).toString());
     setEditUniversities([...detail.profile.targetUniversities]);
     setEditGpa(detail.profile.gpa?.toString() ?? "");
