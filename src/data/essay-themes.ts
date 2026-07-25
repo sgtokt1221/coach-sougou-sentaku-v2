@@ -2771,6 +2771,68 @@ export const essayThemes: EssayTheme[] = [
     relatedAP: ["薬剤師の役割", "医療DX", "対人支援", "専門性"],
     wordLimit: 800
   },
+
+  // 薬学：薬剤耐性(AMR) (6題) — pharmacy-006「薬剤耐性(AMR)と抗菌薬の適正使用」の各論
+  {
+    id: "pharmacy-031",
+    field: "pharmacy",
+    fieldLabel: "薬学",
+    title: "ワンヘルス・アプローチと家畜への抗菌薬使用",
+    description: "薬剤耐性は人間の医療だけの問題ではなく、家畜や農業、環境とも関わっている。人・動物・環境を一体として捉える「ワンヘルス」の考え方を説明し、薬剤耐性対策において分野を越えた協力がなぜ必要かを論じなさい。",
+    difficulty: 3,
+    relatedAP: ["ワンヘルス", "薬剤耐性", "食の安全", "分野横断"],
+    wordLimit: 800
+  },
+  {
+    id: "pharmacy-032",
+    field: "pharmacy",
+    fieldLabel: "薬学",
+    title: "新規抗菌薬の開発はなぜ進まないのか",
+    description: "耐性菌に有効な新しい抗菌薬が求められている一方で、製薬企業の開発は活発とはいえない。その経済的な理由を分析したうえで、開発を促すためにどのような仕組みが考えられるか論じなさい。",
+    difficulty: 3,
+    relatedAP: ["創薬", "薬剤耐性", "医療経済", "政策設計"],
+    wordLimit: 800
+  },
+  {
+    id: "pharmacy-033",
+    field: "pharmacy",
+    fieldLabel: "薬学",
+    title: "抗菌薬適正使用支援チームと院内感染対策",
+    description: "医療機関で抗菌薬の使い方を評価・支援するチーム活動について、薬剤師が担いうる役割を説明し、院内での耐性菌の広がりを防ぐために必要な取り組みを論じなさい。",
+    difficulty: 2,
+    relatedAP: ["チーム医療", "感染制御", "薬剤耐性", "医療安全"],
+    wordLimit: 800
+  },
+  {
+    id: "pharmacy-034",
+    field: "pharmacy",
+    fieldLabel: "薬学",
+    title: "「風邪に抗菌薬を」と求める患者への対応",
+    description: "多くのかぜはウイルスが原因であり抗菌薬は効かないが、処方を望む患者は少なくない。この状況が生じる背景を考察し、薬剤師や医師がどのように説明すべきか、あなたの考えを述べなさい。",
+    difficulty: 1,
+    relatedAP: ["患者対応", "薬剤耐性", "医療コミュニケーション", "啓発"],
+    wordLimit: 600
+  },
+  {
+    id: "pharmacy-035",
+    field: "pharmacy",
+    fieldLabel: "薬学",
+    title: "薬剤耐性をめぐる国際的な取り組みと格差",
+    description: "薬剤耐性は国境を越えて広がる問題である。抗菌薬が過剰に使われる国と、必要な抗菌薬が十分に手に入らない国が同時に存在する状況を踏まえ、国際社会が取るべき対策を論じなさい。",
+    difficulty: 3,
+    relatedAP: ["グローバルヘルス", "薬剤耐性", "国際協力", "公正性"],
+    wordLimit: 1000
+  },
+  {
+    id: "pharmacy-036",
+    field: "pharmacy",
+    fieldLabel: "薬学",
+    title: "抗菌薬に頼らない感染症対策",
+    description: "抗菌薬以外の方法で細菌感染に対抗する研究や、ワクチン・衛生対策による予防が注目されている。抗菌薬への依存を減らすという観点から、これらの取り組みの意義と課題を論じなさい。",
+    difficulty: 2,
+    relatedAP: ["感染症対策", "薬剤耐性", "予防医療", "技術革新"],
+    wordLimit: 800
+  },
 ];
 
 // 分野一覧を取得する関数
