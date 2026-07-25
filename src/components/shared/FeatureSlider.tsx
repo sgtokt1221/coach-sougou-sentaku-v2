@@ -100,7 +100,7 @@ export default function FeatureSlider() {
                 active
                   ? "lg:bg-white/10 lg:text-white"
                   : "lg:text-white/25 lg:hover:text-white/40 lg:hover:bg-white/[0.04]"
-              } max-lg:p-1 lg:flex lg:items-center lg:gap-1.5 lg:px-3 lg:py-2 lg:rounded-lg lg:text-[12px] lg:font-medium`}
+              } max-lg:p-2.5 lg:flex lg:items-center lg:gap-1.5 lg:px-3 lg:py-2 lg:rounded-lg lg:text-[12px] lg:font-medium`}
             >
               {/* Mobile: dot indicator */}
               <span className={`block lg:hidden size-2 rounded-full transition-all duration-200 ${

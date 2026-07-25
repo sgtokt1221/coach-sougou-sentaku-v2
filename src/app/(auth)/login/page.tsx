@@ -245,10 +245,10 @@ export default function LoginPage() {
       <div
         ref={mobileScrollRef}
         onScroll={handleMobileScroll}
-        className="lg:hidden h-screen overflow-y-auto snap-y snap-mandatory"
+        className="lg:hidden h-dvh overflow-y-auto snap-y snap-mandatory"
       >
         {/* Section 1: Branding splash */}
-        <section className="relative flex h-screen snap-start flex-col overflow-hidden px-5 py-6">
+        <section className="relative flex h-dvh snap-start flex-col overflow-hidden px-5 py-6">
           <div className="absolute inset-0 bg-gradient-to-br from-[oklch(0.22_0.03_260)] via-[oklch(0.18_0.04_220)] to-[oklch(0.15_0.02_260)]" />
           <div className="relative z-10 flex flex-col justify-between h-full">
             {/* Logo */}
@@ -291,7 +291,7 @@ export default function LoginPage() {
         </section>
 
         {/* Section 2: Login form */}
-        <section className="flex h-screen snap-start items-center justify-center bg-background bg-mesh p-6">
+        <section className="flex h-dvh snap-start items-center justify-center bg-background bg-mesh p-6">
           <div className="w-full max-w-[380px]">
             {loginForm}
           </div>

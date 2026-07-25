@@ -97,8 +97,8 @@ export function Header() {
         <img src="/logo-dark.svg" alt="coach for 総合型選抜" className="h-9 lg:h-6 hidden dark:block" />
       </Link>
 
-      {/* PC以上: タイトル領域 */}
-      <div className="hidden md:flex min-w-0 flex-1 items-center justify-center">
+      {/* PC以上: タイトル領域（<1024px は中央ロゴを出すため非表示） */}
+      <div className="hidden lg:flex min-w-0 flex-1 items-center justify-center">
         <h1 className="truncate text-lg font-semibold text-foreground">
           {getPageTitle(pathname)}
         </h1>

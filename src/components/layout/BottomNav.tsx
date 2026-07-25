@@ -268,7 +268,7 @@ export function BottomNav() {
         className="lg:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
-        <div className="flex h-[60px] items-center justify-around px-2">
+        <div className="flex h-[var(--app-bottom-nav-height)] items-center justify-around px-2">
           <TabLink label="ホーム" href="/student/dashboard" Icon={LayoutDashboard} active={pathname.startsWith("/student/dashboard")} />
           <TabLink label="成長" href="/student/growth" Icon={TrendingUp} active={growthActive} />
 
@@ -284,7 +284,9 @@ export function BottomNav() {
           >
             <span
               className={cn(
-                "flex size-11 items-center justify-center rounded-full",
+                // 44px の円を -mt-6 で上に逃がし、占有高を他タブのアイコン(20px)と揃える。
+                // これでラベルの縦位置が他タブと一致し、円だけがナビ上端から突出する。
+                "-mt-6 flex size-11 items-center justify-center rounded-full",
                 "bg-gradient-to-br from-primary to-primary/70 text-primary-foreground",
                 "shadow-[0_4px_14px_rgba(0,0,0,0.15)] ring-2 ring-background",
                 "transition-transform duration-200 active:scale-95",

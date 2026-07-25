@@ -63,7 +63,7 @@ export default function TourLayout({ children }: { children: ReactNode }) {
         <TutorialBanner />
         <div className="flex flex-1 min-h-0 overflow-hidden">
           <Sidebar />
-          <div className="flex flex-1 flex-col overflow-hidden">
+          <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
             <Header />
             <main className="flex-1 overflow-y-auto bg-mesh pb-[var(--app-mobile-bottom-inset)] lg:pb-8">
               <ErrorBoundary fallbackUrl="/tour/dashboard">{children}</ErrorBoundary>

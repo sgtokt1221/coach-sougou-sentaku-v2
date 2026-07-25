@@ -20,6 +20,7 @@ export function GraduationReminder() {
   const [open, setOpen] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const pushedRef = useRef(false);
+  const bannerRef = useRef<HTMLDivElement>(null);
 
   const profile = userProfile as StudentProfile | null;
   const applicable =
@@ -34,11 +35,37 @@ export function GraduationReminder() {
     authFetch("/api/student/graduation-reminder", { method: "POST" }).catch(() => {});
   }, [applicable]);
 
+  /**
+   * このバナー自身の高さを `--student-banner-height` として公開する。
+   * 同じスクロールコンテナ内で `sticky top-0` する他のバナー
+   * （StudentRecordingBanner）が、この分だけ下にずれて重なりを避けるため。
+   * 折り返しで高さが変わるので ResizeObserver で追従する。
+   */
+  useEffect(() => {
+    const el = bannerRef.current;
+    const root = document.documentElement;
+    if (!el) {
+      root.style.removeProperty("--student-banner-height");
+      return;
+    }
+    const observer = new ResizeObserver(() => {
+      root.style.setProperty("--student-banner-height", `${el.offsetHeight}px`);
+    });
+    observer.observe(el);
+    return () => {
+      observer.disconnect();
+      root.style.removeProperty("--student-banner-height");
+    };
+  }, [applicable, dismissed]);
+
   if (!applicable || dismissed) return null;
 
   return (
     <>
-      <div className="sticky top-0 z-40 flex flex-wrap items-center gap-2 border-b border-amber-300 bg-amber-50 px-4 py-2 text-sm text-amber-900 dark:border-amber-500/40 dark:bg-amber-950/40 dark:text-amber-200">
+      <div
+        ref={bannerRef}
+        className="sticky top-0 z-40 flex flex-wrap items-center gap-2 border-b border-amber-300 bg-amber-50 px-4 py-2 text-sm text-amber-900 dark:border-amber-500/40 dark:bg-amber-950/40 dark:text-amber-200"
+      >
         <GraduationCap className="size-4 shrink-0" />
         <span className="min-w-0 flex-1">
           ご卒業おめでとうございます。<strong>進学先（合格した大学）</strong>を登録してください。
