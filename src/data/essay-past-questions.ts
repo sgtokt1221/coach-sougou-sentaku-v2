@@ -931,6 +931,7 @@ export const PAST_QUESTIONS: PastQuestion[] = [
 ※本サンプル課題文は練習用にAI生成されたものです。実際の出題内容を保証するものではありません。`,
     isSampleSourceText: true },
   { id: "pq-ritsumeikan-general-001", universityId: "ritsumeikan-u", universityName: "立命館大学", facultyName: "全学部共通", year: 2025, theme: "読解力・要約力・意見表明の総合評価", description: "AO選抜全般。「読む／聴く」力、「要約する」力、「書く／発言する」力、「意見を表明する力」を問う。独創性・論理性・思考力・表現力が大切。公式サイトで過去問・講評公開。", type: "frequent", field: "総合" },
+  { id: "pq-ritsumeikan-pharm-001", universityId: "ritsumeikan-u", universityName: "立命館大学", facultyName: "薬学部", year: 2025, theme: "神経変性疾患のメカニズムと治療薬開発", description: "総合型選抜。60分・全3問。第一問はアルツハイマー病とパーキンソン病によって体内で増加・減少する物質の名称と構造式を答える問題。第二問はアルツハイマー病・パーキンソン病以外の神経変性疾患のメカニズムを説明する問題。第三問は神経変性疾患の治療薬の開発について、現在よりも良い開発や研究を進めるための方法を答える問題。第二問と第三問は合わせて2000字。ほかに将来の展望を書いた文書（1200字程度）を提出。面接は個人面接10分・面接官2名で、口頭試問としてタンパク質の説明やパーキンソン病の発症メカニズムを問われた。", type: "past", questionType: "essay", wordLimit: 2000, timeLimit: 60, field: "薬学" },
 
   // ===== 立教大学 =====
   { id: "pq-rikkyo-ic-001", universityId: "rikkyo-u", universityName: "立教大学", facultyName: "異文化コミュニケーション学部", year: 2019, theme: "自文化中心主義と歴史記述の関係", description: "自由選抜入試方式A。課題論文を読み、自文化中心主義が歴史記述にどう影響するかについて1000字で論述。90分。", type: "past", wordLimit: 1000, timeLimit: 90, field: "文化",
