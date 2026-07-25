@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SegmentControl } from "@/components/shared/SegmentControl";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BookOpen, Star, Clock, ArrowRight, ChevronDown, ChevronUp, BarChart3, Lightbulb } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { BookOpen, Star, Clock, ArrowRight, ChevronDown, ChevronUp, BarChart3, Lightbulb, Search, X } from "lucide-react";
 import { PastQuestionChart } from "@/components/essay/PastQuestionChart";
 import { HelpfulContextPanel } from "@/components/essay/HelpfulContextPanel";
 import type { HelpfulContext } from "@/data/essay-past-questions";
@@ -96,6 +97,7 @@ export default function EssayThemesPage() {
   const [error, setError] = useState<string | null>(null);
 
   // フィルター状態
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedField, setSelectedField] = useState("all");
   const [selectedDifficulty, setSelectedDifficulty] = useState("all");
   const [selectedQuestionType, setSelectedQuestionType] = useState("all");
@@ -194,6 +196,36 @@ export default function EssayThemesPage() {
     );
   }
 
+  /** 検索語（前後空白・大文字小文字を無視）。空なら絞り込みなし */
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+
+  /** 渡したフィールドのいずれかに検索語が含まれるか。配列は連結して対象にする */
+  const matchesQuery = (
+    ...targets: (string | number | string[] | undefined)[]
+  ): boolean => {
+    if (!normalizedQuery) return true;
+    return targets.some((t) => {
+      if (t == null) return false;
+      const text = Array.isArray(t) ? t.join(" ") : String(t);
+      return text.toLowerCase().includes(normalizedQuery);
+    });
+  };
+
+  // 検索はテーマ・過去問の両方に効く（タブの件数表示もこの結果を使う）
+  const searchedThemes = themes.filter((t) =>
+    matchesQuery(t.title, t.description, t.fieldLabel, t.relatedAP),
+  );
+  const searchedPastQuestions = pastQuestions.filter((pq) =>
+    matchesQuery(
+      pq.universityName,
+      pq.facultyName,
+      pq.theme,
+      pq.description,
+      pq.field,
+      pq.year,
+    ),
+  );
+
   return (
     <div className="container mx-auto max-w-7xl px-4 py-8">
       {/* ヘッダー */}
@@ -217,6 +249,30 @@ export default function EssayThemesPage() {
         )}
       </div>
 
+      {/* 検索（テーマ・過去問を横断） */}
+      <div className="relative mb-4">
+        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          type="search"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="キーワードで検索（大学名・学部・テーマ・分野）"
+          aria-label="テーマ・過去問を検索"
+          // ブラウザ標準のクリアボタンは自前のものと重なるので隠す
+          className="pl-9 pr-10 [&::-webkit-search-cancel-button]:appearance-none"
+        />
+        {searchQuery && (
+          <button
+            type="button"
+            onClick={() => setSearchQuery("")}
+            aria-label="検索をクリア"
+            className="absolute right-2 top-1/2 flex size-7 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            <X className="size-4" />
+          </button>
+        )}
+      </div>
+
       {/* タブ切替 */}
       <div className="flex rounded-lg border p-1 mb-6">
         <button
@@ -225,7 +281,7 @@ export default function EssayThemesPage() {
             tab === "themes" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
           }`}
         >
-          テーマ練習（{themes.length}題）
+          テーマ練習（{searchedThemes.length}題）
         </button>
         <button
           onClick={() => setTab("past")}
@@ -233,14 +289,14 @@ export default function EssayThemesPage() {
             tab === "past" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
           }`}
         >
-          大学別過去問（{pastQuestions.length}題）
+          大学別過去問（{searchedPastQuestions.length}題）
         </button>
       </div>
 
       {/* 過去問タブ */}
       {tab === "past" && (
         <div className="space-y-3">
-          {pastQuestions.map((pq) => {
+          {searchedPastQuestions.map((pq) => {
             const isExpanded = expandedPQ === pq.id;
             const hasExtra = pq.chartData || pq.sourceText || pq.tedTalk;
             return (
@@ -378,6 +434,13 @@ export default function EssayThemesPage() {
               </Card>
             );
           })}
+
+          {searchedPastQuestions.length === 0 && (
+            <div className="rounded-lg border border-dashed py-12 text-center">
+              <p className="text-gray-500 text-lg mb-2">該当する過去問が見つかりませんでした</p>
+              <p className="text-gray-400 text-sm">検索キーワードを変えてお試しください</p>
+            </div>
+          )}
         </div>
       )}
 
@@ -432,7 +495,7 @@ export default function EssayThemesPage() {
 
       {/* テーマ一覧（formatフィルタ適用） */}
       {(() => {
-        const visibleThemes = themes.filter((t) => {
+        const visibleThemes = searchedThemes.filter((t) => {
           if (selectedQuestionType === "all") return true;
           if (selectedQuestionType === "essay") {
             return !t.questionType || t.questionType === "essay";

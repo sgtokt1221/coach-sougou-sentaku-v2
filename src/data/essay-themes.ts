@@ -2469,6 +2469,308 @@ export const essayThemes: EssayTheme[] = [
       language: "ja"
     }
   },
+
+  // 薬学 (30題)
+  {
+    id: "pharmacy-001",
+    field: "pharmacy",
+    fieldLabel: "薬学",
+    title: "かかりつけ薬剤師と地域包括ケア",
+    description: "地域包括ケアシステムにおいて、かかりつけ薬剤師が果たすべき役割について論じなさい。医師・看護師・介護職との連携のあり方にも言及すること。",
+    difficulty: 2,
+    relatedAP: ["地域医療", "多職種連携", "地域貢献", "在宅医療"],
+    wordLimit: 800
+  },
+  {
+    id: "pharmacy-002",
+    field: "pharmacy",
+    fieldLabel: "薬学",
+    title: "ポリファーマシーの問題と薬剤師の介入",
+    description: "高齢者に多剤併用（ポリファーマシー）が生じる背景を整理し、薬剤師がどのように介入すべきか、あなたの考えを述べなさい。",
+    difficulty: 2,
+    relatedAP: ["高齢化対策", "医療安全", "処方支援", "多職種連携"],
+    wordLimit: 800
+  },
+  {
+    id: "pharmacy-003",
+    field: "pharmacy",
+    fieldLabel: "薬学",
+    title: "後発医薬品の普及と薬価制度",
+    description: "後発医薬品（ジェネリック）の使用促進が進められてきた理由と、それが医療費・製薬産業・患者に与える影響について論じなさい。",
+    difficulty: 2,
+    relatedAP: ["医療経済", "医療費適正化", "製薬産業", "社会課題解決"],
+    wordLimit: 800
+  },
+  {
+    id: "pharmacy-004",
+    field: "pharmacy",
+    fieldLabel: "薬学",
+    title: "ドラッグ・ラグとドラッグ・ロス",
+    description: "海外で承認された医薬品が日本で使えるようになるまでの遅れ（ドラッグ・ラグ）や、そもそも開発されない問題（ドラッグ・ロス）が生じる要因を挙げ、解決策を論じなさい。",
+    difficulty: 3,
+    relatedAP: ["創薬", "規制科学", "国際比較", "患者アクセス"],
+    wordLimit: 800
+  },
+  {
+    id: "pharmacy-005",
+    field: "pharmacy",
+    fieldLabel: "薬学",
+    title: "AI創薬がもたらす変化と限界",
+    description: "人工知能を活用した創薬研究が注目されている。従来の創薬プロセスと比較しながら、AI創薬の可能性と、それでも人が担い続ける役割について論じなさい。",
+    difficulty: 2,
+    relatedAP: ["AI活用", "創薬", "技術革新", "研究倫理"],
+    wordLimit: 800
+  },
+  {
+    id: "pharmacy-006",
+    field: "pharmacy",
+    fieldLabel: "薬学",
+    title: "薬剤耐性(AMR)と抗菌薬の適正使用",
+    description: "薬剤耐性菌が世界的な脅威とされる理由を説明し、抗菌薬の適正使用を進めるために薬剤師・医療機関・社会が取るべき対策を論じなさい。",
+    difficulty: 2,
+    relatedAP: ["感染症対策", "公衆衛生", "国際協調", "医療安全"],
+    wordLimit: 800
+  },
+  {
+    id: "pharmacy-007",
+    field: "pharmacy",
+    fieldLabel: "薬学",
+    title: "医薬品の供給不足とサプライチェーン",
+    description: "近年、後発医薬品を中心に供給不足が続いている。その構造的な要因を分析し、安定供給を実現するために必要な仕組みについて述べなさい。",
+    difficulty: 2,
+    relatedAP: ["医薬品供給", "危機管理", "製薬産業", "社会課題解決"],
+    wordLimit: 800
+  },
+  {
+    id: "pharmacy-008",
+    field: "pharmacy",
+    fieldLabel: "薬学",
+    title: "セルフメディケーションとOTC医薬品",
+    description: "自分の健康は自分で守るというセルフメディケーションの考え方について、OTC医薬品（市販薬）を扱う薬剤師の立場から、その利点と注意すべき点を述べなさい。",
+    difficulty: 1,
+    relatedAP: ["予防医療", "健康支援", "薬剤師の役割", "生活者支援"],
+    wordLimit: 600
+  },
+  {
+    id: "pharmacy-009",
+    field: "pharmacy",
+    fieldLabel: "薬学",
+    title: "治験の倫理とインフォームド・コンセント",
+    description: "新薬開発に不可欠な臨床試験（治験）において、被験者の人権を守るためにどのような配慮が必要か。歴史的経緯を踏まえて論じなさい。",
+    difficulty: 3,
+    relatedAP: ["研究倫理", "生命倫理", "患者の権利", "創薬"],
+    wordLimit: 800
+  },
+  {
+    id: "pharmacy-010",
+    field: "pharmacy",
+    fieldLabel: "薬学",
+    title: "個別化医療とファーマコゲノミクス",
+    description: "遺伝情報に基づいて薬の効き方や副作用を予測する個別化医療について、その意義と、実現にあたっての倫理的・社会的課題を論じなさい。",
+    difficulty: 3,
+    relatedAP: ["個別化医療", "ゲノム", "生命倫理", "先端医療"],
+    wordLimit: 800
+  },
+  {
+    id: "pharmacy-011",
+    field: "pharmacy",
+    fieldLabel: "薬学",
+    title: "医療用麻薬と緩和ケア",
+    description: "がん疼痛の緩和に用いられる医療用麻薬について、日本での使用量が諸外国より少ないとされる背景を考察し、適正な使用を広めるために何が必要か論じなさい。",
+    difficulty: 2,
+    relatedAP: ["緩和ケア", "QOL", "患者支援", "医療者教育"],
+    wordLimit: 800
+  },
+  {
+    id: "pharmacy-012",
+    field: "pharmacy",
+    fieldLabel: "薬学",
+    title: "薬害の歴史から何を学ぶか",
+    description: "日本で起きた薬害の事例を一つ取り上げ、その経過と、そこから医薬品の安全性確保のために得られた教訓について論じなさい。",
+    difficulty: 3,
+    relatedAP: ["医薬品安全", "薬害", "規制科学", "患者の権利"],
+    wordLimit: 1000
+  },
+  {
+    id: "pharmacy-013",
+    field: "pharmacy",
+    fieldLabel: "薬学",
+    title: "高額医薬品と医療費の持続可能性",
+    description: "一回の投与で数千万円を超える医薬品が登場している。こうした高額医薬品について、患者のアクセスと医療保険制度の持続可能性をどう両立させるべきか論じなさい。",
+    difficulty: 3,
+    relatedAP: ["医療経済", "費用対効果", "社会保障", "患者アクセス"],
+    wordLimit: 800
+  },
+  {
+    id: "pharmacy-014",
+    field: "pharmacy",
+    fieldLabel: "薬学",
+    title: "再生医療等製品の実用化と課題",
+    description: "細胞・遺伝子治療などの再生医療等製品について、従来の医薬品と異なる特徴を整理し、実用化を進めるうえでの課題を論じなさい。",
+    difficulty: 3,
+    relatedAP: ["先端医療", "再生医療", "規制科学", "技術革新"],
+    wordLimit: 800
+  },
+  {
+    id: "pharmacy-015",
+    field: "pharmacy",
+    fieldLabel: "薬学",
+    title: "ワクチン忌避と科学コミュニケーション",
+    description: "ワクチンに対する不安や忌避が広がる背景を分析し、医療者が科学的な情報をどのように伝えるべきかについて、あなたの考えを述べなさい。",
+    difficulty: 2,
+    relatedAP: ["公衆衛生", "科学コミュニケーション", "リスク認知", "情報リテラシー"],
+    wordLimit: 800
+  },
+  {
+    id: "pharmacy-016",
+    field: "pharmacy",
+    fieldLabel: "薬学",
+    title: "電子処方箋とオンライン服薬指導",
+    description: "医療のデジタル化が進むなかで、電子処方箋やオンライン服薬指導が普及することの利点と、注意すべき点について述べなさい。",
+    difficulty: 1,
+    relatedAP: ["医療DX", "情報活用", "患者利便性", "個人情報保護"],
+    wordLimit: 600
+  },
+  {
+    id: "pharmacy-017",
+    field: "pharmacy",
+    fieldLabel: "薬学",
+    title: "服薬アドヒアランスをどう支えるか",
+    description: "処方された薬を患者が正しく続けられない要因を挙げ、薬剤師としてどのような支援ができるか、具体的に述べなさい。",
+    difficulty: 1,
+    relatedAP: ["患者支援", "服薬指導", "コミュニケーション", "医療安全"],
+    wordLimit: 600
+  },
+  {
+    id: "pharmacy-018",
+    field: "pharmacy",
+    fieldLabel: "薬学",
+    title: "健康食品・サプリメントと医薬品の相互作用",
+    description: "健康食品やサプリメントが医薬品に与える影響について具体例を挙げ、消費者の安全を守るために薬剤師が果たすべき役割を論じなさい。",
+    difficulty: 2,
+    relatedAP: ["医薬品安全", "消費者保護", "健康支援", "情報提供"],
+    wordLimit: 800
+  },
+  {
+    id: "pharmacy-019",
+    field: "pharmacy",
+    fieldLabel: "薬学",
+    title: "医薬分業の意義と課題",
+    description: "医師が処方し薬剤師が調剤する医薬分業について、その本来の目的を説明したうえで、現在指摘されている課題と改善の方向を論じなさい。",
+    difficulty: 2,
+    relatedAP: ["医療制度", "薬剤師の役割", "医療の質", "制度設計"],
+    wordLimit: 800
+  },
+  {
+    id: "pharmacy-020",
+    field: "pharmacy",
+    fieldLabel: "薬学",
+    title: "動物実験と代替法をめぐる議論",
+    description: "医薬品開発における動物実験について、必要性を主張する立場と、動物福祉の観点から見直しを求める立場の双方を整理し、あなたの考えを述べなさい。",
+    difficulty: 3,
+    relatedAP: ["研究倫理", "動物福祉", "創薬", "科学と社会"],
+    wordLimit: 800
+  },
+  {
+    id: "pharmacy-021",
+    field: "pharmacy",
+    fieldLabel: "薬学",
+    title: "環境中に排出される医薬品の影響",
+    description: "使用された医薬品が河川などの環境中に排出されることによる影響を説明し、その低減のために社会が取り組むべきことを論じなさい。",
+    difficulty: 2,
+    relatedAP: ["環境問題", "公衆衛生", "持続可能性", "社会課題解決"],
+    wordLimit: 800
+  },
+  {
+    id: "pharmacy-022",
+    field: "pharmacy",
+    fieldLabel: "薬学",
+    title: "医薬品情報の提供と広告規制",
+    description: "医薬品に関する情報が広告やインターネットを通じて拡散する現状を踏まえ、適正な情報提供のために必要な規制と専門家の役割について論じなさい。",
+    difficulty: 2,
+    relatedAP: ["情報リテラシー", "医薬品安全", "消費者保護", "メディア"],
+    wordLimit: 800
+  },
+  {
+    id: "pharmacy-023",
+    field: "pharmacy",
+    fieldLabel: "薬学",
+    title: "認知症治療薬の登場がもたらす課題",
+    description: "認知症の進行抑制を目的とした新しい治療薬について、期待される効果と、費用・診断体制・患者家族の負担といった課題を整理して論じなさい。",
+    difficulty: 3,
+    relatedAP: ["高齢化対策", "先端医療", "医療経済", "患者家族支援"],
+    wordLimit: 800
+  },
+  {
+    id: "pharmacy-024",
+    field: "pharmacy",
+    fieldLabel: "薬学",
+    title: "国際保健と医薬品アクセスの格差",
+    description: "開発途上国で必要な医薬品が届かない状況について、特許制度や価格の問題を踏まえて要因を分析し、格差の是正に向けた方策を論じなさい。",
+    difficulty: 3,
+    relatedAP: ["国際協力", "グローバルヘルス", "特許制度", "公正性"],
+    wordLimit: 1000
+  },
+  {
+    id: "pharmacy-025",
+    field: "pharmacy",
+    fieldLabel: "薬学",
+    title: "リアルワールドデータと市販後調査",
+    description: "実際の診療で得られるデータ（リアルワールドデータ）を医薬品の評価に活用することの意義と、扱ううえで注意すべき点を論じなさい。",
+    difficulty: 3,
+    relatedAP: ["データ活用", "医薬品安全", "規制科学", "個人情報保護"],
+    wordLimit: 800
+  },
+  {
+    id: "pharmacy-026",
+    field: "pharmacy",
+    fieldLabel: "薬学",
+    title: "薬学6年制教育と薬剤師のキャリア",
+    description: "薬学部が6年制となった背景を説明し、これからの薬剤師に求められる能力と、あなたが目指す薬剤師像について述べなさい。",
+    difficulty: 1,
+    relatedAP: ["キャリア形成", "専門職教育", "薬剤師の役割", "自己理解"],
+    wordLimit: 600
+  },
+  {
+    id: "pharmacy-027",
+    field: "pharmacy",
+    fieldLabel: "薬学",
+    title: "終末期医療における薬剤師の関わり",
+    description: "人生の最終段階における医療において、薬剤師はどのように関わることができるか。患者本人と家族の意思決定を支える視点から論じなさい。",
+    difficulty: 2,
+    relatedAP: ["終末期医療", "意思決定支援", "多職種連携", "生命倫理"],
+    wordLimit: 800
+  },
+  {
+    id: "pharmacy-028",
+    field: "pharmacy",
+    fieldLabel: "薬学",
+    title: "がん薬物療法と支持療法の重要性",
+    description: "がんの薬物療法にともなう副作用を軽減する支持療法について、その意義を説明し、治療を継続するために薬剤師が果たせる役割を論じなさい。",
+    difficulty: 2,
+    relatedAP: ["がん医療", "QOL", "チーム医療", "患者支援"],
+    wordLimit: 800
+  },
+  {
+    id: "pharmacy-029",
+    field: "pharmacy",
+    fieldLabel: "薬学",
+    title: "感染症パンデミックへの備え",
+    description: "新興感染症の流行に備えて、医薬品やワクチンの開発・備蓄・供給の体制をどう整えるべきか。過去の経験を踏まえて論じなさい。",
+    difficulty: 2,
+    relatedAP: ["感染症対策", "危機管理", "公衆衛生", "国際協調"],
+    wordLimit: 800
+  },
+  {
+    id: "pharmacy-030",
+    field: "pharmacy",
+    fieldLabel: "薬学",
+    title: "対物業務から対人業務へ",
+    description: "薬剤師の仕事が「対物業務」から「対人業務」へ移行すべきといわれる理由を説明し、その変化のなかで薬剤師に求められる力について、あなたの考えを述べなさい。",
+    difficulty: 2,
+    relatedAP: ["薬剤師の役割", "医療DX", "対人支援", "専門性"],
+    wordLimit: 800
+  },
 ];
 
 // 分野一覧を取得する関数
@@ -2485,6 +2787,7 @@ export const fieldLabelMap: Record<string, string> = {
   technology: "科学技術",
   environment: "環境",
   medical: "医療",
+  pharmacy: "薬学",
   international: "国際",
   culture: "文化",
   law: "法律",
