@@ -2528,7 +2528,7 @@ export const essayThemes: EssayTheme[] = [
     title: "薬剤耐性(AMR)と抗菌薬の適正使用",
     description: "薬剤耐性菌が世界的な脅威とされる理由を説明し、抗菌薬の適正使用を進めるために薬剤師・医療機関・社会が取るべき対策を論じなさい。",
     difficulty: 2,
-    relatedAP: ["感染症対策", "公衆衛生", "国際協調", "医療安全"],
+    relatedAP: ["感染症対策", "薬剤耐性", "公衆衛生", "国際協調", "医療安全"],
     wordLimit: 800
   },
   {
