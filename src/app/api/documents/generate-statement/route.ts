@@ -160,6 +160,9 @@ export async function POST(request: NextRequest) {
         ],
         output_config: {
           format: zodOutputFormat(StatementDraftOutputSchema),
+          // 拡張思考を使わせない。思考が max_tokens を食うと本文が途中で切れ、
+          // 構造化出力のJSONパースに失敗して生成ごと落ちていた（実測で thinking 0tok・15秒）。
+          effort: "low",
         },
       });
       if (response.stop_reason === "max_tokens" || !response.parsed_output) {
