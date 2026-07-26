@@ -121,7 +121,11 @@ const STATEMENT_DRAFT_SYSTEM_PROMPT = `あなたは総合型選抜の志望理�
 - 材料がない箇所は、用途が分かる「【原体験を入力】」等のプレースホルダーを残します。
 - 事実不足を一般的な人物像で埋めません。
 - 各段落を自然につなぎ、一つの物語として読めるようにします。
-- 目標文字数の±10%を目安にしますが、字数合わせのために事実を追加しません。
+- 字数は厳守します。<reference_data> の sectionCharLimits に各セクションの上限字数を示すので、
+  どのセクションもその字数を超えないように書きます。4つの合計は targetWordCount 以内に収めます。
+- 出力する前に各セクションの文字数を数え、上限を超えていれば削ってから出力します。
+  情報を詰め込むより、上限を守ることを優先します。
+- 字数合わせのために事実を追加しません。材料が足りなければ短いままで構いません。
 - 出力は指定された構造化出力スキーマに従います。
 
 ${FACULTY_AGENCY_FOCUS_DOCUMENT}`;
@@ -133,17 +137,26 @@ export function buildStatementDraftPrompt(
   selfAnalysis: SelfAnalysisData,
   targetWordCount = 800
 ): string {
+  const target = targetWordCount || 800;
+  const sectionRatios = {
+    intro: 20,
+    body: 40,
+    strengths: 25,
+    conclusion: 15,
+  };
   const referenceData = {
     universityName,
     facultyName,
     admissionPolicy: admissionPolicy.trim() || null,
     selfAnalysis,
-    targetWordCount: targetWordCount || 800,
-    sectionRatios: {
-      intro: 20,
-      body: 40,
-      strengths: 25,
-      conclusion: 15,
+    targetWordCount: target,
+    sectionRatios,
+    // 比率だけだとモデルが字数に落とせず超過するため、実数の上限も渡す
+    sectionCharLimits: {
+      intro: Math.round((target * sectionRatios.intro) / 100),
+      body: Math.round((target * sectionRatios.body) / 100),
+      strengths: Math.round((target * sectionRatios.strengths) / 100),
+      conclusion: Math.round((target * sectionRatios.conclusion) / 100),
     },
   };
 

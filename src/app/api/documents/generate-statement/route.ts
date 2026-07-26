@@ -17,7 +17,8 @@ import {
 } from "@/lib/ai/prompt-versions";
 import type { AiGenerationMetadata } from "@/lib/types/ai";
 
-export const maxDuration = 60;
+// 生成(40-50秒)に加えて字数超過時の圧縮リライトが走るため、60秒では打ち切られる。
+export const maxDuration = 300;
 
 interface GenerateStatementRequest {
   universityId: string;
@@ -146,7 +147,10 @@ export async function POST(request: NextRequest) {
       const client = new Anthropic({ apiKey });
       const response = await client.messages.parse({
         model: AI_MODEL_STATEMENT,
-        max_tokens: 4096,
+        // 拡張思考が有効なモデルでは max_tokens を thinking と本文で分け合う。
+        // 4096 だと思考だけで使い切って本文が0トークンになり、
+        // parsed_output が空のまま stop_reason=max_tokens で失敗していた。
+        max_tokens: 16384,
         system: prompt,
         messages: [
           {
@@ -159,6 +163,11 @@ export async function POST(request: NextRequest) {
         },
       });
       if (response.stop_reason === "max_tokens" || !response.parsed_output) {
+        // usage には thinking の内訳も入る（max_tokens を思考で使い切ったかの判別用）
+        console.error("[generate-statement] 構造化応答が不正", {
+          stop_reason: response.stop_reason,
+          usage: response.usage,
+        });
         throw new Error("Claude APIの構造化応答が不正です");
       }
 
@@ -174,16 +183,18 @@ export async function POST(request: NextRequest) {
           (sum, [, text]) => sum + text.length,
           0
         );
-        for (const [key, text] of entries) {
-          const sectionLimit = Math.max(
-            20,
-            Math.floor(contentBudget * (text.length / originalLength))
-          );
-          structure[key as keyof typeof structure] = await fitToCharLimit(
-            client,
-            text,
-            sectionLimit
-          );
+        // セクションは互いに独立なので並列で圧縮する（直列だと4本分の待ち時間になる）
+        const compressed = await Promise.all(
+          entries.map(async ([key, text]) => {
+            const sectionLimit = Math.max(
+              20,
+              Math.floor(contentBudget * (text.length / originalLength))
+            );
+            return [key, await fitToCharLimit(client, text, sectionLimit)] as const;
+          })
+        );
+        for (const [key, text] of compressed) {
+          structure[key as keyof typeof structure] = text;
         }
         draft = joinStatementStructure(structure);
       }

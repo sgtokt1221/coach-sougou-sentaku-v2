@@ -17,6 +17,9 @@ import {
   selectDocumentModel,
 } from "@/lib/ai/prompt-versions";
 
+// 生成に加えて字数超過時の圧縮リライトが走るため、既定の実行時間では足りない。
+export const maxDuration = 300;
+
 export async function POST(request: NextRequest) {
   try {
     const gate = await requireFeature(request, "documentEditor");
@@ -133,7 +136,9 @@ export async function POST(request: NextRequest) {
 
     const message = await client.messages.parse({
       model: generationModel,
-      max_tokens: 4096,
+      // 拡張思考が有効なモデルでは max_tokens を thinking と本文で分け合う。
+      // 4096 だと思考だけで使い切って本文が0トークンになり生成が失敗する。
+      max_tokens: 16384,
       system: systemPrompt,
       messages: [
         {
@@ -147,6 +152,11 @@ export async function POST(request: NextRequest) {
     });
 
     if (message.stop_reason === "max_tokens" || !message.parsed_output) {
+      // usage には thinking の内訳も入る（max_tokens を思考で使い切ったかの判別用）
+      console.error("[generate-draft] 構造化応答が不正", {
+        stop_reason: message.stop_reason,
+        usage: message.usage,
+      });
       return NextResponse.json(
         { error: "AIからの応答を検証できませんでした" },
         { status: 502 }
@@ -179,19 +189,22 @@ export async function POST(request: NextRequest) {
         (sum, section) => sum + section.content.length,
         0
       );
-      for (const section of populated) {
-        const sectionLimit = Math.max(
-          20,
-          Math.floor(
-            contentBudget * (section.content.length / originalContentLength)
-          )
-        );
-        section.content = await fitToCharLimit(
-          client,
-          section.content,
-          sectionLimit
-        );
-      }
+      // セクションは互いに独立なので並列で圧縮する（直列だとセクション数だけ待ち時間が積み上がる）
+      await Promise.all(
+        populated.map(async (section) => {
+          const sectionLimit = Math.max(
+            20,
+            Math.floor(
+              contentBudget * (section.content.length / originalContentLength)
+            )
+          );
+          section.content = await fitToCharLimit(
+            client,
+            section.content,
+            sectionLimit
+          );
+        })
+      );
       draft = sections
         .map((section) => section.content)
         .filter((content) => content.trim())

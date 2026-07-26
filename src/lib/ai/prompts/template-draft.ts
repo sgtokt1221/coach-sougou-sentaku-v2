@@ -17,7 +17,11 @@ const TEMPLATE_DRAFT_SYSTEM_PROMPT = `あなたは総合型選抜（旧AO入試�
 - 活動実績がない箇所は、「【原体験を入力】」等の用途が分かるプレースホルダーを残します。
 - 数値や固有名詞は、登録データに存在する場合だけ使用します。
 - 生徒本人の自然な「である調」で書き、段落を一つの物語としてつなぎます。
-- 目標文字数の±10%を目安にしますが、事実不足を架空情報で埋めません。
+- 字数は厳守します。各セクションの charLimit を超えないように書き、全セクションの合計は
+  targetWordCount 以内に収めます。出力前に各セクションの文字数を数え、超えていれば削ります。
+- 一方で短すぎる下書きは推敲の土台になりません。材料がある限り、各セクションは charLimit の
+  8割以上を目安に書き、合計が targetWordCount に近づくようにします。
+- 字数を満たすために事実を捏造しません。材料が足りない箇所はプレースホルダーを残します。
 - 出力は指定された構造化出力スキーマに従います。`;
 
 export function buildTemplateDraftPrompt(
@@ -33,12 +37,17 @@ export function buildTemplateDraftPrompt(
     structuredData?: StructuredActivityData;
   }[]
 ): string {
+  const target = targetWordCount || 800;
+  // 比率だけだとモデルが字数に落とせず超過するため、セクションごとの実数上限を渡す
+  const perSectionLimit = Math.floor(
+    target / Math.max(1, framework.sections.length)
+  );
   const referenceData = {
     universityName,
     facultyName,
     admissionPolicy: admissionPolicy.trim() || null,
     documentType,
-    targetWordCount: targetWordCount || 800,
+    targetWordCount: target,
     framework: {
       type: framework.type,
       name: framework.name,
@@ -48,6 +57,7 @@ export function buildTemplateDraftPrompt(
         title: section.title,
         description: section.description,
         guidingQuestion: section.guidingQuestion,
+        charLimit: perSectionLimit,
       })),
     },
     activities: activities.map((activity) => ({
