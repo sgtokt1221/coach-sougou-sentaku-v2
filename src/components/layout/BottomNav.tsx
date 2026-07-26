@@ -163,6 +163,8 @@ const superadminTabs: TabDef[] = [
   { label: "管理者", href: "/superadmin/admins", icon: Shield },
   { label: "生徒", href: "/superadmin/students", icon: Users },
   { label: "講師", href: "/superadmin/teachers", icon: GraduationCap },
+  // 管理者と同じインボックス（/admin は superadmin もアクセス可）
+  { label: "チャット", href: "/admin/messages", icon: MessageSquare },
 ];
 
 export function BottomNav() {
@@ -178,7 +180,9 @@ export function BottomNav() {
 
   // 管理者チャットの未読件数（生徒/講師からの連絡）。チャットタブのバッジに使う。
   const { data: adminUnread } = useAuthSWR<{ unreadCount: number }>(
-    role === "admin" ? "/api/admin/messages?countOnly=true" : null,
+    role === "admin" || role === "superadmin"
+      ? "/api/admin/messages?countOnly=true"
+      : null,
   );
   const chatUnread = adminUnread?.unreadCount ?? 0;
 

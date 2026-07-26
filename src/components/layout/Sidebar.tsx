@@ -186,6 +186,8 @@ const superadminNavGroups: NavGroup[] = [
       { label: "管理者一覧", href: "/superadmin/admins", icon: Shield },
       { label: "講師一覧", href: "/superadmin/teachers", icon: GraduationCap },
       { label: "生徒一覧", href: "/superadmin/students", icon: Users },
+      // 管理者と同じインボックス。モバイル下タブの「チャット」と対応させる
+      { label: "メッセージ", href: "/admin/messages", icon: MessageSquare, badge: AdminMessagesBadge },
     ],
   },
   {
