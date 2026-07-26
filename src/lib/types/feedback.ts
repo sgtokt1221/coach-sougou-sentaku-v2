@@ -12,18 +12,28 @@ export interface ChatAttachment {
   contentType?: string;
 }
 
-/** チャットで参照する「問題」の種別 */
-export type ChatReferenceKind =
-  | 'essay-theme'
-  | 'past-question'
-  | 'interview-drill'
-  | 'summary-drill'
-  | 'custom'
-  | 'homework'
-  | 'essay-comment'
-  | 'self-analysis'
-  | 'document'
-  | 'skill-check';
+/**
+ * チャットで参照する「問題」の種別。
+ *
+ * サーバー側の検証（sanitizeReference）もこの配列をそのまま使う。
+ * 以前は型とは別に検証用の配列を手で持っていたため、種別を増やしたときに
+ * 追加漏れが起き、reference が保存されず引用カードが出ない不具合になった。
+ * 追加はここ1箇所だけで完結させること。
+ */
+export const CHAT_REFERENCE_KINDS = [
+  'essay-theme',
+  'past-question',
+  'interview-drill',
+  'summary-drill',
+  'custom',
+  'homework',
+  'essay-comment',
+  'self-analysis',
+  'document',
+  'skill-check',
+] as const;
+
+export type ChatReferenceKind = (typeof CHAT_REFERENCE_KINDS)[number];
 
 /** メッセージに添える問題参照（カード表示） */
 export interface ChatReference {

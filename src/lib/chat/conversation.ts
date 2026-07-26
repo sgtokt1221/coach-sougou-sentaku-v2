@@ -1,5 +1,6 @@
 import { adminDb } from "@/lib/firebase/admin";
 import { FieldValue } from "firebase-admin/firestore";
+import { CHAT_REFERENCE_KINDS } from "@/lib/types/feedback";
 import type {
   ChatAttachment,
   ChatReference,
@@ -7,17 +8,9 @@ import type {
   SenderRole,
 } from "@/lib/types/feedback";
 
-const REFERENCE_KINDS: ChatReferenceKind[] = [
-  "essay-theme",
-  "past-question",
-  "interview-drill",
-  "summary-drill",
-  "custom",
-  "homework",
-  "essay-comment",
-  "self-analysis",
-  "document",
-];
+// 種別の正本は types/feedback.ts。ここで別配列を持つと追加漏れで
+// reference が黙って捨てられるため、必ず正本を参照する。
+const REFERENCE_KINDS: readonly ChatReferenceKind[] = CHAT_REFERENCE_KINDS;
 
 /**
  * クライアントから送られた問題参照を検証する。

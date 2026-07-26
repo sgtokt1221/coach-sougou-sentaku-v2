@@ -67,6 +67,8 @@ export async function GET(request: NextRequest) {
         read: data.read ?? false,
         attachments: data.attachments ?? undefined,
         broadcast: data.broadcast ?? undefined,
+        // 引用カード。返し忘れるとチャットに遷移ボタンが出ない
+        reference: data.reference ?? undefined,
       };
     });
 
