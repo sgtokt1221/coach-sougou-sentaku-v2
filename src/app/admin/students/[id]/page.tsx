@@ -1391,6 +1391,7 @@ function AdminStudentDetailPageInner() {
         onOpenChange={(o) => !o && setScDialog(null)}
         kind={scDialog?.kind ?? "essay"}
         result={scDialog?.result ?? null}
+        studentId={id}
       />
 
       {/* Essay Detail Dialog */}

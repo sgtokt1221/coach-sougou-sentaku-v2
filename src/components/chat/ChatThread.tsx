@@ -35,6 +35,7 @@ const TYPE_LABEL: Partial<Record<FeedbackType, string>> = {
   document: "書類へのコメント",
   activity: "活動へのコメント",
   "self-analysis": "自己分析へのコメント",
+  "skill-check": "スキルチェックへのコメント",
 };
 
 interface ChatThreadProps {
@@ -124,24 +125,29 @@ function ReferenceCard({ reference }: { reference: ChatReference }) {
   const isComment = reference.kind === "essay-comment";
   const isSelfAnalysis = reference.kind === "self-analysis";
   const isDocument = reference.kind === "document";
-  const headerLabel = isDocument
-    ? "出願書類"
-    : isSelfAnalysis
-      ? "自己分析"
-      : isComment
-        ? "コメント"
-        : reference.kind === "homework"
-          ? "宿題"
-          : "問題";
-  const buttonLabel = isDocument
-    ? "書類を見る"
-    : isSelfAnalysis
-      ? "自己分析を見る"
-      : isComment
-        ? "コメントを読む"
-        : reference.kind === "homework"
-          ? "取り組む"
-          : "解く";
+  const isSkillCheck = reference.kind === "skill-check";
+  const headerLabel = isSkillCheck
+    ? "スキルチェック"
+    : isDocument
+      ? "出願書類"
+      : isSelfAnalysis
+        ? "自己分析"
+        : isComment
+          ? "コメント"
+          : reference.kind === "homework"
+            ? "宿題"
+            : "問題";
+  const buttonLabel = isSkillCheck
+    ? "結果を見る"
+    : isDocument
+      ? "書類を見る"
+      : isSelfAnalysis
+        ? "自己分析を見る"
+        : isComment
+          ? "コメントを読む"
+          : reference.kind === "homework"
+            ? "取り組む"
+            : "解く";
   return (
     <div className="mt-1.5 rounded-lg border border-primary/30 bg-primary/5 p-2.5">
       <div className="flex items-center gap-1.5 text-[11px] font-semibold text-primary">

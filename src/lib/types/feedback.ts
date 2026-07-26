@@ -1,4 +1,4 @@
-export type FeedbackType = 'essay' | 'weakness' | 'document' | 'activity' | 'general' | 'self-analysis';
+export type FeedbackType = 'essay' | 'weakness' | 'document' | 'activity' | 'general' | 'self-analysis' | 'skill-check';
 
 /** メッセージの送信者種別。表示/API で createdBy から導出する */
 export type SenderRole = 'coach' | 'student';
@@ -22,7 +22,8 @@ export type ChatReferenceKind =
   | 'homework'
   | 'essay-comment'
   | 'self-analysis'
-  | 'document';
+  | 'document'
+  | 'skill-check';
 
 /** メッセージに添える問題参照（カード表示） */
 export interface ChatReference {
