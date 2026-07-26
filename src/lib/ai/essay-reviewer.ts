@@ -1,5 +1,8 @@
 import Anthropic from "@anthropic-ai/sdk";
-import type { EssayScores, EssayFeedback, TopicInsights } from "@/lib/types/essay";
+import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
+import { SkillCheckOutputSchema } from "@/lib/ai/schemas/skill-check";
+import { AI_MODEL_SONNET } from "@/lib/ai/prompt-versions";
+import type { EssayScores, EssayFeedback } from "@/lib/types/essay";
 
 export interface ReviewCoreResult {
   scores: EssayScores;
@@ -26,56 +29,55 @@ export async function reviewWithClaude(options: {
   }
 
   const client = new Anthropic();
-  const response = await client.messages.create({
-    model: "claude-sonnet-4-6",
+
+  // 構造化出力 + Zod 検証で受け取る。以前はテキスト応答から正規表現でJSONを
+  // 切り出して JSON.parse していたため、モデルが引用符やエスケープを1文字誤ると
+  // 採点全体が失敗していた（本番で "Unterminated string in JSON" 系の失敗が発生）。
+  const response = await client.messages.parse({
+    model: AI_MODEL_SONNET,
     max_tokens: maxTokens,
     system: systemPrompt,
     messages: [{ role: "user", content: userMessage }],
+    output_config: {
+      format: zodOutputFormat(SkillCheckOutputSchema),
+      // 拡張思考に max_tokens を食われて本文が切れるのを防ぐ
+      effort: "low",
+    },
   });
 
-  const rawText = response.content[0].type === "text" ? response.content[0].text : "";
-
-  const jsonMatch =
-    rawText.match(/```json\s*([\s\S]*?)\s*```/) || rawText.match(/(\{[\s\S]*\})/);
-  if (!jsonMatch) {
-    throw new Error(`AI添削結果のパースに失敗: ${rawText.slice(0, 300)}`);
+  if (response.stop_reason === "max_tokens" || !response.parsed_output) {
+    console.error("[reviewWithClaude] 構造化応答が不正", {
+      stop_reason: response.stop_reason,
+      usage: response.usage,
+    });
+    throw new Error("AI添削結果の検証に失敗しました");
   }
 
-  const parsed = JSON.parse(jsonMatch[1]);
+  const parsed = response.parsed_output;
 
-  const scores: EssayScores = {
-    structure: parsed.scores.structure,
-    logic: parsed.scores.logic,
-    expression: parsed.scores.expression,
-    apAlignment: parsed.scores.apAlignment,
-    originality: parsed.scores.originality,
-    total: parsed.scores.total,
-  };
+  // 合計はモデルに計算させず、サーバー側で確定させる
+  const total =
+    parsed.scores.structure +
+    parsed.scores.logic +
+    parsed.scores.expression +
+    parsed.scores.apAlignment +
+    parsed.scores.originality;
 
-  const topicInsights: TopicInsights | undefined = parsed.feedback.topicInsights
-    ? {
-        background: parsed.feedback.topicInsights.background ?? "",
-        relatedThemes: parsed.feedback.topicInsights.relatedThemes ?? [],
-        deepDivePoints: parsed.feedback.topicInsights.deepDivePoints ?? [],
-        recommendedAngle: parsed.feedback.topicInsights.recommendedAngle ?? "",
-      }
-    : undefined;
+  const scores: EssayScores = { ...parsed.scores, total };
 
   const feedback: EssayFeedback = {
-    overall: parsed.feedback.overall ?? "",
-    goodPoints: parsed.feedback.goodPoints ?? [],
-    improvements: parsed.feedback.improvements ?? [],
-    repeatedIssues: parsed.feedback.repeatedIssues ?? [],
-    improvementsSinceLast: parsed.feedback.improvementsSinceLast ?? [],
-    topicInsights,
-    brushedUpText: parsed.feedback.brushedUpText ?? undefined,
-    languageCorrections: parsed.feedback.languageCorrections ?? [],
-    priorityImprovement: parsed.feedback.priorityImprovement ?? undefined,
-    nextChallenge: parsed.feedback.nextChallenge ?? undefined,
-    quantitativeAnalysis: parsed.feedback.quantitativeAnalysis ?? undefined,
+    overall: parsed.feedback.overall,
+    goodPoints: parsed.feedback.goodPoints,
+    improvements: parsed.feedback.improvements,
+    priorityImprovement: parsed.feedback.priorityImprovement,
+    nextChallenge: parsed.feedback.nextChallenge,
+    // スキルチェックでは使わない項目（小論文添削側で扱う）
+    repeatedIssues: [],
+    improvementsSinceLast: [],
+    languageCorrections: [],
   };
 
-  return { scores, feedback, raw: rawText };
+  return { scores, feedback, raw: JSON.stringify(parsed) };
 }
 
 /**

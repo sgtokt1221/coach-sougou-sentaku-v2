@@ -90,35 +90,19 @@ ${question.rubricHint ? `- 採点観点の補足: ${question.rubricHint}` : ""}
 ### total（合計）
 structure + logic + expression + apAlignment + originality の合計を返す。
 
-## 出力形式（必ずこのJSON形式で返答）
-
-\`\`\`json
-{
-  "scores": {
-    "structure": <0-10>,
-    "logic": <0-10>,
-    "expression": <0-10>,
-    "apAlignment": <0-10>,
-    "originality": <0-10>,
-    "total": <0-50>
-  },
-  "feedback": {
-    "overall": "<全体評 300字以内>",
-    "goodPoints": ["<良い点 1>", "<良い点 2>", "<良い点 3>"],
-    "improvements": ["<改善点 1>", "<改善点 2>"],
-    "repeatedIssues": [],
-    "improvementsSinceLast": [],
-    "priorityImprovement": "<次回スキルチェックまでに重点的に直す1点を必ず提示>",
-    "nextChallenge": "<次段階に向けた具体的な練習課題 1つ>"
-  }
-}
-\`\`\`
+## 出力
+指定された構造化出力スキーマに従って返す。各項目の内容は次のとおり。
+- scores: 上記5軸をそれぞれ 0-10 で採点する（合計はサーバー側で計算するため出力しない）
+- feedback.overall: 全体評 300字以内
+- feedback.goodPoints: 良い点を2〜3個
+- feedback.improvements: 改善点を2個程度
+- feedback.priorityImprovement: 次回スキルチェックまでに重点的に直す1点（必須）
+- feedback.nextChallenge: 次段階に向けた具体的な練習課題を1つ
 
 ## 採点上の厳守事項
 - S(45+)は「旧帝・早慶合格水準」にのみ与える。ただし判断材料は、高校生が書ける範囲での
   構成・論理・表現の完成度であり、大学レベルの専門知識の有無ではない。
 - D(<22)は「論として成立していない」場合のみ。存在感のある論述には最低でもC帯を与える。
-- languageCorrections, repeatedIssues, improvementsSinceLast は空配列で構わない（スキルチェックでは不要）。
 
 ## フィードバックの書き方（最重要）
 読むのは**高校生**である。次を必ず守る。
