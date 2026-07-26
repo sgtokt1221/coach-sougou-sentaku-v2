@@ -1,7 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { SkillCheckOutputSchema } from "@/lib/ai/schemas/skill-check";
-import { AI_MODEL_SONNET } from "@/lib/ai/prompt-versions";
+import { AI_MODEL_REVIEW } from "@/lib/ai/prompt-versions";
 import type { EssayScores, EssayFeedback } from "@/lib/types/essay";
 
 export interface ReviewCoreResult {
@@ -34,7 +34,7 @@ export async function reviewWithClaude(options: {
   // 切り出して JSON.parse していたため、モデルが引用符やエスケープを1文字誤ると
   // 採点全体が失敗していた（本番で "Unterminated string in JSON" 系の失敗が発生）。
   const response = await client.messages.parse({
-    model: AI_MODEL_SONNET,
+    model: AI_MODEL_REVIEW,
     max_tokens: maxTokens,
     system: systemPrompt,
     messages: [{ role: "user", content: userMessage }],

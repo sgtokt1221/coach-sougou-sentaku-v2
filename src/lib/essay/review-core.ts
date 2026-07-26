@@ -6,7 +6,7 @@ import {
 } from "@/lib/ai/prompts/essay";
 import { EssayReviewOutputSchema } from "@/lib/ai/schemas/essay-review";
 import { calculateEssayMetrics } from "@/lib/essay/review-metrics";
-import { AI_MODEL_SONNET, AI_PROMPT_VERSIONS } from "@/lib/ai/prompt-versions";
+import { AI_MODEL_REVIEW, AI_PROMPT_VERSIONS } from "@/lib/ai/prompt-versions";
 import type {
   EssayScores,
   EssayFeedback,
@@ -108,7 +108,7 @@ ${input.ocrText}
 </essay_under_review>`;
 
   const response = await client.messages.parse({
-    model: AI_MODEL_SONNET,
+    model: AI_MODEL_REVIEW,
     max_tokens: isReport ? 6000 : 4096,
     system: systemPrompt,
     messages: [{ role: "user", content: userMessage }],
@@ -207,7 +207,7 @@ ${input.ocrText}
     scoreMaximum,
     aiMetadata: {
       ...AI_PROMPT_VERSIONS.essayReview,
-      model: AI_MODEL_SONNET,
+      model: AI_MODEL_REVIEW,
     },
   };
 
