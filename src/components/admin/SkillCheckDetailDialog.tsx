@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Send, Loader2 } from "lucide-react";
 import {
@@ -17,6 +17,7 @@ import { authFetch } from "@/lib/api/client";
 import { ACADEMIC_CATEGORY_LABELS } from "@/lib/types/skill-check";
 import type { SkillCheckResult } from "@/lib/types/skill-check";
 import type { InterviewSkillCheckResult } from "@/lib/types/interview-skill-check";
+import type { AdminFeedback } from "@/lib/types/feedback";
 
 /**
  * 管理者・講師が生徒のスキルチェック結果を読み取り表示するダイアログ。
@@ -42,11 +43,39 @@ export function SkillCheckDetailDialog({
 }) {
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
+  const [history, setHistory] = useState<AdminFeedback[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
 
-  // 別の結果を開いたら書きかけをリセットする
+  /**
+   * この結果に対して過去に送ったフィードバックを取得する。
+   * type と targetId の両方を渡すのは、既存の複合インデックスが
+   * (type, targetId, createdAt) の順で作られており、targetId だけの絞り込みでは
+   * インデックス不足でクエリが失敗するため。
+   */
+  const loadHistory = useCallback(async () => {
+    if (!studentId || !result) {
+      setHistory([]);
+      return;
+    }
+    setLoadingHistory(true);
+    try {
+      const res = await authFetch(
+        `/api/admin/students/${studentId}/feedback?type=skill-check&targetId=${encodeURIComponent(result.id)}`,
+      );
+      if (res.ok) setHistory(await res.json());
+    } catch {
+      // 履歴が出せなくても送信自体は妨げない
+    } finally {
+      setLoadingHistory(false);
+    }
+  }, [studentId, result]);
+
+  // 別の結果を開いたら書きかけをリセットし、その結果の履歴を読み直す
   useEffect(() => {
     setMessage("");
-  }, [result?.id]);
+    if (open) void loadHistory();
+    else setHistory([]);
+  }, [open, result?.id, loadHistory]);
 
   /** 結果の要約ラベル。チャットの引用カードとスレッド見出しに使う */
   function buildLabel(): string {
@@ -90,6 +119,7 @@ export function SkillCheckDetailDialog({
       if (!res.ok) throw new Error();
       setMessage("");
       toast.success("フィードバックを送信しました");
+      await loadHistory();
     } catch {
       toast.error("送信に失敗しました");
     } finally {
@@ -122,6 +152,48 @@ export function SkillCheckDetailDialog({
                 <p className="mt-0.5 text-xs text-muted-foreground">
                   生徒のチャットに、この結果への引用カード付きで届きます。
                 </p>
+
+                {/* この結果に対して送信済みのフィードバック */}
+                {loadingHistory ? (
+                  <p className="mt-2 text-xs text-muted-foreground">履歴を読み込み中...</p>
+                ) : history.length > 0 ? (
+                  <div className="mt-2 space-y-2">
+                    <p className="text-xs font-semibold text-muted-foreground">
+                      送信済み（{history.length}件）
+                    </p>
+                    {history.map((f) => (
+                      <div key={f.id} className="rounded-md border bg-background p-2">
+                        <div className="flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
+                          <span className="truncate">{f.createdByName || "講師"}</span>
+                          <span className="flex shrink-0 items-center gap-1.5">
+                            {new Date(f.createdAt).toLocaleString("ja-JP", {
+                              month: "numeric",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                            <span
+                              className={
+                                f.read
+                                  ? "text-emerald-600"
+                                  : "font-semibold text-amber-600"
+                              }
+                            >
+                              {f.read ? "既読" : "未読"}
+                            </span>
+                          </span>
+                        </div>
+                        <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed">
+                          {f.message}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    この結果へのフィードバックはまだありません。
+                  </p>
+                )}
                 <Textarea
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
