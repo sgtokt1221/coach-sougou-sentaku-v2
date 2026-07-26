@@ -5,13 +5,15 @@ import { Badge } from "@/components/ui/badge";
 import type { SkillCheckResult } from "@/lib/types/skill-check";
 import { ACADEMIC_CATEGORY_LABELS } from "@/lib/types/skill-check";
 import { RANK_META } from "@/lib/skill-check/rank";
+import { getQuestionById } from "@/lib/skill-check/questions";
 import { SkillRankBadge } from "./SkillRankBadge";
 import { SkillRadarChart } from "./SkillRadarChart";
-import { CheckCircle2, Lightbulb, Target } from "lucide-react";
+import { CheckCircle2, FileText, Lightbulb, Target } from "lucide-react";
 
 export function SkillCheckResultView({ result }: { result: SkillCheckResult }) {
   const meta = RANK_META[result.rank];
   const { scores, feedback } = result;
+  const question = getQuestionById(result.questionId);
 
   return (
     <div className="space-y-6">
@@ -121,6 +123,39 @@ export function SkillCheckResultView({ result }: { result: SkillCheckResult }) {
           </CardContent>
         </Card>
       )}
+
+      {/* 提出した答案の原文。面接スキルチェックの対話ログと同じ位置づけで最後に置く */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <FileText className="size-4 text-slate-600" />
+            提出した答案
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {question && (
+            <div className="rounded-md border bg-muted/40 p-3">
+              <p className="text-xs font-semibold text-muted-foreground">出題</p>
+              <p className="mt-1 text-sm font-medium">{question.title}</p>
+              <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
+                {question.prompt}
+              </p>
+            </div>
+          )}
+          <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+            <span>{result.wordCount}字</span>
+            <span>所要 {Math.max(1, Math.round(result.durationSec / 60))}分</span>
+            {question && <span>制限 {question.wordLimit}字 / {question.timeLimitMin}分</span>}
+          </div>
+          {result.essayText?.trim() ? (
+            <p className="max-h-96 overflow-y-auto whitespace-pre-wrap rounded-md border p-3 text-sm leading-relaxed">
+              {result.essayText}
+            </p>
+          ) : (
+            <p className="text-sm text-muted-foreground">答案の本文が保存されていません。</p>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

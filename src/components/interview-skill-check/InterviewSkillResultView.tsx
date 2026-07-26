@@ -7,9 +7,17 @@ import { RANK_META } from "@/lib/skill-check/rank";
 import type { InterviewSkillCheckResult } from "@/lib/types/interview-skill-check";
 import { CheckCircle2, Lightbulb, Target, Mic } from "lucide-react";
 
-export function InterviewSkillResultView({ result }: { result: InterviewSkillCheckResult }) {
+export function InterviewSkillResultView({
+  result,
+  viewer = "student",
+}: {
+  result: InterviewSkillCheckResult;
+  /** 閲覧者。管理者が見るときは対話ログの話者を「生徒」と表示する */
+  viewer?: "student" | "admin";
+}) {
   const { scores, feedback, rank } = result;
   const meta = RANK_META[rank];
+  const studentLabel = viewer === "admin" ? "生徒" : "あなた";
 
   return (
     <div className="space-y-6">
@@ -129,14 +137,18 @@ export function InterviewSkillResultView({ result }: { result: InterviewSkillChe
           <CardTitle className="text-base">対話ログ</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm max-h-96 overflow-y-auto">
-          {result.messages.map((m, i) => (
-            <div key={i} className={m.role === "student" ? "pl-6" : ""}>
-              <Badge variant={m.role === "student" ? "default" : "outline"} className="mb-1 text-[10px]">
-                {m.role === "student" ? "あなた" : "面接官"}
-              </Badge>
-              <p className="whitespace-pre-wrap leading-relaxed">{m.content}</p>
-            </div>
-          ))}
+          {result.messages.length > 0 ? (
+            result.messages.map((m, i) => (
+              <div key={i} className={m.role === "student" ? "pl-6" : ""}>
+                <Badge variant={m.role === "student" ? "default" : "outline"} className="mb-1 text-[10px]">
+                  {m.role === "student" ? studentLabel : "面接官"}
+                </Badge>
+                <p className="whitespace-pre-wrap leading-relaxed">{m.content}</p>
+              </div>
+            ))
+          ) : (
+            <p className="text-muted-foreground">対話ログが保存されていません。</p>
+          )}
         </CardContent>
       </Card>
     </div>

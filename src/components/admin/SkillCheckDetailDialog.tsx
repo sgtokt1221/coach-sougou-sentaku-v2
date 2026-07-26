@@ -39,7 +39,10 @@ export function SkillCheckDetailDialog({
           kind === "essay" ? (
             <SkillCheckResultView result={result as SkillCheckResult} />
           ) : (
-            <InterviewSkillResultView result={result as InterviewSkillCheckResult} />
+            <InterviewSkillResultView
+              result={result as InterviewSkillCheckResult}
+              viewer="admin"
+            />
           )
         ) : (
           <p className="py-8 text-center text-sm text-muted-foreground">
