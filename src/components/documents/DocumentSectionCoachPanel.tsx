@@ -7,18 +7,12 @@ import {
   Loader2,
   Sparkles,
   CornerDownLeft,
-  ChevronRight,
   Target,
   Sprout,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { MobileSlideOverPanel } from "@/components/shared/MobileSlideOverPanel";
 import { authFetch } from "@/lib/api/client";
 import { stripSuggestion } from "@/lib/ai/prompts/document-coach";
 import { APReference } from "@/components/coach/APReference";
@@ -76,8 +70,6 @@ interface Props {
  * 既存スレッドがあれば API GET で履歴復元 (docId + sectionId)。
  */
 export function DocumentSectionCoachPanel(props: Props) {
-  const [mobileOpen, setMobileOpen] = useState(false);
-
   return (
     <>
       {/* デスクトップ */}
@@ -85,38 +77,14 @@ export function DocumentSectionCoachPanel(props: Props) {
         <PanelBody {...props} />
       </div>
 
-      {/* モバイル: 編集フロー上端へ追従。入力中も常に開け、保存ボタンとは競合させない。 */}
-      <Button
-        type="button"
-        onClick={() => setMobileOpen(true)}
-        variant="outline"
-        className="sticky top-2 z-30 mb-3 flex min-h-11 w-full items-center justify-between gap-3 rounded-xl border-indigo-200 bg-indigo-50/95 px-4 text-indigo-900 shadow-md backdrop-blur hover:bg-indigo-100 dark:border-indigo-900 dark:bg-indigo-950/90 dark:text-indigo-100 dark:hover:bg-indigo-950 lg:hidden"
-        aria-label="AIコーチを開く"
-      >
-        <span className="flex min-w-0 items-center gap-3">
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-indigo-600 text-white">
-            <MessageSquare className="size-4" />
-          </span>
-          <span className="min-w-0 text-left">
-            <span className="block text-sm font-semibold">AIコーチに相談</span>
-            <span className="block truncate text-xs font-normal text-indigo-700 dark:text-indigo-300">
-              選択中のセクションを一緒に整理
-            </span>
-          </span>
-        </span>
-        <ChevronRight className="size-4 shrink-0" />
-      </Button>
-
-      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetContent side="left" className="w-[92vw] sm:w-[420px] p-0 flex flex-col">
-          <SheetHeader className="border-b px-4 py-3">
-            <SheetTitle>AIコーチ</SheetTitle>
-          </SheetHeader>
-          <div className="flex-1 min-h-0">
-            <PanelBody {...props} />
-          </div>
-        </SheetContent>
-      </Sheet>
+      {/*
+        モバイル: 書類の編集画面（/student/documents/[id]）や小論文添削と同じ
+        段階スナップ式のスライドパネルに揃える。以前はボタン＋Sheet だったため、
+        本文を書きながら覗く（peek）ことができず、画面ごとに操作が違っていた。
+      */}
+      <MobileSlideOverPanel label="AIコーチ" title="AIコーチ">
+        <PanelBody {...props} />
+      </MobileSlideOverPanel>
     </>
   );
 }
