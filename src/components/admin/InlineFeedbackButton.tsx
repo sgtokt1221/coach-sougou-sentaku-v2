@@ -7,6 +7,7 @@ import { MessageSquare, Send, Loader2 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import { authFetch } from "@/lib/api/client";
+import { COMPOSER_SUBMIT_HINT, isComposerSubmitKey } from "@/lib/ui/composer-keys";
 import type { FeedbackType, AdminFeedback, ChatReference } from "@/lib/types/feedback";
 
 interface InlineFeedbackButtonProps {
@@ -102,14 +103,15 @@ export function InlineFeedbackButton({
                   rows={2}
                   className="min-h-[60px] text-sm"
                   onKeyDown={(e) => {
-                    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                    if (isComposerSubmitKey(e)) {
+                      e.preventDefault();
                       handleSend();
                     }
                   }}
                 />
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-[10px] text-muted-foreground">Cmd+Enter で送信</span>
+                <span className="text-[10px] text-muted-foreground">{COMPOSER_SUBMIT_HINT}</span>
                 <Button
                   size="sm"
                   onClick={handleSend}

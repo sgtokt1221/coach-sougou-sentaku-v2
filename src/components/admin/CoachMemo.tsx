@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { StickyNote, Send, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { authFetch } from "@/lib/api/client";
+import { COMPOSER_SUBMIT_HINT, isComposerSubmitKey } from "@/lib/ui/composer-keys";
 import type { AdminFeedback } from "@/lib/types/feedback";
 
 interface CoachMemoProps {
@@ -76,13 +77,14 @@ export function CoachMemo({ studentId }: CoachMemoProps) {
             rows={3}
             className="text-sm"
             onKeyDown={(e) => {
-              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+              if (isComposerSubmitKey(e)) {
+                e.preventDefault();
                 handleSend();
               }
             }}
           />
           <div className="flex items-center justify-between">
-            <span className="text-[10px] text-muted-foreground">Cmd+Enter で送信</span>
+            <span className="text-[10px] text-muted-foreground">{COMPOSER_SUBMIT_HINT}</span>
             <Button size="sm" onClick={handleSend} disabled={sending || !message.trim()}>
               {sending ? (
                 <Loader2 className="mr-1 size-3 animate-spin" />

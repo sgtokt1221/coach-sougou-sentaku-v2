@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils/avatar";
 import { authFetch } from "@/lib/api/client";
+import { COMPOSER_SUBMIT_HINT, isComposerSubmitKey } from "@/lib/ui/composer-keys";
 import { ProblemPickerDialog } from "@/components/admin/ProblemPickerDialog";
 import type {
   ChatAttachment,
@@ -521,7 +522,7 @@ export function ChatThread({
               className="max-h-32 min-h-[40px] flex-1 resize-none text-base"
               onFocus={scrollMessagesToBottom}
               onKeyDown={(e) => {
-                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                if (isComposerSubmitKey(e)) {
                   e.preventDefault();
                   handleSend();
                 }
@@ -548,7 +549,7 @@ export function ChatThread({
             data-chat-composer-meta
             className="px-1 pb-1 pt-1 text-[10px] text-muted-foreground"
           >
-            Cmd+Enter で送信
+            {COMPOSER_SUBMIT_HINT}
           </p>
           {draftKey && (
             <div data-chat-composer-meta>

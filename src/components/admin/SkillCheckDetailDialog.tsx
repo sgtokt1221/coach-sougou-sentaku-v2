@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { SkillCheckResultView } from "@/components/skill-check/SkillCheckResultView";
 import { InterviewSkillResultView } from "@/components/interview-skill-check/InterviewSkillResultView";
 import { authFetch } from "@/lib/api/client";
+import { COMPOSER_SUBMIT_HINT, isComposerSubmitKey } from "@/lib/ui/composer-keys";
 import { ACADEMIC_CATEGORY_LABELS } from "@/lib/types/skill-check";
 import type { SkillCheckResult } from "@/lib/types/skill-check";
 import type { InterviewSkillCheckResult } from "@/lib/types/interview-skill-check";
@@ -200,8 +201,17 @@ export function SkillCheckDetailDialog({
                   placeholder="よかった点と、次に直すところを具体的に伝えましょう。"
                   rows={3}
                   className="mt-2 bg-background"
+                  onKeyDown={(e) => {
+                    if (isComposerSubmitKey(e)) {
+                      e.preventDefault();
+                      void sendFeedback();
+                    }
+                  }}
                 />
-                <div className="mt-2 flex justify-end">
+                <div className="mt-2 flex items-center justify-between">
+                  <span className="text-[10px] text-muted-foreground">
+                    {COMPOSER_SUBMIT_HINT}
+                  </span>
                   <Button
                     size="sm"
                     onClick={sendFeedback}
