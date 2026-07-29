@@ -66,9 +66,9 @@ export function EssayDraftsSection() {
                       {draft.universityName} {draft.facultyName}
                     </span>
                   )}
-                  {draft.topic && (
+                  {(draft.topicLabel || draft.topic) && (
                     <span className="truncate text-xs text-muted-foreground">
-                      / {draft.topic}
+                      / {draft.topicLabel || draft.topic}
                     </span>
                   )}
                 </div>

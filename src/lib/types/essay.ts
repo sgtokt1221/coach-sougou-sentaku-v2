@@ -211,6 +211,11 @@ export interface EssayDraft {
   themeId?: string;
   pastQuestionId?: string;
   homeworkId?: string;
+  /**
+   * 一覧表示用のテーマ名。topic は手入力時しか埋まらないため、
+   * テーマ・過去問から選んだ下書きはサーバー側で名前を解決して入れる。
+   */
+  topicLabel?: string;
   createdAt: string;
   updatedAt: string;
 }
