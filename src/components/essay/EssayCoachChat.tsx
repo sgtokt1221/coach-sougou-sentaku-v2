@@ -44,6 +44,10 @@ interface EssayCoachChatProps {
   draft: string;
   universityId?: string;
   facultyId?: string;
+  /** 出題形式・課題文。コーチが資料の中身に即して助言できるよう渡す */
+  questionType?: CoachRequestBody["questionType"];
+  sourceText?: string;
+  chartData?: unknown;
   /** topic が変わった際に会話をリセットするためのキー */
   resetKey?: string;
 }
@@ -53,6 +57,9 @@ export function EssayCoachChat({
   draft,
   universityId,
   facultyId,
+  questionType,
+  sourceText,
+  chartData,
   resetKey,
 }: EssayCoachChatProps) {
   const [messages, setMessages] = useState<CoachMessage[]>([OPENING_MESSAGE]);
@@ -117,6 +124,9 @@ export function EssayCoachChat({
       draft,
       universityId,
       facultyId,
+      questionType,
+      sourceText,
+      chartData,
       userMessage: content,
     };
 

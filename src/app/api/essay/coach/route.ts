@@ -78,6 +78,9 @@ export async function POST(request: NextRequest) {
   const topic = (body.topic ?? "").trim();
   const universityId = body.universityId?.trim();
   const facultyId = body.facultyId?.trim();
+  const questionType = body.questionType;
+  const sourceText = body.sourceText?.trim();
+  const chartData = body.chartData;
 
   // スレッド取得 or 新規作成
   const threadsCol = adminDb.collection(`users/${uid}/essayCoachThreads`);
@@ -192,6 +195,9 @@ export async function POST(request: NextRequest) {
     selfAnalysis,
     draft,
     turnCount,
+    questionType,
+    sourceText,
+    chartData,
   });
 
   // Claude 呼び出し (LLMOps: レイテンシ・トークン・コストをトレース記録)

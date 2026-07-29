@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/select";
 import { useAuthSWR } from "@/lib/api/swr";
 import type { University } from "@/lib/types/university";
+import type { CoachRequestBody } from "@/lib/types/essay-coach";
 import { EssayCoachChat } from "./EssayCoachChat";
 import { SelfAnalysisReference } from "./SelfAnalysisReference";
 import { APReference } from "@/components/coach/APReference";
@@ -98,7 +99,7 @@ type PastQuestionChartData = Parameters<typeof PastQuestionChart>[0]["charts"];
 export interface ReferenceMaterial {
   sourceText?: string;
   chartData?: PastQuestionChartData;
-  questionType?: string;
+  questionType?: CoachRequestBody["questionType"];
 }
 
 interface EssayCoachPanelProps {
@@ -233,6 +234,9 @@ export function EssayCoachPanelBody({
             draft={draft}
             universityId={universityId}
             facultyId={facultyId}
+            questionType={referenceMaterial?.questionType}
+            sourceText={referenceMaterial?.sourceText}
+            chartData={referenceMaterial?.chartData}
             resetKey={`${universityId ?? ""}:${facultyId ?? ""}:${topic}`}
           />
         )}

@@ -4,6 +4,8 @@
  * Firestore パス: `users/{studentUid}/essayCoachThreads/{threadId}`
  */
 
+import type { EssayReviewRequest } from "./essay";
+
 export interface CoachMessage {
   role: "user" | "assistant";
   content: string;
@@ -52,6 +54,12 @@ export interface CoachRequestBody {
   draft: string;
   universityId?: string;
   facultyId?: string;
+  /** 出題形式。採点側 (EssayReviewRequest) と同じ区分を使う */
+  questionType?: EssayReviewRequest["questionType"];
+  /** 課題文・英文などの出題資料 */
+  sourceText?: string;
+  /** グラフ・データ資料 */
+  chartData?: unknown;
   /** ユーザーの今回の発話 */
   userMessage: string;
 }
