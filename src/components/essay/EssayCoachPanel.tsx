@@ -107,8 +107,13 @@ interface EssayCoachPanelProps {
   draft: string;
   universityId?: string;
   facultyId?: string;
-  /** 過去問の参考資料 (あれば 資料 タブが先頭に追加される) */
+  /** 過去問の参考資料 (あれば 資料 タブが先頭に追加され、コーチにも渡る) */
   referenceMaterial?: ReferenceMaterial;
+  /**
+   * 資料タブを増やさずにコーチにだけ渡す出題資料。
+   * 課題文を画面の別の場所に出している画面 (レポート課題の ReportSourcePane) で使う。
+   */
+  coachMaterial?: ReferenceMaterial;
   /**
    * 会話をリセットする単位。既定は topic だが、同じテーマ名で設問が変わる画面
    * (ちょこ添削の空欄切り替えなど) では設問を一意に識別する値を渡すこと。
@@ -181,8 +186,11 @@ export function EssayCoachPanelBody({
   universityId,
   facultyId,
   referenceMaterial,
+  coachMaterial,
   conversationKey,
 }: EssayCoachPanelProps) {
+  // 資料タブは referenceMaterial だけで決める。coachMaterial はコーチにのみ渡す。
+  const materialForCoach = referenceMaterial ?? coachMaterial;
   const hasReference = Boolean(
     referenceMaterial?.sourceText ||
       (referenceMaterial?.chartData && referenceMaterial.chartData.length > 0),
@@ -240,9 +248,9 @@ export function EssayCoachPanelBody({
             draft={draft}
             universityId={universityId}
             facultyId={facultyId}
-            questionType={referenceMaterial?.questionType}
-            sourceText={referenceMaterial?.sourceText}
-            chartData={referenceMaterial?.chartData}
+            questionType={materialForCoach?.questionType}
+            sourceText={materialForCoach?.sourceText}
+            chartData={materialForCoach?.chartData}
             resetKey={`${universityId ?? ""}:${facultyId ?? ""}:${conversationKey ?? topic}`}
           />
         )}

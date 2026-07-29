@@ -7,6 +7,7 @@ import {
   stripSuggestion,
   type DocumentCoachSelfAnalysisContext,
 } from "@/lib/ai/prompts/document-coach";
+import { stripMarkdown } from "@/lib/ai/plain-text";
 import type {
   DocumentCoachMessage,
   DocumentSectionCoachRequest,
@@ -179,8 +180,9 @@ export async function POST(request: NextRequest) {
         { role: "user" as const, content: userMsg.content },
       ],
     });
-    reply =
-      response.content[0]?.type === "text" ? response.content[0].text : "";
+    reply = stripMarkdown(
+      response.content[0]?.type === "text" ? response.content[0].text : ""
+    );
   } catch (err) {
     console.error("[documents/section-coach] Claude call failed:", err);
     return NextResponse.json(

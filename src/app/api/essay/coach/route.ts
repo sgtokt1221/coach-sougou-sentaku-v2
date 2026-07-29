@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 import { recordAiTrace } from "@/lib/ai/trace";
+import { stripMarkdown } from "@/lib/ai/plain-text";
 import {
   buildEssayCoachSystemPrompt,
   type CoachSelfAnalysis,
@@ -218,8 +219,9 @@ export async function POST(request: NextRequest) {
         { role: "user" as const, content: userMsg.content },
       ],
     });
-    reply =
-      response.content[0]?.type === "text" ? response.content[0].text : "";
+    reply = stripMarkdown(
+      response.content[0]?.type === "text" ? response.content[0].text : ""
+    );
     void recordAiTrace({
       feature: "essay-coach",
       model: COACH_MODEL,

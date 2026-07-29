@@ -521,6 +521,18 @@ export default function EssayNewPage() {
     return undefined;
   }, [pastQuestion, dynamicSourceText, selectedTheme]);
 
+  /**
+   * レポート課題の課題文。ReportSourcePane で画面に出しているため資料タブは
+   * 増やさず、コーチにだけ読ませる。
+   */
+  const reportCoachMaterial = useMemo(
+    () =>
+      reportMode && reportMaterial
+        ? { sourceText: reportMaterial.body, questionType: "report" as const }
+        : undefined,
+    [reportMode, reportMaterial]
+  );
+
   // 過去問の大学を AP 参照先として解決（志望校でなくても、その大学APで採点するため）。
   const problemUni: ResolvedUniversity | null = pastQuestion
     ? (resolved.find((r) => r.universityId === pastQuestion.universityId) ??
@@ -1711,6 +1723,7 @@ export default function EssayNewPage() {
               universityId={universityId || undefined}
               facultyId={facultyId || undefined}
               referenceMaterial={effectiveMaterial}
+              coachMaterial={reportCoachMaterial}
             />
 
             {/* 右列: 小論文入力 (常に最大幅) */}
