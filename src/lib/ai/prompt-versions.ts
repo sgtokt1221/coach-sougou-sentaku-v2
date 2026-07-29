@@ -24,8 +24,21 @@ export function selectDocumentModel(documentType: unknown): string {
 
 export const AI_PROMPT_VERSIONS = {
   essayReview: {
-    promptVersion: "essay-review-v2",
+    // v3: 字数指示の矛盾を解消し、充足率をサーバー計算値として渡すようにした。
+    // v4: アンカーを引き下げ、6点を標準に据えて7点以上に軸ごとの加点条件を課した。
+    //     校正実測（同一答案・4品質帯）: 普通に良い答案が 40.5点(A) → 37点(B) へ。
+    //     D級 16.5→17.0 / C級 27.0→27.0 / A級 42.0→40.0 と、狙った帯だけが動く。
+    // 採点結果が動くため、プロンプトを実質変更したらここも必ず上げる
+    // （aiMetadata に刻まれる版が変わらないと改定前後のスコア比較ができない）。
+    promptVersion: "essay-review-v4",
     schemaVersion: "essay-review-output-v2",
+  },
+  skillCheck: {
+    // v2: 軸別バンドの 10/8 点の記述を締め、6点を平均に据えた。
+    //     校正実測（law-01・同一答案）: 普通に良い答案が 44点(A) → 38点(B) へ。
+    //     C級は 24点(C) のまま。小論文添削のB級37点とほぼ揃った（従来は7点ずれ）。
+    promptVersion: "skill-check-v2",
+    schemaVersion: "skill-check-output-v1",
   },
   documentReview: {
     promptVersion: "document-review-v2",

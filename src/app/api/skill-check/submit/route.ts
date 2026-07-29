@@ -3,6 +3,8 @@ import { reviewWithClaude, buildMockReviewResult } from "@/lib/ai/essay-reviewer
 import { buildSkillCheckPrompt } from "@/lib/ai/prompts/skill-check";
 import { getQuestionById } from "@/lib/skill-check/questions";
 import { calculateRank } from "@/lib/skill-check/rank";
+import { calculateFillRate } from "@/lib/essay/review-metrics";
+import { AI_MODEL_REVIEW, AI_PROMPT_VERSIONS } from "@/lib/ai/prompt-versions";
 import type { AcademicCategory, SkillCheckResult } from "@/lib/types/skill-check";
 import { ACADEMIC_CATEGORIES } from "@/lib/types/skill-check";
 import type { WeaknessRecord } from "@/lib/types/growth";
@@ -60,8 +62,11 @@ export async function POST(request: NextRequest) {
   }
 
   // AI採点（未設定時はモック）
-  const systemPrompt = buildSkillCheckPrompt(question);
-  const userMessage = `【問題】${question.title}\n${question.prompt}\n\n【小論文本文】\n${essayText}`;
+  // 充足率はサーバーで計算して渡す。モデルに字数を数えさせると「7割未満なら減点」の
+  // 判定が安定しない（プロンプト側は wordLimit を受け取っていなかった）。
+  const fillRate = calculateFillRate(essayText, question.wordLimit);
+  const systemPrompt = buildSkillCheckPrompt(question, { fillRate });
+  const userMessage = `【問題】${question.title}\n${question.prompt}\n\n<essay_under_review>\n${essayText}\n</essay_under_review>`;
 
   let reviewResult;
   try {
@@ -110,6 +115,12 @@ export async function POST(request: NextRequest) {
       feedback: sanitize(feedback),
       takenAt: FieldValue.serverTimestamp(),
       version: "v1",
+      // 採点プロンプトの版。アンカーを変えるとスコア水準が動くため、
+      // どの基準で付いた点かを後から判別できるように記録する。
+      aiMetadata: {
+        ...AI_PROMPT_VERSIONS.skillCheck,
+        model: AI_MODEL_REVIEW,
+      },
     });
     resultId = docRef.id;
   } catch (err) {

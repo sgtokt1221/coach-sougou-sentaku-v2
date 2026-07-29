@@ -1,5 +1,6 @@
 import type { ChocoParagraph } from "@/lib/types/choco";
 import { CHOCO_ROLE_LABELS } from "@/lib/types/choco";
+import { instructionBoundary } from "./shared";
 
 /**
  * 本文全体（伏せ段落は位置を明示）＋伏せた段落の役割・キーポイント・模範＋生徒回答
@@ -21,6 +22,13 @@ export function buildChocoReviewPrompt(
     .join("\n\n");
 
   return `あなたは小論文の丁寧な添削者です。ある完成した小論文のうち「${blankIndex + 1}段落目（役割: ${roleLabel}）」だけを生徒が書きました。前後の段落は完成済みのお手本です。生徒の段落を、前後の文脈とのつながりを重視して評価してください。相手は「1段落だけなら書ける」という、まだ自信のない生徒です。まず良い点を認め、具体的に励ましてください。
+
+${instructionBoundary("生徒が書いた段落")}
+
+## 模範段落の扱い
+- 模範段落は採点の基準として参照するだけです。フィードバックに模範段落の文言を
+  そのまま引用したり、言い換えて全文を示したりしないでください（生徒には後で開示します）。
+- 助言は生徒自身が書いた言葉を引用して行います。
 
 ## 小論文全体（${blankIndex + 1}段落目が生徒の回答）
 ${body}

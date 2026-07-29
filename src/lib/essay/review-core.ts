@@ -5,7 +5,10 @@ import {
   type EssaySelfAnalysisContext,
 } from "@/lib/ai/prompts/essay";
 import { EssayReviewOutputSchema } from "@/lib/ai/schemas/essay-review";
-import { calculateEssayMetrics } from "@/lib/essay/review-metrics";
+import {
+  calculateEssayMetrics,
+  calculateFillRate,
+} from "@/lib/essay/review-metrics";
 import { AI_MODEL_REVIEW, AI_PROMPT_VERSIONS } from "@/lib/ai/prompt-versions";
 import type {
   EssayScores,
@@ -78,11 +81,15 @@ export async function reviewEssayCore(
   const isReport = input.questionType === "report";
   const admissionPolicy = input.admissionPolicy?.trim() ?? "";
   const hasAdmissionPolicy = admissionPolicy.length > 0;
+  // 充足率はプロンプトにも渡す。モデルに字数を数えさせると server 側の集計と
+  // ずれ、「7割未満なら減点」の判定が安定しない。
+  const fillRate = calculateFillRate(input.ocrText, input.wordLimit);
   const systemPrompt = buildEssayReviewPrompt({
     questionType: input.questionType,
     hasAdmissionPolicy,
     hasPreviousAttempt: Boolean(input.previousAttempt),
-    hasWordLimit: Boolean(input.wordLimit),
+    wordLimit: input.wordLimit,
+    fillRate,
   });
 
   const referenceData = {

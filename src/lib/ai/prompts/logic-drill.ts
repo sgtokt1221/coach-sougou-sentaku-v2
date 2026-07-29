@@ -4,9 +4,13 @@ import {
   type LogicDrillItem,
   type LogicDrillAnswer,
 } from "@/lib/types/logic-drill";
+import { instructionBoundary } from "./shared";
 
 const COMMON_RUBRIC = `あなたは高校生の小論文・論理表現を指導するコーチです。
 以下の回答を「論理」の観点で採点してください。必ず日本語で、次のJSONだけを出力してください（前後に文章を付けない）。
+
+${instructionBoundary("生徒の説明・修正文・意見文")}
+
 {
   "scores": { "consistency": <0-5>, "validity": <0-5>, "structure": <0-5> },
   "feedback": { "good": "<良かった点>", "improve": "<改善点(具体的な赤ペン)>"{FLAW_FIELD} }

@@ -21,6 +21,20 @@ function countChars(text: string): number {
   return Array.from(text.replace(/\s/g, "")).length;
 }
 
+/**
+ * 制限字数に対する充足率(%)。制限字数が無ければ null。
+ *
+ * 採点プロンプトにもこの値を渡す。LLM に字数を数えさせると server 側の集計
+ * (countChars: 空白を除く) とずれ、「7割未満なら減点」の判定が不安定になる。
+ */
+export function calculateFillRate(
+  essayText: string,
+  wordLimit: number | undefined
+): number | null {
+  if (typeof wordLimit !== "number" || wordLimit <= 0) return null;
+  return Math.round((countChars(essayText) / Math.round(wordLimit)) * 100);
+}
+
 function splitParagraphs(text: string): string[] {
   return text
     .split(/\n+/)
@@ -83,9 +97,7 @@ export function calculateEssayMetrics(
   return {
     wordCount,
     wordLimit: normalizedLimit,
-    fillRate: normalizedLimit
-      ? Math.round((wordCount / normalizedLimit) * 100)
-      : null,
+    fillRate: calculateFillRate(essayText, wordLimit),
     sentenceCount: (essayText.match(/[。！？!?]/g) ?? []).length,
     paragraphCount: paragraphs.length,
     paragraphRatio: paragraphRatio(paragraphs),

@@ -14,12 +14,27 @@ export const ESSAY_REVIEW_SYSTEM_PROMPT = `あなたは総合型選抜（旧AO�
 4. apAlignment: APとの意味的な整合。単語の一致だけで加点しない
 5. originality: 本人の具体的な視点、判断、経験
 
-## 共通アンカー
+## 共通アンカー（6点＝標準。ここを基準に上下させる）
 - 0〜2点: 必要要素がほぼない、または重大な破綻がある
 - 3〜5点: 一部は満たすが、根拠不足・曖昧さ・飛躍が目立つ
-- 6〜7点: 必要要素を概ね満たし、実用的な水準にある
-- 8〜9点: 明確な根拠と一貫性があり、優れている
-- 10点: 反論検討や表現まで含め模範的。例外的な場合だけ付ける
+- 6点: **平均的な高校生の答案**。必要要素は揃っているが、そこから踏み込んでいない。
+  「破綻はなく、よく書けている」と感じたらまず6点です。
+  必要要素が揃っている前提で迷ったときは6点にします。
+  ただし6点は**必要要素が揃っていることが条件**です。主張・根拠・具体のいずれかが
+  欠けている軸、または設問への応答がずれている軸は5点以下にします。
+- 7点: 6点の水準に加えて、下の「7点以上の条件」をその軸で満たしている
+- 8〜9点: 条件を満たし、かつ同学年の上位1〜2割に入る出来。安易に付けません
+- 10点: 数十枚に1枚。付けるなら goodPoints でその根拠を具体的に説明できること
+
+「読みやすい」「まとまっている」という印象だけで7点以上を付けません。
+7点以上は必ず下の条件に照らして判定し、条件を満たさなければ6点以下にします。
+
+## 7点以上の条件（軸ごと。満たさなければ6点以下）
+- structure: 各段落の役割が互いに異なり、順序を入れ替えると論が成立しなくなる構成になっている
+- logic: 反論または別の立場に触れ、それを踏まえてなお自分の主張が残る理由を示している
+- expression: 一文の長さや語彙を内容に応じて意図的に使い分けている（誤りがないだけでは6点）
+- apAlignment: APの主旨と本人の具体的な経験・計画が、言い換えではなく因果関係で結ばれている
+- originality: 本人しか書けない具体（固有の状況、判断の迷い、実際の数値）が論の中心にある
 
 文字数そのものではなく、設問に必要な主張・根拠・検討が揃っているかを採点してください。
 制限字数がない場合、短いことだけを理由に減点しません。必要要素が欠ける場合は、その不足を理由に該当軸を下げます。
@@ -27,12 +42,12 @@ export const ESSAY_REVIEW_SYSTEM_PROMPT = `あなたは総合型選抜（旧AO�
 ## 重い減点事由
 - 設問が明示的に求めている要素（「〜を比較せよ」「〜の方策を示せ」等）が欠けている場合、
   最も重い減点事由として扱い、logic と apAlignment を4点以下にします。
-- 制限字数がある場合、その7割に届かない答案は論を展開しきれていないため、
-  structure と logic を6点以下にします。
 - 努力や着眼点を汲んで点を底上げしません。実力を正確に伝えることが本人の役に立ちます。
+（字数についての扱いは「今回の条件」に従ってください。自分で字数を数える必要はありません。）
 
 ## フィードバックの書き方（最重要）
-読むのは**高校生**です。次を必ず守ります。
+読むのは**高校生**です。点は上の基準どおり厳しく付けますが、**語り口は変えません**。
+点が低いときこそ、どこを直せば上がるかを具体的に示します。次を必ず守ります。
 
 ### 言葉づかい
 - 中学生が読んでも分かる言葉で書きます。専門用語を使うときは短い言い換えを添えます。
@@ -77,7 +92,32 @@ export interface EssayReviewPromptOptions {
   questionType?: string;
   hasAdmissionPolicy: boolean;
   hasPreviousAttempt: boolean;
-  hasWordLimit: boolean;
+  /** 制限字数。無ければ undefined */
+  wordLimit?: number;
+  /** 制限字数に対する充足率(%)。サーバー計算値。制限字数が無ければ null */
+  fillRate?: number | null;
+}
+
+/** 充足率がこの値を下回る答案は論を展開しきれていないと判定する。 */
+const FILL_RATE_PENALTY_THRESHOLD = 70;
+
+/**
+ * 字数に関する指示。
+ *
+ * 以前は共通部で「7割未満なら減点」と言いながら、条件部で「充足率はサーバーが
+ * 計算するため内容面だけを評価せよ」と言っており、制限字数のある答案では相反する
+ * 2つの指示が同時に入っていた。充足率はサーバーで確定できるので、判定結果を
+ * 数値付きで渡し、モデルには数えさせない。
+ */
+function buildWordLimitRule(options: EssayReviewPromptOptions): string {
+  const { wordLimit, fillRate } = options;
+  if (typeof wordLimit !== "number" || wordLimit <= 0 || fillRate == null) {
+    return "制限字数はありません。短さそのものでは減点せず、必要要素の不足だけを評価してください。";
+  }
+  if (fillRate < FILL_RATE_PENALTY_THRESHOLD) {
+    return `制限字数は${wordLimit}字で、この答案の充足率は${fillRate}%です（サーバー計算値）。${FILL_RATE_PENALTY_THRESHOLD}%未満のため論を展開しきれていないと判定します。structure と logic は6点以下にしてください。`;
+  }
+  return `制限字数は${wordLimit}字で、この答案の充足率は${fillRate}%です（サーバー計算値）。${FILL_RATE_PENALTY_THRESHOLD}%は満たしているため、字数を理由に加点も減点もせず、内容面だけを評価してください。`;
 }
 
 function buildQuestionTypeRubric(questionType?: string): string {
@@ -106,9 +146,7 @@ export function buildEssayReviewPrompt(
   const previousRule = options.hasPreviousAttempt
     ? "前回答案があります。improvementsSinceLastは前回・今回の本文で確認できる差だけを記述してください。"
     : "前回答案はありません。improvementsSinceLastは必ず空配列にしてください。";
-  const wordLimitRule = options.hasWordLimit
-    ? "制限字数があります。充足率はサーバーが計算するため、内容面への影響だけを評価してください。"
-    : "制限字数はありません。短さそのものでは減点せず、必要要素の不足だけを評価してください。";
+  const wordLimitRule = buildWordLimitRule(options);
   const reportRule =
     options.questionType === "report"
       ? "reportInsightsを具体的に記述してください。"
