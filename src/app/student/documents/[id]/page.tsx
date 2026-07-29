@@ -106,6 +106,7 @@ export default function DocumentEditorPage() {
   const [rewriteInstruction, setRewriteInstruction] = useState("");
   const [rewriting, setRewriting] = useState(false);
   const [rewritePreview, setRewritePreview] = useState<string | null>(null);
+  const [rewriteNotice, setRewriteNotice] = useState<string | null>(null);
 
   const loadDocument = useCallback(async () => {
     setLoading(true);
@@ -283,6 +284,7 @@ export default function DocumentEditorPage() {
       if (res.ok) {
         const data = await res.json();
         setRewritePreview(data.rewritten);
+        setRewriteNotice(data.notice ?? null);
       } else {
         const err = await res.json().catch(() => ({}));
         toast.error(err?.error || "書き換えに失敗しました");
@@ -304,6 +306,7 @@ export default function DocumentEditorPage() {
     const next = rewritePreview;
     setContent(next);
     setRewritePreview(null);
+    setRewriteNotice(null);
     setRewriteInstruction("");
     try {
       const res = await authFetch(`/api/documents/${id}`, {
@@ -324,6 +327,7 @@ export default function DocumentEditorPage() {
   /** プレビュー中の書き換え案を破棄する。本文には影響しない。 */
   function discardRewrite() {
     setRewritePreview(null);
+    setRewriteNotice(null);
   }
 
   async function commitStatus(status: DocumentStatus) {
@@ -466,6 +470,7 @@ export default function DocumentEditorPage() {
           setRewriteInstruction={setRewriteInstruction}
           rewriting={rewriting}
           rewritePreview={rewritePreview}
+          rewriteNotice={rewriteNotice}
           onRewrite={handleRewrite}
           onApplyRewrite={applyRewrite}
           onDiscardRewrite={discardRewrite}
@@ -506,6 +511,7 @@ export default function DocumentEditorPage() {
             setRewriteInstruction={setRewriteInstruction}
             rewriting={rewriting}
             rewritePreview={rewritePreview}
+            rewriteNotice={rewriteNotice}
             onRewrite={handleRewrite}
             onApplyRewrite={applyRewrite}
             onDiscardRewrite={discardRewrite}
@@ -667,6 +673,7 @@ function ReviewPanel({
   setRewriteInstruction,
   rewriting,
   rewritePreview,
+  rewriteNotice,
   onRewrite,
   onApplyRewrite,
   onDiscardRewrite,
@@ -686,6 +693,7 @@ function ReviewPanel({
   setRewriteInstruction: (v: string) => void;
   rewriting: boolean;
   rewritePreview: string | null;
+  rewriteNotice: string | null;
   onRewrite: () => void;
   onApplyRewrite: () => void;
   onDiscardRewrite: () => void;
@@ -807,6 +815,11 @@ function ReviewPanel({
               <Separator />
               <div className="space-y-2">
                 <p className="text-sm font-medium">書き換え案</p>
+                {rewriteNotice && (
+                  <p className="rounded-md border border-amber-300 bg-amber-50 p-2 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+                    {rewriteNotice}
+                  </p>
+                )}
                 <div className="bg-muted/30 max-h-64 overflow-y-auto rounded-md border p-3 text-sm whitespace-pre-wrap">
                   {rewritePreview}
                 </div>

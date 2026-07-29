@@ -168,20 +168,27 @@ export async function POST(
       (typeof data?.targetWordCount === "number"
         ? Math.round(data.targetWordCount * 1.1)
         : null);
+    let notice: string | undefined;
     if (limit) {
       rewritten = await fitToCharLimit(client, rewritten, limit);
       if (rewritten.length > limit) {
-        return NextResponse.json(
-          {
-            error:
-              "書き換え結果を指定文字数内に収められませんでした。指示を分けてお試しください。",
-          },
-          { status: 502 }
-        );
+        // 生徒が指示文で字数を明示した場合だけ、収まらない結果は返さない。
+        if (explicitLimit) {
+          return NextResponse.json(
+            {
+              error:
+                "書き換え結果を指定文字数内に収められませんでした。指示を分けてお試しください。",
+            },
+            { status: 502 }
+          );
+        }
+        // 目標文字数由来の上限は、元の本文がすでに超過していることが多い。
+        // 書き換え結果ごと捨てると生徒は何も得られないため、超過を伝えて返す。
+        notice = `目標文字数の上限${limit}字を超えています（${rewritten.length}字）。置き換えたあとに削ってください。`;
       }
     }
 
-    return NextResponse.json({ rewritten });
+    return NextResponse.json({ rewritten, notice });
   } catch (error) {
     console.error("Document rewrite error:", error);
     return NextResponse.json(
