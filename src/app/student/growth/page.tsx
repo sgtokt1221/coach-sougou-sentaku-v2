@@ -126,6 +126,13 @@ function WeaknessColumn({
   );
 }
 
+/**
+ * 小論文の採点アンカーを引き下げた日時（JST）。同じ答案でも3〜4点低く出るため、
+ * この日をまたぐ生徒にはグラフの段差の理由を知らせる。
+ * 採点基準を再度変える場合はここも更新する。
+ */
+const SCORING_CRITERIA_UPDATED_AT = new Date("2026-07-30T00:00:00+09:00").getTime();
+
 export default function GrowthPage() {
   const { data: essayData, isLoading: loadingTrend } = useAuthSWR<{ essays: { submittedAt: string; status: string; scores?: { total: number; structure: number; logic: number; expression: number; apAlignment: number; originality: number } }[] }>("/api/essay/history?userId=current");
   const { data: interviewData, isLoading: loadingInterviews } = useAuthSWR<{ interviews: InterviewHistoryItem[] }>("/api/interview/history?userId=current");
@@ -223,6 +230,20 @@ export default function GrowthPage() {
     [trendData],
   );
   const hasCombined = essaySeries.length > 0 || interviewTrendData.length > 0;
+
+  /**
+   * 採点基準の更新（アンカー引き下げ）より前に提出した答案を持つ生徒にだけ、
+   * グラフの段差の理由を知らせる。更新後に始めた生徒には出さない。
+   */
+  const showScoringCriteriaNotice = useMemo(() => {
+    const essays = essayData?.essays ?? [];
+    return essays.some(
+      (e) =>
+        e.scores &&
+        e.status === "reviewed" &&
+        new Date(e.submittedAt).getTime() < SCORING_CRITERIA_UPDATED_AT
+    );
+  }, [essayData]);
 
   const weaknesses = useMemo((): WeaknessWithLevel[] => {
     const items: WeaknessRecord[] = weaknessData?.weaknesses ?? [];
@@ -338,6 +359,12 @@ export default function GrowthPage() {
             </div>
           </CardHeader>
           <CardContent>
+            {showScoringCriteriaNotice && (
+              <p className="mb-3 rounded-md border border-sky-200 bg-sky-50 p-2.5 text-xs leading-relaxed text-sky-900 dark:border-sky-900 dark:bg-sky-950/50 dark:text-sky-200">
+                2026年7月30日に小論文の採点基準を更新しました。同じ答案でも以前より3〜4点低く出ます。
+                グラフがこの日をまたいで下がっていても、実力が落ちたわけではありません。
+              </p>
+            )}
             {loadingTrend || loadingInterviews ? (
               <Skeleton className="h-[220px] w-full lg:h-[280px]" />
             ) : !hasCombined ? (

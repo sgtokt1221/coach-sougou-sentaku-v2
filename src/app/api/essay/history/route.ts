@@ -78,6 +78,10 @@ export async function GET(request: NextRequest) {
     };
 
     async function resolveNames(universityId: string, facultyId: string) {
+      // 志望校を選ばずに提出した答案は targetUniversity が空になる。空のまま
+      // doc(`universities/`) を引くと Firestore が例外を投げ、その生徒の履歴と
+      // スコア推移が丸ごと 500 で消えるため、ここで打ち切る。
+      if (!universityId) return { universityName: "", facultyName: "" };
       const resolvedUniversityId =
         universityIdAliases[universityId] ?? universityId;
       if (!universityCache.has(resolvedUniversityId)) {
