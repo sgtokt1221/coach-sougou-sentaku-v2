@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
@@ -480,6 +480,47 @@ export default function EssayNewPage() {
   const [topic, setTopic] = useState("");
   const [writingDirection, setWritingDirection] = useState<"vertical" | "horizontal">("horizontal");
 
+  /**
+   * 実際の設問文。テーマ入力欄はテーマ/過去問/課題文を選ぶと非表示になるため、
+   * topic state が埋まるのは手入力のときだけ。選択元から設問を組み立て直す。
+   */
+  const effectiveTopic = useMemo(() => {
+    if (reportMode && reportMaterial) return reportMaterial.title;
+    if (pastQuestion) {
+      return [pastQuestion.theme, pastQuestion.description]
+        .filter((s) => s && s.trim())
+        .join("\n\n");
+    }
+    if (selectedTheme) {
+      return [selectedTheme.title, selectedTheme.description]
+        .filter((s) => s && s.trim())
+        .join("\n\n");
+    }
+    return topic;
+  }, [reportMode, reportMaterial, pastQuestion, selectedTheme, topic]);
+
+  /**
+   * 出題資料（課題文・グラフ・出題形式）。採点には送っていたがコーチには
+   * 過去問のときしか渡していなかったため、テーマ選択時も同じものを渡す。
+   */
+  const effectiveMaterial = useMemo(() => {
+    if (pastQuestion) {
+      return {
+        sourceText: pastQuestion.sourceText ?? dynamicSourceText ?? undefined,
+        chartData: pastQuestion.chartData,
+        questionType: pastQuestion.questionType,
+      };
+    }
+    if (selectedTheme) {
+      return {
+        sourceText: selectedTheme.sourceText,
+        chartData: selectedTheme.chartData,
+        questionType: selectedTheme.questionType,
+      };
+    }
+    return undefined;
+  }, [pastQuestion, dynamicSourceText, selectedTheme]);
+
   // 過去問の大学を AP 参照先として解決（志望校でなくても、その大学APで採点するため）。
   const problemUni: ResolvedUniversity | null = pastQuestion
     ? (resolved.find((r) => r.universityId === pastQuestion.universityId) ??
@@ -700,7 +741,7 @@ export default function EssayNewPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             imageBase64: images[i].base64,
-            universityId, facultyId, topic, writingDirection,
+            universityId, facultyId, topic: effectiveTopic, writingDirection,
             consent: true, // consent: 利用規約の保存同意に基づく
           }),
         });
@@ -742,7 +783,7 @@ export default function EssayNewPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             imageBase64: images[i].base64,
-            universityId, facultyId, topic, writingDirection,
+            universityId, facultyId, topic: effectiveTopic, writingDirection,
             consent: true, // consent: 利用規約の保存同意に基づく
           }),
         });
@@ -866,7 +907,7 @@ export default function EssayNewPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          essayId: id, ocrText: directText, universityId, facultyId, topic,
+          essayId: id, ocrText: directText, universityId, facultyId, topic: effectiveTopic,
           wordLimit: customMaxLength || pastQuestion?.wordLimit || selectedTheme?.wordLimit || retryParent?.retryContext?.wordLimit,
           inputMode,
           ...(homeworkId ? { homeworkId } : {}),
@@ -920,7 +961,7 @@ export default function EssayNewPage() {
         ocrText: directText,
         universityName: effectiveUni?.universityName ?? "",
         facultyName: effectiveUni?.facultyName ?? "",
-        topic: topic ?? "",
+        topic: effectiveTopic,
         submittedAt: new Date().toISOString(),
       }));
       router.push(`/student/essay/${data.essayId ?? id}`);
@@ -958,7 +999,7 @@ export default function EssayNewPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          essayId, ocrText, universityId, facultyId, topic,
+          essayId, ocrText, universityId, facultyId, topic: effectiveTopic,
           wordLimit: customMaxLength || pastQuestion?.wordLimit || selectedTheme?.wordLimit || retryParent?.retryContext?.wordLimit,
           inputMode,
           ...(homeworkId ? { homeworkId } : {}),
@@ -999,7 +1040,7 @@ export default function EssayNewPage() {
         ocrText,
         universityName: effectiveUni?.universityName ?? "",
         facultyName: effectiveUni?.facultyName ?? "",
-        topic: topic ?? "",
+        topic: effectiveTopic,
         submittedAt: new Date().toISOString(),
       }));
       router.push(`/student/essay/${data.essayId ?? essayId}`);
@@ -1665,19 +1706,11 @@ export default function EssayNewPage() {
           >
             {/* 左列: 執筆サポートパネル (資料/AIコーチ/AP/ネタ/自己分析) */}
             <EssayCoachPanel
-              topic={topic}
+              topic={effectiveTopic}
               draft={directText}
               universityId={universityId || undefined}
               facultyId={facultyId || undefined}
-              referenceMaterial={
-                pastQuestion && (pastQuestion.sourceText || dynamicSourceText || pastQuestion.chartData)
-                  ? {
-                      sourceText: pastQuestion.sourceText ?? dynamicSourceText ?? undefined,
-                      chartData: pastQuestion.chartData,
-                      questionType: pastQuestion.questionType,
-                    }
-                  : undefined
-              }
+              referenceMaterial={effectiveMaterial}
             />
 
             {/* 右列: 小論文入力 (常に最大幅) */}
