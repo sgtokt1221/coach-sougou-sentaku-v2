@@ -4,6 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "emu": "PATH=\"/opt/homebrew/opt/openjdk/bin:$PATH\" firebase emulators:start --project demo-coach --only auth,firestore,storage --import ./.emulator-data --export-on-exit ./.emulator-data",
+    "seed:emu": "NEXT_PUBLIC_FIREBASE_PROJECT_ID=demo-coach FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 tsx scripts/seed-emulator.ts",
+    "dev:emu": "NEXT_PUBLIC_FIREBASE_EMULATOR=1 NEXT_PUBLIC_FIREBASE_PROJECT_ID=demo-coach NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=demo-coach.appspot.com FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_STORAGE_EMULATOR_HOST=127.0.0.1:9199 next dev",
     "dev:https": "next dev --experimental-https --experimental-https-cert certs/cert.pem --experimental-https-key certs/key.pem",
     "build": "rm -rf .next && npm run validate:data && NODE_OPTIONS='--max-old-space-size=4096' next build",
     "start": "next start",

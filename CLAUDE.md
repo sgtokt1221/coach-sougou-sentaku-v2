@@ -73,6 +73,25 @@
 - `npm run format` - Prettier フォーマット
 - `npm run format:check` - フォーマットチェック
 
+### ローカルでUIを検証する（認証が要る画面）
+`npm run dev` は .env.local の実プロジェクトに繋がるため、ログインできないと生徒画面を開けない。
+エミュレータを使えばローカルだけで完結する。ターミナル2つで:
+
+```
+npm run emu       # Auth/Firestore/Storage エミュレータ（Java 必須。Homebrew の openjdk を PATH に通してある）
+npm run seed:emu  # 検証用の生徒アカウントとデータを投入
+npm run dev:emu   # エミュレータに繋いだ dev サーバー
+```
+
+`student@example.com` / `password` でログインする。投入されるもの:
+- 生徒1名（plan=standard + documentPackage購入済み。requireFeature を全部通すため）
+- `/student/documents/emu-doc-over-limit` — AI書き換えの字数警告
+- `/student/documents/emu-doc-placeholder` — 書き換えのプレースホルダー警告
+- `/student/essay/history` — 下書き一覧のテーマ名表示
+
+エミュレータのデータは `.emulator-data/` に残る（gitignore 済み）。
+AI呼び出しは .env.local の ANTHROPIC_API_KEY をそのまま使うので実APIに出る。
+
 ## 7. Common Pitfalls
 - Claude Vision APIのOCR精度: 手書きの崩し字は誤認識しやすい → 生徒に確認ステップ必須
 - 大学データの鮮度: 毎年募集要項が変わるため、年次更新フローが必要

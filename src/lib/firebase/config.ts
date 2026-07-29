@@ -1,10 +1,26 @@
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
-import { getAuth, type Auth } from "firebase/auth";
-import { getFirestore, type Firestore } from "firebase/firestore";
-import { getStorage, type FirebaseStorage } from "firebase/storage";
+import { getAuth, connectAuthEmulator, type Auth } from "firebase/auth";
+import {
+  getFirestore,
+  connectFirestoreEmulator,
+  type Firestore,
+} from "firebase/firestore";
+import {
+  getStorage,
+  connectStorageEmulator,
+  type FirebaseStorage,
+} from "firebase/storage";
+
+/** ローカルの Firebase エミュレータへ繋ぐか（npm run dev:emu で立つ）。 */
+const useEmulator =
+  process.env.NODE_ENV === "development" &&
+  process.env.NEXT_PUBLIC_FIREBASE_EMULATOR === "1";
 
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  // エミュレータ利用時は実プロジェクトの認証情報が不要なため、ダミーで初期化する。
+  apiKey: useEmulator
+    ? "emulator-api-key"
+    : process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
@@ -26,4 +42,18 @@ if (auth) {
 }
 export const db: Firestore | null = app ? getFirestore(app) : null;
 export const storage: FirebaseStorage | null = app ? getStorage(app) : null;
+
+// エミュレータ接続は各インスタンスにつき1回だけ。Fast Refresh でこのモジュールが
+// 再評価されると重複呼び出しで例外になるため、握りつぶす。
+if (useEmulator) {
+  const host = process.env.NEXT_PUBLIC_FIREBASE_EMULATOR_HOST ?? "127.0.0.1";
+  try {
+    if (auth) connectAuthEmulator(auth, `http://${host}:9099`);
+    if (db) connectFirestoreEmulator(db, host, 8080);
+    if (storage) connectStorageEmulator(storage, host, 9199);
+  } catch {
+    // 接続済み
+  }
+}
+
 export default app;

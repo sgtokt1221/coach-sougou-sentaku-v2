@@ -59,3 +59,9 @@ __pycache__/
 
 # OCR評価セット（答案画像・正解データ＝PII, リポジトリに含めない）
 /evalset/
+
+# Firebase エミュレータの永続データ
+.emulator-data/
+
+# Firebase エミュレータのデバッグログ
+*-debug.log

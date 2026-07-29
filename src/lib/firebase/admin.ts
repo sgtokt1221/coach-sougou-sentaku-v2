@@ -12,7 +12,13 @@ function getAdminApp(): App | null {
   const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
   const storageBucket = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
 
-  if (privateKey && clientEmail) {
+  // エミュレータ利用時は認証情報を使わない。.env.local に実プロジェクトのサービス
+  // アカウントが残っていると、projectId が食い違って初期化に失敗する。
+  const useEmulator = Boolean(
+    process.env.FIRESTORE_EMULATOR_HOST || process.env.FIREBASE_AUTH_EMULATOR_HOST
+  );
+
+  if (privateKey && clientEmail && !useEmulator) {
     return initializeApp({
       credential: cert({
         projectId,
