@@ -143,20 +143,18 @@ export async function POST(
         { status: 500 }
       );
     }
-    const originalPlaceholders = [
-      ...content.matchAll(/【[^】]+】/g),
-    ].map((match) => match[0]);
-    if (
-      originalPlaceholders.some(
-        (placeholder) => !rewritten.includes(placeholder),
-      )
-    ) {
-      return NextResponse.json(
-        {
-          error:
-            "書き換えで未入力プレースホルダーが失われたため、結果を破棄しました。",
-        },
-        { status: 502 },
+    const notices: string[] = [];
+
+    // 未入力欄がAIに埋められると、生徒本人の体験でない記述が混じったまま提出されうる。
+    // ただし「APに合わせて書き直して」のように、生徒の指示どおりに動いた結果として
+    // 欄が消えることも多い。結果ごと捨てると生徒は何も得られないため、該当箇所を
+    // 名指しして確認を促す。
+    const lostPlaceholders = [...content.matchAll(/【[^】]+】/g)]
+      .map((match) => match[0])
+      .filter((placeholder) => !rewritten.includes(placeholder));
+    if (lostPlaceholders.length) {
+      notices.push(
+        `以下の未入力欄がAIによって埋められています。自分の実際の体験かどうか必ず確認してください。\n${lostPlaceholders.join(" ")}`
       );
     }
 
@@ -168,7 +166,6 @@ export async function POST(
       (typeof data?.targetWordCount === "number"
         ? Math.round(data.targetWordCount * 1.1)
         : null);
-    let notice: string | undefined;
     if (limit) {
       rewritten = await fitToCharLimit(client, rewritten, limit);
       if (rewritten.length > limit) {
@@ -184,11 +181,16 @@ export async function POST(
         }
         // 目標文字数由来の上限は、元の本文がすでに超過していることが多い。
         // 書き換え結果ごと捨てると生徒は何も得られないため、超過を伝えて返す。
-        notice = `目標文字数の上限${limit}字を超えています（${rewritten.length}字）。置き換えたあとに削ってください。`;
+        notices.push(
+          `目標文字数の上限${limit}字を超えています（${rewritten.length}字）。置き換えたあとに削ってください。`
+        );
       }
     }
 
-    return NextResponse.json({ rewritten, notice });
+    return NextResponse.json({
+      rewritten,
+      notice: notices.join("\n\n") || undefined,
+    });
   } catch (error) {
     console.error("Document rewrite error:", error);
     return NextResponse.json(

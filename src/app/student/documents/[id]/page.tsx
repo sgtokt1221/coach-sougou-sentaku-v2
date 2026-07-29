@@ -816,7 +816,7 @@ function ReviewPanel({
               <div className="space-y-2">
                 <p className="text-sm font-medium">書き換え案</p>
                 {rewriteNotice && (
-                  <p className="rounded-md border border-amber-300 bg-amber-50 p-2 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+                  <p className="rounded-md border border-amber-300 bg-amber-50 p-2 text-xs whitespace-pre-line text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
                     {rewriteNotice}
                   </p>
                 )}
