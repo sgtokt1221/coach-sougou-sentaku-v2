@@ -109,6 +109,11 @@ interface EssayCoachPanelProps {
   facultyId?: string;
   /** 過去問の参考資料 (あれば 資料 タブが先頭に追加される) */
   referenceMaterial?: ReferenceMaterial;
+  /**
+   * 会話をリセットする単位。既定は topic だが、同じテーマ名で設問が変わる画面
+   * (ちょこ添削の空欄切り替えなど) では設問を一意に識別する値を渡すこと。
+   */
+  conversationKey?: string;
 }
 
 function resolveReferenceLabel(material: ReferenceMaterial | undefined): {
@@ -176,6 +181,7 @@ export function EssayCoachPanelBody({
   universityId,
   facultyId,
   referenceMaterial,
+  conversationKey,
 }: EssayCoachPanelProps) {
   const hasReference = Boolean(
     referenceMaterial?.sourceText ||
@@ -237,7 +243,7 @@ export function EssayCoachPanelBody({
             questionType={referenceMaterial?.questionType}
             sourceText={referenceMaterial?.sourceText}
             chartData={referenceMaterial?.chartData}
-            resetKey={`${universityId ?? ""}:${facultyId ?? ""}:${topic}`}
+            resetKey={`${universityId ?? ""}:${facultyId ?? ""}:${conversationKey ?? topic}`}
           />
         )}
         {active === "ap" && (

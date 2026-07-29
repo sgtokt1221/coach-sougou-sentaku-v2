@@ -223,6 +223,7 @@ export default function ChocoPage() {
                   <div className="min-h-0 flex-1">
                     <EssayCoachPanelBody
                       topic={passage.themeTitle}
+                      conversationKey={`${passage.id}:${blankIndex}`}
                       draft={text}
                       universityId={selectedUni?.universityId}
                       facultyId={selectedUni?.facultyId}
@@ -257,6 +258,7 @@ export default function ChocoPage() {
               <div className="min-h-0 flex-1">
                 <EssayCoachPanelBody
                   topic={passage.themeTitle}
+                  conversationKey={`${passage.id}:${blankIndex}`}
                   draft={text}
                   universityId={selectedUni?.universityId}
                   facultyId={selectedUni?.facultyId}
