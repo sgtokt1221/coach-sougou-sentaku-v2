@@ -178,13 +178,47 @@ export function BottomNav() {
   );
   const selfAnalysisDone = selfAnalysisDoc?.isComplete === true;
 
-  // 管理者チャットの未読件数（生徒/講師からの連絡）。チャットタブのバッジに使う。
+  // 各タブの未読バッジ。サイドバーの *Badge コンポーネントと同じ SWR キーを使い、
+  // デスクトップとモバイルで件数がずれないようにする。
   const { data: adminUnread } = useAuthSWR<{ unreadCount: number }>(
     role === "admin" || role === "superadmin"
       ? "/api/admin/messages?countOnly=true"
       : null,
   );
   const chatUnread = adminUnread?.unreadCount ?? 0;
+
+  // 生徒: チャット未読（FeedbackBadge と同じ）
+  const { data: studentUnread } = useAuthSWR<{ unreadCount: number }>(
+    role === "student" ? "/api/student/feedback?countOnly=true" : null,
+    { refreshInterval: 60000 },
+  );
+  const studentChatUnread = studentUnread?.unreadCount ?? 0;
+
+  // 生徒: 未提出の宿題（HomeworkBadge と同じ）
+  const { data: homework } = useAuthSWR<unknown[]>(
+    role === "student" ? "/api/student/homework" : null,
+  );
+  const homeworkCount = homework?.length ?? 0;
+
+  // 講師: 管理者からの未読 + 担当生徒スレッドの未読（TeacherMessagesBadge と同じ）
+  const { data: teacherAdminUnread } = useAuthSWR<{ unreadCount: number }>(
+    role === "teacher" ? "/api/teacher/feedback?countOnly=true" : null,
+    { refreshInterval: 60000 },
+  );
+  const { data: teacherStudents } = useAuthSWR<{ unreadByTeacher?: number }[]>(
+    role === "teacher" ? "/api/teacher/students" : null,
+    { refreshInterval: 60000 },
+  );
+  const teacherUnread =
+    (teacherAdminUnread?.unreadCount ?? 0) +
+    (teacherStudents ?? []).reduce((sum, s) => sum + (s.unreadByTeacher ?? 0), 0);
+
+  /** タブに出す未読件数。href ごとに対応する集計を返す。 */
+  const tabBadge = (href: string): number => {
+    if (href === "/admin/messages") return chatUnread;
+    if (href === "/teacher/students") return teacherUnread;
+    return 0;
+  };
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
@@ -213,7 +247,7 @@ export function BottomNav() {
                 href={href}
                 Icon={Icon}
                 active={pathname.startsWith(href)}
-                badge={href === "/admin/messages" ? chatUnread : 0}
+                badge={tabBadge(href)}
               />
             ))}
             <button
@@ -302,8 +336,8 @@ export function BottomNav() {
             <span className="text-[10px] font-semibold leading-none tracking-wide">Action!</span>
           </button>
 
-          <TabLink label="チャット" href="/student/feedback" Icon={MessageSquare} active={chatActive} />
-          <TabLink label="宿題" href="/student/homework" Icon={ClipboardList} active={homeworkActive} />
+          <TabLink label="チャット" href="/student/feedback" Icon={MessageSquare} active={chatActive} badge={studentChatUnread} />
+          <TabLink label="宿題" href="/student/homework" Icon={ClipboardList} active={homeworkActive} badge={homeworkCount} />
         </div>
       </nav>
 
