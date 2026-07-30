@@ -138,10 +138,11 @@ function ScoreSkeleton() {
 }
 
 /**
- * レポート課題（課題文を読んで書く）専用の講評ブロック。
+ * 課題文型（課題文を読んで書く）専用の講評ブロック。
+ * レポート課題モードと、課題文つき過去問の双方で使う。
  * sourceType="report" で reportInsights が生成されているときのみ表示する。
  * 課題文の理解度など5観点の講評と、誤読の指摘を一覧する。
- * @param insights レポート課題専用の講評データ
+ * @param insights 課題文型専用の講評データ
  */
 function ReportInsightsCard({ insights }: { insights: ReportInsights }) {
   const items: { label: string; body: string }[] = [
@@ -156,7 +157,7 @@ function ReportInsightsCard({ insights }: { insights: ReportInsights }) {
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center gap-2 text-lg tracking-tight text-indigo-700">
           <FileText className="size-5" />
-          レポート観点
+          課題文の読み取り
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -1000,7 +1001,7 @@ export default function EssayResultPage() {
                     </div>
                   </div>
 
-                  {/* レポート観点 (sourceType="report" のときのみ) */}
+                  {/* 課題文の読み取り (sourceType="report" のときのみ) */}
                   {result.feedback.reportInsights && (
                     <ReportInsightsCard
                       insights={result.feedback.reportInsights}
@@ -1493,7 +1494,7 @@ export default function EssayResultPage() {
                 </div>
               </div>
 
-              {/* レポート観点 (sourceType="report" のときのみ) */}
+              {/* 課題文の読み取り (sourceType="report" のときのみ) */}
               {result.feedback.reportInsights && (
                 <div className="mt-6">
                   <ReportInsightsCard

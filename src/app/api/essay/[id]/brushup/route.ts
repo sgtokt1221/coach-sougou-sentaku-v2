@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { verifyAuthToken, adminDb } from "@/lib/firebase/admin";
 import { buildEssayBrushupPrompt } from "@/lib/ai/prompts/essay";
+import { cleanAiText, fitToCharLimit } from "@/lib/ai/fit-char-limit";
 import type { EssayFeedback } from "@/lib/types/essay";
 
 export const maxDuration = 60;
@@ -84,16 +85,23 @@ export async function POST(
       messages: [{ role: "user", content: prompt }],
     });
 
-    const brushedUpText =
-      response.content[0]?.type === "text"
-        ? response.content[0].text.trim()
-        : "";
+    let brushedUpText = cleanAiText(
+      response.content[0]?.type === "text" ? response.content[0].text : "",
+    );
 
     if (!brushedUpText) {
       return NextResponse.json(
         { error: "ブラッシュアップ版の生成に失敗しました" },
         { status: 502 },
       );
+    }
+
+    // 「元本文の±20%に収める」はプロンプトだけでは守られない（字数は他機能でも
+    // 実測で守られなかった）。上限を超えた分はサーバー側で数えて詰める。
+    // 下限側は「磨く」方向なので短くなっても実害がなく、詰めない。
+    const upperLimit = Math.round(ocrText.length * 1.2);
+    if (brushedUpText.length > upperLimit) {
+      brushedUpText = await fitToCharLimit(client, brushedUpText, upperLimit);
     }
 
     await essayRef.update({

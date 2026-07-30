@@ -295,12 +295,17 @@ export default function EssayHistoryPage() {
                       <span className="text-muted-foreground text-sm">
                         {item.facultyName}
                       </span>
+                      {/*
+                        課題文を読んで書く形式。レポート課題モードだけでなく、
+                        課題文つきの過去問（50dd8cc で report 扱いにした69件）も
+                        ここに入るため「レポート」ではなく形式名で表示する。
+                      */}
                       {item.sourceType === "report" && (
                         <Badge
                           variant="outline"
                           className="border-indigo-300 text-xs text-indigo-700"
                         >
-                          レポート
+                          課題文型
                         </Badge>
                       )}
                       {item.topic && (
