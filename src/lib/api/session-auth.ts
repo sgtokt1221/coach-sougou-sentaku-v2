@@ -62,25 +62,75 @@ export async function assertSessionAccess(
   );
 }
 
-/** 前回セッション取得 (同一生徒で現在より前、完了済みを優先) */
+/**
+ * 欠席回を遡って何件まで飛ばすか。連続欠席が続いても実施回に届くようにするが、
+ * 無制限に遡ると読み取り量が増えるので上限を置く。
+ */
+const PREVIOUS_SESSION_LOOKBACK = 10;
+
+/**
+ * 前回セッション取得 (同一生徒で現在より前の、直近の「実施した」回)。
+ *
+ * 欠席回 (status: "cancelled") は飛ばす。授業が行われていないので debrief が無く、
+ * これを「前回」として扱うと次回授業に前回の内容が引き継がれない:
+ *   - previous-debrief が null を返し、反省点・次回議題が表示されない
+ *   - generate-plan が前回情報なしで台本を作る
+ *   - session-artifacts の抽出範囲が欠席回で切れ、欠席回より前に生徒が提出した
+ *     小論文・書類が一度も授業で扱われないまま次回の材料から落ちる
+ * 欠席した分の内容は、その次に実施する授業へ持ち越すのが運用上正しい。
+ *
+ * Firestore は範囲条件と別フィールドの不等号を併用できないため、数件取って
+ * JS 側で絞る。
+ */
 export async function getPreviousSession(
   adminDb: FirebaseFirestore.Firestore,
   studentId: string,
   currentScheduledAt: string,
 ): Promise<Session | null> {
+  const { session } = await getPreviousSessionWithAbsences(
+    adminDb,
+    studentId,
+    currentScheduledAt,
+  );
+  return session;
+}
+
+/**
+ * getPreviousSession と同じ検索をしつつ、飛ばした欠席回の件数も返す。
+ *
+ * 引き継ぎ元が直前の回でなくなるため、画面で「間に欠席が N 回あります」と
+ * 伝えるのに使う。件数は同じクエリ結果から数えるので追加の読み取りは発生せず、
+ * 新しい複合インデックスも要らない。
+ */
+export async function getPreviousSessionWithAbsences(
+  adminDb: FirebaseFirestore.Firestore,
+  studentId: string,
+  currentScheduledAt: string,
+): Promise<{ session: Session | null; skippedAbsences: number }> {
   try {
     const snap = await adminDb
       .collection("sessions")
       .where("studentId", "==", studentId)
       .where("scheduledAt", "<", currentScheduledAt)
       .orderBy("scheduledAt", "desc")
-      .limit(1)
+      .limit(PREVIOUS_SESSION_LOOKBACK)
       .get();
-    if (snap.empty) return null;
-    const d = snap.docs[0];
-    return { id: d.id, ...d.data() } as Session;
+    if (snap.empty) return { session: null, skippedAbsences: 0 };
+    const sessions = snap.docs.map(
+      (d) => ({ id: d.id, ...d.data() }) as Session,
+    );
+    const attendedIndex = sessions.findIndex((s) => s.status !== "cancelled");
+    if (attendedIndex < 0) {
+      // 遡れる範囲すべてが欠席。引き継ぐ内容が無いので null を返す
+      // (直前の欠席回を返すと debrief 無しの回が「前回」になってしまう)。
+      return { session: null, skippedAbsences: sessions.length };
+    }
+    return {
+      session: sessions[attendedIndex],
+      skippedAbsences: attendedIndex,
+    };
   } catch (err) {
     console.warn("[session-auth] getPreviousSession failed:", err);
-    return null;
+    return { session: null, skippedAbsences: 0 };
   }
 }

@@ -1,13 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
-import { assertSessionAccess, getPreviousSession } from "@/lib/api/session-auth";
+import {
+  assertSessionAccess,
+  getPreviousSessionWithAbsences,
+} from "@/lib/api/session-auth";
 import type { Session } from "@/lib/types/session";
 
 /**
  * GET /api/admin/sessions/[id]/previous-debrief
  *
- * 同一生徒の「前回セッション」の反省点/次回議題/新弱点を返す。
- * 次回授業時に「前回の授業の反省点」として表示する用途。前回が無ければ null。
+ * 同一生徒の「前回実施した回」の反省点/次回議題/新弱点を返す。
+ * 次回授業時に「前回の授業の反省点」として表示する用途。
+ * 欠席回は getPreviousSession が飛ばすので、欠席した分の内容も次の実施回へ
+ * 持ち越される。前回が無ければ null。
  */
 export async function GET(
   request: NextRequest,
@@ -34,7 +39,14 @@ export async function GET(
     return NextResponse.json({ previous: null });
   }
 
-  const prev = await getPreviousSession(adminDb, session.studentId, session.scheduledAt);
+  // 欠席回は飛ばすため、引き継ぎ元が直前の回とは限らない。
+  // 講師が「なぜ前々回の内容が出ているのか」を判断できるよう欠席件数も返す。
+  const { session: prev, skippedAbsences } =
+    await getPreviousSessionWithAbsences(
+      adminDb,
+      session.studentId,
+      session.scheduledAt,
+    );
   if (!prev || !prev.debrief) {
     return NextResponse.json({ previous: null });
   }
@@ -46,6 +58,7 @@ export async function GET(
       reflectionPoints: prev.debrief.reflectionPoints ?? [],
       nextAgendaSeed: prev.debrief.nextAgendaSeed ?? "",
       newWeaknessAreas: prev.debrief.newWeaknessAreas ?? [],
+      skippedAbsences,
     },
   });
 }
