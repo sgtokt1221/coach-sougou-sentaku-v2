@@ -2,6 +2,7 @@
  * 主要大学の総合型選抜 小論文 過去問・頻出テーマ
  * ソース: 河合塾Kei-Net, ベネッセマナビジョン, ホワイトアカデミー高等部, 各大学公式
  */
+import type { EssayQuestionType } from "@/lib/types/essay";
 
 /**
  * 練習用に補完した「論述のための前提知識・論点」。
@@ -27,7 +28,8 @@ export interface PastQuestion {
   theme: string;
   description: string;
   type: "past" | "frequent";
-  questionType?: "essay" | "english-reading" | "data-analysis" | "mixed" | "lecture"; // 出題形式
+  /** 出題形式。正本は EssayQuestionType（採点ルーブリックと共有） */
+  questionType?: EssayQuestionType;
   sourceText?: string; // 英文や資料のテキスト（出題文）
   isSampleSourceText?: boolean; // sourceText が AI 生成の練習サンプルか (実問題文は false/未指定)
   wordLimit?: number;
@@ -3598,8 +3600,39 @@ export function getPastQuestionsByField(field: string): PastQuestion[] {
   return PAST_QUESTIONS.filter((pq) => pq.field === field);
 }
 
+/**
+ * 出題形式を確定させる。
+ *
+ * 課題文つきの過去問 69 件が questionType 未設定のまま登録されており、課題文を
+ * AI に渡しているのに「設問のみの小論文」として採点されていた（課題文の理解・
+ * 要約の妥当性・参照の妥当性が評価軸に入らず、reportInsights も出ない）。
+ * 資料の種類から形式を決める。データ側に明示があればそれを優先する。
+ */
+export function resolveQuestionType(pq: PastQuestion): EssayQuestionType | undefined {
+  if (pq.questionType) return pq.questionType;
+  if (pq.tedTalk) return "lecture";
+  const hasChart = Boolean(pq.chartData?.length);
+  const hasSource = Boolean(pq.sourceText);
+  if (hasChart && hasSource) return "mixed";
+  if (hasChart) return "data-analysis";
+  if (hasSource) {
+    // 英文か日本語課題文かは文字種の比率で判定する
+    const ascii = (pq.sourceText!.match(/[A-Za-z]/g) ?? []).length;
+    const jp = (pq.sourceText!.match(/[ぁ-んァ-ヶ一-龯]/g) ?? []).length;
+    return ascii > jp ? "english-reading" : "report";
+  }
+  return undefined;
+}
+
+/** 出題形式を確定させた版を返す。生徒に渡す経路は必ずこれを通す。 */
+function withResolvedType(pq: PastQuestion): PastQuestion {
+  const questionType = resolveQuestionType(pq);
+  return questionType === pq.questionType ? pq : { ...pq, questionType };
+}
+
 export function getPastQuestionById(id: string): PastQuestion | undefined {
-  return PAST_QUESTIONS.find((pq) => pq.id === id);
+  const pq = PAST_QUESTIONS.find((pq) => pq.id === id);
+  return pq ? withResolvedType(pq) : undefined;
 }
 
 /**
@@ -3660,7 +3693,8 @@ import { PAST_QUESTION_HELPFUL_CONTEXTS } from "./past-question-helpful-contexts
  * → 手作業実装分は外部マップで上書きされない。
  */
 export function getEnrichedPastQuestions(): PastQuestion[] {
-  return PAST_QUESTIONS.map((pq) => {
+  return PAST_QUESTIONS.map((raw) => {
+    const pq = withResolvedType(raw);
     if (pq.helpfulContext) return pq;
     const external = PAST_QUESTION_HELPFUL_CONTEXTS[pq.id];
     return external ? { ...pq, helpfulContext: external } : pq;
@@ -3669,8 +3703,9 @@ export function getEnrichedPastQuestions(): PastQuestion[] {
 
 /** id 指定で enriched 版を 1 件取得 (利便ヘルパー)。 */
 export function getEnrichedPastQuestionById(id: string): PastQuestion | undefined {
-  const pq = PAST_QUESTIONS.find((q) => q.id === id);
-  if (!pq) return undefined;
+  const raw = PAST_QUESTIONS.find((q) => q.id === id);
+  if (!raw) return undefined;
+  const pq = withResolvedType(raw);
   if (pq.helpfulContext) return pq;
   const external = PAST_QUESTION_HELPFUL_CONTEXTS[pq.id];
   return external ? { ...pq, helpfulContext: external } : pq;

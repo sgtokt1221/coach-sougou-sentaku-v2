@@ -13,9 +13,13 @@ export const EssayReviewOutputSchema = z.object({
   }),
   feedback: z.object({
     overall: boundedText,
-    goodPoints: z.array(shortText).max(5),
+    // 件数の上限はスキーマでは緩めに取り、表示件数はサーバー側で絞る。
+    // 上限を厳しくすると「助言を出しすぎた」だけで構造化出力の検証に失敗し、
+    // 添削全体が 500 になる（課題文型(report)で実際に improvements が5件を
+    // 超えて発生した）。
+    goodPoints: z.array(shortText).max(10),
     priorityImprovement: boundedText,
-    improvements: z.array(boundedText).max(5),
+    improvements: z.array(boundedText).max(10),
     nextChallenge: boundedText,
     repeatedIssues: z
       .array(

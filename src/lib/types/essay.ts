@@ -90,6 +90,24 @@ export interface TopicInsights {
 }
 
 /**
+ * 出題形式の正本。採点ルーブリック・コーチの観点・データ側の分類はすべてこれを参照する。
+ *
+ * - essay: 設問のみ（資料なし）
+ * - english-reading: 英文を読んで答える
+ * - data-analysis: グラフ・統計を読んで答える
+ * - mixed: 英文＋データ
+ * - lecture: 講義・動画を踏まえて答える
+ * - report: 日本語の課題文を読んで答える（要約・参照の妥当性まで評価する）
+ */
+export type EssayQuestionType =
+  | "essay"
+  | "english-reading"
+  | "data-analysis"
+  | "mixed"
+  | "lecture"
+  | "report";
+
+/**
  * 答案に保存する出題の文脈。管理者・講師が「生徒が何を読んで何に答えたか」を
  * 確認するために使う（essays/{id}.questionContext）。
  */
@@ -192,13 +210,7 @@ export interface EssayReviewRequest {
   facultyId: string;
   topic?: string;
   wordLimit?: number;
-  questionType?:
-    | "essay"
-    | "english-reading"
-    | "data-analysis"
-    | "mixed"
-    | "lecture"
-    | "report";
+  questionType?: EssayQuestionType;
   sourceText?: string;
   chartDataSummary?: string;
   pastQuestionFacultyName?: string;

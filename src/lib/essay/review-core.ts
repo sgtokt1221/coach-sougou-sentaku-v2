@@ -191,9 +191,10 @@ ${input.ocrText}
   // Firestore は undefined を許可しないため、optional フィールドは値があるときだけ含める。
   const feedback: EssayFeedback = {
     overall: parsed.feedback.overall,
-    goodPoints: parsed.feedback.goodPoints,
+    // スキーマ側の上限は緩く取ってあるので、生徒が読める量にここで絞る。
+    goodPoints: parsed.feedback.goodPoints.slice(0, 5),
     priorityImprovement: parsed.feedback.priorityImprovement,
-    improvements: parsed.feedback.improvements,
+    improvements: parsed.feedback.improvements.slice(0, 5),
     nextChallenge: parsed.feedback.nextChallenge,
     repeatedIssues: parsed.feedback.repeatedIssues.filter(
       (issue) => hasAdmissionPolicy || issue.category !== "apAlignment"

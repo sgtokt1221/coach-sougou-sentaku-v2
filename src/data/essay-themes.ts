@@ -1,3 +1,5 @@
+import type { EssayQuestionType } from "@/lib/types/essay";
+
 export interface EssayTheme {
   id: string;
   field: string;
@@ -7,7 +9,8 @@ export interface EssayTheme {
   difficulty: 1 | 2 | 3; // 1=基礎, 2=標準, 3=発展
   relatedAP: string[]; // 関連するAP keyword
   wordLimit: number; // 推奨字数
-  questionType?: "essay" | "data-analysis" | "english-reading" | "lecture";
+  /** 出題形式。正本は EssayQuestionType（採点ルーブリックと共有） */
+  questionType?: EssayQuestionType;
   sourceText?: string; // 英文資料
   chartData?: {
     type: "bar" | "line" | "pie";
