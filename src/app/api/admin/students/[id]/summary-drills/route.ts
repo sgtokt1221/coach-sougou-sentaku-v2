@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireRole, scopeByOrganization } from "@/lib/api/auth";
 import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
 import { adminDb } from "@/lib/firebase/admin";
+import type { EssayInlineComment } from "@/lib/types/essay";
 
 export interface SummaryDrillListItem {
   id: string;
@@ -16,6 +17,10 @@ export interface SummaryDrillListItem {
   };
   total: number;
   feedback: string | null;
+  /** 生徒が書いた要約本文 */
+  summaryText: string;
+  /** 管理者/講師による範囲指定インラインコメント */
+  inlineComments?: EssayInlineComment[];
   completedAt: string;
 }
 
@@ -77,6 +82,9 @@ export async function GET(
         scores: data.scores ?? { comprehension: 0, conciseness: 0, keyPoints: 0, structure: 0, expression: 0 },
         total: data.total ?? 0,
         feedback: data.feedback ?? null,
+        // 生徒の要約本文と範囲コメント。管理者画面で本文にコメントを付けるために返す
+        summaryText: data.summaryText ?? "",
+        inlineComments: data.inlineComments ?? [],
         completedAt: data.completedAt?.toDate?.()?.toISOString() ?? new Date().toISOString(),
       };
     });

@@ -45,6 +45,8 @@ export async function GET(request: NextRequest) {
         scores: r.scores,
         rank: r.rank as SkillRank,
         feedback: r.feedback,
+        // 講師の範囲コメント。生徒側でも本文に重ねて表示する
+        inlineComments: r.inlineComments ?? [],
         takenAt: r.takenAt?.toDate?.() ?? new Date(),
         version: "v1",
       };

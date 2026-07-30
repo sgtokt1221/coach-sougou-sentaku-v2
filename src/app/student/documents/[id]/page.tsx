@@ -24,6 +24,7 @@ import {
   ChevronUp,
   ShieldCheck,
   Wand2,
+  MessageSquare,
 } from "lucide-react";
 import type {
   Document,
@@ -36,6 +37,7 @@ import {
   AI_LIKENESS_LEVEL_LABELS,
   AI_LIKENESS_SUBMIT_THRESHOLD,
 } from "@/lib/types/document";
+import type { EssayInlineComment } from "@/lib/types/essay";
 import { DocumentReviewBadge } from "@/components/documents/DocumentReviewBadge";
 import { MobileSlideOverPanel } from "@/components/shared/MobileSlideOverPanel";
 import { useAutosave, type AutosaveStatus } from "@/hooks/useAutosave";
@@ -471,6 +473,7 @@ export default function DocumentEditorPage() {
           rewriting={rewriting}
           rewritePreview={rewritePreview}
           rewriteNotice={rewriteNotice}
+          inlineComments={doc.inlineComments}
           onRewrite={handleRewrite}
           onApplyRewrite={applyRewrite}
           onDiscardRewrite={discardRewrite}
@@ -512,6 +515,7 @@ export default function DocumentEditorPage() {
             rewriting={rewriting}
             rewritePreview={rewritePreview}
             rewriteNotice={rewriteNotice}
+            inlineComments={doc.inlineComments}
             onRewrite={handleRewrite}
             onApplyRewrite={applyRewrite}
             onDiscardRewrite={discardRewrite}
@@ -674,6 +678,7 @@ function ReviewPanel({
   rewriting,
   rewritePreview,
   rewriteNotice,
+  inlineComments,
   onRewrite,
   onApplyRewrite,
   onDiscardRewrite,
@@ -694,6 +699,8 @@ function ReviewPanel({
   rewriting: boolean;
   rewritePreview: string | null;
   rewriteNotice: string | null;
+  /** 講師からの範囲コメント（本文が編集用テキストエリアのため一覧で見せる） */
+  inlineComments?: EssayInlineComment[];
   onRewrite: () => void;
   onApplyRewrite: () => void;
   onDiscardRewrite: () => void;
@@ -782,6 +789,38 @@ function ReviewPanel({
           )}
         </CardContent>
       </Card>
+
+      {/* 講師からの範囲コメント。本文は編集用テキストエリアのためハイライトを
+          重ねられないので、引用付きの一覧で見せる。 */}
+      {(inlineComments ?? []).length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <MessageSquare className="size-4" />
+              先生からのコメント
+              <span className="text-xs font-normal text-muted-foreground">
+                {inlineComments!.length}件
+              </span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {inlineComments!.map((c: EssayInlineComment) => (
+              <div key={c.id} className="rounded-lg border bg-card p-2.5">
+                <p className="text-xs font-semibold text-teal-700">
+                  {c.createdByName}
+                  <span className="ml-1 text-[10px] font-normal text-muted-foreground">
+                    {c.createdByRole === "teacher" ? "講師" : "管理者"}
+                  </span>
+                </p>
+                <p className="mt-1 rounded bg-muted/50 px-2 py-1 text-[11px] text-muted-foreground">
+                  「{c.quote}」
+                </p>
+                <p className="mt-1 whitespace-pre-wrap text-sm">{c.comment}</p>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       {/* AIで書き換え */}
       <Card>

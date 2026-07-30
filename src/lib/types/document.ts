@@ -1,3 +1,4 @@
+import type { EssayInlineComment } from "./essay";
 import type { AiGenerationMetadata } from "@/lib/types/ai";
 
 export type DocumentType =
@@ -62,6 +63,8 @@ export interface Document {
   updatedAt: string;
   /** 未完了ウィザードの復元用。完走後は completed:true（または省略）。 */
   wizardState?: DocumentWizardState;
+  /** 管理者/講師による範囲指定インラインコメント */
+  inlineComments?: EssayInlineComment[];
 }
 
 export interface DocumentVersion {

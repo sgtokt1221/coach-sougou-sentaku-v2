@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { SkillCheckResult } from "@/lib/types/skill-check";
+import { InlineCommentableText } from "@/components/essay/InlineCommentableText";
 import { ACADEMIC_CATEGORY_LABELS } from "@/lib/types/skill-check";
 import { RANK_META } from "@/lib/skill-check/rank";
 import { getQuestionById } from "@/lib/skill-check/questions";
@@ -10,7 +11,22 @@ import { SkillRankBadge } from "./SkillRankBadge";
 import { SkillRadarChart } from "./SkillRadarChart";
 import { CheckCircle2, FileText, Lightbulb, Target } from "lucide-react";
 
-export function SkillCheckResultView({ result }: { result: SkillCheckResult }) {
+export function SkillCheckResultView({
+  result,
+  comment,
+}: {
+  result: SkillCheckResult;
+  /**
+   * 答案本文にドラッグ範囲コメントを付けられるようにする設定。
+   * 管理者/講師の画面では mode="edit"、生徒の画面では mode="view" を渡す。
+   */
+  comment?: {
+    mode: "edit" | "view";
+    studentId: string;
+    viewerUid?: string;
+    viewerRole?: string;
+  };
+}) {
   const meta = RANK_META[result.rank];
   const { scores, feedback } = result;
   const question = getQuestionById(result.questionId);
@@ -147,7 +163,18 @@ export function SkillCheckResultView({ result }: { result: SkillCheckResult }) {
             <span>所要 {Math.max(1, Math.round(result.durationSec / 60))}分</span>
             {question && <span>制限 {question.wordLimit}字 / {question.timeLimitMin}分</span>}
           </div>
-          {result.essayText?.trim() ? (
+          {result.essayText?.trim() && comment ? (
+            <InlineCommentableText
+              target="skillCheck"
+              id={result.id}
+              studentId={comment.studentId}
+              text={result.essayText}
+              initialComments={result.inlineComments}
+              mode={comment.mode}
+              viewerUid={comment.viewerUid}
+              viewerRole={comment.viewerRole}
+            />
+          ) : result.essayText?.trim() ? (
             <p className="max-h-96 overflow-y-auto whitespace-pre-wrap rounded-md border p-3 text-sm leading-relaxed">
               {result.essayText}
             </p>

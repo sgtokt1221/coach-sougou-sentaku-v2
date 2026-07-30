@@ -73,6 +73,8 @@ export async function GET(
         scores: r.scores,
         rank: r.rank as SkillRank,
         feedback: r.feedback,
+        // 範囲コメント。答案本文にドラッグコメントを重ねるために返す
+        inlineComments: r.inlineComments ?? [],
         takenAt: r.takenAt?.toDate?.() ?? new Date(),
         version: "v1",
       };

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { authFetch } from "@/lib/api/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SkillCheckResultView } from "@/components/skill-check/SkillCheckResultView";
+import { useAuth } from "@/contexts/AuthContext";
 import type { SkillCheckResult, SkillCheckStatus } from "@/lib/types/skill-check";
 
 export default function SkillCheckResultPage({
@@ -13,6 +14,8 @@ export default function SkillCheckResultPage({
   params: Promise<{ resultId: string }>;
 }) {
   const { resultId } = use(params);
+  // 講師の範囲コメントを本文に重ねて表示するため uid が必要
+  const { user } = useAuth();
   const [result, setResult] = useState<SkillCheckResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [inChain, setInChain] = useState(false);
@@ -92,7 +95,14 @@ export default function SkillCheckResultPage({
           ← スキルチェック履歴へ
         </Link>
       </div>
-      <SkillCheckResultView result={result} />
+      <SkillCheckResultView
+        result={result}
+        comment={
+          user
+            ? { mode: "view", studentId: user.uid }
+            : undefined
+        }
+      />
     </div>
   );
 }

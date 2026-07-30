@@ -70,6 +70,8 @@ export async function GET(
       universityName: data.universityName ?? "",
       facultyName: data.facultyName ?? "",
       content: latestVersion?.content ?? data.content ?? "",
+      // 範囲コメント。管理者画面で本文にドラッグコメントを重ねるために返す
+      inlineComments: data.inlineComments ?? [],
       wordCount: data.wordCount ?? 0,
       targetWordCount: data.targetWordCount ?? undefined,
       status: data.status ?? "draft",

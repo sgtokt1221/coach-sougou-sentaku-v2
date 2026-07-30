@@ -14,6 +14,8 @@ import { FileText, ChevronDown, TrendingUp } from "lucide-react";
 import { useAuthSWR } from "@/lib/api/swr";
 import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
 import type { SummaryDrillListItem } from "@/app/api/admin/students/[id]/summary-drills/route";
+import { InlineCommentableText } from "@/components/essay/InlineCommentableText";
+import { useAuth } from "@/contexts/AuthContext";
 import { FACULTY_REGISTRY } from "@/data/faculty-topics/registry";
 
 const SCORE_LABELS: Record<string, string> = {
@@ -36,6 +38,8 @@ function scoreColor(total: number): string {
 }
 
 export function SummaryDrillsSection({ studentId }: { studentId: string }) {
+  // 範囲コメントの削除可否判定に使う
+  const { user, userProfile } = useAuth();
   const { data: drills, isLoading, error } = useAuthSWR<SummaryDrillListItem[]>(
     `/api/admin/students/${studentId}/summary-drills`
   );
@@ -142,6 +146,24 @@ export function SummaryDrillsSection({ studentId }: { studentId: string }) {
                   </div>
                 ))}
               </div>
+
+              {selectedDrill.summaryText?.trim() && (
+                <div>
+                  <p className="mb-1 text-xs font-medium text-muted-foreground">
+                    生徒の要約（ドラッグでコメント）
+                  </p>
+                  <InlineCommentableText
+                    target="summaryDrill"
+                    id={selectedDrill.id}
+                    studentId={studentId}
+                    text={selectedDrill.summaryText}
+                    initialComments={selectedDrill.inlineComments}
+                    mode="edit"
+                    viewerUid={user?.uid}
+                    viewerRole={userProfile?.role}
+                  />
+                </div>
+              )}
 
               {selectedDrill.feedback && (
                 <div>

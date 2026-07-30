@@ -27,6 +27,9 @@ import { useAuthSWR } from "@/lib/api/swr";
 import { authFetch } from "@/lib/api/client";
 import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
 import { DocumentReviewBadge } from "@/components/documents/DocumentReviewBadge";
+import { InlineCommentableText } from "@/components/essay/InlineCommentableText";
+import { useAuth } from "@/contexts/AuthContext";
+import type { EssayInlineComment } from "@/lib/types/essay";
 import type {
   DocumentStatus,
   DocumentReview,
@@ -63,6 +66,8 @@ interface DocumentDetail {
   universityName: string;
   facultyName: string;
   content: string;
+  /** 管理者/講師による範囲指定インラインコメント */
+  inlineComments?: EssayInlineComment[];
   wordCount: number;
   targetWordCount?: number;
   status: DocumentStatus;
@@ -121,6 +126,8 @@ function getDeadlineBadge(deadline?: string) {
 }
 
 export function DocumentsSection({ studentId }: { studentId: string }) {
+  // 範囲コメントの削除可否判定に使う
+  const { user, userProfile } = useAuth();
   const { data, isLoading, error, mutate } = useAuthSWR<DocumentListItem[]>(
     `/api/admin/students/${studentId}/documents`
   );
@@ -415,13 +422,16 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
               {/* 左: 生徒の答案（本文）を大きく全表示 */}
               <div className="space-y-2 lg:col-span-3">
                 <h3 className="text-sm font-semibold">生徒の答案（本文）</h3>
-                <div className="rounded-lg border bg-white p-4 text-sm leading-7 text-gray-800 lg:max-h-[calc(92vh-9rem)] lg:overflow-y-auto dark:bg-gray-950 dark:text-gray-200">
-                  {detailDoc.content.split("\n").map((line, i) => (
-                    <p key={i} className={line.trim() === "" ? "h-4" : ""}>
-                      {line || " "}
-                    </p>
-                  ))}
-                </div>
+                {/* ドラッグで範囲を選ぶとその箇所にコメントを付けられる（小論文と同じ） */}
+                <InlineCommentableText
+                  target="document"
+                  id={detailDoc.id}
+                  text={detailDoc.content}
+                  initialComments={detailDoc.inlineComments}
+                  mode="edit"
+                  viewerUid={user?.uid}
+                  viewerRole={userProfile?.role}
+                />
                 <p className="text-muted-foreground text-xs">
                   {detailDoc.wordCount}
                   {detailDoc.targetWordCount

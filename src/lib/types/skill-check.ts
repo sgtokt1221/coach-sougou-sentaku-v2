@@ -1,4 +1,4 @@
-import type { EssayScores, EssayFeedback } from "./essay";
+import type { EssayScores, EssayFeedback, EssayInlineComment } from "./essay";
 
 export type AcademicCategory =
   | "law"
@@ -63,6 +63,8 @@ export interface SkillCheckResult {
   scores: EssayScores;
   rank: SkillRank;
   feedback: EssayFeedback;
+  /** 管理者/講師による範囲指定インラインコメント */
+  inlineComments?: EssayInlineComment[];
   takenAt: Date;
   version: "v1";
 }

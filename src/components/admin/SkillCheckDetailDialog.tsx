@@ -19,6 +19,7 @@ import { ACADEMIC_CATEGORY_LABELS } from "@/lib/types/skill-check";
 import type { SkillCheckResult } from "@/lib/types/skill-check";
 import type { InterviewSkillCheckResult } from "@/lib/types/interview-skill-check";
 import type { AdminFeedback } from "@/lib/types/feedback";
+import { useAuth } from "@/contexts/AuthContext";
 
 /**
  * 管理者・講師が生徒のスキルチェック結果を読み取り表示するダイアログ。
@@ -42,6 +43,8 @@ export function SkillCheckDetailDialog({
   /** フィードバック送信先の生徒UID。未指定なら送信UIを出さない */
   studentId?: string;
 }) {
+  // ドラッグ範囲コメントの削除可否判定に使う（自分が付けたもの / 管理者は全件）
+  const { user, userProfile } = useAuth();
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
   const [history, setHistory] = useState<AdminFeedback[]>([]);
@@ -139,7 +142,14 @@ export function SkillCheckDetailDialog({
         {result ? (
           <>
             {kind === "essay" ? (
-              <SkillCheckResultView result={result as SkillCheckResult} />
+              <SkillCheckResultView
+                result={result as SkillCheckResult}
+                comment={
+                  studentId
+                    ? { mode: "edit", studentId, viewerUid: user?.uid, viewerRole: userProfile?.role }
+                    : undefined
+                }
+              />
             ) : (
               <InterviewSkillResultView
                 result={result as InterviewSkillCheckResult}
