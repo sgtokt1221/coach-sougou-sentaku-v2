@@ -106,7 +106,12 @@ export async function getPreviousSessionWithAbsences(
   adminDb: FirebaseFirestore.Firestore,
   studentId: string,
   currentScheduledAt: string,
-): Promise<{ session: Session | null; skippedAbsences: number }> {
+): Promise<{
+  session: Session | null;
+  skippedAbsences: number;
+  /** 飛ばした欠席回のうち、準備してあった台本が残っているもの（新しい順） */
+  missedSessions: Session[];
+}> {
   try {
     const snap = await adminDb
       .collection("sessions")
@@ -115,22 +120,30 @@ export async function getPreviousSessionWithAbsences(
       .orderBy("scheduledAt", "desc")
       .limit(PREVIOUS_SESSION_LOOKBACK)
       .get();
-    if (snap.empty) return { session: null, skippedAbsences: 0 };
+    if (snap.empty)
+      return { session: null, skippedAbsences: 0, missedSessions: [] };
     const sessions = snap.docs.map(
       (d) => ({ id: d.id, ...d.data() }) as Session,
     );
     const attendedIndex = sessions.findIndex((s) => s.status !== "cancelled");
+    // 実施回に当たるまでの欠席回。ここに準備済みの台本が残っていれば未消化の内容。
+    const absentRange =
+      attendedIndex < 0 ? sessions : sessions.slice(0, attendedIndex);
+    const missedSessions = absentRange.filter(
+      (s) => s.prepPlan || (s.theme ?? "").trim().length > 0,
+    );
     if (attendedIndex < 0) {
-      // 遡れる範囲すべてが欠席。引き継ぐ内容が無いので null を返す
-      // (直前の欠席回を返すと debrief 無しの回が「前回」になってしまう)。
-      return { session: null, skippedAbsences: sessions.length };
+      // 遡れる範囲すべてが欠席。引き継ぐ debrief は無いが、未消化の台本は返す
+      // (直前の欠席回を session として返すと debrief 無しの回が「前回」になる)。
+      return { session: null, skippedAbsences: sessions.length, missedSessions };
     }
     return {
       session: sessions[attendedIndex],
       skippedAbsences: attendedIndex,
+      missedSessions,
     };
   } catch (err) {
     console.warn("[session-auth] getPreviousSession failed:", err);
-    return { session: null, skippedAbsences: 0 };
+    return { session: null, skippedAbsences: 0, missedSessions: [] };
   }
 }

@@ -37,6 +37,16 @@ export interface LessonPlanContext {
   };
   /** 前回の台本ゴール */
   previousPrepGoal?: string;
+  /**
+   * 欠席で実施できなかった回の準備内容（新しい順）。
+   * 未消化なので今回の授業で扱わせる。
+   */
+  missedPreps?: Array<{
+    date: string;
+    theme: string;
+    goal: string;
+    questions: string[];
+  }>;
   /** 前回セッション以降に生徒が作成した成果物のサマリー（面接/書類/活動/スキルチェック/レポート） */
   recentArtifactsSummary?: string;
   /** 志望校のアドミッション・ポリシー (上位数校。AP 合致を意識した問い設計に使う) */
@@ -96,6 +106,22 @@ export function buildLessonPlanPrompt(ctx: LessonPlanContext): string {
 前回新発見の弱点: ${ctx.previousDebrief.newWeaknessAreas.join("、") || "なし"}
 `
     : "\n## 前回の授業\n(これが初回授業、または前回の記録なし)\n";
+
+  // 欠席回の準備内容。実施できていないので、今回の台本に取り込ませる。
+  const missedSection = (ctx.missedPreps ?? []).length
+    ? `\n## 欠席で扱えなかった内容 (今回に持ち越し。必ず組み込む)
+${ctx
+  .missedPreps!.map(
+    (m) =>
+      `- ${m.date} 欠席${m.theme ? `／テーマ: ${m.theme}` : ""}${m.goal ? `／ねらい: ${m.goal}` : ""}${
+        m.questions.length ? `\n  用意していた問い: ${m.questions.slice(0, 5).join(" / ")}` : ""
+      }`,
+  )
+  .join("\n")}
+この分は生徒がまだ一度も扱っていません。今回のゴールと問いに反映してください。
+ただし今回の分と合わせて詰め込みすぎず、優先順位をつけて絞ってください。
+`
+    : "";
 
   const coachSection = ctx.recentCoachDialogSnippet
     ? `\n## 生徒が直近 AI コーチで相談した内容 (参考)\n${ctx.recentCoachDialogSnippet.slice(0, 500)}\n`
@@ -180,6 +206,6 @@ ${weakLines}
 
 ## 直近の小論文添削フィードバック (抜粋)
 ${essayLines}
-${apSection}${skillSection}${artifactsSection}${coachSection}${prevSection}${regeneratedHint}
+${apSection}${skillSection}${artifactsSection}${coachSection}${prevSection}${missedSection}${regeneratedHint}
 上記を踏まえ、若手講師がそのまま使える「今日の授業台本」を JSON で出力してください。`;
 }

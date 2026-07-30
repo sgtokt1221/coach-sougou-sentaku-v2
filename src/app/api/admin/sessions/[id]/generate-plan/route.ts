@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 import {
   assertSessionAccess,
-  getPreviousSession,
+  getPreviousSessionWithAbsences,
 } from "@/lib/api/session-auth";
 import { getSessionPeriodArtifacts } from "@/lib/api/session-artifacts";
 import {
@@ -77,7 +77,7 @@ export async function POST(
     weakSnap,
     essaysSnap,
     coachThreadsSnap,
-    prevSession,
+    prevResult,
     studentSnap,
     essaySkillSnap,
     interviewSkillSnap,
@@ -101,7 +101,7 @@ export async function POST(
       .limit(1)
       .get()
       .catch(() => null),
-    getPreviousSession(adminDb, studentId, session.scheduledAt),
+    getPreviousSessionWithAbsences(adminDb, studentId, session.scheduledAt),
     // 志望校解決用に生徒プロフィール
     adminDb.doc(`users/${studentId}`).get().catch(() => null),
     // 最新スキルチェック (小論文 / 面接)
@@ -118,6 +118,18 @@ export async function POST(
       .get()
       .catch(() => null),
   ]);
+
+  // 欠席回は飛ばして「直近の実施回」を前回とする。欠席回に準備してあった台本は
+  // 未消化の内容なので、今回の台本で扱わせるため別途 AI に渡す。
+  const prevSession = prevResult.session;
+  const missedPreps = prevResult.missedSessions
+    .map((s) => ({
+      date: s.scheduledAt.slice(0, 10),
+      theme: s.prepPlan?.theme ?? s.theme ?? "",
+      goal: s.prepPlan?.goal ?? "",
+      questions: s.prepPlan?.questions ?? [],
+    }))
+    .filter((m) => m.theme || m.goal || m.questions.length > 0);
 
   const sa = saSnap.exists ? saSnap.data() : null;
   const topWeaknesses = weakSnap.docs
@@ -280,6 +292,7 @@ export async function POST(
         }
       : undefined,
     previousPrepGoal: prevSession?.prepPlan?.goal,
+    missedPreps,
     recentArtifactsSummary,
     admissionPolicies,
     latestSkill,
