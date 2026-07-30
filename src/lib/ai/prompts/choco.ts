@@ -44,18 +44,14 @@ ${target.text}
 - coherence（つながり）: 前後の段落と自然につながり、話の流れを壊していないか
 - expression（表現）: 日本語が正しく、読みやすいか
 
-## 出力（JSON のみ。前後に説明文を書かない）
-{
-  "scores": { "logic": 0-10, "coherence": 0-10, "expression": 0-10 },
-  "feedback": {
-    "overall": "全体講評（2〜3文、まず良い点を認める）",
-    "goodPoints": ["良かった点1", "良かった点2"],
-    "improvements": ["もう一歩1", "もう一歩2"],
-    "languageCorrections": [
-      { "location": "該当箇所の短い引用", "original": "誤/改善前", "suggestion": "改善案", "type": "typo|grammar|connector|expression|redundancy", "reason": "理由" }
-    ],
-    "weaknessTags": ["弱点タグ(例: 論理の飛躍, 主張が曖昧, 接続の不足)"],
-    "nextTip": "次に気をつけること1つ"
-  }
-}`;
+## 出力
+指定された構造化出力スキーマに従い、すべて日本語で記述してください。各項目の内容は次のとおりです。
+- scores.logic / coherence / expression: 上記3軸をそれぞれ 0〜10 の整数で採点する
+- feedback.overall: 全体講評。2〜3文で、まず良い点を認める
+- feedback.goodPoints: 良かった点を1〜2個
+- feedback.improvements: もう一歩の点を1〜2個
+- feedback.languageCorrections: 日本語の直し。original は生徒の段落に**完全一致する原文**だけを使い、
+  引用できない指摘は返さない。重要度の高い最大3件に絞る
+- feedback.weaknessTags: 弱点タグ（例: 論理の飛躍、主張が曖昧、接続の不足）
+- feedback.nextTip: 次に気をつけることを1つ`;
 }

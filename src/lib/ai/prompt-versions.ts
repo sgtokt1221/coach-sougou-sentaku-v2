@@ -33,6 +33,12 @@ export const AI_PROMPT_VERSIONS = {
     promptVersion: "essay-review-v4",
     schemaVersion: "essay-review-output-v2",
   },
+  chocoReview: {
+    // v2: 手書きJSON＋正規表現パースから構造化出力へ移行し、模範段落の引用禁止と
+    //     命令・データ境界を追加した。
+    promptVersion: "choco-review-v2",
+    schemaVersion: "choco-review-output-v1",
+  },
   skillCheck: {
     // v2: 軸別バンドの 10/8 点の記述を締め、6点を平均に据えた。
     //     校正実測（law-01・同一答案）: 普通に良い答案が 44点(A) → 38点(B) へ。

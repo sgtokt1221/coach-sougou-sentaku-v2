@@ -5,6 +5,7 @@ import { reviewChocoParagraph } from "@/lib/essay/choco-core";
 import { computeChocoTotal } from "@/lib/choco/score";
 import { applyChocoWeaknesses } from "@/lib/choco/apply-weakness";
 import type { ChocoReview } from "@/lib/types/choco";
+import { AI_MODEL_REVIEW, AI_PROMPT_VERSIONS } from "@/lib/ai/prompt-versions";
 
 export const maxDuration = 60;
 
@@ -64,7 +65,15 @@ export async function POST(request: NextRequest) {
       submittedAt: now,
       createdAt: now,
     };
-    await ref.set(doc);
+    // 採点プロンプトの版。基準を変えるとスコア水準が動くため、どの基準で付いた点かを
+    // 後から判別できるように記録する。
+    await ref.set({
+      ...doc,
+      aiMetadata: {
+        ...AI_PROMPT_VERSIONS.chocoReview,
+        model: AI_MODEL_REVIEW,
+      },
+    });
 
     // 弱点DB反映は応答前に await する（fire-and-forget だと応答後にインスタンスが凍結して
     // 反映が失われうるため）。失敗しても catch して結果は返す。
