@@ -112,6 +112,7 @@ import { EssayCoachHistorySection } from "@/components/admin/EssayCoachHistorySe
 import { SessionsHistorySection } from "@/components/admin/SessionsHistorySection";
 import { GrowthReportsSection } from "@/components/admin/GrowthReportsSection";
 import { DocumentsSection } from "@/components/admin/DocumentsSection";
+import { EssayQuestionContext } from "@/components/admin/EssayQuestionContext";
 import { InterviewsSection } from "@/components/admin/InterviewsSection";
 import { SummaryDrillsSection } from "@/components/admin/SummaryDrillsSection";
 import { LogicDrillsSection } from "@/components/admin/LogicDrillsSection";
@@ -1419,6 +1420,12 @@ function AdminStudentDetailPageInner() {
             </div>
           ) : essayDetail ? (
             <div className="space-y-6 py-2">
+              {/* 出題の文脈。生徒が何を読んで何に答えたかが分からないと添削の妥当性を判断できない */}
+              <EssayQuestionContext
+                topic={essayDetail.topic}
+                context={essayDetail.questionContext}
+              />
+
               {/* Score bars */}
               {essayDetail.scores && (
                 <div className="space-y-3">

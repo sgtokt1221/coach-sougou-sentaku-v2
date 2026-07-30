@@ -48,6 +48,23 @@ export async function POST(request: NextRequest) {
 
     const requestUserId = auth.uid;
 
+    /**
+     * 出題の文脈。管理者・講師が答案詳細を開いたときに「生徒が何を読んで何に答えたか」
+     * を確認できるよう保存する。従来は topic 以外を保存しておらず、英文読解やレポート
+     * 課題の答案でも管理者側には題名の文字列しか出ないため、添削の妥当性を判断できなかった。
+     * Firestore は undefined を拒否するので null に寄せる。
+     */
+    const questionContext = {
+      questionType: questionType ?? null,
+      wordLimit: body.wordLimit ?? null,
+      sourceText: sourceText ?? null,
+      chartDataSummary: chartDataSummary ?? null,
+      lectureInfo: body.lectureInfo ?? null,
+      pastQuestionFacultyName: pastQuestionFacultyName ?? null,
+      themeId: body.themeId ?? null,
+      pastQuestionId: body.pastQuestionId ?? null,
+    };
+
     // 大学・学部のAPを取得
     let admissionPolicy = "";
     let weaknessList = "（過去の弱点なし）";
@@ -129,6 +146,7 @@ export async function POST(request: NextRequest) {
             parentEssayId: parentEssayIdResolved,
             attemptNumber,
             inputMode: body.inputMode ?? null,
+            questionContext,
             ...(retryContext ? { retryContext } : {}),
           });
         } else {
@@ -376,6 +394,9 @@ export async function POST(request: NextRequest) {
             weaknessTags,
             status: "reviewed",
             reviewedAt: FieldValue.serverTimestamp(),
+            // 画像モードは /api/essay/upload が先に doc を作るため、作成時の
+            // 分岐を通らない。ここでも書いて経路によらず必ず残るようにする。
+            questionContext,
             // sourceType の優先順位: 宿題 > レポート > (既定: manual 等)
             ...(homeworkId
               ? { sourceType: "homework", homeworkAssignmentId: homeworkId }

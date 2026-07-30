@@ -922,6 +922,9 @@ export default function EssayNewPage() {
           essayId: id, ocrText: directText, universityId, facultyId, topic: effectiveTopic,
           wordLimit: customMaxLength || pastQuestion?.wordLimit || selectedTheme?.wordLimit || retryParent?.retryContext?.wordLimit,
           inputMode,
+          // 出題元。管理者側で元のテーマ・過去問を辿れるようにする
+          ...(selectedTheme && { themeId: selectedTheme.id }),
+          ...(pastQuestion && { pastQuestionId: pastQuestion.id }),
           ...(homeworkId ? { homeworkId } : {}),
           ...(retryFromId && { parentEssayId: retryFromId }),
           ...(reportMode && reportMaterial && {
@@ -1014,6 +1017,9 @@ export default function EssayNewPage() {
           essayId, ocrText, universityId, facultyId, topic: effectiveTopic,
           wordLimit: customMaxLength || pastQuestion?.wordLimit || selectedTheme?.wordLimit || retryParent?.retryContext?.wordLimit,
           inputMode,
+          // 出題元。管理者側で元のテーマ・過去問を辿れるようにする
+          ...(selectedTheme && { themeId: selectedTheme.id }),
+          ...(pastQuestion && { pastQuestionId: pastQuestion.id }),
           ...(homeworkId ? { homeworkId } : {}),
           ...(retryFromId && { parentEssayId: retryFromId }),
           ...(pastQuestion && {

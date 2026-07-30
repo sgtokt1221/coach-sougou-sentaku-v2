@@ -5,6 +5,24 @@ import { adminDb } from "@/lib/firebase/admin";
 import { MOCK_UNIVERSITIES } from "@/lib/matching/mockData";
 import { resolveTargetUniversities } from "@/lib/universities/resolve";
 import type { StudentDetail } from "@/lib/types/admin";
+import { getThemeById } from "@/data/essay-themes";
+import { getPastQuestionById } from "@/data/essay-past-questions";
+
+/**
+ * 答案のテーマ名。topic を保存していなかった時期の答案は出題元から復元する。
+ * テーマ選択で提出された答案は topic が空のまま保存されていた（b9ca937 で修正）。
+ */
+function resolveEssayTopic(data: FirebaseFirestore.DocumentData): string | undefined {
+  const saved = typeof data.topic === "string" ? data.topic.trim() : "";
+  if (saved) return saved;
+  const ctx = data.questionContext ?? data.retryContext ?? {};
+  if (ctx.pastQuestionId) {
+    const pq = getPastQuestionById(ctx.pastQuestionId);
+    if (pq) return `${pq.universityName} ${pq.year}年 ${pq.theme}`;
+  }
+  if (ctx.themeId) return getThemeById(ctx.themeId)?.title;
+  return undefined;
+}
 import {
   computeEssayAggregateFromList,
   computeInterviewAggregateFromList,
@@ -146,7 +164,7 @@ export async function GET(
         id: d.id,
         targetUniversity: resolved.uniName,
         targetFaculty: resolved.facName,
-        topic: data.topic,
+        topic: resolveEssayTopic(data),
         submittedAt: data.submittedAt?.toDate().toISOString() ?? new Date().toISOString(),
         scores: data.scores ?? null,
         status: data.status ?? "uploaded",

@@ -38,6 +38,8 @@ export interface Essay {
   lectureId?: string;
   /** 管理者/講師による範囲指定インラインコメント */
   inlineComments?: EssayInlineComment[];
+  /** 出題の文脈（出題形式・制限字数・課題文）。管理者の答案詳細で表示する */
+  questionContext?: EssayQuestionContextData;
 }
 
 /**
@@ -85,6 +87,18 @@ export interface TopicInsights {
   relatedThemes: string[];
   deepDivePoints: string[];
   recommendedAngle: string;
+}
+
+/**
+ * 答案に保存する出題の文脈。管理者・講師が「生徒が何を読んで何に答えたか」を
+ * 確認するために使う（essays/{id}.questionContext）。
+ */
+export interface EssayQuestionContextData {
+  questionType?: string | null;
+  wordLimit?: number | null;
+  sourceText?: string | null;
+  chartDataSummary?: string | null;
+  lectureInfo?: string | null;
 }
 
 export interface LanguageCorrection {
@@ -189,6 +203,9 @@ export interface EssayReviewRequest {
   chartDataSummary?: string;
   pastQuestionFacultyName?: string;
   lectureInfo?: string;
+  /** 出題元の識別子。管理者側で元のテーマ・過去問を辿れるように保存する */
+  themeId?: string;
+  pastQuestionId?: string;
   parentEssayId?: string;
   inputMode?: "image" | "text" | "dictation";
   /** 宿題から取り組んだ場合の homeworkAssignment ID。提出時に宿題を提出済みにする */
