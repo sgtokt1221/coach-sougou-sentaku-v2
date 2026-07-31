@@ -3,6 +3,11 @@ import Anthropic from "@anthropic-ai/sdk";
 import { verifyAuthToken, adminDb } from "@/lib/firebase/admin";
 import { buildEssayBrushupPrompt } from "@/lib/ai/prompts/essay";
 import { cleanAiText, fitToCharLimit } from "@/lib/ai/fit-char-limit";
+import {
+  detectJapaneseStyle,
+  unifyJapaneseStyle,
+} from "@/lib/ai/japanese-style";
+import { AI_MODEL_REVIEW } from "@/lib/ai/prompt-versions";
 import type { EssayFeedback } from "@/lib/types/essay";
 
 export const maxDuration = 60;
@@ -80,7 +85,9 @@ export async function POST(
 
     const client = new Anthropic();
     const response = await client.messages.create({
-      model: "claude-haiku-4-5-20251001",
+      // 全文を書き直す生成タスク。haiku では文体が混ざる・見出しが混入する事象が
+      // 実データで出ていたため、添削本体と同じモデルに揃える。
+      model: AI_MODEL_REVIEW,
       max_tokens: 2000,
       messages: [{ role: "user", content: prompt }],
     });
@@ -93,6 +100,26 @@ export async function POST(
       return NextResponse.json(
         { error: "ブラッシュアップ版の生成に失敗しました" },
         { status: 502 },
+      );
+    }
+
+    // 見出しを付けるなと指示しても混入することがある（実データに
+    // 「# ブラッシュアップ版本文」が残っていた）。本文の前に来る見出し行を落とす。
+    brushedUpText = brushedUpText.replace(/^\s*#{1,6}[^\n]*\n+/, "").trim();
+
+    // 文体の統一。原文が「である調」なのに添削後で敬体が混ざる事象が実データで
+    // 出ていた。プロンプトに指示を足したうえで、混在していたらサーバー側で直す。
+    const brushedStyle = detectJapaneseStyle(brushedUpText);
+    if (brushedStyle.mixed) {
+      const originalStyle = detectJapaneseStyle(ocrText);
+      // 原文の文体に合わせる。原文でも判断がつかなければ小論文の既定である「である調」。
+      const target =
+        originalStyle.dominant ?? brushedStyle.dominant ?? "dearu";
+      brushedUpText = await unifyJapaneseStyle(
+        client,
+        brushedUpText,
+        target,
+        AI_MODEL_REVIEW,
       );
     }
 
