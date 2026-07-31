@@ -2,10 +2,23 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireRole, scopeByOrganization } from "@/lib/api/auth";
 import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
 import { adminDb } from "@/lib/firebase/admin";
+import type { EssayInlineComment } from "@/lib/types/essay";
+import type { ChocoRole } from "@/lib/types/choco";
 
 export interface ChocoReviewListItem {
   id: string;
   createdAt: string;
+  /** 元の文章のタイトル */
+  themeTitle: string;
+  /** 生徒が担当した段落の位置（0始まり）と役割 */
+  blankIndex: number;
+  role: ChocoRole | null;
+  /** 生徒が書いた段落。管理者画面で本文にコメントを付けるために返す */
+  studentText: string;
+  wordCount: number;
+  scores: { logic: number; coherence: number; expression: number; total: number } | null;
+  feedbackOverall: string;
+  inlineComments?: EssayInlineComment[];
 }
 
 export async function GET(
@@ -62,6 +75,14 @@ export async function GET(
       return {
         id: doc.id,
         createdAt: data.createdAt?.toDate?.()?.toISOString() ?? data.createdAt ?? new Date().toISOString(),
+        themeTitle: data.themeTitle ?? "",
+        blankIndex: typeof data.blankIndex === "number" ? data.blankIndex : 0,
+        role: data.role ?? null,
+        studentText: data.studentText ?? "",
+        wordCount: data.wordCount ?? (data.studentText ?? "").length,
+        scores: data.scores ?? null,
+        feedbackOverall: data.feedback?.overall ?? "",
+        inlineComments: data.inlineComments ?? [],
       };
     });
 

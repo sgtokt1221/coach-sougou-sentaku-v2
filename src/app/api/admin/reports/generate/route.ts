@@ -8,6 +8,7 @@ import {
   mergeCountMaps,
 } from "@/lib/growth/weakness-aggregate";
 import { buildLessonObservationSummaryPrompt } from "@/lib/ai/prompts/lesson-summary";
+import { AI_MODEL_SONNET } from "@/lib/ai/prompt-versions";
 import { buildPracticeQuestionsPrompt } from "@/lib/ai/prompts/practice-questions";
 import {
   buildComprehensiveAssessmentPrompt,
@@ -530,7 +531,8 @@ export async function POST(request: NextRequest) {
           studentContext,
         });
         const resp = await client.messages.create({
-          model: "claude-haiku-4-5-20251001",
+          // 生徒がそのまま解く練習問題。出題文の質が指導の質に直結する。
+          model: AI_MODEL_SONNET,
           max_tokens: 3500,
           system: systemPrompt,
           messages: [{ role: "user", content: "JSON のみを出力してください。" }],
@@ -633,7 +635,8 @@ export async function POST(request: NextRequest) {
         const client = new Anthropic();
         const systemPrompt = buildComprehensiveAssessmentPrompt(comprehensiveInput);
         const resp = await client.messages.create({
-          model: "claude-haiku-4-5-20251001",
+          // 生徒・保護者が読む総合評価の散文。文体の乱れが目に見える。
+          model: AI_MODEL_SONNET,
           max_tokens: 1500,
           system: systemPrompt,
           messages: [{ role: "user", content: "JSON のみを出力してください。" }],

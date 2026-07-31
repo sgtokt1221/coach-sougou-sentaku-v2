@@ -10,6 +10,7 @@ import {
   type LessonPlanContext,
 } from "@/lib/ai/prompts/lesson-plan";
 import { buildPracticeQuestionsPrompt } from "@/lib/ai/prompts/practice-questions";
+import { AI_MODEL_SONNET } from "@/lib/ai/prompt-versions";
 import {
   computeThisWeekWeakItems,
   extractInterviewAssistantQuestions,
@@ -427,7 +428,9 @@ export async function POST(
     const Anthropic = (await import("@anthropic-ai/sdk")).default;
     const client = new Anthropic();
     const pqResp = await client.messages.create({
-      model: "claude-haiku-4-5-20251001",
+      // 生徒がそのまま解く練習問題を作る。8000トークン規模の長文生成で、
+      // 出題文の質がそのまま指導の質になるため上位モデルを使う。
+      model: AI_MODEL_SONNET,
       max_tokens: 8000,
       system: pqSystem,
       messages: [{ role: "user", content: "JSON のみを出力してください。" }],

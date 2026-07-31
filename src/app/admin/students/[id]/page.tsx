@@ -145,6 +145,7 @@ import { DocumentsSection } from "@/components/admin/DocumentsSection";
 import { EssayQuestionContext } from "@/components/admin/EssayQuestionContext";
 import { InterviewsSection } from "@/components/admin/InterviewsSection";
 import { SummaryDrillsSection } from "@/components/admin/SummaryDrillsSection";
+import { ChocoReviewsSection } from "@/components/admin/ChocoReviewsSection";
 import { LogicDrillsSection } from "@/components/admin/LogicDrillsSection";
 import { InterviewDrillsSection } from "@/components/admin/InterviewDrillsSection";
 import { ActivitiesSection } from "@/components/admin/ActivitiesSection";
@@ -1135,6 +1136,7 @@ function AdminStudentDetailPageInner() {
 
       <InterviewsSection studentId={id} autoOpenInterviewId={searchParams?.get("interview") ?? undefined} />
       <SummaryDrillsSection studentId={id} />
+      <ChocoReviewsSection studentId={id} />
       <LogicDrillsSection studentId={id} />
       <InterviewDrillsSection studentId={id} />
     </div>
