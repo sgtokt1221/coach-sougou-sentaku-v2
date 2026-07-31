@@ -20,7 +20,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { useAuthSWR } from "@/lib/api/swr";
 import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
 import type { StudentListItem } from "@/lib/types/admin";
-import { StudentUnviewedBadge } from "@/components/admin/UnviewedSubmissions";
+import { StudentUnviewedBadge, useUnviewedSubmissions } from "@/components/admin/UnviewedSubmissions";
 import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils/avatar";
@@ -174,6 +174,8 @@ export default function AdminStudentsPage() {
   if (search) params.set("search", search);
   params.set("sort", sortKey);
   if (universityFilter) params.set("university", universityFilter);
+  // 未確認件数は一覧で1回だけ取得し、各行へ渡す（行ごとに取ると行数ぶん叩く）
+  const { data: unviewed } = useUnviewedSubmissions();
   const { data: rawData, isLoading, error: studentsError } = useAuthSWR<StudentListItem[]>(
     `/api/admin/students?${params.toString()}`
   );
@@ -526,7 +528,7 @@ export default function AdminStudentsPage() {
                               <p className="flex items-center gap-1.5 font-medium">
                                 {s.displayName}
                                 {/* 自分がまだ開いていない提出物の件数 */}
-                                <StudentUnviewedBadge studentId={s.uid} />
+                                <StudentUnviewedBadge count={unviewed?.byStudent?.[s.uid] ?? 0} />
                               </p>
                               <p className="text-xs text-muted-foreground">{s.email}</p>
                               {s.createdAt && (

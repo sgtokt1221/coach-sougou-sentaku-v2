@@ -31,7 +31,7 @@ export function AdminAbsenceBadge() {
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0, opacity: 0 }}
           transition={{ type: "spring", stiffness: 500, damping: 25 }}
-          className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-[10px] font-bold text-destructive-foreground"
+          className="ml-auto flex h-[22px] min-w-[22px] items-center justify-center rounded-full bg-destructive px-1.5 text-xs font-bold leading-none tabular-nums text-destructive-foreground"
         >
           {count > 99 ? "99+" : count}
         </motion.span>

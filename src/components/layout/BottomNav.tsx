@@ -34,6 +34,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useAuthSWR } from "@/lib/api/swr";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { MobileMenuContent } from "./MobileMenuContent";
+import { useUnviewedSubmissions } from "@/components/admin/UnviewedSubmissions";
 
 /**
  * ボトムナブ（モバイル専用）
@@ -187,12 +188,11 @@ export function BottomNav() {
   );
   const chatUnread = adminUnread?.unreadCount ?? 0;
 
-  // 管理者/講師: まだ開いていない提出物（通知タブのバッジ）
-  const { data: unviewed } = useAuthSWR<{ total: number }>(
-    role === "admin" || role === "teacher" || role === "superadmin"
-      ? "/api/admin/unviewed-submissions"
-      : null,
-    { refreshInterval: 60000 },
+  // 管理者/講師: まだ開いていない提出物（通知タブのバッジ）。
+  // サイドバーと同じフックを使い、ポーリングのタイマーを二重に持たない。
+  const { data: unviewed } = useUnviewedSubmissions(
+    role === "admin" || role === "teacher" || role === "superadmin",
+    true,
   );
   const unviewedTotal = unviewed?.total ?? 0;
 

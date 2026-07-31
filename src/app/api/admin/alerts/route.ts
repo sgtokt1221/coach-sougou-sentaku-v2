@@ -448,7 +448,9 @@ export async function GET(request: NextRequest) {
             itemId: eDoc0.id,
             at: eAt.toISOString(),
             message: `${sName}さんが添削を提出しました`,
-            link: `/admin/students/${studentUid}?tab=activity`,
+            // 答案そのものを開くところまで飛ばす。生徒ページ止まりだと
+            // 開いた扱いにならず未確認バッジが減らない。
+            link: `/admin/students/${studentUid}?tab=performance&essay=${eDoc0.id}`,
           });
         }
 

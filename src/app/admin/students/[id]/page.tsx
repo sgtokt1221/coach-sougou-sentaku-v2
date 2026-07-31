@@ -60,7 +60,7 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { resetPassword } from "@/lib/firebase/auth";
 import { authFetch, markSubmissionViewed } from "@/lib/api/client";
-import { useUnviewedSubmissions } from "@/components/admin/UnviewedSubmissions";
+import { useUnviewedSubmissionsMutate } from "@/components/admin/UnviewedSubmissions";
 import { ScoresTrendChart } from "@/components/growth/ScoresTrendChart";
 import { DetailedScoresTrendChart } from "@/components/growth/DetailedScoresTrendChart";
 import { INTERVIEW_SCORE_LINES } from "@/components/charts/theme";
@@ -450,7 +450,19 @@ function AdminStudentDetailPageInner() {
   const { data: logicDrillsData } = useAuthSWR<any[]>(`/api/admin/students/${id}/logic-drills`);
   const { data: chocoReviewsData } = useAuthSWR<any[]>(`/api/admin/students/${id}/choco-reviews`);
   // 未確認バッジの再取得用（提出物を開いたら件数を減らす）
-  const { mutate: mutateUnviewed } = useUnviewedSubmissions();
+  const mutateUnviewed = useUnviewedSubmissionsMutate();
+
+  // 通知からの深リンク（?essay=）で該当答案を直接開く。
+  // 開けば既読になるので、通知から辿ればバッジが減る。
+  const autoOpenEssayId = searchParams?.get("essay") ?? null;
+  const autoOpenedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!autoOpenEssayId || autoOpenedRef.current === autoOpenEssayId) return;
+    autoOpenedRef.current = autoOpenEssayId;
+    void openEssayDetail(autoOpenEssayId);
+    // openEssayDetail は再生成されるため依存に入れない（1回だけ開く）
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoOpenEssayId]);
   const { data: activityLogsData } = useAuthSWR<any[]>(`/api/admin/students/${id}/activity-logs`);
   const { data: documentsData } = useAuthSWR<any[]>(`/api/admin/students/${id}/documents`);
 

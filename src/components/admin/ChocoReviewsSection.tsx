@@ -16,7 +16,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
 import { InlineCommentableText } from "@/components/essay/InlineCommentableText";
 import { markSubmissionViewed } from "@/lib/api/client";
-import { useUnviewedSubmissions } from "@/components/admin/UnviewedSubmissions";
+import { useUnviewedSubmissionsMutate } from "@/components/admin/UnviewedSubmissions";
 import { CHOCO_ROLE_LABELS } from "@/lib/types/choco";
 import type { ChocoReviewListItem } from "@/app/api/admin/students/[id]/choco-reviews/route";
 
@@ -33,7 +33,7 @@ function scoreColor(total: number): string {
 export function ChocoReviewsSection({ studentId }: { studentId: string }) {
   // 範囲コメントの削除可否判定に使う
   const { user, userProfile } = useAuth();
-  const { mutate: mutateUnviewed } = useUnviewedSubmissions();
+  const mutateUnviewed = useUnviewedSubmissionsMutate();
   const { data, isLoading, error } = useAuthSWR<ChocoReviewListItem[]>(
     `/api/admin/students/${studentId}/choco-reviews`,
   );

@@ -29,7 +29,7 @@ import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
 import { DocumentReviewBadge } from "@/components/documents/DocumentReviewBadge";
 import { InlineCommentableText } from "@/components/essay/InlineCommentableText";
 import { markSubmissionViewed } from "@/lib/api/client";
-import { useUnviewedSubmissions } from "@/components/admin/UnviewedSubmissions";
+import { useUnviewedSubmissionsMutate } from "@/components/admin/UnviewedSubmissions";
 import { useAuth } from "@/contexts/AuthContext";
 import type { EssayInlineComment } from "@/lib/types/essay";
 import type {
@@ -130,7 +130,7 @@ function getDeadlineBadge(deadline?: string) {
 export function DocumentsSection({ studentId }: { studentId: string }) {
   // 範囲コメントの削除可否判定に使う
   const { user, userProfile } = useAuth();
-  const { mutate: mutateUnviewed } = useUnviewedSubmissions();
+  const mutateUnviewed = useUnviewedSubmissionsMutate();
   const { data, isLoading, error, mutate } = useAuthSWR<DocumentListItem[]>(
     `/api/admin/students/${studentId}/documents`
   );

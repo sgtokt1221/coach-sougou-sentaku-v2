@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { SkillCheckResultView } from "@/components/skill-check/SkillCheckResultView";
 import { InterviewSkillResultView } from "@/components/interview-skill-check/InterviewSkillResultView";
 import { authFetch, markSubmissionViewed } from "@/lib/api/client";
-import { useUnviewedSubmissions } from "@/components/admin/UnviewedSubmissions";
+import { useUnviewedSubmissionsMutate } from "@/components/admin/UnviewedSubmissions";
 import { COMPOSER_SUBMIT_HINT, isComposerSubmitKey } from "@/lib/ui/composer-keys";
 import { ACADEMIC_CATEGORY_LABELS } from "@/lib/types/skill-check";
 import type { SkillCheckResult } from "@/lib/types/skill-check";
@@ -46,7 +46,7 @@ export function SkillCheckDetailDialog({
 }) {
   // ドラッグ範囲コメントの削除可否判定に使う（自分が付けたもの / 管理者は全件）
   const { user, userProfile } = useAuth();
-  const { mutate: mutateUnviewed } = useUnviewedSubmissions();
+  const mutateUnviewed = useUnviewedSubmissionsMutate();
   // ダイアログを開いた提出物を自分の既読にする（未確認バッジ用）
   useEffect(() => {
     if (!open || !result || !studentId) return;
