@@ -6,7 +6,43 @@ import { Select as SelectPrimitive } from "@base-ui/react/select"
 import { cn } from "@/lib/utils"
 import { ChevronDownIcon, CheckIcon, ChevronUpIcon } from "lucide-react"
 
-const Select = SelectPrimitive.Root
+/**
+ * Base UI の Select は、選択中の値をラベルに直すために Root へ `items` を
+ * 渡す必要がある。渡さないと SelectValue が生の値をそのまま描画するため、
+ * 「講師」ではなく `teacher`、塾名ではなく `org-a` と出ていた。
+ *
+ * アプリ内 29 箇所すべてに items を書かせるのは漏れるので、children に
+ * 並んでいる SelectItem から value とラベルを拾って自動で組み立てる。
+ * 呼び出し側が明示的に items を渡した場合はそちらを優先する。
+ */
+function collectItems(
+  node: React.ReactNode,
+  out: Record<string, React.ReactNode>,
+): void {
+  React.Children.forEach(node, (child) => {
+    if (!React.isValidElement(child)) return;
+    const props = child.props as { value?: unknown; children?: React.ReactNode };
+    if (child.type === SelectItem && typeof props.value === "string") {
+      out[props.value] = props.children;
+    }
+    if (props.children) collectItems(props.children, out);
+  });
+}
+
+function Select({ items, children, ...props }: SelectPrimitive.Root.Props<string>) {
+  const resolved = React.useMemo(() => {
+    if (items) return items;
+    const map: Record<string, React.ReactNode> = {};
+    collectItems(children, map);
+    return Object.keys(map).length > 0 ? map : undefined;
+  }, [items, children]);
+
+  return (
+    <SelectPrimitive.Root items={resolved} {...props}>
+      {children}
+    </SelectPrimitive.Root>
+  );
+}
 
 function SelectGroup({ className, ...props }: SelectPrimitive.Group.Props) {
   return (

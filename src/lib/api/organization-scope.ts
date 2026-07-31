@@ -20,19 +20,63 @@ export function chunk<T>(arr: T[], size: number): T[][] {
 }
 
 /**
- * admin の所属組織メンバー(admin uid)一覧を返す。
+ * 所属の正本は users/{uid}.organizationId ひとつだけ。
+ *
+ * 以前は organizations.memberAdminUids との二重管理で、片方だけ更新すると
+ * 黙ってズレた。所属は users 側だけを見て、メンバー一覧はそこから引く。
+ */
+export async function getUserOrgId(
+  adminDb: Firestore,
+  uid: string,
+): Promise<string | undefined> {
+  const me = (await adminDb.doc(`users/${uid}`).get()).data() ?? {};
+  return typeof me.organizationId === "string" ? me.organizationId : undefined;
+}
+
+/**
+ * ある塾に所属するスタッフ(admin/teacher)の uid 一覧。
+ * 生徒の managedBy がこの中にあれば「同じ塾の生徒」とみなす。
+ */
+export async function getOrgStaffUids(
+  adminDb: Firestore,
+  organizationId: string,
+): Promise<string[]> {
+  const snap = await adminDb
+    .collection("users")
+    .where("organizationId", "==", organizationId)
+    .get();
+  return snap.docs
+    .filter((d) => ["admin", "teacher", "superadmin"].includes(d.data().role))
+    .map((d) => d.id);
+}
+
+/**
+ * admin の所属組織メンバー(スタッフ uid)一覧を返す。
  * 組織未所属なら自分のみ [adminUid]（＝従来の managedBy==自分 と同等）。
  */
 export async function getOrgMemberAdminUids(
   adminDb: Firestore,
   adminUid: string,
 ): Promise<string[]> {
-  const me = (await adminDb.doc(`users/${adminUid}`).get()).data() ?? {};
-  const orgId = typeof me.organizationId === "string" ? me.organizationId : null;
+  const orgId = await getUserOrgId(adminDb, adminUid);
   if (!orgId) return [adminUid];
-  const org = (await adminDb.doc(`organizations/${orgId}`).get()).data() ?? {};
-  const members: string[] = Array.isArray(org.memberAdminUids) ? org.memberAdminUids : [];
-  return Array.from(new Set<string>([adminUid, ...members]));
+  const staff = await getOrgStaffUids(adminDb, orgId);
+  return Array.from(new Set<string>([adminUid, ...staff]));
+}
+
+/**
+ * 担当者(managedBy)に合わせて所属を揃えるための更新フィールドを返す。
+ *
+ * 生徒の担当を別の塾の管理者へ移したのに organizationId が古いままだと、
+ * 移管元の塾からも見え続ける（scopeByOrganization の組織一致パス）。
+ * 担当を変える処理では必ずこれを混ぜること。
+ */
+export async function orgFieldsFollowingManager(
+  adminDb: Firestore,
+  managerUid: string,
+): Promise<{ organizationId?: string }> {
+  const orgId = await getUserOrgId(adminDb, managerUid);
+  return orgId ? { organizationId: orgId } : {};
 }
 
 /**

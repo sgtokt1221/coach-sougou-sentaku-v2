@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
+import { orgFieldsFollowingManager } from "@/lib/api/organization-scope";
 
 export async function POST(request: Request) {
   const authResult = await requireRole(request, ["superadmin"]);
@@ -25,10 +26,14 @@ export async function POST(request: Request) {
   }
 
   try {
+    // 所属は担当者に追従させる。これが無いと managedBy は移管先を指すのに
+    // organizationId が移管元のままになり、移管元の塾からも見え続ける。
+    const orgFields = await orgFieldsFollowingManager(adminDb, toAdminUid);
     const batch = adminDb.batch();
     for (const uid of studentUids) {
       batch.update(adminDb.doc(`users/${uid}`), {
         managedBy: toAdminUid,
+        ...orgFields,
         updatedAt: new Date(),
       });
     }

@@ -50,7 +50,15 @@ export async function GET(request: NextRequest) {
   }
 
   const org = (await adminDb.doc(`organizations/${orgId}`).get()).data() ?? {};
-  const memberUids: string[] = Array.isArray(org.memberAdminUids) ? org.memberAdminUids : [];
+  // 所属の正本は users/{uid}.organizationId。organizations.memberAdminUids と
+  // 二重に持つと片方だけ更新されて黙ってズレるため、users 側から引く。
+  const staffSnap = await adminDb
+    .collection("users")
+    .where("organizationId", "==", orgId)
+    .get();
+  const memberUids = staffSnap.docs
+    .filter((d) => d.data().role === "admin")
+    .map((d) => d.id);
   const uids = Array.from(new Set<string>([uid, ...memberUids]));
   const members: MemberListItem[] = await Promise.all(
     uids.map(async (mUid) => {

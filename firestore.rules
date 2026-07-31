@@ -185,9 +185,12 @@ service cloud.firestore {
     }
 
     // organizations: superadmin のみ書き込み、 メンバーは read 可
+    // 所属の正本は users/{uid}.organizationId。memberAdminUids と二重に
+    // 持つとズレるので、ルールも users 側だけを見る。
     match /organizations/{orgId} {
       allow read: if request.auth != null && (
-        isSuperAdmin() || request.auth.uid in resource.data.memberAdminUids
+        isSuperAdmin() ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationId == orgId
       );
       allow write: if isSuperAdmin();
     }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,11 @@ export default function NewAdminPage() {
   const [role, setRole] = useState<"admin" | "teacher">("admin");
   const [password, setPassword] = useState("");
   const [orgId, setOrgId] = useState<string>(NO_ORG);
+  // 講師に切り替えたとき「未所属」「新しい塾」が選ばれたままだと選択肢から
+  // 消えて表示が空になるので戻す
+  useEffect(() => {
+    if (role === "teacher" && (orgId === NO_ORG || orgId === NEW_ORG)) setOrgId("");
+  }, [role, orgId]);
   const [newOrgName, setNewOrgName] = useState("");
 
   const { data: orgs, mutate: mutateOrgs } = useAuthSWR<{ items: OrganizationListItem[] }>(
@@ -48,6 +53,12 @@ export default function NewAdminPage() {
     }
     if (role === "admin" && orgId === NEW_ORG && !newOrgName.trim()) {
       toast.error("新しい塾の名前を入力してください");
+      return;
+    }
+    // 講師は塾に属していないと、その塾の管理者の講師一覧に出てこない。
+    // 後から手で付ける運用にすると必ず付け忘れるので、ここで必須にする。
+    if (role === "teacher" && (orgId === NO_ORG || orgId === NEW_ORG)) {
+      toast.error("講師を作るには所属する塾を選んでください");
       return;
     }
 
@@ -69,7 +80,14 @@ export default function NewAdminPage() {
         payload = { email, displayName, password };
       } else {
         endpoint = "/api/superadmin/admins";
-        payload = { email, displayName, role, password };
+        // 所属は作成時に必ず渡す（講師はここを通る）
+        payload = {
+          email,
+          displayName,
+          role,
+          password,
+          ...(orgId !== NO_ORG && orgId !== NEW_ORG ? { organizationId: orgId } : {}),
+        };
       }
 
       const res = await authFetch(endpoint, {
@@ -152,16 +170,20 @@ export default function NewAdminPage() {
                 </SelectContent>
               </Select>
             </div>
-            {role === "admin" && (
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium">所属塾</Label>
+            {/* 講師も塾を選ばせる。所属が無いとその塾の講師一覧に出てこない */}
+            <div className="space-y-1.5">
+                <Label className="text-xs font-medium">
+                  所属塾{role === "teacher" && <span className="text-destructive">（必須）</span>}
+                </Label>
                 <Select value={orgId} onValueChange={(v) => { if (v) setOrgId(v); }}>
                   <SelectTrigger>
-                    <SelectValue placeholder="塾を選択（任意）" />
+                    <SelectValue placeholder="塾を選択" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={NEW_ORG}>＋ 新しい塾を作成…</SelectItem>
-                    <SelectItem value={NO_ORG}>未所属</SelectItem>
+                    {role === "admin" && (
+                      <SelectItem value={NEW_ORG}>＋ 新しい塾を作成…</SelectItem>
+                    )}
+                    {role === "admin" && <SelectItem value={NO_ORG}>未所属</SelectItem>}
                     {(orgs?.items ?? []).map((o) => (
                       <SelectItem key={o.id} value={o.id}>
                         {o.name}
@@ -186,11 +208,12 @@ export default function NewAdminPage() {
                   </div>
                 ) : (
                   <p className="text-[11px] text-muted-foreground">
-                    塾を選ぶとその塾の管理者として作成（生徒を共有）。「未所属」も選べます。
+                    {role === "teacher"
+                      ? "講師はここで選んだ塾に所属します。所属していない講師は、その塾の講師一覧に出てきません。"
+                      : "塾を選ぶとその塾の管理者として作成（生徒を共有）。「未所属」も選べます。"}
                   </p>
                 )}
-              </div>
-            )}
+            </div>
             <div className="space-y-1.5">
               <Label htmlFor="password" className="text-xs font-medium">
                 パスワード

@@ -99,11 +99,13 @@ export async function POST(request: Request) {
   if (authResult instanceof NextResponse) return authResult;
 
   const body = await request.json();
-  const { email, displayName, role, password } = body as {
+  const { email, displayName, role, password, organizationId } = body as {
     email: string;
     displayName: string;
     role: "admin" | "teacher";
     password: string;
+    /** 所属させる塾。後から手で付ける運用は付け忘れるので作成時に決める */
+    organizationId?: string;
   };
 
   if (!email || !displayName || !role || !password) {
@@ -132,6 +134,8 @@ export async function POST(request: Request) {
       email,
       displayName,
       role,
+      // 所属は作成時に決める。後から手で付ける運用にすると必ず付け忘れる。
+      ...(organizationId ? { organizationId } : {}),
       createdAt: new Date(),
       updatedAt: new Date(),
     });
