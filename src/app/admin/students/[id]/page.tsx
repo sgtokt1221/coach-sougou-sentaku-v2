@@ -86,6 +86,7 @@ import { UniversitySelectStep } from "@/components/onboarding/UniversitySelectSt
 import type { EnglishCert } from "@/lib/types/user";
 import { CategorySelector } from "@/components/skill-check/CategorySelector";
 import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
+import { SkillRadarChart } from "@/components/skill-check/SkillRadarChart";
 import { scoreToSkillRank } from "@/lib/history-rank";
 import type { SkillCheckStatus, AcademicCategory, SkillCheckResult } from "@/lib/types/skill-check";
 import type { InterviewSkillCheckStatus, InterviewSkillCheckResult } from "@/lib/types/interview-skill-check";
@@ -1497,10 +1498,17 @@ function AdminStudentDetailPageInner() {
                 context={essayDetail.questionContext}
               />
 
-              {/* Score bars */}
+              {/* Score bars + レーダー。5軸の偏りは棒だけだと掴みにくいので図も出す */}
               {essayDetail.scores && (
                 <div className="space-y-3">
                   <h3 className="text-sm font-semibold text-foreground">AIスコア</h3>
+                  <div className="grid gap-3 sm:grid-cols-2 sm:items-center">
+                  <SkillRadarChart
+                    scores={essayDetail.scores}
+                    apAxisLabel="AP合致"
+                    showAp={essayDetail.feedback?.apAlignmentAssessable !== false}
+                    height={220}
+                  />
                   <div className="grid gap-2">
                     {[
                       { key: "structure", label: "構成", color: "bg-indigo-500" },
@@ -1524,9 +1532,10 @@ function AdminStudentDetailPageInner() {
                       <span className="w-20 text-xs font-semibold">合計</span>
                       <div className="flex-1" />
                       <span className={`text-lg font-bold ${scoreColor(essayDetail.scores.total)}`}>
-                        {essayDetail.scores.total}/50
+                        {essayDetail.scores.total}/{essayDetail.feedback?.scoreMaximum ?? 50}
                       </span>
                     </div>
+                  </div>
                   </div>
                 </div>
               )}
