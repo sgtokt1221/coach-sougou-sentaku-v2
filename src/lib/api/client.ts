@@ -87,3 +87,15 @@ export async function markSubmissionViewed(
     // バッジが消えないだけなので握りつぶす
   }
 }
+
+/** 未確認の提出物をまとめて既読にする。件数を返す。 */
+export async function markAllSubmissionsViewed(): Promise<number> {
+  const res = await authFetch("/api/admin/unviewed-submissions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ all: true }),
+  });
+  if (!res.ok) throw new Error("既読にできませんでした");
+  const body = (await res.json()) as { marked?: number };
+  return body.marked ?? 0;
+}

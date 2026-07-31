@@ -1,9 +1,13 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useSWRConfig } from "swr";
+import { toast } from "sonner";
+import { CheckCheck, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useAuthSWR } from "@/lib/api/swr";
+import { markAllSubmissionsViewed } from "@/lib/api/client";
 import type { SubmissionKind } from "@/lib/api/submission-kinds";
 
 export interface UnviewedSubmissionsData {
@@ -91,5 +95,46 @@ export function TabUnviewedBadge({ count }: { count: number }) {
     >
       {count > 99 ? "99+" : count}
     </span>
+  );
+}
+
+/**
+ * 未確認をまとめて既読にするボタン。
+ *
+ * 提出を1件ずつ開かないと赤が消えないと、溜まったときに実質消せなくなる。
+ * サーバー側もバッジと同じ集計を使うので、押せば必ず 0 になる。
+ */
+export function MarkAllViewedButton() {
+  const { data } = useUnviewedSubmissions();
+  const mutateUnviewed = useUnviewedSubmissionsMutate();
+  const [busy, setBusy] = useState(false);
+  const count = data?.total ?? 0;
+  if (count === 0) return null;
+
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      disabled={busy}
+      onClick={async () => {
+        setBusy(true);
+        try {
+          const n = await markAllSubmissionsViewed();
+          await mutateUnviewed();
+          toast.success(`${n}件を既読にしました`);
+        } catch {
+          toast.error("既読にできませんでした");
+        } finally {
+          setBusy(false);
+        }
+      }}
+    >
+      {busy ? (
+        <Loader2 className="size-4 animate-spin" />
+      ) : (
+        <CheckCheck className="size-4" />
+      )}
+      未確認{count}件をすべて既読にする
+    </Button>
   );
 }
