@@ -85,14 +85,17 @@ export function InlineFeedbackButton({
         {!compact && <span className="text-xs">FB</span>}
       </Button>
 
+      {/* height:auto のアニメーションは使わない。framer-motion が開いた瞬間の
+          高さを測って固定してしまい、入力欄や送信ボタンが切れていた
+          （弱点一覧では 0px に潰れて全く出なかった）。
+          高さは素のレイアウトに任せ、フェードだけ付ける。 */}
       <AnimatePresence>
         {open && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden"
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.15 }}
           >
             <div className="mt-2 rounded-lg border bg-card p-3 shadow-sm space-y-3">
               <div className="flex items-center gap-2">

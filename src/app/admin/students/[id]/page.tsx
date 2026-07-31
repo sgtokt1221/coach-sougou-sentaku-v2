@@ -1502,6 +1502,20 @@ function AdminStudentDetailPageInner() {
           </DialogHeader>
 
           <DialogBody>
+          {/* FBは本文の上に sticky で置く。2カラムにしてから右カラムの講評が長くなり、
+              最下部だと全部スクロールしないと辿り着けなかった。DialogBody の外
+              （flex の固定領域）に出すと framer-motion が展開後の高さを測り損ねて
+              送信ボタンが切れるので、スクロール領域の中に置く。 */}
+          {essayDetail && (
+            <div className="sticky top-0 z-10 -mt-1 border-b bg-background pb-2">
+              <InlineFeedbackButton
+                studentId={id}
+                type="essay"
+                targetId={essayDetail.id}
+                targetLabel={`${essayDetail.targetUniversity} ${essayDetail.topic ?? ""}`}
+              />
+            </div>
+          )}
           {essayLoading ? (
             <div className="space-y-4 py-4">
               <Skeleton className="h-6 w-48" />
@@ -1653,14 +1667,6 @@ function AdminStudentDetailPageInner() {
                   )}
                 </>
               )}
-              {/* Admin Feedback */}
-              <Separator />
-              <InlineFeedbackButton
-                studentId={id}
-                type="essay"
-                targetId={essayDetail.id}
-                targetLabel={`${essayDetail.targetUniversity} ${essayDetail.topic ?? ""}`}
-              />
               </div>
             </div>
           ) : (
