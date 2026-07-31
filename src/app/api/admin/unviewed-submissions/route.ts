@@ -73,16 +73,21 @@ export async function GET(request: NextRequest) {
     ]);
     const viewed = new Set(viewedSnap.docs.map((d) => d.id));
     if (studentIds.length === 0) {
-      return NextResponse.json({ total: 0, byStudent: {}, ids: {} });
+      return NextResponse.json({ total: 0, byStudent: {}, byStudentKind: {}, ids: {} });
     }
     const studentSet = new Set(studentIds);
 
     const byStudent: Record<string, number> = {};
+    // 生徒詳細のタブごとにバッジを出すため、生徒×種別の内訳も返す
+    const byStudentKind: Record<string, Partial<Record<SubmissionKind, number>>> =
+      {};
     const ids: Partial<Record<SubmissionKind, string[]>> = {};
 
     const add = (kind: SubmissionKind, id: string, studentId: string) => {
       if (viewed.has(viewedDocId(kind, id))) return;
       byStudent[studentId] = (byStudent[studentId] ?? 0) + 1;
+      const k = (byStudentKind[studentId] ??= {});
+      k[kind] = (k[kind] ?? 0) + 1;
       (ids[kind] ??= []).push(id);
     };
 
@@ -136,11 +141,11 @@ export async function GET(request: NextRequest) {
     await Promise.all([...globalTasks, ...subTasks]);
 
     const total = Object.values(byStudent).reduce((a, b) => a + b, 0);
-    return NextResponse.json({ total, byStudent, ids });
+    return NextResponse.json({ total, byStudent, byStudentKind, ids });
   } catch (error) {
     console.error("[unviewed-submissions] failed:", error);
     // バッジは失敗しても本体機能を止めない
-    return NextResponse.json({ total: 0, byStudent: {}, ids: {} });
+    return NextResponse.json({ total: 0, byStudent: {}, byStudentKind: {}, ids: {} });
   }
 }
 

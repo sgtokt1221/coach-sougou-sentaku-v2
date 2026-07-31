@@ -16,6 +16,10 @@ import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
 import type { SummaryDrillListItem } from "@/app/api/admin/students/[id]/summary-drills/route";
 import { InlineCommentableText } from "@/components/essay/InlineCommentableText";
 import { useAuth } from "@/contexts/AuthContext";
+import {
+  useUnviewedSubmissions,
+  TabUnviewedBadge,
+} from "@/components/admin/UnviewedSubmissions";
 import { FACULTY_REGISTRY } from "@/data/faculty-topics/registry";
 
 const SCORE_LABELS: Record<string, string> = {
@@ -40,6 +44,8 @@ function scoreColor(total: number): string {
 export function SummaryDrillsSection({ studentId }: { studentId: string }) {
   // 範囲コメントの削除可否判定に使う
   const { user, userProfile } = useAuth();
+  const { data: unviewedData } = useUnviewedSubmissions();
+  const unviewedCount = unviewedData?.byStudentKind?.[studentId]?.summaryDrill ?? 0;
   const { data: drills, isLoading, error } = useAuthSWR<SummaryDrillListItem[]>(
     `/api/admin/students/${studentId}/summary-drills`
   );
@@ -70,6 +76,7 @@ export function SummaryDrillsSection({ studentId }: { studentId: string }) {
               <FileText className="size-4" />
               要約ドリル
               <Badge variant="secondary" className="ml-1">{count}回</Badge>
+              <TabUnviewedBadge count={unviewedCount} />
             </span>
             <span className="flex items-center gap-3">
               {count > 0 && (

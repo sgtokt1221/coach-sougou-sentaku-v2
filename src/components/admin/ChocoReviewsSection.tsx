@@ -16,7 +16,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
 import { InlineCommentableText } from "@/components/essay/InlineCommentableText";
 import { markSubmissionViewed } from "@/lib/api/client";
-import { useUnviewedSubmissionsMutate } from "@/components/admin/UnviewedSubmissions";
+import {
+  useUnviewedSubmissions,
+  useUnviewedSubmissionsMutate,
+  TabUnviewedBadge,
+} from "@/components/admin/UnviewedSubmissions";
 import { CHOCO_ROLE_LABELS } from "@/lib/types/choco";
 import type { ChocoReviewListItem } from "@/app/api/admin/students/[id]/choco-reviews/route";
 
@@ -34,6 +38,8 @@ export function ChocoReviewsSection({ studentId }: { studentId: string }) {
   // 範囲コメントの削除可否判定に使う
   const { user, userProfile } = useAuth();
   const mutateUnviewed = useUnviewedSubmissionsMutate();
+  const { data: unviewedData } = useUnviewedSubmissions();
+  const unviewedCount = unviewedData?.byStudentKind?.[studentId]?.chocoReview ?? 0;
   const { data, isLoading, error } = useAuthSWR<ChocoReviewListItem[]>(
     `/api/admin/students/${studentId}/choco-reviews`,
   );
@@ -57,6 +63,7 @@ export function ChocoReviewsSection({ studentId }: { studentId: string }) {
                 {items.length}件
               </span>
             )}
+            <TabUnviewedBadge count={unviewedCount} />
           </CardTitle>
         </CardHeader>
         <CardContent>

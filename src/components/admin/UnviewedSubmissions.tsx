@@ -10,6 +10,8 @@ export interface UnviewedSubmissionsData {
   total: number;
   /** 生徒 uid → 未確認件数 */
   byStudent: Record<string, number>;
+  /** 生徒 uid → 種別ごとの未確認件数（生徒詳細のタブバッジ用） */
+  byStudentKind: Record<string, Partial<Record<SubmissionKind, number>>>;
   /** 種別ごとの未確認 ID */
   ids: Partial<Record<SubmissionKind, string[]>>;
 }
@@ -73,6 +75,19 @@ export function StudentUnviewedBadge({ count }: { count: number }) {
     <span
       title="まだ開いていない提出物"
       className="inline-flex h-[22px] min-w-[22px] items-center justify-center rounded-full bg-destructive px-1.5 text-xs font-bold leading-none tabular-nums text-destructive-foreground"
+    >
+      {count > 99 ? "99+" : count}
+    </span>
+  );
+}
+
+/** タブ見出しの右に付ける小さな件数バッジ。 */
+export function TabUnviewedBadge({ count }: { count: number }) {
+  if (count === 0) return null;
+  return (
+    <span
+      title="まだ開いていない提出物"
+      className="ml-1.5 inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-destructive px-1 text-[11px] font-bold leading-none tabular-nums text-destructive-foreground"
     >
       {count > 99 ? "99+" : count}
     </span>

@@ -60,7 +60,12 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { resetPassword } from "@/lib/firebase/auth";
 import { authFetch, markSubmissionViewed } from "@/lib/api/client";
-import { useUnviewedSubmissionsMutate } from "@/components/admin/UnviewedSubmissions";
+import {
+  useUnviewedSubmissions,
+  useUnviewedSubmissionsMutate,
+  TabUnviewedBadge,
+} from "@/components/admin/UnviewedSubmissions";
+import type { SubmissionKind } from "@/lib/api/submission-kinds";
 import { ScoresTrendChart } from "@/components/growth/ScoresTrendChart";
 import { DetailedScoresTrendChart } from "@/components/growth/DetailedScoresTrendChart";
 import { INTERVIEW_SCORE_LINES } from "@/components/charts/theme";
@@ -451,6 +456,12 @@ function AdminStudentDetailPageInner() {
   const { data: chocoReviewsData } = useAuthSWR<any[]>(`/api/admin/students/${id}/choco-reviews`);
   // 未確認バッジの再取得用（提出物を開いたら件数を減らす）
   const mutateUnviewed = useUnviewedSubmissionsMutate();
+  // タブごとの未確認件数。ポーリングはしない（サイドバー側が回している）
+  const { data: unviewedData } = useUnviewedSubmissions();
+  const unviewedKinds = unviewedData?.byStudentKind?.[id] ?? {};
+  /** そのタブに属する提出物の未確認合計 */
+  const tabUnviewed = (kinds: SubmissionKind[]) =>
+    kinds.reduce((sum, k) => sum + (unviewedKinds[k] ?? 0), 0);
 
   // 通知からの深リンク（?essay=）で該当答案を直接開く。
   // 開けば既読になるので、通知から辿ればバッジが減る。
@@ -1229,8 +1240,23 @@ function AdminStudentDetailPageInner() {
           </div>
           <TabsList className="mt-3 hidden w-full justify-start overflow-x-auto sm:flex">
             <TabsTrigger value="overview">概要</TabsTrigger>
-            <TabsTrigger value="performance">成績・弱点</TabsTrigger>
-            <TabsTrigger value="activity">活動・書類</TabsTrigger>
+            <TabsTrigger value="performance">
+              成績・弱点
+              <TabUnviewedBadge
+                count={tabUnviewed([
+                  "essay",
+                  "skillCheck",
+                  "interviewSkillCheck",
+                  "chocoReview",
+                  "summaryDrill",
+                  "logicDrill",
+                ])}
+              />
+            </TabsTrigger>
+            <TabsTrigger value="activity">
+              活動・書類
+              <TabUnviewedBadge count={tabUnviewed(["document"])} />
+            </TabsTrigger>
             <TabsTrigger value="reports">レポート</TabsTrigger>
             <TabsTrigger value="homework">宿題</TabsTrigger>
             {!isTeacherViewer && (
