@@ -40,6 +40,8 @@ export interface Essay {
   inlineComments?: EssayInlineComment[];
   /** 出題の文脈（出題形式・制限字数・課題文）。管理者の答案詳細で表示する */
   questionContext?: EssayQuestionContextData;
+  /** topic を下書きから時刻で推定して復元したか */
+  topicEstimated?: boolean;
 }
 
 /**

@@ -164,6 +164,8 @@ export interface EssayListItem {
   targetUniversity: string;
   targetFaculty: string;
   topic?: string;
+  /** topic を下書きから時刻で推定して復元したか（講師が鵜呑みにしないため） */
+  topicEstimated?: boolean;
   submittedAt: string;
   scores: EssayScores | null;
   status: string;

@@ -1044,8 +1044,21 @@ function AdminStudentDetailPageInner() {
                       <p className="font-medium">
                         {essay.targetUniversity} {essay.targetFaculty}
                       </p>
-                      {essay.topic && (
-                        <p className="text-xs text-muted-foreground">{essay.topic}</p>
+                      {/* テーマは講師がフィードバックを書くのに要る。空欄で黙らせず、
+                          推定で復元したものはその旨を添える。 */}
+                      {essay.topic ? (
+                        <p className="text-xs text-muted-foreground">
+                          {essay.topicEstimated && (
+                            <span className="mr-1 rounded bg-amber-100 px-1 text-[10px] text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
+                              推定
+                            </span>
+                          )}
+                          {essay.topic}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-muted-foreground/70">
+                          テーマ未記録（この機能より前に提出された答案です）
+                        </p>
                       )}
                       <p className="text-xs text-muted-foreground">
                         {new Date(essay.submittedAt).toLocaleDateString("ja-JP")}
@@ -1423,6 +1436,7 @@ function AdminStudentDetailPageInner() {
               {/* 出題の文脈。生徒が何を読んで何に答えたかが分からないと添削の妥当性を判断できない */}
               <EssayQuestionContext
                 topic={essayDetail.topic}
+                topicEstimated={essayDetail.topicEstimated}
                 context={essayDetail.questionContext}
               />
 

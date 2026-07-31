@@ -59,12 +59,54 @@ export async function GET(
 
     // テーマ名が空の答案（保存していなかった時期のもの）は出題元から補う。
     let topic: string | undefined = data.topic || undefined;
+    let topicEstimated = false;
     if (!topic && ctx.pastQuestionId) {
       const pq = getPastQuestionById(ctx.pastQuestionId);
       if (pq) topic = `${pq.universityName} ${pq.year}年 ${pq.theme}`;
     }
     if (!topic && ctx.themeId) {
       topic = getThemeById(ctx.themeId)?.title;
+    }
+    // それでも分からない答案は、提出時刻に最も近い下書きから推定する。
+    // 講師がフィードバックを書くのに設問が要るため、空欄のままにはしない。
+    if (!topic) {
+      const submittedMs = data.submittedAt?.toDate?.()?.getTime?.() ?? 0;
+      if (submittedMs) {
+        try {
+          const drafts = await adminDb!
+            .collection(`users/${studentId}/essayDrafts`)
+            .get();
+          const nearest = drafts.docs
+            .map((d) => {
+              const y = d.data();
+              return {
+                themeId: y.themeId as string | undefined,
+                pastQuestionId: y.pastQuestionId as string | undefined,
+                diffMin:
+                  Math.abs(
+                    (y.updatedAt?.toDate?.()?.getTime?.() ?? 0) - submittedMs,
+                  ) / 60000,
+              };
+            })
+            .filter((y) => (y.themeId || y.pastQuestionId) && y.diffMin <= 120)
+            .sort((a, b) => a.diffMin - b.diffMin)[0];
+          if (nearest?.pastQuestionId) {
+            const pq = getPastQuestionById(nearest.pastQuestionId);
+            if (pq) {
+              topic = `${pq.universityName} ${pq.year}年 ${pq.theme}`;
+              topicEstimated = true;
+            }
+          } else if (nearest?.themeId) {
+            const t = getThemeById(nearest.themeId)?.title;
+            if (t) {
+              topic = t;
+              topicEstimated = true;
+            }
+          }
+        } catch (err) {
+          console.warn("[admin/essay] essayDrafts fetch failed:", err);
+        }
+      }
     }
 
     const essay: Essay = {
@@ -84,6 +126,7 @@ export async function GET(
 
     return NextResponse.json({
       ...essay,
+      topicEstimated,
       questionContext: {
         questionType: ctx.questionType ?? null,
         wordLimit: ctx.wordLimit ?? null,

@@ -22,9 +22,12 @@ const QUESTION_TYPE_LABELS: Record<string, string> = {
  */
 export function EssayQuestionContext({
   topic,
+  topicEstimated,
   context,
 }: {
   topic?: string;
+  /** 下書きから時刻で推定して復元したテーマか */
+  topicEstimated?: boolean;
   context?: EssayQuestionContextData;
 }) {
   const [sourceOpen, setSourceOpen] = useState(false);
@@ -62,7 +65,14 @@ export function EssayQuestionContext({
       </div>
 
       {topic ? (
-        <p className="text-sm whitespace-pre-wrap">{topic}</p>
+        <p className="text-sm whitespace-pre-wrap">
+          {topicEstimated && (
+            <span className="mr-1 rounded bg-amber-100 px-1 text-[10px] align-middle text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
+              推定
+            </span>
+          )}
+          {topic}
+        </p>
       ) : (
         <p className="text-sm text-muted-foreground">
           設問が記録されていません（この機能より前に提出された答案です）

@@ -8,20 +8,59 @@ import type { StudentDetail } from "@/lib/types/admin";
 import { getThemeById } from "@/data/essay-themes";
 import { getPastQuestionById } from "@/data/essay-past-questions";
 
-/**
- * 答案のテーマ名。topic を保存していなかった時期の答案は出題元から復元する。
- * テーマ選択で提出された答案は topic が空のまま保存されていた（b9ca937 で修正）。
- */
-function resolveEssayTopic(data: FirebaseFirestore.DocumentData): string | undefined {
-  const saved = typeof data.topic === "string" ? data.topic.trim() : "";
-  if (saved) return saved;
-  const ctx = data.questionContext ?? data.retryContext ?? {};
-  if (ctx.pastQuestionId) {
-    const pq = getPastQuestionById(ctx.pastQuestionId);
+/** 出題元IDからテーマ名を組み立てる。 */
+function labelFromSource(
+  themeId?: string | null,
+  pastQuestionId?: string | null,
+): string | undefined {
+  if (pastQuestionId) {
+    const pq = getPastQuestionById(pastQuestionId);
     if (pq) return `${pq.universityName} ${pq.year}年 ${pq.theme}`;
   }
-  if (ctx.themeId) return getThemeById(ctx.themeId)?.title;
+  if (themeId) return getThemeById(themeId)?.title;
   return undefined;
+}
+
+/** 提出時刻に最も近い下書きを探すときの許容差（分）。 */
+const DRAFT_MATCH_WINDOW_MIN = 120;
+
+interface DraftHint {
+  themeId?: string;
+  pastQuestionId?: string;
+  updatedAtMs: number;
+}
+
+/**
+ * 答案のテーマ名。
+ *
+ * topic を保存していなかった時期の答案（テーマ選択で提出すると topic が空のまま
+ * 保存されていた。b9ca937 で修正）は、管理者側に何も出ず講師がフィードバックを
+ * 書けなかった。順に手がかりを辿る:
+ *   1. 保存された topic
+ *   2. questionContext / retryContext の出題元ID（c1c6783 以降の答案）
+ *   3. 同じ生徒の下書きのうち提出時刻に最も近いもの（それ以前の答案の救済）
+ * 3 は時刻による推定なので、呼び出し側で「推定」と分かるようにする。
+ */
+function resolveEssayTopic(
+  data: FirebaseFirestore.DocumentData,
+  draftHints: DraftHint[],
+): { topic?: string; estimated: boolean } {
+  const saved = typeof data.topic === "string" ? data.topic.trim() : "";
+  if (saved) return { topic: saved, estimated: false };
+
+  const ctx = data.questionContext ?? data.retryContext ?? {};
+  const fromCtx = labelFromSource(ctx.themeId, ctx.pastQuestionId);
+  if (fromCtx) return { topic: fromCtx, estimated: false };
+
+  const submittedMs = data.submittedAt?.toDate?.()?.getTime?.() ?? 0;
+  if (!submittedMs || draftHints.length === 0) return { estimated: false };
+  const nearest = draftHints
+    .map((h) => ({ ...h, diffMin: Math.abs(h.updatedAtMs - submittedMs) / 60000 }))
+    .filter((h) => h.diffMin <= DRAFT_MATCH_WINDOW_MIN)
+    .sort((a, b) => a.diffMin - b.diffMin)[0];
+  if (!nearest) return { estimated: false };
+  const fromDraft = labelFromSource(nearest.themeId, nearest.pastQuestionId);
+  return fromDraft ? { topic: fromDraft, estimated: true } : { estimated: false };
 }
 import {
   computeEssayAggregateFromList,
@@ -157,14 +196,35 @@ export async function GET(
       };
     }
 
+    // topic 未保存の答案をテーマ名に復元するための手がかり。生徒ごとに1回だけ引く。
+    const draftHints: DraftHint[] = [];
+    try {
+      const draftsSnap = await adminDb
+        .collection(`users/${id}/essayDrafts`)
+        .get();
+      for (const d of draftsSnap.docs) {
+        const y = d.data();
+        if (!y.themeId && !y.pastQuestionId) continue;
+        draftHints.push({
+          themeId: y.themeId,
+          pastQuestionId: y.pastQuestionId,
+          updatedAtMs: y.updatedAt?.toDate?.()?.getTime?.() ?? 0,
+        });
+      }
+    } catch (err) {
+      console.warn("[admin/students] essayDrafts fetch failed:", err);
+    }
+
     const essays = essaysSnap.docs.map((d) => {
       const data = d.data();
       const resolved = resolveUniName(data.targetUniversity ?? "", data.targetFaculty ?? "");
+      const { topic, estimated } = resolveEssayTopic(data, draftHints);
       return {
         id: d.id,
         targetUniversity: resolved.uniName,
         targetFaculty: resolved.facName,
-        topic: resolveEssayTopic(data),
+        topic,
+        topicEstimated: estimated,
         submittedAt: data.submittedAt?.toDate().toISOString() ?? new Date().toISOString(),
         scores: data.scores ?? null,
         status: data.status ?? "uploaded",
