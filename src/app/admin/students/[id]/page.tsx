@@ -823,6 +823,8 @@ function AdminStudentDetailPageInner() {
         interviewHistory={interviewSkillCheck?.history ?? []}
         onOpenEssay={(r) => setScDialog({ kind: "essay", result: r })}
         onOpenInterview={(r) => setScDialog({ kind: "interview", result: r })}
+        unviewedEssay={unviewedKinds.skillCheck ?? 0}
+        unviewedInterview={unviewedKinds.interviewSkillCheck ?? 0}
       />
 
       {/* Profile Card */}

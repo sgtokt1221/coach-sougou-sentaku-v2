@@ -18,8 +18,10 @@ import { InlineCommentableText } from "@/components/essay/InlineCommentableText"
 import { useAuth } from "@/contexts/AuthContext";
 import {
   useUnviewedSubmissions,
+  useUnviewedSubmissionsMutate,
   TabUnviewedBadge,
 } from "@/components/admin/UnviewedSubmissions";
+import { markSubmissionViewed } from "@/lib/api/client";
 import { FACULTY_REGISTRY } from "@/data/faculty-topics/registry";
 
 const SCORE_LABELS: Record<string, string> = {
@@ -45,6 +47,7 @@ export function SummaryDrillsSection({ studentId }: { studentId: string }) {
   // 範囲コメントの削除可否判定に使う
   const { user, userProfile } = useAuth();
   const { data: unviewedData } = useUnviewedSubmissions();
+  const mutateUnviewed = useUnviewedSubmissionsMutate();
   const unviewedCount = unviewedData?.byStudentKind?.[studentId]?.summaryDrill ?? 0;
   const { data: drills, isLoading, error } = useAuthSWR<SummaryDrillListItem[]>(
     `/api/admin/students/${studentId}/summary-drills`
@@ -100,7 +103,14 @@ export function SummaryDrillsSection({ studentId }: { studentId: string }) {
                   <div
                     key={drill.id}
                     className="flex items-center justify-between rounded-lg border p-3 cursor-pointer hover:bg-muted/50"
-                    onClick={() => setSelectedDrill(drill)}
+                    onClick={() => {
+                      setSelectedDrill(drill);
+                      void markSubmissionViewed(
+                        "summaryDrill",
+                        drill.id,
+                        studentId,
+                      ).then(() => mutateUnviewed());
+                    }}
                   >
                     <div>
                       <p className="text-sm font-medium">{drill.passageTitle ?? "無題"}</p>

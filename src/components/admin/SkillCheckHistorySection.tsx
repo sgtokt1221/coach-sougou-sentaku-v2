@@ -6,6 +6,7 @@ import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
 import { ACADEMIC_CATEGORY_LABELS, type SkillCheckResult } from "@/lib/types/skill-check";
 import type { InterviewSkillCheckResult } from "@/lib/types/interview-skill-check";
 import { FileText, Mic, ChevronRight } from "lucide-react";
+import { TabUnviewedBadge } from "@/components/admin/UnviewedSubmissions";
 
 function formatDate(d: Date | string): string {
   return new Date(d).toLocaleDateString("ja-JP", {
@@ -25,11 +26,16 @@ export function SkillCheckHistorySection({
   interviewHistory,
   onOpenEssay,
   onOpenInterview,
+  unviewedEssay = 0,
+  unviewedInterview = 0,
 }: {
   essayHistory: SkillCheckResult[];
   interviewHistory: InterviewSkillCheckResult[];
   onOpenEssay: (r: SkillCheckResult) => void;
   onOpenInterview: (r: InterviewSkillCheckResult) => void;
+  /** まだ開いていない件数（見出しバッジ用） */
+  unviewedEssay?: number;
+  unviewedInterview?: number;
 }) {
   if (essayHistory.length === 0 && interviewHistory.length === 0) return null;
 
@@ -41,6 +47,7 @@ export function SkillCheckHistorySection({
             <CardTitle className="flex items-center gap-2 text-base">
               <Mic className="size-4 text-primary" />
               面接スキルチェック履歴
+              <TabUnviewedBadge count={unviewedInterview} />
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
@@ -68,6 +75,7 @@ export function SkillCheckHistorySection({
             <CardTitle className="flex items-center gap-2 text-base">
               <FileText className="size-4 text-primary" />
               小論文スキルチェック履歴
+              <TabUnviewedBadge count={unviewedEssay} />
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">

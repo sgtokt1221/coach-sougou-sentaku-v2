@@ -13,6 +13,12 @@ import {
 import { Brain, ChevronDown, TrendingUp } from "lucide-react";
 import { useAuthSWR } from "@/lib/api/swr";
 import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
+import { markSubmissionViewed } from "@/lib/api/client";
+import {
+  useUnviewedSubmissions,
+  useUnviewedSubmissionsMutate,
+  TabUnviewedBadge,
+} from "@/components/admin/UnviewedSubmissions";
 import type { LogicDrillListItem } from "@/app/api/admin/students/[id]/logic-drills/route";
 import { LOGIC_DRILL_TYPE_LABELS } from "@/lib/types/logic-drill";
 
@@ -45,6 +51,9 @@ export function LogicDrillsSection({ studentId }: { studentId: string }) {
 
   const [expanded, setExpanded] = useState(false);
   const [selectedDrill, setSelectedDrill] = useState<LogicDrillListItem | null>(null);
+  const mutateUnviewed = useUnviewedSubmissionsMutate();
+  const { data: unviewedData } = useUnviewedSubmissions();
+  const unviewedCount = unviewedData?.byStudentKind?.[studentId]?.logicDrill ?? 0;
 
   if (error) {
     return <ApiErrorBanner error={error} title="論理ドリル履歴の取得に失敗しました" />;
@@ -69,6 +78,7 @@ export function LogicDrillsSection({ studentId }: { studentId: string }) {
               <Brain className="size-4" />
               論理ドリル
               <Badge variant="secondary" className="ml-1">{count}回</Badge>
+              <TabUnviewedBadge count={unviewedCount} />
             </span>
             <span className="flex items-center gap-3">
               {count > 0 && (
@@ -94,7 +104,14 @@ export function LogicDrillsSection({ studentId }: { studentId: string }) {
                     <div
                       key={drill.id}
                       className="flex items-center justify-between rounded-lg border p-3 cursor-pointer hover:bg-muted/50"
-                      onClick={() => setSelectedDrill(drill)}
+                      onClick={() => {
+                        setSelectedDrill(drill);
+                        void markSubmissionViewed(
+                          "logicDrill",
+                          drill.id,
+                          studentId,
+                        ).then(() => mutateUnviewed());
+                      }}
                     >
                       <div>
                         <p className="text-sm font-medium">{drillTypeLabel(drill.drillType)}</p>
