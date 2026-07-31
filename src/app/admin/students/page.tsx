@@ -20,6 +20,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { useAuthSWR } from "@/lib/api/swr";
 import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
 import type { StudentListItem } from "@/lib/types/admin";
+import { StudentUnviewedBadge } from "@/components/admin/UnviewedSubmissions";
 import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils/avatar";
@@ -522,7 +523,11 @@ export default function AdminStudentsPage() {
                               <AvatarFallback>{getInitials(s.displayName)}</AvatarFallback>
                             </Avatar>
                             <div className="min-w-0">
-                              <p className="font-medium">{s.displayName}</p>
+                              <p className="flex items-center gap-1.5 font-medium">
+                                {s.displayName}
+                                {/* 自分がまだ開いていない提出物の件数 */}
+                                <StudentUnviewedBadge studentId={s.uid} />
+                              </p>
                               <p className="text-xs text-muted-foreground">{s.email}</p>
                               {s.createdAt && (
                                 <p className="mt-0.5 text-[10px] text-muted-foreground">

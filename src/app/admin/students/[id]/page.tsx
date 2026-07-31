@@ -59,7 +59,8 @@ import {
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { resetPassword } from "@/lib/firebase/auth";
-import { authFetch } from "@/lib/api/client";
+import { authFetch, markSubmissionViewed } from "@/lib/api/client";
+import { useUnviewedSubmissions } from "@/components/admin/UnviewedSubmissions";
 import { ScoresTrendChart } from "@/components/growth/ScoresTrendChart";
 import { DetailedScoresTrendChart } from "@/components/growth/DetailedScoresTrendChart";
 import { INTERVIEW_SCORE_LINES } from "@/components/charts/theme";
@@ -448,6 +449,8 @@ function AdminStudentDetailPageInner() {
   const { data: summaryDrillsData } = useAuthSWR<any[]>(`/api/admin/students/${id}/summary-drills`);
   const { data: logicDrillsData } = useAuthSWR<any[]>(`/api/admin/students/${id}/logic-drills`);
   const { data: chocoReviewsData } = useAuthSWR<any[]>(`/api/admin/students/${id}/choco-reviews`);
+  // 未確認バッジの再取得用（提出物を開いたら件数を減らす）
+  const { mutate: mutateUnviewed } = useUnviewedSubmissions();
   const { data: activityLogsData } = useAuthSWR<any[]>(`/api/admin/students/${id}/activity-logs`);
   const { data: documentsData } = useAuthSWR<any[]>(`/api/admin/students/${id}/documents`);
 
@@ -480,6 +483,8 @@ function AdminStudentDetailPageInner() {
 
   async function openEssayDetail(essayId: string) {
     setEssayDetailOpen(true);
+    // 開いた1件を自分の既読にする（未確認バッジ用）
+    void markSubmissionViewed("essay", essayId, id).then(() => mutateUnviewed());
     setEssayLoading(true);
     setEssayDetail(null);
     try {

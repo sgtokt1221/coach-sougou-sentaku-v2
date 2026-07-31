@@ -15,6 +15,8 @@ import { useAuthSWR } from "@/lib/api/swr";
 import { useAuth } from "@/contexts/AuthContext";
 import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
 import { InlineCommentableText } from "@/components/essay/InlineCommentableText";
+import { markSubmissionViewed } from "@/lib/api/client";
+import { useUnviewedSubmissions } from "@/components/admin/UnviewedSubmissions";
 import { CHOCO_ROLE_LABELS } from "@/lib/types/choco";
 import type { ChocoReviewListItem } from "@/app/api/admin/students/[id]/choco-reviews/route";
 
@@ -31,6 +33,7 @@ function scoreColor(total: number): string {
 export function ChocoReviewsSection({ studentId }: { studentId: string }) {
   // 範囲コメントの削除可否判定に使う
   const { user, userProfile } = useAuth();
+  const { mutate: mutateUnviewed } = useUnviewedSubmissions();
   const { data, isLoading, error } = useAuthSWR<ChocoReviewListItem[]>(
     `/api/admin/students/${studentId}/choco-reviews`,
   );
@@ -69,7 +72,12 @@ export function ChocoReviewsSection({ studentId }: { studentId: string }) {
                 <button
                   key={r.id}
                   type="button"
-                  onClick={() => setSelected(r)}
+                  onClick={() => {
+                    setSelected(r);
+                    void markSubmissionViewed("chocoReview", r.id, studentId).then(
+                      () => mutateUnviewed(),
+                    );
+                  }}
                   className="flex w-full items-center justify-between gap-3 py-2 text-left hover:bg-muted/40"
                 >
                   <div className="min-w-0 flex-1">

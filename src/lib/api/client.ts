@@ -67,3 +67,23 @@ export async function authFetch(
 
   return fetch(url, { ...options, headers });
 }
+
+/**
+ * 提出物を開いたことを自分の既読として記録する（管理者/講師）。
+ * バッジ用の記録なので失敗しても本体機能は止めない。
+ */
+export async function markSubmissionViewed(
+  kind: string,
+  id: string,
+  studentId?: string,
+): Promise<void> {
+  try {
+    await authFetch("/api/admin/unviewed-submissions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ kind, id, studentId }),
+    });
+  } catch {
+    // バッジが消えないだけなので握りつぶす
+  }
+}

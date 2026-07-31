@@ -28,6 +28,8 @@ import { authFetch } from "@/lib/api/client";
 import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
 import { DocumentReviewBadge } from "@/components/documents/DocumentReviewBadge";
 import { InlineCommentableText } from "@/components/essay/InlineCommentableText";
+import { markSubmissionViewed } from "@/lib/api/client";
+import { useUnviewedSubmissions } from "@/components/admin/UnviewedSubmissions";
 import { useAuth } from "@/contexts/AuthContext";
 import type { EssayInlineComment } from "@/lib/types/essay";
 import type {
@@ -128,6 +130,7 @@ function getDeadlineBadge(deadline?: string) {
 export function DocumentsSection({ studentId }: { studentId: string }) {
   // 範囲コメントの削除可否判定に使う
   const { user, userProfile } = useAuth();
+  const { mutate: mutateUnviewed } = useUnviewedSubmissions();
   const { data, isLoading, error, mutate } = useAuthSWR<DocumentListItem[]>(
     `/api/admin/students/${studentId}/documents`
   );
@@ -221,6 +224,10 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
   }
 
   async function openDetail(docId: string) {
+    // 開いた1件を自分の既読にする（未確認バッジ用）
+    void markSubmissionViewed("document", docId, studentId).then(() =>
+      mutateUnviewed(),
+    );
     setDetailOpen(true);
     setDetailLoading(true);
     setDetailDoc(null);

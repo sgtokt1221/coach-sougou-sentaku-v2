@@ -187,6 +187,15 @@ export function BottomNav() {
   );
   const chatUnread = adminUnread?.unreadCount ?? 0;
 
+  // 管理者/講師: まだ開いていない提出物（通知タブのバッジ）
+  const { data: unviewed } = useAuthSWR<{ total: number }>(
+    role === "admin" || role === "teacher" || role === "superadmin"
+      ? "/api/admin/unviewed-submissions"
+      : null,
+    { refreshInterval: 60000 },
+  );
+  const unviewedTotal = unviewed?.total ?? 0;
+
   // 生徒: チャット未読（FeedbackBadge と同じ）
   const { data: studentUnread } = useAuthSWR<{ unreadCount: number }>(
     role === "student" ? "/api/student/feedback?countOnly=true" : null,
@@ -217,6 +226,7 @@ export function BottomNav() {
   const tabBadge = (href: string): number => {
     if (href === "/admin/messages") return chatUnread;
     if (href === "/teacher/students") return teacherUnread;
+    if (href === "/admin/alerts") return unviewedTotal;
     return 0;
   };
 

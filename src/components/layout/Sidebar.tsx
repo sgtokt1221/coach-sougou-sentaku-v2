@@ -39,6 +39,7 @@ import { SelfAnalysisBadge } from "@/components/student/IncompleteStepBadge";
 import { HomeworkBadge } from "@/components/student/HomeworkBadge";
 import { AdminMessagesBadge } from "@/components/admin/AdminMessagesBadge";
 import { AdminAbsenceBadge } from "@/components/admin/AdminAbsenceBadge";
+import { UnviewedSubmissionsBadge } from "@/components/admin/UnviewedSubmissions";
 import { TeacherMessagesBadge } from "@/components/teacher/TeacherMessagesBadge";
 
 interface NavItem {
@@ -132,7 +133,8 @@ const adminNavGroups: NavGroup[] = [
     title: "Overview",
     items: [
       { label: "ダッシュボード", href: "/admin/dashboard", icon: LayoutDashboard },
-      { label: "通知", href: "/admin/alerts", icon: Bell },
+      // 自分がまだ開いていない提出物の件数を出す
+      { label: "通知", href: "/admin/alerts", icon: Bell, badge: UnviewedSubmissionsBadge },
       { label: "レポート", href: "/admin/reports", icon: FileBarChart },
       { label: "メッセージ", href: "/admin/messages", icon: MessageSquare, badge: AdminMessagesBadge },
     ],
