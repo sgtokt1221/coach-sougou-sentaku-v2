@@ -109,13 +109,33 @@ export async function GET(
       }
     }
 
+    // 大学・学部は ID のまま返していたため、ダイアログ見出しに
+    // 「kyoto-sangyo-u social」のような生の ID が出ていた。名前に解決する。
+    let uniName = data.targetUniversity || "";
+    let facName = data.targetFaculty || "";
+    if (data.targetUniversity) {
+      try {
+        const uniDoc = await adminDb!.doc(`universities/${data.targetUniversity}`).get();
+        if (uniDoc.exists) {
+          const u = uniDoc.data()!;
+          uniName = (u.name as string) ?? uniName;
+          const fac = (u.faculties as { id: string; name: string }[] | undefined)?.find(
+            (f) => f.id === data.targetFaculty,
+          );
+          if (fac) facName = fac.name;
+        }
+      } catch (err) {
+        console.warn("[admin/essay] university resolve failed:", err);
+      }
+    }
+
     const essay: Essay = {
       id: essayDoc.id,
       userId: data.userId,
       imageUrl: data.imageUrl || "",
       ocrText: data.ocrText || "",
-      targetUniversity: data.targetUniversity || "",
-      targetFaculty: data.targetFaculty || "",
+      targetUniversity: uniName,
+      targetFaculty: facName,
       topic,
       submittedAt: data.submittedAt?.toDate() || new Date(),
       status: data.status || "uploaded",

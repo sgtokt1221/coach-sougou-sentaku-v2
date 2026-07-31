@@ -21,6 +21,11 @@ interface CommentableEssayTextProps {
   onDelete?: (commentId: string) => Promise<void>;
   /** このコメントを削除できるか (edit 時のみ) */
   canDelete?: (c: EssayInlineComment) => boolean;
+  /**
+   * 本文欄の内部スクロールをやめて全文を出す。
+   * 2カラム表示で本文を読みながら講評を追う画面で使う。
+   */
+  fullHeight?: boolean;
 }
 
 interface Seg {
@@ -67,6 +72,7 @@ export function CommentableEssayText({
   onAdd,
   onDelete,
   canDelete,
+  fullHeight = false,
 }: CommentableEssayTextProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -156,7 +162,9 @@ export function CommentableEssayText({
       <div
         ref={containerRef}
         onMouseUp={handleMouseUp}
-        className="max-h-72 overflow-y-auto whitespace-pre-wrap rounded-lg border bg-white p-4 text-sm leading-7"
+        className={`whitespace-pre-wrap rounded-lg border bg-white p-4 text-sm leading-7 dark:bg-gray-950 ${
+          fullHeight ? "" : "max-h-72 overflow-y-auto"
+        }`}
       >
         {parts.length > 0 ? parts : text || "（本文なし）"}
       </div>

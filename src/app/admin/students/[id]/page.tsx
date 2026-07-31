@@ -79,7 +79,7 @@ import {
   ESSAY_CATEGORY_ORDER,
   type EssayCategoryKey,
 } from "@/lib/growth/weakness-category";
-import { ESSAY_STATUS_LABELS, type Essay } from "@/lib/types/essay";
+import { ESSAY_STATUS_LABELS, type Essay, type EssayFeedback } from "@/lib/types/essay";
 import type { WeaknessRecord } from "@/lib/types/growth";
 import { getWeaknessReminderLevel } from "@/lib/types/growth";
 import { UniversitySelectStep } from "@/components/onboarding/UniversitySelectStep";
@@ -93,6 +93,35 @@ import { SkillCheckDetailDialog } from "@/components/admin/SkillCheckDetailDialo
 import { StudentSkillRadar } from "@/components/admin/StudentSkillRadar";
 import { SkillCheckHistorySection } from "@/components/admin/SkillCheckHistorySection";
 import { CategoryAverageRadar } from "@/components/admin/CategoryAverageRadar";
+
+/**
+ * 生徒が設定した字数制限に対する現在の字数。
+ * 充足率が低い答案は講師が真っ先に見る情報なので、原文の見出し横に出す。
+ */
+function EssayWordCount({
+  analysis,
+}: {
+  analysis: NonNullable<EssayFeedback["quantitativeAnalysis"]>;
+}) {
+  const { wordCount, wordLimit, fillRate } = analysis;
+  if (!wordLimit) {
+    return (
+      <span className="text-xs text-muted-foreground tabular-nums">
+        {wordCount}字（制限なし）
+      </span>
+    );
+  }
+  // 7割未満は採点でも減点対象なので目立たせる
+  const low = typeof fillRate === "number" && fillRate < 70;
+  return (
+    <span
+      className={`text-xs tabular-nums ${low ? "font-semibold text-amber-700 dark:text-amber-400" : "text-muted-foreground"}`}
+    >
+      {wordCount} / {wordLimit}字
+      {typeof fillRate === "number" ? `（${fillRate}%）` : ""}
+    </span>
+  );
+}
 
 const CERT_TYPES: { value: EnglishCert["type"]; label: string }[] = [
   { value: "EIKEN", label: "英検" },
@@ -1410,7 +1439,7 @@ function AdminStudentDetailPageInner() {
 
       {/* Essay Detail Dialog */}
       <Dialog open={essayDetailOpen} onOpenChange={setEssayDetailOpen}>
-        <DialogContent className="sm:max-w-3xl">
+        <DialogContent className="sm:max-w-3xl lg:max-w-6xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FileText className="size-5" />
@@ -1432,7 +1461,35 @@ function AdminStudentDetailPageInner() {
               <Skeleton className="h-20 w-full" />
             </div>
           ) : essayDetail ? (
-            <div className="space-y-6 py-2">
+            <div className="py-2 lg:grid lg:grid-cols-5 lg:gap-6">
+              {/* 左: 生徒の原文。講師が読みながら右の講評を追えるよう、
+                  本文側だけを長く取り内部スクロールを付けない。 */}
+              <div className="space-y-2 lg:col-span-2">
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <h3 className="text-sm font-semibold text-foreground">
+                    元テキスト（ドラッグでコメント可）
+                  </h3>
+                  {essayDetail.feedback?.quantitativeAnalysis && (
+                    <EssayWordCount
+                      analysis={essayDetail.feedback.quantitativeAnalysis}
+                    />
+                  )}
+                </div>
+                <CommentableEssayText
+                  text={essayDetail.ocrText}
+                  comments={essayDetail.inlineComments ?? []}
+                  mode="edit"
+                  fullHeight
+                  onAdd={(range) => addEssayComment(essayDetail.id, range)}
+                  onDelete={(cid) => deleteEssayComment(essayDetail.id, cid)}
+                  canDelete={(c) =>
+                    userProfile?.role !== "teacher" || c.createdBy === user?.uid
+                  }
+                />
+              </div>
+
+              {/* 右: 出題・スコア・講評 */}
+              <div className="mt-6 space-y-6 lg:col-span-3 lg:mt-0">
               {/* 出題の文脈。生徒が何を読んで何に答えたかが分からないと添削の妥当性を判断できない */}
               <EssayQuestionContext
                 topic={essayDetail.topic}
@@ -1473,25 +1530,6 @@ function AdminStudentDetailPageInner() {
                   </div>
                 </div>
               )}
-
-              <Separator />
-
-              {/* Original text + インラインコメント */}
-              <div className="space-y-2">
-                <h3 className="text-sm font-semibold text-foreground">
-                  元テキスト（ドラッグでコメント可）
-                </h3>
-                <CommentableEssayText
-                  text={essayDetail.ocrText}
-                  comments={essayDetail.inlineComments ?? []}
-                  mode="edit"
-                  onAdd={(range) => addEssayComment(essayDetail.id, range)}
-                  onDelete={(cid) => deleteEssayComment(essayDetail.id, cid)}
-                  canDelete={(c) =>
-                    userProfile?.role !== "teacher" || c.createdBy === user?.uid
-                  }
-                />
-              </div>
 
               {/* Feedback */}
               {essayDetail.feedback && (
@@ -1567,6 +1605,7 @@ function AdminStudentDetailPageInner() {
                 targetId={essayDetail.id}
                 targetLabel={`${essayDetail.targetUniversity} ${essayDetail.topic ?? ""}`}
               />
+              </div>
             </div>
           ) : (
             <div className="py-8 text-center text-sm text-muted-foreground">
