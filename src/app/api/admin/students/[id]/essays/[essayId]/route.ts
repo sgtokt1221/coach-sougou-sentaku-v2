@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { requireRole } from "@/lib/api/auth";
+import { requireRole, scopeByOrganization } from "@/lib/api/auth";
+import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
 import { adminDb } from "@/lib/firebase/admin";
 import type { Essay } from "@/lib/types/essay";
 import { getThemeById } from "@/data/essay-themes";
@@ -24,6 +25,23 @@ export async function GET(
       { status: 500 }
     );
   }
+
+  // 答案が studentId のものかを見るだけでは足りない。呼び出した管理者が
+  // その生徒を見てよいかを他の生徒APIと同じゲートで判定する（他塾からの
+  // ID 直打ちで答案本文が読めてしまうため）。
+  const scopeDoc = await adminDb.doc(`users/${studentId}`).get();
+  const denied = await scopeByOrganization({
+    requesterUid: auth.uid,
+    requesterRole: auth.role,
+    studentUid: studentId,
+    studentData: {
+      managedBy: scopeDoc.data()?.managedBy,
+      organizationId: scopeDoc.data()?.organizationId,
+      assignedTeacherIds: getAssignedTeacherIds(scopeDoc.data()),
+    },
+    allowAssignedTeacher: true,
+  });
+  if (denied) return denied;
 
   try {
     const essayDoc = await adminDb.doc(`essays/${essayId}`).get();

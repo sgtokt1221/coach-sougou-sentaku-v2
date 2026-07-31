@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
+import { getStaffOrgFilter } from "@/lib/api/organization-scope";
 import { adminDb } from "@/lib/firebase/admin";
 import type { TeacherListItem } from "@/lib/types/admin";
 
@@ -61,8 +62,13 @@ export async function GET(request: Request) {
       return NextResponse.json([teacher]);
     }
 
-    // adminは自教室の講師（managedByで紐付けられた講師）を取得
-    // superadminは全講師
+    // adminは自塾の講師だけ、superadminは全講師。
+    // 以前はコメントだけで絞っておらず、全塾の講師の氏名・メールが返っていた。
+    const filter = await getStaffOrgFilter(adminDb, authResult.uid, authResult.role);
+    if (filter.scoped) {
+      if (!filter.organizationId) return NextResponse.json([]);
+      query = query.where("organizationId", "==", filter.organizationId);
+    }
     const snapshot = await query.get();
 
     const teachers: TeacherListItem[] = await Promise.all(

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
+import { getStaffOrgFilter } from "@/lib/api/organization-scope";
 import { adminDb } from "@/lib/firebase/admin";
 import type { TeacherListItem } from "@/lib/types/admin";
 
@@ -44,10 +45,16 @@ export async function GET(request: Request) {
   }
 
   try {
-    const snapshot = await adminDb
+    // 自塾の講師だけ。以前は絞っておらず全塾の講師が返っていた。
+    const filter = await getStaffOrgFilter(adminDb, authResult.uid, authResult.role);
+    let q: FirebaseFirestore.Query = adminDb
       .collection("users")
-      .where("role", "==", "teacher")
-      .get();
+      .where("role", "==", "teacher");
+    if (filter.scoped) {
+      if (!filter.organizationId) return NextResponse.json([]);
+      q = q.where("organizationId", "==", filter.organizationId);
+    }
+    const snapshot = await q.get();
 
     const teachers: TeacherListItem[] = await Promise.all(
       snapshot.docs.map(async (doc) => {

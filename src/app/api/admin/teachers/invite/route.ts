@@ -25,12 +25,18 @@ export async function POST(request: Request) {
   }
 
   try {
+    // 招待した管理者の塾を引き継ぐ。これが無いと講師が所属不明になり、
+    // 組織で絞る一覧（/api/admin/teachers）から消える。
+    const inviterOrgId = (await adminDb.doc(`users/${authResult.uid}`).get()).data()
+      ?.organizationId as string | undefined;
+
     const userRecord = await adminAuth.createUser({ email, password, displayName });
 
     await adminDb.doc(`users/${userRecord.uid}`).set({
       email,
       displayName,
       role: "teacher",
+      ...(inviterOrgId ? { organizationId: inviterOrgId } : {}),
       createdAt: new Date(),
       updatedAt: new Date(),
     });

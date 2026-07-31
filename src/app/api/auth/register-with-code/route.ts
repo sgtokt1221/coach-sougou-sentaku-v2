@@ -73,6 +73,9 @@ export async function POST(request: Request) {
       email,
       displayName,
       role: invData.role,
+      // 招待に塾が指定されていれば引き継ぐ。無ければ所属なしのままにし、
+      // superadmin が後から割り当てる（所属不明を他塾に見せない側に倒す）。
+      ...(invData.organizationId ? { organizationId: invData.organizationId } : {}),
       createdAt: new Date(),
       updatedAt: new Date(),
     });

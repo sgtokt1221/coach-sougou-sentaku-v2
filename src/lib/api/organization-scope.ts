@@ -59,6 +59,28 @@ export async function getAnalyticsStudentIdSet(
 }
 
 /**
+ * スタッフ（admin / teacher）一覧を自塾に絞るための organizationId を返す。
+ *
+ * - superadmin → null（絞らない＝全塾）
+ * - organizationId を持つ → その値で絞る
+ * - organizationId が無い → undefined（＝1件も返さない）
+ *
+ * 生徒は managedBy で組織に紐づくが、講師には managedBy が無いため
+ * organizationId が唯一の手掛かりになる。所属不明のスタッフを他塾に
+ * 見せるより、見せない方に倒す（招待時に organizationId を必ず入れること）。
+ */
+export async function getStaffOrgFilter(
+  adminDb: Firestore,
+  uid: string,
+  role: string,
+): Promise<{ scoped: false } | { scoped: true; organizationId: string | undefined }> {
+  if (role === "superadmin") return { scoped: false };
+  const me = (await adminDb.doc(`users/${uid}`).get()).data() ?? {};
+  const orgId = typeof me.organizationId === "string" ? me.organizationId : undefined;
+  return { scoped: true, organizationId: orgId };
+}
+
+/**
  * admin が閲覧できる生徒の uid 集合（組織メンバーが managedBy の生徒）を返す。
  * Firestore の in は最大30要素なのでチャンク分割する。
  */

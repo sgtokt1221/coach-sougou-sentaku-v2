@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
+import { getOrgScopedStudentIds } from "@/lib/api/organization-scope";
 import { adminDb } from "@/lib/firebase/admin";
 import type { Assignment } from "@/lib/types/schedule";
 
@@ -30,11 +31,18 @@ export async function GET(request: NextRequest) {
     }
 
     const snapshot = await query.get();
-    const assignments: Assignment[] = snapshot.docs.map((doc) => ({
+    let assignments: Assignment[] = snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
       createdAt: doc.data().createdAt?.toDate() || new Date(),
     })) as Assignment[];
+
+    // 自塾の生徒の割り当てだけ返す。以前は絞りが無く、引数なしで叩くと
+    // 全塾の講師×生徒の割り当てが返っていた。
+    if (auth.role !== "superadmin") {
+      const visible = new Set(await getOrgScopedStudentIds(adminDb, auth.uid));
+      assignments = assignments.filter((a) => a.studentId && visible.has(a.studentId));
+    }
 
     return NextResponse.json(assignments);
   } catch (error) {

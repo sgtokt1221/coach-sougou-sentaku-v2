@@ -161,9 +161,12 @@ service cloud.firestore {
     }
 
     // 分析データ
+    // 集計データ。組織で分かれていないため admin に開けると他塾の数字が
+    // 見える。クライアントからの参照は無く、サーバーは Admin SDK で
+    // ルールを迂回するので superadmin だけに絞る。
     match /analytics/{docId} {
-      allow read: if isAdmin();
-      allow write: if isAdmin();
+      allow read: if isSuperAdmin();
+      allow write: if isSuperAdmin();
     }
 
     // 招待コード: Admin SDKのみアクセス（クライアント全拒否）
