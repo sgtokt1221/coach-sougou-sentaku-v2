@@ -146,6 +146,8 @@ export async function POST(request: NextRequest) {
             parentEssayId: parentEssayIdResolved,
             attemptNumber,
             inputMode: body.inputMode ?? null,
+            // 執筆中のAIコーチ会話。管理者の答案詳細で推定せずに引くため保存する
+            coachThreadId: body.coachThreadId ?? null,
             questionContext,
             ...(retryContext ? { retryContext } : {}),
           });

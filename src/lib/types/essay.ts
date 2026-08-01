@@ -43,6 +43,8 @@ export interface Essay {
   questionContext?: EssayQuestionContextData;
   /** topic を下書きから時刻で推定して復元したか */
   topicEstimated?: boolean;
+  /** 執筆中に使った AIコーチ会話のID（提出時に保存。推定不要の確実な紐付け） */
+  coachThreadId?: string;
   /** この答案を書いていたときの AIコーチ会話（管理者の答案詳細で表示する） */
   coachThreads?: LinkedCoachThread[];
 }
@@ -227,6 +229,8 @@ export interface EssayReviewRequest {
   inputMode?: "image" | "text" | "dictation";
   /** 宿題から取り組んだ場合の homeworkAssignment ID。提出時に宿題を提出済みにする */
   homeworkId?: string;
+  /** 執筆中に使った AIコーチ会話のID。答案に保存して管理者側の紐付けに使う */
+  coachThreadId?: string;
 }
 
 /** 小論文の途中保存（下書き）。テキスト入力モード専用。users/{uid}/essayDrafts/{id} */

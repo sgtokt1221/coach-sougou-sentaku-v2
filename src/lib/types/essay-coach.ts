@@ -49,11 +49,12 @@ export interface CoachThreadSummary {
 /**
  * 答案に紐付いた AIコーチ会話。
  *
- * 会話側に答案IDを持っていないため、お題(topic)の一致か、同じ大学かつ提出
- * 時刻の近さで推定する。どちらで当てたかを matchedBy で返し、画面に出す。
+ * 提出時に answer 側へ coachThreadId を保存していれば確実に引ける(linked)。
+ * それが無い過去の答案は、お題(topic)の一致か、同じ大学かつ提出時刻の近さで
+ * 推定する。どれで当てたかを matchedBy で返し、画面に出す。
  */
 export interface LinkedCoachThread extends CoachThread {
-  matchedBy: "topic" | "time";
+  matchedBy: "linked" | "topic" | "time";
 }
 
 export interface CoachRequestBody {

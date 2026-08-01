@@ -141,6 +141,8 @@ export default function EssayNewPage() {
   const [step, setStep] = useState(1);
   const [inputMode, setInputMode] = useState<"text" | "image" | "dictation">("text");
   const [directText, setDirectText] = useState("");
+  /** 執筆サポートのAIコーチ会話ID。提出時に答案へ保存する */
+  const [coachThreadId, setCoachThreadId] = useState<string | null>(null);
   /** テキスト入力モードの字数制限。過去問・テーマ選択で推奨値に同期、手動編集も可能。 */
   const [customMaxLength, setCustomMaxLength] = useState(800);
   const [isRecording, setIsRecording] = useState(false);
@@ -922,6 +924,8 @@ export default function EssayNewPage() {
           essayId: id, ocrText: directText, universityId, facultyId, topic: effectiveTopic,
           wordLimit: customMaxLength || pastQuestion?.wordLimit || selectedTheme?.wordLimit || retryParent?.retryContext?.wordLimit,
           inputMode,
+          // 執筆中のAIコーチ会話。管理者側で「この答案の会話」を推定せずに引く
+          ...(coachThreadId ? { coachThreadId } : {}),
           // 出題元。管理者側で元のテーマ・過去問を辿れるようにする
           ...(selectedTheme && { themeId: selectedTheme.id }),
           ...(pastQuestion && { pastQuestionId: pastQuestion.id }),
@@ -1017,6 +1021,8 @@ export default function EssayNewPage() {
           essayId, ocrText, universityId, facultyId, topic: effectiveTopic,
           wordLimit: customMaxLength || pastQuestion?.wordLimit || selectedTheme?.wordLimit || retryParent?.retryContext?.wordLimit,
           inputMode,
+          // 執筆中のAIコーチ会話。管理者側で「この答案の会話」を推定せずに引く
+          ...(coachThreadId ? { coachThreadId } : {}),
           // 出題元。管理者側で元のテーマ・過去問を辿れるようにする
           ...(selectedTheme && { themeId: selectedTheme.id }),
           ...(pastQuestion && { pastQuestionId: pastQuestion.id }),
@@ -1730,6 +1736,7 @@ export default function EssayNewPage() {
               facultyId={facultyId || undefined}
               referenceMaterial={effectiveMaterial}
               coachMaterial={reportCoachMaterial}
+              onThreadChange={setCoachThreadId}
             />
 
             {/* 右列: 小論文入力 (常に最大幅) */}

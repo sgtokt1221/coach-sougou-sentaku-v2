@@ -119,6 +119,8 @@ interface EssayCoachPanelProps {
    * (ちょこ添削の空欄切り替えなど) では設問を一意に識別する値を渡すこと。
    */
   conversationKey?: string;
+  /** 会話スレッドIDの通知。提出時に答案へ保存するために親へ渡す */
+  onThreadChange?: (threadId: string | null) => void;
 }
 
 function resolveReferenceLabel(material: ReferenceMaterial | undefined): {
@@ -188,6 +190,7 @@ export function EssayCoachPanelBody({
   referenceMaterial,
   coachMaterial,
   conversationKey,
+  onThreadChange,
 }: EssayCoachPanelProps) {
   // 資料タブは referenceMaterial だけで決める。coachMaterial はコーチにのみ渡す。
   const materialForCoach = referenceMaterial ?? coachMaterial;
@@ -252,6 +255,7 @@ export function EssayCoachPanelBody({
             sourceText={materialForCoach?.sourceText}
             chartData={materialForCoach?.chartData}
             resetKey={`${universityId ?? ""}:${facultyId ?? ""}:${conversationKey ?? topic}`}
+            onThreadChange={onThreadChange}
           />
         )}
         {active === "ap" && (

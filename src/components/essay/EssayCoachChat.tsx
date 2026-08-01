@@ -50,6 +50,12 @@ interface EssayCoachChatProps {
   chartData?: unknown;
   /** topic が変わった際に会話をリセットするためのキー */
   resetKey?: string;
+  /**
+   * 会話スレッドIDが決まった/変わったときに親へ知らせる。
+   * 提出時に答案へ保存し、管理者側で「この答案の会話」を推定なしで
+   * 引けるようにするために使う。
+   */
+  onThreadChange?: (threadId: string | null) => void;
 }
 
 export function EssayCoachChat({
@@ -61,9 +67,14 @@ export function EssayCoachChat({
   sourceText,
   chartData,
   resetKey,
+  onThreadChange,
 }: EssayCoachChatProps) {
   const [messages, setMessages] = useState<CoachMessage[]>([OPENING_MESSAGE]);
   const [threadId, setThreadId] = useState<string | null>(null);
+  // 親が古い ID を掴んだままにならないよう、変化のたびに通知する
+  useEffect(() => {
+    onThreadChange?.(threadId);
+  }, [threadId, onThreadChange]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);

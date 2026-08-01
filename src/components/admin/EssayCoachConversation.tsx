@@ -20,9 +20,10 @@ function formatDate(iso: string | undefined): string {
 /**
  * 答案の詳細で「この問題を書いていたときのAIコーチとのやり取り」を出す。
  *
- * 会話は答案IDを持っていないので、お題一致か提出時刻の近さで推定している。
- * 講師が「本当にこの答案の会話か」を判断できるよう、当てた根拠とお題・時刻を
- * 必ず添える。推定にすぎないものを断定的に見せない。
+ * 提出時に会話IDを記録した答案は確実に引ける(この答案の会話)。それが無い
+ * 過去の答案はお題一致か提出時刻の近さで推定する。講師が「本当にこの答案の
+ * 会話か」を判断できるよう、当てた根拠とお題・時刻を必ず添える。推定に
+ * すぎないものを断定的に見せない。
  */
 export function EssayCoachConversation({
   threads,
@@ -79,12 +80,18 @@ export function EssayCoachConversation({
                 <Badge
                   variant="outline"
                   className={
-                    t.matchedBy === "topic"
-                      ? "text-[10px]"
-                      : "border-amber-300 text-[10px] text-amber-700 dark:border-amber-700 dark:text-amber-400"
+                    t.matchedBy === "linked"
+                      ? "border-emerald-300 text-[10px] text-emerald-700 dark:border-emerald-700 dark:text-emerald-400"
+                      : t.matchedBy === "topic"
+                        ? "text-[10px]"
+                        : "border-amber-300 text-[10px] text-amber-700 dark:border-amber-700 dark:text-amber-400"
                   }
                 >
-                  {t.matchedBy === "topic" ? "お題一致" : "時刻から推定"}
+                  {t.matchedBy === "linked"
+                    ? "この答案の会話"
+                    : t.matchedBy === "topic"
+                      ? "お題一致"
+                      : "時刻から推定"}
                 </Badge>
                 <ChevronDown
                   className={`size-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`}

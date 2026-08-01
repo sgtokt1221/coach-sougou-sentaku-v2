@@ -157,6 +157,7 @@ export async function GET(
       topic,
       data.targetUniversity as string | undefined,
       data.submittedAt?.toDate?.()?.getTime?.() ?? 0,
+      data.coachThreadId as string | undefined,
     );
 
     const essay: Essay = {
@@ -210,10 +211,31 @@ async function findCoachThreads(
   topic: string | undefined,
   universityId: string | undefined,
   submittedMs: number,
+  linkedThreadId: string | undefined,
 ): Promise<LinkedCoachThread[]> {
   const { adminDb } = await import("@/lib/firebase/admin");
   if (!adminDb) return [];
   try {
+    // 提出時に記録した会話があれば推定は不要。確実にこれ。
+    if (linkedThreadId) {
+      const doc = await adminDb
+        .doc(`users/${studentId}/essayCoachThreads/${linkedThreadId}`)
+        .get();
+      if (doc.exists) {
+        const t = doc.data() as CoachThread;
+        return [
+          {
+            ...t,
+            id: doc.id,
+            messages: Array.isArray(t.messages)
+              ? t.messages.slice(0, COACH_MAX_MESSAGES)
+              : [],
+            matchedBy: "linked",
+          },
+        ];
+      }
+      // 記録があるのに会話が消えている場合は推定へ落とす
+    }
     const snap = await adminDb
       .collection(`users/${studentId}/essayCoachThreads`)
       .get();
