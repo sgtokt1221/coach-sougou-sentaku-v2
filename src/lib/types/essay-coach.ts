@@ -46,6 +46,16 @@ export interface CoachThreadSummary {
   updatedAt: string;
 }
 
+/**
+ * 答案に紐付いた AIコーチ会話。
+ *
+ * 会話側に答案IDを持っていないため、お題(topic)の一致か、同じ大学かつ提出
+ * 時刻の近さで推定する。どちらで当てたかを matchedBy で返し、画面に出す。
+ */
+export interface LinkedCoachThread extends CoachThread {
+  matchedBy: "topic" | "time";
+}
+
 export interface CoachRequestBody {
   /** 継続スレッド時。未指定なら新規作成 */
   threadId?: string;

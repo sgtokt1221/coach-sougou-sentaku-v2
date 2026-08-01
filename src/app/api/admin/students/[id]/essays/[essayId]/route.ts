@@ -3,6 +3,7 @@ import { requireRole, scopeByOrganization } from "@/lib/api/auth";
 import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
 import { adminDb } from "@/lib/firebase/admin";
 import type { Essay } from "@/lib/types/essay";
+import type { CoachThread, LinkedCoachThread } from "@/lib/types/essay-coach";
 import { getThemeById } from "@/data/essay-themes";
 import { getPastQuestionById } from "@/data/essay-past-questions";
 
@@ -147,6 +148,17 @@ export async function GET(
       }
     }
 
+    // この答案を書いていたときの AIコーチ会話を拾う。会話側に答案IDが無い
+    // ため、お題の一致（表記ゆれを吸収）か、同じ大学で提出時刻に近いもので
+    // 推定する。関係ない会話を出すと講師を惑わせるので、どちらの根拠で
+    // 当てたかを matchedBy で返し、条件に合わないものは一切返さない。
+    const coachThreads = await findCoachThreads(
+      studentId,
+      topic,
+      data.targetUniversity as string | undefined,
+      data.submittedAt?.toDate?.()?.getTime?.() ?? 0,
+    );
+
     const essay: Essay = {
       id: essayDoc.id,
       userId: data.userId,
@@ -164,6 +176,7 @@ export async function GET(
 
     return NextResponse.json({
       ...essay,
+      coachThreads,
       topicEstimated,
       questionContext: {
         questionType: ctx.questionType ?? null,
@@ -179,5 +192,72 @@ export async function GET(
       { error: "エッセイの取得に失敗しました" },
       { status: 500 }
     );
+  }
+}
+
+/** 提出時刻からこの範囲内に更新された会話を「同じ問題での会話」とみなす */
+const COACH_MATCH_WINDOW_MS = 6 * 60 * 60 * 1000;
+/** 1スレッドあたりの返却上限。長い会話でレスポンスが膨らむのを防ぐ */
+const COACH_MAX_MESSAGES = 200;
+
+/** 表記ゆれ（空白・大文字小文字）を吸収してお題を比べる */
+function normalizeTopic(v: string | undefined): string {
+  return (v ?? "").replace(/\s+/g, "").toLowerCase();
+}
+
+async function findCoachThreads(
+  studentId: string,
+  topic: string | undefined,
+  universityId: string | undefined,
+  submittedMs: number,
+): Promise<LinkedCoachThread[]> {
+  const { adminDb } = await import("@/lib/firebase/admin");
+  if (!adminDb) return [];
+  try {
+    const snap = await adminDb
+      .collection(`users/${studentId}/essayCoachThreads`)
+      .get();
+    const wantTopic = normalizeTopic(topic);
+
+    const scored = snap.docs
+      .map((d) => {
+        const t = { ...(d.data() as CoachThread), id: d.id };
+        const tMs = t.updatedAt ? new Date(t.updatedAt).getTime() : 0;
+        const distance =
+          submittedMs && tMs ? Math.abs(tMs - submittedMs) : Number.POSITIVE_INFINITY;
+        const threadTopic = normalizeTopic(t.topic);
+        const byTopic = wantTopic.length > 0 && threadTopic === wantTopic;
+        // 両方にお題があって食い違うなら、時間が近くても別の問題の会話。
+        // これが無いと「5時間後に始めた別テーマの会話」を拾ってしまう。
+        const topicConflict =
+          wantTopic.length > 0 && threadTopic.length > 0 && threadTopic !== wantTopic;
+        const byTime =
+          !topicConflict &&
+          !!universityId &&
+          t.universityId === universityId &&
+          distance <= COACH_MATCH_WINDOW_MS;
+        if (!byTopic && !byTime) return null;
+        return {
+          thread: {
+            ...t,
+            messages: Array.isArray(t.messages)
+              ? t.messages.slice(0, COACH_MAX_MESSAGES)
+              : [],
+            matchedBy: byTopic ? ("topic" as const) : ("time" as const),
+          },
+          distance,
+          byTopic,
+        };
+      })
+      .filter((x): x is NonNullable<typeof x> => x !== null);
+
+    // お題一致を優先し、同順位なら提出時刻に近いものから
+    scored.sort((a, b) =>
+      a.byTopic !== b.byTopic ? (a.byTopic ? -1 : 1) : a.distance - b.distance,
+    );
+    return scored.slice(0, 3).map((x) => x.thread);
+  } catch (err) {
+    console.warn("[admin/essay] coach threads fetch failed:", err);
+    return [];
   }
 }

@@ -1,4 +1,5 @@
 import type { AiGenerationMetadata } from "@/lib/types/ai";
+import type { LinkedCoachThread } from "./essay-coach";
 
 export type EssayStatus =
   | "uploaded"
@@ -42,6 +43,8 @@ export interface Essay {
   questionContext?: EssayQuestionContextData;
   /** topic を下書きから時刻で推定して復元したか */
   topicEstimated?: boolean;
+  /** この答案を書いていたときの AIコーチ会話（管理者の答案詳細で表示する） */
+  coachThreads?: LinkedCoachThread[];
 }
 
 /**

@@ -164,6 +164,7 @@ import { HomeworkStatusSection } from "@/components/admin/HomeworkStatusSection"
 import { buildActivityHeatmapData } from "@/lib/utils/activity-heatmap";
 import { useAuthSWR } from "@/lib/api/swr";
 import { useAuth } from "@/contexts/AuthContext";
+import { EssayCoachConversation } from "@/components/admin/EssayCoachConversation";
 
 
 /**
@@ -1667,6 +1668,10 @@ function AdminStudentDetailPageInner() {
                   )}
                 </>
               )}
+              {/* この問題を書いていたときのAIコーチとのやり取り。答案だけ見ても
+                  生徒がどこで詰まったか分からないため、講評の後に置く。 */}
+              <Separator />
+              <EssayCoachConversation threads={essayDetail.coachThreads} />
               </div>
             </div>
           ) : (
