@@ -13,9 +13,11 @@ export function sanitizeQuote(input: unknown): ChatQuote | undefined {
   if (!input || typeof input !== "object") return undefined;
   const q = input as Partial<ChatQuote>;
   const text = typeof q.text === "string" ? q.text.trim() : "";
-  if (!q.messageId || typeof q.messageId !== "string" || !text) return undefined;
+  if (!text) return undefined;
   return {
-    messageId: q.messageId,
+    ...(typeof q.messageId === "string" && q.messageId
+      ? { messageId: q.messageId }
+      : {}),
     authorName: typeof q.authorName === "string" ? q.authorName.slice(0, 60) : "",
     text:
       text.length > MAX_QUOTE_CHARS ? `${text.slice(0, MAX_QUOTE_CHARS)}…` : text,

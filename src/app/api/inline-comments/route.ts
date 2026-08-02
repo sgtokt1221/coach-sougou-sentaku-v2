@@ -14,6 +14,7 @@ import {
 import type { ChatReference } from "@/lib/types/feedback";
 import type { EssayInlineComment } from "@/lib/types/essay";
 
+import { sanitizeQuote } from "@/lib/chat/quote";
 /**
  * 対象ドキュメントを解決し、呼び出し管理者/講師がその生徒を担当しているか検証する。
  * 小論文専用だった /api/essay/[id]/comments と同じスコープ判定を、対象登録表から
@@ -172,6 +173,15 @@ export async function POST(request: NextRequest) {
       description: comment.slice(0, 120),
     };
     const message = `${config.label}にコメントしました`;
+    // 生徒の本文のどこへのコメントかが、チャットだけ見て分かるようにする。
+    // 引用が無いと「コメントしました」しか出ず、開くまで対象が分からない。
+    // sanitizeQuote を通して長さを揃える。範囲コメントは2000字まで許容して
+    // いるので、そのまま載せるとチャットが引用で埋まる
+    const chatQuote = sanitizeQuote({
+      authorName: (studentData.displayName as string) ?? "あなたの本文",
+      text: quote,
+      partial: true,
+    });
     const isTeacher = role === "teacher";
     const subcollection = isTeacher ? "teacherFeedback" : "feedback";
 
@@ -185,6 +195,7 @@ export async function POST(request: NextRequest) {
       createdAt: now,
       read: false,
       reference,
+      ...(chatQuote ? { quote: chatQuote } : {}),
       ...(callerPhotoURL ? { createdByPhotoURL: callerPhotoURL } : {}),
       ...(isTeacher ? { teacherId: uid } : {}),
     });

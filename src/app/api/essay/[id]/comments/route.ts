@@ -9,6 +9,7 @@ import {
 import type { ChatReference } from "@/lib/types/feedback";
 import type { EssayInlineComment } from "@/lib/types/essay";
 
+import { sanitizeQuote } from "@/lib/chat/quote";
 /**
  * 小論文の userId を取り、呼び出し管理者/講師がその生徒を担当しているか検証する。
  * 返り値: { studentId, studentData } もしくは NextResponse(エラー)。
@@ -117,6 +118,14 @@ export async function POST(
       description: comment.slice(0, 120),
     };
     const message = "小論文にコメントしました";
+    // どの箇所へのコメントかをチャットだけで分かるようにする（書類側と同じ）
+    // sanitizeQuote を通して長さを揃える。範囲コメントは2000字まで許容して
+    // いるので、そのまま載せるとチャットが引用で埋まる
+    const chatQuote = sanitizeQuote({
+      authorName: (studentData.displayName as string) ?? "あなたの答案",
+      text: quote,
+      partial: true,
+    });
     const isTeacher = role === "teacher";
     const subcollection = isTeacher ? "teacherFeedback" : "feedback";
 
@@ -130,6 +139,7 @@ export async function POST(
       createdAt: now,
       read: false,
       reference,
+      ...(chatQuote ? { quote: chatQuote } : {}),
       ...(callerPhotoURL ? { createdByPhotoURL: callerPhotoURL } : {}),
       ...(isTeacher ? { teacherId: uid } : {}),
     };
