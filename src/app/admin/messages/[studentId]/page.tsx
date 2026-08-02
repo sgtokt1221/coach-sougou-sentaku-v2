@@ -15,14 +15,17 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils/avatar";
 import type {
   ChatAttachment,
+  ChatQuote,
   ChatReference,
   ConversationListItem,
 } from "@/lib/types/feedback";
 
+import { useAuth } from "@/contexts/AuthContext";
 export default function AdminThreadPage() {
   const params = useParams<{ studentId: string }>();
   const studentId = params.studentId;
   const router = useRouter();
+  const { user } = useAuth();
   const { messages, loading } = useFeedbackThread(studentId);
   const { data: list } = useAuthSWR<ConversationListItem[]>(
     "/api/admin/messages"
@@ -47,7 +50,8 @@ export default function AdminThreadPage() {
   async function handleSend(
     text: string,
     attachments: ChatAttachment[],
-    reference?: ChatReference
+    reference?: ChatReference,
+    quote?: ChatQuote,
   ) {
     const res = await authFetch(`/api/admin/students/${studentId}/feedback`, {
       method: "POST",
@@ -91,6 +95,8 @@ export default function AdminThreadPage() {
             messages={messages}
             currentRole="coach"
             onSend={handleSend}
+            reactionTarget={{ ownerId: studentId, collection: "feedback" }}
+            viewerUid={user?.uid}
             loading={loading}
             otherName={studentName}
             otherPhotoURL={studentPhotoURL}

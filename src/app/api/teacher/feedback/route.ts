@@ -12,6 +12,7 @@ import type {
   FeedbackCreateRequest,
 } from "@/lib/types/feedback";
 
+import { sanitizeQuote } from "@/lib/chat/quote";
 /**
  * GET /api/teacher/feedback?countOnly=true
  * 講師が管理者から受け取った未読数 (自分のスレッドの unreadByStudent)。
@@ -73,6 +74,7 @@ export async function POST(request: NextRequest) {
 
     const now = new Date();
     const message = (body.message ?? "").trim();
+    const quote = sanitizeQuote((body as { quote?: unknown }).quote);
     const feedbackData = {
       type: "general" as const,
       targetId: "chat",
@@ -86,6 +88,8 @@ export async function POST(request: NextRequest) {
         ? { createdByPhotoURL: userData.photoURL as string }
         : {}),
       ...(attachments.length > 0 ? { attachments } : {}),
+      // 返信元の引用（全文/部分）。長さはサーバー側で切る
+      ...(quote ? { quote } : {}),
     };
 
     const docRef = await adminDb

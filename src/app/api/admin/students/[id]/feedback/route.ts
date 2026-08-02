@@ -8,6 +8,7 @@ import {
 } from "@/lib/chat/conversation";
 import type { AdminFeedback, FeedbackCreateRequest } from "@/lib/types/feedback";
 
+import { sanitizeQuote } from "@/lib/chat/quote";
 /**
  * GET /api/admin/students/[id]/feedback
  * 指定生徒のフィードバック一覧を取得
@@ -84,6 +85,9 @@ export async function GET(
         createdByName: data.createdByName ?? "",
         createdAt: data.createdAt?.toDate?.()?.toISOString() ?? new Date().toISOString(),
         read: data.read ?? false,
+        // 引用とリアクション。写し忘れると画面に出ない（reference と同じ轍）
+        quote: data.quote ?? undefined,
+        reactions: data.reactions ?? undefined,
       };
     });
 
@@ -167,6 +171,7 @@ export async function POST(
     const now = new Date();
     const attachments = attachmentsEarly;
     const reference = referenceEarly;
+    const quote = sanitizeQuote((body as { quote?: unknown }).quote);
     const feedbackData = {
       type: body.type,
       targetId: body.targetId ?? "",
@@ -181,6 +186,8 @@ export async function POST(
         : {}),
       ...(attachments.length > 0 ? { attachments } : {}),
       ...(reference ? { reference } : {}),
+      // 返信元の引用（全文/部分）
+      ...(quote ? { quote } : {}),
     };
 
     const docRef = await adminDb

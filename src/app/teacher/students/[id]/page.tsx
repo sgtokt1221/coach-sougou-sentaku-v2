@@ -10,7 +10,11 @@ import { useFeedbackThread } from "@/lib/hooks/useFeedbackThread";
 import { ChatThread } from "@/components/chat/ChatThread";
 import { PageTransition } from "@/components/shared/PageTransition";
 import { FullHeightPage } from "@/components/layout/FullHeightPage";
-import type { ChatAttachment, ChatReference } from "@/lib/types/feedback";
+import type {
+  ChatAttachment,
+  ChatQuote,
+  ChatReference,
+} from "@/lib/types/feedback";
 
 export default function TeacherStudentChatPage() {
   return (
@@ -51,7 +55,8 @@ function Body() {
   async function handleSend(
     text: string,
     attachments: ChatAttachment[],
-    reference?: ChatReference
+    reference?: ChatReference,
+    quote?: ChatQuote,
   ) {
     const res = await authFetch(`/api/teacher/students/${studentId}/feedback`, {
       method: "POST",
@@ -96,6 +101,8 @@ function Body() {
             messages={messages}
             currentRole="coach"
             onSend={handleSend}
+            reactionTarget={{ ownerId: studentId, collection: "teacherFeedback" }}
+            viewerUid={user?.uid}
             loading={loading}
             otherName={studentName}
             referenceStudentId={studentId}

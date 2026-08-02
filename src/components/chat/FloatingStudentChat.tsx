@@ -9,7 +9,11 @@ import { useFeedbackThread } from "@/lib/hooks/useFeedbackThread";
 import { ChatThread } from "@/components/chat/ChatThread";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils/avatar";
-import type { ChatAttachment, ChatReference } from "@/lib/types/feedback";
+import type {
+  ChatAttachment,
+  ChatQuote,
+  ChatReference,
+} from "@/lib/types/feedback";
 
 interface FloatingStudentChatProps {
   /** 対象生徒の uid */
@@ -87,6 +91,7 @@ export function FloatingStudentChat({
     text: string,
     attachments: ChatAttachment[],
     reference?: ChatReference,
+    quote?: ChatQuote,
   ) {
     const res = await authFetch(sendUrl, {
       method: "POST",

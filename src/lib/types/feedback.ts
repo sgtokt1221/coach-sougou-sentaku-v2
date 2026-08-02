@@ -44,6 +44,26 @@ export interface ChatReference {
   description?: string;
 }
 
+/**
+ * 返信元の引用。
+ *
+ * 元メッセージが後から消えても引用は残したいので、本文を写して持つ
+ * （参照だけ持つと表示できなくなる）。partial は選択範囲だけを引いたか。
+ */
+export interface ChatQuote {
+  messageId: string;
+  authorName: string;
+  /** 引用する本文。部分引用なら選択範囲だけ。長すぎるものは保存時に切り詰める */
+  text: string;
+  partial: boolean;
+}
+
+/** 絵文字 → 押した人の uid 一覧 */
+export type ChatReactions = Record<string, string[]>;
+
+/** チャットで使える絵文字。ここが正本で、UIのピッカーもこれを描く */
+export const CHAT_REACTION_EMOJIS = ["👍", "🙏", "🎉", "😂", "😢", "🔥"] as const;
+
 export interface AdminFeedback {
   id: string;
   type: FeedbackType;
@@ -67,6 +87,10 @@ export interface AdminFeedback {
    * 複数講師対応で講師別にスレッドを分離するために使う。
    */
   teacherId?: string;
+  /** 返信元の引用（任意） */
+  quote?: ChatQuote;
+  /** 絵文字リアクション（任意） */
+  reactions?: ChatReactions;
 }
 
 export interface FeedbackCreateRequest {

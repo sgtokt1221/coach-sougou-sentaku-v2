@@ -12,6 +12,7 @@ import type {
   FeedbackCreateRequest,
 } from "@/lib/types/feedback";
 
+import { sanitizeQuote } from "@/lib/chat/quote";
 /**
  * GET /api/student/feedback
  * 自分のフィードバック一覧を取得
@@ -65,6 +66,9 @@ export async function GET(request: NextRequest) {
         createdAt:
           data.createdAt?.toDate?.()?.toISOString() ?? new Date().toISOString(),
         read: data.read ?? false,
+        // 引用とリアクション。写し忘れると画面に出ない（reference と同じ轍）
+        quote: data.quote ?? undefined,
+        reactions: data.reactions ?? undefined,
         attachments: data.attachments ?? undefined,
         broadcast: data.broadcast ?? undefined,
         // 引用カード。返し忘れるとチャットに遷移ボタンが出ない
@@ -116,6 +120,7 @@ export async function POST(request: NextRequest) {
 
     const now = new Date();
     const message = (body.message ?? "").trim();
+    const quote = sanitizeQuote((body as { quote?: unknown }).quote);
     const feedbackData = {
       type: "general" as const,
       targetId: "chat",
@@ -129,6 +134,8 @@ export async function POST(request: NextRequest) {
         ? { createdByPhotoURL: userData.photoURL as string }
         : {}),
       ...(attachments.length > 0 ? { attachments } : {}),
+      // 返信元の引用（全文/部分）。長さはサーバー側で切る
+      ...(quote ? { quote } : {}),
     };
 
     const docRef = await adminDb

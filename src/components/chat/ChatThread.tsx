@@ -10,6 +10,8 @@ import {
   FileText,
   Megaphone,
   BookOpen,
+  Quote as QuoteIcon,
+  SmilePlus,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -22,10 +24,12 @@ import { ProblemPickerDialog } from "@/components/admin/ProblemPickerDialog";
 import type {
   ChatAttachment,
   ChatMessage,
+  ChatQuote,
   ChatReference,
   FeedbackType,
   SenderRole,
 } from "@/lib/types/feedback";
+import { CHAT_REACTION_EMOJIS } from "@/lib/types/feedback";
 import { usePersistentDraft } from "@/hooks/usePersistentDraft";
 import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
 
@@ -46,7 +50,8 @@ interface ChatThreadProps {
   onSend: (
     text: string,
     attachments: ChatAttachment[],
-    reference?: ChatReference
+    reference?: ChatReference,
+    quote?: ChatQuote
   ) => Promise<void>;
   loading?: boolean;
   emptyText?: string;
@@ -58,6 +63,13 @@ interface ChatThreadProps {
   referenceStudentId?: string;
   /** 生徒画面で未送信メッセージを保存するときの一意なキー。 */
   draftKey?: string;
+  /**
+   * リアクションの保存先。渡さないとリアクションUIを出さない。
+   * メッセージは users/{ownerId}/{collection} にあるので、その2つが要る。
+   */
+  reactionTarget?: { ownerId: string; collection: "feedback" | "teacherFeedback" };
+  /** 自分の uid。自分が押したリアクションを強調するのに使う */
+  viewerUid?: string;
 }
 
 function readFileAsBase64(file: File): Promise<string> {
@@ -186,7 +198,84 @@ export function ChatThread({
   otherPhotoURL,
   referenceStudentId,
   draftKey,
+  reactionTarget,
+  viewerUid,
 }: ChatThreadProps) {
+  /** 各バブルのDOM。部分引用で選択範囲がそのバブル内か判定するのに使う */
+  const bubbleRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  /** 送信待ちの引用。入力欄の上に出す */
+  const [pendingQuote, setPendingQuote] = useState<ChatQuote | null>(null);
+  /** リアクションのピッカーを開いているメッセージ */
+  const [pickerFor, setPickerFor] = useState<string | null>(null);
+  /** 楽観更新。サーバー応答を待たずに反映する */
+  const [localReactions, setLocalReactions] = useState<
+    Record<string, Record<string, string[]>>
+  >({});
+
+  /** 全文引用。選択範囲があればその部分だけ引く */
+  const quoteMessage = useCallback((m: ChatMessage, partialText?: string) => {
+    const text = (partialText ?? m.message ?? "").trim();
+    if (!text) return;
+    setPendingQuote({
+      messageId: m.id,
+      authorName: m.createdByName ?? "",
+      text,
+      partial: Boolean(partialText),
+    });
+  }, []);
+
+  /**
+   * バブル内で選択された文字列を返す。選択がそのバブルの外へ出ている場合は
+   * 部分引用として扱わない（別の発言が混ざるため）。
+   */
+  const selectionWithin = (el: HTMLElement | null): string | undefined => {
+    if (!el) return undefined;
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed || sel.rangeCount === 0) return undefined;
+    const range = sel.getRangeAt(0);
+    if (!el.contains(range.commonAncestorContainer)) return undefined;
+    const t = sel.toString().trim();
+    return t.length > 0 ? t : undefined;
+  };
+
+  const toggleReaction = useCallback(
+    async (messageId: string, emoji: string, current?: Record<string, string[]>) => {
+      if (!reactionTarget || !viewerUid) return;
+      const base = current ?? {};
+      const users = base[emoji] ?? [];
+      const next = users.includes(viewerUid)
+        ? users.filter((u) => u !== viewerUid)
+        : [...users, viewerUid];
+      const optimistic = { ...base };
+      if (next.length === 0) delete optimistic[emoji];
+      else optimistic[emoji] = next;
+      setLocalReactions((p) => ({ ...p, [messageId]: optimistic }));
+      setPickerFor(null);
+      try {
+        const res = await authFetch("/api/chat/reactions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ownerId: reactionTarget.ownerId,
+            collection: reactionTarget.collection,
+            messageId,
+            emoji,
+          }),
+        });
+        if (!res.ok) throw new Error();
+      } catch {
+        // 失敗したら楽観更新を捨てて購読値に戻す
+        setLocalReactions((p) => {
+          const n = { ...p };
+          delete n[messageId];
+          return n;
+        });
+        toast.error("リアクションを反映できませんでした");
+      }
+    },
+    [reactionTarget, viewerUid],
+  );
+
   const [text, setText] = useState("");
   const [pending, setPending] = useState<ChatAttachment[]>([]);
   const [pendingRef, setPendingRef] = useState<ChatReference | null>(null);
@@ -312,10 +401,16 @@ export function ChatThread({
     if ((!text.trim() && pending.length === 0 && !pendingRef) || sending) return;
     setSending(true);
     try {
-      await onSend(text.trim(), pending, pendingRef ?? undefined);
+      await onSend(
+        text.trim(),
+        pending,
+        pendingRef ?? undefined,
+        pendingQuote ?? undefined,
+      );
       setText("");
       setPending([]);
       setPendingRef(null);
+      setPendingQuote(null);
     } catch {
       toast.error("送信に失敗しました");
     } finally {
@@ -399,12 +494,31 @@ export function ChatThread({
                   )}
                   {(m.message || (m.attachments && m.attachments.length > 0)) && (
                     <div
+                      ref={(el) => { bubbleRefs.current[m.id] = el; }}
                       className={`rounded-2xl px-3 py-2 text-sm ${
                         mine
                           ? "rounded-br-sm bg-primary text-primary-foreground"
                           : "rounded-bl-sm bg-muted text-foreground"
                       }`}
                     >
+                      {/* 返信元の引用。誰の発言かと、部分引用かどうかを出す */}
+                      {m.quote && (
+                        <div
+                          className={`mb-1.5 rounded-md border-l-2 px-2 py-1 text-xs ${
+                            mine
+                              ? "border-primary-foreground/50 bg-primary-foreground/10"
+                              : "border-muted-foreground/40 bg-background/60"
+                          }`}
+                        >
+                          <span className="block font-medium opacity-80">
+                            {m.quote.authorName || "引用"}
+                            {m.quote.partial ? "（一部）" : ""}
+                          </span>
+                          <span className="block whitespace-pre-wrap break-words opacity-90">
+                            {m.quote.text}
+                          </span>
+                        </div>
+                      )}
                       {m.message && (
                         <p className="whitespace-pre-wrap break-words">
                           {m.message}
@@ -419,6 +533,83 @@ export function ChatThread({
                       )}
                     </div>
                   )}
+                  {/* 引用・リアクションの操作。バブル内を選択してから押すと
+                      その部分だけを引用する */}
+                  {(m.message || reactionTarget) && (
+                    <div className={`flex items-center gap-1 ${mine ? "flex-row-reverse" : ""}`}>
+                      {m.message && (
+                        <button
+                          type="button"
+                          title="引用して返信（選択中なら選択部分のみ）"
+                          onClick={() =>
+                            quoteMessage(m, selectionWithin(bubbleRefs.current[m.id]))
+                          }
+                          className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                        >
+                          <QuoteIcon className="size-3.5" />
+                        </button>
+                      )}
+                      {reactionTarget && viewerUid && (
+                        <button
+                          type="button"
+                          title="リアクション"
+                          onClick={() => setPickerFor(pickerFor === m.id ? null : m.id)}
+                          className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                        >
+                          <SmilePlus className="size-3.5" />
+                        </button>
+                      )}
+                      {pickerFor === m.id && (
+                        <div className="flex items-center gap-0.5 rounded-full border bg-popover px-1.5 py-1 shadow-sm">
+                          {CHAT_REACTION_EMOJIS.map((e) => (
+                            <button
+                              key={e}
+                              type="button"
+                              onClick={() =>
+                                toggleReaction(m.id, e, localReactions[m.id] ?? m.reactions)
+                              }
+                              className="rounded px-1 text-base leading-none hover:bg-muted"
+                            >
+                              {e}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* 付いているリアクション。押すと自分の分を付け外しする */}
+                  {(() => {
+                    const rs = localReactions[m.id] ?? m.reactions;
+                    const entries = Object.entries(rs ?? {}).filter(
+                      ([, u]) => Array.isArray(u) && u.length > 0,
+                    );
+                    if (entries.length === 0) return null;
+                    return (
+                      <div className={`flex flex-wrap gap-1 ${mine ? "justify-end" : ""}`}>
+                        {entries.map(([emoji, users]) => {
+                          const pressed = viewerUid ? users.includes(viewerUid) : false;
+                          return (
+                            <button
+                              key={emoji}
+                              type="button"
+                              disabled={!reactionTarget || !viewerUid}
+                              onClick={() => toggleReaction(m.id, emoji, rs)}
+                              className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-xs tabular-nums ${
+                                pressed
+                                  ? "border-primary bg-primary/10 text-primary"
+                                  : "bg-background text-muted-foreground"
+                              }`}
+                            >
+                              <span className="text-sm leading-none">{emoji}</span>
+                              {users.length}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
+
                   {m.reference && (
                     <div className="w-full max-w-[20rem]">
                       <ReferenceCard reference={m.reference} />
@@ -466,6 +657,29 @@ export function ChatThread({
                   </button>
                 </div>
               ))}
+            </div>
+          )}
+          {/* 送信待ちの引用。何を引いているか見えないと誤爆するので本文も出す */}
+          {pendingQuote && (
+            <div className="mb-2 flex items-start gap-1 rounded-md border border-primary/30 bg-primary/5 py-1 pl-2 pr-1 text-xs">
+              <QuoteIcon className="mt-0.5 size-3.5 shrink-0 text-primary" />
+              <div className="min-w-0 flex-1">
+                <span className="block font-medium">
+                  {pendingQuote.authorName || "引用"}
+                  {pendingQuote.partial ? "（一部）" : "（全文）"}
+                </span>
+                <span className="block line-clamp-2 break-words text-muted-foreground">
+                  {pendingQuote.text}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPendingQuote(null)}
+                className="rounded p-0.5 hover:bg-muted"
+                title="引用をやめる"
+              >
+                <X className="size-3" />
+              </button>
             </div>
           )}
           {pendingRef && (

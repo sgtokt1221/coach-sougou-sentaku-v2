@@ -10,7 +10,11 @@ import { ChatThread } from "@/components/chat/ChatThread";
 import { FullHeightPage } from "@/components/layout/FullHeightPage";
 import { PageTransition } from "@/components/shared/PageTransition";
 import { SegmentControl } from "@/components/shared/SegmentControl";
-import type { ChatAttachment } from "@/lib/types/feedback";
+import type {
+  ChatAttachment,
+  ChatQuote,
+  ChatReference,
+} from "@/lib/types/feedback";
 
 interface StudentTeacherItem {
   teacherId: string;
@@ -89,11 +93,16 @@ function AdminThread({ uid }: { uid?: string }) {
     authFetch("/api/student/feedback/read", { method: "POST" }).catch(() => {});
   }, [uid, messages, loading]);
 
-  async function handleSend(text: string, attachments: ChatAttachment[]) {
+  async function handleSend(
+    text: string,
+    attachments: ChatAttachment[],
+    _reference?: ChatReference,
+    quote?: ChatQuote,
+  ) {
     const res = await authFetch("/api/student/feedback", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: text, attachments }),
+      body: JSON.stringify({ message: text, attachments, quote }),
     });
     if (!res.ok) throw new Error("send failed");
   }
@@ -104,6 +113,8 @@ function AdminThread({ uid }: { uid?: string }) {
         messages={messages}
         currentRole="student"
         onSend={handleSend}
+        reactionTarget={uid ? { ownerId: uid, collection: "feedback" } : undefined}
+        viewerUid={uid}
         draftKey="student-feedback-admin"
         loading={loading}
         emptyText="管理者からのメッセージや、あなたからの相談がここに表示されます"
@@ -201,11 +212,16 @@ function TeacherThread({
     }).catch(() => {});
   }, [uid, teacherId, messages, loading]);
 
-  async function handleSend(text: string, attachments: ChatAttachment[]) {
+  async function handleSend(
+    text: string,
+    attachments: ChatAttachment[],
+    _reference?: ChatReference,
+    quote?: ChatQuote,
+  ) {
     const res = await authFetch("/api/student/teacher-feedback", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: text, attachments, teacherId }),
+      body: JSON.stringify({ message: text, attachments, teacherId, quote }),
     });
     if (!res.ok) throw new Error("send failed");
   }
@@ -216,6 +232,8 @@ function TeacherThread({
         messages={messages}
         currentRole="student"
         onSend={handleSend}
+        reactionTarget={uid ? { ownerId: uid, collection: "teacherFeedback" } : undefined}
+        viewerUid={uid}
         draftKey={`student-feedback-teacher-${teacherId}`}
         loading={loading}
         otherName={otherName}

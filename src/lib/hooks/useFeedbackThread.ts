@@ -86,6 +86,9 @@ export function useFeedbackThread(
             attachments: data.attachments ?? undefined,
             broadcast: data.broadcast ?? undefined,
             reference: data.reference ?? undefined,
+            // 引用とリアクション。ここで写し忘れると画面に出ない
+            quote: data.quote ?? undefined,
+            reactions: data.reactions ?? undefined,
             teacherId: data.teacherId ?? undefined,
             senderRole: createdBy === studentUid ? "student" : "coach",
           };

@@ -13,6 +13,7 @@ import type {
   FeedbackCreateRequest,
 } from "@/lib/types/feedback";
 
+import { sanitizeQuote } from "@/lib/chat/quote";
 /**
  * POST /api/student/teacher-feedback
  * 生徒が担当講師(assignedTeacherId)へメッセージを送信する。
@@ -61,6 +62,7 @@ export async function POST(request: NextRequest) {
 
     const now = new Date();
     const message = (body.message ?? "").trim();
+    const quote = sanitizeQuote((body as { quote?: unknown }).quote);
     const feedbackData = {
       type: "general" as const,
       targetId: "chat",
@@ -75,6 +77,8 @@ export async function POST(request: NextRequest) {
         : {}),
       teacherId,
       ...(attachments.length > 0 ? { attachments } : {}),
+      // 返信元の引用（全文/部分）。長さはサーバー側で切る
+      ...(quote ? { quote } : {}),
     };
 
     const docRef = await adminDb

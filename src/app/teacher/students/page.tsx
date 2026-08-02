@@ -15,7 +15,11 @@ import { SegmentControl } from "@/components/shared/SegmentControl";
 import { PageTransition } from "@/components/shared/PageTransition";
 import { FullHeightPage } from "@/components/layout/FullHeightPage";
 import { getInitials } from "@/lib/utils/avatar";
-import type { ChatAttachment } from "@/lib/types/feedback";
+import type {
+  ChatAttachment,
+  ChatQuote,
+  ChatReference,
+} from "@/lib/types/feedback";
 
 interface TeacherStudentItem {
   studentId: string;
@@ -155,11 +159,16 @@ function AdminContact() {
     authFetch("/api/teacher/feedback/read", { method: "POST" }).catch(() => {});
   }, [uid, messages, loading]);
 
-  async function handleSend(text: string, attachments: ChatAttachment[]) {
+  async function handleSend(
+    text: string,
+    attachments: ChatAttachment[],
+    _reference?: ChatReference,
+    quote?: ChatQuote,
+  ) {
     const res = await authFetch("/api/teacher/feedback", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: text, attachments }),
+      body: JSON.stringify({ message: text, attachments, quote }),
     });
     if (!res.ok) throw new Error("send failed");
   }
@@ -170,6 +179,8 @@ function AdminContact() {
         messages={messages}
         currentRole="student"
         onSend={handleSend}
+        reactionTarget={uid ? { ownerId: uid, collection: "feedback" } : undefined}
+        viewerUid={uid}
         loading={loading}
         emptyText="担当管理者へのメッセージがここに表示されます"
       />
