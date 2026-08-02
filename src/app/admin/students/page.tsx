@@ -28,6 +28,7 @@ import { isGraduated } from "@/lib/utils/grade";
 import { authFetch } from "@/lib/api/client";
 import { toast } from "sonner";
 import { useSWRConfig } from "swr";
+import { formatLastSeen } from "@/lib/ui/format-last-seen";
 
 type SortKey = "lastActivity" | "score" | "name" | "rank" | "interviewRank";
 type StatusFilter = "all" | "attention" | "healthy" | "graduated";
@@ -44,32 +45,6 @@ function formatJoinElapsed(iso: string): string {
   const years = Math.floor(days / 365);
   const months = Math.floor((days % 365) / 30);
   return months > 0 ? `${years}年${months}ヶ月前` : `${years}年前`;
-}
-
-/**
- * 最終ログインの表示。日付だけだと「今日」としか分からず、今日の何時に
- * 来たのかが見えないため時刻まで出す。
- */
-function formatLastSeen(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
-  const time = d.toLocaleTimeString("ja-JP", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-  const today = new Date();
-  const sameDay = (a: Date, b: Date) =>
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate();
-  if (sameDay(d, today)) return `今日 ${time}`;
-  const yesterday = new Date(today.getTime() - 86400000);
-  if (sameDay(d, yesterday)) return `昨日 ${time}`;
-  const md = d.toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" });
-  if (d.getFullYear() !== today.getFullYear()) {
-    return `${d.getFullYear()}/${md} ${time}`;
-  }
-  return `${md} ${time}`;
 }
 
 function scoreColor(total: number): string {
@@ -449,6 +424,7 @@ export default function AdminStudentsPage() {
                         {s.latestScore !== null && (
                           <span className={`font-bold ${scoreColor(s.latestScore)}`}>{s.latestScore}</span>
                         )}
+                        {scoreTrendIcon(s.scoreTrend)}
                       </span>
                       <span className="inline-flex items-center gap-1">
                         <span className="text-[10px] text-muted-foreground">面接</span>
@@ -460,6 +436,7 @@ export default function AdminStudentsPage() {
                         {s.latestInterviewScore != null && (
                           <span className={`font-bold ${scoreColor(s.latestInterviewScore)}`}>{s.latestInterviewScore}</span>
                         )}
+                        {scoreTrendIcon(s.interviewScoreTrend ?? null)}
                       </span>
                       {s.activeWeaknessCount > 0 && (
                         <span className="inline-flex items-center gap-1">
@@ -475,7 +452,7 @@ export default function AdminStudentsPage() {
                     </div>
 
                     <div className="mt-2 flex flex-wrap items-center gap-x-3 text-[11px] text-muted-foreground">
-                      <span>ログイン {s.lastSeenAt ? formatJoinElapsed(s.lastSeenAt) : "—"}</span>
+                      <span>ログイン {s.lastSeenAt ? formatLastSeen(s.lastSeenAt) : "—"}</span>
                       {s.lastActivity && (
                         <span>
                           {ACTIVITY_LABEL[s.lastActivity.type]} {formatJoinElapsed(s.lastActivity.at)}

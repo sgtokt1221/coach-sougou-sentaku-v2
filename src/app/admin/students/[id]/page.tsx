@@ -165,6 +165,7 @@ import { buildActivityHeatmapData } from "@/lib/utils/activity-heatmap";
 import { useAuthSWR } from "@/lib/api/swr";
 import { useAuth } from "@/contexts/AuthContext";
 import { EssayCoachConversation } from "@/components/admin/EssayCoachConversation";
+import { formatLastSeen } from "@/lib/ui/format-last-seen";
 
 
 /**
@@ -368,7 +369,8 @@ function PinnedSummary({ detail }: { detail: StudentDetail }) {
     },
     {
       label: "最終ログイン",
-      value: seen.text,
+      // 何時に来たかが分かるよう時刻まで出す。色分けは日数で行う
+      value: formatLastSeen(lastSeenAt),
       color: colorFor(seen.days),
       icon: Clock,
       monogram: null,

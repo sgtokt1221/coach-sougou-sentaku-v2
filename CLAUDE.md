@@ -100,7 +100,15 @@ AI呼び出しは .env.local の ANTHROPIC_API_KEY をそのまま使うので�
 | 保存形式 | コレクション |
 |---|---|
 | Firestore Timestamp | `essays`(submittedAt) / `users/*/skillChecks`(takenAt) / `users/*/summaryDrills`(completedAt) / `users/*/logicDrills`(completedAt) / `users/*/interviewSkillChecks` |
-| ISO 8601 文字列 | `sessions`(scheduledAt/createdAt/updatedAt/startedAt/endedAt) / `documents` / `users/*/essayCoachThreads` / `users/*/chokoReviews` / `users`(gradeUpdatedAt 等) |
+| ISO 8601 文字列 | `sessions`(scheduledAt/createdAt/updatedAt/startedAt/endedAt) / `documents` / `users/*/essayCoachThreads` / `users/*/chokoReviews` |
+
+`users` は**フィールドごとに違う**ので特に注意する。
+- Timestamp: `lastSeenAt`（ハートビートが `FieldValue.serverTimestamp()` で書く）/ `createdAt` / `updatedAt`
+- ISO 文字列: `gradeUpdatedAt` / `disabledAt` / `researchEnrolledAt`
+
+読む側は `data.lastSeenAt?.toDate?.()` のように Timestamp 前提で書かれている箇所が
+あるため（`/api/admin/students`、`/api/admin/alerts`）、ここに文字列を書くと
+値が null になって画面から消える。
 
 - 読む側は両対応にする（`v?.toDate?.() ?? new Date(v)`）
 - 範囲条件（`where(field, ">=", x)`）を書くときは、そのコレクションの型に
