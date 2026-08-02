@@ -495,6 +495,19 @@ export function ChatThread({
                   {(m.message || (m.attachments && m.attachments.length > 0)) && (
                     <div
                       ref={(el) => { bubbleRefs.current[m.id] = el; }}
+                      // ドラッグで選択し終わった時点で引用に入る。ボタンを
+                      // 押す一手間を挟むと、選択が外れて引用し損ねる
+                      onMouseUp={() => {
+                        const t = selectionWithin(bubbleRefs.current[m.id]);
+                        if (t) quoteMessage(m, t);
+                      }}
+                      onTouchEnd={() => {
+                        // モバイルは選択確定がここより後になることがある
+                        setTimeout(() => {
+                          const t = selectionWithin(bubbleRefs.current[m.id]);
+                          if (t) quoteMessage(m, t);
+                        }, 0);
+                      }}
                       className={`rounded-2xl px-3 py-2 text-sm ${
                         mine
                           ? "rounded-br-sm bg-primary text-primary-foreground"
@@ -506,7 +519,7 @@ export function ChatThread({
                         <div
                           className={`mb-1.5 rounded-md border-l-2 px-2 py-1 text-xs ${
                             mine
-                              ? "border-primary-foreground/50 bg-primary-foreground/10"
+                              ? "border-primary-foreground/70 bg-primary-foreground/20"
                               : "border-muted-foreground/40 bg-background/60"
                           }`}
                         >
@@ -540,10 +553,8 @@ export function ChatThread({
                       {m.message && (
                         <button
                           type="button"
-                          title="引用して返信（選択中なら選択部分のみ）"
-                          onClick={() =>
-                            quoteMessage(m, selectionWithin(bubbleRefs.current[m.id]))
-                          }
+                          title="全文を引用して返信（一部だけならドラッグで選択）"
+                          onClick={() => quoteMessage(m)}
                           className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
                         >
                           <QuoteIcon className="size-3.5" />

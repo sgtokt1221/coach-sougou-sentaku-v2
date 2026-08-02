@@ -63,6 +63,7 @@ export default function AdminThreadPage() {
         message: text,
         attachments,
         reference,
+        quote,
       }),
     });
     if (!res.ok) throw new Error("send failed");
