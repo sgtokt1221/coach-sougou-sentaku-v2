@@ -23,6 +23,10 @@ env:
     secret: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
   - variable: NEXT_PUBLIC_FIREBASE_APP_ID
     secret: NEXT_PUBLIC_FIREBASE_APP_ID
+  # Web Push 用の VAPID 公開鍵。Firebase Console のウェブプッシュ証明書で
+  # 発行する。未設定だと通知トークンを取得できず、プッシュ通知が一切届かない。
+  - variable: NEXT_PUBLIC_FIREBASE_VAPID_KEY
+    secret: NEXT_PUBLIC_FIREBASE_VAPID_KEY
   - variable: ANTHROPIC_API_KEY
     secret: ANTHROPIC_API_KEY
   - variable: OPENAI_API_KEY
