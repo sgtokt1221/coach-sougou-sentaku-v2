@@ -46,6 +46,32 @@ function formatJoinElapsed(iso: string): string {
   return months > 0 ? `${years}年${months}ヶ月前` : `${years}年前`;
 }
 
+/**
+ * 最終ログインの表示。日付だけだと「今日」としか分からず、今日の何時に
+ * 来たのかが見えないため時刻まで出す。
+ */
+function formatLastSeen(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  const time = d.toLocaleTimeString("ja-JP", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  const today = new Date();
+  const sameDay = (a: Date, b: Date) =>
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate();
+  if (sameDay(d, today)) return `今日 ${time}`;
+  const yesterday = new Date(today.getTime() - 86400000);
+  if (sameDay(d, yesterday)) return `昨日 ${time}`;
+  const md = d.toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" });
+  if (d.getFullYear() !== today.getFullYear()) {
+    return `${d.getFullYear()}/${md} ${time}`;
+  }
+  return `${md} ${time}`;
+}
+
 function scoreColor(total: number): string {
   if (total >= 40) return "text-emerald-600 dark:text-emerald-400";
   if (total >= 30) return "text-amber-600 dark:text-amber-400";
@@ -497,7 +523,6 @@ export default function AdminStudentsPage() {
                       ランク
                     </th>
                     <th className="px-4 py-3 text-center font-medium">最新スコア</th>
-                    <th className="px-4 py-3 text-center font-medium hidden lg:table-cell">推移</th>
                     <th className="px-4 py-3 text-center font-medium hidden lg:table-cell">弱点</th>
                     <th className="px-4 py-3 text-center font-medium">最終ログイン</th>
                     <th className="px-4 py-3 text-center font-medium">最終活動</th>
@@ -577,6 +602,8 @@ export default function AdminStudentsPage() {
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex flex-col items-center gap-1 text-sm">
+                            {/* 推移はスコアの真横に出す。独立した列だと視線が
+                                離れてどちらの点数の話か分かりにくかった。 */}
                             <span className="inline-flex items-center gap-1">
                               <Monogram kind="essay" />
                               {s.latestScore !== null ? (
@@ -586,6 +613,7 @@ export default function AdminStudentsPage() {
                               ) : (
                                 <span className="text-muted-foreground">-</span>
                               )}
+                              {scoreTrendIcon(s.scoreTrend)}
                             </span>
                             <span className="inline-flex items-center gap-1">
                               <Monogram kind="interview" />
@@ -596,17 +624,6 @@ export default function AdminStudentsPage() {
                               ) : (
                                 <span className="text-muted-foreground">-</span>
                               )}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 hidden lg:table-cell">
-                          <div className="flex flex-col items-center gap-1">
-                            <span className="inline-flex items-center gap-1">
-                              <Monogram kind="essay" />
-                              {scoreTrendIcon(s.scoreTrend)}
-                            </span>
-                            <span className="inline-flex items-center gap-1">
-                              <Monogram kind="interview" />
                               {scoreTrendIcon(s.interviewScoreTrend ?? null)}
                             </span>
                           </div>
@@ -631,7 +648,7 @@ export default function AdminStudentsPage() {
                         </td>
                         <td className="px-4 py-3 text-center">
                           <span className="text-xs text-muted-foreground">
-                            {s.lastSeenAt ? formatJoinElapsed(s.lastSeenAt) : "—"}
+                            {s.lastSeenAt ? formatLastSeen(s.lastSeenAt) : "—"}
                           </span>
                         </td>
                         <td className="px-4 py-3 text-center">
