@@ -21,6 +21,25 @@ function getMessagingInstance(): Messaging | null {
 }
 
 /**
+ * メッセージ用 Service Worker を登録する。
+ *
+ * SW からは NEXT_PUBLIC_* を読めないので、Firebase の設定をクエリ文字列で
+ * 渡す。値は元々クライアントに露出している公開設定。
+ */
+function registerMessagingServiceWorker(): Promise<ServiceWorkerRegistration> {
+  const config = {
+    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ?? "",
+    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ?? "",
+    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? "",
+    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ?? "",
+    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID ?? "",
+    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID ?? "",
+  };
+  const qs = new URLSearchParams(config).toString();
+  return navigator.serviceWorker.register(`/firebase-messaging-sw.js?${qs}`);
+}
+
+/**
  * 通知許可をリクエストしてFCMトークンを取得
  * @returns FCMトークン or null（拒否/未対応の場合）
  */
@@ -42,7 +61,7 @@ export async function requestNotificationPermission(): Promise<string | null> {
     }
     const token = await getToken(msg, {
       vapidKey,
-      serviceWorkerRegistration: await navigator.serviceWorker.register("/firebase-messaging-sw.js"),
+      serviceWorkerRegistration: await registerMessagingServiceWorker(),
     });
     return token;
   } catch (err) {

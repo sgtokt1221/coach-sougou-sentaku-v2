@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
       title: `${studentName}さんからメッセージ`,
       body: message || "[添付ファイル]",
       url: `/teacher/students/${uid}`,
-    });
+    }, "inboundMessage");
 
     const newFeedback: AdminFeedback = {
       id: docRef.id,

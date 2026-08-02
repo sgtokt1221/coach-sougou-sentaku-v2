@@ -62,12 +62,12 @@ export async function PATCH(
 
   try {
     if (session.teacherId) {
-      await sendFcmToUser(session.teacherId, { title, body, url });
+      await sendFcmToUser(session.teacherId, { title, body, url }, "attendance");
     }
     const studentDoc = await adminDb.doc(`users/${session.studentId}`).get();
     const managedBy = studentDoc.data()?.managedBy as string | undefined;
     if (managedBy) {
-      await sendFcmToUser(managedBy, { title, body, url });
+      await sendFcmToUser(managedBy, { title, body, url }, "attendance");
     }
   } catch (err) {
     console.warn("[absent] notify failed:", err);

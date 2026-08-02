@@ -152,7 +152,7 @@ export async function POST(request: NextRequest) {
         title: `${studentName}さんからメッセージ`,
         body: message || "[添付ファイル]",
         url: `/admin/messages/${uid}`,
-      });
+      }, "inboundMessage");
     }
 
     const newFeedback: AdminFeedback = {

@@ -133,7 +133,7 @@ export async function POST(request: NextRequest) {
           title: "コーチからの一斉連絡",
           body: message || "[添付ファイル]",
           url: "/student/feedback",
-        });
+        }, "message");
 
         sent++;
       })

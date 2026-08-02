@@ -166,12 +166,18 @@ export async function resetUnread(
 
 /**
  * 指定ユーザーの FCM トークン全てへプッシュ通知を送る (失敗は無視)。
+ *
+ * kind は必須。設定でその種別を切っている相手には送らない。省略可能に
+ * すると付け忘れた経路だけ設定を無視して届き続けるので、引数で強制する。
  */
 export async function sendFcmToUser(
   uid: string,
-  payload: { title: string; body: string; url: string }
+  payload: { title: string; body: string; url: string },
+  kind: string
 ): Promise<void> {
   if (!adminDb) return;
+  const { shouldNotify } = await import("@/lib/notifications/should-notify");
+  if (!(await shouldNotify(uid, kind))) return;
   try {
     const tokensSnap = await adminDb.collection(`users/${uid}/fcmTokens`).get();
     if (tokensSnap.empty) return;

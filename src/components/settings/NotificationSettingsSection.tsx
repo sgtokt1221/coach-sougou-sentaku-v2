@@ -27,12 +27,13 @@ import {
 } from "@/lib/firebase/messaging";
 import { auth } from "@/lib/firebase/config";
 import { toast } from "sonner";
+import type { NotificationKind } from "@/lib/notifications/catalog";
 
-interface NotificationPrefs {
-  alertDigest: boolean;
-  deadlineReminder: boolean;
-  weeklyProgress: boolean;
+interface SettingsResponse {
+  prefs: Record<string, boolean>;
   email: string;
+  kinds: NotificationKind[];
+  role: string;
 }
 
 type PushState = "granted" | "default" | "denied" | "unsupported";
@@ -43,12 +44,9 @@ type PushState = "granted" | "default" | "denied" | "unsupported";
  * - 書類期限リマインダー / 週次進捗レポート / 通知用メール
  */
 export function NotificationSettingsSection() {
-  const [prefs, setPrefs] = useState<NotificationPrefs>({
-    alertDigest: true,
-    deadlineReminder: true,
-    weeklyProgress: true,
-    email: "",
-  });
+  const [prefs, setPrefs] = useState<Record<string, boolean>>({});
+  const [email, setEmail] = useState("");
+  const [kinds, setKinds] = useState<NotificationKind[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -70,8 +68,12 @@ export function NotificationSettingsSection() {
       try {
         const res = await authFetch("/api/notifications/settings");
         if (res.ok) {
-          const data = await res.json();
-          if (alive) setPrefs(data);
+          const data = (await res.json()) as SettingsResponse;
+          if (alive) {
+            setPrefs(data.prefs ?? {});
+            setEmail(data.email ?? "");
+            setKinds(data.kinds ?? []);
+          }
         }
       } catch {
         /* noop */
@@ -120,11 +122,12 @@ export function NotificationSettingsSection() {
       const res = await authFetch("/api/notifications/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(prefs),
+        body: JSON.stringify({ prefs, email }),
       });
       if (res.ok) {
-        const data = await res.json();
-        setPrefs(data);
+        const data = (await res.json()) as SettingsResponse;
+        setPrefs(data.prefs ?? {});
+        setEmail(data.email ?? "");
         setSaved(true);
         setTimeout(() => setSaved(false), 3000);
       } else {
@@ -198,51 +201,50 @@ export function NotificationSettingsSection() {
           </div>
         </div>
 
-        {/* 書類期限リマインダー */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-start gap-3">
-            <FileText className="mt-0.5 size-5 text-amber-500" />
-            <div>
-              <Label htmlFor="deadline" className="text-sm font-medium">
-                書類期限リマインダー
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                提出期限が 7 日以内の書類についてお知らせします
-              </p>
-            </div>
+        {/* 受け取る通知。立場ごとに項目が変わるのでサーバーから来た
+            kinds をそのまま描く。ここに項目を足すときは catalog.ts を直す。 */}
+        {kinds.length > 0 && (
+          <div className="space-y-4">
+            {(["push", "email"] as const).map((channel) => {
+              const items = kinds.filter((k) => k.channel === channel);
+              if (items.length === 0) return null;
+              return (
+                <div key={channel} className="space-y-3">
+                  <p className="text-xs font-semibold text-muted-foreground">
+                    {channel === "push" ? "プッシュ通知" : "メール"}
+                  </p>
+                  {items.map((k) => (
+                    <div key={k.id} className="flex items-center justify-between gap-3">
+                      <div className="flex items-start gap-3">
+                        {channel === "push" ? (
+                          <Bell className="mt-0.5 size-5 text-primary" />
+                        ) : (
+                          <FileText className="mt-0.5 size-5 text-amber-500" />
+                        )}
+                        <div>
+                          <Label htmlFor={`notif-${k.id}`} className="text-sm font-medium">
+                            {k.label}
+                          </Label>
+                          <p className="text-xs text-muted-foreground">
+                            {k.description}
+                          </p>
+                        </div>
+                      </div>
+                      <Switch
+                        id={`notif-${k.id}`}
+                        checked={prefs[k.id] ?? true}
+                        disabled={loading}
+                        onCheckedChange={(checked) =>
+                          setPrefs((prev) => ({ ...prev, [k.id]: checked }))
+                        }
+                      />
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
           </div>
-          <Switch
-            id="deadline"
-            checked={prefs.deadlineReminder}
-            disabled={loading}
-            onCheckedChange={(checked) =>
-              setPrefs((prev) => ({ ...prev, deadlineReminder: checked }))
-            }
-          />
-        </div>
-
-        {/* 週次進捗レポート */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-start gap-3">
-            <TrendingUp className="mt-0.5 size-5 text-sky-500" />
-            <div>
-              <Label htmlFor="weekly" className="text-sm font-medium">
-                週次進捗レポート
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                毎週の学習進捗サマリーをメールでお届けします
-              </p>
-            </div>
-          </div>
-          <Switch
-            id="weekly"
-            checked={prefs.weeklyProgress}
-            disabled={loading}
-            onCheckedChange={(checked) =>
-              setPrefs((prev) => ({ ...prev, weeklyProgress: checked }))
-            }
-          />
-        </div>
+        )}
 
         {/* メールアドレス */}
         <div className="space-y-2">
@@ -251,11 +253,9 @@ export function NotificationSettingsSection() {
             id="notif-email"
             type="email"
             placeholder="例: example@email.com"
-            value={prefs.email}
+            value={email}
             disabled={loading}
-            onChange={(e) =>
-              setPrefs((prev) => ({ ...prev, email: e.target.value }))
-            }
+            onChange={(e) => setEmail(e.target.value)}
           />
           <p className="text-[10px] text-muted-foreground">
             空欄ならアカウントのメールアドレスに送信されます

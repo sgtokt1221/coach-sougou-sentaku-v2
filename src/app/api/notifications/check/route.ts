@@ -128,7 +128,14 @@ export async function POST(request: Request) {
   const { getMessaging } = await import("firebase-admin/messaging");
   const messaging = getMessaging();
 
+  // 設定でその種別を切っている相手には送らない
+  const { shouldNotify } = await import("@/lib/notifications/should-notify");
+
   for (const target of targets) {
+    const kind =
+      target.type === "document_deadline" ? "documentDeadline" : "session";
+    if (!(await shouldNotify(target.userId, kind))) continue;
+
     const tokensSnap = await adminDb
       .collection("users")
       .doc(target.userId)

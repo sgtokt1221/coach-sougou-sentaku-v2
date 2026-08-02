@@ -7,6 +7,11 @@ interface SendNotificationBody {
   title: string;
   body: string;
   data?: Record<string, string>;
+  /**
+   * 通知種別。指定すると相手の設定に従う。管理者が手動で送る用途もあるため
+   * 省略可能にしてあるが、自動送信から呼ぶときは必ず指定すること。
+   */
+  kind?: string;
 }
 
 /**
@@ -17,7 +22,7 @@ export async function POST(request: Request) {
   const auth = await requireRole(request, ["admin", "teacher", "superadmin"]);
   if (auth instanceof NextResponse) return auth;
 
-  const { userId, title, body, data } = (await request.json()) as SendNotificationBody;
+  const { userId, title, body, data, kind } = (await request.json()) as SendNotificationBody;
 
   if (!userId || !title || !body) {
     return NextResponse.json(
@@ -28,6 +33,13 @@ export async function POST(request: Request) {
 
   if (!adminDb) {
     return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
+  }
+
+  if (kind) {
+    const { shouldNotify } = await import("@/lib/notifications/should-notify");
+    if (!(await shouldNotify(userId, kind))) {
+      return NextResponse.json({ success: true, sentTo: 0, message: "受信設定でオフ" });
+    }
   }
 
   // ユーザーのFCMトークン一覧を取得

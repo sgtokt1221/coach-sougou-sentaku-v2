@@ -206,11 +206,13 @@ export async function POST(
       const { getMessaging } = await import("firebase-admin/messaging");
       const messaging = getMessaging();
 
-      const tokensSnap = await adminDb
-        .collection(`users/${id}/fcmTokens`)
-        .get();
+      // 設定でこの種別を切っている生徒には送らない
+      const { shouldNotify } = await import("@/lib/notifications/should-notify");
+      const tokensSnap = (await shouldNotify(id, "feedback"))
+        ? await adminDb.collection(`users/${id}/fcmTokens`).get()
+        : null;
 
-      if (!tokensSnap.empty) {
+      if (tokensSnap && !tokensSnap.empty) {
         const tokens = tokensSnap.docs.map((d) => d.data().token as string);
         const preview =
           (body.message?.trim() ||

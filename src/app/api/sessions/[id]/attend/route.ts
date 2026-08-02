@@ -59,10 +59,10 @@ export async function PATCH(
   const body = `${session.studentName}さんが ${whenLabel} のセッションの欠席連絡を取り消しました`;
   const url = `/admin/sessions/${id}`;
   try {
-    if (session.teacherId) await sendFcmToUser(session.teacherId, { title, body, url });
+    if (session.teacherId) await sendFcmToUser(session.teacherId, { title, body, url }, "attendance");
     const studentDoc = await adminDb.doc(`users/${session.studentId}`).get();
     const managedBy = studentDoc.data()?.managedBy as string | undefined;
-    if (managedBy) await sendFcmToUser(managedBy, { title, body, url });
+    if (managedBy) await sendFcmToUser(managedBy, { title, body, url }, "attendance");
   } catch (err) {
     console.warn("[attend] notify failed:", err);
   }

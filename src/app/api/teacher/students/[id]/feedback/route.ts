@@ -110,7 +110,7 @@ export async function POST(
       title: "講師からメッセージ",
       body: message || reference?.label || "[添付ファイル]",
       url: "/student/feedback",
-    });
+    }, "feedback");
 
     const newFeedback: AdminFeedback = {
       id: docRef.id,

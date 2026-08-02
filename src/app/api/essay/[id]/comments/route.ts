@@ -153,7 +153,7 @@ export async function POST(
       title: "小論文へのコメント",
       body: comment.slice(0, 50),
       url: `/student/essay/${id}`,
-    });
+    }, "feedback");
 
     return NextResponse.json(newComment, { status: 201 });
   } catch (error) {

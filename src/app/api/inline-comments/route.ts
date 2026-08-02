@@ -205,7 +205,7 @@ export async function POST(request: NextRequest) {
       title: `${config.label}へのコメント`,
       body: comment.slice(0, 50),
       url: href,
-    });
+    }, "feedback");
 
     return NextResponse.json(newComment, { status: 201 });
   } catch (error) {

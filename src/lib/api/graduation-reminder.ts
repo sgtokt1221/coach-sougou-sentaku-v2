@@ -35,7 +35,7 @@ export async function sendGraduationReminder(
     }
   }
 
-  await sendFcmToUser(uid, REMINDER);
+  await sendFcmToUser(uid, REMINDER, "reminder");
   await adminDb
     .doc(`users/${uid}`)
     .set({ lastGraduationReminderAt: new Date().toISOString() }, { merge: true });

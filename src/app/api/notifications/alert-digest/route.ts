@@ -78,6 +78,8 @@ export async function POST(request: NextRequest) {
       const adminData = adminDoc.data();
       const prefs = adminData?.notificationPrefs;
       adminEmail = prefs?.email || adminData?.email || "";
+      // 設定でダイジェストを切っている管理者には送らない
+      if (prefs?.alertDigest === false) adminEmail = "";
     } else {
       adminEmail = "admin@example.com";
     }

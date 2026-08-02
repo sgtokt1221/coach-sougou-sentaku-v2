@@ -29,12 +29,24 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "coach for 総合型選抜",
   description: "AI搭載の総合型選抜対策プラットフォーム",
+  manifest: "/manifest.webmanifest",
+  // iOS はホーム画面に追加したPWAでないと Web Push が届かない
+  appleWebApp: {
+    capable: true,
+    title: "coach",
+    statusBarStyle: "default",
+  },
+  icons: {
+    icon: "/icons/icon-192.png",
+    apple: "/icons/icon-192.png",
+  },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  themeColor: "#0f766e",
 };
 
 export default function RootLayout({

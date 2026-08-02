@@ -24,6 +24,9 @@ async function notifyStudentOfSession(
   try {
     const { adminDb } = await import("@/lib/firebase/admin");
     if (!adminDb) return;
+    // 設定でこの種別を切っている生徒には送らない
+    const { shouldNotify } = await import("@/lib/notifications/should-notify");
+    if (!(await shouldNotify(studentId, "session"))) return;
     const tokensSnap = await adminDb
       .collection(`users/${studentId}/fcmTokens`)
       .get();
