@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { TutorialProvider } from "@/contexts/TutorialContext";
+import { SwrCacheProvider } from "@/components/SwrCacheProvider";
 import { Toaster } from "@/components/ui/sonner";
 
 /**
@@ -18,10 +19,13 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <ThemeProvider attribute="class" defaultTheme="light" forcedTheme="light" disableTransitionOnChange>
       <AuthProvider>
-        <TutorialProvider>
-          {children}
-          <Toaster />
-        </TutorialProvider>
+        {/* SWR キャッシュは AuthProvider の内側。uid を見て分離する */}
+        <SwrCacheProvider>
+          <TutorialProvider>
+            {children}
+            <Toaster />
+          </TutorialProvider>
+        </SwrCacheProvider>
       </AuthProvider>
     </ThemeProvider>
   );
