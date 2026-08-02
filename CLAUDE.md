@@ -92,6 +92,21 @@ npm run dev:emu   # エミュレータに繋いだ dev サーバー
 エミュレータのデータは `.emulator-data/` に残る（gitignore 済み）。
 AI呼び出しは .env.local の ANTHROPIC_API_KEY をそのまま使うので実APIに出る。
 
+## 6.5 日付フィールドの保存形式（コレクションごとに違う）
+同じ「日付」でもコレクションで型が違う。**書き込む前に既存データの型に合わせること。**
+混在させると Firestore の範囲クエリが型ごとに別グループとして扱うため、
+条件に一致しても黙って除外される（インデックス欠落と同じく沈黙失敗になる）。
+
+| 保存形式 | コレクション |
+|---|---|
+| Firestore Timestamp | `essays`(submittedAt) / `users/*/skillChecks`(takenAt) / `users/*/summaryDrills`(completedAt) / `users/*/logicDrills`(completedAt) / `users/*/interviewSkillChecks` |
+| ISO 8601 文字列 | `sessions`(scheduledAt/createdAt/updatedAt/startedAt/endedAt) / `documents` / `users/*/essayCoachThreads` / `users/*/chokoReviews` / `users`(gradeUpdatedAt 等) |
+
+- 読む側は両対応にする（`v?.toDate?.() ?? new Date(v)`）
+- 範囲条件（`where(field, ">=", x)`）を書くときは、そのコレクションの型に
+  合わせた値を渡す。Date と文字列を取り違えると一致件数がゼロになる
+- シードスクリプトも本番の書き込み経路と同じ型で書く
+
 ## 7. Common Pitfalls
 - Claude Vision APIのOCR精度: 手書きの崩し字は誤認識しやすい → 生徒に確認ステップ必須
 - 大学データの鮮度: 毎年募集要項が変わるため、年次更新フローが必要

@@ -67,3 +67,5 @@ __pycache__/
 *-debug.log
 
 scripts/orphan-backup-*.json
+
+scripts/sessions-date-backup-*.json

@@ -318,7 +318,13 @@ async function seed() {
     studentName: "開発ユーザー",
     type: "coaching",
     status: "scheduled",
-    scheduledAt: new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000),
+    // sessions の日付は ISO 文字列。本番の書き込み経路が全て
+    // new Date().toISOString() なので合わせる。ここだけ Date を書くと
+    // 型が混在し、scheduledAt の範囲クエリ（前回セッションの取得）が
+    // 黙って取りこぼす。
+    scheduledAt: new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
     durationMinutes: 60,
     notes: "志望理由書の添削フィードバック",
   }, "session: coaching");
