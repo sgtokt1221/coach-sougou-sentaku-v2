@@ -23,6 +23,7 @@ export function InlineCommentableText({
   mode,
   viewerUid,
   viewerRole,
+  fullHeight = false,
 }: {
   target: InlineCommentTarget;
   id: string;
@@ -34,6 +35,11 @@ export function InlineCommentableText({
   /** edit のとき、削除可否の判定に使う */
   viewerUid?: string;
   viewerRole?: string;
+  /**
+   * 本文を内部スクロールさせず全文を出す。
+   * 講師が答案を一目で読めるようにする画面で使う（既定は max-h-72 の枠内）。
+   */
+  fullHeight?: boolean;
 }) {
   const [comments, setComments] = useState<EssayInlineComment[]>(
     initialComments ?? [],
@@ -89,6 +95,7 @@ export function InlineCommentableText({
 
   return (
     <CommentableEssayText
+      fullHeight={fullHeight}
       text={text}
       comments={comments}
       mode={mode}

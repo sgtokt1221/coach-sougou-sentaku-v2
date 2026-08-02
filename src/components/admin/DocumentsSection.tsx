@@ -433,9 +433,23 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
             </div>
           ) : detailDoc ? (
             <div className="grid gap-6 py-2 lg:grid-cols-5">
-              {/* 左: 生徒の答案（本文）を大きく全表示 */}
+              {/* 左: 生徒の答案（本文）。講師が一目で読めるよう内部スクロール
+                  を付けず全文を出す（fullHeight）。枠内で折り返していると
+                  読むのにスクロールが要り、添削の判断がしづらい。 */}
               <div className="space-y-2 lg:col-span-3">
-                <h3 className="text-sm font-semibold">生徒の答案（本文）</h3>
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <h3 className="text-sm font-semibold">生徒の答案（本文）</h3>
+                  <span className="text-xs text-muted-foreground tabular-nums">
+                    {detailDoc.wordCount}
+                    {detailDoc.targetWordCount
+                      ? ` / ${detailDoc.targetWordCount}`
+                      : ""}
+                    字
+                    {detailDoc.targetWordCount
+                      ? `（${Math.round((detailDoc.wordCount / detailDoc.targetWordCount) * 100)}%）`
+                      : ""}
+                  </span>
+                </div>
                 {/* ドラッグで範囲を選ぶとその箇所にコメントを付けられる（小論文と同じ） */}
                 <InlineCommentableText
                   target="document"
@@ -443,16 +457,10 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
                   text={detailDoc.content}
                   initialComments={detailDoc.inlineComments}
                   mode="edit"
+                  fullHeight
                   viewerUid={user?.uid}
                   viewerRole={userProfile?.role}
                 />
-                <p className="text-muted-foreground text-xs">
-                  {detailDoc.wordCount}
-                  {detailDoc.targetWordCount
-                    ? `/${detailDoc.targetWordCount}`
-                    : ""}
-                  字
-                </p>
               </div>
 
               {/* 右: AIスコア / 個別性 / レビュー */}
