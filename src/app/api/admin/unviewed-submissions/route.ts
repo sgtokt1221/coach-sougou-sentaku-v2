@@ -10,6 +10,15 @@ import {
   type SubmissionKind,
 } from "@/lib/api/submission-kinds";
 
+/**
+ * 判定に使うフィールドだけ取る。答案の本文や書類の全文まで読むと、
+ * 29件で95KBのような無駄な転送になる（実測）。件数を数えるのに本文は要らない。
+ */
+const NEEDED_FIELDS = ["userId", "status", "createdAt", "updatedAt"] as const;
+function fieldsFor(timestampField: string): string[] {
+  return Array.from(new Set<string>([...NEEDED_FIELDS, timestampField]));
+}
+
 export const maxDuration = 30;
 
 /** 担当生徒の uid を解決する（生徒一覧APIと同じスコープ規則）。 */
@@ -95,9 +104,13 @@ async function computeUnviewed(
     // in クエリは30件までなので分割
     for (let i = 0; i < studentIds.length; i += 30) {
       const part = studentIds.slice(i, i + 30);
+      // グローバル側は userId の in と日付の範囲を併用すると複合インデックスが
+      // 要る（欠けると沈黙して空になる）。ここは取得フィールドだけ絞り、
+      // 期間の判定は下の isRecentSubmission に任せる。
       const snap = await adminDb!
         .collection(col)
         .where("userId", "in", part)
+        .select(...fieldsFor(cfg.timestampField))
         .get()
         .catch(() => null);
       if (!snap) continue;
