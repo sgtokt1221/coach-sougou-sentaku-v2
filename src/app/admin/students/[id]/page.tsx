@@ -1549,6 +1549,7 @@ function AdminStudentDetailPageInner() {
                   )}
                 </div>
                 <CommentableEssayText
+                  quoteOnly
                   onQuote={(q) => {
                     setEssayFbText((prev) => appendQuote(prev, q));
                     setEssayFbOpen(true);

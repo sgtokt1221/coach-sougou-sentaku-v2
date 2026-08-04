@@ -25,6 +25,7 @@ export function InlineCommentableText({
   viewerRole,
   fullHeight = false,
   onQuote,
+  quoteOnly = false,
 }: {
   target: InlineCommentTarget;
   id: string;
@@ -43,6 +44,8 @@ export function InlineCommentableText({
   fullHeight?: boolean;
   /** 選択箇所をまとめFBへ引用する（複数箇所を1通にまとめるため） */
   onQuote?: (quote: string) => void;
+  /** 引用だけ行う（範囲コメントは使わない） */
+  quoteOnly?: boolean;
 }) {
   const [comments, setComments] = useState<EssayInlineComment[]>(
     initialComments ?? [],
@@ -100,6 +103,7 @@ export function InlineCommentableText({
     <CommentableEssayText
       fullHeight={fullHeight}
       onQuote={onQuote}
+      quoteOnly={quoteOnly}
       text={text}
       comments={comments}
       mode={mode}

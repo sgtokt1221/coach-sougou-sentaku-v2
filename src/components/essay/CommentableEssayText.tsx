@@ -31,6 +31,11 @@ interface CommentableEssayTextProps {
    * 何箇所も続けて引用し、1通のFBにまとめられるようにするため。
    */
   onQuote?: (quote: string) => void;
+  /**
+   * 引用だけを行う。選択した時点で onQuote に渡し、確認の入力欄を出さない。
+   * 「この箇所にコメント」（範囲に紐づくコメント）は使わない画面で指定する。
+   */
+  quoteOnly?: boolean;
 }
 
 interface Seg {
@@ -79,6 +84,7 @@ export function CommentableEssayText({
   canDelete,
   fullHeight = false,
   onQuote,
+  quoteOnly = false,
 }: CommentableEssayTextProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -108,7 +114,15 @@ export function CommentableEssayText({
     let end = offsetWithin(container, range.endContainer, range.endOffset);
     if (start > end) [start, end] = [end, start];
     if (end <= start) return;
-    setPending({ start, end, quote: text.slice(start, end) });
+    const picked = text.slice(start, end);
+    if (quoteOnly) {
+      // 確認の箱を挟まず、その場で引用に入れる
+      onQuote?.(picked);
+      setSelectedId(null);
+      window.getSelection()?.removeAllRanges();
+      return;
+    }
+    setPending({ start, end, quote: picked });
     setSelectedId(null);
   }
 
@@ -177,7 +191,9 @@ export function CommentableEssayText({
 
       {mode === "edit" && (
         <p className="text-[10px] text-muted-foreground">
-          ※ 本文をドラッグで選択するとコメントを追加できます
+          {quoteOnly
+            ? "※ 本文をドラッグで選択すると、その箇所が下のコメント欄に引用されます"
+            : "※ 本文をドラッグで選択するとコメントを追加できます"}
         </p>
       )}
 

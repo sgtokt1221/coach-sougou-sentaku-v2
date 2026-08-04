@@ -168,6 +168,7 @@ export function SkillCheckResultView({
           {result.essayText?.trim() && comment ? (
             <InlineCommentableText
               onQuote={comment.onQuote}
+              quoteOnly={Boolean(comment.onQuote)}
               target="skillCheck"
               id={result.id}
               studentId={comment.studentId}

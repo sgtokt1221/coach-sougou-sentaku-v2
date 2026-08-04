@@ -481,6 +481,7 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
                 {/* ドラッグで範囲を選ぶとその箇所にコメントを付けられる（小論文と同じ） */}
                 <InlineCommentableText
                   onQuote={(q) => setReviewMsg((prev) => appendQuote(prev, q))}
+                  quoteOnly
                   target="document"
                   id={detailDoc.id}
                   text={detailDoc.content}
@@ -490,9 +491,53 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
                   viewerUid={user?.uid}
                   viewerRole={userProfile?.role}
                 />
+
+                {/* レビュー: 承認 / 差し戻し（コメント付き→生徒チャットへ通知） */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-semibold">レビュー</h3>
+                    <DocumentReviewBadge state={detailDoc.review?.state} />
+                  </div>
+                  <Textarea
+                    value={reviewMsg}
+                    onChange={(e) => setReviewMsg(e.target.value)}
+                    placeholder="コメント（差し戻しは必須・承認は任意）。生徒のチャットに届きます。"
+                    rows={3}
+                    className="text-sm"
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      className="gap-1"
+                      disabled={reviewBusy !== null}
+                      onClick={() => submitReview("approved")}
+                    >
+                      {reviewBusy === "approved" ? (
+                        <Loader2 className="size-3.5 animate-spin" />
+                      ) : (
+                        <CheckCircle2 className="size-3.5" />
+                      )}
+                      承認
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1 text-rose-600 dark:text-rose-400"
+                      disabled={reviewBusy !== null}
+                      onClick={() => submitReview("revision_requested")}
+                    >
+                      {reviewBusy === "revision_requested" ? (
+                        <Loader2 className="size-3.5 animate-spin" />
+                      ) : (
+                        <RotateCcw className="size-3.5" />
+                      )}
+                      差し戻し
+                    </Button>
+                  </div>
+                </div>
               </div>
 
-              {/* 右: AIスコア / 個別性 / レビュー */}
+              {/* 右: AIスコア / 個別性 / AIコーチ */}
               <div className="space-y-4 lg:col-span-2">
                 {/* AI Score */}
                 {detailDoc.aiScore && (
@@ -616,49 +661,6 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
 
                 <Separator />
 
-                {/* レビュー: 承認 / 差し戻し（コメント付き→生徒チャットへ通知） */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-semibold">レビュー</h3>
-                    <DocumentReviewBadge state={detailDoc.review?.state} />
-                  </div>
-                  <Textarea
-                    value={reviewMsg}
-                    onChange={(e) => setReviewMsg(e.target.value)}
-                    placeholder="コメント（差し戻しは必須・承認は任意）。生徒のチャットに届きます。"
-                    rows={3}
-                    className="text-sm"
-                  />
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      className="gap-1"
-                      disabled={reviewBusy !== null}
-                      onClick={() => submitReview("approved")}
-                    >
-                      {reviewBusy === "approved" ? (
-                        <Loader2 className="size-3.5 animate-spin" />
-                      ) : (
-                        <CheckCircle2 className="size-3.5" />
-                      )}
-                      承認
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="gap-1 text-rose-600 dark:text-rose-400"
-                      disabled={reviewBusy !== null}
-                      onClick={() => submitReview("revision_requested")}
-                    >
-                      {reviewBusy === "revision_requested" ? (
-                        <Loader2 className="size-3.5 animate-spin" />
-                      ) : (
-                        <RotateCcw className="size-3.5" />
-                      )}
-                      差し戻し
-                    </Button>
-                  </div>
-                </div>
 
                 {/* この書類を書いていたときのAIコーチとのやり取り。
                     本文だけ見ても生徒がどこで迷ったか分からないため添える。
