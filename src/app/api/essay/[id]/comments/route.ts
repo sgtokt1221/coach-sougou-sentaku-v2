@@ -115,9 +115,10 @@ export async function POST(
       kind: "essay-comment",
       label: "小論文へのコメント",
       href: `/student/essay/${id}`,
-      description: comment.slice(0, 120),
+      // 本文にコメントを載せたので、カードは遷移リンクだけにする
     };
-    const message = "小論文にコメントしました";
+    // 本文はコメントそのもの（書類側と同じ）
+    const message = comment;
     // どの箇所へのコメントかをチャットだけで分かるようにする（書類側と同じ）
     // sanitizeQuote を通して長さを揃える。範囲コメントは2000字まで許容して
     // いるので、そのまま載せるとチャットが引用で埋まる

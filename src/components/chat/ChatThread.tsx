@@ -504,7 +504,7 @@ export function ChatThread({
                       )}
                     </div>
                   )}
-                  {(m.message || (m.attachments && m.attachments.length > 0)) && (
+                  {(m.message || m.reference || (m.attachments && m.attachments.length > 0)) && (
                     <div
                       ref={(el) => { bubbleRefs.current[m.id] = el; }}
                       // ドラッグで選択し終わった時点で引用に入る。ボタンを
@@ -575,6 +575,13 @@ export function ChatThread({
                           {m.attachments.map((att, i) => (
                             <AttachmentView key={i} att={att} />
                           ))}
+                        </div>
+                      )}
+                      {/* 参照カードはバブルの中に置く。外に出すと1つの連絡が
+                          2つの箱に分かれて見える */}
+                      {m.reference && (
+                        <div className="mt-1.5">
+                          <ReferenceCard reference={m.reference} />
                         </div>
                       )}
                     </div>
@@ -654,11 +661,7 @@ export function ChatThread({
                     );
                   })()}
 
-                  {m.reference && (
-                    <div className="w-full max-w-[20rem]">
-                      <ReferenceCard reference={m.reference} />
-                    </div>
-                  )}
+
                   <span className="px-1 text-[10px] text-muted-foreground">
                     {/* coach(管理者/講師)発のメッセージは自分の送信でも送信者名を表示し、
                         誰が送ったか分かるようにする (複数管理者で会話を共有するため) */}

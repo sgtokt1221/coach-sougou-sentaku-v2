@@ -170,9 +170,11 @@ export async function POST(request: NextRequest) {
       kind: config.referenceKind,
       label: `${config.label}へのコメント`,
       href,
-      description: comment.slice(0, 120),
+      // 本文にコメントを載せたので、カードは遷移リンクだけにする
     };
-    const message = `${config.label}にコメントしました`;
+    // 本文はコメントそのもの。「コメントしました」だけだと中身が参照カード
+    // にしか無く、1つの連絡が2つの箱に分かれて見える
+    const message = comment;
     // 生徒の本文のどこへのコメントかが、チャットだけ見て分かるようにする。
     // 引用が無いと「コメントしました」しか出ず、開くまで対象が分からない。
     // sanitizeQuote を通して長さを揃える。範囲コメントは2000字まで許容して
