@@ -30,6 +30,7 @@ import type {
   SenderRole,
 } from "@/lib/types/feedback";
 import { CHAT_REACTION_EMOJIS } from "@/lib/types/feedback";
+import { appendQuote, parseMessageBlocks } from "@/lib/chat/message-blocks";
 import { usePersistentDraft } from "@/hooks/usePersistentDraft";
 import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
 
@@ -203,8 +204,7 @@ export function ChatThread({
 }: ChatThreadProps) {
   /** 各バブルのDOM。部分引用で選択範囲がそのバブル内か判定するのに使う */
   const bubbleRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  /** 送信待ちの引用。入力欄の上に出す */
-  const [pendingQuote, setPendingQuote] = useState<ChatQuote | null>(null);
+
   /** リアクションのピッカーを開いているメッセージ */
   const [pickerFor, setPickerFor] = useState<string | null>(null);
   /** 楽観更新。サーバー応答を待たずに反映する */
@@ -212,17 +212,6 @@ export function ChatThread({
     Record<string, Record<string, string[]>>
   >({});
 
-  /** 全文引用。選択範囲があればその部分だけ引く */
-  const quoteMessage = useCallback((m: ChatMessage, partialText?: string) => {
-    const text = (partialText ?? m.message ?? "").trim();
-    if (!text) return;
-    setPendingQuote({
-      messageId: m.id,
-      authorName: m.createdByName ?? "",
-      text,
-      partial: Boolean(partialText),
-    });
-  }, []);
 
   /**
    * バブル内で選択された文字列を返す。選択がそのバブルの外へ出ている場合は
@@ -277,6 +266,35 @@ export function ChatThread({
   );
 
   const [text, setText] = useState("");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  /**
+   * 引用を入力欄の末尾へ積む。
+   *
+   * 1通の中で 引用→コメント→引用→コメント と書けるようにするため、
+   * 引用は状態で1つ持つのではなく本文に差し込む。
+   * 引用した本文はコメントの一部として送られ、受信側で引用として描かれる。
+   */
+  const quoteMessage = useCallback((m: ChatMessage, partialText?: string) => {
+    const raw = (partialText ?? m.message ?? "").trim();
+    if (!raw) return;
+    // 引用の引用は増殖するので、引用行は落として地の文だけ引く
+    const body = parseMessageBlocks(raw)
+      .filter((b) => b.kind === "text")
+      .map((b) => b.text)
+      .join("\n");
+    const text = (body || raw).trim();
+    if (!text) return;
+    setText((prev) => appendQuote(prev, text));
+    // 続けてコメントを書けるよう入力欄へ移す
+    requestAnimationFrame(() => {
+      const el = textareaRef.current;
+      if (!el) return;
+      el.focus();
+      el.selectionStart = el.selectionEnd = el.value.length;
+      el.scrollTop = el.scrollHeight;
+    });
+    window.getSelection()?.removeAllRanges();
+  }, []);
   const [pending, setPending] = useState<ChatAttachment[]>([]);
   const [pendingRef, setPendingRef] = useState<ChatReference | null>(null);
   const [sending, setSending] = useState(false);
@@ -401,16 +419,10 @@ export function ChatThread({
     if ((!text.trim() && pending.length === 0 && !pendingRef) || sending) return;
     setSending(true);
     try {
-      await onSend(
-        text.trim(),
-        pending,
-        pendingRef ?? undefined,
-        pendingQuote ?? undefined,
-      );
+      await onSend(text.trim(), pending, pendingRef ?? undefined);
       setText("");
       setPending([]);
       setPendingRef(null);
-      setPendingQuote(null);
     } catch {
       toast.error("送信に失敗しました");
     } finally {
@@ -532,11 +544,32 @@ export function ChatThread({
                           </span>
                         </div>
                       )}
-                      {m.message && (
-                        <p className="whitespace-pre-wrap break-words">
-                          {m.message}
-                        </p>
-                      )}
+                      {/* 本文中の引用行を引用ブロックとして描く。1通の中に
+                          引用→コメント→引用→コメント と並べられる */}
+                      {m.message &&
+                        parseMessageBlocks(m.message).map((b, i) =>
+                          b.kind === "quote" ? (
+                            <div
+                              key={i}
+                              className={`my-1 rounded-md border-l-2 px-2 py-1 text-xs ${
+                                mine
+                                  ? "border-primary-foreground/70 bg-primary-foreground/20"
+                                  : "border-muted-foreground/40 bg-background/60"
+                              }`}
+                            >
+                              <span className="block whitespace-pre-wrap break-words opacity-90">
+                                {b.text}
+                              </span>
+                            </div>
+                          ) : (
+                            <p
+                              key={i}
+                              className="whitespace-pre-wrap break-words"
+                            >
+                              {b.text}
+                            </p>
+                          ),
+                        )}
                       {m.attachments && m.attachments.length > 0 && (
                         <div className={`space-y-1.5 ${m.message ? "mt-1.5" : ""}`}>
                           {m.attachments.map((att, i) => (
@@ -668,29 +701,6 @@ export function ChatThread({
                   </button>
                 </div>
               ))}
-            </div>
-          )}
-          {/* 送信待ちの引用。何を引いているか見えないと誤爆するので本文も出す */}
-          {pendingQuote && (
-            <div className="mb-2 flex items-start gap-1 rounded-md border border-primary/30 bg-primary/5 py-1 pl-2 pr-1 text-xs">
-              <QuoteIcon className="mt-0.5 size-3.5 shrink-0 text-primary" />
-              <div className="min-w-0 flex-1">
-                <span className="block font-medium">
-                  {pendingQuote.authorName || "引用"}
-                  {pendingQuote.partial ? "（一部）" : "（全文）"}
-                </span>
-                <span className="block line-clamp-2 break-words text-muted-foreground">
-                  {pendingQuote.text}
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setPendingQuote(null)}
-                className="rounded p-0.5 hover:bg-muted"
-                title="引用をやめる"
-              >
-                <X className="size-3" />
-              </button>
             </div>
           )}
           {pendingRef && (
