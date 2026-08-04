@@ -165,7 +165,9 @@ function ReferenceCard({ reference }: { reference: ChatReference }) {
             ? "取り組む"
             : "解く";
   return (
-    <div className="mt-1.5 rounded-lg border border-primary/30 bg-primary/5 p-2.5">
+    // 自分の発言（濃い背景のバブル）の中にも置くので、不透明な面を敷く。
+    // bg-primary/5 のような半透明だと背景の緑が透けて文字が読めなくなる。
+    <div className="mt-1.5 max-w-sm rounded-lg border border-border bg-background p-2.5 text-left">
       <div className="flex items-center gap-1.5 text-[11px] font-semibold text-primary">
         <BookOpen className="size-3.5" />
         {headerLabel}
@@ -491,7 +493,9 @@ export function ChatThread({
                   </Avatar>
                 )}
                 <div
-                  className={`flex max-w-[80%] flex-col gap-1 ${
+                  // 画面が広いと80%でも1行が長くなりすぎて読みづらい。
+                  // 文字数で上限を切る（日本語で40〜45字程度）
+                  className={`flex max-w-[min(80%,38rem)] flex-col gap-1 ${
                     mine ? "items-end" : "items-start"
                   }`}
                 >
