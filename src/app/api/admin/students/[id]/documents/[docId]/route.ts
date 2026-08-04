@@ -64,6 +64,10 @@ export async function GET(
         : null;
     const feedback = latestVersion?.feedback;
 
+    // この書類を書いていたときの AIコーチ会話。スレッドが docId を持つので
+    // 推定は不要。セクション単位なので複数ある
+    const coachThreads = await loadCoachThreads(studentId, docId);
+
     return NextResponse.json({
       id: docRef.id,
       type: data.type ?? "",
@@ -87,6 +91,7 @@ export async function GET(
           }
         : undefined,
       aiLikeness: data.aiLikeness ?? undefined,
+      coachThreads,
     });
   } catch (error) {
     console.error("Admin document detail error:", error);
@@ -94,5 +99,39 @@ export async function GET(
       { error: "書類詳細の取得中にエラーが発生しました" },
       { status: 500 }
     );
+  }
+}
+
+/** 1スレッドあたりの返却上限。長い会話でレスポンスが膨らむのを防ぐ */
+const COACH_MAX_MESSAGES = 200;
+
+/**
+ * 書類に紐づく AIコーチ会話（セクション単位）。
+ * documentCoachThreads は docId を持つので、答案と違って推定は要らない。
+ */
+async function loadCoachThreads(studentId: string, docId: string) {
+  const { adminDb } = await import("@/lib/firebase/admin");
+  if (!adminDb) return [];
+  try {
+    const snap = await adminDb
+      .collection(`users/${studentId}/documentCoachThreads`)
+      .where("docId", "==", docId)
+      .get();
+    return snap.docs
+      .map((d) => {
+        const t = d.data();
+        return {
+          id: d.id,
+          sectionTitle: (t.sectionTitle as string) ?? "セクション",
+          updatedAt: (t.updatedAt as string) ?? "",
+          messages: Array.isArray(t.messages)
+            ? t.messages.slice(0, COACH_MAX_MESSAGES)
+            : [],
+        };
+      })
+      .sort((a, b) => a.updatedAt.localeCompare(b.updatedAt));
+  } catch (err) {
+    console.warn("[admin/document] coach threads fetch failed:", err);
+    return [];
   }
 }

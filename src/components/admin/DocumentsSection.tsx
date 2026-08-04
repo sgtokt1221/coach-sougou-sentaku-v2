@@ -28,6 +28,7 @@ import { authFetch } from "@/lib/api/client";
 import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
 import { DocumentReviewBadge } from "@/components/documents/DocumentReviewBadge";
 import { InlineCommentableText } from "@/components/essay/InlineCommentableText";
+import { CoachConversationList } from "@/components/admin/CoachConversationList";
 import { markSubmissionViewed } from "@/lib/api/client";
 import {
   useUnviewedSubmissions,
@@ -64,6 +65,25 @@ interface DocumentListItem {
     originality: number;
   };
   aiLikeness?: DocumentAiLikeness;
+  /** この書類を書いていたときの AIコーチ会話（セクション単位） */
+  coachThreads?: {
+    id: string;
+    sectionTitle: string;
+    updatedAt: string;
+    messages: { role: "user" | "assistant"; content: string }[];
+  }[];
+}
+
+function formatCoachDate(iso: string | undefined): string {
+  if (!iso) return "-";
+  const d = new Date(iso);
+  if (isNaN(+d)) return "-";
+  return d.toLocaleString("ja-JP", {
+    month: "numeric",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 interface DocumentDetail {
@@ -84,6 +104,13 @@ interface DocumentDetail {
     originality: number;
   };
   aiLikeness?: DocumentAiLikeness;
+  /** この書類を書いていたときの AIコーチ会話（セクション単位） */
+  coachThreads?: {
+    id: string;
+    sectionTitle: string;
+    updatedAt: string;
+    messages: { role: "user" | "assistant"; content: string }[];
+  }[];
 }
 
 /** 2状態表示: draft=下書き(secondary) / それ以外(旧値含む・完成扱い)=完成(default)。 */
@@ -630,6 +657,21 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
                     </Button>
                   </div>
                 </div>
+
+                {/* この書類を書いていたときのAIコーチとのやり取り。
+                    本文だけ見ても生徒がどこで迷ったか分からないため添える。
+                    スレッドが docId を持つので推定は不要（答案と違う点）。 */}
+                <CoachConversationList
+                  heading="AIコーチとのやり取り"
+                  emptyText="この書類に対応するAIコーチの会話は見つかりませんでした。"
+                  items={(detailDoc.coachThreads ?? []).map((t) => ({
+                    id: t.id,
+                    title: t.sectionTitle,
+                    meta: `${formatCoachDate(t.updatedAt)}・${t.messages.length}件のやり取り`,
+                    badge: { label: "この書類の会話", tone: "certain" as const },
+                    messages: t.messages,
+                  }))}
+                />
               </div>
             </div>
           ) : (
