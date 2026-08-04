@@ -22,6 +22,7 @@ import type { InterviewSkillCheckResult } from "@/lib/types/interview-skill-chec
 import type { AdminFeedback } from "@/lib/types/feedback";
 import { useAuth } from "@/contexts/AuthContext";
 
+import { appendQuote } from "@/lib/chat/message-blocks";
 /**
  * 管理者・講師が生徒のスキルチェック結果を読み取り表示するダイアログ。
  * 生徒側の表示コンポーネント (SkillCheckResultView / InterviewSkillResultView) を流用。
@@ -158,7 +159,13 @@ export function SkillCheckDetailDialog({
                 result={result as SkillCheckResult}
                 comment={
                   studentId
-                    ? { mode: "edit", studentId, viewerUid: user?.uid, viewerRole: userProfile?.role }
+                    ? {
+                      mode: "edit",
+                      studentId,
+                      viewerUid: user?.uid,
+                      viewerRole: userProfile?.role,
+                      onQuote: (q: string) => setMessage((prev) => appendQuote(prev, q)),
+                    }
                     : undefined
                 }
               />

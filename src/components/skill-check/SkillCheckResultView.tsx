@@ -25,6 +25,8 @@ export function SkillCheckResultView({
     studentId: string;
     viewerUid?: string;
     viewerRole?: string;
+    /** 選択箇所をまとめFBへ引用する（複数箇所を1通にまとめるため） */
+    onQuote?: (quote: string) => void;
   };
 }) {
   const meta = RANK_META[result.rank];
@@ -165,6 +167,7 @@ export function SkillCheckResultView({
           </div>
           {result.essayText?.trim() && comment ? (
             <InlineCommentableText
+              onQuote={comment.onQuote}
               target="skillCheck"
               id={result.id}
               studentId={comment.studentId}

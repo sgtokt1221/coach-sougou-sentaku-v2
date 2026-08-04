@@ -26,6 +26,11 @@ interface CommentableEssayTextProps {
    * 2カラム表示で本文を読みながら講評を追う画面で使う。
    */
   fullHeight?: boolean;
+  /**
+   * 選択箇所を「まとめFB」へ引用として送る。渡すとボタンが出る。
+   * 何箇所も続けて引用し、1通のFBにまとめられるようにするため。
+   */
+  onQuote?: (quote: string) => void;
 }
 
 interface Seg {
@@ -73,6 +78,7 @@ export function CommentableEssayText({
   onDelete,
   canDelete,
   fullHeight = false,
+  onQuote,
 }: CommentableEssayTextProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -204,9 +210,25 @@ export function CommentableEssayText({
             >
               キャンセル
             </Button>
+            {onQuote && (
+              <Button
+                variant="outline"
+                size="sm"
+                title="この箇所をFB入力欄に引用として足す（続けて別の箇所も引ける）"
+                onClick={() => {
+                  onQuote(pending.quote);
+                  setPending(null);
+                  setDraft("");
+                  window.getSelection()?.removeAllRanges();
+                }}
+                disabled={saving}
+              >
+                FBに引用
+              </Button>
+            )}
             <Button size="sm" onClick={saveComment} disabled={saving || !draft.trim()}>
               {saving && <Loader2 className="mr-1 size-3.5 animate-spin" />}
-              コメント
+              この箇所にコメント
             </Button>
           </div>
         </div>

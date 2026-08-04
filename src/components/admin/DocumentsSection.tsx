@@ -29,6 +29,7 @@ import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
 import { DocumentReviewBadge } from "@/components/documents/DocumentReviewBadge";
 import { InlineCommentableText } from "@/components/essay/InlineCommentableText";
 import { CoachConversationList } from "@/components/admin/CoachConversationList";
+import { appendQuote } from "@/lib/chat/message-blocks";
 import { markSubmissionViewed } from "@/lib/api/client";
 import {
   useUnviewedSubmissions,
@@ -479,6 +480,7 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
                 </div>
                 {/* ドラッグで範囲を選ぶとその箇所にコメントを付けられる（小論文と同じ） */}
                 <InlineCommentableText
+                  onQuote={(q) => setReviewMsg((prev) => appendQuote(prev, q))}
                   target="document"
                   id={detailDoc.id}
                   text={detailDoc.content}

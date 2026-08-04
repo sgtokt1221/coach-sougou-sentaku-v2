@@ -168,6 +168,7 @@ import { EssayCoachConversation } from "@/components/admin/EssayCoachConversatio
 import { formatLastSeen } from "@/lib/ui/format-last-seen";
 
 
+import { appendQuote } from "@/lib/chat/message-blocks";
 /**
  * 弱点一覧をカテゴリ別アコーディオン形式で表示。
  * 細分化問題対策 Phase 2-B: フラットな table を categoryId で grouping。
@@ -505,6 +506,9 @@ function AdminStudentDetailPageInner() {
   // Essay detail state
   const [essayDetailOpen, setEssayDetailOpen] = useState(false);
   const [essayDetail, setEssayDetail] = useState<Essay | null>(null);
+  /** 答案から積み上げるFB本文。複数箇所を1通にまとめるため親で持つ */
+  const [essayFbText, setEssayFbText] = useState("");
+  const [essayFbOpen, setEssayFbOpen] = useState(false);
   const [essayLoading, setEssayLoading] = useState(false);
 
   async function openEssayDetail(essayId: string) {
@@ -1516,6 +1520,10 @@ function AdminStudentDetailPageInner() {
                 type="essay"
                 targetId={essayDetail.id}
                 targetLabel={`${essayDetail.targetUniversity} ${essayDetail.topic ?? ""}`}
+                value={essayFbText}
+                onValueChange={setEssayFbText}
+                open={essayFbOpen}
+                onOpenChange={setEssayFbOpen}
               />
             </div>
           )}
@@ -1541,6 +1549,10 @@ function AdminStudentDetailPageInner() {
                   )}
                 </div>
                 <CommentableEssayText
+                  onQuote={(q) => {
+                    setEssayFbText((prev) => appendQuote(prev, q));
+                    setEssayFbOpen(true);
+                  }}
                   text={essayDetail.ocrText}
                   comments={essayDetail.inlineComments ?? []}
                   mode="edit"

@@ -18,6 +18,15 @@ interface InlineFeedbackButtonProps {
   compact?: boolean;
   /** 送信するコメントに添える参照カード（生徒がタップで該当画面へ飛べる） */
   reference?: ChatReference;
+  /**
+   * 外から本文を積むための制御。答案の選択箇所を引用として足すのに使う。
+   * 渡された場合は本文の状態を親が持つ（複数箇所を1通にまとめるため）。
+   */
+  value?: string;
+  onValueChange?: (v: string) => void;
+  /** 外から開いた状態にする */
+  open?: boolean;
+  onOpenChange?: (v: boolean) => void;
 }
 
 export function InlineFeedbackButton({
@@ -27,9 +36,24 @@ export function InlineFeedbackButton({
   targetLabel,
   compact = false,
   reference,
+  value,
+  onValueChange,
+  open: openProp,
+  onOpenChange,
 }: InlineFeedbackButtonProps) {
-  const [open, setOpen] = useState(false);
-  const [message, setMessage] = useState("");
+  const [openInner, setOpenInner] = useState(false);
+  const [messageInner, setMessageInner] = useState("");
+  // 制御されていれば親の値を使う。答案から引用を積むときに必要
+  const open = openProp ?? openInner;
+  const setOpen = (v: boolean) => {
+    setOpenInner(v);
+    onOpenChange?.(v);
+  };
+  const message = value ?? messageInner;
+  const setMessage = (v: string) => {
+    if (onValueChange) onValueChange(v);
+    else setMessageInner(v);
+  };
   const [sending, setSending] = useState(false);
   const [feedbacks, setFeedbacks] = useState<AdminFeedback[]>([]);
   const [loadingFeedbacks, setLoadingFeedbacks] = useState(false);
@@ -77,7 +101,7 @@ export function InlineFeedbackButton({
       <Button
         variant="ghost"
         size={compact ? "icon" : "sm"}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => setOpen(!open)}
         className={compact ? "size-7" : ""}
         title="フィードバック"
       >
