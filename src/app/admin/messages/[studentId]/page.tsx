@@ -6,7 +6,7 @@ import { mutate } from "swr";
 import { ArrowLeft } from "lucide-react";
 import { useAuthSWR } from "@/lib/api/swr";
 import { authFetch } from "@/lib/api/client";
-import { useMergedFeedbackThread } from "@/lib/hooks/useMergedFeedbackThread";
+import { useFeedbackThread } from "@/lib/hooks/useFeedbackThread";
 import { ChatThread } from "@/components/chat/ChatThread";
 import { FullHeightPage } from "@/components/layout/FullHeightPage";
 import { PageTransition } from "@/components/shared/PageTransition";
@@ -26,8 +26,7 @@ export default function AdminThreadPage() {
   const studentId = params.studentId;
   const router = useRouter();
   const { user } = useAuth();
-  // 管理者は講師とのやり取りも同じ画面で見る（保存先は分けたまま）
-  const { messages, loading } = useMergedFeedbackThread(studentId);
+  const { messages, loading } = useFeedbackThread(studentId);
   const { data: list } = useAuthSWR<ConversationListItem[]>(
     "/api/admin/messages"
   );

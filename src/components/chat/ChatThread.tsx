@@ -495,15 +495,8 @@ export function ChatThread({
                     mine ? "items-end" : "items-start"
                   }`}
                 >
-                  {(typeLabel || m.broadcast || m.teacherId) && (
+                  {(typeLabel || m.broadcast) && (
                     <div className="flex flex-wrap items-center gap-1">
-                      {/* 講師スレッド由来。管理者画面では2スレッドを混ぜて
-                          出すので、どちらの会話か分かるようにする */}
-                      {m.teacherId && (
-                        <span className="rounded bg-sky-500/15 px-1.5 py-0.5 text-[10px] font-medium text-sky-700 dark:text-sky-400">
-                          講師とのやり取り
-                        </span>
-                      )}
                       {m.broadcast && (
                         <span className="inline-flex items-center gap-1 rounded bg-orange-500/15 px-1.5 py-0.5 text-[10px] font-medium text-orange-600 dark:text-orange-400">
                           <Megaphone className="size-3" />
