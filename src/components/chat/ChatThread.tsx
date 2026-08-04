@@ -66,9 +66,11 @@ interface ChatThreadProps {
   draftKey?: string;
   /**
    * リアクションの保存先。渡さないとリアクションUIを出さない。
-   * メッセージは users/{ownerId}/{collection} にあるので、その2つが要る。
+   * 保存先のサブコレクションはメッセージごとに決める（teacherId を持つものは
+   * 講師スレッド）。管理者画面では2スレッドを混ぜて表示するため、
+   * 画面側で1つに決め打ちすると片方が 404 になる。
    */
-  reactionTarget?: { ownerId: string; collection: "feedback" | "teacherFeedback" };
+  reactionTarget?: { ownerId: string };
   /** 自分の uid。自分が押したリアクションを強調するのに使う */
   viewerUid?: string;
 }
@@ -228,7 +230,12 @@ export function ChatThread({
   };
 
   const toggleReaction = useCallback(
-    async (messageId: string, emoji: string, current?: Record<string, string[]>) => {
+    async (
+      messageId: string,
+      emoji: string,
+      current: Record<string, string[]> | undefined,
+      fromTeacherThread: boolean,
+    ) => {
       if (!reactionTarget || !viewerUid) return;
       const base = current ?? {};
       const users = base[emoji] ?? [];
@@ -246,7 +253,7 @@ export function ChatThread({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             ownerId: reactionTarget.ownerId,
-            collection: reactionTarget.collection,
+            collection: fromTeacherThread ? "teacherFeedback" : "feedback",
             messageId,
             emoji,
           }),
@@ -488,8 +495,15 @@ export function ChatThread({
                     mine ? "items-end" : "items-start"
                   }`}
                 >
-                  {(typeLabel || m.broadcast) && (
+                  {(typeLabel || m.broadcast || m.teacherId) && (
                     <div className="flex flex-wrap items-center gap-1">
+                      {/* 講師スレッド由来。管理者画面では2スレッドを混ぜて
+                          出すので、どちらの会話か分かるようにする */}
+                      {m.teacherId && (
+                        <span className="rounded bg-sky-500/15 px-1.5 py-0.5 text-[10px] font-medium text-sky-700 dark:text-sky-400">
+                          講師とのやり取り
+                        </span>
+                      )}
                       {m.broadcast && (
                         <span className="inline-flex items-center gap-1 rounded bg-orange-500/15 px-1.5 py-0.5 text-[10px] font-medium text-orange-600 dark:text-orange-400">
                           <Megaphone className="size-3" />
@@ -617,7 +631,12 @@ export function ChatThread({
                               key={e}
                               type="button"
                               onClick={() =>
-                                toggleReaction(m.id, e, localReactions[m.id] ?? m.reactions)
+                                toggleReaction(
+                                  m.id,
+                                  e,
+                                  localReactions[m.id] ?? m.reactions,
+                                  Boolean(m.teacherId),
+                                )
                               }
                               className="rounded px-1 text-base leading-none hover:bg-muted"
                             >
@@ -645,7 +664,9 @@ export function ChatThread({
                               key={emoji}
                               type="button"
                               disabled={!reactionTarget || !viewerUid}
-                              onClick={() => toggleReaction(m.id, emoji, rs)}
+                              onClick={() =>
+                                toggleReaction(m.id, emoji, rs, Boolean(m.teacherId))
+                              }
                               className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-xs tabular-nums ${
                                 pressed
                                   ? "border-primary bg-primary/10 text-primary"

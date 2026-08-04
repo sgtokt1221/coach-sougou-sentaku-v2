@@ -102,7 +102,7 @@ function Body() {
             messages={messages}
             currentRole="coach"
             onSend={handleSend}
-            reactionTarget={{ ownerId: studentId, collection: "teacherFeedback" }}
+            reactionTarget={{ ownerId: studentId }}
             viewerUid={user?.uid}
             loading={loading}
             otherName={studentName}

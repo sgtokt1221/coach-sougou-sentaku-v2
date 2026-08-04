@@ -113,7 +113,7 @@ function AdminThread({ uid }: { uid?: string }) {
         messages={messages}
         currentRole="student"
         onSend={handleSend}
-        reactionTarget={uid ? { ownerId: uid, collection: "feedback" } : undefined}
+        reactionTarget={uid ? { ownerId: uid } : undefined}
         viewerUid={uid}
         draftKey="student-feedback-admin"
         loading={loading}
@@ -232,7 +232,7 @@ function TeacherThread({
         messages={messages}
         currentRole="student"
         onSend={handleSend}
-        reactionTarget={uid ? { ownerId: uid, collection: "teacherFeedback" } : undefined}
+        reactionTarget={uid ? { ownerId: uid } : undefined}
         viewerUid={uid}
         draftKey={`student-feedback-teacher-${teacherId}`}
         loading={loading}

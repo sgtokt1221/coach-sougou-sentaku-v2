@@ -179,7 +179,7 @@ function AdminContact() {
         messages={messages}
         currentRole="student"
         onSend={handleSend}
-        reactionTarget={uid ? { ownerId: uid, collection: "feedback" } : undefined}
+        reactionTarget={uid ? { ownerId: uid } : undefined}
         viewerUid={uid}
         loading={loading}
         emptyText="担当管理者へのメッセージがここに表示されます"

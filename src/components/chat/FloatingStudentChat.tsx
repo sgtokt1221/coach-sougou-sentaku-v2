@@ -6,6 +6,7 @@ import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { MessageSquare, X } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import { useFeedbackThread } from "@/lib/hooks/useFeedbackThread";
+import { useMergedFeedbackThread } from "@/lib/hooks/useMergedFeedbackThread";
 import { ChatThread } from "@/components/chat/ChatThread";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils/avatar";
@@ -45,12 +46,16 @@ export function FloatingStudentChat({
   viewerUid,
 }: FloatingStudentChatProps) {
   const isTeacher = viewerRole === "teacher";
-  const { messages, loading } = useFeedbackThread(
+  // 講師は自分のスレッドのみ（講師同士の分離を保つ）。
+  // 管理者は講師とのやり取りも混ぜて見る。
+  const own = useFeedbackThread(
     studentId,
     isTeacher
       ? { subcollection: "teacherFeedback", teacherId: viewerUid }
       : undefined,
   );
+  const merged = useMergedFeedbackThread(isTeacher ? null : studentId);
+  const { messages, loading } = isTeacher ? own : merged;
 
   const sendUrl = isTeacher
     ? `/api/teacher/students/${studentId}/feedback`
