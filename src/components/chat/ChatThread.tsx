@@ -172,11 +172,11 @@ function ReferenceCard({ reference }: { reference: ChatReference }) {
         <BookOpen className="size-3.5" />
         {headerLabel}
       </div>
-      <p className="mt-0.5 min-w-0 truncate text-sm font-medium text-foreground">
+      <p className="mt-0.5 min-w-0 text-sm font-medium break-words text-foreground">
         {reference.label}
       </p>
       {reference.description && (
-        <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
+        <p className="mt-0.5 text-xs break-words whitespace-pre-wrap text-muted-foreground">
           {reference.description}
         </p>
       )}
