@@ -45,13 +45,39 @@ interface Seg {
 }
 
 /** comments を ocrText のオフセットでハイライト用セグメントに変換 (重なりは先勝ち) */
+/**
+ * コメントの位置を本文に対して解決する。
+ *
+ * 位置は文字オフセットで持っているので、生徒が本文を編集すると（特に前の方を
+ * 直すと）ズレる。保存してある quote と照合し、ズレていれば本文中から探し直す。
+ *
+ * - オフセットの内容が quote と一致 → そのまま
+ * - 一致しないが quote が本文に1箇所だけある → そこへ付け直す
+ * - 見つからない / 複数ある → null（下線を引かない。誤った場所に引く方が有害）
+ */
+function resolveAnchor(
+  text: string,
+  c: EssayInlineComment,
+): { start: number; end: number } | null {
+  const start = Math.max(0, Math.min(c.start, text.length));
+  const end = Math.max(start, Math.min(c.end, text.length));
+  if (end > start && text.slice(start, end) === c.quote) return { start, end };
+
+  const q = c.quote ?? "";
+  if (!q) return null;
+  const first = text.indexOf(q);
+  if (first < 0) return null;
+  if (text.indexOf(q, first + 1) >= 0) return null; // 同じ文が複数あると決められない
+  return { start: first, end: first + q.length };
+}
+
 function buildSegments(text: string, comments: EssayInlineComment[]): Seg[] {
   const segs: Seg[] = [];
   const sorted = [...comments].sort((a, b) => a.start - b.start);
   for (const c of sorted) {
-    const start = Math.max(0, Math.min(c.start, text.length));
-    const end = Math.max(start, Math.min(c.end, text.length));
-    if (end <= start) continue;
+    const resolved = resolveAnchor(text, c);
+    if (!resolved) continue;
+    const { start, end } = resolved;
     const overlaps = segs.some((s) => start < s.end && end > s.start);
     if (overlaps) continue;
     segs.push({ start, end, commentId: c.id });
@@ -94,6 +120,9 @@ export function CommentableEssayText({
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const segments = buildSegments(text, comments);
+  // 下線を引けなかったコメント（本文が変わって位置が特定できないもの）
+  const anchoredIds = new Set(segments.map((sg) => sg.commentId));
+  const orphaned = comments.filter((c) => !anchoredIds.has(c.id));
   const commentMap = new Map(comments.map((c) => [c.id, c]));
 
   function handleMouseUp() {
@@ -299,6 +328,27 @@ export function CommentableEssayText({
         <p className="text-[11px] text-muted-foreground">
           コメント {comments.length} 件 — 下線部をタップで内容を表示
         </p>
+      )}
+
+      {/* 本文が編集されて位置を特定できなくなったコメント。
+          下線が引けないだけで黙って消すと、講師の指摘が失われたように見える */}
+      {orphaned.length > 0 && (
+        <div className="rounded-lg border border-amber-300 bg-amber-50/60 p-3 space-y-2 dark:border-amber-800 dark:bg-amber-950/20">
+          <p className="text-xs font-semibold text-amber-800 dark:text-amber-300">
+            本文が変更され、位置を特定できないコメント {orphaned.length} 件
+          </p>
+          {orphaned.map((c) => (
+            <div key={c.id} className="rounded bg-background/70 p-2 text-xs">
+              <p className="text-muted-foreground line-through">
+                「{c.quote}」
+              </p>
+              <p className="mt-0.5 whitespace-pre-wrap break-words">{c.comment}</p>
+              <p className="mt-0.5 text-[10px] text-muted-foreground">
+                {c.createdByName}
+              </p>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );
