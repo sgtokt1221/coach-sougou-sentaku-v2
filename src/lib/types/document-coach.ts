@@ -38,6 +38,11 @@ export interface DocumentSectionCoachRequest {
   sectionGuidingQuestion: string;
   /** セクションの現在の内容 (8000 文字で切詰め) */
   currentSectionContent: string;
+  /**
+   * フォーカス中以外のセクションの本文（参照用）。
+   * これが無いと「導入と重複していないか」等に答えられない。
+   */
+  otherSections?: { title: string; content: string }[];
   universityId?: string;
   facultyId?: string;
   documentType?: string;

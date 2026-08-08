@@ -18,6 +18,8 @@ export interface DocumentCoachContext {
   sectionTitle: string;
   sectionGuidingQuestion: string;
   currentSectionContent: string;
+  /** 他セクションの本文。重複や流れの確認に使う（書き換え対象ではない） */
+  otherSections?: { title: string; content: string }[];
   documentType?: string;
   universityName?: string;
   facultyName?: string;
@@ -49,6 +51,10 @@ ${SUGGESTION_DELIMITER}
     sectionTitle: ctx.sectionTitle,
     sectionGuidingQuestion: ctx.sectionGuidingQuestion,
     currentSectionContent: ctx.currentSectionContent || null,
+    otherSections:
+      ctx.otherSections && ctx.otherSections.length > 0
+        ? ctx.otherSections
+        : null,
     documentType: ctx.documentType ?? null,
     universityName: ctx.universityName ?? null,
     facultyName: ctx.facultyName ?? null,
@@ -72,6 +78,8 @@ ${SUGGESTION_DELIMITER}
 - ただし生徒が聞いてきたことには答えます。他のセクション、小論文、面接、活動実績、
   出願手続きなどでも、分かる範囲で普通に答え、「それは担当外です」と断りません。
   答えたあとに、必要なら今のセクションへ一言で戻します。
+- otherSections は他セクションの現在の本文です。重複や話の流れを見るための参照で、
+  書き換える対象ではありません。候補文は必ずフォーカス中のセクション向けに出します。
 - APの単語を言わせるのではなく、生徒の事実がAPの主旨をどう裏づけるかを確認します。
 - 推測した内容は確定事実として候補文へ入れません。
 - 命令口調、絵文字、APの長い逐語引用は避けます。

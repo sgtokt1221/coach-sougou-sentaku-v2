@@ -957,6 +957,9 @@ export default function NewDocumentPage() {
                   universityId={selectedUniversity?.universityId}
                   facultyId={selectedUniversity?.facultyId}
                   docId={docId}
+                  otherSections={(draftResult?.sections ?? [])
+                    .filter((sec) => sec.id !== focusedSectionId)
+                    .map((sec) => ({ title: sec.title, content: sec.content }))}
                   onApplySuggestion={handleApplySuggestion}
                 />
               )}

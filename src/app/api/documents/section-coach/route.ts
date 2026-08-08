@@ -21,9 +21,9 @@ export const maxDuration = 60;
 const MAX_CONTENT_CHARS = 8000;
 const MAX_HISTORY_TURNS = 10;
 
-function truncate(s: string): string {
+function truncate(s: string, max: number = MAX_CONTENT_CHARS): string {
   if (!s) return "";
-  return s.length > MAX_CONTENT_CHARS ? s.slice(0, MAX_CONTENT_CHARS) : s;
+  return s.length > max ? s.slice(0, max) : s;
 }
 
 /**
@@ -152,6 +152,11 @@ export async function POST(request: NextRequest) {
     sectionTitle: body.sectionTitle,
     sectionGuidingQuestion: body.sectionGuidingQuestion ?? "",
     currentSectionContent: truncate(body.currentSectionContent ?? ""),
+    // 他セクションは参照用。丸ごと渡すと長いので1つずつ切り詰める
+    otherSections: (body.otherSections ?? [])
+      .filter((s) => s?.content?.trim())
+      .slice(0, 10)
+      .map((s) => ({ title: s.title, content: truncate(s.content, 1200) })),
     documentType: body.documentType,
     universityName,
     facultyName,

@@ -59,6 +59,8 @@ interface Props {
   universityId?: string;
   facultyId?: string;
   docId?: string | null;
+  /** フォーカス中以外のセクション（参照用）。重複や流れの相談に答えるのに要る */
+  otherSections?: { title: string; content: string }[];
   onApplySuggestion: (sectionId: string, text: string) => void;
 }
 
@@ -97,6 +99,7 @@ function PanelBody({
   universityId,
   facultyId,
   docId,
+  otherSections,
   onApplySuggestion,
 }: Props) {
   // セクションごとの会話状態を Map で保持し、フォーカス切替時にスワップする
@@ -221,6 +224,7 @@ function PanelBody({
       sectionTitle: focusedSection.title,
       sectionGuidingQuestion: focusedSection.guidingQuestion,
       currentSectionContent: focusedSection.content,
+      otherSections,
       documentType,
       universityId,
       facultyId,
