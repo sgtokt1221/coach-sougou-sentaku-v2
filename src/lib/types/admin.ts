@@ -168,6 +168,8 @@ export interface EssayListItem {
   topicEstimated?: boolean;
   submittedAt: string;
   scores: EssayScores | null;
+  /** 満点。APを評価できなかった答案は 40 になる（既定 50） */
+  scoreMaximum?: number;
   status: string;
 }
 

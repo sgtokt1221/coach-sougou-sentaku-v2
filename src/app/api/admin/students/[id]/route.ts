@@ -227,6 +227,8 @@ export async function GET(
         topicEstimated: estimated,
         submittedAt: data.submittedAt?.toDate().toISOString() ?? new Date().toISOString(),
         scores: data.scores ?? null,
+        // APが取れなかった答案は満点が40点。50固定で割るとランクが実際より低く出る
+        scoreMaximum: data.feedback?.scoreMaximum ?? 50,
         status: data.status ?? "uploaded",
       };
     });

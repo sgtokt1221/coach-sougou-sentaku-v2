@@ -1137,7 +1137,10 @@ function AdminStudentDetailPageInner() {
                         {essay.scores ? (
                           <>
                             <SkillRankBadge
-                              rank={scoreToSkillRank(essay.scores.total, 50)}
+                              rank={scoreToSkillRank(
+                                essay.scores.total,
+                                essay.scoreMaximum ?? 50,
+                              )}
                               size="sm"
                               animate={false}
                             />
@@ -1145,7 +1148,9 @@ function AdminStudentDetailPageInner() {
                               <p className={`text-lg font-bold ${scoreColor(essay.scores.total)}`}>
                                 {essay.scores.total}
                               </p>
-                              <p className="text-xs text-muted-foreground">/50</p>
+                              <p className="text-xs text-muted-foreground">
+                                /{essay.scoreMaximum ?? 50}
+                              </p>
                             </div>
                           </>
                         ) : (
@@ -1608,6 +1613,15 @@ function AdminStudentDetailPageInner() {
                     <div className="mt-1 flex items-center gap-3 border-t pt-2">
                       <span className="w-20 text-xs font-semibold">合計</span>
                       <div className="flex-1" />
+                      {/* 添削履歴の一覧と同じランク表記。点だけだと水準を掴みにくい */}
+                      <SkillRankBadge
+                        rank={scoreToSkillRank(
+                          essayDetail.scores.total,
+                          essayDetail.feedback?.scoreMaximum ?? 50,
+                        )}
+                        size="sm"
+                        animate={false}
+                      />
                       <span className={`text-lg font-bold ${scoreColor(essayDetail.scores.total)}`}>
                         {essayDetail.scores.total}/{essayDetail.feedback?.scoreMaximum ?? 50}
                       </span>
