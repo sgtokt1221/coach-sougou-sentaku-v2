@@ -89,6 +89,11 @@ npm run dev:emu   # エミュレータに繋いだ dev サーバー
 - `/student/documents/emu-doc-placeholder` — 書き換えのプレースホルダー警告
 - `/student/essay/history` — 下書き一覧のテーマ名表示
 
+エミュレータは `firebase.emu.json` の専用ポート（auth 9599 / firestore 8581 / storage 9699）で動く。
+標準ポート（9099/8080/9199）はノーマルCoachのエミュレータと衝突し、衝突すると
+**そちらへ黙って繋がってログインだけ失敗する**（エラーも出ない）ので戻さない。
+クライアント側のポートは `NEXT_PUBLIC_FIREBASE_EMULATOR_*_PORT` で渡している。
+
 エミュレータのデータは `.emulator-data/` に残る（gitignore 済み）。
 AI呼び出しは .env.local の ANTHROPIC_API_KEY をそのまま使うので実APIに出る。
 

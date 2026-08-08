@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,10 +12,25 @@ import { GrowthTree } from "@/components/self-analysis/GrowthTree";
 import { StepEditModal } from "@/components/self-analysis/StepEditModal";
 import { useAuthSWR } from "@/lib/api/swr";
 import { authFetch } from "@/lib/api/client";
-import type { SelfAnalysis, ChatMessage, StepChatHistory } from "@/lib/types/self-analysis";
+import {
+  SELF_ANALYSIS_STEPS,
+  type SelfAnalysis,
+  type ChatMessage,
+  type StepChatHistory,
+} from "@/lib/types/self-analysis";
 
 export default function SelfAnalysisPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  /**
+   * ?redo=N … 木の実から「AIとやり直す」で来たとき。
+   * そのステップだけ対話をやり直し、他のステップと完了状態は触らない。
+   */
+  const redoParam = Number(searchParams.get("redo"));
+  const redoStep =
+    Number.isInteger(redoParam) && redoParam >= 1 && redoParam <= 7
+      ? redoParam
+      : null;
   const { data, isLoading } = useAuthSWR<SelfAnalysis | null>(
     "/api/self-analysis?userId=me"
   );
@@ -33,11 +48,12 @@ export default function SelfAnalysisPage() {
 
   // Restore progress from Firestore
   useEffect(() => {
-    if (restored || !data || data.isComplete) return;
+    if (restored || !data) return;
+    if (data.isComplete && !redoStep) return;
     const saved = data.completedSteps ?? 0;
     if (saved > 0) {
       setCompletedSteps(saved);
-      setCurrentStep(saved + 1 <= 7 ? saved + 1 : 7);
+      setCurrentStep(redoStep ?? (saved + 1 <= 7 ? saved + 1 : 7));
       const restoredData: Record<number, Record<string, unknown>> = {};
       const STEP_KEYS = ["values", "strengths", "weaknesses", "interests", "vision", "identity", "synthesis"] as const;
       STEP_KEYS.forEach((key, i) => {
@@ -52,7 +68,7 @@ export default function SelfAnalysisPage() {
       }
     }
     setRestored(true);
-  }, [data, restored]);
+  }, [data, restored, redoStep]);
 
   const saveProgress = useCallback(
     async (
@@ -135,9 +151,42 @@ export default function SelfAnalysisPage() {
       ];
       setChatHistories(updatedChatHistories);
 
+      if (redoStep) {
+        // やり直しは対象ステップだけ差し替える。completedSteps と完了フラグは
+        // そのまま（他のステップをやり直させないため）。
+        void (async () => {
+          const ok = await saveProgress(
+            updatedStepsData,
+            updatedChatHistories,
+            completedSteps,
+            data?.isComplete ?? allComplete,
+          );
+          if (!ok) {
+            setSaveFailed(true);
+            toast.error("保存に失敗しました。通信環境を確認して「保存を再試行」を押してください。");
+            return;
+          }
+          setSaveFailed(false);
+          toast.success("やり直した内容を保存しました");
+          router.push("/student/self-analysis/result");
+        })();
+        return;
+      }
+
       void persistAndAdvance(updatedStepsData, updatedChatHistories, currentStep);
     },
-    [currentStep, stepsData, chatHistories, persistAndAdvance]
+    [
+      currentStep,
+      stepsData,
+      chatHistories,
+      persistAndAdvance,
+      redoStep,
+      saveProgress,
+      completedSteps,
+      allComplete,
+      data?.isComplete,
+      router,
+    ]
   );
 
   // 保存失敗時の再試行: メモリ上の最新 state を使って同じ step を再保存する
@@ -145,8 +194,9 @@ export default function SelfAnalysisPage() {
     void persistAndAdvance(stepsData, chatHistories, currentStep);
   }, [stepsData, chatHistories, currentStep, persistAndAdvance]);
 
-  const currentMessages =
-    chatHistories.find((h) => h.step === currentStep)?.messages ?? [];
+  const currentMessages = redoStep
+    ? []
+    : (chatHistories.find((h) => h.step === currentStep)?.messages ?? []);
 
   // 果実クリックで編集モーダルを開く（完了済みステップのみ GrowthTree 側で発火）
   const handleFruitClick = useCallback((step: number) => {
@@ -181,12 +231,12 @@ export default function SelfAnalysisPage() {
 
   // If already complete, redirect to result
   useEffect(() => {
-    if (data?.isComplete) {
+    if (data?.isComplete && !redoStep) {
       router.push("/student/self-analysis/result");
     }
-  }, [data, router]);
+  }, [data, router, redoStep]);
 
-  if (data?.isComplete) {
+  if (data?.isComplete && !redoStep) {
     return null;
   }
 
@@ -209,7 +259,11 @@ export default function SelfAnalysisPage() {
         <Button variant="ghost" size="sm" onClick={() => router.back()}>
           <ArrowLeft className="size-4" />
         </Button>
-        <h1 className="text-xl lg:text-2xl font-bold">AI自己分析ワークショップ</h1>
+        <h1 className="text-xl lg:text-2xl font-bold">
+          {redoStep
+            ? `${SELF_ANALYSIS_STEPS[redoStep - 1]?.title ?? `ステップ${redoStep}`}をやり直す`
+            : "AI自己分析ワークショップ"}
+        </h1>
       </div>
 
       {/* 左: 自己分析の木（常時表示） / 右: 入力（ワークショップ） */}
@@ -229,7 +283,7 @@ export default function SelfAnalysisPage() {
             stepsData={stepsData}
             onFruitClick={handleFruitClick}
           />
-          {completedSteps > 0 && !allComplete && (
+          {completedSteps > 0 && !allComplete && !redoStep && (
             <p className="text-center text-xs text-muted-foreground">
               木の実をクリックすると過去の内容を編集できます
             </p>
@@ -248,11 +302,18 @@ export default function SelfAnalysisPage() {
         {/* 右カラム: 入力 */}
         <div data-self-analysis-input className="flex-1 min-w-0 space-y-4">
           <div data-keyboard-hide>
-            <StepIndicator
-              currentStep={currentStep}
-              completedSteps={completedSteps}
-              onStepClick={(step) => setCurrentStep(step)}
-            />
+            {redoStep ? (
+              <p className="rounded-lg border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                このステップだけをやり直しています。完了すると、ここの内容だけが
+                新しくなります（他のステップはそのままです）。
+              </p>
+            ) : (
+              <StepIndicator
+                currentStep={currentStep}
+                completedSteps={completedSteps}
+                onStepClick={(step) => setCurrentStep(step)}
+              />
+            )}
           </div>
 
           {/* 保存失敗の警告 + 再試行 */}
@@ -270,7 +331,10 @@ export default function SelfAnalysisPage() {
             </div>
           )}
 
-          {allComplete ? (
+          {redoStep && !restored ? (
+            // 復元前に対話を始めると、保存時に他ステップを空で上書きしてしまう
+            <Skeleton className="h-[400px] w-full" />
+          ) : allComplete && !redoStep ? (
             <div className="text-center py-12 space-y-4">
               <PartyPopper className="size-12 mx-auto text-primary" />
               <h2 className="text-xl font-bold">自己分析が完了しました</h2>
@@ -301,6 +365,7 @@ export default function SelfAnalysisPage() {
         step={editStep}
         stepData={editStep != null ? (stepsData[editStep] ?? {}) : {}}
         onSave={handleEditSave}
+        onRedo={(step) => router.push(`/student/self-analysis?redo=${step}`)}
       />
     </div>
   );

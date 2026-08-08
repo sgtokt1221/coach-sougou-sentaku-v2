@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Loader2, Plus, X } from "lucide-react";
+import { Loader2, Plus, RotateCcw, X } from "lucide-react";
 import {
   Dialog,
   DialogBody,
@@ -96,6 +96,8 @@ interface StepEditModalProps {
   stepData: Record<string, unknown>;
   /** 保存ハンドラ。成功なら true を返す（呼び出し側でモーダルを閉じる） */
   onSave: (updated: Record<string, unknown>) => Promise<boolean>;
+  /** このステップだけAIとの対話をやり直す。渡されたときだけボタンを出す */
+  onRedo?: (step: number) => void;
 }
 
 /**
@@ -111,6 +113,7 @@ export function StepEditModal({
   step,
   stepData,
   onSave,
+  onRedo,
 }: StepEditModalProps) {
   const [draft, setDraft] = useState<Record<string, unknown>>({});
   const [saving, setSaving] = useState(false);
@@ -213,6 +216,7 @@ export function StepEditModal({
           <DialogTitle>{title}を編集</DialogTitle>
           <DialogDescription>
             内容を直接編集できます。保存すると自己分析に反映されます。
+            {onRedo && "AIと話しながら作り直したいときは「AIとやり直す」を押してください。"}
           </DialogDescription>
         </DialogHeader>
 
@@ -305,6 +309,17 @@ export function StepEditModal({
             onSaveNow={editDraft.saveNow}
             className="mr-auto"
           />
+          {onRedo && step != null && (
+            <Button
+              variant="outline"
+              onClick={() => onRedo(step)}
+              disabled={saving}
+              className="gap-1.5"
+            >
+              <RotateCcw className="size-4" />
+              AIとやり直す
+            </Button>
+          )}
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={saving}>
             キャンセル
           </Button>

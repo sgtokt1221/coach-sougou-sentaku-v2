@@ -47,10 +47,19 @@ export const storage: FirebaseStorage | null = app ? getStorage(app) : null;
 // 再評価されると重複呼び出しで例外になるため、握りつぶす。
 if (useEmulator) {
   const host = process.env.NEXT_PUBLIC_FIREBASE_EMULATOR_HOST ?? "127.0.0.1";
+  // ポートは環境変数で変えられるようにする。既定値で他プロジェクトのエミュレータと
+  // ぶつかると、そちらへ黙って繋がって「ログインできない」だけの症状になる。
+  // process.env はビルド時に静的置換されるため、変数キーでは読めない。必ず直書きする。
+  const authPort =
+    Number(process.env.NEXT_PUBLIC_FIREBASE_EMULATOR_AUTH_PORT) || 9099;
+  const firestorePort =
+    Number(process.env.NEXT_PUBLIC_FIREBASE_EMULATOR_FIRESTORE_PORT) || 8080;
+  const storagePort =
+    Number(process.env.NEXT_PUBLIC_FIREBASE_EMULATOR_STORAGE_PORT) || 9199;
   try {
-    if (auth) connectAuthEmulator(auth, `http://${host}:9099`);
-    if (db) connectFirestoreEmulator(db, host, 8080);
-    if (storage) connectStorageEmulator(storage, host, 9199);
+    if (auth) connectAuthEmulator(auth, `http://${host}:${authPort}`);
+    if (db) connectFirestoreEmulator(db, host, firestorePort);
+    if (storage) connectStorageEmulator(storage, host, storagePort);
   } catch {
     // 接続済み
   }

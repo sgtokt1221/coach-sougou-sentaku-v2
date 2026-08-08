@@ -349,6 +349,7 @@ export default function SelfAnalysisResultPage() {
         step={editStep}
         stepData={editStep != null ? (stepsData[editStep] ?? {}) : {}}
         onSave={handleEditSave}
+        onRedo={(step) => router.push(`/student/self-analysis?redo=${step}`)}
       />
     </div>
   );

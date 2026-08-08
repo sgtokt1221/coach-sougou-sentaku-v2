@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -54,6 +54,7 @@ import {
 
 import { useTextHistory } from "@/hooks/useTextHistory";
 import { UndoRedoButtons } from "@/components/shared/UndoRedoButtons";
+import { DocumentSectionCoachPanel } from "@/components/documents/DocumentSectionCoachPanel";
 /** 2状態表示: draft=outline / それ以外(完成扱い)=default。 */
 function statusVariant2(status: DocumentStatus): "outline" | "default" {
   return status === "draft" ? "outline" : "default";
@@ -372,6 +373,22 @@ export default function DocumentEditorPage() {
     await commitStatus(next);
   }
 
+  /**
+   * 編集画面は本文が1つなので、全体を1セクションとしてAIコーチへ渡す。
+   * 作成ウィザードはセクション単位だが、こちらは書き上げた本文への相談が主。
+   * docId を渡すので、会話は書類に紐づいて管理者側からも辿れる。
+   */
+  const coachSection = useMemo(
+    () => ({
+      id: "whole",
+      title: `${doc?.type ?? "書類"}の本文`,
+      guidingQuestion:
+        "この本文について、どこをどう直すとよいか相談できます。",
+      content,
+    }),
+    [doc?.type, content],
+  );
+
   if (loading) {
     return (
       <div className="mx-auto max-w-5xl space-y-4 px-4 py-5 lg:py-8">
@@ -483,7 +500,7 @@ export default function DocumentEditorPage() {
       </MobileSlideOverPanel>
 
       {/* Desktop layout */}
-      <div className="hidden gap-6 lg:grid lg:grid-cols-3">
+      <div className="hidden gap-6 lg:grid lg:grid-cols-4">
         <div className="lg:col-span-2">
           <EditorPanel
             content={content}
@@ -497,6 +514,19 @@ export default function DocumentEditorPage() {
             saving={saving}
             saveStatus={saveStatus}
             lastSavedAt={lastSavedAt}
+          />
+        </div>
+        {/* AIコーチ: 書きながら相談できるようにする。以前は作成ウィザードに
+            しか無く、編集画面では質問できなかった */}
+        <div className="lg:h-[calc(100dvh-12rem)]">
+          <DocumentSectionCoachPanel
+            frameworkType={doc?.type ?? "free"}
+            focusedSection={coachSection}
+            documentType={doc?.type}
+            universityId={doc?.universityId}
+            facultyId={doc?.facultyId}
+            docId={id}
+            onApplySuggestion={(_sectionId, text) => setContent(text)}
           />
         </div>
         <div>
