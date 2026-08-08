@@ -15,6 +15,7 @@ import type {
   DocumentSectionCoachThread,
 } from "@/lib/types/document-coach";
 import { prepareAdmissionPolicy } from "@/lib/ai/admission-policy";
+import { getDocumentTemplate } from "@/lib/templates/document-templates";
 
 export const maxDuration = 60;
 
@@ -158,6 +159,7 @@ export async function POST(request: NextRequest) {
       .slice(0, 10)
       .map((s) => ({ title: s.title, content: truncate(s.content, 1200) })),
     documentType: body.documentType,
+    documentStructure: getDocumentTemplate(body.documentType ?? "")?.sampleStructure,
     universityName,
     facultyName,
     admissionPolicy,

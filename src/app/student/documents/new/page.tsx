@@ -31,7 +31,11 @@ import type {
 import { FRAMEWORK_TYPE_LABELS } from "@/lib/types/template";
 import { FRAMEWORKS } from "@/lib/templates/frameworks";
 import { DocumentSectionCoachPanel } from "@/components/documents/DocumentSectionCoachPanel";
-import { DOCUMENT_TEMPLATES } from "@/lib/templates/document-templates";
+import {
+  DOCUMENT_TEMPLATES,
+  freeGuidingQuestion,
+  freePlaceholder,
+} from "@/lib/templates/document-templates";
 import { useAuthSWR } from "@/lib/api/swr";
 import { authFetch } from "@/lib/api/client";
 import { useAutosave } from "@/hooks/useAutosave";
@@ -351,7 +355,7 @@ export default function NewDocumentPage() {
                 id: "free",
                 title: "本文",
                 content: freeContent,
-                placeholder: "志望理由書の本文を自由に入力してください。",
+                placeholder: freePlaceholder(doc.type as DocumentType | undefined),
               },
             ],
             wordCount: freeContent.length,
@@ -412,9 +416,11 @@ export default function NewDocumentPage() {
     return {
       id: focusedSectionId,
       title: draftResult.sections[idx].title,
+      // 自由記述はフレームワークの問いが無い。書類の種類に合わせて聞く。
+      // 種類に関わらず「志望理由」を聞いていたため、自己推薦書や研究計画書でも
+      // 志望理由書としての助言になっていた。
       guidingQuestion:
-        fwSection?.guidingQuestion ??
-        "この文章で最も伝えたい志望理由は何ですか？",
+        fwSection?.guidingQuestion ?? freeGuidingQuestion(documentType ?? undefined),
       content: draftResult.sections[idx].content,
     };
   })();
@@ -549,7 +555,7 @@ export default function NewDocumentPage() {
           id: "free",
           title: "本文",
           content: "",
-          placeholder: "志望理由書の本文を自由に入力してください。",
+          placeholder: freePlaceholder(documentType ?? undefined),
         },
       ],
       wordCount: 0,

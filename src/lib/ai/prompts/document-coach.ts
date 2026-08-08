@@ -21,6 +21,8 @@ export interface DocumentCoachContext {
   /** 他セクションの本文。重複や流れの確認に使う（書き換え対象ではない） */
   otherSections?: { title: string; content: string }[];
   documentType?: string;
+  /** 書類種別ごとの基本構成。自由記述はフレームワークが無く、これが唯一の指針になる */
+  documentStructure?: string;
   universityName?: string;
   facultyName?: string;
   admissionPolicy?: string;
@@ -56,6 +58,7 @@ ${SUGGESTION_DELIMITER}
         ? ctx.otherSections
         : null,
     documentType: ctx.documentType ?? null,
+    documentStructure: ctx.documentStructure ?? null,
     universityName: ctx.universityName ?? null,
     facultyName: ctx.facultyName ?? null,
     admissionPolicy: ctx.admissionPolicy?.trim() || null,
@@ -80,6 +83,8 @@ ${SUGGESTION_DELIMITER}
   答えたあとに、必要なら今のセクションへ一言で戻します。
 - otherSections は他セクションの現在の本文です。重複や話の流れを見るための参照で、
   書き換える対象ではありません。候補文は必ずフォーカス中のセクション向けに出します。
+- documentStructure はこの書類種別の一般的な構成です。今の内容がその書類として
+  何を欠いているかを見る目安に使い、当てはめを強要せず、生徒の材料を優先します。
 - APの単語を言わせるのではなく、生徒の事実がAPの主旨をどう裏づけるかを確認します。
 - 推測した内容は確定事実として候補文へ入れません。
 - 命令口調、絵文字、APの長い逐語引用は避けます。
