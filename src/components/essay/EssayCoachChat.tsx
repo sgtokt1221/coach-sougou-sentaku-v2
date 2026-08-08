@@ -12,6 +12,7 @@ import type {
 } from "@/lib/types/essay-coach";
 import { usePersistentDraft } from "@/hooks/usePersistentDraft";
 import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
+import { useAutoGrowTextarea } from "@/hooks/useAutoGrowTextarea";
 
 const OPENING_MESSAGE: CoachMessage = {
   role: "assistant",
@@ -76,6 +77,8 @@ export function EssayCoachChat({
     onThreadChange?.(threadId);
   }, [threadId, onThreadChange]);
   const [input, setInput] = useState("");
+  // 入力量に合わせて高さを伸ばす（数行書くと見えなくなるのを防ぐ）
+  const inputRef = useAutoGrowTextarea<HTMLTextAreaElement>(input);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -237,6 +240,7 @@ export function EssayCoachChat({
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="ここから何を書けばいい?など、自由に質問してください"
+            ref={inputRef}
             rows={2}
             className="resize-none"
             disabled={sending}

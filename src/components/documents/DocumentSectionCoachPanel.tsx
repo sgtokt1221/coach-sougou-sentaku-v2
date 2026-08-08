@@ -25,6 +25,7 @@ import type {
 } from "@/lib/types/document-coach";
 import { usePersistentDraft } from "@/hooks/usePersistentDraft";
 import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
+import { useAutoGrowTextarea } from "@/hooks/useAutoGrowTextarea";
 
 const OPENING_MESSAGE: DocumentCoachMessage = {
   role: "assistant",
@@ -103,6 +104,8 @@ function PanelBody({
     Record<string, { threadId: string | null; messages: DocumentCoachMessage[] }>
   >({});
   const [input, setInput] = useState("");
+  // 入力量に合わせて高さを伸ばす（数行書くと見えなくなるのを防ぐ）
+  const inputRef = useAutoGrowTextarea<HTMLTextAreaElement>(input);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // 参照タブ。コーチ(対話) / AP / 自己分析 を小論文添削コーチと同様に切り替える
@@ -437,6 +440,7 @@ function PanelBody({
                 ? "このセクションについて相談してください"
                 : "セクションを選んでください"
             }
+            ref={inputRef}
             rows={2}
             className="resize-none text-sm"
             disabled={sending || !focusedSection}

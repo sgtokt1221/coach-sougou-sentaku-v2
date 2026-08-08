@@ -32,6 +32,7 @@ import type {
 } from "@/lib/types/feedback";
 import { CHAT_REACTION_EMOJIS } from "@/lib/types/feedback";
 import { appendQuote, parseMessageBlocks } from "@/lib/chat/message-blocks";
+import { useAutoGrowTextarea } from "@/hooks/useAutoGrowTextarea";
 import { usePersistentDraft } from "@/hooks/usePersistentDraft";
 import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
 
@@ -276,7 +277,8 @@ export function ChatThread({
   );
 
   const [text, setText] = useState("");
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  // 入力量に合わせて伸びる。ref は従来どおりフォーカス移動にも使う
+  const textareaRef = useAutoGrowTextarea<HTMLTextAreaElement>(text);
   /**
    * 引用を入力欄の末尾へ積む。
    *
@@ -848,8 +850,10 @@ export function ChatThread({
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder="メッセージを入力..."
+              ref={textareaRef}
               rows={1}
               // text-base(16px): iOS でフォーカス時の自動ズーム(16px未満で発生)を防ぐ
+              // 高さは useAutoGrowTextarea が中身に合わせて伸ばす
               className="max-h-32 min-h-[40px] flex-1 resize-none text-base"
               onFocus={scrollMessagesToBottom}
               onKeyDown={(e) => {

@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { SectionTextarea } from "@/components/documents/SectionTextarea";
 import {
   ArrowLeft,
   ArrowRight,
@@ -976,38 +977,33 @@ export default function NewDocumentPage() {
                     }
                   >
                     {draftResult.sections.map((section, i) => (
-                      <div
+                      <SectionTextarea
                         key={section.id ?? i}
-                        className={
+                        title={section.title}
+                        value={section.content}
+                        placeholder={section.placeholder}
+                        onFocus={() => setFocusedSectionId(section.id)}
+                        onChange={(next) => {
+                          const updated = [...draftResult.sections];
+                          updated[i] = { ...updated[i], content: next };
+                          setDraftResult({
+                            ...draftResult,
+                            sections: updated,
+                            draft: updated.map((s) => s.content).filter((c) => c.trim()).join("\n\n"),
+                          });
+                        }}
+                        rows={writingMode === "free" ? undefined : 4}
+                        wrapperClassName={
                           writingMode === "free"
                             ? "space-y-1 lg:flex lg:min-h-0 lg:flex-1 lg:flex-col"
                             : "space-y-1"
                         }
-                      >
-                        <h3 className="font-medium text-sm text-primary lg:shrink-0">
-                          {section.title}
-                        </h3>
-                        <Textarea
-                          value={section.content}
-                          placeholder={section.placeholder}
-                          onFocus={() => setFocusedSectionId(section.id)}
-                          onChange={(e) => {
-                            const updated = [...draftResult.sections];
-                            updated[i] = { ...updated[i], content: e.target.value };
-                            setDraftResult({
-                              ...draftResult,
-                              sections: updated,
-                              draft: updated.map((s) => s.content).filter((c) => c.trim()).join("\n\n"),
-                            });
-                          }}
-                          rows={writingMode === "free" ? undefined : 4}
-                          className={
-                            writingMode === "free"
-                              ? "min-h-[50vh] resize-y text-base lg:min-h-0 lg:h-full lg:resize-none lg:text-sm"
-                              : "min-h-[9rem] resize-y text-base lg:text-sm"
-                          }
-                        />
-                      </div>
+                        className={
+                          writingMode === "free"
+                            ? "min-h-[50vh] resize-y text-base lg:min-h-0 lg:h-full lg:resize-none lg:text-sm"
+                            : "min-h-[9rem] resize-y text-base lg:text-sm"
+                        }
+                      />
                     ))}
                   </CardContent>
                 </Card>
