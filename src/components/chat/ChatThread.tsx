@@ -11,6 +11,7 @@ import {
   Megaphone,
   BookOpen,
   Quote as QuoteIcon,
+  Copy,
   SmilePlus,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -304,6 +305,42 @@ export function ChatThread({
     });
     window.getSelection()?.removeAllRanges();
   }, []);
+
+  /**
+   * ドラッグで選択したときに出す小さなメニュー（コピー / 部分引用）。
+   * 選択は解除せずに持っておく。ボタンを押すまで何もしない。
+   */
+  const [selectionMenu, setSelectionMenu] = useState<{
+    message: ChatMessage;
+    text: string;
+    x: number;
+    y: number;
+  } | null>(null);
+
+  const openSelectionMenu = useCallback(
+    (m: ChatMessage, x: number, y: number) => {
+      const t = selectionWithin(bubbleRefs.current[m.id]);
+      if (!t) {
+        setSelectionMenu(null);
+        return;
+      }
+      setSelectionMenu({ message: m, text: t, x, y });
+    },
+    // selectionWithin は再生成されても中身が変わらない
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
+  // 選択が消えたらメニューも閉じる（別の場所をクリックした時など）
+  useEffect(() => {
+    if (!selectionMenu) return;
+    const close = () => {
+      const sel = window.getSelection();
+      if (!sel || sel.isCollapsed) setSelectionMenu(null);
+    };
+    document.addEventListener("selectionchange", close);
+    return () => document.removeEventListener("selectionchange", close);
+  }, [selectionMenu]);
   const [pending, setPending] = useState<ChatAttachment[]>([]);
   const [pendingRef, setPendingRef] = useState<ChatReference | null>(null);
   const [sending, setSending] = useState(false);
@@ -448,6 +485,47 @@ export function ChatThread({
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
+      {/* 選択したテキストに対する操作。押すまで何も起きない */}
+      {selectionMenu && (
+        <div
+          className="fixed z-50 flex overflow-hidden rounded-lg border bg-popover shadow-md"
+          style={{
+            left: Math.max(8, Math.min(selectionMenu.x - 60, window.innerWidth - 180)),
+            top: Math.max(8, selectionMenu.y + 8),
+          }}
+          // メニュー押下で選択が消えないようにする
+          onMouseDown={(e) => e.preventDefault()}
+        >
+          <button
+            type="button"
+            className="flex items-center gap-1.5 px-3 py-2 text-xs hover:bg-muted"
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(selectionMenu.text);
+                toast.success("コピーしました");
+              } catch {
+                toast.error("コピーできませんでした");
+              }
+              setSelectionMenu(null);
+            }}
+          >
+            <Copy className="size-3.5" />
+            コピー
+          </button>
+          <button
+            type="button"
+            className="flex items-center gap-1.5 border-l px-3 py-2 text-xs hover:bg-muted"
+            onClick={() => {
+              quoteMessage(selectionMenu.message, selectionMenu.text);
+              setSelectionMenu(null);
+            }}
+          >
+            <QuoteIcon className="size-3.5" />
+            部分引用
+          </button>
+        </div>
+      )}
+
       {/* D&D 中のドロップ案内オーバーレイ */}
       {dragOver && !disabled && (
         <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center rounded-lg border-2 border-dashed border-primary bg-primary/10 backdrop-blur-[1px]">
@@ -518,18 +596,15 @@ export function ChatThread({
                   {(m.message || m.reference || (m.attachments && m.attachments.length > 0)) && (
                     <div
                       ref={(el) => { bubbleRefs.current[m.id] = el; }}
-                      // ドラッグで選択し終わった時点で引用に入る。ボタンを
-                      // 押す一手間を挟むと、選択が外れて引用し損ねる
-                      onMouseUp={() => {
-                        const t = selectionWithin(bubbleRefs.current[m.id]);
-                        if (t) quoteMessage(m, t);
-                      }}
-                      onTouchEnd={() => {
+                      // 選択し終わったら、コピーか部分引用かを選ぶボタンを出す。
+                      // 選択しただけで引用に入ると、読むためになぞった時に困る
+                      onMouseUp={(e) => openSelectionMenu(m, e.clientX, e.clientY)}
+                      onTouchEnd={(e) => {
                         // モバイルは選択確定がここより後になることがある
-                        setTimeout(() => {
-                          const t = selectionWithin(bubbleRefs.current[m.id]);
-                          if (t) quoteMessage(m, t);
-                        }, 0);
+                        const t = e.changedTouches[0];
+                        const x = t?.clientX ?? 0;
+                        const y = t?.clientY ?? 0;
+                        setTimeout(() => openSelectionMenu(m, x, y), 0);
                       }}
                       className={`rounded-2xl px-3 py-2 text-sm ${
                         mine

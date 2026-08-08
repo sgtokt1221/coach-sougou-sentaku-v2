@@ -9,6 +9,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -100,6 +106,7 @@ export default function DocumentEditorPage() {
   const [reviewing, setReviewing] = useState(false);
   const [feedback, setFeedback] = useState<DocumentFeedback | null>(null);
   const [showVersions, setShowVersions] = useState(false);
+  const [toolsOpen, setToolsOpen] = useState(false);
   const [aiLikeness, setAiLikeness] = useState<DocumentAiLikeness | null>(null);
 
   const [aiChecking, setAiChecking] = useState(false);
@@ -499,8 +506,20 @@ export default function DocumentEditorPage() {
         />
       </MobileSlideOverPanel>
 
-      {/* Desktop layout */}
-      <div className="hidden gap-6 lg:grid lg:grid-cols-4">
+      {/* Desktop layout: 左にAIコーチ、右にエディタ。AI添削などの道具は
+          右のシートに畳み、書く場所を広く取る（3列は詰まりすぎた） */}
+      <div className="hidden gap-6 lg:grid lg:grid-cols-3">
+        <div className="lg:h-[calc(100dvh-12rem)]">
+          <DocumentSectionCoachPanel
+            frameworkType={doc?.type ?? "free"}
+            focusedSection={coachSection}
+            documentType={doc?.type}
+            universityId={doc?.universityId}
+            facultyId={doc?.facultyId}
+            docId={id}
+            onApplySuggestion={(_sectionId, text) => setContent(text)}
+          />
+        </div>
         <div className="lg:col-span-2">
           <EditorPanel
             content={content}
@@ -514,46 +533,55 @@ export default function DocumentEditorPage() {
             saving={saving}
             saveStatus={saveStatus}
             lastSavedAt={lastSavedAt}
-          />
-        </div>
-        {/* AIコーチ: 書きながら相談できるようにする。以前は作成ウィザードに
-            しか無く、編集画面では質問できなかった */}
-        <div className="lg:h-[calc(100dvh-12rem)]">
-          <DocumentSectionCoachPanel
-            frameworkType={doc?.type ?? "free"}
-            focusedSection={coachSection}
-            documentType={doc?.type}
-            universityId={doc?.universityId}
-            facultyId={doc?.facultyId}
-            docId={id}
-            onApplySuggestion={(_sectionId, text) => setContent(text)}
-          />
-        </div>
-        <div>
-          <ReviewPanel
-            feedback={feedback}
-            reviewing={reviewing}
-            onReview={handleReview}
-            contentEmpty={!content.trim()}
-            versions={doc.versions}
-            showVersions={showVersions}
-            setShowVersions={setShowVersions}
-            aiLikeness={aiLikeness}
-            aiChecking={aiChecking}
-            onAiCheck={handleAiCheck}
-            currentWordCount={wordCount}
-            rewriteInstruction={rewriteInstruction}
-            setRewriteInstruction={setRewriteInstruction}
-            rewriting={rewriting}
-            rewritePreview={rewritePreview}
-            rewriteNotice={rewriteNotice}
-            inlineComments={doc.inlineComments}
-            onRewrite={handleRewrite}
-            onApplyRewrite={applyRewrite}
-            onDiscardRewrite={discardRewrite}
+            toolbar={
+              <DocumentToolbar
+                onOpen={(v) => {
+                  if (v === "versions") setShowVersions(true);
+                  setToolsOpen(true);
+                }}
+                hasFeedback={!!feedback}
+                versionCount={doc.versions?.length ?? 0}
+              />
+            }
           />
         </div>
       </div>
+
+      {/* AIの道具一式。開いている間も本文が見えるよう、背景は暗転させない */}
+      <Sheet open={toolsOpen} onOpenChange={setToolsOpen}>
+        <SheetContent
+          side="right"
+          className="w-full data-[side=right]:sm:max-w-md"
+        >
+          <SheetHeader>
+            <SheetTitle>AIツール</SheetTitle>
+          </SheetHeader>
+          <div className="px-4 pb-6">
+            <ReviewPanel
+              feedback={feedback}
+              reviewing={reviewing}
+              onReview={handleReview}
+              contentEmpty={!content.trim()}
+              versions={doc.versions}
+              showVersions={showVersions}
+              setShowVersions={setShowVersions}
+              aiLikeness={aiLikeness}
+              aiChecking={aiChecking}
+              onAiCheck={handleAiCheck}
+              currentWordCount={wordCount}
+              rewriteInstruction={rewriteInstruction}
+              setRewriteInstruction={setRewriteInstruction}
+              rewriting={rewriting}
+              rewritePreview={rewritePreview}
+              rewriteNotice={rewriteNotice}
+              inlineComments={doc.inlineComments}
+              onRewrite={handleRewrite}
+              onApplyRewrite={applyRewrite}
+              onDiscardRewrite={discardRewrite}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
 
       <Dialog open={submitGateOpen} onOpenChange={setSubmitGateOpen}>
         <DialogContent>
@@ -601,6 +629,7 @@ function EditorPanel({
   saving,
   saveStatus,
   lastSavedAt,
+  toolbar,
 }: {
   content: string;
   setContent: (v: string) => void;
@@ -613,6 +642,8 @@ function EditorPanel({
   saving: boolean;
   saveStatus: AutosaveStatus;
   lastSavedAt: Date | null;
+  /** 本文の上に並べる操作（AI添削などのシートを開くボタン群） */
+  toolbar?: React.ReactNode;
 }) {
   // AIの書き換えや下書き復元で本文を丸ごと差し替えるため、
   // ブラウザ標準の取り消しでは戻れない。履歴をアプリ側で持つ
@@ -620,7 +651,8 @@ function EditorPanel({
   return (
     <Card>
       <CardContent className="space-y-3 p-4">
-        <div className="flex justify-end">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          {toolbar ?? <span />}
           <UndoRedoButtons
             undo={history.undo}
             redo={history.redo}
@@ -1064,6 +1096,51 @@ function ReviewPanel({
           )}
         </Card>
       )}
+    </div>
+  );
+}
+
+/** 本文の上に置く、AIの道具を開くボタン群。名前はホバーで出す（幅を食わせない） */
+function DocumentToolbar({
+  onOpen,
+  hasFeedback,
+  versionCount,
+}: {
+  onOpen: (target: "review" | "rewrite" | "likeness" | "versions") => void;
+  hasFeedback: boolean;
+  versionCount: number;
+}) {
+  const items = [
+    { key: "review" as const, icon: Sparkles, label: "AI添削", dot: hasFeedback },
+    { key: "rewrite" as const, icon: Wand2, label: "AIで書き換え", dot: false },
+    { key: "likeness" as const, icon: ShieldCheck, label: "個別性チェック", dot: false },
+    {
+      key: "versions" as const,
+      icon: History,
+      label: `バージョン履歴${versionCount > 0 ? `（${versionCount}）` : ""}`,
+      dot: false,
+    },
+  ];
+  return (
+    <div className="flex items-center gap-1">
+      {items.map((it) => (
+        <Button
+          key={it.key}
+          type="button"
+          variant="ghost"
+          size="sm"
+          title={it.label}
+          aria-label={it.label}
+          onClick={() => onOpen(it.key)}
+          className="text-muted-foreground hover:text-foreground relative gap-1.5 px-2"
+        >
+          <it.icon className="size-4" />
+          <span className="hidden text-xs xl:inline">{it.label}</span>
+          {it.dot && (
+            <span className="bg-primary absolute top-1 right-1 size-1.5 rounded-full" />
+          )}
+        </Button>
+      ))}
     </div>
   );
 }
