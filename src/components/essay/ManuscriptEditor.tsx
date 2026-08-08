@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect } from "react";
 import { Check, X } from "lucide-react";
 
+import { useTextHistory } from "@/hooks/useTextHistory";
+import { UndoRedoButtons } from "@/components/shared/UndoRedoButtons";
 interface Highlight {
   start: number;
   end: number;
@@ -41,6 +43,8 @@ export function ManuscriptEditor({
   const isEn = mode === "en";
   const charCount = isEn ? countWords(value) : value.length;
   const unitLabel = isEn ? "words" : "字";
+  // AIの書き換えや下書き復元で本文を差し替えるため、標準の取り消しでは戻れない
+  const history = useTextHistory(value, onChange);
   const isOver = charCount > maxLength;
   const percentage = Math.min(100, (charCount / maxLength) * 100);
   const hasHighlights = highlights && highlights.length > 0;
@@ -277,11 +281,19 @@ export function ManuscriptEditor({
             ? `${value.split(/\n/).filter(Boolean).length} paragraphs ・ ${value.split(/[.!?\n]/).filter((s) => s.trim()).length} sentences`
             : `${value.split(/\n/).length}段落 ・ ${value.split(/[。！？\n]/).filter(Boolean).length}文`}
         </span>
-        {hasHighlights && (
-          <span className="text-amber-600 font-medium">
-            オレンジ部分をタップで修正可能
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {hasHighlights && (
+            <span className="text-amber-600 font-medium">
+              オレンジ部分をタップで修正可能
+            </span>
+          )}
+          <UndoRedoButtons
+            undo={history.undo}
+            redo={history.redo}
+            canUndo={history.canUndo}
+            canRedo={history.canRedo}
+          />
+        </div>
       </div>
     </div>
   );

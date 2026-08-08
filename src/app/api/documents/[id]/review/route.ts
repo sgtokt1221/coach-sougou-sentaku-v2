@@ -146,6 +146,7 @@ export async function POST(
     const reviewModel = selectDocumentModel(documentData.type);
     const systemPrompt = buildDocumentReviewPrompt({
       hasAdmissionPolicy,
+      documentType: documentData.type,
     });
     const referenceData = {
       universityName: documentData.universityName ?? "未指定",

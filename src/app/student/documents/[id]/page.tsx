@@ -52,6 +52,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 
+import { useTextHistory } from "@/hooks/useTextHistory";
+import { UndoRedoButtons } from "@/components/shared/UndoRedoButtons";
 /** 2状態表示: draft=outline / それ以外(完成扱い)=default。 */
 function statusVariant2(status: DocumentStatus): "outline" | "default" {
   return status === "draft" ? "outline" : "default";
@@ -582,9 +584,20 @@ function EditorPanel({
   saveStatus: AutosaveStatus;
   lastSavedAt: Date | null;
 }) {
+  // AIの書き換えや下書き復元で本文を丸ごと差し替えるため、
+  // ブラウザ標準の取り消しでは戻れない。履歴をアプリ側で持つ
+  const history = useTextHistory(content, setContent);
   return (
     <Card>
       <CardContent className="space-y-3 p-4">
+        <div className="flex justify-end">
+          <UndoRedoButtons
+            undo={history.undo}
+            redo={history.redo}
+            canUndo={history.canUndo}
+            canRedo={history.canRedo}
+          />
+        </div>
         <textarea
           className="bg-background focus:ring-ring min-h-[clamp(16rem,45dvh,28rem)] w-full resize-y rounded-md border p-3 text-base focus:ring-2 focus:outline-none lg:min-h-[400px] lg:text-sm"
           value={content}

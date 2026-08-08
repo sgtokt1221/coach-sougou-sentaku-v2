@@ -47,7 +47,10 @@ export const AI_PROMPT_VERSIONS = {
     schemaVersion: "skill-check-output-v1",
   },
   documentReview: {
-    promptVersion: "document-review-v2",
+    // v3: 「構成」の評価観点を書類の種類ごとに切り替えた。以前は全種類を
+    //     志望理由書の基準（主張・根拠・志望理由・将来像）で採点しており、
+    //     自己推薦書や研究計画書に志望理由の流れを求めていた。
+    promptVersion: "document-review-v3",
     schemaVersion: "document-review-output-v2",
   },
   statementDraft: {
