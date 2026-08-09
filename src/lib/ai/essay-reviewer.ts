@@ -21,7 +21,7 @@ export async function reviewWithClaude(options: {
   userMessage: string;
   maxTokens?: number;
 }): Promise<ReviewCoreResult> {
-  const { systemPrompt, userMessage, maxTokens = 4096 } = options;
+  const { systemPrompt, userMessage, maxTokens = 12000 } = options;
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
@@ -40,8 +40,9 @@ export async function reviewWithClaude(options: {
     messages: [{ role: "user", content: userMessage }],
     output_config: {
       format: zodOutputFormat(SkillCheckOutputSchema),
-      // 拡張思考に max_tokens を食われて本文が切れるのを防ぐ
-      effort: "low",
+      // 以前は max_tokens 4096 で thinking に食われて本文が切れるのを避けるため low に
+      // していた。max_tokens を 12000 に上げて余地を作り、採点の吟味を戻す。
+      effort: "medium",
     },
   });
 

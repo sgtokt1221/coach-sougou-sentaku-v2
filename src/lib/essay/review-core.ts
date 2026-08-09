@@ -116,11 +116,16 @@ ${input.ocrText}
 
   const response = await client.messages.parse({
     model: AI_MODEL_REVIEW,
-    max_tokens: isReport ? 6000 : 4096,
+    // messages.parse は max_tokens を thinking と本文で共有する。旧値の 4096 では
+    // 長い構造化出力(languageCorrections 最大5件 + 各種フィードバック)に食われ、
+    // 採点を吟味する余地が残らずルーブリックの既定値へ丸まっていた。
+    max_tokens: isReport ? 16000 : 12000,
     system: systemPrompt,
     messages: [{ role: "user", content: userMessage }],
     output_config: {
       format: zodOutputFormat(EssayReviewOutputSchema),
+      // 既定値と同じ high だが、採点水準に直結するため明示して固定する
+      effort: "high",
     },
   });
 
