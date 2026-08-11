@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { buildWhisperPrompt } from "@/lib/interview/whisper-context";
-import { AI_MODEL_SONNET } from "@/lib/ai/prompt-versions";
+import { AI_MODEL_FAST } from "@/lib/ai/prompt-versions";
 
 export async function POST(request: NextRequest) {
   try {
@@ -110,7 +110,8 @@ export async function POST(request: NextRequest) {
         allMessages.push({ role: "user", content: transcribedText });
 
         const res = await client.messages.create({
-          model: AI_MODEL_SONNET,
+          // 音声面接は文字起こし・読み上げが前後に入るため速度を優先する
+          model: AI_MODEL_FAST,
           max_tokens: 512,
           system: systemPrompt,
           messages: allMessages,

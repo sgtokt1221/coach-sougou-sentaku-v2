@@ -2,6 +2,15 @@ export const AI_MODEL_SONNET = "claude-sonnet-4-6";
 export const AI_MODEL_STATEMENT = "claude-sonnet-5";
 
 /**
+ * 応答速度を優先する用途だけに使う。
+ *
+ * 精度の理由で haiku は全廃したが、音声面接だけは文字起こし→応答→読み上げが
+ * 直列に走るため、応答が遅いと会話が成立しない。実測（同一条件3回）で
+ * haiku 平均1.6秒 / sonnet 平均3.0秒。ここだけ速さを取る。
+ */
+export const AI_MODEL_FAST = "claude-haiku-4-5-20251001";
+
+/**
  * 小論文添削・スキルチェック採点で使うモデル。
  *
  * 精度向上のため claude-sonnet-5 を試したが、採点分布が中央に寄って平板化した。
