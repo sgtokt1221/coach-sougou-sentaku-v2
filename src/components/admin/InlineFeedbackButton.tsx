@@ -3,8 +3,17 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { usePersistentDraft } from "@/hooks/usePersistentDraft";
+import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
 import { MessageSquare, Send, Loader2 } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import { authFetch } from "@/lib/api/client";
 import { COMPOSER_SUBMIT_HINT, isComposerSubmitKey } from "@/lib/ui/composer-keys";
@@ -74,6 +83,20 @@ export function InlineFeedbackButton({
       .finally(() => setLoadingFeedbacks(false));
   }, [open, studentId, type, targetId]);
 
+  /**
+   * 書きかけを端末とクラウドへ退避する。長文のFBを書いている途中で
+   * モーダルを閉じたりリロードしても消えないようにする。
+   */
+  const draft = usePersistentDraft({
+    key: `admin-feedback-${type}-${targetId}`,
+    value: { message },
+    onRestore: (saved) => {
+      if (saved.message && !message) setMessage(saved.message);
+    },
+    hasContent: (saved) => saved.message.trim().length > 0,
+    enabled: open,
+  });
+
   async function handleSend() {
     if (!message.trim()) return;
     setSending(true);
@@ -87,6 +110,7 @@ export function InlineFeedbackButton({
       const created: AdminFeedback = await res.json();
       setFeedbacks((prev) => [created, ...prev]);
       setMessage("");
+      void draft.clearDraft();
       toast.success("フィードバックを送信しました");
       setOpen(false);
     } catch {
@@ -109,73 +133,94 @@ export function InlineFeedbackButton({
         {!compact && <span className="text-xs">FB</span>}
       </Button>
 
-      {/* height:auto のアニメーションは使わない。framer-motion が開いた瞬間の
-          高さを測って固定してしまい、入力欄や送信ボタンが切れていた
-          （弱点一覧では 0px に潰れて全く出なかった）。
-          高さは素のレイアウトに任せ、フェードだけ付ける。 */}
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
-            transition={{ duration: 0.15 }}
-          >
-            <div className="mt-2 rounded-lg border bg-card p-3 shadow-sm space-y-3">
-              <div className="flex items-center gap-2">
-                <Textarea
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  placeholder={`${targetLabel} へのフィードバック...`}
-                  rows={2}
-                  className="min-h-[60px] text-sm"
-                  onKeyDown={(e) => {
-                    if (isComposerSubmitKey(e)) {
-                      e.preventDefault();
-                      handleSend();
-                    }
-                  }}
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] text-muted-foreground">{COMPOSER_SUBMIT_HINT}</span>
-                <Button
-                  size="sm"
-                  onClick={handleSend}
-                  disabled={sending || !message.trim()}
-                >
-                  {sending ? (
-                    <Loader2 className="mr-1 size-3 animate-spin" />
-                  ) : (
-                    <Send className="mr-1 size-3" />
-                  )}
-                  送信
-                </Button>
-              </div>
+      {/* 別モーダルで開く。元のモーダル（答案・書類）の中に折りたたむと、
+          長いFBを書くときに親のスクロールと干渉して書きにくかった。 */}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <MessageSquare className="size-4" />
+              フィードバック
+              <span className="text-muted-foreground truncate text-xs font-normal">
+                {targetLabel}
+              </span>
+            </DialogTitle>
+          </DialogHeader>
 
-              {/* Existing feedbacks */}
-              {loadingFeedbacks ? (
-                <p className="text-xs text-muted-foreground">読み込み中...</p>
-              ) : feedbacks.length > 0 ? (
-                <div className="space-y-2 border-t pt-2">
-                  <p className="text-[10px] font-medium text-muted-foreground">過去のフィードバック</p>
-                  {feedbacks.map((fb) => (
-                    <div key={fb.id} className="rounded border bg-muted/30 p-2 text-xs space-y-0.5">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium">{fb.createdByName}</span>
-                        <span className="text-muted-foreground">
-                          {new Date(fb.createdAt).toLocaleDateString("ja-JP")}
-                        </span>
-                      </div>
-                      <p className="text-muted-foreground whitespace-pre-wrap">{fb.message}</p>
+          <DialogBody className="space-y-3">
+            <Textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder={`${targetLabel} へのフィードバック...`}
+              // resize-y: 右下をドラッグして高さを変えられる
+              className="min-h-[12rem] resize-y text-sm"
+              onKeyDown={(e) => {
+                if (isComposerSubmitKey(e)) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
+            />
+
+            {/* Existing feedbacks */}
+            {loadingFeedbacks ? (
+              <p className="text-muted-foreground text-xs">読み込み中...</p>
+            ) : feedbacks.length > 0 ? (
+              <div className="space-y-2 border-t pt-2">
+                <p className="text-muted-foreground text-[10px] font-medium">
+                  過去のフィードバック
+                </p>
+                {feedbacks.map((fb) => (
+                  <div
+                    key={fb.id}
+                    className="bg-muted/30 space-y-0.5 rounded border p-2 text-xs"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">{fb.createdByName}</span>
+                      <span className="text-muted-foreground">
+                        {new Date(fb.createdAt).toLocaleString("ja-JP", {
+                          month: "numeric",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
                     </div>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+                    <p className="text-muted-foreground whitespace-pre-wrap">
+                      {fb.message}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </DialogBody>
+
+          <DialogFooter className="items-center">
+            <DraftSaveIndicator
+              status={draft.status}
+              lastSavedAt={draft.lastSavedAt}
+              restored={draft.restored}
+              onSaveNow={draft.saveNow}
+              className="mr-auto"
+            />
+            <span className="text-muted-foreground hidden text-[10px] sm:inline">
+              {COMPOSER_SUBMIT_HINT}
+            </span>
+            <Button
+              size="sm"
+              onClick={handleSend}
+              disabled={sending || !message.trim()}
+            >
+              {sending ? (
+                <Loader2 className="mr-1 size-3 animate-spin" />
+              ) : (
+                <Send className="mr-1 size-3" />
+              )}
+              送信
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

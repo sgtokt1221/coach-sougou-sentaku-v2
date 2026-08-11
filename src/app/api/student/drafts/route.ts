@@ -3,6 +3,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
 
+/**
+ * 下書きは本人の users/{uid}/drafts にしか触らないため、役割を絞る必要がない。
+ * 生徒限定にしていたせいで、管理者のFB・レビューコメントがクラウドに退避できず
+ * 「クラウド同期に失敗」と出ていた（端末にだけ残る状態）。
+ */
+const DRAFT_ROLES = ["student", "teacher", "admin", "superadmin"];
+
 const MAX_DRAFT_BYTES = 500_000;
 const KEY_PATTERN = /^[a-zA-Z0-9:_-]{1,160}$/;
 
@@ -25,7 +32,7 @@ function draftRef(uid: string, key: string) {
 
 /** GET /api/student/drafts?key=... - 現在の生徒の汎用途中保存を取得する。 */
 export async function GET(request: NextRequest) {
-  const authResult = await requireRole(request, ["student"]);
+  const authResult = await requireRole(request, DRAFT_ROLES);
   if (authResult instanceof NextResponse) return authResult;
 
   const key = getDraftKey(request);
@@ -64,7 +71,7 @@ export async function GET(request: NextRequest) {
 
 /** PUT /api/student/drafts - 現在の生徒の汎用途中保存を上書きする。 */
 export async function PUT(request: NextRequest) {
-  const authResult = await requireRole(request, ["student"]);
+  const authResult = await requireRole(request, DRAFT_ROLES);
   if (authResult instanceof NextResponse) return authResult;
 
   try {
@@ -125,7 +132,7 @@ export async function PUT(request: NextRequest) {
 
 /** DELETE /api/student/drafts?key=... - 完了・破棄した途中保存を削除する。 */
 export async function DELETE(request: NextRequest) {
-  const authResult = await requireRole(request, ["student"]);
+  const authResult = await requireRole(request, DRAFT_ROLES);
   if (authResult instanceof NextResponse) return authResult;
 
   const key = getDraftKey(request);

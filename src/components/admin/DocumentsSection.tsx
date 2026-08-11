@@ -12,6 +12,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogBody,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   FileText,
@@ -21,9 +23,12 @@ import {
   RotateCcw,
   Undo2,
   ShieldCheck,
+  MessageSquare,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
+import { usePersistentDraft } from "@/hooks/usePersistentDraft";
+import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
 import { useAuthSWR } from "@/lib/api/swr";
 import { authFetch } from "@/lib/api/client";
 import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
@@ -178,6 +183,7 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
   const [detailDoc, setDetailDoc] = useState<DocumentDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [reviewMsg, setReviewMsg] = useState("");
+  const [reviewOpen, setReviewOpen] = useState(false);
   const [reviewBusy, setReviewBusy] = useState<
     "approved" | "revision_requested" | "cleared" | null
   >(null);
@@ -210,6 +216,17 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
       setAiCheckBusy(false);
     }
   }
+
+  /** 書きかけのレビューコメントを退避する。閉じても消えないように */
+  const reviewDraft = usePersistentDraft({
+    key: `admin-doc-review-${detailDoc?.id ?? "none"}`,
+    value: { message: reviewMsg },
+    onRestore: (saved: { message: string }) => {
+      if (saved.message && !reviewMsg) setReviewMsg(saved.message);
+    },
+    hasContent: (saved: { message: string }) => saved.message.trim().length > 0,
+    enabled: reviewOpen && !!detailDoc,
+  });
 
   async function submitReview(
     state: "approved" | "revision_requested" | "cleared",
@@ -272,6 +289,8 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
       });
       void openDetail(detailDoc.id);
       setReviewMsg("");
+      void reviewDraft.clearDraft();
+      setReviewOpen(false);
       mutate();
       toast.success(
         state === "approved"
@@ -510,7 +529,10 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
                 </div>
                 {/* ドラッグで範囲を選ぶとその箇所にコメントを付けられる（小論文と同じ） */}
                 <InlineCommentableText
-                  onQuote={(q) => setReviewMsg((prev) => appendQuote(prev, q))}
+                  onQuote={(q) => {
+                    setReviewMsg((prev) => appendQuote(prev, q));
+                    setReviewOpen(true);
+                  }}
                   quoteOnly
                   target="document"
                   id={detailDoc.id}
@@ -522,101 +544,20 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
                   viewerRole={userProfile?.role}
                 />
 
-                {/* レビュー: 承認 / 差し戻し（コメント付き→生徒チャットへ通知） */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-semibold">レビュー</h3>
-                    <DocumentReviewBadge state={detailDoc.review?.state} />
-                  </div>
-                  <Textarea
-                    value={reviewMsg}
-                    onChange={(e) => setReviewMsg(e.target.value)}
-                    placeholder="コメント（差し戻しは必須・承認は任意）。生徒のチャットに届きます。"
-                    rows={3}
-                    className="text-sm"
-                  />
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      className="gap-1"
-                      disabled={reviewBusy !== null}
-                      onClick={() => submitReview("approved")}
-                    >
-                      {reviewBusy === "approved" ? (
-                        <Loader2 className="size-3.5 animate-spin" />
-                      ) : (
-                        <CheckCircle2 className="size-3.5" />
-                      )}
-                      承認
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="gap-1 text-rose-600 dark:text-rose-400"
-                      disabled={reviewBusy !== null}
-                      onClick={() => submitReview("revision_requested")}
-                    >
-                      {reviewBusy === "revision_requested" ? (
-                        <Loader2 className="size-3.5 animate-spin" />
-                      ) : (
-                        <RotateCcw className="size-3.5" />
-                      )}
-                      差し戻し
-                    </Button>
-                    {detailDoc.review?.state && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="gap-1"
-                        disabled={reviewBusy !== null}
-                        onClick={() => submitReview("cleared")}
-                      >
-                        {reviewBusy === "cleared" ? (
-                          <Loader2 className="size-3.5 animate-spin" />
-                        ) : (
-                          <Undo2 className="size-3.5" />
-                        )}
-                        取り消し
-                      </Button>
-                    )}
-                  </div>
-
-                  {/* 操作履歴。review は最新状態しか持たないので、
-                      いつ誰がどのコメントで承認/差し戻したかはここでしか追えない */}
-                  {(detailDoc.reviewHistory?.length ?? 0) > 0 && (
-                    <div className="space-y-1 rounded border p-2">
-                      <p className="text-muted-foreground text-xs font-medium">
-                        レビュー履歴
-                      </p>
-                      {[...(detailDoc.reviewHistory ?? [])]
-                        .reverse()
-                        .map((h, i) => (
-                          <div key={`${h.at}-${i}`} className="text-xs">
-                            <div className="flex flex-wrap items-center gap-1.5">
-                              <span className="font-medium">
-                                {REVIEW_ACTION_LABELS[h.action] ?? h.action}
-                              </span>
-                              <span className="text-muted-foreground">
-                                {h.byName}
-                              </span>
-                              <span className="text-muted-foreground">
-                                {new Date(h.at).toLocaleString("ja-JP", {
-                                  month: "numeric",
-                                  day: "numeric",
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })}
-                              </span>
-                            </div>
-                            {h.comment && (
-                              <p className="text-muted-foreground mt-0.5 whitespace-pre-wrap">
-                                {h.comment}
-                              </p>
-                            )}
-                          </div>
-                        ))}
-                    </div>
-                  )}
+                {/* レビューは別モーダル。長いコメントを書くとき、書類本文と
+                    同じスクロール領域にあると書きにくかった */}
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-semibold">レビュー</h3>
+                  <DocumentReviewBadge state={detailDoc.review?.state} />
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="ml-auto gap-1"
+                    onClick={() => setReviewOpen(true)}
+                  >
+                    <MessageSquare className="size-3.5" />
+                    コメントして承認/差し戻し
+                  </Button>
                 </div>
               </div>
 
@@ -766,6 +707,128 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
               書類データの取得に失敗しました
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* レビュー用モーダル。書類モーダルに埋めると、長いコメントを書くとき
+          本文と同じスクロール領域で書きにくかった。入力欄はドラッグで広がる。 */}
+      <Dialog open={reviewOpen} onOpenChange={setReviewOpen}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <MessageSquare className="size-4" />
+              レビュー
+              {detailDoc && (
+                <span className="text-muted-foreground truncate text-xs font-normal">
+                  {detailDoc.universityName} {detailDoc.type}
+                </span>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          <DialogBody className="space-y-3">
+            {detailDoc && (
+              <>
+
+                  <Textarea
+                    value={reviewMsg}
+                    onChange={(e) => setReviewMsg(e.target.value)}
+                    placeholder="コメント（差し戻しは必須・承認は任意）。生徒のチャットに届きます。"
+                    className="min-h-[10rem] resize-y text-sm"
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      className="gap-1"
+                      disabled={reviewBusy !== null}
+                      onClick={() => submitReview("approved")}
+                    >
+                      {reviewBusy === "approved" ? (
+                        <Loader2 className="size-3.5 animate-spin" />
+                      ) : (
+                        <CheckCircle2 className="size-3.5" />
+                      )}
+                      承認
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1 text-rose-600 dark:text-rose-400"
+                      disabled={reviewBusy !== null}
+                      onClick={() => submitReview("revision_requested")}
+                    >
+                      {reviewBusy === "revision_requested" ? (
+                        <Loader2 className="size-3.5 animate-spin" />
+                      ) : (
+                        <RotateCcw className="size-3.5" />
+                      )}
+                      差し戻し
+                    </Button>
+                    {detailDoc.review?.state && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="gap-1"
+                        disabled={reviewBusy !== null}
+                        onClick={() => submitReview("cleared")}
+                      >
+                        {reviewBusy === "cleared" ? (
+                          <Loader2 className="size-3.5 animate-spin" />
+                        ) : (
+                          <Undo2 className="size-3.5" />
+                        )}
+                        取り消し
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* 操作履歴。review は最新状態しか持たないので、
+                      いつ誰がどのコメントで承認/差し戻したかはここでしか追えない */}
+                  {(detailDoc.reviewHistory?.length ?? 0) > 0 && (
+                    <div className="space-y-1 rounded border p-2">
+                      <p className="text-muted-foreground text-xs font-medium">
+                        レビュー履歴
+                      </p>
+                      {[...(detailDoc.reviewHistory ?? [])]
+                        .reverse()
+                        .map((h, i) => (
+                          <div key={`${h.at}-${i}`} className="text-xs">
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <span className="font-medium">
+                                {REVIEW_ACTION_LABELS[h.action] ?? h.action}
+                              </span>
+                              <span className="text-muted-foreground">
+                                {h.byName}
+                              </span>
+                              <span className="text-muted-foreground">
+                                {new Date(h.at).toLocaleString("ja-JP", {
+                                  month: "numeric",
+                                  day: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </span>
+                            </div>
+                            {h.comment && (
+                              <p className="text-muted-foreground mt-0.5 whitespace-pre-wrap">
+                                {h.comment}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                    </div>
+                  )}
+              </>
+            )}
+          </DialogBody>
+          <DialogFooter className="items-center">
+            <DraftSaveIndicator
+              status={reviewDraft.status}
+              lastSavedAt={reviewDraft.lastSavedAt}
+              restored={reviewDraft.restored}
+              onSaveNow={reviewDraft.saveNow}
+              className="mr-auto"
+            />
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>
