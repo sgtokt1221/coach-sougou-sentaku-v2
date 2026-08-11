@@ -8,9 +8,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireRole, scopeByOrganization } from "@/lib/api/auth";
 import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
 import { adminDb } from "@/lib/firebase/admin";
-import type { DocumentReview, DocumentReviewState } from "@/lib/types/document";
+import { FieldValue } from "firebase-admin/firestore";
+import type {
+  DocumentReview,
+  DocumentReviewHistoryEntry,
+  DocumentReviewState,
+} from "@/lib/types/document";
 
 const REVIEW_STATES: DocumentReviewState[] = ["approved", "revision_requested"];
+/** 承認/差し戻しの取り消し。review を消して未レビューへ戻す */
+const CLEAR = "cleared" as const;
 
 export async function POST(
   request: NextRequest,
@@ -22,14 +29,17 @@ export async function POST(
   const { id: studentId, docId } = await params;
   if (!adminDb) return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
 
-  let body: { state?: string };
+  let body: { state?: string; comment?: string };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: "リクエストボディが不正です" }, { status: 400 });
   }
-  const state = body.state as DocumentReviewState;
-  if (!state || !REVIEW_STATES.includes(state)) {
+  const state = body.state as DocumentReviewState | typeof CLEAR;
+  if (
+    !state ||
+    (state !== CLEAR && !REVIEW_STATES.includes(state as DocumentReviewState))
+  ) {
     return NextResponse.json({ error: "state が不正です" }, { status: 400 });
   }
 
@@ -68,13 +78,43 @@ export async function POST(
       /* noop */
     }
 
-    const review: DocumentReview = {
-      state,
+    const at = new Date().toISOString();
+    // 何をしたかは履歴に必ず残す。review は最新状態しか持たないため、
+    // 取り消すと「誰がいつ承認していたか」が消えてしまう。
+    const entry: DocumentReviewHistoryEntry = {
+      action: state,
       by: callerUid,
       byName,
-      at: new Date().toISOString(),
+      at,
+      ...(body.comment?.trim() ? { comment: body.comment.trim() } : {}),
     };
-    await ref.set({ review, updatedAt: review.at }, { merge: true });
+
+    if (state === CLEAR) {
+      await ref.set(
+        {
+          review: FieldValue.delete(),
+          reviewHistory: FieldValue.arrayUnion(entry),
+          updatedAt: at,
+        },
+        { merge: true },
+      );
+      return NextResponse.json({ cleared: true, entry });
+    }
+
+    const review: DocumentReview = {
+      state: state as DocumentReviewState,
+      by: callerUid,
+      byName,
+      at,
+    };
+    await ref.set(
+      {
+        review,
+        reviewHistory: FieldValue.arrayUnion(entry),
+        updatedAt: at,
+      },
+      { merge: true },
+    );
 
     return NextResponse.json(review);
   } catch (error) {

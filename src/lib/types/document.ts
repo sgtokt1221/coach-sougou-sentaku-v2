@@ -26,6 +26,20 @@ export interface DocumentReview {
   at: string;
 }
 
+/**
+ * レビューの操作履歴。review は最新状態しか持たないため、
+ * 「いつ誰がどのコメントで承認/差し戻したか」を後から追えなかった。
+ */
+export interface DocumentReviewHistoryEntry {
+  /** cleared = 承認/差し戻しの取り消し */
+  action: DocumentReviewState | "cleared";
+  by: string;
+  byName: string;
+  at: string;
+  /** そのとき生徒へ送ったコメント本文（引用を含む） */
+  comment?: string;
+}
+
 /** 未完了ウィザードの復元用進行状態。ウィザード完走後は completed:true。 */
 export interface DocumentWizardState {
   /** 0-4（書類タイプ/志望校/フレームワーク/活動実績/下書き生成） */
@@ -57,6 +71,8 @@ export interface Document {
   aiLikeness?: DocumentAiLikeness;
   /** 管理者による承認/差し戻しレビュー状態 */
   review?: DocumentReview;
+  /** レビュー操作の履歴（新しいものを末尾に積む） */
+  reviewHistory?: DocumentReviewHistoryEntry[];
   deadline?: string;
   linkedActivities: string[];
   createdAt: string;

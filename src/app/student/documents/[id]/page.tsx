@@ -528,6 +528,10 @@ export default function DocumentEditorPage() {
 
       {/* モバイル: AI添削（共通の段階スナップ式スライドパネル）。 */}
       <MobileSlideOverPanel label="AI添削" title="AI添削">
+        {/* 先生のコメントはAIの講評より先に読ませる */}
+        <div className="mb-4">
+          <TeacherComments inlineComments={doc.inlineComments} />
+        </div>
         <ReviewPanel
           feedback={feedback}
           reviewing={reviewing}
@@ -595,6 +599,7 @@ export default function DocumentEditorPage() {
                 }}
                 hasFeedback={!!feedback}
                 versionCount={doc.versions?.length ?? 0}
+                commentCount={doc.inlineComments?.length ?? 0}
               />
             }
           />
@@ -610,7 +615,8 @@ export default function DocumentEditorPage() {
           <SheetHeader>
             <SheetTitle>AIツール</SheetTitle>
           </SheetHeader>
-          <div className="px-4 pb-6">
+          <div className="space-y-4 px-4 pb-6">
+            <TeacherComments inlineComments={doc.inlineComments} />
             <ReviewPanel
               feedback={feedback}
               reviewing={reviewing}
@@ -925,38 +931,6 @@ function ReviewPanel({
         </CardContent>
       </Card>
 
-      {/* 講師からの範囲コメント。本文は編集用テキストエリアのためハイライトを
-          重ねられないので、引用付きの一覧で見せる。 */}
-      {(inlineComments ?? []).length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <MessageSquare className="size-4" />
-              先生からのコメント
-              <span className="text-xs font-normal text-muted-foreground">
-                {inlineComments!.length}件
-              </span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {inlineComments!.map((c: EssayInlineComment) => (
-              <div key={c.id} className="rounded-lg border bg-card p-2.5">
-                <p className="text-xs font-semibold text-teal-700">
-                  {c.createdByName}
-                  <span className="ml-1 text-[10px] font-normal text-muted-foreground">
-                    {c.createdByRole === "teacher" ? "講師" : "管理者"}
-                  </span>
-                </p>
-                <p className="mt-1 rounded bg-muted/50 px-2 py-1 text-[11px] text-muted-foreground">
-                  「{c.quote}」
-                </p>
-                <p className="mt-1 whitespace-pre-wrap text-sm">{c.comment}</p>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
-
       {/* AIで書き換え */}
       <Card>
         <CardHeader className="pb-3">
@@ -1190,12 +1164,28 @@ function DocumentToolbar({
   onOpen,
   hasFeedback,
   versionCount,
+  commentCount,
 }: {
-  onOpen: (target: "review" | "rewrite" | "likeness" | "versions") => void;
+  onOpen: (
+    target: "comments" | "review" | "rewrite" | "likeness" | "versions",
+  ) => void;
   hasFeedback: boolean;
   versionCount: number;
+  /** 先生からの範囲コメント件数。0なら出さない */
+  commentCount: number;
 }) {
   const items = [
+    // 先生のコメントはAIの機能より先に置く
+    ...(commentCount > 0
+      ? [
+          {
+            key: "comments" as const,
+            icon: MessageSquare,
+            label: `先生のコメント（${commentCount}）`,
+            dot: true,
+          },
+        ]
+      : []),
     { key: "review" as const, icon: Sparkles, label: "AI添削", dot: hasFeedback },
     { key: "rewrite" as const, icon: Wand2, label: "AIで書き換え", dot: false },
     { key: "likeness" as const, icon: ShieldCheck, label: "個別性チェック", dot: false },
@@ -1241,4 +1231,47 @@ function formatVersionDate(iso: string): string {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+/**
+ * 講師からの範囲コメント。
+ *
+ * 以前は AI添削パネルの中にあったため、2列レイアウトで「AIツール」の
+ * シートを開かないと読めなかった。先生からの指摘は本文の隣に常に出す。
+ */
+function TeacherComments({
+  inlineComments,
+}: {
+  inlineComments?: EssayInlineComment[];
+}) {
+  if ((inlineComments ?? []).length === 0) return null;
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <MessageSquare className="size-4" />
+          先生からのコメント
+          <span className="text-muted-foreground text-xs font-normal">
+            {inlineComments!.length}件
+          </span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {inlineComments!.map((c: EssayInlineComment) => (
+          <div key={c.id} className="bg-card rounded-lg border p-2.5">
+            <p className="text-xs font-semibold text-teal-700">
+              {c.createdByName}
+              <span className="text-muted-foreground ml-1 text-[10px] font-normal">
+                {c.createdByRole === "teacher" ? "講師" : "管理者"}
+              </span>
+            </p>
+            <p className="bg-muted/50 text-muted-foreground mt-1 rounded px-2 py-1 text-[11px]">
+              「{c.quote}」
+            </p>
+            <p className="mt-1 text-sm whitespace-pre-wrap">{c.comment}</p>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
 }

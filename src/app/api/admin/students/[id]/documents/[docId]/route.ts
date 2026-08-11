@@ -80,6 +80,8 @@ export async function GET(
       targetWordCount: data.targetWordCount ?? undefined,
       status: data.status ?? "draft",
       review: data.review ?? undefined,
+      // 誰がいつどのコメントで承認/差し戻し/取り消したか
+      reviewHistory: data.reviewHistory ?? [],
       aiScore: feedback
         ? {
             apAlignment:

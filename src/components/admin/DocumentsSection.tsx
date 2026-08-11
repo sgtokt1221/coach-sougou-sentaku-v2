@@ -19,6 +19,7 @@ import {
   Loader2,
   CheckCircle2,
   RotateCcw,
+  Undo2,
   ShieldCheck,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -41,6 +42,7 @@ import type { EssayInlineComment } from "@/lib/types/essay";
 import type {
   DocumentStatus,
   DocumentReview,
+  DocumentReviewHistoryEntry,
   DocumentAiLikeness,
 } from "@/lib/types/document";
 import {
@@ -99,6 +101,8 @@ interface DocumentDetail {
   targetWordCount?: number;
   status: DocumentStatus;
   review?: DocumentReview;
+  /** 承認/差し戻し/取り消しの操作履歴（古い順） */
+  reviewHistory?: DocumentReviewHistoryEntry[];
   aiScore?: {
     apAlignment?: number;
     structure: number;
@@ -175,7 +179,7 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
   const [detailLoading, setDetailLoading] = useState(false);
   const [reviewMsg, setReviewMsg] = useState("");
   const [reviewBusy, setReviewBusy] = useState<
-    "approved" | "revision_requested" | null
+    "approved" | "revision_requested" | "cleared" | null
   >(null);
   const [aiCheckBusy, setAiCheckBusy] = useState(false);
 
@@ -207,17 +211,31 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
     }
   }
 
-  async function submitReview(state: "approved" | "revision_requested") {
+  async function submitReview(
+    state: "approved" | "revision_requested" | "cleared",
+  ) {
     if (!detailDoc) return;
     if (state === "revision_requested" && !reviewMsg.trim()) {
       toast.error("差し戻しにはコメント（理由）を入力してください");
+      return;
+    }
+    if (
+      state === "cleared" &&
+      !window.confirm(
+        "この書類のレビュー状態を取り消して未レビューに戻します。取り消したことは履歴に残ります。",
+      )
+    ) {
       return;
     }
     setReviewBusy(state);
     try {
       const message =
         reviewMsg.trim() ||
-        (state === "approved" ? "この書類を承認しました。" : "");
+        (state === "approved"
+          ? "この書類を承認しました。"
+          : state === "cleared"
+            ? "この書類のレビュー状態を取り消しました。"
+            : "");
       const targetLabel = `${detailDoc.universityName} ${detailDoc.type}`;
       // 1) コメントを送信（チャット＋通知）
       await authFetch(`/api/admin/students/${studentId}/feedback`, {
@@ -241,15 +259,27 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ state }),
+          // コメントも渡す。履歴から「どの指摘で差し戻したか」を追えるようにする
+          body: JSON.stringify({ state, comment: message }),
         }
       );
       if (!res.ok) throw new Error();
-      const review: DocumentReview = await res.json();
-      setDetailDoc({ ...detailDoc, review });
+      const result = await res.json();
+      // 取り消し時は review を消す。履歴は再取得で反映する
+      setDetailDoc({
+        ...detailDoc,
+        review: state === "cleared" ? undefined : (result as DocumentReview),
+      });
+      void openDetail(detailDoc.id);
       setReviewMsg("");
       mutate();
-      toast.success(state === "approved" ? "承認しました" : "差し戻しました");
+      toast.success(
+        state === "approved"
+          ? "承認しました"
+          : state === "cleared"
+            ? "レビュー状態を取り消しました"
+            : "差し戻しました",
+      );
     } catch {
       toast.error("処理に失敗しました");
     } finally {
@@ -533,7 +563,60 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
                       )}
                       差し戻し
                     </Button>
+                    {detailDoc.review?.state && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="gap-1"
+                        disabled={reviewBusy !== null}
+                        onClick={() => submitReview("cleared")}
+                      >
+                        {reviewBusy === "cleared" ? (
+                          <Loader2 className="size-3.5 animate-spin" />
+                        ) : (
+                          <Undo2 className="size-3.5" />
+                        )}
+                        取り消し
+                      </Button>
+                    )}
                   </div>
+
+                  {/* 操作履歴。review は最新状態しか持たないので、
+                      いつ誰がどのコメントで承認/差し戻したかはここでしか追えない */}
+                  {(detailDoc.reviewHistory?.length ?? 0) > 0 && (
+                    <div className="space-y-1 rounded border p-2">
+                      <p className="text-muted-foreground text-xs font-medium">
+                        レビュー履歴
+                      </p>
+                      {[...(detailDoc.reviewHistory ?? [])]
+                        .reverse()
+                        .map((h, i) => (
+                          <div key={`${h.at}-${i}`} className="text-xs">
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <span className="font-medium">
+                                {REVIEW_ACTION_LABELS[h.action] ?? h.action}
+                              </span>
+                              <span className="text-muted-foreground">
+                                {h.byName}
+                              </span>
+                              <span className="text-muted-foreground">
+                                {new Date(h.at).toLocaleString("ja-JP", {
+                                  month: "numeric",
+                                  day: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </span>
+                            </div>
+                            {h.comment && (
+                              <p className="text-muted-foreground mt-0.5 whitespace-pre-wrap">
+                                {h.comment}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -688,3 +771,11 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
     </>
   );
 }
+
+/** レビュー履歴に出す操作名 */
+const REVIEW_ACTION_LABELS: Record<string, string> = {
+  approved: "承認",
+  revision_requested: "差し戻し",
+  resubmitted: "再確認待ち",
+  cleared: "取り消し",
+};
