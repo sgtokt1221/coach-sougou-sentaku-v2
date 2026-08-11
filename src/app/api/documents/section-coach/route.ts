@@ -180,7 +180,8 @@ export async function POST(request: NextRequest) {
     const client = new Anthropic();
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 800,
+      // 背景知識を聞かれたときは長めに答えるため、800 では途中で切れる
+      max_tokens: 1500,
       system: systemPrompt,
       messages: [
         ...trimmedHistory.map((m) => ({ role: m.role, content: m.content })),

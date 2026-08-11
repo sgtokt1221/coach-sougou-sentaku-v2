@@ -13,13 +13,24 @@ import type {
   CoachThread,
 } from "@/lib/types/essay-coach";
 import type { Activity } from "@/lib/types/activity";
+import { AI_MODEL_SONNET } from "@/lib/ai/prompt-versions";
 
 export const maxDuration = 60;
 
 const MAX_DRAFT_CHARS = 8000;
 const MAX_HISTORY_TURNS = 10;
 const MAX_ACTIVITIES = 5;
-const COACH_MODEL = "claude-haiku-4-5-20251001";
+/**
+ * コーチの応答モデル。
+ *
+ * 背景知識を聞かれたら正確に答える必要があるため haiku から上げた。
+ * 同じ質問（個人情報保護の制度と事件）で haiku は2点間違えた:
+ *   - 行政機関個人情報保護法が現存すると説明（2022年に個人情報保護法へ統合済み）
+ *   - 罰則を「6月以下の懲役または100万円以下の罰金」と説明（法人は1億円以下）
+ * sonnet は同じ質問で罰金1億円を正しく答え、廃止済みの法律にも触れなかった。
+ * 1通あたりの費用は上がる。戻すならここを haiku に差し替える。
+ */
+const COACH_MODEL = AI_MODEL_SONNET;
 
 function truncateDraft(s: string): string {
   if (!s) return "";
@@ -209,7 +220,8 @@ export async function POST(request: NextRequest) {
     const client = new Anthropic();
     const response = await client.messages.create({
       model: COACH_MODEL,
-      max_tokens: 600,
+      // 背景知識を聞かれたときは長めに答えるため、600 では途中で切れる
+      max_tokens: 1500,
       system: systemPrompt,
       messages: [
         ...trimmedHistory.map((m) => ({
