@@ -82,6 +82,11 @@ export const ESSAY_REVIEW_SYSTEM_PROMPT = `あなたは総合型選抜（旧AO�
 ## 重い減点事由
 - 設問が明示的に求めている要素（「〜を比較せよ」「〜の方策を示せ」等）が欠けている場合、
   最も重い減点事由として扱い、logic と apAlignment を4点以下にします。
+- 資料（課題文・英文・グラフ・講義）が与えられている設問で、その内容を取り違えて
+  いる場合も同じ重さで扱い、logic を4点以下にします。総合型選抜の小論文は資料を
+  読んで書く形式が主流で、誤読は結論の当否より重い欠点です。
+  取り違えた箇所は improvements で必ず引用し、資料のどこと食い違うかを示します。
+  資料が与えられていない設問では、この事由は適用しません。
 - 努力や着眼点を汲んで点を底上げしません。実力を正確に伝えることが本人の役に立ちます。
 （字数についての扱いは「今回の条件」に従ってください。自分で字数を数える必要はありません。）
 
@@ -138,8 +143,11 @@ export interface EssayReviewPromptOptions {
   fillRate?: number | null;
 }
 
-/** 充足率がこの値を下回る答案は論を展開しきれていないと判定する。 */
-const FILL_RATE_PENALTY_THRESHOLD = 70;
+/**
+ * 充足率がこの値を下回る答案は論を展開しきれていないと判定する。
+ * 総合型選抜の指導では8割が目安とされるため、7割から引き上げた。
+ */
+const FILL_RATE_PENALTY_THRESHOLD = 80;
 
 /**
  * 字数に関する指示。
@@ -162,18 +170,20 @@ function buildWordLimitRule(options: EssayReviewPromptOptions): string {
 
 function buildQuestionTypeRubric(questionType?: string): string {
   switch (questionType) {
+    // 「重視します」だけでは、どの軸をどう動かすかが決まらない。
+    // 読解の正確さは logic で見る（他の軸へ持ち込まない）と明示する。
     case "english-reading":
-      return "英文の要旨・概念を正確に理解し、資料と自論を接続できているかを重視します。";
+      return "英文の要旨・概念を正確に理解し、資料と自論を接続できているかを logic で見ます。要旨の取り違えは logic を4点以下にします。";
     case "data-analysis":
-      return "資料の数値・傾向を正確に読み、データに基づいて考察できているかを重視します。";
+      return "資料の数値・傾向を正確に読み、データに基づいて考察できているかを logic で見ます。数値や増減の読み違えは logic を4点以下にします。";
     case "mixed":
-      return "英文・データ双方の正確な読解と、それらを自論へ接続する力を重視します。";
+      return "英文・データ双方の正確な読解と、それらを自論へ接続する力を logic で見ます。どちらかの読み違えでも logic を4点以下にします。";
     case "lecture":
-      return "講義固有の主張・具体例を正確に踏まえ、単なる一般論を超えているかを重視します。";
+      return "講義固有の主張・具体例を正確に踏まえ、一般論を超えているかを logic で見ます。講義の主張の取り違えは logic を4点以下にします。";
     case "report":
-      return "課題文の理解、要約・言い換え、参照の妥当性、自分の考察との接続を重視し、reportInsightsを必ず埋めます。";
+      return "課題文の理解、要約・言い換え、参照の妥当性、自分の考察との接続を logic で見ます。課題文の主張の取り違えは logic を4点以下にします。reportInsightsを必ず埋めます。";
     default:
-      return "設問への直接的な応答、主張、根拠、反論検討を重視します。";
+      return "資料のない設問です。設問への直接的な応答、主張、根拠、反論検討を重視します。読解の誤りによる減点は適用しません。";
   }
 }
 

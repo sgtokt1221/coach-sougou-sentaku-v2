@@ -49,7 +49,15 @@ export const AI_PROMPT_VERSIONS = {
     // （D17/C27/B37/A40）だけで、実データの密集帯を見落とした。
     // 採点結果が動くため、プロンプトを実質変更したらここも必ず上げる
     // （aiMetadata に刻まれる版が変わらないと改定前後のスコア比較ができない）。
-    promptVersion: "essay-review-v5",
+    // v6: 総合型選抜との整合を見直した。資料を読んで書く形式が主流なのに、
+    //     軸の基準にも重い減点事由にも「資料の読解」が一切無く、課題文や
+    //     グラフを取り違えた答案でも logic の「根拠が一般論」(5点)にしか
+    //     当たらなかった（材料は sourceText/chartDataSummary で渡していた）。
+    //     - 誤読を設問要素の欠落と同じ重さの減点事由にした（logic 4点以下）
+    //     - 出題形式ごとの指示を「重視します」から「logic で見る」へ具体化
+    //     - 資料のない設問では誤読減点を適用しないと明記
+    //     あわせて字数の減点しきい値を充足率70%→80%に上げた（8割が指導の目安）。
+    promptVersion: "essay-review-v6",
     schemaVersion: "essay-review-output-v2",
   },
   chocoReview: {
