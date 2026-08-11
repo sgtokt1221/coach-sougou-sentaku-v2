@@ -122,7 +122,8 @@ async function main() {
     }
 
     const before = (e.scores ?? null) as Scores | null;
-    const oldVersion = e.aiMetadata?.promptVersion ?? "不明";
+    // 版は feedback の中に入る（review-core が feedback.aiMetadata に載せる）
+    const oldVersion = e.feedback?.aiMetadata?.promptVersion ?? "不明";
     console.log(
       `${d.id}  ${String(e.topic ?? "(お題なし)").slice(0, 24)}  ` +
         `${ocrText.length}字 / 制限${ctx.wordLimit ?? "なし"} / ${ctx.questionType ?? "essay"}` +
