@@ -396,6 +396,52 @@ export default function DocumentEditorPage() {
     [doc?.type, content],
   );
 
+  /**
+   * 過去の版の本文に戻す。
+   *
+   * 版は手動保存でしか積まれないため、先に今の本文を保存して版に残してから
+   * 戻す。そうしないと自動保存しかしていない本文が戻した瞬間に消える。
+   */
+  const handleRestoreVersion = async (v: Document["versions"][number]) => {
+    if (v.content === content) {
+      toast.info("この版は今の本文と同じです");
+      return;
+    }
+    if (
+      !window.confirm(
+        `${v.wordCount}文字のこの版に戻します。今の本文（${content.length}文字）は履歴に残るので、戻した後でもやり直せます。`,
+      )
+    ) {
+      return;
+    }
+    setSaving(true);
+    try {
+      // 1) 今の本文を版として残す
+      if (content.trim()) {
+        const keep = await authFetch(`/api/documents/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content }),
+        });
+        if (!keep.ok) throw new Error();
+      }
+      // 2) 選んだ版へ戻して確定する
+      const res = await authFetch(`/api/documents/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: v.content }),
+      });
+      if (!res.ok) throw new Error();
+      setContent(v.content);
+      await loadDocument();
+      toast.success("この版に戻しました");
+    } catch {
+      toast.error("戻せませんでした。通信環境を確認してもう一度お試しください");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="mx-auto max-w-5xl space-y-4 px-4 py-5 lg:py-8">
@@ -488,6 +534,7 @@ export default function DocumentEditorPage() {
           onReview={handleReview}
           contentEmpty={!content.trim()}
           versions={doc.versions}
+          onRestoreVersion={handleRestoreVersion}
           showVersions={showVersions}
           setShowVersions={setShowVersions}
           aiLikeness={aiLikeness}
@@ -517,7 +564,14 @@ export default function DocumentEditorPage() {
             universityId={doc?.universityId}
             facultyId={doc?.facultyId}
             docId={id}
-            onApplySuggestion={(_sectionId, text) => setContent(text)}
+            onApplySuggestion={(_sectionId, text) => {
+              // 編集画面の「セクション」は本文全体なので、置き換えると
+              // 書いたものが丸ごと消える。末尾に足して本人に配置させる。
+              setContent((prev) =>
+                prev.trim() ? `${prev.trimEnd()}\n\n${text}` : text,
+              );
+              toast.success("本文の末尾に追記しました。位置は自由に動かせます");
+            }}
           />
         </div>
         <div className="lg:col-span-2">
@@ -563,6 +617,7 @@ export default function DocumentEditorPage() {
               onReview={handleReview}
               contentEmpty={!content.trim()}
               versions={doc.versions}
+              onRestoreVersion={handleRestoreVersion}
               showVersions={showVersions}
               setShowVersions={setShowVersions}
               aiLikeness={aiLikeness}
@@ -742,6 +797,7 @@ function ReviewPanel({
   onReview,
   contentEmpty,
   versions,
+  onRestoreVersion,
   showVersions,
   setShowVersions,
   aiLikeness,
@@ -763,6 +819,8 @@ function ReviewPanel({
   onReview: () => void;
   contentEmpty: boolean;
   versions: Document["versions"];
+  /** その版の本文に戻す。現在の本文は履歴に残るので失われない */
+  onRestoreVersion: (version: Document["versions"][number]) => void;
   showVersions: boolean;
   setShowVersions: (v: boolean) => void;
   aiLikeness: DocumentAiLikeness | null;
@@ -780,6 +838,8 @@ function ReviewPanel({
   onApplyRewrite: () => void;
   onDiscardRewrite: () => void;
 }) {
+  /** 中身を開いている版。1つずつ開く */
+  const [openVersionId, setOpenVersionId] = useState<string | null>(null);
   return (
     <div className="space-y-4">
       {/* AI Review */}
@@ -1071,27 +1131,52 @@ function ReviewPanel({
           </CardHeader>
           {showVersions && (
             <CardContent className="space-y-2">
-              {[...versions].reverse().map((v) => (
-                <div
-                  key={v.id}
-                  className="space-y-1 rounded border p-2 text-xs"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">{v.id}</span>
-                    <span className="text-muted-foreground">
-                      {v.wordCount} 文字
-                    </span>
+              {[...versions].reverse().map((v) => {
+                const open = openVersionId === v.id;
+                return (
+                  <div key={v.id} className="rounded border text-xs">
+                    <button
+                      type="button"
+                      className="hover:bg-muted/40 flex w-full items-center justify-between gap-2 p-2 text-left"
+                      onClick={() => setOpenVersionId(open ? null : v.id)}
+                    >
+                      <span className="min-w-0">
+                        {/* 版のIDは生徒には意味が無い。いつ・どれくらいの版かで選ぶ */}
+                        <span className="font-medium">
+                          {formatVersionDate(v.createdAt)}
+                        </span>
+                        <span className="text-muted-foreground ml-2">
+                          {v.wordCount} 文字
+                        </span>
+                        {v.feedback && (
+                          <Badge variant="secondary" className="ml-2 text-[10px]">
+                            添削済み
+                          </Badge>
+                        )}
+                      </span>
+                      <ChevronDown
+                        className={`size-4 shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
+                      />
+                    </button>
+                    {open && (
+                      <div className="space-y-2 border-t p-2">
+                        <div className="bg-muted/40 max-h-60 overflow-y-auto rounded p-2 leading-relaxed whitespace-pre-wrap">
+                          {v.content || "（本文なし）"}
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 w-full gap-1 px-2 text-xs"
+                          onClick={() => onRestoreVersion(v)}
+                        >
+                          <History className="size-3.5" />
+                          この版に戻す
+                        </Button>
+                      </div>
+                    )}
                   </div>
-                  <p className="text-muted-foreground">
-                    {new Date(v.createdAt).toLocaleDateString("ja-JP")}
-                  </p>
-                  {v.feedback && (
-                    <Badge variant="secondary" className="text-xs">
-                      添削済み
-                    </Badge>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </CardContent>
           )}
         </Card>
@@ -1143,4 +1228,17 @@ function DocumentToolbar({
       ))}
     </div>
   );
+}
+
+/** 版の見出し。生徒が選べるよう日付と時刻で示す */
+function formatVersionDate(iso: string): string {
+  const d = new Date(iso);
+  if (isNaN(+d)) return iso;
+  return d.toLocaleString("ja-JP", {
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
