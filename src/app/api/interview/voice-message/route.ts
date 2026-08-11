@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { buildWhisperPrompt } from "@/lib/interview/whisper-context";
+import { AI_MODEL_SONNET } from "@/lib/ai/prompt-versions";
 
 export async function POST(request: NextRequest) {
   try {
@@ -109,7 +110,7 @@ export async function POST(request: NextRequest) {
         allMessages.push({ role: "user", content: transcribedText });
 
         const res = await client.messages.create({
-          model: "claude-haiku-4-5-20251001",
+          model: AI_MODEL_SONNET,
           max_tokens: 512,
           system: systemPrompt,
           messages: allMessages,

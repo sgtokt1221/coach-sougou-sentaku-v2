@@ -318,7 +318,7 @@ export async function POST(request: NextRequest) {
           concatenated,
         );
         const resp = await client.messages.create({
-          model: "claude-haiku-4-5-20251001",
+          model: AI_MODEL_SONNET,
           max_tokens: 500,
           system: systemPrompt,
           messages: [{ role: "user", content: "JSON 配列を出力してください。" }],

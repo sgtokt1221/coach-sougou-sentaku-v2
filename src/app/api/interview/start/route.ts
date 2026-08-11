@@ -6,6 +6,7 @@ import type { ContentMode } from "@/lib/types/interview-content";
 import type { InterviewStartRequest, InterviewStartResponse } from "@/lib/types/interview";
 import type { WeaknessRecord } from "@/lib/types/growth";
 import type { InterviewTendency } from "@/lib/types/university";
+import { AI_MODEL_SONNET } from "@/lib/ai/prompt-versions";
 
 export async function POST(request: NextRequest) {
   try {
@@ -143,7 +144,7 @@ export async function POST(request: NextRequest) {
       const maxTokens = mode === "group_discussion" ? 1800 : 512;
 
       const response = await client.messages.create({
-        model: "claude-haiku-4-5-20251001",
+        model: AI_MODEL_SONNET,
         max_tokens: maxTokens,
         system: systemPrompt,
         messages: [{ role: "user", content: "面接を開始してください。開始の挨拶と最初の質問をしてください。" }],

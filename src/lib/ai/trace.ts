@@ -35,7 +35,10 @@ export interface AiTraceInput {
  * 【要確認】価格は変動するため、公式 (https://www.anthropic.com/pricing) で定期検証すること。
  */
 const MODEL_PRICING_USD: Record<string, { input: number; output: number }> = {
+  // haiku は全面的に使わなくなったが、過去のトレースの単価計算に要るため残す
   "claude-haiku-4-5-20251001": { input: 1.0, output: 5.0 },
+  "claude-sonnet-4-6": { input: 3.0, output: 15.0 },
+  "claude-sonnet-5": { input: 3.0, output: 15.0 },
 };
 
 /** 為替は概算。必要に応じて更新。 */

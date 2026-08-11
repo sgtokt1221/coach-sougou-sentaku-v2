@@ -4,6 +4,7 @@ import { assertSessionAccess } from "@/lib/api/session-auth";
 import { buildLessonReflectionPrompt } from "@/lib/ai/prompts/lesson-reflection";
 import { extractJsonObject } from "@/lib/ai/extract-json";
 import type { Session, LessonDebrief } from "@/lib/types/session";
+import { AI_MODEL_SONNET } from "@/lib/ai/prompt-versions";
 
 export const maxDuration = 60;
 
@@ -71,7 +72,7 @@ export async function POST(
     const Anthropic = (await import("@anthropic-ai/sdk")).default;
     const client = new Anthropic();
     const resp = await client.messages.create({
-      model: "claude-haiku-4-5-20251001",
+      model: AI_MODEL_SONNET,
       max_tokens: 1200,
       system: systemPrompt,
       messages: [{ role: "user", content: "JSON のみを出力してください。" }],

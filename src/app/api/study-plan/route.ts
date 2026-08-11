@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb, verifyAuthToken } from "@/lib/firebase/admin";
 import type { StudyPlanTask, StudyPlanResponse } from "@/lib/types/study-plan";
+import { AI_MODEL_SONNET } from "@/lib/ai/prompt-versions";
 
 export async function GET(request: NextRequest) {
   try {
@@ -60,7 +61,7 @@ export async function GET(request: NextRequest) {
           "anthropic-version": "2023-06-01",
         },
         body: JSON.stringify({
-          model: "claude-3-haiku-20240307",
+          model: AI_MODEL_SONNET,
           max_tokens: 1500,
           messages: [
             {

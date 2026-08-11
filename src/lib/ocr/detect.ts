@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { TemplateInfo } from "@/lib/types/ocr";
+import { AI_MODEL_SONNET } from "@/lib/ai/prompt-versions";
 
 /** 検出プロンプトのバージョン（変更時に更新して記録に残す） */
 export const DETECT_PROMPT_VERSION = "detect-v1";
@@ -26,7 +27,7 @@ export async function detectTemplate(base64Data: string): Promise<TemplateInfo> 
   try {
     const client = new Anthropic();
     const response = await client.messages.create({
-      model: "claude-haiku-4-5-20251001",
+      model: AI_MODEL_SONNET,
       max_tokens: 300,
       messages: [
         {

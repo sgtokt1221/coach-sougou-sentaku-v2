@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { buildInterviewSystemPrompt } from "@/lib/ai/prompts/interview";
 import type { InterviewMessageResponse, InterviewMessage, InterviewMode } from "@/lib/types/interview";
+import { AI_MODEL_SONNET } from "@/lib/ai/prompt-versions";
 
 export async function POST(request: NextRequest) {
   try {
@@ -90,7 +91,7 @@ export async function POST(request: NextRequest) {
     const maxTokens = mode === "group_discussion" ? 1200 : 512;
 
     const response = await client.messages.create({
-      model: "claude-haiku-4-5-20251001",
+      model: AI_MODEL_SONNET,
       max_tokens: maxTokens,
       system: systemPrompt,
       messages: claudeMessages,
@@ -106,7 +107,7 @@ export async function POST(request: NextRequest) {
       if (bracketCount <= 1 && content.length < 120) {
         try {
           const followup = await client.messages.create({
-            model: "claude-haiku-4-5-20251001",
+            model: AI_MODEL_SONNET,
             max_tokens: maxTokens,
             system: systemPrompt,
             messages: [

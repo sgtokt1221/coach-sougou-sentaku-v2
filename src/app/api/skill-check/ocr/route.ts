@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import * as crypto from "crypto";
+import { AI_MODEL_SONNET } from "@/lib/ai/prompt-versions";
 
 /**
  * スキルチェック用の軽量 OCR エンドポイント。
@@ -84,7 +85,7 @@ async function extractEssayBody(rawOcrText: string): Promise<string> {
   try {
     const client = new Anthropic();
     const response = await client.messages.create({
-      model: "claude-haiku-4-5-20251001",
+      model: AI_MODEL_SONNET,
       max_tokens: 4096,
       system: `あなたはOCRテキストから小論文の本文だけを抽出するフィルターです。
 入力されたテキストから、手書きの小論文本文のみを抽出し、それだけを出力してください。

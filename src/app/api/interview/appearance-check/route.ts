@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { buildAppearanceCheckPrompt } from "@/lib/ai/prompts/appearance";
 import type { AppearanceAnalysis } from "@/lib/types/interview";
+import { AI_MODEL_SONNET } from "@/lib/ai/prompt-versions";
 
 export async function POST(request: Request) {
   const { imageBase64, mimeType = "image/jpeg" } = await request.json();
@@ -23,7 +24,7 @@ export async function POST(request: Request) {
   try {
     const client = new Anthropic();
     const response = await client.messages.create({
-      model: "claude-haiku-4-5-20251001",
+      model: AI_MODEL_SONNET,
       max_tokens: 512,
       messages: [
         {

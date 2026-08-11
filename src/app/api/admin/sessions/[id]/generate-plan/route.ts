@@ -307,7 +307,7 @@ export async function POST(
     const Anthropic = (await import("@anthropic-ai/sdk")).default;
     const client = new Anthropic();
     const resp = await client.messages.create({
-      model: "claude-haiku-4-5-20251001",
+      model: AI_MODEL_SONNET,
       max_tokens: 2000,
       system: systemPrompt,
       messages: [

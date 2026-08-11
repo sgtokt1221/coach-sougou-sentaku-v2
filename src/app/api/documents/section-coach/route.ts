@@ -16,6 +16,7 @@ import type {
 } from "@/lib/types/document-coach";
 import { prepareAdmissionPolicy } from "@/lib/ai/admission-policy";
 import { getDocumentTemplate } from "@/lib/templates/document-templates";
+import { AI_MODEL_SONNET } from "@/lib/ai/prompt-versions";
 
 export const maxDuration = 60;
 
@@ -179,7 +180,7 @@ export async function POST(request: NextRequest) {
     const Anthropic = (await import("@anthropic-ai/sdk")).default;
     const client = new Anthropic();
     const response = await client.messages.create({
-      model: "claude-haiku-4-5-20251001",
+      model: AI_MODEL_SONNET,
       // 背景知識を聞かれたときは長めに答えるため、800 では途中で切れる
       max_tokens: 1500,
       system: systemPrompt,
