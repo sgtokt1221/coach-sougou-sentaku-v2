@@ -182,7 +182,8 @@ export async function POST(request: NextRequest) {
     const response = await client.messages.create({
       model: AI_MODEL_SONNET,
       // 背景知識を聞かれたときは長めに答えるため、800 では途中で切れる
-      max_tokens: 1500,
+      // 背景知識や見本（全文の参考例）を書くため長めに取る
+      max_tokens: 2500,
       system: systemPrompt,
       messages: [
         ...trimmedHistory.map((m) => ({ role: m.role, content: m.content })),
