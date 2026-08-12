@@ -80,13 +80,20 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
+  overlay = true,
   ...props
 }: DialogPrimitive.Popup.Props & {
   showCloseButton?: boolean
+  /**
+   * 背景の暗転・ぼかしを出すか。false にすると後ろがそのまま読める。
+   * 後ろの本文を読みながら書く用途（FB・レビュー）で使う。
+   * 併せて Dialog 側に modal={false} を渡さないと後ろを操作できない。
+   */
+  overlay?: boolean
 }) {
   return (
     <DialogPortal>
-      <DialogOverlay />
+      {overlay && <DialogOverlay />}
       <DialogPrimitive.Popup
         data-slot="dialog-content"
         className={cn(

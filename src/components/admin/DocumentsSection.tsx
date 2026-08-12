@@ -715,8 +715,14 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
 
       {/* レビュー用モーダル。書類モーダルに埋めると、長いコメントを書くとき
           本文と同じスクロール領域で書きにくかった。入力欄はドラッグで広がる。 */}
-      <Dialog open={reviewOpen} onOpenChange={setReviewOpen}>
-        <DialogContent className="sm:max-w-2xl" style={reviewDrag.contentStyle}>
+      {/* modal={false} + overlay={false}: 後ろの書類本文を読みながら、
+          ドラッグで引用しつつ書くため、暗転も操作の遮断もしない */}
+      <Dialog open={reviewOpen} onOpenChange={setReviewOpen} modal={false}>
+        <DialogContent
+          className="shadow-xl sm:max-w-2xl"
+          style={reviewDrag.contentStyle}
+          overlay={false}
+        >
           {/* 見出しをつかんで動かせる */}
           <DialogHeader {...reviewDrag.handleProps}>
             <DialogTitle className="flex items-center gap-2 text-base">

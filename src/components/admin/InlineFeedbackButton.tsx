@@ -138,8 +138,14 @@ export function InlineFeedbackButton({
 
       {/* 別モーダルで開く。元のモーダル（答案・書類）の中に折りたたむと、
           長いFBを書くときに親のスクロールと干渉して書きにくかった。 */}
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-2xl" style={dragDialog.contentStyle}>
+      {/* modal={false} + overlay={false}: 後ろの答案を読みながら、
+          ドラッグで引用しつつ返信するため、暗転も操作の遮断もしない */}
+      <Dialog open={open} onOpenChange={setOpen} modal={false}>
+        <DialogContent
+          className="shadow-xl sm:max-w-2xl"
+          style={dragDialog.contentStyle}
+          overlay={false}
+        >
           {/* 見出しをつかんで動かせる */}
           <DialogHeader {...dragDialog.handleProps}>
             <DialogTitle className="flex items-center gap-2 text-base">
