@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { usePersistentDraft } from "@/hooks/usePersistentDraft";
+import { useDraggableDialog } from "@/hooks/useDraggableDialog";
 import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
 import { MessageSquare, Send, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -87,6 +88,8 @@ export function InlineFeedbackButton({
    * 書きかけを端末とクラウドへ退避する。長文のFBを書いている途中で
    * モーダルを閉じたりリロードしても消えないようにする。
    */
+  const dragDialog = useDraggableDialog(open);
+
   const draft = usePersistentDraft({
     key: `admin-feedback-${type}-${targetId}`,
     value: { message },
@@ -136,8 +139,9 @@ export function InlineFeedbackButton({
       {/* 別モーダルで開く。元のモーダル（答案・書類）の中に折りたたむと、
           長いFBを書くときに親のスクロールと干渉して書きにくかった。 */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-2xl">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-2xl" style={dragDialog.contentStyle}>
+          {/* 見出しをつかんで動かせる */}
+          <DialogHeader {...dragDialog.handleProps}>
             <DialogTitle className="flex items-center gap-2 text-base">
               <MessageSquare className="size-4" />
               フィードバック

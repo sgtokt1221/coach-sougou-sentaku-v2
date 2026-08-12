@@ -28,6 +28,7 @@ import {
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { usePersistentDraft } from "@/hooks/usePersistentDraft";
+import { useDraggableDialog } from "@/hooks/useDraggableDialog";
 import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
 import { useAuthSWR } from "@/lib/api/swr";
 import { authFetch } from "@/lib/api/client";
@@ -216,6 +217,8 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
       setAiCheckBusy(false);
     }
   }
+
+  const reviewDrag = useDraggableDialog(reviewOpen);
 
   /** 書きかけのレビューコメントを退避する。閉じても消えないように */
   const reviewDraft = usePersistentDraft({
@@ -713,8 +716,9 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
       {/* レビュー用モーダル。書類モーダルに埋めると、長いコメントを書くとき
           本文と同じスクロール領域で書きにくかった。入力欄はドラッグで広がる。 */}
       <Dialog open={reviewOpen} onOpenChange={setReviewOpen}>
-        <DialogContent className="sm:max-w-2xl">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-2xl" style={reviewDrag.contentStyle}>
+          {/* 見出しをつかんで動かせる */}
+          <DialogHeader {...reviewDrag.handleProps}>
             <DialogTitle className="flex items-center gap-2 text-base">
               <MessageSquare className="size-4" />
               レビュー
