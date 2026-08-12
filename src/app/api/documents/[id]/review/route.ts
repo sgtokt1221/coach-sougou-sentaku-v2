@@ -218,7 +218,32 @@ ${content}
       },
     };
 
-    return NextResponse.json({ feedback, documentId: id });
+    /**
+     * 添削結果を保存する。
+     *
+     * 以前は返すだけで保存しておらず、再読込すると消え、講師の画面にも
+     * 残らなかった（生徒側は versions[].feedback しか見ておらず、版は手動保存
+     * でしか作られないため、実質どこにも残らない）。
+     * どの本文に対する評価かが分からないと後から読めないので、評価した本文
+     * そのものも一緒に残す。
+     */
+    const reviewedAt = new Date().toISOString();
+    try {
+      await adminDb.doc(`documents/${id}`).set(
+        {
+          feedback,
+          feedbackContent: content,
+          feedbackAt: reviewedAt,
+          updatedAt: reviewedAt,
+        },
+        { merge: true },
+      );
+    } catch (err) {
+      // 保存に失敗しても添削結果は返す（画面では見られる）
+      console.error("[documents/review] feedback 保存失敗:", err);
+    }
+
+    return NextResponse.json({ feedback, documentId: id, feedbackAt: reviewedAt });
   } catch (error) {
     console.error("Document review error:", error);
     return NextResponse.json(

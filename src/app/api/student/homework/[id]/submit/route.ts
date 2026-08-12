@@ -20,6 +20,8 @@ import type {
   InterviewMessage,
 } from "@/lib/types/interview";
 import { prepareAdmissionPolicy } from "@/lib/ai/admission-policy";
+import { getThemeById } from "@/data/essay-themes";
+import { getPastQuestionById } from "@/data/essay-past-questions";
 
 /**
  * POST /api/student/homework/[id]/submit
@@ -220,6 +222,27 @@ async function submitEssay(args: {
   }
   const essayRef = adminDb.doc(`essays/${essayId}`);
 
+  /**
+   * 出題の条件を復元する。
+   *
+   * 宿題経由の提出は questionType も wordLimit も渡しておらず、通常の提出と
+   * 同じ答案でも採点が変わっていた（資料つき設問の読解評価も、字数の充足率
+   * 判定も効かない）。配布時の snapshot に出題元IDが残っているので、そこから
+   * 通常提出と同じ条件を組み立てる。
+   */
+  const themeSource = homework.snapshot.essayThemeId
+    ? getThemeById(homework.snapshot.essayThemeId)
+    : undefined;
+  const pastSource = homework.snapshot.pastQuestionId
+    ? getPastQuestionById(homework.snapshot.pastQuestionId)
+    : undefined;
+  const questionType = themeSource?.questionType ?? pastSource?.questionType;
+  const wordLimit = themeSource?.wordLimit ?? pastSource?.wordLimit;
+  const sourceText = themeSource?.sourceText ?? pastSource?.sourceText;
+  const chartDataSummary = themeSource?.chartData
+    ? JSON.stringify(themeSource.chartData)
+    : undefined;
+
   await essayRef.set({
     userId: uid,
     ocrText: bodyText,
@@ -235,6 +258,17 @@ async function submitEssay(args: {
     attemptNumber: 1,
     rootEssayId: essayId,
     parentEssayId: null,
+    // 何に答えたかを残す。通常提出と同じ形（管理者画面と再採点で使う）
+    questionContext: {
+      questionType: questionType ?? null,
+      wordLimit: wordLimit ?? null,
+      sourceText: sourceText ?? null,
+      chartDataSummary: chartDataSummary ?? null,
+      lectureInfo: null,
+      pastQuestionFacultyName: pastSource?.facultyName ?? null,
+      themeId: homework.snapshot.essayThemeId ?? null,
+      pastQuestionId: homework.snapshot.pastQuestionId ?? null,
+    },
   });
 
   // 自己分析
@@ -261,6 +295,10 @@ async function submitEssay(args: {
     const coreResult = await reviewEssayCore({
       ocrText: bodyText,
       topic: homework.snapshot.title,
+      questionType,
+      wordLimit,
+      sourceText,
+      chartDataSummary,
       admissionPolicy,
       weaknessList,
       essaySelfAnalysis,

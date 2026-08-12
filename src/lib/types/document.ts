@@ -73,6 +73,12 @@ export interface Document {
   review?: DocumentReview;
   /** レビュー操作の履歴（新しいものを末尾に積む） */
   reviewHistory?: DocumentReviewHistoryEntry[];
+  /** 直近のAI添削結果。版と違い、添削するたびに上書きする */
+  feedback?: DocumentFeedback;
+  /** その添削が対象にした本文。今の本文と違えば古い評価と分かる */
+  feedbackContent?: string;
+  /** 添削した時刻 (ISO) */
+  feedbackAt?: string;
   deadline?: string;
   linkedActivities: string[];
   createdAt: string;

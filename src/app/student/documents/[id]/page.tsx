@@ -129,13 +129,11 @@ export default function DocumentEditorPage() {
       setDoc(data);
       setContent(data.content);
       setAiLikeness(data.aiLikeness ?? null);
-      // Load latest feedback if available
+      // 添削結果は書類直下に保存される。無い場合だけ版から拾う（旧データ救済）
       const latestWithFeedback = [...(data.versions || [])]
         .reverse()
         .find((v) => v.feedback);
-      if (latestWithFeedback?.feedback) {
-        setFeedback(latestWithFeedback.feedback);
-      }
+      setFeedback(data.feedback ?? latestWithFeedback?.feedback ?? null);
     } catch {
       setDoc(null);
     } finally {

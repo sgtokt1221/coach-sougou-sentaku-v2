@@ -62,7 +62,8 @@ export async function GET(
       data.versions?.length > 0
         ? data.versions[data.versions.length - 1]
         : null;
-    const feedback = latestVersion?.feedback;
+    // 添削結果は書類直下に保存される。旧データのため版も見る
+    const feedback = data.feedback ?? latestVersion?.feedback;
 
     // この書類を書いていたときの AIコーチ会話。スレッドが docId を持つので
     // 推定は不要。セクション単位なので複数ある
