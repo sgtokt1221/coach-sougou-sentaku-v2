@@ -59,6 +59,13 @@ export async function POST(request: NextRequest) {
     let sessionFacultyId = "";
     let sessionMode = mode ?? "";
     let homeworkAssignmentIdFromSession: string | undefined;
+    /**
+     * 採点に使う会話。サーバーに残っている記録を正本にする（監査 P0-3）。
+     * クライアントから送られた messages をそのまま採点していたため、
+     * 差し替えても欠落させても検出できなかった。
+     */
+    let scoringMessages = messages;
+    let messageSource: "server" | "client" = "client";
 
     const { adminDb } = await import("@/lib/firebase/admin");
     if (adminDb) {
@@ -69,7 +76,18 @@ export async function POST(request: NextRequest) {
           const sessionData = sessionDoc.data()!;
           sessionUniversityId = sessionData.universityId ?? "";
           sessionFacultyId = sessionData.facultyId ?? "";
-          if (!sessionMode) sessionMode = sessionData.mode ?? "";
+          // モードもセッション側を優先する（別モードの基準で採点させない）
+          if (sessionData.mode) sessionMode = sessionData.mode;
+          const stored = sessionData.messages;
+          if (Array.isArray(stored) && stored.length > 0) {
+            scoringMessages = stored;
+            messageSource = "server";
+          } else {
+            // 保存前に始まったセッションはクライアントの記録で採点する
+            console.warn(
+              `[interview/end] ${sessionId}: サーバーに会話が無いためクライアント送信分で採点する`,
+            );
+          }
           if (typeof sessionData.homeworkAssignmentId === "string") {
             homeworkAssignmentIdFromSession = sessionData.homeworkAssignmentId;
           }
@@ -143,11 +161,11 @@ export async function POST(request: NextRequest) {
     };
     try {
       const coreResult = await scoreInterviewCore({
-        messages,
+        messages: scoringMessages,
         universityName,
         facultyName,
         admissionPolicy,
-        mode,
+        mode: sessionMode || mode,
         presentationContent,
         selfAnalysisContext,
         videoAnalysis,
@@ -235,7 +253,13 @@ export async function POST(request: NextRequest) {
           scores,
           feedback,
           conversationSummary,
-          messages: messages.map((m) => ({ role: m.role, content: m.content })),
+          // 採点に使ったものをそのまま残す（後から根拠を辿れるようにする）
+          messages: scoringMessages.map((m) => ({
+            role: m.role,
+            content: m.content,
+          })),
+          /** 採点した会話の出どころ。client は保存前に始まった古いセッション */
+          scoringMessageSource: messageSource,
           weaknessTags,
           duration,
           status: "completed",

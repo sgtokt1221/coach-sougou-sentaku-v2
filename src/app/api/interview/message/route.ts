@@ -3,6 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { buildInterviewSystemPrompt } from "@/lib/ai/prompts/interview";
 import type { InterviewMessageResponse, InterviewMessage, InterviewMode } from "@/lib/types/interview";
 import { AI_MODEL_SONNET } from "@/lib/ai/prompt-versions";
+import { verifyAuthToken, adminDb } from "@/lib/firebase/admin";
 
 export async function POST(request: NextRequest) {
   try {
@@ -151,6 +152,38 @@ export async function POST(request: NextRequest) {
       messages.length < minTurns;
 
     const isActive = !timeUp && naturalActive;
+
+    /**
+     * 会話を1ターンずつサーバーへ残す（監査 P0-3）。
+     *
+     * これまで会話はクライアントだけが持ち、終了時にまとめて送られたものを
+     * そのまま採点していた。差し替えても欠落させても検出できない。
+     * ここで積んでおけば、採点はサーバーの記録から行える。
+     *
+     * 保存に失敗しても面接は続行する（会話を止めない）。
+     */
+    if (adminDb) {
+      try {
+        const auth = await verifyAuthToken(request);
+        const ref = adminDb.doc(`interviews/${sessionId}`);
+        const snap = await ref.get();
+        // 他人のセッションには書かない
+        if (snap.exists && (!auth || snap.data()?.userId === auth.uid)) {
+          await ref.set(
+            {
+              messages: [
+                ...messages.map((m) => ({ role: m.role, content: m.content })),
+                { role: "ai", content },
+              ],
+              lastMessageAt: new Date().toISOString(),
+            },
+            { merge: true },
+          );
+        }
+      } catch (err) {
+        console.error("[interview/message] 会話の保存に失敗:", err);
+      }
+    }
 
     const result: InterviewMessageResponse = { content, isActive: Boolean(isActive) };
     return NextResponse.json(result);
