@@ -75,14 +75,14 @@ const SCORE_LABELS: Partial<Record<keyof InterviewScores, string>> = {
   enthusiasm: "熱意",
   specificity: "具体性",
   bodyLanguage: "ボディランゲージ（合計外）",
-  presentationStructure: "発表の論理構成",
-  dataEvidence: "データの根拠",
-  resourceConsistency: "資料との整合性",
-  knowledgeAccuracy: "専門知識の正確性",
-  criticalThinking: "応用思考力",
-  collaboration: "協調性",
-  leadership: "リーダーシップ",
-  listening: "傾聴力",
+  presentationStructure: "発表の論理構成（合計外）",
+  dataEvidence: "データの根拠（合計外）",
+  resourceConsistency: "資料との整合性（合計外）",
+  knowledgeAccuracy: "専門知識の正確性（合計外）",
+  criticalThinking: "応用思考力（合計外）",
+  collaboration: "協調性（合計外）",
+  leadership: "リーダーシップ（合計外）",
+  listening: "傾聴力（合計外）",
 };
 
 const SCORE_COLORS: Partial<Record<keyof InterviewScores, string>> = {
@@ -185,6 +185,10 @@ export default function InterviewResultPage() {
     );
   }
 
+  /**
+   * 合計に入るのは内容4軸だけ。ボディランゲージとモード別の軸は
+   * 満点も評価可否も違うので、合計外と分かるラベルで並べる。
+   */
   const allScoreKeys: (keyof Omit<InterviewScores, "total">)[] = [
     "clarity", "apAlignment", "enthusiasm", "specificity", "bodyLanguage",
     "presentationStructure", "dataEvidence", "resourceConsistency",

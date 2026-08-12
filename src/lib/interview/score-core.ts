@@ -132,12 +132,40 @@ export async function scoreInterviewCore(
     typeof rawVideoScore === "number"
       ? Math.round(rawVideoScore * 10) / 10
       : null;
+  /**
+   * モード別の追加軸。プロンプトは集団討論の協調性・口頭試問の専門知識などを
+   * 要求しているのに、保存時に捨てていた（監査 P0-2）。AI を呼んで採点させた
+   * 結果を使わず、どのモードも実質同じ4軸で見ている状態だった。
+   *
+   * 合計には入れない。モードごとに軸数が変わると満点が変わり、
+   * 面接どうしの比較ができなくなる（P0-1 と同じ失敗を繰り返さない）。
+   */
+  const MODE_KEYS = [
+    "presentationStructure",
+    "dataEvidence",
+    "resourceConsistency",
+    "knowledgeAccuracy",
+    "criticalThinking",
+    "collaboration",
+    "leadership",
+    "listening",
+  ] as const;
+  const modeScores: Partial<Record<(typeof MODE_KEYS)[number], number>> = {};
+  for (const key of MODE_KEYS) {
+    const v = parsed.scores?.[key];
+    // 0-10 の数値だけ受ける。範囲外・欠落は無かったものとして扱う
+    if (typeof v === "number" && Number.isFinite(v) && v >= 0 && v <= 10) {
+      modeScores[key] = Math.round(v * 10) / 10;
+    }
+  }
+
   const scores: InterviewScores = {
     clarity: parsed.scores.clarity,
     apAlignment: parsed.scores.apAlignment,
     enthusiasm: parsed.scores.enthusiasm,
     specificity: parsed.scores.specificity,
     bodyLanguage,
+    ...modeScores,
     // 内容4軸のみ。満点は常に INTERVIEW_CONTENT_MAX (40)
     total:
       parsed.scores.clarity +
