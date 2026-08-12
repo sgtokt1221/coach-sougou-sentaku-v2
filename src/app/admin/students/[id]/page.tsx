@@ -55,6 +55,7 @@ import {
   Clock,
   Activity,
   Calendar,
+  BookOpen,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -1683,7 +1684,7 @@ function AdminStudentDetailPageInner() {
                       <div className="space-y-2">
                         <h3 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
                           <ArrowRightLeft className="size-3.5" />
-                          添削後テキスト
+                          添削後テキスト（生徒画面の「ブラッシュアップ版」）
                         </h3>
                         <div className="max-h-60 overflow-y-auto rounded-lg border border-emerald-200 bg-emerald-50 p-4 font-mono text-sm leading-7 tracking-wide text-gray-800 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-gray-200">
                           {essayDetail.feedback.brushedUpText.split("\n").map((line, i) => (
@@ -1697,6 +1698,66 @@ function AdminStudentDetailPageInner() {
                   )}
                 </>
               )}
+              {/* テーマ深掘り / ブラッシュアップ版。生徒画面には出ていたが管理者側
+                  には無く、面談で同じ画面を見られなかった。 */}
+              {essayDetail.feedback?.topicInsights && (
+                <>
+                  <Separator />
+                  <div className="space-y-2">
+                    <h3 className="flex items-center gap-2 text-sm font-semibold">
+                      <BookOpen className="size-4" />
+                      テーマ深掘り
+                    </h3>
+                    <div className="space-y-2 rounded-lg border p-3 text-sm">
+                      <div>
+                        <p className="text-muted-foreground text-xs font-medium">
+                          背景・文脈
+                        </p>
+                        <p className="whitespace-pre-wrap">
+                          {essayDetail.feedback.topicInsights.background}
+                        </p>
+                      </div>
+                      {essayDetail.feedback.topicInsights.relatedThemes.length >
+                        0 && (
+                        <div>
+                          <p className="text-muted-foreground text-xs font-medium">
+                            関連テーマ
+                          </p>
+                          <p>
+                            {essayDetail.feedback.topicInsights.relatedThemes.join(
+                              "、",
+                            )}
+                          </p>
+                        </div>
+                      )}
+                      {essayDetail.feedback.topicInsights.deepDivePoints.length >
+                        0 && (
+                        <div>
+                          <p className="text-muted-foreground text-xs font-medium">
+                            深掘りの視点
+                          </p>
+                          <ul className="list-inside list-decimal space-y-0.5">
+                            {essayDetail.feedback.topicInsights.deepDivePoints.map(
+                              (pt, i) => (
+                                <li key={i}>{pt}</li>
+                              ),
+                            )}
+                          </ul>
+                        </div>
+                      )}
+                      <div>
+                        <p className="text-muted-foreground text-xs font-medium">
+                          推奨切り口
+                        </p>
+                        <p className="whitespace-pre-wrap">
+                          {essayDetail.feedback.topicInsights.recommendedAngle}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+
               {/* この問題を書いていたときのAIコーチとのやり取り。答案だけ見ても
                   生徒がどこで詰まったか分からないため、講評の後に置く。 */}
               <Separator />
