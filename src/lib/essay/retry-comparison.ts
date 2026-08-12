@@ -67,7 +67,12 @@ export function computeRetryComparison(
       structure: current.scores.structure - parent.scores.structure,
       logic: current.scores.logic - parent.scores.logic,
       expression: current.scores.expression - parent.scores.expression,
-      apAlignment: current.scores.apAlignment - parent.scores.apAlignment,
+      // APは合計外かつ未取得なら null。両方に値があるときだけ差を出す
+      apAlignment:
+        typeof current.scores.apAlignment === "number" &&
+        typeof parent.scores.apAlignment === "number"
+          ? current.scores.apAlignment - parent.scores.apAlignment
+          : 0,
       originality: current.scores.originality - parent.scores.originality,
       total: current.scores.total - parent.scores.total,
     },

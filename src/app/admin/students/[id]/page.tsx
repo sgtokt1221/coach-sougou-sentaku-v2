@@ -183,7 +183,16 @@ function WeaknessesByCategoryList({
   studentId: string;
 }) {
   const [openCategories, setOpenCategories] = useState<Set<EssayCategoryKey>>(
-    () => new Set(["structure", "logic", "expression", "apAlignment", "originality", "other"] as EssayCategoryKey[]),
+    () =>
+      new Set([
+        "structure",
+        "logic",
+        "expression",
+        "apAlignment",
+        "originality",
+        "reasoningMaturity",
+        "other",
+      ] as EssayCategoryKey[]),
   );
 
   // 未解決優先、 categoryId で grouping。 unresolved/resolved 別表示
@@ -192,6 +201,7 @@ function WeaknessesByCategoryList({
       structure: [],
       logic: [],
       expression: [],
+      reasoningMaturity: [],
       apAlignment: [],
       originality: [],
       other: [],
@@ -783,6 +793,11 @@ function AdminStudentDetailPageInner() {
   // 日々の取り組みの項目別平均（全提出から算出）
   const avgOf = (nums: number[]) =>
     nums.length ? nums.reduce((a, b) => a + b, 0) / nums.length : 0;
+  /** 未評価(null/undefined)を 0 として混ぜない。全部未評価なら null */
+  const avgMeasured = (nums: (number | null | undefined)[]) => {
+    const ns = nums.filter((n): n is number => typeof n === "number");
+    return ns.length ? ns.reduce((a, b) => a + b, 0) / ns.length : null;
+  };
   const essayScoresList = essays
     .map((e) => e.scores)
     .filter((s): s is NonNullable<typeof s> => !!s);
@@ -792,8 +807,11 @@ function AdminStudentDetailPageInner() {
           structure: avgOf(essayScoresList.map((s) => s.structure)),
           logic: avgOf(essayScoresList.map((s) => s.logic)),
           expression: avgOf(essayScoresList.map((s) => s.expression)),
-          apAlignment: avgOf(essayScoresList.map((s) => s.apAlignment)),
           originality: avgOf(essayScoresList.map((s) => s.originality)),
+          reasoningMaturity: avgMeasured(
+            essayScoresList.map((s) => s.reasoningMaturity),
+          ),
+          apAlignment: avgMeasured(essayScoresList.map((s) => s.apAlignment)),
         }
       : undefined;
   const ivTrend = interviewScoreTrend ?? [];
@@ -804,7 +822,7 @@ function AdminStudentDetailPageInner() {
           apAlignment: avgOf(ivTrend.map((p) => p.apAlignment)),
           enthusiasm: avgOf(ivTrend.map((p) => p.enthusiasm)),
           specificity: avgOf(ivTrend.map((p) => p.specificity)),
-          bodyLanguage: avgOf(ivTrend.map((p) => p.bodyLanguage)),
+          bodyLanguage: avgMeasured(ivTrend.map((p) => p.bodyLanguage)),
         }
       : undefined;
 

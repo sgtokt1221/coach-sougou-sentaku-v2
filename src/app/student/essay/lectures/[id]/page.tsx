@@ -30,6 +30,7 @@ const SCORE_LABELS: Record<keyof Omit<EssayScores, "total">, string> = {
   logic: "論理",
   expression: "表現",
   apAlignment: "AP合致",
+  reasoningMaturity: "議論の成熟度",
   originality: "独自性",
 };
 

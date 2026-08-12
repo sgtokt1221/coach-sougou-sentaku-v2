@@ -1,11 +1,27 @@
 import type { RepeatedIssue, Improvement } from "./essay";
 
+/**
+ * 面接のスコア。
+ *
+ * total は「内容」4軸の合計（0-40）で固定する。以前は動画がある回だけ
+ * bodyLanguage を足して0-50になり、画面は常に40で割っていたため
+ * 100%超のランクが出ていた（監査 P0-1）。
+ * 伝達（bodyLanguage）は満点も評価可否も内容と違うので、合計に混ぜず
+ * 別枠で持つ。動画が無い回は 0 ではなく null（評価不能）。
+ */
+/** 内容評価の満点。total はこの範囲に収まる */
+export const INTERVIEW_CONTENT_MAX = 40;
+/** 伝達（動画）評価の満点 */
+export const INTERVIEW_DELIVERY_MAX = 10;
+
 export interface InterviewScores {
   clarity: number;       // 明確さ 0-10
   apAlignment: number;   // AP合致度 0-10
   enthusiasm: number;    // 熱意 0-10
   specificity: number;   // 具体性 0-10
-  bodyLanguage: number;  // ボディランゲージ 0-10
+  /** 伝達（動画）0-10。動画が無い回は null = 評価不能 */
+  bodyLanguage: number | null;
+  /** 内容4軸の合計 (0-40)。満点は INTERVIEW_CONTENT_MAX */
   total: number;
   // プレゼンテーション追加項目
   presentationStructure?: number;  // 発表の論理構成 0-10

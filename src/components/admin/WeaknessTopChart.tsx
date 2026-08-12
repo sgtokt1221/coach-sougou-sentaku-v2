@@ -31,6 +31,7 @@ const CATEGORY_COLORS: Record<EssayCategoryKey, { bg: string; hex: string }> = {
   expression: { bg: "bg-emerald-500", hex: "#10b981" },
   apAlignment: { bg: "bg-amber-500", hex: "#f59e0b" },
   originality: { bg: "bg-violet-500", hex: "#8b5cf6" },
+  reasoningMaturity: { bg: "bg-rose-500", hex: "#f43f5e" },
   other: { bg: "bg-slate-400", hex: "#94a3b8" },
 };
 

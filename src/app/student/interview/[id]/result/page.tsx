@@ -74,7 +74,7 @@ const SCORE_LABELS: Partial<Record<keyof InterviewScores, string>> = {
   apAlignment: "AP合致度",
   enthusiasm: "熱意",
   specificity: "具体性",
-  bodyLanguage: "ボディランゲージ",
+  bodyLanguage: "ボディランゲージ（合計外）",
   presentationStructure: "発表の論理構成",
   dataEvidence: "データの根拠",
   resourceConsistency: "資料との整合性",
@@ -245,7 +245,9 @@ export default function InterviewResultPage() {
                         {result.scores.total}
                         <span className="text-xl text-muted-foreground/60 font-normal">/40</span>
                       </div>
-                      <p className="text-sm text-muted-foreground mt-1">総合スコア</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        総合スコア（内容4軸）
+                      </p>
                       <div className="mt-2">
                         <Badge className="bg-indigo-500 text-white border-0">
                           {result.scores.total >= 32 ? "優秀" : result.scores.total >= 28 ? "良好" : result.scores.total >= 20 ? "標準" : "要改善"}

@@ -122,20 +122,28 @@ export async function scoreInterviewCore(
     );
   }
 
-  const bodyLanguageScore = input.videoAnalysis?.overallVideoScore ?? 0;
-  const bodyLanguageRounded = Math.round(bodyLanguageScore * 10) / 10;
+  /**
+   * 伝達（動画）は内容と満点も評価可否も違うので、合計に混ぜない。
+   * 動画が無い回は 0 ではなく null（評価不能）。0 にすると「最低評価」と
+   * 区別が付かず、平均やランクを歪めていた（監査 P0-1）。
+   */
+  const rawVideoScore = input.videoAnalysis?.overallVideoScore;
+  const bodyLanguage =
+    typeof rawVideoScore === "number"
+      ? Math.round(rawVideoScore * 10) / 10
+      : null;
   const scores: InterviewScores = {
     clarity: parsed.scores.clarity,
     apAlignment: parsed.scores.apAlignment,
     enthusiasm: parsed.scores.enthusiasm,
     specificity: parsed.scores.specificity,
-    bodyLanguage: bodyLanguageRounded,
+    bodyLanguage,
+    // 内容4軸のみ。満点は常に INTERVIEW_CONTENT_MAX (40)
     total:
       parsed.scores.clarity +
       parsed.scores.apAlignment +
       parsed.scores.enthusiasm +
-      parsed.scores.specificity +
-      bodyLanguageRounded,
+      parsed.scores.specificity,
   };
 
   const feedback: InterviewFeedback = {

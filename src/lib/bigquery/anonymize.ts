@@ -127,7 +127,8 @@ interface EssayBQRecord {
   score_structure: number;
   score_logic: number;
   score_expression: number;
-  score_ap_alignment: number;
+  /** AP未取得は null（0点と区別する） */
+  score_ap_alignment: number | null;
   score_originality: number;
   score_total: number;
   word_count: number;
@@ -145,7 +146,8 @@ interface InterviewBQRecord {
   duration_seconds: number;
   mode: string;
   score_clarity: number;
-  score_ap_alignment: number;
+  /** AP未取得は null（0点と区別する） */
+  score_ap_alignment: number | null;
   score_enthusiasm: number;
   score_specificity: number;
   score_total: number;

@@ -40,7 +40,8 @@ interface InterviewHistoryItem {
   apAlignment: number;
   enthusiasm: number;
   specificity: number;
-  bodyLanguage: number;
+  /** 動画なしの回は null（評価不能）。0 と混ぜない */
+  bodyLanguage: number | null;
 }
 
 
@@ -81,7 +82,7 @@ export default function InterviewHistoryPage() {
       apAlignment: item.scores?.apAlignment ?? 0,
       enthusiasm: item.scores?.enthusiasm ?? 0,
       specificity: item.scores?.specificity ?? 0,
-      bodyLanguage: item.scores?.bodyLanguage ?? 0,
+      bodyLanguage: item.scores?.bodyLanguage ?? null,
     })
   );
   const historyToShow = history;

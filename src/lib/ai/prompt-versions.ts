@@ -66,7 +66,15 @@ export const AI_PROMPT_VERSIONS = {
     //     - 出題形式ごとの指示を「重視します」から「logic で見る」へ具体化
     //     - 資料のない設問では誤読減点を適用しないと明記
     //     あわせて字数の減点しきい値を充足率70%→80%に上げた（8割が指導の目安）。
-    promptVersion: "essay-review-v6",
+    // v7: 監査を受けて軸構成を変更（案1）。
+    //     - reasoningMaturity（議論の成熟度）を独立軸として追加
+    //     - apAlignment を合計から外し、志望校との相性を見る補助指標にした
+    //       （全設問で合計の20%を占め、資料読解や設問対応より重かった）
+    //     合計は 構成/論理性/表現力/独自性/議論の成熟度 の5軸50点で固定。
+    //     APの有無で満点が40/50に変わる問題も同時に解消した。
+    //     ※ 満点と軸の意味が変わるため、既存答案は
+    //        scripts/rescore-essays.ts で採点し直すこと。
+    promptVersion: "essay-review-v7",
     schemaVersion: "essay-review-output-v2",
   },
   chocoReview: {

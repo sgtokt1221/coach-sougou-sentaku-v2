@@ -15,16 +15,33 @@ type ScoreLine = { key: string; label: string; color: string };
 interface RadarBlockProps {
   title: string;
   count?: number;
-  averages: Record<string, number>;
+  /** 未評価の軸は null。0 として描かない */
+  averages: Record<string, number | null>;
   lines: readonly ScoreLine[];
   color: string;
 }
 
 function RadarBlock({ title, count, averages, lines, color }: RadarBlockProps) {
-  const data = lines.map((l) => ({
+  /**
+   * 未評価(null)の軸はレーダーから外す。0 として描くと「最低評価」に見え、
+   * 実際に0点だったデータと区別が付かない（面接の未撮影がこれで潰れていた）。
+   */
+  const measured = lines.filter((l) => typeof averages[l.key] === "number");
+  const unmeasured = lines.filter((l) => typeof averages[l.key] !== "number");
+  const data = measured.map((l) => ({
     subject: l.label,
-    value: Number((averages[l.key] ?? 0).toFixed(1)),
+    value: Number((averages[l.key] as number).toFixed(1)),
   }));
+  if (data.length === 0) {
+    return (
+      <div className="rounded-xl border bg-card p-3">
+        <h3 className="text-sm font-semibold">{title}</h3>
+        <p className="text-muted-foreground mt-2 text-xs">
+          まだ評価データがありません。
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-xl border bg-card p-3">
@@ -55,6 +72,12 @@ function RadarBlock({ title, count, averages, lines, color }: RadarBlockProps) {
           </RadarChart>
         </ResponsiveContainer>
         <ul className="space-y-1 text-xs sm:min-w-[120px]">
+          {unmeasured.map((l) => (
+            <li key={l.key} className="flex items-center justify-between gap-3">
+              <span className="text-muted-foreground">{l.label}</span>
+              <span className="text-muted-foreground">—（未評価）</span>
+            </li>
+          ))}
           {data.map((d) => (
             <li
               key={d.subject}
@@ -82,8 +105,8 @@ export function CategoryAverageRadar({
   essayCount,
   interviewCount,
 }: {
-  essayAverages?: Record<string, number>;
-  interviewAverages?: Record<string, number>;
+  essayAverages?: Record<string, number | null>;
+  interviewAverages?: Record<string, number | null>;
   essayCount?: number;
   interviewCount?: number;
 }) {

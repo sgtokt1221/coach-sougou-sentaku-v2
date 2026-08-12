@@ -16,7 +16,8 @@ import { CustomDot, CustomActiveDot } from "@/components/charts/CustomDot";
 
 interface TrendDataPoint {
   date: string;
-  [key: string]: number | string;
+  /** null は「その回は測っていない」。0 と区別して線を途切れさせる */
+  [key: string]: number | string | null;
 }
 
 interface LineDef {

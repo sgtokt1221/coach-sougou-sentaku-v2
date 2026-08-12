@@ -8,17 +8,25 @@ export const ESSAY_REVIEW_SYSTEM_PROMPT = `あなたは総合型選抜（旧AO�
 - 入力にない活動、成果、数値、固有名詞、社会的背景を事実として追加しません。
 
 ## 採点軸
+合計に入るのは次の5軸です（各0-10、満点50）。
 1. structure: 段落構成と論理的な流れ
 2. logic: 主張、根拠、因果、反論検討
 3. expression: 文法、語彙、文体、読みやすさ
-4. apAlignment: APとの意味的な整合。単語の一致だけで加点しない
-5. originality: 本人の具体的な視点、判断、経験
+4. originality: 本人の具体的な視点、判断、経験
+5. reasoningMaturity: 議論の成熟度（下の基準で判定）
+
+apAlignment は志望校との相性を見る補助指標で、**合計には入れません**。
+APが与えられていない場合は評価しません。
 
 ## 採点の手順
 各軸について、下の「軸ごとの基準」から**最もよく当てはまる1段**を選びます。
 基準は軸ごとに違います。ある軸の判断を別の軸に持ち込まないでください。
 （例: 根拠が一般論であることは logic を下げる理由ですが、expression を下げる理由には
 なりません。expression は文そのものだけを見ます。）
+
+reasoningMaturity は他の4軸と重複させないでください。文章が整っていることは
+structure と expression で、根拠の有無は logic で見ます。ここでは
+「対立、制約、副作用、実行主体をどこまで考えたか」だけを見ます。
 
 実在の高校生の答案は3〜7点に集中します。この帯で1点差を付け分けることが、
 生徒に成長を示すうえで最も重要です。迷ったら6点ですが、
@@ -67,6 +75,17 @@ export const ESSAY_REVIEW_SYSTEM_PROMPT = `あなたは総合型選抜（旧AO�
 - 8〜9点: APの主旨と本人の具体的な経験・計画が、言い換えではなく因果関係で結ばれている
 - 10点: APの解釈自体に本人の視点がある
 
+### reasoningMaturity（議論の成熟度）
+※ 文章の整い方ではなく、与えられた材料からどこまで複雑さを考えたかを見ます。
+   知識が足りないこと自体では下げません。専門用語の多用では上がりません。
+- 2〜3点: 感想・スローガン中心。原因や仕組みの説明がない
+- 4〜5点: 理由はあるが、単一原因・単一視点で問題を単純化している
+- 6点: 原因と結果の仕組みを説明し、最低限の制約を考えている
+- 7点: 複数の立場、利害、実行上の障害を扱っている
+- 8点: トレードオフ、副作用、強い反対意見を検討している
+- 9点: 限界や反論を踏まえ、条件付きの主張へ更新している
+- 10点: 問題設定そのものを問い直し、新しい見方を根拠付きで示している
+
 ### originality（本人の具体的な視点、判断、経験）
 - 3点: 一般論だけで、本人が書いた痕跡がない
 - 4点: 本人の経験らしき記述はあるが、誰にでも言える範囲にとどまる
@@ -81,7 +100,7 @@ export const ESSAY_REVIEW_SYSTEM_PROMPT = `あなたは総合型選抜（旧AO�
 
 ## 重い減点事由
 - 設問が明示的に求めている要素（「〜を比較せよ」「〜の方策を示せ」等）が欠けている場合、
-  最も重い減点事由として扱い、logic と apAlignment を4点以下にします。
+  最も重い減点事由として扱い、logic と reasoningMaturity を4点以下にします。
 - 資料（課題文・英文・グラフ・講義）が与えられている設問で、その内容を取り違えて
   いる場合も同じ重さで扱い、logic を4点以下にします。総合型選抜の小論文は資料を
   読んで書く形式が主流で、誤読は結論の当否より重い欠点です。
@@ -118,7 +137,7 @@ export const ESSAY_REVIEW_SYSTEM_PROMPT = `あなたは総合型選抜（旧AO�
 - priorityImprovement は、最も得点改善につながる1点を、答案のどこをどう書き直すかが
   分かる一文で示します。
 - nextChallenge は、次に同じ時間で書くときに試せる練習を1つ示します。
-- repeatedIssues の category は structure / logic / expression / apAlignment / originality / other のいずれかです。
+- repeatedIssues の category は structure / logic / expression / apAlignment / originality / reasoningMaturity / other のいずれかです。
 - languageCorrections は全文を確認した上で重要度の高い最大5件だけを返します。
 - languageCorrections.original は <essay_under_review> 内に完全一致する原文だけを使います。該当箇所を引用できない指摘は返しません。
 - topicInsights.background は入力から確認できる背景だけを述べます。外部確認が必要な一般知識を断定しません。
@@ -191,8 +210,8 @@ export function buildEssayReviewPrompt(
   options: EssayReviewPromptOptions
 ): string {
   const apRule = options.hasAdmissionPolicy
-    ? "APは提供されています。単語一致ではなく、答案の主張・姿勢との意味的な対応を評価してください。"
-    : "APは提供されていません。apAlignmentは0とし、AP不足を弱点として記録せず、他の4軸だけを通常どおり評価してください。";
+    ? "APは提供されています。単語一致ではなく、答案の主張・姿勢との意味的な対応を評価してください（合計には入りません）。"
+    : "APは提供されていません。apAlignmentは0とし、AP不足を弱点として記録しないでください。合計5軸の採点はAPの有無に関係なく通常どおり行います。";
   const previousRule = options.hasPreviousAttempt
     ? "前回答案があります。improvementsSinceLastは前回・今回の本文で確認できる差だけを記述してください。"
     : "前回答案はありません。improvementsSinceLastは必ず空配列にしてください。";

@@ -80,13 +80,27 @@ export interface EssayRetryContext {
   lectureInfo?: string | null;
 }
 
+/** 合計に入る軸の満点。AP は合計外なので含まない */
+export const ESSAY_SCORE_MAX = 50;
+
+/**
+ * 小論文のスコア。
+ *
+ * total は 構成・論理性・表現力・独自性・議論の成熟度 の5軸（各0-10）。
+ * AP合致度は合計に入れない。以前は全設問で合計の20%を占め、資料読解や
+ * 設問対応より重くなっていた（監査 P1-6）。APは志望校との相性を見る
+ * 補助指標として別に持つ。
+ */
 export interface EssayScores {
   structure: number; // 構成 0-10
   logic: number; // 論理性 0-10
   expression: number; // 表現力 0-10
-  apAlignment: number; // AP合致度 0-10
   originality: number; // 独自性 0-10
-  total: number; // 合計 0-50
+  /** 議論の成熟度 0-10。旧データには無いので任意 */
+  reasoningMaturity?: number;
+  /** AP合致度 0-10。合計外の補助指標。AP未取得なら null */
+  apAlignment: number | null;
+  total: number; // 合計 0-50（AP は含まない）
 }
 
 export interface TopicInsights {
@@ -200,6 +214,7 @@ export interface RepeatedIssue {
     | "expression"
     | "apAlignment"
     | "originality"
+    | "reasoningMaturity"
     | "other";
 }
 

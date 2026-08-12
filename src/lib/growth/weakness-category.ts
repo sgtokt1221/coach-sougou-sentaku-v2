@@ -12,6 +12,7 @@ export const ESSAY_CATEGORY_KEYS = [
   "expression",
   "apAlignment",
   "originality",
+  "reasoningMaturity",
 ] as const;
 
 export type EssayCategoryKey = (typeof ESSAY_CATEGORY_KEYS)[number] | "other";
@@ -22,6 +23,7 @@ export const ESSAY_CATEGORY_LABELS: Record<EssayCategoryKey, string> = {
   expression: "表現力",
   apAlignment: "AP合致",
   originality: "独自性",
+  reasoningMaturity: "議論の成熟度",
   other: "その他",
 };
 
@@ -31,6 +33,7 @@ export const ESSAY_CATEGORY_ORDER: readonly EssayCategoryKey[] = [
   "expression",
   "apAlignment",
   "originality",
+  "reasoningMaturity",
   "other",
 ];
 

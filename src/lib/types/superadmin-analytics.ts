@@ -57,6 +57,7 @@ export interface WeaknessAggregate {
     | "expression"
     | "apAlignment"
     | "originality"
+    | "reasoningMaturity"
     | "other";
 }
 
@@ -68,6 +69,7 @@ export interface WeaknessByCategorySummary {
     | "expression"
     | "apAlignment"
     | "originality"
+    | "reasoningMaturity"
     | "other";
   label: string;
   totalOccurrences: number;

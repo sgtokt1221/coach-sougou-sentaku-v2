@@ -18,6 +18,7 @@ export interface WeaknessRecord {
     | "expression"
     | "apAlignment"
     | "originality"
+    | "reasoningMaturity"
     | "other";
   /**
    * Phase 5: 正規タクソノミー ID (例: "logic.leap")。

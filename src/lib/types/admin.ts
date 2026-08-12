@@ -115,7 +115,8 @@ export interface StudentDetail {
     apAlignment: number;
     enthusiasm: number;
     specificity: number;
-    bodyLanguage: number;
+    /** 全回とも動画なしなら null（未測定。0 と区別する） */
+    bodyLanguage: number | null;
   };
   /** スキル俯瞰用 essay 統計サマリ (StatsSummaryCard と同じ shape) */
   essayStatsSummary?: {
@@ -191,7 +192,8 @@ export interface InterviewScoreTrendPoint {
   apAlignment: number;
   enthusiasm: number;
   specificity: number;
-  bodyLanguage: number;
+  /** 動画なしの回は null（未測定） */
+  bodyLanguage: number | null;
 }
 
 export interface AdminListItem {

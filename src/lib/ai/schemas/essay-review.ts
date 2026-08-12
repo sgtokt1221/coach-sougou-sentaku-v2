@@ -10,6 +10,7 @@ export const EssayReviewOutputSchema = z.object({
     expression: z.number().int().min(0).max(10),
     apAlignment: z.number().int().min(0).max(10),
     originality: z.number().int().min(0).max(10),
+    reasoningMaturity: z.number().int().min(0).max(10),
   }),
   feedback: z.object({
     overall: boundedText,
@@ -31,6 +32,7 @@ export const EssayReviewOutputSchema = z.object({
             "expression",
             "apAlignment",
             "originality",
+            "reasoningMaturity",
             "other",
           ]),
           count: z.number().int().min(1).max(99),

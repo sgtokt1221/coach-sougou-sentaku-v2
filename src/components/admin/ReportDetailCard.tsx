@@ -578,6 +578,7 @@ function WeaknessProgressByCategory({
       expression: [],
       apAlignment: [],
       originality: [],
+      reasoningMaturity: [],
       other: [],
     };
     for (const w of items) {

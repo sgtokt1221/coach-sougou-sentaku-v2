@@ -276,7 +276,8 @@ export async function GET(
           apAlignment: s?.apAlignment ?? 0,
           enthusiasm: s?.enthusiasm ?? 0,
           specificity: s?.specificity ?? 0,
-          bodyLanguage: s?.bodyLanguage ?? 0,
+          // 動画なしの回は未測定。0 にすると「最低評価」として平均を下げる
+          bodyLanguage: typeof s?.bodyLanguage === "number" ? s.bodyLanguage : null,
         };
       })
       .filter(
@@ -287,7 +288,7 @@ export async function GET(
           apAlignment: number;
           enthusiasm: number;
           specificity: number;
-          bodyLanguage: number;
+          bodyLanguage: number | null;
         } => i.total != null,
       )
       .reverse();
@@ -316,15 +317,20 @@ export async function GET(
     const recentInterviewScores = interviewsSnap.docs
       .slice(0, 3)
       .map((d) => d.data().scores)
-      .filter((s): s is Record<string, number> => s != null);
+      .filter((s): s is Record<string, number | null> => s != null);
+    /** 測っていない回を 0 として混ぜない。全回未測定なら null（表示側で「未測定」） */
+    const avgMeasured = (xs: (number | null | undefined)[]) => {
+      const ns = xs.filter((x): x is number => typeof x === "number");
+      return ns.length > 0 ? avg(ns) : null;
+    };
     const interviewCategoryAverages =
       recentInterviewScores.length > 0
         ? {
-            clarity: avg(recentInterviewScores.map((s) => s.clarity ?? 0)),
-            apAlignment: avg(recentInterviewScores.map((s) => s.apAlignment ?? 0)),
-            enthusiasm: avg(recentInterviewScores.map((s) => s.enthusiasm ?? 0)),
-            specificity: avg(recentInterviewScores.map((s) => s.specificity ?? 0)),
-            bodyLanguage: avg(recentInterviewScores.map((s) => s.bodyLanguage ?? 0)),
+            clarity: avg(recentInterviewScores.map((s) => (s.clarity as number) ?? 0)),
+            apAlignment: avg(recentInterviewScores.map((s) => (s.apAlignment as number) ?? 0)),
+            enthusiasm: avg(recentInterviewScores.map((s) => (s.enthusiasm as number) ?? 0)),
+            specificity: avg(recentInterviewScores.map((s) => (s.specificity as number) ?? 0)),
+            bodyLanguage: avgMeasured(recentInterviewScores.map((s) => s.bodyLanguage)),
           }
         : undefined;
 
@@ -410,7 +416,17 @@ export async function GET(
               prevInterviewScores.length > 0
                 ? Math.round((interviewAvgCurrent - interviewAvgPrev) * 10) / 10
                 : 0,
-            ...pickBestWorst(interviewCategoryAverages, INTERVIEW_CATEGORY_LABELS),
+            // 未測定(null)は best/worst の判定に混ぜない
+            ...pickBestWorst(
+              interviewCategoryAverages
+                ? (Object.fromEntries(
+                    Object.entries(interviewCategoryAverages).filter(
+                      ([, v]) => typeof v === "number",
+                    ),
+                  ) as Record<string, number>)
+                : undefined,
+              INTERVIEW_CATEGORY_LABELS,
+            ),
           }
         : undefined;
 

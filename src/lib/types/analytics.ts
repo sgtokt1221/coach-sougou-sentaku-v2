@@ -7,8 +7,11 @@ export interface BigQueryEssayLog {
   score_structure: number;
   score_logic: number;
   score_expression: number;
-  score_ap_alignment: number;
+  /** AP未取得は null（0点と区別する）。合計には含まない */
+  score_ap_alignment: number | null;
   score_originality: number;
+  /** 議論の成熟度。旧データには無い */
+  score_reasoning_maturity?: number;
   score_total: number;
   word_count: number;
   topic: string;
@@ -71,6 +74,7 @@ export interface WeaknessAnalytics {
       | "expression"
       | "apAlignment"
       | "originality"
+      | "reasoningMaturity"
       | "other";
   }[];
   /** Phase 2-C: カテゴリ別集計 (= 重点弱点 Top 5 と同じ系統) */
@@ -81,6 +85,7 @@ export interface WeaknessAnalytics {
       | "expression"
       | "apAlignment"
       | "originality"
+      | "reasoningMaturity"
       | "other";
     label: string;
     totalCount: number;

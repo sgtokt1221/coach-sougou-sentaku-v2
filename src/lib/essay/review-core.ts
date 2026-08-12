@@ -5,6 +5,7 @@ import {
   type EssaySelfAnalysisContext,
 } from "@/lib/ai/prompts/essay";
 import { EssayReviewOutputSchema } from "@/lib/ai/schemas/essay-review";
+import { ESSAY_SCORE_MAX } from "@/lib/types/essay";
 import {
   calculateEssayMetrics,
   calculateFillRate,
@@ -145,19 +146,24 @@ ${input.ocrText}
     );
   }
 
-  const scoreMaximum = hasAdmissionPolicy ? 50 : 40;
+  /**
+   * 合計はAPを含まない5軸（構成・論理性・表現力・独自性・議論の成熟度）。
+   * APの有無で満点が変わらなくなったので、常に50点満点で比較できる。
+   */
+  const scoreMaximum = ESSAY_SCORE_MAX;
   const total =
     parsed.scores.structure +
     parsed.scores.logic +
     parsed.scores.expression +
     parsed.scores.originality +
-    (hasAdmissionPolicy ? parsed.scores.apAlignment : 0);
+    parsed.scores.reasoningMaturity;
   const scores: EssayScores = {
     structure: parsed.scores.structure,
     logic: parsed.scores.logic,
     expression: parsed.scores.expression,
-    apAlignment: hasAdmissionPolicy ? parsed.scores.apAlignment : 0,
     originality: parsed.scores.originality,
+    reasoningMaturity: parsed.scores.reasoningMaturity,
+    apAlignment: hasAdmissionPolicy ? parsed.scores.apAlignment : null,
     total,
   };
 

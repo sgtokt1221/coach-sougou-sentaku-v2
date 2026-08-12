@@ -352,6 +352,7 @@ export async function POST(request: NextRequest) {
       | "expression"
       | "apAlignment"
       | "originality"
+      | "reasoningMaturity"
       | "other"
     >();
     for (const issue of feedback.repeatedIssues) {
@@ -474,8 +475,10 @@ export async function POST(request: NextRequest) {
       score_structure: scores.structure,
       score_logic: scores.logic,
       score_expression: scores.expression,
+      // AP未取得は null（0点と区別する）
       score_ap_alignment: scores.apAlignment,
       score_originality: scores.originality,
+      score_reasoning_maturity: scores.reasoningMaturity,
       score_total: scores.total,
       word_count: ocrText.length,
       topic: topic ?? "",
