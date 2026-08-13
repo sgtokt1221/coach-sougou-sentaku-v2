@@ -53,6 +53,7 @@ import type {
   RetryComparison,
   ReportInsights,
   TaskFulfillment,
+  ClaimCheck,
 } from "@/lib/types/essay";
 import { getRankFromPercentage, getScorePercentage } from "@/lib/score-rank";
 
@@ -104,6 +105,8 @@ interface EssayFeedback {
   topicInsights?: TopicInsights;
   /** 設問への適合判定。旧データには無い */
   taskFulfillment?: TaskFulfillment;
+  /** 事実主張の確認状態。旧データには無い */
+  claimChecks?: ClaimCheck[];
   brushedUpText?: string;
   languageCorrections?: LanguageCorrection[];
   priorityImprovement?: string;
@@ -960,6 +963,7 @@ export default function EssayResultPage() {
                     <TaskFulfillmentCard
                       task={result.feedback.taskFulfillment}
                     />
+                    <ClaimChecksCard claims={result.feedback.claimChecks} />
 
                     {/* 改善点 */}
                     <div className="space-y-4">
@@ -1458,6 +1462,7 @@ export default function EssayResultPage() {
                 )}
 
                 <TaskFulfillmentCard task={result.feedback.taskFulfillment} />
+                <ClaimChecksCard claims={result.feedback.claimChecks} />
 
                 {/* 改善点 */}
                 <div className="space-y-4">
@@ -1793,6 +1798,55 @@ function TaskFulfillmentCard({ task }: { task?: TaskFulfillment }) {
           ))}
         </ul>
         {task.note && <p className="text-sm text-slate-700">{task.note}</p>}
+      </CardContent>
+    </Card>
+  );
+}
+
+/** 確認状態のラベル。「実在しない」とは断定せず、確認できたかで言う */
+const CLAIM_STATUS_LABELS: Record<ClaimCheck["status"], string> = {
+  verified: "資料で確認できた",
+  contradicted: "資料と食い違う",
+  unverified: "確認できない",
+  not_checkable: "本人の経験",
+};
+
+/**
+ * 答案が持ち出した事実の確認状態（監査 P1-11）。
+ * 架空の固有名詞や数値が「具体的」として加点されるのを防ぐため、
+ * 何が確認できていないかを本人にも見せる。
+ */
+function ClaimChecksCard({ claims }: { claims?: ClaimCheck[] }) {
+  const shown = (claims ?? []).filter(
+    (c) => c.status === "unverified" || c.status === "contradicted",
+  );
+  if (shown.length === 0) return null;
+  return (
+    <Card className="border-0 bg-amber-50 shadow-md">
+      <CardContent className="space-y-2 p-4">
+        <p className="text-sm font-semibold text-amber-900">
+          出典を確かめたい記述
+        </p>
+        <p className="text-xs text-amber-800">
+          次の記述は資料から確認できませんでした。出典を添えるか、確認できる
+          言い方に直すと説得力が上がります（誤りと決まったわけではありません）。
+        </p>
+        <ul className="space-y-1 text-sm">
+          {shown.map((c, i) => (
+            <li key={i} className="flex gap-2">
+              <span className="shrink-0 text-amber-700">
+                {c.status === "contradicted" ? "×" : "?"}
+              </span>
+              <span>
+                {c.claim}
+                <span className="text-muted-foreground block text-xs">
+                  {CLAIM_STATUS_LABELS[c.status]}
+                  {c.evidence ? `／${c.evidence}` : ""}
+                </span>
+              </span>
+            </li>
+          ))}
+        </ul>
       </CardContent>
     </Card>
   );

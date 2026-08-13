@@ -96,6 +96,7 @@ export async function GET(
         quantitativeAnalysis: feedback.quantitativeAnalysis ?? null,
         // 設問への適合判定（v8〜）。旧データには無い
         taskFulfillment: feedback.taskFulfillment ?? null,
+        claimChecks: feedback.claimChecks ?? null,
         apAlignmentAssessable: feedback.apAlignmentAssessable ?? null,
         scoreMaximum: feedback.scoreMaximum ?? null,
       },

@@ -94,6 +94,42 @@ export const EssayReviewOutputSchema = z.object({
       /** 外している場合に、何を書くべきだったかを一文で */
       note: boundedText,
     }),
+    /**
+     * 答案が持ち出した事実主張の確認状態（監査 P1-11）。
+     * 架空の固有名詞・統計が「具体的」として加点されるのを防ぐ。
+     */
+    claimChecks: z
+      .array(
+        z.object({
+          /** 答案から抜き出した主張。原文の表現をそのまま使う */
+          claim: shortText,
+          type: z.enum([
+            "person",
+            "organization",
+            "law_or_policy",
+            "research_or_book",
+            "statistic",
+            "date",
+            "quotation",
+            "personal_fact",
+          ]),
+          /**
+           * verified: 与えられた資料で裏が取れる
+           * contradicted: 資料と食い違う
+           * unverified: 資料が無く確認できない（外部知識で断定しない）
+           * not_checkable: 本人の経験など、そもそも外から確認できない
+           */
+          status: z.enum([
+            "verified",
+            "contradicted",
+            "unverified",
+            "not_checkable",
+          ]),
+          /** verified/contradicted の根拠となる資料内の一文。無ければ空 */
+          evidence: boundedText,
+        }),
+      )
+      .max(10),
     reportInsights: z
       .object({
         sourceComprehension: boundedText,

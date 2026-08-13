@@ -16,6 +16,7 @@ import type {
   EssayFeedback,
   TopicInsights,
   TaskFulfillment,
+  ClaimCheck,
   ReportInsights,
 } from "@/lib/types/essay";
 
@@ -163,23 +164,41 @@ ${input.ocrText}
   const capBy = (v: number, cap: number) => Math.min(v, cap);
   const structureCap = offTopic ? 4 : missingRequired ? 6 : 10;
   const expressionCap = offTopic ? 6 : 10;
+  // 資料と食い違う主張がある答案は、資料の取り違えとして logic を抑える
+  const contradicted = (parsed.feedback?.claimChecks ?? []).some(
+    (c) => c.status === "contradicted",
+  );
+  const logicCap = contradicted ? 4 : 10;
 
   const scoreMaximum = ESSAY_SCORE_MAX;
   const total =
     capBy(parsed.scores.structure, structureCap) +
-    parsed.scores.logic +
+    capBy(parsed.scores.logic, logicCap) +
     capBy(parsed.scores.expression, expressionCap) +
     parsed.scores.originality +
     parsed.scores.reasoningMaturity;
   const scores: EssayScores = {
     structure: capBy(parsed.scores.structure, structureCap),
-    logic: parsed.scores.logic,
+    logic: capBy(parsed.scores.logic, logicCap),
     expression: capBy(parsed.scores.expression, expressionCap),
     originality: parsed.scores.originality,
     reasoningMaturity: parsed.scores.reasoningMaturity,
     apAlignment: hasAdmissionPolicy ? parsed.scores.apAlignment : null,
     total,
   };
+
+  /**
+   * 事実主張の確認状態（監査 P1-11）。資料と食い違う主張があれば、
+   * 資料の取り違えと同じ扱いで logic を抑える（プロンプト任せにしない）。
+   */
+  const claimChecks: ClaimCheck[] = (parsed.feedback?.claimChecks ?? []).map(
+    (c) => ({
+      claim: c.claim,
+      type: c.type,
+      status: c.status,
+      evidence: c.evidence ?? "",
+    }),
+  );
 
   const taskFulfillment: TaskFulfillment | undefined = task
     ? {
@@ -241,6 +260,7 @@ ${input.ocrText}
       : [],
     ...(topicInsights ? { topicInsights } : {}),
     ...(taskFulfillment ? { taskFulfillment } : {}),
+    ...(claimChecks.length > 0 ? { claimChecks } : {}),
     ...(reportInsights ? { reportInsights } : {}),
     languageCorrections,
     quantitativeAnalysis: calculateEssayMetrics(

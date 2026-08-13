@@ -9,6 +9,7 @@ import {
 } from "@/lib/ai/japanese-style";
 import { AI_MODEL_REVIEW } from "@/lib/ai/prompt-versions";
 import type { EssayFeedback } from "@/lib/types/essay";
+import { findAddedFacts } from "@/lib/essay/added-facts";
 
 export const maxDuration = 60;
 
@@ -131,11 +132,25 @@ export async function POST(
       brushedUpText = await fitToCharLimit(client, brushedUpText, upperLimit);
     }
 
+    /**
+     * 原文に無い固有名詞・数値が増えていないかを見る（監査 P1-11）。
+     * プロンプトで禁じても破られることがあり、ブラッシュアップ版は生徒が
+     * そのまま提出しうる。消さずに、増えた語を添えて本人に確認させる。
+     */
+    const addedFacts = findAddedFacts(ocrText, brushedUpText);
+    if (addedFacts.length > 0) {
+      console.warn(
+        `[essay/brushup] ${id}: 原文に無い語が増えた:`,
+        addedFacts.join(" / "),
+      );
+    }
+
     await essayRef.update({
       "feedback.brushedUpText": brushedUpText,
+      "feedback.brushedUpAddedFacts": addedFacts,
     });
 
-    return NextResponse.json({ brushedUpText, cached: false });
+    return NextResponse.json({ brushedUpText, addedFacts, cached: false });
   } catch (error) {
     console.error("[essay/brushup] error:", error);
     const detail = error instanceof Error ? error.message : String(error);

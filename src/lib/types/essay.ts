@@ -117,6 +117,22 @@ export interface TaskFulfillment {
   note: string;
 }
 
+/** 答案が持ち出した事実主張の確認状態（監査 P1-11） */
+export interface ClaimCheck {
+  claim: string;
+  type:
+    | "person"
+    | "organization"
+    | "law_or_policy"
+    | "research_or_book"
+    | "statistic"
+    | "date"
+    | "quotation"
+    | "personal_fact";
+  status: "verified" | "contradicted" | "unverified" | "not_checkable";
+  evidence: string;
+}
+
 export interface TopicInsights {
   background: string;
   relatedThemes: string[];
@@ -204,6 +220,10 @@ export interface EssayFeedback {
   topicInsights?: TopicInsights;
   /** 設問への適合判定。旧データには無い */
   taskFulfillment?: TaskFulfillment;
+  /** 事実主張の確認状態。旧データには無い */
+  claimChecks?: ClaimCheck[];
+  /** ブラッシュアップ版で原文に無い語が増えた場合、その語（確認用） */
+  brushedUpAddedFacts?: string[];
   brushedUpText?: string;
   languageCorrections?: LanguageCorrection[];
   priorityImprovement?: string;

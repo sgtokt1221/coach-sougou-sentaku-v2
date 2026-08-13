@@ -79,7 +79,13 @@ export const AI_PROMPT_VERSIONS = {
     //     答案内の引用を返させる。主題を外した答案は structure を4点、
     //     expression を6点で頭打ちにする（サーバー側で適用）。
     //     文章が整っていれば中位に紛れていた「主題を外した答案」を落とす。
-    promptVersion: "essay-review-v8",
+    // v9: 事実主張の確認状態を出させる（監査 P1-11）。答案が持ち出した
+    //     固有名詞・統計・制度名を claimChecks に列挙し、資料で裏が取れない
+    //     ものを unverified とする。unverified/contradicted は logic の
+    //     「答案固有の事実」としても originality の「具体性」としても
+    //     加点根拠にしない。架空の固有名詞が具体性として加点されるのを防ぐ。
+    //     資料と食い違う主張があれば logic を4点以下（サーバー側で適用）。
+    promptVersion: "essay-review-v9",
     schemaVersion: "essay-review-output-v2",
   },
   interviewScore: {
