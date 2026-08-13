@@ -85,7 +85,13 @@ export const AI_PROMPT_VERSIONS = {
     //     「答案固有の事実」としても originality の「具体性」としても
     //     加点根拠にしない。架空の固有名詞が具体性として加点されるのを防ぐ。
     //     資料と食い違う主張があれば logic を4点以下（サーバー側で適用）。
-    promptVersion: "essay-review-v9",
+    // v10: 主題のすり替えを見るようにした。「災害復興における住民参加」を
+    //      問われて救助（発災直後）の話に終始した答案が、v9 では
+    //      answersQuestion=true と判定されていた（実データ・長谷川葵）。
+    //      設問の主題語を先に特定させ、近いが別の語に置き換わっている答案・
+    //      主題の一部しか扱っていない答案を false にする。met の evidence は
+    //      主題語そのものに触れた一文に限る。
+    promptVersion: "essay-review-v10",
     schemaVersion: "essay-review-output-v2",
   },
   interviewScore: {
