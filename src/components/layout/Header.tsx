@@ -17,13 +17,13 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useAuth } from "@/contexts/AuthContext";
 import { signOutUser } from "@/lib/firebase/auth";
 import { MobileMenuContent } from "./MobileMenuContent";
-import { AdminScopeSelector } from "./AdminScopeSelector";
 
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { user, userProfile } = useAuth();
   const pathname = usePathname();
-  const showScopeSelector = userProfile?.role === "superadmin" && pathname.startsWith("/admin");
+  // スーパー管理者が管理者になり替わる導線は廃止した。
+  // 塾ごとの担当分離が崩れ、別法人の生徒が見えてしまう事故につながる。
 
   const initials =
     userProfile?.displayName
@@ -82,11 +82,14 @@ export function Header() {
       {/* スマホ専用: 中央にロゴ */}
       <Link
         href={
-          userProfile?.role === "admin" || userProfile?.role === "superadmin"
-            ? "/admin/dashboard"
-            : userProfile?.role === "teacher"
-              ? "/teacher/dashboard"
-              : "/student/dashboard"
+          // スーパー管理者は自分のダッシュボードへ。管理者側へは入らない
+          userProfile?.role === "superadmin"
+            ? "/superadmin/dashboard"
+            : userProfile?.role === "admin"
+              ? "/admin/dashboard"
+              : userProfile?.role === "teacher"
+                ? "/teacher/dashboard"
+                : "/student/dashboard"
         }
         className="lg:hidden absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center"
         aria-label="ホームへ"
@@ -103,12 +106,6 @@ export function Header() {
           {getPageTitle(pathname)}
         </h1>
       </div>
-
-      {showScopeSelector && (
-        <div className="hidden lg:block">
-          <AdminScopeSelector />
-        </div>
-      )}
 
       <div className="md:flex-initial lg:flex-1" />
 

@@ -238,22 +238,17 @@ export default function SuperadminStudentsPage() {
                               onChange={() => toggleStudent(s.uid)}
                             />
                           </td>
-                          <td
-                            className="px-4 py-3"
-                            onClick={() => router.push(`/admin/students/${s.uid}`)}
-                          >
+                          {/* 管理者画面への遷移は廃止（担当分離を崩さないため） */}
+                          <td className="px-4 py-3">
                             <div className="flex items-center gap-2.5">
                               <Avatar size="sm">
                                 <AvatarImage src={s.photoURL ?? undefined} alt={s.displayName} />
                                 <AvatarFallback>{getInitials(s.displayName)}</AvatarFallback>
                               </Avatar>
-                              <p className="font-medium hover:underline">{s.displayName}</p>
+                              <p className="font-medium">{s.displayName}</p>
                             </div>
                           </td>
-                          <td
-                            className="px-4 py-3 hidden sm:table-cell"
-                            onClick={() => router.push(`/admin/students/${s.uid}`)}
-                          >
+                          <td className="px-4 py-3 hidden sm:table-cell">
                             <p className="text-xs text-muted-foreground">{s.email}</p>
                           </td>
                           <td className="px-4 py-3 text-center">

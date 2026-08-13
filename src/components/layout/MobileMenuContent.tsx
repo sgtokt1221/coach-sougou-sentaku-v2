@@ -27,7 +27,6 @@ import {
   Shield,
   Trophy,
   BarChart3,
-  ExternalLink,
   BookMarked,
   BookOpen,
   Scale,
@@ -215,7 +214,7 @@ const superadminSecondary: ListItem[] = [
   { label: "大学データ", href: "/admin/universities", icon: Database },
   { label: "合格者データ", href: "/admin/passed-data", icon: Trophy },
   { label: "分析", href: "/admin/analytics", icon: BarChart3 },
-  { label: "Admin View", href: "/admin/dashboard", icon: ExternalLink },
+  // Admin View（管理者ダッシュボード）は廃止。担当の分離を崩さないため
 ];
 
 const teacherPrimary: PrimaryAction[] = [

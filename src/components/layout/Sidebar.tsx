@@ -19,7 +19,6 @@ import {
   Award,
   Trophy,
   Shield,
-  ExternalLink,
   Lightbulb,
   BookOpen,
   BookMarked,
@@ -207,12 +206,10 @@ const superadminNavGroups: NavGroup[] = [
       { label: "全体分析", href: "/superadmin/analytics", icon: BarChart3 },
     ],
   },
-  {
-    title: "",
-    items: [
-      { label: "Admin View", href: "/admin/dashboard", icon: ExternalLink },
-    ],
-  },
+  // 管理者ダッシュボードへの導線（Admin View）は廃止した。
+  // スーパー管理者が管理者になり替わると担当の分離が崩れる。
+  // メッセージ・大学データ・合格者データ等の /admin/* は、担当に紐づかない
+  // 共有画面なので残している。
 ];
 
 function NavLink({ item, pathname, isChild = false }: { item: NavItem; pathname: string; isChild?: boolean }) {

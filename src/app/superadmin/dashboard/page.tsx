@@ -23,7 +23,6 @@ import {
   Ticket,
   FileText,
   Mic,
-  ArrowUpRight,
   TrendingUp,
   Clock,
 } from "lucide-react";
@@ -304,11 +303,6 @@ export default function SuperadminDashboard() {
         <Link href="/superadmin/admins">
           <Button variant="outline" size="sm" className="gap-2">
             <Ticket className="size-4" /> 招待コード発行
-          </Button>
-        </Link>
-        <Link href="/admin/dashboard">
-          <Button variant="outline" size="sm" className="gap-2">
-            <ArrowUpRight className="size-4" /> Admin View
           </Button>
         </Link>
       </div>
