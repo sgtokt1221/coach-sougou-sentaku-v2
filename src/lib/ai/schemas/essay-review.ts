@@ -73,6 +73,27 @@ export const EssayReviewOutputSchema = z.object({
         })
       )
       .max(5),
+    /**
+     * 設問が求めた要求ごとの充足判定（監査 P1-12）。
+     * 主題を外した答案でも文章力で点が残る問題を、独立した判定で拾う。
+     */
+    taskFulfillment: z.object({
+      /** 設問に正面から答えているか */
+      answersQuestion: z.boolean(),
+      requirements: z
+        .array(
+          z.object({
+            /** 設問が求めていること（「比較せよ」「三つ挙げよ」等） */
+            requirement: shortText,
+            status: z.enum(["met", "partial", "missing"]),
+            /** met/partial の根拠となる答案内の一文。missing なら空文字 */
+            evidence: boundedText,
+          }),
+        )
+        .max(6),
+      /** 外している場合に、何を書くべきだったかを一文で */
+      note: boundedText,
+    }),
     reportInsights: z
       .object({
         sourceComprehension: boundedText,

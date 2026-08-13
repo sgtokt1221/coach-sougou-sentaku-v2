@@ -74,7 +74,12 @@ export const AI_PROMPT_VERSIONS = {
     //     APの有無で満点が40/50に変わる問題も同時に解消した。
     //     ※ 満点と軸の意味が変わるため、既存答案は
     //        scripts/rescore-essays.ts で採点し直すこと。
-    promptVersion: "essay-review-v7",
+    // v8: 設問への適合を独立判定にした（監査 P1-12）。
+    //     採点前に設問の要求を分解し、要求ごとに met/partial/missing と
+    //     答案内の引用を返させる。主題を外した答案は structure を4点、
+    //     expression を6点で頭打ちにする（サーバー側で適用）。
+    //     文章が整っていれば中位に紛れていた「主題を外した答案」を落とす。
+    promptVersion: "essay-review-v8",
     schemaVersion: "essay-review-output-v2",
   },
   chocoReview: {

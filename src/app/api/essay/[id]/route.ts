@@ -94,6 +94,10 @@ export async function GET(
         priorityImprovement: feedback.priorityImprovement ?? null,
         nextChallenge: feedback.nextChallenge ?? null,
         quantitativeAnalysis: feedback.quantitativeAnalysis ?? null,
+        // 設問への適合判定（v8〜）。旧データには無い
+        taskFulfillment: feedback.taskFulfillment ?? null,
+        apAlignmentAssessable: feedback.apAlignmentAssessable ?? null,
+        scoreMaximum: feedback.scoreMaximum ?? null,
       },
       targetUniversity: data.targetUniversity,
       targetFaculty: data.targetFaculty,

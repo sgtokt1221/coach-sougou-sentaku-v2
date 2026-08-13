@@ -25,15 +25,31 @@ export const SCORE_COLORS = {
   expression: "var(--chart-4)",  // green系 — 表現力
   apAlignment: "var(--chart-5)", // rose/orange系 — AP合致度
   originality: "var(--chart-1)", // teal系 — 独自性
+  reasoningMaturity: "var(--chart-6, var(--chart-3))", // 議論の成熟度
 } as const;
 
+/**
+ * 合計に入る5軸（v7〜）。AP合致度は合計外の補助指標なので含めない。
+ * APを見たい画面は AP_SCORE_LINE を足す。
+ */
 export const SCORE_LINES = [
   { key: "structure", label: "構成", color: SCORE_COLORS.structure },
   { key: "logic", label: "論理性", color: SCORE_COLORS.logic },
   { key: "expression", label: "表現力", color: SCORE_COLORS.expression },
-  { key: "apAlignment", label: "AP合致度", color: SCORE_COLORS.apAlignment },
   { key: "originality", label: "独自性", color: SCORE_COLORS.originality },
+  {
+    key: "reasoningMaturity",
+    label: "議論の成熟度",
+    color: SCORE_COLORS.reasoningMaturity,
+  },
 ] as const;
+
+/** AP合致度（合計外）。志望校との相性を見る画面だけで足す */
+export const AP_SCORE_LINE = {
+  key: "apAlignment",
+  label: "AP合致度（合計外）",
+  color: SCORE_COLORS.apAlignment,
+} as const;
 
 /** 面接スコアの共通5軸（全モード必須項目）の系列定義 */
 export const INTERVIEW_SCORE_LINES = [

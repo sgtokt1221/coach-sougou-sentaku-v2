@@ -103,6 +103,20 @@ export interface EssayScores {
   total: number; // 合計 0-50（AP は含まない）
 }
 
+/** 設問が求めた要求ごとの充足判定（監査 P1-12） */
+export interface TaskFulfillment {
+  /** 設問に正面から答えているか */
+  answersQuestion: boolean;
+  requirements: {
+    requirement: string;
+    status: "met" | "partial" | "missing";
+    /** met/partial の根拠となる答案内の一文 */
+    evidence: string;
+  }[];
+  /** 外している場合に、何を書くべきだったか */
+  note: string;
+}
+
 export interface TopicInsights {
   background: string;
   relatedThemes: string[];
@@ -188,6 +202,8 @@ export interface EssayFeedback {
   repeatedIssues: RepeatedIssue[];
   improvementsSinceLast: Improvement[];
   topicInsights?: TopicInsights;
+  /** 設問への適合判定。旧データには無い */
+  taskFulfillment?: TaskFulfillment;
   brushedUpText?: string;
   languageCorrections?: LanguageCorrection[];
   priorityImprovement?: string;

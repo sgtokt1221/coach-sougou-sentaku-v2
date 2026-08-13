@@ -52,6 +52,7 @@ import type {
   QuantitativeAnalysis,
   RetryComparison,
   ReportInsights,
+  TaskFulfillment,
 } from "@/lib/types/essay";
 import { getRankFromPercentage, getScorePercentage } from "@/lib/score-rank";
 
@@ -59,8 +60,13 @@ interface EssayScores {
   structure: number;
   logic: number;
   expression: number;
-  apAlignment: number;
   originality: number;
+  /** 議論の成熟度。旧データには無い */
+  reasoningMaturity?: number;
+  /** AP合致度は合計外。未取得は null */
+  apAlignment: number | null;
+  /** サーバーが計算した合計（0-50） */
+  total: number;
 }
 
 interface RepeatedIssue {
@@ -96,6 +102,8 @@ interface EssayFeedback {
   repeatedIssues: RepeatedIssue[];
   improvementsSinceLast: ImprovementSinceLast[];
   topicInsights?: TopicInsights;
+  /** 設問への適合判定。旧データには無い */
+  taskFulfillment?: TaskFulfillment;
   brushedUpText?: string;
   languageCorrections?: LanguageCorrection[];
   priorityImprovement?: string;
@@ -340,26 +348,30 @@ export default function EssayResultPage() {
     );
   }
 
-  const totalScore =
-    result.scores.structure +
-    result.scores.logic +
-    result.scores.expression +
-    result.scores.apAlignment +
-    result.scores.originality;
+  /**
+   * 合計はサーバーが計算した値を使う。画面で足し直すと、軸構成が変わった
+   * ときにサーバーとずれる（v7 で AP が合計外になり、議論の成熟度が入った）。
+   */
+  const totalScore = result.scores.total;
   const scoreMaximum = result.feedback.scoreMaximum ?? 50;
   const apAlignmentAssessable = result.feedback.apAlignmentAssessable !== false;
 
   const percentage = getScorePercentage(totalScore, scoreMaximum);
   const rank = getRankFromPercentage(percentage);
 
+  // 合計に入る5軸。旧データに無い軸は描かない（0 として凹ませない）
   const radarData = [
     { subject: "構成", value: result.scores.structure },
     { subject: "論理性", value: result.scores.logic },
     { subject: "表現力", value: result.scores.expression },
-    ...(apAlignmentAssessable
-      ? [{ subject: "AP合致度", value: result.scores.apAlignment }]
-      : []),
     { subject: "独自性", value: result.scores.originality },
+    ...(typeof result.scores.reasoningMaturity === "number"
+      ? [{ subject: "議論の成熟度", value: result.scores.reasoningMaturity }]
+      : []),
+    // APは合計外。相性の参考として並べる
+    ...(apAlignmentAssessable && typeof result.scores.apAlignment === "number"
+      ? [{ subject: "AP合致度（合計外）", value: result.scores.apAlignment }]
+      : []),
   ];
 
   return (
@@ -945,6 +957,10 @@ export default function EssayResultPage() {
                       </Card>
                     )}
 
+                    <TaskFulfillmentCard
+                      task={result.feedback.taskFulfillment}
+                    />
+
                     {/* 改善点 */}
                     <div className="space-y-4">
                       {/* 最優先改善ポイント */}
@@ -1441,6 +1457,8 @@ export default function EssayResultPage() {
                   </Card>
                 )}
 
+                <TaskFulfillmentCard task={result.feedback.taskFulfillment} />
+
                 {/* 改善点 */}
                 <div className="space-y-4">
                   {/* 最優先改善ポイント */}
@@ -1732,5 +1750,50 @@ export default function EssayResultPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * 設問への適合（監査 P1-12）。
+ * 主題を外していると文章が整っていても点が伸びないため、改善点より先に出す。
+ * モバイルのタブ表示とデスクトップの通し表示は別々に組まれているので、
+ * 部品にして両方から呼ぶ（片方だけ直して気付かない事故を防ぐ）。
+ */
+function TaskFulfillmentCard({ task }: { task?: TaskFulfillment }) {
+  if (!task) return null;
+  return (
+    <Card
+      className={`border-0 shadow-md ${task.answersQuestion ? "bg-emerald-50" : "bg-rose-50"}`}
+    >
+      <CardContent className="space-y-2 p-4">
+        <p
+          className={`text-sm font-semibold ${
+            task.answersQuestion ? "text-emerald-800" : "text-rose-800"
+          }`}
+        >
+          {task.answersQuestion
+            ? "設問に答えられています"
+            : "設問からずれています"}
+        </p>
+        <ul className="space-y-1 text-sm">
+          {task.requirements.map((r, i) => (
+            <li key={i} className="flex gap-2">
+              <span className="shrink-0">
+                {r.status === "met" ? "◎" : r.status === "partial" ? "△" : "×"}
+              </span>
+              <span>
+                <span className="font-medium">{r.requirement}</span>
+                {r.evidence && (
+                  <span className="text-muted-foreground block text-xs">
+                    {r.evidence}
+                  </span>
+                )}
+              </span>
+            </li>
+          ))}
+        </ul>
+        {task.note && <p className="text-sm text-slate-700">{task.note}</p>}
+      </CardContent>
+    </Card>
   );
 }

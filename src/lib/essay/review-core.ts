@@ -15,6 +15,7 @@ import type {
   EssayScores,
   EssayFeedback,
   TopicInsights,
+  TaskFulfillment,
   ReportInsights,
 } from "@/lib/types/essay";
 
@@ -150,22 +151,47 @@ ${input.ocrText}
    * 合計はAPを含まない5軸（構成・論理性・表現力・独自性・議論の成熟度）。
    * APの有無で満点が変わらなくなったので、常に50点満点で比較できる。
    */
+  /**
+   * 設問に正面から答えていない答案は、文章が整っていても上限をかける
+   * （監査 P1-12）。AIの点付けだけに任せると、structure と expression が
+   * 高いまま残り「読みやすいが主題を外した答案」が中位に紛れる。
+   */
+  const task = parsed.feedback?.taskFulfillment;
+  const missingRequired =
+    task?.requirements?.some((r) => r.status === "missing") ?? false;
+  const offTopic = task ? task.answersQuestion === false : false;
+  const capBy = (v: number, cap: number) => Math.min(v, cap);
+  const structureCap = offTopic ? 4 : missingRequired ? 6 : 10;
+  const expressionCap = offTopic ? 6 : 10;
+
   const scoreMaximum = ESSAY_SCORE_MAX;
   const total =
-    parsed.scores.structure +
+    capBy(parsed.scores.structure, structureCap) +
     parsed.scores.logic +
-    parsed.scores.expression +
+    capBy(parsed.scores.expression, expressionCap) +
     parsed.scores.originality +
     parsed.scores.reasoningMaturity;
   const scores: EssayScores = {
-    structure: parsed.scores.structure,
+    structure: capBy(parsed.scores.structure, structureCap),
     logic: parsed.scores.logic,
-    expression: parsed.scores.expression,
+    expression: capBy(parsed.scores.expression, expressionCap),
     originality: parsed.scores.originality,
     reasoningMaturity: parsed.scores.reasoningMaturity,
     apAlignment: hasAdmissionPolicy ? parsed.scores.apAlignment : null,
     total,
   };
+
+  const taskFulfillment: TaskFulfillment | undefined = task
+    ? {
+        answersQuestion: task.answersQuestion,
+        requirements: (task.requirements ?? []).map((r) => ({
+          requirement: r.requirement,
+          status: r.status,
+          evidence: r.evidence ?? "",
+        })),
+        note: task.note ?? "",
+      }
+    : undefined;
 
   const topicInsights: TopicInsights | undefined = parsed.feedback
     ?.topicInsights
@@ -214,6 +240,7 @@ ${input.ocrText}
       ? parsed.feedback.improvementsSinceLast
       : [],
     ...(topicInsights ? { topicInsights } : {}),
+    ...(taskFulfillment ? { taskFulfillment } : {}),
     ...(reportInsights ? { reportInsights } : {}),
     languageCorrections,
     quantitativeAnalysis: calculateEssayMetrics(
