@@ -153,36 +153,49 @@ ${input.ocrText}
    * APの有無で満点が変わらなくなったので、常に50点満点で比較できる。
    */
   /**
-   * 設問に正面から答えていない答案は、文章が整っていても上限をかける
-   * （監査 P1-12）。AIの点付けだけに任せると、structure と expression が
-   * 高いまま残り「読みやすいが主題を外した答案」が中位に紛れる。
+   * 設問への適合を点に反映する（監査 P1-12）。
+   *
+   * 上限が構成と表現だけだと、中身の軸（論理性・独自性・成熟度）が残るため
+   * 主題を外した答案でも22〜28点の中位に居座った。設問に答えていない以上、
+   * その論・具体・考察は「別の問いへの答え」なので、内容側をまとめて抑える。
+   *
+   *   ずれている（answersQuestion=false）: 内容4軸を3点以下、表現は6点以下
+   *     → 上限18点/50（36%）。文章力は事実として観測できるので表現は残す
+   *   要求の欠落（答えてはいるが一部欠け）: 設問対応に関わる3軸を6点以下
+   *     → 上限は概ね30点台前半
    */
   const task = parsed.feedback?.taskFulfillment;
   const missingRequired =
     task?.requirements?.some((r) => r.status === "missing") ?? false;
   const offTopic = task ? task.answersQuestion === false : false;
   const capBy = (v: number, cap: number) => Math.min(v, cap);
-  const structureCap = offTopic ? 4 : missingRequired ? 6 : 10;
-  const expressionCap = offTopic ? 6 : 10;
-  // 資料と食い違う主張がある答案は、資料の取り違えとして logic を抑える
+
+  // 資料と食い違う主張は、資料の取り違えとして logic を抑える
   const contradicted = (parsed.feedback?.claimChecks ?? []).some(
     (c) => c.status === "contradicted",
   );
-  const logicCap = contradicted ? 4 : 10;
+
+  const contentCap = offTopic ? 3 : missingRequired ? 6 : 10;
+  const structureCap = contentCap;
+  const originalityCap = contentCap;
+  const maturityCap = contentCap;
+  const logicCap = Math.min(contentCap, contradicted ? 4 : 10);
+  // 表現は「何を書いたか」に依らず読める。ずれていても6点までは認める
+  const expressionCap = offTopic ? 6 : 10;
 
   const scoreMaximum = ESSAY_SCORE_MAX;
   const total =
     capBy(parsed.scores.structure, structureCap) +
     capBy(parsed.scores.logic, logicCap) +
     capBy(parsed.scores.expression, expressionCap) +
-    parsed.scores.originality +
-    parsed.scores.reasoningMaturity;
+    capBy(parsed.scores.originality, originalityCap) +
+    capBy(parsed.scores.reasoningMaturity, maturityCap);
   const scores: EssayScores = {
     structure: capBy(parsed.scores.structure, structureCap),
     logic: capBy(parsed.scores.logic, logicCap),
     expression: capBy(parsed.scores.expression, expressionCap),
-    originality: parsed.scores.originality,
-    reasoningMaturity: parsed.scores.reasoningMaturity,
+    originality: capBy(parsed.scores.originality, originalityCap),
+    reasoningMaturity: capBy(parsed.scores.reasoningMaturity, maturityCap),
     apAlignment: hasAdmissionPolicy ? parsed.scores.apAlignment : null,
     total,
   };

@@ -13,7 +13,10 @@
  * 使い方（既定は確認のみ。--apply で書き込み）:
  *   NEXT_PUBLIC_FIREBASE_PROJECT_ID=coach-sougou-sentaku \
  *   GOOGLE_CLOUD_PROJECT=coach-sougou-sentaku \
- *   npx tsx scripts/rescore-essays.ts [--apply] [--limit=20]
+ *   npx tsx scripts/rescore-essays.ts [--apply] [--limit=20] [--names=岡本,長谷川]
+ *
+ * --names は生徒の表示名の部分一致。指定するとその生徒の答案だけを対象にする。
+ * --limit は新しい順に N 件。--names と併せると「その生徒の直近N件」になる。
  */
 import { config } from "dotenv";
 config({ path: ".env.local" });
@@ -28,6 +31,12 @@ const LIMIT = Number(
   process.argv.find((a) => a.startsWith("--limit="))?.split("=")[1] ?? 0,
 );
 const TARGET_VERSION = AI_PROMPT_VERSIONS.essayReview.promptVersion;
+const NAMES = (
+  process.argv.find((a) => a.startsWith("--names="))?.split("=")[1] ?? ""
+)
+  .split(",")
+  .map((x) => x.trim())
+  .filter(Boolean);
 
 async function resolveAdmissionPolicy(
   universityId: string | undefined,
@@ -55,10 +64,29 @@ async function main() {
     .orderBy("submittedAt", "desc")
     .get();
 
+  /** 表示名で絞る場合に使う uid の集合 */
+  let allowedUids: Set<string> | null = null;
+  if (NAMES.length > 0) {
+    const users = await adminDb.collection("users").get();
+    allowedUids = new Set(
+      users.docs
+        .filter((u) => {
+          const name = String(u.data().displayName ?? "");
+          return NAMES.some((n) => name.includes(n));
+        })
+        .map((u) => u.id),
+    );
+    const names = users.docs
+      .filter((u) => allowedUids!.has(u.id))
+      .map((u) => String(u.data().displayName ?? u.id));
+    console.log(`対象の生徒: ${names.join(" / ") || "（該当なし）"}`);
+  }
+
   const targets = snap.docs.filter((d) => {
     const e = d.data();
     if (!(e.ocrText ?? e.originalText ?? "").trim()) return false;
     if (!e.scores) return false;
+    if (allowedUids && !allowedUids.has(e.userId)) return false;
     // すでに新版で採点済みなら飛ばす（再実行しても二重に課金しない）
     return e.feedback?.aiMetadata?.promptVersion !== TARGET_VERSION;
   });
