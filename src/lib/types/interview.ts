@@ -77,6 +77,12 @@ export interface InterviewFeedback {
   repeatedIssues: RepeatedIssue[];
   improvementsSinceLast: Improvement[];
   personalizedAdvice?: string[];
+  /** 採点に使ったプロンプト版・スキーマ版・モデル。改定前後の比較に使う */
+  aiMetadata?: {
+    promptVersion: string;
+    schemaVersion: string;
+    model: string;
+  };
 }
 
 export interface Interview {

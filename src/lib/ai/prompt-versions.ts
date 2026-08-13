@@ -82,6 +82,15 @@ export const AI_PROMPT_VERSIONS = {
     promptVersion: "essay-review-v8",
     schemaVersion: "essay-review-output-v2",
   },
+  interviewScore: {
+    // v1: 手書きJSONのパースから構造化出力(Zod)へ移行した（監査 P1-1）。
+    //     以前は本文から正規表現で JSON を抜き出しており、範囲外の点数も
+    //     軸の欠落も型違いも素通りしていた。版も記録していなかったため、
+    //     改定前後のスコア比較ができなかった。
+    //     あわせてモード別の軸を保存し（P0-2）、合計を内容4軸に固定した（P0-1）。
+    promptVersion: "interview-score-v1",
+    schemaVersion: "interview-score-output-v1",
+  },
   chocoReview: {
     // v2: 手書きJSON＋正規表現パースから構造化出力へ移行し、模範段落の引用禁止と
     //     命令・データ境界を追加した。

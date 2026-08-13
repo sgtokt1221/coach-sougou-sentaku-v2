@@ -1,4 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
+import { InterviewScoreOutputSchema } from "@/lib/ai/schemas/interview-score";
+import { AI_MODEL_REVIEW, AI_PROMPT_VERSIONS } from "@/lib/ai/prompt-versions";
 import { buildInterviewEvaluationPrompt } from "@/lib/ai/prompts/interview";
 import type {
   InterviewScores,
@@ -88,36 +91,40 @@ export async function scoreInterviewCore(
     ? `\n\n## この生徒の自己分析データ(面接前に本人が整理した内容)\n${input.selfAnalysisContext}\n\n※ 上記の自己分析を踏まえて、「面接でこう答えるべきだった」「自己分析のこの強みをもっと活かすべきだった」等の具体的なアドバイスを improvements に含めてください。`
     : "";
 
-  const response = await client.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 4096,
+  /**
+   * 構造化出力で受ける（監査 P1-1）。
+   * 以前は本文から JSON を正規表現で抜き出して JSON.parse していたため、
+   * 範囲外の点数も、軸の欠落も、型違いも素通りしていた。
+   */
+  const response = await client.messages.parse({
+    model: AI_MODEL_REVIEW,
+    // parse() は max_tokens を thinking と本文で共有する。4096 では
+    // 評価を吟味する余地が残らない（小論文で実際に起きた）
+    max_tokens: 12000,
     messages: [
       {
         role: "user",
         content: `${evaluationPrompt}${selfAnalysisSection}\n\n## 面接会話記録\n\n${conversationText}`,
       },
     ],
+    output_config: {
+      format: zodOutputFormat(InterviewScoreOutputSchema),
+      effort: "high",
+    },
   });
 
   const rawText =
     response.content[0]?.type === "text" ? response.content[0].text : "";
-
-  const jsonMatch =
-    rawText.match(/```json\s*([\s\S]*?)\s*```/) ?? rawText.match(/(\{[\s\S]*\})/);
-
-  if (!jsonMatch) {
+  if (response.stop_reason === "max_tokens") {
     throw new InterviewScoreParseError(
-      "AI 評価結果に JSON ブロックが含まれていません",
+      "AI 評価結果が最大トークン数で途中終了しました",
       rawText,
     );
   }
-
-  let parsed: ReturnType<typeof JSON.parse>;
-  try {
-    parsed = JSON.parse(jsonMatch[1]);
-  } catch (err) {
+  const parsed = response.parsed_output;
+  if (!parsed) {
     throw new InterviewScoreParseError(
-      `JSON.parse 失敗: ${(err as Error).message}`,
+      "AI 評価結果が構造化出力スキーマを満たしませんでした",
       rawText,
     );
   }
@@ -180,6 +187,11 @@ export async function scoreInterviewCore(
     improvements: parsed.feedback.improvements ?? [],
     repeatedIssues: parsed.feedback.repeatedIssues ?? [],
     improvementsSinceLast: parsed.feedback.improvementsSinceLast ?? [],
+    personalizedAdvice: parsed.feedback.personalizedAdvice ?? [],
+    aiMetadata: {
+      ...AI_PROMPT_VERSIONS.interviewScore,
+      model: AI_MODEL_REVIEW,
+    },
   };
 
   const conversationSummary = parsed.conversationSummary ?? {
