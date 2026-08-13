@@ -12,9 +12,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
  * 置かれているため、インラインの transform で上書きするときは中央寄せの
  * 分（-50%）を必ず含める。含めないと左上にずれる。
  *
- * @param open 開閉状態。開き直したら位置を中央へ戻す
+ * @param open 開閉状態。開き直したら初期位置へ戻す
+ * @param placement 初期位置。"right" は画面の右端寄せ（後ろの答案・書類を
+ *   隠さずに読みながら書くため）。狭い画面では中央のまま。
  */
-export function useDraggableDialog(open: boolean) {
+export function useDraggableDialog(
+  open: boolean,
+  placement: "center" | "right" = "center",
+) {
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const drag = useRef<{ startX: number; startY: number; baseX: number; baseY: number } | null>(
     null,
@@ -58,10 +63,28 @@ export function useDraggableDialog(open: boolean) {
   );
 
   return {
-    /** DialogContent に渡す。中央寄せ分を含めた transform */
+    /**
+     * DialogContent に渡す transform。
+     * 中央寄せ（left-1/2 + -translate-x-1/2）を transform で上書きするため、
+     * center のときは -50% を含める。right は className 側で right-6 に
+     * 付け替えるので X の中央寄せは要らない。
+     *
+     * right は X の中央寄せ(-50%)を外すだけ。left-1/2 は残るので、左端が
+     * 画面中央に来て右半分に置かれる。後ろの答案・書類の左側が読める。
+     *
+     * ピクセルで位置を計算するのはやめた。fixed の基準が親の transform に
+     * 引きずられ、開くアニメーション(zoom-95)の最中に測ると値がずれるため、
+     * 実測にもとづく初期位置は当てにならなかった。
+     * className で left-auto/right-6 に付け替える案も、tailwind-merge が
+     * `left-1/2` と `lg:left-auto` を別グループとして扱うため効かなかった。
+     */
     contentStyle: {
-      transform: `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px))`,
+      transform:
+        placement === "right"
+          ? `translate(${offset.x}px, calc(-50% + ${offset.y}px))`
+          : `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px))`,
     } as React.CSSProperties,
+
     /** つかむ場所（見出し）に渡す */
     handleProps: {
       onPointerDown,

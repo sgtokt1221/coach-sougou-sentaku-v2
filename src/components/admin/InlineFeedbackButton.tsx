@@ -88,7 +88,8 @@ export function InlineFeedbackButton({
    * 書きかけを端末とクラウドへ退避する。長文のFBを書いている途中で
    * モーダルを閉じたりリロードしても消えないようにする。
    */
-  const dragDialog = useDraggableDialog(open);
+  // 後ろの答案を読みながら書けるよう、初期位置を画面の右へ寄せる
+  const dragDialog = useDraggableDialog(open, "right");
 
   const draft = usePersistentDraft({
     key: `admin-feedback-${type}-${targetId}`,

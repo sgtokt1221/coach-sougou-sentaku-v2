@@ -218,7 +218,8 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
     }
   }
 
-  const reviewDrag = useDraggableDialog(reviewOpen);
+  // 後ろの書類本文を読みながら書けるよう、初期位置を画面の右へ寄せる
+  const reviewDrag = useDraggableDialog(reviewOpen, "right");
 
   /** 書きかけのレビューコメントを退避する。閉じても消えないように */
   const reviewDraft = usePersistentDraft({
