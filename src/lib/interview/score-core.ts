@@ -40,6 +40,15 @@ export interface InterviewScoreCoreInput {
   selfAnalysisContext?: string;
   /** 動画分析。あれば bodyLanguage スコアの加算に使う */
   videoAnalysis?: VideoAnalysis;
+  /**
+   * 前回の面接結果（同一モード）。渡さないと前回比は出せない。
+   * 以前は渡さないまま improvementsSinceLast を要求しており、
+   * モデルが比較内容を作文できる状態だった（監査 P1-2）。
+   */
+  previousAttempt?: {
+    scores: { clarity: number; apAlignment: number; enthusiasm: number; specificity: number };
+    feedbackSummary: string[];
+  };
 }
 
 export interface InterviewScoreCoreOutput {
@@ -86,6 +95,18 @@ export async function scoreInterviewCore(
     input.mode,
     input.presentationContent,
   );
+
+  /**
+   * 前回結果の有無で指示を切り替える（監査 P1-2）。
+   * 無いのに前回比を求めると、モデルは比較を作文してしまう。
+   */
+  const previousSection = input.previousAttempt
+    ? `\n\n## 前回の面接結果（同一モード）\n` +
+      `スコア: 明確さ${input.previousAttempt.scores.clarity} / AP合致度${input.previousAttempt.scores.apAlignment} / ` +
+      `熱意${input.previousAttempt.scores.enthusiasm} / 具体性${input.previousAttempt.scores.specificity}\n` +
+      `前回の講評:\n${input.previousAttempt.feedbackSummary.map((x) => `- ${x}`).join("\n")}\n\n` +
+      `※ improvementsSinceLast には、前回と今回の両方で確認できる差だけを書いてください。`
+    : `\n\n## 前回の面接結果\n前回の記録はありません。improvementsSinceLast は必ず空配列にしてください。推測で比較を書かないこと。`;
 
   const selfAnalysisSection = input.selfAnalysisContext
     ? `\n\n## この生徒の自己分析データ(面接前に本人が整理した内容)\n${input.selfAnalysisContext}\n\n※ 上記の自己分析を踏まえて、「面接でこう答えるべきだった」「自己分析のこの強みをもっと活かすべきだった」等の具体的なアドバイスを improvements に含めてください。`
@@ -186,7 +207,10 @@ export async function scoreInterviewCore(
     goodPoints: parsed.feedback.goodPoints ?? [],
     improvements: parsed.feedback.improvements ?? [],
     repeatedIssues: parsed.feedback.repeatedIssues ?? [],
-    improvementsSinceLast: parsed.feedback.improvementsSinceLast ?? [],
+    // 前回結果を渡していないのに比較が返ってきたら捨てる。作文を保存しない
+    improvementsSinceLast: input.previousAttempt
+      ? (parsed.feedback.improvementsSinceLast ?? [])
+      : [],
     personalizedAdvice: parsed.feedback.personalizedAdvice ?? [],
     aiMetadata: {
       ...AI_PROMPT_VERSIONS.interviewScore,

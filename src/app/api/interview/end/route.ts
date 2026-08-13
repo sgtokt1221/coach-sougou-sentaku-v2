@@ -160,6 +160,63 @@ export async function POST(request: NextRequest) {
       nextFocusAreas: string[];
     };
     try {
+    /**
+     * 同一モードの前回結果を渡す（監査 P1-2）。
+     * 渡さないまま前回比を求めると、モデルが比較を作文する。
+     */
+    let previousAttempt:
+      | {
+          scores: {
+            clarity: number;
+            apAlignment: number;
+            enthusiasm: number;
+            specificity: number;
+          };
+          feedbackSummary: string[];
+        }
+      | undefined;
+    if (adminDb && userId) {
+      try {
+        const prevSnap = await adminDb
+          .collection("interviews")
+          .where("userId", "==", userId)
+          .where("status", "==", "completed")
+          .get();
+        const prev = prevSnap.docs
+          .map((d) => ({ id: d.id, ...d.data() }) as Record<string, unknown>)
+          .filter(
+            (x) =>
+              x.id !== sessionId &&
+              (x.mode ?? "") === sessionMode &&
+              x.scores != null,
+          )
+          .sort((a, b) => {
+            const ta =
+              (a.completedAt as { toMillis?: () => number })?.toMillis?.() ?? 0;
+            const tb =
+              (b.completedAt as { toMillis?: () => number })?.toMillis?.() ?? 0;
+            return tb - ta;
+          })[0];
+        if (prev) {
+          const ps = prev.scores as Record<string, number>;
+          const pf = prev.feedback as { overall?: string; improvements?: string[] } | undefined;
+          previousAttempt = {
+            scores: {
+              clarity: ps.clarity ?? 0,
+              apAlignment: ps.apAlignment ?? 0,
+              enthusiasm: ps.enthusiasm ?? 0,
+              specificity: ps.specificity ?? 0,
+            },
+            feedbackSummary: [pf?.overall ?? "", ...(pf?.improvements ?? [])]
+              .filter(Boolean)
+              .slice(0, 5),
+          };
+        }
+      } catch (err) {
+        console.warn("[interview/end] 前回結果の取得に失敗:", err);
+      }
+    }
+
       const coreResult = await scoreInterviewCore({
         messages: scoringMessages,
         universityName,
@@ -169,6 +226,7 @@ export async function POST(request: NextRequest) {
         presentationContent,
         selfAnalysisContext,
         videoAnalysis,
+        ...(previousAttempt ? { previousAttempt } : {}),
       });
       scores = coreResult.scores;
       feedback = coreResult.feedback;
