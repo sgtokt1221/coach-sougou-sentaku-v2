@@ -107,6 +107,10 @@ export interface EssayScores {
 export interface TaskFulfillment {
   /** 設問に正面から答えているか */
   answersQuestion: boolean;
+  /** 答案の中心的な話題と設問の主題の関係 */
+  subjectMatch?: "same" | "narrower" | "different";
+  /** 設問の主題語 */
+  subject?: string;
   requirements: {
     requirement: string;
     status: "met" | "partial" | "missing";

@@ -167,7 +167,16 @@ ${input.ocrText}
   const task = parsed.feedback?.taskFulfillment;
   const missingRequired =
     task?.requirements?.some((r) => r.status === "missing") ?? false;
-  const offTopic = task ? task.answersQuestion === false : false;
+  /**
+   * 上限は subjectMatch（3択）で決める。ブール1つだと実行ごとに揺れ、
+   * 同じ答案が 17点 と 25点 の間で動いた。
+   *   different = 別の話題が中心 → 内容4軸 3点以下
+   *   narrower  = 主題の一部に限定 → 6点以下
+   *   same      = 要求の欠落があれば6点以下、無ければ上限なし
+   */
+  const subjectMatch = task?.subjectMatch ?? (task?.answersQuestion === false ? "different" : "same");
+  const offTopic = subjectMatch === "different";
+  const narrowed = subjectMatch === "narrower";
   const capBy = (v: number, cap: number) => Math.min(v, cap);
 
   // 資料と食い違う主張は、資料の取り違えとして logic を抑える
@@ -175,7 +184,7 @@ ${input.ocrText}
     (c) => c.status === "contradicted",
   );
 
-  const contentCap = offTopic ? 3 : missingRequired ? 6 : 10;
+  const contentCap = offTopic ? 3 : narrowed || missingRequired ? 6 : 10;
   const structureCap = contentCap;
   const originalityCap = contentCap;
   const maturityCap = contentCap;
@@ -216,6 +225,7 @@ ${input.ocrText}
   const taskFulfillment: TaskFulfillment | undefined = task
     ? {
         answersQuestion: task.answersQuestion,
+        subjectMatch: task.subjectMatch,
         requirements: (task.requirements ?? []).map((r) => ({
           requirement: r.requirement,
           status: r.status,

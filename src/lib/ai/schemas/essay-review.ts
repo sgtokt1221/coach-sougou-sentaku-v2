@@ -78,8 +78,14 @@ export const EssayReviewOutputSchema = z.object({
      * 主題を外した答案でも文章力で点が残る問題を、独立した判定で拾う。
      */
     taskFulfillment: z.object({
-      /** 設問に正面から答えているか */
+      /** 設問に正面から答えているか（subjectMatch === "same" と一致させる） */
       answersQuestion: z.boolean(),
+      /**
+       * 答案の中心的な話題と、設問の主題の関係。
+       * same=同一 / narrower=主題の一部に限定 / different=別の話題
+       * ブール1つだと実行ごとに判定が揺れたため、3択で明示させる。
+       */
+      subjectMatch: z.enum(["same", "narrower", "different"]),
       requirements: z
         .array(
           z.object({
@@ -129,7 +135,7 @@ export const EssayReviewOutputSchema = z.object({
           evidence: boundedText,
         }),
       )
-      .max(10),
+      .max(6),
     reportInsights: z
       .object({
         sourceComprehension: boundedText,

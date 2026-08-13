@@ -97,7 +97,19 @@ export const AI_PROMPT_VERSIONS = {
     //      ずれている場合は内容4軸を3点以下（上限18点/50）、要求の欠落は
     //      設問対応に関わる3軸を6点以下にする。プロンプトにも同じ基準を書き、
     //      サーバー側の上限は最後の砦として残す。
-    promptVersion: "essay-review-v11",
+    // v12: answersQuestion の意味を「主題に答えているか」だけに限定した。
+    //      v11 では要求（具体例など）の欠落だけで false になり、主題には
+    //      正しく答えている答案まで「ずれている」扱いで3点上限に落ちていた
+    //      （実データ: 復興の答案が28→18点。AI自身が「主題そのものは正しく
+    //      論じている」と書きながら false にしていた）。
+    //      要求の欠落は requirements の missing で表し、上限は6点側を使う。
+    // v13: 主題の一致をブールから3択(subjectMatch)にした。
+    //      v11 は要求の欠落だけで「ずれ」扱いになり、主題に答えている答案が
+    //      28→18点に落ちた。v12 で緩めたら今度はすり替えを拾えなくなり、
+    //      同じ答案が 17点 と 25点 の間で揺れた。
+    //      same / narrower / different を本文の分量で選ばせ、上限は
+    //      different=3点 / narrower・要求欠落=6点 と機械的に決める。
+    promptVersion: "essay-review-v13",
     schemaVersion: "essay-review-output-v2",
   },
   interviewScore: {
