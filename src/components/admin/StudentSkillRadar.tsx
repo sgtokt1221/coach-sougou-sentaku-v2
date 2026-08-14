@@ -79,12 +79,16 @@ export function StudentSkillRadar({
   const essayLatest = skillCheck?.latestResult?.scores;
   const essayRadar = useMemo(() => {
     if (!essayLatest) return null;
+    // 合計に入る5軸のみ。APは合計外なので混ぜない
     return [
       { subject: "構成", value: essayLatest.structure ?? 0 },
       { subject: "論理性", value: essayLatest.logic ?? 0 },
       { subject: "表現力", value: essayLatest.expression ?? 0 },
-      { subject: "AP合致度", value: essayLatest.apAlignment ?? 0 },
       { subject: "独自性", value: essayLatest.originality ?? 0 },
+      // 旧データには無いので、値があるときだけ描く
+      ...(typeof essayLatest.reasoningMaturity === "number"
+        ? [{ subject: "議論の成熟度", value: essayLatest.reasoningMaturity }]
+        : []),
     ];
   }, [essayLatest]);
 

@@ -10,35 +10,27 @@ import {
 } from "recharts";
 import type { EssayScores } from "@/lib/types/essay";
 
+/**
+ * 合計に入る5軸のレーダー。小論文添削・スキルチェックで共用する。
+ *
+ * AP合致度（スキルチェックの旧「系統適合」）は描かない。合計に1点も
+ * 入らないため、五角形に混ぜると合計を構成する軸と同じ重みに見える。
+ * 数値は呼び出し側の一覧に「合計外」として出す。
+ */
 export function SkillRadarChart({
   scores,
-  apAxisLabel = "系統適合",
-  showAp = true,
-  showMaturity = false,
   height = 260,
 }: {
   scores: EssayScores;
-  /** AP軸の表示名。スキルチェックは「系統適合」、小論文添削は「AP合致」 */
-  apAxisLabel?: string;
-  /** APが取得できず評価できなかった答案では軸ごと外す（0点に見えるのを避ける） */
-  showAp?: boolean;
-  /**
-   * 議論の成熟度を軸に加える。小論文添削(v7以降)だけが持つ軸で、
-   * スキルチェックのスコアには存在しない。
-   */
-  showMaturity?: boolean;
   height?: number;
 }) {
   const data = [
     { axis: "構成", score: scores.structure, fullMark: 10 },
     { axis: "論理", score: scores.logic, fullMark: 10 },
     { axis: "表現", score: scores.expression, fullMark: 10 },
-    ...(showAp
-      ? [{ axis: apAxisLabel, score: scores.apAlignment, fullMark: 10 }]
-      : []),
     { axis: "独自性", score: scores.originality, fullMark: 10 },
     // 旧データには無いので、値があるときだけ描く（0 として凹ませない）
-    ...(showMaturity && typeof scores.reasoningMaturity === "number"
+    ...(typeof scores.reasoningMaturity === "number"
       ? [{ axis: "成熟度", score: scores.reasoningMaturity, fullMark: 10 }]
       : []),
   ];

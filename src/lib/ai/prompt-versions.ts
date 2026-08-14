@@ -139,8 +139,18 @@ export const AI_PROMPT_VERSIONS = {
     // v2: 軸別バンドの 10/8 点の記述を締め、6点を平均に据えた。
     //     校正実測（law-01・同一答案）: 普通に良い答案が 44点(A) → 38点(B) へ。
     //     C級は 24点(C) のまま。小論文添削のB級37点とほぼ揃った（従来は7点ずれ）。
-    promptVersion: "skill-check-v2",
-    schemaVersion: "skill-check-output-v1",
+    // v3: 軸を小論文添削（essay-review-v14）に揃えた。
+    //     - 系統適合(apAlignment)を廃止。系統別の期待水準は logic の中で見る
+    //     - 議論の成熟度(reasoningMaturity)を追加
+    //     - 合計は 構成12 / 論理性12 / 表現力11 / 独自性5 / 成熟度10 の重み付け
+    //     スキルチェックの合計は SC×0.4 + 練習平均（小論文添削+ちょこ）×0.6 で
+    //     合成される（src/lib/skill-check/aggregate.ts）。同じ0-50スケールで
+    //     混ぜているのに軸構成が違ったため、合成値の意味が壊れていた。
+    //     ※ 満点の意味が変わるため、既存の結果は
+    //        scripts/rescore-skill-checks.ts で採点し直すこと。
+    //     ランク境界（S45/A40/B32/C22）は据え置き。再採点の実測を見て判断する。
+    promptVersion: "skill-check-v3",
+    schemaVersion: "skill-check-output-v2",
   },
   documentReview: {
     // v3: 「構成」の評価観点を書類の種類ごとに切り替えた。以前は全種類を

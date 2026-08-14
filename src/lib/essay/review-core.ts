@@ -5,7 +5,7 @@ import {
   type EssaySelfAnalysisContext,
 } from "@/lib/ai/prompts/essay";
 import { EssayReviewOutputSchema } from "@/lib/ai/schemas/essay-review";
-import { ESSAY_SCORE_MAX, ESSAY_SCORE_WEIGHTS } from "@/lib/types/essay";
+import { ESSAY_SCORE_MAX, calculateEssayTotal } from "@/lib/types/essay";
 import {
   calculateEssayMetrics,
   calculateFillRate,
@@ -206,12 +206,7 @@ ${input.ocrText}
     originality: capBy(parsed.scores.originality, originalityCap),
     reasoningMaturity: capBy(parsed.scores.reasoningMaturity, maturityCap),
   };
-  const total = Math.round(
-    (Object.keys(ESSAY_SCORE_WEIGHTS) as EssayScoreAxis[]).reduce(
-      (sum, axis) => sum + capped[axis] * (ESSAY_SCORE_WEIGHTS[axis] / 10),
-      0
-    )
-  );
+  const total = calculateEssayTotal(capped);
   const scores: EssayScores = {
     ...capped,
     apAlignment: hasAdmissionPolicy ? parsed.scores.apAlignment : null,

@@ -104,6 +104,25 @@ export const ESSAY_SCORE_WEIGHTS = {
 export type EssayScoreAxis = keyof typeof ESSAY_SCORE_WEIGHTS;
 
 /**
+ * 軸ごとの 0-10 から合計（0-50）を出す。
+ *
+ * 小論文添削（review-core）とスキルチェック（essay-reviewer）の双方がここを通す。
+ * 換算式を2箇所に書くと、片方だけ配点を変えたときに同じ0-50スケールで
+ * 合成している集計（skill-check/aggregate）が黙って壊れる。
+ */
+export function calculateEssayTotal(
+  scores: Partial<Record<EssayScoreAxis, number>>
+): number {
+  const axes = Object.keys(ESSAY_SCORE_WEIGHTS) as EssayScoreAxis[];
+  return Math.round(
+    axes.reduce(
+      (sum, axis) => sum + (scores[axis] ?? 0) * (ESSAY_SCORE_WEIGHTS[axis] / 10),
+      0
+    )
+  );
+}
+
+/**
  * 小論文のスコア。
  *
  * total は 構成・論理性・表現力・独自性・議論の成熟度 の5軸（各0-10）を

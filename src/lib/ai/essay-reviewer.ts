@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { SkillCheckOutputSchema } from "@/lib/ai/schemas/skill-check";
 import { AI_MODEL_REVIEW } from "@/lib/ai/prompt-versions";
+import { calculateEssayTotal } from "@/lib/types/essay";
 import type { EssayScores, EssayFeedback } from "@/lib/types/essay";
 
 export interface ReviewCoreResult {
@@ -56,15 +57,15 @@ export async function reviewWithClaude(options: {
 
   const parsed = response.parsed_output;
 
-  // 合計はモデルに計算させず、サーバー側で確定させる
-  const total =
-    parsed.scores.structure +
-    parsed.scores.logic +
-    parsed.scores.expression +
-    parsed.scores.apAlignment +
-    parsed.scores.originality;
-
-  const scores: EssayScores = { ...parsed.scores, total };
+  // 合計はモデルに計算させず、サーバー側で確定させる。
+  // 配点は小論文添削と同じ（ESSAY_SCORE_WEIGHTS）。同じ0-50スケールで
+  // 練習平均と合成されるため、換算式を分けない。
+  const scores: EssayScores = {
+    ...parsed.scores,
+    // スキルチェックは系統適合を採点しない（系統別の期待水準は logic で見る）
+    apAlignment: null,
+    total: calculateEssayTotal(parsed.scores),
+  };
 
   const feedback: EssayFeedback = {
     overall: parsed.feedback.overall,
@@ -87,13 +88,17 @@ export async function reviewWithClaude(options: {
 export function buildMockReviewResult(essayText: string): ReviewCoreResult {
   const wordCount = essayText.length;
   const baseScore = Math.min(10, Math.max(4, Math.floor(wordCount / 100)));
-  const scores: EssayScores = {
+  const axisScores = {
     structure: baseScore,
     logic: baseScore,
     expression: Math.max(4, baseScore - 1),
-    apAlignment: Math.max(4, baseScore - 1),
     originality: Math.max(4, baseScore - 2),
-    total: baseScore * 5 - 4,
+    reasoningMaturity: Math.max(3, baseScore - 2),
+  };
+  const scores: EssayScores = {
+    ...axisScores,
+    apAlignment: null,
+    total: calculateEssayTotal(axisScores),
   };
   const feedback: EssayFeedback = {
     overall: "（モック）全体的に筋の通った論述ができています。",

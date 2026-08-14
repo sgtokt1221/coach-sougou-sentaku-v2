@@ -35,6 +35,15 @@
       ]
     },
     {
+      "_comment": "直近30日の練習平均（skill-check/aggregate.ts の computeEssayAggregate）。等式+範囲の暗黙の並び順は昇順なので、上の DESCENDING では使えない。欠けていると try/catch に落ちて練習平均が常に空になり、合成が SC 単独へ黙って退化する",
+      "collectionGroup": "essays",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "submittedAt", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "sessions",
       "queryScope": "COLLECTION",
       "fields": [

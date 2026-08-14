@@ -1610,12 +1610,7 @@ function AdminStudentDetailPageInner() {
                   <h3 className="text-sm font-semibold text-foreground">AIスコア</h3>
                   <div className="grid gap-3 sm:grid-cols-2 sm:items-center">
                   {/* APは合計に入らないので軸に混ぜない。数値は下の一覧に残す */}
-                  <SkillRadarChart
-                    scores={essayDetail.scores}
-                    showAp={false}
-                    showMaturity
-                    height={220}
-                  />
+                  <SkillRadarChart scores={essayDetail.scores} height={220} />
                   <div className="grid gap-2">
                     {[
                       { key: "structure", label: "構成", weight: ESSAY_SCORE_WEIGHTS.structure },

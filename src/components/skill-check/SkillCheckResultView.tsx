@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { SkillCheckResult } from "@/lib/types/skill-check";
+import { ESSAY_SCORE_WEIGHTS } from "@/lib/types/essay";
 import { InlineCommentableText } from "@/components/essay/InlineCommentableText";
 import { ACADEMIC_CATEGORY_LABELS } from "@/lib/types/skill-check";
 import { RANK_META } from "@/lib/skill-check/rank";
@@ -53,23 +54,37 @@ export function SkillCheckResultView({
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">5軸スコア</CardTitle>
+            {/* 軸数は固定にしない。旧データ（議論の成熟度なし）は4軸で描かれる */}
+            <CardTitle className="text-base">スコア</CardTitle>
           </CardHeader>
           <CardContent>
             <SkillRadarChart scores={scores} />
+            {/* 配点は合計50点の中での重み。軸の点は0-10で、合計だけ配点で換算される */}
             <dl className="mt-3 grid grid-cols-5 gap-1 text-center text-xs">
               {[
-                { k: "構成", v: scores.structure },
-                { k: "論理", v: scores.logic },
-                { k: "表現", v: scores.expression },
-                { k: "系統適合", v: scores.apAlignment },
-                { k: "独自性", v: scores.originality },
-              ].map((s) => (
-                <div key={s.k} className="min-w-0">
-                  <dt className="min-w-0 break-words text-muted-foreground">{s.k}</dt>
-                  <dd className="font-semibold tabular-nums">{s.v}/10</dd>
-                </div>
-              ))}
+                { k: "構成", v: scores.structure, w: ESSAY_SCORE_WEIGHTS.structure },
+                { k: "論理", v: scores.logic, w: ESSAY_SCORE_WEIGHTS.logic },
+                { k: "表現", v: scores.expression, w: ESSAY_SCORE_WEIGHTS.expression },
+                { k: "独自性", v: scores.originality, w: ESSAY_SCORE_WEIGHTS.originality },
+                {
+                  k: "成熟度",
+                  v: scores.reasoningMaturity,
+                  w: ESSAY_SCORE_WEIGHTS.reasoningMaturity,
+                },
+                // 旧データ（成熟度なし）は軸ごと出さない
+              ].map((s) =>
+                typeof s.v !== "number" ? null : (
+                  <div key={s.k} className="min-w-0">
+                    <dt className="min-w-0 break-words text-muted-foreground">
+                      {s.k}
+                      <span className="ml-0.5 text-[10px] text-muted-foreground/70">
+                        配点{s.w}
+                      </span>
+                    </dt>
+                    <dd className="font-semibold tabular-nums">{s.v}/10</dd>
+                  </div>
+                )
+              )}
             </dl>
           </CardContent>
         </Card>
