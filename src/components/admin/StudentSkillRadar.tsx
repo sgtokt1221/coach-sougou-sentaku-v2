@@ -17,7 +17,11 @@ import type { StudentDetail } from "@/lib/types/admin";
 import type { SkillCheckStatus } from "@/lib/types/skill-check";
 import type { InterviewSkillCheckStatus } from "@/lib/types/interview-skill-check";
 import type { AggregateBreakdown } from "@/lib/skill-check/aggregate";
+import { SC_WEIGHT, PRACTICE_WEIGHT } from "@/lib/skill-check/weights";
 import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
+
+const SC_PCT = Math.round(SC_WEIGHT * 100);
+const PRACTICE_PCT = Math.round(PRACTICE_WEIGHT * 100);
 
 interface Props {
   detail: StudentDetail;
@@ -174,7 +178,9 @@ function SkillCard({
     ? "border-teal-200 bg-gradient-to-br from-teal-50 to-sky-50 dark:border-teal-900 dark:from-teal-950/30 dark:to-sky-950/30"
     : "border-rose-200 bg-gradient-to-br from-rose-50 to-amber-50 dark:border-rose-900 dark:from-rose-950/30 dark:to-amber-950/30";
 
-  // 未受験
+  // SCも練習も無い（= 出せる指標が何も無い）ときだけ未受験表示にする。
+  // 練習だけでランクが付く生徒（mode = practice_only）にここを出すと、
+  // 添削で伸びているのに「ランクが付きません」と言うことになる。
   if (!aggregate || aggregate.mode === "none" || aggregate.compositeRank === null) {
     return (
       <div className={`rounded-lg border p-4 ${bgClass}`}>
@@ -266,6 +272,16 @@ function SkillCard({
           )}
         </div>
       </div>
+
+      {/* 何からランクが出ているか。生徒画面(SkillRankPanel)と同じ内訳を出す */}
+      <p className="mt-2 text-[11px] text-muted-foreground">
+        {aggregate.mode === "weighted" &&
+          `SC ${aggregate.scScore}（${aggregate.scRank}）× ${SC_PCT}% + 練習平均 ${aggregate.practiceAvg?.toFixed(1)}（${aggregate.practiceCount}件）× ${PRACTICE_PCT}%`}
+        {aggregate.mode === "sc_only" &&
+          `SCのみ（直近30日の練習なし）— 練習を始めるとランクに${PRACTICE_PCT}%反映されます`}
+        {aggregate.mode === "practice_only" &&
+          `練習平均のみ（${aggregate.practiceCount}件、SC未受験）— 月1回のスキルチェックを受けるとランクの精度が上がります`}
+      </p>
 
       {/* レーダーチャート */}
       {radar && radar.some((r) => r.value > 0) && (

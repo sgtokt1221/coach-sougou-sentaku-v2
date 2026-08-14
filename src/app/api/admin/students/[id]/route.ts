@@ -63,8 +63,9 @@ function resolveEssayTopic(
   return fromDraft ? { topic: fromDraft, estimated: true } : { estimated: false };
 }
 import {
-  computeEssayAggregateFromList,
-  computeInterviewAggregateFromList,
+  computeEssayAggregate,
+  computeInterviewAggregate,
+  resolveScRawScore,
 } from "@/lib/skill-check/aggregate";
 
 export async function GET(
@@ -457,26 +458,26 @@ export async function GET(
     const targetUnis = userData.targetUniversities ?? [];
     const resolvedUniversities = resolveTargetUniversities(targetUnis);
 
-    // スキル指標 = 最新スキルチェックテスト結果のみ。
-    // 練習履歴 (essays / interviews) は合成しない (= 月 1 リマインド再受験で更新)
+    // スキル指標 = SC × 0.4 + 直近30日の練習平均 × 0.6 の合成。
+    // 以前はここだけ練習を空配列で渡して SC 単独にしていたため、生徒一覧の
+    // ランクと食い違っていた（同じ生徒が一覧では B、詳細では A になる）。
+    // SC 未受験でも練習だけでランクが付く（mode = practice_only）。
     const latestEssaySc = skillChecksSnap.docs[0]?.data();
     const latestInterviewSc = interviewSkillChecksSnap.docs[0]?.data();
 
-    const essayScTotal =
-      typeof latestEssaySc?.scores?.total === "number"
-        ? latestEssaySc.scores.total
-        : null;
-    const interviewScTotal =
-      typeof latestInterviewSc?.scores?.total === "number"
-        ? latestInterviewSc.scores.total
-        : null;
-
-    // 空配列を渡すと blend() が sc_only / none に自動分岐 (純粋関数を再利用)
-    const essayAggregate = computeEssayAggregateFromList(essayScTotal, []);
-    const interviewAggregate = computeInterviewAggregateFromList(
-      interviewScTotal,
-      [],
+    // SC 原値の決め方は生徒一覧と共通のヘルパーに寄せる（食い違いを構造的に防ぐ）
+    const essayScTotal = resolveScRawScore(latestEssaySc, userData);
+    const interviewScTotal = resolveScRawScore(
+      latestInterviewSc,
+      userData,
+      "interview",
     );
+
+    // 直近30日の練習（小論文添削 + ちょこ添削 / 面接）を Firestore から集めて合成する
+    const [essayAggregate, interviewAggregate] = await Promise.all([
+      computeEssayAggregate(id, essayScTotal),
+      computeInterviewAggregate(id, interviewScTotal),
+    ]);
 
     // SC 受験メタ (リマインド UI 用)
     const buildSkillCheckMeta = (

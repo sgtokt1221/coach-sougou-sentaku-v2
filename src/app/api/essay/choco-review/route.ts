@@ -93,11 +93,14 @@ export async function POST(request: NextRequest) {
           university_id: "",
           faculty_id: passage.facultyKey,
           submitted_at: now,
+          // つながりは本添削の「構成」に対応する。1段落だけの練習では
+          // AP合致度・独自性・議論の成熟度を採点できないので null にする
+          // （0を入れると BQ の AVG が実際より低く出る）
           score_structure: evaluation.scores.coherence,
           score_logic: evaluation.scores.logic,
           score_expression: evaluation.scores.expression,
-          score_ap_alignment: 0,
-          score_originality: 0,
+          score_ap_alignment: null,
+          score_originality: null,
           score_total: scores.total,
           word_count: studentText.length,
           topic: passage.themeTitle,

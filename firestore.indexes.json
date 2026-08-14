@@ -44,6 +44,15 @@
       ]
     },
     {
+      "_comment": "面接の直近30日平均（computeInterviewAggregate）。essays と同じ理由で昇順が要る",
+      "collectionGroup": "interviews",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "startedAt", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "sessions",
       "queryScope": "COLLECTION",
       "fields": [

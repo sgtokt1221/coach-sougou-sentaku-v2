@@ -7,6 +7,7 @@ import type { StudentListItem } from "@/lib/types/admin";
 import {
   computeEssayAggregate,
   computeInterviewAggregate,
+  resolveScRawScore,
 } from "@/lib/skill-check/aggregate";
 
 function isDeclining(scores: number[]): boolean {
@@ -172,15 +173,20 @@ export async function GET(request: NextRequest) {
           adminDb!.collection("sessions").where("studentUid", "==", uid).orderBy("scheduledAt", "desc").limit(1).get(),
           adminDb!.collection("interviews").where("userId", "==", uid).get(),
           adminDb!.collection(`users/${uid}/homeworkAssignments`).get(),
+          // SC 原値は生徒詳細と同じ出所（サブコレクションの最新1件）から取る。
+          // 一覧だけ users のデノーマライズ値を使うと、書き込みが片方だけ失敗した
+          // ときに一覧と詳細でランクが食い違う
+          adminDb!.collection(`users/${uid}/skillChecks`).orderBy("takenAt", "desc").limit(1).get(),
+          adminDb!.collection(`users/${uid}/interviewSkillChecks`).orderBy("takenAt", "desc").limit(1).get(),
         ]);
-        const subQueryNames = ["essays", "weaknesses", "documents", "sessions", "interviews", "homeworkAssignments"];
-        const [essaysSnap, weaknessesSnap, documentsSnap, sessionsSnap, interviewsSnap, homeworkSnap] = subResults.map((r, i) => {
+        const subQueryNames = ["essays", "weaknesses", "documents", "sessions", "interviews", "homeworkAssignments", "skillChecks", "interviewSkillChecks"];
+        const [essaysSnap, weaknessesSnap, documentsSnap, sessionsSnap, interviewsSnap, homeworkSnap, skillChecksSnap, interviewSkillChecksSnap] = subResults.map((r, i) => {
           if (r.status === "rejected") {
             console.warn(`[admin/students] subquery '${subQueryNames[i]}' failed for ${uid}:`, r.reason);
             return { size: 0, docs: [] } as unknown as FirebaseFirestore.QuerySnapshot;
           }
           return r.value;
-        }) as [FirebaseFirestore.QuerySnapshot, FirebaseFirestore.QuerySnapshot, FirebaseFirestore.QuerySnapshot, FirebaseFirestore.QuerySnapshot, FirebaseFirestore.QuerySnapshot, FirebaseFirestore.QuerySnapshot];
+        }) as [FirebaseFirestore.QuerySnapshot, FirebaseFirestore.QuerySnapshot, FirebaseFirestore.QuerySnapshot, FirebaseFirestore.QuerySnapshot, FirebaseFirestore.QuerySnapshot, FirebaseFirestore.QuerySnapshot, FirebaseFirestore.QuerySnapshot, FirebaseFirestore.QuerySnapshot];
 
         const essayCount = essaysSnap.size;
         const latestEssay = essaysSnap.docs[0]?.data();
@@ -332,11 +338,15 @@ export async function GET(request: NextRequest) {
         const lastSkillCheckedAt: string | null = data.lastSkillCheckedAt?.toDate?.()?.toISOString() ?? null;
         const lastInterviewCheckedAt: string | null = data.lastInterviewCheckedAt?.toDate?.()?.toISOString() ?? null;
 
-        // 練習集計を反映した aggregate ランクを算出
-        // currentSkillRank/currentInterviewRank は「SC + 直近30日練習の合成」値
+        // 練習集計を反映した aggregate ランクを算出。生徒詳細と同じ式・同じ入力を使う。
+        // 渡すのは SC の原値。currentSkillScore は refreshEssayAggregateCache が
+        // 書いた「合成後」の値なので、これを原値として渡すと練習平均を二重に混ぜる。
         const [essayAgg, interviewAgg] = await Promise.all([
-          computeEssayAggregate(uid, typeof data.currentSkillScore === "number" ? data.currentSkillScore : null),
-          computeInterviewAggregate(uid, typeof data.currentInterviewScore === "number" ? data.currentInterviewScore : null),
+          computeEssayAggregate(uid, resolveScRawScore(skillChecksSnap.docs[0]?.data(), data)),
+          computeInterviewAggregate(
+            uid,
+            resolveScRawScore(interviewSkillChecksSnap.docs[0]?.data(), data, "interview"),
+          ),
         ]);
 
         return {

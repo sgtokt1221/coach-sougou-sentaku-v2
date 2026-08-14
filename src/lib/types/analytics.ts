@@ -9,7 +9,8 @@ export interface BigQueryEssayLog {
   score_expression: number;
   /** AP未取得は null（0点と区別する）。合計には含まない */
   score_ap_alignment: number | null;
-  score_originality: number;
+  /** ちょこ添削（1段落）では採点できないので null。0点と区別する */
+  score_originality: number | null;
   /** 議論の成熟度。旧データには無い */
   score_reasoning_maturity?: number;
   score_total: number;

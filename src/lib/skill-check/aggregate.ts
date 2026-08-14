@@ -82,13 +82,15 @@ function blend(
     };
   }
   if (scScore === null && practiceAvg !== null) {
+    // 表示は weighted と同じく小数1桁に丸める（平均そのままだと
+    // 27.666666666666668 のような値が画面に出る）。ランクは丸め前で判定する
     const compositeRank = rankFn(practiceAvg);
     return {
       scRank: null,
       scScore: null,
       practiceAvg,
       practiceCount,
-      compositeScore: practiceAvg,
+      compositeScore: Math.round(practiceAvg * 10) / 10,
       compositeRank,
       mode: "practice_only",
     };
@@ -326,6 +328,37 @@ export async function computeInterviewAggregate(
 }
 
 export { emptyBreakdown };
+
+/**
+ * 合成に渡す SC の原値を決める。生徒一覧と生徒詳細で必ず同じ値を使うためのヘルパー。
+ *
+ * 優先順位:
+ *   1. スキルチェックのサブコレクション最新1件の合計（これが正本）
+ *   2. users のデノーマライズ値 lastSkillCheckScore（サブコレクションを引けない画面用）
+ *   3. currentSkillScore（lastSkillCheckScore を持たない旧データの後方互換）
+ *
+ * currentSkillScore は refreshEssayAggregateCache が書いた「合成後」の値なので、
+ * 1・2 がある限り使わない。これを原値として渡すと練習平均を二重に混ぜることになる。
+ */
+export function resolveScRawScore(
+  latestSkillCheck: { scores?: { total?: unknown } } | undefined,
+  userData: {
+    lastSkillCheckScore?: unknown;
+    currentSkillScore?: unknown;
+    lastInterviewCheckScore?: unknown;
+    currentInterviewScore?: unknown;
+  },
+  kind: "essay" | "interview" = "essay",
+): number | null {
+  const latest = latestSkillCheck?.scores?.total;
+  if (typeof latest === "number") return latest;
+  const last =
+    kind === "essay" ? userData.lastSkillCheckScore : userData.lastInterviewCheckScore;
+  if (typeof last === "number") return last;
+  const current =
+    kind === "essay" ? userData.currentSkillScore : userData.currentInterviewScore;
+  return typeof current === "number" ? current : null;
+}
 
 /**
  * 指定ユーザーの essay aggregate を再計算し、Firestore `users/{uid}` の
