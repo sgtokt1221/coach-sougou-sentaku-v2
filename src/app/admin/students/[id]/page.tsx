@@ -422,28 +422,25 @@ function PinnedSummary({ detail }: { detail: StudentDetail }) {
 }
 
 /**
- * 成績タブの見出しに出す現在のスキルランク。
- * 値は生徒一覧・概要タブと同じ合成（SC × 0.4 + 直近の練習平均 × 0.6）。
+ * 項目別平均チャートの見出しに出す現在のスキルランク。
+ * 値は生徒一覧・概要タブと同じ合成（SC × 0.4 + 練習平均 × 0.6）。
  */
 function SkillRankSummary({
-  label,
   aggregate,
   maxScore,
 }: {
-  label: string;
   aggregate: AggregateBreakdown | undefined;
   maxScore: number;
 }) {
   if (!aggregate || aggregate.compositeRank === null) return null;
   return (
-    <div className="flex items-center gap-1.5">
-      <span className="text-xs text-muted-foreground">{label}</span>
+    <span className="flex items-center gap-1.5">
       <SkillRankBadge rank={aggregate.compositeRank} size="sm" animate={false} />
       <span className="text-xs font-medium tabular-nums text-foreground">
         {aggregate.compositeScore}
         <span className="text-muted-foreground">/{maxScore}</span>
       </span>
-    </div>
+    </span>
   );
 }
 
@@ -1045,32 +1042,31 @@ function AdminStudentDetailPageInner() {
       {(essayCategoryAvg || interviewCategoryAvg) && (
         <Card>
           <CardHeader className="pb-2">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <BarChart3 className="size-4" />
-                項目別の平均（日々の取り組み）
-              </CardTitle>
-              {/* 現在のスキルランク。生徒一覧・概要タブと同じ合成値 */}
-              <div className="flex items-center gap-3">
-                <SkillRankSummary
-                  label="小論文"
-                  aggregate={detail.essayAggregate}
-                  maxScore={50}
-                />
-                <SkillRankSummary
-                  label="面接"
-                  aggregate={detail.interviewAggregate}
-                  maxScore={40}
-                />
-              </div>
-            </div>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <BarChart3 className="size-4" />
+              項目別の平均（日々の取り組み）
+            </CardTitle>
           </CardHeader>
           <CardContent>
+            {/* ランクは各チャートの見出しへ。どちらの値かが一目で分かる。
+                値は生徒一覧・概要タブと同じ合成 */}
             <CategoryAverageRadar
               essayAverages={essayCategoryAvg}
               interviewAverages={interviewCategoryAvg}
               essayCount={essayScoresList.length}
               interviewCount={ivTrend.length}
+              essayRank={
+                <SkillRankSummary
+                  aggregate={detail.essayAggregate}
+                  maxScore={50}
+                />
+              }
+              interviewRank={
+                <SkillRankSummary
+                  aggregate={detail.interviewAggregate}
+                  maxScore={40}
+                />
+              }
             />
           </CardContent>
         </Card>

@@ -19,9 +19,11 @@ interface RadarBlockProps {
   averages: Record<string, number | null>;
   lines: readonly ScoreLine[];
   color: string;
+  /** 見出しの右に出す現在のスキルランク。チャートと同じ枠に置く */
+  rank?: React.ReactNode;
 }
 
-function RadarBlock({ title, count, averages, lines, color }: RadarBlockProps) {
+function RadarBlock({ title, count, averages, lines, color, rank }: RadarBlockProps) {
   /**
    * 未評価(null)の軸はレーダーから外す。0 として描くと「最低評価」に見え、
    * 実際に0点だったデータと区別が付かない（面接の未撮影がこれで潰れていた）。
@@ -35,7 +37,10 @@ function RadarBlock({ title, count, averages, lines, color }: RadarBlockProps) {
   if (data.length === 0) {
     return (
       <div className="rounded-xl border bg-card p-3">
-        <h3 className="text-sm font-semibold">{title}</h3>
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="text-sm font-semibold">{title}</h3>
+          {rank}
+        </div>
         <p className="text-muted-foreground mt-2 text-xs">
           まだ評価データがありません。
         </p>
@@ -45,8 +50,11 @@ function RadarBlock({ title, count, averages, lines, color }: RadarBlockProps) {
 
   return (
     <div className="rounded-xl border bg-card p-3">
-      <div className="mb-1 flex items-baseline justify-between">
-        <h3 className="text-sm font-semibold">{title}</h3>
+      <div className="mb-1 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <h3 className="text-sm font-semibold">{title}</h3>
+          {rank}
+        </div>
         {typeof count === "number" && (
           <span className="text-[11px] text-muted-foreground">
             {count}件の平均
@@ -104,11 +112,16 @@ export function CategoryAverageRadar({
   interviewAverages,
   essayCount,
   interviewCount,
+  essayRank,
+  interviewRank,
 }: {
   essayAverages?: Record<string, number | null>;
   interviewAverages?: Record<string, number | null>;
   essayCount?: number;
   interviewCount?: number;
+  /** 小論文・面接それぞれの現在のスキルランク表示 */
+  essayRank?: React.ReactNode;
+  interviewRank?: React.ReactNode;
 }) {
   if (!essayAverages && !interviewAverages) return null;
 
@@ -118,6 +131,7 @@ export function CategoryAverageRadar({
         <RadarBlock
           title="小論文 項目別平均"
           count={essayCount}
+          rank={essayRank}
           averages={essayAverages}
           lines={SCORE_LINES}
           color="var(--chart-1)"
@@ -127,6 +141,7 @@ export function CategoryAverageRadar({
         <RadarBlock
           title="面接 項目別平均"
           count={interviewCount}
+          rank={interviewRank}
           averages={interviewAverages}
           lines={INTERVIEW_SCORE_LINES}
           color="var(--chart-5)"
