@@ -46,6 +46,7 @@ import { RankBadge } from "@/components/shared/RankBadge";
 import { RedPenText } from "@/components/essay/RedPenText";
 import { CommentableEssayText } from "@/components/essay/CommentableEssayText";
 import type { EssayInlineComment } from "@/lib/types/essay";
+import { ESSAY_SCORE_WEIGHTS } from "@/lib/types/essay";
 import { RetryComparisonCard } from "@/components/essay/RetryComparison";
 import type {
   GrowthEvent,
@@ -363,19 +364,48 @@ export default function EssayResultPage() {
   const rank = getRankFromPercentage(percentage);
 
   // 合計に入る5軸。旧データに無い軸は描かない（0 として凹ませない）
+  // weight は合計50点の中での配点。軸の点は0-10で、合計だけ配点で換算される
   const radarData = [
-    { subject: "構成", value: result.scores.structure },
-    { subject: "論理性", value: result.scores.logic },
-    { subject: "表現力", value: result.scores.expression },
-    { subject: "独自性", value: result.scores.originality },
+    {
+      subject: "構成",
+      value: result.scores.structure,
+      weight: ESSAY_SCORE_WEIGHTS.structure,
+    },
+    {
+      subject: "論理性",
+      value: result.scores.logic,
+      weight: ESSAY_SCORE_WEIGHTS.logic,
+    },
+    {
+      subject: "表現力",
+      value: result.scores.expression,
+      weight: ESSAY_SCORE_WEIGHTS.expression,
+    },
+    {
+      subject: "独自性",
+      value: result.scores.originality,
+      weight: ESSAY_SCORE_WEIGHTS.originality,
+    },
     ...(typeof result.scores.reasoningMaturity === "number"
-      ? [{ subject: "議論の成熟度", value: result.scores.reasoningMaturity }]
-      : []),
-    // APは合計外。相性の参考として並べる
-    ...(apAlignmentAssessable && typeof result.scores.apAlignment === "number"
-      ? [{ subject: "AP合致度（合計外）", value: result.scores.apAlignment }]
+      ? [
+          {
+            subject: "議論の成熟度",
+            value: result.scores.reasoningMaturity,
+            weight: ESSAY_SCORE_WEIGHTS.reasoningMaturity,
+          },
+        ]
       : []),
   ];
+
+  /**
+   * 合計外の参考値。レーダーには載せない。
+   * APは合計に1点も入らないため、五角形に混ぜると合計を構成する軸と
+   * 同じ重みに見えてしまう（実際の合計への寄与は0）。数値は下の一覧に残す。
+   */
+  const referenceScores =
+    apAlignmentAssessable && typeof result.scores.apAlignment === "number"
+      ? [{ subject: "AP合致度", value: result.scores.apAlignment }]
+      : [];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-sky-50/30 pb-20 lg:pb-8">
@@ -531,6 +561,9 @@ export default function EssayResultPage() {
                     >
                       <span className="text-sm font-medium text-slate-700">
                         {item.subject}
+                        <span className="ml-1.5 text-xs font-normal text-slate-400">
+                          配点{item.weight}
+                        </span>
                       </span>
                       <div className="flex items-center gap-2">
                         <div className="h-2 w-20 overflow-hidden rounded-full bg-slate-100">
@@ -540,6 +573,32 @@ export default function EssayResultPage() {
                           />
                         </div>
                         <span className="min-w-[2rem] text-right text-sm font-bold text-slate-900 tabular-nums">
+                          {item.value}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* 合計外の参考値。レーダーには含めない */}
+                  {referenceScores.map((item) => (
+                    <div
+                      key={item.subject}
+                      className="flex items-center justify-between border-t border-slate-100 pt-3"
+                    >
+                      <span className="text-sm font-medium text-slate-500">
+                        {item.subject}
+                        <span className="ml-1.5 text-xs font-normal text-slate-400">
+                          合計外・参考
+                        </span>
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <div className="h-2 w-20 overflow-hidden rounded-full bg-slate-100">
+                          <div
+                            className="h-full rounded-full bg-slate-300 transition-all"
+                            style={{ width: `${(item.value / 10) * 100}%` }}
+                          />
+                        </div>
+                        <span className="min-w-[2rem] text-right text-sm font-bold text-slate-500 tabular-nums">
                           {item.value}
                         </span>
                       </div>

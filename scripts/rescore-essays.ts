@@ -137,6 +137,8 @@ async function main() {
             feedback: out.feedback,
             // 元に戻せるよう旧スコアを退避（既にあれば上書きしない）
             ...(e.scoresBeforeV7 ? {} : { scoresBeforeV7: before }),
+            // v14（配点の重み付け）の直前スコア。v7 の退避とは別に持つ
+            ...(e.scoresBeforeV14 ? {} : { scoresBeforeV14: before }),
             rescoredAt: new Date().toISOString(),
           },
           { merge: true },

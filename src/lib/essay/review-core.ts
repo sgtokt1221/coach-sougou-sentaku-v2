@@ -5,13 +5,14 @@ import {
   type EssaySelfAnalysisContext,
 } from "@/lib/ai/prompts/essay";
 import { EssayReviewOutputSchema } from "@/lib/ai/schemas/essay-review";
-import { ESSAY_SCORE_MAX } from "@/lib/types/essay";
+import { ESSAY_SCORE_MAX, ESSAY_SCORE_WEIGHTS } from "@/lib/types/essay";
 import {
   calculateEssayMetrics,
   calculateFillRate,
 } from "@/lib/essay/review-metrics";
 import { AI_MODEL_REVIEW, AI_PROMPT_VERSIONS } from "@/lib/ai/prompt-versions";
 import type {
+  EssayScoreAxis,
   EssayScores,
   EssayFeedback,
   TopicInsights,
@@ -193,18 +194,26 @@ ${input.ocrText}
   const expressionCap = offTopic ? 6 : 10;
 
   const scoreMaximum = ESSAY_SCORE_MAX;
-  const total =
-    capBy(parsed.scores.structure, structureCap) +
-    capBy(parsed.scores.logic, logicCap) +
-    capBy(parsed.scores.expression, expressionCap) +
-    capBy(parsed.scores.originality, originalityCap) +
-    capBy(parsed.scores.reasoningMaturity, maturityCap);
-  const scores: EssayScores = {
+  /**
+   * 軸ごとの点は 0-10 のまま保存し、合計を出すときだけ配点で重み付けする。
+   * 軸を 0-12 のように伸ばすとルーブリックも過去データも作り直しになるため、
+   * 換算は合計の計算だけに閉じ込める。
+   */
+  const capped: Record<EssayScoreAxis, number> = {
     structure: capBy(parsed.scores.structure, structureCap),
     logic: capBy(parsed.scores.logic, logicCap),
     expression: capBy(parsed.scores.expression, expressionCap),
     originality: capBy(parsed.scores.originality, originalityCap),
     reasoningMaturity: capBy(parsed.scores.reasoningMaturity, maturityCap),
+  };
+  const total = Math.round(
+    (Object.keys(ESSAY_SCORE_WEIGHTS) as EssayScoreAxis[]).reduce(
+      (sum, axis) => sum + capped[axis] * (ESSAY_SCORE_WEIGHTS[axis] / 10),
+      0
+    )
+  );
+  const scores: EssayScores = {
+    ...capped,
     apAlignment: hasAdmissionPolicy ? parsed.scores.apAlignment : null,
     total,
   };

@@ -84,9 +84,30 @@ export interface EssayRetryContext {
 export const ESSAY_SCORE_MAX = 50;
 
 /**
+ * 合計50点の中での軸ごとの配点（essay-review-v14）。
+ *
+ * 各軸は従来どおり 0-10 で採点し、合計を出すときだけこの配点へ換算する。
+ * ルーブリックもレーダーチャートも 0-10 のままなので、改定前の答案と
+ * 軸ごとの比較ができる。
+ *
+ * v13 までは5軸とも10点（各20%）だった。独自性の比重を下げ、その分を
+ * 構成・論理性・表現力へ振り替えている。
+ */
+export const ESSAY_SCORE_WEIGHTS = {
+  structure: 12,
+  logic: 12,
+  expression: 11,
+  originality: 5,
+  reasoningMaturity: 10,
+} as const;
+
+export type EssayScoreAxis = keyof typeof ESSAY_SCORE_WEIGHTS;
+
+/**
  * 小論文のスコア。
  *
- * total は 構成・論理性・表現力・独自性・議論の成熟度 の5軸（各0-10）。
+ * total は 構成・論理性・表現力・独自性・議論の成熟度 の5軸（各0-10）を
+ * ESSAY_SCORE_WEIGHTS で重み付けした 0-50。
  * AP合致度は合計に入れない。以前は全設問で合計の20%を占め、資料読解や
  * 設問対応より重くなっていた（監査 P1-6）。APは志望校との相性を見る
  * 補助指標として別に持つ。

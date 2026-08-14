@@ -109,7 +109,15 @@ export const AI_PROMPT_VERSIONS = {
     //      同じ答案が 17点 と 25点 の間で揺れた。
     //      same / narrower / different を本文の分量で選ばせ、上限は
     //      different=3点 / narrower・要求欠落=6点 と機械的に決める。
-    promptVersion: "essay-review-v13",
+    // v14: 5軸均等（各10点）だった配点を、軸ごとの重み付けに変えた。
+    //      構成12 / 論理性12 / 表現力11 / 独自性5 / 議論の成熟度10 = 50点。
+    //      独自性は高校生の答案では差が付きにくく、比重を下げて構成・論理性・
+    //      表現力へ振り替えた（ESSAY_SCORE_WEIGHTS）。
+    //      軸ごとの点は 0-10 のまま出させ、換算は合計の計算だけに閉じ込める
+    //      （ルーブリックとレーダーチャートは改定前と比較できる）。
+    //      ※ 合計の意味が変わるため、既存答案は
+    //         scripts/rescore-essays.ts で採点し直すこと。
+    promptVersion: "essay-review-v14",
     schemaVersion: "essay-review-output-v2",
   },
   interviewScore: {
