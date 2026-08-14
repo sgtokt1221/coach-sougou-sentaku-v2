@@ -24,6 +24,8 @@ import {
   Undo2,
   ShieldCheck,
   MessageSquare,
+  History,
+  ChevronDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
@@ -37,6 +39,7 @@ import { DocumentReviewBadge } from "@/components/documents/DocumentReviewBadge"
 import { InlineCommentableText } from "@/components/essay/InlineCommentableText";
 import { CoachConversationList } from "@/components/admin/CoachConversationList";
 import { appendQuote } from "@/lib/chat/message-blocks";
+import { formatVersionDate } from "@/lib/ui/format-version-date";
 import { markSubmissionViewed } from "@/lib/api/client";
 import {
   useUnviewedSubmissions,
@@ -115,6 +118,15 @@ interface DocumentDetail {
     originality: number;
   };
   aiLikeness?: DocumentAiLikeness;
+  /** 版の履歴（新しい順）。生徒側の「バージョン履歴」と同じもの */
+  versions?: {
+    id: string;
+    content: string;
+    wordCount: number;
+    createdAt: string;
+    aiScore?: { apAlignment?: number; structure: number; originality: number };
+    feedbackSummary?: string;
+  }[];
   /** この書類を書いていたときの AIコーチ会話（セクション単位） */
   coachThreads?: {
     id: string;
@@ -189,6 +201,9 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
     "approved" | "revision_requested" | "cleared" | null
   >(null);
   const [aiCheckBusy, setAiCheckBusy] = useState(false);
+  /** 版の履歴の開閉。既定は畳んでおく（本文が長いと詳細が読みにくくなる） */
+  const [showVersions, setShowVersions] = useState(false);
+  const [openVersionId, setOpenVersionId] = useState<string | null>(null);
 
   /**
    * 管理者から生徒書類の個別性を確認する。結果は生徒と共有の aiLikeness に保存され、
@@ -563,6 +578,83 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
                     コメントして承認/差し戻し
                   </Button>
                 </div>
+
+                {/* 版の履歴。生徒がどう書き直してきたかを管理者からも追えるようにする。
+                    生徒側は「この版に戻す」も出すが、管理者は閲覧のみ */}
+                {detailDoc.versions && detailDoc.versions.length > 0 && (
+                  <div className="space-y-2">
+                    <button
+                      type="button"
+                      className="flex w-full items-center justify-between"
+                      onClick={() => setShowVersions((v) => !v)}
+                    >
+                      <h3 className="flex items-center gap-1.5 text-sm font-semibold">
+                        <History className="size-4" />
+                        バージョン履歴（{detailDoc.versions.length}）
+                      </h3>
+                      <ChevronDown
+                        className={`size-4 text-muted-foreground transition-transform ${showVersions ? "rotate-180" : ""}`}
+                      />
+                    </button>
+                    {showVersions && (
+                      <div className="space-y-2">
+                        {detailDoc.versions.map((v, i) => {
+                          const open = openVersionId === v.id;
+                          return (
+                            <div key={v.id} className="rounded border text-xs">
+                              <button
+                                type="button"
+                                className="flex w-full items-center justify-between gap-2 p-2 text-left hover:bg-muted/40"
+                                onClick={() =>
+                                  setOpenVersionId(open ? null : v.id)
+                                }
+                              >
+                                <span className="min-w-0">
+                                  <span className="font-medium">
+                                    {formatVersionDate(v.createdAt)}
+                                  </span>
+                                  {i === 0 && (
+                                    <Badge
+                                      variant="secondary"
+                                      className="ml-2 text-[10px]"
+                                    >
+                                      最新
+                                    </Badge>
+                                  )}
+                                  <span className="ml-2 text-muted-foreground">
+                                    {v.wordCount} 文字
+                                  </span>
+                                  {v.aiScore && (
+                                    <span className="ml-2 text-muted-foreground">
+                                      AP:{v.aiScore.apAlignment ?? "—"} 構成:
+                                      {v.aiScore.structure} 独自:
+                                      {v.aiScore.originality}
+                                    </span>
+                                  )}
+                                </span>
+                                <ChevronDown
+                                  className={`size-4 shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
+                                />
+                              </button>
+                              {open && (
+                                <div className="space-y-2 border-t p-2">
+                                  {v.feedbackSummary && (
+                                    <p className="text-muted-foreground">
+                                      {v.feedbackSummary}
+                                    </p>
+                                  )}
+                                  <div className="max-h-60 overflow-y-auto rounded bg-muted/40 p-2 leading-relaxed whitespace-pre-wrap">
+                                    {v.content || "（本文なし）"}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* 右: AIスコア / 個別性 / AIコーチ */}

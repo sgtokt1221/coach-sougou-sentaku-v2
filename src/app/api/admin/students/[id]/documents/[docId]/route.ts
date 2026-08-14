@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireRole, scopeByOrganization } from "@/lib/api/auth";
 import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
 import { adminDb } from "@/lib/firebase/admin";
+import type { DocumentVersion } from "@/lib/types/document";
+
+/** 返す版の上限（新しい順）。本文を丸ごと持つので全部返すと重い */
+const MAX_VERSIONS = 20;
 
 export async function GET(
   request: NextRequest,
@@ -94,6 +98,30 @@ export async function GET(
           }
         : undefined,
       aiLikeness: data.aiLikeness ?? undefined,
+      /**
+       * 版の履歴。生徒側と同じものを管理者にも返す。
+       * 本文は版ごとに丸ごと持つので、多いと重くなる。新しい順に上限を切る。
+       */
+      versions: (Array.isArray(data.versions) ? data.versions : [])
+        .slice(-MAX_VERSIONS)
+        .reverse()
+        .map((v: DocumentVersion) => ({
+          id: v.id,
+          content: v.content ?? "",
+          wordCount: v.wordCount ?? 0,
+          createdAt: v.createdAt ?? "",
+          aiScore: v.feedback
+            ? {
+                apAlignment:
+                  typeof v.feedback.apAlignmentScore === "number"
+                    ? v.feedback.apAlignmentScore
+                    : undefined,
+                structure: v.feedback.structureScore,
+                originality: v.feedback.originalityScore,
+              }
+            : undefined,
+          feedbackSummary: v.feedback?.overallFeedback ?? undefined,
+        })),
       coachThreads,
     });
   } catch (error) {

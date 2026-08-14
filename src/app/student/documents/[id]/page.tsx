@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useCallback } from "react";
+import { formatVersionDate } from "@/lib/ui/format-version-date";
 import { useRouter, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -1219,18 +1220,6 @@ function DocumentToolbar({
 }
 
 /** 版の見出し。生徒が選べるよう日付と時刻で示す */
-function formatVersionDate(iso: string): string {
-  const d = new Date(iso);
-  if (isNaN(+d)) return iso;
-  return d.toLocaleString("ja-JP", {
-    year: "numeric",
-    month: "numeric",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
 /**
  * 講師からの範囲コメント。
  *

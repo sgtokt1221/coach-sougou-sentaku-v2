@@ -8,9 +8,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
  * FBやレビューのコメントを書くとき、後ろの答案・書類を見ながら位置を
  * 調整したいことがある。見出しをつかんで動かす。
  *
- * DialogContent は Tailwind の `-translate-x-1/2 -translate-y-1/2` で中央に
- * 置かれているため、インラインの transform で上書きするときは中央寄せの
- * 分（-50%）を必ず含める。含めないと左上にずれる。
+ * DialogContent の中央寄せは Tailwind v4 の `-translate-x-1/2 -translate-y-1/2`
+ * だが、v4 はこれを **CSS の `translate` プロパティ**（`translate: -50% -50%`）
+ * として出す。`transform` とは別プロパティで、両方指定すると合成される。
+ * そのため transform 側にも -50% を書くと二重にかかり、モーダルが自分の高さの
+ * 半分だけ上へずれる（実測: viewport 900px、高さ537px のレビューモーダルの
+ * 上端が -87px になり、見出しが画面外に出ていた）。
+ * ここでは transform はドラッグ量だけに使い、中央寄せは translate プロパティに
+ * 任せる。右寄せのときだけ translate を上書きして X の中央寄せを外す。
  *
  * @param open 開閉状態。開き直したら初期位置へ戻す
  * @param placement 初期位置。"right" は画面の右端寄せ（後ろの答案・書類を
@@ -64,13 +69,14 @@ export function useDraggableDialog(
 
   return {
     /**
-     * DialogContent に渡す transform。
-     * 中央寄せ（left-1/2 + -translate-x-1/2）を transform で上書きするため、
-     * center のときは -50% を含める。right は className 側で right-6 に
-     * 付け替えるので X の中央寄せは要らない。
+     * DialogContent に渡すスタイル。
      *
-     * right は X の中央寄せ(-50%)を外すだけ。left-1/2 は残るので、左端が
-     * 画面中央に来て右半分に置かれる。後ろの答案・書類の左側が読める。
+     * transform はドラッグ量だけ。中央寄せは Tailwind が出す `translate`
+     * プロパティに任せる（両方に -50% を書くと二重にかかる）。
+     *
+     * right は translate を `0 -50%` に上書きして X の中央寄せだけ外す。
+     * left-1/2 は残るので、左端が画面中央に来て右半分に置かれる。
+     * 後ろの答案・書類の左側が読める。
      *
      * ピクセルで位置を計算するのはやめた。fixed の基準が親の transform に
      * 引きずられ、開くアニメーション(zoom-95)の最中に測ると値がずれるため、
@@ -79,10 +85,8 @@ export function useDraggableDialog(
      * `left-1/2` と `lg:left-auto` を別グループとして扱うため効かなかった。
      */
     contentStyle: {
-      transform:
-        placement === "right"
-          ? `translate(${offset.x}px, calc(-50% + ${offset.y}px))`
-          : `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px))`,
+      ...(placement === "right" ? { translate: "0 -50%" } : {}),
+      transform: `translate(${offset.x}px, ${offset.y}px)`,
     } as React.CSSProperties,
 
     /** つかむ場所（見出し）に渡す */
