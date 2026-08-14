@@ -146,11 +146,25 @@ export default function AdminAlertsPage() {
   const { data: fetchedAlerts, isLoading: loading, error: alertsError } = useAuthSWR<AlertItem[]>("/api/admin/alerts");
   const [localAlerts, setLocalAlerts] = useState<AlertItem[] | null>(null);
   const [filter, setFilter] = useState<FilterType>("all");
+  /** 確認済みだけを見るモード。既定は未確認だけを出す */
+  const [showAcknowledged, setShowAcknowledged] = useState(false);
 
   const alerts = localAlerts ?? fetchedAlerts ?? [];
 
+  /**
+   * 確認済みは一覧から外す。確認しても残り続けると、何が未対応なのかを
+   * 毎回目で選り分けることになる。「確認済み N件」から表示に切り替えられる
+   * ので、間違えて確認済みにしても戻せる。
+   */
+  const acknowledgedAlerts = alerts.filter((a) => a.acknowledged);
+  const visibleAlerts = showAcknowledged
+    ? acknowledgedAlerts
+    : alerts.filter((a) => !a.acknowledged);
+
   const filteredAlerts =
-    filter === "all" ? alerts : alerts.filter((a) => a.type === filter);
+    filter === "all"
+      ? visibleAlerts
+      : visibleAlerts.filter((a) => a.type === filter);
 
   // severity で「要注意」(critical/high/warning) と「お知らせ」(info) に区分。
   // route 側で既にソート済みのため、filter で分割して順に描画する。
@@ -333,13 +347,23 @@ export default function AdminAlertsPage() {
           <Badge variant="secondary" className="text-sm">
             未確認 {unacknowledgedCount}件
           </Badge>
+          {acknowledgedAlerts.length > 0 && (
+            <Button
+              variant={showAcknowledged ? "default" : "outline"}
+              size="sm"
+              onClick={() => setShowAcknowledged((v) => !v)}
+            >
+              <CheckCircle className="mr-1 size-3.5" />
+              確認済み {acknowledgedAlerts.length}件
+            </Button>
+          )}
         </div>
       </div>
 
       {/* Filter */}
       <div className="flex flex-wrap gap-2">
         {filterOptions.map((opt) => {
-          const count = alerts.filter((a) => a.type === opt.value).length;
+          const count = visibleAlerts.filter((a) => a.type === opt.value).length;
           return (
             <Button
               key={opt.value}
@@ -372,9 +396,11 @@ export default function AdminAlertsPage() {
       ) : filteredAlerts.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-sm text-muted-foreground">
-            {filter === "all"
-              ? "現在通知はありません"
-              : "該当する通知はありません"}
+            {showAcknowledged
+              ? "確認済みの通知はありません"
+              : filter === "all"
+                ? "未確認の通知はありません"
+                : "該当する通知はありません"}
           </CardContent>
         </Card>
       ) : (

@@ -5,6 +5,7 @@ import {
   updateConversationSummary,
   sanitizeAttachments,
   sanitizeReference,
+  sendFcmToUser,
 } from "@/lib/chat/conversation";
 import type { AdminFeedback, FeedbackCreateRequest } from "@/lib/types/feedback";
 
@@ -208,41 +209,24 @@ export async function POST(
       senderRole: "coach",
     });
 
-    // Push通知送信（失敗しても無視）
-    try {
-      const { getMessaging } = await import("firebase-admin/messaging");
-      const messaging = getMessaging();
-
-      // 設定でこの種別を切っている生徒には送らない
-      const { shouldNotify } = await import("@/lib/notifications/should-notify");
-      const tokensSnap = (await shouldNotify(id, "feedback"))
-        ? await adminDb.collection(`users/${id}/fcmTokens`).get()
-        : null;
-
-      if (tokensSnap && !tokensSnap.empty) {
-        const tokens = tokensSnap.docs.map((d) => d.data().token as string);
-        const preview =
-          (body.message?.trim() ||
-            (reference ? `📝 ${reference.label}` : "") ||
-            (attachments.length > 0 ? "[添付ファイル]" : "")) ?? "";
-        const truncatedBody =
-          preview.length > 50 ? preview.slice(0, 50) + "…" : preview;
-
-        await messaging.sendEachForMulticast({
-          tokens,
-          notification: {
-            title: "コーチからフィードバック",
-            body: truncatedBody,
-          },
-          data: { url: "/student/feedback" },
-          webpush: {
-            fcmOptions: { link: "/student/feedback" },
-          },
-        });
-      }
-    } catch {
-      // Push通知失敗は無視
-    }
+    /**
+     * Push通知。送信経路は sendFcmToUser の1本に寄せる。
+     * ここに独自実装を持っていたため、失効トークンの掃除も種別設定の判定も
+     * 二重管理になっていた（片方だけ直しても再発する）。
+     */
+    const preview =
+      (body.message?.trim() ||
+        (reference ? `📝 ${reference.label}` : "") ||
+        (attachments.length > 0 ? "[添付ファイル]" : "")) ?? "";
+    await sendFcmToUser(
+      id,
+      {
+        title: "コーチからフィードバック",
+        body: preview,
+        url: "/student/feedback",
+      },
+      "feedback",
+    );
 
     const newFeedback: AdminFeedback = {
       id: docRef.id,

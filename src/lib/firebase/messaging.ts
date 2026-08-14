@@ -85,6 +85,37 @@ export async function saveFcmToken(idToken: string, fcmToken: string): Promise<v
 }
 
 /**
+ * 既に許可済みの利用者のトークンを取り直して保存する。
+ *
+ * FCM のWebトークンは、SWの更新やブラウザ側の都合で入れ替わる。今までは
+ * 「通知を許可した瞬間」にしか保存しておらず、入れ替わったあとは古い
+ * トークンへ送り続けていた（送信側は失敗しても黙るので気づけない）。
+ * これが「Pushが来るときと来ないときがある」の主因。
+ *
+ * 許可を求めるダイアログは出さない。未許可の人の体験は変えない。
+ */
+export async function refreshFcmToken(idToken: string): Promise<void> {
+  if (typeof window === "undefined") return;
+  if (!("Notification" in window)) return;
+  if (Notification.permission !== "granted") return;
+
+  const msg = getMessagingInstance();
+  if (!msg) return;
+  const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
+  if (!vapidKey) return;
+
+  try {
+    const token = await getToken(msg, {
+      vapidKey,
+      serviceWorkerRegistration: await registerMessagingServiceWorker(),
+    });
+    if (token) await saveFcmToken(idToken, token);
+  } catch (err) {
+    console.warn("[FCM] token refresh failed:", err);
+  }
+}
+
+/**
  * フォアグラウンド通知リスナーを登録
  */
 export function onForegroundMessage(callback: (payload: { title?: string; body?: string }) => void): (() => void) | null {

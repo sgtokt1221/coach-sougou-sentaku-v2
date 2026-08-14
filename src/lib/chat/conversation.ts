@@ -181,22 +181,52 @@ export async function sendFcmToUser(
   try {
     const tokensSnap = await adminDb.collection(`users/${uid}/fcmTokens`).get();
     if (tokensSnap.empty) return;
-    const tokens = tokensSnap.docs
-      .map((d) => d.data().token as string)
-      .filter(Boolean);
+    const docs = tokensSnap.docs.filter((d) => Boolean(d.data().token));
+    const tokens = docs.map((d) => d.data().token as string);
     if (tokens.length === 0) return;
 
     const truncated =
       payload.body.length > 50 ? payload.body.slice(0, 50) + "…" : payload.body;
 
     const { getMessaging } = await import("firebase-admin/messaging");
-    await getMessaging().sendEachForMulticast({
+    const res = await getMessaging().sendEachForMulticast({
       tokens,
       notification: { title: payload.title, body: truncated },
       data: { url: payload.url },
       webpush: { fcmOptions: { link: payload.url } },
     });
-  } catch {
-    // プッシュ失敗は無視
+
+    /**
+     * 結果を捨てない。
+     *
+     * 以前は送りっぱなしで、失効したトークンが users/{uid}/fcmTokens に
+     * 溜まり続けていた。端末を替えたり SW が更新されるとトークンが入れ替わるため、
+     * 「届く端末と届かない端末」が混ざり、原因も追えなかった。
+     * 失効が確定したものだけ消し、それ以外の失敗はログに残す。
+     */
+    const now = new Date().toISOString();
+    await Promise.all(
+      res.responses.map(async (r, i) => {
+        const ref = docs[i].ref;
+        if (r.success) {
+          await ref.set({ lastSuccessAt: now }, { merge: true });
+          return;
+        }
+        const code = r.error?.code ?? "";
+        if (
+          code === "messaging/registration-token-not-registered" ||
+          code === "messaging/invalid-registration-token" ||
+          code === "messaging/invalid-argument"
+        ) {
+          await ref.delete();
+          console.warn(`[fcm] 失効トークンを削除 uid=${uid} code=${code}`);
+          return;
+        }
+        console.warn(`[fcm] 送信失敗 uid=${uid} code=${code}`, r.error?.message);
+      }),
+    );
+  } catch (err) {
+    // プッシュ自体で画面を壊さない。ただし黙らせず痕跡は残す
+    console.warn(`[fcm] 送信でエラー uid=${uid}`, err);
   }
 }
