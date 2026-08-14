@@ -1,7 +1,6 @@
 import type { SkillRank } from "@/lib/types/skill-check";
 import { calculateRank } from "./rank";
 import { calculateInterviewRank } from "@/lib/interview-skill-check/rank";
-import { SKILL_CHECK_REFRESH_DAYS } from "@/lib/types/skill-check";
 import { SC_WEIGHT, PRACTICE_WEIGHT } from "./weights";
 import { blendPracticeScores } from "@/lib/choco/blend";
 
@@ -11,8 +10,6 @@ export const CHOCO_WEIGHT = 0.5;
 // Client component から参照しやすいよう re-export (旧 import パス互換)
 export { SC_WEIGHT, PRACTICE_WEIGHT } from "./weights";
 
-/** 小論文スケール */
-const ESSAY_MAX = 50;
 /** 面接SCスケール */
 const INTERVIEW_SC_MAX = 40;
 /** 面接練習スケール */
@@ -25,9 +22,9 @@ export interface AggregateBreakdown {
   scRank: SkillRank | null;
   /** SCの総合スコア（系統のスケールそのまま） */
   scScore: number | null;
-  /** 直近30日の練習平均（SCと同じスケールに正規化済み） */
+  /** 練習平均（全期間・SCと同じスケールに正規化済み） */
   practiceAvg: number | null;
-  /** 直近30日の練習件数 */
+  /** 練習件数（全期間） */
   practiceCount: number;
   /** 合成後の総合スコア（SCと同じスケール） */
   compositeScore: number | null;
@@ -108,105 +105,16 @@ function blend(
   };
 }
 
-function daysAgo(n: number): Date {
-  const d = new Date();
-  d.setDate(d.getDate() - n);
-  return d;
-}
-
-/** 30 日内に履歴がない場合の fallback: 全期間の直近 N 件 */
-const FALLBACK_RECENT_LIMIT = 10;
-
 /**
- * 既に取得済みの essay 履歴リストから aggregate を計算する純粋関数版。
+ * 小論文SC + 練習（小論文添削 + ちょこ添削）から合成ランクを算出。
  *
- * Firestore を再クエリせず、 呼び出し元が手元に持っている essays から
- * 直近 30 日 → fallback 直近 N 件の練習平均を出す。
- * 主に `/api/admin/students/[id]` のように essays を既に取得済みの
- * エンドポイントで使う (= 重複クエリとインデックス依存を避ける)。
- */
-export function computeEssayAggregateFromList(
-  scTotal: number | null,
-  essays: { submittedAt: string | Date; scores?: { total?: number } | null }[],
-): AggregateBreakdown {
-  const cutoff = daysAgo(SKILL_CHECK_REFRESH_DAYS);
-  const toDate = (v: string | Date) => (v instanceof Date ? v : new Date(v));
-  const toScore = (e: (typeof essays)[number]) =>
-    typeof e.scores?.total === "number" ? e.scores.total : null;
-
-  let scores = essays
-    .filter((e) => toDate(e.submittedAt) >= cutoff)
-    .map(toScore)
-    .filter((s): s is number => s !== null);
-
-  if (scores.length === 0) {
-    scores = [...essays]
-      .sort(
-        (a, b) =>
-          toDate(b.submittedAt).getTime() - toDate(a.submittedAt).getTime(),
-      )
-      .slice(0, FALLBACK_RECENT_LIMIT)
-      .map(toScore)
-      .filter((s): s is number => s !== null);
-  }
-
-  const practiceAvg =
-    scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : null;
-  return blend(scTotal, practiceAvg, scores.length, calculateRank);
-}
-
-/**
- * interview 履歴リストから aggregate を計算する純粋関数版。
- * 練習スコア (0-50) を面接 SC スケール (0-40) に正規化する。
- */
-export function computeInterviewAggregateFromList(
-  scTotal: number | null,
-  interviews: {
-    startedAt: string | Date;
-    status?: string;
-    scores?: { total?: number } | null;
-  }[],
-): AggregateBreakdown {
-  const cutoff = daysAgo(SKILL_CHECK_REFRESH_DAYS);
-  const toDate = (v: string | Date) => (v instanceof Date ? v : new Date(v));
-  const toScore = (i: (typeof interviews)[number]) => {
-    if (i.status !== "completed") return null;
-    return typeof i.scores?.total === "number" ? i.scores.total : null;
-  };
-
-  let rawScores = interviews
-    .filter((i) => toDate(i.startedAt) >= cutoff)
-    .map(toScore)
-    .filter((s): s is number => s !== null);
-
-  if (rawScores.length === 0) {
-    rawScores = [...interviews]
-      .sort(
-        (a, b) => toDate(b.startedAt).getTime() - toDate(a.startedAt).getTime(),
-      )
-      .slice(0, FALLBACK_RECENT_LIMIT)
-      .map(toScore)
-      .filter((s): s is number => s !== null);
-  }
-
-  // 練習側 (0-50) → 面接 SC スケール (0-40) に正規化
-  const normalized = rawScores.map(
-    (s) => (s * INTERVIEW_SC_MAX) / INTERVIEW_PRACTICE_MAX,
-  );
-  const practiceAvg =
-    normalized.length > 0
-      ? normalized.reduce((a, b) => a + b, 0) / normalized.length
-      : null;
-  return blend(scTotal, practiceAvg, normalized.length, calculateInterviewRank);
-}
-
-/**
- * 小論文SC + essay 添削スコアから合成ランクを算出。
+ * 練習スコアは「これまでの添削すべて」の平均を使う。
  *
- * 練習スコアは原則「直近 30 日の essays」 を使うが、 30 日以内に履歴が
- * ない生徒には fallback として「全期間の直近 10 件」 を使う。 これにより
- * 「テスト未受験 + 直近サボり中だが過去に取り組み履歴ありの生徒」 にも
- * ランクが付与される (ユーザー仕様)。
+ * 以前は直近30日の窓で、30日以内に履歴が無いときだけ全期間の直近10件へ
+ * フォールバックしていた。直近に1件でもあるとその1件に引きずられ、
+ * 過去の添削が効かなかった（実データ: 直近の弱い1件だけで D、全期間なら C）。
+ * 積み上げた添削がそのままランクに出るほうが指導の実感に合う、という判断で
+ * 全期間平均にした（2026-08-14）。件数が増えるほど1回の出来では動かなくなる。
  */
 export async function computeEssayAggregate(
   userId: string,
@@ -216,48 +124,16 @@ export async function computeEssayAggregate(
   if (!adminDb) return blend(scTotal, null, 0, calculateRank);
 
   try {
-    const cutoff = daysAgo(SKILL_CHECK_REFRESH_DAYS);
-
-    const essayRecent = await adminDb
-      .collection("essays")
-      .where("userId", "==", userId)
-      .where("submittedAt", ">=", cutoff)
-      .get();
-    let essayTotals = essayRecent.docs
+    const [essayAll, chocoAll] = await Promise.all([
+      adminDb.collection("essays").where("userId", "==", userId).get(),
+      adminDb.collection(`users/${userId}/chokoReviews`).get(),
+    ]);
+    const essayTotals = essayAll.docs
       .map((d) => d.data()?.scores?.total)
       .filter((s): s is number => typeof s === "number");
-
-    // ちょこ添削の submittedAt は ISO 文字列保存なので cutoff も文字列で比較する
-    // (ISO 文字列は辞書順 == 時系列順)。essays 側は Timestamp なので Date で比較。
-    const chocoRecent = await adminDb
-      .collection(`users/${userId}/chokoReviews`)
-      .where("submittedAt", ">=", cutoff.toISOString())
-      .get();
-    let chocoTotals = chocoRecent.docs
+    const chocoTotals = chocoAll.docs
       .map((d) => d.data()?.scores?.total)
       .filter((s): s is number => typeof s === "number");
-
-    if (essayTotals.length === 0 && chocoTotals.length === 0) {
-      const fb = await adminDb
-        .collection("essays")
-        .where("userId", "==", userId)
-        .orderBy("submittedAt", "desc")
-        .limit(FALLBACK_RECENT_LIMIT)
-        .get();
-      essayTotals = fb.docs
-        .map((d) => d.data()?.scores?.total)
-        .filter((s): s is number => typeof s === "number");
-      if (essayTotals.length === 0) {
-        const cfb = await adminDb
-          .collection(`users/${userId}/chokoReviews`)
-          .orderBy("submittedAt", "desc")
-          .limit(FALLBACK_RECENT_LIMIT)
-          .get();
-        chocoTotals = cfb.docs
-          .map((d) => d.data()?.scores?.total)
-          .filter((s): s is number => typeof s === "number");
-      }
-    }
 
     const { avg, count } = blendPracticeScores(essayTotals, chocoTotals, CHOCO_WEIGHT);
     return blend(scTotal, avg, count, calculateRank);
@@ -271,9 +147,7 @@ export async function computeEssayAggregate(
  * 面接SC + interview 練習スコアから合成ランクを算出。
  * 面接SC(0-40)と面接練習(0-50)のスケール差を吸収するため練習側を正規化。
  *
- * 練習スコアは原則「直近 30 日の interviews」 を使うが、 30 日以内に
- * 履歴がない生徒には fallback として「全期間の直近 10 件 (completed のみ)」
- * を使う。 これによりテスト未受験 / 直近サボり中の生徒にもランクが付く。
+ * 練習スコアは小論文と同じく全期間の平均（生徒が話した completed のみ）。
  */
 export async function computeInterviewAggregate(
   userId: string,
@@ -310,23 +184,12 @@ export async function computeInterviewAggregate(
       .filter((s): s is number => s !== null);
 
   try {
-    const cutoff = daysAgo(SKILL_CHECK_REFRESH_DAYS);
-    const recentSnap = await adminDb
+    // 小論文と同じく全期間の平均を使う（窓を分けると2つのランクで意味が変わる）
+    const allSnap = await adminDb
       .collection("interviews")
       .where("userId", "==", userId)
-      .where("startedAt", ">=", cutoff)
       .get();
-    let rawScores = extractScores(recentSnap.docs);
-
-    if (rawScores.length === 0) {
-      const fallbackSnap = await adminDb
-        .collection("interviews")
-        .where("userId", "==", userId)
-        .orderBy("startedAt", "desc")
-        .limit(FALLBACK_RECENT_LIMIT)
-        .get();
-      rawScores = extractScores(fallbackSnap.docs);
-    }
+    const rawScores = extractScores(allSnap.docs);
 
     // 練習側(0-50) → 面接SCスケール(0-40) に正規化
     const normalized = rawScores.map(
@@ -351,18 +214,18 @@ export { emptyBreakdown };
  * 優先順位:
  *   1. スキルチェックのサブコレクション最新1件の合計（これが正本）
  *   2. users のデノーマライズ値 lastSkillCheckScore（サブコレクションを引けない画面用）
- *   3. currentSkillScore（lastSkillCheckScore を持たない旧データの後方互換）
+ *   3. どちらも無ければ null（＝未受験）
  *
- * currentSkillScore は refreshEssayAggregateCache が書いた「合成後」の値なので、
- * 1・2 がある限り使わない。これを原値として渡すと練習平均を二重に混ぜることになる。
+ * currentSkillScore は使わない。あれは refreshEssayAggregateCache が書いた
+ * 「合成後」の値で、SCの原値ではない。未受験の生徒でも練習だけの合成値が
+ * 入っているため、これを原値として渡すと練習平均を二重に混ぜたうえ、
+ * 未受験の生徒が「SC受験済み」として扱われる。
  */
 export function resolveScRawScore(
   latestSkillCheck: { scores?: { total?: unknown } } | undefined,
   userData: {
     lastSkillCheckScore?: unknown;
-    currentSkillScore?: unknown;
     lastInterviewCheckScore?: unknown;
-    currentInterviewScore?: unknown;
   },
   kind: "essay" | "interview" = "essay",
 ): number | null {
@@ -370,18 +233,15 @@ export function resolveScRawScore(
   if (typeof latest === "number") return latest;
   const last =
     kind === "essay" ? userData.lastSkillCheckScore : userData.lastInterviewCheckScore;
-  if (typeof last === "number") return last;
-  const current =
-    kind === "essay" ? userData.currentSkillScore : userData.currentInterviewScore;
-  return typeof current === "number" ? current : null;
+  return typeof last === "number" ? last : null;
 }
 
 /**
  * 指定ユーザーの essay aggregate を再計算し、Firestore `users/{uid}` の
  * `currentSkillScore` / `currentSkillRank` (デノーマライズ値) を更新する。
  *
- * SC 原値は `lastSkillCheckScore` から取得。未設定の旧データは `currentSkillScore`
- * を SC 原値とみなす (後方互換)。
+ * SC 原値は resolveScRawScore で決める（画面と同じ入口を通す）。
+ * currentSkillScore は自分が書いた合成値なので、原値として読み直さない。
  *
  * essay/review や skill-check/submit 完了時に fire-and-forget で呼び出す想定。
  * 失敗してもユーザーレスポンスには影響させない。
@@ -392,18 +252,12 @@ export async function refreshEssayAggregateCache(userId: string): Promise<void> 
   const userRef = adminDb.doc(`users/${userId}`);
   const snap = await userRef.get();
   if (!snap.exists) return;
-  const data = snap.data() as {
-    lastSkillCheckScore?: number;
-    currentSkillScore?: number;
-  };
-  // lastSkillCheckScore があればそれを SC 原値に使う。
-  // なければ旧データとみなして currentSkillScore を使う (後方互換)。
-  const scTotal =
-    typeof data.lastSkillCheckScore === "number"
-      ? data.lastSkillCheckScore
-      : typeof data.currentSkillScore === "number"
-        ? data.currentSkillScore
-        : null;
+  const latestSc = await adminDb
+    .collection(`users/${userId}/skillChecks`)
+    .orderBy("takenAt", "desc")
+    .limit(1)
+    .get();
+  const scTotal = resolveScRawScore(latestSc.docs[0]?.data(), snap.data() ?? {});
   const result = await computeEssayAggregate(userId, scTotal);
   if (result.compositeScore !== null && result.compositeRank !== null) {
     await userRef.update({
@@ -425,16 +279,18 @@ export async function refreshInterviewAggregateCache(
   const userRef = adminDb.doc(`users/${userId}`);
   const snap = await userRef.get();
   if (!snap.exists) return;
-  const data = snap.data() as {
-    lastInterviewCheckScore?: number;
-    currentInterviewScore?: number;
-  };
-  const scTotal =
-    typeof data.lastInterviewCheckScore === "number"
-      ? data.lastInterviewCheckScore
-      : typeof data.currentInterviewScore === "number"
-        ? data.currentInterviewScore
-        : null;
+  // essay 側と同じく、SC 原値は正本（サブコレクション）から取る。
+  // currentInterviewScore は自分が書いた合成値なので読み直さない
+  const latestSc = await adminDb
+    .collection(`users/${userId}/interviewSkillChecks`)
+    .orderBy("takenAt", "desc")
+    .limit(1)
+    .get();
+  const scTotal = resolveScRawScore(
+    latestSc.docs[0]?.data(),
+    snap.data() ?? {},
+    "interview",
+  );
   const result = await computeInterviewAggregate(userId, scTotal);
   if (result.compositeScore !== null && result.compositeRank !== null) {
     await userRef.update({

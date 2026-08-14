@@ -66,6 +66,11 @@
 - 命名: camelCase (変数/関数), PascalCase (コンポーネント/型)
 - AI関連の定数・プロンプトは src/lib/ai/prompts/ に集約
 
+## 5.5 コミット・push
+- このプロジェクトでは、作業が終わったら確認を取らずに main へコミット・push してよい（2026-08-14 にユーザーが指示）。
+- push で App Hosting の本番デプロイが走る。push 前に `npm run build` を通し、UI 変更は画面で確認してから出す。
+- Firestore インデックスと本番データの書き換え（再採点スクリプト等）は push とは別。実行前に確認を取る。
+
 ## 6. Development Commands
 - `npm run dev` - ローカル開発サーバー（Turbopack）
 - `npm run build` - ビルド
