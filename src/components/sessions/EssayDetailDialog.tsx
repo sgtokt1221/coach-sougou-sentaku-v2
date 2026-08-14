@@ -14,7 +14,7 @@ import { Progress } from "@/components/ui/progress";
 import { FileText, ThumbsUp, Lightbulb, ArrowRightLeft } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import { CommentableEssayText } from "@/components/essay/CommentableEssayText";
-import type { EssayInlineComment } from "@/lib/types/essay";
+import { ESSAY_SCORE_WEIGHTS, type EssayInlineComment } from "@/lib/types/essay";
 
 interface EssayDetail {
   id: string;
@@ -29,6 +29,8 @@ interface EssayDetail {
     expression: number;
     apAlignment: number;
     originality: number;
+    /** 旧データ（v7以前）には無い */
+    reasoningMaturity?: number;
     total: number;
   };
   feedback?: {
@@ -45,12 +47,21 @@ function scoreColor(total: number): string {
   return "text-rose-600 dark:text-rose-400";
 }
 
-const SCORE_AXES: { key: keyof NonNullable<EssayDetail["scores"]>; label: string }[] = [
-  { key: "structure", label: "構成" },
-  { key: "logic", label: "論理性" },
-  { key: "expression", label: "表現力" },
-  { key: "apAlignment", label: "AP合致度" },
-  { key: "originality", label: "独自性" },
+/** 合計に入る5軸。APは合計外なので、この一覧とは分けて出す */
+const SCORE_AXES: {
+  key: keyof NonNullable<EssayDetail["scores"]>;
+  label: string;
+  weight: number;
+}[] = [
+  { key: "structure", label: "構成", weight: ESSAY_SCORE_WEIGHTS.structure },
+  { key: "logic", label: "論理性", weight: ESSAY_SCORE_WEIGHTS.logic },
+  { key: "expression", label: "表現力", weight: ESSAY_SCORE_WEIGHTS.expression },
+  { key: "originality", label: "独自性", weight: ESSAY_SCORE_WEIGHTS.originality },
+  {
+    key: "reasoningMaturity",
+    label: "議論の成熟度",
+    weight: ESSAY_SCORE_WEIGHTS.reasoningMaturity,
+  },
 ];
 
 /**
@@ -119,14 +130,36 @@ export default function EssayDetailDialog({
                 <div className="grid gap-2">
                   {SCORE_AXES.map((item) => {
                     const val = data.scores![item.key] as number;
+                    // 議論の成熟度は旧データには無い
+                    if (typeof val !== "number") return null;
                     return (
                       <div key={item.key} className="flex items-center gap-3">
-                        <span className="w-20 text-xs text-muted-foreground">{item.label}</span>
+                        <span className="w-28 text-xs text-muted-foreground">
+                          {item.label}
+                          <span className="ml-1 text-[10px] text-muted-foreground/70">
+                            配点{item.weight}
+                          </span>
+                        </span>
                         <Progress value={val * 10} className="h-2 flex-1" />
                         <span className="w-8 text-right text-xs font-medium">{val}/10</span>
                       </div>
                     );
                   })}
+                  {/* 合計外の参考値 */}
+                  {typeof data.scores.apAlignment === "number" && (
+                    <div className="flex items-center gap-3 border-t pt-2">
+                      <span className="w-28 text-xs text-muted-foreground">
+                        AP合致度
+                        <span className="ml-1 text-[10px] text-muted-foreground/70">
+                          合計外
+                        </span>
+                      </span>
+                      <Progress value={data.scores.apAlignment * 10} className="h-2 flex-1" />
+                      <span className="w-8 text-right text-xs font-medium text-muted-foreground">
+                        {data.scores.apAlignment}/10
+                      </span>
+                    </div>
+                  )}
                   <div className="mt-1 flex items-center gap-3 border-t pt-2">
                     <span className="w-20 text-xs font-semibold">合計</span>
                     <div className="flex-1" />

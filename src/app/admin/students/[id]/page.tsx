@@ -86,7 +86,12 @@ import {
   ESSAY_CATEGORY_ORDER,
   type EssayCategoryKey,
 } from "@/lib/growth/weakness-category";
-import { ESSAY_STATUS_LABELS, type Essay, type EssayFeedback } from "@/lib/types/essay";
+import {
+  ESSAY_SCORE_WEIGHTS,
+  ESSAY_STATUS_LABELS,
+  type Essay,
+  type EssayFeedback,
+} from "@/lib/types/essay";
 import type { WeaknessRecord } from "@/lib/types/growth";
 import { getWeaknessReminderLevel } from "@/lib/types/growth";
 import { UniversitySelectStep } from "@/components/onboarding/UniversitySelectStep";
@@ -1604,24 +1609,36 @@ function AdminStudentDetailPageInner() {
                 <div className="space-y-3">
                   <h3 className="text-sm font-semibold text-foreground">AIスコア</h3>
                   <div className="grid gap-3 sm:grid-cols-2 sm:items-center">
+                  {/* APは合計に入らないので軸に混ぜない。数値は下の一覧に残す */}
                   <SkillRadarChart
                     scores={essayDetail.scores}
-                    apAxisLabel="AP合致"
-                    showAp={essayDetail.feedback?.apAlignmentAssessable !== false}
+                    showAp={false}
+                    showMaturity
                     height={220}
                   />
                   <div className="grid gap-2">
                     {[
-                      { key: "structure", label: "構成", color: "bg-indigo-500" },
-                      { key: "logic", label: "論理性", color: "bg-amber-500" },
-                      { key: "expression", label: "表現力", color: "bg-emerald-500" },
-                      { key: "apAlignment", label: "AP合致度", color: "bg-rose-500" },
-                      { key: "originality", label: "独自性", color: "bg-violet-500" },
+                      { key: "structure", label: "構成", weight: ESSAY_SCORE_WEIGHTS.structure },
+                      { key: "logic", label: "論理性", weight: ESSAY_SCORE_WEIGHTS.logic },
+                      { key: "expression", label: "表現力", weight: ESSAY_SCORE_WEIGHTS.expression },
+                      { key: "originality", label: "独自性", weight: ESSAY_SCORE_WEIGHTS.originality },
+                      {
+                        key: "reasoningMaturity",
+                        label: "議論の成熟度",
+                        weight: ESSAY_SCORE_WEIGHTS.reasoningMaturity,
+                      },
                     ].map((item) => {
                       const val = essayDetail.scores![item.key as keyof typeof essayDetail.scores] as number;
+                      // 議論の成熟度は旧データには無い
+                      if (typeof val !== "number") return null;
                       return (
                         <div key={item.key} className="flex items-center gap-3">
-                          <span className="w-20 text-xs text-muted-foreground">{item.label}</span>
+                          <span className="w-28 text-xs text-muted-foreground">
+                            {item.label}
+                            <span className="ml-1 text-[10px] text-muted-foreground/70">
+                              配点{item.weight}
+                            </span>
+                          </span>
                           <div className="flex-1">
                             <Progress value={val * 10} className="h-2" />
                           </div>
@@ -1629,6 +1646,24 @@ function AdminStudentDetailPageInner() {
                         </div>
                       );
                     })}
+                    {/* 合計外の参考値。レーダーには含めない */}
+                    {essayDetail.feedback?.apAlignmentAssessable !== false &&
+                      typeof essayDetail.scores.apAlignment === "number" && (
+                        <div className="flex items-center gap-3 border-t pt-2">
+                          <span className="w-28 text-xs text-muted-foreground">
+                            AP合致度
+                            <span className="ml-1 text-[10px] text-muted-foreground/70">
+                              合計外
+                            </span>
+                          </span>
+                          <div className="flex-1">
+                            <Progress value={essayDetail.scores.apAlignment * 10} className="h-2" />
+                          </div>
+                          <span className="w-8 text-right text-xs font-medium text-muted-foreground">
+                            {essayDetail.scores.apAlignment}/10
+                          </span>
+                        </div>
+                      )}
                     <div className="mt-1 flex items-center gap-3 border-t pt-2">
                       <span className="w-20 text-xs font-semibold">合計</span>
                       <div className="flex-1" />
