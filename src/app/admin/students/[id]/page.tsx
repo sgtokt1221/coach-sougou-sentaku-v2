@@ -98,6 +98,7 @@ import { UniversitySelectStep } from "@/components/onboarding/UniversitySelectSt
 import type { EnglishCert } from "@/lib/types/user";
 import { CategorySelector } from "@/components/skill-check/CategorySelector";
 import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
+import type { AggregateBreakdown } from "@/lib/skill-check/aggregate";
 import { SkillRadarChart } from "@/components/skill-check/SkillRadarChart";
 import { scoreToSkillRank } from "@/lib/history-rank";
 import type { SkillCheckStatus, AcademicCategory, SkillCheckResult } from "@/lib/types/skill-check";
@@ -416,6 +417,32 @@ function PinnedSummary({ detail }: { detail: StudentDetail }) {
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+/**
+ * 成績タブの見出しに出す現在のスキルランク。
+ * 値は生徒一覧・概要タブと同じ合成（SC × 0.4 + 直近の練習平均 × 0.6）。
+ */
+function SkillRankSummary({
+  label,
+  aggregate,
+  maxScore,
+}: {
+  label: string;
+  aggregate: AggregateBreakdown | undefined;
+  maxScore: number;
+}) {
+  if (!aggregate || aggregate.compositeRank === null) return null;
+  return (
+    <div className="flex items-center gap-1.5">
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <SkillRankBadge rank={aggregate.compositeRank} size="sm" animate={false} />
+      <span className="text-xs font-medium tabular-nums text-foreground">
+        {aggregate.compositeScore}
+        <span className="text-muted-foreground">/{maxScore}</span>
+      </span>
     </div>
   );
 }
@@ -1014,6 +1041,41 @@ function AdminStudentDetailPageInner() {
 
   const renderPerformanceTab = () => (
     <div className="space-y-6">
+      {/* 項目別の平均（日々の取り組み）。タブを開いて最初に見る値なので一番上に置く */}
+      {(essayCategoryAvg || interviewCategoryAvg) && (
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <BarChart3 className="size-4" />
+                項目別の平均（日々の取り組み）
+              </CardTitle>
+              {/* 現在のスキルランク。生徒一覧・概要タブと同じ合成値 */}
+              <div className="flex items-center gap-3">
+                <SkillRankSummary
+                  label="小論文"
+                  aggregate={detail.essayAggregate}
+                  maxScore={50}
+                />
+                <SkillRankSummary
+                  label="面接"
+                  aggregate={detail.interviewAggregate}
+                  maxScore={40}
+                />
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <CategoryAverageRadar
+              essayAverages={essayCategoryAvg}
+              interviewAverages={interviewCategoryAvg}
+              essayCount={essayScoresList.length}
+              interviewCount={ivTrend.length}
+            />
+          </CardContent>
+        </Card>
+      )}
+
       {/* Score Trend Chart */}
       <Card>
         <CardHeader className="pb-2">
@@ -1055,26 +1117,6 @@ function AdminStudentDetailPageInner() {
           )}
         </CardContent>
       </Card>
-
-      {/* 項目別の平均（日々の取り組み） */}
-      {(essayCategoryAvg || interviewCategoryAvg) && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <BarChart3 className="size-4" />
-              項目別の平均（日々の取り組み）
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <CategoryAverageRadar
-              essayAverages={essayCategoryAvg}
-              interviewAverages={interviewCategoryAvg}
-              essayCount={essayScoresList.length}
-              interviewCount={ivTrend.length}
-            />
-          </CardContent>
-        </Card>
-      )}
 
       {/* Weaknesses Table — Accordion */}
       <Card>

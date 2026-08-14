@@ -91,26 +91,42 @@ export function SegmentControl<T extends string = string>({
   const fontSize = size === "sm" ? "text-xs" : "text-sm";
 
   /**
-   * アクティブなタブを保持し、value 変化時に可視範囲へスクロールする。
+   * アクティブなタブを保持し、value 変化時に可視範囲へ「横だけ」スクロールする。
    * options が溢れてアクティブタブが隠れた場合でも見えるようにする。
+   *
+   * scrollIntoView は使わない。block:"nearest" を付けても、要素が画面外にあれば
+   * スクロール可能な祖先（ここでは <main>）を縦にも動かすため、この部品を含む
+   * タブを開くだけでページが勝手に飛ぶ（生徒詳細の「成績・弱点」で発生した）。
+   * 自分のスクロールコンテナの scrollLeft だけを触る。
    */
   const activeTabRef = useRef<HTMLButtonElement | null>(null);
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const el = activeTabRef.current;
-    if (!el) return;
+    const scroller = scrollerRef.current;
+    if (!el || !scroller) return;
+    // 横に溢れていなければ何もしない
+    if (scroller.scrollWidth <= scroller.clientWidth) return;
+
+    const left = el.offsetLeft;
+    const right = left + el.offsetWidth;
+    const viewLeft = scroller.scrollLeft;
+    const viewRight = viewLeft + scroller.clientWidth;
+    if (left >= viewLeft && right <= viewRight) return;
+
     const prefersReducedMotion =
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    el.scrollIntoView({
-      block: "nearest",
-      inline: "nearest",
+    scroller.scrollTo({
+      left: left < viewLeft ? left : right - scroller.clientWidth,
       behavior: prefersReducedMotion ? "auto" : "smooth",
     });
   }, [value]);
 
   return (
     <div
+      ref={scrollerRef}
       data-allow-x-scroll
       className={cn(
         "w-full overflow-x-auto -mx-1 px-1 scrollbar-none",
