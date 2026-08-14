@@ -282,13 +282,29 @@ export async function computeInterviewAggregate(
   const { adminDb } = await import("@/lib/firebase/admin");
   if (!adminDb) return blend(scTotal, null, 0, calculateInterviewRank);
 
+  /**
+   * 練習1回として数える面接。
+   *
+   * status が completed でも、開始直後に閉じたセッションが残る（本番で
+   * 発話0〜1件・スコア0のものが確認できた）。これを平均に入れると、
+   * 実質やっていない生徒に低いランクが付く。生徒が一度も話していない
+   * セッションは練習と見なさない。AIの初回質問だけの状態がこれに当たる。
+   */
+  const isPracticed = (data: FirebaseFirestore.DocumentData): boolean => {
+    if (data?.status !== "completed") return false;
+    const messages = Array.isArray(data.messages) ? data.messages : [];
+    return messages.some(
+      (m: { role?: string }) => m?.role === "student",
+    );
+  };
+
   const extractScores = (
     docs: FirebaseFirestore.QueryDocumentSnapshot[],
   ): number[] =>
     docs
       .map((d) => {
         const data = d.data();
-        if (data?.status !== "completed") return null;
+        if (!isPracticed(data)) return null;
         return typeof data?.scores?.total === "number" ? data.scores.total : null;
       })
       .filter((s): s is number => s !== null);
