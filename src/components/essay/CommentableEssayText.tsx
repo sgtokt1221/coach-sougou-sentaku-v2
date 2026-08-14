@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MessageSquarePlus, X, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -125,7 +125,7 @@ export function CommentableEssayText({
   const orphaned = comments.filter((c) => !anchoredIds.has(c.id));
   const commentMap = new Map(comments.map((c) => [c.id, c]));
 
-  function handleMouseUp() {
+  function handleSelectionEnd() {
     if (mode !== "edit") return;
     const sel = window.getSelection();
     const container = containerRef.current;
@@ -133,20 +133,40 @@ export function CommentableEssayText({
     const str = sel.toString();
     if (!str.trim()) return;
     const range = sel.getRangeAt(0);
+    /**
+     * 本文の外まで伸びた選択は、本文の範囲に丸めて拾う。
+     *
+     * 文末までドラッグすると枠の外まで選択が伸びるのが普通で、以前はそれを
+     * 「本文外の選択」として捨てていた。結果、ドラッグの仕方によって引用が
+     * できたりできなかったりしていた。
+     */
+    const contentRange = document.createRange();
+    contentRange.selectNodeContents(container);
+    // 本文とまったく重ならない選択（別の場所を選んだ）は自分の担当ではない
     if (
-      !container.contains(range.startContainer) ||
-      !container.contains(range.endContainer)
+      range.compareBoundaryPoints(Range.END_TO_START, contentRange) >= 0 ||
+      range.compareBoundaryPoints(Range.START_TO_END, contentRange) <= 0
     ) {
       return;
     }
-    let start = offsetWithin(container, range.startContainer, range.startOffset);
-    let end = offsetWithin(container, range.endContainer, range.endOffset);
+    const startInside = container.contains(range.startContainer);
+    const endInside = container.contains(range.endContainer);
+    let start = startInside
+      ? offsetWithin(container, range.startContainer, range.startOffset)
+      : 0;
+    let end = endInside
+      ? offsetWithin(container, range.endContainer, range.endOffset)
+      : text.length;
     if (start > end) [start, end] = [end, start];
     if (end <= start) return;
     const picked = text.slice(start, end);
     if (quoteOnly) {
-      // 確認の箱を挟まず、その場で引用に入れる
-      onQuote?.(picked);
+      // 確認の箱を挟まず、その場で引用に入れる。
+      // 開くのは次のフレーム。この mouseup に続く click を、開いたばかりの
+      // FBモーダル（modal={false}）が「外側クリック」と見なして即座に
+      // 閉じてしまうため（引用は入るのにモーダルが出ない状態になっていた）。
+      const quote = picked;
+      requestAnimationFrame(() => onQuote?.(quote));
       setSelectedId(null);
       window.getSelection()?.removeAllRanges();
       return;
@@ -204,13 +224,33 @@ export function CommentableEssayText({
     parts.push(<span key={`t-${cursor}`}>{text.slice(cursor)}</span>);
   }
 
+  /**
+   * 選択の確定は document 側で受ける。
+   *
+   * 以前は本文ボックスの onMouseUp だけを見ていたため、文末までドラッグして
+   * 枠の外で指を離すと発火せず、引用もFBモーダルも開かなかった。
+   * どこで離しても拾えるように document で待ち受け、選択範囲がこの本文の中に
+   * あるか（handleSelectionEnd 内の containment チェック）で自分の担当かを決める。
+   */
+  const selectionEndRef = useRef(handleSelectionEnd);
+  selectionEndRef.current = handleSelectionEnd;
+  useEffect(() => {
+    if (mode !== "edit") return;
+    const onEnd = () => selectionEndRef.current();
+    document.addEventListener("mouseup", onEnd);
+    document.addEventListener("touchend", onEnd);
+    return () => {
+      document.removeEventListener("mouseup", onEnd);
+      document.removeEventListener("touchend", onEnd);
+    };
+  }, [mode]);
+
   const selected = selectedId ? commentMap.get(selectedId) : null;
 
   return (
     <div className="space-y-3">
       <div
         ref={containerRef}
-        onMouseUp={handleMouseUp}
         className={`whitespace-pre-wrap rounded-lg border bg-white p-4 text-sm leading-7 dark:bg-gray-950 ${
           fullHeight ? "" : "max-h-72 overflow-y-auto"
         }`}
