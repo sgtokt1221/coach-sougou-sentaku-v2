@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 import { buildActivityFullInterviewPrompt } from "@/lib/ai/prompts/activity";
+import { logAiConversation } from "@/lib/chat/ai-conversation-log";
 import { ACTIVITY_CATEGORY_LABELS } from "@/lib/types/activity";
 import type { ActivityCategory } from "@/lib/types/activity";
 
@@ -12,6 +13,8 @@ import type { ActivityCategory } from "@/lib/types/activity";
 interface InterviewRequest {
   message: string;
   history?: Array<{ role: string; content: string }>;
+  /** 続きの会話ならクライアントが持っているID。無ければ新規採番して返す */
+  conversationId?: string | null;
 }
 
 const VALID_CATEGORIES = new Set(Object.keys(ACTIVITY_CATEGORY_LABELS));
@@ -30,7 +33,7 @@ export async function POST(request: NextRequest) {
   } catch {
     return NextResponse.json({ error: "リクエストが不正です" }, { status: 400 });
   }
-  const { message, history } = body;
+  const { message, history, conversationId } = body;
   if (!message) {
     return NextResponse.json({ error: "message は必須です" }, { status: 400 });
   }
@@ -67,6 +70,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "ヒアリング処理中にエラーが発生しました" }, { status: 502 });
   }
 
+  /**
+   * やり取りを履歴として残す（管理者の「AI対話履歴」で読めるようにする）。
+   * この経路は会話を保存しておらず、構造化された結果しか残っていなかった。
+   */
+  const savedId = await logAiConversation({
+    uid: auth.uid,
+    kind: "activity_interview",
+    conversationId,
+    messages: [...messages, { role: "assistant", content: text }],
+  });
+
   try {
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
@@ -90,11 +104,12 @@ export async function POST(request: NextRequest) {
         isComplete: Boolean(parsed.isComplete),
         structuredData: parsed.structuredData,
         suggested,
+        conversationId: savedId,
       });
     }
   } catch {
     // JSON 抽出失敗時は raw text を返す
   }
 
-  return NextResponse.json({ aiQuestion: text, isComplete: false });
+  return NextResponse.json({ aiQuestion: text, isComplete: false, conversationId: savedId });
 }

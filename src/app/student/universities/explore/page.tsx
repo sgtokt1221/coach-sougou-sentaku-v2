@@ -67,6 +67,8 @@ export default function UniversityExplorePage() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [candidates, setCandidates] = useState<Record<string, Candidate>>({});
+  /** サーバーが採番する会話ID。次のターンに渡して同じ会話へ追記させる */
+  const [conversationId, setConversationId] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
 
@@ -103,7 +105,7 @@ export default function UniversityExplorePage() {
       const res = await authFetch("/api/universities/explore", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: content, history }),
+        body: JSON.stringify({ message: content, history, conversationId }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -111,6 +113,7 @@ export default function UniversityExplorePage() {
         return;
       }
       setMessages((prev) => [...prev, { role: "assistant", content: data.aiResponse }]);
+      if (data.conversationId) setConversationId(data.conversationId);
       if (Array.isArray(data.candidates) && data.candidates.length) {
         setCandidates((prev) => {
           const next = { ...prev };

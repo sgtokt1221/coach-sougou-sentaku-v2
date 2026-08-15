@@ -12,10 +12,12 @@ import type {
  *
  * その生徒とAIのやり取りを、機能をまたいで1本の時系列にして返す。
  *
- * 会話が残っているのは小論文コーチ・書類コーチ・AI模擬面接・面接スキルチェック・
- * 自己分析の5つ。それぞれ保存場所も role の呼び方も時刻の型も違うので、
- * ここで揃える。活動実績のヒアリングや志望校探索など、会話を保存していない
- * 機能は出せない（保存していないものは後から復元できない）。
+ * 読む場所は6つ。小論文コーチ・書類コーチ・AI模擬面接・面接スキルチェック・
+ * 自己分析は機能ごとに別の場所へ保存されており、保存場所も role の呼び方も
+ * 時刻の型も違うのでここで揃える。
+ * 活動ヒアリング・志望校探索・探究の分野決めは元々会話を保存していなかったため、
+ * 後から足すぶんは users/{uid}/aiConversations に集約している
+ * （src/lib/chat/ai-conversation-log.ts）。
  */
 
 /** 1つの会話で返すメッセージの上限。長い面接がレスポンスを膨らませるのを防ぐ */
@@ -92,7 +94,7 @@ export async function GET(
    * 会話は5系統あり、片方のインデックス欠落やデータ不整合で履歴全体が
    * 見えなくなる方が困る。失敗した系統だけ落として warn を残す。
    */
-  const [essay, docs, interviews, skillChecks, selfAnalysis] =
+  const [essay, docs, interviews, skillChecks, selfAnalysis, logged] =
     await Promise.allSettled([
       adminDb
         .collection(`users/${id}/essayCoachThreads`)
@@ -116,6 +118,12 @@ export async function GET(
         .limit(MAX_ITEMS_PER_KIND)
         .get(),
       adminDb.doc(`selfAnalysis/${id}`).get(),
+      // 活動ヒアリング・志望校探索・探究の分野決め。会話をここへ集約している
+      adminDb
+        .collection(`users/${id}/aiConversations`)
+        .orderBy("updatedAt", "desc")
+        .limit(MAX_ITEMS_PER_KIND * 3)
+        .get(),
     ]);
 
   const items: AiConversation[] = [];
@@ -149,6 +157,7 @@ export async function GET(
   warn("interviews", interviews);
   warn("interviewSkillChecks", skillChecks);
   warn("selfAnalysis", selfAnalysis);
+  warn("aiConversations", logged);
 
   if (essay.status === "fulfilled") {
     essay.value.docs.forEach((d) => {
@@ -216,6 +225,19 @@ export async function GET(
         `自己分析 ステップ${entry?.step ?? i + 1}`,
         toIso(t.updatedAt),
         normalizeMessages(entry?.messages),
+      );
+    });
+  }
+
+  if (logged.status === "fulfilled") {
+    logged.value.docs.forEach((d) => {
+      const t = d.data();
+      push(
+        (t.kind as AiConversationKind) ?? "activity_interview",
+        d.id,
+        String(t.title ?? "AIとの相談"),
+        toIso(t.updatedAt ?? t.createdAt),
+        normalizeMessages(t.messages),
       );
     });
   }

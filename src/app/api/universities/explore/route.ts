@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logAiConversation } from "@/lib/chat/ai-conversation-log";
 import { requireRole } from "@/lib/api/auth";
 import {
   getExplorerCatalog,
@@ -14,6 +15,8 @@ import { getDisplayGrade } from "@/lib/utils/grade";
 interface ExploreRequest {
   message: string;
   history?: Array<{ role: string; content: string }>;
+  /** 続きの会話ならクライアントが持っているID */
+  conversationId?: string | null;
 }
 
 interface StudentInfo {
@@ -115,7 +118,7 @@ export async function POST(request: NextRequest) {
   } catch {
     return NextResponse.json({ error: "リクエストが不正です" }, { status: 400 });
   }
-  const { message, history } = body;
+  const { message, history, conversationId } = body;
   if (!message) {
     return NextResponse.json({ error: "message は必須です" }, { status: 400 });
   }
@@ -194,5 +197,13 @@ export async function POST(request: NextRequest) {
     // JSON 抽出失敗時は raw text を返答として扱う
   }
 
-  return NextResponse.json({ aiResponse, isComplete, candidates });
+  // やり取りを履歴に残す（管理者の「AI対話履歴」で読めるようにする）
+  const savedId = await logAiConversation({
+    uid,
+    kind: "university_explore",
+    conversationId,
+    messages: [...messages, { role: "assistant", content: aiResponse }],
+  });
+
+  return NextResponse.json({ aiResponse, isComplete, candidates, conversationId: savedId });
 }

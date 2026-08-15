@@ -46,6 +46,8 @@ export function ActivityRegisterChat({ onSaved }: { onSaved?: () => void }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  /** サーバーが採番する会話ID。次のターンに渡して同じ会話へ追記させる */
+  const [conversationId, setConversationId] = useState<string | null>(null);
   const [structuredData, setStructuredData] = useState<StructuredActivityData | null>(null);
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState<ActivityCategory | "">("");
@@ -95,7 +97,7 @@ export function ActivityRegisterChat({ onSaved }: { onSaved?: () => void }) {
       const res = await authFetch("/api/activities/interview", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text, history }),
+        body: JSON.stringify({ message: text, history , conversationId }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -103,6 +105,7 @@ export function ActivityRegisterChat({ onSaved }: { onSaved?: () => void }) {
         return;
       }
       setMessages((prev) => [...prev, { role: "ai", content: data.aiQuestion }]);
+      if (data.conversationId) setConversationId(data.conversationId);
       if (data.isComplete && data.structuredData) {
         setStructuredData(data.structuredData);
         if (data.suggested) {

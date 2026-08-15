@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logAiConversation } from "@/lib/chat/ai-conversation-log";
 import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
 import { loadResearchSelfContext } from "@/lib/ai/research-context";
@@ -11,6 +12,8 @@ import {
 interface ChatBody {
   message: string;
   history?: Array<{ role: string; content: string }>;
+  /** 続きの会話ならクライアントが持っているID */
+  conversationId?: string | null;
 }
 
 function parseChat(text: string): CurriculumChatResult {
@@ -77,7 +80,24 @@ export async function POST(request: NextRequest) {
       messages,
     });
     const text = resp.content[0]?.type === "text" ? resp.content[0].text : "";
-    return NextResponse.json({ ...parseChat(text), selfAnalysisComplete });
+    const parsed = parseChat(text);
+
+    // やり取りを履歴に残す（管理者の「AI対話履歴」で読めるようにする）
+    const savedId = await logAiConversation({
+      uid,
+      kind: "research_decide",
+      conversationId: body.conversationId,
+      messages: [
+        ...messages,
+        { role: "assistant", content: parsed.aiMessage || text },
+      ],
+    });
+
+    return NextResponse.json({
+      ...parsed,
+      selfAnalysisComplete,
+      conversationId: savedId,
+    });
   } catch (error) {
     console.error("Research curriculum chat error:", error);
     return NextResponse.json({ error: "対話処理中にエラーが発生しました" }, { status: 500 });

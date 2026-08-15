@@ -28,6 +28,8 @@ export function StudentResearchDecide() {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [suggested, setSuggested] = useState<string[]>([]);
+  /** サーバーが採番する会話ID。次のターンに渡して同じ会話へ追記させる */
+  const [conversationId, setConversationId] = useState<string | null>(null);
   const [decided, setDecided] = useState<Decided | null>(null);
 
   const restoreDraft = useCallback(
@@ -78,11 +80,12 @@ export function StudentResearchDecide() {
       const res = await authFetch("/api/research/curriculum/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: msg, history }),
+        body: JSON.stringify({ message: msg, history, conversationId }),
       });
       if (!res.ok) throw new Error();
       const data = await res.json();
       setMessages((m) => [...m, { role: "assistant", content: data.aiMessage ?? "" }]);
+      if (data.conversationId) setConversationId(data.conversationId);
       setSuggested(Array.isArray(data.suggestedDomains) ? data.suggestedDomains : []);
       if (data.isReady && data.decided) {
         await saveDecision(data.decided);

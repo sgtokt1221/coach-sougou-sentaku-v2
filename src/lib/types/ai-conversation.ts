@@ -10,7 +10,10 @@ export type AiConversationKind =
   | "document_coach"
   | "interview"
   | "interview_skill_check"
-  | "self_analysis";
+  | "self_analysis"
+  | "activity_interview"
+  | "university_explore"
+  | "research_decide";
 
 export const AI_CONVERSATION_LABELS: Record<AiConversationKind, string> = {
   essay_coach: "小論文コーチ",
@@ -18,6 +21,9 @@ export const AI_CONVERSATION_LABELS: Record<AiConversationKind, string> = {
   interview: "AI模擬面接",
   interview_skill_check: "面接スキルチェック",
   self_analysis: "自己分析",
+  activity_interview: "活動ヒアリング",
+  university_explore: "志望校探索",
+  research_decide: "探究の分野決め",
 };
 
 export interface AiConversationMessage {
