@@ -87,12 +87,20 @@ export interface GrowthReport {
     bestCategory: string;
     worstCategory: string;
     /** 期間内 essays の項目別平均 (各 0-10、レーダーチャート用)。古いレポートには無い */
+    /**
+     * 合計に入る5軸の平均（essay-review-v14）。
+     * AP合致度は合計外の補助指標なので入れない。
+     * 旧レポートは apAlignment を持ち reasoningMaturity を持たないため、
+     * どちらも任意にして両方描けるようにする。
+     */
     categoryAverages?: {
       structure: number;
       logic: number;
       expression: number;
-      apAlignment: number;
       originality: number;
+      reasoningMaturity?: number;
+      /** 旧レポート（v13以前）にのみ入っている */
+      apAlignment?: number;
     };
   };
   interviewStats: {

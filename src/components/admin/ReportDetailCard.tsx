@@ -673,26 +673,35 @@ export function StatsSummaryCard({
   const prevRank = scoreToSkillRank(prevAvg, max);
   const rankChanged = currentRank !== prevRank && stats.count > 0;
 
-  // レーダーチャート用データ (5 軸)
+  /**
+   * レーダーチャート用データ。
+   *
+   * 小論文は合計に入る5軸（essay-review-v14）。AP合致度は合計外なので混ぜない。
+   * 値が無い軸は描かない。0 で埋めると「最低評価」と区別が付かず、旧レポート
+   * （議論の成熟度が無い）や AP未取得の答案が凹んで見えていた。
+   */
   const radarData = useMemo(() => {
     const c = stats.categoryAverages;
     if (!c) return null;
-    if (isEssay) {
-      return [
-        { subject: "構成", value: c.structure ?? 0 },
-        { subject: "論理性", value: c.logic ?? 0 },
-        { subject: "表現力", value: c.expression ?? 0 },
-        { subject: "AP合致度", value: c.apAlignment ?? 0 },
-        { subject: "独自性", value: c.originality ?? 0 },
-      ];
-    }
-    return [
-      { subject: "明確さ", value: c.clarity ?? 0 },
-      { subject: "AP合致度", value: c.apAlignment ?? 0 },
-      { subject: "熱意", value: c.enthusiasm ?? 0 },
-      { subject: "具体性", value: c.specificity ?? 0 },
-      { subject: "ボディランゲージ", value: c.bodyLanguage ?? 0 },
-    ];
+    const axes = isEssay
+      ? [
+          { subject: "構成", value: c.structure },
+          { subject: "論理性", value: c.logic },
+          { subject: "表現力", value: c.expression },
+          { subject: "独自性", value: c.originality },
+          { subject: "議論の成熟度", value: c.reasoningMaturity },
+        ]
+      : [
+          { subject: "明確さ", value: c.clarity },
+          { subject: "AP合致度", value: c.apAlignment },
+          { subject: "熱意", value: c.enthusiasm },
+          { subject: "具体性", value: c.specificity },
+          { subject: "ボディランゲージ", value: c.bodyLanguage },
+        ];
+    const measured = axes.filter(
+      (a): a is { subject: string; value: number } => typeof a.value === "number",
+    );
+    return measured.length > 0 ? measured : null;
   }, [isEssay, stats.categoryAverages]);
 
   return (

@@ -33,12 +33,19 @@ interface WeaknessData {
   resolved: boolean;
 }
 
+/**
+ * 合計に入る5軸（essay-review-v14）。
+ *
+ * 以前は AP合致度を含み、議論の成熟度が無かった。APは合計外の補助指標な
+ * うえ、AP未取得の答案では null になる。それを0点として平均していたため、
+ * AP合致度の平均が不当に下がり、「最も弱い項目 = AP合致度」と毎回出ていた。
+ */
 const ESSAY_CATEGORIES: { key: string; label: string }[] = [
   { key: "structure", label: "構成" },
   { key: "logic", label: "論理性" },
   { key: "expression", label: "表現力" },
-  { key: "apAlignment", label: "AP合致度" },
   { key: "originality", label: "独自性" },
+  { key: "reasoningMaturity", label: "議論の成熟度" },
 ];
 
 function getPeriodRange(period: "weekly" | "monthly"): { start: Date; end: Date } {
@@ -83,27 +90,49 @@ export function computeEssayStats(
 
   const scoreChange = prevScored.length > 0 ? Math.round((avgScore - prevAvg) * 10) / 10 : 0;
 
-  // Calculate category averages
-  const categoryAvgs: Record<string, number> = {};
+  /**
+   * 項目別平均。その軸が実際に採点された答案だけで割る。
+   * 未評価を0として混ぜると、平均も「最も弱い項目」も歪む
+   * （旧データには議論の成熟度が無いので、そこを0で埋めない）。
+   */
+  const categoryAvgs: Record<string, number | null> = {};
   for (const cat of ESSAY_CATEGORIES) {
-    const sum = scored.reduce((s, e) => {
-      const scores = e.scores as Record<string, number>;
-      return s + (scores[cat.key] ?? 0);
-    }, 0);
-    categoryAvgs[cat.key] = sum / scored.length;
+    let sum = 0;
+    let n = 0;
+    for (const e of scored) {
+      const v = (e.scores as Record<string, unknown>)[cat.key];
+      if (typeof v === "number") {
+        sum += v;
+        n += 1;
+      }
+    }
+    categoryAvgs[cat.key] = n > 0 ? sum / n : null;
   }
 
-  let bestKey = ESSAY_CATEGORIES[0].key;
-  let worstKey = ESSAY_CATEGORIES[0].key;
-  for (const cat of ESSAY_CATEGORIES) {
-    if (categoryAvgs[cat.key] > categoryAvgs[bestKey]) bestKey = cat.key;
-    if (categoryAvgs[cat.key] < categoryAvgs[worstKey]) worstKey = cat.key;
+  const measured = ESSAY_CATEGORIES.filter(
+    (c) => typeof categoryAvgs[c.key] === "number",
+  );
+  let bestCategory = "-";
+  let worstCategory = "-";
+  if (measured.length > 0) {
+    let bestKey = measured[0].key;
+    let worstKey = measured[0].key;
+    for (const cat of measured) {
+      if ((categoryAvgs[cat.key] as number) > (categoryAvgs[bestKey] as number))
+        bestKey = cat.key;
+      if ((categoryAvgs[cat.key] as number) < (categoryAvgs[worstKey] as number))
+        worstKey = cat.key;
+    }
+    bestCategory = measured.find((c) => c.key === bestKey)?.label ?? "-";
+    worstCategory = measured.find((c) => c.key === worstKey)?.label ?? "-";
   }
-
-  const bestCategory = ESSAY_CATEGORIES.find((c) => c.key === bestKey)?.label ?? "-";
-  const worstCategory = ESSAY_CATEGORIES.find((c) => c.key === worstKey)?.label ?? "-";
 
   const round1 = (n: number) => Math.round(n * 10) / 10;
+  /** 採点されていない軸は入れない（0で埋めるとレーダーが凹んで見える） */
+  const avgOrOmit = (key: string) => {
+    const v = categoryAvgs[key];
+    return typeof v === "number" ? { [key]: round1(v) } : {};
+  };
 
   return {
     count: periodEssays.length,
@@ -115,8 +144,8 @@ export function computeEssayStats(
       structure: round1(categoryAvgs.structure ?? 0),
       logic: round1(categoryAvgs.logic ?? 0),
       expression: round1(categoryAvgs.expression ?? 0),
-      apAlignment: round1(categoryAvgs.apAlignment ?? 0),
       originality: round1(categoryAvgs.originality ?? 0),
+      ...avgOrOmit("reasoningMaturity"),
     },
   };
 }
@@ -253,7 +282,7 @@ function generateRecommendations(
     recommendations.push("今期間中に小論文の提出がありませんでした。定期的な練習を心がけましょう。");
   } else if (essayStats.scoreChange < -3) {
     recommendations.push(
-      `小論文スコアが${Math.abs(essayStats.scoreChange)}点下がっています。特に「${essayStats.worstCategory}」に注力しましょう。`
+      `小論文スコアが${Math.abs(essayStats.scoreChange)}点下がっています。平均が最も低いのは「${essayStats.worstCategory}」です。`
     );
   } else if (essayStats.scoreChange > 3) {
     recommendations.push(
@@ -263,7 +292,7 @@ function generateRecommendations(
 
   if (essayStats.worstCategory !== "-" && essayStats.worstCategory !== essayStats.bestCategory) {
     recommendations.push(
-      `「${essayStats.worstCategory}」が最も改善の余地があります。意識的に強化しましょう。`
+      `項目別の平均が最も低いのは「${essayStats.worstCategory}」です。ここを重点的に見ていきましょう。`
     );
   }
 
@@ -301,7 +330,8 @@ function generateRecommendations(
 function generateOverallAssessment(
   essayStats: GrowthReport["essayStats"],
   interviewStats: GrowthReport["interviewStats"],
-  weaknessProgress: WeaknessProgress[]
+  weaknessProgress: WeaknessProgress[],
+  period: "weekly" | "monthly"
 ): string {
   const totalActivity = essayStats.count + interviewStats.count;
   const improvedCount = weaknessProgress.filter((w) => w.status === "improved").length;
@@ -313,10 +343,15 @@ function generateOverallAssessment(
 
   const parts: string[] = [];
 
-  // Activity level
-  if (totalActivity >= 10) {
+  /**
+   * 活動量の評価。週次と月次で同じ件数を当てていたため、月次では
+   * 普通に取り組んでいる生徒にも「もう少し学習量を増やす」と出ていた。
+   */
+  const high = period === "weekly" ? 6 : 16;
+  const steady = period === "weekly" ? 3 : 8;
+  if (totalActivity >= high) {
     parts.push("非常に積極的に学習に取り組んでいます。");
-  } else if (totalActivity >= 5) {
+  } else if (totalActivity >= steady) {
     parts.push("安定した学習ペースを維持しています。");
   } else {
     parts.push("もう少し学習量を増やすことをお勧めします。");
@@ -376,7 +411,12 @@ export function generateGrowthReport(params: {
     params.previousWeaknessCounts,
   );
   const recommendations = generateRecommendations(essayStats, interviewStats, weaknessProgress);
-  let overallAssessment = generateOverallAssessment(essayStats, interviewStats, weaknessProgress);
+  let overallAssessment = generateOverallAssessment(
+    essayStats,
+    interviewStats,
+    weaknessProgress,
+    params.period,
+  );
 
   // 授業観察を総合評価に織り込む (先頭 1-2 件、既存文の後に追加)
   if (
