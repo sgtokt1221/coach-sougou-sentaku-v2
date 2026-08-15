@@ -72,15 +72,33 @@ export async function requestNotificationPermission(): Promise<string | null> {
 
 /**
  * FCMトークンをFirestoreに保存（API経由）
+ *
+ * 端末情報はクライアントから送る。サーバーの User-Agent ヘッダに頼っていたが、
+ * 本番では全件 "Google" として記録されており、どの端末のトークンかを
+ * 判別できなかった（届かない端末の切り分けができない）。
+ *
+ * standalone は「ホーム画面に追加したPWAの中で登録したか」。iOS は
+ * インストール済みPWA内で取った購読でないと通知が届かないため、
+ * これが false のiOS端末は届かなくて当たり前、と判断できるようにする。
  */
 export async function saveFcmToken(idToken: string, fcmToken: string): Promise<void> {
+  const standalone =
+    typeof window !== "undefined" &&
+    (window.matchMedia?.("(display-mode: standalone)").matches ||
+      // iOS Safari は display-mode を返さない時期があるため独自プロパティも見る
+      (window.navigator as { standalone?: boolean }).standalone === true);
+
   await fetch("/api/notifications/token", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${idToken}`,
     },
-    body: JSON.stringify({ fcmToken }),
+    body: JSON.stringify({
+      fcmToken,
+      userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "",
+      standalone,
+    }),
   });
 }
 

@@ -15,10 +15,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
   }
 
-  const { fcmToken } = await request.json();
+  const body = await request.json();
+  const { fcmToken } = body as { fcmToken?: unknown };
   if (!fcmToken || typeof fcmToken !== "string") {
     return NextResponse.json({ error: "fcmToken is required" }, { status: 400 });
   }
+  /**
+   * 端末情報はクライアントが送ってきた値を優先する。
+   * リクエストヘッダの User-Agent は本番で全件 "Google" になっており、
+   * どの端末のトークンかを判別できなかった。
+   */
+  const clientUserAgent =
+    typeof (body as { userAgent?: unknown }).userAgent === "string"
+      ? ((body as { userAgent: string }).userAgent as string)
+      : "";
+  const standalone = (body as { standalone?: unknown }).standalone === true;
 
   if (!adminDb) {
     return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
@@ -30,12 +41,20 @@ export async function POST(request: Request) {
     .collection("fcmTokens")
     .doc(fcmToken);
 
-  await tokenRef.set({
-    token: fcmToken,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    userAgent: request.headers.get("User-Agent") ?? "",
-  });
+  // createdAt は最初の登録時のまま残す（そのトークンがいつからのものかを見るため）
+  const existing = await tokenRef.get();
+  const now = new Date().toISOString();
+  await tokenRef.set(
+    {
+      token: fcmToken,
+      ...(existing.exists ? {} : { createdAt: now }),
+      updatedAt: now,
+      userAgent: clientUserAgent || request.headers.get("User-Agent") || "",
+      /** ホーム画面に追加したPWAの中で登録したか。iOSはこれが true でないと届かない */
+      standalone,
+    },
+    { merge: true },
+  );
 
   return NextResponse.json({ success: true });
 }
