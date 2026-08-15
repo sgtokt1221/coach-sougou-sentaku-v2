@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { mutate } from "swr";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 import { onForegroundMessage, refreshFcmToken } from "@/lib/firebase/messaging";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -13,6 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
  */
 export function ForegroundNotifier() {
   const { user } = useAuth();
+  const router = useRouter();
 
   /**
    * 許可済みの利用者のFCMトークンを、アプリを開くたびに取り直して保存する。
@@ -33,19 +35,36 @@ export function ForegroundNotifier() {
   useEffect(() => {
     const unsub = onForegroundMessage((payload) => {
       if (payload.title || payload.body) {
-        toast(payload.title ?? "新着メッセージ", {
+        /**
+         * 前面にいる間は OS 通知が出せないので、これが唯一の気づく手段になる。
+         * 既定（下部・4秒・操作なし）だと、スマホでは親指の下に小さく出て
+         * すぐ消えるため見逃す。上部・長め・タップで遷移できる形にする。
+         */
+        toast(payload.title ?? "新着のお知らせ", {
           description: payload.body,
+          position: "top-center",
+          duration: 8000,
+          ...(payload.url
+            ? {
+                action: {
+                  label: "開く",
+                  onClick: () => router.push(payload.url!),
+                },
+              }
+            : {}),
         });
       }
-      // 未読バッジ / インボックスを更新
-      mutate("/api/student/feedback?countOnly=true");
-      mutate("/api/admin/messages?countOnly=true");
-      mutate("/api/admin/messages");
+      /**
+       * 未読バッジを更新する。見逃しても後から件数で気づけるようにするため、
+       * ここで取りこぼすとバッジが増えない。個別のキーを列挙すると
+       * 追加のたびに漏れるので、キャッシュ済みのものをまとめて再検証する。
+       */
+      void mutate(() => true);
     });
     return () => {
       unsub?.();
     };
-  }, []);
+  }, [router]);
 
   return null;
 }

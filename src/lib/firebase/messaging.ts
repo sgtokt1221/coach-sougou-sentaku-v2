@@ -134,9 +134,15 @@ export async function refreshFcmToken(idToken: string): Promise<void> {
 }
 
 /**
- * フォアグラウンド通知リスナーを登録
+ * フォアグラウンド通知リスナーを登録。
+ *
+ * アプリが前面にあるとき、FCM は OS 通知を出さずにここへ配信する（仕様）。
+ * 遷移先も渡す。通知をタップしたときに該当画面へ行けないと、
+ * 「通知が来たのにどこを見ればいいか分からない」状態になる。
  */
-export function onForegroundMessage(callback: (payload: { title?: string; body?: string }) => void): (() => void) | null {
+export function onForegroundMessage(
+  callback: (payload: { title?: string; body?: string; url?: string }) => void,
+): (() => void) | null {
   const msg = getMessagingInstance();
   if (!msg) return null;
 
@@ -144,6 +150,10 @@ export function onForegroundMessage(callback: (payload: { title?: string; body?:
     callback({
       title: payload.notification?.title,
       body: payload.notification?.body,
+      url:
+        (payload.data?.url as string | undefined) ??
+        payload.fcmOptions?.link ??
+        undefined,
     });
   });
   return unsubscribe;
