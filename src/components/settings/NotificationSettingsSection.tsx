@@ -36,7 +36,18 @@ interface SettingsResponse {
   role: string;
 }
 
-type PushState = "granted" | "default" | "denied" | "unsupported";
+/**
+ * needs_install: iPhone/iPadで、ホーム画面に追加したアプリからではなく
+ * ブラウザのタブで開いている状態。iOS はインストール済みPWAの中でしか
+ * Web Push を扱えず、Notification API 自体が存在しない。
+ * 「非対応ブラウザ」と出すと諦めさせてしまうので、手順を出すために分ける。
+ */
+type PushState =
+  | "granted"
+  | "default"
+  | "denied"
+  | "unsupported"
+  | "needs_install";
 
 /**
  * 設定: 通知 セクション。
@@ -55,8 +66,22 @@ export function NotificationSettingsSection() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    const ua = navigator.userAgent;
+    // iPadOS は Mac を名乗るので、タッチ対応も見て判定する
+    const isIos =
+      /iPhone|iPad|iPod/.test(ua) ||
+      (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+    const standalone =
+      window.matchMedia?.("(display-mode: standalone)").matches ||
+      (window.navigator as { standalone?: boolean }).standalone === true;
+
     if (!("Notification" in window)) {
-      setPushState("unsupported");
+      setPushState(isIos && !standalone ? "needs_install" : "unsupported");
+      return;
+    }
+    // iOS はタブで開いている限り許可を取れない（取れても届かない）
+    if (isIos && !standalone && Notification.permission !== "granted") {
+      setPushState("needs_install");
       return;
     }
     setPushState(Notification.permission as PushState);
@@ -175,6 +200,11 @@ export function NotificationSettingsSection() {
                     非対応ブラウザ
                   </Badge>
                 )}
+                {pushState === "needs_install" && (
+                  <Badge variant="outline" className="text-[10px]">
+                    ホーム画面への追加が必要
+                  </Badge>
+                )}
                 <span className="text-[11px] text-muted-foreground">
                   PC / スマホへリアルタイムでお知らせ
                 </span>
@@ -183,6 +213,20 @@ export function NotificationSettingsSection() {
                 <p className="mt-1 text-[10px] text-muted-foreground">
                   ブラウザの通知設定がブロックされています。 ブラウザ側で許可に変更してください
                 </p>
+              )}
+              {pushState === "needs_install" && (
+                <div className="mt-2 space-y-1 text-[11px] text-muted-foreground">
+                  <p>
+                    iPhone・iPad では、ホーム画面に追加したアプリから開いたときだけ
+                    通知を受け取れます（Safariのタブでは受け取れません）。
+                  </p>
+                  <ol className="ml-4 list-decimal space-y-0.5">
+                    <li>Safari下部の共有ボタン（□に↑）を押す</li>
+                    <li>「ホーム画面に追加」を選ぶ</li>
+                    <li>ホーム画面のアイコンから開き直す</li>
+                    <li>この画面をもう一度開いて「許可する」を押す</li>
+                  </ol>
+                </div>
               )}
             </div>
             {(pushState === "default" || pushState === "denied") && (
