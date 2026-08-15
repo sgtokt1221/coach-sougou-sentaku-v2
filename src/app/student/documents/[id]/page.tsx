@@ -522,6 +522,21 @@ export default function DocumentEditorPage() {
           saving={saving}
           saveStatus={saveStatus}
           lastSavedAt={lastSavedAt}
+          /**
+           * モバイルにも道具の入口を出す。以前はここにツールバーが無く、
+           * バージョン履歴（＝過去の版に戻す操作）へ辿り着けなかった。
+           */
+          toolbar={
+            <DocumentToolbar
+              onOpen={(v) => {
+                if (v === "versions") setShowVersions(true);
+                setToolsOpen(true);
+              }}
+              hasFeedback={!!feedback}
+              versionCount={doc.versions?.length ?? 0}
+              commentCount={doc.inlineComments?.length ?? 0}
+            />
+          }
         />
       </div>
 
