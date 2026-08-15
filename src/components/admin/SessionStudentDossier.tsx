@@ -28,7 +28,7 @@ import { DocumentsSection } from "@/components/admin/DocumentsSection";
 import { ActivitiesSection } from "@/components/admin/ActivitiesSection";
 import { SessionsHistorySection } from "@/components/admin/SessionsHistorySection";
 import { ExamResultsSection } from "@/components/admin/ExamResultsSection";
-import { EssayCoachHistorySection } from "@/components/admin/EssayCoachHistorySection";
+import { AiConversationsSection } from "@/components/admin/AiConversationsSection";
 import { HomeworkStatusSection } from "@/components/admin/HomeworkStatusSection";
 import { CoachMemo } from "@/components/admin/CoachMemo";
 import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
@@ -331,7 +331,7 @@ export function SessionStudentDossier({
           {activeTab === "memos" && (
             <div className="space-y-6">
               <CoachMemo studentId={studentId} />
-              <EssayCoachHistorySection studentId={studentId} />
+              <AiConversationsSection studentId={studentId} />
             </div>
           )}
         </div>

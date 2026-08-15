@@ -151,7 +151,7 @@ import { ExamResultsSection } from "@/components/admin/ExamResultsSection";
 import { ResearchEnrollmentSection } from "@/components/admin/ResearchEnrollmentSection";
 import { AdminResearchCurriculumSection } from "@/components/admin/AdminResearchCurriculumSection";
 import { SubscriptionManagementSection } from "@/components/admin/SubscriptionManagementSection";
-import { EssayCoachHistorySection } from "@/components/admin/EssayCoachHistorySection";
+import { AiConversationsSection } from "@/components/admin/AiConversationsSection";
 import { SessionsHistorySection } from "@/components/admin/SessionsHistorySection";
 import { GrowthReportsSection } from "@/components/admin/GrowthReportsSection";
 import { DocumentsSection } from "@/components/admin/DocumentsSection";
@@ -1258,7 +1258,7 @@ function AdminStudentDetailPageInner() {
   const renderReportsTab = () => (
     <div className="space-y-6">
       <GrowthReportsSection studentId={id} />
-      <EssayCoachHistorySection studentId={id} />
+      <AiConversationsSection studentId={id} />
       <CoachMemo studentId={id} />
     </div>
   );
