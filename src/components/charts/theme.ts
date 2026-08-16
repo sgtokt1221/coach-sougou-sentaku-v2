@@ -19,13 +19,21 @@ export const SCORE_TYPE_COLORS = {
   interview: "var(--chart-5)",   // rose/red — 面接
 } as const;
 
+/**
+ * 小論文の軸ごとの色。線グラフで5〜6本を同時に描くので、色相を離して割り当てる。
+ *
+ * 以前は議論の成熟度が未定義の --chart-6 を参照しており、フォールバックで
+ * 構成と同じ紫になっていた（凡例を見ないとどちらの線か分からなかった）。
+ * 独自性(175)と表現力(145)も30°しか離れておらず、緑同士で見分けにくかった。
+ * いまは 280 / 75 / 235 / 175 / 340 / 30 で、隣接する色相を45°以上離している。
+ */
 export const SCORE_COLORS = {
-  structure: "var(--chart-3)",   // purple/indigo系 — 構成
-  logic: "var(--chart-2)",       // amber系 — 論理性
-  expression: "var(--chart-4)",  // green系 — 表現力
-  apAlignment: "var(--chart-5)", // rose/orange系 — AP合致度
-  originality: "var(--chart-1)", // teal系 — 独自性
-  reasoningMaturity: "var(--chart-6, var(--chart-3))", // 議論の成熟度
+  structure: "var(--chart-3)",         // 紫 280° — 構成
+  logic: "var(--chart-2)",             // 琥珀 75° — 論理性
+  expression: "var(--chart-6)",        // 青 235° — 表現力
+  apAlignment: "var(--chart-5)",       // 橙 30° — AP合致度
+  originality: "var(--chart-1)",       // ティール 175° — 独自性
+  reasoningMaturity: "var(--chart-7)", // ピンク 340° — 議論の成熟度
 } as const;
 
 /**
