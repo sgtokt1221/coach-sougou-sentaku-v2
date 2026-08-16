@@ -26,6 +26,7 @@ import {
   MessageSquare,
   History,
   ChevronDown,
+  Target,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
@@ -38,6 +39,7 @@ import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
 import { DocumentReviewBadge } from "@/components/documents/DocumentReviewBadge";
 import { InlineCommentableText } from "@/components/essay/InlineCommentableText";
 import { CoachConversationList } from "@/components/admin/CoachConversationList";
+import { APReference } from "@/components/coach/APReference";
 import { appendQuote } from "@/lib/chat/message-blocks";
 import { formatVersionDate } from "@/lib/ui/format-version-date";
 import { markSubmissionViewed } from "@/lib/api/client";
@@ -101,6 +103,9 @@ function formatCoachDate(iso: string | undefined): string {
 interface DocumentDetail {
   id: string;
   type: string;
+  /** APを引くのに使う（表示名だけでは大学データを特定できない） */
+  universityId?: string;
+  facultyId?: string;
   universityName: string;
   facultyName: string;
   content: string;
@@ -203,6 +208,8 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
   const [aiCheckBusy, setAiCheckBusy] = useState(false);
   /** 版の履歴の開閉。既定は畳んでおく（本文が長いと詳細が読みにくくなる） */
   const [showVersions, setShowVersions] = useState(false);
+  /** 志望校APの開閉。既定は畳む（本文とAIスコアを先に見せる） */
+  const [showAp, setShowAp] = useState(false);
   const [openVersionId, setOpenVersionId] = useState<string | null>(null);
 
   /**
@@ -679,6 +686,37 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
                         /10
                       </span>
                     </div>
+                  </div>
+                )}
+
+                {/* 志望校のAP。AP合致度の点だけ見せられても、何と照らして
+                    その点なのかが分からない。畳んでおき、必要なときに開く */}
+                {detailDoc.universityId && detailDoc.facultyId && (
+                  <div className="space-y-2">
+                    <button
+                      type="button"
+                      className="flex w-full items-center justify-between gap-2"
+                      onClick={() => setShowAp((v) => !v)}
+                    >
+                      <h3 className="flex items-center gap-1.5 text-sm font-semibold">
+                        <Target className="size-4" />
+                        アドミッション・ポリシー
+                        <span className="text-xs font-normal text-muted-foreground">
+                          {detailDoc.universityName} {detailDoc.facultyName}
+                        </span>
+                      </h3>
+                      <ChevronDown
+                        className={`size-4 text-muted-foreground transition-transform ${showAp ? "rotate-180" : ""}`}
+                      />
+                    </button>
+                    {showAp && (
+                      <div className="rounded-lg border">
+                        <APReference
+                          universityId={detailDoc.universityId}
+                          facultyId={detailDoc.facultyId}
+                        />
+                      </div>
+                    )}
                   </div>
                 )}
 

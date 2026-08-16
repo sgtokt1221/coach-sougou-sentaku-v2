@@ -76,6 +76,9 @@ export async function GET(
     return NextResponse.json({
       id: docRef.id,
       type: data.type ?? "",
+      // AP参照に必要。名前だけだと大学データを引けない
+      universityId: data.universityId ?? "",
+      facultyId: data.facultyId ?? "",
       universityName: data.universityName ?? "",
       facultyName: data.facultyName ?? "",
       content: latestVersion?.content ?? data.content ?? "",
