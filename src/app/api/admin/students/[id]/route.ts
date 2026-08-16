@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { resolveLastActivity } from "@/lib/api/last-activity";
 import { requireRole, scopeByOrganization } from "@/lib/api/auth";
 import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
 import { adminDb } from "@/lib/firebase/admin";
@@ -431,22 +432,12 @@ export async function GET(
           }
         : undefined;
 
-    // 最終活動（添削・面接の最新を、種別つきで特定）
-    const activityCandidates: { type: "essay" | "interview"; at: string }[] = [];
-    if (essays.length > 0) {
-      activityCandidates.push({ type: "essay", at: essays[0].submittedAt });
-    }
-    if (interviewsSnap.docs.length > 0) {
-      const latestInterview = interviewsSnap.docs[0].data();
-      if (latestInterview.startedAt) {
-        activityCandidates.push({
-          type: "interview",
-          at: latestInterview.startedAt.toDate().toISOString(),
-        });
-      }
-    }
-    activityCandidates.sort((a, b) => (a.at < b.at ? 1 : -1));
-    const lastActivity = activityCandidates[0] ?? null;
+    /**
+     * 最終活動。ここは添削と面接しか見ておらず、書類を書いてもドリルを
+     * やっても更新されなかった。数える取り組みは lib/api/last-activity.ts に
+     * まとめ、生徒一覧と同じ判定を通す。
+     */
+    const lastActivity = await resolveLastActivity(adminDb, id);
     const lastActivityAt = lastActivity?.at ?? null;
 
     // 最終ログイン (ハートビートで更新される users.lastSeenAt)

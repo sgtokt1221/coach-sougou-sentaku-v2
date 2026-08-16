@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { resolveLastActivity } from "@/lib/api/last-activity";
 import { requireRole } from "@/lib/api/auth";
 import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
 import { resolveTargetUniversities } from "@/lib/universities/resolve";
@@ -193,12 +194,6 @@ export async function GET(request: NextRequest) {
         const latestScore: number | null =
           latestEssay?.scores?.total ?? null;
 
-        // 最終活動の候補 (種別つき)。ログイン(lastSeenAt)は活動には含めない
-        type ActivityType = NonNullable<StudentListItem["lastActivity"]>["type"];
-        const activityCandidates: Array<{ type: ActivityType; ts: number }> = [];
-        const latestEssayTs = latestEssay?.submittedAt?.toDate?.()?.getTime();
-        if (latestEssayTs) activityCandidates.push({ type: "essay", ts: latestEssayTs });
-
         // 面接 (トップレベル interviews を JS で並べ替え。completed のみ。index 回避)
         const completedInterviews = interviewsSnap.docs
           .filter((d) => d.data().status === "completed")
@@ -208,9 +203,6 @@ export async function GET(request: NextRequest) {
           }))
           .filter((x) => x.ts > 0)
           .sort((a, b) => b.ts - a.ts);
-        if (completedInterviews[0]) {
-          activityCandidates.push({ type: "interview", ts: completedInterviews[0].ts });
-        }
 
         // 面接 最新スコア + 推移 (直近3回、古い順で computeScoreTrend)
         const latestInterviewScore: number | null =
@@ -222,38 +214,20 @@ export async function GET(request: NextRequest) {
           .reverse();
         const interviewScoreTrend = computeScoreTrend(recentInterviewScores);
 
-        const otherCollections: Array<{ name: string; field: string; type: ActivityType }> = [
-          { name: "skillChecks", field: "takenAt", type: "skillCheck" },
-          { name: "interviewSkillChecks", field: "takenAt", type: "interviewSkillCheck" },
-          { name: "summaryDrills", field: "completedAt", type: "summaryDrill" },
-          { name: "activityLogs", field: "createdAt", type: "activity" },
-        ];
-        for (const { name, field, type } of otherCollections) {
-          try {
-            const snap = await adminDb!
-              .collection(`users/${uid}/${name}`)
-              .orderBy(field, "desc")
-              .limit(1)
-              .get();
-            const ts = snap.docs[0]?.data()?.[field]?.toDate?.()?.getTime();
-            if (ts) activityCandidates.push({ type, ts });
-          } catch {
-            // スキップ
-          }
-        }
-
-        // 最終活動 (何をいつ)
-        const lastActivityCandidate = [...activityCandidates].sort((a, b) => b.ts - a.ts)[0];
-        const lastActivity: StudentListItem["lastActivity"] = lastActivityCandidate
-          ? { type: lastActivityCandidate.type, at: new Date(lastActivityCandidate.ts).toISOString() }
-          : null;
+        /**
+         * 最終活動 (何をいつ)。数える取り組みは lib/api/last-activity.ts が正本。
+         * 以前はここに6種類を直書きしており、出願書類・ちょこ添削・論理ドリル・
+         * 自己分析・宿題などをやっても最終活動が更新されなかった。
+         */
+        const lastActivity = await resolveLastActivity(adminDb!, uid);
 
         // 最終ログイン (users.lastSeenAt / ハートビート)
         const lastSeenDate = data.lastSeenAt?.toDate?.();
         const lastSeenAt: string | null = lastSeenDate ? lastSeenDate.toISOString() : null;
 
         // lastActivityAt は従来通り活動 + ログインを conflate (inactive アラート / ソート互換)
-        const allTimestamps = activityCandidates.map((c) => c.ts);
+        const allTimestamps: number[] = [];
+        if (lastActivity) allTimestamps.push(new Date(lastActivity.at).getTime());
         if (lastSeenDate) allTimestamps.push(lastSeenDate.getTime());
         const lastActivityAt: string | null = allTimestamps.length > 0
           ? new Date(Math.max(...allTimestamps)).toISOString()

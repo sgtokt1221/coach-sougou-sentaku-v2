@@ -99,6 +99,7 @@ import type { EnglishCert } from "@/lib/types/user";
 import { CategorySelector } from "@/components/skill-check/CategorySelector";
 import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
 import type { AggregateBreakdown } from "@/lib/skill-check/aggregate";
+import { LAST_ACTIVITY_LABELS } from "@/lib/api/last-activity";
 import { SkillRadarChart } from "@/components/skill-check/SkillRadarChart";
 import { scoreToSkillRank } from "@/lib/history-rank";
 import type { SkillCheckStatus, AcademicCategory, SkillCheckResult } from "@/lib/types/skill-check";
@@ -363,14 +364,10 @@ function PinnedSummary({ detail }: { detail: StudentDetail }) {
           ? "text-yellow-600"
           : "text-red-600";
 
-  // 最終活動（何を・いつ）
-  const ACTIVITY_LABEL: Record<string, string> = {
-    essay: "小論文添削",
-    interview: "模擬面接",
-  };
+  // 最終活動（何を・いつ）。ラベルの正本は lib/api/last-activity.ts
   const act = relative(lastActivity?.at);
   const activityValue = lastActivity
-    ? `${ACTIVITY_LABEL[lastActivity.type] ?? "活動"} ・ ${act.text}`
+    ? `${LAST_ACTIVITY_LABELS[lastActivity.type] ?? "活動"} ・ ${act.text}`
     : "なし";
 
   // 最終ログイン

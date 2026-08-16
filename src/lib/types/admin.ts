@@ -30,8 +30,8 @@ export interface StudentListItem {
   lastActivityAt: string | null;
   /** 最終ログイン (users.lastSeenAt)。ステータス表示用 */
   lastSeenAt?: string | null;
-  /** 最終活動の種別と日時 (ログインとは別。何をいつやったか) */
-  lastActivity?: { type: "essay" | "interview" | "skillCheck" | "interviewSkillCheck" | "summaryDrill" | "activity"; at: string } | null;
+  /** 最終活動の種別と日時 (ログインとは別。何をいつやったか)。種別の正本は lib/api/last-activity.ts */
+  lastActivity?: import("@/lib/api/last-activity").LastActivity | null;
   /** 提出締切を過ぎた未提出 (assigned/in_progress) の宿題があるか */
   hasOverdueHomework?: boolean;
   alertFlags: ("inactive" | "repeated_weakness" | "declining" | "document_deadline" | "ap_struggle" | "weakness_stuck" | "deadline_risk" | "score_plateau")[];
@@ -151,8 +151,8 @@ export interface StudentDetail {
     needsRefresh: boolean;
   };
   lastActivityAt?: string | null;
-  /** 最終活動の種別と日時 (小論文添削 / 模擬面接) */
-  lastActivity?: { type: "essay" | "interview"; at: string } | null;
+  /** 最終活動の種別と日時。種別の正本は lib/api/last-activity.ts */
+  lastActivity?: import("@/lib/api/last-activity").LastActivity | null;
   /** 最終ログイン (users.lastSeenAt) */
   lastSeenAt?: string | null;
   realtimeUnlocked?: boolean;

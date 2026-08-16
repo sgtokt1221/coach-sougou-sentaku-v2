@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
+import { LAST_ACTIVITY_LABELS } from "@/lib/api/last-activity";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -121,18 +122,8 @@ function Monogram({ kind }: { kind: "essay" | "interview" }) {
   );
 }
 
-/** 最終活動の種別ラベル */
-const ACTIVITY_LABEL: Record<
-  NonNullable<StudentListItem["lastActivity"]>["type"],
-  string
-> = {
-  essay: "小論文添削",
-  interview: "模擬面接",
-  skillCheck: "小論文スキルチェック",
-  interviewSkillCheck: "面接スキルチェック",
-  summaryDrill: "要約ドリル",
-  activity: "活動登録",
-};
+/** 最終活動の種別ラベル。正本は lib/api/last-activity.ts（種別を足すたびに直す場所を1つにする） */
+const ACTIVITY_LABEL = LAST_ACTIVITY_LABELS;
 
 /**
  * 要対応 判定。アラートが1件でもある、または締切超過の未提出宿題がある生徒。
