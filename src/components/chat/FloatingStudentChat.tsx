@@ -146,6 +146,8 @@ export function FloatingStudentChat({
             exit={shouldReduceMotion ? undefined : { scale: 0.92, opacity: 0, y: 16 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
             style={{ transformOrigin: "bottom right" }}
+            /* キーボードが出たときの寸法は globals.css 側で上書きする */
+            data-floating-chat
             // 最前面(z-[60])。モバイルは下部ナビ(--app-bottom-nav-height)+キーボード(--kb)を避けて持ち上げ、入力欄が隠れないように。PC は右下。
             className="fixed z-[60] flex flex-col overflow-hidden rounded-2xl border bg-card shadow-2xl right-3 bottom-[calc(var(--app-bottom-nav-height)+0.75rem+env(safe-area-inset-bottom)+var(--kb,0px))] h-[min(calc(var(--vvh,100dvh)*0.7),760px)] w-[calc(100vw-1.5rem)] lg:right-6 lg:bottom-6 lg:h-[min(78vh,760px)] lg:w-[min(640px,calc(100vw-2rem))]"
           >

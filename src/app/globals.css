@@ -1144,6 +1144,16 @@
     display: none;
   }
 
+  /* 生徒詳細のフローティングチャット。
+     通常時は下部ナビの上に浮かせているが、キーボードが出ると
+     ナビはキーボードの裏に隠れる。それでもナビの高さ分だけ持ち上げていたため、
+     入力欄とキーボードの間に70pxほどの隙間が空き、カードも 可視高×0.7 の
+     ままで小さかった。入力中は可視領域いっぱいに使う。 */
+  html[data-keyboard-open="true"] [data-floating-chat] {
+    bottom: calc(var(--kb, 0px) + 0.5rem);
+    height: min(calc(var(--vvh, 100dvh) - 1rem), 760px);
+  }
+
   html[data-keyboard-open="true"] [data-chat-composer] {
     padding-top: 0.5rem;
   }

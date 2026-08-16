@@ -296,7 +296,15 @@ export function ChatThread({
       .join("\n");
     const text = (body || raw).trim();
     if (!text) return;
-    setText((prev) => appendQuote(prev, text));
+    // 誰のいつの発言かを引用に添える。後から読み返したときに、
+    // 引用だけ浮いていて何への返信か分からない状態を避ける
+    setText((prev) =>
+      appendQuote(
+        prev,
+        text,
+        `${m.createdByName || "発言"} ・ ${formatTime(m.createdAt)}`,
+      ),
+    );
     // 続けてコメントを書けるよう入力欄へ移す
     requestAnimationFrame(() => {
       const el = textareaRef.current;
@@ -645,6 +653,13 @@ export function ChatThread({
                                   : "border-muted-foreground/40 bg-background/60"
                               }`}
                             >
+                              {/* 誰のいつの発言を引いたか。出典を持たない
+                                  古いメッセージでは何も出さない */}
+                              {b.source && (
+                                <span className="mb-0.5 block text-[11px] font-medium opacity-70">
+                                  {b.source}
+                                </span>
+                              )}
                               <span className="block whitespace-pre-wrap break-words opacity-90">
                                 {b.text}
                               </span>
