@@ -41,6 +41,7 @@ import { DocumentReviewBadge } from "@/components/documents/DocumentReviewBadge"
 import { InlineCommentableText } from "@/components/essay/InlineCommentableText";
 import { CoachConversationList } from "@/components/admin/CoachConversationList";
 import { APReference } from "@/components/coach/APReference";
+import { RedPenText } from "@/components/essay/RedPenText";
 import { appendQuote } from "@/lib/chat/message-blocks";
 import { formatVersionDate } from "@/lib/ui/format-version-date";
 import { markSubmissionViewed } from "@/lib/api/client";
@@ -130,6 +131,7 @@ interface DocumentDetail {
     location: string;
     original: string;
     suggestion: string;
+    type: "typo" | "grammar" | "connector" | "expression" | "redundancy";
     reason: string;
   }[];
   aiLikeness?: DocumentAiLikeness;
@@ -789,32 +791,18 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
                   )}
                 </div>
 
-                {/* 日本語の直し（赤ペン）。内容の講評より先に、直せば必ず
-                    良くなる点を出す */}
+                {/* 日本語の直し（赤ペン）。生徒側と同じ部品で、同じ見え方にする。
+                    本文に下線を引き、押すと直しが出る */}
                 {detailDoc.languageCorrections &&
                   detailDoc.languageCorrections.length > 0 && (
                     <div className="space-y-2">
                       <h3 className="text-sm font-semibold">
-                        日本語の直し（{detailDoc.languageCorrections.length}）
+                        赤ペン添削（{detailDoc.languageCorrections.length}件）
                       </h3>
-                      <div className="space-y-1.5">
-                        {detailDoc.languageCorrections.map((c, i) => (
-                          <div key={i} className="rounded-md border p-2 text-xs">
-                            <div>
-                              <span className="text-rose-600 line-through">
-                                {c.original}
-                              </span>
-                              {" → "}
-                              <span className="text-emerald-600">
-                                {c.suggestion}
-                              </span>
-                            </div>
-                            <p className="mt-0.5 text-muted-foreground">
-                              {c.reason}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
+                      <RedPenText
+                        text={detailDoc.content}
+                        corrections={detailDoc.languageCorrections}
+                      />
                     </div>
                   )}
 

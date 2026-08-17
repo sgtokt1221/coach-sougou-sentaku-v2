@@ -15,6 +15,7 @@ import { useAuthSWR } from "@/lib/api/swr";
 import { useAuth } from "@/contexts/AuthContext";
 import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
 import { InlineCommentableText } from "@/components/essay/InlineCommentableText";
+import { RedPenText } from "@/components/essay/RedPenText";
 import { markSubmissionViewed } from "@/lib/api/client";
 import {
   useUnviewedSubmissions,
@@ -164,6 +165,20 @@ export function ChocoReviewsSection({ studentId }: { studentId: string }) {
                   </p>
                 </div>
               )}
+
+              {/* 赤ペン。生徒が見ているものと同じ部品で同じ見え方にする */}
+              {selected.languageCorrections &&
+                selected.languageCorrections.length > 0 && (
+                  <div>
+                    <p className="mb-1 text-xs font-medium text-muted-foreground">
+                      赤ペン（{selected.languageCorrections.length}件）
+                    </p>
+                    <RedPenText
+                      text={selected.studentText}
+                      corrections={selected.languageCorrections}
+                    />
+                  </div>
+                )}
             </div>
           )}
         </DialogContent>

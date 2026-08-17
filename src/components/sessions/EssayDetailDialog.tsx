@@ -14,6 +14,7 @@ import { Progress } from "@/components/ui/progress";
 import { FileText, ThumbsUp, Lightbulb, ArrowRightLeft } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import { CommentableEssayText } from "@/components/essay/CommentableEssayText";
+import { RedPenText } from "@/components/essay/RedPenText";
 import { ESSAY_SCORE_WEIGHTS, type EssayInlineComment } from "@/lib/types/essay";
 
 interface EssayDetail {
@@ -38,6 +39,14 @@ interface EssayDetail {
     goodPoints: string[];
     improvements: string[];
     brushedUpText?: string;
+    /** 日本語の直し（赤ペン）。生徒側と同じものを出す */
+    languageCorrections?: {
+      location: string;
+      original: string;
+      suggestion: string;
+      type: "typo" | "grammar" | "connector" | "expression" | "redundancy";
+      reason: string;
+    }[];
   };
 }
 
@@ -222,6 +231,23 @@ export default function EssayDetailDialog({
                     </div>
                   )}
                 </div>
+
+                {/* 赤ペン。生徒が見ているものと同じ部品で同じ見え方にする */}
+                {data.feedback.languageCorrections &&
+                  data.feedback.languageCorrections.length > 0 && (
+                    <>
+                      <Separator />
+                      <div className="space-y-2">
+                        <h3 className="text-sm font-semibold">
+                          赤ペン添削（{data.feedback.languageCorrections.length}件）
+                        </h3>
+                        <RedPenText
+                          text={data.ocrText ?? ""}
+                          corrections={data.feedback.languageCorrections}
+                        />
+                      </div>
+                    </>
+                  )}
 
                 {data.feedback.brushedUpText && (
                   <>

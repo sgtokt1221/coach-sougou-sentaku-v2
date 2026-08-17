@@ -46,6 +46,7 @@ import {
   ThumbsUp,
   Lightbulb,
   ArrowRightLeft,
+  PenLine,
   Star,
   Languages,
   Plus,
@@ -78,6 +79,7 @@ import { TeacherAssignmentSection } from "@/components/admin/TeacherAssignmentSe
 import { FloatingStudentChat } from "@/components/chat/FloatingStudentChat";
 import { HighSchoolSelect } from "@/components/shared/HighSchoolSelect";
 import { CommentableEssayText } from "@/components/essay/CommentableEssayText";
+import { RedPenText } from "@/components/essay/RedPenText";
 import type { StudentDetail } from "@/lib/types/admin";
 import { getDisplayGrade } from "@/lib/utils/grade";
 import {
@@ -1759,6 +1761,29 @@ function AdminStudentDetailPageInner() {
                       </div>
                     )}
                   </div>
+
+                  {/* 赤ペン添削。生徒が見ているものと同じ部品で、同じ見え方にする。
+                      面談で「ここを直そう」と話すときに、生徒の画面と食い違うと
+                      指している箇所が伝わらない */}
+                  {essayDetail.feedback.languageCorrections &&
+                    essayDetail.feedback.languageCorrections.length > 0 && (
+                      <>
+                        <Separator />
+                        <div className="space-y-2">
+                          <h3 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+                            <PenLine className="size-3.5" />
+                            赤ペン添削
+                            <Badge variant="secondary" className="text-xs">
+                              {essayDetail.feedback.languageCorrections.length}件
+                            </Badge>
+                          </h3>
+                          <RedPenText
+                            text={essayDetail.ocrText ?? ""}
+                            corrections={essayDetail.feedback.languageCorrections}
+                          />
+                        </div>
+                      </>
+                    )}
 
                   {/* Brushed up text */}
                   {essayDetail.feedback.brushedUpText && (

@@ -117,7 +117,17 @@ export const AI_PROMPT_VERSIONS = {
     //      （ルーブリックとレーダーチャートは改定前と比較できる）。
     //      ※ 合計の意味が変わるため、既存答案は
     //         scripts/rescore-essays.ts で採点し直すこと。
-    promptVersion: "essay-review-v14",
+    // v15: 作文の基礎（主述のねじれ・助詞・一文の長さ）を必ず指摘させる。
+    //      表現力軸と赤ペンは元からあり本番20件すべてに指摘が出ていたが、
+    //      拾う対象が明示されておらず、主述のねじれのように読めば分かるはずの
+    //      誤りが漏れることがあった。
+    //      - 主述のねじれを最優先。文頭の主語と文末の述語を取り出して繋がるか
+    //        確かめる手順と、実例（「貴学では〜環境であり〜必要不可欠です」）を書いた
+    //      - 助詞の誤り・欠落を独立した観点にした
+    //      - 一文が長すぎるものは「点は下げないが必ず注意する」と明示。
+    //        4点の基準からも「一文が長すぎる」を外し、助詞と主述のねじれに置き換えた
+    //        （長さだけで点を落とすと、直せる指摘が減点として伝わる）
+    promptVersion: "essay-review-v15",
     schemaVersion: "essay-review-output-v2",
   },
   interviewScore: {
@@ -174,7 +184,9 @@ export const AI_PROMPT_VERSIONS = {
     //       800字目標に対して41字の書類でも同じ基準で採点していた
     //     ※ 軸が増えるため、既存の書類は scripts/rescore-documents.ts で
     //        採点し直すこと。
-    promptVersion: "document-review-v4",
+    // v5: 小論文 v15 と同じく、作文の基礎（主述のねじれ・助詞・一文の長さ）を
+    //     必ず指摘させる。手順と実例を書き、長さだけでは減点しないと明示した。
+    promptVersion: "document-review-v5",
     schemaVersion: "document-review-output-v2",
   },
   statementDraft: {

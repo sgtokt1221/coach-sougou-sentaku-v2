@@ -18,6 +18,14 @@ export interface ChocoReviewListItem {
   wordCount: number;
   scores: { logic: number; coherence: number; expression: number; total: number } | null;
   feedbackOverall: string;
+  /** 日本語の直し（赤ペン）。生徒側と同じものを管理者にも出す */
+  languageCorrections?: {
+    location: string;
+    original: string;
+    suggestion: string;
+    type: "typo" | "grammar" | "connector" | "expression" | "redundancy";
+    reason: string;
+  }[];
   inlineComments?: EssayInlineComment[];
 }
 
@@ -82,6 +90,7 @@ export async function GET(
         wordCount: data.wordCount ?? (data.studentText ?? "").length,
         scores: data.scores ?? null,
         feedbackOverall: data.feedback?.overall ?? "",
+        languageCorrections: data.feedback?.languageCorrections ?? [],
         inlineComments: data.inlineComments ?? [],
       };
     });
