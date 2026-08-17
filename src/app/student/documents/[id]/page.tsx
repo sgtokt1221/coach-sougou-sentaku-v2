@@ -899,6 +899,10 @@ function ReviewPanel({
                 )}
                 <ScoreBar label="構成" score={feedback.structureScore} />
                 <ScoreBar label="独自性" score={feedback.originalityScore} />
+                {/* v4 で追加。旧データには無いので、あるときだけ出す */}
+                {typeof feedback.expressionScore === "number" && (
+                  <ScoreBar label="表現" score={feedback.expressionScore} />
+                )}
               </div>
 
               <Separator />

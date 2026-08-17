@@ -1,4 +1,4 @@
-import type { EssayInlineComment } from "./essay";
+import type { EssayInlineComment, LanguageCorrection } from "./essay";
 import type { AiGenerationMetadata } from "@/lib/types/ai";
 
 export type DocumentType =
@@ -103,6 +103,8 @@ export interface DocumentFeedback {
   apAlignmentAssessability: "assessable" | "insufficient_context";
   structureScore: number;
   originalityScore: number;
+  /** 日本語の正確さと読みやすさ（v4 で追加。旧データには無い） */
+  expressionScore?: number;
   overallFeedback: string;
   improvements: string[];
   apSpecificNotes: string;
@@ -111,6 +113,8 @@ export interface DocumentFeedback {
     structure: string[];
     originality: string[];
   };
+  /** 日本語の直し（赤ペン）。v4 で追加。旧データには無い */
+  languageCorrections?: LanguageCorrection[];
   aiMetadata?: AiGenerationMetadata;
 }
 

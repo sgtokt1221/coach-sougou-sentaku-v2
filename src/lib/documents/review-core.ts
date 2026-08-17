@@ -142,9 +142,25 @@ export async function reviewDocumentCore(params: {
   const client = new Anthropic();
   const hasAdmissionPolicy = admissionPolicy.length > 0;
   const reviewModel = selectDocumentModel(documentData.type);
+  /**
+   * 字数はサーバーで確定して渡す（モデルに数えさせると集計とずれる）。
+   * 空白を除いた文字数で数える。小論文側の calculateFillRate と同じ考え方。
+   */
+  const wordCount = Array.from(content.replace(/\s/g, "")).length;
+  const targetWordCount =
+    typeof documentData.targetWordCount === "number" &&
+    documentData.targetWordCount > 0
+      ? Math.round(documentData.targetWordCount)
+      : undefined;
+  const fillRate = targetWordCount
+    ? Math.round((wordCount / targetWordCount) * 100)
+    : null;
+
   const systemPrompt = buildDocumentReviewPrompt({
     hasAdmissionPolicy,
     documentType: documentData.type,
+    targetWordCount,
+    fillRate,
   });
   const referenceData = {
     universityName: documentData.universityName ?? "未指定",
@@ -193,6 +209,7 @@ ${content}
       : "insufficient_context",
     structureScore: parsed.structureScore,
     originalityScore: parsed.originalityScore,
+    expressionScore: parsed.expressionScore,
     overallFeedback: parsed.overallFeedback,
     improvements: parsed.improvements,
     apSpecificNotes: hasAdmissionPolicy
@@ -205,6 +222,16 @@ ${content}
       structure: matchingEvidence(content, parsed.scoreEvidence.structure),
       originality: matchingEvidence(content, parsed.scoreEvidence.originality),
     },
+    /**
+     * 赤ペンは本文に完全一致する原文だけを残す。作られた引用を弾くため。
+     * 直し先が原文と同じものも落とす（直っていない指摘は役に立たない）。
+     */
+    languageCorrections: (parsed.languageCorrections ?? []).filter(
+      (c) =>
+        c.original.length > 0 &&
+        content.includes(c.original) &&
+        c.original !== c.suggestion,
+    ),
     aiMetadata: {
       ...AI_PROMPT_VERSIONS.documentReview,
       model: reviewModel,

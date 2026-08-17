@@ -164,7 +164,17 @@ export const AI_PROMPT_VERSIONS = {
     // v3: 「構成」の評価観点を書類の種類ごとに切り替えた。以前は全種類を
     //     志望理由書の基準（主張・根拠・志望理由・将来像）で採点しており、
     //     自己推薦書や研究計画書に志望理由の流れを求めていた。
-    promptVersion: "document-review-v3",
+    // v4: 軸を4つにし（表現を追加）、軸ごとの基準を書き分けた。
+    //     3軸の共通アンカーだけだったため、実データが 6/7/7 のように中央へ
+    //     固まり差が出なかった（小論文 v5 と同じ症状）。
+    //     あわせて次の2つを追加:
+    //     - 日本語の直し（languageCorrections）。小論文にはあったが書類には
+    //       無く、誤字や主述のねじれを指摘する経路がなかった
+    //     - 目標字数と充足率をサーバー計算値で渡す。以前は字数を渡しておらず、
+    //       800字目標に対して41字の書類でも同じ基準で採点していた
+    //     ※ 軸が増えるため、既存の書類は scripts/rescore-documents.ts で
+    //        採点し直すこと。
+    promptVersion: "document-review-v4",
     schemaVersion: "document-review-output-v2",
   },
   statementDraft: {

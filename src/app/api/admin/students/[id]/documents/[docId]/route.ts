@@ -98,8 +98,11 @@ export async function GET(
                 : undefined,
             structure: feedback.structureScore,
             originality: feedback.originalityScore,
+            expression: feedback.expressionScore,
           }
         : undefined,
+      // 日本語の直し（赤ペン）。v4 以降の添削でのみ入る
+      languageCorrections: feedback?.languageCorrections ?? [],
       aiLikeness: data.aiLikeness ?? undefined,
       /**
        * 版の履歴。生徒側と同じものを管理者にも返す。

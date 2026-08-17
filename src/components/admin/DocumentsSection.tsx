@@ -122,7 +122,16 @@ interface DocumentDetail {
     apAlignment?: number;
     structure: number;
     originality: number;
+    /** v4 で追加。旧データには無い */
+    expression?: number;
   };
+  /** 日本語の直し（赤ペン）。v4 で追加 */
+  languageCorrections?: {
+    location: string;
+    original: string;
+    suggestion: string;
+    reason: string;
+  }[];
   aiLikeness?: DocumentAiLikeness;
   /** 版の履歴（新しい順）。生徒側の「バージョン履歴」と同じもの */
   versions?: {
@@ -241,7 +250,9 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
               : undefined,
           structure: feedback?.structureScore,
           originality: feedback?.originalityScore,
+          expression: feedback?.expressionScore,
         },
+        languageCorrections: feedback?.languageCorrections ?? [],
       });
       mutate();
       toast.success("AI添削を実行しました");
@@ -729,7 +740,7 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
                     </Button>
                   </div>
                   {detailDoc.aiScore ? (
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                       {[
                         {
                           label: "AP合致度",
@@ -740,6 +751,10 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
                           label: "独自性",
                           value: detailDoc.aiScore.originality,
                         },
+                        // v4 で追加。旧データには無いので、そのときは出さない
+                        ...(typeof detailDoc.aiScore.expression === "number"
+                          ? [{ label: "表現", value: detailDoc.aiScore.expression }]
+                          : []),
                       ].map((s) => (
                         <div
                           key={s.label}
@@ -773,6 +788,35 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
                     </p>
                   )}
                 </div>
+
+                {/* 日本語の直し（赤ペン）。内容の講評より先に、直せば必ず
+                    良くなる点を出す */}
+                {detailDoc.languageCorrections &&
+                  detailDoc.languageCorrections.length > 0 && (
+                    <div className="space-y-2">
+                      <h3 className="text-sm font-semibold">
+                        日本語の直し（{detailDoc.languageCorrections.length}）
+                      </h3>
+                      <div className="space-y-1.5">
+                        {detailDoc.languageCorrections.map((c, i) => (
+                          <div key={i} className="rounded-md border p-2 text-xs">
+                            <div>
+                              <span className="text-rose-600 line-through">
+                                {c.original}
+                              </span>
+                              {" → "}
+                              <span className="text-emerald-600">
+                                {c.suggestion}
+                              </span>
+                            </div>
+                            <p className="mt-0.5 text-muted-foreground">
+                              {c.reason}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                 {/* 志望校のAP。AP合致度の点だけ見せられても、何と照らして
                     その点なのかが分からない。畳んでおき、必要なときに開く */}
