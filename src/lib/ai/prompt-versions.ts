@@ -127,7 +127,13 @@ export const AI_PROMPT_VERSIONS = {
     //      - 一文が長すぎるものは「点は下げないが必ず注意する」と明示。
     //        4点の基準からも「一文が長すぎる」を外し、助詞と主述のねじれに置き換えた
     //        （長さだけで点を落とすと、直せる指摘が減点として伝わる）
-    promptVersion: "essay-review-v15",
+    // v16: 一文の長さを減点の対象に戻した（v15 では「点は下げない」としていた）。
+    //      長い一文は読み手に負担をかけるうえ、主述のねじれや修飾の掛かり違いを
+    //      生む原因そのものなので、注意だけで済ませない。
+    //      目安を数値で示す: 80字超が複数あれば5点以下、100字超があれば4点以下。
+    //      減点したうえで「どこで切るか」の指摘も必ず出させる（点だけ下げて
+    //      直し方を示さないと、生徒は次に何をすればよいか分からない）。
+    promptVersion: "essay-review-v16",
     schemaVersion: "essay-review-output-v2",
   },
   interviewScore: {
@@ -186,7 +192,8 @@ export const AI_PROMPT_VERSIONS = {
     //        採点し直すこと。
     // v5: 小論文 v15 と同じく、作文の基礎（主述のねじれ・助詞・一文の長さ）を
     //     必ず指摘させる。手順と実例を書き、長さだけでは減点しないと明示した。
-    promptVersion: "document-review-v5",
+    // v6: 小論文 v16 と同じく、一文の長さを減点の対象に戻した。
+    promptVersion: "document-review-v6",
     schemaVersion: "document-review-output-v2",
   },
   statementDraft: {
