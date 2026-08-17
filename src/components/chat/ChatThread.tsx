@@ -296,14 +296,20 @@ export function ChatThread({
       .join("\n");
     const text = (body || raw).trim();
     if (!text) return;
-    // 誰のいつの発言かを引用に添える。後から読み返したときに、
-    // 引用だけ浮いていて何への返信か分からない状態を避ける
+    /**
+     * 誰のいつの発言かを引用に添える。
+     *
+     * createdByName は保存時のデノーマライズ値で、古い発言には入っていない
+     * （本番の生徒発言に空のものがある）。空のときは吹き出しのアイコンと
+     * 同じ考え方で補う: 相手の発言なら otherName、自分の発言なら「自分」。
+     * ここを "発言" のままにすると、誰の言葉か分からない引用になる。
+     */
+    const authorName =
+      m.createdByName ||
+      (m.senderRole === currentRole ? "自分" : otherName) ||
+      "発言";
     setText((prev) =>
-      appendQuote(
-        prev,
-        text,
-        `${m.createdByName || "発言"} ・ ${formatTime(m.createdAt)}`,
-      ),
+      appendQuote(prev, text, `${authorName} ・ ${formatTime(m.createdAt)}`),
     );
     // 続けてコメントを書けるよう入力欄へ移す
     requestAnimationFrame(() => {
@@ -314,7 +320,7 @@ export function ChatThread({
       el.scrollTop = el.scrollHeight;
     });
     window.getSelection()?.removeAllRanges();
-  }, []);
+  }, [currentRole, otherName]);
 
   /**
    * ドラッグで選択したときに出す小さなメニュー（コピー / 部分引用）。
