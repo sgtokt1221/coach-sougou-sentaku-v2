@@ -27,6 +27,7 @@ import {
   History,
   ChevronDown,
   Target,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
@@ -206,11 +207,50 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
     "approved" | "revision_requested" | "cleared" | null
   >(null);
   const [aiCheckBusy, setAiCheckBusy] = useState(false);
+  const [aiReviewBusy, setAiReviewBusy] = useState(false);
   /** 版の履歴の開閉。既定は畳んでおく（本文が長いと詳細が読みにくくなる） */
   const [showVersions, setShowVersions] = useState(false);
   /** 志望校APの開閉。既定は畳む（本文とAIスコアを先に見せる） */
   const [showAp, setShowAp] = useState(false);
   const [openVersionId, setOpenVersionId] = useState<string | null>(null);
+
+  /**
+   * 管理者から生徒書類のAI添削を実行する。結果は生徒と共有の feedback に
+   * 保存されるので、生徒側にもそのまま反映される。
+   */
+  async function runAiReview() {
+    if (!detailDoc) return;
+    setAiReviewBusy(true);
+    try {
+      const res = await authFetch(
+        `/api/admin/students/${studentId}/documents/${detailDoc.id}/review-ai`,
+        { method: "POST" }
+      );
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        toast.error(err?.error || "AI添削に失敗しました");
+        return;
+      }
+      const { feedback } = await res.json();
+      setDetailDoc({
+        ...detailDoc,
+        aiScore: {
+          apAlignment:
+            typeof feedback?.apAlignmentScore === "number"
+              ? feedback.apAlignmentScore
+              : undefined,
+          structure: feedback?.structureScore,
+          originality: feedback?.originalityScore,
+        },
+      });
+      mutate();
+      toast.success("AI添削を実行しました");
+    } catch {
+      toast.error("AI添削に失敗しました");
+    } finally {
+      setAiReviewBusy(false);
+    }
+  }
 
   /**
    * 管理者から生徒書類の個別性を確認する。結果は生徒と共有の aiLikeness に保存され、
@@ -666,28 +706,73 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
 
               {/* 右: AIスコア / 個別性 / AIコーチ */}
               <div className="space-y-4 lg:col-span-2">
-                {/* AI Score */}
-                {detailDoc.aiScore && (
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-semibold">AIスコア</h3>
-                    <div className="flex gap-4 text-sm">
-                      <span>
-                        AP合致度:{" "}
-                        <strong>
-                          {detailDoc.aiScore.apAlignment ?? "未評価"}
-                        </strong>
-                        {detailDoc.aiScore.apAlignment !== undefined && "/10"}
-                      </span>
-                      <span>
-                        構成: <strong>{detailDoc.aiScore.structure}</strong>/10
-                      </span>
-                      <span>
-                        独自性: <strong>{detailDoc.aiScore.originality}</strong>
-                        /10
-                      </span>
-                    </div>
+                {/* AIスコア。講評を読む前に水準を掴めるよう大きく出す */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="flex items-center gap-1.5 text-sm font-semibold">
+                      <Sparkles className="size-4" />
+                      AIスコア
+                    </h3>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1"
+                      onClick={runAiReview}
+                      disabled={aiReviewBusy}
+                    >
+                      {aiReviewBusy ? (
+                        <Loader2 className="size-3.5 animate-spin" />
+                      ) : (
+                        <Sparkles className="size-3.5" />
+                      )}
+                      {detailDoc.aiScore ? "再添削" : "AI添削を実行"}
+                    </Button>
                   </div>
-                )}
+                  {detailDoc.aiScore ? (
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        {
+                          label: "AP合致度",
+                          value: detailDoc.aiScore.apAlignment,
+                        },
+                        { label: "構成", value: detailDoc.aiScore.structure },
+                        {
+                          label: "独自性",
+                          value: detailDoc.aiScore.originality,
+                        },
+                      ].map((s) => (
+                        <div
+                          key={s.label}
+                          className="rounded-lg border bg-muted/30 p-3 text-center"
+                        >
+                          <div className="text-xs text-muted-foreground">
+                            {s.label}
+                          </div>
+                          <div className="mt-0.5 tabular-nums">
+                            {typeof s.value === "number" ? (
+                              <>
+                                <span className="text-3xl font-bold">
+                                  {s.value}
+                                </span>
+                                <span className="text-sm text-muted-foreground">
+                                  /10
+                                </span>
+                              </>
+                            ) : (
+                              <span className="text-sm text-muted-foreground">
+                                未評価
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      まだAI添削が実行されていません。上のボタンから実行できます。
+                    </p>
+                  )}
+                </div>
 
                 {/* 志望校のAP。AP合致度の点だけ見せられても、何と照らして
                     その点なのかが分からない。畳んでおき、必要なときに開く */}
