@@ -7,6 +7,11 @@ import { buildDocumentRewritePrompt } from "@/lib/ai/prompts/document-rewrite";
 import { cleanAiText, fitToCharLimit } from "@/lib/ai/fit-char-limit";
 import { prepareAdmissionPolicy } from "@/lib/ai/admission-policy";
 
+/**
+ * AIによる書き換え。本文を丸ごと生成し直す。
+ */
+export const maxDuration = 180;
+
 /** 指示文から「N字以下 / N字以内 / N文字まで」等の上限文字数を抽出する。無ければ null。 */
 function extractCharLimit(instruction: string): number | null {
   const m = instruction.match(/(\d{2,4})\s*(?:文字|字)\s*(?:以下|以内|まで)/);

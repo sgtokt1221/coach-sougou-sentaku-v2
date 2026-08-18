@@ -5,6 +5,11 @@ import { adminDb } from "@/lib/firebase/admin";
 import { checkAiLikeness } from "@/lib/ai/ai-likeness";
 
 /**
+ * 個別性チェック。AI呼び出し1回。
+ */
+export const maxDuration = 120;
+
+/**
  * 指定書類の本文の個別性を確認し、結果を documents/{id}.aiLikeness に保存して返す。
  * グローバル documents コレクション + userId 所有者チェック。
  */

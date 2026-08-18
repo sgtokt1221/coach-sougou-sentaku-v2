@@ -8,6 +8,12 @@ import {
 } from "@/lib/documents/review-core";
 
 /**
+ * 書類のAI添削は実測で50〜110秒かかる（志望理由書は上位モデルを使うため長い）。
+ * 隣の generate-statement と揃えて上限を伸ばしておく。
+ */
+export const maxDuration = 300;
+
+/**
  * POST /api/documents/[id]/review — 生徒が自分の書類をAI添削する。
  *
  * 添削そのものは lib/documents/review-core.ts に集約している（管理者・講師も

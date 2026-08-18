@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import { DocumentReviewProgress } from "@/components/documents/DocumentReviewProgress";
 import {
   Sheet,
   SheetContent,
@@ -882,6 +883,8 @@ function ReviewPanel({
             <Sparkles className="mr-2 size-4" />
             {reviewing ? "添削中..." : "AI添削を実行"}
           </Button>
+
+          <DocumentReviewProgress active={reviewing} />
 
           {feedback && (
             <>

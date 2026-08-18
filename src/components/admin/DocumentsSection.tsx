@@ -36,6 +36,7 @@ import { useDraggableDialog } from "@/hooks/useDraggableDialog";
 import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
 import { useAuthSWR } from "@/lib/api/swr";
 import { authFetch } from "@/lib/api/client";
+import { DocumentReviewProgress } from "@/components/documents/DocumentReviewProgress";
 import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
 import { DocumentReviewBadge } from "@/components/documents/DocumentReviewBadge";
 import { InlineCommentableText } from "@/components/essay/InlineCommentableText";
@@ -741,6 +742,7 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
                       {detailDoc.aiScore ? "再添削" : "AI添削を実行"}
                     </Button>
                   </div>
+                  <DocumentReviewProgress active={aiReviewBusy} />
                   {detailDoc.aiScore ? (
                     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                       {[

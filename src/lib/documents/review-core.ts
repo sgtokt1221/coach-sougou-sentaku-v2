@@ -170,32 +170,62 @@ export async function reviewDocumentCore(params: {
     selfAnalysis: selfAnalysis ?? null,
   };
 
-  const response = await client.messages.parse({
-    model: reviewModel,
-    /**
-     * messages.parse は max_tokens を thinking と本文で共有する。
-     * 4096 では thinking に食い潰されて本文が返らず、stop_reason=max_tokens で
-     * 必ず失敗していた（実測: 4096 も 8000 も途中終了。12000 で出力7842、成功）。
-     * v4 で軸（表現）と赤ペン最大5件を足して出力が増えたのに、ここが
-     * 4096 のままだったのが直接の原因。小論文添削は同じ理由で 12000。
-     */
-    max_tokens: 16000,
-    system: systemPrompt,
-    messages: [
-      {
-        role: "user",
-        content: `<reference_data>
+  /**
+   * messages.parse は max_tokens を thinking と本文で共有する。
+   *
+   * 志望理由書は claude-sonnet-5 なので拡張思考が効く。effort 既定だと実測で
+   * thinking だけ 8000〜12300 トークン使い、本文と合わせて 16000 の枠をほぼ
+   * 使い切る。本文がわずかでも伸びると JSON が途中で切れ、parse が
+   * 「Unterminated string」を投げて添削が丸ごと失敗していた。
+   *
+   * max_tokens をこれ以上増やす手は使えない。32000 にすると SDK が
+   * 「10分を超える可能性があるのでストリーミングが必要」として送信前に弾く。
+   *
+   * そこで effort を medium に落とす。同一の志望理由書での実測:
+   *   既定   thinking 8003tok / 計10656tok / 110秒 → 構成6 表現3
+   *   medium thinking 2063tok / 計 4641tok /  52秒 → 構成6 表現4
+   *   low    thinking    0tok / 計 2452tok /  30秒 → 構成7 表現5
+   * low まで落とすと採点が目に見えて甘くなる（長すぎる一文や主述のねじれを
+   * 見落とす）。medium なら厳しさをほぼ保ったまま、枠の 1/3 しか使わない。
+   */
+  const response = await client.messages
+    .parse({
+      model: reviewModel,
+      max_tokens: 16000,
+      system: systemPrompt,
+      messages: [
+        {
+          role: "user",
+          content: `<reference_data>
 ${JSON.stringify(referenceData)}
 </reference_data>
 <document_under_review>
 ${content}
 </document_under_review>`,
+        },
+      ],
+      output_config: {
+        format: zodOutputFormat(DocumentReviewOutputSchema),
+        effort: "medium",
       },
-    ],
-    output_config: {
-      format: zodOutputFormat(DocumentReviewOutputSchema),
-    },
-  });
+    })
+    /**
+     * parse() は応答を組み立てる途中で投げる。下の stop_reason チェックまで
+     * 到達しないので、ここで捕まえないと本番ログに素の JSON パースエラーしか
+     * 残らず、何が起きたのか追えない（実際それで原因の特定が遅れた）。
+     */
+    .catch((err) => {
+      console.error("[documents/review] 応答の組み立てに失敗", {
+        model: reviewModel,
+        documentType: documentData.type,
+        wordCount,
+        error: err instanceof Error ? err.message : String(err),
+      });
+      throw new DocumentReviewError(
+        "AI添削の結果を受け取れませんでした。もう一度実行してください",
+        502,
+      );
+    });
 
   /**
    * 失敗の理由をログに残す。以前は「検証に失敗」としか出ず、

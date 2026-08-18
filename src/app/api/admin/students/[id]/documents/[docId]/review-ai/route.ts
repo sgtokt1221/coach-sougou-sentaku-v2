@@ -8,6 +8,11 @@ import {
 } from "@/lib/documents/review-core";
 
 /**
+ * 管理者からのAI添削。生徒側と同じ処理を通すので同じだけ時間がかかる。
+ */
+export const maxDuration = 300;
+
+/**
  * POST /api/admin/students/[id]/documents/[docId]/review-ai
  *
  * 管理者・講師が生徒の出願書類をAI添削する。

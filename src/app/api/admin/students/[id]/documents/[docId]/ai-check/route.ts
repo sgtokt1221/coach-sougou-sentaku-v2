@@ -5,6 +5,11 @@ import { adminDb } from "@/lib/firebase/admin";
 import { checkAiLikeness } from "@/lib/ai/ai-likeness";
 
 /**
+ * 個別性チェック（管理者）。
+ */
+export const maxDuration = 120;
+
+/**
  * 管理者（admin/teacher/superadmin）が生徒の出願書類の個別性を確認する API。
  * 判定対象は保存済みの本文（documents/{docId}.content）。結果は生徒と共有の
  * documents/{docId}.aiLikeness に保存するため、生徒側にもそのまま反映される。
