@@ -171,6 +171,8 @@ const validDocumentReview = {
   apAlignmentAssessability: "insufficient_context" as const,
   structureScore: 6,
   originalityScore: 5,
+  // v4 で追加。フィクスチャが追随しておらず、この検証はずっと落ちていた
+  expressionScore: 6,
   overallFeedback: "講評",
   improvements: ["改善"],
   apSpecificNotes: "AP未取得",
@@ -179,6 +181,15 @@ const validDocumentReview = {
     structure: ["引用"],
     originality: ["引用"],
   },
+  languageCorrections: [
+    {
+      location: "第2段落",
+      original: "貴学では、〜環境であり",
+      suggestion: "貴学は、〜環境です",
+      type: "grammar" as const,
+      reason: "主語と述語が噛み合っていない",
+    },
+  ],
 };
 assert.equal(
   DocumentReviewOutputSchema.safeParse(validDocumentReview).success,

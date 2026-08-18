@@ -6,6 +6,7 @@ import { adminDb } from "@/lib/firebase/admin";
 import { buildDocumentRewritePrompt } from "@/lib/ai/prompts/document-rewrite";
 import { cleanAiText, fitToCharLimit } from "@/lib/ai/fit-char-limit";
 import { prepareAdmissionPolicy } from "@/lib/ai/admission-policy";
+import { loadStudentDocumentContext } from "@/lib/documents/student-context";
 
 /**
  * AIによる書き換え。本文を丸ごと生成し直す。
@@ -102,6 +103,15 @@ export async function POST(
       );
     }
 
+    /**
+     * 生徒の材料。「もっと具体的なエピソードを入れて」のような指示に対して、
+     * 材料が無いとモデルはそれらしい話を作る。実在の実績を渡して、
+     * そこからしか足せないようにする。
+     */
+    const { selfAnalysis, activities } = await loadStudentDocumentContext(
+      auth.uid
+    );
+
     const client = new Anthropic();
     const systemPrompt = buildDocumentRewritePrompt({
       instruction,
@@ -110,6 +120,8 @@ export async function POST(
       facultyName: data?.facultyName ?? "未指定",
       admissionPolicy,
       targetWordCount: data?.targetWordCount,
+      selfAnalysis,
+      activities,
     });
 
     const response = await client.messages.create({

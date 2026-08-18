@@ -193,11 +193,17 @@ export const AI_PROMPT_VERSIONS = {
     // v5: 小論文 v15 と同じく、作文の基礎（主述のねじれ・助詞・一文の長さ）を
     //     必ず指摘させる。手順と実例を書き、長さだけでは減点しないと明示した。
     // v6: 小論文 v16 と同じく、一文の長さを減点の対象に戻した。
-    promptVersion: "document-review-v6",
+    // v7: 登録済みの活動実績を reference_data に渡すようにした。以前は自己分析
+    //     しか渡しておらず、独自性を採点する材料が本文だけだった。登録済みの
+    //     実績と突き合わせられないので、書かれている経験が本人のものか判断
+    //     できず、強い実績を書き落としていても指摘できなかった。
+    promptVersion: "document-review-v7",
     schemaVersion: "document-review-output-v2",
   },
   statementDraft: {
-    promptVersion: "statement-draft-v2",
+    // v3: 活動実績を渡すようにした。以前は自己分析だけで書かせていたため、
+    //     生徒が登録した具体的な場面・数値が下書きに一切入らなかった。
+    promptVersion: "statement-draft-v3",
     schemaVersion: "statement-draft-output-v2",
   },
   templateDraft: {

@@ -12,6 +12,7 @@ import { requireFeature } from "@/lib/api/subscription";
 import { requireRole } from "@/lib/api/auth";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { prepareAdmissionPolicy } from "@/lib/ai/admission-policy";
+import { loadStudentDocumentContext } from "@/lib/documents/student-context";
 import {
   AI_PROMPT_VERSIONS,
   selectDocumentModel,
@@ -61,7 +62,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fetch real activities from Firestore
     if (!adminDb) {
       return NextResponse.json(
         { error: "データベースに接続できません" },
@@ -69,25 +69,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const activitiesSnap = await adminDb
-      .collection(`users/${auth.uid}/activities`)
-      .get();
-
+    /**
+     * 生徒の材料。以前は活動実績しか読んでおらず、自己分析は見ていなかった。
+     * 隣の generate-statement はその逆で、どちらのボタンを押しても材料が
+     * 半分しか使われていなかったので、両方を同じローダーから読む。
+     */
     const requestedIds = Array.isArray(body.activityIds)
-      ? new Set(
-          body.activityIds.filter((id): id is string => typeof id === "string")
-        )
+      ? body.activityIds.filter((id): id is string => typeof id === "string")
       : null;
-    const activities = activitiesSnap.docs
-      .filter((doc) => requestedIds === null || requestedIds.has(doc.id))
-      .map((doc) => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          title: typeof data.title === "string" ? data.title : "活動実績",
-          structuredData: data.structuredData,
-        };
-      });
+    const { selfAnalysis, activities } = await loadStudentDocumentContext(
+      auth.uid,
+      requestedIds
+    );
 
     const universitySnap = await adminDb
       .doc(`universities/${body.universityId}`)
@@ -131,7 +124,8 @@ export async function POST(request: NextRequest) {
       admissionPolicy,
       body.documentType,
       body.targetWordCount || 800,
-      activities
+      activities,
+      selfAnalysis
     );
 
     const message = await client.messages.parse({

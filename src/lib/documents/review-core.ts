@@ -1,10 +1,12 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { buildDocumentReviewPrompt } from "@/lib/ai/prompts/document";
-import type { SelfAnalysisContext } from "@/lib/ai/prompts/document";
 import { DocumentReviewOutputSchema } from "@/lib/ai/schemas/document-review";
 import type { DocumentFeedback } from "@/lib/types/document";
 import { prepareAdmissionPolicy } from "@/lib/ai/admission-policy";
+import {
+  loadStudentDocumentContext,
+} from "@/lib/documents/student-context";
 import {
   AI_PROMPT_VERSIONS,
   selectDocumentModel,
@@ -20,38 +22,6 @@ import {
  *
  * 役割外: 認証・認可、機能ゲート（requireFeature）。
  */
-
-function stringArray(value: unknown): string[] | undefined {
-  if (!Array.isArray(value)) return undefined;
-  const result = value
-    .filter((item): item is string => typeof item === "string")
-    .map((item) => item.trim())
-    .filter(Boolean);
-  return result.length > 0 ? result : undefined;
-}
-
-function stringValue(value: unknown): string | undefined {
-  return typeof value === "string" && value.trim() ? value.trim() : undefined;
-}
-
-function mapSelfAnalysis(raw: Record<string, unknown>): SelfAnalysisContext {
-  const obj = (k: string) =>
-    raw[k] && typeof raw[k] === "object"
-      ? (raw[k] as Record<string, unknown>)
-      : {};
-  const values = obj("values");
-  const strengths = obj("strengths");
-  const vision = obj("vision");
-  const identity = obj("identity");
-
-  return {
-    values: stringArray(values.coreValues),
-    strengths: stringArray(strengths.strengths),
-    vision: stringValue(vision.longTermVision),
-    selfStatement: stringValue(identity.selfStatement),
-    uniqueNarrative: stringValue(identity.uniqueNarrative),
-  };
-}
 
 /** 本文に完全一致しない引用は根拠として採らない（作られた引用を弾く） */
 function matchingEvidence(content: string, values: string[]): string[] {
@@ -123,17 +93,15 @@ export async function reviewDocumentCore(params: {
     }
   }
 
-  // 自己分析。書類の持ち主のものを引く（新旧2つの保存先に対応）
-  let selfAnalysis: SelfAnalysisContext | undefined;
-  let selfAnalysisSnap = await adminDb.doc(`selfAnalysis/${params.ownerUid}`).get();
-  if (!selfAnalysisSnap.exists) {
-    selfAnalysisSnap = await adminDb
-      .doc(`users/${params.ownerUid}/selfAnalysis/current`)
-      .get();
-  }
-  if (selfAnalysisSnap.exists) {
-    selfAnalysis = mapSelfAnalysis(selfAnalysisSnap.data()!);
-  }
+  /**
+   * 添削の材料。自己分析だけでなく活動実績も渡す。
+   * 以前は自己分析しか読んでおらず、独自性を採点する材料が本文だけだった。
+   * 登録済みの実績と突き合わせられないので、書かれている経験が本人のものか
+   * 判断できず、逆に強い実績を書き落としていても指摘できなかった。
+   */
+  const { selfAnalysis, activities } = await loadStudentDocumentContext(
+    params.ownerUid
+  );
 
   if (!process.env.ANTHROPIC_API_KEY) {
     throw new DocumentReviewError("APIキーが設定されていません", 503);
@@ -168,6 +136,7 @@ export async function reviewDocumentCore(params: {
     documentType: documentData.type ?? "出願書類",
     admissionPolicy: hasAdmissionPolicy ? admissionPolicy : null,
     selfAnalysis: selfAnalysis ?? null,
+    activities: activities.length > 0 ? activities : null,
   };
 
   /**

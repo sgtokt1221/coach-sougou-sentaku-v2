@@ -16,6 +16,7 @@ import {
   AI_PROMPT_VERSIONS,
 } from "@/lib/ai/prompt-versions";
 import type { AiGenerationMetadata } from "@/lib/types/ai";
+import { loadActivityContexts } from "@/lib/documents/student-context";
 
 // 生成(40-50秒)に加えて字数超過時の圧縮リライトが走るため、60秒では打ち切られる。
 export const maxDuration = 300;
@@ -116,6 +117,11 @@ export async function POST(request: NextRequest) {
     const selfAnalysis = normalizeSelfAnalysisData(
       selfAnalysisDoc.exists ? selfAnalysisDoc.data() : null
     );
+    /**
+     * 活動実績。以前は自己分析だけで志望理由書を書かせていたため、
+     * 生徒が登録した具体的な場面や数値が下書きに一切入らなかった。
+     */
+    const activities = await loadActivityContexts(auth.uid);
 
     // Claude APIを呼び出し（モック対応）
     let statementResponse: StatementDraftResponse;
@@ -141,7 +147,8 @@ export async function POST(request: NextRequest) {
         facultyName,
         admissionPolicy,
         selfAnalysis,
-        body.targetWordCount || 800
+        body.targetWordCount || 800,
+        activities
       );
       const Anthropic = (await import("@anthropic-ai/sdk")).default;
       const client = new Anthropic({ apiKey });

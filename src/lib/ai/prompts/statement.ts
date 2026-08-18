@@ -2,6 +2,8 @@
  * 志望理由書自動下書き生成プロンプト
  */
 import { FACULTY_AGENCY_FOCUS_DOCUMENT } from "./shared";
+import type { ActivityContext } from "@/lib/documents/student-context";
+import { ACTIVITY_GROUNDING_RULE } from "./shared";
 
 export interface SelfAnalysisData {
   values: string[];
@@ -135,7 +137,9 @@ export function buildStatementDraftPrompt(
   facultyName: string,
   admissionPolicy: string,
   selfAnalysis: SelfAnalysisData,
-  targetWordCount = 800
+  targetWordCount = 800,
+  /** 活動実績。以前は渡しておらず、自己分析だけで志望理由書を書かせていた */
+  activities: ActivityContext[] = []
 ): string {
   const target = targetWordCount || 800;
   const sectionRatios = {
@@ -149,6 +153,7 @@ export function buildStatementDraftPrompt(
     facultyName,
     admissionPolicy: admissionPolicy.trim() || null,
     selfAnalysis,
+    activities: activities.length > 0 ? activities : null,
     targetWordCount: target,
     sectionRatios,
     // 比率だけだとモデルが字数に落とせず超過するため、実数の上限も渡す
@@ -161,6 +166,11 @@ export function buildStatementDraftPrompt(
   };
 
   return `${STATEMENT_DRAFT_SYSTEM_PROMPT}
+
+## 活動実績の扱い
+${ACTIVITY_GROUNDING_RULE}
+- 自己分析の価値観・将来像を、activities にある具体的な場面・数値・役割で裏づけること。
+  抽象的な言葉だけで段落を埋めないこと。
 
 <reference_data>
 ${JSON.stringify(referenceData)}

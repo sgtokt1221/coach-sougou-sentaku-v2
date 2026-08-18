@@ -17,6 +17,7 @@ import type {
 import { prepareAdmissionPolicy } from "@/lib/ai/admission-policy";
 import { getDocumentTemplate } from "@/lib/templates/document-templates";
 import { AI_MODEL_SONNET } from "@/lib/ai/prompt-versions";
+import { loadStudentDocumentContext } from "@/lib/documents/student-context";
 
 export const maxDuration = 60;
 
@@ -126,24 +127,15 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // 自己分析取得 (任意。認証済み uid のみ。/api/self-analysis と同じトップレベルパス)
-  // ※ admin/superadmin が呼んだ場合は本人=管理者の uid を見るため通常は未取得 (undefined) で続行する。
-  let selfAnalysis: DocumentCoachSelfAnalysisContext | undefined;
-  try {
-    const saDoc = await adminDb.doc(`selfAnalysis/${uid}`).get();
-    if (saDoc.exists) {
-      const sa = saDoc.data()!;
-      selfAnalysis = {
-        values: sa.values?.coreValues,
-        strengths: sa.strengths?.strengths,
-        vision: sa.vision?.longTermVision,
-        selfStatement: sa.identity?.selfStatement,
-        uniqueNarrative: sa.identity?.uniqueNarrative,
-      };
-    }
-  } catch (err) {
-    console.warn("[documents/section-coach] selfAnalysis fetch failed:", err);
-  }
+  /**
+   * 生徒の材料（任意）。認証済み uid のもの。
+   * ※ admin/superadmin が呼んだ場合は本人=管理者の uid を見るため通常は空で続行する。
+   *
+   * 以前はここで selfAnalysis/{uid} だけを直接読んでいたため、旧形式
+   * （users/{uid}/selfAnalysis/current）のまま止まっている生徒では材料なしで
+   * 会話していた。活動実績も読んでいなかった。共通ローダーに寄せて両方を読む。
+   */
+  const { selfAnalysis, activities } = await loadStudentDocumentContext(uid);
 
   const historyMessages: DocumentCoachMessage[] = existing?.messages ?? [];
   const trimmedHistory = historyMessages.slice(-MAX_HISTORY_TURNS * 2);
@@ -165,6 +157,7 @@ export async function POST(request: NextRequest) {
     facultyName,
     admissionPolicy,
     selfAnalysis,
+    activities,
     turnCount,
   });
 

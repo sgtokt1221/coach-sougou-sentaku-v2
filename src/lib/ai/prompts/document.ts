@@ -1,4 +1,7 @@
-import { FACULTY_AGENCY_FOCUS_DOCUMENT } from "./shared";
+import {
+  ACTIVITY_GROUNDING_RULE,
+  FACULTY_AGENCY_FOCUS_DOCUMENT,
+} from "./shared";
 
 export interface SelfAnalysisContext {
   values?: string[];
@@ -204,5 +207,13 @@ ${structure}
 ${apRule}
 
 ## 今回の字数
-${buildWordCountRule(options)}`;
+${buildWordCountRule(options)}
+
+## 活動実績の突き合わせ
+${ACTIVITY_GROUNDING_RULE}
+- 本文に書かれた経験が activities のどれに当たるかを見て、originality の判断材料にすること。
+  activities にある固有の数値・役割・期間が本文で落ちている場合は、improvements で
+  「どの実績のどの要素を足すか」を具体的に書くこと。
+- activities に無い実績が本文に書かれていても、それだけを理由に減点しないこと
+  （登録していないだけの可能性がある）。ただし improvements で確認を促すこと。`;
 }
