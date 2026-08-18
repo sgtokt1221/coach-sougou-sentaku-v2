@@ -930,7 +930,8 @@
           "gpa": null,
           "englishCert": null,
           "otherReqs": [
-            "併願可"
+            "併願可",
+            "推薦入試（一般公募）は試験日が11月と12月に分かれ、最大4日間受験できる。schedule に入れているのは11月回（試験 2026-11-21・22／出願 2026-11-01〜11-14〈消印有効〉／合格発表 2026-12-02）。12月回は 試験 2026-12-05・06／出願 2026-11-01〜11-28〈消印有効〉／合格発表 2026-12-16。"
           ]
         },
         "selectionMethods": [
@@ -971,10 +972,10 @@
           }
         ],
         "schedule": {
-          "applicationStart": "2025-10-31",
-          "applicationEnd": "2025-11-14",
-          "examDate": "2025-12-09",
-          "resultDate": "2025-12-27"
+          "applicationStart": "2026-11-01",
+          "applicationEnd": "2026-11-14",
+          "examDate": "2026-11-21",
+          "resultDate": "2026-12-02"
         },
         "admissionUrl": "https://www.kindai.ac.jp/admissions/",
         "selectionType": "school_recommendation"
@@ -1091,7 +1092,8 @@
           "gpa": null,
           "englishCert": null,
           "otherReqs": [
-            "併願可"
+            "併願可",
+            "推薦入試（一般公募）は試験日が11月と12月に分かれ、最大4日間受験できる。schedule に入れているのは11月回（試験 2026-11-21・22／出願 2026-11-01〜11-14〈消印有効〉／合格発表 2026-12-02）。12月回は 試験 2026-12-05・06／出願 2026-11-01〜11-28〈消印有効〉／合格発表 2026-12-16。"
           ]
         },
         "selectionMethods": [
@@ -1122,10 +1124,10 @@
           }
         ],
         "schedule": {
-          "applicationStart": "2025-10-31",
-          "applicationEnd": "2025-11-14",
-          "examDate": "2025-12-09",
-          "resultDate": "2025-12-27"
+          "applicationStart": "2026-11-01",
+          "applicationEnd": "2026-11-14",
+          "examDate": "2026-11-21",
+          "resultDate": "2026-12-02"
         },
         "admissionUrl": "https://www.kindai.ac.jp/admissions/",
         "selectionType": "school_recommendation"
@@ -1303,7 +1305,8 @@
           "gpa": null,
           "englishCert": null,
           "otherReqs": [
-            "併願可"
+            "併願可",
+            "医学部は推薦入試（一般公募）の複数日受験・事前課題（小論文）の対象外。一次試験 2026-11-22（発表 2026-12-02）、二次試験 2026-12-06（最終合格発表 2026-12-16）。"
           ]
         },
         "selectionMethods": [
@@ -1324,10 +1327,10 @@
           }
         ],
         "schedule": {
-          "applicationStart": "2025-11-14",
-          "applicationEnd": "2025-11-28",
-          "examDate": "2025-12-23",
-          "resultDate": "2026-01-10"
+          "applicationStart": "2026-11-01",
+          "applicationEnd": "2026-11-13",
+          "examDate": "2026-11-22",
+          "resultDate": "2026-12-16"
         },
         "admissionUrl": "https://www.kindai.ac.jp/admissions/",
         "selectionType": "school_recommendation"
@@ -1370,7 +1373,7 @@
     "admissionSource": {
       "url": "https://kindai.jp/assets/pdf/exam/system/ao/2027_ao_requirements_a4.pdf",
       "retrievedAt": "2026-08-18",
-      "note": "2027年4月入学の総合型選抜入学試験要項（学内表記は「2026年度（令和8年度）」、試験は令和8年9〜11月実施）に基づく。総合型選抜の実施は15学部（看護・法・経済・経営・理工・理工(女子選抜方式)・文芸・総合社会・国際・情報・農・生物理工・工・産業理工・短期大学部）。薬学部・医学部・建築学部は総合型選抜の実施なし（当データの3学部は selectionType=school_recommendation の公募推薦データ）。看護学部のみ専願制、他は併願可。評定は方針1（評定不問経路ありはnull、理工学部は全体3.0必須）。未収録: 理工学部（女子選抜方式）15名程度は理工学部の注記として保持、短期大学部 商経科(二部)10名程度は学部データの対象外。"
+      "note": "2027年4月入学の総合型選抜入学試験要項（学内表記は「2026年度（令和8年度）」、試験は令和8年9〜11月実施）に基づく。総合型選抜の実施は15学部（看護・法・経済・経営・理工・理工(女子選抜方式)・文芸・総合社会・国際・情報・農・生物理工・工・産業理工・短期大学部）。薬学部・医学部・建築学部は総合型選抜の実施なし（当データの3学部は selectionType=school_recommendation の公募推薦データ）。看護学部のみ専願制、他は併願可。評定は方針1（評定不問経路ありはnull、理工学部は全体3.0必須）。未収録: 理工学部（女子選抜方式）15名程度は理工学部の注記として保持、短期大学部 商経科(二部)10名程度は学部データの対象外。　薬学部・医学部・建築学部の公募推薦の日程は令和9年度入試ガイド（https://kindai.jp/assets/pdf/exam/exam-guide-2027.pdf）で2026-08-18に確認。"
     }
   },
   {
