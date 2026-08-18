@@ -172,7 +172,14 @@ export async function reviewDocumentCore(params: {
 
   const response = await client.messages.parse({
     model: reviewModel,
-    max_tokens: 4096,
+    /**
+     * messages.parse は max_tokens を thinking と本文で共有する。
+     * 4096 では thinking に食い潰されて本文が返らず、stop_reason=max_tokens で
+     * 必ず失敗していた（実測: 4096 も 8000 も途中終了。12000 で出力7842、成功）。
+     * v4 で軸（表現）と赤ペン最大5件を足して出力が増えたのに、ここが
+     * 4096 のままだったのが直接の原因。小論文添削は同じ理由で 12000。
+     */
+    max_tokens: 16000,
     system: systemPrompt,
     messages: [
       {
@@ -190,7 +197,28 @@ ${content}
     },
   });
 
-  if (response.stop_reason === "max_tokens" || !response.parsed_output) {
+  /**
+   * 失敗の理由をログに残す。以前は「検証に失敗」としか出ず、
+   * max_tokens で切れたのかスキーマ不一致なのかを本番のログから判別できなかった。
+   */
+  if (response.stop_reason === "max_tokens") {
+    console.error("[documents/review] max_tokens で途中終了", {
+      model: reviewModel,
+      documentType: documentData.type,
+      wordCount,
+      usage: response.usage,
+    });
+    throw new DocumentReviewError(
+      "添削結果が長くなりすぎて途中で終了しました。時間をおいて再実行してください",
+      502,
+    );
+  }
+  if (!response.parsed_output) {
+    console.error("[documents/review] 構造化出力の検証に失敗", {
+      model: reviewModel,
+      stop_reason: response.stop_reason,
+      usage: response.usage,
+    });
     throw new DocumentReviewError("AIレスポンスの検証に失敗しました", 502);
   }
 
