@@ -197,7 +197,11 @@ export const AI_PROMPT_VERSIONS = {
     //     しか渡しておらず、独自性を採点する材料が本文だけだった。登録済みの
     //     実績と突き合わせられないので、書かれている経験が本人のものか判断
     //     できず、強い実績を書き落としていても指摘できなかった。
-    promptVersion: "document-review-v7",
+    // v8: 改善点を構造化した（どこ・何が問題・どうする・直した文の例）。
+    //     文字列1本だったため「具体性を高めましょう」で終わる指摘が混ざり、
+    //     生徒が次に何をすればよいか分からなかった。書き換え例を別欄にして
+    //     省略できないようにした。
+    promptVersion: "document-review-v8",
     schemaVersion: "document-review-output-v2",
   },
   statementDraft: {

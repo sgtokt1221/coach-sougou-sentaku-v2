@@ -97,6 +97,18 @@ export interface DocumentVersion {
   feedback?: DocumentFeedback;
 }
 
+/**
+ * 改善点1件。どこを・何が問題で・どう直すか・直した文の例。
+ * 以前は文字列1本で、「具体性を高めましょう」で終わる指摘が混ざっていた。
+ */
+export interface DocumentImprovement {
+  location: string;
+  problem: string;
+  action: string;
+  /** 直した文の例。削る・確認する類の指摘では無い場合がある */
+  example?: string | null;
+}
+
 export interface DocumentFeedback {
   /** AP未取得時は採点せずnull。 */
   apAlignmentScore: number | null;
@@ -106,7 +118,13 @@ export interface DocumentFeedback {
   /** 日本語の正確さと読みやすさ（v4 で追加。旧データには無い） */
   expressionScore?: number;
   overallFeedback: string;
+  /**
+   * 改善点（1行にまとめたもの）。v7以前のデータはこれしか無いので残す。
+   * v8以降は improvementDetails から組み立てて両方保存する。
+   */
   improvements: string[];
+  /** 改善点の内訳（v8 で追加。旧データには無い） */
+  improvementDetails?: DocumentImprovement[];
   apSpecificNotes: string;
   scoreEvidence?: {
     apAlignment: string[];

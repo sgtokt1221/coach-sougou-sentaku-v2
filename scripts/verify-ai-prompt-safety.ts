@@ -174,7 +174,15 @@ const validDocumentReview = {
   // v4 で追加。フィクスチャが追随しておらず、この検証はずっと落ちていた
   expressionScore: 6,
   overallFeedback: "講評",
-  improvements: ["改善"],
+  // v8 で構造化。書き換え例まで埋まっていることを型で担保する
+  improvements: [
+    {
+      location: "部活動を通じて協調性を学びました",
+      problem: "抽象語だけで、何をした結果そう言えるのかが伝わらない",
+      action: "意見が割れた場面・自分の行動・結果の順に1文ずつ書く",
+      example: "合奏の方針で意見が割れたとき、私は両者の主張を書き出して共通点を探しました。",
+    },
+  ],
   apSpecificNotes: "AP未取得",
   scoreEvidence: {
     apAlignment: [],

@@ -238,7 +238,20 @@ ${content}
     originalityScore: parsed.originalityScore,
     expressionScore: parsed.expressionScore,
     overallFeedback: parsed.overallFeedback,
-    improvements: parsed.improvements,
+    /**
+     * 改善点は構造化して保存する。あわせて1行にまとめたものも書く。
+     * v7以前のデータを読む箇所（旧 feedback しか無い書類の表示）が
+     * improvements: string[] を前提にしているため、両方を残す。
+     */
+    improvements: parsed.improvements.map((item) =>
+      [item.location, item.problem, item.action].filter(Boolean).join(" / "),
+    ),
+    improvementDetails: parsed.improvements.map((item) => ({
+      location: item.location,
+      problem: item.problem,
+      action: item.action,
+      example: item.example ?? null,
+    })),
     apSpecificNotes: hasAdmissionPolicy
       ? parsed.apSpecificNotes
       : "アドミッションポリシーを取得できなかったため、AP合致度は評価していません。",
