@@ -15,7 +15,11 @@
  * 使い方（既定は確認のみ。--apply で書き込み）:
  *   NEXT_PUBLIC_FIREBASE_PROJECT_ID=coach-sougou-sentaku \
  *   GOOGLE_CLOUD_PROJECT=coach-sougou-sentaku \
- *   npx tsx scripts/rescore-documents.ts [--apply] [--limit=20] [--names=長谷川]
+ *   npx tsx scripts/rescore-documents.ts [--apply] [--limit=20] [--names=長谷川] [--force]
+ *
+ * --force: すでに最新版で採点済みのものも対象にする。指定した生徒の書類を
+ *          まとめて採点し直したいときに使う。未添削（feedback が無い）書類も
+ *          対象に含める。
  */
 import { config } from "dotenv";
 config({ path: ".env.local" });
@@ -25,6 +29,7 @@ import { reviewDocumentCore } from "../src/lib/documents/review-core";
 import { AI_PROMPT_VERSIONS } from "../src/lib/ai/prompt-versions";
 
 const APPLY = process.argv.includes("--apply");
+const FORCE = process.argv.includes("--force");
 const LIMIT = Number(
   process.argv.find((a) => a.startsWith("--limit="))?.split("=")[1] ?? 0,
 );
@@ -63,9 +68,11 @@ async function main() {
   const targets = snap.docs.filter((d) => {
     const x = d.data();
     if (!String(x.content ?? "").trim()) return false;
-    // 添削済みのものだけを対象にする（未添削は生徒・管理者が実行する）
-    if (!x.feedback) return false;
     if (allowedUids && !allowedUids.has(x.userId)) return false;
+    // --force なら版も添削済みかも問わない（指名した生徒をまとめて採点し直す用）
+    if (FORCE) return true;
+    // 通常は添削済みのものだけを対象にする（未添削は生徒・管理者が実行する）
+    if (!x.feedback) return false;
     // すでに新版で採点済みなら飛ばす（再実行しても二重に課金しない）
     return x.feedback?.aiMetadata?.promptVersion !== TARGET_VERSION;
   });
@@ -89,19 +96,31 @@ async function main() {
       });
       console.log(
         `${d.id}  ${nameByUid.get(x.userId) ?? x.userId}  ${x.type} (${x.wordCount ?? "?"}字)\n` +
-          `  旧 AP${before.apAlignmentScore ?? "-"} 構成${before.structureScore} 独自${before.originalityScore}\n` +
+          `  旧 ${before ? `AP${before.apAlignmentScore ?? "-"} 構成${before.structureScore} 独自${before.originalityScore}` : "（未添削）"}\n` +
           `  新 AP${feedback.apAlignmentScore ?? "-"} 構成${feedback.structureScore} 独自${feedback.originalityScore} 表現${feedback.expressionScore}` +
           `  赤ペン${feedback.languageCorrections?.length ?? 0}件`,
       );
 
       if (APPLY) {
         // reviewDocumentCore が feedback を保存済み。旧スコアの退避だけ足す
-        if (!x.feedbackBeforeV4) {
+        if (before && !x.feedbackBeforeV4) {
           await d.ref.set({ feedbackBeforeV4: before }, { merge: true });
         }
       } else {
-        // 確認のみの実行でも core は保存してしまうため、元に戻す
-        await d.ref.set({ feedback: before }, { merge: true });
+        /**
+         * 確認のみの実行でも core は保存してしまうため、元に戻す。
+         * feedbackAt / feedbackContent も core が書くので一緒に戻すこと。
+         * 以前は feedback だけ戻していたため、未添削だった書類に
+         * 「添削日はあるが結果が無い」状態が残った。
+         */
+        await d.ref.set(
+          {
+            feedback: before,
+            feedbackAt: x.feedbackAt ?? null,
+            feedbackContent: x.feedbackContent ?? null,
+          },
+          { merge: true },
+        );
       }
       ok++;
     } catch (err) {
