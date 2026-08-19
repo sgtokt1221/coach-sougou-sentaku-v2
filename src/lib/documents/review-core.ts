@@ -23,10 +23,22 @@ import {
  * 役割外: 認証・認可、機能ゲート（requireFeature）。
  */
 
-/** 本文に完全一致しない引用は根拠として採らない（作られた引用を弾く） */
+/**
+ * 本文に完全一致しない引用は根拠として採らない（作られた引用を弾く）。
+ * 表示は3件までなので、多く返ってきた分はここで切り詰める。
+ */
 function matchingEvidence(content: string, values: string[]): string[] {
-  return values.filter((value) => value.length > 0 && content.includes(value));
+  return values
+    .filter((value) => value.length > 0 && content.includes(value))
+    .slice(0, 3);
 }
+
+/**
+ * 画面に出す件数。スキーマ側はモデルが返しうる幅を受け取れるよう緩めてあり
+ * （超えると添削が丸ごと失敗するため）、絞り込みは保存時のここで行う。
+ */
+const DISPLAY_MAX_IMPROVEMENTS = 5;
+const DISPLAY_MAX_CORRECTIONS = 5;
 
 export class DocumentReviewError extends Error {
   constructor(
@@ -243,15 +255,19 @@ ${content}
      * v7以前のデータを読む箇所（旧 feedback しか無い書類の表示）が
      * improvements: string[] を前提にしているため、両方を残す。
      */
-    improvements: parsed.improvements.map((item) =>
-      [item.location, item.problem, item.action].filter(Boolean).join(" / "),
-    ),
-    improvementDetails: parsed.improvements.map((item) => ({
-      location: item.location,
-      problem: item.problem,
-      action: item.action,
-      example: item.example ?? null,
-    })),
+    improvements: parsed.improvements
+      .slice(0, DISPLAY_MAX_IMPROVEMENTS)
+      .map((item) =>
+        [item.location, item.problem, item.action].filter(Boolean).join(" / "),
+      ),
+    improvementDetails: parsed.improvements
+      .slice(0, DISPLAY_MAX_IMPROVEMENTS)
+      .map((item) => ({
+        location: item.location,
+        problem: item.problem,
+        action: item.action,
+        example: item.example ?? null,
+      })),
     apSpecificNotes: hasAdmissionPolicy
       ? parsed.apSpecificNotes
       : "アドミッションポリシーを取得できなかったため、AP合致度は評価していません。",
@@ -266,12 +282,14 @@ ${content}
      * 赤ペンは本文に完全一致する原文だけを残す。作られた引用を弾くため。
      * 直し先が原文と同じものも落とす（直っていない指摘は役に立たない）。
      */
-    languageCorrections: (parsed.languageCorrections ?? []).filter(
-      (c) =>
-        c.original.length > 0 &&
-        content.includes(c.original) &&
-        c.original !== c.suggestion,
-    ),
+    languageCorrections: (parsed.languageCorrections ?? [])
+      .filter(
+        (c) =>
+          c.original.length > 0 &&
+          content.includes(c.original) &&
+          c.original !== c.suggestion,
+      )
+      .slice(0, DISPLAY_MAX_CORRECTIONS),
     aiMetadata: {
       ...AI_PROMPT_VERSIONS.documentReview,
       model: reviewModel,
