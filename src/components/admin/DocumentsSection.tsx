@@ -37,6 +37,7 @@ import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
 import { useAuthSWR } from "@/lib/api/swr";
 import { authFetch } from "@/lib/api/client";
 import { DocumentReviewProgress } from "@/components/documents/DocumentReviewProgress";
+import { DocumentImprovements } from "@/components/documents/DocumentImprovements";
 import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
 import { DocumentReviewBadge } from "@/components/documents/DocumentReviewBadge";
 import { InlineCommentableText } from "@/components/essay/InlineCommentableText";
@@ -58,6 +59,7 @@ import type {
   DocumentReview,
   DocumentReviewHistoryEntry,
   DocumentAiLikeness,
+  DocumentImprovement,
 } from "@/lib/types/document";
 import {
   AI_LIKENESS_LEVEL_LABELS,
@@ -127,6 +129,12 @@ interface DocumentDetail {
     /** v4 で追加。旧データには無い */
     expression?: number;
   };
+  /** 講評と改善点。生徒側と同じものを管理者にも出す */
+  overallFeedback?: string;
+  improvements?: string[];
+  /** 改善点の内訳（v8 で追加。旧データには無い） */
+  improvementDetails?: DocumentImprovement[];
+  apSpecificNotes?: string;
   /** 日本語の直し（赤ペン）。v4 で追加 */
   languageCorrections?: {
     location: string;
@@ -256,6 +264,10 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
           expression: feedback?.expressionScore,
         },
         languageCorrections: feedback?.languageCorrections ?? [],
+        overallFeedback: feedback?.overallFeedback,
+        improvements: feedback?.improvements ?? [],
+        improvementDetails: feedback?.improvementDetails,
+        apSpecificNotes: feedback?.apSpecificNotes,
       });
       mutate();
       toast.success("AI添削を実行しました");
@@ -792,6 +804,37 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
                     </p>
                   )}
                 </div>
+
+                {/* 講評と改善点。生徒が見ているものと同じものを出す。
+                    面談で「AIは何を指摘したか」を突き合わせるために要る */}
+                {detailDoc.overallFeedback && (
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-semibold">総合評価</h3>
+                    <p className="text-sm leading-relaxed text-muted-foreground">
+                      {detailDoc.overallFeedback}
+                    </p>
+                  </div>
+                )}
+
+                {((detailDoc.improvementDetails?.length ?? 0) > 0 ||
+                  (detailDoc.improvements?.length ?? 0) > 0) && (
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-semibold">改善点</h3>
+                    <DocumentImprovements
+                      improvements={detailDoc.improvements ?? []}
+                      details={detailDoc.improvementDetails}
+                    />
+                  </div>
+                )}
+
+                {detailDoc.apSpecificNotes && (
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-semibold">APに関する注意</h3>
+                    <p className="text-sm leading-relaxed text-muted-foreground">
+                      {detailDoc.apSpecificNotes}
+                    </p>
+                  </div>
+                )}
 
                 {/* 日本語の直し（赤ペン）。生徒側と同じ部品で、同じ見え方にする。
                     本文に下線を引き、押すと直しが出る */}

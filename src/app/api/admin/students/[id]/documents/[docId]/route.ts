@@ -101,6 +101,15 @@ export async function GET(
             expression: feedback.expressionScore,
           }
         : undefined,
+      /**
+       * 講評と改善点。以前はスコアと赤ペンしか返しておらず、管理者が
+       * AI添削を実行できるのに結果の中身を読めなかった（面談で使えない）。
+       */
+      overallFeedback: feedback?.overallFeedback ?? undefined,
+      improvements: feedback?.improvements ?? [],
+      // 内訳（どこ・何が問題・どうする・書き換え例）は v8 以降のみ
+      improvementDetails: feedback?.improvementDetails ?? undefined,
+      apSpecificNotes: feedback?.apSpecificNotes ?? undefined,
       // 日本語の直し（赤ペン）。v4 以降の添削でのみ入る
       languageCorrections: feedback?.languageCorrections ?? [],
       aiLikeness: data.aiLikeness ?? undefined,

@@ -13,6 +13,13 @@ import { getFirestore } from "firebase-admin/firestore";
 
 const STUDENT_EMAIL = "student@example.com";
 const STUDENT_PASSWORD = "password";
+/**
+ * 管理者アカウント。生徒しか作っていなかったため、管理者画面（生徒詳細の
+ * 書類・チャット・添削結果）をローカルで一度も開けなかった。
+ * 生徒は managedBy でこの管理者に紐づける（スコーピングを通すため）。
+ */
+const ADMIN_EMAIL = "admin@example.com";
+const ADMIN_PASSWORD = "password";
 const PROJECT_ID = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? "demo-coach";
 
 /** 目標800字に対して超過している志望理由書。AI書き換えの字数警告をそのまま再現できる。 */
@@ -62,6 +69,31 @@ async function main() {
     ).uid;
   }
 
+  // 管理者アカウント
+  let adminUid: string;
+  try {
+    adminUid = (await auth.getUserByEmail(ADMIN_EMAIL)).uid;
+    await auth.updateUser(adminUid, { password: ADMIN_PASSWORD });
+  } catch {
+    adminUid = (
+      await auth.createUser({
+        email: ADMIN_EMAIL,
+        password: ADMIN_PASSWORD,
+        displayName: "検証 管理者",
+      })
+    ).uid;
+  }
+
+  await db.doc(`users/${adminUid}`).set(
+    {
+      email: ADMIN_EMAIL,
+      name: "検証 管理者",
+      role: "admin",
+      createdAt: new Date().toISOString(),
+    },
+    { merge: true }
+  );
+
   await db.doc(`users/${uid}`).set(
     {
       email: STUDENT_EMAIL,
@@ -71,6 +103,8 @@ async function main() {
       // 機能ゲート（requireFeature）を全部通すため
       plan: "standard",
       documentPackage: { purchased: true },
+      // 管理者APIは managedBy でスコープするので、紐づけないと生徒が見えない
+      managedBy: adminUid,
       createdAt: new Date().toISOString(),
     },
     { merge: true }
@@ -146,8 +180,9 @@ async function main() {
   );
 
   console.log("投入しました。");
-  console.log(`  ログイン: ${STUDENT_EMAIL} / ${STUDENT_PASSWORD}`);
-  console.log(`  uid: ${uid}`);
+  console.log(`  生徒:   ${STUDENT_EMAIL} / ${STUDENT_PASSWORD}  (uid: ${uid})`);
+  console.log(`  管理者: ${ADMIN_EMAIL} / ${ADMIN_PASSWORD}  (uid: ${adminUid})`);
+  console.log(`  /admin/students/${uid}                  … 管理者から見た生徒詳細`);
   console.log("  /student/documents/emu-doc-over-limit   … 字数警告の確認");
   console.log("  /student/documents/emu-doc-placeholder  … プレースホルダー警告の確認");
   console.log("  /student/essay/history                  … 下書きのテーマ名表示");
