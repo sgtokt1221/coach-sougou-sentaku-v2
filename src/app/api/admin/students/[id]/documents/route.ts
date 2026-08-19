@@ -23,6 +23,8 @@ interface DocumentListItem {
     apAlignment?: number;
     structure: number;
     originality: number;
+    /** v4 で追加。旧データには無い */
+    expression?: number;
   };
   aiLikeness?: DocumentAiLikeness;
 }
@@ -80,7 +82,12 @@ export async function GET(
         data.versions?.length > 0
           ? data.versions[data.versions.length - 1]
           : null;
-      const feedback = latestVersion?.feedback;
+      /**
+       * 添削結果は書類本体の feedback に入る（reviewDocumentCore の保存先）。
+       * ここが版の feedback しか見ていなかったため、添削済みでも一覧の
+       * AIスコアが常に空だった。詳細APIと同じ順で見る。
+       */
+      const feedback = data.feedback ?? latestVersion?.feedback;
 
       return {
         id: doc.id,
@@ -105,6 +112,8 @@ export async function GET(
                   : undefined,
               structure: feedback.structureScore,
               originality: feedback.originalityScore,
+              // v4 で追加。総合点の分母に関わるので一覧にも返す
+              expression: feedback.expressionScore,
             }
           : undefined,
         aiLikeness: (data.aiLikeness as DocumentAiLikeness) ?? undefined,

@@ -38,6 +38,10 @@ import { useAuthSWR } from "@/lib/api/swr";
 import { authFetch } from "@/lib/api/client";
 import { DocumentReviewProgress } from "@/components/documents/DocumentReviewProgress";
 import { DocumentImprovements } from "@/components/documents/DocumentImprovements";
+import {
+  DocumentTotalScoreCard,
+  DocumentTotalScoreInline,
+} from "@/components/documents/DocumentTotalScore";
 import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
 import { DocumentReviewBadge } from "@/components/documents/DocumentReviewBadge";
 import { InlineCommentableText } from "@/components/essay/InlineCommentableText";
@@ -82,6 +86,8 @@ interface DocumentListItem {
     apAlignment?: number;
     structure: number;
     originality: number;
+    /** v4 で追加。旧データには無い */
+    expression?: number;
   };
   aiLikeness?: DocumentAiLikeness;
   /** この書類を書いていたときの AIコーチ会話（セクション単位） */
@@ -501,14 +507,10 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
                         </td>
                         <td className="hidden px-4 py-3 text-center md:table-cell">
                           {doc.aiScore ? (
-                            <span className="text-xs">
-                              AP:{doc.aiScore.apAlignment ?? "未評価"} 構成:
-                              {doc.aiScore.structure} 独自:
-                              {doc.aiScore.originality}
-                            </span>
+                            <DocumentTotalScoreInline scores={doc.aiScore} />
                           ) : (
                             <span className="text-muted-foreground text-xs">
-                              -
+                              未添削
                             </span>
                           )}
                           {doc.aiLikeness && (
@@ -698,10 +700,10 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
                                     {v.wordCount} 文字
                                   </span>
                                   {v.aiScore && (
-                                    <span className="ml-2 text-muted-foreground">
-                                      AP:{v.aiScore.apAlignment ?? "—"} 構成:
-                                      {v.aiScore.structure} 独自:
-                                      {v.aiScore.originality}
+                                    <span className="ml-2">
+                                      <DocumentTotalScoreInline
+                                        scores={v.aiScore}
+                                      />
                                     </span>
                                   )}
                                 </span>
@@ -756,48 +758,7 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
                   </div>
                   <DocumentReviewProgress active={aiReviewBusy} />
                   {detailDoc.aiScore ? (
-                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                      {[
-                        {
-                          label: "AP合致度",
-                          value: detailDoc.aiScore.apAlignment,
-                        },
-                        { label: "構成", value: detailDoc.aiScore.structure },
-                        {
-                          label: "独自性",
-                          value: detailDoc.aiScore.originality,
-                        },
-                        // v4 で追加。旧データには無いので、そのときは出さない
-                        ...(typeof detailDoc.aiScore.expression === "number"
-                          ? [{ label: "表現", value: detailDoc.aiScore.expression }]
-                          : []),
-                      ].map((s) => (
-                        <div
-                          key={s.label}
-                          className="rounded-lg border bg-muted/30 p-3 text-center"
-                        >
-                          <div className="text-xs text-muted-foreground">
-                            {s.label}
-                          </div>
-                          <div className="mt-0.5 tabular-nums">
-                            {typeof s.value === "number" ? (
-                              <>
-                                <span className="text-3xl font-bold">
-                                  {s.value}
-                                </span>
-                                <span className="text-sm text-muted-foreground">
-                                  /10
-                                </span>
-                              </>
-                            ) : (
-                              <span className="text-sm text-muted-foreground">
-                                未評価
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                    <DocumentTotalScoreCard scores={detailDoc.aiScore} />
                   ) : (
                     <p className="text-sm text-muted-foreground">
                       まだAI添削が実行されていません。上のボタンから実行できます。

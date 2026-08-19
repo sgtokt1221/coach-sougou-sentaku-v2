@@ -98,6 +98,78 @@ export interface DocumentVersion {
 }
 
 /**
+ * 書類の採点軸と配点。合計40点。
+ *
+ * 小論文の ESSAY_SCORE_WEIGHTS と同じ考え方で、換算をここ1か所に持つ。
+ * 画面ごとに合計の出し方が散ると、同じ書類が場所によって違う点に見える。
+ *
+ * AP合致度を最も重くしているのは、出願書類が「その大学が求める人物像に
+ * 合っているか」を示す書類だから。表現（日本語の正確さ）は内容ではないが、
+ * 提出書類は読み直される前提の文章なので軽くはしない。
+ */
+export const DOCUMENT_SCORE_WEIGHTS = {
+  apAlignment: 12,
+  structure: 10,
+  originality: 9,
+  expression: 9,
+} as const;
+
+export type DocumentScoreAxis = keyof typeof DOCUMENT_SCORE_WEIGHTS;
+
+export interface DocumentTotalScore {
+  /** 加重合計（採点できた軸のみ） */
+  total: number;
+  /** 満点（採点できた軸のみ）。APを取得できない書類では28点になる */
+  max: number;
+  /** 満点に対する割合(%)。ランク判定に使う */
+  percentage: number;
+  /** 採点できなかった軸。画面で「AP未評価」等を出すため */
+  missing: DocumentScoreAxis[];
+}
+
+/**
+ * 総合点を出す。
+ *
+ * APを取得できなかった書類では apAlignmentScore が null になる。その場合は
+ * 分母からも外す（0点として扱うと、大学未設定というだけで低評価になる）。
+ * 旧データには expression が無いので、同じく分母から外す。
+ */
+export function calculateDocumentTotal(
+  scores: Partial<Record<DocumentScoreAxis, number | null | undefined>>
+): DocumentTotalScore {
+  const axes = Object.keys(DOCUMENT_SCORE_WEIGHTS) as DocumentScoreAxis[];
+  let total = 0;
+  let max = 0;
+  const missing: DocumentScoreAxis[] = [];
+
+  for (const axis of axes) {
+    const value = scores[axis];
+    if (typeof value !== "number") {
+      missing.push(axis);
+      continue;
+    }
+    const weight = DOCUMENT_SCORE_WEIGHTS[axis];
+    total += value * (weight / 10);
+    max += weight;
+  }
+
+  return {
+    total: Math.round(total),
+    max,
+    percentage: max > 0 ? Math.round((total / max) * 100) : 0,
+    missing,
+  };
+}
+
+/** 画面に出す軸のラベル */
+export const DOCUMENT_SCORE_LABELS: Record<DocumentScoreAxis, string> = {
+  apAlignment: "AP合致度",
+  structure: "構成",
+  originality: "独自性",
+  expression: "表現",
+};
+
+/**
  * 改善点1件。どこを・何が問題で・どう直すか・直した文の例。
  * 以前は文字列1本で、「具体性を高めましょう」で終わる指摘が混ざっていた。
  */
