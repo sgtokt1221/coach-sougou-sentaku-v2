@@ -9,6 +9,8 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { SCORE_LINES, INTERVIEW_SCORE_LINES } from "@/components/charts/theme";
+import { ESSAY_SCORE_WEIGHTS } from "@/lib/types/essay";
+import { axisPoints } from "@/lib/score-rank";
 
 type ScoreLine = { key: string; label: string; color: string };
 
@@ -21,9 +23,23 @@ interface RadarBlockProps {
   color: string;
   /** 見出しの右に出す現在のスキルランク。チャートと同じ枠に置く */
   rank?: React.ReactNode;
+  /**
+   * 軸ごとの配点。渡すと一覧の分母を配点に揃える（小論文は軸ごとに配点が
+   * 違うため、平均を素点で出すと合計の分母と食い違って見える）。
+   * 面接は軸が均等なので渡さない。
+   */
+  weights?: Record<string, number>;
 }
 
-function RadarBlock({ title, count, averages, lines, color, rank }: RadarBlockProps) {
+function RadarBlock({
+  title,
+  count,
+  averages,
+  lines,
+  color,
+  rank,
+  weights,
+}: RadarBlockProps) {
   /**
    * 未評価(null)の軸はレーダーから外す。0 として描くと「最低評価」に見え、
    * 実際に0点だったデータと区別が付かない（面接の未撮影がこれで潰れていた）。
@@ -33,6 +49,7 @@ function RadarBlock({ title, count, averages, lines, color, rank }: RadarBlockPr
   const data = measured.map((l) => ({
     subject: l.label,
     value: Number((averages[l.key] as number).toFixed(1)),
+    weight: weights?.[l.key],
   }));
   if (data.length === 0) {
     return (
@@ -93,7 +110,9 @@ function RadarBlock({ title, count, averages, lines, color, rank }: RadarBlockPr
             >
               <span className="text-muted-foreground">{d.subject}</span>
               <span className="font-semibold tabular-nums">
-                {d.value.toFixed(1)}/10
+                {d.weight
+                  ? `${axisPoints(d.value, d.weight).toFixed(1)}/${d.weight}`
+                  : `${d.value.toFixed(1)}/10`}
               </span>
             </li>
           ))}
@@ -135,6 +154,7 @@ export function CategoryAverageRadar({
           averages={essayAverages}
           lines={SCORE_LINES}
           color="var(--chart-1)"
+          weights={ESSAY_SCORE_WEIGHTS}
         />
       )}
       {interviewAverages && (
