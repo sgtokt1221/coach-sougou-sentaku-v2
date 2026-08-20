@@ -436,6 +436,9 @@ function SkillRankSummary({
   return (
     <span className="flex items-center gap-1.5">
       <SkillRankBadge rank={aggregate.compositeRank} size="sm" animate={false} />
+      {/* 軸平均の合計ではないので、何の数字かを書く（隣の項目別平均を
+          足した値と一致しない。合成の重みは aggregate 側で決まる） */}
+      <span className="text-[10px] text-muted-foreground">現在の実力</span>
       <span className="text-xs font-medium tabular-nums text-foreground">
         {aggregate.compositeScore}
         <span className="text-muted-foreground">/{maxScore}</span>
