@@ -16,6 +16,7 @@ import { authFetch } from "@/lib/api/client";
 import { CommentableEssayText } from "@/components/essay/CommentableEssayText";
 import { RedPenText } from "@/components/essay/RedPenText";
 import { ESSAY_SCORE_WEIGHTS, type EssayInlineComment } from "@/lib/types/essay";
+import { axisPoints } from "@/lib/score-rank";
 
 interface EssayDetail {
   id: string;
@@ -143,14 +144,11 @@ export default function EssayDetailDialog({
                     if (typeof val !== "number") return null;
                     return (
                       <div key={item.key} className="flex items-center gap-3">
-                        <span className="w-28 text-xs text-muted-foreground">
-                          {item.label}
-                          <span className="ml-1 text-[10px] text-muted-foreground/70">
-                            配点{item.weight}
-                          </span>
-                        </span>
+                        <span className="w-28 text-xs text-muted-foreground">{item.label}</span>
                         <Progress value={val * 10} className="h-2 flex-1" />
-                        <span className="w-8 text-right text-xs font-medium">{val}/10</span>
+                        <span className="w-12 text-right text-xs font-medium tabular-nums">
+                          {axisPoints(val, item.weight).toFixed(1)}/{item.weight}
+                        </span>
                       </div>
                     );
                   })}
@@ -164,7 +162,7 @@ export default function EssayDetailDialog({
                         </span>
                       </span>
                       <Progress value={data.scores.apAlignment * 10} className="h-2 flex-1" />
-                      <span className="w-8 text-right text-xs font-medium text-muted-foreground">
+                      <span className="w-12 text-right text-xs font-medium tabular-nums text-muted-foreground">
                         {data.scores.apAlignment}/10
                       </span>
                     </div>

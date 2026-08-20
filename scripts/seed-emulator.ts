@@ -147,6 +147,17 @@ async function main() {
         type: "志望理由書",
         title: d.title,
         content: d.content,
+        // 添削済みの点（軸ごとの表示が配点換算になっているかの確認用）
+        feedback: {
+          apAlignmentScore: 7,
+          apAlignmentAssessability: "assessable",
+          structureScore: 6,
+          originalityScore: 5,
+          expressionScore: 6,
+          overallFeedback: "志望理由の芯は伝わるが、根拠の具体性が足りない。",
+          improvements: ["体験と学びのつながりを一段掘り下げる"],
+          apSpecificNotes: "APの「主体的に学び続ける意欲」に触れられている。",
+        },
         targetWordCount: 800,
         status: "draft",
         universityId: "ritsumeikan-u",
@@ -160,6 +171,77 @@ async function main() {
       { merge: true }
     );
   }
+
+  // 添削済みの答案（軸ごとのスコア表示の確認用。配点が均等でない軸を含む）
+  await db.doc("essays/emu-essay-reviewed").set(
+    {
+      userId: uid,
+      ocrText:
+        "オンライン教育の可能性は場所や時間に関わらず、インターネット環境があれば質の高い教育を受けられることだ。一方で課題は、通信環境や使う機器によって格差が出てしまうことだ。",
+      targetUniversity: "ritsumeikan-u",
+      targetFaculty: "pharmacy",
+      topic: "オンライン教育の可能性",
+      imageUrl: "",
+      status: "reviewed",
+      submittedAt: new Date(),
+      inputMode: "text",
+      // 5軸とも0-10。合計は配点(12/12/11/5/10)で換算した 22.9 → 23
+      scores: {
+        structure: 5,
+        logic: 5,
+        expression: 4,
+        originality: 5,
+        reasoningMaturity: 4,
+        apAlignment: 5,
+        total: 23,
+      },
+      feedback: {
+        overall:
+          "設問が求める骨格は押さえているが、根拠が一般論にとどまり、比較が並べただけで終わっている。",
+        goodPoints: ["可能性と課題を別段落に分けている"],
+        improvements: ["比較の観点を1つに絞って対比する"],
+        repeatedIssues: [],
+        improvementsSinceLast: [],
+        scoreMaximum: 50,
+      },
+      questionContext: { wordLimit: 800, questionType: "theme" },
+    },
+    { merge: true }
+  );
+
+  // スキルチェック結果（軸ごとのスコア表示の確認用）
+  await db.doc(`users/${uid}/skillChecks/emu-skill-check`).set(
+    {
+      userId: uid,
+      category: "medical",
+      questionId: "emu-question",
+      essayText: "医療従事者の不足について、地域差の観点から論じる。",
+      wordCount: 620,
+      durationSec: 1800,
+      // 5軸とも0-10。合計は配点(12/12/11/5/10)で換算した 26.8 → 27
+      scores: {
+        structure: 6,
+        logic: 5,
+        expression: 6,
+        originality: 4,
+        reasoningMaturity: 5,
+        apAlignment: null,
+        total: 27,
+      },
+      rank: "C",
+      feedback: {
+        overall: "論点は絞れているが、根拠のデータが弱い。",
+        goodPoints: ["地域差という観点を明示できている"],
+        improvements: ["具体的な数値か事例を1つ入れる"],
+        repeatedIssues: [],
+        improvementsSinceLast: [],
+        scoreMaximum: 50,
+      },
+      takenAt: new Date(),
+      version: "v1",
+    },
+    { merge: true }
+  );
 
   // 小論文の下書き（一覧のテーマ名表示の確認用）
   await db.doc(`users/${uid}/essayDrafts/emu-draft-theme`).set(
@@ -186,6 +268,8 @@ async function main() {
   console.log("  /student/documents/emu-doc-over-limit   … 字数警告の確認");
   console.log("  /student/documents/emu-doc-placeholder  … プレースホルダー警告の確認");
   console.log("  /student/essay/history                  … 下書きのテーマ名表示");
+  console.log("  /student/essay/emu-essay-reviewed       … 軸ごとのスコア表示（配点換算）");
+  console.log("  /student/skill-check/emu-skill-check    … スキルチェック結果のスコア表示");
 }
 
 main().catch((err) => {

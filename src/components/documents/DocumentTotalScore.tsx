@@ -4,7 +4,7 @@ import {
   DOCUMENT_SCORE_WEIGHTS,
   type DocumentScoreAxis,
 } from "@/lib/types/document";
-import { getRankFromPercentage, getRankInfo } from "@/lib/score-rank";
+import { axisPoints, getRankFromPercentage, getRankInfo } from "@/lib/score-rank";
 
 /**
  * 書類の総合点とランク。一覧・詳細・生徒画面で同じ換算・同じ見え方にする。
@@ -101,17 +101,16 @@ export function DocumentTotalScoreCard({
           const value = scores[axis];
           return (
             <div key={axis} className="text-xs">
-              <div className="text-muted-foreground">
-                {DOCUMENT_SCORE_LABELS[axis]}
-                <span className="ml-1 text-[10px] opacity-70">
-                  配点{DOCUMENT_SCORE_WEIGHTS[axis]}
-                </span>
-              </div>
+              <div className="text-muted-foreground">{DOCUMENT_SCORE_LABELS[axis]}</div>
               <div className="tabular-nums">
                 {typeof value === "number" ? (
                   <>
-                    <span className="text-lg font-semibold">{value}</span>
-                    <span className="text-muted-foreground">/10</span>
+                    <span className="text-lg font-semibold">
+                      {axisPoints(value, DOCUMENT_SCORE_WEIGHTS[axis]).toFixed(1)}
+                    </span>
+                    <span className="text-muted-foreground">
+                      /{DOCUMENT_SCORE_WEIGHTS[axis]}
+                    </span>
                   </>
                 ) : (
                   <span className="text-muted-foreground">未評価</span>

@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { SkillCheckResult } from "@/lib/types/skill-check";
 import { ESSAY_SCORE_WEIGHTS } from "@/lib/types/essay";
+import { axisPoints } from "@/lib/score-rank";
 import { InlineCommentableText } from "@/components/essay/InlineCommentableText";
 import { ACADEMIC_CATEGORY_LABELS } from "@/lib/types/skill-check";
 import { RANK_META } from "@/lib/skill-check/rank";
@@ -59,7 +60,7 @@ export function SkillCheckResultView({
           </CardHeader>
           <CardContent>
             <SkillRadarChart scores={scores} />
-            {/* 配点は合計50点の中での重み。軸の点は0-10で、合計だけ配点で換算される */}
+            {/* 軸の点は0-10で保存し、表示だけ配点スケール（合計50点の内訳）へ換算する */}
             <dl className="mt-3 grid grid-cols-5 gap-1 text-center text-xs">
               {[
                 { k: "構成", v: scores.structure, w: ESSAY_SCORE_WEIGHTS.structure },
@@ -75,13 +76,10 @@ export function SkillCheckResultView({
               ].map((s) =>
                 typeof s.v !== "number" ? null : (
                   <div key={s.k} className="min-w-0">
-                    <dt className="min-w-0 break-words text-muted-foreground">
-                      {s.k}
-                      <span className="ml-0.5 text-[10px] text-muted-foreground/70">
-                        配点{s.w}
-                      </span>
-                    </dt>
-                    <dd className="font-semibold tabular-nums">{s.v}/10</dd>
+                    <dt className="min-w-0 break-words text-muted-foreground">{s.k}</dt>
+                    <dd className="font-semibold tabular-nums">
+                      {axisPoints(s.v, s.w).toFixed(1)}/{s.w}
+                    </dd>
                   </div>
                 )
               )}

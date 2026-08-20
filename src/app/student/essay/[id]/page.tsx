@@ -56,7 +56,7 @@ import type {
   TaskFulfillment,
   ClaimCheck,
 } from "@/lib/types/essay";
-import { getRankFromPercentage, getScorePercentage } from "@/lib/score-rank";
+import { axisPoints, getRankFromPercentage, getScorePercentage } from "@/lib/score-rank";
 
 interface EssayScores {
   structure: number;
@@ -364,7 +364,7 @@ export default function EssayResultPage() {
   const rank = getRankFromPercentage(percentage);
 
   // 合計に入る5軸。旧データに無い軸は描かない（0 として凹ませない）
-  // weight は合計50点の中での配点。軸の点は0-10で、合計だけ配点で換算される
+  // weight は合計50点の中での配点。軸の点は0-10で保存し、表示だけ配点へ換算する
   const radarData = [
     {
       subject: "構成",
@@ -561,9 +561,6 @@ export default function EssayResultPage() {
                     >
                       <span className="text-sm font-medium text-slate-700">
                         {item.subject}
-                        <span className="ml-1.5 text-xs font-normal text-slate-400">
-                          配点{item.weight}
-                        </span>
                       </span>
                       <div className="flex items-center gap-2">
                         <div className="h-2 w-20 overflow-hidden rounded-full bg-slate-100">
@@ -572,8 +569,11 @@ export default function EssayResultPage() {
                             style={{ width: `${(item.value / 10) * 100}%` }}
                           />
                         </div>
-                        <span className="min-w-[2rem] text-right text-sm font-bold text-slate-900 tabular-nums">
-                          {item.value}
+                        <span className="min-w-[3.5rem] text-right text-sm font-bold text-slate-900 tabular-nums">
+                          {axisPoints(item.value, item.weight).toFixed(1)}
+                          <span className="text-xs font-normal text-slate-400">
+                            /{item.weight}
+                          </span>
                         </span>
                       </div>
                     </div>
@@ -598,8 +598,9 @@ export default function EssayResultPage() {
                             style={{ width: `${(item.value / 10) * 100}%` }}
                           />
                         </div>
-                        <span className="min-w-[2rem] text-right text-sm font-bold text-slate-500 tabular-nums">
+                        <span className="min-w-[3.5rem] text-right text-sm font-bold text-slate-500 tabular-nums">
                           {item.value}
+                          <span className="text-xs font-normal text-slate-400">/10</span>
                         </span>
                       </div>
                     </div>

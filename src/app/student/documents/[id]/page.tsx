@@ -41,12 +41,15 @@ import type {
   DocumentFeedback,
   DocumentStatus,
   DocumentAiLikeness,
+  DocumentScoreAxis,
 } from "@/lib/types/document";
 import {
   documentStatusLabel2,
   AI_LIKENESS_LEVEL_LABELS,
   AI_LIKENESS_SUBMIT_THRESHOLD,
+  DOCUMENT_SCORE_WEIGHTS,
 } from "@/lib/types/document";
+import { axisPoints } from "@/lib/score-rank";
 import type { EssayInlineComment } from "@/lib/types/essay";
 import { DocumentReviewBadge } from "@/components/documents/DocumentReviewBadge";
 import { MobileSlideOverPanel } from "@/components/shared/MobileSlideOverPanel";
@@ -70,22 +73,27 @@ function statusVariant2(status: DocumentStatus): "outline" | "default" {
   return status === "draft" ? "outline" : "default";
 }
 
+/**
+ * 軸ごとの点。分母はその軸の配点に揃える（0-10 の素点で出すと、すぐ上の
+ * 総合点カードや合計と分母が食い違って見える）。
+ */
 function ScoreBar({
   label,
   score,
-  max = 10,
+  axis,
 }: {
   label: string;
   score: number;
-  max?: number;
+  axis: DocumentScoreAxis;
 }) {
-  const pct = Math.round((score / max) * 100);
+  const weight = DOCUMENT_SCORE_WEIGHTS[axis];
+  const pct = Math.round(score * 10);
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between text-sm">
         <span>{label}</span>
-        <span className="font-medium">
-          {score}/{max}
+        <span className="font-medium tabular-nums">
+          {axisPoints(score, weight).toFixed(1)}/{weight}
         </span>
       </div>
       <div className="bg-muted h-2 w-full rounded-full">
@@ -910,13 +918,14 @@ function ReviewPanel({
                   <ScoreBar
                     label="AP合致度"
                     score={feedback.apAlignmentScore}
+                    axis="apAlignment"
                   />
                 )}
-                <ScoreBar label="構成" score={feedback.structureScore} />
-                <ScoreBar label="独自性" score={feedback.originalityScore} />
+                <ScoreBar label="構成" score={feedback.structureScore} axis="structure" />
+                <ScoreBar label="独自性" score={feedback.originalityScore} axis="originality" />
                 {/* v4 で追加。旧データには無いので、あるときだけ出す */}
                 {typeof feedback.expressionScore === "number" && (
-                  <ScoreBar label="表現" score={feedback.expressionScore} />
+                  <ScoreBar label="表現" score={feedback.expressionScore} axis="expression" />
                 )}
               </div>
 

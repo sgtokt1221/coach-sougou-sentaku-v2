@@ -94,6 +94,7 @@ import {
   type Essay,
   type EssayFeedback,
 } from "@/lib/types/essay";
+import { axisPoints } from "@/lib/score-rank";
 import type { WeaknessRecord } from "@/lib/types/growth";
 import { getWeaknessReminderLevel } from "@/lib/types/growth";
 import { UniversitySelectStep } from "@/components/onboarding/UniversitySelectStep";
@@ -1665,16 +1666,13 @@ function AdminStudentDetailPageInner() {
                       if (typeof val !== "number") return null;
                       return (
                         <div key={item.key} className="flex items-center gap-3">
-                          <span className="w-28 text-xs text-muted-foreground">
-                            {item.label}
-                            <span className="ml-1 text-[10px] text-muted-foreground/70">
-                              配点{item.weight}
-                            </span>
-                          </span>
+                          <span className="w-28 text-xs text-muted-foreground">{item.label}</span>
                           <div className="flex-1">
                             <Progress value={val * 10} className="h-2" />
                           </div>
-                          <span className="w-8 text-right text-xs font-medium">{val}/10</span>
+                          <span className="w-12 text-right text-xs font-medium tabular-nums">
+                            {axisPoints(val, item.weight).toFixed(1)}/{item.weight}
+                          </span>
                         </div>
                       );
                     })}
@@ -1691,7 +1689,7 @@ function AdminStudentDetailPageInner() {
                           <div className="flex-1">
                             <Progress value={essayDetail.scores.apAlignment * 10} className="h-2" />
                           </div>
-                          <span className="w-8 text-right text-xs font-medium text-muted-foreground">
+                          <span className="w-12 text-right text-xs font-medium tabular-nums text-muted-foreground">
                             {essayDetail.scores.apAlignment}/10
                           </span>
                         </div>

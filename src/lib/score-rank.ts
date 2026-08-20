@@ -80,3 +80,14 @@ export function getRankInfo(rank: ScoreRank): RankInfo {
 export function getScorePercentage(score: number, max: number): number {
   return Math.round((score / max) * 100);
 }
+
+/**
+ * 0-10 で採点した軸を、その軸の配点スケールへ換算した表示用の点。
+ *
+ * 画面では分母を配点に揃える。「5/10」の横に「配点12」を出すと分母が2つ
+ * あるように見え、軸を足しても合計にならないように読めるため。
+ * 保存されるスコアもレーダーチャートも 0-10 のまま。
+ */
+export function axisPoints(score: number, weight: number): number {
+  return Math.round(score * weight) / 10;
+}
