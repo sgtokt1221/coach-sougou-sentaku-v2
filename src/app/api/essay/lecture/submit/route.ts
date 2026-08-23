@@ -8,6 +8,7 @@ import {
 } from "@/lib/essay/review-core";
 import { analyzeGrowth, updateWeaknessRecords } from "@/lib/growth/analyze";
 import { getLectureById } from "@/data/essay-lectures";
+import { getEssayBlock } from "@/lib/types/essay-block";
 import type { WeaknessRecord } from "@/lib/types/growth";
 import type { EssayScores, EssayFeedback } from "@/lib/types/essay";
 
@@ -125,7 +126,15 @@ export async function POST(request: NextRequest) {
     const essayId = `essay_lec_${lecture.id}_${Date.now()}`;
     const essayRef = adminDb.doc(`essays/${essayId}`);
     const topic = `小論文講座: ${lecture.title}`;
-    const lectureInfo = `講義「${lecture.title}」の関連問題。重点的に評価する観点: ${lecture.exercise.focusPoints.join("、")}。設問: ${lecture.exercise.prompt}`;
+    const block = lecture.exercise.blockId
+      ? getEssayBlock(lecture.exercise.blockId)
+      : null;
+    // 型のどのブロックを書かせたかを AI に伝える。ブロック1つだけの課題を
+    // 完成答案として採点すると、構成が「途中で終わっている」と減点される。
+    const blockInfo = block
+      ? `この回答は答案全体ではなく、型の「${block.label}」ブロックだけを書く課題である（役割: ${block.role}）。完成答案として不足がある点は減点せず、このブロックとしての出来を見ること。`
+      : "この回答は答案全体である。";
+    const lectureInfo = `講義「${lecture.title}」の関連問題。${blockInfo}重点的に評価する観点: ${lecture.exercise.focusPoints.join("、")}。設問: ${lecture.exercise.prompt}`;
 
     await essayRef.set({
       userId: uid,
