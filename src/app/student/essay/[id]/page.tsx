@@ -234,6 +234,11 @@ export default function EssayResultPage() {
     "overview" | "redpen" | "weaknesses" | "brushup" | "insights"
   >("overview");
   const [generatingBrushup, setGeneratingBrushup] = useState(false);
+  /**
+   * 既定は畳んでおく。点とランクだけ見て閉じる生徒が多く、講評が読まれていなかった。
+   * 上に要点を2つだけ出し、読む気になった人が開く形にする。
+   */
+  const [showDetails, setShowDetails] = useState(false);
   const [deepDive, setDeepDive] = useState<EssayDeepDive | undefined>();
   const [generatingDeepDive, setGeneratingDeepDive] = useState(false);
 
@@ -666,6 +671,45 @@ export default function EssayResultPage() {
           </Card>
         </div>
 
+        {/* 既定はここまで。点だけ見て閉じられないよう、要点を2つだけ先に出す */}
+        <Card className="mb-6">
+          <CardContent className="space-y-4 p-5">
+            {result.feedback.overall && (
+              <div className="space-y-1.5">
+                <p className="text-muted-foreground text-xs font-semibold">
+                  今回の一言
+                </p>
+                <p className="text-[0.95rem] leading-relaxed">
+                  {result.feedback.overall}
+                </p>
+              </div>
+            )}
+            {result.feedback.priorityImprovement && (
+              <div className="border-primary/50 space-y-1.5 border-l-2 pl-4">
+                <p className="text-primary text-xs font-semibold">
+                  次にやること
+                </p>
+                <p className="text-[0.95rem] leading-relaxed">
+                  {result.feedback.priorityImprovement}
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <div className="mb-6 flex justify-center">
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => setShowDetails((v) => !v)}
+          >
+            {showDetails ? "閉じる" : "詳しく見る"}
+            <ChevronDown
+              className={`ml-1 size-4 transition-transform ${showDetails ? "rotate-180" : ""}`}
+            />
+          </Button>
+        </div>
+
         {/* 前回比サマリー (再トライ時のみ) */}
         {result.retryComparison && (
           <div className="mb-8">
@@ -700,7 +744,7 @@ export default function EssayResultPage() {
         </div>
 
         {/* 繰り返し弱点を目立たせるカード */}
-        {(result.feedback.repeatedIssues ?? []).length > 0 && (
+        {showDetails && (result.feedback.repeatedIssues ?? []).length > 0 && (
           <Card className="mb-8 border-0 border-rose-200 bg-gradient-to-r from-rose-50 to-rose-100/60 shadow-lg">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2 text-lg tracking-tight text-rose-700">
@@ -773,551 +817,648 @@ export default function EssayResultPage() {
         )}
 
         {/* タブ式コンテンツエリア - PC では 2カラム */}
-        <div className="lg:grid lg:grid-cols-[280px_1fr] lg:gap-8">
-          {/* PC用ナビゲーション */}
-          <div className="hidden lg:block">
-            <div className="sticky top-4 max-h-[calc(100vh-2rem)] space-y-2 overflow-y-auto">
-              <div className="space-y-1">
-                <button
-                  onClick={() =>
-                    document
-                      .getElementById("overview-section")
-                      ?.scrollIntoView({ behavior: "smooth" })
-                  }
-                  className="w-full rounded-lg px-3 py-2 text-left text-sm font-medium tracking-tight text-slate-700 transition-all hover:bg-slate-100"
-                >
-                  概要
-                </button>
-                <button
-                  onClick={() =>
-                    document
-                      .getElementById("redpen-section")
-                      ?.scrollIntoView({ behavior: "smooth" })
-                  }
-                  className="w-full rounded-lg px-3 py-2 text-left text-sm font-medium tracking-tight text-slate-700 transition-all hover:bg-slate-100"
-                >
-                  赤ペン添削
-                </button>
-                <button
-                  onClick={() =>
-                    document
-                      .getElementById("weaknesses-section")
-                      ?.scrollIntoView({ behavior: "smooth" })
-                  }
-                  className="w-full rounded-lg px-3 py-2 text-left text-sm font-medium tracking-tight text-slate-700 transition-all hover:bg-slate-100"
-                >
-                  弱点分析
-                </button>
-                <button
-                  onClick={() =>
-                    document
-                      .getElementById("brushup-section")
-                      ?.scrollIntoView({ behavior: "smooth" })
-                  }
-                  className="w-full rounded-lg px-3 py-2 text-left text-sm font-medium tracking-tight text-slate-700 transition-all hover:bg-slate-100"
-                >
-                  ブラッシュアップ
-                </button>
-                <button
-                  onClick={() =>
-                    document
-                      .getElementById("insights-section")
-                      ?.scrollIntoView({ behavior: "smooth" })
-                  }
-                  className="w-full rounded-lg px-3 py-2 text-left text-sm font-medium tracking-tight text-slate-700 transition-all hover:bg-slate-100"
-                >
-                  深掘り洞察
-                </button>
+        {showDetails && (
+          <div className="lg:grid lg:grid-cols-[280px_1fr] lg:gap-8">
+            {/* PC用ナビゲーション */}
+            <div className="hidden lg:block">
+              <div className="sticky top-4 max-h-[calc(100vh-2rem)] space-y-2 overflow-y-auto">
+                <div className="space-y-1">
+                  <button
+                    onClick={() =>
+                      document
+                        .getElementById("overview-section")
+                        ?.scrollIntoView({ behavior: "smooth" })
+                    }
+                    className="w-full rounded-lg px-3 py-2 text-left text-sm font-medium tracking-tight text-slate-700 transition-all hover:bg-slate-100"
+                  >
+                    概要
+                  </button>
+                  <button
+                    onClick={() =>
+                      document
+                        .getElementById("redpen-section")
+                        ?.scrollIntoView({ behavior: "smooth" })
+                    }
+                    className="w-full rounded-lg px-3 py-2 text-left text-sm font-medium tracking-tight text-slate-700 transition-all hover:bg-slate-100"
+                  >
+                    赤ペン添削
+                  </button>
+                  <button
+                    onClick={() =>
+                      document
+                        .getElementById("weaknesses-section")
+                        ?.scrollIntoView({ behavior: "smooth" })
+                    }
+                    className="w-full rounded-lg px-3 py-2 text-left text-sm font-medium tracking-tight text-slate-700 transition-all hover:bg-slate-100"
+                  >
+                    弱点分析
+                  </button>
+                  <button
+                    onClick={() =>
+                      document
+                        .getElementById("brushup-section")
+                        ?.scrollIntoView({ behavior: "smooth" })
+                    }
+                    className="w-full rounded-lg px-3 py-2 text-left text-sm font-medium tracking-tight text-slate-700 transition-all hover:bg-slate-100"
+                  >
+                    ブラッシュアップ
+                  </button>
+                  <button
+                    onClick={() =>
+                      document
+                        .getElementById("insights-section")
+                        ?.scrollIntoView({ behavior: "smooth" })
+                    }
+                    className="w-full rounded-lg px-3 py-2 text-left text-sm font-medium tracking-tight text-slate-700 transition-all hover:bg-slate-100"
+                  >
+                    深掘り洞察
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* コンテンツ */}
-          <div className="lg:hidden">
-            <div className="space-y-6">
-              <SegmentControl
-                value={tab}
-                onChange={setTab}
-                fullWidth
-                size="sm"
-                options={[
-                  { id: "overview", label: "概要" },
-                  { id: "redpen", label: "赤ペン" },
-                  { id: "weaknesses", label: "弱点" },
-                  { id: "brushup", label: "ブラッシュ" },
-                  { id: "insights", label: "洞察" },
-                ]}
-              />
+            {/* コンテンツ */}
+            <div className="lg:hidden">
+              <div className="space-y-6">
+                <SegmentControl
+                  value={tab}
+                  onChange={setTab}
+                  fullWidth
+                  size="sm"
+                  options={[
+                    { id: "overview", label: "概要" },
+                    { id: "redpen", label: "赤ペン" },
+                    { id: "weaknesses", label: "弱点" },
+                    { id: "brushup", label: "ブラッシュ" },
+                    { id: "insights", label: "洞察" },
+                  ]}
+                />
 
-              {tab === "overview" && (
-                <div id="overview-section">
-                  {/* 全体講評 */}
-                  <Card className="border-0 bg-gradient-to-br from-sky-50 via-indigo-50 to-purple-50 shadow-lg">
-                    <CardHeader className="pb-4">
-                      <CardTitle className="flex items-center gap-2 text-xl tracking-tight text-slate-800">
-                        <MessageSquare className="size-6 text-sky-600" />
-                        全体講評
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="rounded-xl border border-sky-200 bg-white/70 p-6">
-                        <p className="text-sm leading-relaxed font-medium text-slate-800">
-                          {result.feedback.overall}
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* 定量分析 */}
-                  {result.feedback.quantitativeAnalysis &&
-                    (() => {
-                      const qa = result.feedback.quantitativeAnalysis;
-                      return (
-                        <Card className="border-0 bg-white/70 shadow-md backdrop-blur-sm">
-                          <CardHeader className="pb-4">
-                            <CardTitle className="flex items-center gap-2 text-lg tracking-tight text-slate-800">
-                              <BarChart3 className="size-5 text-sky-600" />
-                              定量分析
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent className="space-y-6">
-                            {/* 字数進捗 */}
-                            {qa.wordLimit && (
-                              <div className="rounded-xl border border-sky-100 bg-gradient-to-r from-sky-50 to-indigo-50 p-4">
-                                <div className="mb-3 flex items-center justify-between">
-                                  <span className="font-medium text-slate-800">
-                                    字数
-                                  </span>
-                                  <span className="text-sm font-semibold text-sky-700 tabular-nums">
-                                    {qa.wordCount} / {qa.wordLimit}字 (
-                                    {qa.fillRate}%)
-                                  </span>
-                                </div>
-                                <div className="h-3 overflow-hidden rounded-full bg-white/60">
-                                  <div
-                                    className="h-full rounded-full transition-all duration-500"
-                                    style={{
-                                      width: `${Math.min(qa.fillRate ?? 0, 100)}%`,
-                                      backgroundColor:
-                                        (qa.fillRate ?? 0) >= 90
-                                          ? "#10b981"
-                                          : (qa.fillRate ?? 0) >= 80
-                                            ? "#f59e0b"
-                                            : "#f43f5e",
-                                    }}
-                                  />
-                                </div>
-                              </div>
-                            )}
-
-                            {/* 統計グリッド */}
-                            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-                              <div className="rounded-xl border border-slate-200 bg-white/60 p-4 text-center transition-all hover:shadow-md">
-                                <p className="text-2xl font-bold text-slate-900 tabular-nums">
-                                  {qa.evidenceCount}
-                                </p>
-                                <p className="text-muted-foreground mt-1 text-xs">
-                                  根拠・具体例
-                                </p>
-                                {qa.evidenceCount < 2 && (
-                                  <p className="mt-1 text-xs font-medium text-amber-600">
-                                    2個以上推奨
-                                  </p>
-                                )}
-                              </div>
-                              <div className="rounded-xl border border-slate-200 bg-white/60 p-4 text-center transition-all hover:shadow-md">
-                                <p className="text-2xl font-bold text-slate-900 tabular-nums">
-                                  {qa.connectorVariety}
-                                </p>
-                                <p className="text-muted-foreground mt-1 text-xs">
-                                  接続詞の種類
-                                </p>
-                                {qa.connectorVariety < 4 && (
-                                  <p className="mt-1 text-xs font-medium text-amber-600">
-                                    4種以上が理想
-                                  </p>
-                                )}
-                              </div>
-                              <div className="rounded-xl border border-slate-200 bg-white/60 p-4 text-center transition-all hover:shadow-md">
-                                <p className="text-2xl font-bold text-slate-900 tabular-nums">
-                                  {qa.sentenceCount}
-                                </p>
-                                <p className="text-muted-foreground mt-1 text-xs">
-                                  文の数
-                                </p>
-                              </div>
-                              <div className="rounded-xl border border-slate-200 bg-white/60 p-4 text-center transition-all hover:shadow-md">
-                                <p className="text-2xl font-bold text-slate-900 tabular-nums">
-                                  {qa.paragraphCount}
-                                </p>
-                                <p className="text-muted-foreground mt-1 text-xs">
-                                  段落数
-                                </p>
-                              </div>
-                            </div>
-
-                            {/* 段落構成ビジュアル */}
-                            <div className="rounded-xl border border-purple-100 bg-gradient-to-r from-purple-50 to-pink-50 p-4">
-                              <p className="mb-3 text-sm font-medium text-slate-800">
-                                段落構成バランス
-                              </p>
-                              <div className="flex h-6 overflow-hidden rounded-full shadow-inner">
-                                <div
-                                  className="flex items-center justify-center bg-gradient-to-r from-sky-400 to-sky-500 text-xs font-medium text-white"
-                                  style={{
-                                    width: `${qa.paragraphRatio.intro}%`,
-                                  }}
-                                  title={`序論 ${qa.paragraphRatio.intro}%`}
-                                >
-                                  {qa.paragraphRatio.intro > 15 && "序論"}
-                                </div>
-                                <div
-                                  className="flex items-center justify-center bg-gradient-to-r from-emerald-400 to-emerald-500 text-xs font-medium text-white"
-                                  style={{
-                                    width: `${qa.paragraphRatio.body}%`,
-                                  }}
-                                  title={`本論 ${qa.paragraphRatio.body}%`}
-                                >
-                                  {qa.paragraphRatio.body > 20 && "本論"}
-                                </div>
-                                <div
-                                  className="flex items-center justify-center bg-gradient-to-r from-purple-400 to-purple-500 text-xs font-medium text-white"
-                                  style={{
-                                    width: `${qa.paragraphRatio.conclusion}%`,
-                                  }}
-                                  title={`結論 ${qa.paragraphRatio.conclusion}%`}
-                                >
-                                  {qa.paragraphRatio.conclusion > 15 && "結論"}
-                                </div>
-                              </div>
-                              <div className="mt-2 flex justify-between text-xs text-slate-600 tabular-nums">
-                                <span>序論 {qa.paragraphRatio.intro}%</span>
-                                <span>本論 {qa.paragraphRatio.body}%</span>
-                                <span>
-                                  結論 {qa.paragraphRatio.conclusion}%
-                                </span>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })()}
-                </div>
-              )}
-
-              {tab === "redpen" && (
-                <div id="redpen-section">
-                  {result.feedback.languageCorrections &&
-                  result.feedback.languageCorrections.length > 0 ? (
-                    <Card className="border-0 bg-white/80 shadow-lg backdrop-blur-sm">
+                {tab === "overview" && (
+                  <div id="overview-section">
+                    {/* 全体講評 */}
+                    <Card className="border-0 bg-gradient-to-br from-sky-50 via-indigo-50 to-purple-50 shadow-lg">
                       <CardHeader className="pb-4">
-                        <CardTitle className="flex items-center gap-2 text-xl tracking-tight text-rose-700">
-                          <SpellCheck className="size-6" />
-                          赤ペン添削
-                          <Badge variant="secondary" className="ml-2 text-xs">
-                            {result.feedback.languageCorrections.length}
-                            件の修正案
-                          </Badge>
+                        <CardTitle className="flex items-center gap-2 text-xl tracking-tight text-slate-800">
+                          <MessageSquare className="size-6 text-sky-600" />
+                          全体講評
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <RedPenText
-                          text={result.ocrText ?? ""}
-                          corrections={result.feedback.languageCorrections}
-                        />
+                        <div className="rounded-xl border border-sky-200 bg-white/70 p-6">
+                          <p className="text-sm leading-relaxed font-medium text-slate-800">
+                            {result.feedback.overall}
+                          </p>
+                        </div>
                       </CardContent>
                     </Card>
-                  ) : (
-                    <Card className="border-0 bg-gradient-to-br from-emerald-50 to-emerald-100/60 shadow-md">
-                      <CardContent className="p-8 text-center">
-                        <CheckCircle className="mx-auto mb-3 size-12 text-emerald-500" />
-                        <h3 className="mb-2 text-lg font-semibold tracking-tight text-emerald-800">
-                          素晴らしい文章です！
-                        </h3>
-                        <p className="text-sm text-emerald-700">
-                          言語的な修正点は見つかりませんでした。表現力と文法の正確性が高く評価されます。
-                        </p>
-                      </CardContent>
-                    </Card>
-                  )}
-                </div>
-              )}
 
-              {tab === "weaknesses" && (
-                <div id="weaknesses-section" className="space-y-6">
-                  {/* 2カラムレイアウト: 良い点 & 改善点 */}
-                  <div className="grid gap-6 lg:grid-cols-2">
-                    {/* 良い点 */}
-                    {(result.feedback.goodPoints ?? []).length > 0 && (
-                      <Card className="border-0 bg-gradient-to-br from-emerald-50 to-emerald-100/60 shadow-md">
+                    {/* 定量分析 */}
+                    {result.feedback.quantitativeAnalysis &&
+                      (() => {
+                        const qa = result.feedback.quantitativeAnalysis;
+                        return (
+                          <Card className="border-0 bg-white/70 shadow-md backdrop-blur-sm">
+                            <CardHeader className="pb-4">
+                              <CardTitle className="flex items-center gap-2 text-lg tracking-tight text-slate-800">
+                                <BarChart3 className="size-5 text-sky-600" />
+                                定量分析
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                              {/* 字数進捗 */}
+                              {qa.wordLimit && (
+                                <div className="rounded-xl border border-sky-100 bg-gradient-to-r from-sky-50 to-indigo-50 p-4">
+                                  <div className="mb-3 flex items-center justify-between">
+                                    <span className="font-medium text-slate-800">
+                                      字数
+                                    </span>
+                                    <span className="text-sm font-semibold text-sky-700 tabular-nums">
+                                      {qa.wordCount} / {qa.wordLimit}字 (
+                                      {qa.fillRate}%)
+                                    </span>
+                                  </div>
+                                  <div className="h-3 overflow-hidden rounded-full bg-white/60">
+                                    <div
+                                      className="h-full rounded-full transition-all duration-500"
+                                      style={{
+                                        width: `${Math.min(qa.fillRate ?? 0, 100)}%`,
+                                        backgroundColor:
+                                          (qa.fillRate ?? 0) >= 90
+                                            ? "#10b981"
+                                            : (qa.fillRate ?? 0) >= 80
+                                              ? "#f59e0b"
+                                              : "#f43f5e",
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* 統計グリッド */}
+                              <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+                                <div className="rounded-xl border border-slate-200 bg-white/60 p-4 text-center transition-all hover:shadow-md">
+                                  <p className="text-2xl font-bold text-slate-900 tabular-nums">
+                                    {qa.evidenceCount}
+                                  </p>
+                                  <p className="text-muted-foreground mt-1 text-xs">
+                                    根拠・具体例
+                                  </p>
+                                  {qa.evidenceCount < 2 && (
+                                    <p className="mt-1 text-xs font-medium text-amber-600">
+                                      2個以上推奨
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="rounded-xl border border-slate-200 bg-white/60 p-4 text-center transition-all hover:shadow-md">
+                                  <p className="text-2xl font-bold text-slate-900 tabular-nums">
+                                    {qa.connectorVariety}
+                                  </p>
+                                  <p className="text-muted-foreground mt-1 text-xs">
+                                    接続詞の種類
+                                  </p>
+                                  {qa.connectorVariety < 4 && (
+                                    <p className="mt-1 text-xs font-medium text-amber-600">
+                                      4種以上が理想
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="rounded-xl border border-slate-200 bg-white/60 p-4 text-center transition-all hover:shadow-md">
+                                  <p className="text-2xl font-bold text-slate-900 tabular-nums">
+                                    {qa.sentenceCount}
+                                  </p>
+                                  <p className="text-muted-foreground mt-1 text-xs">
+                                    文の数
+                                  </p>
+                                </div>
+                                <div className="rounded-xl border border-slate-200 bg-white/60 p-4 text-center transition-all hover:shadow-md">
+                                  <p className="text-2xl font-bold text-slate-900 tabular-nums">
+                                    {qa.paragraphCount}
+                                  </p>
+                                  <p className="text-muted-foreground mt-1 text-xs">
+                                    段落数
+                                  </p>
+                                </div>
+                              </div>
+
+                              {/* 段落構成ビジュアル */}
+                              <div className="rounded-xl border border-purple-100 bg-gradient-to-r from-purple-50 to-pink-50 p-4">
+                                <p className="mb-3 text-sm font-medium text-slate-800">
+                                  段落構成バランス
+                                </p>
+                                <div className="flex h-6 overflow-hidden rounded-full shadow-inner">
+                                  <div
+                                    className="flex items-center justify-center bg-gradient-to-r from-sky-400 to-sky-500 text-xs font-medium text-white"
+                                    style={{
+                                      width: `${qa.paragraphRatio.intro}%`,
+                                    }}
+                                    title={`序論 ${qa.paragraphRatio.intro}%`}
+                                  >
+                                    {qa.paragraphRatio.intro > 15 && "序論"}
+                                  </div>
+                                  <div
+                                    className="flex items-center justify-center bg-gradient-to-r from-emerald-400 to-emerald-500 text-xs font-medium text-white"
+                                    style={{
+                                      width: `${qa.paragraphRatio.body}%`,
+                                    }}
+                                    title={`本論 ${qa.paragraphRatio.body}%`}
+                                  >
+                                    {qa.paragraphRatio.body > 20 && "本論"}
+                                  </div>
+                                  <div
+                                    className="flex items-center justify-center bg-gradient-to-r from-purple-400 to-purple-500 text-xs font-medium text-white"
+                                    style={{
+                                      width: `${qa.paragraphRatio.conclusion}%`,
+                                    }}
+                                    title={`結論 ${qa.paragraphRatio.conclusion}%`}
+                                  >
+                                    {qa.paragraphRatio.conclusion > 15 &&
+                                      "結論"}
+                                  </div>
+                                </div>
+                                <div className="mt-2 flex justify-between text-xs text-slate-600 tabular-nums">
+                                  <span>序論 {qa.paragraphRatio.intro}%</span>
+                                  <span>本論 {qa.paragraphRatio.body}%</span>
+                                  <span>
+                                    結論 {qa.paragraphRatio.conclusion}%
+                                  </span>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      })()}
+                  </div>
+                )}
+
+                {tab === "redpen" && (
+                  <div id="redpen-section">
+                    {result.feedback.languageCorrections &&
+                    result.feedback.languageCorrections.length > 0 ? (
+                      <Card className="border-0 bg-white/80 shadow-lg backdrop-blur-sm">
                         <CardHeader className="pb-4">
-                          <CardTitle className="flex items-center gap-2 text-lg tracking-tight text-emerald-700">
-                            <CheckCircle className="size-5" />
-                            良い点
+                          <CardTitle className="flex items-center gap-2 text-xl tracking-tight text-rose-700">
+                            <SpellCheck className="size-6" />
+                            赤ペン添削
+                            <Badge variant="secondary" className="ml-2 text-xs">
+                              {result.feedback.languageCorrections.length}
+                              件の修正案
+                            </Badge>
                           </CardTitle>
                         </CardHeader>
                         <CardContent>
-                          <ul className="space-y-3">
-                            {(result.feedback.goodPoints ?? []).map(
-                              (point, i) => (
-                                <li key={i} className="flex items-start gap-3">
-                                  <div className="mt-0.5 rounded-full bg-emerald-200 p-1">
-                                    <CheckCircle className="size-3 text-emerald-700" />
-                                  </div>
-                                  <span className="text-sm leading-relaxed text-slate-800">
-                                    {point}
-                                  </span>
-                                </li>
-                              )
-                            )}
-                          </ul>
+                          <RedPenText
+                            text={result.ocrText ?? ""}
+                            corrections={result.feedback.languageCorrections}
+                          />
+                        </CardContent>
+                      </Card>
+                    ) : (
+                      <Card className="border-0 bg-gradient-to-br from-emerald-50 to-emerald-100/60 shadow-md">
+                        <CardContent className="p-8 text-center">
+                          <CheckCircle className="mx-auto mb-3 size-12 text-emerald-500" />
+                          <h3 className="mb-2 text-lg font-semibold tracking-tight text-emerald-800">
+                            素晴らしい文章です！
+                          </h3>
+                          <p className="text-sm text-emerald-700">
+                            言語的な修正点は見つかりませんでした。表現力と文法の正確性が高く評価されます。
+                          </p>
                         </CardContent>
                       </Card>
                     )}
+                  </div>
+                )}
 
-                    <TaskFulfillmentCard
-                      task={result.feedback.taskFulfillment}
-                    />
-                    <ClaimChecksCard claims={result.feedback.claimChecks} />
-
-                    {/* 改善点 */}
-                    <div className="space-y-4">
-                      {/* 最優先改善ポイント */}
-                      {result.feedback.priorityImprovement && (
-                        <Card className="border-0 bg-gradient-to-br from-amber-50 to-amber-100/60 shadow-md">
-                          <CardContent className="p-4">
-                            <div className="flex items-start gap-3">
-                              <div className="rounded-full bg-amber-200 p-1.5">
-                                <Star className="size-4 text-amber-700" />
-                              </div>
-                              <div>
-                                <p className="mb-2 text-sm font-semibold tracking-tight text-amber-800">
-                                  最優先の改善ポイント
-                                </p>
-                                <p className="text-sm leading-relaxed text-amber-700">
-                                  {result.feedback.priorityImprovement}
-                                </p>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )}
-
-                      {/* 一般的な改善点 */}
-                      {shownImprovements.length > 0 && (
-                        <Card className="border-0 bg-gradient-to-br from-amber-50 to-amber-100/60 shadow-md">
+                {tab === "weaknesses" && (
+                  <div id="weaknesses-section" className="space-y-6">
+                    {/* 2カラムレイアウト: 良い点 & 改善点 */}
+                    <div className="grid gap-6 lg:grid-cols-2">
+                      {/* 良い点 */}
+                      {(result.feedback.goodPoints ?? []).length > 0 && (
+                        <Card className="border-0 bg-gradient-to-br from-emerald-50 to-emerald-100/60 shadow-md">
                           <CardHeader className="pb-4">
-                            <CardTitle className="flex items-center gap-2 text-lg tracking-tight text-amber-700">
-                              <AlertTriangle className="size-5" />
-                              改善点
+                            <CardTitle className="flex items-center gap-2 text-lg tracking-tight text-emerald-700">
+                              <CheckCircle className="size-5" />
+                              良い点
                             </CardTitle>
                           </CardHeader>
                           <CardContent>
                             <ul className="space-y-3">
-                              {shownImprovements.map((point, i) => (
-                                <li key={i} className="flex items-start gap-3">
-                                  <div className="mt-0.5 rounded-full bg-amber-200 p-1">
-                                    <AlertTriangle className="size-3 text-amber-700" />
-                                  </div>
-                                  <span className="text-sm leading-relaxed text-slate-800">
-                                    {point}
-                                  </span>
-                                </li>
-                              ))}
+                              {(result.feedback.goodPoints ?? []).map(
+                                (point, i) => (
+                                  <li
+                                    key={i}
+                                    className="flex items-start gap-3"
+                                  >
+                                    <div className="mt-0.5 rounded-full bg-emerald-200 p-1">
+                                      <CheckCircle className="size-3 text-emerald-700" />
+                                    </div>
+                                    <span className="text-sm leading-relaxed text-slate-800">
+                                      {point}
+                                    </span>
+                                  </li>
+                                )
+                              )}
                             </ul>
                           </CardContent>
                         </Card>
                       )}
-                    </div>
-                  </div>
 
-                  {/* 課題文の読み取り (sourceType="report" のときのみ) */}
-                  {result.feedback.reportInsights && (
-                    <ReportInsightsCard
-                      insights={result.feedback.reportInsights}
-                    />
-                  )}
+                      <TaskFulfillmentCard
+                        task={result.feedback.taskFulfillment}
+                      />
+                      <ClaimChecksCard claims={result.feedback.claimChecks} />
 
-                  {/* 改善点（成長を褒める） */}
-                  {(result.feedback.improvementsSinceLast ?? []).length > 0 && (
-                    <Card className="border-0 border-emerald-200 bg-gradient-to-br from-emerald-50 via-emerald-50 to-teal-50 shadow-md">
-                      <CardHeader className="pb-4">
-                        <CardTitle className="flex items-center gap-2 text-lg tracking-tight text-emerald-800">
-                          <Award className="size-5" />
-                          前回からの改善点
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        {(result.feedback.improvementsSinceLast ?? []).map(
-                          (item, i) => (
-                            <div
-                              key={i}
-                              className="rounded-lg border border-emerald-200 bg-white/60 p-4 transition-all hover:shadow-md"
-                            >
-                              <div className="space-y-2">
-                                <div className="flex items-start gap-2">
-                                  <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-600">
-                                    改善前
-                                  </span>
-                                  <p className="text-muted-foreground flex-1 text-sm line-through">
-                                    {item.before}
+                      {/* 改善点 */}
+                      <div className="space-y-4">
+                        {/* 最優先改善ポイント */}
+                        {result.feedback.priorityImprovement && (
+                          <Card className="border-0 bg-gradient-to-br from-amber-50 to-amber-100/60 shadow-md">
+                            <CardContent className="p-4">
+                              <div className="flex items-start gap-3">
+                                <div className="rounded-full bg-amber-200 p-1.5">
+                                  <Star className="size-4 text-amber-700" />
+                                </div>
+                                <div>
+                                  <p className="mb-2 text-sm font-semibold tracking-tight text-amber-800">
+                                    最優先の改善ポイント
+                                  </p>
+                                  <p className="text-sm leading-relaxed text-amber-700">
+                                    {result.feedback.priorityImprovement}
                                   </p>
                                 </div>
-                                <div className="flex items-start gap-2">
-                                  <CheckCircle className="mt-0.5 size-4 shrink-0 text-emerald-600" />
-                                  <div className="flex-1">
-                                    <span className="mr-2 rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-600">
-                                      改善後
+                              </div>
+                            </CardContent>
+                          </Card>
+                        )}
+
+                        {/* 一般的な改善点 */}
+                        {shownImprovements.length > 0 && (
+                          <Card className="border-0 bg-gradient-to-br from-amber-50 to-amber-100/60 shadow-md">
+                            <CardHeader className="pb-4">
+                              <CardTitle className="flex items-center gap-2 text-lg tracking-tight text-amber-700">
+                                <AlertTriangle className="size-5" />
+                                改善点
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <ul className="space-y-3">
+                                {shownImprovements.map((point, i) => (
+                                  <li
+                                    key={i}
+                                    className="flex items-start gap-3"
+                                  >
+                                    <div className="mt-0.5 rounded-full bg-amber-200 p-1">
+                                      <AlertTriangle className="size-3 text-amber-700" />
+                                    </div>
+                                    <span className="text-sm leading-relaxed text-slate-800">
+                                      {point}
                                     </span>
-                                    <span className="text-sm font-medium text-emerald-800">
-                                      {item.after}
+                                  </li>
+                                ))}
+                              </ul>
+                            </CardContent>
+                          </Card>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* 課題文の読み取り (sourceType="report" のときのみ) */}
+                    {result.feedback.reportInsights && (
+                      <ReportInsightsCard
+                        insights={result.feedback.reportInsights}
+                      />
+                    )}
+
+                    {/* 改善点（成長を褒める） */}
+                    {(result.feedback.improvementsSinceLast ?? []).length >
+                      0 && (
+                      <Card className="border-0 border-emerald-200 bg-gradient-to-br from-emerald-50 via-emerald-50 to-teal-50 shadow-md">
+                        <CardHeader className="pb-4">
+                          <CardTitle className="flex items-center gap-2 text-lg tracking-tight text-emerald-800">
+                            <Award className="size-5" />
+                            前回からの改善点
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          {(result.feedback.improvementsSinceLast ?? []).map(
+                            (item, i) => (
+                              <div
+                                key={i}
+                                className="rounded-lg border border-emerald-200 bg-white/60 p-4 transition-all hover:shadow-md"
+                              >
+                                <div className="space-y-2">
+                                  <div className="flex items-start gap-2">
+                                    <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-600">
+                                      改善前
                                     </span>
+                                    <p className="text-muted-foreground flex-1 text-sm line-through">
+                                      {item.before}
+                                    </p>
+                                  </div>
+                                  <div className="flex items-start gap-2">
+                                    <CheckCircle className="mt-0.5 size-4 shrink-0 text-emerald-600" />
+                                    <div className="flex-1">
+                                      <span className="mr-2 rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-600">
+                                        改善後
+                                      </span>
+                                      <span className="text-sm font-medium text-emerald-800">
+                                        {item.after}
+                                      </span>
+                                    </div>
                                   </div>
                                 </div>
                               </div>
+                            )
+                          )}
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {/* Next Challenge */}
+                    {result.feedback.nextChallenge && (
+                      <Card className="border-0 bg-gradient-to-br from-sky-50 to-indigo-100/60 shadow-md">
+                        <CardContent className="p-4">
+                          <div className="flex items-start gap-3">
+                            <div className="rounded-full bg-sky-200 p-1.5">
+                              <Target className="size-4 text-sky-700" />
                             </div>
-                          )
-                        )}
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {/* Next Challenge */}
-                  {result.feedback.nextChallenge && (
-                    <Card className="border-0 bg-gradient-to-br from-sky-50 to-indigo-100/60 shadow-md">
-                      <CardContent className="p-4">
-                        <div className="flex items-start gap-3">
-                          <div className="rounded-full bg-sky-200 p-1.5">
-                            <Target className="size-4 text-sky-700" />
-                          </div>
-                          <div>
-                            <p className="mb-2 text-sm font-semibold tracking-tight text-sky-800">
-                              次回のチャレンジ
-                            </p>
-                            <p className="text-sm leading-relaxed text-sky-700">
-                              {result.feedback.nextChallenge}
-                            </p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {/* 成長フィードバック */}
-                  {result.growthEvents && result.growthEvents.length > 0 && (
-                    <Card className="border-0 bg-white/70 shadow-md backdrop-blur-sm">
-                      <CardHeader className="pb-4">
-                        <CardTitle className="flex items-center gap-2 text-lg tracking-tight text-sky-700">
-                          <TrendingUp className="size-5" />
-                          成長フィードバック
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        {result.growthEvents.map((event, i) => {
-                          const bgClass =
-                            event.type === "praise"
-                              ? "bg-gradient-to-r from-emerald-50 to-emerald-100/60 border-emerald-200"
-                              : event.type === "warning"
-                                ? "bg-gradient-to-r from-rose-50 to-rose-100/60 border-rose-200"
-                                : "bg-gradient-to-r from-sky-50 to-indigo-100/60 border-sky-200";
-                          const Icon =
-                            event.type === "praise"
-                              ? Sparkles
-                              : event.type === "warning"
-                                ? AlertCircle
-                                : AlertTriangle;
-                          const iconColor =
-                            event.type === "praise"
-                              ? "text-emerald-600"
-                              : event.type === "warning"
-                                ? "text-rose-600"
-                                : "text-sky-600";
-                          return (
-                            <div
-                              key={i}
-                              className={`flex items-start gap-3 rounded-xl border p-4 ${bgClass} shadow-sm transition-all hover:shadow-md`}
-                            >
-                              <div className="rounded-full bg-white/70 p-1.5">
-                                <Icon className={`size-4 ${iconColor}`} />
-                              </div>
-                              <p className="text-sm leading-relaxed font-medium text-slate-800">
-                                {event.message}
+                            <div>
+                              <p className="mb-2 text-sm font-semibold tracking-tight text-sky-800">
+                                次回のチャレンジ
+                              </p>
+                              <p className="text-sm leading-relaxed text-sky-700">
+                                {result.feedback.nextChallenge}
                               </p>
                             </div>
-                          );
-                        })}
-                      </CardContent>
-                    </Card>
-                  )}
-                </div>
-              )}
-
-              {tab === "brushup" && (
-                <div id="brushup-section">
-                  {/* ブラッシュアップ版が未生成: オンデマンド生成ボタン */}
-                  {!result.feedback.brushedUpText && (
-                    <Card className="border-0 bg-gradient-to-br from-emerald-50 via-emerald-50 to-teal-50 shadow-lg">
-                      <CardHeader className="pb-4">
-                        <CardTitle className="flex items-center gap-2 text-xl tracking-tight text-emerald-700">
-                          <PenTool className="size-6" />
-                          ブラッシュアップ版
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="py-8 text-center">
-                          <div className="mb-4 inline-flex size-16 items-center justify-center rounded-full bg-emerald-100">
-                            <Zap className="size-8 text-emerald-600" />
                           </div>
-                          <h3 className="mb-2 text-lg font-semibold tracking-tight text-emerald-800">
-                            ブラッシュアップ版を生成しますか？
-                          </h3>
-                          <p className="mx-auto mb-4 max-w-md text-sm text-emerald-700">
-                            AIがあなたの本文を、
-                            添削の改善ポイントに沿って磨いた全文を作成します。
-                            一度作ると保存されるので次回からはすぐ表示されます。
-                          </p>
-                          <Button
-                            onClick={generateBrushup}
-                            disabled={generatingBrushup}
-                            className="bg-emerald-600 hover:bg-emerald-700"
-                          >
-                            {generatingBrushup ? (
-                              <>
-                                <Zap className="mr-1 size-4 animate-pulse" />
-                                生成中…
-                              </>
-                            ) : (
-                              <>
-                                <PenTool className="mr-1 size-4" />
-                                ブラッシュアップ版を生成する
-                              </>
-                            )}
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-                  {/* ブラッシュアップ版 */}
-                  {result.feedback.brushedUpText && (
-                    <Card className="border-0 bg-gradient-to-br from-emerald-50 via-emerald-50 to-teal-50 shadow-lg">
-                      <CardHeader className="flex flex-row items-center justify-between pb-4">
-                        <CardTitle className="flex items-center gap-2 text-xl tracking-tight text-emerald-700">
-                          <PenTool className="size-6" />
-                          ブラッシュアップ版
-                        </CardTitle>
-                        {showBrushedUp && (
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {/* 成長フィードバック */}
+                    {result.growthEvents && result.growthEvents.length > 0 && (
+                      <Card className="border-0 bg-white/70 shadow-md backdrop-blur-sm">
+                        <CardHeader className="pb-4">
+                          <CardTitle className="flex items-center gap-2 text-lg tracking-tight text-sky-700">
+                            <TrendingUp className="size-5" />
+                            成長フィードバック
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                          {result.growthEvents.map((event, i) => {
+                            const bgClass =
+                              event.type === "praise"
+                                ? "bg-gradient-to-r from-emerald-50 to-emerald-100/60 border-emerald-200"
+                                : event.type === "warning"
+                                  ? "bg-gradient-to-r from-rose-50 to-rose-100/60 border-rose-200"
+                                  : "bg-gradient-to-r from-sky-50 to-indigo-100/60 border-sky-200";
+                            const Icon =
+                              event.type === "praise"
+                                ? Sparkles
+                                : event.type === "warning"
+                                  ? AlertCircle
+                                  : AlertTriangle;
+                            const iconColor =
+                              event.type === "praise"
+                                ? "text-emerald-600"
+                                : event.type === "warning"
+                                  ? "text-rose-600"
+                                  : "text-sky-600";
+                            return (
+                              <div
+                                key={i}
+                                className={`flex items-start gap-3 rounded-xl border p-4 ${bgClass} shadow-sm transition-all hover:shadow-md`}
+                              >
+                                <div className="rounded-full bg-white/70 p-1.5">
+                                  <Icon className={`size-4 ${iconColor}`} />
+                                </div>
+                                <p className="text-sm leading-relaxed font-medium text-slate-800">
+                                  {event.message}
+                                </p>
+                              </div>
+                            );
+                          })}
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
+                )}
+
+                {tab === "brushup" && (
+                  <div id="brushup-section">
+                    {/* ブラッシュアップ版が未生成: オンデマンド生成ボタン */}
+                    {!result.feedback.brushedUpText && (
+                      <Card className="border-0 bg-gradient-to-br from-emerald-50 via-emerald-50 to-teal-50 shadow-lg">
+                        <CardHeader className="pb-4">
+                          <CardTitle className="flex items-center gap-2 text-xl tracking-tight text-emerald-700">
+                            <PenTool className="size-6" />
+                            ブラッシュアップ版
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="py-8 text-center">
+                            <div className="mb-4 inline-flex size-16 items-center justify-center rounded-full bg-emerald-100">
+                              <Zap className="size-8 text-emerald-600" />
+                            </div>
+                            <h3 className="mb-2 text-lg font-semibold tracking-tight text-emerald-800">
+                              ブラッシュアップ版を生成しますか？
+                            </h3>
+                            <p className="mx-auto mb-4 max-w-md text-sm text-emerald-700">
+                              AIがあなたの本文を、
+                              添削の改善ポイントに沿って磨いた全文を作成します。
+                              一度作ると保存されるので次回からはすぐ表示されます。
+                            </p>
+                            <Button
+                              onClick={generateBrushup}
+                              disabled={generatingBrushup}
+                              className="bg-emerald-600 hover:bg-emerald-700"
+                            >
+                              {generatingBrushup ? (
+                                <>
+                                  <Zap className="mr-1 size-4 animate-pulse" />
+                                  生成中…
+                                </>
+                              ) : (
+                                <>
+                                  <PenTool className="mr-1 size-4" />
+                                  ブラッシュアップ版を生成する
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+                    {/* ブラッシュアップ版 */}
+                    {result.feedback.brushedUpText && (
+                      <Card className="border-0 bg-gradient-to-br from-emerald-50 via-emerald-50 to-teal-50 shadow-lg">
+                        <CardHeader className="flex flex-row items-center justify-between pb-4">
+                          <CardTitle className="flex items-center gap-2 text-xl tracking-tight text-emerald-700">
+                            <PenTool className="size-6" />
+                            ブラッシュアップ版
+                          </CardTitle>
+                          {showBrushedUp && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-xs shadow-sm transition-all hover:shadow-md"
+                              onClick={() =>
+                                copyToClipboard(
+                                  result.feedback.brushedUpText!,
+                                  "brushup"
+                                )
+                              }
+                            >
+                              {copiedSection === "brushup" ? (
+                                <>
+                                  <Check className="mr-1 size-3" />
+                                  コピー済み
+                                </>
+                              ) : (
+                                <>
+                                  <Copy className="mr-1 size-3" />
+                                  全コピー
+                                </>
+                              )}
+                            </Button>
+                          )}
+                        </CardHeader>
+                        <CardContent>
+                          {!showBrushedUp ? (
+                            <div className="py-8 text-center">
+                              <div className="mb-4 inline-flex size-16 items-center justify-center rounded-full bg-emerald-100">
+                                <Zap className="size-8 text-emerald-600" />
+                              </div>
+                              <h3 className="mb-2 text-lg font-semibold tracking-tight text-emerald-800">
+                                自分で考えてから確認
+                              </h3>
+                              <p className="mx-auto mb-4 max-w-md text-sm text-emerald-700">
+                                まず自分で改善点を考えてから、ブラッシュアップ版を確認しましょう。学習効果がより高まります。
+                              </p>
+                              <Button
+                                variant="outline"
+                                onClick={() => setShowBrushedUp(true)}
+                                className="border-emerald-300 text-emerald-700 transition-all hover:bg-emerald-50 hover:shadow-md"
+                              >
+                                <ChevronDown className="mr-1 size-4" />
+                                ブラッシュアップ版を見る
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="space-y-4">
+                              <div className="flex items-center justify-between">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setShowBrushedUp(false)}
+                                  className="text-emerald-600 hover:bg-emerald-100/60"
+                                >
+                                  <ChevronUp className="mr-1 size-4" />
+                                  閉じる
+                                </Button>
+                              </div>
+                              <div className="rounded-xl border border-emerald-200 bg-white/70 p-6 shadow-inner">
+                                <p className="text-sm leading-relaxed font-[450] whitespace-pre-wrap text-slate-800">
+                                  {result.feedback.brushedUpText}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
+                )}
+
+                {tab === "insights" && (
+                  <div id="insights-section" className="space-y-4">
+                    {/* 長文の深掘り（採点とは別に、開いたときだけ生成する） */}
+                    <EssayDeepDiveView
+                      deepDive={deepDive}
+                      generating={generatingDeepDive}
+                      onGenerate={generateDeepDive}
+                    />
+
+                    {/* 採点時に出た短い版。長文がまだ無い人向けに残す */}
+                    {result.feedback.topicInsights && (
+                      <Card className="border-0 bg-gradient-to-br from-purple-50 via-indigo-50 to-sky-50 shadow-lg">
+                        <CardHeader className="flex flex-row items-center justify-between pb-4">
+                          <CardTitle className="flex items-center gap-2 text-xl tracking-tight text-purple-700">
+                            <BookOpen className="size-6" />
+                            テーマ深掘り
+                          </CardTitle>
                           <Button
                             variant="outline"
                             size="sm"
                             className="text-xs shadow-sm transition-all hover:shadow-md"
-                            onClick={() =>
-                              copyToClipboard(
-                                result.feedback.brushedUpText!,
-                                "brushup"
-                              )
-                            }
+                            onClick={() => {
+                              const ti = result.feedback.topicInsights!;
+                              const text = `【背景・文脈】\n${ti.background}\n\n【関連テーマ】\n${ti.relatedThemes.join("、")}\n\n【深掘りの視点】\n${ti.deepDivePoints.map((p, i) => `${i + 1}. ${p}`).join("\n")}\n\n【推奨切り口】\n${ti.recommendedAngle}`;
+                              copyToClipboard(text, "topic");
+                            }}
                           >
-                            {copiedSection === "brushup" ? (
+                            {copiedSection === "topic" ? (
                               <>
                                 <Check className="mr-1 size-3" />
                                 コピー済み
@@ -1329,83 +1470,303 @@ export default function EssayResultPage() {
                               </>
                             )}
                           </Button>
-                        )}
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                          <div className="rounded-xl border border-purple-200 bg-white/60 p-4">
+                            <h3 className="mb-2 flex items-center gap-1 text-sm font-semibold tracking-tight text-purple-800">
+                              <FileText className="size-4" />
+                              背景・文脈
+                            </h3>
+                            <p className="text-sm leading-relaxed text-slate-800">
+                              {result.feedback.topicInsights.background}
+                            </p>
+                          </div>
+
+                          <div className="rounded-xl border border-purple-200 bg-white/60 p-4">
+                            <h3 className="mb-3 text-sm font-semibold tracking-tight text-purple-800">
+                              関連テーマ
+                            </h3>
+                            <div className="flex flex-wrap gap-2">
+                              {result.feedback.topicInsights.relatedThemes.map(
+                                (theme, i) => (
+                                  <Badge
+                                    key={i}
+                                    variant="secondary"
+                                    className="border-purple-200 bg-purple-100 text-xs text-purple-800"
+                                  >
+                                    {theme}
+                                  </Badge>
+                                )
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="rounded-xl border border-purple-200 bg-white/60 p-4">
+                            <h3 className="mb-3 flex items-center gap-1 text-sm font-semibold tracking-tight text-purple-800">
+                              <Lightbulb className="size-4" />
+                              さらに深掘りできる視点
+                            </h3>
+                            <div className="space-y-3">
+                              {result.feedback.topicInsights.deepDivePoints.map(
+                                (point, i) => (
+                                  <div
+                                    key={i}
+                                    className="flex items-start gap-3"
+                                  >
+                                    <div className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-purple-200 text-xs font-bold text-purple-800 tabular-nums">
+                                      {i + 1}
+                                    </div>
+                                    <span className="text-sm leading-relaxed text-slate-800">
+                                      {point}
+                                    </span>
+                                  </div>
+                                )
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="rounded-xl border border-purple-300 bg-gradient-to-r from-purple-100 to-indigo-100 p-4">
+                            <h3 className="mb-2 flex items-center gap-1 text-sm font-semibold tracking-tight text-purple-800">
+                              <Compass className="size-4" />
+                              あなたへの推奨切り口
+                            </h3>
+                            <p className="text-sm leading-relaxed font-medium text-purple-900">
+                              {result.feedback.topicInsights.recommendedAngle}
+                            </p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* PC用レイアウト - 全セクションが見える形 */}
+            <div className="hidden space-y-8 lg:block">
+              {/* 概要セクション */}
+              <section id="overview-section" className="scroll-mt-8">
+                {/* 全体講評 */}
+                <Card className="border-0 bg-gradient-to-br from-sky-50 via-indigo-50 to-purple-50 shadow-lg">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center gap-2 text-xl tracking-tight text-slate-800">
+                      <MessageSquare className="size-6 text-sky-600" />
+                      全体講評
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="rounded-xl border border-sky-200 bg-white/70 p-6">
+                      <p className="text-sm leading-relaxed font-medium text-slate-800">
+                        {result.feedback.overall}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </section>
+
+              <Separator className="my-8 opacity-30" />
+
+              {/* 赤ペン添削セクション */}
+              <section id="redpen-section" className="scroll-mt-8">
+                {result.feedback.languageCorrections &&
+                result.feedback.languageCorrections.length > 0 ? (
+                  <Card className="border-0 bg-white/80 shadow-lg backdrop-blur-sm">
+                    <CardHeader className="pb-4">
+                      <CardTitle className="flex items-center gap-2 text-xl tracking-tight text-rose-700">
+                        <SpellCheck className="size-6" />
+                        赤ペン添削
+                        <Badge variant="secondary" className="ml-2 text-xs">
+                          {result.feedback.languageCorrections.length}件の修正案
+                        </Badge>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <RedPenText
+                        text={result.ocrText ?? ""}
+                        corrections={result.feedback.languageCorrections}
+                      />
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card className="border-0 bg-gradient-to-br from-emerald-50 to-emerald-100/60 shadow-md">
+                    <CardContent className="p-8 text-center">
+                      <CheckCircle className="mx-auto mb-3 size-12 text-emerald-500" />
+                      <h3 className="mb-2 text-lg font-semibold tracking-tight text-emerald-800">
+                        素晴らしい文章です！
+                      </h3>
+                      <p className="text-sm text-emerald-700">
+                        言語的な修正点は見つかりませんでした。表現力と文法の正確性が高く評価されます。
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+              </section>
+
+              <Separator className="my-8 opacity-30" />
+
+              {/* 弱点セクション */}
+              <section id="weaknesses-section" className="scroll-mt-8">
+                {/* 2カラムレイアウト: 良い点 & 改善点 */}
+                <div className="grid gap-6 lg:grid-cols-2">
+                  {/* 良い点 */}
+                  {(result.feedback.goodPoints ?? []).length > 0 && (
+                    <Card className="border-0 bg-gradient-to-br from-emerald-50 to-emerald-100/60 shadow-md">
+                      <CardHeader className="pb-4">
+                        <CardTitle className="flex items-center gap-2 text-lg tracking-tight text-emerald-700">
+                          <CheckCircle className="size-5" />
+                          良い点
+                        </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        {!showBrushedUp ? (
-                          <div className="py-8 text-center">
-                            <div className="mb-4 inline-flex size-16 items-center justify-center rounded-full bg-emerald-100">
-                              <Zap className="size-8 text-emerald-600" />
-                            </div>
-                            <h3 className="mb-2 text-lg font-semibold tracking-tight text-emerald-800">
-                              自分で考えてから確認
-                            </h3>
-                            <p className="mx-auto mb-4 max-w-md text-sm text-emerald-700">
-                              まず自分で改善点を考えてから、ブラッシュアップ版を確認しましょう。学習効果がより高まります。
-                            </p>
-                            <Button
-                              variant="outline"
-                              onClick={() => setShowBrushedUp(true)}
-                              className="border-emerald-300 text-emerald-700 transition-all hover:bg-emerald-50 hover:shadow-md"
-                            >
-                              <ChevronDown className="mr-1 size-4" />
-                              ブラッシュアップ版を見る
-                            </Button>
-                          </div>
-                        ) : (
-                          <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setShowBrushedUp(false)}
-                                className="text-emerald-600 hover:bg-emerald-100/60"
-                              >
-                                <ChevronUp className="mr-1 size-4" />
-                                閉じる
-                              </Button>
-                            </div>
-                            <div className="rounded-xl border border-emerald-200 bg-white/70 p-6 shadow-inner">
-                              <p className="text-sm leading-relaxed font-[450] whitespace-pre-wrap text-slate-800">
-                                {result.feedback.brushedUpText}
-                              </p>
-                            </div>
-                          </div>
-                        )}
+                        <ul className="space-y-3">
+                          {(result.feedback.goodPoints ?? []).map(
+                            (point, i) => (
+                              <li key={i} className="flex items-start gap-3">
+                                <div className="mt-0.5 rounded-full bg-emerald-200 p-1">
+                                  <CheckCircle className="size-3 text-emerald-700" />
+                                </div>
+                                <span className="text-sm leading-relaxed text-slate-800">
+                                  {point}
+                                </span>
+                              </li>
+                            )
+                          )}
+                        </ul>
                       </CardContent>
                     </Card>
                   )}
+
+                  <TaskFulfillmentCard task={result.feedback.taskFulfillment} />
+                  <ClaimChecksCard claims={result.feedback.claimChecks} />
+
+                  {/* 改善点 */}
+                  <div className="space-y-4">
+                    {/* 最優先改善ポイント */}
+                    {result.feedback.priorityImprovement && (
+                      <Card className="border-0 bg-gradient-to-br from-amber-50 to-amber-100/60 shadow-md">
+                        <CardContent className="p-4">
+                          <div className="flex items-start gap-3">
+                            <div className="rounded-full bg-amber-200 p-1.5">
+                              <Star className="size-4 text-amber-700" />
+                            </div>
+                            <div>
+                              <p className="mb-2 text-sm font-semibold tracking-tight text-amber-800">
+                                最優先の改善ポイント
+                              </p>
+                              <p className="text-sm leading-relaxed text-amber-700">
+                                {result.feedback.priorityImprovement}
+                              </p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {/* 一般的な改善点 */}
+                    {shownImprovements.length > 0 && (
+                      <Card className="border-0 bg-gradient-to-br from-amber-50 to-amber-100/60 shadow-md">
+                        <CardHeader className="pb-4">
+                          <CardTitle className="flex items-center gap-2 text-lg tracking-tight text-amber-700">
+                            <AlertTriangle className="size-5" />
+                            改善点
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <ul className="space-y-3">
+                            {shownImprovements.map((point, i) => (
+                              <li key={i} className="flex items-start gap-3">
+                                <div className="mt-0.5 rounded-full bg-amber-200 p-1">
+                                  <AlertTriangle className="size-3 text-amber-700" />
+                                </div>
+                                <span className="text-sm leading-relaxed text-slate-800">
+                                  {point}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
                 </div>
-              )}
 
-              {tab === "insights" && (
-                <div id="insights-section" className="space-y-4">
-                  {/* 長文の深掘り（採点とは別に、開いたときだけ生成する） */}
-                  <EssayDeepDiveView
-                    deepDive={deepDive}
-                    generating={generatingDeepDive}
-                    onGenerate={generateDeepDive}
-                  />
+                {/* 課題文の読み取り (sourceType="report" のときのみ) */}
+                {result.feedback.reportInsights && (
+                  <div className="mt-6">
+                    <ReportInsightsCard
+                      insights={result.feedback.reportInsights}
+                    />
+                  </div>
+                )}
+              </section>
 
-                  {/* 採点時に出た短い版。長文がまだ無い人向けに残す */}
-                  {result.feedback.topicInsights && (
-                    <Card className="border-0 bg-gradient-to-br from-purple-50 via-indigo-50 to-sky-50 shadow-lg">
-                      <CardHeader className="flex flex-row items-center justify-between pb-4">
-                        <CardTitle className="flex items-center gap-2 text-xl tracking-tight text-purple-700">
-                          <BookOpen className="size-6" />
-                          テーマ深掘り
-                        </CardTitle>
+              <Separator className="my-8 opacity-30" />
+
+              {/* ブラッシュアップセクション */}
+              <section id="brushup-section" className="scroll-mt-8">
+                {/* 未生成: オンデマンド生成ボタン */}
+                {!result.feedback.brushedUpText && (
+                  <Card className="border-0 bg-gradient-to-br from-emerald-50 via-emerald-50 to-teal-50 shadow-lg">
+                    <CardHeader className="pb-4">
+                      <CardTitle className="flex items-center gap-2 text-xl tracking-tight text-emerald-700">
+                        <PenTool className="size-6" />
+                        ブラッシュアップ版
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="py-8 text-center">
+                        <div className="mb-4 inline-flex size-16 items-center justify-center rounded-full bg-emerald-100">
+                          <Zap className="size-8 text-emerald-600" />
+                        </div>
+                        <h3 className="mb-2 text-lg font-semibold tracking-tight text-emerald-800">
+                          ブラッシュアップ版を生成しますか？
+                        </h3>
+                        <p className="mx-auto mb-4 max-w-md text-sm text-emerald-700">
+                          AIがあなたの本文を、
+                          添削の改善ポイントに沿って磨いた全文を作成します。
+                          一度作ると保存されるので次回からはすぐ表示されます。
+                        </p>
+                        <Button
+                          onClick={generateBrushup}
+                          disabled={generatingBrushup}
+                          className="bg-emerald-600 hover:bg-emerald-700"
+                        >
+                          {generatingBrushup ? (
+                            <>
+                              <Zap className="mr-1 size-4 animate-pulse" />
+                              生成中…
+                            </>
+                          ) : (
+                            <>
+                              <PenTool className="mr-1 size-4" />
+                              ブラッシュアップ版を生成する
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+                {result.feedback.brushedUpText && (
+                  <Card className="border-0 bg-gradient-to-br from-emerald-50 via-emerald-50 to-teal-50 shadow-lg">
+                    <CardHeader className="flex flex-row items-center justify-between pb-4">
+                      <CardTitle className="flex items-center gap-2 text-xl tracking-tight text-emerald-700">
+                        <PenTool className="size-6" />
+                        ブラッシュアップ版
+                      </CardTitle>
+                      {showBrushedUp && (
                         <Button
                           variant="outline"
                           size="sm"
                           className="text-xs shadow-sm transition-all hover:shadow-md"
-                          onClick={() => {
-                            const ti = result.feedback.topicInsights!;
-                            const text = `【背景・文脈】\n${ti.background}\n\n【関連テーマ】\n${ti.relatedThemes.join("、")}\n\n【深掘りの視点】\n${ti.deepDivePoints.map((p, i) => `${i + 1}. ${p}`).join("\n")}\n\n【推奨切り口】\n${ti.recommendedAngle}`;
-                            copyToClipboard(text, "topic");
-                          }}
+                          onClick={() =>
+                            copyToClipboard(
+                              result.feedback.brushedUpText!,
+                              "brushup"
+                            )
+                          }
                         >
-                          {copiedSection === "topic" ? (
+                          {copiedSection === "brushup" ? (
                             <>
                               <Check className="mr-1 size-3" />
                               コピー済み
@@ -1417,298 +1778,84 @@ export default function EssayResultPage() {
                             </>
                           )}
                         </Button>
-                      </CardHeader>
-                      <CardContent className="space-y-6">
-                        <div className="rounded-xl border border-purple-200 bg-white/60 p-4">
-                          <h3 className="mb-2 flex items-center gap-1 text-sm font-semibold tracking-tight text-purple-800">
-                            <FileText className="size-4" />
-                            背景・文脈
-                          </h3>
-                          <p className="text-sm leading-relaxed text-slate-800">
-                            {result.feedback.topicInsights.background}
-                          </p>
-                        </div>
-
-                        <div className="rounded-xl border border-purple-200 bg-white/60 p-4">
-                          <h3 className="mb-3 text-sm font-semibold tracking-tight text-purple-800">
-                            関連テーマ
-                          </h3>
-                          <div className="flex flex-wrap gap-2">
-                            {result.feedback.topicInsights.relatedThemes.map(
-                              (theme, i) => (
-                                <Badge
-                                  key={i}
-                                  variant="secondary"
-                                  className="border-purple-200 bg-purple-100 text-xs text-purple-800"
-                                >
-                                  {theme}
-                                </Badge>
-                              )
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="rounded-xl border border-purple-200 bg-white/60 p-4">
-                          <h3 className="mb-3 flex items-center gap-1 text-sm font-semibold tracking-tight text-purple-800">
-                            <Lightbulb className="size-4" />
-                            さらに深掘りできる視点
-                          </h3>
-                          <div className="space-y-3">
-                            {result.feedback.topicInsights.deepDivePoints.map(
-                              (point, i) => (
-                                <div key={i} className="flex items-start gap-3">
-                                  <div className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-purple-200 text-xs font-bold text-purple-800 tabular-nums">
-                                    {i + 1}
-                                  </div>
-                                  <span className="text-sm leading-relaxed text-slate-800">
-                                    {point}
-                                  </span>
-                                </div>
-                              )
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="rounded-xl border border-purple-300 bg-gradient-to-r from-purple-100 to-indigo-100 p-4">
-                          <h3 className="mb-2 flex items-center gap-1 text-sm font-semibold tracking-tight text-purple-800">
-                            <Compass className="size-4" />
-                            あなたへの推奨切り口
-                          </h3>
-                          <p className="text-sm leading-relaxed font-medium text-purple-900">
-                            {result.feedback.topicInsights.recommendedAngle}
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* PC用レイアウト - 全セクションが見える形 */}
-          <div className="hidden space-y-8 lg:block">
-            {/* 概要セクション */}
-            <section id="overview-section" className="scroll-mt-8">
-              {/* 全体講評 */}
-              <Card className="border-0 bg-gradient-to-br from-sky-50 via-indigo-50 to-purple-50 shadow-lg">
-                <CardHeader className="pb-4">
-                  <CardTitle className="flex items-center gap-2 text-xl tracking-tight text-slate-800">
-                    <MessageSquare className="size-6 text-sky-600" />
-                    全体講評
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="rounded-xl border border-sky-200 bg-white/70 p-6">
-                    <p className="text-sm leading-relaxed font-medium text-slate-800">
-                      {result.feedback.overall}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </section>
-
-            <Separator className="my-8 opacity-30" />
-
-            {/* 赤ペン添削セクション */}
-            <section id="redpen-section" className="scroll-mt-8">
-              {result.feedback.languageCorrections &&
-              result.feedback.languageCorrections.length > 0 ? (
-                <Card className="border-0 bg-white/80 shadow-lg backdrop-blur-sm">
-                  <CardHeader className="pb-4">
-                    <CardTitle className="flex items-center gap-2 text-xl tracking-tight text-rose-700">
-                      <SpellCheck className="size-6" />
-                      赤ペン添削
-                      <Badge variant="secondary" className="ml-2 text-xs">
-                        {result.feedback.languageCorrections.length}件の修正案
-                      </Badge>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <RedPenText
-                      text={result.ocrText ?? ""}
-                      corrections={result.feedback.languageCorrections}
-                    />
-                  </CardContent>
-                </Card>
-              ) : (
-                <Card className="border-0 bg-gradient-to-br from-emerald-50 to-emerald-100/60 shadow-md">
-                  <CardContent className="p-8 text-center">
-                    <CheckCircle className="mx-auto mb-3 size-12 text-emerald-500" />
-                    <h3 className="mb-2 text-lg font-semibold tracking-tight text-emerald-800">
-                      素晴らしい文章です！
-                    </h3>
-                    <p className="text-sm text-emerald-700">
-                      言語的な修正点は見つかりませんでした。表現力と文法の正確性が高く評価されます。
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
-            </section>
-
-            <Separator className="my-8 opacity-30" />
-
-            {/* 弱点セクション */}
-            <section id="weaknesses-section" className="scroll-mt-8">
-              {/* 2カラムレイアウト: 良い点 & 改善点 */}
-              <div className="grid gap-6 lg:grid-cols-2">
-                {/* 良い点 */}
-                {(result.feedback.goodPoints ?? []).length > 0 && (
-                  <Card className="border-0 bg-gradient-to-br from-emerald-50 to-emerald-100/60 shadow-md">
-                    <CardHeader className="pb-4">
-                      <CardTitle className="flex items-center gap-2 text-lg tracking-tight text-emerald-700">
-                        <CheckCircle className="size-5" />
-                        良い点
-                      </CardTitle>
+                      )}
                     </CardHeader>
                     <CardContent>
-                      <ul className="space-y-3">
-                        {(result.feedback.goodPoints ?? []).map((point, i) => (
-                          <li key={i} className="flex items-start gap-3">
-                            <div className="mt-0.5 rounded-full bg-emerald-200 p-1">
-                              <CheckCircle className="size-3 text-emerald-700" />
-                            </div>
-                            <span className="text-sm leading-relaxed text-slate-800">
-                              {point}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
+                      {!showBrushedUp ? (
+                        <div className="py-8 text-center">
+                          <div className="mb-4 inline-flex size-16 items-center justify-center rounded-full bg-emerald-100">
+                            <Zap className="size-8 text-emerald-600" />
+                          </div>
+                          <h3 className="mb-2 text-lg font-semibold tracking-tight text-emerald-800">
+                            自分で考えてから確認
+                          </h3>
+                          <p className="mx-auto mb-4 max-w-md text-sm text-emerald-700">
+                            まず自分で改善点を考えてから、ブラッシュアップ版を確認しましょう。学習効果がより高まります。
+                          </p>
+                          <Button
+                            variant="outline"
+                            onClick={() => setShowBrushedUp(true)}
+                            className="border-emerald-300 text-emerald-700 transition-all hover:bg-emerald-50 hover:shadow-md"
+                          >
+                            <ChevronDown className="mr-1 size-4" />
+                            ブラッシュアップ版を見る
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setShowBrushedUp(false)}
+                              className="text-emerald-600 hover:bg-emerald-100/60"
+                            >
+                              <ChevronUp className="mr-1 size-4" />
+                              閉じる
+                            </Button>
+                          </div>
+                          <div className="rounded-xl border border-emerald-200 bg-white/70 p-6 shadow-inner">
+                            <p className="text-sm leading-relaxed font-[450] whitespace-pre-wrap text-slate-800">
+                              {result.feedback.brushedUpText}
+                            </p>
+                          </div>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 )}
+              </section>
 
-                <TaskFulfillmentCard task={result.feedback.taskFulfillment} />
-                <ClaimChecksCard claims={result.feedback.claimChecks} />
+              <Separator className="my-8 opacity-30" />
 
-                {/* 改善点 */}
-                <div className="space-y-4">
-                  {/* 最優先改善ポイント */}
-                  {result.feedback.priorityImprovement && (
-                    <Card className="border-0 bg-gradient-to-br from-amber-50 to-amber-100/60 shadow-md">
-                      <CardContent className="p-4">
-                        <div className="flex items-start gap-3">
-                          <div className="rounded-full bg-amber-200 p-1.5">
-                            <Star className="size-4 text-amber-700" />
-                          </div>
-                          <div>
-                            <p className="mb-2 text-sm font-semibold tracking-tight text-amber-800">
-                              最優先の改善ポイント
-                            </p>
-                            <p className="text-sm leading-relaxed text-amber-700">
-                              {result.feedback.priorityImprovement}
-                            </p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
+              {/* テーマ深掘りセクション */}
+              <section id="insights-section" className="scroll-mt-8 space-y-4">
+                {/* 長文の深掘り（採点とは別に、開いたときだけ生成する） */}
+                <EssayDeepDiveView
+                  deepDive={deepDive}
+                  generating={generatingDeepDive}
+                  onGenerate={generateDeepDive}
+                />
 
-                  {/* 一般的な改善点 */}
-                  {shownImprovements.length > 0 && (
-                    <Card className="border-0 bg-gradient-to-br from-amber-50 to-amber-100/60 shadow-md">
-                      <CardHeader className="pb-4">
-                        <CardTitle className="flex items-center gap-2 text-lg tracking-tight text-amber-700">
-                          <AlertTriangle className="size-5" />
-                          改善点
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <ul className="space-y-3">
-                          {shownImprovements.map((point, i) => (
-                            <li key={i} className="flex items-start gap-3">
-                              <div className="mt-0.5 rounded-full bg-amber-200 p-1">
-                                <AlertTriangle className="size-3 text-amber-700" />
-                              </div>
-                              <span className="text-sm leading-relaxed text-slate-800">
-                                {point}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      </CardContent>
-                    </Card>
-                  )}
-                </div>
-              </div>
-
-              {/* 課題文の読み取り (sourceType="report" のときのみ) */}
-              {result.feedback.reportInsights && (
-                <div className="mt-6">
-                  <ReportInsightsCard
-                    insights={result.feedback.reportInsights}
-                  />
-                </div>
-              )}
-            </section>
-
-            <Separator className="my-8 opacity-30" />
-
-            {/* ブラッシュアップセクション */}
-            <section id="brushup-section" className="scroll-mt-8">
-              {/* 未生成: オンデマンド生成ボタン */}
-              {!result.feedback.brushedUpText && (
-                <Card className="border-0 bg-gradient-to-br from-emerald-50 via-emerald-50 to-teal-50 shadow-lg">
-                  <CardHeader className="pb-4">
-                    <CardTitle className="flex items-center gap-2 text-xl tracking-tight text-emerald-700">
-                      <PenTool className="size-6" />
-                      ブラッシュアップ版
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="py-8 text-center">
-                      <div className="mb-4 inline-flex size-16 items-center justify-center rounded-full bg-emerald-100">
-                        <Zap className="size-8 text-emerald-600" />
-                      </div>
-                      <h3 className="mb-2 text-lg font-semibold tracking-tight text-emerald-800">
-                        ブラッシュアップ版を生成しますか？
-                      </h3>
-                      <p className="mx-auto mb-4 max-w-md text-sm text-emerald-700">
-                        AIがあなたの本文を、
-                        添削の改善ポイントに沿って磨いた全文を作成します。
-                        一度作ると保存されるので次回からはすぐ表示されます。
-                      </p>
-                      <Button
-                        onClick={generateBrushup}
-                        disabled={generatingBrushup}
-                        className="bg-emerald-600 hover:bg-emerald-700"
-                      >
-                        {generatingBrushup ? (
-                          <>
-                            <Zap className="mr-1 size-4 animate-pulse" />
-                            生成中…
-                          </>
-                        ) : (
-                          <>
-                            <PenTool className="mr-1 size-4" />
-                            ブラッシュアップ版を生成する
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-              {result.feedback.brushedUpText && (
-                <Card className="border-0 bg-gradient-to-br from-emerald-50 via-emerald-50 to-teal-50 shadow-lg">
-                  <CardHeader className="flex flex-row items-center justify-between pb-4">
-                    <CardTitle className="flex items-center gap-2 text-xl tracking-tight text-emerald-700">
-                      <PenTool className="size-6" />
-                      ブラッシュアップ版
-                    </CardTitle>
-                    {showBrushedUp && (
+                {/* 採点時に出た短い版。長文がまだ無い人向けに残す */}
+                {result.feedback.topicInsights && (
+                  <Card className="border-0 bg-gradient-to-br from-purple-50 via-indigo-50 to-sky-50 shadow-lg">
+                    <CardHeader className="flex flex-row items-center justify-between pb-4">
+                      <CardTitle className="flex items-center gap-2 text-xl tracking-tight text-purple-700">
+                        <BookOpen className="size-6" />
+                        テーマ深掘り
+                      </CardTitle>
                       <Button
                         variant="outline"
                         size="sm"
                         className="text-xs shadow-sm transition-all hover:shadow-md"
-                        onClick={() =>
-                          copyToClipboard(
-                            result.feedback.brushedUpText!,
-                            "brushup"
-                          )
-                        }
+                        onClick={() => {
+                          const ti = result.feedback.topicInsights!;
+                          const text = `【背景・文脈】\n${ti.background}\n\n【関連テーマ】\n${ti.relatedThemes.join("、")}\n\n【深掘りの視点】\n${ti.deepDivePoints.map((p, i) => `${i + 1}. ${p}`).join("\n")}\n\n【推奨切り口】\n${ti.recommendedAngle}`;
+                          copyToClipboard(text, "topic");
+                        }}
                       >
-                        {copiedSection === "brushup" ? (
+                        {copiedSection === "topic" ? (
                           <>
                             <Check className="mr-1 size-3" />
                             コピー済み
@@ -1720,162 +1867,74 @@ export default function EssayResultPage() {
                           </>
                         )}
                       </Button>
-                    )}
-                  </CardHeader>
-                  <CardContent>
-                    {!showBrushedUp ? (
-                      <div className="py-8 text-center">
-                        <div className="mb-4 inline-flex size-16 items-center justify-center rounded-full bg-emerald-100">
-                          <Zap className="size-8 text-emerald-600" />
-                        </div>
-                        <h3 className="mb-2 text-lg font-semibold tracking-tight text-emerald-800">
-                          自分で考えてから確認
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      <div className="rounded-xl border border-purple-200 bg-white/60 p-4">
+                        <h3 className="mb-2 flex items-center gap-1 text-sm font-semibold tracking-tight text-purple-800">
+                          <FileText className="size-4" />
+                          背景・文脈
                         </h3>
-                        <p className="mx-auto mb-4 max-w-md text-sm text-emerald-700">
-                          まず自分で改善点を考えてから、ブラッシュアップ版を確認しましょう。学習効果がより高まります。
+                        <p className="text-sm leading-relaxed text-slate-800">
+                          {result.feedback.topicInsights.background}
                         </p>
-                        <Button
-                          variant="outline"
-                          onClick={() => setShowBrushedUp(true)}
-                          className="border-emerald-300 text-emerald-700 transition-all hover:bg-emerald-50 hover:shadow-md"
-                        >
-                          <ChevronDown className="mr-1 size-4" />
-                          ブラッシュアップ版を見る
-                        </Button>
                       </div>
-                    ) : (
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setShowBrushedUp(false)}
-                            className="text-emerald-600 hover:bg-emerald-100/60"
-                          >
-                            <ChevronUp className="mr-1 size-4" />
-                            閉じる
-                          </Button>
-                        </div>
-                        <div className="rounded-xl border border-emerald-200 bg-white/70 p-6 shadow-inner">
-                          <p className="text-sm leading-relaxed font-[450] whitespace-pre-wrap text-slate-800">
-                            {result.feedback.brushedUpText}
-                          </p>
+
+                      <div className="rounded-xl border border-purple-200 bg-white/60 p-4">
+                        <h3 className="mb-3 text-sm font-semibold tracking-tight text-purple-800">
+                          関連テーマ
+                        </h3>
+                        <div className="flex flex-wrap gap-2">
+                          {result.feedback.topicInsights.relatedThemes.map(
+                            (theme, i) => (
+                              <Badge
+                                key={i}
+                                variant="secondary"
+                                className="border-purple-200 bg-purple-100 text-xs text-purple-800"
+                              >
+                                {theme}
+                              </Badge>
+                            )
+                          )}
                         </div>
                       </div>
-                    )}
-                  </CardContent>
-                </Card>
-              )}
-            </section>
 
-            <Separator className="my-8 opacity-30" />
-
-            {/* テーマ深掘りセクション */}
-            <section id="insights-section" className="scroll-mt-8 space-y-4">
-              {/* 長文の深掘り（採点とは別に、開いたときだけ生成する） */}
-              <EssayDeepDiveView
-                deepDive={deepDive}
-                generating={generatingDeepDive}
-                onGenerate={generateDeepDive}
-              />
-
-              {/* 採点時に出た短い版。長文がまだ無い人向けに残す */}
-              {result.feedback.topicInsights && (
-                <Card className="border-0 bg-gradient-to-br from-purple-50 via-indigo-50 to-sky-50 shadow-lg">
-                  <CardHeader className="flex flex-row items-center justify-between pb-4">
-                    <CardTitle className="flex items-center gap-2 text-xl tracking-tight text-purple-700">
-                      <BookOpen className="size-6" />
-                      テーマ深掘り
-                    </CardTitle>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-xs shadow-sm transition-all hover:shadow-md"
-                      onClick={() => {
-                        const ti = result.feedback.topicInsights!;
-                        const text = `【背景・文脈】\n${ti.background}\n\n【関連テーマ】\n${ti.relatedThemes.join("、")}\n\n【深掘りの視点】\n${ti.deepDivePoints.map((p, i) => `${i + 1}. ${p}`).join("\n")}\n\n【推奨切り口】\n${ti.recommendedAngle}`;
-                        copyToClipboard(text, "topic");
-                      }}
-                    >
-                      {copiedSection === "topic" ? (
-                        <>
-                          <Check className="mr-1 size-3" />
-                          コピー済み
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="mr-1 size-3" />
-                          全コピー
-                        </>
-                      )}
-                    </Button>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="rounded-xl border border-purple-200 bg-white/60 p-4">
-                      <h3 className="mb-2 flex items-center gap-1 text-sm font-semibold tracking-tight text-purple-800">
-                        <FileText className="size-4" />
-                        背景・文脈
-                      </h3>
-                      <p className="text-sm leading-relaxed text-slate-800">
-                        {result.feedback.topicInsights.background}
-                      </p>
-                    </div>
-
-                    <div className="rounded-xl border border-purple-200 bg-white/60 p-4">
-                      <h3 className="mb-3 text-sm font-semibold tracking-tight text-purple-800">
-                        関連テーマ
-                      </h3>
-                      <div className="flex flex-wrap gap-2">
-                        {result.feedback.topicInsights.relatedThemes.map(
-                          (theme, i) => (
-                            <Badge
-                              key={i}
-                              variant="secondary"
-                              className="border-purple-200 bg-purple-100 text-xs text-purple-800"
-                            >
-                              {theme}
-                            </Badge>
-                          )
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="rounded-xl border border-purple-200 bg-white/60 p-4">
-                      <h3 className="mb-3 flex items-center gap-1 text-sm font-semibold tracking-tight text-purple-800">
-                        <Lightbulb className="size-4" />
-                        さらに深掘りできる視点
-                      </h3>
-                      <div className="space-y-3">
-                        {result.feedback.topicInsights.deepDivePoints.map(
-                          (point, i) => (
-                            <div key={i} className="flex items-start gap-3">
-                              <div className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-purple-200 text-xs font-bold text-purple-800 tabular-nums">
-                                {i + 1}
+                      <div className="rounded-xl border border-purple-200 bg-white/60 p-4">
+                        <h3 className="mb-3 flex items-center gap-1 text-sm font-semibold tracking-tight text-purple-800">
+                          <Lightbulb className="size-4" />
+                          さらに深掘りできる視点
+                        </h3>
+                        <div className="space-y-3">
+                          {result.feedback.topicInsights.deepDivePoints.map(
+                            (point, i) => (
+                              <div key={i} className="flex items-start gap-3">
+                                <div className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-purple-200 text-xs font-bold text-purple-800 tabular-nums">
+                                  {i + 1}
+                                </div>
+                                <span className="text-sm leading-relaxed text-slate-800">
+                                  {point}
+                                </span>
                               </div>
-                              <span className="text-sm leading-relaxed text-slate-800">
-                                {point}
-                              </span>
-                            </div>
-                          )
-                        )}
+                            )
+                          )}
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="rounded-xl border border-purple-300 bg-gradient-to-r from-purple-100 to-indigo-100 p-4">
-                      <h3 className="mb-2 flex items-center gap-1 text-sm font-semibold tracking-tight text-purple-800">
-                        <Compass className="size-4" />
-                        あなたへの推奨切り口
-                      </h3>
-                      <p className="text-sm leading-relaxed font-medium text-purple-900">
-                        {result.feedback.topicInsights.recommendedAngle}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </section>
+                      <div className="rounded-xl border border-purple-300 bg-gradient-to-r from-purple-100 to-indigo-100 p-4">
+                        <h3 className="mb-2 flex items-center gap-1 text-sm font-semibold tracking-tight text-purple-800">
+                          <Compass className="size-4" />
+                          あなたへの推奨切り口
+                        </h3>
+                        <p className="text-sm leading-relaxed font-medium text-purple-900">
+                          {result.feedback.topicInsights.recommendedAngle}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </section>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
