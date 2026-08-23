@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import type { SceneDiagram } from "@/data/essay-lectures";
 
 /** 帯の色。6段まで。7段目以降は先頭に戻る */
@@ -18,23 +18,29 @@ const BAR_COLORS = [
  * 帯の幅が実際の配分なので、④根拠が一番太いことが目で分かる。
  */
 export function DiagramScene({ diagram }: { diagram: SceneDiagram }) {
+  const reduce = useReducedMotion();
   const total = diagram.items.reduce((s, i) => s + i.value, 0) || 1;
 
   return (
-    <div className="space-y-3">
-      <div className="flex h-8 w-full overflow-hidden rounded-lg">
+    <div className="mx-auto w-full max-w-2xl space-y-5">
+      <div className="flex h-12 w-full overflow-hidden rounded-xl shadow-sm">
         {diagram.items.map((item, i) => (
           <motion.div
             key={item.label}
             initial={{ width: 0 }}
             animate={{ width: `${(item.value / total) * 100}%` }}
-            transition={{ delay: i * 0.2, duration: 0.4 }}
+            transition={{
+              delay: reduce ? 0 : i * 0.18,
+              type: "spring",
+              stiffness: 120,
+              damping: 22,
+            }}
             className={`${BAR_COLORS[i % BAR_COLORS.length]} h-full`}
           />
         ))}
       </div>
 
-      <ul className="space-y-1 text-xs">
+      <ul className="space-y-1.5 text-sm">
         {diagram.items.map((item, i) => (
           <motion.li
             key={item.label}

@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { ArrowDown } from "lucide-react";
 import type { SceneCompare } from "@/data/essay-lectures";
 
@@ -10,12 +10,14 @@ import type { SceneCompare } from "@/data/essay-lectures";
  * 直し方そのものが頭に残らない。
  */
 export function CompareScene({ compare }: { compare: SceneCompare }) {
+  const reduce = useReducedMotion();
   return (
-    <div className="space-y-3">
+    <div className="mx-auto w-full max-w-2xl space-y-4">
       <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="rounded-lg border border-rose-200 bg-rose-50/60 p-3 text-sm leading-relaxed text-rose-900"
+        initial={reduce ? false : { opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: "spring", stiffness: 280, damping: 26 }}
+        className="rounded-xl border border-rose-200 bg-rose-50/60 p-5 text-[1.05rem] leading-loose text-rose-900 sm:text-[1.15rem] dark:bg-rose-950/20"
       >
         {compare.before}
       </motion.p>
@@ -26,10 +28,15 @@ export function CompareScene({ compare }: { compare: SceneCompare }) {
       </div>
 
       <motion.p
-        initial={{ opacity: 0, y: 6 }}
+        initial={reduce ? false : { opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-        className="rounded-lg border border-emerald-200 bg-emerald-50/60 p-3 text-sm leading-relaxed text-emerald-900"
+        transition={{
+          delay: reduce ? 0 : 0.5,
+          type: "spring",
+          stiffness: 280,
+          damping: 26,
+        }}
+        className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-5 text-[1.05rem] leading-loose text-emerald-900 sm:text-[1.15rem] dark:bg-emerald-950/20"
       >
         {splitByHighlight(compare.after, compare.highlight).map((part, i) =>
           part.hit ? (

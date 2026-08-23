@@ -41,12 +41,17 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s1",
         visual: "manuscript",
         caption:
-          "作文はできごとと気持ちを書く。小論文は問いに答えて、その理由を示す文章だ。まず違いを見る。",
+          "同じ体験でも、作文は気持ちを書き、小論文は問いへの答えを書く。まず並べて見比べよう。",
         manuscript: {
           lines: [
             {
               text: "私は昨日、地域のボランティアに参加して楽しかった。",
-              tone: "bad",
+              label: "作文",
+            },
+            {
+              text: "高校生が地域活動に関わる意義は、担い手不足を補う点にある。",
+              label: "小論文",
+              tone: "good",
             },
           ],
         },
@@ -97,17 +102,17 @@ export const ESSAY_LECTURES: EssayLecture[] = [
       },
       {
         id: "s5",
-        visual: "manuscript",
+        visual: "diagram",
         caption:
-          "配点が一番大きいのは構成と論証（各12点）。次が表現力（11点）。この講座はこの3つを順に埋めていく。",
-        manuscript: {
-          lines: [
-            { text: "構成12点：ブロックの並び", tone: "normal" },
-            { text: "論証12点：理由と根拠のつながり", tone: "normal" },
-            {
-              text: "表現力11点：てにをは・主述・一文の長さ",
-              tone: "normal",
-            },
+          "50点の内訳。構成と論証で半分近くを占める。この講座はこの順に埋めていく。",
+        diagram: {
+          unit: "点",
+          items: [
+            { label: "構成", value: 12, note: "ブロックの並び" },
+            { label: "論証", value: 12, note: "理由と根拠のつながり" },
+            { label: "表現力", value: 11, note: "てにをは・主述・一文の長さ" },
+            { label: "議論の成熟度", value: 10, note: "反対意見の扱い" },
+            { label: "独自性", value: 5, note: "自分の視点" },
           ],
         },
       },
@@ -115,9 +120,14 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s6",
         visual: "manuscript",
         caption:
-          "まずは今の力を見る。次の課題を200字で書いてみよう。うまく書けなくてよい。ここが出発点になる。",
+          "まずは今の力を見る。次の問いに200字で答えてみよう。うまく書けなくてよい。ここが出発点になる。",
         manuscript: {
-          lines: [{ text: "（課題へ）", tone: "normal" }],
+          lines: [
+            {
+              text: "高校生が地域活動に参加する意義について、あなたの考えを述べなさい。",
+              label: "次の課題",
+            },
+          ],
         },
       },
     ],

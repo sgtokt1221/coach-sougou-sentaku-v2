@@ -21,7 +21,17 @@ export interface ManuscriptLine {
   text: string;
   /** その文が型のどのブロックか（左側に表示する） */
   blockId?: EssayBlockId;
-  /** 悪い例は赤、直した例は緑で見せる */
+  /**
+   * 左側に出す自由なラベル。型のブロックではない見出し
+   * （「作文」「小論文」など）を付けたいときに使う。
+   * blockId と併用しない。
+   */
+  label?: string;
+  /**
+   * bad は赤の取り消し線で描かれる。**間違っている文にだけ付ける。**
+   * 「作文の例」のように、間違いではないが小論文ではない文には付けない
+   * （誤りとして見えてしまう）。
+   */
   tone?: "normal" | "bad" | "good";
 }
 
@@ -51,8 +61,8 @@ export interface LectureScene {
  * グラフのライブラリは入れない。帯の幅を割合で出すだけで足りる。
  */
 export interface SceneDiagram {
-  /** 単位。帯の下に「800字」「60分」のように出す */
-  unit: "字" | "分";
+  /** 単位。帯の下に「800字」「60分」「50点」のように出す */
+  unit: "字" | "分" | "点";
   items: { label: string; value: number; note?: string }[];
 }
 

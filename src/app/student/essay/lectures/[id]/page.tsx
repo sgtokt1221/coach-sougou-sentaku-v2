@@ -133,7 +133,7 @@ export default function EssayLectureDetailPage() {
   // ===== 講義 =====
   if (step === "lecture") {
     return (
-      <div className="mx-auto max-w-3xl space-y-5 px-4 py-5 lg:px-6 lg:py-8">
+      <div className="mx-auto max-w-5xl space-y-5 px-4 py-5 lg:px-6 lg:py-8">
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
