@@ -1,8 +1,13 @@
 import type { EssayLecture } from "./types";
 
 /**
- * 小論文の基礎を学ぶ全8講。講義 → 関連問題（提出すると添削履歴に残る）。
- * 学部非依存の普遍的な「書き方」の基礎を、易→難で配列する。
+ * 小論文の基礎を学ぶ講座。講義アニメ → 文のドリル → 型のブロック課題 → AI添削。
+ *
+ * 1〜8講は「型を組む」まで一本の問い（スマートフォンの使用時間の制限）を通して進み、
+ * 3〜7講で書いたブロックを8講で1本の答案につなぐ。
+ * 9〜11講は旧テキスト講（読む・分析／推敲）で、Phase 2 以降に作り替える。
+ *
+ * id は既提出の答案（essays.lectureId）と紐づくため絶対に変えない。
  */
 export const ESSAY_LECTURES: EssayLecture[] = [
   {
@@ -126,78 +131,6 @@ export const ESSAY_LECTURES: EssayLecture[] = [
       wordLimit: 200,
       focusPoints: ["主張の明確さ", "説明の論理性"],
       blockId: null,
-    },
-  },
-  {
-    id: "essay-basics-02",
-    order: 2,
-    level: "基礎",
-    title: "課題文の読み方",
-    summary: "筆者の主張と論拠を正確につかみ、自分の意見と切り分ける",
-    durationMin: 10,
-    sections: [
-      {
-        id: "s1",
-        heading: "筆者の主張を1文でつかむ",
-        body: "課題文型では、まず筆者が何を言いたいか（主張）を1文で言えるようにします。「つまり」「したがって」の後に主張が来やすいので目印にしましょう。",
-      },
-      {
-        id: "s2",
-        heading: "主張を支える論拠を拾う",
-        body: "主張の理由・根拠・具体例を拾います。これが後で自分の賛否を述べるときの材料になります。",
-      },
-      {
-        id: "s3",
-        heading: "要約と自分の意見を分ける",
-        body: "課題文の要約と自分の意見を混同しないこと。まず筆者の論を正確に捉えてから、自分の立場を作ります。",
-      },
-    ],
-    keyTakeaways: [
-      "筆者の主張を1文で言えるようにする",
-      "主張を支える論拠を拾う",
-      "要約と自分の意見を区別する",
-    ],
-    exercise: {
-      prompt:
-        "次の短い文章を読み、筆者の主張を1文で、その根拠を2点、合わせて200字以内でまとめてください。\n\n【課題文】SNSは情報を素早く広める一方、誤情報も拡散しやすい。だから利用者は情報の出所を確かめる習慣を持つべきだ。",
-      wordLimit: 200,
-      focusPoints: ["筆者の主張の正確な把握", "根拠の抽出"],
-    },
-  },
-  {
-    id: "essay-basics-03",
-    order: 3,
-    level: "基礎",
-    title: "設問分析",
-    summary: "問われていることに正対し、条件を取りこぼさない",
-    durationMin: 8,
-    sections: [
-      {
-        id: "s1",
-        heading: "問われていることに正対する",
-        body: "「賛否を述べよ」「原因を論じよ」「あなたの考えを書け」では求められる答えが違います。設問の動詞に注目して、答え方を決めましょう。",
-      },
-      {
-        id: "s2",
-        heading: "条件をすべて拾う",
-        body: "字数・観点・「具体例を挙げて」などの条件は採点対象です。守らないと内容が良くても減点されます。",
-      },
-      {
-        id: "s3",
-        heading: "いきなり書き始めない",
-        body: "読む→構成メモ→書く→見直し、の順で進めます。構成メモを先に作ると、論理が崩れにくくなります。",
-      },
-    ],
-    keyTakeaways: [
-      "設問の動詞で答え方が決まる",
-      "字数・条件は必ず守る",
-      "構成メモを作ってから書く",
-    ],
-    exercise: {
-      prompt:
-        "次の設問について「答えるために何を書くべきか」と「守るべき条件」を箇条書きで整理してください（200字以内）。\n\n【設問】地方の人口減少にどう対応すべきか、具体策を一つ挙げてあなたの考えを述べよ（400字）。",
-      wordLimit: 200,
-      focusPoints: ["設問要求の把握", "条件の網羅"],
     },
   },
   {
@@ -584,11 +517,143 @@ export const ESSAY_LECTURES: EssayLecture[] = [
     },
   },
   {
-    id: "essay-basics-07",
-    order: 7,
+    id: "essay-basics-09",
+    order: 5,
     level: "実践",
-    title: "反論への配慮",
-    summary: "想定反論を受け止めてから切り返し、説得力を高める",
+    title: "根拠・具体例",
+    summary: "一般論ではなく、事実・経験・数字で理由を支える",
+    durationMin: 12,
+    sections: [
+      {
+        id: "s1",
+        heading: "一般論は根拠にならない",
+        body: "「多くの人が困っている」「近年問題になっている」は、誰に何が起きているかを言っていません。これは根拠ではなく、印象を書いただけです。",
+      },
+      {
+        id: "s2",
+        heading: "事実・経験・数字のどれかを置く",
+        body: "調査結果や数字、自分が実際に見聞きした出来事を一つ置きます。出所を書ければさらに強くなります。",
+      },
+      {
+        id: "s3",
+        heading: "抽象語は具体に落とす",
+        body: "「社会問題」「多様性」のような大きな言葉は、そのままでは中身が伝わりません。誰にどんなことが起きているかまで下ろして書きます。",
+      },
+    ],
+    scenes: [
+      {
+        id: "s1",
+        visual: "manuscript",
+        caption:
+          "根拠のつもりで一般論を書いた例。誰がどう困っているのかが書かれていない。",
+        manuscript: {
+          lines: [
+            {
+              text: "実際、多くの人がスマートフォンの使いすぎで困っている。",
+              tone: "bad",
+              blockId: "evidence",
+            },
+          ],
+        },
+        highlightBlock: "evidence",
+      },
+      {
+        id: "s2",
+        visual: "manuscript",
+        caption:
+          "同じ題材でも、数字と出所を置けば根拠になる。「実際、」で始めるのが型だ。",
+        manuscript: {
+          lines: [
+            {
+              text: "実際、多くの人が困っている。",
+              tone: "bad",
+              blockId: "evidence",
+            },
+            {
+              text: "実際、内閣府の調査では、高校生が一日にインターネットを使う時間は平均で六時間近くに達している。",
+              tone: "good",
+              blockId: "evidence",
+            },
+          ],
+        },
+        highlightBlock: "evidence",
+      },
+      {
+        id: "s3",
+        visual: "manuscript",
+        caption:
+          "自分の経験も根拠になる。ただし「大変だった」で終えず、主張を支える形にする。",
+        manuscript: {
+          lines: [
+            {
+              text: "私も部活の帰りにスマートフォンを見続けてしまい、大変だった。",
+              tone: "bad",
+              blockId: "evidence",
+            },
+            {
+              text: "私は就寝前の使用をやめた一か月間、朝の眠気が減り、授業中に居眠りをしなくなった。",
+              tone: "good",
+              blockId: "evidence",
+            },
+          ],
+        },
+      },
+      {
+        id: "s4",
+        visual: "manuscript",
+        caption:
+          "「社会問題」のような大きな言葉は、それだけでは何も言っていない。誰に何が起きているかまで下ろす。",
+        manuscript: {
+          lines: [
+            { text: "地方の人口減少は深刻な社会問題である。", tone: "bad" },
+            {
+              text: "地方では、進学で県外へ出た若者が戻らず、商店や病院の担い手が減っている。",
+              tone: "good",
+            },
+          ],
+        },
+      },
+      {
+        id: "s5",
+        visual: "blocks",
+        caption:
+          "③理由と④根拠はセットで働く。理由だけで止めると、読み手は「本当にそうか」で終わってしまう。",
+        blocks: { filled: ["position", "reason", "evidence"] },
+        highlightBlock: "evidence",
+      },
+      {
+        id: "s6",
+        visual: "manuscript",
+        caption:
+          "150字で書く。事実か経験を一つだけ選び、数を増やさずに詳しく書く。",
+        manuscript: {
+          lines: [
+            { text: "実際、〜。（150字）", tone: "good", blockId: "evidence" },
+          ],
+        },
+      },
+    ],
+    drill: { kind: "particle" },
+    keyTakeaways: [
+      "一般論ではなく事実・経験・数字を置く",
+      "自分の経験は主張を支える形に書き直す",
+      "抽象語は誰に何が起きているかまで落とす",
+    ],
+    exercise: {
+      prompt:
+        "前の講で書いた「スマートフォンの使用時間の制限」についての理由を支える根拠・具体例を、150字以内で書きなさい。自分の経験でも調べた事実でもよい。",
+      wordLimit: 150,
+      minLength: 60,
+      focusPoints: ["根拠の具体性", "主張との関連"],
+      blockId: "evidence",
+    },
+  },
+  {
+    id: "essay-basics-07",
+    order: 6,
+    level: "実践",
+    title: "譲歩と反論",
+    summary: "反対側の最も強い言い分を書き、切り返して立場を強める",
     durationMin: 12,
     sections: [
       {
@@ -607,21 +672,477 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         body: "反論を踏まえた主張は一面的でなくなり、説得力が増します。",
       },
     ],
+    scenes: [
+      {
+        id: "s1",
+        visual: "manuscript",
+        caption:
+          "反対意見にまったく触れない答案。筋は通っているが、一方的に見えてしまう。",
+        manuscript: {
+          lines: [
+            {
+              text: "私は使用時間の制限が必要だと考える。",
+              blockId: "position",
+            },
+            {
+              text: "なぜなら、就寝前の使用が睡眠時間を削るからである。",
+              blockId: "reason",
+            },
+            { text: "したがって、制限すべきである。", blockId: "conclusion" },
+          ],
+        },
+      },
+      {
+        id: "s2",
+        visual: "manuscript",
+        caption:
+          "反対側をいったん認めてから切り返す。これが⑤譲歩と反論の型だ。",
+        manuscript: {
+          lines: [
+            {
+              text: "確かに、スマートフォンは調べ学習や連絡にも使われており、時間で一律に区切るのは乱暴である。",
+              tone: "good",
+              blockId: "concession",
+            },
+            {
+              text: "しかし、制限を就寝前の時間帯だけに限れば、学習の妨げにはならない。",
+              tone: "good",
+              blockId: "concession",
+            },
+          ],
+        },
+        highlightBlock: "concession",
+      },
+      {
+        id: "s3",
+        visual: "manuscript",
+        caption:
+          "わざと弱い反論を立てても点にならない。相手の一番強い言い分を自分で書く。",
+        manuscript: {
+          lines: [
+            { text: "確かに、スマートフォンを使いたい人もいる。", tone: "bad" },
+            {
+              text: "確かに、緊急時の連絡手段まで制限するのは危険である。",
+              tone: "good",
+            },
+          ],
+        },
+      },
+      {
+        id: "s4",
+        visual: "manuscript",
+        caption:
+          "「確かに」で終えると、自分の立場まで揺らいで見える。必ず「しかし」で戻す。",
+        manuscript: {
+          lines: [
+            {
+              text: "確かに、緊急時に連絡が取れなくなる恐れはある。",
+              tone: "normal",
+            },
+            { text: "だから、制限には難しい面もある。", tone: "bad" },
+            {
+              text: "しかし、通話だけを制限の対象から外せばこの心配は消える。",
+              tone: "good",
+            },
+          ],
+        },
+      },
+      {
+        id: "s5",
+        visual: "blocks",
+        caption:
+          "⑤は譲るためのブロックではない。反論を処理して②立場を強くするために置く。",
+        blocks: {
+          filled: [
+            "position",
+            "reason",
+            "evidence",
+            "concession",
+            "conclusion",
+          ],
+        },
+        highlightBlock: "concession",
+      },
+      {
+        id: "s6",
+        visual: "manuscript",
+        caption:
+          "150字なら二文で収まる。「確かに」で一文、「しかし」で一文が目安だ。",
+        manuscript: {
+          lines: [
+            {
+              text: "確かに〜。しかし〜。（150字）",
+              tone: "good",
+              blockId: "concession",
+            },
+          ],
+        },
+      },
+    ],
+    drill: { kind: "particle" },
     keyTakeaways: [
-      "想定反論を一つ挙げる",
-      "譲歩（確かに）→再反論（しかし）",
-      "多面的な主張は説得力が高い",
+      "相手の一番強い言い分を自分で書く",
+      "「確かに」で終えず「しかし」で切り返す",
+      "⑤譲歩と反論は②立場を強めるために置く",
     ],
     exercise: {
       prompt:
-        "「高校生にスマホは必要だ」というあなたの主張に対する想定反論を一つ挙げ、それに再反論する形で250字以内で書いてください。",
-      wordLimit: 250,
-      focusPoints: ["反論の的確さ", "再反論の論理"],
+        "「スマートフォンの使用時間の制限」についてのあなたの立場に対する最も強い反論を一つ挙げ、それに応答する形で150字以内で書きなさい。",
+      wordLimit: 150,
+      minLength: 60,
+      focusPoints: ["反論の的確さ", "切り返しの説得力"],
+      blockId: "concession",
+    },
+  },
+  {
+    id: "essay-basics-10",
+    order: 7,
+    level: "実践",
+    title: "結論",
+    summary: "新しい話を足さず、立場を言い直して閉じる",
+    durationMin: 8,
+    sections: [
+      {
+        id: "s1",
+        heading: "新情報を足さない",
+        body: "結論で新しい話題を出すと、説明されないまま答案が終わってしまいます。結論に書くのは、本論で扱ったことだけです。",
+      },
+      {
+        id: "s2",
+        heading: "立場を言い直す",
+        body: "②立場をそのまま写すのではなく、本論で足した条件を入れて言い直します。読み終えたときに答えが残ります。",
+      },
+      {
+        id: "s3",
+        heading: "字数を残しておく",
+        body: "書いているうちに字数が尽き、結論が一行で終わる答案が多くあります。書き始める前に、結論の分を先に取り分けておきましょう。",
+      },
+    ],
+    scenes: [
+      {
+        id: "s1",
+        visual: "manuscript",
+        caption:
+          "結論で新しい話を始めた例。触れただけで終わる話題は、書かないほうがよい。",
+        manuscript: {
+          lines: [
+            {
+              text: "したがって、就寝前の使用時間は制限すべきである。",
+              blockId: "conclusion",
+            },
+            {
+              text: "また、SNSでの誹謗中傷への対策も急がれる。",
+              tone: "bad",
+              blockId: "conclusion",
+            },
+          ],
+        },
+        highlightBlock: "conclusion",
+      },
+      {
+        id: "s2",
+        visual: "manuscript",
+        caption:
+          "②立場をそのまま写さない。本論で足した条件を入れて言い直すと、答案がまとまる。",
+        manuscript: {
+          lines: [
+            {
+              text: "私は使用時間の制限が必要だと考える。",
+              blockId: "position",
+            },
+            {
+              text: "したがって、就寝前の時間帯に限って使用を制限すべきである。",
+              tone: "good",
+              blockId: "conclusion",
+            },
+          ],
+        },
+        highlightBlock: "conclusion",
+      },
+      {
+        id: "s3",
+        visual: "manuscript",
+        caption:
+          "決意表明で終えると、問いに答えないまま閉じることになる。答えで終える。",
+        manuscript: {
+          lines: [
+            { text: "私もこれから使い方を見直していきたい。", tone: "bad" },
+            {
+              text: "したがって、就寝前の使用は制限すべきである。",
+              tone: "good",
+            },
+          ],
+        },
+      },
+      {
+        id: "s4",
+        visual: "manuscript",
+        caption:
+          "⑤で書きすぎ、⑥が一行で終わった例。書き出す前に結論の80字を取り分けておく。",
+        manuscript: {
+          lines: [
+            {
+              text: "確かに緊急時には連絡が取れず困る場合もあり、学習に使う生徒もいるため一律の制限には慎重であるべきで、",
+              tone: "bad",
+            },
+            { text: "制限は必要だ。", tone: "bad" },
+          ],
+        },
+      },
+      {
+        id: "s5",
+        visual: "blocks",
+        caption:
+          "②立場と⑥結論が同じことを言っているか、提出前にこの二つを見比べる。",
+        blocks: { filled: ["position", "conclusion"] },
+        highlightBlock: "conclusion",
+      },
+      {
+        id: "s6",
+        visual: "manuscript",
+        caption: "80字で書く。「したがって〜である」で言い切れば十分だ。",
+        manuscript: {
+          lines: [
+            {
+              text: "したがって、〜すべきである。（80字）",
+              tone: "good",
+              blockId: "conclusion",
+            },
+          ],
+        },
+      },
+    ],
+    drill: { kind: "sentence_length" },
+    keyTakeaways: [
+      "結論に新しい話題を足さない",
+      "②立場を言い直して閉じる",
+      "書き始める前に結論の字数を残しておく",
+    ],
+    exercise: {
+      prompt:
+        "これまでの講で書いた立場・理由・根拠・譲歩を踏まえ、「スマートフォンの使用時間の制限」についての結論を80字以内で書きなさい。",
+      wordLimit: 80,
+      minLength: 30,
+      focusPoints: ["立場との一貫性", "新情報を足さないこと"],
+      blockId: "conclusion",
+    },
+  },
+  {
+    id: "essay-basics-11",
+    order: 8,
+    level: "実践",
+    title: "ブロックをつなぐ",
+    summary: "接続表現と段落の切り方で、6つのブロックを一本の答案にする",
+    durationMin: 15,
+    sections: [
+      {
+        id: "s1",
+        heading: "接続表現は道しるべ",
+        body: "「なぜなら」「実際」「確かに」「したがって」は、次に何が来るかを読み手に知らせる合図です。ブロックの切り替わりに置きます。",
+      },
+      {
+        id: "s2",
+        heading: "同じつなぎ方を繰り返さない",
+        body: "「そして」を続けると幼い印象になります。関係に合わせて「その結果」「一方」などに変えるか、二文を一文にまとめます。",
+      },
+      {
+        id: "s3",
+        heading: "一段落一主張",
+        body: "段落はブロックの切れ目で変えます。一つの段落に言いたいことを二つ入れると、どちらも印象に残りません。",
+      },
+    ],
+    scenes: [
+      {
+        id: "s1",
+        visual: "blocks",
+        caption:
+          "ここまでで六つの部品がそろった。最後に、これを一本の文章につなぐ。",
+        blocks: {
+          filled: [
+            "question",
+            "position",
+            "reason",
+            "evidence",
+            "concession",
+            "conclusion",
+          ],
+        },
+      },
+      {
+        id: "s2",
+        visual: "manuscript",
+        caption:
+          "文が並んでいるだけの例。どれが主張で、どれがその理由なのかが読み取れない。",
+        manuscript: {
+          lines: [
+            { text: "私は使用時間の制限が必要だと考える。", tone: "bad" },
+            { text: "就寝前の使用は睡眠時間を削る。", tone: "bad" },
+            {
+              text: "高校生がインターネットを使う時間は一日に六時間近い。",
+              tone: "bad",
+            },
+          ],
+        },
+      },
+      {
+        id: "s3",
+        visual: "manuscript",
+        caption:
+          "「なぜなら」「実際」を足すだけで、次に何が来るかが分かるようになる。",
+        manuscript: {
+          lines: [
+            {
+              text: "私は使用時間の制限が必要だと考える。",
+              tone: "good",
+              blockId: "position",
+            },
+            {
+              text: "なぜなら、就寝前の使用が睡眠時間を削るからである。",
+              tone: "good",
+              blockId: "reason",
+            },
+            {
+              text: "実際、高校生がインターネットを使う時間は一日に六時間近くに達している。",
+              tone: "good",
+              blockId: "evidence",
+            },
+          ],
+        },
+      },
+      {
+        id: "s4",
+        visual: "manuscript",
+        caption:
+          "「そして」の連発は幼く見える。つなぎ方を変えるか、一文にまとめる。",
+        manuscript: {
+          lines: [
+            {
+              text: "そして睡眠が減る。そして集中力が落ちる。そして成績が下がる。",
+              tone: "bad",
+            },
+            {
+              text: "就寝前の使用で睡眠が減る。その結果、授業中の集中力が落ち、成績にも表れる。",
+              tone: "good",
+            },
+          ],
+        },
+      },
+      {
+        id: "s5",
+        visual: "manuscript",
+        caption:
+          "段落はブロックの切れ目で変える。一つの段落に言いたいことを二つ入れない。",
+        manuscript: {
+          lines: [
+            { text: "第一段落：①問い＋②立場", tone: "normal" },
+            { text: "第二段落：③理由＋④根拠", tone: "normal" },
+            { text: "第三段落：⑤譲歩と反論", tone: "normal" },
+            { text: "第四段落：⑥結論", tone: "normal" },
+          ],
+        },
+      },
+      {
+        id: "s6",
+        visual: "manuscript",
+        caption: "400字ならこの配分でつなぐ。これがそのまま答案の骨格になる。",
+        manuscript: {
+          lines: [
+            { text: "②立場50字 ③理由80字 ④根拠120字", tone: "normal" },
+            { text: "⑤譲歩と反論100字 ⑥結論50字 ＝400字", tone: "good" },
+          ],
+        },
+      },
+    ],
+    drill: { kind: "particle" },
+    keyTakeaways: [
+      "接続表現はブロックの切れ目に置く",
+      "同じつなぎ方を繰り返さない",
+      "段落はブロックの切れ目で変える",
+    ],
+    exercise: {
+      prompt:
+        "3〜7講で書いた各ブロックをつなぎ、「高校生にスマートフォンの使用時間の制限は必要か」についての答案を400字以内でまとめなさい。接続表現と段落の切り方に注意すること。",
+      wordLimit: 400,
+      minLength: 200,
+      focusPoints: ["ブロックの接続", "段落構成", "一貫性"],
+      blockId: null,
+    },
+  },
+  {
+    id: "essay-basics-02",
+    order: 9,
+    level: "実践",
+    title: "課題文の読み方",
+    summary: "筆者の主張と論拠を正確につかみ、自分の意見と切り分ける",
+    durationMin: 10,
+    sections: [
+      {
+        id: "s1",
+        heading: "筆者の主張を1文でつかむ",
+        body: "課題文型では、まず筆者が何を言いたいか（主張）を1文で言えるようにします。「つまり」「したがって」の後に主張が来やすいので目印にしましょう。",
+      },
+      {
+        id: "s2",
+        heading: "主張を支える論拠を拾う",
+        body: "主張の理由・根拠・具体例を拾います。これが後で自分の賛否を述べるときの材料になります。",
+      },
+      {
+        id: "s3",
+        heading: "要約と自分の意見を分ける",
+        body: "課題文の要約と自分の意見を混同しないこと。まず筆者の論を正確に捉えてから、自分の立場を作ります。",
+      },
+    ],
+    keyTakeaways: [
+      "筆者の主張を1文で言えるようにする",
+      "主張を支える論拠を拾う",
+      "要約と自分の意見を区別する",
+    ],
+    exercise: {
+      prompt:
+        "次の短い文章を読み、筆者の主張を1文で、その根拠を2点、合わせて200字以内でまとめてください。\n\n【課題文】SNSは情報を素早く広める一方、誤情報も拡散しやすい。だから利用者は情報の出所を確かめる習慣を持つべきだ。",
+      wordLimit: 200,
+      focusPoints: ["筆者の主張の正確な把握", "根拠の抽出"],
+    },
+  },
+  {
+    id: "essay-basics-03",
+    order: 10,
+    level: "実践",
+    title: "設問分析",
+    summary: "問われていることに正対し、条件を取りこぼさない",
+    durationMin: 8,
+    sections: [
+      {
+        id: "s1",
+        heading: "問われていることに正対する",
+        body: "「賛否を述べよ」「原因を論じよ」「あなたの考えを書け」では求められる答えが違います。設問の動詞に注目して、答え方を決めましょう。",
+      },
+      {
+        id: "s2",
+        heading: "条件をすべて拾う",
+        body: "字数・観点・「具体例を挙げて」などの条件は採点対象です。守らないと内容が良くても減点されます。",
+      },
+      {
+        id: "s3",
+        heading: "いきなり書き始めない",
+        body: "読む→構成メモ→書く→見直し、の順で進めます。構成メモを先に作ると、論理が崩れにくくなります。",
+      },
+    ],
+    keyTakeaways: [
+      "設問の動詞で答え方が決まる",
+      "字数・条件は必ず守る",
+      "構成メモを作ってから書く",
+    ],
+    exercise: {
+      prompt:
+        "次の設問について「答えるために何を書くべきか」と「守るべき条件」を箇条書きで整理してください（200字以内）。\n\n【設問】地方の人口減少にどう対応すべきか、具体策を一つ挙げてあなたの考えを述べよ（400字）。",
+      wordLimit: 200,
+      focusPoints: ["設問要求の把握", "条件の網羅"],
     },
   },
   {
     id: "essay-basics-08",
-    order: 8,
+    order: 11,
     level: "実践",
     title: "推敲と原稿用紙ルール",
     summary: "文末・表記・原稿用紙のルールを整え、提出前に見直す",
