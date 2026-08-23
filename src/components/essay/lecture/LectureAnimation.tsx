@@ -19,9 +19,12 @@ const AUTOPLAY_MS = 6000;
 export function LectureAnimation({
   scenes,
   onFinish,
+  finishLabel = "ドリルへ進む",
 }: {
   scenes: LectureScene[];
   onFinish: () => void;
+  /** 最後のシーンのボタン文言。ドリルの無い講では次が課題になる */
+  finishLabel?: string;
 }) {
   const [index, setIndex] = useState(0);
   const [playing, setPlaying] = useState(true);
@@ -100,7 +103,7 @@ export function LectureAnimation({
         </Button>
         {isLast ? (
           <Button size="sm" onClick={onFinish}>
-            ドリルへ進む
+            {finishLabel}
             <ChevronRight className="ml-1 size-4" />
           </Button>
         ) : (

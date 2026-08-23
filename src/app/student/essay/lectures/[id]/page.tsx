@@ -158,6 +158,7 @@ export default function EssayLectureDetailPage() {
         {hasScenes(lecture) ? (
           <LectureAnimation
             scenes={lecture.scenes!}
+            finishLabel={lecture.drill ? "ドリルへ進む" : "課題へ進む"}
             onFinish={() => setStep(lecture.drill ? "drill" : "exercise")}
           />
         ) : (
@@ -265,6 +266,20 @@ export default function EssayLectureDetailPage() {
             {lecture.exercise.prompt}
           </CardContent>
         </Card>
+
+        {/* 課題文・資料は読ませないと答案が書けない。AI へ渡すだけでなく必ず画面にも出す */}
+        {(lecture.exercise.sourceText ?? lecture.exercise.chartDataSummary) && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">
+                {lecture.exercise.sourceText ? "課題文" : "資料"}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="max-h-72 overflow-y-auto text-sm leading-relaxed whitespace-pre-wrap">
+              {lecture.exercise.sourceText ?? lecture.exercise.chartDataSummary}
+            </CardContent>
+          </Card>
+        )}
 
         {lecture.exercise.blockId && (
           <p className="text-muted-foreground bg-muted/60 rounded-lg p-3 text-xs">
