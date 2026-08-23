@@ -203,6 +203,39 @@ async function main() {
         repeatedIssues: [],
         improvementsSinceLast: [],
         scoreMaximum: 50,
+        // 「あなたの答案から」ラウンド（書き直しドリル）の素材。3件以上ないと出ない
+        languageCorrections: [
+          {
+            location: "第1段落",
+            original: "オンライン教育はすごく便利だと思います。",
+            suggestion: "オンライン教育には、場所を問わず学べるという利点がある。",
+            type: "expression",
+            reason: "「すごく」は話し言葉。文末も敬体になっている",
+          },
+          {
+            location: "第2段落",
+            original:
+              "この方式を使うことによって、誰もが授業を受けることができるようになるということが期待されます。",
+            suggestion: "この方式なら、誰もが授業を受けられると期待できる。",
+            type: "redundancy",
+            reason: "「〜することができる」「〜ということが」が重なって回りくどい",
+          },
+          {
+            location: "第3段落",
+            original: "私が一番伝えたいことは、通信環境の差をなくしたい。",
+            suggestion:
+              "私が一番伝えたいのは、通信環境の差をなくすべきだということである。",
+            type: "grammar",
+            reason: "主語「伝えたいことは」と述語「なくしたい」がねじれている",
+          },
+          {
+            location: "第4段落",
+            original: "貴学の教育方針に共感しし、志望しました。",
+            suggestion: "貴学の教育方針に共感し、志望した。",
+            type: "typo",
+            reason: "「共感しし」は入力の重複",
+          },
+        ],
       },
       questionContext: { wordLimit: 800, questionType: "theme" },
     },

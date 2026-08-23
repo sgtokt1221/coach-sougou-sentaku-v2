@@ -22,6 +22,16 @@ export interface RawCorrection {
  */
 const EXCLUDED_TYPES: LanguageCorrection["type"][] = ["typo"];
 
+/**
+ * 素材にする文の長さの上限。
+ *
+ * 書き直しドリルは「一息で直せる1文」を扱う。これを超える引用は、実際には
+ * 文の直しではなく内容の指摘（要約の方向が違う、主張と根拠が噛み合っていない等）が
+ * languageCorrections に混ざったものだった。内容の指摘は課題文や資料を読み直さないと
+ * 直せないので、ドリルとして成立しない。
+ */
+const MAX_ORIGINAL_LENGTH = 60;
+
 /** 出題済みかどうかを判定するキー。元の文が同じなら同じ問題とみなす。 */
 export function correctionKey(c: Pick<RawCorrection, "original">): string {
   return c.original.trim().replace(/\s+/g, "");
@@ -39,7 +49,10 @@ export function pickPersonalItems(
   const seen = new Set<string>();
   return corrections
     .filter((c) => !EXCLUDED_TYPES.includes(c.type))
-    .filter((c) => c.original.trim().length >= 8)
+    .filter((c) => {
+      const len = c.original.trim().length;
+      return len >= 8 && len <= MAX_ORIGINAL_LENGTH;
+    })
     .sort((a, b) => b.submittedAt - a.submittedAt)
     .filter((c) => {
       const key = correctionKey(c);

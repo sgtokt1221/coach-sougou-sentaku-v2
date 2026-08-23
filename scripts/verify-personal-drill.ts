@@ -84,4 +84,26 @@ assert.equal(new Set(keys).size, keys.length, "重複を除いていない");
 // 素材が足りなければ空を返す（呼び出し側でラウンドごと省く）
 assert.deepEqual(pickPersonalItems([], new Set(), 3), []);
 
+// 長すぎる引用は素材にしない。実データでは、これが内容面の指摘
+// （要約の方向が違う等）だった。文の直しとしては成立しない
+const longOne: RawCorrection[] = [
+  {
+    original:
+      "筆者は、地域の図書館がカフェや催しによってにぎわいを取り戻したことを高く評価し、これからも人が集まる場へと変えていくべきだと述べている。",
+    suggestion:
+      "筆者は、図書館はまず静かに読める場所であり続けるべきだと述べている。",
+    type: "expression",
+    reason: "課題文の主張と正反対の要約になっている",
+    essayId: "e5",
+    submittedAt: 10,
+  },
+  ...base,
+];
+assert.ok(
+  pickPersonalItems(longOne, new Set(), 4).every(
+    (i) => i.original.length <= 60
+  ),
+  "長すぎる引用を除いていない"
+);
+
 console.log("personal drill OK");
