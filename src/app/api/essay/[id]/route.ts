@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { computeRetryComparison } from "@/lib/essay/retry-comparison";
-import type { EssayFeedback, EssayScores, RetryComparison } from "@/lib/types/essay";
+import type {
+  EssayFeedback,
+  EssayScores,
+  RetryComparison,
+} from "@/lib/types/essay";
 
 export async function GET(
   _request: NextRequest,
@@ -20,7 +24,10 @@ export async function GET(
     const essayDoc = await adminDb.doc(`essays/${id}`).get();
 
     if (!essayDoc.exists) {
-      return NextResponse.json({ error: "小論文が見つかりません" }, { status: 404 });
+      return NextResponse.json(
+        { error: "小論文が見つかりません" },
+        { status: 404 }
+      );
     }
 
     const data = essayDoc.data()!;
@@ -30,11 +37,15 @@ export async function GET(
     let facultyName = data.targetFaculty ?? "";
     if (data.targetUniversity) {
       try {
-        const uniDoc = await adminDb.doc(`universities/${data.targetUniversity}`).get();
+        const uniDoc = await adminDb
+          .doc(`universities/${data.targetUniversity}`)
+          .get();
         if (uniDoc.exists) {
           const uniData = uniDoc.data()!;
           universityName = uniData.name ?? data.targetUniversity;
-          const faculty = (uniData.faculties ?? []).find((f: { id: string }) => f.id === data.targetFaculty);
+          const faculty = (uniData.faculties ?? []).find(
+            (f: { id: string }) => f.id === data.targetFaculty
+          );
           facultyName = faculty?.name ?? data.targetFaculty ?? "";
         }
       } catch {}
@@ -42,7 +53,8 @@ export async function GET(
 
     const scores = (data.scores ?? {}) as EssayScores;
     const feedback = (data.feedback ?? {}) as EssayFeedback;
-    const attemptNumber = typeof data.attemptNumber === "number" ? data.attemptNumber : 1;
+    const attemptNumber =
+      typeof data.attemptNumber === "number" ? data.attemptNumber : 1;
     const rootEssayId: string = data.rootEssayId ?? essayDoc.id;
     const parentEssayId: string | null = data.parentEssayId ?? null;
 
@@ -57,7 +69,10 @@ export async function GET(
             retryComparison = computeRetryComparison(
               {
                 id: parentDoc.id,
-                attemptNumber: typeof pdata.attemptNumber === "number" ? pdata.attemptNumber : 1,
+                attemptNumber:
+                  typeof pdata.attemptNumber === "number"
+                    ? pdata.attemptNumber
+                    : 1,
                 submittedAt: pdata.submittedAt?.toDate?.() ?? new Date(),
                 scores: pdata.scores as EssayScores,
                 feedback: pdata.feedback as EssayFeedback,
@@ -76,7 +91,8 @@ export async function GET(
       universityName,
       facultyName,
       topic: data.topic ?? "",
-      submittedAt: data.submittedAt?.toDate?.()?.toISOString() ?? new Date().toISOString(),
+      submittedAt:
+        data.submittedAt?.toDate?.()?.toISOString() ?? new Date().toISOString(),
       ocrText: data.ocrText ?? "",
       status: data.status ?? "reviewed",
       inlineComments: data.inlineComments ?? [],
@@ -107,6 +123,8 @@ export async function GET(
       parentEssayId,
       inputMode: data.inputMode ?? null,
       retryContext: data.retryContext ?? null,
+      // 生成済みのテーマ深掘り（無ければ画面で「詳しく読む」ボタンを出す）
+      deepDive: data.deepDive ?? null,
       ...(retryComparison ? { retryComparison } : {}),
     });
   } catch (error) {

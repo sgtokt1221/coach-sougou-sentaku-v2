@@ -47,6 +47,8 @@ export interface Essay {
   coachThreadId?: string;
   /** この答案を書いていたときの AIコーチ会話（管理者の答案詳細で表示する） */
   coachThreads?: LinkedCoachThread[];
+  /** テーマの深掘り。開いたときに生成して保存する（毎回の提出では作らない） */
+  deepDive?: EssayDeepDive;
 }
 
 /**
@@ -116,7 +118,8 @@ export function calculateEssayTotal(
   const axes = Object.keys(ESSAY_SCORE_WEIGHTS) as EssayScoreAxis[];
   return Math.round(
     axes.reduce(
-      (sum, axis) => sum + (scores[axis] ?? 0) * (ESSAY_SCORE_WEIGHTS[axis] / 10),
+      (sum, axis) =>
+        sum + (scores[axis] ?? 0) * (ESSAY_SCORE_WEIGHTS[axis] / 10),
       0
     )
   );
@@ -175,6 +178,38 @@ export interface ClaimCheck {
     | "personal_fact";
   status: "verified" | "contradicted" | "unverified" | "not_checkable";
   evidence: string;
+}
+
+/**
+ * テーマの深掘り。採点とは別に、開いたときだけ生成する読み物。
+ *
+ * 採点の中で作っていた topicInsights は「入力から確認できる背景だけを述べる」
+ * 制約の下にあり（採点で事実を捏造させないためのルール）、背景知識を補うという
+ * 本来の目的を果たせなかった。知識を教えるのが目的の生成は、採点と分ける。
+ */
+export interface EssayDeepDive {
+  /** この設問が扱っている論点を一文で */
+  issue: string;
+  /** 何と何が対立しているのか。ここが読み物の本体 */
+  conflict: string;
+  /** 主な立場。それぞれの言い分と、弱いところ */
+  positions: {
+    label: string;
+    claim: string;
+    grounds: string;
+    weakness: string;
+  }[];
+  /** 知っていると書ける具体（制度・出来事・数値）。断定できないものは書かせない */
+  facts: { title: string; detail: string }[];
+  /** よくある誤解と、なぜ誤解なのか */
+  misconceptions: { belief: string; correction: string }[];
+  /** この設問で実際に使える切り口 */
+  angles: { angle: string; howToUse: string }[];
+  /** さらに調べるための問い */
+  furtherQuestions: string[];
+  aiMetadata?: AiGenerationMetadata;
+  /** ISO 8601 */
+  generatedAt: string;
 }
 
 export interface TopicInsights {

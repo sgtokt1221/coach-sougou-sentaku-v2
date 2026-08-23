@@ -45,7 +45,8 @@ import { ScoreRing } from "@/components/shared/ScoreRing";
 import { RankBadge } from "@/components/shared/RankBadge";
 import { RedPenText } from "@/components/essay/RedPenText";
 import { CommentableEssayText } from "@/components/essay/CommentableEssayText";
-import type { EssayInlineComment } from "@/lib/types/essay";
+import type { EssayInlineComment, EssayDeepDive } from "@/lib/types/essay";
+import { EssayDeepDiveView } from "@/components/essay/EssayDeepDiveView";
 import { ESSAY_SCORE_WEIGHTS } from "@/lib/types/essay";
 import { RetryComparisonCard } from "@/components/essay/RetryComparison";
 import type {
@@ -56,7 +57,11 @@ import type {
   TaskFulfillment,
   ClaimCheck,
 } from "@/lib/types/essay";
-import { axisPoints, getRankFromPercentage, getScorePercentage } from "@/lib/score-rank";
+import {
+  axisPoints,
+  getRankFromPercentage,
+  getScorePercentage,
+} from "@/lib/score-rank";
 
 interface EssayScores {
   structure: number;
@@ -227,6 +232,37 @@ export default function EssayResultPage() {
     "overview" | "redpen" | "weaknesses" | "brushup" | "insights"
   >("overview");
   const [generatingBrushup, setGeneratingBrushup] = useState(false);
+  const [deepDive, setDeepDive] = useState<EssayDeepDive | undefined>();
+  const [generatingDeepDive, setGeneratingDeepDive] = useState(false);
+
+  /**
+   * テーマの深掘りは開いたときだけ作る。採点のたびに作ると、読まない人のぶんも払う。
+   * 一度作れば答案に保存されるので、二度目からは生成しない。
+   */
+  const generateDeepDive = async () => {
+    if (generatingDeepDive) return;
+    setGeneratingDeepDive(true);
+    try {
+      const { authFetch } = await import("@/lib/api/client");
+      const res = await authFetch(`/api/essay/${id}/deep-dive`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        const payload = (await res.json().catch(() => ({}))) as {
+          error?: string;
+        };
+        throw new Error(payload.error ?? "生成に失敗しました");
+      }
+      setDeepDive((await res.json()) as EssayDeepDive);
+    } catch (err) {
+      const { toast } = await import("sonner");
+      toast.error(
+        err instanceof Error ? err.message : "深掘りの生成に失敗しました"
+      );
+    } finally {
+      setGeneratingDeepDive(false);
+    }
+  };
 
   const generateBrushup = async () => {
     if (generatingBrushup) return;
@@ -306,6 +342,8 @@ export default function EssayResultPage() {
         if (!res.ok) throw new Error("データの取得に失敗しました");
         const data = await res.json();
         setResult(data);
+        // 生成済みなら再生成させない
+        if (data.deepDive) setDeepDive(data.deepDive as EssayDeepDive);
       } catch {
         setError("添削結果の取得に失敗しました");
       } finally {
@@ -600,7 +638,9 @@ export default function EssayResultPage() {
                         </div>
                         <span className="min-w-[3.5rem] text-right text-sm font-bold text-slate-500 tabular-nums">
                           {item.value}
-                          <span className="text-xs font-normal text-slate-400">/10</span>
+                          <span className="text-xs font-normal text-slate-400">
+                            /10
+                          </span>
                         </span>
                       </div>
                     </div>
@@ -1329,8 +1369,15 @@ export default function EssayResultPage() {
               )}
 
               {tab === "insights" && (
-                <div id="insights-section">
-                  {/* テーマ深掘り */}
+                <div id="insights-section" className="space-y-4">
+                  {/* 長文の深掘り（採点とは別に、開いたときだけ生成する） */}
+                  <EssayDeepDiveView
+                    deepDive={deepDive}
+                    generating={generatingDeepDive}
+                    onGenerate={generateDeepDive}
+                  />
+
+                  {/* 採点時に出た短い版。長文がまだ無い人向けに残す */}
                   {result.feedback.topicInsights && (
                     <Card className="border-0 bg-gradient-to-br from-purple-50 via-indigo-50 to-sky-50 shadow-lg">
                       <CardHeader className="flex flex-row items-center justify-between pb-4">
@@ -1716,7 +1763,15 @@ export default function EssayResultPage() {
             <Separator className="my-8 opacity-30" />
 
             {/* テーマ深掘りセクション */}
-            <section id="insights-section" className="scroll-mt-8">
+            <section id="insights-section" className="scroll-mt-8 space-y-4">
+              {/* 長文の深掘り（採点とは別に、開いたときだけ生成する） */}
+              <EssayDeepDiveView
+                deepDive={deepDive}
+                generating={generatingDeepDive}
+                onGenerate={generateDeepDive}
+              />
+
+              {/* 採点時に出た短い版。長文がまだ無い人向けに残す */}
               {result.feedback.topicInsights && (
                 <Card className="border-0 bg-gradient-to-br from-purple-50 via-indigo-50 to-sky-50 shadow-lg">
                   <CardHeader className="flex flex-row items-center justify-between pb-4">
@@ -1878,7 +1933,7 @@ const CLAIM_STATUS_LABELS: Record<ClaimCheck["status"], string> = {
  */
 function ClaimChecksCard({ claims }: { claims?: ClaimCheck[] }) {
   const shown = (claims ?? []).filter(
-    (c) => c.status === "unverified" || c.status === "contradicted",
+    (c) => c.status === "unverified" || c.status === "contradicted"
   );
   if (shown.length === 0) return null;
   return (
