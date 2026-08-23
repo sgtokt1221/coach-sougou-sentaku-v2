@@ -82,6 +82,15 @@ for (const l of lectures) {
     fail(`unknown exercise blockId: ${l.id}`);
   }
 
+  if (l.relatedPractice) {
+    if (!l.relatedPractice.href.startsWith("/student/")) {
+      fail(`relatedPractice href must be an app path: ${l.id}`);
+    }
+    if (l.relatedPractice.note.trim().length < 10) {
+      fail(`short relatedPractice note: ${l.id}`);
+    }
+  }
+
   const ex = l.exercise;
   if (ex.formId) {
     if (!getEssayForm(ex.formId)) fail(`unknown formId: ${l.id}/${ex.formId}`);

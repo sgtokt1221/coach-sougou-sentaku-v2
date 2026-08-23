@@ -118,4 +118,6 @@ export interface EssayLecture {
   /** 学習後の要点チェックリスト */
   keyTakeaways: string[];
   exercise: LectureExercise;
+  /** 講義の内容を続けて練習できる既存のドリルへの導線 */
+  relatedPractice?: { label: string; href: string; note: string };
 }

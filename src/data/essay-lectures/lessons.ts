@@ -649,6 +649,11 @@ export const ESSAY_LECTURES: EssayLecture[] = [
       focusPoints: ["根拠の具体性", "主張との関連"],
       blockId: "evidence",
     },
+    relatedPractice: {
+      label: "ちょこ添削",
+      href: "/student/essay/choco",
+      note: "1段落だけ書いて、根拠の書き方を試せます",
+    },
   },
   {
     id: "essay-basics-07",
@@ -1214,6 +1219,11 @@ export const ESSAY_LECTURES: EssayLecture[] = [
       focusPoints: ["事実と意見の区別", "断定の適切さ"],
       blockId: "evidence",
     },
+    relatedPractice: {
+      label: "論理ドリル",
+      href: "/student/essay/logic-drill",
+      note: "因果の取り違えや飛躍を見つける練習ができます",
+    },
   },
   {
     id: "essay-basics-13",
@@ -1328,6 +1338,11 @@ export const ESSAY_LECTURES: EssayLecture[] = [
       minLength: 80,
       focusPoints: ["抽象語の具体化", "論点の大きさ"],
       blockId: "question",
+    },
+    relatedPractice: {
+      label: "論理ドリル",
+      href: "/student/essay/logic-drill",
+      note: "具体と抽象を行き来する型があります",
     },
   },
   {
@@ -1584,6 +1599,11 @@ export const ESSAY_LECTURES: EssayLecture[] = [
       minLength: 60,
       focusPoints: ["筆者の主張の正確な把握", "要約と意見の分離"],
       blockId: "question",
+    },
+    relatedPractice: {
+      label: "要約ドリル",
+      href: "/student/essay/summary-drill",
+      note: "要約だけを繰り返し練習できます",
     },
   },
   {

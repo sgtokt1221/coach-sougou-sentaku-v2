@@ -21,6 +21,8 @@ import { authFetch } from "@/lib/api/client";
 import { getLectureById, hasScenes } from "@/data/essay-lectures";
 import { LectureAnimation } from "@/components/essay/lecture/LectureAnimation";
 import { SentenceDrillView } from "@/components/essay/lecture/SentenceDrillView";
+import { PersonalRewriteRound } from "@/components/essay/lecture/PersonalRewriteRound";
+import type { RawCorrection } from "@/lib/sentence-drill/personal";
 import { pickDrillItems } from "@/lib/sentence-drill/pick";
 import { getEssayBlock } from "@/lib/types/essay-block";
 import { getEssayForm, formStepsOf } from "@/lib/types/essay-form";
@@ -35,7 +37,7 @@ import { axisPoints } from "@/lib/score-rank";
 import { usePersistentDraft } from "@/hooks/usePersistentDraft";
 import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
 
-type Step = "lecture" | "drill" | "exercise" | "result";
+type Step = "lecture" | "drill" | "personal" | "exercise" | "result";
 
 /**
  * 合計に入る5軸。分母はその軸の配点に揃える（他の添削結果画面と同じ見せ方）。
@@ -71,6 +73,7 @@ export default function EssayLectureDetailPage() {
   const [answer, setAnswer] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<SubmitResult | null>(null);
+  const [personalItems, setPersonalItems] = useState<RawCorrection[]>([]);
 
   const restoreExerciseDraft = useCallback((saved: { answer: string }) => {
     setAnswer(saved.answer);
@@ -236,8 +239,48 @@ export default function EssayLectureDetailPage() {
             } catch {
               toast.error("ドリルの結果を保存できませんでした");
             }
+            // 本人の赤ペンが3件そろっていれば「あなたの答案から」へ。
+            // そろわなければ、断りを出さずに黙って課題へ進む
+            try {
+              const res = await authFetch(
+                "/api/essay/lecture/personal-items?count=3"
+              );
+              const items = res.ok
+                ? ((await res.json()) as RawCorrection[])
+                : [];
+              if (items.length >= 3) {
+                setPersonalItems(items);
+                setStep("personal");
+                return;
+              }
+            } catch {
+              // 取れなければ黙って課題へ進む
+            }
             setStep("exercise");
           }}
+        />
+      </div>
+    );
+  }
+
+  // ===== あなたの答案から（書き直し） =====
+  if (step === "personal" && personalItems.length > 0) {
+    return (
+      <div className="mx-auto max-w-3xl space-y-4 px-4 py-5 lg:px-6 lg:py-8">
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setStep("lecture")}
+          >
+            <ArrowLeft className="size-4" />
+          </Button>
+          <h1 className="text-lg font-bold">あなたの答案から</h1>
+        </div>
+        <PersonalRewriteRound
+          lectureId={lecture.id}
+          items={personalItems}
+          onFinish={() => setStep("exercise")}
         />
       </div>
     );
@@ -413,6 +456,25 @@ export default function EssayLectureDetailPage() {
             </CardHeader>
             <CardContent className="text-sm leading-relaxed">
               {fb.priorityImprovement}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* 講義で扱った力は、既存のドリルで続けて練習できる */}
+        {lecture.relatedPractice && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">次にやると効く練習</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <p className="text-muted-foreground text-sm">
+                {lecture.relatedPractice.note}
+              </p>
+              <Button asChild variant="outline" size="sm">
+                <Link href={lecture.relatedPractice.href}>
+                  {lecture.relatedPractice.label}へ
+                </Link>
+              </Button>
             </CardContent>
           </Card>
         )}
