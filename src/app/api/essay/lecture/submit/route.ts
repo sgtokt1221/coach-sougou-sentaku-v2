@@ -9,6 +9,7 @@ import {
 import { analyzeGrowth, updateWeaknessRecords } from "@/lib/growth/analyze";
 import { getLectureById } from "@/data/essay-lectures";
 import { getEssayBlock } from "@/lib/types/essay-block";
+import { getEssayForm, formStepsOf } from "@/lib/types/essay-form";
 import type { WeaknessRecord } from "@/lib/types/growth";
 import type { EssayScores, EssayFeedback } from "@/lib/types/essay";
 
@@ -134,7 +135,21 @@ export async function POST(request: NextRequest) {
     const blockInfo = block
       ? `この回答は答案全体ではなく、型の「${block.label}」ブロックだけを書く課題である（役割: ${block.role}）。完成答案として不足がある点は減点せず、このブロックとしての出来を見ること。`
       : "この回答は答案全体である。";
-    const lectureInfo = `講義「${lecture.title}」の関連問題。${blockInfo}重点的に評価する観点: ${lecture.exercise.focusPoints.join("、")}。設問: ${lecture.exercise.prompt}`;
+    // 設問タイプ別の型。書く順番と字数配分をそのまま AI へ伝える。
+    // 型を伝えないと、資料型の「読み取り→解釈」の2段が構成の乱れに見える。
+    const form = lecture.exercise.formId
+      ? getEssayForm(lecture.exercise.formId)
+      : null;
+    const formInfo = form
+      ? `この課題は「${form.name}」の答案である。書く順番と字数の目安: ${formStepsOf(
+          form.id
+        )
+          .map((s) => `${s.label}${s.chars}字`)
+          .join(
+            " → "
+          )}。この型で特に見るところ: ${form.focus}。よくある失敗: ${form.pitfall}。`
+      : "";
+    const lectureInfo = `講義「${lecture.title}」の関連問題。${blockInfo}${formInfo}重点的に評価する観点: ${lecture.exercise.focusPoints.join("、")}。設問: ${lecture.exercise.prompt}`;
 
     await essayRef.set({
       userId: uid,
@@ -152,9 +167,15 @@ export async function POST(request: NextRequest) {
       rootEssayId: essayId,
       parentEssayId: null,
       retryContext: {
-        questionType: "lecture",
+        questionType: form?.questionType ?? "lecture",
         lectureInfo,
         wordLimit: lecture.exercise.wordLimit,
+        ...(lecture.exercise.sourceText
+          ? { sourceText: lecture.exercise.sourceText }
+          : {}),
+        ...(lecture.exercise.chartDataSummary
+          ? { chartDataSummary: lecture.exercise.chartDataSummary }
+          : {}),
       },
     });
 
@@ -166,7 +187,10 @@ export async function POST(request: NextRequest) {
       const coreResult = await reviewEssayCore({
         ocrText: answerText,
         topic,
-        questionType: "lecture",
+        // 型が questionType を指定していればそれを使う（資料型は数値の読み違いを減点する）
+        questionType: form?.questionType ?? "lecture",
+        sourceText: lecture.exercise.sourceText,
+        chartDataSummary: lecture.exercise.chartDataSummary,
         lectureInfo,
         wordLimit: lecture.exercise.wordLimit,
         // 基礎講座は大学AP非依存。空値にしてAP軸を評価対象外にする。

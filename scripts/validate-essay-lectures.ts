@@ -1,6 +1,7 @@
 import { getAllLectures } from "../src/data/essay-lectures";
 import { ESSAY_BLOCK_IDS } from "../src/lib/types/essay-block";
 import { SENTENCE_DRILL_KINDS } from "../src/lib/types/sentence-drill";
+import { getEssayForm } from "../src/lib/types/essay-form";
 
 let errors = 0;
 const fail = (msg: string) => {
@@ -79,6 +80,21 @@ for (const l of lectures) {
   const bid = l.exercise.blockId;
   if (bid && !ESSAY_BLOCK_IDS.includes(bid)) {
     fail(`unknown exercise blockId: ${l.id}`);
+  }
+
+  const ex = l.exercise;
+  if (ex.formId) {
+    if (!getEssayForm(ex.formId)) fail(`unknown formId: ${l.id}/${ex.formId}`);
+    // 型を使う課題はフル答案。ブロック1つだけを書かせる課題と混ぜない
+    if (ex.blockId) fail(`formId with blockId: ${l.id}`);
+    if (ex.wordLimit < 400) fail(`formId with short wordLimit: ${l.id}`);
+  }
+  // 課題文・資料は、それを使う型のときだけ持たせる
+  if (ex.sourceText && ex.formId !== "passage") {
+    fail(`sourceText without passage form: ${l.id}`);
+  }
+  if (ex.chartDataSummary && ex.formId !== "data") {
+    fail(`chartDataSummary without data form: ${l.id}`);
   }
 }
 

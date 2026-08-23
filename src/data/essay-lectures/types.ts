@@ -5,6 +5,7 @@
 
 import type { EssayBlockId } from "@/lib/types/essay-block";
 import type { SentenceDrillKind } from "@/lib/types/sentence-drill";
+import type { EssayFormId } from "@/lib/types/essay-form";
 
 export type LectureLevel = "基礎" | "実践";
 
@@ -88,6 +89,14 @@ export interface LectureExercise {
   focusPoints: string[];
   /** 型のどのブロックを書かせるか。フル答案なら null */
   blockId?: EssayBlockId | null;
+  /** 設問タイプ別の型。フル答案の講（15〜18講）で使う */
+  formId?: EssayFormId;
+  /** 課題文型の課題文。AI添削へそのまま渡す */
+  sourceText?: string;
+  /** 資料型の資料（数値の要約）。AI添削へそのまま渡す */
+  chartDataSummary?: string;
+  /** 制限時間（分）。20講だけ使う */
+  timeLimitMin?: number;
 }
 
 export interface EssayLecture {
