@@ -41,7 +41,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s1",
         visual: "manuscript",
         caption:
-          "同じ体験でも、作文は気持ちを書き、小論文は問いへの答えを書く。まず並べて見比べよう。",
+          "同じ体験でも、作文は気持ちを書き、小論文は**問いへの答えを書く**。まず並べて見比べよう。",
         manuscript: {
           lines: [
             {
@@ -60,7 +60,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s2",
         visual: "manuscript",
         caption:
-          "小論文はまず問いを立て、その答えを一文で言い切る。「楽しかった」からは始めない。",
+          "小論文はまず問いを立て、**その答えを一文で言い切る**。「楽しかった」からは始めない。",
         manuscript: {
           lines: [
             {
@@ -80,7 +80,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s3",
         visual: "blocks",
         caption:
-          "小論文は6つのブロックでできている。この講座では、この6つを1つずつ書けるようにしていく。",
+          "小論文は**6つのブロック**でできている。この講座では、この6つを1つずつ書けるようにしていく。",
         blocks: {
           filled: [
             "question",
@@ -104,7 +104,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s5",
         visual: "diagram",
         caption:
-          "50点の内訳。構成と論証で半分近くを占める。この講座はこの順に埋めていく。",
+          "50点の内訳。**構成と論証で半分近く**を占める。この講座はこの順に埋めていく。",
         diagram: {
           unit: "点",
           items: [
@@ -174,7 +174,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s1",
         visual: "blocks",
         caption:
-          "答案は6ブロックの積み木でできている。上から順に置いていけば形になる。",
+          "答案は6ブロックの積み木でできている。**上から順に置いていけば形になる**。",
         blocks: {
           filled: [
             "question",
@@ -190,7 +190,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s2",
         visual: "blocks",
         caption:
-          "よくある失敗は、④根拠が抜けること。理由だけで具体例が無いと、感想と変わらない。",
+          "よくある失敗は、**④根拠が抜けること**。理由だけで具体例が無いと、感想と変わらない。",
         blocks: {
           filled: ["question", "position", "reason", "conclusion"],
           missing: ["evidence"],
@@ -201,7 +201,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s3",
         visual: "blocks",
         caption:
-          "⑤譲歩と反論が抜けるのも多い。反対意見に触れない主張は、一方的に見える。",
+          "**⑤譲歩と反論が抜ける**のも多い。反対意見に触れない主張は、一方的に見える。",
         blocks: {
           filled: ["question", "position", "reason", "evidence", "conclusion"],
           missing: ["concession"],
@@ -212,7 +212,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s4",
         visual: "manuscript",
         caption:
-          "6ブロックを実際の文にするとこうなる。この順に並べれば、そのまま一本の答案になる。",
+          "6ブロックを実際の文にするとこうなる。この順に並べれば、**そのまま一本の答案になる**。",
         manuscript: {
           lines: [
             {
@@ -242,7 +242,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
       {
         id: "s5",
         visual: "diagram",
-        caption: "800字ならこの配分が目安。④根拠に一番字数を使う。",
+        caption: "800字ならこの配分が目安。**④根拠に一番字数を使う**。",
         diagram: {
           unit: "字",
           items: [
@@ -316,7 +316,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s1",
         visual: "manuscript",
         caption:
-          "一番多い失点はこれ。どちらとも取れる書き方は、立場を決めていないのと同じだ。",
+          "一番多い失点はこれ。**どちらとも取れる書き方**は、立場を決めていないのと同じだ。",
         manuscript: {
           lines: [
             {
@@ -331,7 +331,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s2",
         visual: "manuscript",
         caption:
-          "立場は一つに決めて言い切る。迷いは⑤譲歩のブロックで書けばいい。",
+          "立場は**一つに決めて言い切る**。迷いは⑤譲歩のブロックで書けばいい。",
         manuscript: {
           lines: [
             {
@@ -347,7 +347,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s3",
         visual: "manuscript",
         caption:
-          "設問が「是非を論じよ」なら是非を答える。ずれた答えは、内容が良くても点にならない。",
+          "設問が「是非を論じよ」なら是非を答える。ずれた答えは、**内容が良くても点にならない**。",
         manuscript: {
           lines: [
             { text: "設問：オンライン教育の是非を論じなさい", tone: "normal" },
@@ -363,7 +363,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s4",
         visual: "manuscript",
         caption:
-          "「思う」で終えると弱い。小論文は「考える」「べきだ」で言い切る。",
+          "「思う」で終えると弱い。小論文は**「考える」「べきだ」で言い切る**。",
         manuscript: {
           lines: [
             { text: "〜だと思います。", tone: "bad" },
@@ -375,14 +375,15 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s5",
         visual: "blocks",
         caption:
-          "②立場は答案の背骨。ここが決まると、③理由と⑥結論が自動的に決まる。",
+          "**②立場は答案の背骨**。ここが決まると、③理由と⑥結論が自動的に決まる。",
         blocks: { filled: ["position", "reason", "conclusion"] },
         highlightBlock: "position",
       },
       {
         id: "s6",
         visual: "manuscript",
-        caption: "60字で書く。長く書く必要はない。一文で言い切れれば十分だ。",
+        caption:
+          "60字で書く。長く書く必要はない。**一文で言い切れれば十分だ**。",
         manuscript: {
           lines: [
             {
@@ -438,7 +439,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s1",
         visual: "manuscript",
         caption:
-          "理由が主張の言い換えになっている例。これは何も説明していない。",
+          "理由が**主張の言い換え**になっている例。これは何も説明していない。",
         manuscript: {
           lines: [
             { text: "私は制限が必要だと考える。", blockId: "position" },
@@ -455,7 +456,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s2",
         visual: "manuscript",
         caption:
-          "理由は「なぜそう言えるか」を別の言葉で説明する。主張に無い語が入るのが目印。",
+          "理由は「なぜそう言えるか」を別の言葉で説明する。**主張に無い語が入る**のが目印。",
         manuscript: {
           lines: [
             { text: "私は制限が必要だと考える。", blockId: "position" },
@@ -472,7 +473,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s3",
         visual: "manuscript",
         caption:
-          "理由を並べすぎると全部が浅くなる。800字なら理由は一本、掘り下げる方がいい。",
+          "理由を並べすぎると全部が浅くなる。800字なら**理由は一本、掘り下げる**方がいい。",
         manuscript: {
           lines: [
             { text: "理由は3つある。第一に…第二に…第三に…", tone: "bad" },
@@ -484,7 +485,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s4",
         visual: "manuscript",
         caption:
-          "理由と主張の間が飛んでいないか確かめる。間に一段必要なことが多い。",
+          "理由と主張の**間が飛んでいないか**確かめる。間に一段必要なことが多い。",
         manuscript: {
           lines: [
             { text: "スマホを使う → 成績が下がる", tone: "bad" },
@@ -499,14 +500,14 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s5",
         visual: "blocks",
         caption:
-          "③理由は②立場と④根拠をつなぐ橋。ここが弱いと、根拠を足しても効かない。",
+          "③理由は②立場と④根拠を**つなぐ橋**。ここが弱いと、根拠を足しても効かない。",
         blocks: { filled: ["position", "reason", "evidence"] },
         highlightBlock: "reason",
       },
       {
         id: "s6",
         visual: "manuscript",
-        caption: "100字で書く。「なぜなら〜だからである」の形に収める。",
+        caption: "100字で書く。**「なぜなら〜だからである」**の形に収める。",
         manuscript: {
           lines: [
             {
@@ -562,7 +563,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s1",
         visual: "manuscript",
         caption:
-          "根拠のつもりで一般論を書いた例。誰がどう困っているのかが書かれていない。",
+          "根拠のつもりで**一般論を書いた例**。誰がどう困っているのかが書かれていない。",
         manuscript: {
           lines: [
             {
@@ -578,7 +579,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s2",
         visual: "manuscript",
         caption:
-          "同じ題材でも、数字と出所を置けば根拠になる。「実際、」で始めるのが型だ。",
+          "同じ題材でも、**数字と出所を置けば根拠になる**。「実際、」で始めるのが型だ。",
         manuscript: {
           lines: [
             {
@@ -599,7 +600,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s3",
         visual: "manuscript",
         caption:
-          "自分の経験も根拠になる。ただし「大変だった」で終えず、主張を支える形にする。",
+          "自分の経験も根拠になる。ただし「大変だった」で終えず、**主張を支える形にする**。",
         manuscript: {
           lines: [
             {
@@ -619,7 +620,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s4",
         visual: "manuscript",
         caption:
-          "「社会問題」のような大きな言葉は、それだけでは何も言っていない。誰に何が起きているかまで下ろす。",
+          "「社会問題」のような大きな言葉は、それだけでは何も言っていない。**誰に何が起きているか**まで下ろす。",
         manuscript: {
           lines: [
             { text: "地方の人口減少は深刻な社会問題である。", tone: "bad" },
@@ -634,7 +635,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s5",
         visual: "blocks",
         caption:
-          "③理由と④根拠はセットで働く。理由だけで止めると、読み手は「本当にそうか」で終わってしまう。",
+          "③理由と④根拠は**セットで働く**。理由だけで止めると、読み手は「本当にそうか」で終わってしまう。",
         blocks: { filled: ["position", "reason", "evidence"] },
         highlightBlock: "evidence",
       },
@@ -642,7 +643,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s6",
         visual: "manuscript",
         caption:
-          "150字で書く。事実か経験を一つだけ選び、数を増やさずに詳しく書く。",
+          "150字で書く。事実か経験を**一つだけ選び**、数を増やさずに詳しく書く。",
         manuscript: {
           lines: [
             { text: "実際、〜。（150字）", tone: "good", blockId: "evidence" },
@@ -699,7 +700,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s1",
         visual: "manuscript",
         caption:
-          "反対意見にまったく触れない答案。筋は通っているが、一方的に見えてしまう。",
+          "反対意見にまったく触れない答案。筋は通っているが、**一方的に見えてしまう**。",
         manuscript: {
           lines: [
             {
@@ -718,7 +719,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s2",
         visual: "manuscript",
         caption:
-          "反対側をいったん認めてから切り返す。これが⑤譲歩と反論の型だ。",
+          "反対側を**いったん認めてから切り返す**。これが⑤譲歩と反論の型だ。",
         manuscript: {
           lines: [
             {
@@ -739,7 +740,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s3",
         visual: "manuscript",
         caption:
-          "わざと弱い反論を立てても点にならない。相手の一番強い言い分を自分で書く。",
+          "わざと弱い反論を立てても点にならない。**相手の一番強い言い分**を自分で書く。",
         manuscript: {
           lines: [
             { text: "確かに、スマートフォンを使いたい人もいる。", tone: "bad" },
@@ -754,7 +755,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s4",
         visual: "manuscript",
         caption:
-          "「確かに」で終えると、自分の立場まで揺らいで見える。必ず「しかし」で戻す。",
+          "「確かに」で終えると、自分の立場まで揺らいで見える。**必ず「しかし」で戻す**。",
         manuscript: {
           lines: [
             {
@@ -773,7 +774,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s5",
         visual: "blocks",
         caption:
-          "⑤は譲るためのブロックではない。反論を処理して②立場を強くするために置く。",
+          "⑤は譲るためのブロックではない。反論を処理して**②立場を強くする**ために置く。",
         blocks: {
           filled: [
             "position",
@@ -789,7 +790,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s6",
         visual: "manuscript",
         caption:
-          "150字なら二文で収まる。「確かに」で一文、「しかし」で一文が目安だ。",
+          "150字なら**二文で収まる**。「確かに」で一文、「しかし」で一文が目安だ。",
         manuscript: {
           lines: [
             {
@@ -845,7 +846,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s1",
         visual: "manuscript",
         caption:
-          "結論で新しい話を始めた例。触れただけで終わる話題は、書かないほうがよい。",
+          "結論で**新しい話を始めた例**。触れただけで終わる話題は、書かないほうがよい。",
         manuscript: {
           lines: [
             {
@@ -865,7 +866,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s2",
         visual: "manuscript",
         caption:
-          "②立場をそのまま写さない。本論で足した条件を入れて言い直すと、答案がまとまる。",
+          "②立場をそのまま写さない。**本論で足した条件を入れて**言い直すと、答案がまとまる。",
         manuscript: {
           lines: [
             {
@@ -885,7 +886,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s3",
         visual: "manuscript",
         caption:
-          "決意表明で終えると、問いに答えないまま閉じることになる。答えで終える。",
+          "**決意表明で終えると**、問いに答えないまま閉じることになる。答えで終える。",
         manuscript: {
           lines: [
             { text: "私もこれから使い方を見直していきたい。", tone: "bad" },
@@ -900,7 +901,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s4",
         visual: "manuscript",
         caption:
-          "⑤で書きすぎ、⑥が一行で終わった例。書き出す前に結論の80字を取り分けておく。",
+          "⑤で書きすぎ、⑥が一行で終わった例。書き出す前に**結論の80字を取り分けておく**。",
         manuscript: {
           lines: [
             {
@@ -915,14 +916,14 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s5",
         visual: "blocks",
         caption:
-          "②立場と⑥結論が同じことを言っているか、提出前にこの二つを見比べる。",
+          "②立場と⑥結論が同じことを言っているか、**提出前にこの二つを見比べる**。",
         blocks: { filled: ["position", "conclusion"] },
         highlightBlock: "conclusion",
       },
       {
         id: "s6",
         visual: "manuscript",
-        caption: "80字で書く。「したがって〜である」で言い切れば十分だ。",
+        caption: "80字で書く。**「したがって〜である」**で言い切れば十分だ。",
         manuscript: {
           lines: [
             {
@@ -978,7 +979,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s1",
         visual: "blocks",
         caption:
-          "部品は六つともそろっている。並べただけでは文章にならないのは、間をつなぐ言葉が無いからだ。",
+          "部品は六つともそろっている。並べただけでは文章にならないのは、**間をつなぐ言葉**が無いからだ。",
         blocks: {
           filled: [
             "question",
@@ -994,7 +995,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s2",
         visual: "manuscript",
         caption:
-          "文が並んでいるだけの例。どれが主張で、どれがその理由なのかが読み取れない。",
+          "文が並んでいるだけの例。どれが主張で、どれがその理由なのかが**読み取れない**。",
         manuscript: {
           lines: [
             { text: "私は使用時間の制限が必要だと考える。" },
@@ -1007,7 +1008,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s3",
         visual: "manuscript",
         caption:
-          "「なぜなら」「実際」を足すだけで、次に何が来るかが分かるようになる。",
+          "「なぜなら」「実際」を足すだけで、**次に何が来るかが分かる**ようになる。",
         manuscript: {
           lines: [
             {
@@ -1032,7 +1033,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s4",
         visual: "manuscript",
         caption:
-          "「そして」の連発は幼く見える。つなぎ方を変えるか、一文にまとめる。",
+          "**「そして」の連発**は幼く見える。つなぎ方を変えるか、一文にまとめる。",
         manuscript: {
           lines: [
             {
@@ -1050,7 +1051,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s5",
         visual: "manuscript",
         caption:
-          "段落はブロックの切れ目で変える。一つの段落に言いたいことを二つ入れない。",
+          "段落は**ブロックの切れ目で変える**。一つの段落に言いたいことを二つ入れない。",
         manuscript: {
           lines: [
             { text: "第一段落：①問い＋②立場", tone: "normal" },
@@ -1063,7 +1064,8 @@ export const ESSAY_LECTURES: EssayLecture[] = [
       {
         id: "s6",
         visual: "diagram",
-        caption: "400字ならこの配分でつなぐ。これがそのまま答案の骨格になる。",
+        caption:
+          "400字ならこの配分でつなぐ。これが**そのまま答案の骨格になる**。",
         diagram: {
           unit: "字",
           items: [
@@ -1120,7 +1122,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s1",
         visual: "compare",
         caption:
-          "原因まで言い切ってしまった例。投票率が低いことは確かめられるが、なぜ低いかは確かめていない。",
+          "原因まで言い切ってしまった例。投票率が低いことは確かめられるが、**なぜ低いかは確かめていない**。",
         compare: {
           before: "若者の投票率が低いのは、政治に関心がないからだ。",
           after:
@@ -1133,7 +1135,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s2",
         visual: "manuscript",
         caption:
-          "小論文で使う材料は三つに分かれる。混ぜて書くと、どこまでが確かな話なのかが読み手に伝わらない。",
+          "小論文で使う材料は**事実・推測・意見**の三つ。混ぜて書くと、どこまでが確かな話なのかが読み手に伝わらない。",
         manuscript: {
           lines: [
             { text: "事実：調査や記録で確かめられること", tone: "normal" },
@@ -1152,7 +1154,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s3",
         visual: "compare",
         caption:
-          "壊していると書いた時点で、確かめようのない話になる。事実の部分と判断の部分に切り分ける。",
+          "壊していると書いた時点で、**確かめようのない話**になる。事実の部分と判断の部分に切り分ける。",
         compare: {
           before: "SNSは人間関係を壊している。",
           after:
@@ -1165,7 +1167,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s4",
         visual: "manuscript",
         caption:
-          "事実を先に置き、そのあとで自分の判断を書く。順番が逆だと、判断が根拠なしに見える。",
+          "**事実を先に置き**、そのあとで自分の判断を書く。順番が逆だと、判断が根拠なしに見える。",
         manuscript: {
           lines: [
             {
@@ -1185,7 +1187,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s5",
         visual: "compare",
         caption:
-          "失敗という言葉は評価であって、事実ではない。何がどうだったのかを先に書く。",
+          "**失敗という言葉は評価**であって、事実ではない。何がどうだったのかを先に書く。",
         compare: {
           before: "この制度は失敗だった。",
           after:
@@ -1198,7 +1200,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s6",
         visual: "manuscript",
         caption:
-          "どちらかに偏った答案は、どちらも点が伸びない。事実で支え、意見で言い切る。",
+          "どちらかに偏った答案は、どちらも点が伸びない。**事実で支え、意見で言い切る**。",
         manuscript: {
           lines: [
             {
@@ -1216,7 +1218,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s7",
         visual: "blocks",
         caption:
-          "④根拠に置くのは事実。②立場と③理由は、その事実をもとにした自分の意見だ。",
+          "**④根拠に置くのは事実**。②立場と③理由は、その事実をもとにした自分の意見だ。",
         blocks: { filled: ["position", "reason", "evidence"] },
         highlightBlock: "evidence",
       },
@@ -1270,7 +1272,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s1",
         visual: "manuscript",
         caption:
-          "大きな言葉だけで書いた答案。どの設問にも書ける一文は、何も答えていないのと同じだ。",
+          "大きな言葉だけで書いた答案。どの設問にも書ける一文は、**何も答えていない**のと同じだ。",
         manuscript: {
           lines: [
             { text: "設問：現代の社会問題について論じなさい", tone: "normal" },
@@ -1285,7 +1287,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s2",
         visual: "compare",
         caption:
-          "多様性という言葉は、どの話にも使えてしまう。誰の何の話なのかまで下ろす。",
+          "多様性という言葉は、どの話にも使えてしまう。**誰の何の話なのか**まで下ろす。",
         compare: {
           before: "多様性を尊重する社会が必要だ。",
           after: "外国籍の子どもが母語で学べる環境を整える必要がある。",
@@ -1297,7 +1299,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s3",
         visual: "compare",
         caption:
-          "取り組むべきだ、では何をするのかが決まらない。中身を一つ決めると論じられる。",
+          "取り組むべきだ、では何をするのかが決まらない。**中身を一つ決める**と論じられる。",
         compare: {
           before: "地域活性化に取り組むべきだ。",
           after:
@@ -1310,7 +1312,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s4",
         visual: "manuscript",
         caption:
-          "大きな言葉から段を下りるように降ろしていく。四段目まで来れば200字で書ける。",
+          "大きな言葉から段を下りるように降ろしていく。四段目まで来れば、**200字で書ける**。",
         manuscript: {
           lines: [
             { text: "社会問題", tone: "normal" },
@@ -1324,7 +1326,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s5",
         visual: "compare",
         caption:
-          "課題は大きい、で止めると次の一文が書けない。何が課題なのかを名指しする。",
+          "課題は大きい、で止めると次の一文が書けない。**何が課題なのかを名指しする**。",
         compare: {
           before: "情報化社会の課題は大きい。",
           after: "検索結果の上位だけを読んで判断してしまう習慣が課題である。",
@@ -1336,7 +1338,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s6",
         visual: "blocks",
         caption:
-          "①問いを小さく切れば、②以降は自然に決まる。書けないのは、たいてい問いが大きすぎるときだ。",
+          "**①問いを小さく切れば**、②以降は自然に決まる。書けないのは、たいてい問いが大きすぎるときだ。",
         blocks: { filled: ["question", "position", "reason", "evidence"] },
         highlightBlock: "question",
       },
@@ -1390,7 +1392,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s1",
         visual: "compare",
         caption:
-          "良い経験でした、では何をした人なのか分からない。何が起きて自分がどう動いたかを書く。",
+          "良い経験でした、では何をした人なのか分からない。**何が起きて自分がどう動いたか**を書く。",
         compare: {
           before: "部活動を通して協調性を学びました。とても良い経験でした。",
           after:
@@ -1403,7 +1405,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s2",
         visual: "manuscript",
         caption:
-          "学びましたで終える書き方は感想文の型だ。経験は主張を支えるために置く。",
+          "**学びましたで終える書き方**は感想文の型だ。経験は主張を支えるために置く。",
         manuscript: {
           lines: [
             { text: "経験 → 学びました → 終わり", tone: "bad" },
@@ -1415,7 +1417,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s3",
         visual: "compare",
         caption:
-          "成長できた、は自分の話で終わっている。その経験が何を裏づけるのかまで書く。",
+          "成長できた、は自分の話で終わっている。**その経験が何を裏づけるのか**まで書く。",
         compare: {
           before: "この経験から成長できました。",
           after:
@@ -1428,7 +1430,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s4",
         visual: "manuscript",
         caption:
-          "独自性の配点は5点。珍しい体験を探すのではなく、自分が見たものを書けばよい。",
+          "独自性の配点は5点。珍しい体験を探すのではなく、**自分が見たものを書けばよい**。",
         manuscript: {
           lines: [
             { text: "独自性＝珍しい経験を持っていること", tone: "bad" },
@@ -1443,7 +1445,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s5",
         visual: "compare",
         caption:
-          "責任感が強いと自分で言っても、読み手は確かめられない。行動を書けば伝わる。",
+          "責任感が強いと自分で言っても、読み手は確かめられない。**行動を書けば伝わる**。",
         compare: {
           before: "私は責任感が強い人間です。",
           after:
@@ -1456,7 +1458,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s6",
         visual: "blocks",
         caption:
-          "経験を置くのは④根拠。②立場や⑥結論に混ぜると、主張全体が体験談に見えてしまう。",
+          "**経験を置くのは④根拠**。②立場や⑥結論に混ぜると、主張全体が体験談に見えてしまう。",
         blocks: {
           filled: ["position", "reason", "evidence", "conclusion"],
         },
@@ -1507,7 +1509,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s1",
         visual: "manuscript",
         caption:
-          "課題文を読んだら、まず主張の一文を探す。この四行で筆者が言いたいのは最後の一文だ。",
+          "課題文を読んだら、まず**主張の一文を探す**。この四行で筆者が言いたいのは最後の一文だ。",
         manuscript: {
           lines: [
             { text: "情報が多い時代には、選ぶ力が要る。", tone: "normal" },
@@ -1530,7 +1532,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s2",
         visual: "manuscript",
         caption:
-          "主張は合図の言葉の後ろに置かれやすい。全文を読み直さず、この目印から探す。",
+          "主張は**合図の言葉の後ろ**に置かれやすい。全文を読み直さず、この目印から探す。",
         manuscript: {
           lines: [
             {
@@ -1548,7 +1550,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s3",
         visual: "compare",
         caption:
-          "要約に自分の賛否を混ぜると、筆者の主張が見えなくなる。まず筆者の分だけ書く。",
+          "要約に自分の賛否を混ぜると、筆者の主張が見えなくなる。**まず筆者の分だけ書く**。",
         compare: {
           before:
             "筆者は情報を選ぶ力が必要だと述べているが、私はその通りだと思う。",
@@ -1562,7 +1564,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s4",
         visual: "compare",
         caption:
-          "課題文の言葉を並べただけでは要約にならない。自分の言葉に置き換えて短くする。",
+          "課題文の言葉を並べただけでは要約にならない。**自分の言葉に置き換えて短くする**。",
         compare: {
           before:
             "情報が多い時代には選ぶ力が要り、選ぶ基準を人任せにすると見たいものだけが並ぶ。",
@@ -1575,7 +1577,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s5",
         visual: "manuscript",
         caption:
-          "課題文型では、①問いの位置に筆者の主張の要約が入る。そのうえで②立場を決める。",
+          "課題文型では、①問いの位置に**筆者の主張の要約**が入る。そのうえで②立場を決める。",
         manuscript: {
           lines: [
             {
@@ -1596,7 +1598,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s6",
         visual: "blocks",
         caption:
-          "課題文型で変わるのはこの二つだけだ。③理由から先は、今まで通りに書ける。",
+          "課題文型で変わるのは**この二つだけ**だ。③理由から先は、今まで通りに書ける。",
         blocks: { filled: ["question", "position"] },
         highlightBlock: "question",
       },
@@ -1651,7 +1653,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s1",
         visual: "manuscript",
         caption:
-          "設問は、書くべきことの一覧表だ。読んだらまず、条件を数えて書き出す。",
+          "設問は、**書くべきことの一覧表**だ。読んだらまず、条件を数えて書き出す。",
         manuscript: {
           lines: [
             {
@@ -1668,7 +1670,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s2",
         visual: "compare",
         caption:
-          "比較して論じよ、なら片方だけでは答えていない。両方に触れてから立場を書く。",
+          "比較して論じよ、なら片方だけでは答えていない。**両方に触れてから立場を書く**。",
         compare: {
           before:
             "私はオンライン授業を進めるべきだと考える。場所を問わず学べるからである。",
@@ -1682,7 +1684,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s3",
         visual: "manuscript",
         caption:
-          "設問の最後の動詞で答え方が変わる。ここを読み飛ばすと、答案が丸ごとずれる。",
+          "**設問の最後の動詞**で答え方が変わる。ここを読み飛ばすと、答案が丸ごとずれる。",
         manuscript: {
           lines: [
             {
@@ -1704,7 +1706,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s4",
         visual: "compare",
         caption:
-          "設問をそのまま写した①は、何も決めていない。何を論じるのかを自分の言葉で確定する。",
+          "設問をそのまま写した①は、何も決めていない。何を論じるのかを**自分の言葉で確定する**。",
         compare: {
           before: "地方の人口減少について論じる。",
           after:
@@ -1717,7 +1719,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s5",
         visual: "manuscript",
         caption:
-          "書き終えたら設問に戻り、この三つを見る。内容が良くても条件落ちは減点になる。",
+          "書き終えたら設問に戻り、この三つを見る。内容が良くても**条件落ちは減点になる**。",
         manuscript: {
           lines: [
             { text: "字数：指定の八割を超えているか", tone: "normal" },
@@ -1733,7 +1735,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s6",
         visual: "blocks",
         caption:
-          "設問分析は①問いを作る作業だ。ここが決まれば、②以降はぶれない。",
+          "設問分析は**①問いを作る作業**だ。ここが決まれば、②以降はぶれない。",
         blocks: { filled: ["question", "position", "reason"] },
         highlightBlock: "question",
       },
@@ -1787,7 +1789,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s1",
         visual: "manuscript",
         caption:
-          "資料型では、まず数字をそのまま読む。ここで言えるのは「増えた」という事実だけだ。",
+          "資料型では、まず**数字をそのまま読む**。ここで言えるのは「増えた」という事実だけだ。",
         manuscript: {
           lines: [
             {
@@ -1804,7 +1806,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s2",
         visual: "compare",
         caption:
-          "効果が出ている、は資料に書かれていない。書かれているのは割合が増えたことだけだ。",
+          "効果が出ている、は**資料に書かれていない**。書かれているのは割合が増えたことだけだ。",
         compare: {
           before:
             "この数値から、自転車通学を勧める取り組みが効果を上げていることが分かる。",
@@ -1818,7 +1820,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s3",
         visual: "compare",
         caption:
-          "二つが同時に増えていても、片方がもう片方の原因とは限らない。ここは書き分ける。",
+          "二つが同時に増えていても、片方が**もう片方の原因とは限らない**。ここは書き分ける。",
         compare: {
           before: "自転車通学が増えたことで、生徒の体力が向上している。",
           after:
@@ -1831,7 +1833,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s4",
         visual: "manuscript",
         caption:
-          "割合が上がっても、人数が増えたとは限らない。どちらの数字かを必ず確かめる。",
+          "割合が上がっても、**人数が増えたとは限らない**。どちらの数字かを必ず確かめる。",
         manuscript: {
           lines: [
             {
@@ -1849,7 +1851,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s5",
         visual: "manuscript",
         caption:
-          "資料型は①問いが二つに割れて七段になる。読み取りと解釈を別の段に置くのが要点だ。",
+          "資料型は①問いが二つに割れて七段になる。**読み取りと解釈を別の段に置く**のが要点だ。",
         manuscript: {
           lines: [
             { text: "読み取り：資料から言える事実", tone: "normal" },
@@ -1866,7 +1868,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s6",
         visual: "blocks",
         caption:
-          "資料の数字は④根拠の材料になる。読み取った事実を、そのまま理由の裏づけに使う。",
+          "資料の数字は**④根拠の材料**になる。読み取った事実を、そのまま理由の裏づけに使う。",
         blocks: {
           filled: ["position", "reason", "evidence", "conclusion"],
         },
@@ -1876,7 +1878,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s7",
         visual: "compare",
         caption:
-          "資料に無い数字を持ち出すと、そこだけ根拠が消える。示された範囲の中で言い切る。",
+          "資料に無い数字を持ち出すと、そこだけ根拠が消える。**示された範囲の中で言い切る**。",
         compare: {
           before:
             "全国でも自転車通学は五割を超えており、この流れは全国的なものである。",
@@ -1932,7 +1934,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s1",
         visual: "manuscript",
         caption:
-          "テーマ型の設問には、答えるべき問いが書かれていない。このまま書き出すと、何に答えたのか自分でも分からなくなる。",
+          "テーマ型の設問には、**答えるべき問いが書かれていない**。このまま書き出すと、何に答えたのか自分でも分からなくなる。",
         manuscript: {
           lines: [
             {
@@ -1947,7 +1949,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s2",
         visual: "compare",
         caption:
-          "テーマを写しただけの①は、まだ何も決めていない。答えが返せる問いの形まで切る。",
+          "テーマを写しただけの①は、まだ何も決めていない。**答えが返せる問いの形まで切る**。",
         compare: {
           before: "地域社会について論じる。地域は大切である。",
           after:
@@ -1963,7 +1965,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s3",
         visual: "manuscript",
         caption:
-          "同じテーマでも、切り口を変えれば別の問いになる。三つ書き出し、④根拠まで書ける一つを選ぶ。",
+          "同じテーマでも、切り口を変えれば別の問いになる。三つ書き出し、**④根拠まで書ける一つ**を選ぶ。",
         manuscript: {
           lines: [
             {
@@ -1985,7 +1987,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s4",
         visual: "diagram",
         caption:
-          "テーマ型の字数配分は基本型のままだ。④根拠が一番太く、ここが薄いと点が伸びない。",
+          "テーマ型の字数配分は**基本型のまま**だ。④根拠が一番太く、ここが薄いと点が伸びない。",
         diagram: {
           unit: "字",
           items: [
@@ -2003,7 +2005,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s5",
         visual: "compare",
         caption:
-          "「多くの」「と言われている」は、誰の話でもない。自分が見た場面まで下ろす。",
+          "「多くの」「と言われている」は、誰の話でもない。**自分が見た場面まで下ろす**。",
         compare: {
           before:
             "実際、地域では多くの行事が人手不足で困っていると言われている。",
@@ -2016,7 +2018,8 @@ export const ESSAY_LECTURES: EssayLecture[] = [
       {
         id: "s6",
         visual: "blocks",
-        caption: "テーマ型は六つの段をそのまま使える。名前も並びも変わらない。",
+        caption:
+          "テーマ型は**六つの段をそのまま使える**。名前も並びも変わらない。",
         blocks: {
           filled: [
             "question",
@@ -2031,7 +2034,8 @@ export const ESSAY_LECTURES: EssayLecture[] = [
       {
         id: "s7",
         visual: "diagram",
-        caption: "課題は600字。800字の配分を四分の三にすれば、そのまま使える。",
+        caption:
+          "課題は600字。**800字の配分を四分の三にすれば**、そのまま使える。",
         diagram: {
           unit: "字",
           items: [
@@ -2089,7 +2093,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s1",
         visual: "manuscript",
         caption:
-          "課題文型では、①を自分で作らない。筆者の主張の要約がそこに入る。",
+          "課題文型では、**①を自分で作らない**。筆者の主張の要約がそこに入る。",
         manuscript: {
           lines: [
             {
@@ -2109,7 +2113,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s2",
         visual: "compare",
         caption:
-          "要約に賛否を混ぜると、どこまでが筆者の主張なのか分からなくなる。①は筆者の分だけで書く。",
+          "要約に賛否を混ぜると、どこまでが筆者の主張なのか分からなくなる。**①は筆者の分だけで書く**。",
         compare: {
           before:
             "筆者は図書館の静けさを守るべきだと述べているが、私も静かな場所は必要だと思う。",
@@ -2123,7 +2127,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s3",
         visual: "diagram",
         caption:
-          "①が160字に増える分、③理由と④根拠が少し痩せる。それでも④根拠が一番太いことは変わらない。",
+          "①が160字に増える分、③理由と④根拠が少し痩せる。それでも**④根拠が一番太い**ことは変わらない。",
         diagram: {
           unit: "字",
           items: [
@@ -2145,7 +2149,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s4",
         visual: "compare",
         caption:
-          "要約は課題文を読めた証明にすぎない。点が付くのは③④の自分の論のほうだ。",
+          "要約は課題文を読めた証明にすぎない。点が付くのは**③④の自分の論**のほうだ。",
         compare: {
           before: "要約に400字を使い、残りで立場と理由を書いた。",
           after: "要約は160字で切り上げ、残る640字を自分の論に使った。",
@@ -2157,7 +2161,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s5",
         visual: "manuscript",
         caption:
-          "課題文を写した部分は、自分が書いた字数として読まれない。引用は「筆者は〜と述べる」の形で短く挟む。",
+          "課題文を写した部分は、自分が書いた**字数として読まれない**。引用は「筆者は〜と述べる」の形で短く挟む。",
         manuscript: {
           lines: [
             { text: "課題文の一段落をそのまま書き写す。", tone: "bad" },
@@ -2172,7 +2176,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s6",
         visual: "blocks",
         caption:
-          "課題文型で変わるのは①だけだ。②から先は、これまでと同じ順番で書ける。",
+          "**課題文型で変わるのは①だけ**だ。②から先は、これまでと同じ順番で書ける。",
         blocks: {
           filled: [
             "question",
@@ -2237,7 +2241,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s1",
         visual: "diagram",
         caption:
-          "資料型だけ段が七つになる。①が「読み取り」に変わり、②の前に「解釈」が入る。",
+          "**資料型だけ段が七つになる**。①が「読み取り」に変わり、②の前に「解釈」が入る。",
         diagram: {
           unit: "字",
           items: [
@@ -2259,7 +2263,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s2",
         visual: "manuscript",
         caption:
-          "この二つを一つの段に混ぜると、どこまでが資料の話なのか伝わらない。段を分けて書く。",
+          "この二つを一つの段に混ぜると、どこまでが資料の話なのか伝わらない。**段を分けて書く**。",
         manuscript: {
           lines: [
             {
@@ -2277,7 +2281,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s3",
         visual: "compare",
         caption:
-          "同じ時期に増えた二つを、原因と結果でつないでしまう答案が多い。資料が示しているのは時期だけだ。",
+          "同じ時期に増えた二つを、**原因と結果でつないでしまう**答案が多い。資料が示しているのは時期だけだ。",
         compare: {
           before:
             "この資料から、閲覧席を増やしたことで図書館に立ち寄る高校生が増えたと分かる。",
@@ -2291,7 +2295,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s4",
         visual: "compare",
         caption:
-          "資料に無い数字を足すと、その一文だけ根拠が消える。示された範囲の中で言い切る。",
+          "資料に無い数字を足すと、その一文だけ根拠が消える。**示された範囲の中で言い切る**。",
         compare: {
           before:
             "全国でも高校生の図書館利用は四割を超えており、同じ傾向が続いている。",
@@ -2305,7 +2309,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s5",
         visual: "manuscript",
         caption:
-          "割合が二倍になっても、人数が二倍とは限らない。母数が動いていないかを必ず確かめる。",
+          "割合が二倍になっても、人数が二倍とは限らない。**母数が動いていないか**を必ず確かめる。",
         manuscript: {
           lines: [
             {
@@ -2323,7 +2327,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s6",
         visual: "blocks",
         caption:
-          "変わるのは①の中身と、②の前に一段増えることだけだ。③から先はこれまで通りに書ける。",
+          "変わるのは①の中身と、②の前に一段増えることだけだ。**③から先はこれまで通り**に書ける。",
         blocks: {
           filled: [
             "question",
@@ -2383,7 +2387,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s1",
         visual: "diagram",
         caption:
-          "解決策提示型は③④⑤の名前が変わり、②の後に「現状」が一段入る。並びは今まで通りだ。",
+          "解決策提示型は**③④⑤の名前が変わり**、②の後に「現状」が一段入る。並びは今まで通りだ。",
         diagram: {
           unit: "字",
           items: [
@@ -2405,7 +2409,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s2",
         visual: "compare",
         caption:
-          "本数を増やすべきだ、では誰も動けない。いつ・何を・どう変えるかまで書く。",
+          "本数を増やすべきだ、では誰も動けない。**いつ・何を・どう変えるか**まで書く。",
         compare: {
           before: "バスの本数を増やすべきだ。",
           after:
@@ -2418,7 +2422,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s3",
         visual: "manuscript",
         caption:
-          "解決策は、自分が書いた原因の真上に置く。原因と無関係な打ち手は、良い案でも点にならない。",
+          "解決策は、**自分が書いた原因の真上に置く**。原因と無関係な打ち手は、良い案でも点にならない。",
         manuscript: {
           lines: [
             {
@@ -2436,7 +2440,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s4",
         visual: "compare",
         caption:
-          "誰がやるのか、費用はどこから出るのか。この二つに触れると、思いつきが提案に変わる。",
+          "誰がやるのか、**費用はどこから出るのか**。この二つに触れると、思いつきが提案に変わる。",
         compare: {
           before: "町が新しい交通の仕組みを導入すればよい。",
           after:
@@ -2453,7 +2457,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s5",
         visual: "manuscript",
         caption:
-          "自分の案の弱いところを自分で書く。ここに触れた答案のほうが高く評価される。",
+          "自分の案の**弱いところを自分で書く**。ここに触れた答案のほうが高く評価される。",
         manuscript: {
           lines: [
             {
@@ -2472,7 +2476,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s6",
         visual: "blocks",
         caption:
-          "③理由は「原因」、④根拠は「解決策と実現可能性」に置き換わる。中身が変わるだけで、置く場所は同じだ。",
+          "③理由は「原因」、④根拠は「解決策と実現可能性」に置き換わる。中身が変わるだけで、**置く場所は同じ**だ。",
         blocks: {
           filled: [
             "question",
@@ -2535,7 +2539,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s1",
         visual: "manuscript",
         caption:
-          "見直しは上から順に行う。表記から直し始めると、設問ずれに気づかないまま提出することになる。",
+          "見直しは**上から順に行う**。表記から直し始めると、設問ずれに気づかないまま提出することになる。",
         manuscript: {
           lines: [
             { text: "見直し1：設問に答えているか", tone: "normal" },
@@ -2549,7 +2553,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s2",
         visual: "compare",
         caption:
-          "話し言葉と略語は、内容に関係なく減点される。文末は「である」にそろえる。",
+          "**話し言葉と略語**は、内容に関係なく減点される。文末は「である」にそろえる。",
         compare: {
           before:
             "やっぱりスマホは便利だと思うし、使いすぎは良くないかなと思います。",
@@ -2563,7 +2567,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s3",
         visual: "manuscript",
         caption:
-          "原稿用紙のルールは、覚えれば確実に取れる点だ。ここを落とすのはもったいない。",
+          "原稿用紙のルールは、**覚えれば確実に取れる点**だ。ここを落とすのはもったいない。",
         manuscript: {
           lines: [
             { text: "段落の初めは一マス空ける。", tone: "normal" },
@@ -2582,7 +2586,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s4",
         visual: "compare",
         caption:
-          "「使われてる」「変えれない」は話し言葉だ。書くときは省略しない形に戻す。",
+          "「使われてる」「変えれない」は話し言葉だ。書くときは**省略しない形に戻す**。",
         compare: {
           before: "この制度は多くの人に使われてるので、簡単には変えれない。",
           after:
@@ -2595,7 +2599,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s5",
         visual: "manuscript",
         caption:
-          "感嘆符と略語は答案では使わない。どれも書き直せば消える減点だ。",
+          "感嘆符と略語は答案では使わない。どれも**書き直せば消える減点**だ。",
         manuscript: {
           lines: [
             { text: "本当にこのままでよいのか！", tone: "bad" },
@@ -2611,7 +2615,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s6",
         visual: "blocks",
         caption:
-          "六つの段がそろっているかを確かめる。抜けていれば、表記より先にそこを直す。",
+          "六つの段がそろっているかを確かめる。抜けていれば、**表記より先にそこを直す**。",
         blocks: {
           filled: [
             "question",
@@ -2669,7 +2673,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s1",
         visual: "diagram",
         caption:
-          "60分の試験で書く時間は半分しかない。構想に20分使うほうが、結局は速く書き終わる。",
+          "60分の試験で書く時間は半分しかない。**構想に20分使う**ほうが、結局は速く書き終わる。",
         diagram: {
           unit: "分",
           items: [
@@ -2683,7 +2687,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s2",
         visual: "manuscript",
         caption:
-          "構想の20分はこの三つに割る。ここで段が埋まっていれば、あとは書くだけになる。",
+          "構想の20分はこの三つに割る。ここで**段が埋まっていれば**、あとは書くだけになる。",
         manuscript: {
           lines: [
             { text: "5分：設問を読み、条件を書き出す", tone: "normal" },
@@ -2696,7 +2700,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s3",
         visual: "manuscript",
         caption:
-          "メモは文にしない。単語で置くだけで、書き始めてから構成に迷わなくなる。",
+          "**メモは文にしない**。単語で置くだけで、書き始めてから構成に迷わなくなる。",
         manuscript: {
           lines: [
             {
@@ -2719,7 +2723,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s4",
         visual: "compare",
         caption:
-          "書き切れないと分かったら、⑤を一文に削って⑥を書く。結論の無い答案は大きく落ちる。",
+          "書き切れないと分かったら、⑤を一文に削って⑥を書く。**結論の無い答案は大きく落ちる**。",
         compare: {
           before: "確かに学業との両立は難しく、負担が増えるという心配もあり、",
           after:
@@ -2732,7 +2736,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s5",
         visual: "diagram",
         caption:
-          "字数もあらかじめ決めておく。書きながら配分を考えると、⑥の分が残らない。",
+          "字数もあらかじめ決めておく。書きながら配分を考えると、**⑥の分が残らない**。",
         diagram: {
           unit: "字",
           items: [
@@ -2749,7 +2753,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s6",
         visual: "manuscript",
         caption:
-          "削る順番は書く前に決めておく。迷っている時間そのものが一番の損だ。",
+          "**削る順番は書く前に決めておく**。迷っている時間そのものが一番の損だ。",
         manuscript: {
           lines: [
             {
