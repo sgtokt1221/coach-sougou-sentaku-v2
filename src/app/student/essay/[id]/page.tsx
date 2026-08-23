@@ -62,6 +62,8 @@ import {
   getRankFromPercentage,
   getScorePercentage,
 } from "@/lib/score-rank";
+import { buildNextStepHint } from "@/lib/essay/next-step";
+import { ESSAY_CATEGORY_LABELS } from "@/lib/growth/weakness-category";
 
 interface EssayScores {
   structure: number;
@@ -416,6 +418,8 @@ export default function EssayResultPage() {
     ? (result.feedback.improvements ?? []).slice(1)
     : (result.feedback.improvements ?? []);
   const scoreMaximum = result.feedback.scoreMaximum ?? 50;
+  /** 次のランクまでの差と、その差を埋めるのに一番効く軸 */
+  const nextStep = buildNextStepHint(result.scores, scoreMaximum);
   const apAlignmentAssessable = result.feedback.apAlignmentAssessable !== false;
 
   const percentage = getScorePercentage(totalScore, scoreMaximum);
@@ -674,6 +678,29 @@ export default function EssayResultPage() {
         {/* 既定はここまで。点だけ見て閉じられないよう、要点を2つだけ先に出す */}
         <Card className="mb-6">
           <CardContent className="space-y-4 p-5">
+            {/* 点とランクを見た視線を、そのまま次の一手へつなぐ */}
+            {nextStep && (
+              <div className="bg-muted/50 flex flex-wrap items-baseline gap-x-2 gap-y-1 rounded-lg px-4 py-3">
+                <span className="text-sm">
+                  あと
+                  <span className="text-primary mx-1 text-lg font-bold tabular-nums">
+                    {nextStep.gap.needed}
+                  </span>
+                  点で
+                  <span className="text-primary mx-1 text-lg font-bold">
+                    {nextStep.gap.nextRank}
+                  </span>
+                  ランク
+                </span>
+                <span className="text-muted-foreground text-sm">
+                  いちばん伸びしろがあるのは
+                  <span className="text-foreground mx-1 font-semibold">
+                    {ESSAY_CATEGORY_LABELS[nextStep.headroom.axis]}
+                  </span>
+                  （満点なら +{nextStep.headroom.gain}点）
+                </span>
+              </div>
+            )}
             {result.feedback.overall && (
               <div className="space-y-1.5">
                 <p className="text-muted-foreground text-xs font-semibold">
