@@ -303,6 +303,22 @@ AI呼び出しは .env.local の ANTHROPIC_API_KEY をそのまま使うので�
   - Sidebar: 生徒「プラン」リンク追加
   - src/lib/types/user.ts: UserProfile拡張（stripeSubscriptionId, standardSubscription, documentPackage, features）
   - 環境変数: STRIPE_SECRET_KEY, STRIPE_PUBLISHABLE_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_STANDARD_PRICE_ID, STRIPE_DOCUMENT_PRICE_ID
+- 小論文講座リニューアル完了（2026-08-23、P1〜P3）
+  - `/student/essay/lectures` 全20講。1講ごとに「アニメ講義 → 文のドリル → 課題 → AI添削」
+  - `src/lib/types/essay-block.ts`: 基本型6ブロック（問い/立場/理由/根拠/譲歩と反論/結論）の正本。
+    講義・課題・添削フィードバック・弱点DBはこの名前だけを使う
+  - `src/lib/types/essay-form.ts`: 設問タイプ別の型4つ（theme/passage/data/solution）。
+    6ブロックの並びは変えず、ラベル置換・追加の段・字数配分だけで表現する
+  - `src/data/essay-lectures/`: 講義データ。シーンは manuscript/blocks/compare/diagram の4種
+  - `src/lib/types/sentence-drill.ts` + `src/data/sentence-drills/`: 文のドリル6種102問。
+    **全問4択でAIを呼ばない**（反復が前提なので課金を増やさない）
+  - 講座の課題は `/api/essay/lecture/submit` → 既存の添削コア。`formId` があれば
+    questionType/sourceText/chartDataSummary を渡すので、課題文・資料の読み違いが減点される
+  - 検証: `scripts/verify-essay-blocks.ts` / `verify-essay-forms.ts` / `verify-sentence-drill.ts` /
+    `verify-lecture-types.ts` と、`validate:data` に連結した `validate-sentence-drills.ts` / `validate-essay-lectures.ts`
+  - 設計・計画: `docs/superpowers/specs/2026-08-23-essay-lecture-curriculum-design.md` と
+    `docs/superpowers/plans/2026-08-23-essay-lecture-p1|p2a|p3.md`。**P2b（書き直し式ドリル・
+    本人の赤ペン履歴からの出題・管理者向けの詰まり画面）は未着手**
 - Firebase SDK: .env.local 未設定（ビルドはnullセーフ、未設定でもSSG通過）
 - npmキャッシュにroot所有ファイルあり → `--cache /tmp/npm-cache` で回避中
 
