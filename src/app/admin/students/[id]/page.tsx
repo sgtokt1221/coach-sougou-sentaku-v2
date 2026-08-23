@@ -105,8 +105,15 @@ import type { AggregateBreakdown } from "@/lib/skill-check/aggregate";
 import { LAST_ACTIVITY_LABELS } from "@/lib/api/last-activity";
 import { SkillRadarChart } from "@/components/skill-check/SkillRadarChart";
 import { scoreToSkillRank } from "@/lib/history-rank";
-import type { SkillCheckStatus, AcademicCategory, SkillCheckResult } from "@/lib/types/skill-check";
-import type { InterviewSkillCheckStatus, InterviewSkillCheckResult } from "@/lib/types/interview-skill-check";
+import type {
+  SkillCheckStatus,
+  AcademicCategory,
+  SkillCheckResult,
+} from "@/lib/types/skill-check";
+import type {
+  InterviewSkillCheckStatus,
+  InterviewSkillCheckResult,
+} from "@/lib/types/interview-skill-check";
 import { SkillCheckDetailDialog } from "@/components/admin/SkillCheckDetailDialog";
 import { StudentSkillRadar } from "@/components/admin/StudentSkillRadar";
 import { SkillCheckHistorySection } from "@/components/admin/SkillCheckHistorySection";
@@ -124,7 +131,7 @@ function EssayWordCount({
   const { wordCount, wordLimit, fillRate } = analysis;
   if (!wordLimit) {
     return (
-      <span className="text-xs text-muted-foreground tabular-nums">
+      <span className="text-muted-foreground text-xs tabular-nums">
         {wordCount}字（制限なし）
       </span>
     );
@@ -159,6 +166,7 @@ import { AiConversationsSection } from "@/components/admin/AiConversationsSectio
 import { SessionsHistorySection } from "@/components/admin/SessionsHistorySection";
 import { GrowthReportsSection } from "@/components/admin/GrowthReportsSection";
 import { DocumentsSection } from "@/components/admin/DocumentsSection";
+import { LectureProgressSection } from "@/components/admin/LectureProgressSection";
 import { EssayQuestionContext } from "@/components/admin/EssayQuestionContext";
 import { InterviewsSection } from "@/components/admin/InterviewsSection";
 import { SummaryDrillsSection } from "@/components/admin/SummaryDrillsSection";
@@ -177,7 +185,6 @@ import { useAuthSWR } from "@/lib/api/swr";
 import { useAuth } from "@/contexts/AuthContext";
 import { EssayCoachConversation } from "@/components/admin/EssayCoachConversation";
 import { formatLastSeen } from "@/lib/ui/format-last-seen";
-
 
 import { appendQuote } from "@/lib/chat/message-blocks";
 /**
@@ -202,7 +209,7 @@ function WeaknessesByCategoryList({
         "originality",
         "reasoningMaturity",
         "other",
-      ] as EssayCategoryKey[]),
+      ] as EssayCategoryKey[])
   );
 
   // 未解決優先、 categoryId で grouping。 unresolved/resolved 別表示
@@ -252,16 +259,18 @@ function WeaknessesByCategoryList({
             <button
               type="button"
               onClick={() => toggle(cat)}
-              className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-accent"
+              className="hover:bg-accent flex w-full items-center justify-between px-4 py-3 text-left transition-colors"
             >
               <div className="flex items-center gap-2 text-sm">
                 <ChevronDown
-                  className={`size-4 text-muted-foreground transition-transform ${
+                  className={`text-muted-foreground size-4 transition-transform ${
                     isOpen ? "" : "-rotate-90"
                   }`}
                 />
-                <span className="font-semibold">{ESSAY_CATEGORY_LABELS[cat]}</span>
-                <span className="text-xs text-muted-foreground">
+                <span className="font-semibold">
+                  {ESSAY_CATEGORY_LABELS[cat]}
+                </span>
+                <span className="text-muted-foreground text-xs">
                   {unresolvedCount}件 / 全{items.length}件
                 </span>
               </div>
@@ -276,7 +285,7 @@ function WeaknessesByCategoryList({
                         className={`border-t ${w.resolved ? "opacity-60" : ""}`}
                       >
                         <td className="px-4 py-2.5">
-                          <p className="break-words leading-snug">{w.area}</p>
+                          <p className="leading-snug break-words">{w.area}</p>
                         </td>
                         <td className="px-2 py-2.5 text-center">
                           <WeaknessSourceBadge
@@ -318,19 +327,28 @@ function weaknessBadge(w: WeaknessRecord) {
       return <Badge variant="destructive">要注意</Badge>;
     case "warning":
       return (
-        <Badge variant="outline" className="border-amber-400 bg-amber-50 text-amber-700">
+        <Badge
+          variant="outline"
+          className="border-amber-400 bg-amber-50 text-amber-700"
+        >
           警告
         </Badge>
       );
     case "improving":
       return (
-        <Badge variant="outline" className="border-sky-400 bg-sky-50 text-sky-700">
+        <Badge
+          variant="outline"
+          className="border-sky-400 bg-sky-50 text-sky-700"
+        >
           改善中
         </Badge>
       );
     case "resolved":
       return (
-        <Badge variant="outline" className="border-emerald-400 bg-emerald-50 text-emerald-700">
+        <Badge
+          variant="outline"
+          className="border-emerald-400 bg-emerald-50 text-emerald-700"
+        >
           解決済み
         </Badge>
       );
@@ -401,19 +419,23 @@ function PinnedSummary({ detail }: { detail: StudentDetail }) {
       {cells.map((cell, i) => (
         <div
           key={i}
-          className={`rounded-lg border bg-background/50 p-3 ${cell.pulse ? "animate-pulse" : ""}`}
+          className={`bg-background/50 rounded-lg border p-3 ${cell.pulse ? "animate-pulse" : ""}`}
         >
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <p className="text-xs text-muted-foreground">{cell.label}</p>
-              <p className={`text-lg font-semibold ${cell.color}`}>{cell.value}</p>
+              <p className="text-muted-foreground text-xs">{cell.label}</p>
+              <p className={`text-lg font-semibold ${cell.color}`}>
+                {cell.value}
+              </p>
             </div>
             {cell.monogram && (
-              <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground tabular-nums">
+              <span className="bg-muted text-muted-foreground shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium tracking-wide uppercase tabular-nums">
                 · {cell.monogram}
               </span>
             )}
-            {cell.icon && <cell.icon className="size-4 shrink-0 text-muted-foreground" />}
+            {cell.icon && (
+              <cell.icon className="text-muted-foreground size-4 shrink-0" />
+            )}
           </div>
         </div>
       ))}
@@ -435,11 +457,15 @@ function SkillRankSummary({
   if (!aggregate || aggregate.compositeRank === null) return null;
   return (
     <span className="flex items-center gap-1.5">
-      <SkillRankBadge rank={aggregate.compositeRank} size="sm" animate={false} />
+      <SkillRankBadge
+        rank={aggregate.compositeRank}
+        size="sm"
+        animate={false}
+      />
       {/* 軸平均の合計ではないので、何の数字かを書く（隣の項目別平均を
           足した値と一致しない。合成の重みは aggregate 側で決まる） */}
-      <span className="text-[10px] text-muted-foreground">現在の実力</span>
-      <span className="text-xs font-medium tabular-nums text-foreground">
+      <span className="text-muted-foreground text-[10px]">現在の実力</span>
+      <span className="text-foreground text-xs font-medium tabular-nums">
         {aggregate.compositeScore}
         <span className="text-muted-foreground">/{maxScore}</span>
       </span>
@@ -447,8 +473,21 @@ function SkillRankSummary({
   );
 }
 
-type TabKey = "overview" | "performance" | "activity" | "reports" | "homework" | "messages";
-const VALID_TABS: TabKey[] = ["overview", "performance", "activity", "reports", "homework", "messages"];
+type TabKey =
+  | "overview"
+  | "performance"
+  | "activity"
+  | "reports"
+  | "homework"
+  | "messages";
+const VALID_TABS: TabKey[] = [
+  "overview",
+  "performance",
+  "activity",
+  "reports",
+  "homework",
+  "messages",
+];
 /** タブ value → 日本語ラベル。Base UI の SelectValue は value を生表示するため、モバイルの選択表示に使う。 */
 const TAB_LABELS: Record<TabKey, string> = {
   overview: "概要",
@@ -471,7 +510,9 @@ function AdminStudentDetailPageInner() {
 
   // タブ状態とURL同期
   const rawTab = searchParams?.get("tab") ?? "overview";
-  let tab: TabKey = VALID_TABS.includes(rawTab as TabKey) ? (rawTab as TabKey) : "overview";
+  let tab: TabKey = VALID_TABS.includes(rawTab as TabKey)
+    ? (rawTab as TabKey)
+    : "overview";
   // 講師にはメッセージタブを出さない (直リンク時は概要へ)
   if (isTeacherViewer && tab === "messages") tab = "overview";
 
@@ -484,10 +525,16 @@ function AdminStudentDetailPageInner() {
   const [detail, setDetail] = useState<StudentDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
-  const [openSections, setOpenSections] = useState({ weaknesses: false, essays: false });
-  const [perfTab, setPerfTab] = useState<"total" | "essay" | "interview">("total");
+  const [openSections, setOpenSections] = useState({
+    weaknesses: false,
+    essays: false,
+  });
+  const [perfTab, setPerfTab] = useState<"total" | "essay" | "interview">(
+    "total"
+  );
   const [skillCheck, setSkillCheck] = useState<SkillCheckStatus | null>(null);
-  const [interviewSkillCheck, setInterviewSkillCheck] = useState<InterviewSkillCheckStatus | null>(null);
+  const [interviewSkillCheck, setInterviewSkillCheck] =
+    useState<InterviewSkillCheckStatus | null>(null);
   // スキルチェック詳細ダイアログ
   const [scDialog, setScDialog] = useState<
     | { kind: "essay"; result: SkillCheckResult }
@@ -497,10 +544,18 @@ function AdminStudentDetailPageInner() {
   const [savingCategory, setSavingCategory] = useState(false);
 
   // ヒートマップ用データ取得
-  const { data: interviewsData } = useAuthSWR<any[]>(`/api/admin/students/${id}/interviews`);
-  const { data: summaryDrillsData } = useAuthSWR<any[]>(`/api/admin/students/${id}/summary-drills`);
-  const { data: logicDrillsData } = useAuthSWR<any[]>(`/api/admin/students/${id}/logic-drills`);
-  const { data: chocoReviewsData } = useAuthSWR<any[]>(`/api/admin/students/${id}/choco-reviews`);
+  const { data: interviewsData } = useAuthSWR<any[]>(
+    `/api/admin/students/${id}/interviews`
+  );
+  const { data: summaryDrillsData } = useAuthSWR<any[]>(
+    `/api/admin/students/${id}/summary-drills`
+  );
+  const { data: logicDrillsData } = useAuthSWR<any[]>(
+    `/api/admin/students/${id}/logic-drills`
+  );
+  const { data: chocoReviewsData } = useAuthSWR<any[]>(
+    `/api/admin/students/${id}/choco-reviews`
+  );
   // 未確認バッジの再取得用（提出物を開いたら件数を減らす）
   const mutateUnviewed = useUnviewedSubmissionsMutate();
   // タブごとの未確認件数。ポーリングはしない（サイドバー側が回している）
@@ -521,8 +576,12 @@ function AdminStudentDetailPageInner() {
     // openEssayDetail は再生成されるため依存に入れない（1回だけ開く）
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoOpenEssayId]);
-  const { data: activityLogsData } = useAuthSWR<any[]>(`/api/admin/students/${id}/activity-logs`);
-  const { data: documentsData } = useAuthSWR<any[]>(`/api/admin/students/${id}/documents`);
+  const { data: activityLogsData } = useAuthSWR<any[]>(
+    `/api/admin/students/${id}/activity-logs`
+  );
+  const { data: documentsData } = useAuthSWR<any[]>(
+    `/api/admin/students/${id}/documents`
+  );
 
   // 活動ヒートマップ用データ生成
   const activityHeatmapData = useMemo(() => {
@@ -538,12 +597,21 @@ function AdminStudentDetailPageInner() {
       activityLogs: activityLogsData,
       documents: documentsData,
     });
-  }, [detail, interviewsData, summaryDrillsData, logicDrillsData, chocoReviewsData, activityLogsData, documentsData, skillCheck]);
+  }, [
+    detail,
+    interviewsData,
+    summaryDrillsData,
+    logicDrillsData,
+    chocoReviewsData,
+    activityLogsData,
+    documentsData,
+    skillCheck,
+  ]);
 
   // 弱点Top5データ
   const topWeaknesses = useMemo(() => {
     if (!detail?.weaknesses) return [];
-    return detail.weaknesses.filter(w => !w.resolved);
+    return detail.weaknesses.filter((w) => !w.resolved);
   }, [detail?.weaknesses]);
 
   // Essay detail state
@@ -557,11 +625,15 @@ function AdminStudentDetailPageInner() {
   async function openEssayDetail(essayId: string) {
     setEssayDetailOpen(true);
     // 開いた1件を自分の既読にする（未確認バッジ用）
-    void markSubmissionViewed("essay", essayId, id).then(() => mutateUnviewed());
+    void markSubmissionViewed("essay", essayId, id).then(() =>
+      mutateUnviewed()
+    );
     setEssayLoading(true);
     setEssayDetail(null);
     try {
-      const res = await authFetch(`/api/admin/students/${id}/essays/${essayId}`);
+      const res = await authFetch(
+        `/api/admin/students/${id}/essays/${essayId}`
+      );
       if (res.ok) {
         setEssayDetail(await res.json());
       }
@@ -586,7 +658,9 @@ function AdminStudentDetailPageInner() {
   // インラインコメント追加/削除後に essay を再取得 (フリッカーなし)
   async function refreshEssayDetail(essayId: string) {
     try {
-      const res = await authFetch(`/api/admin/students/${id}/essays/${essayId}`);
+      const res = await authFetch(
+        `/api/admin/students/${id}/essays/${essayId}`
+      );
       if (res.ok) setEssayDetail(await res.json());
     } catch {
       // ignore
@@ -595,7 +669,7 @@ function AdminStudentDetailPageInner() {
 
   async function addEssayComment(
     essayId: string,
-    range: { start: number; end: number; quote: string; comment?: string },
+    range: { start: number; end: number; quote: string; comment?: string }
   ) {
     const res = await authFetch(`/api/essay/${essayId}/comments`, {
       method: "POST",
@@ -612,7 +686,7 @@ function AdminStudentDetailPageInner() {
   async function deleteEssayComment(essayId: string, commentId: string) {
     const res = await authFetch(
       `/api/essay/${essayId}/comments?commentId=${encodeURIComponent(commentId)}`,
-      { method: "DELETE" },
+      { method: "DELETE" }
     );
     if (!res.ok) {
       const b = (await res.json().catch(() => ({}))) as { error?: string };
@@ -633,7 +707,8 @@ function AdminStudentDetailPageInner() {
   const [editUniversities, setEditUniversities] = useState<string[]>([]);
   const [editGpa, setEditGpa] = useState("");
   const [editEnglishCerts, setEditEnglishCerts] = useState<EnglishCert[]>([]);
-  const [editCertType, setEditCertType] = useState<EnglishCert["type"]>("EIKEN");
+  const [editCertType, setEditCertType] =
+    useState<EnglishCert["type"]>("EIKEN");
   const [editCertScore, setEditCertScore] = useState("");
   const [saving, setSaving] = useState(false);
   const [unlockingRealtime, setUnlockingRealtime] = useState(false);
@@ -683,11 +758,14 @@ function AdminStudentDetailPageInner() {
   async function handleChangeSkillCategory(cat: AcademicCategory) {
     setSavingCategory(true);
     try {
-      const res = await authFetch(`/api/admin/students/${id}/skill-check/category`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category: cat }),
-      });
+      const res = await authFetch(
+        `/api/admin/students/${id}/skill-check/category`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ category: cat }),
+        }
+      );
       if (res.ok) {
         toast.success("系統を更新しました");
         // 再取得
@@ -708,7 +786,12 @@ function AdminStudentDetailPageInner() {
       toast.error("メールアドレスが登録されていません");
       return;
     }
-    if (!confirm(`${detail.profile.displayName} 宛にパスワードリセットメールを送信しますか？`)) return;
+    if (
+      !confirm(
+        `${detail.profile.displayName} 宛にパスワードリセットメールを送信しますか？`
+      )
+    )
+      return;
     setSendingReset(true);
     try {
       await resetPassword(detail.profile.email);
@@ -731,12 +814,12 @@ function AdminStudentDetailPageInner() {
     const currentGrade = getDisplayGrade(
       detail.profile.grade,
       detail.profile.gradeUpdatedAt,
-      detail.profile.isRonin,
+      detail.profile.isRonin
     );
     setEditGrade(
       currentGrade.value != null && currentGrade.value <= 3
         ? String(currentGrade.value)
-        : "",
+        : ""
     );
     setEditSessionsPerMonth((detail.profile.sessionsPerMonth ?? 1).toString());
     setEditUniversities([...detail.profile.targetUniversities]);
@@ -796,12 +879,18 @@ function AdminStudentDetailPageInner() {
       <div className="p-6">
         <Card>
           <CardContent className="py-8 text-center">
-            <AlertCircle className="mx-auto mb-2 size-8 text-muted-foreground" />
-            <p className="text-muted-foreground">生徒データの取得に失敗しました</p>
+            <AlertCircle className="text-muted-foreground mx-auto mb-2 size-8" />
+            <p className="text-muted-foreground">
+              生徒データの取得に失敗しました
+            </p>
             {fetchError && (
-              <p className="mt-1 text-xs text-destructive">{fetchError}</p>
+              <p className="text-destructive mt-1 text-xs">{fetchError}</p>
             )}
-            <Button className="mt-4" variant="outline" onClick={() => router.push("/admin/students")}>
+            <Button
+              className="mt-4"
+              variant="outline"
+              onClick={() => router.push("/admin/students")}
+            >
               <ArrowLeft className="mr-1 size-4" />
               生徒一覧に戻る
             </Button>
@@ -811,7 +900,14 @@ function AdminStudentDetailPageInner() {
     );
   }
 
-  const { profile, weaknesses, essays, essayScoreTrend, interviewScoreTrend, lastActivityAt } = detail;
+  const {
+    profile,
+    weaknesses,
+    essays,
+    essayScoreTrend,
+    interviewScoreTrend,
+    lastActivityAt,
+  } = detail;
 
   const essayChartData = (essayScoreTrend ?? []).map((p) => ({
     ...p,
@@ -841,7 +937,7 @@ function AdminStudentDetailPageInner() {
           expression: avgOf(essayScoresList.map((s) => s.expression)),
           originality: avgOf(essayScoresList.map((s) => s.originality)),
           reasoningMaturity: avgMeasured(
-            essayScoresList.map((s) => s.reasoningMaturity),
+            essayScoresList.map((s) => s.reasoningMaturity)
           ),
           apAlignment: avgMeasured(essayScoresList.map((s) => s.apAlignment)),
         }
@@ -871,7 +967,10 @@ function AdminStudentDetailPageInner() {
         }
         onSelectInterview={() =>
           interviewSkillCheck?.latestResult &&
-          setScDialog({ kind: "interview", result: interviewSkillCheck.latestResult })
+          setScDialog({
+            kind: "interview",
+            result: interviewSkillCheck.latestResult,
+          })
         }
       />
 
@@ -915,7 +1014,7 @@ function AdminStudentDetailPageInner() {
         <CardContent>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="flex items-center gap-2 text-sm">
-              <Mail className="size-4 text-muted-foreground" />
+              <Mail className="text-muted-foreground size-4" />
               <span>{profile.email}</span>
             </div>
             {profile.createdAt && (
@@ -923,33 +1022,36 @@ function AdminStudentDetailPageInner() {
                 className="flex items-center gap-2 text-sm"
                 title={new Date(profile.createdAt).toLocaleString("ja-JP")}
               >
-                <Calendar className="size-4 text-muted-foreground" />
+                <Calendar className="text-muted-foreground size-4" />
                 <span>
-                  加入: {new Date(profile.createdAt).toLocaleDateString("ja-JP")}{" "}
-                  <span className="text-xs text-muted-foreground">
-                    ({Math.floor(
+                  加入:{" "}
+                  {new Date(profile.createdAt).toLocaleDateString("ja-JP")}{" "}
+                  <span className="text-muted-foreground text-xs">
+                    (
+                    {Math.floor(
                       (Date.now() - new Date(profile.createdAt).getTime()) /
-                        86400000,
-                    )}日前)
+                        86400000
+                    )}
+                    日前)
                   </span>
                 </span>
               </div>
             )}
             {profile.school && (
               <div className="flex items-center gap-2 text-sm">
-                <School className="size-4 text-muted-foreground" />
+                <School className="text-muted-foreground size-4" />
                 <span>{profile.school}</span>
               </div>
             )}
             {(profile.grade != null || profile.isRonin) && (
               <div className="flex items-center gap-2 text-sm">
-                <GraduationCap className="size-4 text-muted-foreground" />
+                <GraduationCap className="text-muted-foreground size-4" />
                 <span>
                   {
                     getDisplayGrade(
                       profile.grade,
                       profile.gradeUpdatedAt,
-                      profile.isRonin,
+                      profile.isRonin
                     ).label
                   }
                 </span>
@@ -957,13 +1059,13 @@ function AdminStudentDetailPageInner() {
             )}
             {profile.gpa != null && (
               <div className="flex items-center gap-2 text-sm">
-                <Star className="size-4 text-muted-foreground" />
+                <Star className="text-muted-foreground size-4" />
                 <span>評定平均 {profile.gpa.toFixed(1)}</span>
               </div>
             )}
             {profile.englishCerts && profile.englishCerts.length > 0 && (
               <div className="flex items-start gap-2 text-sm">
-                <Languages className="mt-0.5 size-4 text-muted-foreground" />
+                <Languages className="text-muted-foreground mt-0.5 size-4" />
                 <div className="flex flex-wrap gap-1">
                   {profile.englishCerts.map((cert, i) => (
                     <Badge key={i} variant="secondary" className="text-xs">
@@ -974,7 +1076,7 @@ function AdminStudentDetailPageInner() {
               </div>
             )}
             <div className="flex items-start gap-2 text-sm">
-              <TrendingUp className="mt-0.5 size-4 text-muted-foreground" />
+              <TrendingUp className="text-muted-foreground mt-0.5 size-4" />
               <div className="flex flex-wrap gap-1">
                 {(profile.resolvedUniversities ?? []).length > 0 ? (
                   profile.resolvedUniversities!.map((u, i) => (
@@ -1009,7 +1111,7 @@ function AdminStudentDetailPageInner() {
       {skillCheck && (
         <Card>
           <CardContent className="flex flex-wrap items-center gap-3 py-3">
-            <span className="text-xs font-medium text-muted-foreground">
+            <span className="text-muted-foreground text-xs font-medium">
               スキルチェック系統
             </span>
             <CategorySelector
@@ -1017,7 +1119,7 @@ function AdminStudentDetailPageInner() {
               onChange={handleChangeSkillCategory}
               disabled={savingCategory}
             />
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               次回受験時に出題される系統を変更できます。
             </p>
           </CardContent>
@@ -1025,7 +1127,7 @@ function AdminStudentDetailPageInner() {
       )}
 
       {/* Activity Heatmap & Top Weaknesses */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <ActivityHeatmap data={activityHeatmapData} />
         </div>
@@ -1098,19 +1200,25 @@ function AdminStudentDetailPageInner() {
         </CardHeader>
         <CardContent>
           {perfTab === "total" ? (
-            <ScoresTrendChart essayData={essayChartData} interviewData={interviewChartData} />
+            <ScoresTrendChart
+              essayData={essayChartData}
+              interviewData={interviewChartData}
+            />
           ) : perfTab === "essay" ? (
             essayChartData.length > 0 ? (
               <DetailedScoresTrendChart data={essayChartData} />
             ) : (
-              <p className="py-12 text-center text-sm text-muted-foreground">
+              <p className="text-muted-foreground py-12 text-center text-sm">
                 小論文の添削データがありません
               </p>
             )
           ) : interviewChartData.length > 0 ? (
-            <DetailedScoresTrendChart data={interviewChartData} lines={INTERVIEW_SCORE_LINES} />
+            <DetailedScoresTrendChart
+              data={interviewChartData}
+              lines={INTERVIEW_SCORE_LINES}
+            />
           ) : (
-            <p className="py-12 text-center text-sm text-muted-foreground">
+            <p className="text-muted-foreground py-12 text-center text-sm">
               面接の練習データがありません
             </p>
           )}
@@ -1121,21 +1229,27 @@ function AdminStudentDetailPageInner() {
       <Card>
         <CardHeader
           className="cursor-pointer select-none"
-          onClick={() => setOpenSections((s) => ({ ...s, weaknesses: !s.weaknesses }))}
+          onClick={() =>
+            setOpenSections((s) => ({ ...s, weaknesses: !s.weaknesses }))
+          }
         >
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-base">
               <AlertCircle className="size-4" />
               弱点一覧
-              <Badge variant="secondary" className="text-xs ml-1">{weaknesses.filter((w) => !w.resolved).length}</Badge>
+              <Badge variant="secondary" className="ml-1 text-xs">
+                {weaknesses.filter((w) => !w.resolved).length}
+              </Badge>
             </CardTitle>
-            <ChevronDown className={`size-4 text-muted-foreground transition-transform ${openSections.weaknesses ? "rotate-180" : ""}`} />
+            <ChevronDown
+              className={`text-muted-foreground size-4 transition-transform ${openSections.weaknesses ? "rotate-180" : ""}`}
+            />
           </div>
         </CardHeader>
         {openSections.weaknesses && (
           <CardContent className="p-0">
             {weaknesses.length === 0 ? (
-              <div className="py-8 text-center text-sm text-muted-foreground">
+              <div className="text-muted-foreground py-8 text-center text-sm">
                 弱点データなし
               </div>
             ) : (
@@ -1148,6 +1262,8 @@ function AdminStudentDetailPageInner() {
         )}
       </Card>
 
+      <LectureProgressSection studentId={id} />
+
       {/* Essay History — Accordion */}
       <Card>
         <CardHeader
@@ -1158,21 +1274,28 @@ function AdminStudentDetailPageInner() {
             <CardTitle className="flex items-center gap-2 text-base">
               <FileText className="size-4" />
               添削履歴
-              <Badge variant="secondary" className="text-xs ml-1">{essays.length}</Badge>
+              <Badge variant="secondary" className="ml-1 text-xs">
+                {essays.length}
+              </Badge>
             </CardTitle>
-            <ChevronDown className={`size-4 text-muted-foreground transition-transform ${openSections.essays ? "rotate-180" : ""}`} />
+            <ChevronDown
+              className={`text-muted-foreground size-4 transition-transform ${openSections.essays ? "rotate-180" : ""}`}
+            />
           </div>
         </CardHeader>
         {openSections.essays && (
           <CardContent>
             {essays.length === 0 ? (
-              <div className="py-8 text-center text-sm text-muted-foreground">
+              <div className="text-muted-foreground py-8 text-center text-sm">
                 添削履歴なし
               </div>
             ) : (
               <div className="space-y-2">
                 {essays.map((essay) => (
-                  <div key={essay.id} className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-accent">
+                  <div
+                    key={essay.id}
+                    className="hover:bg-accent flex items-center justify-between rounded-lg border p-3 transition-colors"
+                  >
                     <div>
                       <p className="font-medium">
                         {essay.targetUniversity} {essay.targetFaculty}
@@ -1180,7 +1303,7 @@ function AdminStudentDetailPageInner() {
                       {/* テーマは講師がフィードバックを書くのに要る。空欄で黙らせず、
                           推定で復元したものはその旨を添える。 */}
                       {essay.topic ? (
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-muted-foreground text-xs">
                           {essay.topicEstimated && (
                             <span className="mr-1 rounded bg-amber-100 px-1 text-[10px] text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
                               推定
@@ -1189,12 +1312,14 @@ function AdminStudentDetailPageInner() {
                           {essay.topic}
                         </p>
                       ) : (
-                        <p className="text-xs text-muted-foreground/70">
+                        <p className="text-muted-foreground/70 text-xs">
                           テーマ未記録（この機能より前に提出された答案です）
                         </p>
                       )}
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(essay.submittedAt).toLocaleDateString("ja-JP")}
+                      <p className="text-muted-foreground text-xs">
+                        {new Date(essay.submittedAt).toLocaleDateString(
+                          "ja-JP"
+                        )}
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
@@ -1204,16 +1329,18 @@ function AdminStudentDetailPageInner() {
                             <SkillRankBadge
                               rank={scoreToSkillRank(
                                 essay.scores.total,
-                                essay.scoreMaximum ?? 50,
+                                essay.scoreMaximum ?? 50
                               )}
                               size="sm"
                               animate={false}
                             />
                             <div className="text-right">
-                              <p className={`text-lg font-bold ${scoreColor(essay.scores.total)}`}>
+                              <p
+                                className={`text-lg font-bold ${scoreColor(essay.scores.total)}`}
+                              >
                                 {essay.scores.total}
                               </p>
-                              <p className="text-xs text-muted-foreground">
+                              <p className="text-muted-foreground text-xs">
                                 /{essay.scoreMaximum ?? 50}
                               </p>
                             </div>
@@ -1241,7 +1368,10 @@ function AdminStudentDetailPageInner() {
         )}
       </Card>
 
-      <InterviewsSection studentId={id} autoOpenInterviewId={searchParams?.get("interview") ?? undefined} />
+      <InterviewsSection
+        studentId={id}
+        autoOpenInterviewId={searchParams?.get("interview") ?? undefined}
+      />
       <SummaryDrillsSection studentId={id} />
       <ChocoReviewsSection studentId={id} />
       <LogicDrillsSection studentId={id} />
@@ -1270,40 +1400,66 @@ function AdminStudentDetailPageInner() {
     <div className="space-y-6 p-6">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="sm" onClick={() => router.push("/admin/students")}>
-          <ArrowLeft className="size-4 mr-1" />
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.push("/admin/students")}
+        >
+          <ArrowLeft className="mr-1 size-4" />
           戻る
         </Button>
         <div className="flex items-center gap-3">
           <Avatar size="lg">
-            <AvatarImage src={profile.photoURL ?? undefined} alt={profile.displayName} />
+            <AvatarImage
+              src={profile.photoURL ?? undefined}
+              alt={profile.displayName}
+            />
             <AvatarFallback>{getInitials(profile.displayName)}</AvatarFallback>
           </Avatar>
           <div>
             <h1 className="text-2xl font-bold">{profile.displayName}</h1>
-            <p className="text-sm text-muted-foreground">生徒詳細</p>
+            <p className="text-muted-foreground text-sm">生徒詳細</p>
           </div>
 
           {/* 活動ステータス */}
           {(() => {
-            if (!lastActivityAt) return <Badge variant="secondary">活動なし</Badge>;
-            const days = Math.floor((Date.now() - new Date(lastActivityAt).getTime()) / 86400000);
-            if (days <= 7) return <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300">アクティブ</Badge>;
-            if (days <= 14) return <Badge className="bg-amber-100 text-amber-800 border-amber-300">やや停滞</Badge>;
-            return <Badge className="bg-rose-100 text-rose-800 border-rose-300">非アクティブ（{days}日）</Badge>;
+            if (!lastActivityAt)
+              return <Badge variant="secondary">活動なし</Badge>;
+            const days = Math.floor(
+              (Date.now() - new Date(lastActivityAt).getTime()) / 86400000
+            );
+            if (days <= 7)
+              return (
+                <Badge className="border-emerald-300 bg-emerald-100 text-emerald-800">
+                  アクティブ
+                </Badge>
+              );
+            if (days <= 14)
+              return (
+                <Badge className="border-amber-300 bg-amber-100 text-amber-800">
+                  やや停滞
+                </Badge>
+              );
+            return (
+              <Badge className="border-rose-300 bg-rose-100 text-rose-800">
+                非アクティブ（{days}日）
+              </Badge>
+            );
           })()}
         </div>
       </div>
 
       {/* sticky ブロック: ピン留めサマリ + タブリスト */}
       <Tabs value={tab} onValueChange={handleTabChange} className="flex-col">
-        <div className="sticky top-0 z-20 -mx-6 px-6 pt-2 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/70 border-b">
+        <div className="bg-background/95 supports-[backdrop-filter]:bg-background/70 sticky top-0 z-20 -mx-6 border-b px-6 pt-2 backdrop-blur">
           <PinnedSummary detail={detail} />
           {/* モバイル: タブをドロップダウンで切替（横あふれで宿題/メッセージが見切れるため） */}
           <div className="mt-3 sm:hidden">
             <Select value={tab} onValueChange={(v) => v && handleTabChange(v)}>
               <SelectTrigger className="w-full">
-                <SelectValue>{(v) => (v ? TAB_LABELS[v as TabKey] : "")}</SelectValue>
+                <SelectValue>
+                  {(v) => (v ? TAB_LABELS[v as TabKey] : "")}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="overview">概要</SelectItem>
@@ -1345,43 +1501,67 @@ function AdminStudentDetailPageInner() {
         </div>
 
         <TabsContent value="overview">
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
+          >
             {renderOverviewTab()}
           </motion.div>
         </TabsContent>
 
         <TabsContent value="performance">
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
+          >
             {renderPerformanceTab()}
           </motion.div>
         </TabsContent>
 
         <TabsContent value="activity">
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
+          >
             {renderActivityTab()}
           </motion.div>
         </TabsContent>
 
         <TabsContent value="reports">
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
+          >
             {renderReportsTab()}
           </motion.div>
         </TabsContent>
 
         <TabsContent value="homework">
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
+          >
             <HomeworkStatusSection studentId={id} />
           </motion.div>
         </TabsContent>
 
         <TabsContent value="messages">
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
+          >
             {!isTeacherViewer && (
-            <TeacherAssignmentSection
-              studentId={id}
-              studentName={detail.profile.displayName || "生徒"}
-              initialAssignedTeacherIds={detail.profile.assignedTeacherIds}
-            />
+              <TeacherAssignmentSection
+                studentId={id}
+                studentName={detail.profile.displayName || "生徒"}
+                initialAssignedTeacherIds={detail.profile.assignedTeacherIds}
+              />
             )}
           </motion.div>
         </TabsContent>
@@ -1392,9 +1572,7 @@ function AdminStudentDetailPageInner() {
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>プロフィール編集</DialogTitle>
-            <DialogDescription>
-              生徒の基本情報を編集します
-            </DialogDescription>
+            <DialogDescription>生徒の基本情報を編集します</DialogDescription>
           </DialogHeader>
           <DialogBody className="space-y-4">
             <div className="space-y-2">
@@ -1419,7 +1597,10 @@ function AdminStudentDetailPageInner() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-grade">学年</Label>
-              <Select value={editGrade} onValueChange={(v: string | null) => setEditGrade(v ?? "")}>
+              <Select
+                value={editGrade}
+                onValueChange={(v: string | null) => setEditGrade(v ?? "")}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="学年を選択" />
                 </SelectTrigger>
@@ -1441,7 +1622,7 @@ function AdminStudentDetailPageInner() {
                 value={editSessionsPerMonth}
                 onChange={(e) => setEditSessionsPerMonth(e.target.value)}
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 スケジュールの未配置にこの枚数のカードが出ます（既定1）
               </p>
             </div>
@@ -1461,14 +1642,19 @@ function AdminStudentDetailPageInner() {
             <div className="space-y-2">
               <Label>英語資格</Label>
               {editEnglishCerts.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-2">
+                <div className="mb-2 flex flex-wrap gap-2">
                   {editEnglishCerts.map((cert, i) => (
                     <Badge key={i} variant="secondary" className="gap-1 pr-1">
-                      {CERT_TYPES.find((t) => t.value === cert.type)?.label} {cert.score}
+                      {CERT_TYPES.find((t) => t.value === cert.type)?.label}{" "}
+                      {cert.score}
                       <button
                         type="button"
-                        onClick={() => setEditEnglishCerts((prev) => prev.filter((_, idx) => idx !== i))}
-                        className="rounded-full p-0.5 hover:bg-muted"
+                        onClick={() =>
+                          setEditEnglishCerts((prev) =>
+                            prev.filter((_, idx) => idx !== i)
+                          )
+                        }
+                        className="hover:bg-muted rounded-full p-0.5"
                       >
                         <X className="size-3" />
                       </button>
@@ -1479,14 +1665,19 @@ function AdminStudentDetailPageInner() {
               <div className="flex gap-2">
                 <Select
                   value={editCertType}
-                  onValueChange={(v) => { setEditCertType(v as EnglishCert["type"]); setEditCertScore(""); }}
+                  onValueChange={(v) => {
+                    setEditCertType(v as EnglishCert["type"]);
+                    setEditCertScore("");
+                  }}
                 >
                   <SelectTrigger className="w-28">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {CERT_TYPES.map((t) => (
-                      <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                      <SelectItem key={t.value} value={t.value}>
+                        {t.label}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -1495,7 +1686,10 @@ function AdminStudentDetailPageInner() {
                     value={editCertScore}
                     onValueChange={(v) => {
                       if (!v) return;
-                      setEditEnglishCerts((prev) => [...prev, { type: "EIKEN", score: v }]);
+                      setEditEnglishCerts((prev) => [
+                        ...prev,
+                        { type: "EIKEN", score: v },
+                      ]);
                       setEditCertScore("");
                     }}
                   >
@@ -1504,7 +1698,9 @@ function AdminStudentDetailPageInner() {
                     </SelectTrigger>
                     <SelectContent>
                       {EIKEN_GRADES.map((g) => (
-                        <SelectItem key={g} value={g}>{g}</SelectItem>
+                        <SelectItem key={g} value={g}>
+                          {g}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -1522,7 +1718,10 @@ function AdminStudentDetailPageInner() {
                       size="icon"
                       onClick={() => {
                         if (editCertScore.trim()) {
-                          setEditEnglishCerts((prev) => [...prev, { type: editCertType, score: editCertScore.trim() }]);
+                          setEditEnglishCerts((prev) => [
+                            ...prev,
+                            { type: editCertType, score: editCertScore.trim() },
+                          ]);
                           setEditCertScore("");
                         }
                       }}
@@ -1552,7 +1751,6 @@ function AdminStudentDetailPageInner() {
         </DialogContent>
       </Dialog>
 
-
       {/* スキルチェック詳細ダイアログ */}
       <SkillCheckDetailDialog
         open={scDialog !== null}
@@ -1579,312 +1777,380 @@ function AdminStudentDetailPageInner() {
           </DialogHeader>
 
           <DialogBody>
-          {/* FBは本文の上に sticky で置く。2カラムにしてから右カラムの講評が長くなり、
+            {/* FBは本文の上に sticky で置く。2カラムにしてから右カラムの講評が長くなり、
               最下部だと全部スクロールしないと辿り着けなかった。DialogBody の外
               （flex の固定領域）に出すと framer-motion が展開後の高さを測り損ねて
               送信ボタンが切れるので、スクロール領域の中に置く。 */}
-          {essayDetail && (
-            <div className="sticky top-0 z-10 -mt-1 border-b bg-background pb-2">
-              <InlineFeedbackButton
-                studentId={id}
-                type="essay"
-                targetId={essayDetail.id}
-                targetLabel={`${essayDetail.targetUniversity} ${essayDetail.topic ?? ""}`}
-                value={essayFbText}
-                onValueChange={setEssayFbText}
-                open={essayFbOpen}
-                onOpenChange={setEssayFbOpen}
-              />
-            </div>
-          )}
-          {essayLoading ? (
-            <div className="space-y-4 py-4">
-              <Skeleton className="h-6 w-48" />
-              <Skeleton className="h-40 w-full" />
-              <Skeleton className="h-20 w-full" />
-            </div>
-          ) : essayDetail ? (
-            <div className="py-2 lg:grid lg:grid-cols-5 lg:gap-6">
-              {/* 左: 生徒の原文。講師が読みながら右の講評を追えるよう、
-                  本文側だけを長く取り内部スクロールを付けない。 */}
-              <div className="space-y-2 lg:col-span-2">
-                <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <h3 className="text-sm font-semibold text-foreground">
-                    元テキスト（ドラッグでコメント可）
-                  </h3>
-                  {essayDetail.feedback?.quantitativeAnalysis && (
-                    <EssayWordCount
-                      analysis={essayDetail.feedback.quantitativeAnalysis}
-                    />
-                  )}
-                </div>
-                <CommentableEssayText
-                  quoteOnly
-                  onQuote={(q) => {
-                    setEssayFbText((prev) => appendQuote(prev, q));
-                    setEssayFbOpen(true);
-                  }}
-                  text={essayDetail.ocrText}
-                  comments={essayDetail.inlineComments ?? []}
-                  mode="edit"
-                  fullHeight
-                  onAdd={(range) => addEssayComment(essayDetail.id, range)}
-                  onDelete={(cid) => deleteEssayComment(essayDetail.id, cid)}
-                  canDelete={(c) =>
-                    userProfile?.role !== "teacher" || c.createdBy === user?.uid
-                  }
+            {essayDetail && (
+              <div className="bg-background sticky top-0 z-10 -mt-1 border-b pb-2">
+                <InlineFeedbackButton
+                  studentId={id}
+                  type="essay"
+                  targetId={essayDetail.id}
+                  targetLabel={`${essayDetail.targetUniversity} ${essayDetail.topic ?? ""}`}
+                  value={essayFbText}
+                  onValueChange={setEssayFbText}
+                  open={essayFbOpen}
+                  onOpenChange={setEssayFbOpen}
                 />
               </div>
-
-              {/* 右: 出題・スコア・講評 */}
-              <div className="mt-6 space-y-6 lg:col-span-3 lg:mt-0">
-              {/* 出題の文脈。生徒が何を読んで何に答えたかが分からないと添削の妥当性を判断できない */}
-              <EssayQuestionContext
-                topic={essayDetail.topic}
-                topicEstimated={essayDetail.topicEstimated}
-                context={essayDetail.questionContext}
-              />
-
-              {/* Score bars + レーダー。5軸の偏りは棒だけだと掴みにくいので図も出す */}
-              {essayDetail.scores && (
-                <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-foreground">AIスコア</h3>
-                  <div className="grid gap-3 sm:grid-cols-2 sm:items-center">
-                  {/* APは合計に入らないので軸に混ぜない。数値は下の一覧に残す */}
-                  <SkillRadarChart scores={essayDetail.scores} height={220} />
-                  <div className="grid gap-2">
-                    {[
-                      { key: "structure", label: "構成", weight: ESSAY_SCORE_WEIGHTS.structure },
-                      { key: "logic", label: "論理性", weight: ESSAY_SCORE_WEIGHTS.logic },
-                      { key: "expression", label: "表現力", weight: ESSAY_SCORE_WEIGHTS.expression },
-                      { key: "originality", label: "独自性", weight: ESSAY_SCORE_WEIGHTS.originality },
-                      {
-                        key: "reasoningMaturity",
-                        label: "議論の成熟度",
-                        weight: ESSAY_SCORE_WEIGHTS.reasoningMaturity,
-                      },
-                    ].map((item) => {
-                      const val = essayDetail.scores![item.key as keyof typeof essayDetail.scores] as number;
-                      // 議論の成熟度は旧データには無い
-                      if (typeof val !== "number") return null;
-                      return (
-                        <div key={item.key} className="flex items-center gap-3">
-                          <span className="w-28 text-xs text-muted-foreground">{item.label}</span>
-                          <div className="flex-1">
-                            <Progress value={val * 10} className="h-2" />
-                          </div>
-                          <span className="w-12 text-right text-xs font-medium tabular-nums">
-                            {axisPoints(val, item.weight).toFixed(1)}/{item.weight}
-                          </span>
-                        </div>
-                      );
-                    })}
-                    {/* 合計外の参考値。レーダーには含めない */}
-                    {essayDetail.feedback?.apAlignmentAssessable !== false &&
-                      typeof essayDetail.scores.apAlignment === "number" && (
-                        <div className="flex items-center gap-3 border-t pt-2">
-                          <span className="w-28 text-xs text-muted-foreground">
-                            AP合致度
-                            <span className="ml-1 text-[10px] text-muted-foreground/70">
-                              合計外
-                            </span>
-                          </span>
-                          <div className="flex-1">
-                            <Progress value={essayDetail.scores.apAlignment * 10} className="h-2" />
-                          </div>
-                          <span className="w-12 text-right text-xs font-medium tabular-nums text-muted-foreground">
-                            {essayDetail.scores.apAlignment}/10
-                          </span>
-                        </div>
-                      )}
-                    <div className="mt-1 flex items-center gap-3 border-t pt-2">
-                      <span className="w-20 text-xs font-semibold">合計</span>
-                      <div className="flex-1" />
-                      {/* 添削履歴の一覧と同じランク表記。点だけだと水準を掴みにくい */}
-                      <SkillRankBadge
-                        rank={scoreToSkillRank(
-                          essayDetail.scores.total,
-                          essayDetail.feedback?.scoreMaximum ?? 50,
-                        )}
-                        size="sm"
-                        animate={false}
+            )}
+            {essayLoading ? (
+              <div className="space-y-4 py-4">
+                <Skeleton className="h-6 w-48" />
+                <Skeleton className="h-40 w-full" />
+                <Skeleton className="h-20 w-full" />
+              </div>
+            ) : essayDetail ? (
+              <div className="py-2 lg:grid lg:grid-cols-5 lg:gap-6">
+                {/* 左: 生徒の原文。講師が読みながら右の講評を追えるよう、
+                  本文側だけを長く取り内部スクロールを付けない。 */}
+                <div className="space-y-2 lg:col-span-2">
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <h3 className="text-foreground text-sm font-semibold">
+                      元テキスト（ドラッグでコメント可）
+                    </h3>
+                    {essayDetail.feedback?.quantitativeAnalysis && (
+                      <EssayWordCount
+                        analysis={essayDetail.feedback.quantitativeAnalysis}
                       />
-                      <span className={`text-lg font-bold ${scoreColor(essayDetail.scores.total)}`}>
-                        {essayDetail.scores.total}/{essayDetail.feedback?.scoreMaximum ?? 50}
-                      </span>
-                    </div>
+                    )}
                   </div>
-                  </div>
+                  <CommentableEssayText
+                    quoteOnly
+                    onQuote={(q) => {
+                      setEssayFbText((prev) => appendQuote(prev, q));
+                      setEssayFbOpen(true);
+                    }}
+                    text={essayDetail.ocrText}
+                    comments={essayDetail.inlineComments ?? []}
+                    mode="edit"
+                    fullHeight
+                    onAdd={(range) => addEssayComment(essayDetail.id, range)}
+                    onDelete={(cid) => deleteEssayComment(essayDetail.id, cid)}
+                    canDelete={(c) =>
+                      userProfile?.role !== "teacher" ||
+                      c.createdBy === user?.uid
+                    }
+                  />
                 </div>
-              )}
 
-              {/* Feedback */}
-              {essayDetail.feedback && (
-                <>
-                  <Separator />
+                {/* 右: 出題・スコア・講評 */}
+                <div className="mt-6 space-y-6 lg:col-span-3 lg:mt-0">
+                  {/* 出題の文脈。生徒が何を読んで何に答えたかが分からないと添削の妥当性を判断できない */}
+                  <EssayQuestionContext
+                    topic={essayDetail.topic}
+                    topicEstimated={essayDetail.topicEstimated}
+                    context={essayDetail.questionContext}
+                  />
 
-                  <div className="space-y-4">
-                    {/* Overall */}
-                    <div className="space-y-1">
-                      <h3 className="text-sm font-semibold text-foreground">総合評価</h3>
-                      <p className="text-sm text-muted-foreground leading-relaxed">
-                        {essayDetail.feedback.overall}
-                      </p>
+                  {/* Score bars + レーダー。5軸の偏りは棒だけだと掴みにくいので図も出す */}
+                  {essayDetail.scores && (
+                    <div className="space-y-3">
+                      <h3 className="text-foreground text-sm font-semibold">
+                        AIスコア
+                      </h3>
+                      <div className="grid gap-3 sm:grid-cols-2 sm:items-center">
+                        {/* APは合計に入らないので軸に混ぜない。数値は下の一覧に残す */}
+                        <SkillRadarChart
+                          scores={essayDetail.scores}
+                          height={220}
+                        />
+                        <div className="grid gap-2">
+                          {[
+                            {
+                              key: "structure",
+                              label: "構成",
+                              weight: ESSAY_SCORE_WEIGHTS.structure,
+                            },
+                            {
+                              key: "logic",
+                              label: "論理性",
+                              weight: ESSAY_SCORE_WEIGHTS.logic,
+                            },
+                            {
+                              key: "expression",
+                              label: "表現力",
+                              weight: ESSAY_SCORE_WEIGHTS.expression,
+                            },
+                            {
+                              key: "originality",
+                              label: "独自性",
+                              weight: ESSAY_SCORE_WEIGHTS.originality,
+                            },
+                            {
+                              key: "reasoningMaturity",
+                              label: "議論の成熟度",
+                              weight: ESSAY_SCORE_WEIGHTS.reasoningMaturity,
+                            },
+                          ].map((item) => {
+                            const val = essayDetail.scores![
+                              item.key as keyof typeof essayDetail.scores
+                            ] as number;
+                            // 議論の成熟度は旧データには無い
+                            if (typeof val !== "number") return null;
+                            return (
+                              <div
+                                key={item.key}
+                                className="flex items-center gap-3"
+                              >
+                                <span className="text-muted-foreground w-28 text-xs">
+                                  {item.label}
+                                </span>
+                                <div className="flex-1">
+                                  <Progress value={val * 10} className="h-2" />
+                                </div>
+                                <span className="w-12 text-right text-xs font-medium tabular-nums">
+                                  {axisPoints(val, item.weight).toFixed(1)}/
+                                  {item.weight}
+                                </span>
+                              </div>
+                            );
+                          })}
+                          {/* 合計外の参考値。レーダーには含めない */}
+                          {essayDetail.feedback?.apAlignmentAssessable !==
+                            false &&
+                            typeof essayDetail.scores.apAlignment ===
+                              "number" && (
+                              <div className="flex items-center gap-3 border-t pt-2">
+                                <span className="text-muted-foreground w-28 text-xs">
+                                  AP合致度
+                                  <span className="text-muted-foreground/70 ml-1 text-[10px]">
+                                    合計外
+                                  </span>
+                                </span>
+                                <div className="flex-1">
+                                  <Progress
+                                    value={essayDetail.scores.apAlignment * 10}
+                                    className="h-2"
+                                  />
+                                </div>
+                                <span className="text-muted-foreground w-12 text-right text-xs font-medium tabular-nums">
+                                  {essayDetail.scores.apAlignment}/10
+                                </span>
+                              </div>
+                            )}
+                          <div className="mt-1 flex items-center gap-3 border-t pt-2">
+                            <span className="w-20 text-xs font-semibold">
+                              合計
+                            </span>
+                            <div className="flex-1" />
+                            {/* 添削履歴の一覧と同じランク表記。点だけだと水準を掴みにくい */}
+                            <SkillRankBadge
+                              rank={scoreToSkillRank(
+                                essayDetail.scores.total,
+                                essayDetail.feedback?.scoreMaximum ?? 50
+                              )}
+                              size="sm"
+                              animate={false}
+                            />
+                            <span
+                              className={`text-lg font-bold ${scoreColor(essayDetail.scores.total)}`}
+                            >
+                              {essayDetail.scores.total}/
+                              {essayDetail.feedback?.scoreMaximum ?? 50}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
+                  )}
 
-                    {/* Good points */}
-                    {essayDetail.feedback.goodPoints.length > 0 && (
-                      <div className="space-y-2">
-                        <h4 className="flex items-center gap-1.5 text-sm font-medium text-emerald-700 dark:text-emerald-400">
-                          <ThumbsUp className="size-3.5" />
-                          良い点
-                        </h4>
-                        <ul className="space-y-1 pl-5">
-                          {essayDetail.feedback.goodPoints.map((p, i) => (
-                            <li key={i} className="list-disc text-sm text-muted-foreground">{p}</li>
-                          ))}
-                        </ul>
+                  {/* Feedback */}
+                  {essayDetail.feedback && (
+                    <>
+                      <Separator />
+
+                      <div className="space-y-4">
+                        {/* Overall */}
+                        <div className="space-y-1">
+                          <h3 className="text-foreground text-sm font-semibold">
+                            総合評価
+                          </h3>
+                          <p className="text-muted-foreground text-sm leading-relaxed">
+                            {essayDetail.feedback.overall}
+                          </p>
+                        </div>
+
+                        {/* Good points */}
+                        {essayDetail.feedback.goodPoints.length > 0 && (
+                          <div className="space-y-2">
+                            <h4 className="flex items-center gap-1.5 text-sm font-medium text-emerald-700 dark:text-emerald-400">
+                              <ThumbsUp className="size-3.5" />
+                              良い点
+                            </h4>
+                            <ul className="space-y-1 pl-5">
+                              {essayDetail.feedback.goodPoints.map((p, i) => (
+                                <li
+                                  key={i}
+                                  className="text-muted-foreground list-disc text-sm"
+                                >
+                                  {p}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {/* Improvements */}
+                        {essayDetail.feedback.improvements.length > 0 && (
+                          <div className="space-y-2">
+                            <h4 className="flex items-center gap-1.5 text-sm font-medium text-amber-700 dark:text-amber-400">
+                              <Lightbulb className="size-3.5" />
+                              改善点
+                            </h4>
+                            <ul className="space-y-1 pl-5">
+                              {essayDetail.feedback.improvements.map((p, i) => (
+                                <li
+                                  key={i}
+                                  className="text-muted-foreground list-disc text-sm"
+                                >
+                                  {p}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
                       </div>
-                    )}
 
-                    {/* Improvements */}
-                    {essayDetail.feedback.improvements.length > 0 && (
-                      <div className="space-y-2">
-                        <h4 className="flex items-center gap-1.5 text-sm font-medium text-amber-700 dark:text-amber-400">
-                          <Lightbulb className="size-3.5" />
-                          改善点
-                        </h4>
-                        <ul className="space-y-1 pl-5">
-                          {essayDetail.feedback.improvements.map((p, i) => (
-                            <li key={i} className="list-disc text-sm text-muted-foreground">{p}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* 赤ペン添削。生徒が見ているものと同じ部品で、同じ見え方にする。
+                      {/* 赤ペン添削。生徒が見ているものと同じ部品で、同じ見え方にする。
                       面談で「ここを直そう」と話すときに、生徒の画面と食い違うと
                       指している箇所が伝わらない */}
-                  {essayDetail.feedback.languageCorrections &&
-                    essayDetail.feedback.languageCorrections.length > 0 && (
-                      <>
-                        <Separator />
-                        <div className="space-y-2">
-                          <h3 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
-                            <PenLine className="size-3.5" />
-                            赤ペン添削
-                            <Badge variant="secondary" className="text-xs">
-                              {essayDetail.feedback.languageCorrections.length}件
-                            </Badge>
-                          </h3>
-                          <RedPenText
-                            text={essayDetail.ocrText ?? ""}
-                            corrections={essayDetail.feedback.languageCorrections}
-                          />
-                        </div>
-                      </>
-                    )}
+                      {essayDetail.feedback.languageCorrections &&
+                        essayDetail.feedback.languageCorrections.length > 0 && (
+                          <>
+                            <Separator />
+                            <div className="space-y-2">
+                              <h3 className="text-foreground flex items-center gap-1.5 text-sm font-semibold">
+                                <PenLine className="size-3.5" />
+                                赤ペン添削
+                                <Badge variant="secondary" className="text-xs">
+                                  {
+                                    essayDetail.feedback.languageCorrections
+                                      .length
+                                  }
+                                  件
+                                </Badge>
+                              </h3>
+                              <RedPenText
+                                text={essayDetail.ocrText ?? ""}
+                                corrections={
+                                  essayDetail.feedback.languageCorrections
+                                }
+                              />
+                            </div>
+                          </>
+                        )}
 
-                  {/* Brushed up text */}
-                  {essayDetail.feedback.brushedUpText && (
+                      {/* Brushed up text */}
+                      {essayDetail.feedback.brushedUpText && (
+                        <>
+                          <Separator />
+                          <div className="space-y-2">
+                            <h3 className="text-foreground flex items-center gap-1.5 text-sm font-semibold">
+                              <ArrowRightLeft className="size-3.5" />
+                              添削後テキスト（生徒画面の「ブラッシュアップ版」）
+                            </h3>
+                            <div className="max-h-60 overflow-y-auto rounded-lg border border-emerald-200 bg-emerald-50 p-4 font-mono text-sm leading-7 tracking-wide text-gray-800 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-gray-200">
+                              {essayDetail.feedback.brushedUpText
+                                .split("\n")
+                                .map((line, i) => (
+                                  <p
+                                    key={i}
+                                    className={line.trim() === "" ? "h-4" : ""}
+                                  >
+                                    {line || "\u00A0"}
+                                  </p>
+                                ))}
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </>
+                  )}
+                  {/* テーマ深掘り / ブラッシュアップ版。生徒画面には出ていたが管理者側
+                  には無く、面談で同じ画面を見られなかった。 */}
+                  {essayDetail.feedback?.topicInsights && (
                     <>
                       <Separator />
                       <div className="space-y-2">
-                        <h3 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
-                          <ArrowRightLeft className="size-3.5" />
-                          添削後テキスト（生徒画面の「ブラッシュアップ版」）
+                        <h3 className="flex items-center gap-2 text-sm font-semibold">
+                          <BookOpen className="size-4" />
+                          テーマ深掘り
                         </h3>
-                        <div className="max-h-60 overflow-y-auto rounded-lg border border-emerald-200 bg-emerald-50 p-4 font-mono text-sm leading-7 tracking-wide text-gray-800 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-gray-200">
-                          {essayDetail.feedback.brushedUpText.split("\n").map((line, i) => (
-                            <p key={i} className={line.trim() === "" ? "h-4" : ""}>
-                              {line || "\u00A0"}
+                        <div className="space-y-2 rounded-lg border p-3 text-sm">
+                          <div>
+                            <p className="text-muted-foreground text-xs font-medium">
+                              背景・文脈
                             </p>
-                          ))}
+                            <p className="whitespace-pre-wrap">
+                              {essayDetail.feedback.topicInsights.background}
+                            </p>
+                          </div>
+                          {essayDetail.feedback.topicInsights.relatedThemes
+                            .length > 0 && (
+                            <div>
+                              <p className="text-muted-foreground text-xs font-medium">
+                                関連テーマ
+                              </p>
+                              <p>
+                                {essayDetail.feedback.topicInsights.relatedThemes.join(
+                                  "、"
+                                )}
+                              </p>
+                            </div>
+                          )}
+                          {essayDetail.feedback.topicInsights.deepDivePoints
+                            .length > 0 && (
+                            <div>
+                              <p className="text-muted-foreground text-xs font-medium">
+                                深掘りの視点
+                              </p>
+                              <ul className="list-inside list-decimal space-y-0.5">
+                                {essayDetail.feedback.topicInsights.deepDivePoints.map(
+                                  (pt, i) => (
+                                    <li key={i}>{pt}</li>
+                                  )
+                                )}
+                              </ul>
+                            </div>
+                          )}
+                          <div>
+                            <p className="text-muted-foreground text-xs font-medium">
+                              推奨切り口
+                            </p>
+                            <p className="whitespace-pre-wrap">
+                              {
+                                essayDetail.feedback.topicInsights
+                                  .recommendedAngle
+                              }
+                            </p>
+                          </div>
                         </div>
                       </div>
                     </>
                   )}
-                </>
-              )}
-              {/* テーマ深掘り / ブラッシュアップ版。生徒画面には出ていたが管理者側
-                  には無く、面談で同じ画面を見られなかった。 */}
-              {essayDetail.feedback?.topicInsights && (
-                <>
-                  <Separator />
-                  <div className="space-y-2">
-                    <h3 className="flex items-center gap-2 text-sm font-semibold">
-                      <BookOpen className="size-4" />
-                      テーマ深掘り
-                    </h3>
-                    <div className="space-y-2 rounded-lg border p-3 text-sm">
-                      <div>
-                        <p className="text-muted-foreground text-xs font-medium">
-                          背景・文脈
-                        </p>
-                        <p className="whitespace-pre-wrap">
-                          {essayDetail.feedback.topicInsights.background}
-                        </p>
-                      </div>
-                      {essayDetail.feedback.topicInsights.relatedThemes.length >
-                        0 && (
-                        <div>
-                          <p className="text-muted-foreground text-xs font-medium">
-                            関連テーマ
-                          </p>
-                          <p>
-                            {essayDetail.feedback.topicInsights.relatedThemes.join(
-                              "、",
-                            )}
-                          </p>
-                        </div>
-                      )}
-                      {essayDetail.feedback.topicInsights.deepDivePoints.length >
-                        0 && (
-                        <div>
-                          <p className="text-muted-foreground text-xs font-medium">
-                            深掘りの視点
-                          </p>
-                          <ul className="list-inside list-decimal space-y-0.5">
-                            {essayDetail.feedback.topicInsights.deepDivePoints.map(
-                              (pt, i) => (
-                                <li key={i}>{pt}</li>
-                              ),
-                            )}
-                          </ul>
-                        </div>
-                      )}
-                      <div>
-                        <p className="text-muted-foreground text-xs font-medium">
-                          推奨切り口
-                        </p>
-                        <p className="whitespace-pre-wrap">
-                          {essayDetail.feedback.topicInsights.recommendedAngle}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </>
-              )}
 
-              {/* この問題を書いていたときのAIコーチとのやり取り。答案だけ見ても
+                  {/* この問題を書いていたときのAIコーチとのやり取り。答案だけ見ても
                   生徒がどこで詰まったか分からないため、講評の後に置く。 */}
-              <Separator />
-              <EssayCoachConversation threads={essayDetail.coachThreads} />
+                  <Separator />
+                  <EssayCoachConversation threads={essayDetail.coachThreads} />
+                </div>
               </div>
-            </div>
-          ) : (
-            <div className="py-8 text-center text-sm text-muted-foreground">
-              エッセイデータの取得に失敗しました
-            </div>
-          )}
+            ) : (
+              <div className="text-muted-foreground py-8 text-center text-sm">
+                エッセイデータの取得に失敗しました
+              </div>
+            )}
           </DialogBody>
         </DialogContent>
       </Dialog>
 
       {/* その生徒とのチャット (右下フローティング)。管理者↔生徒 / 講師↔生徒 を role で切替 */}
       {user?.uid &&
-        (isTeacherViewer || userProfile?.role === "admin" || userProfile?.role === "superadmin") && (
+        (isTeacherViewer ||
+          userProfile?.role === "admin" ||
+          userProfile?.role === "superadmin") && (
           <FloatingStudentChat
             studentId={id}
             studentName={profile.displayName || "生徒"}
@@ -1900,59 +2166,61 @@ function AdminStudentDetailPageInner() {
           />
         )}
 
-        {!isTeacherViewer && (
-          <Card className="border-rose-200 dark:border-rose-900/50">
-            <CardHeader>
-              <CardTitle className="text-base text-rose-700 dark:text-rose-300">
-                生徒アカウントの削除
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-muted-foreground">
-                無効化するとログインできなくなります。データは保持され、復元は運営への依頼が必要です。
-              </p>
-              <Button
-                variant="destructive"
-                className="shrink-0"
-                onClick={async () => {
-                  if (
-                    !window.confirm(
-                      "この生徒アカウントを無効化しますか？\nログインできなくなります（データは保持されます）。取り消しには運営への依頼が必要です。",
-                    )
-                  ) {
-                    return;
-                  }
-                  try {
-                    const res = await authFetch(`/api/admin/students/${id}`, {
-                      method: "DELETE",
-                    });
-                    if (!res.ok) throw new Error();
-                    toast.success("生徒を無効化しました");
-                    router.push("/admin/students");
-                  } catch {
-                    toast.error("無効化に失敗しました");
-                  }
-                }}
-              >
-                生徒を削除（無効化）
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+      {!isTeacherViewer && (
+        <Card className="border-rose-200 dark:border-rose-900/50">
+          <CardHeader>
+            <CardTitle className="text-base text-rose-700 dark:text-rose-300">
+              生徒アカウントの削除
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-muted-foreground text-sm">
+              無効化するとログインできなくなります。データは保持され、復元は運営への依頼が必要です。
+            </p>
+            <Button
+              variant="destructive"
+              className="shrink-0"
+              onClick={async () => {
+                if (
+                  !window.confirm(
+                    "この生徒アカウントを無効化しますか？\nログインできなくなります（データは保持されます）。取り消しには運営への依頼が必要です。"
+                  )
+                ) {
+                  return;
+                }
+                try {
+                  const res = await authFetch(`/api/admin/students/${id}`, {
+                    method: "DELETE",
+                  });
+                  if (!res.ok) throw new Error();
+                  toast.success("生徒を無効化しました");
+                  router.push("/admin/students");
+                } catch {
+                  toast.error("無効化に失敗しました");
+                }
+              }}
+            >
+              生徒を削除（無効化）
+            </Button>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
 
 export default function AdminStudentDetailPage() {
   return (
-    <Suspense fallback={
-      <div className="space-y-6 p-6">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-40 w-full" />
-        <Skeleton className="h-[320px] w-full" />
-        <Skeleton className="h-40 w-full" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="space-y-6 p-6">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-40 w-full" />
+          <Skeleton className="h-[320px] w-full" />
+          <Skeleton className="h-40 w-full" />
+        </div>
+      }
+    >
       <AdminStudentDetailPageInner />
     </Suspense>
   );
