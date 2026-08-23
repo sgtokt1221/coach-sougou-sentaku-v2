@@ -11,7 +11,9 @@ import type { LectureProgressItem } from "@/app/api/essay/lecture/history/route"
 const PHASES: { key: string; label: string; orders: number[] }[] = [
   { key: "intro", label: "導入", orders: [1] },
   { key: "form", label: "型を組む", orders: [2, 3, 4, 5, 6, 7, 8] },
-  { key: "rest", label: "読む・仕上げる", orders: [9, 10, 11] },
+  { key: "content", label: "中身の質", orders: [9, 10, 11] },
+  { key: "read", label: "読む・分析", orders: [12, 13, 14] },
+  { key: "finish", label: "仕上げる", orders: [15] },
 ];
 
 export default function EssayLecturesPage() {
