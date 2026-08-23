@@ -9,6 +9,9 @@ export const SENTENCE_DRILL_KINDS = [
   "particle",
   "subject_predicate",
   "sentence_length",
+  "modifier",
+  "style",
+  "redundancy",
 ] as const;
 
 export type SentenceDrillKind = (typeof SENTENCE_DRILL_KINDS)[number];
@@ -17,12 +20,18 @@ export const SENTENCE_DRILL_LABELS: Record<SentenceDrillKind, string> = {
   particle: "てにをは",
   subject_predicate: "主述の一致",
   sentence_length: "一文を切る",
+  modifier: "係り受け・指示語",
+  style: "文末・語彙",
+  redundancy: "冗長",
 };
 
 export const SENTENCE_DRILL_DESCRIPTIONS: Record<SentenceDrillKind, string> = {
   particle: "助詞の選び方。「は」と「が」、助詞の重複を直す",
   subject_predicate: "主語と述語のねじれを直す",
   sentence_length: "長い一文を切って読みやすくする",
+  modifier: "修飾語のかかり方と、指示語が指す先をはっきりさせる",
+  style: "話し言葉を書き言葉に直し、文末を常体にそろえる",
+  redundancy: "回りくどい言い方を短く言い切る",
 };
 
 export interface SentenceDrillItem {

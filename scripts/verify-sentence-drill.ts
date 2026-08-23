@@ -6,13 +6,17 @@ import {
 import { pickDrillItems, gradeDrill } from "../src/lib/sentence-drill/pick";
 import { ALL_SENTENCE_DRILL_ITEMS } from "../src/data/sentence-drills";
 
-// P1 は3種
+// P2a で6種
 assert.deepEqual(SENTENCE_DRILL_KINDS, [
   "particle",
   "subject_predicate",
   "sentence_length",
+  "modifier",
+  "style",
+  "redundancy",
 ]);
 assert.equal(SENTENCE_DRILL_LABELS.particle, "てにをは");
+assert.equal(SENTENCE_DRILL_LABELS.modifier, "係り受け・指示語");
 
 // 同じ講義IDなら毎回同じ5問（リロードで問題が入れ替わらない）
 const a = pickDrillItems("particle", "essay-basics-03", 5);
