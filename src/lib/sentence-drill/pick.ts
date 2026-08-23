@@ -26,7 +26,9 @@ export function pickDrillItems(
   const bank = ALL_SENTENCE_DRILL_ITEMS.filter((i) => i.kind === kind);
   if (bank.length === 0) return [];
   const take = Math.min(count, bank.length);
-  const start = hash(seed) % bank.length;
+  // 講義IDが1文字違いだと hash も1しか変わらず、隣の講で4/5が重複する。
+  // 歩幅を take 分にして、隣り合う講の出題が重ならないようにする。
+  const start = (hash(seed) * take) % bank.length;
   return Array.from(
     { length: take },
     (_, i) => bank[(start + i) % bank.length]

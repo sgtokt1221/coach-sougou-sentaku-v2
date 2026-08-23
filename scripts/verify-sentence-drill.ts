@@ -47,4 +47,21 @@ assert.deepEqual(
   [true, false, true]
 );
 
+// 隣り合う講で出題が重ならない（1文字違いのIDでも start がずれる）
+const l01 = pickDrillItems("particle", "essay-basics-01", 5).map((i) => i.id);
+const l02 = pickDrillItems("particle", "essay-basics-02", 5).map((i) => i.id);
+assert.equal(
+  l01.filter((id) => l02.includes(id)).length,
+  0,
+  "隣接する講で出題が重複している"
+);
+
+// 8講ぶん出しても、特定の数問に偏らない（在庫17問のうち大半が使われる）
+const used = new Set(
+  Array.from({ length: 8 }, (_, i) =>
+    pickDrillItems("particle", `essay-basics-0${i + 1}`, 5)
+  ).flatMap((items) => items.map((i) => i.id))
+);
+assert.ok(used.size >= 15, `8講で使われた問題が ${used.size} 種しかない`);
+
 console.log("sentence drill OK");
