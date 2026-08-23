@@ -161,6 +161,12 @@ export default function EssayLectureDetailPage() {
         {hasScenes(lecture) ? (
           <LectureAnimation
             scenes={lecture.scenes!}
+            opening={{
+              order: lecture.order,
+              title: lecture.title,
+              summary: lecture.summary,
+              takeaways: lecture.keyTakeaways,
+            }}
             finishLabel={lecture.drill ? "ドリルへ進む" : "課題へ進む"}
             onFinish={() => setStep(lecture.drill ? "drill" : "exercise")}
           />

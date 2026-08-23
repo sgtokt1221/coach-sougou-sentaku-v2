@@ -60,7 +60,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s2",
         visual: "manuscript",
         caption:
-          "同じ題材でも、小論文はこう書く。「楽しかった」ではなく、問いへの答えから始まる。",
+          "小論文はまず問いを立て、その答えを一文で言い切る。「楽しかった」からは始めない。",
         manuscript: {
           lines: [
             {
@@ -96,7 +96,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s4",
         visual: "blocks",
         caption:
-          "採点は5つの観点で行われる。構成と論証はブロックの並びで決まり、表現力は文そのものの精度で決まる。",
+          "ブロックは**上から順に決まっていく**。①問いが決まれば②立場が決まり、②が決まれば③理由が決まる。",
         blocks: { filled: ["question", "position", "reason"] },
         highlightBlock: "reason",
       },
@@ -211,7 +211,8 @@ export const ESSAY_LECTURES: EssayLecture[] = [
       {
         id: "s4",
         visual: "manuscript",
-        caption: "6ブロックを実際の文にするとこうなる。ブロック名が左に出る。",
+        caption:
+          "6ブロックを実際の文にするとこうなる。この順に並べれば、そのまま一本の答案になる。",
         manuscript: {
           lines: [
             {
@@ -240,13 +241,17 @@ export const ESSAY_LECTURES: EssayLecture[] = [
       },
       {
         id: "s5",
-        visual: "manuscript",
-        caption:
-          "800字ならこの配分が目安。④根拠に一番字数を使う。ここが薄いと点が伸びない。",
-        manuscript: {
-          lines: [
-            { text: "①問い120字 ②立場60字 ③理由160字", tone: "normal" },
-            { text: "④根拠240字 ⑤譲歩140字 ⑥結論80字", tone: "good" },
+        visual: "diagram",
+        caption: "800字ならこの配分が目安。④根拠に一番字数を使う。",
+        diagram: {
+          unit: "字",
+          items: [
+            { label: "①問い", value: 120 },
+            { label: "②立場", value: 60 },
+            { label: "③理由", value: 160 },
+            { label: "④根拠・具体例", value: 240, note: "一番厚く書く" },
+            { label: "⑤譲歩と反論", value: 140 },
+            { label: "⑥結論", value: 80 },
           ],
         },
         highlightBlock: "evidence",
@@ -973,7 +978,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s1",
         visual: "blocks",
         caption:
-          "ここまでで六つの部品がそろった。最後に、これを一本の文章につなぐ。",
+          "部品は六つともそろっている。並べただけでは文章にならないのは、間をつなぐ言葉が無いからだ。",
         blocks: {
           filled: [
             "question",
@@ -992,12 +997,9 @@ export const ESSAY_LECTURES: EssayLecture[] = [
           "文が並んでいるだけの例。どれが主張で、どれがその理由なのかが読み取れない。",
         manuscript: {
           lines: [
-            { text: "私は使用時間の制限が必要だと考える。", tone: "bad" },
-            { text: "就寝前の使用は睡眠時間を削る。", tone: "bad" },
-            {
-              text: "高校生がインターネットを使う時間は一日に六時間近い。",
-              tone: "bad",
-            },
+            { text: "私は使用時間の制限が必要だと考える。" },
+            { text: "就寝前の使用は睡眠時間を削る。" },
+            { text: "高校生がインターネットを使う時間は一日に六時間近い。" },
           ],
         },
       },
@@ -1060,12 +1062,16 @@ export const ESSAY_LECTURES: EssayLecture[] = [
       },
       {
         id: "s6",
-        visual: "manuscript",
+        visual: "diagram",
         caption: "400字ならこの配分でつなぐ。これがそのまま答案の骨格になる。",
-        manuscript: {
-          lines: [
-            { text: "②立場50字 ③理由80字 ④根拠120字", tone: "normal" },
-            { text: "⑤譲歩と反論100字 ⑥結論50字 ＝400字", tone: "good" },
+        diagram: {
+          unit: "字",
+          items: [
+            { label: "②立場", value: 50 },
+            { label: "③理由", value: 80 },
+            { label: "④根拠・具体例", value: 120, note: "一番厚く書く" },
+            { label: "⑤譲歩と反論", value: 100 },
+            { label: "⑥結論", value: 50 },
           ],
         },
       },
@@ -1264,7 +1270,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s1",
         visual: "manuscript",
         caption:
-          "大きな言葉だけで書いた答案。間違いは一つも無いのに、何も言っていない。",
+          "大きな言葉だけで書いた答案。どの設問にも書ける一文は、何も答えていないのと同じだ。",
         manuscript: {
           lines: [
             { text: "設問：現代の社会問題について論じなさい", tone: "normal" },
@@ -2024,15 +2030,17 @@ export const ESSAY_LECTURES: EssayLecture[] = [
       },
       {
         id: "s7",
-        visual: "manuscript",
+        visual: "diagram",
         caption: "課題は600字。800字の配分を四分の三にすれば、そのまま使える。",
-        manuscript: {
-          lines: [
-            { text: "①問い90字 ②立場45字 ③理由120字", tone: "normal" },
-            {
-              text: "④根拠180字 ⑤譲歩と反論105字 ⑥結論60字 ＝600字",
-              tone: "good",
-            },
+        diagram: {
+          unit: "字",
+          items: [
+            { label: "①問い", value: 90 },
+            { label: "②立場", value: 45 },
+            { label: "③理由", value: 120 },
+            { label: "④根拠・具体例", value: 180, note: "一番厚く書く" },
+            { label: "⑤譲歩と反論", value: 105 },
+            { label: "⑥結論", value: 60 },
           ],
         },
       },
@@ -2115,7 +2123,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s3",
         visual: "diagram",
         caption:
-          "①が160字に増える分、③と⑥が少し痩せる。それでも④根拠が一番太いことは変わらない。",
+          "①が160字に増える分、③理由と④根拠が少し痩せる。それでも④根拠が一番太いことは変わらない。",
         diagram: {
           unit: "字",
           items: [
@@ -2587,7 +2595,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s5",
         visual: "manuscript",
         caption:
-          "感嘆符・記号・略語は答案では使わない。どれも書き直せば消える減点だ。",
+          "感嘆符と略語は答案では使わない。どれも書き直せば消える減点だ。",
         manuscript: {
           lines: [
             { text: "本当にこのままでよいのか！", tone: "bad" },
@@ -2603,7 +2611,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s6",
         visual: "blocks",
         caption:
-          "最後に六つの段がそろっているかを確かめる。抜けていれば、表記より先にそこを直す。",
+          "六つの段がそろっているかを確かめる。抜けていれば、表記より先にそこを直す。",
         blocks: {
           filled: [
             "question",
