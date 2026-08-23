@@ -23,20 +23,30 @@ import { LectureAnimation } from "@/components/essay/lecture/LectureAnimation";
 import { SentenceDrillView } from "@/components/essay/lecture/SentenceDrillView";
 import { pickDrillItems } from "@/lib/sentence-drill/pick";
 import { getEssayBlock } from "@/lib/types/essay-block";
-import type { EssayScores, EssayFeedback } from "@/lib/types/essay";
+import type {
+  EssayScores,
+  EssayFeedback,
+  EssayScoreAxis,
+} from "@/lib/types/essay";
+import { ESSAY_SCORE_WEIGHTS } from "@/lib/types/essay";
+import { axisPoints } from "@/lib/score-rank";
 import { usePersistentDraft } from "@/hooks/usePersistentDraft";
 import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
 
 type Step = "lecture" | "drill" | "exercise" | "result";
 
-const SCORE_LABELS: Record<keyof Omit<EssayScores, "total">, string> = {
-  structure: "構成",
-  logic: "論理",
-  expression: "表現",
-  apAlignment: "AP合致",
-  reasoningMaturity: "議論の成熟度",
-  originality: "独自性",
-};
+/**
+ * 合計に入る5軸。分母はその軸の配点に揃える（他の添削結果画面と同じ見せ方）。
+ * 素点の 0-10 で出すと、下の「合計 x/50」と分母が食い違って見える。
+ * AP合致度は講座では評価対象外（大学AP非依存）なので、この一覧には入れない。
+ */
+const SCORE_AXES: { key: EssayScoreAxis; label: string }[] = [
+  { key: "structure", label: "構成" },
+  { key: "logic", label: "論理" },
+  { key: "expression", label: "表現" },
+  { key: "originality", label: "独自性" },
+  { key: "reasoningMaturity", label: "議論の成熟度" },
+];
 
 function scoreColor(total: number): string {
   if (total >= 40) return "text-emerald-600 dark:text-emerald-400";
@@ -328,19 +338,25 @@ export default function EssayLectureDetailPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-5 gap-2">
-              {(Object.keys(SCORE_LABELS) as (keyof typeof SCORE_LABELS)[]).map(
-                (k) => (
-                  <div key={k} className="text-center">
+              {SCORE_AXES.map(({ key, label }) => {
+                const v = result.scores[key];
+                // 議論の成熟度は旧データに無い。0点として見せない
+                if (typeof v !== "number") return null;
+                const weight = ESSAY_SCORE_WEIGHTS[key];
+                return (
+                  <div key={key} className="text-center">
                     <div className="text-muted-foreground text-[11px]">
-                      {SCORE_LABELS[k]}
+                      {label}
                     </div>
-                    <div className="mt-1 text-lg font-bold">
-                      {result.scores[k]}
+                    <div className="mt-1 text-lg font-bold tabular-nums">
+                      {axisPoints(v, weight).toFixed(1)}
                     </div>
-                    <div className="text-muted-foreground text-[10px]">/10</div>
+                    <div className="text-muted-foreground text-[10px]">
+                      /{weight}
+                    </div>
                   </div>
-                )
-              )}
+                );
+              })}
             </div>
           </CardContent>
         </Card>

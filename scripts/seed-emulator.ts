@@ -270,6 +270,7 @@ async function main() {
   console.log("  /student/essay/history                  … 下書きのテーマ名表示");
   console.log("  /student/essay/emu-essay-reviewed       … 軸ごとのスコア表示（配点換算）");
   console.log("  /student/skill-check/emu-skill-check    … スキルチェック結果のスコア表示");
+  console.log("  /student/essay/lectures                 … 小論文講座（アニメ→ドリル→課題）");
 }
 
 main().catch((err) => {
