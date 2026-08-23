@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 import { ManuscriptScene } from "./ManuscriptScene";
 import { BlocksScene } from "./BlocksScene";
 import { CompareScene } from "./CompareScene";
+import { DiagramScene } from "./DiagramScene";
 import type { LectureScene } from "@/data/essay-lectures";
 
 /** 1シーンの自動送り間隔(ms)。手で進める場合は無関係。 */
@@ -77,6 +78,9 @@ export function LectureAnimation({
         )}
         {scene.visual === "compare" && scene.compare && (
           <CompareScene key={scene.id} compare={scene.compare} />
+        )}
+        {scene.visual === "diagram" && scene.diagram && (
+          <DiagramScene key={scene.id} diagram={scene.diagram} />
         )}
       </div>
 

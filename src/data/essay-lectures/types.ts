@@ -26,21 +26,33 @@ export interface ManuscriptLine {
 
 /**
  * 講義アニメの1シーン。1シーン＝1メッセージ。
- * P2a で compare（悪い文と直した文の対比）を追加。diagram は P3。
+ * P2a で compare（悪い文と直した文の対比）を追加。P3 で diagram を追加。
  */
 export interface LectureScene {
   id: string;
   /** 画面下に出る説明文 */
   caption: string;
-  visual: "manuscript" | "blocks" | "compare";
+  visual: "manuscript" | "blocks" | "compare" | "diagram";
   /** visual === "manuscript" のとき必須 */
   manuscript?: { lines: ManuscriptLine[] };
   /** visual === "blocks" のとき必須。filled が積まれ、missing は欠けて見える */
   blocks?: { filled: EssayBlockId[]; missing?: EssayBlockId[] };
   /** visual === "compare" のとき必須 */
   compare?: SceneCompare;
+  /** visual === "diagram" のとき必須 */
+  diagram?: SceneDiagram;
   /** 強調する型のブロック */
   highlightBlock?: EssayBlockId;
+}
+
+/**
+ * 帯で割合を見せる図。字数配分（800字の内訳）と時間配分（60分の使い方）に使う。
+ * グラフのライブラリは入れない。帯の幅を割合で出すだけで足りる。
+ */
+export interface SceneDiagram {
+  /** 単位。帯の下に「800字」「60分」のように出す */
+  unit: "字" | "分";
+  items: { label: string; value: number; note?: string }[];
 }
 
 /**

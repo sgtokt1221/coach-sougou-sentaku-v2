@@ -55,6 +55,16 @@ for (const l of lectures) {
         }
       }
     }
+    if (s.visual === "diagram") {
+      if (!s.diagram?.items.length) {
+        fail(`diagram scene without items: ${l.id}/${s.id}`);
+      } else {
+        for (const item of s.diagram.items) {
+          if (item.value <= 0)
+            fail(`diagram item value <= 0: ${l.id}/${s.id}/${item.label}`);
+        }
+      }
+    }
   }
 
   // アニメ講は6〜10シーン（少ないと講義にならず、多いと最後まで進まない）

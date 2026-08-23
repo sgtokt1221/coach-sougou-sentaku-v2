@@ -12,6 +12,7 @@ export type {
   ManuscriptLine,
   LectureDrill,
   SceneCompare,
+  SceneDiagram,
 } from "./types";
 
 /** 全講義を order 昇順で返す。 */
