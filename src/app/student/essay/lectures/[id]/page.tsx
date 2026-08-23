@@ -23,6 +23,8 @@ import { LectureAnimation } from "@/components/essay/lecture/LectureAnimation";
 import { SentenceDrillView } from "@/components/essay/lecture/SentenceDrillView";
 import { pickDrillItems } from "@/lib/sentence-drill/pick";
 import { getEssayBlock } from "@/lib/types/essay-block";
+import { getEssayForm, formStepsOf } from "@/lib/types/essay-form";
+import { ExerciseTimer } from "@/components/essay/lecture/ExerciseTimer";
 import type {
   EssayScores,
   EssayFeedback,
@@ -268,6 +270,23 @@ export default function EssayLectureDetailPage() {
           <p className="text-muted-foreground bg-muted/60 rounded-lg p-3 text-xs">
             書き出しの例: {getEssayBlock(lecture.exercise.blockId)?.starter}
           </p>
+        )}
+
+        {lecture.exercise.formId && (
+          <div className="bg-muted/60 rounded-lg p-3 text-xs">
+            <p className="font-medium">
+              {getEssayForm(lecture.exercise.formId)?.name}の順番
+            </p>
+            <p className="text-muted-foreground mt-1">
+              {formStepsOf(lecture.exercise.formId)
+                .map((s) => `${s.label}${s.chars}字`)
+                .join(" → ")}
+            </p>
+          </div>
+        )}
+
+        {lecture.exercise.timeLimitMin && (
+          <ExerciseTimer minutes={lecture.exercise.timeLimitMin} />
         )}
 
         <ManuscriptEditor
