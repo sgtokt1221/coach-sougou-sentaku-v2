@@ -35,6 +35,26 @@ for (const l of lectures) {
     if (s.highlightBlock && !ESSAY_BLOCK_IDS.includes(s.highlightBlock)) {
       fail(`unknown highlightBlock: ${l.id}/${s.id}`);
     }
+    if (s.visual === "compare") {
+      if (!s.compare) fail(`compare scene without compare: ${l.id}/${s.id}`);
+      else {
+        if (s.compare.before === s.compare.after) {
+          fail(`compare before/after identical: ${l.id}/${s.id}`);
+        }
+        // highlight は after にだけある語。before にもあると「変わった箇所」にならない
+        for (const w of s.compare.highlight) {
+          if (!s.compare.after.includes(w)) {
+            fail(`highlight not in after: ${l.id}/${s.id}/${w}`);
+          }
+          if (s.compare.before.includes(w)) {
+            fail(`highlight also in before: ${l.id}/${s.id}/${w}`);
+          }
+        }
+        if (s.compare.note.trim().length < 4) {
+          fail(`short compare note: ${l.id}/${s.id}`);
+        }
+      }
+    }
   }
 
   // アニメ講は6〜10シーン（少ないと講義にならず、多いと最後まで進まない）

@@ -7,7 +7,12 @@ export type {
   LectureExercise,
   LectureLevel,
 } from "./types";
-export type { LectureScene, ManuscriptLine, LectureDrill } from "./types";
+export type {
+  LectureScene,
+  ManuscriptLine,
+  LectureDrill,
+  SceneCompare,
+} from "./types";
 
 /** 全講義を order 昇順で返す。 */
 export function getAllLectures(): EssayLecture[] {

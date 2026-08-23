@@ -26,20 +26,35 @@ export interface ManuscriptLine {
 
 /**
  * 講義アニメの1シーン。1シーン＝1メッセージ。
- * P1 では manuscript（原稿用紙に文が積まれる）と blocks（型のカードが積まれる）の
- * 2パターンだけ。compare / diagram は P2 以降で足す。
+ * P2a で compare（悪い文と直した文の対比）を追加。diagram は P3。
  */
 export interface LectureScene {
   id: string;
   /** 画面下に出る説明文 */
   caption: string;
-  visual: "manuscript" | "blocks";
+  visual: "manuscript" | "blocks" | "compare";
   /** visual === "manuscript" のとき必須 */
   manuscript?: { lines: ManuscriptLine[] };
   /** visual === "blocks" のとき必須。filled が積まれ、missing は欠けて見える */
   blocks?: { filled: EssayBlockId[]; missing?: EssayBlockId[] };
+  /** visual === "compare" のとき必須 */
+  compare?: SceneCompare;
   /** 強調する型のブロック */
   highlightBlock?: EssayBlockId;
+}
+
+/**
+ * 悪い文 → 直した文の対比。
+ * `highlight` に入れた語は、直した側で色が変わる。どこが変わったのかを
+ * 目で追えるようにするため（文全体を読み比べさせない）。
+ */
+export interface SceneCompare {
+  before: string;
+  after: string;
+  /** after の中で色を変える語。before には無い語を入れる */
+  highlight: string[];
+  /** 何が変わったのかの一言。caption より短く、対比の真横に出る */
+  note: string;
 }
 
 /** 講義に埋め込む文のドリル。全問選択式（AIを呼ばない）。 */

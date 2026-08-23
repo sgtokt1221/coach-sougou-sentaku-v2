@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 import { ManuscriptScene } from "./ManuscriptScene";
 import { BlocksScene } from "./BlocksScene";
+import { CompareScene } from "./CompareScene";
 import type { LectureScene } from "@/data/essay-lectures";
 
 /** 1シーンの自動送り間隔(ms)。手で進める場合は無関係。 */
@@ -73,6 +74,9 @@ export function LectureAnimation({
             missing={scene.blocks.missing}
             highlightBlock={scene.highlightBlock}
           />
+        )}
+        {scene.visual === "compare" && scene.compare && (
+          <CompareScene key={scene.id} compare={scene.compare} />
         )}
       </div>
 
