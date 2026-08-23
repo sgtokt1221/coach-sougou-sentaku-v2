@@ -61,7 +61,9 @@ export async function POST(request: NextRequest) {
   if (auth instanceof NextResponse) return auth;
   const { uid } = auth;
 
-  const body = (await request.json().catch(() => null)) as CoachRequestBody | null;
+  const body = (await request
+    .json()
+    .catch(() => null)) as CoachRequestBody | null;
   if (
     !body ||
     typeof body.userMessage !== "string" ||
@@ -93,6 +95,8 @@ export async function POST(request: NextRequest) {
   const questionType = body.questionType;
   const sourceText = body.sourceText?.trim();
   const chartData = body.chartData;
+  // 講座の課題を書いている場合の文脈（何のブロックを何字で書かせているか）
+  const lecture = body.lectureContext;
 
   // スレッド取得 or 新規作成
   const threadsCol = adminDb.collection(`users/${uid}/essayCoachThreads`);
@@ -106,7 +110,10 @@ export async function POST(request: NextRequest) {
       existing = snap.data() as CoachThread;
       // 他生徒のスレッドに干渉できないよう ownership 確認
       if (existing.studentId && existing.studentId !== uid) {
-        return NextResponse.json({ error: "権限がありません" }, { status: 403 });
+        return NextResponse.json(
+          { error: "権限がありません" },
+          { status: 403 }
+        );
       }
     } else {
       // 指定 id が無ければ新規採番 (クライアントに同じ id を返す)
@@ -144,7 +151,8 @@ export async function POST(request: NextRequest) {
   }
 
   // 活動実績取得 (最大 5 件、structuredData あり優先)
-  let activities: Array<{ title: string; category?: string; summary: string }> = [];
+  let activities: Array<{ title: string; category?: string; summary: string }> =
+    [];
   try {
     const snap = await adminDb.collection(`users/${uid}/activities`).get();
     const all = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Activity);
@@ -201,6 +209,7 @@ export async function POST(request: NextRequest) {
   const systemPrompt = buildEssayCoachSystemPrompt({
     topic,
     admissionPolicy,
+    lecture,
     universityName,
     facultyName,
     activities,

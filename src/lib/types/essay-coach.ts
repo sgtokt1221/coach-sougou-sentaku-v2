@@ -57,6 +57,37 @@ export interface LinkedCoachThread extends CoachThread {
   matchedBy: "linked" | "topic" | "time";
 }
 
+/**
+ * 小論文講座の課題を書いているときにコーチへ渡す文脈。
+ *
+ * これを渡さないと、コーチは「完成した答案を書く生徒」として助言してしまう。
+ * 講座の課題は型の1ブロックだけを60字で書くようなものが多く、
+ * 「根拠も足しましょう」と言われると生徒は何をすべきか分からなくなる。
+ */
+export interface LectureCoachContext {
+  /** 第N講 */
+  order: number;
+  title: string;
+  /** この講で教えたこと。コーチに「習ったことを使わせる」ために渡す */
+  takeaways: string[];
+  /** ブロック課題のとき。型のどの段を書かせているか */
+  block?: { label: string; role: string; starter: string };
+  /** フル答案のとき。設問タイプ別の型 */
+  form?: {
+    name: string;
+    /** 書く順番と字数（「①問い120字 → ②立場60字 → …」） */
+    steps: string;
+    focus: string;
+    pitfall: string;
+  };
+  wordLimit: number;
+  /**
+   * 直前のドリルで見えたこの生徒の癖。
+   * 講座でしか取れない情報なので、助言をその場で具体的にできる。
+   */
+  drillHint?: string;
+}
+
 export interface CoachRequestBody {
   /** 継続スレッド時。未指定なら新規作成 */
   threadId?: string;
@@ -71,6 +102,8 @@ export interface CoachRequestBody {
   sourceText?: string;
   /** グラフ・データ資料 */
   chartData?: unknown;
+  /** 小論文講座の課題を書いている場合の文脈 */
+  lectureContext?: LectureCoachContext;
   /** ユーザーの今回の発話 */
   userMessage: string;
 }

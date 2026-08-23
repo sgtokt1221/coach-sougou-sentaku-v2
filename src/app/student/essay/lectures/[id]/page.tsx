@@ -14,6 +14,7 @@ import {
   Star,
   CheckCircle2,
   ChevronRight,
+  MessageSquare,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ManuscriptEditor } from "@/components/essay/ManuscriptEditor";
@@ -24,6 +25,8 @@ import { SentenceDrillView } from "@/components/essay/lecture/SentenceDrillView"
 import { PersonalRewriteRound } from "@/components/essay/lecture/PersonalRewriteRound";
 import type { RawCorrection } from "@/lib/sentence-drill/personal";
 import { pickDrillItems } from "@/lib/sentence-drill/pick";
+import { SENTENCE_DRILL_LABELS } from "@/lib/types/sentence-drill";
+import { EssayCoachChat } from "@/components/essay/EssayCoachChat";
 import { getEssayBlock } from "@/lib/types/essay-block";
 import { getEssayForm, formStepsOf } from "@/lib/types/essay-form";
 import { ExerciseTimer } from "@/components/essay/lecture/ExerciseTimer";
@@ -74,6 +77,11 @@ export default function EssayLectureDetailPage() {
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<SubmitResult | null>(null);
   const [personalItems, setPersonalItems] = useState<RawCorrection[]>([]);
+  /**
+   * 直前のドリルで見えたこの生徒の癖。コーチへ渡して、書いている最中に
+   * その場で指摘してもらう（講座でしか取れない情報）。
+   */
+  const [drillHint, setDrillHint] = useState<string | undefined>();
 
   const restoreExerciseDraft = useCallback((saved: { answer: string }) => {
     setAnswer(saved.answer);
@@ -98,6 +106,13 @@ export default function EssayLectureDetailPage() {
   }
 
   const minLength = lecture.exercise.minLength ?? 20;
+  // 課題が「型のどの段を書くものか」。コーチと書き出し例の両方で使う
+  const exerciseBlock = lecture.exercise.blockId
+    ? getEssayBlock(lecture.exercise.blockId)
+    : undefined;
+  const exerciseForm = lecture.exercise.formId
+    ? getEssayForm(lecture.exercise.formId)
+    : undefined;
 
   async function handleSubmit() {
     if (!lecture) return;
@@ -237,11 +252,23 @@ export default function EssayLectureDetailPage() {
           onFinish={async (selected) => {
             // 保存に失敗しても課題へは進ませる（ドリルは本体ではない）
             try {
-              await authFetch("/api/essay/lecture/drill", {
+              const res = await authFetch("/api/essay/lecture/drill", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ lectureId: lecture.id, selected }),
               });
+              if (res.ok) {
+                const grade = (await res.json()) as {
+                  correct: number;
+                  total: number;
+                };
+                // 半分以上落としたときだけ渡す。全問正解の情報は助言に使えない
+                if (grade.correct * 2 <= grade.total) {
+                  setDrillHint(
+                    `${SENTENCE_DRILL_LABELS[lecture.drill!.kind]}のドリルで${grade.total}問中${grade.correct}問しか正解できていない`
+                  );
+                }
+              }
             } catch {
               toast.error("ドリルの結果を保存できませんでした");
             }
@@ -286,6 +313,7 @@ export default function EssayLectureDetailPage() {
         <PersonalRewriteRound
           lectureId={lecture.id}
           items={personalItems}
+          onOverall={(overall) => overall && setDrillHint(overall)}
           onFinish={() => setStep("exercise")}
         />
       </div>
@@ -352,6 +380,51 @@ export default function EssayLectureDetailPage() {
         {lecture.exercise.timeLimitMin && (
           <ExerciseTimer minutes={lecture.exercise.timeLimitMin} />
         )}
+
+        {/* 書きながら相談できるようにする。講座の課題は型のどの段を書くかが
+            決まっているので、その文脈を渡さないと一般論の助言になる */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-sm">
+              <MessageSquare className="size-4" />
+              AIコーチに相談する
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <EssayCoachChat
+              topic={lecture.exercise.prompt}
+              draft={answer}
+              questionType="lecture"
+              sourceText={lecture.exercise.sourceText}
+              chartData={lecture.exercise.chartDataSummary}
+              resetKey={lecture.id}
+              lectureContext={{
+                order: lecture.order,
+                title: lecture.title,
+                takeaways: lecture.keyTakeaways,
+                block: exerciseBlock
+                  ? {
+                      label: exerciseBlock.label,
+                      role: exerciseBlock.role,
+                      starter: exerciseBlock.starter,
+                    }
+                  : undefined,
+                form: exerciseForm
+                  ? {
+                      name: exerciseForm.name,
+                      steps: formStepsOf(exerciseForm.id)
+                        .map((st) => `${st.label}${st.chars}字`)
+                        .join(" → "),
+                      focus: exerciseForm.focus,
+                      pitfall: exerciseForm.pitfall,
+                    }
+                  : undefined,
+                wordLimit: lecture.exercise.wordLimit,
+                drillHint,
+              }}
+            />
+          </CardContent>
+        </Card>
 
         <ManuscriptEditor
           value={answer}

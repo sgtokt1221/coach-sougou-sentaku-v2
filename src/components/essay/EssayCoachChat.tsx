@@ -49,6 +49,8 @@ interface EssayCoachChatProps {
   questionType?: CoachRequestBody["questionType"];
   sourceText?: string;
   chartData?: unknown;
+  /** 小論文講座の課題を書いている場合の文脈 */
+  lectureContext?: CoachRequestBody["lectureContext"];
   /** topic が変わった際に会話をリセットするためのキー */
   resetKey?: string;
   /**
@@ -67,6 +69,7 @@ export function EssayCoachChat({
   questionType,
   sourceText,
   chartData,
+  lectureContext,
   resetKey,
   onThreadChange,
 }: EssayCoachChatProps) {
@@ -141,6 +144,7 @@ export function EssayCoachChat({
       questionType,
       sourceText,
       chartData,
+      lectureContext,
       userMessage: content,
     };
 
@@ -166,9 +170,7 @@ export function EssayCoachChat({
       ]);
     } catch (err) {
       console.error(err);
-      setError(
-        err instanceof Error ? err.message : "応答に失敗しました"
-      );
+      setError(err instanceof Error ? err.message : "応答に失敗しました");
       // 楽観追加したユーザーメッセージをロールバック
       setMessages((prev) => prev.slice(0, -1));
       setInput(content);
@@ -188,7 +190,7 @@ export function EssayCoachChat({
     <div className="flex h-full flex-col">
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto space-y-3 px-3 py-3"
+        className="flex-1 space-y-3 overflow-y-auto px-3 py-3"
       >
         {messages.map((m, i) => (
           <div
@@ -196,9 +198,9 @@ export function EssayCoachChat({
             className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
           >
             <div
-              className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm whitespace-pre-wrap break-words ${
+              className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm break-words whitespace-pre-wrap ${
                 m.role === "user"
-                  ? "bg-teal-500 text-white rounded-br-sm"
+                  ? "rounded-br-sm bg-teal-500 text-white"
                   : "bg-muted text-foreground rounded-bl-sm"
               }`}
             >
@@ -208,27 +210,27 @@ export function EssayCoachChat({
         ))}
         {sending && (
           <div className="flex justify-start">
-            <div className="rounded-2xl bg-muted px-3 py-2 text-sm text-muted-foreground rounded-bl-sm">
-              <Loader2 className="inline size-3 animate-spin mr-1" />
+            <div className="bg-muted text-muted-foreground rounded-2xl rounded-bl-sm px-3 py-2 text-sm">
+              <Loader2 className="mr-1 inline size-3 animate-spin" />
               考え中...
             </div>
           </div>
         )}
         {error && (
-          <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+          <div className="border-destructive/40 bg-destructive/10 text-destructive rounded-lg border px-3 py-2 text-xs">
             {error}
           </div>
         )}
       </div>
-      <div className="border-t p-3 space-y-2">
-        <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
+      <div className="space-y-2 border-t p-3">
+        <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
           {QUICK_PROMPTS.map((p) => (
             <button
               key={p}
               type="button"
               onClick={() => setInput(p)}
               disabled={sending}
-              className="shrink-0 rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-xs text-teal-800 hover:bg-teal-100 disabled:opacity-50 cursor-pointer whitespace-nowrap"
+              className="shrink-0 cursor-pointer rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-xs whitespace-nowrap text-teal-800 hover:bg-teal-100 disabled:opacity-50"
             >
               {p}
             </button>
@@ -249,7 +251,7 @@ export function EssayCoachChat({
             onClick={send}
             disabled={!input.trim() || sending}
             size="icon"
-            className="cursor-pointer shrink-0"
+            className="shrink-0 cursor-pointer"
             aria-label="送信"
           >
             {sending ? (

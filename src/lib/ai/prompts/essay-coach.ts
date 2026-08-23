@@ -13,6 +13,8 @@
  *  - 日本語、「です・ます」 調、 2-4 文程度の短い返答
  */
 
+import type { LectureCoachContext } from "@/lib/types/essay-coach";
+
 export interface CoachSelfAnalysis {
   coreValues?: string[];
   valueOrigins?: string[];
@@ -41,6 +43,8 @@ export interface CoachContext {
   sourceText?: string;
   /** グラフ・データ資料 */
   chartData?: unknown;
+  /** 小論文講座の課題を書いている場合の文脈 */
+  lecture?: LectureCoachContext;
 }
 
 /** 出題資料が長大でもプロンプトを壊さないよう、投入前に丸める。 */
@@ -100,7 +104,42 @@ export function buildEssayCoachSystemPrompt(ctx: CoachContext): string {
     activities: ctx.activities,
     selfAnalysis: ctx.selfAnalysis ?? null,
     draft: ctx.draft || null,
+    lecture: ctx.lecture ?? null,
   };
+
+  /**
+   * 講座の課題は「完成答案」ではないことが多い。型の1ブロックだけを60字で
+   * 書かせている場面で「根拠も足しましょう」と言うと、生徒は何をすべきか
+   * 分からなくなる。何を書かせているのかをここで明示する。
+   */
+  const lectureRule = ctx.lecture
+    ? `
+
+## いまは小論文講座の課題です（第${ctx.lecture.order}講「${ctx.lecture.title}」）
+- この講で教えたのは次の点です。助言はできるだけこれに結び付けてください。
+${ctx.lecture.takeaways.map((t) => `  - ${t}`).join("\n")}
+${
+  ctx.lecture.block
+    ? `- **この課題は答案全体ではなく、型の「${ctx.lecture.block.label}」だけを${ctx.lecture.wordLimit}字で書くものです**
+  （役割: ${ctx.lecture.block.role} / 書き出しの例: ${ctx.lecture.block.starter}）。
+- 他のブロック（理由・根拠・結論など）を今書くよう促さないでください。
+  生徒が「次は何を書けば」と聞いたら、この講の範囲は${ctx.lecture.block.label}までだと伝えます。`
+    : ctx.lecture.form
+      ? `- この課題は「${ctx.lecture.form.name}」の答案（${ctx.lecture.wordLimit}字）です。
+  書く順番と字数の目安: ${ctx.lecture.form.steps}
+  この型で特に見るところ: ${ctx.lecture.form.focus}
+  よくある失敗: ${ctx.lecture.form.pitfall}
+- 生徒がこの順番から外れていたら、どの段が抜けているかを具体的に指摘してください。`
+      : `- この課題は${ctx.lecture.wordLimit}字の答案です。`
+}${
+        ctx.lecture.drillHint
+          ? `
+- 直前のドリルで、この生徒には次の癖が出ていました。書いている文にその癖が
+  出たら、その場で指摘してください: ${ctx.lecture.drillHint}`
+          : ""
+      }
+- 大学名やアドミッションポリシーには触れないでください（講座の課題は志望校に依存しません）。`
+    : "";
 
   return `あなたは、高校生が大学入試の小論文 (総合型選抜) を執筆する過程を支援する対話型コーチです。
 
@@ -153,7 +192,7 @@ export function buildEssayCoachSystemPrompt(ctx: CoachContext): string {
 - 上から目線の命令調 (「○○しなさい」 「こうしろ」)
 - アドミッション・ポリシーの逐語引用 (= 「APではこうあります」 という露骨な参照)
 - Markdown 記法 (**強調**、# 見出し、- 箇条書き、\`コード\`)。画面はプレーンテキスト表示なので記号がそのまま見えてしまう
-- 絵文字の使用${noTopicRule}
+- 絵文字の使用${noTopicRule}${lectureRule}
 
 ## 出題形式ごとの見方
 - ${buildQuestionTypeGuide(ctx.questionType)}

@@ -19,10 +19,13 @@ export function PersonalRewriteRound({
   lectureId,
   items,
   onFinish,
+  onOverall,
 }: {
   lectureId: string;
   items: RawCorrection[];
   onFinish: () => void;
+  /** 判定で見えた癖を親へ渡す（このあとの課題でコーチが使う） */
+  onOverall?: (overall: string) => void;
 }) {
   const [answers, setAnswers] = useState<string[]>(() => items.map(() => ""));
   const [judging, setJudging] = useState(false);
@@ -49,7 +52,9 @@ export function PersonalRewriteRound({
         toast.error(data.error ?? "判定に失敗しました");
         return;
       }
-      setJudge(data as SentenceRewriteJudge);
+      const judged = data as SentenceRewriteJudge;
+      setJudge(judged);
+      if (judged.overall) onOverall?.(judged.overall);
     } catch {
       toast.error("通信エラーが発生しました");
     } finally {
@@ -67,11 +72,14 @@ export function PersonalRewriteRound({
         {items.map((item, i) => {
           const r = judge.results.find((x) => x.index === i);
           return (
-            <div key={i} className="space-y-1 rounded-lg border p-3">
-              <p className="text-muted-foreground text-xs line-through">
+            <div
+              key={i}
+              className="bg-card space-y-2 rounded-xl border p-4 sm:p-5"
+            >
+              <p className="text-muted-foreground text-sm line-through">
                 {item.original}
               </p>
-              <p className="text-sm">{answers[i]}</p>
+              <p className="text-[1.05rem] leading-relaxed">{answers[i]}</p>
               {r && (
                 <div className="flex items-start gap-2 pt-1 text-xs">
                   {r.ok ? (
@@ -117,9 +125,27 @@ export function PersonalRewriteRound({
       </div>
 
       {items.map((item, i) => (
-        <div key={i} className="space-y-2 rounded-lg border p-3">
-          <p className="text-sm">{item.original}</p>
-          <p className="text-muted-foreground text-xs">指摘: {item.reason}</p>
+        <div
+          key={i}
+          className="bg-muted/40 space-y-3 rounded-xl border p-4 sm:p-5"
+        >
+          <div className="space-y-2">
+            <p className="text-muted-foreground text-xs font-semibold">
+              あなたが書いた文
+            </p>
+            <p className="text-[1.05rem] leading-relaxed">{item.original}</p>
+          </div>
+
+          <div className="flex gap-2 border-l-2 border-amber-300 pl-3">
+            <span className="text-muted-foreground shrink-0 text-xs font-semibold">
+              指摘
+            </span>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              {item.reason}
+            </p>
+          </div>
+
+          {/* 書く場所は白にする。周りを淡く沈めて、ここに入力すると分かるようにする */}
           <Textarea
             value={answers[i]}
             onChange={(e) =>
@@ -128,25 +154,32 @@ export function PersonalRewriteRound({
               )
             }
             placeholder="直した文を書いてください"
-            className="min-h-16"
+            className="bg-card min-h-24 rounded-lg p-3.5 text-base shadow-sm"
           />
         </div>
       ))}
 
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3">
         <Button variant="ghost" size="sm" onClick={onFinish}>
           とばす
         </Button>
-        <Button size="sm" onClick={submit} disabled={!allFilled || judging}>
-          {judging ? (
-            <>
-              <Loader2 className="mr-2 size-4 animate-spin" />
-              判定中...
-            </>
-          ) : (
-            "判定する"
+        <div className="flex items-center gap-3">
+          {!allFilled && (
+            <span className="text-muted-foreground text-xs">
+              {answers.filter((a) => a.trim()).length} / {items.length} 記入
+            </span>
           )}
-        </Button>
+          <Button onClick={submit} disabled={!allFilled || judging}>
+            {judging ? (
+              <>
+                <Loader2 className="mr-2 size-4 animate-spin" />
+                判定中...
+              </>
+            ) : (
+              "判定する"
+            )}
+          </Button>
+        </div>
       </div>
     </div>
   );
