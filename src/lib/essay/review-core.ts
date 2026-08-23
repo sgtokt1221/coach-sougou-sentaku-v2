@@ -175,14 +175,16 @@ ${input.ocrText}
    *   narrower  = 主題の一部に限定 → 6点以下
    *   same      = 要求の欠落があれば6点以下、無ければ上限なし
    */
-  const subjectMatch = task?.subjectMatch ?? (task?.answersQuestion === false ? "different" : "same");
+  const subjectMatch =
+    task?.subjectMatch ??
+    (task?.answersQuestion === false ? "different" : "same");
   const offTopic = subjectMatch === "different";
   const narrowed = subjectMatch === "narrower";
   const capBy = (v: number, cap: number) => Math.min(v, cap);
 
   // 資料と食い違う主張は、資料の取り違えとして logic を抑える
   const contradicted = (parsed.feedback?.claimChecks ?? []).some(
-    (c) => c.status === "contradicted",
+    (c) => c.status === "contradicted"
   );
 
   const contentCap = offTopic ? 3 : narrowed || missingRequired ? 6 : 10;
@@ -223,7 +225,7 @@ ${input.ocrText}
       type: c.type,
       status: c.status,
       evidence: c.evidence ?? "",
-    }),
+    })
   );
 
   const taskFulfillment: TaskFulfillment | undefined = task
@@ -267,7 +269,8 @@ ${input.ocrText}
     (correction) =>
       correction.original.length > 0 &&
       input.ocrText.includes(correction.original) &&
-      correction.original !== correction.suggestion
+      correction.original !== correction.suggestion &&
+      isRewrite(correction.suggestion, correction.original)
   );
   const appTargetScore = hasAdmissionPolicy ? 35 : 28;
 
@@ -296,6 +299,10 @@ ${input.ocrText}
       total,
       appTargetScore
     ),
+    priorityTarget: detectPriorityTarget(
+      parsed.feedback.priorityImprovement,
+      languageCorrections
+    ),
     apAlignmentAssessable: hasAdmissionPolicy,
     scoreMaximum,
     aiMetadata: {
@@ -305,4 +312,47 @@ ${input.ocrText}
   };
 
   return { scores, feedback, rawText };
+}
+
+/**
+ * suggestion が「書き換えた文」になっているか。
+ *
+ * 赤ペンの suggestion は画面で置き換え候補として出す欄なので、解説や指示が入ると
+ * 表示が壊れる。実データで「この文自体の語彙・文法は問題ありません。ただし設問の…」
+ * という解説がそのまま入っていた。プロンプトでも禁じたが、保存前にも落とす。
+ */
+function isRewrite(suggestion: string, original: string): boolean {
+  const s = suggestion.trim();
+  if (s.length === 0) return false;
+  // 指示・説明の言い回しが入っているものは書き換え文ではない
+  if (
+    /(してください|しましょう|問題ありません|ただし|以下のように|次のように)/.test(
+      s
+    )
+  ) {
+    return false;
+  }
+  // 元の文に対して極端に長いものは、直しではなく説明になっている
+  if (s.length > original.length * 2.5 + 20) return false;
+  return true;
+}
+
+/**
+ * 最優先の改善点が、赤ペンと改善点のどちらを指しているかを判定する。
+ *
+ * モデルに宣言させるのが確実だが、採点スキーマにこれ以上フィールドを足すと
+ * 構造化出力の文法が大きくなりすぎて API が 400 を返す。そのため
+ * 「最優先の文が、赤ペンで挙げた文を引用しているか」で判定する。
+ * プロンプト側で、赤ペンを指すときは「」で引用するよう指示している。
+ */
+export function detectPriorityTarget(
+  priorityImprovement: string,
+  corrections: { original: string }[]
+): "improvement" | "language" {
+  const quotes = priorityImprovement.match(/「([^」]{6,})」/g) ?? [];
+  for (const raw of quotes) {
+    const quote = raw.slice(1, -1);
+    if (corrections.some((c) => c.original.includes(quote))) return "language";
+  }
+  return "improvement";
 }

@@ -306,6 +306,8 @@ export interface EssayFeedback {
   brushedUpText?: string;
   languageCorrections?: LanguageCorrection[];
   priorityImprovement?: string;
+  /** priorityImprovement が改善点と赤ペンのどちらを指しているか（v17〜） */
+  priorityTarget?: "improvement" | "language";
   nextChallenge?: string;
   quantitativeAnalysis?: QuantitativeAnalysis;
   /** APが取得できず、AP合致度を十分に評価できなかった場合はfalse。 */

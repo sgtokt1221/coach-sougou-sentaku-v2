@@ -94,7 +94,7 @@ export const EssayReviewOutputSchema = z.object({
             status: z.enum(["met", "partial", "missing"]),
             /** met/partial の根拠となる答案内の一文。missing なら空文字 */
             evidence: boundedText,
-          }),
+          })
         )
         .max(6),
       /** 外している場合に、何を書くべきだったかを一文で */
@@ -133,7 +133,7 @@ export const EssayReviewOutputSchema = z.object({
           ]),
           /** verified/contradicted の根拠となる資料内の一文。無ければ空 */
           evidence: boundedText,
-        }),
+        })
       )
       .max(6),
     reportInsights: z

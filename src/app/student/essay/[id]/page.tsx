@@ -106,6 +106,8 @@ interface EssayFeedback {
   overall: string;
   goodPoints: string[];
   improvements: string[];
+  /** 最優先の改善点が改善点と赤ペンのどちらを指しているか */
+  priorityTarget?: "improvement" | "language";
   repeatedIssues: RepeatedIssue[];
   improvementsSinceLast: ImprovementSinceLast[];
   topicInsights?: TopicInsights;
@@ -395,6 +397,19 @@ export default function EssayResultPage() {
    * ときにサーバーとずれる（v7 で AP が合計外になり、議論の成熟度が入った）。
    */
   const totalScore = result.scores.total;
+  /**
+   * 画面に出す改善点。
+   *
+   * 最優先の改善点が改善点1件目を指している場合（priorityTarget = "improvement"）は、
+   * 同じ指摘を2回読ませないよう1件目を落とす。赤ペンを指している場合は落とさない。
+   * priorityTarget を持たない旧データは、そのまま全件出す。
+   */
+  const dedupePriority =
+    !!result.feedback.priorityImprovement &&
+    result.feedback.priorityTarget === "improvement";
+  const shownImprovements = dedupePriority
+    ? (result.feedback.improvements ?? []).slice(1)
+    : (result.feedback.improvements ?? []);
   const scoreMaximum = result.feedback.scoreMaximum ?? 50;
   const apAlignmentAssessable = result.feedback.apAlignmentAssessable !== false;
 
@@ -1089,7 +1104,7 @@ export default function EssayResultPage() {
                       )}
 
                       {/* 一般的な改善点 */}
-                      {(result.feedback.improvements ?? []).length > 0 && (
+                      {shownImprovements.length > 0 && (
                         <Card className="border-0 bg-gradient-to-br from-amber-50 to-amber-100/60 shadow-md">
                           <CardHeader className="pb-4">
                             <CardTitle className="flex items-center gap-2 text-lg tracking-tight text-amber-700">
@@ -1099,21 +1114,16 @@ export default function EssayResultPage() {
                           </CardHeader>
                           <CardContent>
                             <ul className="space-y-3">
-                              {(result.feedback.improvements ?? []).map(
-                                (point, i) => (
-                                  <li
-                                    key={i}
-                                    className="flex items-start gap-3"
-                                  >
-                                    <div className="mt-0.5 rounded-full bg-amber-200 p-1">
-                                      <AlertTriangle className="size-3 text-amber-700" />
-                                    </div>
-                                    <span className="text-sm leading-relaxed text-slate-800">
-                                      {point}
-                                    </span>
-                                  </li>
-                                )
-                              )}
+                              {shownImprovements.map((point, i) => (
+                                <li key={i} className="flex items-start gap-3">
+                                  <div className="mt-0.5 rounded-full bg-amber-200 p-1">
+                                    <AlertTriangle className="size-3 text-amber-700" />
+                                  </div>
+                                  <span className="text-sm leading-relaxed text-slate-800">
+                                    {point}
+                                  </span>
+                                </li>
+                              ))}
                             </ul>
                           </CardContent>
                         </Card>
@@ -1595,7 +1605,7 @@ export default function EssayResultPage() {
                   )}
 
                   {/* 一般的な改善点 */}
-                  {(result.feedback.improvements ?? []).length > 0 && (
+                  {shownImprovements.length > 0 && (
                     <Card className="border-0 bg-gradient-to-br from-amber-50 to-amber-100/60 shadow-md">
                       <CardHeader className="pb-4">
                         <CardTitle className="flex items-center gap-2 text-lg tracking-tight text-amber-700">
@@ -1605,18 +1615,16 @@ export default function EssayResultPage() {
                       </CardHeader>
                       <CardContent>
                         <ul className="space-y-3">
-                          {(result.feedback.improvements ?? []).map(
-                            (point, i) => (
-                              <li key={i} className="flex items-start gap-3">
-                                <div className="mt-0.5 rounded-full bg-amber-200 p-1">
-                                  <AlertTriangle className="size-3 text-amber-700" />
-                                </div>
-                                <span className="text-sm leading-relaxed text-slate-800">
-                                  {point}
-                                </span>
-                              </li>
-                            )
-                          )}
+                          {shownImprovements.map((point, i) => (
+                            <li key={i} className="flex items-start gap-3">
+                              <div className="mt-0.5 rounded-full bg-amber-200 p-1">
+                                <AlertTriangle className="size-3 text-amber-700" />
+                              </div>
+                              <span className="text-sm leading-relaxed text-slate-800">
+                                {point}
+                              </span>
+                            </li>
+                          ))}
                         </ul>
                       </CardContent>
                     </Card>

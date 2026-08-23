@@ -468,6 +468,14 @@ export default function EssayLectureDetailPage() {
   // ===== 結果 =====
   if (step === "result" && result) {
     const fb = result.feedback;
+    /**
+     * 最優先の改善点が改善点1件目を指しているときは、同じ指摘を2回読ませない。
+     * 赤ペンを指している場合（priorityTarget = "language"）は落とさない。
+     */
+    const shownImprovements =
+      fb.priorityImprovement && fb.priorityTarget === "improvement"
+        ? (fb.improvements ?? []).slice(1)
+        : (fb.improvements ?? []);
     return (
       <div className="mx-auto max-w-3xl space-y-5 px-4 py-5 lg:px-6 lg:py-8">
         <div className="flex items-center gap-3">
@@ -558,14 +566,14 @@ export default function EssayLectureDetailPage() {
           </Card>
         )}
 
-        {fb.improvements?.length > 0 && (
+        {shownImprovements.length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle className="text-sm">改善ポイント</CardTitle>
             </CardHeader>
             <CardContent>
               <ul className="list-disc space-y-1 pl-5 text-sm">
-                {fb.improvements.map((p, i) => (
+                {shownImprovements.map((p, i) => (
                   <li key={i}>{p}</li>
                 ))}
               </ul>

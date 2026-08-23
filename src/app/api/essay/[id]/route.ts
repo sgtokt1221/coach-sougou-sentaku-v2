@@ -115,6 +115,8 @@ export async function GET(
         claimChecks: feedback.claimChecks ?? null,
         apAlignmentAssessable: feedback.apAlignmentAssessable ?? null,
         scoreMaximum: feedback.scoreMaximum ?? null,
+        // 表示の出し分け（最優先と改善点1件目の重複排除）に使う
+        priorityTarget: feedback.priorityTarget ?? null,
       },
       targetUniversity: data.targetUniversity,
       targetFaculty: data.targetFaculty,
