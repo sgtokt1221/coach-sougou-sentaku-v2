@@ -95,6 +95,8 @@ import {
   type EssayFeedback,
 } from "@/lib/types/essay";
 import { axisPoints } from "@/lib/score-rank";
+import { buildNextStepHint } from "@/lib/essay/next-step";
+import { EssayDeepDiveView } from "@/components/essay/EssayDeepDiveView";
 import type { WeaknessRecord } from "@/lib/types/growth";
 import { getWeaknessReminderLevel } from "@/lib/types/growth";
 import { UniversitySelectStep } from "@/components/onboarding/UniversitySelectStep";
@@ -1951,6 +1953,29 @@ function AdminStudentDetailPageInner() {
                               {essayDetail.feedback?.scoreMaximum ?? 50}
                             </span>
                           </div>
+
+                          {/* 面談で「次はここを狙おう」と言えるようにする。
+                              生徒画面と同じ計算を使う */}
+                          {(() => {
+                            const next = buildNextStepHint(
+                              essayDetail.scores!,
+                              essayDetail.feedback?.scoreMaximum ?? 50
+                            );
+                            if (!next) return null;
+                            return (
+                              <p className="bg-muted/60 mt-2 rounded-lg px-3 py-2 text-xs">
+                                あと
+                                <span className="mx-1 font-bold tabular-nums">
+                                  {next.gap.needed}
+                                </span>
+                                点で {next.gap.nextRank} ランク・伸びしろは
+                                <span className="mx-1 font-semibold">
+                                  {ESSAY_CATEGORY_LABELS[next.headroom.axis]}
+                                </span>
+                                （満点なら +{next.headroom.gain}点）
+                              </p>
+                            );
+                          })()}
                         </div>
                       </div>
                     </div>
@@ -2068,6 +2093,24 @@ function AdminStudentDetailPageInner() {
                       )}
                     </>
                   )}
+                  {/* 生徒が生成した長文の深掘り。何を読んだかが分かると面談で使える。
+                      管理者側では生成させない（読む人が作る、という設計のため） */}
+                  {essayDetail.deepDive && (
+                    <>
+                      <Separator />
+                      <div className="space-y-2">
+                        <p className="text-sm font-semibold">
+                          テーマ深掘り（生徒が読んだもの）
+                        </p>
+                        <EssayDeepDiveView
+                          deepDive={essayDetail.deepDive}
+                          generating={false}
+                          onGenerate={() => {}}
+                        />
+                      </div>
+                    </>
+                  )}
+
                   {/* テーマ深掘り / ブラッシュアップ版。生徒画面には出ていたが管理者側
                   には無く、面談で同じ画面を見られなかった。 */}
                   {essayDetail.feedback?.topicInsights && (

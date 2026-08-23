@@ -11,20 +11,13 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string; essayId: string }> }
 ) {
-  const auth = await requireRole(request, [
-    "admin",
-    "teacher",
-    "superadmin",
-  ]);
+  const auth = await requireRole(request, ["admin", "teacher", "superadmin"]);
   if (auth instanceof NextResponse) return auth;
 
   const { id: studentId, essayId } = await params;
 
   if (!adminDb) {
-    return NextResponse.json(
-      { error: "サーバー設定エラー" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
   }
 
   // 答案が studentId のものかを見るだけでは足りない。呼び出した管理者が
@@ -103,7 +96,7 @@ export async function GET(
                 pastQuestionId: y.pastQuestionId as string | undefined,
                 diffMin:
                   Math.abs(
-                    (y.updatedAt?.toDate?.()?.getTime?.() ?? 0) - submittedMs,
+                    (y.updatedAt?.toDate?.()?.getTime?.() ?? 0) - submittedMs
                   ) / 60000,
               };
             })
@@ -134,13 +127,15 @@ export async function GET(
     let facName = data.targetFaculty || "";
     if (data.targetUniversity) {
       try {
-        const uniDoc = await adminDb!.doc(`universities/${data.targetUniversity}`).get();
+        const uniDoc = await adminDb!
+          .doc(`universities/${data.targetUniversity}`)
+          .get();
         if (uniDoc.exists) {
           const u = uniDoc.data()!;
           uniName = (u.name as string) ?? uniName;
-          const fac = (u.faculties as { id: string; name: string }[] | undefined)?.find(
-            (f) => f.id === data.targetFaculty,
-          );
+          const fac = (
+            u.faculties as { id: string; name: string }[] | undefined
+          )?.find((f) => f.id === data.targetFaculty);
           if (fac) facName = fac.name;
         }
       } catch (err) {
@@ -157,7 +152,7 @@ export async function GET(
       topic,
       data.targetUniversity as string | undefined,
       data.submittedAt?.toDate?.()?.getTime?.() ?? 0,
-      data.coachThreadId as string | undefined,
+      data.coachThreadId as string | undefined
     );
 
     const essay: Essay = {
@@ -173,6 +168,8 @@ export async function GET(
       scores: data.scores || undefined,
       feedback: data.feedback || undefined,
       inlineComments: data.inlineComments || [],
+      // 生徒が生成したテーマ深掘り。面談で「何を読んだか」を確認できるようにする
+      deepDive: data.deepDive || undefined,
     };
 
     return NextResponse.json({
@@ -211,7 +208,7 @@ async function findCoachThreads(
   topic: string | undefined,
   universityId: string | undefined,
   submittedMs: number,
-  linkedThreadId: string | undefined,
+  linkedThreadId: string | undefined
 ): Promise<LinkedCoachThread[]> {
   const { adminDb } = await import("@/lib/firebase/admin");
   if (!adminDb) return [];
@@ -246,13 +243,17 @@ async function findCoachThreads(
         const t = { ...(d.data() as CoachThread), id: d.id };
         const tMs = t.updatedAt ? new Date(t.updatedAt).getTime() : 0;
         const distance =
-          submittedMs && tMs ? Math.abs(tMs - submittedMs) : Number.POSITIVE_INFINITY;
+          submittedMs && tMs
+            ? Math.abs(tMs - submittedMs)
+            : Number.POSITIVE_INFINITY;
         const threadTopic = normalizeTopic(t.topic);
         const byTopic = wantTopic.length > 0 && threadTopic === wantTopic;
         // 両方にお題があって食い違うなら、時間が近くても別の問題の会話。
         // これが無いと「5時間後に始めた別テーマの会話」を拾ってしまう。
         const topicConflict =
-          wantTopic.length > 0 && threadTopic.length > 0 && threadTopic !== wantTopic;
+          wantTopic.length > 0 &&
+          threadTopic.length > 0 &&
+          threadTopic !== wantTopic;
         const byTime =
           !topicConflict &&
           !!universityId &&
@@ -275,7 +276,7 @@ async function findCoachThreads(
 
     // お題一致を優先し、同順位なら提出時刻に近いものから
     scored.sort((a, b) =>
-      a.byTopic !== b.byTopic ? (a.byTopic ? -1 : 1) : a.distance - b.distance,
+      a.byTopic !== b.byTopic ? (a.byTopic ? -1 : 1) : a.distance - b.distance
     );
     return scored.slice(0, 3).map((x) => x.thread);
   } catch (err) {
