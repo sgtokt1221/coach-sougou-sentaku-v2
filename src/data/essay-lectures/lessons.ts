@@ -1598,7 +1598,7 @@ export const ESSAY_LECTURES: EssayLecture[] = [
         id: "s6",
         visual: "blocks",
         caption:
-          "課題文型で変わるのは**この二つだけ**だ。③理由から先は、今まで通りに書ける。",
+          "課題文型で変わるのは**①が要約になること**だけだ。②から先は、今まで通りに書ける。",
         blocks: { filled: ["question", "position"] },
         highlightBlock: "question",
       },
