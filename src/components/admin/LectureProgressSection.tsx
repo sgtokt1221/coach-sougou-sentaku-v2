@@ -106,6 +106,13 @@ export function LectureProgressSection({ studentId }: { studentId: string }) {
                             <span>ドリル正答率 {row.drillRate}%</span>
                           )}
                         </>
+                      ) : row.drillRate !== null ? (
+                        // ドリルまでやって課題を出していない＝まさにここで止まっている。
+                        // 「未受講」と出すと、止まった場所が見えなくなる
+                        <>
+                          <span className="text-amber-700">課題は未提出</span>
+                          <span>ドリル正答率 {row.drillRate}%</span>
+                        </>
                       ) : (
                         <span>未受講</span>
                       )}

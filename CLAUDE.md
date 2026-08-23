@@ -316,9 +316,17 @@ AI呼び出しは .env.local の ANTHROPIC_API_KEY をそのまま使うので�
     questionType/sourceText/chartDataSummary を渡すので、課題文・資料の読み違いが減点される
   - 検証: `scripts/verify-essay-blocks.ts` / `verify-essay-forms.ts` / `verify-sentence-drill.ts` /
     `verify-lecture-types.ts` と、`validate:data` に連結した `validate-sentence-drills.ts` / `validate-essay-lectures.ts`
+  - **P2b（2026-08-23）**: 4択ドリルの後に「あなたの答案から」ラウンド。本添削の
+    `languageCorrections` から**本人が実際に書いた文**を3件出し、自分で直させて AI が判定する
+    （`/api/essay/lecture/rewrite`。**3件を1回のAI呼び出しでまとめて判定**、`claude-opus-5` / effort low）。
+    - 出題素材は `src/lib/sentence-drill/personal.ts`。誤字と60字超の引用は除く
+      （60字超は内容面の指摘が混ざっており、課題文を読み直さないと直せない）
+    - 出題済みは `users/{uid}/sentenceDrillState/personal` の usedKeys に貯めて二度出さない
+    - 判定は「AIの直し案と一致するか」では見ない。言い回しが違っても指摘が解消していれば正解
+    - 5・9・10・13講から既存ドリル（ちょこ添削/論理ドリル/要約ドリル）への導線
+    - 管理者: 生徒詳細の成績タブに「講座の進み」（20講の受講状況と詰まっている講）
   - 設計・計画: `docs/superpowers/specs/2026-08-23-essay-lecture-curriculum-design.md` と
-    `docs/superpowers/plans/2026-08-23-essay-lecture-p1|p2a|p3.md`。**P2b（書き直し式ドリル・
-    本人の赤ペン履歴からの出題・管理者向けの詰まり画面）は未着手**
+    `docs/superpowers/plans/2026-08-23-essay-lecture-p1|p2a|p2b|p3.md`
 - Firebase SDK: .env.local 未設定（ビルドはnullセーフ、未設定でもSSG通過）
 - npmキャッシュにroot所有ファイルあり → `--cache /tmp/npm-cache` で回避中
 
