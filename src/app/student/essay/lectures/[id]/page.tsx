@@ -18,12 +18,16 @@ import {
 import { toast } from "sonner";
 import { ManuscriptEditor } from "@/components/essay/ManuscriptEditor";
 import { authFetch } from "@/lib/api/client";
-import { getLectureById } from "@/data/essay-lectures";
+import { getLectureById, hasScenes } from "@/data/essay-lectures";
+import { LectureAnimation } from "@/components/essay/lecture/LectureAnimation";
+import { SentenceDrillView } from "@/components/essay/lecture/SentenceDrillView";
+import { pickDrillItems } from "@/lib/sentence-drill/pick";
+import { getEssayBlock } from "@/lib/types/essay-block";
 import type { EssayScores, EssayFeedback } from "@/lib/types/essay";
 import { usePersistentDraft } from "@/hooks/usePersistentDraft";
 import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
 
-type Step = "lecture" | "exercise" | "result";
+type Step = "lecture" | "drill" | "exercise" | "result";
 
 const SCORE_LABELS: Record<keyof Omit<EssayScores, "total">, string> = {
   structure: "構成",
@@ -56,13 +60,10 @@ export default function EssayLectureDetailPage() {
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<SubmitResult | null>(null);
 
-  const restoreExerciseDraft = useCallback(
-    (saved: { answer: string }) => {
-      setAnswer(saved.answer);
-      setStep("exercise");
-    },
-    []
-  );
+  const restoreExerciseDraft = useCallback((saved: { answer: string }) => {
+    setAnswer(saved.answer);
+    setStep("exercise");
+  }, []);
   const exerciseDraft = usePersistentDraft({
     key: `essay-lecture-${params.id}`,
     value: { answer },
@@ -72,7 +73,7 @@ export default function EssayLectureDetailPage() {
 
   if (!lecture) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-10 text-center space-y-4">
+      <div className="mx-auto max-w-3xl space-y-4 px-4 py-10 text-center">
         <p className="text-muted-foreground">講義が見つかりませんでした。</p>
         <Button asChild variant="outline">
           <Link href="/student/essay/lectures">講座一覧へ戻る</Link>
@@ -94,7 +95,10 @@ export default function EssayLectureDetailPage() {
       const res = await authFetch("/api/essay/lecture/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lectureId: lecture.id, answerText: answer.trim() }),
+        body: JSON.stringify({
+          lectureId: lecture.id,
+          answerText: answer.trim(),
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -114,54 +118,114 @@ export default function EssayLectureDetailPage() {
   // ===== 講義 =====
   if (step === "lecture") {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-5 lg:px-6 lg:py-8 space-y-5">
+      <div className="mx-auto max-w-3xl space-y-5 px-4 py-5 lg:px-6 lg:py-8">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => router.push("/student/essay/lectures")}>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => router.push("/student/essay/lectures")}
+          >
             <ArrowLeft className="size-4" />
           </Button>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <Badge variant="outline" className="text-xs">{lecture.level}</Badge>
-              <span className="text-xs text-muted-foreground">第{lecture.order}講</span>
+              <Badge variant="outline" className="text-xs">
+                {lecture.level}
+              </Badge>
+              <span className="text-muted-foreground text-xs">
+                第{lecture.order}講
+              </span>
             </div>
-            <h1 className="text-lg lg:text-xl font-bold flex items-center gap-2">
+            <h1 className="flex items-center gap-2 text-lg font-bold lg:text-xl">
               <GraduationCap className="size-5 shrink-0" />
               {lecture.title}
             </h1>
           </div>
         </div>
 
-        {lecture.sections.map((sec) => (
-          <Card key={sec.id}>
-            <CardHeader>
-              <CardTitle className="text-sm">{sec.heading}</CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm leading-relaxed whitespace-pre-wrap">
-              {sec.body}
-            </CardContent>
-          </Card>
-        ))}
+        {hasScenes(lecture) ? (
+          <LectureAnimation
+            scenes={lecture.scenes!}
+            onFinish={() => setStep(lecture.drill ? "drill" : "exercise")}
+          />
+        ) : (
+          <>
+            {lecture.sections.map((sec) => (
+              <Card key={sec.id}>
+                <CardHeader>
+                  <CardTitle className="text-sm">{sec.heading}</CardTitle>
+                </CardHeader>
+                <CardContent className="text-sm leading-relaxed whitespace-pre-wrap">
+                  {sec.body}
+                </CardContent>
+              </Card>
+            ))}
 
-        <Card className="border-primary/30 bg-primary/5">
-          <CardHeader>
-            <CardTitle className="text-sm">この講義の要点</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-1.5">
-              {lecture.keyTakeaways.map((t, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm">
-                  <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
-                  <span>{t}</span>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
+            <Card className="border-primary/30 bg-primary/5">
+              <CardHeader>
+                <CardTitle className="text-sm">この講義の要点</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-1.5">
+                  {lecture.keyTakeaways.map((t, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm">
+                      <CheckCircle2 className="text-primary mt-0.5 size-4 shrink-0" />
+                      <span>{t}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
 
-        <Button className="w-full" size="lg" onClick={() => setStep("exercise")}>
-          <PenLine className="mr-2 size-4" />
-          この講義の問題を解く
-        </Button>
+            <Button
+              className="w-full"
+              size="lg"
+              onClick={() => setStep(lecture.drill ? "drill" : "exercise")}
+            >
+              <PenLine className="mr-2 size-4" />
+              {lecture.drill ? "ドリルへ進む" : "この講義の問題を解く"}
+            </Button>
+          </>
+        )}
+      </div>
+    );
+  }
+
+  // ===== 文のドリル =====
+  if (step === "drill" && lecture.drill) {
+    return (
+      <div className="mx-auto max-w-3xl space-y-4 px-4 py-5 lg:px-6 lg:py-8">
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setStep("lecture")}
+          >
+            <ArrowLeft className="size-4" />
+          </Button>
+          <h1 className="text-lg font-bold">文のドリル</h1>
+        </div>
+
+        <SentenceDrillView
+          items={pickDrillItems(
+            lecture.drill.kind,
+            lecture.id,
+            lecture.drill.count ?? 5
+          )}
+          onFinish={async (selected) => {
+            // 保存に失敗しても課題へは進ませる（ドリルは本体ではない）
+            try {
+              await authFetch("/api/essay/lecture/drill", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ lectureId: lecture.id, selected }),
+              });
+            } catch {
+              toast.error("ドリルの結果を保存できませんでした");
+            }
+            setStep("exercise");
+          }}
+        />
       </div>
     );
   }
@@ -169,9 +233,13 @@ export default function EssayLectureDetailPage() {
   // ===== 問題 =====
   if (step === "exercise") {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-5 lg:px-6 lg:py-8 space-y-4">
+      <div className="mx-auto max-w-3xl space-y-4 px-4 py-5 lg:px-6 lg:py-8">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => setStep("lecture")}>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setStep("lecture")}
+          >
             <ArrowLeft className="size-4" />
           </Button>
           <h1 className="text-lg font-bold">関連問題</h1>
@@ -186,6 +254,12 @@ export default function EssayLectureDetailPage() {
           </CardContent>
         </Card>
 
+        {lecture.exercise.blockId && (
+          <p className="text-muted-foreground bg-muted/60 rounded-lg p-3 text-xs">
+            書き出しの例: {getEssayBlock(lecture.exercise.blockId)?.starter}
+          </p>
+        )}
+
         <ManuscriptEditor
           value={answer}
           onChange={setAnswer}
@@ -193,14 +267,25 @@ export default function EssayLectureDetailPage() {
           placeholder="ここに回答を入力してください..."
         />
 
-        <Button className="w-full" size="lg" onClick={handleSubmit} disabled={submitting}>
+        <Button
+          className="w-full"
+          size="lg"
+          onClick={handleSubmit}
+          disabled={submitting}
+        >
           {submitting ? (
-            <><Loader2 className="mr-2 size-4 animate-spin" />採点中...</>
+            <>
+              <Loader2 className="mr-2 size-4 animate-spin" />
+              採点中...
+            </>
           ) : (
-            <><Star className="mr-2 size-4" />提出して採点する</>
+            <>
+              <Star className="mr-2 size-4" />
+              提出して採点する
+            </>
           )}
         </Button>
-        <p className="text-center text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-center text-xs">
           提出すると結果が添削履歴に保存されます
         </p>
         <DraftSaveIndicator
@@ -218,56 +303,80 @@ export default function EssayLectureDetailPage() {
   if (step === "result" && result) {
     const fb = result.feedback;
     return (
-      <div className="mx-auto max-w-3xl px-4 py-5 lg:px-6 lg:py-8 space-y-5">
+      <div className="mx-auto max-w-3xl space-y-5 px-4 py-5 lg:px-6 lg:py-8">
         <div className="flex items-center gap-3">
           <h1 className="text-lg font-bold">採点結果</h1>
           <span className="inline-flex items-center gap-1 text-xs text-emerald-600">
-            <CheckCircle2 className="size-3.5" />添削履歴に保存しました
+            <CheckCircle2 className="size-3.5" />
+            添削履歴に保存しました
           </span>
         </div>
 
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              <span className="flex items-center gap-2"><Star className="size-4" />合計スコア</span>
-              <span className={`text-2xl font-bold ${scoreColor(result.scores.total)}`}>
+              <span className="flex items-center gap-2">
+                <Star className="size-4" />
+                合計スコア
+              </span>
+              <span
+                className={`text-2xl font-bold ${scoreColor(result.scores.total)}`}
+              >
                 {result.scores.total} / 50
               </span>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-5 gap-2">
-              {(Object.keys(SCORE_LABELS) as (keyof typeof SCORE_LABELS)[]).map((k) => (
-                <div key={k} className="text-center">
-                  <div className="text-[11px] text-muted-foreground">{SCORE_LABELS[k]}</div>
-                  <div className="mt-1 text-lg font-bold">{result.scores[k]}</div>
-                  <div className="text-[10px] text-muted-foreground">/10</div>
-                </div>
-              ))}
+              {(Object.keys(SCORE_LABELS) as (keyof typeof SCORE_LABELS)[]).map(
+                (k) => (
+                  <div key={k} className="text-center">
+                    <div className="text-muted-foreground text-[11px]">
+                      {SCORE_LABELS[k]}
+                    </div>
+                    <div className="mt-1 text-lg font-bold">
+                      {result.scores[k]}
+                    </div>
+                    <div className="text-muted-foreground text-[10px]">/10</div>
+                  </div>
+                )
+              )}
             </div>
           </CardContent>
         </Card>
 
         {fb.overall && (
           <Card>
-            <CardHeader><CardTitle className="text-sm">講評</CardTitle></CardHeader>
-            <CardContent className="text-sm leading-relaxed whitespace-pre-wrap">{fb.overall}</CardContent>
+            <CardHeader>
+              <CardTitle className="text-sm">講評</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm leading-relaxed whitespace-pre-wrap">
+              {fb.overall}
+            </CardContent>
           </Card>
         )}
 
         {fb.priorityImprovement && (
           <Card>
-            <CardHeader><CardTitle className="text-sm">最優先の改善点</CardTitle></CardHeader>
-            <CardContent className="text-sm leading-relaxed">{fb.priorityImprovement}</CardContent>
+            <CardHeader>
+              <CardTitle className="text-sm">最優先の改善点</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm leading-relaxed">
+              {fb.priorityImprovement}
+            </CardContent>
           </Card>
         )}
 
         {fb.improvements?.length > 0 && (
           <Card>
-            <CardHeader><CardTitle className="text-sm">改善ポイント</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle className="text-sm">改善ポイント</CardTitle>
+            </CardHeader>
             <CardContent>
               <ul className="list-disc space-y-1 pl-5 text-sm">
-                {fb.improvements.map((p, i) => <li key={i}>{p}</li>)}
+                {fb.improvements.map((p, i) => (
+                  <li key={i}>{p}</li>
+                ))}
               </ul>
             </CardContent>
           </Card>
@@ -276,18 +385,25 @@ export default function EssayLectureDetailPage() {
         <div className="flex flex-wrap gap-3">
           <Button variant="outline" asChild>
             <Link href={`/student/essay/${result.essayId}`}>
-              <ChevronRight className="mr-2 size-4" />詳しい添削を見る
+              <ChevronRight className="mr-2 size-4" />
+              詳しい添削を見る
             </Link>
           </Button>
           <Button
             variant="outline"
-            onClick={() => { setAnswer(""); setResult(null); setStep("exercise"); }}
+            onClick={() => {
+              setAnswer("");
+              setResult(null);
+              setStep("exercise");
+            }}
           >
-            <PenLine className="mr-2 size-4" />もう一度解く
+            <PenLine className="mr-2 size-4" />
+            もう一度解く
           </Button>
           <Button asChild>
             <Link href="/student/essay/lectures">
-              <GraduationCap className="mr-2 size-4" />講座一覧へ
+              <GraduationCap className="mr-2 size-4" />
+              講座一覧へ
             </Link>
           </Button>
         </div>
