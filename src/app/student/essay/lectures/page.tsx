@@ -13,7 +13,8 @@ const PHASES: { key: string; label: string; orders: number[] }[] = [
   { key: "form", label: "型を組む", orders: [2, 3, 4, 5, 6, 7, 8] },
   { key: "content", label: "中身の質", orders: [9, 10, 11] },
   { key: "read", label: "読む・分析", orders: [12, 13, 14] },
-  { key: "finish", label: "仕上げる", orders: [15] },
+  { key: "apply", label: "型を変形する", orders: [15, 16, 17, 18] },
+  { key: "finish", label: "仕上げる", orders: [19, 20] },
 ];
 
 export default function EssayLecturesPage() {
