@@ -12,7 +12,7 @@ import { getPastQuestionById } from "@/data/essay-past-questions";
 /** 出題元IDからテーマ名を組み立てる。 */
 function labelFromSource(
   themeId?: string | null,
-  pastQuestionId?: string | null,
+  pastQuestionId?: string | null
 ): string | undefined {
   if (pastQuestionId) {
     const pq = getPastQuestionById(pastQuestionId);
@@ -44,7 +44,7 @@ interface DraftHint {
  */
 function resolveEssayTopic(
   data: FirebaseFirestore.DocumentData,
-  draftHints: DraftHint[],
+  draftHints: DraftHint[]
 ): { topic?: string; estimated: boolean } {
   const saved = typeof data.topic === "string" ? data.topic.trim() : "";
   if (saved) return { topic: saved, estimated: false };
@@ -56,12 +56,17 @@ function resolveEssayTopic(
   const submittedMs = data.submittedAt?.toDate?.()?.getTime?.() ?? 0;
   if (!submittedMs || draftHints.length === 0) return { estimated: false };
   const nearest = draftHints
-    .map((h) => ({ ...h, diffMin: Math.abs(h.updatedAtMs - submittedMs) / 60000 }))
+    .map((h) => ({
+      ...h,
+      diffMin: Math.abs(h.updatedAtMs - submittedMs) / 60000,
+    }))
     .filter((h) => h.diffMin <= DRAFT_MATCH_WINDOW_MIN)
     .sort((a, b) => a.diffMin - b.diffMin)[0];
   if (!nearest) return { estimated: false };
   const fromDraft = labelFromSource(nearest.themeId, nearest.pastQuestionId);
-  return fromDraft ? { topic: fromDraft, estimated: true } : { estimated: false };
+  return fromDraft
+    ? { topic: fromDraft, estimated: true }
+    : { estimated: false };
 }
 import {
   computeEssayAggregate,
@@ -73,7 +78,11 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const authResult = await requireRole(request, ["admin", "teacher", "superadmin"]);
+  const authResult = await requireRole(request, [
+    "admin",
+    "teacher",
+    "superadmin",
+  ]);
   if (authResult instanceof NextResponse) return authResult;
   const { uid, role } = authResult;
 
@@ -81,7 +90,10 @@ export async function GET(
     const { id } = await params;
 
     if (!adminDb) {
-      return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
+      return NextResponse.json(
+        { error: "サーバー設定エラー" },
+        { status: 500 }
+      );
     }
 
     const userDoc = await adminDb.doc(`users/${id}`).get();
@@ -96,7 +108,7 @@ export async function GET(
 
     const { searchParams } = new URL(request.url);
     const viewAs = searchParams.get("viewAs");
-    const effectiveUid = (role === "superadmin" && viewAs) ? viewAs : uid;
+    const effectiveUid = role === "superadmin" && viewAs ? viewAs : uid;
 
     // スコープ判定: superadmin / 自分の管轄 / 同じ塾の admin のいずれか
     const orgDenied = await scopeByOrganization({
@@ -113,7 +125,8 @@ export async function GET(
     if (orgDenied) {
       // teacher の場合は session 経由アクセスを最後に許可
       if (role === "teacher") {
-        const { hasActiveSessionAccess } = await import("@/lib/api/session-access");
+        const { hasActiveSessionAccess } =
+          await import("@/lib/api/session-access");
         const hasAccess = await hasActiveSessionAccess(effectiveUid, id);
         if (!hasAccess) return orgDenied;
       } else {
@@ -134,7 +147,7 @@ export async function GET(
       } catch (indexErr) {
         console.warn(
           "[admin/students] interviews composite index missing, fallback to JS filter:",
-          indexErr,
+          indexErr
         );
         const snap = await adminDb!
           .collection("interviews")
@@ -164,9 +177,7 @@ export async function GET(
         .orderBy("submittedAt", "desc")
         .get(),
       fetchCompletedInterviews(),
-      adminDb
-        .collection(`users/${id}/weaknesses`)
-        .get(),
+      adminDb.collection(`users/${id}/weaknesses`).get(),
       adminDb
         .collection(`users/${id}/skillChecks`)
         .orderBy("takenAt", "desc")
@@ -180,17 +191,24 @@ export async function GET(
     ]);
 
     // 大学ID→日本語名のヘルパー（部分一致フォールバック付き）
-    function resolveUniName(uniId: string, facId: string): { uniName: string; facName: string } {
+    function resolveUniName(
+      uniId: string,
+      facId: string
+    ): { uniName: string; facName: string } {
       // 完全一致を試す
       let uni = MOCK_UNIVERSITIES.find((u) => u.id === uniId);
       // 部分一致フォールバック（IDの先頭部分で探す）
       if (!uni && uniId) {
-        uni = MOCK_UNIVERSITIES.find((u) => uniId.startsWith(u.id) || u.id.startsWith(uniId));
+        uni = MOCK_UNIVERSITIES.find(
+          (u) => uniId.startsWith(u.id) || u.id.startsWith(uniId)
+        );
       }
       let fac = uni?.faculties?.find((f) => f.id === facId);
       // 学部も部分一致
       if (!fac && facId && uni?.faculties) {
-        fac = uni.faculties.find((f) => facId.startsWith(f.id) || f.id.startsWith(facId));
+        fac = uni.faculties.find(
+          (f) => facId.startsWith(f.id) || f.id.startsWith(facId)
+        );
       }
       return {
         uniName: uni?.name ?? uniId,
@@ -219,7 +237,10 @@ export async function GET(
 
     const essays = essaysSnap.docs.map((d) => {
       const data = d.data();
-      const resolved = resolveUniName(data.targetUniversity ?? "", data.targetFaculty ?? "");
+      const resolved = resolveUniName(
+        data.targetUniversity ?? "",
+        data.targetFaculty ?? ""
+      );
       const { topic, estimated } = resolveEssayTopic(data, draftHints);
       return {
         id: d.id,
@@ -227,7 +248,8 @@ export async function GET(
         targetFaculty: resolved.facName,
         topic,
         topicEstimated: estimated,
-        submittedAt: data.submittedAt?.toDate().toISOString() ?? new Date().toISOString(),
+        submittedAt:
+          data.submittedAt?.toDate().toISOString() ?? new Date().toISOString(),
         scores: data.scores ?? null,
         // APが取れなかった答案は満点が40点。50固定で割るとランクが実際より低く出る
         scoreMaximum: data.feedback?.scoreMaximum ?? 50,
@@ -264,6 +286,11 @@ export async function GET(
         expression: e.scores!.expression ?? 0,
         apAlignment: e.scores!.apAlignment ?? 0,
         originality: e.scores!.originality ?? 0,
+        // 旧データには無い軸。0 で埋めず null にして線を切る
+        reasoningMaturity:
+          typeof e.scores!.reasoningMaturity === "number"
+            ? e.scores!.reasoningMaturity
+            : null,
       }));
 
     // 面接スコア推移（総合 + 共通5軸）
@@ -272,18 +299,22 @@ export async function GET(
         const data = d.data();
         const s = data.scores;
         return {
-          date: data.startedAt?.toDate().toISOString() ?? new Date().toISOString(),
+          date:
+            data.startedAt?.toDate().toISOString() ?? new Date().toISOString(),
           total: s?.total ?? null,
           clarity: s?.clarity ?? 0,
           apAlignment: s?.apAlignment ?? 0,
           enthusiasm: s?.enthusiasm ?? 0,
           specificity: s?.specificity ?? 0,
           // 動画なしの回は未測定。0 にすると「最低評価」として平均を下げる
-          bodyLanguage: typeof s?.bodyLanguage === "number" ? s.bodyLanguage : null,
+          bodyLanguage:
+            typeof s?.bodyLanguage === "number" ? s.bodyLanguage : null,
         };
       })
       .filter(
-        (i): i is {
+        (
+          i
+        ): i is {
           date: string;
           total: number;
           clarity: number;
@@ -291,7 +322,7 @@ export async function GET(
           enthusiasm: number;
           specificity: number;
           bodyLanguage: number | null;
-        } => i.total != null,
+        } => i.total != null
       )
       .reverse();
 
@@ -328,11 +359,21 @@ export async function GET(
     const interviewCategoryAverages =
       recentInterviewScores.length > 0
         ? {
-            clarity: avg(recentInterviewScores.map((s) => (s.clarity as number) ?? 0)),
-            apAlignment: avg(recentInterviewScores.map((s) => (s.apAlignment as number) ?? 0)),
-            enthusiasm: avg(recentInterviewScores.map((s) => (s.enthusiasm as number) ?? 0)),
-            specificity: avg(recentInterviewScores.map((s) => (s.specificity as number) ?? 0)),
-            bodyLanguage: avgMeasured(recentInterviewScores.map((s) => s.bodyLanguage)),
+            clarity: avg(
+              recentInterviewScores.map((s) => (s.clarity as number) ?? 0)
+            ),
+            apAlignment: avg(
+              recentInterviewScores.map((s) => (s.apAlignment as number) ?? 0)
+            ),
+            enthusiasm: avg(
+              recentInterviewScores.map((s) => (s.enthusiasm as number) ?? 0)
+            ),
+            specificity: avg(
+              recentInterviewScores.map((s) => (s.specificity as number) ?? 0)
+            ),
+            bodyLanguage: avgMeasured(
+              recentInterviewScores.map((s) => s.bodyLanguage)
+            ),
           }
         : undefined;
 
@@ -354,7 +395,7 @@ export async function GET(
 
     function pickBestWorst(
       cat: Record<string, number> | undefined,
-      labels: Record<string, string>,
+      labels: Record<string, string>
     ): { bestCategory?: string; worstCategory?: string } {
       if (!cat) return {};
       const entries = Object.entries(cat);
@@ -423,11 +464,11 @@ export async function GET(
               interviewCategoryAverages
                 ? (Object.fromEntries(
                     Object.entries(interviewCategoryAverages).filter(
-                      ([, v]) => typeof v === "number",
-                    ),
+                      ([, v]) => typeof v === "number"
+                    )
                   ) as Record<string, number>)
                 : undefined,
-              INTERVIEW_CATEGORY_LABELS,
+              INTERVIEW_CATEGORY_LABELS
             ),
           }
         : undefined;
@@ -461,7 +502,7 @@ export async function GET(
     const interviewScTotal = resolveScRawScore(
       latestInterviewSc,
       userData,
-      "interview",
+      "interview"
     );
 
     // 直近30日の練習（小論文添削 + ちょこ添削 / 面接）を Firestore から集めて合成する
@@ -472,7 +513,7 @@ export async function GET(
 
     // SC 受験メタ (リマインド UI 用)
     const buildSkillCheckMeta = (
-      doc: FirebaseFirestore.DocumentData | undefined,
+      doc: FirebaseFirestore.DocumentData | undefined
     ):
       | { takenAt: string; daysSinceLast: number; needsRefresh: boolean }
       | undefined => {
@@ -501,7 +542,9 @@ export async function GET(
         isRonin: userData.isRonin === true,
         createdAt:
           userData.createdAt?.toDate?.()?.toISOString() ??
-          (typeof userData.createdAt === "string" ? userData.createdAt : undefined),
+          (typeof userData.createdAt === "string"
+            ? userData.createdAt
+            : undefined),
         gpa: userData.gpa ?? undefined,
         englishCerts: userData.englishCerts ?? undefined,
         targetUniversities: targetUnis,
@@ -538,13 +581,27 @@ export async function GET(
   }
 }
 
-const ALLOWED_FIELDS = ["displayName", "school", "schoolId", "grade", "gpa", "englishCerts", "targetUniversities", "sessionsPerMonth", "isRonin"] as const;
+const ALLOWED_FIELDS = [
+  "displayName",
+  "school",
+  "schoolId",
+  "grade",
+  "gpa",
+  "englishCerts",
+  "targetUniversities",
+  "sessionsPerMonth",
+  "isRonin",
+] as const;
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const authResult = await requireRole(request, ["admin", "teacher", "superadmin"]);
+  const authResult = await requireRole(request, [
+    "admin",
+    "teacher",
+    "superadmin",
+  ]);
   if (authResult instanceof NextResponse) return authResult;
   const { uid, role } = authResult;
 
@@ -583,7 +640,7 @@ export async function PUT(
     // managedByスコーピング
     const { searchParams } = new URL(request.url);
     const viewAs = searchParams.get("viewAs");
-    const effectiveUid = (role === "superadmin" && viewAs) ? viewAs : uid;
+    const effectiveUid = role === "superadmin" && viewAs ? viewAs : uid;
 
     // スコープ判定: superadmin / 自分の管轄 / 同じ塾の admin のいずれか
     const orgDenied = await scopeByOrganization({
@@ -597,7 +654,8 @@ export async function PUT(
     });
     if (orgDenied) {
       if (role === "teacher") {
-        const { hasActiveSessionAccess } = await import("@/lib/api/session-access");
+        const { hasActiveSessionAccess } =
+          await import("@/lib/api/session-access");
         const hasAccess = await hasActiveSessionAccess(effectiveUid, id);
         if (!hasAccess) return orgDenied;
       } else {
@@ -636,7 +694,7 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const authResult = await requireRole(request, ["admin", "superadmin"]);
   if (authResult instanceof NextResponse) return authResult;
@@ -650,14 +708,17 @@ export async function DELETE(
   try {
     const studentDoc = await adminDb.doc(`users/${id}`).get();
     if (!studentDoc.exists) {
-      return NextResponse.json({ error: "生徒が見つかりません" }, { status: 404 });
+      return NextResponse.json(
+        { error: "生徒が見つかりません" },
+        { status: 404 }
+      );
     }
     const userData = studentDoc.data();
     // 生徒以外（admin/teacher/superadmin）はこのエンドポイントで無効化させない
     if (userData?.role !== "student") {
       return NextResponse.json(
         { error: "対象は生徒アカウントではありません" },
-        { status: 400 },
+        { status: 400 }
       );
     }
     // 自塾スコープ（担当講師の代理無効化は不可＝allowAssignedTeacher:false）
@@ -682,7 +743,7 @@ export async function DELETE(
     console.error("Admin student disable error:", error);
     return NextResponse.json(
       { error: "生徒の無効化に失敗しました" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

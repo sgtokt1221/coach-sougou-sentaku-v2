@@ -144,6 +144,11 @@ export async function GET(request: NextRequest) {
             expression: scores.expression ?? 0,
             apAlignment: scores.apAlignment ?? 0,
             originality: scores.originality ?? 0,
+            // v7 で足した軸。旧データには無いので 0 で埋めない
+            // （0点として描くと「評価されて0点」に見える）
+            ...(typeof scores.reasoningMaturity === "number"
+              ? { reasoningMaturity: scores.reasoningMaturity }
+              : {}),
             total,
           },
           rootEssayId: data.rootEssayId ?? d.id,

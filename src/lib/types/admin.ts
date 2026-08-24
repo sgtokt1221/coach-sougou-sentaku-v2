@@ -1,7 +1,11 @@
 import type { WeaknessRecord } from "./growth";
 import type { EssayScores } from "./essay";
 import type { EnglishCert } from "./user";
-import type { SkillRank, AcademicCategory, SkillCheckStatus } from "./skill-check";
+import type {
+  SkillRank,
+  AcademicCategory,
+  SkillCheckStatus,
+} from "./skill-check";
 
 export interface StudentListItem {
   uid: string;
@@ -12,7 +16,11 @@ export interface StudentListItem {
   /** 志望校。"universityId:facultyId" 複合ID または自由入力名が混在。表示は resolvedUniversities を使う */
   targetUniversities: string[];
   /** 志望校の解決済み名称 (サーバー側で複合ID→日本語に変換済み)。表示用 */
-  resolvedUniversities?: { compoundId: string; universityName: string; facultyName: string }[];
+  resolvedUniversities?: {
+    compoundId: string;
+    universityName: string;
+    facultyName: string;
+  }[];
   /** 学年 (高 1=1, 2=2, 3=3)、 fiscalYear 加算前の生値 */
   grade?: number;
   /** grade 入力日時 (ISO)。 卒業生判定 + 「現役に戻す」 ボタンの表示用 */
@@ -34,7 +42,16 @@ export interface StudentListItem {
   lastActivity?: import("@/lib/api/last-activity").LastActivity | null;
   /** 提出締切を過ぎた未提出 (assigned/in_progress) の宿題があるか */
   hasOverdueHomework?: boolean;
-  alertFlags: ("inactive" | "repeated_weakness" | "declining" | "document_deadline" | "ap_struggle" | "weakness_stuck" | "deadline_risk" | "score_plateau")[];
+  alertFlags: (
+    | "inactive"
+    | "repeated_weakness"
+    | "declining"
+    | "document_deadline"
+    | "ap_struggle"
+    | "weakness_stuck"
+    | "deadline_risk"
+    | "score_plateau"
+  )[];
   managedBy?: string;
   plan?: "self" | "coach";
   scoreTrend: "up" | "down" | "flat" | null;
@@ -89,7 +106,11 @@ export interface StudentDetail {
     targetUniversities: string[];
     /** 月あたりのセッション回数（未配置の生成枚数に使用）。既定1 */
     sessionsPerMonth?: number;
-    resolvedUniversities?: { compoundId: string; universityName: string; facultyName: string }[];
+    resolvedUniversities?: {
+      compoundId: string;
+      universityName: string;
+      facultyName: string;
+    }[];
     /** @deprecated 単一講師時代の名残。assignedTeacherIds を使う */
     assignedTeacherId?: string;
     /** 担当講師の uid 配列 (複数講師対応) */
@@ -182,6 +203,12 @@ export interface ScoreTrendPoint {
   expression: number;
   apAlignment: number;
   originality: number;
+  /**
+   * 議論の成熟度。v7 で足した軸なので、それ以前の答案には無い。
+   * 未評価は null にしてグラフに線を引かせない（0点として描くと
+   * 「評価されて0点だった」ように見える）。
+   */
+  reasoningMaturity: number | null;
 }
 
 /** 面接スコア推移（総合 + 共通5軸） */
@@ -235,7 +262,11 @@ export interface AdminPerformance {
 
 export interface RecentActivity {
   id: string;
-  type: "essay_submit" | "interview_complete" | "student_added" | "student_assigned";
+  type:
+    | "essay_submit"
+    | "interview_complete"
+    | "student_added"
+    | "student_assigned";
   description: string;
   timestamp: string;
   studentName?: string;

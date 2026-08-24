@@ -8,15 +8,29 @@ import { ScoresTrendChart } from "@/components/growth/ScoresTrendChart";
 import { TeacherReportsSection } from "@/components/student/TeacherReportsSection";
 import { SegmentControl } from "@/components/shared/SegmentControl";
 import { ReportDetailCard } from "@/components/admin/ReportDetailCard";
-import { TrendingUp, AlertCircle, AlertTriangle, CheckCircle2, Calendar, ChevronRight } from "lucide-react";
-import { WeaknessRecord, WeaknessReminderLevel, getWeaknessReminderLevel } from "@/lib/types/growth";
+import {
+  TrendingUp,
+  AlertCircle,
+  AlertTriangle,
+  CheckCircle2,
+  Calendar,
+  ChevronRight,
+} from "lucide-react";
+import {
+  WeaknessRecord,
+  WeaknessReminderLevel,
+  getWeaknessReminderLevel,
+} from "@/lib/types/growth";
 import type { GrowthReport as AdminGrowthReport } from "@/lib/types/growth-report";
 import type { InterviewScores, InterviewMode } from "@/lib/types/interview";
 import { useAuthSWR } from "@/lib/api/swr";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { SESSION_TYPE_LABELS, type Session } from "@/lib/types/session";
-import { WeaknessSourceBadge, sourceLeftBorder } from "@/components/growth/WeaknessSourceBadge";
+import {
+  WeaknessSourceBadge,
+  sourceLeftBorder,
+} from "@/components/growth/WeaknessSourceBadge";
 
 interface InterviewHistoryItem {
   id: string;
@@ -39,8 +53,9 @@ interface TrendDataPoint {
   expression: number;
   apAlignment: number;
   originality: number;
+  /** v7 で足した軸。それ以前の答案には無いので null で線を切る */
+  reasoningMaturity: number | null;
 }
-
 
 const levelConfig: Record<
   WeaknessReminderLevel,
@@ -81,7 +96,12 @@ function WeaknessColumn({
 }) {
   const cfg = levelConfig[level];
   const sorted = [...items].sort((a, b) => {
-    const sourceOrder: Record<string, number> = { essay: 0, both: 1, skill_check: 2, interview: 3 };
+    const sourceOrder: Record<string, number> = {
+      essay: 0,
+      both: 1,
+      skill_check: 2,
+      interview: 3,
+    };
     return (sourceOrder[a.source] ?? 1) - (sourceOrder[b.source] ?? 1);
   });
   return (
@@ -95,27 +115,38 @@ function WeaknessColumn({
       </div>
       <div className="space-y-2">
         {sorted.length === 0 ? (
-          <p className="text-xs text-muted-foreground">該当なし</p>
+          <p className="text-muted-foreground text-xs">該当なし</p>
         ) : (
           sorted.map((w) => (
-            <Card key={w.area} className={`border border-l-4 ${sourceLeftBorder(w.source)}`}>
+            <Card
+              key={w.area}
+              className={`border border-l-4 ${sourceLeftBorder(w.source)}`}
+            >
               <CardContent className="py-3">
                 <div className="flex items-center gap-2">
-                  <p className="text-sm font-medium flex-1">{w.area}</p>
+                  <p className="flex-1 text-sm font-medium">{w.area}</p>
                   <WeaknessSourceBadge source={w.source} />
                 </div>
                 <div className="mt-2 flex items-center gap-2">
-                  <div className="h-1.5 flex-1 rounded-full bg-muted">
+                  <div className="bg-muted h-1.5 flex-1 rounded-full">
                     <div
                       className={`h-1.5 rounded-full transition-all ${
-                        level === "resolved" ? "bg-emerald-500" :
-                        level === "improving" ? "bg-emerald-400" :
-                        w.count >= 5 ? "bg-rose-400" : "bg-amber-400"
+                        level === "resolved"
+                          ? "bg-emerald-500"
+                          : level === "improving"
+                            ? "bg-emerald-400"
+                            : w.count >= 5
+                              ? "bg-rose-400"
+                              : "bg-amber-400"
                       }`}
-                      style={{ width: `${Math.min((w.count / Math.max(maxCount, 1)) * 100, 100)}%` }}
+                      style={{
+                        width: `${Math.min((w.count / Math.max(maxCount, 1)) * 100, 100)}%`,
+                      }}
                     />
                   </div>
-                  <span className="text-xs text-muted-foreground shrink-0">{w.count}回</span>
+                  <span className="text-muted-foreground shrink-0 text-xs">
+                    {w.count}回
+                  </span>
                 </div>
               </CardContent>
             </Card>
@@ -131,13 +162,35 @@ function WeaknessColumn({
  * この日をまたぐ生徒にはグラフの段差の理由を知らせる。
  * 採点基準を再度変える場合はここも更新する。
  */
-const SCORING_CRITERIA_UPDATED_AT = new Date("2026-07-30T00:00:00+09:00").getTime();
+const SCORING_CRITERIA_UPDATED_AT = new Date(
+  "2026-07-30T00:00:00+09:00"
+).getTime();
 
 export default function GrowthPage() {
-  const { data: essayData, isLoading: loadingTrend } = useAuthSWR<{ essays: { submittedAt: string; status: string; scores?: { total: number; structure: number; logic: number; expression: number; apAlignment: number; originality: number } }[] }>("/api/essay/history?userId=current");
-  const { data: interviewData, isLoading: loadingInterviews } = useAuthSWR<{ interviews: InterviewHistoryItem[] }>("/api/interview/history?userId=current");
-  const { data: adminReports, isLoading: loadingAdminReports } = useAuthSWR<AdminGrowthReport[]>("/api/student/reports");
-  const { data: weaknessData, isLoading: loadingWeaknesses } = useAuthSWR<{ weaknesses: WeaknessRecord[] }>("/api/growth/weaknesses?context=dashboard");
+  const { data: essayData, isLoading: loadingTrend } = useAuthSWR<{
+    essays: {
+      submittedAt: string;
+      status: string;
+      scores?: {
+        total: number;
+        structure: number;
+        logic: number;
+        expression: number;
+        apAlignment: number;
+        originality: number;
+        reasoningMaturity?: number;
+      };
+    }[];
+  }>("/api/essay/history?userId=current");
+  const { data: interviewData, isLoading: loadingInterviews } = useAuthSWR<{
+    interviews: InterviewHistoryItem[];
+  }>("/api/interview/history?userId=current");
+  const { data: adminReports, isLoading: loadingAdminReports } = useAuthSWR<
+    AdminGrowthReport[]
+  >("/api/student/reports");
+  const { data: weaknessData, isLoading: loadingWeaknesses } = useAuthSWR<{
+    weaknesses: WeaknessRecord[];
+  }>("/api/growth/weaknesses?context=dashboard");
 
   const router = useRouter();
   const { userProfile } = useAuth();
@@ -149,7 +202,7 @@ export default function GrowthPage() {
   const reportedSessions = useMemo(() => {
     const list = Array.isArray(rawSessions)
       ? rawSessions
-      : rawSessions?.sessions ?? [];
+      : (rawSessions?.sessions ?? []);
     // sharedWithStudent かつ summary があるもの＝生徒に共有された報告書。新しい順。
     return list
       .filter((s) => s.sharedWithStudent && s.summary)
@@ -166,7 +219,7 @@ export default function GrowthPage() {
     };
     const list = adminReports ?? [];
     const sortedDesc = [...list].sort((a, b) =>
-      keyOf(b.generatedAt).localeCompare(keyOf(a.generatedAt)),
+      keyOf(b.generatedAt).localeCompare(keyOf(a.generatedAt))
     );
     return {
       weekly: sortedDesc.find((r) => r.period === "weekly") ?? null,
@@ -194,11 +247,17 @@ export default function GrowthPage() {
   }, [interviewList]);
 
   // メインタブ切替 (画面トップ)
-  const [mainTab, setMainTab] = useState<"report" | "history" | "trend" | "weakness" | "session">("report");
+  const [mainTab, setMainTab] = useState<
+    "report" | "history" | "trend" | "weakness" | "session"
+  >("report");
   // レポート内側の週次/月次切替
-  const [reportPeriod, setReportPeriod] = useState<"weekly" | "monthly">("weekly");
+  const [reportPeriod, setReportPeriod] = useState<"weekly" | "monthly">(
+    "weekly"
+  );
   // 総合スコア推移のタブ切替
-  const [trendTab, setTrendTab] = useState<"combined" | "essay" | "interview">("combined");
+  const [trendTab, setTrendTab] = useState<"combined" | "essay" | "interview">(
+    "combined"
+  );
 
   // 添削 (小論文) のみの時系列 — 項目別チャート用に 5 項目を保持
   // API が desc 順で返すので、ここで昇順にソートしてグラフ左=古, 右=新 にする
@@ -217,6 +276,11 @@ export default function GrowthPage() {
           expression: s.expression ?? 0,
           apAlignment: s.apAlignment ?? 0,
           originality: s.originality ?? 0,
+          // 旧データには無い軸。0 で埋めず null にして線を切る
+          reasoningMaturity:
+            typeof s.reasoningMaturity === "number"
+              ? s.reasoningMaturity
+              : null,
           _ts: d.getTime(),
         };
       })
@@ -227,7 +291,7 @@ export default function GrowthPage() {
   // 総合チャート用: 添削と面接を別系列で渡す
   const essaySeries = useMemo(
     () => trendData.map(({ date, total }) => ({ date, total })),
-    [trendData],
+    [trendData]
   );
   const hasCombined = essaySeries.length > 0 || interviewTrendData.length > 0;
 
@@ -262,8 +326,8 @@ export default function GrowthPage() {
   return (
     <div className="space-y-5 px-4 py-5 lg:space-y-6 lg:px-8 lg:py-8">
       <div>
-        <h1 className="text-xl lg:text-2xl font-bold">成長</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="text-xl font-bold lg:text-2xl">成長</h1>
+        <p className="text-muted-foreground text-sm">
           あなたの学習成長を可視化します
         </p>
       </div>
@@ -272,7 +336,9 @@ export default function GrowthPage() {
       <SegmentControl
         value={mainTab}
         onChange={(v) =>
-          setMainTab(v as "report" | "history" | "trend" | "weakness" | "session")
+          setMainTab(
+            v as "report" | "history" | "trend" | "weakness" | "session"
+          )
         }
         defaultAccent="blue"
         size="md"
@@ -307,7 +373,7 @@ export default function GrowthPage() {
                   <ReportDetailCard report={reportsByPeriod.weekly} readOnly />
                 ) : (
                   <Card>
-                    <CardContent className="py-10 text-center text-sm text-muted-foreground">
+                    <CardContent className="text-muted-foreground py-10 text-center text-sm">
                       今週分の成長レポートはまだ届いていません。
                     </CardContent>
                   </Card>
@@ -317,7 +383,7 @@ export default function GrowthPage() {
                   <ReportDetailCard report={reportsByPeriod.monthly} readOnly />
                 ) : (
                   <Card>
-                    <CardContent className="py-10 text-center text-sm text-muted-foreground">
+                    <CardContent className="text-muted-foreground py-10 text-center text-sm">
                       今月分の成長レポートはまだ届いていません。
                     </CardContent>
                   </Card>
@@ -332,7 +398,7 @@ export default function GrowthPage() {
         <Card>
           <CardHeader className="pb-3">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+              <CardTitle className="text-muted-foreground text-sm font-medium">
                 合計スコア (0〜50 点)
               </CardTitle>
               <SegmentControl
@@ -368,7 +434,7 @@ export default function GrowthPage() {
             {loadingTrend || loadingInterviews ? (
               <Skeleton className="h-[220px] w-full lg:h-[280px]" />
             ) : !hasCombined ? (
-              <p className="py-8 text-center text-sm text-muted-foreground">
+              <p className="text-muted-foreground py-8 text-center text-sm">
                 まだデータがありません
               </p>
             ) : (
@@ -381,7 +447,7 @@ export default function GrowthPage() {
                 )}
                 {trendTab === "essay" &&
                   (essaySeries.length === 0 ? (
-                    <p className="py-16 text-center text-sm text-muted-foreground">
+                    <p className="text-muted-foreground py-16 text-center text-sm">
                       小論文のデータがありません
                     </p>
                   ) : (
@@ -389,7 +455,7 @@ export default function GrowthPage() {
                   ))}
                 {trendTab === "interview" &&
                   (interviewTrendData.length === 0 ? (
-                    <p className="py-16 text-center text-sm text-muted-foreground">
+                    <p className="text-muted-foreground py-16 text-center text-sm">
                       面接のデータがありません
                     </p>
                   ) : (
@@ -412,17 +478,14 @@ export default function GrowthPage() {
             </div>
           ) : weaknesses.length === 0 ? (
             <Card>
-              <CardContent className="py-10 text-center text-sm text-muted-foreground">
+              <CardContent className="text-muted-foreground py-10 text-center text-sm">
                 まだ弱点が記録されていません。小論文や面接に取り組むと、ここに集計されます。
               </CardContent>
             </Card>
           ) : (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
               {(() => {
-                const maxCount = Math.max(
-                  ...weaknesses.map((w) => w.count),
-                  1,
-                );
+                const maxCount = Math.max(...weaknesses.map((w) => w.count), 1);
                 return (
                   <>
                     <WeaknessColumn
@@ -465,7 +528,7 @@ export default function GrowthPage() {
             </div>
           ) : reportedSessions.length === 0 ? (
             <Card>
-              <CardContent className="py-10 text-center text-sm text-muted-foreground">
+              <CardContent className="text-muted-foreground py-10 text-center text-sm">
                 共有された面談報告書はまだありません。面談後に講師が報告書を共有すると、ここに表示されます。
               </CardContent>
             </Card>
@@ -480,7 +543,7 @@ export default function GrowthPage() {
                   <div className="flex items-center gap-3">
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <Calendar className="size-4 text-muted-foreground" />
+                        <Calendar className="text-muted-foreground size-4" />
                         <span className="text-sm font-medium">
                           {new Date(s.scheduledAt).toLocaleDateString("ja-JP")}
                         </span>
@@ -489,12 +552,12 @@ export default function GrowthPage() {
                         </Badge>
                       </div>
                       {s.summary?.overview && (
-                        <p className="mt-1.5 line-clamp-2 text-sm text-muted-foreground">
+                        <p className="text-muted-foreground mt-1.5 line-clamp-2 text-sm">
                           {s.summary.overview}
                         </p>
                       )}
                     </div>
-                    <ChevronRight className="size-5 shrink-0 text-muted-foreground" />
+                    <ChevronRight className="text-muted-foreground size-5 shrink-0" />
                   </div>
                 </CardContent>
               </Card>
