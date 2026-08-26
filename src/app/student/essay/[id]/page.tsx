@@ -63,6 +63,7 @@ import {
   getScorePercentage,
 } from "@/lib/score-rank";
 import { buildNextStepHint } from "@/lib/essay/next-step";
+import { EssayResultSummary } from "@/components/essay/EssayResultSummary";
 import { ESSAY_CATEGORY_LABELS } from "@/lib/growth/weakness-category";
 
 interface EssayScores {
@@ -844,6 +845,22 @@ export default function EssayResultPage() {
         )}
 
         {/* タブ式コンテンツエリア - PC では 2カラム */}
+        {showDetails && (
+          <EssayResultSummary
+            corrections={result.feedback.languageCorrections ?? []}
+            repeatedIssues={result.feedback.repeatedIssues ?? []}
+            goodPoints={result.feedback.goodPoints ?? []}
+            quantitative={result.feedback.quantitativeAnalysis}
+            onJump={(section) => {
+              // モバイルはタブ、PCは通し表示なのでスクロール
+              setTab(section);
+              document
+                .getElementById(`${section}-section`)
+                ?.scrollIntoView({ behavior: "smooth" });
+            }}
+          />
+        )}
+
         {showDetails && (
           <div className="lg:grid lg:grid-cols-[280px_1fr] lg:gap-8">
             {/* PC用ナビゲーション */}
