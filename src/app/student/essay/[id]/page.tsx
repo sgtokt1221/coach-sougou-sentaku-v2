@@ -528,10 +528,17 @@ export default function EssayResultPage() {
         <div className="mb-8">
           <Card className="relative overflow-hidden border-0 bg-white/60 shadow-lg shadow-sky-100/50 backdrop-blur-sm">
             <div className="absolute inset-0 bg-gradient-to-br from-sky-50/50 via-transparent to-purple-50/30" />
-            <CardContent className="relative pt-8 pb-6">
+            <CardContent
+              className={`relative ${showDetails ? "pt-8 pb-6" : "pt-6 pb-4"}`}
+            >
               {/* Mobile-first スコア表示 */}
-              <div className="mb-6 text-center">
-                <div className="flex flex-col items-center gap-6 lg:flex-row lg:gap-8">
+              <div className={`text-center ${showDetails ? "mb-6" : ""}`}>
+                {/* レーダーを畳んでいるときは右が空くので中央に寄せる */}
+                <div
+                  className={`flex flex-col items-center gap-6 lg:flex-row lg:gap-8 ${
+                    showDetails ? "" : "lg:justify-center"
+                  }`}
+                >
                   {/* スコア情報 */}
                   <div className="inline-flex items-center gap-4 lg:gap-6">
                     <ScoreRing
@@ -587,91 +594,94 @@ export default function EssayResultPage() {
                 </div>
               </div>
 
-              {/* レーダーチャート - 大画面では横並び */}
-              <div className="lg:grid lg:grid-cols-2 lg:items-center lg:gap-8">
-                <div className="mb-4 h-[220px] lg:mb-0 lg:h-[280px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RadarChart data={radarData} outerRadius="80%">
-                      <PolarGrid gridType="polygon" stroke="#e2e8f0" />
-                      <PolarAngleAxis
-                        dataKey="subject"
-                        tick={{ fill: "#475569", fontSize: 12 }}
-                      />
-                      <PolarRadiusAxis
-                        domain={[0, 10]}
-                        tickCount={6}
-                        tick={{ fill: "#94a3b8", fontSize: 10 }}
-                        axisLine={false}
-                      />
-                      <Radar
-                        name="スコア"
-                        dataKey="value"
-                        stroke="#2563eb"
-                        fill="#0ea5e9"
-                        fillOpacity={0.25}
-                        strokeWidth={2}
-                      />
-                    </RadarChart>
-                  </ResponsiveContainer>
-                </div>
+              {/* レーダーと軸ごとの内訳は分析なので、詳細を開いたときだけ出す。
+                  最初の画面は「点・長所と短所・次のアクション」で完結させる */}
+              {showDetails && (
+                <div className="lg:grid lg:grid-cols-2 lg:items-center lg:gap-8">
+                  <div className="mb-4 h-[220px] lg:mb-0 lg:h-[280px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RadarChart data={radarData} outerRadius="80%">
+                        <PolarGrid gridType="polygon" stroke="#e2e8f0" />
+                        <PolarAngleAxis
+                          dataKey="subject"
+                          tick={{ fill: "#475569", fontSize: 12 }}
+                        />
+                        <PolarRadiusAxis
+                          domain={[0, 10]}
+                          tickCount={6}
+                          tick={{ fill: "#94a3b8", fontSize: 10 }}
+                          axisLine={false}
+                        />
+                        <Radar
+                          name="スコア"
+                          dataKey="value"
+                          stroke="#2563eb"
+                          fill="#0ea5e9"
+                          fillOpacity={0.25}
+                          strokeWidth={2}
+                        />
+                      </RadarChart>
+                    </ResponsiveContainer>
+                  </div>
 
-                {/* 項目別スコア詳細 */}
-                <div className="space-y-3">
-                  {radarData.map((item) => (
-                    <div
-                      key={item.subject}
-                      className="flex items-center justify-between"
-                    >
-                      <span className="text-sm font-medium text-slate-700">
-                        {item.subject}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <div className="h-2 w-20 overflow-hidden rounded-full bg-slate-100">
-                          <div
-                            className="h-full rounded-full bg-gradient-to-r from-sky-400 to-sky-600 transition-all"
-                            style={{ width: `${(item.value / 10) * 100}%` }}
-                          />
+                  {/* 項目別スコア詳細 */}
+                  <div className="space-y-3">
+                    {radarData.map((item) => (
+                      <div
+                        key={item.subject}
+                        className="flex items-center justify-between"
+                      >
+                        <span className="text-sm font-medium text-slate-700">
+                          {item.subject}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <div className="h-2 w-20 overflow-hidden rounded-full bg-slate-100">
+                            <div
+                              className="h-full rounded-full bg-gradient-to-r from-sky-400 to-sky-600 transition-all"
+                              style={{ width: `${(item.value / 10) * 100}%` }}
+                            />
+                          </div>
+                          <span className="min-w-[3.5rem] text-right text-sm font-bold text-slate-900 tabular-nums">
+                            {axisPoints(item.value, item.weight).toFixed(1)}
+                            <span className="text-xs font-normal text-slate-400">
+                              /{item.weight}
+                            </span>
+                          </span>
                         </div>
-                        <span className="min-w-[3.5rem] text-right text-sm font-bold text-slate-900 tabular-nums">
-                          {axisPoints(item.value, item.weight).toFixed(1)}
-                          <span className="text-xs font-normal text-slate-400">
-                            /{item.weight}
+                      </div>
+                    ))}
+
+                    {/* 合計外の参考値。レーダーには含めない */}
+                    {referenceScores.map((item) => (
+                      <div
+                        key={item.subject}
+                        className="flex items-center justify-between border-t border-slate-100 pt-3"
+                      >
+                        <span className="text-sm font-medium text-slate-500">
+                          {item.subject}
+                          <span className="ml-1.5 text-xs font-normal text-slate-400">
+                            合計外・参考
                           </span>
                         </span>
-                      </div>
-                    </div>
-                  ))}
-
-                  {/* 合計外の参考値。レーダーには含めない */}
-                  {referenceScores.map((item) => (
-                    <div
-                      key={item.subject}
-                      className="flex items-center justify-between border-t border-slate-100 pt-3"
-                    >
-                      <span className="text-sm font-medium text-slate-500">
-                        {item.subject}
-                        <span className="ml-1.5 text-xs font-normal text-slate-400">
-                          合計外・参考
-                        </span>
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <div className="h-2 w-20 overflow-hidden rounded-full bg-slate-100">
-                          <div
-                            className="h-full rounded-full bg-slate-300 transition-all"
-                            style={{ width: `${(item.value / 10) * 100}%` }}
-                          />
-                        </div>
-                        <span className="min-w-[3.5rem] text-right text-sm font-bold text-slate-500 tabular-nums">
-                          {item.value}
-                          <span className="text-xs font-normal text-slate-400">
-                            /10
+                        <div className="flex items-center gap-2">
+                          <div className="h-2 w-20 overflow-hidden rounded-full bg-slate-100">
+                            <div
+                              className="h-full rounded-full bg-slate-300 transition-all"
+                              style={{ width: `${(item.value / 10) * 100}%` }}
+                            />
+                          </div>
+                          <span className="min-w-[3.5rem] text-right text-sm font-bold text-slate-500 tabular-nums">
+                            {item.value}
+                            <span className="text-xs font-normal text-slate-400">
+                              /10
+                            </span>
                           </span>
-                        </span>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -702,18 +712,28 @@ export default function EssayResultPage() {
                 </span>
               </div>
             )}
-            {result.feedback.overall && (
-              <div className="space-y-1.5">
-                <p className="text-muted-foreground text-xs font-semibold">
-                  今回の一言
-                </p>
-                <p className="text-[0.95rem] leading-relaxed">
-                  {result.feedback.overall}
-                </p>
-              </div>
-            )}
+            {/* 長所と短所を並べて、開かなくても何が良くて何が悪いかが分かるようにする */}
+            <EssayResultSummary
+              goodPoints={result.feedback.goodPoints ?? []}
+              repeatedIssues={result.feedback.repeatedIssues ?? []}
+              improvements={shownImprovements}
+              correctionCount={
+                (result.feedback.languageCorrections ?? []).length
+              }
+              onJump={(section) => {
+                // 詳細を開いてから、その節へ（モバイルはタブ、PCはスクロール）
+                setShowDetails(true);
+                setTab(section);
+                setTimeout(() => {
+                  document
+                    .getElementById(`${section}-section`)
+                    ?.scrollIntoView({ behavior: "smooth" });
+                }, 60);
+              }}
+            />
+
             {result.feedback.priorityImprovement && (
-              <div className="border-primary/50 space-y-1.5 border-l-2 pl-4">
+              <div className="bg-primary/5 border-primary/40 space-y-1.5 rounded-xl border p-4">
                 <p className="text-primary text-xs font-semibold">
                   次にやること
                 </p>
@@ -731,7 +751,7 @@ export default function EssayResultPage() {
             size="lg"
             onClick={() => setShowDetails((v) => !v)}
           >
-            {showDetails ? "閉じる" : "詳しく見る"}
+            {showDetails ? "閉じる" : "詳細を見る"}
             <ChevronDown
               className={`ml-1 size-4 transition-transform ${showDetails ? "rotate-180" : ""}`}
             />
@@ -845,22 +865,6 @@ export default function EssayResultPage() {
         )}
 
         {/* タブ式コンテンツエリア - PC では 2カラム */}
-        {showDetails && (
-          <EssayResultSummary
-            corrections={result.feedback.languageCorrections ?? []}
-            repeatedIssues={result.feedback.repeatedIssues ?? []}
-            goodPoints={result.feedback.goodPoints ?? []}
-            quantitative={result.feedback.quantitativeAnalysis}
-            onJump={(section) => {
-              // モバイルはタブ、PCは通し表示なのでスクロール
-              setTab(section);
-              document
-                .getElementById(`${section}-section`)
-                ?.scrollIntoView({ behavior: "smooth" });
-            }}
-          />
-        )}
-
         {showDetails && (
           <div className="lg:grid lg:grid-cols-[280px_1fr] lg:gap-8">
             {/* PC用ナビゲーション */}
