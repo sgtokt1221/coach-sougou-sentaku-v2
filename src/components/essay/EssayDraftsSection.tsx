@@ -72,8 +72,19 @@ export function EssayDraftsSection() {
                     </span>
                   )}
                 </div>
+                {/*
+                  本文の冒頭を出す。見出しは大学とテーマだけなので、
+                  同じテーマの下書きが複数あると日時しか手掛かりが無く、
+                  どれが自分の探している書きかけか分からない。
+                */}
+                {draft.directText.trim() && (
+                  <p className="mt-0.5 truncate text-xs">
+                    {draft.directText.trim()}
+                  </p>
+                )}
                 <p className="mt-0.5 text-[11px] text-muted-foreground">
-                  {formatDateTime(draft.updatedAt)} 保存
+                  {formatDateTime(draft.updatedAt)} 保存 ・{" "}
+                  {draft.directText.trim().length}字
                 </p>
               </div>
               <div className="flex shrink-0 gap-1.5">
