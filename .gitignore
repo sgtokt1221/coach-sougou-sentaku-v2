@@ -69,3 +69,6 @@ __pycache__/
 scripts/orphan-backup-*.json
 
 scripts/sessions-date-backup-*.json
+
+# 本番データの復旧用バックアップ（生徒の答案本文を含むのでコミットしない）
+essay-drafts-backup-*.json
