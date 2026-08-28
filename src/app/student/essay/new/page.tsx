@@ -207,7 +207,15 @@ export default function EssayNewPage() {
 
   // 下書き（途中保存）モード
   const draftIdParam = searchParams?.get("draft");
+  /**
+   * サーバー側の下書きID。
+   *
+   * ref だけで持っていたため、端末に退避した下書きから復元したときに ID が
+   * 引き継がれず、保存のたびに新しい下書きが作られていた（同じ本文の下書きが
+   * 20件以上できていた）。退避データにも載せて往復させる。
+   */
   const savedDraftIdRef = useRef<string | null>(null);
+  const [savedDraftId, setSavedDraftId] = useState<string | null>(null);
   const [savingDraft, setSavingDraft] = useState(false);
 
   // 過去問モード
@@ -322,6 +330,7 @@ export default function EssayNewPage() {
         if (draft.selectedCompoundId)
           setSelectedCompoundId(draft.selectedCompoundId);
         savedDraftIdRef.current = draftIdParam;
+        setSavedDraftId(draftIdParam);
         setActiveTab("new");
         setStep(2);
       } catch {
@@ -739,6 +748,7 @@ export default function EssayNewPage() {
   });
 
   const essayDraftSnapshot = {
+    draftId: savedDraftId ?? undefined,
     directText,
     topic,
     universityId,
@@ -764,6 +774,11 @@ export default function EssayNewPage() {
     maxAgeMs: draftMaxAgeMs,
     value: essayDraftSnapshot,
     onRestore: (draft) => {
+      // 引き継がないと、保存のたびに別の下書きが作られる
+      if (draft.draftId) {
+        savedDraftIdRef.current = draft.draftId;
+        setSavedDraftId(draft.draftId);
+      }
       setDirectText(draft.directText);
       setTopic(draft.topic);
       setSelectedCompoundId(draft.selectedCompoundId);
@@ -792,6 +807,7 @@ export default function EssayNewPage() {
       if (!res.ok) throw new Error("下書きの保存に失敗しました");
       const { draftId } = (await res.json()) as { draftId: string };
       savedDraftIdRef.current = draftId;
+      setSavedDraftId(draftId);
     },
     []
   );
@@ -2043,6 +2059,8 @@ export default function EssayNewPage() {
                             // 先に入力を空にする。中身が残ったまま消すと、
                             // 直後の自動保存が同じ下書きを書き戻してしまう
                             setDraftDiscarded(true);
+                            savedDraftIdRef.current = null;
+                            setSavedDraftId(null);
                             setDirectText("");
                             setTopic("");
                             setOcrText("");
