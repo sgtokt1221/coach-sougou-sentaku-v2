@@ -21,6 +21,15 @@ interface UsePersistentDraftOptions<T> {
   enabled?: boolean;
   delay?: number;
   version?: number;
+  /**
+   * これより古い下書きは自動復元しない（ミリ秒）。
+   *
+   * お題ごとにキーが分かれない画面（自由テーマなど）では、下書き置き場を
+   * 共有するため、別の問題を書き始めたときに前の下書きが開いてしまう。
+   * 「書きかけの続き」は履歴からいつでも開けるので、直近のものだけ自動で戻す。
+   * 未指定なら期限なし（お題ごとにキーが分かれている画面はこちら）。
+   */
+  maxAgeMs?: number;
 }
 
 export interface PersistentDraftResult {
@@ -66,6 +75,7 @@ export function usePersistentDraft<T>({
   enabled = true,
   delay = 1200,
   version = 1,
+  maxAgeMs,
 }: UsePersistentDraftOptions<T>): PersistentDraftResult {
   const { user } = useAuth();
   const uid = user?.uid ?? null;
@@ -183,7 +193,19 @@ export function usePersistentDraft<T>({
     } catch {
       localDraft = null;
     }
-    if (localDraft && hasContentRef.current(localDraft.data)) {
+    /** 古すぎる下書きは、別の問題のものとみなして自動では戻さない */
+    const isFresh = (updatedAt?: string) => {
+      if (maxAgeMs === undefined) return true;
+      const t = updatedAt ? Date.parse(updatedAt) : NaN;
+      if (Number.isNaN(t)) return false;
+      return Date.now() - t <= maxAgeMs;
+    };
+
+    if (
+      localDraft &&
+      hasContentRef.current(localDraft.data) &&
+      isFresh(localDraft.updatedAt)
+    ) {
       restoreRef.current(localDraft.data);
       const snapshot = JSON.stringify(localDraft.data);
       snapshotRef.current = snapshot;
@@ -213,6 +235,7 @@ export function usePersistentDraft<T>({
           remote &&
           remote.version === version &&
           hasContentRef.current(remote.data) &&
+          isFresh(remote.updatedAt) &&
           remoteTime >= localTime &&
           unchangedSinceLoad
         ) {
@@ -239,7 +262,7 @@ export function usePersistentDraft<T>({
     return () => {
       cancelled = true;
     };
-  }, [enabled, key, localKey, uid, version]);
+  }, [enabled, key, localKey, uid, version, maxAgeMs]);
 
   useEffect(() => {
     if (!ready) return;

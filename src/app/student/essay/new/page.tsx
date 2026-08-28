@@ -49,7 +49,12 @@ import { UniversityPicker } from "@/components/essay/UniversityPicker";
 import type { University } from "@/lib/types/university";
 import { SegmentControl } from "@/components/shared/SegmentControl";
 import { getThemeById, EssayTheme } from "@/data/essay-themes";
-import { getEnrichedPastQuestionById, needsSourceText, summarizeChartData, PastQuestion } from "@/data/essay-past-questions";
+import {
+  getEnrichedPastQuestionById,
+  needsSourceText,
+  summarizeChartData,
+  PastQuestion,
+} from "@/data/essay-past-questions";
 import type { PastQuestionSourceTextResponse } from "@/lib/types/past-question-source";
 import type { ReportMaterial } from "@/data/essay-report-materials";
 import { ReportSourcePane } from "@/components/essay/ReportSourcePane";
@@ -95,10 +100,14 @@ interface StepIndicatorProps {
   total: number;
 }
 
-function StepIndicator({ current, total, labels: customLabels }: StepIndicatorProps & { labels?: string[] }) {
+function StepIndicator({
+  current,
+  total,
+  labels: customLabels,
+}: StepIndicatorProps & { labels?: string[] }) {
   const labels = customLabels ?? ["情報入力", "画像アップロード", "OCR確認"];
   return (
-    <div className="flex items-center justify-center gap-2 mb-5 lg:mb-8">
+    <div className="mb-5 flex items-center justify-center gap-2 lg:mb-8">
       {Array.from({ length: total }, (_, i) => {
         const step = i + 1;
         const isDone = step < current;
@@ -118,12 +127,14 @@ function StepIndicator({ current, total, labels: customLabels }: StepIndicatorPr
               >
                 {isDone ? <CheckCircle className="size-4" /> : step}
               </div>
-              <span className={`text-xs text-muted-foreground ${isActive ? "inline" : "hidden sm:block"}`}>
+              <span
+                className={`text-muted-foreground text-xs ${isActive ? "inline" : "hidden sm:block"}`}
+              >
                 {labels[i]}
               </span>
             </div>
             {step < total && (
-              <div className="mb-4 h-px w-8 sm:w-16 bg-border" />
+              <div className="bg-border mb-4 h-px w-8 sm:w-16" />
             )}
           </div>
         );
@@ -132,14 +143,15 @@ function StepIndicator({ current, total, labels: customLabels }: StepIndicatorPr
   );
 }
 
-
 export default function EssayNewPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { userProfile } = useAuth();
   const [activeTab, setActiveTab] = useState<"new" | "history">("new");
   const [step, setStep] = useState(1);
-  const [inputMode, setInputMode] = useState<"text" | "image" | "dictation">("text");
+  const [inputMode, setInputMode] = useState<"text" | "image" | "dictation">(
+    "text"
+  );
   const [directText, setDirectText] = useState("");
   /** 執筆サポートのAIコーチ会話ID。提出時に答案へ保存する */
   const [coachThreadId, setCoachThreadId] = useState<string | null>(null);
@@ -173,7 +185,14 @@ export default function EssayNewPage() {
     };
     retryContext?: {
       wordLimit?: number | null;
-      questionType?: "essay" | "english-reading" | "data-analysis" | "mixed" | "lecture" | "report" | null;
+      questionType?:
+        | "essay"
+        | "english-reading"
+        | "data-analysis"
+        | "mixed"
+        | "lecture"
+        | "report"
+        | null;
       sourceText?: string | null;
       chartDataSummary?: string | null;
       pastQuestionFacultyName?: string | null;
@@ -195,7 +214,9 @@ export default function EssayNewPage() {
   const pastQuestionId = searchParams?.get("pastQuestion");
   const [pastQuestion, setPastQuestion] = useState<PastQuestion | null>(null);
   /** 動的取得した sourceText (本文が静的データに無い過去問用) */
-  const [dynamicSourceText, setDynamicSourceText] = useState<string | null>(null);
+  const [dynamicSourceText, setDynamicSourceText] = useState<string | null>(
+    null
+  );
   /** dynamicSourceText が AI 生成サンプルか (true=サンプル, false=実問題文) */
   const [dynamicIsSample, setDynamicIsSample] = useState<boolean>(false);
   /** sourceText 取得中フラグ */
@@ -206,10 +227,16 @@ export default function EssayNewPage() {
   // レポートモード（課題文を読んで書く）
   const [reportMode, setReportMode] = useState(false);
   const [reportField, setReportField] = useState<string | null>(null);
-  const [reportMaterialList, setReportMaterialList] = useState<ReportMaterialListItem[]>([]);
-  const [reportMaterial, setReportMaterial] = useState<ReportMaterial | null>(null);
+  const [reportMaterialList, setReportMaterialList] = useState<
+    ReportMaterialListItem[]
+  >([]);
+  const [reportMaterial, setReportMaterial] = useState<ReportMaterial | null>(
+    null
+  );
   /** 課題文が1件以上ある系統（準備中判定用）。 */
-  const [reportAvailableFields, setReportAvailableFields] = useState<string[]>([]);
+  const [reportAvailableFields, setReportAvailableFields] = useState<string[]>(
+    []
+  );
   const [reportFieldsLoading, setReportFieldsLoading] = useState(false);
 
   // テーマIDからテーマデータを取得
@@ -255,7 +282,9 @@ export default function EssayNewPage() {
         );
         if (parts.length > 0) setTopic(parts.join("\n\n"));
         if (snap.targetUniversity && snap.targetFaculty) {
-          setSelectedCompoundId(`${snap.targetUniversity}:${snap.targetFaculty}`);
+          setSelectedCompoundId(
+            `${snap.targetUniversity}:${snap.targetFaculty}`
+          );
         }
       } catch {
         // 取得失敗時は通常の新規作成として続行
@@ -272,7 +301,9 @@ export default function EssayNewPage() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await authFetch(`/api/student/essay-drafts/${draftIdParam}`);
+        const res = await authFetch(
+          `/api/student/essay-drafts/${draftIdParam}`
+        );
         if (!res.ok) return;
         const draft = (await res.json()) as {
           directText?: string;
@@ -328,7 +359,9 @@ export default function EssayNewPage() {
     setSourceTextError(null);
     (async () => {
       try {
-        const res = await authFetch(`/api/past-questions/${pastQuestion.id}/source-text`);
+        const res = await authFetch(
+          `/api/past-questions/${pastQuestion.id}/source-text`
+        );
         if (!res.ok) {
           const body = await res.json().catch(() => ({}));
           throw new Error(body.error ?? "本文の取得に失敗しました");
@@ -340,7 +373,9 @@ export default function EssayNewPage() {
         }
       } catch (err) {
         if (!cancelled) {
-          setSourceTextError(err instanceof Error ? err.message : "本文の取得に失敗しました");
+          setSourceTextError(
+            err instanceof Error ? err.message : "本文の取得に失敗しました"
+          );
           setDynamicSourceText(null);
         }
       } finally {
@@ -390,7 +425,8 @@ export default function EssayNewPage() {
         };
         setRetryParent(parent);
         if (parent.topic) setTopic(parent.topic);
-        if (parent.retryContext?.wordLimit) setCustomMaxLength(parent.retryContext.wordLimit);
+        if (parent.retryContext?.wordLimit)
+          setCustomMaxLength(parent.retryContext.wordLimit);
         if (parent.inputMode) setInputMode(parent.inputMode);
       } catch {
         if (!cancelled) setRetryParent(null);
@@ -412,9 +448,13 @@ export default function EssayNewPage() {
       try {
         const res = await authFetch("/api/essay/report/materials");
         if (!res.ok) return;
-        const data = (await res.json()) as { materials: Array<{ field: string }> };
+        const data = (await res.json()) as {
+          materials: Array<{ field: string }>;
+        };
         if (cancelled) return;
-        setReportAvailableFields(Array.from(new Set(data.materials.map((m) => m.field))));
+        setReportAvailableFields(
+          Array.from(new Set(data.materials.map((m) => m.field)))
+        );
       } catch {
         // 取得失敗時は全系統を準備中扱いのままにする
       } finally {
@@ -426,11 +466,15 @@ export default function EssayNewPage() {
     };
   }, [reportMode, reportAvailableFields.length]);
 
-
   // 志望校解決
-  const targetUniversities = (userProfile as Record<string, unknown> | null)?.targetUniversities as string[] | undefined ?? [];
+  const targetUniversities =
+    ((userProfile as Record<string, unknown> | null)?.targetUniversities as
+      | string[]
+      | undefined) ?? [];
   const [resolved, setResolved] = useState<ResolvedUniversity[]>([]);
-  const [allUniversities, setAllUniversities] = useState<ResolvedUniversity[]>([]);
+  const [allUniversities, setAllUniversities] = useState<ResolvedUniversity[]>(
+    []
+  );
   const [showAllUniversities, setShowAllUniversities] = useState(false);
   const [loadingUniversities, setLoadingUniversities] = useState(true);
 
@@ -453,13 +497,14 @@ export default function EssayNewPage() {
       }
     }
     fetchResolved();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetUniversities.join(",")]);
 
   // 全大学リスト取得（他の大学選択用 + 過去問のAP参照先解決用）
   useEffect(() => {
     // 「他大学から選ぶ」時、または過去問が選ばれている時（志望校外の可能性）に先読み
-    if ((!showAllUniversities && !pastQuestion) || allUniversities.length > 0) return;
+    if ((!showAllUniversities && !pastQuestion) || allUniversities.length > 0)
+      return;
     async function fetchAll() {
       try {
         const res = await fetch("/api/universities");
@@ -468,7 +513,14 @@ export default function EssayNewPage() {
         const unis: ResolvedUniversity[] = [];
         for (const u of data.universities ?? []) {
           for (const f of u.faculties ?? []) {
-            unis.push({ universityId: u.id, facultyId: f.id, universityName: u.name, facultyName: f.name, group: u.group, prefecture: u.prefecture });
+            unis.push({
+              universityId: u.id,
+              facultyId: f.id,
+              universityName: u.name,
+              facultyName: f.name,
+              group: u.group,
+              prefecture: u.prefecture,
+            });
           }
         }
         setAllUniversities(unis);
@@ -478,9 +530,13 @@ export default function EssayNewPage() {
   }, [showAllUniversities, allUniversities.length, pastQuestion]);
 
   // Step 1: 志望校選択
-  const [selectedCompoundId, setSelectedCompoundId] = useState<string | null>(null);
+  const [selectedCompoundId, setSelectedCompoundId] = useState<string | null>(
+    null
+  );
   const [topic, setTopic] = useState("");
-  const [writingDirection, setWritingDirection] = useState<"vertical" | "horizontal">("horizontal");
+  const [writingDirection, setWritingDirection] = useState<
+    "vertical" | "horizontal"
+  >("horizontal");
 
   /**
    * 実際の設問文。テーマ入力欄はテーマ/過去問/課題文を選ぶと非表示になるため、
@@ -538,28 +594,33 @@ export default function EssayNewPage() {
   // 過去問の大学を AP 参照先として解決（志望校でなくても、その大学APで採点するため）。
   const problemUni: ResolvedUniversity | null = pastQuestion
     ? (resolved.find((r) => r.universityId === pastQuestion.universityId) ??
-        allUniversities.find(
-          (u) =>
-            u.universityId === pastQuestion.universityId &&
-            u.facultyName === pastQuestion.facultyName
-        ) ??
-        allUniversities.find((u) => u.universityId === pastQuestion.universityId) ??
-        {
-          universityId: pastQuestion.universityId,
-          facultyId: "",
-          universityName: pastQuestion.universityName,
-          facultyName: pastQuestion.facultyName,
-        })
+      allUniversities.find(
+        (u) =>
+          u.universityId === pastQuestion.universityId &&
+          u.facultyName === pastQuestion.facultyName
+      ) ??
+      allUniversities.find(
+        (u) => u.universityId === pastQuestion.universityId
+      ) ?? {
+        universityId: pastQuestion.universityId,
+        facultyId: "",
+        universityName: pastQuestion.universityName,
+        facultyName: pastQuestion.facultyName,
+      })
     : null;
 
   // 1校の場合は自動選択、過去問選択時はその大学（志望校外なら problemUni）をAP参照先に
   useEffect(() => {
     if (pastQuestion) {
       if (problemUni) {
-        setSelectedCompoundId(`${problemUni.universityId}:${problemUni.facultyId}`);
+        setSelectedCompoundId(
+          `${problemUni.universityId}:${problemUni.facultyId}`
+        );
       }
     } else if (resolved.length === 1) {
-      setSelectedCompoundId(`${resolved[0].universityId}:${resolved[0].facultyId}`);
+      setSelectedCompoundId(
+        `${resolved[0].universityId}:${resolved[0].facultyId}`
+      );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resolved, pastQuestion, problemUni?.universityId, problemUni?.facultyId]);
@@ -579,12 +640,19 @@ export default function EssayNewPage() {
 
   // 志望校＋（読み込まれていれば）全大学から選択中の大学を解決
   const selectedUni =
-    resolved.find((r) => `${r.universityId}:${r.facultyId}` === selectedCompoundId) ??
-    allUniversities.find((r) => `${r.universityId}:${r.facultyId}` === selectedCompoundId);
+    resolved.find(
+      (r) => `${r.universityId}:${r.facultyId}` === selectedCompoundId
+    ) ??
+    allUniversities.find(
+      (r) => `${r.universityId}:${r.facultyId}` === selectedCompoundId
+    );
   // 再トライ時に親の志望校が現在の resolved に無い場合は親の情報で補完する。
   // (生徒が志望校を変えた後でも前回テーマで再挑戦できるように。)
   const retryParentUni: ResolvedUniversity | null =
-    retryParent && retryParent.targetUniversity && retryParent.targetFaculty && !selectedUni
+    retryParent &&
+    retryParent.targetUniversity &&
+    retryParent.targetFaculty &&
+    !selectedUni
       ? {
           universityId: retryParent.targetUniversity,
           facultyId: retryParent.targetFaculty,
@@ -597,7 +665,9 @@ export default function EssayNewPage() {
   const facultyId = effectiveUni?.facultyId ?? "";
 
   // Step 2 — 複数画像対応
-  const [images, setImages] = useState<Array<{ base64: string; preview: string }>>([]);
+  const [images, setImages] = useState<
+    Array<{ base64: string; preview: string }>
+  >([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const [uploadProgress, setUploadProgress] = useState("");
@@ -605,14 +675,35 @@ export default function EssayNewPage() {
   // Step 3
   const [essayId, setEssayId] = useState<string | null>(null);
   const [ocrText, setOcrText] = useState("");
-  const [dictationHighlights, setDictationHighlights] = useState<Array<{ start: number; end: number }>>([]);
+  const [dictationHighlights, setDictationHighlights] = useState<
+    Array<{ start: number; end: number }>
+  >([]);
   const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** 下書きを破棄したあとに復元バナーを出し続けないためのフラグ */
+  const [draftDiscarded, setDraftDiscarded] = useState(false);
 
   const essayContext = (
-    draftIdParam ?? themeId ?? pastQuestionId ?? homeworkId ?? retryFromId ?? "free"
-  ).replace(/[^a-zA-Z0-9:_-]/g, "_").slice(0, 120);
+    draftIdParam ??
+    themeId ??
+    pastQuestionId ??
+    homeworkId ??
+    retryFromId ??
+    "free"
+  )
+    .replace(/[^a-zA-Z0-9:_-]/g, "_")
+    .slice(0, 120);
+  /**
+   * 自由テーマ（テーマ・過去問・宿題のいずれでもない提出）は、お題ごとに
+   * 下書きの置き場を分けられない。全部が "free" を共有するため、別の問題を
+   * 書き始めたときに前の問題の下書きが開いてしまっていた。
+   *
+   * 直近のものだけ自動で戻す。それより古い書きかけは、添削履歴の
+   * 「書きかけの下書き」から明示的に開ける。
+   */
+  const draftMaxAgeMs =
+    essayContext === "free" ? 12 * 60 * 60 * 1000 : undefined;
   const {
     status: ocrDraftStatus,
     restored: ocrDraftRestored,
@@ -621,9 +712,15 @@ export default function EssayNewPage() {
     clearDraft: clearOcrDraft,
   } = usePersistentDraft({
     key: `essay-ocr:${essayContext}`,
+    maxAgeMs: draftMaxAgeMs,
     value: {
-      inputMode, essayId, ocrText, topic, selectedCompoundId,
-      customMaxLength, writingDirection,
+      inputMode,
+      essayId,
+      ocrText,
+      topic,
+      selectedCompoundId,
+      customMaxLength,
+      writingDirection,
     },
     onRestore: (draft) => {
       if (!draft.essayId || !draft.ocrText) return;
@@ -637,7 +734,8 @@ export default function EssayNewPage() {
       setStep(3);
     },
     hasContent: (draft) =>
-      draft.inputMode !== "text" && Boolean(draft.essayId && draft.ocrText.trim()),
+      draft.inputMode !== "text" &&
+      Boolean(draft.essayId && draft.ocrText.trim()),
   });
 
   const essayDraftSnapshot = {
@@ -663,6 +761,7 @@ export default function EssayNewPage() {
     clearDraft: clearTextDraft,
   } = usePersistentDraft({
     key: `essay-text:${essayContext}`,
+    maxAgeMs: draftMaxAgeMs,
     value: essayDraftSnapshot,
     onRestore: (draft) => {
       setDirectText(draft.directText);
@@ -673,23 +772,29 @@ export default function EssayNewPage() {
       setInputMode("text");
       setStep(2);
     },
-    hasContent: (draft) => Boolean(draft.directText.trim() || draft.topic.trim()),
+    hasContent: (draft) =>
+      Boolean(draft.directText.trim() || draft.topic.trim()),
   });
 
-  const saveEssayDraft = useCallback(async (draft: typeof essayDraftSnapshot) => {
-    if (!draft.directText.trim() && !draft.topic.trim()) return;
-    const res = await authFetch("/api/student/essay-drafts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...(savedDraftIdRef.current ? { draftId: savedDraftIdRef.current } : {}),
-        ...draft,
-      }),
-    });
-    if (!res.ok) throw new Error("下書きの保存に失敗しました");
-    const { draftId } = (await res.json()) as { draftId: string };
-    savedDraftIdRef.current = draftId;
-  }, []);
+  const saveEssayDraft = useCallback(
+    async (draft: typeof essayDraftSnapshot) => {
+      if (!draft.directText.trim() && !draft.topic.trim()) return;
+      const res = await authFetch("/api/student/essay-drafts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...(savedDraftIdRef.current
+            ? { draftId: savedDraftIdRef.current }
+            : {}),
+          ...draft,
+        }),
+      });
+      if (!res.ok) throw new Error("下書きの保存に失敗しました");
+      const { draftId } = (await res.json()) as { draftId: string };
+      savedDraftIdRef.current = draftId;
+    },
+    []
+  );
 
   const {
     status: essayDraftStatus,
@@ -747,7 +852,9 @@ export default function EssayNewPage() {
         // 送信前にブラウザ内QCで撮影品質を判定（不合格なら撮り直しを促し中断）
         const qc = await checkImageQuality(images[i].base64);
         if (!qc.ok) {
-          setError(`${i + 1}枚目: ${qc.reason ?? "画像の品質を確認できませんでした"}`);
+          setError(
+            `${i + 1}枚目: ${qc.reason ?? "画像の品質を確認できませんでした"}`
+          );
           return;
         }
         const res = await authFetch("/api/essay/upload", {
@@ -755,11 +862,15 @@ export default function EssayNewPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             imageBase64: images[i].base64,
-            universityId, facultyId, topic: effectiveTopic, writingDirection,
+            universityId,
+            facultyId,
+            topic: effectiveTopic,
+            writingDirection,
             consent: true, // consent: 利用規約の保存同意に基づく
           }),
         });
-        if (!res.ok) throw new Error(`${i + 1}枚目のアップロードに失敗しました`);
+        if (!res.ok)
+          throw new Error(`${i + 1}枚目のアップロードに失敗しました`);
         const data = await res.json();
         if (i === 0) firstEssayId = data.essayId;
         if (data.ocrText) ocrResults.push(data.ocrText);
@@ -769,7 +880,9 @@ export default function EssayNewPage() {
       setOcrText(ocrResults.join("\n\n"));
       setStep(3);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "アップロードに失敗しました");
+      setError(
+        err instanceof Error ? err.message : "アップロードに失敗しました"
+      );
     } finally {
       setIsUploading(false);
       setUploadProgress("");
@@ -789,7 +902,9 @@ export default function EssayNewPage() {
         // 送信前にブラウザ内QCで撮影品質を判定（不合格なら撮り直しを促し中断）
         const qc = await checkImageQuality(images[i].base64);
         if (!qc.ok) {
-          setError(`${i + 1}枚目: ${qc.reason ?? "画像の品質を確認できませんでした"}`);
+          setError(
+            `${i + 1}枚目: ${qc.reason ?? "画像の品質を確認できませんでした"}`
+          );
           return;
         }
         const res = await authFetch("/api/essay/upload", {
@@ -797,7 +912,10 @@ export default function EssayNewPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             imageBase64: images[i].base64,
-            universityId, facultyId, topic: effectiveTopic, writingDirection,
+            universityId,
+            facultyId,
+            topic: effectiveTopic,
+            writingDirection,
             consent: true, // consent: 利用規約の保存同意に基づく
           }),
         });
@@ -820,7 +938,10 @@ export default function EssayNewPage() {
   }
 
   // 音読モード: 録音完了 → Whisper送信
-  async function handleDictationComplete(audioBase64: string, mimeType: string) {
+  async function handleDictationComplete(
+    audioBase64: string,
+    mimeType: string
+  ) {
     setIsDictating(true);
     setError(null);
     try {
@@ -889,7 +1010,9 @@ export default function EssayNewPage() {
     try {
       const res = await authFetch(`/api/essay/report/materials?field=${field}`);
       if (!res.ok) return;
-      const data = (await res.json()) as { materials: ReportMaterialListItem[] };
+      const data = (await res.json()) as {
+        materials: ReportMaterialListItem[];
+      };
       setReportMaterialList(data.materials);
     } catch {
       // 取得失敗時は空一覧のまま（準備中表示）
@@ -921,8 +1044,16 @@ export default function EssayNewPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          essayId: id, ocrText: directText, universityId, facultyId, topic: effectiveTopic,
-          wordLimit: customMaxLength || pastQuestion?.wordLimit || selectedTheme?.wordLimit || retryParent?.retryContext?.wordLimit,
+          essayId: id,
+          ocrText: directText,
+          universityId,
+          facultyId,
+          topic: effectiveTopic,
+          wordLimit:
+            customMaxLength ||
+            pastQuestion?.wordLimit ||
+            selectedTheme?.wordLimit ||
+            retryParent?.retryContext?.wordLimit,
           inputMode,
           // 執筆中のAIコーチ会話。管理者側で「この答案の会話」を推定せずに引く
           ...(coachThreadId ? { coachThreadId } : {}),
@@ -931,37 +1062,57 @@ export default function EssayNewPage() {
           ...(pastQuestion && { pastQuestionId: pastQuestion.id }),
           ...(homeworkId ? { homeworkId } : {}),
           ...(retryFromId && { parentEssayId: retryFromId }),
-          ...(reportMode && reportMaterial && {
-            questionType: "report" as const,
-            sourceText: reportMaterial.body,
-            topic: reportMaterial.title,
-            wordLimit: reportMaterial.recommendedWordLimit,
-          }),
+          ...(reportMode &&
+            reportMaterial && {
+              questionType: "report" as const,
+              sourceText: reportMaterial.body,
+              topic: reportMaterial.title,
+              wordLimit: reportMaterial.recommendedWordLimit,
+            }),
           ...(pastQuestion && {
             questionType: pastQuestion.questionType,
-            sourceText: pastQuestion.sourceText ?? dynamicSourceText ?? undefined,
-            chartDataSummary: pastQuestion.chartData ? summarizeChartData(pastQuestion.chartData) : undefined,
+            sourceText:
+              pastQuestion.sourceText ?? dynamicSourceText ?? undefined,
+            chartDataSummary: pastQuestion.chartData
+              ? summarizeChartData(pastQuestion.chartData)
+              : undefined,
             pastQuestionFacultyName: pastQuestion.facultyName,
             ...(pastQuestion.tedTalk && {
               lectureInfo: `講義タイトル: ${pastQuestion.tedTalk.title}\n講演者: ${pastQuestion.tedTalk.speaker}\n講義時間: ${pastQuestion.tedTalk.durationMinutes}分`,
             }),
           }),
-          ...(selectedTheme && !pastQuestion && {
-            questionType: selectedTheme.questionType,
-            sourceText: selectedTheme.sourceText,
-            chartDataSummary: selectedTheme.chartData ? summarizeChartData(selectedTheme.chartData) : undefined,
-            ...(selectedTheme.tedTalk && {
-              lectureInfo: `講義タイトル: ${selectedTheme.tedTalk.title}\n講演者: ${selectedTheme.tedTalk.speaker}\n講義時間: ${selectedTheme.tedTalk.durationMinutes}分`,
+          ...(selectedTheme &&
+            !pastQuestion && {
+              questionType: selectedTheme.questionType,
+              sourceText: selectedTheme.sourceText,
+              chartDataSummary: selectedTheme.chartData
+                ? summarizeChartData(selectedTheme.chartData)
+                : undefined,
+              ...(selectedTheme.tedTalk && {
+                lectureInfo: `講義タイトル: ${selectedTheme.tedTalk.title}\n講演者: ${selectedTheme.tedTalk.speaker}\n講義時間: ${selectedTheme.tedTalk.durationMinutes}分`,
+              }),
             }),
-          }),
           // 再トライ時、過去問/テーマが直接ない場合は親の retryContext を引き継ぐ
-          ...(retryParent?.retryContext && !pastQuestion && !selectedTheme && {
-            ...(retryParent.retryContext.questionType && { questionType: retryParent.retryContext.questionType }),
-            ...(retryParent.retryContext.sourceText && { sourceText: retryParent.retryContext.sourceText }),
-            ...(retryParent.retryContext.chartDataSummary && { chartDataSummary: retryParent.retryContext.chartDataSummary }),
-            ...(retryParent.retryContext.pastQuestionFacultyName && { pastQuestionFacultyName: retryParent.retryContext.pastQuestionFacultyName }),
-            ...(retryParent.retryContext.lectureInfo && { lectureInfo: retryParent.retryContext.lectureInfo }),
-          }),
+          ...(retryParent?.retryContext &&
+            !pastQuestion &&
+            !selectedTheme && {
+              ...(retryParent.retryContext.questionType && {
+                questionType: retryParent.retryContext.questionType,
+              }),
+              ...(retryParent.retryContext.sourceText && {
+                sourceText: retryParent.retryContext.sourceText,
+              }),
+              ...(retryParent.retryContext.chartDataSummary && {
+                chartDataSummary: retryParent.retryContext.chartDataSummary,
+              }),
+              ...(retryParent.retryContext.pastQuestionFacultyName && {
+                pastQuestionFacultyName:
+                  retryParent.retryContext.pastQuestionFacultyName,
+              }),
+              ...(retryParent.retryContext.lectureInfo && {
+                lectureInfo: retryParent.retryContext.lectureInfo,
+              }),
+            }),
         }),
         signal: controller.signal,
       });
@@ -975,14 +1126,17 @@ export default function EssayNewPage() {
           method: "DELETE",
         }).catch(() => {});
       }
-      sessionStorage.setItem("essayReviewResult", JSON.stringify({
-        ...data,
-        ocrText: directText,
-        universityName: effectiveUni?.universityName ?? "",
-        facultyName: effectiveUni?.facultyName ?? "",
-        topic: effectiveTopic,
-        submittedAt: new Date().toISOString(),
-      }));
+      sessionStorage.setItem(
+        "essayReviewResult",
+        JSON.stringify({
+          ...data,
+          ocrText: directText,
+          universityName: effectiveUni?.universityName ?? "",
+          facultyName: effectiveUni?.facultyName ?? "",
+          topic: effectiveTopic,
+          submittedAt: new Date().toISOString(),
+        })
+      );
       router.push(`/student/essay/${data.essayId ?? id}`);
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") {
@@ -1018,8 +1172,16 @@ export default function EssayNewPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          essayId, ocrText, universityId, facultyId, topic: effectiveTopic,
-          wordLimit: customMaxLength || pastQuestion?.wordLimit || selectedTheme?.wordLimit || retryParent?.retryContext?.wordLimit,
+          essayId,
+          ocrText,
+          universityId,
+          facultyId,
+          topic: effectiveTopic,
+          wordLimit:
+            customMaxLength ||
+            pastQuestion?.wordLimit ||
+            selectedTheme?.wordLimit ||
+            retryParent?.retryContext?.wordLimit,
           inputMode,
           // 執筆中のAIコーチ会話。管理者側で「この答案の会話」を推定せずに引く
           ...(coachThreadId ? { coachThreadId } : {}),
@@ -1030,28 +1192,47 @@ export default function EssayNewPage() {
           ...(retryFromId && { parentEssayId: retryFromId }),
           ...(pastQuestion && {
             questionType: pastQuestion.questionType,
-            sourceText: pastQuestion.sourceText ?? dynamicSourceText ?? undefined,
-            chartDataSummary: pastQuestion.chartData ? summarizeChartData(pastQuestion.chartData) : undefined,
+            sourceText:
+              pastQuestion.sourceText ?? dynamicSourceText ?? undefined,
+            chartDataSummary: pastQuestion.chartData
+              ? summarizeChartData(pastQuestion.chartData)
+              : undefined,
             pastQuestionFacultyName: pastQuestion.facultyName,
             ...(pastQuestion.tedTalk && {
               lectureInfo: `講義タイトル: ${pastQuestion.tedTalk.title}\n講演者: ${pastQuestion.tedTalk.speaker}\n講義時間: ${pastQuestion.tedTalk.durationMinutes}分`,
             }),
           }),
-          ...(selectedTheme && !pastQuestion && {
-            questionType: selectedTheme.questionType,
-            sourceText: selectedTheme.sourceText,
-            chartDataSummary: selectedTheme.chartData ? summarizeChartData(selectedTheme.chartData) : undefined,
-            ...(selectedTheme.tedTalk && {
-              lectureInfo: `講義タイトル: ${selectedTheme.tedTalk.title}\n講演者: ${selectedTheme.tedTalk.speaker}\n講義時間: ${selectedTheme.tedTalk.durationMinutes}分`,
+          ...(selectedTheme &&
+            !pastQuestion && {
+              questionType: selectedTheme.questionType,
+              sourceText: selectedTheme.sourceText,
+              chartDataSummary: selectedTheme.chartData
+                ? summarizeChartData(selectedTheme.chartData)
+                : undefined,
+              ...(selectedTheme.tedTalk && {
+                lectureInfo: `講義タイトル: ${selectedTheme.tedTalk.title}\n講演者: ${selectedTheme.tedTalk.speaker}\n講義時間: ${selectedTheme.tedTalk.durationMinutes}分`,
+              }),
             }),
-          }),
-          ...(retryParent?.retryContext && !pastQuestion && !selectedTheme && {
-            ...(retryParent.retryContext.questionType && { questionType: retryParent.retryContext.questionType }),
-            ...(retryParent.retryContext.sourceText && { sourceText: retryParent.retryContext.sourceText }),
-            ...(retryParent.retryContext.chartDataSummary && { chartDataSummary: retryParent.retryContext.chartDataSummary }),
-            ...(retryParent.retryContext.pastQuestionFacultyName && { pastQuestionFacultyName: retryParent.retryContext.pastQuestionFacultyName }),
-            ...(retryParent.retryContext.lectureInfo && { lectureInfo: retryParent.retryContext.lectureInfo }),
-          }),
+          ...(retryParent?.retryContext &&
+            !pastQuestion &&
+            !selectedTheme && {
+              ...(retryParent.retryContext.questionType && {
+                questionType: retryParent.retryContext.questionType,
+              }),
+              ...(retryParent.retryContext.sourceText && {
+                sourceText: retryParent.retryContext.sourceText,
+              }),
+              ...(retryParent.retryContext.chartDataSummary && {
+                chartDataSummary: retryParent.retryContext.chartDataSummary,
+              }),
+              ...(retryParent.retryContext.pastQuestionFacultyName && {
+                pastQuestionFacultyName:
+                  retryParent.retryContext.pastQuestionFacultyName,
+              }),
+              ...(retryParent.retryContext.lectureInfo && {
+                lectureInfo: retryParent.retryContext.lectureInfo,
+              }),
+            }),
         }),
         signal: controller.signal,
       });
@@ -1059,14 +1240,17 @@ export default function EssayNewPage() {
       if (!res.ok) throw new Error("添削リクエストに失敗しました");
       const data = await res.json();
       await clearOcrDraft();
-      sessionStorage.setItem("essayReviewResult", JSON.stringify({
-        ...data,
-        ocrText,
-        universityName: effectiveUni?.universityName ?? "",
-        facultyName: effectiveUni?.facultyName ?? "",
-        topic: effectiveTopic,
-        submittedAt: new Date().toISOString(),
-      }));
+      sessionStorage.setItem(
+        "essayReviewResult",
+        JSON.stringify({
+          ...data,
+          ocrText,
+          universityName: effectiveUni?.universityName ?? "",
+          facultyName: effectiveUni?.facultyName ?? "",
+          topic: effectiveTopic,
+          submittedAt: new Date().toISOString(),
+        })
+      );
       router.push(`/student/essay/${data.essayId ?? essayId}`);
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") {
@@ -1100,17 +1284,17 @@ export default function EssayNewPage() {
           className="mb-4"
         />
       )}
-      <div className="flex items-center gap-2 mb-4">
+      <div className="mb-4 flex items-center gap-2">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => (step > 1 ? setStep(step - 1) : router.back())}
         >
-          <ArrowLeft className="size-4 mr-1" />
+          <ArrowLeft className="mr-1 size-4" />
           戻る
         </Button>
         {!(activeTab === "new" && step === 1) && (
-          <h1 className="text-lg lg:text-xl font-bold flex items-center gap-2">
+          <h1 className="flex items-center gap-2 text-lg font-bold lg:text-xl">
             <FileText className="size-5" />
             小論文添削
           </h1>
@@ -1133,654 +1317,174 @@ export default function EssayNewPage() {
       {activeTab === "history" ? (
         <EssayHistory />
       ) : (
-      <>
-      <StepIndicator
-        current={step}
-        total={inputMode === "text" ? 2 : inputMode === "dictation" ? 4 : 3}
-        labels={
-          inputMode === "text"
-            ? ["情報入力", "テキスト入力"]
-            : inputMode === "dictation"
-              ? ["情報入力", "画像撮影", "音読", "確認"]
-              : ["情報入力", "画像アップロード", "OCR確認"]
-        }
-      />
-
-      {step === 1 && (
         <>
-        <SelfAnalysisGuardCard />
-
-        <WeaknessReminderCard />
-
-        {/* 再トライリマインダー */}
-        {retryParent && (
-          <Card className="mb-6 border-indigo-200 bg-gradient-to-br from-indigo-50 via-sky-50 to-purple-50">
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between gap-2 flex-wrap">
-                <CardTitle className="text-lg text-indigo-900 flex items-center gap-2">
-                  <RotateCcw className="size-5 text-indigo-700" />
-                  第{(retryParent.attemptNumber ?? 1) + 1}回チャレンジ
-                </CardTitle>
-                <Link
-                  href={`/student/essay/${retryParent.id}`}
-                  className="text-xs text-indigo-700 hover:text-indigo-900 underline underline-offset-2"
-                >
-                  前回の添削を見る
-                </Link>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="rounded-lg bg-white/70 border border-indigo-100 p-3">
-                <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <div>
-                    <p className="text-sm font-medium text-slate-800">
-                      {retryParent.universityName} {retryParent.facultyName}
-                    </p>
-                    {retryParent.topic && (
-                      <p className="text-xs text-slate-600 mt-0.5">テーマ: {retryParent.topic}</p>
-                    )}
-                  </div>
-                  {retryParent.scores && (
-                    <div className="text-right">
-                      <p className="text-xs text-muted-foreground">前回スコア</p>
-                      <p className="text-lg font-bold tabular-nums text-slate-800">
-                        {retryParent.scores.total}
-                        <span className="text-xs text-muted-foreground font-normal">/50</span>
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {retryParent.feedback?.priorityImprovement && (
-                <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 flex gap-2.5">
-                  <Star className="size-4 text-amber-700 shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-xs font-semibold text-amber-900 mb-1">最優先で取り組むポイント</p>
-                    <p className="text-sm text-amber-900 leading-relaxed">
-                      {retryParent.feedback.priorityImprovement}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {retryParent.feedback?.improvements && retryParent.feedback.improvements.length > 0 && (
-                <div className="rounded-lg bg-white/60 border border-indigo-100 p-3">
-                  <p className="text-xs font-semibold text-indigo-900 mb-2 flex items-center gap-1">
-                    <AlertTriangle className="size-3.5" />
-                    前回の改善ポイント
-                  </p>
-                  <ul className="space-y-1.5">
-                    {retryParent.feedback.improvements.slice(0, 3).map((imp, i) => (
-                      <li key={i} className="text-sm text-slate-700 flex gap-2 leading-relaxed">
-                        <span className="text-indigo-500 shrink-0">•</span>
-                        <span>{imp}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {retryParent.feedback?.nextChallenge && (
-                <div className="rounded-lg bg-sky-50 border border-sky-200 p-3 flex gap-2.5">
-                  <Target className="size-4 text-sky-700 shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-xs font-semibold text-sky-900 mb-1">今回のチャレンジ</p>
-                    <p className="text-sm text-sky-900 leading-relaxed">
-                      {retryParent.feedback.nextChallenge}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {retryParentLoading && (
-          <Card className="mb-6">
-            <CardContent className="p-4">
-              <Skeleton className="h-5 w-32" />
-              <Skeleton className="mt-2 h-20 w-full rounded-lg" />
-            </CardContent>
-          </Card>
-        )}
-
-        {/* 過去問情報表示（読み取り専用） */}
-        {pastQuestion && (
-          <PastQuestionTopicCard
-            pastQuestion={pastQuestion}
-            dynamicSourceText={dynamicSourceText}
-            dynamicIsSample={dynamicIsSample}
-            sourceTextLoading={sourceTextLoading}
-            sourceTextError={sourceTextError}
-          />
-        )}
-
-        {/* テーマ情報表示（EssayTheme選択時） */}
-        {selectedTheme && !pastQuestion && (
-          <Card className="mb-6 border-sky-200 bg-sky-50">
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between gap-2 mb-2">
-                <Badge variant="outline" className="bg-sky-100 text-sky-700 border-sky-300">
-                  {selectedTheme.fieldLabel}
-                </Badge>
-                <Badge
-                  variant="outline"
-                  className={
-                    selectedTheme.difficulty === 1
-                      ? "bg-emerald-100 text-emerald-800 border-emerald-300"
-                      : selectedTheme.difficulty === 2
-                      ? "bg-amber-100 text-amber-800 border-amber-300"
-                      : "bg-rose-100 text-rose-800 border-rose-300"
-                  }
-                >
-                  {selectedTheme.difficulty === 1 ? "基礎" : selectedTheme.difficulty === 2 ? "標準" : "発展"}
-                </Badge>
-              </div>
-              <CardTitle className="text-lg text-sky-900">
-                {selectedTheme.title}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <p className="text-sky-800 mb-3">
-                {selectedTheme.description}
-              </p>
-              <div className="flex items-center gap-4 text-sm text-sky-700">
-                <span>推奨字数: {selectedTheme.wordLimit}字</span>
-                {selectedTheme.relatedAP.length > 0 && (
-                  <div className="flex items-center gap-1">
-                    <span>関連分野:</span>
-                    <div className="flex gap-1">
-                      {selectedTheme.relatedAP.slice(0, 3).map((ap, index) => (
-                        <Badge key={index} variant="secondary" className="text-xs">
-                          {ap}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* 情報入力（統合カード）: 種類 / 提出方法 / AP参照先 / テーマ / レポート課題文 / 書き方向 / 次へ */}
-        <Card className="mt-4">
-          <CardHeader>
-            <CardTitle className="text-sm lg:text-base">情報入力</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-5 p-3 lg:p-4">
-            {/* 小論文の種類（通常の新規提出のみ表示） */}
-            {!pastQuestion && !retryParent && !selectedTheme && (
-              <div className="space-y-2">
-                <Label>小論文の種類</Label>
-                <SegmentControl
-                  fullWidth
-                  size="sm"
-                  value={reportMode ? "report" : "normal"}
-                  onChange={(v) => handleToggleReportMode(v === "report")}
-                  options={[
-                    { id: "normal", label: "通常の小論文" },
-                    { id: "report", label: "レポート（課題文を読んで書く）" },
-                  ]}
-                />
-              </div>
-            )}
-
-            {/* 提出方法（レポート中はテキスト固定のため非表示） */}
-            {!reportMode && (
-              <div className="space-y-2">
-                <Label>提出方法</Label>
-                <SegmentControl
-                  fullWidth
-                  size="sm"
-                  value={inputMode}
-                  onChange={(v) =>
-                    setInputMode(v as "text" | "image" | "dictation")
-                  }
-                  options={[
-                    { id: "text", label: "テキスト入力" },
-                    { id: "dictation", label: "手書き" },
-                  ]}
-                />
-              </div>
-            )}
-
-            {/* レポート課題文の選択（系統 → 課題文） */}
-            {reportMode && (
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>分野を選択</Label>
-                {reportFieldsLoading ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {Array.from({ length: 9 }).map((_, i) => (
-                      <Skeleton key={i} className="h-11 w-full rounded-lg" />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {REPORT_FIELDS.map((f) => {
-                      const available = reportAvailableFields.includes(f.field);
-                      const isSelected = reportField === f.field;
-                      return (
-                        <button
-                          key={f.field}
-                          type="button"
-                          disabled={!available}
-                          onClick={() => handleSelectReportField(f.field)}
-                          className={[
-                            "rounded-lg border p-2 min-h-[44px] text-sm text-center transition-colors",
-                            !available
-                              ? "border-dashed border-border text-muted-foreground/60 cursor-not-allowed"
-                              : isSelected
-                                ? "border-primary bg-primary/5 text-primary font-medium"
-                                : "border-border hover:border-primary/50",
-                          ].join(" ")}
-                        >
-                          {f.label}
-                          {!available && (
-                            <span className="block text-[10px] text-muted-foreground/60">準備中</span>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {reportField && (
-                <div className="space-y-2">
-                  <Label>課題文を選択</Label>
-                  {reportMaterialList.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">この分野の課題文は準備中です。</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {reportMaterialList.map((m) => {
-                        const isSelected = reportMaterial?.id === m.id;
-                        return (
-                          <button
-                            key={m.id}
-                            type="button"
-                            onClick={() => handleSelectReportMaterial(m.id)}
-                            className={[
-                              "w-full text-left rounded-lg border p-3 transition-colors",
-                              isSelected
-                                ? "border-primary bg-primary/5"
-                                : "border-border hover:bg-muted/50",
-                            ].join(" ")}
-                          >
-                            <p className={`text-sm font-medium ${isSelected ? "text-primary" : ""}`}>
-                              {m.title}
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                              推奨字数: {m.recommendedWordLimit}字
-                            </p>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
-              </div>
-            )}
-
-            {/* アドミッションポリシー参照先 / 過去問・再トライ時は自動設定 */}
-            {(pastQuestion || retryParent) ? (
-              <>
-              {effectiveUni && (
-                <div className="flex items-center gap-3 rounded-lg border border-primary bg-primary/5 p-3">
-                  <GraduationCap className="size-5 text-primary shrink-0" />
-                  <div>
-                    <p className="text-sm font-medium">{effectiveUni.universityName}</p>
-                    <p className="text-xs text-muted-foreground">{effectiveUni.facultyName}</p>
-                  </div>
-                </div>
-              )}
-
-              {(inputMode === "image" || inputMode === "dictation") && (
-                <div className="space-y-2">
-                  <Label>原稿の書き方向</Label>
-                  <SegmentControl
-                    fullWidth
-                    size="sm"
-                    value={writingDirection}
-                    onChange={(v) =>
-                      setWritingDirection(v as "vertical" | "horizontal")
-                    }
-                    options={[
-                      { id: "vertical", label: "縦書き（原稿用紙）" },
-                      { id: "horizontal", label: "横書き" },
-                    ]}
-                  />
-                  {writingDirection === "horizontal" && (
-                    <a
-                      href="/api/essay/template"
-                      download
-                      className="group mt-3 flex items-center gap-3 rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50 via-sky-50 to-indigo-50 p-3 shadow-sm transition-all hover:shadow-md hover:border-emerald-300 hover:-translate-y-0.5"
-                    >
-                      <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-sky-500 text-white shadow-sm">
-                        <Download className="size-5" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-semibold text-slate-900 tracking-tight">
-                          B4 原稿用紙 PDF をダウンロード
-                        </div>
-                        <div className="text-xs text-slate-600 mt-0.5">
-                          印刷して手書き → 撮影すると OCR 精度が大幅アップ
-                        </div>
-                      </div>
-                      <ChevronRight className="size-4 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-emerald-600" />
-                    </a>
-                  )}
-                </div>
-              )}
-
-              <Separator />
-
-              <Button
-                className="w-full min-h-[44px] py-3"
-                disabled={!universityId || !facultyId}
-                onClick={() => setStep(2)}
-              >
-                次へ
-                <ChevronRight className="size-4 ml-1" />
-              </Button>
-              </>
-            ) : loadingUniversities ? (
-              <>
-                <Skeleton className="h-5 w-32" />
-                <Skeleton className="h-20 w-full rounded-lg" />
-              </>
-            ) : targetUniversities.length === 0 ? (
-              <div className="flex items-center gap-4 py-8">
-                <div className="flex size-12 items-center justify-center rounded-lg bg-muted">
-                  <GraduationCap className="size-6 text-muted-foreground" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium">アドミッションポリシー参照先が未設定です</p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    設定画面で志望校を登録してください（添削の採点基準になります）
-                  </p>
-                  <Link href="/student/settings">
-                    <Button variant="outline" size="sm" className="mt-3">
-                      <Settings className="size-4 mr-1" />
-                      設定画面へ
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            ) : (
-              <>
-                {resolved.length === 1 ? (
-                <div className="flex items-center gap-3 rounded-lg border border-primary bg-primary/5 p-3">
-                  <GraduationCap className="size-5 text-primary shrink-0" />
-                  <div>
-                    <p className="text-sm font-medium">{resolved[0].universityName}</p>
-                    <p className="text-xs text-muted-foreground">{resolved[0].facultyName}</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <Label>アドミッションポリシー参照先を選択</Label>
-                  <div className="grid gap-2 grid-cols-1 lg:grid-cols-2">
-                    {resolved.map((item) => {
-                      const compoundId = `${item.universityId}:${item.facultyId}`;
-                      const isSelected = selectedCompoundId === compoundId;
-                      return (
-                        <button
-                          key={compoundId}
-                          onClick={() => setSelectedCompoundId(compoundId)}
-                          className={[
-                            "w-full text-left rounded-lg border p-3 min-h-[44px] py-3 transition-colors",
-                            isSelected
-                              ? "border-primary bg-primary/5"
-                              : "border-border hover:bg-muted/50",
-                          ].join(" ")}
-                        >
-                          <div className="flex items-center gap-3">
-                            <GraduationCap
-                              className={[
-                                "size-5 shrink-0",
-                                isSelected ? "text-primary" : "text-muted-foreground",
-                              ].join(" ")}
-                            />
-                            <div>
-                              <p className={[
-                                "text-sm font-medium",
-                                isSelected ? "text-primary" : "",
-                              ].join(" ")}>
-                                {item.universityName}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                {item.facultyName}
-                              </p>
-                            </div>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* 他の大学から選ぶ */}
-              <div className="pt-2">
-                {!showAllUniversities ? (
-                  <button
-                    type="button"
-                    onClick={() => setShowAllUniversities(true)}
-                    className="text-xs text-muted-foreground hover:text-primary transition-colors underline"
-                  >
-                    他の大学・学部から選ぶ
-                  </button>
-                ) : (
-                  <div className="space-y-2">
-                    <Label className="text-xs">
-                      他の大学・学部（検索・都道府県別・グループ別）
-                    </Label>
-                    <UniversityPicker
-                      items={allUniversities}
-                      selectedCompoundId={selectedCompoundId}
-                      onSelect={setSelectedCompoundId}
-                    />
-                  </div>
-                )}
-              </div>
-
-              {!selectedTheme && !pastQuestion && !reportMode && (
-                <div className="space-y-2">
-                  <Label htmlFor="topic">
-                    テーマ
-                    <Badge variant="secondary" className="ml-2 text-xs">
-                      任意
-                    </Badge>
-                  </Label>
-                  <Input
-                    id="topic"
-                    placeholder="例：グローバル化と日本の未来"
-                    value={topic}
-                    onChange={(e) => setTopic(e.target.value)}
-                  />
-                </div>
-              )}
-
-              {(inputMode === "image" || inputMode === "dictation") && (
-                <div className="space-y-2">
-                  <Label>原稿の書き方向</Label>
-                  <SegmentControl
-                    fullWidth
-                    size="sm"
-                    value={writingDirection}
-                    onChange={(v) =>
-                      setWritingDirection(v as "vertical" | "horizontal")
-                    }
-                    options={[
-                      { id: "vertical", label: "縦書き（原稿用紙）" },
-                      { id: "horizontal", label: "横書き" },
-                    ]}
-                  />
-                  {writingDirection === "horizontal" && (
-                    <a
-                      href="/api/essay/template"
-                      download
-                      className="group mt-3 flex items-center gap-3 rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50 via-sky-50 to-indigo-50 p-3 shadow-sm transition-all hover:shadow-md hover:border-emerald-300 hover:-translate-y-0.5"
-                    >
-                      <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-sky-500 text-white shadow-sm">
-                        <Download className="size-5" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-semibold text-slate-900 tracking-tight">
-                          B4 原稿用紙 PDF をダウンロード
-                        </div>
-                        <div className="text-xs text-slate-600 mt-0.5">
-                          印刷して手書き → 撮影すると OCR 精度が大幅アップ
-                        </div>
-                      </div>
-                      <ChevronRight className="size-4 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-emerald-600" />
-                    </a>
-                  )}
-                </div>
-              )}
-
-              <Separator />
-
-              <Button
-                className="w-full min-h-[44px] py-3"
-                disabled={!selectedCompoundId || (reportMode && !reportMaterial)}
-                onClick={() => setStep(2)}
-              >
-                次へ
-                <ChevronRight className="size-4 ml-1" />
-              </Button>
-              </>
-            )}
-          </CardContent>
-        </Card>
-        </>
-      )}
-
-      {/* Step 2: Text input mode */}
-      {step === 2 && inputMode === "text" && (
-        <>
-          {/* TED講義動画パネル（講義型の場合） */}
-          {(() => {
-            const ted = pastQuestion?.tedTalk || selectedTheme?.tedTalk;
-            return ted ? (
-            <Card className="mb-4 border-indigo-200">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-indigo-800 flex items-center gap-2">
-                  <FileText className="size-4" />
-                  講義動画
-                  <Badge variant="outline" className="text-xs bg-indigo-50 text-indigo-700 border-indigo-300">TED Talk</Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="aspect-video rounded-lg overflow-hidden">
-                  <iframe
-                    src={`https://embed.ted.com/talks/${ted.talkId}?subtitle=${ted.language}`}
-                    width="100%" height="100%"
-                    allow="autoplay; fullscreen; encrypted-media"
-                    allowFullScreen
-                    className="border-0"
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  {ted.speaker}「{ted.title}」({ted.durationMinutes}分)
-                </p>
-              </CardContent>
-            </Card>
-            ) : null;
-          })()}
-
-          {/* テーマの参考資料パネル（英文/グラフ） */}
-          {selectedTheme && !pastQuestion && (selectedTheme.sourceText || selectedTheme.chartData) && (
-            <Card className="mb-4 border-indigo-200">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-indigo-800 flex items-center gap-2">
-                  <FileText className="size-4" />
-                  参考資料
-                  {selectedTheme.questionType === "english-reading" && (
-                    <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-300">英文</Badge>
-                  )}
-                  {selectedTheme.questionType === "data-analysis" && (
-                    <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-300">グラフ</Badge>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {selectedTheme.sourceText && (
-                  <div className="rounded-lg bg-muted/50 p-3 max-h-[400px] overflow-y-auto">
-                    <p className="text-sm whitespace-pre-wrap leading-relaxed font-mono">{selectedTheme.sourceText}</p>
-                  </div>
-                )}
-                {selectedTheme.chartData && selectedTheme.chartData.length > 0 && (
-                  <PastQuestionChart charts={selectedTheme.chartData} />
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          <div
-            className={
-              useSideBySide
-                ? "lg:grid lg:grid-cols-[minmax(22rem,28rem)_minmax(0,1fr)] lg:gap-6 lg:items-start"
-                : ""
+          <StepIndicator
+            current={step}
+            total={inputMode === "text" ? 2 : inputMode === "dictation" ? 4 : 3}
+            labels={
+              inputMode === "text"
+                ? ["情報入力", "テキスト入力"]
+                : inputMode === "dictation"
+                  ? ["情報入力", "画像撮影", "音読", "確認"]
+                  : ["情報入力", "画像アップロード", "OCR確認"]
             }
-          >
-            {/* 左列: 執筆サポートパネル (資料/AIコーチ/AP/ネタ/自己分析) */}
-            <EssayCoachPanel
-              topic={effectiveTopic}
-              draft={directText}
-              universityId={universityId || undefined}
-              facultyId={facultyId || undefined}
-              referenceMaterial={effectiveMaterial}
-              coachMaterial={reportCoachMaterial}
-              onThreadChange={setCoachThreadId}
-            />
+          />
 
-            {/* 右列: 小論文入力 (常に最大幅) */}
-            <div className={useSideBySide ? "lg:min-w-0" : ""}>
-              {/* レポートモード: 課題文の読解ペインを入力欄の直上に表示 */}
-              {reportMode && reportMaterial && (
-                <div className="mb-4">
-                  <ReportSourcePane
-                    title={reportMaterial.title}
-                    body={reportMaterial.body}
-                    focusPoints={reportMaterial.focusPoints}
-                  />
-                </div>
+          {step === 1 && (
+            <>
+              <SelfAnalysisGuardCard />
+
+              <WeaknessReminderCard />
+
+              {/* 再トライリマインダー */}
+              {retryParent && (
+                <Card className="mb-6 border-indigo-200 bg-gradient-to-br from-indigo-50 via-sky-50 to-purple-50">
+                  <CardHeader className="pb-3">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <CardTitle className="flex items-center gap-2 text-lg text-indigo-900">
+                        <RotateCcw className="size-5 text-indigo-700" />第
+                        {(retryParent.attemptNumber ?? 1) + 1}回チャレンジ
+                      </CardTitle>
+                      <Link
+                        href={`/student/essay/${retryParent.id}`}
+                        className="text-xs text-indigo-700 underline underline-offset-2 hover:text-indigo-900"
+                      >
+                        前回の添削を見る
+                      </Link>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="rounded-lg border border-indigo-100 bg-white/70 p-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                          <p className="text-sm font-medium text-slate-800">
+                            {retryParent.universityName}{" "}
+                            {retryParent.facultyName}
+                          </p>
+                          {retryParent.topic && (
+                            <p className="mt-0.5 text-xs text-slate-600">
+                              テーマ: {retryParent.topic}
+                            </p>
+                          )}
+                        </div>
+                        {retryParent.scores && (
+                          <div className="text-right">
+                            <p className="text-muted-foreground text-xs">
+                              前回スコア
+                            </p>
+                            <p className="text-lg font-bold text-slate-800 tabular-nums">
+                              {retryParent.scores.total}
+                              <span className="text-muted-foreground text-xs font-normal">
+                                /50
+                              </span>
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {retryParent.feedback?.priorityImprovement && (
+                      <div className="flex gap-2.5 rounded-lg border border-amber-200 bg-amber-50 p-3">
+                        <Star className="mt-0.5 size-4 shrink-0 text-amber-700" />
+                        <div>
+                          <p className="mb-1 text-xs font-semibold text-amber-900">
+                            最優先で取り組むポイント
+                          </p>
+                          <p className="text-sm leading-relaxed text-amber-900">
+                            {retryParent.feedback.priorityImprovement}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {retryParent.feedback?.improvements &&
+                      retryParent.feedback.improvements.length > 0 && (
+                        <div className="rounded-lg border border-indigo-100 bg-white/60 p-3">
+                          <p className="mb-2 flex items-center gap-1 text-xs font-semibold text-indigo-900">
+                            <AlertTriangle className="size-3.5" />
+                            前回の改善ポイント
+                          </p>
+                          <ul className="space-y-1.5">
+                            {retryParent.feedback.improvements
+                              .slice(0, 3)
+                              .map((imp, i) => (
+                                <li
+                                  key={i}
+                                  className="flex gap-2 text-sm leading-relaxed text-slate-700"
+                                >
+                                  <span className="shrink-0 text-indigo-500">
+                                    •
+                                  </span>
+                                  <span>{imp}</span>
+                                </li>
+                              ))}
+                          </ul>
+                        </div>
+                      )}
+
+                    {retryParent.feedback?.nextChallenge && (
+                      <div className="flex gap-2.5 rounded-lg border border-sky-200 bg-sky-50 p-3">
+                        <Target className="mt-0.5 size-4 shrink-0 text-sky-700" />
+                        <div>
+                          <p className="mb-1 text-xs font-semibold text-sky-900">
+                            今回のチャレンジ
+                          </p>
+                          <p className="text-sm leading-relaxed text-sky-900">
+                            {retryParent.feedback.nextChallenge}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               )}
-              {/* 過去問選択時はお題カードを入力欄の直上に表示（執筆中の参照用） */}
-              {inputMode === "text" && pastQuestion && (
+
+              {retryParentLoading && (
+                <Card className="mb-6">
+                  <CardContent className="p-4">
+                    <Skeleton className="h-5 w-32" />
+                    <Skeleton className="mt-2 h-20 w-full rounded-lg" />
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* 過去問情報表示（読み取り専用） */}
+              {pastQuestion && (
                 <PastQuestionTopicCard
                   pastQuestion={pastQuestion}
                   dynamicSourceText={dynamicSourceText}
                   dynamicIsSample={dynamicIsSample}
                   sourceTextLoading={sourceTextLoading}
                   sourceTextError={sourceTextError}
-                  fullSourceText
                 />
               )}
-              {/* テーマ選択時もお題カードを入力欄の直上に表示（執筆中の参照用） */}
-              {inputMode === "text" && selectedTheme && !pastQuestion && (
-                <Card className="mb-4 border-sky-200 bg-sky-50">
+
+              {/* テーマ情報表示（EssayTheme選択時） */}
+              {selectedTheme && !pastQuestion && (
+                <Card className="mb-6 border-sky-200 bg-sky-50">
                   <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <Badge variant="outline" className="bg-sky-100 text-sky-700 border-sky-300">
+                    <div className="mb-2 flex items-start justify-between gap-2">
+                      <Badge
+                        variant="outline"
+                        className="border-sky-300 bg-sky-100 text-sky-700"
+                      >
                         {selectedTheme.fieldLabel}
                       </Badge>
                       <Badge
                         variant="outline"
                         className={
                           selectedTheme.difficulty === 1
-                            ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                            ? "border-emerald-300 bg-emerald-100 text-emerald-800"
                             : selectedTheme.difficulty === 2
-                            ? "bg-amber-100 text-amber-800 border-amber-300"
-                            : "bg-rose-100 text-rose-800 border-rose-300"
+                              ? "border-amber-300 bg-amber-100 text-amber-800"
+                              : "border-rose-300 bg-rose-100 text-rose-800"
                         }
                       >
-                        {selectedTheme.difficulty === 1 ? "基礎" : selectedTheme.difficulty === 2 ? "標準" : "発展"}
+                        {selectedTheme.difficulty === 1
+                          ? "基礎"
+                          : selectedTheme.difficulty === 2
+                            ? "標準"
+                            : "発展"}
                       </Badge>
                     </div>
                     <CardTitle className="text-lg text-sky-900">
@@ -1788,18 +1492,26 @@ export default function EssayNewPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="pt-0">
-                    <p className="text-sky-800 mb-3">{selectedTheme.description}</p>
-                    <div className="flex items-center gap-4 text-sm text-sky-700 flex-wrap">
+                    <p className="mb-3 text-sky-800">
+                      {selectedTheme.description}
+                    </p>
+                    <div className="flex items-center gap-4 text-sm text-sky-700">
                       <span>推奨字数: {selectedTheme.wordLimit}字</span>
                       {selectedTheme.relatedAP.length > 0 && (
-                        <div className="flex items-center gap-1 flex-wrap">
+                        <div className="flex items-center gap-1">
                           <span>関連分野:</span>
-                          <div className="flex gap-1 flex-wrap">
-                            {selectedTheme.relatedAP.slice(0, 3).map((ap, index) => (
-                              <Badge key={index} variant="secondary" className="text-xs">
-                                {ap}
-                              </Badge>
-                            ))}
+                          <div className="flex gap-1">
+                            {selectedTheme.relatedAP
+                              .slice(0, 3)
+                              .map((ap, index) => (
+                                <Badge
+                                  key={index}
+                                  variant="secondary"
+                                  className="text-xs"
+                                >
+                                  {ap}
+                                </Badge>
+                              ))}
                           </div>
                         </div>
                       )}
@@ -1807,431 +1519,1252 @@ export default function EssayNewPage() {
                   </CardContent>
                 </Card>
               )}
-              {inputMode === "text" && !pastQuestion && !selectedTheme && topic.trim() && (
-                <Card className="mb-4 border-amber-200 bg-amber-50">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm text-amber-900">お題</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <p className="whitespace-pre-wrap text-sm leading-relaxed text-amber-900">
-                      {topic}
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
-              <Card>
+
+              {/* 情報入力（統合カード）: 種類 / 提出方法 / AP参照先 / テーマ / レポート課題文 / 書き方向 / 次へ */}
+              <Card className="mt-4">
                 <CardHeader>
-                  <CardTitle className="text-sm lg:text-base">小論文を入力</CardTitle>
+                  <CardTitle className="text-sm lg:text-base">
+                    情報入力
+                  </CardTitle>
                 </CardHeader>
-                <CardContent className="p-3 lg:p-4 space-y-4">
-                  {/* レポートモードでは字数を課題文の推奨値に固定（提出時に上書きされ、編集不可） */}
-                  {reportMode ? (
-                    <p className="text-sm text-muted-foreground">
-                      推奨字数: {reportMaterial?.recommendedWordLimit}字
-                    </p>
-                  ) : (
-                    <CharLimitSelector value={customMaxLength} onChange={setCustomMaxLength} />
+                <CardContent className="space-y-5 p-3 lg:p-4">
+                  {/* 小論文の種類（通常の新規提出のみ表示） */}
+                  {!pastQuestion && !retryParent && !selectedTheme && (
+                    <div className="space-y-2">
+                      <Label>小論文の種類</Label>
+                      <SegmentControl
+                        fullWidth
+                        size="sm"
+                        value={reportMode ? "report" : "normal"}
+                        onChange={(v) => handleToggleReportMode(v === "report")}
+                        options={[
+                          { id: "normal", label: "通常の小論文" },
+                          {
+                            id: "report",
+                            label: "レポート（課題文を読んで書く）",
+                          },
+                        ]}
+                      />
+                    </div>
                   )}
-                  {directText.trim() === "" && (
-                    <div className="rounded-lg border border-amber-200 bg-amber-50/60 dark:border-amber-900 dark:bg-amber-950/20 p-3 flex gap-2.5">
-                      <Sparkles className="size-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-                      <div className="text-xs leading-relaxed text-amber-900 dark:text-amber-100">
-                        <p className="font-semibold mb-0.5">書き出しに迷ったら</p>
-                        <p className="hidden lg:block text-amber-800 dark:text-amber-200">
-                          左の <span className="font-medium">AIコーチ</span> に「お題から何を書けばいい?」と話しかけてみよう。気になる論点や書きたい方向を伝えると、一緒に整理してくれます。
-                        </p>
-                        <p className="lg:hidden text-amber-800 dark:text-amber-200">
-                          入力欄の上にある <span className="font-medium">執筆サポート</span> から AIコーチ を開いて「お題から何を書けばいい?」と話しかけてみよう。
-                        </p>
+
+                  {/* 提出方法（レポート中はテキスト固定のため非表示） */}
+                  {!reportMode && (
+                    <div className="space-y-2">
+                      <Label>提出方法</Label>
+                      <SegmentControl
+                        fullWidth
+                        size="sm"
+                        value={inputMode}
+                        onChange={(v) =>
+                          setInputMode(v as "text" | "image" | "dictation")
+                        }
+                        options={[
+                          { id: "text", label: "テキスト入力" },
+                          { id: "dictation", label: "手書き" },
+                        ]}
+                      />
+                    </div>
+                  )}
+
+                  {/* レポート課題文の選択（系統 → 課題文） */}
+                  {reportMode && (
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label>分野を選択</Label>
+                        {reportFieldsLoading ? (
+                          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                            {Array.from({ length: 9 }).map((_, i) => (
+                              <Skeleton
+                                key={i}
+                                className="h-11 w-full rounded-lg"
+                              />
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                            {REPORT_FIELDS.map((f) => {
+                              const available = reportAvailableFields.includes(
+                                f.field
+                              );
+                              const isSelected = reportField === f.field;
+                              return (
+                                <button
+                                  key={f.field}
+                                  type="button"
+                                  disabled={!available}
+                                  onClick={() =>
+                                    handleSelectReportField(f.field)
+                                  }
+                                  className={[
+                                    "min-h-[44px] rounded-lg border p-2 text-center text-sm transition-colors",
+                                    !available
+                                      ? "border-border text-muted-foreground/60 cursor-not-allowed border-dashed"
+                                      : isSelected
+                                        ? "border-primary bg-primary/5 text-primary font-medium"
+                                        : "border-border hover:border-primary/50",
+                                  ].join(" ")}
+                                >
+                                  {f.label}
+                                  {!available && (
+                                    <span className="text-muted-foreground/60 block text-[10px]">
+                                      準備中
+                                    </span>
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  )}
-                  <ManuscriptEditor
-                    value={directText}
-                    onChange={setDirectText}
-                    maxLength={customMaxLength}
-                    placeholder={
-                      retryParent
-                        ? "前回の改善点を意識して書き直してみよう..."
-                        : "ここに小論文を入力してください..."
-                      }
-                  />
-                  <DraftSaveIndicator
-                    status={textDraftStatus === "error" ? essayDraftStatus : textDraftStatus}
-                    restored={textDraftRestored}
-                    lastSavedAt={textDraftSavedAt ?? essayDraftSavedAt}
-                    onSaveNow={() => {
-                      void flushEssayDraft();
-                      void saveTextDraft();
-                    }}
-                  />
-                  {error && (
-                    <p className="text-sm text-destructive">{error}</p>
-                  )}
-                  <div className="flex gap-2">
-                    {/* レポートモードでは下書き保存を無効（非表示） */}
-                    {!reportMode && (
-                      <Button
-                        variant="outline"
-                        onClick={handleSaveDraft}
-                        disabled={savingDraft || (!directText.trim() && !topic.trim())}
-                      >
-                        {savingDraft ? "保存中..." : "下書き保存"}
-                      </Button>
-                    )}
-                    <Button
-                      className="flex-1"
-                      onClick={handleDirectSubmit}
-                      disabled={isSubmitting || !directText.trim() || (reportMode && !reportMaterial)}
-                    >
-                      {isSubmitting ? "添削中..." : "添削する"}
-                      <ChevronRight className="size-4 ml-1" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </>
-      )}
 
-      {/* Step 2: Dictation mode — image upload */}
-      {step === 2 && inputMode === "dictation" && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm lg:text-base">手書き小論文を撮影</CardTitle>
-          </CardHeader>
-          <CardContent className="p-3 lg:p-4 space-y-4">
-            {/* 画像保存の告知（インフォームド・コンセント）: アップロード画像は精度改善のため保存される */}
-            <p className="rounded-md bg-muted/50 px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
-              アップロードした答案画像とOCR結果は、添削精度の改善のために保存・利用されます。
-            </p>
-            <div className="space-y-3">
-              <p className="text-sm text-muted-foreground">
-                原稿用紙の写真を撮影してください。複数枚の場合はページ順に追加してください。
-              </p>
-            </div>
-            {images.length > 0 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-                {images.map((img, i) => (
-                  <div key={i} className="relative group rounded-lg border overflow-hidden">
-                    <img src={img.preview} alt={`${i + 1}枚目`} className="w-full aspect-[3/4] object-cover" />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <button type="button" onClick={() => removeImage(i)} className="size-7 rounded-full bg-rose-500 text-white flex items-center justify-center">
-                        <Trash2 className="size-3.5" />
-                      </button>
-                    </div>
-                    <span className="absolute top-1 left-1 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded-full">{i + 1}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-            <div
-              className="border-2 border-dashed border-border rounded-lg min-h-[120px] flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-muted/50 transition-colors"
-              onClick={() => fileInputRef.current?.click()}
-              onDrop={handleDrop}
-              onDragOver={handleDragOver}
-            >
-              {images.length === 0 ? (
-                <>
-                  <Camera className="size-8 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">タップして撮影</p>
-                </>
-              ) : (
-                <>
-                  <Plus className="size-6 text-muted-foreground" />
-                  <p className="text-xs text-muted-foreground">もう1枚追加</p>
-                </>
-              )}
-            </div>
-            <input ref={fileInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileChange} />
-            {images.length > 0 && (
-              <Button className="w-full" onClick={handleDictationUpload} disabled={isUploading}>
-                {isUploading ? (
-                  <><Loader2 className="size-4 mr-1 animate-spin" />{uploadProgress || "処理中..."}</>
-                ) : (
-                  <>次へ：音読<ChevronRight className="size-4 ml-1" /></>
-                )}
-              </Button>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Step 3: Dictation mode — OCR確認 + 音読補正 */}
-      {step === 3 && inputMode === "dictation" && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm lg:text-base">認識結果の確認</CardTitle>
-          </CardHeader>
-          <CardContent className="p-3 lg:p-4 space-y-4">
-            {/* OCR結果 */}
-            {ocrText ? (
-              <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-3">
-                <p className="text-sm text-emerald-800">画像からテキストを認識しました。</p>
-                <p className="text-xs text-emerald-700 mt-1">内容が正しければ「このまま添削」、不十分なら下の音読で補正できます。</p>
-              </div>
-            ) : (
-              <div className="rounded-lg bg-amber-50 border border-amber-200 p-3">
-                <p className="text-sm text-amber-800">画像からテキストを認識できませんでした。下の音読でテキスト化してください。</p>
-              </div>
-            )}
-
-            <CharLimitSelector value={customMaxLength} onChange={setCustomMaxLength} />
-
-            {/* OCRテキスト表示エリア */}
-            <ManuscriptEditor
-              value={ocrText}
-              onChange={setOcrText}
-              maxLength={customMaxLength}
-              placeholder="認識されたテキストがここに表示されます"
-              highlights={dictationHighlights}
-              onHighlightsChange={setDictationHighlights}
-            />
-            <DraftSaveIndicator
-              status={ocrDraftStatus}
-              restored={ocrDraftRestored}
-              lastSavedAt={ocrDraftSavedAt}
-              onSaveNow={() => void saveOcrDraft()}
-            />
-
-            {/* 添削ボタン */}
-            {ocrText.trim() && (
-              <Button className="w-full" variant="default" onClick={handleReview} disabled={isSubmitting}>
-                {isSubmitting ? <><Loader2 className="size-4 mr-1 animate-spin" />添削中...</> : <><CheckCircle className="size-4 mr-1" />この内容で添削する</>}
-              </Button>
-            )}
-
-            <Separator />
-
-            {/* 音読セクション */}
-            <div className="rounded-lg bg-sky-50 border border-sky-200 p-3">
-              <p className="text-sm text-sky-800 font-medium">音読で補正する</p>
-              <p className="text-xs text-sky-700 mt-1">画像を見ながら音読すると、OCR結果をより正確に補正できます。</p>
-            </div>
-
-            {/* 元画像 */}
-            {images.length > 0 && (
-              <div className="rounded-lg border overflow-hidden max-h-[250px] overflow-y-auto">
-                {images.map((img, i) => (
-                  <div key={i} className="relative">
-                    <img src={img.preview} alt={`${i + 1}枚目`} className="w-full object-contain" />
-                    {images.length > 1 && (
-                      <span className="absolute top-1 left-1 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded-full">{i + 1}</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Recording UI */}
-            <div className="flex flex-col items-center gap-3 py-4">
-              {isDictating ? (
-                <>
-                  <Loader2 className="size-10 text-primary animate-spin" />
-                  <p className="text-sm text-muted-foreground">音声を認識中...</p>
-                </>
-              ) : isRecording ? (
-                <>
-                  <button
-                    onClick={() => {
-                      setIsRecording(false);
-                      const recorder = (window as unknown as Record<string, MediaRecorder>).__essayRecorder;
-                      if (recorder && recorder.state !== "inactive") recorder.stop();
-                    }}
-                    className="relative flex items-center justify-center w-20 h-20 rounded-full bg-destructive text-white shadow-lg"
-                  >
-                    <span className="absolute inset-0 rounded-full bg-destructive/30 animate-ping" />
-                    <Square className="size-8 relative z-10" />
-                  </button>
-                  <p className="text-sm text-muted-foreground">録音中... 読み終わったらタップ</p>
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={() => {
-                      setIsRecording(true);
-                      // Start recording
-                      navigator.mediaDevices.getUserMedia({
-                        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-                      }).then((stream) => {
-                        const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" : "audio/webm";
-                        const recorder = new MediaRecorder(stream, { mimeType });
-                        const chunks: Blob[] = [];
-                        recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
-                        recorder.onstop = () => {
-                          stream.getTracks().forEach((t) => t.stop());
-                          const blob = new Blob(chunks, { type: mimeType });
-                          const reader = new FileReader();
-                          reader.onloadend = () => {
-                            const base64 = (reader.result as string).split(",")[1];
-                            handleDictationComplete(base64, mimeType);
-                          };
-                          reader.readAsDataURL(blob);
-                        };
-                        recorder.start(250);
-                        // Store recorder ref for stop button
-                        (window as unknown as Record<string, MediaRecorder>).__essayRecorder = recorder;
-                      }).catch(() => { setIsRecording(false); setError("マイクにアクセスできません"); });
-                    }}
-                    className="flex items-center justify-center w-20 h-20 rounded-full bg-primary text-primary-foreground shadow-lg hover:scale-105 transition-transform"
-                  >
-                    <Mic className="size-8" />
-                  </button>
-                  <p className="text-sm text-muted-foreground">タップして音読開始</p>
-                </>
-              )}
-            </div>
-
-            {error && <p className="text-sm text-destructive text-center">{error}</p>}
-          </CardContent>
-        </Card>
-      )}
-
-
-      {/* Step 2: Image upload mode */}
-      {step === 2 && inputMode === "image" && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm lg:text-base">
-              {images.length === 0 ? "1枚目の原稿用紙" : `${images.length + 1}枚目を追加しますか？`}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-3 lg:p-4 space-y-4">
-            {/* 確認済み画像一覧 */}
-            {images.length > 0 && (
-              <div className="space-y-3">
-                {images.map((img, i) => (
-                  <div key={i} className="flex items-center gap-3 rounded-lg border p-2">
-                    <img src={img.preview} alt={`${i + 1}枚目`} className="size-16 rounded-md object-cover shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium">{i + 1}枚目</p>
-                      <p className="text-xs text-emerald-600 flex items-center gap-1">
-                        <CheckCircle className="size-3" />追加済み
-                      </p>
-                    </div>
-                    <button type="button" onClick={() => removeImage(i)} className="text-muted-foreground hover:text-destructive p-1">
-                      <Trash2 className="size-4" />
-                    </button>
-                  </div>
-                ))}
-                <Separator />
-              </div>
-            )}
-
-            {/* 撮影/選択エリア */}
-            <div
-              className="border-2 border-dashed border-border rounded-lg min-h-[180px] flex flex-col items-center justify-center gap-3 cursor-pointer hover:bg-muted/50 transition-colors"
-              onDrop={handleDrop}
-              onDragOver={handleDragOver}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <Camera className="size-10 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground text-center">
-                {images.length === 0
-                  ? "タップして1枚目を撮影・選択"
-                  : "タップして次のページを追加"}
-              </p>
-            </div>
-
-            <div className="flex gap-3">
-              <Button variant="outline" className="flex-1" onClick={() => fileInputRef.current?.click()}>
-                <Upload className="size-4 mr-2" />
-                ファイル選択
-              </Button>
-              <Button variant="outline" className="flex-1" onClick={() => cameraInputRef.current?.click()}>
-                <Camera className="size-4 mr-2" />
-                カメラ撮影
-              </Button>
-            </div>
-
-            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
-            <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileChange} />
-
-            {/* 画像がある場合のアクションボタン */}
-            {images.length > 0 && (
-              <>
-                <Separator />
-                <Button
-                  className="w-full"
-                  disabled={isUploading}
-                  onClick={handleUpload}
-                >
-                  {isUploading ? (
-                    <><Loader2 className="size-4 mr-1 animate-spin" />{uploadProgress || "OCR解析中..."}</>
-                  ) : (
-                    <>{images.length === 1 ? "この1枚でOCR解析" : `${images.length}枚でOCR解析`}<ChevronRight className="size-4 ml-1" /></>
-                  )}
-                </Button>
-              </>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {step === 3 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm lg:text-base">OCR結果を確認・修正</CardTitle>
-          </CardHeader>
-          <CardContent className="p-3 lg:p-4 space-y-4">
-            {error && (
-              <p className="text-sm text-destructive bg-destructive/10 rounded p-3">
-                {error}
-              </p>
-            )}
-            <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 mb-2">
-              <p className="text-sm text-amber-800 font-medium">OCRの認識結果を確認してください</p>
-              <p className="text-xs text-amber-700 mt-1">誤認識がある場合は修正してから添削に進んでください。正確な添削には正しいテキストが必要です。</p>
-            </div>
-
-            {images.length > 0 && (
-              <details className="mb-2">
-                <summary className="text-sm text-muted-foreground cursor-pointer hover:text-foreground">
-                  元画像を表示（{images.length}枚）
-                </summary>
-                <div className={`mt-2 gap-2 ${images.length > 1 ? "grid grid-cols-2" : ""}`}>
-                  {images.map((img, i) => (
-                    <div key={i} className="relative">
-                      <img src={img.preview} alt={`${i + 1}枚目`} className="w-full rounded-lg border object-contain max-h-64" />
-                      {images.length > 1 && (
-                        <span className="absolute top-1 left-1 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded-full">{i + 1}</span>
+                      {reportField && (
+                        <div className="space-y-2">
+                          <Label>課題文を選択</Label>
+                          {reportMaterialList.length === 0 ? (
+                            <p className="text-muted-foreground text-sm">
+                              この分野の課題文は準備中です。
+                            </p>
+                          ) : (
+                            <div className="space-y-2">
+                              {reportMaterialList.map((m) => {
+                                const isSelected = reportMaterial?.id === m.id;
+                                return (
+                                  <button
+                                    key={m.id}
+                                    type="button"
+                                    onClick={() =>
+                                      handleSelectReportMaterial(m.id)
+                                    }
+                                    className={[
+                                      "w-full rounded-lg border p-3 text-left transition-colors",
+                                      isSelected
+                                        ? "border-primary bg-primary/5"
+                                        : "border-border hover:bg-muted/50",
+                                    ].join(" ")}
+                                  >
+                                    <p
+                                      className={`text-sm font-medium ${isSelected ? "text-primary" : ""}`}
+                                    >
+                                      {m.title}
+                                    </p>
+                                    <p className="text-muted-foreground mt-0.5 text-xs">
+                                      推奨字数: {m.recommendedWordLimit}字
+                                    </p>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
                       )}
                     </div>
-                  ))}
+                  )}
+
+                  {/* アドミッションポリシー参照先 / 過去問・再トライ時は自動設定 */}
+                  {pastQuestion || retryParent ? (
+                    <>
+                      {effectiveUni && (
+                        <div className="border-primary bg-primary/5 flex items-center gap-3 rounded-lg border p-3">
+                          <GraduationCap className="text-primary size-5 shrink-0" />
+                          <div>
+                            <p className="text-sm font-medium">
+                              {effectiveUni.universityName}
+                            </p>
+                            <p className="text-muted-foreground text-xs">
+                              {effectiveUni.facultyName}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {(inputMode === "image" || inputMode === "dictation") && (
+                        <div className="space-y-2">
+                          <Label>原稿の書き方向</Label>
+                          <SegmentControl
+                            fullWidth
+                            size="sm"
+                            value={writingDirection}
+                            onChange={(v) =>
+                              setWritingDirection(
+                                v as "vertical" | "horizontal"
+                              )
+                            }
+                            options={[
+                              { id: "vertical", label: "縦書き（原稿用紙）" },
+                              { id: "horizontal", label: "横書き" },
+                            ]}
+                          />
+                          {writingDirection === "horizontal" && (
+                            <a
+                              href="/api/essay/template"
+                              download
+                              className="group mt-3 flex items-center gap-3 rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50 via-sky-50 to-indigo-50 p-3 shadow-sm transition-all hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-md"
+                            >
+                              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-sky-500 text-white shadow-sm">
+                                <Download className="size-5" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="text-sm font-semibold tracking-tight text-slate-900">
+                                  B4 原稿用紙 PDF をダウンロード
+                                </div>
+                                <div className="mt-0.5 text-xs text-slate-600">
+                                  印刷して手書き → 撮影すると OCR
+                                  精度が大幅アップ
+                                </div>
+                              </div>
+                              <ChevronRight className="size-4 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-emerald-600" />
+                            </a>
+                          )}
+                        </div>
+                      )}
+
+                      <Separator />
+
+                      <Button
+                        className="min-h-[44px] w-full py-3"
+                        disabled={!universityId || !facultyId}
+                        onClick={() => setStep(2)}
+                      >
+                        次へ
+                        <ChevronRight className="ml-1 size-4" />
+                      </Button>
+                    </>
+                  ) : loadingUniversities ? (
+                    <>
+                      <Skeleton className="h-5 w-32" />
+                      <Skeleton className="h-20 w-full rounded-lg" />
+                    </>
+                  ) : targetUniversities.length === 0 ? (
+                    <div className="flex items-center gap-4 py-8">
+                      <div className="bg-muted flex size-12 items-center justify-center rounded-lg">
+                        <GraduationCap className="text-muted-foreground size-6" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium">
+                          アドミッションポリシー参照先が未設定です
+                        </p>
+                        <p className="text-muted-foreground mt-1 text-sm">
+                          設定画面で志望校を登録してください（添削の採点基準になります）
+                        </p>
+                        <Link href="/student/settings">
+                          <Button variant="outline" size="sm" className="mt-3">
+                            <Settings className="mr-1 size-4" />
+                            設定画面へ
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      {resolved.length === 1 ? (
+                        <div className="border-primary bg-primary/5 flex items-center gap-3 rounded-lg border p-3">
+                          <GraduationCap className="text-primary size-5 shrink-0" />
+                          <div>
+                            <p className="text-sm font-medium">
+                              {resolved[0].universityName}
+                            </p>
+                            <p className="text-muted-foreground text-xs">
+                              {resolved[0].facultyName}
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <Label>アドミッションポリシー参照先を選択</Label>
+                          <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
+                            {resolved.map((item) => {
+                              const compoundId = `${item.universityId}:${item.facultyId}`;
+                              const isSelected =
+                                selectedCompoundId === compoundId;
+                              return (
+                                <button
+                                  key={compoundId}
+                                  onClick={() =>
+                                    setSelectedCompoundId(compoundId)
+                                  }
+                                  className={[
+                                    "min-h-[44px] w-full rounded-lg border p-3 py-3 text-left transition-colors",
+                                    isSelected
+                                      ? "border-primary bg-primary/5"
+                                      : "border-border hover:bg-muted/50",
+                                  ].join(" ")}
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <GraduationCap
+                                      className={[
+                                        "size-5 shrink-0",
+                                        isSelected
+                                          ? "text-primary"
+                                          : "text-muted-foreground",
+                                      ].join(" ")}
+                                    />
+                                    <div>
+                                      <p
+                                        className={[
+                                          "text-sm font-medium",
+                                          isSelected ? "text-primary" : "",
+                                        ].join(" ")}
+                                      >
+                                        {item.universityName}
+                                      </p>
+                                      <p className="text-muted-foreground text-xs">
+                                        {item.facultyName}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 他の大学から選ぶ */}
+                      <div className="pt-2">
+                        {!showAllUniversities ? (
+                          <button
+                            type="button"
+                            onClick={() => setShowAllUniversities(true)}
+                            className="text-muted-foreground hover:text-primary text-xs underline transition-colors"
+                          >
+                            他の大学・学部から選ぶ
+                          </button>
+                        ) : (
+                          <div className="space-y-2">
+                            <Label className="text-xs">
+                              他の大学・学部（検索・都道府県別・グループ別）
+                            </Label>
+                            <UniversityPicker
+                              items={allUniversities}
+                              selectedCompoundId={selectedCompoundId}
+                              onSelect={setSelectedCompoundId}
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      {!selectedTheme && !pastQuestion && !reportMode && (
+                        <div className="space-y-2">
+                          <Label htmlFor="topic">
+                            テーマ
+                            <Badge variant="secondary" className="ml-2 text-xs">
+                              任意
+                            </Badge>
+                          </Label>
+                          <Input
+                            id="topic"
+                            placeholder="例：グローバル化と日本の未来"
+                            value={topic}
+                            onChange={(e) => setTopic(e.target.value)}
+                          />
+                        </div>
+                      )}
+
+                      {(inputMode === "image" || inputMode === "dictation") && (
+                        <div className="space-y-2">
+                          <Label>原稿の書き方向</Label>
+                          <SegmentControl
+                            fullWidth
+                            size="sm"
+                            value={writingDirection}
+                            onChange={(v) =>
+                              setWritingDirection(
+                                v as "vertical" | "horizontal"
+                              )
+                            }
+                            options={[
+                              { id: "vertical", label: "縦書き（原稿用紙）" },
+                              { id: "horizontal", label: "横書き" },
+                            ]}
+                          />
+                          {writingDirection === "horizontal" && (
+                            <a
+                              href="/api/essay/template"
+                              download
+                              className="group mt-3 flex items-center gap-3 rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50 via-sky-50 to-indigo-50 p-3 shadow-sm transition-all hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-md"
+                            >
+                              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-sky-500 text-white shadow-sm">
+                                <Download className="size-5" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="text-sm font-semibold tracking-tight text-slate-900">
+                                  B4 原稿用紙 PDF をダウンロード
+                                </div>
+                                <div className="mt-0.5 text-xs text-slate-600">
+                                  印刷して手書き → 撮影すると OCR
+                                  精度が大幅アップ
+                                </div>
+                              </div>
+                              <ChevronRight className="size-4 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-emerald-600" />
+                            </a>
+                          )}
+                        </div>
+                      )}
+
+                      <Separator />
+
+                      <Button
+                        className="min-h-[44px] w-full py-3"
+                        disabled={
+                          !selectedCompoundId || (reportMode && !reportMaterial)
+                        }
+                        onClick={() => setStep(2)}
+                      >
+                        次へ
+                        <ChevronRight className="ml-1 size-4" />
+                      </Button>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            </>
+          )}
+
+          {/* Step 2: Text input mode */}
+          {step === 2 && inputMode === "text" && (
+            <>
+              {/* TED講義動画パネル（講義型の場合） */}
+              {(() => {
+                const ted = pastQuestion?.tedTalk || selectedTheme?.tedTalk;
+                return ted ? (
+                  <Card className="mb-4 border-indigo-200">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="flex items-center gap-2 text-sm text-indigo-800">
+                        <FileText className="size-4" />
+                        講義動画
+                        <Badge
+                          variant="outline"
+                          className="border-indigo-300 bg-indigo-50 text-xs text-indigo-700"
+                        >
+                          TED Talk
+                        </Badge>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="aspect-video overflow-hidden rounded-lg">
+                        <iframe
+                          src={`https://embed.ted.com/talks/${ted.talkId}?subtitle=${ted.language}`}
+                          width="100%"
+                          height="100%"
+                          allow="autoplay; fullscreen; encrypted-media"
+                          allowFullScreen
+                          className="border-0"
+                        />
+                      </div>
+                      <p className="text-muted-foreground mt-2 text-xs">
+                        {ted.speaker}「{ted.title}」({ted.durationMinutes}分)
+                      </p>
+                    </CardContent>
+                  </Card>
+                ) : null;
+              })()}
+
+              {/* テーマの参考資料パネル（英文/グラフ） */}
+              {selectedTheme &&
+                !pastQuestion &&
+                (selectedTheme.sourceText || selectedTheme.chartData) && (
+                  <Card className="mb-4 border-indigo-200">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="flex items-center gap-2 text-sm text-indigo-800">
+                        <FileText className="size-4" />
+                        参考資料
+                        {selectedTheme.questionType === "english-reading" && (
+                          <Badge
+                            variant="outline"
+                            className="border-emerald-300 bg-emerald-50 text-xs text-emerald-700"
+                          >
+                            英文
+                          </Badge>
+                        )}
+                        {selectedTheme.questionType === "data-analysis" && (
+                          <Badge
+                            variant="outline"
+                            className="border-purple-300 bg-purple-50 text-xs text-purple-700"
+                          >
+                            グラフ
+                          </Badge>
+                        )}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {selectedTheme.sourceText && (
+                        <div className="bg-muted/50 max-h-[400px] overflow-y-auto rounded-lg p-3">
+                          <p className="font-mono text-sm leading-relaxed whitespace-pre-wrap">
+                            {selectedTheme.sourceText}
+                          </p>
+                        </div>
+                      )}
+                      {selectedTheme.chartData &&
+                        selectedTheme.chartData.length > 0 && (
+                          <PastQuestionChart charts={selectedTheme.chartData} />
+                        )}
+                    </CardContent>
+                  </Card>
+                )}
+
+              <div
+                className={
+                  useSideBySide
+                    ? "lg:grid lg:grid-cols-[minmax(22rem,28rem)_minmax(0,1fr)] lg:items-start lg:gap-6"
+                    : ""
+                }
+              >
+                {/* 左列: 執筆サポートパネル (資料/AIコーチ/AP/ネタ/自己分析) */}
+                <EssayCoachPanel
+                  topic={effectiveTopic}
+                  draft={directText}
+                  universityId={universityId || undefined}
+                  facultyId={facultyId || undefined}
+                  referenceMaterial={effectiveMaterial}
+                  coachMaterial={reportCoachMaterial}
+                  onThreadChange={setCoachThreadId}
+                />
+
+                {/* 右列: 小論文入力 (常に最大幅) */}
+                <div className={useSideBySide ? "lg:min-w-0" : ""}>
+                  {/* 下書きを戻したことを必ず知らせる。黙って戻すと、別の問題を
+                  書こうとして開いた人が前のお題のまま書き進めてしまう */}
+                  {(textDraftRestored || ocrDraftRestored) &&
+                    !draftDiscarded && (
+                      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-300 bg-amber-50/70 px-4 py-3 dark:bg-amber-950/20">
+                        <p className="text-sm">
+                          書きかけの下書きを開きました
+                          {topic ? (
+                            <span className="ml-1 font-semibold">
+                              「{topic}」
+                            </span>
+                          ) : null}
+                        </p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={async () => {
+                            // 先に入力を空にする。中身が残ったまま消すと、
+                            // 直後の自動保存が同じ下書きを書き戻してしまう
+                            setDraftDiscarded(true);
+                            setDirectText("");
+                            setTopic("");
+                            setOcrText("");
+                            setEssayId(null);
+                            setStep(1);
+                            await Promise.allSettled([
+                              clearTextDraft(),
+                              clearOcrDraft(),
+                            ]);
+                          }}
+                        >
+                          別の問題を書く
+                        </Button>
+                      </div>
+                    )}
+
+                  {/* レポートモード: 課題文の読解ペインを入力欄の直上に表示 */}
+                  {reportMode && reportMaterial && (
+                    <div className="mb-4">
+                      <ReportSourcePane
+                        title={reportMaterial.title}
+                        body={reportMaterial.body}
+                        focusPoints={reportMaterial.focusPoints}
+                      />
+                    </div>
+                  )}
+                  {/* 過去問選択時はお題カードを入力欄の直上に表示（執筆中の参照用） */}
+                  {inputMode === "text" && pastQuestion && (
+                    <PastQuestionTopicCard
+                      pastQuestion={pastQuestion}
+                      dynamicSourceText={dynamicSourceText}
+                      dynamicIsSample={dynamicIsSample}
+                      sourceTextLoading={sourceTextLoading}
+                      sourceTextError={sourceTextError}
+                      fullSourceText
+                    />
+                  )}
+                  {/* テーマ選択時もお題カードを入力欄の直上に表示（執筆中の参照用） */}
+                  {inputMode === "text" && selectedTheme && !pastQuestion && (
+                    <Card className="mb-4 border-sky-200 bg-sky-50">
+                      <CardHeader className="pb-3">
+                        <div className="mb-2 flex items-start justify-between gap-2">
+                          <Badge
+                            variant="outline"
+                            className="border-sky-300 bg-sky-100 text-sky-700"
+                          >
+                            {selectedTheme.fieldLabel}
+                          </Badge>
+                          <Badge
+                            variant="outline"
+                            className={
+                              selectedTheme.difficulty === 1
+                                ? "border-emerald-300 bg-emerald-100 text-emerald-800"
+                                : selectedTheme.difficulty === 2
+                                  ? "border-amber-300 bg-amber-100 text-amber-800"
+                                  : "border-rose-300 bg-rose-100 text-rose-800"
+                            }
+                          >
+                            {selectedTheme.difficulty === 1
+                              ? "基礎"
+                              : selectedTheme.difficulty === 2
+                                ? "標準"
+                                : "発展"}
+                          </Badge>
+                        </div>
+                        <CardTitle className="text-lg text-sky-900">
+                          {selectedTheme.title}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="pt-0">
+                        <p className="mb-3 text-sky-800">
+                          {selectedTheme.description}
+                        </p>
+                        <div className="flex flex-wrap items-center gap-4 text-sm text-sky-700">
+                          <span>推奨字数: {selectedTheme.wordLimit}字</span>
+                          {selectedTheme.relatedAP.length > 0 && (
+                            <div className="flex flex-wrap items-center gap-1">
+                              <span>関連分野:</span>
+                              <div className="flex flex-wrap gap-1">
+                                {selectedTheme.relatedAP
+                                  .slice(0, 3)
+                                  .map((ap, index) => (
+                                    <Badge
+                                      key={index}
+                                      variant="secondary"
+                                      className="text-xs"
+                                    >
+                                      {ap}
+                                    </Badge>
+                                  ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                  {inputMode === "text" &&
+                    !pastQuestion &&
+                    !selectedTheme &&
+                    topic.trim() && (
+                      <Card className="mb-4 border-amber-200 bg-amber-50">
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-sm text-amber-900">
+                            お題
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="pt-0">
+                          <p className="text-sm leading-relaxed whitespace-pre-wrap text-amber-900">
+                            {topic}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    )}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-sm lg:text-base">
+                        小論文を入力
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4 p-3 lg:p-4">
+                      {/* レポートモードでは字数を課題文の推奨値に固定（提出時に上書きされ、編集不可） */}
+                      {reportMode ? (
+                        <p className="text-muted-foreground text-sm">
+                          推奨字数: {reportMaterial?.recommendedWordLimit}字
+                        </p>
+                      ) : (
+                        <CharLimitSelector
+                          value={customMaxLength}
+                          onChange={setCustomMaxLength}
+                        />
+                      )}
+                      {directText.trim() === "" && (
+                        <div className="flex gap-2.5 rounded-lg border border-amber-200 bg-amber-50/60 p-3 dark:border-amber-900 dark:bg-amber-950/20">
+                          <Sparkles className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                          <div className="text-xs leading-relaxed text-amber-900 dark:text-amber-100">
+                            <p className="mb-0.5 font-semibold">
+                              書き出しに迷ったら
+                            </p>
+                            <p className="hidden text-amber-800 lg:block dark:text-amber-200">
+                              左の <span className="font-medium">AIコーチ</span>{" "}
+                              に「お題から何を書けばいい?」と話しかけてみよう。気になる論点や書きたい方向を伝えると、一緒に整理してくれます。
+                            </p>
+                            <p className="text-amber-800 lg:hidden dark:text-amber-200">
+                              入力欄の上にある{" "}
+                              <span className="font-medium">執筆サポート</span>{" "}
+                              から AIコーチ
+                              を開いて「お題から何を書けばいい?」と話しかけてみよう。
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                      <ManuscriptEditor
+                        value={directText}
+                        onChange={setDirectText}
+                        maxLength={customMaxLength}
+                        placeholder={
+                          retryParent
+                            ? "前回の改善点を意識して書き直してみよう..."
+                            : "ここに小論文を入力してください..."
+                        }
+                      />
+                      <DraftSaveIndicator
+                        status={
+                          textDraftStatus === "error"
+                            ? essayDraftStatus
+                            : textDraftStatus
+                        }
+                        restored={textDraftRestored}
+                        lastSavedAt={textDraftSavedAt ?? essayDraftSavedAt}
+                        onSaveNow={() => {
+                          void flushEssayDraft();
+                          void saveTextDraft();
+                        }}
+                      />
+                      {error && (
+                        <p className="text-destructive text-sm">{error}</p>
+                      )}
+                      <div className="flex gap-2">
+                        {/* レポートモードでは下書き保存を無効（非表示） */}
+                        {!reportMode && (
+                          <Button
+                            variant="outline"
+                            onClick={handleSaveDraft}
+                            disabled={
+                              savingDraft ||
+                              (!directText.trim() && !topic.trim())
+                            }
+                          >
+                            {savingDraft ? "保存中..." : "下書き保存"}
+                          </Button>
+                        )}
+                        <Button
+                          className="flex-1"
+                          onClick={handleDirectSubmit}
+                          disabled={
+                            isSubmitting ||
+                            !directText.trim() ||
+                            (reportMode && !reportMaterial)
+                          }
+                        >
+                          {isSubmitting ? "添削中..." : "添削する"}
+                          <ChevronRight className="ml-1 size-4" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
-              </details>
-            )}
+              </div>
+            </>
+          )}
 
-            <CharLimitSelector value={customMaxLength} onChange={setCustomMaxLength} />
+          {/* Step 2: Dictation mode — image upload */}
+          {step === 2 && inputMode === "dictation" && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm lg:text-base">
+                  手書き小論文を撮影
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4 p-3 lg:p-4">
+                {/* 画像保存の告知（インフォームド・コンセント）: アップロード画像は精度改善のため保存される */}
+                <p className="bg-muted/50 text-muted-foreground rounded-md px-3 py-2 text-[11px] leading-relaxed">
+                  アップロードした答案画像とOCR結果は、添削精度の改善のために保存・利用されます。
+                </p>
+                <div className="space-y-3">
+                  <p className="text-muted-foreground text-sm">
+                    原稿用紙の写真を撮影してください。複数枚の場合はページ順に追加してください。
+                  </p>
+                </div>
+                {images.length > 0 && (
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3">
+                    {images.map((img, i) => (
+                      <div
+                        key={i}
+                        className="group relative overflow-hidden rounded-lg border"
+                      >
+                        <img
+                          src={img.preview}
+                          alt={`${i + 1}枚目`}
+                          className="aspect-[3/4] w-full object-cover"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+                          <button
+                            type="button"
+                            onClick={() => removeImage(i)}
+                            className="flex size-7 items-center justify-center rounded-full bg-rose-500 text-white"
+                          >
+                            <Trash2 className="size-3.5" />
+                          </button>
+                        </div>
+                        <span className="absolute top-1 left-1 rounded-full bg-black/60 px-1.5 py-0.5 text-[10px] text-white">
+                          {i + 1}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div
+                  className="border-border hover:bg-muted/50 flex min-h-[120px] cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed transition-colors"
+                  onClick={() => fileInputRef.current?.click()}
+                  onDrop={handleDrop}
+                  onDragOver={handleDragOver}
+                >
+                  {images.length === 0 ? (
+                    <>
+                      <Camera className="text-muted-foreground size-8" />
+                      <p className="text-muted-foreground text-sm">
+                        タップして撮影
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="text-muted-foreground size-6" />
+                      <p className="text-muted-foreground text-xs">
+                        もう1枚追加
+                      </p>
+                    </>
+                  )}
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
+                {images.length > 0 && (
+                  <Button
+                    className="w-full"
+                    onClick={handleDictationUpload}
+                    disabled={isUploading}
+                  >
+                    {isUploading ? (
+                      <>
+                        <Loader2 className="mr-1 size-4 animate-spin" />
+                        {uploadProgress || "処理中..."}
+                      </>
+                    ) : (
+                      <>
+                        次へ：音読
+                        <ChevronRight className="ml-1 size-4" />
+                      </>
+                    )}
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
-            <ManuscriptEditor
-              value={ocrText}
-              onChange={setOcrText}
-              maxLength={customMaxLength}
-              placeholder="OCRで認識されたテキストがここに表示されます"
-            />
-            <DraftSaveIndicator
-              status={ocrDraftStatus}
-              restored={ocrDraftRestored}
-              lastSavedAt={ocrDraftSavedAt}
-              onSaveNow={() => void saveOcrDraft()}
-            />
+          {/* Step 3: Dictation mode — OCR確認 + 音読補正 */}
+          {step === 3 && inputMode === "dictation" && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm lg:text-base">
+                  認識結果の確認
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4 p-3 lg:p-4">
+                {/* OCR結果 */}
+                {ocrText ? (
+                  <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+                    <p className="text-sm text-emerald-800">
+                      画像からテキストを認識しました。
+                    </p>
+                    <p className="mt-1 text-xs text-emerald-700">
+                      内容が正しければ「このまま添削」、不十分なら下の音読で補正できます。
+                    </p>
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+                    <p className="text-sm text-amber-800">
+                      画像からテキストを認識できませんでした。下の音読でテキスト化してください。
+                    </p>
+                  </div>
+                )}
 
-            <Separator />
+                <CharLimitSelector
+                  value={customMaxLength}
+                  onChange={setCustomMaxLength}
+                />
 
-            <Button
-              className="w-full"
-              disabled={!ocrText.trim() || isSubmitting}
-              onClick={handleReview}
-            >
-              {isSubmitting ? "添削リクエスト送信中..." : "この内容で添削する"}
-              {!isSubmitting && <ChevronRight className="size-4 ml-1" />}
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-      </>
+                {/* OCRテキスト表示エリア */}
+                <ManuscriptEditor
+                  value={ocrText}
+                  onChange={setOcrText}
+                  maxLength={customMaxLength}
+                  placeholder="認識されたテキストがここに表示されます"
+                  highlights={dictationHighlights}
+                  onHighlightsChange={setDictationHighlights}
+                />
+                <DraftSaveIndicator
+                  status={ocrDraftStatus}
+                  restored={ocrDraftRestored}
+                  lastSavedAt={ocrDraftSavedAt}
+                  onSaveNow={() => void saveOcrDraft()}
+                />
+
+                {/* 添削ボタン */}
+                {ocrText.trim() && (
+                  <Button
+                    className="w-full"
+                    variant="default"
+                    onClick={handleReview}
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-1 size-4 animate-spin" />
+                        添削中...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="mr-1 size-4" />
+                        この内容で添削する
+                      </>
+                    )}
+                  </Button>
+                )}
+
+                <Separator />
+
+                {/* 音読セクション */}
+                <div className="rounded-lg border border-sky-200 bg-sky-50 p-3">
+                  <p className="text-sm font-medium text-sky-800">
+                    音読で補正する
+                  </p>
+                  <p className="mt-1 text-xs text-sky-700">
+                    画像を見ながら音読すると、OCR結果をより正確に補正できます。
+                  </p>
+                </div>
+
+                {/* 元画像 */}
+                {images.length > 0 && (
+                  <div className="max-h-[250px] overflow-hidden overflow-y-auto rounded-lg border">
+                    {images.map((img, i) => (
+                      <div key={i} className="relative">
+                        <img
+                          src={img.preview}
+                          alt={`${i + 1}枚目`}
+                          className="w-full object-contain"
+                        />
+                        {images.length > 1 && (
+                          <span className="absolute top-1 left-1 rounded-full bg-black/60 px-1.5 py-0.5 text-[10px] text-white">
+                            {i + 1}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Recording UI */}
+                <div className="flex flex-col items-center gap-3 py-4">
+                  {isDictating ? (
+                    <>
+                      <Loader2 className="text-primary size-10 animate-spin" />
+                      <p className="text-muted-foreground text-sm">
+                        音声を認識中...
+                      </p>
+                    </>
+                  ) : isRecording ? (
+                    <>
+                      <button
+                        onClick={() => {
+                          setIsRecording(false);
+                          const recorder = (
+                            window as unknown as Record<string, MediaRecorder>
+                          ).__essayRecorder;
+                          if (recorder && recorder.state !== "inactive")
+                            recorder.stop();
+                        }}
+                        className="bg-destructive relative flex h-20 w-20 items-center justify-center rounded-full text-white shadow-lg"
+                      >
+                        <span className="bg-destructive/30 absolute inset-0 animate-ping rounded-full" />
+                        <Square className="relative z-10 size-8" />
+                      </button>
+                      <p className="text-muted-foreground text-sm">
+                        録音中... 読み終わったらタップ
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => {
+                          setIsRecording(true);
+                          // Start recording
+                          navigator.mediaDevices
+                            .getUserMedia({
+                              audio: {
+                                echoCancellation: true,
+                                noiseSuppression: true,
+                                autoGainControl: true,
+                              },
+                            })
+                            .then((stream) => {
+                              const mimeType = MediaRecorder.isTypeSupported(
+                                "audio/webm;codecs=opus"
+                              )
+                                ? "audio/webm;codecs=opus"
+                                : "audio/webm";
+                              const recorder = new MediaRecorder(stream, {
+                                mimeType,
+                              });
+                              const chunks: Blob[] = [];
+                              recorder.ondataavailable = (e) => {
+                                if (e.data.size > 0) chunks.push(e.data);
+                              };
+                              recorder.onstop = () => {
+                                stream.getTracks().forEach((t) => t.stop());
+                                const blob = new Blob(chunks, {
+                                  type: mimeType,
+                                });
+                                const reader = new FileReader();
+                                reader.onloadend = () => {
+                                  const base64 = (
+                                    reader.result as string
+                                  ).split(",")[1];
+                                  handleDictationComplete(base64, mimeType);
+                                };
+                                reader.readAsDataURL(blob);
+                              };
+                              recorder.start(250);
+                              // Store recorder ref for stop button
+                              (
+                                window as unknown as Record<
+                                  string,
+                                  MediaRecorder
+                                >
+                              ).__essayRecorder = recorder;
+                            })
+                            .catch(() => {
+                              setIsRecording(false);
+                              setError("マイクにアクセスできません");
+                            });
+                        }}
+                        className="bg-primary text-primary-foreground flex h-20 w-20 items-center justify-center rounded-full shadow-lg transition-transform hover:scale-105"
+                      >
+                        <Mic className="size-8" />
+                      </button>
+                      <p className="text-muted-foreground text-sm">
+                        タップして音読開始
+                      </p>
+                    </>
+                  )}
+                </div>
+
+                {error && (
+                  <p className="text-destructive text-center text-sm">
+                    {error}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Step 2: Image upload mode */}
+          {step === 2 && inputMode === "image" && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm lg:text-base">
+                  {images.length === 0
+                    ? "1枚目の原稿用紙"
+                    : `${images.length + 1}枚目を追加しますか？`}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4 p-3 lg:p-4">
+                {/* 確認済み画像一覧 */}
+                {images.length > 0 && (
+                  <div className="space-y-3">
+                    {images.map((img, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center gap-3 rounded-lg border p-2"
+                      >
+                        <img
+                          src={img.preview}
+                          alt={`${i + 1}枚目`}
+                          className="size-16 shrink-0 rounded-md object-cover"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium">{i + 1}枚目</p>
+                          <p className="flex items-center gap-1 text-xs text-emerald-600">
+                            <CheckCircle className="size-3" />
+                            追加済み
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeImage(i)}
+                          className="text-muted-foreground hover:text-destructive p-1"
+                        >
+                          <Trash2 className="size-4" />
+                        </button>
+                      </div>
+                    ))}
+                    <Separator />
+                  </div>
+                )}
+
+                {/* 撮影/選択エリア */}
+                <div
+                  className="border-border hover:bg-muted/50 flex min-h-[180px] cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed transition-colors"
+                  onDrop={handleDrop}
+                  onDragOver={handleDragOver}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Camera className="text-muted-foreground size-10" />
+                  <p className="text-muted-foreground text-center text-sm">
+                    {images.length === 0
+                      ? "タップして1枚目を撮影・選択"
+                      : "タップして次のページを追加"}
+                  </p>
+                </div>
+
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Upload className="mr-2 size-4" />
+                    ファイル選択
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => cameraInputRef.current?.click()}
+                  >
+                    <Camera className="mr-2 size-4" />
+                    カメラ撮影
+                  </Button>
+                </div>
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
+                <input
+                  ref={cameraInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
+
+                {/* 画像がある場合のアクションボタン */}
+                {images.length > 0 && (
+                  <>
+                    <Separator />
+                    <Button
+                      className="w-full"
+                      disabled={isUploading}
+                      onClick={handleUpload}
+                    >
+                      {isUploading ? (
+                        <>
+                          <Loader2 className="mr-1 size-4 animate-spin" />
+                          {uploadProgress || "OCR解析中..."}
+                        </>
+                      ) : (
+                        <>
+                          {images.length === 1
+                            ? "この1枚でOCR解析"
+                            : `${images.length}枚でOCR解析`}
+                          <ChevronRight className="ml-1 size-4" />
+                        </>
+                      )}
+                    </Button>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {step === 3 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm lg:text-base">
+                  OCR結果を確認・修正
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4 p-3 lg:p-4">
+                {error && (
+                  <p className="text-destructive bg-destructive/10 rounded p-3 text-sm">
+                    {error}
+                  </p>
+                )}
+                <div className="mb-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
+                  <p className="text-sm font-medium text-amber-800">
+                    OCRの認識結果を確認してください
+                  </p>
+                  <p className="mt-1 text-xs text-amber-700">
+                    誤認識がある場合は修正してから添削に進んでください。正確な添削には正しいテキストが必要です。
+                  </p>
+                </div>
+
+                {images.length > 0 && (
+                  <details className="mb-2">
+                    <summary className="text-muted-foreground hover:text-foreground cursor-pointer text-sm">
+                      元画像を表示（{images.length}枚）
+                    </summary>
+                    <div
+                      className={`mt-2 gap-2 ${images.length > 1 ? "grid grid-cols-2" : ""}`}
+                    >
+                      {images.map((img, i) => (
+                        <div key={i} className="relative">
+                          <img
+                            src={img.preview}
+                            alt={`${i + 1}枚目`}
+                            className="max-h-64 w-full rounded-lg border object-contain"
+                          />
+                          {images.length > 1 && (
+                            <span className="absolute top-1 left-1 rounded-full bg-black/60 px-1.5 py-0.5 text-[10px] text-white">
+                              {i + 1}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+                )}
+
+                <CharLimitSelector
+                  value={customMaxLength}
+                  onChange={setCustomMaxLength}
+                />
+
+                <ManuscriptEditor
+                  value={ocrText}
+                  onChange={setOcrText}
+                  maxLength={customMaxLength}
+                  placeholder="OCRで認識されたテキストがここに表示されます"
+                />
+                <DraftSaveIndicator
+                  status={ocrDraftStatus}
+                  restored={ocrDraftRestored}
+                  lastSavedAt={ocrDraftSavedAt}
+                  onSaveNow={() => void saveOcrDraft()}
+                />
+
+                <Separator />
+
+                <Button
+                  className="w-full"
+                  disabled={!ocrText.trim() || isSubmitting}
+                  onClick={handleReview}
+                >
+                  {isSubmitting
+                    ? "添削リクエスト送信中..."
+                    : "この内容で添削する"}
+                  {!isSubmitting && <ChevronRight className="ml-1 size-4" />}
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </>
       )}
     </div>
   );
