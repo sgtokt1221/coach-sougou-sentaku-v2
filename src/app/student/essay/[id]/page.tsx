@@ -64,6 +64,7 @@ import {
 } from "@/lib/score-rank";
 import { buildNextStepHint } from "@/lib/essay/next-step";
 import { EssayResultSummary } from "@/components/essay/EssayResultSummary";
+import { EssayReviewCoach } from "@/components/essay/EssayReviewCoach";
 import { ESSAY_CATEGORY_LABELS } from "@/lib/growth/weakness-category";
 
 interface EssayScores {
@@ -744,6 +745,19 @@ export default function EssayResultPage() {
             )}
           </CardContent>
         </Card>
+
+        {/*
+          講評を読んだ直後が一番聞きたいタイミングなので、詳細の中ではなく
+          最初の画面に置く。既定は閉じた1行で、開いたときだけ会話が出る。
+        */}
+        <EssayReviewCoach
+          essayId={result.id}
+          topic={result.topic}
+          essayText={result.ocrText ?? ""}
+          scoreTotal={totalScore}
+          scoreMaximum={scoreMaximum}
+          feedback={result.feedback}
+        />
 
         <div className="mb-6 flex justify-center">
           <Button

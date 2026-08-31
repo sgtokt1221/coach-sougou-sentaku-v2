@@ -13,7 +13,10 @@
  *  - 日本語、「です・ます」 調、 2-4 文程度の短い返答
  */
 
-import type { LectureCoachContext } from "@/lib/types/essay-coach";
+import type {
+  LectureCoachContext,
+  CoachReviewContext,
+} from "@/lib/types/essay-coach";
 
 export interface CoachSelfAnalysis {
   coreValues?: string[];
@@ -45,6 +48,7 @@ export interface CoachContext {
   chartData?: unknown;
   /** 小論文講座の課題を書いている場合の文脈 */
   lecture?: LectureCoachContext;
+  review?: CoachReviewContext;
 }
 
 /** 出題資料が長大でもプロンプトを壊さないよう、投入前に丸める。 */
@@ -105,6 +109,7 @@ export function buildEssayCoachSystemPrompt(ctx: CoachContext): string {
     selfAnalysis: ctx.selfAnalysis ?? null,
     draft: ctx.draft || null,
     lecture: ctx.lecture ?? null,
+    review: ctx.review ?? null,
   };
 
   /**
@@ -139,6 +144,22 @@ ${
           : ""
       }
 - 大学名やアドミッションポリシーには触れないでください（講座の課題は志望校に依存しません）。`
+    : "";
+
+  /**
+   * 添削結果を見ながらの相談は、これから書く場面とは求められるものが違う。
+   * 答案は提出済みで点も付いているので、書き出しの相談をしても意味がない。
+   * 生徒が知りたいのは「この指摘は何を言っているのか」「どう直せばいいのか」。
+   */
+  const reviewRule = ctx.review
+    ? `
+
+## いまは添削結果を見ながらの相談です
+- reference_data の review が、生徒がいま画面で読んでいる採点と講評です。draft はその採点対象の答案（提出済み）です。
+- 指摘の意味を聞かれたら、講評の言葉を繰り返さず、答案のどの部分を指しているかを引用して説明してください。
+- 「どう直せばいい?」には、直した文そのものを示してください。抽象的な方針だけで終わらせない。
+- これから書く前提の助言（書き出しをどうする、構成をどう組む）はしないでください。答案はもう出ています。
+- 次の答案に活かす話をするときは、review の priorityImprovement を軸にしてください。`
     : "";
 
   return `あなたは、高校生が大学入試の小論文 (総合型選抜) を執筆する過程を支援する対話型コーチです。
@@ -192,7 +213,7 @@ ${
 - 上から目線の命令調 (「○○しなさい」 「こうしろ」)
 - アドミッション・ポリシーの逐語引用 (= 「APではこうあります」 という露骨な参照)
 - Markdown 記法 (**強調**、# 見出し、- 箇条書き、\`コード\`)。画面はプレーンテキスト表示なので記号がそのまま見えてしまう
-- 絵文字の使用${noTopicRule}${lectureRule}
+- 絵文字の使用${noTopicRule}${lectureRule}${reviewRule}
 
 ## 出題形式ごとの見方
 - ${buildQuestionTypeGuide(ctx.questionType)}

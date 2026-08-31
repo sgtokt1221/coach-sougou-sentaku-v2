@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -51,6 +51,14 @@ interface EssayCoachChatProps {
   chartData?: unknown;
   /** 小論文講座の課題を書いている場合の文脈 */
   lectureContext?: CoachRequestBody["lectureContext"];
+  /** 添削結果を見ながら相談する場合の文脈（講評そのもの） */
+  reviewContext?: CoachRequestBody["reviewContext"];
+  /**
+   * 最初の一言とクイック質問。既定は「これから書く」場面向けなので、
+   * 添削結果など別の場面ではその場に合うものを渡す。
+   */
+  openingMessage?: string;
+  quickPrompts?: string[];
   /** topic が変わった際に会話をリセットするためのキー */
   resetKey?: string;
   /**
@@ -70,10 +78,22 @@ export function EssayCoachChat({
   sourceText,
   chartData,
   lectureContext,
+  reviewContext,
+  openingMessage,
+  quickPrompts,
   resetKey,
   onThreadChange,
 }: EssayCoachChatProps) {
-  const [messages, setMessages] = useState<CoachMessage[]>([OPENING_MESSAGE]);
+  // resetKey の効果で参照するので、識別子を安定させる
+  const opening = useMemo<CoachMessage>(
+    () =>
+      openingMessage
+        ? { ...OPENING_MESSAGE, content: openingMessage }
+        : OPENING_MESSAGE,
+    [openingMessage]
+  );
+  const prompts = quickPrompts ?? QUICK_PROMPTS;
+  const [messages, setMessages] = useState<CoachMessage[]>([opening]);
   const [threadId, setThreadId] = useState<string | null>(null);
   // 親が古い ID を掴んだままにならないよう、変化のたびに通知する
   useEffect(() => {
@@ -88,11 +108,11 @@ export function EssayCoachChat({
 
   // resetKey が変わったら会話をリセット
   useEffect(() => {
-    setMessages([OPENING_MESSAGE]);
+    setMessages([opening]);
     setThreadId(null);
     setInput("");
     setError(null);
-  }, [resetKey]);
+  }, [resetKey, opening]);
 
   const restoreDraft = useCallback(
     (saved: {
@@ -145,6 +165,7 @@ export function EssayCoachChat({
       sourceText,
       chartData,
       lectureContext,
+      reviewContext,
       userMessage: content,
     };
 
@@ -224,7 +245,7 @@ export function EssayCoachChat({
       </div>
       <div className="space-y-2 border-t p-3">
         <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
-          {QUICK_PROMPTS.map((p) => (
+          {prompts.map((p) => (
             <button
               key={p}
               type="button"

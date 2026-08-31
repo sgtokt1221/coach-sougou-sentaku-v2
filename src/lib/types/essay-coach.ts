@@ -88,6 +88,26 @@ export interface LectureCoachContext {
   drillHint?: string;
 }
 
+/**
+ * 添削結果を見ながら相談するときにコーチへ渡す文脈。
+ *
+ * これが無いと、コーチは生徒が読んでいる講評を知らないまま答えることになり、
+ * 「この指摘どういう意味?」に一般論で返してしまう。答案は draft で渡すので、
+ * ここには採点と講評のうち生徒が画面で見ているものだけを入れる。
+ */
+export interface CoachReviewContext {
+  total: number;
+  maximum: number;
+  goodPoints: string[];
+  improvements: string[];
+  /** 「次にやること」。生徒が最初に目を留める一文 */
+  priorityImprovement?: string;
+  /** 赤ペン。原文と直し案の対で渡さないと、どの文の話か伝わらない */
+  corrections?: { original: string; suggestion: string; reason?: string }[];
+  /** 繰り返し指摘されている弱点（「N回目」として画面に出ているもの） */
+  repeatedIssues?: { area: string; count: number }[];
+}
+
 export interface CoachRequestBody {
   /** 継続スレッド時。未指定なら新規作成 */
   threadId?: string;
@@ -104,6 +124,8 @@ export interface CoachRequestBody {
   chartData?: unknown;
   /** 小論文講座の課題を書いている場合の文脈 */
   lectureContext?: LectureCoachContext;
+  /** 添削結果を見ながら相談している場合の文脈 */
+  reviewContext?: CoachReviewContext;
   /** ユーザーの今回の発話 */
   userMessage: string;
 }

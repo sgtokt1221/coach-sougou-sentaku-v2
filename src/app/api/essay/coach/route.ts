@@ -11,6 +11,7 @@ import type {
   CoachRequestBody,
   CoachResponseBody,
   CoachThread,
+  CoachReviewContext,
 } from "@/lib/types/essay-coach";
 import type { Activity } from "@/lib/types/activity";
 import { AI_MODEL_SONNET } from "@/lib/ai/prompt-versions";
@@ -35,6 +36,35 @@ const COACH_MODEL = AI_MODEL_SONNET;
 function truncateDraft(s: string): string {
   if (!s) return "";
   return s.length > MAX_DRAFT_CHARS ? s.slice(0, MAX_DRAFT_CHARS) : s;
+}
+
+/**
+ * 講評は生徒の画面に出ている分だけで足りる。全部入れるとプロンプトが膨らみ、
+ * 肝心の答案と質問が薄まるので、件数と長さで絞る。
+ */
+function trimReviewContext(
+  r: CoachReviewContext | undefined
+): CoachReviewContext | undefined {
+  if (!r) return undefined;
+  const text = (v: string) => String(v ?? "").slice(0, 400);
+  return {
+    total: r.total,
+    maximum: r.maximum,
+    goodPoints: (r.goodPoints ?? []).slice(0, 5).map(text),
+    improvements: (r.improvements ?? []).slice(0, 5).map(text),
+    priorityImprovement: r.priorityImprovement
+      ? text(r.priorityImprovement)
+      : undefined,
+    corrections: (r.corrections ?? []).slice(0, 12).map((c) => ({
+      original: text(c.original),
+      suggestion: text(c.suggestion),
+      reason: c.reason ? text(c.reason) : undefined,
+    })),
+    repeatedIssues: (r.repeatedIssues ?? []).slice(0, 5).map((i) => ({
+      area: text(i.area),
+      count: i.count,
+    })),
+  };
 }
 
 function buildDraftSnapshot(s: string): string {
@@ -97,6 +127,8 @@ export async function POST(request: NextRequest) {
   const chartData = body.chartData;
   // 講座の課題を書いている場合の文脈（何のブロックを何字で書かせているか）
   const lecture = body.lectureContext;
+  // 添削結果を見ながら相談している場合の文脈（生徒が読んでいる講評そのもの）
+  const review = trimReviewContext(body.reviewContext);
 
   // スレッド取得 or 新規作成
   const threadsCol = adminDb.collection(`users/${uid}/essayCoachThreads`);
@@ -219,6 +251,7 @@ export async function POST(request: NextRequest) {
     questionType,
     sourceText,
     chartData,
+    review,
   });
 
   // Claude 呼び出し (LLMOps: レイテンシ・トークン・コストをトレース記録)
