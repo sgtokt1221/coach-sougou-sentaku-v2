@@ -59,22 +59,13 @@ import type { PastQuestionSourceTextResponse } from "@/lib/types/past-question-s
 import type { ReportMaterial } from "@/data/essay-report-materials";
 import { ReportSourcePane } from "@/components/essay/ReportSourcePane";
 import { buildReportQuestion } from "@/lib/essay/report-question";
+import { ESSAY_FIELDS } from "@/lib/types/essay-field";
 import { useAutosave } from "@/hooks/useAutosave";
 import { usePersistentDraft } from "@/hooks/usePersistentDraft";
 import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
 
-/** レポートモードで選べる9系統（essay-themes と同一の分類）。 */
-const REPORT_FIELDS: Array<{ field: string; label: string }> = [
-  { field: "society", label: "社会" },
-  { field: "economy", label: "経済" },
-  { field: "education", label: "教育" },
-  { field: "environment", label: "環境" },
-  { field: "international", label: "国際" },
-  { field: "law", label: "法律" },
-  { field: "medical", label: "医療" },
-  { field: "politics", label: "政治" },
-  { field: "technology", label: "科学技術" },
-];
+/** レポートモードで選べる分野（正本は ESSAY_FIELDS）。 */
+const REPORT_FIELDS = ESSAY_FIELDS;
 
 /** レポート課題文一覧の軽量項目（本文 body を含まない）。 */
 type ReportMaterialListItem = {
