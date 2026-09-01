@@ -29,6 +29,7 @@ import type { CoachRequestBody } from "@/lib/types/essay-coach";
 import { EssayCoachChat } from "./EssayCoachChat";
 import { SelfAnalysisReference } from "./SelfAnalysisReference";
 import { APReference } from "@/components/coach/APReference";
+import { ReportSourcePane } from "@/components/essay/ReportSourcePane";
 import { PastQuestionChart } from "./PastQuestionChart";
 import type {
   FacultyTopic,
@@ -115,6 +116,17 @@ interface EssayCoachPanelProps {
    */
   coachMaterial?: ReferenceMaterial;
   /**
+   * レポート課題の課題文と設問。渡すと「課題文」タブが先頭に付く。
+   * 入力欄の上に置いていたときは、書きながら設問を見返すのに
+   * 画面を大きくさかのぼる必要があった。AP・ネタと同じ場所に集める。
+   */
+  reportMaterial?: {
+    title: string;
+    question: string;
+    body: string;
+    recommendedWordLimit: number;
+  };
+  /**
    * 会話をリセットする単位。既定は topic だが、同じテーマ名で設問が変わる画面
    * (ちょこ添削の空欄切り替えなど) では設問を一意に識別する値を渡すこと。
    */
@@ -129,7 +141,9 @@ function resolveReferenceLabel(material: ReferenceMaterial | undefined): {
 } {
   const qt = material?.questionType;
   const hasText = Boolean(material?.sourceText);
-  const hasChart = Boolean(material?.chartData && material.chartData.length > 0);
+  const hasChart = Boolean(
+    material?.chartData && material.chartData.length > 0
+  );
   if (qt === "english-reading" || (hasText && !hasChart)) {
     return { label: "英文", Icon: FileText };
   }
@@ -148,8 +162,15 @@ interface TabDef {
 function buildPrimaryTabs(
   hasReference: boolean,
   reference: ReferenceMaterial | undefined,
+  hasReport: boolean
 ): TabDef[] {
   // 主要タブ (大きく表示): 資料 vs AIコーチ の選択
+  if (hasReport) {
+    return [
+      { id: "reference", label: "課題文", Icon: FileText },
+      { id: "coach", label: "AIコーチ", Icon: MessageSquare },
+    ];
+  }
   if (hasReference) {
     const ref = resolveReferenceLabel(reference);
     return [
@@ -170,7 +191,7 @@ export function EssayCoachPanel(props: EssayCoachPanelProps) {
   return (
     <>
       {/* デスクトップ: 左列として常設 (2 カラムレイアウトの左) */}
-      <div className="hidden lg:flex lg:flex-col lg:sticky lg:top-4 lg:h-[calc(100vh-2rem)] lg:min-h-0">
+      <div className="hidden lg:sticky lg:top-4 lg:flex lg:h-[calc(100vh-2rem)] lg:min-h-0 lg:flex-col">
         <EssayCoachPanelBody {...props} />
       </div>
 
@@ -189,6 +210,7 @@ export function EssayCoachPanelBody({
   facultyId,
   referenceMaterial,
   coachMaterial,
+  reportMaterial,
   conversationKey,
   onThreadChange,
 }: EssayCoachPanelProps) {
@@ -196,21 +218,27 @@ export function EssayCoachPanelBody({
   const materialForCoach = referenceMaterial ?? coachMaterial;
   const hasReference = Boolean(
     referenceMaterial?.sourceText ||
-      (referenceMaterial?.chartData && referenceMaterial.chartData.length > 0),
+    (referenceMaterial?.chartData && referenceMaterial.chartData.length > 0)
   );
-  const primaryTabs = buildPrimaryTabs(hasReference, referenceMaterial);
-  const [active, setActive] = useState<TabId>(hasReference ? "reference" : "coach");
+  const primaryTabs = buildPrimaryTabs(
+    hasReference,
+    referenceMaterial,
+    Boolean(reportMaterial)
+  );
+  const [active, setActive] = useState<TabId>(
+    hasReference || reportMaterial ? "reference" : "coach"
+  );
 
   return (
-    <Card className="flex flex-col h-full min-h-0 overflow-hidden rounded-xl">
+    <Card className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl">
       {/* 主要タブ (大きく表示) 資料 ↔ AIコーチ */}
-      <div className="flex items-center gap-1 border-b bg-muted/30 p-1.5">
+      <div className="bg-muted/30 flex items-center gap-1 border-b p-1.5">
         {primaryTabs.map(({ id, label, Icon }) => (
           <button
             key={id}
             type="button"
             onClick={() => setActive(id)}
-            className={`flex-1 flex items-center justify-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium transition-colors cursor-pointer ${
+            className={`flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${
               active === id
                 ? "bg-teal-500 text-white shadow-sm"
                 : "text-foreground hover:bg-background/60"
@@ -229,7 +257,7 @@ export function EssayCoachPanelBody({
             key={id}
             type="button"
             onClick={() => setActive(id)}
-            className={`flex-1 flex items-center justify-center gap-1 rounded px-2 py-1 text-[11px] font-medium transition-colors cursor-pointer ${
+            className={`flex flex-1 cursor-pointer items-center justify-center gap-1 rounded px-2 py-1 text-[11px] font-medium transition-colors ${
               active === id
                 ? "bg-teal-100 text-teal-800 dark:bg-teal-950/50 dark:text-teal-200"
                 : "text-muted-foreground hover:bg-muted"
@@ -241,8 +269,16 @@ export function EssayCoachPanelBody({
         ))}
       </div>
 
-      <div className="flex-1 min-h-0 overflow-hidden">
-        {active === "reference" && hasReference && (
+      <div className="min-h-0 flex-1 overflow-hidden">
+        {active === "reference" && reportMaterial && (
+          <ReportSourcePane
+            title={reportMaterial.title}
+            question={reportMaterial.question}
+            body={reportMaterial.body}
+            wordLimit={reportMaterial.recommendedWordLimit}
+          />
+        )}
+        {active === "reference" && !reportMaterial && hasReference && (
           <ReferenceReference material={referenceMaterial!} />
         )}
         {active === "coach" && (
@@ -272,15 +308,15 @@ export function EssayCoachPanelBody({
 
 function ReferenceReference({ material }: { material: ReferenceMaterial }) {
   return (
-    <div className="h-full overflow-y-auto p-4 space-y-4">
-      <div className="flex items-center gap-2 flex-wrap">
+    <div className="h-full space-y-4 overflow-y-auto p-4">
+      <div className="flex flex-wrap items-center gap-2">
         <FileText className="size-4 text-indigo-600" />
         <span className="text-sm font-semibold text-indigo-800">出題資料</span>
         {(material.questionType === "english-reading" ||
           material.questionType === "mixed") && (
           <Badge
             variant="outline"
-            className="text-xs bg-emerald-50 text-emerald-700 border-emerald-300"
+            className="border-emerald-300 bg-emerald-50 text-xs text-emerald-700"
           >
             英文
           </Badge>
@@ -289,15 +325,15 @@ function ReferenceReference({ material }: { material: ReferenceMaterial }) {
           material.questionType === "mixed") && (
           <Badge
             variant="outline"
-            className="text-xs bg-purple-50 text-purple-700 border-purple-300"
+            className="border-purple-300 bg-purple-50 text-xs text-purple-700"
           >
             グラフ
           </Badge>
         )}
       </div>
       {material.sourceText && (
-        <div className="rounded-lg bg-gray-50 border p-3">
-          <p className="text-sm whitespace-pre-wrap leading-relaxed font-mono break-words">
+        <div className="rounded-lg border bg-gray-50 p-3">
+          <p className="font-mono text-sm leading-relaxed break-words whitespace-pre-wrap">
             {material.sourceText}
           </p>
         </div>
@@ -325,7 +361,7 @@ function NetaReference({
   facultyId?: string;
 }) {
   const { data, isLoading } = useAuthSWR<University>(
-    universityId ? `/api/universities/${universityId}` : null,
+    universityId ? `/api/universities/${universityId}` : null
   );
 
   // 志望校・学部から自動解決した topicFacultyId (取れない場合は undefined)
@@ -336,9 +372,13 @@ function NetaReference({
     : undefined;
 
   // ユーザーが手動で選んだ学部 (セッション内のみ保持)
-  const [manualFacultyId, setManualFacultyId] = useState<string | undefined>(undefined);
+  const [manualFacultyId, setManualFacultyId] = useState<string | undefined>(
+    undefined
+  );
   const effectiveFacultyId = manualFacultyId ?? autoResolvedFacultyId;
-  const topicData = effectiveFacultyId ? FACULTY_TOPIC_DATA[effectiveFacultyId] : undefined;
+  const topicData = effectiveFacultyId
+    ? FACULTY_TOPIC_DATA[effectiveFacultyId]
+    : undefined;
 
   // 利用可能な学部をカテゴリ別にグループ化
   const groupedFaculties = useMemo(() => {
@@ -360,17 +400,19 @@ function NetaReference({
     manualFacultyId !== autoResolvedFacultyId;
 
   return (
-    <div className="h-full flex flex-col min-h-0">
+    <div className="flex h-full min-h-0 flex-col">
       {/* 学部セレクタ (常設) */}
-      <div className="border-b p-2.5 space-y-1.5 shrink-0">
-        <div className="text-[11px] text-muted-foreground">学部別ネタインプット</div>
+      <div className="shrink-0 space-y-1.5 border-b p-2.5">
+        <div className="text-muted-foreground text-[11px]">
+          学部別ネタインプット
+        </div>
         <Select
           value={effectiveFacultyId ?? ""}
           onValueChange={(v: string | null) =>
             setManualFacultyId(v ?? undefined)
           }
         >
-          <SelectTrigger className="w-full h-9 text-sm">
+          <SelectTrigger className="h-9 w-full text-sm">
             <SelectValue placeholder="学部を選択..." />
           </SelectTrigger>
           <SelectContent>
@@ -390,7 +432,7 @@ function NetaReference({
           <button
             type="button"
             onClick={() => setManualFacultyId(undefined)}
-            className="text-[11px] text-primary hover:underline cursor-pointer"
+            className="text-primary cursor-pointer text-[11px] hover:underline"
           >
             志望学部に戻す
           </button>
@@ -398,22 +440,24 @@ function NetaReference({
       </div>
 
       {/* 本体 */}
-      <div className="flex-1 min-h-0 overflow-y-auto">
+      <div className="min-h-0 flex-1 overflow-y-auto">
         {isLoading && universityId && !effectiveFacultyId ? (
-          <div className="p-4 text-sm text-muted-foreground">読み込み中...</div>
+          <div className="text-muted-foreground p-4 text-sm">読み込み中...</div>
         ) : !topicData ? (
-          <div className="p-4 text-sm text-muted-foreground">
+          <div className="text-muted-foreground p-4 text-sm">
             上のセレクタから学部を選ぶと、その学部のネタインプットが表示されます。
           </div>
         ) : (
-          <div className="p-3 space-y-3">
+          <div className="space-y-3 p-3">
             <div className="px-1">
-              <div className="text-sm font-semibold">{topicData.facultyLabel}</div>
+              <div className="text-sm font-semibold">
+                {topicData.facultyLabel}
+              </div>
               <Link
                 href={`/student/topic-input/${effectiveFacultyId}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 mt-1 text-[11px] text-primary hover:underline"
+                className="text-primary mt-1 inline-flex items-center gap-1 text-[11px] hover:underline"
               >
                 全ネタを別ページで開く
                 <ChevronRight className="size-3" />
@@ -421,7 +465,7 @@ function NetaReference({
             </div>
             {topicData.categories.map((cat) => (
               <div key={cat.id} className="space-y-1.5">
-                <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide px-1">
+                <div className="text-muted-foreground px-1 text-[11px] font-semibold tracking-wide uppercase">
                   {cat.label}
                 </div>
                 <div className="space-y-1.5">
@@ -441,20 +485,22 @@ function NetaReference({
 function NetaTopicCard({ topic }: { topic: FacultyTopic }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="rounded-lg border bg-card">
+    <div className="bg-card rounded-lg border">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full text-left p-2.5 cursor-pointer"
+        className="w-full cursor-pointer p-2.5 text-left"
       >
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
-            <div className="text-xs font-medium leading-snug">
-              <span className="text-muted-foreground mr-1">#{topic.number}</span>
+            <div className="text-xs leading-snug font-medium">
+              <span className="text-muted-foreground mr-1">
+                #{topic.number}
+              </span>
               {topic.title}
             </div>
             {!open && (
-              <div className="text-[11px] text-muted-foreground line-clamp-2 mt-1">
+              <div className="text-muted-foreground mt-1 line-clamp-2 text-[11px]">
                 {topic.summary}
               </div>
             )}
@@ -462,12 +508,16 @@ function NetaTopicCard({ topic }: { topic: FacultyTopic }) {
         </div>
       </button>
       {open && (
-        <div className="border-t px-2.5 py-2 text-[11px] space-y-2">
-          <div className="text-foreground/85 leading-relaxed">{topic.summary}</div>
+        <div className="space-y-2 border-t px-2.5 py-2 text-[11px]">
+          <div className="text-foreground/85 leading-relaxed">
+            {topic.summary}
+          </div>
           {topic.sections.map((sec) => (
-            <div key={sec.id} className="border-l-2 border-muted pl-2">
-              <div className="text-[11px] font-semibold mb-0.5">{sec.heading}</div>
-              <p className="whitespace-pre-wrap leading-relaxed text-foreground/85">
+            <div key={sec.id} className="border-muted border-l-2 pl-2">
+              <div className="mb-0.5 text-[11px] font-semibold">
+                {sec.heading}
+              </div>
+              <p className="text-foreground/85 leading-relaxed whitespace-pre-wrap">
                 {stripHighlights(sec.body)}
               </p>
             </div>

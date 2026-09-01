@@ -57,7 +57,6 @@ import {
 } from "@/data/essay-past-questions";
 import type { PastQuestionSourceTextResponse } from "@/lib/types/past-question-source";
 import type { ReportMaterial } from "@/data/essay-report-materials";
-import { ReportSourcePane } from "@/components/essay/ReportSourcePane";
 import { buildReportQuestion } from "@/lib/essay/report-question";
 import { ESSAY_FIELDS } from "@/lib/types/essay-field";
 import { useAutosave } from "@/hooks/useAutosave";
@@ -73,6 +72,7 @@ type ReportMaterialListItem = {
   title: string;
   field: string;
   fieldLabel: string;
+  question: string;
   focusPoints: string[];
   recommendedWordLimit: number;
   difficulty: number;
@@ -2027,6 +2027,17 @@ export default function EssayNewPage() {
                   facultyId={facultyId || undefined}
                   referenceMaterial={effectiveMaterial}
                   coachMaterial={reportCoachMaterial}
+                  reportMaterial={
+                    reportMode && reportMaterial
+                      ? {
+                          title: reportMaterial.title,
+                          question: reportMaterial.question,
+                          body: reportMaterial.body,
+                          recommendedWordLimit:
+                            reportMaterial.recommendedWordLimit,
+                        }
+                      : undefined
+                  }
                   onThreadChange={setCoachThreadId}
                 />
 
@@ -2070,16 +2081,6 @@ export default function EssayNewPage() {
                       </div>
                     )}
 
-                  {/* レポートモード: 課題文の読解ペインを入力欄の直上に表示 */}
-                  {reportMode && reportMaterial && (
-                    <div className="mb-4">
-                      <ReportSourcePane
-                        title={reportMaterial.title}
-                        body={reportMaterial.body}
-                        focusPoints={reportMaterial.focusPoints}
-                      />
-                    </div>
-                  )}
                   {/* 過去問選択時はお題カードを入力欄の直上に表示（執筆中の参照用） */}
                   {inputMode === "text" && pastQuestion && (
                     <PastQuestionTopicCard

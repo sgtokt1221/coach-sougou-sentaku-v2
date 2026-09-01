@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAuthToken } from "@/lib/firebase/admin";
-import { getReportMaterialsByField, reportMaterials } from "@/data/essay-report-materials";
+import {
+  getReportMaterialsByField,
+  reportMaterials,
+} from "@/data/essay-report-materials";
 
 /**
  * GET /api/essay/report/materials
@@ -21,6 +24,7 @@ export async function GET(request: NextRequest) {
     field: m.field,
     fieldLabel: m.fieldLabel,
     title: m.title,
+    question: m.question,
     focusPoints: m.focusPoints,
     recommendedWordLimit: m.recommendedWordLimit,
     difficulty: m.difficulty,
