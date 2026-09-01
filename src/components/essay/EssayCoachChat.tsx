@@ -134,6 +134,44 @@ export function EssayCoachChat({
       saved.input.trim().length > 0 || saved.messages.length > 1,
   });
 
+  /**
+   * 端末にキャッシュが無いときは、サーバーに残っている会話から戻す。
+   *
+   * 会話は端末の下書きからしか復元しておらず、別の端末で開いたときや、
+   * 下書き一覧から開き直したときに履歴が空になっていた。
+   * 会話そのものは essayCoachThreads に残っているので、お題で引き当てる。
+   */
+  const serverRestoredRef = useRef<string | null>(null);
+  useEffect(() => {
+    const key = resetKey ?? topic;
+    if (!coachDraft.ready || !topic.trim()) return;
+    if (serverRestoredRef.current === key) return;
+    if (messages.length > 1 || threadId) return;
+    serverRestoredRef.current = key;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await authFetch(
+          `/api/essay/coach?topic=${encodeURIComponent(topic)}`
+        );
+        if (!res.ok) return;
+        const data = (await res.json()) as {
+          thread: { id: string; messages: CoachMessage[] } | null;
+        };
+        if (cancelled || !data.thread || data.thread.messages.length === 0) {
+          return;
+        }
+        setMessages([opening, ...data.thread.messages]);
+        setThreadId(data.thread.id);
+      } catch {
+        // 取れなければ新しい会話として始める
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [coachDraft.ready, topic, resetKey, messages.length, threadId, opening]);
+
   // 新メッセージ時に末尾スクロール
   useEffect(() => {
     scrollRef.current?.scrollTo({

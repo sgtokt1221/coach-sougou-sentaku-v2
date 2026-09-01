@@ -766,6 +766,22 @@ export default function EssayNewPage() {
    */
   const reviewTimeoutMs = reportMode ? 240000 : 100000;
 
+  /**
+   * AIコーチの会話を分ける単位。下書きIDは含めない。
+   *
+   * 下書きから開き直すと essayContext が下書きIDに変わるため、書いていたときの
+   * 会話と別物になり、履歴が空に見えていた。会話はお題に紐づくべきもの。
+   */
+  const coachContext = (
+    themeId ??
+    pastQuestionId ??
+    homeworkId ??
+    retryFromId ??
+    (reportMaterialIdToLoad ? `report:${reportMaterialIdToLoad}` : "free")
+  )
+    .replace(/[^a-zA-Z0-9:_-]/g, "_")
+    .slice(0, 120);
+
   const draftMaxAgeMs =
     essayContext === "free" ? 12 * 60 * 60 * 1000 : undefined;
   const {
@@ -2128,7 +2144,7 @@ export default function EssayNewPage() {
                   facultyId={facultyId || undefined}
                   referenceMaterial={effectiveMaterial}
                   coachMaterial={reportCoachMaterial}
-                  conversationKey={essayContext}
+                  conversationKey={coachContext}
                   reportMaterial={
                     reportMode && reportMaterial
                       ? {

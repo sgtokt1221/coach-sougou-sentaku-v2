@@ -86,6 +86,57 @@ function activitySummary(a: Activity): string {
   return a.description ?? "";
 }
 
+/**
+ * GET /api/essay/coach?topic=...
+ *
+ * そのお題で最後に話した会話を返す。
+ *
+ * 会話は端末のキャッシュから戻していたため、キャッシュが無い端末や、
+ * 下書きから開き直したときに履歴が空になっていた。サーバーには
+ * essayCoachThreads として残っているので、お題が一致するものを引く。
+ */
+export async function GET(request: NextRequest) {
+  const authResult = await requireRole(request, ["student"]);
+  if (authResult instanceof NextResponse) return authResult;
+  const { uid } = authResult;
+
+  const topic = (new URL(request.url).searchParams.get("topic") ?? "").trim();
+  if (!topic) return NextResponse.json({ thread: null });
+
+  const { adminDb } = await import("@/lib/firebase/admin");
+  if (!adminDb) {
+    return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
+  }
+
+  try {
+    const snap = await adminDb
+      .collection(`users/${uid}/essayCoachThreads`)
+      .where("topic", "==", topic)
+      .get();
+    if (snap.empty) return NextResponse.json({ thread: null });
+
+    // updatedAt は ISO 文字列で入っている（CLAUDE.md の日付形式）
+    const latest = snap.docs
+      .map((d) => ({ id: d.id, data: d.data() as CoachThread }))
+      .sort((a, b) =>
+        String(b.data.updatedAt ?? "").localeCompare(
+          String(a.data.updatedAt ?? "")
+        )
+      )[0];
+
+    return NextResponse.json({
+      thread: {
+        id: latest.id,
+        messages: latest.data.messages ?? [],
+        updatedAt: latest.data.updatedAt ?? null,
+      },
+    });
+  } catch (error) {
+    console.error("essay coach GET error:", error);
+    return NextResponse.json({ thread: null });
+  }
+}
+
 export async function POST(request: NextRequest) {
   const auth = await requireRole(request, ["student"]);
   if (auth instanceof NextResponse) return auth;
