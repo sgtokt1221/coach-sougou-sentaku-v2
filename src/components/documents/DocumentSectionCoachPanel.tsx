@@ -6,7 +6,6 @@ import {
   Send,
   Loader2,
   Sparkles,
-  CornerDownLeft,
   Target,
   Sprout,
   Wand2,
@@ -17,7 +16,8 @@ import { MobileSlideOverPanel } from "@/components/shared/MobileSlideOverPanel";
 import { authFetch } from "@/lib/api/client";
 import { stripSuggestion } from "@/lib/ai/prompts/document-coach";
 import { APReference } from "@/components/coach/APReference";
-import { AiDraftNotice } from "@/components/documents/AiDraftNotice";
+import { SelfWriteBox } from "@/components/documents/SelfWriteBox";
+import type { SelfWriteItem } from "@/lib/types/document-selfwrite";
 import { SelfAnalysisReference } from "@/components/essay/SelfAnalysisReference";
 import type {
   DocumentCoachMessage,
@@ -312,6 +312,16 @@ function PanelBody({
   };
 
   const currentSuggestion = currentKey ? suggestions[currentKey] : undefined;
+  /**
+   * コーチが返した「入れる要素」。1行1件の箇条書きで来る。
+   * 箇条書きの記号が無い行が混じっても拾えるよう、記号は落として扱う。
+   */
+  const suggestionItems: SelfWriteItem[] = (currentSuggestion ?? "")
+    .split("\n")
+    .map((l) => l.replace(/^[・\-*\s]+/, "").trim())
+    .filter(Boolean)
+    .slice(0, 6)
+    .map((label) => ({ label }));
 
   /** 書き換えの指示に使う、直近のコーチの助言（最初の定型あいさつは除く） */
   const lastAdvice = [...(current?.messages ?? [])]
@@ -338,9 +348,9 @@ function PanelBody({
       .filter(Boolean)
       .join("\n\n");
 
-  const handleApply = () => {
-    if (!focusedSection || !currentSuggestion) return;
-    onApplySuggestion(focusedSection.id, currentSuggestion);
+  const handleApply = (text: string) => {
+    if (!focusedSection) return;
+    onApplySuggestion(focusedSection.id, text);
     // 使用済みの提案は一度クリア (重複振り込みを防ぐ)
     setSuggestions((prev) => {
       const next = { ...prev };
@@ -459,26 +469,18 @@ function PanelBody({
           </div>
         )}
 
-        {/* 振り込み候補 */}
-        {focusedSection && currentSuggestion && (
-          <div className="space-y-2 rounded-lg border-2 border-teal-200 bg-teal-50 p-3 dark:border-teal-900 dark:bg-teal-950">
-            <div className="flex items-center gap-1 text-xs font-medium text-teal-700 dark:text-teal-300">
-              <Sparkles className="size-3.5" />
-              振り込み候補
-            </div>
-            <p className="text-foreground/90 text-xs whitespace-pre-wrap">
-              {currentSuggestion}
-            </p>
-            <AiDraftNotice />
-            <Button
-              size="sm"
-              onClick={handleApply}
-              className="h-8 gap-1 text-xs"
-            >
-              <CornerDownLeft className="size-3.5" />
-              この提案を振り込む
-            </Button>
-          </div>
+        {/*
+          コーチは本文ではなく「入れる要素」を返す。それを見て本人が書き、
+          書いた文だけが本文へ入る（AIの文字列を最終稿に残さないため）。
+        */}
+        {focusedSection && suggestionItems.length > 0 && (
+          <SelfWriteBox
+            mode="elements"
+            target={focusedSection.title}
+            items={suggestionItems}
+            acceptLabel="この文を本文へ入れる"
+            onAccept={handleApply}
+          />
         )}
 
         {/* コーチの助言のとおりに本文を書き換える（案を見てから置き換える） */}

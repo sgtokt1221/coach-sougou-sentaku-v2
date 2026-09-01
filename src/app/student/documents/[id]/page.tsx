@@ -68,7 +68,6 @@ import {
 import { useTextHistory } from "@/hooks/useTextHistory";
 import { UndoRedoButtons } from "@/components/shared/UndoRedoButtons";
 import { DocumentSectionCoachPanel } from "@/components/documents/DocumentSectionCoachPanel";
-import { AiDraftNotice } from "@/components/documents/AiDraftNotice";
 /** 2状態表示: draft=outline / それ以外(完成扱い)=default。 */
 function statusVariant2(status: DocumentStatus): "outline" | "default" {
   return status === "draft" ? "outline" : "default";
@@ -107,6 +106,13 @@ function ScoreBar({
   );
 }
 
+/** AIが返す「直すところ」。書き換えた本文は受け取らない */
+interface DocumentFix {
+  location: string;
+  problem: string;
+  action: string;
+}
+
 export default function DocumentEditorPage() {
   const router = useRouter();
   const params = useParams();
@@ -130,8 +136,7 @@ export default function DocumentEditorPage() {
 
   const [rewriteInstruction, setRewriteInstruction] = useState("");
   const [rewriting, setRewriting] = useState(false);
-  const [rewritePreview, setRewritePreview] = useState<string | null>(null);
-  const [rewriteNotice, setRewriteNotice] = useState<string | null>(null);
+  const [rewriteFixes, setRewriteFixes] = useState<DocumentFix[] | null>(null);
 
   const loadDocument = useCallback(async () => {
     setLoading(true);
@@ -292,8 +297,10 @@ export default function DocumentEditorPage() {
   }
 
   /**
-   * 生徒の指示に従ってAIに本文の書き換え案を生成させる。
-   * いきなり本文を上書きせず、結果は rewritePreview に保持してプレビュー表示する。
+   * 生徒の指示に対して、AIに「どこをどう直すか」を出させる。
+   *
+   * 以前は書き換えた本文を返してそのまま置き換えていた。最終稿にAIの書いた
+   * 文字列が残るため、指摘までにして本文は本人が直す形にした。
    */
   async function handleRewrite(instructionOverride?: string) {
     const instruction = (instructionOverride ?? rewriteInstruction).trim();
@@ -306,9 +313,8 @@ export default function DocumentEditorPage() {
         body: JSON.stringify({ content, instruction }),
       });
       if (res.ok) {
-        const data = await res.json();
-        setRewritePreview(data.rewritten);
-        setRewriteNotice(data.notice ?? null);
+        const data = (await res.json()) as { fixes: DocumentFix[] };
+        setRewriteFixes(data.fixes ?? []);
       } else {
         const err = await res.json().catch(() => ({}));
         toast.error(err?.error || "書き換えに失敗しました");
@@ -321,50 +327,21 @@ export default function DocumentEditorPage() {
   }
 
   /**
-   * プレビュー中の書き換え案を本文に適用する。
-   * デバウンス自動保存任せだと置換直後の離脱で未保存になりうるため、
-   * 明示的に保存（版も積む）し、トーストで結果を知らせる。
-   */
-  async function applyRewrite() {
-    if (!rewritePreview || !doc) return;
-    const next = rewritePreview;
-    setContent(next);
-    setRewritePreview(null);
-    setRewriteNotice(null);
-    setRewriteInstruction("");
-    try {
-      const res = await authFetch(`/api/documents/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: next }),
-      });
-      if (res.ok) {
-        toast.success("本文を書き換え案に置き換えました");
-      } else {
-        toast.error("置き換えの保存に失敗しました");
-      }
-    } catch {
-      toast.error("置き換えの保存に失敗しました");
-    }
-  }
-
-  /**
    * AIコーチの助言のとおりに書き換える。
    *
-   * 案を作るだけで本文は変えない。置き換えるかどうかは既存のプレビューで
-   * 本人が決める。コーチは左、プレビューは右の道具パネルにあるので、
-   * 気づかれないまま案が眠らないよう、こちらから開く。
+   * 出すのは「どこをどう直すか」だけで、本文は変えない。直すのは本人。
+   * コーチは左、指摘は右の道具パネルにあるので、気づかれないまま
+   * 眠らないよう、こちらから開く。
    */
   async function handleCoachRewrite(instruction: string) {
     setToolsOpen(true);
     await handleRewrite(instruction);
-    toast.info("書き換え案を作りました。確認してから置き換えてください");
+    toast.info("直すところを出しました。本文は自分で直してください");
   }
 
-  /** プレビュー中の書き換え案を破棄する。本文には影響しない。 */
+  /** 指摘を閉じる。本文には影響しない。 */
   function discardRewrite() {
-    setRewritePreview(null);
-    setRewriteNotice(null);
+    setRewriteFixes(null);
   }
 
   async function commitStatus(status: DocumentStatus) {
@@ -587,11 +564,8 @@ export default function DocumentEditorPage() {
           rewriteInstruction={rewriteInstruction}
           setRewriteInstruction={setRewriteInstruction}
           rewriting={rewriting}
-          rewritePreview={rewritePreview}
-          rewriteNotice={rewriteNotice}
-          inlineComments={doc.inlineComments}
+          rewriteFixes={rewriteFixes}
           onRewrite={handleRewrite}
-          onApplyRewrite={applyRewrite}
           onDiscardRewrite={discardRewrite}
         />
       </MobileSlideOverPanel>
@@ -674,11 +648,8 @@ export default function DocumentEditorPage() {
               rewriteInstruction={rewriteInstruction}
               setRewriteInstruction={setRewriteInstruction}
               rewriting={rewriting}
-              rewritePreview={rewritePreview}
-              rewriteNotice={rewriteNotice}
-              inlineComments={doc.inlineComments}
+              rewriteFixes={rewriteFixes}
               onRewrite={handleRewrite}
-              onApplyRewrite={applyRewrite}
               onDiscardRewrite={discardRewrite}
             />
           </div>
@@ -854,11 +825,8 @@ function ReviewPanel({
   rewriteInstruction,
   setRewriteInstruction,
   rewriting,
-  rewritePreview,
-  rewriteNotice,
-  inlineComments,
+  rewriteFixes,
   onRewrite,
-  onApplyRewrite,
   onDiscardRewrite,
 }: {
   feedback: DocumentFeedback | null;
@@ -877,12 +845,9 @@ function ReviewPanel({
   rewriteInstruction: string;
   setRewriteInstruction: (v: string) => void;
   rewriting: boolean;
-  rewritePreview: string | null;
-  rewriteNotice: string | null;
+  rewriteFixes: DocumentFix[] | null;
   /** 講師からの範囲コメント（本文が編集用テキストエリアのため一覧で見せる） */
-  inlineComments?: EssayInlineComment[];
   onRewrite: () => void;
-  onApplyRewrite: () => void;
   onDiscardRewrite: () => void;
 }) {
   /** 中身を開いている版。1つずつ開く */
@@ -1005,7 +970,7 @@ function ReviewPanel({
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-muted-foreground text-sm">
-            指示を伝えると、AIが本文の書き換え案を作成します。内容を確認してから置き換えるか選べます。
+            指示を伝えると、AIがどこをどう直すかを出します。本文は自分で直します（AIが書いた文をそのまま提出しないため）。
           </p>
           <Textarea
             placeholder="例: もっと具体的なエピソードを入れて簡潔にまとめて"
@@ -1015,40 +980,48 @@ function ReviewPanel({
           />
           <Button
             className="w-full"
-            onClick={onRewrite}
+            onClick={() => onRewrite()}
             disabled={rewriting || contentEmpty || !rewriteInstruction.trim()}
           >
             <Wand2 className="mr-2 size-4" />
-            {rewriting ? "書き換え中..." : "AIで書き換える"}
+            {rewriting ? "確認中..." : "直すところを出す"}
           </Button>
 
-          {rewritePreview && (
+          {rewriteFixes && rewriteFixes.length > 0 && (
             <>
               <Separator />
               <div className="space-y-2">
-                <p className="text-sm font-medium">書き換え案</p>
-                <AiDraftNotice />
-                {rewriteNotice && (
-                  <p className="rounded-md border border-amber-300 bg-amber-50 p-2 text-xs whitespace-pre-line text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
-                    {rewriteNotice}
-                  </p>
-                )}
-                <div className="bg-muted/30 max-h-64 overflow-y-auto rounded-md border p-3 text-sm whitespace-pre-wrap">
-                  {rewritePreview}
-                </div>
-                <div className="flex gap-2">
-                  <Button size="sm" className="flex-1" onClick={onApplyRewrite}>
-                    この内容に置き換える
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="flex-1"
-                    onClick={onDiscardRewrite}
-                  >
-                    破棄
-                  </Button>
-                </div>
+                <p className="text-sm font-medium">直すところ</p>
+                <p className="text-muted-foreground text-xs">
+                  本文は自動では変わりません。左のエディタで自分で直してください。
+                </p>
+                <ul className="space-y-2">
+                  {rewriteFixes.map((f, i) => (
+                    <li key={i} className="rounded-md border p-3 text-xs">
+                      {f.location && (
+                        <p className="text-foreground/70 mb-1">
+                          「{f.location}」
+                        </p>
+                      )}
+                      {f.problem && (
+                        <p className="text-rose-700 dark:text-rose-300">
+                          {f.problem}
+                        </p>
+                      )}
+                      {f.action && (
+                        <p className="mt-1 leading-relaxed">{f.action}</p>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full"
+                  onClick={onDiscardRewrite}
+                >
+                  閉じる
+                </Button>
               </div>
             </>
           )}

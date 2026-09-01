@@ -151,63 +151,33 @@ export async function POST(
     const rawText =
       response.content[0].type === "text" ? response.content[0].text : "";
 
-    // 本文全文をプレーンテキストで返させる。万一コードフェンスが付いても剥がす。
-    let rewritten = cleanAiText(rawText);
-    if (!rewritten) {
+    /**
+     * 「対象 / 問題 / やること」の3行で1件。書き換えた本文は受け取らない
+     * （返せば結局それが本文に入り、最終稿にAIの文字列が残るため）。
+     */
+    const fixes = cleanAiText(rawText)
+      .split(/\n\s*\n/)
+      .map((block) => {
+        const pick = (key: string) =>
+          block.match(new RegExp(`${key}[:：]\\s*(.+)`))?.[1]?.trim() ?? "";
+        return {
+          location: pick("対象"),
+          problem: pick("問題"),
+          action: pick("やること"),
+        };
+      })
+      .filter((f) => f.problem || f.action)
+      .slice(0, 6);
+
+    if (fixes.length === 0) {
       console.error("Empty rewrite response:", rawText);
       return NextResponse.json(
-        { error: "書き換え結果を取得できませんでした" },
+        { error: "直すところを取得できませんでした" },
         { status: 500 }
       );
     }
-    const notices: string[] = [];
 
-    // 未入力欄がAIに埋められると、生徒本人の体験でない記述が混じったまま提出されうる。
-    // ただし「APに合わせて書き直して」のように、生徒の指示どおりに動いた結果として
-    // 欄が消えることも多い。結果ごと捨てると生徒は何も得られないため、該当箇所を
-    // 名指しして確認を促す。
-    const lostPlaceholders = [...content.matchAll(/【[^】]+】/g)]
-      .map((match) => match[0])
-      .filter((placeholder) => !rewritten.includes(placeholder));
-    if (lostPlaceholders.length) {
-      notices.push(
-        `以下の未入力欄がAIによって埋められています。自分の実際の体験かどうか必ず確認してください。\n${lostPlaceholders.join(" ")}`
-      );
-    }
-
-    // 字数上限の強制。指示文の「N字以下」等を優先、無ければ目標文字数の+10%を上限とする。
-    // LLM は1回の指示では字数を守りきれないため、超過時はサーバー側で数えて詰める。
-    const explicitLimit = extractCharLimit(instruction);
-    const limit =
-      explicitLimit ??
-      (typeof data?.targetWordCount === "number"
-        ? Math.round(data.targetWordCount * 1.1)
-        : null);
-    if (limit) {
-      rewritten = await fitToCharLimit(client, rewritten, limit);
-      if (rewritten.length > limit) {
-        // 生徒が指示文で字数を明示した場合だけ、収まらない結果は返さない。
-        if (explicitLimit) {
-          return NextResponse.json(
-            {
-              error:
-                "書き換え結果を指定文字数内に収められませんでした。指示を分けてお試しください。",
-            },
-            { status: 502 }
-          );
-        }
-        // 目標文字数由来の上限は、元の本文がすでに超過していることが多い。
-        // 書き換え結果ごと捨てると生徒は何も得られないため、超過を伝えて返す。
-        notices.push(
-          `目標文字数の上限${limit}字を超えています（${rewritten.length}字）。置き換えたあとに削ってください。`
-        );
-      }
-    }
-
-    return NextResponse.json({
-      rewritten,
-      notice: notices.join("\n\n") || undefined,
-    });
+    return NextResponse.json({ fixes });
   } catch (error) {
     console.error("Document rewrite error:", error);
     return NextResponse.json(
