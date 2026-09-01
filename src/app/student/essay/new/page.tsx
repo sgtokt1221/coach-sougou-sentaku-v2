@@ -713,6 +713,16 @@ export default function EssayNewPage() {
    * 直近のものだけ自動で戻す。それより古い書きかけは、添削履歴の
    * 「書きかけの下書き」から明示的に開ける。
    */
+  /**
+   * 添削を待つ上限。
+   *
+   * レポート課題は約1万字の課題文をプロンプトに載せるため、AI呼び出しだけで
+   * 実測 76 秒かかる（課題文8,257字＋答案1,202字）。100秒で打ち切ると、
+   * Firestore の読み書きを足した往復が間に合わず「時間がかかりすぎました」に
+   * なる。形式ごとに上限を変える。サーバ側の maxDuration もこれに合わせる。
+   */
+  const reviewTimeoutMs = reportMode ? 240000 : 100000;
+
   const draftMaxAgeMs =
     essayContext === "free" ? 12 * 60 * 60 * 1000 : undefined;
   const {
@@ -1057,7 +1067,7 @@ export default function EssayNewPage() {
     try {
       const id = `essay_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 100000);
+      const timeout = setTimeout(() => controller.abort(), reviewTimeoutMs);
       const res = await authFetch("/api/essay/review", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1200,7 +1210,7 @@ export default function EssayNewPage() {
       }
 
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 100000);
+      const timeout = setTimeout(() => controller.abort(), reviewTimeoutMs);
       const res = await authFetch("/api/essay/review", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1312,7 +1322,7 @@ export default function EssayNewPage() {
   }
 
   if (isSubmitting) {
-    return <ReviewProgress />;
+    return <ReviewProgress longRunning={reportMode} />;
   }
 
   // Step 2 テキスト執筆中は常に 2 カラム (左=参照/コーチ、右=入力)

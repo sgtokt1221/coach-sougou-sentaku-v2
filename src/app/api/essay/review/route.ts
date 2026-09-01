@@ -18,7 +18,9 @@ import type { EssaySelfAnalysisContext } from "@/lib/ai/prompts/essay";
 import { requireRole } from "@/lib/api/auth";
 import { prepareAdmissionPolicy } from "@/lib/ai/admission-policy";
 
-export const maxDuration = 120;
+// レポート課題は約1万字の課題文を載せるため、AI呼び出しだけで実測76秒かかる。
+// Firestore の読み書きを足すと 120 秒では足りない。
+export const maxDuration = 300;
 
 export async function POST(request: NextRequest) {
   try {
