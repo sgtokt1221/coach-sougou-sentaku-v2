@@ -294,14 +294,15 @@ export default function DocumentEditorPage() {
    * 生徒の指示に従ってAIに本文の書き換え案を生成させる。
    * いきなり本文を上書きせず、結果は rewritePreview に保持してプレビュー表示する。
    */
-  async function handleRewrite() {
-    if (!doc || !content.trim() || !rewriteInstruction.trim()) return;
+  async function handleRewrite(instructionOverride?: string) {
+    const instruction = (instructionOverride ?? rewriteInstruction).trim();
+    if (!doc || !content.trim() || !instruction) return;
     setRewriting(true);
     try {
       const res = await authFetch(`/api/documents/${id}/rewrite`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content, instruction: rewriteInstruction }),
+        body: JSON.stringify({ content, instruction }),
       });
       if (res.ok) {
         const data = await res.json();
@@ -344,6 +345,19 @@ export default function DocumentEditorPage() {
     } catch {
       toast.error("置き換えの保存に失敗しました");
     }
+  }
+
+  /**
+   * AIコーチの助言のとおりに書き換える。
+   *
+   * 案を作るだけで本文は変えない。置き換えるかどうかは既存のプレビューで
+   * 本人が決める。コーチは左、プレビューは右の道具パネルにあるので、
+   * 気づかれないまま案が眠らないよう、こちらから開く。
+   */
+  async function handleCoachRewrite(instruction: string) {
+    setToolsOpen(true);
+    await handleRewrite(instruction);
+    toast.info("書き換え案を作りました。確認してから置き換えてください");
   }
 
   /** プレビュー中の書き換え案を破棄する。本文には影響しない。 */
@@ -399,11 +413,10 @@ export default function DocumentEditorPage() {
     () => ({
       id: "whole",
       title: `${doc?.type ?? "書類"}の本文`,
-      guidingQuestion:
-        "この本文について、どこをどう直すとよいか相談できます。",
+      guidingQuestion: "この本文について、どこをどう直すとよいか相談できます。",
       content,
     }),
-    [doc?.type, content],
+    [doc?.type, content]
   );
 
   /**
@@ -419,7 +432,7 @@ export default function DocumentEditorPage() {
     }
     if (
       !window.confirm(
-        `${v.wordCount}文字のこの版に戻します。今の本文（${content.length}文字）は履歴に残るので、戻した後でもやり直せます。`,
+        `${v.wordCount}文字のこの版に戻します。今の本文（${content.length}文字）は履歴に残るので、戻した後でもやり直せます。`
       )
     ) {
       return;
@@ -593,11 +606,13 @@ export default function DocumentEditorPage() {
             universityId={doc?.universityId}
             facultyId={doc?.facultyId}
             docId={id}
+            onRequestRewrite={handleCoachRewrite}
+            rewriting={rewriting}
             onApplySuggestion={(_sectionId, text) => {
               // 編集画面の「セクション」は本文全体なので、置き換えると
               // 書いたものが丸ごと消える。末尾に足して本人に配置させる。
               setContent((prev) =>
-                prev.trim() ? `${prev.trimEnd()}\n\n${text}` : text,
+                prev.trim() ? `${prev.trimEnd()}\n\n${text}` : text
               );
               toast.success("本文の末尾に追記しました。位置は自由に動かせます");
             }}
@@ -921,11 +936,23 @@ function ReviewPanel({
                     axis="apAlignment"
                   />
                 )}
-                <ScoreBar label="構成" score={feedback.structureScore} axis="structure" />
-                <ScoreBar label="独自性" score={feedback.originalityScore} axis="originality" />
+                <ScoreBar
+                  label="構成"
+                  score={feedback.structureScore}
+                  axis="structure"
+                />
+                <ScoreBar
+                  label="独自性"
+                  score={feedback.originalityScore}
+                  axis="originality"
+                />
                 {/* v4 で追加。旧データには無いので、あるときだけ出す */}
                 {typeof feedback.expressionScore === "number" && (
-                  <ScoreBar label="表現" score={feedback.expressionScore} axis="expression" />
+                  <ScoreBar
+                    label="表現"
+                    score={feedback.expressionScore}
+                    axis="expression"
+                  />
                 )}
               </div>
 
@@ -1159,7 +1186,10 @@ function ReviewPanel({
                           {v.wordCount} 文字
                         </span>
                         {v.feedback && (
-                          <Badge variant="secondary" className="ml-2 text-[10px]">
+                          <Badge
+                            variant="secondary"
+                            className="ml-2 text-[10px]"
+                          >
                             添削済み
                           </Badge>
                         )}
@@ -1203,7 +1233,7 @@ function DocumentToolbar({
   commentCount,
 }: {
   onOpen: (
-    target: "comments" | "review" | "rewrite" | "likeness" | "versions",
+    target: "comments" | "review" | "rewrite" | "likeness" | "versions"
   ) => void;
   hasFeedback: boolean;
   versionCount: number;
@@ -1222,9 +1252,19 @@ function DocumentToolbar({
           },
         ]
       : []),
-    { key: "review" as const, icon: Sparkles, label: "AI添削", dot: hasFeedback },
+    {
+      key: "review" as const,
+      icon: Sparkles,
+      label: "AI添削",
+      dot: hasFeedback,
+    },
     { key: "rewrite" as const, icon: Wand2, label: "AIで書き換え", dot: false },
-    { key: "likeness" as const, icon: ShieldCheck, label: "個別性チェック", dot: false },
+    {
+      key: "likeness" as const,
+      icon: ShieldCheck,
+      label: "個別性チェック",
+      dot: false,
+    },
     {
       key: "versions" as const,
       icon: History,

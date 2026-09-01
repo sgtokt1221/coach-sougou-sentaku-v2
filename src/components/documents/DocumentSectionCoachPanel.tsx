@@ -9,6 +9,7 @@ import {
   CornerDownLeft,
   Target,
   Sprout,
+  Wand2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -62,6 +63,16 @@ interface Props {
   /** フォーカス中以外のセクション（参照用）。重複や流れの相談に答えるのに要る */
   otherSections?: { title: string; content: string }[];
   onApplySuggestion: (sectionId: string, text: string) => void;
+  /**
+   * コーチの助言のとおりに本文を書き換える。
+   *
+   * 書き換えは「AIで書き換え」の欄でしかできず、コーチに直してもらった内容を
+   * 自分で言い直して指示する必要があった。ここから同じ書き換えを起こし、
+   * 案の確認と置き換えは既存の承認フロー（プレビュー→置き換える）に任せる。
+   * 書き換えができない画面（まだ保存されていない下書き）では渡さない。
+   */
+  onRequestRewrite?: (instruction: string) => void;
+  rewriting?: boolean;
 }
 
 /**
@@ -76,7 +87,7 @@ export function DocumentSectionCoachPanel(props: Props) {
   return (
     <>
       {/* デスクトップ */}
-      <div className="hidden lg:flex lg:h-full lg:min-h-0 lg:flex-col lg:rounded-lg lg:border lg:bg-card">
+      <div className="lg:bg-card hidden lg:flex lg:h-full lg:min-h-0 lg:flex-col lg:rounded-lg lg:border">
         <PanelBody {...props} />
       </div>
 
@@ -101,10 +112,15 @@ function PanelBody({
   docId,
   otherSections,
   onApplySuggestion,
+  onRequestRewrite,
+  rewriting,
 }: Props) {
   // セクションごとの会話状態を Map で保持し、フォーカス切替時にスワップする
   const [conversations, setConversations] = useState<
-    Record<string, { threadId: string | null; messages: DocumentCoachMessage[] }>
+    Record<
+      string,
+      { threadId: string | null; messages: DocumentCoachMessage[] }
+    >
   >({});
   const [input, setInput] = useState("");
   // 入力量に合わせて高さを伸ばす（数行書くと見えなくなるのを防ぐ）
@@ -120,13 +136,19 @@ function PanelBody({
 
   const currentKey = focusedSection?.id ?? null;
   const current = currentKey
-    ? conversations[currentKey] ?? { threadId: null, messages: [OPENING_MESSAGE] }
+    ? (conversations[currentKey] ?? {
+        threadId: null,
+        messages: [OPENING_MESSAGE],
+      })
     : null;
 
   const ensureSlot = useCallback((key: string) => {
     setConversations((prev) => {
       if (prev[key]) return prev;
-      return { ...prev, [key]: { threadId: null, messages: [OPENING_MESSAGE] } };
+      return {
+        ...prev,
+        [key]: { threadId: null, messages: [OPENING_MESSAGE] },
+      };
     });
   }, []);
 
@@ -172,7 +194,9 @@ function PanelBody({
           { signal: ac.signal }
         );
         if (!res.ok) return;
-        const data = (await res.json()) as { thread: DocumentSectionCoachThread | null };
+        const data = (await res.json()) as {
+          thread: DocumentSectionCoachThread | null;
+        };
         if (!data.thread) return;
         setConversations((prev) => ({
           ...prev,
@@ -252,7 +276,10 @@ function PanelBody({
         at: new Date().toISOString(),
       };
       setConversations((prev) => {
-        const slot = prev[key] ?? { threadId: null, messages: [OPENING_MESSAGE] };
+        const slot = prev[key] ?? {
+          threadId: null,
+          messages: [OPENING_MESSAGE],
+        };
         return {
           ...prev,
           [key]: {
@@ -285,6 +312,31 @@ function PanelBody({
 
   const currentSuggestion = currentKey ? suggestions[currentKey] : undefined;
 
+  /** 書き換えの指示に使う、直近のコーチの助言（最初の定型あいさつは除く） */
+  const lastAdvice = [...(current?.messages ?? [])]
+    .reverse()
+    .find((m) => m.role === "assistant" && m.at !== OPENING_MESSAGE.at);
+  /** 直近の生徒の要望。何をしてほしいのかは本人の言葉にしか無い */
+  const lastRequest = [...(current?.messages ?? [])]
+    .reverse()
+    .find((m) => m.role === "user");
+
+  /**
+   * 書き換えの指示を組み立てる。
+   *
+   * コーチの助言をそのまま指示にすると、助言に含まれる生徒への問いかけ
+   * （「どんな場面でしたか」など）まで指示として渡ってしまう。
+   * 本人の要望を主にし、助言は補足として添える。
+   */
+  const buildRewriteInstruction = (): string =>
+    [
+      lastRequest ? `生徒の要望: ${lastRequest.content}` : "",
+      lastAdvice ? `コーチの助言: ${stripSuggestion(lastAdvice.content)}` : "",
+      "上の要望に沿って本文を書き換えてください。助言のうち生徒への質問は指示ではないので従わないこと。答えが分からない部分は、事実を作らずに今ある記述のまま残すこと。",
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+
   const handleApply = () => {
     if (!focusedSection || !currentSuggestion) return;
     onApplySuggestion(focusedSection.id, currentSuggestion);
@@ -306,33 +358,33 @@ function PanelBody({
   return (
     <div className="flex h-full flex-col">
       {/* ヘッダ: フォーカス中セクション情報 */}
-      <div className="border-b px-3 py-2 shrink-0">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+      <div className="shrink-0 border-b px-3 py-2">
+        <div className="text-muted-foreground flex items-center gap-2 text-xs">
           <Sparkles className="size-3.5" />
           <span>AIコーチ</span>
         </div>
         {focusedSection ? (
           <>
             <p className="mt-1 text-sm font-medium">{focusedSection.title}</p>
-            <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">
+            <p className="text-muted-foreground mt-0.5 line-clamp-2 text-xs">
               {focusedSection.guidingQuestion}
             </p>
           </>
         ) : (
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className="text-muted-foreground mt-1 text-xs">
             セクションをクリックして相談を始めてください
           </p>
         )}
       </div>
 
       {/* 参照タブ: コーチ / AP / 自己分析（小論文添削コーチと同様に切り替え） */}
-      <div className="flex items-center gap-1 border-b px-2 py-1.5 shrink-0">
+      <div className="flex shrink-0 items-center gap-1 border-b px-2 py-1.5">
         {TAB_DEFS.map(({ id, label, Icon }) => (
           <button
             key={id}
             type="button"
             onClick={() => setActiveTab(id)}
-            className={`flex-1 flex items-center justify-center gap-1 rounded px-2 py-1.5 text-xs font-medium transition-colors cursor-pointer ${
+            className={`flex flex-1 cursor-pointer items-center justify-center gap-1 rounded px-2 py-1.5 text-xs font-medium transition-colors ${
               activeTab === id
                 ? "bg-teal-500 text-white shadow-sm"
                 : "text-muted-foreground hover:bg-muted"
@@ -346,13 +398,13 @@ function PanelBody({
 
       {/* AP タブ */}
       {activeTab === "ap" && (
-        <div className="flex-1 min-h-0 overflow-hidden">
+        <div className="min-h-0 flex-1 overflow-hidden">
           <APReference universityId={universityId} facultyId={facultyId} />
         </div>
       )}
       {/* 自己分析タブ */}
       {activeTab === "self" && (
-        <div className="flex-1 min-h-0 overflow-hidden">
+        <div className="min-h-0 flex-1 overflow-hidden">
           <SelfAnalysisReference />
         </div>
       )}
@@ -360,12 +412,12 @@ function PanelBody({
       {/* 会話エリア（コーチタブ。切替時も状態保持のため hidden で退避） */}
       <div
         ref={scrollRef}
-        className={`flex-1 overflow-y-auto space-y-3 px-3 py-3 ${
+        className={`flex-1 space-y-3 overflow-y-auto px-3 py-3 ${
           activeTab === "coach" ? "" : "hidden"
         }`}
       >
         {!focusedSection && (
-          <div className="text-center text-xs text-muted-foreground py-8">
+          <div className="text-muted-foreground py-8 text-center text-xs">
             セクションのテキストエリアをクリックすると、
             <br />
             そのセクション専用の対話が始まります。
@@ -381,9 +433,9 @@ function PanelBody({
                 className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
               >
                 <div
-                  className={`max-w-[88%] rounded-2xl px-3 py-2 text-sm whitespace-pre-wrap break-words ${
+                  className={`max-w-[88%] rounded-2xl px-3 py-2 text-sm break-words whitespace-pre-wrap ${
                     m.role === "user"
-                      ? "bg-teal-500 text-white rounded-br-sm"
+                      ? "rounded-br-sm bg-teal-500 text-white"
                       : "bg-muted text-foreground rounded-bl-sm"
                   }`}
                 >
@@ -394,43 +446,68 @@ function PanelBody({
           })}
         {sending && (
           <div className="flex justify-start">
-            <div className="rounded-2xl bg-muted px-3 py-2 text-sm text-muted-foreground rounded-bl-sm">
-              <Loader2 className="inline size-3 animate-spin mr-1" />
+            <div className="bg-muted text-muted-foreground rounded-2xl rounded-bl-sm px-3 py-2 text-sm">
+              <Loader2 className="mr-1 inline size-3 animate-spin" />
               考え中...
             </div>
           </div>
         )}
         {error && (
-          <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+          <div className="border-destructive/40 bg-destructive/10 text-destructive rounded-lg border px-3 py-2 text-xs">
             {error}
           </div>
         )}
 
         {/* 振り込み候補 */}
         {focusedSection && currentSuggestion && (
-          <div className="rounded-lg border-2 border-teal-200 bg-teal-50 dark:bg-teal-950 dark:border-teal-900 p-3 space-y-2">
+          <div className="space-y-2 rounded-lg border-2 border-teal-200 bg-teal-50 p-3 dark:border-teal-900 dark:bg-teal-950">
             <div className="flex items-center gap-1 text-xs font-medium text-teal-700 dark:text-teal-300">
               <Sparkles className="size-3.5" />
               振り込み候補
             </div>
-            <p className="text-xs whitespace-pre-wrap text-foreground/90">
+            <p className="text-foreground/90 text-xs whitespace-pre-wrap">
               {currentSuggestion}
             </p>
             <Button
               size="sm"
               onClick={handleApply}
-              className="gap-1 h-8 text-xs"
+              className="h-8 gap-1 text-xs"
             >
               <CornerDownLeft className="size-3.5" />
               この提案を振り込む
             </Button>
           </div>
         )}
+
+        {/* コーチの助言のとおりに本文を書き換える（案を見てから置き換える） */}
+        {focusedSection && onRequestRewrite && lastAdvice && (
+          <div className="space-y-1.5 rounded-lg border border-dashed p-3">
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={rewriting}
+              onClick={() => onRequestRewrite(buildRewriteInstruction())}
+              className="h-8 gap-1 text-xs"
+            >
+              {rewriting ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <Wand2 className="size-3.5" />
+              )}
+              {rewriting
+                ? "書き換え案を作成中..."
+                : "この助言で本文を書き換える"}
+            </Button>
+            <p className="text-muted-foreground text-[11px]">
+              案を作るだけです。確認してから置き換えるか選べます。
+            </p>
+          </div>
+        )}
       </div>
 
       {/* 入力エリア（コーチタブのみ表示。送信欄は常に最下部固定） */}
       <div
-        className={`border-t p-3 shrink-0 ${
+        className={`shrink-0 border-t p-3 ${
           activeTab === "coach" ? "" : "hidden"
         }`}
       >
