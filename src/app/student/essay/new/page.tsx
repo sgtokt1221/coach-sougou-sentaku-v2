@@ -58,6 +58,7 @@ import {
 import type { PastQuestionSourceTextResponse } from "@/lib/types/past-question-source";
 import type { ReportMaterial } from "@/data/essay-report-materials";
 import { ReportSourcePane } from "@/components/essay/ReportSourcePane";
+import { buildReportQuestion } from "@/lib/essay/report-question";
 import { useAutosave } from "@/hooks/useAutosave";
 import { usePersistentDraft } from "@/hooks/usePersistentDraft";
 import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
@@ -552,7 +553,8 @@ export default function EssayNewPage() {
    * topic state が埋まるのは手入力のときだけ。選択元から設問を組み立て直す。
    */
   const effectiveTopic = useMemo(() => {
-    if (reportMode && reportMaterial) return reportMaterial.title;
+    if (reportMode && reportMaterial)
+      return buildReportQuestion(reportMaterial);
     if (pastQuestion) {
       return [pastQuestion.theme, pastQuestion.description]
         .filter((s) => s && s.trim())
@@ -1082,7 +1084,7 @@ export default function EssayNewPage() {
             reportMaterial && {
               questionType: "report" as const,
               sourceText: reportMaterial.body,
-              topic: reportMaterial.title,
+              topic: effectiveTopic,
               wordLimit: reportMaterial.recommendedWordLimit,
             }),
           ...(pastQuestion && {

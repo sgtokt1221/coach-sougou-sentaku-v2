@@ -14,7 +14,7 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,css,json}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css,json}\"",
     "check-env": "tsx scripts/check-env.ts",
-    "validate:data": "tsx scripts/validate-university-data.ts && tsx scripts/validate-logic-drills.ts && tsx scripts/validate-logical-tour.ts && tsx scripts/validate-recurring-class.ts && tsx scripts/validate-report-materials.ts && tsx scripts/validate-sentence-drills.ts && tsx scripts/validate-essay-lectures.ts",
+    "validate:data": "tsx scripts/validate-university-data.ts && tsx scripts/validate-logic-drills.ts && tsx scripts/validate-logical-tour.ts && tsx scripts/validate-recurring-class.ts && tsx scripts/validate-report-materials.ts && tsx scripts/validate-sentence-drills.ts && tsx scripts/validate-essay-lectures.ts && tsx scripts/verify-report-question.ts",
     "seed:universities": "tsx scripts/seed-universities.ts",
     "seed:superadmin": "tsx scripts/seed-superadmin.ts",
     "consolidate:weaknesses": "tsx scripts/consolidate-weaknesses-taxonomy.ts",
