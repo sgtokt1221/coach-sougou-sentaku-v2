@@ -290,7 +290,15 @@ export function EssayCoachPanelBody({
             questionType={materialForCoach?.questionType}
             sourceText={materialForCoach?.sourceText}
             chartData={materialForCoach?.chartData}
-            resetKey={`${universityId ?? ""}:${facultyId ?? ""}:${conversationKey ?? topic}`}
+            /*
+              会話をやり直す単位。conversationKey があるときはそれだけで決める。
+              志望校やお題は読み込みの途中で埋まるため、それらを混ぜると
+              リロード直後にキーが変わり、復元したばかりの会話が消えていた。
+            */
+            resetKey={
+              conversationKey ??
+              `${universityId ?? ""}:${facultyId ?? ""}:${topic}`
+            }
             onThreadChange={onThreadChange}
           />
         )}

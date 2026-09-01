@@ -199,6 +199,8 @@ export default function EssayNewPage() {
 
   // 下書き（途中保存）モード
   const draftIdParam = searchParams?.get("draft");
+  // 選んだ課題文。URLに残さないと、リロードで通常の小論文に戻ってしまう
+  const reportIdParam = searchParams?.get("report");
   /**
    * サーバー側の下書きID。
    *
@@ -439,6 +441,41 @@ export default function EssayNewPage() {
       cancelled = true;
     };
   }, [retryFromId]);
+
+  /**
+   * URL に課題文が指定されていれば、その状態から始める。
+   *
+   * これが無いと、リロードのたびに通常の小論文の画面へ戻り、選んだ課題文も
+   * 推奨字数も失われていた。書いている途中で再読み込みした人が、何も知らずに
+   * 別の設定で提出してしまう。
+   */
+  useEffect(() => {
+    if (!reportIdParam || reportMaterial) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await authFetch(
+          `/api/essay/report/materials/${reportIdParam}`
+        );
+        if (!res.ok) return;
+        const material = (await res.json()) as ReportMaterial;
+        if (cancelled) return;
+        setReportMode(true);
+        setInputMode("text");
+        setReportField(material.field);
+        setReportMaterial(material);
+        setCustomMaxLength(material.recommendedWordLimit);
+        // 課題文を選び終えた人が戻ってきているので、執筆画面まで進めておく。
+        // 情報入力に戻すと、課題文もコーチの会話も画面から消えてしまう
+        setStep(2);
+      } catch {
+        // 取得できなければ通常の新規作成として続行する
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [reportIdParam, reportMaterial]);
 
   // レポートモード: 課題文が存在する系統を先読み（準備中判定用）
   useEffect(() => {
@@ -701,7 +738,7 @@ export default function EssayNewPage() {
     pastQuestionId ??
     homeworkId ??
     retryFromId ??
-    "free"
+    (reportIdParam ? `report:${reportIdParam}` : "free")
   )
     .replace(/[^a-zA-Z0-9:_-]/g, "_")
     .slice(0, 120);
@@ -1028,6 +1065,10 @@ export default function EssayNewPage() {
     setReportMaterial(null);
     setReportMaterialList([]);
     if (next) setInputMode("text");
+    // 通常の小論文へ戻すときはURLの課題文も外す
+    if (!next && reportIdParam) {
+      router.replace("/student/essay/new", { scroll: false });
+    }
   }
 
   /** 系統を選び、その系統の課題文一覧を取得する。 */
@@ -1055,6 +1096,10 @@ export default function EssayNewPage() {
       const material = (await res.json()) as ReportMaterial;
       setReportMaterial(material);
       setCustomMaxLength(material.recommendedWordLimit);
+      // リロードで戻れるようにURLへ残す（履歴は増やさない）
+      router.replace(`/student/essay/new?report=${material.id}`, {
+        scroll: false,
+      });
     } catch {
       // 取得失敗時は選択なしのまま
     }
@@ -2076,6 +2121,7 @@ export default function EssayNewPage() {
                   facultyId={facultyId || undefined}
                   referenceMaterial={effectiveMaterial}
                   coachMaterial={reportCoachMaterial}
+                  conversationKey={essayContext}
                   reportMaterial={
                     reportMode && reportMaterial
                       ? {
