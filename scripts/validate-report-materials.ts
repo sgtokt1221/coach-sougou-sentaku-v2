@@ -2,8 +2,6 @@ import assert from "node:assert/strict";
 import { reportMaterials } from "@/data/essay-report-materials";
 import { isEssayField } from "@/lib/types/essay-field";
 
-
-
 function validate() {
   const ids = new Set<string>();
   for (const m of reportMaterials) {
@@ -13,7 +11,7 @@ function validate() {
     assert.ok(m.title.length > 0, `title 空: ${m.id}`);
     assert.ok(
       m.body.length >= 8000 && m.body.length <= 13000,
-      `body 字数が範囲外(${m.body.length}): ${m.id}`,
+      `body 字数が範囲外(${m.body.length}): ${m.id}`
     );
     assert.ok(m.focusPoints.length >= 3, `focusPoints は3つ以上: ${m.id}`);
     assert.ok(m.recommendedWordLimit > 0, `recommendedWordLimit 不正: ${m.id}`);
