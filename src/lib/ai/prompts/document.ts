@@ -1,3 +1,4 @@
+import { getDocumentTemplate } from "@/lib/templates/document-templates";
 import {
   ACTIVITY_GROUNDING_RULE,
   FACULTY_AGENCY_FOCUS_DOCUMENT,
@@ -28,24 +29,16 @@ export interface DocumentReviewPromptOptions {
  * いた。種類は reference_data に渡っていたが、評価軸が固定だったため、
  * 自己推薦書や研究計画書に志望理由の流れを求めてしまっていた。
  */
-const STRUCTURE_BY_TYPE: Record<string, string> = {
-  志望理由書:
-    "主張 → 根拠 → 志望理由 → 将来像 の流れが論理的につながっているか",
-  自己推薦書:
-    "強みの提示 → それを裏づける具体的な経験 → その強みが大学で活きる根拠 の流れになっているか",
-  学業活動報告書:
-    "活動の事実（時期・役割・規模）→ その中で自分が取った行動 → そこから得た学び が具体的に示されているか。志望理由や将来像は求めない",
-  研究計画書:
-    "問い（何を明らかにするか）→ 先行研究の把握 → 方法 → 実現可能性 が筋道立てて書かれているか",
-  学びの設計書:
-    "入学後の学習計画 → 科目・研究室・制度との接続 → 卒業後の展望 が具体的につながっているか",
-};
-
 const STRUCTURE_FALLBACK =
   "主張と根拠が対応し、全体が一貫した流れになっているか";
 
-export function structureCriterionFor(documentType: string | undefined): string {
-  return (documentType && STRUCTURE_BY_TYPE[documentType]) ?? STRUCTURE_FALLBACK;
+export function structureCriterionFor(
+  documentType: string | undefined
+): string {
+  return (
+    getDocumentTemplate(documentType ?? "")?.structureCriterion ??
+    STRUCTURE_FALLBACK
+  );
 }
 
 /**
@@ -63,7 +56,11 @@ const FILL_RATE_PENALTY_THRESHOLD = 80;
  */
 function buildWordCountRule(options: DocumentReviewPromptOptions): string {
   const { targetWordCount, fillRate } = options;
-  if (typeof targetWordCount !== "number" || targetWordCount <= 0 || fillRate == null) {
+  if (
+    typeof targetWordCount !== "number" ||
+    targetWordCount <= 0 ||
+    fillRate == null
+  ) {
     return "目標字数の指定はありません。短さそのものでは減点せず、必要要素の不足だけを評価してください。";
   }
   if (fillRate < FILL_RATE_PENALTY_THRESHOLD) {

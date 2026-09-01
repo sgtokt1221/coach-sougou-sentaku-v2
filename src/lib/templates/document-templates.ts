@@ -4,6 +4,8 @@ export const DOCUMENT_TEMPLATES: DocumentTemplate[] = [
   {
     documentType: "志望理由書",
     recommendedFrameworks: ["PREP", "kishoutenketsu", "why-how-what"],
+    structureCriterion:
+      "主張 → 根拠 → 志望理由 → 将来像 の流れが論理的につながっているか",
     sampleStructure: `【志望理由書の基本構成】
 1. 志望動機の核心（なぜこの大学・学部なのか）
 2. 原体験・きっかけ（関心を持った背景）
@@ -14,16 +16,20 @@ export const DOCUMENT_TEMPLATES: DocumentTemplate[] = [
   {
     documentType: "学業活動報告書",
     recommendedFrameworks: ["STAR", "kishoutenketsu"],
+    structureCriterion:
+      "活動の事実（時期・役割・規模）→ その中で自分が取った行動 → そこから得た学び が具体的に示されているか。志望理由や将来像は必須としない（書かれていれば加点材料だが、無くても減点しない）",
     sampleStructure: `【学業活動報告書の基本構成】
 1. 活動の概要（何をしたか）
 2. 活動の背景と動機（なぜ取り組んだか）
 3. 具体的な取り組み内容（どう行動したか）
 4. 成果と学び（何を得たか）
-5. 今後への活かし方（大学でどう発展させるか）`,
+5. 今後への活かし方（大学でどう発展させるか。任意）`,
   },
   {
     documentType: "研究計画書",
     recommendedFrameworks: ["problem-solving", "PREP"],
+    structureCriterion:
+      "問い（何を明らかにするか）→ 先行研究の把握 → 方法 → 実現可能性 が筋道立てて書かれているか",
     sampleStructure: `【研究計画書の基本構成】
 1. 研究テーマと問題意識
 2. 先行研究の整理と自分の立ち位置
@@ -34,6 +40,8 @@ export const DOCUMENT_TEMPLATES: DocumentTemplate[] = [
   {
     documentType: "自己推薦書",
     recommendedFrameworks: ["STAR", "why-how-what"],
+    structureCriterion:
+      "強みの提示 → それを裏づける具体的な経験 → その強みが大学で活きる根拠 の流れになっているか",
     sampleStructure: `【自己推薦書の基本構成】
 1. 自己紹介と強みの提示
 2. 強みを証明するエピソード
@@ -44,6 +52,8 @@ export const DOCUMENT_TEMPLATES: DocumentTemplate[] = [
   {
     documentType: "学びの設計書",
     recommendedFrameworks: ["kishoutenketsu", "problem-solving"],
+    structureCriterion:
+      "入学後の学習計画 → 科目・研究室・制度との接続 → 卒業後の展望 が具体的につながっているか",
     sampleStructure: `【学びの設計書の基本構成】
 1. 学びのテーマと出発点
 2. これまでの探究プロセス
@@ -53,7 +63,9 @@ export const DOCUMENT_TEMPLATES: DocumentTemplate[] = [
   },
 ];
 
-export function getDocumentTemplate(documentType: string): DocumentTemplate | undefined {
+export function getDocumentTemplate(
+  documentType: string
+): DocumentTemplate | undefined {
   return DOCUMENT_TEMPLATES.find((t) => t.documentType === documentType);
 }
 
@@ -64,7 +76,10 @@ export function getDocumentTemplate(documentType: string): DocumentTemplate | un
  * 以前は種類に関わらず「志望理由」を聞いていたため、自己推薦書や研究計画書でも
  * 志望理由書としての助言になっていた。
  */
-const FREE_GUIDE_BY_TYPE: Record<string, { question: string; placeholder: string }> = {
+const FREE_GUIDE_BY_TYPE: Record<
+  string,
+  { question: string; placeholder: string }
+> = {
   志望理由書: {
     question: "この文章で最も伝えたい志望理由は何ですか？",
     placeholder: "なぜこの大学・学部で学びたいのかを、自由に書いてください。",
@@ -93,11 +108,15 @@ const FREE_GUIDE_FALLBACK = {
 };
 
 export function freeGuidingQuestion(documentType: string | undefined): string {
-  return (documentType && FREE_GUIDE_BY_TYPE[documentType]?.question)
-    ?? FREE_GUIDE_FALLBACK.question;
+  return (
+    (documentType && FREE_GUIDE_BY_TYPE[documentType]?.question) ??
+    FREE_GUIDE_FALLBACK.question
+  );
 }
 
 export function freePlaceholder(documentType: string | undefined): string {
-  return (documentType && FREE_GUIDE_BY_TYPE[documentType]?.placeholder)
-    ?? FREE_GUIDE_FALLBACK.placeholder;
+  return (
+    (documentType && FREE_GUIDE_BY_TYPE[documentType]?.placeholder) ??
+    FREE_GUIDE_FALLBACK.placeholder
+  );
 }

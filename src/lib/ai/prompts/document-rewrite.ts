@@ -1,6 +1,7 @@
 import type { SelfAnalysisContext } from "./document";
 import type { ActivityContext } from "@/lib/documents/student-context";
 import { ACTIVITY_GROUNDING_RULE } from "./shared";
+import { structureCriterionFor } from "./document";
 /** AIによる出願書類の指示ベース本文書き換えに使うプロンプト。 */
 export interface DocumentRewriteInput {
   instruction: string;
@@ -33,6 +34,12 @@ const DOCUMENT_REWRITE_SYSTEM_PROMPT = `あなたは総合型選抜（旧AO入�
 
 ## 書類タイプ
 {{DOCUMENT_TYPE}}
+
+## この書類のあるべき流れ
+{{STRUCTURE_CRITERION}}
+指示が構成に関わるときは、この流れを崩さないように書き換えること。
+この流れに無い要素（例: 学業活動報告書に志望理由や将来像）を、
+指示されていないのに足さないこと。
 
 ## 生徒の登録済みの材料
 {{REFERENCE_MATERIAL}}
@@ -81,6 +88,9 @@ export function buildDocumentRewritePrompt(
       () => input.admissionPolicy || "（未設定）"
     )
     .replace("{{DOCUMENT_TYPE}}", () => input.documentType)
+    .replace("{{STRUCTURE_CRITERION}}", () =>
+      structureCriterionFor(input.documentType)
+    )
     .replace("{{REFERENCE_MATERIAL}}", () => referenceMaterial)
     .replace("{{ACTIVITY_GROUNDING_RULE}}", () => ACTIVITY_GROUNDING_RULE)
     .replace("{{INSTRUCTION}}", () => input.instruction);

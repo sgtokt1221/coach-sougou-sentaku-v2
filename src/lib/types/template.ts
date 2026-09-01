@@ -29,7 +29,16 @@ export interface FrameworkDefinition {
 export interface DocumentTemplate {
   documentType: DocumentType;
   recommendedFrameworks: FrameworkType[];
+  /** 生徒に見せる構成例。セクションコーチが「どう書くか」を教えるのに使う */
   sampleStructure: string;
+  /**
+   * 添削の「構成」軸で何を見るか。
+   *
+   * 以前は採点側（prompts/document.ts）に別の一覧があり、テンプレの構成例と
+   * ずれていた。教える形と採点する形が食い違うと、生徒は指示どおり書いたのに
+   * 評価されない、という状態になる。ここを正本にする。
+   */
+  structureCriterion: string;
 }
 
 export interface DraftGenerateRequest {
