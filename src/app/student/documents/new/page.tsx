@@ -31,6 +31,7 @@ import type {
 import { FRAMEWORK_TYPE_LABELS } from "@/lib/types/template";
 import { FRAMEWORKS } from "@/lib/templates/frameworks";
 import { DocumentSectionCoachPanel } from "@/components/documents/DocumentSectionCoachPanel";
+import { AiDraftNotice } from "@/components/documents/AiDraftNotice";
 import {
   DOCUMENT_TEMPLATES,
   freeGuidingQuestion,
@@ -69,7 +70,8 @@ function reconstructDraftResult(
     if (positions.every((p) => p.idx >= 0)) {
       const sections = positions.map((p, i) => {
         const start = p.idx + p.title.length;
-        const end = i + 1 < positions.length ? positions[i + 1].idx : content.length;
+        const end =
+          i + 1 < positions.length ? positions[i + 1].idx : content.length;
         return {
           id: p.id,
           title: p.title,
@@ -92,13 +94,19 @@ type WritingMode = "framework" | "free";
 export default function NewDocumentPage() {
   const router = useRouter();
   const { userProfile } = useAuth();
-  const targetIds = ((userProfile as StudentProfile | null)?.targetUniversities ?? []).join(",");
+  const targetIds = (
+    (userProfile as StudentProfile | null)?.targetUniversities ?? []
+  ).join(",");
   const { data: uniData } = useAuthSWR<{ resolved: UniversityOption[] }>(
-    targetIds ? `/api/universities/resolve?ids=${encodeURIComponent(targetIds)}` : null
+    targetIds
+      ? `/api/universities/resolve?ids=${encodeURIComponent(targetIds)}`
+      : null
   );
   const universities: UniversityOption[] = uniData?.resolved ?? [];
 
-  const [allUniversities, setAllUniversities] = useState<UniversityOption[]>([]);
+  const [allUniversities, setAllUniversities] = useState<UniversityOption[]>(
+    []
+  );
   const [showAllUniversities, setShowAllUniversities] = useState(false);
 
   useEffect(() => {
@@ -111,7 +119,12 @@ export default function NewDocumentPage() {
         const unis: UniversityOption[] = [];
         for (const u of data.universities ?? []) {
           for (const f of u.faculties ?? []) {
-            unis.push({ universityId: u.id, facultyId: f.id, universityName: u.name, facultyName: f.name });
+            unis.push({
+              universityId: u.id,
+              facultyId: f.id,
+              universityName: u.name,
+              facultyName: f.name,
+            });
           }
         }
         setAllUniversities(unis);
@@ -122,13 +135,18 @@ export default function NewDocumentPage() {
 
   const [step, setStep] = useState(0);
   const [documentType, setDocumentType] = useState<DocumentType | null>(null);
-  const [selectedUniversity, setSelectedUniversity] = useState<UniversityOption | null>(null);
-  const [frameworkType, setFrameworkType] = useState<FrameworkType | null>(null);
+  const [selectedUniversity, setSelectedUniversity] =
+    useState<UniversityOption | null>(null);
+  const [frameworkType, setFrameworkType] = useState<FrameworkType | null>(
+    null
+  );
   const [writingMode, setWritingMode] = useState<WritingMode | null>(null);
   const [selectedActivityIds, setSelectedActivityIds] = useState<string[]>([]);
   const [targetWordCount, setTargetWordCount] = useState(800);
   const [generating, setGenerating] = useState(false);
-  const [draftResult, setDraftResult] = useState<DraftGenerateResponse | null>(null);
+  const [draftResult, setDraftResult] = useState<DraftGenerateResponse | null>(
+    null
+  );
   const [saving, setSaving] = useState(false);
   const [focusedSectionId, setFocusedSectionId] = useState<string | null>(null);
 
@@ -169,14 +187,20 @@ export default function NewDocumentPage() {
     [docId]
   );
 
-  const { status: saveStatus, lastSavedAt, flush } = useAutosave(
+  const {
+    status: saveStatus,
+    lastSavedAt,
+    flush,
+  } = useAutosave(
     {
       currentStep: step,
       writingMode: writingMode ?? undefined,
       frameworkType: frameworkType ?? undefined,
       selectedActivityIds,
       targetWordCount,
-      sections: draftResult?.sections.map((s) => ({ id: s.id, content: s.content })) ?? [],
+      sections:
+        draftResult?.sections.map((s) => ({ id: s.id, content: s.content })) ??
+        [],
     },
     saveWizardState,
     { enabled: !!docId }
@@ -272,11 +296,20 @@ export default function NewDocumentPage() {
       setDocId(doc.id);
     } catch (err) {
       console.error("Draft create failed:", err);
-      toast.error(err instanceof Error ? err.message : "下書きの作成に失敗しました");
+      toast.error(
+        err instanceof Error ? err.message : "下書きの作成に失敗しました"
+      );
     } finally {
       setCreating(false);
     }
-  }, [documentType, selectedUniversity, targetWordCount, writingMode, frameworkType, selectedActivityIds]);
+  }, [
+    documentType,
+    selectedUniversity,
+    targetWordCount,
+    writingMode,
+    frameworkType,
+    selectedActivityIds,
+  ]);
 
   /** 次のステップへ。志望校ステップ(1)を抜けるとき早期作成し、保留中の自動保存を確定する。 */
   const handleNext = async () => {
@@ -326,11 +359,7 @@ export default function NewDocumentPage() {
         const ws = doc.wizardState;
         const fwType: string | undefined = ws?.frameworkType;
         const restoredWritingMode: WritingMode | null =
-          ws?.writingMode === "free"
-            ? "free"
-            : fwType
-              ? "framework"
-              : null;
+          ws?.writingMode === "free" ? "free" : fwType ? "framework" : null;
         setWritingMode(restoredWritingMode);
         if (fwType) setFrameworkType(fwType as FrameworkType);
         if (Array.isArray(ws?.selectedActivityIds)) {
@@ -340,13 +369,15 @@ export default function NewDocumentPage() {
           setTargetWordCount(ws.targetWordCount);
         }
         const fw = fwType
-          ? FRAMEWORKS.find((f) => f.type === fwType) ?? null
+          ? (FRAMEWORKS.find((f) => f.type === fwType) ?? null)
           : null;
         if (restoredWritingMode === "free") {
           const freeContent = Array.isArray(ws?.sections)
             ? ((ws.sections as { id: string; content: string }[]).find(
                 (section) => section.id === "free"
-              )?.content ?? doc.content ?? "")
+              )?.content ??
+              doc.content ??
+              "")
             : (doc.content ?? "");
           setDraftResult({
             draft: freeContent,
@@ -355,16 +386,25 @@ export default function NewDocumentPage() {
                 id: "free",
                 title: "本文",
                 content: freeContent,
-                placeholder: freePlaceholder(doc.type as DocumentType | undefined),
+                placeholder: freePlaceholder(
+                  doc.type as DocumentType | undefined
+                ),
               },
             ],
             wordCount: freeContent.length,
           });
           setFocusedSectionId("free");
-        } else if (Array.isArray(ws?.sections) && ws.sections.length > 0 && fw) {
+        } else if (
+          Array.isArray(ws?.sections) &&
+          ws.sections.length > 0 &&
+          fw
+        ) {
           // 保存済みセクションから復元（本文の見出し分割に依存しない）
           const byId = new Map(
-            (ws.sections as { id: string; content: string }[]).map((s) => [s.id, s.content]),
+            (ws.sections as { id: string; content: string }[]).map((s) => [
+              s.id,
+              s.content,
+            ])
           );
           const sections = fw.sections.map((s) => ({
             id: s.id,
@@ -375,7 +415,10 @@ export default function NewDocumentPage() {
           setDraftResult({
             frameworkType: fwType as FrameworkType,
             sections,
-            draft: sections.map((s) => s.content).filter((c) => c.trim()).join("\n\n"),
+            draft: sections
+              .map((s) => s.content)
+              .filter((c) => c.trim())
+              .join("\n\n"),
           });
         } else if (doc.content) {
           // 旧データ（見出し入り本文）は従来ロジックで分割復元
@@ -410,9 +453,13 @@ export default function NewDocumentPage() {
 
   const focusedSection = (() => {
     if (!focusedSectionId || !draftResult) return null;
-    const idx = draftResult.sections.findIndex((s) => s.id === focusedSectionId);
+    const idx = draftResult.sections.findIndex(
+      (s) => s.id === focusedSectionId
+    );
     if (idx < 0) return null;
-    const fwSection = framework?.sections.find((s) => s.id === focusedSectionId);
+    const fwSection = framework?.sections.find(
+      (s) => s.id === focusedSectionId
+    );
     return {
       id: focusedSectionId,
       title: draftResult.sections[idx].title,
@@ -420,7 +467,8 @@ export default function NewDocumentPage() {
       // 種類に関わらず「志望理由」を聞いていたため、自己推薦書や研究計画書でも
       // 志望理由書としての助言になっていた。
       guidingQuestion:
-        fwSection?.guidingQuestion ?? freeGuidingQuestion(documentType ?? undefined),
+        fwSection?.guidingQuestion ??
+        freeGuidingQuestion(documentType ?? undefined),
       content: draftResult.sections[idx].content,
     };
   })();
@@ -434,12 +482,17 @@ export default function NewDocumentPage() {
     setDraftResult({
       ...draftResult,
       sections: updated,
-      draft: updated.map((s) => s.content).filter((c) => c.trim()).join("\n\n"),
+      draft: updated
+        .map((s) => s.content)
+        .filter((c) => c.trim())
+        .join("\n\n"),
     });
     toast.success(`「${updated[idx].title}」を更新しました`);
   };
 
-  const { data: activitiesData } = useAuthSWR<{ activities: Activity[] }>("/api/activities");
+  const { data: activitiesData } = useAuthSWR<{ activities: Activity[] }>(
+    "/api/activities"
+  );
   const activities = activitiesData?.activities || [];
 
   const template = documentType
@@ -450,12 +503,18 @@ export default function NewDocumentPage() {
 
   const canProceed = () => {
     switch (step) {
-      case 0: return !!documentType;
-      case 1: return !!selectedUniversity;
-      case 2: return writingMode !== null;
-      case 3: return true;
-      case 4: return !!draftResult;
-      default: return false;
+      case 0:
+        return !!documentType;
+      case 1:
+        return !!selectedUniversity;
+      case 2:
+        return writingMode !== null;
+      case 3:
+        return true;
+      case 4:
+        return !!draftResult;
+      default:
+        return false;
     }
   };
 
@@ -465,7 +524,8 @@ export default function NewDocumentPage() {
       writingMode !== "framework" ||
       !frameworkType ||
       !selectedUniversity
-    ) return;
+    )
+      return;
     setGenerating(true);
 
     try {
@@ -528,8 +588,16 @@ export default function NewDocumentPage() {
           : [
               { id: "intro", title: "導入", content: data.structure.intro },
               { id: "body", title: "志望理由", content: data.structure.body },
-              { id: "strengths", title: "自己の強みと貢献", content: data.structure.strengths },
-              { id: "conclusion", title: "将来への展開", content: data.structure.conclusion },
+              {
+                id: "strengths",
+                title: "自己の強みと貢献",
+                content: data.structure.strengths,
+              },
+              {
+                id: "conclusion",
+                title: "将来への展開",
+                content: data.structure.conclusion,
+              },
             ];
       setDraftResult({
         draft: data.draft,
@@ -541,7 +609,11 @@ export default function NewDocumentPage() {
       await persistContent(data.draft);
     } catch (err) {
       console.error("Self-analysis draft generation failed:", err);
-      toast.error(err instanceof Error ? err.message : "自己分析下書きの生成に失敗しました");
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : "自己分析下書きの生成に失敗しました"
+      );
     } finally {
       setGenerating(false);
     }
@@ -616,7 +688,7 @@ export default function NewDocumentPage() {
         </Button>
         <h1 className="text-2xl font-bold">新しい書類を作成</h1>
         {docId && (
-          <span className="ml-auto text-xs text-muted-foreground whitespace-nowrap">
+          <span className="text-muted-foreground ml-auto text-xs whitespace-nowrap">
             {saveStatus === "saving" && "保存中…"}
             {saveStatus === "saved" &&
               lastSavedAt &&
@@ -650,7 +722,7 @@ export default function NewDocumentPage() {
               {label}
             </div>
             {i < STEPS.length - 1 && (
-              <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
+              <ArrowRight className="text-muted-foreground h-4 w-4 shrink-0" />
             )}
           </div>
         ))}
@@ -664,21 +736,21 @@ export default function NewDocumentPage() {
               key={type}
               className={`cursor-pointer transition-all hover:shadow-md ${
                 documentType === type
-                  ? "ring-2 ring-primary border-primary"
+                  ? "ring-primary border-primary ring-2"
                   : ""
               }`}
               onClick={() => setDocumentType(type)}
             >
               <CardHeader className="pb-2">
-                <CardTitle className="text-base flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-base">
                   <FileText className="h-4 w-4" />
                   {type}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  {DOCUMENT_TEMPLATES.find((t) => t.documentType === type)?.sampleStructure
-                    .split("\n")[0]
+                <p className="text-muted-foreground text-sm">
+                  {DOCUMENT_TEMPLATES.find((t) => t.documentType === type)
+                    ?.sampleStructure.split("\n")[0]
                     .replace("【", "")
                     .replace("】", "") || type}
                 </p>
@@ -697,7 +769,7 @@ export default function NewDocumentPage() {
               className={`cursor-pointer transition-all hover:shadow-md ${
                 selectedUniversity?.universityId === u.universityId &&
                 selectedUniversity?.facultyId === u.facultyId
-                  ? "ring-2 ring-primary border-primary"
+                  ? "ring-primary border-primary ring-2"
                   : ""
               }`}
               onClick={() => setSelectedUniversity(u)}
@@ -706,7 +778,7 @@ export default function NewDocumentPage() {
                 <CardTitle className="text-base">{u.universityName}</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">{u.facultyName}</p>
+                <p className="text-muted-foreground text-sm">{u.facultyName}</p>
               </CardContent>
             </Card>
           ))}
@@ -717,7 +789,7 @@ export default function NewDocumentPage() {
               <button
                 type="button"
                 onClick={() => setShowAllUniversities(true)}
-                className="text-xs text-muted-foreground hover:text-primary transition-colors underline"
+                className="text-muted-foreground hover:text-primary text-xs underline transition-colors"
               >
                 他の大学・学部から選ぶ
               </button>
@@ -725,16 +797,26 @@ export default function NewDocumentPage() {
               <div className="space-y-2">
                 <Label className="text-xs">他の大学・学部</Label>
                 <select
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-                  value={selectedUniversity ? `${selectedUniversity.universityId}:${selectedUniversity.facultyId}` : ""}
+                  className="border-border bg-background w-full rounded-md border px-3 py-2 text-sm"
+                  value={
+                    selectedUniversity
+                      ? `${selectedUniversity.universityId}:${selectedUniversity.facultyId}`
+                      : ""
+                  }
                   onChange={(e) => {
-                    const uni = allUniversities.find(u => `${u.universityId}:${u.facultyId}` === e.target.value);
+                    const uni = allUniversities.find(
+                      (u) =>
+                        `${u.universityId}:${u.facultyId}` === e.target.value
+                    );
                     if (uni) setSelectedUniversity(uni);
                   }}
                 >
                   <option value="">選択してください</option>
                   {allUniversities.map((u) => (
-                    <option key={`${u.universityId}:${u.facultyId}`} value={`${u.universityId}:${u.facultyId}`}>
+                    <option
+                      key={`${u.universityId}:${u.facultyId}`}
+                      value={`${u.universityId}:${u.facultyId}`}
+                    >
                       {u.universityName} — {u.facultyName}
                     </option>
                   ))}
@@ -749,7 +831,7 @@ export default function NewDocumentPage() {
       {step === 2 && (
         <div className="space-y-4">
           {template && (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               {documentType}には以下のフレームワークが推奨されます。
             </p>
           )}
@@ -757,7 +839,7 @@ export default function NewDocumentPage() {
             <Card
               className={`cursor-pointer transition-all hover:shadow-md ${
                 writingMode === "free"
-                  ? "ring-2 ring-primary border-primary"
+                  ? "ring-primary border-primary ring-2"
                   : ""
               }`}
               onClick={() => {
@@ -768,13 +850,13 @@ export default function NewDocumentPage() {
               }}
             >
               <CardHeader className="pb-2">
-                <CardTitle className="text-base flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-base">
                   自由記述
                   <Badge variant="outline">フレームワークなし</Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   構成を固定せず、白紙または自己分析AIの下書きから自由に書きます。
                 </p>
               </CardContent>
@@ -786,7 +868,7 @@ export default function NewDocumentPage() {
                   key={fw.type}
                   className={`cursor-pointer transition-all hover:shadow-md ${
                     frameworkType === fw.type
-                      ? "ring-2 ring-primary border-primary"
+                      ? "ring-primary border-primary ring-2"
                       : ""
                   }`}
                   onClick={() => {
@@ -797,7 +879,7 @@ export default function NewDocumentPage() {
                   }}
                 >
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-base flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2 text-base">
                       {fw.name}
                       {isRecommended && (
                         <Badge variant="secondary" className="gap-1">
@@ -808,7 +890,7 @@ export default function NewDocumentPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2">
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-muted-foreground text-sm">
                       {fw.description}
                     </p>
                     <div className="flex flex-wrap gap-1">
@@ -829,7 +911,7 @@ export default function NewDocumentPage() {
       {/* Step 3: Activity selection */}
       {step === 3 && (
         <div className="space-y-4">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             活動実績を選択すると、下書きに自動的に反映されます（任意）。
           </p>
 
@@ -846,7 +928,7 @@ export default function NewDocumentPage() {
 
           {activities.length === 0 ? (
             <Card>
-              <CardContent className="py-8 text-center text-muted-foreground">
+              <CardContent className="text-muted-foreground py-8 text-center">
                 登録済みの活動実績がありません。スキップして下書きを生成できます。
               </CardContent>
             </Card>
@@ -857,13 +939,13 @@ export default function NewDocumentPage() {
                   key={a.id}
                   className={`cursor-pointer transition-all hover:shadow-md ${
                     selectedActivityIds.includes(a.id)
-                      ? "ring-2 ring-primary border-primary"
+                      ? "ring-primary border-primary ring-2"
                       : ""
                   }`}
                   onClick={() => toggleActivity(a.id)}
                 >
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-base flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2 text-base">
                       <input
                         type="checkbox"
                         checked={selectedActivityIds.includes(a.id)}
@@ -874,7 +956,7 @@ export default function NewDocumentPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm text-muted-foreground line-clamp-2">
+                    <p className="text-muted-foreground line-clamp-2 text-sm">
                       {a.description}
                     </p>
                   </CardContent>
@@ -890,14 +972,15 @@ export default function NewDocumentPage() {
         <div className="space-y-4">
           {!draftResult && !generating && (
             <Card>
-              <CardContent className="py-8 text-center space-y-4">
+              <CardContent className="space-y-4 py-8 text-center">
                 <div className="space-y-2">
                   <p className="font-medium">
                     {documentType} - {selectedUniversity?.universityName}{" "}
                     {selectedUniversity?.facultyName}
                   </p>
-                  <p className="text-sm text-muted-foreground">
-                    構成: {writingMode === "free"
+                  <p className="text-muted-foreground text-sm">
+                    構成:{" "}
+                    {writingMode === "free"
                       ? "自由記述"
                       : frameworkType
                         ? FRAMEWORK_TYPE_LABELS[frameworkType]
@@ -921,7 +1004,12 @@ export default function NewDocumentPage() {
                   )}
 
                   {writingMode === "framework" && (
-                    <Button onClick={handleGenerate} size="lg" className="gap-2" variant="outline">
+                    <Button
+                      onClick={handleGenerate}
+                      size="lg"
+                      className="gap-2"
+                      variant="outline"
+                    >
                       <Sparkles className="h-4 w-4" />
                       フレームワーク形式で下書き生成
                     </Button>
@@ -945,9 +1033,11 @@ export default function NewDocumentPage() {
 
           {generating && (
             <Card>
-              <CardContent className="py-12 text-center space-y-4">
-                <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-                <p className="text-muted-foreground">AIが下書きを生成しています...</p>
+              <CardContent className="space-y-4 py-12 text-center">
+                <Loader2 className="text-primary mx-auto h-8 w-8 animate-spin" />
+                <p className="text-muted-foreground">
+                  AIが下書きを生成しています...
+                </p>
               </CardContent>
             </Card>
           )}
@@ -985,6 +1075,8 @@ export default function NewDocumentPage() {
                         : "space-y-4 lg:min-h-0 lg:flex-1 lg:overflow-y-auto"
                     }
                   >
+                    {/* 自由記述は本人が書いた本文なので、AIの注意書きは出さない */}
+                    {writingMode !== "free" && <AiDraftNotice />}
                     {draftResult.sections.map((section, i) => (
                       <SectionTextarea
                         key={section.id ?? i}
@@ -998,7 +1090,10 @@ export default function NewDocumentPage() {
                           setDraftResult({
                             ...draftResult,
                             sections: updated,
-                            draft: updated.map((s) => s.content).filter((c) => c.trim()).join("\n\n"),
+                            draft: updated
+                              .map((s) => s.content)
+                              .filter((c) => c.trim())
+                              .join("\n\n"),
                           });
                         }}
                         rows={writingMode === "free" ? undefined : 4}
@@ -1009,7 +1104,7 @@ export default function NewDocumentPage() {
                         }
                         className={
                           writingMode === "free"
-                            ? "min-h-[50vh] resize-y text-base lg:min-h-0 lg:h-full lg:resize-none lg:text-sm"
+                            ? "min-h-[50vh] resize-y text-base lg:h-full lg:min-h-0 lg:resize-none lg:text-sm"
                             : "min-h-[9rem] resize-y text-base lg:text-sm"
                         }
                       />
@@ -1027,7 +1122,11 @@ export default function NewDocumentPage() {
                   >
                     再生成
                   </Button>
-                  <Button onClick={handleSave} disabled={saving} className="gap-2">
+                  <Button
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="gap-2"
+                  >
                     {saving ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
@@ -1045,18 +1144,11 @@ export default function NewDocumentPage() {
       {/* Navigation */}
       {step < 4 && (
         <div className="flex justify-between">
-          <Button
-            variant="outline"
-            onClick={handleBack}
-            disabled={step === 0}
-          >
+          <Button variant="outline" onClick={handleBack} disabled={step === 0}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             前へ
           </Button>
-          <Button
-            onClick={handleNext}
-            disabled={!canProceed() || creating}
-          >
+          <Button onClick={handleNext} disabled={!canProceed() || creating}>
             次へ
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>

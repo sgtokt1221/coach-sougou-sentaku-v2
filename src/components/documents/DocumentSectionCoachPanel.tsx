@@ -17,6 +17,7 @@ import { MobileSlideOverPanel } from "@/components/shared/MobileSlideOverPanel";
 import { authFetch } from "@/lib/api/client";
 import { stripSuggestion } from "@/lib/ai/prompts/document-coach";
 import { APReference } from "@/components/coach/APReference";
+import { AiDraftNotice } from "@/components/documents/AiDraftNotice";
 import { SelfAnalysisReference } from "@/components/essay/SelfAnalysisReference";
 import type {
   DocumentCoachMessage,
@@ -468,6 +469,7 @@ function PanelBody({
             <p className="text-foreground/90 text-xs whitespace-pre-wrap">
               {currentSuggestion}
             </p>
+            <AiDraftNotice />
             <Button
               size="sm"
               onClick={handleApply}

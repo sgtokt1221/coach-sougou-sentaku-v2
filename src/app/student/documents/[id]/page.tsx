@@ -68,6 +68,7 @@ import {
 import { useTextHistory } from "@/hooks/useTextHistory";
 import { UndoRedoButtons } from "@/components/shared/UndoRedoButtons";
 import { DocumentSectionCoachPanel } from "@/components/documents/DocumentSectionCoachPanel";
+import { AiDraftNotice } from "@/components/documents/AiDraftNotice";
 /** 2状態表示: draft=outline / それ以外(完成扱い)=default。 */
 function statusVariant2(status: DocumentStatus): "outline" | "default" {
   return status === "draft" ? "outline" : "default";
@@ -1026,6 +1027,7 @@ function ReviewPanel({
               <Separator />
               <div className="space-y-2">
                 <p className="text-sm font-medium">書き換え案</p>
+                <AiDraftNotice />
                 {rewriteNotice && (
                   <p className="rounded-md border border-amber-300 bg-amber-50 p-2 text-xs whitespace-pre-line text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
                     {rewriteNotice}
