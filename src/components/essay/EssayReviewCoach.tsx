@@ -34,6 +34,8 @@ export function EssayReviewCoach({
   essayId,
   topic,
   essayText,
+  questionType,
+  sourceText,
   scoreTotal,
   scoreMaximum,
   feedback,
@@ -41,6 +43,9 @@ export function EssayReviewCoach({
   essayId: string;
   topic: string;
   essayText: string;
+  /** 出題資料。レポート課題では課題文が無いと指摘の指す先を説明できない */
+  questionType?: string;
+  sourceText?: string;
   scoreTotal: number;
   scoreMaximum: number;
   feedback: ReviewFeedback;
@@ -88,6 +93,12 @@ export function EssayReviewCoach({
           <EssayCoachChat
             topic={topic}
             draft={essayText}
+            questionType={
+              questionType as
+                | React.ComponentProps<typeof EssayCoachChat>["questionType"]
+                | undefined
+            }
+            sourceText={sourceText}
             reviewContext={reviewContext}
             resetKey={`review:${essayId}`}
             openingMessage="添削結果について何でも聞いてください。指摘の意味が分からないところ、どう直せばいいか迷うところはありますか?"

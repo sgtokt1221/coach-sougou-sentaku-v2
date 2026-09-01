@@ -4,27 +4,30 @@
 
 このリポジトリは **CoachFor総合型選抜（v2）** であり、**ノーマルCoach（武田塾系）とは完全に別プロジェクト**。
 
-| 項目 | このプロジェクト | ノーマルCoach |
-|---|---|---|
-| 通称 | **Coach v2 / CoachFor総合型選抜 / 総合型選抜Coach** | **Coach / ノーマルCoach / 武田塾系Coach** |
-| パス | `~/Projects/coach-sougou-sentaku-v2/` | `~/Projects/study-quest/` |
-| 目的 | 総合型選抜の小論文・面接・出願書類のAI添削 | 武田塾型 自学自習管理（参考書ルート + 日次タスク） |
-| Stack | **Next.js 16** + Firebase | **Vite + React 19** + Firebase |
-| 中核価値 | 添削の質・AP合致度 | 継続性・成長実感 |
-| デプロイ | Firebase App Hosting (`coach-app--coach-sougou-sentaku.asia-east1.hosted.app`) | Firebase Hosting |
+| 項目     | このプロジェクト                                                               | ノーマルCoach                                      |
+| -------- | ------------------------------------------------------------------------------ | -------------------------------------------------- |
+| 通称     | **Coach v2 / CoachFor総合型選抜 / 総合型選抜Coach**                            | **Coach / ノーマルCoach / 武田塾系Coach**          |
+| パス     | `~/Projects/coach-sougou-sentaku-v2/`                                          | `~/Projects/study-quest/`                          |
+| 目的     | 総合型選抜の小論文・面接・出願書類のAI添削                                     | 武田塾型 自学自習管理（参考書ルート + 日次タスク） |
+| Stack    | **Next.js 16** + Firebase                                                      | **Vite + React 19** + Firebase                     |
+| 中核価値 | 添削の質・AP合致度                                                             | 継続性・成長実感                                   |
+| デプロイ | Firebase App Hosting (`coach-app--coach-sougou-sentaku.asia-east1.hosted.app`) | Firebase Hosting                                   |
 
 判断ルール：
+
 - **小論文/面接/AP/出願書類** の話題 → このプロジェクト（v2）
 - **参考書ルート/日次タスク/学習トラッキング/ポモドーロ/ストリーク（学習時間）** の話題 → ノーマルCoach
 - ユーザーが「Coach」と言ったとき、文脈から判別不能なら必ず確認する
 
 ## 1. Project Overview
+
 - 総合型選抜（旧AO入試）に特化したAI学習支援Webアプリ
 - 小論文の画像認識添削、大学別AP面接対策、成長トラッキング、ビッグデータ分析
 - 管理者ポータル + 生徒ポータルの2ポータル構成
 - 対応大学: 旧帝大7校、関関同立4校、MARCH5校、産近甲龍4校（初期20校）
 
 ## 2. Technical Stack
+
 - フロントエンド: Next.js 15 + React 19 + TypeScript + Tailwind CSS v4 + shadcn/ui
 - 認証: Firebase Authentication
 - DB: Firestore (メイン) + BigQuery (ビッグデータ分析)
@@ -34,44 +37,49 @@
 - PWA対応
 
 ## 3. Key Files & Architecture
-| File/Dir | Role |
-|----------|------|
-| docs/design.md | 設計書（DB設計、API設計、画面設計） |
-| src/app/ | Next.js App Router ページ |
-| src/app/(auth)/login/ | ログインページ |
-| src/app/student/ | 生徒ポータル |
-| src/app/admin/ | 管理者ポータル |
-| src/components/ui/ | shadcn/ui コンポーネント |
-| src/components/layout/ | レイアウトコンポーネント |
-| src/components/shared/ | 共通コンポーネント |
-| src/lib/firebase/config.ts | Firebase初期化（getApps重複防止） |
-| src/lib/types/ | 型定義（user.ts, university.ts, essay.ts, interview.ts, matching.ts, growth.ts, admin.ts, session.ts, document.ts, activity.ts, passed-data.ts） |
-| src/lib/utils.ts | cn() ユーティリティ（shadcn/ui用） |
-| src/lib/growth/analyze.ts | 成長分析ロジック（弱点検出・更新・フィルタ） |
-| src/lib/ai/prompts/ | AIプロンプト（essay.ts, interview.ts, summary.ts, document.ts, activity.ts） |
-| src/components/interview/ | 面接UIコンポーネント（VoiceRecorder, AudioPlayback, TranscriptionView） |
-| src/lib/matching/ | 志望校マッチングエンジン |
-| src/components/growth/ | 成長トラッキングUIコンポーネント |
-| src/contexts/ | React Context（AuthContext等） |
-| src/data/ | 静的データ |
+
+| File/Dir                   | Role                                                                                                                                             |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| docs/design.md             | 設計書（DB設計、API設計、画面設計）                                                                                                              |
+| src/app/                   | Next.js App Router ページ                                                                                                                        |
+| src/app/(auth)/login/      | ログインページ                                                                                                                                   |
+| src/app/student/           | 生徒ポータル                                                                                                                                     |
+| src/app/admin/             | 管理者ポータル                                                                                                                                   |
+| src/components/ui/         | shadcn/ui コンポーネント                                                                                                                         |
+| src/components/layout/     | レイアウトコンポーネント                                                                                                                         |
+| src/components/shared/     | 共通コンポーネント                                                                                                                               |
+| src/lib/firebase/config.ts | Firebase初期化（getApps重複防止）                                                                                                                |
+| src/lib/types/             | 型定義（user.ts, university.ts, essay.ts, interview.ts, matching.ts, growth.ts, admin.ts, session.ts, document.ts, activity.ts, passed-data.ts） |
+| src/lib/utils.ts           | cn() ユーティリティ（shadcn/ui用）                                                                                                               |
+| src/lib/growth/analyze.ts  | 成長分析ロジック（弱点検出・更新・フィルタ）                                                                                                     |
+| src/lib/ai/prompts/        | AIプロンプト（essay.ts, interview.ts, summary.ts, document.ts, activity.ts）                                                                     |
+| src/components/interview/  | 面接UIコンポーネント（VoiceRecorder, AudioPlayback, TranscriptionView）                                                                          |
+| src/lib/matching/          | 志望校マッチングエンジン                                                                                                                         |
+| src/components/growth/     | 成長トラッキングUIコンポーネント                                                                                                                 |
+| src/contexts/              | React Context（AuthContext等）                                                                                                                   |
+| src/data/                  | 静的データ                                                                                                                                       |
 
 ## 4. Database Schema
+
 - Firestore: universities/, users/, users/{id}/essays/, users/{id}/interviews/, analytics/
 - BigQuery: essay_submissions, interview_sessions, student_snapshots
 - 詳細は docs/design.md 参照
 
 ## 5. Coding Conventions
+
 - TypeScript strict mode
 - コンポーネント: 関数コンポーネント + hooks
 - 命名: camelCase (変数/関数), PascalCase (コンポーネント/型)
 - AI関連の定数・プロンプトは src/lib/ai/prompts/ に集約
 
 ## 5.5 コミット・push
+
 - このプロジェクトでは、作業が終わったら確認を取らずに main へコミット・push してよい（2026-08-14 にユーザーが指示）。
 - push で App Hosting の本番デプロイが走る。push 前に `npm run build` を通し、UI 変更は画面で確認してから出す。
 - Firestore インデックスと本番データの書き換え（再採点スクリプト等）は push とは別。実行前に確認を取る。
 
 ## 6. Development Commands
+
 - `npm run dev` - ローカル開発サーバー（Turbopack）
 - `npm run build` - ビルド
 - `npm run lint` - ESLint
@@ -79,6 +87,7 @@
 - `npm run format:check` - フォーマットチェック
 
 ### ローカルでUIを検証する（認証が要る画面）
+
 `npm run dev` は .env.local の実プロジェクトに繋がるため、ログインできないと生徒画面を開けない。
 エミュレータを使えばローカルだけで完結する。ターミナル2つで:
 
@@ -89,6 +98,7 @@ npm run dev:emu   # エミュレータに繋いだ dev サーバー
 ```
 
 `student@example.com` / `password` でログインする。投入されるもの:
+
 - 生徒1名（plan=standard + documentPackage購入済み。requireFeature を全部通すため）
 - `/student/documents/emu-doc-over-limit` — AI書き換えの字数警告
 - `/student/documents/emu-doc-placeholder` — 書き換えのプレースホルダー警告
@@ -99,20 +109,31 @@ npm run dev:emu   # エミュレータに繋いだ dev サーバー
 **そちらへ黙って繋がってログインだけ失敗する**（エラーも出ない）ので戻さない。
 クライアント側のポートは `NEXT_PUBLIC_FIREBASE_EMULATOR_*_PORT` で渡している。
 
+スクリプトからエミュレータのデータを直接読み書きするときは **projectId に `demo-coach` を使う**。
+`dev:emu` はクライアントを `NEXT_PUBLIC_FIREBASE_PROJECT_ID=demo-coach` で起動するため、
+本番と同じ `coach-sougou-sentaku` を指定すると、同じエミュレータ内の**別の名前空間**に
+書き込まれる。エラーは出ず、書けたように見えて画面に反映されない（沈黙失敗）。
+
+```
+FIRESTORE_EMULATOR_HOST=127.0.0.1:8581 GCLOUD_PROJECT=demo-coach npx tsx scripts/seed-universities.ts
+```
+
 エミュレータのデータは `.emulator-data/` に残る（gitignore 済み）。
 AI呼び出しは .env.local の ANTHROPIC_API_KEY をそのまま使うので実APIに出る。
 
 ## 6.5 日付フィールドの保存形式（コレクションごとに違う）
+
 同じ「日付」でもコレクションで型が違う。**書き込む前に既存データの型に合わせること。**
 混在させると Firestore の範囲クエリが型ごとに別グループとして扱うため、
 条件に一致しても黙って除外される（インデックス欠落と同じく沈黙失敗になる）。
 
-| 保存形式 | コレクション |
-|---|---|
+| 保存形式            | コレクション                                                                                                                                                        |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Firestore Timestamp | `essays`(submittedAt) / `users/*/skillChecks`(takenAt) / `users/*/summaryDrills`(completedAt) / `users/*/logicDrills`(completedAt) / `users/*/interviewSkillChecks` |
-| ISO 8601 文字列 | `sessions`(scheduledAt/createdAt/updatedAt/startedAt/endedAt) / `documents` / `users/*/essayCoachThreads` / `users/*/chokoReviews` |
+| ISO 8601 文字列     | `sessions`(scheduledAt/createdAt/updatedAt/startedAt/endedAt) / `documents` / `users/*/essayCoachThreads` / `users/*/chokoReviews`                                  |
 
 `users` は**フィールドごとに違う**ので特に注意する。
+
 - Timestamp: `lastSeenAt`（ハートビートが `FieldValue.serverTimestamp()` で書く）/ `createdAt` / `updatedAt`
 - ISO 文字列: `gradeUpdatedAt` / `disabledAt` / `researchEnrolledAt`
 
@@ -126,12 +147,14 @@ AI呼び出しは .env.local の ANTHROPIC_API_KEY をそのまま使うので�
 - シードスクリプトも本番の書き込み経路と同じ型で書く
 
 ## 7. Common Pitfalls
+
 - Claude Vision APIのOCR精度: 手書きの崩し字は誤認識しやすい → 生徒に確認ステップ必須
 - 大学データの鮮度: 毎年募集要項が変わるため、年次更新フローが必要
 - BigQueryコスト: スキャン量に注意、パーティション設定必須
 - App Hostingはpushで自動デプロイされるが、Firestoreインデックスは `firebase deploy --only firestore:indexes` を別途実行しないと反映されない（複合インデックス欠落は空表示の沈黙失敗になる）
 
 ## 8. Current State / Known Issues
+
 - Phase: Phase 1-5 全完了 + Superadmin/スコーピング実装完了
 - 設計書: docs/design.md (v1.2) - 独占的差別化4機能追加済み
 - **Superadmin + 管理者別生徒スコーピング（2026-03-22実装）**
@@ -297,7 +320,7 @@ AI呼び出しは .env.local の ANTHROPIC_API_KEY をそのまま使うので�
   - /api/stripe/portal: Stripe Customer Portalセッション作成（生徒自身+管理者経由）
   - /api/subscription/status: GET(現在のサブスク状態+FeatureFlags返却)
   - src/lib/api/subscription.ts: requireFeature() — 機能ゲートミドルウェア（403返却+upgradeUrl）
-  - /api/documents/*, /api/activities/* 全ルートにrequireFeature適用済み
+  - /api/documents/_, /api/activities/_ 全ルートにrequireFeature適用済み
   - /student/pricing: プランカード2種+機能比較テーブル+Stripeポータルリンク
   - src/components/shared/SubscriptionBanner.tsx: プレミアム機能アクセス制限バナー
   - Sidebar: 生徒「プラン」リンク追加
@@ -333,6 +356,7 @@ AI呼び出しは .env.local の ANTHROPIC_API_KEY をそのまま使うので�
 ## 9. Implementation Roadmap
 
 ### Phase 0: プロジェクト初期セットアップ（1日）
+
 - 0-1. Next.js 15 + TypeScript プロジェクト作成（create-next-app）
 - 0-2. Tailwind CSS v4 + shadcn/ui セットアップ
 - 0-3. Framer Motion + Recharts インストール
@@ -344,6 +368,7 @@ AI呼び出しは .env.local の ANTHROPIC_API_KEY をそのまま使うので�
 ### Phase 1: MVP（4-6週間）
 
 #### 1A. 認証 + レイアウト（3-4日）← Phase 0 完了後
+
 - 1A-1. Firebase Auth 設定（Google + メールログイン）
 - 1A-2. AuthContext / useAuth フック
 - 1A-3. ロールベースルーティング（student / teacher / admin）
@@ -351,6 +376,7 @@ AI呼び出しは .env.local の ANTHROPIC_API_KEY をそのまま使うので�
 - 1A-5. UIデザインシステム（カラーパレット、Glass Morphism、アニメーション基盤）
 
 #### 1B. 大学データベース構築（2-3日）← Phase 0 完了後（1Aと並行可能）
+
 - 1B-1. 大学データJSON作成（20大学分）
   - 旧帝大7校 → 関関同立4校 → MARCH5校 → 産近甲龍4校
   - 各校: AP、選考方法、日程、出願要件
@@ -358,6 +384,7 @@ AI呼び出しは .env.local の ANTHROPIC_API_KEY をそのまま使うので�
 - 1B-3. 大学データ型定義（src/lib/types/university.ts）
 
 #### 1C. 小論文添削機能（5-7日）← 1A + 1B 完了後
+
 - 1C-1. 画像アップロードUI（カメラ撮影 / ファイル選択）
 - 1C-2. Cloud Storage アップロード処理
 - 1C-3. Claude Vision API OCR連携（/api/essay/upload）
@@ -369,23 +396,27 @@ AI呼び出しは .env.local の ANTHROPIC_API_KEY をそのまま使うので�
 - 1C-7. 添削履歴一覧
 
 #### 1D. 成長トラッキング（3-4日）← 1C 完了後
+
 - 1D-1. growthProfile スキーマ実装（WeaknessRecord型）
 - 1D-2. analyzeGrowth() ロジック（設計書4.3の実装）
 - 1D-3. 弱点リマインドカードUI
 - 1D-4. 弱点表示の画面別フィルタ
 
 #### 1E. 生徒ダッシュボード（2-3日）← 1D 完了後
+
 - 1E-1. ダッシュボードページ（/）
 - 1E-2. 弱点リマインドカード（sticky、severity別色分け）
 - 1E-3. 成長グラフ（Recharts）
 - 1E-4. skeleton loading + アニメーション
 
 #### 1F. 管理者: 生徒一覧・詳細（2-3日）← 1A + 1D 完了後
+
 - 1F-1. 管理者ダッシュボード（/admin）
 - 1F-2. 生徒一覧（検索・フィルタ）
 - 1F-3. 生徒詳細（プロフィール、成長グラフ、弱点一覧、添削履歴）
 
 ### Phase 1 依存関係図
+
 ```
 Phase 0（セットアップ）
   ├── 1A（認証+レイアウト）──┐
@@ -402,6 +433,7 @@ Phase 0（セットアップ）
 ```
 
 ### Phase 2: 面接 + マッチング（3-4週間）← Phase 1 完了が前提
+
 - 2A. AI模擬面接（テキストチャット）
   - 面接AIプロンプト設計（4モード: 個人/GD/プレゼン/口頭試問）
   - チャットUI + タイマー + 評価
@@ -411,6 +443,7 @@ Phase 0（セットアップ）
 - 2E. 管理者: 大学データ編集UI
 
 ### Phase 3: ビッグデータ + 高度分析（3-4週間）← Phase 1-2 完了が前提
+
 - 3A. BigQuery連携パイプライン
 - 3B. 管理者分析ダッシュボード
 - 3C. 弱点パターン分析
@@ -418,6 +451,7 @@ Phase 0（セットアップ）
 - 3E. 要注意生徒アラート
 
 ### Phase 4: 音声・ビデオ面談 + 拡張（4-5週間）← Phase 2 完了が前提
+
 - 4A. 音声面接（MediaRecorder + TTS/STT）
 - 4B. Whisper文字起こしパイプライン
 - 4C. Claude自動サマリー（指導報告書）
@@ -425,6 +459,7 @@ Phase 0（セットアップ）
 - 4E. 面談セッション管理
 
 ### Phase 5: 独占的差別化機能（5-6週間）← Phase 1-2 完了が前提（Phase 3-4と並行可能）
+
 - 5A. 出願書類エディタ + AI添削
 - 5B. 活動実績AIヒアリング + 構造化
 - 5C. 合格者データ集計・閲覧
@@ -432,6 +467,7 @@ Phase 0（セットアップ）
 - 5E. Stripe決済連携
 
 ### Phase間の依存関係
+
 ```
 Phase 0 → Phase 1 → Phase 2 → Phase 3
                   │           → Phase 4

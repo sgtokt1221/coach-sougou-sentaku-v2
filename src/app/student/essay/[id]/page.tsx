@@ -136,6 +136,9 @@ interface EssayResult {
   topic: string;
   submittedAt: string;
   ocrText?: string;
+  /** 出題資料。AIコーチへ渡す */
+  questionType?: string | null;
+  sourceText?: string | null;
   scores: EssayScores;
   feedback: EssayFeedback;
   growthEvents?: GrowthEvent[];
@@ -754,6 +757,8 @@ export default function EssayResultPage() {
           essayId={result.id}
           topic={result.topic}
           essayText={result.ocrText ?? ""}
+          questionType={result.questionType ?? undefined}
+          sourceText={result.sourceText ?? undefined}
           scoreTotal={totalScore}
           scoreMaximum={scoreMaximum}
           feedback={result.feedback}

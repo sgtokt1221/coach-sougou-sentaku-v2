@@ -578,8 +578,17 @@ export default function EssayNewPage() {
         questionType: selectedTheme.questionType,
       };
     }
+    // 再トライは元の答案の出題資料を引き継ぐ。引き継がないと、同じ設問を
+    // 書き直しているのに課題文が消え、コーチも採点も資料なしの設問として扱う
+    if (retryParent?.retryContext?.sourceText) {
+      return {
+        sourceText: retryParent.retryContext.sourceText,
+        chartData: undefined,
+        questionType: retryParent.retryContext.questionType ?? undefined,
+      };
+    }
     return undefined;
-  }, [pastQuestion, dynamicSourceText, selectedTheme]);
+  }, [pastQuestion, dynamicSourceText, selectedTheme, retryParent]);
 
   /**
    * レポート課題の課題文。ReportSourcePane で画面に出しているため資料タブは
@@ -1071,6 +1080,21 @@ export default function EssayNewPage() {
           ...(pastQuestion && { pastQuestionId: pastQuestion.id }),
           ...(homeworkId ? { homeworkId } : {}),
           ...(retryFromId && { parentEssayId: retryFromId }),
+          // 元の答案の出題資料を引き継ぐ。テーマ・過去問・レポートを
+          // 選び直した場合は、この後のスプレッドで上書きされる
+          ...(retryParent?.retryContext?.sourceText
+            ? {
+                questionType:
+                  retryParent.retryContext.questionType ?? undefined,
+                sourceText: retryParent.retryContext.sourceText,
+                ...(retryParent.retryContext.chartDataSummary
+                  ? {
+                      chartDataSummary:
+                        retryParent.retryContext.chartDataSummary,
+                    }
+                  : {}),
+              }
+            : {}),
           ...(reportMode &&
             reportMaterial && {
               questionType: "report" as const,
@@ -1199,6 +1223,21 @@ export default function EssayNewPage() {
           ...(pastQuestion && { pastQuestionId: pastQuestion.id }),
           ...(homeworkId ? { homeworkId } : {}),
           ...(retryFromId && { parentEssayId: retryFromId }),
+          // 元の答案の出題資料を引き継ぐ。テーマ・過去問・レポートを
+          // 選び直した場合は、この後のスプレッドで上書きされる
+          ...(retryParent?.retryContext?.sourceText
+            ? {
+                questionType:
+                  retryParent.retryContext.questionType ?? undefined,
+                sourceText: retryParent.retryContext.sourceText,
+                ...(retryParent.retryContext.chartDataSummary
+                  ? {
+                      chartDataSummary:
+                        retryParent.retryContext.chartDataSummary,
+                    }
+                  : {}),
+              }
+            : {}),
           ...(pastQuestion && {
             questionType: pastQuestion.questionType,
             sourceText:

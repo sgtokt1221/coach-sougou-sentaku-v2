@@ -94,6 +94,10 @@ export async function GET(
       submittedAt:
         data.submittedAt?.toDate?.()?.toISOString() ?? new Date().toISOString(),
       ocrText: data.ocrText ?? "",
+      // 出題資料。結果画面のAIコーチへ渡すために返す。これが無いと、
+      // レポート課題で「課題文のどこを指しているのか」に答えられない
+      questionType: data.questionContext?.questionType ?? null,
+      sourceText: data.questionContext?.sourceText ?? null,
       status: data.status ?? "reviewed",
       inlineComments: data.inlineComments ?? [],
       scores,
