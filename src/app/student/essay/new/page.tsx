@@ -201,6 +201,9 @@ export default function EssayNewPage() {
   const draftIdParam = searchParams?.get("draft");
   // 選んだ課題文。URLに残さないと、リロードで通常の小論文に戻ってしまう
   const reportIdParam = searchParams?.get("report");
+  /** 下書きから復元したレポートの課題文ID。URLに無くても開けるようにする */
+  const [reportDraftId, setReportDraftId] = useState<string | null>(null);
+  const reportMaterialIdToLoad = reportIdParam ?? reportDraftId;
   /**
    * サーバー側の下書きID。
    *
@@ -313,6 +316,7 @@ export default function EssayNewPage() {
           customMaxLength?: number;
           writingDirection?: "vertical" | "horizontal";
           selectedCompoundId?: string;
+          reportMaterialId?: string;
         };
         if (cancelled) return;
         setInputMode("text");
@@ -325,6 +329,8 @@ export default function EssayNewPage() {
           setSelectedCompoundId(draft.selectedCompoundId);
         savedDraftIdRef.current = draftIdParam;
         setSavedDraftId(draftIdParam);
+        // 下書きがレポートのものなら、その状態で開く
+        if (draft.reportMaterialId) setReportDraftId(draft.reportMaterialId);
         setActiveTab("new");
         setStep(2);
       } catch {
@@ -450,12 +456,12 @@ export default function EssayNewPage() {
    * 別の設定で提出してしまう。
    */
   useEffect(() => {
-    if (!reportIdParam || reportMaterial) return;
+    if (!reportMaterialIdToLoad || reportMaterial) return;
     let cancelled = false;
     (async () => {
       try {
         const res = await authFetch(
-          `/api/essay/report/materials/${reportIdParam}`
+          `/api/essay/report/materials/${reportMaterialIdToLoad}`
         );
         if (!res.ok) return;
         const material = (await res.json()) as ReportMaterial;
@@ -475,7 +481,7 @@ export default function EssayNewPage() {
     return () => {
       cancelled = true;
     };
-  }, [reportIdParam, reportMaterial]);
+  }, [reportMaterialIdToLoad, reportMaterial]);
 
   // レポートモード: 課題文が存在する系統を先読み（準備中判定用）
   useEffect(() => {
@@ -810,6 +816,7 @@ export default function EssayNewPage() {
     themeId: selectedTheme?.id,
     pastQuestionId: pastQuestion?.id,
     homeworkId: homeworkId ?? undefined,
+    reportMaterialId: reportMode ? reportMaterial?.id : undefined,
   };
 
   const {

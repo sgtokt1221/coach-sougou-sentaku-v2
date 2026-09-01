@@ -21,6 +21,8 @@ function resumeHref(draft: EssayDraft): string {
   if (draft.themeId) params.set("theme", draft.themeId);
   if (draft.pastQuestionId) params.set("pastQuestion", draft.pastQuestionId);
   if (draft.homeworkId) params.set("homeworkId", draft.homeworkId);
+  // レポートは課題文が要る。渡さないと通常の小論文として開いてしまう
+  if (draft.reportMaterialId) params.set("report", draft.reportMaterialId);
   return `/student/essay/new?${params.toString()}`;
 }
 
@@ -51,7 +53,7 @@ export function EssayDraftsSection() {
 
   return (
     <div className="mb-2">
-      <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-muted-foreground">
+      <h3 className="text-muted-foreground mb-2 flex items-center gap-1.5 text-sm font-semibold">
         <FileEdit className="size-4" />
         書きかけの下書き
       </h3>
@@ -67,7 +69,7 @@ export function EssayDraftsSection() {
                     </span>
                   )}
                   {(draft.topicLabel || draft.topic) && (
-                    <span className="truncate text-xs text-muted-foreground">
+                    <span className="text-muted-foreground truncate text-xs">
                       / {draft.topicLabel || draft.topic}
                     </span>
                   )}
@@ -82,7 +84,7 @@ export function EssayDraftsSection() {
                     {draft.directText.trim()}
                   </p>
                 )}
-                <p className="mt-0.5 text-[11px] text-muted-foreground">
+                <p className="text-muted-foreground mt-0.5 text-[11px]">
                   {formatDateTime(draft.updatedAt)} 保存 ・{" "}
                   {draft.directText.trim().length}字
                 </p>

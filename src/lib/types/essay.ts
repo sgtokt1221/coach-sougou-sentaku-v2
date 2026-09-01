@@ -382,6 +382,13 @@ export interface EssayDraft {
   pastQuestionId?: string;
   homeworkId?: string;
   /**
+   * レポート課題の課題文ID。
+   *
+   * これが無かったころは、レポートで書いた下書きを「続ける」で開くと通常の
+   * 小論文として復元され、課題文も推奨字数も失われていた。
+   */
+  reportMaterialId?: string;
+  /**
    * 一覧表示用のテーマ名。topic は手入力時しか埋まらないため、
    * テーマ・過去問から選んだ下書きはサーバー側で名前を解決して入れる。
    */

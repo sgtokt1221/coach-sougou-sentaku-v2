@@ -18,11 +18,17 @@ export async function GET(
   try {
     const { id } = await params;
     if (!adminDb) {
-      return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
+      return NextResponse.json(
+        { error: "サーバー設定エラー" },
+        { status: 500 }
+      );
     }
     const doc = await adminDb.doc(`users/${uid}/essayDrafts/${id}`).get();
     if (!doc.exists) {
-      return NextResponse.json({ error: "下書きが見つかりません" }, { status: 404 });
+      return NextResponse.json(
+        { error: "下書きが見つかりません" },
+        { status: 404 }
+      );
     }
     const data = doc.data()!;
     const draft: EssayDraft = {
@@ -38,6 +44,8 @@ export async function GET(
       universityName: data.universityName ?? "",
       facultyName: data.facultyName ?? "",
       themeId: data.themeId,
+      // レポートで書いた下書きは、これが無いと通常の小論文として開いてしまう
+      reportMaterialId: data.reportMaterialId,
       pastQuestionId: data.pastQuestionId,
       homeworkId: data.homeworkId,
       createdAt:
@@ -69,7 +77,10 @@ export async function DELETE(
   try {
     const { id } = await params;
     if (!adminDb) {
-      return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
+      return NextResponse.json(
+        { error: "サーバー設定エラー" },
+        { status: 500 }
+      );
     }
     await adminDb.doc(`users/${uid}/essayDrafts/${id}`).delete();
     return NextResponse.json({ ok: true });
