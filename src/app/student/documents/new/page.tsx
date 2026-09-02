@@ -31,7 +31,6 @@ import type {
 import { FRAMEWORK_TYPE_LABELS } from "@/lib/types/template";
 import { FRAMEWORKS } from "@/lib/templates/frameworks";
 import { DocumentSectionCoachPanel } from "@/components/documents/DocumentSectionCoachPanel";
-import { AiDraftNotice } from "@/components/documents/AiDraftNotice";
 import {
   DOCUMENT_TEMPLATES,
   freeGuidingQuestion,
@@ -929,7 +928,7 @@ export default function NewDocumentPage() {
           {activities.length === 0 ? (
             <Card>
               <CardContent className="text-muted-foreground py-8 text-center">
-                登録済みの活動実績がありません。スキップして下書きを生成できます。
+                登録済みの活動実績がありません。スキップして骨子を作れます。
               </CardContent>
             </Card>
           ) : (
@@ -1036,7 +1035,7 @@ export default function NewDocumentPage() {
               <CardContent className="space-y-4 py-12 text-center">
                 <Loader2 className="text-primary mx-auto h-8 w-8 animate-spin" />
                 <p className="text-muted-foreground">
-                  AIが下書きを生成しています...
+                  AIが骨子を作っています...
                 </p>
               </CardContent>
             </Card>
@@ -1065,7 +1064,7 @@ export default function NewDocumentPage() {
                 <Card className="lg:flex lg:min-h-0 lg:flex-1 lg:flex-col lg:overflow-hidden">
                   <CardHeader className="lg:shrink-0">
                     <CardTitle className="text-lg">
-                      {writingMode === "free" ? "本文" : "生成された下書き"}
+                      {writingMode === "free" ? "本文" : "骨子を見ながら書く"}
                     </CardTitle>
                   </CardHeader>
                   <CardContent
@@ -1075,13 +1074,13 @@ export default function NewDocumentPage() {
                         : "space-y-4 lg:min-h-0 lg:flex-1 lg:overflow-y-auto"
                     }
                   >
-                    {/* 自由記述は本人が書いた本文なので、AIの注意書きは出さない */}
-                    {writingMode !== "free" && <AiDraftNotice />}
                     {draftResult.sections.map((section, i) => (
                       <SectionTextarea
                         key={section.id ?? i}
                         title={section.title}
                         value={section.content}
+                        points={section.points}
+                        guidingQuestion={section.guidingQuestion}
                         placeholder={section.placeholder}
                         onFocus={() => setFocusedSectionId(section.id)}
                         onChange={(next) => {

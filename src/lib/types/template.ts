@@ -58,7 +58,12 @@ export interface DraftGenerateResponse {
   sections: {
     id: string;
     title: string;
+    /** 本人が書く欄の中身。生成直後は空（AIは本文を書かない） */
     content: string;
+    /** その段に入れる要素。これを見て本人が書く */
+    points?: string[];
+    /** 書き出す前に本人が答える問い */
+    guidingQuestion?: string;
     placeholder?: string;
   }[];
   wordCount?: number;

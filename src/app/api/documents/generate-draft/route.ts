@@ -5,7 +5,6 @@ import type {
 } from "@/lib/types/template";
 import { getFrameworkByType } from "@/lib/templates/frameworks";
 import { buildTemplateDraftPrompt } from "@/lib/ai/prompts/template-draft";
-import { fitToCharLimit } from "@/lib/ai/fit-char-limit";
 import { TemplateDraftOutputSchema } from "@/lib/ai/schemas/template-draft";
 import { adminDb } from "@/lib/firebase/admin";
 import { requireFeature } from "@/lib/api/subscription";
@@ -163,66 +162,28 @@ export async function POST(request: NextRequest) {
     const sectionsById = new Map(
       message.parsed_output.sections.map((section) => [section.id, section])
     );
+    /**
+     * 返すのは骨子だけ。本文は空にして、本人が書く。
+     * 本文を返すと最終稿にAIの書いた文字列が残り、手を入れても生成物の印は
+     * 消えるとは限らないため（このアプリは本人が書く形に統一している）。
+     */
     const sections = framework.sections.map((s) => {
       const generated = sectionsById.get(s.id);
       return {
         id: s.id,
         title: generated?.title || s.title,
-        content: generated?.content || "",
+        content: "",
+        points: generated?.points ?? [],
+        guidingQuestion: generated?.guidingQuestion || s.guidingQuestion,
         placeholder: `【${s.guidingQuestion}】\n${s.placeholder ?? "ここに記入してください。"}`,
       };
     });
 
-    const limit = Math.round((body.targetWordCount || 800) * 1.1);
-    let draft = sections
-      .map((section) => section.content)
-      .filter((content) => content.trim())
-      .join("\n\n");
-    if (draft.length > limit) {
-      const populated = sections.filter((section) => section.content.trim());
-      const separatorLength = Math.max(0, populated.length - 1) * 2;
-      const contentBudget = Math.max(1, limit - separatorLength);
-      const originalContentLength = populated.reduce(
-        (sum, section) => sum + section.content.length,
-        0
-      );
-      // セクションは互いに独立なので並列で圧縮する（直列だとセクション数だけ待ち時間が積み上がる）
-      await Promise.all(
-        populated.map(async (section) => {
-          const sectionLimit = Math.max(
-            20,
-            Math.floor(
-              contentBudget * (section.content.length / originalContentLength)
-            )
-          );
-          section.content = await fitToCharLimit(
-            client,
-            section.content,
-            sectionLimit
-          );
-        })
-      );
-      draft = sections
-        .map((section) => section.content)
-        .filter((content) => content.trim())
-        .join("\n\n");
-    }
-
-    if (draft.length > limit) {
-      return NextResponse.json(
-        {
-          error:
-            "下書きを指定文字数内に収められませんでした。目標文字数を増やすか、活動数を減らしてください。",
-        },
-        { status: 502 }
-      );
-    }
-
     const result: DraftGenerateResponse = {
-      draft,
+      draft: "",
       frameworkType: body.frameworkType,
       sections,
-      wordCount: draft.length,
+      wordCount: 0,
       aiMetadata: {
         ...AI_PROMPT_VERSIONS.templateDraft,
         model: generationModel,
