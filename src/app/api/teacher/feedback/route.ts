@@ -13,6 +13,7 @@ import type {
 } from "@/lib/types/feedback";
 
 import { sanitizeQuote } from "@/lib/chat/quote";
+import { stripRichText } from "@/lib/chat/rich-text";
 /**
  * GET /api/teacher/feedback?countOnly=true
  * 講師が管理者から受け取った未読数 (自分のスレッドの unreadByStudent)。
@@ -28,7 +29,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ unreadCount: 0 });
     }
     if (!adminDb) {
-      return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
+      return NextResponse.json(
+        { error: "サーバー設定エラー" },
+        { status: 500 }
+      );
     }
     const convDoc = await adminDb.doc(`conversations/${uid}`).get();
     const unread =
@@ -63,7 +67,10 @@ export async function POST(request: NextRequest) {
       );
     }
     if (!adminDb) {
-      return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
+      return NextResponse.json(
+        { error: "サーバー設定エラー" },
+        { status: 500 }
+      );
     }
 
     const userDoc = await adminDb.doc(`users/${uid}`).get();
@@ -107,11 +114,15 @@ export async function POST(request: NextRequest) {
     });
 
     if (managedBy) {
-      await sendFcmToUser(managedBy, {
-        title: `${teacherName}さんからメッセージ`,
-        body: message || "[添付ファイル]",
-        url: `/admin/messages/${uid}`,
-      }, "inboundMessage");
+      await sendFcmToUser(
+        managedBy,
+        {
+          title: `${teacherName}さんからメッセージ`,
+          body: stripRichText(message) || "[添付ファイル]",
+          url: `/admin/messages/${uid}`,
+        },
+        "inboundMessage"
+      );
     }
 
     const newFeedback: AdminFeedback = {

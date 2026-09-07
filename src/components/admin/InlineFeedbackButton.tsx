@@ -17,8 +17,16 @@ import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
 import { MessageSquare, Send, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { authFetch } from "@/lib/api/client";
-import { COMPOSER_SUBMIT_HINT, isComposerSubmitKey } from "@/lib/ui/composer-keys";
-import type { FeedbackType, AdminFeedback, ChatReference } from "@/lib/types/feedback";
+import {
+  COMPOSER_SUBMIT_HINT,
+  isComposerSubmitKey,
+} from "@/lib/ui/composer-keys";
+import type {
+  FeedbackType,
+  AdminFeedback,
+  ChatReference,
+} from "@/lib/types/feedback";
+import { RichText } from "@/components/chat/RichText";
 
 interface InlineFeedbackButtonProps {
   studentId: string;
@@ -77,7 +85,7 @@ export function InlineFeedbackButton({
       .then(async (res) => {
         if (res.ok) {
           const data = await res.json();
-          setFeedbacks(Array.isArray(data) ? data : data.feedbacks ?? []);
+          setFeedbacks(Array.isArray(data) ? data : (data.feedbacks ?? []));
         }
       })
       .catch(() => {})
@@ -108,7 +116,13 @@ export function InlineFeedbackButton({
       const res = await authFetch(`/api/admin/students/${studentId}/feedback`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type, targetId, targetLabel, message: message.trim(), ...(reference ? { reference } : {}) }),
+        body: JSON.stringify({
+          type,
+          targetId,
+          targetLabel,
+          message: message.trim(),
+          ...(reference ? { reference } : {}),
+        }),
       });
       if (!res.ok) throw new Error("送信失敗");
       const created: AdminFeedback = await res.json();
@@ -197,9 +211,10 @@ export function InlineFeedbackButton({
                         })}
                       </span>
                     </div>
-                    <p className="text-muted-foreground whitespace-pre-wrap">
-                      {fb.message}
-                    </p>
+                    <RichText
+                      text={fb.message}
+                      className="text-muted-foreground"
+                    />
                   </div>
                 ))}
               </div>

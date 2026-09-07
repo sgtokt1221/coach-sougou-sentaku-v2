@@ -6,6 +6,7 @@ import {
   sanitizeAttachments,
 } from "@/lib/chat/conversation";
 import type { BroadcastRequest, ChatAttachment } from "@/lib/types/feedback";
+import { stripRichText } from "@/lib/chat/rich-text";
 
 /**
  * POST /api/admin/messages/broadcast
@@ -35,7 +36,10 @@ export async function POST(request: NextRequest) {
 
     const { adminDb } = await import("@/lib/firebase/admin");
     if (!adminDb) {
-      return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
+      return NextResponse.json(
+        { error: "サーバー設定エラー" },
+        { status: 500 }
+      );
     }
 
     const { searchParams } = new URL(request.url);
@@ -73,7 +77,10 @@ export async function POST(request: NextRequest) {
     }
 
     if (targetIds.length === 0) {
-      return NextResponse.json({ error: "送信対象がありません" }, { status: 400 });
+      return NextResponse.json(
+        { error: "送信対象がありません" },
+        { status: 400 }
+      );
     }
 
     let sent = 0;
@@ -121,7 +128,8 @@ export async function POST(request: NextRequest) {
         await updateConversationSummary({
           studentId,
           studentName: (studentData?.displayName as string) ?? "",
-          studentPhotoURL: (studentData?.photoURL as string | undefined) ?? null,
+          studentPhotoURL:
+            (studentData?.photoURL as string | undefined) ?? null,
           coachId: (studentData?.managedBy as string | undefined) ?? undefined,
           organizationId:
             (studentData?.organizationId as string | undefined) ?? undefined,
@@ -129,11 +137,15 @@ export async function POST(request: NextRequest) {
           senderRole: "coach",
         });
 
-        await sendFcmToUser(studentId, {
-          title: "コーチからの一斉連絡",
-          body: message || "[添付ファイル]",
-          url: "/student/feedback",
-        }, "message");
+        await sendFcmToUser(
+          studentId,
+          {
+            title: "コーチからの一斉連絡",
+            body: stripRichText(message) || "[添付ファイル]",
+            url: "/student/feedback",
+          },
+          "message"
+        );
 
         sent++;
       })

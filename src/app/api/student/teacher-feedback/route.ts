@@ -14,6 +14,7 @@ import type {
 } from "@/lib/types/feedback";
 
 import { sanitizeQuote } from "@/lib/chat/quote";
+import { stripRichText } from "@/lib/chat/rich-text";
 /**
  * POST /api/student/teacher-feedback
  * 生徒が担当講師(assignedTeacherId)へメッセージを送信する。
@@ -45,7 +46,10 @@ export async function POST(request: NextRequest) {
     }
 
     if (!adminDb) {
-      return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
+      return NextResponse.json(
+        { error: "サーバー設定エラー" },
+        { status: 500 }
+      );
     }
 
     const userDoc = await adminDb.doc(`users/${uid}`).get();
@@ -100,11 +104,15 @@ export async function POST(request: NextRequest) {
     });
 
     // 担当講師へプッシュ通知
-    await sendFcmToUser(teacherId, {
-      title: `${studentName}さんからメッセージ`,
-      body: message || "[添付ファイル]",
-      url: `/teacher/students/${uid}`,
-    }, "inboundMessage");
+    await sendFcmToUser(
+      teacherId,
+      {
+        title: `${studentName}さんからメッセージ`,
+        body: stripRichText(message) || "[添付ファイル]",
+        url: `/teacher/students/${uid}`,
+      },
+      "inboundMessage"
+    );
 
     const newFeedback: AdminFeedback = {
       id: docRef.id,

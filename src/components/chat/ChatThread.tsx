@@ -17,10 +17,16 @@ import {
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { RichText } from "@/components/chat/RichText";
+import { stripRichText } from "@/lib/chat/rich-text";
+import { RichTextToolbar } from "@/components/chat/RichTextToolbar";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils/avatar";
 import { authFetch } from "@/lib/api/client";
-import { COMPOSER_SUBMIT_HINT, isComposerSubmitKey } from "@/lib/ui/composer-keys";
+import {
+  COMPOSER_SUBMIT_HINT,
+  isComposerSubmitKey,
+} from "@/lib/ui/composer-keys";
 import { ProblemPickerDialog } from "@/components/admin/ProblemPickerDialog";
 import type {
   ChatAttachment,
@@ -125,7 +131,7 @@ function AttachmentView({ att }: { att: ChatAttachment }) {
       href={att.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex items-center gap-2 rounded-lg border bg-background/60 px-3 py-2 text-xs hover:bg-background"
+      className="bg-background/60 hover:bg-background flex items-center gap-2 rounded-lg border px-3 py-2 text-xs"
     >
       <FileText className="size-4 shrink-0" />
       <span className="min-w-0 truncate">{att.name}</span>
@@ -169,23 +175,23 @@ function ReferenceCard({ reference }: { reference: ChatReference }) {
   return (
     // 自分の発言（濃い背景のバブル）の中にも置くので、不透明な面を敷く。
     // bg-primary/5 のような半透明だと背景の緑が透けて文字が読めなくなる。
-    <div className="mt-1.5 max-w-sm rounded-lg border border-border bg-background p-2.5 text-left">
-      <div className="flex items-center gap-1.5 text-[11px] font-semibold text-primary">
+    <div className="border-border bg-background mt-1.5 max-w-sm rounded-lg border p-2.5 text-left">
+      <div className="text-primary flex items-center gap-1.5 text-[11px] font-semibold">
         <BookOpen className="size-3.5" />
         {headerLabel}
       </div>
-      <p className="mt-0.5 min-w-0 text-sm font-medium break-words text-foreground">
+      <p className="text-foreground mt-0.5 min-w-0 text-sm font-medium break-words">
         {reference.label}
       </p>
       {reference.description && (
-        <p className="mt-0.5 text-xs break-words whitespace-pre-wrap text-muted-foreground">
+        <p className="text-muted-foreground mt-0.5 text-xs break-words whitespace-pre-wrap">
           {reference.description}
         </p>
       )}
       {safe && (
         <Link
           href={reference.href}
-          className="mt-1.5 inline-flex items-center gap-1 rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground hover:opacity-90"
+          className="bg-primary text-primary-foreground mt-1.5 inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium hover:opacity-90"
         >
           {buttonLabel}
         </Link>
@@ -218,7 +224,6 @@ export function ChatThread({
     Record<string, Record<string, string[]>>
   >({});
 
-
   /**
    * バブル内で選択された文字列を返す。選択がそのバブルの外へ出ている場合は
    * 部分引用として扱わない（別の発言が混ざるため）。
@@ -238,7 +243,7 @@ export function ChatThread({
       messageId: string,
       emoji: string,
       current: Record<string, string[]> | undefined,
-      fromTeacherThread: boolean,
+      fromTeacherThread: boolean
     ) => {
       if (!reactionTarget || !viewerUid) return;
       const base = current ?? {};
@@ -273,7 +278,7 @@ export function ChatThread({
         toast.error("リアクションを反映できませんでした");
       }
     },
-    [reactionTarget, viewerUid],
+    [reactionTarget, viewerUid]
   );
 
   const [text, setText] = useState("");
@@ -286,41 +291,46 @@ export function ChatThread({
    * 引用は状態で1つ持つのではなく本文に差し込む。
    * 引用した本文はコメントの一部として送られ、受信側で引用として描かれる。
    */
-  const quoteMessage = useCallback((m: ChatMessage, partialText?: string) => {
-    const raw = (partialText ?? m.message ?? "").trim();
-    if (!raw) return;
-    // 引用の引用は増殖するので、引用行は落として地の文だけ引く
-    const body = parseMessageBlocks(raw)
-      .filter((b) => b.kind === "text")
-      .map((b) => b.text)
-      .join("\n");
-    const text = (body || raw).trim();
-    if (!text) return;
-    /**
-     * 誰のいつの発言かを引用に添える。
-     *
-     * createdByName は保存時のデノーマライズ値で、古い発言には入っていない
-     * （本番の生徒発言に空のものがある）。空のときは吹き出しのアイコンと
-     * 同じ考え方で補う: 相手の発言なら otherName、自分の発言なら「自分」。
-     * ここを "発言" のままにすると、誰の言葉か分からない引用になる。
-     */
-    const authorName =
-      m.createdByName ||
-      (m.senderRole === currentRole ? "自分" : otherName) ||
-      "発言";
-    setText((prev) =>
-      appendQuote(prev, text, `${authorName} ・ ${formatTime(m.createdAt)}`),
-    );
-    // 続けてコメントを書けるよう入力欄へ移す
-    requestAnimationFrame(() => {
-      const el = textareaRef.current;
-      if (!el) return;
-      el.focus();
-      el.selectionStart = el.selectionEnd = el.value.length;
-      el.scrollTop = el.scrollHeight;
-    });
-    window.getSelection()?.removeAllRanges();
-  }, [currentRole, otherName]);
+  const quoteMessage = useCallback(
+    (m: ChatMessage, partialText?: string) => {
+      const raw = (partialText ?? m.message ?? "").trim();
+      if (!raw) return;
+      // 引用の引用は増殖するので、引用行は落として地の文だけ引く
+      const body = parseMessageBlocks(raw)
+        .filter((b) => b.kind === "text")
+        .map((b) => b.text)
+        .join("\n");
+      // 引用に取り込むときは装飾の記法を落とす。引用は元の文脈を示すもので、
+      // 色や大きさまで持ち込むと引用先の見た目が壊れる
+      const text = stripRichText((body || raw).trim());
+      if (!text) return;
+      /**
+       * 誰のいつの発言かを引用に添える。
+       *
+       * createdByName は保存時のデノーマライズ値で、古い発言には入っていない
+       * （本番の生徒発言に空のものがある）。空のときは吹き出しのアイコンと
+       * 同じ考え方で補う: 相手の発言なら otherName、自分の発言なら「自分」。
+       * ここを "発言" のままにすると、誰の言葉か分からない引用になる。
+       */
+      const authorName =
+        m.createdByName ||
+        (m.senderRole === currentRole ? "自分" : otherName) ||
+        "発言";
+      setText((prev) =>
+        appendQuote(prev, text, `${authorName} ・ ${formatTime(m.createdAt)}`)
+      );
+      // 続けてコメントを書けるよう入力欄へ移す
+      requestAnimationFrame(() => {
+        const el = textareaRef.current;
+        if (!el) return;
+        el.focus();
+        el.selectionStart = el.selectionEnd = el.value.length;
+        el.scrollTop = el.scrollHeight;
+      });
+      window.getSelection()?.removeAllRanges();
+    },
+    [currentRole, otherName]
+  );
 
   /**
    * ドラッグで選択したときに出す小さなメニュー（コピー / 部分引用）。
@@ -344,7 +354,7 @@ export function ChatThread({
     },
     // selectionWithin は再生成されても中身が変わらない
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    []
   );
 
   // 選択が消えたらメニューも閉じる（別の場所をクリックした時など）
@@ -414,7 +424,9 @@ export function ChatThread({
   // 画像/PDF 以外・10MB 超は弾く（D&D は input の accept 属性が効かないため明示チェック）。
   async function uploadFiles(files: File[]) {
     const valid = files.filter((file) => {
-      if (!(file.type.startsWith("image/") || file.type === "application/pdf")) {
+      if (
+        !(file.type.startsWith("image/") || file.type === "application/pdf")
+      ) {
         toast.error(`${file.name}: 画像またはPDFのみ添付できます`);
         return false;
       }
@@ -478,7 +490,8 @@ export function ChatThread({
   }
 
   async function handleSend() {
-    if ((!text.trim() && pending.length === 0 && !pendingRef) || sending) return;
+    if ((!text.trim() && pending.length === 0 && !pendingRef) || sending)
+      return;
     setSending(true);
     try {
       await onSend(text.trim(), pending, pendingRef ?? undefined);
@@ -504,9 +517,12 @@ export function ChatThread({
       {/* 選択したテキストに対する操作。押すまで何も起きない */}
       {selectionMenu && (
         <div
-          className="fixed z-50 flex overflow-hidden rounded-lg border bg-popover shadow-md"
+          className="bg-popover fixed z-50 flex overflow-hidden rounded-lg border shadow-md"
           style={{
-            left: Math.max(8, Math.min(selectionMenu.x - 60, window.innerWidth - 180)),
+            left: Math.max(
+              8,
+              Math.min(selectionMenu.x - 60, window.innerWidth - 180)
+            ),
             top: Math.max(8, selectionMenu.y + 8),
           }}
           // メニュー押下で選択が消えないようにする
@@ -514,7 +530,7 @@ export function ChatThread({
         >
           <button
             type="button"
-            className="flex items-center gap-1.5 px-3 py-2 text-xs hover:bg-muted"
+            className="hover:bg-muted flex items-center gap-1.5 px-3 py-2 text-xs"
             onClick={async () => {
               try {
                 await navigator.clipboard.writeText(selectionMenu.text);
@@ -530,7 +546,7 @@ export function ChatThread({
           </button>
           <button
             type="button"
-            className="flex items-center gap-1.5 border-l px-3 py-2 text-xs hover:bg-muted"
+            className="hover:bg-muted flex items-center gap-1.5 border-l px-3 py-2 text-xs"
             onClick={() => {
               quoteMessage(selectionMenu.message, selectionMenu.text);
               setSelectionMenu(null);
@@ -544,8 +560,8 @@ export function ChatThread({
 
       {/* D&D 中のドロップ案内オーバーレイ */}
       {dragOver && !disabled && (
-        <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center rounded-lg border-2 border-dashed border-primary bg-primary/10 backdrop-blur-[1px]">
-          <div className="flex flex-col items-center gap-2 text-primary">
+        <div className="border-primary bg-primary/10 pointer-events-none absolute inset-0 z-20 flex items-center justify-center rounded-lg border-2 border-dashed backdrop-blur-[1px]">
+          <div className="text-primary flex flex-col items-center gap-2">
             <Paperclip className="size-6" />
             <p className="text-sm font-medium">ここにドロップして添付</p>
           </div>
@@ -557,11 +573,11 @@ export function ChatThread({
         className="min-h-0 flex-1 space-y-3 overflow-y-auto px-1 py-4"
       >
         {loading ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">
+          <p className="text-muted-foreground py-8 text-center text-sm">
             読み込み中...
           </p>
         ) : messages.length === 0 ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">
+          <p className="text-muted-foreground py-8 text-center text-sm">
             {emptyText}
           </p>
         ) : (
@@ -602,19 +618,25 @@ export function ChatThread({
                         </span>
                       )}
                       {typeLabel && (
-                        <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                        <span className="bg-muted text-muted-foreground rounded px-1.5 py-0.5 text-[10px]">
                           {typeLabel}
                           {m.targetLabel ? `: ${m.targetLabel}` : ""}
                         </span>
                       )}
                     </div>
                   )}
-                  {(m.message || m.reference || (m.attachments && m.attachments.length > 0)) && (
+                  {(m.message ||
+                    m.reference ||
+                    (m.attachments && m.attachments.length > 0)) && (
                     <div
-                      ref={(el) => { bubbleRefs.current[m.id] = el; }}
+                      ref={(el) => {
+                        bubbleRefs.current[m.id] = el;
+                      }}
                       // 選択し終わったら、コピーか部分引用かを選ぶボタンを出す。
                       // 選択しただけで引用に入ると、読むためになぞった時に困る
-                      onMouseUp={(e) => openSelectionMenu(m, e.clientX, e.clientY)}
+                      onMouseUp={(e) =>
+                        openSelectionMenu(m, e.clientX, e.clientY)
+                      }
                       onTouchEnd={(e) => {
                         // モバイルは選択確定がここより後になることがある
                         const t = e.changedTouches[0];
@@ -624,8 +646,8 @@ export function ChatThread({
                       }}
                       className={`rounded-2xl px-3 py-2 text-sm ${
                         mine
-                          ? "rounded-br-sm bg-primary text-primary-foreground"
-                          : "rounded-bl-sm bg-muted text-foreground"
+                          ? "bg-primary text-primary-foreground rounded-br-sm"
+                          : "bg-muted text-foreground rounded-bl-sm"
                       }`}
                     >
                       {/* 返信元の引用。誰の発言かと、部分引用かどうかを出す */}
@@ -641,7 +663,7 @@ export function ChatThread({
                             {m.quote.authorName || "引用"}
                             {m.quote.partial ? "（一部）" : ""}
                           </span>
-                          <span className="block whitespace-pre-wrap break-words opacity-90">
+                          <span className="block break-words whitespace-pre-wrap opacity-90">
                             {m.quote.text}
                           </span>
                         </div>
@@ -666,21 +688,19 @@ export function ChatThread({
                                   {b.source}
                                 </span>
                               )}
-                              <span className="block whitespace-pre-wrap break-words opacity-90">
+                              <span className="block break-words whitespace-pre-wrap opacity-90">
                                 {b.text}
                               </span>
                             </div>
                           ) : (
-                            <p
-                              key={i}
-                              className="whitespace-pre-wrap break-words"
-                            >
-                              {b.text}
-                            </p>
-                          ),
+                            /* 管理者が付けた色・大きさをそのまま描く */
+                            <RichText key={i} text={b.text} />
+                          )
                         )}
                       {m.attachments && m.attachments.length > 0 && (
-                        <div className={`space-y-1.5 ${m.message ? "mt-1.5" : ""}`}>
+                        <div
+                          className={`space-y-1.5 ${m.message ? "mt-1.5" : ""}`}
+                        >
                           {m.attachments.map((att, i) => (
                             <AttachmentView key={i} att={att} />
                           ))}
@@ -698,13 +718,15 @@ export function ChatThread({
                   {/* 引用・リアクションの操作。バブル内を選択してから押すと
                       その部分だけを引用する */}
                   {(m.message || reactionTarget) && (
-                    <div className={`flex items-center gap-1 ${mine ? "flex-row-reverse" : ""}`}>
+                    <div
+                      className={`flex items-center gap-1 ${mine ? "flex-row-reverse" : ""}`}
+                    >
                       {m.message && (
                         <button
                           type="button"
                           title="全文を引用して返信（一部だけならドラッグで選択）"
                           onClick={() => quoteMessage(m)}
-                          className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                          className="text-muted-foreground hover:bg-muted hover:text-foreground rounded p-1"
                         >
                           <QuoteIcon className="size-3.5" />
                         </button>
@@ -713,14 +735,16 @@ export function ChatThread({
                         <button
                           type="button"
                           title="リアクション"
-                          onClick={() => setPickerFor(pickerFor === m.id ? null : m.id)}
-                          className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                          onClick={() =>
+                            setPickerFor(pickerFor === m.id ? null : m.id)
+                          }
+                          className="text-muted-foreground hover:bg-muted hover:text-foreground rounded p-1"
                         >
                           <SmilePlus className="size-3.5" />
                         </button>
                       )}
                       {pickerFor === m.id && (
-                        <div className="flex items-center gap-0.5 rounded-full border bg-popover px-1.5 py-1 shadow-sm">
+                        <div className="bg-popover flex items-center gap-0.5 rounded-full border px-1.5 py-1 shadow-sm">
                           {CHAT_REACTION_EMOJIS.map((e) => (
                             <button
                               key={e}
@@ -730,10 +754,10 @@ export function ChatThread({
                                   m.id,
                                   e,
                                   localReactions[m.id] ?? m.reactions,
-                                  Boolean(m.teacherId),
+                                  Boolean(m.teacherId)
                                 )
                               }
-                              className="rounded px-1 text-base leading-none hover:bg-muted"
+                              className="hover:bg-muted rounded px-1 text-base leading-none"
                             >
                               {e}
                             </button>
@@ -747,20 +771,29 @@ export function ChatThread({
                   {(() => {
                     const rs = localReactions[m.id] ?? m.reactions;
                     const entries = Object.entries(rs ?? {}).filter(
-                      ([, u]) => Array.isArray(u) && u.length > 0,
+                      ([, u]) => Array.isArray(u) && u.length > 0
                     );
                     if (entries.length === 0) return null;
                     return (
-                      <div className={`flex flex-wrap gap-1 ${mine ? "justify-end" : ""}`}>
+                      <div
+                        className={`flex flex-wrap gap-1 ${mine ? "justify-end" : ""}`}
+                      >
                         {entries.map(([emoji, users]) => {
-                          const pressed = viewerUid ? users.includes(viewerUid) : false;
+                          const pressed = viewerUid
+                            ? users.includes(viewerUid)
+                            : false;
                           return (
                             <button
                               key={emoji}
                               type="button"
                               disabled={!reactionTarget || !viewerUid}
                               onClick={() =>
-                                toggleReaction(m.id, emoji, rs, Boolean(m.teacherId))
+                                toggleReaction(
+                                  m.id,
+                                  emoji,
+                                  rs,
+                                  Boolean(m.teacherId)
+                                )
                               }
                               className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-xs tabular-nums ${
                                 pressed
@@ -768,7 +801,9 @@ export function ChatThread({
                                   : "bg-background text-muted-foreground"
                               }`}
                             >
-                              <span className="text-sm leading-none">{emoji}</span>
+                              <span className="text-sm leading-none">
+                                {emoji}
+                              </span>
                               {users.length}
                             </button>
                           );
@@ -777,8 +812,7 @@ export function ChatThread({
                     );
                   })()}
 
-
-                  <span className="px-1 text-[10px] text-muted-foreground">
+                  <span className="text-muted-foreground px-1 text-[10px]">
                     {/* coach(管理者/講師)発のメッセージは自分の送信でも送信者名を表示し、
                         誰が送ったか分かるようにする (複数管理者で会話を共有するため) */}
                     {(!mine || m.senderRole === "coach") && m.createdByName
@@ -799,14 +833,14 @@ export function ChatThread({
       {!disabled && (
         <div
           data-chat-composer
-          className="shrink-0 border-t bg-background/80 px-1 pt-3"
+          className="bg-background/80 shrink-0 border-t px-1 pt-3"
         >
           {pending.length > 0 && (
             <div className="mb-2 flex flex-wrap gap-2">
               {pending.map((att, i) => (
                 <div
                   key={i}
-                  className="flex items-center gap-1 rounded-md border bg-muted/50 py-1 pl-2 pr-1 text-xs"
+                  className="bg-muted/50 flex items-center gap-1 rounded-md border py-1 pr-1 pl-2 text-xs"
                 >
                   <span className="max-w-[140px] truncate">{att.name}</span>
                   <button
@@ -814,7 +848,7 @@ export function ChatThread({
                     onClick={() =>
                       setPending((p) => p.filter((_, idx) => idx !== i))
                     }
-                    className="rounded p-0.5 hover:bg-muted"
+                    className="hover:bg-muted rounded p-0.5"
                   >
                     <X className="size-3" />
                   </button>
@@ -823,8 +857,8 @@ export function ChatThread({
             </div>
           )}
           {pendingRef && (
-            <div className="mb-2 flex items-center gap-1 rounded-md border border-primary/30 bg-primary/5 py-1 pl-2 pr-1 text-xs">
-              <BookOpen className="size-3.5 shrink-0 text-primary" />
+            <div className="border-primary/30 bg-primary/5 mb-2 flex items-center gap-1 rounded-md border py-1 pr-1 pl-2 text-xs">
+              <BookOpen className="text-primary size-3.5 shrink-0" />
               <span className="max-w-[220px] truncate">
                 {pendingRef.kind === "homework" ? "宿題: " : "問題: "}
                 {pendingRef.label}
@@ -832,11 +866,22 @@ export function ChatThread({
               <button
                 type="button"
                 onClick={() => setPendingRef(null)}
-                className="rounded p-0.5 hover:bg-muted"
+                className="hover:bg-muted rounded p-0.5"
               >
                 <X className="size-3" />
               </button>
             </div>
+          )}
+          {/*
+            色と大きさは管理者・講師だけが付けられる。生徒側に出すと
+            装飾の練習の場になってしまうため。
+          */}
+          {currentRole === "coach" && (
+            <RichTextToolbar
+              textareaRef={textareaRef}
+              value={text}
+              onChange={setText}
+            />
           )}
           <div className="flex items-end gap-2">
             <input
@@ -903,7 +948,7 @@ export function ChatThread({
           </div>
           <p
             data-chat-composer-meta
-            className="px-1 pb-1 pt-1 text-[10px] text-muted-foreground"
+            className="text-muted-foreground px-1 pt-1 pb-1 text-[10px]"
           >
             {COMPOSER_SUBMIT_HINT}
           </p>

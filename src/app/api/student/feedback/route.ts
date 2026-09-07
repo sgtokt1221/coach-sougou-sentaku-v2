@@ -13,6 +13,7 @@ import type {
 } from "@/lib/types/feedback";
 
 import { sanitizeQuote } from "@/lib/chat/quote";
+import { stripRichText } from "@/lib/chat/rich-text";
 /**
  * GET /api/student/feedback
  * 自分のフィードバック一覧を取得
@@ -28,14 +29,22 @@ export async function GET(request: NextRequest) {
     const countOnly = searchParams.get("countOnly") === "true";
 
     if (!adminDb) {
-      return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
+      return NextResponse.json(
+        { error: "サーバー設定エラー" },
+        { status: 500 }
+      );
     }
 
     if (countOnly) {
       // conversations サマリの unreadByStudent を優先。無ければ従来スキャン
       const convDoc = await adminDb.doc(`conversations/${uid}`).get();
-      if (convDoc.exists && typeof convDoc.data()?.unreadByStudent === "number") {
-        return NextResponse.json({ unreadCount: convDoc.data()!.unreadByStudent });
+      if (
+        convDoc.exists &&
+        typeof convDoc.data()?.unreadByStudent === "number"
+      ) {
+        return NextResponse.json({
+          unreadCount: convDoc.data()!.unreadByStudent,
+        });
       }
       // フォールバック: 自分宛(コーチ発)の未読のみ数える
       const unreadSnap = await adminDb
@@ -109,7 +118,10 @@ export async function POST(request: NextRequest) {
     }
 
     if (!adminDb) {
-      return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
+      return NextResponse.json(
+        { error: "サーバー設定エラー" },
+        { status: 500 }
+      );
     }
 
     const userDoc = await adminDb.doc(`users/${uid}`).get();
@@ -155,11 +167,15 @@ export async function POST(request: NextRequest) {
 
     // コーチへプッシュ通知
     if (managedBy) {
-      await sendFcmToUser(managedBy, {
-        title: `${studentName}さんからメッセージ`,
-        body: message || "[添付ファイル]",
-        url: `/admin/messages/${uid}`,
-      }, "inboundMessage");
+      await sendFcmToUser(
+        managedBy,
+        {
+          title: `${studentName}さんからメッセージ`,
+          body: stripRichText(message) || "[添付ファイル]",
+          url: `/admin/messages/${uid}`,
+        },
+        "inboundMessage"
+      );
     }
 
     const newFeedback: AdminFeedback = {
