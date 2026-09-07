@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogBody,
@@ -27,6 +26,7 @@ import type {
   ChatReference,
 } from "@/lib/types/feedback";
 import { RichText } from "@/components/chat/RichText";
+import { RichField } from "@/components/chat/RichField";
 
 interface InlineFeedbackButtonProps {
   studentId: string;
@@ -173,12 +173,13 @@ export function InlineFeedbackButton({
           </DialogHeader>
 
           <DialogBody className="space-y-3">
-            <Textarea
+            {/* チャットと同じ装飾つきの入力欄。片方だけ色が付けられない
+                という状態にしないため、同じ部品を使う */}
+            <RichField
               value={message}
-              onChange={(e) => setMessage(e.target.value)}
+              onChange={setMessage}
               placeholder={`${targetLabel} へのフィードバック...`}
-              // resize-y: 右下をドラッグして高さを変えられる
-              className="min-h-[12rem] resize-y text-sm"
+              className="max-h-none min-h-[12rem] text-sm"
               onKeyDown={(e) => {
                 if (isComposerSubmitKey(e)) {
                   e.preventDefault();

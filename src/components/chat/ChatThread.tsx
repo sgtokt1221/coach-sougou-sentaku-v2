@@ -19,8 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { RichText } from "@/components/chat/RichText";
 import { stripRichText } from "@/lib/chat/rich-text";
-import { RichTextToolbar } from "@/components/chat/RichTextToolbar";
-import { RichComposer } from "@/components/chat/RichComposer";
+import { RichField } from "@/components/chat/RichField";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils/avatar";
 import { authFetch } from "@/lib/api/client";
@@ -285,8 +284,6 @@ export function ChatThread({
   const [text, setText] = useState("");
   // 入力量に合わせて伸びる。ref は従来どおりフォーカス移動にも使う
   const textareaRef = useAutoGrowTextarea<HTMLTextAreaElement>(text);
-  /** 装飾つきの入力欄。ツールバーはここの選択範囲に効く */
-  const richEditorRef = useRef<HTMLDivElement | null>(null);
   /**
    * 引用を入力欄の末尾へ積む。
    *
@@ -879,15 +876,6 @@ export function ChatThread({
             色と大きさは管理者・講師だけが付けられる。生徒側に出すと
             装飾の練習の場になってしまうため。
           */}
-          {currentRole === "coach" && (
-            <RichTextToolbar
-              editorRef={richEditorRef}
-              onChanged={() => {
-                const el = richEditorRef.current;
-                if (el) el.dispatchEvent(new Event("input", { bubbles: true }));
-              }}
-            />
-          )}
           <div className="flex items-end gap-2">
             <input
               ref={fileRef}
@@ -922,12 +910,11 @@ export function ChatThread({
               生徒は装飾しないので、これまでどおりの入力欄のまま。
             */}
             {currentRole === "coach" ? (
-              <RichComposer
+              <RichField
                 value={text}
                 onChange={setText}
-                editorRef={richEditorRef}
                 placeholder="メッセージを入力..."
-                onFocus={scrollMessagesToBottom}
+                className="flex-1"
                 onKeyDown={(e) => {
                   if (isComposerSubmitKey(e)) {
                     e.preventDefault();

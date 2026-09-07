@@ -12,8 +12,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { authFetch } from "@/lib/api/client";
+import { RichField } from "@/components/chat/RichField";
 import type {
   ChatAttachment,
   ConversationListItem,
@@ -183,7 +183,7 @@ export function BroadcastDialog({
           {mode === "select" && (
             <div className="max-h-40 space-y-1 overflow-y-auto rounded-lg border p-2">
               {candidates.length === 0 && (
-                <p className="px-2 py-1 text-xs text-muted-foreground">
+                <p className="text-muted-foreground px-2 py-1 text-xs">
                   該当する{category === "teacher" ? "講師" : "生徒"}がいません
                 </p>
               )}
@@ -200,7 +200,9 @@ export function BroadcastDialog({
                   >
                     <span
                       className={`flex size-4 items-center justify-center rounded border ${
-                        on ? "border-primary bg-primary text-primary-foreground" : ""
+                        on
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : ""
                       }`}
                     >
                       {on && <Check className="size-3" />}
@@ -212,12 +214,12 @@ export function BroadcastDialog({
             </div>
           )}
 
-          <Textarea
+          {/* 一斉連絡も装飾できる。大事なところを目立たせたい場面が多い */}
+          <RichField
             value={message}
-            onChange={(e) => setMessage(e.target.value)}
+            onChange={setMessage}
             placeholder="送信するメッセージを入力..."
-            rows={4}
-            className="text-sm"
+            className="max-h-none min-h-[6rem] text-sm"
           />
 
           {pending.length > 0 && (
@@ -225,13 +227,15 @@ export function BroadcastDialog({
               {pending.map((att, i) => (
                 <div
                   key={i}
-                  className="flex items-center gap-1 rounded-md border bg-muted/50 py-1 pl-2 pr-1 text-xs"
+                  className="bg-muted/50 flex items-center gap-1 rounded-md border py-1 pr-1 pl-2 text-xs"
                 >
                   <span className="max-w-[140px] truncate">{att.name}</span>
                   <button
                     type="button"
-                    onClick={() => setPending((p) => p.filter((_, idx) => idx !== i))}
-                    className="rounded p-0.5 hover:bg-muted"
+                    onClick={() =>
+                      setPending((p) => p.filter((_, idx) => idx !== i))
+                    }
+                    className="hover:bg-muted rounded p-0.5"
                   >
                     <X className="size-3" />
                   </button>

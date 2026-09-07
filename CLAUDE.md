@@ -153,6 +153,9 @@ AI呼び出しは .env.local の ANTHROPIC_API_KEY をそのまま使うので�
 - BigQueryコスト: スキャン量に注意、パーティション設定必須
 - App Hostingはpushで自動デプロイされるが、Firestoreインデックスは `firebase deploy --only firestore:indexes` を別途実行しないと反映されない（複合インデックス欠落は空表示の沈黙失敗になる）
 
+- AI添削・生成の API ルートには `maxDuration` を必ず設定する。extended thinking は effort medium を既定にする。
+- `messages.parse` の max_tokens は thinking と本文で共有される。文書系は12000-16384、単純な機能は2000-4096。
+
 ## 8. Current State / Known Issues
 
 - Phase: Phase 1-5 全完了 + Superadmin/スコーピング実装完了
