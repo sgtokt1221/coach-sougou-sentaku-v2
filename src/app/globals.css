@@ -37,27 +37,27 @@
   --chart-2: oklch(0.72 0.16 75);
   --chart-3: oklch(0.55 0.12 280);
   --chart-4: oklch(0.65 0.18 145);
-  --chart-5: oklch(0.60 0.20 30);
+  --chart-5: oklch(0.6 0.2 30);
   /* 小論文の5軸を線グラフで並べるために色相を離して足した2色。
      既存の 175/75/280/145/30 と最低45°離す（青 235 / ピンク 340）。 */
   --chart-6: oklch(0.55 0.16 235);
-  --chart-7: oklch(0.60 0.18 340);
+  --chart-7: oklch(0.6 0.18 340);
 
   /* Elegant sidebar */
   --sidebar: oklch(0.22 0.03 260);
-  --sidebar-foreground: oklch(0.90 0.01 80);
+  --sidebar-foreground: oklch(0.9 0.01 80);
   --sidebar-primary: oklch(0.65 0.14 175);
   --sidebar-primary-foreground: oklch(0.98 0.004 80);
   --sidebar-accent: oklch(0.28 0.03 260);
   --sidebar-accent-foreground: oklch(0.95 0.01 80);
-  --sidebar-border: oklch(0.30 0.02 260);
-  --sidebar-ring: oklch(0.45 0.10 175);
+  --sidebar-border: oklch(0.3 0.02 260);
+  --sidebar-ring: oklch(0.45 0.1 175);
 
   /* Severity (aligned to unified palette: rose/amber/emerald) */
-  --severity-critical: #f43f5e;  /* rose-500 */
-  --severity-warning: #f59e0b;   /* amber-500 */
+  --severity-critical: #f43f5e; /* rose-500 */
+  --severity-warning: #f59e0b; /* amber-500 */
   --severity-improving: #10b981; /* emerald-500 (unified positive) */
-  --severity-resolved: #10b981;  /* emerald-500 */
+  --severity-resolved: #10b981; /* emerald-500 */
 
   /* Accent gold */
   --gold: oklch(0.75 0.16 75);
@@ -116,21 +116,21 @@
   --border: oklch(0.28 0.02 260);
   --input: oklch(0.28 0.02 260);
   --ring: oklch(0.55 0.12 175);
-  --chart-1: oklch(0.60 0.16 175);
+  --chart-1: oklch(0.6 0.16 175);
   --chart-2: oklch(0.68 0.14 75);
-  --chart-3: oklch(0.60 0.14 280);
+  --chart-3: oklch(0.6 0.14 280);
   --chart-4: oklch(0.58 0.16 145);
   --chart-5: oklch(0.55 0.18 30);
   --chart-6: oklch(0.62 0.15 235);
   --chart-7: oklch(0.66 0.16 340);
   --sidebar: oklch(0.14 0.02 260);
-  --sidebar-foreground: oklch(0.90 0.01 80);
+  --sidebar-foreground: oklch(0.9 0.01 80);
   --sidebar-primary: oklch(0.65 0.14 175);
   --sidebar-primary-foreground: oklch(0.98 0.004 80);
   --sidebar-accent: oklch(0.22 0.02 260);
   --sidebar-accent-foreground: oklch(0.95 0.01 80);
   --sidebar-border: oklch(0.22 0.02 260);
-  --sidebar-ring: oklch(0.50 0.10 175);
+  --sidebar-ring: oklch(0.5 0.1 175);
 }
 
 @theme inline {
@@ -190,14 +190,21 @@
 
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "liga" 1, "kern" 1;
+    font-feature-settings:
+      "liga" 1,
+      "kern" 1;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   /* Refined heading typography */
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: var(--font-heading);
     letter-spacing: -0.02em;
     line-height: 1.2;
@@ -226,7 +233,10 @@
   }
 
   /* Smooth transitions for interactive elements */
-  a, button, [role="button"], [role="tab"] {
+  a,
+  button,
+  [role="button"],
+  [role="tab"] {
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
@@ -287,14 +297,28 @@
 }
 
 @keyframes gentleBounce {
-  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-  40% { transform: translateY(-4px); }
-  60% { transform: translateY(-2px); }
+  0%,
+  20%,
+  50%,
+  80%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-4px);
+  }
+  60% {
+    transform: translateY(-2px);
+  }
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideInLeft {
@@ -309,18 +333,32 @@
 }
 
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
 }
 
 @keyframes pulse-soft {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
 }
 
 @keyframes ripple {
@@ -335,26 +373,40 @@
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes breathe {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.02); }
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
 }
 
 @keyframes gridScroll {
   0% {
-    background-position: 0 0, 0 0;
+    background-position:
+      0 0,
+      0 0;
   }
   100% {
-    background-position: 60px 60px, 60px 60px;
+    background-position:
+      60px 60px,
+      60px 60px;
   }
 }
 
 @keyframes orbFloat1 {
-  0%, 100% {
+  0%,
+  100% {
     transform: translate(0, 0) scale(1);
   }
   33% {
@@ -366,7 +418,8 @@
 }
 
 @keyframes orbFloat2 {
-  0%, 100% {
+  0%,
+  100% {
     transform: translate(0, 0) scale(1);
   }
   50% {
@@ -375,7 +428,8 @@
 }
 
 @keyframes orbFloat3 {
-  0%, 100% {
+  0%,
+  100% {
     transform: translate(0, 0) scale(1);
   }
   25% {
@@ -447,8 +501,12 @@
 }
 
 @keyframes marquee {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
 }
 
 .animate-marquee {
@@ -466,28 +524,68 @@
 }
 
 /* Enhanced Stagger System */
-.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
-.stagger-children > *:nth-child(2) { animation-delay: 80ms; }
-.stagger-children > *:nth-child(3) { animation-delay: 160ms; }
-.stagger-children > *:nth-child(4) { animation-delay: 240ms; }
-.stagger-children > *:nth-child(5) { animation-delay: 320ms; }
-.stagger-children > *:nth-child(6) { animation-delay: 400ms; }
-.stagger-children > *:nth-child(7) { animation-delay: 480ms; }
-.stagger-children > *:nth-child(8) { animation-delay: 560ms; }
-.stagger-children > *:nth-child(9) { animation-delay: 640ms; }
-.stagger-children > *:nth-child(10) { animation-delay: 720ms; }
-.stagger-children > *:nth-child(11) { animation-delay: 800ms; }
-.stagger-children > *:nth-child(12) { animation-delay: 880ms; }
+.stagger-children > *:nth-child(1) {
+  animation-delay: 0ms;
+}
+.stagger-children > *:nth-child(2) {
+  animation-delay: 80ms;
+}
+.stagger-children > *:nth-child(3) {
+  animation-delay: 160ms;
+}
+.stagger-children > *:nth-child(4) {
+  animation-delay: 240ms;
+}
+.stagger-children > *:nth-child(5) {
+  animation-delay: 320ms;
+}
+.stagger-children > *:nth-child(6) {
+  animation-delay: 400ms;
+}
+.stagger-children > *:nth-child(7) {
+  animation-delay: 480ms;
+}
+.stagger-children > *:nth-child(8) {
+  animation-delay: 560ms;
+}
+.stagger-children > *:nth-child(9) {
+  animation-delay: 640ms;
+}
+.stagger-children > *:nth-child(10) {
+  animation-delay: 720ms;
+}
+.stagger-children > *:nth-child(11) {
+  animation-delay: 800ms;
+}
+.stagger-children > *:nth-child(12) {
+  animation-delay: 880ms;
+}
 
 /* Fast stagger variant */
-.stagger-fast > *:nth-child(1) { animation-delay: 0ms; }
-.stagger-fast > *:nth-child(2) { animation-delay: 40ms; }
-.stagger-fast > *:nth-child(3) { animation-delay: 80ms; }
-.stagger-fast > *:nth-child(4) { animation-delay: 120ms; }
-.stagger-fast > *:nth-child(5) { animation-delay: 160ms; }
-.stagger-fast > *:nth-child(6) { animation-delay: 200ms; }
-.stagger-fast > *:nth-child(7) { animation-delay: 240ms; }
-.stagger-fast > *:nth-child(8) { animation-delay: 280ms; }
+.stagger-fast > *:nth-child(1) {
+  animation-delay: 0ms;
+}
+.stagger-fast > *:nth-child(2) {
+  animation-delay: 40ms;
+}
+.stagger-fast > *:nth-child(3) {
+  animation-delay: 80ms;
+}
+.stagger-fast > *:nth-child(4) {
+  animation-delay: 120ms;
+}
+.stagger-fast > *:nth-child(5) {
+  animation-delay: 160ms;
+}
+.stagger-fast > *:nth-child(6) {
+  animation-delay: 200ms;
+}
+.stagger-fast > *:nth-child(7) {
+  animation-delay: 240ms;
+}
+.stagger-fast > *:nth-child(8) {
+  animation-delay: 280ms;
+}
 
 /* ─── Enhanced Card Variants ─── */
 .glass-card {
@@ -503,7 +601,7 @@
 }
 
 .glass-card::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
@@ -551,7 +649,7 @@
 }
 
 .feature-card::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   background: linear-gradient(135deg, var(--primary) 0%, var(--chart-2) 100%);
@@ -561,7 +659,7 @@
 }
 
 .feature-card::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: 1px;
   background: var(--card);
@@ -595,7 +693,7 @@
 }
 
 .stat-card::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -607,36 +705,53 @@
 /* ─── Enhanced Background Patterns ─── */
 .bg-mesh {
   background-image:
-    radial-gradient(at 20% 20%, oklch(0.52 0.14 175 / 0.06) 0%, transparent 50%),
+    radial-gradient(
+      at 20% 20%,
+      oklch(0.52 0.14 175 / 0.06) 0%,
+      transparent 50%
+    ),
     radial-gradient(at 80% 80%, oklch(0.75 0.16 75 / 0.05) 0%, transparent 50%),
     radial-gradient(at 50% 50%, oklch(0.55 0.12 280 / 0.03) 0%, transparent 60%);
 }
 
 .dark .bg-mesh {
   background-image:
-    radial-gradient(at 20% 20%, oklch(0.52 0.14 175 / 0.10) 0%, transparent 50%),
+    radial-gradient(at 20% 20%, oklch(0.52 0.14 175 / 0.1) 0%, transparent 50%),
     radial-gradient(at 80% 80%, oklch(0.75 0.16 75 / 0.06) 0%, transparent 50%),
     radial-gradient(at 50% 50%, oklch(0.55 0.12 280 / 0.05) 0%, transparent 60%);
 }
 
 /* Dots pattern for empty states */
 .bg-dots {
-  background-image: radial-gradient(circle, oklch(0.7 0 0 / 0.1) 1px, transparent 1px);
+  background-image: radial-gradient(
+    circle,
+    oklch(0.7 0 0 / 0.1) 1px,
+    transparent 1px
+  );
   background-size: 20px 20px;
 }
 
 .dark .bg-dots {
-  background-image: radial-gradient(circle, oklch(0.4 0 0 / 0.2) 1px, transparent 1px);
+  background-image: radial-gradient(
+    circle,
+    oklch(0.4 0 0 / 0.2) 1px,
+    transparent 1px
+  );
 }
 
 /* Wave pattern */
 .bg-wave {
-  background-image: linear-gradient(135deg, oklch(0.52 0.14 175 / 0.03) 25%, transparent 25%),
+  background-image:
+    linear-gradient(135deg, oklch(0.52 0.14 175 / 0.03) 25%, transparent 25%),
     linear-gradient(225deg, oklch(0.52 0.14 175 / 0.03) 25%, transparent 25%),
     linear-gradient(45deg, oklch(0.52 0.14 175 / 0.03) 25%, transparent 25%),
     linear-gradient(315deg, oklch(0.52 0.14 175 / 0.03) 25%, transparent 25%);
   background-size: 40px 40px;
-  background-position: 0 0, 20px 0, 20px -20px, 0px 20px;
+  background-position:
+    0 0,
+    20px 0,
+    20px -20px,
+    0px 20px;
 }
 
 /* ─── Subtle grain texture ─── */
@@ -660,7 +775,7 @@
 }
 
 .btn-glow::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   background: linear-gradient(135deg, var(--primary), var(--chart-2));
@@ -686,7 +801,7 @@
 }
 
 .btn-ripple::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 50%;
   left: 50%;
@@ -695,7 +810,9 @@
   border-radius: 50%;
   background: oklch(1 0 0 / 0.3);
   transform: translate(-50%, -50%);
-  transition: width 0.6s, height 0.6s;
+  transition:
+    width 0.6s,
+    height 0.6s;
 }
 
 .btn-ripple:active::after {
@@ -757,7 +874,7 @@
 }
 
 .score-ring::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: -2px;
   background: conic-gradient(
@@ -803,7 +920,7 @@
 }
 
 .progress-bar-fill::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -848,10 +965,14 @@
 }
 
 .empty-state::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at center, oklch(0.52 0.14 175 / 0.02) 0%, transparent 70%);
+  background: radial-gradient(
+    circle at center,
+    oklch(0.52 0.14 175 / 0.02) 0%,
+    transparent 70%
+  );
   border-radius: var(--radius-lg);
 }
 
@@ -884,7 +1005,7 @@
 }
 
 .badge-pulse::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   right: 0;
@@ -947,15 +1068,31 @@
 
 /* Success/Error state animations */
 @keyframes success-checkmark {
-  0% { opacity: 0; transform: scale(0.3) rotate(-45deg); }
-  50% { opacity: 1; transform: scale(1.1) rotate(-45deg); }
-  100% { opacity: 1; transform: scale(1) rotate(-45deg); }
+  0% {
+    opacity: 0;
+    transform: scale(0.3) rotate(-45deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1) rotate(-45deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(-45deg);
+  }
 }
 
 @keyframes error-shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-4px); }
-  75% { transform: translateX(4px); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-4px);
+  }
+  75% {
+    transform: translateX(4px);
+  }
 }
 
 .animate-success {
@@ -972,7 +1109,7 @@
 }
 
 .status-online::after {
-  content: '';
+  content: "";
   position: absolute;
   top: -2px;
   right: -2px;
@@ -992,7 +1129,7 @@
 }
 
 .interactive-card::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   background: var(--primary);
@@ -1069,7 +1206,9 @@
 
 /* Accessibility enhancements */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
@@ -1204,4 +1343,16 @@
   html[data-keyboard-open="true"] [data-workshop-composer] {
     padding: 0.5rem 0.75rem;
   }
+}
+
+/*
+ * メッセージの部分装飾で使う色。ツールバーの丸に出す見本と、
+ * 本文に当たる文字色を同じ値から引くため、変数にしておく。
+ */
+:root {
+  --rich-red: oklch(0.586 0.222 17.6);
+  --rich-orange: oklch(0.646 0.183 55.2);
+  --rich-green: oklch(0.596 0.145 163.2);
+  --rich-blue: oklch(0.588 0.158 241.9);
+  --rich-purple: oklch(0.541 0.229 292.4);
 }

@@ -20,6 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { RichText } from "@/components/chat/RichText";
 import { stripRichText } from "@/lib/chat/rich-text";
 import { RichTextToolbar } from "@/components/chat/RichTextToolbar";
+import { RichComposer } from "@/components/chat/RichComposer";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils/avatar";
 import { authFetch } from "@/lib/api/client";
@@ -284,6 +285,8 @@ export function ChatThread({
   const [text, setText] = useState("");
   // 入力量に合わせて伸びる。ref は従来どおりフォーカス移動にも使う
   const textareaRef = useAutoGrowTextarea<HTMLTextAreaElement>(text);
+  /** 装飾つきの入力欄。ツールバーはここの選択範囲に効く */
+  const richEditorRef = useRef<HTMLDivElement | null>(null);
   /**
    * 引用を入力欄の末尾へ積む。
    *
@@ -878,9 +881,11 @@ export function ChatThread({
           */}
           {currentRole === "coach" && (
             <RichTextToolbar
-              textareaRef={textareaRef}
-              value={text}
-              onChange={setText}
+              editorRef={richEditorRef}
+              onChanged={() => {
+                const el = richEditorRef.current;
+                if (el) el.dispatchEvent(new Event("input", { bubbles: true }));
+              }}
             />
           )}
           <div className="flex items-end gap-2">
@@ -912,23 +917,43 @@ export function ChatThread({
                 onPick={(ref) => setPendingRef(ref)}
               />
             )}
-            <Textarea
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder="メッセージを入力..."
-              ref={textareaRef}
-              rows={1}
-              // text-base(16px): iOS でフォーカス時の自動ズーム(16px未満で発生)を防ぐ
-              // 高さは useAutoGrowTextarea が中身に合わせて伸ばす
-              className="max-h-32 min-h-[40px] flex-1 resize-none text-base"
-              onFocus={scrollMessagesToBottom}
-              onKeyDown={(e) => {
-                if (isComposerSubmitKey(e)) {
-                  e.preventDefault();
-                  handleSend();
-                }
-              }}
-            />
+            {/*
+              管理者・講師は装飾できるので、書いている最中も色が見える欄にする。
+              生徒は装飾しないので、これまでどおりの入力欄のまま。
+            */}
+            {currentRole === "coach" ? (
+              <RichComposer
+                value={text}
+                onChange={setText}
+                editorRef={richEditorRef}
+                placeholder="メッセージを入力..."
+                onFocus={scrollMessagesToBottom}
+                onKeyDown={(e) => {
+                  if (isComposerSubmitKey(e)) {
+                    e.preventDefault();
+                    handleSend();
+                  }
+                }}
+              />
+            ) : (
+              <Textarea
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder="メッセージを入力..."
+                ref={textareaRef}
+                rows={1}
+                // text-base(16px): iOS でフォーカス時の自動ズーム(16px未満で発生)を防ぐ
+                // 高さは useAutoGrowTextarea が中身に合わせて伸ばす
+                className="max-h-32 min-h-[40px] flex-1 resize-none text-base"
+                onFocus={scrollMessagesToBottom}
+                onKeyDown={(e) => {
+                  if (isComposerSubmitKey(e)) {
+                    e.preventDefault();
+                    handleSend();
+                  }
+                }}
+              />
+            )}
             <Button
               type="button"
               size="icon"

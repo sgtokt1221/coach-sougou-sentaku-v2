@@ -12,7 +12,8 @@ import type { KeyboardEvent } from "react";
  * @returns 送信すべきキー操作なら true
  */
 export function isComposerSubmitKey(
-  e: KeyboardEvent<HTMLTextAreaElement | HTMLInputElement>
+  // 装飾つきの入力欄は contenteditable の div なので、要素の型は絞らない
+  e: KeyboardEvent<HTMLElement>
 ): boolean {
   if (e.key !== "Enter") return false;
   if (e.nativeEvent.isComposing) return false;
@@ -20,4 +21,5 @@ export function isComposerSubmitKey(
 }
 
 /** 入力欄の下に出す操作ヒント。表記を1箇所に集約する */
-export const COMPOSER_SUBMIT_HINT = "Shift+Enter / Cmd+Enter で送信（Enter は改行）";
+export const COMPOSER_SUBMIT_HINT =
+  "Shift+Enter / Cmd+Enter で送信（Enter は改行）";
