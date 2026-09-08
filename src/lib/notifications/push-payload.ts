@@ -102,3 +102,42 @@ export function buildPushMessage(
     },
   };
 }
+
+/**
+ * 通知本文に入れる日時。必ず日本時間で組む。
+ *
+ * サーバー（Cloud Run）は UTC なので、Date#getHours() などをそのまま使うと
+ * 「14:00 の面談」が「05:00」と通知される（本番で起きていた）。
+ */
+const JST = "Asia/Tokyo";
+
+function jstParts(iso: string): Record<string, string> | null {
+  const d = new Date(iso);
+  if (!Number.isFinite(d.getTime())) return null;
+  const parts = new Intl.DateTimeFormat("ja-JP", {
+    timeZone: JST,
+    month: "numeric",
+    day: "numeric",
+    weekday: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(d);
+  const out: Record<string, string> = {};
+  for (const p of parts) out[p.type] = p.value;
+  return out;
+}
+
+/** 例: "9/10(水) 14:00" */
+export function formatSessionTimeJst(iso: string): string {
+  const p = jstParts(iso);
+  if (!p) return "";
+  return `${p.month}/${p.day}(${p.weekday}) ${p.hour}:${p.minute}`;
+}
+
+/** 例: "14:00" */
+export function formatTimeJst(iso: string): string {
+  const p = jstParts(iso);
+  if (!p) return "";
+  return `${p.hour}:${p.minute}`;
+}

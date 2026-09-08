@@ -19,6 +19,20 @@ interface EnvVar {
 }
 
 const ENV_VARS: EnvVar[] = [
+  // Web Push
+  {
+    key: "NEXT_PUBLIC_FIREBASE_VAPID_KEY",
+    required: false,
+    description:
+      "Web Push の VAPID 公開鍵（無いとトークンが取れず通知が動かない）",
+    affects: ["プッシュ通知"],
+  },
+  {
+    key: "CRON_SECRET",
+    required: false,
+    description: "Cloud Scheduler からの呼び出しを認証する共有秘密",
+    affects: ["期限リマインド", "卒業リマインド"],
+  },
   // LiveKit (アプリ内ビデオ通話)
   {
     key: "LIVEKIT_API_KEY",

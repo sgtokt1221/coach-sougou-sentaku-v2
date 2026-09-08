@@ -235,4 +235,27 @@ const PUSH_KINDS = ["feedback", "message", "session"];
   );
 }
 
+// ===== 通知本文の日時は日本時間（サーバーは UTC） =====
+import {
+  formatSessionTimeJst,
+  formatTimeJst,
+} from "../src/lib/notifications/push-payload";
+
+{
+  // UTC 05:00 = JST 14:00。サーバーの時計に引きずられない
+  assert.equal(
+    formatSessionTimeJst("2026-09-10T05:00:00.000Z"),
+    "9/10(木) 14:00"
+  );
+  assert.equal(formatTimeJst("2026-09-10T05:00:00.000Z"), "14:00");
+  // 日付をまたぐ場合（UTC 9/9 20:30 = JST 9/10 05:30）
+  assert.equal(
+    formatSessionTimeJst("2026-09-09T20:30:00.000Z"),
+    "9/10(木) 05:30"
+  );
+  // 壊れた入力は空文字。通知本文に "Invalid Date" を出さない
+  assert.equal(formatSessionTimeJst("not-a-date"), "");
+  assert.equal(formatTimeJst(""), "");
+}
+
 console.log("verify-push-payload OK");

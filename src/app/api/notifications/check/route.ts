@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase/admin";
+import { formatTimeJst } from "@/lib/notifications/push-payload";
 
 interface NotificationTarget {
   userId: string;
@@ -118,7 +119,8 @@ export async function POST(request: Request) {
       targets.push({
         userId: session.studentId,
         title: "明日のセッション",
-        body: `明日 ${scheduledAt.toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" })} から${session.teacherName}先生とのセッションがあります`,
+        // サーバーは UTC なので、時刻は必ず日本時間で組む
+        body: `明日 ${formatTimeJst(session.scheduledAt)} から${session.teacherName}先生とのセッションがあります`,
         type: "session_reminder",
         severity: "warning",
         data: {
@@ -129,41 +131,23 @@ export async function POST(request: Request) {
     }
   }
 
-  // --- 通知送信 ---
+  /**
+   * 送信は sendFcmToUser に一本化する。
+   * 以前はここで独自に送っており、token 欠落の文書が1つ混ざると一括送信ごと
+   * 落ち、しかも catch が空で痕跡が残らなかった。失効削除も成功記録も無かった。
+   * sentCount は「実際に1台以上へ届いた人数」にする（以前は試みた人数だった）。
+   */
   let sentCount = 0;
-  const { getMessaging } = await import("firebase-admin/messaging");
-  const messaging = getMessaging();
-
-  // 設定でその種別を切っている相手には送らない
-  const { shouldNotify } = await import("@/lib/notifications/should-notify");
-
+  const { sendFcmToUser } = await import("@/lib/chat/conversation");
   for (const target of targets) {
     const kind =
       target.type === "document_deadline" ? "documentDeadline" : "session";
-    if (!(await shouldNotify(target.userId, kind))) continue;
-
-    const tokensSnap = await adminDb
-      .collection("users")
-      .doc(target.userId)
-      .collection("fcmTokens")
-      .get();
-
-    if (tokensSnap.empty) continue;
-
-    const tokens = tokensSnap.docs.map((d) => d.data().token as string);
-    try {
-      await messaging.sendEachForMulticast({
-        tokens,
-        notification: { title: target.title, body: target.body },
-        data: target.data,
-        webpush: {
-          fcmOptions: { link: target.data.url },
-        },
-      });
-      sentCount++;
-    } catch {
-      // Individual send failure - continue with others
-    }
+    const r = await sendFcmToUser(
+      target.userId,
+      { title: target.title, body: target.body, url: target.data.url },
+      kind
+    );
+    if (r.sent > 0) sentCount++;
   }
 
   return NextResponse.json({

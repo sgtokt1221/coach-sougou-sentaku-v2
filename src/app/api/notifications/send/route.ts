@@ -36,92 +36,39 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
   }
 
-  if (kind) {
-    const { shouldNotify } = await import("@/lib/notifications/should-notify");
-    if (!(await shouldNotify(userId, kind))) {
-      return NextResponse.json({
-        success: true,
-        sentTo: 0,
-        message: "受信設定でオフ",
-      });
-    }
+  /**
+   * 送信は sendFcmToUser に一本化する。
+   * 以前はここで独自に送っており、token 欠落の文書が1つ混ざると一括送信ごと
+   * 落ち、失効の削除も一部の種類しか見ておらず、成功の記録も無かった。
+   *
+   * kind を省略した手動送信は、これまでどおり相手の設定を無視する（force）。
+   */
+  const { sendFcmToUser } = await import("@/lib/chat/conversation");
+  const r = await sendFcmToUser(
+    userId,
+    { title, body, url: data?.url ?? "/" },
+    kind ?? "message",
+    { force: !kind }
+  );
+
+  if (r.skipped === "prefs") {
+    return NextResponse.json({
+      success: true,
+      sentTo: 0,
+      message: "受信設定でオフ",
+    });
   }
-
-  // ユーザーのFCMトークン一覧を取得
-  const tokensSnap = await adminDb
-    .collection("users")
-    .doc(userId)
-    .collection("fcmTokens")
-    .get();
-
-  if (tokensSnap.empty) {
+  if (r.skipped === "no-tokens") {
     return NextResponse.json({
       success: true,
       sentTo: 0,
       message: "通知トークンが未登録",
     });
   }
-
-  // token の無い文書が1つでも混ざると一括送信ごと落ちるので除く
-  const tokens = tokensSnap.docs
-    .map((doc) => doc.data().token as string | undefined)
-    .filter((t): t is string => Boolean(t));
-  if (tokens.length === 0) {
-    return NextResponse.json({
-      success: true,
-      sentTo: 0,
-      message: "有効なトークンがありません",
-    });
-  }
-
-  // ペイロードは push-payload.ts で組む（tag の一意化・クリック先の統一）
-  const { buildPushMessage } = await import("@/lib/notifications/push-payload");
-  const message = buildPushMessage({
-    title,
-    body,
-    url: data?.url ?? "/",
-    kind: kind ?? "message",
-  });
-
-  // Firebase Admin SDKでマルチキャスト送信
-  const { getMessaging } = await import("firebase-admin/messaging");
-  const messaging = getMessaging();
-
-  const response = await messaging.sendEachForMulticast({
-    tokens,
-    ...message,
-    // 呼び出し側が渡した data も残す（url/kind/tag は builder のものを優先）
-    data: { ...(data ?? {}), ...message.data },
-  });
-
-  // 無効なトークンをクリーンアップ
-  const invalidTokens: string[] = [];
-  response.responses.forEach((resp, idx) => {
-    if (
-      !resp.success &&
-      resp.error?.code === "messaging/registration-token-not-registered"
-    ) {
-      invalidTokens.push(tokens[idx]);
-    }
-  });
-
-  if (invalidTokens.length > 0) {
-    const batch = adminDb.batch();
-    for (const token of invalidTokens) {
-      batch.delete(
-        adminDb
-          .collection("users")
-          .doc(userId)
-          .collection("fcmTokens")
-          .doc(token)
-      );
-    }
-    await batch.commit();
-  }
-
   return NextResponse.json({
     success: true,
-    sentTo: response.successCount,
-    failed: response.failureCount,
+    sentTo: r.sent,
+    failed: r.failed,
+    pruned: r.pruned,
   });
 }

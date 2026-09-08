@@ -4,6 +4,7 @@ import { getOrgMemberAdminUids } from "@/lib/api/organization-scope";
 import { sanitizeForStudent } from "@/lib/api/session-sanitize";
 import { shouldMarkEnded } from "@/lib/types/session";
 import type { Session, SessionType } from "@/lib/types/session";
+import { formatSessionTimeJst } from "@/lib/notifications/push-payload";
 
 const TYPE_LABEL: Record<SessionType, string> = {
   coaching: "コーチング",
@@ -26,50 +27,24 @@ async function notifyStudentOfSession(
     type: SessionType;
   }
 ): Promise<void> {
-  try {
-    const { adminDb } = await import("@/lib/firebase/admin");
-    if (!adminDb) return;
-    // 設定でこの種別を切っている生徒には送らない
-    const { shouldNotify } = await import("@/lib/notifications/should-notify");
-    if (!(await shouldNotify(studentId, "session"))) return;
-    const tokensSnap = await adminDb
-      .collection(`users/${studentId}/fcmTokens`)
-      .get();
-    if (tokensSnap.empty) return;
-
-    const { getMessaging } = await import("firebase-admin/messaging");
-    const messaging = getMessaging();
-
-    // token の無い文書が1つでも混ざると一括送信ごと落ちるので除く
-    const tokens = tokensSnap.docs
-      .map((doc) => doc.data().token as string | undefined)
-      .filter((t): t is string => Boolean(t));
-    if (tokens.length === 0) return;
-    const d = new Date(session.scheduledAt);
-    const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
-    const datePart = `${d.getMonth() + 1}/${d.getDate()}(${weekdays[d.getDay()]})`;
-    const timePart = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-    const teacher = session.teacherName ? ` / ${session.teacherName}` : "";
-    const typeLabel = TYPE_LABEL[session.type] ?? "面談";
-    const link = `/student/sessions/${session.id}`;
-
-    // ペイロードは push-payload.ts で組む（tag の一意化・クリック先の統一）
-    const { buildPushMessage } =
-      await import("@/lib/notifications/push-payload");
-    const message = buildPushMessage({
+  /**
+   * 送信は sendFcmToUser に一本化する（設定の判定・失効削除・成功記録込み）。
+   * 日時は日本時間で組む。サーバーは UTC なので getHours() をそのまま使うと
+   * 「14:00 の面談」が「05:00」と通知されていた。
+   */
+  const when = formatSessionTimeJst(session.scheduledAt);
+  const teacher = session.teacherName ? ` / ${session.teacherName}` : "";
+  const typeLabel = TYPE_LABEL[session.type] ?? "面談";
+  const { sendFcmToUser } = await import("@/lib/chat/conversation");
+  await sendFcmToUser(
+    studentId,
+    {
       title: "新しい面談が予定されました",
-      body: `${datePart} ${timePart} - ${typeLabel}${teacher}`,
-      url: link,
-      kind: "session",
-    });
-    await messaging.sendEachForMulticast({
-      tokens,
-      ...message,
-      data: { ...message.data, sessionId: session.id },
-    });
-  } catch (err) {
-    console.warn("[sessions] FCM notification failed:", err);
-  }
+      body: `${when} - ${typeLabel}${teacher}`,
+      url: `/student/sessions/${session.id}`,
+    },
+    "session"
+  );
 }
 
 export async function GET(request: NextRequest) {
