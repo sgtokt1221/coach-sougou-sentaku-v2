@@ -15,14 +15,14 @@ interface NotificationTarget {
  * Cronジョブまたは手動で呼び出す想定
  */
 export async function POST(request: Request) {
-  // APIキーによる簡易認証（Cron用）
-  const authHeader = request.headers.get("Authorization");
-  const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-    // dev環境ではスキップ
-    if (process.env.NODE_ENV !== "development") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  /**
+   * CRON_SECRET が無ければ拒否する（cron/graduation-reminders と同じ形）。
+   * 以前は「設定されているときだけ照合」だったため、本番で未設定のまま
+   * 誰でも全生徒へ通知を送れる状態になっていた。
+   */
+  const secret = process.env.CRON_SECRET;
+  if (!secret || request.headers.get("x-cron-secret") !== secret) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
   if (!adminDb) {
@@ -33,7 +33,10 @@ export async function POST(request: Request) {
   const targets: NotificationTarget[] = [];
 
   // --- 書類期限チェック ---
-  const usersSnap = await adminDb.collection("users").where("role", "==", "student").get();
+  const usersSnap = await adminDb
+    .collection("users")
+    .where("role", "==", "student")
+    .get();
 
   for (const userDoc of usersSnap.docs) {
     const docsSnap = await adminDb
@@ -48,7 +51,9 @@ export async function POST(request: Request) {
       if (!doc.deadline) continue;
 
       const deadline = new Date(doc.deadline + "T23:59:59");
-      const daysUntil = Math.ceil((deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      const daysUntil = Math.ceil(
+        (deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+      );
 
       if (daysUntil <= 1 && daysUntil >= 0) {
         targets.push({
@@ -92,7 +97,8 @@ export async function POST(request: Request) {
   for (const sessionDoc of sessionsSnap.docs) {
     const session = sessionDoc.data();
     const scheduledAt = new Date(session.scheduledAt);
-    const hoursUntil = (scheduledAt.getTime() - now.getTime()) / (1000 * 60 * 60);
+    const hoursUntil =
+      (scheduledAt.getTime() - now.getTime()) / (1000 * 60 * 60);
 
     if (hoursUntil <= 1 && hoursUntil > 0) {
       // 1時間前: urgent

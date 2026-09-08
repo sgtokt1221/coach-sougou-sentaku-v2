@@ -1,6 +1,11 @@
 "use client";
 
-import { getMessaging, getToken, onMessage, type Messaging } from "firebase/messaging";
+import {
+  getMessaging,
+  getToken,
+  onMessage,
+  type Messaging,
+} from "firebase/messaging";
 import app from "@/lib/firebase/config";
 
 let messaging: Messaging | null = null;
@@ -32,7 +37,8 @@ function registerMessagingServiceWorker(): Promise<ServiceWorkerRegistration> {
     authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ?? "",
     projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? "",
     storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ?? "",
-    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID ?? "",
+    messagingSenderId:
+      process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID ?? "",
     appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID ?? "",
   };
   const qs = new URLSearchParams(config).toString();
@@ -81,14 +87,17 @@ export async function requestNotificationPermission(): Promise<string | null> {
  * インストール済みPWA内で取った購読でないと通知が届かないため、
  * これが false のiOS端末は届かなくて当たり前、と判断できるようにする。
  */
-export async function saveFcmToken(idToken: string, fcmToken: string): Promise<void> {
+export async function saveFcmToken(
+  idToken: string,
+  fcmToken: string
+): Promise<void> {
   const standalone =
     typeof window !== "undefined" &&
     (window.matchMedia?.("(display-mode: standalone)").matches ||
       // iOS Safari は display-mode を返さない時期があるため独自プロパティも見る
       (window.navigator as { standalone?: boolean }).standalone === true);
 
-  await fetch("/api/notifications/token", {
+  const res = await fetch("/api/notifications/token", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -100,6 +109,22 @@ export async function saveFcmToken(idToken: string, fcmToken: string): Promise<v
       standalone,
     }),
   });
+  /**
+   * 結果を見ずに戻ると、401 や 500 でも「有効にしました」と出てしまう。
+   * 保存できていないのに緑になる、が本番で起きていた原因の1つ。
+   */
+  if (!res.ok) {
+    let detail = "";
+    try {
+      detail = ((await res.json()) as { error?: string }).error ?? "";
+    } catch {
+      /* 本文が無くてもよい */
+    }
+    throw new Error(
+      detail ||
+        `通知の登録に失敗しました（${res.status}）。もう一度お試しください`
+    );
+  }
 }
 
 /**
@@ -141,7 +166,13 @@ export async function refreshFcmToken(idToken: string): Promise<void> {
  * 「通知が来たのにどこを見ればいいか分からない」状態になる。
  */
 export function onForegroundMessage(
-  callback: (payload: { title?: string; body?: string; url?: string }) => void,
+  callback: (payload: {
+    title?: string;
+    body?: string;
+    url?: string;
+    /** 送信側が付けた一意の tag。自前で OS 通知を出すときも同じものを使う */
+    tag?: string;
+  }) => void
 ): (() => void) | null {
   const msg = getMessagingInstance();
   if (!msg) return null;
@@ -154,7 +185,45 @@ export function onForegroundMessage(
         (payload.data?.url as string | undefined) ??
         payload.fcmOptions?.link ??
         undefined,
+      tag: payload.data?.tag as string | undefined,
     });
   });
   return unsubscribe;
+}
+
+/**
+ * ページ側から OS 通知を出す。
+ *
+ * タブが存在すると FCM は onMessage に配信し、サービスワーカーは OS 通知を
+ * 出さない（仕様）。タブを開いたまま別の作業をしていると、アプリ内トーストが
+ * 見ていない画面で8秒出て消えるだけになる。これが「届かない」の主因だった。
+ * そういうときはここで OS 通知を出す。
+ *
+ * サービスワーカー側の notificationclick が data.url を開く。
+ */
+export async function showLocalNotification(payload: {
+  title: string;
+  body?: string;
+  url?: string;
+  tag?: string;
+}): Promise<boolean> {
+  if (typeof window === "undefined") return false;
+  if (!("Notification" in window) || Notification.permission !== "granted") {
+    return false;
+  }
+  if (!("serviceWorker" in navigator)) return false;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    await reg.showNotification(payload.title, {
+      body: payload.body ?? "",
+      icon: "/icons/icon-192.png",
+      badge: "/icons/icon-192.png",
+      tag: payload.tag ?? `notice-${Date.now()}`,
+      data: { url: payload.url ?? "/" },
+    });
+    return true;
+  } catch (err) {
+    console.warn("[FCM] local notification failed:", err);
+    return false;
+  }
 }

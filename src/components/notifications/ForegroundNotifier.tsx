@@ -4,7 +4,11 @@ import { useEffect } from "react";
 import { mutate } from "swr";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { onForegroundMessage, refreshFcmToken } from "@/lib/firebase/messaging";
+import {
+  onForegroundMessage,
+  refreshFcmToken,
+  showLocalNotification,
+} from "@/lib/firebase/messaging";
 import { useAuth } from "@/contexts/AuthContext";
 
 /**
@@ -36,7 +40,27 @@ export function ForegroundNotifier() {
     const unsub = onForegroundMessage((payload) => {
       if (payload.title || payload.body) {
         /**
-         * 前面にいる間は OS 通知が出せないので、これが唯一の気づく手段になる。
+         * タブが存在するだけで FCM はここに配信し、サービスワーカーは OS 通知を
+         * 出さない。タブを開いたまま別の作業をしていると、トーストは見ていない
+         * 画面で消える。本番で「届かない」と感じられていた主因。
+         * 見ていないときは OS 通知として出す。
+         */
+        const looking =
+          typeof document !== "undefined" &&
+          document.visibilityState === "visible" &&
+          document.hasFocus();
+        if (!looking) {
+          void showLocalNotification({
+            title: payload.title ?? "新着のお知らせ",
+            body: payload.body,
+            url: payload.url,
+            tag: payload.tag,
+          });
+          void mutate(() => true);
+          return;
+        }
+        /**
+         * 見ているときだけトースト。
          * 既定（下部・4秒・操作なし）だと、スマホでは親指の下に小さく出て
          * すぐ消えるため見逃す。上部・長め・タップで遷移できる形にする。
          */

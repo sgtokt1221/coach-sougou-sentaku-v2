@@ -22,7 +22,8 @@ export async function POST(request: Request) {
   const auth = await requireRole(request, ["admin", "teacher", "superadmin"]);
   if (auth instanceof NextResponse) return auth;
 
-  const { userId, title, body, data, kind } = (await request.json()) as SendNotificationBody;
+  const { userId, title, body, data, kind } =
+    (await request.json()) as SendNotificationBody;
 
   if (!userId || !title || !body) {
     return NextResponse.json(
@@ -38,7 +39,11 @@ export async function POST(request: Request) {
   if (kind) {
     const { shouldNotify } = await import("@/lib/notifications/should-notify");
     if (!(await shouldNotify(userId, kind))) {
-      return NextResponse.json({ success: true, sentTo: 0, message: "受信設定でオフ" });
+      return NextResponse.json({
+        success: true,
+        sentTo: 0,
+        message: "受信設定でオフ",
+      });
     }
   }
 
@@ -50,10 +55,33 @@ export async function POST(request: Request) {
     .get();
 
   if (tokensSnap.empty) {
-    return NextResponse.json({ success: true, sentTo: 0, message: "通知トークンが未登録" });
+    return NextResponse.json({
+      success: true,
+      sentTo: 0,
+      message: "通知トークンが未登録",
+    });
   }
 
-  const tokens = tokensSnap.docs.map((doc) => doc.data().token as string);
+  // token の無い文書が1つでも混ざると一括送信ごと落ちるので除く
+  const tokens = tokensSnap.docs
+    .map((doc) => doc.data().token as string | undefined)
+    .filter((t): t is string => Boolean(t));
+  if (tokens.length === 0) {
+    return NextResponse.json({
+      success: true,
+      sentTo: 0,
+      message: "有効なトークンがありません",
+    });
+  }
+
+  // ペイロードは push-payload.ts で組む（tag の一意化・クリック先の統一）
+  const { buildPushMessage } = await import("@/lib/notifications/push-payload");
+  const message = buildPushMessage({
+    title,
+    body,
+    url: data?.url ?? "/",
+    kind: kind ?? "message",
+  });
 
   // Firebase Admin SDKでマルチキャスト送信
   const { getMessaging } = await import("firebase-admin/messaging");
@@ -61,17 +89,18 @@ export async function POST(request: Request) {
 
   const response = await messaging.sendEachForMulticast({
     tokens,
-    notification: { title, body },
-    data: data ?? {},
-    webpush: {
-      fcmOptions: { link: data?.url ?? "/student/dashboard" },
-    },
+    ...message,
+    // 呼び出し側が渡した data も残す（url/kind/tag は builder のものを優先）
+    data: { ...(data ?? {}), ...message.data },
   });
 
   // 無効なトークンをクリーンアップ
   const invalidTokens: string[] = [];
   response.responses.forEach((resp, idx) => {
-    if (!resp.success && resp.error?.code === "messaging/registration-token-not-registered") {
+    if (
+      !resp.success &&
+      resp.error?.code === "messaging/registration-token-not-registered"
+    ) {
       invalidTokens.push(tokens[idx]);
     }
   });
@@ -80,7 +109,11 @@ export async function POST(request: Request) {
     const batch = adminDb.batch();
     for (const token of invalidTokens) {
       batch.delete(
-        adminDb.collection("users").doc(userId).collection("fcmTokens").doc(token)
+        adminDb
+          .collection("users")
+          .doc(userId)
+          .collection("fcmTokens")
+          .doc(token)
       );
     }
     await batch.commit();

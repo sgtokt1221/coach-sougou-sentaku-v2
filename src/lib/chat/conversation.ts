@@ -19,12 +19,16 @@ const REFERENCE_KINDS: readonly ChatReferenceKind[] = CHAT_REFERENCE_KINDS;
 export function sanitizeReference(raw: unknown): ChatReference | undefined {
   if (!raw || typeof raw !== "object") return undefined;
   const r = raw as Record<string, unknown>;
-  if (typeof r.kind !== "string" || !REFERENCE_KINDS.includes(r.kind as ChatReferenceKind))
+  if (
+    typeof r.kind !== "string" ||
+    !REFERENCE_KINDS.includes(r.kind as ChatReferenceKind)
+  )
     return undefined;
   if (typeof r.label !== "string" || !r.label.trim()) return undefined;
   if (typeof r.href !== "string") return undefined;
   // 内部パスのみ: "/student/" 始まり、"//" やスキームを拒否
-  if (!r.href.startsWith("/student/") || r.href.startsWith("//")) return undefined;
+  if (!r.href.startsWith("/student/") || r.href.startsWith("//"))
+    return undefined;
   return {
     kind: r.kind as ChatReferenceKind,
     label: r.label.slice(0, 200),
@@ -185,15 +189,18 @@ export async function sendFcmToUser(
     const tokens = docs.map((d) => d.data().token as string);
     if (tokens.length === 0) return;
 
-    const truncated =
-      payload.body.length > 50 ? payload.body.slice(0, 50) + "…" : payload.body;
+    /**
+     * ペイロードは push-payload.ts で組む。tag を送信ごとに一意にしないと
+     * OS が前の通知を上書きし、3通来ても1通しか見えない（本番で起きていた）。
+     */
+    const { buildPushMessage } =
+      await import("@/lib/notifications/push-payload");
+    const message = buildPushMessage({ ...payload, kind });
 
     const { getMessaging } = await import("firebase-admin/messaging");
     const res = await getMessaging().sendEachForMulticast({
       tokens,
-      notification: { title: payload.title, body: truncated },
-      data: { url: payload.url },
-      webpush: { fcmOptions: { link: payload.url } },
+      ...message,
     });
 
     /**
@@ -222,8 +229,11 @@ export async function sendFcmToUser(
           console.warn(`[fcm] 失効トークンを削除 uid=${uid} code=${code}`);
           return;
         }
-        console.warn(`[fcm] 送信失敗 uid=${uid} code=${code}`, r.error?.message);
-      }),
+        console.warn(
+          `[fcm] 送信失敗 uid=${uid} code=${code}`,
+          r.error?.message
+        );
+      })
     );
   } catch (err) {
     // プッシュ自体で画面を壊さない。ただし黙らせず痕跡は残す

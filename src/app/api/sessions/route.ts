@@ -40,7 +40,11 @@ async function notifyStudentOfSession(
     const { getMessaging } = await import("firebase-admin/messaging");
     const messaging = getMessaging();
 
-    const tokens = tokensSnap.docs.map((d) => d.data().token as string);
+    // token の無い文書が1つでも混ざると一括送信ごと落ちるので除く
+    const tokens = tokensSnap.docs
+      .map((doc) => doc.data().token as string | undefined)
+      .filter((t): t is string => Boolean(t));
+    if (tokens.length === 0) return;
     const d = new Date(session.scheduledAt);
     const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
     const datePart = `${d.getMonth() + 1}/${d.getDate()}(${weekdays[d.getDay()]})`;
@@ -49,14 +53,19 @@ async function notifyStudentOfSession(
     const typeLabel = TYPE_LABEL[session.type] ?? "面談";
     const link = `/student/sessions/${session.id}`;
 
+    // ペイロードは push-payload.ts で組む（tag の一意化・クリック先の統一）
+    const { buildPushMessage } =
+      await import("@/lib/notifications/push-payload");
+    const message = buildPushMessage({
+      title: "新しい面談が予定されました",
+      body: `${datePart} ${timePart} - ${typeLabel}${teacher}`,
+      url: link,
+      kind: "session",
+    });
     await messaging.sendEachForMulticast({
       tokens,
-      notification: {
-        title: "新しい面談が予定されました",
-        body: `${datePart} ${timePart} - ${typeLabel}${teacher}`,
-      },
-      data: { url: link, sessionId: session.id },
-      webpush: { fcmOptions: { link } },
+      ...message,
+      data: { ...message.data, sessionId: session.id },
     });
   } catch (err) {
     console.warn("[sessions] FCM notification failed:", err);
