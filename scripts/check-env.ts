@@ -38,6 +38,12 @@ const ENV_VARS: EnvVar[] = [
     description: "LiveKit Cloud の接続先 (wss://xxx.livekit.cloud)",
     affects: ["ビデオ通話"],
   },
+  {
+    key: "NEXT_PUBLIC_CALL_RECORDING",
+    required: false,
+    description: "通話の録画を有効にする (1 で有効。既定は無効＝課金なし)",
+    affects: ["通話の録画"],
+  },
   // Firebase Client
   {
     key: "NEXT_PUBLIC_FIREBASE_API_KEY",

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 import { isLiveKitConfigured } from "@/lib/livekit/config";
+import { isCallRecordingEnabled } from "@/lib/livekit/client-config";
 import {
   canControlRecording,
   canViewRecordingUrl,
@@ -101,6 +102,10 @@ export async function POST(
       { error: "ビデオ通話が設定されていません" },
       { status: 503 }
     );
+  }
+  // ボタンを隠すだけでなくサーバでも断る。UI を迂回されても課金が出ないように
+  if (!isCallRecordingEnabled()) {
+    return NextResponse.json({ error: "録画は現在無効です" }, { status: 503 });
   }
 
   let body: { action?: unknown };

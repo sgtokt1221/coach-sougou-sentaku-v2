@@ -5,6 +5,7 @@ import { Circle, Loader2, Square } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { authFetch } from "@/lib/api/client";
+import { isCallRecordingEnabled } from "@/lib/livekit/client-config";
 import type { Call } from "@/lib/types/call";
 
 /**
@@ -23,6 +24,9 @@ export function RecordingBar({
   const [busy, setBusy] = useState(false);
   const rec = call.recording;
   const status = rec?.status;
+
+  // 録画を止めているときは表示ごと出さない（費用が出ないようにするため）
+  if (!isCallRecordingEnabled()) return null;
 
   async function send(action: "request" | "stop") {
     setBusy(true);

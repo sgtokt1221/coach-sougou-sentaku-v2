@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 import { consentRequiredUids, evaluateConsent } from "@/lib/livekit/authz";
+import { isCallRecordingEnabled } from "@/lib/livekit/client-config";
 import { startRoomRecording } from "@/lib/livekit/egress";
 import type { Call } from "@/lib/types/call";
 
@@ -23,6 +24,11 @@ export async function POST(
   ]);
   if (auth instanceof NextResponse) return auth;
   const { id } = await params;
+
+  // 同意が揃うと このルートが Egress を回すので、ここでも止める
+  if (!isCallRecordingEnabled()) {
+    return NextResponse.json({ error: "録画は現在無効です" }, { status: 503 });
+  }
 
   let body: { granted?: unknown };
   try {

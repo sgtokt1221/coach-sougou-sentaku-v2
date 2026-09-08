@@ -69,6 +69,11 @@ env:
   # wss://xxx.livekit.cloud。クライアントが接続先として必要とし、秘匿性は無い。
   # - variable: NEXT_PUBLIC_LIVEKIT_URL
   #   value: wss://xxxxx.livekit.cloud
+  #
+  # 録画を使うときだけ "1" にする。未設定なら録画ボタンが出ず、API も 503 を返す。
+  # 費用の大半は録画（映像1分あたり約3円、無料枠は月60分）。
+  # - variable: NEXT_PUBLIC_CALL_RECORDING
+  #   value: "1"
   # Google Programmable Search Engine の検索エンジン ID (cx)。
   # クライアントに露出する非機密値のため Secret ではなく平文 value で設定。
   - variable: NEXT_PUBLIC_GOOGLE_PSE_CX
