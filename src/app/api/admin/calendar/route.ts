@@ -71,10 +71,8 @@ export async function GET(request: NextRequest) {
   const to = searchParams.get("to"); // YYYY-MM-DD
   const viewAs = searchParams.get("viewAs");
 
-  const effectiveUid =
-    role === "superadmin" && viewAs ? viewAs : uid;
-  const effectiveRole =
-    role === "superadmin" && viewAs ? "admin" : role;
+  const effectiveUid = role === "superadmin" && viewAs ? viewAs : uid;
+  const effectiveRole = role === "superadmin" && viewAs ? "admin" : role;
 
   const fromDate = from ? new Date(`${from}T00:00:00${JST_OFFSET}`) : null;
   const toDate = to ? new Date(`${to}T23:59:59${JST_OFFSET}`) : null;
@@ -176,7 +174,7 @@ export async function GET(request: NextRequest) {
               .collection("sessions")
               .where("createdByAdminId", "==", effectiveUid)
               .get()
-          ).docs,
+          ).docs
         );
       }
       for (const doc of sessionDocs) {
@@ -186,7 +184,9 @@ export async function GET(request: NextRequest) {
         // scheduledAt は TZ 無しの JST-naive 文字列 ("2026-06-03T11:00")。
         // サーバー(UTC)で誤解釈されないよう、他箇所と同様に JST として解釈する。
         const hasTz = /[zZ]$|[+-]\d{2}:?\d{2}$/.test(scheduledAt);
-        const start = new Date(hasTz ? scheduledAt : `${scheduledAt}${JST_OFFSET}`);
+        const start = new Date(
+          hasTz ? scheduledAt : `${scheduledAt}${JST_OFFSET}`
+        );
         if (isNaN(start.getTime())) continue;
         if (!inRange(start)) continue;
         const durationMin = typeof s.duration === "number" ? s.duration : 60;
@@ -196,15 +196,13 @@ export async function GET(request: NextRequest) {
           s.type === "mock_interview"
             ? "模擬面接"
             : s.type === "coaching"
-            ? "コーチング"
-            : s.type === "essay_review"
-            ? "小論文レビュー"
-            : s.type === "group_review"
-            ? "グループ添削"
-            : "面談";
-        const label = studentName
-          ? `${typeLabel}: ${studentName}`
-          : typeLabel;
+              ? "コーチング"
+              : s.type === "essay_review"
+                ? "小論文レビュー"
+                : s.type === "group_review"
+                  ? "グループ添削"
+                  : "面談";
+        const label = studentName ? `${typeLabel}: ${studentName}` : typeLabel;
         events.push({
           uid: `coach-session-${doc.id}@coach.app`,
           id: `coach-session-${doc.id}@coach.app`,
@@ -216,7 +214,6 @@ export async function GET(request: NextRequest) {
           type: "session",
           label,
           description: s.notes || undefined,
-          location: s.meetLink || undefined,
           studentNames: studentName ? [studentName] : [],
           href: `/admin/sessions/${doc.id}`,
           sessionType: s.type,
@@ -294,8 +291,7 @@ export async function GET(request: NextRequest) {
         label: `${uni_shortTitle(ev.univName)} ${ev.facName} ${ev.labelPrefix}${
           yearLabel ? ` (${yearLabel})` : ""
         }`,
-        description:
-          names.length > 0 ? `志望: ${names.join("、")}` : undefined,
+        description: names.length > 0 ? `志望: ${names.join("、")}` : undefined,
         studentNames: names,
         href: `/admin/universities/${ev.univId}`,
       });
@@ -344,11 +340,7 @@ export async function GET(request: NextRequest) {
     // 5. 日本の祝日
     if (fromDate && toDate) {
       const years = new Set<number>();
-      for (
-        let y = fromDate.getFullYear();
-        y <= toDate.getFullYear();
-        y++
-      ) {
+      for (let y = fromDate.getFullYear(); y <= toDate.getFullYear(); y++) {
         years.add(y);
       }
       for (const y of years) {

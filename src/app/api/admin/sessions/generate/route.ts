@@ -60,7 +60,10 @@ export async function POST(request: NextRequest) {
           .get();
     slots = snap.docs
       .map((d) => d.data())
-      .filter((t) => t.active === true && ONE_ON_ONE_TYPES.includes(t.type as SessionType))
+      .filter(
+        (t) =>
+          t.active === true && ONE_ON_ONE_TYPES.includes(t.type as SessionType)
+      )
       .map((t) => ({
         studentId: t.studentId as string,
         studentName: (t.studentName as string) ?? "",
@@ -84,7 +87,7 @@ export async function POST(request: NextRequest) {
           memberUids.has(s.createdByAdminId) &&
           typeof s.scheduledAt === "string" &&
           s.scheduledAt.startsWith(`${prev}-`) &&
-          ONE_ON_ONE_TYPES.includes(s.type as SessionType),
+          ONE_ON_ONE_TYPES.includes(s.type as SessionType)
       );
     slots = extractSlots(prevSessions);
   }
@@ -102,7 +105,9 @@ export async function POST(request: NextRequest) {
   const closureDates = new Set(
     closureSnap.docs
       .map((d) => d.data().date as string)
-      .filter((date) => typeof date === "string" && date.startsWith(`${month}-`)),
+      .filter(
+        (date) => typeof date === "string" && date.startsWith(`${month}-`)
+      )
   );
 
   // --- 既存キー（当月・自 org セッション） ---
@@ -121,7 +126,12 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const result = computeGeneration({ slots, month, closureDates, existingKeys });
+  const result = computeGeneration({
+    slots,
+    month,
+    closureDates,
+    existingKeys,
+  });
 
   const counts = {
     toCreate: result.toCreate.length,
@@ -157,7 +167,6 @@ export async function POST(request: NextRequest) {
         scheduledAt: item.scheduledAt,
         duration: item.slot.duration ?? null,
         format: item.slot.format === "online" ? "online" : "offline",
-        meetLink: null,
         notes: null,
         sharedWithStudent: false,
         createdAt: now,

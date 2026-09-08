@@ -27,7 +27,7 @@ export interface CalendarEvent {
   label: string;
   /** 詳細 (iCal DESCRIPTION 相当) */
   description?: string;
-  /** 場所 (iCal LOCATION 相当, meetLink 等) */
+  /** 場所 (iCal LOCATION 相当) */
   location?: string;
   /** 関連生徒名 */
   studentNames: string[];

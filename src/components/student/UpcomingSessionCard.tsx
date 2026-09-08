@@ -6,7 +6,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthSWR } from "@/lib/api/swr";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSessionCall } from "@/lib/hooks/useSessionCall";
 import type { Session, SessionType } from "@/lib/types/session";
 import type { StudentProfile } from "@/lib/types/user";
 
@@ -82,16 +84,16 @@ export function UpcomingSessionCard() {
   if (!next) {
     if (!isCoachPlan) return null;
     return (
-      <Card className="rounded-2xl border-dashed border-border/60 bg-muted/30">
+      <Card className="border-border/60 bg-muted/30 rounded-2xl border-dashed">
         <CardContent className="flex items-center gap-3 p-4">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-muted text-muted-foreground shrink-0">
+          <div className="bg-muted text-muted-foreground flex size-10 shrink-0 items-center justify-center rounded-xl">
             <Calendar className="size-5" />
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-foreground">
+          <div className="min-w-0 flex-1">
+            <p className="text-foreground text-sm font-medium">
               次回のセッション予定はまだありません
             </p>
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <p className="text-muted-foreground mt-0.5 text-xs">
               担当コーチがスケジュールするとここに表示されます
             </p>
           </div>
@@ -116,25 +118,29 @@ export function UpcomingSessionCard() {
 
 /** 次回 1 件をフルカードで強調表示 */
 function PrimarySessionCard({ session }: { session: Session }) {
+  const { user } = useAuth();
+  const router = useRouter();
+  // 講師が通話を始めていたら、詳細ページを経由せずここから入れるようにする
+  const activeCall = useSessionCall(user?.uid, session.id);
   const when = formatDate(session.scheduledAt);
   const dateLabel = dateLabelOf(when);
   const isInProgress = session.status === "in_progress";
   const isSoon = when.diffHours >= 0 && when.diffHours <= 1 && !isInProgress;
 
   return (
-    <Link href={`/student/sessions/${session.id}`} className="block group">
+    <Link href={`/student/sessions/${session.id}`} className="group block">
       <Card
         className={`relative overflow-hidden rounded-2xl border transition-all ${
           isInProgress
             ? "border-rose-300 bg-rose-50/50 dark:border-rose-900 dark:bg-rose-950/20"
             : isSoon
               ? "border-amber-300 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/20"
-              : "border-teal-200 bg-gradient-to-br from-teal-50 to-sky-50 dark:border-teal-900 dark:from-teal-950/30 dark:to-sky-950/20 group-hover:border-teal-300"
+              : "border-teal-200 bg-gradient-to-br from-teal-50 to-sky-50 group-hover:border-teal-300 dark:border-teal-900 dark:from-teal-950/30 dark:to-sky-950/20"
         }`}
       >
         <CardContent className="flex items-center gap-4 p-4">
           <div
-            className={`flex flex-col items-center justify-center rounded-xl px-3 py-2 shrink-0 min-w-16 ${
+            className={`flex min-w-16 shrink-0 flex-col items-center justify-center rounded-xl px-3 py-2 ${
               isInProgress
                 ? "bg-rose-500 text-white"
                 : isSoon
@@ -142,19 +148,19 @@ function PrimarySessionCard({ session }: { session: Session }) {
                   : "bg-teal-500 text-white"
             }`}
           >
-            <span className="text-[10px] font-medium uppercase tracking-wide opacity-90">
+            <span className="text-[10px] font-medium tracking-wide uppercase opacity-90">
               {dateLabel}
             </span>
-            <span className="text-lg font-bold font-mono tabular-nums mt-0.5">
+            <span className="mt-0.5 font-mono text-lg font-bold tabular-nums">
               {when.time}
             </span>
           </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
               {isInProgress ? (
                 <Badge
                   variant="outline"
-                  className="gap-1 border-rose-200 bg-rose-50 text-rose-700 text-[10px]"
+                  className="gap-1 border-rose-200 bg-rose-50 text-[10px] text-rose-700"
                 >
                   <span className="relative flex size-2">
                     <span className="absolute inline-flex size-full animate-ping rounded-full bg-rose-400 opacity-75" />
@@ -165,7 +171,7 @@ function PrimarySessionCard({ session }: { session: Session }) {
               ) : isSoon ? (
                 <Badge
                   variant="outline"
-                  className="gap-1 border-amber-200 bg-amber-50 text-amber-700 text-[10px]"
+                  className="gap-1 border-amber-200 bg-amber-50 text-[10px] text-amber-700"
                 >
                   <Clock className="size-2.5" />
                   まもなく開始
@@ -173,17 +179,17 @@ function PrimarySessionCard({ session }: { session: Session }) {
               ) : (
                 <Badge
                   variant="outline"
-                  className="gap-1 border-teal-200 bg-teal-50 text-teal-700 text-[10px]"
+                  className="gap-1 border-teal-200 bg-teal-50 text-[10px] text-teal-700"
                 >
                   <Calendar className="size-2.5" />
                   次回の授業
                 </Badge>
               )}
-              <span className="text-[11px] text-muted-foreground">
+              <span className="text-muted-foreground text-[11px]">
                 {TYPE_LABEL[session.type] ?? "授業"}
               </span>
             </div>
-            <p className="text-sm font-medium mt-1 truncate">
+            <p className="mt-1 truncate text-sm font-medium">
               {session.teacherName ?? "担当講師"}
               {session.prepPlan?.goal && (
                 <span className="text-muted-foreground">
@@ -193,26 +199,26 @@ function PrimarySessionCard({ session }: { session: Session }) {
               )}
             </p>
           </div>
-          {/* 開始 1 時間以内 + Meet リンクありなら、詳細ページを経由せず直接 Meet を開く */}
-          {session.meetLink && (isInProgress || isSoon) ? (
+          {/* 通話中なら直接入れるようにする。無いときは詳細へ進む矢印 */}
+          {activeCall && (isInProgress || isSoon) ? (
             <button
               type="button"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                window.open(session.meetLink, "_blank", "noopener,noreferrer");
+                router.push(`/call/${activeCall.id}`);
               }}
-              className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium shadow-sm shrink-0 transition-colors ${
+              className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium shadow-sm transition-colors ${
                 isInProgress
-                  ? "bg-rose-500 hover:bg-rose-600 text-white"
-                  : "bg-amber-500 hover:bg-amber-600 text-white"
+                  ? "bg-rose-500 text-white hover:bg-rose-600"
+                  : "bg-amber-500 text-white hover:bg-amber-600"
               }`}
             >
               <Video className="size-3.5" />
-              Meet に参加
+              通話に参加
             </button>
           ) : (
-            <ArrowUpRight className="size-5 text-muted-foreground shrink-0 group-hover:text-foreground transition-colors" />
+            <ArrowUpRight className="text-muted-foreground group-hover:text-foreground size-5 shrink-0 transition-colors" />
           )}
         </CardContent>
       </Card>
@@ -226,21 +232,21 @@ function CompactSessionRow({ session }: { session: Session }) {
   return (
     <Link
       href={`/student/sessions/${session.id}`}
-      className="group flex items-center gap-3 rounded-lg border border-border/60 bg-background/80 px-3 py-2 hover:border-border hover:bg-background transition-colors"
+      className="group border-border/60 bg-background/80 hover:border-border hover:bg-background flex items-center gap-3 rounded-lg border px-3 py-2 transition-colors"
     >
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground shrink-0 min-w-[88px]">
+      <div className="text-muted-foreground flex min-w-[88px] shrink-0 items-center gap-1.5 text-xs">
         <Calendar className="size-3.5" />
         <span className="font-medium tabular-nums">
           {dateLabelOf(when)} {when.time}
         </span>
       </div>
-      <span className="text-[11px] text-muted-foreground shrink-0">
+      <span className="text-muted-foreground shrink-0 text-[11px]">
         {TYPE_LABEL[session.type] ?? "授業"}
       </span>
-      <span className="text-xs text-foreground/80 truncate flex-1">
+      <span className="text-foreground/80 flex-1 truncate text-xs">
         {session.teacherName ?? "担当講師"}
       </span>
-      <ArrowUpRight className="size-3.5 text-muted-foreground shrink-0 group-hover:text-foreground" />
+      <ArrowUpRight className="text-muted-foreground group-hover:text-foreground size-3.5 shrink-0" />
     </Link>
   );
 }

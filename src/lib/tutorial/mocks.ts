@@ -18,7 +18,6 @@ const tourSessionPrimary = {
   type: "coaching",
   scheduledAt: sessionDay2.toISOString(),
   duration: 60,
-  meetLink: "https://meet.example.com/demo-1",
   status: "scheduled",
   sharedWithStudent: true,
 };
@@ -60,7 +59,10 @@ export const TUTORIAL_MOCK_API: Record<string, unknown> = {
     isComplete: false,
     values: {
       summary: "人の役に立つこと、チームで何かを成し遂げること、誠実であること",
-      examples: ["文化祭実行委員長として住民連携イベントを企画", "部活動で後輩指導"],
+      examples: [
+        "文化祭実行委員長として住民連携イベントを企画",
+        "部活動で後輩指導",
+      ],
     },
     strengths: {
       summary: "論理的思考、リーダーシップ、粘り強さ",
@@ -85,7 +87,14 @@ export const TUTORIAL_MOCK_API: Record<string, unknown> = {
       id: "tour-skill-1",
       rank: "B",
       category: "social-science",
-      scores: { total: 38, logic: 9, structure: 8, expression: 8, ap: 8, depth: 5 },
+      scores: {
+        total: 38,
+        logic: 9,
+        structure: 8,
+        expression: 8,
+        ap: 8,
+        depth: 5,
+      },
       takenAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
     },
     history: [
@@ -93,21 +102,42 @@ export const TUTORIAL_MOCK_API: Record<string, unknown> = {
         id: "tour-skill-1",
         rank: "B",
         category: "social-science",
-        scores: { total: 38, logic: 9, structure: 8, expression: 8, ap: 8, depth: 5 },
+        scores: {
+          total: 38,
+          logic: 9,
+          structure: 8,
+          expression: 8,
+          ap: 8,
+          depth: 5,
+        },
         takenAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
       },
       {
         id: "tour-skill-2",
         rank: "C",
         category: "social-science",
-        scores: { total: 32, logic: 7, structure: 7, expression: 7, ap: 6, depth: 5 },
+        scores: {
+          total: 32,
+          logic: 7,
+          structure: 7,
+          expression: 7,
+          ap: 6,
+          depth: 5,
+        },
         takenAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 35).toISOString(),
       },
       {
         id: "tour-skill-3",
         rank: "C",
         category: "social-science",
-        scores: { total: 28, logic: 6, structure: 6, expression: 6, ap: 5, depth: 5 },
+        scores: {
+          total: 28,
+          logic: 6,
+          structure: 6,
+          expression: 6,
+          ap: 5,
+          depth: 5,
+        },
         takenAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 65).toISOString(),
       },
     ],
@@ -152,19 +182,25 @@ export const TUTORIAL_MOCK_API: Record<string, unknown> = {
     essays: [
       {
         id: "tour-essay-3",
-        submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
+        submittedAt: new Date(
+          Date.now() - 1000 * 60 * 60 * 24 * 3
+        ).toISOString(),
         scores: { total: 80 },
         topic: "地域社会における若者の役割",
       },
       {
         id: "tour-essay-2",
-        submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
+        submittedAt: new Date(
+          Date.now() - 1000 * 60 * 60 * 24 * 10
+        ).toISOString(),
         scores: { total: 74 },
         topic: "AIと雇用の未来",
       },
       {
         id: "tour-essay-1",
-        submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 18).toISOString(),
+        submittedAt: new Date(
+          Date.now() - 1000 * 60 * 60 * 24 * 18
+        ).toISOString(),
         scores: { total: 68 },
         topic: "グローバル化と地域文化",
       },
@@ -180,7 +216,9 @@ export const TUTORIAL_MOCK_API: Record<string, unknown> = {
       },
       {
         id: "tour-iv-1",
-        startedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString(),
+        startedAt: new Date(
+          Date.now() - 1000 * 60 * 60 * 24 * 14
+        ).toISOString(),
         scores: { total: 26 },
       },
     ],
@@ -194,8 +232,12 @@ export const TUTORIAL_MOCK_API: Record<string, unknown> = {
         count: 3,
         source: "essay",
         severity: "warning",
-        firstOccurred: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString(),
-        lastOccurred: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
+        firstOccurred: new Date(
+          Date.now() - 1000 * 60 * 60 * 24 * 14
+        ).toISOString(),
+        lastOccurred: new Date(
+          Date.now() - 1000 * 60 * 60 * 24 * 3
+        ).toISOString(),
         resolved: false,
       },
       {
@@ -204,8 +246,12 @@ export const TUTORIAL_MOCK_API: Record<string, unknown> = {
         count: 2,
         source: "interview",
         severity: "new",
-        firstOccurred: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
-        lastOccurred: new Date(Date.now() - 1000 * 60 * 60 * 24 * 4).toISOString(),
+        firstOccurred: new Date(
+          Date.now() - 1000 * 60 * 60 * 24 * 10
+        ).toISOString(),
+        lastOccurred: new Date(
+          Date.now() - 1000 * 60 * 60 * 24 * 4
+        ).toISOString(),
         resolved: false,
       },
       {
@@ -214,8 +260,12 @@ export const TUTORIAL_MOCK_API: Record<string, unknown> = {
         count: 1,
         source: "interview",
         severity: "new",
-        firstOccurred: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString(),
-        lastOccurred: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString(),
+        firstOccurred: new Date(
+          Date.now() - 1000 * 60 * 60 * 24 * 14
+        ).toISOString(),
+        lastOccurred: new Date(
+          Date.now() - 1000 * 60 * 60 * 24 * 14
+        ).toISOString(),
         resolved: true,
       },
     ],
@@ -234,7 +284,8 @@ export const TUTORIAL_MOCK_API: Record<string, unknown> = {
         universityId: "kansai-univ",
         facultyId: "law",
         type: "志望理由書",
-        content: "私が貴学の法学部を志望する理由は、地域コミュニティの問題解決に法律の側面から取り組みたいからです。文化祭実行委員長として住民連携イベントを企画した際、…",
+        content:
+          "私が貴学の法学部を志望する理由は、地域コミュニティの問題解決に法律の側面から取り組みたいからです。文化祭実行委員長として住民連携イベントを企画した際、…",
         wordCount: 1250,
         targetWordCount: 1600,
         status: "draft",
@@ -254,7 +305,9 @@ export const TUTORIAL_MOCK_API: Record<string, unknown> = {
         status: "draft",
         deadline: new Date(Date.now() + 1000 * 60 * 60 * 24 * 14).toISOString(),
         updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
+        createdAt: new Date(
+          Date.now() - 1000 * 60 * 60 * 24 * 10
+        ).toISOString(),
       },
     ],
   },
@@ -276,7 +329,8 @@ export const TUTORIAL_MOCK_API: Record<string, unknown> = {
           {
             id: "law",
             name: "法学部",
-            admissionPolicy: "法的思考力と社会への問題意識を持つ意欲的な学生を求める。",
+            admissionPolicy:
+              "法的思考力と社会への問題意識を持つ意欲的な学生を求める。",
           },
         ],
       },

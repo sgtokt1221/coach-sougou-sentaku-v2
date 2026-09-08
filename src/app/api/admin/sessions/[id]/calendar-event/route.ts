@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 import { assertSessionAccess } from "@/lib/api/session-auth";
 import {
-  createEventWithMeet,
+  createCalendarEvent,
   deleteEvent,
   getAuthedClient,
   updateEvent,
@@ -32,7 +32,7 @@ function buildEventTimes(session: Session): {
 
 async function fetchStudentEmail(
   db: FirebaseFirestore.Firestore,
-  studentId: string,
+  studentId: string
 ): Promise<string | null> {
   try {
     const d = await db.doc(`users/${studentId}`).get();
@@ -50,7 +50,8 @@ function buildSummary(session: Session): string {
 
 function buildDescription(session: Session): string {
   const parts: string[] = [];
-  if (session.prepPlan?.goal) parts.push(`今日のゴール: ${session.prepPlan.goal}`);
+  if (session.prepPlan?.goal)
+    parts.push(`今日のゴール: ${session.prepPlan.goal}`);
   if (session.notes) parts.push(session.notes);
   return parts.join("\n\n");
 }
@@ -58,7 +59,7 @@ function buildDescription(session: Session): string {
 /** 後付けでセッションに Calendar event を作成 */
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await requireRole(request, ["admin", "teacher", "superadmin"]);
   if (auth instanceof NextResponse) return auth;
@@ -72,17 +73,23 @@ export async function POST(
   const ref = adminDb.doc(`sessions/${id}`);
   const snap = await ref.get();
   if (!snap.exists) {
-    return NextResponse.json({ error: "セッションが見つかりません" }, { status: 404 });
+    return NextResponse.json(
+      { error: "セッションが見つかりません" },
+      { status: 404 }
+    );
   }
   const session = { id: snap.id, ...snap.data() } as Session;
   const accessError = await assertSessionAccess(adminDb, session, auth);
   if (accessError) return accessError;
 
-  const authedClient = await getAuthedClient(adminDb, session.teacherId ?? auth.uid);
+  const authedClient = await getAuthedClient(
+    adminDb,
+    session.teacherId ?? auth.uid
+  );
   if (!authedClient) {
     return NextResponse.json(
       { error: "Google Calendar が連携されていません" },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
@@ -92,7 +99,7 @@ export async function POST(
     : null;
 
   try {
-    const { eventId, meetLink } = await createEventWithMeet(authedClient.client, {
+    const { eventId } = await createCalendarEvent(authedClient.client, {
       summary: buildSummary(session),
       description: buildDescription(session),
       startIso,
@@ -102,17 +109,16 @@ export async function POST(
     await ref.set(
       {
         calendarEventId: eventId,
-        meetLink: meetLink ?? session.meetLink ?? null,
         updatedAt: new Date().toISOString(),
       },
-      { merge: true },
+      { merge: true }
     );
-    return NextResponse.json({ calendarEventId: eventId, meetLink });
+    return NextResponse.json({ calendarEventId: eventId });
   } catch (err) {
     console.error("[calendar-event] create failed:", err);
     return NextResponse.json(
       { error: "Calendar イベントの作成に失敗しました" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
@@ -120,7 +126,7 @@ export async function POST(
 /** PATCH: 日時変更時 Calendar を同期 */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await requireRole(request, ["admin", "teacher", "superadmin"]);
   if (auth instanceof NextResponse) return auth;
@@ -134,7 +140,10 @@ export async function PATCH(
   const ref = adminDb.doc(`sessions/${id}`);
   const snap = await ref.get();
   if (!snap.exists) {
-    return NextResponse.json({ error: "セッションが見つかりません" }, { status: 404 });
+    return NextResponse.json(
+      { error: "セッションが見つかりません" },
+      { status: 404 }
+    );
   }
   const session = { id: snap.id, ...snap.data() } as Session;
   const accessError = await assertSessionAccess(adminDb, session, auth);
@@ -143,14 +152,17 @@ export async function PATCH(
   if (!session.calendarEventId) {
     return NextResponse.json(
       { error: "Calendar イベントがありません" },
-      { status: 400 },
+      { status: 400 }
     );
   }
-  const authedClient = await getAuthedClient(adminDb, session.teacherId ?? auth.uid);
+  const authedClient = await getAuthedClient(
+    adminDb,
+    session.teacherId ?? auth.uid
+  );
   if (!authedClient) {
     return NextResponse.json(
       { error: "Google Calendar が連携されていません" },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
@@ -168,7 +180,7 @@ export async function PATCH(
     console.error("[calendar-event] update failed:", err);
     return NextResponse.json(
       { error: "Calendar イベントの更新に失敗しました" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
@@ -176,7 +188,7 @@ export async function PATCH(
 /** DELETE: Calendar event を削除 */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await requireRole(request, ["admin", "teacher", "superadmin"]);
   if (auth instanceof NextResponse) return auth;
@@ -190,7 +202,10 @@ export async function DELETE(
   const ref = adminDb.doc(`sessions/${id}`);
   const snap = await ref.get();
   if (!snap.exists) {
-    return NextResponse.json({ error: "セッションが見つかりません" }, { status: 404 });
+    return NextResponse.json(
+      { error: "セッションが見つかりません" },
+      { status: 404 }
+    );
   }
   const session = { id: snap.id, ...snap.data() } as Session;
   const accessError = await assertSessionAccess(adminDb, session, auth);
@@ -199,11 +214,14 @@ export async function DELETE(
   if (!session.calendarEventId) {
     return NextResponse.json({ ok: true });
   }
-  const authedClient = await getAuthedClient(adminDb, session.teacherId ?? auth.uid);
+  const authedClient = await getAuthedClient(
+    adminDb,
+    session.teacherId ?? auth.uid
+  );
   if (!authedClient) {
     return NextResponse.json(
       { error: "Google Calendar が連携されていません" },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
@@ -214,14 +232,14 @@ export async function DELETE(
         calendarEventId: null,
         updatedAt: new Date().toISOString(),
       },
-      { merge: true },
+      { merge: true }
     );
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("[calendar-event] delete failed:", err);
     return NextResponse.json(
       { error: "Calendar イベントの削除に失敗しました" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

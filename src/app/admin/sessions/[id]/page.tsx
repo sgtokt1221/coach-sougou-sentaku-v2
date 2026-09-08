@@ -9,8 +9,6 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Video,
-  Copy,
-  ExternalLink,
   Check,
   Share2,
   XCircle,
@@ -28,7 +26,13 @@ import Link from "next/link";
 import { AnimatedButton } from "@/components/shared/AnimatedButton";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { authFetch } from "@/lib/api/client";
-import type { Session, SessionStatus, SessionKind, SessionSubmission, GroupSessionFields } from "@/lib/types/session";
+import type {
+  Session,
+  SessionStatus,
+  SessionKind,
+  SessionSubmission,
+  GroupSessionFields,
+} from "@/lib/types/session";
 import {
   SESSION_TYPE_LABELS,
   SESSION_STATUS_LABELS,
@@ -53,6 +57,7 @@ import { PreviousSessionDebriefCard } from "@/components/admin/PreviousSessionDe
 import { SessionLifecycleBar } from "@/components/admin/SessionLifecycleBar";
 import { SessionReportDialog } from "@/components/admin/SessionReportDialog";
 import { AdminResearchSession } from "@/components/admin/AdminResearchSession";
+import { StartCallButton } from "@/components/call/StartCallButton";
 
 const STATUS_VARIANT: Record<
   SessionStatus,
@@ -77,7 +82,6 @@ export default function AdminSessionDetailPage() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [notes, setNotes] = useState("");
-  const [copied, setCopied] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
@@ -96,7 +100,9 @@ export default function AdminSessionDetailPage() {
   // Group review submissions
   const [submissions, setSubmissions] = useState<SessionSubmission[]>([]);
   const [submissionsLoading, setSubmissionsLoading] = useState(false);
-  const [submissionUpdating, setSubmissionUpdating] = useState<string | null>(null);
+  const [submissionUpdating, setSubmissionUpdating] = useState<string | null>(
+    null
+  );
 
   const load = useCallback(async () => {
     try {
@@ -144,11 +150,13 @@ export default function AdminSessionDetailPage() {
     // 生徒詳細・スキルチェックをまとめて取得 (status に依らず常時表示)
     (async () => {
       try {
-        const [detailRes, essaySkillRes, interviewSkillRes] = await Promise.all([
-          authFetch(`/api/admin/students/${sid}`),
-          authFetch(`/api/admin/students/${sid}/skill-check`),
-          authFetch(`/api/admin/students/${sid}/interview-skill-check`),
-        ]);
+        const [detailRes, essaySkillRes, interviewSkillRes] = await Promise.all(
+          [
+            authFetch(`/api/admin/students/${sid}`),
+            authFetch(`/api/admin/students/${sid}/skill-check`),
+            authFetch(`/api/admin/students/${sid}/interview-skill-check`),
+          ]
+        );
         if (!detailRes.ok) throw new Error();
         setStudent((await detailRes.json()) as StudentDetail);
         if (essaySkillRes.ok) setSkillCheck(await essaySkillRes.json());
@@ -181,13 +189,6 @@ export default function AdminSessionDetailPage() {
     }
   }
 
-  function copyMeetLink() {
-    if (!session?.meetLink) return;
-    navigator.clipboard.writeText(session.meetLink);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
-
   function startPqEdit() {
     setPqDraft(session?.practiceQuestions ?? []);
     setPqEditing(true);
@@ -197,11 +198,14 @@ export default function AdminSessionDetailPage() {
     if (!session) return;
     setPqSaving(true);
     try {
-      const res = await authFetch(`/api/admin/sessions/${id}/practice-questions`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ practiceQuestions: pqDraft }),
-      });
+      const res = await authFetch(
+        `/api/admin/sessions/${id}/practice-questions`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ practiceQuestions: pqDraft }),
+        }
+      );
       if (!res.ok) throw new Error("保存失敗");
       const { practiceQuestions } = (await res.json()) as {
         practiceQuestions: PracticeQuestion[];
@@ -235,19 +239,25 @@ export default function AdminSessionDetailPage() {
     }
   }
 
-  async function toggleSubmissionSelection(submissionId: string, selected: boolean) {
+  async function toggleSubmissionSelection(
+    submissionId: string,
+    selected: boolean
+  ) {
     setSubmissionUpdating(submissionId);
     try {
-      const res = await authFetch(`/api/sessions/${id}/submissions/${submissionId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ selectedByTeacher: selected }),
-      });
+      const res = await authFetch(
+        `/api/sessions/${id}/submissions/${submissionId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ selectedByTeacher: selected }),
+        }
+      );
       if (!res.ok) throw new Error();
 
       // Update local state
-      setSubmissions(prev =>
-        prev.map(sub =>
+      setSubmissions((prev) =>
+        prev.map((sub) =>
           sub.id === submissionId
             ? { ...sub, selectedByTeacher: selected }
             : sub
@@ -262,7 +272,7 @@ export default function AdminSessionDetailPage() {
 
   if (loading) {
     return (
-      <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+      <div className="mx-auto max-w-3xl space-y-6 px-4 py-8">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-64 w-full" />
         <Skeleton className="h-48 w-full" />
@@ -272,7 +282,7 @@ export default function AdminSessionDetailPage() {
 
   if (!session) {
     return (
-      <div className="max-w-3xl mx-auto px-4 py-8 text-center">
+      <div className="mx-auto max-w-3xl px-4 py-8 text-center">
         <p className="text-muted-foreground">セッションが見つかりません</p>
         <Button
           variant="outline"
@@ -285,13 +295,12 @@ export default function AdminSessionDetailPage() {
     );
   }
 
-  // 授業形態 (format 未設定の既存データは meetLink 有無でフォールバック判定)
-  const isOnline = session.format
-    ? session.format === "online"
-    : !!session.meetLink;
+  // 授業形態。Meet をやめたので format が唯一の正本。未設定は対面として扱う
+  const isOnline = session.format === "online";
 
   // 探究授業セッション（生徒が講師に教える回）は専用レイアウトにする
-  const isResearchSession = !!session.isResearch && session.type !== "group_review";
+  const isResearchSession =
+    !!session.isResearch && session.type !== "group_review";
 
   // UI 上の種別（type + isResearch を1軸に射影）。レガシー type は面談へ寄せて非表示にする。
   const currentKind = typeResearchToKind(session.type, session.isResearch);
@@ -319,13 +328,13 @@ export default function AdminSessionDetailPage() {
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        <div className="grid gap-3 sm:grid-cols-2 text-sm">
+        <div className="grid gap-3 text-sm sm:grid-cols-2">
           {session.type !== "group_review" && (
             <div>
               <span className="text-muted-foreground">生徒名:</span>{" "}
               <Link
                 href={`/admin/students/${session.studentId}`}
-                className="font-medium text-primary hover:underline underline-offset-4"
+                className="text-primary font-medium underline-offset-4 hover:underline"
               >
                 {session.studentName}
               </Link>
@@ -338,8 +347,10 @@ export default function AdminSessionDetailPage() {
           <div>
             <span className="text-muted-foreground">タイプ:</span>{" "}
             {session.type === "group_review" ? (
-              <Badge variant="outline" className="text-xs ml-1">
-                {session.isResearch ? "探究授業" : SESSION_TYPE_LABELS[session.type]}
+              <Badge variant="outline" className="ml-1 text-xs">
+                {session.isResearch
+                  ? "探究授業"
+                  : SESSION_TYPE_LABELS[session.type]}
               </Badge>
             ) : (
               <select
@@ -347,7 +358,7 @@ export default function AdminSessionDetailPage() {
                 value={currentKind}
                 onChange={(e) => {
                   const { type, isResearch } = kindToTypeResearch(
-                    e.target.value as SessionKind,
+                    e.target.value as SessionKind
                   );
                   patchSession({ type, isResearch });
                 }}
@@ -378,7 +389,7 @@ export default function AdminSessionDetailPage() {
               <span className="text-muted-foreground">形態:</span>{" "}
               <Badge
                 variant="outline"
-                className={`text-xs ml-1 ${
+                className={`ml-1 text-xs ${
                   isOnline
                     ? "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-300"
                     : "border-slate-300 bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300"
@@ -395,49 +406,43 @@ export default function AdminSessionDetailPage() {
               {(session as GroupSession).theme && (
                 <div>
                   <span className="text-muted-foreground">テーマ:</span>{" "}
-                  <span className="font-medium">{(session as GroupSession).theme}</span>
+                  <span className="font-medium">
+                    {(session as GroupSession).theme}
+                  </span>
                 </div>
               )}
               {(session as GroupSession).targetWeakness && (
                 <div>
                   <span className="text-muted-foreground">対象の弱点:</span>{" "}
-                  <span className="font-medium">{(session as GroupSession).targetWeakness}</span>
+                  <span className="font-medium">
+                    {(session as GroupSession).targetWeakness}
+                  </span>
                 </div>
               )}
               <div className="sm:col-span-2">
                 <span className="text-muted-foreground">提出期限:</span>{" "}
                 <span className="font-medium">
-                  {new Date((session as GroupSession).submissionDeadline).toLocaleString("ja-JP")}
+                  {new Date(
+                    (session as GroupSession).submissionDeadline
+                  ).toLocaleString("ja-JP")}
                 </span>
               </div>
             </>
           )}
         </div>
 
-        {isOnline && session.meetLink && (
+        {/* オンラインの回はアプリ内で通話する。Meet は使わない */}
+        {isOnline && session.studentId && (
           <>
             <Separator />
             <div className="flex flex-wrap items-center gap-2">
               <Video className="size-4 shrink-0 text-emerald-600" />
-              <span className="text-sm truncate flex-1 min-w-0">
-                {session.meetLink}
-              </span>
-              <Button variant="ghost" size="sm" onClick={copyMeetLink} className="shrink-0">
-                {copied ? (
-                  <Check className="size-4 text-emerald-600" />
-                ) : (
-                  <Copy className="size-4" />
-                )}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="shrink-0"
-                onClick={() => window.open(session.meetLink, "_blank", "noopener,noreferrer")}
-              >
-                <ExternalLink className="size-4 mr-1" />
-                Meetに参加
-              </Button>
+              <span className="min-w-0 flex-1 text-sm">オンライン授業</span>
+              <StartCallButton
+                participantUids={[session.studentId]}
+                sessionId={session.id}
+                label="通話を始める"
+              />
             </div>
           </>
         )}
@@ -452,7 +457,7 @@ export default function AdminSessionDetailPage() {
               onClick={() => patchSession({ status: "cancelled" })}
               disabled={saving}
             >
-              <XCircle className="size-4 mr-1" />
+              <XCircle className="mr-1 size-4" />
               欠席にする
             </Button>
           )}
@@ -469,7 +474,7 @@ export default function AdminSessionDetailPage() {
               }
               disabled={saving}
             >
-              <Check className="size-4 mr-1" />
+              <Check className="mr-1 size-4" />
               出席に戻す
             </Button>
           )}
@@ -481,7 +486,7 @@ export default function AdminSessionDetailPage() {
             }
             disabled={saving}
           >
-            <Share2 className="size-4 mr-1" />
+            <Share2 className="mr-1 size-4" />
             {session.sharedWithStudent ? "報告書を共有中" : "報告書を共有"}
           </Button>
           {session.type !== "group_review" && (
@@ -490,7 +495,7 @@ export default function AdminSessionDetailPage() {
               variant="outline"
               onClick={() => setReportOpen(true)}
             >
-              <BarChart3 className="size-4 mr-1" />
+              <BarChart3 className="mr-1 size-4" />
               成長レポート
             </Button>
           )}
@@ -507,7 +512,7 @@ export default function AdminSessionDetailPage() {
       </CardHeader>
       <CardContent className="space-y-3">
         <textarea
-          className="flex min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex min-h-24 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none"
           placeholder="メモを入力..."
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
@@ -529,7 +534,7 @@ export default function AdminSessionDetailPage() {
   );
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
+    <div className="mx-auto max-w-6xl space-y-6 px-4 py-8">
       <PageHeader title="セッション詳細" backAction={() => router.back()} />
 
       {isResearchSession ? (
@@ -576,7 +581,7 @@ export default function AdminSessionDetailPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex flex-col items-center gap-2 py-8 text-sm text-muted-foreground">
+                  <div className="text-muted-foreground flex flex-col items-center gap-2 py-8 text-sm">
                     <AlertCircle className="size-8" />
                     <p>生徒データの取得に失敗しました</p>
                   </div>
@@ -616,28 +621,34 @@ export default function AdminSessionDetailPage() {
                     今日使う類題
                   </CardTitle>
                   <div className="flex items-center gap-1">
-                    {!pqEditing && (session.practiceQuestions?.length ?? 0) > 0 && (
-                      <>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={startPqEdit}
-                          className="cursor-pointer"
-                        >
-                          <Pencil className="mr-1 size-3" />
-                          編集
-                        </Button>
-                        <Button asChild variant="outline" size="sm" className="cursor-pointer">
-                          <Link
-                            href={`/admin/sessions/${id}/practice-sheet?mode=both`}
-                            target="_blank"
+                    {!pqEditing &&
+                      (session.practiceQuestions?.length ?? 0) > 0 && (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={startPqEdit}
+                            className="cursor-pointer"
                           >
-                            <Printer className="mr-1 size-3" />
-                            問題用紙
-                          </Link>
-                        </Button>
-                      </>
-                    )}
+                            <Pencil className="mr-1 size-3" />
+                            編集
+                          </Button>
+                          <Button
+                            asChild
+                            variant="outline"
+                            size="sm"
+                            className="cursor-pointer"
+                          >
+                            <Link
+                              href={`/admin/sessions/${id}/practice-sheet?mode=both`}
+                              target="_blank"
+                            >
+                              <Printer className="mr-1 size-3" />
+                              問題用紙
+                            </Link>
+                          </Button>
+                        </>
+                      )}
                     {pqEditing && (
                       <>
                         <Button
@@ -700,110 +711,144 @@ export default function AdminSessionDetailPage() {
         <>
           {basicInfoCard}
           {/* Group Review Submissions */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">提出された小論文</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {submissionsLoading ? (
-              <div className="space-y-3">
-                {[...Array(3)].map((_, i) => (
-                  <Skeleton key={i} className="h-24 w-full" />
-                ))}
-              </div>
-            ) : submissions.length === 0 ? (
-              <div className="text-center py-8">
-                <FileText className="size-8 mx-auto text-muted-foreground mb-2" />
-                <p className="text-sm text-muted-foreground mb-1">
-                  まだ提出された小論文がありません
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  提出期限: {(session as GroupSession).submissionDeadline ?
-                    new Date((session as GroupSession).submissionDeadline).toLocaleString("ja-JP") : "未設定"}
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {/* Stats */}
-                <div className="flex items-center gap-4 text-sm text-muted-foreground pb-2 border-b">
-                  <span>総提出数: <strong className="text-foreground">{submissions.length}件</strong></span>
-                  <span>選択済み: <strong className="text-foreground">{submissions.filter(s => s.selectedByTeacher).length}件</strong></span>
-                  {(session as GroupSession).submissionDeadline && (
-                    <span>期限: {new Date((session as GroupSession).submissionDeadline).toLocaleString("ja-JP")}</span>
-                  )}
-                </div>
-
-                {/* Submissions List */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">提出された小論文</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {submissionsLoading ? (
                 <div className="space-y-3">
-                  {submissions
-                    .sort((a, b) => b.voteCount - a.voteCount) // Sort by votes descending
-                    .map((submission) => (
-                    <div
-                      key={submission.id}
-                      className={`rounded-lg border p-4 ${
-                        submission.selectedByTeacher
-                          ? "border-primary bg-primary/5"
-                          : "border-border"
-                      }`}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1 space-y-2">
-                          <div className="flex items-center gap-2">
-                            <Badge variant="secondary" className="text-xs">
-                              {submission.anonymousLabel}
-                            </Badge>
-                            {submission.topic && (
-                              <Badge variant="outline" className="text-xs">
-                                {submission.topic}
-                              </Badge>
-                            )}
-                          </div>
-
-                          {submission.scores?.total && (
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs text-muted-foreground">スコア:</span>
-                              <span className={`font-medium ${scoreColor(submission.scores.total)}`}>
-                                {submission.scores.total}/50
-                              </span>
-                            </div>
-                          )}
-
-                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                            <span>👍 {submission.voteCount} votes</span>
-                            <span>{new Date(submission.createdAt).toLocaleDateString("ja-JP")}</span>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          <Button
-                            size="sm"
-                            variant={submission.selectedByTeacher ? "secondary" : "outline"}
-                            onClick={() => toggleSubmissionSelection(
-                              submission.id,
-                              !submission.selectedByTeacher
-                            )}
-                            disabled={submissionUpdating === submission.id}
-                          >
-                            {submissionUpdating === submission.id ? (
-                              <Loader2 className="size-4 animate-spin" />
-                            ) : submission.selectedByTeacher ? (
-                              <>
-                                <Check className="size-4 mr-1" />
-                                選択中
-                              </>
-                            ) : (
-                              "取り上げる"
-                            )}
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
+                  {[...Array(3)].map((_, i) => (
+                    <Skeleton key={i} className="h-24 w-full" />
                   ))}
                 </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              ) : submissions.length === 0 ? (
+                <div className="py-8 text-center">
+                  <FileText className="text-muted-foreground mx-auto mb-2 size-8" />
+                  <p className="text-muted-foreground mb-1 text-sm">
+                    まだ提出された小論文がありません
+                  </p>
+                  <p className="text-muted-foreground text-xs">
+                    提出期限:{" "}
+                    {(session as GroupSession).submissionDeadline
+                      ? new Date(
+                          (session as GroupSession).submissionDeadline
+                        ).toLocaleString("ja-JP")
+                      : "未設定"}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Stats */}
+                  <div className="text-muted-foreground flex items-center gap-4 border-b pb-2 text-sm">
+                    <span>
+                      総提出数:{" "}
+                      <strong className="text-foreground">
+                        {submissions.length}件
+                      </strong>
+                    </span>
+                    <span>
+                      選択済み:{" "}
+                      <strong className="text-foreground">
+                        {submissions.filter((s) => s.selectedByTeacher).length}
+                        件
+                      </strong>
+                    </span>
+                    {(session as GroupSession).submissionDeadline && (
+                      <span>
+                        期限:{" "}
+                        {new Date(
+                          (session as GroupSession).submissionDeadline
+                        ).toLocaleString("ja-JP")}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Submissions List */}
+                  <div className="space-y-3">
+                    {submissions
+                      .sort((a, b) => b.voteCount - a.voteCount) // Sort by votes descending
+                      .map((submission) => (
+                        <div
+                          key={submission.id}
+                          className={`rounded-lg border p-4 ${
+                            submission.selectedByTeacher
+                              ? "border-primary bg-primary/5"
+                              : "border-border"
+                          }`}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 space-y-2">
+                              <div className="flex items-center gap-2">
+                                <Badge variant="secondary" className="text-xs">
+                                  {submission.anonymousLabel}
+                                </Badge>
+                                {submission.topic && (
+                                  <Badge variant="outline" className="text-xs">
+                                    {submission.topic}
+                                  </Badge>
+                                )}
+                              </div>
+
+                              {submission.scores?.total && (
+                                <div className="flex items-center gap-2">
+                                  <span className="text-muted-foreground text-xs">
+                                    スコア:
+                                  </span>
+                                  <span
+                                    className={`font-medium ${scoreColor(submission.scores.total)}`}
+                                  >
+                                    {submission.scores.total}/50
+                                  </span>
+                                </div>
+                              )}
+
+                              <div className="text-muted-foreground flex items-center gap-4 text-xs">
+                                <span>👍 {submission.voteCount} votes</span>
+                                <span>
+                                  {new Date(
+                                    submission.createdAt
+                                  ).toLocaleDateString("ja-JP")}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <Button
+                                size="sm"
+                                variant={
+                                  submission.selectedByTeacher
+                                    ? "secondary"
+                                    : "outline"
+                                }
+                                onClick={() =>
+                                  toggleSubmissionSelection(
+                                    submission.id,
+                                    !submission.selectedByTeacher
+                                  )
+                                }
+                                disabled={submissionUpdating === submission.id}
+                              >
+                                {submissionUpdating === submission.id ? (
+                                  <Loader2 className="size-4 animate-spin" />
+                                ) : submission.selectedByTeacher ? (
+                                  <>
+                                    <Check className="mr-1 size-4" />
+                                    選択中
+                                  </>
+                                ) : (
+                                  "取り上げる"
+                                )}
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
           {memoCard}
         </>
       )}

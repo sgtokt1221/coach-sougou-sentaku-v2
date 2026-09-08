@@ -1,7 +1,17 @@
 import type { PracticeQuestion } from "@/lib/types/growth-report";
 
-export type SessionStatus = "scheduled" | "in_progress" | "completed" | "cancelled" | "ended";
-export type SessionType = "coaching" | "mock_interview" | "essay_review" | "general" | "group_review";
+export type SessionStatus =
+  | "scheduled"
+  | "in_progress"
+  | "completed"
+  | "cancelled"
+  | "ended";
+export type SessionType =
+  | "coaching"
+  | "mock_interview"
+  | "essay_review"
+  | "general"
+  | "group_review";
 
 /** 探究授業中に生徒が入力する資料画像 1 件 (Storage のダウンロードURL参照) */
 export interface ResearchInputAttachment {
@@ -34,11 +44,13 @@ export interface Session {
   researchTeacherComment?: string;
   /** 探究授業中に生徒が端末から入力する内容（講師セッションへライブ反映） */
   researchInputs?: ResearchSessionInputs;
-  /** 授業形態 (1 対 1 のみ。online=Meet 利用 / offline=対面)。未設定は meetLink 有無でフォールバック判定 */
+  /**
+   * 授業形態 (1 対 1 のみ)。online はアプリ内通話、offline は対面。
+   * 未設定は対面として扱う。作成APIは必ずどちらかを書く。
+   */
   format?: "online" | "offline";
   scheduledAt: string;
   duration?: number;
-  meetLink?: string;
   notes?: string;
   summary?: SessionSummary;
   /** 授業前の AI 生成台本 (講師編集可) */
@@ -167,7 +179,6 @@ export interface SessionCreateRequest {
   type: SessionType;
   format?: "online" | "offline";
   scheduledAt: string;
-  meetLink?: string;
   notes?: string;
   /** 自己探究授業セッションとして作成するか */
   isResearch?: boolean;
@@ -207,7 +218,6 @@ export interface GroupSessionCreateRequest {
   teacherName: string;
   type: "group_review";
   scheduledAt: string;
-  meetLink?: string;
   notes?: string;
   theme?: string;
   targetWeakness?: string;
@@ -236,7 +246,11 @@ export const SESSION_TYPE_CREATE_OPTIONS: SessionType[] = [
 ];
 
 /** UI上の種別（type + isResearch を1軸に射影）。データは従来の type/isResearch で保存。 */
-export type SessionKind = "general" | "mock_interview" | "research" | "group_review";
+export type SessionKind =
+  | "general"
+  | "mock_interview"
+  | "research"
+  | "group_review";
 
 /** SessionKind の表示ラベル。 */
 export const SESSION_KIND_LABELS: Record<SessionKind, string> = {
@@ -255,7 +269,11 @@ export const SESSION_KIND_DESCRIPTIONS: Record<SessionKind, string> = {
 };
 
 /** カレンダー/1対1作成で選べる種別（group_review は別経路）。 */
-export const SESSION_KIND_CREATE_OPTIONS: SessionKind[] = ["general", "mock_interview", "research"];
+export const SESSION_KIND_CREATE_OPTIONS: SessionKind[] = [
+  "general",
+  "mock_interview",
+  "research",
+];
 
 /**
  * SessionKind → 保存用の { type, isResearch }。
@@ -263,7 +281,10 @@ export const SESSION_KIND_CREATE_OPTIONS: SessionKind[] = ["general", "mock_inte
  * @param kind UI種別
  * @returns 保存用の type と isResearch
  */
-export function kindToTypeResearch(kind: SessionKind): { type: SessionType; isResearch: boolean } {
+export function kindToTypeResearch(kind: SessionKind): {
+  type: SessionType;
+  isResearch: boolean;
+} {
   if (kind === "research") return { type: "general", isResearch: true };
   return { type: kind as SessionType, isResearch: false };
 }
@@ -275,7 +296,10 @@ export function kindToTypeResearch(kind: SessionKind): { type: SessionType; isRe
  * @param isResearch 探究フラグ
  * @returns UI種別
  */
-export function typeResearchToKind(type: SessionType, isResearch?: boolean): SessionKind {
+export function typeResearchToKind(
+  type: SessionType,
+  isResearch?: boolean
+): SessionKind {
   if (isResearch) return "research";
   if (type === "mock_interview") return "mock_interview";
   if (type === "group_review") return "group_review";
@@ -311,10 +335,15 @@ export function sessionEndTime(session: {
  * completed / cancelled / ended は対象外（手動確定・終了済みは尊重）。
  */
 export function shouldMarkEnded(
-  session: { status: SessionStatus; scheduledAt: string; duration?: number | null },
-  now: number = Date.now(),
+  session: {
+    status: SessionStatus;
+    scheduledAt: string;
+    duration?: number | null;
+  },
+  now: number = Date.now()
 ): boolean {
-  if (session.status !== "scheduled" && session.status !== "in_progress") return false;
+  if (session.status !== "scheduled" && session.status !== "in_progress")
+    return false;
   const start = new Date(session.scheduledAt).getTime();
   if (Number.isNaN(start)) return false;
   return sessionEndTime(session) <= now;

@@ -16,9 +16,12 @@ import { isLiveKitConfiguredClient } from "@/lib/livekit/client-config";
  */
 export function StartCallButton({
   participantUids,
+  sessionId,
   label = "通話",
 }: {
   participantUids: string[];
+  /** セッションから始めた通話に紐づける。あとで記録を辿るのに使う */
+  sessionId?: string;
   label?: string;
 }) {
   const router = useRouter();
@@ -33,7 +36,10 @@ export function StartCallButton({
       const res = await authFetch("/api/calls", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ participantUids }),
+        body: JSON.stringify({
+          participantUids,
+          ...(sessionId ? { sessionId } : {}),
+        }),
       });
       const data = await res.json();
       if (!res.ok || !data.callId) {

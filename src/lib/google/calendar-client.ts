@@ -1,7 +1,11 @@
 import { OAuth2Client } from "google-auth-library";
 import { google, type calendar_v3 } from "googleapis";
 import type { Firestore } from "firebase-admin/firestore";
-import { loadTokens, saveTokens, type GoogleCalendarTokens } from "./token-store";
+import {
+  loadTokens,
+  saveTokens,
+  type GoogleCalendarTokens,
+} from "./token-store";
 
 const SCOPES = [
   "https://www.googleapis.com/auth/calendar.events",
@@ -34,13 +38,13 @@ export function generateAuthUrl(state: string): string {
 }
 
 export async function exchangeCodeForTokens(
-  code: string,
+  code: string
 ): Promise<{ tokens: GoogleCalendarTokens; rawExpiryDate?: number | null }> {
   const client = createOAuthClient();
   const { tokens } = await client.getToken(code);
   if (!tokens.access_token || !tokens.refresh_token) {
     throw new Error(
-      "access_token / refresh_token の取得に失敗しました (prompt=consent を確認)",
+      "access_token / refresh_token の取得に失敗しました (prompt=consent を確認)"
     );
   }
   // fetch email
@@ -68,7 +72,7 @@ export async function exchangeCodeForTokens(
 
 export async function getAuthedClient(
   db: Firestore,
-  uid: string,
+  uid: string
 ): Promise<{ client: OAuth2Client; tokens: GoogleCalendarTokens } | null> {
   const tokens = await loadTokens(db, uid);
   if (!tokens) return null;
@@ -94,7 +98,9 @@ export async function getAuthedClient(
   return { client, tokens };
 }
 
-export async function revokeTokens(tokens: GoogleCalendarTokens): Promise<void> {
+export async function revokeTokens(
+  tokens: GoogleCalendarTokens
+): Promise<void> {
   const client = createOAuthClient();
   client.setCredentials({ refresh_token: tokens.refreshToken });
   try {
@@ -112,46 +118,36 @@ interface CreateEventInput {
   timeZone?: string;
   attendeeEmails?: string[];
   /** 未指定なら新 Meet リンク自動生成、指定があれば使う */
-  existingMeetLink?: string;
 }
 
-export async function createEventWithMeet(
+/**
+ * カレンダーに予定を作る。
+ *
+ * 以前は Meet の会議も同時に発行していたが、通話はアプリ内で行うようにしたので
+ * conferenceData は付けない。カレンダーは日程の共有だけに使う。
+ */
+export async function createCalendarEvent(
   client: OAuth2Client,
-  input: CreateEventInput,
-): Promise<{ eventId: string; meetLink: string | null; htmlLink: string | null }> {
+  input: CreateEventInput
+): Promise<{ eventId: string; htmlLink: string | null }> {
   const cal = google.calendar({ version: "v3", auth: client });
   const event: calendar_v3.Schema$Event = {
     summary: input.summary,
     description: input.description,
-    start: { dateTime: input.startIso, timeZone: input.timeZone ?? "Asia/Tokyo" },
+    start: {
+      dateTime: input.startIso,
+      timeZone: input.timeZone ?? "Asia/Tokyo",
+    },
     end: { dateTime: input.endIso, timeZone: input.timeZone ?? "Asia/Tokyo" },
     attendees: input.attendeeEmails?.map((email) => ({ email })),
-    conferenceData: input.existingMeetLink
-      ? {
-          entryPoints: [
-            {
-              entryPointType: "video",
-              uri: input.existingMeetLink,
-              label: "Google Meet",
-            },
-          ],
-        }
-      : {
-          createRequest: {
-            requestId: `coach-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
-            conferenceSolutionKey: { type: "hangoutsMeet" },
-          },
-        },
   };
   const res = await cal.events.insert({
     calendarId: "primary",
-    conferenceDataVersion: 1,
     sendUpdates: "all",
     requestBody: event,
   });
   return {
     eventId: res.data.id ?? "",
-    meetLink: res.data.hangoutLink ?? null,
     htmlLink: res.data.htmlLink ?? null,
   };
 }
@@ -168,16 +164,22 @@ interface UpdateEventInput {
 export async function updateEvent(
   client: OAuth2Client,
   eventId: string,
-  input: UpdateEventInput,
+  input: UpdateEventInput
 ): Promise<void> {
   const cal = google.calendar({ version: "v3", auth: client });
   const patch: calendar_v3.Schema$Event = {};
   if (input.summary !== undefined) patch.summary = input.summary;
   if (input.description !== undefined) patch.description = input.description;
   if (input.startIso)
-    patch.start = { dateTime: input.startIso, timeZone: input.timeZone ?? "Asia/Tokyo" };
+    patch.start = {
+      dateTime: input.startIso,
+      timeZone: input.timeZone ?? "Asia/Tokyo",
+    };
   if (input.endIso)
-    patch.end = { dateTime: input.endIso, timeZone: input.timeZone ?? "Asia/Tokyo" };
+    patch.end = {
+      dateTime: input.endIso,
+      timeZone: input.timeZone ?? "Asia/Tokyo",
+    };
   if (input.status) patch.status = input.status;
 
   await cal.events.patch({
@@ -190,7 +192,7 @@ export async function updateEvent(
 
 export async function deleteEvent(
   client: OAuth2Client,
-  eventId: string,
+  eventId: string
 ): Promise<void> {
   const cal = google.calendar({ version: "v3", auth: client });
   try {

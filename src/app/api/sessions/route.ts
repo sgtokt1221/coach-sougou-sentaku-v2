@@ -19,7 +19,12 @@ const TYPE_LABEL: Record<SessionType, string> = {
  */
 async function notifyStudentOfSession(
   studentId: string,
-  session: { id: string; scheduledAt: string; teacherName?: string; type: SessionType },
+  session: {
+    id: string;
+    scheduledAt: string;
+    teacherName?: string;
+    type: SessionType;
+  }
 ): Promise<void> {
   try {
     const { adminDb } = await import("@/lib/firebase/admin");
@@ -76,10 +81,8 @@ export async function GET(request: NextRequest) {
 
   // viewAs support for superadmin
   const viewAs = searchParams.get("viewAs");
-  const effectiveUid =
-    role === "superadmin" && viewAs ? viewAs : uid;
-  const effectiveRole =
-    role === "superadmin" && viewAs ? "admin" : role;
+  const effectiveUid = role === "superadmin" && viewAs ? viewAs : uid;
+  const effectiveRole = role === "superadmin" && viewAs ? "admin" : role;
 
   let sessions: Session[] = [];
 
@@ -91,13 +94,14 @@ export async function GET(request: NextRequest) {
   try {
     const snap = await adminDb.collection("sessions").get();
     if (!snap.empty) {
-      sessions = snap.docs.map(
-        (d) => ({ id: d.id, ...d.data() }) as Session
-      );
+      sessions = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Session);
     }
   } catch (error) {
     console.error("Failed to fetch sessions:", error);
-    return NextResponse.json({ error: "セッションの取得に失敗しました" }, { status: 500 });
+    return NextResponse.json(
+      { error: "セッションの取得に失敗しました" },
+      { status: 500 }
+    );
   }
 
   // 終了予定時刻を過ぎた予定/実施中は「終了(ended)」へ遅延更新（実データも書き換え）。
@@ -129,7 +133,8 @@ export async function GET(request: NextRequest) {
     // 生徒は自分の面談のみ（予定も含む）。講師専用フィールドは除去して返す。
     const own = sessions.filter((s) => s.studentId === effectiveUid);
     own.sort(
-      (a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime()
+      (a, b) =>
+        new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime()
     );
     return NextResponse.json(own.map(sanitizeForStudent));
   }
@@ -137,7 +142,9 @@ export async function GET(request: NextRequest) {
     sessions = sessions.filter((s) => s.teacherId === effectiveUid);
   } else if (effectiveRole === "admin") {
     // admin は自分の塾(組織)メンバーが作成したセッションを共有
-    const memberUids = new Set(await getOrgMemberAdminUids(adminDb, effectiveUid));
+    const memberUids = new Set(
+      await getOrgMemberAdminUids(adminDb, effectiveUid)
+    );
     sessions = sessions.filter(
       (s) => s.createdByAdminId && memberUids.has(s.createdByAdminId)
     );
@@ -185,7 +192,6 @@ export async function POST(request: NextRequest) {
       status: "scheduled" as const,
       scheduledAt: body.scheduledAt,
       duration: body.duration ?? null,
-      meetLink: body.meetLink ?? null,
       notes: body.notes ?? null,
       theme: body.theme ?? null,
       targetWeakness: body.targetWeakness ?? null,
@@ -201,7 +207,10 @@ export async function POST(request: NextRequest) {
     };
 
     if (!adminDb) {
-      return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
+      return NextResponse.json(
+        { error: "サーバー設定エラー" },
+        { status: 500 }
+      );
     }
     const ref = await adminDb.collection("sessions").add(sessionData);
 
@@ -214,8 +223,8 @@ export async function POST(request: NextRequest) {
             scheduledAt: sessionData.scheduledAt,
             teacherName: sessionData.teacherName,
             type: sessionData.type,
-          }),
-        ),
+          })
+        )
       );
     }
 
@@ -270,7 +279,6 @@ export async function POST(request: NextRequest) {
       format: body.format === "online" ? "online" : "offline",
       scheduledAt: session.scheduledAt,
       duration: session.duration ?? null,
-      meetLink: session.meetLink ?? null,
       notes: session.notes ?? null,
       sharedWithStudent: session.sharedWithStudent,
       createdAt: now,
@@ -287,7 +295,10 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Failed to create session:", error);
-    return NextResponse.json({ error: "セッションの作成に失敗しました" }, { status: 500 });
+    return NextResponse.json(
+      { error: "セッションの作成に失敗しました" },
+      { status: 500 }
+    );
   }
 
   return NextResponse.json(session, { status: 201 });
