@@ -13,9 +13,8 @@
 set -euo pipefail
 
 PROJECT="coach-sougou-sentaku"
-# App Hosting のバックエンドが使うサービスアカウント（既存の secret と同じもの）
-SA_COMPUTE="firebase-app-hosting-compute@${PROJECT}.iam.gserviceaccount.com"
-SA_BUILD="service-160362237739@gcp-sa-firebaseapphosting.iam.gserviceaccount.com"
+# App Hosting のバックエンド名
+BACKEND="coach-app"
 
 say() { printf '\n\033[1m%s\033[0m\n' "$1"; }
 
@@ -31,12 +30,12 @@ put_secret() {
   fi
   printf '%s' "$value" | gcloud secrets versions add "$name" \
     --project="$PROJECT" --data-file=- >/dev/null
-  for sa in "$SA_COMPUTE" "$SA_BUILD"; do
-    gcloud secrets add-iam-policy-binding "$name" \
-      --project="$PROJECT" \
-      --member="serviceAccount:${sa}" \
-      --role=roles/secretmanager.secretAccessor >/dev/null
-  done
+  # 権限は firebase の公式コマンドで付ける。
+  # gcloud で secretAccessor だけ付けてもビルドが
+  # 「Error resolving secret version」で落ちる（viewer と
+  # secretVersionManager も要るため）。実際に2回落とした。
+  firebase apphosting:secrets:grantaccess "$name" \
+    --backend "$BACKEND" --project "$PROJECT" >/dev/null
   printf '  %s OK\n' "$name"
 }
 

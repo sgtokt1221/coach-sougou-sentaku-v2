@@ -157,6 +157,7 @@ AI呼び出しは .env.local の ANTHROPIC_API_KEY をそのまま使うので�
 - BigQueryコスト: スキャン量に注意、パーティション設定必須
 - App Hostingはpushで自動デプロイされるが、Firestoreインデックスは `firebase deploy --only firestore:indexes` を別途実行しないと反映されない（複合インデックス欠落は空表示の沈黙失敗になる）
 - `apphosting.yaml` で存在しない Secret Manager の secret を参照すると、**デプロイ自体が落ちて本番が更新されない**。鍵を先に作ってから参照を足す（新機能の env はコメントで置いておく）
+- App Hosting から secret を読む権限は `firebase apphosting:secrets:grantaccess <名前> --backend coach-app` で付ける。`gcloud` で `secretAccessor` だけ付けても `viewer` が足りず、ビルドが `Error resolving secret version` で落ちる
 
 - AI添削・生成の API ルートには `maxDuration` を必ず設定する。extended thinking は effort medium を既定にする。
 - `messages.parse` の max_tokens は thinking と本文で共有される。文書系は12000-16384、単純な機能は2000-4096。
