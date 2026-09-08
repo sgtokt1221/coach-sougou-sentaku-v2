@@ -62,13 +62,13 @@ env:
   # 鍵が用意できるまではコメントのままにしておく。
   # 未設定でも通話ボタンが出ないだけで、既存機能とビルドには影響しない。
   #
-  # - variable: LIVEKIT_API_KEY
-  #   secret: LIVEKIT_API_KEY
-  # - variable: LIVEKIT_API_SECRET
-  #   secret: LIVEKIT_API_SECRET
+  - variable: LIVEKIT_API_KEY
+    secret: LIVEKIT_API_KEY
+  - variable: LIVEKIT_API_SECRET
+    secret: LIVEKIT_API_SECRET
   # wss://xxx.livekit.cloud。クライアントが接続先として必要とし、秘匿性は無い。
-  # - variable: NEXT_PUBLIC_LIVEKIT_URL
-  #   value: wss://xxxxx.livekit.cloud
+  - variable: NEXT_PUBLIC_LIVEKIT_URL
+    value: wss://coachfor-hc4wjkbl.livekit.cloud
   #
   # 録画を使うときだけ "1" にする。未設定なら録画ボタンが出ず、API も 503 を返す。
   # 費用の大半は録画（映像1分あたり約3円、無料枠は月60分）。
