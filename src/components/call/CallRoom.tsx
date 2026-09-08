@@ -4,10 +4,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LiveKitRoom, VideoConference } from "@livekit/components-react";
 import "@livekit/components-styles";
-import { Loader2, PhoneOff } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { authFetch } from "@/lib/api/client";
-import type { CallView } from "@/lib/types/call";
+import { useCallRealtime } from "@/lib/hooks/useCallRealtime";
+import { CallEnded } from "@/components/call/CallEnded";
+import { RecordingBar } from "@/components/call/RecordingBar";
+import { RecordingConsentModal } from "@/components/call/RecordingConsentModal";
+import type { Call, CallView } from "@/lib/types/call";
 
 /** 接続に失敗しても諦めるまでの回数 */
 const MAX_CONNECT_ATTEMPTS = 3;
@@ -29,19 +33,30 @@ interface TokenResponse {
 export function CallRoom({
   call,
   isHost,
+  viewerUid,
 }: {
   call: CallView;
   isHost: boolean;
+  viewerUid?: string;
 }) {
   const router = useRouter();
+  /**
+   * 録画の同意要求と録画中の表示は、通話中に相手側から降ってくる。
+   * 入室時に一度読んだ call だけでは追えないので実時間で購読する。
+   */
+  const { call: live } = useCallRealtime(call.id);
+  const current: Call | CallView = live ?? call;
   const [phase, setPhase] = useState<Phase>("loading");
   const [token, setToken] = useState<string>("");
   const [serverUrl, setServerUrl] = useState<string>("");
   const [message, setMessage] = useState<string>("");
   const attemptsRef = useRef(0);
 
+  /**
+   * トークンを取り直す。初回は phase の初期値が "loading" なので、
+   * ここで同期に setState しない（effect 内の同期更新を避ける）。
+   */
   const fetchToken = useCallback(async () => {
-    setPhase("loading");
     try {
       const res = await authFetch("/api/livekit/token", {
         method: "POST",
@@ -64,11 +79,17 @@ export function CallRoom({
     }
   }, [call.id]);
 
+  /**
+   * 相手が終了させた場合も含め、終了は通話ドキュメントから導く。
+   * ここで setPhase すると effect 内の同期更新になるので状態は増やさない。
+   */
+  const ended = phase === "ended" || current.status === "ended";
+
   useEffect(() => {
-    if (call.status === "ended") {
-      setPhase("ended");
-      return;
-    }
+    if (call.status === "ended") return;
+    // トークン取得はサーバーとの同期そのもの（effect の本来の用途）。
+    // 状態更新はすべて await の後に起きるが、静的解析では追えないため個別に外す。
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void fetchToken();
   }, [call.status, fetchToken]);
 
@@ -88,16 +109,9 @@ export function CallRoom({
     setPhase("ended");
   }, [call.id, isHost]);
 
-  if (phase === "ended") {
-    return (
-      <div className="flex h-full flex-col items-center justify-center gap-4 p-6 text-center">
-        <PhoneOff className="text-muted-foreground size-8" />
-        <p className="text-sm font-medium">通話を終了しました</p>
-        <Button variant="outline" onClick={() => router.back()}>
-          戻る
-        </Button>
-      </div>
-    );
+  if (ended) {
+    // 録画の書き出しは通話が終わってから進むので、購読中の最新を渡す
+    return <CallEnded call={current} />;
   }
 
   if (phase === "error") {
@@ -108,7 +122,14 @@ export function CallRoom({
           <Button variant="outline" onClick={() => router.back()}>
             戻る
           </Button>
-          <Button onClick={() => void fetchToken()}>もう一度試す</Button>
+          <Button
+            onClick={() => {
+              setPhase("loading");
+              void fetchToken();
+            }}
+          >
+            もう一度試す
+          </Button>
         </div>
       </div>
     );
@@ -125,31 +146,50 @@ export function CallRoom({
     );
   }
 
+  const rec = (current as Call).recording;
+  const needsConsent =
+    !isHost &&
+    rec?.status === "awaiting_consent" &&
+    viewerUid !== undefined &&
+    rec.consent?.[viewerUid] === undefined;
+
   return (
-    <LiveKitRoom
-      token={token}
-      serverUrl={serverUrl}
-      connect
-      video
-      audio
-      // 画面いっぱいに広げる。data-lk-theme は LiveKit の既定スタイル
-      data-lk-theme="default"
-      className="h-full"
-      onConnected={() => {
-        attemptsRef.current = 0;
-        setPhase("connected");
-      }}
-      onDisconnected={() => void leave()}
-      onError={(err) => {
-        attemptsRef.current += 1;
-        console.warn("[CallRoom] room error", err);
-        if (attemptsRef.current >= MAX_CONNECT_ATTEMPTS) {
-          setMessage("接続が不安定です。もう一度おかけ直しください");
-          setPhase("error");
-        }
-      }}
-    >
-      <VideoConference />
-    </LiveKitRoom>
+    <>
+      {needsConsent && (
+        <RecordingConsentModal
+          callId={call.id}
+          requestedAt={rec?.requestedAt}
+          hostName={call.hostName}
+        />
+      )}
+      <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between gap-2 px-3 py-2">
+        <RecordingBar call={current as Call} isHost={isHost} />
+      </div>
+      <LiveKitRoom
+        token={token}
+        serverUrl={serverUrl}
+        connect
+        video
+        audio
+        // 画面いっぱいに広げる。data-lk-theme は LiveKit の既定スタイル
+        data-lk-theme="default"
+        className="h-full"
+        onConnected={() => {
+          attemptsRef.current = 0;
+          setPhase("connected");
+        }}
+        onDisconnected={() => void leave()}
+        onError={(err) => {
+          attemptsRef.current += 1;
+          console.warn("[CallRoom] room error", err);
+          if (attemptsRef.current >= MAX_CONNECT_ATTEMPTS) {
+            setMessage("接続が不安定です。もう一度おかけ直しください");
+            setPhase("error");
+          }
+        }}
+      >
+        <VideoConference />
+      </LiveKitRoom>
+    </>
   );
 }

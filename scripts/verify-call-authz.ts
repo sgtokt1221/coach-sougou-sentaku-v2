@@ -10,10 +10,14 @@
 import assert from "node:assert";
 import {
   buildParticipantUids,
+  canControlRecording,
   canDeclineCall,
   canEndCall,
   canJoinCall,
+  canViewRecordingUrl,
+  consentRequiredUids,
   effectiveCallStatus,
+  evaluateConsent,
   type CandidateUser,
 } from "../src/lib/livekit/authz";
 import { CALL_MAX_PARTICIPANTS, buildRoomName } from "../src/lib/types/call";
@@ -184,6 +188,92 @@ const sameOrg = (uid: string): CandidateUser => ({
     effectiveCallStatus({ status: "ringing", createdAt: "not-a-date" }, now),
     "ringing"
   );
+}
+
+// --- canControlRecording ---
+
+{
+  const call = { hostUid: "admin1" };
+  assert.equal(canControlRecording(call, "admin1"), true);
+  // 生徒は録画を start / stop できない
+  assert.equal(canControlRecording(call, "s1"), false);
+}
+
+// --- consentRequiredUids ---
+
+{
+  const call = { hostUid: "admin1", participantUids: ["admin1", "s1", "s2"] };
+  // 発信者は自分の判断で録画するので同意の対象外
+  assert.deepEqual(consentRequiredUids(call), ["s1", "s2"]);
+}
+
+// --- evaluateConsent ---
+
+{
+  const call = { hostUid: "admin1", participantUids: ["admin1", "s1", "s2"] };
+  const asked = "2026-09-09T10:00:00.000Z";
+  const soon = new Date("2026-09-09T10:00:10.000Z");
+  const late = new Date("2026-09-09T10:01:30.000Z");
+
+  // 全員そろうまでは待つ
+  assert.deepEqual(evaluateConsent(call, { s1: "granted" }, asked, soon), {
+    decision: "waiting",
+    pending: ["s2"],
+  });
+
+  // 全員が同意したら始める
+  assert.deepEqual(
+    evaluateConsent(call, { s1: "granted", s2: "granted" }, asked, soon),
+    { decision: "start" }
+  );
+
+  // 1人でも断ったら録画しない。他が同意していても関係ない
+  assert.deepEqual(
+    evaluateConsent(call, { s1: "granted", s2: "declined" }, asked, soon),
+    { decision: "declined", reason: "declined" }
+  );
+
+  // 無回答のまま時間切れは「同意していない」扱い。同意とみなさない
+  assert.deepEqual(evaluateConsent(call, { s1: "granted" }, asked, late), {
+    decision: "declined",
+    reason: "timeout",
+  });
+
+  // 同意がまだ1件も無い状態
+  assert.deepEqual(evaluateConsent(call, undefined, asked, soon), {
+    decision: "waiting",
+    pending: ["s1", "s2"],
+  });
+
+  // requestedAt が壊れていても時間切れにしない（待ち続ける）
+  assert.deepEqual(evaluateConsent(call, undefined, "not-a-date", late), {
+    decision: "waiting",
+    pending: ["s1", "s2"],
+  });
+}
+
+// 1対1で相手が同意したら始まる
+{
+  const call = { hostUid: "admin1", participantUids: ["admin1", "s1"] };
+  assert.deepEqual(
+    evaluateConsent(
+      call,
+      { s1: "granted" },
+      "2026-09-09T10:00:00.000Z",
+      new Date("2026-09-09T10:00:05.000Z")
+    ),
+    { decision: "start" }
+  );
+}
+
+// --- canViewRecordingUrl ---
+
+{
+  // 既存のセッション録音と同じで、生徒には録画URLを見せない
+  assert.equal(canViewRecordingUrl("student"), false);
+  assert.equal(canViewRecordingUrl("teacher"), true);
+  assert.equal(canViewRecordingUrl("admin"), true);
+  assert.equal(canViewRecordingUrl("superadmin"), true);
 }
 
 // --- buildRoomName ---

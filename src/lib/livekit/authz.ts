@@ -9,9 +9,11 @@
  */
 
 import {
+  CALL_CONSENT_TIMEOUT_SEC,
   CALL_MAX_PARTICIPANTS,
   CALL_STALE_HOURS,
   type Call,
+  type CallConsent,
   type CallStatus,
 } from "@/lib/types/call";
 
@@ -119,4 +121,72 @@ export function effectiveCallStatus(
   if (!Number.isFinite(created)) return call.status;
   const elapsedHours = (now.getTime() - created) / (1000 * 60 * 60);
   return elapsedHours >= CALL_STALE_HOURS ? "ended" : call.status;
+}
+
+/** 録画を操作できるのは発信者だけ */
+export function canControlRecording(
+  call: Pick<Call, "hostUid">,
+  uid: string
+): boolean {
+  return call.hostUid === uid;
+}
+
+/**
+ * 同意を求める相手。発信者（講師・管理者）は自分の判断で録画するので対象外。
+ */
+export function consentRequiredUids(
+  call: Pick<Call, "hostUid" | "participantUids">
+): string[] {
+  return call.participantUids.filter((uid) => uid !== call.hostUid);
+}
+
+export type ConsentOutcome =
+  /** まだ返事をしていない人が居る */
+  | { decision: "waiting"; pending: string[] }
+  /** 全員が同意した。録画を始めてよい */
+  | { decision: "start" }
+  /** 誰かが断った、または時間切れ。録画しない */
+  | { decision: "declined"; reason: "declined" | "timeout" };
+
+/**
+ * 同意の集計。
+ *
+ * 1人でも断ったら録画しない。返事が無いまま時間が過ぎた場合も同じ扱いにする。
+ * 「無回答は同意」にすると、画面を見ていない生徒を録ってしまう。
+ */
+export function evaluateConsent(
+  call: Pick<Call, "hostUid" | "participantUids">,
+  consent: Record<string, CallConsent> | undefined,
+  requestedAt: string | undefined,
+  now: Date = new Date()
+): ConsentOutcome {
+  const required = consentRequiredUids(call);
+  const given = consent ?? {};
+
+  if (required.some((uid) => given[uid] === "declined")) {
+    return { decision: "declined", reason: "declined" };
+  }
+
+  const pending = required.filter((uid) => given[uid] !== "granted");
+  if (pending.length === 0) return { decision: "start" };
+
+  const asked = requestedAt ? new Date(requestedAt).getTime() : NaN;
+  if (Number.isFinite(asked)) {
+    const elapsedSec = (now.getTime() - asked) / 1000;
+    if (elapsedSec >= CALL_CONSENT_TIMEOUT_SEC) {
+      return { decision: "declined", reason: "timeout" };
+    }
+  }
+  return { decision: "waiting", pending };
+}
+
+/**
+ * 録画の再生URLを見せてよいか。
+ *
+ * 既存のセッション録音が講師・管理者だけに見える作りなので、それに揃える
+ * （sanitizeForStudent が生徒向けレスポンスから録音を落としている）。
+ * 生徒には「録画された」ことだけ伝え、URL は返さない。
+ */
+export function canViewRecordingUrl(role: string): boolean {
+  return role === "teacher" || role === "admin" || role === "superadmin";
 }

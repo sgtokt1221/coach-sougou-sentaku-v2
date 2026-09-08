@@ -97,7 +97,11 @@ npm run seed:emu  # 検証用の生徒アカウントとデータを投入
 npm run dev:emu   # エミュレータに繋いだ dev サーバー
 ```
 
-`student@example.com` / `password` でログインする。投入されるもの:
+`student@example.com` / `password` でログインする。
+**`seed:emu` は既存ユーザーのパスワードを再設定するため、ブラウザで開いていた
+セッションのトークンが失効する**（API が 401 相当になり、開発フォールバックの
+`dev-user` として扱われて「参加者ではありません」等になる）。シード後は必ず
+ログインし直す。投入されるもの:
 
 - 生徒1名（plan=standard + documentPackage購入済み。requireFeature を全部通すため）
 - `/student/documents/emu-doc-over-limit` — AI書き換えの字数警告

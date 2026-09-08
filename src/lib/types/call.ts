@@ -37,17 +37,45 @@ export interface CallParticipant {
   role: CallParticipantRole;
 }
 
-/** 録画の状態（P2）。P1 では書かれない */
+/**
+ * 録画の同意。生徒は未成年なので、録画は本人の同意を取ってから始める。
+ * 返事をしないまま時間が過ぎた場合は「同意していない」として扱う。
+ */
+export type CallConsent = "granted" | "declined";
+
+/** 同意を待つ秒数。過ぎたら未同意として録画を始めない */
+export const CALL_CONSENT_TIMEOUT_SEC = 45;
+
+export type CallRecordingStatus =
+  /** 講師が録画を押し、参加者の同意を待っている */
+  | "awaiting_consent"
+  /** 誰かが断ったので録画しない */
+  | "declined"
+  | "recording"
+  /** 停止後、LiveKit が書き出している */
+  | "processing"
+  | "done"
+  | "failed";
+
 export interface CallRecording {
-  status: "recording" | "processing" | "done" | "failed";
+  status: CallRecordingStatus;
+  /** 参加者ごとの同意。発信者本人は対象外 */
+  consent?: Record<string, CallConsent>;
+  requestedAt?: string;
   egressId?: string;
   /** Cloud Storage のパス。calls/{callId}/recording-{ts}.mp4 */
   path?: string;
-  /** 長期署名URL。sessions の録音と同じ作法 */
-  url?: string;
+  /**
+   * 再生URLはここに持たない。
+   * calls ドキュメントは参加者全員が Firestore から直接読めるため、URL を
+   * 置くと生徒にも渡ってしまう。再生は GET /api/calls/{id}/recording で
+   * 役割を確認してから、その都度 署名URL を発行する。
+   */
   startedAt?: string;
   endedAt?: string;
   durationSec?: number;
+  /** 失敗したときの理由。画面に出す */
+  error?: string;
 }
 
 export interface Call {

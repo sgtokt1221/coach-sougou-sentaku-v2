@@ -64,8 +64,12 @@ export default function CallPage({
   }
 
   return (
-    <div className="h-dvh bg-black">
-      <CallRoom call={call} isHost={call.hostUid === user?.uid} />
+    <div className="relative h-dvh bg-black">
+      <CallRoom
+        call={call}
+        isHost={call.hostUid === user?.uid}
+        viewerUid={user?.uid}
+      />
     </div>
   );
 }

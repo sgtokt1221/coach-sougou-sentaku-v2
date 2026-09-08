@@ -1,7 +1,7 @@
 # アプリ内ビデオ通話 設計書
 
 作成: 2026-09-08
-状態: **P1 実装済み**（鍵の投入待ち）。P2・P3 未着手
+状態: **P1・P2 実装済み**（鍵の投入待ち）。P3 未着手
 
 ## 0. P1 で入ったもの
 
@@ -17,6 +17,24 @@
 | 着信の購読                   | `src/lib/hooks/useIncomingCall.ts`                                       |
 | ルール・インデックス         | `firestore.rules` / `firestore.indexes.json`                             |
 | 検証                         | `scripts/verify-call-authz.ts`（`validate:data` に連結。ビルドが止まる） |
+
+### P2 で入ったもの（録画）
+
+| 追加                         | ファイル                                                                 |
+| ---------------------------- | ------------------------------------------------------------------------ |
+| Egress の開始・停止          | `src/lib/livekit/egress.ts`                                              |
+| 録画の操作と再生URL発行      | `src/app/api/calls/[id]/recording/route.ts`                              |
+| 同意の受付と録画開始         | `src/app/api/calls/[id]/recording/consent/route.ts`                      |
+| webhook                      | `src/app/api/livekit/webhook/route.ts`                                   |
+| 同意画面・録画表示・終了画面 | `src/components/call/{RecordingConsentModal,RecordingBar,CallEnded}.tsx` |
+| 通話の実時間購読             | `src/lib/hooks/useCallRealtime.ts`                                       |
+
+エミュレータで確認済み: 録画要求で `awaiting_consent` になる、発信者自身の同意は
+400 で弾く、参加者の同意がそろうと Egress 開始を試みる（鍵がダミーなので 502 と
+`failed` になるところまで）、1人でも断れば `declined`、確認終了後の再送は 409、
+参加者以外は 403、生徒は録画を操作できず 403、署名の無い/不正な webhook は 400、
+正しい署名の `egress_ended` でパスと長さ（ナノ秒→秒）が書き戻る、`room_finished`
+で通話が `ended` になる。**実際の映像の録画だけ未確認。**
 
 **動かすには鍵が要る。** LiveKit Cloud のアカウント作成は人がやる（§12）。鍵が入るまでは
 通話ボタンが出ず、トークン発行は 503 を返すだけで既存機能には影響しない。
@@ -236,7 +254,37 @@ POST  /api/calls/[id]/decline  res 200 { ok: true }      参加者のみ。decli
 
 P1 を出して実際に使ってから P2 に進む。
 
-## 9. 録画と同意（P2）
+## 9. 録画と同意（実装済み）
+
+### 9.0 実際の流れ
+
+```
+講師が「録画」を押す
+  → recording.status = awaiting_consent（まだ録っていない）
+  → 参加者全員に同意画面（45秒で自動的に「録画しない」）
+       ├ 全員が同意 → Egress 開始 → status = recording（全員に赤い表示）
+       ├ 1人でも断る → status = declined（録画されない）
+       └ 時間切れ    → status = declined
+講師が「停止」
+  → stopEgress → status = processing
+  → egress_ended webhook → status = done（パスと長さを書き戻す）
+```
+
+**発信者は同意の対象外**（自分の判断で録画する側）。同意を送っても 400 で弾く。
+「講師が録画に同意した」という記録が残ると、あとから誰の同意か読み違えるため。
+
+**同意の書き込みと集計はトランザクション**で行う。グループ通話では複数人が
+ほぼ同時に押すので、素朴な read → write だと最後の同意を取りこぼして
+「全員同意したのに始まらない」になる。
+
+### 9.1 再生URLを Firestore に置かない
+
+`calls` ドキュメントは参加者全員が client SDK から直接読める（§4.2）。ここに
+署名URLを書くと生徒にも渡ってしまう。パスだけ保存し、再生時に
+`GET /api/calls/{id}/recording` で役割を確認してから24時間の署名URLを発行する。
+既存のセッション録音が生徒向けレスポンスから落とされているのと同じ扱い。
+
+### 9.2 その他
 
 - 講師が録画を開始した時点で、参加者全員の画面に録画中の表示を出す。
 - 既存の `src/components/student/StudentRecordingJoinModal.tsx:63-65` は「マイクの音声のみ・カメラ映像は記録されません」と明記しているため流用できない。映像込みの文言で新規に作る。
