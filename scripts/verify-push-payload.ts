@@ -125,4 +125,114 @@ import {
   assert.equal(makePushTag("", 1, "n"), "notice-1-n");
 }
 
+// ===== 届く状態かどうかの判定（push-status.ts） =====
+import { summarizePushStatus } from "../src/lib/notifications/push-status";
+
+const PUSH_KINDS = ["feedback", "message", "session"];
+
+// トークンが無ければ「届かない」。permission が granted でも関係ない
+{
+  const s = summarizePushStatus([], undefined, PUSH_KINDS);
+  assert.equal(s.tokens, 0);
+  assert.equal(s.lastSuccessAt, null);
+  assert.equal(s.thisDevice, false);
+  assert.equal(s.pushDisabled, false);
+}
+
+// token 欠落の文書は数えない（送信側でも除いている）
+{
+  const s = summarizePushStatus(
+    [{ token: "" }, { token: "a" }, {}],
+    undefined,
+    PUSH_KINDS
+  );
+  assert.equal(s.tokens, 1);
+}
+
+// 最後に届いた時刻は端末をまたいで最新を取る
+{
+  const s = summarizePushStatus(
+    [
+      { token: "a", lastSuccessAt: "2026-09-01T00:00:00.000Z" },
+      { token: "b", lastSuccessAt: "2026-09-08T00:00:00.000Z" },
+      { token: "c" },
+    ],
+    undefined,
+    PUSH_KINDS
+  );
+  assert.equal(s.lastSuccessAt, "2026-09-08T00:00:00.000Z");
+}
+
+// 失敗は「成功より後」のものだけ見せる。直っているのに赤いままにしない
+{
+  const stale = summarizePushStatus(
+    [
+      {
+        token: "a",
+        lastSuccessAt: "2026-09-08T00:00:00.000Z",
+        lastError: "messaging/internal",
+        lastFailureAt: "2026-09-01T00:00:00.000Z",
+      },
+    ],
+    undefined,
+    PUSH_KINDS
+  );
+  assert.equal(stale.lastError, null);
+
+  const fresh = summarizePushStatus(
+    [
+      {
+        token: "a",
+        lastSuccessAt: "2026-09-01T00:00:00.000Z",
+        lastError: "messaging/internal",
+        lastFailureAt: "2026-09-08T00:00:00.000Z",
+      },
+    ],
+    undefined,
+    PUSH_KINDS
+  );
+  assert.equal(fresh.lastError, "messaging/internal");
+}
+
+// 「この端末」は deviceId で判定する
+{
+  const docs = [{ token: "a", deviceId: "dev-1" }];
+  assert.equal(
+    summarizePushStatus(docs, undefined, PUSH_KINDS, "dev-1").thisDevice,
+    true
+  );
+  assert.equal(
+    summarizePushStatus(docs, undefined, PUSH_KINDS, "dev-2").thisDevice,
+    false
+  );
+  assert.equal(
+    summarizePushStatus(docs, undefined, PUSH_KINDS).thisDevice,
+    false
+  );
+}
+
+// 全種類 OFF のときだけ「切っている」。1つでも ON なら違う。未設定は ON 扱い
+{
+  const allOff = { feedback: false, message: false, session: false };
+  assert.equal(
+    summarizePushStatus([{ token: "a" }], allOff, PUSH_KINDS).pushDisabled,
+    true
+  );
+  const oneOn = { feedback: false, message: true, session: false };
+  assert.equal(
+    summarizePushStatus([{ token: "a" }], oneOn, PUSH_KINDS).pushDisabled,
+    false
+  );
+  const partial = { feedback: false };
+  assert.equal(
+    summarizePushStatus([{ token: "a" }], partial, PUSH_KINDS).pushDisabled,
+    false
+  );
+  // 種別が無いロールでは「切っている」にならない
+  assert.equal(
+    summarizePushStatus([{ token: "a" }], allOff, []).pushDisabled,
+    false
+  );
+}
+
 console.log("verify-push-payload OK");

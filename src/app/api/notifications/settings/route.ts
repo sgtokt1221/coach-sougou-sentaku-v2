@@ -13,7 +13,7 @@ const ROLES = ["student", "teacher", "admin", "superadmin"];
 /** 保存済みの値と既定値を、その立場の種別ぶんだけ合成する */
 function resolvePrefs(
   role: string,
-  saved: Record<string, unknown> | undefined,
+  saved: Record<string, unknown> | undefined
 ): Record<string, boolean> {
   const out = defaultPrefsForRole(role);
   for (const id of Object.keys(out)) {
@@ -52,17 +52,26 @@ export async function GET(request: NextRequest) {
       | Record<string, unknown>
       | undefined;
 
+    /**
+     * 本当に届く状態かも返す。画面の「有効」は permission だけで判定していて、
+     * トークンが1件も無くても緑だった。deviceId を受けて「この端末」も分ける。
+     */
+    const deviceId = request.nextUrl.searchParams.get("deviceId") ?? undefined;
+    const { loadPushStatus } = await import("@/lib/notifications/push-status");
+    const push = await loadPushStatus(adminDb, uid, role, deviceId);
+
     return NextResponse.json({
       prefs: resolvePrefs(role, saved),
       email: (saved?.email as string) || (userData?.email as string) || "",
       kinds,
       role,
+      push,
     });
   } catch (error) {
     console.error("Get notification settings error:", error);
     return NextResponse.json(
       { error: "通知設定の取得に失敗しました" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
@@ -124,7 +133,7 @@ export async function PUT(request: NextRequest) {
     console.error("Update notification settings error:", error);
     return NextResponse.json(
       { error: "通知設定の更新に失敗しました" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

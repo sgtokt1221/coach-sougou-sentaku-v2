@@ -174,20 +174,45 @@ export async function resetUnread(
  * kind は必須。設定でその種別を切っている相手には送らない。省略可能に
  * すると付け忘れた経路だけ設定を無視して届き続けるので、引数で強制する。
  */
+export interface FcmSendResult {
+  /** 送信を試みたトークン数 */
+  attempted: number;
+  sent: number;
+  failed: number;
+  /** 失効として削除した数 */
+  pruned: number;
+  /** 設定で止めた、トークンが無い、など送らなかった理由 */
+  skipped?: "prefs" | "no-tokens" | "not-configured";
+}
+
 export async function sendFcmToUser(
   uid: string,
   payload: { title: string; body: string; url: string },
-  kind: string
-): Promise<void> {
-  if (!adminDb) return;
-  const { shouldNotify } = await import("@/lib/notifications/should-notify");
-  if (!(await shouldNotify(uid, kind))) return;
+  kind: string,
+  /**
+   * force: 設定の ON/OFF を無視して送る。自分宛のテスト送信だけで使う。
+   * 「切っているから届かない」のか「壊れていて届かない」のかを切り分けるため。
+   */
+  opts: { force?: boolean } = {}
+): Promise<FcmSendResult> {
+  const none = (skipped: FcmSendResult["skipped"]): FcmSendResult => ({
+    attempted: 0,
+    sent: 0,
+    failed: 0,
+    pruned: 0,
+    skipped,
+  });
+  if (!adminDb) return none("not-configured");
+  if (!opts.force) {
+    const { shouldNotify } = await import("@/lib/notifications/should-notify");
+    if (!(await shouldNotify(uid, kind))) return none("prefs");
+  }
   try {
     const tokensSnap = await adminDb.collection(`users/${uid}/fcmTokens`).get();
-    if (tokensSnap.empty) return;
+    if (tokensSnap.empty) return none("no-tokens");
     const docs = tokensSnap.docs.filter((d) => Boolean(d.data().token));
     const tokens = docs.map((d) => d.data().token as string);
-    if (tokens.length === 0) return;
+    if (tokens.length === 0) return none("no-tokens");
 
     /**
      * ペイロードは push-payload.ts で組む。tag を送信ごとに一意にしないと
@@ -212,10 +237,13 @@ export async function sendFcmToUser(
      * 失効が確定したものだけ消し、それ以外の失敗はログに残す。
      */
     const now = new Date().toISOString();
+    let sent = 0;
+    let pruned = 0;
     await Promise.all(
       res.responses.map(async (r, i) => {
         const ref = docs[i].ref;
         if (r.success) {
+          sent++;
           await ref.set({ lastSuccessAt: now }, { merge: true });
           return;
         }
@@ -225,18 +253,34 @@ export async function sendFcmToUser(
           code === "messaging/invalid-registration-token" ||
           code === "messaging/invalid-argument"
         ) {
+          pruned++;
           await ref.delete();
           console.warn(`[fcm] 失効トークンを削除 uid=${uid} code=${code}`);
           return;
         }
+        /**
+         * 失効以外の失敗は文書にも残す。ログにしか無いと、設定画面から
+         * 「この端末は最近失敗している」と見せられず、誰も気づけない。
+         */
+        await ref.set(
+          { lastError: code || "unknown", lastFailureAt: now },
+          { merge: true }
+        );
         console.warn(
           `[fcm] 送信失敗 uid=${uid} code=${code}`,
           r.error?.message
         );
       })
     );
+    return {
+      attempted: tokens.length,
+      sent,
+      failed: tokens.length - sent - pruned,
+      pruned,
+    };
   } catch (err) {
     // プッシュ自体で画面を壊さない。ただし黙らせず痕跡は残す
     console.warn(`[fcm] 送信でエラー uid=${uid}`, err);
+    return { attempted: 0, sent: 0, failed: 0, pruned: 0 };
   }
 }

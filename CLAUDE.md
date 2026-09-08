@@ -161,6 +161,7 @@ AI呼び出しは .env.local の ANTHROPIC_API_KEY をそのまま使うので�
 
 - AI添削・生成の API ルートには `maxDuration` を必ず設定する。extended thinking は effort medium を既定にする。
 - `messages.parse` の max_tokens は thinking と本文で共有される。文書系は12000-16384、単純な機能は2000-4096。
+- Web Push はタブが1つでも開いていると SW でなく onMessage に配信され、OS 通知が出ない（見ていないタブで消える沈黙失敗）。前面判定は `visibilityState` と `hasFocus()` の両方で行い、見ていなければ `showNotification` で出す。通知の `tag` は送信ごとに一意にする（同じ tag は OS が上書きし、3通来ても1通しか見えない）
 
 ## 8. Current State / Known Issues
 

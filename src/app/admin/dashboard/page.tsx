@@ -5,7 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import { Users, FileText, BarChart3, AlertTriangle, FileWarning } from "lucide-react";
+import {
+  Users,
+  FileText,
+  BarChart3,
+  AlertTriangle,
+  FileWarning,
+} from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { CountUp } from "@/components/shared/CountUp";
 import { AnimatedList } from "@/components/shared/AnimatedList";
@@ -14,6 +20,7 @@ import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
 import type { StudentListItem, AlertItem } from "@/lib/types/admin";
 import { StudentStatusPie } from "@/components/admin/StudentStatusPie";
 import { AdminCalendar } from "@/components/admin/AdminCalendar";
+import { NotificationPermissionBanner } from "@/components/notifications/NotificationPermissionBanner";
 
 function scoreColor(total: number): string {
   if (total >= 40) return "text-emerald-600 dark:text-emerald-400";
@@ -25,13 +32,20 @@ function scoreColor(total: number): string {
 function targetUniversitiesLabel(s: StudentListItem): string {
   if (s.resolvedUniversities && s.resolvedUniversities.length > 0) {
     return s.resolvedUniversities
-      .map((u) => (u.facultyName ? `${u.universityName} ${u.facultyName}` : u.universityName))
+      .map((u) =>
+        u.facultyName
+          ? `${u.universityName} ${u.facultyName}`
+          : u.universityName
+      )
       .join("、");
   }
   return s.targetUniversities.join(", ") || "志望校未設定";
 }
 
-function alertFlagLabel(flag: string): { label: string; variant: "destructive" | "secondary" } {
+function alertFlagLabel(flag: string): {
+  label: string;
+  variant: "destructive" | "secondary";
+} {
   switch (flag) {
     case "inactive":
       return { label: "非アクティブ", variant: "secondary" };
@@ -47,14 +61,19 @@ function alertFlagLabel(flag: string): { label: string; variant: "destructive" |
 export default function AdminDashboard() {
   const { userProfile } = useAuth();
   const isSuperadmin = userProfile?.role === "superadmin";
-  const { data: rawData, isLoading, error: studentsError } = useAuthSWR<StudentListItem[]>("/api/admin/students?limit=500");
-  const { data: alertsData, error: alertsError } = useAuthSWR<AlertItem[]>("/api/admin/alerts");
+  const {
+    data: rawData,
+    isLoading,
+    error: studentsError,
+  } = useAuthSWR<StudentListItem[]>("/api/admin/students?limit=500");
+  const { data: alertsData, error: alertsError } =
+    useAuthSWR<AlertItem[]>("/api/admin/alerts");
   const students = rawData ?? [];
   const loading = isLoading;
 
-  const deadlineAlertCount = alertsData?.filter(
-    (a) => a.type === "document_deadline" && !a.acknowledged
-  ).length ?? 0;
+  const deadlineAlertCount =
+    alertsData?.filter((a) => a.type === "document_deadline" && !a.acknowledged)
+      .length ?? 0;
 
   const totalStudents = students.length;
   const weeklyEssayCount = students.reduce((sum, s) => sum + s.essayCount, 0);
@@ -78,29 +97,57 @@ export default function AdminDashboard() {
     .slice(0, 5);
 
   const stats = [
-    { label: "生徒数", value: totalStudents, icon: Users, color: "text-primary" },
-    { label: "添削数合計", value: weeklyEssayCount, icon: FileText, color: "text-emerald-600 dark:text-emerald-400" },
-    { label: "平均スコア", value: `${averageScore}/50`, icon: BarChart3, color: "text-amber-600 dark:text-amber-400" },
-    { label: "要注意生徒", value: alertStudents.length, icon: AlertTriangle, color: "text-rose-600 dark:text-rose-400" },
+    {
+      label: "生徒数",
+      value: totalStudents,
+      icon: Users,
+      color: "text-primary",
+    },
+    {
+      label: "添削数合計",
+      value: weeklyEssayCount,
+      icon: FileText,
+      color: "text-emerald-600 dark:text-emerald-400",
+    },
+    {
+      label: "平均スコア",
+      value: `${averageScore}/50`,
+      icon: BarChart3,
+      color: "text-amber-600 dark:text-amber-400",
+    },
+    {
+      label: "要注意生徒",
+      value: alertStudents.length,
+      icon: AlertTriangle,
+      color: "text-rose-600 dark:text-rose-400",
+    },
   ];
 
   return (
     <div className="space-y-6 p-6">
       <div>
         <h1 className="text-2xl font-bold">管理者ダッシュボード</h1>
-        <p className="text-sm text-muted-foreground">生徒全体の状況を把握できます</p>
+        <p className="text-muted-foreground text-sm">
+          生徒全体の状況を把握できます
+        </p>
       </div>
 
+      {/* 通知の許可はこれまで生徒にしか案内しておらず、管理者3人中2人が未登録だった */}
+      <NotificationPermissionBanner />
+
       {studentsError && (
-        <ApiErrorBanner error={studentsError} title="生徒データの取得に失敗しました" />
+        <ApiErrorBanner
+          error={studentsError}
+          title="生徒データの取得に失敗しました"
+        />
       )}
       {alertsError && (
         <ApiErrorBanner error={alertsError} title="通知の取得に失敗しました" />
       )}
 
       {/* Stats Cards - superadmin only */}
-      {isSuperadmin && (
-        loading ? (
+      {isSuperadmin &&
+        (loading ? (
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             {Array.from({ length: 4 }).map((_, i) => (
               <Skeleton key={i} className="h-28 w-full" />
@@ -113,7 +160,9 @@ export default function AdminDashboard() {
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-muted-foreground">{stat.label}</p>
+                      <p className="text-muted-foreground text-sm">
+                        {stat.label}
+                      </p>
                       <p className="text-2xl font-bold">
                         {typeof stat.value === "number" ? (
                           <CountUp value={stat.value} duration={0.8} />
@@ -128,13 +177,10 @@ export default function AdminDashboard() {
               </Card>
             ))}
           </AnimatedList>
-        )
-      )}
+        ))}
 
       {/* Student Status Distribution */}
-      {isSuperadmin && (
-        <StudentStatusPie students={students} />
-      )}
+      {isSuperadmin && <StudentStatusPie students={students} />}
 
       <Separator />
 
@@ -150,7 +196,7 @@ export default function AdminDashboard() {
                 <p className="font-medium">
                   書類期限通知: {deadlineAlertCount}件
                 </p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   期限が迫っている未完成書類があります
                 </p>
               </div>
@@ -172,7 +218,7 @@ export default function AdminDashboard() {
             </h2>
             <Link
               href="/admin/alerts"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              className="text-muted-foreground hover:text-foreground text-sm transition-colors"
             >
               すべて見る &rarr;
             </Link>
@@ -184,7 +230,7 @@ export default function AdminDashboard() {
             </div>
           ) : alertStudents.length === 0 ? (
             <Card>
-              <CardContent className="py-8 text-center text-sm text-muted-foreground">
+              <CardContent className="text-muted-foreground py-8 text-center text-sm">
                 要注意の生徒はいません
               </CardContent>
             </Card>
@@ -192,11 +238,11 @@ export default function AdminDashboard() {
             <div className="space-y-2">
               {alertStudents.map((s) => (
                 <Link key={s.uid} href={`/admin/students/${s.uid}`}>
-                  <Card className="cursor-pointer transition-colors hover:bg-accent">
+                  <Card className="hover:bg-accent cursor-pointer transition-colors">
                     <CardContent className="flex items-center justify-between py-3">
                       <div>
                         <p className="font-medium">{s.displayName}</p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-muted-foreground text-xs">
                           {targetUniversitiesLabel(s)}
                         </p>
                       </div>
@@ -204,7 +250,11 @@ export default function AdminDashboard() {
                         {s.alertFlags.map((flag) => {
                           const { label, variant } = alertFlagLabel(flag);
                           return (
-                            <Badge key={flag} variant={variant} className="text-xs">
+                            <Badge
+                              key={flag}
+                              variant={variant}
+                              className="text-xs"
+                            >
                               {label}
                             </Badge>
                           );
@@ -232,7 +282,7 @@ export default function AdminDashboard() {
             </div>
           ) : recentStudents.length === 0 ? (
             <Card>
-              <CardContent className="py-8 text-center text-sm text-muted-foreground">
+              <CardContent className="text-muted-foreground py-8 text-center text-sm">
                 まだ活動記録がありません
               </CardContent>
             </Card>
@@ -240,23 +290,30 @@ export default function AdminDashboard() {
             <div className="space-y-2">
               {recentStudents.map((s) => (
                 <Link key={s.uid} href={`/admin/students/${s.uid}`}>
-                  <Card className="cursor-pointer transition-colors hover:bg-accent">
+                  <Card className="hover:bg-accent cursor-pointer transition-colors">
                     <CardContent className="flex items-center justify-between py-3">
                       <div>
                         <p className="font-medium">{s.displayName}</p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-muted-foreground text-xs">
                           添削 {s.essayCount}件
                         </p>
                       </div>
                       <div className="text-right">
                         {s.latestScore !== null && (
-                          <p className={`text-lg font-bold ${scoreColor(s.latestScore)}`}>
-                            {s.latestScore}<span className="text-xs text-muted-foreground">/50</span>
+                          <p
+                            className={`text-lg font-bold ${scoreColor(s.latestScore)}`}
+                          >
+                            {s.latestScore}
+                            <span className="text-muted-foreground text-xs">
+                              /50
+                            </span>
                           </p>
                         )}
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-muted-foreground text-xs">
                           {s.lastActivityAt
-                            ? new Date(s.lastActivityAt).toLocaleDateString("ja-JP")
+                            ? new Date(s.lastActivityAt).toLocaleDateString(
+                                "ja-JP"
+                              )
                             : "-"}
                         </p>
                       </div>

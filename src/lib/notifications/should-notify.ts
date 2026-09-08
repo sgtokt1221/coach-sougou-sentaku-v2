@@ -10,7 +10,7 @@ import { getNotificationKind, audienceOf } from "@/lib/notifications/catalog";
  */
 export async function shouldNotify(
   uid: string,
-  kindId: string,
+  kindId: string
 ): Promise<boolean> {
   const kind = getNotificationKind(kindId);
   if (!kind) return true; // 未登録の種別は止めない（呼び出し側の書き間違いで沈黙させない）
@@ -19,13 +19,23 @@ export async function shouldNotify(
   try {
     const snap = await adminDb.doc(`users/${uid}`).get();
     const data = snap.data();
-    if (!data) return false;
+    if (!data) {
+      // 認証だけあって users 文書が無い利用者。黙って止めると永久に届かない
+      console.warn(`[notify] users/${uid} が無いため送らない kind=${kindId}`);
+      return false;
+    }
 
     // その立場が受け取る対象でなければ送らない。
     // role 未設定は verifyAuthToken と同じく student 扱いにする。ここだけ
     // 別の既定にすると、role を持たない利用者に一切通知が行かなくなる。
-    const audience = audienceOf(String(data.role ?? "student"));
-    if (!audience || !kind.audiences.includes(audience)) return false;
+    const role = String(data.role || "student");
+    const audience = audienceOf(role);
+    if (!audience) {
+      // 想定外の role（空文字や旧名）。設定画面にも出ないので、ここで痕跡を残す
+      console.warn(`[notify] role="${role}" が不明のため送らない uid=${uid}`);
+      return false;
+    }
+    if (!kind.audiences.includes(audience)) return false;
 
     const prefs = data.notificationPrefs as Record<string, unknown> | undefined;
     const v = prefs?.[kindId];

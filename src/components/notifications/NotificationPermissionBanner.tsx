@@ -10,7 +10,12 @@ import {
 } from "@/lib/firebase/messaging";
 
 export function NotificationPermissionBanner() {
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
+  // 何が届くかは立場で違う。生徒向けの文言をスタッフに出すと自分事にならない
+  const isStaff =
+    userProfile?.role === "admin" ||
+    userProfile?.role === "teacher" ||
+    userProfile?.role === "superadmin";
   const [visible, setVisible] = useState(false);
   const [requesting, setRequesting] = useState(false);
 
@@ -20,7 +25,9 @@ export function NotificationPermissionBanner() {
     if (Notification.permission !== "default") return;
     const dismissed = sessionStorage.getItem("notification-banner-dismissed");
     if (dismissed) return;
-    setVisible(true);
+    // SSR との食い違いを避けつつ、effect 内の同期 setState にもしない
+    const t = setTimeout(() => setVisible(true), 0);
+    return () => clearTimeout(t);
   }, []);
 
   const handleEnable = async () => {
@@ -67,7 +74,9 @@ export function NotificationPermissionBanner() {
             通知を有効にしませんか？
           </p>
           <p className="text-muted-foreground mt-0.5 text-xs">
-            書類の提出期限やセッションのリマインダーをお知らせします
+            {isStaff
+              ? "生徒からの返信や出欠の連絡を、開いていないときにもお知らせします"
+              : "書類の提出期限やセッションのリマインダーをお知らせします"}
           </p>
           <button
             onClick={handleEnable}

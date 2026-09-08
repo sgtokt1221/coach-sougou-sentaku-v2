@@ -57,6 +57,7 @@ import {
   Activity,
   Calendar,
   BookOpen,
+  Bell,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -1019,6 +1020,33 @@ function AdminStudentDetailPageInner() {
               <Mail className="text-muted-foreground size-4" />
               <span>{profile.email}</span>
             </div>
+            {/* 通知が届く状態か。切っている・未登録は送っても届かないので、ここで分かるようにする */}
+            {profile.push && (
+              <div className="flex items-center gap-2 text-sm">
+                <Bell className="text-muted-foreground size-4" />
+                {profile.push.pushDisabled ? (
+                  <span className="text-amber-600">通知を切っている</span>
+                ) : profile.push.tokens === 0 ? (
+                  <span className="text-muted-foreground">
+                    通知は未登録（許可していない）
+                  </span>
+                ) : (
+                  <span>
+                    通知あり
+                    {profile.push.lastSuccessAt && (
+                      <span className="text-muted-foreground text-xs">
+                        {" "}
+                        (最終配信{" "}
+                        {new Date(
+                          profile.push.lastSuccessAt
+                        ).toLocaleDateString("ja-JP")}
+                        )
+                      </span>
+                    )}
+                  </span>
+                )}
+              </div>
+            )}
             {profile.createdAt && (
               <div
                 className="flex items-center gap-2 text-sm"

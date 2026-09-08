@@ -8,6 +8,7 @@ import { Calendar, Users, Clock, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { authFetch } from "@/lib/api/client";
+import { NotificationPermissionBanner } from "@/components/notifications/NotificationPermissionBanner";
 
 interface TodaySession {
   id: string;
@@ -51,7 +52,7 @@ export default function TeacherDashboard() {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6 p-6">
       {/* ヘッダー */}
       <div className="space-y-2">
         <h1 className="text-3xl font-bold">講師ダッシュボード</h1>
@@ -60,47 +61,56 @@ export default function TeacherDashboard() {
         </p>
       </div>
 
+      {/* 通知の許可はこれまで生徒にしか案内しておらず、講師は未登録だった */}
+      <NotificationPermissionBanner />
+
       {/* クイックアクション */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="hover:bg-accent/50 transition-colors cursor-pointer"
-              onClick={() => router.push("/teacher/schedule")}>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <Card
+          className="hover:bg-accent/50 cursor-pointer transition-colors"
+          onClick={() => router.push("/teacher/schedule")}
+        >
           <CardContent className="flex items-center p-6">
-            <Calendar className="h-8 w-8 text-primary mr-4" />
+            <Calendar className="text-primary mr-4 h-8 w-8" />
             <div>
               <div className="font-semibold">シフト入力</div>
-              <div className="text-sm text-muted-foreground">
+              <div className="text-muted-foreground text-sm">
                 翌月の勤務予定を登録
               </div>
             </div>
-            <ArrowRight className="h-4 w-4 ml-auto text-muted-foreground" />
+            <ArrowRight className="text-muted-foreground ml-auto h-4 w-4" />
           </CardContent>
         </Card>
 
-        <Card className="hover:bg-accent/50 transition-colors cursor-pointer"
-              onClick={() => router.push("/teacher/roster")}>
+        <Card
+          className="hover:bg-accent/50 cursor-pointer transition-colors"
+          onClick={() => router.push("/teacher/roster")}
+        >
           <CardContent className="flex items-center p-6">
-            <Users className="h-8 w-8 text-primary mr-4" />
+            <Users className="text-primary mr-4 h-8 w-8" />
             <div>
               <div className="font-semibold">担当生徒</div>
-              <div className="text-sm text-muted-foreground">
+              <div className="text-muted-foreground text-sm">
                 生徒一覧と進捗確認
               </div>
             </div>
-            <ArrowRight className="h-4 w-4 ml-auto text-muted-foreground" />
+            <ArrowRight className="text-muted-foreground ml-auto h-4 w-4" />
           </CardContent>
         </Card>
 
-        <Card className="hover:bg-accent/50 transition-colors cursor-pointer"
-              onClick={() => router.push("/teacher/sessions")}>
+        <Card
+          className="hover:bg-accent/50 cursor-pointer transition-colors"
+          onClick={() => router.push("/teacher/sessions")}
+        >
           <CardContent className="flex items-center p-6">
-            <Clock className="h-8 w-8 text-primary mr-4" />
+            <Clock className="text-primary mr-4 h-8 w-8" />
             <div>
               <div className="font-semibold">セッション履歴</div>
-              <div className="text-sm text-muted-foreground">
+              <div className="text-muted-foreground text-sm">
                 過去の指導記録
               </div>
             </div>
-            <ArrowRight className="h-4 w-4 ml-auto text-muted-foreground" />
+            <ArrowRight className="text-muted-foreground ml-auto h-4 w-4" />
           </CardContent>
         </Card>
       </div>
@@ -109,15 +119,15 @@ export default function TeacherDashboard() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center">
-            <Calendar className="h-5 w-5 mr-2" />
+            <Calendar className="mr-2 h-5 w-5" />
             今日のセッション
           </CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-8">読み込み中...</div>
+            <div className="py-8 text-center">読み込み中...</div>
           ) : todaySessions.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-muted-foreground py-8 text-center">
               本日のセッションはありません
             </div>
           ) : (
@@ -125,12 +135,12 @@ export default function TeacherDashboard() {
               {todaySessions.map((session) => (
                 <div
                   key={session.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
+                  className="hover:bg-accent/50 flex items-center justify-between rounded-lg border p-4 transition-colors"
                 >
                   <div className="flex items-center space-x-4">
                     <div>
                       <div className="font-medium">{session.studentName}</div>
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-muted-foreground text-sm">
                         {session.type === "coaching" && "コーチング"}
                         {session.type === "mock_interview" && "模擬面接"}
                         {session.type === "essay_review" && "小論文添削"}
@@ -143,14 +153,17 @@ export default function TeacherDashboard() {
                       <div className="font-medium">
                         {formatTime(session.preferredTime)}
                       </div>
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-muted-foreground text-sm">
                         {session.duration}分
                       </div>
                     </div>
                     <Badge
                       variant={
-                        session.status === "scheduled" ? "default" :
-                        session.status === "completed" ? "secondary" : "outline"
+                        session.status === "scheduled"
+                          ? "default"
+                          : session.status === "completed"
+                            ? "secondary"
+                            : "outline"
                       }
                     >
                       {session.status === "scheduled" && "予定"}
@@ -171,19 +184,19 @@ export default function TeacherDashboard() {
           <CardTitle>お知らせ</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="p-3 bg-sky-50 border-l-4 border-sky-400 rounded">
+          <div className="rounded border-l-4 border-sky-400 bg-sky-50 p-3">
             <div className="text-sm font-medium text-sky-800">
               シフト提出期限のお知らせ
             </div>
-            <div className="text-sm text-sky-700 mt-1">
+            <div className="mt-1 text-sm text-sky-700">
               毎月25日までに翌月のシフトを提出してください。
             </div>
           </div>
-          <div className="p-3 bg-emerald-50 border-l-4 border-emerald-400 rounded">
+          <div className="rounded border-l-4 border-emerald-400 bg-emerald-50 p-3">
             <div className="text-sm font-medium text-emerald-800">
               システム更新
             </div>
-            <div className="text-sm text-emerald-700 mt-1">
+            <div className="mt-1 text-sm text-emerald-700">
               新機能: セッション記録の音声転写機能が利用可能になりました。
             </div>
           </div>

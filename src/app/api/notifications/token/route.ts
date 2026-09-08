@@ -18,7 +18,10 @@ export async function POST(request: Request) {
   const body = await request.json();
   const { fcmToken } = body as { fcmToken?: unknown };
   if (!fcmToken || typeof fcmToken !== "string") {
-    return NextResponse.json({ error: "fcmToken is required" }, { status: 400 });
+    return NextResponse.json(
+      { error: "fcmToken is required" },
+      { status: 400 }
+    );
   }
   /**
    * 端末情報はクライアントが送ってきた値を優先する。
@@ -30,6 +33,10 @@ export async function POST(request: Request) {
       ? ((body as { userAgent: string }).userAgent as string)
       : "";
   const standalone = (body as { standalone?: unknown }).standalone === true;
+  const deviceId =
+    typeof (body as { deviceId?: unknown }).deviceId === "string"
+      ? ((body as { deviceId: string }).deviceId as string).slice(0, 64)
+      : "";
 
   if (!adminDb) {
     return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
@@ -52,9 +59,31 @@ export async function POST(request: Request) {
       userAgent: clientUserAgent || request.headers.get("User-Agent") || "",
       /** ホーム画面に追加したPWAの中で登録したか。iOSはこれが true でないと届かない */
       standalone,
+      ...(deviceId ? { deviceId } : {}),
     },
-    { merge: true },
+    { merge: true }
   );
 
-  return NextResponse.json({ success: true });
+  /**
+   * 同じ端末の古いトークンを消す。
+   * トークンは入れ替わるたびに新しい文書になるため、端末 ID で束ねないと
+   * 1端末に死んだトークンが積み上がる（本番で1端末に3〜6件あった）。
+   * 古い方に送っても失敗するだけで、失敗して初めて消える作りだった。
+   */
+  let removed = 0;
+  if (deviceId) {
+    const sameDevice = await adminDb
+      .collection(`users/${authResult.uid}/fcmTokens`)
+      .where("deviceId", "==", deviceId)
+      .get();
+    const batch = adminDb.batch();
+    for (const d of sameDevice.docs) {
+      if (d.id === fcmToken) continue;
+      batch.delete(d.ref);
+      removed++;
+    }
+    if (removed > 0) await batch.commit();
+  }
+
+  return NextResponse.json({ success: true, removed });
 }

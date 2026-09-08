@@ -529,6 +529,12 @@ export async function GET(
     const essaySkillCheckMeta = buildSkillCheckMeta(latestEssaySc);
     const interviewSkillCheckMeta = buildSkillCheckMeta(latestInterviewSc);
 
+    // 通知が届く状態か（トークンの有無・最終配信・設定で全部切っているか）
+    const { loadPushStatus } = await import("@/lib/notifications/push-status");
+    const pushStatus = await loadPushStatus(adminDb, id, "student").catch(
+      () => null
+    );
+
     const detail: StudentDetail = {
       profile: {
         uid: id,
@@ -551,6 +557,15 @@ export async function GET(
         sessionsPerMonth: userData.sessionsPerMonth ?? 1,
         resolvedUniversities,
         assignedTeacherIds: getAssignedTeacherIds(userData),
+        ...(pushStatus
+          ? {
+              push: {
+                tokens: pushStatus.tokens,
+                lastSuccessAt: pushStatus.lastSuccessAt,
+                pushDisabled: pushStatus.pushDisabled,
+              },
+            }
+          : {}),
       },
       weaknesses,
       essays,

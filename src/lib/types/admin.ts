@@ -115,6 +115,15 @@ export interface StudentDetail {
     assignedTeacherId?: string;
     /** 担当講師の uid 配列 (複数講師対応) */
     assignedTeacherIds?: string[];
+    /**
+     * プッシュ通知が届く状態か。送った側から「切っている」「未登録」が
+     * 見えないと、届いていないのに気づけない。
+     */
+    push?: {
+      tokens: number;
+      lastSuccessAt: string | null;
+      pushDisabled: boolean;
+    };
   };
   weaknesses: WeaknessRecord[];
   essays: EssayListItem[];

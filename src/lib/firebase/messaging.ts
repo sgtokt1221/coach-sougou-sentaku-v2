@@ -77,6 +77,33 @@ export async function requestNotificationPermission(): Promise<string | null> {
 }
 
 /**
+ * この端末を識別する ID。localStorage に1回だけ作って持ち続ける。
+ *
+ * FCM のトークンは SW の更新やブラウザの都合で入れ替わる。以前はトークンを
+ * そのまま文書 ID にしていたため、同じ端末で入れ替わるたびに文書が増え、
+ * 1端末に3〜6件の死んだトークンが積み上がっていた（本番で確認）。
+ * 端末 ID を添えて保存し、同じ端末の古い文書はサーバ側で消す。
+ */
+export function getDeviceId(): string {
+  if (typeof window === "undefined") return "";
+  const KEY = "coach-device-id";
+  try {
+    const existing = window.localStorage.getItem(KEY);
+    if (existing) return existing;
+    const fresh =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+    window.localStorage.setItem(KEY, fresh);
+    return fresh;
+  } catch {
+    // localStorage が使えない環境（プライベートモード等）では毎回変わるが、
+    // 通知自体は届く。積み上がりだけ防げない
+    return "";
+  }
+}
+
+/**
  * FCMトークンをFirestoreに保存（API経由）
  *
  * 端末情報はクライアントから送る。サーバーの User-Agent ヘッダに頼っていたが、
@@ -107,6 +134,7 @@ export async function saveFcmToken(
       fcmToken,
       userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "",
       standalone,
+      deviceId: getDeviceId(),
     }),
   });
   /**
@@ -226,4 +254,31 @@ export async function showLocalNotification(payload: {
     console.warn("[FCM] local notification failed:", err);
     return false;
   }
+}
+
+/**
+ * 動いているサービスワーカーの版を聞く。
+ * 「直したのに届かない」ときに、古い SW のままかどうかを切り分けるため。
+ * 応答が無ければ null（SW が無い、または古くて応答しない）。
+ */
+export async function getServiceWorkerVersion(): Promise<string | null> {
+  if (typeof window === "undefined" || !("serviceWorker" in navigator)) {
+    return null;
+  }
+  const ctrl = navigator.serviceWorker.controller;
+  if (!ctrl) return null;
+  return new Promise((resolve) => {
+    const ch = new MessageChannel();
+    const timer = setTimeout(() => resolve(null), 1500);
+    ch.port1.onmessage = (e) => {
+      clearTimeout(timer);
+      resolve((e.data as { version?: string })?.version ?? null);
+    };
+    try {
+      ctrl.postMessage({ type: "GET_SW_VERSION" }, [ch.port2]);
+    } catch {
+      clearTimeout(timer);
+      resolve(null);
+    }
+  });
 }
