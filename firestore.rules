@@ -154,6 +154,16 @@ service cloud.firestore {
       allow create: if request.auth != null && isAdmin();
     }
 
+    // ビデオ通話: 参加者のみ読める。書き込みはサーバー(Admin SDK)だけ。
+    // participantUids が認可の正本で、着信の購読もこのルールに乗る。
+    // クライアントに書かせると、自分を participantUids に足して他人の通話へ
+    // 入れてしまうため write は一切許可しない（拒否も API を通す）。
+    match /calls/{callId} {
+      allow read: if request.auth != null &&
+        request.auth.uid in resource.data.participantUids;
+      allow write: if false;
+    }
+
     // 合格者データ（匿名化済み）
     match /passedStudentData/{dataId} {
       allow read: if request.auth != null;

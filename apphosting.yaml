@@ -52,6 +52,23 @@ env:
     secret: STRIPE_WEBHOOK_SECRET
   - variable: STRIPE_PRO_PRICE_ID
     secret: STRIPE_PRO_PRICE_ID
+  # LiveKit Cloud（アプリ内ビデオ通話）。
+  #
+  # 【有効化の手順】この4行のコメントを外す前に、必ず先に済ませること。
+  #   1. LiveKit Cloud でプロジェクトを作り、API Key / Secret / URL を得る
+  #   2. Secret Manager に LIVEKIT_API_KEY と LIVEKIT_API_SECRET を作る
+  #   3. backend coach-app に secretAccessor を付ける
+  # 存在しない secret を参照すると **App Hosting のデプロイ自体が失敗する**ため、
+  # 鍵が用意できるまではコメントのままにしておく。
+  # 未設定でも通話ボタンが出ないだけで、既存機能とビルドには影響しない。
+  #
+  # - variable: LIVEKIT_API_KEY
+  #   secret: LIVEKIT_API_KEY
+  # - variable: LIVEKIT_API_SECRET
+  #   secret: LIVEKIT_API_SECRET
+  # wss://xxx.livekit.cloud。クライアントが接続先として必要とし、秘匿性は無い。
+  # - variable: NEXT_PUBLIC_LIVEKIT_URL
+  #   value: wss://xxxxx.livekit.cloud
   # Google Programmable Search Engine の検索エンジン ID (cx)。
   # クライアントに露出する非機密値のため Secret ではなく平文 value で設定。
   - variable: NEXT_PUBLIC_GOOGLE_PSE_CX

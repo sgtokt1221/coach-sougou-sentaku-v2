@@ -8,6 +8,7 @@ import { authFetch } from "@/lib/api/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFeedbackThread } from "@/lib/hooks/useFeedbackThread";
 import { ChatThread } from "@/components/chat/ChatThread";
+import { StartCallButton } from "@/components/call/StartCallButton";
 import { PageTransition } from "@/components/shared/PageTransition";
 import { FullHeightPage } from "@/components/layout/FullHeightPage";
 import type {
@@ -56,7 +57,7 @@ function Body() {
     text: string,
     attachments: ChatAttachment[],
     reference?: ChatReference,
-    quote?: ChatQuote,
+    quote?: ChatQuote
   ) {
     const res = await authFetch(`/api/teacher/students/${studentId}/feedback`, {
       method: "POST",
@@ -80,24 +81,27 @@ function Body() {
         <div className="flex items-center gap-2 pb-2">
           <Link
             href="/teacher/students"
-            className="rounded-md p-1 hover:bg-accent"
+            className="hover:bg-accent rounded-md p-1"
             aria-label="戻る"
           >
-            <ArrowLeft className="size-5 text-muted-foreground" />
+            <ArrowLeft className="text-muted-foreground size-5" />
           </Link>
           <div className="flex-1">
             <h1 className="text-xl font-bold">{studentName} さん</h1>
-            <p className="text-xs text-muted-foreground">担当生徒とのやり取り</p>
+            <p className="text-muted-foreground text-xs">
+              担当生徒とのやり取り
+            </p>
           </div>
+          <StartCallButton participantUids={[studentId]} />
           <Link
             href={`/admin/students/${studentId}`}
-            className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-accent"
+            className="hover:bg-accent inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium"
           >
             <LineChart className="size-4" />
             学習状況を見る
           </Link>
         </div>
-        <div className="flex-1 overflow-hidden rounded-xl border bg-card px-3">
+        <div className="bg-card flex-1 overflow-hidden rounded-xl border px-3">
           <ChatThread
             messages={messages}
             currentRole="coach"

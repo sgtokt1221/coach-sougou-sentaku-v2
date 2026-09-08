@@ -7,6 +7,7 @@ import { Header } from "./Header";
 import { BottomNav } from "./BottomNav";
 import { KeyboardInsetManager } from "./KeyboardInsetManager";
 import { ForegroundNotifier } from "@/components/notifications/ForegroundNotifier";
+import { IncomingCallModal } from "@/components/call/IncomingCallModal";
 import { getAppLayoutMode } from "@/lib/ui/app-layout-mode";
 import { cn } from "@/lib/utils";
 
@@ -32,11 +33,18 @@ export function AppLayout({ children }: { children: ReactNode }) {
     >
       <KeyboardInsetManager />
       <ForegroundNotifier />
+      {/* 着信。アプリを開いている間はここで鳴る（プッシュ通知は閉じているときの補助） */}
+      <IncomingCallModal />
       <Sidebar />
       {/* min-h-0 / min-w-0 で overflow がこのコンテナ〜main へ確実に伝播するようにする */}
-      <div data-app-scroll className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+      <div
+        data-app-scroll
+        className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
+      >
         {/* 面接など hideMobileHeader ルートはモバイルのみ共通 Header を隠す（PC は常に表示） */}
-        <div className={mode.hideMobileHeader ? "hidden lg:contents" : "contents"}>
+        <div
+          className={mode.hideMobileHeader ? "hidden lg:contents" : "contents"}
+        >
           <Header />
         </div>
         {/* scrollOwner:
@@ -46,10 +54,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
             下部インセットは両モード共通で確保（BottomNav 背面に主要操作が入らないように）。 */}
         <main
           className={cn(
-            "min-h-0 min-w-0 flex-1 bg-mesh pb-[var(--app-mobile-bottom-inset)] lg:pb-8",
+            "bg-mesh min-h-0 min-w-0 flex-1 pb-[var(--app-mobile-bottom-inset)] lg:pb-8",
             mode.scrollOwner === "main"
               ? "overflow-x-hidden overflow-y-auto lg:overflow-y-scroll lg:[scrollbar-gutter:stable]"
-              : "overflow-hidden",
+              : "overflow-hidden"
           )}
         >
           {children}

@@ -19,6 +19,25 @@ interface EnvVar {
 }
 
 const ENV_VARS: EnvVar[] = [
+  // LiveKit (アプリ内ビデオ通話)
+  {
+    key: "LIVEKIT_API_KEY",
+    required: false,
+    description: "LiveKit Cloud API Key",
+    affects: ["ビデオ通話"],
+  },
+  {
+    key: "LIVEKIT_API_SECRET",
+    required: false,
+    description: "LiveKit Cloud API Secret",
+    affects: ["ビデオ通話"],
+  },
+  {
+    key: "NEXT_PUBLIC_LIVEKIT_URL",
+    required: false,
+    description: "LiveKit Cloud の接続先 (wss://xxx.livekit.cloud)",
+    affects: ["ビデオ通話"],
+  },
   // Firebase Client
   {
     key: "NEXT_PUBLIC_FIREBASE_API_KEY",
@@ -115,7 +134,11 @@ function checkEnv() {
   for (const v of ENV_VARS) {
     const value = process.env[v.key];
     const isSet = !!value && value !== "" && !value.startsWith("xxxxx");
-    const icon = isSet ? "\x1b[32m[OK]\x1b[0m" : v.required ? "\x1b[31m[NG]\x1b[0m" : "\x1b[33m[--]\x1b[0m";
+    const icon = isSet
+      ? "\x1b[32m[OK]\x1b[0m"
+      : v.required
+        ? "\x1b[31m[NG]\x1b[0m"
+        : "\x1b[33m[--]\x1b[0m";
 
     console.log(`${icon} ${v.key}`);
     console.log(`     ${v.description}`);
@@ -135,16 +158,12 @@ function checkEnv() {
   console.log(`Set: ${setCount}/${ENV_VARS.length}`);
 
   if (missing.length > 0) {
-    console.log(
-      `\n\x1b[31mMissing required (${missing.length}):\x1b[0m`
-    );
+    console.log(`\n\x1b[31mMissing required (${missing.length}):\x1b[0m`);
     missing.forEach((k) => console.log(`  - ${k}`));
   }
 
   if (optional.length > 0) {
-    console.log(
-      `\n\x1b[33mOptional not set (${optional.length}):\x1b[0m`
-    );
+    console.log(`\n\x1b[33mOptional not set (${optional.length}):\x1b[0m`);
     optional.forEach((k) => console.log(`  - ${k}`));
   }
 
@@ -156,10 +175,14 @@ function checkEnv() {
 
   const firebase = !missing.some((k) => k.startsWith("NEXT_PUBLIC_FIREBASE"));
   const adminSdk = !missing.some((k) => k.startsWith("FIREBASE_ADMIN"));
-  const claude = !optional.includes("ANTHROPIC_API_KEY") && !missing.includes("ANTHROPIC_API_KEY");
-  const openai = !optional.includes("OPENAI_API_KEY") && !missing.includes("OPENAI_API_KEY");
+  const claude =
+    !optional.includes("ANTHROPIC_API_KEY") &&
+    !missing.includes("ANTHROPIC_API_KEY");
+  const openai =
+    !optional.includes("OPENAI_API_KEY") && !missing.includes("OPENAI_API_KEY");
 
-  const status = (ok: boolean) => ok ? "\x1b[32mREADY\x1b[0m" : "\x1b[33mMOCK\x1b[0m";
+  const status = (ok: boolean) =>
+    ok ? "\x1b[32mREADY\x1b[0m" : "\x1b[33mMOCK\x1b[0m";
   console.log(`  Firebase Auth/Firestore: ${status(firebase)}`);
   console.log(`  Admin SDK (API routes):  ${status(adminSdk)}`);
   console.log(`  AI Essay/Interview:      ${status(claude)}`);

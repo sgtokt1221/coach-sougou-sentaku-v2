@@ -8,6 +8,7 @@ import { useAuthSWR } from "@/lib/api/swr";
 import { authFetch } from "@/lib/api/client";
 import { useFeedbackThread } from "@/lib/hooks/useFeedbackThread";
 import { ChatThread } from "@/components/chat/ChatThread";
+import { StartCallButton } from "@/components/call/StartCallButton";
 import { FullHeightPage } from "@/components/layout/FullHeightPage";
 import { PageTransition } from "@/components/shared/PageTransition";
 import { Button } from "@/components/ui/button";
@@ -51,7 +52,7 @@ export default function AdminThreadPage() {
     text: string,
     attachments: ChatAttachment[],
     reference?: ChatReference,
-    quote?: ChatQuote,
+    quote?: ChatQuote
   ) {
     const res = await authFetch(`/api/admin/students/${studentId}/feedback`, {
       method: "POST",
@@ -86,12 +87,13 @@ export default function AdminThreadPage() {
             <AvatarImage src={studentPhotoURL ?? undefined} alt={studentName} />
             <AvatarFallback>{getInitials(studentName)}</AvatarFallback>
           </Avatar>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <h1 className="truncate text-base font-bold">{studentName}</h1>
-            <p className="text-[11px] text-muted-foreground">メッセージ</p>
+            <p className="text-muted-foreground text-[11px]">メッセージ</p>
           </div>
+          <StartCallButton participantUids={[studentId]} />
         </div>
-        <div className="min-h-0 flex-1 overflow-hidden rounded-xl border bg-card px-3">
+        <div className="bg-card min-h-0 flex-1 overflow-hidden rounded-xl border px-3">
           <ChatThread
             messages={messages}
             currentRole="coach"
@@ -101,7 +103,9 @@ export default function AdminThreadPage() {
             loading={loading}
             otherName={studentName}
             otherPhotoURL={studentPhotoURL}
-            referenceStudentId={item?.role === "teacher" ? undefined : studentId}
+            referenceStudentId={
+              item?.role === "teacher" ? undefined : studentId
+            }
             emptyText="この生徒へのメッセージやコメントがここに表示されます"
           />
         </div>

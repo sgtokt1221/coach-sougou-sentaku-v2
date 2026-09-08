@@ -27,7 +27,8 @@ export const NOTIFICATION_KINDS: NotificationKind[] = [
   {
     id: "feedback",
     label: "講師からのフィードバック",
-    description: "答案へのコメントや、講師・管理者からのフィードバックが届いたとき",
+    description:
+      "答案へのコメントや、講師・管理者からのフィードバックが届いたとき",
     channel: "push",
     audiences: ["student"],
     defaultEnabled: true,
@@ -46,6 +47,15 @@ export const NOTIFICATION_KINDS: NotificationKind[] = [
     description: "面談が設定されたときと、開始前のリマインド",
     channel: "push",
     audiences: ["student"],
+    defaultEnabled: true,
+  },
+  {
+    id: "call",
+    label: "通話の呼び出し",
+    description: "講師・管理者からビデオ通話の呼び出しがあったとき",
+    channel: "push",
+    // 通話は3者とも受け取る。既定で切ると呼んでも気づかれない
+    audiences: ["student", "teacher", "admin"],
     defaultEnabled: true,
   },
   {
@@ -95,7 +105,8 @@ export const NOTIFICATION_KINDS: NotificationKind[] = [
   {
     id: "alertDigest",
     label: "要注意生徒のダイジェスト",
-    description: "成績の停滞や期限超過など、気にかけるべき生徒をまとめてメールで受け取る",
+    description:
+      "成績の停滞や期限超過など、気にかけるべき生徒をまとめてメールで受け取る",
     channel: "email",
     audiences: ["admin", "teacher"],
     defaultEnabled: true,

@@ -11,6 +11,8 @@ import { initializeApp, getApps } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 
+/** 検証用の組織ID。通話の招待は organizationId の一致で判定する */
+const EMU_ORG_ID = "emu-org";
 const STUDENT_EMAIL = "student@example.com";
 const STUDENT_PASSWORD = "password";
 /**
@@ -89,6 +91,26 @@ async function main() {
       email: ADMIN_EMAIL,
       name: "検証 管理者",
       role: "admin",
+      // 通話は organizationId が一致する相手しか招待できない。
+      // 未設定だと発信が 403 になるので、生徒と同じ組織を入れておく。
+      organizationId: EMU_ORG_ID,
+      createdAt: new Date().toISOString(),
+    },
+    { merge: true }
+  );
+
+  /**
+   * 開発時のフォールバック用。requireRole は Admin SDK でトークンを検証できない
+   * 開発環境で uid を "dev-user" として admin 扱いにする（src/lib/api/auth.ts）。
+   * エミュレータではトークン検証が通らないことがあるため、この経路で API を
+   * 検証できるように実体を用意しておく。本番には存在しない。
+   */
+  await db.doc("users/dev-user").set(
+    {
+      email: "dev-user@example.com",
+      name: "開発ユーザー",
+      role: "admin",
+      organizationId: EMU_ORG_ID,
       createdAt: new Date().toISOString(),
     },
     { merge: true }
@@ -105,6 +127,8 @@ async function main() {
       documentPackage: { purchased: true },
       // 管理者APIは managedBy でスコープするので、紐づけないと生徒が見えない
       managedBy: adminUid,
+      // 通話の招待判定に使う（管理者と同じ組織）
+      organizationId: EMU_ORG_ID,
       createdAt: new Date().toISOString(),
     },
     { merge: true }
@@ -208,7 +232,8 @@ async function main() {
           {
             location: "第1段落",
             original: "オンライン教育はすごく便利だと思います。",
-            suggestion: "オンライン教育には、場所を問わず学べるという利点がある。",
+            suggestion:
+              "オンライン教育には、場所を問わず学べるという利点がある。",
             type: "expression",
             reason: "「すごく」は話し言葉。文末も敬体になっている",
           },
@@ -218,7 +243,8 @@ async function main() {
               "この方式を使うことによって、誰もが授業を受けることができるようになるということが期待されます。",
             suggestion: "この方式なら、誰もが授業を受けられると期待できる。",
             type: "redundancy",
-            reason: "「〜することができる」「〜ということが」が重なって回りくどい",
+            reason:
+              "「〜することができる」「〜ということが」が重なって回りくどい",
           },
           {
             location: "第3段落",
@@ -295,15 +321,34 @@ async function main() {
   );
 
   console.log("投入しました。");
-  console.log(`  生徒:   ${STUDENT_EMAIL} / ${STUDENT_PASSWORD}  (uid: ${uid})`);
-  console.log(`  管理者: ${ADMIN_EMAIL} / ${ADMIN_PASSWORD}  (uid: ${adminUid})`);
-  console.log(`  /admin/students/${uid}                  … 管理者から見た生徒詳細`);
+  console.log(
+    `  生徒:   ${STUDENT_EMAIL} / ${STUDENT_PASSWORD}  (uid: ${uid})`
+  );
+  console.log(
+    `  管理者: ${ADMIN_EMAIL} / ${ADMIN_PASSWORD}  (uid: ${adminUid})`
+  );
+  console.log(
+    `  /admin/students/${uid}                  … 管理者から見た生徒詳細`
+  );
   console.log("  /student/documents/emu-doc-over-limit   … 字数警告の確認");
-  console.log("  /student/documents/emu-doc-placeholder  … プレースホルダー警告の確認");
-  console.log("  /student/essay/history                  … 下書きのテーマ名表示");
-  console.log("  /student/essay/emu-essay-reviewed       … 軸ごとのスコア表示（配点換算）");
-  console.log("  /student/skill-check/emu-skill-check    … スキルチェック結果のスコア表示");
-  console.log("  /student/essay/lectures                 … 小論文講座（アニメ→ドリル→課題）");
+  console.log(
+    "  /student/documents/emu-doc-placeholder  … プレースホルダー警告の確認"
+  );
+  console.log(
+    "  /student/essay/history                  … 下書きのテーマ名表示"
+  );
+  console.log(
+    "  /student/essay/emu-essay-reviewed       … 軸ごとのスコア表示（配点換算）"
+  );
+  console.log(
+    "  /student/skill-check/emu-skill-check    … スキルチェック結果のスコア表示"
+  );
+  console.log(
+    "  /student/essay/lectures                 … 小論文講座（アニメ→ドリル→課題）"
+  );
+  console.log(
+    `  /admin/messages/${uid}  … 「通話」ボタン（LiveKit の鍵が要る）`
+  );
 }
 
 main().catch((err) => {
