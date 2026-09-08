@@ -50,6 +50,17 @@ case "$LK_URL" in
   *) echo "NEXT_PUBLIC_LIVEKIT_URL は wss:// で始まる必要があります" >&2; exit 1 ;;
 esac
 
+# LiveKit の画面ではシークレットが点で伏せられており、そこをコピーすると
+# 点そのものが入る。長さは正しく見えるので目視では気づけない（実際に踏んだ）。
+# 英数字と -_ 以外が混ざっていたら伏せ字とみなして止める。
+if printf '%s' "$LK_KEY$LK_SECRET" | LC_ALL=C grep -q '[^A-Za-z0-9_-]'; then
+  echo "" >&2
+  echo "鍵かシークレットに英数字以外が混ざっています。" >&2
+  echo "LiveKit の画面で伏せ字（••••）のままコピーしていませんか。" >&2
+  echo "目のアイコンで実際の値を表示してからコピーし直してください。" >&2
+  exit 1
+fi
+
 # 値そのものは出さず、長さだけ見せて取り違えに気づけるようにする
 say "読み取りました（値は表示しません）"
 printf '  LIVEKIT_API_KEY        %s文字\n' "${#LK_KEY}"
@@ -82,7 +93,7 @@ put_secret LIVEKIT_API_SECRET "$LK_SECRET"
 
 say "apphosting.yaml を有効にします"
 python3 - "$LK_URL" <<'PY'
-import sys
+import re, sys
 url = sys.argv[1]
 p = "apphosting.yaml"
 s = open(p).read()
@@ -95,16 +106,28 @@ else:
         "  - variable: LIVEKIT_API_KEY\n    secret: LIVEKIT_API_KEY\n"
         "  - variable: LIVEKIT_API_SECRET\n    secret: LIVEKIT_API_SECRET\n",
     )
-    s3 = s2.replace(
-        "  # - variable: NEXT_PUBLIC_LIVEKIT_URL\n"
-        "  #   value: wss://xxxxx.livekit.cloud\n",
+    if s2 == s:
+        print("  鍵の行を有効にできませんでした。apphosting.yaml を手で確認してください")
+        raise SystemExit(1)
+    # URL の行は、以前に別の値でコメント化されている場合があるので正規表現で拾う
+    s3, n = re.subn(
+        r"^  # - variable: NEXT_PUBLIC_LIVEKIT_URL\n  #   value: .*\n",
         f"  - variable: NEXT_PUBLIC_LIVEKIT_URL\n    value: {url}\n",
+        s2,
+        count=1,
+        flags=re.M,
     )
-    if s3 == s:
-        print("  置換できませんでした。apphosting.yaml を手で確認してください")
+    # 3つとも有効になったことを必ず確かめる。片方だけ通ると
+    # 「設定したのにボタンが出ない」沈黙失敗になる（実際に踏んだ）
+    if n == 0:
+        print("  URL の行を有効にできませんでした。apphosting.yaml を手で確認してください")
         raise SystemExit(1)
     open(p, "w").write(s3)
-    print("  有効にしました")
+    for name in ("LIVEKIT_API_KEY", "LIVEKIT_API_SECRET", "NEXT_PUBLIC_LIVEKIT_URL"):
+        if f"\n  - variable: {name}\n" not in s3:
+            print(f"  {name} が有効になっていません")
+            raise SystemExit(1)
+    print("  3つとも有効にしました")
 PY
 
 say "完了"

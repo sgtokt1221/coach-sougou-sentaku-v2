@@ -54,6 +54,16 @@ case "$LK_URL" in
   *) echo "URL は wss:// で始まる必要があります。中止します" >&2; exit 1 ;;
 esac
 
+# LiveKit の画面ではシークレットが点で伏せられており、そこをコピーすると
+# 点そのものが入る。長さは正しく見えるので目視では気づけない（実際に踏んだ）。
+if printf '%s' "$LK_KEY$LK_SECRET" | LC_ALL=C grep -q '[^A-Za-z0-9_-]'; then
+  echo "" >&2
+  echo "鍵かシークレットに英数字以外が混ざっています。" >&2
+  echo "LiveKit の画面で伏せ字（••••）のままコピーしていませんか。" >&2
+  echo "目のアイコンで実際の値を表示してからコピーし直してください。" >&2
+  exit 1
+fi
+
 say "2. Secret Manager に登録します"
 put_secret LIVEKIT_API_KEY "$LK_KEY"
 put_secret LIVEKIT_API_SECRET "$LK_SECRET"
