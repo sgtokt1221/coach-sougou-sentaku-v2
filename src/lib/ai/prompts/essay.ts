@@ -339,7 +339,17 @@ function buildQuestionTypeRubric(questionType?: string): string {
     case "lecture":
       return "講義固有の主張・具体例を正確に踏まえ、一般論を超えているかを logic で見ます。講義の主張の取り違えは logic を4点以下にします。";
     case "report":
-      return "課題文の理解、要約・言い換え、参照の妥当性、自分の考察との接続を logic で見ます。課題文の主張の取り違えは logic を4点以下にします。reportInsightsを必ず埋めます。";
+      return [
+        "課題文の理解、要約・言い換え、参照の妥当性、自分の考察との接続を logic で見ます。",
+        "課題文の主張の取り違えは logic を4点以下にします。reportInsightsを必ず埋めます。",
+        // 監査前は「矛盾したとき」しか減点が無く、課題文を無視した答案が無傷だった
+        "採点の前に sourceEngagement を必ず判定します。答案の本文だけを根拠にします。",
+        "grounded=課題文の主張・具体・数値のいずれかを引用または言い換えて自論に接続している。",
+        "shallow=課題文の話題には触れるが、課題文を読まなくても書ける一般論に留まる。",
+        "absent=課題文の内容がまったく現れない（話題が同じだけの答案はこれに当たります）。",
+        "quotes には、そう判断した根拠となる答案内の記述をそのまま入れます。absent なら空配列にします。",
+        "設問に「課題文を読み」とあっても、答案が課題文に触れていなければ absent です。",
+      ].join("");
     default:
       return "資料のない設問です。設問への直接的な応答、主張、根拠、反論検討を重視します。読解の誤りによる減点は適用しません。";
   }
@@ -357,8 +367,8 @@ export function buildEssayReviewPrompt(
   const wordLimitRule = buildWordLimitRule(options);
   const reportRule =
     options.questionType === "report"
-      ? "reportInsightsを具体的に記述してください。"
-      : "reportInsightsはnullにしてください。";
+      ? "reportInsightsを具体的に記述し、sourceEngagementを必ず判定してください。"
+      : "reportInsightsはnullにしてください。sourceEngagementもnullにしてください。";
 
   return `${ESSAY_REVIEW_SYSTEM_PROMPT}
 

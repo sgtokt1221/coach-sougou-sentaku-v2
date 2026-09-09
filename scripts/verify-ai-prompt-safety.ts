@@ -180,7 +180,8 @@ const validDocumentReview = {
       location: "部活動を通じて協調性を学びました",
       problem: "抽象語だけで、何をした結果そう言えるのかが伝わらない",
       action: "意見が割れた場面・自分の行動・結果の順に1文ずつ書く",
-      example: "合奏の方針で意見が割れたとき、私は両者の主張を書き出して共通点を探しました。",
+      example:
+        "合奏の方針で意見が割れたとき、私は両者の主張を書き出して共通点を探しました。",
     },
   ],
   apSpecificNotes: "AP未取得",
@@ -239,12 +240,18 @@ const validEssayReview = {
       answersQuestion: true,
       subjectMatch: "same" as const,
       requirements: [
-        { requirement: "設問の主題を論じる", status: "met" as const, evidence: "引用" },
+        {
+          requirement: "設問の主題を論じる",
+          status: "met" as const,
+          evidence: "引用",
+        },
       ],
       note: "主題: 住民参加",
     },
     claimChecks: [],
     reportInsights: null,
+    // 課題文型でないときは null。report のときだけ判定が入る（v18〜）
+    sourceEngagement: null,
   },
 };
 assert.equal(EssayReviewOutputSchema.safeParse(validEssayReview).success, true);

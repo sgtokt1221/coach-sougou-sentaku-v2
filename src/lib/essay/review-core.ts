@@ -11,6 +11,7 @@ import {
   calculateFillRate,
 } from "@/lib/essay/review-metrics";
 import { AI_MODEL_REVIEW, AI_PROMPT_VERSIONS } from "@/lib/ai/prompt-versions";
+import { sourceEngagementCaps } from "@/lib/essay/source-engagement";
 import type {
   EssayScoreAxis,
   EssayScores,
@@ -187,11 +188,29 @@ ${input.ocrText}
     (c) => c.status === "contradicted"
   );
 
-  const contentCap = offTopic ? 3 : narrowed || missingRequired ? 6 : 10;
+  /**
+   * 課題文型で、答案が課題文に触れたか。
+   *
+   * 監査前は「矛盾したとき」しか減点が無く、課題文を無視した答案は無傷だった
+   * （読まないほうが安全ですらあった）。触れていない答案は主題ずれと同じ重さで
+   * 抑える。report 以外には一切かからない。
+   */
+  const sourceCaps = sourceEngagementCaps({
+    questionType: input.questionType,
+    engagement: parsed.feedback?.sourceEngagement ?? null,
+    misreadings: parsed.feedback?.reportInsights?.misreadings ?? null,
+  });
+
+  const baseContentCap = offTopic ? 3 : narrowed || missingRequired ? 6 : 10;
+  const contentCap = Math.min(baseContentCap, sourceCaps.content);
   const structureCap = contentCap;
   const originalityCap = contentCap;
   const maturityCap = contentCap;
-  const logicCap = Math.min(contentCap, contradicted ? 4 : 10);
+  const logicCap = Math.min(
+    contentCap,
+    contradicted ? 4 : 10,
+    sourceCaps.logic
+  );
   // 表現は「何を書いたか」に依らず読める。ずれていても6点までは認める
   const expressionCap = offTopic ? 6 : 10;
 
@@ -265,6 +284,15 @@ ${input.ocrText}
       }
     : undefined;
 
+  // 課題文の扱い。合計には入れず、指標として保存・表示する
+  const sourceEngagement = parsed.feedback.sourceEngagement
+    ? {
+        level: parsed.feedback.sourceEngagement.level,
+        basis: parsed.feedback.sourceEngagement.basis ?? "",
+        quotes: parsed.feedback.sourceEngagement.quotes ?? [],
+      }
+    : undefined;
+
   const languageCorrections = parsed.feedback.languageCorrections.filter(
     (correction) =>
       correction.original.length > 0 &&
@@ -292,6 +320,7 @@ ${input.ocrText}
     ...(taskFulfillment ? { taskFulfillment } : {}),
     ...(claimChecks.length > 0 ? { claimChecks } : {}),
     ...(reportInsights ? { reportInsights } : {}),
+    ...(sourceEngagement ? { sourceEngagement } : {}),
     languageCorrections,
     quantitativeAnalysis: calculateEssayMetrics(
       input.ocrText,

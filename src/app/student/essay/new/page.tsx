@@ -59,6 +59,7 @@ import type { PastQuestionSourceTextResponse } from "@/lib/types/past-question-s
 import type { ReportMaterial } from "@/data/essay-report-materials";
 import { buildReportQuestion } from "@/lib/essay/report-question";
 import { ESSAY_FIELDS } from "@/lib/types/essay-field";
+import { ESSAY_FORMS, formStepsOf } from "@/lib/types/essay-form";
 import { useAutosave } from "@/hooks/useAutosave";
 import { usePersistentDraft } from "@/hooks/usePersistentDraft";
 import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
@@ -632,6 +633,30 @@ export default function EssayNewPage() {
     }
     return undefined;
   }, [pastQuestion, dynamicSourceText, selectedTheme, retryParent]);
+
+  /**
+   * 課題文型（report）かどうか。過去問・レポート教材・やり直しのどれでも
+   * 同じ questionType が来るので、これ1つで3経路とも捕まえられる。
+   * questionType は retryContext に保存されるため、やり直しでも型が消えない。
+   */
+  const passageForm = useMemo(() => {
+    const qt = reportMode
+      ? "report"
+      : (pastQuestion?.questionType ??
+        selectedTheme?.questionType ??
+        retryParent?.retryContext?.questionType);
+    if (qt !== "report") return null;
+    return ESSAY_FORMS.find((f) => f.id === "passage") ?? null;
+  }, [reportMode, pastQuestion, selectedTheme, retryParent]);
+
+  /** 採点に渡す型の説明文。講座と同じ文面にする */
+  const passageFormInfo = useMemo(() => {
+    if (!passageForm) return undefined;
+    const steps = formStepsOf(passageForm.id)
+      .map((st) => `${st.label}${st.chars}字`)
+      .join(" → ");
+    return `この答案は「${passageForm.name}」である。書く順番と字数の目安: ${steps}。この型で特に見るところ: ${passageForm.focus}。よくある失敗: ${passageForm.pitfall}。`;
+  }, [passageForm]);
 
   /**
    * レポート課題の課題文。ReportSourcePane で画面に出しているため資料タブは
@@ -1224,6 +1249,22 @@ export default function EssayNewPage() {
                 lectureInfo: retryParent.retryContext.lectureInfo,
               }),
             }),
+          /**
+           * 課題文型の「型」を採点にも渡す。lectureInfo は
+           * /api/essay/review が既に受け取り retryContext にも保存するので、
+           * 新しいフィールドを増やさずに済み、やり直しでも消えない。
+           * 課題文型に TED 講義は付かないため、上のスプレッドとは衝突しない。
+           */
+          ...(passageFormInfo
+            ? {
+                lectureInfo: [
+                  retryParent?.retryContext?.lectureInfo,
+                  passageFormInfo,
+                ]
+                  .filter(Boolean)
+                  .join("\n"),
+              }
+            : {}),
         }),
         signal: controller.signal,
       });
@@ -1359,6 +1400,22 @@ export default function EssayNewPage() {
                 lectureInfo: retryParent.retryContext.lectureInfo,
               }),
             }),
+          /**
+           * 課題文型の「型」を採点にも渡す。lectureInfo は
+           * /api/essay/review が既に受け取り retryContext にも保存するので、
+           * 新しいフィールドを増やさずに済み、やり直しでも消えない。
+           * 課題文型に TED 講義は付かないため、上のスプレッドとは衝突しない。
+           */
+          ...(passageFormInfo
+            ? {
+                lectureInfo: [
+                  retryParent?.retryContext?.lectureInfo,
+                  passageFormInfo,
+                ]
+                  .filter(Boolean)
+                  .join("\n"),
+              }
+            : {}),
         }),
         signal: controller.signal,
       });
@@ -2209,6 +2266,24 @@ export default function EssayNewPage() {
                       sourceTextError={sourceTextError}
                       fullSourceText
                     />
+                  )}
+                  {/* 課題文型は「筆者の主張の要約」から始める。講座と同じ型を出す。
+                      これまで型は講座でしか出しておらず、過去問では一度も
+                      表示されていなかった（読まずに書ける原因のひとつ） */}
+                  {inputMode === "text" && passageForm && (
+                    <div className="bg-muted/60 mb-4 rounded-lg border p-3">
+                      <p className="text-sm font-semibold">
+                        {passageForm.name}の順番
+                      </p>
+                      <p className="text-muted-foreground mt-1 text-xs">
+                        {formStepsOf(passageForm.id)
+                          .map((st) => `${st.label}${st.chars}字`)
+                          .join(" → ")}
+                      </p>
+                      <p className="text-muted-foreground mt-1.5 text-xs">
+                        {passageForm.focus}。{passageForm.pitfall}
+                      </p>
+                    </div>
                   )}
                   {/* テーマ選択時もお題カードを入力欄の直上に表示（執筆中の参照用） */}
                   {inputMode === "text" && selectedTheme && !pastQuestion && (

@@ -56,6 +56,10 @@ import { buildNextStepHint } from "@/lib/essay/next-step";
 import { EssayResultSummary } from "@/components/essay/EssayResultSummary";
 import { EssayReviewCoach } from "@/components/essay/EssayReviewCoach";
 import { ESSAY_CATEGORY_LABELS } from "@/lib/growth/weakness-category";
+import {
+  sourceEngagementLabel,
+  type SourceEngagement,
+} from "@/lib/essay/source-engagement";
 
 interface EssayScores {
   structure: number;
@@ -115,6 +119,8 @@ interface EssayFeedback {
   nextChallenge?: string;
   quantitativeAnalysis?: QuantitativeAnalysis;
   reportInsights?: ReportInsights;
+  /** 課題文の扱い（課題文型のみ）。合計には入らない指標 */
+  sourceEngagement?: SourceEngagement;
   apAlignmentAssessable?: boolean;
   scoreMaximum?: number;
 }
@@ -1024,6 +1030,47 @@ export default function EssayResultPage() {
                   )}
                 </div>
               </div>
+
+              {/* 課題文の扱い。合計50点には入れず、指標として見せる。
+                  点は既存5軸の上限で下がる（source-engagement.ts） */}
+              {result.feedback.sourceEngagement && (
+                <div
+                  className={`mt-6 rounded-lg border p-4 ${
+                    result.feedback.sourceEngagement.level === "grounded"
+                      ? "border-emerald-200 bg-emerald-50"
+                      : result.feedback.sourceEngagement.level === "shallow"
+                        ? "border-amber-200 bg-amber-50"
+                        : "border-rose-200 bg-rose-50"
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold">課題文の扱い</p>
+                    <span className="text-sm font-bold">
+                      {sourceEngagementLabel(
+                        result.feedback.sourceEngagement.level
+                      )}
+                    </span>
+                  </div>
+                  {result.feedback.sourceEngagement.basis && (
+                    <p className="text-muted-foreground mt-1.5 text-xs">
+                      {result.feedback.sourceEngagement.basis}
+                    </p>
+                  )}
+                  {result.feedback.sourceEngagement.quotes.length > 0 && (
+                    <ul className="text-muted-foreground mt-2 space-y-1 text-xs">
+                      {result.feedback.sourceEngagement.quotes.map((q, i) => (
+                        <li key={i} className="border-l-2 pl-2">
+                          {q}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <p className="text-muted-foreground mt-2 text-[10px]">
+                    この評価は50点の合計には含まれません。課題文に触れていない場合は、
+                    構成・論理性・独自性・成熟度の上限が下がります。
+                  </p>
+                </div>
+              )}
 
               {/* 課題文の読み取り (sourceType="report" のときのみ) */}
               {result.feedback.reportInsights && (

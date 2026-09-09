@@ -140,7 +140,24 @@ export const AI_PROMPT_VERSIONS = {
     //      最優先=改善点1件目の凝縮、と役割を決め、重複を明示的に禁じた。
     //      あわせて suggestion に解説文を書くことを禁止（置き換え候補として
     //      表示される欄に「〜は問題ありません」が入って表示が壊れていた）。
-    promptVersion: "essay-review-v17",
+    // v18: 課題文型で「読まなくても点が取れる」状態を潰した。
+    //      5軸の基準に資料読解の観点が1つも無く（構成/論理性/表現力/独自性/成熟度の
+    //      約40行に課題文・資料・読解・要約・筆者・引用という語が一度も出てこない）、
+    //      サーバ側で効く上限も「資料と矛盾した」の1本だけだった。つまり課題文を
+    //      無視した答案には減点が存在せず、矛盾しようがないぶん読まないほうが
+    //      安全ですらあった。誤読を書き留める reportInsights.misreadings も
+    //      表示専用で、採点コードは読んでいなかった。
+    //      - sourceEngagement（grounded/shallow/absent）を採点前に判定させる
+    //      - absent は主題ずれと同じ重さで内容4軸を3点以下、shallow は6点以下
+    //        （サーバー側で適用。src/lib/essay/source-engagement.ts）
+    //      - misreadings が非空なら logic を4点以下（死んでいた欄を活かす）
+    //      新しい採点軸は足していない。軸名がコード全体に手書きで散っており
+    //      （choco/score.ts は5軸を個別に足すため6軸目を黙って無視する）、
+    //      skill-check/aggregate.ts が同じ0-50尺度で合成しているため、
+    //      軸を増やすと合成値が黙って壊れる。合計50点とランク境界は据え置き。
+    //      ※ 課題文型の点が下がるため、report の既存答案は
+    //         scripts/rescore-essays.ts で採点し直すこと。
+    promptVersion: "essay-review-v18",
     schemaVersion: "essay-review-output-v2",
   },
   interviewScore: {
