@@ -136,17 +136,6 @@ export const EssayReviewOutputSchema = z.object({
         })
       )
       .max(6),
-    /**
-     * 課題文に触れたか。課題文型(report)のときだけ埋めさせる。
-     * nullable にしてあるのは、他の出題形式と既存の検証用データを壊さないため。
-     */
-    sourceEngagement: z
-      .object({
-        level: z.enum(["grounded", "shallow", "absent"]),
-        basis: shortText,
-        quotes: z.array(shortText).max(5),
-      })
-      .nullable(),
     reportInsights: z
       .object({
         sourceComprehension: boundedText,

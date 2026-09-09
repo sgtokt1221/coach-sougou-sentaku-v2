@@ -3,7 +3,8 @@
  *
  * 「読んでも読まなくても点が取れる」を潰すのが目的なので、
  * 「読まなければ確実に下がる」「資料の無い設問には一切かからない」の2点を
- * 静的に確かめる。
+ * 静的に確かめる。判定そのものは別呼び出しの AI が出すため、ここでは
+ * 判定を受け取ってからの上限の決め方だけを見る。
  *
  * 実行: npx tsx scripts/verify-source-engagement.ts
  */
@@ -20,7 +21,7 @@ const REPORT = "report";
 {
   const c = sourceEngagementCaps({
     questionType: REPORT,
-    engagement: { level: "absent", basis: "b", quotes: [] },
+    level: "absent",
   });
   assert.equal(c.content, 3);
   assert.equal(c.logic, 3);
@@ -31,7 +32,7 @@ const REPORT = "report";
 {
   const c = sourceEngagementCaps({
     questionType: REPORT,
-    engagement: { level: "shallow", basis: "b", quotes: [] },
+    level: "shallow",
   });
   assert.equal(c.content, 6);
   assert.equal(c.logic, 6);
@@ -42,7 +43,7 @@ const REPORT = "report";
 {
   const c = sourceEngagementCaps({
     questionType: REPORT,
-    engagement: { level: "grounded", basis: "b", quotes: ["筆者は〜と述べる"] },
+    level: "grounded",
   });
   assert.equal(c.content, 10);
   assert.equal(c.logic, 10);
@@ -62,7 +63,7 @@ const REPORT = "report";
   ]) {
     const c = sourceEngagementCaps({
       questionType: qt,
-      engagement: { level: "absent", basis: "b", quotes: [] },
+      level: "absent",
       misreadings: ["取り違え"],
     });
     assert.equal(
@@ -79,7 +80,7 @@ const REPORT = "report";
 {
   const c = sourceEngagementCaps({
     questionType: REPORT,
-    engagement: { level: "grounded", basis: "b", quotes: ["引用"] },
+    level: "grounded",
     misreadings: ["筆者の主張を逆に読んでいる"],
   });
   assert.equal(c.content, 10);
@@ -91,7 +92,7 @@ const REPORT = "report";
 {
   const c = sourceEngagementCaps({
     questionType: REPORT,
-    engagement: { level: "absent", basis: "b", quotes: [] },
+    level: "absent",
     misreadings: ["誤読"],
   });
   assert.equal(c.content, 3);
@@ -100,8 +101,8 @@ const REPORT = "report";
 
 // --- 判定が取れなかったら減点しない（AIが欄を埋め忘れただけの答案を落とさない） ---
 {
-  for (const e of [undefined, null]) {
-    const c = sourceEngagementCaps({ questionType: REPORT, engagement: e });
+  for (const e of [undefined, null] as const) {
+    const c = sourceEngagementCaps({ questionType: REPORT, level: e });
     assert.equal(c.content, 10);
     assert.equal(c.logic, 10);
     assert.equal(c.reason, null);
@@ -109,7 +110,7 @@ const REPORT = "report";
   // 誤読だけ取れている場合は logic を抑える
   const c = sourceEngagementCaps({
     questionType: REPORT,
-    engagement: null,
+    level: null,
     misreadings: ["誤読"],
   });
   assert.equal(c.logic, 4);
@@ -119,7 +120,7 @@ const REPORT = "report";
 {
   const c = sourceEngagementCaps({
     questionType: REPORT,
-    engagement: { level: "grounded", basis: "b", quotes: [] },
+    level: "grounded",
     misreadings: [],
   });
   assert.equal(c.logic, 10);

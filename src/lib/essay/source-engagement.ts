@@ -14,20 +14,13 @@
  * 合成値が黙って壊れる。合計50点・ランク境界は据え置き、既存の上限機構
  * （subjectMatch → cap、review-core.ts）に1本足すだけにする。
  *
- * 純関数。Firestore にも AI にも依存しないので
- * scripts/verify-source-engagement.ts から直接検証する。
+ * ここは上限の決め方だけを持つ純関数。判定そのものは別呼び出しで行う
+ * （src/lib/essay/source-engagement-judge.ts）。Firestore にも AI にも
+ * 依存しないので scripts/verify-source-engagement.ts から直接検証する。
  */
 
 /** 答案が課題文にどれだけ踏み込んでいるか */
 export type SourceEngagementLevel = "grounded" | "shallow" | "absent";
-
-export interface SourceEngagement {
-  level: SourceEngagementLevel;
-  /** そう判断した理由 */
-  basis: string;
-  /** 課題文に触れている答案内の記述（level の裏づけ） */
-  quotes: string[];
-}
 
 export interface SourceCaps {
   /** 内容4軸（構成・論理性・独自性・成熟度）の上限 */
@@ -53,13 +46,14 @@ const NO_CAP: SourceCaps = { content: 10, logic: 10, reason: null };
  */
 export function sourceEngagementCaps(params: {
   questionType?: string | null;
-  engagement?: SourceEngagement | null;
+  /** 課題文の扱いの判定。取れなければ減点しない */
+  level?: SourceEngagementLevel | null;
   /** reportInsights.misreadings。非空なら課題文の取り違えがある */
   misreadings?: string[] | null;
 }): SourceCaps {
   if (params.questionType !== "report") return NO_CAP;
 
-  const level = params.engagement?.level;
+  const level = params.level;
   const hasMisreading = (params.misreadings?.length ?? 0) > 0;
 
   // 誤読は logic だけを抑える（読んではいるので、構成や表現まで巻き込まない）

@@ -147,10 +147,21 @@ export const AI_PROMPT_VERSIONS = {
     //      無視した答案には減点が存在せず、矛盾しようがないぶん読まないほうが
     //      安全ですらあった。誤読を書き留める reportInsights.misreadings も
     //      表示専用で、採点コードは読んでいなかった。
-    //      - sourceEngagement（grounded/shallow/absent）を採点前に判定させる
+    //      - 課題文を読んで書いたか（grounded/shallow/absent）を、添削とは
+    //        別の1回の呼び出しで判定する（src/lib/essay/source-engagement-judge.ts）。
+    //        添削のスキーマに3値の enum を1つ足しただけで Anthropic API が
+    //        `The compiled grammar is too large` で 400 を返し、全答案の添削が
+    //        失敗した。項目を削っても回復せず、外すと成功する対照実験で確定した。
+    //        **このスキーマにはもう項目を足せない。** 増やすなら別呼び出しにする。
+    //      - 語の一致で数える案は捨てた。8000字級の課題文だと「意見・全員・雰囲気」
+    //        のような一般語が偶然一致し、課題文の論点に一度も触れていない答案を
+    //        grounded と誤判定した（実答案で確認）。要るのは語の重なりではなく
+    //        「設問だけで書けたか」の判断なので、意味を読める側に任せる。
     //      - absent は主題ずれと同じ重さで内容4軸を3点以下、shallow は6点以下
     //        （サーバー側で適用。src/lib/essay/source-engagement.ts）
     //      - misreadings が非空なら logic を4点以下（死んでいた欄を活かす）
+    //      - 出題側も直した。過去問63件と教材10件を「筆者の〜という主張を踏まえ」の
+    //        形に書き換え、scripts/validate-past-questions.ts でビルド時に縛る。
     //      新しい採点軸は足していない。軸名がコード全体に手書きで散っており
     //      （choco/score.ts は5軸を個別に足すため6軸目を黙って無視する）、
     //      skill-check/aggregate.ts が同じ0-50尺度で合成しているため、

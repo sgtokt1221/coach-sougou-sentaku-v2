@@ -12,6 +12,7 @@ import {
 } from "@/lib/essay/review-metrics";
 import { AI_MODEL_REVIEW, AI_PROMPT_VERSIONS } from "@/lib/ai/prompt-versions";
 import { sourceEngagementCaps } from "@/lib/essay/source-engagement";
+import { judgeSourceEngagement } from "@/lib/essay/source-engagement-judge";
 import type {
   EssayScoreAxis,
   EssayScores,
@@ -119,20 +120,37 @@ ${JSON.stringify(previousAttempt)}
 ${input.ocrText}
 </essay_under_review>`;
 
-  const response = await client.messages.parse({
-    model: AI_MODEL_REVIEW,
-    // messages.parse は max_tokens を thinking と本文で共有する。旧値の 4096 では
-    // 長い構造化出力(languageCorrections 最大5件 + 各種フィードバック)に食われ、
-    // 採点を吟味する余地が残らずルーブリックの既定値へ丸まっていた。
-    max_tokens: isReport ? 16000 : 12000,
-    system: systemPrompt,
-    messages: [{ role: "user", content: userMessage }],
-    output_config: {
-      format: zodOutputFormat(EssayReviewOutputSchema),
-      // 既定値と同じ high だが、採点水準に直結するため明示して固定する
-      effort: "high",
-    },
-  });
+  /**
+   * 課題文型のときだけ、「課題文を読んで書いたか」を別呼び出しで判定する。
+   * 添削と同時に走らせるので待ち時間は増えない。判定が取れなければ減点しない。
+   */
+  const engagementPromise =
+    input.questionType === "report" && (input.sourceText?.trim().length ?? 0) > 0
+      ? judgeSourceEngagement({
+          client,
+          essayText: input.ocrText,
+          sourceText: input.sourceText as string,
+          topic: input.topic,
+        })
+      : Promise.resolve(null);
+
+  const [response, engagement] = await Promise.all([
+    client.messages.parse({
+      model: AI_MODEL_REVIEW,
+      // messages.parse は max_tokens を thinking と本文で共有する。旧値の 4096 では
+      // 長い構造化出力(languageCorrections 最大5件 + 各種フィードバック)に食われ、
+      // 採点を吟味する余地が残らずルーブリックの既定値へ丸まっていた。
+      max_tokens: isReport ? 16000 : 12000,
+      system: systemPrompt,
+      messages: [{ role: "user", content: userMessage }],
+      output_config: {
+        format: zodOutputFormat(EssayReviewOutputSchema),
+        // 既定値と同じ high だが、採点水準に直結するため明示して固定する
+        effort: "high",
+      },
+    }),
+    engagementPromise,
+  ]);
 
   const rawText =
     response.content[0]?.type === "text" ? response.content[0].text : "";
@@ -197,7 +215,7 @@ ${input.ocrText}
    */
   const sourceCaps = sourceEngagementCaps({
     questionType: input.questionType,
-    engagement: parsed.feedback?.sourceEngagement ?? null,
+    level: engagement?.level ?? null,
     misreadings: parsed.feedback?.reportInsights?.misreadings ?? null,
   });
 
@@ -273,6 +291,13 @@ ${input.ocrText}
   const reportInsights: ReportInsights | undefined = parsed.feedback
     .reportInsights
     ? {
+        // 添削とは別呼び出しの判定（添削のスキーマに項目を足せないため）
+        ...(engagement
+          ? {
+              engagementLevel: engagement.level,
+              engagementBasis: engagement.basis,
+            }
+          : {}),
         sourceComprehension:
           parsed.feedback.reportInsights.sourceComprehension ?? "",
         summaryAccuracy: parsed.feedback.reportInsights.summaryAccuracy ?? "",
@@ -281,15 +306,6 @@ ${input.ocrText}
         analysisDepth: parsed.feedback.reportInsights.analysisDepth ?? "",
         sourceConnection: parsed.feedback.reportInsights.sourceConnection ?? "",
         misreadings: parsed.feedback.reportInsights.misreadings ?? [],
-      }
-    : undefined;
-
-  // 課題文の扱い。合計には入れず、指標として保存・表示する
-  const sourceEngagement = parsed.feedback.sourceEngagement
-    ? {
-        level: parsed.feedback.sourceEngagement.level,
-        basis: parsed.feedback.sourceEngagement.basis ?? "",
-        quotes: parsed.feedback.sourceEngagement.quotes ?? [],
       }
     : undefined;
 
@@ -320,7 +336,6 @@ ${input.ocrText}
     ...(taskFulfillment ? { taskFulfillment } : {}),
     ...(claimChecks.length > 0 ? { claimChecks } : {}),
     ...(reportInsights ? { reportInsights } : {}),
-    ...(sourceEngagement ? { sourceEngagement } : {}),
     languageCorrections,
     quantitativeAnalysis: calculateEssayMetrics(
       input.ocrText,

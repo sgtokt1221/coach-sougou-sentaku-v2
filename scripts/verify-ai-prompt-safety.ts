@@ -250,8 +250,6 @@ const validEssayReview = {
     },
     claimChecks: [],
     reportInsights: null,
-    // 課題文型でないときは null。report のときだけ判定が入る（v18〜）
-    sourceEngagement: null,
   },
 };
 assert.equal(EssayReviewOutputSchema.safeParse(validEssayReview).success, true);

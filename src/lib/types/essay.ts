@@ -281,11 +281,15 @@ export interface QuantitativeAnalysis {
 }
 
 /** 課題文の扱い。判定と上限のロジックは src/lib/essay/source-engagement.ts */
-import type { SourceEngagement } from "@/lib/essay/source-engagement";
-export type { SourceEngagement };
+import type { SourceEngagementLevel } from "@/lib/essay/source-engagement";
+export type { SourceEngagementLevel };
 
 /** レポート課題（課題文を読んで書く）専用の講評。questionType="report" のときのみ生成。 */
 export interface ReportInsights {
+  /** 課題文に触れたか。合計には入れず、指標として表示する */
+  engagementLevel?: SourceEngagementLevel;
+  /** そう判定した根拠。生徒にそのまま見せる */
+  engagementBasis?: string;
   sourceComprehension: string; // 課題文の理解度・要点把握
   summaryAccuracy: string; // 要約・言い換えの正確さ
   citationAppropriateness: string; // 引用/参照の妥当性
@@ -321,11 +325,6 @@ export interface EssayFeedback {
   aiMetadata?: AiGenerationMetadata;
   /** レポート課題専用の講評（report のときのみ） */
   reportInsights?: ReportInsights;
-  /**
-   * 課題文に触れたか（report のときのみ）。合計には入れない指標として表示する。
-   * 点は既存5軸の上限で下げる（src/lib/essay/source-engagement.ts）。
-   */
-  sourceEngagement?: SourceEngagement;
 }
 
 export interface RepeatedIssue {
