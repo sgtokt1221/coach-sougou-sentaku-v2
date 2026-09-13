@@ -1,9 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
-import {
-  buildEssayReviewPrompt,
-  type EssaySelfAnalysisContext,
-} from "@/lib/ai/prompts/essay";
+import { buildEssayReviewPrompt } from "@/lib/ai/prompts/essay";
 import { EssayReviewOutputSchema } from "@/lib/ai/schemas/essay-review";
 import { ESSAY_SCORE_MAX, calculateEssayTotal } from "@/lib/types/essay";
 import {
@@ -50,7 +47,6 @@ export interface EssayReviewCoreInput {
   wordLimit?: number;
   admissionPolicy?: string;
   weaknessList: string;
-  essaySelfAnalysis?: EssaySelfAnalysisContext;
   previousAttempt?: {
     essayText: string;
     feedbackSummary: string[];
@@ -104,7 +100,8 @@ export async function reviewEssayCore(
     wordLimit: input.wordLimit ?? null,
     admissionPolicy: hasAdmissionPolicy ? admissionPolicy : null,
     priorWeaknesses: input.weaknessList || null,
-    selfAnalysis: input.essaySelfAnalysis ?? null,
+    // 自己分析（志望・価値観）は渡さない。渡すと「志望と答案がつながっていない」
+    // という主観を求める指摘が出る。小論文は答案の論だけで採点する。
     sourceText: input.sourceText ?? null,
     chartDataSummary: input.chartDataSummary ?? null,
     lectureInfo: input.lectureInfo ?? null,
@@ -125,7 +122,8 @@ ${input.ocrText}
    * 添削と同時に走らせるので待ち時間は増えない。判定が取れなければ減点しない。
    */
   const engagementPromise =
-    input.questionType === "report" && (input.sourceText?.trim().length ?? 0) > 0
+    input.questionType === "report" &&
+    (input.sourceText?.trim().length ?? 0) > 0
       ? judgeSourceEngagement({
           client,
           essayText: input.ocrText,

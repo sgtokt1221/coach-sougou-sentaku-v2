@@ -1,4 +1,7 @@
-import type { AcademicCategory, SkillCheckQuestion } from "@/lib/types/skill-check";
+import type {
+  AcademicCategory,
+  SkillCheckQuestion,
+} from "@/lib/types/skill-check";
 import { ACADEMIC_CATEGORY_LABELS } from "@/lib/types/skill-check";
 import { instructionBoundary } from "./shared";
 
@@ -21,15 +24,24 @@ import { instructionBoundary } from "./shared";
  */
 const CATEGORY_EXPECTATIONS: Record<AcademicCategory, string> = {
   law: "対立する二つの立場の両方に触れているか。ルールが必要な理由を自分の言葉で説明できているか。身近な例で具体化できているか",
-  economics: "お金やモノの動きを「誰が得をして誰が困るか」で整理できているか。数字や事実を一つ以上使えているか",
-  medical: "患者本人の気持ちと社会全体の利益の両方に目を向けているか。命に関わる話を慎重な言葉で書けているか",
-  literature: "取り上げた作品や文章の中身を具体的に示せているか。自分の受け取り方とその理由を書けているか",
-  international: "複数の国や立場から見た違いを書けているか。具体的な国名や出来事を挙げられているか",
-  education: "生徒・先生・保護者など複数の立場から考えられているか。学校で実際にできる形まで具体化できているか",
-  social: "身のまわりの出来事を社会の仕組みと結びつけて説明できているか。思い込みでなく事実にもとづいているか",
-  science: "仕組みを順序立てて説明できているか。良い面と心配な面の両方を書けているか",
-  environment: "原因と結果のつながりを説明できているか。自分や地域でできることまで落とし込めているか",
-  ai_info: "技術の仕組みを自分の言葉で説明できているか。便利さと問題点の両方を書けているか",
+  economics:
+    "お金やモノの動きを「誰が得をして誰が困るか」で整理できているか。数字や事実を一つ以上使えているか",
+  medical:
+    "患者本人の気持ちと社会全体の利益の両方に目を向けているか。命に関わる話を慎重な言葉で書けているか",
+  literature:
+    "取り上げた作品や文章の中身を具体的に示せているか。自分の受け取り方とその理由を書けているか",
+  international:
+    "複数の国や立場から見た違いを書けているか。具体的な国名や出来事を挙げられているか",
+  education:
+    "生徒・先生・保護者など複数の立場から考えられているか。学校で実際にできる形まで具体化できているか",
+  social:
+    "身のまわりの出来事を社会の仕組みと結びつけて説明できているか。思い込みでなく事実にもとづいているか",
+  science:
+    "仕組みを順序立てて説明できているか。良い面と心配な面の両方を書けているか",
+  environment:
+    "原因と結果のつながりを説明できているか。自分や地域でできることまで落とし込めているか",
+  ai_info:
+    "技術の仕組みを自分の言葉で説明できているか。便利さと問題点の両方を書けているか",
 };
 
 /** 充足率がこの値を下回る答案は論を展開しきれていないと判定する。 */
@@ -44,7 +56,7 @@ const FILL_RATE_PENALTY_THRESHOLD = 70;
  */
 function buildWordLimitRule(
   wordLimit: number,
-  fillRate: number | null,
+  fillRate: number | null
 ): string {
   if (!wordLimit || fillRate == null) {
     return "- 制限字数の情報がないため、字数を理由に加点も減点もしない。";
@@ -57,13 +69,13 @@ function buildWordLimitRule(
 
 export function buildSkillCheckPrompt(
   question: SkillCheckQuestion,
-  options?: { pastCategorySummary?: string; fillRate?: number | null },
+  options?: { pastCategorySummary?: string; fillRate?: number | null }
 ): string {
   const categoryLabel = ACADEMIC_CATEGORY_LABELS[question.category];
   const expectation = CATEGORY_EXPECTATIONS[question.category];
   const wordLimitRule = buildWordLimitRule(
     question.wordLimit,
-    options?.fillRate ?? null,
+    options?.fillRate ?? null
   );
 
   return `あなたは「Coach for 総合型選抜」のスキルチェック採点AIです。以下の【標準化ルーブリック v2】に基づき、小論文を厳密に採点してください。
@@ -128,8 +140,9 @@ ${question.rubricHint ? `- 採点観点の補足: ${question.rubricHint}` : ""}
 - 2: 文章として破綻。
 
 ### originality（独自性）
-- 10: 本人しか書けない具体（固有の状況、判断の迷い、実際の数値）が論の中心にある。数十枚に1枚。
-- 8: 自分の観点や経験が論を支えている（上位1〜2割）。
+※ 着眼点・主張・論の組み立ての独自性を見る。本人の経験・志望・感想の有無では上げ下げしない。
+- 10: その着眼点が主題の捉え方そのものを変えている。数十枚に1枚。
+- 8: 見落とされがちな論点や前提を指摘し、そこから主張を組み立てている（上位1〜2割）。
 - 6: 部分的に独自の視点があるが、多くは教科書的。**平均的な答案はここ**。
 - 4: 一般論のみ。
 - 2: テンプレ回答。

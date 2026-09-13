@@ -104,24 +104,6 @@ export async function POST(request: NextRequest) {
             .join("\n")
         : "(過去の弱点なし)";
 
-    // 自己分析 (任意)
-    step = "load_self_analysis";
-    let essaySelfAnalysis;
-    try {
-      const saDoc = await adminDb.doc(`selfAnalysis/${uid}`).get();
-      if (saDoc.exists) {
-        const sa = saDoc.data()!;
-        essaySelfAnalysis = {
-          values: sa.values?.coreValues,
-          strengths: sa.strengths?.strengths,
-          vision: sa.vision?.longTermVision,
-          selfStatement: sa.identity?.selfStatement,
-        };
-      }
-    } catch {
-      // 取れなくても続行
-    }
-
     // essay ドキュメント作成 (sourceType="lecture")
     step = "create_essay";
     const essayId = `essay_lec_${lecture.id}_${Date.now()}`;
@@ -196,7 +178,6 @@ export async function POST(request: NextRequest) {
         // 基礎講座は大学AP非依存。空値にしてAP軸を評価対象外にする。
         admissionPolicy: "",
         weaknessList,
-        essaySelfAnalysis,
       });
       scores = coreResult.scores;
       feedback = coreResult.feedback;

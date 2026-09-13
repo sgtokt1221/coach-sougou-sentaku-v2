@@ -26,11 +26,11 @@ const TIPS = [
   { icon: Lightbulb, text: "抽象と具体を行き来すると論が深まります" },
   { icon: PenTool, text: "結論で新しい論点を出さず、本論の要約に留めましょう" },
   { icon: BookOpen, text: "冒頭30字で採点者の印象が決まります" },
-  { icon: Target, text: "自分だけの体験をストーリーとして入れると独自性UP" },
+  { icon: Target, text: "よくある理由の一歩先の論点を掘ると独自性UP" },
   { icon: Lightbulb, text: "800字なら4段落、1200字なら5-6段落が目安です" },
   {
     icon: GraduationCap,
-    text: "志望理由と小論文の主張に一貫性を持たせましょう",
+    text: "主張と結論が一貫しているか、最後に読み返しましょう",
   },
   {
     icon: FileText,

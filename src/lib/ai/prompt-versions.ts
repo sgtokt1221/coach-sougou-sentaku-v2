@@ -168,7 +168,11 @@ export const AI_PROMPT_VERSIONS = {
     //      軸を増やすと合成値が黙って壊れる。合計50点とランク境界は据え置き。
     //      ※ 課題文型の点が下がるため、report の既存答案は
     //         scripts/rescore-essays.ts で採点し直すこと。
-    promptVersion: "essay-review-v18",
+    // v19: 答案に主観を求めない。独自性を「本人の経験」ではなく着眼点・主張・
+    //      論の組み立てで見る基準に替えた。自己分析（志望）を入力に渡していたため
+    //      「創薬科学への志望と答案がつながっていない」のような指摘が出ていた。
+    //      入力から外し、経験・志望・感想の欠如を指摘しない規則を足した。
+    promptVersion: "essay-review-v19",
     schemaVersion: "essay-review-output-v2",
   },
   interviewScore: {

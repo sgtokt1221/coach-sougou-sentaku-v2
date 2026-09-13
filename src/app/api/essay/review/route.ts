@@ -14,7 +14,6 @@ import {
   reviewEssayCore,
   EssayReviewParseError,
 } from "@/lib/essay/review-core";
-import type { EssaySelfAnalysisContext } from "@/lib/ai/prompts/essay";
 import { requireRole } from "@/lib/api/auth";
 import { prepareAdmissionPolicy } from "@/lib/ai/admission-policy";
 
@@ -262,25 +261,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 自己分析データがあれば取得 (小論文にも生徒の価値観・強みを反映)
-    let essaySelfAnalysis: EssaySelfAnalysisContext | undefined;
-    if (adminDb && essayUserId) {
-      try {
-        const saDoc = await adminDb.doc(`selfAnalysis/${essayUserId}`).get();
-        if (saDoc.exists) {
-          const sa = saDoc.data()!;
-          essaySelfAnalysis = {
-            values: sa.values?.coreValues,
-            strengths: sa.strengths?.strengths,
-            vision: sa.vision?.longTermVision,
-            selfStatement: sa.identity?.selfStatement,
-          };
-        }
-      } catch (err) {
-        console.warn("Self-analysis fetch failed for essay review:", err);
-      }
-    }
-
     // AI 添削をコア関数経由で呼ぶ (宿題提出フローからも同じ関数を呼ぶ)
     let scores: EssayScores;
     let feedback: EssayFeedback;
@@ -295,7 +275,6 @@ export async function POST(request: NextRequest) {
         wordLimit: body.wordLimit,
         admissionPolicy,
         weaknessList,
-        essaySelfAnalysis,
         ...(parentSnapshot
           ? {
               previousAttempt: {

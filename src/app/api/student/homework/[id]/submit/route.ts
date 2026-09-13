@@ -271,23 +271,6 @@ async function submitEssay(args: {
     },
   });
 
-  // 自己分析
-  let essaySelfAnalysis;
-  try {
-    const saDoc = await adminDb.doc(`selfAnalysis/${uid}`).get();
-    if (saDoc.exists) {
-      const sa = saDoc.data()!;
-      essaySelfAnalysis = {
-        values: sa.values?.coreValues,
-        strengths: sa.strengths?.strengths,
-        vision: sa.vision?.longTermVision,
-        selfStatement: sa.identity?.selfStatement,
-      };
-    }
-  } catch {
-    // 取れなくても続行
-  }
-
   // AI 添削 (core 関数経由)
   let scores: EssayScores;
   let feedback: EssayFeedback;
@@ -301,7 +284,6 @@ async function submitEssay(args: {
       chartDataSummary,
       admissionPolicy,
       weaknessList,
-      essaySelfAnalysis,
     });
     scores = coreResult.scores;
     feedback = coreResult.feedback;
