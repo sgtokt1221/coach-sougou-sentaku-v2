@@ -7,6 +7,13 @@ import { getPastQuestionById } from "@/data/essay-past-questions";
 import { reportMaterials } from "@/data/essay-report-materials";
 
 /**
+ * 1人あたり残す下書きの数。自動保存は書いている間ずっと走るため、
+ * 上限を決めないと書きかけが溜まり続け、履歴の「書きかけの下書き」から
+ * 本人が目的のものを探せなくなる。古いものから消す。
+ */
+const DRAFT_KEEP_COUNT = 5;
+
+/**
  * 一覧に出すテーマ名を決める。テーマ選択時は topic が空のままなので、
  * 選択元（過去問・テーマ）の名前を引く。
  * 選択中はテーマ入力欄が隠れるため、topic に残った値は選択前の入力が
@@ -150,6 +157,20 @@ export async function POST(request: NextRequest) {
     await adminDb
       .doc(`users/${uid}/essayDrafts/${draftId}`)
       .set(data, { merge: true });
+
+    // 増えるのは新規作成のときだけ。更新は自動保存が数秒ごとに叩くので数えない
+    if (isNew) {
+      const snap = await adminDb
+        .collection(`users/${uid}/essayDrafts`)
+        .orderBy("updatedAt", "desc")
+        .get();
+      const stale = snap.docs.slice(DRAFT_KEEP_COUNT);
+      if (stale.length > 0) {
+        const batch = adminDb.batch();
+        stale.forEach((doc) => batch.delete(doc.ref));
+        await batch.commit();
+      }
+    }
 
     return NextResponse.json({ draftId });
   } catch (error) {

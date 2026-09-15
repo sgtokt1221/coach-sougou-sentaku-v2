@@ -420,6 +420,26 @@ export default function EssayNewPage() {
         if (!res.ok) throw new Error("親エッセイの取得に失敗しました");
         const data = await res.json();
         if (cancelled) return;
+        /**
+         * 出題を復元する。
+         *
+         * retryContext は再トライとレポートのときしか保存されないため、
+         * テーマ・過去問の初回答案からやり直すと課題文・推奨字数・出題形式が
+         * 揃って落ち、同じ設問のはずが資料なしの別のお題になっていた。
+         * questionContext は毎回保存されるので、無いぶんはそこから補う。
+         */
+        const retryContext =
+          data.retryContext ??
+          (data.sourceText || data.questionType || data.questionWordLimit
+            ? {
+                wordLimit: data.questionWordLimit ?? null,
+                questionType: data.questionType ?? null,
+                sourceText: data.sourceText ?? null,
+                chartDataSummary: data.chartDataSummary ?? null,
+                pastQuestionFacultyName: null,
+                lectureInfo: data.lectureInfo ?? null,
+              }
+            : null);
         const parent: RetryParent = {
           id: data.id,
           universityName: data.universityName ?? "",
@@ -431,9 +451,18 @@ export default function EssayNewPage() {
           inputMode: data.inputMode ?? null,
           scores: data.scores,
           feedback: data.feedback,
-          retryContext: data.retryContext ?? null,
+          retryContext,
         };
         setRetryParent(parent);
+        // 出題元が分かるなら、テーマ・過去問を選んだ状態に戻す。設問文・課題文・
+        // グラフ・推奨字数が元の答案とまったく同じ形で復元される
+        if (data.themeId) {
+          setSelectedTheme(getThemeById(data.themeId) ?? null);
+        } else if (data.pastQuestionId) {
+          setPastQuestion(
+            getEnrichedPastQuestionById(data.pastQuestionId) ?? null
+          );
+        }
         if (parent.topic) setTopic(parent.topic);
         if (parent.retryContext?.wordLimit)
           setCustomMaxLength(parent.retryContext.wordLimit);

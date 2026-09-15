@@ -98,6 +98,14 @@ export async function GET(
       // レポート課題で「課題文のどこを指しているのか」に答えられない
       questionType: data.questionContext?.questionType ?? null,
       sourceText: data.questionContext?.sourceText ?? null,
+      // 出題元。やり直し画面が同じ設問を組み立て直すのに使う。retryContext は
+      // 再トライとレポートのときしか保存されないため、初回答案からのやり直しでは
+      // ここからしか元の課題文・字数・出題形式を復元できない
+      questionWordLimit: data.questionContext?.wordLimit ?? null,
+      chartDataSummary: data.questionContext?.chartDataSummary ?? null,
+      lectureInfo: data.questionContext?.lectureInfo ?? null,
+      themeId: data.questionContext?.themeId ?? null,
+      pastQuestionId: data.questionContext?.pastQuestionId ?? null,
       status: data.status ?? "reviewed",
       inlineComments: data.inlineComments ?? [],
       scores,
