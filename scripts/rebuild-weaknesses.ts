@@ -40,6 +40,25 @@ const APPLY = process.argv.includes("--apply");
 const ONLY_UID = process.argv
   .find((a) => a.startsWith("--uid="))
   ?.slice("--uid=".length);
+/** 名前で絞る（部分一致）。例: --name=山内,岡本,長谷川 */
+const ONLY_NAMES = (
+  process.argv.find((a) => a.startsWith("--name="))?.slice("--name=".length) ??
+  ""
+)
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+/** 1人ずつの前後を全部出す（--name / --uid のときは既定で詳しく出す） */
+const DETAIL =
+  process.argv.includes("--detail") || ONLY_NAMES.length > 0 || !!ONLY_UID;
+/**
+ * 棚卸しモード。正規ラベルに寄らなかった弱点名を全部出す。
+ *
+ * 目視で1件ずつ拾うと、同じ意味なのに別レコードになっている組（「一文の長さ」と
+ * 「長文の読みやすさ」など）を取りこぼす。どれだけ寄せられていないかを
+ * 機械的に出して、タクソノミーに足す判断材料にする。書き込みはしない。
+ */
+const AUDIT = process.argv.includes("--audit");
 
 type Category = ReturnType<typeof categorizeWeakness>;
 
@@ -154,9 +173,71 @@ async function main() {
   if (!adminDb) throw new Error("Firebase Admin SDK が初期化されていません");
   const db = adminDb;
 
-  const userDocs = ONLY_UID
+  let userDocs = ONLY_UID
     ? [await db.doc(`users/${ONLY_UID}`).get()]
     : (await db.collection("users").get()).docs;
+
+  if (ONLY_NAMES.length > 0) {
+    userDocs = userDocs.filter((d) => {
+      const name = String(d.data()?.displayName ?? "");
+      return ONLY_NAMES.some((n) => name.includes(n));
+    });
+    if (userDocs.length === 0) {
+      console.log(`該当する生徒が見つかりません: ${ONLY_NAMES.join(", ")}`);
+      return;
+    }
+  }
+
+  if (AUDIT) {
+    /** 正規ラベルに寄った／寄らなかった弱点名を全ユーザー分数える */
+    const unresolved = new Map<string, number>();
+    const resolved = new Map<string, number>();
+    let dropped = 0;
+    for (const userDoc of userDocs) {
+      if (!userDoc.exists) continue;
+      const subs = await loadSubmissions(userDoc.id);
+      for (const sub of subs) {
+        for (const issue of sub.issues) {
+          const area = (issue.area ?? "").trim();
+          if (!area) continue;
+          if (!isWeaknessLabel(area)) {
+            dropped++;
+            continue;
+          }
+          const entry = resolveCanonical(area, {
+            categoryHint: (issue.category as Category) ?? undefined,
+            supportText: (issue.message ?? "").trim() || undefined,
+          });
+          const map = entry ? resolved : unresolved;
+          const key = entry ? entry.label : area;
+          map.set(key, (map.get(key) ?? 0) + 1);
+        }
+      }
+    }
+    const total =
+      [...resolved.values()].reduce((a, b) => a + b, 0) +
+      [...unresolved.values()].reduce((a, b) => a + b, 0);
+    const unresolvedCount = [...unresolved.values()].reduce((a, b) => a + b, 0);
+    console.log(`\n【棚卸し・書き込みなし】`);
+    console.log(
+      `弱点の指摘 ${total}件のうち、正規ラベルに寄らなかったのは ${unresolvedCount}件` +
+        `（${Math.round((unresolvedCount / Math.max(1, total)) * 100)}%）。` +
+        `弱点として扱わなかったもの ${dropped}件`
+    );
+    console.log(`\n■ 寄らなかった弱点名（多い順・タクソノミー追加の候補）`);
+    for (const [label, n] of [...unresolved.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 40)) {
+      console.log(`  ${String(n).padStart(3)}件  ${label}`);
+    }
+    console.log(`\n■ 寄った先（多い順）`);
+    for (const [label, n] of [...resolved.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 25)) {
+      console.log(`  ${String(n).padStart(3)}件  ${label}`);
+    }
+    return;
+  }
 
   const backup: Record<string, unknown[]> = {};
   let usersWithWeaknesses = 0;
@@ -205,28 +286,50 @@ async function main() {
     }
 
     const newIds = new Set(rebuilt.map((r) => weaknessDocId(r.area)));
-    const stale = existing.filter((e) => !newIds.has(e.id));
+    /**
+     * 面談で講師が入れた弱点は作り直しの対象外。提出物から復元できないので、
+     * 消さずにそのまま残す（AIが積んだ汎用ラベルとは別物）。
+     */
+    const stale = existing.filter(
+      (e) => !newIds.has(e.id) && (e as { source?: string }).source !== "lesson"
+    );
     deletedTotal += stale.length;
 
-    if (
-      shownExamples.length < 3 &&
-      (existing.length > 0 || rebuilt.length > 0)
-    ) {
-      const before = existing
-        .map(
-          (e) =>
-            `${(e as { area?: string }).area}(${(e as { count?: number }).count}回)`
-        )
-        .slice(0, 5)
-        .join(" / ");
-      const after = rebuilt
-        .map((r) => `${r.area}(${r.count}回)`)
-        .slice(0, 5)
-        .join(" / ");
+    if (DETAIL) {
+      const name = String(userDoc.data()?.displayName ?? "(名前なし)");
+      const fmt = (label: string, count: number, extra = "") =>
+        `    ${count}回  ${label.length > 34 ? label.slice(0, 34) + "…" : label}${extra}`;
+      console.log(`\n■ ${name}（提出 ${subs.length}件）`);
+      console.log("  今:");
+      for (const e of [...existing].sort(
+        (a, b) =>
+          ((b as { count?: number }).count ?? 0) -
+          ((a as { count?: number }).count ?? 0)
+      )) {
+        const rec = e as { area?: string; count?: number; source?: string };
+        console.log(
+          fmt(
+            String(rec.area ?? ""),
+            rec.count ?? 0,
+            rec.source === "lesson" ? "（面談・残す）" : ""
+          )
+        );
+      }
+      console.log("  作り直し後:");
+      if (rebuilt.length === 0) console.log("    (なし)");
+      for (const r of rebuilt) {
+        console.log(fmt(r.area, r.count));
+        if (r.lastExample) {
+          console.log(`         直近: ${r.lastExample.slice(0, 60)}`);
+        }
+      }
+      console.log(`  消えるもの: ${stale.length}件`);
+    }
+
+    if (!DETAIL && shownExamples.length < 3 && existing.length > 0) {
+      const name = String(userDoc.data()?.displayName ?? uid.slice(0, 6));
       shownExamples.push(
-        `  uid ${uid.slice(0, 6)}…  提出${subs.length}件\n` +
-          `    前: ${before || "(なし)"}\n` +
-          `    後: ${after || "(なし)"}`
+        `  ${name}（提出${subs.length}件）: ${existing.length}件 → ${rebuilt.length}件`
       );
     }
 

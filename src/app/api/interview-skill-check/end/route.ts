@@ -24,7 +24,10 @@ interface EndBody {
   voiceSummary?: string;
 }
 
-function mockResult(messages: InterviewMessage[]): { scores: InterviewSkillScores; feedback: InterviewSkillFeedback } {
+function mockResult(messages: InterviewMessage[]): {
+  scores: InterviewSkillScores;
+  feedback: InterviewSkillFeedback;
+} {
   const studentTurns = messages.filter((m) => m.role === "student").length;
   const base = Math.min(8, Math.max(4, studentTurns * 2));
   const scores: InterviewSkillScores = {
@@ -34,12 +37,15 @@ function mockResult(messages: InterviewMessage[]): { scores: InterviewSkillScore
     demeanor: base,
     total: 0,
   };
-  scores.total = scores.verbal + scores.logical + scores.depth + scores.demeanor;
+  scores.total =
+    scores.verbal + scores.logical + scores.depth + scores.demeanor;
   const feedback: InterviewSkillFeedback = {
-    overall: "（モック）落ち着いて対話ができていました。揺さぶり質問への対応がさらに深まると良いです。",
+    overall:
+      "（モック）落ち着いて対話ができていました。揺さぶり質問への対応がさらに深まると良いです。",
     goodPoints: ["丁寧な言葉遣い", "自分の関心を具体的に説明できた"],
     improvements: ["反論への対応", "抽象化の深さ"],
-    priorityImprovement: "反論されたら一度受け止めてから、自分の立場を言い直す練習を。",
+    priorityImprovement:
+      "反論されたら一度受け止めてから、自分の立場を言い直す練習を。",
   };
   return { scores, feedback };
 }
@@ -87,20 +93,29 @@ export async function POST(request: NextRequest) {
       const client = new Anthropic();
       const systemPrompt = appendVoiceAnalysisToEvaluation(
         INTERVIEW_SKILL_CHECK_EVALUATION_PROMPT,
-        voiceSummary,
+        voiceSummary
       );
       const transcriptBlocks = messages
-        .map((m) => `【${m.role === "student" ? "受験生" : "面接官"}】${m.content}`)
+        .map(
+          (m) => `【${m.role === "student" ? "受験生" : "面接官"}】${m.content}`
+        )
         .join("\n\n");
       const response = await client.messages.create({
         model: "claude-sonnet-4-6",
         max_tokens: 2048,
         system: systemPrompt,
-        messages: [{ role: "user", content: `# 面接対話ログ\n\n${transcriptBlocks}\n\n上記を採点してください。` }],
+        messages: [
+          {
+            role: "user",
+            content: `# 面接対話ログ\n\n${transcriptBlocks}\n\n上記を採点してください。`,
+          },
+        ],
       });
-      const rawText = response.content[0].type === "text" ? response.content[0].text : "";
+      const rawText =
+        response.content[0].type === "text" ? response.content[0].text : "";
       const jsonMatch =
-        rawText.match(/```json\s*([\s\S]*?)\s*```/) || rawText.match(/(\{[\s\S]*\})/);
+        rawText.match(/```json\s*([\s\S]*?)\s*```/) ||
+        rawText.match(/(\{[\s\S]*\})/);
       if (!jsonMatch) throw new Error("パース失敗");
       const parsed = JSON.parse(jsonMatch[1]);
       scores = {
@@ -111,7 +126,8 @@ export async function POST(request: NextRequest) {
         total: Number(parsed.scores.total ?? 0),
       };
       // totalが与えられていない/ずれている場合は再計算
-      const computedTotal = scores.verbal + scores.logical + scores.depth + scores.demeanor;
+      const computedTotal =
+        scores.verbal + scores.logical + scores.depth + scores.demeanor;
       if (scores.total !== computedTotal) scores.total = computedTotal;
       feedback = {
         overall: parsed.feedback.overall ?? "",
@@ -122,7 +138,10 @@ export async function POST(request: NextRequest) {
       };
     } catch (err) {
       console.error("Evaluation failed:", err);
-      return NextResponse.json({ error: "採点に失敗しました" }, { status: 500 });
+      return NextResponse.json(
+        { error: "採点に失敗しました" },
+        { status: 500 }
+      );
     }
   }
 
@@ -135,10 +154,12 @@ export async function POST(request: NextRequest) {
   let resultId = `mock-${Date.now()}`;
 
   if (!adminDb) {
-    console.error("[interview-skill-check/end] adminDb is null — Firebase Admin SDK not initialized");
+    console.error(
+      "[interview-skill-check/end] adminDb is null — Firebase Admin SDK not initialized"
+    );
     return NextResponse.json(
       { error: "サーバー側の設定不備により保存できませんでした" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 
@@ -147,23 +168,25 @@ export async function POST(request: NextRequest) {
 
   // 重要書き込み: interviewSkillCheck 本体 (失敗したら 500)
   try {
-    const docRef = await adminDb.collection(`users/${userId}/interviewSkillChecks`).add({
-      userId,
-      scores: sanitize(scores),
-      rank,
-      feedback: sanitize(feedback),
-      messages: sanitize(messages),
-      durationSec: durationSec ?? 0,
-      turnCount,
-      takenAt: FieldValue.serverTimestamp(),
-      version: "v1",
-    });
+    const docRef = await adminDb
+      .collection(`users/${userId}/interviewSkillChecks`)
+      .add({
+        userId,
+        scores: sanitize(scores),
+        rank,
+        feedback: sanitize(feedback),
+        messages: sanitize(messages),
+        durationSec: durationSec ?? 0,
+        turnCount,
+        takenAt: FieldValue.serverTimestamp(),
+        version: "v1",
+      });
     resultId = docRef.id;
   } catch (err) {
     console.error("[interview-skill-check/end] Failed to write doc:", err);
     return NextResponse.json(
       { error: "面接スキルチェック結果の保存に失敗しました" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 
@@ -177,21 +200,31 @@ export async function POST(request: NextRequest) {
         lastInterviewCheckScore: scores.total,
         lastInterviewCheckRank: rank,
       },
-      { merge: true },
+      { merge: true }
     );
-    const { refreshInterviewAggregateCache } = await import(
-      "@/lib/skill-check/aggregate"
-    );
+    const { refreshInterviewAggregateCache } =
+      await import("@/lib/skill-check/aggregate");
     void refreshInterviewAggregateCache(userId).catch((e) =>
-      console.warn("[interview-skill-check/end] aggregate refresh failed:", e),
+      console.warn("[interview-skill-check/end] aggregate refresh failed:", e)
     );
   } catch (err) {
-    console.error("[interview-skill-check/end] Failed to update user doc:", err);
+    console.error(
+      "[interview-skill-check/end] Failed to update user doc:",
+      err
+    );
   }
 
-  // 補助書き込み: 弱点 (失敗しても続行)
+  /**
+   * 補助書き込み: 弱点 (失敗しても続行)。
+   *
+   * ここは improvements（助言の自由文）をそのまま弱点にしていた。助言は毎回
+   * 出るうえ、正規化の部分一致で「結論が不明確・欠落している」等の汎用ラベルに
+   * 落ちるため、誰の弱点リストも同じ文言で埋まっていた。この採点は弱点そのものを
+   * 出す欄（repeatedIssues）を持たないので、弱点は積まない。
+   * 弱点の正本は小論文添削と模擬面接に置く。
+   */
   try {
-    const weaknessTags = feedback.improvements.slice();
+    const weaknessTags: string[] = [];
     if (weaknessTags.length > 0) {
       const existingSnap = await adminDb
         .collection(`users/${userId}/weaknesses`)
@@ -210,25 +243,34 @@ export async function POST(request: NextRequest) {
           reminderDismissedAt: w.reminderDismissedAt?.toDate() ?? null,
         };
       });
-      const updated = updateWeaknessRecords(existing, weaknessTags, "interview_skill_check");
+      const updated = updateWeaknessRecords(
+        existing,
+        weaknessTags,
+        "interview_skill_check"
+      );
       for (const w of updated) {
-        await adminDb.doc(`users/${userId}/weaknesses/${weaknessDocId(w.area)}`).set(
-          {
-            area: w.area,
-            count: w.count,
-            firstOccurred: w.firstOccurred,
-            lastOccurred: w.lastOccurred,
-            improving: w.improving,
-            resolved: w.resolved,
-            source: w.source,
-            reminderDismissedAt: w.reminderDismissedAt,
-          },
-          { merge: true },
-        );
+        await adminDb
+          .doc(`users/${userId}/weaknesses/${weaknessDocId(w.area)}`)
+          .set(
+            {
+              area: w.area,
+              count: w.count,
+              firstOccurred: w.firstOccurred,
+              lastOccurred: w.lastOccurred,
+              improving: w.improving,
+              resolved: w.resolved,
+              source: w.source,
+              reminderDismissedAt: w.reminderDismissedAt,
+            },
+            { merge: true }
+          );
       }
     }
   } catch (err) {
-    console.error("[interview-skill-check/end] Failed to update weaknesses:", err);
+    console.error(
+      "[interview-skill-check/end] Failed to update weaknesses:",
+      err
+    );
   }
 
   const result: InterviewSkillCheckResult = {

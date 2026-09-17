@@ -68,7 +68,18 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     id: "structure.off_topic",
     category: "structure",
     label: "設問・テーマから論点がずれている",
-    keywords: ["設問", "テーマからずれ", "論点がずれ", "逸脱", "外れ", "趣旨"],
+    keywords: [
+      "設問",
+      "テーマからずれ",
+      "論点がずれ",
+      "逸脱",
+      "外れ",
+      "趣旨",
+      // 実データで「テーマのすり替え」が別レコードになっていた
+      "すり替え",
+      "主題がずれ",
+      "主題のずれ",
+    ],
   },
 
   // ---- 論証 (logic) ----
@@ -97,6 +108,10 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
       "説得力",
       "エビデンス",
       "理由が薄",
+      // 実データで「理由づけの薄さ」が別レコードになっていた
+      "理由づけ",
+      "理由付け",
+      "裏づけ",
     ],
   },
   {
@@ -144,6 +159,22 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
       "わかりにくい",
       "読みにくい",
       "伝わらな",
+    ],
+  },
+  {
+    // 実データで「一文の長さ」「一文の長さと読点の多用」「長文の読みやすさ」が
+    // 別々のレコードになっていた。同じ指摘なので1本に束ねる。
+    id: "expression.long_sentence",
+    category: "expression",
+    label: "一文が長く読みにくい",
+    keywords: [
+      "一文が長",
+      "一文の長さ",
+      "長文",
+      "読点",
+      "80字",
+      "文が長",
+      "長い文",
     ],
   },
   {
@@ -367,11 +398,34 @@ const MAX_KEYWORD_RESOLVE_LENGTH = 40;
 const ADVICE_ENDING =
   /(ましょう|ください|してみて|すると良く|するとよく|すると伝わ|と良いです|とよいです|しよう)/;
 
-/** 弱点リストに積んでよいテキストか（助言・長文を弾く） */
+/**
+ * 弱点の名前として意味をなさない語。
+ *
+ * 実データに「全体」だけのレコードや、構造化出力の欄名をそのまま返した
+ * "logic" / "structure" が入っていた。これらが弱点リストに並んでも、
+ * 生徒は何を直せばよいか分からない。
+ */
+const STOP_LABELS = new Set([
+  "全体",
+  "総合",
+  "その他",
+  "なし",
+  "特になし",
+  "structure",
+  "logic",
+  "expression",
+  "apalignment",
+  "originality",
+  "reasoningmaturity",
+  "other",
+]);
+
+/** 弱点リストに積んでよいテキストか（助言・長文・中身のない語を弾く） */
 export function isWeaknessLabel(text: string): boolean {
   const t = text.trim();
-  if (t.length === 0) return false;
+  if (t.length < 3) return false;
   if (t.length > MAX_KEYWORD_RESOLVE_LENGTH) return false;
+  if (STOP_LABELS.has(t.toLowerCase())) return false;
   return !ADVICE_ENDING.test(t);
 }
 
