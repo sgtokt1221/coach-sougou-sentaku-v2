@@ -5,7 +5,13 @@ export interface WeaknessRecord {
   lastOccurred: Date;
   improving: boolean;
   resolved: boolean;
-  source: "essay" | "interview" | "skill_check" | "interview_skill_check" | "lesson" | "both";
+  source:
+    | "essay"
+    | "interview"
+    | "skill_check"
+    | "interview_skill_check"
+    | "lesson"
+    | "both";
   reminderDismissedAt: Date | null;
   /**
    * 弱点の系統カテゴリ。 essay 5 軸 + other で分類。
@@ -33,11 +39,25 @@ export interface WeaknessRecord {
    * 自動付与: improving=true で 60日 / resolved=true で 30日 lastOccurred から経過。
    */
   archivedAt?: Date | null;
+  /**
+   * 直近の具体例。AI が挙げた「答案のこの一文がこう弱い」をそのまま入れる。
+   *
+   * 正規ラベル（「結論が不明確・欠落している」等）だけだと、どの答案でも同じ
+   * 文言が並び、生徒は自分の何を直せばよいか分からない。ラベルは束ねるための
+   * ものと割り切り、中身はここで見せる。
+   */
+  lastExample?: string;
 }
 
-export type WeaknessReminderLevel = "critical" | "warning" | "improving" | "resolved";
+export type WeaknessReminderLevel =
+  | "critical"
+  | "warning"
+  | "improving"
+  | "resolved";
 
-export function getWeaknessReminderLevel(w: WeaknessRecord): WeaknessReminderLevel | null {
+export function getWeaknessReminderLevel(
+  w: WeaknessRecord
+): WeaknessReminderLevel | null {
   if (w.resolved) return "resolved";
   if (w.count >= 5) return "critical";
   if (w.count >= 3) return "warning";

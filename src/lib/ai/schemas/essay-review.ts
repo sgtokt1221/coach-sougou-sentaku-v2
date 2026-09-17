@@ -25,6 +25,11 @@ export const EssayReviewOutputSchema = z.object({
     repeatedIssues: z
       .array(
         z.object({
+          /**
+           * 弱点の呼び名。`describe()` で言い切りの文を求めると、かえって
+           * "logic" のようなカテゴリ名が返った（2026-09-17 実測）。
+           * ラベルはモデルに任せず、サーバーで message と合わせて正規化する。
+           */
           area: shortText,
           category: z.enum([
             "structure",

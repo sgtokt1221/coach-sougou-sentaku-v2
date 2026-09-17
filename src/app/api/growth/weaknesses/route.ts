@@ -40,7 +40,9 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const snapshot = await adminDb.collection(`users/${userId}/weaknesses`).get();
+    const snapshot = await adminDb
+      .collection(`users/${userId}/weaknesses`)
+      .get();
     const weaknesses: WeaknessRecord[] = snapshot.docs.map((d) => {
       const data = d.data();
       return {
@@ -54,6 +56,8 @@ export async function GET(request: NextRequest) {
         reminderDismissedAt: data.reminderDismissedAt?.toDate() ?? null,
         categoryId: data.categoryId,
         archivedAt: data.archivedAt?.toDate?.() ?? data.archivedAt ?? null,
+        // 直近の具体例。画面ではラベルの下にこれを出す
+        lastExample: data.lastExample,
       } satisfies WeaknessRecord;
     });
 
@@ -70,22 +74,33 @@ export async function POST(request: NextRequest) {
   const { userId, area } = body;
 
   if (!userId || !area) {
-    return NextResponse.json({ error: "userId and area are required" }, { status: 400 });
+    return NextResponse.json(
+      { error: "userId and area are required" },
+      { status: 400 }
+    );
   }
 
   const { adminDb } = await import("@/lib/firebase/admin");
   if (!adminDb) {
-    return NextResponse.json({ success: false, reason: "Firebase not configured" });
+    return NextResponse.json({
+      success: false,
+      reason: "Firebase not configured",
+    });
   }
 
   try {
     const { FieldValue } = await import("firebase-admin/firestore");
-    await adminDb.doc(`users/${userId}/weaknesses/${weaknessDocId(area)}`).update({
-      reminderDismissedAt: FieldValue.serverTimestamp(),
-    });
+    await adminDb
+      .doc(`users/${userId}/weaknesses/${weaknessDocId(area)}`)
+      .update({
+        reminderDismissedAt: FieldValue.serverTimestamp(),
+      });
     return NextResponse.json({ success: true });
   } catch (err) {
     console.warn("Failed to update reminderDismissedAt:", err);
-    return NextResponse.json({ success: false, reason: "Update failed" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, reason: "Update failed" },
+      { status: 500 }
+    );
   }
 }

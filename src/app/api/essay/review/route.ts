@@ -340,11 +340,17 @@ export async function POST(request: NextRequest) {
       throw coreErr;
     }
 
-    // 弱点タグを抽出
-    const weaknessTags: string[] = [
-      ...feedback.repeatedIssues.map((issue) => issue.area),
-      ...feedback.improvements,
-    ];
+    /**
+     * 弱点タグ。repeatedIssues（AIが弱点として挙げたもの）だけを使う。
+     *
+     * 以前は improvements（「次はこう直す」という助言の自由文）も混ぜていた。
+     * 助言は毎回3〜4件出るうえ、正規化がキーワードの部分一致なので、
+     * 「結論を一文で言い切る」のような助言まで「結論が不明確・欠落している」に
+     * 落ちていた。結果、誰が書いても同じ弱点が並び、回数も実態と合わなくなる。
+     */
+    const weaknessTags: string[] = feedback.repeatedIssues.map(
+      (issue) => issue.area
+    );
 
     // AI が出力した category を hint として伝播 (= 未出力なら fallback)
     const categoryHints = new Map<
@@ -357,8 +363,17 @@ export async function POST(request: NextRequest) {
       | "reasoningMaturity"
       | "other"
     >();
+    /**
+     * 弱点の具体例（「答案のこの一文がこう弱い」）。
+     *
+     * ラベルは「結論が不明確・欠落している」のように束ねるためのもので、
+     * それだけだと誰の弱点リストも同じ文言になる。今回の答案の話を残す。
+     */
+    const detailHints = new Map<string, string>();
     for (const issue of feedback.repeatedIssues) {
       if (issue.category) categoryHints.set(issue.area, issue.category);
+      if (issue.message?.trim())
+        detailHints.set(issue.area, issue.message.trim());
     }
 
     // 弱点レコードを更新し成長イベントを生成
@@ -366,7 +381,9 @@ export async function POST(request: NextRequest) {
       existingWeaknesses,
       weaknessTags,
       "essay",
-      categoryHints
+      categoryHints,
+      undefined,
+      detailHints
     );
     const growthEvents = analyzeGrowth(weaknessTags, existingWeaknesses);
 
@@ -431,7 +448,9 @@ export async function POST(request: NextRequest) {
         if (essayUserId) {
           for (const weakness of updatedWeaknesses) {
             await adminDb
-              .doc(`users/${essayUserId}/weaknesses/${weaknessDocId(weakness.area)}`)
+              .doc(
+                `users/${essayUserId}/weaknesses/${weaknessDocId(weakness.area)}`
+              )
               .set(
                 {
                   area: weakness.area,
@@ -444,6 +463,10 @@ export async function POST(request: NextRequest) {
                   reminderDismissedAt: weakness.reminderDismissedAt,
                   ...(weakness.categoryId
                     ? { categoryId: weakness.categoryId }
+                    : {}),
+                  // 直近の具体例。ラベルだけだと誰の弱点も同じ文言になる
+                  ...(weakness.lastExample
+                    ? { lastExample: weakness.lastExample }
                     : {}),
                 },
                 { merge: true }

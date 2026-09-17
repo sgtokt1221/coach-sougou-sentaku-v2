@@ -179,7 +179,12 @@ export const AI_PROMPT_VERSIONS = {
     //      要約ではなく原文なのは、要約を挟むと「講演がそう言ったか」を要約の
     //      精度が決めてしまうため。プロンプトでは書き起こしに無いことを講演の
     //      主張として書かないよう縛り、取り違えの指摘には引用を求める。
-    promptVersion: "essay-review-v20",
+    // v21: 弱点の精度。repeatedIssues に「助言ではなく、引用できる弱点だけを
+    //      30字以内で最大3件」を課した。あわせてサーバ側で improvements を
+    //      弱点タグに混ぜるのをやめた（助言文がキーワード部分一致で
+    //      「結論が不明確・欠落している」等の汎用ラベルに落ち、誰にでも同じ弱点が
+    //      積み上がっていた。実データで同一ラベルが13回という状態になっていた）。
+    promptVersion: "essay-review-v21",
     schemaVersion: "essay-review-output-v2",
   },
   interviewScore: {
@@ -188,7 +193,9 @@ export const AI_PROMPT_VERSIONS = {
     //     軸の欠落も型違いも素通りしていた。版も記録していなかったため、
     //     改定前後のスコア比較ができなかった。
     //     あわせてモード別の軸を保存し（P0-2）、合計を内容4軸に固定した（P0-1）。
-    promptVersion: "interview-score-v1",
+    // v2: repeatedIssues に「助言ではなく、引用できる弱点だけ」を課した
+    //     （小論文添削 v21 と同じ理由。弱点リストが汎用ラベルで埋まっていた）
+    promptVersion: "interview-score-v2",
     schemaVersion: "interview-score-output-v1",
   },
   chocoReview: {

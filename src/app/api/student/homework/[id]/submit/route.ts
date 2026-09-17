@@ -301,10 +301,8 @@ async function submitEssay(args: {
     throw err;
   }
 
-  const weaknessTags: string[] = [
-    ...feedback.repeatedIssues.map((i) => i.area),
-    ...feedback.improvements,
-  ];
+  // 助言の自由文は混ぜない（混ぜると誰にでも付く弱点に落ちる）
+  const weaknessTags: string[] = feedback.repeatedIssues.map((i) => i.area);
   const updatedWeaknesses = updateWeaknessRecords(
     existingWeaknesses,
     weaknessTags
@@ -464,10 +462,8 @@ async function submitInterview(args: {
     throw err;
   }
 
-  const weaknessTags: string[] = [
-    ...feedback.repeatedIssues.map((i) => i.area),
-    ...feedback.improvements,
-  ];
+  // 助言の自由文は混ぜない（混ぜると誰にでも付く弱点に落ちる）
+  const weaknessTags: string[] = feedback.repeatedIssues.map((i) => i.area);
   const updatedWeaknesses = updateWeaknessRecords(
     existingWeaknesses,
     weaknessTags,

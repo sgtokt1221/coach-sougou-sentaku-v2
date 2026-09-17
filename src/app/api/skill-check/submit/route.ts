@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { weaknessDocId } from "@/lib/growth/weakness-id";
-import { reviewWithClaude, buildMockReviewResult } from "@/lib/ai/essay-reviewer";
+import {
+  reviewWithClaude,
+  buildMockReviewResult,
+} from "@/lib/ai/essay-reviewer";
 import { buildSkillCheckPrompt } from "@/lib/ai/prompts/skill-check";
 import { getQuestionById } from "@/lib/skill-check/questions";
 import { calculateRank } from "@/lib/skill-check/rank";
 import { calculateFillRate } from "@/lib/essay/review-metrics";
 import { AI_MODEL_REVIEW, AI_PROMPT_VERSIONS } from "@/lib/ai/prompt-versions";
-import type { AcademicCategory, SkillCheckResult } from "@/lib/types/skill-check";
+import type {
+  AcademicCategory,
+  SkillCheckResult,
+} from "@/lib/types/skill-check";
 import { ACADEMIC_CATEGORIES } from "@/lib/types/skill-check";
 import type { WeaknessRecord } from "@/lib/types/growth";
 import { analyzeGrowth, updateWeaknessRecords } from "@/lib/growth/analyze";
@@ -37,10 +43,16 @@ export async function POST(request: NextRequest) {
   }
   const question = getQuestionById(questionId);
   if (!question || question.category !== category) {
-    return NextResponse.json({ error: "問題が見つかりません" }, { status: 404 });
+    return NextResponse.json(
+      { error: "問題が見つかりません" },
+      { status: 404 }
+    );
   }
   if (essayText.length < 100) {
-    return NextResponse.json({ error: "本文が短すぎます（100字以上必要）" }, { status: 400 });
+    return NextResponse.json(
+      { error: "本文が短すぎます（100字以上必要）" },
+      { status: 400 }
+    );
   }
 
   // ユーザー識別
@@ -78,7 +90,10 @@ export async function POST(request: NextRequest) {
     }
   } catch (err) {
     console.error("Skill check review error:", err);
-    return NextResponse.json({ error: "AI採点でエラーが発生しました" }, { status: 500 });
+    return NextResponse.json(
+      { error: "AI採点でエラーが発生しました" },
+      { status: 500 }
+    );
   }
 
   const { scores, feedback } = reviewResult;
@@ -90,10 +105,12 @@ export async function POST(request: NextRequest) {
   let resultId = `mock-${Date.now()}`;
 
   if (!adminDb) {
-    console.error("[skill-check/submit] adminDb is null — Firebase Admin SDK not initialized");
+    console.error(
+      "[skill-check/submit] adminDb is null — Firebase Admin SDK not initialized"
+    );
     return NextResponse.json(
       { error: "サーバー側の設定不備により保存できませんでした" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 
@@ -128,7 +145,7 @@ export async function POST(request: NextRequest) {
     console.error("[skill-check/submit] Failed to write skillCheck doc:", err);
     return NextResponse.json(
       { error: "スキルチェック結果の保存に失敗しました" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 
@@ -143,24 +160,21 @@ export async function POST(request: NextRequest) {
         lastSkillCheckRank: rank,
         academicCategory: category,
       },
-      { merge: true },
+      { merge: true }
     );
     // aggregate 再計算: 直近30日 essays と SC 原値の合成で currentSkillScore/Rank を更新
-    const { refreshEssayAggregateCache } = await import(
-      "@/lib/skill-check/aggregate"
-    );
+    const { refreshEssayAggregateCache } =
+      await import("@/lib/skill-check/aggregate");
     void refreshEssayAggregateCache(userId).catch((e) =>
-      console.warn("[skill-check/submit] aggregate refresh failed:", e),
+      console.warn("[skill-check/submit] aggregate refresh failed:", e)
     );
   } catch (err) {
     console.error("[skill-check/submit] Failed to update user doc:", err);
   }
 
   try {
-    const weaknessTags = [
-      ...feedback.repeatedIssues.map((r) => r.area),
-      ...feedback.improvements,
-    ];
+    // 助言の自由文は混ぜない（混ぜると誰にでも付く弱点に落ちる）
+    const weaknessTags = feedback.repeatedIssues.map((r) => r.area);
     if (weaknessTags.length > 0) {
       const existingSnap = await adminDb
         .collection(`users/${userId}/weaknesses`)
@@ -179,21 +193,27 @@ export async function POST(request: NextRequest) {
           reminderDismissedAt: w.reminderDismissedAt?.toDate() ?? null,
         };
       });
-      const updated = updateWeaknessRecords(existing, weaknessTags, "skill_check");
+      const updated = updateWeaknessRecords(
+        existing,
+        weaknessTags,
+        "skill_check"
+      );
       for (const w of updated) {
-        await adminDb.doc(`users/${userId}/weaknesses/${weaknessDocId(w.area)}`).set(
-          {
-            area: w.area,
-            count: w.count,
-            firstOccurred: w.firstOccurred,
-            lastOccurred: w.lastOccurred,
-            improving: w.improving,
-            resolved: w.resolved,
-            source: w.source,
-            reminderDismissedAt: w.reminderDismissedAt,
-          },
-          { merge: true },
-        );
+        await adminDb
+          .doc(`users/${userId}/weaknesses/${weaknessDocId(w.area)}`)
+          .set(
+            {
+              area: w.area,
+              count: w.count,
+              firstOccurred: w.firstOccurred,
+              lastOccurred: w.lastOccurred,
+              improving: w.improving,
+              resolved: w.resolved,
+              source: w.source,
+              reminderDismissedAt: w.reminderDismissedAt,
+            },
+            { merge: true }
+          );
       }
       void analyzeGrowth(weaknessTags, existing);
     }

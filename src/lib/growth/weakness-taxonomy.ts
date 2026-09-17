@@ -48,7 +48,15 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     id: "structure.weak_flow",
     category: "structure",
     label: "段落のつながり・論述の流れが弱い",
-    keywords: ["流れ", "つながり", "繋がり", "接続", "展開", "段落", "構成の流れ"],
+    keywords: [
+      "流れ",
+      "つながり",
+      "繋がり",
+      "接続",
+      "展開",
+      "段落",
+      "構成の流れ",
+    ],
   },
   {
     id: "structure.unbalanced",
@@ -68,13 +76,28 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     id: "logic.leap",
     category: "logic",
     label: "主張と理由が飛躍している",
-    keywords: ["飛躍", "短絡", "唐突", "主張と理由", "論理が飛", "つながらない"],
+    keywords: [
+      "飛躍",
+      "短絡",
+      "唐突",
+      "主張と理由",
+      "論理が飛",
+      "つながらない",
+    ],
   },
   {
     id: "logic.weak_evidence",
     category: "logic",
     label: "根拠・データが不足している",
-    keywords: ["根拠", "裏付け", "データ", "証拠", "説得力", "エビデンス", "理由が薄"],
+    keywords: [
+      "根拠",
+      "裏付け",
+      "データ",
+      "証拠",
+      "説得力",
+      "エビデンス",
+      "理由が薄",
+    ],
   },
   {
     id: "logic.causal_error",
@@ -100,13 +123,28 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     id: "expression.verbose",
     category: "expression",
     label: "冗長・回りくどく簡潔さに欠ける",
-    keywords: ["冗長", "回りくど", "くどい", "簡潔", "話が長い", "長すぎ", "重複"],
+    keywords: [
+      "冗長",
+      "回りくど",
+      "くどい",
+      "簡潔",
+      "話が長い",
+      "長すぎ",
+      "重複",
+    ],
   },
   {
     id: "expression.ambiguous",
     category: "expression",
     label: "曖昧で意味が伝わりにくい",
-    keywords: ["曖昧", "あいまい", "不明確", "わかりにくい", "読みにくい", "伝わらな"],
+    keywords: [
+      "曖昧",
+      "あいまい",
+      "不明確",
+      "わかりにくい",
+      "読みにくい",
+      "伝わらな",
+    ],
   },
   {
     id: "expression.grammar",
@@ -126,19 +164,40 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     id: "ap.weak_motivation",
     category: "apAlignment",
     label: "志望理由・動機が浅い",
-    keywords: ["志望理由", "志望動機", "動機が浅", "動機が弱", "なぜこの大学", "なぜこの学部"],
+    keywords: [
+      "志望理由",
+      "志望動機",
+      "動機が浅",
+      "動機が弱",
+      "なぜこの大学",
+      "なぜこの学部",
+    ],
   },
   {
     id: "ap.no_link",
     category: "apAlignment",
     label: "アドミッションポリシーとの結びつきが弱い",
-    keywords: ["アドミ", "ポリシー", "AP", "合致", "結びつき", "大学の求める", "学部の特色"],
+    keywords: [
+      "アドミ",
+      "ポリシー",
+      "AP",
+      "合致",
+      "結びつき",
+      "大学の求める",
+      "学部の特色",
+    ],
   },
   {
     id: "ap.generic",
     category: "apAlignment",
     label: "どの大学にも言える一般論にとどまる",
-    keywords: ["一般論", "ありきたりな志望", "どこでも", "抽象的な志望", "汎用的"],
+    keywords: [
+      "一般論",
+      "ありきたりな志望",
+      "どこでも",
+      "抽象的な志望",
+      "汎用的",
+    ],
   },
 
   // ---- 独自性 (originality) ----
@@ -146,13 +205,29 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     id: "originality.no_experience",
     category: "originality",
     label: "自分の経験・具体例が薄い",
-    keywords: ["経験", "体験", "エピソード", "具体例", "事例", "実体験", "具体性がな"],
+    keywords: [
+      "経験",
+      "体験",
+      "エピソード",
+      "具体例",
+      "事例",
+      "実体験",
+      "具体性がな",
+    ],
   },
   {
     id: "originality.cliche",
     category: "originality",
     label: "視点がありきたりで独自性に欠ける",
-    keywords: ["ありきたり", "平凡", "月並み", "借り物", "独自性", "個性", "ありがち"],
+    keywords: [
+      "ありきたり",
+      "平凡",
+      "月並み",
+      "借り物",
+      "独自性",
+      "個性",
+      "ありがち",
+    ],
   },
   {
     id: "originality.abstract",
@@ -166,7 +241,14 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     id: "iv.clarity.unstructured",
     category: "structure",
     label: "結論ファーストでなく要点が不明瞭",
-    keywords: ["結論ファースト", "要点", "結論から", "構造化", "PREP", "話の組み立て"],
+    keywords: [
+      "結論ファースト",
+      "要点",
+      "結論から",
+      "構造化",
+      "PREP",
+      "話の組み立て",
+    ],
   },
 
   // ---- 面接: 熱意 (other) ----
@@ -174,7 +256,15 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     id: "iv.enthusiasm.low",
     category: "other",
     label: "熱意・主体性が伝わらない",
-    keywords: ["熱意", "意欲", "主体性", "積極性", "やる気", "志望度", "受け身"],
+    keywords: [
+      "熱意",
+      "意欲",
+      "主体性",
+      "積極性",
+      "やる気",
+      "志望度",
+      "受け身",
+    ],
   },
 
   // ---- 面接: 非言語 (other) ----
@@ -200,15 +290,27 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     id: "iv.body.delivery",
     category: "other",
     label: "話し方(フィラー・話速・声)に課題",
-    keywords: ["フィラー", "話速", "早口", "うなずき", "声が小さ", "滑舌", "間の取り方"],
+    keywords: [
+      "フィラー",
+      "話速",
+      "早口",
+      "うなずき",
+      "声が小さ",
+      "滑舌",
+      "間の取り方",
+    ],
   },
 ] as const;
 
 /** id → エントリの索引 (生成時 1 回) */
-const BY_ID = new Map<string, TaxonomyEntry>(WEAKNESS_TAXONOMY.map((e) => [e.id, e]));
+const BY_ID = new Map<string, TaxonomyEntry>(
+  WEAKNESS_TAXONOMY.map((e) => [e.id, e])
+);
 
 /** 与えられた文字列が既知の正規 ID かどうか */
-export function isKnownCanonicalId(id: string | undefined | null): id is string {
+export function isKnownCanonicalId(
+  id: string | undefined | null
+): id is string {
   return typeof id === "string" && BY_ID.has(id);
 }
 
@@ -227,6 +329,15 @@ export interface ResolveOptions {
   categoryHint?: EssayCategoryKey;
   /** AI が直接指定した正規 ID。既知 ID なら最優先で採用 */
   aiCanonicalId?: string | null;
+  /**
+   * 補助テキスト（AI が書いた弱点の説明文）。
+   *
+   * ラベル（area）は「解決策の具体性」のような見出し語や、ときには "logic" の
+   * ような語が返ってきて、それだけでは弱点が決まらない。説明文には何がどう
+   * 弱いかが書かれているので、ラベルで決まらないときだけこちらを見る。
+   * ただし長文は無関係な語を巻き込むので、**2語以上**当たった候補しか採らない。
+   */
+  supportText?: string;
 }
 
 /**
@@ -237,24 +348,67 @@ export interface ResolveOptions {
  *   2. keyword スコアリングで最良エントリ (categoryHint 一致は微加点)
  *   3. どれにも当たらなければ null (= 正規化不能 → 呼び出し側で従来挙動)
  */
+/**
+ * キーワードで正規化してよいテキストの長さの上限。
+ *
+ * キーワードは部分一致で当たるため、長い文ほど無関係な語を巻き込む。
+ * 「結論を一文で言い切ると伝わります」という助言が「結論」1語で
+ * 「結論が不明確・欠落している」に落ちていた。弱点名は短い名詞句なので、
+ * 文の長さで助言と切り分ける。長い文は正規化せず、そのまま別レコードにする
+ * （誤ったラベルに合流させるより、合流しない方が害が小さい）。
+ */
+const MAX_KEYWORD_RESOLVE_LENGTH = 40;
+
+/**
+ * 助言の言い回し。「〜しましょう」「〜してください」は次にやることであって
+ * 弱点名ではない。弱点は名詞句（「結論が一文で言い切れていない」）で来るので、
+ * 文末の形だけで切り分けられる。意味は判定しない。
+ */
+const ADVICE_ENDING =
+  /(ましょう|ください|してみて|すると良く|するとよく|すると伝わ|と良いです|とよいです|しよう)/;
+
+/** 弱点リストに積んでよいテキストか（助言・長文を弾く） */
+export function isWeaknessLabel(text: string): boolean {
+  const t = text.trim();
+  if (t.length === 0) return false;
+  if (t.length > MAX_KEYWORD_RESOLVE_LENGTH) return false;
+  return !ADVICE_ENDING.test(t);
+}
+
 export function resolveCanonical(
   text: string,
-  opts: ResolveOptions = {},
+  opts: ResolveOptions = {}
 ): TaxonomyEntry | null {
   if (isKnownCanonicalId(opts.aiCanonicalId)) {
     return BY_ID.get(opts.aiCanonicalId) ?? null;
   }
   if (!text || text.trim().length === 0) return null;
+  if (text.trim().length > MAX_KEYWORD_RESOLVE_LENGTH) return null;
 
+  const byLabel = matchByKeywords(text, opts.categoryHint, 1);
+  if (byLabel) return byLabel;
+  // ラベルで決まらないときだけ説明文を見る（2語以上一致が条件）
+  if (opts.supportText) {
+    return matchByKeywords(opts.supportText, opts.categoryHint, 2);
+  }
+  return null;
+}
+
+/** キーワード一致で最有力の候補を返す。minScore 未満は採らない */
+function matchByKeywords(
+  text: string,
+  categoryHint: EssayCategoryKey | undefined,
+  minScore: number
+): TaxonomyEntry | null {
   let best: { entry: TaxonomyEntry; score: number } | null = null;
   for (const entry of WEAKNESS_TAXONOMY) {
     let score = 0;
     for (const kw of entry.keywords) {
       if (text.includes(kw)) score += 1;
     }
-    if (score === 0) continue;
+    if (score < minScore) continue;
     // カテゴリヒント一致は僅かに優遇 (同点時の振り分け用)
-    if (opts.categoryHint && entry.category === opts.categoryHint) score += 0.5;
+    if (categoryHint && entry.category === categoryHint) score += 0.5;
     if (!best || score > best.score) best = { entry, score };
   }
   return best ? best.entry : null;

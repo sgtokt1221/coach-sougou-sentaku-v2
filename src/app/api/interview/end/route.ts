@@ -318,11 +318,14 @@ export async function POST(request: NextRequest) {
       throw coreErr;
     }
 
-    // 弱点タグを抽出（会話内容）
-    const weaknessTags: string[] = [
-      ...feedback.repeatedIssues.map((issue) => issue.area),
-      ...feedback.improvements,
-    ];
+    /**
+     * 弱点タグ（会話内容）。弱点として挙がったものだけを使う。
+     * improvements（助言の自由文）を混ぜると、正規化の部分一致で
+     * 誰にでも付く弱点に落ちる（小論文添削と同じ理由）。
+     */
+    const weaknessTags: string[] = feedback.repeatedIssues.map(
+      (issue) => issue.area
+    );
 
     // VideoAnalysis → 弱点タグ
     if (videoAnalysis) {
@@ -367,11 +370,20 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    /** 弱点の具体例（「この発言がこう弱い」）。ラベルだけでは中身が分からない */
+    const detailHints = new Map<string, string>();
+    for (const issue of feedback.repeatedIssues ?? []) {
+      const message = (issue as { message?: string }).message?.trim();
+      if (message) detailHints.set(issue.area, message);
+    }
+
     const updatedWeaknesses = updateWeaknessRecords(
       existingWeaknesses,
       weaknessTags,
       "interview",
-      categoryHints
+      categoryHints,
+      undefined,
+      detailHints
     );
     const growthEvents = analyzeGrowth(weaknessTags, existingWeaknesses);
 
@@ -470,6 +482,10 @@ export async function POST(request: NextRequest) {
                   reminderDismissedAt: weakness.reminderDismissedAt,
                   ...(weakness.categoryId
                     ? { categoryId: weakness.categoryId }
+                    : {}),
+                  // 直近の具体例（面接のこの発言がこう弱い）
+                  ...(weakness.lastExample
+                    ? { lastExample: weakness.lastExample }
                     : {}),
                 },
                 { merge: true }

@@ -5,7 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertTriangle } from "lucide-react";
-import { WeaknessRecord, WeaknessReminderLevel, getWeaknessReminderLevel } from "@/lib/types/growth";
+import {
+  WeaknessRecord,
+  WeaknessReminderLevel,
+  getWeaknessReminderLevel,
+} from "@/lib/types/growth";
 
 type WeaknessWithLevel = WeaknessRecord & { level: WeaknessReminderLevel };
 
@@ -77,20 +81,36 @@ export function WeaknessReminderCard() {
       <CardContent className="space-y-2 pt-0">
         {weaknesses.map((w) => {
           const daysAgo = w.lastOccurred
-            ? Math.max(0, Math.floor((Date.now() - new Date(w.lastOccurred).getTime()) / (1000 * 60 * 60 * 24)))
+            ? Math.max(
+                0,
+                Math.floor(
+                  (Date.now() - new Date(w.lastOccurred).getTime()) /
+                    (1000 * 60 * 60 * 24)
+                )
+              )
             : null;
           return (
-            <div key={w.area} className="flex items-center gap-2">
-              <Badge
-                variant="outline"
-                className={`shrink-0 text-xs ${levelBadgeClass[w.level]}`}
-              >
-                {levelLabel[w.level]}
-              </Badge>
-              <span className="text-sm text-amber-900 flex-1">{w.area}</span>
-              <span className="text-xs text-amber-700/70">
-                {w.count}回{daysAgo !== null && ` · ${daysAgo === 0 ? "今日" : `${daysAgo}日前`}`}
-              </span>
+            <div key={w.area} className="space-y-0.5">
+              <div className="flex items-center gap-2">
+                <Badge
+                  variant="outline"
+                  className={`shrink-0 text-xs ${levelBadgeClass[w.level]}`}
+                >
+                  {levelLabel[w.level]}
+                </Badge>
+                <span className="flex-1 text-sm text-amber-900">{w.area}</span>
+                <span className="text-xs text-amber-700/70">
+                  {w.count}回
+                  {daysAgo !== null &&
+                    ` · ${daysAgo === 0 ? "今日" : `${daysAgo}日前`}`}
+                </span>
+              </div>
+              {/* ラベルだけだと誰の弱点も同じ文言になる。直近の答案の話を出す */}
+              {w.lastExample && (
+                <p className="pl-[3.25rem] text-xs leading-relaxed text-amber-800/80">
+                  直近: {w.lastExample}
+                </p>
+              )}
             </div>
           );
         })}
