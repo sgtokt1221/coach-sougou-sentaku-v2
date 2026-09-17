@@ -42,6 +42,7 @@ export interface PastQuestion {
     xKey: string;
     yKeys: { key: string; name: string; color: string }[];
   }[];
+  /** 形は essay-themes の tedTalk と揃える（採点へ渡す経路が同じ） */
   tedTalk?: {
     talkId: string; // TED talk ID (used for embed URL)
     title: string;

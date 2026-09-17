@@ -28,6 +28,7 @@ import {
   X,
 } from "lucide-react";
 import { PastQuestionChart } from "@/components/essay/PastQuestionChart";
+import { tedEmbedUrl } from "@/lib/essay/ted-embed";
 import { HelpfulContextPanel } from "@/components/essay/HelpfulContextPanel";
 import type { HelpfulContext } from "@/data/essay-past-questions";
 import { EssayTheme } from "@/data/essay-themes";
@@ -539,7 +540,7 @@ export default function EssayThemesPage() {
                         <div className="bg-card overflow-hidden rounded-lg border">
                           <div className="aspect-video">
                             <iframe
-                              src={`https://embed.ted.com/talks/${pq.tedTalk.talkId}?subtitle=${pq.tedTalk.language}`}
+                              src={tedEmbedUrl(pq.tedTalk)}
                               width="100%"
                               height="100%"
                               allow="autoplay; fullscreen; encrypted-media"

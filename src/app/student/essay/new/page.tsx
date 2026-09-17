@@ -49,6 +49,7 @@ import { UniversityPicker } from "@/components/essay/UniversityPicker";
 import type { University } from "@/lib/types/university";
 import { SegmentControl } from "@/components/shared/SegmentControl";
 import { getThemeById, EssayTheme } from "@/data/essay-themes";
+import { tedEmbedUrl } from "@/lib/essay/ted-embed";
 import {
   getEnrichedPastQuestionById,
   needsSourceText,
@@ -817,8 +818,14 @@ export default function EssayNewPage() {
    * 実測 76 秒かかる（課題文8,257字＋答案1,202字）。100秒で打ち切ると、
    * Firestore の読み書きを足した往復が間に合わず「時間がかかりすぎました」に
    * なる。形式ごとに上限を変える。サーバ側の maxDuration もこれに合わせる。
+   *
+   * 講義型（TED）も講演の書き起こし（5,000〜9,000字）を載せるので同じ扱いにする。
    */
-  const reviewTimeoutMs = reportMode ? 240000 : 100000;
+  const isLectureQuestion =
+    (selectedTheme?.questionType ??
+      pastQuestion?.questionType ??
+      retryParent?.retryContext?.questionType) === "lecture";
+  const reviewTimeoutMs = reportMode || isLectureQuestion ? 240000 : 100000;
 
   /**
    * AIコーチの会話を分ける単位。下書きIDは含めない。
@@ -1242,9 +1249,6 @@ export default function EssayNewPage() {
               ? summarizeChartData(pastQuestion.chartData)
               : undefined,
             pastQuestionFacultyName: pastQuestion.facultyName,
-            ...(pastQuestion.tedTalk && {
-              lectureInfo: `講義タイトル: ${pastQuestion.tedTalk.title}\n講演者: ${pastQuestion.tedTalk.speaker}\n講義時間: ${pastQuestion.tedTalk.durationMinutes}分`,
-            }),
           }),
           ...(selectedTheme &&
             !pastQuestion && {
@@ -1253,9 +1257,6 @@ export default function EssayNewPage() {
               chartDataSummary: selectedTheme.chartData
                 ? summarizeChartData(selectedTheme.chartData)
                 : undefined,
-              ...(selectedTheme.tedTalk && {
-                lectureInfo: `講義タイトル: ${selectedTheme.tedTalk.title}\n講演者: ${selectedTheme.tedTalk.speaker}\n講義時間: ${selectedTheme.tedTalk.durationMinutes}分`,
-              }),
             }),
           // 再トライ時、過去問/テーマが直接ない場合は親の retryContext を引き継ぐ
           ...(retryParent?.retryContext &&
@@ -1394,9 +1395,6 @@ export default function EssayNewPage() {
               ? summarizeChartData(pastQuestion.chartData)
               : undefined,
             pastQuestionFacultyName: pastQuestion.facultyName,
-            ...(pastQuestion.tedTalk && {
-              lectureInfo: `講義タイトル: ${pastQuestion.tedTalk.title}\n講演者: ${pastQuestion.tedTalk.speaker}\n講義時間: ${pastQuestion.tedTalk.durationMinutes}分`,
-            }),
           }),
           ...(selectedTheme &&
             !pastQuestion && {
@@ -1405,9 +1403,6 @@ export default function EssayNewPage() {
               chartDataSummary: selectedTheme.chartData
                 ? summarizeChartData(selectedTheme.chartData)
                 : undefined,
-              ...(selectedTheme.tedTalk && {
-                lectureInfo: `講義タイトル: ${selectedTheme.tedTalk.title}\n講演者: ${selectedTheme.tedTalk.speaker}\n講義時間: ${selectedTheme.tedTalk.durationMinutes}分`,
-              }),
             }),
           ...(retryParent?.retryContext &&
             !pastQuestion &&
@@ -2156,7 +2151,7 @@ export default function EssayNewPage() {
                     <CardContent>
                       <div className="aspect-video overflow-hidden rounded-lg">
                         <iframe
-                          src={`https://embed.ted.com/talks/${ted.talkId}?subtitle=${ted.language}`}
+                          src={tedEmbedUrl(ted)}
                           width="100%"
                           height="100%"
                           allow="autoplay; fullscreen; encrypted-media"

@@ -16,6 +16,9 @@ import {
 } from "@/lib/essay/review-core";
 import { requireRole } from "@/lib/api/auth";
 import { prepareAdmissionPolicy } from "@/lib/ai/admission-policy";
+import { getThemeById } from "@/data/essay-themes";
+import { getPastQuestionById } from "@/data/essay-past-questions";
+import { buildTedLectureInfo } from "@/lib/essay/lecture-info";
 
 // レポート課題は約1万字の課題文を載せるため、AI呼び出しだけで実測76秒かかる。
 // Firestore の読み書きを足すと 120 秒では足りない。
@@ -48,6 +51,22 @@ export async function POST(request: NextRequest) {
     }
 
     const requestUserId = auth.uid;
+
+    /**
+     * 講義型（TED）の出題資料はサーバーで組み立てる。
+     *
+     * 書き起こしは1本5,000〜9,000字ある。画面側で組み立てると、その全文が
+     * ブラウザのバンドルに載り、答案ごとに Firestore へも書かれる。出題元のID
+     * （themeId / pastQuestionId）は画面から来るので、中身はここで引く。
+     */
+    const tedTalk =
+      (body.themeId ? getThemeById(body.themeId)?.tedTalk : undefined) ??
+      (body.pastQuestionId
+        ? getPastQuestionById(body.pastQuestionId)?.tedTalk
+        : undefined);
+    const lectureInfo = tedTalk
+      ? buildTedLectureInfo(tedTalk)
+      : body.lectureInfo;
 
     /**
      * 出題の文脈。管理者・講師が答案詳細を開いたときに「生徒が何を読んで何に答えたか」
@@ -271,7 +290,8 @@ export async function POST(request: NextRequest) {
         questionType,
         sourceText,
         chartDataSummary,
-        lectureInfo: body.lectureInfo,
+        // TED の書き起こしはサーバーで組み立てたものを使う（保存はしない）
+        lectureInfo,
         wordLimit: body.wordLimit,
         admissionPolicy,
         weaknessList,
