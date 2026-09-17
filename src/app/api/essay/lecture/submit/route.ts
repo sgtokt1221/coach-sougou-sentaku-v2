@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { weaknessDocId } from "@/lib/growth/weakness-id";
 import { FieldValue } from "firebase-admin/firestore";
 import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
@@ -220,7 +221,7 @@ export async function POST(request: NextRequest) {
     // 弱点 DB 更新
     step = "update_weaknesses";
     for (const w of updatedWeaknesses) {
-      await adminDb.doc(`users/${uid}/weaknesses/${w.area}`).set(
+      await adminDb.doc(`users/${uid}/weaknesses/${weaknessDocId(w.area)}`).set(
         {
           area: w.area,
           count: w.count,

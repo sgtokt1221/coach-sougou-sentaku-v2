@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { weaknessDocId } from "@/lib/growth/weakness-id";
 import type {
   EssayReviewRequest,
   EssayFeedback,
@@ -430,7 +431,7 @@ export async function POST(request: NextRequest) {
         if (essayUserId) {
           for (const weakness of updatedWeaknesses) {
             await adminDb
-              .doc(`users/${essayUserId}/weaknesses/${weakness.area}`)
+              .doc(`users/${essayUserId}/weaknesses/${weaknessDocId(weakness.area)}`)
               .set(
                 {
                   area: weakness.area,

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { weaknessDocId } from "@/lib/growth/weakness-id";
 import Anthropic from "@anthropic-ai/sdk";
 import {
   INTERVIEW_SKILL_CHECK_EVALUATION_PROMPT,
@@ -211,7 +212,7 @@ export async function POST(request: NextRequest) {
       });
       const updated = updateWeaknessRecords(existing, weaknessTags, "interview_skill_check");
       for (const w of updated) {
-        await adminDb.doc(`users/${userId}/weaknesses/${w.area}`).set(
+        await adminDb.doc(`users/${userId}/weaknesses/${weaknessDocId(w.area)}`).set(
           {
             area: w.area,
             count: w.count,

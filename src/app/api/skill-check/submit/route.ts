@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { weaknessDocId } from "@/lib/growth/weakness-id";
 import { reviewWithClaude, buildMockReviewResult } from "@/lib/ai/essay-reviewer";
 import { buildSkillCheckPrompt } from "@/lib/ai/prompts/skill-check";
 import { getQuestionById } from "@/lib/skill-check/questions";
@@ -180,7 +181,7 @@ export async function POST(request: NextRequest) {
       });
       const updated = updateWeaknessRecords(existing, weaknessTags, "skill_check");
       for (const w of updated) {
-        await adminDb.doc(`users/${userId}/weaknesses/${w.area}`).set(
+        await adminDb.doc(`users/${userId}/weaknesses/${weaknessDocId(w.area)}`).set(
           {
             area: w.area,
             count: w.count,

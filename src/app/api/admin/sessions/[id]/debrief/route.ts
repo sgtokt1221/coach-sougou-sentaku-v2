@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { weaknessDocId } from "@/lib/growth/weakness-id";
 import { FieldValue } from "firebase-admin/firestore";
 import { requireRole } from "@/lib/api/auth";
 import { assertSessionAccess } from "@/lib/api/session-auth";
@@ -76,7 +77,7 @@ export async function POST(
     const freshAreas = mergedAreas.filter((a) => !existingAreas.has(a));
     const now = new Date();
     for (const area of freshAreas) {
-      const wref = adminDb.doc(`users/${session.studentId}/weaknesses/${area}`);
+      const wref = adminDb.doc(`users/${session.studentId}/weaknesses/${weaknessDocId(area)}`);
       const wsnap = await wref.get();
       if (wsnap.exists) {
         await wref.set(

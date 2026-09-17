@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { weaknessDocId } from "@/lib/growth/weakness-id";
 import { getRemindableWeaknesses } from "@/lib/growth/analyze";
 import type { WeaknessRecord } from "@/lib/types/growth";
 
@@ -79,7 +80,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const { FieldValue } = await import("firebase-admin/firestore");
-    await adminDb.doc(`users/${userId}/weaknesses/${area}`).update({
+    await adminDb.doc(`users/${userId}/weaknesses/${weaknessDocId(area)}`).update({
       reminderDismissedAt: FieldValue.serverTimestamp(),
     });
     return NextResponse.json({ success: true });

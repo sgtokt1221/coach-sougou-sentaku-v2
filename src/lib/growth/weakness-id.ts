@@ -15,6 +15,7 @@ export function weaknessDocId(area: string): string {
     // 予約パターン（__x__）を避ける
     .replace(/__+/g, "_")
     .trim()
-    .slice(0, 80);
+    // Firestore のドキュメントIDは 1500 バイトまで。日本語で余裕を持たせて 200 文字
+    .slice(0, 200);
   return cleaned.length > 0 ? cleaned : "その他";
 }
