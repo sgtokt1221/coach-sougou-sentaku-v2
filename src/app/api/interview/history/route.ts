@@ -2,31 +2,29 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    let userId = searchParams.get("userId");
-
-    // "current" は「現在のログインユーザー」のエイリアス。トークン / dev role から解決する。
-    // 旧実装は !userId のみチェックしていて、"current" のままだと後段の
-    // where("userId", "==", "current") で hit せず 0 件返却するバグがあった。
-    if (!userId || userId === "current") {
-      userId = null;
-      const authHeader = request.headers.get("Authorization");
-      if (authHeader?.startsWith("Bearer ")) {
-        try {
-          const { adminAuth } = await import("@/lib/firebase/admin");
-          if (adminAuth) {
-            const decoded = await adminAuth.verifyIdToken(authHeader.slice(7));
-            userId = decoded.uid;
-          }
-        } catch (e) {
-          console.error("Interview history: auth token verification failed:", e);
+    /**
+     * 誰の履歴を返すかは**トークンからだけ**決める。
+     *
+     * 以前はクエリの userId を優先していたため、他人の uid を付ければ
+     * その生徒の面接履歴（スコア・会話の要約）が読めた。クエリは無視する。
+     */
+    let userId: string | null = null;
+    const authHeader = request.headers.get("Authorization");
+    if (authHeader?.startsWith("Bearer ")) {
+      try {
+        const { adminAuth } = await import("@/lib/firebase/admin");
+        if (adminAuth) {
+          const decoded = await adminAuth.verifyIdToken(authHeader.slice(7));
+          userId = decoded.uid;
         }
+      } catch (e) {
+        console.error("Interview history: auth token verification failed:", e);
       }
-      // dev mode fallback
-      if (!userId && process.env.NODE_ENV === "development") {
-        const devRole = request.headers.get("X-Dev-Role");
-        if (devRole) userId = "dev-user";
-      }
+    }
+    // dev mode fallback
+    if (!userId && process.env.NODE_ENV === "development") {
+      const devRole = request.headers.get("X-Dev-Role");
+      if (devRole) userId = "dev-user";
     }
 
     if (!userId) {
@@ -70,7 +68,8 @@ export async function GET(request: NextRequest) {
         facultyId: data.facultyId,
         mode: data.mode,
         status: data.status,
-        startedAt: data.startedAt?.toDate?.()?.toISOString() ?? new Date().toISOString(),
+        startedAt:
+          data.startedAt?.toDate?.()?.toISOString() ?? new Date().toISOString(),
         duration: data.duration ?? 0,
         scores: data.scores ?? null,
         universityContext: data.universityContext ?? null,

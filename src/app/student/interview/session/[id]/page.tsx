@@ -17,12 +17,37 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Send, StopCircle, ChevronDown, ChevronUp, Video, VideoOff, Pencil, Check, X, BookOpenCheck, TrendingUp, TrendingDown, ArrowRight, ArrowLeft } from "lucide-react";
+import {
+  Send,
+  StopCircle,
+  ChevronDown,
+  ChevronUp,
+  Video,
+  VideoOff,
+  Pencil,
+  Check,
+  X,
+  BookOpenCheck,
+  TrendingUp,
+  TrendingDown,
+  ArrowRight,
+  ArrowLeft,
+} from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import { useAuth } from "@/contexts/AuthContext";
 import type { StudentProfile } from "@/lib/types/user";
-import type { InterviewMessage, InterviewMode, InterviewInputMode, VoiceAnalysis, VideoAnalysis, AppearanceAnalysis } from "@/lib/types/interview";
-import { getWeaknessReminderLevel, type WeaknessRecord } from "@/lib/types/growth";
+import type {
+  InterviewMessage,
+  InterviewMode,
+  InterviewInputMode,
+  VoiceAnalysis,
+  VideoAnalysis,
+  AppearanceAnalysis,
+} from "@/lib/types/interview";
+import {
+  getWeaknessReminderLevel,
+  type WeaknessRecord,
+} from "@/lib/types/growth";
 import { useRealtimeInterview } from "@/hooks/useRealtimeInterview";
 import type { VoiceProvider } from "@/lib/interview/realtime/voice-session-factory";
 import { resolveVoiceProvider } from "@/lib/interview/voice-provider";
@@ -31,8 +56,13 @@ import { transcribeTurnViaStt } from "@/lib/interview/stt-client";
 import { INTERVIEW_MODE_LABELS } from "@/lib/types/interview";
 import { FluidLoader } from "@/components/shared/FluidLoader";
 import { FullHeightPage } from "@/components/layout/FullHeightPage";
-import VoiceAnalyzer, { refineWithTranscription, type VoiceAnalyzerHandle } from "@/components/interview/VoiceAnalyzer";
-import VideoAnalyzer, { type VideoAnalyzerHandle } from "@/components/interview/VideoAnalyzer";
+import VoiceAnalyzer, {
+  refineWithTranscription,
+  type VoiceAnalyzerHandle,
+} from "@/components/interview/VoiceAnalyzer";
+import VideoAnalyzer, {
+  type VideoAnalyzerHandle,
+} from "@/components/interview/VideoAnalyzer";
 import CameraPreview from "@/components/interview/CameraPreview";
 import InterviewPreflight from "@/components/interview/InterviewPreflight";
 import { SavedDrillsReference } from "@/components/interview/SavedDrillsReference";
@@ -69,10 +99,22 @@ function formatTime(seconds: number): string {
 
 // === 弱点カンペ用ヘルパー ===
 
-const CHEAT_BADGE_MAP: Record<"critical" | "warning" | "improving", { label: string; cls: string }> = {
-  critical: { label: "重要", cls: "bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900" },
-  warning: { label: "要注意", cls: "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900" },
-  improving: { label: "改善中", cls: "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900" },
+const CHEAT_BADGE_MAP: Record<
+  "critical" | "warning" | "improving",
+  { label: string; cls: string }
+> = {
+  critical: {
+    label: "重要",
+    cls: "bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900",
+  },
+  warning: {
+    label: "要注意",
+    cls: "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900",
+  },
+  improving: {
+    label: "改善中",
+    cls: "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900",
+  },
 };
 
 const CHEAT_SOURCE_LABEL: Record<WeaknessRecord["source"], string> = {
@@ -85,7 +127,12 @@ const CHEAT_SOURCE_LABEL: Record<WeaknessRecord["source"], string> = {
 };
 
 function isInterviewSource(s: WeaknessRecord["source"]): boolean {
-  return s === "interview" || s === "interview_skill_check" || s === "both" || s === "lesson";
+  return (
+    s === "interview" ||
+    s === "interview_skill_check" ||
+    s === "both" ||
+    s === "lesson"
+  );
 }
 
 /**
@@ -93,7 +140,12 @@ function isInterviewSource(s: WeaknessRecord["source"]): boolean {
  * resolved は除外。
  */
 function sortCheatWeaknesses(list: WeaknessRecord[]): WeaknessRecord[] {
-  const weight: Record<string, number> = { critical: 3, warning: 2, normal: 1, improving: 0 };
+  const weight: Record<string, number> = {
+    critical: 3,
+    warning: 2,
+    normal: 1,
+    improving: 0,
+  };
   return [...list]
     .filter((w) => !w.resolved)
     .sort((a, b) => {
@@ -141,12 +193,17 @@ export default function InterviewSessionPage() {
     },
     hasContent: (draft) => Boolean(draft.input.trim() || draft.memo.trim()),
   });
-  const [voiceAnalysis, setVoiceAnalysis] = useState<VoiceAnalysis | null>(null);
-  const [videoAnalysis, setVideoAnalysis] = useState<VideoAnalysis | null>(null);
+  const [voiceAnalysis, setVoiceAnalysis] = useState<VoiceAnalysis | null>(
+    null
+  );
+  const [videoAnalysis, setVideoAnalysis] = useState<VideoAnalysis | null>(
+    null
+  );
   // 終了時に確定値を同期取得するための ref (state 反映待ちのレース回避)
   const voiceAnalyzerRef = useRef<VoiceAnalyzerHandle | null>(null);
   const videoAnalyzerRef = useRef<VideoAnalyzerHandle | null>(null);
-  const [appearanceAnalysis, setAppearanceAnalysis] = useState<AppearanceAnalysis | null>(null);
+  const [appearanceAnalysis, setAppearanceAnalysis] =
+    useState<AppearanceAnalysis | null>(null);
   const [appearanceAlert, setAppearanceAlert] = useState<string | null>(null);
   const [gazeAlert, setGazeAlert] = useState<string | null>(null);
   const gazeAlertTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -170,10 +227,16 @@ export default function InterviewSessionPage() {
    * 音声なし/STT失敗/空のときは Gemini 内蔵文字起こし(fallbackText)にフォールバック。
    */
   const sttStudentTurn = useCallback(
-    async (id: string, audioWavBase64: string | undefined, fallbackText: string) => {
+    async (
+      id: string,
+      audioWavBase64: string | undefined,
+      fallbackText: string
+    ) => {
       const finalize = (content: string) =>
         setMessages((prev) =>
-          prev.map((m) => (m.id === id ? { ...m, content, correcting: false } : m)),
+          prev.map((m) =>
+            m.id === id ? { ...m, content, correcting: false } : m
+          )
         );
       if (!audioWavBase64) {
         finalize(fallbackText);
@@ -187,11 +250,13 @@ export default function InterviewSessionPage() {
       });
       finalize(text ?? fallbackText);
     },
-    [sessionInfo, userProfile],
+    [sessionInfo, userProfile]
   );
 
   const realtime = useRealtimeInterview({
     mode: sessionInfo?.mode ?? "individual",
+    // 口頭試問の分野など、開始時にサーバーへ保存した設定を引くために渡す
+    sessionId,
     // 音声プロバイダ: /new の選択 → なければ localStorage 上書き/env で解決（既定 openai）。
     // GD は当面 openai 固定（hook 側で吸収）。
     provider: sessionInfo?.voiceProvider ?? resolveVoiceProvider(),
@@ -200,7 +265,9 @@ export default function InterviewSessionPage() {
     universityName: sessionInfo?.universityContext.universityName ?? "",
     facultyName: sessionInfo?.universityContext.facultyName ?? "",
     admissionPolicy: sessionInfo?.universityContext.admissionPolicy ?? "",
-    weaknessList: weaknesses.map((w) => `- ${w.area}(${w.count}回)`).join("\n") || "（過去の弱点なし）",
+    weaknessList:
+      weaknesses.map((w) => `- ${w.area}(${w.count}回)`).join("\n") ||
+      "（過去の弱点なし）",
     presentationContent: sessionInfo?.presentationContent,
     onMessageAppend: (m, audioWavBase64) => {
       if (m.role === "student") {
@@ -221,7 +288,8 @@ export default function InterviewSessionPage() {
     },
     onMessageUpdateLast: (patch) => {
       setMessages((prev) => {
-        if (prev.length === 0 || prev[prev.length - 1].role !== "ai") return prev;
+        if (prev.length === 0 || prev[prev.length - 1].role !== "ai")
+          return prev;
         const copy = [...prev];
         copy[copy.length - 1] = { ...copy[copy.length - 1], ...patch };
         return copy;
@@ -232,7 +300,7 @@ export default function InterviewSessionPage() {
       // (並行 response 時の最後のバブル誤上書きを防ぐ)
       setMessages((prev) => {
         const idx = prev.findLastIndex(
-          (m) => m.role === "ai" && m.responseId === responseId,
+          (m) => m.role === "ai" && m.responseId === responseId
         );
         if (idx < 0) return prev;
         const copy = [...prev];
@@ -250,10 +318,13 @@ export default function InterviewSessionPage() {
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [editDraft, setEditDraft] = useState("");
 
-  const startEditMessage = useCallback((idx: number) => {
-    setEditingIdx(idx);
-    setEditDraft(messages[idx]?.content ?? "");
-  }, [messages]);
+  const startEditMessage = useCallback(
+    (idx: number) => {
+      setEditingIdx(idx);
+      setEditDraft(messages[idx]?.content ?? "");
+    },
+    [messages]
+  );
 
   const commitEditMessage = useCallback(() => {
     if (editingIdx === null) return;
@@ -263,7 +334,7 @@ export default function InterviewSessionPage() {
       return;
     }
     setMessages((prev) =>
-      prev.map((m, i) => (i === editingIdx ? { ...m, content: trimmed } : m)),
+      prev.map((m, i) => (i === editingIdx ? { ...m, content: trimmed } : m))
     );
     setEditingIdx(null);
     setEditDraft("");
@@ -286,8 +357,7 @@ export default function InterviewSessionPage() {
       setSessionInfo(info);
       // sessionStorage に会話バックアップがあれば復元
       const backup = sessionStorage.getItem(`interview_messages_${sessionId}`);
-      const parsed: InterviewMessage[] =
-        backup ? JSON.parse(backup) : [];
+      const parsed: InterviewMessage[] = backup ? JSON.parse(backup) : [];
       if (parsed.length > 0) {
         setMessages(parsed);
         resumeMessagesRef.current = parsed;
@@ -298,7 +368,8 @@ export default function InterviewSessionPage() {
       }
       // 音声面接の新規開始時のみ、開始前に身だしなみチェックを挟む（カメラ取得もここで判定）。
       // 再開（会話履歴あり）の場合はスキップしてそのまま再接続。
-      if (info.inputMode === "voice" && parsed.length === 0) setShowPreflight(true);
+      if (info.inputMode === "voice" && parsed.length === 0)
+        setShowPreflight(true);
       return;
     }
 
@@ -327,7 +398,9 @@ export default function InterviewSessionPage() {
         };
         if (cancelled) return;
         setSessionInfo(info);
-        const msgs: InterviewMessage[] = Array.isArray(doc.messages) ? doc.messages : [];
+        const msgs: InterviewMessage[] = Array.isArray(doc.messages)
+          ? doc.messages
+          : [];
         resumeMessagesRef.current = msgs;
         if (msgs.length > 0) {
           setMessages(msgs);
@@ -336,7 +409,8 @@ export default function InterviewSessionPage() {
         } else {
           setMessages([{ role: "ai", content: info.openingMessage }]);
         }
-        if (info.inputMode === "voice" && msgs.length === 0) setShowPreflight(true);
+        if (info.inputMode === "voice" && msgs.length === 0)
+          setShowPreflight(true);
       } catch {
         /* 復元失敗は無視 */
       }
@@ -350,7 +424,8 @@ export default function InterviewSessionPage() {
   useEffect(() => {
     if (!cameraEnabled || !navigator.mediaDevices?.getUserMedia) return;
     let stream: MediaStream | null = null;
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: 640, height: 480 } })
+    navigator.mediaDevices
+      .getUserMedia({ video: { facingMode: "user", width: 640, height: 480 } })
       .then((s) => {
         stream = s;
         setVideoStream(s);
@@ -476,20 +551,28 @@ export default function InterviewSessionPage() {
 
   // Auto-scroll
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+    scrollRef.current?.scrollTo({
+      top: scrollRef.current.scrollHeight,
+      behavior: "smooth",
+    });
   }, [messages, isLoading]);
 
   // Backup messages to sessionStorage
   useEffect(() => {
     if (messages.length > 0) {
-      sessionStorage.setItem(`interview_messages_${sessionId}`, JSON.stringify(messages));
+      sessionStorage.setItem(
+        `interview_messages_${sessionId}`,
+        JSON.stringify(messages)
+      );
     }
   }, [messages, sessionId]);
 
   // 会話を Firestore に自動保存（履歴からの再開用）。終了処理中は保存しない。
   useEffect(() => {
     if (!sessionId || endedRef.current) return;
-    const real = messages.filter((m) => !m.isThinking && !m.correcting && m.content?.trim());
+    const real = messages.filter(
+      (m) => !m.isThinking && !m.correcting && m.content?.trim()
+    );
     if (real.length === 0) return;
     const timer = setTimeout(() => {
       authFetch(`/api/interview/${sessionId}/messages`, {
@@ -505,7 +588,9 @@ export default function InterviewSessionPage() {
   useEffect(() => {
     function flush() {
       if (endedRef.current) return;
-      const real = messages.filter((m) => !m.isThinking && !m.correcting && m.content?.trim());
+      const real = messages.filter(
+        (m) => !m.isThinking && !m.correcting && m.content?.trim()
+      );
       if (real.length === 0) return;
       authFetch(`/api/interview/${sessionId}/messages`, {
         method: "POST",
@@ -559,7 +644,10 @@ export default function InterviewSessionPage() {
     } catch {
       setMessages((prev) => [
         ...prev,
-        { role: "ai", content: "⚠ 通信エラーが発生しました。もう一度お話しください。" },
+        {
+          role: "ai",
+          content: "⚠ 通信エラーが発生しました。もう一度お話しください。",
+        },
       ]);
     } finally {
       setIsLoading(false);
@@ -571,8 +659,21 @@ export default function InterviewSessionPage() {
     endedRef.current = true;
     setIsEnding(true);
     try {
-      console.log("[handleEnd] Sending messages:", messages.length, "turns, duration:", elapsed);
-      console.log("[handleEnd] Messages:", JSON.stringify(messages.map(m => ({ role: m.role, content: m.content.slice(0, 50) }))));
+      console.log(
+        "[handleEnd] Sending messages:",
+        messages.length,
+        "turns, duration:",
+        elapsed
+      );
+      console.log(
+        "[handleEnd] Messages:",
+        JSON.stringify(
+          messages.map((m) => ({
+            role: m.role,
+            content: m.content.slice(0, 50),
+          }))
+        )
+      );
 
       // 終了時は flush() で蓄積データから確定値を同期取得する。
       // (アナライザの stop 時 emit→setState は handleEnd の後に反映されるため、
@@ -589,7 +690,7 @@ export default function InterviewSessionPage() {
           refinedVoiceAnalysis = refineWithTranscription(
             finalVoice,
             studentTexts,
-            elapsed,
+            elapsed
           );
         }
       }
@@ -598,10 +699,14 @@ export default function InterviewSessionPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          sessionId, messages, duration: elapsed,
+          sessionId,
+          messages,
+          duration: elapsed,
           mode: sessionInfo?.mode,
           presentationContent: sessionInfo?.presentationContent,
-          ...(refinedVoiceAnalysis ? { voiceAnalysis: refinedVoiceAnalysis } : {}),
+          ...(refinedVoiceAnalysis
+            ? { voiceAnalysis: refinedVoiceAnalysis }
+            : {}),
           ...(finalVideo ? { videoAnalysis: finalVideo } : {}),
           ...(appearanceAnalysis ? { appearanceAnalysis } : {}),
         }),
@@ -609,15 +714,18 @@ export default function InterviewSessionPage() {
       if (!res.ok) throw new Error();
       const data = await res.json();
       // Store result for immediate display on result page
-      sessionStorage.setItem(`interview_result_${data.interviewId}`, JSON.stringify({
-        ...data,
-        messages,
-        universityName: sessionInfo?.universityContext?.universityName ?? "",
-        facultyName: sessionInfo?.universityContext?.facultyName ?? "",
-        mode: sessionInfo?.mode ?? "individual",
-        duration: elapsed,
-        practicedAt: new Date().toISOString(),
-      }));
+      sessionStorage.setItem(
+        `interview_result_${data.interviewId}`,
+        JSON.stringify({
+          ...data,
+          messages,
+          universityName: sessionInfo?.universityContext?.universityName ?? "",
+          facultyName: sessionInfo?.universityContext?.facultyName ?? "",
+          mode: sessionInfo?.mode ?? "individual",
+          duration: elapsed,
+          practicedAt: new Date().toISOString(),
+        })
+      );
       sessionStorage.removeItem(`interview_session_${sessionId}`);
       sessionStorage.removeItem(`interview_messages_${sessionId}`);
       await clearInputDraft();
@@ -654,42 +762,53 @@ export default function InterviewSessionPage() {
       <>
         {/* 指摘されている弱点 */}
         <div>
-          <p className="text-[11px] font-semibold text-sky-800 dark:text-sky-200 mb-1.5">
+          <p className="mb-1.5 text-[11px] font-semibold text-sky-800 dark:text-sky-200">
             ⚠ 自分の弱点 (カンペ)
           </p>
           {sortedWeaknesses.length === 0 ? (
-            <p className="text-xs text-muted-foreground">指摘された弱点はまだありません</p>
+            <p className="text-muted-foreground text-xs">
+              指摘された弱点はまだありません
+            </p>
           ) : (
             <>
               <ul className="space-y-1">
                 {visible.map((w) => {
                   const level = getWeaknessReminderLevel(w);
-                  const badge = level && level !== "resolved" ? CHEAT_BADGE_MAP[level] : null;
+                  const badge =
+                    level && level !== "resolved"
+                      ? CHEAT_BADGE_MAP[level]
+                      : null;
                   const trend = w.improving
                     ? { Icon: TrendingDown, cls: "text-emerald-500" }
                     : w.count >= 5
-                    ? { Icon: TrendingUp, cls: "text-rose-500" }
-                    : null;
+                      ? { Icon: TrendingUp, cls: "text-rose-500" }
+                      : null;
                   return (
                     <li
                       key={w.area}
-                      className="rounded border border-slate-200/70 dark:border-slate-700/50 bg-white/60 dark:bg-slate-900/30 px-2 py-1.5"
+                      className="rounded border border-slate-200/70 bg-white/60 px-2 py-1.5 dark:border-slate-700/50 dark:bg-slate-900/30"
                     >
                       <div className="flex items-center gap-1.5">
                         {badge && (
-                          <span className={`text-[10px] px-1.5 py-0.5 rounded border shrink-0 ${badge.cls}`}>
+                          <span
+                            className={`shrink-0 rounded border px-1.5 py-0.5 text-[10px] ${badge.cls}`}
+                          >
                             {badge.label}
                           </span>
                         )}
-                        <span className="text-xs font-medium flex-1 line-clamp-1 text-foreground/90">
+                        <span className="text-foreground/90 line-clamp-1 flex-1 text-xs font-medium">
                           {w.area}
                         </span>
-                        {trend && <trend.Icon className={`size-3 shrink-0 ${trend.cls}`} />}
-                        <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">
+                        {trend && (
+                          <trend.Icon
+                            className={`size-3 shrink-0 ${trend.cls}`}
+                          />
+                        )}
+                        <span className="text-muted-foreground shrink-0 text-[10px] tabular-nums">
                           {w.count}回
                         </span>
                       </div>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                      <p className="text-muted-foreground mt-0.5 text-[10px]">
                         {CHEAT_SOURCE_LABEL[w.source]}
                       </p>
                     </li>
@@ -700,7 +819,7 @@ export default function InterviewSessionPage() {
                 <button
                   type="button"
                   onClick={() => setCheatExpanded(true)}
-                  className="text-[11px] text-sky-700 dark:text-sky-300 hover:underline mt-1.5"
+                  className="mt-1.5 text-[11px] text-sky-700 hover:underline dark:text-sky-300"
                 >
                   ▼ あと {remaining}件
                 </button>
@@ -710,10 +829,11 @@ export default function InterviewSessionPage() {
         </div>
         {/* アドミッションポリシー */}
         <div>
-          <p className="text-[11px] font-semibold text-sky-800 dark:text-sky-200 mb-1.5">
-            📘 {sessionInfo.universityContext.universityName} {sessionInfo.universityContext.facultyName} のAP
+          <p className="mb-1.5 text-[11px] font-semibold text-sky-800 dark:text-sky-200">
+            📘 {sessionInfo.universityContext.universityName}{" "}
+            {sessionInfo.universityContext.facultyName} のAP
           </p>
-          <p className="text-xs leading-relaxed text-foreground/85 whitespace-pre-wrap">
+          <p className="text-foreground/85 text-xs leading-relaxed whitespace-pre-wrap">
             {sessionInfo.universityContext.admissionPolicy}
           </p>
         </div>
@@ -751,52 +871,58 @@ export default function InterviewSessionPage() {
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between gap-2 px-4 py-3 border-b bg-background shrink-0">
-        <div className="flex items-center gap-1.5 min-w-0">
+      <div className="bg-background flex shrink-0 items-center justify-between gap-2 border-b px-4 py-3">
+        <div className="flex min-w-0 items-center gap-1.5">
           {/* モバイルは共通ヘッダー非表示のため、内部ヘッダーに戻る導線を置く（44pxタップ領域）。PC は共通ヘッダーがあるため非表示。 */}
           <button
             type="button"
             onClick={() => router.back()}
-            className="lg:hidden -ml-2 inline-flex min-h-11 min-w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground -ml-2 inline-flex min-h-11 min-w-11 items-center justify-center rounded-md transition-colors lg:hidden"
             aria-label="戻る"
           >
             <ArrowLeft className="size-5" />
           </button>
           <div className="min-w-0">
-            <p className="font-semibold text-sm truncate">
+            <p className="truncate text-sm font-semibold">
               {sessionInfo
                 ? `${sessionInfo.universityContext.universityName} ${sessionInfo.universityContext.facultyName}`
                 : "面接セッション"}
             </p>
-            <p className="text-xs text-muted-foreground truncate">
+            <p className="text-muted-foreground truncate text-xs">
               {modeLabel}
-              {sessionInfo?.mode === "group_discussion" && " — 教員3名 + 他受験生3名が参加"}
-              {sessionInfo?.mode === "presentation" && " — プレゼン後に質疑応答"}
+              {sessionInfo?.mode === "group_discussion" &&
+                " — 教員3名 + 他受験生3名が参加"}
+              {sessionInfo?.mode === "presentation" &&
+                " — プレゼン後に質疑応答"}
               {sessionInfo?.mode === "oral_exam" && " — 専門知識を問う試問"}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex shrink-0 items-center gap-3">
           <button
             onClick={() => setCameraEnabled((v) => !v)}
-            className={`p-1.5 rounded-md transition-colors cursor-pointer ${cameraEnabled ? "text-emerald-600 bg-emerald-50" : "text-muted-foreground hover:text-foreground"}`}
+            className={`cursor-pointer rounded-md p-1.5 transition-colors ${cameraEnabled ? "bg-emerald-50 text-emerald-600" : "text-muted-foreground hover:text-foreground"}`}
             title={cameraEnabled ? "カメラ分析ON" : "カメラ分析OFF"}
           >
-            {cameraEnabled ? <Video className="size-4" /> : <VideoOff className="size-4" />}
+            {cameraEnabled ? (
+              <Video className="size-4" />
+            ) : (
+              <VideoOff className="size-4" />
+            )}
           </button>
           <button
             onClick={() => setCheatSheetOpen((v) => !v)}
-            className={`lg:hidden p-1.5 rounded-md transition-colors cursor-pointer ${cheatSheetOpen ? "text-sky-600 bg-sky-50" : "text-muted-foreground hover:text-foreground"}`}
+            className={`cursor-pointer rounded-md p-1.5 transition-colors lg:hidden ${cheatSheetOpen ? "bg-sky-50 text-sky-600" : "text-muted-foreground hover:text-foreground"}`}
             title={cheatSheetOpen ? "カンペを閉じる" : "弱点とAPをカンペ表示"}
           >
             <BookOpenCheck className="size-4" />
           </button>
           <span
-            className={`text-sm font-mono tabular-nums ${
+            className={`font-mono text-sm tabular-nums ${
               sessionInfo?.mode === "group_discussion" && elapsed >= 14 * 60
-                ? "text-rose-600 font-semibold"
+                ? "font-semibold text-rose-600"
                 : sessionInfo?.mode === "group_discussion" && elapsed >= 11 * 60
-                  ? "text-amber-600 font-semibold"
+                  ? "font-semibold text-amber-600"
                   : "text-muted-foreground"
             }`}
           >
@@ -807,429 +933,451 @@ export default function InterviewSessionPage() {
             size="sm"
             onClick={() => setShowEndDialog(true)}
           >
-            <StopCircle className="size-4 mr-1" />
+            <StopCircle className="mr-1 size-4" />
             終了
           </Button>
         </div>
       </div>
 
       {/* 2カラムコンテナ: 左=カンペ(PC固定) / 右=チャット領域 */}
-      <div className="flex-1 flex overflow-hidden min-h-0">
+      <div className="flex min-h-0 flex-1 overflow-hidden">
         {/* 左サイドバー: カンペ常時表示 (lg以上のみ) */}
         {sessionInfo && (
-          <aside className="hidden lg:flex flex-col lg:w-[360px] xl:w-[440px] shrink-0 border-r bg-sky-50/30 dark:bg-sky-950/10 overflow-y-auto">
-            <div className="px-4 py-3 space-y-4">
-              {renderCheatSheet()}
-            </div>
+          <aside className="hidden shrink-0 flex-col overflow-y-auto border-r bg-sky-50/30 lg:flex lg:w-[360px] xl:w-[440px] dark:bg-sky-950/10">
+            <div className="space-y-4 px-4 py-3">{renderCheatSheet()}</div>
           </aside>
         )}
 
         {/* 右カラム: alerts / messages / memo / input */}
-        <div className="flex-1 flex flex-col min-w-0 min-h-0">
-
-      {/* Appearance alert */}
-      {appearanceAlert && (
-        <div className="mx-4 mt-2 rounded-lg border border-rose-300 bg-rose-50 dark:border-rose-700 dark:bg-rose-950/30 px-3 py-2 text-sm text-rose-700 dark:text-rose-300 animate-in fade-in slide-in-from-top-2">
-          <strong>身だしなみ:</strong> {appearanceAlert}
-        </div>
-      )}
-
-
-      {/* Gaze alert (リアルタイム視線指導) */}
-      {gazeAlert && (
-        <div className="mx-4 mt-2 rounded-lg border border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-950/30 px-3 py-2 text-sm text-amber-800 dark:text-amber-200 animate-in fade-in slide-in-from-top-2">
-          <strong>目線:</strong> {gazeAlert}
-        </div>
-      )}
-
-      {/* カンペ: 弱点 + アドミッションポリシー (モバイル: bottom Sheet オーバーレイ / PC: 左サイドバー)
-          Sheet はメッセージ領域を押し下げずオーバーレイ表示する。開閉は cheatSheetOpen と同期。 */}
-      <Sheet open={cheatSheetOpen} onOpenChange={setCheatSheetOpen}>
-        <SheetContent side="bottom" className="lg:hidden">
-          <SheetHeader className="pb-0">
-            <SheetTitle>弱点とアドミッションポリシー</SheetTitle>
-          </SheetHeader>
-          <div className="px-4 pb-2 space-y-3">
-            {sessionInfo && renderCheatSheet()}
-          </div>
-        </SheetContent>
-      </Sheet>
-
-      {/* Messages */}
-      <div
-        ref={scrollRef}
-        className="flex-1 overflow-y-auto px-4 py-4 space-y-3"
-      >
-        {/* 討論テーマ: 司会が開幕で読み上げるのと同じテーマを常時表示 */}
-        {sessionInfo?.mode === "group_discussion" && (
-          <div className="sticky top-0 z-40 mb-3 rounded-lg border-2 border-primary/40 bg-primary/5 p-3 shadow-md">
-            <p className="text-[11px] font-bold uppercase tracking-wide text-primary">
-              本日のテーマ
-            </p>
-            <p className="mt-0.5 text-sm font-bold leading-snug text-foreground">
-              {realtime.gdTheme ?? "テーマを準備しています…"}
-            </p>
-          </div>
-        )}
-
-        {/* ユーザーターンランプ: GD で自分の発話タイミングを明示 */}
-        {sessionInfo?.mode === "group_discussion" && (
-          <div
-            className={`sticky top-12 z-30 mb-3 rounded-lg border-2 p-3 shadow-md transition-all ${
-              realtime.isUserTurn
-                ? "border-emerald-400 bg-emerald-50 dark:bg-emerald-950/40"
-                : "border-slate-300 bg-slate-50 dark:bg-slate-900/40"
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <span className="relative flex size-3.5">
-                {realtime.isUserTurn && (
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                )}
-                <span
-                  className={`relative inline-flex size-3.5 rounded-full ${
-                    realtime.isUserTurn ? "bg-emerald-500" : "bg-slate-400"
-                  }`}
-                />
-              </span>
-              <p
-                className={`text-sm font-bold ${
-                  realtime.isUserTurn
-                    ? "text-emerald-900 dark:text-emerald-200"
-                    : "text-slate-600 dark:text-slate-300"
-                }`}
-              >
-                {realtime.isUserTurn
-                  ? "あなたの番です — マイクが ON です"
-                  : `${
-                      realtime.currentSpeaker === "moderator"
-                        ? "司会"
-                        : realtime.currentSpeaker === "peer_bold"
-                          ? "健太さん"
-                          : realtime.currentSpeaker === "peer_careful"
-                            ? "美咲さん"
-                            : realtime.currentSpeaker === "peer_creative"
-                              ? "翔太さん"
-                              : realtime.currentSpeaker === "professor_logic"
-                                ? "佐藤教授"
-                                : realtime.currentSpeaker === "professor_practical"
-                                  ? "田中准教授"
-                                  : "他の参加者"
-                    }が話しています — 待機中`}
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* ユーザーターンランプ (個人/プレゼン/口頭試問の音声面接): AI 発話中は入力不可、
-            喋り終わったら「あなたのターンです」がぬるっと出てマイク ON になる */}
-        {isVoiceMode &&
-          sessionInfo?.mode !== "group_discussion" &&
-          realtime.status === "connected" && (
-            <div
-              key={realtime.isUserTurn ? "your-turn" : "ai-turn"}
-              className={`sticky top-0 z-30 mb-3 rounded-lg border-2 p-3 shadow-md transition-all duration-500 animate-in fade-in slide-in-from-top-1 ${
-                realtime.isUserTurn
-                  ? "border-emerald-400 bg-emerald-50 dark:bg-emerald-950/40"
-                  : "border-slate-300 bg-slate-50 dark:bg-slate-900/40"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <span className="relative flex size-3.5">
-                  {realtime.isUserTurn && (
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                  )}
-                  <span
-                    className={`relative inline-flex size-3.5 rounded-full ${
-                      realtime.isUserTurn ? "bg-emerald-500" : "bg-slate-400"
-                    }`}
-                  />
-                </span>
-                <p
-                  className={`text-sm font-bold ${
-                    realtime.isUserTurn
-                      ? "text-emerald-900 dark:text-emerald-200"
-                      : "text-slate-600 dark:text-slate-300"
-                  }`}
-                >
-                  {realtime.isUserTurn
-                    ? "あなたのターンです — マイクが ON です"
-                    : "面接官が話しています — お待ちください"}
-                </p>
-              </div>
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+          {/* Appearance alert */}
+          {appearanceAlert && (
+            <div className="animate-in fade-in slide-in-from-top-2 mx-4 mt-2 rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-700 dark:bg-rose-950/30 dark:text-rose-300">
+              <strong>身だしなみ:</strong> {appearanceAlert}
             </div>
           )}
 
-        {sessionInfo?.mode === "group_discussion" && realtime.isAwaitingNext && (
-          <div className="mb-3 flex flex-col items-center gap-2 rounded-lg border border-primary/40 bg-primary/5 p-3">
-            <p className="text-xs text-muted-foreground">
-              発言が終わりました。準備ができたら次の話者へ進めてください。
-            </p>
-            <Button
-              size="sm"
-              onClick={realtime.advanceGdTurn}
-              className="gap-1.5"
-            >
-              次の話者へ
-              <ArrowRight className="size-4" />
-            </Button>
-          </div>
-        )}
-
-        {sessionInfo?.mode === "group_discussion" && messages.length > 0 && (
-          <div className="mb-3 rounded-lg border border-border/60 bg-muted/30 p-3">
-            <p className="text-[11px] font-semibold text-muted-foreground mb-2">
-              👥 集団討論の参加者
-            </p>
-            <div className="flex flex-wrap gap-1.5">
-              {Object.values(GD_SPEAKERS).map((sp) => (
-                <span
-                  key={sp.role}
-                  className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] ${sp.colorClass}`}
-                  title={sp.description}
-                >
-                  <span className="flex size-4 items-center justify-center rounded-full bg-white/70 text-[9px] font-bold">
-                    {sp.avatar}
-                  </span>
-                  {sp.displayName}
-                </span>
-              ))}
-              <span className="inline-flex items-center gap-1 rounded-md border border-primary/40 bg-primary/10 px-2 py-0.5 text-[10px] text-primary">
-                <span className="flex size-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground">
-                  あ
-                </span>
-                あなた
-              </span>
+          {/* Gaze alert (リアルタイム視線指導) */}
+          {gazeAlert && (
+            <div className="animate-in fade-in slide-in-from-top-2 mx-4 mt-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-200">
+              <strong>目線:</strong> {gazeAlert}
             </div>
-          </div>
-        )}
+          )}
 
-        {messages.map((msg, i) => {
-          if (msg.role === "student") {
-            const isEditing = editingIdx === i;
-            return (
-              <div key={i} className="flex justify-end group">
-                {isEditing ? (
-                  <div className="w-full max-w-[90%] lg:max-w-[80%] rounded-2xl rounded-tr-sm border-2 border-primary bg-primary/5 p-2">
-                    <textarea
-                      value={editDraft}
-                      onChange={(e) => setEditDraft(e.target.value)}
-                      className="w-full min-h-[60px] text-sm bg-background rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-primary/30 resize-y"
-                      autoFocus
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-                          e.preventDefault();
-                          commitEditMessage();
-                        } else if (e.key === "Escape") {
-                          e.preventDefault();
-                          cancelEditMessage();
-                        }
-                      }}
+          {/* カンペ: 弱点 + アドミッションポリシー (モバイル: bottom Sheet オーバーレイ / PC: 左サイドバー)
+          Sheet はメッセージ領域を押し下げずオーバーレイ表示する。開閉は cheatSheetOpen と同期。 */}
+          <Sheet open={cheatSheetOpen} onOpenChange={setCheatSheetOpen}>
+            <SheetContent side="bottom" className="lg:hidden">
+              <SheetHeader className="pb-0">
+                <SheetTitle>弱点とアドミッションポリシー</SheetTitle>
+              </SheetHeader>
+              <div className="space-y-3 px-4 pb-2">
+                {sessionInfo && renderCheatSheet()}
+              </div>
+            </SheetContent>
+          </Sheet>
+
+          {/* Messages */}
+          <div
+            ref={scrollRef}
+            className="flex-1 space-y-3 overflow-y-auto px-4 py-4"
+          >
+            {/* 討論テーマ: 司会が開幕で読み上げるのと同じテーマを常時表示 */}
+            {sessionInfo?.mode === "group_discussion" && (
+              <div className="border-primary/40 bg-primary/5 sticky top-0 z-40 mb-3 rounded-lg border-2 p-3 shadow-md">
+                <p className="text-primary text-[11px] font-bold tracking-wide uppercase">
+                  本日のテーマ
+                </p>
+                <p className="text-foreground mt-0.5 text-sm leading-snug font-bold">
+                  {realtime.gdTheme ?? "テーマを準備しています…"}
+                </p>
+              </div>
+            )}
+
+            {/* ユーザーターンランプ: GD で自分の発話タイミングを明示 */}
+            {sessionInfo?.mode === "group_discussion" && (
+              <div
+                className={`sticky top-12 z-30 mb-3 rounded-lg border-2 p-3 shadow-md transition-all ${
+                  realtime.isUserTurn
+                    ? "border-emerald-400 bg-emerald-50 dark:bg-emerald-950/40"
+                    : "border-slate-300 bg-slate-50 dark:bg-slate-900/40"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="relative flex size-3.5">
+                    {realtime.isUserTurn && (
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                    )}
+                    <span
+                      className={`relative inline-flex size-3.5 rounded-full ${
+                        realtime.isUserTurn ? "bg-emerald-500" : "bg-slate-400"
+                      }`}
                     />
-                    <div className="mt-1 flex items-center justify-between">
-                      <p className="text-[10px] text-muted-foreground">
-                        ⌘+Enterで保存 / Escでキャンセル
-                      </p>
-                      <div className="flex gap-1">
-                        <button
-                          onClick={cancelEditMessage}
-                          className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
-                          type="button"
-                        >
-                          <X className="size-3" />
-                          取消
-                        </button>
-                        <button
-                          onClick={commitEditMessage}
-                          className="inline-flex items-center gap-1 rounded bg-primary px-2 py-1 text-xs text-primary-foreground hover:bg-primary/90"
-                          type="button"
-                        >
-                          <Check className="size-3" />
-                          保存
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ) : msg.correcting ? (
-                  <div className="max-w-[85%] lg:max-w-[75%] rounded-2xl rounded-tr-sm bg-primary/50 text-primary-foreground px-4 py-2 text-sm italic animate-pulse">
-                    {msg.content}
-                  </div>
-                ) : (
-                  <div className="flex items-end gap-1">
-                    <button
-                      type="button"
-                      onClick={() => startEditMessage(i)}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-muted-foreground hover:text-foreground"
-                      title="発言を編集(誤変換を修正)"
-                      aria-label="発言を編集"
-                    >
-                      <Pencil className="size-3.5" />
-                    </button>
-                    <div className="max-w-[85%] lg:max-w-[75%] rounded-2xl rounded-tr-sm bg-primary text-primary-foreground px-4 py-2 text-sm whitespace-pre-wrap">
-                      {msg.content}
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          }
-
-          // AI 発言: GDモードなら複数発言を話者別カードに分解、それ以外は従来の吹き出し
-          if (sessionInfo?.mode === "group_discussion") {
-            const utterances = splitIntoUtterances(msg.content, DEFAULT_INTERVIEWER);
-            return (
-              <div key={i} className="flex flex-col gap-2">
-                {utterances.map((u, j) => (
-                  <div key={j} className="flex justify-start">
-                    <div
-                      className={`max-w-[90%] lg:max-w-[80%] rounded-2xl rounded-tl-sm border px-3 py-2 ${u.profile.colorClass}`}
-                    >
-                      <div className="mb-1 flex items-center gap-1.5">
-                        <span className="flex size-5 items-center justify-center rounded-full bg-white/70 text-[10px] font-bold">
-                          {u.profile.avatar}
-                        </span>
-                        <span className="text-xs font-semibold">
-                          {u.profile.displayName}
-                        </span>
-                      </div>
-                      {msg.isThinking && !u.body ? (
-                        <span className="flex items-center gap-1 py-0.5">
-                          <span className="size-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:-0.3s]" />
-                          <span className="size-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:-0.15s]" />
-                          <span className="size-1.5 rounded-full bg-muted-foreground animate-bounce" />
-                        </span>
-                      ) : (
-                        <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                          {u.body}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            );
-          }
-
-          // 個人面接・プレゼン・口頭試問: 従来通り
-          // 「考え中」プレースホルダーは bouncing dots で表現する
-          return (
-            <div key={i} className="flex justify-start">
-              <div className="max-w-[85%] lg:max-w-[75%] rounded-2xl rounded-tl-sm bg-muted text-foreground px-4 py-2 text-sm">
-                {msg.isThinking && !msg.content ? (
-                  <span className="flex items-center gap-1 py-0.5">
-                    <span className="size-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:-0.3s]" />
-                    <span className="size-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:-0.15s]" />
-                    <span className="size-1.5 rounded-full bg-muted-foreground animate-bounce" />
                   </span>
-                ) : (
-                  msg.content
-                )}
+                  <p
+                    className={`text-sm font-bold ${
+                      realtime.isUserTurn
+                        ? "text-emerald-900 dark:text-emerald-200"
+                        : "text-slate-600 dark:text-slate-300"
+                    }`}
+                  >
+                    {realtime.isUserTurn
+                      ? "あなたの番です — マイクが ON です"
+                      : `${
+                          realtime.currentSpeaker === "moderator"
+                            ? "司会"
+                            : realtime.currentSpeaker === "peer_bold"
+                              ? "健太さん"
+                              : realtime.currentSpeaker === "peer_careful"
+                                ? "美咲さん"
+                                : realtime.currentSpeaker === "peer_creative"
+                                  ? "翔太さん"
+                                  : realtime.currentSpeaker ===
+                                      "professor_logic"
+                                    ? "佐藤教授"
+                                    : realtime.currentSpeaker ===
+                                        "professor_practical"
+                                      ? "田中准教授"
+                                      : "他の参加者"
+                        }が話しています — 待機中`}
+                  </p>
+                </div>
               </div>
-            </div>
-          );
-        })}
+            )}
 
-        {isLoading && (
-          <div className="flex justify-start">
-            <div className="bg-muted rounded-2xl rounded-tl-sm px-4 py-3 flex items-center gap-1">
-              <span className="size-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:-0.3s]" />
-              <span className="size-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:-0.15s]" />
-              <span className="size-1.5 rounded-full bg-muted-foreground animate-bounce" />
-            </div>
-          </div>
-        )}
-
-        {/* 保険ボタン: 自動VADが終話を取りこぼして会話が止まったとき、押すと前へ進む。
-            会話末尾・右寄せ（自分のコメント位置）に控えめに表示。普段はハンズフリー。 */}
-        {isVoiceMode && realtime.status === "connected" && realtime.isUserTurn && (
-          <div className="flex flex-col items-end gap-0.5 animate-in fade-in slide-in-from-bottom-1">
-            <span className="text-[11px] text-muted-foreground pr-1">進まないときに</span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={realtime.forceEndTurn}
-              className="gap-1.5 rounded-2xl rounded-tr-sm border-emerald-300 text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300"
-            >
-              <Send className="size-4" />
-              話し終わった
-            </Button>
-          </div>
-        )}
-      </div>
-
-      {/* Memo area */}
-      <div className="px-4 border-t shrink-0">
-        <button
-          onClick={() => setMemoOpen((o) => !o)}
-          className="flex items-center gap-1 text-xs text-muted-foreground py-2"
-        >
-          {memoOpen ? <ChevronDown className="size-3" /> : <ChevronUp className="size-3" />}
-          メモ
-        </button>
-        {memoOpen && (
-          <textarea
-            className="w-full h-20 text-xs rounded border bg-muted/50 p-2 resize-none focus:outline-none focus:ring-1 focus:ring-ring mb-2"
-            placeholder="面接中のメモ（採点には影響しません）"
-            value={memo}
-            onChange={(e) => setMemo(e.target.value)}
-          />
-        )}
-      </div>
-
-      <DraftSaveIndicator
-        status={inputDraftStatus}
-        restored={inputDraftRestored}
-        lastSavedAt={inputDraftSavedAt}
-        onSaveNow={() => void saveInputDraft()}
-        className="shrink-0 border-t px-4"
-      />
-
-      {/* Input: テキストモードは常時、音声モードはレート制限・エラー時のみ */}
-      {(!isVoiceMode ||
-        realtime.status === "fallback_rate_limited" ||
-        realtime.status === "fallback_error") && (
-      <div className="px-4 py-3 border-t bg-background shrink-0">
-        {isVoiceMode ? (
-          realtime.status === "fallback_rate_limited" ? (
-            <div className="flex flex-col items-center justify-center gap-1 py-3 text-sm text-amber-700">
-              <span>音声モードの面接は 7 日に 1 回までです</span>
-              {realtime.nextAvailableAt && (
-                <span className="text-[12px]">
-                  次回は {new Date(realtime.nextAvailableAt).toLocaleDateString("ja-JP")} から利用できます
-                </span>
+            {/* ユーザーターンランプ (個人/プレゼン/口頭試問の音声面接): AI 発話中は入力不可、
+            喋り終わったら「あなたのターンです」がぬるっと出てマイク ON になる */}
+            {isVoiceMode &&
+              sessionInfo?.mode !== "group_discussion" &&
+              realtime.status === "connected" && (
+                <div
+                  key={realtime.isUserTurn ? "your-turn" : "ai-turn"}
+                  className={`animate-in fade-in slide-in-from-top-1 sticky top-0 z-30 mb-3 rounded-lg border-2 p-3 shadow-md transition-all duration-500 ${
+                    realtime.isUserTurn
+                      ? "border-emerald-400 bg-emerald-50 dark:bg-emerald-950/40"
+                      : "border-slate-300 bg-slate-50 dark:bg-slate-900/40"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="relative flex size-3.5">
+                      {realtime.isUserTurn && (
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                      )}
+                      <span
+                        className={`relative inline-flex size-3.5 rounded-full ${
+                          realtime.isUserTurn
+                            ? "bg-emerald-500"
+                            : "bg-slate-400"
+                        }`}
+                      />
+                    </span>
+                    <p
+                      className={`text-sm font-bold ${
+                        realtime.isUserTurn
+                          ? "text-emerald-900 dark:text-emerald-200"
+                          : "text-slate-600 dark:text-slate-300"
+                      }`}
+                    >
+                      {realtime.isUserTurn
+                        ? "あなたのターンです — マイクが ON です"
+                        : "面接官が話しています — お待ちください"}
+                    </p>
+                  </div>
+                </div>
               )}
-              <span className="text-[11px] text-muted-foreground">それまではテキストモードで練習できます</span>
-            </div>
-          ) : realtime.status === "fallback_error" ? (
-            <div className="flex flex-col items-center justify-center gap-1 py-3 text-sm text-rose-600">
-              <span>接続に失敗しました</span>
-              {realtime.error && <span className="text-[11px] font-mono">{realtime.error.slice(0, 200)}</span>}
-            </div>
-          ) : null
-        ) : (
-          <div className="flex gap-2">
-            <input
-              ref={inputRef}
-              type="text"
-              className="flex-1 rounded-lg border bg-background px-3 py-2.5 lg:px-4 lg:py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder="回答を入力 (Cmd/Ctrl+Enter で送信)"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              disabled={isLoading}
-            />
-            <Button
-              size="sm"
-              onClick={sendMessage}
-              disabled={!input.trim() || isLoading}
-            >
-              <Send className="size-4" />
-            </Button>
-          </div>
-        )}
-      </div>
-      )}
 
+            {sessionInfo?.mode === "group_discussion" &&
+              realtime.isAwaitingNext && (
+                <div className="border-primary/40 bg-primary/5 mb-3 flex flex-col items-center gap-2 rounded-lg border p-3">
+                  <p className="text-muted-foreground text-xs">
+                    発言が終わりました。準備ができたら次の話者へ進めてください。
+                  </p>
+                  <Button
+                    size="sm"
+                    onClick={realtime.advanceGdTurn}
+                    className="gap-1.5"
+                  >
+                    次の話者へ
+                    <ArrowRight className="size-4" />
+                  </Button>
+                </div>
+              )}
+
+            {sessionInfo?.mode === "group_discussion" &&
+              messages.length > 0 && (
+                <div className="border-border/60 bg-muted/30 mb-3 rounded-lg border p-3">
+                  <p className="text-muted-foreground mb-2 text-[11px] font-semibold">
+                    👥 集団討論の参加者
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {Object.values(GD_SPEAKERS).map((sp) => (
+                      <span
+                        key={sp.role}
+                        className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] ${sp.colorClass}`}
+                        title={sp.description}
+                      >
+                        <span className="flex size-4 items-center justify-center rounded-full bg-white/70 text-[9px] font-bold">
+                          {sp.avatar}
+                        </span>
+                        {sp.displayName}
+                      </span>
+                    ))}
+                    <span className="border-primary/40 bg-primary/10 text-primary inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[10px]">
+                      <span className="bg-primary text-primary-foreground flex size-4 items-center justify-center rounded-full text-[9px] font-bold">
+                        あ
+                      </span>
+                      あなた
+                    </span>
+                  </div>
+                </div>
+              )}
+
+            {messages.map((msg, i) => {
+              if (msg.role === "student") {
+                const isEditing = editingIdx === i;
+                return (
+                  <div key={i} className="group flex justify-end">
+                    {isEditing ? (
+                      <div className="border-primary bg-primary/5 w-full max-w-[90%] rounded-2xl rounded-tr-sm border-2 p-2 lg:max-w-[80%]">
+                        <textarea
+                          value={editDraft}
+                          onChange={(e) => setEditDraft(e.target.value)}
+                          className="bg-background focus:ring-primary/30 min-h-[60px] w-full resize-y rounded-md p-2 text-sm focus:ring-2 focus:outline-none"
+                          autoFocus
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                              e.preventDefault();
+                              commitEditMessage();
+                            } else if (e.key === "Escape") {
+                              e.preventDefault();
+                              cancelEditMessage();
+                            }
+                          }}
+                        />
+                        <div className="mt-1 flex items-center justify-between">
+                          <p className="text-muted-foreground text-[10px]">
+                            ⌘+Enterで保存 / Escでキャンセル
+                          </p>
+                          <div className="flex gap-1">
+                            <button
+                              onClick={cancelEditMessage}
+                              className="text-muted-foreground hover:bg-muted inline-flex items-center gap-1 rounded px-2 py-1 text-xs"
+                              type="button"
+                            >
+                              <X className="size-3" />
+                              取消
+                            </button>
+                            <button
+                              onClick={commitEditMessage}
+                              className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-1 rounded px-2 py-1 text-xs"
+                              type="button"
+                            >
+                              <Check className="size-3" />
+                              保存
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ) : msg.correcting ? (
+                      <div className="bg-primary/50 text-primary-foreground max-w-[85%] animate-pulse rounded-2xl rounded-tr-sm px-4 py-2 text-sm italic lg:max-w-[75%]">
+                        {msg.content}
+                      </div>
+                    ) : (
+                      <div className="flex items-end gap-1">
+                        <button
+                          type="button"
+                          onClick={() => startEditMessage(i)}
+                          className="text-muted-foreground hover:text-foreground p-1 opacity-0 transition-opacity group-hover:opacity-100"
+                          title="発言を編集(誤変換を修正)"
+                          aria-label="発言を編集"
+                        >
+                          <Pencil className="size-3.5" />
+                        </button>
+                        <div className="bg-primary text-primary-foreground max-w-[85%] rounded-2xl rounded-tr-sm px-4 py-2 text-sm whitespace-pre-wrap lg:max-w-[75%]">
+                          {msg.content}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+
+              // AI 発言: GDモードなら複数発言を話者別カードに分解、それ以外は従来の吹き出し
+              if (sessionInfo?.mode === "group_discussion") {
+                const utterances = splitIntoUtterances(
+                  msg.content,
+                  DEFAULT_INTERVIEWER
+                );
+                return (
+                  <div key={i} className="flex flex-col gap-2">
+                    {utterances.map((u, j) => (
+                      <div key={j} className="flex justify-start">
+                        <div
+                          className={`max-w-[90%] rounded-2xl rounded-tl-sm border px-3 py-2 lg:max-w-[80%] ${u.profile.colorClass}`}
+                        >
+                          <div className="mb-1 flex items-center gap-1.5">
+                            <span className="flex size-5 items-center justify-center rounded-full bg-white/70 text-[10px] font-bold">
+                              {u.profile.avatar}
+                            </span>
+                            <span className="text-xs font-semibold">
+                              {u.profile.displayName}
+                            </span>
+                          </div>
+                          {msg.isThinking && !u.body ? (
+                            <span className="flex items-center gap-1 py-0.5">
+                              <span className="bg-muted-foreground size-1.5 animate-bounce rounded-full [animation-delay:-0.3s]" />
+                              <span className="bg-muted-foreground size-1.5 animate-bounce rounded-full [animation-delay:-0.15s]" />
+                              <span className="bg-muted-foreground size-1.5 animate-bounce rounded-full" />
+                            </span>
+                          ) : (
+                            <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                              {u.body}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              }
+
+              // 個人面接・プレゼン・口頭試問: 従来通り
+              // 「考え中」プレースホルダーは bouncing dots で表現する
+              return (
+                <div key={i} className="flex justify-start">
+                  <div className="bg-muted text-foreground max-w-[85%] rounded-2xl rounded-tl-sm px-4 py-2 text-sm lg:max-w-[75%]">
+                    {msg.isThinking && !msg.content ? (
+                      <span className="flex items-center gap-1 py-0.5">
+                        <span className="bg-muted-foreground size-1.5 animate-bounce rounded-full [animation-delay:-0.3s]" />
+                        <span className="bg-muted-foreground size-1.5 animate-bounce rounded-full [animation-delay:-0.15s]" />
+                        <span className="bg-muted-foreground size-1.5 animate-bounce rounded-full" />
+                      </span>
+                    ) : (
+                      msg.content
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+
+            {isLoading && (
+              <div className="flex justify-start">
+                <div className="bg-muted flex items-center gap-1 rounded-2xl rounded-tl-sm px-4 py-3">
+                  <span className="bg-muted-foreground size-1.5 animate-bounce rounded-full [animation-delay:-0.3s]" />
+                  <span className="bg-muted-foreground size-1.5 animate-bounce rounded-full [animation-delay:-0.15s]" />
+                  <span className="bg-muted-foreground size-1.5 animate-bounce rounded-full" />
+                </div>
+              </div>
+            )}
+
+            {/* 保険ボタン: 自動VADが終話を取りこぼして会話が止まったとき、押すと前へ進む。
+            会話末尾・右寄せ（自分のコメント位置）に控えめに表示。普段はハンズフリー。 */}
+            {isVoiceMode &&
+              realtime.status === "connected" &&
+              realtime.isUserTurn && (
+                <div className="animate-in fade-in slide-in-from-bottom-1 flex flex-col items-end gap-0.5">
+                  <span className="text-muted-foreground pr-1 text-[11px]">
+                    進まないときに
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={realtime.forceEndTurn}
+                    className="gap-1.5 rounded-2xl rounded-tr-sm border-emerald-300 text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300"
+                  >
+                    <Send className="size-4" />
+                    話し終わった
+                  </Button>
+                </div>
+              )}
+          </div>
+
+          {/* Memo area */}
+          <div className="shrink-0 border-t px-4">
+            <button
+              onClick={() => setMemoOpen((o) => !o)}
+              className="text-muted-foreground flex items-center gap-1 py-2 text-xs"
+            >
+              {memoOpen ? (
+                <ChevronDown className="size-3" />
+              ) : (
+                <ChevronUp className="size-3" />
+              )}
+              メモ
+            </button>
+            {memoOpen && (
+              <textarea
+                className="bg-muted/50 focus:ring-ring mb-2 h-20 w-full resize-none rounded border p-2 text-xs focus:ring-1 focus:outline-none"
+                placeholder="面接中のメモ（採点には影響しません）"
+                value={memo}
+                onChange={(e) => setMemo(e.target.value)}
+              />
+            )}
+          </div>
+
+          <DraftSaveIndicator
+            status={inputDraftStatus}
+            restored={inputDraftRestored}
+            lastSavedAt={inputDraftSavedAt}
+            onSaveNow={() => void saveInputDraft()}
+            className="shrink-0 border-t px-4"
+          />
+
+          {/* Input: テキストモードは常時、音声モードはレート制限・エラー時のみ */}
+          {(!isVoiceMode ||
+            realtime.status === "fallback_rate_limited" ||
+            realtime.status === "fallback_error") && (
+            <div className="bg-background shrink-0 border-t px-4 py-3">
+              {isVoiceMode ? (
+                realtime.status === "fallback_rate_limited" ? (
+                  <div className="flex flex-col items-center justify-center gap-1 py-3 text-sm text-amber-700">
+                    <span>音声モードの面接は 7 日に 1 回までです</span>
+                    {realtime.nextAvailableAt && (
+                      <span className="text-[12px]">
+                        次回は{" "}
+                        {new Date(realtime.nextAvailableAt).toLocaleDateString(
+                          "ja-JP"
+                        )}{" "}
+                        から利用できます
+                      </span>
+                    )}
+                    <span className="text-muted-foreground text-[11px]">
+                      それまではテキストモードで練習できます
+                    </span>
+                  </div>
+                ) : realtime.status === "fallback_error" ? (
+                  <div className="flex flex-col items-center justify-center gap-1 py-3 text-sm text-rose-600">
+                    <span>接続に失敗しました</span>
+                    {realtime.error && (
+                      <span className="font-mono text-[11px]">
+                        {realtime.error.slice(0, 200)}
+                      </span>
+                    )}
+                  </div>
+                ) : null
+              ) : (
+                <div className="flex gap-2">
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    className="bg-background focus:ring-ring flex-1 rounded-lg border px-3 py-2.5 text-sm focus:ring-2 focus:outline-none lg:px-4 lg:py-3"
+                    placeholder="回答を入力 (Cmd/Ctrl+Enter で送信)"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    disabled={isLoading}
+                  />
+                  <Button
+                    size="sm"
+                    onClick={sendMessage}
+                    disabled={!input.trim() || isLoading}
+                  >
+                    <Send className="size-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
       {/* /2カラムコンテナ */}
@@ -1244,8 +1392,12 @@ export default function InterviewSessionPage() {
           onAnalysisComplete={setVideoAnalysis}
           onGazeAlert={(msg) => {
             setGazeAlert(msg);
-            if (gazeAlertTimerRef.current) clearTimeout(gazeAlertTimerRef.current);
-            gazeAlertTimerRef.current = setTimeout(() => setGazeAlert(null), 6000);
+            if (gazeAlertTimerRef.current)
+              clearTimeout(gazeAlertTimerRef.current);
+            gazeAlertTimerRef.current = setTimeout(
+              () => setGazeAlert(null),
+              6000
+            );
           }}
         />
       )}
@@ -1270,7 +1422,7 @@ export default function InterviewSessionPage() {
               採点・フィードバックを受けるか、評価なしで終了できます。
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="flex-col sm:flex-row gap-2">
+          <DialogFooter className="flex-col gap-2 sm:flex-row">
             <Button
               variant="outline"
               onClick={() => setShowEndDialog(false)}

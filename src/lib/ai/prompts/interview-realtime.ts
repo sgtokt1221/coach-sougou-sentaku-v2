@@ -8,9 +8,10 @@
  * - 応答は短く、自然な会話ペースで
  */
 
-import type { InterviewMode } from "@/lib/types/interview";
+import type { InterviewMode, OralExamTopic } from "@/lib/types/interview";
 import type { InterviewTendency } from "@/lib/types/university";
 import { FACULTY_AGENCY_FOCUS_INTERVIEW } from "./shared";
+import { buildOralExamTopicBlock } from "./interview";
 
 /**
  * 個人面接 / プレゼンテーション / 口頭試問用の instructions を生成。
@@ -33,6 +34,8 @@ export function buildRealtimeIndividualInstructions(
   presentationContent?: string,
   selfAnalysis?: SelfAnalysisContext,
   contentCandidates?: string[],
+  /** 口頭試問の出題分野。他のモードでは使わない */
+  oralExam?: OralExamTopic
 ): string {
   // バンク(superadmin管理の想定質問/お題)。優先候補として提示しつつ AP 動的生成も維持。
   const candidatesBlock =
@@ -66,9 +69,16 @@ ${contentCandidates.map((c) => `- ${c}`).join("\n")}
       case "presentation":
         return `## あなたの最初の発言（必ずこの通りに話し始めること）
 「本日は${universityName} ${facultyName}の総合型選抜、プレゼンテーション審査にお越しいただきありがとうございます。私は${facultyName}の教員です。本日はあなたの発表を楽しみにしておりました。それでは準備ができましたら、発表を始めてください。」`;
-      case "oral_exam":
+      case "oral_exam": {
+        const subject = oralExam?.subject?.trim();
+        // 分野が決まっている大学では、志望理由からではなくその分野から始める
+        if (subject) {
+          return `## あなたの最初の発言（必ずこの通りに話し始めること）
+「本日は${universityName} ${facultyName}の総合型選抜、口頭試問にお越しいただきありがとうございます。私は${facultyName}の教員です。本日は${subject}についてお聞きします。落ち着いてお答えください。まずはじめに、${subject}の中で特に関心を持って学んできたことを教えていただけますか。」`;
+        }
         return `## あなたの最初の発言（必ずこの通りに話し始めること）
 「本日は${universityName} ${facultyName}の総合型選抜、口頭試問にお越しいただきありがとうございます。私は${facultyName}の教員です。これから${facultyName}に関連する質問をいくつかお聞きしますので、落ち着いてお答えください。まずはじめに、この学部を志望された理由を教えていただけますか。」`;
+      }
       default:
         return `## あなたの最初の発言（必ずこの通りに話し始めること）
 「本日は${universityName} ${facultyName}の総合型選抜の面接にお越しいただきありがとうございます。私は${facultyName}の教員です。それでは面接を始めます。まず、簡単に自己紹介をお願いできますか。」`;
@@ -120,13 +130,16 @@ ${FACULTY_AGENCY_FOCUS_INTERVIEW}`;
 
 ${presentationContent ? `## 受験生が準備した発表内容\n${presentationContent}` : ""}`;
       case "oral_exam":
-        return `## AP 連動の基本方針
-- **上のアドミッションポリシー (AP) が示す重視分野** (研究テーマ・学問観・キーワード) から試問テーマを選ぶこと
-- 応用思考問題も AP の価値観 (社会貢献・批判的思考・独創性など) と結びつけて作問する
+        return `${buildOralExamTopicBlock(oralExam, facultyName)}
+
+## AP 連動の基本方針
+- ${oralExam?.subject?.trim() ? "試問は上の分野から出す。そのうえで" : "**上のアドミッションポリシー (AP) が示す重視分野** (研究テーマ・学問観・キーワード) から試問テーマを選ぶこと。"}
+  応用思考問題は AP の価値観 (社会貢献・批判的思考・独創性など) と結びつけて作問する
+- 受験生は高校生である。高校の履修範囲か、そこから考えれば届く範囲で問うこと
 
 ## 面接の進行 (全体で 8-10 ターン)
 1. 「本日はよろしくお願いいたします」と挨拶してから試問を始める
-2. **専門分野の基礎知識を問う。テーマは AP が強調する分野・キーワードから選ぶ**
+2. **基礎知識を問う。テーマは上の「試問の分野」から選ぶ**
 3. 段階的に応用的・批判的思考を問う質問へ移行する
 4. **応用問題は「本学 AP は〇〇を重視していますが、この問題にその観点からどう答えますか」のように AP と結びつける**
 5. 曖昧な回答には「なぜそう考えますか？」「根拠は何ですか？」と必ず追及する
@@ -287,7 +300,7 @@ function formatInterviewTendency(t: InterviewTendency | undefined): string {
  */
 export function buildRealtimeGdSpeakerInstructions(
   speaker: GdSpeakerKey,
-  theme?: string,
+  theme?: string
 ): string {
   let characterPrompt = GD_CHARACTER_PROMPTS[speaker];
 
@@ -297,7 +310,10 @@ export function buildRealtimeGdSpeakerInstructions(
       theme && theme.trim()
         ? `本日のテーマは『${theme.trim()}』です。それでは、どなたからでも結構ですので、ご意見をお願いします。`
         : "";
-    characterPrompt = characterPrompt.replace("{{THEME_ANNOUNCEMENT}}", announcement);
+    characterPrompt = characterPrompt.replace(
+      "{{THEME_ANNOUNCEMENT}}",
+      announcement
+    );
   }
 
   return `${characterPrompt}
@@ -346,7 +362,7 @@ export function buildRealtimeGdSpeakerContextMessage(
   admissionPolicy: string,
   weaknessList: string,
   interviewTendency?: InterviewTendency,
-  theme?: string,
+  theme?: string
 ): string {
   const tendencyText = formatInterviewTendency(interviewTendency);
   const lines: string[] = [
@@ -361,19 +377,19 @@ export function buildRealtimeGdSpeakerContextMessage(
     lines.push(
       "",
       "[討論テーマ] (司会が開幕で発表するテーマ。議論はこのテーマに沿って行う)",
-      theme.trim(),
+      theme.trim()
     );
   }
-  lines.push(
-    "",
-    "[アドミッションポリシー]",
-    admissionPolicy,
-  );
+  lines.push("", "[アドミッションポリシー]", admissionPolicy);
   if (tendencyText) {
     lines.push("", "[この学部の面接傾向]", tendencyText);
   }
   if (weaknessList && weaknessList.trim()) {
-    lines.push("", "[今回の受験生の弱点メモ (内心で意識、発言では言及しない)]", weaknessList);
+    lines.push(
+      "",
+      "[今回の受験生の弱点メモ (内心で意識、発言では言及しない)]",
+      weaknessList
+    );
   }
   lines.push("", "</my-internal-notes>");
   return lines.join("\n");

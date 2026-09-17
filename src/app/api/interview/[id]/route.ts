@@ -1,10 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 
+/**
+ * GET /api/interview/[id]
+ *
+ * 面接の記録（会話全文・採点・フィードバック）を返す。
+ * 認証なしで返していたため、IDを知っていれば他人の面接を全部読めた。
+ * 本人か、担当する管理者・講師だけに限る。
+ */
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const authResult = await requireRole(request, [
+    "student",
+    "teacher",
+    "admin",
+    "superadmin",
+  ]);
+  if (authResult instanceof NextResponse) return authResult;
+  const { uid, role } = authResult;
+
   try {
     const { id } = await params;
 
@@ -13,7 +29,17 @@ export async function GET(
       try {
         const interviewDoc = await adminDb.doc(`interviews/${id}`).get();
         if (interviewDoc.exists) {
-          return NextResponse.json({ id: interviewDoc.id, ...interviewDoc.data() });
+          const data = interviewDoc.data()!;
+          const isOwner =
+            !data.userId || data.userId === uid || uid === "dev-user";
+          const isStaff = role !== "student";
+          if (!isOwner && !isStaff) {
+            return NextResponse.json(
+              { error: "権限がありません" },
+              { status: 403 }
+            );
+          }
+          return NextResponse.json({ id: interviewDoc.id, ...data });
         }
       } catch (err) {
         console.warn("Failed to fetch interview from Firestore:", err);
@@ -49,11 +75,17 @@ export async function DELETE(
     const { id } = await params;
     const { adminDb } = await import("@/lib/firebase/admin");
     if (!adminDb) {
-      return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
+      return NextResponse.json(
+        { error: "サーバー設定エラー" },
+        { status: 500 }
+      );
     }
     const doc = await adminDb.doc(`interviews/${id}`).get();
     if (!doc.exists) {
-      return NextResponse.json({ error: "面接が見つかりません" }, { status: 404 });
+      return NextResponse.json(
+        { error: "面接が見つかりません" },
+        { status: 404 }
+      );
     }
     const data = doc.data()!;
     if (data.userId && uid !== "dev-user" && data.userId !== uid) {

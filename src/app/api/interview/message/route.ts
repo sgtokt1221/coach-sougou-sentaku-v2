@@ -1,14 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { buildInterviewSystemPrompt } from "@/lib/ai/prompts/interview";
-import type { InterviewMessageResponse, InterviewMessage, InterviewMode } from "@/lib/types/interview";
+import type {
+  InterviewMessageResponse,
+  InterviewMessage,
+  InterviewMode,
+} from "@/lib/types/interview";
 import { AI_MODEL_SONNET } from "@/lib/ai/prompt-versions";
 import { verifyAuthToken, adminDb } from "@/lib/firebase/admin";
+
+/** 集団討論は1ターンでAIを2回呼ぶことがある */
+export const maxDuration = 120;
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { sessionId, messages, mode, universityContext, presentationContent, elapsedSeconds }: {
+    const {
+      sessionId,
+      messages,
+      mode,
+      universityContext,
+      presentationContent,
+      elapsedSeconds,
+    }: {
       sessionId: string;
       messages: InterviewMessage[];
       mode?: InterviewMode;
@@ -32,43 +46,43 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    /**
+     * セッションの記録。口頭試問の分野はここから取る。
+     *
+     * 分野をクライアントから受け取ると、途中の1リクエストで欠けただけで
+     * 試験官が別の話題に流れる（エラーは出ない）。開始時に保存した値を使う。
+     */
+    let sessionData: Record<string, any> | null = null;
+    if (adminDb) {
+      try {
+        const snap = await adminDb.doc(`interviews/${sessionId}`).get();
+        if (snap.exists) sessionData = snap.data() ?? null;
+      } catch (err) {
+        console.warn("Failed to fetch session from Firestore:", err);
+      }
+    }
+    const oralExam = sessionData?.oralExam as
+      | { subject: string; scope?: string }
+      | undefined;
+
     // セッション情報からシステムプロンプトを構築
-    let systemPrompt = "あなたは大学入試の面接官です。総合型選抜の面接を行ってください。";
+    let systemPrompt =
+      "あなたは大学入試の面接官です。総合型選抜の面接を行ってください。";
 
     // 1. リクエストボディから直接コンテキストを取得（優先）
-    if (universityContext) {
+    const ctx = universityContext ?? sessionData?.universityContext;
+    if (ctx) {
       systemPrompt = buildInterviewSystemPrompt(
-        mode ?? "individual",
-        universityContext.universityName ?? "（大学名未設定）",
-        universityContext.facultyName ?? "（学部名未設定）",
-        universityContext.admissionPolicy ?? "（AP未設定）",
+        mode ?? sessionData?.mode ?? "individual",
+        ctx.universityName ?? "（大学名未設定）",
+        ctx.facultyName ?? "（学部名未設定）",
+        ctx.admissionPolicy ?? "（AP未設定）",
         "（過去の弱点なし）",
         undefined,
-        presentationContent
+        presentationContent,
+        undefined,
+        oralExam
       );
-    } else {
-      // 2. Firestoreから取得（フォールバック）
-      const { adminDb } = await import("@/lib/firebase/admin");
-      if (adminDb) {
-        try {
-          const sessionDoc = await adminDb.doc(`interviews/${sessionId}`).get();
-          if (sessionDoc.exists) {
-            const sessionData = sessionDoc.data()!;
-            const ctx = sessionData.universityContext;
-            if (ctx) {
-              systemPrompt = buildInterviewSystemPrompt(
-                sessionData.mode ?? "individual",
-                ctx.universityName,
-                ctx.facultyName,
-                ctx.admissionPolicy,
-                "（過去の弱点なし）"
-              );
-            }
-          }
-        } catch (err) {
-          console.warn("Failed to fetch session from Firestore:", err);
-        }
-      }
     }
 
     // GD 残り時間が少なくなってきたら総括フェーズに入る指示を system prompt に追加
@@ -104,7 +118,8 @@ export async function POST(request: NextRequest) {
     // GD で極端に短いレスポンス(司会の指示だけ等)が返ってきた場合、続きを生成して結合
     // 目安: 接頭辞【...】が 1 つ以下かつ 120 字未満なら続きを促す
     if (mode === "group_discussion") {
-      const bracketCount = (content.match(/[【\[][^】\]]+[】\]]/g) ?? []).length;
+      const bracketCount = (content.match(/[【\[][^】\]]+[】\]]/g) ?? [])
+        .length;
       if (bracketCount <= 1 && content.length < 120) {
         try {
           const followup = await client.messages.create({
@@ -143,13 +158,26 @@ export async function POST(request: NextRequest) {
       elapsedSeconds >= 14 * 60 &&
       messages.length >= minTurns;
 
+    /**
+     * 面接を続けるか。
+     *
+     * 以前はここに `response.stop_reason !== "end_turn"` が入っていた。
+     * 通常の応答は必ず end_turn で返るため条件は常に偽になり、
+     * 実際には「minTurns に達したら即終了」になっていた。個人面接は
+     * 8 メッセージ（生徒の4回目の回答あたり）で、プロンプトが指示する
+     * 起承転結の「転」に入る前に打ち切られていた。
+     * 終了の判断は、AIが終了を宣言したか・上限ターンに達したかで決める。
+     */
+    const declaredEnd =
+      content.includes("以上で面接を終了") ||
+      content.includes("以上で集団討論を終了") ||
+      content.includes("以上で口頭試問を終了") ||
+      content.includes("以上でプレゼンテーション面接を終了") ||
+      content.includes("面接を終わりにします");
+
     const naturalActive =
-      (messages.length < maxTurns &&
-        !content.includes("以上で面接を終了") &&
-        !content.includes("以上で集団討論を終了") &&
-        !content.includes("面接を終わりにします") &&
-        response.stop_reason !== "end_turn") ||
-      messages.length < minTurns;
+      messages.length < minTurns ||
+      (messages.length < maxTurns && !declaredEnd);
 
     const isActive = !timeUp && naturalActive;
 
@@ -162,13 +190,21 @@ export async function POST(request: NextRequest) {
      *
      * 保存に失敗しても面接は続行する（会話を止めない）。
      */
-    if (adminDb) {
+    if (adminDb && sessionData) {
       try {
         const auth = await verifyAuthToken(request);
         const ref = adminDb.doc(`interviews/${sessionId}`);
-        const snap = await ref.get();
-        // 他人のセッションには書かない
-        if (snap.exists && (!auth || snap.data()?.userId === auth.uid)) {
+        /**
+         * 本人のセッションにだけ書く。
+         *
+         * 以前は「認証が取れなければ書いてよい」判定になっていたため、
+         * トークンを付けなければ他人の会話記録を丸ごと差し替えられた。
+         * 採点はこの記録を正本にするので、書き手は本人に限る。
+         */
+        const isOwner =
+          auth && (sessionData.userId === auth.uid || auth.uid === "dev-user");
+        // 保存前に始まった古いセッション（userId 未設定）は本人判定ができないため書かない
+        if (isOwner) {
           await ref.set(
             {
               messages: [
@@ -176,8 +212,11 @@ export async function POST(request: NextRequest) {
                 { role: "ai", content },
               ],
               lastMessageAt: new Date().toISOString(),
+              // 進行中一覧はこちらで並べ替える。書かないとテキスト面接だけ
+              // 開始時刻のまま並び、最後に触ったセッションが上に来ない
+              lastActiveAt: new Date(),
             },
-            { merge: true },
+            { merge: true }
           );
         }
       } catch (err) {
@@ -185,7 +224,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const result: InterviewMessageResponse = { content, isActive: Boolean(isActive) };
+    const result: InterviewMessageResponse = {
+      content,
+      isActive: Boolean(isActive),
+    };
     return NextResponse.json(result);
   } catch (error) {
     console.error("Interview message error:", error);

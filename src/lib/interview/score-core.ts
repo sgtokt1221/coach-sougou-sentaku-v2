@@ -36,6 +36,8 @@ export interface InterviewScoreCoreInput {
   mode?: string;
   /** プレゼンモード時の発表内容 */
   presentationContent?: string;
+  /** 口頭試問の出題分野。専門知識の正確性をこの分野の中で見るために渡す */
+  oralExam?: { subject: string; scope?: string };
   /** 自己分析の整形済みコンテキスト (改行区切りテキスト) */
   selfAnalysisContext?: string;
   /** 動画分析。あれば bodyLanguage スコアの加算に使う */
@@ -46,7 +48,12 @@ export interface InterviewScoreCoreInput {
    * モデルが比較内容を作文できる状態だった（監査 P1-2）。
    */
   previousAttempt?: {
-    scores: { clarity: number; apAlignment: number; enthusiasm: number; specificity: number };
+    scores: {
+      clarity: number;
+      apAlignment: number;
+      enthusiasm: number;
+      specificity: number;
+    };
     feedbackSummary: string[];
   };
 }
@@ -66,7 +73,7 @@ export interface InterviewScoreCoreOutput {
 export class InterviewScoreParseError extends Error {
   constructor(
     message: string,
-    public readonly rawText: string,
+    public readonly rawText: string
   ) {
     super(message);
     this.name = "InterviewScoreParseError";
@@ -74,7 +81,7 @@ export class InterviewScoreParseError extends Error {
 }
 
 export async function scoreInterviewCore(
-  input: InterviewScoreCoreInput,
+  input: InterviewScoreCoreInput
 ): Promise<InterviewScoreCoreOutput> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
@@ -94,6 +101,7 @@ export async function scoreInterviewCore(
     input.admissionPolicy,
     input.mode,
     input.presentationContent,
+    input.oralExam
   );
 
   /**
@@ -139,14 +147,14 @@ export async function scoreInterviewCore(
   if (response.stop_reason === "max_tokens") {
     throw new InterviewScoreParseError(
       "AI 評価結果が最大トークン数で途中終了しました",
-      rawText,
+      rawText
     );
   }
   const parsed = response.parsed_output;
   if (!parsed) {
     throw new InterviewScoreParseError(
       "AI 評価結果が構造化出力スキーマを満たしませんでした",
-      rawText,
+      rawText
     );
   }
 
@@ -178,8 +186,26 @@ export async function scoreInterviewCore(
     "leadership",
     "listening",
   ] as const;
+  /**
+   * そのモードの軸だけを拾う。
+   *
+   * 全部拾っていたため、個人面接で AI が collaboration を返すとそのまま保存され、
+   * 結果画面に「協調性」が出ていた（合計には入らないので点は狂わないが、
+   * 受けていない形式の評価が並ぶ）。
+   */
+  const KEYS_BY_MODE: Record<string, readonly (typeof MODE_KEYS)[number][]> = {
+    individual: [],
+    presentation: [
+      "presentationStructure",
+      "dataEvidence",
+      "resourceConsistency",
+    ],
+    oral_exam: ["knowledgeAccuracy", "criticalThinking"],
+    group_discussion: ["collaboration", "leadership", "listening"],
+  };
+  const allowedKeys = KEYS_BY_MODE[input.mode ?? "individual"] ?? [];
   const modeScores: Partial<Record<(typeof MODE_KEYS)[number], number>> = {};
-  for (const key of MODE_KEYS) {
+  for (const key of allowedKeys) {
     const v = parsed.scores?.[key];
     // 0-10 の数値だけ受ける。範囲外・欠落は無かったものとして扱う
     if (typeof v === "number" && Number.isFinite(v) && v >= 0 && v <= 10) {

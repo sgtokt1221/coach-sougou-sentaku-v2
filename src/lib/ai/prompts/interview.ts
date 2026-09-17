@@ -1,4 +1,4 @@
-import type { InterviewMode } from "../../types/interview";
+import type { InterviewMode, OralExamTopic } from "../../types/interview";
 import type { InterviewTendency } from "../../types/university";
 import { FACULTY_AGENCY_FOCUS_INTERVIEW } from "./shared";
 
@@ -270,15 +270,18 @@ ${FACULTY_AGENCY_FOCUS_INTERVIEW}
 
 ${FACULTY_AGENCY_FOCUS_INTERVIEW}
 
+{{ORAL_EXAM_TOPIC}}
+
 ## 面接の進め方（口頭試問）
-- {{FACULTY_NAME}}の専門分野に関する知識・理解を問う試問を行います
-- まず受験生の志望分野・関心テーマを確認し、その分野に関連する問いを出してください
+- 上の「試問の分野」に沿った知識・理解を問う試問を行います
 - 以下の3段階で進めてください：
-  1. **基礎確認**（ターン1〜3）: 学部の基礎的な概念・用語の理解を確認
+  1. **基礎確認**（ターン1〜3）: その分野の基礎的な概念・用語の理解を確認
   2. **応用思考**（ターン4〜6）: 「もし〜だったら」「なぜそう考えるか」と思考力を試す
   3. **専門的議論**（ターン7〜9）: 時事問題や最新トピックと絡めた質問
 - 一度に1つの問いのみ行ってください
 - 正解・不正解に関わらず、思考プロセスを問う質問で掘り下げてください
+- 受験生は高校生です。高校の履修範囲か、そこから考えれば届く範囲で問うてください。
+  大学で初めて習う用語を前提にした問いは出さないでください
 - 8〜10ターン後に「以上で口頭試問を終了いたします」と終了してください
 - 試験官としての発言のみ出力してください。JSON出力や評価コメントは不要です
 
@@ -346,15 +349,24 @@ const EVALUATION_SCORES_JSON: Record<string, string> = {
   group_discussion: `"clarity": <0-10>, "apAlignment": <0-10>, "enthusiasm": <0-10>, "specificity": <0-10>, "collaboration": <0-10>, "leadership": <0-10>, "listening": <0-10>, "total": <合計>`,
 };
 
-function buildEvaluationPrompt(mode: string, presentationContent?: string): string {
+function buildEvaluationPrompt(
+  mode: string,
+  presentationContent?: string,
+  oralExam?: OralExamTopic
+): string {
   const modeKey = mode in EVALUATION_MODE_ADDITIONS ? mode : "individual";
   const presSection = presentationContent
     ? `\n## 受験生の提出資料（採点の参考にしてください）\n${presentationContent}\n`
     : "";
+  // 口頭試問は分野が指定されていることがある。知識の正確さはその分野の中で見る
+  const oralSection =
+    modeKey === "oral_exam" && oralExam?.subject?.trim()
+      ? `\n## 口頭試問の出題分野\n- ${oralExam.subject.trim()}${oralExam.scope?.trim() ? `（${oralExam.scope.trim()}）` : ""}\n- knowledgeAccuracy はこの分野の知識として正確かで見てください。分野外の知識の多さで加点しないでください。\n- 受験生は高校生です。高校の履修範囲を超える知識が無いことを減点理由にしないでください。\n`
+      : "";
 
   return `${EVALUATION_BASE}
 ${EVALUATION_MODE_ADDITIONS[modeKey]}
-${presSection}
+${oralSection}${presSection}
 ## 志望大学・学部情報
 {{UNIVERSITY_NAME}} {{FACULTY_NAME}}
 {{ADMISSION_POLICY}}
@@ -396,11 +408,39 @@ repeatedIssues 各項目には次のいずれかを category として **必ず*
 JSON以外のテキストは出力しないでください。`;
 }
 
+/**
+ * 口頭試問の「試問の分野」ブロック。
+ *
+ * 大学によって出題分野が決まっている（生物、数学I・A、法学の基礎など）。
+ * 指定があるならその分野だけを問い、無ければ従来どおり受験生に確認させる。
+ */
+export function buildOralExamTopicBlock(
+  oralExam?: OralExamTopic,
+  facultyName = "学部"
+): string {
+  const subject = oralExam?.subject?.trim();
+  if (!subject) {
+    return `## 試問の分野
+- 分野の指定はありません。最初の質問で受験生の志望分野・関心テーマを確認し、
+  以降はその分野と${facultyName}の学びに関連づけて問うてください。`;
+  }
+  const scope = oralExam?.scope?.trim();
+  return `## 試問の分野（受験生の志望校で指定されているもの）
+- **分野: ${subject}**
+${scope ? `- 出題範囲・重点: ${scope}\n` : ""}- 試問は**この分野の中から**出してください。分野を外れた質問（志望理由・自己PR・
+  他分野の知識）を主題にしてはいけません。志望理由に触れるとしても、この分野への
+  関心の理由を1問確認する程度にとどめてください。
+- 学部の学びとこの分野のつながりを意識して問いを組み立ててください。`;
+}
+
 function pressureLabel(pressure: "low" | "medium" | "high"): string {
   switch (pressure) {
-    case "low": return "穏やか・和やか";
-    case "medium": return "標準的";
-    case "high": return "厳しめ・圧迫気味";
+    case "low":
+      return "穏やか・和やか";
+    case "medium":
+      return "標準的";
+    case "high":
+      return "厳しめ・圧迫気味";
   }
 }
 
@@ -412,7 +452,9 @@ export function buildInterviewSystemPrompt(
   weaknessList: string,
   interviewTendency?: InterviewTendency,
   presentationContent?: string,
-  contentCandidates?: string[]
+  contentCandidates?: string[],
+  /** 口頭試問の出題分野。他のモードでは使わない */
+  oralExam?: OralExamTopic
 ): string {
   const tendencyText = interviewTendency
     ? `- 面接形式: ${interviewTendency.format}\n- 所要時間: ${interviewTendency.duration}\n- 面接官: ${interviewTendency.interviewers}\n- 雰囲気: ${pressureLabel(interviewTendency.pressure)}\n- 配点傾向: ${interviewTendency.weight}\n- 頻出テーマ: ${interviewTendency.frequentTopics.join("、")}\n- 対策ポイント: ${interviewTendency.tips}`
@@ -423,6 +465,10 @@ export function buildInterviewSystemPrompt(
     : "";
 
   const base = INTERVIEW_SYSTEM_PROMPTS[mode]
+    .replace(
+      "{{ORAL_EXAM_TOPIC}}",
+      buildOralExamTopicBlock(oralExam, facultyName)
+    )
     .replace(/{{UNIVERSITY_NAME}}/g, universityName)
     .replace(/{{FACULTY_NAME}}/g, facultyName)
     .replace("{{ADMISSION_POLICY}}", admissionPolicy)
@@ -446,9 +492,14 @@ export function buildInterviewEvaluationPrompt(
   facultyName: string,
   admissionPolicy: string,
   mode?: string,
-  presentationContent?: string
+  presentationContent?: string,
+  oralExam?: OralExamTopic
 ): string {
-  return buildEvaluationPrompt(mode ?? "individual", presentationContent)
+  return buildEvaluationPrompt(
+    mode ?? "individual",
+    presentationContent,
+    oralExam
+  )
     .replace("{{UNIVERSITY_NAME}}", universityName)
     .replace("{{FACULTY_NAME}}", facultyName)
     .replace("{{ADMISSION_POLICY}}", admissionPolicy);

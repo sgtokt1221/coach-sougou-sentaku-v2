@@ -3,10 +3,16 @@ import Anthropic from "@anthropic-ai/sdk";
 import { buildInterviewSystemPrompt } from "@/lib/ai/prompts/interview";
 import { getInterviewContent } from "@/lib/interview/content-store";
 import type { ContentMode } from "@/lib/types/interview-content";
-import type { InterviewStartRequest, InterviewStartResponse } from "@/lib/types/interview";
+import type {
+  InterviewStartRequest,
+  InterviewStartResponse,
+} from "@/lib/types/interview";
 import type { WeaknessRecord } from "@/lib/types/growth";
 import type { InterviewTendency } from "@/lib/types/university";
 import { AI_MODEL_SONNET } from "@/lib/ai/prompt-versions";
+
+/** 冒頭発話の生成でAIを呼ぶ。既定の実行上限では足りないことがある */
+export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,29 +26,41 @@ export async function POST(request: NextRequest) {
       customOpeningQuestion,
       sourceType,
       homeworkAssignmentId,
+      oralExam,
     } = body;
+    /** 口頭試問以外では分野を持ち回らない（他モードのプロンプトに混ざらないように） */
+    const oralExamTopic =
+      mode === "oral_exam" && oralExam?.subject?.trim()
+        ? {
+            subject: oralExam.subject.trim(),
+            ...(oralExam.scope?.trim() ? { scope: oralExam.scope.trim() } : {}),
+          }
+        : undefined;
     const resolvedInputMode = inputMode ?? "text";
 
-    // IDトークンからuserIdを取得（クライアントから送られたuserIdより安全）
-    let userId: string | null = body.userId ?? null;
-    if (!userId) {
-      const authHeader = request.headers.get("Authorization");
-      if (authHeader?.startsWith("Bearer ")) {
-        try {
-          const { adminAuth } = await import("@/lib/firebase/admin");
-          if (adminAuth) {
-            const decoded = await adminAuth.verifyIdToken(authHeader.slice(7));
-            userId = decoded.uid;
-          }
-        } catch (authErr) {
-          console.warn("[interview/start] Failed to verify ID token:", authErr);
+    /**
+     * 誰の面接かはトークンからだけ決める。
+     *
+     * 以前は body.userId があればそれを使い、無いときだけトークンを見ていた。
+     * 他人の uid を入れれば、その生徒の弱点リストを読んでプロンプトに載せられた。
+     */
+    let userId: string | null = null;
+    const authHeader = request.headers.get("Authorization");
+    if (authHeader?.startsWith("Bearer ")) {
+      try {
+        const { adminAuth } = await import("@/lib/firebase/admin");
+        if (adminAuth) {
+          const decoded = await adminAuth.verifyIdToken(authHeader.slice(7));
+          userId = decoded.uid;
         }
+      } catch (authErr) {
+        console.warn("[interview/start] Failed to verify ID token:", authErr);
       }
-      // dev mode fallback
-      if (!userId && process.env.NODE_ENV === "development") {
-        const devRole = request.headers.get("X-Dev-Role");
-        if (devRole) userId = "dev-user";
-      }
+    }
+    // dev mode fallback
+    if (!userId && process.env.NODE_ENV === "development") {
+      const devRole = request.headers.get("X-Dev-Role");
+      if (devRole) userId = "dev-user";
     }
 
     if (!universityId || !facultyId || !mode) {
@@ -63,12 +81,15 @@ export async function POST(request: NextRequest) {
     const { adminDb } = await import("@/lib/firebase/admin");
     if (adminDb) {
       try {
-        const universityDoc = await adminDb.doc(`universities/${universityId}`).get();
+        const universityDoc = await adminDb
+          .doc(`universities/${universityId}`)
+          .get();
         if (universityDoc.exists) {
           const universityData = universityDoc.data()!;
           universityName = universityData.name ?? universityName;
           const faculty = universityData.faculties?.find(
-            (f: { id: string; name?: string; admissionPolicy?: string }) => f.id === facultyId
+            (f: { id: string; name?: string; admissionPolicy?: string }) =>
+              f.id === facultyId
           );
           if (faculty) {
             facultyName = faculty.name ?? facultyName;
@@ -116,13 +137,15 @@ export async function POST(request: NextRequest) {
 
     // 宿題提出など固定のお題で開始したい場合は Claude を呼ばず、お題をそのまま冒頭発話にする
     const fixedOpening =
-      typeof customOpeningQuestion === "string" && customOpeningQuestion.trim().length > 0
+      typeof customOpeningQuestion === "string" &&
+      customOpeningQuestion.trim().length > 0
         ? customOpeningQuestion.trim()
         : null;
 
     // 音声モード (個人/プレゼン/口頭試問/GD すべて) は Realtime API が自分で挨拶を生成するので
     // Claude での openingMessage 生成はスキップして爆速化する
-    const skipClaudeOpening = resolvedInputMode === "voice" || fixedOpening !== null;
+    const skipClaudeOpening =
+      resolvedInputMode === "voice" || fixedOpening !== null;
 
     let openingMessage = fixedOpening ?? "";
     if (!skipClaudeOpening) {
@@ -136,9 +159,21 @@ export async function POST(request: NextRequest) {
 
       const client = new Anthropic();
       // バンク(superadmin管理)から優先候補を取得して system prompt に渡す
-      const bankItems = await getInterviewContent(mode as ContentMode, { facultyName });
+      const bankItems = await getInterviewContent(mode as ContentMode, {
+        facultyName,
+      });
       const contentCandidates = bankItems.slice(0, 6).map((i) => i.title);
-      const systemPrompt = buildInterviewSystemPrompt(mode, universityName, facultyName, admissionPolicy, weaknessList, interviewTendency, presentationContent, contentCandidates);
+      const systemPrompt = buildInterviewSystemPrompt(
+        mode,
+        universityName,
+        facultyName,
+        admissionPolicy,
+        weaknessList,
+        interviewTendency,
+        presentationContent,
+        contentCandidates,
+        oralExamTopic
+      );
 
       // GD の導入は 司会→健太→美咲→翔太→司会(締め) の 5 発話を一度に返すため長めに
       const maxTokens = mode === "group_discussion" ? 1800 : 512;
@@ -147,7 +182,13 @@ export async function POST(request: NextRequest) {
         model: AI_MODEL_SONNET,
         max_tokens: maxTokens,
         system: systemPrompt,
-        messages: [{ role: "user", content: "面接を開始してください。開始の挨拶と最初の質問をしてください。" }],
+        messages: [
+          {
+            role: "user",
+            content:
+              "面接を開始してください。開始の挨拶と最初の質問をしてください。",
+          },
+        ],
       });
 
       openingMessage =
@@ -171,6 +212,8 @@ export async function POST(request: NextRequest) {
           universityContext: { universityName, facultyName, admissionPolicy },
           inputMode: resolvedInputMode,
           sourceType: sourceType ?? "manual",
+          // 続きのターンと採点でも同じ分野を使うため、セッションに残す
+          ...(oralExamTopic ? { oralExam: oralExamTopic } : {}),
           ...(homeworkAssignmentId ? { homeworkAssignmentId } : {}),
           ...(fixedOpening ? { openingMessage: fixedOpening } : {}),
         });

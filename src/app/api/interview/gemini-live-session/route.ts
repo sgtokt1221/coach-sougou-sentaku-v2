@@ -28,7 +28,10 @@ import {
 } from "@/lib/ai/prompts/interview-realtime";
 import type { InterviewMode } from "@/lib/types/interview";
 import type { InterviewTendency } from "@/lib/types/university";
-import { pickOneInterviewContent, getInterviewContent } from "@/lib/interview/content-store";
+import {
+  pickOneInterviewContent,
+  getInterviewContent,
+} from "@/lib/interview/content-store";
 import type { ContentMode } from "@/lib/types/interview-content";
 
 /**
@@ -45,7 +48,11 @@ const GD_SPEAKERS: { key: GdSpeakerKey; voice: string }[] = [
 ];
 
 export async function POST(request: NextRequest) {
-  const authResult = await requireRole(request, ["student", "admin", "superadmin"]);
+  const authResult = await requireRole(request, [
+    "student",
+    "admin",
+    "superadmin",
+  ]);
   if (authResult instanceof NextResponse) return authResult;
   const { uid, role } = authResult;
 
@@ -58,11 +65,15 @@ export async function POST(request: NextRequest) {
     admissionPolicy?: string;
     weaknessList?: string;
     presentationContent?: string;
+    sessionId?: string;
   };
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "リクエストボディが不正です" }, { status: 400 });
+    return NextResponse.json(
+      { error: "リクエストボディが不正です" },
+      { status: 400 }
+    );
   }
 
   const {
@@ -74,6 +85,7 @@ export async function POST(request: NextRequest) {
     admissionPolicy = "",
     weaknessList = "（過去の弱点なし）",
     presentationContent,
+    sessionId,
   } = body;
 
   if (!mode) {
@@ -86,17 +98,24 @@ export async function POST(request: NextRequest) {
     try {
       const { adminDb } = await import("@/lib/firebase/admin");
       if (adminDb) {
-        const universityDoc = await adminDb.doc(`universities/${universityId}`).get();
+        const universityDoc = await adminDb
+          .doc(`universities/${universityId}`)
+          .get();
         if (universityDoc.exists) {
           const universityData = universityDoc.data()!;
           const faculty = universityData.faculties?.find(
-            (f: { id: string; interviewTendency?: InterviewTendency }) => f.id === facultyId,
+            (f: { id: string; interviewTendency?: InterviewTendency }) =>
+              f.id === facultyId
           );
-          if (faculty?.interviewTendency) interviewTendency = faculty.interviewTendency;
+          if (faculty?.interviewTendency)
+            interviewTendency = faculty.interviewTendency;
         }
       }
     } catch (err) {
-      console.warn("[gemini-live-session] failed to fetch interviewTendency", err);
+      console.warn(
+        "[gemini-live-session] failed to fetch interviewTendency",
+        err
+      );
     }
   }
 
@@ -128,7 +147,8 @@ export async function POST(request: NextRequest) {
     if (adminDb) {
       const userDoc = await adminDb.doc(`users/${uid}`).get();
       const data = userDoc.data();
-      if (data?.lastRealtimeAt?.toDate) lastRealtimeAt = data.lastRealtimeAt.toDate();
+      if (data?.lastRealtimeAt?.toDate)
+        lastRealtimeAt = data.lastRealtimeAt.toDate();
       if (data?.realtimeUnlocked === true) realtimeUnlocked = true;
     }
   } catch (err) {
@@ -146,7 +166,10 @@ export async function POST(request: NextRequest) {
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    return NextResponse.json({ error: "GEMINI_API_KEY が設定されていません" }, { status: 503 });
+    return NextResponse.json(
+      { error: "GEMINI_API_KEY が設定されていません" },
+      { status: 503 }
+    );
   }
   const ai = getGeminiClient(apiKey);
 
@@ -165,7 +188,7 @@ export async function POST(request: NextRequest) {
           admissionPolicy,
           weaknessList,
           interviewTendency,
-          gdTheme?.title,
+          gdTheme?.title
         )
       : null;
 
@@ -180,22 +203,31 @@ export async function POST(request: NextRequest) {
           GD_SPEAKERS.map(async ({ key, voice }) => {
             const instructions = buildRealtimeGdSpeakerInstructions(
               key,
-              key === "moderator" ? gdTheme?.title : undefined,
+              key === "moderator" ? gdTheme?.title : undefined
             );
             const token = await issueGeminiLiveToken(ai, instructions, voice);
             return { speaker: key, voice, token };
-          }),
+          })
         ),
         issueGeminiLiveToken(ai, EARS_INSTRUCTIONS, GEMINI_INDIVIDUAL_VOICE),
       ]);
       const successful = results
         .filter((r) => r.token !== null)
-        .map((r) => ({ speaker: r.speaker, voice: r.voice, token: r.token!.value, expiresAt: r.token!.expiresAt }));
+        .map((r) => ({
+          speaker: r.speaker,
+          voice: r.voice,
+          token: r.token!.value,
+          expiresAt: r.token!.expiresAt,
+        }));
 
       if (successful.length < GD_SPEAKERS.length || !earsToken) {
         return NextResponse.json(
-          { provider: "gemini", error: "Gemini Live セッションの確立に失敗しました", partial: successful.length },
-          { status: 502 },
+          {
+            provider: "gemini",
+            error: "Gemini Live セッションの確立に失敗しました",
+            partial: successful.length,
+          },
+          { status: 502 }
         );
       }
 
@@ -214,8 +246,27 @@ export async function POST(request: NextRequest) {
     }
 
     // 個人 / プレゼン / 口頭試問: バンクから優先候補を数件取得して渡す
-    const bankItems = await getInterviewContent(mode as ContentMode, { facultyName });
+    const bankItems = await getInterviewContent(mode as ContentMode, {
+      facultyName,
+    });
     const contentCandidates = bankItems.slice(0, 6).map((i) => i.title);
+    /**
+     * 口頭試問の分野は開始時にセッションへ保存してある。ここで引く。
+     * クライアントから受け取ると、欠けたときに試験官が黙って別の分野を問う。
+     */
+    let oralExam: { subject: string; scope?: string } | undefined;
+    if (mode === "oral_exam" && sessionId) {
+      try {
+        const { adminDb } = await import("@/lib/firebase/admin");
+        const snap = await adminDb?.doc(`interviews/${sessionId}`).get();
+        oralExam = snap?.data()?.oralExam;
+      } catch (err) {
+        console.warn(
+          "[gemini-live-session] 口頭試問の分野を引けませんでした",
+          err
+        );
+      }
+    }
     const instructions = buildRealtimeIndividualInstructions(
       mode,
       universityName,
@@ -226,14 +277,23 @@ export async function POST(request: NextRequest) {
       presentationContent,
       selfAnalysis,
       contentCandidates,
+      oralExam
     );
-    const token = await issueGeminiLiveToken(ai, instructions, GEMINI_INDIVIDUAL_VOICE, {
-      strictTurnTaking: true,
-    });
+    const token = await issueGeminiLiveToken(
+      ai,
+      instructions,
+      GEMINI_INDIVIDUAL_VOICE,
+      {
+        strictTurnTaking: true,
+      }
+    );
     if (!token) {
       return NextResponse.json(
-        { provider: "gemini", error: "Gemini Live セッションの確立に失敗しました" },
-        { status: 502 },
+        {
+          provider: "gemini",
+          error: "Gemini Live セッションの確立に失敗しました",
+        },
+        { status: 502 }
       );
     }
 
@@ -243,13 +303,24 @@ export async function POST(request: NextRequest) {
       provider: "gemini",
       mode,
       model: GEMINI_LIVE_MODEL,
-      tokens: [{ speaker: "interviewer", voice: GEMINI_INDIVIDUAL_VOICE, token: token.value, expiresAt: token.expiresAt }],
+      tokens: [
+        {
+          speaker: "interviewer",
+          voice: GEMINI_INDIVIDUAL_VOICE,
+          token: token.value,
+          expiresAt: token.expiresAt,
+        },
+      ],
     });
   } catch (err) {
     console.error("[gemini-live-session] token creation failed", err);
     return NextResponse.json(
-      { provider: "gemini", error: "Gemini Live トークンの発行に失敗しました", detail: err instanceof Error ? err.message : String(err) },
-      { status: 502 },
+      {
+        provider: "gemini",
+        error: "Gemini Live トークンの発行に失敗しました",
+        detail: err instanceof Error ? err.message : String(err),
+      },
+      { status: 502 }
     );
   }
 }
@@ -261,7 +332,9 @@ async function updateLastRealtimeAt(uid: string, role: string): Promise<void> {
     const { adminDb } = await import("@/lib/firebase/admin");
     const { FieldValue } = await import("firebase-admin/firestore");
     if (adminDb) {
-      await adminDb.doc(`users/${uid}`).update({ lastRealtimeAt: FieldValue.serverTimestamp() });
+      await adminDb
+        .doc(`users/${uid}`)
+        .update({ lastRealtimeAt: FieldValue.serverTimestamp() });
     }
   } catch (err) {
     console.warn("[gemini-live-session] failed to update lastRealtimeAt", err);
