@@ -161,6 +161,7 @@ AI呼び出しは .env.local の ANTHROPIC_API_KEY をそのまま使うので�
 
 - AI添削・生成の API ルートには `maxDuration` を必ず設定する。extended thinking は effort medium を既定にする。
 - `messages.parse` の max_tokens は thinking と本文で共有される。文書系は12000-16384、単純な機能は2000-4096。
+- 弱点DB（`users/*/weaknesses`）に積むのは AI の `repeatedIssues` だけ。改善提案（助言の自由文）を混ぜると、正規化のキーワード部分一致で「結論が不明確」等の汎用ラベルに落ち、誰の弱点リストも同じ数件になる。過去の弱点をプロンプトへ渡すときは「今回observedしたものだけ挙げる」と明記する（書かないとモデルが一覧をなぞり、回数が増えるほど定型化が強まる）。
 - 小論文のAI（添削・コーチ・スキルチェック）は答案に主観（経験・志望・感想）を求めない。独自性は着眼点・主張・論の組み立てで見る。自己分析を小論文添削の入力に渡さない（渡すと「志望とつながっていない」と指摘する）。出願書類は別。
 - 小論文添削の構造化出力スキーマ（`src/lib/ai/schemas/essay-review.ts`）は Anthropic の文法サイズ上限に達している。項目を1つ足すだけで `The compiled grammar is too large` の 400 になり、**全答案の添削が落ちる**。判定を増やすときは別呼び出しにする（例: `source-engagement-judge.ts`）。
 - Web Push はタブが1つでも開いていると SW でなく onMessage に配信され、OS 通知が出ない（見ていないタブで消える沈黙失敗）。前面判定は `visibilityState` と `hasFocus()` の両方で行い、見ていなければ `showNotification` で出す。通知の `tag` は送信ごとに一意にする（同じ tag は OS が上書きし、3通来ても1通しか見えない）
