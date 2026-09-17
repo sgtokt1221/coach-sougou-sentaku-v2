@@ -184,7 +184,12 @@ export const AI_PROMPT_VERSIONS = {
     //      弱点タグに混ぜるのをやめた（助言文がキーワード部分一致で
     //      「結論が不明確・欠落している」等の汎用ラベルに落ち、誰にでも同じ弱点が
     //      積み上がっていた。実データで同一ラベルが13回という状態になっていた）。
-    promptVersion: "essay-review-v21",
+    // v22: 過去の弱点リストの扱いを明記した。priorWeaknesses を渡しているのに
+    //      扱い方を書いていなかったため、モデルが「12回指摘」の一覧をなぞって
+    //      毎回同じ弱点を報告し、回数が増えるほど圧が強まる自己強化ループに
+    //      なっていた（本番7人187件で上位4ラベルが64%）。今回の答案で観測でき
+    //      引用できるものだけを挙げ、見当たらなければ挙げないことを課した。
+    promptVersion: "essay-review-v22",
     schemaVersion: "essay-review-output-v2",
   },
   interviewScore: {
@@ -195,7 +200,7 @@ export const AI_PROMPT_VERSIONS = {
     //     あわせてモード別の軸を保存し（P0-2）、合計を内容4軸に固定した（P0-1）。
     // v2: repeatedIssues に「助言ではなく、引用できる弱点だけ」を課した
     //     （小論文添削 v21 と同じ理由。弱点リストが汎用ラベルで埋まっていた）
-    promptVersion: "interview-score-v2",
+    promptVersion: "interview-score-v3",
     schemaVersion: "interview-score-output-v1",
   },
   chocoReview: {

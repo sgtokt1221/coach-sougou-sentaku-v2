@@ -187,7 +187,20 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     id: "expression.tone",
     category: "expression",
     label: "文体・語彙が不適切",
-    keywords: ["文体", "語彙", "言い回し", "口語", "敬体", "常体", "稚拙"],
+    keywords: [
+      "文体",
+      "語彙",
+      "言い回し",
+      "口語",
+      "敬体",
+      "常体",
+      "稚拙",
+      // 実データで「言葉遣い・表現の適切さ」「言語表現の正確性」が別レコードだった
+      "言葉遣い",
+      "言語表現",
+      "表現の適切",
+      "表現の正確",
+    ],
   },
 
   // ---- AP 合致 (apAlignment) ----
@@ -264,7 +277,18 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     id: "originality.abstract",
     category: "originality",
     label: "抽象的で具体性に欠ける",
-    keywords: ["抽象", "漠然", "ぼんやり", "観念的"],
+    keywords: [
+      "抽象",
+      "漠然",
+      "ぼんやり",
+      "観念的",
+      // 実データで「具体性の欠如」「具体的な制度設計の欠如」が別レコードだった
+      "具体性の欠如",
+      "具体性が不足",
+      "具体性に欠け",
+      "具体策",
+      "具体的な制度",
+    ],
   },
 
   // ---- 面接: 明確さ・話し方 (structure/expression に寄せる) ----
@@ -279,6 +303,34 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
       "構造化",
       "PREP",
       "話の組み立て",
+    ],
+  },
+
+  {
+    // 実データで「回答の不在」「回答の不在・面接不成立」「回答の不成立」が
+    // 別レコードになっていた（面接が成立しなかった回の記録）。
+    id: "iv.no_answer",
+    category: "other",
+    label: "面接が成立していない（回答がない）",
+    keywords: [
+      "回答の不在",
+      "回答がな",
+      "面接不成立",
+      "回答の不成立",
+      "無回答",
+    ],
+  },
+  {
+    // 「質問への応答」「回答の深掘り耐性・具体性の不足」を1本に。
+    id: "iv.answer_depth",
+    category: "logic",
+    label: "質問に正面から答えられていない",
+    keywords: [
+      "質問への応答",
+      "深掘り耐性",
+      "質問に答え",
+      "応答がずれ",
+      "質問とずれ",
     ],
   },
 

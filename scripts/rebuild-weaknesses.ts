@@ -193,9 +193,46 @@ async function main() {
     const unresolved = new Map<string, number>();
     const resolved = new Map<string, number>();
     let dropped = 0;
+    /** ラベル → それが出た提出の数。「毎回同じ弱点が出ていないか」を見る */
+    const subsWithLabel = new Map<string, number>();
+    let totalSubs = 0;
+    /** 生徒ごとの定型度（最頻ラベルが何割の提出に出ているか） */
+    const perStudent: {
+      name: string;
+      subs: number;
+      top: string;
+      rate: number;
+    }[] = [];
     for (const userDoc of userDocs) {
       if (!userDoc.exists) continue;
       const subs = await loadSubmissions(userDoc.id);
+      totalSubs += subs.length;
+      const perStudentLabel = new Map<string, number>();
+      for (const sub of subs) {
+        const labelsHere = new Set<string>();
+        for (const issue of sub.issues) {
+          const a = (issue.area ?? "").trim();
+          if (!a || !isWeaknessLabel(a)) continue;
+          const e = resolveCanonical(a, {
+            categoryHint: (issue.category as Category) ?? undefined,
+            supportText: (issue.message ?? "").trim() || undefined,
+          });
+          labelsHere.add(e ? e.label : a);
+        }
+        for (const l of labelsHere) {
+          subsWithLabel.set(l, (subsWithLabel.get(l) ?? 0) + 1);
+          perStudentLabel.set(l, (perStudentLabel.get(l) ?? 0) + 1);
+        }
+      }
+      const top = [...perStudentLabel.entries()].sort((a, b) => b[1] - a[1])[0];
+      if (top && subs.length > 0) {
+        perStudent.push({
+          name: String(userDoc.data()?.displayName ?? userDoc.id.slice(0, 6)),
+          subs: subs.length,
+          top: top[0],
+          rate: top[1] / subs.length,
+        });
+      }
       for (const sub of subs) {
         for (const issue of sub.issues) {
           const area = (issue.area ?? "").trim();
@@ -235,6 +272,30 @@ async function main() {
       .sort((a, b) => b[1] - a[1])
       .slice(0, 25)) {
       console.log(`  ${String(n).padStart(3)}件  ${label}`);
+    }
+
+    /**
+     * 定型度。同じ弱点が提出のたびに出ていないかを見る。
+     * 8割の提出に出るラベルは、その生徒の何が弱いかを言っておらず、
+     * 「毎回これが出る」状態（過去の弱点リストをAIがなぞっている疑い）。
+     */
+    console.log(
+      `\n■ 定型度（提出 ${totalSubs}件のうち、そのラベルが出た割合）`
+    );
+    for (const [label, n] of [...subsWithLabel.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 12)) {
+      const pct = Math.round((n / Math.max(1, totalSubs)) * 100);
+      const mark = pct >= 60 ? " ← ほぼ毎回" : pct >= 40 ? " ← 高い" : "";
+      console.log(
+        `  ${String(pct).padStart(3)}%  (${n}/${totalSubs})  ${label}${mark}`
+      );
+    }
+    console.log(`\n■ 生徒ごと（最頻ラベルが何割の提出に出ているか）`);
+    for (const s of perStudent.sort((a, b) => b.rate - a.rate)) {
+      console.log(
+        `  ${Math.round(s.rate * 100)}%  ${s.name}（提出${s.subs}件）  ${s.top}`
+      );
     }
     return;
   }
