@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertTriangle } from "lucide-react";
+import { authFetch } from "@/lib/api/client";
 import {
   WeaknessRecord,
   WeaknessReminderLevel,
@@ -36,7 +37,8 @@ export function WeaknessReminderCard() {
   useEffect(() => {
     async function fetchWeaknesses() {
       try {
-        const res = await fetch("/api/growth/weaknesses?context=essay_new");
+        // authFetch でないと本人を特定できず、常に空が返る（カードが出ない）
+        const res = await authFetch("/api/growth/weaknesses?context=essay_new");
         if (!res.ok) throw new Error("fetch failed");
         const data = await res.json();
         const items: WeaknessRecord[] = data.weaknesses ?? [];

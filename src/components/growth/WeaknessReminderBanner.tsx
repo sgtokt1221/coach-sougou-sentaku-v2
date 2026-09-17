@@ -5,17 +5,34 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CheckCircle2, AlertCircle, AlertTriangle, TrendingUp } from "lucide-react";
-import { WeaknessRecord, WeaknessReminderLevel, getWeaknessReminderLevel } from "@/lib/types/growth";
+import {
+  CheckCircle2,
+  AlertCircle,
+  AlertTriangle,
+  TrendingUp,
+} from "lucide-react";
+import {
+  WeaknessRecord,
+  WeaknessReminderLevel,
+  getWeaknessReminderLevel,
+} from "@/lib/types/growth";
 import { authFetch } from "@/lib/api/client";
-import { WeaknessSourceBadge, sourceLeftBorder } from "@/components/growth/WeaknessSourceBadge";
+import {
+  WeaknessSourceBadge,
+  sourceLeftBorder,
+} from "@/components/growth/WeaknessSourceBadge";
 
 type WeaknessWithLevel = WeaknessRecord & { level: WeaknessReminderLevel };
 
-
 const levelConfig: Record<
   WeaknessReminderLevel,
-  { bg: string; border: string; badgeVariant: string; label: string; icon: React.ReactNode }
+  {
+    bg: string;
+    border: string;
+    badgeVariant: string;
+    label: string;
+    icon: React.ReactNode;
+  }
 > = {
   critical: {
     bg: "bg-rose-50 dark:bg-rose-950/30",
@@ -56,7 +73,10 @@ interface WeaknessReminderBannerProps {
   compact?: boolean;
 }
 
-export function WeaknessReminderBanner({ maxItems = DEFAULT_MAX_DISPLAY, compact = false }: WeaknessReminderBannerProps = {}) {
+export function WeaknessReminderBanner({
+  maxItems = DEFAULT_MAX_DISPLAY,
+  compact = false,
+}: WeaknessReminderBannerProps = {}) {
   const [weaknesses, setWeaknesses] = useState<WeaknessWithLevel[]>([]);
   const [loading, setLoading] = useState(true);
   const [dismissing, setDismissing] = useState<Set<string>>(new Set());
@@ -84,10 +104,11 @@ export function WeaknessReminderBanner({ maxItems = DEFAULT_MAX_DISPLAY, compact
   async function handleDismiss(area: string) {
     setDismissing((prev) => new Set(prev).add(area));
     try {
-      await fetch("/api/growth/weaknesses", {
+      // authFetch でないと本人を特定できず、解除が保存されない
+      await authFetch("/api/growth/weaknesses", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "dismiss", area }),
+        body: JSON.stringify({ area }),
       });
       setWeaknesses((prev) => prev.filter((w) => w.area !== area));
     } catch {
@@ -122,22 +143,35 @@ export function WeaknessReminderBanner({ maxItems = DEFAULT_MAX_DISPLAY, compact
       {displayed.map((w) => {
         const cfg = levelConfig[w.level];
         const daysAgo = w.lastOccurred
-          ? Math.max(0, Math.floor((Date.now() - new Date(w.lastOccurred).getTime()) / (1000 * 60 * 60 * 24)))
+          ? Math.max(
+              0,
+              Math.floor(
+                (Date.now() - new Date(w.lastOccurred).getTime()) /
+                  (1000 * 60 * 60 * 24)
+              )
+            )
           : null;
         if (compact) {
           return (
             <div
               key={w.area}
-              className={`${cfg.bg} ${cfg.border} border border-l-4 ${sourceLeftBorder(w.source)} rounded-lg flex items-center gap-2 px-2.5 py-1.5`}
+              className={`${cfg.bg} ${cfg.border} border border-l-4 ${sourceLeftBorder(w.source)} flex items-center gap-2 rounded-lg px-2.5 py-1.5`}
             >
               {cfg.icon}
-              <span className="text-xs font-medium truncate flex-1">{w.area}</span>
-              <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">{w.count}回</span>
+              <span className="flex-1 truncate text-xs font-medium">
+                {w.area}
+              </span>
+              <span className="text-muted-foreground shrink-0 text-[10px] tabular-nums">
+                {w.count}回
+              </span>
             </div>
           );
         }
         return (
-          <Card key={w.area} className={`${cfg.bg} ${cfg.border} border-l-4 ${sourceLeftBorder(w.source)}`}>
+          <Card
+            key={w.area}
+            className={`${cfg.bg} ${cfg.border} border-l-4 ${sourceLeftBorder(w.source)}`}
+          >
             <CardContent className="flex items-center gap-3 py-3">
               {cfg.icon}
               <div className="min-w-0 flex-1">
@@ -148,12 +182,14 @@ export function WeaknessReminderBanner({ maxItems = DEFAULT_MAX_DISPLAY, compact
                   <WeaknessSourceBadge source={w.source} />
                   <span className="text-sm font-medium">{w.area}</span>
                 </div>
-                <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
+                <div className="text-muted-foreground mt-0.5 flex items-center gap-2 text-xs">
                   <span>{w.count}回指摘</span>
                   {daysAgo !== null && (
                     <>
                       <span>·</span>
-                      <span>最終: {daysAgo === 0 ? "今日" : `${daysAgo}日前`}</span>
+                      <span>
+                        最終: {daysAgo === 0 ? "今日" : `${daysAgo}日前`}
+                      </span>
                     </>
                   )}
                 </div>
@@ -172,9 +208,15 @@ export function WeaknessReminderBanner({ maxItems = DEFAULT_MAX_DISPLAY, compact
         );
       })}
       {remaining > 0 && (
-        <p className={compact ? "text-[11px] text-muted-foreground" : "text-sm text-muted-foreground"}>
+        <p
+          className={
+            compact
+              ? "text-muted-foreground text-[11px]"
+              : "text-muted-foreground text-sm"
+          }
+        >
           他{remaining}件の弱点があります。
-          <a href="/student/growth" className="ml-1 text-primary underline">
+          <a href="/student/growth" className="text-primary ml-1 underline">
             すべて見る
           </a>
         </p>

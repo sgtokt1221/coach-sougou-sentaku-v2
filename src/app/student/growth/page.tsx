@@ -148,6 +148,12 @@ function WeaknessColumn({
                     {w.count}回
                   </span>
                 </div>
+                {/* ラベルだけだと誰の弱点も同じ文言になる。直近の答案の話を出す */}
+                {w.lastExample && (
+                  <p className="text-muted-foreground mt-2 text-xs leading-relaxed">
+                    直近: {w.lastExample}
+                  </p>
+                )}
               </CardContent>
             </Card>
           ))
