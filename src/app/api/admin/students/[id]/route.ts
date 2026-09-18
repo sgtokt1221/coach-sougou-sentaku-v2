@@ -285,7 +285,15 @@ export async function GET(
         logic: e.scores!.logic ?? 0,
         expression: e.scores!.expression ?? 0,
         apAlignment: e.scores!.apAlignment ?? 0,
-        originality: e.scores!.originality ?? 0,
+        // 回答力(v23〜)と旧軸の独自性。無い方は null にして線を切る
+        responsiveness:
+          typeof e.scores!.responsiveness === "number"
+            ? e.scores!.responsiveness
+            : null,
+        originality:
+          typeof e.scores!.originality === "number"
+            ? e.scores!.originality
+            : null,
         // 旧データには無い軸。0 で埋めず null にして線を切る
         reasoningMaturity:
           typeof e.scores!.reasoningMaturity === "number"
@@ -332,6 +340,12 @@ export async function GET(
         ? Math.round((xs.reduce((s, n) => s + n, 0) / xs.length) * 10) / 10
         : 0;
 
+    /** 測っていない回を 0 として混ぜない。全回未測定なら null（表示側で「未測定」） */
+    const avgMeasured = (xs: (number | null | undefined)[]) => {
+      const ns = xs.filter((x): x is number => typeof x === "number");
+      return ns.length > 0 ? avg(ns) : null;
+    };
+
     const recentEssayScores = essays
       .filter((e) => e.scores)
       .slice(0, 3)
@@ -343,7 +357,9 @@ export async function GET(
             logic: avg(recentEssayScores.map((s) => s.logic ?? 0)),
             expression: avg(recentEssayScores.map((s) => s.expression ?? 0)),
             apAlignment: avg(recentEssayScores.map((s) => s.apAlignment ?? 0)),
-            originality: avg(recentEssayScores.map((s) => s.originality ?? 0)),
+            responsiveness: avgMeasured(
+              recentEssayScores.map((s) => s.responsiveness)
+            ),
           }
         : undefined;
 
@@ -351,11 +367,6 @@ export async function GET(
       .slice(0, 3)
       .map((d) => d.data().scores)
       .filter((s): s is Record<string, number | null> => s != null);
-    /** 測っていない回を 0 として混ぜない。全回未測定なら null（表示側で「未測定」） */
-    const avgMeasured = (xs: (number | null | undefined)[]) => {
-      const ns = xs.filter((x): x is number => typeof x === "number");
-      return ns.length > 0 ? avg(ns) : null;
-    };
     const interviewCategoryAverages =
       recentInterviewScores.length > 0
         ? {
@@ -383,7 +394,8 @@ export async function GET(
       logic: "論理性",
       expression: "表現力",
       apAlignment: "AP合致度",
-      originality: "独自性",
+      responsiveness: "回答力",
+      originality: "独自性（旧軸）",
     };
     const INTERVIEW_CATEGORY_LABELS: Record<string, string> = {
       clarity: "明確さ",
@@ -394,11 +406,14 @@ export async function GET(
     };
 
     function pickBestWorst(
-      cat: Record<string, number> | undefined,
+      cat: Record<string, number | null> | undefined,
       labels: Record<string, string>
     ): { bestCategory?: string; worstCategory?: string } {
       if (!cat) return {};
-      const entries = Object.entries(cat);
+      // 未採点の軸（null）は最弱・最強の判定に混ぜない
+      const entries = Object.entries(cat).filter(
+        (e): e is [string, number] => typeof e[1] === "number"
+      );
       if (entries.length === 0) return {};
       const best = entries.reduce((a, b) => (b[1] > a[1] ? b : a));
       const worst = entries.reduce((a, b) => (b[1] < a[1] ? b : a));

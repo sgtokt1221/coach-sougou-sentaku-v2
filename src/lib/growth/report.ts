@@ -9,7 +9,10 @@ export interface EssayData {
     logic: number;
     expression: number;
     apAlignment: number;
-    originality: number;
+    /** 回答力（v23〜）。旧データには無い */
+    responsiveness?: number;
+    /** 独自性。v23 で廃止した旧軸 */
+    originality?: number;
   } | null;
 }
 
@@ -44,11 +47,16 @@ const ESSAY_CATEGORIES: { key: string; label: string }[] = [
   { key: "structure", label: "構成" },
   { key: "logic", label: "論理性" },
   { key: "expression", label: "表現力" },
-  { key: "originality", label: "独自性" },
+  { key: "responsiveness", label: "回答力" },
+  // v23 で廃止。旧採点の答案が対象期間にあるときだけ平均に出る
+  { key: "originality", label: "独自性（旧軸）" },
   { key: "reasoningMaturity", label: "議論の成熟度" },
 ];
 
-function getPeriodRange(period: "weekly" | "monthly"): { start: Date; end: Date } {
+function getPeriodRange(period: "weekly" | "monthly"): {
+  start: Date;
+  end: Date;
+} {
   const end = new Date();
   const start = new Date();
   if (period === "weekly") {
@@ -78,17 +86,22 @@ export function computeEssayStats(
 
   const avgScore =
     Math.round(
-      (scored.reduce((sum, e) => sum + (e.scores?.total ?? 0), 0) / scored.length) * 10
+      (scored.reduce((sum, e) => sum + (e.scores?.total ?? 0), 0) /
+        scored.length) *
+        10
     ) / 10;
 
   const prevAvg =
     prevScored.length > 0
       ? Math.round(
-          (prevScored.reduce((sum, e) => sum + (e.scores?.total ?? 0), 0) / prevScored.length) * 10
+          (prevScored.reduce((sum, e) => sum + (e.scores?.total ?? 0), 0) /
+            prevScored.length) *
+            10
         ) / 10
       : 0;
 
-  const scoreChange = prevScored.length > 0 ? Math.round((avgScore - prevAvg) * 10) / 10 : 0;
+  const scoreChange =
+    prevScored.length > 0 ? Math.round((avgScore - prevAvg) * 10) / 10 : 0;
 
   /**
    * 項目別平均。その軸が実際に採点された答案だけで割る。
@@ -110,7 +123,7 @@ export function computeEssayStats(
   }
 
   const measured = ESSAY_CATEGORIES.filter(
-    (c) => typeof categoryAvgs[c.key] === "number",
+    (c) => typeof categoryAvgs[c.key] === "number"
   );
   let bestCategory = "-";
   let worstCategory = "-";
@@ -120,7 +133,9 @@ export function computeEssayStats(
     for (const cat of measured) {
       if ((categoryAvgs[cat.key] as number) > (categoryAvgs[bestKey] as number))
         bestKey = cat.key;
-      if ((categoryAvgs[cat.key] as number) < (categoryAvgs[worstKey] as number))
+      if (
+        (categoryAvgs[cat.key] as number) < (categoryAvgs[worstKey] as number)
+      )
         worstKey = cat.key;
     }
     bestCategory = measured.find((c) => c.key === bestKey)?.label ?? "-";
@@ -144,7 +159,8 @@ export function computeEssayStats(
       structure: round1(categoryAvgs.structure ?? 0),
       logic: round1(categoryAvgs.logic ?? 0),
       expression: round1(categoryAvgs.expression ?? 0),
-      originality: round1(categoryAvgs.originality ?? 0),
+      ...avgOrOmit("responsiveness"),
+      ...avgOrOmit("originality"),
       ...avgOrOmit("reasoningMaturity"),
     },
   };
@@ -171,17 +187,22 @@ export function computeInterviewStats(
 
   const avgScore =
     Math.round(
-      (scored.reduce((sum, i) => sum + (i.scores?.total ?? 0), 0) / scored.length) * 10
+      (scored.reduce((sum, i) => sum + (i.scores?.total ?? 0), 0) /
+        scored.length) *
+        10
     ) / 10;
 
   const prevAvg =
     prevScored.length > 0
       ? Math.round(
-          (prevScored.reduce((sum, i) => sum + (i.scores?.total ?? 0), 0) / prevScored.length) * 10
+          (prevScored.reduce((sum, i) => sum + (i.scores?.total ?? 0), 0) /
+            prevScored.length) *
+            10
         ) / 10
       : 0;
 
-  const scoreChange = prevScored.length > 0 ? Math.round((avgScore - prevAvg) * 10) / 10 : 0;
+  const scoreChange =
+    prevScored.length > 0 ? Math.round((avgScore - prevAvg) * 10) / 10 : 0;
 
   // 項目別平均 (レーダーチャート用)
   const catSums: Record<string, { sum: number; count: number }> = {};
@@ -237,7 +258,7 @@ export function computeInterviewStats(
 function computeWeaknessProgress(
   weaknesses: WeaknessData[],
   periodCounts: Record<string, number> = {},
-  previousCounts: Record<string, number> = {},
+  previousCounts: Record<string, number> = {}
 ): WeaknessProgress[] {
   return weaknesses
     .filter((w) => !w.resolved)
@@ -279,7 +300,9 @@ function generateRecommendations(
 
   // Essay-based recommendations
   if (essayStats.count === 0) {
-    recommendations.push("今期間中に小論文の提出がありませんでした。定期的な練習を心がけましょう。");
+    recommendations.push(
+      "今期間中に小論文の提出がありませんでした。定期的な練習を心がけましょう。"
+    );
   } else if (essayStats.scoreChange < -3) {
     recommendations.push(
       `小論文スコアが${Math.abs(essayStats.scoreChange)}点下がっています。平均が最も低いのは「${essayStats.worstCategory}」です。`
@@ -290,7 +313,10 @@ function generateRecommendations(
     );
   }
 
-  if (essayStats.worstCategory !== "-" && essayStats.worstCategory !== essayStats.bestCategory) {
+  if (
+    essayStats.worstCategory !== "-" &&
+    essayStats.worstCategory !== essayStats.bestCategory
+  ) {
     recommendations.push(
       `項目別の平均が最も低いのは「${essayStats.worstCategory}」です。ここを重点的に見ていきましょう。`
     );
@@ -298,9 +324,13 @@ function generateRecommendations(
 
   // Interview-based recommendations
   if (interviewStats.count === 0) {
-    recommendations.push("面接練習を行いましょう。定期的な模擬面接が効果的です。");
+    recommendations.push(
+      "面接練習を行いましょう。定期的な模擬面接が効果的です。"
+    );
   } else if (interviewStats.scoreChange < -3) {
-    recommendations.push("面接スコアが低下傾向です。回答の具体性と志望理由の明確化を意識しましょう。");
+    recommendations.push(
+      "面接スコアが低下傾向です。回答の具体性と志望理由の明確化を意識しましょう。"
+    );
   }
 
   // Weakness-based recommendations
@@ -308,16 +338,26 @@ function generateRecommendations(
     (w) => w.status === "declined" || (w.status === "stable" && w.attempts >= 3)
   );
   if (stuckWeaknesses.length > 0) {
-    const areas = stuckWeaknesses.slice(0, 3).map((w) => `「${w.weakness}」`).join("、");
+    const areas = stuckWeaknesses
+      .slice(0, 3)
+      .map((w) => `「${w.weakness}」`)
+      .join("、");
     recommendations.push(
       `${areas}が長期的に改善されていません。異なるアプローチでの練習を検討しましょう。`
     );
   }
 
-  const improvedWeaknesses = weaknessProgress.filter((w) => w.status === "improved");
+  const improvedWeaknesses = weaknessProgress.filter(
+    (w) => w.status === "improved"
+  );
   if (improvedWeaknesses.length > 0) {
-    const areas = improvedWeaknesses.slice(0, 3).map((w) => `「${w.weakness}」`).join("、");
-    recommendations.push(`${areas}に改善が見られます。引き続き定着を目指しましょう。`);
+    const areas = improvedWeaknesses
+      .slice(0, 3)
+      .map((w) => `「${w.weakness}」`)
+      .join("、");
+    recommendations.push(
+      `${areas}に改善が見られます。引き続き定着を目指しましょう。`
+    );
   }
 
   if (recommendations.length === 0) {
@@ -334,8 +374,12 @@ function generateOverallAssessment(
   period: "weekly" | "monthly"
 ): string {
   const totalActivity = essayStats.count + interviewStats.count;
-  const improvedCount = weaknessProgress.filter((w) => w.status === "improved").length;
-  const declinedCount = weaknessProgress.filter((w) => w.status === "declined").length;
+  const improvedCount = weaknessProgress.filter(
+    (w) => w.status === "improved"
+  ).length;
+  const declinedCount = weaknessProgress.filter(
+    (w) => w.status === "declined"
+  ).length;
 
   if (totalActivity === 0) {
     return "今期間は学習活動がありませんでした。計画的に取り組みましょう。";
@@ -368,7 +412,9 @@ function generateOverallAssessment(
   if (improvedCount > declinedCount) {
     parts.push("弱点の改善が進んでおり、成長が感じられます。");
   } else if (declinedCount > improvedCount) {
-    parts.push("いくつかの弱点が固定化しつつあります。重点的な対策を検討しましょう。");
+    parts.push(
+      "いくつかの弱点が固定化しつつあります。重点的な対策を検討しましょう。"
+    );
   }
 
   return parts.join("");
@@ -403,19 +449,29 @@ export function generateGrowthReport(params: {
 }): GrowthReport {
   const { start, end } = getPeriodRange(params.period);
 
-  const essayStats = computeEssayStats(params.periodEssays, params.previousEssays);
-  const interviewStats = computeInterviewStats(params.periodInterviews, params.previousInterviews);
+  const essayStats = computeEssayStats(
+    params.periodEssays,
+    params.previousEssays
+  );
+  const interviewStats = computeInterviewStats(
+    params.periodInterviews,
+    params.previousInterviews
+  );
   const weaknessProgress = computeWeaknessProgress(
     params.weaknesses,
     params.periodWeaknessCounts,
-    params.previousWeaknessCounts,
+    params.previousWeaknessCounts
   );
-  const recommendations = generateRecommendations(essayStats, interviewStats, weaknessProgress);
+  const recommendations = generateRecommendations(
+    essayStats,
+    interviewStats,
+    weaknessProgress
+  );
   let overallAssessment = generateOverallAssessment(
     essayStats,
     interviewStats,
     weaknessProgress,
-    params.period,
+    params.period
   );
 
   // 授業観察を総合評価に織り込む (先頭 1-2 件、既存文の後に追加)
@@ -462,7 +518,7 @@ export function buildSessionSummaryDraft(
       nextAgendaSeed?: string;
     };
     scheduledAt?: string;
-  }>,
+  }>
 ): NonNullable<GrowthReport["sessionSummary"]> {
   const completed = sessions.filter((s) => s.status === "completed");
   const totalCount = completed.length;
@@ -476,8 +532,10 @@ export function buildSessionSummaryDraft(
     new Set(
       completed
         .flatMap((s) => s.debrief?.newWeaknessAreas ?? [])
-        .filter((a): a is string => typeof a === "string" && a.trim().length > 0),
-    ),
+        .filter(
+          (a): a is string => typeof a === "string" && a.trim().length > 0
+        )
+    )
   );
 
   // latestNextAgenda: scheduledAt 降順で最初の nextAgendaSeed
@@ -487,7 +545,8 @@ export function buildSessionSummaryDraft(
     return tb - ta;
   });
   const latestNextAgenda = sortedByDate.find(
-    (s) => s.debrief?.nextAgendaSeed && s.debrief.nextAgendaSeed.trim().length > 0,
+    (s) =>
+      s.debrief?.nextAgendaSeed && s.debrief.nextAgendaSeed.trim().length > 0
   )?.debrief?.nextAgendaSeed;
 
   // teacherObservations: notes をそのまま連結 (AI 抽出はルート側で行う、ここではフォールバックとして短文列)

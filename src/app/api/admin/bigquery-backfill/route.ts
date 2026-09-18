@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
   if (!adminDb) {
     return NextResponse.json(
       { error: "Firestore 初期化エラー" },
-      { status: 500 },
+      { status: 500 }
     );
   }
   const client = getBigQueryClient();
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
   if (!client || !dataset) {
     return NextResponse.json(
       { error: "BigQuery クライアント初期化失敗" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
 async function fetchExistingIds(
   dataset: ReturnType<typeof getBigQueryDataset>,
   tableName: string,
-  idColumn: string,
+  idColumn: string
 ): Promise<Set<string>> {
   if (!dataset) return new Set();
   try {
@@ -77,13 +77,13 @@ async function fetchExistingIds(
 
 async function backfillEssays(
   dataset: ReturnType<typeof getBigQueryDataset>,
-  dryRun: boolean,
+  dryRun: boolean
 ) {
   if (!adminDb || !dataset) return { error: "init failed" };
   const existing = await fetchExistingIds(
     dataset,
     TABLE_NAMES.ESSAY_SUBMISSIONS,
-    "essay_id",
+    "essay_id"
   );
 
   const snap = await adminDb.collection("essays").get();
@@ -104,13 +104,16 @@ async function backfillEssays(
       score_expression: scores.expression ?? null,
       score_ap_alignment: scores.apAlignment ?? null,
       score_originality: scores.originality ?? null,
+      score_responsiveness: scores.responsiveness ?? null,
       score_total: scores.total ?? null,
       word_count: d.wordCount ?? null,
       topic: d.topic ?? null,
       ocr_confidence: null,
       ai_model: null,
       weakness_tags: Array.isArray(d.weaknessTags) ? d.weaknessTags : [],
-      improvement_tags: Array.isArray(d.improvementTags) ? d.improvementTags : [],
+      improvement_tags: Array.isArray(d.improvementTags)
+        ? d.improvementTags
+        : [],
     });
   }
 
@@ -148,13 +151,13 @@ async function backfillEssays(
 
 async function backfillInterviews(
   dataset: ReturnType<typeof getBigQueryDataset>,
-  dryRun: boolean,
+  dryRun: boolean
 ) {
   if (!adminDb || !dataset) return { error: "init failed" };
   const existing = await fetchExistingIds(
     dataset,
     TABLE_NAMES.INTERVIEW_SESSIONS,
-    "interview_id",
+    "interview_id"
   );
 
   const snap = await adminDb

@@ -57,12 +57,16 @@ import { EssayResultSummary } from "@/components/essay/EssayResultSummary";
 import { EssayReviewCoach } from "@/components/essay/EssayReviewCoach";
 import { ESSAY_CATEGORY_LABELS } from "@/lib/growth/weakness-category";
 import { sourceEngagementLabel } from "@/lib/essay/source-engagement";
+import { essayScoreAxisRows } from "@/lib/essay/score-axes";
 
 interface EssayScores {
   structure: number;
   logic: number;
   expression: number;
-  originality: number;
+  /** 回答力（v23〜）。旧データには無い */
+  responsiveness?: number;
+  /** 独自性。v23 で廃止した旧軸。旧データにだけある */
+  originality?: number;
   /** 議論の成熟度。旧データには無い */
   reasoningMaturity?: number;
   /** AP合致度は合計外。未取得は null */
@@ -432,37 +436,12 @@ export default function EssayResultPage() {
 
   // 合計に入る5軸。旧データに無い軸は描かない（0 として凹ませない）
   // weight は合計50点の中での配点。軸の点は0-10で保存し、表示だけ配点へ換算する
-  const radarData = [
-    {
-      subject: "構成",
-      value: result.scores.structure,
-      weight: ESSAY_SCORE_WEIGHTS.structure,
-    },
-    {
-      subject: "論理性",
-      value: result.scores.logic,
-      weight: ESSAY_SCORE_WEIGHTS.logic,
-    },
-    {
-      subject: "表現力",
-      value: result.scores.expression,
-      weight: ESSAY_SCORE_WEIGHTS.expression,
-    },
-    {
-      subject: "独自性",
-      value: result.scores.originality,
-      weight: ESSAY_SCORE_WEIGHTS.originality,
-    },
-    ...(typeof result.scores.reasoningMaturity === "number"
-      ? [
-          {
-            subject: "議論の成熟度",
-            value: result.scores.reasoningMaturity,
-            weight: ESSAY_SCORE_WEIGHTS.reasoningMaturity,
-          },
-        ]
-      : []),
-  ];
+  // 軸の並びと旧データ（独自性）の扱いは essayScoreAxisRows に集約している
+  const radarData = essayScoreAxisRows(result.scores).map((row) => ({
+    subject: row.label,
+    value: row.value,
+    weight: row.weight,
+  }));
 
   /**
    * 合計外の参考値。レーダーには載せない。
@@ -1055,7 +1034,7 @@ export default function EssayResultPage() {
                   )}
                   <p className="text-muted-foreground mt-2 text-[10px]">
                     この評価は50点の合計には含まれません。課題文に触れていない場合は、
-                    構成・論理性・独自性・成熟度の上限が下がります。
+                    構成・論理性・回答力・成熟度の上限が下がります。
                   </p>
                 </div>
               )}

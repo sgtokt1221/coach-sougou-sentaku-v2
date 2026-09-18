@@ -1,4 +1,8 @@
-import type { EssayFeedback, EssayScores, RetryComparison } from "@/lib/types/essay";
+import type {
+  EssayFeedback,
+  EssayScores,
+  RetryComparison,
+} from "@/lib/types/essay";
 
 interface ParentSnapshot {
   id: string;
@@ -16,7 +20,9 @@ interface CurrentSnapshot {
 function toIso(value: Date | string): string {
   if (value instanceof Date) return value.toISOString();
   const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
+  return Number.isNaN(parsed.getTime())
+    ? new Date().toISOString()
+    : parsed.toISOString();
 }
 
 function uniqueAreas(feedback: EssayFeedback): Set<string> {
@@ -52,8 +58,10 @@ export function computeRetryComparison(
       ? currentQa.wordCount - parentQa.wordCount
       : null;
   const fillRateDelta =
-    parentQa?.fillRate !== null && parentQa?.fillRate !== undefined &&
-    currentQa?.fillRate !== null && currentQa?.fillRate !== undefined
+    parentQa?.fillRate !== null &&
+    parentQa?.fillRate !== undefined &&
+    currentQa?.fillRate !== null &&
+    currentQa?.fillRate !== undefined
       ? currentQa.fillRate - parentQa.fillRate
       : null;
 
@@ -73,7 +81,12 @@ export function computeRetryComparison(
         typeof parent.scores.apAlignment === "number"
           ? current.scores.apAlignment - parent.scores.apAlignment
           : 0,
-      originality: current.scores.originality - parent.scores.originality,
+      // 回答力は v23 からの軸。前回が旧採点（独自性）なら比較しない
+      responsiveness:
+        typeof current.scores.responsiveness === "number" &&
+        typeof parent.scores.responsiveness === "number"
+          ? current.scores.responsiveness - parent.scores.responsiveness
+          : 0,
       total: current.scores.total - parent.scores.total,
     },
     resolvedWeaknesses,

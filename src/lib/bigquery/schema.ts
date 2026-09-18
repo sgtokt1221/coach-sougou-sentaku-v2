@@ -29,7 +29,9 @@ export const ESSAY_SUBMISSIONS_SCHEMA: TableSchema = {
     { name: "score_logic", type: "INT64", mode: "NULLABLE" },
     { name: "score_expression", type: "INT64", mode: "NULLABLE" },
     { name: "score_ap_alignment", type: "INT64", mode: "NULLABLE" },
+    /** v23 で回答力に置き換えた旧軸。過去の行のためだけに残す */
     { name: "score_originality", type: "INT64", mode: "NULLABLE" },
+    { name: "score_responsiveness", type: "INT64", mode: "NULLABLE" },
     { name: "score_total", type: "INT64", mode: "NULLABLE" },
 
     // metadata
@@ -42,7 +44,7 @@ export const ESSAY_SUBMISSIONS_SCHEMA: TableSchema = {
     { name: "weakness_tags", type: "STRING", mode: "REPEATED" },
     { name: "improvement_tags", type: "STRING", mode: "REPEATED" },
     /** weakness_tags と同 index で対応する categoryId (= structure / logic /
-     *  expression / apAlignment / originality / other)。 SQL では
+     *  expression / apAlignment / responsiveness / other)。 SQL では
      *  UNNEST OFFSET で結合可能 */
     { name: "weakness_categories", type: "STRING", mode: "REPEATED" },
 

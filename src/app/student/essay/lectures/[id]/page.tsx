@@ -51,7 +51,7 @@ const SCORE_AXES: { key: EssayScoreAxis; label: string }[] = [
   { key: "structure", label: "構成" },
   { key: "logic", label: "論理" },
   { key: "expression", label: "表現" },
-  { key: "originality", label: "独自性" },
+  { key: "responsiveness", label: "回答力" },
   { key: "reasoningMaturity", label: "議論の成熟度" },
 ];
 

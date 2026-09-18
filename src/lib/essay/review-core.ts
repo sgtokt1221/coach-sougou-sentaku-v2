@@ -167,13 +167,13 @@ ${input.ocrText}
   }
 
   /**
-   * 合計はAPを含まない5軸（構成・論理性・表現力・独自性・議論の成熟度）。
+   * 合計はAPを含まない5軸（構成・論理性・表現力・回答力・議論の成熟度）。
    * APの有無で満点が変わらなくなったので、常に50点満点で比較できる。
    */
   /**
    * 設問への適合を点に反映する（監査 P1-12）。
    *
-   * 上限が構成と表現だけだと、中身の軸（論理性・独自性・成熟度）が残るため
+   * 上限が構成と表現だけだと、中身の軸（論理性・回答力・成熟度）が残るため
    * 主題を外した答案でも22〜28点の中位に居座った。設問に答えていない以上、
    * その論・具体・考察は「別の問いへの答え」なので、内容側をまとめて抑える。
    *
@@ -220,8 +220,16 @@ ${input.ocrText}
   const baseContentCap = offTopic ? 3 : narrowed || missingRequired ? 6 : 10;
   const contentCap = Math.min(baseContentCap, sourceCaps.content);
   const structureCap = contentCap;
-  const originalityCap = contentCap;
   const maturityCap = contentCap;
+  /**
+   * 回答力は taskFulfillment の結論そのものなので、他の軸より強く縛る。
+   * 主題がずれている・主題の一部しか論じていない（answersQuestion=false）なら
+   * 3点以下、要求が欠けているなら5点以下。ルーブリックの段と一致させている。
+   */
+  const responsivenessCap = Math.min(
+    offTopic || narrowed ? 3 : missingRequired ? 5 : 10,
+    sourceCaps.content
+  );
   const logicCap = Math.min(
     contentCap,
     contradicted ? 4 : 10,
@@ -240,7 +248,7 @@ ${input.ocrText}
     structure: capBy(parsed.scores.structure, structureCap),
     logic: capBy(parsed.scores.logic, logicCap),
     expression: capBy(parsed.scores.expression, expressionCap),
-    originality: capBy(parsed.scores.originality, originalityCap),
+    responsiveness: capBy(parsed.scores.responsiveness, responsivenessCap),
     reasoningMaturity: capBy(parsed.scores.reasoningMaturity, maturityCap),
   };
   const total = calculateEssayTotal(capped);

@@ -1,3 +1,4 @@
+import type { EssayCategoryKey } from "@/lib/growth/weakness-category";
 export interface BigQueryEssayLog {
   essay_id: string;
   user_id: string;
@@ -9,8 +10,10 @@ export interface BigQueryEssayLog {
   score_expression: number;
   /** AP未取得は null（0点と区別する）。合計には含まない */
   score_ap_alignment: number | null;
-  /** ちょこ添削（1段落）では採点できないので null。0点と区別する */
-  score_originality: number | null;
+  /** 回答力。ちょこ添削（1段落）では採点できないので null。0点と区別する */
+  score_responsiveness: number | null;
+  /** v23 で廃止した独自性。旧データを読むときだけ入る */
+  score_originality?: number | null;
   /** 議論の成熟度。旧データには無い */
   score_reasoning_maturity?: number;
   score_total: number;
@@ -58,7 +61,12 @@ export interface AnalyticsOverview {
   totalInterviews: number;
   avgEssayScore: number;
   avgInterviewScore: number;
-  monthlyTrend: { month: string; essays: number; interviews: number; avgScore: number }[];
+  monthlyTrend: {
+    month: string;
+    essays: number;
+    interviews: number;
+    avgScore: number;
+  }[];
   universityPopularity: { universityName: string; count: number }[];
   scoreDistribution: { range: string; count: number }[];
 }
@@ -68,33 +76,23 @@ export interface WeaknessAnalytics {
     area: string;
     count: number;
     improvementRate: number;
-    /** Phase 2-C: 弱点カテゴリ (= structure / logic / expression / apAlignment / originality / other) */
-    categoryId?:
-      | "structure"
-      | "logic"
-      | "expression"
-      | "apAlignment"
-      | "originality"
-      | "reasoningMaturity"
-      | "other";
+    /** Phase 2-C: 弱点カテゴリ (= weakness-category.ts の EssayCategoryKey) */
+    categoryId?: EssayCategoryKey;
   }[];
   /** Phase 2-C: カテゴリ別集計 (= 重点弱点 Top 5 と同じ系統) */
   byCategory?: Array<{
-    categoryId:
-      | "structure"
-      | "logic"
-      | "expression"
-      | "apAlignment"
-      | "originality"
-      | "reasoningMaturity"
-      | "other";
+    categoryId: EssayCategoryKey;
     label: string;
     totalCount: number;
     studentCount: number;
     topItems: { area: string; count: number; improvementRate: number }[];
   }>;
   avgDaysToResolve: number;
-  universityGap: { universityName: string; requiredSkills: string[]; studentGap: string[] }[];
+  universityGap: {
+    universityName: string;
+    requiredSkills: string[];
+    studentGap: string[];
+  }[];
   improvementPatterns: {
     pattern: string;
     successRate: number;

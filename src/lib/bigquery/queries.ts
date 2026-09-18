@@ -84,7 +84,8 @@ function buildWhereClause(
     });
   }
 
-  const clause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+  const clause =
+    conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
   return { clause, params };
 }
 
@@ -126,6 +127,7 @@ export interface EssayScoreTrendRow {
   avg_expression: number;
   avg_ap_alignment: number;
   avg_originality: number;
+  avg_responsiveness: number;
   avg_total: number;
   submission_count: number;
 }
@@ -147,6 +149,7 @@ export async function getEssayScoreTrends(
       AVG(score_expression)   AS avg_expression,
       AVG(score_ap_alignment) AS avg_ap_alignment,
       AVG(score_originality)  AS avg_originality,
+      AVG(score_responsiveness) AS avg_responsiveness,
       AVG(score_total)        AS avg_total,
       COUNT(*)                AS submission_count
     FROM \`${BQ_DATASET_NAME}.essay_submissions\`
@@ -372,7 +375,12 @@ export async function getStudentComparison(
     const studentRows = await runQuery(studentSql, params);
     const overallRows = await runQuery(overallSql, []);
 
-    if (!studentRows || !overallRows || studentRows.length === 0 || overallRows.length === 0) {
+    if (
+      !studentRows ||
+      !overallRows ||
+      studentRows.length === 0 ||
+      overallRows.length === 0
+    ) {
       return null;
     }
 

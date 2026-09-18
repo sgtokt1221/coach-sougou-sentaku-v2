@@ -60,8 +60,7 @@ export function ScoreChangeIndicator({ change }: { change: number }) {
   if (change > 0) {
     return (
       <span className="inline-flex items-center gap-0.5 text-emerald-600 dark:text-emerald-400">
-        <TrendingUp className="size-3.5" />
-        +{change}
+        <TrendingUp className="size-3.5" />+{change}
       </span>
     );
   }
@@ -74,9 +73,8 @@ export function ScoreChangeIndicator({ change }: { change: number }) {
     );
   }
   return (
-    <span className="inline-flex items-center gap-0.5 text-muted-foreground">
-      <Minus className="size-3.5" />
-      0
+    <span className="text-muted-foreground inline-flex items-center gap-0.5">
+      <Minus className="size-3.5" />0
     </span>
   );
 }
@@ -188,7 +186,7 @@ export function ReportDetailCard({
         throw new Error(
           payload.detail
             ? `[${payload.step ?? "?"}] ${payload.detail}`
-            : payload.error ?? "保存に失敗しました"
+            : (payload.error ?? "保存に失敗しました")
         );
       }
       const updated = (await res.json()) as GrowthReport;
@@ -222,12 +220,13 @@ export function ReportDetailCard({
       {/* 編集ツールバー */}
       {!readOnly && (
         <div className="flex items-center justify-between gap-2 print:hidden">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            {typeof report.editedAt === "string" && report.editedAt.length > 0 && (
-              <span>
-                最終編集: {new Date(report.editedAt).toLocaleString("ja-JP")}
-              </span>
-            )}
+          <div className="text-muted-foreground flex items-center gap-2 text-xs">
+            {typeof report.editedAt === "string" &&
+              report.editedAt.length > 0 && (
+                <span>
+                  最終編集: {new Date(report.editedAt).toLocaleString("ja-JP")}
+                </span>
+              )}
             {report.sharedWithStudent === false && (
               <Badge variant="outline" className="gap-1 text-[10px]">
                 <EyeOff className="size-3" />
@@ -266,32 +265,30 @@ export function ReportDetailCard({
 
       {/* 期間・生成日 メタヘッダー (詳細画面で先出しする場合は非表示。印刷時は専用バーで代替) */}
       {!hideMetaHeader && (
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-md border bg-muted/30 px-3 py-2 text-xs text-muted-foreground print:hidden">
+        <div className="bg-muted/30 text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1 rounded-md border px-3 py-2 text-xs print:hidden">
           <Badge variant="outline" className="text-[10px]">
             {report.period === "weekly" ? "週次" : "月次"}
           </Badge>
           <div className="inline-flex items-center gap-1">
             <Calendar className="size-3.5" />
             <span>期間:</span>
-            <span className="font-medium text-foreground">
+            <span className="text-foreground font-medium">
               {formatDate(report.startDate)} 〜 {formatDate(report.endDate)}
             </span>
           </div>
           <div className="inline-flex items-center gap-1">
             <Clock className="size-3.5" />
             <span>生成日:</span>
-            <span className="font-medium text-foreground">{formatDate(report.generatedAt)}</span>
+            <span className="text-foreground font-medium">
+              {formatDate(report.generatedAt)}
+            </span>
           </div>
         </div>
       )}
 
       {/* 学力サマリ 2 カラム */}
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 print:grid-cols-2 print:gap-2 print:break-inside-avoid">
-        <StatsSummaryCard
-          kind="essay"
-          stats={report.essayStats}
-          max={50}
-        />
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 print:break-inside-avoid print:grid-cols-2 print:gap-2">
+        <StatsSummaryCard kind="essay" stats={report.essayStats} max={50} />
         <StatsSummaryCard
           kind="interview"
           stats={report.interviewStats}
@@ -332,7 +329,9 @@ export function ReportDetailCard({
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => setRecs(recs.filter((_, idx) => idx !== i))}
+                      onClick={() =>
+                        setRecs(recs.filter((_, idx) => idx !== i))
+                      }
                       aria-label="この項目を削除"
                     >
                       <X className="size-4" />
@@ -359,7 +358,7 @@ export function ReportDetailCard({
                   </div>
                 ))}
                 {report.recommendations.length === 0 && (
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-muted-foreground text-xs">
                     推奨アクションは記録されていません
                   </p>
                 )}
@@ -381,7 +380,7 @@ export function ReportDetailCard({
                 className="bg-white text-sm"
               />
             ) : (
-              <p className="whitespace-pre-wrap text-sm leading-relaxed">
+              <p className="text-sm leading-relaxed whitespace-pre-wrap">
                 {report.overallAssessment}
               </p>
             )}
@@ -413,7 +412,7 @@ export function ReportDetailCard({
                   </label>
                 </>
               ) : (
-                <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                <p className="text-sm leading-relaxed whitespace-pre-wrap">
                   {report.teacherComment}
                 </p>
               )}
@@ -423,7 +422,9 @@ export function ReportDetailCard({
       </div>
 
       {/* 面談・活動実績・出願書類の補助セクション (新フィールドがある場合のみ表示。旧レポートには無い) */}
-      {(report.sessionDigest || report.activitySummary || report.documentSummary) && (
+      {(report.sessionDigest ||
+        report.activitySummary ||
+        report.documentSummary) && (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 print:grid-cols-2 print:gap-2">
           {report.sessionDigest && report.sessionDigest.totalCount > 0 && (
             <SessionDigestSection digest={report.sessionDigest} />
@@ -459,7 +460,7 @@ function SessionDigestSection({
         {digest.sessions.map((s, i) => (
           <div
             key={i}
-            className="rounded-md border bg-white p-2.5 text-xs dark:bg-card print:break-inside-avoid print:border-gray-300 print:p-1.5"
+            className="dark:bg-card rounded-md border bg-white p-2.5 text-xs print:break-inside-avoid print:border-gray-300 print:p-1.5"
           >
             <div className="mb-1 flex flex-wrap items-center justify-between gap-1 font-medium">
               <span>{formatDate(s.date)}</span>
@@ -487,7 +488,7 @@ function SessionDigestSection({
               </div>
             )}
             {s.nextAgenda && (
-              <div className="mt-1.5 text-muted-foreground">
+              <div className="text-muted-foreground mt-1.5">
                 次回アジェンダ: {s.nextAgenda}
               </div>
             )}
@@ -520,7 +521,7 @@ function ActivitySummarySection({
           ))}
         </ul>
       ) : (
-        <p className="text-xs text-muted-foreground">記録なし</p>
+        <p className="text-muted-foreground text-xs">記録なし</p>
       )}
     </div>
   );
@@ -539,21 +540,22 @@ function DocumentSummarySection({
     <div className="rounded-lg border border-orange-200 bg-orange-50/40 p-3 dark:border-orange-900 dark:bg-orange-950/20 print:break-inside-avoid print:border-gray-300 print:bg-white print:p-2">
       <h4 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-orange-800 dark:text-orange-300">
         <FileCheck2 className="size-4" />
-        出願書類 完成 {summary.completed}/全 {summary.total} ・進行中 {summary.inProgress}
+        出願書類 完成 {summary.completed}/全 {summary.total} ・進行中{" "}
+        {summary.inProgress}
       </h4>
       {summary.upcomingDeadlines.length > 0 ? (
         <ul className="space-y-1 text-xs leading-relaxed">
           {summary.upcomingDeadlines.map((d, i) => (
             <li key={i} className="flex items-center justify-between gap-2">
               <span>{d.title}</span>
-              <span className="shrink-0 tabular-nums text-muted-foreground">
+              <span className="text-muted-foreground shrink-0 tabular-nums">
                 {formatDate(d.deadline)}
               </span>
             </li>
           ))}
         </ul>
       ) : (
-        <p className="text-xs text-muted-foreground">直近の締切はありません</p>
+        <p className="text-muted-foreground text-xs">直近の締切はありません</p>
       )}
     </div>
   );
@@ -577,6 +579,7 @@ function WeaknessProgressByCategory({
       logic: [],
       expression: [],
       apAlignment: [],
+      responsiveness: [],
       originality: [],
       reasoningMaturity: [],
       other: [],
@@ -604,11 +607,11 @@ function WeaknessProgressByCategory({
         {visible.map((cat) => (
           <div
             key={cat}
-            className="rounded-md border bg-white p-2.5 dark:bg-card print:break-inside-avoid print:border-gray-300 print:p-1.5"
+            className="dark:bg-card rounded-md border bg-white p-2.5 print:break-inside-avoid print:border-gray-300 print:p-1.5"
           >
             <div className="mb-1.5 flex items-center justify-between text-xs font-semibold print:mb-1 print:text-[10pt]">
               <span>{ESSAY_CATEGORY_LABELS[cat]}</span>
-              <span className="text-[10px] text-muted-foreground print:text-[8pt]">
+              <span className="text-muted-foreground text-[10px] print:text-[8pt]">
                 {grouped[cat].length} 件
               </span>
             </div>
@@ -618,15 +621,15 @@ function WeaknessProgressByCategory({
                   key={w.weakness}
                   className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between"
                 >
-                  <span className="flex-1 whitespace-pre-wrap break-words leading-relaxed">
+                  <span className="flex-1 leading-relaxed break-words whitespace-pre-wrap">
                     {w.weakness}
                   </span>
                   <div className="flex shrink-0 flex-wrap items-center gap-1.5 sm:pt-0.5">
-                    <span className="tabular-nums text-muted-foreground">
+                    <span className="text-muted-foreground tabular-nums">
                       {w.previousScore}→{w.currentScore}
                     </span>
                     <WeaknessStatusBadge status={w.status} />
-                    <span className="text-[10px] text-muted-foreground print:text-[8pt]">
+                    <span className="text-muted-foreground text-[10px] print:text-[8pt]">
                       {w.attempts}回
                     </span>
                   </div>
@@ -688,7 +691,8 @@ export function StatsSummaryCard({
           { subject: "構成", value: c.structure },
           { subject: "論理性", value: c.logic },
           { subject: "表現力", value: c.expression },
-          { subject: "独自性", value: c.originality },
+          { subject: "回答力", value: c.responsiveness },
+          { subject: "独自性（旧軸）", value: c.originality },
           { subject: "議論の成熟度", value: c.reasoningMaturity },
         ]
       : [
@@ -699,14 +703,15 @@ export function StatsSummaryCard({
           { subject: "ボディランゲージ", value: c.bodyLanguage },
         ];
     const measured = axes.filter(
-      (a): a is { subject: string; value: number } => typeof a.value === "number",
+      (a): a is { subject: string; value: number } =>
+        typeof a.value === "number"
     );
     return measured.length > 0 ? measured : null;
   }, [isEssay, stats.categoryAverages]);
 
   return (
     <div
-      className={`rounded-lg border p-4 print:p-2 print:break-inside-avoid ${
+      className={`rounded-lg border p-4 print:break-inside-avoid print:p-2 ${
         isEssay
           ? "border-teal-200 bg-gradient-to-br from-teal-50 to-sky-50 dark:border-teal-900 dark:from-teal-950/30 dark:to-sky-950/30 print:border-gray-300 print:bg-white"
           : "border-rose-200 bg-gradient-to-br from-rose-50 to-amber-50 dark:border-rose-900 dark:from-rose-950/30 dark:to-amber-950/30 print:border-gray-300 print:bg-white"
@@ -736,7 +741,7 @@ export function StatsSummaryCard({
         <div>
           <div className="text-3xl font-bold tabular-nums">
             {stats.avgScore}
-            <span className="ml-1 text-sm text-muted-foreground">/{max}</span>
+            <span className="text-muted-foreground ml-1 text-sm">/{max}</span>
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs">
             <span className="text-muted-foreground">先期比</span>
@@ -775,7 +780,7 @@ export function StatsSummaryCard({
         </div>
       )}
       {radarData && stats.count > 0 && (
-        <div className="mt-3 grid grid-cols-1 items-center gap-3 sm:grid-cols-[minmax(0,1fr)_auto] print:grid-cols-1 print:gap-2 print:break-inside-avoid">
+        <div className="mt-3 grid grid-cols-1 items-center gap-3 sm:grid-cols-[minmax(0,1fr)_auto] print:break-inside-avoid print:grid-cols-1 print:gap-2">
           {/*
             印刷で ResponsiveContainer はサイズ測定が不整合になり、SVG/軸ラベルが
             箱を超えてはみ出すため、固定サイズの RadarChart を中央寄せで使う。
@@ -813,7 +818,7 @@ export function StatsSummaryCard({
                 <span className="text-muted-foreground">{item.subject}</span>
                 <span className="font-medium tabular-nums">
                   {item.value.toFixed(1)}
-                  <span className="ml-0.5 text-[10px] text-muted-foreground print:text-[8pt]">
+                  <span className="text-muted-foreground ml-0.5 text-[10px] print:text-[8pt]">
                     /10
                   </span>
                 </span>

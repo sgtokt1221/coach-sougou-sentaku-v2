@@ -72,7 +72,7 @@ export function StudentSkillRadar({
 
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   const recentEssayActivity = essays.filter(
-    (e) => new Date(e.submittedAt) > thirtyDaysAgo,
+    (e) => new Date(e.submittedAt) > thirtyDaysAgo
   ).length;
   const recentInterviewActivity = interviewScoreTrend
     ? interviewScoreTrend.filter((t) => new Date(t.date) > thirtyDaysAgo).length
@@ -88,7 +88,13 @@ export function StudentSkillRadar({
       { subject: "構成", value: essayLatest.structure ?? 0 },
       { subject: "論理性", value: essayLatest.logic ?? 0 },
       { subject: "表現力", value: essayLatest.expression ?? 0 },
-      { subject: "独自性", value: essayLatest.originality ?? 0 },
+      // 回答力（v23〜）と旧軸の独自性。どちらも値があるときだけ描く
+      ...(typeof essayLatest.responsiveness === "number"
+        ? [{ subject: "回答力", value: essayLatest.responsiveness }]
+        : []),
+      ...(typeof essayLatest.originality === "number"
+        ? [{ subject: "独自性（旧軸）", value: essayLatest.originality }]
+        : []),
       // 旧データには無いので、値があるときだけ描く
       ...(typeof essayLatest.reasoningMaturity === "number"
         ? [{ subject: "議論の成熟度", value: essayLatest.reasoningMaturity }]
@@ -143,7 +149,9 @@ export function StudentSkillRadar({
             meta={interviewSkillCheckMeta}
             maxScore={40}
             radar={interviewRadar}
-            onClick={interviewSkillCheck?.latestResult ? onSelectInterview : undefined}
+            onClick={
+              interviewSkillCheck?.latestResult ? onSelectInterview : undefined
+            }
           />
         </motion.div>
       </CardContent>
@@ -181,17 +189,25 @@ function SkillCard({
   // SCも練習も無い（= 出せる指標が何も無い）ときだけ未受験表示にする。
   // 練習だけでランクが付く生徒（mode = practice_only）にここを出すと、
   // 添削で伸びているのに「ランクが付きません」と言うことになる。
-  if (!aggregate || aggregate.mode === "none" || aggregate.compositeRank === null) {
+  if (
+    !aggregate ||
+    aggregate.mode === "none" ||
+    aggregate.compositeRank === null
+  ) {
     return (
       <div className={`rounded-lg border p-4 ${bgClass}`}>
         <div className="flex items-center gap-2 text-sm font-semibold">
-          {isEssay ? <FileText className="size-4" /> : <Mic className="size-4" />}
+          {isEssay ? (
+            <FileText className="size-4" />
+          ) : (
+            <Mic className="size-4" />
+          )}
           {label}
         </div>
-        <p className="mt-3 text-sm text-muted-foreground">
+        <p className="text-muted-foreground mt-3 text-sm">
           スキルチェックテストを受けるとランクが付きます。
         </p>
-        <p className="mt-1 text-xs text-muted-foreground">
+        <p className="text-muted-foreground mt-1 text-xs">
           月 1 回の受験でスキルを最新に保ちましょう。
         </p>
       </div>
@@ -207,7 +223,7 @@ function SkillCard({
     <div
       className={`rounded-lg border p-4 ${bgClass} ${
         onClick
-          ? "cursor-pointer transition-shadow hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+          ? "focus-visible:ring-primary/50 cursor-pointer transition-shadow hover:shadow-md focus:outline-none focus-visible:ring-2"
           : ""
       }`}
       role={onClick ? "button" : undefined}
@@ -232,7 +248,11 @@ function SkillCard({
               : "text-rose-700 dark:text-rose-300"
           }`}
         >
-          {isEssay ? <FileText className="size-4" /> : <Mic className="size-4" />}
+          {isEssay ? (
+            <FileText className="size-4" />
+          ) : (
+            <Mic className="size-4" />
+          )}
           {label}
         </div>
         <div className="flex items-center gap-1.5">
@@ -243,7 +263,7 @@ function SkillCard({
             </Badge>
           )}
           {onClick && (
-            <span className="text-[10px] text-muted-foreground">詳細 ›</span>
+            <span className="text-muted-foreground text-[10px]">詳細 ›</span>
           )}
         </div>
       </div>
@@ -257,15 +277,13 @@ function SkillCard({
         />
         <div>
           <div className="text-3xl font-bold tabular-nums">
-            {aggregate.compositeScore !== null
-              ? aggregate.compositeScore
-              : "—"}
-            <span className="ml-1 text-sm text-muted-foreground">
+            {aggregate.compositeScore !== null ? aggregate.compositeScore : "—"}
+            <span className="text-muted-foreground ml-1 text-sm">
               /{maxScore}
             </span>
           </div>
           {takenAtLabel && (
-            <div className="mt-0.5 flex items-center gap-1 text-[11px] text-muted-foreground">
+            <div className="text-muted-foreground mt-0.5 flex items-center gap-1 text-[11px]">
               <Calendar className="size-3" />
               {takenAtLabel}
             </div>
@@ -274,7 +292,7 @@ function SkillCard({
       </div>
 
       {/* 何からランクが出ているか。生徒画面(SkillRankPanel)と同じ内訳を出す */}
-      <p className="mt-2 text-[11px] text-muted-foreground">
+      <p className="text-muted-foreground mt-2 text-[11px]">
         {aggregate.mode === "weighted" &&
           `SC ${aggregate.scScore}（${aggregate.scRank}）× ${SC_PCT}% + 練習平均 ${aggregate.practiceAvg?.toFixed(1)}（${aggregate.practiceCount}件）× ${PRACTICE_PCT}%`}
         {aggregate.mode === "sc_only" &&
@@ -294,7 +312,11 @@ function SkillCard({
                   dataKey="subject"
                   tick={{ fill: "#475569", fontSize: 10 }}
                 />
-                <PolarRadiusAxis domain={[0, 10]} tick={false} axisLine={false} />
+                <PolarRadiusAxis
+                  domain={[0, 10]}
+                  tick={false}
+                  axisLine={false}
+                />
                 <Radar
                   dataKey="value"
                   stroke={isEssay ? "#0d9488" : "#e11d48"}
@@ -314,7 +336,7 @@ function SkillCard({
                 <span className="text-muted-foreground">{item.subject}</span>
                 <span className="font-medium tabular-nums">
                   {item.value.toFixed(1)}
-                  <span className="ml-0.5 text-[10px] text-muted-foreground">
+                  <span className="text-muted-foreground ml-0.5 text-[10px]">
                     /10
                   </span>
                 </span>
@@ -323,7 +345,6 @@ function SkillCard({
           </ul>
         </div>
       )}
-
     </div>
   );
 }

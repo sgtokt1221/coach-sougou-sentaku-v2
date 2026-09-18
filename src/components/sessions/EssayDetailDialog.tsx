@@ -15,7 +15,10 @@ import { FileText, ThumbsUp, Lightbulb, ArrowRightLeft } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import { CommentableEssayText } from "@/components/essay/CommentableEssayText";
 import { RedPenText } from "@/components/essay/RedPenText";
-import { ESSAY_SCORE_WEIGHTS, type EssayInlineComment } from "@/lib/types/essay";
+import {
+  ESSAY_SCORE_WEIGHTS,
+  type EssayInlineComment,
+} from "@/lib/types/essay";
 import { axisPoints } from "@/lib/score-rank";
 
 interface EssayDetail {
@@ -30,7 +33,10 @@ interface EssayDetail {
     logic: number;
     expression: number;
     apAlignment: number;
-    originality: number;
+    /** 回答力（v23〜）。旧データには無い */
+    responsiveness?: number;
+    /** 独自性。v23 で廃止した旧軸。旧データにだけある */
+    originality?: number;
     /** 旧データ（v7以前）には無い */
     reasoningMaturity?: number;
     total: number;
@@ -65,8 +71,18 @@ const SCORE_AXES: {
 }[] = [
   { key: "structure", label: "構成", weight: ESSAY_SCORE_WEIGHTS.structure },
   { key: "logic", label: "論理性", weight: ESSAY_SCORE_WEIGHTS.logic },
-  { key: "expression", label: "表現力", weight: ESSAY_SCORE_WEIGHTS.expression },
-  { key: "originality", label: "独自性", weight: ESSAY_SCORE_WEIGHTS.originality },
+  {
+    key: "expression",
+    label: "表現力",
+    weight: ESSAY_SCORE_WEIGHTS.expression,
+  },
+  {
+    key: "responsiveness",
+    label: "回答力",
+    weight: ESSAY_SCORE_WEIGHTS.responsiveness,
+  },
+  // v23 で廃止した旧軸。旧採点の答案にだけ値があり、無い軸は描画時に落ちる
+  { key: "originality", label: "独自性（旧軸）", weight: 5 },
   {
     key: "reasoningMaturity",
     label: "議論の成熟度",
@@ -129,7 +145,7 @@ export default function EssayDetailDialog({
             <Skeleton className="h-40 w-full" />
           </div>
         ) : !data ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">
+          <p className="text-muted-foreground py-8 text-center text-sm">
             データの取得に失敗しました
           </p>
         ) : (
@@ -144,10 +160,13 @@ export default function EssayDetailDialog({
                     if (typeof val !== "number") return null;
                     return (
                       <div key={item.key} className="flex items-center gap-3">
-                        <span className="w-28 text-xs text-muted-foreground">{item.label}</span>
+                        <span className="text-muted-foreground w-28 text-xs">
+                          {item.label}
+                        </span>
                         <Progress value={val * 10} className="h-2 flex-1" />
                         <span className="w-12 text-right text-xs font-medium tabular-nums">
-                          {axisPoints(val, item.weight).toFixed(1)}/{item.weight}
+                          {axisPoints(val, item.weight).toFixed(1)}/
+                          {item.weight}
                         </span>
                       </div>
                     );
@@ -155,14 +174,17 @@ export default function EssayDetailDialog({
                   {/* 合計外の参考値 */}
                   {typeof data.scores.apAlignment === "number" && (
                     <div className="flex items-center gap-3 border-t pt-2">
-                      <span className="w-28 text-xs text-muted-foreground">
+                      <span className="text-muted-foreground w-28 text-xs">
                         AP合致度
-                        <span className="ml-1 text-[10px] text-muted-foreground/70">
+                        <span className="text-muted-foreground/70 ml-1 text-[10px]">
                           合計外
                         </span>
                       </span>
-                      <Progress value={data.scores.apAlignment * 10} className="h-2 flex-1" />
-                      <span className="w-12 text-right text-xs font-medium tabular-nums text-muted-foreground">
+                      <Progress
+                        value={data.scores.apAlignment * 10}
+                        className="h-2 flex-1"
+                      />
+                      <span className="text-muted-foreground w-12 text-right text-xs font-medium tabular-nums">
                         {data.scores.apAlignment}/10
                       </span>
                     </div>
@@ -170,7 +192,9 @@ export default function EssayDetailDialog({
                   <div className="mt-1 flex items-center gap-3 border-t pt-2">
                     <span className="w-20 text-xs font-semibold">合計</span>
                     <div className="flex-1" />
-                    <span className={`text-lg font-bold ${scoreColor(data.scores.total)}`}>
+                    <span
+                      className={`text-lg font-bold ${scoreColor(data.scores.total)}`}
+                    >
                       {data.scores.total}/50
                     </span>
                   </div>
@@ -198,7 +222,7 @@ export default function EssayDetailDialog({
                 <div className="space-y-4">
                   <div className="space-y-1">
                     <h3 className="text-sm font-semibold">総合評価</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
+                    <p className="text-muted-foreground text-sm leading-relaxed">
                       {data.feedback.overall}
                     </p>
                   </div>
@@ -210,7 +234,12 @@ export default function EssayDetailDialog({
                       </h4>
                       <ul className="space-y-1 pl-5">
                         {data.feedback.goodPoints.map((p, i) => (
-                          <li key={i} className="list-disc text-sm text-muted-foreground">{p}</li>
+                          <li
+                            key={i}
+                            className="text-muted-foreground list-disc text-sm"
+                          >
+                            {p}
+                          </li>
                         ))}
                       </ul>
                     </div>
@@ -223,7 +252,12 @@ export default function EssayDetailDialog({
                       </h4>
                       <ul className="space-y-1 pl-5">
                         {data.feedback.improvements.map((p, i) => (
-                          <li key={i} className="list-disc text-sm text-muted-foreground">{p}</li>
+                          <li
+                            key={i}
+                            className="text-muted-foreground list-disc text-sm"
+                          >
+                            {p}
+                          </li>
                         ))}
                       </ul>
                     </div>
@@ -237,7 +271,8 @@ export default function EssayDetailDialog({
                       <Separator />
                       <div className="space-y-2">
                         <h3 className="text-sm font-semibold">
-                          赤ペン添削（{data.feedback.languageCorrections.length}件）
+                          赤ペン添削（{data.feedback.languageCorrections.length}
+                          件）
                         </h3>
                         <RedPenText
                           text={data.ocrText ?? ""}
@@ -256,11 +291,16 @@ export default function EssayDetailDialog({
                         添削後テキスト
                       </h3>
                       <div className="max-h-60 overflow-y-auto rounded-lg border border-emerald-200 bg-emerald-50 p-4 font-mono text-sm leading-7 text-gray-800 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-gray-200">
-                        {data.feedback.brushedUpText.split("\n").map((line, i) => (
-                          <p key={i} className={line.trim() === "" ? "h-4" : ""}>
-                            {line || " "}
-                          </p>
-                        ))}
+                        {data.feedback.brushedUpText
+                          .split("\n")
+                          .map((line, i) => (
+                            <p
+                              key={i}
+                              className={line.trim() === "" ? "h-4" : ""}
+                            >
+                              {line || " "}
+                            </p>
+                          ))}
                       </div>
                     </div>
                   </>

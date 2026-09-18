@@ -20,13 +20,14 @@ assert.deepEqual(nextRankGap(20, 40), { nextRank: "B", needed: 4 });
 const boundary = nextRankGap(29.9999, 50);
 assert.ok(boundary && boundary.needed >= 0.1);
 
-// 伸びしろは「配点で見て一番増える軸」。独自性(5)より構成(12)を選ぶ
+// 伸びしろは「点が低い軸」ではなく「配点で見て一番増える軸」。
+// 成熟度(配点5)が2点(伸びしろ4.0)でも、構成(配点12)の6点(4.8)を選ぶ
 const scores = {
   structure: 6,
   logic: 8,
   expression: 8,
-  originality: 2,
-  reasoningMaturity: 8,
+  responsiveness: 8,
+  reasoningMaturity: 2,
 } as const;
 const head = biggestHeadroom(scores);
 assert.equal(head?.axis, "structure", `選ばれたのは ${head?.axis}`);
@@ -38,7 +39,7 @@ assert.equal(
     structure: 10,
     logic: 10,
     expression: 10,
-    originality: 10,
+    responsiveness: 10,
     reasoningMaturity: 10,
   }),
   null
@@ -46,9 +47,13 @@ assert.equal(
 
 // 採点されていない軸は無視する（旧データに議論の成熟度が無い）
 assert.equal(
-  biggestHeadroom({ structure: 10, logic: 10, expression: 10, originality: 9 })
-    ?.axis,
-  "originality"
+  biggestHeadroom({
+    structure: 10,
+    logic: 10,
+    expression: 10,
+    responsiveness: 9,
+  })?.axis,
+  "responsiveness"
 );
 
 // まとめ役は両方そろったときだけ返す

@@ -37,7 +37,7 @@ import {
   CheckCircle,
   BarChart3,
   MessageSquare,
-  Mic
+  Mic,
 } from "lucide-react";
 
 /**
@@ -45,7 +45,9 @@ import {
  * SkillHistoryChart が受け取る形式（SkillCheckResult）にアダプトする。
  * 最低限 scores.total と takenAt があればよい。
  */
-function adaptHistory(history: InterviewSkillCheckResult[]): SkillCheckResult[] {
+function adaptHistory(
+  history: InterviewSkillCheckResult[]
+): SkillCheckResult[] {
   return history.map((r) => ({
     id: r.id,
     userId: r.userId,
@@ -59,7 +61,7 @@ function adaptHistory(history: InterviewSkillCheckResult[]): SkillCheckResult[] 
       logic: 0,
       expression: 0,
       apAlignment: 0,
-      originality: 0,
+      responsiveness: 0,
       total: r.scores.total,
     },
     rank: r.rank,
@@ -89,7 +91,8 @@ export default function SkillCheckTopPage() {
   const [essayLoading, setEssayLoading] = useState(true);
 
   // 面接状態
-  const [interviewStatus, setInterviewStatus] = useState<InterviewSkillCheckStatus | null>(null);
+  const [interviewStatus, setInterviewStatus] =
+    useState<InterviewSkillCheckStatus | null>(null);
   const [interviewLoading, setInterviewLoading] = useState(true);
 
   useEffect(() => {
@@ -156,8 +159,8 @@ export default function SkillCheckTopPage() {
         {/* Page Header Skeleton */}
         <Card className="overflow-hidden">
           <CardContent className="p-8">
-            <Skeleton className="h-8 w-48 mb-4" />
-            <Skeleton className="h-12 w-64 mb-6" />
+            <Skeleton className="mb-4 h-8 w-48" />
+            <Skeleton className="mb-6 h-12 w-64" />
             <Skeleton className="h-10 w-full" />
           </CardContent>
         </Card>
@@ -176,7 +179,7 @@ export default function SkillCheckTopPage() {
         </Card>
 
         {/* Stats Skeleton */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           {[...Array(4)].map((_, i) => (
             <Card key={i}>
               <CardContent className="p-4">
@@ -204,7 +207,7 @@ export default function SkillCheckTopPage() {
           <h1 className="text-3xl font-bold tracking-tight text-gray-900 lg:text-4xl">
             スキルチェック
           </h1>
-          <p className="text-lg text-muted-foreground">
+          <p className="text-muted-foreground text-lg">
             月1回、定量的にスキルを測定して継続的な成長をトラッキング
           </p>
         </div>
@@ -230,11 +233,7 @@ export default function SkillCheckTopPage() {
         />
       )}
 
-      {activeTab === "interview" && (
-        <InterviewTab
-          status={interviewStatus}
-        />
-      )}
+      {activeTab === "interview" && <InterviewTab status={interviewStatus} />}
     </div>
   );
 }
@@ -273,7 +272,7 @@ function EssayTab({
                   <h2 className="text-3xl font-bold tracking-tight text-gray-900 lg:text-4xl">
                     小論文スキルチェック
                   </h2>
-                  <p className="text-lg text-muted-foreground">
+                  <p className="text-muted-foreground text-lg">
                     月1回、定量的に小論文スキルを測定
                   </p>
                 </div>
@@ -299,31 +298,37 @@ function EssayTab({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.1 }}
-        className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+        className="grid grid-cols-2 gap-4 lg:grid-cols-4"
         data-tour="skillcheck-stats"
       >
         <Card className="shadow-md">
           <CardContent className="p-4 text-center">
-            <div className="flex items-center justify-center gap-2 mb-2">
+            <div className="mb-2 flex items-center justify-center gap-2">
               <BarChart3 className="h-4 w-4 text-indigo-600" />
-              <span className="text-xs font-medium text-muted-foreground">受験回数</span>
+              <span className="text-muted-foreground text-xs font-medium">
+                受験回数
+              </span>
             </div>
-            <div className="text-3xl font-bold tabular-nums text-gray-900">
+            <div className="text-3xl font-bold text-gray-900 tabular-nums">
               {totalAttempts}
             </div>
             {totalAttempts === 0 && (
-              <p className="text-xs text-muted-foreground mt-1">最初の受験で入力されます</p>
+              <p className="text-muted-foreground mt-1 text-xs">
+                最初の受験で入力されます
+              </p>
             )}
           </CardContent>
         </Card>
 
         <Card className="shadow-md">
           <CardContent className="p-4 text-center">
-            <div className="flex items-center justify-center gap-2 mb-2">
+            <div className="mb-2 flex items-center justify-center gap-2">
               <Award className="h-4 w-4 text-emerald-600" />
-              <span className="text-xs font-medium text-muted-foreground">最新ランク</span>
+              <span className="text-muted-foreground text-xs font-medium">
+                最新ランク
+              </span>
             </div>
-            <div className="text-3xl font-bold tabular-nums text-gray-900">
+            <div className="text-3xl font-bold text-gray-900 tabular-nums">
               {latestRank}
             </div>
           </CardContent>
@@ -331,24 +336,32 @@ function EssayTab({
 
         <Card className="shadow-md">
           <CardContent className="p-4 text-center">
-            <div className="flex items-center justify-center gap-2 mb-2">
+            <div className="mb-2 flex items-center justify-center gap-2">
               <TrendingUp className="h-4 w-4 text-sky-600" />
-              <span className="text-xs font-medium text-muted-foreground">最新スコア</span>
+              <span className="text-muted-foreground text-xs font-medium">
+                最新スコア
+              </span>
             </div>
-            <div className="text-3xl font-bold tabular-nums text-gray-900">
-              {typeof latestScore === 'number' ? `${latestScore}/50` : latestScore}
+            <div className="text-3xl font-bold text-gray-900 tabular-nums">
+              {typeof latestScore === "number"
+                ? `${latestScore}/50`
+                : latestScore}
             </div>
           </CardContent>
         </Card>
 
         <Card className="shadow-md">
           <CardContent className="p-4 text-center">
-            <div className="flex items-center justify-center gap-2 mb-2">
+            <div className="mb-2 flex items-center justify-center gap-2">
               <Clock className="h-4 w-4 text-amber-600" />
-              <span className="text-xs font-medium text-muted-foreground">経過日数</span>
+              <span className="text-muted-foreground text-xs font-medium">
+                経過日数
+              </span>
             </div>
-            <div className="text-3xl font-bold tabular-nums text-gray-900">
-              {typeof daysSinceLatest === 'number' ? `${daysSinceLatest}日` : daysSinceLatest}
+            <div className="text-3xl font-bold text-gray-900 tabular-nums">
+              {typeof daysSinceLatest === "number"
+                ? `${daysSinceLatest}日`
+                : daysSinceLatest}
             </div>
           </CardContent>
         </Card>
@@ -367,14 +380,14 @@ function EssayTab({
               現在の系統
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <CardContent className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex-grow">
               <CategorySelector
                 value={status?.currentCategory ?? null}
                 onChange={onCategoryChange}
               />
             </div>
-            <p className="text-xs text-muted-foreground lg:text-right">
+            <p className="text-muted-foreground text-xs lg:text-right">
               志望学部から自動判定されています。変更も可能です。
             </p>
           </CardContent>
@@ -399,7 +412,12 @@ function EssayTab({
                 </CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col items-center gap-4 text-center">
-                <SkillRankBadge rank={latest.rank} size="xl" showLabel score={latest.scores.total} />
+                <SkillRankBadge
+                  rank={latest.rank}
+                  size="xl"
+                  showLabel
+                  score={latest.scores.total}
+                />
                 <Badge variant="outline" className="text-sm">
                   {ACADEMIC_CATEGORY_LABELS[latest.category]}
                 </Badge>
@@ -462,7 +480,7 @@ function EssayTab({
                 最初の小論文スキルチェックを受けよう
               </h2>
 
-              <p className="mb-8 text-muted-foreground">
+              <p className="text-muted-foreground mb-8">
                 約 20-25 分。お題はランダム。過去問トレンドから選ばれます。
               </p>
 
@@ -470,10 +488,10 @@ function EssayTab({
                 {[
                   "AI が5観点 (構成/論理/表現/AP/独自) で定量採点",
                   "S-F ランクで成長が一目でわかる",
-                  "受験後、弱点を自動で蓄積"
+                  "受験後、弱点を自動で蓄積",
                 ].map((text, index) => (
                   <div key={index} className="flex items-center gap-3 text-sm">
-                    <CheckCircle className="h-5 w-5 text-emerald-600 flex-shrink-0" />
+                    <CheckCircle className="h-5 w-5 flex-shrink-0 text-emerald-600" />
                     <span className="text-gray-700">{text}</span>
                   </div>
                 ))}
@@ -524,7 +542,7 @@ function InterviewTab({
                   <h2 className="text-3xl font-bold tracking-tight text-gray-900 lg:text-4xl">
                     面接スキルチェック
                   </h2>
-                  <p className="text-lg text-muted-foreground">
+                  <p className="text-muted-foreground text-lg">
                     5ターンの対話で、言語・論理・思考の深さ・面接態度を測定します。
                   </p>
                 </div>
@@ -550,31 +568,37 @@ function InterviewTab({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.1 }}
-        className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+        className="grid grid-cols-2 gap-4 lg:grid-cols-4"
         data-tour="skillcheck-stats"
       >
         <Card className="shadow-md">
           <CardContent className="p-4 text-center">
-            <div className="flex items-center justify-center gap-2 mb-2">
+            <div className="mb-2 flex items-center justify-center gap-2">
               <BarChart3 className="h-4 w-4 text-rose-600" />
-              <span className="text-xs font-medium text-muted-foreground">受験回数</span>
+              <span className="text-muted-foreground text-xs font-medium">
+                受験回数
+              </span>
             </div>
-            <div className="text-3xl font-bold tabular-nums text-gray-900">
+            <div className="text-3xl font-bold text-gray-900 tabular-nums">
               {totalAttempts}
             </div>
             {totalAttempts === 0 && (
-              <p className="text-xs text-muted-foreground mt-1">最初の受験で入力されます</p>
+              <p className="text-muted-foreground mt-1 text-xs">
+                最初の受験で入力されます
+              </p>
             )}
           </CardContent>
         </Card>
 
         <Card className="shadow-md">
           <CardContent className="p-4 text-center">
-            <div className="flex items-center justify-center gap-2 mb-2">
+            <div className="mb-2 flex items-center justify-center gap-2">
               <Award className="h-4 w-4 text-emerald-600" />
-              <span className="text-xs font-medium text-muted-foreground">最新ランク</span>
+              <span className="text-muted-foreground text-xs font-medium">
+                最新ランク
+              </span>
             </div>
-            <div className="text-3xl font-bold tabular-nums text-gray-900">
+            <div className="text-3xl font-bold text-gray-900 tabular-nums">
               {latestRank}
             </div>
           </CardContent>
@@ -582,24 +606,32 @@ function InterviewTab({
 
         <Card className="shadow-md">
           <CardContent className="p-4 text-center">
-            <div className="flex items-center justify-center gap-2 mb-2">
+            <div className="mb-2 flex items-center justify-center gap-2">
               <TrendingUp className="h-4 w-4 text-amber-600" />
-              <span className="text-xs font-medium text-muted-foreground">最新スコア</span>
+              <span className="text-muted-foreground text-xs font-medium">
+                最新スコア
+              </span>
             </div>
-            <div className="text-3xl font-bold tabular-nums text-gray-900">
-              {typeof latestScore === 'number' ? `${latestScore}/40` : latestScore}
+            <div className="text-3xl font-bold text-gray-900 tabular-nums">
+              {typeof latestScore === "number"
+                ? `${latestScore}/40`
+                : latestScore}
             </div>
           </CardContent>
         </Card>
 
         <Card className="shadow-md">
           <CardContent className="p-4 text-center">
-            <div className="flex items-center justify-center gap-2 mb-2">
+            <div className="mb-2 flex items-center justify-center gap-2">
               <Clock className="h-4 w-4 text-amber-600" />
-              <span className="text-xs font-medium text-muted-foreground">経過日数</span>
+              <span className="text-muted-foreground text-xs font-medium">
+                経過日数
+              </span>
             </div>
-            <div className="text-3xl font-bold tabular-nums text-gray-900">
-              {typeof daysSinceLatest === 'number' ? `${daysSinceLatest}日` : daysSinceLatest}
+            <div className="text-3xl font-bold text-gray-900 tabular-nums">
+              {typeof daysSinceLatest === "number"
+                ? `${daysSinceLatest}日`
+                : daysSinceLatest}
             </div>
           </CardContent>
         </Card>
@@ -626,11 +658,13 @@ function InterviewTab({
                 <div className="flex items-center gap-3">
                   <SkillRankBadge rank={latest.rank} size="xl" />
                   <div className="flex flex-col">
-                    <span className="text-xs text-muted-foreground">総合スコア</span>
+                    <span className="text-muted-foreground text-xs">
+                      総合スコア
+                    </span>
                     <span className="text-lg font-semibold">
                       {latest.scores.total}/40
                     </span>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-muted-foreground text-xs">
                       {new Date(latest.takenAt).toLocaleDateString("ja-JP")}
                     </span>
                   </div>
@@ -643,8 +677,13 @@ function InterviewTab({
                     { k: "態度", v: latest.scores.demeanor },
                   ].map((s) => (
                     <div key={s.k} className="rounded border p-2">
-                      <p className="text-[10px] text-muted-foreground">{s.k}</p>
-                      <p className="text-xl font-semibold tabular-nums">{s.v}<span className="text-xs text-muted-foreground">/10</span></p>
+                      <p className="text-muted-foreground text-[10px]">{s.k}</p>
+                      <p className="text-xl font-semibold tabular-nums">
+                        {s.v}
+                        <span className="text-muted-foreground text-xs">
+                          /10
+                        </span>
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -688,7 +727,7 @@ function InterviewTab({
                 最初の面接スキルチェックを受けよう
               </h2>
 
-              <p className="mb-8 text-muted-foreground">
+              <p className="text-muted-foreground mb-8">
                 約 15-20 分。5ターンの短縮面接で総合的な面接力を測定します。
               </p>
 
@@ -696,10 +735,10 @@ function InterviewTab({
                 {[
                   "AI面接官が5ターン対話し、終了時に4軸で採点",
                   "S-F ランクで面接力を一目で把握",
-                  "弱点を自動でフィードバック"
+                  "弱点を自動でフィードバック",
                 ].map((text, index) => (
                   <div key={index} className="flex items-center gap-3 text-sm">
-                    <CheckCircle className="h-5 w-5 text-emerald-600 flex-shrink-0" />
+                    <CheckCircle className="h-5 w-5 flex-shrink-0 text-emerald-600" />
                     <span className="text-gray-700">{text}</span>
                   </div>
                 ))}

@@ -18,34 +18,38 @@ export const maxDuration = 60;
  *   現行スキーマに存在しない)。
  */
 export async function GET(request: NextRequest) {
-  const auth = await requireRole(request, ["student", "admin", "teacher", "superadmin"]);
+  const auth = await requireRole(request, [
+    "student",
+    "admin",
+    "teacher",
+    "superadmin",
+  ]);
   if (auth instanceof NextResponse) return auth;
 
   if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json(
       { error: "成長レポートにはAPIキーが必要です", available: false },
-      { status: 503 },
+      { status: 503 }
     );
   }
 
   if (!adminDb) {
     return NextResponse.json(
       { error: "データベースに接続できません" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 
   try {
-    const { buildGrowthReportPrompt } = await import("@/lib/ai/prompts/growth-report");
+    const { buildGrowthReportPrompt } =
+      await import("@/lib/ai/prompts/growth-report");
     const Anthropic = (await import("@anthropic-ai/sdk")).default;
 
     const { searchParams } = new URL(request.url);
     const queryUserId = searchParams.get("userId");
     // student は自分自身のレポートのみ取得可。admin/teacher/superadmin は明示の userId 必要
     const userId =
-      auth.role === "student"
-        ? auth.uid
-        : queryUserId ?? auth.uid;
+      auth.role === "student" ? auth.uid : (queryUserId ?? auth.uid);
 
     // ユーザー固有データ取得
     let scoreTrend = "(データなし)";
@@ -70,7 +74,7 @@ export async function GET(request: NextRequest) {
             };
           })
           .filter((e) => e.date && typeof e.total === "number")
-          .sort((a, b) => (a.date!.getTime() - b.date!.getTime()));
+          .sort((a, b) => a.date!.getTime() - b.date!.getTime());
         if (essayItems.length > 0) {
           scoreTrend = essayItems
             .map((e) => {
@@ -105,7 +109,11 @@ export async function GET(request: NextRequest) {
         if (wItems.length > 0) {
           weaknessList = wItems
             .map((w) => {
-              const status = w.resolved ? "解決" : w.improving ? "改善中" : "未改善";
+              const status = w.resolved
+                ? "解決"
+                : w.improving
+                  ? "改善中"
+                  : "未改善";
               return `${w.area ?? "不明"}(${w.count ?? 0}回,${status})`;
             })
             .join(", ");
@@ -121,7 +129,7 @@ export async function GET(request: NextRequest) {
       logic: 0,
       expression: 0,
       apAlignment: 0,
-      originality: 0,
+      responsiveness: 0,
     };
     try {
       const allEssaysSnap = await adminDb.collection("essays").get();
@@ -129,22 +137,26 @@ export async function GET(request: NextRequest) {
         .map((d) => (d.data() as { scores?: { total?: number } }).scores)
         .filter(
           (
-            s,
+            s
           ): s is {
             total: number;
             structure: number;
             logic: number;
             expression: number;
             apAlignment: number;
-            originality: number;
-          } => !!s && typeof s.total === "number",
+            responsiveness?: number;
+          } => !!s && typeof s.total === "number"
         );
       if (allScores.length > 0) {
         avgScores.structure = avg(allScores.map((s) => s.structure));
         avgScores.logic = avg(allScores.map((s) => s.logic));
         avgScores.expression = avg(allScores.map((s) => s.expression));
         avgScores.apAlignment = avg(allScores.map((s) => s.apAlignment));
-        avgScores.originality = avg(allScores.map((s) => s.originality));
+        // 回答力は v23 からの軸。採点済みの答案だけで平均する
+        const measured = allScores
+          .map((s) => s.responsiveness)
+          .filter((v): v is number => typeof v === "number");
+        avgScores.responsiveness = measured.length > 0 ? avg(measured) : 0;
       }
     } catch (e) {
       console.warn("[growth/report] all essays fetch failed:", e);
@@ -154,7 +166,11 @@ export async function GET(request: NextRequest) {
       .map(([k, v]) => `${k}: 全体平均 ${v}`)
       .join("\n");
 
-    const prompt = buildGrowthReportPrompt(weaknessList, scoreTrend, avgComparison);
+    const prompt = buildGrowthReportPrompt(
+      weaknessList,
+      scoreTrend,
+      avgComparison
+    );
 
     const client = new Anthropic();
     const response = await client.messages.create({
@@ -172,7 +188,7 @@ export async function GET(request: NextRequest) {
     if (!jsonMatch) {
       return NextResponse.json(
         { error: "AIからの応答を解析できませんでした" },
-        { status: 500 },
+        { status: 500 }
       );
     }
 
@@ -185,14 +201,14 @@ export async function GET(request: NextRequest) {
             (c: { area: string; myScore: number; avgScore?: number }) => ({
               ...c,
               avgScore:
-                avgScores[c.area as keyof typeof avgScores] ??
-                c.avgScore ??
-                0,
-            }),
+                avgScores[c.area as keyof typeof avgScores] ?? c.avgScore ?? 0,
+            })
           )
         : [],
       recommendations: Array.isArray(parsed.recommendations)
-        ? parsed.recommendations.filter((r: unknown): r is string => typeof r === "string")
+        ? parsed.recommendations.filter(
+            (r: unknown): r is string => typeof r === "string"
+          )
         : [],
       generatedAt: new Date().toISOString(),
     };
@@ -205,7 +221,7 @@ export async function GET(request: NextRequest) {
         error: "成長レポートの生成に失敗しました",
         detail: error instanceof Error ? error.message : String(error),
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

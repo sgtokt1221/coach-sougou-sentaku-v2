@@ -209,6 +209,7 @@ function WeaknessesByCategoryList({
         "logic",
         "expression",
         "apAlignment",
+        "responsiveness",
         "originality",
         "reasoningMaturity",
         "other",
@@ -223,6 +224,7 @@ function WeaknessesByCategoryList({
       expression: [],
       reasoningMaturity: [],
       apAlignment: [],
+      responsiveness: [],
       originality: [],
       other: [],
     };
@@ -938,7 +940,10 @@ function AdminStudentDetailPageInner() {
           structure: avgOf(essayScoresList.map((s) => s.structure)),
           logic: avgOf(essayScoresList.map((s) => s.logic)),
           expression: avgOf(essayScoresList.map((s) => s.expression)),
-          originality: avgOf(essayScoresList.map((s) => s.originality)),
+          // 回答力は v23 からの軸。旧採点の答案には無いので、あるものだけで平均する
+          responsiveness: avgMeasured(
+            essayScoresList.map((s) => s.responsiveness)
+          ),
           reasoningMaturity: avgMeasured(
             essayScoresList.map((s) => s.reasoningMaturity)
           ),
@@ -1904,9 +1909,9 @@ function AdminStudentDetailPageInner() {
                               weight: ESSAY_SCORE_WEIGHTS.expression,
                             },
                             {
-                              key: "originality",
-                              label: "独自性",
-                              weight: ESSAY_SCORE_WEIGHTS.originality,
+                              key: "responsiveness",
+                              label: "回答力",
+                              weight: ESSAY_SCORE_WEIGHTS.responsiveness,
                             },
                             {
                               key: "reasoningMaturity",

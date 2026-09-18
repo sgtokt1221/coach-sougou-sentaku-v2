@@ -11,7 +11,10 @@
 
 import { getBigQueryDataset, BQ_DATASET_NAME } from "./client";
 import { TABLE_NAMES } from "./schema";
-import type { BigQueryEssayLog, BigQueryInterviewLog } from "@/lib/types/analytics";
+import type {
+  BigQueryEssayLog,
+  BigQueryInterviewLog,
+} from "@/lib/types/analytics";
 
 // ---------------------------------------------------------------------------
 // Student snapshot row shape (not in analytics.ts yet, defined inline here)
@@ -60,7 +63,10 @@ async function insertRow(
   } catch (err) {
     // BigQuery streaming insert can fail with partial errors.
     // Log but never throw so the caller is unaffected.
-    console.error(`[BQ] Failed to insert into ${BQ_DATASET_NAME}.${tableName}:`, err);
+    console.error(
+      `[BQ] Failed to insert into ${BQ_DATASET_NAME}.${tableName}:`,
+      err
+    );
   }
 }
 
@@ -71,7 +77,9 @@ async function insertRow(
 /**
  * Log a completed essay review to BigQuery.
  */
-export async function logEssaySubmission(data: BigQueryEssayLog): Promise<void> {
+export async function logEssaySubmission(
+  data: BigQueryEssayLog
+): Promise<void> {
   await insertRow(
     TABLE_NAMES.ESSAY_SUBMISSIONS,
     {
@@ -86,7 +94,8 @@ export async function logEssaySubmission(data: BigQueryEssayLog): Promise<void> 
       score_logic: data.score_logic,
       score_expression: data.score_expression,
       score_ap_alignment: data.score_ap_alignment,
-      score_originality: data.score_originality,
+      score_originality: data.score_originality ?? null,
+      score_responsiveness: data.score_responsiveness ?? null,
       score_total: data.score_total,
       word_count: data.word_count,
       topic: data.topic || null,

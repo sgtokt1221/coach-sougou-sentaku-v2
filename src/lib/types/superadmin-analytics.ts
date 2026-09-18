@@ -1,3 +1,4 @@
+import type { EssayCategoryKey } from "@/lib/growth/weakness-category";
 /**
  * superadmin 分析ダッシュボード (`/superadmin/analytics`) 用の集計型
  */
@@ -51,26 +52,12 @@ export interface WeaknessAggregate {
   /** 対象生徒 (先頭 20 件まで、occurrences 降順) */
   students: WeaknessAggregateStudent[];
   /** Phase 2-C: 弱点カテゴリ */
-  categoryId?:
-    | "structure"
-    | "logic"
-    | "expression"
-    | "apAlignment"
-    | "originality"
-    | "reasoningMaturity"
-    | "other";
+  categoryId?: EssayCategoryKey;
 }
 
 /** カテゴリ別サマリー (= ダッシュボード上部のカード用) */
 export interface WeaknessByCategorySummary {
-  categoryId:
-    | "structure"
-    | "logic"
-    | "expression"
-    | "apAlignment"
-    | "originality"
-    | "reasoningMaturity"
-    | "other";
+  categoryId: EssayCategoryKey;
   label: string;
   totalOccurrences: number;
   uniqueAreas: number;

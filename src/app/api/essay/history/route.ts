@@ -118,7 +118,7 @@ export async function GET(request: NextRequest) {
           logic: 0,
           expression: 0,
           apAlignment: 0,
-          originality: 0,
+          responsiveness: 0,
         };
         const total =
           scores.total ??
@@ -126,7 +126,7 @@ export async function GET(request: NextRequest) {
             (scores.logic ?? 0) +
             (scores.expression ?? 0) +
             (scores.apAlignment ?? 0) +
-            (scores.originality ?? 0);
+            (scores.responsiveness ?? scores.originality ?? 0);
         return {
           id: d.id,
           universityName,
@@ -143,7 +143,14 @@ export async function GET(request: NextRequest) {
             logic: scores.logic ?? 0,
             expression: scores.expression ?? 0,
             apAlignment: scores.apAlignment ?? 0,
-            originality: scores.originality ?? 0,
+            // 回答力（v23〜）と旧軸の独自性は、どちらも「あるときだけ」返す。
+            // 0 で埋めると、採点していない軸が0点として描かれる
+            ...(typeof scores.responsiveness === "number"
+              ? { responsiveness: scores.responsiveness }
+              : {}),
+            ...(typeof scores.originality === "number"
+              ? { originality: scores.originality }
+              : {}),
             // v7 で足した軸。旧データには無いので 0 で埋めない
             // （0点として描くと「評価されて0点」に見える）
             ...(typeof scores.reasoningMaturity === "number"

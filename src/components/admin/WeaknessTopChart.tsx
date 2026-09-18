@@ -30,6 +30,7 @@ const CATEGORY_COLORS: Record<EssayCategoryKey, { bg: string; hex: string }> = {
   logic: { bg: "bg-indigo-500", hex: "#6366f1" },
   expression: { bg: "bg-emerald-500", hex: "#10b981" },
   apAlignment: { bg: "bg-amber-500", hex: "#f59e0b" },
+  responsiveness: { bg: "bg-teal-500", hex: "#14b8a6" },
   originality: { bg: "bg-violet-500", hex: "#8b5cf6" },
   reasoningMaturity: { bg: "bg-rose-500", hex: "#f43f5e" },
   other: { bg: "bg-slate-400", hex: "#94a3b8" },
@@ -81,9 +82,7 @@ export function WeaknessTopChart({ weaknesses }: WeaknessTopChartProps) {
       if (items.length === 0) return [];
       const total = items.reduce((s, w) => s + (w.count ?? 1), 0);
       // 内部は count 降順 → declined / 重要度高い順
-      const sorted = [...items].sort(
-        (a, b) => (b.count ?? 1) - (a.count ?? 1),
-      );
+      const sorted = [...items].sort((a, b) => (b.count ?? 1) - (a.count ?? 1));
       return [
         {
           category: cat,
@@ -107,7 +106,7 @@ export function WeaknessTopChart({ weaknesses }: WeaknessTopChartProps) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex h-[240px] items-center justify-center text-sm text-muted-foreground">
+          <div className="text-muted-foreground flex h-[240px] items-center justify-center text-sm">
             現在、 未解決弱点はありません
           </div>
         </CardContent>
@@ -145,17 +144,17 @@ export function WeaknessTopChart({ weaknesses }: WeaknessTopChartProps) {
                 <button
                   type="button"
                   onClick={() => toggle(g.category)}
-                  className="w-full rounded-md p-2 text-left transition-colors hover:bg-accent"
+                  className="hover:bg-accent w-full rounded-md p-2 text-left transition-colors"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
                       {isOpen ? (
-                        <ChevronDown className="size-4 text-muted-foreground" />
+                        <ChevronDown className="text-muted-foreground size-4" />
                       ) : (
-                        <ChevronRight className="size-4 text-muted-foreground" />
+                        <ChevronRight className="text-muted-foreground size-4" />
                       )}
                       <span className="text-sm font-medium">{g.label}</span>
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-muted-foreground text-xs">
                         ({g.items.length}項目)
                       </span>
                     </div>
@@ -163,7 +162,7 @@ export function WeaknessTopChart({ weaknesses }: WeaknessTopChartProps) {
                       {g.totalCount}回
                     </span>
                   </div>
-                  <div className="ml-6 mt-1.5 h-1.5 overflow-hidden rounded-full bg-muted">
+                  <div className="bg-muted mt-1.5 ml-6 h-1.5 overflow-hidden rounded-full">
                     <div
                       className={`h-full ${color.bg} transition-all`}
                       style={{ width: `${ratio}%` }}
@@ -172,7 +171,7 @@ export function WeaknessTopChart({ weaknesses }: WeaknessTopChartProps) {
                 </button>
 
                 {isOpen && (
-                  <ul className="ml-6 mt-1 space-y-1.5 border-l pl-3 text-xs">
+                  <ul className="mt-1 ml-6 space-y-1.5 border-l pl-3 text-xs">
                     {g.items.map((w, idx) => {
                       const SourceIcon = SOURCE_ICONS[w.source] ?? Layers;
                       const severity = getWeaknessReminderLevel(w);
@@ -182,8 +181,8 @@ export function WeaknessTopChart({ weaknesses }: WeaknessTopChartProps) {
                           className="flex items-start justify-between gap-2 rounded p-1.5"
                         >
                           <div className="flex min-w-0 items-start gap-1.5">
-                            <SourceIcon className="mt-0.5 size-3 shrink-0 text-muted-foreground" />
-                            <span className="break-words leading-snug">
+                            <SourceIcon className="text-muted-foreground mt-0.5 size-3 shrink-0" />
+                            <span className="leading-snug break-words">
                               {w.area}
                             </span>
                           </div>
@@ -207,7 +206,7 @@ export function WeaknessTopChart({ weaknesses }: WeaknessTopChartProps) {
         </ul>
 
         <div className="mt-3 border-t pt-3">
-          <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+          <div className="text-muted-foreground flex flex-wrap justify-center gap-x-3 gap-y-1 text-[11px]">
             {ESSAY_CATEGORY_ORDER.map((k) => (
               <div key={k} className="flex items-center gap-1">
                 <span
@@ -218,7 +217,7 @@ export function WeaknessTopChart({ weaknesses }: WeaknessTopChartProps) {
               </div>
             ))}
           </div>
-          <p className="mt-2 text-center text-[10px] text-muted-foreground">
+          <p className="text-muted-foreground mt-2 text-center text-[10px]">
             未解決 {unresolvedCount} 件の弱点を {groups.length} カテゴリに集約
           </p>
         </div>

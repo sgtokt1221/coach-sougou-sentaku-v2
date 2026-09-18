@@ -7,7 +7,10 @@ import type {
   EssayScores,
 } from "@/lib/types/essay";
 import { analyzeGrowth, updateWeaknessRecords } from "@/lib/growth/analyze";
-import { categorizeWeakness } from "@/lib/growth/weakness-category";
+import {
+  categorizeWeakness,
+  type EssayCategoryKey,
+} from "@/lib/growth/weakness-category";
 import type { WeaknessRecord } from "@/lib/types/growth";
 import { logEssaySubmission } from "@/lib/bigquery/logger";
 import { computeRetryComparison } from "@/lib/essay/retry-comparison";
@@ -353,16 +356,8 @@ export async function POST(request: NextRequest) {
     );
 
     // AI が出力した category を hint として伝播 (= 未出力なら fallback)
-    const categoryHints = new Map<
-      string,
-      | "structure"
-      | "logic"
-      | "expression"
-      | "apAlignment"
-      | "originality"
-      | "reasoningMaturity"
-      | "other"
-    >();
+    // 許可値は weakness-category.ts（EssayCategoryKey）を正本にする
+    const categoryHints = new Map<string, EssayCategoryKey>();
     /**
      * 弱点の具体例（「答案のこの一文がこう弱い」）。
      *
@@ -502,7 +497,7 @@ export async function POST(request: NextRequest) {
       score_expression: scores.expression,
       // AP未取得は null（0点と区別する）
       score_ap_alignment: scores.apAlignment,
-      score_originality: scores.originality,
+      score_responsiveness: scores.responsiveness,
       score_reasoning_maturity: scores.reasoningMaturity,
       score_total: scores.total,
       word_count: ocrText.length,

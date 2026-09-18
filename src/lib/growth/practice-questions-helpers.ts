@@ -5,13 +5,15 @@ import type { PracticeQuestion } from "@/lib/types/growth-report";
  * 類題プロンプトに「今週優先で克服すべき項目」として渡す。
  */
 export function computeThisWeekWeakItems(
-  docs: FirebaseFirestore.QueryDocumentSnapshot[],
+  docs: FirebaseFirestore.QueryDocumentSnapshot[]
 ): Array<{ area: string; avgScore: number; essayCount: number }> {
   const cats = [
     "structure",
     "logic",
     "expression",
     "apAlignment",
+    "responsiveness",
+    // v23 で廃止。旧採点の答案しか無い生徒のために残す
     "originality",
   ] as const;
   const labels: Record<string, string> = {
@@ -19,7 +21,8 @@ export function computeThisWeekWeakItems(
     logic: "論理性",
     expression: "表現力",
     apAlignment: "AP合致度",
-    originality: "独自性",
+    responsiveness: "回答力",
+    originality: "独自性（旧軸）",
   };
   const sums: Record<string, { sum: number; count: number }> = {};
   for (const d of docs) {
@@ -50,7 +53,7 @@ export function computeThisWeekWeakItems(
  */
 export function extractInterviewAssistantQuestions(
   docs: FirebaseFirestore.QueryDocumentSnapshot[],
-  limit: number,
+  limit: number
 ): string[] {
   const out: string[] = [];
   for (const d of docs) {
@@ -72,7 +75,7 @@ export function extractInterviewAssistantQuestions(
  * UI / 表示ロジックは `q.usage` を直接読まず必ずこれを経由する。
  */
 export function resolveUsage(
-  q: Pick<PracticeQuestion, "usage" | "priority">,
+  q: Pick<PracticeQuestion, "usage" | "priority">
 ): "lesson" | "homework" | "extra" {
   if (q.usage) return q.usage;
   return q.priority === "primary" ? "lesson" : "homework";
@@ -84,20 +87,20 @@ export function resolveUsage(
  * - homework → after_submission (生徒が提出後に解答例公開)
  */
 export function defaultAnswerVisibility(
-  usage: "lesson" | "homework" | "extra",
+  usage: "lesson" | "homework" | "extra"
 ): "teacher_only" | "after_submission" {
   return usage === "homework" ? "after_submission" : "teacher_only";
 }
 
 function validateDifficulty(
-  d: unknown,
+  d: unknown
 ): "basic" | "standard" | "advanced" | undefined {
   return d === "basic" || d === "standard" || d === "advanced" ? d : undefined;
 }
 
 function validateUsage(
   u: unknown,
-  fallback: "lesson" | "homework",
+  fallback: "lesson" | "homework"
 ): "lesson" | "homework" | "extra" {
   return u === "lesson" || u === "homework" || u === "extra" ? u : fallback;
 }
@@ -117,7 +120,7 @@ export function normalizePracticeQuestion(
   priority: "primary" | "secondary",
   idPrefix: string,
   index: number,
-  now: number,
+  now: number
 ): PracticeQuestion {
   const fallbackUsage: "lesson" | "homework" =
     priority === "primary" ? "lesson" : "homework";
@@ -194,7 +197,7 @@ export function buildPracticeQuestionsFromJson(parsed: {
   // primary 0 件 + secondary に複数あるなら、先頭 3 件を primary に昇格
   if (primarySource.length === 0 && secondarySource.length >= 1) {
     console.warn(
-      "[practice-questions] AI returned 0 primaryQuestions; promoting first 3 of secondaryQuestions to primary",
+      "[practice-questions] AI returned 0 primaryQuestions; promoting first 3 of secondaryQuestions to primary"
     );
     primarySource = secondarySource.slice(0, 3);
     secondarySource = secondarySource.slice(3);
@@ -202,10 +205,10 @@ export function buildPracticeQuestionsFromJson(parsed: {
 
   return [
     ...primarySource.map((q, i) =>
-      normalizePracticeQuestion(q, toType(q.type), "primary", "pq_p", i, now),
+      normalizePracticeQuestion(q, toType(q.type), "primary", "pq_p", i, now)
     ),
     ...secondarySource.map((q, i) =>
-      normalizePracticeQuestion(q, toType(q.type), "secondary", "pq_s", i, now),
+      normalizePracticeQuestion(q, toType(q.type), "secondary", "pq_s", i, now)
     ),
   ]
     .filter((q) => q.title.trim().length > 0)

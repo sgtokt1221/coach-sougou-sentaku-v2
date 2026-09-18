@@ -27,7 +27,7 @@ type Scores = {
   logic: number;
   expression: number;
   apAlignment: number;
-  originality: number;
+  responsiveness: number;
   total: number;
 };
 
@@ -36,20 +36,20 @@ const AXES = [
   "logic",
   "expression",
   "apAlignment",
-  "originality",
+  "responsiveness",
 ] as const;
 
 /** 答案の大学・学部から AP を組み立てる（/api/essay/review と同じ形） */
 async function resolveAdmissionPolicy(
   universityId: string | undefined,
-  facultyId: string | undefined,
+  facultyId: string | undefined
 ): Promise<string> {
   if (!universityId || !facultyId) return "";
   const uni = await adminDb!.doc(`universities/${universityId}`).get();
   if (!uni.exists) return "";
   const data = uni.data()!;
   const faculty = (data.faculties ?? []).find(
-    (f: { id: string }) => f.id === facultyId,
+    (f: { id: string }) => f.id === facultyId
   );
   if (!faculty?.admissionPolicy) return "";
   const prepared = prepareAdmissionPolicy(faculty.admissionPolicy);
@@ -99,7 +99,7 @@ async function main() {
     const ctx = e.questionContext ?? {};
     const admissionPolicy = await resolveAdmissionPolicy(
       e.targetUniversity,
-      e.targetFaculty,
+      e.targetFaculty
     );
 
     let after: Scores;
@@ -127,7 +127,7 @@ async function main() {
     console.log(
       `${d.id}  ${String(e.topic ?? "(お題なし)").slice(0, 24)}  ` +
         `${ocrText.length}字 / 制限${ctx.wordLimit ?? "なし"} / ${ctx.questionType ?? "essay"}` +
-        `${admissionPolicy ? "" : " / AP無し"}`,
+        `${admissionPolicy ? "" : " / AP無し"}`
     );
     console.log(`  旧(${oldVersion}) ${fmt(before)}`);
     console.log(`  新              ${fmt(after)}${diff(before, after)}`);
@@ -141,7 +141,7 @@ async function main() {
       (xs.reduce((a, b) => a + b, 0) / xs.length).toFixed(1);
     console.log(
       `合計点の平均: 旧 ${avg(totals.map((t) => t.before))} → ` +
-        `新 ${avg(totals.map((t) => t.after))}（${totals.length}件）`,
+        `新 ${avg(totals.map((t) => t.after))}（${totals.length}件）`
     );
   }
 }

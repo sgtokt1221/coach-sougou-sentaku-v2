@@ -86,21 +86,24 @@ export interface EssayRetryContext {
 export const ESSAY_SCORE_MAX = 50;
 
 /**
- * 合計50点の中での軸ごとの配点（essay-review-v14）。
+ * 合計50点の中での軸ごとの配点。
  *
  * 各軸は従来どおり 0-10 で採点し、合計を出すときだけこの配点へ換算する。
  * ルーブリックもレーダーチャートも 0-10 のままなので、改定前の答案と
  * 軸ごとの比較ができる。
  *
- * v13 までは5軸とも10点（各20%）だった。独自性の比重を下げ、その分を
- * 構成・論理性・表現力へ振り替えている。
+ * v13 までは5軸とも10点（各20%）。v14 で独自性の比重を下げた。
+ * v23（2026-09-18）で独自性の軸そのものをやめ、**回答力**（設問が求めた
+ * ことに答えているか）に置き換えた。総合型選抜の答案で最初に見られるのは
+ * 「問われたことに答えているか」であり、着眼点の新しさではないため。
+ * 配点は 回答力10・成熟度5 とし、合計50点は維持する。
  */
 export const ESSAY_SCORE_WEIGHTS = {
   structure: 12,
   logic: 12,
   expression: 11,
-  originality: 5,
-  reasoningMaturity: 10,
+  responsiveness: 10,
+  reasoningMaturity: 5,
 } as const;
 
 export type EssayScoreAxis = keyof typeof ESSAY_SCORE_WEIGHTS;
@@ -128,7 +131,7 @@ export function calculateEssayTotal(
 /**
  * 小論文のスコア。
  *
- * total は 構成・論理性・表現力・独自性・議論の成熟度 の5軸（各0-10）を
+ * total は 構成・論理性・表現力・回答力・議論の成熟度 の5軸（各0-10）を
  * ESSAY_SCORE_WEIGHTS で重み付けした 0-50。
  * AP合致度は合計に入れない。以前は全設問で合計の20%を占め、資料読解や
  * 設問対応より重くなっていた（監査 P1-6）。APは志望校との相性を見る
@@ -138,13 +141,34 @@ export interface EssayScores {
   structure: number; // 構成 0-10
   logic: number; // 論理性 0-10
   expression: number; // 表現力 0-10
-  originality: number; // 独自性 0-10
+  /** 回答力 0-10（設問が求めたことに答えているか）。v23 で独自性を置き換えた */
+  responsiveness: number;
+  /**
+   * 独自性 0-10。v23（2026-09-18）で廃止した旧軸。
+   * 過去の答案を開いたときに「独自性（旧軸）」として表示するためだけに残す。
+   * 新規採点では書き込まない（合計にも入らない）。
+   */
+  originality?: number;
   /** 議論の成熟度 0-10。旧データには無いので任意 */
   reasoningMaturity?: number;
   /** AP合致度 0-10。合計外の補助指標。AP未取得なら null */
   apAlignment: number | null;
   total: number; // 合計 0-50（AP は含まない）
 }
+
+/** 小論文スコアの軸ラベル（グラフ・履歴・管理画面の正本） */
+export const ESSAY_AXIS_LABELS: Record<EssayScoreAxis, string> = {
+  structure: "構成",
+  logic: "論理性",
+  expression: "表現力",
+  responsiveness: "回答力",
+  reasoningMaturity: "議論の成熟度",
+};
+
+/** 廃止した軸のラベル。過去データを表示するときだけ使う */
+export const LEGACY_ESSAY_AXIS_LABELS: Record<string, string> = {
+  originality: "独自性（旧軸）",
+};
 
 /** 設問が求めた要求ごとの充足判定（監査 P1-12） */
 export interface TaskFulfillment {
@@ -338,6 +362,8 @@ export interface RepeatedIssue {
     | "logic"
     | "expression"
     | "apAlignment"
+    | "responsiveness"
+    /** v23 で廃止。過去の弱点レコードを読むためだけに残す */
     | "originality"
     | "reasoningMaturity"
     | "other";
@@ -427,7 +453,7 @@ export interface RetryComparison {
     logic: number;
     expression: number;
     apAlignment: number;
-    originality: number;
+    responsiveness: number;
     total: number;
   };
   resolvedWeaknesses: string[];

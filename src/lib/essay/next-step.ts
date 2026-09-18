@@ -62,7 +62,7 @@ export interface AxisHeadroom {
 /**
  * 伸びしろが一番大きい軸。
  *
- * 「点が低い軸」ではなく「配点で見て一番増える軸」を選ぶ。独自性(配点5)を
+ * 「点が低い軸」ではなく「配点で見て一番増える軸」を選ぶ。成熟度(配点5)を
  * 0点から満点にしても5点だが、構成(配点12)を6点から満点にすれば4.8点増える。
  * 生徒に勧めるのは、同じ努力で点が動く側であるべき。
  */
@@ -92,7 +92,7 @@ export function biggestHeadroom(
 
 /** 画面に出す1行。次のランクが無い、または軸が取れないときは null */
 export function buildNextStepHint(
-  scores: EssayScores,
+  scores: Partial<EssayScores> & { total: number },
   max: number
 ): { gap: NextRankGap; headroom: AxisHeadroom } | null {
   const gap = nextRankGap(scores.total, max);

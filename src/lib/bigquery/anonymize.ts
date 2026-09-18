@@ -7,7 +7,9 @@ import { createHash } from "crypto";
  * k-匿名性を確保する。
  */
 
-const ANONYMIZATION_SALT = process.env.ANONYMIZATION_SALT || "coachfor-default-salt-change-in-production";
+const ANONYMIZATION_SALT =
+  process.env.ANONYMIZATION_SALT ||
+  "coachfor-default-salt-change-in-production";
 
 // ───────────────────────────────────────────────
 // 1. studentId の匿名化（SHA-256ハッシュ）
@@ -43,7 +45,9 @@ const PII_FIELDS = new Set([
 /**
  * レコードからPIIフィールドを除去し、studentId/userId をハッシュ化する
  */
-export function anonymizeRecord<T extends Record<string, unknown>>(record: T): Record<string, unknown> {
+export function anonymizeRecord<T extends Record<string, unknown>>(
+  record: T
+): Record<string, unknown> {
   const anonymized: Record<string, unknown> = {};
 
   for (const [key, value] of Object.entries(record)) {
@@ -129,7 +133,9 @@ interface EssayBQRecord {
   score_expression: number;
   /** AP未取得は null（0点と区別する） */
   score_ap_alignment: number | null;
-  score_originality: number;
+  score_responsiveness?: number | null;
+  /** v23 で廃止した独自性。過去の行にだけ入る */
+  score_originality?: number | null;
   score_total: number;
   word_count: number;
   topic: string;

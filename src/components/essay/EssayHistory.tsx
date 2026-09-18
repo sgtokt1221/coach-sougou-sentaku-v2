@@ -6,7 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FileText, ChevronDown, ChevronUp, RotateCcw, History as HistoryIcon, ArrowUpRight, Minus } from "lucide-react";
+import {
+  FileText,
+  ChevronDown,
+  ChevronUp,
+  RotateCcw,
+  History as HistoryIcon,
+  ArrowUpRight,
+  Minus,
+} from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { useAuthSWR } from "@/lib/api/swr";
 import {
@@ -19,7 +27,12 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { CHART_COLORS, SCORE_COLORS, CHART_ANIMATION, GRID_STYLE } from "@/components/charts/theme";
+import {
+  CHART_COLORS,
+  SCORE_COLORS,
+  CHART_ANIMATION,
+  GRID_STYLE,
+} from "@/components/charts/theme";
 import { CustomTooltip } from "@/components/charts/CustomTooltip";
 import { CustomDot, CustomActiveDot } from "@/components/charts/CustomDot";
 import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
@@ -51,7 +64,9 @@ interface EssayHistoryItem {
     logic: number;
     expression: number;
     apAlignment: number;
-    originality: number;
+    responsiveness?: number;
+    /** v23 で廃止。旧採点の答案だけ持つ */
+    originality?: number;
   };
   rootEssayId?: string;
   parentEssayId?: string | null;
@@ -88,24 +103,43 @@ const SCORE_LINE_COLORS = {
   logic: SCORE_COLORS.logic,
   expression: SCORE_COLORS.expression,
   apAlignment: SCORE_COLORS.apAlignment,
+  responsiveness: SCORE_COLORS.responsiveness,
   originality: SCORE_COLORS.originality,
 };
 
-type LineKey = "structure" | "logic" | "expression" | "apAlignment" | "originality";
+type LineKey =
+  | "structure"
+  | "logic"
+  | "expression"
+  | "apAlignment"
+  | "responsiveness"
+  | "originality";
 const DETAIL_LINES: { key: LineKey; label: string }[] = [
   { key: "structure", label: "構成" },
   { key: "logic", label: "論理性" },
   { key: "expression", label: "表現力" },
   { key: "apAlignment", label: "AP合致度" },
-  { key: "originality", label: "独自性" },
+  { key: "responsiveness", label: "回答力" },
 ];
+/**
+ * v23 で回答力に置き換えた旧軸。旧採点の答案が1件でもあるときだけ足す。
+ * 同じ線に繋ぐと、途中で意味の変わった軸を1本の推移として見せてしまう。
+ */
+const LEGACY_DETAIL_LINE: { key: LineKey; label: string } = {
+  key: "originality",
+  label: "独自性（旧軸）",
+};
 
 export function EssayHistory() {
   const router = useRouter();
-  const [visibleLines, setVisibleLines] = useState<Set<string>>(new Set(["total"]));
+  const [visibleLines, setVisibleLines] = useState<Set<string>>(
+    new Set(["total"])
+  );
   const [expandedChains, setExpandedChains] = useState<Set<string>>(new Set());
 
-  const { data: rawData, isLoading: loading } = useAuthSWR<{ essays: EssayHistoryItem[] }>("/api/essay/history");
+  const { data: rawData, isLoading: loading } = useAuthSWR<{
+    essays: EssayHistoryItem[];
+  }>("/api/essay/history");
   const history = useMemo(() => rawData?.essays ?? [], [rawData]);
 
   function toggleLine(key: string) {
@@ -140,8 +174,14 @@ export function EssayHistory() {
       logic: item.scores.logic,
       expression: item.scores.expression,
       apAlignment: item.scores.apAlignment,
+      responsiveness: item.scores.responsiveness,
       originality: item.scores.originality,
     }));
+
+  // 旧採点（独自性）の答案が混ざっているときだけ、旧軸の線も選べるようにする
+  const detailLines = chartData.some((d) => typeof d.originality === "number")
+    ? [...DETAIL_LINES, LEGACY_DETAIL_LINE]
+    : DETAIL_LINES;
 
   // 同じ rootEssayId の essays をチェーンに集約
   const chains: EssayChain[] = useMemo(() => {
@@ -164,7 +204,9 @@ export function EssayHistory() {
       out.push({ rootId, attempts: sorted, latest: sorted[sorted.length - 1] });
     }
     // 最新の submittedAt が新しいチェーン順
-    out.sort((a, b) => b.latest.submittedAt.localeCompare(a.latest.submittedAt));
+    out.sort((a, b) =>
+      b.latest.submittedAt.localeCompare(a.latest.submittedAt)
+    );
     return out;
   }, [history]);
 
@@ -202,11 +244,11 @@ export function EssayHistory() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base">スコア推移</CardTitle>
-            <div className="flex flex-wrap gap-2 mt-2">
+            <div className="mt-2 flex flex-wrap gap-2">
               <button
                 onClick={() => toggleLine("total")}
                 className={[
-                  "text-xs px-2 py-1 rounded border transition-colors",
+                  "rounded border px-2 py-1 text-xs transition-colors",
                   visibleLines.has("total")
                     ? "border-indigo-400 bg-indigo-50 text-indigo-700"
                     : "border-border text-muted-foreground",
@@ -214,17 +256,21 @@ export function EssayHistory() {
               >
                 合計スコア
               </button>
-              {DETAIL_LINES.map(({ key, label }) => (
+              {detailLines.map(({ key, label }) => (
                 <button
                   key={key}
                   onClick={() => toggleLine(key)}
                   className={[
-                    "text-xs px-2 py-1 rounded border transition-colors",
+                    "rounded border px-2 py-1 text-xs transition-colors",
                     visibleLines.has(key)
-                      ? "border-current bg-muted"
+                      ? "bg-muted border-current"
                       : "border-border text-muted-foreground",
                   ].join(" ")}
-                  style={visibleLines.has(key) ? { color: SCORE_LINE_COLORS[key] } : {}}
+                  style={
+                    visibleLines.has(key)
+                      ? { color: SCORE_LINE_COLORS[key] }
+                      : {}
+                  }
                 >
                   {label}
                 </button>
@@ -239,8 +285,18 @@ export function EssayHistory() {
                   stroke={GRID_STYLE.stroke}
                   opacity={GRID_STYLE.opacity}
                 />
-                <XAxis dataKey="date" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-                <YAxis domain={[0, 50]} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                <XAxis
+                  dataKey="date"
+                  tick={{ fontSize: 11 }}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <YAxis
+                  domain={[0, 50]}
+                  tick={{ fontSize: 11 }}
+                  tickLine={false}
+                  axisLine={false}
+                />
                 <Tooltip content={<CustomTooltip />} />
                 {visibleLines.has("total") && (
                   <Line
@@ -256,8 +312,9 @@ export function EssayHistory() {
                     animationEasing={CHART_ANIMATION.easing}
                   />
                 )}
-                {DETAIL_LINES.filter(({ key }) => visibleLines.has(key)).map(
-                  ({ key, label }) => (
+                {detailLines
+                  .filter(({ key }) => visibleLines.has(key))
+                  .map(({ key, label }) => (
                     <Line
                       key={key}
                       type="monotone"
@@ -271,8 +328,7 @@ export function EssayHistory() {
                       animationDuration={CHART_ANIMATION.duration}
                       animationEasing={CHART_ANIMATION.easing}
                     />
-                  )
-                )}
+                  ))}
                 <Legend wrapperStyle={{ fontSize: 12 }} />
               </LineChart>
             </ResponsiveContainer>
@@ -287,32 +343,41 @@ export function EssayHistory() {
           const latest = chain.latest;
           const earliest = chain.attempts[0];
           const totalDelta =
-            isMultiAttempt && earliest.status === "reviewed" && latest.status === "reviewed"
+            isMultiAttempt &&
+            earliest.status === "reviewed" &&
+            latest.status === "reviewed"
               ? latest.totalScore - earliest.totalScore
               : null;
           return (
-            <Card key={chain.rootId} className="overflow-hidden transition-shadow hover:shadow-md">
+            <Card
+              key={chain.rootId}
+              className="overflow-hidden transition-shadow hover:shadow-md"
+            >
               <CardContent
-                className="p-3 lg:p-4 flex items-center justify-between gap-3 cursor-pointer"
+                className="flex cursor-pointer items-center justify-between gap-3 p-3 lg:p-4"
                 onClick={() =>
                   latest.status === "reviewed"
                     ? router.push(`/student/essay/${latest.id}`)
                     : undefined
                 }
               >
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-medium text-sm">{latest.universityName}</span>
-                    <span className="text-muted-foreground text-sm">{latest.facultyName}</span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-medium">
+                      {latest.universityName}
+                    </span>
+                    <span className="text-muted-foreground text-sm">
+                      {latest.facultyName}
+                    </span>
                     {latest.topic && (
-                      <span className="text-xs text-muted-foreground truncate">
+                      <span className="text-muted-foreground truncate text-xs">
                         / {latest.topic}
                       </span>
                     )}
                     {isMultiAttempt && (
                       <Badge
                         variant="outline"
-                        className="bg-indigo-50 text-indigo-700 border-indigo-200 text-xs"
+                        className="border-indigo-200 bg-indigo-50 text-xs text-indigo-700"
                       >
                         {chain.attempts.length}回挑戦
                       </Badge>
@@ -320,20 +385,26 @@ export function EssayHistory() {
                     {totalDelta !== null && totalDelta !== 0 && (
                       <span
                         className={
-                          "inline-flex items-center gap-0.5 text-[11px] font-semibold tabular-nums px-1.5 py-0.5 rounded border " +
+                          "inline-flex items-center gap-0.5 rounded border px-1.5 py-0.5 text-[11px] font-semibold tabular-nums " +
                           (totalDelta > 0
-                            ? "text-emerald-700 bg-emerald-50 border-emerald-200"
-                            : "text-rose-700 bg-rose-50 border-rose-200")
+                            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                            : "border-rose-200 bg-rose-50 text-rose-700")
                         }
                       >
-                        <ArrowUpRight className={"size-3 " + (totalDelta < 0 ? "rotate-90" : "")} />
+                        <ArrowUpRight
+                          className={
+                            "size-3 " + (totalDelta < 0 ? "rotate-90" : "")
+                          }
+                        />
                         {totalDelta > 0 ? `+${totalDelta}` : totalDelta}
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">{formatDateTime(latest.submittedAt)}</p>
+                  <p className="text-muted-foreground mt-1 text-xs">
+                    {formatDateTime(latest.submittedAt)}
+                  </p>
                 </div>
-                <div className="flex items-center gap-3 shrink-0">
+                <div className="flex shrink-0 items-center gap-3">
                   {latest.status === "reviewed" && (
                     <>
                       <SkillRankBadge
@@ -343,7 +414,9 @@ export function EssayHistory() {
                       />
                       <span className="text-lg font-bold">
                         {latest.totalScore}
-                        <span className="text-sm text-muted-foreground">/50</span>
+                        <span className="text-muted-foreground text-sm">
+                          /50
+                        </span>
                       </span>
                     </>
                   )}
@@ -353,7 +426,7 @@ export function EssayHistory() {
                 </div>
               </CardContent>
               {/* チェーンアクション */}
-              <div className="px-3 pb-3 lg:px-4 lg:pb-4 flex items-center justify-between gap-2 flex-wrap">
+              <div className="flex flex-wrap items-center justify-between gap-2 px-3 pb-3 lg:px-4 lg:pb-4">
                 {isMultiAttempt ? (
                   <button
                     type="button"
@@ -361,10 +434,16 @@ export function EssayHistory() {
                       e.stopPropagation();
                       toggleChain(chain.rootId);
                     }}
-                    className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+                    className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-xs"
                   >
-                    {isExpanded ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />}
-                    {isExpanded ? "履歴を閉じる" : `${chain.attempts.length}回分の履歴を見る`}
+                    {isExpanded ? (
+                      <ChevronUp className="size-3" />
+                    ) : (
+                      <ChevronDown className="size-3" />
+                    )}
+                    {isExpanded
+                      ? "履歴を閉じる"
+                      : `${chain.attempts.length}回分の履歴を見る`}
                   </button>
                 ) : (
                   <span />
@@ -379,55 +458,67 @@ export function EssayHistory() {
                       router.push(`/student/essay/new?retryFrom=${latest.id}`);
                     }}
                   >
-                    <RotateCcw className="size-3.5 mr-1" />
+                    <RotateCcw className="mr-1 size-3.5" />
                     同じテーマで再トライ
                   </Button>
                 )}
               </div>
               {/* 展開時: 各 attempt のタイムライン */}
               {isExpanded && isMultiAttempt && (
-                <div className="border-t bg-slate-50/60 px-3 lg:px-4 py-3 space-y-2">
+                <div className="space-y-2 border-t bg-slate-50/60 px-3 py-3 lg:px-4">
                   {chain.attempts.map((a, i) => {
                     const prev = i > 0 ? chain.attempts[i - 1] : null;
                     const delta =
-                      prev && prev.status === "reviewed" && a.status === "reviewed"
+                      prev &&
+                      prev.status === "reviewed" &&
+                      a.status === "reviewed"
                         ? a.totalScore - prev.totalScore
                         : null;
                     return (
                       <div
                         key={a.id}
-                        className="flex items-center justify-between gap-2 rounded-md bg-white border border-slate-200 px-3 py-2 cursor-pointer hover:bg-slate-50"
+                        className="flex cursor-pointer items-center justify-between gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 hover:bg-slate-50"
                         onClick={() =>
-                          a.status === "reviewed" ? router.push(`/student/essay/${a.id}`) : undefined
+                          a.status === "reviewed"
+                            ? router.push(`/student/essay/${a.id}`)
+                            : undefined
                         }
                       >
-                        <div className="flex items-center gap-2 min-w-0">
-                          <HistoryIcon className="size-3.5 text-slate-400 shrink-0" />
+                        <div className="flex min-w-0 items-center gap-2">
+                          <HistoryIcon className="size-3.5 shrink-0 text-slate-400" />
                           <span className="text-xs font-medium text-slate-700 tabular-nums">
                             第{a.attemptNumber ?? i + 1}回
                           </span>
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-muted-foreground text-xs">
                             {formatDateTime(a.submittedAt)}
                           </span>
                         </div>
-                        <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex shrink-0 items-center gap-2">
                           {delta !== null && (
                             <span
                               className={
-                                "inline-flex items-center gap-0.5 text-[11px] font-semibold tabular-nums px-1.5 py-0.5 rounded border " +
+                                "inline-flex items-center gap-0.5 rounded border px-1.5 py-0.5 text-[11px] font-semibold tabular-nums " +
                                 (delta > 0
-                                  ? "text-emerald-700 bg-emerald-50 border-emerald-200"
+                                  ? "border-emerald-200 bg-emerald-50 text-emerald-700"
                                   : delta < 0
-                                    ? "text-rose-700 bg-rose-50 border-rose-200"
-                                    : "text-slate-500 bg-slate-50 border-slate-200")
+                                    ? "border-rose-200 bg-rose-50 text-rose-700"
+                                    : "border-slate-200 bg-slate-50 text-slate-500")
                               }
                             >
                               {delta === 0 ? (
                                 <Minus className="size-3" />
                               ) : (
-                                <ArrowUpRight className={"size-3 " + (delta < 0 ? "rotate-90" : "")} />
+                                <ArrowUpRight
+                                  className={
+                                    "size-3 " + (delta < 0 ? "rotate-90" : "")
+                                  }
+                                />
                               )}
-                              {delta > 0 ? `+${delta}` : delta === 0 ? "±0" : delta}
+                              {delta > 0
+                                ? `+${delta}`
+                                : delta === 0
+                                  ? "±0"
+                                  : delta}
                             </span>
                           )}
                           {a.status === "reviewed" ? (
@@ -439,11 +530,16 @@ export function EssayHistory() {
                               />
                               <span className="text-sm font-bold tabular-nums">
                                 {a.totalScore}
-                                <span className="text-xs text-muted-foreground font-normal">/50</span>
+                                <span className="text-muted-foreground text-xs font-normal">
+                                  /50
+                                </span>
                               </span>
                             </>
                           ) : (
-                            <Badge variant={STATUS_VARIANT[a.status]} className="text-[10px]">
+                            <Badge
+                              variant={STATUS_VARIANT[a.status]}
+                              className="text-[10px]"
+                            >
                               {STATUS_LABEL[a.status]}
                             </Badge>
                           )}

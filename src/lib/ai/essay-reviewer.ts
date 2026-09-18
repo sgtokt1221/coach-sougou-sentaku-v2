@@ -92,7 +92,7 @@ export function buildMockReviewResult(essayText: string): ReviewCoreResult {
     structure: baseScore,
     logic: baseScore,
     expression: Math.max(4, baseScore - 1),
-    originality: Math.max(4, baseScore - 2),
+    responsiveness: Math.max(4, baseScore - 2),
     reasoningMaturity: Math.max(3, baseScore - 2),
   };
   const scores: EssayScores = {

@@ -8,6 +8,19 @@ import type {
   GapItem,
 } from "@/lib/types/analytics";
 
+/**
+ * 軸ごとのギャップを出す対象。独自性(v22以前)と回答力(v23〜)は同じ位置の軸なので、
+ * 両方を並べて出す（生徒の答案がどちらの採点かで、片方だけ値が入る）。
+ */
+const AREA_KEYS = [
+  "structure",
+  "logic",
+  "expression",
+  "apAlignment",
+  "responsiveness",
+  "originality",
+] as const;
+
 const MOCK_GAPS: UniversityGapAnalysis[] = [
   {
     universityId: "tokyo-u",
@@ -18,11 +31,23 @@ const MOCK_GAPS: UniversityGapAnalysis[] = [
     avgInterviewScore: 28,
     requiredScores: { essay: 40, interview: 32 },
     gapAnalysis: [
-      { area: "論理性", studentAvg: 6.5, required: 8, gap: -1.5, status: "yellow" },
+      {
+        area: "論理性",
+        studentAvg: 6.5,
+        required: 8,
+        gap: -1.5,
+        status: "yellow",
+      },
       { area: "構成", studentAvg: 7, required: 8, gap: -1, status: "yellow" },
       { area: "AP合致度", studentAvg: 5, required: 8, gap: -3, status: "red" },
       { area: "独自性", studentAvg: 7, required: 8, gap: -1, status: "yellow" },
-      { area: "表現力", studentAvg: 8.5, required: 8, gap: 0.5, status: "green" },
+      {
+        area: "表現力",
+        studentAvg: 8.5,
+        required: 8,
+        gap: 0.5,
+        status: "green",
+      },
     ],
     studentCount: 3,
   },
@@ -35,11 +60,41 @@ const MOCK_GAPS: UniversityGapAnalysis[] = [
     avgInterviewScore: 30,
     requiredScores: { essay: 38, interview: 30 },
     gapAnalysis: [
-      { area: "論理性", studentAvg: 7.5, required: 8, gap: -0.5, status: "green" },
-      { area: "構成", studentAvg: 7, required: 7.5, gap: -0.5, status: "green" },
-      { area: "AP合致度", studentAvg: 6, required: 7.5, gap: -1.5, status: "yellow" },
-      { area: "独自性", studentAvg: 8, required: 7.5, gap: 0.5, status: "green" },
-      { area: "表現力", studentAvg: 8.5, required: 7.5, gap: 1, status: "green" },
+      {
+        area: "論理性",
+        studentAvg: 7.5,
+        required: 8,
+        gap: -0.5,
+        status: "green",
+      },
+      {
+        area: "構成",
+        studentAvg: 7,
+        required: 7.5,
+        gap: -0.5,
+        status: "green",
+      },
+      {
+        area: "AP合致度",
+        studentAvg: 6,
+        required: 7.5,
+        gap: -1.5,
+        status: "yellow",
+      },
+      {
+        area: "独自性",
+        studentAvg: 8,
+        required: 7.5,
+        gap: 0.5,
+        status: "green",
+      },
+      {
+        area: "表現力",
+        studentAvg: 8.5,
+        required: 7.5,
+        gap: 1,
+        status: "green",
+      },
     ],
     studentCount: 2,
   },
@@ -52,9 +107,27 @@ const MOCK_GAPS: UniversityGapAnalysis[] = [
     avgInterviewScore: 26,
     requiredScores: { essay: 36, interview: 30 },
     gapAnalysis: [
-      { area: "論理性", studentAvg: 6, required: 7.5, gap: -1.5, status: "yellow" },
-      { area: "構成", studentAvg: 6.5, required: 7, gap: -0.5, status: "green" },
-      { area: "AP合致度", studentAvg: 5.5, required: 7.5, gap: -2, status: "red" },
+      {
+        area: "論理性",
+        studentAvg: 6,
+        required: 7.5,
+        gap: -1.5,
+        status: "yellow",
+      },
+      {
+        area: "構成",
+        studentAvg: 6.5,
+        required: 7,
+        gap: -0.5,
+        status: "green",
+      },
+      {
+        area: "AP合致度",
+        studentAvg: 5.5,
+        required: 7.5,
+        gap: -2,
+        status: "red",
+      },
       { area: "独自性", studentAvg: 7, required: 7, gap: 0, status: "green" },
       { area: "表現力", studentAvg: 7, required: 7, gap: 0, status: "green" },
     ],
@@ -69,10 +142,28 @@ const MOCK_GAPS: UniversityGapAnalysis[] = [
     avgInterviewScore: 31,
     requiredScores: { essay: 38, interview: 30 },
     gapAnalysis: [
-      { area: "論理性", studentAvg: 8, required: 7.5, gap: 0.5, status: "green" },
+      {
+        area: "論理性",
+        studentAvg: 8,
+        required: 7.5,
+        gap: 0.5,
+        status: "green",
+      },
       { area: "構成", studentAvg: 7.5, required: 7.5, gap: 0, status: "green" },
-      { area: "AP合致度", studentAvg: 7, required: 7.5, gap: -0.5, status: "green" },
-      { area: "独自性", studentAvg: 7.5, required: 7.5, gap: 0, status: "green" },
+      {
+        area: "AP合致度",
+        studentAvg: 7,
+        required: 7.5,
+        gap: -0.5,
+        status: "green",
+      },
+      {
+        area: "独自性",
+        studentAvg: 7.5,
+        required: 7.5,
+        gap: 0,
+        status: "green",
+      },
       { area: "表現力", studentAvg: 8, required: 8, gap: 0, status: "green" },
     ],
     studentCount: 2,
@@ -89,8 +180,20 @@ const MOCK_GAPS: UniversityGapAnalysis[] = [
       { area: "論理性", studentAvg: 5, required: 7, gap: -2, status: "red" },
       { area: "構成", studentAvg: 5, required: 7, gap: -2, status: "red" },
       { area: "AP合致度", studentAvg: 4, required: 7, gap: -3, status: "red" },
-      { area: "独自性", studentAvg: 5, required: 6.5, gap: -1.5, status: "yellow" },
-      { area: "表現力", studentAvg: 6, required: 6.5, gap: -0.5, status: "green" },
+      {
+        area: "独自性",
+        studentAvg: 5,
+        required: 6.5,
+        gap: -1.5,
+        status: "yellow",
+      },
+      {
+        area: "表現力",
+        studentAvg: 6,
+        required: 6.5,
+        gap: -0.5,
+        status: "green",
+      },
     ],
     studentCount: 1,
   },
@@ -103,7 +206,11 @@ function computeGapStatus(gap: number): GapItem["status"] {
 }
 
 export async function GET(request: NextRequest) {
-  const authResult = await requireRole(request, ["admin", "superadmin", "teacher"]);
+  const authResult = await requireRole(request, [
+    "admin",
+    "superadmin",
+    "teacher",
+  ]);
   if (authResult instanceof NextResponse) return authResult;
   const { uid, role } = authResult;
 
@@ -118,7 +225,10 @@ export async function GET(request: NextRequest) {
         return NextResponse.json(response);
       }
       return NextResponse.json(
-        { error: "Firestore に接続できません", detail: "adminDb is not initialized" },
+        {
+          error: "Firestore に接続できません",
+          detail: "adminDb is not initialized",
+        },
         { status: 500 }
       );
     }
@@ -127,7 +237,9 @@ export async function GET(request: NextRequest) {
     const studentDocs: FirebaseFirestore.QueryDocumentSnapshot[] = [];
     if (role === "superadmin") {
       studentDocs.push(
-        ...(await adminDb.collection("users").where("role", "==", "student").get()).docs,
+        ...(
+          await adminDb.collection("users").where("role", "==", "student").get()
+        ).docs
       );
     } else if (role === "admin") {
       const memberUids = await getOrgMemberAdminUids(adminDb, uid);
@@ -149,7 +261,7 @@ export async function GET(request: NextRequest) {
             .where("role", "==", "student")
             .where("managedBy", "==", uid)
             .get()
-        ).docs,
+        ).docs
       );
     }
 
@@ -215,10 +327,11 @@ export async function GET(request: NextRequest) {
           if (essay.scores?.total != null) {
             entry.essayScores.push(essay.scores.total);
           }
-          const areas = ["structure", "logic", "expression", "apAlignment", "originality"];
+          const areas = AREA_KEYS;
           for (const area of areas) {
             if (essay.scores?.[area] != null) {
-              if (!entry.scoresByArea.has(area)) entry.scoresByArea.set(area, []);
+              if (!entry.scoresByArea.has(area))
+                entry.scoresByArea.set(area, []);
               entry.scoresByArea.get(area)!.push(essay.scores[area]);
             }
           }
@@ -239,7 +352,10 @@ export async function GET(request: NextRequest) {
       uniIds.add(entry.universityId);
     }
 
-    const uniNames = new Map<string, { name: string; faculties: Map<string, string> }>();
+    const uniNames = new Map<
+      string,
+      { name: string; faculties: Map<string, string> }
+    >();
     for (const uniId of uniIds) {
       try {
         const uniDoc = await adminDb.doc(`universities/${uniId}`).get();
@@ -263,7 +379,8 @@ export async function GET(request: NextRequest) {
       logic: "論理性",
       expression: "表現力",
       apAlignment: "AP合致度",
-      originality: "独自性",
+      responsiveness: "回答力",
+      originality: "独自性（旧軸）",
     };
 
     const gaps: UniversityGapAnalysis[] = [];
@@ -276,13 +393,16 @@ export async function GET(request: NextRequest) {
       const avgEssay =
         entry.essayScores.length > 0
           ? Math.round(
-              (entry.essayScores.reduce((a, b) => a + b, 0) / entry.essayScores.length) * 10
+              (entry.essayScores.reduce((a, b) => a + b, 0) /
+                entry.essayScores.length) *
+                10
             ) / 10
           : 0;
       const avgInterview =
         entry.interviewScores.length > 0
           ? Math.round(
-              (entry.interviewScores.reduce((a, b) => a + b, 0) / entry.interviewScores.length) *
+              (entry.interviewScores.reduce((a, b) => a + b, 0) /
+                entry.interviewScores.length) *
                 10
             ) / 10
           : 0;
@@ -291,12 +411,14 @@ export async function GET(request: NextRequest) {
       const requiredInterview = 28;
 
       const gapAnalysis: GapItem[] = [];
-      const areas = ["structure", "logic", "expression", "apAlignment", "originality"];
+      const areas = AREA_KEYS;
       for (const area of areas) {
         const scores = entry.scoresByArea.get(area) ?? [];
         const avg =
           scores.length > 0
-            ? Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 10) / 10
+            ? Math.round(
+                (scores.reduce((a, b) => a + b, 0) / scores.length) * 10
+              ) / 10
             : 0;
         const required = 7;
         const gap = Math.round((avg - required) * 10) / 10;

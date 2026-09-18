@@ -45,7 +45,9 @@ interface EssayHistoryItem {
     logic: number;
     expression: number;
     apAlignment: number;
-    originality: number;
+    responsiveness?: number;
+    /** v23 で廃止。旧採点の答案だけ持つ */
+    originality?: number;
   };
   sourceType?:
     | "manual"
@@ -79,6 +81,7 @@ const SCORE_LINE_COLORS = {
   logic: SCORE_COLORS.logic,
   expression: SCORE_COLORS.expression,
   apAlignment: SCORE_COLORS.apAlignment,
+  responsiveness: SCORE_COLORS.responsiveness,
   originality: SCORE_COLORS.originality,
 };
 
@@ -87,14 +90,23 @@ type LineKey =
   | "logic"
   | "expression"
   | "apAlignment"
+  | "responsiveness"
   | "originality";
 const DETAIL_LINES: { key: LineKey; label: string }[] = [
   { key: "structure", label: "構成" },
   { key: "logic", label: "論理性" },
   { key: "expression", label: "表現力" },
   { key: "apAlignment", label: "AP合致度" },
-  { key: "originality", label: "独自性" },
+  { key: "responsiveness", label: "回答力" },
 ];
+/**
+ * v23 で回答力に置き換えた旧軸。旧採点の答案が1件でもあるときだけ足す。
+ * 同じ線に繋ぐと、途中で意味の変わった軸を1本の推移として見せてしまう。
+ */
+const LEGACY_DETAIL_LINE: { key: LineKey; label: string } = {
+  key: "originality",
+  label: "独自性（旧軸）",
+};
 
 function formatDate(iso: string): string {
   const d = new Date(iso);
@@ -140,8 +152,14 @@ export default function EssayHistoryPage() {
       logic: item.scores.logic,
       expression: item.scores.expression,
       apAlignment: item.scores.apAlignment,
+      responsiveness: item.scores.responsiveness,
       originality: item.scores.originality,
     }));
+
+  // 旧採点（独自性）の答案が混ざっているときだけ、旧軸の線も選べるようにする
+  const detailLines = chartData.some((d) => typeof d.originality === "number")
+    ? [...DETAIL_LINES, LEGACY_DETAIL_LINE]
+    : DETAIL_LINES;
 
   return (
     <div className="mx-auto max-w-3xl space-y-4 px-4 py-5 lg:space-y-6 lg:px-6 lg:py-8">
@@ -194,7 +212,7 @@ export default function EssayHistoryPage() {
                   >
                     合計スコア
                   </button>
-                  {DETAIL_LINES.map(({ key, label }) => (
+                  {detailLines.map(({ key, label }) => (
                     <button
                       key={key}
                       onClick={() => toggleLine(key)}
@@ -250,23 +268,23 @@ export default function EssayHistoryPage() {
                         animationEasing={CHART_ANIMATION.easing}
                       />
                     )}
-                    {DETAIL_LINES.filter(({ key }) =>
-                      visibleLines.has(key)
-                    ).map(({ key, label }) => (
-                      <Line
-                        key={key}
-                        type="monotone"
-                        dataKey={key}
-                        name={label}
-                        stroke={SCORE_LINE_COLORS[key]}
-                        strokeWidth={1.5}
-                        dot={<CustomDot />}
-                        activeDot={<CustomActiveDot />}
-                        isAnimationActive={true}
-                        animationDuration={CHART_ANIMATION.duration}
-                        animationEasing={CHART_ANIMATION.easing}
-                      />
-                    ))}
+                    {detailLines
+                      .filter(({ key }) => visibleLines.has(key))
+                      .map(({ key, label }) => (
+                        <Line
+                          key={key}
+                          type="monotone"
+                          dataKey={key}
+                          name={label}
+                          stroke={SCORE_LINE_COLORS[key]}
+                          strokeWidth={1.5}
+                          dot={<CustomDot />}
+                          activeDot={<CustomActiveDot />}
+                          isAnimationActive={true}
+                          animationDuration={CHART_ANIMATION.duration}
+                          animationEasing={CHART_ANIMATION.easing}
+                        />
+                      ))}
                     <Legend wrapperStyle={{ fontSize: 12 }} />
                   </LineChart>
                 </ResponsiveContainer>

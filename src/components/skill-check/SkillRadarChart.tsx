@@ -9,6 +9,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import type { EssayScores } from "@/lib/types/essay";
+import { essayScoreAxisRows } from "@/lib/essay/score-axes";
 
 /**
  * 合計に入る5軸のレーダー。小論文添削・スキルチェックで共用する。
@@ -16,6 +17,9 @@ import type { EssayScores } from "@/lib/types/essay";
  * AP合致度（スキルチェックの旧「系統適合」）は描かない。合計に1点も
  * 入らないため、五角形に混ぜると合計を構成する軸と同じ重みに見える。
  * 数値は呼び出し側の一覧に「合計外」として出す。
+ *
+ * 軸の並びと旧データの扱い（v22以前は回答力でなく独自性）は
+ * essayScoreAxisRows に任せる。ここで軸名を手書きしない。
  */
 export function SkillRadarChart({
   scores,
@@ -24,16 +28,11 @@ export function SkillRadarChart({
   scores: EssayScores;
   height?: number;
 }) {
-  const data = [
-    { axis: "構成", score: scores.structure, fullMark: 10 },
-    { axis: "論理", score: scores.logic, fullMark: 10 },
-    { axis: "表現", score: scores.expression, fullMark: 10 },
-    { axis: "独自性", score: scores.originality, fullMark: 10 },
-    // 旧データには無いので、値があるときだけ描く（0 として凹ませない）
-    ...(typeof scores.reasoningMaturity === "number"
-      ? [{ axis: "成熟度", score: scores.reasoningMaturity, fullMark: 10 }]
-      : []),
-  ];
+  const data = essayScoreAxisRows(scores).map((row) => ({
+    axis: row.short,
+    score: row.value,
+    fullMark: 10,
+  }));
   return (
     <div className="w-full" style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">

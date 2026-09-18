@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { SkillCheckResult } from "@/lib/types/skill-check";
-import { ESSAY_SCORE_WEIGHTS } from "@/lib/types/essay";
+import { essayScoreAxisRows } from "@/lib/essay/score-axes";
 import { axisPoints } from "@/lib/score-rank";
 import { InlineCommentableText } from "@/components/essay/InlineCommentableText";
 import { ACADEMIC_CATEGORY_LABELS } from "@/lib/types/skill-check";
@@ -46,7 +46,9 @@ export function SkillCheckResultView({
                 {ACADEMIC_CATEGORY_LABELS[result.category]}
               </Badge>
               <div className="text-4xl font-bold">{scores.total} / 50</div>
-              <p className="mt-1 text-sm text-muted-foreground">{meta.description}</p>
+              <p className="text-muted-foreground mt-1 text-sm">
+                {meta.description}
+              </p>
             </div>
           </div>
         </CardContent>
@@ -62,27 +64,16 @@ export function SkillCheckResultView({
             <SkillRadarChart scores={scores} />
             {/* 軸の点は0-10で保存し、表示だけ配点スケール（合計50点の内訳）へ換算する */}
             <dl className="mt-3 grid grid-cols-5 gap-1 text-center text-xs">
-              {[
-                { k: "構成", v: scores.structure, w: ESSAY_SCORE_WEIGHTS.structure },
-                { k: "論理", v: scores.logic, w: ESSAY_SCORE_WEIGHTS.logic },
-                { k: "表現", v: scores.expression, w: ESSAY_SCORE_WEIGHTS.expression },
-                { k: "独自性", v: scores.originality, w: ESSAY_SCORE_WEIGHTS.originality },
-                {
-                  k: "成熟度",
-                  v: scores.reasoningMaturity,
-                  w: ESSAY_SCORE_WEIGHTS.reasoningMaturity,
-                },
-                // 旧データ（成熟度なし）は軸ごと出さない
-              ].map((s) =>
-                typeof s.v !== "number" ? null : (
-                  <div key={s.k} className="min-w-0">
-                    <dt className="min-w-0 break-words text-muted-foreground">{s.k}</dt>
-                    <dd className="font-semibold tabular-nums">
-                      {axisPoints(s.v, s.w).toFixed(1)}/{s.w}
-                    </dd>
-                  </div>
-                )
-              )}
+              {essayScoreAxisRows(scores).map((row) => (
+                <div key={row.key} className="min-w-0">
+                  <dt className="text-muted-foreground min-w-0 break-words">
+                    {row.short}
+                  </dt>
+                  <dd className="font-semibold tabular-nums">
+                    {axisPoints(row.value, row.weight).toFixed(1)}/{row.weight}
+                  </dd>
+                </div>
+              ))}
             </dl>
           </CardContent>
         </Card>
@@ -102,7 +93,9 @@ export function SkillCheckResultView({
           <CardContent className="flex items-start gap-3 py-4">
             <Target className="mt-0.5 size-5 shrink-0 text-emerald-700" />
             <div>
-              <p className="text-sm font-semibold">次回スキルチェックまでの重点課題</p>
+              <p className="text-sm font-semibold">
+                次回スキルチェックまでの重点課題
+              </p>
               <p className="mt-1 text-sm">{feedback.priorityImprovement}</p>
             </div>
           </CardContent>
@@ -165,18 +158,26 @@ export function SkillCheckResultView({
         </CardHeader>
         <CardContent className="space-y-3">
           {question && (
-            <div className="rounded-md border bg-muted/40 p-3">
-              <p className="text-xs font-semibold text-muted-foreground">出題</p>
+            <div className="bg-muted/40 rounded-md border p-3">
+              <p className="text-muted-foreground text-xs font-semibold">
+                出題
+              </p>
               <p className="mt-1 text-sm font-medium">{question.title}</p>
-              <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
+              <p className="text-muted-foreground mt-1 text-sm leading-relaxed whitespace-pre-wrap">
                 {question.prompt}
               </p>
             </div>
           )}
-          <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+          <div className="text-muted-foreground flex flex-wrap gap-3 text-xs">
             <span>{result.wordCount}字</span>
-            <span>所要 {Math.max(1, Math.round(result.durationSec / 60))}分</span>
-            {question && <span>制限 {question.wordLimit}字 / {question.timeLimitMin}分</span>}
+            <span>
+              所要 {Math.max(1, Math.round(result.durationSec / 60))}分
+            </span>
+            {question && (
+              <span>
+                制限 {question.wordLimit}字 / {question.timeLimitMin}分
+              </span>
+            )}
           </div>
           {result.essayText?.trim() && comment ? (
             <InlineCommentableText
@@ -192,11 +193,13 @@ export function SkillCheckResultView({
               viewerRole={comment.viewerRole}
             />
           ) : result.essayText?.trim() ? (
-            <p className="max-h-96 overflow-y-auto whitespace-pre-wrap rounded-md border p-3 text-sm leading-relaxed">
+            <p className="max-h-96 overflow-y-auto rounded-md border p-3 text-sm leading-relaxed whitespace-pre-wrap">
               {result.essayText}
             </p>
           ) : (
-            <p className="text-sm text-muted-foreground">答案の本文が保存されていません。</p>
+            <p className="text-muted-foreground text-sm">
+              答案の本文が保存されていません。
+            </p>
           )}
         </CardContent>
       </Card>

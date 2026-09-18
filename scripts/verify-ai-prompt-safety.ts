@@ -218,7 +218,7 @@ const validEssayReview = {
     logic: 6,
     expression: 6,
     apAlignment: 0,
-    originality: 6,
+    responsiveness: 6,
     reasoningMaturity: 5,
   },
   feedback: {
@@ -271,7 +271,7 @@ const validSkillCheck = {
     structure: 6,
     logic: 6,
     expression: 6,
-    originality: 5,
+    responsiveness: 5,
     reasoningMaturity: 5,
   },
   feedback: {

@@ -97,7 +97,10 @@ export interface GrowthReport {
       structure: number;
       logic: number;
       expression: number;
-      originality: number;
+      /** 回答力（v23〜）。旧採点しか無い期間のレポートには入らない */
+      responsiveness?: number;
+      /** 独自性。v23 で廃止した旧軸 */
+      originality?: number;
       reasoningMaturity?: number;
       /** 旧レポート（v13以前）にのみ入っている */
       apAlignment?: number;

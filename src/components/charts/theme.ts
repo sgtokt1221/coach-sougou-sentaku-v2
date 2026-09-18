@@ -15,8 +15,8 @@ export const CHART_COLORS = {
  * chart-1 (teal 175°) と chart-5 (rose 30°) は hue がほぼ反対で識別しやすい。
  */
 export const SCORE_TYPE_COLORS = {
-  essay: "var(--chart-1)",       // teal — 小論文
-  interview: "var(--chart-5)",   // rose/red — 面接
+  essay: "var(--chart-1)", // teal — 小論文
+  interview: "var(--chart-5)", // rose/red — 面接
 } as const;
 
 /**
@@ -24,15 +24,17 @@ export const SCORE_TYPE_COLORS = {
  *
  * 以前は議論の成熟度が未定義の --chart-6 を参照しており、フォールバックで
  * 構成と同じ紫になっていた（凡例を見ないとどちらの線か分からなかった）。
- * 独自性(175)と表現力(145)も30°しか離れておらず、緑同士で見分けにくかった。
+ * 旧・独自性(175)と表現力(145)も30°しか離れておらず、緑同士で見分けにくかった。
  * いまは 280 / 75 / 235 / 175 / 340 / 30 で、隣接する色相を45°以上離している。
  */
 export const SCORE_COLORS = {
-  structure: "var(--chart-3)",         // 紫 280° — 構成
-  logic: "var(--chart-2)",             // 琥珀 75° — 論理性
-  expression: "var(--chart-6)",        // 青 235° — 表現力
-  apAlignment: "var(--chart-5)",       // 橙 30° — AP合致度
-  originality: "var(--chart-1)",       // ティール 175° — 独自性
+  structure: "var(--chart-3)", // 紫 280° — 構成
+  logic: "var(--chart-2)", // 琥珀 75° — 論理性
+  expression: "var(--chart-6)", // 青 235° — 表現力
+  apAlignment: "var(--chart-5)", // 橙 30° — AP合致度
+  responsiveness: "var(--chart-1)", // ティール 175° — 回答力
+  /** v23 で廃止。過去の答案の線を描くときだけ使う（回答力と同じ位置の色） */
+  originality: "var(--chart-1)",
   reasoningMaturity: "var(--chart-7)", // ピンク 340° — 議論の成熟度
 } as const;
 
@@ -44,13 +46,29 @@ export const SCORE_LINES = [
   { key: "structure", label: "構成", color: SCORE_COLORS.structure },
   { key: "logic", label: "論理性", color: SCORE_COLORS.logic },
   { key: "expression", label: "表現力", color: SCORE_COLORS.expression },
-  { key: "originality", label: "独自性", color: SCORE_COLORS.originality },
+  {
+    key: "responsiveness",
+    label: "回答力",
+    color: SCORE_COLORS.responsiveness,
+  },
   {
     key: "reasoningMaturity",
     label: "議論の成熟度",
     color: SCORE_COLORS.reasoningMaturity,
   },
 ] as const;
+
+/**
+ * v23（2026-09-18）で廃止した独自性の線。
+ *
+ * 回答力に置き換えたが、同じ線に繋ぐと軸の意味が途中で変わったグラフになる。
+ * 旧採点の答案が1件でもある画面でだけ、別系列として足す。
+ */
+export const LEGACY_SCORE_LINE = {
+  key: "originality",
+  label: "独自性（旧軸）",
+  color: SCORE_COLORS.originality,
+} as const;
 
 /** AP合致度（合計外）。志望校との相性を見る画面だけで足す */
 export const AP_SCORE_LINE = {

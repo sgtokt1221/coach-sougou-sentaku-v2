@@ -49,7 +49,10 @@ interface TrendDataPoint {
   logic: number;
   expression: number;
   apAlignment: number;
-  originality: number;
+  /** 回答力（v23〜）。旧採点の答案には無いので null で線を切る */
+  responsiveness: number | null;
+  /** 独自性。v23 で廃止した旧軸。新しい答案には無いので null */
+  originality: number | null;
   /** v7 で足した軸。それ以前の答案には無いので null で線を切る */
   reasoningMaturity: number | null;
 }
@@ -183,7 +186,8 @@ export default function GrowthPage() {
         logic: number;
         expression: number;
         apAlignment: number;
-        originality: number;
+        responsiveness?: number;
+        originality?: number;
         reasoningMaturity?: number;
       };
     }[];
@@ -281,7 +285,10 @@ export default function GrowthPage() {
           logic: s.logic ?? 0,
           expression: s.expression ?? 0,
           apAlignment: s.apAlignment ?? 0,
-          originality: s.originality ?? 0,
+          // 回答力(v23〜)と旧軸の独自性。無い方は null にして線を切る
+          responsiveness:
+            typeof s.responsiveness === "number" ? s.responsiveness : null,
+          originality: typeof s.originality === "number" ? s.originality : null,
           // 旧データには無い軸。0 で埋めず null にして線を切る
           reasoningMaturity:
             typeof s.reasoningMaturity === "number"

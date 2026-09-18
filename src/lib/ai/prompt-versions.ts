@@ -189,8 +189,20 @@ export const AI_PROMPT_VERSIONS = {
     //      毎回同じ弱点を報告し、回数が増えるほど圧が強まる自己強化ループに
     //      なっていた（本番7人187件で上位4ラベルが64%）。今回の答案で観測でき
     //      引用できるものだけを挙げ、見当たらなければ挙げないことを課した。
-    promptVersion: "essay-review-v22",
-    schemaVersion: "essay-review-output-v2",
+    // v23: 独自性(originality)の軸を廃止し、回答力(responsiveness＝設問が求めた
+    //      ことに答えているか)に置き換えた。総合型選抜の答案でまず見られるのは
+    //      「問われたことに答えているか」であり、着眼点の新しさではない。
+    //      配点は 構成12 / 論理性12 / 表現力11 / 回答力10 / 成熟度5 = 50点で据え置き。
+    //      回答力は taskFulfillment（subjectMatch と requirements）と一致させ、
+    //      サーバー側でも上限をかける（ずれ・一部限定なら3点以下、要求の欠落なら
+    //      5点以下。src/lib/essay/review-core.ts）。モデル任せだと「設問には
+    //      答えているが浅い」と「設問を外している」が同じ点になる。
+    //      保存キーも originality → responsiveness へ変える。同じキーのまま
+    //      意味だけ変えると、過去の答案のグラフが別軸の値を回答力として
+    //      表示してしまう（沈黙失敗）。過去データは「独自性（旧軸）」として
+    //      読み取り専用で残す。
+    promptVersion: "essay-review-v23",
+    schemaVersion: "essay-review-output-v3",
   },
   interviewScore: {
     // v1: 手書きJSONのパースから構造化出力(Zod)へ移行した（監査 P1-1）。

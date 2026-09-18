@@ -48,7 +48,11 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
-import { CHART_COLORS, CHART_ANIMATION, GRID_STYLE } from "@/components/charts/theme";
+import {
+  CHART_COLORS,
+  CHART_ANIMATION,
+  GRID_STYLE,
+} from "@/components/charts/theme";
 import { CustomTooltip } from "@/components/charts/CustomTooltip";
 import { CustomDot, CustomActiveDot } from "@/components/charts/CustomDot";
 
@@ -65,18 +69,22 @@ export default function AnalyticsPage() {
   const isSuperadmin = userProfile?.role === "superadmin";
   const [activeTab, setActiveTab] = useState<AnalyticsTab>("overview");
 
-  const { data: overview, isLoading: loadingOverview } = useAuthSWR<AnalyticsOverview>(
-    isSuperadmin ? "/api/admin/analytics/overview" : null
-  );
-  const { data: weaknesses, isLoading: loadingWeaknesses } = useAuthSWR<WeaknessAnalytics>(
-    isSuperadmin ? "/api/admin/analytics/weaknesses" : null
-  );
-  const { data: universityGap, isLoading: loadingGap } = useAuthSWR<UniversityGapResponse>(
-    isSuperadmin ? "/api/admin/analytics/university-gap" : null
-  );
-  const { data: monthlyTrends, isLoading: loadingTrends } = useAuthSWR<MonthlyTrendsResponse>(
-    isSuperadmin ? "/api/admin/analytics/monthly-trends" : null
-  );
+  const { data: overview, isLoading: loadingOverview } =
+    useAuthSWR<AnalyticsOverview>(
+      isSuperadmin ? "/api/admin/analytics/overview" : null
+    );
+  const { data: weaknesses, isLoading: loadingWeaknesses } =
+    useAuthSWR<WeaknessAnalytics>(
+      isSuperadmin ? "/api/admin/analytics/weaknesses" : null
+    );
+  const { data: universityGap, isLoading: loadingGap } =
+    useAuthSWR<UniversityGapResponse>(
+      isSuperadmin ? "/api/admin/analytics/university-gap" : null
+    );
+  const { data: monthlyTrends, isLoading: loadingTrends } =
+    useAuthSWR<MonthlyTrendsResponse>(
+      isSuperadmin ? "/api/admin/analytics/monthly-trends" : null
+    );
   const { data: weaknessPatterns, isLoading: loadingPatterns } =
     useAuthSWR<WeaknessPatternsResponse>(
       isSuperadmin ? "/api/admin/analytics/weakness-patterns" : null
@@ -85,9 +93,9 @@ export default function AnalyticsPage() {
   if (!isSuperadmin) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 p-12">
-        <ShieldAlert className="size-12 text-muted-foreground" />
+        <ShieldAlert className="text-muted-foreground size-12" />
         <h2 className="text-xl font-semibold">アクセス権限がありません</h2>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           このページはスーパー管理者のみアクセスできます。
         </p>
       </div>
@@ -98,7 +106,7 @@ export default function AnalyticsPage() {
     <div className="space-y-6 p-4 sm:p-6">
       <div>
         <h1 className="text-2xl font-bold">全体分析</h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           全生徒の学習傾向と弱点パターンを分析 (全テナント横断)
         </p>
       </div>
@@ -221,11 +229,11 @@ function OverviewContent({ overview }: { overview: AnalyticsOverview }) {
         {stats.map((stat) => (
           <Card key={stat.label}>
             <CardContent className="flex items-center gap-4 pt-6">
-              <div className={`rounded-lg bg-muted p-2 ${stat.color}`}>
+              <div className={`bg-muted rounded-lg p-2 ${stat.color}`}>
                 <stat.icon className="size-5" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">{stat.label}</p>
+                <p className="text-muted-foreground text-sm">{stat.label}</p>
                 <p className="text-2xl font-bold">{stat.value}</p>
               </div>
             </CardContent>
@@ -248,7 +256,12 @@ function OverviewContent({ overview }: { overview: AnalyticsOverview }) {
               />
               <XAxis dataKey="month" tickLine={false} axisLine={false} />
               <YAxis yAxisId="left" tickLine={false} axisLine={false} />
-              <YAxis yAxisId="right" orientation="right" tickLine={false} axisLine={false} />
+              <YAxis
+                yAxisId="right"
+                orientation="right"
+                tickLine={false}
+                axisLine={false}
+              />
               <Tooltip content={<CustomTooltip />} />
               <Legend wrapperStyle={{ fontSize: 12 }} />
               <Line
@@ -335,18 +348,25 @@ function OverviewContent({ overview }: { overview: AnalyticsOverview }) {
           <CardContent>
             <div className="space-y-3">
               {overview.universityPopularity.map((uni, i) => (
-                <div key={uni.universityName} className="flex items-center gap-3">
-                  <span className="w-6 text-right text-sm font-semibold text-muted-foreground">
+                <div
+                  key={uni.universityName}
+                  className="flex items-center gap-3"
+                >
+                  <span className="text-muted-foreground w-6 text-right text-sm font-semibold">
                     {i + 1}
                   </span>
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">{uni.universityName}</span>
-                      <span className="text-sm text-muted-foreground">{uni.count}件</span>
+                      <span className="text-sm font-medium">
+                        {uni.universityName}
+                      </span>
+                      <span className="text-muted-foreground text-sm">
+                        {uni.count}件
+                      </span>
                     </div>
-                    <div className="mt-1 h-2 w-full rounded-full bg-muted">
+                    <div className="bg-muted mt-1 h-2 w-full rounded-full">
                       <div
-                        className="h-2 rounded-full bg-primary"
+                        className="bg-primary h-2 rounded-full"
                         style={{
                           width: `${(uni.count / overview.universityPopularity[0].count) * 100}%`,
                         }}
@@ -370,34 +390,40 @@ function WeaknessContent({ weaknesses }: { weaknesses: WeaknessAnalytics }) {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Card>
           <CardContent className="flex items-center gap-4 pt-6">
-            <div className="rounded-lg bg-rose-100 dark:bg-rose-950/30 p-2 text-rose-600 dark:text-rose-400">
+            <div className="rounded-lg bg-rose-100 p-2 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400">
               <AlertTriangle className="size-5" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">弱点カテゴリ数</p>
-              <p className="text-2xl font-bold">{weaknesses.topWeaknesses.length}</p>
+              <p className="text-muted-foreground text-sm">弱点カテゴリ数</p>
+              <p className="text-2xl font-bold">
+                {weaknesses.topWeaknesses.length}
+              </p>
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="flex items-center gap-4 pt-6">
-            <div className="rounded-lg bg-emerald-100 dark:bg-emerald-950/30 p-2 text-emerald-600 dark:text-emerald-400">
+            <div className="rounded-lg bg-emerald-100 p-2 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400">
               <Clock className="size-5" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">平均改善日数</p>
-              <p className="text-2xl font-bold">{weaknesses.avgDaysToResolve}日</p>
+              <p className="text-muted-foreground text-sm">平均改善日数</p>
+              <p className="text-2xl font-bold">
+                {weaknesses.avgDaysToResolve}日
+              </p>
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="flex items-center gap-4 pt-6">
-            <div className="rounded-lg bg-primary/10 p-2 text-primary">
+            <div className="bg-primary/10 text-primary rounded-lg p-2">
               <Target className="size-5" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">改善パターン数</p>
-              <p className="text-2xl font-bold">{weaknesses.improvementPatterns.length}</p>
+              <p className="text-muted-foreground text-sm">改善パターン数</p>
+              <p className="text-2xl font-bold">
+                {weaknesses.improvementPatterns.length}
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -414,17 +440,17 @@ function WeaknessContent({ weaknesses }: { weaknesses: WeaknessAnalytics }) {
               {weaknesses.byCategory.map((c) => (
                 <div
                   key={c.categoryId}
-                  className="rounded-lg border bg-card p-3"
+                  className="bg-card rounded-lg border p-3"
                 >
-                  <div className="text-xs text-muted-foreground">{c.label}</div>
+                  <div className="text-muted-foreground text-xs">{c.label}</div>
                   <div className="mt-1 text-xl font-bold tabular-nums">
                     {c.totalCount}
-                    <span className="ml-1 text-xs font-normal text-muted-foreground">
+                    <span className="text-muted-foreground ml-1 text-xs font-normal">
                       回 / {c.studentCount}名
                     </span>
                   </div>
                   {c.topItems.length > 0 && (
-                    <ul className="mt-2 space-y-0.5 text-[10px] text-muted-foreground">
+                    <ul className="text-muted-foreground mt-2 space-y-0.5 text-[10px]">
                       {c.topItems.slice(0, 3).map((it) => (
                         <li key={it.area} className="truncate">
                           ・{it.area} ({it.count}回)
@@ -449,11 +475,19 @@ function WeaknessContent({ weaknesses }: { weaknesses: WeaknessAnalytics }) {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b text-left">
-                  <th className="pb-3 font-medium text-muted-foreground">#</th>
-                  <th className="pb-3 font-medium text-muted-foreground">弱点エリア</th>
-                  <th className="pb-3 font-medium text-muted-foreground">カテゴリ</th>
-                  <th className="pb-3 font-medium text-muted-foreground">指摘回数</th>
-                  <th className="pb-3 font-medium text-muted-foreground">改善率</th>
+                  <th className="text-muted-foreground pb-3 font-medium">#</th>
+                  <th className="text-muted-foreground pb-3 font-medium">
+                    弱点エリア
+                  </th>
+                  <th className="text-muted-foreground pb-3 font-medium">
+                    カテゴリ
+                  </th>
+                  <th className="text-muted-foreground pb-3 font-medium">
+                    指摘回数
+                  </th>
+                  <th className="text-muted-foreground pb-3 font-medium">
+                    改善率
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -462,12 +496,14 @@ function WeaknessContent({ weaknesses }: { weaknesses: WeaknessAnalytics }) {
                     <td className="py-3 font-medium">{i + 1}</td>
                     <td className="py-3">{w.area}</td>
                     <td className="py-3">
-                      <span className="rounded bg-muted px-2 py-0.5 text-[10px]">
+                      <span className="bg-muted rounded px-2 py-0.5 text-[10px]">
                         {w.categoryId === "structure" && "構成"}
                         {w.categoryId === "logic" && "論証"}
                         {w.categoryId === "expression" && "表現力"}
                         {w.categoryId === "apAlignment" && "AP合致"}
-                        {w.categoryId === "originality" && "独自性"}
+                        {w.categoryId === "responsiveness" && "回答力"}
+                        {w.categoryId === "reasoningMaturity" && "議論の成熟度"}
+                        {w.categoryId === "originality" && "独自性（旧軸）"}
                         {w.categoryId === "other" && "その他"}
                         {!w.categoryId && "—"}
                       </span>
@@ -475,7 +511,7 @@ function WeaknessContent({ weaknesses }: { weaknesses: WeaknessAnalytics }) {
                     <td className="py-3">{w.count}回</td>
                     <td className="py-3">
                       <div className="flex items-center gap-2">
-                        <div className="h-2 w-16 rounded-full bg-muted">
+                        <div className="bg-muted h-2 w-16 rounded-full">
                           <div
                             className={`h-2 rounded-full ${
                               w.improvementRate >= 70
@@ -514,8 +550,12 @@ function WeaknessContent({ weaknesses }: { weaknesses: WeaknessAnalytics }) {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <Badge variant="outline">成功率 {p.successRate}%</Badge>
-                    <Badge variant="outline">平均 {p.avgSubmissions}回提出</Badge>
-                    <Badge variant="outline">{p.avgDaysToImprove}日で改善</Badge>
+                    <Badge variant="outline">
+                      平均 {p.avgSubmissions}回提出
+                    </Badge>
+                    <Badge variant="outline">
+                      {p.avgDaysToImprove}日で改善
+                    </Badge>
                   </div>
                 </CardContent>
               </Card>
@@ -536,20 +576,32 @@ function WeaknessContent({ weaknesses }: { weaknesses: WeaknessAnalytics }) {
                 <h4 className="mb-2 font-semibold">{gap.universityName}</h4>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div>
-                    <p className="mb-1 text-xs font-medium text-muted-foreground">求められるスキル</p>
+                    <p className="text-muted-foreground mb-1 text-xs font-medium">
+                      求められるスキル
+                    </p>
                     <div className="flex flex-wrap gap-1">
                       {gap.requiredSkills.map((skill) => (
-                        <Badge key={skill} variant="secondary" className="text-xs">
+                        <Badge
+                          key={skill}
+                          variant="secondary"
+                          className="text-xs"
+                        >
                           {skill}
                         </Badge>
                       ))}
                     </div>
                   </div>
                   <div>
-                    <p className="mb-1 text-xs font-medium text-muted-foreground">生徒の弱点ギャップ</p>
+                    <p className="text-muted-foreground mb-1 text-xs font-medium">
+                      生徒の弱点ギャップ
+                    </p>
                     <div className="flex flex-wrap gap-1">
                       {gap.studentGap.map((g) => (
-                        <Badge key={g} variant="destructive" className="text-xs">
+                        <Badge
+                          key={g}
+                          variant="destructive"
+                          className="text-xs"
+                        >
                           {g}
                         </Badge>
                       ))}
@@ -570,8 +622,10 @@ function WeaknessContent({ weaknesses }: { weaknesses: WeaknessAnalytics }) {
  * ======================================== */
 function UniversityGapContent({ data }: { data: UniversityGapResponse }) {
   const statusColors = {
-    green: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400",
-    yellow: "bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400",
+    green:
+      "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400",
+    yellow:
+      "bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400",
     red: "bg-rose-100 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400",
   };
   const statusLabels = {
@@ -584,8 +638,8 @@ function UniversityGapContent({ data }: { data: UniversityGapResponse }) {
     return (
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-12">
-          <GraduationCap className="mb-3 size-10 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">データがありません</p>
+          <GraduationCap className="text-muted-foreground mb-3 size-10" />
+          <p className="text-muted-foreground text-sm">データがありません</p>
         </CardContent>
       </Card>
     );
@@ -596,26 +650,28 @@ function UniversityGapContent({ data }: { data: UniversityGapResponse }) {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Card>
           <CardContent className="flex items-center gap-4 pt-6">
-            <div className="rounded-lg bg-primary/10 p-2 text-primary">
+            <div className="bg-primary/10 text-primary rounded-lg p-2">
               <GraduationCap className="size-5" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">分析大学数</p>
+              <p className="text-muted-foreground text-sm">分析大学数</p>
               <p className="text-2xl font-bold">{data.gaps.length}</p>
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="flex items-center gap-4 pt-6">
-            <div className="rounded-lg bg-rose-100 dark:bg-rose-950/30 p-2 text-rose-600 dark:text-rose-400">
+            <div className="rounded-lg bg-rose-100 p-2 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400">
               <AlertTriangle className="size-5" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">要注意</p>
+              <p className="text-muted-foreground text-sm">要注意</p>
               <p className="text-2xl font-bold">
-                {data.gaps.filter((g) =>
-                  g.gapAnalysis.some((a) => a.status === "red")
-                ).length}
+                {
+                  data.gaps.filter((g) =>
+                    g.gapAnalysis.some((a) => a.status === "red")
+                  ).length
+                }
                 校
               </p>
             </div>
@@ -623,15 +679,17 @@ function UniversityGapContent({ data }: { data: UniversityGapResponse }) {
         </Card>
         <Card>
           <CardContent className="flex items-center gap-4 pt-6">
-            <div className="rounded-lg bg-emerald-100 dark:bg-emerald-950/30 p-2 text-emerald-600 dark:text-emerald-400">
+            <div className="rounded-lg bg-emerald-100 p-2 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400">
               <CheckCircle2 className="size-5" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">順調</p>
+              <p className="text-muted-foreground text-sm">順調</p>
               <p className="text-2xl font-bold">
-                {data.gaps.filter((g) =>
-                  g.gapAnalysis.every((a) => a.status === "green")
-                ).length}
+                {
+                  data.gaps.filter((g) =>
+                    g.gapAnalysis.every((a) => a.status === "green")
+                  ).length
+                }
                 校
               </p>
             </div>
@@ -653,9 +711,9 @@ function UniversityGapContent({ data }: { data: UniversityGapResponse }) {
                 <CardTitle className="text-base">
                   {gap.universityName} - {gap.facultyName}
                 </CardTitle>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  対象生徒: {gap.studentCount}名 | 添削平均: {gap.avgEssayScore}/50 | 面接平均:{" "}
-                  {gap.avgInterviewScore}/40
+                <p className="text-muted-foreground mt-1 text-xs">
+                  対象生徒: {gap.studentCount}名 | 添削平均: {gap.avgEssayScore}
+                  /50 | 面接平均: {gap.avgInterviewScore}/40
                 </p>
               </div>
               <Badge
@@ -669,11 +727,21 @@ function UniversityGapContent({ data }: { data: UniversityGapResponse }) {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b text-left">
-                      <th className="pb-2 font-medium text-muted-foreground">評価項目</th>
-                      <th className="pb-2 text-right font-medium text-muted-foreground">生徒平均</th>
-                      <th className="pb-2 text-right font-medium text-muted-foreground">必要水準</th>
-                      <th className="pb-2 text-right font-medium text-muted-foreground">ギャップ</th>
-                      <th className="pb-2 text-right font-medium text-muted-foreground">ステータス</th>
+                      <th className="text-muted-foreground pb-2 font-medium">
+                        評価項目
+                      </th>
+                      <th className="text-muted-foreground pb-2 text-right font-medium">
+                        生徒平均
+                      </th>
+                      <th className="text-muted-foreground pb-2 text-right font-medium">
+                        必要水準
+                      </th>
+                      <th className="text-muted-foreground pb-2 text-right font-medium">
+                        ギャップ
+                      </th>
+                      <th className="text-muted-foreground pb-2 text-right font-medium">
+                        ステータス
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -728,14 +796,17 @@ function ScoreDistributionContent() {
 
   const params = new URLSearchParams({ type: "both", period });
   const { data, isLoading } = useAuthSWR<ScoreDistributionResponse>(
-    `/api/admin/analytics/score-distribution?${params.toString()}`,
+    `/api/admin/analytics/score-distribution?${params.toString()}`
   );
 
   return (
     <>
       <div className="flex flex-wrap items-center gap-3">
-        <span className="text-sm text-muted-foreground">期間:</span>
-        <Select value={period} onValueChange={(v: string | null) => setPeriod(v ?? "all")}>
+        <span className="text-muted-foreground text-sm">期間:</span>
+        <Select
+          value={period}
+          onValueChange={(v: string | null) => setPeriod(v ?? "all")}
+        >
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="期間" />
           </SelectTrigger>
@@ -808,17 +879,17 @@ function ScoreDistributionCard({
         >
           <Icon className="size-4" />
           <span>{label} スコア分布</span>
-          <span className="text-xs font-normal text-muted-foreground">
+          <span className="text-muted-foreground text-xs font-normal">
             (最大 {maxScore} 点)
           </span>
-          <span className="ml-auto text-xs font-normal text-muted-foreground">
+          <span className="text-muted-foreground ml-auto text-xs font-normal">
             {total} 件
           </span>
         </CardTitle>
       </CardHeader>
       <CardContent className="min-w-0">
         {total === 0 ? (
-          <div className="flex h-[280px] items-center justify-center text-sm text-muted-foreground">
+          <div className="text-muted-foreground flex h-[280px] items-center justify-center text-sm">
             この期間のデータはありません
           </div>
         ) : (
@@ -849,7 +920,7 @@ function ScoreDistributionCard({
                 />
               </BarChart>
             </ResponsiveContainer>
-            <div className="mt-2 flex flex-wrap justify-center gap-3 text-xs text-muted-foreground">
+            <div className="text-muted-foreground mt-2 flex flex-wrap justify-center gap-3 text-xs">
               {data.map((d) => (
                 <span key={d.range}>
                   {d.range}: {d.percentage}%
@@ -871,8 +942,8 @@ function MonthlyTrendsContent({ data }: { data: MonthlyTrendsResponse }) {
     return (
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-12">
-          <TrendingUp className="mb-3 size-10 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">データがありません</p>
+          <TrendingUp className="text-muted-foreground mb-3 size-10" />
+          <p className="text-muted-foreground text-sm">データがありません</p>
         </CardContent>
       </Card>
     );
@@ -883,10 +954,16 @@ function MonthlyTrendsContent({ data }: { data: MonthlyTrendsResponse }) {
     month: t.month.slice(5), // "2026-04" -> "04"
   }));
 
-  const totalSubmissions = data.trends.reduce((sum, t) => sum + t.submissionCount, 0);
+  const totalSubmissions = data.trends.reduce(
+    (sum, t) => sum + t.submissionCount,
+    0
+  );
   const avgStudents =
     data.trends.length > 0
-      ? Math.round(data.trends.reduce((sum, t) => sum + t.studentCount, 0) / data.trends.length)
+      ? Math.round(
+          data.trends.reduce((sum, t) => sum + t.studentCount, 0) /
+            data.trends.length
+        )
       : 0;
 
   return (
@@ -894,33 +971,33 @@ function MonthlyTrendsContent({ data }: { data: MonthlyTrendsResponse }) {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Card>
           <CardContent className="flex items-center gap-4 pt-6">
-            <div className="rounded-lg bg-primary/10 p-2 text-primary">
+            <div className="bg-primary/10 text-primary rounded-lg p-2">
               <FileText className="size-5" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">総提出数</p>
+              <p className="text-muted-foreground text-sm">総提出数</p>
               <p className="text-2xl font-bold">{totalSubmissions}</p>
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="flex items-center gap-4 pt-6">
-            <div className="rounded-lg bg-indigo-100 dark:bg-indigo-950/30 p-2 text-indigo-600 dark:text-indigo-400">
+            <div className="rounded-lg bg-indigo-100 p-2 text-indigo-600 dark:bg-indigo-950/30 dark:text-indigo-400">
               <Users className="size-5" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">月平均生徒数</p>
+              <p className="text-muted-foreground text-sm">月平均生徒数</p>
               <p className="text-2xl font-bold">{avgStudents}</p>
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="flex items-center gap-4 pt-6">
-            <div className="rounded-lg bg-emerald-100 dark:bg-emerald-950/30 p-2 text-emerald-600 dark:text-emerald-400">
+            <div className="rounded-lg bg-emerald-100 p-2 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400">
               <TrendingUp className="size-5" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">期間</p>
+              <p className="text-muted-foreground text-sm">期間</p>
               <p className="text-2xl font-bold">{data.trends.length}ヶ月</p>
             </div>
           </CardContent>
@@ -939,14 +1016,24 @@ function MonthlyTrendsContent({ data }: { data: MonthlyTrendsResponse }) {
                 stroke={GRID_STYLE.stroke}
                 opacity={GRID_STYLE.opacity}
               />
-              <XAxis dataKey="month" tickLine={false} axisLine={false} fontSize={12} />
+              <XAxis
+                dataKey="month"
+                tickLine={false}
+                axisLine={false}
+                fontSize={12}
+              />
               <YAxis
                 yAxisId="left"
                 tickLine={false}
                 axisLine={false}
                 fontSize={12}
                 domain={[0, 100]}
-                label={{ value: "スコア", angle: -90, position: "insideLeft", style: { fontSize: 11 } }}
+                label={{
+                  value: "スコア",
+                  angle: -90,
+                  position: "insideLeft",
+                  style: { fontSize: 11 },
+                }}
               />
               <YAxis
                 yAxisId="right"
@@ -954,7 +1041,12 @@ function MonthlyTrendsContent({ data }: { data: MonthlyTrendsResponse }) {
                 tickLine={false}
                 axisLine={false}
                 fontSize={12}
-                label={{ value: "件数", angle: 90, position: "insideRight", style: { fontSize: 11 } }}
+                label={{
+                  value: "件数",
+                  angle: 90,
+                  position: "insideRight",
+                  style: { fontSize: 11 },
+                }}
               />
               <Tooltip content={<CustomTooltip />} />
               <Legend wrapperStyle={{ fontSize: 12 }} />
@@ -1008,12 +1100,19 @@ function MonthlyTrendsContent({ data }: { data: MonthlyTrendsResponse }) {
  * ======================================== */
 function WeaknessPatternsContent({ data }: { data: WeaknessPatternsResponse }) {
   const [sortKey, setSortKey] = useState<
-    "occurrenceCount" | "resolutionRate" | "avgResolutionDays" | "affectedStudents"
+    | "occurrenceCount"
+    | "resolutionRate"
+    | "avgResolutionDays"
+    | "affectedStudents"
   >("occurrenceCount");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   const handleSort = (
-    key: "occurrenceCount" | "resolutionRate" | "avgResolutionDays" | "affectedStudents"
+    key:
+      | "occurrenceCount"
+      | "resolutionRate"
+      | "avgResolutionDays"
+      | "affectedStudents"
   ) => {
     if (sortKey === key) {
       setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
@@ -1032,8 +1131,10 @@ function WeaknessPatternsContent({ data }: { data: WeaknessPatternsResponse }) {
     return (
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-12">
-          <Target className="mb-3 size-10 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">弱点パターンデータがありません</p>
+          <Target className="text-muted-foreground mb-3 size-10" />
+          <p className="text-muted-foreground text-sm">
+            弱点パターンデータがありません
+          </p>
         </CardContent>
       </Card>
     );
@@ -1045,44 +1146,46 @@ function WeaknessPatternsContent({ data }: { data: WeaknessPatternsResponse }) {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardContent className="flex items-center gap-4 pt-6">
-            <div className="rounded-lg bg-rose-100 dark:bg-rose-950/30 p-2 text-rose-600 dark:text-rose-400">
+            <div className="rounded-lg bg-rose-100 p-2 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400">
               <AlertTriangle className="size-5" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">総弱点検出数</p>
+              <p className="text-muted-foreground text-sm">総弱点検出数</p>
               <p className="text-2xl font-bold">{data.totalWeaknesses}</p>
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="flex items-center gap-4 pt-6">
-            <div className="rounded-lg bg-emerald-100 dark:bg-emerald-950/30 p-2 text-emerald-600 dark:text-emerald-400">
+            <div className="rounded-lg bg-emerald-100 p-2 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400">
               <CheckCircle2 className="size-5" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">全体解決率</p>
-              <p className="text-2xl font-bold">{data.overallResolutionRate}%</p>
+              <p className="text-muted-foreground text-sm">全体解決率</p>
+              <p className="text-2xl font-bold">
+                {data.overallResolutionRate}%
+              </p>
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="flex items-center gap-4 pt-6">
-            <div className="rounded-lg bg-amber-100 dark:bg-amber-950/30 p-2 text-amber-600 dark:text-amber-400">
+            <div className="rounded-lg bg-amber-100 p-2 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400">
               <Clock className="size-5" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">平均解決日数</p>
+              <p className="text-muted-foreground text-sm">平均解決日数</p>
               <p className="text-2xl font-bold">{data.avgResolutionDays}日</p>
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="flex items-center gap-4 pt-6">
-            <div className="rounded-lg bg-primary/10 p-2 text-primary">
+            <div className="bg-primary/10 text-primary rounded-lg p-2">
               <Target className="size-5" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">パターン数</p>
+              <p className="text-muted-foreground text-sm">パターン数</p>
               <p className="text-2xl font-bold">{data.patterns.length}</p>
             </div>
           </CardContent>
@@ -1099,9 +1202,11 @@ function WeaknessPatternsContent({ data }: { data: WeaknessPatternsResponse }) {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b text-left">
-                  <th className="pb-3 font-medium text-muted-foreground">弱点</th>
+                  <th className="text-muted-foreground pb-3 font-medium">
+                    弱点
+                  </th>
                   <th
-                    className="cursor-pointer pb-3 text-right font-medium text-muted-foreground hover:text-foreground"
+                    className="text-muted-foreground hover:text-foreground cursor-pointer pb-3 text-right font-medium"
                     onClick={() => handleSort("occurrenceCount")}
                   >
                     <span className="inline-flex items-center gap-1">
@@ -1109,11 +1214,11 @@ function WeaknessPatternsContent({ data }: { data: WeaknessPatternsResponse }) {
                       <ArrowUpDown className="size-3" />
                     </span>
                   </th>
-                  <th className="hidden pb-3 text-right font-medium text-muted-foreground sm:table-cell">
+                  <th className="text-muted-foreground hidden pb-3 text-right font-medium sm:table-cell">
                     解決数
                   </th>
                   <th
-                    className="cursor-pointer pb-3 text-right font-medium text-muted-foreground hover:text-foreground"
+                    className="text-muted-foreground hover:text-foreground cursor-pointer pb-3 text-right font-medium"
                     onClick={() => handleSort("resolutionRate")}
                   >
                     <span className="inline-flex items-center gap-1">
@@ -1122,7 +1227,7 @@ function WeaknessPatternsContent({ data }: { data: WeaknessPatternsResponse }) {
                     </span>
                   </th>
                   <th
-                    className="hidden cursor-pointer pb-3 text-right font-medium text-muted-foreground hover:text-foreground md:table-cell"
+                    className="text-muted-foreground hover:text-foreground hidden cursor-pointer pb-3 text-right font-medium md:table-cell"
                     onClick={() => handleSort("avgResolutionDays")}
                   >
                     <span className="inline-flex items-center gap-1">
@@ -1131,7 +1236,7 @@ function WeaknessPatternsContent({ data }: { data: WeaknessPatternsResponse }) {
                     </span>
                   </th>
                   <th
-                    className="hidden cursor-pointer pb-3 text-right font-medium text-muted-foreground hover:text-foreground lg:table-cell"
+                    className="text-muted-foreground hover:text-foreground hidden cursor-pointer pb-3 text-right font-medium lg:table-cell"
                     onClick={() => handleSort("affectedStudents")}
                   >
                     <span className="inline-flex items-center gap-1">
@@ -1150,7 +1255,11 @@ function WeaknessPatternsContent({ data }: { data: WeaknessPatternsResponse }) {
                         {p.relatedUniversities.length > 0 && (
                           <div className="mt-1 flex flex-wrap gap-1">
                             {p.relatedUniversities.slice(0, 3).map((uni) => (
-                              <Badge key={uni} variant="outline" className="text-[10px]">
+                              <Badge
+                                key={uni}
+                                variant="outline"
+                                className="text-[10px]"
+                              >
                                 {uni}
                               </Badge>
                             ))}
@@ -1164,10 +1273,12 @@ function WeaknessPatternsContent({ data }: { data: WeaknessPatternsResponse }) {
                       </div>
                     </td>
                     <td className="py-3 text-right">{p.occurrenceCount}</td>
-                    <td className="hidden py-3 text-right sm:table-cell">{p.resolvedCount}</td>
+                    <td className="hidden py-3 text-right sm:table-cell">
+                      {p.resolvedCount}
+                    </td>
                     <td className="py-3 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <div className="hidden h-2 w-12 rounded-full bg-muted sm:block">
+                        <div className="bg-muted hidden h-2 w-12 rounded-full sm:block">
                           <div
                             className={`h-2 rounded-full ${
                               p.resolutionRate >= 70
@@ -1176,7 +1287,9 @@ function WeaknessPatternsContent({ data }: { data: WeaknessPatternsResponse }) {
                                   ? "bg-amber-500"
                                   : "bg-rose-500"
                             }`}
-                            style={{ width: `${Math.min(p.resolutionRate, 100)}%` }}
+                            style={{
+                              width: `${Math.min(p.resolutionRate, 100)}%`,
+                            }}
                           />
                         </div>
                         <span
@@ -1192,8 +1305,12 @@ function WeaknessPatternsContent({ data }: { data: WeaknessPatternsResponse }) {
                         </span>
                       </div>
                     </td>
-                    <td className="hidden py-3 text-right md:table-cell">{p.avgResolutionDays}日</td>
-                    <td className="hidden py-3 text-right lg:table-cell">{p.affectedStudents}名</td>
+                    <td className="hidden py-3 text-right md:table-cell">
+                      {p.avgResolutionDays}日
+                    </td>
+                    <td className="hidden py-3 text-right lg:table-cell">
+                      {p.affectedStudents}名
+                    </td>
                   </tr>
                 ))}
               </tbody>

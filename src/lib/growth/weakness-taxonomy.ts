@@ -65,8 +65,10 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     keywords: ["序論", "本論", "バランス", "配分", "比率", "構成のバランス"],
   },
   {
+    // id は本番の弱点レコードに canonicalId として保存済みなので変えない。
+    // v23 で採点軸を回答力にしたため、カテゴリだけ responsiveness へ移した。
     id: "structure.off_topic",
-    category: "structure",
+    category: "responsiveness",
     label: "設問・テーマから論点がずれている",
     keywords: [
       "設問",
@@ -244,22 +246,36 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     ],
   },
 
-  // ---- 独自性 (originality) ----
+  // ---- 回答力 (responsiveness) ----
   {
-    id: "originality.no_experience",
-    category: "originality",
-    label: "自分の経験・具体例が薄い",
+    id: "responsiveness.missing_requirement",
+    category: "responsiveness",
+    label: "設問が求めた要素に答えていない",
     keywords: [
-      "経験",
-      "体験",
-      "エピソード",
-      "具体例",
-      "事例",
-      "実体験",
-      "具体性がな",
+      "設問が求め",
+      "求められている",
+      "問われている",
+      "問いに答え",
+      "答えていな",
+      "比較していな",
+      "触れていない",
+      "条件を満た",
+      "指定された",
     ],
   },
+
+  // ---- 旧・独自性 (v23 で廃止。id は保存済みなので変えない) ----
   {
+    // v22 まで「自分の経験・具体例が薄い」。経験の有無は評価しないと決めたので
+    // （2026-09-17 のユーザー指摘）、根拠の具体性の話として logic に寄せ、
+    // 経験・体験・実体験のキーワードは外した。
+    id: "originality.no_experience",
+    category: "logic",
+    label: "根拠が一般論で具体に乏しい",
+    keywords: ["具体例", "事例", "具体性がな", "一般論"],
+  },
+  {
+    // v23 で独自性の採点をやめたので、新しくは付かない。旧レコードの表示用。
     id: "originality.cliche",
     category: "originality",
     label: "視点がありきたりで独自性に欠ける",
@@ -274,8 +290,9 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     ],
   },
   {
+    // 具体策・制度設計の欠如は独自性ではなく論の中身の話なので logic へ移した
     id: "originality.abstract",
-    category: "originality",
+    category: "logic",
     label: "抽象的で具体性に欠ける",
     keywords: [
       "抽象",
@@ -467,6 +484,7 @@ const STOP_LABELS = new Set([
   "logic",
   "expression",
   "apalignment",
+  "responsiveness",
   "originality",
   "reasoningmaturity",
   "other",

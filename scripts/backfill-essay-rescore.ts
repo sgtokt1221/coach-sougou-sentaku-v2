@@ -47,7 +47,7 @@ if (!getApps().length) {
 const db = getFirestore();
 
 const vec = (s: Partial<EssayScores>) =>
-  `${s.structure}/${s.logic}/${s.expression}/${s.apAlignment}/${s.originality}`;
+  `${s.structure}/${s.logic}/${s.expression}/${s.apAlignment}/${s.responsiveness}`;
 
 async function loadAdmissionPolicy(
   universityId: string | undefined,
@@ -167,7 +167,9 @@ async function main() {
 
   console.log(`\n成功 ${ok}件 / スキップ ${skipped}件 / 失敗 ${failed}件`);
   if (!isWrite) {
-    console.log("dry-run のため書き込みはしていない。実行するには --write を付ける。");
+    console.log(
+      "dry-run のため書き込みはしていない。実行するには --write を付ける。"
+    );
   }
 }
 

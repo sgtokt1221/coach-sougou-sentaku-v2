@@ -137,7 +137,8 @@ export interface StudentDetail {
     logic: number;
     expression: number;
     apAlignment: number;
-    originality: number;
+    /** 回答力（v23〜）。旧採点しか無ければ null */
+    responsiveness: number | null;
   };
   /** 直近 interviews (個人面接モード) の 5 軸平均 (0-10)。スキル俯瞰レーダー用 */
   interviewCategoryAverages?: {
@@ -211,7 +212,10 @@ export interface ScoreTrendPoint {
   logic: number;
   expression: number;
   apAlignment: number;
-  originality: number;
+  /** 回答力（v23〜）。旧採点の答案には無いので null */
+  responsiveness: number | null;
+  /** 独自性。v23 で廃止した旧軸。新しい答案には無いので null */
+  originality: number | null;
   /**
    * 議論の成熟度。v7 で足した軸なので、それ以前の答案には無い。
    * 未評価は null にしてグラフに線を引かせない（0点として描くと

@@ -24,7 +24,7 @@ export const SkillCheckOutputSchema = z.object({
     structure: z.number().int().min(0).max(10),
     logic: z.number().int().min(0).max(10),
     expression: z.number().int().min(0).max(10),
-    originality: z.number().int().min(0).max(10),
+    responsiveness: z.number().int().min(0).max(10),
     reasoningMaturity: z.number().int().min(0).max(10),
   }),
   feedback: z.object({

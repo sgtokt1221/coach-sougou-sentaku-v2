@@ -1,3 +1,4 @@
+import type { EssayCategoryKey } from "@/lib/growth/weakness-category";
 export interface WeaknessRecord {
   area: string;
   count: number;
@@ -18,14 +19,7 @@ export interface WeaknessRecord {
    * AI が直接出力できない場合は categorizeWeakness(area) で
    * 書き込み時に自動付与される。
    */
-  categoryId?:
-    | "structure"
-    | "logic"
-    | "expression"
-    | "apAlignment"
-    | "originality"
-    | "reasoningMaturity"
-    | "other";
+  categoryId?: EssayCategoryKey;
   /**
    * Phase 5: 正規タクソノミー ID (例: "logic.leap")。
    * これが一致する弱点は表記ゆれに関わらず 1 本に統合される。
