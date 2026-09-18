@@ -1,10 +1,11 @@
 /**
- * 既存の答案を、新しい採点軸（essay-review-v7）で採点し直す。
+ * 既存の答案を、いまの採点軸で採点し直す。
  *
- * v7 で軸構成が変わったため、古い答案とは満点も軸の意味も違う:
- *   旧: 構成/論理性/表現力/AP合致度/独自性 = 50点（AP無しは40点）
- *   新: 構成/論理性/表現力/独自性/議論の成熟度 = 50点（APは合計外の補助指標）
- * 混ざったままだと平均・ランク・成長グラフが比較不能になる。
+ * 軸が変わるたびに使う。混ざったままだと平均・ランク・成長グラフが比較不能になる。
+ *   v7:  AP合致度を合計から外し、議論の成熟度を足した
+ *   v14: 軸ごとに配点を付けた（構成12/論理12/表現11/独自性5/成熟度10）
+ *   v23: 独自性をやめ、回答力（設問に答えているか）に置き換えた
+ *        （構成12/論理12/表現11/回答力10/成熟度5）
  *
  * 保存時と同じ条件（questionContext + 学部AP）で採点し直し、
  * scores / feedback を上書きする。旧スコアは scoresBeforeV7 に退避するので
@@ -127,7 +128,7 @@ async function main() {
       console.log(
         `${d.id}  ${String(e.topic ?? "(お題なし)").slice(0, 20)}\n` +
           `  旧 ${before.total}点（AP ${before.apAlignment ?? "-"}）\n` +
-          `  新 ${after.total}点（成熟度 ${after.reasoningMaturity} / AP ${after.apAlignment ?? "未評価"}）`,
+          `  新 ${after.total}点（回答力 ${after.responsiveness} / 成熟度 ${after.reasoningMaturity} / AP ${after.apAlignment ?? "未評価"}）`,
       );
 
       if (APPLY) {
@@ -139,6 +140,8 @@ async function main() {
             ...(e.scoresBeforeV7 ? {} : { scoresBeforeV7: before }),
             // v14（配点の重み付け）の直前スコア。v7 の退避とは別に持つ
             ...(e.scoresBeforeV14 ? {} : { scoresBeforeV14: before }),
+            // v23（独自性→回答力）の直前スコア。旧軸の値はここにだけ残る
+            ...(e.scoresBeforeV23 ? {} : { scoresBeforeV23: before }),
             rescoredAt: new Date().toISOString(),
           },
           { merge: true },
