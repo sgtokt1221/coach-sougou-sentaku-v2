@@ -15,13 +15,30 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, ArrowUpDown, Users, UserPlus, Filter, TrendingUp, TrendingDown, Minus, CheckCircle2, AlertCircle, GraduationCap, RotateCcw, ChevronRight } from "lucide-react";
+import {
+  Search,
+  ArrowUpDown,
+  Users,
+  UserPlus,
+  Filter,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  CheckCircle2,
+  AlertCircle,
+  GraduationCap,
+  RotateCcw,
+  ChevronRight,
+} from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { motion, useReducedMotion } from "framer-motion";
 import { useAuthSWR } from "@/lib/api/swr";
 import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
 import type { StudentListItem } from "@/lib/types/admin";
-import { StudentUnviewedBadge, useUnviewedSubmissions } from "@/components/admin/UnviewedSubmissions";
+import {
+  StudentUnviewedBadge,
+  useUnviewedSubmissions,
+} from "@/components/admin/UnviewedSubmissions";
 import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils/avatar";
@@ -61,7 +78,7 @@ function scoreTrendIcon(trend: StudentListItem["scoreTrend"]) {
     case "down":
       return <TrendingDown className="size-4 text-rose-500" />;
     case "flat":
-      return <Minus className="size-4 text-muted-foreground" />;
+      return <Minus className="text-muted-foreground size-4" />;
     default:
       return <span className="text-muted-foreground">-</span>;
   }
@@ -94,7 +111,7 @@ function weaknessTrendIndicator(trend: StudentListItem["weaknessTrend"]) {
       return (
         <span
           title="弱点は横ばい"
-          className="inline-flex items-center gap-0.5 text-[11px] text-muted-foreground"
+          className="text-muted-foreground inline-flex items-center gap-0.5 text-[11px]"
         >
           <Minus className="size-3" />
           横ばい
@@ -110,7 +127,7 @@ function Monogram({ kind }: { kind: "essay" | "interview" }) {
   const isEssay = kind === "essay";
   return (
     <span
-      className={`inline-flex size-4 shrink-0 items-center justify-center rounded text-[10px] font-bold leading-none ${
+      className={`inline-flex size-4 shrink-0 items-center justify-center rounded text-[10px] leading-none font-bold ${
         isEssay
           ? "bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300"
           : "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300"
@@ -154,7 +171,8 @@ export default function AdminStudentsPage() {
       if (!res.ok) throw new Error("更新に失敗しました");
       toast.success(`${displayName} を浪人として復帰させました`);
       await mutate(
-        (key) => typeof key === "string" && key.startsWith("/api/admin/students"),
+        (key) =>
+          typeof key === "string" && key.startsWith("/api/admin/students")
       );
     } catch (err) {
       console.error(err);
@@ -168,9 +186,11 @@ export default function AdminStudentsPage() {
   if (universityFilter) params.set("university", universityFilter);
   // 未確認件数は一覧で1回だけ取得し、各行へ渡す（行ごとに取ると行数ぶん叩く）
   const { data: unviewed } = useUnviewedSubmissions();
-  const { data: rawData, isLoading, error: studentsError } = useAuthSWR<StudentListItem[]>(
-    `/api/admin/students?${params.toString()}`
-  );
+  const {
+    data: rawData,
+    isLoading,
+    error: studentsError,
+  } = useAuthSWR<StudentListItem[]>(`/api/admin/students?${params.toString()}`);
 
   // ステータスフィルタをクライアントサイドで適用
   // 「卒業生」 タブ以外では卒業生を非表示にし、 通常リストを汚さない
@@ -179,13 +199,18 @@ export default function AdminStudentsPage() {
 
     const visible =
       statusFilter === "graduated"
-        ? rawData.filter((s) => isGraduated(s.grade, s.gradeUpdatedAt, s.isRonin))
-        : rawData.filter((s) => !isGraduated(s.grade, s.gradeUpdatedAt, s.isRonin));
+        ? rawData.filter((s) =>
+            isGraduated(s.grade, s.gradeUpdatedAt, s.isRonin)
+          )
+        : rawData.filter(
+            (s) => !isGraduated(s.grade, s.gradeUpdatedAt, s.isRonin)
+          );
 
     if (statusFilter === "all" || statusFilter === "graduated") return visible;
 
     if (statusFilter === "attention") return visible.filter(needsAttention);
-    if (statusFilter === "healthy") return visible.filter((s) => !needsAttention(s));
+    if (statusFilter === "healthy")
+      return visible.filter((s) => !needsAttention(s));
     return visible;
   }, [rawData, statusFilter]);
 
@@ -193,7 +218,7 @@ export default function AdminStudentsPage() {
   const tabCounts = useMemo(() => {
     const all = rawData ?? [];
     const active = all.filter(
-      (s) => !isGraduated(s.grade, s.gradeUpdatedAt, s.isRonin),
+      (s) => !isGraduated(s.grade, s.gradeUpdatedAt, s.isRonin)
     );
     const attention = active.filter(needsAttention).length;
     return {
@@ -228,14 +253,16 @@ export default function AdminStudentsPage() {
       .then((d) => {
         const map: Record<string, string> = {};
         for (const r of d.resolved ?? []) {
-          map[`${r.universityId}:${r.facultyId}`] = `${r.universityName} ${r.facultyName}`;
+          map[`${r.universityId}:${r.facultyId}`] =
+            `${r.universityName} ${r.facultyName}`;
         }
         setUniNameMap(map);
       })
       .catch(() => {});
   }, [allCompoundIds]);
 
-  const resolveUniName = (compoundId: string) => uniNameMap[compoundId] ?? compoundId;
+  const resolveUniName = (compoundId: string) =>
+    uniNameMap[compoundId] ?? compoundId;
 
   const universityOptions = useMemo(() => {
     return allCompoundIds
@@ -256,7 +283,9 @@ export default function AdminStudentsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">生徒一覧</h1>
-          <p className="text-sm text-muted-foreground">全生徒の状況を確認できます</p>
+          <p className="text-muted-foreground text-sm">
+            全生徒の状況を確認できます
+          </p>
         </div>
         <Button onClick={() => router.push("/admin/students/new")}>
           <UserPlus className="mr-2 size-4" />
@@ -267,9 +296,9 @@ export default function AdminStudentsPage() {
       {/* Search, Filter & Sort */}
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-1 flex-wrap items-center gap-3 max-w-2xl min-w-0">
-            <div className="relative flex-1 max-w-md min-w-0">
-              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <div className="flex max-w-2xl min-w-0 flex-1 flex-wrap items-center gap-3">
+            <div className="relative max-w-md min-w-0 flex-1">
+              <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
               <Input
                 placeholder="名前・メールで検索..."
                 value={search}
@@ -279,10 +308,12 @@ export default function AdminStudentsPage() {
             </div>
             <Select
               value={universityFilter}
-              onValueChange={(v) => setUniversityFilter(v === "all" ? "" : (v ?? ""))}
+              onValueChange={(v) =>
+                setUniversityFilter(v === "all" ? "" : (v ?? ""))
+              }
             >
               <SelectTrigger className="w-full sm:w-[200px]">
-                <Filter className="mr-2 size-4 text-muted-foreground" />
+                <Filter className="text-muted-foreground mr-2 size-4" />
                 <SelectValue placeholder="志望校で絞り込み" />
               </SelectTrigger>
               <SelectContent>
@@ -296,7 +327,7 @@ export default function AdminStudentsPage() {
             </Select>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <ArrowUpDown className="size-4 shrink-0 text-muted-foreground" />
+            <ArrowUpDown className="text-muted-foreground size-4 shrink-0" />
             {sortOptions.map((opt) => (
               <Button
                 key={opt.key}
@@ -312,8 +343,10 @@ export default function AdminStudentsPage() {
 
         {/* Status Filter */}
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm font-medium text-muted-foreground">ステータス:</span>
-          <div className="flex max-w-full items-center gap-1 overflow-x-auto p-1 bg-muted rounded-lg">
+          <span className="text-muted-foreground text-sm font-medium">
+            ステータス:
+          </span>
+          <div className="bg-muted flex max-w-full items-center gap-1 overflow-x-auto rounded-lg p-1">
             <Button
               variant={statusFilter === "all" ? "default" : "ghost"}
               size="sm"
@@ -355,7 +388,10 @@ export default function AdminStudentsPage() {
 
       {/* Table */}
       {studentsError && (
-        <ApiErrorBanner error={studentsError} title="生徒一覧の取得に失敗しました" />
+        <ApiErrorBanner
+          error={studentsError}
+          title="生徒一覧の取得に失敗しました"
+        />
       )}
       <Card>
         <CardContent className="p-0">
@@ -368,8 +404,14 @@ export default function AdminStudentsPage() {
           ) : students.length === 0 ? (
             <EmptyState
               icon={Users}
-              title={search ? "該当する生徒が見つかりません" : "生徒がまだ登録されていません"}
-              description={search ? "検索条件を変更してお試しください" : undefined}
+              title={
+                search
+                  ? "該当する生徒が見つかりません"
+                  : "生徒がまだ登録されていません"
+              }
+              description={
+                search ? "検索条件を変更してお試しください" : undefined
+              }
             />
           ) : (
             <>
@@ -379,61 +421,93 @@ export default function AdminStudentsPage() {
                   <div
                     key={s.uid}
                     onClick={() => router.push(`/admin/students/${s.uid}`)}
-                    className={`cursor-pointer p-3 ${
-                      s.hasOverdueHomework
-                        ? "border-l-4 border-l-red-500 bg-red-50 dark:bg-red-950/30"
-                        : "active:bg-accent"
-                    }`}
+                    // 期限切れは下の「宿題提出期限切れ」バッジで示す。左色帯は使わない
+                    className="active:bg-accent cursor-pointer p-3"
                   >
                     <div className="flex items-center gap-2.5">
                       <Avatar size="sm">
-                        <AvatarImage src={s.photoURL ?? undefined} alt={s.displayName} />
-                        <AvatarFallback>{getInitials(s.displayName)}</AvatarFallback>
+                        <AvatarImage
+                          src={s.photoURL ?? undefined}
+                          alt={s.displayName}
+                        />
+                        <AvatarFallback>
+                          {getInitials(s.displayName)}
+                        </AvatarFallback>
                       </Avatar>
                       <div className="min-w-0 flex-1">
                         <p className="truncate font-medium">{s.displayName}</p>
-                        <p className="truncate text-xs text-muted-foreground">{s.email}</p>
+                        <p className="text-muted-foreground truncate text-xs">
+                          {s.email}
+                        </p>
                       </div>
-                      <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                      <ChevronRight className="text-muted-foreground size-4 shrink-0" />
                     </div>
 
                     {s.targetUniversities.length > 0 && (
-                      <p className="mt-2 truncate text-xs text-muted-foreground">
+                      <p className="text-muted-foreground mt-2 truncate text-xs">
                         志望: {resolveUniName(s.targetUniversities[0])}
-                        {s.targetUniversities.length > 1 ? ` 他${s.targetUniversities.length - 1}校` : ""}
+                        {s.targetUniversities.length > 1
+                          ? ` 他${s.targetUniversities.length - 1}校`
+                          : ""}
                       </p>
                     )}
 
                     <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs">
                       <span className="inline-flex items-center gap-1">
-                        <span className="text-[10px] text-muted-foreground">小論</span>
+                        <span className="text-muted-foreground text-[10px]">
+                          小論
+                        </span>
                         {s.currentSkillRank ? (
-                          <SkillRankBadge rank={s.currentSkillRank} size="sm" animate={false} />
+                          <SkillRankBadge
+                            rank={s.currentSkillRank}
+                            size="sm"
+                            animate={false}
+                          />
                         ) : (
                           <span className="text-muted-foreground">未</span>
                         )}
                         {s.latestScore !== null && (
-                          <span className={`font-bold ${scoreColor(s.latestScore)}`}>{s.latestScore}</span>
+                          <span
+                            className={`font-bold ${scoreColor(s.latestScore)}`}
+                          >
+                            {s.latestScore}
+                          </span>
                         )}
                         {scoreTrendIcon(s.scoreTrend)}
                       </span>
                       <span className="inline-flex items-center gap-1">
-                        <span className="text-[10px] text-muted-foreground">面接</span>
+                        <span className="text-muted-foreground text-[10px]">
+                          面接
+                        </span>
                         {s.currentInterviewRank ? (
-                          <SkillRankBadge rank={s.currentInterviewRank} size="sm" animate={false} />
+                          <SkillRankBadge
+                            rank={s.currentInterviewRank}
+                            size="sm"
+                            animate={false}
+                          />
                         ) : (
                           <span className="text-muted-foreground">未</span>
                         )}
                         {s.latestInterviewScore != null && (
-                          <span className={`font-bold ${scoreColor(s.latestInterviewScore)}`}>{s.latestInterviewScore}</span>
+                          <span
+                            className={`font-bold ${scoreColor(s.latestInterviewScore)}`}
+                          >
+                            {s.latestInterviewScore}
+                          </span>
                         )}
                         {scoreTrendIcon(s.interviewScoreTrend ?? null)}
                       </span>
                       {s.activeWeaknessCount > 0 && (
                         <span className="inline-flex items-center gap-1">
-                          <span className="text-[10px] text-muted-foreground">弱点</span>
+                          <span className="text-muted-foreground text-[10px]">
+                            弱点
+                          </span>
                           <Badge
-                            variant={s.activeWeaknessCount >= 5 ? "destructive" : "secondary"}
+                            variant={
+                              s.activeWeaknessCount >= 5
+                                ? "destructive"
+                                : "secondary"
+                            }
                             className="px-1.5 py-0 text-[10px]"
                           >
                             {s.activeWeaknessCount}
@@ -442,17 +516,24 @@ export default function AdminStudentsPage() {
                       )}
                     </div>
 
-                    <div className="mt-2 flex flex-wrap items-center gap-x-3 text-[11px] text-muted-foreground">
-                      <span>ログイン {s.lastSeenAt ? formatLastSeen(s.lastSeenAt) : "—"}</span>
+                    <div className="text-muted-foreground mt-2 flex flex-wrap items-center gap-x-3 text-[11px]">
+                      <span>
+                        ログイン{" "}
+                        {s.lastSeenAt ? formatLastSeen(s.lastSeenAt) : "—"}
+                      </span>
                       {s.lastActivity && (
                         <span>
-                          {ACTIVITY_LABEL[s.lastActivity.type]} {formatJoinElapsed(s.lastActivity.at)}
+                          {ACTIVITY_LABEL[s.lastActivity.type]}{" "}
+                          {formatJoinElapsed(s.lastActivity.at)}
                         </span>
                       )}
                     </div>
 
                     {s.hasOverdueHomework && (
-                      <Badge variant="destructive" className="mt-2 gap-1 text-[10px] font-bold">
+                      <Badge
+                        variant="destructive"
+                        className="mt-2 gap-1 text-[10px] font-bold"
+                      >
                         <AlertCircle className="size-3" />
                         宿題提出期限切れ
                       </Badge>
@@ -476,193 +557,250 @@ export default function AdminStudentsPage() {
               </div>
 
               {/* タブレット以上: テーブル */}
-              <div className="hidden sm:block overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b bg-muted/50">
-                    <th className="px-4 py-3 text-left font-medium">名前</th>
-                    <th className="px-4 py-3 text-left font-medium hidden sm:table-cell">志望校</th>
-                    <th className="px-4 py-3 text-center font-medium">
-                      <span className="block text-[10px] uppercase tracking-wide text-muted-foreground">小論文</span>
-                      ランク
-                    </th>
-                    <th className="px-4 py-3 text-center font-medium hidden md:table-cell">
-                      <span className="block text-[10px] uppercase tracking-wide text-muted-foreground">面接</span>
-                      ランク
-                    </th>
-                    <th className="px-4 py-3 text-center font-medium">最新スコア</th>
-                    <th className="px-4 py-3 text-center font-medium hidden lg:table-cell">弱点</th>
-                    <th className="px-4 py-3 text-center font-medium">最終ログイン</th>
-                    <th className="px-4 py-3 text-center font-medium">最終活動</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {students.map((s, i) => {
-                    return (
-                      <motion.tr
-                        key={s.uid}
-                        initial={shouldReduceMotion ? false : { opacity: 0, y: 12 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.25, ease: "easeOut", delay: i * 0.05 }}
-                        className={`cursor-pointer border-b transition-colors ${
-                          s.hasOverdueHomework
-                            ? "border-l-4 border-l-red-500 bg-red-50 hover:bg-red-100 dark:bg-red-950/30 dark:hover:bg-red-950/50"
-                            : "hover:bg-accent"
-                        }`}
-                        onClick={() => router.push(`/admin/students/${s.uid}`)}
-                      >
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2.5">
-                            <Avatar size="sm">
-                              <AvatarImage src={s.photoURL ?? undefined} alt={s.displayName} />
-                              <AvatarFallback>{getInitials(s.displayName)}</AvatarFallback>
-                            </Avatar>
-                            <div className="min-w-0">
-                              <p className="flex items-center gap-1.5 font-medium">
-                                {s.displayName}
-                                {/* 自分がまだ開いていない提出物の件数 */}
-                                <StudentUnviewedBadge count={unviewed?.byStudent?.[s.uid] ?? 0} />
-                              </p>
-                              <p className="text-xs text-muted-foreground">{s.email}</p>
-                              {s.createdAt && (
-                                <p className="mt-0.5 text-[10px] text-muted-foreground">
-                                  加入 {formatJoinElapsed(s.createdAt)}
+              <div className="hidden overflow-x-auto sm:block">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-muted/50 border-b">
+                      <th className="px-4 py-3 text-left font-medium">名前</th>
+                      <th className="hidden px-4 py-3 text-left font-medium sm:table-cell">
+                        志望校
+                      </th>
+                      <th className="px-4 py-3 text-center font-medium">
+                        <span className="text-muted-foreground block text-[10px] tracking-wide uppercase">
+                          小論文
+                        </span>
+                        ランク
+                      </th>
+                      <th className="hidden px-4 py-3 text-center font-medium md:table-cell">
+                        <span className="text-muted-foreground block text-[10px] tracking-wide uppercase">
+                          面接
+                        </span>
+                        ランク
+                      </th>
+                      <th className="px-4 py-3 text-center font-medium">
+                        最新スコア
+                      </th>
+                      <th className="hidden px-4 py-3 text-center font-medium lg:table-cell">
+                        弱点
+                      </th>
+                      <th className="px-4 py-3 text-center font-medium">
+                        最終ログイン
+                      </th>
+                      <th className="px-4 py-3 text-center font-medium">
+                        最終活動
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {students.map((s, i) => {
+                      return (
+                        <motion.tr
+                          key={s.uid}
+                          initial={
+                            shouldReduceMotion ? false : { opacity: 0, y: 12 }
+                          }
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{
+                            duration: 0.25,
+                            ease: "easeOut",
+                            delay: i * 0.05,
+                          }}
+                          // 期限切れは行内の「宿題提出期限切れ」バッジで示す
+                          className="hover:bg-accent cursor-pointer border-b transition-colors"
+                          onClick={() =>
+                            router.push(`/admin/students/${s.uid}`)
+                          }
+                        >
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2.5">
+                              <Avatar size="sm">
+                                <AvatarImage
+                                  src={s.photoURL ?? undefined}
+                                  alt={s.displayName}
+                                />
+                                <AvatarFallback>
+                                  {getInitials(s.displayName)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="min-w-0">
+                                <p className="flex items-center gap-1.5 font-medium">
+                                  {s.displayName}
+                                  {/* 自分がまだ開いていない提出物の件数 */}
+                                  <StudentUnviewedBadge
+                                    count={unviewed?.byStudent?.[s.uid] ?? 0}
+                                  />
                                 </p>
-                              )}
+                                <p className="text-muted-foreground text-xs">
+                                  {s.email}
+                                </p>
+                                {s.createdAt && (
+                                  <p className="text-muted-foreground mt-0.5 text-[10px]">
+                                    加入 {formatJoinElapsed(s.createdAt)}
+                                  </p>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 hidden sm:table-cell">
-                          {s.targetUniversities.length > 0 ? (
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-xs">{resolveUniName(s.targetUniversities[0])}</span>
-                              {s.targetUniversities.length > 1 && (
-                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                                  他{s.targetUniversities.length - 1}校
-                                </Badge>
-                              )}
-                            </div>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">-</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          {s.currentSkillRank ? (
-                            <SkillRankBadge
-                              rank={s.currentSkillRank}
-                              size="sm"
-                              animate={false}
-                            />
-                          ) : (
-                            <span className="text-xs text-muted-foreground">未</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-center hidden md:table-cell">
-                          {s.currentInterviewRank ? (
-                            <SkillRankBadge
-                              rank={s.currentInterviewRank}
-                              size="sm"
-                              animate={false}
-                            />
-                          ) : (
-                            <span className="text-xs text-muted-foreground">未</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex flex-col items-center gap-1 text-sm">
-                            {/* 推移はスコアの真横に出す。独立した列だと視線が
-                                離れてどちらの点数の話か分かりにくかった。 */}
-                            <span className="inline-flex items-center gap-1">
-                              <Monogram kind="essay" />
-                              {s.latestScore !== null ? (
-                                <span className={`font-bold ${scoreColor(s.latestScore)}`}>
-                                  {s.latestScore}
+                          </td>
+                          <td className="hidden px-4 py-3 sm:table-cell">
+                            {s.targetUniversities.length > 0 ? (
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xs">
+                                  {resolveUniName(s.targetUniversities[0])}
                                 </span>
-                              ) : (
-                                <span className="text-muted-foreground">-</span>
-                              )}
-                              {scoreTrendIcon(s.scoreTrend)}
-                            </span>
-                            <span className="inline-flex items-center gap-1">
-                              <Monogram kind="interview" />
-                              {s.latestInterviewScore != null ? (
-                                <span className={`font-bold ${scoreColor(s.latestInterviewScore)}`}>
-                                  {s.latestInterviewScore}
-                                </span>
-                              ) : (
-                                <span className="text-muted-foreground">-</span>
-                              )}
-                              {scoreTrendIcon(s.interviewScoreTrend ?? null)}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-center hidden lg:table-cell">
-                          <div className="flex flex-col items-center gap-1">
-                            {s.activeWeaknessCount > 0 ? (
-                              <Badge
-                                variant={s.activeWeaknessCount >= 5 ? "destructive" : "secondary"}
-                                className={[
-                                  "text-xs transition-transform hover:scale-110",
-                                  s.activeWeaknessCount >= 5 ? "animate-pulse" : "",
-                                ].join(" ")}
-                              >
-                                {s.activeWeaknessCount}
-                              </Badge>
-                            ) : (
-                              <span className="text-muted-foreground">0</span>
-                            )}
-                            {weaknessTrendIndicator(s.weaknessTrend)}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <span className="text-xs text-muted-foreground">
-                            {s.lastSeenAt ? formatLastSeen(s.lastSeenAt) : "—"}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <div className="flex flex-col items-center gap-1.5">
-                            {s.hasOverdueHomework && (
-                              <Badge
-                                variant="destructive"
-                                className="gap-1 text-[10px] font-bold animate-pulse"
-                              >
-                                <AlertCircle className="size-3" />
-                                宿題提出期限切れ
-                              </Badge>
-                            )}
-                            {s.lastActivity ? (
-                              <div className="leading-tight">
-                                <span className="text-xs font-medium">
-                                  {ACTIVITY_LABEL[s.lastActivity.type]}
-                                </span>
-                                <span className="block text-[10px] text-muted-foreground">
-                                  {formatJoinElapsed(s.lastActivity.at)}
-                                </span>
+                                {s.targetUniversities.length > 1 && (
+                                  <Badge
+                                    variant="outline"
+                                    className="px-1.5 py-0 text-[10px]"
+                                  >
+                                    他{s.targetUniversities.length - 1}校
+                                  </Badge>
+                                )}
                               </div>
                             ) : (
-                              <span className="text-xs text-muted-foreground">—</span>
+                              <span className="text-muted-foreground text-xs">
+                                -
+                              </span>
                             )}
-                            {statusFilter === "graduated" && (
-                              <Button
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            {s.currentSkillRank ? (
+                              <SkillRankBadge
+                                rank={s.currentSkillRank}
                                 size="sm"
-                                variant="outline"
-                                className="h-7 gap-1 text-xs"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  void markAsRonin(s.uid, s.displayName);
-                                }}
-                              >
-                                <RotateCcw className="size-3" />
-                                現役に戻す
-                              </Button>
+                                animate={false}
+                              />
+                            ) : (
+                              <span className="text-muted-foreground text-xs">
+                                未
+                              </span>
                             )}
-                          </div>
-                        </td>
-                      </motion.tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                          </td>
+                          <td className="hidden px-4 py-3 text-center md:table-cell">
+                            {s.currentInterviewRank ? (
+                              <SkillRankBadge
+                                rank={s.currentInterviewRank}
+                                size="sm"
+                                animate={false}
+                              />
+                            ) : (
+                              <span className="text-muted-foreground text-xs">
+                                未
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex flex-col items-center gap-1 text-sm">
+                              {/* 推移はスコアの真横に出す。独立した列だと視線が
+                                離れてどちらの点数の話か分かりにくかった。 */}
+                              <span className="inline-flex items-center gap-1">
+                                <Monogram kind="essay" />
+                                {s.latestScore !== null ? (
+                                  <span
+                                    className={`font-bold ${scoreColor(s.latestScore)}`}
+                                  >
+                                    {s.latestScore}
+                                  </span>
+                                ) : (
+                                  <span className="text-muted-foreground">
+                                    -
+                                  </span>
+                                )}
+                                {scoreTrendIcon(s.scoreTrend)}
+                              </span>
+                              <span className="inline-flex items-center gap-1">
+                                <Monogram kind="interview" />
+                                {s.latestInterviewScore != null ? (
+                                  <span
+                                    className={`font-bold ${scoreColor(s.latestInterviewScore)}`}
+                                  >
+                                    {s.latestInterviewScore}
+                                  </span>
+                                ) : (
+                                  <span className="text-muted-foreground">
+                                    -
+                                  </span>
+                                )}
+                                {scoreTrendIcon(s.interviewScoreTrend ?? null)}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="hidden px-4 py-3 text-center lg:table-cell">
+                            <div className="flex flex-col items-center gap-1">
+                              {s.activeWeaknessCount > 0 ? (
+                                <Badge
+                                  variant={
+                                    s.activeWeaknessCount >= 5
+                                      ? "destructive"
+                                      : "secondary"
+                                  }
+                                  className={[
+                                    "text-xs transition-transform hover:scale-110",
+                                    s.activeWeaknessCount >= 5
+                                      ? "animate-pulse"
+                                      : "",
+                                  ].join(" ")}
+                                >
+                                  {s.activeWeaknessCount}
+                                </Badge>
+                              ) : (
+                                <span className="text-muted-foreground">0</span>
+                              )}
+                              {weaknessTrendIndicator(s.weaknessTrend)}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <span className="text-muted-foreground text-xs">
+                              {s.lastSeenAt
+                                ? formatLastSeen(s.lastSeenAt)
+                                : "—"}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <div className="flex flex-col items-center gap-1.5">
+                              {s.hasOverdueHomework && (
+                                <Badge
+                                  variant="destructive"
+                                  className="animate-pulse gap-1 text-[10px] font-bold"
+                                >
+                                  <AlertCircle className="size-3" />
+                                  宿題提出期限切れ
+                                </Badge>
+                              )}
+                              {s.lastActivity ? (
+                                <div className="leading-tight">
+                                  <span className="text-xs font-medium">
+                                    {ACTIVITY_LABEL[s.lastActivity.type]}
+                                  </span>
+                                  <span className="text-muted-foreground block text-[10px]">
+                                    {formatJoinElapsed(s.lastActivity.at)}
+                                  </span>
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground text-xs">
+                                  —
+                                </span>
+                              )}
+                              {statusFilter === "graduated" && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 gap-1 text-xs"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    void markAsRonin(s.uid, s.displayName);
+                                  }}
+                                >
+                                  <RotateCcw className="size-3" />
+                                  現役に戻す
+                                </Button>
+                              )}
+                            </div>
+                          </td>
+                        </motion.tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             </>
           )}

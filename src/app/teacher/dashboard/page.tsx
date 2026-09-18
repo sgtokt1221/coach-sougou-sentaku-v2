@@ -184,19 +184,16 @@ export default function TeacherDashboard() {
           <CardTitle>お知らせ</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="rounded border-l-4 border-sky-400 bg-sky-50 p-3">
-            <div className="text-sm font-medium text-sky-800">
-              シフト提出期限のお知らせ
-            </div>
-            <div className="mt-1 text-sm text-sky-700">
+          {/* 面で分けるときはベタ塗り（白地＋左色帯は使わない） */}
+          <div className="rounded bg-sky-800 p-3 text-white">
+            <div className="text-sm font-medium">シフト提出期限のお知らせ</div>
+            <div className="mt-1 text-sm text-sky-50">
               毎月25日までに翌月のシフトを提出してください。
             </div>
           </div>
-          <div className="rounded border-l-4 border-emerald-400 bg-emerald-50 p-3">
-            <div className="text-sm font-medium text-emerald-800">
-              システム更新
-            </div>
-            <div className="mt-1 text-sm text-emerald-700">
+          <div className="rounded bg-emerald-800 p-3 text-white">
+            <div className="text-sm font-medium">システム更新</div>
+            <div className="mt-1 text-sm text-emerald-50">
               新機能: セッション記録の音声転写機能が利用可能になりました。
             </div>
           </div>

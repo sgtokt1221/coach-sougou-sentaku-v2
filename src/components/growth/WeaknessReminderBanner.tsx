@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -17,50 +16,38 @@ import {
   getWeaknessReminderLevel,
 } from "@/lib/types/growth";
 import { authFetch } from "@/lib/api/client";
-import {
-  WeaknessSourceBadge,
-  sourceLeftBorder,
-} from "@/components/growth/WeaknessSourceBadge";
+import { WeaknessSourceBadge } from "@/components/growth/WeaknessSourceBadge";
 
 type WeaknessWithLevel = WeaknessRecord & { level: WeaknessReminderLevel };
 
+/**
+ * 段（要注意／警告／改善中／解決済み）はベタ塗りのチップで示す。
+ * 白地に左だけ色帯を立てたカードは使わない（線が増えるわりに段が区別できない）。
+ * chip は白文字が 4.5:1 を満たす濃さを選ぶ。
+ */
 const levelConfig: Record<
   WeaknessReminderLevel,
-  {
-    bg: string;
-    border: string;
-    badgeVariant: string;
-    label: string;
-    icon: React.ReactNode;
-  }
+  { chip: string; label: string; icon: React.ReactNode }
 > = {
   critical: {
-    bg: "bg-rose-50 dark:bg-rose-950/30",
-    border: "border-rose-200 dark:border-rose-800/50",
-    badgeVariant: "destructive",
+    chip: "bg-rose-700 text-white",
     label: "要注意",
-    icon: <AlertCircle className="size-4 text-rose-500" />,
+    icon: <AlertCircle className="size-3.5" />,
   },
   warning: {
-    bg: "bg-amber-50 dark:bg-amber-950/30",
-    border: "border-amber-200 dark:border-amber-800/50",
-    badgeVariant: "secondary",
+    chip: "bg-amber-700 text-white",
     label: "警告",
-    icon: <AlertTriangle className="size-4 text-amber-500" />,
+    icon: <AlertTriangle className="size-3.5" />,
   },
   improving: {
-    bg: "bg-emerald-50 dark:bg-emerald-950/30",
-    border: "border-emerald-200 dark:border-emerald-800/50",
-    badgeVariant: "secondary",
+    chip: "bg-emerald-700 text-white",
     label: "改善中",
-    icon: <TrendingUp className="size-4 text-emerald-500" />,
+    icon: <TrendingUp className="size-3.5" />,
   },
   resolved: {
-    bg: "bg-emerald-50 dark:bg-emerald-950/30",
-    border: "border-emerald-200 dark:border-emerald-800/50",
-    badgeVariant: "secondary",
+    chip: "bg-slate-600 text-white",
     label: "解決済み",
-    icon: <CheckCircle2 className="size-4 text-emerald-500" />,
+    icon: <CheckCircle2 className="size-3.5" />,
   },
 };
 
@@ -155,9 +142,14 @@ export function WeaknessReminderBanner({
           return (
             <div
               key={w.area}
-              className={`${cfg.bg} ${cfg.border} border border-l-4 ${sourceLeftBorder(w.source)} flex items-center gap-2 rounded-lg px-2.5 py-1.5`}
+              className="border-border/60 flex items-center gap-2 rounded-lg border px-2.5 py-1.5"
             >
-              {cfg.icon}
+              <span
+                className={`flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium ${cfg.chip}`}
+              >
+                {cfg.icon}
+                {cfg.label}
+              </span>
               <span className="flex-1 truncate text-xs font-medium">
                 {w.area}
               </span>
@@ -168,17 +160,16 @@ export function WeaknessReminderBanner({
           );
         }
         return (
-          <Card
-            key={w.area}
-            className={`${cfg.bg} ${cfg.border} border-l-4 ${sourceLeftBorder(w.source)}`}
-          >
+          <Card key={w.area}>
             <CardContent className="flex items-center gap-3 py-3">
-              {cfg.icon}
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="outline" className="text-xs">
+                  <span
+                    className={`flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium ${cfg.chip}`}
+                  >
+                    {cfg.icon}
                     {cfg.label}
-                  </Badge>
+                  </span>
                   <WeaknessSourceBadge source={w.source} />
                   <span className="text-sm font-medium">{w.area}</span>
                 </div>

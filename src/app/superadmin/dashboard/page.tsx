@@ -38,7 +38,11 @@ import {
   CartesianGrid,
   Legend,
 } from "recharts";
-import { CHART_COLORS, CHART_ANIMATION, GRID_STYLE } from "@/components/charts/theme";
+import {
+  CHART_COLORS,
+  CHART_ANIMATION,
+  GRID_STYLE,
+} from "@/components/charts/theme";
 import { CustomTooltip } from "@/components/charts/CustomTooltip";
 import { useAuthSWR } from "@/lib/api/swr";
 import type { SuperadminDashboardStats } from "@/lib/types/admin";
@@ -91,11 +95,14 @@ export default function SuperadminDashboard() {
             集計の取得に失敗しました
           </h2>
           <p className="mt-2 text-sm text-rose-700/80 dark:text-rose-300/80">
-            ダッシュボード値を 0 で表示すると誤解を生むため、 ここで停止しています。
-            ページをリロードしても回復しない場合は、 サーバーログを確認してください。
+            ダッシュボード値を 0 で表示すると誤解を生むため、
+            ここで停止しています。 ページをリロードしても回復しない場合は、
+            サーバーログを確認してください。
           </p>
           <pre className="mt-3 overflow-x-auto rounded bg-white/50 p-2 text-[11px] text-rose-900 dark:bg-black/30 dark:text-rose-200">
-            {statsError instanceof Error ? statsError.message : String(statsError)}
+            {statsError instanceof Error
+              ? statsError.message
+              : String(statsError)}
           </pre>
         </div>
       </div>
@@ -123,7 +130,7 @@ export default function SuperadminDashboard() {
   const isAllOrgs = selectedOrg === ALL_ORGS;
   const selectedOrgStat = isAllOrgs
     ? null
-    : stats.byOrganization.find((o) => o.orgId === selectedOrg) ?? null;
+    : (stats.byOrganization.find((o) => o.orgId === selectedOrg) ?? null);
   const view = isAllOrgs
     ? {
         totalAdmins: stats.totalAdmins,
@@ -151,9 +158,27 @@ export default function SuperadminDashboard() {
     color: string;
     bg: string;
   }[] = [
-    { label: "管理者数", value: view.totalAdmins, icon: Shield, color: "text-primary", bg: "bg-primary/10" },
-    { label: "講師数", value: view.totalTeachers, icon: Users, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-500/10" },
-    { label: "生徒数", value: view.totalStudents, icon: GraduationCap, color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-500/10" },
+    {
+      label: "管理者数",
+      value: view.totalAdmins,
+      icon: Shield,
+      color: "text-primary",
+      bg: "bg-primary/10",
+    },
+    {
+      label: "講師数",
+      value: view.totalTeachers,
+      icon: Users,
+      color: "text-emerald-600 dark:text-emerald-400",
+      bg: "bg-emerald-500/10",
+    },
+    {
+      label: "生徒数",
+      value: view.totalStudents,
+      icon: GraduationCap,
+      color: "text-amber-600 dark:text-amber-400",
+      bg: "bg-amber-500/10",
+    },
     // 未割当生徒は全塾ビューのみ意味を持つ (特定塾選択時は非表示)
     ...(isAllOrgs
       ? [
@@ -166,11 +191,26 @@ export default function SuperadminDashboard() {
           },
         ]
       : []),
-    { label: "平均スコア", value: view.avgEssayScore ?? "—", icon: TrendingUp, color: "text-sky-600 dark:text-sky-400", bg: "bg-sky-500/10" },
-    { label: "アクティブ率(30日)", value: `${activeRate}%`, icon: Clock, color: "text-violet-600 dark:text-violet-400", bg: "bg-violet-500/10" },
+    {
+      label: "平均スコア",
+      value: view.avgEssayScore ?? "—",
+      icon: TrendingUp,
+      color: "text-sky-600 dark:text-sky-400",
+      bg: "bg-sky-500/10",
+    },
+    {
+      label: "アクティブ率(30日)",
+      value: `${activeRate}%`,
+      icon: Clock,
+      color: "text-violet-600 dark:text-violet-400",
+      bg: "bg-violet-500/10",
+    },
   ];
 
-  const activityConfig: Record<string, { icon: React.ReactNode; border: string; bg: string }> = {
+  const activityConfig: Record<
+    string,
+    { icon: React.ReactNode; border: string; bg: string }
+  > = {
     essay_submit: {
       icon: <FileText className="size-4 text-sky-500" />,
       border: "border-l-sky-500",
@@ -194,7 +234,7 @@ export default function SuperadminDashboard() {
   };
 
   const defaultActivityConfig = {
-    icon: <Clock className="size-4 text-muted-foreground" />,
+    icon: <Clock className="text-muted-foreground size-4" />,
     border: "border-l-muted-foreground",
     bg: "bg-muted/30",
   };
@@ -215,7 +255,10 @@ export default function SuperadminDashboard() {
 
   // BarChart data for admin performance
   const barData = shownPerformance.map((a) => ({
-    name: a.displayName.length > 6 ? a.displayName.slice(0, 6) + "…" : a.displayName,
+    name:
+      a.displayName.length > 6
+        ? a.displayName.slice(0, 6) + "…"
+        : a.displayName,
     fullName: a.displayName,
     生徒数: a.studentCount,
   }));
@@ -223,7 +266,7 @@ export default function SuperadminDashboard() {
   // スコア推移: 全塾なら全体、特定塾ならその塾の推移 (なければ空)
   const shownScoreTrend = isAllOrgs
     ? stats.scoreTrend
-    : stats.scoreTrendByOrg[selectedOrg] ?? [];
+    : (stats.scoreTrendByOrg[selectedOrg] ?? []);
   const scoreTrendTitle = isAllOrgs
     ? "全体スコア推移（直近30日）"
     : `${selectedOrgStat?.orgName ?? "選択塾"}のスコア推移（直近30日）`;
@@ -233,7 +276,7 @@ export default function SuperadminDashboard() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">Superadmin ダッシュボード</h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             {isAllOrgs
               ? "システム全体の管理状況を確認できます"
               : `「${selectedOrgStat?.orgName ?? "選択塾"}」の状況を表示中`}
@@ -264,17 +307,21 @@ export default function SuperadminDashboard() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">{stat.label}</p>
+                  <p className="text-muted-foreground text-sm">{stat.label}</p>
                   <div className="flex items-center gap-2">
                     <p className="text-3xl font-bold">{stat.value}</p>
                     {stat.label === "未割当生徒" &&
                       typeof stat.value === "number" &&
                       stat.value > 0 && (
-                        <Badge variant="destructive" className="text-[10px]">要対応</Badge>
+                        <Badge variant="destructive" className="text-[10px]">
+                          要対応
+                        </Badge>
                       )}
                   </div>
                 </div>
-                <div className={`flex size-12 items-center justify-center rounded-full ${stat.bg}`}>
+                <div
+                  className={`flex size-12 items-center justify-center rounded-full ${stat.bg}`}
+                >
                   <stat.icon className={`size-6 ${stat.color}`} />
                 </div>
               </div>
@@ -334,23 +381,25 @@ export default function SuperadminDashboard() {
                   : 0;
               return (
                 <div key={f.key} className="rounded-lg border p-3">
-                  <p className="text-xs text-muted-foreground">{f.label}</p>
+                  <p className="text-muted-foreground text-xs">{f.label}</p>
                   <p className="mt-0.5 text-2xl font-bold tabular-nums">
                     {item.count}
-                    <span className="ml-1 text-xs font-normal text-muted-foreground">件</span>
+                    <span className="text-muted-foreground ml-1 text-xs font-normal">
+                      件
+                    </span>
                   </p>
                   <div className="mt-1.5 flex items-center gap-1.5">
-                    <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+                    <div className="bg-muted h-1.5 flex-1 overflow-hidden rounded-full">
                       <div
-                        className="h-full rounded-full bg-primary transition-all"
+                        className="bg-primary h-full rounded-full transition-all"
                         style={{ width: `${rate}%` }}
                       />
                     </div>
-                    <span className="text-[10px] tabular-nums text-muted-foreground">
+                    <span className="text-muted-foreground text-[10px] tabular-nums">
                       {rate}%
                     </span>
                   </div>
-                  <p className="mt-0.5 text-[10px] text-muted-foreground">
+                  <p className="text-muted-foreground mt-0.5 text-[10px]">
                     利用生徒 {item.students}名
                   </p>
                 </div>
@@ -371,21 +420,35 @@ export default function SuperadminDashboard() {
           </CardHeader>
           <CardContent className="space-y-4">
             {shownPerformance.length === 0 ? (
-              <p className="text-sm text-muted-foreground">データがありません</p>
+              <p className="text-muted-foreground text-sm">
+                データがありません
+              </p>
             ) : (
               <>
                 {/* BarChart */}
                 {barData.length > 0 && (
                   <div className="h-48 min-w-0">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={barData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
+                      <BarChart
+                        data={barData}
+                        margin={{ top: 5, right: 5, left: -20, bottom: 5 }}
+                      >
                         <CartesianGrid
                           strokeDasharray={GRID_STYLE.strokeDasharray}
                           stroke={GRID_STYLE.stroke}
                           opacity={GRID_STYLE.opacity}
                         />
-                        <XAxis dataKey="name" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-                        <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                        <XAxis
+                          dataKey="name"
+                          tick={{ fontSize: 11 }}
+                          tickLine={false}
+                          axisLine={false}
+                        />
+                        <YAxis
+                          tick={{ fontSize: 11 }}
+                          tickLine={false}
+                          axisLine={false}
+                        />
                         <Tooltip content={<CustomTooltip />} />
                         <Legend wrapperStyle={{ fontSize: 11 }} />
                         <Bar
@@ -405,30 +468,52 @@ export default function SuperadminDashboard() {
                 <div className="overflow-x-auto" data-allow-x-scroll>
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b bg-muted/50">
-                        <th className="px-4 py-2 text-left font-medium">名前</th>
-                        <th className="px-4 py-2 text-center font-medium">ロール</th>
-                        <th className="px-4 py-2 text-center font-medium">生徒数</th>
-                        <th className="px-4 py-2 text-center font-medium">平均スコア</th>
+                      <tr className="bg-muted/50 border-b">
+                        <th className="px-4 py-2 text-left font-medium">
+                          名前
+                        </th>
+                        <th className="px-4 py-2 text-center font-medium">
+                          ロール
+                        </th>
+                        <th className="px-4 py-2 text-center font-medium">
+                          生徒数
+                        </th>
+                        <th className="px-4 py-2 text-center font-medium">
+                          平均スコア
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
                       {shownPerformance.map((admin) => (
-                        <tr key={admin.uid} className="border-b hover:bg-accent/50">
+                        <tr
+                          key={admin.uid}
+                          className="hover:bg-accent/50 border-b"
+                        >
                           <td className="px-4 py-2">
-                            <Link href={`/superadmin/admins/${admin.uid}`} className="font-medium hover:underline">
+                            <Link
+                              href={`/superadmin/admins/${admin.uid}`}
+                              className="font-medium hover:underline"
+                            >
                               {admin.displayName}
                             </Link>
                           </td>
                           <td className="px-4 py-2 text-center">
-                            <Badge variant={admin.role === "admin" ? "default" : "secondary"}>
+                            <Badge
+                              variant={
+                                admin.role === "admin" ? "default" : "secondary"
+                              }
+                            >
                               {admin.role === "admin" ? "管理者" : "講師"}
                             </Badge>
                           </td>
-                          <td className="px-4 py-2 text-center">{admin.studentCount}</td>
+                          <td className="px-4 py-2 text-center">
+                            {admin.studentCount}
+                          </td>
                           <td className="px-4 py-2 text-center">
                             {admin.averageScore !== null ? (
-                              <span className="font-bold">{admin.averageScore}</span>
+                              <span className="font-bold">
+                                {admin.averageScore}
+                              </span>
                             ) : (
                               <span className="text-muted-foreground">-</span>
                             )}
@@ -453,29 +538,43 @@ export default function SuperadminDashboard() {
           </CardHeader>
           <CardContent>
             {stats.byOrganization.length === 0 ? (
-              <p className="text-sm text-muted-foreground">塾がありません</p>
+              <p className="text-muted-foreground text-sm">塾がありません</p>
             ) : (
               <div className="overflow-x-auto" data-allow-x-scroll>
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b bg-muted/50">
+                    <tr className="bg-muted/50 border-b">
                       <th className="px-3 py-2 text-left font-medium">塾</th>
-                      <th className="px-3 py-2 text-center font-medium">管理者</th>
-                      <th className="px-3 py-2 text-center font-medium">講師</th>
-                      <th className="px-3 py-2 text-center font-medium">生徒</th>
-                      <th className="px-3 py-2 text-center font-medium">平均</th>
-                      <th className="px-3 py-2 text-center font-medium">活動率</th>
+                      <th className="px-3 py-2 text-center font-medium">
+                        管理者
+                      </th>
+                      <th className="px-3 py-2 text-center font-medium">
+                        講師
+                      </th>
+                      <th className="px-3 py-2 text-center font-medium">
+                        生徒
+                      </th>
+                      <th className="px-3 py-2 text-center font-medium">
+                        平均
+                      </th>
+                      <th className="px-3 py-2 text-center font-medium">
+                        活動率
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {stats.byOrganization.map((o) => {
                       const rate =
                         o.studentCount > 0
-                          ? Math.round((o.activeStudentCount / o.studentCount) * 100)
+                          ? Math.round(
+                              (o.activeStudentCount / o.studentCount) * 100
+                            )
                           : 0;
                       const nameCell =
                         o.orgId === "__none__" ? (
-                          <span className="text-muted-foreground">{o.orgName}</span>
+                          <span className="text-muted-foreground">
+                            {o.orgName}
+                          </span>
                         ) : (
                           <Link
                             href={`/superadmin/organizations/${o.orgId}`}
@@ -485,14 +584,25 @@ export default function SuperadminDashboard() {
                           </Link>
                         );
                       return (
-                        <tr key={o.orgId} className="border-b hover:bg-accent/50">
+                        <tr
+                          key={o.orgId}
+                          className="hover:bg-accent/50 border-b"
+                        >
                           <td className="px-3 py-2">{nameCell}</td>
-                          <td className="px-3 py-2 text-center">{o.adminCount}</td>
-                          <td className="px-3 py-2 text-center">{o.teacherCount}</td>
-                          <td className="px-3 py-2 text-center">{o.studentCount}</td>
+                          <td className="px-3 py-2 text-center">
+                            {o.adminCount}
+                          </td>
+                          <td className="px-3 py-2 text-center">
+                            {o.teacherCount}
+                          </td>
+                          <td className="px-3 py-2 text-center">
+                            {o.studentCount}
+                          </td>
                           <td className="px-3 py-2 text-center">
                             {o.avgEssayScore !== null ? (
-                              <span className="font-bold">{o.avgEssayScore}</span>
+                              <span className="font-bold">
+                                {o.avgEssayScore}
+                              </span>
                             ) : (
                               <span className="text-muted-foreground">-</span>
                             )}
@@ -518,28 +628,42 @@ export default function SuperadminDashboard() {
           </CardHeader>
           <CardContent>
             {stats.recentActivity.length === 0 ? (
-              <p className="text-sm text-muted-foreground">アクティビティはありません</p>
+              <p className="text-muted-foreground text-sm">
+                アクティビティはありません
+              </p>
             ) : (
               <div className="space-y-2">
                 {stats.recentActivity.slice(0, 8).map((activity) => {
-                  const config = activityConfig[activity.type] ?? defaultActivityConfig;
+                  const config =
+                    activityConfig[activity.type] ?? defaultActivityConfig;
                   return (
                     <div
                       key={activity.id}
-                      className={`flex items-start gap-3 rounded-md border-l-4 p-3 ${config.border} ${config.bg}`}
+                      // 種類はアイコンの色で分かる。白地＋左色帯の積み重ねはしない
+                      className="border-border/60 flex items-start gap-3 rounded-md border p-3"
                     >
                       <div className="mt-0.5">{config.icon}</div>
-                      <div className="flex-1 min-w-0">
+                      <div className="min-w-0 flex-1">
                         <p className="text-sm">
                           {activity.studentName && (
-                            <span className="font-semibold">{activity.studentName}</span>
+                            <span className="font-semibold">
+                              {activity.studentName}
+                            </span>
                           )}
                           {activity.adminName && (
-                            <span className="text-xs text-muted-foreground"> ({activity.adminName})</span>
+                            <span className="text-muted-foreground text-xs">
+                              {" "}
+                              ({activity.adminName})
+                            </span>
                           )}
-                          <span className="text-muted-foreground"> {activity.description}</span>
+                          <span className="text-muted-foreground">
+                            {" "}
+                            {activity.description}
+                          </span>
                         </p>
-                        <p className="text-[11px] text-muted-foreground">{timeAgo(activity.timestamp)}</p>
+                        <p className="text-muted-foreground text-[11px]">
+                          {timeAgo(activity.timestamp)}
+                        </p>
                       </div>
                     </div>
                   );
@@ -561,15 +685,34 @@ export default function SuperadminDashboard() {
             </CardHeader>
             <CardContent>
               {shownScoreTrend.length === 0 ? (
-                <p className="text-sm text-muted-foreground">データがありません</p>
+                <p className="text-muted-foreground text-sm">
+                  データがありません
+                </p>
               ) : (
                 <div className="h-48 min-w-0">
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={shownScoreTrend} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
+                    <AreaChart
+                      data={shownScoreTrend}
+                      margin={{ top: 5, right: 5, left: -20, bottom: 5 }}
+                    >
                       <defs>
-                        <linearGradient id="scoreFill" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor={CHART_COLORS.primary} stopOpacity={0.3} />
-                          <stop offset="95%" stopColor={CHART_COLORS.primary} stopOpacity={0} />
+                        <linearGradient
+                          id="scoreFill"
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="5%"
+                            stopColor={CHART_COLORS.primary}
+                            stopOpacity={0.3}
+                          />
+                          <stop
+                            offset="95%"
+                            stopColor={CHART_COLORS.primary}
+                            stopOpacity={0}
+                          />
                         </linearGradient>
                       </defs>
                       <CartesianGrid
@@ -584,7 +727,12 @@ export default function SuperadminDashboard() {
                         tickLine={false}
                         axisLine={false}
                       />
-                      <YAxis tick={{ fontSize: 10 }} domain={["dataMin - 2", "dataMax + 2"]} tickLine={false} axisLine={false} />
+                      <YAxis
+                        tick={{ fontSize: 10 }}
+                        domain={["dataMin - 2", "dataMax + 2"]}
+                        tickLine={false}
+                        axisLine={false}
+                      />
                       <Tooltip content={<CustomTooltip />} />
                       <Area
                         type="monotone"
@@ -620,19 +768,19 @@ export default function SuperadminDashboard() {
                   <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
                     {stats.invitationSummary.pending}
                   </p>
-                  <p className="text-xs text-muted-foreground">有効</p>
+                  <p className="text-muted-foreground text-xs">有効</p>
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-muted-foreground">
+                  <p className="text-muted-foreground text-2xl font-bold">
                     {stats.invitationSummary.used}
                   </p>
-                  <p className="text-xs text-muted-foreground">使用済み</p>
+                  <p className="text-muted-foreground text-xs">使用済み</p>
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-rose-600 dark:text-rose-400">
                     {stats.invitationSummary.expired}
                   </p>
-                  <p className="text-xs text-muted-foreground">期限切れ</p>
+                  <p className="text-muted-foreground text-xs">期限切れ</p>
                 </div>
               </div>
             </CardContent>

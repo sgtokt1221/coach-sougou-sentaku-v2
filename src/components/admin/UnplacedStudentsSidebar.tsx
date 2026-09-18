@@ -33,9 +33,12 @@ interface UnplacedStudentsSidebarProps {
  */
 export default function UnplacedStudentsSidebar({
   students,
-  loading = false
+  loading = false,
 }: UnplacedStudentsSidebarProps) {
-  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, student: UnplacedStudent) => {
+  const handleDragStart = (
+    e: React.DragEvent<HTMLDivElement>,
+    student: UnplacedStudent
+  ) => {
     e.dataTransfer.setData("studentId", student.uid);
     e.dataTransfer.setData("studentName", student.displayName);
     e.dataTransfer.effectAllowed = "copy";
@@ -51,7 +54,10 @@ export default function UnplacedStudentsSidebar({
   }, [students]);
 
   const [filter, setFilter] = useState<UnplacedFilterValue>(EMPTY_FILTER);
-  const filtered = useMemo(() => applyUnplacedFilters(students, filter), [students, filter]);
+  const filtered = useMemo(
+    () => applyUnplacedFilters(students, filter),
+    [students, filter]
+  );
 
   const [nameMap, setNameMap] = useState<Record<string, string>>({});
   const idsKey = compoundIds.join(",");
@@ -62,7 +68,8 @@ export default function UnplacedStudentsSidebar({
       .then((d) => {
         const map: Record<string, string> = {};
         for (const r of d.resolved ?? []) {
-          map[`${r.universityId}:${r.facultyId}`] = `${r.universityName} ${r.facultyName}`;
+          map[`${r.universityId}:${r.facultyId}`] =
+            `${r.universityName} ${r.facultyName}`;
         }
         setNameMap(map);
       })
@@ -74,10 +81,10 @@ export default function UnplacedStudentsSidebar({
 
   if (loading) {
     return (
-      <div className="p-4 space-y-4">
+      <div className="space-y-4 p-4">
         <div className="flex items-center gap-2">
-          <h3 className="font-semibold text-sm">未配置</h3>
-          <Skeleton className="w-6 h-5 rounded-full" />
+          <h3 className="text-sm font-semibold">未配置</h3>
+          <Skeleton className="h-5 w-6 rounded-full" />
         </div>
         <div className="space-y-3">
           {Array.from({ length: 4 }).map((_, i) => (
@@ -90,9 +97,9 @@ export default function UnplacedStudentsSidebar({
 
   if (students.length === 0) {
     return (
-      <div className="p-4 space-y-4">
+      <div className="space-y-4 p-4">
         <div className="flex items-center gap-2">
-          <h3 className="font-semibold text-sm">未配置</h3>
+          <h3 className="text-sm font-semibold">未配置</h3>
           <Badge variant="secondary" className="text-xs">
             0
           </Badge>
@@ -101,7 +108,7 @@ export default function UnplacedStudentsSidebar({
           <CheckCircle className="size-8 text-emerald-600" />
           <div className="space-y-1">
             <p className="text-sm font-medium">全員配置済み</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               今月のセッションが全て配置されています
             </p>
           </div>
@@ -111,73 +118,89 @@ export default function UnplacedStudentsSidebar({
   }
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="space-y-4 p-4">
       <div className="flex items-center gap-2">
-        <h3 className="font-semibold text-sm">未配置</h3>
+        <h3 className="text-sm font-semibold">未配置</h3>
         <Badge variant="destructive" className="text-xs">
           {filtered.length}
         </Badge>
       </div>
 
-      <UnplacedFilterBar students={students} value={filter} onChange={setFilter} />
+      <UnplacedFilterBar
+        students={students}
+        value={filter}
+        onChange={setFilter}
+      />
 
-      <div className="overflow-y-auto max-h-[calc(100vh-280px)] space-y-3">
+      <div className="max-h-[calc(100vh-280px)] space-y-3 overflow-y-auto">
         {filtered.length === 0 ? (
-          <p className="text-xs text-muted-foreground py-4">該当する生徒がいません</p>
+          <p className="text-muted-foreground py-4 text-xs">
+            該当する生徒がいません
+          </p>
         ) : (
           filtered.map((student, index) => (
-          <Card
-            key={`${student.uid}-${index}`}
-            className="p-3 cursor-grab active:cursor-grabbing hover:shadow-sm transition-all duration-200 border-l-4 border-l-amber-400"
-            draggable
-            onDragStart={(e) => handleDragStart(e, student)}
-          >
-            <div className="space-y-2">
-              {/* Student name and drag handle */}
-              <div className="flex items-center gap-2">
-                <GripVertical className="size-4 text-muted-foreground flex-shrink-0" />
-                <span className="font-medium text-sm truncate">
-                  {student.displayName}
-                </span>
-              </div>
-
-              {/* Target universities */}
-              {student.targetUniversities.length > 0 && (
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground">志望校</p>
-                  <div className="flex flex-wrap gap-1">
-                    {student.targetUniversities.slice(0, 2).map((university, index) => (
-                      <Badge
-                        key={index}
-                        variant="outline"
-                        className="text-xs text-muted-foreground"
-                      >
-                        {nameMap[university] ?? university}
-                      </Badge>
-                    ))}
-                    {student.targetUniversities.length > 2 && (
-                      <Badge variant="outline" className="text-xs text-muted-foreground">
-                        +{student.targetUniversities.length - 2}
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Latest score */}
-              {student.latestScore !== null && (
+            <Card
+              key={`${student.uid}-${index}`}
+              // 未配置であることは見出しと配置先の空欄で分かる。左色帯は使わない
+              className="cursor-grab p-3 transition-all duration-200 hover:shadow-sm active:cursor-grabbing"
+              draggable
+              onDragStart={(e) => handleDragStart(e, student)}
+            >
+              <div className="space-y-2">
+                {/* Student name and drag handle */}
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">最新スコア</span>
-                  <Badge
-                    variant={student.latestScore >= 70 ? "default" : "secondary"}
-                    className="text-xs"
-                  >
-                    {student.latestScore}点
-                  </Badge>
+                  <GripVertical className="text-muted-foreground size-4 flex-shrink-0" />
+                  <span className="truncate text-sm font-medium">
+                    {student.displayName}
+                  </span>
                 </div>
-              )}
-            </div>
-          </Card>
+
+                {/* Target universities */}
+                {student.targetUniversities.length > 0 && (
+                  <div className="space-y-1">
+                    <p className="text-muted-foreground text-xs">志望校</p>
+                    <div className="flex flex-wrap gap-1">
+                      {student.targetUniversities
+                        .slice(0, 2)
+                        .map((university, index) => (
+                          <Badge
+                            key={index}
+                            variant="outline"
+                            className="text-muted-foreground text-xs"
+                          >
+                            {nameMap[university] ?? university}
+                          </Badge>
+                        ))}
+                      {student.targetUniversities.length > 2 && (
+                        <Badge
+                          variant="outline"
+                          className="text-muted-foreground text-xs"
+                        >
+                          +{student.targetUniversities.length - 2}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Latest score */}
+                {student.latestScore !== null && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground text-xs">
+                      最新スコア
+                    </span>
+                    <Badge
+                      variant={
+                        student.latestScore >= 70 ? "default" : "secondary"
+                      }
+                      className="text-xs"
+                    >
+                      {student.latestScore}点
+                    </Badge>
+                  </div>
+                )}
+              </div>
+            </Card>
           ))
         )}
       </div>

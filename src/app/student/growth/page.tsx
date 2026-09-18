@@ -27,10 +27,7 @@ import { useAuthSWR } from "@/lib/api/swr";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { SESSION_TYPE_LABELS, type Session } from "@/lib/types/session";
-import {
-  WeaknessSourceBadge,
-  sourceLeftBorder,
-} from "@/components/growth/WeaknessSourceBadge";
+import { WeaknessSourceBadge } from "@/components/growth/WeaknessSourceBadge";
 
 interface InterviewHistoryItem {
   id: string;
@@ -57,29 +54,34 @@ interface TrendDataPoint {
   reasoningMaturity: number | null;
 }
 
+/**
+ * 段（要注意／改善中／解決済み）はベタ塗りの帯で分ける。
+ * 白地に左だけ色帯を立てたカードは使わない（線が増えるわりに段が区別できない）。
+ * headClass は白文字が 4.5:1 を満たす濃さを選ぶ。
+ */
 const levelConfig: Record<
   WeaknessReminderLevel,
-  { label: string; icon: React.ReactNode; badgeClass: string }
+  { label: string; icon: React.ReactNode; headClass: string }
 > = {
   critical: {
     label: "要注意",
-    icon: <AlertCircle className="size-4 text-rose-500" />,
-    badgeClass: "border-rose-300 bg-rose-100 text-rose-700",
+    icon: <AlertCircle className="size-4 text-white" />,
+    headClass: "bg-rose-700 text-white",
   },
   warning: {
     label: "警告",
-    icon: <AlertTriangle className="size-4 text-amber-500" />,
-    badgeClass: "border-amber-300 bg-amber-100 text-amber-700",
+    icon: <AlertTriangle className="size-4 text-white" />,
+    headClass: "bg-amber-700 text-white",
   },
   improving: {
     label: "改善中",
-    icon: <TrendingUp className="size-4 text-emerald-500" />,
-    badgeClass: "border-emerald-300 bg-emerald-100 text-emerald-700",
+    icon: <TrendingUp className="size-4 text-white" />,
+    headClass: "bg-emerald-700 text-white",
   },
   resolved: {
     label: "解決済み",
-    icon: <CheckCircle2 className="size-4 text-emerald-600" />,
-    badgeClass: "border-emerald-400 bg-emerald-50 text-emerald-800",
+    icon: <CheckCircle2 className="size-4 text-white" />,
+    headClass: "bg-slate-600 text-white",
   },
 };
 
@@ -106,22 +108,20 @@ function WeaknessColumn({
   });
   return (
     <div>
-      <div className="mb-3 flex items-center gap-2">
+      <div
+        className={`mb-3 flex items-center gap-2 rounded-lg px-3 py-2 ${cfg.headClass}`}
+      >
         {cfg.icon}
-        <h3 className="text-sm font-semibold">{title}</h3>
-        <Badge variant="outline" className="text-xs">
-          {items.length}件
-        </Badge>
+        <h3 className="flex-1 text-sm font-semibold">{title}</h3>
+        <span className="text-xs tabular-nums">{items.length}件</span>
       </div>
       <div className="space-y-2">
         {sorted.length === 0 ? (
           <p className="text-muted-foreground text-xs">該当なし</p>
         ) : (
+          // 段は上のベタ塗り帯で分かる。カード自体は無地にする
           sorted.map((w) => (
-            <Card
-              key={w.area}
-              className={`border border-l-4 ${sourceLeftBorder(w.source)}`}
-            >
+            <Card key={w.area} className="border">
               <CardContent className="py-3">
                 <div className="flex items-center gap-2">
                   <p className="flex-1 text-sm font-medium">{w.area}</p>
