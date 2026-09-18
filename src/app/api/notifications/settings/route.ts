@@ -34,7 +34,17 @@ export async function GET(request: NextRequest) {
   if (authResult instanceof NextResponse) return authResult;
   const { uid, role } = authResult;
 
-  const kinds = kindsForRole(role);
+  /**
+   * メールが送れる状態か。
+   *
+   * RESEND_API_KEY が無いとメールは1通も出ない。それでも設定画面には
+   * 「書類期限のメール」等のトグルとメール欄が出ており、切り替えても
+   * 何も起きない（実態と食い違う表示）。送れないときは画面から隠す。
+   */
+  const emailAvailable = Boolean(process.env.RESEND_API_KEY);
+  const kinds = kindsForRole(role).filter(
+    (k) => emailAvailable || k.channel !== "email"
+  );
 
   if (!adminDb) {
     return NextResponse.json({
@@ -42,6 +52,7 @@ export async function GET(request: NextRequest) {
       email: "",
       kinds,
       role,
+      emailAvailable,
     });
   }
 
@@ -66,6 +77,7 @@ export async function GET(request: NextRequest) {
       kinds,
       role,
       push,
+      emailAvailable,
     });
   } catch (error) {
     console.error("Get notification settings error:", error);

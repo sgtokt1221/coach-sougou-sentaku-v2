@@ -43,6 +43,8 @@ interface SettingsResponse {
   kinds: NotificationKind[];
   role: string;
   push?: PushStatus;
+  /** メールを送れる状態か（サーバーに鍵が無ければ false） */
+  emailAvailable?: boolean;
 }
 
 /**
@@ -81,6 +83,11 @@ export function NotificationSettingsSection() {
    */
   const [hasDeviceId, setHasDeviceId] = useState(true);
   const [testing, setTesting] = useState(false);
+  /**
+   * メールが送れる状態か。送れないのにトグルとメール欄を出すと、
+   * 切り替えても何も起きない画面になる（実際、本番では鍵が無く1通も出ていない）。
+   */
+  const [emailAvailable, setEmailAvailable] = useState(false);
 
   /** 登録状況を取り直す。許可した直後・テスト送信の後に呼ぶ */
   const reloadPush = async () => {
@@ -132,6 +139,7 @@ export function NotificationSettingsSection() {
             setEmail(data.email ?? "");
             setKinds(data.kinds ?? []);
             setPush(data.push ?? null);
+            setEmailAvailable(data.emailAvailable === true);
           }
         }
         // 「直したのに届かない」の切り分け用。古い SW のままなら null か古い版が返る
@@ -477,21 +485,23 @@ export function NotificationSettingsSection() {
           </div>
         )}
 
-        {/* メールアドレス */}
-        <div className="space-y-2">
-          <Label htmlFor="notif-email">通知用メールアドレス (任意)</Label>
-          <Input
-            id="notif-email"
-            type="email"
-            placeholder="例: example@email.com"
-            value={email}
-            disabled={loading}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-          <p className="text-muted-foreground text-[10px]">
-            空欄ならアカウントのメールアドレスに送信されます
-          </p>
-        </div>
+        {/* メールアドレス。メールが送れない構成では出さない */}
+        {emailAvailable && (
+          <div className="space-y-2">
+            <Label htmlFor="notif-email">通知用メールアドレス (任意)</Label>
+            <Input
+              id="notif-email"
+              type="email"
+              placeholder="例: example@email.com"
+              value={email}
+              disabled={loading}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+            <p className="text-muted-foreground text-[10px]">
+              空欄ならアカウントのメールアドレスに送信されます
+            </p>
+          </div>
+        )}
 
         <div className="flex items-center justify-end gap-3">
           {saved && (
