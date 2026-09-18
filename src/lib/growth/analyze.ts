@@ -6,6 +6,7 @@ import {
   resolveCanonical,
   canonicalLabel,
   isWeaknessLabel,
+  isLocationOnlyLabel,
 } from "@/lib/growth/weakness-taxonomy";
 
 /**
@@ -301,6 +302,18 @@ export function updateWeaknessRecords(
       byCanonical.set(entry.id, newIdx);
       byArea.set(entry.label, newIdx);
       touched.add(newIdx);
+      continue;
+    }
+
+    /**
+     * 正規化できず、しかも場所・見出しを指しているだけのラベルは積まない。
+     * 「冒頭の文」「改善策の根拠」が弱点リストに並んでも、生徒は何を直せばよいか
+     * 分からない。落としたことはログに残す（黙って減らさない）。
+     */
+    if (isLocationOnlyLabel(tag)) {
+      console.warn(
+        `[weakness] 場所だけのラベルなので積みませんでした: ${JSON.stringify(tag)}`
+      );
       continue;
     }
 

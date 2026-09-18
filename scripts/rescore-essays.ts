@@ -22,6 +22,7 @@
 import { config } from "dotenv";
 config({ path: ".env.local" });
 
+import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "../src/lib/firebase/admin";
 import { reviewEssayCore } from "../src/lib/essay/review-core";
 import { prepareAdmissionPolicy } from "../src/lib/ai/admission-policy";
@@ -29,7 +30,7 @@ import { AI_PROMPT_VERSIONS } from "../src/lib/ai/prompt-versions";
 
 const APPLY = process.argv.includes("--apply");
 const LIMIT = Number(
-  process.argv.find((a) => a.startsWith("--limit="))?.split("=")[1] ?? 0,
+  process.argv.find((a) => a.startsWith("--limit="))?.split("=")[1] ?? 0
 );
 const TARGET_VERSION = AI_PROMPT_VERSIONS.essayReview.promptVersion;
 const NAMES = (
@@ -41,14 +42,14 @@ const NAMES = (
 
 async function resolveAdmissionPolicy(
   universityId: string | undefined,
-  facultyId: string | undefined,
+  facultyId: string | undefined
 ): Promise<string> {
   if (!universityId || !facultyId) return "";
   const uni = await adminDb!.doc(`universities/${universityId}`).get();
   if (!uni.exists) return "";
   const data = uni.data()!;
   const faculty = (data.faculties ?? []).find(
-    (f: { id: string }) => f.id === facultyId,
+    (f: { id: string }) => f.id === facultyId
   );
   if (!faculty?.admissionPolicy) return "";
   const prepared = prepareAdmissionPolicy(faculty.admissionPolicy);
@@ -75,7 +76,7 @@ async function main() {
           const name = String(u.data().displayName ?? "");
           return NAMES.some((n) => name.includes(n));
         })
-        .map((u) => u.id),
+        .map((u) => u.id)
     );
     const names = users.docs
       .filter((u) => allowedUids!.has(u.id))
@@ -95,7 +96,7 @@ async function main() {
   const list = LIMIT > 0 ? targets.slice(0, LIMIT) : targets;
   console.log(
     `全 ${snap.size} 件 / 対象 ${targets.length} 件 / 今回処理 ${list.length} 件` +
-      `${APPLY ? "" : "（確認のみ。--apply で書き込み）"}\n`,
+      `${APPLY ? "" : "（確認のみ。--apply で書き込み）"}\n`
   );
 
   let ok = 0;
@@ -107,7 +108,7 @@ async function main() {
     const ctx = e.questionContext ?? {};
     const admissionPolicy = await resolveAdmissionPolicy(
       e.targetUniversity,
-      e.targetFaculty,
+      e.targetFaculty
     );
 
     try {
@@ -128,7 +129,7 @@ async function main() {
       console.log(
         `${d.id}  ${String(e.topic ?? "(お題なし)").slice(0, 20)}\n` +
           `  旧 ${before.total}点（AP ${before.apAlignment ?? "-"}）\n` +
-          `  新 ${after.total}点（回答力 ${after.responsiveness} / 成熟度 ${after.reasoningMaturity} / AP ${after.apAlignment ?? "未評価"}）`,
+          `  新 ${after.total}点（回答力 ${after.responsiveness} / 成熟度 ${after.reasoningMaturity} / AP ${after.apAlignment ?? "未評価"}）`
       );
 
       if (APPLY) {
@@ -144,8 +145,17 @@ async function main() {
             ...(e.scoresBeforeV23 ? {} : { scoresBeforeV23: before }),
             rescoredAt: new Date().toISOString(),
           },
-          { merge: true },
+          { merge: true }
         );
+        /**
+         * merge:true は scores のキーを合成するため、旧軸の originality が残る。
+         * 残すと履歴グラフが「独自性（旧軸）」の線を復活させ、再採点済みの答案に
+         * 古い軸の点を並べて描いてしまう。同じ set の中でドット記法と map を
+         * 混ぜると Firestore が同一フィールドの二重指定で弾くので、別 update で消す。
+         */
+        if (typeof e.scores?.originality === "number") {
+          await d.ref.update({ "scores.originality": FieldValue.delete() });
+        }
       }
       ok++;
     } catch (err) {
