@@ -165,6 +165,7 @@ AI呼び出しは .env.local の ANTHROPIC_API_KEY をそのまま使うので�
 - 小論文のAI（添削・コーチ・スキルチェック）は答案に主観（経験・志望・感想）を求めない。独自性は着眼点・主張・論の組み立てで見る。自己分析を小論文添削の入力に渡さない（渡すと「志望とつながっていない」と指摘する）。出願書類は別。
 - 小論文添削の構造化出力スキーマ（`src/lib/ai/schemas/essay-review.ts`）は Anthropic の文法サイズ上限に達している。項目を1つ足すだけで `The compiled grammar is too large` の 400 になり、**全答案の添削が落ちる**。判定を増やすときは別呼び出しにする（例: `source-engagement-judge.ts`）。
 - Web Push はタブが1つでも開いていると SW でなく onMessage に配信され、OS 通知が出ない（見ていないタブで消える沈黙失敗）。前面判定は `visibilityState` と `hasFocus()` の両方で行い、見ていなければ `showNotification` で出す。通知の `tag` は送信ごとに一意にする（同じ tag は OS が上書きし、3通来ても1通しか見えない）
+- **背面の PWA はページ側の判定が動かない**。ウィンドウは残ったままページだけ凍結され、FCM は「見えている」と判断して転送するため、どこにも出ないまま消える。SW の `push` でも受け、`WindowClient.focused` なウィンドウが無ければ SW から出す（SDK と同じ tag なら二重にならない）。`visibilityState` は凍結中も visible のことがあり当てにならない
 
 ## 8. Current State / Known Issues
 

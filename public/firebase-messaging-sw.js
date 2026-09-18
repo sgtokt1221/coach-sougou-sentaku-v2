@@ -9,7 +9,7 @@ importScripts(
  * どの版が動いているかを見分けるための印。SW を変えたら必ず上げる。
  * 設定画面から読み出して「更新が届いたか」を確かめる。
  */
-const SW_VERSION = "2026-09-09.1";
+const SW_VERSION = "2026-09-18.1";
 
 /**
  * 新しい SW をすぐ有効にする。
@@ -61,6 +61,66 @@ messaging.onBackgroundMessage((payload) => {
     tag: data.tag || `notice-${Date.now()}`,
     data: { url: data.url || "/" },
   });
+});
+
+/**
+ * 取りこぼしの保険（PWA で通知が出ない件）。
+ *
+ * FCM の SW は「見えているウィンドウがあるか」だけを見て、あればページへ
+ * 転送し、自分では通知を出さない。ところが**ホーム画面から開いた PWA を
+ * 背面に回すと、ウィンドウは残ったままページだけが凍結される**。FCM は
+ * 「見えている」と判断して転送し、凍結されたページは onMessage を処理
+ * できないので、どこにも何も出ないまま消える。前回入れたページ側の
+ * visibilityState / hasFocus の判定は、ページが動いていないので届かない。
+ *
+ * そこで push そのものをここでも受け、**本当に操作されているウィンドウが
+ * 無ければ**自分で通知を出す。SDK が表示する場合と tag が同じなので、
+ * 両方出ても OS 側で1つに畳まれる（tag は送信ごとに一意）。
+ *
+ * 判定には WindowClient.focused を使う。visibilityState は凍結中の PWA でも
+ * visible のままのことがあり、当てにならない。
+ */
+self.addEventListener("push", (event) => {
+  let payload = null;
+  try {
+    payload = event.data ? event.data.json() : null;
+  } catch {
+    return; // 解釈できないものは SDK 側に任せる
+  }
+  if (!payload) return;
+
+  const notification = payload.notification || {};
+  const data = payload.data || {};
+  const title = notification.title || data.title;
+  if (!title) return; // 表示するものが無い
+
+  const body = notification.body || data.body || "";
+  const tag = notification.tag || data.tag || `notice-${Date.now()}`;
+  const url =
+    data.url ||
+    (payload.fcmOptions && payload.fcmOptions.link) ||
+    (notification.click_action ?? "/");
+
+  event.waitUntil(
+    (async () => {
+      const wins = await self.clients.matchAll({
+        type: "window",
+        includeUncontrolled: true,
+      });
+      // 操作中のウィンドウがあるならページ側がトーストを出す
+      const inUse = wins.some(
+        (c) => c.focused === true && c.visibilityState === "visible"
+      );
+      if (inUse) return;
+      await self.registration.showNotification(title, {
+        body,
+        icon: "/icons/icon-192.png",
+        badge: "/icons/icon-192.png",
+        tag,
+        data: { url },
+      });
+    })()
+  );
 });
 
 /**
