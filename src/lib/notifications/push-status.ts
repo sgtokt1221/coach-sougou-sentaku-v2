@@ -54,19 +54,23 @@ export function summarizePushStatus(
   const valid = docs.filter((d) => typeof d.token === "string" && d.token);
   const lastSuccessAt = latest(valid.map((d) => d.lastSuccessAt));
 
-  // 成功より後に失敗した端末があるときだけ「失敗中」として見せる。
-  // 昔の失敗を出し続けると、直っているのに赤いままになる
+  /**
+   * 失敗中かどうかは**端末ごとに**見る。
+   *
+   * 以前は全端末の最新成功と最新失敗を突き合わせていたため、PCで届いていれば
+   * スマホが失敗し続けていても失敗が消え、「有効」の緑バッジになっていた
+   * （直し方の導線も出ない）。同じ端末の中で、成功より後の失敗だけを残す。
+   */
   let lastError: string | null = null;
   let lastFailureAt: string | null = null;
   for (const d of valid) {
     if (!d.lastError || !d.lastFailureAt) continue;
+    // その端末が失敗の後に成功していれば、もう失敗中ではない
+    if (d.lastSuccessAt && d.lastSuccessAt >= d.lastFailureAt) continue;
     if (lastFailureAt === null || d.lastFailureAt > lastFailureAt) {
       lastFailureAt = d.lastFailureAt;
       lastError = d.lastError;
     }
-  }
-  if (lastFailureAt && lastSuccessAt && lastSuccessAt >= lastFailureAt) {
-    lastError = null;
   }
 
   const pushDisabled =

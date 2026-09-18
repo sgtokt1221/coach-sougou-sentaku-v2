@@ -239,12 +239,27 @@ export async function sendFcmToUser(
     const now = new Date().toISOString();
     let sent = 0;
     let pruned = 0;
+    /**
+     * 記録の書き込みで送信結果を失わない。
+     *
+     * 以前はこの中の set/delete が1件でも失敗すると外側の catch に落ち、
+     * 送信済みなのに {attempted:0, sent:0} を返していた。呼び出し側は
+     * 「送れていない」と表示するが実際には届いている（逆向きの沈黙失敗）。
+     * 記録は補助なので、失敗しても集計は続ける。
+     */
+    const note = async (fn: () => Promise<unknown>) => {
+      try {
+        await fn();
+      } catch (e) {
+        console.warn(`[fcm] 送信結果の記録に失敗 uid=${uid}`, e);
+      }
+    };
     await Promise.all(
       res.responses.map(async (r, i) => {
         const ref = docs[i].ref;
         if (r.success) {
           sent++;
-          await ref.set({ lastSuccessAt: now }, { merge: true });
+          await note(() => ref.set({ lastSuccessAt: now }, { merge: true }));
           return;
         }
         const code = r.error?.code ?? "";
@@ -254,7 +269,7 @@ export async function sendFcmToUser(
           code === "messaging/invalid-argument"
         ) {
           pruned++;
-          await ref.delete();
+          await note(() => ref.delete());
           console.warn(`[fcm] 失効トークンを削除 uid=${uid} code=${code}`);
           return;
         }
@@ -262,9 +277,11 @@ export async function sendFcmToUser(
          * 失効以外の失敗は文書にも残す。ログにしか無いと、設定画面から
          * 「この端末は最近失敗している」と見せられず、誰も気づけない。
          */
-        await ref.set(
-          { lastError: code || "unknown", lastFailureAt: now },
-          { merge: true }
+        await note(() =>
+          ref.set(
+            { lastError: code || "unknown", lastFailureAt: now },
+            { merge: true }
+          )
         );
         console.warn(
           `[fcm] 送信失敗 uid=${uid} code=${code}`,

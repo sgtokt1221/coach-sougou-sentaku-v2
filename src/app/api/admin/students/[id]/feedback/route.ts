@@ -7,9 +7,13 @@ import {
   sanitizeReference,
   sendFcmToUser,
 } from "@/lib/chat/conversation";
-import type { AdminFeedback, FeedbackCreateRequest } from "@/lib/types/feedback";
+import type {
+  AdminFeedback,
+  FeedbackCreateRequest,
+} from "@/lib/types/feedback";
 
 import { sanitizeQuote } from "@/lib/chat/quote";
+import { stripRichText } from "@/lib/chat/rich-text";
 /**
  * GET /api/admin/students/[id]/feedback
  * 指定生徒のフィードバック一覧を取得
@@ -30,7 +34,10 @@ export async function GET(
     const { id } = await params;
 
     if (!adminDb) {
-      return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
+      return NextResponse.json(
+        { error: "サーバー設定エラー" },
+        { status: 500 }
+      );
     }
 
     // managedByスコーピング
@@ -84,7 +91,8 @@ export async function GET(
         message: data.message ?? "",
         createdBy: data.createdBy ?? "",
         createdByName: data.createdByName ?? "",
-        createdAt: data.createdAt?.toDate?.()?.toISOString() ?? new Date().toISOString(),
+        createdAt:
+          data.createdAt?.toDate?.()?.toISOString() ?? new Date().toISOString(),
         read: data.read ?? false,
         // 引用とリアクション。写し忘れると画面に出ない（reference と同じ轍）
         quote: data.quote ?? undefined,
@@ -137,7 +145,10 @@ export async function POST(
     }
 
     if (!adminDb) {
-      return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
+      return NextResponse.json(
+        { error: "サーバー設定エラー" },
+        { status: 500 }
+      );
     }
 
     // managedByスコーピング
@@ -201,7 +212,8 @@ export async function POST(
       studentName: (userData?.displayName as string) ?? "",
       studentPhotoURL: (userData?.photoURL as string | undefined) ?? null,
       coachId: (userData?.managedBy as string | undefined) ?? undefined,
-      organizationId: (userData?.organizationId as string | undefined) ?? undefined,
+      organizationId:
+        (userData?.organizationId as string | undefined) ?? undefined,
       lastMessageText:
         body.message ||
         reference?.label ||
@@ -214,10 +226,16 @@ export async function POST(
      * ここに独自実装を持っていたため、失効トークンの掃除も種別設定の判定も
      * 二重管理になっていた（片方だけ直しても再発する）。
      */
+    /**
+     * 装飾記法は通知本文から外す。
+     * [[c=red;s=lg]]…[[/]] がそのまま出るうえ、本文の上限50字を記法が食って
+     * 中身が読めなくなる。
+     */
     const preview =
-      (body.message?.trim() ||
-        (reference ? `📝 ${reference.label}` : "") ||
-        (attachments.length > 0 ? "[添付ファイル]" : "")) ?? "";
+      (stripRichText(body.message ?? "").trim() ||
+        (reference ? reference.label : "") ||
+        (attachments.length > 0 ? "[添付ファイル]" : "")) ??
+      "";
     await sendFcmToUser(
       id,
       {
@@ -225,7 +243,7 @@ export async function POST(
         body: preview,
         url: "/student/feedback",
       },
-      "feedback",
+      "feedback"
     );
 
     const newFeedback: AdminFeedback = {

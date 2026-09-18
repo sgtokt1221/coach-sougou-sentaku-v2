@@ -6,7 +6,6 @@ import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 import { BottomNav } from "./BottomNav";
 import { KeyboardInsetManager } from "./KeyboardInsetManager";
-import { ForegroundNotifier } from "@/components/notifications/ForegroundNotifier";
 import { IncomingCallModal } from "@/components/call/IncomingCallModal";
 import { getAppLayoutMode } from "@/lib/ui/app-layout-mode";
 import { cn } from "@/lib/utils";
@@ -32,7 +31,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
       }
     >
       <KeyboardInsetManager />
-      <ForegroundNotifier />
+      {/* 通知の受け手は Providers に移した（AppLayout を通さない画面でも受けるため） */}
       {/* 着信。アプリを開いている間はここで鳴る（プッシュ通知は閉じているときの補助） */}
       <IncomingCallModal />
       <Sidebar />

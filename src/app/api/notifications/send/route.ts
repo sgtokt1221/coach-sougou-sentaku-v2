@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { requireRole } from "@/lib/api/auth";
+import { requireRole, scopeByOrganization } from "@/lib/api/auth";
+import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
 import { adminDb } from "@/lib/firebase/admin";
 
 interface SendNotificationBody {
@@ -35,6 +36,35 @@ export async function POST(request: Request) {
   if (!adminDb) {
     return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
   }
+
+  /**
+   * 宛先が自分の担当・自分の塾の生徒かを確かめる。
+   *
+   * ロールだけ見て userId をそのまま使っていたため、本番のように複数の塾が
+   * 同居していると、別法人の管理者が他法人の生徒へ通知を撃てた。
+   * 他のAPIと同じ scopeByOrganization を通す。
+   */
+  const targetDoc = await adminDb.doc(`users/${userId}`).get();
+  if (!targetDoc.exists) {
+    return NextResponse.json(
+      { error: "宛先の利用者が見つかりません" },
+      { status: 404 }
+    );
+  }
+  const targetData = targetDoc.data();
+  const denied = await scopeByOrganization({
+    requesterUid: auth.uid,
+    requesterRole: auth.role,
+    studentUid: userId,
+    studentData: {
+      managedBy: targetData?.managedBy as string | undefined,
+      organizationId: targetData?.organizationId as string | undefined,
+      assignedTeacherIds: getAssignedTeacherIds(targetData),
+    },
+    // 担当講師は自分の生徒へ連絡できる
+    allowAssignedTeacher: true,
+  });
+  if (denied) return denied;
 
   /**
    * 送信は sendFcmToUser に一本化する。

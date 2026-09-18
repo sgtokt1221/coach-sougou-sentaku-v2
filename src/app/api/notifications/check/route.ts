@@ -9,7 +9,20 @@ interface NotificationTarget {
   type: "document_deadline" | "session_reminder";
   severity: "warning" | "urgent";
   data: Record<string, string>;
+  /**
+   * 同じ通知を二度送らないための鍵。
+   *
+   * 「期限3日前」「開始1時間前」は窓であって一度きりではない。定期実行の
+   * 間隔ぶんだけ同じ通知が重複していた（15分間隔なら1時間前リマインドが4通）。
+   * 送信前にこの鍵で記録を作り、作れなかった（＝既にある）ら送らない。
+   */
+  dedupeKey: string;
 }
+
+/**
+ * 全生徒とその書類を走査して送るため、既定の実行上限では足りない。
+ */
+export const maxDuration = 300;
 
 /**
  * POST /api/notifications/check — 書類期限・セッションリマインダーをチェックし通知送信
@@ -51,7 +64,12 @@ export async function POST(request: Request) {
       const doc = docSnap.data();
       if (!doc.deadline) continue;
 
-      const deadline = new Date(doc.deadline + "T23:59:59");
+      /**
+       * 期限は日本時間の締切として読む。
+       * オフセットを付けないとサーバー（UTC）の 23:59:59 と解釈され、
+       * 日本時間では9時間ずれる。当日の書類が「明日です」と通知されていた。
+       */
+      const deadline = new Date(`${doc.deadline}T23:59:59+09:00`);
       const daysUntil = Math.ceil(
         (deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
       );
@@ -67,6 +85,7 @@ export async function POST(request: Request) {
             type: "document_deadline",
             url: `/student/documents/${docSnap.id}`,
           },
+          dedupeKey: `document-${docSnap.id}-1d`,
         });
       } else if (daysUntil <= 3 && daysUntil > 1) {
         targets.push({
@@ -79,6 +98,7 @@ export async function POST(request: Request) {
             type: "document_deadline",
             url: `/student/documents/${docSnap.id}`,
           },
+          dedupeKey: `document-${docSnap.id}-3d`,
         });
       }
     }
@@ -113,6 +133,7 @@ export async function POST(request: Request) {
           type: "session_reminder",
           url: `/student/sessions/${sessionDoc.id}`,
         },
+        dedupeKey: `session-${sessionDoc.id}-1h`,
       });
     } else if (hoursUntil <= 24 && hoursUntil > 1) {
       // 1日前: warning
@@ -127,6 +148,7 @@ export async function POST(request: Request) {
           type: "session_reminder",
           url: `/student/sessions/${sessionDoc.id}`,
         },
+        dedupeKey: `session-${sessionDoc.id}-24h`,
       });
     }
   }
@@ -138,8 +160,27 @@ export async function POST(request: Request) {
    * sentCount は「実際に1台以上へ届いた人数」にする（以前は試みた人数だった）。
    */
   let sentCount = 0;
+  let skippedDuplicate = 0;
   const { sendFcmToUser } = await import("@/lib/chat/conversation");
   for (const target of targets) {
+    /**
+     * 既に送ったものは送らない。create は既存があれば失敗するので、
+     * 同時に2回走っても片方だけが通る。
+     */
+    const logRef = adminDb.doc(
+      `notificationSends/${target.userId}__${target.dedupeKey}`
+    );
+    try {
+      await logRef.create({
+        userId: target.userId,
+        key: target.dedupeKey,
+        type: target.type,
+        sentAt: new Date().toISOString(),
+      });
+    } catch {
+      skippedDuplicate++;
+      continue;
+    }
     const kind =
       target.type === "document_deadline" ? "documentDeadline" : "session";
     const r = await sendFcmToUser(
@@ -158,5 +199,7 @@ export async function POST(request: Request) {
     },
     notificationsGenerated: targets.length,
     notificationsSent: sentCount,
+    /** 既に送っていて飛ばした数（重複防止が効いた数） */
+    skippedDuplicate,
   });
 }

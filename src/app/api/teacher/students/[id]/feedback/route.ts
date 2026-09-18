@@ -8,6 +8,7 @@ import {
   sanitizeAttachments,
   sanitizeReference,
 } from "@/lib/chat/conversation";
+import { stripRichText } from "@/lib/chat/rich-text";
 import type {
   AdminFeedback,
   ChatAttachment,
@@ -45,12 +46,18 @@ export async function POST(
     }
 
     if (!adminDb) {
-      return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
+      return NextResponse.json(
+        { error: "サーバー設定エラー" },
+        { status: 500 }
+      );
     }
 
     const studentDoc = await adminDb.doc(`users/${id}`).get();
     if (!studentDoc.exists) {
-      return NextResponse.json({ error: "生徒が見つかりません" }, { status: 404 });
+      return NextResponse.json(
+        { error: "生徒が見つかりません" },
+        { status: 404 }
+      );
     }
     const studentData = studentDoc.data();
 
@@ -106,11 +113,17 @@ export async function POST(
     });
 
     // 生徒へプッシュ通知
-    await sendFcmToUser(id, {
-      title: "講師からメッセージ",
-      body: message || reference?.label || "[添付ファイル]",
-      url: "/student/feedback",
-    }, "feedback");
+    // 装飾記法は通知本文から外す（記法がそのまま出て、上限50字を食う）
+    await sendFcmToUser(
+      id,
+      {
+        title: "講師からメッセージ",
+        body:
+          stripRichText(message ?? "") || reference?.label || "[添付ファイル]",
+        url: "/student/feedback",
+      },
+      "feedback"
+    );
 
     const newFeedback: AdminFeedback = {
       id: docRef.id,

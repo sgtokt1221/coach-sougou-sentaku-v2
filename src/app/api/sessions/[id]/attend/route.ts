@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyAuthToken, adminDb } from "@/lib/firebase/admin";
 import { sendFcmToUser } from "@/lib/chat/conversation";
 import type { Session } from "@/lib/types/session";
+import { formatSessionTimeJst } from "@/lib/notifications/push-payload";
 
 /**
  * PATCH /api/sessions/[id]/attend
@@ -10,7 +11,7 @@ import type { Session } from "@/lib/types/session";
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await verifyAuthToken(request);
   if (!auth) {
@@ -24,7 +25,10 @@ export async function PATCH(
   const ref = adminDb.doc(`sessions/${id}`);
   const snap = await ref.get();
   if (!snap.exists) {
-    return NextResponse.json({ error: "セッションが見つかりません" }, { status: 404 });
+    return NextResponse.json(
+      { error: "セッションが見つかりません" },
+      { status: 404 }
+    );
   }
   const session = { id: snap.id, ...snap.data() } as Session;
 
@@ -32,10 +36,13 @@ export async function PATCH(
     return NextResponse.json({ error: "権限がありません" }, { status: 403 });
   }
   // 自分が報告した欠席のみ取り消し可（管理者がつけた欠席は対象外）
-  if (session.status !== "cancelled" || session.absenceReportedBy !== "student") {
+  if (
+    session.status !== "cancelled" ||
+    session.absenceReportedBy !== "student"
+  ) {
     return NextResponse.json(
       { error: "このセッションは出席に戻せません" },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
@@ -47,22 +54,27 @@ export async function PATCH(
       absenceReportedAt: null,
       updatedAt: now,
     },
-    { merge: true },
+    { merge: true }
   );
 
   // 通知 (失敗は握りつぶす)
-  const when = new Date(session.scheduledAt);
-  const whenLabel = Number.isNaN(when.getTime())
-    ? ""
-    : `${when.getMonth() + 1}/${when.getDate()} ${String(when.getHours()).padStart(2, "0")}:${String(when.getMinutes()).padStart(2, "0")}`;
+  // 日時は必ず日本時間で組む。サーバー(Cloud Run)は UTC なので、素の Date の
+  // ゲッタを使うと 14:00 の面談が「5:00」と通知される
+  const whenLabel = formatSessionTimeJst(session.scheduledAt);
   const title = "生徒が出席に戻しました";
   const body = `${session.studentName}さんが ${whenLabel} のセッションの欠席連絡を取り消しました`;
   const url = `/admin/sessions/${id}`;
   try {
-    if (session.teacherId) await sendFcmToUser(session.teacherId, { title, body, url }, "attendance");
+    if (session.teacherId)
+      await sendFcmToUser(
+        session.teacherId,
+        { title, body, url },
+        "attendance"
+      );
     const studentDoc = await adminDb.doc(`users/${session.studentId}`).get();
     const managedBy = studentDoc.data()?.managedBy as string | undefined;
-    if (managedBy) await sendFcmToUser(managedBy, { title, body, url }, "attendance");
+    if (managedBy)
+      await sendFcmToUser(managedBy, { title, body, url }, "attendance");
   } catch (err) {
     console.warn("[attend] notify failed:", err);
   }

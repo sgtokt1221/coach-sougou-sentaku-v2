@@ -20,9 +20,17 @@ export async function shouldNotify(
     const snap = await adminDb.doc(`users/${uid}`).get();
     const data = snap.data();
     if (!data) {
-      // 認証だけあって users 文書が無い利用者。黙って止めると永久に届かない
-      console.warn(`[notify] users/${uid} が無いため送らない kind=${kindId}`);
-      return false;
+      /**
+       * 認証だけあって users 文書が無い利用者。
+       *
+       * ここで止めると、その人には以後どの通知も永久に届かない（ログ以外に
+       * 痕跡が残らない）。このファイルの方針どおり、判定できないときは
+       * 送る側へ倒す。
+       */
+      console.warn(
+        `[notify] users/${uid} が無いため設定を判定できない。送る kind=${kindId}`
+      );
+      return true;
     }
 
     // その立場が受け取る対象でなければ送らない。

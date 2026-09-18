@@ -30,8 +30,16 @@ const ENV_VARS: EnvVar[] = [
   {
     key: "CRON_SECRET",
     required: false,
-    description: "Cloud Scheduler からの呼び出しを認証する共有秘密",
-    affects: ["期限リマインド", "卒業リマインド"],
+    description:
+      "Cloud Scheduler からの呼び出しを認証する共有秘密（無いと定期実行の口は全て401で、面談リマインドも卒業リマインドも動かない）",
+    affects: ["面談リマインド", "期限リマインド", "卒業リマインド"],
+  },
+  {
+    key: "RESEND_API_KEY",
+    required: false,
+    description:
+      "メール送信（無いとメールは1通も出ない。書類期限のリマインドと要注意ダイジェストが該当）",
+    affects: ["書類期限のメール", "要注意生徒のダイジェスト"],
   },
   // LiveKit (アプリ内ビデオ通話)
   {

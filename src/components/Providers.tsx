@@ -6,6 +6,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { TutorialProvider } from "@/contexts/TutorialContext";
 import { SwrCacheProvider } from "@/components/SwrCacheProvider";
 import { Toaster } from "@/components/ui/sonner";
+import { ForegroundNotifier } from "@/components/notifications/ForegroundNotifier";
 
 /**
  * アプリ全体のプロバイダ。
@@ -17,12 +18,25 @@ import { Toaster } from "@/components/ui/sonner";
  */
 export function Providers({ children }: { children: ReactNode }) {
   return (
-    <ThemeProvider attribute="class" defaultTheme="light" forcedTheme="light" disableTransitionOnChange>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="light"
+      forcedTheme="light"
+      disableTransitionOnChange
+    >
       <AuthProvider>
         {/* SWR キャッシュは AuthProvider の内側。uid を見て分離する */}
         <SwrCacheProvider>
           <TutorialProvider>
             {children}
+            {/*
+              通知の受け手はアプリ全体に置く。
+              AppLayout の中に置いていたため、通話画面・ツアー・ログインなど
+              AppLayout を通さない画面を開いている間は、FCM が「見えている
+              ウィンドウがある」と判断して転送するのに受け手がおらず、
+              OS通知もトーストも出ずに消えていた。
+            */}
+            <ForegroundNotifier />
             <Toaster />
           </TutorialProvider>
         </SwrCacheProvider>

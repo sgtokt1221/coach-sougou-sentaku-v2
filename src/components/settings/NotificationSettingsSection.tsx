@@ -75,6 +75,11 @@ export function NotificationSettingsSection() {
   /** サーバー側の登録状況。permission が granted でもここが 0 なら届かない */
   const [push, setPush] = useState<PushStatus | null>(null);
   const [swVersion, setSwVersion] = useState<string | null>(null);
+  /**
+   * 端末を見分けられるか（localStorage が使えないと空になる）。
+   * 空のときは「この端末は未登録」を出さない。押しても状態が変わらないため。
+   */
+  const [hasDeviceId, setHasDeviceId] = useState(true);
   const [testing, setTesting] = useState(false);
 
   /** 登録状況を取り直す。許可した直後・テスト送信の後に呼ぶ */
@@ -111,6 +116,7 @@ export function NotificationSettingsSection() {
       return;
     }
     setPushState(Notification.permission as PushState);
+    setHasDeviceId(Boolean(getDeviceId()));
   }, []);
 
   useEffect(() => {
@@ -159,9 +165,22 @@ export function NotificationSettingsSection() {
             : "denied"
         ) as PushState;
         setPushState(current);
+        /**
+         * 失敗の理由を必ず出す。
+         *
+         * 以前は denied 以外を無言で返しており、VAPID鍵の未設定・トークン取得の
+         * 失敗・未ログインのどれで止まっても「押しても何も起きない」画面に
+         * なっていた（許可済みの表示のまま、実際には届かない）。
+         */
         if (current === "denied") {
           toast.error(
             "ブラウザの通知設定がブロックされています。 ブラウザ設定から許可してください"
+          );
+        } else if (!auth?.currentUser) {
+          toast.error("ログインし直してからもう一度お試しください");
+        } else {
+          toast.error(
+            "通知の登録に失敗しました。時間をおいて「登録し直す」を押してください"
           );
         }
       }
@@ -256,11 +275,22 @@ export function NotificationSettingsSection() {
               <p className="text-sm font-medium">ブラウザ通知</p>
               <div className="mt-1 flex items-center gap-2">
                 {pushState === "granted" &&
-                  (push && push.tokens === 0 ? (
+                  /**
+                   * 登録状況が取れていないときに「有効」と言わない。
+                   * サーバーが落ちた・取得に失敗した場合も緑になっていた。
+                   * 端末の判別ができない場合（localStorage が使えず deviceId が
+                   * 空）も「この端末は未登録」と断定しない。押しても直らない
+                   * 警告を出し続けることになるため。
+                   */
+                  (!push ? (
+                    <Badge variant="outline" className="text-[10px]">
+                      登録状況を確認できません
+                    </Badge>
+                  ) : push.tokens === 0 ? (
                     <Badge className="bg-amber-500 text-[10px] text-white hover:bg-amber-500">
                       許可済み・端末が未登録
                     </Badge>
-                  ) : push && !push.thisDevice ? (
+                  ) : hasDeviceId && !push.thisDevice ? (
                     <Badge className="bg-amber-500 text-[10px] text-white hover:bg-amber-500">
                       この端末は未登録
                     </Badge>
@@ -361,7 +391,7 @@ export function NotificationSettingsSection() {
                   {/* 許可済みでも登録が無い・この端末が無い・失敗中なら取り直せる */}
                   {push &&
                     (push.tokens === 0 ||
-                      !push.thisDevice ||
+                      (hasDeviceId && !push.thisDevice) ||
                       push.lastError) && (
                       <Button
                         size="sm"

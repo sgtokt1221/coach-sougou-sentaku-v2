@@ -31,15 +31,26 @@ export interface SendEmailResult {
  * メール送信
  * RESEND_API_KEY が未設定の場合はコンソールにログ出力してフォールバック
  */
-export async function sendEmail(payload: EmailPayload): Promise<SendEmailResult> {
+export async function sendEmail(
+  payload: EmailPayload
+): Promise<SendEmailResult> {
   const client = getClient();
 
+  /**
+   * 鍵が無いときは「送った」と言わない。
+   *
+   * 以前はログに出して success:true を返していた。本番の apphosting.yaml に
+   * RESEND_API_KEY が無いため、書類期限のリマインドも要注意ダイジェストも
+   * 1通も届いていないのに、管理画面には「送信しました」と出ていた。
+   */
   if (!client) {
-    console.log("[Email Fallback] RESEND_API_KEY not configured. Logging email:");
-    console.log(`  To: ${Array.isArray(payload.to) ? payload.to.join(", ") : payload.to}`);
-    console.log(`  Subject: ${payload.subject}`);
-    console.log(`  HTML length: ${payload.html.length} chars`);
-    return { success: true, id: `fallback_${Date.now()}` };
+    console.error(
+      `[Email] RESEND_API_KEY が未設定のため送信していません: ${payload.subject}`
+    );
+    return {
+      success: false,
+      error: "メール送信が未設定です（RESEND_API_KEY）",
+    };
   }
 
   try {
@@ -57,15 +68,16 @@ export async function sendEmail(payload: EmailPayload): Promise<SendEmailResult>
 
     return { success: true, id: result.data?.id };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "メール送信に失敗しました";
+    const message =
+      error instanceof Error ? error.message : "メール送信に失敗しました";
     console.error("[Email Error]", message);
     return { success: false, error: message };
   }
 }
 
 /**
- * 一括メール送信
- * RESEND_API_KEY が未設定の場合はコンソールにログ出力してフォールバック
+ * 一括メール送信。
+ * 鍵が無いときは失敗として返す（送っていないものを成功と報告しない）。
  */
 export async function sendBatchEmails(
   emails: EmailPayload[]
@@ -73,11 +85,13 @@ export async function sendBatchEmails(
   const client = getClient();
 
   if (!client) {
-    console.log(`[Email Fallback] Batch: ${emails.length} emails logged (RESEND_API_KEY not configured)`);
-    return emails.map((e) => {
-      console.log(`  To: ${Array.isArray(e.to) ? e.to.join(", ") : e.to} | Subject: ${e.subject}`);
-      return { success: true, id: `fallback_${Date.now()}_${Math.random().toString(36).slice(2, 8)}` };
-    });
+    console.error(
+      `[Email] RESEND_API_KEY が未設定のため ${emails.length} 通を送信していません`
+    );
+    return emails.map(() => ({
+      success: false,
+      error: "メール送信が未設定です（RESEND_API_KEY）",
+    }));
   }
 
   try {
@@ -104,7 +118,8 @@ export async function sendBatchEmails(
       id: d.id,
     }));
   } catch (error) {
-    const message = error instanceof Error ? error.message : "バッチメール送信に失敗しました";
+    const message =
+      error instanceof Error ? error.message : "バッチメール送信に失敗しました";
     console.error("[Email Batch Error]", message);
     return emails.map(() => ({ success: false, error: message }));
   }

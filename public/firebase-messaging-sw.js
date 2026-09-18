@@ -148,17 +148,25 @@ async function focusOrOpen(path) {
     type: "window",
     includeUncontrolled: true,
   });
-  const same = wins.find((w) => new URL(w.url).origin === self.location.origin);
-  if (same) {
-    await same.focus();
-    if ("navigate" in same) {
-      try {
-        await same.navigate(target);
-      } catch {
-        // 遷移できない状態なら前に出すだけにする
+  const sameOrigin = wins.filter(
+    (w) => new URL(w.url).origin === self.location.origin
+  );
+  // 直前まで使っていたウィンドウを優先する。最初に見つかったものだと、
+  // タブが複数あるときに関係ないタブが飛ぶ
+  const win =
+    sameOrigin.find((w) => w.focused) ??
+    sameOrigin.find((w) => w.visibilityState === "visible") ??
+    sameOrigin[0];
+  if (win) {
+    try {
+      await win.focus();
+      if ("navigate" in win) {
+        await win.navigate(target);
+        return;
       }
+    } catch {
+      // SW に制御されていないウィンドウは navigate できない。開き直す
     }
-    return;
   }
   await self.clients.openWindow(target);
 }
