@@ -503,6 +503,7 @@ export async function POST(request: NextRequest) {
       score_knowledge_accuracy: scores.knowledgeAccuracy ?? null,
       score_reasoning_maturity: scores.reasoningMaturity,
       score_total: scores.total,
+      score_maximum: feedback.scoreMaximum ?? 50,
       word_count: ocrText.length,
       topic: topic ?? "",
       weakness_tags: weaknessTags,

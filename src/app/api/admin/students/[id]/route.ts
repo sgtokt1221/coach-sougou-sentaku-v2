@@ -6,6 +6,7 @@ import { adminDb } from "@/lib/firebase/admin";
 import { MOCK_UNIVERSITIES } from "@/lib/matching/mockData";
 import { resolveTargetUniversities } from "@/lib/universities/resolve";
 import type { StudentDetail } from "@/lib/types/admin";
+import { normalizedEssayTotal } from "@/lib/types/essay";
 import { getThemeById } from "@/data/essay-themes";
 import { getPastQuestionById } from "@/data/essay-past-questions";
 
@@ -251,7 +252,8 @@ export async function GET(
         submittedAt:
           data.submittedAt?.toDate().toISOString() ?? new Date().toISOString(),
         scores: data.scores ?? null,
-        // APが取れなかった答案は満点が40点。50固定で割るとランクが実際より低く出る
+        // 満点は答案ごとに違う（口頭試問型は専門知識を合計に入れるので60）。
+        // 50固定で割るとランクが実際とずれる
         scoreMaximum: data.feedback?.scoreMaximum ?? 50,
         status: data.status ?? "uploaded",
       };
@@ -280,7 +282,9 @@ export async function GET(
       .reverse()
       .map((e) => ({
         date: e.submittedAt,
-        total: e.scores!.total,
+        // 満点の違う答案を1本の線に混ぜると、口頭試問型を1本やっただけで
+        // 伸びたように見える。50点スケールへ揃えて描く
+        total: normalizedEssayTotal(e.scores!.total, e.scoreMaximum),
         structure: e.scores!.structure ?? 0,
         logic: e.scores!.logic ?? 0,
         expression: e.scores!.expression ?? 0,
@@ -346,10 +350,17 @@ export async function GET(
       return ns.length > 0 ? avg(ns) : null;
     };
 
+    /**
+     * 平均に使う total は50点スケールへ揃える（満点60の口頭試問型が混ざると
+     * 平均が黙って上がる）。軸ごとの 0-10 は満点に依らないのでそのまま。
+     */
     const recentEssayScores = essays
       .filter((e) => e.scores)
       .slice(0, 3)
-      .map((e) => e.scores!);
+      .map((e) => ({
+        ...e.scores!,
+        total: normalizedEssayTotal(e.scores!.total, e.scoreMaximum),
+      }));
     const essayCategoryAverages =
       recentEssayScores.length > 0
         ? {
@@ -427,7 +438,10 @@ export async function GET(
     const prevEssayScores = essays
       .filter((e) => e.scores)
       .slice(3, 6)
-      .map((e) => e.scores!);
+      .map((e) => ({
+        ...e.scores!,
+        total: normalizedEssayTotal(e.scores!.total, e.scoreMaximum),
+      }));
     const essayAvgCurrent =
       recentEssayScores.length > 0
         ? recentEssayScores.reduce((s, x) => s + (x.total ?? 0), 0) /

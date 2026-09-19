@@ -528,6 +528,7 @@ export async function POST(request: NextRequest) {
       score_enthusiasm: scores.enthusiasm,
       score_specificity: scores.specificity,
       score_total: scores.total,
+      score_maximum: scores.totalMax ?? 40,
       weakness_tags: weaknessTags,
       weakness_categories: weaknessTags.map(
         (tag) => categoryHints.get(tag) ?? categorizeWeakness(tag)

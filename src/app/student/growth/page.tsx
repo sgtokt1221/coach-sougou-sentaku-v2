@@ -28,6 +28,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { SESSION_TYPE_LABELS, type Session } from "@/lib/types/session";
 import { WeaknessSourceBadge } from "@/components/growth/WeaknessSourceBadge";
+import { normalizedEssayTotal } from "@/lib/types/essay";
 
 interface InterviewHistoryItem {
   id: string;
@@ -180,6 +181,8 @@ export default function GrowthPage() {
     essays: {
       submittedAt: string;
       status: string;
+      /** 合計の満点。口頭試問型は60。旧データは無し（=50） */
+      scoreMaximum?: number;
       scores?: {
         total: number;
         structure: number;
@@ -280,7 +283,8 @@ export default function GrowthPage() {
         const s = e.scores!;
         return {
           date: `${d.getMonth() + 1}/${d.getDate()}`,
-          total: s.total,
+          // 満点の違う答案を同じ線に混ぜない（口頭試問型は60点満点）
+          total: normalizedEssayTotal(s.total, e.scoreMaximum),
           structure: s.structure ?? 0,
           logic: s.logic ?? 0,
           expression: s.expression ?? 0,

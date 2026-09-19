@@ -19,6 +19,7 @@ import {
   Zap,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { normalizedEssayTotal } from "@/lib/types/essay";
 
 interface EssayHistoryItem {
   id: string;
@@ -26,6 +27,8 @@ interface EssayHistoryItem {
   facultyName: string;
   submittedAt: string;
   scores: { total: number };
+  /** 合計の満点。口頭試問型は60。旧データは無し（=50） */
+  scoreMaximum?: number;
 }
 
 interface TrendDataPoint {
@@ -103,7 +106,8 @@ export default function StudentPortalV2() {
     .filter((e) => e.scores)
     .map((e) => ({
       date: e.submittedAt.slice(5).replace("-", "/"),
-      total: e.scores.total,
+      // 満点の違う答案を同じ線に混ぜない（口頭試問型は60点満点）
+      total: normalizedEssayTotal(e.scores.total, e.scoreMaximum),
       structure: 0,
       logic: 0,
       expression: 0,

@@ -1,5 +1,6 @@
 "use client";
 
+import { normalizedEssayTotal } from "@/lib/types/essay";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -171,7 +172,8 @@ export function EssayHistory() {
     .sort((a, b) => a.submittedAt.localeCompare(b.submittedAt))
     .map((item) => ({
       date: formatDate(item.submittedAt),
-      total: item.totalScore,
+      // 満点の違う答案を同じ線に混ぜない（口頭試問型は60点満点）
+      total: normalizedEssayTotal(item.totalScore, item.scoreMaximum),
       structure: item.scores.structure,
       logic: item.scores.logic,
       expression: item.scores.expression,

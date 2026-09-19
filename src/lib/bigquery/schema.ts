@@ -35,6 +35,8 @@ export const ESSAY_SUBMISSIONS_SCHEMA: TableSchema = {
     /** 専門知識の正確性。口頭試問型の答案にだけ入る */
     { name: "score_knowledge_accuracy", type: "INT64", mode: "NULLABLE" },
     { name: "score_total", type: "INT64", mode: "NULLABLE" },
+    /** その答案の満点。口頭試問型は60。集計はこれで割って揃える */
+    { name: "score_maximum", type: "INT64", mode: "NULLABLE" },
 
     // metadata
     { name: "word_count", type: "INT64", mode: "NULLABLE" },
@@ -89,6 +91,8 @@ export const INTERVIEW_SESSIONS_SCHEMA: TableSchema = {
     { name: "score_enthusiasm", type: "INT64", mode: "NULLABLE" },
     { name: "score_specificity", type: "INT64", mode: "NULLABLE" },
     { name: "score_total", type: "INT64", mode: "NULLABLE" },
+    /** その答案の満点。口頭試問型は60。集計はこれで割って揃える */
+    { name: "score_maximum", type: "INT64", mode: "NULLABLE" },
 
     // tags
     { name: "weakness_tags", type: "STRING", mode: "REPEATED" },

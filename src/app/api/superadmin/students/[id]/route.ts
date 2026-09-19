@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
+import { normalizedEssayTotal } from "@/lib/types/essay";
 
 export async function GET(
   request: Request,
@@ -18,7 +19,10 @@ export async function GET(
   try {
     const studentDoc = await adminDb.doc(`users/${id}`).get();
     if (!studentDoc.exists) {
-      return NextResponse.json({ error: "生徒が見つかりません" }, { status: 404 });
+      return NextResponse.json(
+        { error: "生徒が見つかりません" },
+        { status: 404 }
+      );
     }
 
     const data = studentDoc.data()!;
@@ -47,7 +51,14 @@ export async function GET(
       .orderBy("submittedAt", "desc")
       .limit(1)
       .get();
-    const latestScore = essaysSnap.docs[0]?.data()?.scores?.total ?? null;
+    const latestEssay = essaysSnap.docs[0]?.data();
+    const latestScore =
+      typeof latestEssay?.scores?.total === "number"
+        ? normalizedEssayTotal(
+            latestEssay.scores.total,
+            latestEssay.feedback?.scoreMaximum
+          )
+        : null;
 
     const essayCountSnap = await adminDb
       .collection("users")
@@ -69,7 +80,8 @@ export async function GET(
       organizationId: orgId,
       organizationName,
       targetUniversities: data.targetUniversities ?? [],
-      createdAt: data.createdAt?.toDate?.()?.toISOString() ?? new Date().toISOString(),
+      createdAt:
+        data.createdAt?.toDate?.()?.toISOString() ?? new Date().toISOString(),
       latestScore,
       essayCount: essayCountSnap.data().count,
     });
@@ -92,7 +104,8 @@ export async function PATCH(
   if (body.school !== undefined) updates.school = body.school;
   if (body.schoolId !== undefined) updates.schoolId = body.schoolId;
   if (body.grade !== undefined) updates.grade = body.grade;
-  if (body.targetUniversities !== undefined) updates.targetUniversities = body.targetUniversities;
+  if (body.targetUniversities !== undefined)
+    updates.targetUniversities = body.targetUniversities;
   updates.updatedAt = new Date();
 
   if (!adminDb) {
@@ -135,9 +148,14 @@ export async function DELETE(
   }
 
   try {
-    await adminDb.doc(`users/${id}`).update({ role: "disabled", updatedAt: new Date() });
+    await adminDb
+      .doc(`users/${id}`)
+      .update({ role: "disabled", updatedAt: new Date() });
     return NextResponse.json({ success: true, uid: id, role: "disabled" });
   } catch {
-    return NextResponse.json({ error: "無効化に失敗しました" }, { status: 500 });
+    return NextResponse.json(
+      { error: "無効化に失敗しました" },
+      { status: 500 }
+    );
   }
 }

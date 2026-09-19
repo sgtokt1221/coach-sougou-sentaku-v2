@@ -9,7 +9,12 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
-  const authResult = await requireRole(request, ["admin", "teacher", "superadmin", "student"]);
+  const authResult = await requireRole(request, [
+    "admin",
+    "teacher",
+    "superadmin",
+    "student",
+  ]);
   if (authResult instanceof NextResponse) return authResult;
 
   const { id: sessionId } = await params;
@@ -41,6 +46,7 @@ export async function GET(
         ocrText: data.ocrText,
         topic: data.topic,
         scores: data.scores,
+        scoreMaximum: data.scoreMaximum ?? 50,
         voteCount: data.voteCount || 0,
         selectedByTeacher: data.selectedByTeacher || false,
         createdAt: data.createdAt,
@@ -89,10 +95,7 @@ export async function POST(
     // Check session exists and get submission deadline
     const sessionDoc = await adminDb.doc(`sessions/${sessionId}`).get();
     if (!sessionDoc.exists) {
-      return NextResponse.json(
-        { error: "Session not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Session not found" }, { status: 404 });
     }
 
     const sessionData = sessionDoc.data();
@@ -126,10 +129,7 @@ export async function POST(
     // Fetch the essay
     const essayDoc = await adminDb.doc(`essays/${essayId}`).get();
     if (!essayDoc.exists) {
-      return NextResponse.json(
-        { error: "Essay not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Essay not found" }, { status: 404 });
     }
 
     const essayData = essayDoc.data();
@@ -157,6 +157,8 @@ export async function POST(
       ocrText: essayData.ocrText || "",
       topic: essayData.topic,
       scores: essayData.scores ? { total: essayData.scores.total } : undefined,
+      // 満点は答案ごとに違う（口頭試問型は60）。/50 と決め打ちさせない
+      scoreMaximum: essayData.feedback?.scoreMaximum ?? 50,
       voteCount: 0,
       selectedByTeacher: false,
       createdAt: new Date().toISOString(),

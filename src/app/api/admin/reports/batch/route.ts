@@ -8,16 +8,56 @@ import {
   collectWeaknessTags,
   mergeCountMaps,
 } from "@/lib/growth/weakness-aggregate";
-import type { BatchReportRequest, GrowthReportSummary } from "@/lib/types/growth-report";
+import type {
+  BatchReportRequest,
+  GrowthReportSummary,
+} from "@/lib/types/growth-report";
 
-function generateMockBatchReports(period: "weekly" | "monthly"): GrowthReportSummary[] {
+function generateMockBatchReports(
+  period: "weekly" | "monthly"
+): GrowthReportSummary[] {
   const { start, end } = getPeriodRange(period);
   const students = [
-    { id: "mock_student_001", name: "田中 太郎", essayCount: 3, interviewCount: 1, essayChange: 2.3, interviewChange: 1.0 },
-    { id: "mock_student_002", name: "佐藤 花子", essayCount: 1, interviewCount: 0, essayChange: -1.5, interviewChange: 0 },
-    { id: "mock_student_003", name: "鈴木 一郎", essayCount: 4, interviewCount: 2, essayChange: 4.2, interviewChange: 3.0 },
-    { id: "mock_student_004", name: "山田 美咲", essayCount: 2, interviewCount: 1, essayChange: -3.8, interviewChange: -2.0 },
-    { id: "mock_student_005", name: "高橋 健太", essayCount: 0, interviewCount: 0, essayChange: 0, interviewChange: 0 },
+    {
+      id: "mock_student_001",
+      name: "田中 太郎",
+      essayCount: 3,
+      interviewCount: 1,
+      essayChange: 2.3,
+      interviewChange: 1.0,
+    },
+    {
+      id: "mock_student_002",
+      name: "佐藤 花子",
+      essayCount: 1,
+      interviewCount: 0,
+      essayChange: -1.5,
+      interviewChange: 0,
+    },
+    {
+      id: "mock_student_003",
+      name: "鈴木 一郎",
+      essayCount: 4,
+      interviewCount: 2,
+      essayChange: 4.2,
+      interviewChange: 3.0,
+    },
+    {
+      id: "mock_student_004",
+      name: "山田 美咲",
+      essayCount: 2,
+      interviewCount: 1,
+      essayChange: -3.8,
+      interviewChange: -2.0,
+    },
+    {
+      id: "mock_student_005",
+      name: "高橋 健太",
+      essayCount: 0,
+      interviewCount: 0,
+      essayChange: 0,
+      interviewChange: 0,
+    },
   ];
   return students.map((s) => ({
     id: `report_${s.id}_${period}_${Date.now()}`,
@@ -28,7 +68,8 @@ function generateMockBatchReports(period: "weekly" | "monthly"): GrowthReportSum
     endDate: end.toISOString(),
     generatedAt: new Date().toISOString(),
     essayCount: period === "weekly" ? s.essayCount : s.essayCount * 3,
-    interviewCount: period === "weekly" ? s.interviewCount : s.interviewCount * 3,
+    interviewCount:
+      period === "weekly" ? s.interviewCount : s.interviewCount * 3,
     essayScoreChange: s.essayChange,
     interviewScoreChange: s.interviewChange,
     overallAssessment:
@@ -42,7 +83,11 @@ function generateMockBatchReports(period: "weekly" | "monthly"): GrowthReportSum
 }
 
 export async function POST(request: NextRequest) {
-  const authResult = await requireRole(request, ["admin", "teacher", "superadmin"]);
+  const authResult = await requireRole(request, [
+    "admin",
+    "teacher",
+    "superadmin",
+  ]);
   if (authResult instanceof NextResponse) return authResult;
   const { uid, role } = authResult;
 
@@ -63,7 +108,10 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(generateMockBatchReports(period));
       }
       return NextResponse.json(
-        { error: "Firestore に接続できません", detail: "adminDb is not initialized" },
+        {
+          error: "Firestore に接続できません",
+          detail: "adminDb is not initialized",
+        },
         { status: 500 }
       );
     }
@@ -72,7 +120,9 @@ export async function POST(request: NextRequest) {
     const studentDocs: FirebaseFirestore.QueryDocumentSnapshot[] = [];
     if (role === "superadmin") {
       studentDocs.push(
-        ...(await adminDb.collection("users").where("role", "==", "student").get()).docs,
+        ...(
+          await adminDb.collection("users").where("role", "==", "student").get()
+        ).docs
       );
     } else if (role === "admin") {
       const memberUids = await getOrgMemberAdminUids(adminDb, uid);
@@ -94,7 +144,7 @@ export async function POST(request: NextRequest) {
             .where("role", "==", "student")
             .where("managedBy", "==", uid)
             .get()
-        ).docs,
+        ).docs
       );
     }
 
@@ -113,53 +163,62 @@ export async function POST(request: NextRequest) {
 
         // 各クエリは「高速経路 → JS フィルタ fallback」で silent fallback を回避。
         // 失敗時は throw されて呼び出し側 catch で 500 に昇格する。
-        const [periodEssaysSnap, prevEssaysSnap, periodInterviewsSnap, prevInterviewsSnap, weaknessesSnap] =
-          await Promise.all([
-            queryWithRangeFilter(
-              adminDb!.collection("essays"),
-              "userId",
-              studentId,
-              "submittedAt",
-              start,
-              end,
-            ),
-            queryWithRangeFilter(
-              adminDb!.collection("essays"),
-              "userId",
-              studentId,
-              "submittedAt",
-              prevStart,
-              start,
-            ),
-            queryWithRangeFilter(
-              adminDb!.collection("interviews"),
-              "userId",
-              studentId,
-              "startedAt",
-              start,
-              end,
-            ),
-            queryWithRangeFilter(
-              adminDb!.collection("interviews"),
-              "userId",
-              studentId,
-              "startedAt",
-              prevStart,
-              start,
-            ),
-            adminDb!.collection(`users/${studentId}/weaknesses`).get(),
-          ]);
+        const [
+          periodEssaysSnap,
+          prevEssaysSnap,
+          periodInterviewsSnap,
+          prevInterviewsSnap,
+          weaknessesSnap,
+        ] = await Promise.all([
+          queryWithRangeFilter(
+            adminDb!.collection("essays"),
+            "userId",
+            studentId,
+            "submittedAt",
+            start,
+            end
+          ),
+          queryWithRangeFilter(
+            adminDb!.collection("essays"),
+            "userId",
+            studentId,
+            "submittedAt",
+            prevStart,
+            start
+          ),
+          queryWithRangeFilter(
+            adminDb!.collection("interviews"),
+            "userId",
+            studentId,
+            "startedAt",
+            start,
+            end
+          ),
+          queryWithRangeFilter(
+            adminDb!.collection("interviews"),
+            "userId",
+            studentId,
+            "startedAt",
+            prevStart,
+            start
+          ),
+          adminDb!.collection(`users/${studentId}/weaknesses`).get(),
+        ]);
 
         const toEssayData = (doc: FirebaseFirestore.QueryDocumentSnapshot) => {
           const d = doc.data();
           return {
             id: doc.id,
             submittedAt: d.submittedAt?.toDate?.() ?? new Date(),
+            // 満点は答案ごとに違う（口頭試問型は60）。平均の正規化に使う
+            scoreMaximum: d.feedback?.scoreMaximum ?? 50,
             scores: d.scores ?? null,
           };
         };
 
-        const toInterviewData = (doc: FirebaseFirestore.QueryDocumentSnapshot) => {
+        const toInterviewData = (
+          doc: FirebaseFirestore.QueryDocumentSnapshot
+        ) => {
           const d = doc.data();
           const s = d.scores;
           return {
@@ -168,15 +227,22 @@ export async function POST(request: NextRequest) {
             scores: s
               ? {
                   total: typeof s.total === "number" ? s.total : 0,
-                  clarity: typeof s.clarity === "number" ? s.clarity : undefined,
+                  clarity:
+                    typeof s.clarity === "number" ? s.clarity : undefined,
                   apAlignment:
-                    typeof s.apAlignment === "number" ? s.apAlignment : undefined,
+                    typeof s.apAlignment === "number"
+                      ? s.apAlignment
+                      : undefined,
                   enthusiasm:
                     typeof s.enthusiasm === "number" ? s.enthusiasm : undefined,
                   specificity:
-                    typeof s.specificity === "number" ? s.specificity : undefined,
+                    typeof s.specificity === "number"
+                      ? s.specificity
+                      : undefined,
                   bodyLanguage:
-                    typeof s.bodyLanguage === "number" ? s.bodyLanguage : undefined,
+                    typeof s.bodyLanguage === "number"
+                      ? s.bodyLanguage
+                      : undefined,
                 }
               : null,
           };
@@ -185,11 +251,11 @@ export async function POST(request: NextRequest) {
         // 期間別の weaknessTags 集計 (悪化/改善判定で使用)
         const periodWeaknessCounts = mergeCountMaps(
           collectWeaknessTags(periodEssaysSnap.docs),
-          collectWeaknessTags(periodInterviewsSnap.docs),
+          collectWeaknessTags(periodInterviewsSnap.docs)
         );
         const previousWeaknessCounts = mergeCountMaps(
           collectWeaknessTags(prevEssaysSnap.docs),
-          collectWeaknessTags(prevInterviewsSnap.docs),
+          collectWeaknessTags(prevInterviewsSnap.docs)
         );
 
         const report = generateGrowthReport({

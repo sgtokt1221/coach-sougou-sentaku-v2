@@ -183,6 +183,8 @@ export default function EssayNewPage() {
       priorityImprovement?: string | null;
       nextChallenge?: string | null;
       repeatedIssues?: Array<{ area: string; count?: number }>;
+      /** 合計の満点。口頭試問型は60。旧データは無し（=50） */
+      scoreMaximum?: number;
     };
     retryContext?: {
       wordLimit?: number | null;
@@ -1718,7 +1720,7 @@ export default function EssayNewPage() {
                             <p className="text-lg font-bold text-slate-800 tabular-nums">
                               {retryParent.scores.total}
                               <span className="text-muted-foreground text-xs font-normal">
-                                /50
+                                /{retryParent.feedback?.scoreMaximum ?? 50}
                               </span>
                             </p>
                           </div>

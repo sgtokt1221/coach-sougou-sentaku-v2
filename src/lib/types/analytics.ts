@@ -19,6 +19,8 @@ export interface BigQueryEssayLog {
   /** 議論の成熟度。旧データには無い */
   score_reasoning_maturity?: number;
   score_total: number;
+  /** その答案の満点。口頭試問型は60。集計はこれで割って揃える */
+  score_maximum?: number | null;
   word_count: number;
   topic: string;
   weakness_tags: string[];
@@ -49,6 +51,8 @@ export interface BigQueryInterviewLog {
   score_enthusiasm: number;
   score_specificity: number;
   score_total: number;
+  /** その面接の満点。口頭試問は専門知識を合計に入れるので50、他は40 */
+  score_maximum?: number | null;
   weakness_tags: string[];
   weakness_categories?: string[];
   question_count: number;

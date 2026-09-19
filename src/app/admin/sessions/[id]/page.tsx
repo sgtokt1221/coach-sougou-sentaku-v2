@@ -70,9 +70,14 @@ const STATUS_VARIANT: Record<
   ended: "secondary",
 };
 
-function scoreColor(total: number): string {
-  if (total >= 40) return "text-emerald-600 dark:text-emerald-400";
-  if (total >= 30) return "text-amber-600 dark:text-amber-400";
+/**
+ * 満点は答案ごとに違う（口頭試問型は専門知識を合計に入れるので60）。
+ * 40/30 の絶対値で色を決めると、口頭試問型だけ甘く出る。割合で見る。
+ */
+function scoreColor(total: number, max = 50): string {
+  const pct = max > 0 ? (total / max) * 100 : 0;
+  if (pct >= 80) return "text-emerald-600 dark:text-emerald-400";
+  if (pct >= 60) return "text-amber-600 dark:text-amber-400";
   return "text-rose-600 dark:text-rose-400";
 }
 
@@ -796,9 +801,10 @@ export default function AdminSessionDetailPage() {
                                     スコア:
                                   </span>
                                   <span
-                                    className={`font-medium ${scoreColor(submission.scores.total)}`}
+                                    className={`font-medium ${scoreColor(submission.scores.total, submission.scoreMaximum ?? 50)}`}
                                   >
-                                    {submission.scores.total}/50
+                                    {submission.scores.total}/
+                                    {submission.scoreMaximum ?? 50}
                                   </span>
                                 </div>
                               )}

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
+import { normalizedEssayTotal } from "@/lib/types/essay";
 
 interface MonthlyPoint {
   month: string; // YYYY-MM
@@ -16,13 +17,13 @@ interface UniversityPaceResponse {
   facultyId: string;
   universityName: string;
   facultyName: string;
-  totalStudents: number;       // この大学/学部を志望している全生徒数
+  totalStudents: number; // この大学/学部を志望している全生徒数
   totalSubmissions: number;
   /** status 制約なしの interview 総数 (透明化メタ) */
   totalInterviewsAllStatuses?: number;
   /** 分析に使った completed interview の数 */
   completedInterviewsAnalyzed?: number;
-  monthly: MonthlyPoint[];     // 月別の活動推移 (直近 12 ヶ月)
+  monthly: MonthlyPoint[]; // 月別の活動推移 (直近 12 ヶ月)
 }
 
 /**
@@ -34,7 +35,8 @@ interface UniversityPaceResponse {
 export async function GET(request: NextRequest) {
   const auth = await requireRole(request, ["superadmin"]);
   if (auth instanceof NextResponse) return auth;
-  if (!adminDb) return NextResponse.json({ error: "DB 未初期化" }, { status: 500 });
+  if (!adminDb)
+    return NextResponse.json({ error: "DB 未初期化" }, { status: 500 });
 
   const url = new URL(request.url);
   const universityId = url.searchParams.get("universityId") ?? "";
@@ -43,7 +45,7 @@ export async function GET(request: NextRequest) {
   if (!universityId || !facultyId) {
     return NextResponse.json(
       { error: "universityId と facultyId は必須" },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
@@ -97,7 +99,15 @@ export async function GET(request: NextRequest) {
       const data = d.data();
       const date = data.submittedAt?.toDate?.();
       if (!date || typeof data.scores?.total !== "number") continue;
-      essayDocs.push({ date, total: data.scores.total, uid: data.userId });
+      // 満点の違う答案（口頭試問型は60）をそのまま平均に混ぜない
+      essayDocs.push({
+        date,
+        total: normalizedEssayTotal(
+          data.scores.total,
+          data.feedback?.scoreMaximum
+        ),
+        uid: data.userId,
+      });
     }
     for (const d of interviewsSnap.docs) {
       const data = d.data();
@@ -113,7 +123,7 @@ export async function GET(request: NextRequest) {
   for (let i = 11; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     months.push(
-      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
     );
   }
 
@@ -124,12 +134,16 @@ export async function GET(request: NextRequest) {
     const start = new Date(year, month, 1);
     const end = new Date(year, month + 1, 1);
 
-    const monthEssays = essayDocs.filter((e) => e.date >= start && e.date < end);
+    const monthEssays = essayDocs.filter(
+      (e) => e.date >= start && e.date < end
+    );
     const monthInterviews = interviewDocs.filter(
-      (i) => i.date >= start && i.date < end,
+      (i) => i.date >= start && i.date < end
     );
     const avg = (xs: number[]) =>
-      xs.length === 0 ? 0 : Math.round((xs.reduce((a, b) => a + b, 0) / xs.length) * 10) / 10;
+      xs.length === 0
+        ? 0
+        : Math.round((xs.reduce((a, b) => a + b, 0) / xs.length) * 10) / 10;
     const activeStudents = new Set([
       ...monthEssays.map((e) => e.uid),
       ...monthInterviews.map((i) => i.uid),
@@ -149,7 +163,7 @@ export async function GET(request: NextRequest) {
   const uniDoc = await adminDb.doc(`universities/${universityId}`).get();
   const uniData = uniDoc.data();
   const faculty = uniData?.faculties?.find(
-    (f: { id: string }) => f.id === facultyId,
+    (f: { id: string }) => f.id === facultyId
   );
 
   const response: UniversityPaceResponse = {

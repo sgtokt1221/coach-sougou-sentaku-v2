@@ -715,7 +715,8 @@ export default function StudentSessionDetailPage() {
                             )}
                             {submission.scores && (
                               <p className="text-muted-foreground text-xs">
-                                スコア: {submission.scores.total}点
+                                スコア: {submission.scores.total} /{" "}
+                                {submission.scoreMaximum ?? 50}点
                               </p>
                             )}
                           </div>

@@ -362,9 +362,14 @@ function weaknessBadge(w: WeaknessRecord) {
   }
 }
 
-function scoreColor(total: number): string {
-  if (total >= 40) return "text-emerald-600 dark:text-emerald-400";
-  if (total >= 30) return "text-amber-600 dark:text-amber-400";
+/**
+ * 満点は答案ごとに違う（口頭試問型は専門知識を合計に入れるので60）。
+ * 40/30 の絶対値で色を決めると、口頭試問型だけ甘く出る。割合で見る。
+ */
+function scoreColor(total: number, max = 50): string {
+  const pct = max > 0 ? (total / max) * 100 : 0;
+  if (pct >= 80) return "text-emerald-600 dark:text-emerald-400";
+  if (pct >= 60) return "text-amber-600 dark:text-amber-400";
   return "text-rose-600 dark:text-rose-400";
 }
 
@@ -1371,7 +1376,7 @@ function AdminStudentDetailPageInner() {
                             />
                             <div className="text-right">
                               <p
-                                className={`text-lg font-bold ${scoreColor(essay.scores.total)}`}
+                                className={`text-lg font-bold ${scoreColor(essay.scores.total, essay.scoreMaximum ?? 50)}`}
                               >
                                 {essay.scores.total}
                               </p>
@@ -1942,6 +1947,26 @@ function AdminStudentDetailPageInner() {
                               </div>
                             );
                           })}
+                          {/* 口頭試問型の専門知識。合計に入る（満点60） */}
+                          {typeof essayDetail.scores.knowledgeAccuracy ===
+                            "number" && (
+                            <div className="flex items-center gap-3 border-t pt-2">
+                              <span className="text-muted-foreground w-28 text-xs">
+                                専門知識の正確性
+                              </span>
+                              <div className="flex-1">
+                                <Progress
+                                  value={
+                                    essayDetail.scores.knowledgeAccuracy * 10
+                                  }
+                                  className="h-2"
+                                />
+                              </div>
+                              <span className="w-12 text-right text-xs font-medium tabular-nums">
+                                {essayDetail.scores.knowledgeAccuracy}/10
+                              </span>
+                            </div>
+                          )}
                           {/* 合計外の参考値。レーダーには含めない */}
                           {essayDetail.feedback?.apAlignmentAssessable !==
                             false &&
@@ -1980,7 +2005,7 @@ function AdminStudentDetailPageInner() {
                               animate={false}
                             />
                             <span
-                              className={`text-lg font-bold ${scoreColor(essayDetail.scores.total)}`}
+                              className={`text-lg font-bold ${scoreColor(essayDetail.scores.total, essayDetail.feedback?.scoreMaximum ?? 50)}`}
                             >
                               {essayDetail.scores.total}/
                               {essayDetail.feedback?.scoreMaximum ?? 50}
@@ -2020,6 +2045,39 @@ function AdminStudentDetailPageInner() {
                       <Separator />
 
                       <div className="space-y-4">
+                        {/* 口頭試問型の知識の誤り。面談でそのまま使えるように出す */}
+                        {(essayDetail.feedback.knowledgeInsights?.errors
+                          ?.length ?? 0) > 0 && (
+                          <div className="space-y-2">
+                            <h3 className="text-foreground text-sm font-semibold">
+                              知識の誤り
+                            </h3>
+                            {essayDetail.feedback.knowledgeInsights!.errors.map(
+                              (e, i) => (
+                                <div
+                                  key={i}
+                                  className={`rounded-lg p-3 text-sm ${
+                                    e.severity === "critical"
+                                      ? "bg-rose-600 text-white"
+                                      : "bg-amber-100 text-amber-950"
+                                  }`}
+                                >
+                                  <p className="font-medium">「{e.claim}」</p>
+                                  <p
+                                    className={`mt-1 text-xs leading-relaxed ${
+                                      e.severity === "critical"
+                                        ? "text-rose-50"
+                                        : "text-amber-900"
+                                    }`}
+                                  >
+                                    {e.correction}
+                                  </p>
+                                </div>
+                              )
+                            )}
+                          </div>
+                        )}
+
                         {/* Overall */}
                         <div className="space-y-1">
                           <h3 className="text-foreground text-sm font-semibold">

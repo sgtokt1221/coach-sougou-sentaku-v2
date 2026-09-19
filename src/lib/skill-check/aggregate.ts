@@ -1,3 +1,4 @@
+import { normalizedEssayTotal } from "@/lib/types/essay";
 import type { SkillRank } from "@/lib/types/skill-check";
 import { calculateRank } from "./rank";
 import { calculateInterviewRank } from "@/lib/interview-skill-check/rank";
@@ -138,10 +139,7 @@ export async function computeEssayAggregate(
         const data = d.data();
         const total = data?.scores?.total;
         if (typeof total !== "number") return null;
-        const max = data?.feedback?.scoreMaximum;
-        return typeof max === "number" && max > 0 && max !== 50
-          ? (total / max) * 50
-          : total;
+        return normalizedEssayTotal(total, data?.feedback?.scoreMaximum);
       })
       .filter((s): s is number => typeof s === "number");
     const chocoTotals = chocoAll.docs

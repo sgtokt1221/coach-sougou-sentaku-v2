@@ -98,6 +98,7 @@ export async function logEssaySubmission(
       score_responsiveness: data.score_responsiveness ?? null,
       score_knowledge_accuracy: data.score_knowledge_accuracy ?? null,
       score_total: data.score_total,
+      score_maximum: data.score_maximum ?? null,
       word_count: data.word_count,
       topic: data.topic || null,
       ocr_confidence: null, // populated if available in future
@@ -141,6 +142,7 @@ export async function logInterviewSession(
       score_enthusiasm: data.score_enthusiasm,
       score_specificity: data.score_specificity,
       score_total: data.score_total,
+      score_maximum: data.score_maximum ?? null,
       weakness_tags: data.weakness_tags ?? [],
       weakness_categories: data.weakness_categories ?? [],
       improvement_tags: [],

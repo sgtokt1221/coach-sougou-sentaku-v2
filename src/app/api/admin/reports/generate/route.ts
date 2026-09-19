@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireRole, scopeByOrganization } from "@/lib/api/auth";
 import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
 import { adminDb } from "@/lib/firebase/admin";
-import { generateGrowthReport, getPeriodRange, buildSessionSummaryDraft } from "@/lib/growth/report";
+import {
+  generateGrowthReport,
+  getPeriodRange,
+  buildSessionSummaryDraft,
+} from "@/lib/growth/report";
 import {
   collectWeaknessTags,
   mergeCountMaps,
@@ -19,7 +23,10 @@ import {
   extractInterviewAssistantQuestions,
   buildPracticeQuestionsFromJson,
 } from "@/lib/growth/practice-questions-helpers";
-import { loadStudentContext, type StudentContext } from "@/lib/growth/student-context";
+import {
+  loadStudentContext,
+  type StudentContext,
+} from "@/lib/growth/student-context";
 import { queryWithRangeFilter } from "@/lib/admin/firestore-range-query";
 import type {
   GenerateReportRequest,
@@ -29,7 +36,10 @@ import type {
 } from "@/lib/types/growth-report";
 
 // Mock data for dev mode
-function generateMockReport(studentId: string, period: "weekly" | "monthly"): GrowthReport {
+function generateMockReport(
+  studentId: string,
+  period: "weekly" | "monthly"
+): GrowthReport {
   const { start, end } = getPeriodRange(period);
   const mockNames: Record<string, string> = {
     mock_student_001: "田中 太郎",
@@ -59,9 +69,27 @@ function generateMockReport(studentId: string, period: "weekly" | "monthly"): Gr
       scoreChange: -1.5,
     },
     weaknessProgress: [
-      { weakness: "論理の飛躍", previousScore: 4, currentScore: 6, status: "improved", attempts: 5 },
-      { weakness: "具体例不足", previousScore: 5, currentScore: 5, status: "stable", attempts: 3 },
-      { weakness: "結論の弱さ", previousScore: 6, currentScore: 4, status: "declined", attempts: 4 },
+      {
+        weakness: "論理の飛躍",
+        previousScore: 4,
+        currentScore: 6,
+        status: "improved",
+        attempts: 5,
+      },
+      {
+        weakness: "具体例不足",
+        previousScore: 5,
+        currentScore: 5,
+        status: "stable",
+        attempts: 3,
+      },
+      {
+        weakness: "結論の弱さ",
+        previousScore: 6,
+        currentScore: 4,
+        status: "declined",
+        attempts: 4,
+      },
     ],
     recommendations: [
       "小論文スコアが2.3点上昇しました。この調子で継続しましょう。",
@@ -103,23 +131,31 @@ function stripUndefined<T>(obj: T): T {
 /** 小論文統計を AI 総合所見プロンプト向けの1〜数行の日本語要約に整形する。 */
 function formatEssaySummary(stats: GrowthReport["essayStats"]): string {
   if (stats.count === 0) return "今期間の小論文提出なし";
-  const changeText = stats.scoreChange >= 0 ? `+${stats.scoreChange}` : `${stats.scoreChange}`;
+  const changeText =
+    stats.scoreChange >= 0 ? `+${stats.scoreChange}` : `${stats.scoreChange}`;
   return `件数${stats.count}件・平均${stats.avgScore}点（前期間比${changeText}点）。得意カテゴリ: ${stats.bestCategory}、弱点カテゴリ: ${stats.worstCategory}`;
 }
 
 /** 面接統計を AI 総合所見プロンプト向けの1〜数行の日本語要約に整形する。 */
 function formatInterviewSummary(stats: GrowthReport["interviewStats"]): string {
   if (stats.count === 0) return "今期間の面接練習なし";
-  const changeText = stats.scoreChange >= 0 ? `+${stats.scoreChange}` : `${stats.scoreChange}`;
+  const changeText =
+    stats.scoreChange >= 0 ? `+${stats.scoreChange}` : `${stats.scoreChange}`;
   return `件数${stats.count}件・平均${stats.avgScore}点（前期間比${changeText}点）`;
 }
 
 /** 弱点推移を「改善/停滞/悪化」でグループ化した日本語要約に整形する。 */
 function formatWeaknessSummary(progress: WeaknessProgress[]): string {
   if (progress.length === 0) return "登録されている弱点なし";
-  const improved = progress.filter((w) => w.status === "improved").map((w) => w.weakness);
-  const stable = progress.filter((w) => w.status === "stable").map((w) => w.weakness);
-  const declined = progress.filter((w) => w.status === "declined").map((w) => w.weakness);
+  const improved = progress
+    .filter((w) => w.status === "improved")
+    .map((w) => w.weakness);
+  const stable = progress
+    .filter((w) => w.status === "stable")
+    .map((w) => w.weakness);
+  const declined = progress
+    .filter((w) => w.status === "declined")
+    .map((w) => w.weakness);
   const parts: string[] = [];
   if (improved.length > 0) parts.push(`改善: ${improved.join("、")}`);
   if (stable.length > 0) parts.push(`停滞: ${stable.join("、")}`);
@@ -132,20 +168,28 @@ function formatSelfAnalysisNote(ctx: StudentContext): string | undefined {
   const parts: string[] = [];
   if (ctx.primaryTargets.length > 0) {
     parts.push(
-      `志望校: ${ctx.primaryTargets.map((t) => `${t.universityName}${t.facultyName}`).join("、")}`,
+      `志望校: ${ctx.primaryTargets.map((t) => `${t.universityName}${t.facultyName}`).join("、")}`
     );
   }
   if (ctx.mbtiType) parts.push(`MBTI: ${ctx.mbtiType}`);
-  if (ctx.selfAnalysis?.apConnection) parts.push(`AP接続: ${ctx.selfAnalysis.apConnection}`);
-  if (ctx.selfAnalysis?.uniqueCombo) parts.push(`強み: ${ctx.selfAnalysis.uniqueCombo}`);
+  if (ctx.selfAnalysis?.apConnection)
+    parts.push(`AP接続: ${ctx.selfAnalysis.apConnection}`);
+  if (ctx.selfAnalysis?.uniqueCombo)
+    parts.push(`強み: ${ctx.selfAnalysis.uniqueCombo}`);
   if (ctx.englishCerts.length > 0) {
-    parts.push(`資格: ${ctx.englishCerts.map((c) => `${c.type}${c.score}`).join("、")}`);
+    parts.push(
+      `資格: ${ctx.englishCerts.map((c) => `${c.type}${c.score}`).join("、")}`
+    );
   }
   return parts.length > 0 ? parts.join(" / ") : undefined;
 }
 
 export async function POST(request: NextRequest) {
-  const authResult = await requireRole(request, ["admin", "teacher", "superadmin"]);
+  const authResult = await requireRole(request, [
+    "admin",
+    "teacher",
+    "superadmin",
+  ]);
   if (authResult instanceof NextResponse) return authResult;
   const { uid, role } = authResult;
 
@@ -183,7 +227,10 @@ export async function POST(request: NextRequest) {
     step = "fetch_student";
     const studentDoc = await adminDb.doc(`users/${studentId}`).get();
     if (!studentDoc.exists) {
-      return NextResponse.json({ error: "生徒が見つかりません" }, { status: 404 });
+      return NextResponse.json(
+        { error: "生徒が見つかりません" },
+        { status: 404 }
+      );
     }
 
     const studentData = studentDoc.data()!;
@@ -221,7 +268,7 @@ export async function POST(request: NextRequest) {
       studentId,
       "submittedAt",
       start,
-      end,
+      end
     );
 
     step = "fetch_essays_prev";
@@ -231,7 +278,7 @@ export async function POST(request: NextRequest) {
       studentId,
       "submittedAt",
       prevStart,
-      start,
+      start
     );
 
     step = "fetch_interviews_current";
@@ -241,7 +288,7 @@ export async function POST(request: NextRequest) {
       studentId,
       "startedAt",
       start,
-      end,
+      end
     );
 
     step = "fetch_interviews_prev";
@@ -251,7 +298,7 @@ export async function POST(request: NextRequest) {
       studentId,
       "startedAt",
       prevStart,
-      start,
+      start
     );
 
     step = "fetch_weaknesses";
@@ -272,7 +319,10 @@ export async function POST(request: NextRequest) {
         .orderBy("scheduledAt", "desc")
         .get();
     } catch (indexErr) {
-      console.warn("[reports/generate] sessions index missing, fallback to JS filter:", indexErr);
+      console.warn(
+        "[reports/generate] sessions index missing, fallback to JS filter:",
+        indexErr
+      );
       const all = await adminDb
         .collection("sessions")
         .where("studentId", "==", studentId)
@@ -285,8 +335,8 @@ export async function POST(request: NextRequest) {
       });
       filtered.sort((a, b) =>
         ((b.data().scheduledAt as string) ?? "").localeCompare(
-          (a.data().scheduledAt as string) ?? "",
-        ),
+          (a.data().scheduledAt as string) ?? ""
+        )
       );
       sessionsSnap = { docs: filtered };
     }
@@ -315,13 +365,15 @@ export async function POST(request: NextRequest) {
         const concatenated = debriefNotes.join("\n---\n");
         const systemPrompt = buildLessonObservationSummaryPrompt(
           studentData.displayName ?? "生徒",
-          concatenated,
+          concatenated
         );
         const resp = await client.messages.create({
           model: AI_MODEL_SONNET,
           max_tokens: 500,
           system: systemPrompt,
-          messages: [{ role: "user", content: "JSON 配列を出力してください。" }],
+          messages: [
+            { role: "user", content: "JSON 配列を出力してください。" },
+          ],
         });
         const text =
           resp.content[0]?.type === "text" ? resp.content[0].text : "";
@@ -358,7 +410,9 @@ export async function POST(request: NextRequest) {
           summaryPoints: data.summary?.topicsDiscussed ?? [],
           actionItems: (data.summary?.actionItems ?? [])
             .map((a) => a.task)
-            .filter((t): t is string => typeof t === "string" && t.trim().length > 0),
+            .filter(
+              (t): t is string => typeof t === "string" && t.trim().length > 0
+            ),
           nextAgenda: data.debrief?.nextAgendaSeed,
         };
       })
@@ -368,12 +422,15 @@ export async function POST(request: NextRequest) {
           !!e.goal ||
           e.summaryPoints.length > 0 ||
           e.actionItems.length > 0 ||
-          !!e.nextAgenda,
+          !!e.nextAgenda
       )
       .slice(0, 10);
     const sessionDigest: GrowthReport["sessionDigest"] =
       sessionDigestEntries.length > 0
-        ? { totalCount: sessionDigestEntries.length, sessions: sessionDigestEntries }
+        ? {
+            totalCount: sessionDigestEntries.length,
+            sessions: sessionDigestEntries,
+          }
         : undefined;
 
     // Phase 2: 生徒の個別文脈 (志望校・自己分析・MBTI・活動・資格) を取得。
@@ -400,7 +457,10 @@ export async function POST(request: NextRequest) {
           ? { totalCount: activitiesSnap.size, highlights }
           : undefined;
     } catch (err) {
-      console.warn("[reports/generate] activities fetch failed, fallback to recentActivities:", err);
+      console.warn(
+        "[reports/generate] activities fetch failed, fallback to recentActivities:",
+        err
+      );
       activitySummary =
         studentContext.recentActivities.length > 0
           ? {
@@ -427,21 +487,28 @@ export async function POST(request: NextRequest) {
             status?: string;
             title?: string;
             deadline?: string;
-          },
+          }
       );
       const total = docs.length;
       const completed = docs.filter((d) => d.status === "final").length;
       const upcomingDeadlines = docs
         .filter(
           (d): d is { status?: string; title?: string; deadline: string } =>
-            d.status !== "final" && typeof d.deadline === "string" && d.deadline.length > 0,
+            d.status !== "final" &&
+            typeof d.deadline === "string" &&
+            d.deadline.length > 0
         )
         .sort((a, b) => a.deadline.localeCompare(b.deadline))
         .slice(0, 3)
         .map((d) => ({ title: d.title ?? "", deadline: d.deadline }));
       documentSummary =
         total > 0
-          ? { total, completed, inProgress: total - completed, upcomingDeadlines }
+          ? {
+              total,
+              completed,
+              inProgress: total - completed,
+              upcomingDeadlines,
+            }
           : undefined;
     } catch (err) {
       console.warn("[reports/generate] documents fetch failed:", err);
@@ -454,6 +521,8 @@ export async function POST(request: NextRequest) {
       return {
         id: doc.id,
         submittedAt: d.submittedAt?.toDate?.() ?? new Date(),
+        // 満点は答案ごとに違う（口頭試問型は60）。平均の正規化に使う
+        scoreMaximum: d.feedback?.scoreMaximum ?? 50,
         scores: d.scores ?? null,
       };
     };
@@ -485,7 +554,9 @@ export async function POST(request: NextRequest) {
     step = "generate_practice_questions";
     let practiceQuestions: PracticeQuestion[] | undefined;
     if (!process.env.ANTHROPIC_API_KEY) {
-      console.warn("[reports/generate] practice questions skipped: ANTHROPIC_API_KEY not set");
+      console.warn(
+        "[reports/generate] practice questions skipped: ANTHROPIC_API_KEY not set"
+      );
     }
     if (process.env.ANTHROPIC_API_KEY) {
       try {
@@ -508,15 +579,15 @@ export async function POST(request: NextRequest) {
 
         const thisWeekInterviewQuestions = extractInterviewAssistantQuestions(
           periodInterviewsSnap.docs,
-          5,
+          5
         );
 
         const thisWeekWeakItems = computeThisWeekWeakItems(
-          periodEssaysSnap.docs,
+          periodEssaysSnap.docs
         );
 
         console.log(
-          `[reports/generate] practice context: thisWeekWeakItems=${thisWeekWeakItems.length} thisWeekTopics=${thisWeekEssayTopics.length} thisWeekInterviews=${thisWeekInterviewQuestions.length} chronicWeaknesses=${chronicWeaknesses.length} pastTopics=${pastEssayTopics.length} targets=${studentContext.primaryTargets.length} hasSelfAnalysis=${!!studentContext.selfAnalysis} mbti=${studentContext.mbtiType ?? "none"} activities=${studentContext.recentActivities.length} certs=${studentContext.englishCerts.length}`,
+          `[reports/generate] practice context: thisWeekWeakItems=${thisWeekWeakItems.length} thisWeekTopics=${thisWeekEssayTopics.length} thisWeekInterviews=${thisWeekInterviewQuestions.length} chronicWeaknesses=${chronicWeaknesses.length} pastTopics=${pastEssayTopics.length} targets=${studentContext.primaryTargets.length} hasSelfAnalysis=${!!studentContext.selfAnalysis} mbti=${studentContext.mbtiType ?? "none"} activities=${studentContext.recentActivities.length} certs=${studentContext.englishCerts.length}`
         );
 
         const Anthropic = (await import("@anthropic-ai/sdk")).default;
@@ -535,28 +606,34 @@ export async function POST(request: NextRequest) {
           model: AI_MODEL_SONNET,
           max_tokens: 3500,
           system: systemPrompt,
-          messages: [{ role: "user", content: "JSON のみを出力してください。" }],
+          messages: [
+            { role: "user", content: "JSON のみを出力してください。" },
+          ],
         });
         const text =
           resp.content[0]?.type === "text" ? resp.content[0].text : "";
         console.log(
-          `[reports/generate] practice raw response length=${text.length}`,
+          `[reports/generate] practice raw response length=${text.length}`
         );
         const match = text.match(/\{[\s\S]*\}/);
         if (!match) {
           console.warn(
             "[reports/generate] practice questions: no JSON found in response",
-            text.slice(0, 200),
+            text.slice(0, 200)
           );
         }
         if (match) {
           const parsed = JSON.parse(match[0]) as {
-            primaryQuestions?: Array<Partial<PracticeQuestion> & { type?: string }>;
-            secondaryQuestions?: Array<Partial<PracticeQuestion> & { type?: string }>;
+            primaryQuestions?: Array<
+              Partial<PracticeQuestion> & { type?: string }
+            >;
+            secondaryQuestions?: Array<
+              Partial<PracticeQuestion> & { type?: string }
+            >;
           };
           const combined = buildPracticeQuestionsFromJson(parsed);
           console.log(
-            `[reports/generate] practice parsed=${combined.length} (primary=${parsed.primaryQuestions?.length ?? 0}, secondary=${parsed.secondaryQuestions?.length ?? 0})`,
+            `[reports/generate] practice parsed=${combined.length} (primary=${parsed.primaryQuestions?.length ?? 0}, secondary=${parsed.secondaryQuestions?.length ?? 0})`
           );
           if (combined.length > 0) practiceQuestions = combined;
         }
@@ -565,18 +642,18 @@ export async function POST(request: NextRequest) {
       }
     }
     console.log(
-      `[reports/generate] practice final count=${practiceQuestions?.length ?? 0}`,
+      `[reports/generate] practice final count=${practiceQuestions?.length ?? 0}`
     );
 
     step = "generate_report";
     // 期間別 weaknessTags 集計 (悪化/改善判定で使用)
     const periodWeaknessCounts = mergeCountMaps(
       collectWeaknessTags(periodEssaysSnap.docs),
-      collectWeaknessTags(periodInterviewsSnap.docs),
+      collectWeaknessTags(periodInterviewsSnap.docs)
     );
     const previousWeaknessCounts = mergeCountMaps(
       collectWeaknessTags(prevEssaysSnap.docs),
-      collectWeaknessTags(prevInterviewsSnap.docs),
+      collectWeaknessTags(prevInterviewsSnap.docs)
     );
     const report = generateGrowthReport({
       studentId,
@@ -599,7 +676,8 @@ export async function POST(request: NextRequest) {
         }),
       periodWeaknessCounts,
       previousWeaknessCounts,
-      sessionSummary: sessionSummary.totalCount > 0 ? sessionSummary : undefined,
+      sessionSummary:
+        sessionSummary.totalCount > 0 ? sessionSummary : undefined,
       practiceQuestions,
       sessionDigest,
       activitySummary,
@@ -610,7 +688,7 @@ export async function POST(request: NextRequest) {
     step = "ai_comprehensive_assessment";
     if (!process.env.ANTHROPIC_API_KEY) {
       console.warn(
-        "[reports/generate] comprehensive assessment skipped: ANTHROPIC_API_KEY not set",
+        "[reports/generate] comprehensive assessment skipped: ANTHROPIC_API_KEY not set"
       );
     }
     if (process.env.ANTHROPIC_API_KEY) {
@@ -633,19 +711,23 @@ export async function POST(request: NextRequest) {
         };
         const Anthropic = (await import("@anthropic-ai/sdk")).default;
         const client = new Anthropic();
-        const systemPrompt = buildComprehensiveAssessmentPrompt(comprehensiveInput);
+        const systemPrompt =
+          buildComprehensiveAssessmentPrompt(comprehensiveInput);
         const resp = await client.messages.create({
           // 生徒・保護者が読む総合評価の散文。文体の乱れが目に見える。
           model: AI_MODEL_SONNET,
           max_tokens: 1500,
           system: systemPrompt,
-          messages: [{ role: "user", content: "JSON のみを出力してください。" }],
+          messages: [
+            { role: "user", content: "JSON のみを出力してください。" },
+          ],
         });
-        const text = resp.content[0]?.type === "text" ? resp.content[0].text : "";
+        const text =
+          resp.content[0]?.type === "text" ? resp.content[0].text : "";
         const match = text.match(/\{[\s\S]*\}/);
         if (!match) {
           console.warn(
-            "[reports/generate] comprehensive assessment: no JSON found in response",
+            "[reports/generate] comprehensive assessment: no JSON found in response"
           );
         } else {
           const parsed = JSON.parse(match[0]) as {
@@ -659,21 +741,21 @@ export async function POST(request: NextRequest) {
             Array.isArray(parsed.recommendations) &&
             parsed.recommendations.length > 0 &&
             parsed.recommendations.every(
-              (r) => typeof r === "string" && r.trim().length > 0,
+              (r) => typeof r === "string" && r.trim().length > 0
             );
           if (isValidAssessment && isValidRecommendations) {
             report.overallAssessment = parsed.overallAssessment as string;
             report.recommendations = parsed.recommendations as string[];
           } else {
             console.warn(
-              "[reports/generate] comprehensive assessment: invalid shape, keeping rule-based values",
+              "[reports/generate] comprehensive assessment: invalid shape, keeping rule-based values"
             );
           }
         }
       } catch (err) {
         console.warn(
           "[reports/generate] comprehensive assessment failed, keeping rule-based values:",
-          err,
+          err
         );
       }
     }

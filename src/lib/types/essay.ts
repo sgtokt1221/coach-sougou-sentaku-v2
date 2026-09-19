@@ -164,6 +164,25 @@ export interface EssayScores {
   total: number;
 }
 
+/**
+ * 満点の違う答案を横並びにするための、50点スケールへの換算。
+ *
+ * 口頭試問型は専門知識の正確性を合計に入れるので満点60。素の total のまま
+ * 平均・推移・アラートに混ぜると、口頭試問型を1本やっただけで平均が上がり、
+ * 「伸びた」ように見える（エラーは出ない）。
+ *
+ * **比較・集計に使う値はここを通す。** 1件の答案をそのまま見せる場所
+ * （添削結果・答案詳細）では換算せず、実際の点と満点を出す。
+ */
+export function normalizedEssayTotal(
+  total: number,
+  scoreMaximum?: number | null
+): number {
+  if (typeof scoreMaximum !== "number" || scoreMaximum <= 0) return total;
+  if (scoreMaximum === ESSAY_SCORE_MAX) return total;
+  return Math.round((total / scoreMaximum) * ESSAY_SCORE_MAX * 10) / 10;
+}
+
 /** 小論文スコアの軸ラベル（グラフ・履歴・管理画面の正本） */
 export const ESSAY_AXIS_LABELS: Record<EssayScoreAxis, string> = {
   structure: "構成",

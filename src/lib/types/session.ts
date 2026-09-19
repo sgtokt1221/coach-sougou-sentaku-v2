@@ -202,6 +202,8 @@ export interface SessionSubmission {
   ocrText: string;
   topic?: string;
   scores?: { total: number };
+  /** 合計の満点。口頭試問型は60。旧データは無し（=50） */
+  scoreMaximum?: number;
   voteCount: number;
   selectedByTeacher: boolean;
   createdAt: string;

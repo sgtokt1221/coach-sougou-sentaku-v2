@@ -1,8 +1,11 @@
 import type { GrowthReport, WeaknessProgress } from "@/lib/types/growth-report";
+import { normalizedEssayTotal } from "@/lib/types/essay";
 
 export interface EssayData {
   id: string;
   submittedAt: Date;
+  /** その答案の満点。口頭試問型は60。旧データは無し（=50） */
+  scoreMaximum?: number;
   scores: {
     total: number;
     structure: number;
@@ -86,7 +89,11 @@ export function computeEssayStats(
 
   const avgScore =
     Math.round(
-      (scored.reduce((sum, e) => sum + (e.scores?.total ?? 0), 0) /
+      (scored.reduce(
+        (sum, e) =>
+          sum + normalizedEssayTotal(e.scores?.total ?? 0, e.scoreMaximum),
+        0
+      ) /
         scored.length) *
         10
     ) / 10;
@@ -94,7 +101,11 @@ export function computeEssayStats(
   const prevAvg =
     prevScored.length > 0
       ? Math.round(
-          (prevScored.reduce((sum, e) => sum + (e.scores?.total ?? 0), 0) /
+          (prevScored.reduce(
+            (sum, e) =>
+              sum + normalizedEssayTotal(e.scores?.total ?? 0, e.scoreMaximum),
+            0
+          ) /
             prevScored.length) *
             10
         ) / 10

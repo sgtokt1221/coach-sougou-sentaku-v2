@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase/admin";
+import { normalizedEssayTotal } from "@/lib/types/essay";
 
 /**
  * 大学 × 学部 別の合格者統計を「動的集計」 で返す API。
@@ -13,7 +14,7 @@ import { adminDb } from "@/lib/firebase/admin";
  */
 export async function GET(
   _request: Request,
-  { params }: { params: Promise<{ universityId: string; facultyId: string }> },
+  { params }: { params: Promise<{ universityId: string; facultyId: string }> }
 ) {
   const { universityId, facultyId } = await params;
 
@@ -34,7 +35,7 @@ export async function GET(
         examSnap.docs
           .filter((d) => d.data().status === "passed")
           .map((d) => d.ref.parent.parent?.id)
-          .filter((uid): uid is string => typeof uid === "string"),
+          .filter((uid): uid is string => typeof uid === "string")
       ),
     ];
 
@@ -73,7 +74,9 @@ export async function GET(
     // 3. 集計
     const sampleSize = studentData.length;
     const avg = (xs: number[]) =>
-      xs.length === 0 ? 0 : Math.round((xs.reduce((s, n) => s + n, 0) / xs.length) * 10) / 10;
+      xs.length === 0
+        ? 0
+        : Math.round((xs.reduce((s, n) => s + n, 0) / xs.length) * 10) / 10;
 
     const essayCounts = studentData.map((s) => s.essays.length);
     const interviewCounts = studentData.map((s) => s.interviews.length);
@@ -81,10 +84,17 @@ export async function GET(
     // 各生徒の essay 平均スコア (= 個人ごと総合スコア平均)
     const perStudentEssayAvg = studentData
       .map((s) => {
+        // 満点の違う答案（口頭試問型は60）をそのまま平均に混ぜない
         const totals = s.essays
-          .map((e) => e.scores?.total)
+          .map((e) =>
+            typeof e.scores?.total === "number"
+              ? normalizedEssayTotal(e.scores.total, e.feedback?.scoreMaximum)
+              : null
+          )
           .filter((t): t is number => typeof t === "number");
-        return totals.length > 0 ? totals.reduce((a, b) => a + b, 0) / totals.length : null;
+        return totals.length > 0
+          ? totals.reduce((a, b) => a + b, 0) / totals.length
+          : null;
       })
       .filter((v): v is number => v !== null);
     const perStudentInterviewAvg = studentData
@@ -92,7 +102,9 @@ export async function GET(
         const totals = s.interviews
           .map((i) => i.scores?.total)
           .filter((t): t is number => typeof t === "number");
-        return totals.length > 0 ? totals.reduce((a, b) => a + b, 0) / totals.length : null;
+        return totals.length > 0
+          ? totals.reduce((a, b) => a + b, 0) / totals.length
+          : null;
       })
       .filter((v): v is number => v !== null);
 
@@ -105,7 +117,13 @@ export async function GET(
           const tb = b.submittedAt?.toMillis?.() ?? 0;
           return tb - ta;
         });
-        return sorted[0]?.scores?.total ?? null;
+        const latest = sorted[0];
+        return typeof latest?.scores?.total === "number"
+          ? normalizedEssayTotal(
+              latest.scores.total,
+              latest.feedback?.scoreMaximum
+            )
+          : null;
       })
       .filter((v): v is number => typeof v === "number");
 
@@ -154,14 +172,16 @@ export async function GET(
       .slice(0, 5)
       .map(([area, days]) => ({
         area,
-        avgDaysToResolve: Math.round(days.reduce((a, b) => a + b, 0) / days.length),
+        avgDaysToResolve: Math.round(
+          days.reduce((a, b) => a + b, 0) / days.length
+        ),
       }));
 
     // 大学/学部名解決
     const uniDoc = await adminDb.doc(`universities/${universityId}`).get();
     const uniData = uniDoc.data();
     const faculty = uniData?.faculties?.find(
-      (f: { id: string }) => f.id === facultyId,
+      (f: { id: string }) => f.id === facultyId
     );
 
     return NextResponse.json({
@@ -189,7 +209,7 @@ export async function GET(
         error: "合格者データの取得に失敗しました",
         detail: error instanceof Error ? error.message : String(error),
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

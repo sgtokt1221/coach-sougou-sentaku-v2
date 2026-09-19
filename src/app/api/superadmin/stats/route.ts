@@ -11,6 +11,7 @@ import type {
   FeatureUsageStat,
   FeatureUsageItem,
 } from "@/lib/types/admin";
+import { normalizedEssayTotal } from "@/lib/types/essay";
 
 /**
  * Firestore Timestamp / Date / ISO 文字列 / 数値タイムスタンプ のどれでも
@@ -53,9 +54,7 @@ export async function GET(request: Request) {
     // 件数: count() 失敗時は .get().size にフォールバック (件数は正確性が必要なので
     // ここだけ失敗したら 500=fail-loud、それ以外のセクションは個別に degrade する)
     const usersCol = adminDb.collection("users");
-    const safeCount = async (
-      q: FirebaseFirestore.Query,
-    ): Promise<number> => {
+    const safeCount = async (q: FirebaseFirestore.Query): Promise<number> => {
       try {
         return (await q.count().get()).data().count;
       } catch {
@@ -81,23 +80,27 @@ export async function GET(request: Request) {
     const isActive = (data: FirebaseFirestore.DocumentData): boolean => {
       const iso = toIsoOrNull(
         data.lastSeenAt ??
-          (data.lastActivity as { at?: unknown } | undefined)?.at,
+          (data.lastActivity as { at?: unknown } | undefined)?.at
       );
       return !!iso && Date.now() - new Date(iso).getTime() <= THIRTY_DAYS_MS;
     };
     try {
-      const allStudentsSnap = await usersCol.where("role", "==", "student").get();
+      const allStudentsSnap = await usersCol
+        .where("role", "==", "student")
+        .get();
       unassignedCount = allStudentsSnap.docs.filter(
-        (doc) => !doc.data().managedBy,
+        (doc) => !doc.data().managedBy
       ).length;
-      activeStudents = allStudentsSnap.docs.filter((d) => isActive(d.data())).length;
+      activeStudents = allStudentsSnap.docs.filter((d) =>
+        isActive(d.data())
+      ).length;
 
       // 生徒 → 所属塾 マップ (継承された organizationId、無ければ "__none__")
       for (const sDoc of allStudentsSnap.docs) {
         const orgId = sDoc.data().organizationId;
         studentOrgMap.set(
           sDoc.id,
-          typeof orgId === "string" && orgId ? orgId : "__none__",
+          typeof orgId === "string" && orgId ? orgId : "__none__"
         );
       }
 
@@ -116,7 +119,7 @@ export async function GET(request: Request) {
           adminCount: new Set(members).size,
         });
         members.forEach((uid) =>
-          orgByAdmin.set(uid, { orgId: orgDoc.id, orgName: name }),
+          orgByAdmin.set(uid, { orgId: orgDoc.id, orgName: name })
         );
       }
 
@@ -126,87 +129,97 @@ export async function GET(request: Request) {
 
       const perfSettled = await Promise.allSettled(
         adminTeacherSnap.docs.map(async (doc) => {
-        const data = doc.data();
-        const managedStudents = allStudentsSnap.docs.filter(
-          (s) => s.data().managedBy === doc.id,
-        );
-        let totalScore = 0;
-        let scoreCount = 0;
-        let alertCount = 0;
-        let activeCount = 0;
+          const data = doc.data();
+          const managedStudents = allStudentsSnap.docs.filter(
+            (s) => s.data().managedBy === doc.id
+          );
+          let totalScore = 0;
+          let scoreCount = 0;
+          let alertCount = 0;
+          let activeCount = 0;
 
-        for (const student of managedStudents) {
-          const studentData = student.data();
-          if (isActive(studentData)) activeCount++;
-          const essaysSnap = await adminDb!
-            .collection("users")
-            .doc(student.id)
-            .collection("essays")
-            .orderBy("submittedAt", "desc")
-            .limit(1)
-            .get();
+          for (const student of managedStudents) {
+            const studentData = student.data();
+            if (isActive(studentData)) activeCount++;
+            const essaysSnap = await adminDb!
+              .collection("users")
+              .doc(student.id)
+              .collection("essays")
+              .orderBy("submittedAt", "desc")
+              .limit(1)
+              .get();
 
-          // 最新スコア
-          if (essaysSnap.docs.length > 0) {
-            const score = essaysSnap.docs[0].data()?.scores?.total;
-            if (typeof score === "number") {
-              totalScore += score;
-              scoreCount++;
+            // 最新スコア
+            if (essaysSnap.docs.length > 0) {
+              const latest = essaysSnap.docs[0].data();
+              // 満点の違う答案（口頭試問型は60）を素のまま平均に足さない
+              const score =
+                typeof latest?.scores?.total === "number"
+                  ? normalizedEssayTotal(
+                      latest.scores.total,
+                      latest.feedback?.scoreMaximum
+                    )
+                  : undefined;
+              if (typeof score === "number") {
+                totalScore += score;
+                scoreCount++;
+              }
             }
-          }
 
-          // 要注意判定 (A-1 修正): essay 0 件の新規生徒は加入後 14 日まで
-          // 猶予。 essay あれば 7 日以上前で要注意
-          const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
-          if (essaysSnap.docs.length === 0) {
-            const signupIso = toIsoOrNull(studentData.createdAt);
-            if (signupIso) {
-              const daysSinceSignup = Math.floor(
-                (Date.now() - new Date(signupIso).getTime()) / 86400000,
+            // 要注意判定 (A-1 修正): essay 0 件の新規生徒は加入後 14 日まで
+            // 猶予。 essay あれば 7 日以上前で要注意
+            const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+            if (essaysSnap.docs.length === 0) {
+              const signupIso = toIsoOrNull(studentData.createdAt);
+              if (signupIso) {
+                const daysSinceSignup = Math.floor(
+                  (Date.now() - new Date(signupIso).getTime()) / 86400000
+                );
+                if (daysSinceSignup >= 14) alertCount++;
+              }
+            } else {
+              const lastIso = toIsoOrNull(
+                essaysSnap.docs[0].data()?.submittedAt
               );
-              if (daysSinceSignup >= 14) alertCount++;
-            }
-          } else {
-            const lastIso = toIsoOrNull(
-              essaysSnap.docs[0].data()?.submittedAt,
-            );
-            if (
-              lastIso &&
-              Date.now() - new Date(lastIso).getTime() > sevenDaysMs
-            ) {
-              alertCount++;
+              if (
+                lastIso &&
+                Date.now() - new Date(lastIso).getTime() > sevenDaysMs
+              ) {
+                alertCount++;
+              }
             }
           }
-        }
 
-        const role = data.role as "admin" | "teacher";
-        // admin はメンバーシップ(memberAdminUids)、teacher は自身の organizationId で所属判定
-        const orgId =
-          (role === "admin"
-            ? orgByAdmin.get(doc.id)?.orgId
-            : typeof data.organizationId === "string"
-              ? data.organizationId
-              : undefined) ?? "__none__";
+          const role = data.role as "admin" | "teacher";
+          // admin はメンバーシップ(memberAdminUids)、teacher は自身の organizationId で所属判定
+          const orgId =
+            (role === "admin"
+              ? orgByAdmin.get(doc.id)?.orgId
+              : typeof data.organizationId === "string"
+                ? data.organizationId
+                : undefined) ?? "__none__";
 
-        return {
-          perf: {
-            uid: doc.id,
-            displayName: data.displayName ?? "",
+          return {
+            perf: {
+              uid: doc.id,
+              displayName: data.displayName ?? "",
+              role,
+              studentCount: managedStudents.length,
+              averageScore:
+                scoreCount > 0
+                  ? Math.round((totalScore / scoreCount) * 10) / 10
+                  : null,
+              alertStudentCount: alertCount,
+              organizationId: orgId,
+            } as AdminPerformance,
+            orgId,
             role,
+            scoreSum: totalScore,
+            scoreCount,
             studentCount: managedStudents.length,
-            averageScore:
-              scoreCount > 0 ? Math.round((totalScore / scoreCount) * 10) / 10 : null,
-            alertStudentCount: alertCount,
-            organizationId: orgId,
-          } as AdminPerformance,
-          orgId,
-          role,
-          scoreSum: totalScore,
-          scoreCount,
-          studentCount: managedStudents.length,
-          activeCount,
-        };
-      }),
+            activeCount,
+          };
+        })
       );
       type PerfItem = {
         perf: AdminPerformance;
@@ -218,7 +231,9 @@ export async function GET(request: Request) {
         activeCount: number;
       };
       const extended = perfSettled
-        .filter((r): r is PromiseFulfilledResult<PerfItem> => r.status === "fulfilled")
+        .filter(
+          (r): r is PromiseFulfilledResult<PerfItem> => r.status === "fulfilled"
+        )
         .map((r) => r.value);
       adminPerformance = extended.map((e) => e.perf);
 
@@ -244,15 +259,14 @@ export async function GET(request: Request) {
         }
       >();
       for (const e of extended) {
-        const cur =
-          aggr.get(e.orgId) ?? {
-            teacherCount: 0,
-            adminCount: 0,
-            studentCount: 0,
-            scoreSum: 0,
-            scoreCount: 0,
-            activeCount: 0,
-          };
+        const cur = aggr.get(e.orgId) ?? {
+          teacherCount: 0,
+          adminCount: 0,
+          studentCount: 0,
+          scoreSum: 0,
+          scoreCount: 0,
+          activeCount: 0,
+        };
         if (e.role === "teacher") cur.teacherCount++;
         else cur.adminCount++;
         cur.studentCount += e.studentCount;
@@ -270,11 +284,13 @@ export async function GET(request: Request) {
           adminCount:
             orgId === "__none__"
               ? a.adminCount
-              : orgMeta.get(orgId)?.adminCount ?? a.adminCount,
+              : (orgMeta.get(orgId)?.adminCount ?? a.adminCount),
           teacherCount: a.teacherCount,
           studentCount: a.studentCount,
           avgEssayScore:
-            a.scoreCount > 0 ? Math.round((a.scoreSum / a.scoreCount) * 10) / 10 : null,
+            a.scoreCount > 0
+              ? Math.round((a.scoreSum / a.scoreCount) * 10) / 10
+              : null,
           activeStudentCount: a.activeCount,
         }))
         .sort((x, y) => y.studentCount - x.studentCount);
@@ -368,7 +384,8 @@ export async function GET(request: Request) {
     }
 
     recentActivity.sort(
-      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+      (a, b) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
     );
     recentActivity.splice(10);
 
@@ -384,7 +401,7 @@ export async function GET(request: Request) {
     const addToBucket = (
       map: Map<string, DayBucket>,
       key: string,
-      score: number,
+      score: number
     ) => {
       const existing = map.get(key) ?? { total: 0, count: 0 };
       existing.total += score;
@@ -394,7 +411,10 @@ export async function GET(request: Request) {
 
     for (const doc of recentEssaysDocs) {
       const data = doc.data();
-      const score = data.scores?.total;
+      const score =
+        typeof data.scores?.total === "number"
+          ? normalizedEssayTotal(data.scores.total, data.feedback?.scoreMaximum)
+          : undefined;
       const ts = toIsoOrNull(data.submittedAt);
       if (typeof score !== "number" || !ts) continue;
       const date = new Date(ts);
@@ -454,7 +474,7 @@ export async function GET(request: Request) {
     try {
       // top-level (userId フィールドで distinct)
       const usageFromTopLevel = async (
-        col: string,
+        col: string
       ): Promise<FeatureUsageItem> => {
         const snap = await adminDb!.collection(col).get();
         const set = new Set<string>();
@@ -466,7 +486,7 @@ export async function GET(request: Request) {
       };
       // collectionGroup (親ドキュメント=生徒uid で distinct)。set も返す
       const groupUsage = async (
-        group: string,
+        group: string
       ): Promise<{ count: number; set: Set<string> }> => {
         const snap = await adminDb!.collectionGroup(group).get();
         const set = new Set<string>();
@@ -477,20 +497,33 @@ export async function GET(request: Request) {
         return { count: snap.size, set };
       };
 
-      const [essays, interviews, documents, activities, scDocs, scInterview, selfSnap] =
-        await Promise.all([
-          usageFromTopLevel("essays"),
-          usageFromTopLevel("interviews"),
-          groupUsage("documents"),
-          groupUsage("activities"),
-          groupUsage("skillChecks"),
-          groupUsage("interviewSkillChecks"),
-          adminDb.collection("selfAnalysis").get(),
-        ]);
+      const [
+        essays,
+        interviews,
+        documents,
+        activities,
+        scDocs,
+        scInterview,
+        selfSnap,
+      ] = await Promise.all([
+        usageFromTopLevel("essays"),
+        usageFromTopLevel("interviews"),
+        groupUsage("documents"),
+        groupUsage("activities"),
+        groupUsage("skillChecks"),
+        groupUsage("interviewSkillChecks"),
+        adminDb.collection("selfAnalysis").get(),
+      ]);
       featureUsage.essays = essays;
       featureUsage.interviews = interviews;
-      featureUsage.documents = { count: documents.count, students: documents.set.size };
-      featureUsage.activities = { count: activities.count, students: activities.set.size };
+      featureUsage.documents = {
+        count: documents.count,
+        students: documents.set.size,
+      };
+      featureUsage.activities = {
+        count: activities.count,
+        students: activities.set.size,
+      };
       // スキルチェックは小論文/面接の両方を合算 (生徒は和集合で distinct)
       const scUnion = new Set<string>([...scDocs.set, ...scInterview.set]);
       featureUsage.skillChecks = {
@@ -530,7 +563,7 @@ export async function GET(request: Request) {
         error: "集計取得に失敗しました",
         detail: error instanceof Error ? error.message : String(error),
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

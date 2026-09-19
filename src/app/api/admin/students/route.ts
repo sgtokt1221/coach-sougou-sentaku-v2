@@ -5,6 +5,7 @@ import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
 import { resolveTargetUniversities } from "@/lib/universities/resolve";
 import { getOrgMemberAdminUids, chunk } from "@/lib/api/organization-scope";
 import type { StudentListItem } from "@/lib/types/admin";
+import { normalizedEssayTotal } from "@/lib/types/essay";
 import {
   computeEssayAggregate,
   computeInterviewAggregate,
@@ -27,12 +28,26 @@ function computeScoreTrend(scores: number[]): "up" | "down" | "flat" | null {
 }
 
 export async function POST(request: NextRequest) {
-  const authResult = await requireRole(request, ["admin", "teacher", "superadmin"]);
+  const authResult = await requireRole(request, [
+    "admin",
+    "teacher",
+    "superadmin",
+  ]);
   if (authResult instanceof NextResponse) return authResult;
   const { uid: callerUid } = authResult;
 
   const body = await request.json();
-  const { email, displayName, password, school, schoolId, grade, gpa, englishCerts, targetUniversities } = body as {
+  const {
+    email,
+    displayName,
+    password,
+    school,
+    schoolId,
+    grade,
+    gpa,
+    englishCerts,
+    targetUniversities,
+  } = body as {
     email: string;
     displayName: string;
     password: string;
@@ -45,11 +60,17 @@ export async function POST(request: NextRequest) {
   };
 
   if (!email || !displayName || !password) {
-    return NextResponse.json({ error: "必須フィールドが不足しています" }, { status: 400 });
+    return NextResponse.json(
+      { error: "必須フィールドが不足しています" },
+      { status: 400 }
+    );
   }
 
   if (password.length < 6) {
-    return NextResponse.json({ error: "パスワードは6文字以上必要です" }, { status: 400 });
+    return NextResponse.json(
+      { error: "パスワードは6文字以上必要です" },
+      { status: 400 }
+    );
   }
 
   const { adminAuth, adminDb } = await import("@/lib/firebase/admin");
@@ -107,7 +128,11 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  const authResult = await requireRole(request, ["admin", "teacher", "superadmin"]);
+  const authResult = await requireRole(request, [
+    "admin",
+    "teacher",
+    "superadmin",
+  ]);
   if (authResult instanceof NextResponse) return authResult;
   const { uid, role } = authResult;
 
@@ -121,12 +146,15 @@ export async function GET(request: NextRequest) {
     const rankFilter = searchParams.get("rank");
 
     // superadminがviewAsを指定している場合、そのadminの視点でフィルタ
-    const effectiveUid = (role === "superadmin" && viewAs) ? viewAs : uid;
-    const effectiveRole = (role === "superadmin" && viewAs) ? "admin" : role;
+    const effectiveUid = role === "superadmin" && viewAs ? viewAs : uid;
+    const effectiveRole = role === "superadmin" && viewAs ? "admin" : role;
 
     const { adminDb } = await import("@/lib/firebase/admin");
     if (!adminDb) {
-      return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
+      return NextResponse.json(
+        { error: "サーバー設定エラー" },
+        { status: 500 }
+      );
     }
 
     // 生徒ドキュメント集合を取得 (admin は同じ塾のメンバーが managedBy の生徒を共有)
@@ -143,7 +171,10 @@ export async function GET(request: NextRequest) {
         .get();
       snap.docs.forEach((d) => studentDocsById.set(d.id, d));
     } else if (effectiveRole === "superadmin") {
-      const snap = await adminDb.collection("users").where("role", "==", "student").get();
+      const snap = await adminDb
+        .collection("users")
+        .where("role", "==", "student")
+        .get();
       snap.docs.forEach((d) => studentDocsById.set(d.id, d));
     } else {
       // admin: 自分の塾(組織)メンバーが managedBy になっている生徒を共有
@@ -168,31 +199,90 @@ export async function GET(request: NextRequest) {
         // silent fallback と異なり console.warn で痕跡を残す。
         // interviews は composite index 回避のため orderBy なしで取得し JS で並べ替える
         const subResults = await Promise.allSettled([
-          adminDb!.collection("essays").where("userId", "==", uid).orderBy("submittedAt", "desc").get(),
+          adminDb!
+            .collection("essays")
+            .where("userId", "==", uid)
+            .orderBy("submittedAt", "desc")
+            .get(),
           adminDb!.collection(`users/${uid}/weaknesses`).get(),
           adminDb!.collection(`users/${uid}/documents`).get(),
-          adminDb!.collection("sessions").where("studentUid", "==", uid).orderBy("scheduledAt", "desc").limit(1).get(),
+          adminDb!
+            .collection("sessions")
+            .where("studentUid", "==", uid)
+            .orderBy("scheduledAt", "desc")
+            .limit(1)
+            .get(),
           adminDb!.collection("interviews").where("userId", "==", uid).get(),
           adminDb!.collection(`users/${uid}/homeworkAssignments`).get(),
           // SC 原値は生徒詳細と同じ出所（サブコレクションの最新1件）から取る。
           // 一覧だけ users のデノーマライズ値を使うと、書き込みが片方だけ失敗した
           // ときに一覧と詳細でランクが食い違う
-          adminDb!.collection(`users/${uid}/skillChecks`).orderBy("takenAt", "desc").limit(1).get(),
-          adminDb!.collection(`users/${uid}/interviewSkillChecks`).orderBy("takenAt", "desc").limit(1).get(),
+          adminDb!
+            .collection(`users/${uid}/skillChecks`)
+            .orderBy("takenAt", "desc")
+            .limit(1)
+            .get(),
+          adminDb!
+            .collection(`users/${uid}/interviewSkillChecks`)
+            .orderBy("takenAt", "desc")
+            .limit(1)
+            .get(),
         ]);
-        const subQueryNames = ["essays", "weaknesses", "documents", "sessions", "interviews", "homeworkAssignments", "skillChecks", "interviewSkillChecks"];
-        const [essaysSnap, weaknessesSnap, documentsSnap, sessionsSnap, interviewsSnap, homeworkSnap, skillChecksSnap, interviewSkillChecksSnap] = subResults.map((r, i) => {
+        const subQueryNames = [
+          "essays",
+          "weaknesses",
+          "documents",
+          "sessions",
+          "interviews",
+          "homeworkAssignments",
+          "skillChecks",
+          "interviewSkillChecks",
+        ];
+        const [
+          essaysSnap,
+          weaknessesSnap,
+          documentsSnap,
+          sessionsSnap,
+          interviewsSnap,
+          homeworkSnap,
+          skillChecksSnap,
+          interviewSkillChecksSnap,
+        ] = subResults.map((r, i) => {
           if (r.status === "rejected") {
-            console.warn(`[admin/students] subquery '${subQueryNames[i]}' failed for ${uid}:`, r.reason);
-            return { size: 0, docs: [] } as unknown as FirebaseFirestore.QuerySnapshot;
+            console.warn(
+              `[admin/students] subquery '${subQueryNames[i]}' failed for ${uid}:`,
+              r.reason
+            );
+            return {
+              size: 0,
+              docs: [],
+            } as unknown as FirebaseFirestore.QuerySnapshot;
           }
           return r.value;
-        }) as [FirebaseFirestore.QuerySnapshot, FirebaseFirestore.QuerySnapshot, FirebaseFirestore.QuerySnapshot, FirebaseFirestore.QuerySnapshot, FirebaseFirestore.QuerySnapshot, FirebaseFirestore.QuerySnapshot, FirebaseFirestore.QuerySnapshot, FirebaseFirestore.QuerySnapshot];
+        }) as [
+          FirebaseFirestore.QuerySnapshot,
+          FirebaseFirestore.QuerySnapshot,
+          FirebaseFirestore.QuerySnapshot,
+          FirebaseFirestore.QuerySnapshot,
+          FirebaseFirestore.QuerySnapshot,
+          FirebaseFirestore.QuerySnapshot,
+          FirebaseFirestore.QuerySnapshot,
+          FirebaseFirestore.QuerySnapshot,
+        ];
 
         const essayCount = essaysSnap.size;
         const latestEssay = essaysSnap.docs[0]?.data();
+        /**
+         * 並び替え・比較に使う値なので50点スケールへ揃える。
+         * 口頭試問型は満点60で、素の値のまま並べると上位に来てしまう。
+         */
         const latestScore: number | null =
-          latestEssay?.scores?.total ?? null;
+          typeof latestEssay?.scores?.total === "number"
+            ? normalizedEssayTotal(
+                latestEssay.scores.total,
+                latestEssay.feedback?.scoreMaximum
+              )
+            : null;
 
         // 面接 (トップレベル interviews を JS で並べ替え。completed のみ。index 回避)
         const completedInterviews = interviewsSnap.docs
@@ -206,7 +296,9 @@ export async function GET(request: NextRequest) {
 
         // 面接 最新スコア + 推移 (直近3回、古い順で computeScoreTrend)
         const latestInterviewScore: number | null =
-          typeof completedInterviews[0]?.total === "number" ? completedInterviews[0].total : null;
+          typeof completedInterviews[0]?.total === "number"
+            ? completedInterviews[0].total
+            : null;
         const recentInterviewScores = completedInterviews
           .slice(0, 3)
           .map((x) => x.total)
@@ -223,21 +315,26 @@ export async function GET(request: NextRequest) {
 
         // 最終ログイン (users.lastSeenAt / ハートビート)
         const lastSeenDate = data.lastSeenAt?.toDate?.();
-        const lastSeenAt: string | null = lastSeenDate ? lastSeenDate.toISOString() : null;
+        const lastSeenAt: string | null = lastSeenDate
+          ? lastSeenDate.toISOString()
+          : null;
 
         // lastActivityAt は従来通り活動 + ログインを conflate (inactive アラート / ソート互換)
         const allTimestamps: number[] = [];
-        if (lastActivity) allTimestamps.push(new Date(lastActivity.at).getTime());
+        if (lastActivity)
+          allTimestamps.push(new Date(lastActivity.at).getTime());
         if (lastSeenDate) allTimestamps.push(lastSeenDate.getTime());
-        const lastActivityAt: string | null = allTimestamps.length > 0
-          ? new Date(Math.max(...allTimestamps)).toISOString()
-          : null;
+        const lastActivityAt: string | null =
+          allTimestamps.length > 0
+            ? new Date(Math.max(...allTimestamps)).toISOString()
+            : null;
 
         // 提出締切を過ぎた未提出 (assigned/in_progress) の宿題があるか
         const nowMs = Date.now();
         const hasOverdueHomework = homeworkSnap.docs.some((d) => {
           const hw = d.data();
-          if (hw.status !== "assigned" && hw.status !== "in_progress") return false;
+          if (hw.status !== "assigned" && hw.status !== "in_progress")
+            return false;
           if (!hw.dueDate) return false;
           const due = new Date(hw.dueDate).getTime();
           return Number.isFinite(due) && due < nowMs;
@@ -285,7 +382,10 @@ export async function GET(request: NextRequest) {
             (d) => d.data().improving === true && !d.data().resolved
           ).length;
           const stuckCount = activeWeaknessDocs.filter(
-            (d) => !d.data().improving && !d.data().resolved && (d.data().count ?? 0) >= 3
+            (d) =>
+              !d.data().improving &&
+              !d.data().resolved &&
+              (d.data().count ?? 0) >= 3
           ).length;
           if (improvingCount > 0 && improvingCount >= stuckCount) {
             weaknessTrend = "improving";
@@ -306,20 +406,30 @@ export async function GET(request: NextRequest) {
         // 最終セッション日
         const lastSessionDoc = sessionsSnap.docs[0]?.data();
         const lastSessionAt: string | null = lastSessionDoc?.scheduledAt
-          ? (lastSessionDoc.scheduledAt.toDate?.()?.toISOString() ?? lastSessionDoc.scheduledAt)
+          ? (lastSessionDoc.scheduledAt.toDate?.()?.toISOString() ??
+            lastSessionDoc.scheduledAt)
           : null;
 
-        const lastSkillCheckedAt: string | null = data.lastSkillCheckedAt?.toDate?.()?.toISOString() ?? null;
-        const lastInterviewCheckedAt: string | null = data.lastInterviewCheckedAt?.toDate?.()?.toISOString() ?? null;
+        const lastSkillCheckedAt: string | null =
+          data.lastSkillCheckedAt?.toDate?.()?.toISOString() ?? null;
+        const lastInterviewCheckedAt: string | null =
+          data.lastInterviewCheckedAt?.toDate?.()?.toISOString() ?? null;
 
         // 練習集計を反映した aggregate ランクを算出。生徒詳細と同じ式・同じ入力を使う。
         // 渡すのは SC の原値。currentSkillScore は refreshEssayAggregateCache が
         // 書いた「合成後」の値なので、これを原値として渡すと練習平均を二重に混ぜる。
         const [essayAgg, interviewAgg] = await Promise.all([
-          computeEssayAggregate(uid, resolveScRawScore(skillChecksSnap.docs[0]?.data(), data)),
+          computeEssayAggregate(
+            uid,
+            resolveScRawScore(skillChecksSnap.docs[0]?.data(), data)
+          ),
           computeInterviewAggregate(
             uid,
-            resolveScRawScore(interviewSkillChecksSnap.docs[0]?.data(), data, "interview"),
+            resolveScRawScore(
+              interviewSkillChecksSnap.docs[0]?.data(),
+              data,
+              "interview"
+            )
           ),
         ]);
 
@@ -330,7 +440,9 @@ export async function GET(request: NextRequest) {
           plan: (data.plan as "self" | "coach" | undefined) ?? "self",
           photoURL: data.photoURL ?? null,
           targetUniversities: data.targetUniversities ?? [],
-          resolvedUniversities: resolveTargetUniversities(data.targetUniversities),
+          resolvedUniversities: resolveTargetUniversities(
+            data.targetUniversities
+          ),
           grade: typeof data.grade === "number" ? data.grade : undefined,
           gradeUpdatedAt:
             typeof data.gradeUpdatedAt === "string"
@@ -391,8 +503,17 @@ export async function GET(request: NextRequest) {
       } else if (sort === "name") {
         cmp = a.displayName.localeCompare(b.displayName, "ja");
       } else if (sort === "rank" || sort === "interviewRank") {
-        const rankOrder: Record<string, number> = { S: 0, A: 1, B: 2, C: 3, D: 4 };
-        const field = sort === "interviewRank" ? "currentInterviewRank" : "currentSkillRank";
+        const rankOrder: Record<string, number> = {
+          S: 0,
+          A: 1,
+          B: 2,
+          C: 3,
+          D: 4,
+        };
+        const field =
+          sort === "interviewRank"
+            ? "currentInterviewRank"
+            : "currentSkillRank";
         const aRank = a[field] ? rankOrder[a[field] as string] : 99;
         const bRank = b[field] ? rankOrder[b[field] as string] : 99;
         cmp = aRank - bRank;
