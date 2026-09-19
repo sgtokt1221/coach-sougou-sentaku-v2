@@ -106,6 +106,8 @@ export async function GET(
       lectureInfo: data.questionContext?.lectureInfo ?? null,
       themeId: data.questionContext?.themeId ?? null,
       pastQuestionId: data.questionContext?.pastQuestionId ?? null,
+      // 口頭試問型の小問集合。やり直しで同じ問題を出し直すのに使う
+      oralExam: data.questionContext?.oralExam ?? null,
       status: data.status ?? "reviewed",
       inlineComments: data.inlineComments ?? [],
       scores,

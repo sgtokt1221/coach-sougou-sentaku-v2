@@ -76,3 +76,49 @@ export function normalizeOralExamQuestionSet(
 
   return { ...set, totalWordLimit, subQuestions: scaled };
 }
+
+/** 繰り返しを避けるために参照する、直近の出題数 */
+export const ORAL_EXAM_RECENT_LOOKBACK = 8;
+
+/**
+ * この生徒が最近解いた口頭試問型の出題を、新しい順で返す。
+ *
+ * 出題は毎回AIが作るので、どこかに覚えておかないと同じ問いが何度も出る。
+ * 答案（essays.questionContext.oralExam）が正本。まだ提出していない下書きも
+ * 見るかは迷ったが、書きかけの問題まで避けると「続きを別の角度で」が
+ * できなくなるので、提出済みだけを対象にする。
+ *
+ * `userId` の等値クエリだけにして並べ替えはメモリで行う。orderBy を足すと
+ * 複合インデックスが要り、欠けたときに黙って空になる。
+ */
+export async function loadRecentOralExamQuestions(
+  db: FirebaseFirestore.Firestore,
+  userId: string
+): Promise<{ theme: string; prompts: string[] }[]> {
+  const snap = await db
+    .collection("essays")
+    .where("userId", "==", userId)
+    .get();
+  const rows = snap.docs
+    .map((d) => {
+      const data = d.data();
+      const set = data.questionContext?.oralExam as
+        | OralExamQuestionSet
+        | undefined;
+      if (!set?.subQuestions?.length) return null;
+      const at =
+        data.submittedAt?.toDate?.()?.getTime?.() ??
+        (typeof data.submittedAt === "string"
+          ? new Date(data.submittedAt).getTime()
+          : 0);
+      return {
+        at,
+        theme: set.theme ?? "",
+        prompts: set.subQuestions.map((q) => q.prompt),
+      };
+    })
+    .filter((r): r is { at: number; theme: string; prompts: string[] } => !!r)
+    .sort((a, b) => b.at - a.at)
+    .slice(0, ORAL_EXAM_RECENT_LOOKBACK);
+  return rows.map(({ theme, prompts }) => ({ theme, prompts }));
+}

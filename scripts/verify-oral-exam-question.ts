@@ -8,10 +8,13 @@
 import assert from "node:assert";
 import {
   ORAL_EXAM_MAX_QUESTIONS,
+  ORAL_EXAM_RECENT_LOOKBACK,
   buildOralExamQuestion,
   joinOralExamAnswers,
+  loadRecentOralExamQuestions,
   normalizeOralExamQuestionSet,
 } from "../src/lib/essay/oral-exam-question";
+import { buildOralExamQuestionPrompt } from "../src/lib/ai/prompts/oral-exam-question";
 import type { OralExamQuestionSet } from "../src/lib/types/essay";
 
 function make(wordLimits: number[], total: number): OralExamQuestionSet {
@@ -72,4 +75,70 @@ const joined = joinOralExamAnswers(set, ["あ", "い", "う"]);
 assert.ok(joined.startsWith("問1\nあ"), joined);
 assert.ok(joined.includes("問3\nう"), joined);
 
-console.log("[verify-oral-exam-question] OK");
+/**
+ * 直近の出題を引く経路。ここが黙って空を返すと「前に解いた問いを避ける」が
+ * 何もしないまま動いているように見える（同じ問題が出続ける）。
+ */
+const docs = [
+  {
+    questionContext: {
+      oralExam: { theme: "A", subQuestions: [{ prompt: "a1" }] },
+    },
+    submittedAt: "2026-01-03T00:00:00Z",
+  },
+  {
+    questionContext: {
+      oralExam: { theme: "B", subQuestions: [{ prompt: "b1" }] },
+    },
+    submittedAt: "2026-01-05T00:00:00Z",
+  },
+  // 口頭試問型でない答案は混ぜない
+  {
+    questionContext: { questionType: "report" },
+    submittedAt: "2026-01-09T00:00:00Z",
+  },
+  // 小問が空のものも混ぜない
+  {
+    questionContext: { oralExam: { theme: "C", subQuestions: [] } },
+    submittedAt: "2026-01-10T00:00:00Z",
+  },
+];
+const fakeDb = {
+  collection: () => ({
+    where: () => ({
+      get: async () => ({ docs: docs.map((d) => ({ data: () => d })) }),
+    }),
+  }),
+} as unknown as FirebaseFirestore.Firestore;
+
+async function checkRecent() {
+  const recent = await loadRecentOralExamQuestions(fakeDb, "uid");
+  assert.deepEqual(
+    recent.map((r) => r.theme),
+    ["B", "A"],
+    "新しい順になっていない / 口頭試問型以外が混ざっている"
+  );
+  assert.ok(ORAL_EXAM_RECENT_LOOKBACK >= 1);
+
+  // 避ける指示がプロンプトに載ること。載らないと同じ問いが出続ける
+  const withAvoid = buildOralExamQuestionPrompt({
+    theme: "A",
+    totalWordLimit: 800,
+    questionCount: 3,
+    recent,
+  });
+  assert.ok(withAvoid.includes("繰り返さない"), "避ける指示が無い");
+  assert.ok(withAvoid.includes("b1"), "直近の問いが渡っていない");
+
+  // 「同じ問題でよい」を選んだときは避ける指示を出さない
+  const noAvoid = buildOralExamQuestionPrompt({
+    theme: "A",
+    totalWordLimit: 800,
+    questionCount: 3,
+  });
+  assert.ok(!noAvoid.includes("繰り返さない"), "避ける指示が消えていない");
+}
+
+checkRecent().then(() => {
+  console.log("[verify-oral-exam-question] OK");
+});

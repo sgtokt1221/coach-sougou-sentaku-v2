@@ -87,6 +87,8 @@ export async function POST(request: NextRequest) {
       pastQuestionFacultyName: pastQuestionFacultyName ?? null,
       themeId: body.themeId ?? null,
       pastQuestionId: body.pastQuestionId ?? null,
+      // 口頭試問型の小問集合。やり直しで同じ問題に戻すための正本
+      oralExam: body.oralExam ?? null,
     };
 
     // 大学・学部のAPを取得

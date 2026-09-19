@@ -10,6 +10,7 @@ import {
   ORAL_EXAM_MAX_WORDS,
   ORAL_EXAM_MIN_QUESTIONS,
   ORAL_EXAM_MIN_WORDS,
+  loadRecentOralExamQuestions,
   normalizeOralExamQuestionSet,
 } from "@/lib/essay/oral-exam-question";
 import type { OralExamQuestionSet } from "@/lib/types/essay";
@@ -29,6 +30,7 @@ export async function POST(request: NextRequest) {
     "superadmin",
   ]);
   if (auth instanceof NextResponse) return auth;
+  const { uid } = auth;
 
   const body = await request.json();
   const theme = typeof body.theme === "string" ? body.theme.trim() : "";
@@ -73,6 +75,21 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  /**
+   * 直前までに解いた問いを避ける（既定）。生徒が「同じ問題でもよい」を
+   * 選んだときだけ参照しない。
+   */
+  let recent: { theme: string; prompts: string[] }[] = [];
+  if (body.avoidRepeat !== false) {
+    try {
+      const { adminDb } = await import("@/lib/firebase/admin");
+      if (adminDb) recent = await loadRecentOralExamQuestions(adminDb, uid);
+    } catch (err) {
+      // 参照できなくても出題は作る。ここで止めると練習ができなくなる
+      console.warn("[oral-exam/generate] 直近の出題を引けませんでした", err);
+    }
+  }
+
   try {
     const client = new Anthropic();
     const response = await client.messages.parse({
@@ -82,6 +99,7 @@ export async function POST(request: NextRequest) {
         theme,
         totalWordLimit,
         questionCount,
+        recent,
       }),
       messages: [
         {
@@ -124,7 +142,8 @@ export async function POST(request: NextRequest) {
     // 字数の合計はモデル任せにしない（ずれたまま通すと充足率の判定が狂う）
     const questionSet = normalizeOralExamQuestionSet(raw, totalWordLimit);
 
-    return NextResponse.json({ questionSet });
+    // 何件を避けたかを返す。画面で「前回までと違う問いにしました」を出す
+    return NextResponse.json({ questionSet, avoidedCount: recent.length });
   } catch (err) {
     console.error("[oral-exam/generate] failed:", err);
     return NextResponse.json(

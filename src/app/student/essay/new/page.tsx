@@ -253,6 +253,10 @@ export default function EssayNewPage() {
   const [oralExamAnswers, setOralExamAnswers] = useState<string[]>([]);
   const [oralExamLoading, setOralExamLoading] = useState(false);
   const [oralExamError, setOralExamError] = useState<string | null>(null);
+  /** 前に解いた問いを避けるか。既定は避ける。同じ問題で練習したい人は外せる */
+  const [oralExamAvoidRepeat, setOralExamAvoidRepeat] = useState(true);
+  /** 直前の生成で何件の出題を避けたか（0 なら初回） */
+  const [oralExamAvoidedCount, setOralExamAvoidedCount] = useState(0);
 
   const [reportMode, setReportMode] = useState(false);
   const [reportField, setReportField] = useState<string | null>(null);
@@ -499,6 +503,15 @@ export default function EssayNewPage() {
           setPastQuestion(
             getEnrichedPastQuestionById(data.pastQuestionId) ?? null
           );
+        }
+        // 口頭試問型は出題そのものを戻す（答案に保存した小問集合から）
+        if (data.oralExam?.subQuestions?.length) {
+          setOralExamMode(true);
+          setOralExamSet(data.oralExam);
+          setOralExamTheme(data.oralExam.theme ?? "");
+          setOralExamCount(data.oralExam.subQuestions.length);
+          setOralExamAnswers(data.oralExam.subQuestions.map(() => ""));
+          setInputMode("text");
         }
         if (parent.topic) setTopic(parent.topic);
         if (parent.retryContext?.wordLimit)
@@ -1242,6 +1255,7 @@ export default function EssayNewPage() {
           theme: oralExamTheme.trim(),
           totalWordLimit: customMaxLength,
           questionCount: oralExamCount,
+          avoidRepeat: oralExamAvoidRepeat,
         }),
       });
       if (!res.ok) {
@@ -1253,9 +1267,11 @@ export default function EssayNewPage() {
         );
         return;
       }
-      const { questionSet } = (await res.json()) as {
+      const { questionSet, avoidedCount } = (await res.json()) as {
         questionSet: OralExamQuestionSet;
+        avoidedCount?: number;
       };
+      setOralExamAvoidedCount(avoidedCount ?? 0);
       setOralExamSet(questionSet);
       setOralExamAnswers(questionSet.subQuestions.map(() => ""));
       setStep(2);
@@ -1357,6 +1373,9 @@ export default function EssayNewPage() {
               questionType: "oral_exam" as const,
               topic: effectiveTopic,
               wordLimit: oralExamSet.totalWordLimit,
+              // 出題そのものを答案に残す。これが無いと「もう一度書く」で
+              // 小問ごとの字数が復元できず、同じ問題に戻れない
+              oralExam: oralExamSet,
             }),
           ...(pastQuestion && {
             questionType: pastQuestion.questionType,
@@ -1959,6 +1978,24 @@ export default function EssayNewPage() {
                           )}
                         />
                       </div>
+
+                      <label className="flex cursor-pointer items-start gap-2.5">
+                        <input
+                          type="checkbox"
+                          checked={oralExamAvoidRepeat}
+                          onChange={(e) =>
+                            setOralExamAvoidRepeat(e.target.checked)
+                          }
+                          className="mt-0.5 size-4"
+                        />
+                        <span className="text-sm">
+                          前に解いた問いを避ける
+                          <span className="text-muted-foreground mt-0.5 block text-xs">
+                            これまでに提出した口頭試問型の問いと重ならないように作ります。
+                            同じ問題で解き直したいときは外してください。
+                          </span>
+                        </span>
+                      </label>
 
                       {oralExamError && (
                         <p className="text-sm text-rose-600">{oralExamError}</p>
@@ -2615,6 +2652,8 @@ export default function EssayNewPage() {
                             <p className="mt-1 text-xs text-slate-300">
                               合計{oralExamSet.totalWordLimit}字／
                               {oralExamSet.subQuestions.length}問
+                              {oralExamAvoidedCount > 0 &&
+                                `／これまでの${oralExamAvoidedCount}題と重ならないように作りました`}
                             </p>
                           </div>
                           {oralExamSet.subQuestions.map((q, i) => {

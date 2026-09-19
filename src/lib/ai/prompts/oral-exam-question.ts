@@ -11,6 +11,35 @@ export function buildOralExamQuestionPrompt(args: {
   theme: string;
   totalWordLimit: number;
   questionCount: number;
+  /**
+   * この生徒が最近解いた同種の出題（新しい順）。
+   * 同じ問いを繰り返すと練習にならないので、重ならないように作らせる。
+   * 生徒が「同じ問題でよい」を選んだときは空で渡す。
+   */
+  recent?: { theme: string; prompts: string[] }[];
+}): string {
+  const recent = args.recent ?? [];
+  const avoidBlock =
+    recent.length > 0
+      ? `
+
+## 最近この受験生が解いた問い（繰り返さない）
+${recent
+  .map((r) => `- ${r.theme}\n${r.prompts.map((p) => `  ・${p}`).join("\n")}`)
+  .join("\n")}
+
+- **上と同じ問いを作らないでください。**言い回しを変えただけのものも同じ扱いです。
+- テーマが上と同じ場合は、**別の角度**から問うてください（前回が定義と制度なら、
+  今回は事例の判断・例外・他分野との比較など）。
+- 上で問われていない論点を優先して選んでください。`
+      : "";
+  return `${buildBody(args)}${avoidBlock}`;
+}
+
+function buildBody(args: {
+  theme: string;
+  totalWordLimit: number;
+  questionCount: number;
 }): string {
   return `あなたは大学入試の口頭試問（筆記形式）の作問者です。
 与えられたテーマについて、受験生の**知識と理解**を確かめる小問集合を作ります。

@@ -452,6 +452,13 @@ export interface EssayReviewRequest {
   homeworkId?: string;
   /** 執筆中に使った AIコーチ会話のID。答案に保存して管理者側の紐付けに使う */
   coachThreadId?: string;
+  /**
+   * 口頭試問型の小問集合。
+   *
+   * 出題は毎回AIが作るので、答案に保存しておかないと「もう一度書く」で
+   * 同じ問題に戻れない（topic の文字列からは小問ごとの字数を復元できない）。
+   */
+  oralExam?: OralExamQuestionSet;
 }
 
 /** 小論文の途中保存（下書き）。テキスト入力モード専用。users/{uid}/essayDrafts/{id} */
