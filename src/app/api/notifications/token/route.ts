@@ -1,6 +1,53 @@
+import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { verifyAuthToken } from "@/lib/firebase/admin";
 import { adminDb } from "@/lib/firebase/admin";
+
+/**
+ * FCMトークンの持ち主を1人に保つための台帳。
+ *
+ * トークンは**端末（ブラウザ）**を指すもので、利用者を指さない。同じ端末で
+ * 別のアカウントにログインすると、まったく同じトークンが新しい uid の下にも
+ * 登録され、古い方は誰も消さなかった。その結果、本番では1つのトークンが
+ * 最大3人に登録され、**A宛の通知がいまBが使っている端末に出る**状態だった
+ * （2026-09-20 に実データで確認）。受け取る側は「自分宛が来ない／他人のが来る」
+ * としか見えず、送信側のログは成功のままなので気づけない。
+ *
+ * トークンをそのまま文書IDにすると長さも文字種も扱いにくいので、SHA-256 の
+ * 16進で引く。中身は uid だけ。
+ */
+const OWNER_COLLECTION = "fcmTokenOwners";
+
+function ownerDocId(fcmToken: string): string {
+  return createHash("sha256").update(fcmToken).digest("hex");
+}
+
+/**
+ * このトークンを uid のものにし、他の利用者に残っている同じトークンを消す。
+ * 台帳が壊れていても登録自体は続ける（通知が来ないより良い）。
+ */
+async function claimToken(fcmToken: string, uid: string): Promise<string[]> {
+  const released: string[] = [];
+  if (!adminDb) return released;
+  const ref = adminDb.collection(OWNER_COLLECTION).doc(ownerDocId(fcmToken));
+  try {
+    const snap = await ref.get();
+    const prevUid = snap.exists
+      ? (snap.data()?.uid as string | undefined)
+      : undefined;
+    if (prevUid && prevUid !== uid) {
+      await adminDb.doc(`users/${prevUid}/fcmTokens/${fcmToken}`).delete();
+      released.push(prevUid);
+      console.warn(
+        `[fcm] 端末の持ち主が変わったため前の登録を解除 prev=${prevUid} next=${uid}`
+      );
+    }
+    await ref.set({ uid, updatedAt: new Date().toISOString() });
+  } catch (e) {
+    console.warn("[fcm] 持ち主台帳の更新に失敗", e);
+  }
+  return released;
+}
 
 /**
  * POST /api/notifications/token — FCMトークンをFirestoreに保存
@@ -85,5 +132,51 @@ export async function POST(request: Request) {
     if (removed > 0) await batch.commit();
   }
 
-  return NextResponse.json({ success: true, removed });
+  /**
+   * この端末の持ち主をこの利用者にする。同じ端末で前に使っていた
+   * アカウントの登録はここで消える（消さないと別人の通知がこの端末に出る）。
+   */
+  const released = await claimToken(fcmToken, authResult.uid);
+
+  return NextResponse.json({
+    success: true,
+    removed,
+    released: released.length,
+  });
+}
+
+/**
+ * DELETE /api/notifications/token — この端末の登録を外す。
+ *
+ * ログアウト時に呼ぶ。外さないと、次にこの端末を使う人の通知と混ざる。
+ */
+export async function DELETE(request: Request) {
+  const authResult = await verifyAuthToken(request);
+  if (!authResult) {
+    return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+  }
+  const body = await request.json().catch(() => ({}));
+  const { fcmToken } = body as { fcmToken?: unknown };
+  if (!fcmToken || typeof fcmToken !== "string") {
+    return NextResponse.json(
+      { error: "fcmToken is required" },
+      { status: 400 }
+    );
+  }
+  if (!adminDb) {
+    return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
+  }
+  await adminDb
+    .doc(`users/${authResult.uid}/fcmTokens/${fcmToken}`)
+    .delete()
+    .catch(() => undefined);
+  // 台帳も片付ける。自分のものだったときだけ消す
+  try {
+    const ref = adminDb.collection(OWNER_COLLECTION).doc(ownerDocId(fcmToken));
+    const snap = await ref.get();
+    if (snap.exists && snap.data()?.uid === authResult.uid) await ref.delete();
+  } catch {
+    /* 台帳の掃除に失敗しても、登録は消えているので実害はない */
+  }
+  return NextResponse.json({ success: true });
 }

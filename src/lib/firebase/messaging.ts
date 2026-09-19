@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  deleteToken,
   getMessaging,
   getToken,
   onMessage,
@@ -152,6 +153,44 @@ export async function saveFcmToken(
       detail ||
         `通知の登録に失敗しました（${res.status}）。もう一度お試しください`
     );
+  }
+}
+
+/**
+ * ログアウト時に、この端末の登録を外す。
+ *
+ * FCMトークンは**端末**を指すもので、利用者を指さない。外さないと、
+ * 同じ端末で次にログインした人の通知と混ざり、前の利用者宛の通知が
+ * この端末に出続ける（本番で1トークンが3人に登録されていた）。
+ *
+ * 失敗してもログアウト自体は止めない。
+ */
+export async function clearFcmToken(idToken: string | null): Promise<void> {
+  if (typeof window === "undefined") return;
+  try {
+    const msg = getMessagingInstance();
+    if (!msg) return;
+    const registration = await navigator.serviceWorker?.getRegistration(
+      "/firebase-messaging-sw.js"
+    );
+    const token = await getToken(msg, {
+      vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
+      ...(registration ? { serviceWorkerRegistration: registration } : {}),
+    }).catch(() => null);
+    if (token && idToken) {
+      await fetch("/api/notifications/token", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ fcmToken: token }),
+      }).catch(() => undefined);
+    }
+    // 端末側の購読も破棄する。残すと同じトークンが再登録されうる
+    await deleteToken(msg).catch(() => undefined);
+  } catch {
+    /* ログアウトを止めない */
   }
 }
 

@@ -81,6 +81,18 @@ export async function resetPassword(email: string) {
 }
 
 export async function signOutUser() {
+  /**
+   * 先にこの端末の通知登録を外す。外さずにログアウトすると、同じ端末で
+   * 次にログインした人の通知と混ざり、前の利用者宛がこの端末に出続ける。
+   * サインアウト後は ID トークンを取れないので、必ずこの順で行う。
+   */
+  try {
+    const idToken = (await auth?.currentUser?.getIdToken()) ?? null;
+    const { clearFcmToken } = await import("@/lib/firebase/messaging");
+    await clearFcmToken(idToken);
+  } catch {
+    /* 通知の後片付けに失敗してもログアウトは続ける */
+  }
   if (auth) {
     await signOut(auth);
   }
