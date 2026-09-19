@@ -27,7 +27,10 @@ import {
   StartSensitivity,
 } from "@google/genai";
 import type { LiveServerMessage, Session, UsageMetadata } from "@google/genai";
-import type { InterviewVoiceSession, VoiceSessionCallbacks } from "./voice-session";
+import type {
+  InterviewVoiceSession,
+  VoiceSessionCallbacks,
+} from "./voice-session";
 import { normalizeTranscript } from "@/lib/interview/transcript";
 import { encodeWav16 } from "@/lib/interview/wav";
 
@@ -54,7 +57,8 @@ const STRICT_REALTIME_INPUT_CONFIG = {
 function isVoiceDebug(): boolean {
   if (typeof window === "undefined") return false;
   try {
-    if (new URLSearchParams(window.location.search).get("debugVoice") === "1") return true;
+    if (new URLSearchParams(window.location.search).get("debugVoice") === "1")
+      return true;
     return window.localStorage.getItem("debugVoice") === "1";
   } catch {
     return false;
@@ -73,7 +77,10 @@ function estimateGeminiCostUsd(u: UsageMetadata): {
   audioOut: number;
   textOut: number;
 } {
-  let audioIn = 0, textIn = 0, audioOut = 0, textOut = 0;
+  let audioIn = 0,
+    textIn = 0,
+    audioOut = 0,
+    textOut = 0;
   const isAudio = (m: unknown) => String(m).toUpperCase().includes("AUDIO");
   for (const d of u.promptTokensDetails ?? []) {
     if (isAudio(d.modality)) audioIn += d.tokenCount ?? 0;
@@ -83,7 +90,8 @@ function estimateGeminiCostUsd(u: UsageMetadata): {
     if (isAudio(d.modality)) audioOut += d.tokenCount ?? 0;
     else textOut += d.tokenCount ?? 0;
   }
-  const usd = (audioIn * 1 + textIn * 1 + audioOut * 20 + textOut * 6) / 1_000_000;
+  const usd =
+    (audioIn * 1 + textIn * 1 + audioOut * 20 + textOut * 6) / 1_000_000;
   return { usd, audioIn, textIn, audioOut, textOut };
 }
 
@@ -128,6 +136,11 @@ const SCRIPT_BUFFER_SIZE = 4096; // ≈256ms @16kHz
 /** 出力再生が drain したと判定してから onOutputAudioActivity(false) を出すまでの保持 */
 const OUTPUT_DRAIN_HOLD_MS = 200;
 const OUTPUT_POLL_MS = 100;
+/**
+ * 再接続の試行間隔。1回目は即、以降は少し待つ。
+ * 回線の瞬断でセッションが落ちても、面接が止まらずに済む幅を取る。
+ */
+const RECONNECT_DELAYS_MS = [0, 500, 1500, 3000];
 
 /** base64 → Uint8Array */
 function base64ToBytes(b64: string): Uint8Array {
@@ -248,25 +261,43 @@ export class GeminiLiveSession implements InterviewVoiceSession {
       model: this.opts.model,
       callbacks: {
         onopen: () => {
-          if (process.env.NODE_ENV === "development") console.log("[GeminiLive] open");
+          if (process.env.NODE_ENV === "development")
+            console.log("[GeminiLive] open");
         },
         onmessage: (msg: LiveServerMessage) => this.handleMessage(msg),
         onerror: (e: ErrorEvent) => {
           if (this.isClosed) return;
+          // WebSocket の error は必ず close を伴う。復帰できるかは onclose 側で
+          // 判断するので、ここで呼び出し側へ通知しない（通知すると、再接続に
+          // 成功しても画面が「接続に失敗しました」に落ちる）。
           console.warn("[GeminiLive] error", e?.message);
-          this.opts.onError?.(new Error(e.message ?? "gemini live error"));
         },
         onclose: (e: CloseEvent) => {
           const code = e?.code;
           const reason = e?.reason;
           if (this.isClosed) {
-            if (process.env.NODE_ENV === "development") console.log("[GeminiLive] close(self)", code, reason);
+            if (process.env.NODE_ENV === "development")
+              console.log("[GeminiLive] close(self)", code, reason);
             return;
           }
-          // 予期しないクローズ: マイク送信を止めて(スパム防止)、理由を通知
+          // 予期しないクローズ: マイク送信を止める(スパム防止)
           this.inputActive = false;
-          console.warn(`[GeminiLive] unexpected close code=${code} reason=${reason ?? ""}`);
-          this.opts.onError?.(new Error(`gemini closed: ${code} ${reason ?? ""}`));
+          console.warn(
+            `[GeminiLive] unexpected close code=${code} reason=${reason ?? ""}`
+          );
+          /**
+           * goAway 予告なしに切れることがある（回線の瞬断・サーバー側 1006/1011）。
+           * 以前はここで即エラー通知するだけだったので、面接が会話の途中で
+           * 黙って止まっていた（画面は残るが試験官が二度と話さない）。
+           * resumption handle があるなら goAway と同じ経路で復帰を試みる。
+           */
+          if (this.resumptionHandle) {
+            void this.reconnect();
+            return;
+          }
+          this.opts.onError?.(
+            new Error(`gemini closed: ${code} ${reason ?? ""}`)
+          );
         },
       },
       config: {
@@ -287,14 +318,16 @@ export class GeminiLiveSession implements InterviewVoiceSession {
         JSON.stringify({
           strictTurnTaking: !!this.opts.strictTurnTaking,
           reconnect: !!this.resumptionHandle,
-        }),
+        })
       );
     }
   }
 
   private handleMessage(msg: LiveServerMessage): void {
     if (this.isClosed) return;
-    this.opts.onEvent?.({ type: "gemini.message", msg } as unknown as { type: string });
+    this.opts.onEvent?.({ type: "gemini.message", msg } as unknown as {
+      type: string;
+    });
 
     // コスト計測用に最新の usageMetadata を保持
     if (msg.usageMetadata) this.lastUsage = msg.usageMetadata;
@@ -308,13 +341,16 @@ export class GeminiLiveSession implements InterviewVoiceSession {
       if (isVoiceDebug()) {
         console.info(
           "[GeminiLive][diag] goAway → reconnect",
-          JSON.stringify({ aiResponding: this.currentResponseId !== null }),
+          JSON.stringify({ aiResponding: this.currentResponseId !== null })
         );
       }
       void this.reconnect();
       return;
     }
-    if (msg.sessionResumptionUpdate?.resumable && msg.sessionResumptionUpdate.newHandle) {
+    if (
+      msg.sessionResumptionUpdate?.resumable &&
+      msg.sessionResumptionUpdate.newHandle
+    ) {
       this.resumptionHandle = msg.sessionResumptionUpdate.newHandle;
     }
 
@@ -350,7 +386,10 @@ export class GeminiLiveSession implements InterviewVoiceSession {
     // 出力トランスクリプト（delta）
     if (sc.outputTranscription?.text && this.currentResponseId) {
       this.aiTranscriptBuf += sc.outputTranscription.text;
-      this.opts.onAssistantTranscriptDelta?.(normalizeTranscript(this.aiTranscriptBuf), this.currentResponseId);
+      this.opts.onAssistantTranscriptDelta?.(
+        normalizeTranscript(this.aiTranscriptBuf),
+        this.currentResponseId
+      );
     }
 
     // 割り込み: 再生中の出力を破棄
@@ -362,7 +401,7 @@ export class GeminiLiveSession implements InterviewVoiceSession {
           JSON.stringify({
             aiResponding: this.currentResponseId !== null,
             tail: normalizeTranscript(this.aiTranscriptBuf).slice(-40),
-          }),
+          })
         );
       }
       this.clearOutputQueue();
@@ -373,11 +412,16 @@ export class GeminiLiveSession implements InterviewVoiceSession {
       if (isVoiceDebug()) {
         console.info(
           "[GeminiLive][diag] turnComplete",
-          JSON.stringify({ tail: normalizeTranscript(this.aiTranscriptBuf).slice(-40) }),
+          JSON.stringify({
+            tail: normalizeTranscript(this.aiTranscriptBuf).slice(-40),
+          })
         );
       }
       if (this.currentResponseId) {
-        this.opts.onAssistantTranscript?.(normalizeTranscript(this.aiTranscriptBuf), this.currentResponseId);
+        this.opts.onAssistantTranscript?.(
+          normalizeTranscript(this.aiTranscriptBuf),
+          this.currentResponseId
+        );
       }
       this.currentResponseId = null;
       this.aiTranscriptBuf = "";
@@ -423,7 +467,10 @@ export class GeminiLiveSession implements InterviewVoiceSession {
     const inRate = ctx.sampleRate;
     if (process.env.NODE_ENV !== "production") {
       const s = stream.getAudioTracks()[0]?.getSettings?.();
-      console.debug("[gemini-live] mic capture", { ctxSampleRate: inRate, trackSettings: s });
+      console.debug("[gemini-live] mic capture", {
+        ctxSampleRate: inRate,
+        trackSettings: s,
+      });
     }
     this.micSource = ctx.createMediaStreamSource(stream);
     // NOTE: ScriptProcessorNode は deprecated だが全ブラウザで動作。
@@ -442,7 +489,10 @@ export class GeminiLiveSession implements InterviewVoiceSession {
       }
       try {
         this.session.sendRealtimeInput({
-          audio: { data: int16ToBase64(int16), mimeType: `audio/pcm;rate=${INPUT_SAMPLE_RATE}` },
+          audio: {
+            data: int16ToBase64(int16),
+            mimeType: `audio/pcm;rate=${INPUT_SAMPLE_RATE}`,
+          },
         });
       } catch {
         /* 送信失敗は無視（再接続中など） */
@@ -464,7 +514,11 @@ export class GeminiLiveSession implements InterviewVoiceSession {
     }
     const ctx = this.outputCtx;
     const bytes = base64ToBytes(b64);
-    const int16 = new Int16Array(bytes.buffer, bytes.byteOffset, Math.floor(bytes.byteLength / 2));
+    const int16 = new Int16Array(
+      bytes.buffer,
+      bytes.byteOffset,
+      Math.floor(bytes.byteLength / 2)
+    );
     const float32 = new Float32Array(int16.length);
     for (let i = 0; i < int16.length; i++) float32[i] = int16[i] / 0x8000;
     const buffer = ctx.createBuffer(1, float32.length, OUTPUT_SAMPLE_RATE);
@@ -533,7 +587,10 @@ export class GeminiLiveSession implements InterviewVoiceSession {
     }
   }
 
-  addConversationItem(role: "user" | "assistant" | "system", text: string): void {
+  addConversationItem(
+    role: "user" | "assistant" | "system",
+    text: string
+  ): void {
     const geminiRole = role === "assistant" ? "model" : "user";
     try {
       this.session?.sendClientContent({
@@ -567,7 +624,8 @@ export class GeminiLiveSession implements InterviewVoiceSession {
   endUserTurn(): void {
     try {
       this.session?.sendRealtimeInput({ audioStreamEnd: true });
-      if (isVoiceDebug()) console.info("[GeminiLive][diag] audioStreamEnd (forced)");
+      if (isVoiceDebug())
+        console.info("[GeminiLive][diag] audioStreamEnd (forced)");
     } catch {
       /* noop */
     }
@@ -583,32 +641,66 @@ export class GeminiLiveSession implements InterviewVoiceSession {
     this.flushUserTranscript();
   }
 
-  /** 切断予告 / 接続寿命対策の自動再接続（会話文脈は resumption handle で維持） */
+  /**
+   * 切断予告 / 予期しない切断からの自動再接続（会話文脈は resumption handle で維持）。
+   *
+   * 1回失敗しただけで諦めると、回線が一瞬詰まっただけで面接が終わる。
+   * 短い間隔で数回試し、それでも駄目なときにだけ呼び出し側へ知らせる。
+   */
   private async reconnect(): Promise<void> {
     if (this.isClosed || this.reconnecting || !this.resumptionHandle) {
       if (isVoiceDebug()) {
         console.warn(
           "[GeminiLive][diag] reconnect skipped",
-          JSON.stringify({ closed: this.isClosed, reconnecting: this.reconnecting, hasHandle: !!this.resumptionHandle }),
+          JSON.stringify({
+            closed: this.isClosed,
+            reconnecting: this.reconnecting,
+            hasHandle: !!this.resumptionHandle,
+          })
         );
       }
       return;
     }
     this.reconnecting = true;
     try {
-      try {
-        this.session?.close();
-      } catch {
-        /* noop */
-      }
-      await this.openSession();
-      if (isVoiceDebug()) console.info("[GeminiLive][diag] reconnect OK");
-    } catch (err) {
-      if (isVoiceDebug()) console.warn("[GeminiLive][diag] reconnect FAILED", (err as Error)?.message);
-      this.opts.onError?.(err instanceof Error ? err : new Error("gemini reconnect failed"));
-    } finally {
-      this.reconnecting = false;
+      this.session?.close();
+    } catch {
+      /* noop */
     }
+    let lastErr: unknown = null;
+    for (let attempt = 0; attempt < RECONNECT_DELAYS_MS.length; attempt++) {
+      if (this.isClosed) break;
+      if (attempt > 0) {
+        await new Promise((r) => setTimeout(r, RECONNECT_DELAYS_MS[attempt]));
+        if (this.isClosed) break;
+      }
+      try {
+        await this.openSession();
+        // 切断時にマイク送信を止めているので、復帰したら送信を戻す
+        // （戻さないと繋がったまま誰の声も届かない＝止まって見える）
+        if ((this.opts.withMic ?? true) && this.micSource)
+          this.inputActive = true;
+        // 中断された AI ターンの状態を捨て、ユーザーターンから再開する
+        this.currentResponseId = null;
+        this.aiTranscriptBuf = "";
+        if (isVoiceDebug())
+          console.info(`[GeminiLive][diag] reconnect OK (${attempt + 1}回目)`);
+        this.reconnecting = false;
+        this.opts.onReconnected?.();
+        return;
+      } catch (err) {
+        lastErr = err;
+        console.warn(
+          `[GeminiLive] reconnect failed (${attempt + 1}/${RECONNECT_DELAYS_MS.length})`,
+          (err as Error)?.message
+        );
+      }
+    }
+    this.reconnecting = false;
+    if (this.isClosed) return;
+    this.opts.onError?.(
+      lastErr instanceof Error ? lastErr : new Error("gemini reconnect failed")
+    );
   }
 
   close(): void {
@@ -619,7 +711,7 @@ export class GeminiLiveSession implements InterviewVoiceSession {
       const c = estimateGeminiCostUsd(this.lastUsage);
       console.log(
         `[GeminiLive] 概算コスト $${c.usd.toFixed(4)} ` +
-          `(in audio:${c.audioIn} text:${c.textIn} / out audio:${c.audioOut} text:${c.textOut} tokens)`,
+          `(in audio:${c.audioIn} text:${c.textIn} / out audio:${c.audioOut} text:${c.textOut} tokens)`
       );
     }
     if (this.outputPollTimer !== null) {

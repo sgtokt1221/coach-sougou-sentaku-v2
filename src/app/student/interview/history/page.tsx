@@ -17,7 +17,12 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { CHART_COLORS, CHART_ANIMATION, GRID_STYLE, INTERVIEW_SCORE_LINES } from "@/components/charts/theme";
+import {
+  CHART_COLORS,
+  CHART_ANIMATION,
+  GRID_STYLE,
+  INTERVIEW_SCORE_LINES,
+} from "@/components/charts/theme";
 import { CustomTooltip } from "@/components/charts/CustomTooltip";
 import { CustomDot, CustomActiveDot } from "@/components/charts/CustomDot";
 import { SegmentControl } from "@/components/shared/SegmentControl";
@@ -36,6 +41,8 @@ interface InterviewHistoryItem {
   mode: InterviewMode;
   practicedAt: string;
   totalScore: number;
+  /** 合計の満点。口頭試問は50、それ以外は40。旧データは無し */
+  totalMax?: number;
   clarity: number;
   apAlignment: number;
   enthusiasm: number;
@@ -43,7 +50,6 @@ interface InterviewHistoryItem {
   /** 動画なしの回は null（評価不能）。0 と混ぜない */
   bodyLanguage: number | null;
 }
-
 
 const MODE_VARIANT: Record<
   InterviewMode,
@@ -60,15 +66,15 @@ export default function InterviewHistoryPage() {
   const [chartTab, setChartTab] = useState<"total" | "detailed">("total");
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: rawData, isLoading: loading } = useAuthSWR<{ interviews: any[] }>("/api/interview/history?userId=current");
+  const { data: rawData, isLoading: loading } = useAuthSWR<{
+    interviews: any[];
+  }>("/api/interview/history?userId=current");
   const history: InterviewHistoryItem[] = (rawData?.interviews ?? []).map(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (item: any) => ({
       id: item.id,
       universityName:
-        item.universityName ??
-        item.universityContext?.universityName ??
-        "",
+        item.universityName ?? item.universityContext?.universityName ?? "",
       facultyName:
         item.facultyName ?? item.universityContext?.facultyName ?? "",
       mode: item.mode ?? "individual",
@@ -88,7 +94,7 @@ export default function InterviewHistoryPage() {
   const historyToShow = history;
 
   const sortedAsc = [...historyToShow].sort((a, b) =>
-    a.practicedAt.localeCompare(b.practicedAt),
+    a.practicedAt.localeCompare(b.practicedAt)
   );
   const chartData = sortedAsc.map((item) => ({
     date: item.practicedAt,
@@ -105,14 +111,14 @@ export default function InterviewHistoryPage() {
   }));
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-5 lg:px-6 lg:py-8 space-y-4 lg:space-y-6">
+    <div className="mx-auto max-w-3xl space-y-4 px-4 py-5 lg:space-y-6 lg:px-6 lg:py-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg lg:text-xl font-bold flex items-center gap-2">
+        <h1 className="flex items-center gap-2 text-lg font-bold lg:text-xl">
           <TrendingUp className="size-5" />
           面接履歴
         </h1>
         <Button onClick={() => router.push("/student/interview/new")}>
-          <Plus className="size-4 mr-2" />
+          <Plus className="mr-2 size-4" />
           新規練習
         </Button>
       </div>
@@ -132,7 +138,10 @@ export default function InterviewHistoryPage() {
               icon={Mic}
               title="まだ面接練習がありません"
               description="最初の模擬面接を始めましょう！"
-              action={{ label: "面接練習を始める", href: "/student/interview/new" }}
+              action={{
+                label: "面接練習を始める",
+                href: "/student/interview/new",
+              }}
             />
           </CardContent>
         </Card>
@@ -165,8 +174,18 @@ export default function InterviewHistoryPage() {
                         stroke={GRID_STYLE.stroke}
                         opacity={GRID_STYLE.opacity}
                       />
-                      <XAxis dataKey="date" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-                      <YAxis domain={[0, 40]} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                      <XAxis
+                        dataKey="date"
+                        tick={{ fontSize: 11 }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <YAxis
+                        domain={[0, 50]}
+                        tick={{ fontSize: 11 }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
                       <Tooltip content={<CustomTooltip />} />
                       <Line
                         type="monotone"
@@ -183,7 +202,10 @@ export default function InterviewHistoryPage() {
                     </LineChart>
                   </ResponsiveContainer>
                 ) : (
-                  <DetailedScoresTrendChart data={detailedChartData} lines={INTERVIEW_SCORE_LINES} />
+                  <DetailedScoresTrendChart
+                    data={detailedChartData}
+                    lines={INTERVIEW_SCORE_LINES}
+                  />
                 )}
               </CardContent>
             </Card>
@@ -194,31 +216,47 @@ export default function InterviewHistoryPage() {
             {historyToShow.map((item) => (
               <Card
                 key={item.id}
-                className="cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => router.push(`/student/interview/${item.id}/result`)}
+                className="cursor-pointer transition-shadow hover:shadow-md"
+                onClick={() =>
+                  router.push(`/student/interview/${item.id}/result`)
+                }
               >
-                <CardContent className="p-3 lg:p-4 flex items-center justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium text-sm">{item.universityName}</span>
-                      <span className="text-muted-foreground text-sm">{item.facultyName}</span>
-                      <Badge variant={MODE_VARIANT[item.mode]} className="text-xs">
+                <CardContent className="flex items-center justify-between gap-3 p-3 lg:p-4">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-sm font-medium">
+                        {item.universityName}
+                      </span>
+                      <span className="text-muted-foreground text-sm">
+                        {item.facultyName}
+                      </span>
+                      <Badge
+                        variant={MODE_VARIANT[item.mode]}
+                        className="text-xs"
+                      >
                         {INTERVIEW_MODE_LABELS[item.mode]}
                       </Badge>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">{item.practicedAt}</p>
+                    <p className="text-muted-foreground mt-1 text-xs">
+                      {item.practicedAt}
+                    </p>
                   </div>
-                  <div className="shrink-0 flex items-center gap-2">
+                  <div className="flex shrink-0 items-center gap-2">
                     {item.totalScore > 0 && (
                       <SkillRankBadge
-                        rank={scoreToSkillRank(item.totalScore, 40)}
+                        rank={scoreToSkillRank(
+                          item.totalScore,
+                          item.totalMax ?? 40
+                        )}
                         size="sm"
                         animate={false}
                       />
                     )}
                     <span className="text-lg font-bold">
                       {item.totalScore}
-                      <span className="text-sm text-muted-foreground">/40</span>
+                      <span className="text-muted-foreground text-sm">
+                        /{item.totalMax ?? 40}
+                      </span>
                     </span>
                   </div>
                 </CardContent>

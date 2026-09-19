@@ -76,6 +76,8 @@ export async function GET(request: NextRequest) {
         universityName: data.universityContext?.universityName ?? "",
         facultyName: data.universityContext?.facultyName ?? "",
         totalScore: data.scores?.total ?? 0,
+        // 満点はモードで変わる（口頭試問は50）。画面で40を直書きさせない
+        totalMax: data.scores?.totalMax ?? 40,
         conversationSummary: data.conversationSummary ?? null,
       };
     });

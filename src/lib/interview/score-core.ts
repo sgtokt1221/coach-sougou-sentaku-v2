@@ -9,6 +9,10 @@ import type {
   InterviewMessage,
   VideoAnalysis,
 } from "@/lib/types/interview";
+import {
+  INTERVIEW_CONTENT_MAX,
+  INTERVIEW_ORAL_EXAM_MAX,
+} from "@/lib/types/interview";
 
 /**
  * 面接スコアリング AI 呼び出しのコア機能。
@@ -213,6 +217,23 @@ export async function scoreInterviewCore(
     }
   }
 
+  const contentTotal =
+    parsed.scores.clarity +
+    parsed.scores.apAlignment +
+    parsed.scores.enthusiasm +
+    parsed.scores.specificity;
+  /**
+   * 口頭試問だけは専門知識の正確性を合計に入れる（満点50）。
+   *
+   * 知識を問う試験なので、これが合計外だと「答えられていないのに点が高い」
+   * 結果になる。応用思考力(criticalThinking)は共通4軸の明確さ・具体性と
+   * 重なるため合計には入れず、参考値のまま置く。
+   * 採点されなかった回（欠落）は満点も40のままにして、0点として引かない。
+   */
+  const includeKnowledge =
+    input.mode === "oral_exam" &&
+    typeof modeScores.knowledgeAccuracy === "number";
+
   const scores: InterviewScores = {
     clarity: parsed.scores.clarity,
     apAlignment: parsed.scores.apAlignment,
@@ -220,12 +241,12 @@ export async function scoreInterviewCore(
     specificity: parsed.scores.specificity,
     bodyLanguage,
     ...modeScores,
-    // 内容4軸のみ。満点は常に INTERVIEW_CONTENT_MAX (40)
-    total:
-      parsed.scores.clarity +
-      parsed.scores.apAlignment +
-      parsed.scores.enthusiasm +
-      parsed.scores.specificity,
+    total: includeKnowledge
+      ? contentTotal + modeScores.knowledgeAccuracy!
+      : contentTotal,
+    totalMax: includeKnowledge
+      ? INTERVIEW_ORAL_EXAM_MAX
+      : INTERVIEW_CONTENT_MAX,
   };
 
   const feedback: InterviewFeedback = {

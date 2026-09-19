@@ -28,9 +28,15 @@ export interface VoiceSessionCallbacks {
    * AI の発話 transcript が部分的に届くたび。
    * 第1引数: 同一 response 内で累積された部分テキスト / 第2引数: responseId（無ければ undefined）
    */
-  onAssistantTranscriptDelta?: (cumulativeText: string, responseId: string | undefined) => void;
+  onAssistantTranscriptDelta?: (
+    cumulativeText: string,
+    responseId: string | undefined
+  ) => void;
   /** AI の発話テキストが確定したとき */
-  onAssistantTranscript?: (text: string, responseId: string | undefined) => void;
+  onAssistantTranscript?: (
+    text: string,
+    responseId: string | undefined
+  ) => void;
   /** AI が応答を開始したとき（マイクミュート/「考え中」UI 用） */
   onResponseStart?: () => void;
   /** AI が応答を完了したとき（生成完了。実際の鳴り止みは onOutputAudioActivity を基準にする） */
@@ -42,6 +48,14 @@ export interface VoiceSessionCallbacks {
   onOutputAudioActivity?: (active: boolean) => void;
   /** 受信音声レベルが取得できない環境の通知（呼び出し側は固定遅延フォールバックへ） */
   onOutputLevelUnsupported?: () => void;
+  /**
+   * 切断から自動復帰したとき。
+   *
+   * 復帰時に AI のターンは失われている（response.done が来ないまま切れている）。
+   * 呼び出し側はここでユーザーターンへ戻す必要がある。戻さないと、接続は
+   * 生きているのにマイクが止まったまま＝面接が止まって見える。
+   */
+  onReconnected?: () => void;
   /** 接続/実行時エラー */
   onError?: (error: Error) => void;
 }
@@ -56,7 +70,10 @@ export interface InterviewVoiceSession {
   /** AI に応答生成を指示する */
   triggerResponse(): void;
   /** 会話履歴にテキストアイテムを追加する（再開時の文脈注入・GD broadcast 等） */
-  addConversationItem(role: "user" | "assistant" | "system", text: string): void;
+  addConversationItem(
+    role: "user" | "assistant" | "system",
+    text: string
+  ): void;
   /** 現在生成中/再生中の応答をキャンセルする（GD の話者切替・割り込み用） */
   cancelResponse(): void;
   /**

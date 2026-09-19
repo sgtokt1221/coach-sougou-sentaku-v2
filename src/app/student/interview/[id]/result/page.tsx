@@ -45,6 +45,8 @@ import type { SessionSummary } from "@/lib/types/session";
 import { ScoreRing } from "@/components/shared/ScoreRing";
 import { RankBadge } from "@/components/shared/RankBadge";
 import { TranscriptionView } from "@/components/interview/TranscriptionView";
+import { InterviewConversationLog } from "@/components/interview/InterviewConversationLog";
+import { interviewTotalMax } from "@/lib/types/interview";
 import VoiceAnalysisReport from "@/components/interview/VoiceAnalysisReport";
 import VideoAnalysisReport from "@/components/interview/VideoAnalysisReport";
 import AppearanceReport from "@/components/interview/AppearanceReport";
@@ -107,7 +109,6 @@ export default function InterviewResultPage() {
 
   const [result, setResult] = useState<InterviewResult | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showLog, setShowLog] = useState(false);
   const [tab, setTab] = useState<"overview" | "qa" | "voice" | "video">(
     "overview"
   );
@@ -217,7 +218,12 @@ export default function InterviewResultPage() {
   ];
   const scoreKeys = allScoreKeys.filter((k) => result.scores[k] != null);
 
-  const percentage = getScorePercentage(result.scores.total, 40);
+  /**
+   * 満点はモードで変わる（口頭試問は専門知識の正確性を合計に入れるので50）。
+   * 40 を直書きすると、口頭試問だけ割合とランクが実際より高く出る。
+   */
+  const totalMax = interviewTotalMax(result.scores);
+  const percentage = getScorePercentage(result.scores.total, totalMax);
   const rank = getRankFromPercentage(percentage);
 
   return (
@@ -265,7 +271,7 @@ export default function InterviewResultPage() {
                   <div className="inline-flex items-center gap-4 lg:gap-6">
                     <ScoreRing
                       score={result.scores.total}
-                      maxScore={40}
+                      maxScore={totalMax}
                       size={80}
                       strokeWidth={6}
                     />
@@ -273,19 +279,21 @@ export default function InterviewResultPage() {
                       <div className="text-4xl font-bold text-slate-900 tabular-nums lg:text-5xl">
                         {result.scores.total}
                         <span className="text-muted-foreground/60 text-xl font-normal">
-                          /40
+                          /{totalMax}
                         </span>
                       </div>
                       <p className="text-muted-foreground mt-1 text-sm">
-                        総合スコア（内容4軸）
+                        {result.mode === "oral_exam"
+                          ? "総合スコア（内容4軸＋専門知識）"
+                          : "総合スコア（内容4軸）"}
                       </p>
                       <div className="mt-2">
                         <Badge className="border-0 bg-indigo-500 text-white">
-                          {result.scores.total >= 32
+                          {percentage >= 80
                             ? "優秀"
-                            : result.scores.total >= 28
+                            : percentage >= 70
                               ? "良好"
-                              : result.scores.total >= 20
+                              : percentage >= 50
                                 ? "標準"
                                 : "要改善"}
                         </Badge>
@@ -367,7 +375,7 @@ export default function InterviewResultPage() {
             <div className="flex items-center gap-3">
               <ScoreRing
                 score={result.scores.total}
-                maxScore={40}
+                maxScore={totalMax}
                 size={40}
                 strokeWidth={4}
               />
@@ -375,7 +383,7 @@ export default function InterviewResultPage() {
                 <div className="text-lg font-bold text-slate-900 tabular-nums">
                   {result.scores.total}
                   <span className="text-muted-foreground/60 text-sm font-normal">
-                    /40
+                    /{totalMax}
                   </span>
                 </div>
                 <p className="text-muted-foreground text-xs">総合スコア</p>
@@ -714,54 +722,8 @@ export default function InterviewResultPage() {
                     </Card>
                   )}
 
-                  {/* 会話ログ */}
-                  {result.messages && result.messages.length > 0 && (
-                    <Card className="border-0 bg-white/70 shadow-md backdrop-blur-sm">
-                      <CardHeader>
-                        <button
-                          onClick={() => setShowLog((v) => !v)}
-                          className="flex w-full items-center justify-between text-left"
-                        >
-                          <CardTitle className="text-lg tracking-tight">
-                            会話ログ
-                          </CardTitle>
-                          {showLog ? (
-                            <ChevronUp className="text-muted-foreground size-4" />
-                          ) : (
-                            <ChevronDown className="text-muted-foreground size-4" />
-                          )}
-                        </button>
-                      </CardHeader>
-                      {showLog && (
-                        <CardContent className="space-y-3">
-                          {result.messages.map(
-                            (msg: InterviewMessage, i: number) => (
-                              <div
-                                key={i}
-                                className={[
-                                  "flex",
-                                  msg.role === "student"
-                                    ? "justify-end"
-                                    : "justify-start",
-                                ].join(" ")}
-                              >
-                                <div
-                                  className={[
-                                    "max-w-[80%] rounded-2xl px-4 py-3 text-sm transition-all hover:shadow-sm",
-                                    msg.role === "ai"
-                                      ? "text-foreground rounded-tl-sm bg-slate-100"
-                                      : "bg-primary text-primary-foreground rounded-tr-sm",
-                                  ].join(" ")}
-                                >
-                                  {msg.content}
-                                </div>
-                              </div>
-                            )
-                          )}
-                        </CardContent>
-                      )}
-                    </Card>
-                  )}
+                  {/* やりとり（モバイル・デスクトップで同じものを描く） */}
+                  <InterviewConversationLog messages={result.messages} />
                 </div>
               )}
 
@@ -975,6 +937,11 @@ export default function InterviewResultPage() {
                   </CardContent>
                 </Card>
               )}
+
+              {/* やりとり（モバイル側と同じものを描く） */}
+              <div className="mt-6">
+                <InterviewConversationLog messages={result.messages} />
+              </div>
             </section>
 
             <Separator className="my-8 opacity-30" />

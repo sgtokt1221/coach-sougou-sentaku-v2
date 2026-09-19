@@ -13,13 +13,26 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Mic, ChevronRight, ChevronDown, MessageSquare, ThumbsUp, Lightbulb } from "lucide-react";
+import {
+  Mic,
+  ChevronRight,
+  ChevronDown,
+  MessageSquare,
+  ThumbsUp,
+  Lightbulb,
+} from "lucide-react";
 import { useAuthSWR } from "@/lib/api/swr";
+import { interviewTotalMax } from "@/lib/types/interview";
 import { authFetch } from "@/lib/api/client";
 import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
 import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
 import { scoreToSkillRank } from "@/lib/history-rank";
-import type { InterviewMode, InterviewMessage, InterviewScores, InterviewFeedback } from "@/lib/types/interview";
+import type {
+  InterviewMode,
+  InterviewMessage,
+  InterviewScores,
+  InterviewFeedback,
+} from "@/lib/types/interview";
 import { INTERVIEW_MODE_LABELS } from "@/lib/types/interview";
 
 interface InterviewListItem {
@@ -80,9 +93,14 @@ function formatDuration(seconds: number): string {
   return `${m}分${s > 0 ? `${s}秒` : ""}`;
 }
 
-function interviewScoreColor(total: number): string {
-  if (total >= 32) return "text-emerald-600 dark:text-emerald-400";
-  if (total >= 24) return "text-amber-600 dark:text-amber-400";
+/**
+ * 満点はモードで変わる（口頭試問は専門知識を合計に入れるので50）。
+ * 32/24 の絶対値で色を決めると、口頭試問だけ厳しく出る。割合で見る。
+ */
+function interviewScoreColor(total: number, max = 40): string {
+  const pct = max > 0 ? (total / max) * 100 : 0;
+  if (pct >= 80) return "text-emerald-600 dark:text-emerald-400";
+  if (pct >= 60) return "text-amber-600 dark:text-amber-400";
   return "text-rose-600 dark:text-rose-400";
 }
 
@@ -93,7 +111,11 @@ export function InterviewsSection({
   studentId: string;
   autoOpenInterviewId?: string;
 }) {
-  const { data: interviews, isLoading, error } = useAuthSWR<InterviewListItem[]>(
+  const {
+    data: interviews,
+    isLoading,
+    error,
+  } = useAuthSWR<InterviewListItem[]>(
     `/api/admin/students/${studentId}/interviews`
   );
 
@@ -121,7 +143,12 @@ export function InterviewsSection({
   const totalCount = completedInterviews.length;
   const avgScore =
     totalCount > 0
-      ? Math.round(completedInterviews.reduce((sum, i) => sum + (i.scores?.total ?? 0), 0) / totalCount)
+      ? Math.round(
+          completedInterviews.reduce(
+            (sum, i) => sum + (i.scores?.total ?? 0),
+            0
+          ) / totalCount
+        )
       : 0;
 
   async function openDetail(interviewId: string) {
@@ -154,95 +181,126 @@ export function InterviewsSection({
             <CardTitle className="flex items-center gap-2 text-base">
               <Mic className="size-4" />
               面接履歴
-              {!isLoading && <Badge variant="secondary" className="text-xs ml-1">{items.length}</Badge>}
+              {!isLoading && (
+                <Badge variant="secondary" className="ml-1 text-xs">
+                  {items.length}
+                </Badge>
+              )}
             </CardTitle>
-            <ChevronDown className={`size-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
+            <ChevronDown
+              className={`text-muted-foreground size-4 transition-transform ${open ? "rotate-180" : ""}`}
+            />
           </div>
         </CardHeader>
         {open && (
-        <CardContent>
-          {isLoading ? (
-            <div className="space-y-3">
-              <Skeleton className="h-16 w-full" />
-              <Skeleton className="h-12 w-full" />
-            </div>
-          ) : error ? (
-            <ApiErrorBanner error={error} title="面接履歴の取得に失敗しました" />
-          ) : items.length === 0 ? (
-            <div className="py-8 text-center text-sm text-muted-foreground">
-              面接履歴データなし
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {/* Stats */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="rounded-lg border p-3 text-center">
-                  <p className="text-2xl font-bold">{totalCount}</p>
-                  <p className="text-xs text-muted-foreground">面接回数</p>
-                </div>
-                <div className="rounded-lg border p-3 text-center">
-                  <p className={`text-2xl font-bold ${interviewScoreColor(avgScore)}`}>
-                    {avgScore}
-                  </p>
-                  <p className="text-xs text-muted-foreground">平均スコア /40</p>
-                </div>
+          <CardContent>
+            {isLoading ? (
+              <div className="space-y-3">
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-12 w-full" />
               </div>
-
-              {/* Interview List */}
-              <div className="space-y-2">
-                <p className="text-sm font-medium">面接一覧</p>
-                {items.map((interview) => (
-                  <div
-                    key={interview.id}
-                    className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-accent cursor-pointer"
-                    onClick={() => openDetail(interview.id)}
-                  >
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium">
-                          {interview.targetUniversity} {interview.targetFaculty}
-                        </span>
-                        {modeBadge(interview.mode)}
-                      </div>
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                        <span>{new Date(interview.createdAt).toLocaleDateString("ja-JP")}</span>
-                        <span>{formatDuration(interview.duration)}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {interview.scores ? (
-                        <>
-                          <SkillRankBadge
-                            rank={scoreToSkillRank(interview.scores.total, 40)}
-                            size="sm"
-                            animate={false}
-                          />
-                          <span className={`text-lg font-bold ${interviewScoreColor(interview.scores.total)}`}>
-                            {interview.scores.total}
-                          </span>
-                        </>
-                      ) : (
-                        <Badge variant="secondary" className="text-xs">進行中</Badge>
-                      )}
-                      <ChevronRight className="size-4 text-muted-foreground" />
-                    </div>
+            ) : error ? (
+              <ApiErrorBanner
+                error={error}
+                title="面接履歴の取得に失敗しました"
+              />
+            ) : items.length === 0 ? (
+              <div className="text-muted-foreground py-8 text-center text-sm">
+                面接履歴データなし
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* Stats */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="rounded-lg border p-3 text-center">
+                    <p className="text-2xl font-bold">{totalCount}</p>
+                    <p className="text-muted-foreground text-xs">面接回数</p>
                   </div>
-                ))}
+                  <div className="rounded-lg border p-3 text-center">
+                    <p
+                      className={`text-2xl font-bold ${interviewScoreColor(avgScore)}`}
+                    >
+                      {avgScore}
+                    </p>
+                    <p className="text-muted-foreground text-xs">
+                      平均スコア /40
+                    </p>
+                  </div>
+                </div>
+
+                {/* Interview List */}
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">面接一覧</p>
+                  {items.map((interview) => (
+                    <div
+                      key={interview.id}
+                      className="hover:bg-accent flex cursor-pointer items-center justify-between rounded-lg border p-3 transition-colors"
+                      onClick={() => openDetail(interview.id)}
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium">
+                            {interview.targetUniversity}{" "}
+                            {interview.targetFaculty}
+                          </span>
+                          {modeBadge(interview.mode)}
+                        </div>
+                        <div className="text-muted-foreground flex items-center gap-3 text-xs">
+                          <span>
+                            {new Date(interview.createdAt).toLocaleDateString(
+                              "ja-JP"
+                            )}
+                          </span>
+                          <span>{formatDuration(interview.duration)}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {interview.scores ? (
+                          <>
+                            <SkillRankBadge
+                              rank={scoreToSkillRank(
+                                interview.scores.total,
+                                interviewTotalMax(interview.scores)
+                              )}
+                              size="sm"
+                              animate={false}
+                            />
+                            <span
+                              className={`text-lg font-bold ${interviewScoreColor(interview.scores.total, interviewTotalMax(interview.scores))}`}
+                            >
+                              {interview.scores.total}
+                            </span>
+                          </>
+                        ) : (
+                          <Badge variant="secondary" className="text-xs">
+                            進行中
+                          </Badge>
+                        )}
+                        <ChevronRight className="text-muted-foreground size-4" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
-        </CardContent>
+            )}
+          </CardContent>
         )}
       </Card>
 
       {/* Interview Detail Dialog */}
-      <Dialog open={selectedId !== null} onOpenChange={(open) => { if (!open) setSelectedId(null); }}>
-        <DialogContent className="sm:max-w-2xl !top-[8vh] !-translate-y-0 max-h-[84vh] overflow-y-auto">
+      <Dialog
+        open={selectedId !== null}
+        onOpenChange={(open) => {
+          if (!open) setSelectedId(null);
+        }}
+      >
+        <DialogContent className="!top-[8vh] max-h-[84vh] !-translate-y-0 overflow-y-auto sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>面接詳細</DialogTitle>
             {detailData && (
               <DialogDescription>
-                {detailData.targetUniversity} {detailData.targetFaculty} - {INTERVIEW_MODE_LABELS[detailData.mode]}
+                {detailData.targetUniversity} {detailData.targetFaculty} -{" "}
+                {INTERVIEW_MODE_LABELS[detailData.mode]}
               </DialogDescription>
             )}
           </DialogHeader>
@@ -259,17 +317,34 @@ export function InterviewsSection({
                 <div className="space-y-3">
                   <p className="text-sm font-medium">スコア</p>
                   <div className="space-y-2">
-                    {(["clarity", "apAlignment", "enthusiasm", "specificity"] as const).map((key) => (
+                    {(
+                      [
+                        "clarity",
+                        "apAlignment",
+                        "enthusiasm",
+                        "specificity",
+                      ] as const
+                    ).map((key) => (
                       <div key={key} className="flex items-center gap-3">
-                        <span className="w-20 text-xs text-muted-foreground">{SCORE_LABELS[key]}</span>
-                        <Progress value={(detailData.scores![key] / 10) * 100} className="flex-1 h-2" />
-                        <span className="w-8 text-right text-sm font-medium">{detailData.scores![key]}</span>
+                        <span className="text-muted-foreground w-20 text-xs">
+                          {SCORE_LABELS[key]}
+                        </span>
+                        <Progress
+                          value={(detailData.scores![key] / 10) * 100}
+                          className="h-2 flex-1"
+                        />
+                        <span className="w-8 text-right text-sm font-medium">
+                          {detailData.scores![key]}
+                        </span>
                       </div>
                     ))}
-                    <div className="flex items-center justify-between pt-1 border-t">
+                    <div className="flex items-center justify-between border-t pt-1">
                       <span className="text-sm font-medium">合計</span>
-                      <span className={`text-lg font-bold ${interviewScoreColor(detailData.scores.total)}`}>
-                        {detailData.scores.total}/40
+                      <span
+                        className={`text-lg font-bold ${interviewScoreColor(detailData.scores.total, interviewTotalMax(detailData.scores))}`}
+                      >
+                        {detailData.scores.total}/
+                        {interviewTotalMax(detailData.scores)}
                       </span>
                     </div>
                   </div>
@@ -280,17 +355,22 @@ export function InterviewsSection({
               {detailData.feedback && (
                 <div className="space-y-3">
                   <p className="text-sm font-medium">フィードバック</p>
-                  <p className="text-sm text-muted-foreground">{detailData.feedback.overall}</p>
+                  <p className="text-muted-foreground text-sm">
+                    {detailData.feedback.overall}
+                  </p>
 
                   {detailData.feedback.goodPoints.length > 0 && (
                     <div>
-                      <p className="flex items-center gap-1 text-xs font-medium text-emerald-600 mb-1">
+                      <p className="mb-1 flex items-center gap-1 text-xs font-medium text-emerald-600">
                         <ThumbsUp className="size-3" />
                         良い点
                       </p>
                       <ul className="space-y-1">
                         {detailData.feedback.goodPoints.map((point, i) => (
-                          <li key={i} className="text-xs text-muted-foreground pl-4 relative before:content-[''] before:absolute before:left-1 before:top-1.5 before:size-1.5 before:rounded-full before:bg-emerald-400">
+                          <li
+                            key={i}
+                            className="text-muted-foreground relative pl-4 text-xs before:absolute before:top-1.5 before:left-1 before:size-1.5 before:rounded-full before:bg-emerald-400 before:content-['']"
+                          >
                             {point}
                           </li>
                         ))}
@@ -300,13 +380,16 @@ export function InterviewsSection({
 
                   {detailData.feedback.improvements.length > 0 && (
                     <div>
-                      <p className="flex items-center gap-1 text-xs font-medium text-amber-600 mb-1">
+                      <p className="mb-1 flex items-center gap-1 text-xs font-medium text-amber-600">
                         <Lightbulb className="size-3" />
                         改善点
                       </p>
                       <ul className="space-y-1">
                         {detailData.feedback.improvements.map((point, i) => (
-                          <li key={i} className="text-xs text-muted-foreground pl-4 relative before:content-[''] before:absolute before:left-1 before:top-1.5 before:size-1.5 before:rounded-full before:bg-amber-400">
+                          <li
+                            key={i}
+                            className="text-muted-foreground relative pl-4 text-xs before:absolute before:top-1.5 before:left-1 before:size-1.5 before:rounded-full before:bg-amber-400 before:content-['']"
+                          >
                             {point}
                           </li>
                         ))}
@@ -320,45 +403,84 @@ export function InterviewsSection({
               {detailData.conversationSummary && (
                 <div className="space-y-3">
                   <p className="text-sm font-medium">弱点分析サマリー</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {detailData.conversationSummary.keyWeaknesses.length > 0 && (
-                      <div className="rounded-lg border border-rose-200 bg-rose-50 dark:bg-rose-950/20 p-3">
-                        <p className="text-xs font-medium text-rose-700 dark:text-rose-400 mb-2">主要弱点</p>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    {detailData.conversationSummary.keyWeaknesses.length >
+                      0 && (
+                      <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 dark:bg-rose-950/20">
+                        <p className="mb-2 text-xs font-medium text-rose-700 dark:text-rose-400">
+                          主要弱点
+                        </p>
                         <ul className="space-y-1">
-                          {detailData.conversationSummary.keyWeaknesses.map((w, i) => (
-                            <li key={i} className="text-xs text-rose-600 dark:text-rose-300">{w}</li>
-                          ))}
+                          {detailData.conversationSummary.keyWeaknesses.map(
+                            (w, i) => (
+                              <li
+                                key={i}
+                                className="text-xs text-rose-600 dark:text-rose-300"
+                              >
+                                {w}
+                              </li>
+                            )
+                          )}
                         </ul>
                       </div>
                     )}
                     {detailData.conversationSummary.strongPoints.length > 0 && (
-                      <div className="rounded-lg border border-emerald-200 bg-emerald-50 dark:bg-emerald-950/20 p-3">
-                        <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400 mb-2">強み</p>
+                      <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 dark:bg-emerald-950/20">
+                        <p className="mb-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                          強み
+                        </p>
                         <ul className="space-y-1">
-                          {detailData.conversationSummary.strongPoints.map((s, i) => (
-                            <li key={i} className="text-xs text-emerald-600 dark:text-emerald-300">{s}</li>
-                          ))}
+                          {detailData.conversationSummary.strongPoints.map(
+                            (s, i) => (
+                              <li
+                                key={i}
+                                className="text-xs text-emerald-600 dark:text-emerald-300"
+                              >
+                                {s}
+                              </li>
+                            )
+                          )}
                         </ul>
                       </div>
                     )}
                   </div>
-                  {detailData.conversationSummary.criticalMoments.length > 0 && (
-                    <div className="rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/20 p-3">
-                      <p className="text-xs font-medium text-amber-700 dark:text-amber-400 mb-2">改善すべき回答</p>
+                  {detailData.conversationSummary.criticalMoments.length >
+                    0 && (
+                    <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 dark:bg-amber-950/20">
+                      <p className="mb-2 text-xs font-medium text-amber-700 dark:text-amber-400">
+                        改善すべき回答
+                      </p>
                       <ul className="space-y-1.5">
-                        {detailData.conversationSummary.criticalMoments.map((c, i) => (
-                          <li key={i} className="text-xs text-amber-700 dark:text-amber-300">{c}</li>
-                        ))}
+                        {detailData.conversationSummary.criticalMoments.map(
+                          (c, i) => (
+                            <li
+                              key={i}
+                              className="text-xs text-amber-700 dark:text-amber-300"
+                            >
+                              {c}
+                            </li>
+                          )
+                        )}
                       </ul>
                     </div>
                   )}
                   {detailData.conversationSummary.nextFocusAreas.length > 0 && (
                     <div className="rounded-lg border p-3">
-                      <p className="text-xs font-medium mb-2">次回の重点改善ポイント</p>
+                      <p className="mb-2 text-xs font-medium">
+                        次回の重点改善ポイント
+                      </p>
                       <div className="flex flex-wrap gap-1.5">
-                        {detailData.conversationSummary.nextFocusAreas.map((a, i) => (
-                          <Badge key={i} variant="secondary" className="text-[10px]">{a}</Badge>
-                        ))}
+                        {detailData.conversationSummary.nextFocusAreas.map(
+                          (a, i) => (
+                            <Badge
+                              key={i}
+                              variant="secondary"
+                              className="text-[10px]"
+                            >
+                              {a}
+                            </Badge>
+                          )
+                        )}
                       </div>
                     </div>
                   )}
@@ -372,7 +494,7 @@ export function InterviewsSection({
                     <MessageSquare className="size-4" />
                     会話ログ
                   </p>
-                  <div className="space-y-3 max-h-80 overflow-y-auto rounded-lg border p-3 bg-muted/20">
+                  <div className="bg-muted/20 max-h-80 space-y-3 overflow-y-auto rounded-lg border p-3">
                     {detailData.messages.map((msg, i) => (
                       <div
                         key={i}
@@ -385,7 +507,7 @@ export function InterviewsSection({
                               : "bg-background border"
                           }`}
                         >
-                          <p className="text-[10px] font-medium mb-0.5 opacity-70">
+                          <p className="mb-0.5 text-[10px] font-medium opacity-70">
                             {msg.role === "ai" ? "面接官 (AI)" : "生徒"}
                           </p>
                           {msg.content}
@@ -397,7 +519,7 @@ export function InterviewsSection({
               )}
             </div>
           ) : (
-            <div className="py-8 text-center text-sm text-muted-foreground">
+            <div className="text-muted-foreground py-8 text-center text-sm">
               データの取得に失敗しました
             </div>
           )}

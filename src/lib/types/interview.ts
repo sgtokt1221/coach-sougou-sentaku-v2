@@ -9,10 +9,31 @@ import type { RepeatedIssue, Improvement } from "./essay";
  * 伝達（bodyLanguage）は満点も評価可否も内容と違うので、合計に混ぜず
  * 別枠で持つ。動画が無い回は 0 ではなく null（評価不能）。
  */
-/** 内容評価の満点。total はこの範囲に収まる */
+/** 内容評価（共通4軸）の満点 */
 export const INTERVIEW_CONTENT_MAX = 40;
 /** 伝達（動画）評価の満点 */
 export const INTERVIEW_DELIVERY_MAX = 10;
+
+/**
+ * 口頭試問の満点。共通4軸に加えて専門知識の正確性(knowledgeAccuracy)を合計に入れる。
+ *
+ * 口頭試問は知識を問う試験なので、知識の正確さが合計外だと
+ * 「答えられていないのに点が高い」結果になる（2026-09-19 ユーザー指摘）。
+ */
+export const INTERVIEW_ORAL_EXAM_MAX = 50;
+
+/**
+ * その面接の合計の満点を返す。
+ *
+ * モードで満点が変わるので、画面ごとに 40 を直書きしない。
+ * 旧データ（口頭試問で知識を合計に入れていなかった回）は totalMax を持たないため、
+ * 記録された値を優先し、無ければ共通4軸の40として扱う。
+ */
+export function interviewTotalMax(
+  scores: Pick<InterviewScores, "totalMax"> | null | undefined
+): number {
+  return scores?.totalMax ?? INTERVIEW_CONTENT_MAX;
+}
 
 export interface InterviewScores {
   clarity: number; // 明確さ 0-10
@@ -21,8 +42,16 @@ export interface InterviewScores {
   specificity: number; // 具体性 0-10
   /** 伝達（動画）0-10。動画が無い回は null = 評価不能 */
   bodyLanguage: number | null;
-  /** 内容4軸の合計 (0-40)。満点は INTERVIEW_CONTENT_MAX */
+  /**
+   * 合計。共通4軸（0-40）、口頭試問は専門知識の正確性を足して 0-50。
+   * 満点は totalMax を見ること（モードで変わる）。
+   */
   total: number;
+  /**
+   * この回の合計の満点。口頭試問は50、それ以外は40。
+   * 旧データには無いので、読む側は interviewTotalMax() を通す。
+   */
+  totalMax?: number;
   // プレゼンテーション追加項目
   presentationStructure?: number; // 発表の論理構成 0-10
   dataEvidence?: number; // データの根拠 0-10

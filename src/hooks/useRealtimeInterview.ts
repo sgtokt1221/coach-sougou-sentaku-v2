@@ -40,6 +40,16 @@ const UNSUPPORTED_FALLBACK_MS = 1500;
 /** response.done 時にまだ音声が鳴っていない(極短/無音応答)場合に、音声開始を待つ猶予。
  *  この間に音声が始まれば idle 検出で復帰、始まらなければこの後に復帰する。 */
 const NO_AUDIO_GRACE_MS = 2000;
+/**
+ * AI のターンが始まったまま何のイベントも来なくなったときに、
+ * 強制的にユーザーターンへ戻すまでの時間。
+ *
+ * response.done も出力音声も来ない切れ方をすると、既存の保険タイマーは
+ * どれも仕掛けられない（すべて onResponseEnd の中で作っているため）。
+ * その場合マイクが止まったままになり、面接が無言で止まる。
+ * 試験官の1発話は長くても30秒程度なので、これを超えたら異常とみなす。
+ */
+const AI_TURN_WATCHDOG_MS = 60000;
 
 /**
  * transcript が transcription prompt の漏れ (echo + prompt hallucination) と思われる場合 true。
@@ -197,6 +207,8 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
   const isAiStreamingRef = useRef(false);
   /** マイク再開予定の setTimeout ID (AI 応答終了後に再開) */
   const micResumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** AI ターンが無言で固まったときの最後の保険 */
+  const aiTurnWatchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   /** response.done 済みでユーザーターン復帰待ちか (出力音声の鳴り止みを待っている) */
   const pendingResumeRef = useRef(false);
   /** 直近の出力音声アクティブ状態 (true=AI 音声が鳴っている) */
@@ -235,6 +247,10 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
     if (micResumeTimerRef.current) {
       clearTimeout(micResumeTimerRef.current);
       micResumeTimerRef.current = null;
+    }
+    if (aiTurnWatchdogRef.current) {
+      clearTimeout(aiTurnWatchdogRef.current);
+      aiTurnWatchdogRef.current = null;
     }
     setMicEnabled(true);
     try {
@@ -321,6 +337,10 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
     if (micResumeTimerRef.current) {
       clearTimeout(micResumeTimerRef.current);
       micResumeTimerRef.current = null;
+    }
+    if (aiTurnWatchdogRef.current) {
+      clearTimeout(aiTurnWatchdogRef.current);
+      aiTurnWatchdogRef.current = null;
     }
     isAiRespondingRef.current = false;
     isAiStreamingRef.current = false;
@@ -615,6 +635,16 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
             } catch {
               /* noop */
             }
+            // 何も返ってこなくなった場合の最後の保険（無言で固まらせない）
+            if (aiTurnWatchdogRef.current)
+              clearTimeout(aiTurnWatchdogRef.current);
+            aiTurnWatchdogRef.current = setTimeout(() => {
+              console.warn(
+                "[useRealtimeInterview] AIターンが応答なしのまま止まったため、ユーザーターンへ戻す"
+              );
+              pendingResumeRef.current = true;
+              resumeUserTurn();
+            }, AI_TURN_WATCHDOG_MS);
           },
           onOutputAudioActivity: (active) => {
             // getStats(inbound-rtp) 由来の実音声レベルでターンを駆動する。
@@ -710,9 +740,34 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
               );
             }
           },
+          onReconnected: () => {
+            /**
+             * 切断から復帰した。切れた時点の AI ターンは response.done が
+             * 来ないまま消えているので、待っていても復帰イベントは来ない。
+             * ここでユーザーターンへ戻さないと、接続は生きているのに
+             * マイクが止まったままになり、面接が止まって見える。
+             */
+            console.warn(
+              "[useRealtimeInterview] reconnected; ユーザーターンへ戻す"
+            );
+            isAiRespondingRef.current = false;
+            isAiStreamingRef.current = false;
+            pendingResumeRef.current = true;
+            resumeUserTurn();
+          },
           onError: (err) => {
+            /**
+             * ここへ来るのは再接続を試し尽くした後だけ（クライアント側で
+             * goAway・予期しない切断とも自動再接続する）。
+             *
+             * 以前は error 文字列を入れるだけで status が "connected" のまま
+             * だったため、セッションが死んでも画面は面接中のまま、試験官が
+             * 二度と話さない状態になっていた。fallback_error に落として
+             * 「接続に失敗しました」を出し、テキストで続けられるようにする。
+             */
             console.warn("[useRealtimeInterview] session error", err);
             setError(err.message);
+            setStatus("fallback_error");
           },
         });
         await session.connect();

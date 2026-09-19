@@ -15,7 +15,11 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { CHART_COLORS, CHART_ANIMATION, GRID_STYLE } from "@/components/charts/theme";
+import {
+  CHART_COLORS,
+  CHART_ANIMATION,
+  GRID_STYLE,
+} from "@/components/charts/theme";
 import { CustomTooltip } from "@/components/charts/CustomTooltip";
 import { CustomDot, CustomActiveDot } from "@/components/charts/CustomDot";
 import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
@@ -32,6 +36,8 @@ interface InterviewHistoryItem {
   mode: InterviewMode;
   practicedAt: string;
   totalScore: number;
+  /** 合計の満点。口頭試問は50、それ以外は40。旧データは無し */
+  totalMax?: number;
 }
 
 const MODE_VARIANT: Record<
@@ -48,15 +54,15 @@ export function InterviewHistory() {
   const router = useRouter();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: rawData, isLoading: loading } = useAuthSWR<{ interviews: any[] }>("/api/interview/history?userId=current");
+  const { data: rawData, isLoading: loading } = useAuthSWR<{
+    interviews: any[];
+  }>("/api/interview/history?userId=current");
   const history: InterviewHistoryItem[] = (rawData?.interviews ?? []).map(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (item: any) => ({
       id: item.id,
       universityName:
-        item.universityName ??
-        item.universityContext?.universityName ??
-        "",
+        item.universityName ?? item.universityContext?.universityName ?? "",
       facultyName:
         item.facultyName ?? item.universityContext?.facultyName ?? "",
       mode: item.mode ?? "individual",
@@ -119,8 +125,18 @@ export function InterviewHistory() {
                   stroke={GRID_STYLE.stroke}
                   opacity={GRID_STYLE.opacity}
                 />
-                <XAxis dataKey="date" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-                <YAxis domain={[0, 40]} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                <XAxis
+                  dataKey="date"
+                  tick={{ fontSize: 11 }}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <YAxis
+                  domain={[0, 50]}
+                  tick={{ fontSize: 11 }}
+                  tickLine={false}
+                  axisLine={false}
+                />
                 <Tooltip content={<CustomTooltip />} />
                 <Line
                   type="monotone"
@@ -144,29 +160,37 @@ export function InterviewHistory() {
         {history.map((item) => (
           <Card
             key={item.id}
-            className="cursor-pointer hover:shadow-md transition-shadow"
+            className="cursor-pointer transition-shadow hover:shadow-md"
             onClick={() => router.push(`/student/interview/${item.id}/result`)}
           >
-            <CardContent className="p-3 lg:p-4 flex items-center justify-between gap-3">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-medium text-sm">{item.universityName}</span>
-                  <span className="text-muted-foreground text-sm">{item.facultyName}</span>
+            <CardContent className="flex items-center justify-between gap-3 p-3 lg:p-4">
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-medium">
+                    {item.universityName}
+                  </span>
+                  <span className="text-muted-foreground text-sm">
+                    {item.facultyName}
+                  </span>
                   <Badge variant={MODE_VARIANT[item.mode]} className="text-xs">
                     {INTERVIEW_MODE_LABELS[item.mode]}
                   </Badge>
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">{item.practicedAt}</p>
+                <p className="text-muted-foreground mt-1 text-xs">
+                  {item.practicedAt}
+                </p>
               </div>
-              <div className="shrink-0 flex items-center gap-2">
+              <div className="flex shrink-0 items-center gap-2">
                 <SkillRankBadge
-                  rank={scoreToSkillRank(item.totalScore, 40)}
+                  rank={scoreToSkillRank(item.totalScore, item.totalMax ?? 40)}
                   size="sm"
                   animate={false}
                 />
                 <span className="text-lg font-bold">
                   {item.totalScore}
-                  <span className="text-sm text-muted-foreground">/40</span>
+                  <span className="text-muted-foreground text-sm">
+                    /{item.totalMax ?? 40}
+                  </span>
                 </span>
               </div>
             </CardContent>
