@@ -10,6 +10,7 @@ import {
 import { AI_MODEL_REVIEW, AI_PROMPT_VERSIONS } from "@/lib/ai/prompt-versions";
 import { sourceEngagementCaps } from "@/lib/essay/source-engagement";
 import { judgeSourceEngagement } from "@/lib/essay/source-engagement-judge";
+import { judgeKnowledgeAccuracy } from "@/lib/essay/knowledge-judge";
 import type {
   EssayScoreAxis,
   EssayScores,
@@ -81,6 +82,8 @@ export async function reviewEssayCore(
 
   const client = new Anthropic();
   const isReport = input.questionType === "report";
+  /** 口頭試問型（小問集合）。小問の数だけ指摘が増えるので report と同じ余裕を取る */
+  const isOralExam = input.questionType === "oral_exam";
   const admissionPolicy = input.admissionPolicy?.trim() ?? "";
   const hasAdmissionPolicy = admissionPolicy.length > 0;
   // 充足率はプロンプトにも渡す。モデルに字数を数えさせると server 側の集計と
@@ -132,13 +135,25 @@ ${input.ocrText}
         })
       : Promise.resolve(null);
 
-  const [response, engagement] = await Promise.all([
+  /**
+   * 口頭試問型のときだけ、専門知識の正確性を別呼び出しで判定する。
+   * 添削のスキーマには項目を足せない（文法サイズ上限で全添削が落ちる）。
+   */
+  const knowledgePromise = isOralExam
+    ? judgeKnowledgeAccuracy({
+        client,
+        essayText: input.ocrText,
+        question: input.topic ?? "",
+      })
+    : Promise.resolve(null);
+
+  const [response, engagement, knowledge] = await Promise.all([
     client.messages.parse({
       model: AI_MODEL_REVIEW,
       // messages.parse は max_tokens を thinking と本文で共有する。旧値の 4096 では
       // 長い構造化出力(languageCorrections 最大5件 + 各種フィードバック)に食われ、
       // 採点を吟味する余地が残らずルーブリックの既定値へ丸まっていた。
-      max_tokens: isReport ? 16000 : 12000,
+      max_tokens: isReport || isOralExam ? 16000 : 12000,
       system: systemPrompt,
       messages: [{ role: "user", content: userMessage }],
       output_config: {
@@ -148,6 +163,7 @@ ${input.ocrText}
       },
     }),
     engagementPromise,
+    knowledgePromise,
   ]);
 
   const rawText =
@@ -238,7 +254,13 @@ ${input.ocrText}
   // 表現は「何を書いたか」に依らず読める。ずれていても6点までは認める
   const expressionCap = offTopic ? 6 : 10;
 
-  const scoreMaximum = ESSAY_SCORE_MAX;
+  /**
+   * 合計の満点。通常は50点。
+   * 口頭試問型で知識判定が取れたときだけ、専門知識の正確性(0-10)を合計に入れて60点にする。
+   * 知識を問う出題なので合計外だと「答えられていないのに点が高い」結果になる。
+   * 判定が取れなければ50点満点のまま（判定不能を理由に点を下げない）。
+   */
+  const scoreMaximum = knowledge ? ESSAY_SCORE_MAX + 10 : ESSAY_SCORE_MAX;
   /**
    * 軸ごとの点は 0-10 のまま保存し、合計を出すときだけ配点で重み付けする。
    * 軸を 0-12 のように伸ばすとルーブリックも過去データも作り直しになるため、
@@ -251,10 +273,11 @@ ${input.ocrText}
     responsiveness: capBy(parsed.scores.responsiveness, responsivenessCap),
     reasoningMaturity: capBy(parsed.scores.reasoningMaturity, maturityCap),
   };
-  const total = calculateEssayTotal(capped);
+  const total = calculateEssayTotal(capped) + (knowledge?.score ?? 0);
   const scores: EssayScores = {
     ...capped,
     apAlignment: hasAdmissionPolicy ? parsed.scores.apAlignment : null,
+    ...(knowledge ? { knowledgeAccuracy: knowledge.score } : {}),
     total,
   };
 
@@ -355,6 +378,14 @@ ${input.ocrText}
     ),
     apAlignmentAssessable: hasAdmissionPolicy,
     scoreMaximum,
+    ...(knowledge
+      ? {
+          knowledgeInsights: {
+            basis: knowledge.basis,
+            errors: knowledge.errors,
+          },
+        }
+      : {}),
     aiMetadata: {
       ...AI_PROMPT_VERSIONS.essayReview,
       model: AI_MODEL_REVIEW,

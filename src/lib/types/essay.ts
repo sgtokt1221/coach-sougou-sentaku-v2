@@ -153,7 +153,15 @@ export interface EssayScores {
   reasoningMaturity?: number;
   /** AP合致度 0-10。合計外の補助指標。AP未取得なら null */
   apAlignment: number | null;
-  total: number; // 合計 0-50（AP は含まない）
+  /**
+   * 専門知識の正確性 0-10。**口頭試問型（questionType="oral_exam"）だけ**付き、
+   * その回だけ合計に入る（満点60）。知識を問う出題なので、合計外だと
+   * 「答えられていないのに点が高い」結果になる。
+   * 判定できなかった回は付かず、合計は50点満点のまま。
+   */
+  knowledgeAccuracy?: number;
+  /** 合計。通常は 0-50、口頭試問型で知識判定が取れた回は 0-60 */
+  total: number;
 }
 
 /** 小論文スコアの軸ラベル（グラフ・履歴・管理画面の正本） */
@@ -252,6 +260,8 @@ export interface TopicInsights {
  * - mixed: 英文＋データ
  * - lecture: 講義・動画を踏まえて答える
  * - report: 日本語の課題文を読んで答える（要約・参照の妥当性まで評価する）
+ * - oral_exam: 口頭試問型。1つのテーマについての小問集合に答える
+ *   （専門知識の正確性まで評価し、この形式だけ合計に入れる）
  */
 export type EssayQuestionType =
   | "essay"
@@ -259,7 +269,33 @@ export type EssayQuestionType =
   | "data-analysis"
   | "mixed"
   | "lecture"
-  | "report";
+  | "report"
+  | "oral_exam";
+
+/**
+ * 口頭試問型の小問集合。
+ *
+ * 静的データではなく、生徒が入力したテーマから毎回AIが作る。作った問題は
+ * 下書きと答案に保存する（保存しないと「続ける」「もう一度書く」で別の問題になる）。
+ */
+export interface OralExamSubQuestion {
+  /** 1始まりの問番号 */
+  no: number;
+  /** 設問文 */
+  prompt: string;
+  /** この小問の目安字数。合計は totalWordLimit と一致させる */
+  wordLimit: number;
+  /** 何を確かめる問いか（生徒には出さない。採点の観点） */
+  aim: string;
+}
+
+export interface OralExamQuestionSet {
+  /** 生徒が入力したテーマ */
+  theme: string;
+  /** 全体の指定字数。subQuestions の wordLimit の合計と一致する */
+  totalWordLimit: number;
+  subQuestions: OralExamSubQuestion[];
+}
 
 /**
  * 答案に保存する出題の文脈。管理者・講師が「生徒が何を読んで何に答えたか」を
@@ -271,6 +307,8 @@ export interface EssayQuestionContextData {
   sourceText?: string | null;
   chartDataSummary?: string | null;
   lectureInfo?: string | null;
+  /** 口頭試問型の小問集合（questionType="oral_exam" のときだけ） */
+  oralExam?: OralExamQuestionSet | null;
 }
 
 export interface LanguageCorrection {
@@ -349,6 +387,23 @@ export interface EssayFeedback {
   aiMetadata?: AiGenerationMetadata;
   /** レポート課題専用の講評（report のときのみ） */
   reportInsights?: ReportInsights;
+  /** 口頭試問型の知識判定（oral_exam で判定が取れたときのみ） */
+  knowledgeInsights?: KnowledgeInsights;
+}
+
+/**
+ * 専門知識の正確性の講評。口頭試問型（oral_exam）でだけ生成する。
+ * 採点は別呼び出し（src/lib/essay/knowledge-judge.ts）。
+ */
+export interface KnowledgeInsights {
+  /** そう判断した根拠。生徒にそのまま見せる */
+  basis: string;
+  /** 答案から引用した誤り */
+  errors: {
+    claim: string;
+    correction: string;
+    severity: "critical" | "minor";
+  }[];
 }
 
 export interface RepeatedIssue {
@@ -427,6 +482,14 @@ export interface EssayDraft {
    * テーマ・過去問から選んだ下書きはサーバー側で名前を解決して入れる。
    */
   topicLabel?: string;
+  /**
+   * 口頭試問型の小問集合と、小問ごとの書きかけの答え。
+   *
+   * 出題はテーマから毎回AIが作るので、ここに保存しないと「続ける」で
+   * 別の問題が出る（復元は毎回書かれる側を正本にする）。
+   */
+  oralExam?: OralExamQuestionSet;
+  oralExamAnswers?: string[];
   createdAt: string;
   updatedAt: string;
 }

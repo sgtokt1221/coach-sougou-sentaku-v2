@@ -24,7 +24,9 @@ function resolveTopicLabel(data: {
   themeId?: string;
   pastQuestionId?: string;
   reportMaterialId?: string;
+  oralExam?: { theme?: string };
 }): string | undefined {
+  if (data.oralExam?.theme) return `口頭試問 / ${data.oralExam.theme}`;
   if (data.reportMaterialId) {
     const m = reportMaterials.find((x) => x.id === data.reportMaterialId);
     if (m) return `レポート / ${m.title}`;
@@ -79,6 +81,8 @@ export async function GET(request: NextRequest) {
         pastQuestionId: data.pastQuestionId,
         homeworkId: data.homeworkId,
         reportMaterialId: data.reportMaterialId,
+        oralExam: data.oralExam,
+        oralExamAnswers: data.oralExamAnswers,
         topicLabel: resolveTopicLabel(data),
         createdAt:
           data.createdAt?.toDate?.()?.toISOString() ??
@@ -152,6 +156,17 @@ export async function POST(request: NextRequest) {
     if (typeof body.homeworkId === "string") data.homeworkId = body.homeworkId;
     if (typeof body.reportMaterialId === "string")
       data.reportMaterialId = body.reportMaterialId;
+    /**
+     * 口頭試問型の出題と書きかけの答え。
+     * 出題はテーマから毎回AIが作るので、ここに保存しないと「続ける」で
+     * 別の問題が出る（復元は毎回書かれる側を正本にする）。
+     */
+    if (body.oralExam && Array.isArray(body.oralExam.subQuestions))
+      data.oralExam = body.oralExam;
+    if (Array.isArray(body.oralExamAnswers))
+      data.oralExamAnswers = body.oralExamAnswers.map((a: unknown) =>
+        typeof a === "string" ? a : ""
+      );
     if (isNew) data.createdAt = FieldValue.serverTimestamp();
 
     await adminDb

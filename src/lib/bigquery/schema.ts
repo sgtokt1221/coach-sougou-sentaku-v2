@@ -32,6 +32,8 @@ export const ESSAY_SUBMISSIONS_SCHEMA: TableSchema = {
     /** v23 で回答力に置き換えた旧軸。過去の行のためだけに残す */
     { name: "score_originality", type: "INT64", mode: "NULLABLE" },
     { name: "score_responsiveness", type: "INT64", mode: "NULLABLE" },
+    /** 専門知識の正確性。口頭試問型の答案にだけ入る */
+    { name: "score_knowledge_accuracy", type: "INT64", mode: "NULLABLE" },
     { name: "score_total", type: "INT64", mode: "NULLABLE" },
 
     // metadata

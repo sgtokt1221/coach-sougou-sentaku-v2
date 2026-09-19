@@ -127,22 +127,22 @@ export function SessionStudentDossier({
           {activeTab === "overview" && (
             <div className="space-y-6">
               {/* プロフィール要約 */}
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 text-sm">
+              <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
                 {profile.school && (
                   <div className="flex items-center gap-2">
-                    <School className="size-4 text-muted-foreground" />
+                    <School className="text-muted-foreground size-4" />
                     <span>{profile.school}</span>
                   </div>
                 )}
                 {(profile.grade != null || profile.isRonin) && (
                   <div className="flex items-center gap-2">
-                    <GraduationCap className="size-4 text-muted-foreground" />
+                    <GraduationCap className="text-muted-foreground size-4" />
                     <span>
                       {
                         getDisplayGrade(
                           profile.grade,
                           profile.gradeUpdatedAt,
-                          profile.isRonin,
+                          profile.isRonin
                         ).label
                       }
                     </span>
@@ -150,7 +150,7 @@ export function SessionStudentDossier({
                 )}
                 {typeof profile.gpa === "number" && (
                   <div className="flex items-center gap-2">
-                    <Award className="size-4 text-muted-foreground" />
+                    <Award className="text-muted-foreground size-4" />
                     <span>GPA {profile.gpa}</span>
                   </div>
                 )}
@@ -165,7 +165,7 @@ export function SessionStudentDossier({
                   </div>
                 )}
                 <div className="flex items-start gap-2 sm:col-span-2">
-                  <TrendingUp className="mt-0.5 size-4 text-muted-foreground" />
+                  <TrendingUp className="text-muted-foreground mt-0.5 size-4" />
                   <div className="flex flex-wrap gap-1">
                     {(profile.resolvedUniversities ?? []).length > 0 ? (
                       profile.resolvedUniversities!.map((u, i) => (
@@ -180,7 +180,9 @@ export function SessionStudentDossier({
                         </Badge>
                       ))
                     ) : (
-                      <span className="text-muted-foreground">志望校未設定</span>
+                      <span className="text-muted-foreground">
+                        志望校未設定
+                      </span>
                     )}
                   </div>
                 </div>
@@ -195,7 +197,10 @@ export function SessionStudentDossier({
                 interviewSkillCheck={interviewSkillCheck}
                 onSelectEssay={() =>
                   skillCheck?.latestResult &&
-                  setScDialog({ kind: "essay", result: skillCheck.latestResult })
+                  setScDialog({
+                    kind: "essay",
+                    result: skillCheck.latestResult,
+                  })
                 }
                 onSelectInterview={() =>
                   interviewSkillCheck?.latestResult &&
@@ -210,9 +215,9 @@ export function SessionStudentDossier({
 
               {/* 弱点 */}
               <div>
-                <p className="text-sm font-medium mb-2">弱点</p>
+                <p className="mb-2 text-sm font-medium">弱点</p>
                 {weaknesses.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">
+                  <p className="text-muted-foreground py-4 text-center text-sm">
                     弱点データなし
                   </p>
                 ) : (
@@ -226,7 +231,7 @@ export function SessionStudentDossier({
           {activeTab === "performance" && (
             <div className="space-y-6">
               <div>
-                <p className="flex items-center gap-2 text-sm font-medium mb-2">
+                <p className="mb-2 flex items-center gap-2 text-sm font-medium">
                   <BarChart3 className="size-4" />
                   スコア推移
                 </p>
@@ -247,12 +252,12 @@ export function SessionStudentDossier({
 
               {/* 添削履歴 */}
               <div>
-                <p className="flex items-center gap-2 text-sm font-medium mb-3">
+                <p className="mb-3 flex items-center gap-2 text-sm font-medium">
                   <FileText className="size-4" />
                   添削履歴
                 </p>
                 {essays.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">
+                  <p className="text-muted-foreground py-4 text-center text-sm">
                     添削履歴なし
                   </p>
                 ) : (
@@ -263,23 +268,28 @@ export function SessionStudentDossier({
                         className="flex items-center justify-between rounded-lg border p-3"
                       >
                         <div>
-                          <p className="font-medium text-sm">
+                          <p className="text-sm font-medium">
                             {essay.targetUniversity} {essay.targetFaculty}
                           </p>
                           {essay.topic && (
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-muted-foreground text-xs">
                               {essay.topic}
                             </p>
                           )}
-                          <p className="text-xs text-muted-foreground">
-                            {new Date(essay.submittedAt).toLocaleDateString("ja-JP")}
+                          <p className="text-muted-foreground text-xs">
+                            {new Date(essay.submittedAt).toLocaleDateString(
+                              "ja-JP"
+                            )}
                           </p>
                         </div>
                         <div className="flex items-center gap-2">
                           {essay.scores ? (
                             <>
                               <SkillRankBadge
-                                rank={scoreToSkillRank(essay.scores.total, 50)}
+                                rank={scoreToSkillRank(
+                                  essay.scores.total,
+                                  essay.scoreMaximum ?? 50
+                                )}
                                 size="sm"
                                 animate={false}
                               />
@@ -287,12 +297,14 @@ export function SessionStudentDossier({
                                 variant="outline"
                                 className={`text-sm font-bold ${scoreColor(essay.scores.total)}`}
                               >
-                                {essay.scores.total}/50
+                                {essay.scores.total}/{essay.scoreMaximum ?? 50}
                               </Badge>
                             </>
                           ) : (
                             <Badge variant="secondary" className="text-xs">
-                              {essay.status === "uploaded" ? "OCR待ち" : essay.status}
+                              {essay.status === "uploaded"
+                                ? "OCR待ち"
+                                : essay.status}
                             </Badge>
                           )}
                         </div>

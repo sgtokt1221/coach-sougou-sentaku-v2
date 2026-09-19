@@ -59,6 +59,8 @@ interface EssayHistoryItem {
   submittedAt: string;
   status: "reviewed" | "reviewing" | "pending" | "error";
   totalScore: number;
+  /** 合計の満点。口頭試問型は専門知識を合計に入れるので60。旧データは無し */
+  scoreMaximum?: number;
   scores: {
     structure: number;
     logic: number;
@@ -408,14 +410,17 @@ export function EssayHistory() {
                   {latest.status === "reviewed" && (
                     <>
                       <SkillRankBadge
-                        rank={scoreToSkillRank(latest.totalScore, 50)}
+                        rank={scoreToSkillRank(
+                          latest.totalScore,
+                          latest.scoreMaximum ?? 50
+                        )}
                         size="sm"
                         animate={false}
                       />
                       <span className="text-lg font-bold">
                         {latest.totalScore}
                         <span className="text-muted-foreground text-sm">
-                          /50
+                          /{latest.scoreMaximum ?? 50}
                         </span>
                       </span>
                     </>
@@ -524,14 +529,17 @@ export function EssayHistory() {
                           {a.status === "reviewed" ? (
                             <>
                               <SkillRankBadge
-                                rank={scoreToSkillRank(a.totalScore, 50)}
+                                rank={scoreToSkillRank(
+                                  a.totalScore,
+                                  a.scoreMaximum ?? 50
+                                )}
                                 size="sm"
                                 animate={false}
                               />
                               <span className="text-sm font-bold tabular-nums">
                                 {a.totalScore}
                                 <span className="text-muted-foreground text-xs font-normal">
-                                  /50
+                                  /{a.scoreMaximum ?? 50}
                                 </span>
                               </span>
                             </>

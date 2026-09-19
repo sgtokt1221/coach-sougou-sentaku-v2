@@ -117,6 +117,9 @@ export async function GET(
         improvementsSinceLast: feedback.improvementsSinceLast ?? [],
         topicInsights: feedback.topicInsights ?? null,
         reportInsights: feedback.reportInsights ?? null,
+        // 口頭試問型の知識判定。ここに足さないと、保存はされているのに
+        // 画面から消える（許可リスト漏れは沈黙失敗になる）
+        knowledgeInsights: feedback.knowledgeInsights ?? null,
         brushedUpText: feedback.brushedUpText ?? null,
         languageCorrections: feedback.languageCorrections ?? null,
         priorityImprovement: feedback.priorityImprovement ?? null,

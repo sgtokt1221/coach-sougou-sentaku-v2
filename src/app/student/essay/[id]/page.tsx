@@ -71,7 +71,9 @@ interface EssayScores {
   reasoningMaturity?: number;
   /** AP合致度は合計外。未取得は null */
   apAlignment: number | null;
-  /** サーバーが計算した合計（0-50） */
+  /** 専門知識の正確性。口頭試問型のときだけ付き、その回は合計に入る */
+  knowledgeAccuracy?: number;
+  /** サーバーが計算した合計（通常0-50、口頭試問型は0-60） */
   total: number;
 }
 
@@ -120,6 +122,15 @@ interface EssayFeedback {
   nextChallenge?: string;
   quantitativeAnalysis?: QuantitativeAnalysis;
   reportInsights?: ReportInsights;
+  /** 口頭試問型の知識判定（判定が取れたときだけ） */
+  knowledgeInsights?: {
+    basis: string;
+    errors: {
+      claim: string;
+      correction: string;
+      severity: "critical" | "minor";
+    }[];
+  };
   apAlignmentAssessable?: boolean;
   scoreMaximum?: number;
 }
@@ -1036,6 +1047,58 @@ export default function EssayResultPage() {
                     この評価は50点の合計には含まれません。課題文に触れていない場合は、
                     構成・論理性・回答力・成熟度の上限が下がります。
                   </p>
+                </div>
+              )}
+
+              {/* 専門知識の正確性（口頭試問型のときだけ。合計に入る） */}
+              {typeof result.scores.knowledgeAccuracy === "number" && (
+                <div className="mt-6 rounded-lg bg-slate-800 p-4 text-white">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold">専門知識の正確性</p>
+                    <span className="text-lg font-bold tabular-nums">
+                      {result.scores.knowledgeAccuracy}
+                      <span className="text-sm font-normal text-slate-300">
+                        /10
+                      </span>
+                    </span>
+                  </div>
+                  {result.feedback.knowledgeInsights?.basis && (
+                    <p className="mt-1.5 text-xs leading-relaxed text-slate-200">
+                      {result.feedback.knowledgeInsights.basis}
+                    </p>
+                  )}
+                  <p className="mt-2 text-[10px] text-slate-400">
+                    口頭試問型は知識を問う出題なので、この点は合計（
+                    {scoreMaximum}点満点）に入ります。
+                  </p>
+                </div>
+              )}
+
+              {/* 知識の誤り（引用つき） */}
+              {(result.feedback.knowledgeInsights?.errors?.length ?? 0) > 0 && (
+                <div className="mt-4 space-y-2">
+                  <p className="text-sm font-semibold">知識の誤り</p>
+                  {result.feedback.knowledgeInsights!.errors.map((e, i) => (
+                    <div
+                      key={i}
+                      className={`rounded-lg p-3 text-sm ${
+                        e.severity === "critical"
+                          ? "bg-rose-600 text-white"
+                          : "bg-amber-100 text-amber-950"
+                      }`}
+                    >
+                      <p className="font-medium">「{e.claim}」</p>
+                      <p
+                        className={`mt-1 text-xs leading-relaxed ${
+                          e.severity === "critical"
+                            ? "text-rose-50"
+                            : "text-amber-900"
+                        }`}
+                      >
+                        {e.correction}
+                      </p>
+                    </div>
+                  ))}
                 </div>
               )}
 

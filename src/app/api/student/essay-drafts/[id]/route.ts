@@ -46,6 +46,9 @@ export async function GET(
       themeId: data.themeId,
       // レポートで書いた下書きは、これが無いと通常の小論文として開いてしまう
       reportMaterialId: data.reportMaterialId,
+      // 口頭試問型は出題そのものを戻す（無いと別の問題で再開してしまう）
+      oralExam: data.oralExam,
+      oralExamAnswers: data.oralExamAnswers,
       pastQuestionId: data.pastQuestionId,
       homeworkId: data.homeworkId,
       createdAt:

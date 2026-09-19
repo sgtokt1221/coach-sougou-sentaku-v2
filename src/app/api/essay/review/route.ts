@@ -498,6 +498,7 @@ export async function POST(request: NextRequest) {
       // AP未取得は null（0点と区別する）
       score_ap_alignment: scores.apAlignment,
       score_responsiveness: scores.responsiveness,
+      score_knowledge_accuracy: scores.knowledgeAccuracy ?? null,
       score_reasoning_maturity: scores.reasoningMaturity,
       score_total: scores.total,
       word_count: ocrText.length,

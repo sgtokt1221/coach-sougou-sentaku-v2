@@ -53,7 +53,7 @@ function blend(
   scScore: number | null,
   practiceAvg: number | null,
   practiceCount: number,
-  rankFn: (total: number) => SkillRank,
+  rankFn: (total: number) => SkillRank
 ): AggregateBreakdown {
   const scRank = scScore !== null ? rankFn(scScore) : null;
   if (scScore === null && practiceAvg === null) {
@@ -118,7 +118,7 @@ function blend(
  */
 export async function computeEssayAggregate(
   userId: string,
-  scTotal: number | null,
+  scTotal: number | null
 ): Promise<AggregateBreakdown> {
   const { adminDb } = await import("@/lib/firebase/admin");
   if (!adminDb) return blend(scTotal, null, 0, calculateRank);
@@ -128,14 +128,31 @@ export async function computeEssayAggregate(
       adminDb.collection("essays").where("userId", "==", userId).get(),
       adminDb.collection(`users/${userId}/chokoReviews`).get(),
     ]);
+    /**
+     * 満点は答案ごとに違う（口頭試問型は専門知識を合計に入れるので60点）。
+     * 素の total をそのまま平均すると、60点満点の回が混ざるだけで平均が
+     * 黙って上がり、合成ランクが実力より高く出る。50点スケールへ正規化する。
+     */
     const essayTotals = essayAll.docs
-      .map((d) => d.data()?.scores?.total)
+      .map((d) => {
+        const data = d.data();
+        const total = data?.scores?.total;
+        if (typeof total !== "number") return null;
+        const max = data?.feedback?.scoreMaximum;
+        return typeof max === "number" && max > 0 && max !== 50
+          ? (total / max) * 50
+          : total;
+      })
       .filter((s): s is number => typeof s === "number");
     const chocoTotals = chocoAll.docs
       .map((d) => d.data()?.scores?.total)
       .filter((s): s is number => typeof s === "number");
 
-    const { avg, count } = blendPracticeScores(essayTotals, chocoTotals, CHOCO_WEIGHT);
+    const { avg, count } = blendPracticeScores(
+      essayTotals,
+      chocoTotals,
+      CHOCO_WEIGHT
+    );
     return blend(scTotal, avg, count, calculateRank);
   } catch (err) {
     console.warn("essay aggregate failed:", err);
@@ -151,7 +168,7 @@ export async function computeEssayAggregate(
  */
 export async function computeInterviewAggregate(
   userId: string,
-  scTotal: number | null,
+  scTotal: number | null
 ): Promise<AggregateBreakdown> {
   const { adminDb } = await import("@/lib/firebase/admin");
   if (!adminDb) return blend(scTotal, null, 0, calculateInterviewRank);
@@ -167,19 +184,19 @@ export async function computeInterviewAggregate(
   const isPracticed = (data: FirebaseFirestore.DocumentData): boolean => {
     if (data?.status !== "completed") return false;
     const messages = Array.isArray(data.messages) ? data.messages : [];
-    return messages.some(
-      (m: { role?: string }) => m?.role === "student",
-    );
+    return messages.some((m: { role?: string }) => m?.role === "student");
   };
 
   const extractScores = (
-    docs: FirebaseFirestore.QueryDocumentSnapshot[],
+    docs: FirebaseFirestore.QueryDocumentSnapshot[]
   ): number[] =>
     docs
       .map((d) => {
         const data = d.data();
         if (!isPracticed(data)) return null;
-        return typeof data?.scores?.total === "number" ? data.scores.total : null;
+        return typeof data?.scores?.total === "number"
+          ? data.scores.total
+          : null;
       })
       .filter((s): s is number => s !== null);
 
@@ -193,13 +210,18 @@ export async function computeInterviewAggregate(
 
     // 練習側(0-50) → 面接SCスケール(0-40) に正規化
     const normalized = rawScores.map(
-      (s) => (s * INTERVIEW_SC_MAX) / INTERVIEW_PRACTICE_MAX,
+      (s) => (s * INTERVIEW_SC_MAX) / INTERVIEW_PRACTICE_MAX
     );
     const practiceAvg =
       normalized.length > 0
         ? normalized.reduce((a, b) => a + b, 0) / normalized.length
         : null;
-    return blend(scTotal, practiceAvg, normalized.length, calculateInterviewRank);
+    return blend(
+      scTotal,
+      practiceAvg,
+      normalized.length,
+      calculateInterviewRank
+    );
   } catch (err) {
     console.warn("interview aggregate failed:", err);
     return blend(scTotal, null, 0, calculateInterviewRank);
@@ -227,12 +249,14 @@ export function resolveScRawScore(
     lastSkillCheckScore?: unknown;
     lastInterviewCheckScore?: unknown;
   },
-  kind: "essay" | "interview" = "essay",
+  kind: "essay" | "interview" = "essay"
 ): number | null {
   const latest = latestSkillCheck?.scores?.total;
   if (typeof latest === "number") return latest;
   const last =
-    kind === "essay" ? userData.lastSkillCheckScore : userData.lastInterviewCheckScore;
+    kind === "essay"
+      ? userData.lastSkillCheckScore
+      : userData.lastInterviewCheckScore;
   return typeof last === "number" ? last : null;
 }
 
@@ -246,7 +270,9 @@ export function resolveScRawScore(
  * essay/review や skill-check/submit 完了時に fire-and-forget で呼び出す想定。
  * 失敗してもユーザーレスポンスには影響させない。
  */
-export async function refreshEssayAggregateCache(userId: string): Promise<void> {
+export async function refreshEssayAggregateCache(
+  userId: string
+): Promise<void> {
   const { adminDb } = await import("@/lib/firebase/admin");
   if (!adminDb) return;
   const userRef = adminDb.doc(`users/${userId}`);
@@ -257,7 +283,10 @@ export async function refreshEssayAggregateCache(userId: string): Promise<void> 
     .orderBy("takenAt", "desc")
     .limit(1)
     .get();
-  const scTotal = resolveScRawScore(latestSc.docs[0]?.data(), snap.data() ?? {});
+  const scTotal = resolveScRawScore(
+    latestSc.docs[0]?.data(),
+    snap.data() ?? {}
+  );
   const result = await computeEssayAggregate(userId, scTotal);
   if (result.compositeScore !== null && result.compositeRank !== null) {
     await userRef.update({
@@ -272,7 +301,7 @@ export async function refreshEssayAggregateCache(userId: string): Promise<void> 
  * `currentInterviewScore` / `currentInterviewRank` を更新する。
  */
 export async function refreshInterviewAggregateCache(
-  userId: string,
+  userId: string
 ): Promise<void> {
   const { adminDb } = await import("@/lib/firebase/admin");
   if (!adminDb) return;
@@ -289,7 +318,7 @@ export async function refreshInterviewAggregateCache(
   const scTotal = resolveScRawScore(
     latestSc.docs[0]?.data(),
     snap.data() ?? {},
-    "interview",
+    "interview"
   );
   const result = await computeInterviewAggregate(userId, scTotal);
   if (result.compositeScore !== null && result.compositeRank !== null) {

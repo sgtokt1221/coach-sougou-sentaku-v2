@@ -14,6 +14,8 @@ export interface BigQueryEssayLog {
   score_responsiveness: number | null;
   /** v23 で廃止した独自性。旧データを読むときだけ入る */
   score_originality?: number | null;
+  /** 専門知識の正確性。口頭試問型の答案にだけ入る */
+  score_knowledge_accuracy?: number | null;
   /** 議論の成熟度。旧データには無い */
   score_reasoning_maturity?: number;
   score_total: number;

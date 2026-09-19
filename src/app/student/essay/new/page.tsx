@@ -58,7 +58,14 @@ import {
 } from "@/data/essay-past-questions";
 import type { PastQuestionSourceTextResponse } from "@/lib/types/past-question-source";
 import type { ReportMaterial } from "@/data/essay-report-materials";
+import type { OralExamQuestionSet } from "@/lib/types/essay";
 import { buildReportQuestion } from "@/lib/essay/report-question";
+import {
+  buildOralExamQuestion,
+  joinOralExamAnswers,
+  ORAL_EXAM_MAX_QUESTIONS,
+  ORAL_EXAM_MIN_QUESTIONS,
+} from "@/lib/essay/oral-exam-question";
 import { ESSAY_FIELDS } from "@/lib/types/essay-field";
 import { ESSAY_FORMS, formStepsOf } from "@/lib/types/essay-form";
 import { useAutosave } from "@/hooks/useAutosave";
@@ -232,6 +239,21 @@ export default function EssayNewPage() {
   const [sourceTextError, setSourceTextError] = useState<string | null>(null);
 
   // レポートモード（課題文を読んで書く）
+  /**
+   * 口頭試問型（小問集合）。テーマ・合計字数・小問数を生徒が指定し、
+   * AI がその場で小問集合を作る。出題は静的データに無いので、
+   * 作った問題は下書きにも保存する（保存しないと「続ける」で別の問題になる）。
+   */
+  const [oralExamMode, setOralExamMode] = useState(false);
+  const [oralExamTheme, setOralExamTheme] = useState("");
+  const [oralExamCount, setOralExamCount] = useState(3);
+  const [oralExamSet, setOralExamSet] = useState<OralExamQuestionSet | null>(
+    null
+  );
+  const [oralExamAnswers, setOralExamAnswers] = useState<string[]>([]);
+  const [oralExamLoading, setOralExamLoading] = useState(false);
+  const [oralExamError, setOralExamError] = useState<string | null>(null);
+
   const [reportMode, setReportMode] = useState(false);
   const [reportField, setReportField] = useState<string | null>(null);
   const [reportMaterialList, setReportMaterialList] = useState<
@@ -319,6 +341,8 @@ export default function EssayNewPage() {
           writingDirection?: "vertical" | "horizontal";
           selectedCompoundId?: string;
           reportMaterialId?: string;
+          oralExam?: OralExamQuestionSet;
+          oralExamAnswers?: string[];
         };
         if (cancelled) return;
         setInputMode("text");
@@ -333,6 +357,18 @@ export default function EssayNewPage() {
         setSavedDraftId(draftIdParam);
         // 下書きがレポートのものなら、その状態で開く
         if (draft.reportMaterialId) setReportDraftId(draft.reportMaterialId);
+        // 口頭試問型は出題そのものを戻す（戻さないと別の問題になる）
+        if (draft.oralExam) {
+          setOralExamMode(true);
+          setOralExamSet(draft.oralExam);
+          setOralExamTheme(draft.oralExam.theme);
+          setOralExamCount(draft.oralExam.subQuestions.length);
+          setOralExamAnswers(
+            draft.oralExam.subQuestions.map(
+              (_, i) => draft.oralExamAnswers?.[i] ?? ""
+            )
+          );
+        }
         setActiveTab("new");
         setStep(2);
       } catch {
@@ -618,6 +654,8 @@ export default function EssayNewPage() {
    * topic state が埋まるのは手入力のときだけ。選択元から設問を組み立て直す。
    */
   const effectiveTopic = useMemo(() => {
+    // 口頭試問型は小問集合を1本の設問文へ組み立てて渡す（report と同じ形）
+    if (oralExamMode && oralExamSet) return buildOralExamQuestion(oralExamSet);
     if (reportMode && reportMaterial)
       return buildReportQuestion(reportMaterial);
     if (pastQuestion) {
@@ -631,7 +669,15 @@ export default function EssayNewPage() {
         .join("\n\n");
     }
     return topic;
-  }, [reportMode, reportMaterial, pastQuestion, selectedTheme, topic]);
+  }, [
+    oralExamMode,
+    oralExamSet,
+    reportMode,
+    reportMaterial,
+    pastQuestion,
+    selectedTheme,
+    topic,
+  ]);
 
   /**
    * 出題資料（課題文・グラフ・出題形式）。採点には送っていたがコーチには
@@ -894,6 +940,9 @@ export default function EssayNewPage() {
     pastQuestionId: pastQuestion?.id,
     homeworkId: homeworkId ?? undefined,
     reportMaterialId: reportMode ? reportMaterial?.id : undefined,
+    // 出題はテーマから毎回作るので、保存しないと「続ける」で別の問題になる
+    oralExam: oralExamMode && oralExamSet ? oralExamSet : undefined,
+    oralExamAnswers: oralExamMode && oralExamSet ? oralExamAnswers : undefined,
   };
 
   const {
@@ -1155,6 +1204,68 @@ export default function EssayNewPage() {
     }
   }
 
+  /**
+   * 小問ごとの答えを1本の本文へ連結して directText に保つ。
+   *
+   * 入力欄を分けるのは画面の中だけ。保存・提出・AIコーチ・下書きの自動保存は
+   * すべて本文が1つである前提で動いているので、正本は directText 側に置く。
+   */
+  useEffect(() => {
+    if (!oralExamMode || !oralExamSet) return;
+    setDirectText(joinOralExamAnswers(oralExamSet, oralExamAnswers));
+  }, [oralExamMode, oralExamSet, oralExamAnswers]);
+
+  /** 口頭試問型に切り替える（他のモードとは排他）。 */
+  function handleToggleOralExamMode(next: boolean) {
+    setOralExamMode(next);
+    setOralExamSet(null);
+    setOralExamAnswers([]);
+    setOralExamError(null);
+    if (next) {
+      setInputMode("text");
+      setReportMode(false);
+      setReportField(null);
+      setReportMaterial(null);
+    }
+  }
+
+  /** テーマから小問集合を作る。 */
+  async function handleGenerateOralExam() {
+    if (!oralExamTheme.trim()) return;
+    setOralExamLoading(true);
+    setOralExamError(null);
+    try {
+      const res = await authFetch("/api/essay/oral-exam/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          theme: oralExamTheme.trim(),
+          totalWordLimit: customMaxLength,
+          questionCount: oralExamCount,
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setOralExamError(
+          typeof body?.error === "string"
+            ? body.error
+            : "問題を作れませんでした。もう一度お試しください"
+        );
+        return;
+      }
+      const { questionSet } = (await res.json()) as {
+        questionSet: OralExamQuestionSet;
+      };
+      setOralExamSet(questionSet);
+      setOralExamAnswers(questionSet.subQuestions.map(() => ""));
+      setStep(2);
+    } catch {
+      setOralExamError("通信エラーが発生しました");
+    } finally {
+      setOralExamLoading(false);
+    }
+  }
+
   /** 系統を選び、その系統の課題文一覧を取得する。 */
   async function handleSelectReportField(field: string) {
     setReportField(field);
@@ -1240,6 +1351,12 @@ export default function EssayNewPage() {
               sourceText: reportMaterial.body,
               topic: effectiveTopic,
               wordLimit: reportMaterial.recommendedWordLimit,
+            }),
+          ...(oralExamMode &&
+            oralExamSet && {
+              questionType: "oral_exam" as const,
+              topic: effectiveTopic,
+              wordLimit: oralExamSet.totalWordLimit,
             }),
           ...(pastQuestion && {
             questionType: pastQuestion.questionType,
@@ -1742,21 +1859,38 @@ export default function EssayNewPage() {
                       <SegmentControl
                         fullWidth
                         size="sm"
-                        value={reportMode ? "report" : "normal"}
-                        onChange={(v) => handleToggleReportMode(v === "report")}
+                        value={
+                          oralExamMode
+                            ? "oral_exam"
+                            : reportMode
+                              ? "report"
+                              : "normal"
+                        }
+                        onChange={(v) => {
+                          if (v === "oral_exam") {
+                            handleToggleOralExamMode(true);
+                            return;
+                          }
+                          handleToggleOralExamMode(false);
+                          handleToggleReportMode(v === "report");
+                        }}
                         options={[
                           { id: "normal", label: "通常の小論文" },
                           {
                             id: "report",
                             label: "レポート（課題文を読んで書く）",
                           },
+                          {
+                            id: "oral_exam",
+                            label: "口頭試問型（小問集合）",
+                          },
                         ]}
                       />
                     </div>
                   )}
 
-                  {/* 提出方法（レポート中はテキスト固定のため非表示） */}
-                  {!reportMode && (
+                  {/* 提出方法（レポート・口頭試問型はテキスト固定のため非表示） */}
+                  {!reportMode && !oralExamMode && (
                     <div className="space-y-2">
                       <Label>提出方法</Label>
                       <SegmentControl
@@ -1771,6 +1905,84 @@ export default function EssayNewPage() {
                           { id: "dictation", label: "手書き" },
                         ]}
                       />
+                    </div>
+                  )}
+
+                  {/* 口頭試問型: テーマ・合計字数・小問数を決めて問題を作る */}
+                  {oralExamMode && (
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="oral-theme">テーマ</Label>
+                        <input
+                          id="oral-theme"
+                          type="text"
+                          value={oralExamTheme}
+                          onChange={(e) => setOralExamTheme(e.target.value)}
+                          placeholder="例: 表現の自由 / 再生可能エネルギー / 細胞分裂"
+                          maxLength={100}
+                          className="bg-background focus:ring-ring w-full rounded-lg border px-3 py-2.5 text-sm focus:ring-2 focus:outline-none"
+                        />
+                        <p className="text-muted-foreground text-xs">
+                          このテーマの知識を問う小問が作られます。1つの分野に絞るほど深く問われます。
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>合計字数</Label>
+                        <CharLimitSelector
+                          value={customMaxLength}
+                          onChange={setCustomMaxLength}
+                        />
+                        <p className="text-muted-foreground text-xs">
+                          この字数を小問ごとに割り振ります。
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>小問の数</Label>
+                        <SegmentControl
+                          fullWidth
+                          size="sm"
+                          value={String(oralExamCount)}
+                          onChange={(v) => setOralExamCount(Number(v))}
+                          options={Array.from(
+                            {
+                              length:
+                                ORAL_EXAM_MAX_QUESTIONS -
+                                ORAL_EXAM_MIN_QUESTIONS +
+                                1,
+                            },
+                            (_, i) => {
+                              const n = ORAL_EXAM_MIN_QUESTIONS + i;
+                              return { id: String(n), label: `${n}問` };
+                            }
+                          )}
+                        />
+                      </div>
+
+                      {oralExamError && (
+                        <p className="text-sm text-rose-600">{oralExamError}</p>
+                      )}
+
+                      <Button
+                        className="w-full"
+                        onClick={handleGenerateOralExam}
+                        disabled={!oralExamTheme.trim() || oralExamLoading}
+                      >
+                        {oralExamLoading
+                          ? "問題を作っています..."
+                          : "問題を作る"}
+                      </Button>
+                      {oralExamLoading && (
+                        <div className="space-y-2">
+                          {Array.from({ length: oralExamCount }).map((_, i) => (
+                            <Skeleton
+                              key={i}
+                              className="h-12 w-full rounded-lg"
+                            />
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -2389,12 +2601,65 @@ export default function EssayNewPage() {
                   <Card>
                     <CardHeader>
                       <CardTitle className="text-sm lg:text-base">
-                        小論文を入力
+                        {oralExamMode ? "小問に答える" : "小論文を入力"}
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4 p-3 lg:p-4">
+                      {/* 口頭試問型: 小問ごとに欄を分ける（提出時に1本へ連結する） */}
+                      {oralExamMode && oralExamSet ? (
+                        <div className="space-y-5">
+                          <div className="rounded-lg bg-slate-800 p-4 text-white">
+                            <p className="text-xs font-semibold tracking-wide text-slate-300">
+                              口頭試問型・{oralExamSet.theme}
+                            </p>
+                            <p className="mt-1 text-xs text-slate-300">
+                              合計{oralExamSet.totalWordLimit}字／
+                              {oralExamSet.subQuestions.length}問
+                            </p>
+                          </div>
+                          {oralExamSet.subQuestions.map((q, i) => {
+                            const answer = oralExamAnswers[i] ?? "";
+                            const over = answer.length > q.wordLimit;
+                            return (
+                              <div key={q.no} className="space-y-2">
+                                <div className="flex items-baseline justify-between gap-2">
+                                  <Label htmlFor={`oral-answer-${q.no}`}>
+                                    問{q.no}
+                                  </Label>
+                                  <span
+                                    className={`text-xs tabular-nums ${
+                                      over
+                                        ? "text-rose-600"
+                                        : "text-muted-foreground"
+                                    }`}
+                                  >
+                                    {answer.length}/{q.wordLimit}字
+                                  </span>
+                                </div>
+                                <p className="text-sm leading-relaxed">
+                                  {q.prompt}
+                                </p>
+                                <textarea
+                                  id={`oral-answer-${q.no}`}
+                                  value={answer}
+                                  onChange={(e) =>
+                                    setOralExamAnswers((prev) => {
+                                      const next = [...prev];
+                                      next[i] = e.target.value;
+                                      return next;
+                                    })
+                                  }
+                                  rows={5}
+                                  placeholder={`問${q.no}の答えを${q.wordLimit}字程度で書いてください`}
+                                  className="bg-background focus:ring-ring w-full rounded-lg border px-3 py-2.5 text-sm leading-relaxed focus:ring-2 focus:outline-none"
+                                />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : null}
                       {/* レポートモードでは字数を課題文の推奨値に固定（提出時に上書きされ、編集不可） */}
-                      {reportMode ? (
+                      {oralExamMode ? null : reportMode ? (
                         <p className="text-muted-foreground text-sm">
                           推奨字数: {reportMaterial?.recommendedWordLimit}字
                         </p>
@@ -2404,7 +2669,7 @@ export default function EssayNewPage() {
                           onChange={setCustomMaxLength}
                         />
                       )}
-                      {directText.trim() === "" && (
+                      {!oralExamMode && directText.trim() === "" && (
                         <div className="flex gap-2.5 rounded-lg border border-amber-200 bg-amber-50/60 p-3 dark:border-amber-900 dark:bg-amber-950/20">
                           <Sparkles className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400" />
                           <div className="text-xs leading-relaxed text-amber-900 dark:text-amber-100">
@@ -2424,16 +2689,18 @@ export default function EssayNewPage() {
                           </div>
                         </div>
                       )}
-                      <ManuscriptEditor
-                        value={directText}
-                        onChange={setDirectText}
-                        maxLength={customMaxLength}
-                        placeholder={
-                          retryParent
-                            ? "前回の改善点を意識して書き直してみよう..."
-                            : "ここに小論文を入力してください..."
-                        }
-                      />
+                      {!oralExamMode && (
+                        <ManuscriptEditor
+                          value={directText}
+                          onChange={setDirectText}
+                          maxLength={customMaxLength}
+                          placeholder={
+                            retryParent
+                              ? "前回の改善点を意識して書き直してみよう..."
+                              : "ここに小論文を入力してください..."
+                          }
+                        />
+                      )}
                       <DraftSaveIndicator
                         status={
                           textDraftStatus === "error"

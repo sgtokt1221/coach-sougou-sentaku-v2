@@ -201,7 +201,11 @@ export const AI_PROMPT_VERSIONS = {
     //      意味だけ変えると、過去の答案のグラフが別軸の値を回答力として
     //      表示してしまう（沈黙失敗）。過去データは「独自性（旧軸）」として
     //      読み取り専用で残す。
-    promptVersion: "essay-review-v23",
+    // v24: 口頭試問型（小問集合）の出題形式を足した。既存の出題形式のルーブリックは
+    //      1文字も変えていないので、v23 との採点比較はそのまま成立する。
+    //      口頭試問型だけ、回答力を小問ごとの充足で見て、専門知識の正確性を
+    //      別呼び出しで採点して合計に入れる（満点60）。
+    promptVersion: "essay-review-v24",
     schemaVersion: "essay-review-output-v3",
   },
   interviewScore: {

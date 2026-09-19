@@ -96,6 +96,7 @@ export async function logEssaySubmission(
       score_ap_alignment: data.score_ap_alignment,
       score_originality: data.score_originality ?? null,
       score_responsiveness: data.score_responsiveness ?? null,
+      score_knowledge_accuracy: data.score_knowledge_accuracy ?? null,
       score_total: data.score_total,
       word_count: data.word_count,
       topic: data.topic || null,
