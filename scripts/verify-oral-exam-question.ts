@@ -13,6 +13,7 @@ import {
   joinOralExamAnswers,
   loadRecentOralExamQuestions,
   normalizeOralExamQuestionSet,
+  oralExamKey,
 } from "../src/lib/essay/oral-exam-question";
 import { buildOralExamQuestionPrompt } from "../src/lib/ai/prompts/oral-exam-question";
 import type { OralExamQuestionSet } from "../src/lib/types/essay";
@@ -74,6 +75,38 @@ assert.ok(!question.includes("確認したいこと"), "aim が生徒に見え�
 const joined = joinOralExamAnswers(set, ["あ", "い", "う"]);
 assert.ok(joined.startsWith("問1\nあ"), joined);
 assert.ok(joined.includes("問3\nう"), joined);
+
+/**
+ * 1問も書いていないときは空。見出しだけの本文を返すと「書きかけあり」と
+ * 判定され、空の下書きが保存されて復元バナーまで出る。
+ */
+assert.equal(joinOralExamAnswers(set, ["", "", ""]), "");
+assert.equal(joinOralExamAnswers(set, []), "");
+assert.equal(joinOralExamAnswers(set, ["  ", ""]), "");
+
+/**
+ * 会話・下書きを問題ごとに分けるキー。
+ * 同じ問題なら開き直しても同じ、違う問題なら必ず変わること。
+ * ここが固定値だと、別の問題で話したAIコーチの履歴がそのまま出る。
+ */
+const keyA = oralExamKey(set);
+assert.equal(
+  keyA,
+  oralExamKey(normalizeOralExamQuestionSet(make([200, 300, 300], 0), 800))
+);
+const other: OralExamQuestionSet = {
+  ...set,
+  subQuestions: set.subQuestions.map((q, i) =>
+    i === 0 ? { ...q, prompt: "別の設問文" } : q
+  ),
+};
+assert.notEqual(keyA, oralExamKey(other), "設問が違うのにキーが同じ");
+assert.notEqual(
+  keyA,
+  oralExamKey({ ...set, theme: "別のテーマ" }),
+  "テーマが違うのにキーが同じ"
+);
+assert.ok(keyA.startsWith("oral:"), keyA);
 
 /**
  * 直近の出題を引く経路。ここが黙って空を返すと「前に解いた問いを避ける」が

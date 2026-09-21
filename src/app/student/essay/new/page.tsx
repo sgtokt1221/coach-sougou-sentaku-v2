@@ -65,6 +65,7 @@ import {
   joinOralExamAnswers,
   ORAL_EXAM_MAX_QUESTIONS,
   ORAL_EXAM_MIN_QUESTIONS,
+  oralExamKey,
 } from "@/lib/essay/oral-exam-question";
 import { ESSAY_FIELDS } from "@/lib/types/essay-field";
 import { ESSAY_FORMS, formStepsOf } from "@/lib/types/essay-form";
@@ -899,6 +900,9 @@ export default function EssayNewPage() {
     pastQuestionId ??
     homeworkId ??
     retryFromId ??
+    // 口頭試問型は出題が毎回変わる。中身から決まるキーで会話を分ける。
+    // "free" を共有していたため、別の問題で話した履歴がそのまま出ていた
+    (oralExamSet ? oralExamKey(oralExamSet) : null) ??
     (reportMaterialIdToLoad ? `report:${reportMaterialIdToLoad}` : "free")
   )
     .replace(/[^a-zA-Z0-9:_-]/g, "_")
@@ -981,16 +985,46 @@ export default function EssayNewPage() {
       setSelectedCompoundId(draft.selectedCompoundId);
       setCustomMaxLength(draft.customMaxLength);
       setWritingDirection(draft.writingDirection);
+      /**
+       * 口頭試問型は出題そのものを戻す。戻さないと、別のページを開いて
+       * 帰ってきたときに小問も書きかけの答えも消える（本文だけが残り、
+       * 通常の小論文として開く）。
+       */
+      if (draft.oralExam?.subQuestions?.length) {
+        setOralExamMode(true);
+        setOralExamSet(draft.oralExam);
+        setOralExamTheme(draft.oralExam.theme ?? "");
+        setOralExamCount(draft.oralExam.subQuestions.length);
+        setOralExamAnswers(
+          draft.oralExam.subQuestions.map(
+            (_, i) => draft.oralExamAnswers?.[i] ?? ""
+          )
+        );
+      }
       setInputMode("text");
       setStep(2);
     },
+    /**
+     * 作った問題は、まだ1文字も書いていなくても残す。
+     * AI呼び出し1回分の出題なので、捨てると作り直しになる。
+     */
     hasContent: (draft) =>
-      Boolean(draft.directText.trim() || draft.topic.trim()),
+      Boolean(
+        draft.directText.trim() ||
+        draft.topic.trim() ||
+        draft.oralExam?.subQuestions?.length
+      ),
   });
 
   const saveEssayDraft = useCallback(
     async (draft: typeof essayDraftSnapshot) => {
-      if (!draft.directText.trim() && !draft.topic.trim()) return;
+      // 出題だけ作って離れた場合も残す（作り直しになるため）
+      if (
+        !draft.directText.trim() &&
+        !draft.topic.trim() &&
+        !draft.oralExam?.subQuestions?.length
+      )
+        return;
       const res = await authFetch("/api/student/essay-drafts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

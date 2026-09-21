@@ -26,6 +26,27 @@ export function buildOralExamQuestion(set: OralExamQuestionSet): string {
 }
 
 /**
+ * その小問集合を一意に指す短いキー。
+ *
+ * 出題は毎回AIが作るので、テーマや過去問のような固定IDが無い。キーが無いと
+ * AIコーチの会話が「free」という1つの置き場を共有してしまい、**別の問題で
+ * 話した履歴がそのまま出る**（2026-09-21 にユーザー報告）。
+ * 中身から決めるので、同じ問題なら開き直しても同じキーになる。
+ */
+export function oralExamKey(set: OralExamQuestionSet): string {
+  const src = [set.theme, ...set.subQuestions.map((q) => q.prompt)].join(
+    "\u0001"
+  );
+  // 文字列の簡易ハッシュ（FNV-1a）。衝突しても同じ問題として扱われるだけ
+  let h = 0x811c9dc5;
+  for (let i = 0; i < src.length; i++) {
+    h ^= src.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return `oral:${h.toString(36)}`;
+}
+
+/**
  * 生徒が小問ごとに書いた答えを、保存する1本の本文へ連結する。
  *
  * 答案本文は1つである前提で全体が組まれている（範囲コメントの文字オフセット、
@@ -36,6 +57,12 @@ export function joinOralExamAnswers(
   set: OralExamQuestionSet,
   answers: string[]
 ): string {
+  /**
+   * 1問も書いていないときは空にする。見出しだけの「問1\n\n問2」を本文として
+   * 返すと、何も書いていないのに「書きかけあり」と判定され、空の下書きが
+   * 保存されて復元バナーまで出る。
+   */
+  if (!answers.some((a) => (a ?? "").trim())) return "";
   return set.subQuestions
     .map((q, i) => `問${q.no}\n${(answers[i] ?? "").trim()}`)
     .join("\n\n");
