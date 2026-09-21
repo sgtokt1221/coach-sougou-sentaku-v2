@@ -67,6 +67,7 @@ export async function GET(
       lectureInfo?: string | null;
       themeId?: string | null;
       pastQuestionId?: string | null;
+      oralExam?: import("@/lib/types/essay").OralExamQuestionSet | null;
     };
 
     // テーマ名が空の答案（保存していなかった時期のもの）は出題元から補う。
@@ -182,6 +183,9 @@ export async function GET(
         sourceText: ctx.sourceText ?? null,
         chartDataSummary: ctx.chartDataSummary ?? null,
         lectureInfo: ctx.lectureInfo ?? null,
+        // 口頭試問型の小問集合。ここに足さないと、保存されていても
+        // 講師の画面に設問が出ない（許可リスト漏れは沈黙失敗になる）
+        oralExam: ctx.oralExam ?? null,
       },
     });
   } catch (error) {
