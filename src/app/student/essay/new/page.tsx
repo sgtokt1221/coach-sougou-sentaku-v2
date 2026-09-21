@@ -1404,15 +1404,6 @@ export default function EssayNewPage() {
               topic: effectiveTopic,
               wordLimit: reportMaterial.recommendedWordLimit,
             }),
-          ...(oralExamMode &&
-            oralExamSet && {
-              questionType: "oral_exam" as const,
-              topic: effectiveTopic,
-              wordLimit: oralExamSet.totalWordLimit,
-              // 出題そのものを答案に残す。これが無いと「もう一度書く」で
-              // 小問ごとの字数が復元できず、同じ問題に戻れない
-              oralExam: oralExamSet,
-            }),
           ...(pastQuestion && {
             questionType: pastQuestion.questionType,
             sourceText:
@@ -1450,6 +1441,24 @@ export default function EssayNewPage() {
               ...(retryParent.retryContext.lectureInfo && {
                 lectureInfo: retryParent.retryContext.lectureInfo,
               }),
+            }),
+          /**
+           * 口頭試問型は最後に載せる。
+           *
+           * テーマや過去問のリンクから入ってモードだけ切り替えた場合、
+           * 後ろのスプレッドに questionType を上書きされ、口頭試問型として
+           * 採点されない（設問も残らない）。出題形式はここで確定させる。
+           */
+          ...(oralExamMode &&
+            oralExamSet && {
+              questionType: "oral_exam" as const,
+              topic: effectiveTopic,
+              wordLimit: oralExamSet.totalWordLimit,
+              // 出題そのものを答案に残す。これが無いと管理者の画面に小問が出ず、
+              // 「もう一度書く」でも同じ問題に戻れない
+              oralExam: oralExamSet,
+              sourceText: undefined,
+              chartDataSummary: undefined,
             }),
           /**
            * 課題文型の「型」を採点にも渡す。lectureInfo は
