@@ -1284,12 +1284,20 @@
   }
 
   /* 生徒詳細のフローティングチャット。
-     通常時は下部ナビの上に浮かせているが、キーボードが出ると
-     ナビはキーボードの裏に隠れる。それでもナビの高さ分だけ持ち上げていたため、
-     入力欄とキーボードの間に70pxほどの隙間が空き、カードも 可視高×0.7 の
-     ままで小さかった。入力中は可視領域いっぱいに使う。 */
+     入力中は可視領域いっぱいに使う。
+
+     **キーボード中は bottom ではなく top で貼る。**
+     iOS はキーボードが出るとレイアウトビューポート自体を押し上げるため、
+     fixed 要素を --kb の分だけ持ち上げると二重にずれる。実機（iPhone Safari）
+     では、カードが画面外へ飛び、入力欄がキーボードの裏に入っていた
+     （2026-09-22 報告）。--vv-offset-top（可視領域の上端。レイアウト
+     ビューポート基準）と --vvh（可視領域の高さ）に直接貼れば、
+     ページがどれだけ押し上げられても結果は同じになる。
+     KeyboardInsetManager は visualViewport の resize と scroll の両方で
+     これらを更新するので、スクロール追従もここで効く。 */
   html[data-keyboard-open="true"] [data-floating-chat] {
-    bottom: calc(var(--kb, 0px) + 0.5rem);
+    top: calc(var(--vv-offset-top, 0px) + 0.5rem);
+    bottom: auto;
     height: min(calc(var(--vvh, 100dvh) - 1rem), 760px);
   }
 
