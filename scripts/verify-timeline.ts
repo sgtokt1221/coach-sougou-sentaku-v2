@@ -3,6 +3,9 @@ import assert from "node:assert/strict";
 import {
   mergeTimeline,
   dailyActivity,
+  allowedTimelineKinds,
+  TIMELINE_FILTERS,
+  TIMELINE_KINDS,
   type TimelineItem,
 } from "../src/lib/admin/timeline";
 
@@ -106,6 +109,20 @@ check("活動量は日本時間の日ごと", () => {
     { date: "2026-09-23", count: 1 },
     { date: "2026-09-24", count: 1 },
   ]);
+});
+
+check("面談の救済だけの講師は、開いた先も通る種類だけ", () => {
+  assert.deepEqual(allowedTimelineKinds(TIMELINE_KINDS, true), [
+    "chocoReview",
+    "summaryDrill",
+    "logicDrill",
+    "interviewDrill",
+  ]);
+  assert.deepEqual(allowedTimelineKinds(TIMELINE_KINDS, false), [...TIMELINE_KINDS]);
+  const kindsOf = (key: string) => TIMELINE_FILTERS.find((f) => f.key === key)!.kinds;
+  assert.deepEqual(allowedTimelineKinds(kindsOf("essay"), true), ["chocoReview"]);
+  assert.deepEqual(allowedTimelineKinds(kindsOf("document"), true), []);
+  assert.deepEqual(allowedTimelineKinds(kindsOf("drill"), true), ["summaryDrill", "logicDrill"]);
 });
 
 console.log(`verify-timeline: ${checks} checks passed`);

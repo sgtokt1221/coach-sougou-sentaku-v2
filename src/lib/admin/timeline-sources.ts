@@ -5,7 +5,8 @@ import type {
   QueryDocumentSnapshot,
 } from "firebase-admin/firestore";
 import { loadAiConversations } from "@/lib/admin/ai-conversations";
-import { parseSessionTime } from "@/lib/admin/session-time";
+import { parseSessionTime, toJstLocalString } from "@/lib/admin/session-time";
+import type { AiConversation } from "@/lib/types/ai-conversation";
 import type { TimelineItem, TimelineKind } from "@/lib/admin/timeline";
 import { getThemeById } from "@/data/essay-themes";
 import { getPastQuestionById } from "@/data/essay-past-questions";
@@ -33,7 +34,40 @@ export type SourceFn = (
   uid: string,
   before: Date | null,
   limit: number,
+  ctx: SourceContext,
 ) => Promise<TimelineItem[]>;
+
+/**
+ * 活動量の棒のための軽い読み込み。since 以降の日時（ISO）だけを返す。
+ * 本体の読み込みと同じ where/orderBy の形にして同じ索引を使う（索引欠落は本番だけで落ちる）。
+ * 取るフィールドは select で日時と絞り込みに要るものだけにする。
+ */
+export type ActivityFn = (
+  db: Firestore,
+  uid: string,
+  since: Date,
+  ctx: SourceContext,
+) => Promise<string[]>;
+
+/** 1リクエストの中で共有する読み込み（AI対話は5か所を読むので2回走らせない） */
+export interface SourceContext {
+  aiConversations: () => Promise<AiConversation[]>;
+}
+
+export function createSourceContext(db: Firestore, uid: string): SourceContext {
+  let ai: Promise<AiConversation[]> | null = null;
+  return {
+    aiConversations: () => (ai ??= loadAiConversations(db, uid)),
+  };
+}
+
+/** 日時フィールドだけを ISO にして並べる（読めない値は捨てる） */
+function isoDates(docs: QueryDocumentSnapshot[], field: string): string[] {
+  return docs.flatMap((d) => {
+    const at = toIso(d.get(field));
+    return at ? [at] : [];
+  });
+}
 
 /** Timestamp / Date / 文字列のどれでも ISO にする。読めなければ null */
 function toIso(v: unknown): string | null {
@@ -289,14 +323,16 @@ const document: SourceFn = async (db, uid, before, limit) => {
 
 // ---- 面談（sessions / scheduledAt: 文字列、studentId で絞る） ----
 // scheduledAt は日本時間のタイムゾーン無し文字列。読み方は session-time.ts を参照。
+// before が無い（最初のページ）ときは今を上限にする。先の予定が今日の記録より上に
+// 並ばないように（次の面談は上部の帯に出している）。
 const session: SourceFn = async (db, uid, before, limit) => {
-  let q: Query = db.collection("sessions").where("studentId", "==", uid);
-  if (before) {
-    const upper = new Date(before.getTime() + 86400000).toISOString().slice(0, 19);
-    q = q.where("scheduledAt", "<", upper);
-  }
-  const snap = await q.orderBy("scheduledAt", "desc").get();
-  const beforeMs = before?.getTime() ?? Infinity;
+  const beforeMs = before?.getTime() ?? Date.now();
+  const snap = await db
+    .collection("sessions")
+    .where("studentId", "==", uid)
+    .where("scheduledAt", "<", toJstLocalString(beforeMs + 86400000))
+    .orderBy("scheduledAt", "desc")
+    .get();
   return snap.docs
     .flatMap((d): (TimelineItem & { ms: number })[] => {
       const data = d.data();
@@ -323,16 +359,22 @@ const session: SourceFn = async (db, uid, before, limit) => {
     .map(({ ms: _ms, ...item }) => item);
 };
 
-// ---- 宿題（users/{uid}/homeworkAssignments / assignedAt: Timestamp） ----
+// ---- 宿題（users/{uid}/homeworkAssignments / submittedAt・assignedAt: Timestamp） ----
+// 並べる日時は「提出した日（無ければ配った日）」。範囲条件は1つのフィールドにしか
+// かけられず、1人あたり数十件の小さいコレクションなので、全件読んでから絞る。
+/** 宿題の並べる日時（提出日 → 配布日） */
+function homeworkAt(data: DocumentData): string | null {
+  return toIso(data.submittedAt) ?? toIso(data.assignedAt);
+}
+
 const homework: SourceFn = async (db, uid, before, limit) => {
-  let q: Query = db.collection(`users/${uid}/homeworkAssignments`);
-  if (before) q = q.where("assignedAt", "<", before);
-  const snap = await q.orderBy("assignedAt", "desc").limit(limit).get();
+  const snap = await db.collection(`users/${uid}/homeworkAssignments`).get();
+  const beforeMs = before?.getTime() ?? Infinity;
   const now = Date.now();
-  return snap.docs.flatMap((d): TimelineItem[] => {
+  const rows = snap.docs.flatMap((d): TimelineItem[] => {
     const data = d.data();
-    const at = toIso(data.assignedAt);
-    if (!at) return [];
+    const at = homeworkAt(data);
+    if (!at || Date.parse(at) >= beforeMs) return [];
     const status = (data.status ?? "assigned") as HomeworkStatus;
     const parts = [HOMEWORK_STATUS_LABELS[status] ?? status];
     const dueMs = typeof data.dueDate === "string" ? Date.parse(data.dueDate) : NaN;
@@ -341,6 +383,10 @@ const homework: SourceFn = async (db, uid, before, limit) => {
       parts.push(
         status === "assigned" && dueMs < now ? "期限切れ" : `期限 ${jstMonthDay(dueMs)}`,
       );
+    }
+    const comment = typeof data.reviewComment === "string" ? data.reviewComment.trim() : "";
+    if (comment) {
+      parts.push(comment.length > 40 ? `${comment.slice(0, 40)}…` : comment);
     }
     return [
       {
@@ -353,15 +399,25 @@ const homework: SourceFn = async (db, uid, before, limit) => {
       },
     ];
   });
+  return rows.sort((a, b) => Date.parse(b.at) - Date.parse(a.at)).slice(0, limit);
 };
 
 // ---- AI対話（機能をまたいで組み立てたもの / updatedAt: ISO） ----
-const aiConversation: SourceFn = async (db, uid, before, limit) => {
+// loadAiConversations は読む場所ごとに新しい方から約30件（MAX_ITEMS_PER_KIND）までしか
+// 読まない。それより古い会話は、時系列の続きを読んでも出てこない（全件は重いため）。
+/**
+ * 時系列に出す AI対話。完了した模擬面接は「面接」の行で出しているので外す
+ * （「すべて」で二重に並ぶため）。中断した面接は「面接」の行に出ない（完了だけ）のでここで出す。
+ */
+function timelineConversations(all: AiConversation[]): AiConversation[] {
+  return all.filter(
+    (c) => (c.kind !== "interview" || c.note === "中断") && c.kind !== "interview_skill_check",
+  );
+}
+
+const aiConversation: SourceFn = async (_db, _uid, before, limit, ctx) => {
   const beforeMs = before?.getTime() ?? Infinity;
-  const all = await loadAiConversations(db, uid);
-  return all
-    // 模擬面接は「面接」の行で出しているので、ここでは外す（「すべて」で二重に並ぶため）
-    .filter((c) => c.kind !== "interview" && c.kind !== "interview_skill_check")
+  return timelineConversations(await ctx.aiConversations())
     .filter((c) => Date.parse(c.updatedAt) < beforeMs)
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
     .slice(0, limit)
@@ -385,4 +441,74 @@ export const TIMELINE_SOURCES: Record<TimelineKind, SourceFn> = {
   session,
   homework,
   aiConversation,
+};
+
+// ---- 活動量（直近の日時だけ） ----
+// 面接は「生徒が話したか」（messages）を見ない。messages は重く、完了した面接で生徒が
+// 一言も話していないものはまれなので、活動量の数え方としては許容する。
+/** 日時フィールドで since 以降を新しい順に読み、日時だけ返す（本体と同じ索引を使う形） */
+function datesSince(q: Query, field: string, since: Date | string): Promise<string[]> {
+  return q
+    .where(field, ">=", since)
+    .orderBy(field, "desc")
+    .select(field)
+    .get()
+    .then((snap) => isoDates(snap.docs, field));
+}
+
+export const TIMELINE_ACTIVITY_SOURCES: Record<TimelineKind, ActivityFn> = {
+  essay: (db, uid, since) =>
+    datesSince(db.collection("essays").where("userId", "==", uid), "submittedAt", since),
+  interview: (db, uid, since) =>
+    datesSince(
+      db.collection("interviews").where("userId", "==", uid).where("status", "==", "completed"),
+      "startedAt",
+      since,
+    ),
+  chocoReview: (db, uid, since) =>
+    datesSince(db.collection(`users/${uid}/chokoReviews`), "createdAt", since.toISOString()),
+  summaryDrill: (db, uid, since) =>
+    datesSince(db.collection(`users/${uid}/summaryDrills`), "completedAt", since),
+  logicDrill: (db, uid, since) =>
+    datesSince(db.collection(`users/${uid}/logicDrills`), "completedAt", since),
+  interviewDrill: (db, uid, since) =>
+    datesSince(db.collection(`users/${uid}/interviewDrills`), "createdAt", since),
+  document: (db, uid, since) =>
+    datesSince(
+      db.collection("documents").where("userId", "==", uid),
+      "updatedAt",
+      since.toISOString(),
+    ),
+  // scheduledAt は日本時間のゾーン無し文字列。1日の余裕を持った粗い条件で読み、時刻で絞る。
+  // 時系列と同じく、先の予定は数えない
+  session: async (db, uid, since) => {
+    const snap = await db
+      .collection("sessions")
+      .where("studentId", "==", uid)
+      .where("scheduledAt", ">=", toJstLocalString(since.getTime() - 86400000))
+      .orderBy("scheduledAt", "desc")
+      .select("scheduledAt", "status")
+      .get();
+    const now = Date.now();
+    return snap.docs.flatMap((d) => {
+      if (d.get("status") === "cancelled") return [];
+      const ms = parseSessionTime(d.get("scheduledAt"));
+      return ms !== null && ms >= since.getTime() && ms < now ? [new Date(ms).toISOString()] : [];
+    });
+  },
+  homework: async (db, uid, since) => {
+    const snap = await db
+      .collection(`users/${uid}/homeworkAssignments`)
+      .select("submittedAt", "assignedAt")
+      .get();
+    return snap.docs.flatMap((d) => {
+      const at = homeworkAt(d.data());
+      return at && Date.parse(at) >= since.getTime() ? [at] : [];
+    });
+  },
+  // 時系列の本体と同じ読み込み（ctx で1回だけ）を使うので、追加の読み込みは無い
+  aiConversation: async (_db, _uid, since, ctx) =>
+    timelineConversations(await ctx.aiConversations())
+      .map((c) => c.updatedAt)
+      .filter((at) => Date.parse(at) >= since.getTime()),
 };

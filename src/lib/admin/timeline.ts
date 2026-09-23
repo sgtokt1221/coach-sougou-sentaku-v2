@@ -46,6 +46,42 @@ export const TIMELINE_FILTERS: {
   { key: "aiConversation", label: "AI対話", kinds: ["aiConversation"] },
 ];
 
+/**
+ * 担当外で「面談中（または完了後24時間以内）」の講師（hasActiveSessionAccess で
+ * 通っただけの講師）に見せてよい種類。行を開いた先の API も同じ救済を持つものだけ。
+ * 持たない種類を出すと、行は見えるのに開くと 403 になる（中身を出すべきでない相手でもある）。
+ *
+ * - essay: ✗ 行は /api/admin/students/[id]/essays/[essayId] を開く。救済なし
+ *   （一覧を返す /api/admin/students/[id] には救済があるが、開く先が 403）
+ * - interview: ✗ interviews/[interviewId] に救済なし
+ * - chocoReview: ○ choco-reviews に救済あり
+ * - summaryDrill: ○ summary-drills に救済あり
+ * - logicDrill: ○ logic-drills に救済あり
+ * - interviewDrill: ○ interview-drills に救済あり
+ * - document: ✗ documents/[docId] に救済なし
+ * - session: ✗ students/[id]/sessions に救済なし（行の開く先 /api/sessions/[id] も
+ *   その面談の担当講師しか通さない）
+ * - homework: ✗ homework（GET）・homework/[hwId]（確認済みの PATCH）に救済なし
+ * - aiConversation: ✗ ai-conversations に救済なし
+ * 各 API に救済を足したら、ここにも足す。
+ */
+export const SESSION_ACCESS_KINDS: readonly TimelineKind[] = [
+  "chocoReview",
+  "summaryDrill",
+  "logicDrill",
+  "interviewDrill",
+];
+
+/** 見せてよい種類に絞る。viaSessionAccess は面談の救済だけで通った講師のとき true */
+export function allowedTimelineKinds(
+  kinds: readonly TimelineKind[],
+  viaSessionAccess: boolean
+): TimelineKind[] {
+  return viaSessionAccess
+    ? kinds.filter((k) => SESSION_ACCESS_KINDS.includes(k))
+    : [...kinds];
+}
+
 export interface TimelineItem {
   kind: TimelineKind;
   id: string;
