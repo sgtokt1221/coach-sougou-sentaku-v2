@@ -161,8 +161,9 @@ function ReferenceCard({ reference }: { reference: ChatReference }) {
           : reference.kind === "homework"
             ? "宿題"
             : "問題";
+  // スキルチェックは 2026-09-23 に廃止。古いメッセージの参照先はダッシュボードへ移る
   const buttonLabel = isSkillCheck
-    ? "結果を見る"
+    ? "ダッシュボードへ"
     : isDocument
       ? "書類を見る"
       : isSelfAnalysis

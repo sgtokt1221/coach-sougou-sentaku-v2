@@ -59,7 +59,7 @@ export const TOUR_PAGES: Record<string, TourPage> = {
       {
         selector: "[data-tour='skill-rank-essay']",
         title: "小論文レベル",
-        description: "提出の平均で決まるランク。直近10件で動きます。",
+        description: "提出の平均で決まるランク。直近の提出で動きます。",
       },
       {
         selector: "[data-tour='score-trend']",

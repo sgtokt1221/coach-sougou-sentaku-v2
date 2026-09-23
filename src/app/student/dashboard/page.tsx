@@ -70,7 +70,12 @@ export default function StudentDashboard() {
   // 認証ロード中は useAuthSWR の key が null → isLoading=false になるため、
   // authLoading も含めて初回マウントを1回に抑え、GSAP タイムラインが中断されないようにする
   const loadingSelfAnalysis = authLoading || loadingSelfAnalysisSWR;
-  const { data: rank } = useAuthSWR<StudentRankResponse>("/api/student/rank");
+  const { data: rank, error: rankError } =
+    useAuthSWR<StudentRankResponse>("/api/student/rank");
+  // 取れなかったときに「まだ提出がありません」と出すと、提出0件と見分けがつかない
+  const rankEmptyMessage = rankError
+    ? "ランクを読み込めませんでした"
+    : "まだ提出がありません";
   const loadingTrend = loadingHistory || loadingInterview;
 
   const { saCompletedSteps, saStepsData } = useMemo(() => {
@@ -199,7 +204,7 @@ export default function StudentDashboard() {
               rank={rank?.essay.compositeRank ?? null}
               score={rank?.essay.compositeScore ?? null}
               maxScore={50}
-              emptyMessage="まだ提出がありません"
+              emptyMessage={rankEmptyMessage}
               className="h-full cursor-pointer transition-shadow hover:shadow-md"
               aggregate={rank?.essay}
             />
@@ -211,7 +216,7 @@ export default function StudentDashboard() {
               rank={rank?.interview.compositeRank ?? null}
               score={rank?.interview.compositeScore ?? null}
               maxScore={40}
-              emptyMessage="まだ提出がありません"
+              emptyMessage={rankEmptyMessage}
               className="h-full cursor-pointer transition-shadow hover:shadow-md"
               aggregate={rank?.interview}
             />
@@ -242,7 +247,7 @@ export default function StudentDashboard() {
             rank={rank?.essay.compositeRank ?? null}
             score={rank?.essay.compositeScore ?? null}
             maxScore={50}
-            emptyMessage="まだ提出がありません"
+            emptyMessage={rankEmptyMessage}
             className="h-full cursor-pointer transition-shadow hover:shadow-md"
             aggregate={rank?.essay}
           />
@@ -253,7 +258,7 @@ export default function StudentDashboard() {
             rank={rank?.interview.compositeRank ?? null}
             score={rank?.interview.compositeScore ?? null}
             maxScore={40}
-            emptyMessage="まだ提出がありません"
+            emptyMessage={rankEmptyMessage}
             className="h-full cursor-pointer transition-shadow hover:shadow-md"
             aggregate={rank?.interview}
           />

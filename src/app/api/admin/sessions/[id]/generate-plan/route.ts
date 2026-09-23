@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 import {
+  computeEssayAggregate,
+  computeInterviewAggregate,
+} from "@/lib/skill-check/aggregate";
+import {
   assertSessionAccess,
   getPreviousSessionWithAbsences,
 } from "@/lib/api/session-auth";
@@ -221,28 +225,22 @@ export async function POST(
     console.warn("[generate-plan] AP resolution failed:", err);
   }
 
-  // ランク (直近10件の提出の平均)。refresh*AggregateCache が users に書いた値を読む
+  // ランク (直近10件の提出の平均)。その場で計算する。
+  // users.currentSkillRank 等のキャッシュは次の提出まで古い値（2026-09-23 以前は
+  // スキルチェック込み）が残るので、台本の AI には渡さない
   let latestSkill: LessonPlanContext["latestSkill"];
-  const studentData = studentSnap?.data() as
-    | {
-        currentSkillRank?: string | null;
-        currentSkillScore?: number | null;
-        currentInterviewRank?: string | null;
-        currentInterviewScore?: number | null;
-      }
-    | undefined;
-  const essayRank = studentData?.currentSkillRank ?? undefined;
-  const interviewRank = studentData?.currentInterviewRank ?? undefined;
+  const [essayAgg, interviewAgg] = await Promise.all([
+    computeEssayAggregate(studentId),
+    computeInterviewAggregate(studentId),
+  ]);
+  const essayRank = essayAgg.compositeRank ?? undefined;
+  const interviewRank = interviewAgg.compositeRank ?? undefined;
   if (essayRank || interviewRank) {
     latestSkill = {
       essayRank,
-      essayScore: essayRank
-        ? (studentData?.currentSkillScore ?? undefined)
-        : undefined,
+      essayScore: essayAgg.compositeScore ?? undefined,
       interviewRank,
-      interviewScore: interviewRank
-        ? (studentData?.currentInterviewScore ?? undefined)
-        : undefined,
+      interviewScore: interviewAgg.compositeScore ?? undefined,
     };
   }
 

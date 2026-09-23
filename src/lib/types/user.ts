@@ -80,17 +80,16 @@ export interface StudentProfile extends UserProfile {
   /** 最後にスキルチェックを受けた日時。30日経過でリマインド表示 */
   lastSkillCheckedAt?: Date;
   /**
-   * 現在の総合スキルランク (デノーマライズ、一覧・ダッシュボード表示用)。
-   * SC 原値そのものではなく **aggregate 後の合成ランク** (SC × 0.7 + 直近30日練習 × 0.3)。
-   * essay/review や interview/end でも更新される。
+   * 現在の小論文ランク (デノーマライズのキャッシュ)。直近10件の提出の平均
+   * （src/lib/skill-check/aggregate.ts）。添削・ちょこ添削のたびに更新される。
+   * 次の提出までは古い値が残るので、正確な値が要る場所は computeEssayAggregate で計算する。
    */
   currentSkillRank?: SkillRank;
-  /** 現在の総合スキルスコア 0-50 (aggregate 後合成スコア、デノーマライズ) */
+  /** 現在の小論文スコア 0-50 (直近10件の平均、デノーマライズ) */
   currentSkillScore?: number;
   /**
-   * SC を受験した時点の原値 (aggregate 計算の入力として保持)。
-   * 普段の添削/面接完了時に aggregate を再計算する際に、この値を SC 入力として使う。
-   * 未設定の旧データは currentSkillScore を SC 原値とみなす (後方互換)。
+   * スキルチェック（2026-09-23 廃止）を受けた時点の原値。過去データとして残すだけで、
+   * ランクの計算には使わない。
    */
   lastSkillCheckScore?: number;
   lastSkillCheckRank?: SkillRank;
@@ -100,9 +99,9 @@ export interface StudentProfile extends UserProfile {
   interviewSkillCheckCompleted?: boolean;
   /** 最後に面接スキルチェックを受けた日時 */
   lastInterviewCheckedAt?: Date;
-  /** 現在の面接スキルランク (aggregate 後合成、面接 SC × 0.7 + 直近30日練習 × 0.3) */
+  /** 現在の面接ランク (直近10件の模擬面接の平均、デノーマライズ) */
   currentInterviewRank?: SkillRank;
-  /** 現在の面接スキルスコア 0-40 (aggregate 後合成) */
+  /** 現在の面接スコア 0-40 (直近10件の平均、デノーマライズ) */
   currentInterviewScore?: number;
   /** 面接 SC を受験した時点の原値 (aggregate 計算の入力) */
   lastInterviewCheckScore?: number;

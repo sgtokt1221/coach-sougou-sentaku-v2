@@ -34,6 +34,7 @@ export function recentWeightedAverage(
   window: number = RANK_WINDOW_WEIGHT
 ): RecentAverage {
   const sorted = items
+    // 満点が0以下の記録は比率が作れないので除く（通常は起きない）
     .filter((x) => x.max > 0 && x.weight > 0 && Number.isFinite(x.value))
     .sort((a, b) => b.at - a.at);
   let weightSum = 0;
@@ -42,7 +43,9 @@ export function recentWeightedAverage(
   for (const x of sorted) {
     if (weightSum >= window) break;
     const w = Math.min(x.weight, window - weightSum);
-    valueSum += (x.value / x.max) * scaleMax * w;
+    // 満点を超える／負の点（不正・旧データ）は 0〜満点に丸める。黙って平均を押し上げないため
+    const ratio = Math.min(1, Math.max(0, x.value / x.max));
+    valueSum += ratio * scaleMax * w;
     weightSum += w;
     used++;
   }

@@ -79,4 +79,10 @@ check("面接: 40点満点を40点スケールのまま、50点満点は40点へ
   assert.equal(r.avg, 32);
 });
 
+check("満点を超える点は満点に丸める", () => {
+  const r = recentWeightedAverage([s(70, 2, 50), s(30, 1, 50)], 50);
+  // 70/50 → 50、30 → 平均40
+  assert.equal(r.avg, 40);
+});
+
 console.log(`verify-rank-average: ${checks} checks passed`);
