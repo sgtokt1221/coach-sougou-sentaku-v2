@@ -8,7 +8,6 @@ import {
   MessageSquare,
   FileText,
   Mic,
-  Gauge,
   Lightbulb,
   GraduationCap,
   FolderOpen,
@@ -37,8 +36,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useAuthSWR } from "@/lib/api/swr";
 import { signOutUser } from "@/lib/firebase/auth";
 import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
-import type { SkillCheckStatus } from "@/lib/types/skill-check";
-import type { InterviewSkillCheckStatus } from "@/lib/types/interview-skill-check";
+import type { StudentRankResponse } from "@/lib/types/rank";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 
@@ -95,11 +93,27 @@ const studentPrimary: PrimaryAction[] = [
     iconBg: "bg-sky-100 dark:bg-sky-950/40",
     iconColor: "text-sky-700 dark:text-sky-300",
     children: [
-      { label: "ネタインプット", href: "/student/topic-input", icon: BookMarked },
-      { label: "テーマ・過去問", href: "/student/essay/themes", icon: BookOpen },
-      { label: "要約ドリル", href: "/student/essay/summary-drill", icon: ClipboardList },
-  { label: "論理ドリル", href: "/student/essay/logic-drill", icon: Scale },
-      { label: "ちょこ添削", href: "/student/essay/choco", icon: ClipboardList },
+      {
+        label: "ネタインプット",
+        href: "/student/topic-input",
+        icon: BookMarked,
+      },
+      {
+        label: "テーマ・過去問",
+        href: "/student/essay/themes",
+        icon: BookOpen,
+      },
+      {
+        label: "要約ドリル",
+        href: "/student/essay/summary-drill",
+        icon: ClipboardList,
+      },
+      { label: "論理ドリル", href: "/student/essay/logic-drill", icon: Scale },
+      {
+        label: "ちょこ添削",
+        href: "/student/essay/choco",
+        icon: ClipboardList,
+      },
     ],
   },
   {
@@ -109,15 +123,12 @@ const studentPrimary: PrimaryAction[] = [
     iconBg: "bg-violet-100 dark:bg-violet-950/40",
     iconColor: "text-violet-700 dark:text-violet-300",
     children: [
-      { label: "ちょこ面接", href: "/student/interview/drill", icon: ClipboardList },
+      {
+        label: "ちょこ面接",
+        href: "/student/interview/drill",
+        icon: ClipboardList,
+      },
     ],
-  },
-  {
-    label: "スキル診断",
-    href: "/student/skill-check",
-    icon: Gauge,
-    iconBg: "bg-amber-100 dark:bg-amber-950/40",
-    iconColor: "text-amber-700 dark:text-amber-300",
   },
   {
     label: "自己分析",
@@ -131,11 +142,23 @@ const studentPrimary: PrimaryAction[] = [
 const studentSecondary: ListItem[] = [
   { label: "ネタインプット", href: "/student/topic-input", icon: BookMarked },
   { label: "テーマ・過去問", href: "/student/essay/themes", icon: BookOpen },
-  { label: "要約ドリル", href: "/student/essay/summary-drill", icon: ClipboardList },
+  {
+    label: "要約ドリル",
+    href: "/student/essay/summary-drill",
+    icon: ClipboardList,
+  },
   { label: "論理ドリル", href: "/student/essay/logic-drill", icon: Scale },
   { label: "ちょこ添削", href: "/student/essay/choco", icon: ClipboardList },
-  { label: "ちょこ面接", href: "/student/interview/drill", icon: ClipboardList },
-  { label: "志望校マッチング", href: "/student/universities", icon: GraduationCap },
+  {
+    label: "ちょこ面接",
+    href: "/student/interview/drill",
+    icon: ClipboardList,
+  },
+  {
+    label: "志望校マッチング",
+    href: "/student/universities",
+    icon: GraduationCap,
+  },
   { label: "出願書類", href: "/student/documents", icon: FolderOpen },
   { label: "活動実績", href: "/student/activities", icon: Award },
   { label: "面談記録", href: "/student/sessions", icon: CalendarCheck },
@@ -271,16 +294,12 @@ export function MobileMenuContent({ onNavigate }: { onNavigate?: () => void }) {
           : studentSecondary;
 
   const isStudent = role === "student";
-  const { data: skillCheck } = useAuthSWR<SkillCheckStatus>(
-    isStudent ? "/api/skill-check/status" : null,
-  );
-  const { data: interviewSkillCheck } = useAuthSWR<InterviewSkillCheckStatus>(
-    isStudent ? "/api/interview-skill-check/status" : null,
+  const { data: rank } = useAuthSWR<StudentRankResponse>(
+    isStudent ? "/api/student/rank" : null
   );
 
-  const essayRank = skillCheck?.aggregate?.compositeRank ?? skillCheck?.latestResult?.rank ?? null;
-  const interviewRank =
-    interviewSkillCheck?.aggregate?.compositeRank ?? interviewSkillCheck?.latestResult?.rank ?? null;
+  const essayRank = rank?.essay.compositeRank ?? null;
+  const interviewRank = rank?.interview.compositeRank ?? null;
 
   const initials =
     userProfile?.displayName
@@ -315,10 +334,13 @@ export function MobileMenuContent({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <div className="flex h-full flex-col">
       {/* ユーザーヘッダー */}
-      <div className="shrink-0 border-b border-border/50 bg-gradient-to-br from-primary/10 via-background to-background px-5 pt-6 pb-4">
+      <div className="border-border/50 from-primary/10 via-background to-background shrink-0 border-b bg-gradient-to-br px-5 pt-6 pb-4">
         <div className="flex items-center gap-3">
           <Avatar size="lg">
-            <AvatarImage src={user?.photoURL ?? undefined} alt={userProfile?.displayName ?? "User"} />
+            <AvatarImage
+              src={user?.photoURL ?? undefined}
+              alt={userProfile?.displayName ?? "User"}
+            />
             <AvatarFallback className="bg-primary/15 text-primary text-sm font-semibold">
               {initials}
             </AvatarFallback>
@@ -327,7 +349,7 @@ export function MobileMenuContent({ onNavigate }: { onNavigate?: () => void }) {
             <p className="truncate text-base font-semibold">
               {userProfile?.displayName ?? "ユーザー"}
             </p>
-            <p className="truncate text-xs text-muted-foreground">
+            <p className="text-muted-foreground truncate text-xs">
               {userProfile?.email}
             </p>
             <Badge variant="secondary" className="mt-1 text-[10px]">
@@ -339,15 +361,25 @@ export function MobileMenuContent({ onNavigate }: { onNavigate?: () => void }) {
         {/* 生徒だけ: スキルランクを2つ並列で表示 */}
         {isStudent && (
           <div className="mt-4 grid grid-cols-2 gap-2">
-            <RankSummary label="小論文" rank={essayRank} href="/student/skill-check" onNavigate={onNavigate} />
-            <RankSummary label="面接" rank={interviewRank} href="/student/skill-check?tab=interview" onNavigate={onNavigate} />
+            <RankSummary
+              label="小論文"
+              rank={essayRank}
+              href="/student/growth"
+              onNavigate={onNavigate}
+            />
+            <RankSummary
+              label="面接"
+              rank={interviewRank}
+              href="/student/growth"
+              onNavigate={onNavigate}
+            />
           </div>
         )}
       </div>
 
       {/* 主要アクション: 2カラムの大タップカード + 展開式サブメニュー */}
       <div className="flex-1 overflow-y-auto px-4 py-4">
-        <p className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/60">
+        <p className="text-muted-foreground/60 mb-2 px-1 text-[10px] font-semibold tracking-[0.15em] uppercase">
           主要メニュー
         </p>
         <div className="grid grid-cols-2 gap-2">
@@ -363,10 +395,10 @@ export function MobileMenuContent({ onNavigate }: { onNavigate?: () => void }) {
 
         {secondary.length > 0 && (
           <>
-            <p className="mt-5 mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/60">
+            <p className="text-muted-foreground/60 mt-5 mb-2 px-1 text-[10px] font-semibold tracking-[0.15em] uppercase">
               その他のメニュー
             </p>
-            <div className="rounded-xl border border-border bg-card divide-y divide-border/60">
+            <div className="border-border bg-card divide-border/60 divide-y rounded-xl border">
               {secondary.map((item) => {
                 const active = pathname.startsWith(item.href);
                 return (
@@ -376,12 +408,19 @@ export function MobileMenuContent({ onNavigate }: { onNavigate?: () => void }) {
                     onClick={onNavigate}
                     className={cn(
                       "flex items-center gap-3 px-4 py-3 transition-colors",
-                      active ? "bg-primary/5 text-primary" : "text-foreground hover:bg-accent/40",
+                      active
+                        ? "bg-primary/5 text-primary"
+                        : "text-foreground hover:bg-accent/40"
                     )}
                   >
-                    <item.icon className={cn("size-4", active ? "text-primary" : "text-muted-foreground")} />
+                    <item.icon
+                      className={cn(
+                        "size-4",
+                        active ? "text-primary" : "text-muted-foreground"
+                      )}
+                    />
                     <span className="flex-1 text-sm">{item.label}</span>
-                    <ChevronRight className="size-4 text-muted-foreground/60" />
+                    <ChevronRight className="text-muted-foreground/60 size-4" />
                   </Link>
                 );
               })}
@@ -391,12 +430,27 @@ export function MobileMenuContent({ onNavigate }: { onNavigate?: () => void }) {
       </div>
 
       {/* フッター: 設定系 + ログアウト */}
-      <div className="shrink-0 border-t border-border/50 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+      <div className="border-border/50 shrink-0 border-t px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
         <div className="grid grid-cols-4 gap-1">
-          <FooterLink label="通知" href={notificationsHref} icon={Bell} onNavigate={onNavigate} />
-          <FooterLink label="設定" href={settingsHref} icon={Settings} onNavigate={onNavigate} />
+          <FooterLink
+            label="通知"
+            href={notificationsHref}
+            icon={Bell}
+            onNavigate={onNavigate}
+          />
+          <FooterLink
+            label="設定"
+            href={settingsHref}
+            icon={Settings}
+            onNavigate={onNavigate}
+          />
           {isStudent && (
-            <FooterLink label="プラン" href="/student/pricing" icon={Crown} onNavigate={onNavigate} />
+            <FooterLink
+              label="プラン"
+              href="/student/pricing"
+              icon={Crown}
+              onNavigate={onNavigate}
+            />
           )}
           <button
             type="button"
@@ -404,7 +458,7 @@ export function MobileMenuContent({ onNavigate }: { onNavigate?: () => void }) {
               onNavigate?.();
               void signOutUser();
             }}
-            className="flex flex-col items-center justify-center gap-1 rounded-lg px-2 py-2 text-muted-foreground hover:bg-accent/40 hover:text-foreground"
+            className="text-muted-foreground hover:bg-accent/40 hover:text-foreground flex flex-col items-center justify-center gap-1 rounded-lg px-2 py-2"
           >
             <LogOut className="size-4" />
             <span className="text-[10px]">ログアウト</span>
@@ -426,7 +480,8 @@ function PrimaryActionCard({
 }) {
   const hasChildren = a.children && a.children.length > 0;
   const [expanded, setExpanded] = useState(hasChildren ?? false);
-  const active = pathname.startsWith(a.href) ||
+  const active =
+    pathname.startsWith(a.href) ||
     a.children?.some((c) => pathname.startsWith(c.href));
 
   return (
@@ -437,14 +492,17 @@ function PrimaryActionCard({
           "flex flex-col gap-2 rounded-xl border p-3 transition-all active:scale-[0.98]",
           active
             ? "border-primary/50 bg-primary/5"
-            : "border-border bg-card hover:border-foreground/20",
+            : "border-border bg-card hover:border-foreground/20"
         )}
       >
         <div className="flex items-start justify-between">
           <Link
             href={a.href}
             onClick={onNavigate}
-            className={cn("flex size-9 items-center justify-center rounded-lg", a.iconBg)}
+            className={cn(
+              "flex size-9 items-center justify-center rounded-lg",
+              a.iconBg
+            )}
           >
             <a.icon className={cn("size-4", a.iconColor)} />
           </Link>
@@ -452,13 +510,15 @@ function PrimaryActionCard({
             <button
               type="button"
               onClick={() => setExpanded(!expanded)}
-              className="flex size-6 items-center justify-center rounded-md text-muted-foreground hover:bg-accent/60 transition-colors"
-              aria-label={expanded ? "サブメニューを閉じる" : "サブメニューを開く"}
+              className="text-muted-foreground hover:bg-accent/60 flex size-6 items-center justify-center rounded-md transition-colors"
+              aria-label={
+                expanded ? "サブメニューを閉じる" : "サブメニューを開く"
+              }
             >
               <ChevronDown
                 className={cn(
                   "size-4 transition-transform duration-200",
-                  expanded && "rotate-180",
+                  expanded && "rotate-180"
                 )}
               />
             </button>
@@ -481,19 +541,20 @@ function PrimaryActionCard({
 
       {/* 子メニュー展開 */}
       {hasChildren && expanded && (
-        <div className="mt-1 ml-2 space-y-0.5 rounded-lg border border-border/60 bg-card/50 p-1">
+        <div className="border-border/60 bg-card/50 mt-1 ml-2 space-y-0.5 rounded-lg border p-1">
           {/* 親自体へのリンク */}
           <Link
             href={a.href}
             onClick={onNavigate}
             className={cn(
               "flex items-center gap-2.5 rounded-md px-2.5 py-2 text-xs transition-colors",
-              pathname.startsWith(a.href) && !a.children?.some((c) => pathname.startsWith(c.href))
+              pathname.startsWith(a.href) &&
+                !a.children?.some((c) => pathname.startsWith(c.href))
                 ? "bg-primary/10 text-primary font-medium"
-                : "text-foreground hover:bg-accent/40",
+                : "text-foreground hover:bg-accent/40"
             )}
           >
-            <a.icon className="size-3.5 text-muted-foreground" />
+            <a.icon className="text-muted-foreground size-3.5" />
             {a.label}
           </Link>
           {a.children!.map((child) => {
@@ -507,10 +568,10 @@ function PrimaryActionCard({
                   "flex items-center gap-2.5 rounded-md px-2.5 py-2 text-xs transition-colors",
                   childActive
                     ? "bg-primary/10 text-primary font-medium"
-                    : "text-foreground hover:bg-accent/40",
+                    : "text-foreground hover:bg-accent/40"
                 )}
               >
-                <child.icon className="size-3.5 text-muted-foreground" />
+                <child.icon className="text-muted-foreground size-3.5" />
                 {child.label}
               </Link>
             );
@@ -534,20 +595,22 @@ function RankSummary({
 }) {
   return (
     <Link
-      href={href}
+      href={rank ? href : "/student/essay/new"}
       onClick={onNavigate}
-      className="flex items-center gap-2 rounded-lg border border-border bg-background/60 px-3 py-2 transition-all hover:border-foreground/20 active:scale-[0.98]"
+      className="border-border bg-background/60 hover:border-foreground/20 flex items-center gap-2 rounded-lg border px-3 py-2 transition-all active:scale-[0.98]"
     >
       {rank ? (
         <SkillRankBadge rank={rank} size="sm" />
       ) : (
-        <div className="flex size-8 items-center justify-center rounded-full border-2 border-dashed border-muted-foreground/30 text-[10px] text-muted-foreground">
+        <div className="border-muted-foreground/30 text-muted-foreground flex size-8 items-center justify-center rounded-full border-2 border-dashed text-[10px]">
           未
         </div>
       )}
       <div className="min-w-0 flex-1">
-        <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</p>
-        <p className="text-xs font-semibold">{rank ?? "診断する"}</p>
+        <p className="text-muted-foreground text-[10px] tracking-wide uppercase">
+          {label}
+        </p>
+        <p className="text-xs font-semibold">{rank ?? "提出する"}</p>
       </div>
     </Link>
   );
@@ -568,7 +631,7 @@ function FooterLink({
     <Link
       href={href}
       onClick={onNavigate}
-      className="flex flex-col items-center justify-center gap-1 rounded-lg px-2 py-2 text-muted-foreground hover:bg-accent/40 hover:text-foreground"
+      className="text-muted-foreground hover:bg-accent/40 hover:text-foreground flex flex-col items-center justify-center gap-1 rounded-lg px-2 py-2"
     >
       <Icon className="size-4" />
       <span className="text-[10px]">{label}</span>

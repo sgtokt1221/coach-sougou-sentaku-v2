@@ -27,10 +27,8 @@ import { ChocoSeriesAnnouncement } from "@/components/student/ChocoSeriesAnnounc
 import { EssayDraftsSection } from "@/components/essay/EssayDraftsSection";
 import { GrowthTree } from "@/components/self-analysis/GrowthTree";
 import type { SelfAnalysis } from "@/lib/types/self-analysis";
-import { SkillCheckRefreshBanner } from "@/components/skill-check/SkillCheckRefreshBanner";
 import { SkillRankPanel } from "@/components/skill-check/SkillRankPanel";
-import type { SkillCheckStatus } from "@/lib/types/skill-check";
-import type { InterviewSkillCheckStatus } from "@/lib/types/interview-skill-check";
+import type { StudentRankResponse } from "@/lib/types/rank";
 
 interface EssayHistoryItem {
   id: string;
@@ -72,12 +70,7 @@ export default function StudentDashboard() {
   // 認証ロード中は useAuthSWR の key が null → isLoading=false になるため、
   // authLoading も含めて初回マウントを1回に抑え、GSAP タイムラインが中断されないようにする
   const loadingSelfAnalysis = authLoading || loadingSelfAnalysisSWR;
-  const { data: skillCheckStatus } = useAuthSWR<SkillCheckStatus>(
-    "/api/skill-check/status"
-  );
-  const { data: interviewSkillStatus } = useAuthSWR<InterviewSkillCheckStatus>(
-    "/api/interview-skill-check/status"
-  );
+  const { data: rank } = useAuthSWR<StudentRankResponse>("/api/student/rank");
   const loadingTrend = loadingHistory || loadingInterview;
 
   const { saCompletedSteps, saStepsData } = useMemo(() => {
@@ -162,12 +155,6 @@ export default function StudentDashboard() {
   return (
     <div className="mx-auto flex h-full max-w-6xl flex-col gap-3 px-3 py-3 lg:gap-4 lg:px-6 lg:py-4">
       <NotificationPermissionBanner />
-      {skillCheckStatus?.needsRefresh &&
-        skillCheckStatus.daysSinceLast !== null && (
-          <SkillCheckRefreshBanner
-            daysSinceLast={skillCheckStatus.daysSinceLast}
-          />
-        )}
 
       <ChocoSeriesAnnouncement />
 
@@ -205,36 +192,28 @@ export default function StudentDashboard() {
           )}
         </Link>
         <div className="col-span-2 flex flex-col gap-2">
-          <Link href="/student/skill-check" className="block flex-1">
+          <Link href="/student/growth" className="block flex-1">
             <SkillRankPanel
               minimal
               label="小論文レベル"
-              rank={skillCheckStatus?.latestResult?.rank ?? null}
-              score={skillCheckStatus?.latestResult?.scores.total ?? null}
+              rank={rank?.essay.compositeRank ?? null}
+              score={rank?.essay.compositeScore ?? null}
               maxScore={50}
-              category={
-                skillCheckStatus?.currentCategory ??
-                skillCheckStatus?.latestResult?.category ??
-                null
-              }
-              emptyMessage="未受験 → 受ける"
+              emptyMessage="まだ提出がありません"
               className="h-full cursor-pointer transition-shadow hover:shadow-md"
-              aggregate={skillCheckStatus?.aggregate}
+              aggregate={rank?.essay}
             />
           </Link>
-          <Link
-            href="/student/skill-check?tab=interview"
-            className="block flex-1"
-          >
+          <Link href="/student/growth" className="block flex-1">
             <SkillRankPanel
               minimal
               label="面接レベル"
-              rank={interviewSkillStatus?.latestResult?.rank ?? null}
-              score={interviewSkillStatus?.latestResult?.scores.total ?? null}
+              rank={rank?.interview.compositeRank ?? null}
+              score={rank?.interview.compositeScore ?? null}
               maxScore={40}
-              emptyMessage="未受験 → 受ける"
+              emptyMessage="まだ提出がありません"
               className="h-full cursor-pointer transition-shadow hover:shadow-md"
-              aggregate={interviewSkillStatus?.aggregate}
+              aggregate={rank?.interview}
             />
           </Link>
         </div>
@@ -254,42 +233,29 @@ export default function StudentDashboard() {
       {/* Desktop: スキル2つ */}
       <section className="hidden gap-3 lg:grid lg:grid-cols-2">
         <Link
-          href="/student/skill-check"
+          href="/student/growth"
           className="block"
           data-tour="skill-rank-essay"
         >
           <SkillRankPanel
             label="小論文スキル"
-            rank={skillCheckStatus?.latestResult?.rank ?? null}
-            score={skillCheckStatus?.latestResult?.scores.total ?? null}
+            rank={rank?.essay.compositeRank ?? null}
+            score={rank?.essay.compositeScore ?? null}
             maxScore={50}
-            takenAt={skillCheckStatus?.latestResult?.takenAt ?? null}
-            daysSinceLast={skillCheckStatus?.daysSinceLast ?? null}
-            category={
-              skillCheckStatus?.currentCategory ??
-              skillCheckStatus?.latestResult?.category ??
-              null
-            }
-            subLabel={skillCheckStatus?.needsRefresh ? "更新推奨" : undefined}
-            emptyMessage="まだ受けていません → 受ける"
+            emptyMessage="まだ提出がありません"
             className="h-full cursor-pointer transition-shadow hover:shadow-md"
-            aggregate={skillCheckStatus?.aggregate}
+            aggregate={rank?.essay}
           />
         </Link>
-        <Link href="/student/skill-check?tab=interview" className="block">
+        <Link href="/student/growth" className="block">
           <SkillRankPanel
             label="面接スキル"
-            rank={interviewSkillStatus?.latestResult?.rank ?? null}
-            score={interviewSkillStatus?.latestResult?.scores.total ?? null}
+            rank={rank?.interview.compositeRank ?? null}
+            score={rank?.interview.compositeScore ?? null}
             maxScore={40}
-            takenAt={interviewSkillStatus?.latestResult?.takenAt ?? null}
-            daysSinceLast={interviewSkillStatus?.daysSinceLast ?? null}
-            subLabel={
-              interviewSkillStatus?.needsRefresh ? "更新推奨" : undefined
-            }
-            emptyMessage="まだ受けていません → 受ける"
+            emptyMessage="まだ提出がありません"
             className="h-full cursor-pointer transition-shadow hover:shadow-md"
-            aggregate={interviewSkillStatus?.aggregate}
+            aggregate={rank?.interview}
           />
         </Link>
       </section>
