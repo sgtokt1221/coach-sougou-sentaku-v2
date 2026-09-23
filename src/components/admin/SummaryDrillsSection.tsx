@@ -4,57 +4,29 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { FileText, ChevronDown, TrendingUp } from "lucide-react";
 import { useAuthSWR } from "@/lib/api/swr";
 import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
 import type { SummaryDrillListItem } from "@/app/api/admin/students/[id]/summary-drills/route";
-import { InlineCommentableText } from "@/components/essay/InlineCommentableText";
-import { useAuth } from "@/contexts/AuthContext";
 import {
   useUnviewedSubmissions,
-  useUnviewedSubmissionsMutate,
   TabUnviewedBadge,
 } from "@/components/admin/UnviewedSubmissions";
-import { markSubmissionViewed } from "@/lib/api/client";
-import { FACULTY_REGISTRY } from "@/data/faculty-topics/registry";
-
-const SCORE_LABELS: Record<string, string> = {
-  comprehension: "読解力",
-  conciseness: "簡潔さ",
-  keyPoints: "要点網羅",
-  structure: "構成力",
-  expression: "表現力",
-};
-
-function getFacultyLabel(facultyId: string | null): string {
-  if (!facultyId) return "不明";
-  return FACULTY_REGISTRY.find((f) => f.id === facultyId)?.label ?? facultyId;
-}
-
-function scoreColor(total: number): string {
-  if (total >= 20) return "text-emerald-600";
-  if (total >= 15) return "text-amber-600";
-  return "text-rose-600";
-}
+import {
+  SummaryDrillDetailDialog,
+  getSummaryDrillFacultyLabel as getFacultyLabel,
+  summaryDrillScoreColor as scoreColor,
+} from "@/components/admin/detail-dialogs/SummaryDrillDetailDialog";
 
 export function SummaryDrillsSection({ studentId }: { studentId: string }) {
-  // 範囲コメントの削除可否判定に使う
-  const { user, userProfile } = useAuth();
   const { data: unviewedData } = useUnviewedSubmissions();
-  const mutateUnviewed = useUnviewedSubmissionsMutate();
   const unviewedCount = unviewedData?.byStudentKind?.[studentId]?.summaryDrill ?? 0;
   const { data: drills, isLoading, error } = useAuthSWR<SummaryDrillListItem[]>(
     `/api/admin/students/${studentId}/summary-drills`
   );
 
   const [expanded, setExpanded] = useState(false);
-  const [selectedDrill, setSelectedDrill] = useState<SummaryDrillListItem | null>(null);
+  const [selectedDrillId, setSelectedDrillId] = useState<string | null>(null);
 
   if (error) {
     return <ApiErrorBanner error={error} title="要約ドリル履歴の取得に失敗しました" />;
@@ -103,14 +75,7 @@ export function SummaryDrillsSection({ studentId }: { studentId: string }) {
                   <div
                     key={drill.id}
                     className="flex items-center justify-between rounded-lg border p-3 cursor-pointer hover:bg-muted/50"
-                    onClick={() => {
-                      setSelectedDrill(drill);
-                      void markSubmissionViewed(
-                        "summaryDrill",
-                        drill.id,
-                        studentId,
-                      ).then(() => mutateUnviewed());
-                    }}
+                    onClick={() => setSelectedDrillId(drill.id)}
                   >
                     <div>
                       <p className="text-sm font-medium">{drill.passageTitle ?? "無題"}</p>
@@ -131,71 +96,13 @@ export function SummaryDrillsSection({ studentId }: { studentId: string }) {
       </Card>
 
       {/* 詳細ダイアログ */}
-      <Dialog open={!!selectedDrill} onOpenChange={() => setSelectedDrill(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-base">
-              {selectedDrill?.passageTitle ?? "要約ドリル結果"}
-            </DialogTitle>
-          </DialogHeader>
-          {selectedDrill && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Badge variant="outline">{getFacultyLabel(selectedDrill.facultyId)}</Badge>
-                <span className={`text-xl font-bold ${scoreColor(selectedDrill.total)}`}>
-                  {selectedDrill.total} / 25
-                </span>
-              </div>
-
-              <div className="grid grid-cols-5 gap-2">
-                {Object.entries(selectedDrill.scores).map(([key, score]) => (
-                  <div key={key} className="text-center">
-                    <div className="text-[10px] text-muted-foreground">{SCORE_LABELS[key]}</div>
-                    <div className="text-sm font-bold">{score}</div>
-                    <div className="mx-auto mt-0.5 flex gap-0.5 justify-center">
-                      {[1, 2, 3, 4, 5].map((i) => (
-                        <div
-                          key={i}
-                          className={`size-1.5 rounded-full ${i <= score ? "bg-primary" : "bg-muted"}`}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {selectedDrill.summaryText?.trim() && (
-                <div>
-                  <p className="mb-1 text-xs font-medium text-muted-foreground">
-                    生徒の要約（ドラッグでコメント）
-                  </p>
-                  <InlineCommentableText
-                    target="summaryDrill"
-                    id={selectedDrill.id}
-                    studentId={studentId}
-                    text={selectedDrill.summaryText}
-                    initialComments={selectedDrill.inlineComments}
-                    mode="edit"
-                    viewerUid={user?.uid}
-                    viewerRole={userProfile?.role}
-                  />
-                </div>
-              )}
-
-              {selectedDrill.feedback && (
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground mb-1">講評</p>
-                  <p className="text-sm leading-relaxed">{selectedDrill.feedback}</p>
-                </div>
-              )}
-
-              <p className="text-xs text-muted-foreground">
-                {new Date(selectedDrill.completedAt).toLocaleString("ja-JP")}
-              </p>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <SummaryDrillDetailDialog
+        studentId={studentId}
+        id={selectedDrillId}
+        onOpenChange={(open) => {
+          if (!open) setSelectedDrillId(null);
+        }}
+      />
     </>
   );
 }

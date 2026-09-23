@@ -15,7 +15,7 @@ export interface CoachConversationItem {
   messages: { role: "user" | "assistant"; content: string }[];
 }
 
-const TONE = {
+export const COACH_BADGE_TONE = {
   certain:
     "border-emerald-300 text-[10px] text-emerald-700 dark:border-emerald-700 dark:text-emerald-400",
   neutral: "text-[10px]",
@@ -72,7 +72,7 @@ export function CoachConversationList({
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   {t.badge && (
-                    <Badge variant="outline" className={TONE[t.badge.tone]}>
+                    <Badge variant="outline" className={COACH_BADGE_TONE[t.badge.tone]}>
                       {t.badge.label}
                     </Badge>
                   )}
@@ -82,35 +82,48 @@ export function CoachConversationList({
                 </div>
               </button>
 
-              {open && (
-                <div className="max-h-80 space-y-2 overflow-y-auto border-t px-3 py-3">
-                  {t.messages.length === 0 ? (
-                    <p className="text-xs text-muted-foreground">
-                      やり取りがありません。
-                    </p>
-                  ) : (
-                    t.messages.map((m, i) => (
-                      <div
-                        key={i}
-                        className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
-                      >
-                        <div
-                          className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm break-words whitespace-pre-wrap ${
-                            m.role === "user"
-                              ? "rounded-br-sm bg-teal-500 text-white"
-                              : "rounded-bl-sm bg-muted text-foreground"
-                          }`}
-                        >
-                          {m.content}
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              )}
+              {open && <CoachConversationMessages messages={t.messages} />}
             </div>
           );
         })
+      )}
+    </div>
+  );
+}
+
+/**
+ * 1件分のやり取り（吹き出し）。一覧の展開と、1件だけ開くダイアログで同じ見え方にする。
+ */
+export function CoachConversationMessages({
+  messages,
+  className = "max-h-80 space-y-2 overflow-y-auto border-t px-3 py-3",
+}: {
+  messages: CoachConversationItem["messages"];
+  className?: string;
+}) {
+  return (
+    <div className={className}>
+      {messages.length === 0 ? (
+        <p className="text-xs text-muted-foreground">
+          やり取りがありません。
+        </p>
+      ) : (
+        messages.map((m, i) => (
+          <div
+            key={i}
+            className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
+          >
+            <div
+              className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm break-words whitespace-pre-wrap ${
+                m.role === "user"
+                  ? "rounded-br-sm bg-teal-500 text-white"
+                  : "rounded-bl-sm bg-muted text-foreground"
+              }`}
+            >
+              {m.content}
+            </div>
+          </div>
+        ))
       )}
     </div>
   );
