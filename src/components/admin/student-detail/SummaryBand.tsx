@@ -122,7 +122,8 @@ export function SummaryBand({
 }) {
   const summary = detail.summary;
   const actionItems = summary?.actionItems ?? [];
-  const actionCount = actionItems.length + (unviewedCount > 0 ? 1 : 0);
+  // 見出しの件数は中身に並べた件数の合計にする（「1件」の下に「未確認 4件」と出ると食い違って見える）
+  const actionCount = actionItems.length + unviewedCount;
   const shownActions = actionItems.slice(0, 3);
   const weaknesses = summary?.topWeaknesses ?? [];
   const next = summary?.nextSession ?? null;
@@ -162,12 +163,12 @@ export function SummaryBand({
             {weaknesses.map((w) => (
               <li key={w.area}>
                 <span className="font-medium">{w.area}</span>
-                {w.recent && (
-                  <span className="whitespace-nowrap tabular-nums">
-                    {" "}
-                    直近{w.recent.of}回中{w.recent.hits}回
-                  </span>
-                )}
+                <span className="whitespace-nowrap tabular-nums">
+                  {" "}
+                  {w.recent
+                    ? `直近${w.recent.of}回中${w.recent.hits}回`
+                    : `${w.count}回`}
+                </span>
               </li>
             ))}
           </ul>

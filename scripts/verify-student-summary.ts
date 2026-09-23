@@ -108,8 +108,8 @@ check("弱点: critical が先・warning・母数", () => {
     w("A", { recentHits: [1, 1, 1] }),
   ]);
   assert.deepEqual(out, [
-    { area: "A", level: "critical", recent: { hits: 3, of: 3 } },
-    { area: "B", level: "warning", recent: { hits: 2, of: 3 } },
+    { area: "A", level: "critical", count: 1, recent: { hits: 3, of: 3 } },
+    { area: "B", level: "warning", count: 1, recent: { hits: 2, of: 3 } },
   ]);
 });
 check("弱点: resolved・archivedAt・該当しないものは出ない", () => {
@@ -130,6 +130,7 @@ check("弱点: 最大3件、旧データは recent null", () => {
   assert.equal(out.length, 3);
   assert.ok(out.every((x) => x.level === "critical"));
   assert.equal(buildTopWeaknesses([w("c", { count: 6 })])[0].recent, null);
+  assert.equal(buildTopWeaknesses([w("c", { count: 6 })])[0].count, 6);
 });
 
 check("firstLine", () => {

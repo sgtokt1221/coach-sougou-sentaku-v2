@@ -19,6 +19,8 @@ export interface SummaryWeakness {
   area: string;
   /** 直近の記録での指摘回数と母数（「直近5回中4回」）。旧データは null */
   recent: { hits: number; of: number } | null;
+  /** 累計の指摘回数（直近の記録が無い旧データでは、これを出す） */
+  count: number;
   level: "critical" | "warning";
 }
 
@@ -117,6 +119,7 @@ export function buildTopWeaknesses(
     .map(({ w, level }) => ({
       area: w.area,
       level,
+      count: w.count,
       recent:
         w.recentHits && w.recentHits.length > 0
           ? {
