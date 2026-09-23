@@ -57,6 +57,8 @@ export interface TimelineItem {
   score?: { value: number; max: number };
   /** 開く先がページ遷移のときだけ */
   href?: string;
+  /** 行の中で操作するための値（宿題の「確認済み」ボタンを出すかの判定） */
+  meta?: { homeworkStatus?: string };
 }
 
 export interface TimelinePage {

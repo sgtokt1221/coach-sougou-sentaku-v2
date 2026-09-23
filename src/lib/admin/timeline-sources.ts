@@ -349,6 +349,7 @@ const homework: SourceFn = async (db, uid, before, limit) => {
         at,
         title: data.snapshot?.title || "宿題",
         subtitle: parts.join(" ・ "),
+        meta: { homeworkStatus: status },
       },
     ];
   });
