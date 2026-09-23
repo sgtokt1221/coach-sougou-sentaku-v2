@@ -1,0 +1,94 @@
+[
+  {
+    "id": "essay_1789471832745_vl8wyd0",
+    "stratum": "retry-child"
+  },
+  {
+    "id": "essay_1789387809921_6aab5xi",
+    "stratum": "retry-parent"
+  },
+  {
+    "id": "essay_1789225456822_zbti3yw",
+    "stratum": "retry-child"
+  },
+  {
+    "id": "essay_1789224264360_d85apof",
+    "stratum": "retry-parent"
+  },
+  {
+    "id": "essay_1788260559905_2nb6qf7",
+    "stratum": "report"
+  },
+  {
+    "id": "essay_1788260438794_menb4ty",
+    "stratum": "report"
+  },
+  {
+    "id": "essay_1789590594362_czg3yhi",
+    "stratum": "report"
+  },
+  {
+    "id": "essay_1789203301970_j7nucoo",
+    "stratum": "report"
+  },
+  {
+    "id": "essay_1785822505035_b7j6jrp",
+    "stratum": "low(<=22)"
+  },
+  {
+    "id": "essay_1785213166773_gdz13sh",
+    "stratum": "low(<=22)"
+  },
+  {
+    "id": "essay_test_1779053730_hist3",
+    "stratum": "low(<=22)"
+  },
+  {
+    "id": "essay_dev_003",
+    "stratum": "low(<=22)"
+  },
+  {
+    "id": "essay_dev_002",
+    "stratum": "low(<=22)"
+  },
+  {
+    "id": "essay_1789635995815_nd7i59y",
+    "stratum": "mid(23-29)"
+  },
+  {
+    "id": "essay_1789545176625_zmx8vuo",
+    "stratum": "mid(23-29)"
+  },
+  {
+    "id": "essay_1789425470278_kt1pfju",
+    "stratum": "mid(23-29)"
+  },
+  {
+    "id": "essay_1789387797669_xon69ya",
+    "stratum": "mid(23-29)"
+  },
+  {
+    "id": "essay_1789387692036_kshexnx",
+    "stratum": "mid(23-29)"
+  },
+  {
+    "id": "essay_1789224968863_ppwgl4w",
+    "stratum": "mid(23-29)"
+  },
+  {
+    "id": "essay_1779862380219_tskfk6m",
+    "stratum": "high(>=30)"
+  },
+  {
+    "id": "essay_1789734789838_3ivg43m",
+    "stratum": "high(>=30)"
+  },
+  {
+    "id": "essay_1789556429238_caltman",
+    "stratum": "high(>=30)"
+  },
+  {
+    "id": "essay_1789270669658_bggwwr4",
+    "stratum": "high(>=30)"
+  }
+]
