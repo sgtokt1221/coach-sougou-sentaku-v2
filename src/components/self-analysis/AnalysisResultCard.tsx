@@ -16,6 +16,7 @@ import {
   Pencil,
   Check,
   X,
+  ChevronDown,
 } from "lucide-react";
 import type { SelfAnalysis } from "@/lib/types/self-analysis";
 import { usePersistentDraft } from "@/hooks/usePersistentDraft";
@@ -33,6 +34,8 @@ interface AnalysisResultCardProps {
   renderSectionExtra?: (sectionKey: EditableSection, sectionTitle: string) => React.ReactNode;
   /** 生徒画面のインライン編集を途中保存するためのキー接頭辞。 */
   draftKeyPrefix?: string;
+  /** true で各項目を閉じた状態で出し、見出しを押して開く（管理者の生徒詳細） */
+  defaultCollapsed?: boolean;
 }
 
 /** 編集内容を書き戻せる SelfAnalysis 上のセクション（オブジェクト型のフィールドのみ） */
@@ -190,7 +193,18 @@ export function AnalysisResultCard({
   readOnly = false,
   renderSectionExtra,
   draftKeyPrefix,
+  defaultCollapsed = false,
 }: AnalysisResultCardProps) {
+  // 開いている項目。defaultCollapsed でないときは常に全部開く
+  const [openSections, setOpenSections] = useState<Set<EditableSection>>(() => new Set());
+  const isOpen = (key: EditableSection) => !defaultCollapsed || openSections.has(key);
+  const toggleSection = (key: EditableSection) =>
+    setOpenSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
   // 未完了ステップは欠損していることがあるため全て null 安全に読む
   const v = analysis.values ?? ({} as SelfAnalysis["values"]);
   const st = analysis.strengths ?? ({} as SelfAnalysis["strengths"]);
@@ -281,12 +295,30 @@ export function AnalysisResultCard({
     <div className="space-y-4">
       {sections.map((section) => (
         <Card key={section.title}>
-          <CardHeader className="pb-3">
+          <CardHeader className={isOpen(section.section) ? "pb-3" : ""}>
             <CardTitle className="text-base flex items-center gap-2">
-              {section.icon}
-              {section.title}
+              {defaultCollapsed ? (
+                <button
+                  type="button"
+                  onClick={() => toggleSection(section.section)}
+                  aria-expanded={isOpen(section.section)}
+                  className="flex w-full items-center gap-2 text-left"
+                >
+                  {section.icon}
+                  {section.title}
+                  <ChevronDown
+                    className={`ml-auto size-4 text-muted-foreground transition-transform ${isOpen(section.section) ? "rotate-180" : ""}`}
+                  />
+                </button>
+              ) : (
+                <>
+                  {section.icon}
+                  {section.title}
+                </>
+              )}
             </CardTitle>
           </CardHeader>
+          {isOpen(section.section) && (
           <CardContent className="space-y-4">
             {section.fields.map((field) => (
               <EditableField
@@ -318,6 +350,7 @@ export function AnalysisResultCard({
               </div>
             )}
           </CardContent>
+          )}
         </Card>
       ))}
 

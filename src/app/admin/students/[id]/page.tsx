@@ -10,7 +10,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -42,7 +41,6 @@ import {
   Pencil,
   KeyRound,
   X,
-  Eye,
   ThumbsUp,
   Lightbulb,
   ArrowRightLeft,
@@ -53,8 +51,6 @@ import {
   Mic,
   MicOff,
   ChevronDown,
-  Clock,
-  Activity,
   Calendar,
   BookOpen,
   Bell,
@@ -66,15 +62,11 @@ import { authFetch, markSubmissionViewed } from "@/lib/api/client";
 import {
   useUnviewedSubmissions,
   useUnviewedSubmissionsMutate,
-  TabUnviewedBadge,
 } from "@/components/admin/UnviewedSubmissions";
-import type { SubmissionKind } from "@/lib/api/submission-kinds";
 import { ScoresTrendChart } from "@/components/growth/ScoresTrendChart";
 import { DetailedScoresTrendChart } from "@/components/growth/DetailedScoresTrendChart";
 import { INTERVIEW_SCORE_LINES } from "@/components/charts/theme";
 import { WeaknessSourceBadge } from "@/components/growth/WeaknessSourceBadge";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { getInitials } from "@/lib/utils/avatar";
 import { SegmentControl } from "@/components/shared/SegmentControl";
 import { TeacherAssignmentSection } from "@/components/admin/TeacherAssignmentSection";
 import { FloatingStudentChat } from "@/components/chat/FloatingStudentChat";
@@ -91,7 +83,6 @@ import {
 } from "@/lib/growth/weakness-category";
 import {
   ESSAY_SCORE_WEIGHTS,
-  ESSAY_STATUS_LABELS,
   type Essay,
   type EssayFeedback,
 } from "@/lib/types/essay";
@@ -104,7 +95,6 @@ import { UniversitySelectStep } from "@/components/onboarding/UniversitySelectSt
 import type { EnglishCert } from "@/lib/types/user";
 import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
 import type { AggregateBreakdown } from "@/lib/skill-check/aggregate";
-import { LAST_ACTIVITY_LABELS } from "@/lib/api/last-activity";
 import { SkillRadarChart } from "@/components/skill-check/SkillRadarChart";
 import { scoreToSkillRank } from "@/lib/history-rank";
 import { StudentSkillRadar } from "@/components/admin/StudentSkillRadar";
@@ -154,29 +144,22 @@ import { ExamResultsSection } from "@/components/admin/ExamResultsSection";
 import { ResearchEnrollmentSection } from "@/components/admin/ResearchEnrollmentSection";
 import { AdminResearchCurriculumSection } from "@/components/admin/AdminResearchCurriculumSection";
 import { SubscriptionManagementSection } from "@/components/admin/SubscriptionManagementSection";
-import { AiConversationsSection } from "@/components/admin/AiConversationsSection";
-import { SessionsHistorySection } from "@/components/admin/SessionsHistorySection";
 import { GrowthReportsSection } from "@/components/admin/GrowthReportsSection";
 import { DocumentsSection } from "@/components/admin/DocumentsSection";
 import { LectureProgressSection } from "@/components/admin/LectureProgressSection";
 import { EssayQuestionContext } from "@/components/admin/EssayQuestionContext";
-import { InterviewsSection } from "@/components/admin/InterviewsSection";
-import { SummaryDrillsSection } from "@/components/admin/SummaryDrillsSection";
-import { ChocoReviewsSection } from "@/components/admin/ChocoReviewsSection";
-import { LogicDrillsSection } from "@/components/admin/LogicDrillsSection";
-import { InterviewDrillsSection } from "@/components/admin/InterviewDrillsSection";
 import { ActivitiesSection } from "@/components/admin/ActivitiesSection";
 import { DiscoverSection } from "@/components/admin/DiscoverSection";
 import { InlineFeedbackButton } from "@/components/admin/InlineFeedbackButton";
 import { CoachMemo } from "@/components/admin/CoachMemo";
-import { ActivityHeatmap } from "@/components/admin/ActivityHeatmap";
 import { WeaknessTopChart } from "@/components/admin/WeaknessTopChart";
-import { HomeworkStatusSection } from "@/components/admin/HomeworkStatusSection";
-import { buildActivityHeatmapData } from "@/lib/utils/activity-heatmap";
-import { useAuthSWR } from "@/lib/api/swr";
 import { useAuth } from "@/contexts/AuthContext";
 import { EssayCoachConversation } from "@/components/admin/EssayCoachConversation";
-import { formatLastSeen } from "@/lib/ui/format-last-seen";
+import { StudentHeader } from "@/components/admin/student-detail/StudentHeader";
+import { SummaryBand } from "@/components/admin/student-detail/SummaryBand";
+import { StudentTimeline } from "@/components/admin/student-detail/StudentTimeline";
+import { StudentSettingsSheet } from "@/components/admin/student-detail/StudentSettingsSheet";
+import { InterviewDetailDialog } from "@/components/admin/detail-dialogs/InterviewDetailDialog";
 
 import { appendQuote } from "@/lib/chat/message-blocks";
 /**
@@ -363,86 +346,6 @@ function scoreColor(total: number, max = 50): string {
 }
 
 /**
- * ピン留めサマリ (未解決弱点数 + 最終活動)
- * スキル指標は StudentSkillRadar (スキルカード) に集約済み。
- */
-function PinnedSummary({ detail }: { detail: StudentDetail }) {
-  const { lastActivity, lastSeenAt } = detail;
-
-  // 相対表記 + 色 (7日以内=緑 / 14日以内=黄 / それ以上=赤)
-  const relative = (iso?: string | null) => {
-    if (!iso) return { text: "なし", days: null as number | null };
-    const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
-    return { text: days <= 0 ? "今日" : `${days}日前`, days };
-  };
-  const colorFor = (days: number | null) =>
-    days === null
-      ? "text-gray-500"
-      : days <= 7
-        ? "text-green-600"
-        : days <= 14
-          ? "text-yellow-600"
-          : "text-red-600";
-
-  // 最終活動（何を・いつ）。ラベルの正本は lib/api/last-activity.ts
-  const act = relative(lastActivity?.at);
-  const activityValue = lastActivity
-    ? `${LAST_ACTIVITY_LABELS[lastActivity.type] ?? "活動"} ・ ${act.text}`
-    : "なし";
-
-  // 最終ログイン
-  const seen = relative(lastSeenAt);
-
-  const cells = [
-    {
-      label: "最終活動",
-      value: activityValue,
-      color: colorFor(act.days),
-      icon: Activity,
-      monogram: null,
-      pulse: false,
-    },
-    {
-      label: "最終ログイン",
-      // 何時に来たかが分かるよう時刻まで出す。色分けは日数で行う
-      value: formatLastSeen(lastSeenAt),
-      color: colorFor(seen.days),
-      icon: Clock,
-      monogram: null,
-      pulse: false,
-    },
-  ];
-
-  return (
-    <div className="grid grid-cols-2 gap-2">
-      {cells.map((cell, i) => (
-        <div
-          key={i}
-          className={`bg-background/50 rounded-lg border p-3 ${cell.pulse ? "animate-pulse" : ""}`}
-        >
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <p className="text-muted-foreground text-xs">{cell.label}</p>
-              <p className={`text-lg font-semibold ${cell.color}`}>
-                {cell.value}
-              </p>
-            </div>
-            {cell.monogram && (
-              <span className="bg-muted text-muted-foreground shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium tracking-wide uppercase tabular-nums">
-                · {cell.monogram}
-              </span>
-            )}
-            {cell.icon && (
-              <cell.icon className="text-muted-foreground size-4 shrink-0" />
-            )}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/**
  * 項目別平均チャートの見出しに出す現在のスキルランク。
  * 値は生徒一覧・概要タブと同じ（提出の直近平均）。
  */
@@ -472,29 +375,28 @@ function SkillRankSummary({
   );
 }
 
-type TabKey =
-  | "overview"
+type ViewKey =
+  | "timeline"
   | "performance"
-  | "activity"
-  | "reports"
-  | "homework"
-  | "messages";
-const VALID_TABS: TabKey[] = [
-  "overview",
-  "performance",
-  "activity",
-  "reports",
-  "homework",
-  "messages",
+  | "documents"
+  | "self-analysis"
+  | "reports";
+/** 切り替えの並びとラベル。Base UI の SelectValue は value を生表示するため、モバイルの選択表示にも使う。 */
+const VIEWS: { key: ViewKey; label: string }[] = [
+  { key: "timeline", label: "時系列" },
+  { key: "performance", label: "成績・弱点" },
+  { key: "documents", label: "書類・実績" },
+  { key: "self-analysis", label: "自己分析" },
+  { key: "reports", label: "レポート" },
 ];
-/** タブ value → 日本語ラベル。Base UI の SelectValue は value を生表示するため、モバイルの選択表示に使う。 */
-const TAB_LABELS: Record<TabKey, string> = {
-  overview: "概要",
-  performance: "成績・弱点",
-  activity: "活動・書類",
-  reports: "レポート",
-  homework: "宿題",
-  messages: "メッセージ",
+/** 古い ?tab= の読み替え（通知などのリンクが残っている） */
+const LEGACY_TAB_TO_VIEW: Record<string, ViewKey> = {
+  overview: "timeline",
+  performance: "performance",
+  activity: "documents",
+  reports: "reports",
+  homework: "timeline",
+  messages: "timeline",
 };
 
 function AdminStudentDetailPageInner() {
@@ -507,52 +409,54 @@ function AdminStudentDetailPageInner() {
   const { user, userProfile } = useAuth();
   const isTeacherViewer = userProfile?.role === "teacher";
 
-  // タブ状態とURL同期
-  const rawTab = searchParams?.get("tab") ?? "overview";
-  let tab: TabKey = VALID_TABS.includes(rawTab as TabKey)
-    ? (rawTab as TabKey)
-    : "overview";
-  // 講師にはメッセージタブを出さない (直リンク時は概要へ)
-  if (isTeacherViewer && tab === "messages") tab = "overview";
+  // 表示の切り替えと URL（?view=）。古い ?tab= で来たリンク（通知など）は読み替える
+  const rawView = searchParams?.get("view");
+  const legacyTab = searchParams?.get("tab") ?? null;
+  const view: ViewKey = VIEWS.some((v) => v.key === rawView)
+    ? (rawView as ViewKey)
+    : ((legacyTab ? LEGACY_TAB_TO_VIEW[legacyTab] : undefined) ?? "timeline");
+  // 旧「宿題」タブは時系列を宿題で絞って見せる
+  const timelineInitialFilter =
+    !rawView && legacyTab === "homework" ? "homework" : undefined;
 
-  const handleTabChange = (next: string) => {
+  const handleViewChange = (next: string) => {
     const sp = new URLSearchParams(searchParams?.toString() ?? "");
-    sp.set("tab", next);
+    sp.delete("tab");
+    sp.set("view", next);
     router.replace(`?${sp.toString()}`, { scroll: false });
   };
+
+  // 旧「メッセージ」タブの中身は担当講師の割り当てだったので、設定のパネルを開く
+  const [settingsOpen, setSettingsOpen] = useState(
+    () => legacyTab === "messages"
+  );
+  // 宿題を出したら時系列を読み直す
+  const [timelineKey, setTimelineKey] = useState(0);
+  // 通知からの深リンク（?interview=）で開く面接
+  const [openInterviewId, setOpenInterviewId] = useState<string | null>(
+    () => searchParams?.get("interview") ?? null
+  );
 
   const [detail, setDetail] = useState<StudentDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [openSections, setOpenSections] = useState({
     weaknesses: false,
-    essays: false,
   });
   const [perfTab, setPerfTab] = useState<"total" | "essay" | "interview">(
     "total"
   );
 
-  // ヒートマップ用データ取得
-  const { data: interviewsData } = useAuthSWR<any[]>(
-    `/api/admin/students/${id}/interviews`
-  );
-  const { data: summaryDrillsData } = useAuthSWR<any[]>(
-    `/api/admin/students/${id}/summary-drills`
-  );
-  const { data: logicDrillsData } = useAuthSWR<any[]>(
-    `/api/admin/students/${id}/logic-drills`
-  );
-  const { data: chocoReviewsData } = useAuthSWR<any[]>(
-    `/api/admin/students/${id}/choco-reviews`
-  );
   // 未確認バッジの再取得用（提出物を開いたら件数を減らす）
   const mutateUnviewed = useUnviewedSubmissionsMutate();
-  // タブごとの未確認件数。ポーリングはしない（サイドバー側が回している）
+  // この生徒の未確認件数。ポーリングはしない（サイドバー側が回している）
   const { data: unviewedData } = useUnviewedSubmissions();
   const unviewedKinds = unviewedData?.byStudentKind?.[id] ?? {};
-  /** そのタブに属する提出物の未確認合計 */
-  const tabUnviewed = (kinds: SubmissionKind[]) =>
-    kinds.reduce((sum, k) => sum + (unviewedKinds[k] ?? 0), 0);
+  /** 未確認の提出物の合計（要点の帯の「要対応」に出す） */
+  const unviewedCount = Object.values(unviewedKinds).reduce<number>(
+    (sum, n) => sum + (n ?? 0),
+    0
+  );
 
   // 通知からの深リンク（?essay=）で該当答案を直接開く。
   // 開けば既読になるので、通知から辿ればバッジが減る。
@@ -565,35 +469,6 @@ function AdminStudentDetailPageInner() {
     // openEssayDetail は再生成されるため依存に入れない（1回だけ開く）
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoOpenEssayId]);
-  const { data: activityLogsData } = useAuthSWR<any[]>(
-    `/api/admin/students/${id}/activity-logs`
-  );
-  const { data: documentsData } = useAuthSWR<any[]>(
-    `/api/admin/students/${id}/documents`
-  );
-
-  // 活動ヒートマップ用データ生成
-  const activityHeatmapData = useMemo(() => {
-    if (!detail) return [];
-
-    return buildActivityHeatmapData({
-      essays: detail.essays,
-      interviews: interviewsData,
-      summaryDrills: summaryDrillsData,
-      logicDrills: logicDrillsData,
-      chocoReviews: chocoReviewsData,
-      activityLogs: activityLogsData,
-      documents: documentsData,
-    });
-  }, [
-    detail,
-    interviewsData,
-    summaryDrillsData,
-    logicDrillsData,
-    chocoReviewsData,
-    activityLogsData,
-    documentsData,
-  ]);
 
   // 弱点Top5データ
   const topWeaknesses = useMemo(() => {
@@ -845,14 +720,7 @@ function AdminStudentDetailPageInner() {
     );
   }
 
-  const {
-    profile,
-    weaknesses,
-    essays,
-    essayScoreTrend,
-    interviewScoreTrend,
-    lastActivityAt,
-  } = detail;
+  const { profile, weaknesses, essayScoreTrend, interviewScoreTrend } = detail;
 
   const essayChartData = (essayScoreTrend ?? []).map((p) => ({
     ...p,
@@ -871,15 +739,9 @@ function AdminStudentDetailPageInner() {
     interviewCount,
   } = computeAxisAverages(detail);
 
-  // タブコンテンツ関数
-  const renderOverviewTab = () => (
-    <div className="space-y-6">
-      <StudentSkillRadar
-        detail={detail}
-        essayAxisAvg={essayCategoryAvg}
-        interviewAxisAvg={interviewCategoryAvg}
-      />
-
+  // 設定のパネルに入れるもの。表示条件（講師に出さない等）は今までのタブの中と同じ
+  const settingsContent = (
+    <>
       {/* Profile Card */}
       <Card>
         <CardHeader>
@@ -1030,24 +892,65 @@ function AdminStudentDetailPageInner() {
       {/* 探究カリキュラム全体(読み取り)。講師も担当生徒分は閲覧可(scopeはGET側で担保) */}
       <AdminResearchCurriculumSection studentId={id} />
 
-      {/* Activity Heatmap & Top Weaknesses */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <ActivityHeatmap data={activityHeatmapData} />
-        </div>
-        <div className="lg:col-span-1">
-          <WeaknessTopChart weaknesses={topWeaknesses} />
-        </div>
-      </div>
+      {!isTeacherViewer && (
+        <TeacherAssignmentSection
+          studentId={id}
+          studentName={detail.profile.displayName || "生徒"}
+          initialAssignedTeacherIds={detail.profile.assignedTeacherIds}
+        />
+      )}
 
-      {/* Discover (自己分析 + 志望校マッチング) */}
-      <DiscoverSection studentId={id} />
-    </div>
+      {!isTeacherViewer && (
+        <Card className="border-rose-200 dark:border-rose-900/50">
+          <CardHeader>
+            <CardTitle className="text-base text-rose-700 dark:text-rose-300">
+              生徒アカウントの削除
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-muted-foreground text-sm">
+              無効化するとログインできなくなります。データは保持され、復元は運営への依頼が必要です。
+            </p>
+            <Button
+              variant="destructive"
+              className="shrink-0"
+              onClick={async () => {
+                if (
+                  !window.confirm(
+                    "この生徒アカウントを無効化しますか？\nログインできなくなります（データは保持されます）。取り消しには運営への依頼が必要です。"
+                  )
+                ) {
+                  return;
+                }
+                try {
+                  const res = await authFetch(`/api/admin/students/${id}`, {
+                    method: "DELETE",
+                  });
+                  if (!res.ok) throw new Error();
+                  toast.success("生徒を無効化しました");
+                  router.push("/admin/students");
+                } catch {
+                  toast.error("無効化に失敗しました");
+                }
+              }}
+            >
+              生徒を削除（無効化）
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+    </>
   );
 
-  const renderPerformanceTab = () => (
+  const renderPerformanceView = () => (
     <div className="space-y-6">
-      {/* 項目別の平均（日々の取り組み）。タブを開いて最初に見る値なので一番上に置く */}
+      <StudentSkillRadar
+        detail={detail}
+        essayAxisAvg={essayCategoryAvg}
+        interviewAxisAvg={interviewCategoryAvg}
+      />
+
+      {/* 項目別の平均（日々の取り組み） */}
       {(essayCategoryAvg || interviewCategoryAvg) && (
         <Card>
           <CardHeader className="pb-2">
@@ -1166,308 +1069,114 @@ function AdminStudentDetailPageInner() {
         )}
       </Card>
 
+      <WeaknessTopChart weaknesses={topWeaknesses} />
+
       <LectureProgressSection studentId={id} />
-
-      {/* Essay History — Accordion */}
-      <Card>
-        <CardHeader
-          className="cursor-pointer select-none"
-          onClick={() => setOpenSections((s) => ({ ...s, essays: !s.essays }))}
-        >
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <FileText className="size-4" />
-              添削履歴
-              <Badge variant="secondary" className="ml-1 text-xs">
-                {essays.length}
-              </Badge>
-            </CardTitle>
-            <ChevronDown
-              className={`text-muted-foreground size-4 transition-transform ${openSections.essays ? "rotate-180" : ""}`}
-            />
-          </div>
-        </CardHeader>
-        {openSections.essays && (
-          <CardContent>
-            {essays.length === 0 ? (
-              <div className="text-muted-foreground py-8 text-center text-sm">
-                添削履歴なし
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {essays.map((essay) => (
-                  <div
-                    key={essay.id}
-                    className="hover:bg-accent flex items-center justify-between rounded-lg border p-3 transition-colors"
-                  >
-                    <div>
-                      <p className="font-medium">
-                        {essay.targetUniversity} {essay.targetFaculty}
-                      </p>
-                      {/* テーマは講師がフィードバックを書くのに要る。空欄で黙らせず、
-                          推定で復元したものはその旨を添える。 */}
-                      {essay.topic ? (
-                        <p className="text-muted-foreground text-xs">
-                          {essay.topicEstimated && (
-                            <span className="mr-1 rounded bg-amber-100 px-1 text-[10px] text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
-                              推定
-                            </span>
-                          )}
-                          {essay.topic}
-                        </p>
-                      ) : (
-                        <p className="text-muted-foreground/70 text-xs">
-                          テーマ未記録（この機能より前に提出された答案です）
-                        </p>
-                      )}
-                      <p className="text-muted-foreground text-xs">
-                        {new Date(essay.submittedAt).toLocaleDateString(
-                          "ja-JP"
-                        )}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-2">
-                        {essay.scores ? (
-                          <>
-                            <SkillRankBadge
-                              rank={scoreToSkillRank(
-                                essay.scores.total,
-                                essay.scoreMaximum ?? 50
-                              )}
-                              size="sm"
-                              animate={false}
-                            />
-                            <div className="text-right">
-                              <p
-                                className={`text-lg font-bold ${scoreColor(essay.scores.total, essay.scoreMaximum ?? 50)}`}
-                              >
-                                {essay.scores.total}
-                              </p>
-                              <p className="text-muted-foreground text-xs">
-                                /{essay.scoreMaximum ?? 50}
-                              </p>
-                            </div>
-                          </>
-                        ) : (
-                          <Badge variant="secondary" className="text-xs">
-                            {ESSAY_STATUS_LABELS[essay.status] ?? essay.status}
-                          </Badge>
-                        )}
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openEssayDetail(essay.id)}
-                      >
-                        <Eye className="mr-1 size-3" />
-                        詳細
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        )}
-      </Card>
-
-      <InterviewsSection
-        studentId={id}
-        autoOpenInterviewId={searchParams?.get("interview") ?? undefined}
-      />
-      <SummaryDrillsSection studentId={id} />
-      <ChocoReviewsSection studentId={id} />
-      <LogicDrillsSection studentId={id} />
-      <InterviewDrillsSection studentId={id} />
-    </div>
-  );
-
-  const renderActivityTab = () => (
-    <div className="space-y-6">
-      <DocumentsSection studentId={id} />
-      <ActivitiesSection studentId={id} />
-      <SessionsHistorySection studentId={id} />
-      <ExamResultsSection studentId={id} />
-    </div>
-  );
-
-  const renderReportsTab = () => (
-    <div className="space-y-6">
-      <GrowthReportsSection studentId={id} />
-      <AiConversationsSection studentId={id} />
-      <CoachMemo studentId={id} />
     </div>
   );
 
   return (
-    <div className="space-y-6 p-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => router.push("/admin/students")}
-        >
-          <ArrowLeft className="mr-1 size-4" />
-          戻る
-        </Button>
-        <div className="flex items-center gap-3">
-          <Avatar size="lg">
-            <AvatarImage
-              src={profile.photoURL ?? undefined}
-              alt={profile.displayName}
-            />
-            <AvatarFallback>{getInitials(profile.displayName)}</AvatarFallback>
-          </Avatar>
-          <div>
-            <h1 className="text-2xl font-bold">{profile.displayName}</h1>
-            <p className="text-muted-foreground text-sm">生徒詳細</p>
-          </div>
+    <div className="space-y-6 p-4 sm:p-6">
+      <Link
+        href="/admin/students"
+        className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm"
+      >
+        <ArrowLeft className="size-4" />
+        戻る
+      </Link>
 
-          {/* 活動ステータス */}
-          {(() => {
-            if (!lastActivityAt)
-              return <Badge variant="secondary">活動なし</Badge>;
-            const days = Math.floor(
-              (Date.now() - new Date(lastActivityAt).getTime()) / 86400000
-            );
-            if (days <= 7)
-              return (
-                <Badge className="border-emerald-300 bg-emerald-100 text-emerald-800">
-                  アクティブ
-                </Badge>
-              );
-            if (days <= 14)
-              return (
-                <Badge className="border-amber-300 bg-amber-100 text-amber-800">
-                  やや停滞
-                </Badge>
-              );
-            return (
-              <Badge className="border-rose-300 bg-rose-100 text-rose-800">
-                非アクティブ（{days}日）
-              </Badge>
-            );
-          })()}
+      <StudentHeader
+        detail={detail}
+        onOpenSettings={() => setSettingsOpen(true)}
+        onHomeworkCreated={() => setTimelineKey((k) => k + 1)}
+      />
+
+      <SummaryBand
+        detail={detail}
+        unviewedCount={unviewedCount}
+        onOpenPerformance={() => handleViewChange("performance")}
+      />
+
+      {/* 切り替え。下へ送っても上に残す（帯は流す） */}
+      <div className="bg-background/95 supports-[backdrop-filter]:bg-background/70 sticky top-0 z-20 -mx-4 border-b px-4 py-2 backdrop-blur sm:-mx-6 sm:px-6">
+        {/* モバイル: ドロップダウンで切替（横あふれで見切れるため） */}
+        <div className="sm:hidden">
+          <Select value={view} onValueChange={(v) => v && handleViewChange(v)}>
+            <SelectTrigger className="w-full" aria-label="表示の切り替え">
+              <SelectValue>
+                {(v) => VIEWS.find((x) => x.key === v)?.label ?? ""}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {VIEWS.map((v) => (
+                <SelectItem key={v.key} value={v.key}>
+                  {v.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="hidden flex-wrap gap-1 sm:flex">
+          {VIEWS.map((v) => (
+            <Button
+              key={v.key}
+              size="sm"
+              variant={view === v.key ? "default" : "ghost"}
+              aria-pressed={view === v.key}
+              onClick={() => handleViewChange(v.key)}
+            >
+              {v.label}
+            </Button>
+          ))}
         </div>
       </div>
 
-      {/* sticky ブロック: ピン留めサマリ + タブリスト */}
-      <Tabs value={tab} onValueChange={handleTabChange} className="flex-col">
-        <div className="bg-background/95 supports-[backdrop-filter]:bg-background/70 sticky top-0 z-20 -mx-6 border-b px-6 pt-2 backdrop-blur">
-          <PinnedSummary detail={detail} />
-          {/* モバイル: タブをドロップダウンで切替（横あふれで宿題/メッセージが見切れるため） */}
-          <div className="mt-3 sm:hidden">
-            <Select value={tab} onValueChange={(v) => v && handleTabChange(v)}>
-              <SelectTrigger className="w-full">
-                <SelectValue>
-                  {(v) => (v ? TAB_LABELS[v as TabKey] : "")}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="overview">概要</SelectItem>
-                <SelectItem value="performance">成績・弱点</SelectItem>
-                <SelectItem value="activity">活動・書類</SelectItem>
-                <SelectItem value="reports">レポート</SelectItem>
-                <SelectItem value="homework">宿題</SelectItem>
-                {!isTeacherViewer && (
-                  <SelectItem value="messages">メッセージ</SelectItem>
-                )}
-              </SelectContent>
-            </Select>
+      <motion.div
+        key={view}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2 }}
+      >
+        {view === "timeline" && (
+          <StudentTimeline
+            key={timelineKey}
+            studentId={id}
+            unviewedIds={unviewedData?.ids}
+            initialFilter={timelineInitialFilter}
+            onOpenEssay={openEssayDetail}
+          />
+        )}
+        {view === "performance" && renderPerformanceView()}
+        {view === "documents" && (
+          <div className="space-y-6">
+            <DocumentsSection studentId={id} />
+            <ActivitiesSection studentId={id} />
+            <ExamResultsSection studentId={id} />
           </div>
-          <TabsList className="mt-3 hidden w-full justify-start overflow-x-auto sm:flex">
-            <TabsTrigger value="overview">概要</TabsTrigger>
-            <TabsTrigger value="performance">
-              成績・弱点
-              <TabUnviewedBadge
-                count={tabUnviewed([
-                  "essay",
-                  "chocoReview",
-                  "summaryDrill",
-                  "logicDrill",
-                ])}
-              />
-            </TabsTrigger>
-            <TabsTrigger value="activity">
-              活動・書類
-              <TabUnviewedBadge count={tabUnviewed(["document"])} />
-            </TabsTrigger>
-            <TabsTrigger value="reports">レポート</TabsTrigger>
-            <TabsTrigger value="homework">宿題</TabsTrigger>
-            {!isTeacherViewer && (
-              <TabsTrigger value="messages">メッセージ</TabsTrigger>
-            )}
-          </TabsList>
-        </div>
+        )}
+        {view === "self-analysis" && (
+          <DiscoverSection studentId={id} defaultCollapsed compactTree />
+        )}
+        {view === "reports" && (
+          <div className="space-y-6">
+            <GrowthReportsSection studentId={id} />
+            <CoachMemo studentId={id} />
+          </div>
+        )}
+      </motion.div>
 
-        <TabsContent value="overview">
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            {renderOverviewTab()}
-          </motion.div>
-        </TabsContent>
+      <StudentSettingsSheet open={settingsOpen} onOpenChange={setSettingsOpen}>
+        {settingsContent}
+      </StudentSettingsSheet>
 
-        <TabsContent value="performance">
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            {renderPerformanceTab()}
-          </motion.div>
-        </TabsContent>
-
-        <TabsContent value="activity">
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            {renderActivityTab()}
-          </motion.div>
-        </TabsContent>
-
-        <TabsContent value="reports">
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            {renderReportsTab()}
-          </motion.div>
-        </TabsContent>
-
-        <TabsContent value="homework">
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            <HomeworkStatusSection studentId={id} />
-          </motion.div>
-        </TabsContent>
-
-        <TabsContent value="messages">
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            {!isTeacherViewer && (
-              <TeacherAssignmentSection
-                studentId={id}
-                studentName={detail.profile.displayName || "生徒"}
-                initialAssignedTeacherIds={detail.profile.assignedTeacherIds}
-              />
-            )}
-          </motion.div>
-        </TabsContent>
-      </Tabs>
+      {/* 通知からの深リンク（?interview=）で面接詳細を開く */}
+      <InterviewDetailDialog
+        studentId={id}
+        id={openInterviewId}
+        onOpenChange={(open) => {
+          if (!open) setOpenInterviewId(null);
+        }}
+      />
 
       {/* Profile Edit Dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
@@ -2152,46 +1861,6 @@ function AdminStudentDetailPageInner() {
             viewerUid={user.uid}
           />
         )}
-
-      {!isTeacherViewer && (
-        <Card className="border-rose-200 dark:border-rose-900/50">
-          <CardHeader>
-            <CardTitle className="text-base text-rose-700 dark:text-rose-300">
-              生徒アカウントの削除
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-muted-foreground text-sm">
-              無効化するとログインできなくなります。データは保持され、復元は運営への依頼が必要です。
-            </p>
-            <Button
-              variant="destructive"
-              className="shrink-0"
-              onClick={async () => {
-                if (
-                  !window.confirm(
-                    "この生徒アカウントを無効化しますか？\nログインできなくなります（データは保持されます）。取り消しには運営への依頼が必要です。"
-                  )
-                ) {
-                  return;
-                }
-                try {
-                  const res = await authFetch(`/api/admin/students/${id}`, {
-                    method: "DELETE",
-                  });
-                  if (!res.ok) throw new Error();
-                  toast.success("生徒を無効化しました");
-                  router.push("/admin/students");
-                } catch {
-                  toast.error("無効化に失敗しました");
-                }
-              }}
-            >
-              生徒を削除（無効化）
-            </Button>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }
