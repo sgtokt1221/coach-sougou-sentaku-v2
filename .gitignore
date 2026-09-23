@@ -75,3 +75,6 @@ essay-drafts-backup-*.json
 
 # 本番データ修正の復旧用バックアップ（生徒の答案本文を含むのでコミットしない）
 essay-draft-backup-*.json
+
+# brainstorming のモックアップ
+.superpowers/
