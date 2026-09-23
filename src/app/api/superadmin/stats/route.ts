@@ -468,7 +468,6 @@ export async function GET(request: Request) {
       interviews: emptyUsage(),
       documents: emptyUsage(),
       activities: emptyUsage(),
-      skillChecks: emptyUsage(),
       selfAnalysis: emptyUsage(),
     };
     try {
@@ -497,23 +496,14 @@ export async function GET(request: Request) {
         return { count: snap.size, set };
       };
 
-      const [
-        essays,
-        interviews,
-        documents,
-        activities,
-        scDocs,
-        scInterview,
-        selfSnap,
-      ] = await Promise.all([
-        usageFromTopLevel("essays"),
-        usageFromTopLevel("interviews"),
-        groupUsage("documents"),
-        groupUsage("activities"),
-        groupUsage("skillChecks"),
-        groupUsage("interviewSkillChecks"),
-        adminDb.collection("selfAnalysis").get(),
-      ]);
+      const [essays, interviews, documents, activities, selfSnap] =
+        await Promise.all([
+          usageFromTopLevel("essays"),
+          usageFromTopLevel("interviews"),
+          groupUsage("documents"),
+          groupUsage("activities"),
+          adminDb.collection("selfAnalysis").get(),
+        ]);
       featureUsage.essays = essays;
       featureUsage.interviews = interviews;
       featureUsage.documents = {
@@ -523,12 +513,6 @@ export async function GET(request: Request) {
       featureUsage.activities = {
         count: activities.count,
         students: activities.set.size,
-      };
-      // スキルチェックは小論文/面接の両方を合算 (生徒は和集合で distinct)
-      const scUnion = new Set<string>([...scDocs.set, ...scInterview.set]);
-      featureUsage.skillChecks = {
-        count: scDocs.count + scInterview.count,
-        students: scUnion.size,
       };
       featureUsage.selfAnalysis = {
         count: selfSnap.size,

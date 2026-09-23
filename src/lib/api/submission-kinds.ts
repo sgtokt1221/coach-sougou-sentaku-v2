@@ -9,8 +9,6 @@
  */
 export type SubmissionKind =
   | "essay"
-  | "skillCheck"
-  | "interviewSkillCheck"
   | "document"
   | "chocoReview"
   | "summaryDrill"
@@ -36,16 +34,6 @@ export const SUBMISSION_KINDS: Record<SubmissionKind, SubmissionKindConfig> = {
     subcollection: null, // essays（グローバル。userId で絞る）
     timestampField: "submittedAt",
     countable: (d) => d.status === "reviewed",
-  },
-  skillCheck: {
-    label: "スキルチェック",
-    subcollection: "skillChecks",
-    timestampField: "takenAt",
-  },
-  interviewSkillCheck: {
-    label: "面接スキルチェック",
-    subcollection: "interviewSkillChecks",
-    timestampField: "takenAt",
   },
   document: {
     label: "出願書類",

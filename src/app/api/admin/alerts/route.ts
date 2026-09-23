@@ -46,8 +46,7 @@ interface StudentAlertData {
       | "essay_reviewed"
       | "self_analysis_done"
       | "document_submitted"
-      | "interview_done"
-      | "skill_check_done";
+      | "interview_done";
     itemId: string;
     at: string;
     message: string;
@@ -417,11 +416,9 @@ export async function GET(request: NextRequest) {
           activityDates.push(latestEssay.submittedAt.toDate().getTime());
         }
 
-        // 面接・スキルチェック・要約ドリル・活動ログ (ネタインプット/面接ドリル)
+        // 面接・要約ドリル・活動ログ (ネタインプット/面接ドリル)
         const otherCollections: Array<{ name: string; field: string }> = [
           { name: "interviews", field: "startedAt" },
-          { name: "skillChecks", field: "takenAt" },
-          { name: "interviewSkillChecks", field: "takenAt" },
           { name: "summaryDrills", field: "completedAt" },
           { name: "activityLogs", field: "createdAt" },
         ];
@@ -595,28 +592,6 @@ export async function GET(request: NextRequest) {
               at: new Date(latestMs).toISOString(),
               message: `${sName}さんが模擬面接を実施しました`,
               link: `/admin/students/${studentUid}?tab=activity`,
-            });
-          }
-        } catch {
-          /* skip */
-        }
-
-        // スキルチェック (users/{uid}/skillChecks, takenAt desc の先頭)
-        try {
-          const scSnap = await adminDb!
-            .collection(`users/${studentUid}/skillChecks`)
-            .orderBy("takenAt", "desc")
-            .limit(1)
-            .get();
-          const scDoc = scSnap.docs[0];
-          const scAt = scDoc?.data()?.takenAt?.toDate?.();
-          if (scDoc && scAt && isRecent(scAt.getTime())) {
-            recentActivities.push({
-              type: "skill_check_done",
-              itemId: scDoc.id,
-              at: scAt.toISOString(),
-              message: `${sName}さんがスキルチェックを完了しました`,
-              link: `/admin/students/${studentUid}?tab=performance`,
             });
           }
         } catch {

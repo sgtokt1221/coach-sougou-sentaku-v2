@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
     const userData = userDoc.data();
     const uid = userDoc.id;
 
-    // documents / sessions / activities / selfAnalysis / skillChecks も並列取得
+    // documents / sessions / activities / selfAnalysis も並列取得
     const [
       essaysSnap,
       interviewsSnap,
@@ -228,14 +228,9 @@ export async function POST(request: NextRequest) {
       documents_in_progress_count: documentsInProgressCount,
       session_count: sessionsSnap.size,
       self_analysis_completion_pct: selfAnalysisCompletionPct,
-      sc_essay_score:
-        typeof userData.lastSkillCheckScore === "number"
-          ? userData.lastSkillCheckScore
-          : null,
-      sc_interview_score:
-        typeof userData.lastInterviewCheckScore === "number"
-          ? userData.lastInterviewCheckScore
-          : null,
+      // スキルチェックは廃止した。列は既存テーブルのスキーマに合わせて残し、null を書く
+      sc_essay_score: null,
+      sc_interview_score: null,
       english_cert_top_score: englishCertTopScore,
       target_university_top: targetUniTop || null,
       target_faculty_top: targetFacTop || null,

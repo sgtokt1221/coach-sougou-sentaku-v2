@@ -1,11 +1,7 @@
 import type { WeaknessRecord } from "./growth";
 import type { EssayScores } from "./essay";
 import type { EnglishCert } from "./user";
-import type {
-  SkillRank,
-  AcademicCategory,
-  SkillCheckStatus,
-} from "./skill-check";
+import type { SkillRank } from "./skill-check";
 
 export interface StudentListItem {
   uid: string;
@@ -62,20 +58,14 @@ export interface StudentListItem {
   weaknessTrend?: "improving" | "stable" | "declining" | null;
   documentProgress: { completed: number; total: number };
   lastSessionAt: string | null;
-  /** スキルチェック総合ランク（未受験 null） */
+  /** 小論文ランク（直近10件の提出の平均。提出なしは null） */
   currentSkillRank: SkillRank | null;
-  /** スキルチェック総合スコア 0-50 */
+  /** 小論文スコア 0-50（直近10件の提出の平均） */
   currentSkillScore: number | null;
-  /** 最後に受験した日時 */
-  lastSkillCheckedAt: string | null;
-  /** 受験系統 */
-  academicCategory: AcademicCategory | null;
-  /** 面接スキルランク */
+  /** 面接ランク（直近10件の提出の平均。提出なしは null） */
   currentInterviewRank: SkillRank | null;
-  /** 面接スキルスコア 0-40 */
+  /** 面接スコア 0-40（直近10件の提出の平均） */
   currentInterviewScore: number | null;
-  /** 最後に面接スキルチェックを受けた日時 */
-  lastInterviewCheckedAt: string | null;
   /** @deprecated 単一講師時代の名残。assignedTeacherIds を使う */
   assignedTeacherId?: string;
   /** 担当講師の uid 配列 (複数講師対応) */
@@ -165,30 +155,16 @@ export interface StudentDetail {
     bestCategory?: string;
     worstCategory?: string;
   };
-  /** 小論文スキル: 最新スキルチェック結果のみ (sc_only / none モード) */
+  /** 小論文スキル: 直近10件の提出の平均 (practice_only / none モード) */
   essayAggregate?: import("@/lib/skill-check/aggregate").AggregateBreakdown;
-  /** 面接スキル: 最新スキルチェック結果のみ */
+  /** 面接スキル: 直近10件の提出の平均 */
   interviewAggregate?: import("@/lib/skill-check/aggregate").AggregateBreakdown;
-  /** 小論文 SC 受験メタ。 リマインド表示用 */
-  essaySkillCheckMeta?: {
-    takenAt: string;
-    daysSinceLast: number;
-    needsRefresh: boolean;
-  };
-  /** 面接 SC 受験メタ */
-  interviewSkillCheckMeta?: {
-    takenAt: string;
-    daysSinceLast: number;
-    needsRefresh: boolean;
-  };
   lastActivityAt?: string | null;
   /** 最終活動の種別と日時。種別の正本は lib/api/last-activity.ts */
   lastActivity?: import("@/lib/api/last-activity").LastActivity | null;
   /** 最終ログイン (users.lastSeenAt) */
   lastSeenAt?: string | null;
   realtimeUnlocked?: boolean;
-  skillCheck?: SkillCheckStatus;
-  interviewSkillCheck?: import("./interview-skill-check").InterviewSkillCheckStatus;
 }
 
 export interface EssayListItem {
@@ -310,7 +286,6 @@ export interface FeatureUsageStat {
   interviews: FeatureUsageItem;
   documents: FeatureUsageItem;
   activities: FeatureUsageItem;
-  skillChecks: FeatureUsageItem;
   selfAnalysis: FeatureUsageItem;
 }
 
@@ -385,8 +360,7 @@ export interface AlertItem {
     | "essay_reviewed" // 添削を提出・完了
     | "self_analysis_done" // 自己分析の進捗・完了
     | "document_submitted" // 書類の提出・再提出
-    | "interview_done" // 模擬面接 完了
-    | "skill_check_done"; // スキルチェック 完了
+    | "interview_done"; // 模擬面接 完了
   // info=活動系のお知らせ
   severity: "critical" | "warning" | "high" | "info";
   message: string;

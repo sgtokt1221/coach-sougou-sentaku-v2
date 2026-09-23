@@ -61,7 +61,6 @@ export interface ActivityHeatmapData {
   date: string;
   essay: number;
   interview: number;
-  skillCheck: number;
   drill: number;          // 要約ドリル
   logicDrill: number;     // 論理ドリル
   choco: number;          // ちょこ添削
@@ -79,8 +78,6 @@ export interface ActivityLog {
 export interface ActivityDataSources {
   essays?: Array<{ submittedAt: string }>;
   interviews?: Array<{ startedAt?: string; createdAt?: string; status?: string }>;
-  // SkillCheckResult.takenAt が Date 型のため string | Date 両対応にする
-  skillChecks?: Array<{ takenAt?: string | Date; createdAt?: string | Date }>;
   summaryDrills?: Array<{ completedAt?: string; createdAt?: string }>;
   logicDrills?: Array<{ completedAt?: string; createdAt?: string }>;
   chocoReviews?: Array<{ createdAt?: string }>;
@@ -101,8 +98,6 @@ export function buildActivityHeatmapData(sources: ActivityDataSources): Activity
     date: day,
     essay: countByDay(sources.essays ?? [], 'submittedAt', day),
     interview: countByDay(completedInterviews, 'startedAt', day),
-    skillCheck: countByDay(sources.skillChecks ?? [], 'takenAt', day) +
-                countByDay(sources.skillChecks ?? [], 'createdAt', day),
     drill: countByDay(sources.summaryDrills ?? [], 'completedAt', day) +
            countByDay(sources.summaryDrills ?? [], 'createdAt', day),
     logicDrill: countByDay(sources.logicDrills ?? [], 'completedAt', day) +

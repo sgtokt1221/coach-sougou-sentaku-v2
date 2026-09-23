@@ -9,7 +9,6 @@ import { normalizedEssayTotal } from "@/lib/types/essay";
 import {
   computeEssayAggregate,
   computeInterviewAggregate,
-  resolveScRawScore,
 } from "@/lib/skill-check/aggregate";
 
 function isDeclining(scores: number[]): boolean {
@@ -214,19 +213,6 @@ export async function GET(request: NextRequest) {
             .get(),
           adminDb!.collection("interviews").where("userId", "==", uid).get(),
           adminDb!.collection(`users/${uid}/homeworkAssignments`).get(),
-          // SC 原値は生徒詳細と同じ出所（サブコレクションの最新1件）から取る。
-          // 一覧だけ users のデノーマライズ値を使うと、書き込みが片方だけ失敗した
-          // ときに一覧と詳細でランクが食い違う
-          adminDb!
-            .collection(`users/${uid}/skillChecks`)
-            .orderBy("takenAt", "desc")
-            .limit(1)
-            .get(),
-          adminDb!
-            .collection(`users/${uid}/interviewSkillChecks`)
-            .orderBy("takenAt", "desc")
-            .limit(1)
-            .get(),
         ]);
         const subQueryNames = [
           "essays",
@@ -235,8 +221,6 @@ export async function GET(request: NextRequest) {
           "sessions",
           "interviews",
           "homeworkAssignments",
-          "skillChecks",
-          "interviewSkillChecks",
         ];
         const [
           essaysSnap,
@@ -245,8 +229,6 @@ export async function GET(request: NextRequest) {
           sessionsSnap,
           interviewsSnap,
           homeworkSnap,
-          skillChecksSnap,
-          interviewSkillChecksSnap,
         ] = subResults.map((r, i) => {
           if (r.status === "rejected") {
             console.warn(
@@ -410,27 +392,10 @@ export async function GET(request: NextRequest) {
             lastSessionDoc.scheduledAt)
           : null;
 
-        const lastSkillCheckedAt: string | null =
-          data.lastSkillCheckedAt?.toDate?.()?.toISOString() ?? null;
-        const lastInterviewCheckedAt: string | null =
-          data.lastInterviewCheckedAt?.toDate?.()?.toISOString() ?? null;
-
-        // 練習集計を反映した aggregate ランクを算出。生徒詳細と同じ式・同じ入力を使う。
-        // 渡すのは SC の原値。currentSkillScore は refreshEssayAggregateCache が
-        // 書いた「合成後」の値なので、これを原値として渡すと練習平均を二重に混ぜる。
+        // 提出の平均からランクを算出する。生徒詳細と同じ式・同じ入力を使う。
         const [essayAgg, interviewAgg] = await Promise.all([
-          computeEssayAggregate(
-            uid,
-            resolveScRawScore(skillChecksSnap.docs[0]?.data(), data)
-          ),
-          computeInterviewAggregate(
-            uid,
-            resolveScRawScore(
-              interviewSkillChecksSnap.docs[0]?.data(),
-              data,
-              "interview"
-            )
-          ),
+          computeEssayAggregate(uid),
+          computeInterviewAggregate(uid),
         ]);
 
         return {
@@ -468,11 +433,8 @@ export async function GET(request: NextRequest) {
           lastSessionAt,
           currentSkillRank: essayAgg.compositeRank,
           currentSkillScore: essayAgg.compositeScore,
-          lastSkillCheckedAt,
-          academicCategory: data.academicCategory ?? null,
           currentInterviewRank: interviewAgg.compositeRank,
           currentInterviewScore: interviewAgg.compositeScore,
-          lastInterviewCheckedAt,
           assignedTeacherIds: getAssignedTeacherIds(data),
         };
       })

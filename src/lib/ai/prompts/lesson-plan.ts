@@ -47,11 +47,11 @@ export interface LessonPlanContext {
     goal: string;
     questions: string[];
   }>;
-  /** 前回セッション以降に生徒が作成した成果物のサマリー（面接/書類/活動/スキルチェック/レポート） */
+  /** 前回セッション以降に生徒が作成した成果物のサマリー（面接/書類/活動/レポート） */
   recentArtifactsSummary?: string;
   /** 志望校のアドミッション・ポリシー (上位数校。AP 合致を意識した問い設計に使う) */
   admissionPolicies?: Array<{ name: string; ap: string }>;
-  /** 最新スキルチェック結果 (ランク/スコア。弱点の裏付けに使う) */
+  /** 直近10件の提出の平均によるランク/スコア (小論文50点満点・面接40点満点。弱点の裏付けに使う) */
   latestSkill?: {
     essayRank?: string;
     essayScore?: number;
@@ -141,9 +141,9 @@ ${ctx
   const skillLines: string[] = [];
   if (ctx.latestSkill?.essayRank || typeof ctx.latestSkill?.essayScore === "number") {
     skillLines.push(
-      `小論文スキル: ランク ${ctx.latestSkill.essayRank ?? "—"} / スコア ${
+      `小論文: ランク ${ctx.latestSkill.essayRank ?? "—"} / スコア ${
         ctx.latestSkill.essayScore ?? "—"
-      }`,
+      } (50点満点)`,
     );
   }
   if (
@@ -151,14 +151,14 @@ ${ctx
     typeof ctx.latestSkill?.interviewScore === "number"
   ) {
     skillLines.push(
-      `面接スキル: ランク ${ctx.latestSkill.interviewRank ?? "—"} / スコア ${
+      `面接: ランク ${ctx.latestSkill.interviewRank ?? "—"} / スコア ${
         ctx.latestSkill.interviewScore ?? "—"
-      }`,
+      } (40点満点)`,
     );
   }
   const skillSection =
     skillLines.length > 0
-      ? `\n## 最新スキルチェック (弱点の裏付け・到達度の参考)\n${skillLines
+      ? `\n## 直近10件の提出の平均によるランク（小論文50点満点・面接40点満点。弱点の裏付け・到達度の参考）\n${skillLines
           .map((l) => `- ${l}`)
           .join("\n")}\n`
       : "";

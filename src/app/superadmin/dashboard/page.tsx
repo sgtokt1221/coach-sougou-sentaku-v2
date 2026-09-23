@@ -60,7 +60,6 @@ const mockStats: SuperadminDashboardStats = {
     interviews: emptyUsageItem,
     documents: emptyUsageItem,
     activities: emptyUsageItem,
-    skillChecks: emptyUsageItem,
     selfAnalysis: emptyUsageItem,
   },
   byOrganization: [],
@@ -363,14 +362,13 @@ export default function SuperadminDashboard() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-5">
             {(
               [
                 { key: "essays", label: "小論文添削" },
                 { key: "interviews", label: "模擬面接" },
                 { key: "documents", label: "出願書類" },
                 { key: "activities", label: "活動実績" },
-                { key: "skillChecks", label: "スキルチェック" },
                 { key: "selfAnalysis", label: "自己分析" },
               ] as const
             ).map((f) => {

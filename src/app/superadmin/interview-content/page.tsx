@@ -24,12 +24,12 @@ import {
   type InterviewContentItem,
 } from "@/lib/types/interview-content";
 
+// スキルチェックは廃止したので skill_check は扱わない（型とデータは残してある）
 const MODES: ContentMode[] = [
   "group_discussion",
   "individual",
   "oral_exam",
   "presentation",
-  "skill_check",
 ];
 
 type ListResponse = { items: InterviewContentItem[]; source: "seed" | "firestore" };

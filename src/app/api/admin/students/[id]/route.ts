@@ -72,7 +72,6 @@ function resolveEssayTopic(
 import {
   computeEssayAggregate,
   computeInterviewAggregate,
-  resolveScRawScore,
 } from "@/lib/skill-check/aggregate";
 
 export async function GET(
@@ -165,13 +164,7 @@ export async function GET(
       }
     };
 
-    const [
-      essaysSnap,
-      interviewsSnap,
-      weaknessesSnap,
-      skillChecksSnap,
-      interviewSkillChecksSnap,
-    ] = await Promise.all([
+    const [essaysSnap, interviewsSnap, weaknessesSnap] = await Promise.all([
       adminDb
         .collection("essays")
         .where("userId", "==", id)
@@ -179,16 +172,6 @@ export async function GET(
         .get(),
       fetchCompletedInterviews(),
       adminDb.collection(`users/${id}/weaknesses`).get(),
-      adminDb
-        .collection(`users/${id}/skillChecks`)
-        .orderBy("takenAt", "desc")
-        .limit(1)
-        .get(),
-      adminDb
-        .collection(`users/${id}/interviewSkillChecks`)
-        .orderBy("takenAt", "desc")
-        .limit(1)
-        .get(),
     ]);
 
     // 大学ID→日本語名のヘルパー（部分一致フォールバック付き）
@@ -519,44 +502,11 @@ export async function GET(
     const targetUnis = userData.targetUniversities ?? [];
     const resolvedUniversities = resolveTargetUniversities(targetUnis);
 
-    // スキル指標 = SC × 0.4 + 直近30日の練習平均 × 0.6 の合成。
-    // 以前はここだけ練習を空配列で渡して SC 単独にしていたため、生徒一覧の
-    // ランクと食い違っていた（同じ生徒が一覧では B、詳細では A になる）。
-    // SC 未受験でも練習だけでランクが付く（mode = practice_only）。
-    const latestEssaySc = skillChecksSnap.docs[0]?.data();
-    const latestInterviewSc = interviewSkillChecksSnap.docs[0]?.data();
-
-    // SC 原値の決め方は生徒一覧と共通のヘルパーに寄せる（食い違いを構造的に防ぐ）
-    const essayScTotal = resolveScRawScore(latestEssaySc, userData);
-    const interviewScTotal = resolveScRawScore(
-      latestInterviewSc,
-      userData,
-      "interview"
-    );
-
-    // 直近30日の練習（小論文添削 + ちょこ添削 / 面接）を Firestore から集めて合成する
+    // スキル指標 = 直近10件の提出の平均。生徒一覧と同じ式・同じ入力で算出する。
     const [essayAggregate, interviewAggregate] = await Promise.all([
-      computeEssayAggregate(id, essayScTotal),
-      computeInterviewAggregate(id, interviewScTotal),
+      computeEssayAggregate(id),
+      computeInterviewAggregate(id),
     ]);
-
-    // SC 受験メタ (リマインド UI 用)
-    const buildSkillCheckMeta = (
-      doc: FirebaseFirestore.DocumentData | undefined
-    ):
-      | { takenAt: string; daysSinceLast: number; needsRefresh: boolean }
-      | undefined => {
-      const taken = doc?.takenAt?.toDate?.() as Date | undefined;
-      if (!taken) return undefined;
-      const days = Math.floor((Date.now() - taken.getTime()) / 86400000);
-      return {
-        takenAt: taken.toISOString(),
-        daysSinceLast: days,
-        needsRefresh: days >= 30,
-      };
-    };
-    const essaySkillCheckMeta = buildSkillCheckMeta(latestEssaySc);
-    const interviewSkillCheckMeta = buildSkillCheckMeta(latestInterviewSc);
 
     // 通知が届く状態か（トークンの有無・最終配信・設定で全部切っているか）
     const { loadPushStatus } = await import("@/lib/notifications/push-status");
@@ -606,8 +556,6 @@ export async function GET(
       ...(interviewCategoryAverages ? { interviewCategoryAverages } : {}),
       essayAggregate,
       interviewAggregate,
-      ...(essaySkillCheckMeta ? { essaySkillCheckMeta } : {}),
-      ...(interviewSkillCheckMeta ? { interviewSkillCheckMeta } : {}),
       lastActivityAt,
       lastActivity,
       lastSeenAt,

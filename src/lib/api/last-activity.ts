@@ -11,8 +11,6 @@ import type { Firestore } from "firebase-admin/firestore";
 export type LastActivityType =
   | "essay"
   | "interview"
-  | "skillCheck"
-  | "interviewSkillCheck"
   | "summaryDrill"
   | "logicDrill"
   | "chocoReview"
@@ -26,8 +24,6 @@ export type LastActivityType =
 export const LAST_ACTIVITY_LABELS: Record<LastActivityType, string> = {
   essay: "小論文添削",
   interview: "模擬面接",
-  skillCheck: "スキルチェック",
-  interviewSkillCheck: "面接スキルチェック",
   summaryDrill: "要約ドリル",
   logicDrill: "論理ドリル",
   chocoReview: "ちょこ添削",
@@ -53,8 +49,6 @@ const SUB_SOURCES: {
   field: string;
   type: LastActivityType;
 }[] = [
-  { name: "skillChecks", field: "takenAt", type: "skillCheck" },
-  { name: "interviewSkillChecks", field: "takenAt", type: "interviewSkillCheck" },
   { name: "summaryDrills", field: "completedAt", type: "summaryDrill" },
   { name: "logicDrills", field: "completedAt", type: "logicDrill" },
   { name: "chokoReviews", field: "submittedAt", type: "chocoReview" },

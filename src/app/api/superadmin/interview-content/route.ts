@@ -8,12 +8,12 @@ import type {
 import { INTERVIEW_CONTENT_SEED } from "@/data/interview-content";
 
 const COLLECTION = "interviewContent";
+// スキルチェックは廃止したので skill_check は扱わない（型とデータは残してある）
 const VALID_MODES: ContentMode[] = [
   "group_discussion",
   "individual",
   "oral_exam",
   "presentation",
-  "skill_check",
 ];
 
 /**

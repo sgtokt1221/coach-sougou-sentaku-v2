@@ -80,8 +80,6 @@ export async function POST(
     coachThreadsSnap,
     prevResult,
     studentSnap,
-    essaySkillSnap,
-    interviewSkillSnap,
   ] = await Promise.all([
     adminDb.doc(`selfAnalysis/${studentId}`).get(),
     // Phase 4: archive を考慮して多めに取り、 後段で filter + slice
@@ -105,19 +103,6 @@ export async function POST(
     getPreviousSessionWithAbsences(adminDb, studentId, session.scheduledAt),
     // 志望校解決用に生徒プロフィール
     adminDb.doc(`users/${studentId}`).get().catch(() => null),
-    // 最新スキルチェック (小論文 / 面接)
-    adminDb
-      .collection(`users/${studentId}/skillChecks`)
-      .orderBy("takenAt", "desc")
-      .limit(1)
-      .get()
-      .catch(() => null),
-    adminDb
-      .collection(`users/${studentId}/interviewSkillChecks`)
-      .orderBy("takenAt", "desc")
-      .limit(1)
-      .get()
-      .catch(() => null),
   ]);
 
   // 欠席回は飛ばして「直近の実施回」を前回とする。欠席回に準備してあった台本は
@@ -236,26 +221,28 @@ export async function POST(
     console.warn("[generate-plan] AP resolution failed:", err);
   }
 
-  // 最新スキルチェック (rank + total)
+  // ランク (直近10件の提出の平均)。refresh*AggregateCache が users に書いた値を読む
   let latestSkill: LessonPlanContext["latestSkill"];
-  const essaySkill = essaySkillSnap && !essaySkillSnap.empty
-    ? (essaySkillSnap.docs[0].data() as {
-        rank?: string;
-        scores?: { total?: number };
-      })
-    : null;
-  const interviewSkill = interviewSkillSnap && !interviewSkillSnap.empty
-    ? (interviewSkillSnap.docs[0].data() as {
-        rank?: string;
-        scores?: { total?: number };
-      })
-    : null;
-  if (essaySkill || interviewSkill) {
+  const studentData = studentSnap?.data() as
+    | {
+        currentSkillRank?: string | null;
+        currentSkillScore?: number | null;
+        currentInterviewRank?: string | null;
+        currentInterviewScore?: number | null;
+      }
+    | undefined;
+  const essayRank = studentData?.currentSkillRank ?? undefined;
+  const interviewRank = studentData?.currentInterviewRank ?? undefined;
+  if (essayRank || interviewRank) {
     latestSkill = {
-      essayRank: essaySkill?.rank,
-      essayScore: essaySkill?.scores?.total,
-      interviewRank: interviewSkill?.rank,
-      interviewScore: interviewSkill?.scores?.total,
+      essayRank,
+      essayScore: essayRank
+        ? (studentData?.currentSkillScore ?? undefined)
+        : undefined,
+      interviewRank,
+      interviewScore: interviewRank
+        ? (studentData?.currentInterviewScore ?? undefined)
+        : undefined,
     };
   }
 

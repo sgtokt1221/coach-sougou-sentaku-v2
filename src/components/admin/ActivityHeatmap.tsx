@@ -26,7 +26,6 @@ function ActivityTooltip({ active, payload, label }: any) {
   const typeLabels: Record<string, string> = {
     essay: "小論文添削",
     interview: "面接",
-    skillCheck: "スキルチェック",
     drill: "要約ドリル",
     logicDrill: "論理ドリル",
     choco: "ちょこ添削",
@@ -69,7 +68,7 @@ function formatXAxisTick(value: string, index: number) {
 export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
   // 全期間で活動があるかチェック
   const hasAnyActivity = data.some(day =>
-    day.essay > 0 || day.interview > 0 || day.skillCheck > 0 ||
+    day.essay > 0 || day.interview > 0 ||
     day.drill > 0 || day.logicDrill > 0 || day.choco > 0 || day.topicInput > 0 || day.interviewDrill > 0 || day.selfAnalysis > 0 || day.document > 0
   );
 
@@ -78,7 +77,6 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
     (acc, d) => ({
       essay: acc.essay + d.essay,
       interview: acc.interview + d.interview,
-      skillCheck: acc.skillCheck + d.skillCheck,
       drill: acc.drill + d.drill,
       logicDrill: acc.logicDrill + d.logicDrill,
       choco: acc.choco + d.choco,
@@ -87,11 +85,11 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
       selfAnalysis: acc.selfAnalysis + d.selfAnalysis,
       document: acc.document + d.document,
     }),
-    { essay: 0, interview: 0, skillCheck: 0, drill: 0, logicDrill: 0, choco: 0, topicInput: 0, interviewDrill: 0, selfAnalysis: 0, document: 0 },
+    { essay: 0, interview: 0, drill: 0, logicDrill: 0, choco: 0, topicInput: 0, interviewDrill: 0, selfAnalysis: 0, document: 0 },
   );
   // 直近7日にアクティブだった日の数
   const activeDaysRecent = data.slice(-7).filter(d =>
-    d.essay > 0 || d.interview > 0 || d.skillCheck > 0 ||
+    d.essay > 0 || d.interview > 0 ||
     d.drill > 0 || d.logicDrill > 0 || d.choco > 0 || d.topicInput > 0 || d.interviewDrill > 0 || d.selfAnalysis > 0 || d.document > 0
   ).length;
 
@@ -131,7 +129,6 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
       tint: "rgba(217,119,6,0.08)",
       items: [
         { key: "selfAnalysis", label: "自己分析", value: totals.selfAnalysis, fill: "#d97706" },
-        { key: "skillCheck", label: "スキル", value: totals.skillCheck, fill: "#f59e0b" },
       ],
     },
   ];

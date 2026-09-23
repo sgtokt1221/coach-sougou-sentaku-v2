@@ -12,7 +12,7 @@ import type {
  *
  * その生徒とAIのやり取りを、機能をまたいで1本の時系列にして返す。
  *
- * 読む場所は6つ。小論文コーチ・書類コーチ・AI模擬面接・面接スキルチェック・
+ * 読む場所は5つ。小論文コーチ・書類コーチ・AI模擬面接・
  * 自己分析は機能ごとに別の場所へ保存されており、保存場所も role の呼び方も
  * 時刻の型も違うのでここで揃える。
  * 活動ヒアリング・志望校探索・探究の分野決めは元々会話を保存していなかったため、
@@ -94,7 +94,7 @@ export async function GET(
    * 会話は5系統あり、片方のインデックス欠落やデータ不整合で履歴全体が
    * 見えなくなる方が困る。失敗した系統だけ落として warn を残す。
    */
-  const [essay, docs, interviews, skillChecks, selfAnalysis, logged] =
+  const [essay, docs, interviews, selfAnalysis, logged] =
     await Promise.allSettled([
       adminDb
         .collection(`users/${id}/essayCoachThreads`)
@@ -110,11 +110,6 @@ export async function GET(
         .collection("interviews")
         .where("userId", "==", id)
         .orderBy("startedAt", "desc")
-        .limit(MAX_ITEMS_PER_KIND)
-        .get(),
-      adminDb
-        .collection(`users/${id}/interviewSkillChecks`)
-        .orderBy("takenAt", "desc")
         .limit(MAX_ITEMS_PER_KIND)
         .get(),
       adminDb.doc(`selfAnalysis/${id}`).get(),
@@ -155,7 +150,6 @@ export async function GET(
   warn("essayCoachThreads", essay);
   warn("documentCoachThreads", docs);
   warn("interviews", interviews);
-  warn("interviewSkillChecks", skillChecks);
   warn("selfAnalysis", selfAnalysis);
   warn("aiConversations", logged);
 
@@ -197,19 +191,6 @@ export async function GET(
         toIso(t.completedAt ?? t.lastActiveAt ?? t.startedAt),
         normalizeMessages(t.messages),
         done ? undefined : "中断",
-      );
-    });
-  }
-
-  if (skillChecks.status === "fulfilled") {
-    skillChecks.value.docs.forEach((d) => {
-      const t = d.data();
-      push(
-        "interview_skill_check",
-        d.id,
-        "面接スキルチェック",
-        toIso(t.takenAt),
-        normalizeMessages(t.messages),
       );
     });
   }

@@ -89,8 +89,6 @@ function alertTypeConfig(type: AlertItem["type"]) {
       return { label: "書類提出", icon: FileCheck, color: "text-sky-600 dark:text-sky-400" };
     case "interview_done":
       return { label: "模擬面接", icon: Mic, color: "text-sky-600 dark:text-sky-400" };
-    case "skill_check_done":
-      return { label: "スキルチェック", icon: CheckCircle, color: "text-sky-600 dark:text-sky-400" };
     default:
       // 想定外のタイプでも undefined を返さず、控えめな既定表示にフォールバック。
       return { label: "通知", icon: Bell, color: "text-slate-600 dark:text-slate-400" };
