@@ -213,9 +213,10 @@ function SkillCard({
       {/* レーダーチャート */}
       {radar && radar.some((r) => r.value > 0) && (
         <div className="mt-3 grid grid-cols-1 items-center gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
-          <div className="mx-auto h-[200px] w-full max-w-[200px]">
+          {/* 軸名（「議論の成熟度」など）が枠で切れないよう、幅に余裕を取り半径を抑える */}
+          <div className="mx-auto h-[200px] w-full max-w-[280px]">
             <ResponsiveContainer width="100%" height="100%">
-              <RadarChart data={radar} outerRadius="75%">
+              <RadarChart data={radar} outerRadius="62%">
                 <PolarGrid gridType="polygon" stroke="#e2e8f0" />
                 <PolarAngleAxis
                   dataKey="subject"
