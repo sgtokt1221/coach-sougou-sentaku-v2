@@ -165,6 +165,8 @@ export interface StudentDetail {
   /** 最終ログイン (users.lastSeenAt) */
   lastSeenAt?: string | null;
   realtimeUnlocked?: boolean;
+  /** 上部の帯（要対応・重要な弱点・次の面談）。組み方は lib/admin/student-summary.ts */
+  summary?: import("@/lib/admin/student-summary").StudentSummary;
 }
 
 export interface EssayListItem {

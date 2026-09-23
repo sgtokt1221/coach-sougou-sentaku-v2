@@ -5,6 +5,7 @@ import type {
   QueryDocumentSnapshot,
 } from "firebase-admin/firestore";
 import { loadAiConversations } from "@/lib/admin/ai-conversations";
+import { parseSessionTime } from "@/lib/admin/session-time";
 import type { TimelineItem, TimelineKind } from "@/lib/admin/timeline";
 import { getThemeById } from "@/data/essay-themes";
 import { getPastQuestionById } from "@/data/essay-past-questions";
@@ -287,20 +288,7 @@ const document: SourceFn = async (db, uid, before, limit) => {
 };
 
 // ---- 面談（sessions / scheduledAt: 文字列、studentId で絞る） ----
-/**
- * scheduledAt は「日本時間の時刻をタイムゾーン無しで書いた文字列」で保存されている
- * （`${date}T${time}:00`、作成フォームの datetime-local は秒も無い）。UTC の ISO と
- * 文字列で比べると9時間ずれ、書式違いで境界の行が重複・欠落する。
- * そのため範囲条件は1日の余裕を持たせた粗い上限にとどめ、正確な比較は
- * 日本時間として読んだ時刻で行う。1人の生徒の面談は多くても数百件なので全件でよい。
- */
-function parseSessionTime(v: unknown): number | null {
-  if (typeof v !== "string" || !v) return null;
-  const hasZone = /(Z|[+-]\d{2}:?\d{2})$/.test(v);
-  const t = Date.parse(hasZone ? v : `${v}+09:00`);
-  return Number.isNaN(t) ? null : t;
-}
-
+// scheduledAt は日本時間のタイムゾーン無し文字列。読み方は session-time.ts を参照。
 const session: SourceFn = async (db, uid, before, limit) => {
   let q: Query = db.collection("sessions").where("studentId", "==", uid);
   if (before) {

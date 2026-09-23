@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import type { Firestore } from "firebase-admin/firestore";
 import { resolveLastActivity } from "@/lib/api/last-activity";
 import { requireRole, scopeByOrganization } from "@/lib/api/auth";
 import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
@@ -9,6 +10,16 @@ import type { StudentDetail } from "@/lib/types/admin";
 import { normalizedEssayTotal } from "@/lib/types/essay";
 import { getThemeById } from "@/data/essay-themes";
 import { getPastQuestionById } from "@/data/essay-past-questions";
+import {
+  buildActionItems,
+  buildTopWeaknesses,
+  firstLine,
+  type StudentSummary,
+} from "@/lib/admin/student-summary";
+import { parseSessionTime, toJstLocalString } from "@/lib/admin/session-time";
+import { loadWeaknessRecords } from "@/lib/growth/weakness-store";
+import { DOCUMENT_TYPE_LABELS, type DocumentType } from "@/lib/types/document";
+import { SESSION_TYPE_LABELS, type SessionType } from "@/lib/types/session";
 
 /** 出題元IDからテーマ名を組み立てる。 */
 function labelFromSource(
@@ -21,6 +32,147 @@ function labelFromSource(
   }
   if (themeId) return getThemeById(themeId)?.title;
   return undefined;
+}
+
+/** 失敗しても生徒詳細は返す。その項目だけ空にする。 */
+async function orEmpty<T>(label: string, p: Promise<T>, empty: T): Promise<T> {
+  try {
+    return await p;
+  } catch (e) {
+    console.warn(`[admin/students/[id]] summary ${label} failed:`, e);
+    return empty;
+  }
+}
+
+/**
+ * 上部の帯（要対応・重要な弱点・次の面談・前回の振り返り・担当講師）。
+ * sessions.scheduledAt は日本時間のゾーン無し文字列なので、クエリは1日の余裕を持った
+ * 粗い範囲にとどめ、正確な前後は parseSessionTime で読んだ時刻で判定する。
+ */
+async function loadStudentSummary(
+  db: Firestore,
+  id: string,
+  teacherIds: string[]
+): Promise<StudentSummary> {
+  const nowMs = Date.now();
+  const now = new Date(nowMs);
+
+  const [documents, homework, weaknessRecords, upcoming, past, teacherNames] =
+    await Promise.all([
+      orEmpty(
+        "documents",
+        db
+          .collection("documents")
+          .where("userId", "==", id)
+          .get()
+          .then((snap) =>
+            snap.docs.map((d) => {
+              const data = d.data();
+              return {
+                id: d.id,
+                type:
+                  DOCUMENT_TYPE_LABELS[data.type as DocumentType] ??
+                  String(data.type ?? "書類"),
+                deadline:
+                  typeof data.deadline === "string" ? data.deadline : null,
+                status: String(data.status ?? ""),
+              };
+            })
+          ),
+        []
+      ),
+      orEmpty(
+        "homework",
+        db
+          .collection(`users/${id}/homeworkAssignments`)
+          .get()
+          .then((snap) =>
+            snap.docs.map((d) => {
+              const data = d.data();
+              return {
+                id: d.id,
+                title: String(data.snapshot?.title ?? "宿題"),
+                dueDate: typeof data.dueDate === "string" ? data.dueDate : null,
+                status: String(data.status ?? ""),
+              };
+            })
+          ),
+        []
+      ),
+      orEmpty(
+        "weaknesses",
+        loadWeaknessRecords(db, id).then((r) => r.records),
+        []
+      ),
+      orEmpty(
+        "nextSession",
+        db
+          .collection("sessions")
+          .where("studentId", "==", id)
+          .where("scheduledAt", ">=", toJstLocalString(nowMs - 86400000))
+          // 既存の (studentId, scheduledAt DESC) 索引を使う。先の予定は数件なので全件でよい
+          .orderBy("scheduledAt", "desc")
+          .get()
+          .then((snap) => snap.docs),
+        []
+      ),
+      orEmpty(
+        "lastDebrief",
+        db
+          .collection("sessions")
+          .where("studentId", "==", id)
+          .where("scheduledAt", "<", toJstLocalString(nowMs + 86400000))
+          .orderBy("scheduledAt", "desc")
+          .limit(10)
+          .get()
+          .then((snap) => snap.docs),
+        []
+      ),
+      orEmpty(
+        "teachers",
+        Promise.all(
+          teacherIds.slice(0, 5).map(async (uid) => {
+            const t = await db.collection("users").doc(uid).get();
+            const name = t.exists ? t.data()?.displayName : null;
+            return typeof name === "string" && name ? name : null;
+          })
+        ).then((names) => names.filter((n): n is string => n !== null)),
+        []
+      ),
+    ]);
+
+  const withTime = (docs: typeof upcoming) =>
+    docs.flatMap((d) => {
+      const data = d.data();
+      if (data.status === "cancelled") return [];
+      const ms = parseSessionTime(data.scheduledAt);
+      return ms === null ? [] : [{ id: d.id, data, ms }];
+    });
+
+  const next = withTime(upcoming)
+    .filter((s) => s.ms >= nowMs)
+    .sort((a, b) => a.ms - b.ms)[0];
+  const lastWithDebrief = withTime(past)
+    .filter((s) => s.ms < nowMs && s.data.debrief)
+    .sort((a, b) => b.ms - a.ms)[0];
+
+  return {
+    actionItems: buildActionItems({ documents, homework, now }),
+    topWeaknesses: buildTopWeaknesses(weaknessRecords),
+    nextSession: next
+      ? {
+          id: next.id,
+          scheduledAt: new Date(next.ms).toISOString(),
+          typeLabel:
+            SESSION_TYPE_LABELS[next.data.type as SessionType] ?? "面談",
+        }
+      : null,
+    lastDebriefLine: lastWithDebrief
+      ? (firstLine(lastWithDebrief.data.debrief.nextAgendaSeed) ??
+        firstLine(lastWithDebrief.data.debrief.notes))
+      : null,
+    teacherNames,
+  };
 }
 
 /** 提出時刻に最も近い下書きを探すときの許容差（分）。 */
@@ -514,6 +666,9 @@ export async function GET(
       () => null
     );
 
+    const assignedTeacherIds = getAssignedTeacherIds(userData);
+    const summary = await loadStudentSummary(adminDb, id, assignedTeacherIds);
+
     const detail: StudentDetail = {
       profile: {
         uid: id,
@@ -535,7 +690,7 @@ export async function GET(
         targetUniversities: targetUnis,
         sessionsPerMonth: userData.sessionsPerMonth ?? 1,
         resolvedUniversities,
-        assignedTeacherIds: getAssignedTeacherIds(userData),
+        assignedTeacherIds,
         ...(pushStatus
           ? {
               push: {
@@ -560,6 +715,7 @@ export async function GET(
       lastActivity,
       lastSeenAt,
       realtimeUnlocked: userData.realtimeUnlocked === true,
+      summary,
     };
 
     return NextResponse.json(detail);
