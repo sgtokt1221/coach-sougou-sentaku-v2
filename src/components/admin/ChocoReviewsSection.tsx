@@ -15,8 +15,9 @@ import { CHOCO_ROLE_LABELS } from "@/lib/types/choco";
 import type { ChocoReviewListItem } from "@/app/api/admin/students/[id]/choco-reviews/route";
 
 function scoreColor(total: number): string {
-  if (total >= 24) return "text-emerald-600";
-  if (total >= 18) return "text-sky-600";
+  // 合計は 0〜50（computeChocoTotal）。以前は 30点満点の前提で 24/18 だった
+  if (total >= 40) return "text-emerald-600";
+  if (total >= 30) return "text-sky-600";
   return "text-amber-600";
 }
 
