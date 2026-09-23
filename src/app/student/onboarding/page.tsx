@@ -142,11 +142,14 @@ export default function OnboardingPage() {
   };
 
   const handleSelfAnalysisSkip = () => {
-    // オンボーディングの最終ステップ。チェーン進行フラグが残っていれば掃除してダッシュボードへ
+    // オンボーディングの最終ステップを飛ばしたら、アプリのツアーを始める
+    // （以前の最終ステップ＝スキルチェックを飛ばしたときと同じ動き）。
+    // チェーン進行フラグが残っていれば掃除する
     try {
       localStorage.removeItem("onboardingChain");
     } catch {}
-    router.replace("/student/dashboard");
+    startTutorial();
+    router.replace("/tour/dashboard");
   };
   const handleSelfAnalysisTake = () => {
     // オンボーディングのチェーン進行フラグ（自己分析→ダッシュボード）
