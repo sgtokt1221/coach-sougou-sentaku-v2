@@ -22,6 +22,7 @@ import type Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
 import { AI_MODEL_REVIEW } from "@/lib/ai/prompt-versions";
+import { summarizeUsage, type AiCallRecord } from "@/lib/ai/call-record";
 import type { SourceEngagementLevel } from "@/lib/essay/source-engagement";
 
 const SourceEngagementSchema = z.object({
@@ -59,6 +60,8 @@ export async function judgeSourceEngagement(params: {
   essayText: string;
   sourceText: string;
   topic?: string | null;
+  /** 呼び出し1回分の記録を受け取る（費用・失敗の集計用） */
+  onCall?: (record: AiCallRecord) => void;
 }): Promise<SourceEngagementJudgement | null> {
   const source = params.sourceText.trim();
   const essay = params.essayText.trim();
@@ -90,14 +93,28 @@ ${essay}
         effort: "medium",
       },
     });
+    const parsed = res.parsed_output;
+    params.onCall?.({
+      name: "sourceEngagement",
+      model: res.model,
+      stopReason: res.stop_reason,
+      usage: summarizeUsage(res.usage),
+      ok: res.stop_reason !== "max_tokens" && Boolean(parsed),
+    });
     // stop_reason の確認は parse の前に置く（parse は失敗時に例外を投げる）
     if (res.stop_reason === "max_tokens") return null;
-    const parsed = res.parsed_output;
     if (!parsed) return null;
     return { level: parsed.level, basis: parsed.basis };
   } catch (err) {
     // 減点しない側に倒す。判定の失敗で生徒の点が下がってはいけない
     console.error("[source-engagement] 判定に失敗:", err);
+    params.onCall?.({
+      name: "sourceEngagement",
+      model: AI_MODEL_REVIEW,
+      stopReason: null,
+      usage: null,
+      ok: false,
+    });
     return null;
   }
 }

@@ -15,6 +15,7 @@ import type Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
 import { AI_MODEL_REVIEW } from "@/lib/ai/prompt-versions";
+import { summarizeUsage, type AiCallRecord } from "@/lib/ai/call-record";
 
 const KnowledgeAccuracySchema = z.object({
   score: z.number().int().min(0).max(10),
@@ -79,6 +80,8 @@ export async function judgeKnowledgeAccuracy(args: {
   essayText: string;
   /** 小問集合を組み立てた設問文（buildOralExamQuestion の出力） */
   question: string;
+  /** 呼び出し1回分の記録を受け取る（費用・失敗の集計用） */
+  onCall?: (record: AiCallRecord) => void;
 }): Promise<KnowledgeAccuracyJudgement | null> {
   try {
     const response = await args.client.messages.parse({
@@ -93,7 +96,16 @@ export async function judgeKnowledgeAccuracy(args: {
       ],
       output_config: { format: zodOutputFormat(KnowledgeAccuracySchema) },
     });
-    if (response.stop_reason === "max_tokens" || !response.parsed_output) {
+    const ok =
+      response.stop_reason !== "max_tokens" && Boolean(response.parsed_output);
+    args.onCall?.({
+      name: "knowledge",
+      model: response.model,
+      stopReason: response.stop_reason,
+      usage: summarizeUsage(response.usage),
+      ok,
+    });
+    if (!ok || !response.parsed_output) {
       console.warn("[knowledge-judge] 構造化応答が不正", {
         stop_reason: response.stop_reason,
       });
@@ -103,6 +115,13 @@ export async function judgeKnowledgeAccuracy(args: {
   } catch (err) {
     // 判定できなくても添削は返す。ここで例外を投げると添削全体が落ちる
     console.warn("[knowledge-judge] failed:", err);
+    args.onCall?.({
+      name: "knowledge",
+      model: AI_MODEL_REVIEW,
+      stopReason: null,
+      usage: null,
+      ok: false,
+    });
     return null;
   }
 }

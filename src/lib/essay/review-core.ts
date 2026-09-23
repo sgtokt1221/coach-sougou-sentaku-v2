@@ -11,6 +11,11 @@ import { AI_MODEL_REVIEW, AI_PROMPT_VERSIONS } from "@/lib/ai/prompt-versions";
 import { sourceEngagementCaps } from "@/lib/essay/source-engagement";
 import { judgeSourceEngagement } from "@/lib/essay/source-engagement-judge";
 import { judgeKnowledgeAccuracy } from "@/lib/essay/knowledge-judge";
+import {
+  summarizeUsage,
+  sumUsage,
+  type AiCallRecord,
+} from "@/lib/ai/call-record";
 import type {
   EssayScoreAxis,
   EssayScores,
@@ -58,6 +63,21 @@ export interface EssayReviewCoreOutput {
   scores: EssayScores;
   feedback: EssayFeedback;
   rawText: string;
+  /** 検証・費用集計用。保存はしない（使用量の合計だけ aiMetadata に載せる） */
+  telemetry: EssayReviewTelemetry;
+}
+
+export interface EssayReviewTelemetry {
+  /** 本体と別呼び出しの記録（呼んだものだけ） */
+  calls: AiCallRecord[];
+  /** 3呼び出しを並列に投げてから揃うまでの時間 */
+  durationMs: number;
+  /**
+   * 本文に実在しない等の理由で捨てた赤ペンの件数。
+   * 保存される赤ペンは実在するものだけなので、AI が本文に無い文を作った回数は
+   * ここでしか数えられない。
+   */
+  droppedLanguageCorrections: number;
 }
 
 export class EssayReviewParseError extends Error {
@@ -81,6 +101,9 @@ export async function reviewEssayCore(
   }
 
   const client = new Anthropic();
+  const calls: AiCallRecord[] = [];
+  const onCall = (record: AiCallRecord) => calls.push(record);
+  const startedAt = Date.now();
   const isReport = input.questionType === "report";
   /** 口頭試問型（小問集合）。小問の数だけ指摘が増えるので report と同じ余裕を取る */
   const isOralExam = input.questionType === "oral_exam";
@@ -132,6 +155,7 @@ ${input.ocrText}
           essayText: input.ocrText,
           sourceText: input.sourceText as string,
           topic: input.topic,
+          onCall,
         })
       : Promise.resolve(null);
 
@@ -144,6 +168,7 @@ ${input.ocrText}
         client,
         essayText: input.ocrText,
         question: input.topic ?? "",
+        onCall,
       })
     : Promise.resolve(null);
 
@@ -165,6 +190,16 @@ ${input.ocrText}
     engagementPromise,
     knowledgePromise,
   ]);
+
+  const durationMs = Date.now() - startedAt;
+  calls.unshift({
+    name: "review",
+    model: response.model,
+    stopReason: response.stop_reason,
+    usage: summarizeUsage(response.usage),
+    ok:
+      response.stop_reason !== "max_tokens" && Boolean(response.parsed_output),
+  });
 
   const rawText =
     response.content[0]?.type === "text" ? response.content[0].text : "";
@@ -389,10 +424,22 @@ ${input.ocrText}
     aiMetadata: {
       ...AI_PROMPT_VERSIONS.essayReview,
       model: AI_MODEL_REVIEW,
+      // 1件の費用を後から出せるように、呼び出し全部の合計を残す
+      usage: sumUsage(calls),
     },
   };
 
-  return { scores, feedback, rawText };
+  return {
+    scores,
+    feedback,
+    rawText,
+    telemetry: {
+      calls,
+      durationMs,
+      droppedLanguageCorrections:
+        parsed.feedback.languageCorrections.length - languageCorrections.length,
+    },
+  };
 }
 
 /**
