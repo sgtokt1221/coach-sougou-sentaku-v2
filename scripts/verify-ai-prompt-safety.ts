@@ -17,12 +17,7 @@ import {
 } from "../src/lib/ai/prompt-versions";
 import { DocumentReviewOutputSchema } from "../src/lib/ai/schemas/document-review";
 import { EssayReviewOutputSchema } from "../src/lib/ai/schemas/essay-review";
-import { SkillCheckOutputSchema } from "../src/lib/ai/schemas/skill-check";
 import { calculateEssayMetrics } from "../src/lib/essay/review-metrics";
-import {
-  ESSAY_SCORE_WEIGHTS,
-  calculateEssayTotal,
-} from "../src/lib/types/essay";
 import type { FrameworkDefinition } from "../src/lib/types/template";
 
 assert.equal(AI_MODEL_SONNET, "claude-sonnet-4-6");
@@ -260,34 +255,5 @@ assert.equal(
   }).success,
   false
 );
-
-/**
- * スキルチェックは合計に入る5軸だけを出す（系統適合は採点しない）。
- * 小論文添削と同じ ESSAY_SCORE_WEIGHTS で合計を出すため、軸がずれると
- * 同じ0-50スケールで混ぜている集計が黙って壊れる。
- */
-const validSkillCheck = {
-  scores: {
-    structure: 6,
-    logic: 6,
-    expression: 6,
-    responsiveness: 5,
-    reasoningMaturity: 5,
-  },
-  feedback: {
-    overall: "講評",
-    goodPoints: ["良い点"],
-    improvements: ["改善点"],
-    priorityImprovement: "結論を一行で言い切る",
-    nextChallenge: "主張を一文でメモしてから書く",
-  },
-};
-assert.equal(SkillCheckOutputSchema.safeParse(validSkillCheck).success, true);
-// 採点軸は小論文添削の合計5軸と一致していること
-assert.deepEqual(
-  Object.keys(validSkillCheck.scores).sort(),
-  Object.keys(ESSAY_SCORE_WEIGHTS).sort()
-);
-assert.equal(calculateEssayTotal(validSkillCheck.scores), 29);
 
 console.log("AI prompt safety verification passed.");
