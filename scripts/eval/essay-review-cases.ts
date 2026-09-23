@@ -89,6 +89,10 @@ const TWISTS: [string, string][] = [
 const FABRICATED =
   "全国地域交通未来機構が2022年に行った調査では、路線バスが廃止された町の人口は5年間で平均17.3%減少したという。";
 
+/** N8 の対照に足す、事実主張を含まない1文（N8 の統計とほぼ同じ長さ） */
+const CONTROL =
+  "つまり、バスの赤字は削るべき支出としてではなく、住民の移動を支えるための費用として見る必要がある。";
+
 const join = (paras: string[]) => paras.join("\n");
 
 function withTwists(text: string): string {
@@ -292,9 +296,23 @@ export const SYNTHETIC_CASES: SyntheticCase[] = [
     },
     expect: [
       { type: "claimFlagged", contains: "未来機構" },
-      // 架空の具体で加点されない（基底より1点を超えて上がらない）
-      { type: "totalNotAbove", caseId: "S0-base", margin: 1 },
+      // 架空の具体で加点されない。比べる先は基底でなく、同じ位置に事実を含まない
+      // 1文を足した対照（N8c）。2026-09-23、1文足すだけで基底から +6点になることが
+      // 分かった（統計の有無と関係なく上がる）ので、基底と比べると別の現象を測ってしまう
+      { type: "totalNotAbove", caseId: "N8c-control", margin: 1 },
     ],
+  },
+  {
+    // N8 の対照。同じ位置に、事実を含まない1文を足す。これも点が上がるなら、
+    // 原因は「架空の統計」ではなく「1文足したこと」への敏感さ
+    id: "N8c-control",
+    label: "N8の対照（事実を含まない1文を足す）",
+    input: {
+      topic: TOPIC_S,
+      wordLimit: 800,
+      ocrText: join([S0[0], S0[1], `${S0[2]}${CONTROL}`, S0[3], S0[4]]),
+    },
+    expect: [],
   },
   {
     id: "N10-strong",

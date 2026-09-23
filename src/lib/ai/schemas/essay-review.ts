@@ -101,7 +101,10 @@ export const EssayReviewOutputSchema = z.object({
             evidence: boundedText,
           })
         )
-        .max(6),
+        // 口頭試問型は小問ごとに要求が出るので 6 では足りない（小問5つ×2で10）。
+        // 上限は文法でなく受け取り後の検査で効くため、超えると添削全体が落ちる
+        // （2026-09-23 の検証で1回発生）。広げても文法サイズは変わらない
+        .max(12),
       /** 外している場合に、何を書くべきだったかを一文で */
       note: boundedText,
     }),
@@ -140,7 +143,8 @@ export const EssayReviewOutputSchema = z.object({
           evidence: boundedText,
         })
       )
-      .max(6),
+      // requirements と同じ理由で広めに取る（事実の多い答案で超えると添削全体が落ちる）
+      .max(12),
     reportInsights: z
       .object({
         sourceComprehension: boundedText,

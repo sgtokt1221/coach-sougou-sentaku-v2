@@ -206,6 +206,8 @@ async function selectProduction() {
   for (const d of snap.docs) {
     const x = d.data();
     if (!x.scores || !(x.ocrText ?? "").trim()) continue;
+    // 本番に残っているテスト用の答案は除く（2026-09-23 の初回で3件混ざった）
+    if (/^essay_(dev|test)_/.test(d.id)) continue;
     const type = x.questionContext?.questionType ?? "essay";
     // 設問が残っていない口頭試問型は再採点できない（作成答案 N9 で見る）
     if (type === "oral_exam" && !x.questionContext?.oralExam) continue;
@@ -345,7 +347,12 @@ function toRow(
     feedback.knowledgeInsights?.errors.map((e) => ({
       claim: e.claim,
       severity: e.severity,
-      inText: c.input.ocrText.includes(e.claim),
+      // 途中を「…」で省いた引用もあるので、区切った断片がすべて本文にあれば実在とみなす
+      inText: e.claim
+        .split(/…|\.\.\./)
+        .map((x) => x.trim())
+        .filter(Boolean)
+        .every((x) => c.input.ocrText.includes(x)),
     })) ?? [];
   const max = feedback.scoreMaximum ?? 50;
   return {
