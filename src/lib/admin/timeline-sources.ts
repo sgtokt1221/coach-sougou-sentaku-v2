@@ -371,6 +371,8 @@ const aiConversation: SourceFn = async (db, uid, before, limit) => {
   const beforeMs = before?.getTime() ?? Infinity;
   const all = await loadAiConversations(db, uid);
   return all
+    // 模擬面接は「面接」の行で出しているので、ここでは外す（「すべて」で二重に並ぶため）
+    .filter((c) => c.kind !== "interview" && c.kind !== "interview_skill_check")
     .filter((c) => Date.parse(c.updatedAt) < beforeMs)
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
     .slice(0, limit)

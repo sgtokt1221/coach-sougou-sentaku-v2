@@ -134,7 +134,8 @@ AI呼び出しは .env.local の ANTHROPIC_API_KEY をそのまま使うので�
 | 保存形式            | コレクション                                                                                                                                                        |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Firestore Timestamp | `essays`(submittedAt) / `users/*/skillChecks`(takenAt) / `users/*/summaryDrills`(completedAt) / `users/*/logicDrills`(completedAt) / `users/*/interviewSkillChecks` |
-| ISO 8601 文字列     | `sessions`(scheduledAt/createdAt/updatedAt/startedAt/endedAt) / `documents` / `users/*/essayCoachThreads` / `users/*/chokoReviews`                                  |
+| ISO 8601 文字列     | `sessions`(createdAt/updatedAt/startedAt/endedAt) / `documents` / `users/*/essayCoachThreads` / `users/*/chokoReviews`                                  |
+| 日本時間の文字列（タイムゾーン無し） | `sessions.scheduledAt`（`2026-09-26T17:00:00` や秒無しの `2026-09-26T17:00`）。`toISOString()`（UTC）と比べると9時間ずれて境目の面談が抜ける・重なる。`+09:00` を補って読む |
 
 `users` は**フィールドごとに違う**ので特に注意する。
 
