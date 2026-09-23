@@ -102,11 +102,31 @@ function toDate(v: unknown): Date | null {
   return v instanceof Date ? v : null;
 }
 
-function tagsOf(data: Record<string, unknown>, issues: Issue[]): string[] {
-  const saved = data.weaknessTags;
-  if (Array.isArray(saved))
-    return saved.filter((t): t is string => typeof t === "string");
+/**
+ * 弱点名として流し直すもの。
+ *
+ * 答案に保存された weaknessTags は、v21（2026-09）より前は改善提案の文（助言）まで
+ * 混ざっている。これを流すと「段落のつながり」等の汎用ラベルに寄って回数が増え、
+ * 「「言い出しずらい」は慣用的な誤りで…」のような文が弱点として積まれる
+ * （2026-09-23 の確認実行で実際に 14回→17回、助言文の弱点が出た）。
+ * 弱点の正本は AI が弱点として挙げた repeatedIssues だけにする。
+ */
+function issueTags(issues: Issue[]): string[] {
   return issues.map((i) => i.area ?? "").filter(Boolean);
+}
+
+/**
+ * 面接の動画解析・身だしなみの弱点。repeatedIssues には入らず weaknessTags にだけ
+ * 残る（src/app/api/interview/end/route.ts が足している）。
+ */
+const VIDEO_TAG =
+  /^(視線が散漫|表情が硬い|姿勢が不安定|首が傾きがち|うなずきが少ない|身だしなみ:)/;
+function videoTags(data: Record<string, unknown>): string[] {
+  const saved = data.weaknessTags;
+  if (!Array.isArray(saved)) return [];
+  return saved.filter(
+    (t): t is string => typeof t === "string" && VIDEO_TAG.test(t)
+  );
 }
 
 /** 1人分の提出履歴を時系列で集める（弱点が0件だった提出も含める。改善の手がかりなので） */
@@ -133,7 +153,7 @@ async function loadSubmissions(uid: string): Promise<Submission[]> {
     subs.push({
       at,
       source: "essay",
-      tags: tagsOf(data, issues),
+      tags: issueTags(issues),
       issues,
       countMisses: !lecture?.exercise.blockId,
     });
@@ -147,7 +167,7 @@ async function loadSubmissions(uid: string): Promise<Submission[]> {
     subs.push({
       at,
       source: "interview",
-      tags: tagsOf(data, issues),
+      tags: [...issueTags(issues), ...videoTags(data)],
       issues,
       countMisses: true,
     });
