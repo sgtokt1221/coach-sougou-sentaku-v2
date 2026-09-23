@@ -41,7 +41,26 @@ export interface WeaknessRecord {
    * ものと割り切り、中身はここで見せる。
    */
   lastExample?: string;
+  /**
+   * 同じ分野（小論文 / 面接）の直近の提出で、指摘されたか（1）されなかったか（0）。
+   * 古い順で最大 WEAKNESS_RECENT_WINDOW 件。段階（重要・注意）はこれで決める。
+   *
+   * 累計の count で決めていたときは、一度5回指摘されると、その後出なくなっても
+   * アーカイブまで「重要」のままだった。2026-09-23 以前のレコードには無く、
+   * その場合だけ count で判定する。
+   */
+  recentHits?: number[];
+  /**
+   * 同じ分野の提出で、続けて指摘されなかった回数。
+   * WEAKNESS_RESOLVE_STREAK に達したら resolved にする（再び指摘されたら戻る）。
+   */
+  missStreak?: number;
 }
+
+/** 段階の判定に使う直近の提出数 */
+export const WEAKNESS_RECENT_WINDOW = 5;
+/** この回数続けて指摘されなければ解決済みにする */
+export const WEAKNESS_RESOLVE_STREAK = 3;
 
 export type WeaknessReminderLevel =
   | "critical"
@@ -53,6 +72,15 @@ export function getWeaknessReminderLevel(
   w: WeaknessRecord
 ): WeaknessReminderLevel | null {
   if (w.resolved) return "resolved";
+  if (w.recentHits && w.recentHits.length > 0) {
+    // 直近5回のうち何回指摘されたか。改善すれば段階が下がる
+    const hits = w.recentHits.reduce((a, b) => a + b, 0);
+    if (hits >= 3) return "critical";
+    if (hits >= 2) return "warning";
+    if (w.improving) return "improving";
+    return null;
+  }
+  // 2026-09-23 以前のレコード（直近の記録が無い）は累計で判定する
   if (w.count >= 5) return "critical";
   if (w.count >= 3) return "warning";
   if (w.improving) return "improving";

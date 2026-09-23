@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { weaknessDocId } from "@/lib/growth/weakness-id";
+import { loadWeaknessRecords } from "@/lib/growth/weakness-store";
 import { getRemindableWeaknesses } from "@/lib/growth/analyze";
-import type { WeaknessRecord } from "@/lib/types/growth";
 
 /**
  * 誰の弱点かはトークンからだけ決める。
@@ -46,26 +46,9 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const snapshot = await adminDb
-      .collection(`users/${userId}/weaknesses`)
-      .get();
-    const weaknesses: WeaknessRecord[] = snapshot.docs.map((d) => {
-      const data = d.data();
-      return {
-        area: data.area,
-        count: data.count,
-        firstOccurred: data.firstOccurred?.toDate() ?? new Date(),
-        lastOccurred: data.lastOccurred?.toDate() ?? new Date(),
-        improving: data.improving ?? false,
-        resolved: data.resolved ?? false,
-        source: data.source ?? "essay",
-        reminderDismissedAt: data.reminderDismissedAt?.toDate() ?? null,
-        categoryId: data.categoryId,
-        archivedAt: data.archivedAt?.toDate?.() ?? data.archivedAt ?? null,
-        // 直近の具体例。画面ではラベルの下にこれを出す
-        lastExample: data.lastExample,
-      } satisfies WeaknessRecord;
-    });
+    // 読み方は提出の書き込みと同じ正本を使う（直近の記録 recentHits を落とすと、
+    // 画面側で段階を累計の回数から計算し直してサーバーの判定とずれる）
+    const { records: weaknesses } = await loadWeaknessRecords(adminDb, userId);
 
     const remindable = getRemindableWeaknesses(weaknesses, context);
     return NextResponse.json({ weaknesses: remindable });

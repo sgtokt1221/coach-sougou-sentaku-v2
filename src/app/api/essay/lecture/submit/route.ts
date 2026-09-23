@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { weaknessDocId } from "@/lib/growth/weakness-id";
+import {
+  activeWeaknesses,
+  loadWeaknessRecords,
+  saveWeaknessRecords,
+} from "@/lib/growth/weakness-store";
 import { FieldValue } from "firebase-admin/firestore";
 import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
@@ -11,7 +15,6 @@ import { analyzeGrowth, updateWeaknessRecords } from "@/lib/growth/analyze";
 import { getLectureById } from "@/data/essay-lectures";
 import { getEssayBlock } from "@/lib/types/essay-block";
 import { getEssayForm, formStepsOf } from "@/lib/types/essay-form";
-import type { WeaknessRecord } from "@/lib/types/growth";
 import type { EssayScores, EssayFeedback } from "@/lib/types/essay";
 
 /**
@@ -78,26 +81,9 @@ export async function POST(request: NextRequest) {
 
     // 弱点 DB 読み込み
     step = "load_weaknesses";
-    let existingWeaknesses: WeaknessRecord[] = [];
-    const weaknessDocs = await adminDb
-      .collection(`users/${uid}/weaknesses`)
-      .where("resolved", "==", false)
-      .get();
-    if (!weaknessDocs.empty) {
-      existingWeaknesses = weaknessDocs.docs.map((d) => {
-        const w = d.data();
-        return {
-          area: w.area,
-          count: w.count,
-          firstOccurred: w.firstOccurred?.toDate() ?? new Date(),
-          lastOccurred: w.lastOccurred?.toDate() ?? new Date(),
-          improving: w.improving ?? false,
-          resolved: w.resolved ?? false,
-          source: w.source ?? "essay",
-          reminderDismissedAt: w.reminderDismissedAt?.toDate() ?? null,
-        } satisfies WeaknessRecord;
-      });
-    }
+    const loadedWeaknesses = await loadWeaknessRecords(adminDb, uid);
+    // 解決済み・アーカイブ済みは AI の文脈に入れない
+    const existingWeaknesses = activeWeaknesses(loadedWeaknesses.records);
     const weaknessList =
       existingWeaknesses.length > 0
         ? existingWeaknesses
@@ -198,10 +184,20 @@ export async function POST(request: NextRequest) {
     // 助言の自由文は混ぜない（混ぜると誰にでも付く弱点に落ちる）
     const weaknessTags: string[] = feedback.repeatedIssues.map((i) => i.area);
     const updatedWeaknesses = updateWeaknessRecords(
-      existingWeaknesses,
-      weaknessTags
+      loadedWeaknesses.records,
+      weaknessTags,
+      {
+        source: "essay",
+        // 型の1ブロックだけを書く課題は答案全体を見ていない。挙がらなかった弱点を
+        // 「指摘されなかった」と数えると、結論を書いていない課題で結論の弱点が解決する
+        countMisses: !lecture.exercise.blockId,
+      }
     );
-    const growthEvents = analyzeGrowth(weaknessTags, existingWeaknesses);
+    const growthEvents = analyzeGrowth(
+      weaknessTags,
+      existingWeaknesses,
+      "essay"
+    );
 
     // 採点結果を essay に書き込み
     step = "save_result";
@@ -218,21 +214,12 @@ export async function POST(request: NextRequest) {
 
     // 弱点 DB 更新
     step = "update_weaknesses";
-    for (const w of updatedWeaknesses) {
-      await adminDb.doc(`users/${uid}/weaknesses/${weaknessDocId(w.area)}`).set(
-        {
-          area: w.area,
-          count: w.count,
-          firstOccurred: w.firstOccurred,
-          lastOccurred: w.lastOccurred,
-          improving: w.improving,
-          resolved: w.resolved,
-          source: w.source,
-          reminderDismissedAt: w.reminderDismissedAt,
-        },
-        { merge: true }
-      );
-    }
+    await saveWeaknessRecords(
+      adminDb,
+      uid,
+      loadedWeaknesses,
+      updatedWeaknesses
+    );
 
     return NextResponse.json({ essayId, scores, feedback, growthEvents });
   } catch (error) {

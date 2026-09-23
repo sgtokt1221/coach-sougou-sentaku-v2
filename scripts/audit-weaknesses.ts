@@ -92,7 +92,7 @@ async function main() {
 
   for (const u of users.docs) {
     const uid = u.id;
-    const name = (u.data().name as string) ?? uid;
+    const name = (u.data().displayName as string) ?? uid;
     const wsnap = await db.collection(`users/${uid}/weaknesses`).get();
     if (wsnap.empty) continue;
     totals.students++;
@@ -154,6 +154,7 @@ async function main() {
         count,
         improving: w.improving ?? false,
         resolved: w.resolved ?? false,
+        ...(Array.isArray(w.recentHits) ? { recentHits: w.recentHits } : {}),
       } as WeaknessRecord;
       const level = getWeaknessReminderLevel(rec);
       const last = toDate(w.lastOccurred)?.getTime() ?? 0;

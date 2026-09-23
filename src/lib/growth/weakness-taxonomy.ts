@@ -414,6 +414,19 @@ export function isKnownCanonicalId(
   return typeof id === "string" && BY_ID.has(id);
 }
 
+/**
+ * 表示ラベル → エントリの索引。
+ *
+ * 書き込みでは area に正規ラベルを入れ、次の提出でそのラベルを読み直して統合する。
+ * ラベルをキーワードで解決し直すと別のエントリに当たることがあり
+ * （「根拠が一般論で具体に乏しい」が logic.weak_evidence に当たっていた）、
+ * 提出のたびに別の弱点へ回数が合算され続けた（本番で実際の11回が33回に）。
+ * ラベルと完全に一致したら、キーワードより先にそのエントリを返す。
+ */
+const BY_LABEL = new Map<string, TaxonomyEntry>(
+  WEAKNESS_TAXONOMY.map((e) => [e.label, e])
+);
+
 /** 正規 ID からエントリを引く (未知なら undefined) */
 export function getTaxonomyEntry(id: string): TaxonomyEntry | undefined {
   return BY_ID.get(id);
@@ -504,7 +517,8 @@ const STOP_LABELS = new Set([
  */
 /** 場所を指す語そのもの（これだけ、またはこれを並べただけのラベルを落とす） */
 const PLACE_WORD =
-  "(?:第?\\s*[0-9０-９一二三四五六七八九十]+\\s*段落|冒頭|書き出し|末尾|序論|本論|結論部|導入部)";
+  // 「問1・問3」は口頭試問型の小問番号（2026-09-23、本番で弱点として積まれていた）
+  "(?:第?\\s*[0-9０-９一二三四五六七八九十]+\\s*段落|問\\s*[0-9０-９一二三四五六七八九十]+|冒頭|書き出し|末尾|序論|本論|結論部|導入部)";
 
 /** 「第1段落・第3段落」のように、場所の語だけで出来ているラベル */
 const PLACE_ONLY = new RegExp(
@@ -541,6 +555,8 @@ export function resolveCanonical(
     return BY_ID.get(opts.aiCanonicalId) ?? null;
   }
   if (!text || text.trim().length === 0) return null;
+  const exact = BY_LABEL.get(text.trim());
+  if (exact) return exact;
   if (text.trim().length > MAX_KEYWORD_RESOLVE_LENGTH) return null;
 
   const byLabel = matchByKeywords(text, opts.categoryHint, 1);

@@ -6,7 +6,12 @@ import type {
 } from "@/lib/types/interview";
 import { analyzeGrowth, updateWeaknessRecords } from "@/lib/growth/analyze";
 import { categorizeWeakness } from "@/lib/growth/weakness-category";
-import { weaknessDocId } from "@/lib/growth/weakness-id";
+import {
+  activeWeaknesses,
+  loadWeaknessRecords,
+  saveWeaknessRecords,
+  type LoadedWeaknesses,
+} from "@/lib/growth/weakness-store";
 import type { WeaknessRecord } from "@/lib/types/growth";
 import { logInterviewSession } from "@/lib/bigquery/logger";
 import { logActivity } from "@/lib/firebase/activity-log";
@@ -68,6 +73,8 @@ export async function POST(request: NextRequest) {
     }
 
     let existingWeaknesses: WeaknessRecord[] = [];
+    /** 読めたときだけ弱点を更新する（読めずに空から更新すると、既存を回数1で上書きする） */
+    let loadedWeaknesses: LoadedWeaknesses | null = null;
     let universityName = "（大学名未設定）";
     let facultyName = "（学部名未設定）";
     let admissionPolicy = "（AP未設定）";
@@ -141,29 +148,8 @@ export async function POST(request: NextRequest) {
         }
 
         if (userId) {
-          const weaknessDocs = await adminDb
-            .collection(`users/${userId}/weaknesses`)
-            .where("resolved", "==", false)
-            .get();
-          if (!weaknessDocs.empty) {
-            existingWeaknesses = weaknessDocs.docs
-              .filter((d) => !d.data().archivedAt) // Phase 4: archive 済みは AI コンテキストから除外
-              .map((d) => {
-                const w = d.data();
-                return {
-                  area: w.area,
-                  count: w.count,
-                  firstOccurred: w.firstOccurred?.toDate() ?? new Date(),
-                  lastOccurred: w.lastOccurred?.toDate() ?? new Date(),
-                  improving: w.improving ?? false,
-                  resolved: w.resolved ?? false,
-                  source: w.source ?? "interview",
-                  reminderDismissedAt: w.reminderDismissedAt?.toDate() ?? null,
-                  categoryId: w.categoryId,
-                  archivedAt: w.archivedAt?.toDate?.() ?? w.archivedAt ?? null,
-                } satisfies WeaknessRecord;
-              });
-          }
+          loadedWeaknesses = await loadWeaknessRecords(adminDb, userId);
+          existingWeaknesses = activeWeaknesses(loadedWeaknesses.records);
 
           // 自己分析データ取得
           try {
@@ -378,14 +364,15 @@ export async function POST(request: NextRequest) {
     }
 
     const updatedWeaknesses = updateWeaknessRecords(
-      existingWeaknesses,
+      loadedWeaknesses?.records ?? [],
       weaknessTags,
-      "interview",
-      categoryHints,
-      undefined,
-      detailHints
+      { source: "interview", categoryHints, detailHints }
     );
-    const growthEvents = analyzeGrowth(weaknessTags, existingWeaknesses);
+    const growthEvents = analyzeGrowth(
+      weaknessTags,
+      existingWeaknesses,
+      "interview"
+    );
 
     /**
      * 褒めイベント。
@@ -465,32 +452,13 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        if (userId) {
-          for (const weakness of updatedWeaknesses) {
-            // area は AI の自由文。そのままIDにするとパスが壊れて以降が保存されない
-            await adminDb
-              .doc(`users/${userId}/weaknesses/${weaknessDocId(weakness.area)}`)
-              .set(
-                {
-                  area: weakness.area,
-                  count: weakness.count,
-                  firstOccurred: weakness.firstOccurred,
-                  lastOccurred: weakness.lastOccurred,
-                  improving: weakness.improving,
-                  resolved: weakness.resolved,
-                  source: weakness.source,
-                  reminderDismissedAt: weakness.reminderDismissedAt,
-                  ...(weakness.categoryId
-                    ? { categoryId: weakness.categoryId }
-                    : {}),
-                  // 直近の具体例（面接のこの発言がこう弱い）
-                  ...(weakness.lastExample
-                    ? { lastExample: weakness.lastExample }
-                    : {}),
-                },
-                { merge: true }
-              );
-          }
+        if (userId && loadedWeaknesses) {
+          await saveWeaknessRecords(
+            adminDb,
+            userId,
+            loadedWeaknesses,
+            updatedWeaknesses
+          );
         }
       } catch (err) {
         console.error("Failed to save interview results to Firestore:", err);

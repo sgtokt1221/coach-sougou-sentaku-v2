@@ -1,4 +1,9 @@
-import { WeaknessRecord, getWeaknessReminderLevel } from "@/lib/types/growth";
+import {
+  WeaknessRecord,
+  getWeaknessReminderLevel,
+  WEAKNESS_RECENT_WINDOW,
+  WEAKNESS_RESOLVE_STREAK,
+} from "@/lib/types/growth";
 import { GrowthEvent } from "@/lib/types/essay";
 import { categorizeWeakness } from "@/lib/growth/weakness-category";
 import { findSimilarArea } from "@/lib/growth/weakness-similarity";
@@ -28,9 +33,48 @@ function weaknessKey(
   return entry ? entry.id : text;
 }
 
+/** 弱点を積む提出の種類 */
+export type WeaknessSource =
+  | "essay"
+  | "interview"
+  | "skill_check"
+  | "interview_skill_check";
+
+/**
+ * 提出の分野。「今回指摘されなかった」は同じ分野の提出でしか言えない。
+ *
+ * 以前は分野を見ずに、提出で触れなかった弱点を一律で「改善中」にしていた。
+ * 面接を1回受けると小論文の弱点が全部「改善中」になり、面接の結果に
+ * 「（小論文の弱点）が改善されています」と出ていた。
+ */
+function domainOf(source: WeaknessRecord["source"]): string {
+  if (source === "essay" || source === "skill_check") return "essay";
+  if (source === "interview" || source === "interview_skill_check")
+    return "interview";
+  return source; // "lesson"（講師が入れた弱点）は提出では動かさない
+}
+
+/** この弱点が、この分野の提出で「指摘されたか／されなかったか」を数える対象か */
+function inDomain(w: WeaknessRecord, source: WeaknessSource): boolean {
+  return w.source === "both" || domainOf(w.source) === domainOf(source);
+}
+
+/** 前回の同じ分野の提出で指摘されていたか（直近の記録が無い旧データは improving の否定で代用） */
+function pointedLastTime(w: WeaknessRecord): boolean {
+  if (w.recentHits && w.recentHits.length > 0) {
+    return w.recentHits[w.recentHits.length - 1] === 1;
+  }
+  return !w.improving;
+}
+
+function pushRecent(hits: number[] | undefined, hit: 0 | 1): number[] {
+  return [...(hits ?? []), hit].slice(-WEAKNESS_RECENT_WINDOW);
+}
+
 export function analyzeGrowth(
   currentWeaknessTags: string[],
-  existingWeaknesses: WeaknessRecord[]
+  existingWeaknesses: WeaknessRecord[],
+  source: WeaknessSource = "essay"
 ): GrowthEvent[] {
   const events: GrowthEvent[] = [];
   // 今回の弱点を正規キーへ畳んで比較する (表記ゆれを吸収)
@@ -38,6 +82,8 @@ export function analyzeGrowth(
 
   for (const weakness of existingWeaknesses) {
     if (weakness.resolved) continue;
+    // 別の分野の弱点は、この提出で指摘されなかったからといって改善とは言えない
+    if (!inDomain(weakness, source)) continue;
 
     const key = weaknessKey(weakness.area, {
       categoryHint: weakness.categoryId,
@@ -45,7 +91,10 @@ export function analyzeGrowth(
     });
     const isInCurrent = currentKeys.has(key);
 
-    if (!isInCurrent && weakness.count >= 2) {
+    // 前回指摘されていて、今回は無くなったときだけ褒める。
+    // 以前は「今回挙がらなかった2回以上の弱点」を毎回すべて褒めていたが、AI が
+    // 1回に挙げる弱点は最大3件なので、テーマが違うだけで「改善」が並んでいた
+    if (!isInCurrent && weakness.count >= 2 && pointedLastTime(weakness)) {
       events.push({
         type: "praise",
         area: weakness.area,
@@ -194,27 +243,42 @@ function consolidateExisting(
   return [...merged, ...passthrough];
 }
 
-export function updateWeaknessRecords(
-  existingWeaknesses: WeaknessRecord[],
-  currentWeaknessTags: string[],
-  newSource:
-    | "essay"
-    | "interview"
-    | "skill_check"
-    | "interview_skill_check" = "essay",
+export interface UpdateWeaknessOptions {
+  /** 今回の提出の種類 */
+  source: WeaknessSource;
   /** AI が直接出力した area → categoryId のヒント。 未指定なら
    *  categorizeWeakness() で fallback 分類 */
-  categoryHints?: Map<string, WeaknessRecord["categoryId"]>,
+  categoryHints?: Map<string, WeaknessRecord["categoryId"]>;
   /** AI が直接出力した area → 正規 canonicalId のヒント (最優先で採用) */
-  canonicalHints?: Map<string, string>,
+  canonicalHints?: Map<string, string>;
   /**
    * area → 具体例（AI が書いた「答案のここがこう弱い」）。
    * 正規ラベルだけでは誰の弱点も同じ文言になるため、直近の例を記録に残す。
    * ラベルが見出し語で決まらないときの正規化の手がかりにも使う。
    */
-  detailHints?: Map<string, string>
+  detailHints?: Map<string, string>;
+  /** 提出の時刻。作り直し（過去の提出の再生）で当時の時刻を入れる */
+  now?: Date;
+  /**
+   * 今回挙がらなかった弱点を「指摘されなかった回」として数えるか（既定 true）。
+   * ちょこ添削のような部分練習は答案全体を見ていないので false にする。
+   * 数えると、結論を書いていない練習で「結論の弱点」が解決済みになる。
+   */
+  countMisses?: boolean;
+}
+
+export function updateWeaknessRecords(
+  existingWeaknesses: WeaknessRecord[],
+  currentWeaknessTags: string[],
+  options: UpdateWeaknessOptions
 ): WeaknessRecord[] {
-  const now = new Date();
+  const {
+    source: newSource,
+    categoryHints,
+    canonicalHints,
+    detailHints,
+  } = options;
+  const now = options.now ?? new Date();
   /**
    * 弱点として積めるものだけに絞る。
    *
@@ -261,6 +325,8 @@ export function updateWeaknessRecords(
       archivedAt: undefined, // 再指摘されたので復活
       source: mergedSource,
       categoryId: w.categoryId ?? fallbackCategory,
+      recentHits: pushRecent(w.recentHits, 1),
+      missStreak: 0,
     };
     touched.add(idx);
   };
@@ -296,6 +362,8 @@ export function updateWeaknessRecords(
         reminderDismissedAt: null,
         categoryId: entry.category,
         ...(detail ? { lastExample: detail } : {}),
+        recentHits: [1],
+        missStreak: 0,
       };
       updated.push(rec);
       const newIdx = updated.length - 1;
@@ -361,17 +429,33 @@ export function updateWeaknessRecords(
       reminderDismissedAt: null,
       categoryId: newCategory,
       ...(detail ? { lastExample: detail } : {}),
+      recentHits: [1],
+      missStreak: 0,
     });
     const newIdx = updated.length - 1;
     byArea.set(tag, newIdx);
     touched.add(newIdx);
   }
 
-  // 今回触れられなかった未解決レコードは improving 扱い (従来挙動)
+  /**
+   * 今回指摘されなかった弱点。**同じ分野の提出のときだけ**動かす。
+   * 直近の記録に「指摘なし」を積み、続けて WEAKNESS_RESOLVE_STREAK 回
+   * 指摘されなければ解決済みにする（再び指摘されたら bump で戻る）。
+   */
   const result = updated.map((w, i) => {
     if (touched.has(i)) return w;
-    if (w.resolved) return w;
-    return { ...w, improving: true };
+    if (w.resolved || w.archivedAt) return w;
+    if (options.countMisses === false) return w;
+    if (!inDomain(w, newSource)) return w;
+    const missStreak = (w.missStreak ?? 0) + 1;
+    const resolved = missStreak >= WEAKNESS_RESOLVE_STREAK;
+    return {
+      ...w,
+      improving: !resolved,
+      resolved,
+      missStreak,
+      recentHits: pushRecent(w.recentHits, 0),
+    };
   });
 
   return archiveOldWeaknesses(result, now);
@@ -417,6 +501,11 @@ export function getActiveWeaknesses(
   return weaknesses.filter((w) => !w.archivedAt);
 }
 
+function dateMs(d: Date | string | null | undefined): number {
+  if (!d) return 0;
+  return d instanceof Date ? d.getTime() : new Date(d).getTime();
+}
+
 const SEVERITY_ORDER: Record<string, number> = {
   critical: 0,
   warning: 1,
@@ -428,9 +517,20 @@ export function getRemindableWeaknesses(
   weaknesses: WeaknessRecord[],
   context: "dashboard" | "essay_new" | "essay_result"
 ): WeaknessRecord[] {
-  let filtered = weaknesses.filter(
-    (w) => !w.archivedAt && getWeaknessReminderLevel(w) !== null
-  );
+  let filtered = weaknesses.filter((w) => {
+    if (w.archivedAt) return false;
+    const level = getWeaknessReminderLevel(w);
+    // 解決済みは「次に気をつけること」ではないので出さない
+    if (level === null || level === "resolved") return false;
+    // 「もう見ない」を押したあと、再び指摘されるまでは出さない
+    if (
+      w.reminderDismissedAt &&
+      dateMs(w.reminderDismissedAt) >= dateMs(w.lastOccurred)
+    ) {
+      return false;
+    }
+    return true;
+  });
 
   if (context === "essay_new") {
     filtered = filtered.filter(

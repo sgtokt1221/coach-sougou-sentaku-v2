@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { weaknessDocId } from "@/lib/growth/weakness-id";
+import {
+  activeWeaknesses,
+  loadWeaknessRecords,
+  saveWeaknessRecords,
+} from "@/lib/growth/weakness-store";
 import {
   reviewWithClaude,
   buildMockReviewResult,
@@ -14,7 +18,6 @@ import type {
   SkillCheckResult,
 } from "@/lib/types/skill-check";
 import { ACADEMIC_CATEGORIES } from "@/lib/types/skill-check";
-import type { WeaknessRecord } from "@/lib/types/growth";
 import { analyzeGrowth, updateWeaknessRecords } from "@/lib/growth/analyze";
 
 export const maxDuration = 120;
@@ -175,48 +178,18 @@ export async function POST(request: NextRequest) {
   try {
     // 助言の自由文は混ぜない（混ぜると誰にでも付く弱点に落ちる）
     const weaknessTags = feedback.repeatedIssues.map((r) => r.area);
-    if (weaknessTags.length > 0) {
-      const existingSnap = await adminDb
-        .collection(`users/${userId}/weaknesses`)
-        .where("resolved", "==", false)
-        .get();
-      const existing: WeaknessRecord[] = existingSnap.docs.map((d) => {
-        const w = d.data();
-        return {
-          area: w.area,
-          count: w.count ?? 0,
-          firstOccurred: w.firstOccurred?.toDate() ?? new Date(),
-          lastOccurred: w.lastOccurred?.toDate() ?? new Date(),
-          improving: w.improving ?? false,
-          resolved: w.resolved ?? false,
-          source: w.source ?? "essay",
-          reminderDismissedAt: w.reminderDismissedAt?.toDate() ?? null,
-        };
-      });
-      const updated = updateWeaknessRecords(
-        existing,
-        weaknessTags,
-        "skill_check"
-      );
-      for (const w of updated) {
-        await adminDb
-          .doc(`users/${userId}/weaknesses/${weaknessDocId(w.area)}`)
-          .set(
-            {
-              area: w.area,
-              count: w.count,
-              firstOccurred: w.firstOccurred,
-              lastOccurred: w.lastOccurred,
-              improving: w.improving,
-              resolved: w.resolved,
-              source: w.source,
-              reminderDismissedAt: w.reminderDismissedAt,
-            },
-            { merge: true }
-          );
-      }
-      void analyzeGrowth(weaknessTags, existing);
-    }
+    // 弱点が1つも挙がらなかった回も更新する。「指摘されなかった」を数えないと
+    // 改善しても解決済みにならない（以前は挙がったときだけ更新していた）
+    const loaded = await loadWeaknessRecords(adminDb, userId);
+    const updated = updateWeaknessRecords(loaded.records, weaknessTags, {
+      source: "skill_check",
+    });
+    await saveWeaknessRecords(adminDb, userId, loaded, updated);
+    void analyzeGrowth(
+      weaknessTags,
+      activeWeaknesses(loaded.records),
+      "skill_check"
+    );
   } catch (err) {
     console.error("[skill-check/submit] Failed to update weaknesses:", err);
   }

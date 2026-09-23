@@ -4,6 +4,22 @@ import { normalizedEssayTotal } from "@/lib/types/essay";
 import { getOrgMemberAdminUids, chunk } from "@/lib/api/organization-scope";
 import { adminDb } from "@/lib/firebase/admin";
 import type { AlertItem } from "@/lib/types/admin";
+import {
+  getWeaknessReminderLevel,
+  type WeaknessRecord,
+} from "@/lib/types/growth";
+
+/**
+ * 弱点の段階。生徒の画面（リマインド）と同じ判定を使う。
+ * 解決済みは null（アラートにしない）。段階の判定が読むのは
+ * count / improving / resolved / recentHits だけ。
+ */
+function weaknessLevel(
+  w: Pick<WeaknessRecord, "count" | "improving" | "resolved" | "recentHits">
+) {
+  const level = getWeaknessReminderLevel(w as WeaknessRecord);
+  return level === "resolved" ? null : level;
+}
 
 /** 活動系 info 通知の「直近」とみなす日数。 */
 const NEW_WINDOW_DAYS = 3;
@@ -14,7 +30,13 @@ interface StudentAlertData {
   lastActivityAt: string | null;
   scoreHistory: number[];
   apAlignmentScores: number[];
-  weaknesses: { area: string; count: number; improving: boolean }[];
+  weaknesses: {
+    area: string;
+    count: number;
+    improving: boolean;
+    resolved: boolean;
+    recentHits?: number[];
+  }[];
   documents: DocumentAlertData[];
   /** users/{uid}/alertAcks に保存済みの確認済みキー集合 */
   acknowledgedKeys: Set<string>;
@@ -154,9 +176,10 @@ function detectAlerts(students: StudentAlertData[]): AlertItem[] {
       }
     }
 
-    // repeated_weakness: same weakness 5+ times
+    // repeated_weakness: 直近の提出で繰り返し指摘されている（段階が「重要」）。
+    // 累計の回数で見ると、改善したあとも一度5回を超えた弱点が出続ける
     for (const w of student.weaknesses) {
-      if (w.count >= 5) {
+      if (weaknessLevel(w) === "critical") {
         add(student, w.area, {
           type: "repeated_weakness",
           severity: w.count >= 7 ? "critical" : "warning",
@@ -224,19 +247,17 @@ function detectAlerts(students: StudentAlertData[]): AlertItem[] {
       }
     }
 
-    // weakness_stuck: same weakness with 3+ attempts and no improvement
+    // weakness_stuck: 直近の提出で繰り返し指摘され（段階が「注意」）、前回も指摘された。
+    // 「重要」は repeated_weakness で出すので、ここでは扱わない
     for (const w of student.weaknesses) {
-      if (w.count >= 3 && !w.improving) {
-        // Only generate this if not already covered by repeated_weakness
-        if (w.count < 5) {
-          add(student, w.area, {
-            type: "weakness_stuck",
-            severity: w.count >= 4 ? "high" : "warning",
-            message: `「${w.area}」が${w.count}回指摘されていますが改善が見られません`,
-            detectedAt: new Date().toISOString(),
-            recommendedAction: `「${w.area}」について別のアプローチ（例文提示、個別解説）を試みましょう。`,
-          });
-        }
+      if (weaknessLevel(w) === "warning" && !w.improving) {
+        add(student, w.area, {
+          type: "weakness_stuck",
+          severity: w.count >= 4 ? "high" : "warning",
+          message: `「${w.area}」が${w.count}回指摘されていますが改善が見られません`,
+          detectedAt: new Date().toISOString(),
+          recommendedAction: `「${w.area}」について別のアプローチ（例文提示、個別解説）を試みましょう。`,
+        });
       }
     }
 
@@ -464,6 +485,10 @@ export async function GET(request: NextRequest) {
               area: wData.area ?? "",
               count: wData.count ?? 0,
               improving: wData.improving ?? false,
+              resolved: wData.resolved === true,
+              ...(Array.isArray(wData.recentHits)
+                ? { recentHits: wData.recentHits as number[] }
+                : {}),
             };
           });
 

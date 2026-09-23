@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { weaknessDocId } from "@/lib/growth/weakness-id";
+import {
+  activeWeaknesses,
+  loadWeaknessRecords,
+  saveWeaknessRecords,
+  type LoadedWeaknesses,
+} from "@/lib/growth/weakness-store";
 import type {
   EssayReviewRequest,
   EssayFeedback,
@@ -96,6 +101,8 @@ export async function POST(request: NextRequest) {
     let weaknessList = "（過去の弱点なし）";
     let essayUserId: string | null = requestUserId;
     let existingWeaknesses: WeaknessRecord[] = [];
+    /** 読めたときだけ弱点を更新する（読めずに空から更新すると、既存を回数1で上書きする） */
+    let loadedWeaknesses: LoadedWeaknesses | null = null;
 
     // 再トライチェーン情報
     let rootEssayId: string = essayId;
@@ -251,30 +258,10 @@ export async function POST(request: NextRequest) {
           const essayData = essayDoc.data()!;
           essayUserId = essayData.userId ?? null;
           if (essayUserId) {
-            const weaknessDocs = await adminDb
-              .collection(`users/${essayUserId}/weaknesses`)
-              .where("resolved", "==", false)
-              .get();
-            if (!weaknessDocs.empty) {
-              existingWeaknesses = weaknessDocs.docs
-                .filter((d) => !d.data().archivedAt) // Phase 4: archive 済みは AI コンテキストから除外
-                .map((d) => {
-                  const w = d.data();
-                  return {
-                    area: w.area,
-                    count: w.count,
-                    firstOccurred: w.firstOccurred?.toDate() ?? new Date(),
-                    lastOccurred: w.lastOccurred?.toDate() ?? new Date(),
-                    improving: w.improving ?? false,
-                    resolved: w.resolved ?? false,
-                    source: w.source ?? "essay",
-                    reminderDismissedAt:
-                      w.reminderDismissedAt?.toDate() ?? null,
-                    categoryId: w.categoryId,
-                    archivedAt:
-                      w.archivedAt?.toDate?.() ?? w.archivedAt ?? null,
-                  } satisfies WeaknessRecord;
-                });
+            loadedWeaknesses = await loadWeaknessRecords(adminDb, essayUserId);
+            // 解決済み・アーカイブ済みは AI の文脈に入れない
+            existingWeaknesses = activeWeaknesses(loadedWeaknesses.records);
+            if (existingWeaknesses.length > 0) {
               weaknessList = existingWeaknesses
                 .map((w) => `- ${w.area}（${w.count}回指摘）`)
                 .join("\n");
@@ -375,14 +362,15 @@ export async function POST(request: NextRequest) {
 
     // 弱点レコードを更新し成長イベントを生成
     const updatedWeaknesses = updateWeaknessRecords(
-      existingWeaknesses,
+      loadedWeaknesses?.records ?? [],
       weaknessTags,
-      "essay",
-      categoryHints,
-      undefined,
-      detailHints
+      { source: "essay", categoryHints, detailHints }
     );
-    const growthEvents = analyzeGrowth(weaknessTags, existingWeaknesses);
+    const growthEvents = analyzeGrowth(
+      weaknessTags,
+      existingWeaknesses,
+      "essay"
+    );
 
     if (scores.total >= Math.round((feedback.scoreMaximum ?? 50) * 0.8)) {
       growthEvents.unshift({
@@ -442,33 +430,13 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        if (essayUserId) {
-          for (const weakness of updatedWeaknesses) {
-            await adminDb
-              .doc(
-                `users/${essayUserId}/weaknesses/${weaknessDocId(weakness.area)}`
-              )
-              .set(
-                {
-                  area: weakness.area,
-                  count: weakness.count,
-                  firstOccurred: weakness.firstOccurred,
-                  lastOccurred: weakness.lastOccurred,
-                  improving: weakness.improving,
-                  resolved: weakness.resolved,
-                  source: weakness.source,
-                  reminderDismissedAt: weakness.reminderDismissedAt,
-                  ...(weakness.categoryId
-                    ? { categoryId: weakness.categoryId }
-                    : {}),
-                  // 直近の具体例。ラベルだけだと誰の弱点も同じ文言になる
-                  ...(weakness.lastExample
-                    ? { lastExample: weakness.lastExample }
-                    : {}),
-                },
-                { merge: true }
-              );
-          }
+        if (essayUserId && loadedWeaknesses) {
+          await saveWeaknessRecords(
+            adminDb,
+            essayUserId,
+            loadedWeaknesses,
+            updatedWeaknesses
+          );
         }
       } catch (err) {
         console.warn("Failed to save review results to Firestore:", err);

@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { weaknessDocId } from "@/lib/growth/weakness-id";
+import {
+  loadWeaknessRecords,
+  saveWeaknessRecords,
+} from "@/lib/growth/weakness-store";
 import Anthropic from "@anthropic-ai/sdk";
 import {
   INTERVIEW_SKILL_CHECK_EVALUATION_PROMPT,
@@ -13,7 +16,6 @@ import type {
 import type { InterviewMessage } from "@/lib/types/interview";
 import { calculateInterviewRank } from "@/lib/interview-skill-check/rank";
 import { updateWeaknessRecords } from "@/lib/growth/analyze";
-import type { WeaknessRecord } from "@/lib/types/growth";
 
 export const maxDuration = 120;
 
@@ -226,45 +228,11 @@ export async function POST(request: NextRequest) {
   try {
     const weaknessTags: string[] = [];
     if (weaknessTags.length > 0) {
-      const existingSnap = await adminDb
-        .collection(`users/${userId}/weaknesses`)
-        .where("resolved", "==", false)
-        .get();
-      const existing: WeaknessRecord[] = existingSnap.docs.map((d) => {
-        const w = d.data();
-        return {
-          area: w.area,
-          count: w.count ?? 0,
-          firstOccurred: w.firstOccurred?.toDate() ?? new Date(),
-          lastOccurred: w.lastOccurred?.toDate() ?? new Date(),
-          improving: w.improving ?? false,
-          resolved: w.resolved ?? false,
-          source: w.source ?? "essay",
-          reminderDismissedAt: w.reminderDismissedAt?.toDate() ?? null,
-        };
+      const loaded = await loadWeaknessRecords(adminDb, userId);
+      const updated = updateWeaknessRecords(loaded.records, weaknessTags, {
+        source: "interview_skill_check",
       });
-      const updated = updateWeaknessRecords(
-        existing,
-        weaknessTags,
-        "interview_skill_check"
-      );
-      for (const w of updated) {
-        await adminDb
-          .doc(`users/${userId}/weaknesses/${weaknessDocId(w.area)}`)
-          .set(
-            {
-              area: w.area,
-              count: w.count,
-              firstOccurred: w.firstOccurred,
-              lastOccurred: w.lastOccurred,
-              improving: w.improving,
-              resolved: w.resolved,
-              source: w.source,
-              reminderDismissedAt: w.reminderDismissedAt,
-            },
-            { merge: true }
-          );
-      }
+      await saveWeaknessRecords(adminDb, userId, loaded, updated);
     }
   } catch (err) {
     console.error(

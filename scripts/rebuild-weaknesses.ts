@@ -1,27 +1,26 @@
 /**
  * 弱点レコードを過去の提出から作り直す。
  *
- * 背景:
- *   弱点タグに improvements（助言の自由文）を混ぜており、さらに正規化が
- *   キーワード1語の部分一致だったため、「結論を一文で言い切る」のような助言が
- *   「結論が不明確・欠落している」に落ちていた。提出のたびに同じ汎用ラベルが
- *   加算され、誰の弱点リストも同じ2〜3件と実態に合わない回数になっている。
+ * 提出（小論文・面接・スキルチェック・ちょこ添削）を古い順に、本番の書き込みと
+ * **同じ関数（updateWeaknessRecords）**へ流し直して users/{uid}/weaknesses を組み直す。
+ * 本番と別の数え方で組むと、直近の記録（recentHits）・連続して指摘されなかった回数
+ * （missStreak）・解決済み・改善中が本番の規則とずれるため、再生で作る。
  *
- * やること:
- *   essays / interviews に残っている当時の feedback.repeatedIssues を時系列に
- *   読み直し、現在の規則（弱点だけを拾う・説明文つきで正規化する）で
- *   users/{uid}/weaknesses を組み直す。回数・初出・直近・具体例が実態に戻る。
+ * 2026-09-23: 統合のたびに元の文書が残って回数が水増しされていた（実際の11回が33回、
+ * 全体で1.29倍）のを戻すために書き直した。
  *
- *   生徒が自分で消した／解決済みにした状態（reminderDismissedAt・resolved・
- *   archivedAt）は引き継ぐ。人が触った跡は上書きしない。
+ * 引き継ぐもの:
+ *   - 「もう見ない」（reminderDismissedAt）。正規ラベル単位で引き継ぐ
+ *   - 講師が面談で入れた弱点（source="lesson"）。提出から作り直せないので、再生の最初に置く
  *
  * 使い方:
  *   確認のみ（既定。書き込まない）:
- *     npx tsx scripts/rebuild-weaknesses.ts
- *   1人だけ:
- *     npx tsx scripts/rebuild-weaknesses.ts --uid=xxxx
+ *     npx tsx --env-file=.env.local scripts/rebuild-weaknesses.ts [--detail]
+ *   1人だけ:  --uid=xxxx / 名前で: --name=山内,岡本
  *   実際に書き換える（先にバックアップJSONを書き出す）:
- *     npx tsx scripts/rebuild-weaknesses.ts --apply
+ *     npx tsx --env-file=.env.local scripts/rebuild-weaknesses.ts --apply
+ *   棚卸し（正規ラベルに寄らなかった弱点名を数える。書き込まない）:
+ *     npx tsx --env-file=.env.local scripts/rebuild-weaknesses.ts --audit
  */
 import { config } from "dotenv";
 config({ path: ".env.local" });
@@ -31,10 +30,22 @@ import { adminDb } from "../src/lib/firebase/admin";
 import {
   resolveCanonical,
   isWeaknessLabel,
-  canonicalLabel,
 } from "../src/lib/growth/weakness-taxonomy";
 import { categorizeWeakness } from "../src/lib/growth/weakness-category";
-import { weaknessDocId } from "../src/lib/growth/weakness-id";
+import {
+  updateWeaknessRecords,
+  archiveOldWeaknesses,
+  type WeaknessSource,
+} from "../src/lib/growth/analyze";
+import {
+  loadWeaknessRecords,
+  saveWeaknessRecords,
+} from "../src/lib/growth/weakness-store";
+import { getLectureById } from "../src/data/essay-lectures";
+import {
+  getWeaknessReminderLevel,
+  type WeaknessRecord,
+} from "../src/lib/types/growth";
 
 const APPLY = process.argv.includes("--apply");
 const ONLY_UID = process.argv
@@ -70,20 +81,13 @@ interface Issue {
 
 interface Submission {
   at: Date;
-  source: "essay" | "interview";
+  source: WeaknessSource;
+  /** 本番で updateWeaknessRecords に渡した弱点名（保存されていればそれ、無ければ repeatedIssues から） */
+  tags: string[];
+  /** カテゴリ・具体例のヒント（repeatedIssues） */
   issues: Issue[];
-}
-
-interface Rebuilt {
-  key: string;
-  area: string;
-  canonicalId?: string;
-  categoryId: Category;
-  count: number;
-  firstOccurred: Date;
-  lastOccurred: Date;
-  lastExample?: string;
-  sources: Set<"essay" | "interview">;
+  /** 部分練習（ちょこ添削・講座のブロック課題）は「指摘されなかった回」を数えない */
+  countMisses: boolean;
 }
 
 function toDate(v: unknown): Date | null {
@@ -98,75 +102,119 @@ function toDate(v: unknown): Date | null {
   return v instanceof Date ? v : null;
 }
 
-/** 1人分の提出履歴を時系列で集める */
+function tagsOf(data: Record<string, unknown>, issues: Issue[]): string[] {
+  const saved = data.weaknessTags;
+  if (Array.isArray(saved))
+    return saved.filter((t): t is string => typeof t === "string");
+  return issues.map((i) => i.area ?? "").filter(Boolean);
+}
+
+/** 1人分の提出履歴を時系列で集める（弱点が0件だった提出も含める。改善の手がかりなので） */
 async function loadSubmissions(uid: string): Promise<Submission[]> {
   const db = adminDb!;
-  const [essays, interviews] = await Promise.all([
+  const [essays, interviews, skills, chocos] = await Promise.all([
     db.collection("essays").where("userId", "==", uid).get(),
     db.collection("interviews").where("userId", "==", uid).get(),
+    db.collection(`users/${uid}/skillChecks`).get(),
+    db.collection(`users/${uid}/chokoReviews`).get(),
   ]);
 
   const subs: Submission[] = [];
   for (const d of essays.docs) {
     const data = d.data();
-    const issues = data.feedback?.repeatedIssues;
-    if (!Array.isArray(issues) || issues.length === 0) continue;
+    if (!data.scores || !data.feedback) continue; // 採点されていない答案
+    const issues: Issue[] = data.feedback.repeatedIssues ?? [];
     const at = toDate(data.submittedAt) ?? toDate(data.reviewedAt);
     if (!at) continue;
-    subs.push({ at, source: "essay", issues });
+    const lecture =
+      data.sourceType === "lecture" && typeof data.lectureId === "string"
+        ? getLectureById(data.lectureId)
+        : undefined;
+    subs.push({
+      at,
+      source: "essay",
+      tags: tagsOf(data, issues),
+      issues,
+      countMisses: !lecture?.exercise.blockId,
+    });
   }
   for (const d of interviews.docs) {
     const data = d.data();
-    const issues = data.feedback?.repeatedIssues;
-    if (!Array.isArray(issues) || issues.length === 0) continue;
+    if (!data.scores || !data.feedback) continue;
+    const issues: Issue[] = data.feedback.repeatedIssues ?? [];
     const at = toDate(data.completedAt) ?? toDate(data.startedAt);
     if (!at) continue;
-    subs.push({ at, source: "interview", issues });
+    subs.push({
+      at,
+      source: "interview",
+      tags: tagsOf(data, issues),
+      issues,
+      countMisses: true,
+    });
+  }
+  for (const d of skills.docs) {
+    const data = d.data();
+    const issues: Issue[] = data.feedback?.repeatedIssues ?? [];
+    if (!data.feedback) continue;
+    const at = toDate(data.takenAt);
+    if (!at) continue;
+    subs.push({
+      at,
+      source: "skill_check",
+      tags: issues.map((i) => i.area ?? "").filter(Boolean),
+      issues,
+      countMisses: true,
+    });
+  }
+  for (const d of chocos.docs) {
+    const data = d.data();
+    const tags: string[] = data.feedback?.weaknessTags ?? [];
+    const at = toDate(data.submittedAt) ?? toDate(data.createdAt);
+    if (!at || tags.length === 0) continue; // 本番も弱点が無ければ何もしない
+    subs.push({ at, source: "essay", tags, issues: [], countMisses: false });
   }
   return subs.sort((a, b) => a.at.getTime() - b.at.getTime());
 }
 
-/** 提出履歴から弱点を組み直す（本番の書き込み経路と同じ規則で） */
-function rebuild(subs: Submission[]): Rebuilt[] {
-  const acc = new Map<string, Rebuilt>();
-
+/** 本番と同じ関数で、提出を古い順に流し直す */
+function replay(
+  initial: WeaknessRecord[],
+  subs: Submission[]
+): WeaknessRecord[] {
+  let recs = initial;
   for (const sub of subs) {
-    const seen = new Set<string>(); // 同一提出内は1回だけ数える
+    const categoryHints = new Map<string, WeaknessRecord["categoryId"]>();
+    const detailHints = new Map<string, string>();
     for (const issue of sub.issues) {
-      const area = (issue.area ?? "").trim();
-      if (!area || !isWeaknessLabel(area)) continue;
-      const message = (issue.message ?? "").trim() || undefined;
-      const categoryHint = (issue.category as Category) ?? undefined;
-      const entry = resolveCanonical(area, {
-        categoryHint,
-        supportText: message,
-      });
-      const key = entry?.id ?? area;
-      if (seen.has(key)) continue;
-      seen.add(key);
-
-      const existing = acc.get(key);
-      if (existing) {
-        existing.count += 1;
-        existing.lastOccurred = sub.at;
-        if (message) existing.lastExample = message;
-        existing.sources.add(sub.source);
-        continue;
-      }
-      acc.set(key, {
-        key,
-        area: entry ? canonicalLabel(entry.id) : area,
-        canonicalId: entry?.id,
-        categoryId: entry?.category ?? categoryHint ?? categorizeWeakness(area),
-        count: 1,
-        firstOccurred: sub.at,
-        lastOccurred: sub.at,
-        lastExample: message,
-        sources: new Set([sub.source]),
-      });
+      if (!issue.area) continue;
+      if (issue.category)
+        categoryHints.set(issue.area, issue.category as Category);
+      if (issue.message?.trim())
+        detailHints.set(issue.area, issue.message.trim());
     }
+    recs = updateWeaknessRecords(recs, sub.tags, {
+      source: sub.source,
+      categoryHints,
+      detailHints,
+      now: sub.at,
+      countMisses: sub.countMisses,
+    });
   }
-  return [...acc.values()].sort((a, b) => b.count - a.count);
+  // アーカイブは今日の日付で判定し直す
+  return archiveOldWeaknesses(recs, new Date());
+}
+
+/** 引き継ぎのキー（正規ラベルに寄せる） */
+function keyOf(w: {
+  area: string;
+  categoryId?: string;
+  canonicalId?: string;
+}): string {
+  return (
+    w.canonicalId ??
+    resolveCanonical(w.area, { categoryHint: w.categoryId as Category })?.id ??
+    w.area
+  );
 }
 
 async function main() {
@@ -304,125 +352,66 @@ async function main() {
   let usersWithWeaknesses = 0;
   let beforeTotal = 0;
   let afterTotal = 0;
-  let deletedTotal = 0;
-  const shownExamples: string[] = [];
+  let beforeCount = 0;
+  let afterCount = 0;
 
   for (const userDoc of userDocs) {
     if (!userDoc.exists) continue;
     const uid = userDoc.id;
-    const existingSnap = await db.collection(`users/${uid}/weaknesses`).get();
-    if (existingSnap.empty) continue;
-    usersWithWeaknesses++;
-
-    const existing = existingSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
-    backup[uid] = existing;
-    beforeTotal += existing.length;
-
+    const loaded = await loadWeaknessRecords(db, uid);
     const subs = await loadSubmissions(uid);
-    const rebuilt = rebuild(subs);
+    if (loaded.records.length === 0 && subs.length === 0) continue;
+    usersWithWeaknesses++;
+    backup[uid] = (
+      await db.collection(`users/${uid}/weaknesses`).get()
+    ).docs.map((d) => ({ id: d.id, ...d.data() }));
+
+    // 講師が面談で入れた弱点は提出から作れないので、再生の最初に置く
+    const lessons = loaded.records
+      .filter((w) => w.source === "lesson")
+      .map((w) => ({ ...w, recentHits: [], missStreak: 0 }));
+    let rebuilt = replay(lessons, subs);
+
+    // 「もう見ない」を引き継ぐ
+    const dismissed = new Map<string, Date>();
+    for (const w of loaded.records) {
+      if (w.reminderDismissedAt) dismissed.set(keyOf(w), w.reminderDismissedAt);
+    }
+    rebuilt = rebuilt.map((w) => {
+      const d = dismissed.get(keyOf(w));
+      return d ? { ...w, reminderDismissedAt: d } : w;
+    });
+
+    beforeTotal += loaded.records.length;
     afterTotal += rebuilt.length;
+    const sum = (xs: WeaknessRecord[]) => xs.reduce((a, w) => a + w.count, 0);
+    beforeCount += sum(loaded.records);
+    afterCount += sum(rebuilt);
 
-    /** 人が触った状態は引き継ぐ（消した・解決済みにした跡を戻さない） */
-    const humanState = new Map<
-      string,
-      {
-        reminderDismissedAt?: unknown;
-        resolved?: boolean;
-        archivedAt?: unknown;
-      }
-    >();
-    for (const e of existing) {
-      const rec = e as Record<string, unknown>;
-      const key =
-        (rec.canonicalId as string) ??
-        resolveCanonical(String(rec.area ?? ""), {
-          categoryHint: rec.categoryId as Category,
-        })?.id ??
-        String(rec.area ?? "");
-      humanState.set(key, {
-        reminderDismissedAt: rec.reminderDismissedAt,
-        resolved: rec.resolved === true,
-        archivedAt: rec.archivedAt,
-      });
-    }
-
-    const newIds = new Set(rebuilt.map((r) => weaknessDocId(r.area)));
-    /**
-     * 面談で講師が入れた弱点は作り直しの対象外。提出物から復元できないので、
-     * 消さずにそのまま残す（AIが積んだ汎用ラベルとは別物）。
-     */
-    const stale = existing.filter(
-      (e) => !newIds.has(e.id) && (e as { source?: string }).source !== "lesson"
+    const name = String(userDoc.data()?.displayName ?? uid.slice(0, 6));
+    console.log(
+      `■ ${name}（提出 ${subs.length}件）  弱点 ${loaded.records.length}件→${rebuilt.length}件` +
+        `  回数の合計 ${sum(loaded.records)}→${sum(rebuilt)}`
     );
-    deletedTotal += stale.length;
-
     if (DETAIL) {
-      const name = String(userDoc.data()?.displayName ?? "(名前なし)");
-      const fmt = (label: string, count: number, extra = "") =>
-        `    ${count}回  ${label.length > 34 ? label.slice(0, 34) + "…" : label}${extra}`;
-      console.log(`\n■ ${name}（提出 ${subs.length}件）`);
+      const fmt = (w: WeaknessRecord) => {
+        const level = getWeaknessReminderLevel(w) ?? "-";
+        const tail = w.archivedAt
+          ? " アーカイブ"
+          : w.improving
+            ? " 改善中"
+            : "";
+        return `    ${String(w.count).padStart(3)}回  ${level}${tail}  直近[${(w.recentHits ?? []).join("")}]  ${w.area}`;
+      };
       console.log("  今:");
-      for (const e of [...existing].sort(
-        (a, b) =>
-          ((b as { count?: number }).count ?? 0) -
-          ((a as { count?: number }).count ?? 0)
-      )) {
-        const rec = e as { area?: string; count?: number; source?: string };
-        console.log(
-          fmt(
-            String(rec.area ?? ""),
-            rec.count ?? 0,
-            rec.source === "lesson" ? "（面談・残す）" : ""
-          )
-        );
-      }
+      for (const w of [...loaded.records].sort((a, b) => b.count - a.count))
+        console.log(fmt(w));
       console.log("  作り直し後:");
-      if (rebuilt.length === 0) console.log("    (なし)");
-      for (const r of rebuilt) {
-        console.log(fmt(r.area, r.count));
-        if (r.lastExample) {
-          console.log(`         直近: ${r.lastExample.slice(0, 60)}`);
-        }
-      }
-      console.log(`  消えるもの: ${stale.length}件`);
+      for (const w of [...rebuilt].sort((a, b) => b.count - a.count))
+        console.log(fmt(w));
     }
 
-    if (!DETAIL && shownExamples.length < 3 && existing.length > 0) {
-      const name = String(userDoc.data()?.displayName ?? uid.slice(0, 6));
-      shownExamples.push(
-        `  ${name}（提出${subs.length}件）: ${existing.length}件 → ${rebuilt.length}件`
-      );
-    }
-
-    if (!APPLY) continue;
-
-    const batch = db.batch();
-    for (const r of rebuilt) {
-      const state = humanState.get(r.key) ?? {};
-      batch.set(
-        db.doc(`users/${uid}/weaknesses/${weaknessDocId(r.area)}`),
-        {
-          area: r.area,
-          count: r.count,
-          firstOccurred: r.firstOccurred,
-          lastOccurred: r.lastOccurred,
-          improving: false,
-          resolved: state.resolved ?? false,
-          source: r.sources.size > 1 ? "both" : [...r.sources][0],
-          reminderDismissedAt: state.reminderDismissedAt ?? null,
-          categoryId: r.categoryId,
-          ...(r.canonicalId ? { canonicalId: r.canonicalId } : {}),
-          ...(r.lastExample ? { lastExample: r.lastExample } : {}),
-          ...(state.archivedAt ? { archivedAt: state.archivedAt } : {}),
-          rebuiltAt: new Date(),
-        },
-        { merge: false }
-      );
-    }
-    for (const s of stale) {
-      batch.delete(db.doc(`users/${uid}/weaknesses/${s.id}`));
-    }
-    await batch.commit();
+    if (APPLY) await saveWeaknessRecords(db, uid, loaded, rebuilt);
   }
 
   const stamp = new Date().toISOString().replace(/[:.]/g, "-");
@@ -431,12 +420,9 @@ async function main() {
 
   console.log(`\n${APPLY ? "【書き換えた】" : "【確認のみ・書き込みなし】"}`);
   console.log(`対象ユーザー: ${usersWithWeaknesses}人`);
-  console.log(
-    `弱点レコード: ${beforeTotal}件 → ${afterTotal}件（削除 ${deletedTotal}件）`
-  );
+  console.log(`弱点レコード: ${beforeTotal}件 → ${afterTotal}件`);
+  console.log(`回数の合計: ${beforeCount} → ${afterCount}`);
   console.log(`バックアップ: ${path}`);
-  console.log("\n例:");
-  for (const e of shownExamples) console.log(e);
 }
 
 main()

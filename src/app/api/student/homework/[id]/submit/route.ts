@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { weaknessDocId } from "@/lib/growth/weakness-id";
+import {
+  activeWeaknesses,
+  loadWeaknessRecords,
+  saveWeaknessRecords,
+  type LoadedWeaknesses,
+} from "@/lib/growth/weakness-store";
 import { FieldValue } from "firebase-admin/firestore";
 import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
@@ -127,26 +132,9 @@ export async function POST(
 
     // 弱点 DB
     step = "load_weaknesses";
-    let existingWeaknesses: WeaknessRecord[] = [];
-    const weaknessDocs = await adminDb
-      .collection(`users/${uid}/weaknesses`)
-      .where("resolved", "==", false)
-      .get();
-    if (!weaknessDocs.empty) {
-      existingWeaknesses = weaknessDocs.docs.map((d) => {
-        const w = d.data();
-        return {
-          area: w.area,
-          count: w.count,
-          firstOccurred: w.firstOccurred?.toDate() ?? new Date(),
-          lastOccurred: w.lastOccurred?.toDate() ?? new Date(),
-          improving: w.improving ?? false,
-          resolved: w.resolved ?? false,
-          source: w.source ?? "essay",
-          reminderDismissedAt: w.reminderDismissedAt?.toDate() ?? null,
-        } satisfies WeaknessRecord;
-      });
-    }
+    const loadedWeaknesses = await loadWeaknessRecords(adminDb, uid);
+    // 解決済み・アーカイブ済みは AI の文脈に入れない
+    const existingWeaknesses = activeWeaknesses(loadedWeaknesses.records);
     const weaknessList =
       existingWeaknesses.length > 0
         ? existingWeaknesses
@@ -164,6 +152,7 @@ export async function POST(
         admissionPolicy,
         weaknessList,
         existingWeaknesses,
+        loadedWeaknesses,
       });
     } else {
       return await submitInterview({
@@ -175,6 +164,7 @@ export async function POST(
         universityName,
         facultyName,
         existingWeaknesses,
+        loadedWeaknesses,
       });
     }
   } catch (error) {
@@ -198,6 +188,7 @@ async function submitEssay(args: {
   admissionPolicy: string;
   weaknessList: string;
   existingWeaknesses: WeaknessRecord[];
+  loadedWeaknesses: LoadedWeaknesses;
 }): Promise<NextResponse> {
   const {
     uid,
@@ -207,6 +198,7 @@ async function submitEssay(args: {
     admissionPolicy,
     weaknessList,
     existingWeaknesses,
+    loadedWeaknesses,
   } = args;
 
   if (!bodyText || bodyText.trim().length < 20) {
@@ -304,10 +296,11 @@ async function submitEssay(args: {
   // 助言の自由文は混ぜない（混ぜると誰にでも付く弱点に落ちる）
   const weaknessTags: string[] = feedback.repeatedIssues.map((i) => i.area);
   const updatedWeaknesses = updateWeaknessRecords(
-    existingWeaknesses,
-    weaknessTags
+    loadedWeaknesses.records,
+    weaknessTags,
+    { source: "essay" }
   );
-  const growthEvents = analyzeGrowth(weaknessTags, existingWeaknesses);
+  const growthEvents = analyzeGrowth(weaknessTags, existingWeaknesses, "essay");
 
   // essay に結果を書き込み
   await essayRef.set(
@@ -322,21 +315,7 @@ async function submitEssay(args: {
   );
 
   // 弱点 DB 更新
-  for (const w of updatedWeaknesses) {
-    await adminDb.doc(`users/${uid}/weaknesses/${weaknessDocId(w.area)}`).set(
-      {
-        area: w.area,
-        count: w.count,
-        firstOccurred: w.firstOccurred,
-        lastOccurred: w.lastOccurred,
-        improving: w.improving,
-        resolved: w.resolved,
-        source: w.source,
-        reminderDismissedAt: w.reminderDismissedAt,
-      },
-      { merge: true }
-    );
-  }
+  await saveWeaknessRecords(adminDb, uid, loadedWeaknesses, updatedWeaknesses);
 
   // homeworkAssignment ステータス更新
   await homeworkRef.update({
@@ -362,6 +341,7 @@ async function submitInterview(args: {
   universityName: string;
   facultyName: string;
   existingWeaknesses: WeaknessRecord[];
+  loadedWeaknesses: LoadedWeaknesses;
 }): Promise<NextResponse> {
   const {
     uid,
@@ -372,6 +352,7 @@ async function submitInterview(args: {
     universityName,
     facultyName,
     existingWeaknesses,
+    loadedWeaknesses,
   } = args;
 
   if (!answer || answer.trim().length < 10) {
@@ -465,11 +446,15 @@ async function submitInterview(args: {
   // 助言の自由文は混ぜない（混ぜると誰にでも付く弱点に落ちる）
   const weaknessTags: string[] = feedback.repeatedIssues.map((i) => i.area);
   const updatedWeaknesses = updateWeaknessRecords(
-    existingWeaknesses,
+    loadedWeaknesses.records,
     weaknessTags,
+    { source: "interview" }
+  );
+  const growthEvents = analyzeGrowth(
+    weaknessTags,
+    existingWeaknesses,
     "interview"
   );
-  const growthEvents = analyzeGrowth(weaknessTags, existingWeaknesses);
 
   await interviewRef.update({
     scores,
@@ -480,21 +465,7 @@ async function submitInterview(args: {
     completedAt: FieldValue.serverTimestamp(),
   });
 
-  for (const w of updatedWeaknesses) {
-    await adminDb.doc(`users/${uid}/weaknesses/${weaknessDocId(w.area)}`).set(
-      {
-        area: w.area,
-        count: w.count,
-        firstOccurred: w.firstOccurred,
-        lastOccurred: w.lastOccurred,
-        improving: w.improving,
-        resolved: w.resolved,
-        source: w.source,
-        reminderDismissedAt: w.reminderDismissedAt,
-      },
-      { merge: true }
-    );
-  }
+  await saveWeaknessRecords(adminDb, uid, loadedWeaknesses, updatedWeaknesses);
 
   await homeworkRef.update({
     status: "submitted",

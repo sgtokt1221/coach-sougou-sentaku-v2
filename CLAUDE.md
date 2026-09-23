@@ -161,6 +161,7 @@ AI呼び出しは .env.local の ANTHROPIC_API_KEY をそのまま使うので�
 
 - AI添削・生成の API ルートには `maxDuration` を必ず設定する。extended thinking は effort medium を既定にする。
 - `messages.parse` の max_tokens は thinking と本文で共有される。文書系は12000-16384、単純な機能は2000-4096。
+- 弱点DB（`users/*/weaknesses`）の読み書きは必ず `src/lib/growth/weakness-store.ts` を通す（手書きすると統合元の文書が残って提出のたびに回数が水増しされ、`archivedAt` も保存されない。本番で1.29倍になっていた）。正規ラベルは読み直しても自分に戻ること（`verify-weakness-records.ts` が validate:data で検査）。点検は `scripts/audit-weaknesses.ts`。
 - 弱点DB（`users/*/weaknesses`）に積むのは AI の `repeatedIssues` だけ。改善提案（助言の自由文）を混ぜると、正規化のキーワード部分一致で「結論が不明確」等の汎用ラベルに落ち、誰の弱点リストも同じ数件になる。過去の弱点をプロンプトへ渡すときは「今回observedしたものだけ挙げる」と明記する（書かないとモデルが一覧をなぞり、回数が増えるほど定型化が強まる）。
 - 小論文のAI（添削・コーチ・スキルチェック）は答案に主観（経験・志望・感想）を求めない。独自性・オリジナリティは評価しない（v23 で軸ごと廃止し、設問に答えているかを見る「回答力」にした）。自己分析を小論文添削の入力に渡さない（渡すと「志望とつながっていない」と指摘する）。出願書類は別。
 - **採点軸を差し替えるときは保存キーも変える**（例: `originality` → `responsiveness`）。同じキーのまま意味だけ変えると、過去の答案のグラフ・平均・弱点カテゴリが別軸の値を新しい軸として黙って描く。旧キーは読み取り専用で残し、軸の並びと旧データの扱いは `src/lib/essay/score-axes.ts` に集約する（画面ごとに軸名を手書きしない）。
