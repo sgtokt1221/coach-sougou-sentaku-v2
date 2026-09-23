@@ -102,24 +102,13 @@ import type { WeaknessRecord } from "@/lib/types/growth";
 import { getWeaknessReminderLevel } from "@/lib/types/growth";
 import { UniversitySelectStep } from "@/components/onboarding/UniversitySelectStep";
 import type { EnglishCert } from "@/lib/types/user";
-import { CategorySelector } from "@/components/skill-check/CategorySelector";
 import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
 import type { AggregateBreakdown } from "@/lib/skill-check/aggregate";
 import { LAST_ACTIVITY_LABELS } from "@/lib/api/last-activity";
 import { SkillRadarChart } from "@/components/skill-check/SkillRadarChart";
 import { scoreToSkillRank } from "@/lib/history-rank";
-import type {
-  SkillCheckStatus,
-  AcademicCategory,
-  SkillCheckResult,
-} from "@/lib/types/skill-check";
-import type {
-  InterviewSkillCheckStatus,
-  InterviewSkillCheckResult,
-} from "@/lib/types/interview-skill-check";
-import { SkillCheckDetailDialog } from "@/components/admin/SkillCheckDetailDialog";
 import { StudentSkillRadar } from "@/components/admin/StudentSkillRadar";
-import { SkillCheckHistorySection } from "@/components/admin/SkillCheckHistorySection";
+import { computeAxisAverages } from "@/lib/admin/axis-averages";
 import { CategoryAverageRadar } from "@/components/admin/CategoryAverageRadar";
 
 /**
@@ -455,7 +444,7 @@ function PinnedSummary({ detail }: { detail: StudentDetail }) {
 
 /**
  * 項目別平均チャートの見出しに出す現在のスキルランク。
- * 値は生徒一覧・概要タブと同じ合成（SC × 0.4 + 練習平均 × 0.6）。
+ * 値は生徒一覧・概要タブと同じ（提出の直近平均）。
  */
 function SkillRankSummary({
   aggregate,
@@ -473,7 +462,7 @@ function SkillRankSummary({
         animate={false}
       />
       {/* 軸平均の合計ではないので、何の数字かを書く（隣の項目別平均を
-          足した値と一致しない。合成の重みは aggregate 側で決まる） */}
+          足した値と一致しない。集計は aggregate 側で決まる） */}
       <span className="text-muted-foreground text-[10px]">現在の実力</span>
       <span className="text-foreground text-xs font-medium tabular-nums">
         {aggregate.compositeScore}
@@ -542,16 +531,6 @@ function AdminStudentDetailPageInner() {
   const [perfTab, setPerfTab] = useState<"total" | "essay" | "interview">(
     "total"
   );
-  const [skillCheck, setSkillCheck] = useState<SkillCheckStatus | null>(null);
-  const [interviewSkillCheck, setInterviewSkillCheck] =
-    useState<InterviewSkillCheckStatus | null>(null);
-  // スキルチェック詳細ダイアログ
-  const [scDialog, setScDialog] = useState<
-    | { kind: "essay"; result: SkillCheckResult }
-    | { kind: "interview"; result: InterviewSkillCheckResult }
-    | null
-  >(null);
-  const [savingCategory, setSavingCategory] = useState(false);
 
   // ヒートマップ用データ取得
   const { data: interviewsData } = useAuthSWR<any[]>(
@@ -600,7 +579,6 @@ function AdminStudentDetailPageInner() {
     return buildActivityHeatmapData({
       essays: detail.essays,
       interviews: interviewsData,
-      skillChecks: skillCheck?.latestResult ? [skillCheck.latestResult] : [],
       summaryDrills: summaryDrillsData,
       logicDrills: logicDrillsData,
       chocoReviews: chocoReviewsData,
@@ -615,7 +593,6 @@ function AdminStudentDetailPageInner() {
     chocoReviewsData,
     activityLogsData,
     documentsData,
-    skillCheck,
   ]);
 
   // 弱点Top5データ
@@ -748,48 +725,6 @@ function AdminStudentDetailPageInner() {
     }
     if (id) fetchDetail();
   }, [id]);
-
-  useEffect(() => {
-    async function fetchSkill() {
-      try {
-        const [essayRes, interviewRes] = await Promise.all([
-          authFetch(`/api/admin/students/${id}/skill-check`),
-          authFetch(`/api/admin/students/${id}/interview-skill-check`),
-        ]);
-        if (essayRes.ok) setSkillCheck(await essayRes.json());
-        if (interviewRes.ok) setInterviewSkillCheck(await interviewRes.json());
-      } catch {
-        // ignore
-      }
-    }
-    if (id) fetchSkill();
-  }, [id]);
-
-  async function handleChangeSkillCategory(cat: AcademicCategory) {
-    setSavingCategory(true);
-    try {
-      const res = await authFetch(
-        `/api/admin/students/${id}/skill-check/category`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ category: cat }),
-        }
-      );
-      if (res.ok) {
-        toast.success("系統を更新しました");
-        // 再取得
-        const next = await authFetch(`/api/admin/students/${id}/skill-check`);
-        if (next.ok) setSkillCheck(await next.json());
-      } else {
-        toast.error("更新に失敗しました");
-      }
-    } catch {
-      toast.error("通信エラー");
-    } finally {
-      setSavingCategory(false);
-    }
-  }
 
   async function handleSendResetEmail() {
     if (!detail?.profile.email) {
@@ -929,72 +864,20 @@ function AdminStudentDetailPageInner() {
   }));
 
   // 日々の取り組みの項目別平均（全提出から算出）
-  const avgOf = (nums: number[]) =>
-    nums.length ? nums.reduce((a, b) => a + b, 0) / nums.length : 0;
-  /** 未評価(null/undefined)を 0 として混ぜない。全部未評価なら null */
-  const avgMeasured = (nums: (number | null | undefined)[]) => {
-    const ns = nums.filter((n): n is number => typeof n === "number");
-    return ns.length ? ns.reduce((a, b) => a + b, 0) / ns.length : null;
-  };
-  const essayScoresList = essays
-    .map((e) => e.scores)
-    .filter((s): s is NonNullable<typeof s> => !!s);
-  const essayCategoryAvg =
-    essayScoresList.length > 0
-      ? {
-          structure: avgOf(essayScoresList.map((s) => s.structure)),
-          logic: avgOf(essayScoresList.map((s) => s.logic)),
-          expression: avgOf(essayScoresList.map((s) => s.expression)),
-          // 回答力は v23 からの軸。旧採点の答案には無いので、あるものだけで平均する
-          responsiveness: avgMeasured(
-            essayScoresList.map((s) => s.responsiveness)
-          ),
-          reasoningMaturity: avgMeasured(
-            essayScoresList.map((s) => s.reasoningMaturity)
-          ),
-          apAlignment: avgMeasured(essayScoresList.map((s) => s.apAlignment)),
-        }
-      : undefined;
-  const ivTrend = interviewScoreTrend ?? [];
-  const interviewCategoryAvg =
-    ivTrend.length > 0
-      ? {
-          clarity: avgOf(ivTrend.map((p) => p.clarity)),
-          apAlignment: avgOf(ivTrend.map((p) => p.apAlignment)),
-          enthusiasm: avgOf(ivTrend.map((p) => p.enthusiasm)),
-          specificity: avgOf(ivTrend.map((p) => p.specificity)),
-          bodyLanguage: avgMeasured(ivTrend.map((p) => p.bodyLanguage)),
-        }
-      : undefined;
+  const {
+    essayAxisAvg: essayCategoryAvg,
+    interviewAxisAvg: interviewCategoryAvg,
+    essayCount,
+    interviewCount,
+  } = computeAxisAverages(detail);
 
   // タブコンテンツ関数
   const renderOverviewTab = () => (
     <div className="space-y-6">
       <StudentSkillRadar
         detail={detail}
-        skillCheck={skillCheck}
-        interviewSkillCheck={interviewSkillCheck}
-        onSelectEssay={() =>
-          skillCheck?.latestResult &&
-          setScDialog({ kind: "essay", result: skillCheck.latestResult })
-        }
-        onSelectInterview={() =>
-          interviewSkillCheck?.latestResult &&
-          setScDialog({
-            kind: "interview",
-            result: interviewSkillCheck.latestResult,
-          })
-        }
-      />
-
-      {/* スキルチェック履歴（過去回の原文＝対話ログ/答案を各回開ける） */}
-      <SkillCheckHistorySection
-        essayHistory={skillCheck?.history ?? []}
-        interviewHistory={interviewSkillCheck?.history ?? []}
-        onOpenEssay={(r) => setScDialog({ kind: "essay", result: r })}
-        onOpenInterview={(r) => setScDialog({ kind: "interview", result: r })}
-        unviewedEssay={unviewedKinds.skillCheck ?? 0}
-        unviewedInterview={unviewedKinds.interviewSkillCheck ?? 0}
+        essayAxisAvg={essayCategoryAvg}
+        interviewAxisAvg={interviewCategoryAvg}
       />
 
       {/* Profile Card */}
@@ -1147,25 +1030,6 @@ function AdminStudentDetailPageInner() {
       {/* 探究カリキュラム全体(読み取り)。講師も担当生徒分は閲覧可(scopeはGET側で担保) */}
       <AdminResearchCurriculumSection studentId={id} />
 
-      {/* 系統変更（管理者操作） */}
-      {skillCheck && (
-        <Card>
-          <CardContent className="flex flex-wrap items-center gap-3 py-3">
-            <span className="text-muted-foreground text-xs font-medium">
-              スキルチェック系統
-            </span>
-            <CategorySelector
-              value={skillCheck.currentCategory ?? null}
-              onChange={handleChangeSkillCategory}
-              disabled={savingCategory}
-            />
-            <p className="text-muted-foreground text-xs">
-              次回受験時に出題される系統を変更できます。
-            </p>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Activity Heatmap & Top Weaknesses */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
@@ -1198,8 +1062,8 @@ function AdminStudentDetailPageInner() {
             <CategoryAverageRadar
               essayAverages={essayCategoryAvg}
               interviewAverages={interviewCategoryAvg}
-              essayCount={essayScoresList.length}
-              interviewCount={ivTrend.length}
+              essayCount={essayCount}
+              interviewCount={interviewCount}
               essayRank={
                 <SkillRankSummary
                   aggregate={detail.essayAggregate}
@@ -1520,8 +1384,6 @@ function AdminStudentDetailPageInner() {
               <TabUnviewedBadge
                 count={tabUnviewed([
                   "essay",
-                  "skillCheck",
-                  "interviewSkillCheck",
                   "chocoReview",
                   "summaryDrill",
                   "logicDrill",
@@ -1790,15 +1652,6 @@ function AdminStudentDetailPageInner() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* スキルチェック詳細ダイアログ */}
-      <SkillCheckDetailDialog
-        open={scDialog !== null}
-        onOpenChange={(o) => !o && setScDialog(null)}
-        kind={scDialog?.kind ?? "essay"}
-        result={scDialog?.result ?? null}
-        studentId={id}
-      />
 
       {/* Essay Detail Dialog */}
       <Dialog open={essayDetailOpen} onOpenChange={setEssayDetailOpen}>

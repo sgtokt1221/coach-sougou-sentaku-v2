@@ -21,8 +21,6 @@ export interface ArtifactItem {
   score?: number | null;
   rank?: string | null;
   status?: string | null;
-  /** スキルチェックの種別（リンク先振り分け用） */
-  skillKind?: "essay" | "interview";
 }
 
 export interface ScoreDelta {
@@ -39,7 +37,6 @@ export interface SessionPeriodArtifacts {
     interviews: ArtifactItem[];
     documents: ArtifactItem[];
     activities: ArtifactItem[];
-    skillChecks: ArtifactItem[];
     reports: ArtifactItem[];
   };
   scoreSummary: { essay: ScoreDelta; interview: ScoreDelta };
@@ -84,14 +81,12 @@ export async function getSessionPeriodArtifacts(
   const prevUpper = ms(prevDate);
   const prevLower = ms(prevPrevDate);
 
-  const [essaysSnap, interviewsSnap, docsSnap, actsSnap, skillSnap, ivSkillSnap, reportsSnap] =
+  const [essaysSnap, interviewsSnap, docsSnap, actsSnap, reportsSnap] =
     await Promise.all([
       adminDb.collection("essays").where("userId", "==", studentId).get().catch(() => null),
       adminDb.collection("interviews").where("userId", "==", studentId).get().catch(() => null),
       adminDb.collection(`users/${studentId}/documents`).get().catch(() => null),
       adminDb.collection(`users/${studentId}/activities`).get().catch(() => null),
-      adminDb.collection(`users/${studentId}/skillChecks`).get().catch(() => null),
-      adminDb.collection(`users/${studentId}/interviewSkillChecks`).get().catch(() => null),
       adminDb.collection(`users/${studentId}/growthReports`).get().catch(() => null),
     ]);
 
@@ -167,30 +162,6 @@ export async function getSessionPeriodArtifacts(
       sub: (a.category as string) ?? undefined,
     }));
 
-  // --- skill checks (essay + interview) ---
-  const skillItems = (
-    snap: FirebaseFirestore.QuerySnapshot | null,
-    kind: string,
-    skillKind: "essay" | "interview",
-  ): ArtifactItem[] =>
-    (snap?.docs ?? [])
-      .map((d) => ({ id: d.id, ...d.data() } as Record<string, unknown>))
-      .filter((s) => inWindow(s.takenAt, lower, upper))
-      .map((s) => ({
-        id: s.id as string,
-        at: toIsoString(s.takenAt),
-        label: kind,
-        skillKind,
-        rank: (s.rank as string) ?? null,
-        score: typeof (s.scores as { total?: number } | undefined)?.total === "number"
-          ? (s.scores as { total: number }).total
-          : null,
-      }));
-  const skillChecks: ArtifactItem[] = [
-    ...skillItems(skillSnap, "小論文スキルチェック", "essay"),
-    ...skillItems(ivSkillSnap, "面接スキルチェック", "interview"),
-  ];
-
   // --- growth reports (shared only) ---
   const reports: ArtifactItem[] = (reportsSnap?.docs ?? [])
     .map((d) => ({ id: d.id, ...d.data() } as Record<string, unknown>))
@@ -209,7 +180,7 @@ export async function getSessionPeriodArtifacts(
 
   return {
     window: { start: prevDate ? toIsoString(prevDate) ?? null : null, end: toIsoString(thisDate) ?? thisDate },
-    artifacts: { essays, interviews, documents, activities, skillChecks, reports },
+    artifacts: { essays, interviews, documents, activities, reports },
     scoreSummary: {
       essay: {
         count: essays.length,

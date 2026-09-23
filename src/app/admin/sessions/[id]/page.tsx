@@ -45,8 +45,6 @@ import type { PracticeQuestion } from "@/lib/types/growth-report";
 
 type GroupSession = Session & GroupSessionFields;
 import type { StudentDetail } from "@/lib/types/admin";
-import type { SkillCheckStatus } from "@/lib/types/skill-check";
-import type { InterviewSkillCheckStatus } from "@/lib/types/interview-skill-check";
 import { LessonPrepSection } from "@/components/admin/LessonPrepSection";
 import { PracticeQuestionsPanel } from "@/components/admin/PracticeQuestionsPanel";
 import { LessonDebriefSection } from "@/components/admin/LessonDebriefSection";
@@ -98,9 +96,6 @@ export default function AdminSessionDetailPage() {
   const [student, setStudent] = useState<StudentDetail | null>(null);
   const [studentLoading, setStudentLoading] = useState(false);
   const [studentError, setStudentError] = useState(false);
-  const [skillCheck, setSkillCheck] = useState<SkillCheckStatus | null>(null);
-  const [interviewSkillCheck, setInterviewSkillCheck] =
-    useState<InterviewSkillCheckStatus | null>(null);
 
   // Group review submissions
   const [submissions, setSubmissions] = useState<SessionSubmission[]>([]);
@@ -152,21 +147,12 @@ export default function AdminSessionDetailPage() {
 
     setStudentLoading(true);
     setStudentError(false);
-    // 生徒詳細・スキルチェックをまとめて取得 (status に依らず常時表示)
+    // 生徒詳細を取得 (status に依らず常時表示)
     (async () => {
       try {
-        const [detailRes, essaySkillRes, interviewSkillRes] = await Promise.all(
-          [
-            authFetch(`/api/admin/students/${sid}`),
-            authFetch(`/api/admin/students/${sid}/skill-check`),
-            authFetch(`/api/admin/students/${sid}/interview-skill-check`),
-          ]
-        );
+        const detailRes = await authFetch(`/api/admin/students/${sid}`);
         if (!detailRes.ok) throw new Error();
         setStudent((await detailRes.json()) as StudentDetail);
-        if (essaySkillRes.ok) setSkillCheck(await essaySkillRes.json());
-        if (interviewSkillRes.ok)
-          setInterviewSkillCheck(await interviewSkillRes.json());
       } catch {
         setStudentError(true);
       } finally {
@@ -596,8 +582,6 @@ export default function AdminSessionDetailPage() {
               <SessionStudentDossier
                 studentId={session.studentId}
                 detail={student}
-                skillCheck={skillCheck}
-                interviewSkillCheck={interviewSkillCheck}
               />
             )}
           </div>

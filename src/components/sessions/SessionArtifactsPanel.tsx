@@ -11,11 +11,8 @@ import InterviewDetailDialog from "@/components/sessions/InterviewDetailDialog";
 import ReportDetailDialog from "@/components/sessions/ReportDetailDialog";
 import DocumentDetailDialog from "@/components/sessions/DocumentDetailDialog";
 import ActivityDetailDialog from "@/components/sessions/ActivityDetailDialog";
-import { SkillCheckDetailDialog } from "@/components/admin/SkillCheckDetailDialog";
 import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
 import type { SkillRank } from "@/lib/types/skill-check";
-import type { SkillCheckResult } from "@/lib/types/skill-check";
-import type { InterviewSkillCheckResult } from "@/lib/types/interview-skill-check";
 import {
   TrendingUp,
   TrendingDown,
@@ -25,7 +22,6 @@ import {
   Mic,
   FolderOpen,
   Award,
-  ClipboardCheck,
   FileBarChart,
   type LucideIcon,
 } from "lucide-react";
@@ -38,7 +34,6 @@ interface ArtifactItem {
   score?: number | null;
   rank?: string | null;
   status?: string | null;
-  skillKind?: "essay" | "interview";
 }
 interface ScoreDelta {
   count: number;
@@ -54,7 +49,6 @@ interface ArtifactsResponse {
     interviews: ArtifactItem[];
     documents: ArtifactItem[];
     activities: ArtifactItem[];
-    skillChecks: ArtifactItem[];
     reports: ArtifactItem[];
   };
   scoreSummary: { essay: ScoreDelta; interview: ScoreDelta };
@@ -111,7 +105,6 @@ const GROUP_ICON: Record<string, LucideIcon> = {
   interviews: Mic,
   documents: FolderOpen,
   activities: Award,
-  skillChecks: ClipboardCheck,
   reports: FileBarChart,
 };
 
@@ -149,36 +142,6 @@ export default function SessionArtifactsPanel({
   const [reportDialogId, setReportDialogId] = useState<string | null>(null);
   const [documentDialogId, setDocumentDialogId] = useState<string | null>(null);
   const [activityDialogId, setActivityDialogId] = useState<string | null>(null);
-  // スキルチェック詳細 (管理者ビュー)。result を取得してダイアログ表示
-  const [skillDialog, setSkillDialog] = useState<
-    | { kind: "essay"; result: SkillCheckResult }
-    | { kind: "interview"; result: InterviewSkillCheckResult }
-    | null
-  >(null);
-  const [skillLoadingId, setSkillLoadingId] = useState<string | null>(null);
-
-  async function openSkillDetail(it: ArtifactItem) {
-    if (!studentId) return;
-    const kind = it.skillKind === "interview" ? "interview" : "essay";
-    const path = kind === "interview" ? "interview-skill-check" : "skill-check";
-    setSkillLoadingId(it.id);
-    try {
-      const res = await authFetch(
-        `/api/admin/students/${studentId}/${path}/${it.id}`
-      );
-      if (!res.ok) return;
-      const result = await res.json();
-      setSkillDialog(
-        kind === "interview"
-          ? { kind: "interview", result }
-          : { kind: "essay", result }
-      );
-    } catch {
-      // ignore
-    } finally {
-      setSkillLoadingId(null);
-    }
-  }
 
   // 管理者ビューで、セッション内ダイアログで開く種別か
   const dialogKindOf = (kind: string): "essays" | "interviews" | null =>
@@ -198,8 +161,6 @@ export default function SessionArtifactsPanel({
           return `/student/documents/${id}`;
         case "activities":
           return `/student/activities/${id}`;
-        case "skillChecks":
-          return "/student/dashboard";
         case "reports":
           return `/student/growth/reports/${id}`;
         default:
@@ -217,7 +178,6 @@ export default function SessionArtifactsPanel({
       { key: "interviews", title: "模擬面接" },
       { key: "documents", title: "出願書類" },
       { key: "activities", title: "活動実績" },
-      { key: "skillChecks", title: "スキルチェック" },
       { key: "reports", title: "成長レポート" },
     ];
 
@@ -285,10 +245,6 @@ export default function SessionArtifactsPanel({
                           {items.map((it) => {
                             const href = hrefOf(g.key, it);
                             const dialogKind = dialogKindOf(g.key);
-                            const isAdminSkill =
-                              !studentView &&
-                              g.key === "skillChecks" &&
-                              !!studentId;
                             // 管理者ビューで reports/documents/activities をセッション内ダイアログで開く
                             const adminDialogKind =
                               !studentView &&
@@ -299,10 +255,7 @@ export default function SessionArtifactsPanel({
                                 ? g.key
                                 : null;
                             const clickable =
-                              !!href ||
-                              !!dialogKind ||
-                              isAdminSkill ||
-                              !!adminDialogKind;
+                              !!href || !!dialogKind || !!adminDialogKind;
                             const inner = (
                               <div
                                 className={`flex items-center justify-between rounded-md border px-3 py-2 text-sm transition-colors ${
@@ -378,19 +331,6 @@ export default function SessionArtifactsPanel({
                                 </button>
                               );
                             }
-                            if (isAdminSkill) {
-                              return (
-                                <button
-                                  key={it.id}
-                                  type="button"
-                                  className="block w-full text-left"
-                                  disabled={skillLoadingId === it.id}
-                                  onClick={() => openSkillDetail(it)}
-                                >
-                                  {inner}
-                                </button>
-                              );
-                            }
                             if (adminDialogKind) {
                               return (
                                 <button
@@ -435,12 +375,6 @@ export default function SessionArtifactsPanel({
             interviewId={interviewDialogId}
             open={interviewDialogId !== null}
             onOpenChange={(o) => !o && setInterviewDialogId(null)}
-          />
-          <SkillCheckDetailDialog
-            open={skillDialog !== null}
-            onOpenChange={(o) => !o && setSkillDialog(null)}
-            kind={skillDialog?.kind ?? "essay"}
-            result={skillDialog?.result ?? null}
           />
           <ReportDetailDialog
             studentId={studentId}

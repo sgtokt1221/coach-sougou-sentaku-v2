@@ -21,7 +21,6 @@ import { ScoresTrendChart } from "@/components/growth/ScoresTrendChart";
 import { CategoryAverageRadar } from "@/components/admin/CategoryAverageRadar";
 import { WeaknessTopChart } from "@/components/admin/WeaknessTopChart";
 import { StudentSkillRadar } from "@/components/admin/StudentSkillRadar";
-import { SkillCheckDetailDialog } from "@/components/admin/SkillCheckDetailDialog";
 import { InterviewsSection } from "@/components/admin/InterviewsSection";
 import { SummaryDrillsSection } from "@/components/admin/SummaryDrillsSection";
 import { DocumentsSection } from "@/components/admin/DocumentsSection";
@@ -35,14 +34,7 @@ import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
 import { scoreToSkillRank } from "@/lib/history-rank";
 import { getDisplayGrade } from "@/lib/utils/grade";
 import type { StudentDetail } from "@/lib/types/admin";
-import type {
-  SkillCheckStatus,
-  SkillCheckResult,
-} from "@/lib/types/skill-check";
-import type {
-  InterviewSkillCheckStatus,
-  InterviewSkillCheckResult,
-} from "@/lib/types/interview-skill-check";
+import { computeAxisAverages } from "@/lib/admin/axis-averages";
 
 type DossierTab =
   | "overview"
@@ -67,20 +59,12 @@ function scoreColor(total: number, max = 50): string {
 export function SessionStudentDossier({
   studentId,
   detail,
-  skillCheck,
-  interviewSkillCheck,
 }: {
   studentId: string;
   detail: StudentDetail;
-  skillCheck: SkillCheckStatus | null;
-  interviewSkillCheck: InterviewSkillCheckStatus | null;
 }) {
   const [activeTab, setActiveTab] = useState<DossierTab>("overview");
-  const [scDialog, setScDialog] = useState<
-    | { kind: "essay"; result: SkillCheckResult }
-    | { kind: "interview"; result: InterviewSkillCheckResult }
-    | null
-  >(null);
+  const { essayAxisAvg, interviewAxisAvg } = computeAxisAverages(detail);
 
   const { profile, weaknesses, essays, essayScoreTrend, interviewScoreTrend } =
     detail;
@@ -192,25 +176,11 @@ export function SessionStudentDossier({
 
               <Separator />
 
-              {/* スキル (最新スキルチェック) */}
+              {/* スキル (提出の直近平均) */}
               <StudentSkillRadar
                 detail={detail}
-                skillCheck={skillCheck}
-                interviewSkillCheck={interviewSkillCheck}
-                onSelectEssay={() =>
-                  skillCheck?.latestResult &&
-                  setScDialog({
-                    kind: "essay",
-                    result: skillCheck.latestResult,
-                  })
-                }
-                onSelectInterview={() =>
-                  interviewSkillCheck?.latestResult &&
-                  setScDialog({
-                    kind: "interview",
-                    result: interviewSkillCheck.latestResult,
-                  })
-                }
+                essayAxisAvg={essayAxisAvg}
+                interviewAxisAvg={interviewAxisAvg}
               />
 
               <Separator />
@@ -350,13 +320,6 @@ export function SessionStudentDossier({
           )}
         </div>
       </CardContent>
-
-      <SkillCheckDetailDialog
-        open={scDialog !== null}
-        onOpenChange={(o) => !o && setScDialog(null)}
-        kind={scDialog?.kind ?? "essay"}
-        result={scDialog?.result ?? null}
-      />
     </Card>
   );
 }

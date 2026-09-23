@@ -164,7 +164,7 @@ export async function POST(
         .filter(Boolean)
     : [];
 
-  // 前回〜今回の成果物サマリー（面接/書類/活動/スキルチェック/成長レポート）をAI入力に追加
+  // 前回〜今回の成果物サマリー（面接/書類/活動/成長レポート）をAI入力に追加
   let recentArtifactsSummary: string | undefined;
   try {
     const pa = await getSessionPeriodArtifacts(adminDb, studentId, session);
@@ -180,9 +180,6 @@ export async function POST(
     }
     if (pa.artifacts.activities.length) {
       lines.push(`活動実績: ${pa.artifacts.activities.map((a) => a.label).join("、")}`);
-    }
-    if (pa.artifacts.skillChecks.length) {
-      lines.push(`スキルチェック: ${pa.artifacts.skillChecks.map((s) => `${s.label}${s.rank ? `(${s.rank})` : ""}`).join("、")}`);
     }
     if (pa.artifacts.reports.length) {
       lines.push(`成長レポート: ${pa.artifacts.reports.map((r) => r.sub ?? r.label).join(" / ")}`);
