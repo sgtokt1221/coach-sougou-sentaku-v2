@@ -23,13 +23,13 @@ export default function TourCompletePage() {
 
   return (
     <div className="mx-auto flex max-w-xl flex-col items-center px-4 py-12 text-center">
-      <div className="mb-6 flex size-20 items-center justify-center rounded-full bg-primary/10 text-primary">
+      <div className="bg-primary/10 text-primary mb-6 flex size-20 items-center justify-center rounded-full">
         <Sparkles className="size-10" />
       </div>
       <h1 className="mb-3 text-2xl font-bold tracking-tight lg:text-3xl">
         ツアーお疲れさまでした
       </h1>
-      <p className="mb-6 text-sm text-muted-foreground lg:text-base">
+      <p className="text-muted-foreground mb-6 text-sm lg:text-base">
         Coach for 総合型選抜 の主要機能を一通りご覧いただきました。
         <br />
         ご自身のアカウントを作成すると、すべての機能を本物のデータで使えます。
@@ -41,7 +41,7 @@ export default function TourCompletePage() {
             "ダッシュボードで成長度を一目で把握",
             "AIとの対話で進める 7 ステップの自己分析",
             "志望校アドミッションポリシーとのマッチング",
-            "月 1 回のスキルチェックで実力を定量化",
+            "提出するたびにランクが更新される",
             "AI による小論文添削と志望理由書の起草",
             "音声 AI による本格的な模擬面接",
           ].map((item) => (

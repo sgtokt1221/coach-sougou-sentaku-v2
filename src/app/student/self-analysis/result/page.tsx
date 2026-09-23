@@ -6,14 +6,24 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { authFetch } from "@/lib/api/client";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, ArrowRight, RotateCcw, Sparkles, Loader2 } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  RotateCcw,
+  Sparkles,
+  Loader2,
+} from "lucide-react";
 import { AnalysisResultCard } from "@/components/self-analysis/AnalysisResultCard";
 import { GrowthTree } from "@/components/self-analysis/GrowthTree";
 import { StepEditModal } from "@/components/self-analysis/StepEditModal";
 import { SelfAnalysisComments } from "@/components/self-analysis/SelfAnalysisComments";
 import { SelfAnalysisChatLog } from "@/components/self-analysis/SelfAnalysisChatLog";
 import { useAuthSWR } from "@/lib/api/swr";
-import type { SelfAnalysis, SelfAnalysisStepKey, StepApproval } from "@/lib/types/self-analysis";
+import type {
+  SelfAnalysis,
+  SelfAnalysisStepKey,
+  StepApproval,
+} from "@/lib/types/self-analysis";
 import type { AdminFeedback } from "@/lib/types/feedback";
 
 /** SelfAnalysis ドキュメントを GrowthTree 用の stepsData (step番号→内容) に変換 */
@@ -27,11 +37,17 @@ const STEP_KEYS = [
   "synthesis",
 ] as const;
 
-function buildStepsData(data: SelfAnalysis): Record<number, Record<string, unknown>> {
+function buildStepsData(
+  data: SelfAnalysis
+): Record<number, Record<string, unknown>> {
   const stepsData: Record<number, Record<string, unknown>> = {};
   STEP_KEYS.forEach((key, i) => {
     const val = data[key] as unknown;
-    if (val && typeof val === "object" && Object.keys(val as object).length > 0) {
+    if (
+      val &&
+      typeof val === "object" &&
+      Object.keys(val as object).length > 0
+    ) {
       stepsData[i + 1] = val as Record<string, unknown>;
     }
   });
@@ -56,7 +72,9 @@ export default function SelfAnalysisResultPage() {
     "/api/self-analysis?userId=me"
   );
   // コーチからのコメント（自己分析宛）と承認状況をステップ別に取得
-  const { data: feedbackList } = useAuthSWR<AdminFeedback[]>("/api/student/feedback");
+  const { data: feedbackList } = useAuthSWR<AdminFeedback[]>(
+    "/api/student/feedback"
+  );
   const { data: approvalData, mutate: mutateApprovals } = useAuthSWR<{
     steps: Partial<Record<SelfAnalysisStepKey, StepApproval>>;
   }>("/api/student/self-analysis/approvals");
@@ -118,7 +136,7 @@ export default function SelfAnalysisResultPage() {
         return false;
       }
     },
-    [data, editStep, mutate, mutateApprovals],
+    [data, editStep, mutate, mutateApprovals]
   );
 
   // 保存済みの Step1〜6 ＋ 志望校AP から「統合・言語化」(synthesis) を生成して保存する。
@@ -187,18 +205,18 @@ export default function SelfAnalysisResultPage() {
     void generateSynthesis(data);
   }, [data, generating, generateSynthesis]);
 
-  // オンボーディングのチェーン中なら、結果確認後に「スキルチェックへ」導線を出す
+  // オンボーディングのチェーン中なら、結果確認後に「ダッシュボードへ」導線を出す
   const [inChain, setInChain] = useState(false);
   useEffect(() => {
     setInChain(
       typeof window !== "undefined" &&
-        localStorage.getItem("onboardingChain") === "1",
+        localStorage.getItem("onboardingChain") === "1"
     );
   }, []);
 
   if (isLoading) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-5 lg:py-6 space-y-4">
+      <div className="mx-auto max-w-2xl space-y-4 px-4 py-5 lg:py-6">
         <Skeleton className="h-8 w-48" />
         {Array.from({ length: 3 }).map((_, i) => (
           <Skeleton key={i} className="h-48 w-full" />
@@ -209,7 +227,7 @@ export default function SelfAnalysisResultPage() {
 
   if (!data) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-5 lg:py-6 text-center space-y-4">
+      <div className="mx-auto max-w-2xl space-y-4 px-4 py-5 text-center lg:py-6">
         <p className="text-muted-foreground">
           自己分析データがありません。ワークショップを開始してください。
         </p>
@@ -222,7 +240,7 @@ export default function SelfAnalysisResultPage() {
 
   async function handleReset() {
     const ok = confirm(
-      "これまでの自己分析データがすべて削除されます。\n本当に最初からやり直しますか?\n\n(この操作は取り消せません)",
+      "これまでの自己分析データがすべて削除されます。\n本当に最初からやり直しますか?\n\n(この操作は取り消せません)"
     );
     if (!ok) return;
     await authFetch("/api/self-analysis", {
@@ -239,28 +257,33 @@ export default function SelfAnalysisResultPage() {
   const synthesisEmpty = isSynthesisEmpty(data);
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-5 lg:py-6">
+    <div className="mx-auto max-w-5xl px-4 py-5 lg:py-6">
       {inChain && (
-        <div className="mb-4 flex flex-col gap-3 rounded-xl border border-primary/30 bg-primary/5 p-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="border-primary/30 bg-primary/5 mb-4 flex flex-col gap-3 rounded-xl border p-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm font-medium">
-            セットアップ：あと1ステップ。次はスキルチェックです。
+            セットアップ完了！ダッシュボードへ進みましょう。
           </p>
           <Button
             size="sm"
             className="shrink-0"
-            onClick={() => router.push("/student/skill-check/new")}
+            onClick={() => {
+              try {
+                localStorage.removeItem("onboardingChain");
+              } catch {}
+              router.push("/student/dashboard");
+            }}
           >
-            スキルチェックへ
+            ダッシュボードへ
             <ArrowRight className="ml-1 size-4" />
           </Button>
         </div>
       )}
-      <div className="flex items-center justify-between gap-2 mb-4 lg:mb-6">
+      <div className="mb-4 flex items-center justify-between gap-2 lg:mb-6">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" onClick={() => router.back()}>
             <ArrowLeft className="size-4" />
           </Button>
-          <h1 className="text-xl lg:text-2xl font-bold">自己分析結果</h1>
+          <h1 className="text-xl font-bold lg:text-2xl">自己分析結果</h1>
         </div>
         <div className="flex items-center gap-2">
           {/* 志望校を後から登録した場合などに、AP反映で作り直すための手動ボタン */}
@@ -272,30 +295,30 @@ export default function SelfAnalysisResultPage() {
               disabled={generating}
             >
               {generating ? (
-                <Loader2 className="size-4 mr-1 animate-spin" />
+                <Loader2 className="mr-1 size-4 animate-spin" />
               ) : (
-                <Sparkles className="size-4 mr-1" />
+                <Sparkles className="mr-1 size-4" />
               )}
               統合を再生成
             </Button>
           )}
           <Button variant="outline" size="sm" onClick={handleReset}>
-            <RotateCcw className="size-4 mr-1" />
+            <RotateCcw className="mr-1 size-4" />
             やり直す
           </Button>
         </div>
       </div>
 
       {generating && (
-        <div className="mb-4 flex items-center gap-2 rounded-lg border border-teal-200 bg-teal-50/80 dark:border-teal-900 dark:bg-teal-950/30 px-3 py-2 text-xs text-teal-800 dark:text-teal-200">
+        <div className="mb-4 flex items-center gap-2 rounded-lg border border-teal-200 bg-teal-50/80 px-3 py-2 text-xs text-teal-800 dark:border-teal-900 dark:bg-teal-950/30 dark:text-teal-200">
           <Loader2 className="size-3.5 animate-spin" />
           統合・言語化を生成しています…
         </div>
       )}
 
       {/* 左: 自己分析の木 / 右: 結果 */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:gap-6 lg:items-start">
-        <div className="w-full space-y-2 lg:w-[300px] lg:shrink-0 lg:sticky lg:top-6">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-6">
+        <div className="w-full space-y-2 lg:sticky lg:top-6 lg:w-[300px] lg:shrink-0">
           <GrowthTree
             compact
             showLabels
@@ -306,12 +329,12 @@ export default function SelfAnalysisResultPage() {
               setEditOpen(true);
             }}
           />
-          <p className="text-center text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-center text-xs">
             木の実をクリックすると内容を編集できます
           </p>
         </div>
 
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 flex-1">
           <AnalysisResultCard
             analysis={data}
             draftKeyPrefix="self-analysis-result"
@@ -322,7 +345,9 @@ export default function SelfAnalysisResultPage() {
                 body: JSON.stringify(updated),
               });
               if (!res.ok) {
-                toast.error("保存に失敗しました。入力内容は下書きに残っています。");
+                toast.error(
+                  "保存に失敗しました。入力内容は下書きに残っています。"
+                );
                 throw new Error("self-analysis update failed");
               }
               mutate();

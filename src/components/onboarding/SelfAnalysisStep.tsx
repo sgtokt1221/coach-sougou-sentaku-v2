@@ -11,8 +11,8 @@ interface Props {
 }
 
 /**
- * オンボーディング: 自己分析の案内ステップ。
- * 基礎情報の後、スキルチェックの前に挟む。実際の自己分析は /student/self-analysis（7ステップ）。
+ * オンボーディング: 自己分析の案内ステップ（最終ステップ）。
+ * 実際の自己分析は /student/self-analysis（7ステップ）。
  */
 export function SelfAnalysisStep({ onSkip, onTake }: Props) {
   return (
@@ -25,33 +25,39 @@ export function SelfAnalysisStep({ onSkip, onTake }: Props) {
             </div>
             <div>
               <h3 className="text-base font-semibold">自己分析</h3>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 価値観・強み・将来像を言語化。出願書類と面接の土台になります
               </p>
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 text-sm">
+          <div className="grid gap-3 text-sm sm:grid-cols-2">
             <div className="flex items-start gap-2">
-              <Clock className="mt-0.5 size-4 text-muted-foreground" />
+              <Clock className="text-muted-foreground mt-0.5 size-4" />
               <div>
                 <p className="font-medium">AIと対話で進む</p>
-                <p className="text-xs text-muted-foreground">途中保存OK・好きなときに再開</p>
+                <p className="text-muted-foreground text-xs">
+                  途中保存OK・好きなときに再開
+                </p>
               </div>
             </div>
             <div className="flex items-start gap-2">
-              <Sparkles className="mt-0.5 size-4 text-muted-foreground" />
+              <Sparkles className="text-muted-foreground mt-0.5 size-4" />
               <div>
                 <p className="font-medium">自分の軸が見える</p>
-                <p className="text-xs text-muted-foreground">志望理由書・面接の説得力が上がる</p>
+                <p className="text-muted-foreground text-xs">
+                  志望理由書・面接の説得力が上がる
+                </p>
               </div>
             </div>
           </div>
 
-          <div className="rounded-md bg-muted/50 p-3 text-xs text-muted-foreground">
-            <Badge variant="outline" className="mb-1">最初におすすめ</Badge>
+          <div className="bg-muted/50 text-muted-foreground rounded-md p-3 text-xs">
+            <Badge variant="outline" className="mb-1">
+              最初におすすめ
+            </Badge>
             <p>
-              先に自己分析をしておくと、このあとのスキルチェックや小論文・面接で「自分の言葉」を使いやすくなります。
+              先に自己分析をしておくと、このあとの小論文・面接で「自分の言葉」を使いやすくなります。
             </p>
           </div>
         </CardContent>
@@ -62,7 +68,7 @@ export function SelfAnalysisStep({ onSkip, onTake }: Props) {
           後で行う
         </Button>
         <Button onClick={onTake}>
-          自己分析を始める <ArrowRight className="size-4 ml-1" />
+          自己分析を始める <ArrowRight className="ml-1 size-4" />
         </Button>
       </div>
     </div>

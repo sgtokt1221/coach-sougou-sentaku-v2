@@ -6,6 +6,8 @@
  * - 本物の API レスポンス形式に合わせて作成（実画面の型期待を満たすため）
  */
 
+import type { StudentRankResponse } from "@/lib/types/rank";
+
 const sessionDay2 = new Date(Date.now() + 1000 * 60 * 60 * 24 * 2); // 2 日後
 const sessionDay9 = new Date(Date.now() + 1000 * 60 * 60 * 24 * 9); // 9 日後
 const sessionDay16 = new Date(Date.now() + 1000 * 60 * 60 * 24 * 16); // 16 日後
@@ -79,104 +81,22 @@ export const TUTORIAL_MOCK_API: Record<string, unknown> = {
     updatedAt: new Date().toISOString(),
   },
 
-  "/api/skill-check/status": {
-    needsRefresh: false,
-    daysSinceLast: 5,
-    currentCategory: "social-science",
-    latestResult: {
-      id: "tour-skill-1",
-      rank: "B",
-      category: "social-science",
-      scores: {
-        total: 38,
-        logic: 9,
-        structure: 8,
-        expression: 8,
-        ap: 8,
-        depth: 5,
-      },
-      takenAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
+  "/api/student/rank": {
+    essay: {
+      practiceAvg: 28.5,
+      practiceCount: 8,
+      compositeScore: 28.5,
+      compositeRank: "C",
+      mode: "practice_only",
     },
-    history: [
-      {
-        id: "tour-skill-1",
-        rank: "B",
-        category: "social-science",
-        scores: {
-          total: 38,
-          logic: 9,
-          structure: 8,
-          expression: 8,
-          ap: 8,
-          depth: 5,
-        },
-        takenAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
-      },
-      {
-        id: "tour-skill-2",
-        rank: "C",
-        category: "social-science",
-        scores: {
-          total: 32,
-          logic: 7,
-          structure: 7,
-          expression: 7,
-          ap: 6,
-          depth: 5,
-        },
-        takenAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 35).toISOString(),
-      },
-      {
-        id: "tour-skill-3",
-        rank: "C",
-        category: "social-science",
-        scores: {
-          total: 28,
-          logic: 6,
-          structure: 6,
-          expression: 6,
-          ap: 5,
-          depth: 5,
-        },
-        takenAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 65).toISOString(),
-      },
-    ],
-    aggregate: {
-      attempts: 3,
-      bestRank: "B",
-      averageTotal: 36,
+    interview: {
+      practiceAvg: 26,
+      practiceCount: 4,
+      compositeScore: 26,
+      compositeRank: "B",
+      mode: "practice_only",
     },
-  },
-
-  "/api/interview-skill-check/status": {
-    needsRefresh: false,
-    daysSinceLast: 7,
-    latestResult: {
-      id: "tour-iv-skill-1",
-      rank: "B",
-      scores: { total: 30, clarity: 8, ap: 8, passion: 7, specificity: 7 },
-      takenAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(),
-    },
-    history: [
-      {
-        id: "tour-iv-skill-1",
-        rank: "B",
-        scores: { total: 30, clarity: 8, ap: 8, passion: 7, specificity: 7 },
-        takenAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(),
-      },
-      {
-        id: "tour-iv-skill-2",
-        rank: "C",
-        scores: { total: 24, clarity: 6, ap: 6, passion: 6, specificity: 6 },
-        takenAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 38).toISOString(),
-      },
-    ],
-    aggregate: {
-      attempts: 2,
-      bestRank: "B",
-      averageTotal: 28,
-    },
-  },
+  } satisfies StudentRankResponse,
 
   "/api/essay/history?userId=current": {
     essays: [

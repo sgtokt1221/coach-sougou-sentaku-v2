@@ -42,53 +42,54 @@ interface TargetConfig {
   hasOwnUserId: boolean;
 }
 
-export const INLINE_COMMENT_TARGETS: Record<InlineCommentTarget, TargetConfig> = {
-  essay: {
-    label: "小論文",
-    path: (id) => `essays/${id}`,
-    textField: "ocrText",
-    studentHref: (id) => `/student/essay/${id}`,
-    referenceKind: "essay-comment",
-    feedbackType: "essay",
-    hasOwnUserId: true,
-  },
-  skillCheck: {
-    label: "スキルチェック",
-    path: (id, studentId) => `users/${studentId}/skillChecks/${id}`,
-    textField: "essayText",
-    studentHref: (id) => `/student/skill-check/${id}`,
-    referenceKind: "essay-comment",
-    feedbackType: "skill_check",
-    hasOwnUserId: false,
-  },
-  document: {
-    label: "出願書類",
-    path: (id) => `documents/${id}`,
-    textField: "content",
-    studentHref: (id) => `/student/documents/${id}`,
-    referenceKind: "essay-comment",
-    feedbackType: "document",
-    hasOwnUserId: true,
-  },
-  chocoReview: {
-    label: "ちょこ添削",
-    path: (id, studentId) => `users/${studentId}/chokoReviews/${id}`,
-    textField: "studentText",
-    studentHref: () => `/student/essay/choco`,
-    referenceKind: "essay-comment",
-    feedbackType: "essay",
-    hasOwnUserId: false,
-  },
-  summaryDrill: {
-    label: "要約ドリル",
-    path: (id, studentId) => `users/${studentId}/summaryDrills/${id}`,
-    textField: "summaryText",
-    studentHref: () => `/student/essay/summary-drill`,
-    referenceKind: "essay-comment",
-    feedbackType: "essay",
-    hasOwnUserId: false,
-  },
-};
+export const INLINE_COMMENT_TARGETS: Record<InlineCommentTarget, TargetConfig> =
+  {
+    essay: {
+      label: "小論文",
+      path: (id) => `essays/${id}`,
+      textField: "ocrText",
+      studentHref: (id) => `/student/essay/${id}`,
+      referenceKind: "essay-comment",
+      feedbackType: "essay",
+      hasOwnUserId: true,
+    },
+    skillCheck: {
+      label: "スキルチェック",
+      path: (id, studentId) => `users/${studentId}/skillChecks/${id}`,
+      textField: "essayText",
+      studentHref: () => `/student/dashboard`,
+      referenceKind: "essay-comment",
+      feedbackType: "skill_check",
+      hasOwnUserId: false,
+    },
+    document: {
+      label: "出願書類",
+      path: (id) => `documents/${id}`,
+      textField: "content",
+      studentHref: (id) => `/student/documents/${id}`,
+      referenceKind: "essay-comment",
+      feedbackType: "document",
+      hasOwnUserId: true,
+    },
+    chocoReview: {
+      label: "ちょこ添削",
+      path: (id, studentId) => `users/${studentId}/chokoReviews/${id}`,
+      textField: "studentText",
+      studentHref: () => `/student/essay/choco`,
+      referenceKind: "essay-comment",
+      feedbackType: "essay",
+      hasOwnUserId: false,
+    },
+    summaryDrill: {
+      label: "要約ドリル",
+      path: (id, studentId) => `users/${studentId}/summaryDrills/${id}`,
+      textField: "summaryText",
+      studentHref: () => `/student/essay/summary-drill`,
+      referenceKind: "essay-comment",
+      feedbackType: "essay",
+      hasOwnUserId: false,
+    },
+  };
 
 export function isInlineCommentTarget(v: unknown): v is InlineCommentTarget {
   return typeof v === "string" && v in INLINE_COMMENT_TARGETS;

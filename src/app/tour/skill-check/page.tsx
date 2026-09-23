@@ -1,10 +1,6 @@
-"use client";
+import { redirect } from "next/navigation";
 
-/**
- * /tour/skill-check
- * 実 /student/skill-check の page をそのまま再利用。
- * モック /api/skill-check/status と /api/interview-skill-check/status が
- * tutorial 用の history・latestResult を返すので、Hero / 統計 / タブ切替が
- * 全て本物の見た目で動く。
- */
-export { default } from "@/app/student/skill-check/page";
+/** スキルチェックは 2026-09-23 に廃止。ツアーは次のステップへ進める */
+export default function Page() {
+  redirect("/tour/essay/new");
+}

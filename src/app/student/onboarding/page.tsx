@@ -6,10 +6,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UniversitySelectStep } from "@/components/onboarding/UniversitySelectStep";
-import { ProfileStep, type ProfileData } from "@/components/onboarding/ProfileStep";
+import {
+  ProfileStep,
+  type ProfileData,
+} from "@/components/onboarding/ProfileStep";
 import { ConfirmStep } from "@/components/onboarding/ConfirmStep";
 import { SelfAnalysisStep } from "@/components/onboarding/SelfAnalysisStep";
-import { SkillCheckStep } from "@/components/onboarding/SkillCheckStep";
 import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
 import { updateProfile } from "@/lib/firebase/profile";
 import { useTutorial } from "@/contexts/TutorialContext";
@@ -17,7 +19,7 @@ import type { StudentProfile } from "@/lib/types/user";
 import { usePersistentDraft } from "@/hooks/usePersistentDraft";
 import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
 
-const STEPS = ["志望校選択", "基礎情報", "確認", "自己分析", "スキルチェック"] as const;
+const STEPS = ["志望校選択", "基礎情報", "確認", "自己分析"] as const;
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -53,10 +55,15 @@ export default function OnboardingPage() {
       setSelectedUniversities(draft.selectedUniversities);
       setProfileData(draft.profileData);
     },
-    hasContent: (draft) => draft.step > 0 || draft.selectedUniversities.length > 0 || Boolean(
-      draft.profileData.gpa !== null || draft.profileData.englishCerts.length > 0 ||
-      draft.profileData.grade !== null || draft.profileData.school.trim()
-    ),
+    hasContent: (draft) =>
+      draft.step > 0 ||
+      draft.selectedUniversities.length > 0 ||
+      Boolean(
+        draft.profileData.gpa !== null ||
+        draft.profileData.englishCerts.length > 0 ||
+        draft.profileData.grade !== null ||
+        draft.profileData.school.trim()
+      ),
   });
 
   // Pre-populate from existing profile (e.g. admin-set data)
@@ -72,7 +79,9 @@ export default function OnboardingPage() {
     if (!profile) return;
     setProfileData((prev) => ({
       gpa: profile.gpa ?? prev.gpa,
-      englishCerts: profile.englishCerts?.length ? profile.englishCerts : prev.englishCerts,
+      englishCerts: profile.englishCerts?.length
+        ? profile.englishCerts
+        : prev.englishCerts,
       grade: profile.grade ?? prev.grade,
       school: profile.school || prev.school,
       schoolId: profile.schoolId ?? prev.schoolId,
@@ -102,14 +111,20 @@ export default function OnboardingPage() {
       // Firestore未設定時はスキップ
     }
     localStorage.setItem("onboardingCompleted", "true");
-    localStorage.setItem("targetUniversities", JSON.stringify(selectedUniversities));
-    localStorage.setItem("studentProfile", JSON.stringify({
-      gpa: profileData.gpa,
-      englishCerts: profileData.englishCerts,
-      grade: profileData.grade,
-      school: profileData.school,
-      schoolId: profileData.schoolId,
-    }));
+    localStorage.setItem(
+      "targetUniversities",
+      JSON.stringify(selectedUniversities)
+    );
+    localStorage.setItem(
+      "studentProfile",
+      JSON.stringify({
+        gpa: profileData.gpa,
+        englishCerts: profileData.englishCerts,
+        grade: profileData.grade,
+        school: profileData.school,
+        schoolId: profileData.schoolId,
+      })
+    );
     await clearDraft();
     refreshProfile();
     setSaving(false);
@@ -126,32 +141,33 @@ export default function OnboardingPage() {
     setStep(3);
   };
 
-  const handleSelfAnalysisSkip = () => setStep(4);
+  const handleSelfAnalysisSkip = () => {
+    // オンボーディングの最終ステップ。チェーン進行フラグが残っていれば掃除してダッシュボードへ
+    try {
+      localStorage.removeItem("onboardingChain");
+    } catch {}
+    router.replace("/student/dashboard");
+  };
   const handleSelfAnalysisTake = () => {
-    // オンボーディングのチェーン進行フラグ（自己分析→スキルチェック→ダッシュボード）
+    // オンボーディングのチェーン進行フラグ（自己分析→ダッシュボード）
     localStorage.setItem("onboardingChain", "1");
     router.push("/student/self-analysis");
   };
 
-  const handleSkillCheckSkip = async () => {
-    startTutorial();
-    router.replace("/tour/dashboard");
-  };
-
-  const handleSkillCheckTake = () => {
-    router.push("/student/skill-check/new");
-  };
-
   return (
-    <div className="min-h-screen bg-mesh flex flex-col items-center justify-center p-4">
+    <div className="bg-mesh flex min-h-screen flex-col items-center justify-center p-4">
       <div className="w-full max-w-2xl space-y-6">
         {/* Header */}
-        <div className="text-center space-y-3">
+        <div className="space-y-3 text-center">
           <div className="flex justify-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo-vertical.svg" alt="coach for 総合型選抜" className="h-32" />
+            <img
+              src="/logo-vertical.svg"
+              alt="coach for 総合型選抜"
+              className="h-32"
+            />
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             はじめに、志望校と基礎情報を設定しましょう
           </p>
         </div>
@@ -174,9 +190,7 @@ export default function OnboardingPage() {
               </div>
               {i < STEPS.length - 1 && (
                 <div
-                  className={`h-px w-8 ${
-                    i < step ? "bg-primary" : "bg-muted"
-                  }`}
+                  className={`h-px w-8 ${i < step ? "bg-primary" : "bg-muted"}`}
                 />
               )}
             </div>
@@ -188,7 +202,7 @@ export default function OnboardingPage() {
           <button
             type="button"
             onClick={handleFinish}
-            className="text-sm text-muted-foreground underline hover:text-foreground transition-colors"
+            className="text-muted-foreground hover:text-foreground text-sm underline transition-colors"
           >
             スキップして始める
           </button>
@@ -227,12 +241,6 @@ export default function OnboardingPage() {
                 onTake={handleSelfAnalysisTake}
               />
             )}
-            {step === 4 && (
-              <SkillCheckStep
-                onSkip={handleSkillCheckSkip}
-                onTake={handleSkillCheckTake}
-              />
-            )}
           </CardContent>
         </Card>
 
@@ -244,7 +252,7 @@ export default function OnboardingPage() {
               onClick={() => setStep(step - 1)}
               disabled={step === 0}
             >
-              <ArrowLeft className="size-4 mr-1" />
+              <ArrowLeft className="mr-1 size-4" />
               戻る
             </Button>
 
@@ -252,14 +260,14 @@ export default function OnboardingPage() {
               {step < 2 ? (
                 <Button onClick={() => setStep(step + 1)} disabled={!canNext}>
                   次へ
-                  <ArrowRight className="size-4 ml-1" />
+                  <ArrowRight className="ml-1 size-4" />
                 </Button>
               ) : (
                 <Button onClick={handleConfirmNext} disabled={saving}>
                   {saving ? (
-                    <Loader2 className="size-4 mr-1 animate-spin" />
+                    <Loader2 className="mr-1 size-4 animate-spin" />
                   ) : (
-                    <ArrowRight className="size-4 mr-1" />
+                    <ArrowRight className="mr-1 size-4" />
                   )}
                   次へ
                 </Button>
@@ -268,7 +276,6 @@ export default function OnboardingPage() {
           </div>
         )}
       </div>
-
     </div>
   );
 }

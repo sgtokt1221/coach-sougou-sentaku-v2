@@ -75,14 +75,24 @@ const fmtDate = (iso?: string) => {
 function ScoreTile({ label, s }: { label: string; s: ScoreDelta }) {
   if (s.count === 0 && s.avg === null) return null;
   const d = s.delta;
-  const Icon = d === null || d === 0 ? Minus : d > 0 ? TrendingUp : TrendingDown;
-  const color = d === null || d === 0 ? "text-muted-foreground" : d > 0 ? "text-emerald-600" : "text-rose-600";
+  const Icon =
+    d === null || d === 0 ? Minus : d > 0 ? TrendingUp : TrendingDown;
+  const color =
+    d === null || d === 0
+      ? "text-muted-foreground"
+      : d > 0
+        ? "text-emerald-600"
+        : "text-rose-600";
   return (
-    <div className="flex-1 min-w-[120px] rounded-lg border bg-muted/30 px-3 py-2">
+    <div className="bg-muted/30 min-w-[120px] flex-1 rounded-lg border px-3 py-2">
       <div className="flex items-center justify-between">
-        <span className="text-xs text-muted-foreground">{label}（{s.count}件）</span>
+        <span className="text-muted-foreground text-xs">
+          {label}（{s.count}件）
+        </span>
         {d !== null && (
-          <span className={`flex items-center gap-0.5 text-xs font-medium ${color}`}>
+          <span
+            className={`flex items-center gap-0.5 text-xs font-medium ${color}`}
+          >
             <Icon className="size-3" />
             {d > 0 ? `+${d}` : d}
           </span>
@@ -90,7 +100,7 @@ function ScoreTile({ label, s }: { label: string; s: ScoreDelta }) {
       </div>
       <div className="mt-0.5 flex items-baseline gap-1">
         <span className="text-xl font-bold">{s.avg ?? "—"}</span>
-        <span className="text-[11px] text-muted-foreground">平均点</span>
+        <span className="text-muted-foreground text-[11px]">平均点</span>
       </div>
     </div>
   );
@@ -105,7 +115,10 @@ const GROUP_ICON: Record<string, LucideIcon> = {
   reports: FileBarChart,
 };
 
-export default function SessionArtifactsPanel({ endpoint, studentView = false }: Props) {
+export default function SessionArtifactsPanel({
+  endpoint,
+  studentView = false,
+}: Props) {
   const [data, setData] = useState<ArtifactsResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -130,7 +143,9 @@ export default function SessionArtifactsPanel({ endpoint, studentView = false }:
 
   const studentId = data?.studentId;
   const [essayDialogId, setEssayDialogId] = useState<string | null>(null);
-  const [interviewDialogId, setInterviewDialogId] = useState<string | null>(null);
+  const [interviewDialogId, setInterviewDialogId] = useState<string | null>(
+    null
+  );
   const [reportDialogId, setReportDialogId] = useState<string | null>(null);
   const [documentDialogId, setDocumentDialogId] = useState<string | null>(null);
   const [activityDialogId, setActivityDialogId] = useState<string | null>(null);
@@ -148,13 +163,15 @@ export default function SessionArtifactsPanel({ endpoint, studentView = false }:
     const path = kind === "interview" ? "interview-skill-check" : "skill-check";
     setSkillLoadingId(it.id);
     try {
-      const res = await authFetch(`/api/admin/students/${studentId}/${path}/${it.id}`);
+      const res = await authFetch(
+        `/api/admin/students/${studentId}/${path}/${it.id}`
+      );
       if (!res.ok) return;
       const result = await res.json();
       setSkillDialog(
         kind === "interview"
           ? { kind: "interview", result }
-          : { kind: "essay", result },
+          : { kind: "essay", result }
       );
     } catch {
       // ignore
@@ -165,7 +182,9 @@ export default function SessionArtifactsPanel({ endpoint, studentView = false }:
 
   // 管理者ビューで、セッション内ダイアログで開く種別か
   const dialogKindOf = (kind: string): "essays" | "interviews" | null =>
-    !studentView && (kind === "essays" || kind === "interviews") ? (kind as "essays" | "interviews") : null;
+    !studentView && (kind === "essays" || kind === "interviews")
+      ? (kind as "essays" | "interviews")
+      : null;
 
   const hrefOf = (kind: string, it: ArtifactItem): string | null => {
     const id = it.id;
@@ -180,9 +199,7 @@ export default function SessionArtifactsPanel({ endpoint, studentView = false }:
         case "activities":
           return `/student/activities/${id}`;
         case "skillChecks":
-          return it.skillKind === "interview"
-            ? `/student/interview-skill-check/${id}`
-            : `/student/skill-check/${id}`;
+          return "/student/dashboard";
         case "reports":
           return `/student/growth/reports/${id}`;
         default:
@@ -194,14 +211,15 @@ export default function SessionArtifactsPanel({ endpoint, studentView = false }:
     return null;
   };
 
-  const groups: { key: keyof ArtifactsResponse["artifacts"]; title: string }[] = [
-    { key: "essays", title: "小論文" },
-    { key: "interviews", title: "模擬面接" },
-    { key: "documents", title: "出願書類" },
-    { key: "activities", title: "活動実績" },
-    { key: "skillChecks", title: "スキルチェック" },
-    { key: "reports", title: "成長レポート" },
-  ];
+  const groups: { key: keyof ArtifactsResponse["artifacts"]; title: string }[] =
+    [
+      { key: "essays", title: "小論文" },
+      { key: "interviews", title: "模擬面接" },
+      { key: "documents", title: "出願書類" },
+      { key: "activities", title: "活動実績" },
+      { key: "skillChecks", title: "スキルチェック" },
+      { key: "reports", title: "成長レポート" },
+    ];
 
   const total = data
     ? groups.reduce((n, g) => n + data.artifacts[g.key].length, 0)
@@ -209,209 +227,241 @@ export default function SessionArtifactsPanel({ endpoint, studentView = false }:
 
   return (
     <>
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between gap-2">
-          <CardTitle className="text-base">前回のセッション以降の取り組み</CardTitle>
-          {!studentView && studentId && (
-            <Link
-              href={`/admin/students/${studentId}`}
-              className="text-xs text-primary hover:underline flex-shrink-0"
-            >
-              生徒の詳細・履歴を開く
-            </Link>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {loading ? (
-          <div className="space-y-2">
-            <Skeleton className="h-8 w-full" />
-            <Skeleton className="h-16 w-full" />
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between gap-2">
+            <CardTitle className="text-base">
+              前回のセッション以降の取り組み
+            </CardTitle>
+            {!studentView && studentId && (
+              <Link
+                href={`/admin/students/${studentId}`}
+                className="text-primary flex-shrink-0 text-xs hover:underline"
+              >
+                生徒の詳細・履歴を開く
+              </Link>
+            )}
           </div>
-        ) : !data ? (
-          <p className="text-sm text-muted-foreground">取得できませんでした</p>
-        ) : (
-          <>
-            {/* スコア変化 */}
-            {(data.scoreSummary.essay.avg !== null || data.scoreSummary.interview.avg !== null) && (
-              <div className="flex gap-2">
-                <ScoreTile label="小論文" s={data.scoreSummary.essay} />
-                <ScoreTile label="面接" s={data.scoreSummary.interview} />
-              </div>
-            )}
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {loading ? (
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-16 w-full" />
+            </div>
+          ) : !data ? (
+            <p className="text-muted-foreground text-sm">
+              取得できませんでした
+            </p>
+          ) : (
+            <>
+              {/* スコア変化 */}
+              {(data.scoreSummary.essay.avg !== null ||
+                data.scoreSummary.interview.avg !== null) && (
+                <div className="flex gap-2">
+                  <ScoreTile label="小論文" s={data.scoreSummary.essay} />
+                  <ScoreTile label="面接" s={data.scoreSummary.interview} />
+                </div>
+              )}
 
-            {total === 0 ? (
-              <p className="py-6 text-center text-sm text-muted-foreground">
-                この期間の取り組みはありません
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {groups.map((g) => {
-                  const items = data.artifacts[g.key];
-                  if (items.length === 0) return null;
-                  const GroupIcon = GROUP_ICON[g.key] ?? FileText;
-                  return (
-                    <div key={g.key} className="space-y-1.5">
-                      <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                        <GroupIcon className="size-3.5" />
-                        <span>{g.title}</span>
-                        <span className="text-[11px]">{items.length}</span>
-                      </div>
-                      <div className="space-y-1">
-                        {items.map((it) => {
-                          const href = hrefOf(g.key, it);
-                          const dialogKind = dialogKindOf(g.key);
-                          const isAdminSkill = !studentView && g.key === "skillChecks" && !!studentId;
-                          // 管理者ビューで reports/documents/activities をセッション内ダイアログで開く
-                          const adminDialogKind =
-                            !studentView &&
-                            !!studentId &&
-                            (g.key === "reports" || g.key === "documents" || g.key === "activities")
-                              ? g.key
-                              : null;
-                          const clickable = !!href || !!dialogKind || isAdminSkill || !!adminDialogKind;
-                          const inner = (
-                            <div
-                              className={`flex items-center justify-between rounded-md border px-3 py-2 text-sm transition-colors ${
-                                clickable ? "hover:bg-accent hover:border-primary/40 cursor-pointer" : ""
-                              }`}
-                            >
-                              <div className="flex items-center gap-2 min-w-0">
-                                <GroupIcon className="size-4 text-muted-foreground flex-shrink-0" />
-                                {it.at && (
-                                  <span className="text-xs text-muted-foreground flex-shrink-0 w-9">
-                                    {fmtDate(it.at)}
-                                  </span>
-                                )}
-                                <span className="truncate">{it.label}</span>
-                                {it.sub && (
-                                  <span className="text-xs text-muted-foreground truncate">{it.sub}</span>
-                                )}
+              {total === 0 ? (
+                <p className="text-muted-foreground py-6 text-center text-sm">
+                  この期間の取り組みはありません
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {groups.map((g) => {
+                    const items = data.artifacts[g.key];
+                    if (items.length === 0) return null;
+                    const GroupIcon = GROUP_ICON[g.key] ?? FileText;
+                    return (
+                      <div key={g.key} className="space-y-1.5">
+                        <div className="text-muted-foreground flex items-center gap-1.5 text-xs font-medium">
+                          <GroupIcon className="size-3.5" />
+                          <span>{g.title}</span>
+                          <span className="text-[11px]">{items.length}</span>
+                        </div>
+                        <div className="space-y-1">
+                          {items.map((it) => {
+                            const href = hrefOf(g.key, it);
+                            const dialogKind = dialogKindOf(g.key);
+                            const isAdminSkill =
+                              !studentView &&
+                              g.key === "skillChecks" &&
+                              !!studentId;
+                            // 管理者ビューで reports/documents/activities をセッション内ダイアログで開く
+                            const adminDialogKind =
+                              !studentView &&
+                              !!studentId &&
+                              (g.key === "reports" ||
+                                g.key === "documents" ||
+                                g.key === "activities")
+                                ? g.key
+                                : null;
+                            const clickable =
+                              !!href ||
+                              !!dialogKind ||
+                              isAdminSkill ||
+                              !!adminDialogKind;
+                            const inner = (
+                              <div
+                                className={`flex items-center justify-between rounded-md border px-3 py-2 text-sm transition-colors ${
+                                  clickable
+                                    ? "hover:bg-accent hover:border-primary/40 cursor-pointer"
+                                    : ""
+                                }`}
+                              >
+                                <div className="flex min-w-0 items-center gap-2">
+                                  <GroupIcon className="text-muted-foreground size-4 flex-shrink-0" />
+                                  {it.at && (
+                                    <span className="text-muted-foreground w-9 flex-shrink-0 text-xs">
+                                      {fmtDate(it.at)}
+                                    </span>
+                                  )}
+                                  <span className="truncate">{it.label}</span>
+                                  {it.sub && (
+                                    <span className="text-muted-foreground truncate text-xs">
+                                      {it.sub}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex flex-shrink-0 items-center gap-1.5">
+                                  {it.rank && (
+                                    <SkillRankBadge
+                                      rank={it.rank as SkillRank}
+                                      size="sm"
+                                      animate={false}
+                                    />
+                                  )}
+                                  {typeof it.score === "number" && (
+                                    <Badge
+                                      variant="outline"
+                                      className="text-xs"
+                                    >
+                                      {it.score}点
+                                    </Badge>
+                                  )}
+                                  {it.status && (
+                                    <Badge
+                                      variant="secondary"
+                                      className="text-xs"
+                                    >
+                                      {it.status}
+                                    </Badge>
+                                  )}
+                                  {clickable && (
+                                    <ChevronRight className="text-muted-foreground size-4" />
+                                  )}
+                                </div>
                               </div>
-                              <div className="flex items-center gap-1.5 flex-shrink-0">
-                                {it.rank && (
-                                  <SkillRankBadge
-                                    rank={it.rank as SkillRank}
-                                    size="sm"
-                                    animate={false}
-                                  />
-                                )}
-                                {typeof it.score === "number" && (
-                                  <Badge variant="outline" className="text-xs">{it.score}点</Badge>
-                                )}
-                                {it.status && (
-                                  <Badge variant="secondary" className="text-xs">{it.status}</Badge>
-                                )}
-                                {clickable && <ChevronRight className="size-4 text-muted-foreground" />}
-                              </div>
-                            </div>
-                          );
-                          if (href) {
-                            return (
-                              <Link key={it.id} href={href} className="block">
-                                {inner}
-                              </Link>
                             );
-                          }
-                          if (dialogKind) {
-                            return (
-                              <button
-                                key={it.id}
-                                type="button"
-                                className="block w-full text-left"
-                                onClick={() =>
-                                  dialogKind === "essays"
-                                    ? setEssayDialogId(it.id)
-                                    : setInterviewDialogId(it.id)
-                                }
-                              >
-                                {inner}
-                              </button>
-                            );
-                          }
-                          if (isAdminSkill) {
-                            return (
-                              <button
-                                key={it.id}
-                                type="button"
-                                className="block w-full text-left"
-                                disabled={skillLoadingId === it.id}
-                                onClick={() => openSkillDetail(it)}
-                              >
-                                {inner}
-                              </button>
-                            );
-                          }
-                          if (adminDialogKind) {
-                            return (
-                              <button
-                                key={it.id}
-                                type="button"
-                                className="block w-full text-left"
-                                onClick={() => {
-                                  if (adminDialogKind === "reports") setReportDialogId(it.id);
-                                  else if (adminDialogKind === "documents") setDocumentDialogId(it.id);
-                                  else setActivityDialogId(it.id);
-                                }}
-                              >
-                                {inner}
-                              </button>
-                            );
-                          }
-                          return <div key={it.id}>{inner}</div>;
-                        })}
+                            if (href) {
+                              return (
+                                <Link key={it.id} href={href} className="block">
+                                  {inner}
+                                </Link>
+                              );
+                            }
+                            if (dialogKind) {
+                              return (
+                                <button
+                                  key={it.id}
+                                  type="button"
+                                  className="block w-full text-left"
+                                  onClick={() =>
+                                    dialogKind === "essays"
+                                      ? setEssayDialogId(it.id)
+                                      : setInterviewDialogId(it.id)
+                                  }
+                                >
+                                  {inner}
+                                </button>
+                              );
+                            }
+                            if (isAdminSkill) {
+                              return (
+                                <button
+                                  key={it.id}
+                                  type="button"
+                                  className="block w-full text-left"
+                                  disabled={skillLoadingId === it.id}
+                                  onClick={() => openSkillDetail(it)}
+                                >
+                                  {inner}
+                                </button>
+                              );
+                            }
+                            if (adminDialogKind) {
+                              return (
+                                <button
+                                  key={it.id}
+                                  type="button"
+                                  className="block w-full text-left"
+                                  onClick={() => {
+                                    if (adminDialogKind === "reports")
+                                      setReportDialogId(it.id);
+                                    else if (adminDialogKind === "documents")
+                                      setDocumentDialogId(it.id);
+                                    else setActivityDialogId(it.id);
+                                  }}
+                                >
+                                  {inner}
+                                </button>
+                              );
+                            }
+                            return <div key={it.id}>{inner}</div>;
+                          })}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </>
-        )}
-      </CardContent>
-    </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
 
-    {!studentView && studentId && (
-      <>
-        <EssayDetailDialog
-          studentId={studentId}
-          essayId={essayDialogId}
-          open={essayDialogId !== null}
-          onOpenChange={(o) => !o && setEssayDialogId(null)}
-        />
-        <InterviewDetailDialog
-          studentId={studentId}
-          interviewId={interviewDialogId}
-          open={interviewDialogId !== null}
-          onOpenChange={(o) => !o && setInterviewDialogId(null)}
-        />
-        <SkillCheckDetailDialog
-          open={skillDialog !== null}
-          onOpenChange={(o) => !o && setSkillDialog(null)}
-          kind={skillDialog?.kind ?? "essay"}
-          result={skillDialog?.result ?? null}
-        />
-        <ReportDetailDialog
-          studentId={studentId}
-          reportId={reportDialogId}
-          open={reportDialogId !== null}
-          onOpenChange={(o) => !o && setReportDialogId(null)}
-        />
-        <DocumentDetailDialog
-          studentId={studentId}
-          documentId={documentDialogId}
-          open={documentDialogId !== null}
-          onOpenChange={(o) => !o && setDocumentDialogId(null)}
-        />
-        <ActivityDetailDialog
-          studentId={studentId}
-          activityId={activityDialogId}
-          open={activityDialogId !== null}
-          onOpenChange={(o) => !o && setActivityDialogId(null)}
-        />
-      </>
-    )}
+      {!studentView && studentId && (
+        <>
+          <EssayDetailDialog
+            studentId={studentId}
+            essayId={essayDialogId}
+            open={essayDialogId !== null}
+            onOpenChange={(o) => !o && setEssayDialogId(null)}
+          />
+          <InterviewDetailDialog
+            studentId={studentId}
+            interviewId={interviewDialogId}
+            open={interviewDialogId !== null}
+            onOpenChange={(o) => !o && setInterviewDialogId(null)}
+          />
+          <SkillCheckDetailDialog
+            open={skillDialog !== null}
+            onOpenChange={(o) => !o && setSkillDialog(null)}
+            kind={skillDialog?.kind ?? "essay"}
+            result={skillDialog?.result ?? null}
+          />
+          <ReportDetailDialog
+            studentId={studentId}
+            reportId={reportDialogId}
+            open={reportDialogId !== null}
+            onOpenChange={(o) => !o && setReportDialogId(null)}
+          />
+          <DocumentDetailDialog
+            studentId={studentId}
+            documentId={documentDialogId}
+            open={documentDialogId !== null}
+            onOpenChange={(o) => !o && setDocumentDialogId(null)}
+          />
+          <ActivityDetailDialog
+            studentId={studentId}
+            activityId={activityDialogId}
+            open={activityDialogId !== null}
+            onOpenChange={(o) => !o && setActivityDialogId(null)}
+          />
+        </>
+      )}
     </>
   );
 }

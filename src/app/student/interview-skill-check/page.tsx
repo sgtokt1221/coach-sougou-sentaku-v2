@@ -1,14 +1,6 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-
-export default function InterviewSkillCheckRedirect() {
-  const router = useRouter();
-
-  useEffect(() => {
-    router.replace("/student/skill-check?tab=interview");
-  }, [router]);
-
-  return null;
+/** スキルチェックは 2026-09-23 に廃止。古いリンクはダッシュボードへ */
+export default function Page() {
+  redirect("/student/dashboard");
 }
