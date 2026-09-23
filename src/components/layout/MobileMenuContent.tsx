@@ -365,12 +365,14 @@ export function MobileMenuContent({ onNavigate }: { onNavigate?: () => void }) {
               label="小論文"
               rank={essayRank}
               href="/student/growth"
+              emptyHref="/student/essay/new"
               onNavigate={onNavigate}
             />
             <RankSummary
               label="面接"
               rank={interviewRank}
               href="/student/growth"
+              emptyHref="/student/interview/new"
               onNavigate={onNavigate}
             />
           </div>
@@ -586,16 +588,19 @@ function RankSummary({
   label,
   rank,
   href,
+  emptyHref,
   onNavigate,
 }: {
   label: string;
   rank: "S" | "A" | "B" | "C" | "D" | null;
   href: string;
+  /** まだ提出が無いときの行き先（小論文なら添削、面接なら模擬面接） */
+  emptyHref: string;
   onNavigate?: () => void;
 }) {
   return (
     <Link
-      href={rank ? href : "/student/essay/new"}
+      href={rank ? href : emptyHref}
       onClick={onNavigate}
       className="border-border bg-background/60 hover:border-foreground/20 flex items-center gap-2 rounded-lg border px-3 py-2 transition-all active:scale-[0.98]"
     >
