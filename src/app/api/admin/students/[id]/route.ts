@@ -64,6 +64,7 @@ async function loadStudentSummary(
         db
           .collection("documents")
           .where("userId", "==", id)
+          .select("type", "deadline", "status")
           .get()
           .then((snap) =>
             snap.docs.map((d) => {
@@ -85,6 +86,7 @@ async function loadStudentSummary(
         "homework",
         db
           .collection(`users/${id}/homeworkAssignments`)
+          .select("snapshot.title", "dueDate", "status")
           .get()
           .then((snap) =>
             snap.docs.map((d) => {
@@ -316,15 +318,19 @@ export async function GET(
       }
     };
 
-    const [essaysSnap, interviewsSnap, weaknessesSnap] = await Promise.all([
-      adminDb
-        .collection("essays")
-        .where("userId", "==", id)
-        .orderBy("submittedAt", "desc")
-        .get(),
-      fetchCompletedInterviews(),
-      adminDb.collection(`users/${id}/weaknesses`).get(),
-    ]);
+    const assignedTeacherIds = getAssignedTeacherIds(userData);
+    // 上部の帯も同時に読む（loadStudentSummary は項目ごとに失敗を受け止めるので落ちない）
+    const [essaysSnap, interviewsSnap, weaknessesSnap, summary] =
+      await Promise.all([
+        adminDb
+          .collection("essays")
+          .where("userId", "==", id)
+          .orderBy("submittedAt", "desc")
+          .get(),
+        fetchCompletedInterviews(),
+        adminDb.collection(`users/${id}/weaknesses`).get(),
+        loadStudentSummary(adminDb, id, assignedTeacherIds),
+      ]);
 
     // 大学ID→日本語名のヘルパー（部分一致フォールバック付き）
     function resolveUniName(
@@ -665,9 +671,6 @@ export async function GET(
     const pushStatus = await loadPushStatus(adminDb, id, "student").catch(
       () => null
     );
-
-    const assignedTeacherIds = getAssignedTeacherIds(userData);
-    const summary = await loadStudentSummary(adminDb, id, assignedTeacherIds);
 
     const detail: StudentDetail = {
       profile: {

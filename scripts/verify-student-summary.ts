@@ -83,8 +83,26 @@ check("宿題: 今日・あと2日", () => {
     ["宿題「要約練習」期限 今日", "宿題「要約練習」期限 あと2日"]
   );
 });
-check("宿題: submitted は出ない", () => {
-  assert.deepEqual(labels([], [hw("h", "2026-09-23", "submitted")]), []);
+check("宿題: submitted は期限に関係なく「提出済み・未確認」", () => {
+  assert.deepEqual(labels([], [hw("h", "2026-09-23", "submitted")]), [
+    "宿題「要約練習」提出済み・未確認",
+  ]);
+  assert.deepEqual(labels([], [hw("h", "2026-12-31", "submitted")]), [
+    "宿題「要約練習」提出済み・未確認",
+  ]);
+  assert.deepEqual(
+    buildActionItems({
+      documents: [],
+      homework: [
+        { id: "h", title: "要約練習", dueDate: null, status: "submitted" },
+      ],
+      now,
+    }).map((i) => i.label),
+    ["宿題「要約練習」提出済み・未確認"]
+  );
+});
+check("宿題: reviewed は出ない", () => {
+  assert.deepEqual(labels([], [hw("h", "2026-09-23", "reviewed")]), []);
 });
 check("宿題: 期限3日後は出ない", () => {
   assert.deepEqual(labels([], [hw("h", "2026-09-27")]), []);

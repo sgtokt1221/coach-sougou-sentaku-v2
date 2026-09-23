@@ -12,7 +12,7 @@ import {
 export interface SummaryActionItem {
   kind: "document" | "homework";
   id: string;
-  label: string; // 「志望理由書の期限 あと3日」「宿題『…』期限切れ」
+  label: string; // 「志望理由書の期限 あと3日」「宿題『…』期限切れ」「宿題『…』提出済み・未確認」
 }
 
 export interface SummaryWeakness {
@@ -86,6 +86,15 @@ export function buildActionItems(input: {
     });
   }
   for (const h of input.homework) {
+    // 提出済みで講師がまだ確認していないものは、期限に関係なく出す
+    if (h.status === "submitted") {
+      items.push({
+        kind: "homework",
+        id: h.id,
+        label: `宿題「${h.title}」提出済み・未確認`,
+      });
+      continue;
+    }
     if (h.status !== "assigned" && h.status !== "in_progress") continue;
     if (!h.dueDate) continue;
     const n = daysUntil(h.dueDate);
