@@ -15,9 +15,12 @@ import { FileText, ThumbsUp, Lightbulb, ArrowRightLeft } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import { CommentableEssayText } from "@/components/essay/CommentableEssayText";
 import { RedPenText } from "@/components/essay/RedPenText";
+import { EssayQuestionContext } from "@/components/admin/EssayQuestionContext";
 import {
   ESSAY_SCORE_WEIGHTS,
   type EssayInlineComment,
+  type EssayQuestionContextData,
+  type KnowledgeInsights,
 } from "@/lib/types/essay";
 import { axisPoints } from "@/lib/score-rank";
 
@@ -28,6 +31,7 @@ interface EssayDetail {
   topic?: string;
   ocrText?: string;
   inlineComments?: EssayInlineComment[];
+  questionContext?: EssayQuestionContextData;
   scores?: {
     structure: number;
     logic: number;
@@ -39,9 +43,15 @@ interface EssayDetail {
     originality?: number;
     /** 旧データ（v7以前）には無い */
     reasoningMaturity?: number;
+    /** 専門知識の正確性。口頭試問型のときだけ付き、その回は合計に入る */
+    knowledgeAccuracy?: number;
     total: number;
   };
   feedback?: {
+    /** 合計の満点。口頭試問型で知識判定が取れた回は60 */
+    scoreMaximum?: number;
+    /** 口頭試問型の知識判定 */
+    knowledgeInsights?: KnowledgeInsights;
     overall: string;
     goodPoints: string[];
     improvements: string[];
@@ -57,9 +67,11 @@ interface EssayDetail {
   };
 }
 
-function scoreColor(total: number): string {
-  if (total >= 40) return "text-emerald-600 dark:text-emerald-400";
-  if (total >= 30) return "text-amber-600 dark:text-amber-400";
+/** 満点に対する割合で色分けする（口頭試問型は60点満点） */
+function scoreColor(total: number, max: number): string {
+  const pct = max > 0 ? (total / max) * 100 : 0;
+  if (pct >= 80) return "text-emerald-600 dark:text-emerald-400";
+  if (pct >= 60) return "text-amber-600 dark:text-amber-400";
   return "text-rose-600 dark:text-rose-400";
 }
 
@@ -150,6 +162,12 @@ export default function EssayDetailDialog({
           </p>
         ) : (
           <div className="space-y-6 py-2">
+            {/* 口頭試問型は小問が見えないと答案を読めない */}
+            <EssayQuestionContext
+              topic={data.topic}
+              context={data.questionContext}
+            />
+
             {data.scores && (
               <div className="space-y-3">
                 <h3 className="text-sm font-semibold">AIスコア</h3>
@@ -171,6 +189,21 @@ export default function EssayDetailDialog({
                       </div>
                     );
                   })}
+                  {/* 口頭試問型の専門知識。合計に入る（満点60） */}
+                  {typeof data.scores.knowledgeAccuracy === "number" && (
+                    <div className="flex items-center gap-3 border-t pt-2">
+                      <span className="text-muted-foreground w-28 text-xs">
+                        専門知識の正確性
+                      </span>
+                      <Progress
+                        value={data.scores.knowledgeAccuracy * 10}
+                        className="h-2 flex-1"
+                      />
+                      <span className="w-12 text-right text-xs font-medium tabular-nums">
+                        {data.scores.knowledgeAccuracy}/10
+                      </span>
+                    </div>
+                  )}
                   {/* 合計外の参考値 */}
                   {typeof data.scores.apAlignment === "number" && (
                     <div className="flex items-center gap-3 border-t pt-2">
@@ -193,9 +226,9 @@ export default function EssayDetailDialog({
                     <span className="w-20 text-xs font-semibold">合計</span>
                     <div className="flex-1" />
                     <span
-                      className={`text-lg font-bold ${scoreColor(data.scores.total)}`}
+                      className={`text-lg font-bold ${scoreColor(data.scores.total, data.feedback?.scoreMaximum ?? 50)}`}
                     >
-                      {data.scores.total}/50
+                      {data.scores.total}/{data.feedback?.scoreMaximum ?? 50}
                     </span>
                   </div>
                 </div>
@@ -220,6 +253,34 @@ export default function EssayDetailDialog({
               <>
                 <Separator />
                 <div className="space-y-4">
+                  {/* 口頭試問型の知識の誤り。面談でそのまま使えるように出す */}
+                  {(data.feedback.knowledgeInsights?.errors?.length ?? 0) >
+                    0 && (
+                    <div className="space-y-2">
+                      <h3 className="text-sm font-semibold">知識の誤り</h3>
+                      {data.feedback.knowledgeInsights!.errors.map((e, i) => (
+                        <div
+                          key={i}
+                          className={`rounded-lg p-3 text-sm ${
+                            e.severity === "critical"
+                              ? "bg-rose-600 text-white"
+                              : "bg-amber-100 text-amber-950"
+                          }`}
+                        >
+                          <p className="font-medium">「{e.claim}」</p>
+                          <p
+                            className={`mt-1 text-xs leading-relaxed ${
+                              e.severity === "critical"
+                                ? "text-rose-50"
+                                : "text-amber-900"
+                            }`}
+                          >
+                            {e.correction}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   <div className="space-y-1">
                     <h3 className="text-sm font-semibold">総合評価</h3>
                     <p className="text-muted-foreground text-sm leading-relaxed">

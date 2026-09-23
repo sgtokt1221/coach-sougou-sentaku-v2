@@ -51,9 +51,11 @@ type DossierTab =
   | "homework"
   | "memos";
 
-function scoreColor(total: number): string {
-  if (total >= 40) return "text-emerald-600 dark:text-emerald-400";
-  if (total >= 30) return "text-amber-600 dark:text-amber-400";
+/** 満点に対する割合で色分けする（口頭試問型は60点満点） */
+function scoreColor(total: number, max = 50): string {
+  const pct = max > 0 ? (total / max) * 100 : 0;
+  if (pct >= 80) return "text-emerald-600 dark:text-emerald-400";
+  if (pct >= 60) return "text-amber-600 dark:text-amber-400";
   return "text-rose-600 dark:text-rose-400";
 }
 
@@ -295,7 +297,7 @@ export function SessionStudentDossier({
                               />
                               <Badge
                                 variant="outline"
-                                className={`text-sm font-bold ${scoreColor(essay.scores.total)}`}
+                                className={`text-sm font-bold ${scoreColor(essay.scores.total, essay.scoreMaximum ?? 50)}`}
                               >
                                 {essay.scores.total}/{essay.scoreMaximum ?? 50}
                               </Badge>
