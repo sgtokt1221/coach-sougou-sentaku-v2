@@ -2,6 +2,7 @@
 
 import type { StudentDetail } from "@/lib/types/admin";
 import type { AggregateBreakdown } from "@/lib/skill-check/aggregate";
+import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
 
 /**
  * 生徒詳細の上部の帯（ランク・要対応・重要な弱点・次の面談）。
@@ -23,7 +24,8 @@ const FILL = {
   session: "bg-[#3730a3]",
 } as const;
 
-const NUMBER_CLASS = "text-2xl leading-none font-bold tabular-nums lg:text-[28px]";
+const NUMBER_CLASS =
+  "text-2xl leading-none font-bold tabular-nums lg:text-[28px]";
 
 function Card({
   fill,
@@ -80,16 +82,24 @@ function RankLine({
       </div>
     );
   }
+  // ランクは生徒画面・一覧と同じバッジで出す（文字だけだと他の画面と見え方が揃わない）
   return (
     <div>
-      <div className="flex flex-wrap items-baseline gap-x-2">
-        <span className="w-12 shrink-0">{label}</span>
-        <span className={NUMBER_CLASS}>{agg.compositeRank}</span>
-        <span className="tabular-nums">
-          {agg.compositeScore}/{max}
-        </span>
+      <p>{label}</p>
+      <div className="mt-1 flex items-center gap-2">
+        <SkillRankBadge
+          rank={agg.compositeRank}
+          size="md"
+          maxScore={max}
+          animate={false}
+        />
+        <div className="min-w-0">
+          <p className="tabular-nums">
+            {agg.compositeScore}/{max}
+          </p>
+          <p>直近{agg.practiceCount}件の平均</p>
+        </div>
       </div>
-      <p>直近{agg.practiceCount}件の平均</p>
     </div>
   );
 }
@@ -144,7 +154,9 @@ export function SummaryBand({
             {actionItems.length > shownActions.length && (
               <li>ほか{actionItems.length - shownActions.length}件</li>
             )}
-            {unviewedCount > 0 && <li>まだ開いていない提出 {unviewedCount}件</li>}
+            {unviewedCount > 0 && (
+              <li>まだ開いていない提出 {unviewedCount}件</li>
+            )}
           </ul>
         </Card>
       ) : (
