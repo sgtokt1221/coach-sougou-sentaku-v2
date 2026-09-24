@@ -20,17 +20,9 @@ import type { SelfAnalysis, SelfAnalysisStepKey, StepApproval } from "@/lib/type
 
 interface DiscoverSectionProps {
   studentId: string;
-  /** true で7項目のカードを閉じた状態で出す（生徒詳細の「自己分析」） */
-  defaultCollapsed?: boolean;
-  /** true で木を小さく出す */
-  compactTree?: boolean;
 }
 
-export function DiscoverSection({
-  studentId,
-  defaultCollapsed = false,
-  compactTree = false,
-}: DiscoverSectionProps) {
+export function DiscoverSection({ studentId }: DiscoverSectionProps) {
   const [selfAnalysis, setSelfAnalysis] = useState<SelfAnalysis | null>(null);
   const [saError, setSaError] = useState<string | null>(null);
   const [loadingSa, setLoadingSa] = useState(true);
@@ -183,7 +175,6 @@ export function DiscoverSection({
               stepsData={saStepsData}
               interactive={false}
               showDetailsOnHover
-              compact={compactTree}
             />
           ) : saError ? (
             <div className="py-8 text-center">
@@ -203,7 +194,6 @@ export function DiscoverSection({
         <AnalysisResultCard
           analysis={selfAnalysis!}
           onUpdate={handleSelfAnalysisUpdate}
-          defaultCollapsed={defaultCollapsed}
           renderSectionExtra={(sectionKey, sectionTitle) => {
             const ap = approvals[sectionKey];
             const approved = ap?.approved === true;

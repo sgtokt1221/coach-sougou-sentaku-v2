@@ -32,12 +32,9 @@ type Mode = "pick" | "custom";
 export function CreateHomeworkDialog({
   studentId,
   onCreated,
-  trigger,
 }: {
   studentId: string;
   onCreated?: () => void;
-  /** 開くボタンを差し替えるとき（生徒詳細のヘッダーなど）。無ければ「新しい宿題を配布」 */
-  trigger?: React.ReactElement;
 }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -108,12 +105,10 @@ export function CreateHomeworkDialog({
       }}
     >
       <DialogTrigger asChild>
-        {trigger ?? (
-          <Button size="sm">
-            <Plus className="mr-1.5 size-4" />
-            新しい宿題を配布
-          </Button>
-        )}
+        <Button size="sm">
+          <Plus className="mr-1.5 size-4" />
+          新しい宿題を配布
+        </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>

@@ -15,12 +15,22 @@ import { useAuthSWR } from "@/lib/api/swr";
 import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
 import { CoachConversationList } from "@/components/admin/CoachConversationList";
 import type { CoachConversationItem } from "@/components/admin/CoachConversationList";
-import { aiConversationToItem } from "@/components/admin/detail-dialogs/AiConversationDialog";
 import {
   AI_CONVERSATION_LABELS,
   type AiConversation,
   type AiConversationKind,
 } from "@/lib/types/ai-conversation";
+
+function formatDate(iso: string): string {
+  const d = new Date(iso);
+  if (isNaN(+d)) return "-";
+  return d.toLocaleString("ja-JP", {
+    month: "numeric",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
 
 /**
  * その生徒とAIのやり取りを、機能をまたいで1つの時系列で見せる。
@@ -47,7 +57,15 @@ export function AiConversationsSection({ studentId }: { studentId: string }) {
   const filtered =
     kind === "all" ? conversations : conversations.filter((c) => c.kind === kind);
 
-  const items: CoachConversationItem[] = filtered.map(aiConversationToItem);
+  const items: CoachConversationItem[] = filtered.map((c) => ({
+    id: c.id,
+    title: c.title,
+    meta: `${formatDate(c.updatedAt)} ・ ${c.messageCount}往復`,
+    badge: c.note
+      ? { label: c.note, tone: "guess" }
+      : { label: AI_CONVERSATION_LABELS[c.kind], tone: "neutral" },
+    messages: c.messages,
+  }));
 
   return (
     <Card>
