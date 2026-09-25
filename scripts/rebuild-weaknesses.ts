@@ -118,8 +118,12 @@ function toDate(v: unknown): Date | null {
  * （2026-09-23 の確認実行で実際に 14回→17回、助言文の弱点が出た）。
  * 弱点の正本は AI が弱点として挙げた repeatedIssues だけにする。
  */
-function issueTags(issues: Issue[]): string[] {
-  return issues.map((i) => i.area ?? "").filter(Boolean);
+function issueTags(
+  issues: Issue[],
+  domain: "essay" | "interview" = "essay"
+): string[] {
+  // 本番と同じく hintsFromIssues の弱点名を使う（同じ場所名の指摘は先に正規ラベルへ寄る）
+  return hintsFromIssues(issues, domain).tags;
 }
 
 function videoTags(data: Record<string, unknown>): string[] {
@@ -170,7 +174,7 @@ async function loadSubmissions(uid: string): Promise<Submission[]> {
     subs.push({
       at,
       source: "interview",
-      tags: [...issueTags(issues), ...videoTags(data)],
+      tags: [...issueTags(issues, "interview"), ...videoTags(data)],
       issues,
       countMisses: true,
     });
@@ -207,7 +211,10 @@ function replay(
   let recs = initial;
   for (const sub of subs) {
     // 本番の書き込み経路と同じ材料（tags は保存済みの弱点名を優先するので使わない）
-    const { categoryHints, detailHints } = hintsFromIssues(sub.issues);
+    const { categoryHints, detailHints } = hintsFromIssues(
+      sub.issues,
+      resolveDomainOf(sub.source)
+    );
     recs = updateWeaknessRecords(recs, sub.tags, {
       source: sub.source,
       categoryHints,

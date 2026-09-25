@@ -310,13 +310,19 @@ export interface UpdateWeaknessOptions {
  * 添削の repeatedIssues から、updateWeaknessRecords に渡す弱点名とヒントを作る。
  * 提出の経路（添削・講座・宿題・作り直し）で同じ材料を渡す（ずれると同じ答案でも
  * 経路によって振り分け先が変わる）。
+ *
+ * ヒントは弱点名をキーに持つので、AI が同じ場所名（「第3・第4段落」）で指摘を
+ * 2件書くと後の1件で上書きされ、前の指摘が別の弱点に読まれて消える。
+ * 同じ名前が2件以上あるときは、1件ずつ自分の説明文で先に正規ラベルへ寄せる
+ * （weaknessKeysOf と同じ材料。正規ラベルは読み直しても自分に戻る）。
  */
 export function hintsFromIssues(
   issues: readonly {
     area?: string;
     category?: WeaknessRecord["categoryId"];
     message?: string;
-  }[]
+  }[],
+  domain: ResolveDomain = "essay"
 ): {
   tags: string[];
   categoryHints: Map<string, WeaknessRecord["categoryId"]>;
@@ -325,12 +331,26 @@ export function hintsFromIssues(
   const tags: string[] = [];
   const categoryHints = new Map<string, WeaknessRecord["categoryId"]>();
   const detailHints = new Map<string, string>();
+  const areaCount = new Map<string, number>();
+  for (const issue of issues) {
+    if (issue.area)
+      areaCount.set(issue.area, (areaCount.get(issue.area) ?? 0) + 1);
+  }
   for (const issue of issues) {
     if (!issue.area) continue;
-    tags.push(issue.area);
-    if (issue.category) categoryHints.set(issue.area, issue.category);
     const message = issue.message?.trim();
-    if (message) detailHints.set(issue.area, message);
+    let tag = issue.area;
+    if ((areaCount.get(tag) ?? 0) > 1) {
+      const entry = resolveCanonical(tag, {
+        categoryHint: issue.category ?? categorizeWeakness(tag),
+        supportText: message,
+        domain,
+      });
+      if (entry) tag = canonicalLabel(entry.id);
+    }
+    tags.push(tag);
+    if (issue.category) categoryHints.set(tag, issue.category);
+    if (message) detailHints.set(tag, message);
   }
   return { tags, categoryHints, detailHints };
 }

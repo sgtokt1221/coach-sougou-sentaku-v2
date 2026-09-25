@@ -4,7 +4,11 @@ import type {
   InterviewScores,
   InterviewFeedback,
 } from "@/lib/types/interview";
-import { analyzeGrowth, updateWeaknessRecords } from "@/lib/growth/analyze";
+import {
+  analyzeGrowth,
+  hintsFromIssues,
+  updateWeaknessRecords,
+} from "@/lib/growth/analyze";
 import { categorizeWeakness } from "@/lib/growth/weakness-category";
 import {
   activeWeaknesses,
@@ -309,9 +313,14 @@ export async function POST(request: NextRequest) {
      * improvements（助言の自由文）を混ぜると、正規化の部分一致で
      * 誰にでも付く弱点に落ちる（小論文添削と同じ理由）。
      */
-    const weaknessTags: string[] = feedback.repeatedIssues.map(
-      (issue) => issue.area
-    );
+    // AI が出力した category と具体例（「この発言がこう弱い」）もヒントとして渡す。
+    // 添削と同じ関数で作る（同じ場所名の指摘が2件あっても上書きで消えない）
+    const {
+      tags: issueTags,
+      categoryHints,
+      detailHints,
+    } = hintsFromIssues(feedback.repeatedIssues ?? [], "interview");
+    const weaknessTags: string[] = [...issueTags];
 
     // VideoAnalysis → 弱点タグ
     if (videoAnalysis) {
@@ -330,37 +339,6 @@ export async function POST(request: NextRequest) {
           weaknessTags.push(`身だしなみ: ${issue.description}`);
         }
       }
-    }
-
-    // AI が出力した category を hint として伝播
-    const categoryHints = new Map<
-      string,
-      | "structure"
-      | "logic"
-      | "expression"
-      | "apAlignment"
-      | "originality"
-      | "other"
-    >();
-    for (const issue of feedback.repeatedIssues ?? []) {
-      const cat = (issue as { category?: string }).category;
-      if (
-        cat === "structure" ||
-        cat === "logic" ||
-        cat === "expression" ||
-        cat === "apAlignment" ||
-        cat === "originality" ||
-        cat === "other"
-      ) {
-        categoryHints.set(issue.area, cat);
-      }
-    }
-
-    /** 弱点の具体例（「この発言がこう弱い」）。ラベルだけでは中身が分からない */
-    const detailHints = new Map<string, string>();
-    for (const issue of feedback.repeatedIssues ?? []) {
-      const message = (issue as { message?: string }).message?.trim();
-      if (message) detailHints.set(issue.area, message);
     }
 
     const updatedWeaknesses = updateWeaknessRecords(

@@ -17,6 +17,7 @@ import {
   updateWeaknessRecords,
   analyzeGrowth,
   getRemindableWeaknesses,
+  hintsFromIssues,
 } from "../src/lib/growth/analyze";
 import {
   getWeaknessReminderLevel,
@@ -299,6 +300,38 @@ check("講師が入れた弱点（lesson）は面接の弱点にも寄る", () =
     now: day(1),
   });
   assert.equal(out[0].canonicalId, "iv.body.eye_contact");
+});
+
+check("同じ場所名の指摘が2件あっても、両方の弱点が積まれる", () => {
+  // 本番（2026-09-26）: 「第3・第4段落」で表現と論証の指摘が並び、ヒントが後の1件で
+  // 上書きされて「主語と述語が噛み合わない文がある」が数えられていなかった
+  const issues = [
+    {
+      area: "第3・第4段落",
+      category: "expression" as const,
+      message:
+        "一文が150字前後まで伸びており、読点で節をつなぎ続けています。主語と述語が噛み合わなくなる原因になっています。",
+    },
+    {
+      area: "第3・第4段落",
+      category: "logic" as const,
+      message:
+        "具体例を挙げた後に「〜と考える」で締めており、なぜその具体例が主張につながるかの説明が省かれています。",
+    },
+  ];
+  const h = hintsFromIssues(issues);
+  const out = updateWeaknessRecords([], h.tags, {
+    source: "essay",
+    categoryHints: h.categoryHints,
+    detailHints: h.detailHints,
+    now: day(1),
+  });
+  const areas = out.map((w) => w.area);
+  assert.ok(
+    areas.includes("主語と述語が噛み合わない文がある"),
+    areas.join(" / ")
+  );
+  assert.equal(out.length, 2, areas.join(" / "));
 });
 
 console.log(`verify-weakness-records: ${checks} checks passed`);
