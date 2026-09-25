@@ -206,6 +206,7 @@ export default function GrowthPage() {
   const { data: adminReports, isLoading: loadingAdminReports } = useAuthSWR<
     AdminGrowthReport[]
   >("/api/student/reports");
+  // all: 解決済みと「もう見ない」を押した弱点も含む全体の一覧として出す
   const { data: weaknessData, isLoading: loadingWeaknesses } = useAuthSWR<{
     weaknesses: WeaknessRecord[];
   }>("/api/growth/weaknesses?context=all");
@@ -507,7 +508,13 @@ export default function GrowthPage() {
           ) : (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
               {(() => {
-                const maxCount = Math.max(...weaknesses.map((w) => w.count), 1);
+                // 解決済みの大きな回数で進行中の棒が短くならないよう、解決済みを除いて出す
+                const maxCount = Math.max(
+                  ...weaknesses
+                    .filter((w) => w.level !== "resolved")
+                    .map((w) => w.count),
+                  1
+                );
                 return (
                   <>
                     <WeaknessColumn

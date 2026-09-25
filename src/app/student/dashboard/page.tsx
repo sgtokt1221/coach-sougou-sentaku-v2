@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { WeaknessReminderBanner } from "@/components/growth/WeaknessReminderBanner";
-import { WeaknessRecord } from "@/lib/types/growth";
+import { WeaknessRecord, getWeaknessReminderLevel } from "@/lib/types/growth";
 import { normalizedEssayTotal } from "@/lib/types/essay";
 import {
   FileEdit,
@@ -340,7 +340,10 @@ function WeaknessSummaryCompact() {
   const { data } = useAuthSWR<{ weaknesses: WeaknessRecord[] }>(
     "/api/growth/weaknesses?context=all"
   );
-  const weaknesses = data?.weaknesses ?? [];
+  // 成長画面の3列と件数を揃える（段階の付かない弱点は数えない。「もう見ない」を押したものは数える）
+  const weaknesses = (data?.weaknesses ?? []).filter(
+    (w) => getWeaknessReminderLevel(w) !== null
+  );
 
   if (weaknesses.length === 0) return null;
 
