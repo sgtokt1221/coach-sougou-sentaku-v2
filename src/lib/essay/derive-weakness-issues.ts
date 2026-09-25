@@ -12,7 +12,11 @@
  * 足す弱点の area は正規ラベルそのもの。AI が同じ弱点（正本の ID）を既に挙げていれば足さない。
  * 設計: docs/superpowers/specs/2026-09-26-weakness-taxonomy-v2-design.md
  */
-import type { EssayFeedback, RepeatedIssue } from "@/lib/types/essay";
+import type {
+  EssayFeedback,
+  RepeatedIssue,
+  TaskFulfillment,
+} from "@/lib/types/essay";
 import type { SentenceCheckResult } from "@/lib/essay/sentence-check-judge";
 import {
   resolveCanonical,
@@ -37,7 +41,9 @@ export type DerivableFeedback = Pick<EssayFeedback, "repeatedIssues"> &
 export interface DeriveOptions {
   /**
    * 講座のブロック課題（1ブロックだけ書く）。答案全体を前提にした
-   * 字数不足・要求の欠落は当てはまらないので足さない
+   * 字数不足・要求の欠落は当てはまらないので足さない。主題ずれ（off_topic）
+   * だけは積むが、narrower（主題の一部に限定）は1ブロックだけ書く課題では
+   * 起きて当然なので積まない。different（別の話題）のときだけ積む
    */
   partial?: boolean;
 }
@@ -48,6 +54,47 @@ const GRAMMAR_MIN = 2;
 const TYPO_MIN = 3;
 /** 字数が指定の何%未満で「大きく足りない」とするか */
 const TOO_SHORT_RATE = 70;
+/** message に載せる引用の上限字数 */
+const QUOTE_MAX = 60;
+/** 要求の欠落で並べて見せる件数の上限（超えた分は「ほかN件」） */
+const REQUIREMENTS_SHOWN = 3;
+
+/** 添削の判定欄から積みうる弱点の正本 ID（正本に存在することは verify-derive-issues.ts で担保） */
+export const DERIVED_ISSUE_IDS = [
+  "expression.twist",
+  "expression.grammar",
+  "expression.typo",
+  "logic.contradiction",
+  "structure.off_topic",
+  "responsiveness.missing_requirement",
+  "responsiveness.too_short",
+  "responsiveness.misread",
+  "responsiveness.knowledge_error",
+] as const;
+type DerivedIssueId = (typeof DERIVED_ISSUE_IDS)[number];
+
+/** 引用が長いと message が読みにくくなるので、60字（既定）で切って「…」を付ける */
+function clip(s: string, n: number = QUOTE_MAX): string {
+  return s.length > n ? `${s.slice(0, n - 1)}…` : s;
+}
+
+/**
+ * 設問の主題と答案の中心がどれだけずれているか。採点（review-core.ts の
+ * reviewEssayCore 内、上限を決めている箇所）と同じ補完規則を使う。
+ *
+ * 旧データは subjectMatch を持たないことがある。answersQuestion=false
+ * （設問に正面から答えていない）なら different、それ以外は same として補う。
+ * 採点側とこの規則がずれると、同じ答案で「点は下げたのに弱点は積まない」
+ * （またはその逆）が起きる。review-core 側の置き換えは別タスクで行う。
+ */
+export function effectiveSubjectMatch(
+  task: TaskFulfillment | undefined | null
+): "same" | "narrower" | "different" {
+  return (
+    task?.subjectMatch ??
+    (task?.answersQuestion === false ? "different" : "same")
+  );
+}
 
 export function deriveWeaknessIssues(
   feedback: DerivableFeedback,
@@ -64,7 +111,7 @@ export function deriveWeaknessIssues(
     });
     if (e) present.add(e.id);
   }
-  const add = (id: string, message: string) => {
+  const add = (id: DerivedIssueId, message: string) => {
     if (present.has(id)) return;
     present.add(id);
     issues.push({
@@ -88,41 +135,53 @@ export function deriveWeaknessIssues(
   if (twists.length >= TWIST_MIN)
     add(
       "expression.twist",
-      `「${twists[0].original}」など、主語と述語が噛み合わない文が${twists.length}文あります。`
+      `「${clip(twists[0].original)}」など、主語と述語が噛み合わない文が${twists.length}文あります。`
     );
   if (grammar.length >= GRAMMAR_MIN)
     add(
       "expression.grammar",
-      `「${grammar[0].original}」など、助詞や語の使い方が崩れた文が${grammar.length}文あります。`
+      `「${clip(grammar[0].original)}」など、助詞や語の使い方が崩れた文が${grammar.length}文あります。`
     );
   if (typos.length >= TYPO_MIN)
     add(
       "expression.typo",
-      `「${typos[0].original}」など、誤字・脱字のある文が${typos.length}文あります。`
+      `「${clip(typos[0].original)}」など、誤字・脱字のある文が${typos.length}文あります。`
     );
   const contradiction = check?.contradictions?.[0];
   if (contradiction)
     add(
       "logic.contradiction",
-      `「${contradiction.first}」と「${contradiction.second}」が食い違っている。`
+      `「${clip(contradiction.first)}」と「${clip(contradiction.second)}」が食い違っている。`
     );
 
   // --- 判定欄 ---
   const task = feedback.taskFulfillment;
-  if (task && task.subjectMatch && task.subjectMatch !== "same")
+  const subjectMatch = effectiveSubjectMatch(task);
+  // partial（ブロック課題）は narrower を除外する。理由は DeriveOptions.partial のコメント参照
+  const offTopicApplies = opts.partial
+    ? subjectMatch === "different"
+    : subjectMatch !== "same";
+  if (offTopicApplies)
     add(
       "structure.off_topic",
-      task.note || "設問の主題と答案の中心がずれている。"
+      task?.note || "設問の主題と答案の中心がずれている。"
     );
   if (!opts.partial) {
     const missing = (task?.requirements ?? []).filter(
       (r) => r.status === "missing"
     );
-    if (missing.length > 0)
+    if (missing.length > 0) {
+      const shown = missing
+        .slice(0, REQUIREMENTS_SHOWN)
+        .map((r) => clip(r.requirement));
+      const restCount = missing.length - shown.length;
+      const quoted = shown.map((s) => `「${s}」`).join("");
+      const rest = restCount > 0 ? `ほか${restCount}件` : "";
       add(
         "responsiveness.missing_requirement",
-        `設問の「${missing.map((r) => r.requirement).join("」「")}」に答えていない。`
+        `設問の${quoted}${rest}に答えていない。`
       );
+    }
     const fillRate = feedback.quantitativeAnalysis?.fillRate;
     if (typeof fillRate === "number" && fillRate < TOO_SHORT_RATE)
       add(
@@ -134,11 +193,12 @@ export function deriveWeaknessIssues(
   const contradicted = (feedback.claimChecks ?? []).filter(
     (c) => c.status === "contradicted"
   );
-  if (misreadings.length > 0) add("responsiveness.misread", misreadings[0]);
+  if (misreadings.length > 0)
+    add("responsiveness.misread", clip(misreadings[0]));
   else if (contradicted.length > 0)
     add(
       "responsiveness.misread",
-      `「${contradicted[0].claim}」が資料と食い違っている。`
+      `「${clip(contradicted[0].claim)}」が資料と食い違っている。`
     );
   const critical = (feedback.knowledgeInsights?.errors ?? []).filter(
     (e) => e.severity === "critical"
@@ -146,7 +206,7 @@ export function deriveWeaknessIssues(
   if (critical.length > 0)
     add(
       "responsiveness.knowledge_error",
-      `「${critical[0].claim}」— ${critical[0].correction}`
+      `「${clip(critical[0].claim)}」— ${clip(critical[0].correction)}`
     );
 
   return issues;

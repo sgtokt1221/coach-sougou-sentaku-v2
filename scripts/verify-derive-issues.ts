@@ -3,9 +3,19 @@
  * 期待どおり積まれるか（AI が同じ弱点を挙げていれば足さないか）を見る。
  */
 import assert from "node:assert";
-import { deriveWeaknessIssues } from "../src/lib/essay/derive-weakness-issues";
-import { canonicalLabel } from "../src/lib/growth/weakness-taxonomy";
+import {
+  deriveWeaknessIssues,
+  DERIVED_ISSUE_IDS,
+} from "../src/lib/essay/derive-weakness-issues";
+import {
+  canonicalLabel,
+  getTaxonomyEntry,
+} from "../src/lib/growth/weakness-taxonomy";
 import type { SentenceCheckResult } from "../src/lib/essay/sentence-check-judge";
+
+// derive が使う ID はすべて正本（weakness-taxonomy.ts）で引ける
+for (const id of DERIVED_ISSUE_IDS)
+  assert.ok(getTaxonomyEntry(id), `${id} が正本に無い`);
 
 const L = canonicalLabel;
 const broken = (
@@ -140,4 +150,117 @@ const areas = (xs: { area: string }[]) => xs.map((x) => x.area).sort();
   );
   assert.equal(twice.length, once.length);
 }
+// off_topic: note が空なら既定文
+{
+  const out = deriveWeaknessIssues(
+    {
+      repeatedIssues: [],
+      taskFulfillment: {
+        answersQuestion: true,
+        subjectMatch: "narrower",
+        requirements: [],
+        note: "",
+      },
+    },
+    null
+  );
+  const issue = out.find((i) => i.area === L("structure.off_topic"));
+  assert.ok(issue, "off_topic が積まれていない");
+  assert.equal(issue!.message, "設問の主題と答案の中心がずれている。");
+}
+// misreadings が無く claimChecks の contradicted だけのときも misread を積む
+{
+  const out = deriveWeaknessIssues(
+    {
+      repeatedIssues: [],
+      claimChecks: [
+        {
+          claim: "c",
+          type: "statistic",
+          status: "contradicted",
+          evidence: "e",
+        },
+      ],
+    },
+    null
+  );
+  assert.deepEqual(areas(out), [L("responsiveness.misread")]);
+}
+// fillRate が null なら too_short を積まない
+{
+  const out = deriveWeaknessIssues(
+    { repeatedIssues: [], quantitativeAnalysis: { fillRate: null } as never },
+    null
+  );
+  assert.deepEqual(out, []);
+}
+// 旧データ（subjectMatch が無く answersQuestion=false）は off_topic を採点と同じ規則で積む
+{
+  const out = deriveWeaknessIssues(
+    {
+      repeatedIssues: [],
+      taskFulfillment: {
+        answersQuestion: false,
+        requirements: [],
+        note: "",
+      },
+    },
+    null
+  );
+  assert.deepEqual(areas(out), [L("structure.off_topic")]);
+}
+// partial + narrower は off_topic を積まない（1ブロックだけ書く課題では起きて当然）
+{
+  const out = deriveWeaknessIssues(
+    {
+      repeatedIssues: [],
+      taskFulfillment: {
+        answersQuestion: true,
+        subjectMatch: "narrower",
+        requirements: [],
+        note: "",
+      },
+    },
+    null,
+    { partial: true }
+  );
+  assert.deepEqual(out, []);
+}
+// partial + different は off_topic を積む
+{
+  const out = deriveWeaknessIssues(
+    {
+      repeatedIssues: [],
+      taskFulfillment: {
+        answersQuestion: true,
+        subjectMatch: "different",
+        requirements: [],
+        note: "",
+      },
+    },
+    null,
+    { partial: true }
+  );
+  assert.deepEqual(areas(out), [L("structure.off_topic")]);
+}
+// 長い引用は60字以内に切られる
+{
+  const longOriginal = "あ".repeat(100);
+  const out = deriveWeaknessIssues(
+    { repeatedIssues: [] },
+    {
+      brokenSentences: broken("twist", 2).map((b) => ({
+        ...b,
+        original: longOriginal,
+      })),
+      contradictions: [],
+    }
+  );
+  const issue = out.find((i) => i.area === L("expression.twist"));
+  assert.ok(issue);
+  const quoted = issue!.message.match(/「(.+?)」/)?.[1] ?? "";
+  assert.ok(quoted.length <= 60, `引用が60字を超えている: ${quoted.length}`);
+  assert.ok(quoted.endsWith("…"));
+}
+
 console.log("[verify-derive-issues] OK");
