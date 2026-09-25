@@ -214,19 +214,22 @@ export function deriveWeaknessIssues(
   // 作り直しで追随でき、同じ入力に何度通しても結果が変わらない（冪等）。
   // ただし点検由来のものは、点検結果（check）があるときだけ落とす。無いのに落とすと
   // 作り直せず、エラーも出ずに弱点が消える
-  const issues = (feedback.repeatedIssues ?? []).filter((i) => {
-    if (isLegacyDerivedIssue(i)) return !check;
-    if (i.derived !== true) return true;
-    return isSentenceDerived(i) ? !check : false;
-  });
   const present = new Set<string>();
-  for (const i of issues) {
+  const issues: RepeatedIssue[] = [];
+  for (const i of feedback.repeatedIssues ?? []) {
+    const fromAi = i.derived !== true && !isLegacyDerivedIssue(i);
+    if (!fromAi && (check || (i.derived === true && !isSentenceDerived(i))))
+      continue;
     const e = resolveCanonical(i.area ?? "", {
       categoryHint: i.category ?? categorizeWeakness(i.area ?? ""),
       supportText: i.message,
       domain: "essay",
     });
+    // AI が書いた弱点のうち、機械判定だけで積む弱点（字数不足・要求の欠落等）に寄るものは落とす。
+    // 判定欄が「足りている」と言っているのに AI の「字数が足りない」で積むと、判定と食い違う
+    if (fromAi && e && MACHINE_ONLY_ISSUE_IDS.some((m) => m === e.id)) continue;
     if (e) present.add(e.id);
+    issues.push(i);
   }
   const add = (id: DerivedIssueId, message: string) => {
     if (present.has(id)) return;

@@ -203,7 +203,8 @@ function WeaknessesByCategoryList({
       WEAKNESS_GROUP_ORDER.map((k) => [k, [] as WeaknessRecord[]])
     ) as Record<WeaknessGroupKey, WeaknessRecord[]>;
     for (const w of weaknesses) {
-      out[weaknessGroupOf(w)].push(w);
+      // ORDER は型で全群を網羅しているが、旧データの想定外の値でも落とさない
+      (out[weaknessGroupOf(w)] ??= []).push(w);
     }
     // 各カテゴリ内: unresolved を上に、 count 降順
     for (const k of WEAKNESS_GROUP_ORDER) {
@@ -257,41 +258,47 @@ function WeaknessesByCategoryList({
               <div className="bg-muted/20">
                 <table className="w-full text-sm">
                   <tbody>
-                    {items.map((w) => (
-                      <tr
-                        key={w.area}
-                        className={`border-t ${w.resolved ? "opacity-60" : ""}`}
-                      >
-                        <td className="px-4 py-2.5">
-                          <p className="leading-snug break-words">{w.area}</p>
-                          {(w.description || weaknessDescriptionOf(w)) && (
-                            <p className="text-muted-foreground mt-0.5 text-xs">
-                              {w.description || weaknessDescriptionOf(w)}
-                            </p>
-                          )}
-                        </td>
-                        <td className="px-2 py-2.5 text-center">
-                          <WeaknessSourceBadge
-                            source={w.source as "essay" | "interview" | "both"}
-                          />
-                        </td>
-                        <td className="px-2 py-2.5 text-center text-xs tabular-nums">
-                          {w.count}回
-                        </td>
-                        <td className="px-2 py-2.5 text-center">
-                          {weaknessBadge(w)}
-                        </td>
-                        <td className="px-2 py-2.5 text-center">
-                          <InlineFeedbackButton
-                            studentId={studentId}
-                            type="weakness"
-                            targetId={w.area}
-                            targetLabel={w.area}
-                            compact
-                          />
-                        </td>
-                      </tr>
-                    ))}
+                    {items.map((w) => {
+                      const description =
+                        w.description || weaknessDescriptionOf(w);
+                      return (
+                        <tr
+                          key={w.area}
+                          className={`border-t ${w.resolved ? "opacity-60" : ""}`}
+                        >
+                          <td className="px-4 py-2.5">
+                            <p className="leading-snug break-words">{w.area}</p>
+                            {description && (
+                              <p className="text-muted-foreground mt-0.5 text-xs">
+                                {description}
+                              </p>
+                            )}
+                          </td>
+                          <td className="px-2 py-2.5 text-center">
+                            <WeaknessSourceBadge
+                              source={
+                                w.source as "essay" | "interview" | "both"
+                              }
+                            />
+                          </td>
+                          <td className="px-2 py-2.5 text-center text-xs tabular-nums">
+                            {w.count}回
+                          </td>
+                          <td className="px-2 py-2.5 text-center">
+                            {weaknessBadge(w)}
+                          </td>
+                          <td className="px-2 py-2.5 text-center">
+                            <InlineFeedbackButton
+                              studentId={studentId}
+                              type="weakness"
+                              targetId={w.area}
+                              targetLabel={w.area}
+                              compact
+                            />
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

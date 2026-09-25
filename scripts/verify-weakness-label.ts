@@ -262,4 +262,50 @@ assert.notEqual(
   "structure.conclusion_restates"
 );
 
+// 「伝わらない」は意味の形だけが文の弱点。主張・熱意が伝わらないのは別の層
+assert.notEqual(
+  resolveCanonical("主張が伝わらない", { domain: "essay" })?.id,
+  "expression.grammar"
+);
+assert.equal(
+  resolveCanonical("意味が伝わらない文がある", { domain: "essay" })?.id,
+  "expression.grammar"
+);
+for (const t of ["熱意が伝わらない", "熱意・主体性が伝わらない"]) {
+  assert.equal(
+    resolveCanonical(t, { domain: "essay" })?.id,
+    "ap.weak_motivation",
+    `小論文の ${t}`
+  );
+  assert.equal(
+    resolveCanonical(t, { domain: "interview" })?.id,
+    "iv.enthusiasm.low",
+    `面接の ${t}`
+  );
+}
+// 面接は同点なら面接の弱点を採る（「熱意」は AP と面接の両方のキーワード）
+assert.equal(
+  resolveCanonical("熱意が感じられない", { domain: "interview" })?.id,
+  "iv.enthusiasm.low"
+);
+
+// 「段落構成」「段落分け」「段落の区切り」は場所の語として除かない
+for (const t of [
+  "段落構成が不適切",
+  "段落分けが不適切",
+  "段落の区切りが曖昧",
+]) {
+  assert.equal(
+    resolveCanonical(t, { domain: "essay" })?.id,
+    "structure.mixed_paragraph",
+    t
+  );
+  assert.equal(isLocationOnlyLabel(t), false, `誤って落とした: ${t}`);
+}
+assert.equal(isLocationOnlyLabel("第3段落"), true);
+assert.equal(
+  resolveCanonical("段落のつながり・論述の流れ", { domain: "essay" })?.id,
+  "structure.weak_flow"
+);
+
 console.log("[verify-weakness-label] OK");

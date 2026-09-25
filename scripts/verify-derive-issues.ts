@@ -252,6 +252,55 @@ const areas = (xs: { area: string }[]) => xs.map((x) => x.area).sort();
     [L("expression.typo")]
   );
 }
+// AI が機械判定だけの弱点（字数不足等）を書いても積まない。判定欄が決める
+{
+  const aiTooShort = {
+    area: "字数が足りない",
+    category: "responsiveness" as const,
+    count: 1,
+    message: "指定字数に届いていない",
+  };
+  const aiTwist = {
+    area: L("expression.twist"),
+    category: "expression" as const,
+    count: 1,
+    message: "主語と述語がねじれている",
+  };
+  const enough = deriveWeaknessIssues(
+    {
+      repeatedIssues: [aiTooShort, aiTwist],
+      quantitativeAnalysis: { fillRate: 95 } as never,
+    },
+    null
+  );
+  assert.deepEqual(areas(enough), [L("expression.twist")], "fillRate 95");
+  const short = deriveWeaknessIssues(
+    {
+      repeatedIssues: [aiTooShort],
+      quantitativeAnalysis: { fillRate: 50 } as never,
+    },
+    null
+  );
+  assert.deepEqual(areas(short), [L("responsiveness.too_short")]);
+  assert.equal(short[0].derived, true, "判定欄から積んだ分だけが残る");
+  // 正規ラベルそのもので書いてきても同じ（要求の欠落・誤字も）
+  for (const id of MACHINE_ONLY_ISSUE_IDS) {
+    const out = deriveWeaknessIssues(
+      {
+        repeatedIssues: [
+          {
+            area: L(id),
+            category: getTaxonomyEntry(id)!.category as never,
+            count: 1,
+            message: "m",
+          },
+        ],
+      },
+      null
+    );
+    assert.deepEqual(out, [], `AI の ${id} を落とす`);
+  }
+}
 // AI へ渡す過去の弱点一覧から外すもの（canonicalId でも正規ラベルでも判定できる）
 {
   for (const id of MACHINE_ONLY_ISSUE_IDS) {

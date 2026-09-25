@@ -345,7 +345,9 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
       "文が曖昧",
       "文意",
       "意味がわかりにくい",
-      "伝わらな",
+      // 単独の「伝わらな」は「主張が伝わらない」「熱意が伝わらない」も拾うので、意味の形だけ
+      "意味が伝わらな",
+      "文意が伝わらな",
     ],
     aliases: ["expression.ambiguous"],
     oldLabels: ["誤字脱字・文法ミスがある", "曖昧で意味が伝わりにくい"],
@@ -430,6 +432,9 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
       "なぜこの学部",
       "でなければならない",
       "この大学を選",
+      // 小論文の「熱意が伝わらない」は AP の層。面接は同点なら iv.enthusiasm.low が勝つ（resolveCanonical）
+      "熱意",
+      "志望の強さ",
     ],
   },
   {
@@ -787,16 +792,26 @@ export function isWeaknessLabel(text: string): boolean {
   return !ADVICE_ENDING.test(t);
 }
 
+const ESSAY_ENTRIES = WEAKNESS_TAXONOMY.filter((e) => !e.id.startsWith("iv."));
+const INTERVIEW_FIRST_ENTRIES = [
+  ...WEAKNESS_TAXONOMY.filter((e) => e.id.startsWith("iv.")),
+  ...ESSAY_ENTRIES,
+];
+
 export function resolveCanonical(
   text: string,
   opts: ResolveOptions = {}
 ): TaxonomyEntry | null {
   const byId = entryForCanonicalId(opts.aiCanonicalId, opts.domain);
   if (byId) return byId;
+  // 面接は同点なら面接の弱点を採る（同点は先頭優先なので iv.* を前に置く）。
+  // 「熱意が伝わらない」が小論文と共通の ap.weak_motivation に取られないようにする
   const candidates =
     opts.domain === "essay"
-      ? WEAKNESS_TAXONOMY.filter((e) => !e.id.startsWith("iv."))
-      : WEAKNESS_TAXONOMY;
+      ? ESSAY_ENTRIES
+      : opts.domain === "interview"
+        ? INTERVIEW_FIRST_ENTRIES
+        : WEAKNESS_TAXONOMY;
   if (!text || text.trim().length === 0) return null;
   const exact = BY_LABEL.get(text.trim());
   if (exact && !(opts.domain === "essay" && exact.id.startsWith("iv.")))
@@ -864,10 +879,12 @@ export function resolveCanonical(
 /**
  * 場所を指す語。取り除いた残りで弱点を決める。
  * 「序論・本論・結論」は構成の弱点そのもの（「序論・本論・結論の構成バランス」）なので含めない。
+ * 「段落構成」「段落分け」「段落の区切り」は structure.mixed_paragraph のキーワードなので残す
+ * （除くと「構成が不適切」だけが残り、どの弱点にも当たらない）。
  */
 const PLACE_TOKEN =
   // 「一文が長い」の「一文」は場所ではないので、番号付きは「第〜」か「〜文目」の形だけ
-  /第\s*[0-9０-９一二三四五六七八九十]+\s*(?:段落|文目|文)|[0-9０-９一二三四五六七八九十]+\s*(?:段落|文目)|問\s*[0-9０-９一二三四五六七八九十]+|段落|冒頭|書き出し|末尾|結論部|導入部|前半|後半|全体|部分|箇所/g;
+  /第\s*[0-9０-９一二三四五六七八九十]+\s*(?:段落|文目|文)|[0-9０-９一二三四五六七八九十]+\s*(?:段落|文目)|問\s*[0-9０-９一二三四五六七八九十]+|段落(?!構成|分け|の区切り)|冒頭|書き出し|末尾|結論部|導入部|前半|後半|全体|部分|箇所/g;
 
 function stripPlaceWords(text: string): string {
   return text.trim().replace(PLACE_TOKEN, "").trim();
@@ -941,7 +958,7 @@ function matchByKeywords(
 export type WeaknessGroupKey = EssayCategoryKey | "interview";
 
 /** 表示順: 文 → 構成 → 論証 → 成熟度 → 設問対応 → AP → 旧軸 → その他 → 面接 */
-export const WEAKNESS_GROUP_ORDER: readonly WeaknessGroupKey[] = [
+export const WEAKNESS_GROUP_ORDER = [
   "expression",
   "structure",
   "logic",
@@ -951,7 +968,17 @@ export const WEAKNESS_GROUP_ORDER: readonly WeaknessGroupKey[] = [
   "originality",
   "other",
   "interview",
-];
+] as const satisfies readonly WeaknessGroupKey[];
+
+// 群を足したのに ORDER に入れ忘れると、群ごとに振り分ける画面で行き場が無くなる。型で塞ぐ
+type MissingGroupInOrder = Exclude<
+  WeaknessGroupKey,
+  (typeof WEAKNESS_GROUP_ORDER)[number]
+>;
+const _orderCoversAllGroups: [MissingGroupInOrder] extends [never]
+  ? true
+  : MissingGroupInOrder = true;
+void _orderCoversAllGroups;
 
 export const WEAKNESS_GROUP_LABELS: Record<WeaknessGroupKey, string> = {
   expression: "文（表現力）",
