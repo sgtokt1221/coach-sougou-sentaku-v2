@@ -23,6 +23,7 @@ import {
   isWeaknessLabel,
 } from "../src/lib/growth/weakness-taxonomy";
 import { categorizeWeakness } from "../src/lib/growth/weakness-category";
+import { withSentenceCheckIssues } from "../src/lib/essay/review-core";
 import { getWeaknessReminderLevel } from "../src/lib/types/growth";
 import type { WeaknessRecord } from "../src/lib/types/growth";
 
@@ -108,8 +109,15 @@ async function main() {
     let submissions = 0;
     for (const d of [...essays.docs, ...interviews.docs, ...skills.docs]) {
       const data = d.data();
-      const issues = data.feedback?.repeatedIssues as Issue[] | undefined;
-      if (!Array.isArray(issues)) continue;
+      const saved = data.feedback?.repeatedIssues as Issue[] | undefined;
+      if (!Array.isArray(saved)) continue;
+      // 1文ずつの点検の結果も書き込み経路（review-core / rebuild-weaknesses）と同じく数える
+      const issues: Issue[] = data.sentenceCheck
+        ? withSentenceCheckIssues(
+            saved as Parameters<typeof withSentenceCheckIssues>[0],
+            data.sentenceCheck
+          )
+        : saved;
       submissions++;
       const at =
         toDate(data.submittedAt) ??
