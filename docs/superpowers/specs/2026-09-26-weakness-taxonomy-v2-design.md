@@ -143,7 +143,7 @@ deriveWeaknessIssues(feedback, check, opts) → repeatedIssues に判定分を�
 
 ## 5. 画面
 
-- 重点弱点のグラフ（WeaknessTopChart）と生徒詳細の弱点一覧: 小論文と面接を分けて表示する。小論文は層（＝採点の軸）の順
+- 重点弱点のグラフ（WeaknessTopChart）と生徒詳細の弱点一覧: 小論文と面接を分けて表示する。生徒詳細の一覧は層（＝採点の軸）の順。重点弱点のグラフは重点を見るものなので小論文の群を回数順に並べ、面接の群は常に最後に置く
 - 生徒の弱点カード（WeaknessReminderCard / Banner、/student/growth）: 弱点名の下に `description` を出す
 - /student/growth の「解決済み」とダッシュボードの「解決」件数: 解決済みも返す取得に直す（いまは getRemindableWeaknesses が除外するため常に0件）
 

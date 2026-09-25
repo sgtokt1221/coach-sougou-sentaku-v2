@@ -94,7 +94,12 @@ export function WeaknessTopChart({ weaknesses }: WeaknessTopChartProps) {
           items: sorted,
         },
       ];
-    }).sort((a, b) => b.totalCount - a.totalCount);
+      // 重点なので小論文の群は回数順。面接は小論文の層に割り込ませず常に最後に置く
+    }).sort(
+      (a, b) =>
+        Number(a.category === "interview") -
+          Number(b.category === "interview") || b.totalCount - a.totalCount
+    );
   }, [weaknesses]);
 
   const unresolvedCount = weaknesses.filter((w) => !w.resolved).length;
