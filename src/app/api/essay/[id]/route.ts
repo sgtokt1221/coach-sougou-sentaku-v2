@@ -1,4 +1,5 @@
-import { feedbackWithSentenceCheck } from "@/lib/essay/review-core";
+import { feedbackWithDerivedIssues } from "@/lib/essay/review-core";
+import { isPartialEssay } from "@/lib/essay/derive-weakness-issues";
 import { NextRequest, NextResponse } from "next/server";
 import { computeRetryComparison } from "@/lib/essay/retry-comparison";
 import type {
@@ -53,10 +54,11 @@ export async function GET(
     }
 
     const scores = (data.scores ?? {}) as EssayScores;
-    // 後から付けた1文ずつの点検を合流させる（弱点DBと添削結果を揃える）
-    const feedback = feedbackWithSentenceCheck(
+    // 後から付けた1文ずつの点検と判定欄の弱点を合流させる（弱点DBと添削結果を揃える）
+    const feedback = feedbackWithDerivedIssues(
       (data.feedback ?? {}) as EssayFeedback,
-      data.sentenceCheck
+      data.sentenceCheck,
+      { partial: isPartialEssay(data) }
     );
     const attemptNumber =
       typeof data.attemptNumber === "number" ? data.attemptNumber : 1;

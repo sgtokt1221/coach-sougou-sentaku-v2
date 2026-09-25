@@ -648,12 +648,12 @@ export async function POST(request: NextRequest) {
     step = "generate_report";
     // 期間別 weaknessTags 集計 (悪化/改善判定で使用)
     const periodWeaknessCounts = mergeCountMaps(
-      collectWeaknessTags(periodEssaysSnap.docs),
-      collectWeaknessTags(periodInterviewsSnap.docs)
+      collectWeaknessTags(periodEssaysSnap.docs, "essay"),
+      collectWeaknessTags(periodInterviewsSnap.docs, "interview")
     );
     const previousWeaknessCounts = mergeCountMaps(
-      collectWeaknessTags(prevEssaysSnap.docs),
-      collectWeaknessTags(prevInterviewsSnap.docs)
+      collectWeaknessTags(prevEssaysSnap.docs, "essay"),
+      collectWeaknessTags(prevInterviewsSnap.docs, "interview")
     );
     const report = generateGrowthReport({
       studentId,

@@ -1,4 +1,5 @@
-import { feedbackWithSentenceCheck } from "@/lib/essay/review-core";
+import { feedbackWithDerivedIssues } from "@/lib/essay/review-core";
+import { isPartialEssay } from "@/lib/essay/derive-weakness-issues";
 import { NextResponse } from "next/server";
 import { requireRole, scopeByOrganization } from "@/lib/api/auth";
 import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
@@ -168,9 +169,11 @@ export async function GET(
       submittedAt: data.submittedAt?.toDate() || new Date(),
       status: data.status || "uploaded",
       scores: data.scores || undefined,
-      // 後から付けた1文ずつの点検を合流させる（弱点DBと添削結果を揃える）
+      // 後から付けた1文ずつの点検と判定欄の弱点を合流させる（弱点DBと添削結果を揃える）
       feedback: data.feedback
-        ? feedbackWithSentenceCheck(data.feedback, data.sentenceCheck)
+        ? feedbackWithDerivedIssues(data.feedback, data.sentenceCheck, {
+            partial: isPartialEssay(data),
+          })
         : undefined,
       inlineComments: data.inlineComments || [],
       // 生徒が生成したテーマ深掘り。面談で「何を読んだか」を確認できるようにする

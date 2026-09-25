@@ -90,7 +90,12 @@ async function main() {
     const expected = new Map<string, number>();
     const lastSeen = new Map<string, number>();
     let submissions = 0;
-    for (const d of [...essays.docs, ...interviews.docs, ...skills.docs]) {
+    const docs = [
+      ...essays.docs.map((d) => ({ d, kind: "essay" as const })),
+      ...interviews.docs.map((d) => ({ d, kind: "interview" as const })),
+      ...skills.docs.map((d) => ({ d, kind: "skill_check" as const })),
+    ];
+    for (const { d, kind } of docs) {
       const data = d.data();
       if (!Array.isArray(data.feedback?.repeatedIssues)) continue;
       submissions++;
@@ -100,7 +105,7 @@ async function main() {
         toDate(data.takenAt) ??
         toDate(data.reviewedAt);
       // 書き込み経路・成長レポートと同じ関数で数える
-      for (const k of weaknessKeysOf(data)) {
+      for (const k of weaknessKeysOf(data, kind)) {
         expected.set(k, (expected.get(k) ?? 0) + 1);
         if (at) lastSeen.set(k, Math.max(lastSeen.get(k) ?? 0, at.getTime()));
       }

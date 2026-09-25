@@ -262,5 +262,46 @@ const areas = (xs: { area: string }[]) => xs.map((x) => x.area).sort();
   assert.ok(quoted.length <= 60, `引用が60字を超えている: ${quoted.length}`);
   assert.ok(quoted.endsWith("…"));
 }
+// 主題ずれの note は説明文なので120字で切る（短ければそのまま）
+{
+  const derive = (note: string) =>
+    deriveWeaknessIssues(
+      {
+        repeatedIssues: [],
+        taskFulfillment: {
+          answersQuestion: false,
+          subjectMatch: "different",
+          requirements: [],
+          note,
+        },
+      },
+      null
+    ).find((i) => i.area === L("structure.off_topic"))!.message;
+  const long = derive("い".repeat(200));
+  assert.equal(
+    long.length,
+    120,
+    `note が120字で切られていない: ${long.length}`
+  );
+  assert.ok(long.endsWith("…"));
+  assert.equal(derive("主題がずれている。"), "主題がずれている。");
+}
+// 読み違いは引用でなく説明なので100字で切る（60字では切らない）
+{
+  const derive = (m: string) =>
+    deriveWeaknessIssues(
+      { repeatedIssues: [], reportInsights: { misreadings: [m] } as never },
+      null
+    ).find((i) => i.area === L("responsiveness.misread"))!.message;
+  const mid = "う".repeat(80);
+  assert.equal(derive(mid), mid, "80字の読み違いが切られている");
+  const long = derive("う".repeat(150));
+  assert.equal(
+    long.length,
+    100,
+    `読み違いが100字で切られていない: ${long.length}`
+  );
+  assert.ok(long.endsWith("…"));
+}
 
 console.log("[verify-derive-issues] OK");

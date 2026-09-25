@@ -27,7 +27,7 @@ import {
   judgeSentences,
   type SentenceCheckResult,
 } from "../src/lib/essay/sentence-check-judge";
-import { withSentenceCheckIssues } from "../src/lib/essay/review-core";
+import { deriveWeaknessIssues } from "../src/lib/essay/derive-weakness-issues";
 
 const APPLY = process.argv.includes("--apply");
 const ONLY_NAMES = (
@@ -128,8 +128,8 @@ async function main() {
       }
       cache[job.id] = { uid: job.uid, result };
       const added =
-        withSentenceCheckIssues(job.repeatedIssues, result).length >
-        job.repeatedIssues.length;
+        deriveWeaknessIssues({ repeatedIssues: job.repeatedIssues }, result)
+          .length > job.repeatedIssues.length;
       const s = perStudent.get(job.name) ?? {
         essays: 0,
         withIssue: 0,

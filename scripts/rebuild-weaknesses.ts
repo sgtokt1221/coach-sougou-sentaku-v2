@@ -43,7 +43,10 @@ import {
   saveWeaknessRecords,
 } from "../src/lib/growth/weakness-store";
 import { getLectureById } from "../src/data/essay-lectures";
-import { withSentenceCheckIssues } from "../src/lib/essay/review-core";
+import {
+  deriveWeaknessIssues,
+  isPartialEssay,
+} from "../src/lib/essay/derive-weakness-issues";
 import { VIDEO_WEAKNESS_TAG } from "../src/lib/growth/weakness-aggregate";
 import {
   getWeaknessReminderLevel,
@@ -140,11 +143,12 @@ async function loadSubmissions(uid: string): Promise<Submission[]> {
   for (const d of essays.docs) {
     const data = d.data();
     if (!data.scores || !data.feedback) continue; // 採点されていない答案
-    // 1文ずつの点検（v26〜。以前の答案は backfill-sentence-check.ts で後から付けた）の
-    // 結果も、本番の添削と同じ規則で弱点に足す。feedback に既にあれば二重にしない
-    const issues: Issue[] = withSentenceCheckIssues(
-      data.feedback.repeatedIssues ?? [],
-      data.sentenceCheck ?? null
+    // 判定欄（1文ずつの点検・設問の充足・読み違い・知識・字数）から足す弱点も、
+    // 本番の添削と同じ関数で足す。feedback に既にあれば二重にしない
+    const issues: Issue[] = deriveWeaknessIssues(
+      data.feedback,
+      data.sentenceCheck ?? null,
+      { partial: isPartialEssay(data) }
     );
     const at = toDate(data.submittedAt) ?? toDate(data.reviewedAt);
     if (!at) continue;

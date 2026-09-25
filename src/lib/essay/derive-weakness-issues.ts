@@ -24,6 +24,7 @@ import {
   getTaxonomyEntry,
 } from "@/lib/growth/weakness-taxonomy";
 import { categorizeWeakness } from "@/lib/growth/weakness-category";
+import { getLectureById } from "@/data/essay-lectures";
 
 /** derive が読む判定欄（古い答案では欠けていることがある） */
 export type DerivableFeedback = Pick<EssayFeedback, "repeatedIssues"> &
@@ -56,6 +57,9 @@ const TYPO_MIN = 3;
 const TOO_SHORT_RATE = 70;
 /** message に載せる引用の上限字数 */
 const QUOTE_MAX = 60;
+/** 引用でなく説明文（主題ずれの note・読み違いの説明）を載せるときの上限字数 */
+const NOTE_MAX = 120;
+const MISREADING_MAX = 100;
 /** 要求の欠落で並べて見せる件数の上限（超えた分は「ほかN件」） */
 const REQUIREMENTS_SHOWN = 3;
 
@@ -80,20 +84,30 @@ function clip(s: string, n: number = QUOTE_MAX): string {
 
 /**
  * 設問の主題と答案の中心がどれだけずれているか。採点（review-core.ts の
- * reviewEssayCore 内、上限を決めている箇所）と同じ補完規則を使う。
+ * reviewEssayCore 内、上限を決めている箇所）もこの関数を使う。
  *
  * 旧データは subjectMatch を持たないことがある。answersQuestion=false
  * （設問に正面から答えていない）なら different、それ以外は same として補う。
  * 採点側とこの規則がずれると、同じ答案で「点は下げたのに弱点は積まない」
- * （またはその逆）が起きる。review-core 側の置き換えは別タスクで行う。
+ * （またはその逆）が起きるので、規則はここだけに置く。
  */
 export function effectiveSubjectMatch(
-  task: TaskFulfillment | undefined | null
+  task:
+    | Pick<TaskFulfillment, "subjectMatch" | "answersQuestion">
+    | undefined
+    | null
 ): "same" | "narrower" | "different" {
   return (
     task?.subjectMatch ??
     (task?.answersQuestion === false ? "different" : "same")
   );
+}
+
+/** 保存済みの答案が講座のブロック課題か（sourceType=lecture かつ課題が1ブロック） */
+export function isPartialEssay(data: Record<string, unknown>): boolean {
+  if (data.sourceType !== "lecture" || typeof data.lectureId !== "string")
+    return false;
+  return Boolean(getLectureById(data.lectureId)?.exercise.blockId);
 }
 
 export function deriveWeaknessIssues(
@@ -164,7 +178,9 @@ export function deriveWeaknessIssues(
   if (offTopicApplies)
     add(
       "structure.off_topic",
-      task?.note || "設問の主題と答案の中心がずれている。"
+      task?.note
+        ? clip(task.note, NOTE_MAX)
+        : "設問の主題と答案の中心がずれている。"
     );
   if (!opts.partial) {
     const missing = (task?.requirements ?? []).filter(
@@ -194,7 +210,7 @@ export function deriveWeaknessIssues(
     (c) => c.status === "contradicted"
   );
   if (misreadings.length > 0)
-    add("responsiveness.misread", clip(misreadings[0]));
+    add("responsiveness.misread", clip(misreadings[0], MISREADING_MAX));
   else if (contradicted.length > 0)
     add(
       "responsiveness.misread",

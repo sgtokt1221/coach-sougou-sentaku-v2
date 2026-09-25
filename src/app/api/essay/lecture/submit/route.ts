@@ -165,6 +165,8 @@ export async function POST(request: NextRequest) {
         // 基礎講座は大学AP非依存。空値にしてAP軸を評価対象外にする。
         admissionPolicy: "",
         weaknessList,
+        // 1ブロックだけ書く課題は、答案全体を前提にした判定（字数・要求の欠落）を弱点にしない
+        partial: Boolean(lecture.exercise.blockId),
       });
       scores = coreResult.scores;
       feedback = coreResult.feedback;

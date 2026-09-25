@@ -16,6 +16,12 @@ import {
   type SentenceCheckResult,
 } from "@/lib/essay/sentence-check-judge";
 import {
+  deriveWeaknessIssues,
+  effectiveSubjectMatch,
+  type DerivableFeedback,
+  type DeriveOptions,
+} from "@/lib/essay/derive-weakness-issues";
+import {
   summarizeUsage,
   sumUsage,
   type AiCallRecord,
@@ -58,6 +64,8 @@ export interface EssayReviewCoreInput {
   wordLimit?: number;
   admissionPolicy?: string;
   weaknessList: string;
+  /** 講座のブロック課題（1ブロックだけ書く）。字数不足・要求の欠落を弱点にしない */
+  partial?: boolean;
   previousAttempt?: {
     essayText: string;
     feedbackSummary: string[];
@@ -259,9 +267,7 @@ ${input.ocrText}
    *   narrower  = 主題の一部に限定 → 6点以下
    *   same      = 要求の欠落があれば6点以下、無ければ上限なし
    */
-  const subjectMatch =
-    task?.subjectMatch ??
-    (task?.answersQuestion === false ? "different" : "same");
+  const subjectMatch = effectiveSubjectMatch(task);
   const offTopic = subjectMatch === "different";
   const narrowed = subjectMatch === "narrower";
   const capBy = (v: number, cap: number) => Math.min(v, cap);
@@ -425,11 +431,8 @@ ${input.ocrText}
       ...parsed.feedback.improvements,
     ].slice(0, 5),
     nextChallenge: parsed.feedback.nextChallenge,
-    repeatedIssues: withSentenceCheckIssues(
-      parsed.feedback.repeatedIssues.filter(
-        (issue) => hasAdmissionPolicy || issue.category !== "apAlignment"
-      ),
-      sentenceCheck
+    repeatedIssues: parsed.feedback.repeatedIssues.filter(
+      (issue) => hasAdmissionPolicy || issue.category !== "apAlignment"
     ),
     improvementsSinceLast: input.previousAttempt
       ? parsed.feedback.improvementsSinceLast
@@ -466,6 +469,12 @@ ${input.ocrText}
       usage: sumUsage(calls),
     },
   };
+
+  // 判定欄（文の点検・設問の充足・読み違い・知識・字数）から弱点を足す。
+  // 作り直し・集計・表示と同じ関数（derive-weakness-issues.ts）
+  feedback.repeatedIssues = deriveWeaknessIssues(feedback, sentenceCheck, {
+    partial: input.partial,
+  });
 
   return {
     scores,
@@ -536,79 +545,32 @@ function contradictionImprovements(
 }
 
 /**
- * 1文ずつの点検で見つけたものを弱点に積む。
- *
- * 本体の repeatedIssues は最大3件で、内容の弱点が優先されるため、文の崩れは
- * 本番の150件中2件しか弱点に入っていなかった（2026-09-25）。
- * ラベルは正規タクソノミーのラベルそのものにする（書き込み時に完全一致で統合される）。
- * 崩れが1文だけの答案は書き損じの可能性があるので、2文以上のときだけ積む。
+ * 表示時に、後から付けた1文ずつの点検と判定欄の弱点を添削結果へ合流させる。
+ * 弱点DBと添削結果で弱点が食い違わないように、書き込みと同じ derive を通す。
+ * 点数は採点当時のまま変えない。
  */
-export function withSentenceCheckIssues(
-  issues: EssayFeedback["repeatedIssues"],
-  check: SentenceCheckResult | null
-): EssayFeedback["repeatedIssues"] {
-  if (!check) return issues;
-  const out = [...issues];
-  const mentions = (re: RegExp) =>
-    issues.some((i) => re.test(`${i.area}${i.message}`));
-  const broken = check.brokenSentences.filter((b) => b.kind !== "typo");
-  if (broken.length >= 2 && !mentions(/ねじれ|主語と述語|主述|助詞|文法/)) {
-    const twists = broken.filter((b) => b.kind === "twist");
-    // ねじれと助詞では直し方が違うので、多い方の名前で積む
-    const isTwist = twists.length * 2 >= broken.length;
-    const sample = isTwist ? twists[0] : broken[0];
-    out.push({
-      area: isTwist
-        ? "主語と述語が噛み合わない文がある"
-        : "誤字脱字・文法ミスがある",
-      category: "expression",
-      count: 1,
-      message: `「${sample.original}」など、${isTwist ? "主語と述語が噛み合わない" : "助詞や語の組み合わせが崩れた"}文が${broken.length}文あります。`,
-    });
-  }
-  const contradiction = check.contradictions[0];
-  if (contradiction && !mentions(/矛盾|一貫|食い違/)) {
-    out.push({
-      area: "主張に矛盾・一貫性の欠如がある",
-      category: "logic",
-      count: 1,
-      message: `「${contradiction.first}」と「${contradiction.second}」が食い違っている。`,
-    });
-  }
-  return out;
-}
-
-/**
- * 答案に後から付けた1文ずつの点検（scripts/backfill-sentence-check.ts）を、
- * 読み出し時に添削結果へ合流させる。
- *
- * v26 以降の答案は保存時に合流済み（sentenceCheck は保存していない）なので、
- * ここで何かが足されるのは点検を後付けした過去の答案だけ。弱点DBには
- * 「主語と述語が噛み合わない」が積まれているのに、答案を開くとどの文か
- * 出ていない、というずれを防ぐ。点数は採点当時のまま変えない。
- */
-export function feedbackWithSentenceCheck<
-  F extends {
+export function feedbackWithDerivedIssues<
+  F extends DerivableFeedback & {
     languageCorrections?: LanguageCorrection[] | null;
-    repeatedIssues?: EssayFeedback["repeatedIssues"] | null;
     improvements?: string[] | null;
   },
->(feedback: F, check: SentenceCheckResult | null | undefined): F {
-  if (!check) return feedback;
+>(
+  feedback: F,
+  check: SentenceCheckResult | null | undefined,
+  opts: DeriveOptions = {}
+): F {
   const improvements = feedback.improvements ?? [];
-  const extra = contradictionImprovements(check).filter(
-    (t) => !improvements.some((i) => i.includes(t.slice(1, 20)))
-  );
+  const extra = check
+    ? contradictionImprovements(check).filter(
+        (t) => !improvements.some((i) => i.includes(t.slice(1, 20)))
+      )
+    : [];
   return {
     ...feedback,
-    languageCorrections: mergeSentenceCorrections(
-      feedback.languageCorrections ?? [],
-      check
-    ),
-    repeatedIssues: withSentenceCheckIssues(
-      feedback.repeatedIssues ?? [],
-      check
-    ),
+    languageCorrections: check
+      ? mergeSentenceCorrections(feedback.languageCorrections ?? [], check)
+      : feedback.languageCorrections,
+    repeatedIssues: deriveWeaknessIssues(feedback, check, opts),
     improvements: [...extra, ...improvements],
   };
 }
