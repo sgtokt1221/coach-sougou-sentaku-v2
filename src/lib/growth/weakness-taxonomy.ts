@@ -784,8 +784,16 @@ export function weaknessCategoryOf(w: {
 }
 
 /** 弱点リストに積んでよいテキストか（助言・長文・中身のない語を弾く） */
+/**
+ * 面接の動画解析の身だしなみタグ（interview/end が「身だしなみ: 〜」の自由文で積む）。
+ * 長さの上限と助言の言い回しで弾かれ、弱点DBに積まれない一方で集計には数えられていた
+ */
+const APPEARANCE_TAG = /^身だしなみ\s*[:：]/;
+
 export function isWeaknessLabel(text: string): boolean {
   const t = text.trim();
+  // 面接の動画解析の身だしなみタグは長い助言文の形だが、姿勢・身だしなみの弱点として積む
+  if (APPEARANCE_TAG.test(t)) return true;
   if (t.length < 3) return false;
   if (t.length > MAX_KEYWORD_RESOLVE_LENGTH) return false;
   if (STOP_LABELS.has(t.toLowerCase())) return false;
@@ -816,6 +824,10 @@ export function resolveCanonical(
   const exact = BY_LABEL.get(text.trim());
   if (exact && !(opts.domain === "essay" && exact.id.startsWith("iv.")))
     return exact;
+  // 面接の動画解析は「身だしなみ: 〜」の長い自由文をタグにする（interview/end）。
+  // 長さの上限で正規化されず、指摘1件ごとに別の弱点として積まれていた（本番で20件超）
+  if (opts.domain !== "essay" && APPEARANCE_TAG.test(text.trim()))
+    return BY_ID.get("iv.body.posture") ?? null;
   if (text.trim().length > MAX_KEYWORD_RESOLVE_LENGTH) return null;
 
   /**

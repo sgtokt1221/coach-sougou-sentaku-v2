@@ -308,4 +308,23 @@ assert.equal(
   "structure.weak_flow"
 );
 
+// 面接の動画解析の「身だしなみ: 〜」（長い自由文）は姿勢・身だしなみに寄る。小論文では寄せない
+assert.equal(
+  resolveCanonical(
+    "身だしなみ: 無精髭が目立ちます。面接前に髭を剃り、清潔感のある状態で臨みましょう。",
+    { domain: "interview" }
+  )?.id,
+  "iv.body.posture"
+);
+assert.equal(
+  resolveCanonical("身だしなみ: 髪が乱れています。", { domain: "essay" })?.id,
+  undefined
+);
+
+assert.equal(
+  isWeaknessLabel("身だしなみ: 猫背気味です。背筋を伸ばしましょう。"),
+  true,
+  "身だしなみタグは弱点DBに積む"
+);
+
 console.log("[verify-weakness-label] OK");
