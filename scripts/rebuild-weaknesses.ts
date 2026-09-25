@@ -43,6 +43,7 @@ import {
 } from "../src/lib/growth/weakness-store";
 import { getLectureById } from "../src/data/essay-lectures";
 import { withSentenceCheckIssues } from "../src/lib/essay/review-core";
+import { VIDEO_WEAKNESS_TAG } from "../src/lib/growth/weakness-aggregate";
 import {
   getWeaknessReminderLevel,
   type WeaknessRecord,
@@ -116,17 +117,11 @@ function issueTags(issues: Issue[]): string[] {
   return issues.map((i) => i.area ?? "").filter(Boolean);
 }
 
-/**
- * 面接の動画解析・身だしなみの弱点。repeatedIssues には入らず weaknessTags にだけ
- * 残る（src/app/api/interview/end/route.ts が足している）。
- */
-const VIDEO_TAG =
-  /^(視線が散漫|表情が硬い|姿勢が不安定|首が傾きがち|うなずきが少ない|身だしなみ:)/;
 function videoTags(data: Record<string, unknown>): string[] {
   const saved = data.weaknessTags;
   if (!Array.isArray(saved)) return [];
   return saved.filter(
-    (t): t is string => typeof t === "string" && VIDEO_TAG.test(t)
+    (t): t is string => typeof t === "string" && VIDEO_WEAKNESS_TAG.test(t)
   );
 }
 

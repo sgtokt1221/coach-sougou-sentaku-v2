@@ -579,6 +579,41 @@ export function withSentenceCheckIssues(
 }
 
 /**
+ * 答案に後から付けた1文ずつの点検（scripts/backfill-sentence-check.ts）を、
+ * 読み出し時に添削結果へ合流させる。
+ *
+ * v26 以降の答案は保存時に合流済み（sentenceCheck は保存していない）なので、
+ * ここで何かが足されるのは点検を後付けした過去の答案だけ。弱点DBには
+ * 「主語と述語が噛み合わない」が積まれているのに、答案を開くとどの文か
+ * 出ていない、というずれを防ぐ。点数は採点当時のまま変えない。
+ */
+export function feedbackWithSentenceCheck<
+  F extends {
+    languageCorrections?: LanguageCorrection[] | null;
+    repeatedIssues?: EssayFeedback["repeatedIssues"] | null;
+    improvements?: string[] | null;
+  },
+>(feedback: F, check: SentenceCheckResult | null | undefined): F {
+  if (!check) return feedback;
+  const improvements = feedback.improvements ?? [];
+  const extra = contradictionImprovements(check).filter(
+    (t) => !improvements.some((i) => i.includes(t.slice(1, 20)))
+  );
+  return {
+    ...feedback,
+    languageCorrections: mergeSentenceCorrections(
+      feedback.languageCorrections ?? [],
+      check
+    ),
+    repeatedIssues: withSentenceCheckIssues(
+      feedback.repeatedIssues ?? [],
+      check
+    ),
+    improvements: [...extra, ...improvements],
+  };
+}
+
+/**
  * suggestion が「書き換えた文」になっているか。
  *
  * 赤ペンの suggestion は画面で置き換え候補として出す欄なので、解説や指示が入ると

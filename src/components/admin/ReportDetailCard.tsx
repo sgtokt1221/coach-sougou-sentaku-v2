@@ -38,11 +38,11 @@ import { toast } from "sonner";
 import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
 import { scoreToSkillRank } from "@/lib/history-rank";
 import {
-  categorizeWeakness,
   ESSAY_CATEGORY_LABELS,
   ESSAY_CATEGORY_ORDER,
   type EssayCategoryKey,
 } from "@/lib/growth/weakness-category";
+import { weaknessCategoryOf } from "@/lib/growth/weakness-taxonomy";
 import type { GrowthReport } from "@/lib/types/growth-report";
 
 function formatDate(iso?: string): string {
@@ -565,7 +565,7 @@ function DocumentSummarySection({
  * 弱点進捗を essay 5 軸カテゴリ (構成 / 論証 / 表現力 / AP合致 / 独自性) +
  * その他 でグルーピングして表示。 印刷時もコンパクトに収まる 1 行リスト形式。
  *
- * カテゴリ判定は `categorizeWeakness` (キーワードマッチング)。
+ * カテゴリ判定は `weaknessCategoryOf`（正規ラベルならタクソノミー、それ以外は文言）。
  * 件数 0 のカテゴリは表示しない。
  */
 function WeaknessProgressByCategory({
@@ -585,7 +585,7 @@ function WeaknessProgressByCategory({
       other: [],
     };
     for (const w of items) {
-      out[categorizeWeakness(w.weakness)].push(w);
+      out[weaknessCategoryOf({ area: w.weakness })].push(w);
     }
     const statusRank = (s: string) =>
       s === "declined" ? 0 : s === "stable" ? 1 : 2;

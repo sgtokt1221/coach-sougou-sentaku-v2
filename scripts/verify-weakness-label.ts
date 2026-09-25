@@ -79,6 +79,35 @@ const cases: [string, string, string | undefined, string][] = [
   ["一文が長く読みにくい", "", "expression", "expression.long_sentence"],
   ["序論・本論・結論の構成バランス", "", "structure", "structure.unbalanced"],
   ["段落のつながり・論述の流れ", "", "structure", "structure.weak_flow"],
+  // 説明文の「結論」1語で「結論が不明確」へ流さない
+  [
+    "段落のつながり・論述の流れ",
+    "前の段落の結論が次の段落の出発点になっていない箇所があります。",
+    "structure",
+    "structure.weak_flow",
+  ],
+  // 見出し語は説明文で中身を決める（「結論が不明確」に何でも集まっていた）
+  [
+    "結論の明確さ",
+    "結論段落が本論の繰り返しにとどまっています。",
+    "structure",
+    "structure.conclusion_restates",
+  ],
+  [
+    "結論の明確さ",
+    "自分がどう判断するかが結論で示されていません。",
+    "structure",
+    "structure.no_conclusion",
+  ],
+  // 説明文の語に引っ張られず、ラベルの語を優先する
+  [
+    "反論検討",
+    "反論の根拠に正面から答える練習を続けてください。",
+    "logic",
+    "logic.one_sided",
+  ],
+  // 「結び」が「結びつき」に部分一致していた
+  ["自分の経験との結びつき", "", "originality", "ap.no_link"],
 ];
 for (const [area, message, hint, expected] of cases) {
   const entry = resolveCanonical(area, {

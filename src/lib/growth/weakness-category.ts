@@ -64,7 +64,11 @@ export function categorizeWeakness(text: string): EssayCategoryKey {
     )
   )
     return "logic";
-  if (/表現|語彙|文法|表記|文体|言い回し|誤字|脱字|読みにくい/.test(text))
+  if (
+    /表現|語彙|文法|表記|文体|言い回し|誤字|脱字|読みにくい|ねじれ|主語と述語|助詞/.test(
+      text
+    )
+  )
     return "expression";
   if (/AP|アドミ|ポリシー|合致|動機|志望理由|大学|学部|学科|魅力/.test(text))
     return "apAlignment";

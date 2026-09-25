@@ -45,7 +45,26 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     id: "structure.no_conclusion",
     category: "structure",
     label: "結論が不明確・欠落している",
-    keywords: ["結論", "締め", "結び", "まとめ方", "落としどころ"],
+    // 「結び」だけだと「結びつき」（AP・経験との結びつき）に部分一致していた
+    keywords: ["結論", "締め", "結びの", "結びが", "まとめ方", "落としどころ"],
+  },
+  {
+    // 「結論が不明確」から分けた（2026-09-25）。本番でこのラベルの半数近くは、
+    // 結論はあるが本論・序論の言い直しで終わっているという指摘だった。
+    // 「結論」と「繰り返し」の両方が当たる（2点）ときにこちらへ来る。
+    // 「結論」1語だけなら同点で上の no_conclusion が先に取る
+    id: "structure.conclusion_restates",
+    category: "structure",
+    label: "結論が本論・序論の繰り返しにとどまる",
+    keywords: [
+      "結論",
+      "繰り返し",
+      "言い換え",
+      "言い直し",
+      "焼き直し",
+      "同じ内容",
+      "重複",
+    ],
   },
   {
     id: "structure.weak_flow",
@@ -607,7 +626,10 @@ export function weaknessCategoryOf(w: {
   canonicalId?: string | null;
   categoryId?: string | null;
 }): EssayCategoryKey {
-  const entry = w.canonicalId ? BY_ID.get(w.canonicalId) : undefined;
+  // 正規 ID が無くても、正規ラベルそのもの（成長レポートの弱点名等）なら引ける
+  const entry =
+    (w.canonicalId ? BY_ID.get(w.canonicalId) : undefined) ??
+    BY_LABEL.get(w.area.trim());
   if (entry) return entry.category;
   return (
     (w.categoryId as EssayCategoryKey | undefined) ?? categorizeWeakness(w.area)
@@ -644,16 +666,32 @@ export function resolveCanonical(
   const label = stripPlaceWords(text);
   const labelIsPlace = label !== text.trim();
   const support = opts.supportText ? stripQuotes(opts.supportText) : "";
+  /**
+   * 場所の語を除いた残りが「反論」「結論」のような1語だけのとき。
+   * 「段落のつながり・論述の流れ」は「段落」を除いても弱点を言っているので当たらない
+   * （当たると説明文の「結論」1語で「結論が不明確」へ流れていた）。
+   */
+  const labelIsBarePlace =
+    labelIsPlace && label.replace(/[のと・、,\s]/g, "").length <= 4;
 
-  // ラベルに場所が混ざっているなら、弱点の中身は説明文の方が詳しい
+  // ラベルが場所なら、弱点の中身は説明文の方が詳しい
   // （「反論段落」の残り「反論」より、説明文の「反駁が成立していない」）。
   // AI が付けたカテゴリの候補に限れば1語で決めてよい
-  if (labelIsPlace && support && opts.categoryHint) {
+  if (labelIsBarePlace && support && opts.categoryHint) {
     const inCategory = matchByKeywords(support, opts.categoryHint, 1, true);
     if (inCategory) return inCategory;
   }
   if (hasAnyKeyword(label)) {
-    const byLabel = matchByKeywords(label, opts.categoryHint, 1);
+    /**
+     * 「結論の明確さ」のような見出し語（述語で終わらない）は、何がどう弱いかを
+     * 言っていない。説明文が「本論の繰り返しにとどまる」と言っているのに、
+     * ラベルの「結論」だけで「結論が不明確」に決まっていた。
+     * 見出し語のときは説明文の語も足して数える。
+     */
+    const byLabel =
+      support && !PREDICATE_ENDING.test(label)
+        ? matchHeading(label, support, opts.categoryHint)
+        : matchByKeywords(label, opts.categoryHint, 1);
     if (byLabel) return byLabel;
   }
   // ラベルで決まらないときだけ説明文を見る。長文は無関係な語を巻き込むので
@@ -676,6 +714,33 @@ const PLACE_TOKEN =
 function stripPlaceWords(text: string): string {
   return text.trim().replace(PLACE_TOKEN, "").trim();
 }
+
+/**
+ * 見出し語ラベルの判定。ラベルの語を2倍、説明文の語を1倍で数える。
+ * 説明文は助言の言葉（「結論では〜」「段落を〜」）を広く含むので、同じ重さで
+ * 数えると「反論検討」が説明文の「根拠」で別の弱点に流れる。ラベルに当たった
+ * 候補の間の優劣を説明文で付けるのが目的。
+ */
+function matchHeading(
+  label: string,
+  support: string,
+  categoryHint: EssayCategoryKey | undefined
+): TaxonomyEntry | null {
+  let best: { entry: TaxonomyEntry; score: number } | null = null;
+  for (const entry of WEAKNESS_TAXONOMY) {
+    const inLabel = entry.keywords.filter((k) => label.includes(k)).length;
+    if (inLabel === 0) continue;
+    let score =
+      inLabel * 2 + entry.keywords.filter((k) => support.includes(k)).length;
+    if (categoryHint && entry.category === categoryHint) score += 0.5;
+    if (!best || score > best.score) best = { entry, score };
+  }
+  return best ? best.entry : null;
+}
+
+/** 述語で終わる（弱点を言い切っている）ラベル。それ以外は見出し語として扱う */
+const PREDICATE_ENDING =
+  /(い|る|た|だ|ない|ある|です|ます|ず|ぬ|欠如|不足|欠落|不明確|不十分|過多)$/;
 
 /** 説明文の中の答案の引用。引用中の語で弱点を決めると、答案の話題で分類してしまう */
 function stripQuotes(text: string): string {

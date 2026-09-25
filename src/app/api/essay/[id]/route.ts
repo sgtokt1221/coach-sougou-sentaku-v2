@@ -1,3 +1,4 @@
+import { feedbackWithSentenceCheck } from "@/lib/essay/review-core";
 import { NextRequest, NextResponse } from "next/server";
 import { computeRetryComparison } from "@/lib/essay/retry-comparison";
 import type {
@@ -52,7 +53,11 @@ export async function GET(
     }
 
     const scores = (data.scores ?? {}) as EssayScores;
-    const feedback = (data.feedback ?? {}) as EssayFeedback;
+    // 後から付けた1文ずつの点検を合流させる（弱点DBと添削結果を揃える）
+    const feedback = feedbackWithSentenceCheck(
+      (data.feedback ?? {}) as EssayFeedback,
+      data.sentenceCheck
+    );
     const attemptNumber =
       typeof data.attemptNumber === "number" ? data.attemptNumber : 1;
     const rootEssayId: string = data.rootEssayId ?? essayDoc.id;

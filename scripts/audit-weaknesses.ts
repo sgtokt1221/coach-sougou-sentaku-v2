@@ -20,17 +20,13 @@ import { adminDb } from "../src/lib/firebase/admin";
 import {
   resolveCanonical,
   canonicalLabel,
-  isWeaknessLabel,
 } from "../src/lib/growth/weakness-taxonomy";
-import { categorizeWeakness } from "../src/lib/growth/weakness-category";
-import { withSentenceCheckIssues } from "../src/lib/essay/review-core";
+import { weaknessKeysOf } from "../src/lib/growth/weakness-aggregate";
 import { getWeaknessReminderLevel } from "../src/lib/types/growth";
 import type { WeaknessRecord } from "../src/lib/types/growth";
 
 const DETAIL = process.argv.includes("--detail");
 const DAY = 24 * 60 * 60 * 1000;
-
-type Issue = { area?: string; category?: string; message?: string };
 
 function toDate(v: unknown): Date | null {
   if (!v) return null;
@@ -38,19 +34,6 @@ function toDate(v: unknown): Date | null {
   if (typeof t.toDate === "function") return t.toDate();
   const d = new Date(v as string);
   return Number.isNaN(d.getTime()) ? null : d;
-}
-
-/** 書き込み経路（updateWeaknessRecords）と同じ規則で、弱点の集計キーを求める */
-function keyOf(issue: Issue): string | null {
-  const area = issue.area?.trim();
-  if (!area || !isWeaknessLabel(area)) return null;
-  const entry = resolveCanonical(area, {
-    categoryHint:
-      (issue.category as WeaknessRecord["categoryId"]) ??
-      categorizeWeakness(area),
-    supportText: issue.message,
-  });
-  return entry ? canonicalLabel(entry.id) : area;
 }
 
 /** 保存済みの弱点文書のキー（表示ラベルから正規ラベルへ） */
@@ -109,26 +92,15 @@ async function main() {
     let submissions = 0;
     for (const d of [...essays.docs, ...interviews.docs, ...skills.docs]) {
       const data = d.data();
-      const saved = data.feedback?.repeatedIssues as Issue[] | undefined;
-      if (!Array.isArray(saved)) continue;
-      // 1文ずつの点検の結果も書き込み経路（review-core / rebuild-weaknesses）と同じく数える
-      const issues: Issue[] = data.sentenceCheck
-        ? withSentenceCheckIssues(
-            saved as Parameters<typeof withSentenceCheckIssues>[0],
-            data.sentenceCheck
-          )
-        : saved;
+      if (!Array.isArray(data.feedback?.repeatedIssues)) continue;
       submissions++;
       const at =
         toDate(data.submittedAt) ??
         toDate(data.completedAt) ??
         toDate(data.takenAt) ??
         toDate(data.reviewedAt);
-      const seen = new Set<string>();
-      for (const issue of issues) {
-        const k = keyOf(issue);
-        if (!k || seen.has(k)) continue;
-        seen.add(k);
+      // 書き込み経路・成長レポートと同じ関数で数える
+      for (const k of weaknessKeysOf(data)) {
         expected.set(k, (expected.get(k) ?? 0) + 1);
         if (at) lastSeen.set(k, Math.max(lastSeen.get(k) ?? 0, at.getTime()));
       }
