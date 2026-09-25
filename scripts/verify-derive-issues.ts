@@ -283,22 +283,67 @@ const areas = (xs: { area: string }[]) => xs.map((x) => x.area).sort();
   );
   assert.deepEqual(areas(short), [L("responsiveness.too_short")]);
   assert.equal(short[0].derived, true, "判定欄から積んだ分だけが残る");
-  // 正規ラベルそのもので書いてきても同じ（要求の欠落・誤字も）
+  // 正規ラベルそのもので書いてきても、判定の材料があれば落とす（材料は該当なしの値）
+  const aiIssue = (id: string) => ({
+    area: L(id),
+    category: getTaxonomyEntry(id)!.category as never,
+    count: 1,
+    message: "m",
+  });
+  const material: Record<
+    string,
+    [Parameters<typeof deriveWeaknessIssues>[0], SentenceCheckResult | null]
+  > = {
+    "expression.typo": [
+      { repeatedIssues: [] },
+      { brokenSentences: [], contradictions: [] },
+    ],
+    "responsiveness.too_short": [
+      { repeatedIssues: [], quantitativeAnalysis: { fillRate: 95 } as never },
+      null,
+    ],
+    "responsiveness.missing_requirement": [
+      { repeatedIssues: [], taskFulfillment: { requirements: [] } as never },
+      null,
+    ],
+    "responsiveness.misread": [
+      { repeatedIssues: [], reportInsights: { misreadings: [] } as never },
+      null,
+    ],
+    "responsiveness.knowledge_error": [
+      { repeatedIssues: [], knowledgeInsights: { errors: [] } as never },
+      null,
+    ],
+  };
   for (const id of MACHINE_ONLY_ISSUE_IDS) {
+    assert.ok(material[id], `${id} の材料が検査に無い`);
+    const [fb, check] = material[id];
     const out = deriveWeaknessIssues(
-      {
-        repeatedIssues: [
-          {
-            area: L(id),
-            category: getTaxonomyEntry(id)!.category as never,
-            count: 1,
-            message: "m",
-          },
-        ],
-      },
-      null
+      { ...fb, repeatedIssues: [aiIssue(id)] },
+      check
     );
-    assert.deepEqual(out, [], `AI の ${id} を落とす`);
+    assert.deepEqual(out, [], `材料があれば AI の ${id} を落とす`);
+    // 材料が無い古い答案では作り直せないので残す
+    const old = deriveWeaknessIssues({ repeatedIssues: [aiIssue(id)] }, null);
+    assert.deepEqual(areas(old), [L(id)], `材料が無ければ AI の ${id} を残す`);
+  }
+  // 材料が無い古い答案: AI の誤字・字数不足は残る
+  assert.deepEqual(
+    areas(deriveWeaknessIssues({ repeatedIssues: [aiTooShort] }, null)),
+    [aiTooShort.area]
+  );
+  // partial は字数不足・要求の欠落を積まないので、材料が無くても AI 由来を落とす
+  for (const id of [
+    "responsiveness.too_short",
+    "responsiveness.missing_requirement",
+  ]) {
+    assert.deepEqual(
+      deriveWeaknessIssues({ repeatedIssues: [aiIssue(id)] }, null, {
+        partial: true,
+      }),
+      [],
+      `partial で AI の ${id} を落とす`
+    );
   }
 }
 // AI へ渡す過去の弱点一覧から外すもの（canonicalId でも正規ラベルでも判定できる）

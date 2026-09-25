@@ -205,6 +205,38 @@ function isSentenceDerived(i: RepeatedIssue): boolean {
   return SENTENCE_DERIVED_IDS.some((d) => d === id);
 }
 
+/**
+ * 機械判定だけで積む弱点で、かつ derive がこの答案の材料で判定し直せるか。
+ * partial（ブロック課題）は字数不足・要求の欠落をそもそも積まないので、AI 由来も落とす
+ */
+function judgeableMachineOnly(
+  id: string,
+  feedback: DerivableFeedback,
+  check: SentenceCheckResult | null | undefined,
+  opts: DeriveOptions
+): boolean {
+  switch (id) {
+    case "expression.typo":
+      return Boolean(check);
+    case "responsiveness.too_short":
+      return (
+        opts.partial === true ||
+        typeof feedback.quantitativeAnalysis?.fillRate === "number"
+      );
+    case "responsiveness.missing_requirement":
+      return (
+        opts.partial === true ||
+        Array.isArray(feedback.taskFulfillment?.requirements)
+      );
+    case "responsiveness.misread":
+      return Boolean(feedback.reportInsights || feedback.claimChecks);
+    case "responsiveness.knowledge_error":
+      return Boolean(feedback.knowledgeInsights);
+    default:
+      return false;
+  }
+}
+
 export function deriveWeaknessIssues(
   feedback: DerivableFeedback,
   check: SentenceCheckResult | null | undefined,
@@ -225,9 +257,11 @@ export function deriveWeaknessIssues(
       supportText: i.message,
       domain: "essay",
     });
-    // AI が書いた弱点のうち、機械判定だけで積む弱点（字数不足・要求の欠落等）に寄るものは落とす。
-    // 判定欄が「足りている」と言っているのに AI の「字数が足りない」で積むと、判定と食い違う
-    if (fromAi && e && MACHINE_ONLY_ISSUE_IDS.some((m) => m === e.id)) continue;
+    // AI が書いた弱点のうち、機械判定だけで積む弱点（字数不足・要求の欠落等）に寄るものは、
+    // 判定の材料が答案にあるときだけ落とす（判定欄が「足りている」と言っているのに AI の
+    // 「字数が足りない」で積むと食い違う）。材料の無い古い答案では作り直せないので残す
+    if (fromAi && e && judgeableMachineOnly(e.id, feedback, check, opts))
+      continue;
     if (e) present.add(e.id);
     issues.push(i);
   }
