@@ -1,6 +1,10 @@
 "use client";
 
 import { ThumbsUp, AlertTriangle, ChevronRight } from "lucide-react";
+import {
+  pickDisplayIssues,
+  DISPLAY_ISSUES_MAX,
+} from "@/lib/essay/display-issues";
 
 /**
  * 必要な形だけを受ける。画面ごとに少しずつ違うローカル型が存在するので、
@@ -9,6 +13,8 @@ import { ThumbsUp, AlertTriangle, ChevronRight } from "lucide-react";
 interface SummaryIssue {
   area: string;
   count: number;
+  /** 判定欄からの派生分。count は常に1なので「N回目」を出さない */
+  derived?: boolean;
 }
 
 export type SummarySection = "redpen" | "weaknesses" | "overview";
@@ -39,13 +45,13 @@ export function EssayResultSummary({
 }) {
   const weakItems: { text: string; note?: string; section: SummarySection }[] =
     [
-      ...repeatedIssues.map((r) => ({
+      ...pickDisplayIssues(repeatedIssues).map((r) => ({
         text: r.area,
-        note: `${r.count}回目`,
+        note: r.derived ? undefined : `${r.count}回目`,
         section: "weaknesses" as const,
       })),
       ...improvements.map((t) => ({ text: t, section: "overview" as const })),
-    ].slice(0, 4);
+    ].slice(0, DISPLAY_ISSUES_MAX);
 
   if (correctionCount > 0) {
     weakItems.push({

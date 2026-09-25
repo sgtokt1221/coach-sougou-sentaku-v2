@@ -54,6 +54,7 @@ import {
 } from "@/lib/score-rank";
 import { buildNextStepHint } from "@/lib/essay/next-step";
 import { EssayResultSummary } from "@/components/essay/EssayResultSummary";
+import { pickDisplayIssues } from "@/lib/essay/display-issues";
 import { EssayReviewCoach } from "@/components/essay/EssayReviewCoach";
 import { ESSAY_CATEGORY_LABELS } from "@/lib/growth/weakness-category";
 import { sourceEngagementLabel } from "@/lib/essay/source-engagement";
@@ -81,6 +82,8 @@ interface RepeatedIssue {
   area: string;
   count: number;
   message?: string;
+  /** 判定欄からの派生分。count は常に1で意味を持たない */
+  derived?: boolean;
 }
 
 interface ImprovementSinceLast {
@@ -809,11 +812,12 @@ export default function EssayResultPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {(result.feedback.repeatedIssues ?? [])
-                .slice(0, 3)
-                .map((item, i) => {
-                  const isCritical = item.count >= 5;
-                  const isWarning = item.count >= 3 && item.count < 5;
+              {pickDisplayIssues(result.feedback.repeatedIssues ?? []).map(
+                (item, i) => {
+                  // 派生分（判定欄から足した弱点）は count が常に1なので回数で色分けしない
+                  const isCritical = !item.derived && item.count >= 5;
+                  const isWarning =
+                    !item.derived && item.count >= 3 && item.count < 5;
                   return (
                     <div
                       key={i}
@@ -831,24 +835,29 @@ export default function EssayResultPage() {
                           {item.area}
                         </p>
                         <p className="text-muted-foreground mt-1 text-sm">
-                          {isCritical
-                            ? "最重要改善ポイント"
-                            : isWarning
-                              ? "要注意領域"
-                              : "継続改善領域"}
+                          {item.derived
+                            ? "今回の答案の判定"
+                            : isCritical
+                              ? "最重要改善ポイント"
+                              : isWarning
+                                ? "要注意領域"
+                                : "継続改善領域"}
                         </p>
                       </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-slate-800 tabular-nums">
-                          {item.count}
+                      {!item.derived && (
+                        <div className="text-right">
+                          <div className="text-2xl font-bold text-slate-800 tabular-nums">
+                            {item.count}
+                          </div>
+                          <div className="text-muted-foreground text-xs">
+                            回指摘
+                          </div>
                         </div>
-                        <div className="text-muted-foreground text-xs">
-                          回指摘
-                        </div>
-                      </div>
+                      )}
                     </div>
                   );
-                })}
+                }
+              )}
             </CardContent>
           </Card>
         )}
