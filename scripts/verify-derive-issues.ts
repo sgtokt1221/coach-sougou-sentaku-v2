@@ -14,6 +14,10 @@ import {
 import { ESSAY_CATEGORY_KEYS } from "../src/lib/growth/weakness-category";
 import { pickDisplayIssues } from "../src/lib/essay/display-issues";
 import {
+  feedbackWithDerivedIssues,
+  sentenceCheckFields,
+} from "../src/lib/essay/review-core";
+import {
   canonicalLabel,
   getTaxonomyEntry,
 } from "../src/lib/growth/weakness-taxonomy";
@@ -541,6 +545,57 @@ const areas = (xs: { area: string }[]) => xs.map((x) => x.area).sort();
   assert.equal(shape(pickDisplayIssues(mk(1, 6))), "adddd");
   assert.equal(shape(pickDisplayIssues(mk(2, 0))), "aa");
   assert.equal(shape(pickDisplayIssues(mk(0, 7))), "ddddd");
+}
+
+// 表示時の合流: 保存時に合流済み（source が review / rescore）なら赤ペンと矛盾の改善文を
+// 合流し直さない。backfill と source の無い旧データは合流する。弱点の derive は常に行う
+{
+  const aiCorrection = {
+    location: "第1段落",
+    original: "AIが見つけた文。",
+    suggestion: "AIが直した文。",
+    type: "expression" as const,
+    reason: "r",
+  };
+  const fb = {
+    repeatedIssues: [],
+    improvements: ["既存の改善点"],
+    languageCorrections: [aiCorrection],
+  };
+  const result = {
+    brokenSentences: broken("twist", 2),
+    contradictions: [{ first: "賛成だ", second: "反対だ", explanation: "e" }],
+  };
+  for (const source of ["review", "rescore"]) {
+    const out = feedbackWithDerivedIssues(fb, { ...result, source });
+    assert.deepEqual(out.languageCorrections, [aiCorrection], source);
+    assert.deepEqual(out.improvements, ["既存の改善点"], source);
+    assert.deepEqual(
+      areas(out.repeatedIssues),
+      [L("expression.twist"), L("logic.contradiction")].sort(),
+      `${source} でも弱点は作り直す`
+    );
+  }
+  for (const check of [{ ...result, source: "backfill" }, result]) {
+    const out = feedbackWithDerivedIssues(fb, check);
+    assert.equal(out.languageCorrections!.length, 3, "点検の2文を合流する");
+    assert.equal(out.improvements!.length, 2, "矛盾の改善文を合流する");
+  }
+}
+// 保存する点検結果: 取れなければ新規答案では書かず、再採点では削除の値を書く
+{
+  assert.deepEqual(sentenceCheckFields(null, "review"), {});
+  const del = Symbol("delete");
+  assert.deepEqual(sentenceCheckFields(null, "rescore", del), {
+    sentenceCheck: del,
+  });
+  const saved = sentenceCheckFields(
+    { brokenSentences: [], contradictions: [] },
+    "rescore",
+    del
+  ).sentenceCheck as { source: string; checkedAt: string };
+  assert.equal(saved.source, "rescore");
+  assert.ok(saved.checkedAt);
 }
 
 console.log("[verify-derive-issues] OK");

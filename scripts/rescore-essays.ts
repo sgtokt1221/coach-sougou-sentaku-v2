@@ -142,7 +142,12 @@ async function main() {
           {
             scores: after,
             feedback: out.feedback,
-            ...sentenceCheckFields(out.sentenceCheck, "rescore"),
+            // 点検が取れなければ前回の点検を消す（新しい feedback と食い違って残さない）
+            ...sentenceCheckFields(
+              out.sentenceCheck,
+              "rescore",
+              FieldValue.delete()
+            ),
             // 元に戻せるよう旧スコアを退避（既にあれば上書きしない）
             ...(e.scoresBeforeV7 ? {} : { scoresBeforeV7: before }),
             // v14（配点の重み付け）の直前スコア。v7 の退避とは別に持つ

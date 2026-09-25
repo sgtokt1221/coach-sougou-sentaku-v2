@@ -19,7 +19,7 @@
 import { config } from "dotenv";
 import { resolve } from "path";
 import { initializeApp, getApps, cert } from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
+import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import {
   reviewEssayCore,
   sentenceCheckFields,
@@ -158,7 +158,12 @@ async function main() {
           {
             scores: result.scores,
             feedback: result.feedback,
-            ...sentenceCheckFields(result.sentenceCheck, "rescore"),
+            // 点検が取れなければ前回の点検を消す（新しい feedback と食い違って残さない）
+            ...sentenceCheckFields(
+              result.sentenceCheck,
+              "rescore",
+              FieldValue.delete()
+            ),
             rescoredAt: new Date(),
           },
           { merge: true }

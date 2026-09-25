@@ -504,11 +504,18 @@ ${input.ocrText}
  */
 export function sentenceCheckFields(
   check: SentenceCheckResult | null,
-  source: "review" | "rescore"
+  source: "review" | "rescore",
+  /**
+   * 点検が取れなかったとき、既存の sentenceCheck を消すための値
+   * （FieldValue.delete()）。再採点は feedback を上書きするので、前回の点検が
+   * 新しい feedback と食い違って残らないように渡す。新規答案では渡さない
+   */
+  deleteValue?: unknown
 ): {
-  sentenceCheck?: SentenceCheckResult & { checkedAt: string; source: string };
+  sentenceCheck?: unknown;
 } {
-  if (!check) return {};
+  if (!check)
+    return deleteValue === undefined ? {} : { sentenceCheck: deleteValue };
   return {
     sentenceCheck: {
       brokenSentences: check.brokenSentences,
@@ -586,20 +593,27 @@ export function feedbackWithDerivedIssues<
   },
 >(
   feedback: F,
-  check: SentenceCheckResult | null | undefined,
+  check: (SentenceCheckResult & { source?: unknown }) | null | undefined,
   opts: DeriveOptions = {}
 ): F {
+  // 添削・再採点の保存時に合流済みの答案（source が review / rescore）は、赤ペンと
+  // 矛盾の改善文を合流し直さない。保存時に上限10件で切った点検分が先頭へ戻り、
+  // AI の赤ペンを押し出すため。合流し直すのは後付けの点検（backfill）と source の無い旧データだけ
+  const mergedAtWrite =
+    check?.source === "review" || check?.source === "rescore";
+  const mergeCheck = mergedAtWrite ? null : check;
   const improvements = feedback.improvements ?? [];
-  const extra = check
-    ? contradictionImprovements(check).filter(
+  const extra = mergeCheck
+    ? contradictionImprovements(mergeCheck).filter(
         (t) => !improvements.some((i) => i.includes(t.slice(1, 20)))
       )
     : [];
   return {
     ...feedback,
-    languageCorrections: check
-      ? mergeSentenceCorrections(feedback.languageCorrections ?? [], check)
+    languageCorrections: mergeCheck
+      ? mergeSentenceCorrections(feedback.languageCorrections ?? [], mergeCheck)
       : feedback.languageCorrections,
+    // 弱点は合流済みかどうかに関係なく、常に同じ derive で作り直す
     repeatedIssues: deriveWeaknessIssues(feedback, check, opts),
     improvements: [...extra, ...improvements],
   };
