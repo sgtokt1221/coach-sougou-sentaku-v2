@@ -102,10 +102,10 @@
 
 ### 4.2 判定から弱点を作る関数を1つにする
 
-現在の `withSentenceCheckIssues(issues, sentenceCheck)`（src/lib/essay/review-core.ts）を、判定欄全体から弱点を足す関数に広げる。
+判定欄全体から弱点を足す関数を src/lib/essay/derive-weakness-issues.ts に置く。
 
 ```
-deriveIssues(feedback, sentenceCheck) → repeatedIssues に判定分を足したもの
+deriveWeaknessIssues(feedback, check, opts) → repeatedIssues に判定分を足したもの
 ```
 
 - 文の点検: twist / 助詞・語 / 誤字 / 矛盾（3.1 の閾値）
@@ -147,7 +147,7 @@ deriveIssues(feedback, sentenceCheck) → repeatedIssues に判定分を足し�
 - 生徒の弱点カード（WeaknessReminderCard / Banner、/student/growth）: 弱点名の下に `description` を出す
 - /student/growth の「解決済み」とダッシュボードの「解決」件数: 解決済みも返す取得に直す（いまは getRemindableWeaknesses が除外するため常に0件）
 
-弱点名と説明は API がタクソノミーから付けて返す（画面ごとに文言を持たない）。対象は `/api/growth/weaknesses`（生徒の画面すべて）と `/api/admin/students/[id]`（生徒詳細・重点弱点のグラフ）。
+説明（description）と群（group）は API がタクソノミーから付けて返す（画面ごとに文言を持たない）。対象は `/api/growth/weaknesses`（生徒の画面すべて）と `/api/admin/students/[id]`（生徒詳細・重点弱点のグラフ）。弱点名は保存済みの `area` をそのまま出すので、ラベルを変えた弱点が新しい名前になるのは作り直し（6. 移行）か、次の提出での統合（consolidateExisting）の後。
 
 ## 6. 移行
 
@@ -164,7 +164,7 @@ deriveIssues(feedback, sentenceCheck) → repeatedIssues に判定分を足し�
 - `scripts/verify-weakness-label.ts` に追加:
   - 旧 ID（originality.no_experience 等）と旧ラベルが正本へ寄ること
   - 各正規ラベルが自分自身へ戻ること
-  - 3.1 の判定元ごとに `deriveIssues` が期待どおりの弱点を足すこと（合成した feedback で）
+  - 3.1 の判定元ごとに `deriveWeaknessIssues` が期待どおりの弱点を足すこと（合成した feedback で）
 - 本番225件の再分類で、漏れが面接の自由記述と「経験が無い」系（v23 で評価しないと決めたもの）だけになること
 - rebuild 後の audit で倍率が 1.0 前後、重複0組
 - 画面: 生徒の成長画面、ダッシュボード、管理者の生徒詳細、重点弱点のグラフを開いて確認する
