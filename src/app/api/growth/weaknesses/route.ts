@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { weaknessDocId } from "@/lib/growth/weakness-id";
 import { loadWeaknessRecords } from "@/lib/growth/weakness-store";
 import { getRemindableWeaknesses } from "@/lib/growth/analyze";
+import {
+  weaknessDescriptionOf,
+  weaknessGroupOf,
+} from "@/lib/growth/weakness-taxonomy";
 
 /**
  * 誰の弱点かはトークンからだけ決める。
@@ -32,7 +36,8 @@ export async function GET(request: NextRequest) {
   const context = (searchParams.get("context") ?? "dashboard") as
     | "dashboard"
     | "essay_new"
-    | "essay_result";
+    | "essay_result"
+    | "all";
 
   const userId = await resolveUserId(request);
 
@@ -49,9 +54,18 @@ export async function GET(request: NextRequest) {
     // 読み方は提出の書き込みと同じ正本を使う（直近の記録 recentHits を落とすと、
     // 画面側で段階を累計の回数から計算し直してサーバーの判定とずれる）
     const { records: weaknesses } = await loadWeaknessRecords(adminDb, userId);
-
-    const remindable = getRemindableWeaknesses(weaknesses, context);
-    return NextResponse.json({ weaknesses: remindable });
+    // all: 成長画面とダッシュボードの件数用。解決済みも含める（アーカイブ済みは除く）。
+    // getRemindableWeaknesses は解決済みを返さないので、「解決済み」の列が常に0件だった
+    const list =
+      context === "all"
+        ? weaknesses.filter((w) => !w.archivedAt)
+        : getRemindableWeaknesses(weaknesses, context);
+    const withDisplay = list.map((w) => ({
+      ...w,
+      description: weaknessDescriptionOf(w),
+      group: weaknessGroupOf(w),
+    }));
+    return NextResponse.json({ weaknesses: withDisplay });
   } catch (err) {
     console.warn("Failed to fetch weaknesses:", err);
     return NextResponse.json({ weaknesses: [] });

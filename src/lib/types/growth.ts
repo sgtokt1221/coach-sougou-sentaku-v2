@@ -1,4 +1,5 @@
 import type { EssayCategoryKey } from "@/lib/growth/weakness-category";
+import type { WeaknessGroupKey } from "@/lib/growth/weakness-taxonomy";
 export interface WeaknessRecord {
   area: string;
   count: number;
@@ -55,6 +56,10 @@ export interface WeaknessRecord {
    * WEAKNESS_RESOLVE_STREAK に達したら resolved にする（再び指摘されたら戻る）。
    */
   missStreak?: number;
+  /** 表示用（API が付ける。保存しない）: カードに出す1行の説明 */
+  description?: string;
+  /** 表示用（API が付ける。保存しない）: 層か面接か */
+  group?: WeaknessGroupKey;
 }
 
 /** 段階の判定に使う直近の提出数 */

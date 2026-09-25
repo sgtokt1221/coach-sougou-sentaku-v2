@@ -9,6 +9,10 @@ import type { StudentDetail } from "@/lib/types/admin";
 import { normalizedEssayTotal } from "@/lib/types/essay";
 import { getThemeById } from "@/data/essay-themes";
 import { getPastQuestionById } from "@/data/essay-past-questions";
+import {
+  weaknessDescriptionOf,
+  weaknessGroupOf,
+} from "@/lib/growth/weakness-taxonomy";
 
 /** 出題元IDからテーマ名を組み立てる。 */
 function labelFromSource(
@@ -257,6 +261,15 @@ export async function GET(
           reminderDismissedAt: data.reminderDismissedAt?.toDate() ?? null,
           categoryId: data.categoryId,
           canonicalId: data.canonicalId,
+          description: weaknessDescriptionOf({
+            area: data.area ?? "",
+            canonicalId: data.canonicalId,
+          }),
+          group: weaknessGroupOf({
+            area: data.area ?? "",
+            canonicalId: data.canonicalId,
+            categoryId: data.categoryId,
+          }),
         };
       });
 
