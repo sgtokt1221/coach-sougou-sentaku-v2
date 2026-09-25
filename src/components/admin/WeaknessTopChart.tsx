@@ -13,19 +13,20 @@ import {
 } from "lucide-react";
 import type { WeaknessRecord } from "@/lib/types/growth";
 import { getWeaknessReminderLevel } from "@/lib/types/growth";
-import { weaknessCategoryOf } from "@/lib/growth/weakness-taxonomy";
 import {
-  ESSAY_CATEGORY_LABELS,
-  ESSAY_CATEGORY_ORDER,
-  type EssayCategoryKey,
-} from "@/lib/growth/weakness-category";
+  WEAKNESS_GROUP_LABELS,
+  WEAKNESS_GROUP_ORDER,
+  weaknessDescriptionOf,
+  weaknessGroupOf,
+  type WeaknessGroupKey,
+} from "@/lib/growth/weakness-taxonomy";
 
 interface WeaknessTopChartProps {
   weaknesses: WeaknessRecord[];
 }
 
 /** カテゴリ別 + 出所別の色マッピング */
-const CATEGORY_COLORS: Record<EssayCategoryKey, { bg: string; hex: string }> = {
+const CATEGORY_COLORS: Record<WeaknessGroupKey, { bg: string; hex: string }> = {
   structure: { bg: "bg-sky-500", hex: "#0ea5e9" },
   logic: { bg: "bg-indigo-500", hex: "#6366f1" },
   expression: { bg: "bg-emerald-500", hex: "#10b981" },
@@ -34,6 +35,7 @@ const CATEGORY_COLORS: Record<EssayCategoryKey, { bg: string; hex: string }> = {
   originality: { bg: "bg-violet-500", hex: "#8b5cf6" },
   reasoningMaturity: { bg: "bg-rose-500", hex: "#f43f5e" },
   other: { bg: "bg-slate-400", hex: "#94a3b8" },
+  interview: { bg: "bg-fuchsia-500", hex: "#d946ef" },
 };
 
 const SOURCE_ICONS: Record<
@@ -47,7 +49,7 @@ const SOURCE_ICONS: Record<
 };
 
 interface CategoryGroup {
-  category: EssayCategoryKey;
+  category: WeaknessGroupKey;
   label: string;
   totalCount: number;
   items: WeaknessRecord[];
@@ -63,22 +65,22 @@ interface CategoryGroup {
  *   全体傾向が一目で見える
  * - 展開すれば個別弱点も全部見える (= 粒度も保持)
  *
- * 分類は weaknessCategoryOf()（正規タクソノミー → 保存済み categoryId → 文言）。
+ * 分類は weaknessGroupOf()（小論文は層、面接の弱点 iv.* は「面接」に分ける）。
  * 文言だけで分類し直すと「反対意見への配慮」等が「その他」に落ちていた。
  */
 export function WeaknessTopChart({ weaknesses }: WeaknessTopChartProps) {
-  const [expanded, setExpanded] = useState<Set<EssayCategoryKey>>(new Set());
+  const [expanded, setExpanded] = useState<Set<WeaknessGroupKey>>(new Set());
 
   const groups: CategoryGroup[] = useMemo(() => {
     const unresolved = weaknesses.filter((w) => !w.resolved);
-    const byCategory = new Map<EssayCategoryKey, WeaknessRecord[]>();
+    const byCategory = new Map<WeaknessGroupKey, WeaknessRecord[]>();
     for (const w of unresolved) {
-      const cat = weaknessCategoryOf(w);
+      const cat = weaknessGroupOf(w);
       if (!byCategory.has(cat)) byCategory.set(cat, []);
       byCategory.get(cat)!.push(w);
     }
 
-    return ESSAY_CATEGORY_ORDER.flatMap<CategoryGroup>((cat) => {
+    return WEAKNESS_GROUP_ORDER.flatMap<CategoryGroup>((cat) => {
       const items = byCategory.get(cat) ?? [];
       if (items.length === 0) return [];
       const total = items.reduce((s, w) => s + (w.count ?? 1), 0);
@@ -87,7 +89,7 @@ export function WeaknessTopChart({ weaknesses }: WeaknessTopChartProps) {
       return [
         {
           category: cat,
-          label: ESSAY_CATEGORY_LABELS[cat],
+          label: WEAKNESS_GROUP_LABELS[cat],
           totalCount: total,
           items: sorted,
         },
@@ -117,7 +119,7 @@ export function WeaknessTopChart({ weaknesses }: WeaknessTopChartProps) {
 
   const maxCategoryCount = Math.max(1, ...groups.map((g) => g.totalCount));
 
-  const toggle = (cat: EssayCategoryKey) => {
+  const toggle = (cat: WeaknessGroupKey) => {
     setExpanded((prev) => {
       const next = new Set(prev);
       if (next.has(cat)) next.delete(cat);
@@ -176,6 +178,8 @@ export function WeaknessTopChart({ weaknesses }: WeaknessTopChartProps) {
                     {g.items.map((w, idx) => {
                       const SourceIcon = SOURCE_ICONS[w.source] ?? Layers;
                       const severity = getWeaknessReminderLevel(w);
+                      const description =
+                        w.description || weaknessDescriptionOf(w);
                       return (
                         <li
                           key={`${w.area}-${idx}`}
@@ -183,9 +187,16 @@ export function WeaknessTopChart({ weaknesses }: WeaknessTopChartProps) {
                         >
                           <div className="flex min-w-0 items-start gap-1.5">
                             <SourceIcon className="text-muted-foreground mt-0.5 size-3 shrink-0" />
-                            <span className="leading-snug break-words">
-                              {w.area}
-                            </span>
+                            <div className="min-w-0">
+                              <span className="leading-snug break-words">
+                                {w.area}
+                              </span>
+                              {description && (
+                                <p className="text-muted-foreground text-[11px] leading-snug">
+                                  {description}
+                                </p>
+                              )}
+                            </div>
                           </div>
                           <span
                             className={`shrink-0 tabular-nums ${
@@ -208,13 +219,13 @@ export function WeaknessTopChart({ weaknesses }: WeaknessTopChartProps) {
 
         <div className="mt-3 border-t pt-3">
           <div className="text-muted-foreground flex flex-wrap justify-center gap-x-3 gap-y-1 text-[11px]">
-            {ESSAY_CATEGORY_ORDER.map((k) => (
+            {WEAKNESS_GROUP_ORDER.map((k) => (
               <div key={k} className="flex items-center gap-1">
                 <span
                   className="inline-block size-2 rounded-sm"
                   style={{ backgroundColor: CATEGORY_COLORS[k].hex }}
                 />
-                {ESSAY_CATEGORY_LABELS[k]}
+                {WEAKNESS_GROUP_LABELS[k]}
               </div>
             ))}
           </div>

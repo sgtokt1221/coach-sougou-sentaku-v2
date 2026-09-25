@@ -83,12 +83,14 @@ import { CommentableEssayText } from "@/components/essay/CommentableEssayText";
 import { RedPenText } from "@/components/essay/RedPenText";
 import type { StudentDetail } from "@/lib/types/admin";
 import { getDisplayGrade } from "@/lib/utils/grade";
+import { ESSAY_CATEGORY_LABELS } from "@/lib/growth/weakness-category";
 import {
-  ESSAY_CATEGORY_LABELS,
-  ESSAY_CATEGORY_ORDER,
-  type EssayCategoryKey,
-} from "@/lib/growth/weakness-category";
-import { weaknessCategoryOf } from "@/lib/growth/weakness-taxonomy";
+  WEAKNESS_GROUP_LABELS,
+  WEAKNESS_GROUP_ORDER,
+  weaknessDescriptionOf,
+  weaknessGroupOf,
+  type WeaknessGroupKey,
+} from "@/lib/growth/weakness-taxonomy";
 import {
   ESSAY_SCORE_WEIGHTS,
   ESSAY_STATUS_LABELS,
@@ -181,8 +183,8 @@ import { formatLastSeen } from "@/lib/ui/format-last-seen";
 import { appendQuote } from "@/lib/chat/message-blocks";
 /**
  * 弱点一覧をカテゴリ別アコーディオン形式で表示。
- * 細分化問題対策 Phase 2-B: フラットな table を categoryId で grouping。
- * 分類は weaknessCategoryOf（正規タクソノミー → 保存済み categoryId → 文言）。
+ * 細分化問題対策 Phase 2-B: フラットな table を群で grouping。
+ * 分類は weaknessGroupOf（小論文は層、面接の弱点 iv.* は「面接」に分ける）。
  */
 function WeaknessesByCategoryList({
   weaknesses,
@@ -191,37 +193,20 @@ function WeaknessesByCategoryList({
   weaknesses: WeaknessRecord[];
   studentId: string;
 }) {
-  const [openCategories, setOpenCategories] = useState<Set<EssayCategoryKey>>(
-    () =>
-      new Set([
-        "structure",
-        "logic",
-        "expression",
-        "apAlignment",
-        "responsiveness",
-        "originality",
-        "reasoningMaturity",
-        "other",
-      ] as EssayCategoryKey[])
+  const [openCategories, setOpenCategories] = useState<Set<WeaknessGroupKey>>(
+    () => new Set(WEAKNESS_GROUP_ORDER)
   );
 
-  // 未解決優先、 categoryId で grouping。 unresolved/resolved 別表示
+  // 未解決優先、 群で grouping。 unresolved/resolved 別表示
   const grouped = useMemo(() => {
-    const out: Record<EssayCategoryKey, WeaknessRecord[]> = {
-      structure: [],
-      logic: [],
-      expression: [],
-      reasoningMaturity: [],
-      apAlignment: [],
-      responsiveness: [],
-      originality: [],
-      other: [],
-    };
+    const out = Object.fromEntries(
+      WEAKNESS_GROUP_ORDER.map((k) => [k, [] as WeaknessRecord[]])
+    ) as Record<WeaknessGroupKey, WeaknessRecord[]>;
     for (const w of weaknesses) {
-      out[weaknessCategoryOf(w)].push(w);
+      out[weaknessGroupOf(w)].push(w);
     }
     // 各カテゴリ内: unresolved を上に、 count 降順
-    for (const k of Object.keys(out) as EssayCategoryKey[]) {
+    for (const k of WEAKNESS_GROUP_ORDER) {
       out[k].sort((a, b) => {
         if (a.resolved !== b.resolved) return a.resolved ? 1 : -1;
         return (b.count ?? 0) - (a.count ?? 0);
@@ -230,9 +215,9 @@ function WeaknessesByCategoryList({
     return out;
   }, [weaknesses]);
 
-  const visible = ESSAY_CATEGORY_ORDER.filter((c) => grouped[c].length > 0);
+  const visible = WEAKNESS_GROUP_ORDER.filter((c) => grouped[c].length > 0);
 
-  const toggle = (c: EssayCategoryKey) => {
+  const toggle = (c: WeaknessGroupKey) => {
     setOpenCategories((prev) => {
       const next = new Set(prev);
       if (next.has(c)) next.delete(c);
@@ -261,7 +246,7 @@ function WeaknessesByCategoryList({
                   }`}
                 />
                 <span className="font-semibold">
-                  {ESSAY_CATEGORY_LABELS[cat]}
+                  {WEAKNESS_GROUP_LABELS[cat]}
                 </span>
                 <span className="text-muted-foreground text-xs">
                   {unresolvedCount}件 / 全{items.length}件
@@ -279,6 +264,11 @@ function WeaknessesByCategoryList({
                       >
                         <td className="px-4 py-2.5">
                           <p className="leading-snug break-words">{w.area}</p>
+                          {(w.description || weaknessDescriptionOf(w)) && (
+                            <p className="text-muted-foreground mt-0.5 text-xs">
+                              {w.description || weaknessDescriptionOf(w)}
+                            </p>
+                          )}
                         </td>
                         <td className="px-2 py-2.5 text-center">
                           <WeaknessSourceBadge
