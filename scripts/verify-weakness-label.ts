@@ -214,4 +214,31 @@ assert.equal(
   "structure.mixed_paragraph"
 );
 
+// 「主張が曖昧」は論の中身の話で、助詞や語の誤りではない
+assert.notEqual(resolveCanonical("主張が曖昧")?.id, "expression.grammar");
+assert.notEqual(resolveCanonical("立場が曖昧")?.id, "expression.grammar");
+assert.equal(resolveCanonical("文意が曖昧")?.id, "expression.grammar");
+// 言い換えても同点負けしない
+assert.equal(
+  resolveCanonical("反論に答えられていない")?.id,
+  "reasoning.weak_rebuttal"
+);
+assert.equal(
+  resolveCanonical("設問の要素が欠けている")?.id,
+  "responsiveness.missing_requirement"
+);
+// 「具体性に欠けている」は設問の要素の欠落に流れない
+assert.equal(resolveCanonical("具体性に欠けている")?.id, "logic.weak_evidence");
+// 表記ゆれは誤字ではない。重複は冗長の方
+assert.notEqual(resolveCanonical("表記ゆれがある")?.id, "expression.typo");
+assert.equal(resolveCanonical("同じ語の重複がある")?.id, "expression.verbose");
+// 小論文に面接の ID が付いてきても採らない
+assert.equal(
+  resolveCanonical("具体的なエピソードの欠如", {
+    aiCanonicalId: "iv.no_episode",
+    domain: "essay",
+  })?.id,
+  "logic.weak_evidence"
+);
+
 console.log("[verify-weakness-label] OK");

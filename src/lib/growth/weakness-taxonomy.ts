@@ -69,7 +69,6 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
       "言い直し",
       "焼き直し",
       "同じ内容",
-      "重複",
     ],
   },
   {
@@ -148,6 +147,10 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
       "触れていない",
       "条件を満た",
       "指定された",
+      // 「設問の要素が欠けている」が off_topic の「設問」と同点で負けないように。
+      // 単独の「欠けている」は「具体性に欠けている」も拾うので入れない
+      "要素",
+      "要素が欠け",
     ],
     oldLabels: ["設問が求めた要素に答えていない"],
   },
@@ -270,6 +273,10 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
       "反論に答え",
       "反論を退け",
       "反論の処理",
+      // 「反論に答えられていない」が one_sided の「反論」と同点で負けないように
+      "反論に答えられ",
+      "反論に答えて",
+      "応答が弱",
     ],
     oldLabels: ["反論への再反論が弱い"],
   },
@@ -321,9 +328,13 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
       "語の組み合わせ",
       "意味が取れ",
       "読めない",
-      "曖昧",
-      "あいまい",
-      "わかりにくい",
+      // 単独の「曖昧」は「主張が曖昧」「立場が曖昧」（論の中身の話）も拾うので、
+      // 文の読み取りに関する複合語に絞る
+      "意味が曖昧",
+      "意味があいまい",
+      "文が曖昧",
+      "文意",
+      "意味がわかりにくい",
       "伝わらな",
     ],
     aliases: ["expression.ambiguous"],
@@ -334,7 +345,8 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     category: "expression",
     label: "誤字・脱字が多い",
     description: "漢字や送り仮名の誤り、字の重なりがある",
-    keywords: ["誤字", "脱字", "誤変換", "送り仮名", "表記"],
+    // 「表記」は表記ゆれ（誤字ではない）も拾うので入れない
+    keywords: ["誤字", "脱字", "誤変換", "送り仮名"],
   },
   {
     id: "expression.long_sentence",
@@ -635,9 +647,11 @@ export interface ResolveOptions {
  * 弱点テキストを正規タクソノミーのエントリへ解決する。
  *
  * 優先順:
- *   1. 有効な aiCanonicalId → 即採用
- *   2. keyword スコアリングで最良エントリ (categoryHint 一致は微加点)
- *   3. どれにも当たらなければ null (= 正規化不能 → 呼び出し側で従来挙動)
+ *   1. 有効な aiCanonicalId → 即採用（別名の旧 ID は正本へ寄る）
+ *   2. 正規ラベル・旧ラベルとの完全一致 → そのエントリ
+ *   3. keyword スコアリングで最良エントリ (categoryHint 一致は微加点)
+ *   4. どれにも当たらなければ null (= 正規化不能 → 呼び出し側で従来挙動)
+ * domain が essay のときは、1〜3 のどの段でも面接の iv.* を採らない。
  */
 /**
  * キーワードで正規化してよいテキストの長さの上限。
@@ -751,7 +765,10 @@ export function resolveCanonical(
   opts: ResolveOptions = {}
 ): TaxonomyEntry | null {
   if (isKnownCanonicalId(opts.aiCanonicalId)) {
-    return BY_ID.get(opts.aiCanonicalId) ?? null;
+    const byId = BY_ID.get(opts.aiCanonicalId);
+    // 小論文に面接の ID が付いていたら採らず、キーワードで決め直す
+    if (byId && !(opts.domain === "essay" && byId.id.startsWith("iv.")))
+      return byId;
   }
   const candidates =
     opts.domain === "essay"

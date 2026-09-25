@@ -28,6 +28,7 @@ config({ path: ".env.local" });
 import { writeFileSync } from "node:fs";
 import { adminDb } from "../src/lib/firebase/admin";
 import {
+  getTaxonomyEntry,
   resolveCanonical,
   isWeaknessLabel,
 } from "../src/lib/growth/weakness-taxonomy";
@@ -232,7 +233,9 @@ function keyOf(w: {
   canonicalId?: string;
 }): string {
   return (
-    w.canonicalId ??
+    (w.canonicalId
+      ? (getTaxonomyEntry(w.canonicalId)?.id ?? w.canonicalId)
+      : undefined) ??
     resolveCanonical(w.area, { categoryHint: w.categoryId as Category })?.id ??
     w.area
   );

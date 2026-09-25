@@ -222,4 +222,47 @@ check("「もう見ない」は再び指摘されるまで出さない。解決�
   assert.deepEqual(shown, ["b"]);
 });
 
+// --- v2 の別名 ID と domain -----------------------------------------------------
+check("旧 ID の既存レコードと新ラベルのタグは同じ弱点として比べる", () => {
+  const old = rec({
+    area: "根拠が一般論で具体に乏しい",
+    canonicalId: "originality.no_experience",
+    count: 3,
+    recentHits: [1],
+  });
+  const events = analyzeGrowth([WEAK.label], [old], "essay");
+  assert.deepEqual(
+    events.filter((e) => e.type === "praise" || e.type === "new_weakness"),
+    [],
+    JSON.stringify(events)
+  );
+});
+
+check(
+  "小論文の「具体的なエピソードの欠如」は既存の統合でも面接の弱点に寄らない",
+  () => {
+    const essayRec = rec({ area: "具体的なエピソードの欠如" });
+    const consolidated = updateWeaknessRecords([essayRec], [], {
+      source: "essay",
+      now: day(1),
+    });
+    assert.equal(consolidated.length, 1);
+    assert.equal(consolidated[0].canonicalId, "logic.weak_evidence");
+    // 書き込み側と同じ弱点に1本で畳まれる（2本に割れない）
+    const written = updateWeaknessRecords(
+      [essayRec],
+      ["具体的なエピソードの欠如"],
+      { source: "essay", now: day(1) }
+    );
+    assert.equal(written.length, 1);
+    assert.equal(written[0].canonicalId, "logic.weak_evidence");
+    // 面接の提出で付いた弱点は面接の ID のまま
+    const iv = updateWeaknessRecords([], ["具体的なエピソードの欠如"], {
+      source: "interview",
+      now: day(1),
+    });
+    assert.equal(iv[0].canonicalId, "iv.no_episode");
+  }
+);
+
 console.log(`verify-weakness-records: ${checks} checks passed`);

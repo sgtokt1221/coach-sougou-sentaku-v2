@@ -10,6 +10,7 @@ import { findSimilarArea } from "@/lib/growth/weakness-similarity";
 import {
   resolveCanonical,
   canonicalLabel,
+  getTaxonomyEntry,
   isWeaknessLabel,
   isLocationOnlyLabel,
 } from "@/lib/growth/weakness-taxonomy";
@@ -23,12 +24,17 @@ function weaknessKey(
   opts?: {
     categoryHint?: WeaknessRecord["categoryId"];
     canonicalId?: string | null;
+    domain?: ResolveDomain;
   }
 ): string {
-  if (opts?.canonicalId) return opts.canonicalId;
+  // 別名の旧 ID（originality.no_experience 等）は正本 ID へ寄せる。
+  // 寄せないと同じ弱点が旧 ID と新 ID で別物になり、改善と新規が同時に出る
+  if (opts?.canonicalId) {
+    return getTaxonomyEntry(opts.canonicalId)?.id ?? opts.canonicalId;
+  }
   const entry = resolveCanonical(text, {
     categoryHint: opts?.categoryHint,
-    aiCanonicalId: opts?.canonicalId ?? null,
+    domain: opts?.domain,
   });
   return entry ? entry.id : text;
 }
@@ -52,6 +58,19 @@ function domainOf(source: WeaknessRecord["source"]): string {
   if (source === "interview" || source === "interview_skill_check")
     return "interview";
   return source; // "lesson"（講師が入れた弱点）は提出では動かさない
+}
+
+type ResolveDomain = "essay" | "interview";
+
+/**
+ * 正規タクソノミーへ寄せるときの候補の範囲。面接の提出・両方で指摘された弱点は
+ * 面接の iv.* も候補にし、それ以外（小論文・講師が入れた弱点）は小論文の弱点だけ。
+ * 小論文の「具体的なエピソードの欠如」が面接の iv.no_episode に寄らないようにする。
+ */
+function resolveDomainOf(source: WeaknessRecord["source"]): ResolveDomain {
+  return source === "both" || domainOf(source) === "interview"
+    ? "interview"
+    : "essay";
 }
 
 /** この弱点が、この分野の提出で「指摘されたか／されなかったか」を数える対象か */
@@ -78,7 +97,10 @@ export function analyzeGrowth(
 ): GrowthEvent[] {
   const events: GrowthEvent[] = [];
   // 今回の弱点を正規キーへ畳んで比較する (表記ゆれを吸収)
-  const currentKeys = new Set(currentWeaknessTags.map((t) => weaknessKey(t)));
+  const domain = resolveDomainOf(source);
+  const currentKeys = new Set(
+    currentWeaknessTags.map((t) => weaknessKey(t, { domain }))
+  );
 
   for (const weakness of existingWeaknesses) {
     if (weakness.resolved) continue;
@@ -88,6 +110,7 @@ export function analyzeGrowth(
     const key = weaknessKey(weakness.area, {
       categoryHint: weakness.categoryId,
       canonicalId: weakness.canonicalId,
+      domain: resolveDomainOf(weakness.source),
     });
     const isInCurrent = currentKeys.has(key);
 
@@ -129,12 +152,13 @@ export function analyzeGrowth(
       weaknessKey(w.area, {
         categoryHint: w.categoryId,
         canonicalId: w.canonicalId,
+        domain: resolveDomainOf(w.source),
       })
     )
   );
   const seenNew = new Set<string>();
   for (const tag of currentWeaknessTags) {
-    const key = weaknessKey(tag);
+    const key = weaknessKey(tag, { domain });
     if (existingKeys.has(key) || seenNew.has(key)) continue;
     seenNew.add(key);
     events.push({
@@ -216,6 +240,7 @@ function consolidateExisting(
     const entry = resolveCanonical(w.area, {
       categoryHint: categoryHints?.get(w.area) ?? w.categoryId,
       aiCanonicalId: w.canonicalId ?? null,
+      domain: resolveDomainOf(w.source),
     });
     if (!entry) {
       passthrough.push(w);
@@ -339,7 +364,7 @@ export function updateWeaknessRecords(
       categoryHint: resolveCategory(tag),
       aiCanonicalId: canonicalHints?.get(tag) ?? null,
       supportText: detail,
-      domain: newSource === "interview" ? "interview" : "essay",
+      domain: resolveDomainOf(newSource),
     });
 
     if (entry) {
