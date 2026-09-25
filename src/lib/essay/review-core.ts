@@ -553,11 +553,17 @@ export function withSentenceCheckIssues(
     issues.some((i) => re.test(`${i.area}${i.message}`));
   const broken = check.brokenSentences.filter((b) => b.kind !== "typo");
   if (broken.length >= 2 && !mentions(/ねじれ|主語と述語|主述|助詞|文法/)) {
+    const twists = broken.filter((b) => b.kind === "twist");
+    // ねじれと助詞では直し方が違うので、多い方の名前で積む
+    const isTwist = twists.length * 2 >= broken.length;
+    const sample = isTwist ? twists[0] : broken[0];
     out.push({
-      area: "誤字脱字・文法ミスがある",
+      area: isTwist
+        ? "主語と述語が噛み合わない文がある"
+        : "誤字脱字・文法ミスがある",
       category: "expression",
       count: 1,
-      message: `「${broken[0].original}」など、主語と述語や助詞が崩れた文が${broken.length}文あります。`,
+      message: `「${sample.original}」など、${isTwist ? "主語と述語が噛み合わない" : "助詞や語の組み合わせが崩れた"}文が${broken.length}文あります。`,
     });
   }
   const contradiction = check.contradictions[0];

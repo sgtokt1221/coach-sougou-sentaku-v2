@@ -227,20 +227,19 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     ],
   },
   {
+    // 「誤字脱字・文法ミス」から分けた（2026-09-25）。誤字と主述のねじれでは直し方が
+    // 違い、ねじれが続く生徒（本番で説明の段落ごとに起きていた）の課題が誤字と
+    // 同じ名前で見えていた
+    id: "expression.twist",
+    category: "expression",
+    label: "主語と述語が噛み合わない文がある",
+    keywords: ["主述", "ねじれ", "主語と述語", "述語"],
+  },
+  {
     id: "expression.grammar",
     category: "expression",
     label: "誤字脱字・文法ミスがある",
-    keywords: [
-      "誤字",
-      "脱字",
-      "文法",
-      "表記",
-      "主述",
-      "ねじれ",
-      "てにをは",
-      "主語と述語",
-      "助詞",
-    ],
+    keywords: ["誤字", "脱字", "文法", "表記", "てにをは", "助詞"],
   },
   {
     id: "expression.tone",
