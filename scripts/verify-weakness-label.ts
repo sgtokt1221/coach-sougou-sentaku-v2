@@ -9,10 +9,15 @@
  */
 import assert from "node:assert";
 import {
+  WEAKNESS_TAXONOMY,
+  canonicalLabel,
+  getTaxonomyEntry,
   isLocationOnlyLabel,
   isWeaknessLabel,
   resolveCanonical,
   weaknessCategoryOf,
+  weaknessDescriptionOf,
+  weaknessGroupOf,
 } from "../src/lib/growth/weakness-taxonomy";
 
 // 実データで返ってきた「場所だけ」のラベル（積んではいけない）
@@ -132,6 +137,81 @@ assert.equal(
     categoryId: "logic",
   }),
   "reasoningMaturity"
+);
+
+// --- タクソノミー v2（2026-09-26） -------------------------------------------
+// まとめた旧 ID は正本へ寄る
+for (const [old, now] of [
+  ["originality.no_experience", "logic.weak_evidence"],
+  ["originality.abstract", "logic.weak_evidence"],
+  ["logic.causal_error", "logic.leap"],
+  ["expression.ambiguous", "expression.grammar"],
+] as const) {
+  assert.equal(getTaxonomyEntry(old)?.id, now, `${old} → ${now}`);
+  assert.equal(resolveCanonical("何でもよい", { aiCanonicalId: old })?.id, now);
+}
+// 旧ラベル（保存済みの area）は正本へ寄る
+for (const [oldLabel, now] of [
+  ["結論が不明確・欠落している", "structure.no_conclusion"],
+  ["段落のつながり・論述の流れが弱い", "structure.weak_flow"],
+  ["根拠・データが不足している", "logic.weak_evidence"],
+  ["根拠が一般論で具体に乏しい", "logic.weak_evidence"],
+  ["抽象的で具体性に欠ける", "logic.weak_evidence"],
+  ["誤字脱字・文法ミスがある", "expression.grammar"],
+  ["主張に矛盾・一貫性の欠如がある", "logic.contradiction"],
+  ["設問・テーマから論点がずれている", "structure.off_topic"],
+] as const) {
+  assert.equal(resolveCanonical(oldLabel)?.id, now, `${oldLabel} → ${now}`);
+}
+// 正規ラベルは自分自身へ戻り、全エントリに説明がある
+for (const e of WEAKNESS_TAXONOMY) {
+  assert.equal(
+    resolveCanonical(e.label)?.id,
+    e.id,
+    `自分へ戻らない: ${e.label}`
+  );
+  assert.ok(e.description.length > 0, `説明が無い: ${e.id}`);
+  assert.equal(canonicalLabel(e.id), e.label);
+}
+// 小論文の弱点は面接の ID に寄らない
+assert.equal(
+  resolveCanonical("具体的なエピソードの欠如", {
+    domain: "essay",
+  })?.id.startsWith("iv."),
+  false
+);
+assert.equal(
+  resolveCanonical("具体的なエピソードの欠如", { domain: "interview" })?.id,
+  "iv.no_episode"
+);
+// 群: 面接の ID は interview、それ以外は層（採点の軸）
+assert.equal(
+  weaknessGroupOf({
+    area: "結論から話せていない",
+    canonicalId: "iv.clarity.unstructured",
+  }),
+  "interview"
+);
+assert.equal(
+  weaknessGroupOf({ area: "主語と述語が噛み合わない文がある" }),
+  "expression"
+);
+assert.equal(
+  weaknessDescriptionOf({ area: "根拠・データが不足している" }),
+  getTaxonomyEntry("logic.weak_evidence")!.description
+);
+// 新しい弱点
+assert.equal(
+  resolveCanonical("高齢者と低所得者を一括りにしている", {
+    categoryHint: "logic",
+  })?.id,
+  "logic.overgeneralize"
+);
+assert.equal(
+  resolveCanonical("1つの段落に話題が混在している", {
+    categoryHint: "structure",
+  })?.id,
+  "structure.mixed_paragraph"
 );
 
 console.log("[verify-weakness-label] OK");

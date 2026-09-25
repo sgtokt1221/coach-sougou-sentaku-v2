@@ -339,6 +339,7 @@ export function updateWeaknessRecords(
       categoryHint: resolveCategory(tag),
       aiCanonicalId: canonicalHints?.get(tag) ?? null,
       supportText: detail,
+      domain: newSource === "interview" ? "interview" : "essay",
     });
 
     if (entry) {

@@ -76,9 +76,7 @@ check("問番号だけのラベルは場所を指すだけとみなす", () => {
 
 // --- 回数が合算され直さない ---------------------------------------------------
 const WEAK = WEAKNESS_TAXONOMY.find((e) => e.id === "logic.weak_evidence")!;
-const NOEXP = WEAKNESS_TAXONOMY.find(
-  (e) => e.id === "originality.no_experience"
-)!;
+const NOEXP = WEAKNESS_TAXONOMY.find((e) => e.id === "logic.leap")!;
 
 check("別の正規ラベル同士は統合されず、提出を重ねても回数が増えない", () => {
   let recs = [
