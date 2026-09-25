@@ -19,8 +19,9 @@ import {
 /**
  * 弱点の統合キーを求める。正規タクソノミーに解決できればその ID、
  * できなければ素の area 文字列を返す (= 従来挙動の後方互換)。
+ * 作り直し（rebuild-weaknesses）の「もう見ない」の引き継ぎも同じキーで照合する。
  */
-function weaknessKey(
+export function weaknessKey(
   text: string,
   opts?: {
     categoryHint?: WeaknessRecord["categoryId"];
@@ -74,7 +75,9 @@ type ResolveDomain = "essay" | "interview";
  * それ以外（小論文の提出）は小論文の弱点だけ。
  * 小論文の「具体的なエピソードの欠如」が面接の iv.no_episode に寄らないようにする。
  */
-function resolveDomainOf(source: WeaknessRecord["source"]): ResolveDomain {
+export function resolveDomainOf(
+  source: WeaknessRecord["source"]
+): ResolveDomain {
   return source === "both" ||
     source === "lesson" ||
     domainOf(source) === "interview"
@@ -301,6 +304,35 @@ export interface UpdateWeaknessOptions {
    * 数えると、結論を書いていない練習で「結論の弱点」が解決済みになる。
    */
   countMisses?: boolean;
+}
+
+/**
+ * 添削の repeatedIssues から、updateWeaknessRecords に渡す弱点名とヒントを作る。
+ * 提出の経路（添削・講座・宿題・作り直し）で同じ材料を渡す（ずれると同じ答案でも
+ * 経路によって振り分け先が変わる）。
+ */
+export function hintsFromIssues(
+  issues: readonly {
+    area?: string;
+    category?: WeaknessRecord["categoryId"];
+    message?: string;
+  }[]
+): {
+  tags: string[];
+  categoryHints: Map<string, WeaknessRecord["categoryId"]>;
+  detailHints: Map<string, string>;
+} {
+  const tags: string[] = [];
+  const categoryHints = new Map<string, WeaknessRecord["categoryId"]>();
+  const detailHints = new Map<string, string>();
+  for (const issue of issues) {
+    if (!issue.area) continue;
+    tags.push(issue.area);
+    if (issue.category) categoryHints.set(issue.area, issue.category);
+    const message = issue.message?.trim();
+    if (message) detailHints.set(issue.area, message);
+  }
+  return { tags, categoryHints, detailHints };
 }
 
 export function updateWeaknessRecords(

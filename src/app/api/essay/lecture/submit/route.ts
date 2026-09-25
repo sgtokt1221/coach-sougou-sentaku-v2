@@ -14,7 +14,11 @@ import {
   EssayReviewParseError,
 } from "@/lib/essay/review-core";
 import type { SentenceCheckResult } from "@/lib/essay/sentence-check-judge";
-import { analyzeGrowth, updateWeaknessRecords } from "@/lib/growth/analyze";
+import {
+  analyzeGrowth,
+  hintsFromIssues,
+  updateWeaknessRecords,
+} from "@/lib/growth/analyze";
 import { getLectureById } from "@/data/essay-lectures";
 import { getEssayBlock } from "@/lib/types/essay-block";
 import { getEssayForm, formStepsOf } from "@/lib/types/essay-form";
@@ -195,12 +199,18 @@ export async function POST(request: NextRequest) {
     }
 
     // 助言の自由文は混ぜない（混ぜると誰にでも付く弱点に落ちる）
-    const weaknessTags: string[] = feedback.repeatedIssues.map((i) => i.area);
+    const {
+      tags: weaknessTags,
+      categoryHints,
+      detailHints,
+    } = hintsFromIssues(feedback.repeatedIssues);
     const updatedWeaknesses = updateWeaknessRecords(
       loadedWeaknesses.records,
       weaknessTags,
       {
         source: "essay",
+        categoryHints,
+        detailHints,
         // 型の1ブロックだけを書く課題は答案全体を見ていない。挙がらなかった弱点を
         // 「指摘されなかった」と数えると、結論を書いていない課題で結論の弱点が解決する
         countMisses: !lecture.exercise.blockId,

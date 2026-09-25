@@ -28,6 +28,7 @@ import {
   type SentenceCheckResult,
 } from "../src/lib/essay/sentence-check-judge";
 import { deriveWeaknessIssues } from "../src/lib/essay/derive-weakness-issues";
+import type { RepeatedIssue } from "../src/lib/types/essay";
 
 const APPLY = process.argv.includes("--apply");
 const ONLY_NAMES = (
@@ -87,7 +88,7 @@ async function main() {
     uid: string;
     name: string;
     text: string;
-    repeatedIssues: never[];
+    repeatedIssues: RepeatedIssue[];
   }[] = [];
   for (const u of targets) {
     const essays = await db
@@ -127,9 +128,13 @@ async function main() {
         continue;
       }
       cache[job.id] = { uid: job.uid, result };
-      const added =
-        deriveWeaknessIssues({ repeatedIssues: job.repeatedIssues }, result)
-          .length > job.repeatedIssues.length;
+      // 件数で比べると、作り直しで落ちた派生分と今回足した分が相殺して見逃す。
+      // 弱点名（派生分は正規ラベル）の集合で、今回新しく積まれるものがあるかを見る
+      const before = new Set(job.repeatedIssues.map((i) => i.area));
+      const added = deriveWeaknessIssues(
+        { repeatedIssues: job.repeatedIssues },
+        result
+      ).some((i) => !before.has(i.area));
       const s = perStudent.get(job.name) ?? {
         essays: 0,
         withIssue: 0,

@@ -15,11 +15,12 @@ import type {
   RetryComparison,
   EssayScores,
 } from "@/lib/types/essay";
-import { analyzeGrowth, updateWeaknessRecords } from "@/lib/growth/analyze";
 import {
-  categorizeWeakness,
-  type EssayCategoryKey,
-} from "@/lib/growth/weakness-category";
+  analyzeGrowth,
+  hintsFromIssues,
+  updateWeaknessRecords,
+} from "@/lib/growth/analyze";
+import { categorizeWeakness } from "@/lib/growth/weakness-category";
 import type { WeaknessRecord } from "@/lib/types/growth";
 import { logEssaySubmission } from "@/lib/bigquery/logger";
 import { computeRetryComparison } from "@/lib/essay/retry-comparison";
@@ -115,6 +116,11 @@ export async function POST(request: NextRequest) {
     let rootEssayId: string = essayId;
     let parentEssayIdResolved: string | null = null;
     let attemptNumber = 1;
+    /**
+     * 講座のブロック課題（1ブロックだけ書く）か。やり直しはこの経路を通るので親答案から
+     * 引き継ぐ（引き継がないと、やり直しだけ字数不足・要求の欠落が弱点に積まれる）
+     */
+    let partial = false;
     let parentSnapshot: {
       id: string;
       attemptNumber: number;
@@ -143,6 +149,7 @@ export async function POST(request: NextRequest) {
                   ? pdata.attemptNumber
                   : 1;
               attemptNumber = parentAttempt + 1;
+              partial = isPartialEssay(pdata);
               if (pdata.scores && pdata.feedback) {
                 parentSnapshot = {
                   id: body.parentEssayId,
@@ -155,7 +162,7 @@ export async function POST(request: NextRequest) {
                   feedback: feedbackWithDerivedIssues(
                     pdata.feedback as EssayFeedback,
                     pdata.sentenceCheck,
-                    { partial: isPartialEssay(pdata) }
+                    { partial }
                   ),
                 };
               }
@@ -205,6 +212,7 @@ export async function POST(request: NextRequest) {
           }
           essayUserId = existingEssay.data()?.userId ?? requestUserId;
           const existingData = existingEssay.data()!;
+          partial = partial || isPartialEssay(existingData);
           // 既存ドキュメントにチェーン情報が無い場合は補完
           if (!existingData.rootEssayId || !existingData.attemptNumber) {
             const retryContext = parentEssayIdResolved
@@ -306,6 +314,7 @@ export async function POST(request: NextRequest) {
         wordLimit: body.wordLimit,
         admissionPolicy,
         weaknessList,
+        partial,
         ...(parentSnapshot
           ? {
               previousAttempt: {
@@ -361,31 +370,25 @@ export async function POST(request: NextRequest) {
      * 「結論を一文で言い切る」のような助言まで「結論が不明確・欠落している」に
      * 落ちていた。結果、誰が書いても同じ弱点が並び、回数も実態と合わなくなる。
      */
-    const weaknessTags: string[] = feedback.repeatedIssues.map(
-      (issue) => issue.area
-    );
-
-    // AI が出力した category を hint として伝播 (= 未出力なら fallback)
-    // 許可値は weakness-category.ts（EssayCategoryKey）を正本にする
-    const categoryHints = new Map<string, EssayCategoryKey>();
-    /**
-     * 弱点の具体例（「答案のこの一文がこう弱い」）。
-     *
-     * ラベルは「結論が不明確・欠落している」のように束ねるためのもので、
-     * それだけだと誰の弱点リストも同じ文言になる。今回の答案の話を残す。
-     */
-    const detailHints = new Map<string, string>();
-    for (const issue of feedback.repeatedIssues) {
-      if (issue.category) categoryHints.set(issue.area, issue.category);
-      if (issue.message?.trim())
-        detailHints.set(issue.area, issue.message.trim());
-    }
+    // category はヒント（未出力なら fallback 分類）、message は弱点の具体例
+    // （ラベルだけだと誰の弱点リストも同じ文言になるので、今回の答案の話を残す）
+    const {
+      tags: weaknessTags,
+      categoryHints,
+      detailHints,
+    } = hintsFromIssues(feedback.repeatedIssues);
 
     // 弱点レコードを更新し成長イベントを生成
     const updatedWeaknesses = updateWeaknessRecords(
       loadedWeaknesses?.records ?? [],
       weaknessTags,
-      { source: "essay", categoryHints, detailHints }
+      {
+        source: "essay",
+        categoryHints,
+        detailHints,
+        // ブロック課題のやり直しは答案全体を見ていない（講座の提出と同じ扱い）
+        countMisses: !partial,
+      }
     );
     const growthEvents = analyzeGrowth(
       weaknessTags,
@@ -422,6 +425,8 @@ export async function POST(request: NextRequest) {
             // 点検由来の弱点を表示・作り直しで再現できるように点検結果も残す
             ...sentenceCheckFields(sentenceCheck, "review"),
             weaknessTags,
+            // 作り直し・表示が提出当時の扱いで弱点を派生できるように残す（boolean のみ）
+            partial,
             status: "reviewed",
             reviewedAt: FieldValue.serverTimestamp(),
             // 画像モードは /api/essay/upload が先に doc を作るため、作成時の

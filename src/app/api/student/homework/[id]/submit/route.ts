@@ -19,7 +19,11 @@ import {
   scoreInterviewCore,
   InterviewScoreParseError,
 } from "@/lib/interview/score-core";
-import { analyzeGrowth, updateWeaknessRecords } from "@/lib/growth/analyze";
+import {
+  analyzeGrowth,
+  hintsFromIssues,
+  updateWeaknessRecords,
+} from "@/lib/growth/analyze";
 import type { WeaknessRecord } from "@/lib/types/growth";
 import type { HomeworkAssignment } from "@/lib/types/homework";
 import type { EssayScores, EssayFeedback } from "@/lib/types/essay";
@@ -302,11 +306,15 @@ async function submitEssay(args: {
   }
 
   // 助言の自由文は混ぜない（混ぜると誰にでも付く弱点に落ちる）
-  const weaknessTags: string[] = feedback.repeatedIssues.map((i) => i.area);
+  const {
+    tags: weaknessTags,
+    categoryHints,
+    detailHints,
+  } = hintsFromIssues(feedback.repeatedIssues);
   const updatedWeaknesses = updateWeaknessRecords(
     loadedWeaknesses.records,
     weaknessTags,
-    { source: "essay" }
+    { source: "essay", categoryHints, detailHints }
   );
   const growthEvents = analyzeGrowth(weaknessTags, existingWeaknesses, "essay");
 

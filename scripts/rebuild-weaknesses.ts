@@ -28,7 +28,6 @@ config({ path: ".env.local" });
 import { writeFileSync } from "node:fs";
 import { adminDb } from "../src/lib/firebase/admin";
 import {
-  getTaxonomyEntry,
   resolveCanonical,
   isWeaknessLabel,
 } from "../src/lib/growth/weakness-taxonomy";
@@ -36,6 +35,9 @@ import { categorizeWeakness } from "../src/lib/growth/weakness-category";
 import {
   updateWeaknessRecords,
   archiveOldWeaknesses,
+  hintsFromIssues,
+  resolveDomainOf,
+  weaknessKey,
   type WeaknessSource,
 } from "../src/lib/growth/analyze";
 import {
@@ -80,7 +82,7 @@ type Category = ReturnType<typeof categorizeWeakness>;
 
 interface Issue {
   area?: string;
-  category?: string;
+  category?: Category;
   message?: string;
 }
 
@@ -204,15 +206,8 @@ function replay(
 ): WeaknessRecord[] {
   let recs = initial;
   for (const sub of subs) {
-    const categoryHints = new Map<string, WeaknessRecord["categoryId"]>();
-    const detailHints = new Map<string, string>();
-    for (const issue of sub.issues) {
-      if (!issue.area) continue;
-      if (issue.category)
-        categoryHints.set(issue.area, issue.category as Category);
-      if (issue.message?.trim())
-        detailHints.set(issue.area, issue.message.trim());
-    }
+    // 本番の書き込み経路と同じ材料（tags は保存済みの弱点名を優先するので使わない）
+    const { categoryHints, detailHints } = hintsFromIssues(sub.issues);
     recs = updateWeaknessRecords(recs, sub.tags, {
       source: sub.source,
       categoryHints,
@@ -225,19 +220,17 @@ function replay(
   return archiveOldWeaknesses(recs, new Date());
 }
 
-/** 引き継ぎのキー（正規ラベルに寄せる） */
-function keyOf(w: {
-  area: string;
-  categoryId?: string;
-  canonicalId?: string;
-}): string {
-  return (
-    (w.canonicalId
-      ? (getTaxonomyEntry(w.canonicalId)?.id ?? w.canonicalId)
-      : undefined) ??
-    resolveCanonical(w.area, { categoryHint: w.categoryId as Category })?.id ??
-    w.area
-  );
+/**
+ * 引き継ぎのキー（正規ラベルに寄せる）。書き込み経路と同じ weaknessKey を
+ * 記録の source から決めた domain で使う（小論文の弱点に面接の iv.* を当てない）。
+ * ずれると作り直し前後でキーが食い違い、「もう見ない」が引き継がれない
+ */
+function keyOf(w: WeaknessRecord): string {
+  return weaknessKey(w.area, {
+    categoryHint: w.categoryId,
+    canonicalId: w.canonicalId,
+    domain: resolveDomainOf(w.source),
+  });
 }
 
 async function main() {
