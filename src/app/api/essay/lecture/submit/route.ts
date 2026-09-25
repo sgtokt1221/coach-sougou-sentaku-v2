@@ -10,8 +10,10 @@ import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
 import {
   reviewEssayCore,
+  sentenceCheckFields,
   EssayReviewParseError,
 } from "@/lib/essay/review-core";
+import type { SentenceCheckResult } from "@/lib/essay/sentence-check-judge";
 import { analyzeGrowth, updateWeaknessRecords } from "@/lib/growth/analyze";
 import { getLectureById } from "@/data/essay-lectures";
 import { getEssayBlock } from "@/lib/types/essay-block";
@@ -160,6 +162,7 @@ export async function POST(request: NextRequest) {
     step = "review";
     let scores: EssayScores;
     let feedback: EssayFeedback;
+    let sentenceCheck: SentenceCheckResult | null = null;
     try {
       const coreResult = await reviewEssayCore({
         ocrText: answerText,
@@ -177,6 +180,7 @@ export async function POST(request: NextRequest) {
       });
       scores = coreResult.scores;
       feedback = coreResult.feedback;
+      sentenceCheck = coreResult.sentenceCheck;
     } catch (err) {
       if (err instanceof EssayReviewParseError) {
         return NextResponse.json(
@@ -214,6 +218,8 @@ export async function POST(request: NextRequest) {
       {
         scores,
         feedback,
+        // 点検由来の弱点を表示・作り直しで再現できるように点検結果も残す
+        ...sentenceCheckFields(sentenceCheck, "review"),
         weaknessTags,
         status: "reviewed",
         reviewedAt: FieldValue.serverTimestamp(),

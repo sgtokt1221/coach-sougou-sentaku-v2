@@ -24,7 +24,10 @@ config({ path: ".env.local" });
 
 import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "../src/lib/firebase/admin";
-import { reviewEssayCore } from "../src/lib/essay/review-core";
+import {
+  reviewEssayCore,
+  sentenceCheckFields,
+} from "../src/lib/essay/review-core";
 import { isPartialEssay } from "../src/lib/essay/derive-weakness-issues";
 import { prepareAdmissionPolicy } from "../src/lib/ai/admission-policy";
 import { AI_PROMPT_VERSIONS } from "../src/lib/ai/prompt-versions";
@@ -139,6 +142,7 @@ async function main() {
           {
             scores: after,
             feedback: out.feedback,
+            ...sentenceCheckFields(out.sentenceCheck, "rescore"),
             // 元に戻せるよう旧スコアを退避（既にあれば上書きしない）
             ...(e.scoresBeforeV7 ? {} : { scoresBeforeV7: before }),
             // v14（配点の重み付け）の直前スコア。v7 の退避とは別に持つ

@@ -194,6 +194,60 @@ const areas = (xs: { area: string }[]) => xs.map((x) => x.area).sort();
   assert.deepEqual(areas(out), [L("expression.twist")]);
   assert.equal(out[0].derived, undefined, "AI の弱点に目印を付けない");
 }
+// 点検由来の派生分（derived: true）は、点検結果が無ければ残り、あれば作り直される。
+// 判定欄由来の派生分は check=null でも判定欄から作り直される
+{
+  const sentenceDerived = {
+    area: L("expression.grammar"),
+    category: "expression" as const,
+    count: 1,
+    message: "「AがBを行く。」など、助詞や語の使い方が崩れた文が2文あります。",
+    derived: true,
+  };
+  const fieldDerived = {
+    area: L("responsiveness.too_short"),
+    category: "responsiveness" as const,
+    count: 1,
+    message: "指定字数の50%にとどまっている。",
+    derived: true,
+  };
+  // check=null: 点検由来は残る。判定欄由来は判定欄（fillRate 50）から作り直される
+  const kept = deriveWeaknessIssues(
+    {
+      repeatedIssues: [sentenceDerived, fieldDerived],
+      quantitativeAnalysis: { fillRate: 50 } as never,
+    },
+    null
+  );
+  assert.deepEqual(
+    areas(kept),
+    [L("expression.grammar"), L("responsiveness.too_short")].sort()
+  );
+  assert.equal(kept.length, 2, "作り直しで二重にならない");
+  // check=null でも、判定欄が変われば判定欄由来は消える（点検由来は残る）
+  assert.deepEqual(
+    areas(
+      deriveWeaknessIssues(
+        {
+          repeatedIssues: [sentenceDerived, fieldDerived],
+          quantitativeAnalysis: { fillRate: 95 } as never,
+        },
+        null
+      )
+    ),
+    [L("expression.grammar")]
+  );
+  // check あり: 点検由来も作り直される（今回の点検では誤字3文だけ）
+  assert.deepEqual(
+    areas(
+      deriveWeaknessIssues(
+        { repeatedIssues: [sentenceDerived] },
+        { brokenSentences: broken("typo", 3), contradictions: [] }
+      )
+    ),
+    [L("expression.typo")]
+  );
+}
 // AI へ渡す過去の弱点一覧から外すもの（canonicalId でも正規ラベルでも判定できる）
 {
   for (const id of MACHINE_ONLY_ISSUE_IDS) {
@@ -287,8 +341,19 @@ const areas = (xs: { area: string }[]) => xs.map((x) => x.area).sort();
     },
   ];
   for (const i of legacy) assert.ok(isLegacyDerivedIssue(i), i.message);
-  // 点検の結果が無くなれば（=今の規則では積まない）旧派生分は消える
-  assert.deepEqual(deriveWeaknessIssues({ repeatedIssues: legacy }, null), []);
+  // 点検の結果が保存されていない（check=null）なら、作り直せないので旧派生分は残す
+  assert.deepEqual(
+    deriveWeaknessIssues({ repeatedIssues: legacy }, null),
+    legacy
+  );
+  // 点検の結果があり、今の規則では積まない（崩れた文が無い）なら旧派生分は消える
+  assert.deepEqual(
+    deriveWeaknessIssues(
+      { repeatedIssues: legacy },
+      { brokenSentences: [], contradictions: [] }
+    ),
+    []
+  );
   // 点検の結果があれば、今の規則で目印付きとして作り直される
   const rebuilt = deriveWeaknessIssues(
     { repeatedIssues: legacy.slice(0, 1) },

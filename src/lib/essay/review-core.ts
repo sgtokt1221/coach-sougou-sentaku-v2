@@ -76,6 +76,12 @@ export interface EssayReviewCoreOutput {
   scores: EssayScores;
   feedback: EssayFeedback;
   rawText: string;
+  /**
+   * 1文ずつの点検の結果（取れなかったら null）。答案に保存する
+   * （sentenceCheckFields）。保存しないと、表示・作り直し・集計で点検由来の
+   * 弱点（ねじれ・助詞・誤字・矛盾）を作り直せない
+   */
+  sentenceCheck: SentenceCheckResult | null;
   /** 検証・費用集計用。保存はしない（使用量の合計だけ aiMetadata に載せる） */
   telemetry: EssayReviewTelemetry;
 }
@@ -480,11 +486,35 @@ ${input.ocrText}
     scores,
     feedback,
     rawText,
+    sentenceCheck,
     telemetry: {
       calls,
       durationMs,
       droppedLanguageCorrections:
         parsed.feedback.languageCorrections.length - reviewCorrections.length,
+    },
+  };
+}
+
+/**
+ * 答案に保存する点検結果（essays/{id}.sentenceCheck）。
+ * scripts/backfill-sentence-check.ts と同じ形（結果＋checkedAt＋source）で、
+ * 読み出し側（data.sentenceCheck）はどちらも SentenceCheckResult として読む。
+ * 点検が取れなかったときは何も書かない（Firestore は undefined を拒否する）
+ */
+export function sentenceCheckFields(
+  check: SentenceCheckResult | null,
+  source: "review" | "rescore"
+): {
+  sentenceCheck?: SentenceCheckResult & { checkedAt: string; source: string };
+} {
+  if (!check) return {};
+  return {
+    sentenceCheck: {
+      brokenSentences: check.brokenSentences,
+      contradictions: check.contradictions,
+      checkedAt: new Date().toISOString(),
+      source,
     },
   };
 }

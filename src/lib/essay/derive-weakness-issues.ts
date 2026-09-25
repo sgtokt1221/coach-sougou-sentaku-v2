@@ -69,16 +69,28 @@ const MISREADING_MAX = 100;
 const REQUIREMENTS_SHOWN = 3;
 
 /** 添削の判定欄から積みうる弱点の正本 ID（正本に存在することは verify-derive-issues.ts で担保） */
-export const DERIVED_ISSUE_IDS = [
+/**
+ * 1文ずつの点検（sentenceCheck）から積む弱点。点検結果は答案に保存されて
+ * いないことがある（保存を始める前の答案で、backfill していないもの）ので、
+ * 材料が無いときは前回の派生分を落とさず残す（落とすと作り直せずに消える）
+ */
+export const SENTENCE_DERIVED_IDS = [
   "expression.twist",
   "expression.grammar",
   "expression.typo",
   "logic.contradiction",
+] as const;
+/** 判定欄（feedback に保存済み）から積む弱点。いつでも作り直せるので毎回落とす */
+export const FIELD_DERIVED_IDS = [
   "structure.off_topic",
   "responsiveness.missing_requirement",
   "responsiveness.too_short",
   "responsiveness.misread",
   "responsiveness.knowledge_error",
+] as const;
+export const DERIVED_ISSUE_IDS = [
+  ...SENTENCE_DERIVED_IDS,
+  ...FIELD_DERIVED_IDS,
 ] as const;
 type DerivedIssueId = (typeof DERIVED_ISSUE_IDS)[number];
 
@@ -181,16 +193,32 @@ export function isLegacyDerivedIssue(i: {
   );
 }
 
+/** 派生分（derived: true）が点検由来の弱点か。area（正規ラベル）から正本 ID を引く */
+function isSentenceDerived(i: RepeatedIssue): boolean {
+  const id =
+    DERIVED_ISSUE_IDS.find((d) => canonicalLabel(d) === i.area) ??
+    resolveCanonical(i.area ?? "", {
+      categoryHint: i.category ?? categorizeWeakness(i.area ?? ""),
+      supportText: i.message,
+      domain: "essay",
+    })?.id;
+  return SENTENCE_DERIVED_IDS.some((d) => d === id);
+}
+
 export function deriveWeaknessIssues(
   feedback: DerivableFeedback,
   check: SentenceCheckResult | null | undefined,
   opts: DeriveOptions = {}
 ): RepeatedIssue[] {
-  // 前回の派生分（derived）は落としてから作り直す。規則を変えても作り直しで
-  // 追随でき、同じ入力に何度通しても結果が変わらない（冪等）
-  const issues = (feedback.repeatedIssues ?? []).filter(
-    (i) => i.derived !== true && !isLegacyDerivedIssue(i)
-  );
+  // 前回の派生分（derived と v26 の旧形式）は落としてから作り直す。規則を変えても
+  // 作り直しで追随でき、同じ入力に何度通しても結果が変わらない（冪等）。
+  // ただし点検由来のものは、点検結果（check）があるときだけ落とす。無いのに落とすと
+  // 作り直せず、エラーも出ずに弱点が消える
+  const issues = (feedback.repeatedIssues ?? []).filter((i) => {
+    if (isLegacyDerivedIssue(i)) return !check;
+    if (i.derived !== true) return true;
+    return isSentenceDerived(i) ? !check : false;
+  });
   const present = new Set<string>();
   for (const i of issues) {
     const e = resolveCanonical(i.area ?? "", {

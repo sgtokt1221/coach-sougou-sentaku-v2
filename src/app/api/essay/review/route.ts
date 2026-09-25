@@ -26,8 +26,10 @@ import { computeRetryComparison } from "@/lib/essay/retry-comparison";
 import {
   reviewEssayCore,
   feedbackWithDerivedIssues,
+  sentenceCheckFields,
   EssayReviewParseError,
 } from "@/lib/essay/review-core";
+import type { SentenceCheckResult } from "@/lib/essay/sentence-check-judge";
 import { requireRole } from "@/lib/api/auth";
 import { prepareAdmissionPolicy } from "@/lib/ai/admission-policy";
 import { getThemeById } from "@/data/essay-themes";
@@ -291,6 +293,7 @@ export async function POST(request: NextRequest) {
     // AI 添削をコア関数経由で呼ぶ (宿題提出フローからも同じ関数を呼ぶ)
     let scores: EssayScores;
     let feedback: EssayFeedback;
+    let sentenceCheck: SentenceCheckResult | null = null;
     try {
       const coreResult = await reviewEssayCore({
         ocrText,
@@ -317,6 +320,7 @@ export async function POST(request: NextRequest) {
       });
       scores = coreResult.scores;
       feedback = coreResult.feedback;
+      sentenceCheck = coreResult.sentenceCheck;
     } catch (coreErr) {
       if (coreErr instanceof EssayReviewParseError) {
         console.error(
@@ -415,6 +419,8 @@ export async function POST(request: NextRequest) {
           {
             scores,
             feedback,
+            // 点検由来の弱点を表示・作り直しで再現できるように点検結果も残す
+            ...sentenceCheckFields(sentenceCheck, "review"),
             weaknessTags,
             status: "reviewed",
             reviewedAt: FieldValue.serverTimestamp(),

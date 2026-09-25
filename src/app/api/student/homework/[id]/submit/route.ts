@@ -11,8 +11,10 @@ import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
 import {
   reviewEssayCore,
+  sentenceCheckFields,
   EssayReviewParseError,
 } from "@/lib/essay/review-core";
+import type { SentenceCheckResult } from "@/lib/essay/sentence-check-judge";
 import {
   scoreInterviewCore,
   InterviewScoreParseError,
@@ -271,6 +273,7 @@ async function submitEssay(args: {
   // AI 添削 (core 関数経由)
   let scores: EssayScores;
   let feedback: EssayFeedback;
+  let sentenceCheck: SentenceCheckResult | null = null;
   try {
     const coreResult = await reviewEssayCore({
       ocrText: bodyText,
@@ -284,6 +287,7 @@ async function submitEssay(args: {
     });
     scores = coreResult.scores;
     feedback = coreResult.feedback;
+    sentenceCheck = coreResult.sentenceCheck;
   } catch (err) {
     if (err instanceof EssayReviewParseError) {
       return NextResponse.json(
@@ -311,6 +315,8 @@ async function submitEssay(args: {
     {
       scores,
       feedback,
+      // 点検由来の弱点を表示・作り直しで再現できるように点検結果も残す
+      ...sentenceCheckFields(sentenceCheck, "review"),
       weaknessTags,
       status: "reviewed",
       reviewedAt: FieldValue.serverTimestamp(),
