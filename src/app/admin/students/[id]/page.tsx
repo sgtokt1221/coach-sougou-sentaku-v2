@@ -84,11 +84,11 @@ import { RedPenText } from "@/components/essay/RedPenText";
 import type { StudentDetail } from "@/lib/types/admin";
 import { getDisplayGrade } from "@/lib/utils/grade";
 import {
-  categorizeWeakness,
   ESSAY_CATEGORY_LABELS,
   ESSAY_CATEGORY_ORDER,
   type EssayCategoryKey,
 } from "@/lib/growth/weakness-category";
+import { weaknessCategoryOf } from "@/lib/growth/weakness-taxonomy";
 import {
   ESSAY_SCORE_WEIGHTS,
   ESSAY_STATUS_LABELS,
@@ -182,7 +182,7 @@ import { appendQuote } from "@/lib/chat/message-blocks";
 /**
  * 弱点一覧をカテゴリ別アコーディオン形式で表示。
  * 細分化問題対策 Phase 2-B: フラットな table を categoryId で grouping。
- * categoryId 未保存のレガシーレコードは categorizeWeakness で fallback 分類。
+ * 分類は weaknessCategoryOf（正規タクソノミー → 保存済み categoryId → 文言）。
  */
 function WeaknessesByCategoryList({
   weaknesses,
@@ -218,8 +218,7 @@ function WeaknessesByCategoryList({
       other: [],
     };
     for (const w of weaknesses) {
-      const cat = w.categoryId ?? categorizeWeakness(w.area);
-      out[cat as EssayCategoryKey].push(w);
+      out[weaknessCategoryOf(w)].push(w);
     }
     // 各カテゴリ内: unresolved を上に、 count 降順
     for (const k of Object.keys(out) as EssayCategoryKey[]) {

@@ -54,6 +54,8 @@ export function categorizeWeakness(text: string): EssayCategoryKey {
     /設問|題意|問われ|問いに|聞かれ|要求|主題|論点がずれ|答えていな/.test(text)
   )
     return "responsiveness";
+  if (/反論|反駁|多面|単純化|実行主体|副作用|制約/.test(text))
+    return "reasoningMaturity";
   if (/構成|段落|結論|序論|本論|論述構造|繋がり|流れ/.test(text))
     return "structure";
   if (

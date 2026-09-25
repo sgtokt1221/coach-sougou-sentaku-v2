@@ -4,11 +4,11 @@ import { getAnalyticsStudentIdSet } from "@/lib/api/organization-scope";
 import { adminDb } from "@/lib/firebase/admin";
 import type { WeaknessAnalytics } from "@/lib/types/analytics";
 import {
-  categorizeWeakness,
   ESSAY_CATEGORY_LABELS,
   ESSAY_CATEGORY_ORDER,
   type EssayCategoryKey,
 } from "@/lib/growth/weakness-category";
+import { weaknessCategoryOf } from "@/lib/growth/weakness-taxonomy";
 
 type AreaEntry = {
   count: number;
@@ -50,7 +50,11 @@ export async function GET(request: NextRequest) {
         const w = docSnap.data();
         if (w.archivedAt) continue; // Phase 4: archive 済みは集計対象外
         const area = w.area ?? "unknown";
-        const cat: EssayCategoryKey = (w.categoryId as EssayCategoryKey) ?? categorizeWeakness(area);
+        const cat: EssayCategoryKey = weaknessCategoryOf({
+          area,
+          canonicalId: w.canonicalId,
+          categoryId: w.categoryId,
+        });
         const uid = docSnap.ref.parent.parent?.id ?? "";
         // 自分の塾の生徒以外は集計対象外 (superadmin は全件)
         if (studentIdSet && !studentIdSet.has(uid)) continue;

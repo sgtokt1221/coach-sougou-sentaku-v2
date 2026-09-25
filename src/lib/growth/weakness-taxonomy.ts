@@ -17,7 +17,10 @@
  * 非言語(視線・表情・姿勢等)は other に寄せつつ、canonicalId で識別する。
  */
 
-import type { EssayCategoryKey } from "@/lib/growth/weakness-category";
+import {
+  categorizeWeakness,
+  type EssayCategoryKey,
+} from "@/lib/growth/weakness-category";
 
 /** 正規タクソノミーの 1 エントリ */
 export interface TaxonomyEntry {
@@ -128,11 +131,50 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     label: "主張に矛盾・一貫性の欠如がある",
     keywords: ["矛盾", "一貫", "整合", "ぶれ", "筋が通"],
   },
+
+  // ---- 議論の成熟度 (reasoningMaturity) ----
+  // 採点軸にあるのに弱点のラベルが1つも無く、AI が reasoningMaturity と付けた弱点が
+  // 「段落のつながり」等へ落ちていた（2026-09-25、本番150件中12件）。
   {
+    // id は保存済みなので変えない。多面的な検討は成熟度の軸で見るのでカテゴリだけ移した
     id: "logic.one_sided",
-    category: "logic",
+    category: "reasoningMaturity",
     label: "反対意見・多面的な視点への配慮が不足している",
     keywords: ["反対意見", "反論", "一面的", "多面", "視野", "偏り", "片側"],
+  },
+  {
+    id: "reasoning.weak_rebuttal",
+    category: "reasoningMaturity",
+    label: "反論への再反論が弱い",
+    keywords: [
+      "再反論",
+      "反駁",
+      "反論への",
+      "反論に答え",
+      "反論を退け",
+      "反論の処理",
+    ],
+  },
+  {
+    id: "reasoning.oversimplified",
+    category: "reasoningMaturity",
+    label: "問題を単一の原因・視点で単純化している",
+    keywords: ["単純化", "単一の原因", "単一原因", "一つの原因", "二項対立"],
+  },
+  {
+    id: "reasoning.no_constraints",
+    category: "reasoningMaturity",
+    label: "実行主体・制約・副作用を検討していない",
+    keywords: [
+      "実行主体",
+      "実現可能",
+      "実行可能",
+      "副作用",
+      "制約",
+      "財源",
+      "誰が実行",
+      "トレードオフ",
+    ],
   },
 
   // ---- 表現力 (expression) ----
@@ -148,6 +190,9 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
       "話が長い",
       "長すぎ",
       "重複",
+      "同じフレーズ",
+      "同じ表現",
+      "同じ言葉",
     ],
   },
   {
@@ -161,6 +206,8 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
       "わかりにくい",
       "読みにくい",
       "伝わらな",
+      "読めない",
+      "意味が取れ",
     ],
   },
   {
@@ -183,7 +230,17 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     id: "expression.grammar",
     category: "expression",
     label: "誤字脱字・文法ミスがある",
-    keywords: ["誤字", "脱字", "文法", "表記", "主述", "ねじれ", "てにをは"],
+    keywords: [
+      "誤字",
+      "脱字",
+      "文法",
+      "表記",
+      "主述",
+      "ねじれ",
+      "てにをは",
+      "主語と述語",
+      "助詞",
+    ],
   },
   {
     id: "expression.tone",
@@ -535,7 +592,27 @@ const POINTER_SUFFIX =
 /** 場所・見出しを指しているだけで、弱点を述べていないラベルか */
 export function isLocationOnlyLabel(text: string): boolean {
   const t = text.trim();
-  return PLACE_ONLY.test(t) || POINTER_SUFFIX.test(t);
+  if (PLACE_ONLY.test(t) || POINTER_SUFFIX.test(t)) return true;
+  // 「問2結論部」「メリット段落」: 場所の語を除くと弱点の語が残らない
+  const rest = stripPlaceWords(t);
+  return rest !== t && !hasAnyKeyword(rest);
+}
+
+/**
+ * 弱点の分類。正規タクソノミーに載っている弱点は、タクソノミーのカテゴリを正本にする。
+ * 保存済みの categoryId は作成時の値のままなので、カテゴリを移したエントリ
+ * （logic.one_sided → 議論の成熟度 等）が古い軸に残る。
+ */
+export function weaknessCategoryOf(w: {
+  area: string;
+  canonicalId?: string | null;
+  categoryId?: string | null;
+}): EssayCategoryKey {
+  const entry = w.canonicalId ? BY_ID.get(w.canonicalId) : undefined;
+  if (entry) return entry.category;
+  return (
+    (w.categoryId as EssayCategoryKey | undefined) ?? categorizeWeakness(w.area)
+  );
 }
 
 /** 弱点リストに積んでよいテキストか（助言・長文・中身のない語を弾く） */
@@ -559,23 +636,70 @@ export function resolveCanonical(
   if (exact) return exact;
   if (text.trim().length > MAX_KEYWORD_RESOLVE_LENGTH) return null;
 
-  const byLabel = matchByKeywords(text, opts.categoryHint, 1);
-  if (byLabel) return byLabel;
-  // ラベルで決まらないときだけ説明文を見る（2語以上一致が条件）
-  if (opts.supportText) {
-    return matchByKeywords(opts.supportText, opts.categoryHint, 2);
+  /**
+   * 場所の語（「第3段落」「問2」「冒頭」）を除いてから見る。
+   * AI は area に場所を書くことが多く、「第1段落・第3段落」（中身は主述のねじれ）や
+   * 「反論段落」（中身は再反論の弱さ）が「段落」の1語で「段落のつながりが弱い」に
+   * 落ちていた（2026-09-25、本番150件中39件がこのラベル）。
+   */
+  const label = stripPlaceWords(text);
+  const labelIsPlace = label !== text.trim();
+  const support = opts.supportText ? stripQuotes(opts.supportText) : "";
+
+  // ラベルに場所が混ざっているなら、弱点の中身は説明文の方が詳しい
+  // （「反論段落」の残り「反論」より、説明文の「反駁が成立していない」）。
+  // AI が付けたカテゴリの候補に限れば1語で決めてよい
+  if (labelIsPlace && support && opts.categoryHint) {
+    const inCategory = matchByKeywords(support, opts.categoryHint, 1, true);
+    if (inCategory) return inCategory;
+  }
+  if (hasAnyKeyword(label)) {
+    const byLabel = matchByKeywords(label, opts.categoryHint, 1);
+    if (byLabel) return byLabel;
+  }
+  // ラベルで決まらないときだけ説明文を見る。長文は無関係な語を巻き込むので
+  // 2語以上が条件。ただし場所だけのラベルは、捨てると今回の弱点が丸ごと
+  // 消えるので1語で決める
+  if (support) {
+    return matchByKeywords(support, opts.categoryHint, labelIsPlace ? 1 : 2);
   }
   return null;
+}
+
+/**
+ * 場所を指す語。取り除いた残りで弱点を決める。
+ * 「序論・本論・結論」は構成の弱点そのもの（「序論・本論・結論の構成バランス」）なので含めない。
+ */
+const PLACE_TOKEN =
+  // 「一文が長い」の「一文」は場所ではないので、番号付きは「第〜」か「〜文目」の形だけ
+  /第\s*[0-9０-９一二三四五六七八九十]+\s*(?:段落|文目|文)|[0-9０-９一二三四五六七八九十]+\s*(?:段落|文目)|問\s*[0-9０-９一二三四五六七八九十]+|段落|冒頭|書き出し|末尾|結論部|導入部|前半|後半|全体|部分|箇所/g;
+
+function stripPlaceWords(text: string): string {
+  return text.trim().replace(PLACE_TOKEN, "").trim();
+}
+
+/** 説明文の中の答案の引用。引用中の語で弱点を決めると、答案の話題で分類してしまう */
+function stripQuotes(text: string): string {
+  return text.replace(/「[^」]*」|『[^』]*』/g, "");
+}
+
+function hasAnyKeyword(text: string): boolean {
+  return WEAKNESS_TAXONOMY.some((e) =>
+    e.keywords.some((k) => text.includes(k))
+  );
 }
 
 /** キーワード一致で最有力の候補を返す。minScore 未満は採らない */
 function matchByKeywords(
   text: string,
   categoryHint: EssayCategoryKey | undefined,
-  minScore: number
+  minScore: number,
+  /** true なら categoryHint のカテゴリの候補だけを見る */
+  onlyHintCategory = false
 ): TaxonomyEntry | null {
   let best: { entry: TaxonomyEntry; score: number } | null = null;
   for (const entry of WEAKNESS_TAXONOMY) {
+    if (onlyHintCategory && entry.category !== categoryHint) continue;
     let score = 0;
     for (const kw of entry.keywords) {
       if (text.includes(kw)) score += 1;

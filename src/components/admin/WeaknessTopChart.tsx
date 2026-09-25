@@ -13,8 +13,8 @@ import {
 } from "lucide-react";
 import type { WeaknessRecord } from "@/lib/types/growth";
 import { getWeaknessReminderLevel } from "@/lib/types/growth";
+import { weaknessCategoryOf } from "@/lib/growth/weakness-taxonomy";
 import {
-  categorizeWeakness,
   ESSAY_CATEGORY_LABELS,
   ESSAY_CATEGORY_ORDER,
   type EssayCategoryKey,
@@ -63,7 +63,8 @@ interface CategoryGroup {
  *   全体傾向が一目で見える
  * - 展開すれば個別弱点も全部見える (= 粒度も保持)
  *
- * 既存の categorizeWeakness() を再利用 (= データ層変更なし)。
+ * 分類は weaknessCategoryOf()（正規タクソノミー → 保存済み categoryId → 文言）。
+ * 文言だけで分類し直すと「反対意見への配慮」等が「その他」に落ちていた。
  */
 export function WeaknessTopChart({ weaknesses }: WeaknessTopChartProps) {
   const [expanded, setExpanded] = useState<Set<EssayCategoryKey>>(new Set());
@@ -72,7 +73,7 @@ export function WeaknessTopChart({ weaknesses }: WeaknessTopChartProps) {
     const unresolved = weaknesses.filter((w) => !w.resolved);
     const byCategory = new Map<EssayCategoryKey, WeaknessRecord[]>();
     for (const w of unresolved) {
-      const cat = categorizeWeakness(w.area);
+      const cat = weaknessCategoryOf(w);
       if (!byCategory.has(cat)) byCategory.set(cat, []);
       byCategory.get(cat)!.push(w);
     }

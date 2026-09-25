@@ -217,7 +217,17 @@ export const AI_PROMPT_VERSIONS = {
     //      - 「〜の理由は、〜だ」の呼応の崩れを一度も拾えなかった。例を足した
     //        （検証の答案とは別の文にしてある。同じ文を書くと検証が例文の暗記を測る）
     //      結果は docs/superpowers/specs/2026-09-23-essay-review-accuracy-eval-design.md
-    promptVersion: "essay-review-v25",
+    // v26: 日本語として崩れた文の見落としと、弱点の振り分けを直した（2026-09-25）。
+    //      - 1文ずつの点検を別呼び出しにした（src/lib/essay/sentence-check-judge.ts）。
+    //        v25 までは N6（主述のねじれ3か所）で3回中2回、ねじれを1つしか拾えず、
+    //        表現力も 7点のままだった。点検で崩れた文が2文以上なら表現力4点以下、
+    //        書き手の主張どうしの矛盾があれば論理性5点以下（review-core.ts）。
+    //        赤ペンは本体5件＋点検分で最大10件
+    //      - repeatedIssues.area に場所（「第3段落」「反論段落」）を書かせない。
+    //        場所の「段落」の1語で「段落のつながりが弱い」に落ち、本番150件中39件が
+    //        このラベルに集まっていた。表現力・議論の成熟度の弱点はほぼ積まれていなかった
+    //      - 論理性の基準に、答案内の主張の食い違いを足した
+    promptVersion: "essay-review-v26",
     schemaVersion: "essay-review-output-v3",
   },
   interviewScore: {

@@ -89,6 +89,10 @@ const TWISTS: [string, string][] = [
 const FABRICATED =
   "全国地域交通未来機構が2022年に行った調査では、路線バスが廃止された町の人口は5年間で平均17.3%減少したという。";
 
+/** N12 で足す、冒頭の主張（税金で維持すべき）と逆の立場の文 */
+const CONTRADICTION =
+  "税金で赤字路線を支える必要はなく、採算の取れない路線は早く廃止すべきである。";
+
 /** N8 の対照に足す、事実主張を含まない1文（N8 の統計とほぼ同じ長さ） */
 const CONTROL =
   "つまり、バスの赤字は削るべき支出としてではなく、住民の移動を支えるための費用として見る必要がある。";
@@ -374,6 +378,20 @@ export const SYNTHETIC_CASES: SyntheticCase[] = [
     expect: [
       { type: "knowledgeErrorsMin", value: 2 },
       { type: "knowledgeScoreMax", value: 4 },
+    ],
+  },
+  {
+    // 書き手の主張どうしの食い違い（v26）。結論の直前に、冒頭の主張と逆の立場の文を足す
+    id: "N12-contradiction",
+    label: "主張の矛盾",
+    input: {
+      topic: TOPIC_S,
+      wordLimit: 800,
+      ocrText: join([...S0.slice(0, 4), `${CONTRADICTION}${S0[4]}`]),
+    },
+    expect: [
+      { type: "axesMax", axes: ["logic"], value: 5 },
+      { type: "axisBelow", axis: "logic", caseId: "S0-base" },
     ],
   },
 ];

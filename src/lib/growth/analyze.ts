@@ -222,7 +222,9 @@ function consolidateExisting(
       continue;
     }
     const list = groups.get(entry.id) ?? [];
-    list.push({ ...w, categoryId: w.categoryId ?? entry.category });
+    // 正規ラベルに載った弱点はタクソノミーのカテゴリを正本にする（カテゴリを移した
+    // エントリが、作成時の古い軸のまま残らないように）
+    list.push({ ...w, categoryId: entry.category });
     groups.set(entry.id, list);
   }
 

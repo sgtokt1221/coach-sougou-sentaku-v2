@@ -256,6 +256,7 @@ export async function GET(
           source: data.source ?? "essay",
           reminderDismissedAt: data.reminderDismissedAt?.toDate() ?? null,
           categoryId: data.categoryId,
+          canonicalId: data.canonicalId,
         };
       });
 

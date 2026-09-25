@@ -12,6 +12,10 @@ import { sourceEngagementCaps } from "@/lib/essay/source-engagement";
 import { judgeSourceEngagement } from "@/lib/essay/source-engagement-judge";
 import { judgeKnowledgeAccuracy } from "@/lib/essay/knowledge-judge";
 import {
+  judgeSentences,
+  type SentenceCheckResult,
+} from "@/lib/essay/sentence-check-judge";
+import {
   summarizeUsage,
   sumUsage,
   type AiCallRecord,
@@ -24,6 +28,7 @@ import type {
   TaskFulfillment,
   ClaimCheck,
   ReportInsights,
+  LanguageCorrection,
 } from "@/lib/types/essay";
 
 /**
@@ -172,7 +177,17 @@ ${input.ocrText}
       })
     : Promise.resolve(null);
 
-  const [response, engagement, knowledge] = await Promise.all([
+  /**
+   * 1文ずつの点検（主述のねじれ・助詞・意味の通らない文と、答案内の矛盾）。
+   * 本体は採点と講評に手を取られて文の崩れを取りこぼす（N6 で 3回中2回）。
+   */
+  const sentenceCheckPromise = judgeSentences({
+    client,
+    essayText: input.ocrText,
+    onCall,
+  });
+
+  const [response, engagement, knowledge, sentenceCheck] = await Promise.all([
     client.messages.parse({
       model: AI_MODEL_REVIEW,
       // messages.parse は max_tokens を thinking と本文で共有する。旧値の 4096 では
@@ -189,6 +204,7 @@ ${input.ocrText}
     }),
     engagementPromise,
     knowledgePromise,
+    sentenceCheckPromise,
   ]);
 
   const durationMs = Date.now() - startedAt;
@@ -281,13 +297,25 @@ ${input.ocrText}
     offTopic || narrowed ? 3 : missingRequired ? 5 : 10,
     sourceCaps.content
   );
+  /**
+   * 1文ずつの点検の結果を点に反映する。ルーブリックの段と一致させている
+   * （表現力4点 = 助詞の誤りや主述のねじれが複数ある）。本体は崩れた文を
+   * 見落としたまま 7点を付けることがあった。
+   */
+  const grammarErrorCount = countGrammarErrors(sentenceCheck);
+  const selfContradicted = (sentenceCheck?.contradictions.length ?? 0) > 0;
   const logicCap = Math.min(
     contentCap,
     contradicted ? 4 : 10,
+    // 自分の主張どうしが食い違う答案は、主張と根拠が揃っている(6点)とは言えない
+    selfContradicted ? 5 : 10,
     sourceCaps.logic
   );
   // 表現は「何を書いたか」に依らず読める。ずれていても6点までは認める
-  const expressionCap = offTopic ? 6 : 10;
+  const expressionCap = Math.min(
+    offTopic ? 6 : 10,
+    grammarErrorCount >= 2 ? 4 : 10
+  );
 
   /**
    * 合計の満点。通常は50点。
@@ -373,12 +401,16 @@ ${input.ocrText}
       }
     : undefined;
 
-  const languageCorrections = parsed.feedback.languageCorrections.filter(
+  const reviewCorrections = parsed.feedback.languageCorrections.filter(
     (correction) =>
       correction.original.length > 0 &&
       input.ocrText.includes(correction.original) &&
       correction.original !== correction.suggestion &&
       isRewrite(correction.suggestion, correction.original)
+  );
+  const languageCorrections = mergeSentenceCorrections(
+    reviewCorrections,
+    sentenceCheck
   );
   const appTargetScore = hasAdmissionPolicy ? 35 : 28;
 
@@ -388,10 +420,16 @@ ${input.ocrText}
     // スキーマ側の上限は緩く取ってあるので、生徒が読める量にここで絞る。
     goodPoints: parsed.feedback.goodPoints.slice(0, 5),
     priorityImprovement: parsed.feedback.priorityImprovement,
-    improvements: parsed.feedback.improvements.slice(0, 5),
+    improvements: [
+      ...contradictionImprovements(sentenceCheck),
+      ...parsed.feedback.improvements,
+    ].slice(0, 5),
     nextChallenge: parsed.feedback.nextChallenge,
-    repeatedIssues: parsed.feedback.repeatedIssues.filter(
-      (issue) => hasAdmissionPolicy || issue.category !== "apAlignment"
+    repeatedIssues: withSentenceCheckIssues(
+      parsed.feedback.repeatedIssues.filter(
+        (issue) => hasAdmissionPolicy || issue.category !== "apAlignment"
+      ),
+      sentenceCheck
     ),
     improvementsSinceLast: input.previousAttempt
       ? parsed.feedback.improvementsSinceLast
@@ -437,9 +475,101 @@ ${input.ocrText}
       calls,
       durationMs,
       droppedLanguageCorrections:
-        parsed.feedback.languageCorrections.length - languageCorrections.length,
+        parsed.feedback.languageCorrections.length - reviewCorrections.length,
     },
   };
+}
+
+/** 赤ペンに並べる上限。本体の5件に、1文ずつの点検で見つけた崩れを足す */
+const MAX_LANGUAGE_CORRECTIONS = 10;
+
+/** 文として崩れている（表現力の減点に数える）もの。誤字は数えない */
+function countGrammarErrors(check: SentenceCheckResult | null): number {
+  return (check?.brokenSentences ?? []).filter((b) => b.kind !== "typo").length;
+}
+
+const SENTENCE_KIND_TYPE = {
+  twist: "grammar",
+  particle: "grammar",
+  collocation: "grammar",
+  unreadable: "grammar",
+  typo: "typo",
+} as const;
+
+/**
+ * 1文ずつの点検で見つけた崩れを赤ペンに合流させる。
+ *
+ * 崩れた文は直さないと意味が通らないので先に並べる。本体が同じ文を挙げて
+ * いれば本体の方を残す（1つの文に2つの直しを並べない）。
+ */
+export function mergeSentenceCorrections(
+  reviewCorrections: LanguageCorrection[],
+  check: SentenceCheckResult | null
+): LanguageCorrection[] {
+  const overlaps = (a: string, b: string) => a.includes(b) || b.includes(a);
+  const fromCheck: LanguageCorrection[] = (check?.brokenSentences ?? [])
+    .filter(
+      (b) =>
+        isRewrite(b.rewrite, b.original) &&
+        !reviewCorrections.some((c) => overlaps(c.original, b.original))
+    )
+    .map((b) => ({
+      location: b.location,
+      original: b.original,
+      suggestion: b.rewrite,
+      type: SENTENCE_KIND_TYPE[b.kind],
+      reason: b.problem,
+    }));
+  return [...fromCheck, ...reviewCorrections].slice(
+    0,
+    MAX_LANGUAGE_CORRECTIONS
+  );
+}
+
+function contradictionImprovements(
+  check: SentenceCheckResult | null
+): string[] {
+  return (check?.contradictions ?? []).map(
+    (c) =>
+      `「${c.first}」と「${c.second}」が食い違っています。${c.explanation} どちらの立場で書くかを決め、もう一方を書き直してください。`
+  );
+}
+
+/**
+ * 1文ずつの点検で見つけたものを弱点に積む。
+ *
+ * 本体の repeatedIssues は最大3件で、内容の弱点が優先されるため、文の崩れは
+ * 本番の150件中2件しか弱点に入っていなかった（2026-09-25）。
+ * ラベルは正規タクソノミーのラベルそのものにする（書き込み時に完全一致で統合される）。
+ * 崩れが1文だけの答案は書き損じの可能性があるので、2文以上のときだけ積む。
+ */
+export function withSentenceCheckIssues(
+  issues: EssayFeedback["repeatedIssues"],
+  check: SentenceCheckResult | null
+): EssayFeedback["repeatedIssues"] {
+  if (!check) return issues;
+  const out = [...issues];
+  const mentions = (re: RegExp) =>
+    issues.some((i) => re.test(`${i.area}${i.message}`));
+  const broken = check.brokenSentences.filter((b) => b.kind !== "typo");
+  if (broken.length >= 2 && !mentions(/ねじれ|主語と述語|主述|助詞|文法/)) {
+    out.push({
+      area: "誤字脱字・文法ミスがある",
+      category: "expression",
+      count: 1,
+      message: `「${broken[0].original}」など、主語と述語や助詞が崩れた文が${broken.length}文あります。`,
+    });
+  }
+  const contradiction = check.contradictions[0];
+  if (contradiction && !mentions(/矛盾|一貫|食い違/)) {
+    out.push({
+      area: "主張に矛盾・一貫性の欠如がある",
+      category: "logic",
+      count: 1,
+      message: `「${contradiction.first}」と「${contradiction.second}」が食い違っている。`,
+    });
+  }
+  return out;
 }
 
 /**

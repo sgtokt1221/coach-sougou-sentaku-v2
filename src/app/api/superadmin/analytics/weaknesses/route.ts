@@ -6,11 +6,11 @@ import type {
   WeaknessSource,
 } from "@/lib/types/superadmin-analytics";
 import {
-  categorizeWeakness,
   ESSAY_CATEGORY_LABELS,
   ESSAY_CATEGORY_ORDER,
   type EssayCategoryKey,
 } from "@/lib/growth/weakness-category";
+import { weaknessCategoryOf } from "@/lib/growth/weakness-taxonomy";
 
 const MAX_STUDENTS_PER_AREA = 20;
 const MAX_AREAS = 50;
@@ -140,8 +140,11 @@ export async function GET(request: NextRequest) {
       totalRecords++;
 
       if (!areaMap.has(area)) {
-        const categoryId =
-          (data.categoryId as EssayCategoryKey) ?? categorizeWeakness(area);
+        const categoryId = weaknessCategoryOf({
+          area,
+          canonicalId: data.canonicalId as string | undefined,
+          categoryId: data.categoryId as string | undefined,
+        });
         areaMap.set(area, {
           area,
           categoryId,
