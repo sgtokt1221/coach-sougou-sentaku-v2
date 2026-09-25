@@ -104,8 +104,11 @@ export interface CoachReviewContext {
   priorityImprovement?: string;
   /** 赤ペン。原文と直し案の対で渡さないと、どの文の話か伝わらない */
   corrections?: { original: string; suggestion: string; reason?: string }[];
-  /** 繰り返し指摘されている弱点（「N回目」として画面に出ているもの） */
-  repeatedIssues?: { area: string; count: number }[];
+  /**
+   * 繰り返し指摘されている弱点（「N回目」として画面に出ているもの）。
+   * 判定欄からの派生分（今回の答案の判定）は回数の意味が無いので count を持たない
+   */
+  repeatedIssues?: { area: string; count?: number }[];
 }
 
 export interface CoachRequestBody {

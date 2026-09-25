@@ -27,7 +27,7 @@ interface ReviewFeedback {
     suggestion: string;
     reason?: string;
   }[];
-  repeatedIssues?: { area: string; count: number }[];
+  repeatedIssues?: { area: string; count: number; derived?: boolean }[];
 }
 
 export function EssayReviewCoach({
@@ -63,9 +63,10 @@ export function EssayReviewCoach({
       suggestion: c.suggestion,
       reason: c.reason,
     })),
+    // 判定欄からの派生分は count が常に1で回数の意味が無いので渡さない
     repeatedIssues: (feedback.repeatedIssues ?? []).map((r) => ({
       area: r.area,
-      count: r.count,
+      ...(r.derived ? {} : { count: r.count }),
     })),
   };
 

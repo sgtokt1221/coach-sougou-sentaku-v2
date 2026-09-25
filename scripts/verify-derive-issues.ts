@@ -9,6 +9,7 @@ import {
   MACHINE_ONLY_ISSUE_IDS,
   isMachineOnlyWeakness,
   isPartialEssay,
+  isLegacyDerivedIssue,
 } from "../src/lib/essay/derive-weakness-issues";
 import { ESSAY_CATEGORY_KEYS } from "../src/lib/growth/weakness-category";
 import { pickDisplayIssues } from "../src/lib/essay/display-issues";
@@ -232,6 +233,80 @@ const areas = (xs: { area: string }[]) => xs.map((x) => x.area).sort();
   assert.deepEqual(
     areas(out),
     [L("structure.off_topic"), L("responsiveness.misread")].sort()
+  );
+  for (const i of out) assert.ok(i.message.length > 0, `${i.area} の本文が空`);
+  assert.equal(
+    out.find((i) => i.area === L("responsiveness.misread"))!.message,
+    "課題文・資料の読み違いがある。"
+  );
+}
+// misread の本文: 空の要素は飛ばし、文字列のまま入った旧データも1件として扱う
+{
+  const misreadMessage = (misreadings: unknown) =>
+    deriveWeaknessIssues(
+      { repeatedIssues: [], reportInsights: { misreadings } as never },
+      null
+    ).find((i) => i.area === L("responsiveness.misread"))?.message;
+  assert.equal(misreadMessage(["", "本当の指摘"]), "本当の指摘");
+  assert.equal(
+    misreadMessage("筆者の主張を逆に読んでいる"),
+    "筆者の主張を逆に読んでいる"
+  );
+  assert.equal(misreadMessage([]), undefined);
+}
+// v26 の review-core が目印なしで足した定型の派生分は落として作り直す。
+// 似ていても定型に一致しない（AI が書いた）ものは残す
+{
+  const legacy = [
+    {
+      area: "主語と述語が噛み合わない文がある",
+      category: "expression" as const,
+      count: 1,
+      message:
+        "「私は思うのは変わる。」など、主語と述語が噛み合わない文が3文あります。",
+    },
+    {
+      area: "誤字脱字・文法ミスがある",
+      category: "expression" as const,
+      count: 1,
+      message:
+        "「AがBを行く。」など、助詞や語の組み合わせが崩れた文が2文あります。",
+    },
+    {
+      area: "誤字脱字・文法ミスがある",
+      category: "expression" as const,
+      count: 1,
+      message:
+        "「AがBを行く。」など、主語と述語や助詞が崩れた文が2文あります。",
+    },
+    {
+      area: "主張に矛盾・一貫性の欠如がある",
+      category: "logic" as const,
+      count: 1,
+      message: "「賛成だ」と「反対だ」が食い違っている。",
+    },
+  ];
+  for (const i of legacy) assert.ok(isLegacyDerivedIssue(i), i.message);
+  // 点検の結果が無くなれば（=今の規則では積まない）旧派生分は消える
+  assert.deepEqual(deriveWeaknessIssues({ repeatedIssues: legacy }, null), []);
+  // 点検の結果があれば、今の規則で目印付きとして作り直される
+  const rebuilt = deriveWeaknessIssues(
+    { repeatedIssues: legacy.slice(0, 1) },
+    { brokenSentences: broken("twist", 2), contradictions: [] }
+  );
+  assert.deepEqual(areas(rebuilt), [L("expression.twist")]);
+  assert.equal(rebuilt[0].derived, true);
+  // AI が書いた似た弱点は残る
+  const aiWritten = {
+    area: "主語と述語が噛み合わない文がある",
+    category: "expression" as const,
+    count: 2,
+    message: "一文が長く、主語と述語がねじれている箇所が目立つ。",
+  };
+  assert.ok(!isLegacyDerivedIssue(aiWritten));
+  assert.deepEqual(
+    deriveWeaknessIssues({ repeatedIssues: [aiWritten] }, null),
+    [aiWritten]
   );
 }
 // off_topic: note が空なら既定文

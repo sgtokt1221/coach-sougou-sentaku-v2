@@ -62,7 +62,7 @@ function trimReviewContext(
     })),
     repeatedIssues: (r.repeatedIssues ?? []).slice(0, 5).map((i) => ({
       area: text(i.area),
-      count: i.count,
+      ...(typeof i.count === "number" ? { count: i.count } : {}),
     })),
   };
 }

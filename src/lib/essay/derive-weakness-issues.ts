@@ -148,6 +148,39 @@ export function isPartialEssay(data: Record<string, unknown>): boolean {
   return Boolean(getLectureById(data.lectureId)?.exercise.blockId);
 }
 
+/**
+ * 目印（derived）導入前に、v26 の review-core（withSentenceCheckIssues）が
+ * repeatedIssues に足していた定型の派生分。本番の答案に目印なしで残っているので、
+ * 本番データは書き換えずに derive の入口で落として作り直す。
+ * AI が似た弱点を書いた場合まで落とさないよう、area と message の定型の両方で見る。
+ * 文面は git の 1ca39aa（最初の版）と b126cf8（ねじれを分けた版）の withSentenceCheckIssues。
+ */
+const LEGACY_DERIVED_PATTERNS: { area: string; message: RegExp }[] = [
+  {
+    area: "主語と述語が噛み合わない文がある",
+    message: /^「[\s\S]*」など、主語と述語が噛み合わない文が\d+文あります。$/,
+  },
+  {
+    area: "誤字脱字・文法ミスがある",
+    message:
+      /^「[\s\S]*」など、(?:助詞や語の組み合わせが崩れた|主語と述語や助詞が崩れた)文が\d+文あります。$/,
+  },
+  {
+    area: "主張に矛盾・一貫性の欠如がある",
+    message: /^「[\s\S]*」と「[\s\S]*」が食い違っている。$/,
+  },
+];
+
+export function isLegacyDerivedIssue(i: {
+  area?: unknown;
+  message?: unknown;
+}): boolean {
+  if (typeof i.area !== "string" || typeof i.message !== "string") return false;
+  return LEGACY_DERIVED_PATTERNS.some(
+    (p) => p.area === i.area && p.message.test(i.message as string)
+  );
+}
+
 export function deriveWeaknessIssues(
   feedback: DerivableFeedback,
   check: SentenceCheckResult | null | undefined,
@@ -156,7 +189,7 @@ export function deriveWeaknessIssues(
   // 前回の派生分（derived）は落としてから作り直す。規則を変えても作り直しで
   // 追随でき、同じ入力に何度通しても結果が変わらない（冪等）
   const issues = (feedback.repeatedIssues ?? []).filter(
-    (i) => i.derived !== true
+    (i) => i.derived !== true && !isLegacyDerivedIssue(i)
   );
   const present = new Set<string>();
   for (const i of issues) {
@@ -248,17 +281,31 @@ export function deriveWeaknessIssues(
         `指定字数の${Math.round(fillRate)}%にとどまっている。`
       );
   }
-  const misreadings = feedback.reportInsights?.misreadings ?? [];
+  // 旧データでは配列でないことがある。文字列のまま入っていると [0] が1文字に
+  // なるので1件として扱う（採点の length>0 と同じく、空でなければ読み違いあり）
+  const rawMisreadings: unknown = feedback.reportInsights?.misreadings;
+  const misreadings: unknown[] = Array.isArray(rawMisreadings)
+    ? rawMisreadings
+    : typeof rawMisreadings === "string" && rawMisreadings.length > 0
+      ? [rawMisreadings]
+      : [];
   const contradicted = (feedback.claimChecks ?? []).filter(
     (c) => c.status === "contradicted"
   );
-  if (misreadings.length > 0)
-    add("responsiveness.misread", clip(misreadings[0], MISREADING_MAX));
-  else if (contradicted.length > 0)
+  // 積むかどうかは件数で決める（採点の上限と同じ条件）。本文は読める文を探して載せる
+  if (misreadings.length > 0 || contradicted.length > 0) {
+    const firstMisreading = misreadings
+      .map((m) => String(m ?? "").trim())
+      .find((m) => m.length > 0);
     add(
       "responsiveness.misread",
-      `「${clip(contradicted[0].claim)}」が資料と食い違っている。`
+      firstMisreading
+        ? clip(firstMisreading, MISREADING_MAX)
+        : contradicted.length > 0
+          ? `「${clip(contradicted[0].claim)}」が資料と食い違っている。`
+          : "課題文・資料の読み違いがある。"
     );
+  }
   const critical = (feedback.knowledgeInsights?.errors ?? []).filter(
     (e) => e.severity === "critical"
   );

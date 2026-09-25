@@ -17,6 +17,9 @@ interface SummaryIssue {
   derived?: boolean;
 }
 
+/** 「直すところ」に出す弱点の上限。残りの枠に改善点が入る */
+const SUMMARY_ISSUES_MAX = 4;
+
 export type SummarySection = "redpen" | "weaknesses" | "overview";
 
 /**
@@ -45,7 +48,8 @@ export function EssayResultSummary({
 }) {
   const weakItems: { text: string; note?: string; section: SummarySection }[] =
     [
-      ...pickDisplayIssues(repeatedIssues).map((r) => ({
+      // 弱点は4件まで（改善点が入る余地を残す）。全体は5件まで
+      ...pickDisplayIssues(repeatedIssues, SUMMARY_ISSUES_MAX).map((r) => ({
         text: r.area,
         note: r.derived ? undefined : `${r.count}回目`,
         section: "weaknesses" as const,
