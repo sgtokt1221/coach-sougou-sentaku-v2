@@ -441,6 +441,12 @@ export interface RepeatedIssue {
     | "originality"
     | "reasoningMaturity"
     | "other";
+  /**
+   * AI が挙げたものでなく、判定欄（文の点検・設問の充足・読み違い・知識・字数）から
+   * deriveWeaknessIssues が足した弱点。count は常に1で意味を持たない。
+   * derive は入力からこれを落としてから作り直すので、規則を変えても作り直しで追随できる
+   */
+  derived?: boolean;
 }
 
 export interface Improvement {

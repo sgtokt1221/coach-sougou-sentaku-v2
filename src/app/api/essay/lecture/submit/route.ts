@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isMachineOnlyWeakness } from "@/lib/essay/derive-weakness-issues";
 import {
   activeWeaknesses,
   loadWeaknessRecords,
@@ -84,11 +85,14 @@ export async function POST(request: NextRequest) {
     const loadedWeaknesses = await loadWeaknessRecords(adminDb, uid);
     // 解決済み・アーカイブ済みは AI の文脈に入れない
     const existingWeaknesses = activeWeaknesses(loadedWeaknesses.records);
+    // 字数・要求の欠落等は判定欄から機械的に積むので AI には渡さない
+    // （渡すと今回の答案でもなぞって書き、判定と無関係に回数が増える）
+    const weaknessesForAi = existingWeaknesses.filter(
+      (w) => !isMachineOnlyWeakness(w)
+    );
     const weaknessList =
-      existingWeaknesses.length > 0
-        ? existingWeaknesses
-            .map((w) => `- ${w.area}(${w.count}回指摘)`)
-            .join("\n")
+      weaknessesForAi.length > 0
+        ? weaknessesForAi.map((w) => `- ${w.area}(${w.count}回指摘)`).join("\n")
         : "(過去の弱点なし)";
 
     // essay ドキュメント作成 (sourceType="lecture")
@@ -96,6 +100,9 @@ export async function POST(request: NextRequest) {
     const essayId = `essay_lec_${lecture.id}_${Date.now()}`;
     const essayRef = adminDb.doc(`essays/${essayId}`);
     const topic = `小論文講座: ${lecture.title}`;
+    // 1ブロックだけ書く課題は、答案全体を前提にした判定（字数・要求の欠落）を弱点にしない。
+    // 答案にも保存し、後から講座データが変わっても提出当時の扱いで作り直せるようにする
+    const partial = Boolean(lecture.exercise.blockId);
     const block = lecture.exercise.blockId
       ? getEssayBlock(lecture.exercise.blockId)
       : null;
@@ -132,6 +139,7 @@ export async function POST(request: NextRequest) {
       inputMode: "text",
       sourceType: "lecture",
       lectureId: lecture.id,
+      partial,
       attemptNumber: 1,
       rootEssayId: essayId,
       parentEssayId: null,
@@ -165,8 +173,7 @@ export async function POST(request: NextRequest) {
         // 基礎講座は大学AP非依存。空値にしてAP軸を評価対象外にする。
         admissionPolicy: "",
         weaknessList,
-        // 1ブロックだけ書く課題は、答案全体を前提にした判定（字数・要求の欠落）を弱点にしない
-        partial: Boolean(lecture.exercise.blockId),
+        partial,
       });
       scores = coreResult.scores;
       feedback = coreResult.feedback;

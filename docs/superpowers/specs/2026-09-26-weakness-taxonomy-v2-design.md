@@ -126,9 +126,11 @@ deriveIssues(feedback, sentenceCheck) → repeatedIssues に判定分を足し�
 - 書き込み: /api/essay/review、講座の提出、宿題の提出（review-core の出力を組み立てるところ）
 - 作り直し: scripts/rebuild-weaknesses.ts
 - 集計: src/lib/growth/weakness-aggregate.ts の `weaknessKeysOf`（成長レポート・点検スクリプト）
-- 表示: `feedbackWithSentenceCheck`（添削結果の API）
+- 表示: `feedbackWithDerivedIssues`（添削結果の API と、やり直し比較の親答案）
 
 過去の答案は判定欄を既に持っているので、作り直しで判定分の弱点も積まれる（AI の再呼び出しは不要）。
+
+**派生分の目印**: 足した弱点には `derived: true` を付けて保存する（`count` は常に1で意味を持たない）。関数は入力の repeatedIssues から `derived: true` のものを先に落としてから派生し直すので、閾値や規則を変えても作り直し・表示で新しい規則に追随でき、同じ入力に何度通しても結果が変わらない（冪等）。目印の無いもの（AI が挙げた弱点と、目印導入前に保存された派生分）は残し、正本 ID が同じなら重複として足さない。機械判定だけで積む弱点（too_short / missing_requirement / misread / knowledge_error / typo。`MACHINE_ONLY_ISSUE_IDS`）は、AI へ渡す過去の弱点一覧から外す（渡すと AI がなぞって書き、判定と無関係に回数が増える）。講座のブロック課題かどうかは提出時に答案へ `partial` を保存し、無い旧データだけ講座データの `blockId` で判定する（`isPartialEssay`）。
 
 ### 4.3 AI 指摘の振り分け
 

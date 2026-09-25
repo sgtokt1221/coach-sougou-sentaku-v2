@@ -22,6 +22,7 @@ import {
   resolveCanonical,
   canonicalLabel,
   getTaxonomyEntry,
+  entryForCanonicalId,
 } from "@/lib/growth/weakness-taxonomy";
 import { categorizeWeakness } from "@/lib/growth/weakness-category";
 import { getLectureById } from "@/data/essay-lectures";
@@ -44,7 +45,11 @@ export interface DeriveOptions {
    * 講座のブロック課題（1ブロックだけ書く）。答案全体を前提にした
    * 字数不足・要求の欠落は当てはまらないので足さない。主題ずれ（off_topic）
    * だけは積むが、narrower（主題の一部に限定）は1ブロックだけ書く課題では
-   * 起きて当然なので積まない。different（別の話題）のときだけ積む
+   * 起きて当然なので積まない。different（別の話題）のときだけ積む。
+   *
+   * 採点（review-core.ts）は partial を見ないので、ブロック課題で narrower の
+   * 答案は内容軸に上限がかかる（点は下がる）が、弱点としては積まない。
+   * 点と弱点が食い違って見えるのは意図どおり（弱点DBに「主題ずれ」が溜まり続けないため）
    */
   partial?: boolean;
 }
@@ -77,9 +82,37 @@ export const DERIVED_ISSUE_IDS = [
 ] as const;
 type DerivedIssueId = (typeof DERIVED_ISSUE_IDS)[number];
 
-/** 引用が長いと message が読みにくくなるので、60字（既定）で切って「…」を付ける */
-function clip(s: string, n: number = QUOTE_MAX): string {
-  return s.length > n ? `${s.slice(0, n - 1)}…` : s;
+/**
+ * 判定欄の機械判定だけで積む弱点（AI には挙げさせない）。
+ * 過去の弱点一覧（weaknessList）として AI に渡すと、AI が今回の答案でも
+ * なぞって repeatedIssues に書き、判定に関係なく回数が増えるので外す。
+ */
+export const MACHINE_ONLY_ISSUE_IDS: readonly DerivedIssueId[] = [
+  "responsiveness.too_short",
+  "responsiveness.missing_requirement",
+  "responsiveness.misread",
+  "responsiveness.knowledge_error",
+  "expression.typo",
+];
+
+/** 弱点DBのレコードが機械判定だけで積む弱点か（AI へ渡す過去の弱点一覧から外す） */
+export function isMachineOnlyWeakness(w: {
+  area: string;
+  canonicalId?: string | null;
+}): boolean {
+  const id =
+    entryForCanonicalId(w.canonicalId, "essay")?.id ??
+    MACHINE_ONLY_ISSUE_IDS.find((m) => canonicalLabel(m) === w.area.trim());
+  return id !== undefined && MACHINE_ONLY_ISSUE_IDS.some((m) => m === id);
+}
+
+/**
+ * 引用が長いと message が読みにくくなるので、60字（既定）で切って「…」を付ける。
+ * 旧データで文字列でない値が入っていても落ちないように文字列へ寄せる
+ */
+function clip(s: unknown, n: number = QUOTE_MAX): string {
+  const t = String(s ?? "");
+  return t.length > n ? `${t.slice(0, n - 1)}…` : t;
 }
 
 /**
@@ -103,8 +136,13 @@ export function effectiveSubjectMatch(
   );
 }
 
-/** 保存済みの答案が講座のブロック課題か（sourceType=lecture かつ課題が1ブロック） */
+/**
+ * 保存済みの答案が講座のブロック課題か。
+ * 提出時に保存した partial を優先する（講座データの課題が後から変わっても
+ * 提出当時の扱いを保つ）。無い旧データは sourceType=lecture かつ課題が1ブロックかで判定
+ */
 export function isPartialEssay(data: Record<string, unknown>): boolean {
+  if (typeof data.partial === "boolean") return data.partial;
   if (data.sourceType !== "lecture" || typeof data.lectureId !== "string")
     return false;
   return Boolean(getLectureById(data.lectureId)?.exercise.blockId);
@@ -115,7 +153,11 @@ export function deriveWeaknessIssues(
   check: SentenceCheckResult | null | undefined,
   opts: DeriveOptions = {}
 ): RepeatedIssue[] {
-  const issues = [...(feedback.repeatedIssues ?? [])];
+  // 前回の派生分（derived）は落としてから作り直す。規則を変えても作り直しで
+  // 追随でき、同じ入力に何度通しても結果が変わらない（冪等）
+  const issues = (feedback.repeatedIssues ?? []).filter(
+    (i) => i.derived !== true
+  );
   const present = new Set<string>();
   for (const i of issues) {
     const e = resolveCanonical(i.area ?? "", {
@@ -133,6 +175,7 @@ export function deriveWeaknessIssues(
       category: getTaxonomyEntry(id)!.category as RepeatedIssue["category"],
       count: 1,
       message,
+      derived: true,
     });
   };
 

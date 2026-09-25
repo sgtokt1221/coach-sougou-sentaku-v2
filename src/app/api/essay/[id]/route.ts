@@ -82,7 +82,12 @@ export async function GET(
                     : 1,
                 submittedAt: pdata.submittedAt?.toDate?.() ?? new Date(),
                 scores: pdata.scores as EssayScores,
-                feedback: pdata.feedback as EssayFeedback,
+                // 今回の答案と同じ規則の弱点で比べる（derive を通した feedback 同士）
+                feedback: feedbackWithDerivedIssues(
+                  pdata.feedback as EssayFeedback,
+                  pdata.sentenceCheck,
+                  { partial: isPartialEssay(pdata) }
+                ),
               },
               { scores, feedback }
             );

@@ -6,7 +6,12 @@ import assert from "node:assert";
 import {
   deriveWeaknessIssues,
   DERIVED_ISSUE_IDS,
+  MACHINE_ONLY_ISSUE_IDS,
+  isMachineOnlyWeakness,
+  isPartialEssay,
 } from "../src/lib/essay/derive-weakness-issues";
+import { ESSAY_CATEGORY_KEYS } from "../src/lib/growth/weakness-category";
+import { pickDisplayIssues } from "../src/lib/essay/display-issues";
 import {
   canonicalLabel,
   getTaxonomyEntry,
@@ -16,6 +21,14 @@ import type { SentenceCheckResult } from "../src/lib/essay/sentence-check-judge"
 // derive が使う ID はすべて正本（weakness-taxonomy.ts）で引ける
 for (const id of DERIVED_ISSUE_IDS)
   assert.ok(getTaxonomyEntry(id), `${id} が正本に無い`);
+// 派生弱点のカテゴリは RepeatedIssue["category"] の許可値に含まれる
+{
+  const allowed = new Set<string>([...ESSAY_CATEGORY_KEYS, "other"]);
+  for (const id of DERIVED_ISSUE_IDS) {
+    const cat = getTaxonomyEntry(id)!.category;
+    assert.ok(allowed.has(cat), `${id} のカテゴリ ${cat} が許可値に無い`);
+  }
+}
 
 const L = canonicalLabel;
 const broken = (
@@ -149,6 +162,77 @@ const areas = (xs: { area: string }[]) => xs.map((x) => x.area).sort();
     { brokenSentences: broken("twist", 2), contradictions: [] }
   );
   assert.equal(twice.length, once.length);
+  assert.ok(
+    once.every((i) => i.derived === true),
+    "派生分に目印が無い"
+  );
+}
+// 目印付きの古い派生弱点は、判定欄が変われば消える。目印の無い AI の弱点は残る
+{
+  const out = deriveWeaknessIssues(
+    {
+      repeatedIssues: [
+        {
+          area: L("responsiveness.too_short"),
+          category: "responsiveness",
+          count: 1,
+          message: "指定字数の50%にとどまっている。",
+          derived: true,
+        },
+        {
+          area: L("expression.twist"),
+          category: "expression",
+          count: 1,
+          message: "主語と述語がねじれている",
+        },
+      ],
+      quantitativeAnalysis: { fillRate: 95 } as never,
+    },
+    null
+  );
+  assert.deepEqual(areas(out), [L("expression.twist")]);
+  assert.equal(out[0].derived, undefined, "AI の弱点に目印を付けない");
+}
+// AI へ渡す過去の弱点一覧から外すもの（canonicalId でも正規ラベルでも判定できる）
+{
+  for (const id of MACHINE_ONLY_ISSUE_IDS) {
+    assert.ok(isMachineOnlyWeakness({ area: "x", canonicalId: id }), id);
+    assert.ok(isMachineOnlyWeakness({ area: L(id) }), id);
+  }
+  assert.ok(!isMachineOnlyWeakness({ area: L("expression.twist") }));
+  assert.ok(
+    !isMachineOnlyWeakness({ area: "x", canonicalId: "expression.twist" })
+  );
+  assert.ok(!isMachineOnlyWeakness({ area: "自由文の弱点" }));
+}
+// isPartialEssay: 保存した partial を優先し、無ければ講座データで判定
+{
+  assert.equal(isPartialEssay({ partial: true }), true);
+  assert.equal(
+    isPartialEssay({ partial: false, sourceType: "lecture", lectureId: "x" }),
+    false
+  );
+  assert.equal(isPartialEssay({ sourceType: "essay" }), false);
+}
+// 旧データで判定欄に文字列以外が入っていても落ちない
+{
+  const out = deriveWeaknessIssues(
+    {
+      repeatedIssues: [],
+      reportInsights: { misreadings: [null] } as never,
+      taskFulfillment: {
+        answersQuestion: false,
+        subjectMatch: "different",
+        requirements: [],
+        note: 123 as never,
+      },
+    },
+    null
+  );
+  assert.deepEqual(
+    areas(out),
+    [L("structure.off_topic"), L("responsiveness.misread")].sort()
+  );
 }
 // off_topic: note が空なら既定文
 {
@@ -302,6 +386,21 @@ const areas = (xs: { area: string }[]) => xs.map((x) => x.area).sort();
     `読み違いが100字で切られていない: ${long.length}`
   );
   assert.ok(long.endsWith("…"));
+}
+
+// 画面に並べる弱点: 両方あれば派生分も入る（AI 上位3件＋派生2件、片方が少なければ残りで埋める）
+{
+  const mk = (ai: number, dv: number) => [
+    ...Array.from({ length: ai }, () => ({ derived: false })),
+    ...Array.from({ length: dv }, () => ({ derived: true })),
+  ];
+  const shape = (xs: { derived?: boolean }[]) =>
+    xs.map((x) => (x.derived ? "d" : "a")).join("");
+  assert.equal(shape(pickDisplayIssues(mk(5, 3))), "aaadd");
+  assert.equal(shape(pickDisplayIssues(mk(6, 1))), "aaaad");
+  assert.equal(shape(pickDisplayIssues(mk(1, 6))), "adddd");
+  assert.equal(shape(pickDisplayIssues(mk(2, 0))), "aa");
+  assert.equal(shape(pickDisplayIssues(mk(0, 7))), "ddddd");
 }
 
 console.log("[verify-derive-issues] OK");

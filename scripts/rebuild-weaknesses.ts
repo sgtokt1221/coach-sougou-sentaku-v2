@@ -42,7 +42,6 @@ import {
   loadWeaknessRecords,
   saveWeaknessRecords,
 } from "../src/lib/growth/weakness-store";
-import { getLectureById } from "../src/data/essay-lectures";
 import {
   deriveWeaknessIssues,
   isPartialEssay,
@@ -152,16 +151,12 @@ async function loadSubmissions(uid: string): Promise<Submission[]> {
     );
     const at = toDate(data.submittedAt) ?? toDate(data.reviewedAt);
     if (!at) continue;
-    const lecture =
-      data.sourceType === "lecture" && typeof data.lectureId === "string"
-        ? getLectureById(data.lectureId)
-        : undefined;
     subs.push({
       at,
       source: "essay",
       tags: issueTags(issues),
       issues,
-      countMisses: !lecture?.exercise.blockId,
+      countMisses: !isPartialEssay(data),
     });
   }
   for (const d of interviews.docs) {

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isMachineOnlyWeakness } from "@/lib/essay/derive-weakness-issues";
 import {
   activeWeaknesses,
   loadWeaknessRecords,
@@ -135,11 +136,14 @@ export async function POST(
     const loadedWeaknesses = await loadWeaknessRecords(adminDb, uid);
     // 解決済み・アーカイブ済みは AI の文脈に入れない
     const existingWeaknesses = activeWeaknesses(loadedWeaknesses.records);
+    // 字数・要求の欠落等は判定欄から機械的に積むので AI には渡さない
+    // （渡すと今回の答案でもなぞって書き、判定と無関係に回数が増える）
+    const weaknessesForAi = existingWeaknesses.filter(
+      (w) => !isMachineOnlyWeakness(w)
+    );
     const weaknessList =
-      existingWeaknesses.length > 0
-        ? existingWeaknesses
-            .map((w) => `- ${w.area}(${w.count}回指摘)`)
-            .join("\n")
+      weaknessesForAi.length > 0
+        ? weaknessesForAi.map((w) => `- ${w.area}(${w.count}回指摘)`).join("\n")
         : "(過去の弱点なし)";
 
     // 種別ごとに処理

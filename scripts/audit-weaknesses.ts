@@ -97,7 +97,9 @@ async function main() {
     ];
     for (const { d, kind } of docs) {
       const data = d.data();
-      if (!Array.isArray(data.feedback?.repeatedIssues)) continue;
+      // 対象は rebuild-weaknesses.ts と揃える（答案・面接は採点済みのもの）
+      if (!data.feedback) continue;
+      if (kind !== "skill_check" && !data.scores) continue;
       submissions++;
       const at =
         toDate(data.submittedAt) ??

@@ -21,6 +21,7 @@ import { resolve } from "path";
 import { initializeApp, getApps, cert } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { reviewEssayCore } from "../src/lib/essay/review-core";
+import { isPartialEssay } from "../src/lib/essay/derive-weakness-issues";
 import { prepareAdmissionPolicy } from "../src/lib/ai/admission-policy";
 import { AI_PROMPT_VERSIONS } from "../src/lib/ai/prompt-versions";
 import type { EssayScores } from "../src/lib/types/essay";
@@ -141,6 +142,7 @@ async function main() {
         wordLimit: retry.wordLimit ?? undefined,
         admissionPolicy,
         weaknessList: "（過去の弱点なし）",
+        partial: isPartialEssay(r),
       });
 
       console.log(

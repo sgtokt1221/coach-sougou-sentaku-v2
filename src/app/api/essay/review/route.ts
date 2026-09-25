@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
+  isMachineOnlyWeakness,
+  isPartialEssay,
+} from "@/lib/essay/derive-weakness-issues";
+import {
   activeWeaknesses,
   loadWeaknessRecords,
   saveWeaknessRecords,
@@ -21,6 +25,7 @@ import { logEssaySubmission } from "@/lib/bigquery/logger";
 import { computeRetryComparison } from "@/lib/essay/retry-comparison";
 import {
   reviewEssayCore,
+  feedbackWithDerivedIssues,
   EssayReviewParseError,
 } from "@/lib/essay/review-core";
 import { requireRole } from "@/lib/api/auth";
@@ -144,7 +149,12 @@ export async function POST(request: NextRequest) {
                   ocrText:
                     typeof pdata.ocrText === "string" ? pdata.ocrText : "",
                   scores: pdata.scores as EssayScores,
-                  feedback: pdata.feedback as EssayFeedback,
+                  // 今回の答案と同じ規則の弱点で比べる（画面に出している親の添削結果と揃える）
+                  feedback: feedbackWithDerivedIssues(
+                    pdata.feedback as EssayFeedback,
+                    pdata.sentenceCheck,
+                    { partial: isPartialEssay(pdata) }
+                  ),
                 };
               }
             }
@@ -261,8 +271,13 @@ export async function POST(request: NextRequest) {
             loadedWeaknesses = await loadWeaknessRecords(adminDb, essayUserId);
             // 解決済み・アーカイブ済みは AI の文脈に入れない
             existingWeaknesses = activeWeaknesses(loadedWeaknesses.records);
-            if (existingWeaknesses.length > 0) {
-              weaknessList = existingWeaknesses
+            // 字数・要求の欠落等は判定欄から機械的に積むので AI には渡さない
+            // （渡すと今回の答案でもなぞって書き、判定と無関係に回数が増える）
+            const forAi = existingWeaknesses.filter(
+              (w) => !isMachineOnlyWeakness(w)
+            );
+            if (forAi.length > 0) {
+              weaknessList = forAi
                 .map((w) => `- ${w.area}（${w.count}回指摘）`)
                 .join("\n");
             }
@@ -333,7 +348,9 @@ export async function POST(request: NextRequest) {
     }
 
     /**
-     * 弱点タグ。repeatedIssues（AIが弱点として挙げたもの）だけを使う。
+     * 弱点タグ。repeatedIssues だけを使う。中身は AI が弱点として挙げたものと、
+     * 判定欄（文の点検・設問の充足・読み違い・知識・字数）から reviewEssayCore が
+     * deriveWeaknessIssues で足したもの（derived: true）。
      *
      * 以前は improvements（「次はこう直す」という助言の自由文）も混ぜていた。
      * 助言は毎回3〜4件出るうえ、正規化がキーワードの部分一致なので、

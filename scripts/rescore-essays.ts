@@ -25,6 +25,7 @@ config({ path: ".env.local" });
 import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "../src/lib/firebase/admin";
 import { reviewEssayCore } from "../src/lib/essay/review-core";
+import { isPartialEssay } from "../src/lib/essay/derive-weakness-issues";
 import { prepareAdmissionPolicy } from "../src/lib/ai/admission-policy";
 import { AI_PROMPT_VERSIONS } from "../src/lib/ai/prompt-versions";
 
@@ -122,6 +123,7 @@ async function main() {
         wordLimit: ctx.wordLimit ?? undefined,
         admissionPolicy,
         weaknessList: "（過去の弱点なし）",
+        partial: isPartialEssay(e),
       });
 
       const before = e.scores;
