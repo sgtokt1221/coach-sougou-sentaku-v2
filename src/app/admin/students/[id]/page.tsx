@@ -472,6 +472,7 @@ type TabKey =
   | "overview"
   | "performance"
   | "activity"
+  | "selfAnalysis"
   | "reports"
   | "homework"
   | "messages";
@@ -479,6 +480,7 @@ const VALID_TABS: TabKey[] = [
   "overview",
   "performance",
   "activity",
+  "selfAnalysis",
   "reports",
   "homework",
   "messages",
@@ -488,6 +490,7 @@ const TAB_LABELS: Record<TabKey, string> = {
   overview: "概要",
   performance: "成績・弱点",
   activity: "活動・書類",
+  selfAnalysis: "自己分析",
   reports: "レポート",
   homework: "宿題",
   messages: "メッセージ",
@@ -1035,9 +1038,6 @@ function AdminStudentDetailPageInner() {
           <WeaknessTopChart weaknesses={topWeaknesses} />
         </div>
       </div>
-
-      {/* Discover (自己分析 + 志望校マッチング) */}
-      <DiscoverSection studentId={id} />
     </div>
   );
 
@@ -1365,6 +1365,7 @@ function AdminStudentDetailPageInner() {
                 <SelectItem value="overview">概要</SelectItem>
                 <SelectItem value="performance">成績・弱点</SelectItem>
                 <SelectItem value="activity">活動・書類</SelectItem>
+                <SelectItem value="selfAnalysis">自己分析</SelectItem>
                 <SelectItem value="reports">レポート</SelectItem>
                 <SelectItem value="homework">宿題</SelectItem>
                 {!isTeacherViewer && (
@@ -1390,6 +1391,7 @@ function AdminStudentDetailPageInner() {
               活動・書類
               <TabUnviewedBadge count={tabUnviewed(["document"])} />
             </TabsTrigger>
+            <TabsTrigger value="selfAnalysis">自己分析</TabsTrigger>
             <TabsTrigger value="reports">レポート</TabsTrigger>
             <TabsTrigger value="homework">宿題</TabsTrigger>
             {!isTeacherViewer && (
@@ -1425,6 +1427,17 @@ function AdminStudentDetailPageInner() {
             transition={{ duration: 0.2 }}
           >
             {renderActivityTab()}
+          </motion.div>
+        </TabsContent>
+
+        <TabsContent value="selfAnalysis">
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            {/* Discover (自己分析 + 志望校マッチング) */}
+            <DiscoverSection studentId={id} />
           </motion.div>
         </TabsContent>
 
