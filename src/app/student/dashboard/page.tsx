@@ -338,7 +338,7 @@ export default function StudentDashboard() {
 
 function WeaknessSummaryCompact() {
   const { data } = useAuthSWR<{ weaknesses: WeaknessRecord[] }>(
-    "/api/growth/weaknesses?context=dashboard"
+    "/api/growth/weaknesses?context=all"
   );
   const weaknesses = data?.weaknesses ?? [];
 

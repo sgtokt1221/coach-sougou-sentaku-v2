@@ -173,6 +173,11 @@ export function WeaknessReminderBanner({
                   <WeaknessSourceBadge source={w.source} />
                   <span className="text-sm font-medium">{w.area}</span>
                 </div>
+                {w.description && (
+                  <p className="text-muted-foreground mt-0.5 text-xs">
+                    {w.description}
+                  </p>
+                )}
                 <div className="text-muted-foreground mt-0.5 flex items-center gap-2 text-xs">
                   <span>{w.count}回指摘</span>
                   {daysAgo !== null && (

@@ -107,6 +107,11 @@ export function WeaknessReminderCard() {
                     ` · ${daysAgo === 0 ? "今日" : `${daysAgo}日前`}`}
                 </span>
               </div>
+              {w.description && (
+                <p className="pl-[3.25rem] text-xs leading-relaxed text-amber-900/80">
+                  {w.description}
+                </p>
+              )}
               {/* ラベルだけだと誰の弱点も同じ文言になる。直近の答案の話を出す */}
               {w.lastExample && (
                 <p className="pl-[3.25rem] text-xs leading-relaxed text-amber-800/80">

@@ -131,6 +131,11 @@ function WeaknessColumn({
                   <p className="flex-1 text-sm font-medium">{w.area}</p>
                   <WeaknessSourceBadge source={w.source} />
                 </div>
+                {w.description && (
+                  <p className="text-muted-foreground mt-1 text-xs leading-relaxed">
+                    {w.description}
+                  </p>
+                )}
                 <div className="mt-2 flex items-center gap-2">
                   <div className="bg-muted h-1.5 flex-1 rounded-full">
                     <div
@@ -203,7 +208,7 @@ export default function GrowthPage() {
   >("/api/student/reports");
   const { data: weaknessData, isLoading: loadingWeaknesses } = useAuthSWR<{
     weaknesses: WeaknessRecord[];
-  }>("/api/growth/weaknesses?context=dashboard");
+  }>("/api/growth/weaknesses?context=all");
 
   const router = useRouter();
   const { userProfile } = useAuth();
