@@ -241,4 +241,25 @@ assert.equal(
   "logic.weak_evidence"
 );
 
+// 設問に紐づかない「要素」は設問の要素の欠落にしない
+assert.notEqual(
+  resolveCanonical("具体的な要素が欠けている")?.id,
+  "responsiveness.missing_requirement"
+);
+assert.notEqual(
+  resolveCanonical("論拠となる要素が不足")?.id,
+  "responsiveness.missing_requirement"
+);
+// 面接の「質問への応答が弱い」は反論の弱点に取られない
+assert.equal(
+  resolveCanonical("質問への応答が弱い", { domain: "interview" })?.id,
+  "iv.answer_depth"
+);
+
+// 「同じ内容の重複」は冗長の方で、結論の繰り返しではない
+assert.notEqual(
+  resolveCanonical("同じ内容の重複がある")?.id,
+  "structure.conclusion_restates"
+);
+
 console.log("[verify-weakness-label] OK");

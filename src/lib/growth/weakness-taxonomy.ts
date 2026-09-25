@@ -68,7 +68,11 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
       "言い換え",
       "言い直し",
       "焼き直し",
-      "同じ内容",
+      // 単独の「同じ内容」は「同じ内容の重複」（冗長）も拾うので、結論・序論に紐づく形だけ
+      "結論と同じ内容",
+      "序論と同じ内容",
+      "本論と同じ内容",
+      "冒頭と同じ内容",
     ],
   },
   {
@@ -114,6 +118,32 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
 
   // ---- 設問対応 (responsiveness) ----
   {
+    // off_topic より前に置く。「設問の要素が欠けている」は「設問」（off_topic）と
+    // 「設問の要素」の同点になり、要求の欠落の方が正しい
+    id: "responsiveness.missing_requirement",
+    category: "responsiveness",
+    label: "設問が求めた要素が欠けている",
+    description: "「比較せよ」「二つ挙げよ」などの要求に答えていない",
+    keywords: [
+      "設問が求め",
+      "求められている",
+      "問われている",
+      "問いに答え",
+      "答えていな",
+      "比較していな",
+      "触れていない",
+      "条件を満た",
+      "指定された",
+      // 単独の「欠けている」「要素」は「具体性に欠けている」「具体的な要素が欠けている」
+      // も拾うので、設問に紐づく形だけにする
+      "設問の要素",
+      "求めた要素",
+      "問われた要素",
+      "求められた要素",
+    ],
+    oldLabels: ["設問が求めた要素に答えていない"],
+  },
+  {
     // id は保存済みなので変えない（v23 でカテゴリだけ responsiveness へ移した）
     id: "structure.off_topic",
     category: "responsiveness",
@@ -132,28 +162,7 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     ],
     oldLabels: ["設問・テーマから論点がずれている"],
   },
-  {
-    id: "responsiveness.missing_requirement",
-    category: "responsiveness",
-    label: "設問が求めた要素が欠けている",
-    description: "「比較せよ」「二つ挙げよ」などの要求に答えていない",
-    keywords: [
-      "設問が求め",
-      "求められている",
-      "問われている",
-      "問いに答え",
-      "答えていな",
-      "比較していな",
-      "触れていない",
-      "条件を満た",
-      "指定された",
-      // 「設問の要素が欠けている」が off_topic の「設問」と同点で負けないように。
-      // 単独の「欠けている」は「具体性に欠けている」も拾うので入れない
-      "要素",
-      "要素が欠け",
-    ],
-    oldLabels: ["設問が求めた要素に答えていない"],
-  },
+
   {
     id: "responsiveness.misread",
     category: "responsiveness",
@@ -276,7 +285,8 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
       // 「反論に答えられていない」が one_sided の「反論」と同点で負けないように
       "反論に答えられ",
       "反論に答えて",
-      "応答が弱",
+      // 単独の「応答が弱」は面接の「質問への応答が弱い」を奪うので入れない
+      "反論への応答",
     ],
     oldLabels: ["反論への再反論が弱い"],
   },
@@ -621,6 +631,23 @@ export function canonicalLabel(id: string): string {
   return BY_ID.get(id)?.label ?? id;
 }
 
+/**
+ * 保存済み・AI 指定の canonicalId を、その domain で採ってよい正本エントリへ引く。
+ * 別名の旧 ID は正本へ寄る。未知の ID と、小論文（essay）に付いた面接の iv.* は
+ * undefined（呼び出し側はキーワード判定へ進む）。resolveCanonical と
+ * 成長判定のキー（analyze.ts の weaknessKey）の両方がこの規則を使う。
+ */
+export function entryForCanonicalId(
+  id: string | undefined | null,
+  domain?: "essay" | "interview"
+): TaxonomyEntry | undefined {
+  if (!isKnownCanonicalId(id)) return undefined;
+  const entry = BY_ID.get(id);
+  if (entry && domain === "essay" && entry.id.startsWith("iv."))
+    return undefined;
+  return entry;
+}
+
 export interface ResolveOptions {
   /** AI / 既存レコードが持つカテゴリ。同カテゴリ候補を優先するタイブレークに使う */
   categoryHint?: EssayCategoryKey;
@@ -764,12 +791,8 @@ export function resolveCanonical(
   text: string,
   opts: ResolveOptions = {}
 ): TaxonomyEntry | null {
-  if (isKnownCanonicalId(opts.aiCanonicalId)) {
-    const byId = BY_ID.get(opts.aiCanonicalId);
-    // 小論文に面接の ID が付いていたら採らず、キーワードで決め直す
-    if (byId && !(opts.domain === "essay" && byId.id.startsWith("iv.")))
-      return byId;
-  }
+  const byId = entryForCanonicalId(opts.aiCanonicalId, opts.domain);
+  if (byId) return byId;
   const candidates =
     opts.domain === "essay"
       ? WEAKNESS_TAXONOMY.filter((e) => !e.id.startsWith("iv."))

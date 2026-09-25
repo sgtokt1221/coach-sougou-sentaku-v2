@@ -265,4 +265,40 @@ check(
   }
 );
 
+check(
+  "小論文の既存レコードに付いた面接の ID は、成長判定と統合で同じ扱いになる",
+  () => {
+    const old = rec({
+      area: "結論から話せていない",
+      canonicalId: "iv.clarity.unstructured",
+      source: "essay",
+      count: 3,
+      recentHits: [1],
+    });
+    const tag = "結論で立場を言い切れていない";
+    const events = analyzeGrowth([tag], [old], "essay");
+    const written = updateWeaknessRecords([old], [tag], {
+      source: "essay",
+      now: day(1),
+    });
+    // 統合は1本に合算する。成長判定も同じ弱点とみなし、改善・新規を出さない
+    assert.equal(written.length, 1, written.map((w) => w.area).join(" / "));
+    assert.equal(written[0].canonicalId, "structure.no_conclusion");
+    assert.deepEqual(
+      events.filter((e) => e.type === "praise" || e.type === "new_weakness"),
+      [],
+      JSON.stringify(events)
+    );
+  }
+);
+
+check("講師が入れた弱点（lesson）は面接の弱点にも寄る", () => {
+  const lesson = rec({ area: "視線が合わない", source: "lesson" });
+  const out = updateWeaknessRecords([lesson], [], {
+    source: "essay",
+    now: day(1),
+  });
+  assert.equal(out[0].canonicalId, "iv.body.eye_contact");
+});
+
 console.log(`verify-weakness-records: ${checks} checks passed`);

@@ -10,6 +10,7 @@ import { findSimilarArea } from "@/lib/growth/weakness-similarity";
 import {
   resolveCanonical,
   canonicalLabel,
+  entryForCanonicalId,
   getTaxonomyEntry,
   isWeaknessLabel,
   isLocationOnlyLabel,
@@ -29,8 +30,13 @@ function weaknessKey(
 ): string {
   // 別名の旧 ID（originality.no_experience 等）は正本 ID へ寄せる。
   // 寄せないと同じ弱点が旧 ID と新 ID で別物になり、改善と新規が同時に出る
+  // 小論文の弱点に面接の iv.* が付いていたら採らず、キーワードで決め直す
+  // （consolidateExisting と同じ規則。ずれると改善と合算が同時に起きる）
   if (opts?.canonicalId) {
-    return getTaxonomyEntry(opts.canonicalId)?.id ?? opts.canonicalId;
+    const byId = entryForCanonicalId(opts.canonicalId, opts.domain);
+    if (byId) return byId.id;
+    // タクソノミーに無い ID はそのままキーにする（従来どおり）
+    if (!getTaxonomyEntry(opts.canonicalId)) return opts.canonicalId;
   }
   const entry = resolveCanonical(text, {
     categoryHint: opts?.categoryHint,
@@ -63,12 +69,15 @@ function domainOf(source: WeaknessRecord["source"]): string {
 type ResolveDomain = "essay" | "interview";
 
 /**
- * 正規タクソノミーへ寄せるときの候補の範囲。面接の提出・両方で指摘された弱点は
- * 面接の iv.* も候補にし、それ以外（小論文・講師が入れた弱点）は小論文の弱点だけ。
+ * 正規タクソノミーへ寄せるときの候補の範囲。面接の提出・両方で指摘された弱点・
+ * 講師が面談で入れた弱点（lesson。小論文と面接の両方がある）は面接の iv.* も候補にし、
+ * それ以外（小論文の提出）は小論文の弱点だけ。
  * 小論文の「具体的なエピソードの欠如」が面接の iv.no_episode に寄らないようにする。
  */
 function resolveDomainOf(source: WeaknessRecord["source"]): ResolveDomain {
-  return source === "both" || domainOf(source) === "interview"
+  return source === "both" ||
+    source === "lesson" ||
+    domainOf(source) === "interview"
     ? "interview"
     : "essay";
 }
