@@ -520,6 +520,14 @@ export default function EssayNewPage() {
         if (parent.retryContext?.wordLimit)
           setCustomMaxLength(parent.retryContext.wordLimit);
         if (parent.inputMode) setInputMode(parent.inputMode);
+        /**
+         * 同じ問題にすぐ取りかかれるよう、執筆画面から始める。志望校・設問・字数・
+         * 出題形式はここで全部戻っている（情報入力の「次へ」が見るのは志望校だけ）。
+         * 添削履歴タブから押したときは URL だけが変わってタブが履歴のまま残り、
+         * 下書き一覧が出るだけだったので、新規提出タブにも切り替える。
+         */
+        setActiveTab("new");
+        setStep(2);
       } catch {
         if (!cancelled) setRetryParent(null);
       } finally {
@@ -1018,11 +1026,18 @@ export default function EssayNewPage() {
 
   const saveEssayDraft = useCallback(
     async (draft: typeof essayDraftSnapshot) => {
-      // 出題だけ作って離れた場合も残す（作り直しになるため）
+      /**
+       * 本文が無ければサーバーに残さない。ただし口頭試問型の出題だけ作って離れた
+       * 場合は残す（AI で作った問題なので、捨てると作り直しになる）。
+       *
+       * 以前は「お題が入っている」だけでも保存していたため、再トライやテーマ選択で
+       * お題が自動で入った瞬間に本文0字の下書きができ、押すたびに一覧に溜まっていた。
+       * お題は出題元から無料で戻せるので、本文が無い限り残す意味が無い。
+       * 口頭試問型の再トライも、出題は元の答案から戻せるので同じ扱いにする。
+       */
       if (
         !draft.directText.trim() &&
-        !draft.topic.trim() &&
-        !draft.oralExam?.subQuestions?.length
+        (!draft.oralExam?.subQuestions?.length || retryFromId)
       )
         return;
       const res = await authFetch("/api/student/essay-drafts", {
@@ -1040,7 +1055,7 @@ export default function EssayNewPage() {
       savedDraftIdRef.current = draftId;
       setSavedDraftId(draftId);
     },
-    []
+    [retryFromId]
   );
 
   const {
@@ -1659,6 +1674,106 @@ export default function EssayNewPage() {
     return <ReviewProgress longRunning={reportMode} />;
   }
 
+  /**
+   * 再トライのとき、前回の点と改善ポイント。情報入力と執筆画面の両方に出す。
+   * 再トライは執筆画面から始めるので、情報入力にしか無いと前回の指摘を
+   * 見ないまま書き始めることになる。
+   */
+  const retryReminderCard = retryParent ? (
+    <Card className="mb-6 border-indigo-200 bg-gradient-to-br from-indigo-50 via-sky-50 to-purple-50">
+      <CardHeader className="pb-3">
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <CardTitle className="flex items-center gap-2 text-lg text-indigo-900">
+            <RotateCcw className="size-5 text-indigo-700" />第
+            {(retryParent.attemptNumber ?? 1) + 1}回チャレンジ
+          </CardTitle>
+          <Link
+            href={`/student/essay/${retryParent.id}`}
+            className="text-xs text-indigo-700 underline underline-offset-2 hover:text-indigo-900"
+          >
+            前回の添削を見る
+          </Link>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="rounded-lg border border-indigo-100 bg-white/70 p-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <p className="text-sm font-medium text-slate-800">
+                {retryParent.universityName} {retryParent.facultyName}
+              </p>
+              {retryParent.topic && (
+                <p className="mt-0.5 text-xs text-slate-600">
+                  テーマ: {retryParent.topic}
+                </p>
+              )}
+            </div>
+            {retryParent.scores && (
+              <div className="text-right">
+                <p className="text-muted-foreground text-xs">前回スコア</p>
+                <p className="text-lg font-bold text-slate-800 tabular-nums">
+                  {retryParent.scores.total}
+                  <span className="text-muted-foreground text-xs font-normal">
+                    /{retryParent.feedback?.scoreMaximum ?? 50}
+                  </span>
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {retryParent.feedback?.priorityImprovement && (
+          <div className="flex gap-2.5 rounded-lg border border-amber-200 bg-amber-50 p-3">
+            <Star className="mt-0.5 size-4 shrink-0 text-amber-700" />
+            <div>
+              <p className="mb-1 text-xs font-semibold text-amber-900">
+                最優先で取り組むポイント
+              </p>
+              <p className="text-sm leading-relaxed text-amber-900">
+                {retryParent.feedback.priorityImprovement}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {retryParent.feedback?.improvements &&
+          retryParent.feedback.improvements.length > 0 && (
+            <div className="rounded-lg border border-indigo-100 bg-white/60 p-3">
+              <p className="mb-2 flex items-center gap-1 text-xs font-semibold text-indigo-900">
+                <AlertTriangle className="size-3.5" />
+                前回の改善ポイント
+              </p>
+              <ul className="space-y-1.5">
+                {retryParent.feedback.improvements.slice(0, 3).map((imp, i) => (
+                  <li
+                    key={i}
+                    className="flex gap-2 text-sm leading-relaxed text-slate-700"
+                  >
+                    <span className="shrink-0 text-indigo-500">•</span>
+                    <span>{imp}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+        {retryParent.feedback?.nextChallenge && (
+          <div className="flex gap-2.5 rounded-lg border border-sky-200 bg-sky-50 p-3">
+            <Target className="mt-0.5 size-4 shrink-0 text-sky-700" />
+            <div>
+              <p className="mb-1 text-xs font-semibold text-sky-900">
+                今回のチャレンジ
+              </p>
+              <p className="text-sm leading-relaxed text-sky-900">
+                {retryParent.feedback.nextChallenge}
+              </p>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  ) : null;
+
   // Step 2 テキスト執筆中は常に 2 カラム (左=参照/コーチ、右=入力)
   const useSideBySide = step >= 2 && inputMode === "text";
 
@@ -1729,107 +1844,7 @@ export default function EssayNewPage() {
               <WeaknessReminderCard />
 
               {/* 再トライリマインダー */}
-              {retryParent && (
-                <Card className="mb-6 border-indigo-200 bg-gradient-to-br from-indigo-50 via-sky-50 to-purple-50">
-                  <CardHeader className="pb-3">
-                    <div className="flex flex-wrap items-start justify-between gap-2">
-                      <CardTitle className="flex items-center gap-2 text-lg text-indigo-900">
-                        <RotateCcw className="size-5 text-indigo-700" />第
-                        {(retryParent.attemptNumber ?? 1) + 1}回チャレンジ
-                      </CardTitle>
-                      <Link
-                        href={`/student/essay/${retryParent.id}`}
-                        className="text-xs text-indigo-700 underline underline-offset-2 hover:text-indigo-900"
-                      >
-                        前回の添削を見る
-                      </Link>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="rounded-lg border border-indigo-100 bg-white/70 p-3">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div>
-                          <p className="text-sm font-medium text-slate-800">
-                            {retryParent.universityName}{" "}
-                            {retryParent.facultyName}
-                          </p>
-                          {retryParent.topic && (
-                            <p className="mt-0.5 text-xs text-slate-600">
-                              テーマ: {retryParent.topic}
-                            </p>
-                          )}
-                        </div>
-                        {retryParent.scores && (
-                          <div className="text-right">
-                            <p className="text-muted-foreground text-xs">
-                              前回スコア
-                            </p>
-                            <p className="text-lg font-bold text-slate-800 tabular-nums">
-                              {retryParent.scores.total}
-                              <span className="text-muted-foreground text-xs font-normal">
-                                /{retryParent.feedback?.scoreMaximum ?? 50}
-                              </span>
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {retryParent.feedback?.priorityImprovement && (
-                      <div className="flex gap-2.5 rounded-lg border border-amber-200 bg-amber-50 p-3">
-                        <Star className="mt-0.5 size-4 shrink-0 text-amber-700" />
-                        <div>
-                          <p className="mb-1 text-xs font-semibold text-amber-900">
-                            最優先で取り組むポイント
-                          </p>
-                          <p className="text-sm leading-relaxed text-amber-900">
-                            {retryParent.feedback.priorityImprovement}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-
-                    {retryParent.feedback?.improvements &&
-                      retryParent.feedback.improvements.length > 0 && (
-                        <div className="rounded-lg border border-indigo-100 bg-white/60 p-3">
-                          <p className="mb-2 flex items-center gap-1 text-xs font-semibold text-indigo-900">
-                            <AlertTriangle className="size-3.5" />
-                            前回の改善ポイント
-                          </p>
-                          <ul className="space-y-1.5">
-                            {retryParent.feedback.improvements
-                              .slice(0, 3)
-                              .map((imp, i) => (
-                                <li
-                                  key={i}
-                                  className="flex gap-2 text-sm leading-relaxed text-slate-700"
-                                >
-                                  <span className="shrink-0 text-indigo-500">
-                                    •
-                                  </span>
-                                  <span>{imp}</span>
-                                </li>
-                              ))}
-                          </ul>
-                        </div>
-                      )}
-
-                    {retryParent.feedback?.nextChallenge && (
-                      <div className="flex gap-2.5 rounded-lg border border-sky-200 bg-sky-50 p-3">
-                        <Target className="mt-0.5 size-4 shrink-0 text-sky-700" />
-                        <div>
-                          <p className="mb-1 text-xs font-semibold text-sky-900">
-                            今回のチャレンジ
-                          </p>
-                          <p className="text-sm leading-relaxed text-sky-900">
-                            {retryParent.feedback.nextChallenge}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              )}
+              {retryReminderCard}
 
               {retryParentLoading && (
                 <Card className="mb-6">
@@ -2425,6 +2440,8 @@ export default function EssayNewPage() {
               </Card>
             </>
           )}
+
+          {step === 2 && retryReminderCard}
 
           {/* Step 2: Text input mode */}
           {step === 2 && inputMode === "text" && (
