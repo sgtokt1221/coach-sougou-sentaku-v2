@@ -8,10 +8,16 @@ import {
   unifyJapaneseStyle,
 } from "@/lib/ai/japanese-style";
 import { AI_MODEL_REVIEW } from "@/lib/ai/prompt-versions";
-import type { EssayFeedback } from "@/lib/types/essay";
+import type { EssayFeedback, OralExamQuestionSet } from "@/lib/types/essay";
 import { findAddedFacts } from "@/lib/essay/added-facts";
+import {
+  joinOralExamAnswers,
+  splitOralExamAnswers,
+} from "@/lib/essay/oral-exam-question";
+import { generateOralExamModelAnswers } from "@/lib/essay/oral-exam-model-answer";
 
-export const maxDuration = 60;
+// 口頭試問型は問ごとに字数を詰め直すので、通常より時間がかかる
+export const maxDuration = 120;
 
 /**
  * POST /api/essay/[id]/brushup
@@ -78,6 +84,47 @@ export async function POST(
       );
     }
 
+    const client = new Anthropic();
+
+    /**
+     * 口頭試問型は、問ごとの模範解答にする。答案全体を1本の文章として磨くと、
+     * 問の区切りが消えて一続きの作文に書き直される。
+     * 保存は通常と同じ brushedUpText に「問N」の見出しつきで入れる
+     * （画面は問ごとに分けて出し、分けられない答案は全文で出す）。
+     * 本文が小問に分けられない（手で直した等）ときは、通常の磨き方に戻す。
+     */
+    const oralSet: OralExamQuestionSet | undefined =
+      data.questionContext?.questionType === "oral_exam"
+        ? (data.questionContext?.oralExam ?? undefined)
+        : undefined;
+    const oralAnswers = oralSet ? splitOralExamAnswers(oralSet, ocrText) : null;
+    if (oralSet && oralAnswers) {
+      const models = await generateOralExamModelAnswers({
+        client,
+        set: oralSet,
+        answers: oralAnswers,
+        feedback,
+      });
+      if (!models) {
+        return NextResponse.json(
+          { error: "模範解答の生成に失敗しました" },
+          { status: 502 }
+        );
+      }
+      const modelText = joinOralExamAnswers(oralSet, models);
+      // 知識の誤りを直すので原文に無い語は増える。消さずに記録だけ残す（通常と同じ）
+      const addedFacts = findAddedFacts(ocrText, modelText);
+      await essayRef.update({
+        "feedback.brushedUpText": modelText,
+        "feedback.brushedUpAddedFacts": addedFacts,
+      });
+      return NextResponse.json({
+        brushedUpText: modelText,
+        addedFacts,
+        cached: false,
+      });
+    }
+
     const prompt = buildEssayBrushupPrompt(
       ocrText,
       {
@@ -101,7 +148,6 @@ export async function POST(
       }
     );
 
-    const client = new Anthropic();
     const response = await client.messages.create({
       // 全文を書き直す生成タスク。haiku では文体が混ざる・見出しが混入する事象が
       // 実データで出ていたため、添削本体と同じモデルに揃える。

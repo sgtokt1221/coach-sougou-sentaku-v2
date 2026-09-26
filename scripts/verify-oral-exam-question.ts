@@ -11,6 +11,7 @@ import {
   ORAL_EXAM_RECENT_LOOKBACK,
   buildOralExamQuestion,
   joinOralExamAnswers,
+  splitOralExamAnswers,
   loadRecentOralExamQuestions,
   normalizeOralExamQuestionSet,
   oralExamKey,
@@ -80,6 +81,22 @@ assert.ok(joined.includes("問3\nう"), joined);
  * 1問も書いていないときは空。見出しだけの本文を返すと「書きかけあり」と
  * 判定され、空の下書きが保存されて復元バナーまで出る。
  */
+/**
+ * 結果画面は保存された本文を小問ごとに戻して、問いと答えを並べる。
+ * 連結して戻すと元の答えに一致すること。答えの中に「問2」と書いてあっても
+ * 見出し（行頭の「問N」だけの行）でなければ区切りにしない。
+ */
+assert.deepEqual(
+  splitOralExamAnswers(
+    set,
+    joinOralExamAnswers(set, ["あ\n二行目", "問2で述べたとおり", ""])
+  ),
+  ["あ\n二行目", "問2で述べたとおり", ""]
+);
+// 見出しが欠けていたら分けない（別の問の下に答えを出さない）
+assert.equal(splitOralExamAnswers(set, "問1\nあ\n\n問3\nう"), null);
+assert.equal(splitOralExamAnswers(set, "手で書いた答案"), null);
+
 assert.equal(joinOralExamAnswers(set, ["", "", ""]), "");
 assert.equal(joinOralExamAnswers(set, []), "");
 assert.equal(joinOralExamAnswers(set, ["  ", ""]), "");

@@ -83,7 +83,6 @@ import { CommentableEssayText } from "@/components/essay/CommentableEssayText";
 import { RedPenText } from "@/components/essay/RedPenText";
 import type { StudentDetail } from "@/lib/types/admin";
 import { getDisplayGrade } from "@/lib/utils/grade";
-import { ESSAY_CATEGORY_LABELS } from "@/lib/growth/weakness-category";
 import {
   WEAKNESS_GROUP_LABELS,
   WEAKNESS_GROUP_ORDER,
@@ -98,7 +97,7 @@ import {
   type EssayFeedback,
 } from "@/lib/types/essay";
 import { axisPoints } from "@/lib/score-rank";
-import { buildNextStepHint } from "@/lib/essay/next-step";
+import { buildNextStepHint, headroomAxisLabel } from "@/lib/essay/next-step";
 import { EssayDeepDiveView } from "@/components/essay/EssayDeepDiveView";
 import type { WeaknessRecord } from "@/lib/types/growth";
 import { getWeaknessReminderLevel } from "@/lib/types/growth";
@@ -1890,7 +1889,7 @@ function AdminStudentDetailPageInner() {
                                 </span>
                                 点で {next.gap.nextRank} ランク・伸びしろは
                                 <span className="mx-1 font-semibold">
-                                  {ESSAY_CATEGORY_LABELS[next.headroom.axis]}
+                                  {headroomAxisLabel(next.headroom.axis)}
                                 </span>
                                 （満点なら +{next.headroom.gain}点）
                               </p>

@@ -69,6 +69,35 @@ export function joinOralExamAnswers(
 }
 
 /**
+ * 保存された本文を、小問ごとの答えへ戻す（joinOralExamAnswers の逆）。
+ *
+ * 結果画面で「問いと自分の答え」を並べるのに使う。見出し（問N の行）が
+ * 1つでも見つからなければ null を返す。本文を手で直した・画像から読み取った
+ * などで形が崩れているときに、答えを取り違えて別の問の下に出すよりは、
+ * 分けずに全文を出すほうがよい。
+ */
+export function splitOralExamAnswers(
+  set: OralExamQuestionSet,
+  text: string
+): string[] | null {
+  const starts: { index: number; bodyStart: number }[] = [];
+  let from = 0;
+  for (const q of set.subQuestions) {
+    const heading = new RegExp(`(^|\\n)問${q.no}\\n`, "g");
+    heading.lastIndex = from;
+    const m = heading.exec(text);
+    if (!m) return null;
+    const index = m.index + m[1].length;
+    starts.push({ index, bodyStart: m.index + m[0].length });
+    from = m.index + m[0].length;
+  }
+  return starts.map((s, i) => {
+    const end = i + 1 < starts.length ? starts[i + 1].index : text.length;
+    return text.slice(s.bodyStart, end).trim();
+  });
+}
+
+/**
  * AI が返した小問集合を、指定した合計字数・小問数へ合わせ込む。
  *
  * モデルは字数の合計をよく外す。そのまま通すと、答案の充足率

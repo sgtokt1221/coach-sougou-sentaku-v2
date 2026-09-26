@@ -35,8 +35,17 @@ import { ScoreRing } from "@/components/shared/ScoreRing";
 import { RankBadge } from "@/components/shared/RankBadge";
 import { RedPenText } from "@/components/essay/RedPenText";
 import { CommentableEssayText } from "@/components/essay/CommentableEssayText";
-import type { EssayInlineComment, EssayDeepDive } from "@/lib/types/essay";
+import type {
+  EssayInlineComment,
+  EssayDeepDive,
+  OralExamInsights,
+  OralExamKnowledgeDigest,
+  OralExamQuestionSet,
+} from "@/lib/types/essay";
 import { EssayDeepDiveView } from "@/components/essay/EssayDeepDiveView";
+import { OralExamQuestionsCard } from "@/components/essay/OralExamQuestionsCard";
+import { OralExamKnowledgeDigestView } from "@/components/essay/OralExamKnowledgeDigestView";
+import { splitOralExamAnswers } from "@/lib/essay/oral-exam-question";
 import { ESSAY_SCORE_WEIGHTS } from "@/lib/types/essay";
 import { RetryComparisonCard } from "@/components/essay/RetryComparison";
 import type {
@@ -52,11 +61,10 @@ import {
   getRankFromPercentage,
   getScorePercentage,
 } from "@/lib/score-rank";
-import { buildNextStepHint } from "@/lib/essay/next-step";
+import { buildNextStepHint, headroomAxisLabel } from "@/lib/essay/next-step";
 import { EssayResultSummary } from "@/components/essay/EssayResultSummary";
 import { pickDisplayIssues } from "@/lib/essay/display-issues";
 import { EssayReviewCoach } from "@/components/essay/EssayReviewCoach";
-import { ESSAY_CATEGORY_LABELS } from "@/lib/growth/weakness-category";
 import { sourceEngagementLabel } from "@/lib/essay/source-engagement";
 import { essayScoreAxisRows } from "@/lib/essay/score-axes";
 
@@ -134,6 +142,8 @@ interface EssayFeedback {
       severity: "critical" | "minor";
     }[];
   };
+  /** 口頭試問型の小問ごとの判定（判定が取れたときだけ） */
+  oralExamInsights?: OralExamInsights | null;
   apAlignmentAssessable?: boolean;
   scoreMaximum?: number;
 }
@@ -159,6 +169,8 @@ interface EssayResult {
   parentEssayId?: string | null;
   retryComparison?: RetryComparison;
   inlineComments?: EssayInlineComment[];
+  /** 口頭試問型の小問集合（questionType="oral_exam" のときだけ） */
+  oralExam?: OralExamQuestionSet | null;
 }
 
 /**
@@ -265,6 +277,10 @@ export default function EssayResultPage() {
    */
   const [showDetails, setShowDetails] = useState(false);
   const [deepDive, setDeepDive] = useState<EssayDeepDive | undefined>();
+  /** 口頭試問型は深掘りの代わりに「知識の整理」を出す（同じ API が返す） */
+  const [knowledgeDigest, setKnowledgeDigest] = useState<
+    OralExamKnowledgeDigest | undefined
+  >();
   const [generatingDeepDive, setGeneratingDeepDive] = useState(false);
 
   /**
@@ -285,7 +301,12 @@ export default function EssayResultPage() {
         };
         throw new Error(payload.error ?? "生成に失敗しました");
       }
-      setDeepDive((await res.json()) as EssayDeepDive);
+      const json = await res.json();
+      if (json.knowledgeDigest) {
+        setKnowledgeDigest(json.knowledgeDigest as OralExamKnowledgeDigest);
+      } else {
+        setDeepDive(json as EssayDeepDive);
+      }
     } catch (err) {
       const { toast } = await import("sonner");
       toast.error(
@@ -358,6 +379,9 @@ export default function EssayResultPage() {
             topic: parsed.topic ?? "",
             submittedAt: parsed.submittedAt ?? new Date().toISOString(),
             ocrText: parsed.ocrText ?? "",
+            questionType: parsed.questionType ?? null,
+            // 口頭試問型の設問と答えを、添削直後の画面でも問ごとに出す
+            oralExam: parsed.oralExam ?? null,
             scores: parsed.scores,
             feedback: parsed.feedback,
             growthEvents: parsed.growthEvents,
@@ -376,6 +400,8 @@ export default function EssayResultPage() {
         setResult(data);
         // 生成済みなら再生成させない
         if (data.deepDive) setDeepDive(data.deepDive as EssayDeepDive);
+        if (data.knowledgeDigest)
+          setKnowledgeDigest(data.knowledgeDigest as OralExamKnowledgeDigest);
       } catch {
         setError("添削結果の取得に失敗しました");
       } finally {
@@ -448,6 +474,23 @@ export default function EssayResultPage() {
   const percentage = getScorePercentage(totalScore, scoreMaximum);
   const rank = getRankFromPercentage(percentage);
 
+  /**
+   * 口頭試問型（小問集合）。設問と答えを問ごとに並べ、書き換え例は問ごとの
+   * 模範解答、テーマ深掘りは知識の整理に差し替える（作文向けの見せ方のままだと
+   * 問の区切りが消え、意見の対立を読む読み物になってしまう）。
+   */
+  const oralSet = result.oralExam ?? null;
+  const sectionLabel = (sid: string, label: string) =>
+    oralSet && sid === "brushup"
+      ? "模範解答"
+      : oralSet && sid === "insights"
+        ? "知識の整理"
+        : label;
+  const brushedUpByQuestion =
+    oralSet && result.feedback.brushedUpText
+      ? splitOralExamAnswers(oralSet, result.feedback.brushedUpText)
+      : null;
+
   // 合計に入る5軸。旧データに無い軸は描かない（0 として凹ませない）
   // weight は合計50点の中での配点。軸の点は0-10で保存し、表示だけ配点へ換算する
   // 軸の並びと旧データ（独自性）の扱いは essayScoreAxisRows に集約している
@@ -495,13 +538,22 @@ export default function EssayResultPage() {
               </div>
               <p className="text-muted-foreground mt-1 text-sm">
                 {result.universityName} {result.facultyName}
-                {result.topic && (
+                {oralSet ? (
                   <>
                     <span className="mx-2 text-slate-300">•</span>
                     <span className="font-medium text-slate-600">
-                      {result.topic}
+                      口頭試問型：{oralSet.theme}
                     </span>
                   </>
+                ) : (
+                  result.topic && (
+                    <>
+                      <span className="mx-2 text-slate-300">•</span>
+                      <span className="font-medium text-slate-600">
+                        {result.topic}
+                      </span>
+                    </>
+                  )
                 )}
               </p>
             </div>
@@ -703,7 +755,7 @@ export default function EssayResultPage() {
                 <span className="text-muted-foreground text-sm">
                   いちばん伸びしろがあるのは
                   <span className="text-foreground mx-1 font-semibold">
-                    {ESSAY_CATEGORY_LABELS[nextStep.headroom.axis]}
+                    {headroomAxisLabel(nextStep.headroom.axis)}
                   </span>
                   （満点なら +{nextStep.headroom.gain}点）
                 </span>
@@ -740,6 +792,14 @@ export default function EssayResultPage() {
             )}
           </CardContent>
         </Card>
+
+        {oralSet && (
+          <OralExamQuestionsCard
+            set={oralSet}
+            essayText={result.ocrText ?? ""}
+            insights={result.feedback.oralExamInsights}
+          />
+        )}
 
         {/*
           講評を読んだ直後が一番聞きたいタイミングなので、詳細の中ではなく
@@ -900,7 +960,7 @@ export default function EssayResultPage() {
                   }
                   className="text-muted-foreground hover:bg-muted hover:text-foreground shrink-0 cursor-pointer rounded-full px-3 py-1.5 text-xs font-medium transition-colors"
                 >
-                  {s.label}
+                  {sectionLabel(s.id, s.label)}
                 </button>
               ))}
             </div>
@@ -1131,7 +1191,7 @@ export default function EssayResultPage() {
                   <CardHeader className="pb-4">
                     <CardTitle className="flex items-center gap-2 text-xl tracking-tight text-emerald-700">
                       <PenTool className="size-6" />
-                      ブラッシュアップ版
+                      {oralSet ? "小問ごとの模範解答" : "ブラッシュアップ版"}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -1140,12 +1200,24 @@ export default function EssayResultPage() {
                         <Zap className="size-8 text-emerald-600" />
                       </div>
                       <h3 className="mb-2 text-lg font-semibold tracking-tight text-emerald-800">
-                        ブラッシュアップ版を生成しますか？
+                        {oralSet
+                          ? "模範解答を作りますか？"
+                          : "ブラッシュアップ版を生成しますか？"}
                       </h3>
                       <p className="mx-auto mb-4 max-w-md text-sm text-emerald-700">
-                        AIがあなたの本文を、
-                        添削の改善ポイントに沿って磨いた全文を作成します。
-                        一度作ると保存されるので次回からはすぐ表示されます。
+                        {oralSet ? (
+                          <>
+                            AIがあなたの答えをもとに、問ごとの判定と知識の誤りを
+                            直した模範解答を、問ごとの字数の目安で作ります。
+                            一度作ると保存されるので次回からはすぐ表示されます。
+                          </>
+                        ) : (
+                          <>
+                            AIがあなたの本文を、
+                            添削の改善ポイントに沿って磨いた全文を作成します。
+                            一度作ると保存されるので次回からはすぐ表示されます。
+                          </>
+                        )}
                       </p>
                       <Button
                         onClick={generateBrushup}
@@ -1160,7 +1232,9 @@ export default function EssayResultPage() {
                         ) : (
                           <>
                             <PenTool className="mr-1 size-4" />
-                            ブラッシュアップ版を生成する
+                            {oralSet
+                              ? "模範解答を作る"
+                              : "ブラッシュアップ版を生成する"}
                           </>
                         )}
                       </Button>
@@ -1173,7 +1247,7 @@ export default function EssayResultPage() {
                   <CardHeader className="flex flex-row items-center justify-between pb-4">
                     <CardTitle className="flex items-center gap-2 text-xl tracking-tight text-emerald-700">
                       <PenTool className="size-6" />
-                      ブラッシュアップ版
+                      {oralSet ? "小問ごとの模範解答" : "ブラッシュアップ版"}
                     </CardTitle>
                     {showBrushedUp && (
                       <Button
@@ -1211,7 +1285,9 @@ export default function EssayResultPage() {
                           自分で考えてから確認
                         </h3>
                         <p className="mx-auto mb-4 max-w-md text-sm text-emerald-700">
-                          まず自分で改善点を考えてから、ブラッシュアップ版を確認しましょう。学習効果がより高まります。
+                          {oralSet
+                            ? "まず自分で問ごとの直し方を考えてから、模範解答を確認しましょう。学習効果がより高まります。"
+                            : "まず自分で改善点を考えてから、ブラッシュアップ版を確認しましょう。学習効果がより高まります。"}
                         </p>
                         <Button
                           variant="outline"
@@ -1219,7 +1295,9 @@ export default function EssayResultPage() {
                           className="border-emerald-300 text-emerald-700 transition-all hover:bg-emerald-50 hover:shadow-md"
                         >
                           <ChevronDown className="mr-1 size-4" />
-                          ブラッシュアップ版を見る
+                          {oralSet
+                            ? "模範解答を見る"
+                            : "ブラッシュアップ版を見る"}
                         </Button>
                       </div>
                     ) : (
@@ -1235,11 +1313,38 @@ export default function EssayResultPage() {
                             閉じる
                           </Button>
                         </div>
-                        <div className="rounded-xl border border-emerald-200 bg-white/70 p-6 shadow-inner">
-                          <p className="text-sm leading-relaxed font-[450] whitespace-pre-wrap text-slate-800">
-                            {result.feedback.brushedUpText}
-                          </p>
-                        </div>
+                        {oralSet && brushedUpByQuestion ? (
+                          <div className="space-y-3">
+                            {oralSet.subQuestions.map((q, i) => (
+                              <div
+                                key={q.no}
+                                className="space-y-2 rounded-xl bg-emerald-50/60 p-4"
+                              >
+                                <div className="flex gap-3">
+                                  <span className="inline-flex h-6 shrink-0 items-center rounded-full bg-emerald-600 px-2.5 text-xs font-bold text-white">
+                                    問{q.no}
+                                  </span>
+                                  <p className="text-sm font-medium text-slate-900">
+                                    {q.prompt}
+                                  </p>
+                                </div>
+                                <p className="rounded-lg bg-white p-3 text-sm leading-relaxed font-[450] whitespace-pre-wrap text-slate-800">
+                                  {brushedUpByQuestion[i]}
+                                </p>
+                                <p className="text-muted-foreground text-right text-xs tabular-nums">
+                                  {brushedUpByQuestion[i]?.length ?? 0} /{" "}
+                                  {q.wordLimit}字
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="rounded-xl border border-emerald-200 bg-white/70 p-6 shadow-inner">
+                            <p className="text-sm leading-relaxed font-[450] whitespace-pre-wrap text-slate-800">
+                              {result.feedback.brushedUpText}
+                            </p>
+                          </div>
+                        )}
                       </div>
                     )}
                   </CardContent>
@@ -1252,11 +1357,19 @@ export default function EssayResultPage() {
             {/* テーマ深掘りセクション */}
             <section id="insights-section" className="scroll-mt-24 space-y-4">
               {/* 長文の深掘り（採点とは別に、開いたときだけ生成する） */}
-              <EssayDeepDiveView
-                deepDive={deepDive}
-                generating={generatingDeepDive}
-                onGenerate={generateDeepDive}
-              />
+              {oralSet ? (
+                <OralExamKnowledgeDigestView
+                  digest={knowledgeDigest}
+                  generating={generatingDeepDive}
+                  onGenerate={generateDeepDive}
+                />
+              ) : (
+                <EssayDeepDiveView
+                  deepDive={deepDive}
+                  generating={generatingDeepDive}
+                  onGenerate={generateDeepDive}
+                />
+              )}
             </section>
           </div>
         )}

@@ -134,6 +134,8 @@ export async function GET(
         // 口頭試問型の知識判定。ここに足さないと、保存はされているのに
         // 画面から消える（許可リスト漏れは沈黙失敗になる）
         knowledgeInsights: feedback.knowledgeInsights ?? null,
+        // 口頭試問型の小問ごとの判定（同じく許可リストに足さないと画面から消える）
+        oralExamInsights: feedback.oralExamInsights ?? null,
         brushedUpText: feedback.brushedUpText ?? null,
         languageCorrections: feedback.languageCorrections ?? null,
         priorityImprovement: feedback.priorityImprovement ?? null,
@@ -156,6 +158,8 @@ export async function GET(
       retryContext: data.retryContext ?? null,
       // 生成済みのテーマ深掘り（無ければ画面で「詳しく読む」ボタンを出す）
       deepDive: data.deepDive ?? null,
+      // 口頭試問型の「知識の整理」（深掘りの代わり。生成済みなら再生成させない）
+      knowledgeDigest: data.knowledgeDigest ?? null,
       ...(retryComparison ? { retryComparison } : {}),
     });
   } catch (error) {

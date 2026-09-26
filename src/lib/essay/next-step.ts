@@ -4,6 +4,8 @@ import {
   type EssayScores,
 } from "@/lib/types/essay";
 import { getRankFromPercentage, type ScoreRank } from "@/lib/score-rank";
+import { KNOWLEDGE_ACCURACY_WEIGHT } from "@/lib/essay/score-axes";
+import { ESSAY_CATEGORY_LABELS } from "@/lib/growth/weakness-category";
 
 /**
  * 次のランクまでの差と、その差を埋めるのに一番効く軸を出す。
@@ -49,8 +51,18 @@ export function nextRankGap(total: number, max: number): NextRankGap | null {
   return null;
 }
 
+/** 伸びしろを比べる軸。口頭試問型は専門知識も合計に入るので候補にする */
+export type HeadroomAxis = EssayScoreAxis | "knowledgeAccuracy";
+
+/** 伸びしろの軸を画面に出す名前 */
+export function headroomAxisLabel(axis: HeadroomAxis): string {
+  return axis === "knowledgeAccuracy"
+    ? "専門知識"
+    : ESSAY_CATEGORY_LABELS[axis];
+}
+
 export interface AxisHeadroom {
-  axis: EssayScoreAxis;
+  axis: HeadroomAxis;
   /** いまの点（0-10） */
   score: number;
   /** その軸の配点 */
@@ -67,15 +79,20 @@ export interface AxisHeadroom {
  * 生徒に勧めるのは、同じ努力で点が動く側であるべき。
  */
 export function biggestHeadroom(
-  scores: Partial<Record<EssayScoreAxis, number | null | undefined>>
+  scores: Partial<Record<HeadroomAxis, number | null | undefined>>
 ): AxisHeadroom | null {
-  const axes = Object.keys(ESSAY_SCORE_WEIGHTS) as EssayScoreAxis[];
+  // 専門知識は口頭試問型の答案にだけ値があり、その回は合計に入る
+  const weights: Record<HeadroomAxis, number> = {
+    ...ESSAY_SCORE_WEIGHTS,
+    knowledgeAccuracy: KNOWLEDGE_ACCURACY_WEIGHT,
+  };
+  const axes = Object.keys(weights) as HeadroomAxis[];
   let best: AxisHeadroom | null = null;
 
   for (const axis of axes) {
     const score = scores[axis];
     if (typeof score !== "number") continue;
-    const weight = ESSAY_SCORE_WEIGHTS[axis];
+    const weight = weights[axis];
     const gain = Math.round((10 - score) * (weight / 10) * 10) / 10;
     if (gain <= 0) continue;
     // 同じ伸びしろなら配点の大きい軸を選ぶ（指導の優先順位が高い）

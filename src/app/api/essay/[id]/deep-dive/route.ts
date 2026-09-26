@@ -4,7 +4,13 @@ import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { verifyAuthToken, adminDb } from "@/lib/firebase/admin";
 import { buildEssayDeepDivePrompt } from "@/lib/ai/prompts/essay-deep-dive";
 import { EssayDeepDiveOutputSchema } from "@/lib/ai/schemas/essay-deep-dive";
-import type { EssayDeepDive } from "@/lib/types/essay";
+import type {
+  EssayDeepDive,
+  EssayFeedback,
+  OralExamKnowledgeDigest,
+  OralExamQuestionSet,
+} from "@/lib/types/essay";
+import { generateOralExamKnowledgeDigest } from "@/lib/essay/oral-exam-knowledge-digest";
 
 export const maxDuration = 120;
 
@@ -51,6 +57,55 @@ export async function POST(
         { error: "この答案へのアクセス権がありません" },
         { status: 403 }
       );
+    }
+
+    /**
+     * 口頭試問型は「知識の整理」を返す。対立軸・立場を並べる深掘りは意見を書く
+     * 小論文向けで、知識を問う出題では役に立たない。
+     * 応答は { knowledgeDigest } の形（深掘りとは別の型なので混ぜない）。
+     */
+    const oralSet: OralExamQuestionSet | undefined =
+      data.questionContext?.questionType === "oral_exam"
+        ? (data.questionContext?.oralExam ?? undefined)
+        : undefined;
+    if (oralSet) {
+      if (data.knowledgeDigest) {
+        return NextResponse.json({
+          knowledgeDigest: data.knowledgeDigest as OralExamKnowledgeDigest,
+        });
+      }
+      const oralText = (data.ocrText ?? "").trim();
+      if (!oralText) {
+        return NextResponse.json(
+          { error: "答案本文がありません" },
+          { status: 400 }
+        );
+      }
+      if (!process.env.ANTHROPIC_API_KEY) {
+        return NextResponse.json(
+          { error: "ANTHROPIC_API_KEY が設定されていません" },
+          { status: 503 }
+        );
+      }
+      const digest = await generateOralExamKnowledgeDigest({
+        client: new Anthropic(),
+        set: oralSet,
+        essayText: oralText,
+        feedback: (data.feedback ?? {}) as EssayFeedback,
+        facultyName: data.targetFaculty ?? null,
+      });
+      if (!digest) {
+        return NextResponse.json(
+          { error: "知識の整理を作れませんでした。もう一度お試しください" },
+          { status: 500 }
+        );
+      }
+      const knowledgeDigest: OralExamKnowledgeDigest = {
+        ...digest,
+        generatedAt: new Date().toISOString(),
+      };
+      await essayRef.set({ knowledgeDigest }, { merge: true });
+      return NextResponse.json({ knowledgeDigest });
     }
 
     // 生成済みならそのまま返す

@@ -11,6 +11,7 @@ import { AI_MODEL_REVIEW, AI_PROMPT_VERSIONS } from "@/lib/ai/prompt-versions";
 import { sourceEngagementCaps } from "@/lib/essay/source-engagement";
 import { judgeSourceEngagement } from "@/lib/essay/source-engagement-judge";
 import { judgeKnowledgeAccuracy } from "@/lib/essay/knowledge-judge";
+import { judgeOralExamSubQuestions } from "@/lib/essay/oral-exam-subquestion-judge";
 import {
   judgeSentences,
   type SentenceCheckResult,
@@ -192,6 +193,18 @@ ${input.ocrText}
     : Promise.resolve(null);
 
   /**
+   * 口頭試問型のときだけ、小問ごとに答えているかを別呼び出しで判定する（表示用。点には使わない）。
+   */
+  const subQuestionPromise = isOralExam
+    ? judgeOralExamSubQuestions({
+        client,
+        essayText: input.ocrText,
+        question: input.topic ?? "",
+        onCall,
+      })
+    : Promise.resolve(null);
+
+  /**
    * 1文ずつの点検（主述のねじれ・助詞・意味の通らない文と、答案内の矛盾）。
    * 本体は採点と講評に手を取られて文の崩れを取りこぼす（N6 で 3回中2回）。
    */
@@ -201,25 +214,27 @@ ${input.ocrText}
     onCall,
   });
 
-  const [response, engagement, knowledge, sentenceCheck] = await Promise.all([
-    client.messages.parse({
-      model: AI_MODEL_REVIEW,
-      // messages.parse は max_tokens を thinking と本文で共有する。旧値の 4096 では
-      // 長い構造化出力(languageCorrections 最大5件 + 各種フィードバック)に食われ、
-      // 採点を吟味する余地が残らずルーブリックの既定値へ丸まっていた。
-      max_tokens: isReport || isOralExam ? 16000 : 12000,
-      system: systemPrompt,
-      messages: [{ role: "user", content: userMessage }],
-      output_config: {
-        format: zodOutputFormat(EssayReviewOutputSchema),
-        // 既定値と同じ high だが、採点水準に直結するため明示して固定する
-        effort: "high",
-      },
-    }),
-    engagementPromise,
-    knowledgePromise,
-    sentenceCheckPromise,
-  ]);
+  const [response, engagement, knowledge, sentenceCheck, subQuestions] =
+    await Promise.all([
+      client.messages.parse({
+        model: AI_MODEL_REVIEW,
+        // messages.parse は max_tokens を thinking と本文で共有する。旧値の 4096 では
+        // 長い構造化出力(languageCorrections 最大5件 + 各種フィードバック)に食われ、
+        // 採点を吟味する余地が残らずルーブリックの既定値へ丸まっていた。
+        max_tokens: isReport || isOralExam ? 16000 : 12000,
+        system: systemPrompt,
+        messages: [{ role: "user", content: userMessage }],
+        output_config: {
+          format: zodOutputFormat(EssayReviewOutputSchema),
+          // 既定値と同じ high だが、採点水準に直結するため明示して固定する
+          effort: "high",
+        },
+      }),
+      engagementPromise,
+      knowledgePromise,
+      sentenceCheckPromise,
+      subQuestionPromise,
+    ]);
 
   const durationMs = Date.now() - startedAt;
   calls.unshift({
@@ -468,6 +483,7 @@ ${input.ocrText}
           },
         }
       : {}),
+    ...(subQuestions ? { oralExamInsights: subQuestions } : {}),
     aiMetadata: {
       ...AI_PROMPT_VERSIONS.essayReview,
       model: AI_MODEL_REVIEW,

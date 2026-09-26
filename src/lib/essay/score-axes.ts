@@ -37,7 +37,14 @@ const LEGACY_WEIGHTS = {
   reasoningMaturity: 10,
 } as const;
 
-export type EssayAxisKey = EssayScoreAxis | "originality";
+export type EssayAxisKey = EssayScoreAxis | "originality" | "knowledgeAccuracy";
+
+/**
+ * 専門知識の正確性の配点。口頭試問型の答案だけに付き、その回は合計に入る（満点60）。
+ * グラフに出さないと、合計60点のうち10点がどの軸にも見えず、軸の点を足しても
+ * 合計に合わなくなる。
+ */
+export const KNOWLEDGE_ACCURACY_WEIGHT = 10;
 
 export interface EssayScoreAxisRow {
   key: EssayAxisKey;
@@ -46,7 +53,7 @@ export interface EssayScoreAxisRow {
   /** 狭い場所向けの短縮ラベル */
   short: string;
   value: number;
-  /** 合計50点の中でのこの軸の配点 */
+  /** 合計（通常50点、口頭試問型は60点）の中でのこの軸の配点 */
   weight: number;
   /** 廃止済みの軸（過去データの表示） */
   legacy: boolean;
@@ -66,6 +73,7 @@ export function isLegacyEssayScores(
 /**
  * 表示する軸の行を返す。値が無い軸は落とす（0として凹ませない）。
  * 並びは 構成 → 論理 → 表現 → 回答力（旧データは独自性） → 成熟度 で固定する。
+ * 口頭試問型の答案は最後に 専門知識 が付く（合計に入る軸なので）。
  */
 export function essayScoreAxisRows(
   scores: Partial<EssayScores> | null | undefined
@@ -77,6 +85,17 @@ export function essayScoreAxisRows(
   const rows: EssayScoreAxisRow[] = [];
   const push = (key: EssayAxisKey, value: unknown) => {
     if (typeof value !== "number") return;
+    if (key === "knowledgeAccuracy") {
+      rows.push({
+        key,
+        label: "専門知識の正確性",
+        short: "専門知識",
+        value,
+        weight: KNOWLEDGE_ACCURACY_WEIGHT,
+        legacy: false,
+      });
+      return;
+    }
     rows.push({
       key,
       label:
@@ -99,5 +118,6 @@ export function essayScoreAxisRows(
     push("responsiveness", scores.responsiveness);
   }
   push("reasoningMaturity", scores.reasoningMaturity);
+  push("knowledgeAccuracy", scores.knowledgeAccuracy);
   return rows;
 }

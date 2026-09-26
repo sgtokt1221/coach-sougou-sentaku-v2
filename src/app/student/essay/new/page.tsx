@@ -1498,6 +1498,10 @@ export default function EssayNewPage() {
           facultyName: effectiveUni?.facultyName ?? "",
           topic: effectiveTopic,
           submittedAt: new Date().toISOString(),
+          // 結果画面で設問と答えを問ごとに並べるのに使う
+          ...(oralExamMode && oralExamSet
+            ? { questionType: "oral_exam", oralExam: oralExamSet }
+            : {}),
         })
       );
       router.push(`/student/essay/${data.essayId ?? id}`);

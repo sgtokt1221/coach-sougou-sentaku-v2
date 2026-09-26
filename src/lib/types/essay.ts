@@ -263,6 +263,29 @@ export interface EssayDeepDive {
   generatedAt: string;
 }
 
+/**
+ * 口頭試問型の「知識の整理」。テーマ深掘り（EssayDeepDive）の代わりに出す。
+ *
+ * 深掘りは「何が対立している論点か・主な立場」という、意見を書く小論文向けの
+ * 読み物。口頭試問は知識を問う出題なので、役に立つのは用語の定義と事実の整理。
+ * essays/{id}.knowledgeDigest に保存する（開いたときだけ作る）。
+ */
+export interface OralExamKnowledgeDigest {
+  /** このテーマで押さえるべきことを2〜3文で */
+  summary: string;
+  /** 必ず定義を言えるようにする用語 */
+  terms: { term: string; definition: string }[];
+  /** 知っておくべき事実・仕組み */
+  keyPoints: { point: string; detail: string }[];
+  /** 取り違えやすい点と、正しい理解 */
+  misconceptions: { wrong: string; right: string }[];
+  /** 問ごとに、答えるときに外せないこと */
+  perQuestion: { no: number; mustInclude: string }[];
+  aiMetadata?: AiGenerationMetadata;
+  /** ISO 8601 */
+  generatedAt: string;
+}
+
 export interface TopicInsights {
   background: string;
   relatedThemes: string[];
@@ -408,6 +431,28 @@ export interface EssayFeedback {
   reportInsights?: ReportInsights;
   /** 口頭試問型の知識判定（oral_exam で判定が取れたときのみ） */
   knowledgeInsights?: KnowledgeInsights;
+  /** 口頭試問型の小問ごとの判定（oral_exam で判定が取れたときのみ） */
+  oralExamInsights?: OralExamInsights;
+}
+
+/**
+ * 口頭試問型の小問ごとの判定。採点は別呼び出し（src/lib/essay/oral-exam-subquestion-judge.ts）。
+ *
+ * 添削本体も回答力を小問ごとに見ているが、出力は答案全体で1つなので、
+ * 生徒は「どの問が弱かったか」を改善点の文中からしか読み取れなかった。
+ * 表示のためだけの判定で、点数には使わない。
+ */
+export interface OralExamInsights {
+  subQuestions: OralExamSubQuestionVerdict[];
+}
+
+export interface OralExamSubQuestionVerdict {
+  /** 1始まりの問番号 */
+  no: number;
+  /** answered: 問いに答えている / partial: 一部だけ / unanswered: 答えていない */
+  verdict: "answered" | "partial" | "unanswered";
+  /** その問の一言講評。生徒にそのまま見せる */
+  comment: string;
 }
 
 /**
