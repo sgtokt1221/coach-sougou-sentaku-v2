@@ -173,6 +173,7 @@ import { CoachMemo } from "@/components/admin/CoachMemo";
 import { ActivityHeatmap } from "@/components/admin/ActivityHeatmap";
 import { WeaknessTopChart } from "@/components/admin/WeaknessTopChart";
 import { HomeworkStatusSection } from "@/components/admin/HomeworkStatusSection";
+import { StudentEssayDraftsSection } from "@/components/admin/StudentEssayDraftsSection";
 import { buildActivityHeatmapData } from "@/lib/utils/activity-heatmap";
 import { useAuthSWR } from "@/lib/api/swr";
 import { useAuth } from "@/contexts/AuthContext";
@@ -472,6 +473,7 @@ type TabKey =
   | "performance"
   | "activity"
   | "selfAnalysis"
+  | "drafts"
   | "reports"
   | "homework"
   | "messages";
@@ -480,6 +482,7 @@ const VALID_TABS: TabKey[] = [
   "performance",
   "activity",
   "selfAnalysis",
+  "drafts",
   "reports",
   "homework",
   "messages",
@@ -490,6 +493,7 @@ const TAB_LABELS: Record<TabKey, string> = {
   performance: "成績・弱点",
   activity: "活動・書類",
   selfAnalysis: "自己分析",
+  drafts: "下書き",
   reports: "レポート",
   homework: "宿題",
   messages: "メッセージ",
@@ -1365,6 +1369,7 @@ function AdminStudentDetailPageInner() {
                 <SelectItem value="performance">成績・弱点</SelectItem>
                 <SelectItem value="activity">活動・書類</SelectItem>
                 <SelectItem value="selfAnalysis">自己分析</SelectItem>
+                <SelectItem value="drafts">下書き</SelectItem>
                 <SelectItem value="reports">レポート</SelectItem>
                 <SelectItem value="homework">宿題</SelectItem>
                 {!isTeacherViewer && (
@@ -1391,6 +1396,7 @@ function AdminStudentDetailPageInner() {
               <TabUnviewedBadge count={tabUnviewed(["document"])} />
             </TabsTrigger>
             <TabsTrigger value="selfAnalysis">自己分析</TabsTrigger>
+            <TabsTrigger value="drafts">下書き</TabsTrigger>
             <TabsTrigger value="reports">レポート</TabsTrigger>
             <TabsTrigger value="homework">宿題</TabsTrigger>
             {!isTeacherViewer && (
@@ -1437,6 +1443,16 @@ function AdminStudentDetailPageInner() {
           >
             {/* Discover (自己分析 + 志望校マッチング) */}
             <DiscoverSection studentId={id} />
+          </motion.div>
+        </TabsContent>
+
+        <TabsContent value="drafts">
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <StudentEssayDraftsSection studentId={id} />
           </motion.div>
         </TabsContent>
 
