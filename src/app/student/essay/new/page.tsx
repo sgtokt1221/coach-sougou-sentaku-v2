@@ -76,6 +76,9 @@ import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
 /** レポートモードで選べる分野（正本は ESSAY_FIELDS）。 */
 const REPORT_FIELDS = ESSAY_FIELDS;
 
+/** 下書きの上書きを断られた通知。自動保存と手動保存で同じものを使い、重ねて出さない */
+const DRAFT_CONFLICT_TOAST = "essay-draft-conflict";
+
 /** レポート課題文一覧の軽量項目（本文 body を含まない）。 */
 type ReportMaterialListItem = {
   id: string;
@@ -225,6 +228,27 @@ export default function EssayNewPage() {
    */
   const savedDraftIdRef = useRef<string | null>(null);
   const [savedDraftId, setSavedDraftId] = useState<string | null>(null);
+  /**
+   * この画面が最後に読んだ・書いたサーバーの下書きの版（updatedAt）。
+   *
+   * 保存時に送り、サーバーの方が新しければ上書きを断ってもらう。これが無いと、
+   * 古い写しを開いた画面の自動保存が、別の画面で書いた新しい本文を黙って消す。
+   * 端末の退避データにも載せ、写しがどの版から書き始めたものかを判定に使う。
+   * undefined は版を持たない古い退避データ（送らずに、これまでどおり保存する）。
+   */
+  const draftBaseRef = useRef<string | undefined>(undefined);
+  const [draftBaseUpdatedAt, setDraftBaseUpdatedAt] = useState<
+    string | undefined
+  >(undefined);
+  /** ?draft=ID でサーバーから戻した版。これより古い退避データでは上書きしない */
+  const serverDraftAppliedRef = useRef<string | null>(null);
+  /** 退避データから戻したときの、その写しの下書きIDと版 */
+  const localDraftRestoredRef = useRef<{
+    draftId?: string;
+    base?: string;
+  } | null>(null);
+  /** 上書きを断られた通知は1回だけ出す（自動保存のたびに出さない） */
+  const draftConflictNotifiedRef = useRef(false);
   const [savingDraft, setSavingDraft] = useState(false);
 
   // 過去問モード
@@ -350,18 +374,35 @@ export default function EssayNewPage() {
           reportMaterialId?: string;
           oralExam?: OralExamQuestionSet;
           oralExamAnswers?: string[];
+          updatedAt?: string;
         };
         if (cancelled) return;
+        const serverVersion = draft.updatedAt || undefined;
+        draftBaseRef.current = serverVersion;
+        setDraftBaseUpdatedAt(serverVersion);
+        savedDraftIdRef.current = draftIdParam;
+        setSavedDraftId(draftIdParam);
+        serverDraftAppliedRef.current = serverVersion ?? null;
+        /**
+         * 端末の退避データが先に戻っていて、それが今のサーバーの版から書き始めた
+         * ものなら、保存前の書きかけを含むのでそちらを残す。違う版（古い写し）なら
+         * サーバーの内容で置き換える。
+         */
+        const local = localDraftRestoredRef.current;
+        const keepLocal = Boolean(
+          local &&
+          local.draftId === draftIdParam &&
+          serverVersion &&
+          local.base === serverVersion
+        );
         setInputMode("text");
-        setDirectText(draft.directText ?? "");
+        if (!keepLocal) setDirectText(draft.directText ?? "");
         if (draft.topic) setTopic(draft.topic);
         if (typeof draft.customMaxLength === "number")
           setCustomMaxLength(draft.customMaxLength);
         if (draft.writingDirection) setWritingDirection(draft.writingDirection);
         if (draft.selectedCompoundId)
           setSelectedCompoundId(draft.selectedCompoundId);
-        savedDraftIdRef.current = draftIdParam;
-        setSavedDraftId(draftIdParam);
         // 下書きがレポートのものなら、その状態で開く
         if (draft.reportMaterialId) setReportDraftId(draft.reportMaterialId);
         // 口頭試問型は出題そのものを戻す（戻さないと別の問題になる）
@@ -370,11 +411,12 @@ export default function EssayNewPage() {
           setOralExamSet(draft.oralExam);
           setOralExamTheme(draft.oralExam.theme);
           setOralExamCount(draft.oralExam.subQuestions.length);
-          setOralExamAnswers(
-            draft.oralExam.subQuestions.map(
-              (_, i) => draft.oralExamAnswers?.[i] ?? ""
-            )
-          );
+          if (!keepLocal)
+            setOralExamAnswers(
+              draft.oralExam.subQuestions.map(
+                (_, i) => draft.oralExamAnswers?.[i] ?? ""
+              )
+            );
         }
         setActiveTab("new");
         setStep(2);
@@ -981,12 +1023,33 @@ export default function EssayNewPage() {
   } = usePersistentDraft({
     key: `essay-text:${essayContext}`,
     maxAgeMs: draftMaxAgeMs,
-    value: essayDraftSnapshot,
+    // 写しがどの版から書き始めたものかも残す（サーバー保存の上書き判定に使う）
+    value: { ...essayDraftSnapshot, baseUpdatedAt: draftBaseUpdatedAt },
     onRestore: (draft) => {
+      /**
+       * サーバーの下書きを先に戻していて、この写しがそれと違う版から書かれた
+       * ものなら古い写しなので戻さない。戻すと古い本文が自動保存で
+       * サーバーの新しい本文を上書きする（本番で問2・問3が消えた経路）。
+       */
+      if (
+        serverDraftAppliedRef.current &&
+        draft.draftId === savedDraftIdRef.current &&
+        draft.baseUpdatedAt !== serverDraftAppliedRef.current
+      )
+        return;
+      localDraftRestoredRef.current = {
+        draftId: draft.draftId,
+        base: draft.baseUpdatedAt,
+      };
       // 引き継がないと、保存のたびに別の下書きが作られる
       if (draft.draftId) {
         savedDraftIdRef.current = draft.draftId;
         setSavedDraftId(draft.draftId);
+        // サーバーの版を読んだ後なら、そちらの版を持ち続ける
+        if (!serverDraftAppliedRef.current) {
+          draftBaseRef.current = draft.baseUpdatedAt;
+          setDraftBaseUpdatedAt(draft.baseUpdatedAt);
+        }
       }
       setDirectText(draft.directText);
       setTopic(draft.topic);
@@ -1044,16 +1107,40 @@ export default function EssayNewPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          ...draft,
           ...(savedDraftIdRef.current
             ? { draftId: savedDraftIdRef.current }
             : {}),
-          ...draft,
+          // 版が分かるときだけ送る（版の無い古い退避データはこれまでどおり保存）
+          ...(savedDraftIdRef.current && draftBaseRef.current
+            ? { baseUpdatedAt: draftBaseRef.current }
+            : {}),
         }),
       });
+      if (res.status === 409) {
+        const body = (await res.json().catch(() => ({}))) as {
+          error?: string;
+        };
+        const message =
+          body.error ??
+          "この下書きは別の画面でより新しい内容が保存されています。下書き一覧から開き直してください";
+        if (!draftConflictNotifiedRef.current) {
+          draftConflictNotifiedRef.current = true;
+          toast.error(message, { id: DRAFT_CONFLICT_TOAST, duration: 15000 });
+        }
+        throw new Error(message);
+      }
       if (!res.ok) throw new Error("下書きの保存に失敗しました");
-      const { draftId } = (await res.json()) as { draftId: string };
+      const { draftId, updatedAt } = (await res.json()) as {
+        draftId: string;
+        updatedAt?: string;
+      };
       savedDraftIdRef.current = draftId;
       setSavedDraftId(draftId);
+      if (updatedAt) {
+        draftBaseRef.current = updatedAt;
+        setDraftBaseUpdatedAt(updatedAt);
+      }
     },
     [retryFromId]
   );
@@ -1248,8 +1335,11 @@ export default function EssayNewPage() {
     try {
       await Promise.all([saveEssayDraft(essayDraftSnapshot), saveTextDraft()]);
       toast.success("下書きを保存しました");
-    } catch {
-      toast.error("下書きの保存に失敗しました");
+    } catch (e) {
+      // 上書きを断られたときは理由を出す（同じ id なので自動保存の通知と重ならない）
+      if (draftConflictNotifiedRef.current && e instanceof Error)
+        toast.error(e.message, { id: DRAFT_CONFLICT_TOAST, duration: 15000 });
+      else toast.error("下書きの保存に失敗しました");
     } finally {
       setSavingDraft(false);
     }
@@ -2808,9 +2898,12 @@ export default function EssayNewPage() {
                       )}
                       <DraftSaveIndicator
                         status={
-                          textDraftStatus === "error"
-                            ? essayDraftStatus
-                            : textDraftStatus
+                          // 下書きへの保存を断られたら、端末への退避が済んでいても失敗と出す
+                          essayDraftStatus === "error"
+                            ? "error"
+                            : textDraftStatus === "error"
+                              ? essayDraftStatus
+                              : textDraftStatus
                         }
                         restored={textDraftRestored}
                         lastSavedAt={textDraftSavedAt ?? essayDraftSavedAt}

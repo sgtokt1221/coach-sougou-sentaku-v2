@@ -121,8 +121,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { FieldValue } = await import("firebase-admin/firestore");
+    const { Timestamp } = await import("firebase-admin/firestore");
     const isNew = typeof body.draftId !== "string" || !body.draftId;
+    // 保存時刻は応答で返し、次の保存の baseUpdatedAt にしてもらう。
+    // serverTimestamp だと書いた値が分からないので、ここで決める
+    const now = Timestamp.now();
     const draftId: string = isNew
       ? `draft_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
       : body.draftId;
@@ -137,7 +140,7 @@ export async function POST(request: NextRequest) {
       facultyId: body.facultyId ?? "",
       selectedCompoundId: body.selectedCompoundId ?? "",
       inputMode: "text",
-      updatedAt: FieldValue.serverTimestamp(),
+      updatedAt: now,
     };
     if (typeof body.customMaxLength === "number")
       data.customMaxLength = body.customMaxLength;
@@ -167,11 +170,50 @@ export async function POST(request: NextRequest) {
       data.oralExamAnswers = body.oralExamAnswers.map((a: unknown) =>
         typeof a === "string" ? a : ""
       );
-    if (isNew) data.createdAt = FieldValue.serverTimestamp();
+    if (isNew) data.createdAt = now;
 
-    await adminDb
-      .doc(`users/${uid}/essayDrafts/${draftId}`)
-      .set(data, { merge: true });
+    const ref = adminDb.doc(`users/${uid}/essayDrafts/${draftId}`);
+    /**
+     * 古い画面からの上書きを断る。
+     *
+     * 同じ下書きを2つの画面（タブ・端末）で開いていたり、端末に残った古い写しが
+     * 復元されたりすると、古い本文が自動保存で新しい本文を黙って消していた
+     * （本番で口頭試問の問2・問3が消えた）。画面は最後に読んだ・書いた版の
+     * updatedAt を baseUpdatedAt として送り、サーバーの方が新しければ 409 を返す。
+     * baseUpdatedAt が null なのは「版が分からない」なので、既存の下書きには書かない。
+     * キー自体が無いのはこの仕組みより前の画面なので、これまでどおり通す。
+     */
+    const conflict = await adminDb.runTransaction(async (tx) => {
+      if (!isNew && "baseUpdatedAt" in body) {
+        const current = await tx.get(ref);
+        const currentMs: number | undefined = current
+          .data()
+          ?.updatedAt?.toMillis?.();
+        const baseMs =
+          typeof body.baseUpdatedAt === "string"
+            ? Date.parse(body.baseUpdatedAt)
+            : NaN;
+        if (
+          current.exists &&
+          currentMs !== undefined &&
+          (Number.isNaN(baseMs) || currentMs > baseMs)
+        ) {
+          return new Date(currentMs).toISOString();
+        }
+      }
+      tx.set(ref, data, { merge: true });
+      return null;
+    });
+    if (conflict) {
+      return NextResponse.json(
+        {
+          error:
+            "この下書きは別の画面でより新しい内容が保存されています。下書き一覧から開き直してください",
+          updatedAt: conflict,
+        },
+        { status: 409 }
+      );
+    }
 
     // 増えるのは新規作成のときだけ。更新は自動保存が数秒ごとに叩くので数えない
     if (isNew) {
@@ -187,7 +229,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({ draftId });
+    return NextResponse.json({
+      draftId,
+      updatedAt: now.toDate().toISOString(),
+    });
   } catch (error) {
     console.error("Essay drafts POST error:", error);
     return NextResponse.json(
