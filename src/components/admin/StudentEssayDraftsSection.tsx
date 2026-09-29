@@ -87,7 +87,13 @@ export function StudentEssayDraftsSection({
   studentId: string;
 }) {
   const { data, error, isLoading } = useAuthSWR<{ drafts: EssayDraft[] }>(
-    `/api/admin/students/${studentId}/essay-drafts`
+    `/api/admin/students/${studentId}/essay-drafts`,
+    /**
+     * 生徒が書いている最中も追えるよう10秒ごとに読み直す。
+     * このタブを開いている間だけ動き（非表示のタブは描画されない）、
+     * ブラウザのタブが裏にある間は SWR が止める。読むのは最大5件。
+     */
+    { refreshInterval: 10_000 }
   );
   const [openId, setOpenId] = useState<string | null>(null);
 
@@ -109,7 +115,7 @@ export function StudentEssayDraftsSection({
   return (
     <div className="space-y-3">
       <p className="text-muted-foreground text-xs">
-        提出前の書きかけの小論文です。自動保存された最新の状態を表示します。提出すると下書きは消え、答案は「成績・弱点」タブの添削履歴に移ります。
+        提出前の書きかけの小論文（新しい順に5件まで）です。10秒ごとに最新の状態へ更新します。提出すると下書きは消え、答案は「成績・弱点」タブの添削履歴に移ります。
       </p>
       {drafts.length === 0 ? (
         <Card>
