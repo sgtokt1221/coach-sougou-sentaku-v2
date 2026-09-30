@@ -29,6 +29,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { SESSION_TYPE_LABELS, type Session } from "@/lib/types/session";
 import { WeaknessSourceBadge } from "@/components/growth/WeaknessSourceBadge";
 import { normalizedEssayTotal } from "@/lib/types/essay";
+import type { EssayKind } from "@/lib/essay/essay-kind";
 
 interface InterviewHistoryItem {
   id: string;
@@ -186,6 +187,8 @@ export default function GrowthPage() {
     essays: {
       submittedAt: string;
       status: string;
+      /** 答案の種類。スコア推移で線を分ける */
+      kind?: EssayKind;
       /** 合計の満点。口頭試問型は60。旧データは無し（=50） */
       scoreMaximum?: number;
       scores?: {
@@ -260,6 +263,7 @@ export default function GrowthPage() {
         return {
           date: `${d.getMonth() + 1}/${d.getDate()}`,
           total: i.scores!.total,
+          ts: d.getTime(),
         };
       })
       .reverse(); // 新しい順 → 古い順にして時系列グラフに
@@ -304,16 +308,17 @@ export default function GrowthPage() {
             typeof s.reasoningMaturity === "number"
               ? s.reasoningMaturity
               : null,
-          _ts: d.getTime(),
+          kind: e.kind,
+          ts: d.getTime(),
         };
       })
-      .sort((a, b) => a._ts - b._ts)
-      .map(({ _ts: _, ...rest }) => rest); // eslint-disable-line @typescript-eslint/no-unused-vars
+      .sort((a, b) => a.ts - b.ts);
   }, [essayData]);
 
   // 総合チャート用: 添削と面接を別系列で渡す
   const essaySeries = useMemo(
-    () => trendData.map(({ date, total }) => ({ date, total })),
+    () =>
+      trendData.map(({ date, total, kind, ts }) => ({ date, total, kind, ts })),
     [trendData]
   );
   const hasCombined = essaySeries.length > 0 || interviewTrendData.length > 0;

@@ -72,10 +72,12 @@ export function SessionStudentDossier({
   const essayChartData = (essayScoreTrend ?? []).map((p) => ({
     ...p,
     date: p.date.slice(5, 10).replace("-", "/"),
+    ts: Date.parse(p.date),
   }));
   const interviewChartData = (interviewScoreTrend ?? []).map((p) => ({
     ...p,
     date: p.date.slice(5, 10).replace("-", "/"),
+    ts: Date.parse(p.date),
   }));
 
   return (

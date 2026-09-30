@@ -20,6 +20,17 @@ export const SCORE_TYPE_COLORS = {
 } as const;
 
 /**
+ * スコア推移で答案の種類ごとに線を分けるときの色（種類の正本は lib/essay/essay-kind.ts）。
+ * 小論文は SCORE_TYPE_COLORS.essay と同じ色にして、分ける前と見た目をそろえる。
+ * 面接（rose 30°）とも色相を離す: ティール 175° / 紫 280° / 琥珀 75°。
+ */
+export const ESSAY_KIND_COLORS = {
+  essay: "var(--chart-1)", // ティール — 小論文
+  oral_exam: "var(--chart-3)", // 紫 — 口頭試問
+  report: "var(--chart-2)", // 琥珀 — レポート
+} as const;
+
+/**
  * 小論文の軸ごとの色。線グラフで5〜6本を同時に描くので、色相を離して割り当てる。
  *
  * 以前は議論の成熟度が未定義の --chart-6 を参照しており、フォールバックで

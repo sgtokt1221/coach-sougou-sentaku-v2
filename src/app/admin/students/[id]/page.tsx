@@ -859,10 +859,12 @@ function AdminStudentDetailPageInner() {
   const essayChartData = (essayScoreTrend ?? []).map((p) => ({
     ...p,
     date: p.date.slice(5, 10).replace("-", "/"),
+    ts: Date.parse(p.date),
   }));
   const interviewChartData = (interviewScoreTrend ?? []).map((p) => ({
     ...p,
     date: p.date.slice(5, 10).replace("-", "/"),
+    ts: Date.parse(p.date),
   }));
 
   // 日々の取り組みの項目別平均（全提出から算出）

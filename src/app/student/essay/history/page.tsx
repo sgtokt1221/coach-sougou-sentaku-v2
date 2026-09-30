@@ -1,5 +1,16 @@
 "use client";
 
+import { ESSAY_KIND_COLORS } from "@/components/charts/theme";
+import {
+  EssayKindFilter,
+  useEssayKindFilter,
+  withKindTotals,
+} from "@/components/growth/EssayKindFilter";
+import {
+  ESSAY_KIND_LABELS,
+  essayKindTotalKey,
+  type EssayKind,
+} from "@/lib/essay/essay-kind";
 import { normalizedEssayTotal } from "@/lib/types/essay";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -41,6 +52,8 @@ interface EssayHistoryItem {
   status: "reviewed" | "reviewing" | "pending" | "error";
   totalScore: number;
   scoreMaximum?: number;
+  /** 答案の種類。スコア推移で合計の線を分ける */
+  kind?: EssayKind;
   scores: {
     structure: number;
     logic: number;
@@ -150,6 +163,7 @@ export default function EssayHistoryPage() {
       date: formatDate(item.submittedAt),
       // 満点の違う答案を同じ線に混ぜない（口頭試問型は60点満点）
       total: normalizedEssayTotal(item.totalScore, item.scoreMaximum),
+      kind: item.kind,
       structure: item.scores.structure,
       logic: item.scores.logic,
       expression: item.scores.expression,
@@ -162,6 +176,16 @@ export default function EssayHistoryPage() {
   const detailLines = chartData.some((d) => typeof d.originality === "number")
     ? [...DETAIL_LINES, LEGACY_DETAIL_LINE]
     : DETAIL_LINES;
+
+  /**
+   * 答案の種類（小論文／口頭試問／レポート）で絞り込み、「すべて」のときは
+   * 合計の線を種類ごとに分ける。口頭試問（専門知識込み）やレポートを小論文と
+   * 同じ線につなぐと、種類が変わっただけの上下が実力の上下に見える。
+   */
+  const kindFilter = useEssayKindFilter(chartData);
+  const kindChartData = withKindTotals(kindFilter.filtered);
+  const splitTotals =
+    kindFilter.selected === "all" && kindFilter.kinds.length > 1;
 
   return (
     <div className="mx-auto max-w-3xl space-y-4 px-4 py-5 lg:space-y-6 lg:px-6 lg:py-8">
@@ -202,6 +226,16 @@ export default function EssayHistoryPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">スコア推移</CardTitle>
+                {kindFilter.showFilter && (
+                  <div className="mt-2">
+                    <EssayKindFilter
+                      kinds={kindFilter.kinds}
+                      selected={kindFilter.selected}
+                      onChange={kindFilter.setSelected}
+                      counts={kindFilter.counts}
+                    />
+                  </div>
+                )}
                 <div className="mt-2 flex flex-wrap gap-2">
                   <button
                     onClick={() => toggleLine("total")}
@@ -237,7 +271,7 @@ export default function EssayHistoryPage() {
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={240}>
-                  <LineChart data={chartData}>
+                  <LineChart data={kindChartData}>
                     <CartesianGrid
                       strokeDasharray={GRID_STYLE.strokeDasharray}
                       stroke={GRID_STYLE.stroke}
@@ -256,7 +290,7 @@ export default function EssayHistoryPage() {
                       axisLine={false}
                     />
                     <Tooltip content={<CustomTooltip />} />
-                    {visibleLines.has("total") && (
+                    {visibleLines.has("total") && !splitTotals && (
                       <Line
                         type="monotone"
                         dataKey="total"
@@ -270,6 +304,25 @@ export default function EssayHistoryPage() {
                         animationEasing={CHART_ANIMATION.easing}
                       />
                     )}
+                    {visibleLines.has("total") &&
+                      splitTotals &&
+                      kindFilter.kinds.map((k) => (
+                        <Line
+                          key={k}
+                          type="monotone"
+                          dataKey={essayKindTotalKey(k)}
+                          name={`合計（${ESSAY_KIND_LABELS[k]}）`}
+                          stroke={ESSAY_KIND_COLORS[k]}
+                          strokeWidth={2.5}
+                          dot={<CustomDot />}
+                          activeDot={<CustomActiveDot />}
+                          // 他の種類の点をまたいで、同じ種類どうしをつなぐ
+                          connectNulls
+                          isAnimationActive={true}
+                          animationDuration={CHART_ANIMATION.duration}
+                          animationEasing={CHART_ANIMATION.easing}
+                        />
+                      ))}
                     {detailLines
                       .filter(({ key }) => visibleLines.has(key))
                       .map(({ key, label }) => (

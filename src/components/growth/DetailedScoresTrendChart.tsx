@@ -13,6 +13,11 @@ import {
 import { SCORE_LINES, CHART_ANIMATION, GRID_STYLE } from "@/components/charts/theme";
 import { CustomTooltip } from "@/components/charts/CustomTooltip";
 import { CustomDot, CustomActiveDot } from "@/components/charts/CustomDot";
+import {
+  EssayKindFilter,
+  useEssayKindFilter,
+} from "@/components/growth/EssayKindFilter";
+import type { EssayKind } from "@/lib/essay/essay-kind";
 
 interface TrendDataPoint {
   date: string;
@@ -32,8 +37,21 @@ interface DetailedScoresTrendChartProps {
   lines?: readonly LineDef[];
 }
 
-export function DetailedScoresTrendChart({ data, lines }: DetailedScoresTrendChartProps) {
+export function DetailedScoresTrendChart({ data: allData, lines }: DetailedScoresTrendChartProps) {
   const lineDefs = lines ?? SCORE_LINES;
+  // 小論文の点に種類があれば、種類で絞り込めるようにする（面接の点には無いので出ない）
+  const kindFilter = useEssayKindFilter(allData as Array<TrendDataPoint & { kind?: EssayKind }>);
+  const data = kindFilter.filtered;
+  const filter = kindFilter.showFilter ? (
+    <div className="mb-2 flex justify-end">
+      <EssayKindFilter
+        kinds={kindFilter.kinds}
+        selected={kindFilter.selected}
+        onChange={kindFilter.setSelected}
+        counts={kindFilter.counts}
+      />
+    </div>
+  ) : null;
 
   if (data.length === 0) {
     return (
@@ -51,6 +69,8 @@ export function DetailedScoresTrendChart({ data, lines }: DetailedScoresTrendCha
       : data;
 
   return (
+    <div>
+      {filter}
     <ResponsiveContainer width="100%" height={280}>
       <LineChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
         <CartesianGrid
@@ -90,5 +110,6 @@ export function DetailedScoresTrendChart({ data, lines }: DetailedScoresTrendCha
         ))}
       </LineChart>
     </ResponsiveContainer>
+    </div>
   );
 }

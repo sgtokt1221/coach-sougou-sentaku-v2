@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { essayKindOf } from "@/lib/essay/essay-kind";
 
 export async function GET(request: NextRequest) {
   try {
@@ -138,6 +139,8 @@ export async function GET(request: NextRequest) {
           status: data.status ?? "reviewed",
           totalScore: total,
           scoreMaximum: data.feedback?.scoreMaximum ?? 50,
+          // スコア推移で種類ごとに線を分けるため
+          kind: essayKindOf(data),
           scores: {
             structure: scores.structure ?? 0,
             logic: scores.logic ?? 0,

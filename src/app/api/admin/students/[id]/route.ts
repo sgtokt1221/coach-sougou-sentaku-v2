@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { essayKindOf } from "@/lib/essay/essay-kind";
 import { resolveLastActivity } from "@/lib/api/last-activity";
 import { requireRole, scopeByOrganization } from "@/lib/api/auth";
 import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
@@ -242,6 +243,8 @@ export async function GET(
         // 満点は答案ごとに違う（口頭試問型は専門知識を合計に入れるので60）。
         // 50固定で割るとランクが実際とずれる
         scoreMaximum: data.feedback?.scoreMaximum ?? 50,
+        // スコア推移で種類ごとに線を分けるため（口頭試問・レポートを小論文の線に混ぜない）
+        kind: essayKindOf(data),
         status: data.status ?? "uploaded",
       };
     });
@@ -279,6 +282,7 @@ export async function GET(
       .reverse()
       .map((e) => ({
         date: e.submittedAt,
+        kind: e.kind,
         // 満点の違う答案を1本の線に混ぜると、口頭試問型を1本やっただけで
         // 伸びたように見える。50点スケールへ揃えて描く
         total: normalizedEssayTotal(e.scores!.total, e.scoreMaximum),

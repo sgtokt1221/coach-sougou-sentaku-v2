@@ -1,5 +1,16 @@
 "use client";
 
+import { ESSAY_KIND_COLORS } from "@/components/charts/theme";
+import {
+  EssayKindFilter,
+  useEssayKindFilter,
+  withKindTotals,
+} from "@/components/growth/EssayKindFilter";
+import {
+  ESSAY_KIND_LABELS,
+  essayKindTotalKey,
+  type EssayKind,
+} from "@/lib/essay/essay-kind";
 import { normalizedEssayTotal } from "@/lib/types/essay";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -62,6 +73,8 @@ interface EssayHistoryItem {
   totalScore: number;
   /** 合計の満点。口頭試問型は専門知識を合計に入れるので60。旧データは無し */
   scoreMaximum?: number;
+  /** 答案の種類。スコア推移で合計の線を分ける */
+  kind?: EssayKind;
   scores: {
     structure: number;
     logic: number;
@@ -174,6 +187,7 @@ export function EssayHistory() {
       date: formatDate(item.submittedAt),
       // 満点の違う答案を同じ線に混ぜない（口頭試問型は60点満点）
       total: normalizedEssayTotal(item.totalScore, item.scoreMaximum),
+      kind: item.kind,
       structure: item.scores.structure,
       logic: item.scores.logic,
       expression: item.scores.expression,
@@ -186,6 +200,16 @@ export function EssayHistory() {
   const detailLines = chartData.some((d) => typeof d.originality === "number")
     ? [...DETAIL_LINES, LEGACY_DETAIL_LINE]
     : DETAIL_LINES;
+
+  /**
+   * 答案の種類（小論文／口頭試問／レポート）で絞り込み、「すべて」のときは
+   * 合計の線を種類ごとに分ける。口頭試問（専門知識込み）やレポートを小論文と
+   * 同じ線につなぐと、種類が変わっただけの上下が実力の上下に見える。
+   */
+  const kindFilter = useEssayKindFilter(chartData);
+  const kindChartData = withKindTotals(kindFilter.filtered);
+  const splitTotals =
+    kindFilter.selected === "all" && kindFilter.kinds.length > 1;
 
   // 同じ rootEssayId の essays をチェーンに集約
   const chains: EssayChain[] = useMemo(() => {
@@ -248,6 +272,16 @@ export function EssayHistory() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base">スコア推移</CardTitle>
+            {kindFilter.showFilter && (
+              <div className="mt-2">
+                <EssayKindFilter
+                  kinds={kindFilter.kinds}
+                  selected={kindFilter.selected}
+                  onChange={kindFilter.setSelected}
+                  counts={kindFilter.counts}
+                />
+              </div>
+            )}
             <div className="mt-2 flex flex-wrap gap-2">
               <button
                 onClick={() => toggleLine("total")}
@@ -283,7 +317,7 @@ export function EssayHistory() {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={240}>
-              <LineChart data={chartData}>
+              <LineChart data={kindChartData}>
                 <CartesianGrid
                   strokeDasharray={GRID_STYLE.strokeDasharray}
                   stroke={GRID_STYLE.stroke}
@@ -302,7 +336,7 @@ export function EssayHistory() {
                   axisLine={false}
                 />
                 <Tooltip content={<CustomTooltip />} />
-                {visibleLines.has("total") && (
+                {visibleLines.has("total") && !splitTotals && (
                   <Line
                     type="monotone"
                     dataKey="total"
@@ -316,6 +350,25 @@ export function EssayHistory() {
                     animationEasing={CHART_ANIMATION.easing}
                   />
                 )}
+                {visibleLines.has("total") &&
+                  splitTotals &&
+                  kindFilter.kinds.map((k) => (
+                    <Line
+                      key={k}
+                      type="monotone"
+                      dataKey={essayKindTotalKey(k)}
+                      name={`合計（${ESSAY_KIND_LABELS[k]}）`}
+                      stroke={ESSAY_KIND_COLORS[k]}
+                      strokeWidth={2.5}
+                      dot={<CustomDot />}
+                      activeDot={<CustomActiveDot />}
+                      // 他の種類の点をまたいで、同じ種類どうしをつなぐ
+                      connectNulls
+                      isAnimationActive={true}
+                      animationDuration={CHART_ANIMATION.duration}
+                      animationEasing={CHART_ANIMATION.easing}
+                    />
+                  ))}
                 {detailLines
                   .filter(({ key }) => visibleLines.has(key))
                   .map(({ key, label }) => (

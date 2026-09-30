@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { WeaknessReminderBanner } from "@/components/growth/WeaknessReminderBanner";
 import { WeaknessRecord, getWeaknessReminderLevel } from "@/lib/types/growth";
 import { normalizedEssayTotal } from "@/lib/types/essay";
+import type { EssayKind } from "@/lib/essay/essay-kind";
 import {
   FileEdit,
   Mic as MicIcon,
@@ -36,6 +37,8 @@ interface EssayHistoryItem {
   scores: { total: number };
   /** 合計の満点。口頭試問型は60。旧データは無し（=50） */
   scoreMaximum?: number;
+  /** 答案の種類。スコア推移で線を分ける */
+  kind?: EssayKind;
 }
 
 function scoreColor(total: number): string {
@@ -116,11 +119,11 @@ export default function StudentDashboard() {
         return {
           date: `${d.getMonth() + 1}/${d.getDate()}`,
           total: normalizedEssayTotal(e.scores.total, e.scoreMaximum),
-          _ts: d.getTime(),
+          kind: e.kind,
+          ts: d.getTime(),
         };
       })
-      .sort((a, b) => a._ts - b._ts)
-      .map(({ _ts: _, ...rest }) => rest); // eslint-disable-line @typescript-eslint/no-unused-vars
+      .sort((a, b) => a.ts - b.ts);
   }, [essayData]);
 
   const interviewTrend = useMemo(() => {
@@ -131,11 +134,10 @@ export default function StudentDashboard() {
         return {
           date: `${d.getMonth() + 1}/${d.getDate()}`,
           total: i.scores!.total,
-          _ts: d.getTime(),
+          ts: d.getTime(),
         };
       })
-      .sort((a, b) => a._ts - b._ts)
-      .map(({ _ts: _, ...rest }) => rest); // eslint-disable-line @typescript-eslint/no-unused-vars
+      .sort((a, b) => a.ts - b.ts);
   }, [interviewData]);
 
   const latestScore = useMemo(() => {

@@ -1,3 +1,4 @@
+import type { EssayKind } from "@/lib/essay/essay-kind";
 import type { WeaknessRecord } from "./growth";
 import type { EssayScores } from "./essay";
 import type { EnglishCert } from "./user";
@@ -183,6 +184,8 @@ export interface EssayListItem {
 
 export interface ScoreTrendPoint {
   date: string;
+  /** 答案の種類。スコア推移で線を分ける（面接の点には無い） */
+  kind?: EssayKind;
   total: number;
   structure: number;
   logic: number;
