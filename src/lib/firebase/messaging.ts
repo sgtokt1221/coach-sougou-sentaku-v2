@@ -259,43 +259,6 @@ export function onForegroundMessage(
 }
 
 /**
- * ページ側から OS 通知を出す。
- *
- * タブが存在すると FCM は onMessage に配信し、サービスワーカーは OS 通知を
- * 出さない（仕様）。タブを開いたまま別の作業をしていると、アプリ内トーストが
- * 見ていない画面で8秒出て消えるだけになる。これが「届かない」の主因だった。
- * そういうときはここで OS 通知を出す。
- *
- * サービスワーカー側の notificationclick が data.url を開く。
- */
-export async function showLocalNotification(payload: {
-  title: string;
-  body?: string;
-  url?: string;
-  tag?: string;
-}): Promise<boolean> {
-  if (typeof window === "undefined") return false;
-  if (!("Notification" in window) || Notification.permission !== "granted") {
-    return false;
-  }
-  if (!("serviceWorker" in navigator)) return false;
-  try {
-    const reg = await navigator.serviceWorker.ready;
-    await reg.showNotification(payload.title, {
-      body: payload.body ?? "",
-      icon: "/icons/icon-192.png",
-      badge: "/icons/icon-192.png",
-      tag: payload.tag ?? `notice-${Date.now()}`,
-      data: { url: payload.url ?? "/" },
-    });
-    return true;
-  } catch (err) {
-    console.warn("[FCM] local notification failed:", err);
-    return false;
-  }
-}
-
-/**
  * 動いているサービスワーカーの版を聞く。
  * 「直したのに届かない」ときに、古い SW のままかどうかを切り分けるため。
  * 応答が無ければ null（SW が無い、または古くて応答しない）。

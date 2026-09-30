@@ -2,23 +2,15 @@
 
 import { useEffect } from "react";
 import { mutate } from "swr";
-import { toast } from "sonner";
-import { useRouter } from "next/navigation";
-import {
-  onForegroundMessage,
-  refreshFcmToken,
-  showLocalNotification,
-} from "@/lib/firebase/messaging";
+import { onForegroundMessage, refreshFcmToken } from "@/lib/firebase/messaging";
 import { useAuth } from "@/contexts/AuthContext";
 
 /**
- * フォアグラウンド (タブが前面) で FCM 通知を受けた時に
- * sonner トーストを出し、メッセージ系 SWR を再検証する。
- * 背景通知は service worker が OS 通知を出すため、本コンポーネントは前面時の UX 向上用。
+ * フォアグラウンド (タブが前面) で FCM 通知を受けた時に、メッセージ系 SWR を
+ * 再検証する。OS 通知は前面・背面とも service worker が出す。
  */
 export function ForegroundNotifier() {
   const { user } = useAuth();
-  const router = useRouter();
 
   /**
    * 許可済みの利用者のFCMトークンを、アプリを開くたびに取り直して保存する。
@@ -37,58 +29,24 @@ export function ForegroundNotifier() {
   }, [user]);
 
   useEffect(() => {
-    const unsub = onForegroundMessage((payload) => {
-      if (payload.title || payload.body) {
-        /**
-         * タブが存在するだけで FCM はここに配信し、サービスワーカーは OS 通知を
-         * 出さない。タブを開いたまま別の作業をしていると、トーストは見ていない
-         * 画面で消える。本番で「届かない」と感じられていた主因。
-         * 見ていないときは OS 通知として出す。
-         */
-        const looking =
-          typeof document !== "undefined" &&
-          document.visibilityState === "visible" &&
-          document.hasFocus();
-        if (!looking) {
-          void showLocalNotification({
-            title: payload.title ?? "新着のお知らせ",
-            body: payload.body,
-            url: payload.url,
-            tag: payload.tag,
-          });
-          void mutate(() => true);
-          return;
-        }
-        /**
-         * 見ているときだけトースト。
-         * 既定（下部・4秒・操作なし）だと、スマホでは親指の下に小さく出て
-         * すぐ消えるため見逃す。上部・長め・タップで遷移できる形にする。
-         */
-        toast(payload.title ?? "新着のお知らせ", {
-          description: payload.body,
-          position: "top-center",
-          duration: 8000,
-          ...(payload.url
-            ? {
-                action: {
-                  label: "開く",
-                  onClick: () => router.push(payload.url!),
-                },
-              }
-            : {}),
-        });
-      }
-      /**
-       * 未読バッジを更新する。見逃しても後から件数で気づけるようにするため、
-       * ここで取りこぼすとバッジが増えない。個別のキーを列挙すると
-       * 追加のたびに漏れるので、キャッシュ済みのものをまとめて再検証する。
-       */
+    /**
+     * OS 通知はサービスワーカーが出す（アプリを操作中でも出す。行き先の画面を
+     * 開いているときだけ省く）。ここでトーストも出すと二重になるので出さない。
+     *
+     * 以前は操作中ならトーストだけにしていたが、スマホでは上部に8秒出て消える
+     * だけで「使っている間は通知が来ない」と受け取られていた。
+     *
+     * 未読バッジと開いている会話はここで更新する。取りこぼすとバッジが増えず、
+     * 行き先の画面を開いていても新しいメッセージが出ない。個別のキーを列挙すると
+     * 追加のたびに漏れるので、キャッシュ済みのものをまとめて再検証する。
+     */
+    const unsub = onForegroundMessage(() => {
       void mutate(() => true);
     });
     return () => {
       unsub?.();
     };
-  }, [router]);
+  }, []);
 
   return null;
 }

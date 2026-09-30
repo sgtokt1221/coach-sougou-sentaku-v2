@@ -9,6 +9,9 @@ import { readFileSync } from "node:fs";
  * PWA はウィンドウが残ったままページが凍結されるため、転送先が動かない。
  * ここでは「操作中のウィンドウが無ければ SW が自分で出す」ことを確かめる。
  *
+ * 2026-09-30 から、操作中でも出す（スマホで「使っている間は通知が来ない」と
+ * 受け取られていた）。省くのは、行き先の画面をちょうど操作しているときだけ。
+ *
  * ブラウザが無くても回せるように、self / firebase / clients を差し替えて
  * 実物の firebase-messaging-sw.js を評価する。
  */
@@ -16,6 +19,7 @@ import { readFileSync } from "node:fs";
 interface FakeClient {
   focused: boolean;
   visibilityState: string;
+  url?: string;
 }
 
 function loadServiceWorker(clients: FakeClient[]) {
@@ -100,13 +104,47 @@ async function main() {
     );
   }
 
-  // 3. 実際に操作中（ページがトーストを出すので SW は出さない）
+  // 3. アプリを操作中だが別の画面を見ている — 以前はトーストだけで気づかれなかった
   {
     const sw = loadServiceWorker([
-      { focused: true, visibilityState: "visible" },
+      {
+        focused: true,
+        visibilityState: "visible",
+        url: "https://example.test/student/essay/new",
+      },
     ]);
     await sw.push(PAYLOAD);
-    assert.equal(sw.shown.length, 0, "操作中は SW から通知を出さない");
+    assert.equal(sw.shown.length, 1, "操作中でも別の画面なら通知を出す");
+  }
+
+  // 3b. 行き先の画面をちょうど操作している（メッセージが画面に出るので出さない）
+  {
+    const sw = loadServiceWorker([
+      {
+        focused: true,
+        visibilityState: "visible",
+        url: "https://example.test/student/messages?x=1",
+      },
+    ]);
+    await sw.push(PAYLOAD);
+    assert.equal(sw.shown.length, 0, "行き先の画面を操作中なら出さない");
+  }
+
+  // 3c. 行き先の画面は開いているが背面（操作されていない）なら出す
+  {
+    const sw = loadServiceWorker([
+      {
+        focused: false,
+        visibilityState: "visible",
+        url: "https://example.test/student/messages",
+      },
+    ]);
+    await sw.push(PAYLOAD);
+    assert.equal(
+      sw.shown.length,
+      1,
+      "行き先の画面でも操作されていなければ出す"
+    );
   }
 
   // 4. 表示するものが無いペイロードでは出さない
@@ -116,7 +154,7 @@ async function main() {
     assert.equal(sw.shown.length, 0, "title が無ければ出さない");
   }
 
-  console.log("[verify-push-sw] OK (4件)");
+  console.log("[verify-push-sw] OK (6件)");
 }
 
 main().catch((e) => {

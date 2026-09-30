@@ -9,7 +9,7 @@ importScripts(
  * どの版が動いているかを見分けるための印。SW を変えたら必ず上げる。
  * 設定画面から読み出して「更新が届いたか」を確かめる。
  */
-const SW_VERSION = "2026-09-18.1";
+const SW_VERSION = "2026-09-30.1";
 
 /**
  * 新しい SW をすぐ有効にする。
@@ -79,6 +79,13 @@ messaging.onBackgroundMessage((payload) => {
  *
  * 判定には WindowClient.focused を使う。visibilityState は凍結中の PWA でも
  * visible のままのことがあり、当てにならない。
+ *
+ * アプリを操作中でも OS 通知を出す（2026-09-30）。以前は操作中ならページの
+ * トーストに任せていたが、スマホでは上部に8秒出て消えるだけで「使っている間は
+ * 通知が来ない」と受け取られていた。iOS は表示しない push が続くと購読を
+ * 取り消すことがあるので、その意味でも出しておく。
+ * 省くのは、通知の行き先の画面をちょうど開いて操作しているときだけ
+ * （メッセージがそのまま画面に出るので、バナーは重複になる）。
  */
 self.addEventListener("push", (event) => {
   let payload = null;
@@ -107,11 +114,24 @@ self.addEventListener("push", (event) => {
         type: "window",
         includeUncontrolled: true,
       });
-      // 操作中のウィンドウがあるならページ側がトーストを出す
-      const inUse = wins.some(
-        (c) => c.focused === true && c.visibilityState === "visible"
-      );
-      if (inUse) return;
+      const targetPath = (() => {
+        try {
+          return new URL(url, self.location.origin).pathname;
+        } catch {
+          return null;
+        }
+      })();
+      const viewingTarget = wins.some((c) => {
+        if (!(c.focused === true && c.visibilityState === "visible")) {
+          return false;
+        }
+        try {
+          return targetPath !== null && new URL(c.url).pathname === targetPath;
+        } catch {
+          return false;
+        }
+      });
+      if (viewingTarget) return;
       await self.registration.showNotification(title, {
         body,
         icon: "/icons/icon-192.png",
