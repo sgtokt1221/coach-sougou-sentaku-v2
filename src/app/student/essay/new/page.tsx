@@ -984,7 +984,9 @@ export default function EssayNewPage() {
       setEssayId(draft.essayId);
       setOcrText(draft.ocrText);
       setTopic(draft.topic);
-      setSelectedCompoundId(draft.selectedCompoundId);
+      // 空の値で戻すと、1校だけの生徒の自動選択まで消える
+      if (draft.selectedCompoundId)
+        setSelectedCompoundId(draft.selectedCompoundId);
       setCustomMaxLength(draft.customMaxLength);
       setWritingDirection(draft.writingDirection);
       setStep(3);
@@ -1053,7 +1055,9 @@ export default function EssayNewPage() {
       }
       setDirectText(draft.directText);
       setTopic(draft.topic);
-      setSelectedCompoundId(draft.selectedCompoundId);
+      // 空の値で戻すと、1校だけの生徒の自動選択まで消える
+      if (draft.selectedCompoundId)
+        setSelectedCompoundId(draft.selectedCompoundId);
       setCustomMaxLength(draft.customMaxLength);
       setWritingDirection(draft.writingDirection);
       /**
@@ -2158,12 +2162,23 @@ export default function EssayNewPage() {
                       <Button
                         className="w-full"
                         onClick={handleGenerateOralExam}
-                        disabled={!oralExamTheme.trim() || oralExamLoading}
+                        disabled={
+                          !oralExamTheme.trim() ||
+                          oralExamLoading ||
+                          !universityId ||
+                          !facultyId
+                        }
                       >
                         {oralExamLoading
                           ? "問題を作っています..."
                           : "問題を作る"}
                       </Button>
+                      {/* 「問題を作る」は執筆画面へ直接進むので、志望校が無いと提出で必ず断られる */}
+                      {(!universityId || !facultyId) && (
+                        <p className="text-muted-foreground text-xs">
+                          先に下の「アドミッションポリシー参照先」で志望校を選んでください
+                        </p>
+                      )}
                       {oralExamLoading && (
                         <div className="space-y-2">
                           {Array.from({ length: oralExamCount }).map((_, i) => (
@@ -2915,6 +2930,25 @@ export default function EssayNewPage() {
                       {error && (
                         <p className="text-destructive text-sm">{error}</p>
                       )}
+                      {/*
+                       * 志望校が空のまま提出すると添削APIが 400 で断り、
+                       * 「添削リクエストに失敗しました」としか出なかった
+                       * （志望校の無い下書きを開き直したとき等）。先に案内する。
+                       */}
+                      {(!universityId || !facultyId) && (
+                        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-amber-50 p-3 dark:bg-amber-950/30">
+                          <p className="text-sm text-amber-900 dark:text-amber-100">
+                            志望校が選ばれていないため添削できません。書いた内容はそのまま残ります。
+                          </p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setStep(1)}
+                          >
+                            志望校を選ぶ
+                          </Button>
+                        </div>
+                      )}
                       <div className="flex gap-2">
                         {/* レポートモードでは下書き保存を無効（非表示） */}
                         {!reportMode && (
@@ -2935,6 +2969,8 @@ export default function EssayNewPage() {
                           disabled={
                             isSubmitting ||
                             !directText.trim() ||
+                            !universityId ||
+                            !facultyId ||
                             (reportMode && !reportMaterial)
                           }
                         >
