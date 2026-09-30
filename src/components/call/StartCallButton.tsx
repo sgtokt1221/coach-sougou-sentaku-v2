@@ -11,18 +11,24 @@ import { isLiveKitConfiguredClient } from "@/lib/livekit/client-config";
 /**
  * チャット画面から通話を始めるボタン。
  *
- * ChatThread にヘッダの差し込み口が無いので、各ページのヘッダ行に置く。
+ * PC では各ページのヘッダ行に置く。スマホでは ChatThread の composerAccessory に
+ * compact で渡し、入力欄の並びに出す（見出しの右端は親指が届きにくい）。
  * 発信できるのは管理者と講師だけ（サーバ側でも requireRole で弾く）。
  */
 export function StartCallButton({
   participantUids,
   sessionId,
   label = "通話",
+  compact = false,
+  className,
 }: {
   participantUids: string[];
   /** セッションから始めた通話に紐づける。あとで記録を辿るのに使う */
   sessionId?: string;
   label?: string;
+  /** アイコンだけの小さいボタンにする（入力欄の並びに置くとき） */
+  compact?: boolean;
+  className?: string;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -58,8 +64,9 @@ export function StartCallButton({
   return (
     <Button
       type="button"
-      size="sm"
-      variant="outline"
+      size={compact ? "icon" : "sm"}
+      variant={compact ? "ghost" : "outline"}
+      className={className}
       disabled={busy || participantUids.length === 0}
       onClick={start}
       aria-label="ビデオ通話を開始"
@@ -69,7 +76,7 @@ export function StartCallButton({
       ) : (
         <Video className="size-4" />
       )}
-      {label}
+      {!compact && label}
     </Button>
   );
 }

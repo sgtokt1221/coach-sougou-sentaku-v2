@@ -91,10 +91,17 @@ export default function AdminThreadPage() {
             <h1 className="truncate text-base font-bold">{studentName}</h1>
             <p className="text-muted-foreground text-[11px]">メッセージ</p>
           </div>
-          <StartCallButton participantUids={[studentId]} />
+          {/* スマホでは入力欄の並びに出す（ChatThread の composerAccessory） */}
+          <StartCallButton
+            participantUids={[studentId]}
+            className="hidden sm:inline-flex"
+          />
         </div>
         <div className="bg-card min-h-0 flex-1 overflow-hidden rounded-xl border px-3">
           <ChatThread
+            composerAccessory={
+              <StartCallButton participantUids={[studentId]} compact />
+            }
             messages={messages}
             currentRole="coach"
             onSend={handleSend}

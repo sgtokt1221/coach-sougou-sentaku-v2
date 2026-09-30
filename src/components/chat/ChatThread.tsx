@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import Link from "next/link";
 import {
   Send,
@@ -13,6 +19,7 @@ import {
   Quote as QuoteIcon,
   Copy,
   SmilePlus,
+  ArrowDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -81,6 +88,11 @@ interface ChatThreadProps {
   reactionTarget?: { ownerId: string };
   /** 自分の uid。自分が押したリアクションを強調するのに使う */
   viewerUid?: string;
+  /**
+   * スマホのときだけ入力欄の並びに出すもの（通話ボタン等）。
+   * 見出しの右端は親指が届きにくいので、スマホでは下に置く。
+   */
+  composerAccessory?: ReactNode;
 }
 
 function readFileAsBase64(file: File): Promise<string> {
@@ -214,6 +226,7 @@ export function ChatThread({
   draftKey,
   reactionTarget,
   viewerUid,
+  composerAccessory,
 }: ChatThreadProps) {
   /** 各バブルのDOM。部分引用で選択範囲がそのバブル内か判定するのに使う */
   const bubbleRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -405,9 +418,77 @@ export function ChatThread({
     enabled: Boolean(draftKey),
   });
 
+  /**
+   * 一番下を見ているか。見ている間は、中身の高さが伸びても一番下に貼り付ける。
+   *
+   * 以前は件数が変わった瞬間に1回だけ一番下へ送っていた。スマホでは画像や
+   * 長い吹き出しがその後に描かれて高さが伸び、開くと前の位置に止まって見えた。
+   */
+  const atBottomRef = useRef(true);
+  const contentRef = useRef<HTMLDivElement>(null);
+  /** 一番下より上を読んでいる間に届いた相手の発言（開いた時点の未読を含む） */
+  const [newCount, setNewCount] = useState(0);
+  /** 画面に出したメッセージのID。件数や並び順では判定しない（途中に差し込まれることがある） */
+  const seenIdsRef = useRef<Set<string> | null>(null);
+
+  const handleListScroll = useCallback(() => {
+    const el = messageListRef.current;
+    if (!el) return;
+    const near = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+    atBottomRef.current = near;
+    if (near) setNewCount(0);
+  }, []);
+
+  const jumpToLatest = useCallback(() => {
+    const el = messageListRef.current;
+    if (!el) return;
+    atBottomRef.current = true;
+    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    setNewCount(0);
+  }, []);
+
   useEffect(() => {
-    scrollMessagesToBottom();
-  }, [messages.length, scrollMessagesToBottom]);
+    if (loading) return;
+    const seen = seenIdsRef.current;
+    seenIdsRef.current = new Set(messages.map((m) => m.id));
+    if (seen === null) {
+      // 開いた直後。一番下へ送り、届かなかったときのために未読を数えておく
+      // （一番下に着けばスクロールの判定で消える）
+      setNewCount(
+        messages.filter((m) => m.senderRole !== currentRole && !m.read).length
+      );
+      atBottomRef.current = true;
+      requestAnimationFrame(scrollMessagesToBottom);
+      return;
+    }
+    const added = messages.filter((m) => !seen.has(m.id));
+    if (added.length === 0) return;
+    // 自分が送ったとき・一番下を見ているときは追いかける。
+    // 上を読んでいるときは動かさず、「新着あり」を出す
+    if (
+      atBottomRef.current ||
+      added.some((m) => m.senderRole === currentRole)
+    ) {
+      atBottomRef.current = true;
+      requestAnimationFrame(scrollMessagesToBottom);
+      setNewCount(0);
+      return;
+    }
+    setNewCount(
+      (c) => c + added.filter((m) => m.senderRole !== currentRole).length
+    );
+  }, [messages, loading, currentRole, scrollMessagesToBottom]);
+
+  // 画像の読み込みなどで高さが伸びても、一番下を見ていたなら一番下に保つ
+  useEffect(() => {
+    const content = contentRef.current;
+    if (!content || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => {
+      if (atBottomRef.current) scrollMessagesToBottom();
+    });
+    ro.observe(content);
+    return () => ro.disconnect();
+  }, [scrollMessagesToBottom]);
 
   // ソフトキーボードで可視高が変わった後も、直近メッセージを入力欄の直上に保つ。
   useEffect(() => {
@@ -569,269 +650,284 @@ export function ChatThread({
         </div>
       )}
       {/* メッセージリスト（親が縮んでもここだけがスクロールする所有者。min-h-0 必須） */}
-      <div
-        ref={messageListRef}
-        className="min-h-0 flex-1 overflow-y-auto px-1 py-4"
-      >
-        {/* 画面が広いときに吹き出しが右端へ張り付かないよう、
+      <div className="relative flex min-h-0 flex-1 flex-col">
+        <div
+          ref={messageListRef}
+          onScroll={handleListScroll}
+          className="min-h-0 flex-1 overflow-y-auto px-1 py-4"
+        >
+          {/* 画面が広いときに吹き出しが右端へ張り付かないよう、
             会話の欄そのものを中央寄せの幅に収める（入力欄と同じ幅） */}
-        <div className="mx-auto w-full max-w-3xl space-y-3">
-          {loading ? (
-            <p className="text-muted-foreground py-8 text-center text-sm">
-              読み込み中...
-            </p>
-          ) : messages.length === 0 ? (
-            <p className="text-muted-foreground py-8 text-center text-sm">
-              {emptyText}
-            </p>
-          ) : (
-            messages.map((m) => {
-              const mine = m.senderRole === currentRole;
-              const typeLabel = TYPE_LABEL[m.type];
-              return (
-                <div
-                  key={m.id}
-                  className={`flex items-end gap-2 ${
-                    mine ? "justify-end" : "justify-start"
-                  }`}
-                >
-                  {!mine && (
-                    <Avatar size="sm" className="shrink-0">
-                      <AvatarImage
-                        src={m.createdByPhotoURL ?? otherPhotoURL ?? undefined}
-                        alt={otherName ?? m.createdByName}
-                      />
-                      <AvatarFallback>
-                        {getInitials(otherName ?? m.createdByName)}
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
+          <div ref={contentRef} className="mx-auto w-full max-w-3xl space-y-3">
+            {loading ? (
+              <p className="text-muted-foreground py-8 text-center text-sm">
+                読み込み中...
+              </p>
+            ) : messages.length === 0 ? (
+              <p className="text-muted-foreground py-8 text-center text-sm">
+                {emptyText}
+              </p>
+            ) : (
+              messages.map((m) => {
+                const mine = m.senderRole === currentRole;
+                const typeLabel = TYPE_LABEL[m.type];
+                return (
                   <div
-                    // 画面が広いと80%でも1行が長くなりすぎて読みづらい。
-                    // 文字数で上限を切る（日本語で40〜45字程度）
-                    className={`flex max-w-[min(80%,38rem)] flex-col gap-1 ${
-                      mine ? "items-end" : "items-start"
+                    key={m.id}
+                    className={`flex items-end gap-2 ${
+                      mine ? "justify-end" : "justify-start"
                     }`}
                   >
-                    {(typeLabel || m.broadcast) && (
-                      <div className="flex flex-wrap items-center gap-1">
-                        {m.broadcast && (
-                          <span className="inline-flex items-center gap-1 rounded bg-orange-500/15 px-1.5 py-0.5 text-[10px] font-medium text-orange-600 dark:text-orange-400">
-                            <Megaphone className="size-3" />
-                            一斉送信
-                          </span>
-                        )}
-                        {typeLabel && (
-                          <span className="bg-muted text-muted-foreground rounded px-1.5 py-0.5 text-[10px]">
-                            {typeLabel}
-                            {m.targetLabel ? `: ${m.targetLabel}` : ""}
-                          </span>
-                        )}
-                      </div>
+                    {!mine && (
+                      <Avatar size="sm" className="shrink-0">
+                        <AvatarImage
+                          src={
+                            m.createdByPhotoURL ?? otherPhotoURL ?? undefined
+                          }
+                          alt={otherName ?? m.createdByName}
+                        />
+                        <AvatarFallback>
+                          {getInitials(otherName ?? m.createdByName)}
+                        </AvatarFallback>
+                      </Avatar>
                     )}
-                    {(m.message ||
-                      m.reference ||
-                      (m.attachments && m.attachments.length > 0)) && (
-                      <div
-                        ref={(el) => {
-                          bubbleRefs.current[m.id] = el;
-                        }}
-                        // 選択し終わったら、コピーか部分引用かを選ぶボタンを出す。
-                        // 選択しただけで引用に入ると、読むためになぞった時に困る
-                        onMouseUp={(e) =>
-                          openSelectionMenu(m, e.clientX, e.clientY)
-                        }
-                        onTouchEnd={(e) => {
-                          // モバイルは選択確定がここより後になることがある
-                          const t = e.changedTouches[0];
-                          const x = t?.clientX ?? 0;
-                          const y = t?.clientY ?? 0;
-                          setTimeout(() => openSelectionMenu(m, x, y), 0);
-                        }}
-                        className={`rounded-2xl px-3 py-2 text-sm ${
-                          mine
-                            ? "bg-primary text-primary-foreground rounded-br-sm"
-                            : "bg-muted text-foreground rounded-bl-sm"
-                        }`}
-                      >
-                        {/* 返信元の引用。誰の発言かと、部分引用かどうかを出す */}
-                        {m.quote && (
-                          <div
-                            className={`mb-1.5 rounded-md border-l-2 px-2 py-1 text-xs ${
-                              mine
-                                ? "border-primary-foreground/70 bg-primary-foreground/20"
-                                : "border-muted-foreground/40 bg-background/60"
-                            }`}
-                          >
-                            <span className="block font-medium opacity-80">
-                              {m.quote.authorName || "引用"}
-                              {m.quote.partial ? "（一部）" : ""}
+                    <div
+                      // 画面が広いと80%でも1行が長くなりすぎて読みづらい。
+                      // 文字数で上限を切る（日本語で40〜45字程度）
+                      className={`flex max-w-[min(80%,38rem)] flex-col gap-1 ${
+                        mine ? "items-end" : "items-start"
+                      }`}
+                    >
+                      {(typeLabel || m.broadcast) && (
+                        <div className="flex flex-wrap items-center gap-1">
+                          {m.broadcast && (
+                            <span className="inline-flex items-center gap-1 rounded bg-orange-500/15 px-1.5 py-0.5 text-[10px] font-medium text-orange-600 dark:text-orange-400">
+                              <Megaphone className="size-3" />
+                              一斉送信
                             </span>
-                            <span className="block break-words whitespace-pre-wrap opacity-90">
-                              {m.quote.text}
-                            </span>
-                          </div>
-                        )}
-                        {/* 本文中の引用行を引用ブロックとして描く。1通の中に
-                          引用→コメント→引用→コメント と並べられる */}
-                        {m.message &&
-                          parseMessageBlocks(m.message).map((b, i) =>
-                            b.kind === "quote" ? (
-                              <div
-                                key={i}
-                                className={`my-1 rounded-md border-l-2 px-2 py-1 text-xs ${
-                                  mine
-                                    ? "border-primary-foreground/70 bg-primary-foreground/20"
-                                    : "border-muted-foreground/40 bg-background/60"
-                                }`}
-                              >
-                                {/* 誰のいつの発言を引いたか。出典を持たない
-                                  古いメッセージでは何も出さない */}
-                                {b.source && (
-                                  <span className="mb-0.5 block text-[11px] font-medium opacity-70">
-                                    {b.source}
-                                  </span>
-                                )}
-                                <span className="block break-words whitespace-pre-wrap opacity-90">
-                                  {b.text}
-                                </span>
-                              </div>
-                            ) : (
-                              /* 管理者が付けた色・大きさをそのまま描く */
-                              <RichText key={i} text={b.text} />
-                            )
                           )}
-                        {m.attachments && m.attachments.length > 0 && (
-                          <div
-                            className={`space-y-1.5 ${m.message ? "mt-1.5" : ""}`}
-                          >
-                            {m.attachments.map((att, i) => (
-                              <AttachmentView key={i} att={att} />
-                            ))}
-                          </div>
-                        )}
-                        {/* 参照カードはバブルの中に置く。外に出すと1つの連絡が
-                          2つの箱に分かれて見える */}
-                        {m.reference && (
-                          <div className="mt-1.5">
-                            <ReferenceCard reference={m.reference} />
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    {/* 引用・リアクションの操作。バブル内を選択してから押すと
-                      その部分だけを引用する */}
-                    {(m.message || reactionTarget) && (
-                      <div
-                        className={`flex items-center gap-1 ${mine ? "flex-row-reverse" : ""}`}
-                      >
-                        {m.message && (
-                          <button
-                            type="button"
-                            title="全文を引用して返信（一部だけならドラッグで選択）"
-                            onClick={() => quoteMessage(m)}
-                            className="text-muted-foreground hover:bg-muted hover:text-foreground rounded p-1"
-                          >
-                            <QuoteIcon className="size-3.5" />
-                          </button>
-                        )}
-                        {reactionTarget && viewerUid && (
-                          <button
-                            type="button"
-                            title="リアクション"
-                            onClick={() =>
-                              setPickerFor(pickerFor === m.id ? null : m.id)
-                            }
-                            className="text-muted-foreground hover:bg-muted hover:text-foreground rounded p-1"
-                          >
-                            <SmilePlus className="size-3.5" />
-                          </button>
-                        )}
-                        {pickerFor === m.id && (
-                          <div className="bg-popover flex items-center gap-0.5 rounded-full border px-1.5 py-1 shadow-sm">
-                            {CHAT_REACTION_EMOJIS.map((e) => (
-                              <button
-                                key={e}
-                                type="button"
-                                onClick={() =>
-                                  toggleReaction(
-                                    m.id,
-                                    e,
-                                    localReactions[m.id] ?? m.reactions,
-                                    Boolean(m.teacherId)
-                                  )
-                                }
-                                className="hover:bg-muted rounded px-1 text-base leading-none"
-                              >
-                                {e}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* 付いているリアクション。押すと自分の分を付け外しする */}
-                    {(() => {
-                      const rs = localReactions[m.id] ?? m.reactions;
-                      const entries = Object.entries(rs ?? {}).filter(
-                        ([, u]) => Array.isArray(u) && u.length > 0
-                      );
-                      if (entries.length === 0) return null;
-                      return (
-                        <div
-                          className={`flex flex-wrap gap-1 ${mine ? "justify-end" : ""}`}
-                        >
-                          {entries.map(([emoji, users]) => {
-                            const pressed = viewerUid
-                              ? users.includes(viewerUid)
-                              : false;
-                            return (
-                              <button
-                                key={emoji}
-                                type="button"
-                                disabled={!reactionTarget || !viewerUid}
-                                onClick={() =>
-                                  toggleReaction(
-                                    m.id,
-                                    emoji,
-                                    rs,
-                                    Boolean(m.teacherId)
-                                  )
-                                }
-                                className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-xs tabular-nums ${
-                                  pressed
-                                    ? "border-primary bg-primary/10 text-primary"
-                                    : "bg-background text-muted-foreground"
-                                }`}
-                              >
-                                <span className="text-sm leading-none">
-                                  {emoji}
-                                </span>
-                                {users.length}
-                              </button>
-                            );
-                          })}
+                          {typeLabel && (
+                            <span className="bg-muted text-muted-foreground rounded px-1.5 py-0.5 text-[10px]">
+                              {typeLabel}
+                              {m.targetLabel ? `: ${m.targetLabel}` : ""}
+                            </span>
+                          )}
                         </div>
-                      );
-                    })()}
+                      )}
+                      {(m.message ||
+                        m.reference ||
+                        (m.attachments && m.attachments.length > 0)) && (
+                        <div
+                          ref={(el) => {
+                            bubbleRefs.current[m.id] = el;
+                          }}
+                          // 選択し終わったら、コピーか部分引用かを選ぶボタンを出す。
+                          // 選択しただけで引用に入ると、読むためになぞった時に困る
+                          onMouseUp={(e) =>
+                            openSelectionMenu(m, e.clientX, e.clientY)
+                          }
+                          onTouchEnd={(e) => {
+                            // モバイルは選択確定がここより後になることがある
+                            const t = e.changedTouches[0];
+                            const x = t?.clientX ?? 0;
+                            const y = t?.clientY ?? 0;
+                            setTimeout(() => openSelectionMenu(m, x, y), 0);
+                          }}
+                          className={`rounded-2xl px-3 py-2 text-sm ${
+                            mine
+                              ? "bg-primary text-primary-foreground rounded-br-sm"
+                              : "bg-muted text-foreground rounded-bl-sm"
+                          }`}
+                        >
+                          {/* 返信元の引用。誰の発言かと、部分引用かどうかを出す */}
+                          {m.quote && (
+                            <div
+                              className={`mb-1.5 rounded-md border-l-2 px-2 py-1 text-xs ${
+                                mine
+                                  ? "border-primary-foreground/70 bg-primary-foreground/20"
+                                  : "border-muted-foreground/40 bg-background/60"
+                              }`}
+                            >
+                              <span className="block font-medium opacity-80">
+                                {m.quote.authorName || "引用"}
+                                {m.quote.partial ? "（一部）" : ""}
+                              </span>
+                              <span className="block break-words whitespace-pre-wrap opacity-90">
+                                {m.quote.text}
+                              </span>
+                            </div>
+                          )}
+                          {/* 本文中の引用行を引用ブロックとして描く。1通の中に
+                          引用→コメント→引用→コメント と並べられる */}
+                          {m.message &&
+                            parseMessageBlocks(m.message).map((b, i) =>
+                              b.kind === "quote" ? (
+                                <div
+                                  key={i}
+                                  className={`my-1 rounded-md border-l-2 px-2 py-1 text-xs ${
+                                    mine
+                                      ? "border-primary-foreground/70 bg-primary-foreground/20"
+                                      : "border-muted-foreground/40 bg-background/60"
+                                  }`}
+                                >
+                                  {/* 誰のいつの発言を引いたか。出典を持たない
+                                  古いメッセージでは何も出さない */}
+                                  {b.source && (
+                                    <span className="mb-0.5 block text-[11px] font-medium opacity-70">
+                                      {b.source}
+                                    </span>
+                                  )}
+                                  <span className="block break-words whitespace-pre-wrap opacity-90">
+                                    {b.text}
+                                  </span>
+                                </div>
+                              ) : (
+                                /* 管理者が付けた色・大きさをそのまま描く */
+                                <RichText key={i} text={b.text} />
+                              )
+                            )}
+                          {m.attachments && m.attachments.length > 0 && (
+                            <div
+                              className={`space-y-1.5 ${m.message ? "mt-1.5" : ""}`}
+                            >
+                              {m.attachments.map((att, i) => (
+                                <AttachmentView key={i} att={att} />
+                              ))}
+                            </div>
+                          )}
+                          {/* 参照カードはバブルの中に置く。外に出すと1つの連絡が
+                          2つの箱に分かれて見える */}
+                          {m.reference && (
+                            <div className="mt-1.5">
+                              <ReferenceCard reference={m.reference} />
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {/* 引用・リアクションの操作。バブル内を選択してから押すと
+                      その部分だけを引用する */}
+                      {(m.message || reactionTarget) && (
+                        <div
+                          className={`flex items-center gap-1 ${mine ? "flex-row-reverse" : ""}`}
+                        >
+                          {m.message && (
+                            <button
+                              type="button"
+                              title="全文を引用して返信（一部だけならドラッグで選択）"
+                              onClick={() => quoteMessage(m)}
+                              className="text-muted-foreground hover:bg-muted hover:text-foreground rounded p-1"
+                            >
+                              <QuoteIcon className="size-3.5" />
+                            </button>
+                          )}
+                          {reactionTarget && viewerUid && (
+                            <button
+                              type="button"
+                              title="リアクション"
+                              onClick={() =>
+                                setPickerFor(pickerFor === m.id ? null : m.id)
+                              }
+                              className="text-muted-foreground hover:bg-muted hover:text-foreground rounded p-1"
+                            >
+                              <SmilePlus className="size-3.5" />
+                            </button>
+                          )}
+                          {pickerFor === m.id && (
+                            <div className="bg-popover flex items-center gap-0.5 rounded-full border px-1.5 py-1 shadow-sm">
+                              {CHAT_REACTION_EMOJIS.map((e) => (
+                                <button
+                                  key={e}
+                                  type="button"
+                                  onClick={() =>
+                                    toggleReaction(
+                                      m.id,
+                                      e,
+                                      localReactions[m.id] ?? m.reactions,
+                                      Boolean(m.teacherId)
+                                    )
+                                  }
+                                  className="hover:bg-muted rounded px-1 text-base leading-none"
+                                >
+                                  {e}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
 
-                    <span className="text-muted-foreground px-1 text-[10px]">
-                      {/* coach(管理者/講師)発のメッセージは自分の送信でも送信者名を表示し、
+                      {/* 付いているリアクション。押すと自分の分を付け外しする */}
+                      {(() => {
+                        const rs = localReactions[m.id] ?? m.reactions;
+                        const entries = Object.entries(rs ?? {}).filter(
+                          ([, u]) => Array.isArray(u) && u.length > 0
+                        );
+                        if (entries.length === 0) return null;
+                        return (
+                          <div
+                            className={`flex flex-wrap gap-1 ${mine ? "justify-end" : ""}`}
+                          >
+                            {entries.map(([emoji, users]) => {
+                              const pressed = viewerUid
+                                ? users.includes(viewerUid)
+                                : false;
+                              return (
+                                <button
+                                  key={emoji}
+                                  type="button"
+                                  disabled={!reactionTarget || !viewerUid}
+                                  onClick={() =>
+                                    toggleReaction(
+                                      m.id,
+                                      emoji,
+                                      rs,
+                                      Boolean(m.teacherId)
+                                    )
+                                  }
+                                  className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-xs tabular-nums ${
+                                    pressed
+                                      ? "border-primary bg-primary/10 text-primary"
+                                      : "bg-background text-muted-foreground"
+                                  }`}
+                                >
+                                  <span className="text-sm leading-none">
+                                    {emoji}
+                                  </span>
+                                  {users.length}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        );
+                      })()}
+
+                      <span className="text-muted-foreground px-1 text-[10px]">
+                        {/* coach(管理者/講師)発のメッセージは自分の送信でも送信者名を表示し、
                         誰が送ったか分かるようにする (複数管理者で会話を共有するため) */}
-                      {(!mine || m.senderRole === "coach") && m.createdByName
-                        ? `${m.createdByName}・`
-                        : ""}
-                      {formatTime(m.createdAt)}
-                      {mine && m.read ? "・既読" : ""}
-                    </span>
+                        {(!mine || m.senderRole === "coach") && m.createdByName
+                          ? `${m.createdByName}・`
+                          : ""}
+                        {formatTime(m.createdAt)}
+                        {mine && m.read ? "・既読" : ""}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              );
-            })
-          )}
-          <div />
+                );
+              })
+            )}
+            <div />
+          </div>
         </div>
+        {newCount > 0 && (
+          <button
+            type="button"
+            onClick={jumpToLatest}
+            className="bg-primary text-primary-foreground absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium shadow-md"
+          >
+            <ArrowDown className="size-3.5" />
+            新着メッセージ {newCount}件
+          </button>
+        )}
       </div>
 
       {/* 入力エリア（スクロールで縮まないよう固定。下部インセットは main の padding が確保） */}
@@ -906,6 +1002,9 @@ export function ChatThread({
                   <Paperclip className="size-4" />
                 )}
               </Button>
+              {composerAccessory && (
+                <div className="shrink-0 sm:hidden">{composerAccessory}</div>
+              )}
               {referenceStudentId && (
                 <ProblemPickerDialog
                   studentId={referenceStudentId}

@@ -92,7 +92,11 @@ function Body() {
               担当生徒とのやり取り
             </p>
           </div>
-          <StartCallButton participantUids={[studentId]} />
+          {/* スマホでは入力欄の並びに出す（ChatThread の composerAccessory） */}
+          <StartCallButton
+            participantUids={[studentId]}
+            className="hidden sm:inline-flex"
+          />
           <Link
             href={`/admin/students/${studentId}`}
             className="hover:bg-accent inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium"
@@ -103,6 +107,9 @@ function Body() {
         </div>
         <div className="bg-card flex-1 overflow-hidden rounded-xl border px-3">
           <ChatThread
+            composerAccessory={
+              <StartCallButton participantUids={[studentId]} compact />
+            }
             messages={messages}
             currentRole="coach"
             onSend={handleSend}
