@@ -278,6 +278,11 @@ export default function EssayNewPage() {
     null
   );
   const [oralExamAnswers, setOralExamAnswers] = useState<string[]>([]);
+  /**
+   * 最後に入力欄を触った小問の番号。AIコーチに「いまどの問に取り組んでいるか」を
+   * 渡し、「ここから何を書けばいい?」をその問について答えさせる。
+   */
+  const [oralFocusNo, setOralFocusNo] = useState<number | null>(null);
   const [oralExamLoading, setOralExamLoading] = useState(false);
   const [oralExamError, setOralExamError] = useState<string | null>(null);
   /** 前に解いた問いを避けるか。既定は避ける。同じ問題で練習したい人は外せる */
@@ -2658,6 +2663,16 @@ export default function EssayNewPage() {
                       : undefined
                   }
                   onThreadChange={setCoachThreadId}
+                  oralExam={
+                    oralExamMode && oralExamSet
+                      ? {
+                          theme: oralExamSet.theme,
+                          subQuestions: oralExamSet.subQuestions,
+                          answers: oralExamAnswers,
+                          ...(oralFocusNo ? { focusNo: oralFocusNo } : {}),
+                        }
+                      : undefined
+                  }
                 />
 
                 {/* 右列: 小論文入力 (常に最大幅) */}
@@ -2852,6 +2867,7 @@ export default function EssayNewPage() {
                                 <textarea
                                   id={`oral-answer-${q.no}`}
                                   value={answer}
+                                  onFocus={() => setOralFocusNo(q.no)}
                                   onChange={(e) =>
                                     setOralExamAnswers((prev) => {
                                       const next = [...prev];

@@ -12,6 +12,7 @@ import type {
   CoachResponseBody,
   CoachThread,
   CoachReviewContext,
+  CoachOralExamContext,
 } from "@/lib/types/essay-coach";
 import type { Activity } from "@/lib/types/activity";
 import { AI_MODEL_SONNET } from "@/lib/ai/prompt-versions";
@@ -21,6 +22,47 @@ export const maxDuration = 60;
 const MAX_DRAFT_CHARS = 8000;
 const MAX_HISTORY_TURNS = 10;
 const MAX_ACTIVITIES = 5;
+const MAX_ORAL_SUBQUESTIONS = 10;
+const MAX_ORAL_PROMPT_CHARS = 1500;
+const MAX_ORAL_ANSWER_CHARS = 4000;
+
+/**
+ * 口頭試問の文脈を検査して丸める。形が崩れていれば渡さない（通常の小論文として扱う）。
+ * 本文と同じく生徒の入力なので、件数と長さに上限を設ける。
+ */
+function sanitizeOralExam(o: unknown): CoachOralExamContext | undefined {
+  if (!o || typeof o !== "object") return undefined;
+  const x = o as Partial<CoachOralExamContext>;
+  if (!Array.isArray(x.subQuestions) || x.subQuestions.length === 0)
+    return undefined;
+  const subQuestions = x.subQuestions
+    .slice(0, MAX_ORAL_SUBQUESTIONS)
+    .filter(
+      (q) =>
+        q &&
+        typeof q.no === "number" &&
+        typeof q.prompt === "string" &&
+        typeof q.wordLimit === "number"
+    )
+    .map((q) => ({
+      no: q.no,
+      prompt: q.prompt.slice(0, MAX_ORAL_PROMPT_CHARS),
+      wordLimit: q.wordLimit,
+      aim:
+        typeof q.aim === "string" ? q.aim.slice(0, MAX_ORAL_PROMPT_CHARS) : "",
+    }));
+  if (subQuestions.length === 0) return undefined;
+  const answers = subQuestions.map((_, i) => {
+    const a = Array.isArray(x.answers) ? x.answers[i] : "";
+    return typeof a === "string" ? a.slice(0, MAX_ORAL_ANSWER_CHARS) : "";
+  });
+  return {
+    theme: typeof x.theme === "string" ? x.theme.slice(0, 200) : "",
+    subQuestions,
+    answers,
+    ...(typeof x.focusNo === "number" ? { focusNo: x.focusNo } : {}),
+  };
+}
 /**
  * コーチの応答モデル。
  *
@@ -173,7 +215,9 @@ export async function POST(request: NextRequest) {
   const topic = (body.topic ?? "").trim();
   const universityId = body.universityId?.trim();
   const facultyId = body.facultyId?.trim();
-  const questionType = body.questionType;
+  const oralExam = sanitizeOralExam(body.oralExam);
+  // 口頭試問の文脈があるときは出題形式を確定させる（画面側の渡し忘れで小論文扱いにしない）
+  const questionType = oralExam ? "oral_exam" : body.questionType;
   const sourceText = body.sourceText?.trim();
   const chartData = body.chartData;
   // 講座の課題を書いている場合の文脈（何のブロックを何字で書かせているか）
@@ -233,49 +277,58 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // 活動実績取得 (最大 5 件、structuredData あり優先)
+  /**
+   * 活動実績取得 (最大 5 件、structuredData あり優先)
+   *
+   * 口頭試問型は知識の説明を書く形式なので、活動実績・自己分析は渡さない。
+   * 渡すと「なぜ薬学を学ぶのかで締めくくる」のように志望や体験へ話を寄せる。
+   */
   let activities: Array<{ title: string; category?: string; summary: string }> =
     [];
-  try {
-    const snap = await adminDb.collection(`users/${uid}/activities`).get();
-    const all = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Activity);
-    all.sort((a, b) => {
-      const ha = a.structuredData ? 0 : 1;
-      const hb = b.structuredData ? 0 : 1;
-      return ha - hb;
-    });
-    activities = all.slice(0, MAX_ACTIVITIES).map((a) => ({
-      title: a.title,
-      category: a.category,
-      summary: activitySummary(a),
-    }));
-  } catch (err) {
-    console.warn("[essay/coach] activities fetch failed:", err);
+  if (!oralExam) {
+    try {
+      const snap = await adminDb.collection(`users/${uid}/activities`).get();
+      const all = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Activity);
+      all.sort((a, b) => {
+        const ha = a.structuredData ? 0 : 1;
+        const hb = b.structuredData ? 0 : 1;
+        return ha - hb;
+      });
+      activities = all.slice(0, MAX_ACTIVITIES).map((a) => ({
+        title: a.title,
+        category: a.category,
+        summary: activitySummary(a),
+      }));
+    } catch (err) {
+      console.warn("[essay/coach] activities fetch failed:", err);
+    }
   }
 
   // 自己分析取得 (matching/chat と同じパターン)
   let selfAnalysis: CoachSelfAnalysis | undefined;
-  try {
-    const saSnap = await adminDb.doc(`selfAnalysis/${uid}`).get();
-    if (saSnap.exists) {
-      const sa = saSnap.data() as {
-        values?: { coreValues?: string[]; valueOrigins?: string[] };
-        strengths?: { strengths?: string[] };
-        interests?: { fields?: string[] };
-        vision?: { longTermVision?: string };
-        identity?: { selfStatement?: string };
-      };
-      selfAnalysis = {
-        coreValues: sa.values?.coreValues,
-        valueOrigins: sa.values?.valueOrigins,
-        strengths: sa.strengths?.strengths,
-        interests: sa.interests?.fields,
-        longTermVision: sa.vision?.longTermVision,
-        selfStatement: sa.identity?.selfStatement,
-      };
+  if (!oralExam) {
+    try {
+      const saSnap = await adminDb.doc(`selfAnalysis/${uid}`).get();
+      if (saSnap.exists) {
+        const sa = saSnap.data() as {
+          values?: { coreValues?: string[]; valueOrigins?: string[] };
+          strengths?: { strengths?: string[] };
+          interests?: { fields?: string[] };
+          vision?: { longTermVision?: string };
+          identity?: { selfStatement?: string };
+        };
+        selfAnalysis = {
+          coreValues: sa.values?.coreValues,
+          valueOrigins: sa.values?.valueOrigins,
+          strengths: sa.strengths?.strengths,
+          interests: sa.interests?.fields,
+          longTermVision: sa.vision?.longTermVision,
+          selfStatement: sa.identity?.selfStatement,
+        };
+      }
+    } catch (err) {
+      console.warn("[essay/coach] selfAnalysis fetch failed:", err);
     }
-  } catch (err) {
-    console.warn("[essay/coach] selfAnalysis fetch failed:", err);
   }
 
   // 履歴 + 新規 user メッセージ
@@ -303,6 +356,7 @@ export async function POST(request: NextRequest) {
     sourceText,
     chartData,
     review,
+    oralExam,
   });
 
   // Claude 呼び出し (LLMOps: レイテンシ・トークン・コストをトレース記録)

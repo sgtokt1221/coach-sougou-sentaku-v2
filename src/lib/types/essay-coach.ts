@@ -4,7 +4,7 @@
  * Firestore パス: `users/{studentUid}/essayCoachThreads/{threadId}`
  */
 
-import type { EssayReviewRequest } from "./essay";
+import type { EssayReviewRequest, OralExamSubQuestion } from "./essay";
 
 export interface CoachMessage {
   role: "user" | "assistant";
@@ -111,6 +111,23 @@ export interface CoachReviewContext {
   repeatedIssues?: { area: string; count?: number }[];
 }
 
+/**
+ * 口頭試問型（小問集合）を書いているときの文脈。
+ *
+ * 本文（draft）は小問の答えを「問1 … 問2 …」と1本につないだものなので、
+ * どの問が何字でどこまで書けているか、生徒がいまどの問に取り組んでいるかが
+ * 読み取りにくい。これが無いとコーチは通常の小論文として「結論段落を」
+ * 「自分の視点で締めて」と助言し、「何を書けばいい?」がかみ合わなかった。
+ */
+export interface CoachOralExamContext {
+  theme: string;
+  subQuestions: OralExamSubQuestion[];
+  /** subQuestions と同じ並びの、小問ごとの書きかけの答え */
+  answers: string[];
+  /** 生徒が最後に入力欄を触った問の番号（いま取り組んでいる問） */
+  focusNo?: number;
+}
+
 export interface CoachRequestBody {
   /** 継続スレッド時。未指定なら新規作成 */
   threadId?: string;
@@ -129,6 +146,8 @@ export interface CoachRequestBody {
   lectureContext?: LectureCoachContext;
   /** 添削結果を見ながら相談している場合の文脈 */
   reviewContext?: CoachReviewContext;
+  /** 口頭試問型（小問集合）を書いている場合の文脈 */
+  oralExam?: CoachOralExamContext;
   /** ユーザーの今回の発話 */
   userMessage: string;
 }

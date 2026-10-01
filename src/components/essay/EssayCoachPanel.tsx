@@ -133,6 +133,11 @@ interface EssayCoachPanelProps {
   conversationKey?: string;
   /** 会話スレッドIDの通知。提出時に答案へ保存するために親へ渡す */
   onThreadChange?: (threadId: string | null) => void;
+  /**
+   * 口頭試問型を書いているときの小問集合・答え・取り組み中の問。
+   * 渡さないとコーチは通常の小論文として助言する（結論段落や自分の視点を求める）。
+   */
+  oralExam?: CoachRequestBody["oralExam"];
 }
 
 function resolveReferenceLabel(material: ReferenceMaterial | undefined): {
@@ -213,6 +218,7 @@ export function EssayCoachPanelBody({
   reportMaterial,
   conversationKey,
   onThreadChange,
+  oralExam,
 }: EssayCoachPanelProps) {
   // 資料タブは referenceMaterial だけで決める。coachMaterial はコーチにのみ渡す。
   const materialForCoach = referenceMaterial ?? coachMaterial;
@@ -300,6 +306,7 @@ export function EssayCoachPanelBody({
               `${universityId ?? ""}:${facultyId ?? ""}:${topic}`
             }
             onThreadChange={onThreadChange}
+            oralExam={oralExam}
           />
         )}
         {active === "ap" && (

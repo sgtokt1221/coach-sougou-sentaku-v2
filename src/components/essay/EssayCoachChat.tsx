@@ -53,6 +53,8 @@ interface EssayCoachChatProps {
   lectureContext?: CoachRequestBody["lectureContext"];
   /** 添削結果を見ながら相談する場合の文脈（講評そのもの） */
   reviewContext?: CoachRequestBody["reviewContext"];
+  /** 口頭試問型を書いている場合の小問集合・答え・取り組み中の問 */
+  oralExam?: CoachRequestBody["oralExam"];
   /**
    * 最初の一言とクイック質問。既定は「これから書く」場面向けなので、
    * 添削結果など別の場面ではその場に合うものを渡す。
@@ -79,6 +81,7 @@ export function EssayCoachChat({
   chartData,
   lectureContext,
   reviewContext,
+  oralExam,
   openingMessage,
   quickPrompts,
   resetKey,
@@ -204,6 +207,7 @@ export function EssayCoachChat({
       chartData,
       lectureContext,
       reviewContext,
+      oralExam,
       userMessage: content,
     };
 

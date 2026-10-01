@@ -16,6 +16,7 @@
 import type {
   LectureCoachContext,
   CoachReviewContext,
+  CoachOralExamContext,
 } from "@/lib/types/essay-coach";
 
 export interface CoachSelfAnalysis {
@@ -49,6 +50,47 @@ export interface CoachContext {
   /** 小論文講座の課題を書いている場合の文脈 */
   lecture?: LectureCoachContext;
   review?: CoachReviewContext;
+  /** 口頭試問型（小問集合）を書いているとき */
+  oralExam?: CoachOralExamContext;
+}
+
+/**
+ * 口頭試問の小問ごとの進み具合。コーチが「どの問の、何が、どれだけ足りないか」を
+ * 本文を数え直さずに掴めるようにする。字数の上限超えもここで分かる。
+ */
+export function buildOralExamProgress(o: CoachOralExamContext) {
+  return o.subQuestions.map((q, i) => {
+    const answer = (o.answers[i] ?? "").trim();
+    const length = answer.length;
+    const status =
+      length === 0
+        ? "未記入"
+        : length > q.wordLimit
+          ? "字数超過"
+          : length >= q.wordLimit * 0.8
+            ? "目安に到達"
+            : "書きかけ";
+    return {
+      no: q.no,
+      prompt: q.prompt,
+      wordLimit: q.wordLimit,
+      length,
+      status,
+      /** 採点の観点。生徒には出さない（逐語で伝えない） */
+      aim: q.aim,
+      answer,
+    };
+  });
+}
+
+/** 「何を書けばいい?」がどの問の話かを決める。触っている問 → 最初の未完了の問 */
+export function resolveOralExamFocus(o: CoachOralExamContext): number | null {
+  const progress = buildOralExamProgress(o);
+  if (o.focusNo && progress.some((p) => p.no === o.focusNo)) return o.focusNo;
+  const next = progress.find(
+    (p) => p.status === "未記入" || p.status === "書きかけ"
+  );
+  return next?.no ?? null;
 }
 
 /** 出題資料が長大でもプロンプトを壊さないよう、投入前に丸める。 */
@@ -71,6 +113,8 @@ function buildQuestionTypeGuide(questionType?: string): string {
       return "講義型です。講義固有の主張や具体例を踏まえているか確かめ、一般論に流れないよう促してください。";
     case "report":
       return "レポート課題型です。課題文の理解・要約・参照の妥当性を確認し、自分の考察との接続を助けてください。";
+    case "oral_exam":
+      return "口頭試問型（小問集合）です。小問ごとに、設問が求める説明・理由・具体例を正確に書けているかを軸に助言してください（下の「口頭試問型の小問集合です」に従う）。";
     default:
       return "設問に直接答えられているか、主張・根拠・反論検討がそろっているかを軸に助言してください。";
   }
@@ -110,7 +154,47 @@ export function buildEssayCoachSystemPrompt(ctx: CoachContext): string {
     draft: ctx.draft || null,
     lecture: ctx.lecture ?? null,
     review: ctx.review ?? null,
+    oralExam: ctx.oralExam
+      ? {
+          theme: ctx.oralExam.theme,
+          // 生徒がいま取り組んでいる問（入力欄を最後に触った問。なければ最初の未完了の問）
+          currentNo: resolveOralExamFocus(ctx.oralExam),
+          progress: buildOralExamProgress(ctx.oralExam),
+        }
+      : null,
   };
+
+  /**
+   * 口頭試問型は、小問ごとに独立した知識の説明を書く形式。通常の小論文の
+   * 「主張・根拠・反論・結論段落」や「自分の視点で締める」を持ち込むと、
+   * 設問と関係のない助言になる（本番で「なぜ薬学を学ぶのかで締めくくる一段落を」
+   * と返していた）。何を書けばいいかは設問が決めているので、聞き返さずに
+   * 取り組み中の問の、足りない要素を答える。
+   */
+  const oralExamRule = ctx.oralExam
+    ? `
+
+## 口頭試問型の小問集合です（通常の小論文の助言より優先する）
+- 答案は小問ごとに独立した答えです。答案全体の序論・結論段落、自分の意見・志望・
+  体験・「どう貢献したいか」は求めません。書くよう促さないでください。
+- 各小問は、設問が求める要素（定義、仕組みの手順、原因と結果、理由、具体的な状況など）を、
+  その問の字数の中で正確に書けているかで見ます。専門用語の取り違えは必ず指摘します。
+- reference_data.oralExam.progress が小問ごとの設問・字数・今の答え・状態です。
+  字数は数え直さずにここを使います。「字数超過」の問があれば、どこを削るかを示します。
+  設問の字数は topic と progress に書いてあるので、生徒に聞き返さないでください。
+- aim は採点の観点です。助言の狙いを決めるのに使い、文言をそのまま生徒に見せないでください。
+- 生徒が「何を書けばいい?」「この後どうすればいい?」と聞いたら、次の順で答えます。
+  1. どの問の話かを最初に言う。reference_data.oralExam.currentNo の問を基本にし、
+     生徒が問を名指ししていればそちらに従う（例:「問2について」）。
+  2. その問の設問が求めている要素を、2〜4個に分けて示す。
+  3. 今の答えに書けている要素と、まだ書けていない要素を分ける。
+  4. 次に書く1要素を具体的に示す。知識が要るなら短く正確に説明する。
+     最後に、生徒が自分の言葉で書けるかを確かめる問いを1つだけ添えてよい
+     （例:「接合のとき、2つの細菌は何でつながりますか?」）。
+  「今伝えたいことは何ですか」とは聞かない（伝える内容は設問が決めている）。
+- その問が「目安に到達」なら、要素の抜けと専門用語の正確さを確かめたうえで、
+  次の未記入・書きかけの問へ進むよう伝えます。`
+    : "";
 
   /**
    * 講座の課題は「完成答案」ではないことが多い。型の1ブロックだけを60字で
@@ -226,7 +310,7 @@ ${
 - 上から目線の命令調 (「○○しなさい」 「こうしろ」)
 - アドミッション・ポリシーの逐語引用 (= 「APではこうあります」 という露骨な参照)
 - Markdown 記法 (**強調**、# 見出し、- 箇条書き、\`コード\`)。画面はプレーンテキスト表示なので記号がそのまま見えてしまう
-- 絵文字の使用${noTopicRule}${lectureRule}${reviewRule}
+- 絵文字の使用${noTopicRule}${lectureRule}${reviewRule}${oralExamRule}
 
 ## 答案に主観を書かせない
 - 設問が「あなたの考えを述べなさい」のように明示的に求めていない限り、感想・心情・
@@ -254,11 +338,16 @@ ${
 - 答えたあと、必要なら「小論文の方はどうしますか」と一言添えて本題へ戻す。
 
 ## 関わり方
-- 生徒が「何を書けばいい?」と聞いてきたら、 まず今伝えたいことを問う。 それでも詰まるようなら、 切り口の選択肢を 2-3 個提示する
+${
+  ctx.oralExam
+    ? `- 生徒が「何を書けばいい?」と聞いてきたら、上の「口頭試問型の小問集合です」の手順で答える
+- 書いている答えを読んで、説明の飛躍や仕組みの抜けがあれば、「ここは○○の手順が抜けています」のように具体的に指摘する`
+    : `- 生徒が「何を書けばいい?」と聞いてきたら、 まず今伝えたいことを問う。 それでも詰まるようなら、 切り口の選択肢を 2-3 個提示する
 - 抽象的な答えが返ってきたら、 「具体例は?」 「そこで何を判断した?」 で掘り下げる
 - 書いている本文を読んで論の飛躍・根拠不足があれば、 「ここは○○の根拠が薄く見えます。 補強するならこういう要素が要りそうです」 のように具体的に指摘する
 - 活動実績と関連しそうな話題が出たら、 呼び水になる問いを返す
-- 自己分析結果は背景知識として把握し、 「あなたが大事にしている○○と今の経験はどう繋がる?」 のように橋渡しする${stuckModeHint}
+- 自己分析結果は背景知識として把握し、 「あなたが大事にしている○○と今の経験はどう繋がる?」 のように橋渡しする`
+}${stuckModeHint}
 
 <reference_data>
 ${JSON.stringify(referenceData)}
