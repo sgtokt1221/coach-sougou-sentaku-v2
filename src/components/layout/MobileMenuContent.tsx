@@ -315,10 +315,12 @@ export function MobileMenuContent({ onNavigate }: { onNavigate?: () => void }) {
       : role === "teacher"
         ? "/teacher/settings"
         : "/student/settings";
-  const notificationsHref =
-    role === "admin" || role === "superadmin"
-      ? "/admin/settings/notifications"
-      : "/student/settings/notifications";
+  /**
+   * 通知設定は各立場の設定画面の中にある。以前の /〇〇/settings/notifications は
+   * 設定画面へ統合したときに無くなっており、ここだけ古いURLのまま 404 になっていた
+   * （講師は生徒用のURLへ飛んでいた）。
+   */
+  const notificationsHref = `${settingsHref}#notifications`;
 
   const roleLabel =
     role === "superadmin"

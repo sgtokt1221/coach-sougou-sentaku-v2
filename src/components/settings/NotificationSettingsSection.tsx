@@ -156,6 +156,26 @@ export function NotificationSettingsSection() {
     };
   }, []);
 
+  /**
+   * スマホのメニューの「通知」は /〇〇/settings#notifications へ飛ぶ。設定画面は
+   * 各欄があとから読み込まれるので、ブラウザがアンカーへ移る時点ではこの欄が
+   * まだ無く、ページの先頭に止まる。読み込み後に自分で移る。上の欄が遅れて
+   * 伸びると位置がずれるので、少し待ってもう一度合わせる。
+   */
+  useEffect(() => {
+    if (loading || window.location.hash !== "#notifications") return;
+    const go = () =>
+      document
+        .getElementById("notifications")
+        ?.scrollIntoView({ block: "start" });
+    const raf = requestAnimationFrame(go);
+    const timer = setTimeout(go, 600);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(timer);
+    };
+  }, [loading]);
+
   const handleEnablePush = async () => {
     setRequestingPush(true);
     try {
@@ -268,7 +288,8 @@ export function NotificationSettingsSection() {
   };
 
   return (
-    <Card>
+    // スマホのメニューの「通知設定」がここへ飛ぶ（/〇〇/settings#notifications）
+    <Card id="notifications" className="scroll-mt-20">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
           <Bell className="text-primary size-4" />
