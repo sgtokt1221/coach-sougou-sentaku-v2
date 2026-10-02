@@ -66,7 +66,9 @@ import {
   ORAL_EXAM_MAX_QUESTIONS,
   ORAL_EXAM_MIN_QUESTIONS,
   oralExamKey,
+  type PastOralExamTheme,
 } from "@/lib/essay/oral-exam-question";
+import { useAuthSWR } from "@/lib/api/swr";
 import { ESSAY_FIELDS } from "@/lib/types/essay-field";
 import { ESSAY_FORMS, formStepsOf } from "@/lib/types/essay-form";
 import { useAutosave } from "@/hooks/useAutosave";
@@ -283,6 +285,11 @@ export default function EssayNewPage() {
    * 渡し、「ここから何を書けばいい?」をその問について答えさせる。
    */
   const [oralFocusNo, setOralFocusNo] = useState<number | null>(null);
+  /** これまで使ったお題。テーマ欄の下に選択肢として出す（口頭試問のときだけ読む） */
+  const { data: pastOralThemesData } = useAuthSWR<{
+    themes: PastOralExamTheme[];
+  }>(oralExamMode ? "/api/essay/oral-exam/themes" : null);
+  const pastOralThemes = pastOralThemesData?.themes ?? [];
   const [oralExamLoading, setOralExamLoading] = useState(false);
   const [oralExamError, setOralExamError] = useState<string | null>(null);
   /** 前に解いた問いを避けるか。既定は避ける。同じ問題で練習したい人は外せる */
@@ -2107,6 +2114,46 @@ export default function EssayNewPage() {
                         <p className="text-muted-foreground text-xs">
                           このテーマの知識を問う小問が作られます。1つの分野に絞るほど深く問われます。
                         </p>
+                        {pastOralThemes.length > 0 && (
+                          <div className="space-y-1.5 pt-1">
+                            <p className="text-muted-foreground text-xs font-medium">
+                              これまでのお題から選ぶ
+                            </p>
+                            <div className="flex flex-wrap gap-1.5">
+                              {pastOralThemes.map((t) => {
+                                const selected =
+                                  oralExamTheme.trim() === t.theme;
+                                return (
+                                  <button
+                                    key={t.theme}
+                                    type="button"
+                                    onClick={() => setOralExamTheme(t.theme)}
+                                    aria-pressed={selected}
+                                    className={[
+                                      "rounded-full border px-3 py-1 text-xs transition-colors",
+                                      selected
+                                        ? "border-emerald-700 bg-emerald-700 text-white"
+                                        : "bg-background hover:bg-muted",
+                                    ].join(" ")}
+                                  >
+                                    {t.theme}
+                                    {t.submittedCount > 0 && (
+                                      <span
+                                        className={
+                                          selected
+                                            ? "ml-1 text-emerald-100"
+                                            : "text-muted-foreground ml-1"
+                                        }
+                                      >
+                                        {t.submittedCount}回
+                                      </span>
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                       <div className="space-y-2">

@@ -178,3 +178,63 @@ export async function loadRecentOralExamQuestions(
     .slice(0, ORAL_EXAM_RECENT_LOOKBACK);
   return rows.map(({ theme, prompts }) => ({ theme, prompts }));
 }
+
+/** これまでのお題として選べるようにする件数 */
+export const ORAL_EXAM_PAST_THEMES_LIMIT = 10;
+
+export interface PastOralExamTheme {
+  theme: string;
+  /** そのお題で提出した回数（書きかけの下書きは数えない） */
+  submittedCount: number;
+  /** 最後に使った日時（ISO 8601） */
+  lastUsedAt: string;
+}
+
+/**
+ * 口頭試問型で使ったお題を、新しい順に重複なしで返す。
+ *
+ * 毎回テーマを打ち直すと、「感染症の薬剤耐性」「感染症の薬剤耐性について」の
+ * ように表記が揺れ、同じ分野を続けて練習しているのに別のお題として扱われる。
+ * 提出した答案に加えて書きかけの下書きのお題も拾う（作ったが出していない題も選べる）。
+ */
+export async function loadPastOralExamThemes(
+  db: FirebaseFirestore.Firestore,
+  userId: string
+): Promise<PastOralExamTheme[]> {
+  const toMs = (v: unknown): number => {
+    const d = (v as { toDate?: () => Date } | undefined)?.toDate?.();
+    if (d) return d.getTime();
+    const t = typeof v === "string" ? Date.parse(v) : NaN;
+    return Number.isNaN(t) ? 0 : t;
+  };
+  const [essays, drafts] = await Promise.all([
+    db.collection("essays").where("userId", "==", userId).get(),
+    db.collection(`users/${userId}/essayDrafts`).get(),
+  ]);
+  const byTheme = new Map<string, { count: number; at: number }>();
+  const add = (theme: unknown, at: number, submitted: boolean) => {
+    const t = typeof theme === "string" ? theme.trim() : "";
+    if (!t) return;
+    const cur = byTheme.get(t) ?? { count: 0, at: 0 };
+    byTheme.set(t, {
+      count: cur.count + (submitted ? 1 : 0),
+      at: Math.max(cur.at, at),
+    });
+  };
+  for (const d of essays.docs) {
+    const data = d.data();
+    add(data.questionContext?.oralExam?.theme, toMs(data.submittedAt), true);
+  }
+  for (const d of drafts.docs) {
+    const data = d.data();
+    add(data.oralExam?.theme, toMs(data.updatedAt), false);
+  }
+  return [...byTheme.entries()]
+    .sort((a, b) => b[1].at - a[1].at)
+    .slice(0, ORAL_EXAM_PAST_THEMES_LIMIT)
+    .map(([theme, v]) => ({
+      theme,
+      submittedCount: v.count,
+      lastUsedAt: new Date(v.at).toISOString(),
+    }));
+}
