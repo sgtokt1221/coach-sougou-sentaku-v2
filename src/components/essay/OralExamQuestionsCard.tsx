@@ -9,7 +9,8 @@ import type {
 } from "@/lib/types/essay";
 import { splitOralExamAnswers } from "@/lib/essay/oral-exam-question";
 
-const VERDICT_STYLE: Record<
+/** 小問の判定の表示。結果画面と、解き直す小問を選ぶ画面で共用する */
+export const VERDICT_STYLE: Record<
   OralExamSubQuestionVerdict["verdict"],
   { label: string; className: string }
 > = {

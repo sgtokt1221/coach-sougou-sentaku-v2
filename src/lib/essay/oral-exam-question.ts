@@ -179,28 +179,41 @@ export async function loadRecentOralExamQuestions(
   return rows.map(({ theme, prompts }) => ({ theme, prompts }));
 }
 
-/** これまでのお題として選べるようにする件数 */
-export const ORAL_EXAM_PAST_THEMES_LIMIT = 10;
+/** これまでの小問として選べるお題の数と、1つのお題あたりの小問の数 */
+export const ORAL_EXAM_PAST_GROUPS_LIMIT = 15;
+export const ORAL_EXAM_PAST_QUESTIONS_PER_GROUP = 30;
 
-export interface PastOralExamTheme {
+export interface PastOralExamQuestion {
   theme: string;
-  /** そのお題で提出した回数（書きかけの下書きは数えない） */
-  submittedCount: number;
-  /** 最後に使った日時（ISO 8601） */
+  prompt: string;
+  wordLimit: number;
+  aim: string;
+  /** その小問を答案として提出した回数（下書きで作っただけなら0） */
+  timesAnswered: number;
+  /** 最後に出題・提出した日時（ISO 8601） */
   lastUsedAt: string;
+  /** 最後に提出した答案での、その小問の判定（判定が無ければ無し） */
+  lastVerdict?: "answered" | "partial" | "unanswered";
+}
+
+export interface PastOralExamGroup {
+  theme: string;
+  lastUsedAt: string;
+  questions: PastOralExamQuestion[];
 }
 
 /**
- * 口頭試問型で使ったお題を、新しい順に重複なしで返す。
+ * これまでに出た口頭試問の小問を、お題ごとにまとめて新しい順に返す。
  *
- * 毎回テーマを打ち直すと、「感染症の薬剤耐性」「感染症の薬剤耐性について」の
- * ように表記が揺れ、同じ分野を続けて練習しているのに別のお題として扱われる。
- * 提出した答案に加えて書きかけの下書きのお題も拾う（作ったが出していない題も選べる）。
+ * 出題は毎回AIが作り直すので、「前に答えられなかったあの小問をもう一度」が
+ * できなかった。提出した答案と書きかけの下書きから小問を集め、同じ設問文は
+ * 1つにまとめる。前回の判定（答えられた／一部だけ／答えていない）も添えて、
+ * できなかった小問を選んで解き直せるようにする。
  */
-export async function loadPastOralExamThemes(
+export async function loadPastOralExamQuestions(
   db: FirebaseFirestore.Firestore,
   userId: string
-): Promise<PastOralExamTheme[]> {
+): Promise<PastOralExamGroup[]> {
   const toMs = (v: unknown): number => {
     const d = (v as { toDate?: () => Date } | undefined)?.toDate?.();
     if (d) return d.getTime();
@@ -211,30 +224,101 @@ export async function loadPastOralExamThemes(
     db.collection("essays").where("userId", "==", userId).get(),
     db.collection(`users/${userId}/essayDrafts`).get(),
   ]);
-  const byTheme = new Map<string, { count: number; at: number }>();
-  const add = (theme: unknown, at: number, submitted: boolean) => {
-    const t = typeof theme === "string" ? theme.trim() : "";
-    if (!t) return;
-    const cur = byTheme.get(t) ?? { count: 0, at: 0 };
-    byTheme.set(t, {
-      count: cur.count + (submitted ? 1 : 0),
-      at: Math.max(cur.at, at),
-    });
+
+  type Acc = Omit<PastOralExamQuestion, "lastUsedAt"> & {
+    at: number;
+    verdictAt: number;
+  };
+  const byPrompt = new Map<string, Acc>();
+  const add = (
+    set: OralExamQuestionSet | undefined,
+    at: number,
+    submitted: boolean,
+    verdicts?: { no: number; verdict: PastOralExamQuestion["lastVerdict"] }[]
+  ) => {
+    if (!set?.subQuestions?.length) return;
+    const theme = (set.theme ?? "").trim();
+    for (const q of set.subQuestions) {
+      const prompt = (q.prompt ?? "").trim();
+      if (!prompt) continue;
+      const cur = byPrompt.get(prompt) ?? {
+        theme,
+        prompt,
+        wordLimit: q.wordLimit,
+        aim: q.aim ?? "",
+        timesAnswered: 0,
+        at: 0,
+        verdictAt: 0,
+      };
+      if (submitted) cur.timesAnswered += 1;
+      if (at >= cur.at) {
+        cur.at = at;
+        cur.theme = theme || cur.theme;
+        cur.wordLimit = q.wordLimit;
+      }
+      const v = verdicts?.find((x) => x.no === q.no)?.verdict;
+      if (submitted && v && at >= cur.verdictAt) {
+        cur.lastVerdict = v;
+        cur.verdictAt = at;
+      }
+      byPrompt.set(prompt, cur);
+    }
   };
   for (const d of essays.docs) {
     const data = d.data();
-    add(data.questionContext?.oralExam?.theme, toMs(data.submittedAt), true);
+    add(
+      data.questionContext?.oralExam,
+      toMs(data.submittedAt),
+      true,
+      data.feedback?.oralExamInsights?.subQuestions
+    );
   }
   for (const d of drafts.docs) {
     const data = d.data();
-    add(data.oralExam?.theme, toMs(data.updatedAt), false);
+    add(data.oralExam, toMs(data.updatedAt), false);
   }
-  return [...byTheme.entries()]
-    .sort((a, b) => b[1].at - a[1].at)
-    .slice(0, ORAL_EXAM_PAST_THEMES_LIMIT)
-    .map(([theme, v]) => ({
-      theme,
-      submittedCount: v.count,
-      lastUsedAt: new Date(v.at).toISOString(),
-    }));
+
+  const groups = new Map<string, Acc[]>();
+  for (const q of byPrompt.values()) {
+    const list = groups.get(q.theme) ?? [];
+    list.push(q);
+    groups.set(q.theme, list);
+  }
+  return [...groups.entries()]
+    .map(([theme, list]) => {
+      const sorted = list.sort((a, b) => b.at - a.at);
+      return {
+        theme,
+        at: sorted[0]?.at ?? 0,
+        questions: sorted
+          .slice(0, ORAL_EXAM_PAST_QUESTIONS_PER_GROUP)
+          .map(({ at, verdictAt: _v, ...q }) => ({
+            ...q,
+            lastUsedAt: new Date(at).toISOString(),
+          })),
+      };
+    })
+    .sort((a, b) => b.at - a.at)
+    .slice(0, ORAL_EXAM_PAST_GROUPS_LIMIT)
+    .map(({ at, ...g }) => ({ ...g, lastUsedAt: new Date(at).toISOString() }));
+}
+
+/**
+ * 選んだ過去の小問から、そのまま書ける小問集合を組む。
+ * お題が複数にまたがるときは「・」でつなぐ。合計字数は小問の字数の合計にする。
+ */
+export function buildOralExamSetFromPast(
+  chosen: PastOralExamQuestion[]
+): OralExamQuestionSet {
+  const themes = [...new Set(chosen.map((q) => q.theme).filter(Boolean))];
+  return {
+    theme: themes.join("・") || "これまでの小問",
+    totalWordLimit: chosen.reduce((n, q) => n + q.wordLimit, 0),
+    subQuestions: chosen.map((q, i) => ({
+      no: i + 1,
+      prompt: q.prompt,
+      wordLimit: q.wordLimit,
+      aim: q.aim,
+    })),
+  };
 }

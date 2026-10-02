@@ -66,8 +66,9 @@ import {
   ORAL_EXAM_MAX_QUESTIONS,
   ORAL_EXAM_MIN_QUESTIONS,
   oralExamKey,
-  type PastOralExamTheme,
+  type PastOralExamGroup,
 } from "@/lib/essay/oral-exam-question";
+import { OralExamPastPicker } from "@/components/essay/OralExamPastPicker";
 import { useAuthSWR } from "@/lib/api/swr";
 import { ESSAY_FIELDS } from "@/lib/types/essay-field";
 import { ESSAY_FORMS, formStepsOf } from "@/lib/types/essay-form";
@@ -285,11 +286,18 @@ export default function EssayNewPage() {
    * 渡し、「ここから何を書けばいい?」をその問について答えさせる。
    */
   const [oralFocusNo, setOralFocusNo] = useState<number | null>(null);
-  /** これまで使ったお題。テーマ欄の下に選択肢として出す（口頭試問のときだけ読む） */
-  const { data: pastOralThemesData } = useAuthSWR<{
-    themes: PastOralExamTheme[];
-  }>(oralExamMode ? "/api/essay/oral-exam/themes" : null);
-  const pastOralThemes = pastOralThemesData?.themes ?? [];
+  /**
+   * 口頭試問の問題を新しく作るか、これまでに出た小問から選んで解き直すか。
+   * 出題は毎回AIが作り直すので、選べないと「前に答えられなかったあの小問」に戻れない。
+   */
+  const [oralSource, setOralSource] = useState<"new" | "past">("new");
+  const { data: pastOralData, isLoading: pastOralLoading } = useAuthSWR<{
+    groups: PastOralExamGroup[];
+  }>(
+    oralExamMode && oralSource === "past"
+      ? "/api/essay/oral-exam/past-questions"
+      : null
+  );
   const [oralExamLoading, setOralExamLoading] = useState(false);
   const [oralExamError, setOralExamError] = useState<string | null>(null);
   /** 前に解いた問いを避けるか。既定は避ける。同じ問題で練習したい人は外せる */
@@ -2100,146 +2108,139 @@ export default function EssayNewPage() {
                   {/* 口頭試問型: テーマ・合計字数・小問数を決めて問題を作る */}
                   {oralExamMode && (
                     <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="oral-theme">テーマ</Label>
-                        <input
-                          id="oral-theme"
-                          type="text"
-                          value={oralExamTheme}
-                          onChange={(e) => setOralExamTheme(e.target.value)}
-                          placeholder="例: 表現の自由 / 再生可能エネルギー / 細胞分裂"
-                          maxLength={100}
-                          className="bg-background focus:ring-ring w-full rounded-lg border px-3 py-2.5 text-sm focus:ring-2 focus:outline-none"
+                      <SegmentControl
+                        fullWidth
+                        size="sm"
+                        value={oralSource}
+                        onChange={(v) => setOralSource(v as "new" | "past")}
+                        options={[
+                          { id: "new", label: "新しく作る" },
+                          { id: "past", label: "これまでの小問から選ぶ" },
+                        ]}
+                      />
+                      {oralSource === "past" ? (
+                        <OralExamPastPicker
+                          groups={pastOralData?.groups ?? []}
+                          loading={pastOralLoading}
+                          canStart={Boolean(universityId && facultyId)}
+                          onStart={(set) => {
+                            setOralExamSet(set);
+                            setOralExamTheme(set.theme);
+                            setOralExamCount(set.subQuestions.length);
+                            setOralExamAnswers(set.subQuestions.map(() => ""));
+                            setCustomMaxLength(set.totalWordLimit);
+                            setOralExamAvoidedCount(0);
+                            setStep(2);
+                          }}
                         />
-                        <p className="text-muted-foreground text-xs">
-                          このテーマの知識を問う小問が作られます。1つの分野に絞るほど深く問われます。
-                        </p>
-                        {pastOralThemes.length > 0 && (
-                          <div className="space-y-1.5 pt-1">
-                            <p className="text-muted-foreground text-xs font-medium">
-                              これまでのお題から選ぶ
-                            </p>
-                            <div className="flex flex-wrap gap-1.5">
-                              {pastOralThemes.map((t) => {
-                                const selected =
-                                  oralExamTheme.trim() === t.theme;
-                                return (
-                                  <button
-                                    key={t.theme}
-                                    type="button"
-                                    onClick={() => setOralExamTheme(t.theme)}
-                                    aria-pressed={selected}
-                                    className={[
-                                      "rounded-full border px-3 py-1 text-xs transition-colors",
-                                      selected
-                                        ? "border-emerald-700 bg-emerald-700 text-white"
-                                        : "bg-background hover:bg-muted",
-                                    ].join(" ")}
-                                  >
-                                    {t.theme}
-                                    {t.submittedCount > 0 && (
-                                      <span
-                                        className={
-                                          selected
-                                            ? "ml-1 text-emerald-100"
-                                            : "text-muted-foreground ml-1"
-                                        }
-                                      >
-                                        {t.submittedCount}回
-                                      </span>
-                                    )}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label>合計字数</Label>
-                        <CharLimitSelector
-                          value={customMaxLength}
-                          onChange={setCustomMaxLength}
-                        />
-                        <p className="text-muted-foreground text-xs">
-                          この字数を小問ごとに割り振ります。
-                        </p>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label>小問の数</Label>
-                        <SegmentControl
-                          fullWidth
-                          size="sm"
-                          value={String(oralExamCount)}
-                          onChange={(v) => setOralExamCount(Number(v))}
-                          options={Array.from(
-                            {
-                              length:
-                                ORAL_EXAM_MAX_QUESTIONS -
-                                ORAL_EXAM_MIN_QUESTIONS +
-                                1,
-                            },
-                            (_, i) => {
-                              const n = ORAL_EXAM_MIN_QUESTIONS + i;
-                              return { id: String(n), label: `${n}問` };
-                            }
-                          )}
-                        />
-                      </div>
-
-                      <label className="flex cursor-pointer items-start gap-2.5">
-                        <input
-                          type="checkbox"
-                          checked={oralExamAvoidRepeat}
-                          onChange={(e) =>
-                            setOralExamAvoidRepeat(e.target.checked)
-                          }
-                          className="mt-0.5 size-4"
-                        />
-                        <span className="text-sm">
-                          前に解いた問いを避ける
-                          <span className="text-muted-foreground mt-0.5 block text-xs">
-                            これまでに提出した口頭試問型の問いと重ならないように作ります。
-                            同じ問題で解き直したいときは外してください。
-                          </span>
-                        </span>
-                      </label>
-
-                      {oralExamError && (
-                        <p className="text-sm text-rose-600">{oralExamError}</p>
-                      )}
-
-                      <Button
-                        className="w-full"
-                        onClick={handleGenerateOralExam}
-                        disabled={
-                          !oralExamTheme.trim() ||
-                          oralExamLoading ||
-                          !universityId ||
-                          !facultyId
-                        }
-                      >
-                        {oralExamLoading
-                          ? "問題を作っています..."
-                          : "問題を作る"}
-                      </Button>
-                      {/* 「問題を作る」は執筆画面へ直接進むので、志望校が無いと提出で必ず断られる */}
-                      {(!universityId || !facultyId) && (
-                        <p className="text-muted-foreground text-xs">
-                          先に下の「アドミッションポリシー参照先」で志望校を選んでください
-                        </p>
-                      )}
-                      {oralExamLoading && (
-                        <div className="space-y-2">
-                          {Array.from({ length: oralExamCount }).map((_, i) => (
-                            <Skeleton
-                              key={i}
-                              className="h-12 w-full rounded-lg"
+                      ) : (
+                        <>
+                          <div className="space-y-2">
+                            <Label htmlFor="oral-theme">テーマ</Label>
+                            <input
+                              id="oral-theme"
+                              type="text"
+                              value={oralExamTheme}
+                              onChange={(e) => setOralExamTheme(e.target.value)}
+                              placeholder="例: 表現の自由 / 再生可能エネルギー / 細胞分裂"
+                              maxLength={100}
+                              className="bg-background focus:ring-ring w-full rounded-lg border px-3 py-2.5 text-sm focus:ring-2 focus:outline-none"
                             />
-                          ))}
-                        </div>
+                            <p className="text-muted-foreground text-xs">
+                              このテーマの知識を問う小問が作られます。1つの分野に絞るほど深く問われます。
+                            </p>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>合計字数</Label>
+                            <CharLimitSelector
+                              value={customMaxLength}
+                              onChange={setCustomMaxLength}
+                            />
+                            <p className="text-muted-foreground text-xs">
+                              この字数を小問ごとに割り振ります。
+                            </p>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>小問の数</Label>
+                            <SegmentControl
+                              fullWidth
+                              size="sm"
+                              value={String(oralExamCount)}
+                              onChange={(v) => setOralExamCount(Number(v))}
+                              options={Array.from(
+                                {
+                                  length:
+                                    ORAL_EXAM_MAX_QUESTIONS -
+                                    ORAL_EXAM_MIN_QUESTIONS +
+                                    1,
+                                },
+                                (_, i) => {
+                                  const n = ORAL_EXAM_MIN_QUESTIONS + i;
+                                  return { id: String(n), label: `${n}問` };
+                                }
+                              )}
+                            />
+                          </div>
+
+                          <label className="flex cursor-pointer items-start gap-2.5">
+                            <input
+                              type="checkbox"
+                              checked={oralExamAvoidRepeat}
+                              onChange={(e) =>
+                                setOralExamAvoidRepeat(e.target.checked)
+                              }
+                              className="mt-0.5 size-4"
+                            />
+                            <span className="text-sm">
+                              前に解いた問いを避ける
+                              <span className="text-muted-foreground mt-0.5 block text-xs">
+                                これまでに提出した口頭試問型の問いと重ならないように作ります。
+                                同じ問題で解き直したいときは外してください。
+                              </span>
+                            </span>
+                          </label>
+
+                          {oralExamError && (
+                            <p className="text-sm text-rose-600">
+                              {oralExamError}
+                            </p>
+                          )}
+
+                          <Button
+                            className="w-full"
+                            onClick={handleGenerateOralExam}
+                            disabled={
+                              !oralExamTheme.trim() ||
+                              oralExamLoading ||
+                              !universityId ||
+                              !facultyId
+                            }
+                          >
+                            {oralExamLoading
+                              ? "問題を作っています..."
+                              : "問題を作る"}
+                          </Button>
+                          {/* 「問題を作る」は執筆画面へ直接進むので、志望校が無いと提出で必ず断られる */}
+                          {(!universityId || !facultyId) && (
+                            <p className="text-muted-foreground text-xs">
+                              先に下の「アドミッションポリシー参照先」で志望校を選んでください
+                            </p>
+                          )}
+                          {oralExamLoading && (
+                            <div className="space-y-2">
+                              {Array.from({ length: oralExamCount }).map(
+                                (_, i) => (
+                                  <Skeleton
+                                    key={i}
+                                    className="h-12 w-full rounded-lg"
+                                  />
+                                )
+                              )}
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
                   )}
