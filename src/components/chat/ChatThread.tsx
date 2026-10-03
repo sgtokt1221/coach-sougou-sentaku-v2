@@ -463,6 +463,13 @@ export function ChatThread({
     }
     const added = messages.filter((m) => !seen.has(m.id));
     if (added.length === 0) return;
+    // 送信中として出していた自分の吹き出しを、届いた本物と入れ替える
+    const arrivedMine = added
+      .filter((m) => m.senderRole === currentRole)
+      .map((m) => (m.message ?? "").trim());
+    if (arrivedMine.length > 0) {
+      setOutgoing((o) => o.filter((x) => !arrivedMine.includes(x.text)));
+    }
     // 自分が送ったとき・一番下を見ているときは追いかける。
     // 上を読んでいるときは動かさず、「新着あり」を出す
     if (
@@ -571,16 +578,45 @@ export function ChatThread({
     void uploadFiles(files);
   }
 
+  /**
+   * 送ったがまだサーバーから届いていない自分のメッセージ。
+   *
+   * 以前は送信APIの応答（本番で0.3〜1.6秒。プッシュ通知の送信まで含む）を待ってから
+   * 入力欄を空にしていたので、送った直後は何も起きていないように見えた。
+   * 送った瞬間に入力欄を空にして「送信中」の吹き出しを出し、同じ文が購読で
+   * 届いたら消す。失敗したら書いた文を入力欄へ戻す。
+   */
+  const [outgoing, setOutgoing] = useState<
+    { id: string; text: string; attachmentCount: number }[]
+  >([]);
+
   async function handleSend() {
     if ((!text.trim() && pending.length === 0 && !pendingRef) || sending)
       return;
+    const sendText = text.trim();
+    const sendPending = pending;
+    const sendRef = pendingRef;
+    const id = `out-${Date.now()}`;
+    setOutgoing((o) => [
+      ...o,
+      { id, text: sendText, attachmentCount: sendPending.length },
+    ]);
+    setText("");
+    setPending([]);
+    setPendingRef(null);
+    atBottomRef.current = true;
+    requestAnimationFrame(scrollMessagesToBottom);
     setSending(true);
     try {
-      await onSend(text.trim(), pending, pendingRef ?? undefined);
-      setText("");
-      setPending([]);
-      setPendingRef(null);
+      await onSend(sendText, sendPending, sendRef ?? undefined);
+      // 購読で届けば下の effect が消す。届かない画面でも残り続けないようにする
+      setTimeout(() => setOutgoing((o) => o.filter((x) => x.id !== id)), 8000);
     } catch {
+      setOutgoing((o) => o.filter((x) => x.id !== id));
+      // 次の文を書き始めていなければ、送れなかった文を戻す
+      setText((cur) => (cur.trim() ? cur : sendText));
+      setPending((cur) => (cur.length > 0 ? cur : sendPending));
+      setPendingRef((cur) => cur ?? sendRef);
       toast.error("送信に失敗しました");
     } finally {
       setSending(false);
@@ -915,6 +951,19 @@ export function ChatThread({
                 );
               })
             )}
+            {outgoing.map((o) => (
+              <div key={o.id} className="flex justify-end">
+                <div className="flex max-w-[min(80%,38rem)] flex-col items-end gap-1">
+                  <div className="bg-primary text-primary-foreground rounded-2xl rounded-br-sm px-3 py-2 text-sm whitespace-pre-wrap opacity-70">
+                    {stripRichText(o.text) ||
+                      `[添付ファイル ${o.attachmentCount}件]`}
+                  </div>
+                  <span className="text-muted-foreground text-[10px]">
+                    送信中…
+                  </span>
+                </div>
+              </div>
+            ))}
             <div />
           </div>
         </div>
