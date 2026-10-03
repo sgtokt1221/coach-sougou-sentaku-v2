@@ -402,6 +402,45 @@ export interface ReportInsights {
   misreadings: string[]; // 課題文の誤読・事実誤認の指摘
 }
 
+/**
+ * 指摘を本文の箇所に結び付けた結果（essays/{id}.feedbackAnchors）。
+ * 計算は src/lib/essay/feedback-anchors.ts、足りない分は feedback-anchor-judge.ts。
+ */
+export type FeedbackItemKind =
+  | "language"
+  | "priority"
+  | "improvement"
+  | "weakness"
+  | "goodPoint"
+  | "claim"
+  | "requirement"
+  | "knowledge"
+  | "subQuestion";
+
+/** 指摘を押したときに並べる理由のまとまり */
+export type FeedbackAnchorGroup =
+  | "language"
+  | "logic"
+  | "task"
+  | "knowledge"
+  | "good";
+
+export interface FeedbackAnchorItem {
+  /** `${kind}:${元の配列での位置}` */
+  key: string;
+  group: FeedbackAnchorGroup;
+  /** 本文の位置。空なら本文に結び付かない「全体への指摘」 */
+  spans: { start: number; end: number }[];
+}
+
+export interface FeedbackAnchors {
+  version: number;
+  generatedAt: string;
+  /** AI 判定で補えたか（false なら計算で決まった分だけ） */
+  judged: boolean;
+  items: FeedbackAnchorItem[];
+}
+
 export interface EssayFeedback {
   overall: string;
   goodPoints: string[];

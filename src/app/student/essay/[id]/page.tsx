@@ -8,17 +8,14 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import {
-  CheckCircle,
   AlertTriangle,
   ArrowLeft,
   RotateCcw,
   ChevronDown,
   ChevronUp,
   PenTool,
-  SpellCheck,
   Copy,
   Check,
-  Star,
   FileText,
   Zap,
   MessageSquare,
@@ -33,7 +30,6 @@ import {
 } from "recharts";
 import { ScoreRing } from "@/components/shared/ScoreRing";
 import { RankBadge } from "@/components/shared/RankBadge";
-import { RedPenText } from "@/components/essay/RedPenText";
 import { CommentableEssayText } from "@/components/essay/CommentableEssayText";
 import type {
   EssayInlineComment,
@@ -41,6 +37,8 @@ import type {
   OralExamInsights,
   OralExamKnowledgeDigest,
   OralExamQuestionSet,
+  FeedbackAnchors,
+  EssayFeedback as SharedEssayFeedback,
 } from "@/lib/types/essay";
 import { EssayDeepDiveView } from "@/components/essay/EssayDeepDiveView";
 import { OralExamQuestionsCard } from "@/components/essay/OralExamQuestionsCard";
@@ -64,6 +62,7 @@ import {
 import { buildNextStepHint, headroomAxisLabel } from "@/lib/essay/next-step";
 import { EssayResultSummary } from "@/components/essay/EssayResultSummary";
 import { pickDisplayIssues } from "@/lib/essay/display-issues";
+import { AnchoredFeedbackView } from "@/components/essay/AnchoredFeedbackView";
 import { EssayReviewCoach } from "@/components/essay/EssayReviewCoach";
 import { sourceEngagementLabel } from "@/lib/essay/source-engagement";
 import { essayScoreAxisRows } from "@/lib/essay/score-axes";
@@ -171,6 +170,8 @@ interface EssayResult {
   inlineComments?: EssayInlineComment[];
   /** 口頭試問型の小問集合（questionType="oral_exam" のときだけ） */
   oralExam?: OralExamQuestionSet | null;
+  /** 指摘を本文に結び付けた結果。無ければ /anchors が初回に作る */
+  feedbackAnchors?: FeedbackAnchors | null;
 }
 
 /**
@@ -178,9 +179,7 @@ interface EssayResult {
  * 講評で全体像 → 赤ペンで文の直し → 弱点で何を直すか → 書き換え例 → 背景知識。
  */
 const DETAIL_SECTIONS = [
-  { id: "overview", label: "講評" },
-  { id: "redpen", label: "赤ペン" },
-  { id: "weaknesses", label: "弱点" },
+  { id: "feedback", label: "指摘" },
   { id: "brushup", label: "書き換え例" },
   { id: "insights", label: "テーマ深掘り" },
 ] as const;
@@ -282,6 +281,13 @@ export default function EssayResultPage() {
     OralExamKnowledgeDigest | undefined
   >();
   const [generatingDeepDive, setGeneratingDeepDive] = useState(false);
+  /**
+   * 指摘を本文に結び付けた結果。保存済みでなければ、結果を開いた時点で裏で作る
+   * （詳細を開くまでにできていることが多い）。できるまでは計算で決まる分だけで出す。
+   */
+  const [feedbackAnchors, setFeedbackAnchors] =
+    useState<FeedbackAnchors | null>(null);
+  const [anchorsPending, setAnchorsPending] = useState(false);
 
   /**
    * テーマの深掘りは開いたときだけ作る。採点のたびに作ると、読まない人のぶんも払う。
@@ -394,7 +400,16 @@ export default function EssayResultPage() {
           return;
         }
 
-        const res = await fetch(`/api/essay/${id}`);
+        /**
+         * 結果APIはログインと持ち主の確認をする。ページを直接開いた直後は
+         * ログイン状態の復元が終わっておらず、トークン無しで送ると弾かれる。
+         */
+        const [{ authFetch }, { auth }] = await Promise.all([
+          import("@/lib/api/client"),
+          import("@/lib/firebase/config"),
+        ]);
+        await auth?.authStateReady();
+        const res = await authFetch(`/api/essay/${id}`);
         if (!res.ok) throw new Error("データの取得に失敗しました");
         const data = await res.json();
         setResult(data);
@@ -410,6 +425,43 @@ export default function EssayResultPage() {
     }
     if (id) load();
   }, [id]);
+
+  const hasResult = Boolean(result);
+  const savedAnchors = result?.feedbackAnchors ?? null;
+  useEffect(() => {
+    if (!id || !hasResult) return;
+    if (savedAnchors?.judged) {
+      setFeedbackAnchors(savedAnchors);
+      return;
+    }
+    let alive = true;
+    setAnchorsPending(true);
+    (async () => {
+      try {
+        const [{ authFetch }, { auth }] = await Promise.all([
+          import("@/lib/api/client"),
+          import("@/lib/firebase/config"),
+        ]);
+        await auth?.authStateReady();
+        const res = await authFetch(`/api/essay/${id}/anchors`, {
+          method: "POST",
+        });
+        if (!res.ok) return;
+        const data = (await res.json()) as {
+          feedbackAnchors?: FeedbackAnchors;
+        };
+        if (alive && data.feedbackAnchors)
+          setFeedbackAnchors(data.feedbackAnchors);
+      } catch {
+        // 作れなくても計算で決まる分だけで表示する
+      } finally {
+        if (alive) setAnchorsPending(false);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [id, hasResult, savedAnchors]);
 
   // インラインコメントに未読があれば既読化
   const hasUnreadComments = (result?.inlineComments ?? []).some((c) => !c.read);
@@ -770,11 +822,18 @@ export default function EssayResultPage() {
                 (result.feedback.languageCorrections ?? []).length
               }
               onJump={(section) => {
-                // 詳細を開いてから、その節へスクロールする
+                // 詳細を開いてから、その節へスクロールする。
+                // 講評・赤ペン・弱点は「指摘」の2分割の画面にまとめた
                 setShowDetails(true);
+                const target =
+                  section === "overview" ||
+                  section === "redpen" ||
+                  section === "weaknesses"
+                    ? "feedback"
+                    : section;
                 setTimeout(() => {
                   document
-                    .getElementById(`${section}-section`)
+                    .getElementById(`${target}-section`)
                     ?.scrollIntoView({ behavior: "smooth" });
                 }, 60);
               }}
@@ -964,221 +1023,94 @@ export default function EssayResultPage() {
                 </button>
               ))}
             </div>
-            {/* 概要セクション */}
-            <section id="overview-section" className="scroll-mt-24">
-              {/* 全体講評 */}
-              <Card>
-                <CardHeader className="pb-4">
-                  <CardTitle className="flex items-center gap-2 text-xl tracking-tight text-slate-800">
-                    <MessageSquare className="size-6 text-sky-600" />
-                    全体講評
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="rounded-xl border border-sky-200 bg-white/70 p-6">
-                    <p className="text-sm leading-relaxed font-medium text-slate-800">
-                      {result.feedback.overall}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </section>
-
-            <Separator className="my-8 opacity-30" />
-
-            {/* 赤ペン添削セクション */}
-            <section id="redpen-section" className="scroll-mt-24">
-              {result.feedback.languageCorrections &&
-              result.feedback.languageCorrections.length > 0 ? (
-                <Card>
-                  <CardHeader className="pb-4">
-                    <CardTitle className="flex items-center gap-2 text-xl tracking-tight text-rose-700">
-                      <SpellCheck className="size-6" />
-                      赤ペン添削
-                      <Badge variant="secondary" className="ml-2 text-xs">
-                        {result.feedback.languageCorrections.length}件の修正案
-                      </Badge>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <RedPenText
-                      text={result.ocrText ?? ""}
-                      corrections={result.feedback.languageCorrections}
-                    />
-                  </CardContent>
-                </Card>
-              ) : (
-                <Card className="border-emerald-200 bg-emerald-50/40">
-                  <CardContent className="p-8 text-center">
-                    <CheckCircle className="mx-auto mb-3 size-12 text-emerald-500" />
-                    <h3 className="mb-2 text-lg font-semibold tracking-tight text-emerald-800">
-                      素晴らしい文章です！
-                    </h3>
-                    <p className="text-sm text-emerald-700">
-                      言語的な修正点は見つかりませんでした。表現力と文法の正確性が高く評価されます。
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
-            </section>
-
-            <Separator className="my-8 opacity-30" />
-
-            {/* 弱点セクション */}
-            <section id="weaknesses-section" className="scroll-mt-24">
-              {/*
-                良かったところは最初の画面に出しているので、ここでは繰り返さない。
-                この節は「何をどう直すか」だけを置く。
-              */}
-              <div className="grid gap-6 lg:grid-cols-2">
-                <TaskFulfillmentCard task={result.feedback.taskFulfillment} />
-                <ClaimChecksCard claims={result.feedback.claimChecks} />
-
-                {/* 改善点 */}
-                <div className="space-y-4">
-                  {/* 最優先改善ポイント */}
-                  {result.feedback.priorityImprovement && (
-                    <Card className="border-amber-200 bg-amber-50/40">
-                      <CardContent className="p-4">
-                        <div className="flex items-start gap-3">
-                          <div className="rounded-full bg-amber-200 p-1.5">
-                            <Star className="size-4 text-amber-700" />
-                          </div>
-                          <div>
-                            <p className="mb-2 text-sm font-semibold tracking-tight text-amber-800">
-                              最優先の改善ポイント
-                            </p>
-                            <p className="text-sm leading-relaxed text-amber-700">
-                              {result.feedback.priorityImprovement}
-                            </p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {/* 一般的な改善点 */}
-                  {shownImprovements.length > 0 && (
-                    <Card className="border-amber-200 bg-amber-50/40">
-                      <CardHeader className="pb-4">
-                        <CardTitle className="flex items-center gap-2 text-lg tracking-tight text-amber-700">
-                          <AlertTriangle className="size-5" />
-                          改善点
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <ul className="space-y-3">
-                          {shownImprovements.map((point, i) => (
-                            <li key={i} className="flex items-start gap-3">
-                              <div className="mt-0.5 rounded-full bg-amber-200 p-1">
-                                <AlertTriangle className="size-3 text-amber-700" />
-                              </div>
-                              <span className="text-sm leading-relaxed text-slate-800">
-                                {point}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      </CardContent>
-                    </Card>
-                  )}
-                </div>
-              </div>
-
-              {/* 課題文の扱い。合計50点には入れず、指標として見せる。
+            {/*
+              指摘。左に本文（すべての指摘を箇所に結び付けた印）、右に全体講評と
+              本文に結び付かない指摘を置く。以前は講評・赤ペン・弱点が別々の節にあり、
+              同じ文への指摘が節ごとに別の名前で出て分かりにくかった。
+            */}
+            <section id="feedback-section" className="scroll-mt-24">
+              <AnchoredFeedbackView
+                text={result.ocrText ?? ""}
+                // この画面の講評の型は弱点の文面を省略可にしているだけで、中身は共通の型と同じ
+                feedback={result.feedback as Partial<SharedEssayFeedback>}
+                anchors={feedbackAnchors}
+                anchorsPending={anchorsPending && !feedbackAnchors}
+                oralExam={
+                  result.questionType === "oral_exam" ? result.oralExam : null
+                }
+                rightExtra={
+                  <>
+                    {/* 課題文の扱い。合計50点には入れず、指標として見せる。
                   点は既存5軸の上限で下がる（source-engagement.ts） */}
-              {result.feedback.reportInsights?.engagementLevel && (
-                <div
-                  className={`mt-6 rounded-lg border p-4 ${
-                    result.feedback.reportInsights.engagementLevel ===
-                    "grounded"
-                      ? "border-emerald-200 bg-emerald-50"
-                      : result.feedback.reportInsights.engagementLevel ===
-                          "shallow"
-                        ? "border-amber-200 bg-amber-50"
-                        : "border-rose-200 bg-rose-50"
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-semibold">課題文の扱い</p>
-                    <span className="text-sm font-bold">
-                      {sourceEngagementLabel(
-                        result.feedback.reportInsights.engagementLevel
-                      )}
-                    </span>
-                  </div>
-                  {result.feedback.reportInsights.engagementBasis && (
-                    <p className="text-muted-foreground mt-1.5 text-xs">
-                      {result.feedback.reportInsights.engagementBasis}
-                    </p>
-                  )}
-                  <p className="text-muted-foreground mt-2 text-[10px]">
-                    この評価は50点の合計には含まれません。課題文に触れていない場合は、
-                    構成・論理性・回答力・成熟度の上限が下がります。
-                  </p>
-                </div>
-              )}
-
-              {/* 専門知識の正確性（口頭試問型のときだけ。合計に入る） */}
-              {typeof result.scores.knowledgeAccuracy === "number" && (
-                <div className="mt-6 rounded-lg bg-slate-800 p-4 text-white">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-semibold">専門知識の正確性</p>
-                    <span className="text-lg font-bold tabular-nums">
-                      {result.scores.knowledgeAccuracy}
-                      <span className="text-sm font-normal text-slate-300">
-                        /10
-                      </span>
-                    </span>
-                  </div>
-                  {result.feedback.knowledgeInsights?.basis && (
-                    <p className="mt-1.5 text-xs leading-relaxed text-slate-200">
-                      {result.feedback.knowledgeInsights.basis}
-                    </p>
-                  )}
-                  <p className="mt-2 text-[10px] text-slate-400">
-                    口頭試問型は知識を問う出題なので、この点は合計（
-                    {scoreMaximum}点満点）に入ります。
-                  </p>
-                </div>
-              )}
-
-              {/* 知識の誤り（引用つき） */}
-              {(result.feedback.knowledgeInsights?.errors?.length ?? 0) > 0 && (
-                <div className="mt-4 space-y-2">
-                  <p className="text-sm font-semibold">知識の誤り</p>
-                  {result.feedback.knowledgeInsights!.errors.map((e, i) => (
-                    <div
-                      key={i}
-                      className={`rounded-lg p-3 text-sm ${
-                        e.severity === "critical"
-                          ? "bg-rose-600 text-white"
-                          : "bg-amber-100 text-amber-950"
-                      }`}
-                    >
-                      <p className="font-medium">「{e.claim}」</p>
-                      <p
-                        className={`mt-1 text-xs leading-relaxed ${
-                          e.severity === "critical"
-                            ? "text-rose-50"
-                            : "text-amber-900"
+                    {result.feedback.reportInsights?.engagementLevel && (
+                      <div
+                        className={`mt-6 rounded-lg border p-4 ${
+                          result.feedback.reportInsights.engagementLevel ===
+                          "grounded"
+                            ? "border-emerald-200 bg-emerald-50"
+                            : result.feedback.reportInsights.engagementLevel ===
+                                "shallow"
+                              ? "border-amber-200 bg-amber-50"
+                              : "border-rose-200 bg-rose-50"
                         }`}
                       >
-                        {e.correction}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="text-sm font-semibold">課題文の扱い</p>
+                          <span className="text-sm font-bold">
+                            {sourceEngagementLabel(
+                              result.feedback.reportInsights.engagementLevel
+                            )}
+                          </span>
+                        </div>
+                        {result.feedback.reportInsights.engagementBasis && (
+                          <p className="text-muted-foreground mt-1.5 text-xs">
+                            {result.feedback.reportInsights.engagementBasis}
+                          </p>
+                        )}
+                        <p className="text-muted-foreground mt-2 text-[10px]">
+                          この評価は50点の合計には含まれません。課題文に触れていない場合は、
+                          構成・論理性・回答力・成熟度の上限が下がります。
+                        </p>
+                      </div>
+                    )}
 
-              {/* 課題文の読み取り (sourceType="report" のときのみ) */}
-              {result.feedback.reportInsights && (
-                <div className="mt-6">
-                  <ReportInsightsCard
-                    insights={result.feedback.reportInsights}
-                  />
-                </div>
-              )}
+                    {/* 専門知識の正確性（口頭試問型のときだけ。合計に入る） */}
+                    {typeof result.scores.knowledgeAccuracy === "number" && (
+                      <div className="mt-6 rounded-lg bg-slate-800 p-4 text-white">
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="text-sm font-semibold">
+                            専門知識の正確性
+                          </p>
+                          <span className="text-lg font-bold tabular-nums">
+                            {result.scores.knowledgeAccuracy}
+                            <span className="text-sm font-normal text-slate-300">
+                              /10
+                            </span>
+                          </span>
+                        </div>
+                        {result.feedback.knowledgeInsights?.basis && (
+                          <p className="mt-1.5 text-xs leading-relaxed text-slate-200">
+                            {result.feedback.knowledgeInsights.basis}
+                          </p>
+                        )}
+                        <p className="mt-2 text-[10px] text-slate-400">
+                          口頭試問型は知識を問う出題なので、この点は合計（
+                          {scoreMaximum}点満点）に入ります。
+                        </p>
+                      </div>
+                    )}
+
+                    {/* 課題文の読み取り (sourceType="report" のときのみ) */}
+                    {result.feedback.reportInsights && (
+                      <div className="mt-6">
+                        <ReportInsightsCard
+                          insights={result.feedback.reportInsights}
+                        />
+                      </div>
+                    )}
+                  </>
+                }
+              />
             </section>
 
             <Separator className="my-8 opacity-30" />
@@ -1375,99 +1307,5 @@ export default function EssayResultPage() {
         )}
       </div>
     </div>
-  );
-}
-
-/**
- * 設問への適合（監査 P1-12）。
- * 主題を外していると文章が整っていても点が伸びないため、改善点より先に出す。
- * モバイルのタブ表示とデスクトップの通し表示は別々に組まれているので、
- * 部品にして両方から呼ぶ（片方だけ直して気付かない事故を防ぐ）。
- */
-function TaskFulfillmentCard({ task }: { task?: TaskFulfillment }) {
-  if (!task) return null;
-  return (
-    <Card
-      className={`border-0 shadow-md ${task.answersQuestion ? "bg-emerald-50" : "bg-rose-50"}`}
-    >
-      <CardContent className="space-y-2 p-4">
-        <p
-          className={`text-sm font-semibold ${
-            task.answersQuestion ? "text-emerald-800" : "text-rose-800"
-          }`}
-        >
-          {task.answersQuestion
-            ? "設問に答えられています"
-            : "設問からずれています"}
-        </p>
-        <ul className="space-y-1 text-sm">
-          {task.requirements.map((r, i) => (
-            <li key={i} className="flex gap-2">
-              <span className="shrink-0">
-                {r.status === "met" ? "◎" : r.status === "partial" ? "△" : "×"}
-              </span>
-              <span>
-                <span className="font-medium">{r.requirement}</span>
-                {r.evidence && (
-                  <span className="text-muted-foreground block text-xs">
-                    {r.evidence}
-                  </span>
-                )}
-              </span>
-            </li>
-          ))}
-        </ul>
-        {task.note && <p className="text-sm text-slate-700">{task.note}</p>}
-      </CardContent>
-    </Card>
-  );
-}
-
-/** 確認状態のラベル。「実在しない」とは断定せず、確認できたかで言う */
-const CLAIM_STATUS_LABELS: Record<ClaimCheck["status"], string> = {
-  verified: "資料で確認できた",
-  contradicted: "資料と食い違う",
-  unverified: "確認できない",
-  not_checkable: "本人の経験",
-};
-
-/**
- * 答案が持ち出した事実の確認状態（監査 P1-11）。
- * 架空の固有名詞や数値が「具体的」として加点されるのを防ぐため、
- * 何が確認できていないかを本人にも見せる。
- */
-function ClaimChecksCard({ claims }: { claims?: ClaimCheck[] }) {
-  const shown = (claims ?? []).filter(
-    (c) => c.status === "unverified" || c.status === "contradicted"
-  );
-  if (shown.length === 0) return null;
-  return (
-    <Card className="border-0 bg-amber-50 shadow-md">
-      <CardContent className="space-y-2 p-4">
-        <p className="text-sm font-semibold text-amber-900">
-          出典を確かめたい記述
-        </p>
-        <p className="text-xs text-amber-800">
-          次の記述は資料から確認できませんでした。出典を添えるか、確認できる
-          言い方に直すと説得力が上がります（誤りと決まったわけではありません）。
-        </p>
-        <ul className="space-y-1 text-sm">
-          {shown.map((c, i) => (
-            <li key={i} className="flex gap-2">
-              <span className="shrink-0 text-amber-700">
-                {c.status === "contradicted" ? "×" : "?"}
-              </span>
-              <span>
-                {c.claim}
-                <span className="text-muted-foreground block text-xs">
-                  {CLAIM_STATUS_LABELS[c.status]}
-                  {c.evidence ? `／${c.evidence}` : ""}
-                </span>
-              </span>
-            </li>
-          ))}
-        </ul>
-      </CardContent>
-    </Card>
   );
 }

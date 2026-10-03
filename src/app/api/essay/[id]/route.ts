@@ -1,6 +1,8 @@
 import { feedbackWithDerivedIssues } from "@/lib/essay/review-core";
 import { isPartialEssay } from "@/lib/essay/derive-weakness-issues";
 import { NextRequest, NextResponse } from "next/server";
+import { requireRole, scopeByOrganization } from "@/lib/api/auth";
+import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
 import { computeRetryComparison } from "@/lib/essay/retry-comparison";
 import type {
   EssayFeedback,
@@ -9,9 +11,21 @@ import type {
 } from "@/lib/types/essay";
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  /**
+   * 以前は認証も持ち主の確認もしておらず、答案IDが分かれば誰でも他人の答案と
+   * 添削結果を読めた（IDOR）。生徒は自分の答案だけ、管理者・講師は担当の
+   * 生徒の答案だけを読める。
+   */
+  const authResult = await requireRole(request, [
+    "student",
+    "teacher",
+    "admin",
+    "superadmin",
+  ]);
+  if (authResult instanceof NextResponse) return authResult;
   try {
     const { id } = await params;
 
@@ -33,6 +47,32 @@ export async function GET(
     }
 
     const data = essayDoc.data()!;
+
+    if (authResult.role === "student") {
+      if (data.userId !== authResult.uid) {
+        return NextResponse.json(
+          { error: "この小論文を見る権限がありません" },
+          { status: 403 }
+        );
+      }
+    } else {
+      const studentDoc = data.userId
+        ? await adminDb.doc(`users/${data.userId}`).get()
+        : null;
+      const student = studentDoc?.data();
+      const denied = await scopeByOrganization({
+        requesterUid: authResult.uid,
+        requesterRole: authResult.role,
+        studentUid: String(data.userId ?? ""),
+        studentData: {
+          managedBy: student?.managedBy,
+          organizationId: student?.organizationId,
+          assignedTeacherIds: getAssignedTeacherIds(student),
+        },
+        allowAssignedTeacher: true,
+      });
+      if (denied) return denied;
+    }
 
     // 大学名・学部名を解決
     let universityName = data.targetUniversity ?? "";
@@ -158,6 +198,8 @@ export async function GET(
       retryContext: data.retryContext ?? null,
       // 生成済みのテーマ深掘り（無ければ画面で「詳しく読む」ボタンを出す）
       deepDive: data.deepDive ?? null,
+      // 指摘を本文に結び付けた結果（/anchors が初回に作って保存する）。無ければ画面が作りに行く
+      feedbackAnchors: data.feedbackAnchors ?? null,
       // 口頭試問型の「知識の整理」（深掘りの代わり。生成済みなら再生成させない）
       knowledgeDigest: data.knowledgeDigest ?? null,
       ...(retryComparison ? { retryComparison } : {}),
