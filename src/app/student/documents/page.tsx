@@ -210,7 +210,10 @@ export default function DocumentsPage() {
                         >
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className="font-medium text-sm">{doc.type}</span>
+                              <span className="font-medium text-sm">{doc.title || doc.type}</span>
+                              {doc.title && doc.title !== doc.type && !doc.title.includes(doc.type) && (
+                                <span className="text-muted-foreground text-xs">{doc.type}</span>
+                              )}
                               {isWizardIncomplete(doc) && (
                                 <Badge variant="outline">作成途中</Badge>
                               )}

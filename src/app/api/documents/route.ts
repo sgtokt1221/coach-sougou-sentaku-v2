@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { defaultDocumentTitle } from "@/lib/documents/title";
 import { requireFeature } from "@/lib/api/subscription";
 import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
@@ -83,7 +84,11 @@ export async function POST(request: NextRequest) {
       facultyId: body.facultyId,
       universityName: body.universityName,
       facultyName: body.facultyName,
-      title: `${body.universityName}${body.facultyName} ${body.type}`,
+      title: defaultDocumentTitle(
+        body.universityName ?? "",
+        body.facultyName ?? "",
+        body.type ?? ""
+      ),
       content: body.initialContent || "",
       wordCount: body.initialContent ? body.initialContent.length : 0,
       targetWordCount: body.targetWordCount,

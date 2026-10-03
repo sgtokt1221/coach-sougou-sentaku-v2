@@ -35,7 +35,12 @@ import {
   ShieldCheck,
   Wand2,
   MessageSquare,
+  Pencil,
 } from "lucide-react";
+import {
+  DOCUMENT_TITLE_MAX,
+  normalizeDocumentTitle,
+} from "@/lib/documents/title";
 import type {
   Document,
   DocumentFeedback,
@@ -122,6 +127,12 @@ export default function DocumentEditorPage() {
   const [loading, setLoading] = useState(true);
   const [content, setContent] = useState("");
   const [saving, setSaving] = useState(false);
+  /**
+   * 書類のタイトル。生徒が付ける（同じ大学・種類の書類が並ぶと見分けられないため）。
+   * 管理者の画面にも出る。
+   */
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleDraft, setTitleDraft] = useState("");
   const [reviewing, setReviewing] = useState(false);
   const [feedback, setFeedback] = useState<DocumentFeedback | null>(null);
   const [showVersions, setShowVersions] = useState(false);
@@ -467,6 +478,25 @@ export default function DocumentEditorPage() {
     );
   }
 
+  async function saveTitle() {
+    setEditingTitle(false);
+    const title = normalizeDocumentTitle(titleDraft);
+    if (!doc || !title || title === doc.title) return;
+    const prev = doc.title;
+    setDoc({ ...doc, title });
+    try {
+      const res = await authFetch(`/api/documents/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title }),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      setDoc((d) => (d ? { ...d, title: prev } : d));
+      toast.error("タイトルを保存できませんでした");
+    }
+  }
+
   const wordCount = content.length;
 
   return (
@@ -477,7 +507,41 @@ export default function DocumentEditorPage() {
           <ArrowLeft className="size-4" />
         </Button>
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-lg font-bold">{doc.title}</h1>
+          {editingTitle ? (
+            <input
+              autoFocus
+              value={titleDraft}
+              maxLength={DOCUMENT_TITLE_MAX}
+              onChange={(e) => setTitleDraft(e.target.value)}
+              onBlur={() => void saveTitle()}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.nativeEvent.isComposing) {
+                  e.preventDefault();
+                  void saveTitle();
+                } else if (e.key === "Escape") {
+                  setEditingTitle(false);
+                }
+              }}
+              aria-label="書類のタイトル"
+              placeholder="タイトル（例: 第一志望・最終版）"
+              className="bg-background focus:ring-ring w-full rounded-md border px-2 py-1 text-lg font-bold focus:ring-2 focus:outline-none"
+            />
+          ) : (
+            <div className="flex min-w-0 items-center gap-1">
+              <h1 className="truncate text-lg font-bold">{doc.title}</h1>
+              <button
+                type="button"
+                onClick={() => {
+                  setTitleDraft(doc.title);
+                  setEditingTitle(true);
+                }}
+                aria-label="タイトルを変更"
+                className="text-muted-foreground hover:text-foreground shrink-0 rounded p-1"
+              >
+                <Pencil className="size-3.5" />
+              </button>
+            </div>
+          )}
           <div className="mt-1 flex min-w-0 items-center gap-2">
             <Badge variant={statusVariant2(doc.status)} className="shrink-0">
               {documentStatusLabel2(doc.status)}

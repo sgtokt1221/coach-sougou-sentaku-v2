@@ -81,6 +81,8 @@ export async function GET(
       facultyId: data.facultyId ?? "",
       universityName: data.universityName ?? "",
       facultyName: data.facultyName ?? "",
+      // 生徒が付けたタイトル。どの書類の話かを生徒と揃えるために出す
+      title: data.title || data.type || "",
       content: latestVersion?.content ?? data.content ?? "",
       // 範囲コメント。管理者画面で本文にドラッグコメントを重ねるために返す
       inlineComments: data.inlineComments ?? [],

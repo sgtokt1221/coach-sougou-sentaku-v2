@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { normalizeDocumentTitle } from "@/lib/documents/title";
 import { requireFeature } from "@/lib/api/subscription";
 import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
@@ -117,7 +118,11 @@ export async function PUT(
     }
 
     if (body.status !== undefined) updates.status = body.status;
-    if (body.title !== undefined) updates.title = body.title;
+    // 生徒が付けるタイトル。空や長すぎる値は保存しない（一覧・管理者の画面が崩れる）
+    if (body.title !== undefined) {
+      const title = normalizeDocumentTitle(body.title);
+      if (title) updates.title = title;
+    }
     if (body.targetWordCount !== undefined) updates.targetWordCount = body.targetWordCount;
     if (body.deadline !== undefined) updates.deadline = body.deadline;
     // ウィザード進行状態と書類基本項目（志望校/タイプ変更対応）。ホワイトリストのみ。

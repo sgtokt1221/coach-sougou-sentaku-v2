@@ -11,6 +11,8 @@ import type {
 interface DocumentListItem {
   id: string;
   type: string;
+  /** 生徒が付けたタイトル（無ければ種類） */
+  title: string;
   universityName: string;
   facultyName: string;
   wordCount: number;
@@ -94,6 +96,7 @@ export async function GET(
         type: data.type ?? "",
         universityName: data.universityName ?? "",
         facultyName: data.facultyName ?? "",
+        title: data.title || data.type || "",
         wordCount: data.wordCount ?? 0,
         targetWordCount: data.targetWordCount ?? undefined,
         status: data.status ?? "draft",

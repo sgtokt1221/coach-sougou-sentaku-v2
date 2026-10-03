@@ -74,6 +74,8 @@ import {
 interface DocumentListItem {
   id: string;
   type: string;
+  /** 生徒が付けたタイトル（無ければ種類） */
+  title?: string;
   universityName: string;
   facultyName: string;
   wordCount: number;
@@ -114,6 +116,8 @@ function formatCoachDate(iso: string | undefined): string {
 interface DocumentDetail {
   id: string;
   type: string;
+  /** 生徒が付けたタイトル。どの書類の話かを生徒と揃えるために出す */
+  title?: string;
   /** APを引くのに使う（表示名だけでは大学データを特定できない） */
   universityId?: string;
   facultyId?: string;
@@ -351,7 +355,10 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
           : state === "cleared"
             ? "この書類のレビュー状態を取り消しました。"
             : "");
-      const targetLabel = `${detailDoc.universityName} ${detailDoc.type}`;
+      // チャットに出る書類名。生徒が付けたタイトルで、生徒の画面と同じ名前にする
+      const targetLabel = detailDoc.title
+        ? `${detailDoc.title}（${detailDoc.type}）`
+        : `${detailDoc.universityName} ${detailDoc.type}`;
       // 1) コメントを送信（チャット＋通知）
       await authFetch(`/api/admin/students/${studentId}/feedback`, {
         method: "POST",
@@ -492,7 +499,12 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
                     return (
                       <tr key={doc.id} className="border-b">
                         <td className="px-4 py-3">
-                          <p className="font-medium">{doc.type}</p>
+                          <p className="font-medium">{doc.title || doc.type}</p>
+                          {doc.title && doc.title !== doc.type && (
+                            <p className="text-muted-foreground text-xs">
+                              {doc.type}
+                            </p>
+                          )}
                         </td>
                         <td className="hidden px-4 py-3 sm:table-cell">
                           <p className="text-xs">{doc.universityName}</p>
@@ -587,7 +599,7 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FileText className="size-5" />
-              書類詳細
+              {detailDoc?.title || "書類詳細"}
             </DialogTitle>
             {detailDoc && (
               <DialogDescription>
@@ -984,7 +996,8 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
               レビュー
               {detailDoc && (
                 <span className="text-muted-foreground truncate text-xs font-normal">
-                  {detailDoc.universityName} {detailDoc.type}
+                  {detailDoc.title ||
+                    `${detailDoc.universityName} ${detailDoc.type}`}
                 </span>
               )}
             </DialogTitle>
