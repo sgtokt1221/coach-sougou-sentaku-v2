@@ -75,16 +75,295 @@ const REQUIREMENT_STATUS: Record<string, string> = {
   missing: "欠けている",
 };
 
+/** 結び付けの計算結果。生徒の結果画面と管理者の答案ダイアログで共用する */
+export interface AnchoredFeedbackModel {
+  itemByKey: Map<string, FeedbackItem>;
+  groupOf: Map<string, FeedbackAnchorGroup>;
+  /** 本文に印を付ける指摘（小問の判定は問の見出しに出すので含めない） */
+  marked: { key: string; spans: Span[] }[];
+  /** 本文に結び付かない「全体への指摘」 */
+  unanchored: { key: string }[];
+  segments: Segment[];
+  answerSpans: Map<number, Span> | null;
+}
+
 /**
- * 添削の指摘を本文に結び付けて見せる（詳細の表示）。
+ * 指摘の一覧・結び付け・本文の区間をまとめて計算する。
+ * 結び付けが保存されていなければ、計算で決まる分だけで先に作る
+ * （AI で補った結び付けが届いたら差し替わる）。
+ */
+export function useAnchoredFeedback({
+  text,
+  feedback,
+  anchors,
+  oralExam,
+}: {
+  text: string;
+  feedback: Partial<EssayFeedback>;
+  anchors: FeedbackAnchors | null;
+  oralExam?: OralExamQuestionSet | null;
+}): AnchoredFeedbackModel {
+  const items = useMemo(() => listFeedbackItems(feedback), [feedback]);
+  const itemByKey = useMemo(
+    () => new Map(items.map((i) => [i.key, i])),
+    [items]
+  );
+  const effective = useMemo(
+    () =>
+      anchors ??
+      buildAnchors(items, anchorDeterministically(text, items, oralExam), null),
+    [anchors, items, text, oralExam]
+  );
+  return useMemo(() => {
+    const groupOf = new Map(effective.items.map((a) => [a.key, a.group]));
+    // 小問の判定は印にせず、問の見出しに出す（答え全体を塗ると本文が読めない）
+    const marked = effective.items.filter(
+      (a) => a.spans.length > 0 && itemByKey.get(a.key)?.kind !== "subQuestion"
+    );
+    const unanchored = effective.items.filter(
+      (a) =>
+        a.spans.length === 0 &&
+        // 問の見出しに出せる小問の判定は全体に回さない
+        !(itemByKey.get(a.key)?.kind === "subQuestion" && oralExam)
+    );
+    return {
+      itemByKey,
+      groupOf,
+      marked,
+      unanchored,
+      segments: buildSegments(text.length, marked),
+      answerSpans: oralExam ? oralAnswerSpans(text, oralExam) : null,
+    };
+  }, [effective, itemByKey, text, oralExam]);
+}
+
+/** PC 幅か。選んだ箇所の指摘を、PC はその場に、スマホはシートで出し分ける */
+function useIsDesktop(): boolean {
+  /**
+   * シートを CSS で隠すだけだと、背景をぼかす幕は PC でも開いてしまうので、
+   * 画面幅で開くかどうかを決める。
+   */
+  const [isDesktop, setIsDesktop] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const update = () => setIsDesktop(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+  return isDesktop;
+}
+
+/** 印付きの本文（見出しや枠は呼び出し側が付ける）。口頭試問型は問ごとに並べる */
+export function AnchoredEssayBody({
+  model,
+  text,
+  feedback,
+  oralExam,
+  selected,
+  onSelect,
+}: {
+  model: AnchoredFeedbackModel;
+  text: string;
+  feedback: Partial<EssayFeedback>;
+  oralExam?: OralExamQuestionSet | null;
+  selected: string[] | null;
+  onSelect: (keys: string[]) => void;
+}) {
+  const renderRange = (range: Span) =>
+    model.segments
+      .filter((s) => s.end > range.start && s.start < range.end)
+      .map((s) => (
+        <SegmentText
+          key={`${s.start}-${s.end}`}
+          segment={s}
+          text={text.slice(
+            Math.max(s.start, range.start),
+            Math.min(s.end, range.end)
+          )}
+          groupOf={model.groupOf}
+          active={!!selected && sameKeys(selected, s.keys)}
+          onSelect={onSelect}
+        />
+      ));
+
+  if (oralExam && model.answerSpans && model.answerSpans.size > 0) {
+    return (
+      <div className="space-y-5">
+        {oralExam.subQuestions.map((q) => {
+          const span = model.answerSpans!.get(q.no);
+          const verdict = feedback.oralExamInsights?.subQuestions?.find(
+            (v) => v.no === q.no
+          );
+          const style = verdict ? VERDICT_STYLE[verdict.verdict] : null;
+          return (
+            <div key={q.no} className="space-y-2">
+              <div className="bg-muted/50 space-y-1 rounded-lg p-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-semibold">問{q.no}</span>
+                  {style && (
+                    <span
+                      className={`rounded px-1.5 py-0.5 text-xs ${style.className}`}
+                    >
+                      {style.label}
+                    </span>
+                  )}
+                </div>
+                <p className="text-muted-foreground text-xs leading-relaxed">
+                  {q.prompt}
+                </p>
+                {verdict?.comment && (
+                  <p className="text-xs leading-relaxed">{verdict.comment}</p>
+                )}
+              </div>
+              <p className="text-[15px] leading-8 whitespace-pre-wrap">
+                {span ? (
+                  renderRange(span)
+                ) : (
+                  <span className="text-muted-foreground text-sm">未記入</span>
+                )}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+  return (
+    <p className="text-[15px] leading-8 whitespace-pre-wrap">
+      {renderRange({ start: 0, end: text.length })}
+    </p>
+  );
+}
+
+/**
+ * 選んだ箇所への指摘。PC では置いた場所に枠で出し、スマホでは下からシートで出す。
+ */
+export function SelectedSpanFeedback({
+  model,
+  feedback,
+  selected,
+  onClose,
+}: {
+  model: AnchoredFeedbackModel;
+  feedback: Partial<EssayFeedback>;
+  selected: string[] | null;
+  onClose: () => void;
+}) {
+  const isDesktop = useIsDesktop();
+  const panel = selected ? (
+    <GroupedItems
+      keys={selected}
+      itemByKey={model.itemByKey}
+      groupOf={model.groupOf}
+      feedback={feedback}
+    />
+  ) : null;
+  return (
+    <>
+      {panel && (
+        <Card className="hidden border-slate-300 lg:block">
+          <CardContent className="space-y-3 p-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold">選んだ箇所への指摘</p>
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="閉じる"
+                className="text-muted-foreground hover:text-foreground p-1"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+            {panel}
+          </CardContent>
+        </Card>
+      )}
+      <Sheet
+        open={!!selected && !isDesktop}
+        onOpenChange={(o) => {
+          if (!o) onClose();
+        }}
+      >
+        <SheetContent side="bottom" className="max-h-[80vh] lg:hidden">
+          <SheetHeader className="pb-0">
+            <SheetTitle>この箇所への指摘</SheetTitle>
+          </SheetHeader>
+          <div className="overflow-y-auto px-4 pb-4">{panel}</div>
+        </SheetContent>
+      </Sheet>
+    </>
+  );
+}
+
+/** 全体講評と、本文に結び付かない指摘 */
+export function GlobalFeedbackList({
+  model,
+  feedback,
+  extra,
+}: {
+  model: AnchoredFeedbackModel;
+  feedback: Partial<EssayFeedback>;
+  extra?: ReactNode;
+}) {
+  return (
+    <div className="space-y-4">
+      {feedback.overall && (
+        <Card>
+          <CardContent className="space-y-2 p-4">
+            <p className="flex items-center gap-2 text-sm font-semibold">
+              <MessageSquare className="size-4 text-sky-600" />
+              全体講評
+            </p>
+            <p className="text-sm leading-relaxed">{feedback.overall}</p>
+          </CardContent>
+        </Card>
+      )}
+      {model.marked.length > 0 && (
+        <p className="bg-muted/50 rounded-lg p-3 text-xs leading-relaxed">
+          本文に <span className="font-semibold">{model.marked.length}件</span>{" "}
+          の指摘があります。答案の印を押すと内容が見られます。
+        </p>
+      )}
+      {feedback.taskFulfillment &&
+        !feedback.taskFulfillment.answersQuestion &&
+        feedback.taskFulfillment.note && (
+          <Card>
+            <CardContent className="space-y-1 p-4">
+              <p className="text-sm font-semibold text-violet-700">
+                設問への答え
+              </p>
+              <p className="text-sm leading-relaxed">
+                {feedback.taskFulfillment.note}
+              </p>
+            </CardContent>
+          </Card>
+        )}
+      {model.unanchored.length > 0 && (
+        <Card>
+          <CardContent className="space-y-3 p-4">
+            <p className="text-sm font-semibold">答案全体への指摘</p>
+            <GroupedItems
+              keys={model.unanchored.map((a) => a.key)}
+              itemByKey={model.itemByKey}
+              groupOf={model.groupOf}
+              feedback={feedback}
+            />
+          </CardContent>
+        </Card>
+      )}
+      {extra}
+    </div>
+  );
+}
+
+/**
+ * 添削の指摘を本文に結び付けて見せる（生徒の結果画面の詳細）。
  *
  * 左に本文を置き、指摘のある箇所に印を付ける。印を押すと、その箇所への指摘が
  * 理由ごと（言葉／論理・構成／設問への答え／知識／良い点）に並ぶ。
  * 右には全体講評と、本文に結び付かない指摘（構成や、書かれていないことへの指摘）を置く。
  * スマホは「本文」「全体」のタブで切り替え、印を押すと下からシートで出す。
- *
- * 結び付けが保存されていなければ、計算で決まる分だけで先に出し、
- * AI で補った結び付けが届いたら差し替える。
  */
 export function AnchoredFeedbackView({
   text,
@@ -105,201 +384,7 @@ export function AnchoredFeedbackView({
 }) {
   const [selected, setSelected] = useState<string[] | null>(null);
   const [mobileTab, setMobileTab] = useState<"text" | "global">("text");
-  /**
-   * PC では選んだ箇所の指摘を右の欄に出し、スマホでは下からのシートで出す。
-   * シートを CSS で隠すだけだと、背景をぼかす幕は PC でも開いてしまうので、
-   * 画面幅で開くかどうかを決める。
-   */
-  const [isDesktop, setIsDesktop] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia("(min-width: 1024px)");
-    const update = () => setIsDesktop(mq.matches);
-    update();
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
-  }, []);
-
-  const items = useMemo(() => listFeedbackItems(feedback), [feedback]);
-  const itemByKey = useMemo(
-    () => new Map(items.map((i) => [i.key, i])),
-    [items]
-  );
-  const effective = useMemo(
-    () =>
-      anchors ??
-      buildAnchors(items, anchorDeterministically(text, items, oralExam), null),
-    [anchors, items, text, oralExam]
-  );
-  const groupOf = useMemo(
-    () => new Map(effective.items.map((a) => [a.key, a.group])),
-    [effective]
-  );
-  // 小問の判定は印にせず、問の見出しに出す（答え全体を塗ると本文が読めない）
-  const marked = effective.items.filter(
-    (a) => a.spans.length > 0 && itemByKey.get(a.key)?.kind !== "subQuestion"
-  );
-  const unanchored = effective.items.filter(
-    (a) =>
-      a.spans.length === 0 &&
-      // 問の見出しに出せる小問の判定は全体に回さない
-      !(itemByKey.get(a.key)?.kind === "subQuestion" && oralExam)
-  );
-  const segments = useMemo(
-    () => buildSegments(text.length, marked),
-    [text.length, marked]
-  );
-
-  const answerSpans = useMemo(
-    () => (oralExam ? oralAnswerSpans(text, oralExam) : null),
-    [text, oralExam]
-  );
-
-  const select = (keys: string[]) => setSelected(keys);
-
-  const renderRange = (range: Span) =>
-    segments
-      .filter((s) => s.end > range.start && s.start < range.end)
-      .map((s) => (
-        <SegmentText
-          key={`${s.start}-${s.end}`}
-          segment={s}
-          text={text.slice(
-            Math.max(s.start, range.start),
-            Math.min(s.end, range.end)
-          )}
-          groupOf={groupOf}
-          active={!!selected && sameKeys(selected, s.keys)}
-          onSelect={select}
-        />
-      ));
-
-  const essayPane = (
-    <Card>
-      <CardContent className="space-y-4 p-4 lg:p-5">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-sm font-semibold">
-            あなたの答案
-            <span className="text-muted-foreground ml-2 text-xs font-normal">
-              印を押すと、その箇所への指摘が見られます
-            </span>
-          </p>
-          <Legend />
-        </div>
-        {anchorsPending && (
-          <p className="text-muted-foreground text-xs">
-            指摘を本文に配置しています…
-          </p>
-        )}
-        {oralExam && answerSpans && answerSpans.size > 0 ? (
-          <div className="space-y-5">
-            {oralExam.subQuestions.map((q) => {
-              const span = answerSpans.get(q.no);
-              const verdict = feedback.oralExamInsights?.subQuestions?.find(
-                (v) => v.no === q.no
-              );
-              const style = verdict ? VERDICT_STYLE[verdict.verdict] : null;
-              return (
-                <div key={q.no} className="space-y-2">
-                  <div className="bg-muted/50 space-y-1 rounded-lg p-3">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-sm font-semibold">問{q.no}</span>
-                      {style && (
-                        <span
-                          className={`rounded px-1.5 py-0.5 text-xs ${style.className}`}
-                        >
-                          {style.label}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-muted-foreground text-xs leading-relaxed">
-                      {q.prompt}
-                    </p>
-                    {verdict?.comment && (
-                      <p className="text-xs leading-relaxed">
-                        {verdict.comment}
-                      </p>
-                    )}
-                  </div>
-                  <p className="text-[15px] leading-8 whitespace-pre-wrap">
-                    {span ? (
-                      renderRange(span)
-                    ) : (
-                      <span className="text-muted-foreground text-sm">
-                        未記入
-                      </span>
-                    )}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <p className="text-[15px] leading-8 whitespace-pre-wrap">
-            {renderRange({ start: 0, end: text.length })}
-          </p>
-        )}
-      </CardContent>
-    </Card>
-  );
-
-  const spanPanel = selected ? (
-    <GroupedItems
-      keys={selected}
-      itemByKey={itemByKey}
-      groupOf={groupOf}
-      feedback={feedback}
-    />
-  ) : null;
-
-  const globalPane = (
-    <div className="space-y-4">
-      {feedback.overall && (
-        <Card>
-          <CardContent className="space-y-2 p-4">
-            <p className="flex items-center gap-2 text-sm font-semibold">
-              <MessageSquare className="size-4 text-sky-600" />
-              全体講評
-            </p>
-            <p className="text-sm leading-relaxed">{feedback.overall}</p>
-          </CardContent>
-        </Card>
-      )}
-      {marked.length > 0 && (
-        <p className="bg-muted/50 rounded-lg p-3 text-xs leading-relaxed">
-          本文に <span className="font-semibold">{marked.length}件</span>{" "}
-          の指摘があります。答案の印を押すと内容が見られます。
-        </p>
-      )}
-      {feedback.taskFulfillment &&
-        !feedback.taskFulfillment.answersQuestion &&
-        feedback.taskFulfillment.note && (
-          <Card>
-            <CardContent className="space-y-1 p-4">
-              <p className="text-sm font-semibold text-violet-700">
-                設問への答え
-              </p>
-              <p className="text-sm leading-relaxed">
-                {feedback.taskFulfillment.note}
-              </p>
-            </CardContent>
-          </Card>
-        )}
-      {unanchored.length > 0 && (
-        <Card>
-          <CardContent className="space-y-3 p-4">
-            <p className="text-sm font-semibold">答案全体への指摘</p>
-            <GroupedItems
-              keys={unanchored.map((a) => a.key)}
-              itemByKey={itemByKey}
-              groupOf={groupOf}
-              feedback={feedback}
-            />
-          </CardContent>
-        </Card>
-      )}
-      {rightExtra}
-    </div>
-  );
+  const model = useAnchoredFeedback({ text, feedback, anchors, oralExam });
 
   return (
     <div className="space-y-3">
@@ -310,55 +395,58 @@ export function AnchoredFeedbackView({
           value={mobileTab}
           onChange={(v) => setMobileTab(v as "text" | "global")}
           options={[
-            { id: "text", label: "本文", count: marked.length },
-            { id: "global", label: "全体", count: unanchored.length },
+            { id: "text", label: "本文", count: model.marked.length },
+            { id: "global", label: "全体", count: model.unanchored.length },
           ]}
         />
       </div>
       <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(20rem,26rem)] lg:items-start lg:gap-6">
         <div className={mobileTab === "text" ? "" : "hidden lg:block"}>
-          {essayPane}
+          <Card>
+            <CardContent className="space-y-4 p-4 lg:p-5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm font-semibold">
+                  あなたの答案
+                  <span className="text-muted-foreground ml-2 text-xs font-normal">
+                    印を押すと、その箇所への指摘が見られます
+                  </span>
+                </p>
+                <FeedbackLegend />
+              </div>
+              {anchorsPending && (
+                <p className="text-muted-foreground text-xs">
+                  指摘を本文に配置しています…
+                </p>
+              )}
+              <AnchoredEssayBody
+                model={model}
+                text={text}
+                feedback={feedback}
+                oralExam={oralExam}
+                selected={selected}
+                onSelect={setSelected}
+              />
+            </CardContent>
+          </Card>
         </div>
         <div
           className={`space-y-4 lg:sticky lg:top-16 lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto ${
             mobileTab === "global" ? "" : "hidden lg:block"
           }`}
         >
-          {spanPanel && (
-            <Card className="hidden border-slate-300 lg:block">
-              <CardContent className="space-y-3 p-4">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold">選んだ箇所への指摘</p>
-                  <button
-                    type="button"
-                    onClick={() => setSelected(null)}
-                    aria-label="閉じる"
-                    className="text-muted-foreground hover:text-foreground p-1"
-                  >
-                    <X className="size-4" />
-                  </button>
-                </div>
-                {spanPanel}
-              </CardContent>
-            </Card>
-          )}
-          {globalPane}
+          <SelectedSpanFeedback
+            model={model}
+            feedback={feedback}
+            selected={selected}
+            onClose={() => setSelected(null)}
+          />
+          <GlobalFeedbackList
+            model={model}
+            feedback={feedback}
+            extra={rightExtra}
+          />
         </div>
       </div>
-      {/* スマホ: 印を押したら下から出す */}
-      <Sheet
-        open={!!selected && !isDesktop}
-        onOpenChange={(o) => {
-          if (!o) setSelected(null);
-        }}
-      >
-        <SheetContent side="bottom" className="max-h-[80vh] lg:hidden">
-          <SheetHeader className="pb-0">
-            <SheetTitle>この箇所への指摘</SheetTitle>
-          </SheetHeader>
-          <div className="overflow-y-auto px-4 pb-4">{spanPanel}</div>
-        </SheetContent>
-      </Sheet>
     </div>
   );
 }
@@ -411,7 +499,8 @@ function SegmentText({
   );
 }
 
-function Legend() {
+/** 印の色の凡例 */
+export function FeedbackLegend() {
   return (
     <div className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
       {GROUPS.map((g) => (

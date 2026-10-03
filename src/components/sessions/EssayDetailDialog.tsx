@@ -11,16 +11,26 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
-import { FileText, ThumbsUp, Lightbulb, ArrowRightLeft } from "lucide-react";
+import { FileText, ArrowRightLeft } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import { CommentableEssayText } from "@/components/essay/CommentableEssayText";
-import { RedPenText } from "@/components/essay/RedPenText";
+import {
+  AnchoredEssayBody,
+  FeedbackLegend,
+  GlobalFeedbackList,
+  SelectedSpanFeedback,
+  useAnchoredFeedback,
+} from "@/components/essay/AnchoredFeedbackView";
+import { useEssayFeedbackAnchors } from "@/hooks/useEssayFeedbackAnchors";
+import { SegmentControl } from "@/components/shared/SegmentControl";
 import { EssayQuestionContext } from "@/components/admin/EssayQuestionContext";
 import {
   ESSAY_SCORE_WEIGHTS,
   type EssayInlineComment,
   type EssayQuestionContextData,
   type KnowledgeInsights,
+  type EssayFeedback,
+  type FeedbackAnchors,
 } from "@/lib/types/essay";
 import { axisPoints } from "@/lib/score-rank";
 
@@ -32,6 +42,8 @@ interface EssayDetail {
   ocrText?: string;
   inlineComments?: EssayInlineComment[];
   questionContext?: EssayQuestionContextData;
+  /** 指摘を本文に結び付けた結果。無ければ /anchors で作る */
+  feedbackAnchors?: FeedbackAnchors | null;
   scores?: {
     structure: number;
     logic: number;
@@ -119,12 +131,35 @@ export default function EssayDetailDialog({
 }) {
   const [data, setData] = useState<EssayDetail | null>(null);
   const [loading, setLoading] = useState(false);
+  /**
+   * 指摘は生徒と同じ見え方で出す（本文に印、押すと理由ごと）。面談で指している箇所が
+   * 生徒の画面と食い違うと伝わらない。講師のコメントは「コメント」に切り替えて見る。
+   */
+  const { anchors, pending: anchorsPending } = useEssayFeedbackAnchors(
+    data?.id,
+    data?.feedbackAnchors
+  );
+  const oralExam =
+    data?.questionContext?.questionType === "oral_exam"
+      ? (data.questionContext.oralExam ?? null)
+      : null;
+  const feedbackForView = (data?.feedback ?? {}) as Partial<EssayFeedback>;
+  const model = useAnchoredFeedback({
+    text: data?.ocrText ?? "",
+    feedback: feedbackForView,
+    anchors,
+    oralExam,
+  });
+  const [selected, setSelected] = useState<string[] | null>(null);
+  const [textMode, setTextMode] = useState<"ai" | "comment">("ai");
 
   useEffect(() => {
     if (!open || !essayId) return;
     let active = true;
     setLoading(true);
     setData(null);
+    setSelected(null);
+    setTextMode("ai");
     authFetch(`/api/admin/students/${studentId}/essays/${essayId}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => active && setData(d))
@@ -238,13 +273,63 @@ export default function EssayDetailDialog({
             {data.ocrText && (
               <>
                 <Separator />
-                <div className="space-y-2">
-                  <h3 className="text-sm font-semibold">元テキスト</h3>
-                  <CommentableEssayText
-                    text={data.ocrText}
-                    comments={data.inlineComments ?? []}
-                    mode="view"
-                  />
+                <div className="space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h3 className="text-sm font-semibold">元テキスト</h3>
+                    {(data.inlineComments?.length ?? 0) > 0 && (
+                      <SegmentControl
+                        size="sm"
+                        value={textMode}
+                        onChange={(v) => setTextMode(v as "ai" | "comment")}
+                        options={[
+                          { id: "ai", label: "AIの指摘" },
+                          {
+                            id: "comment",
+                            label: "コメント",
+                            count: data.inlineComments?.length ?? 0,
+                          },
+                        ]}
+                      />
+                    )}
+                  </div>
+                  {textMode === "ai" ? (
+                    <>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-muted-foreground text-xs">
+                          印を押すと、その箇所への指摘が見られます（生徒と同じ見え方）
+                        </p>
+                        <FeedbackLegend />
+                      </div>
+                      {anchorsPending && (
+                        <p className="text-muted-foreground text-xs">
+                          指摘を本文に配置しています…
+                        </p>
+                      )}
+                      {/* 本文が長いので、選んだ箇所の指摘は上に固定して見失わないようにする */}
+                      <div className="bg-background sticky top-0 z-10">
+                        <SelectedSpanFeedback
+                          model={model}
+                          feedback={feedbackForView}
+                          selected={selected}
+                          onClose={() => setSelected(null)}
+                        />
+                      </div>
+                      <AnchoredEssayBody
+                        model={model}
+                        text={data.ocrText}
+                        feedback={feedbackForView}
+                        oralExam={oralExam}
+                        selected={selected}
+                        onSelect={setSelected}
+                      />
+                    </>
+                  ) : (
+                    <CommentableEssayText
+                      text={data.ocrText}
+                      comments={data.inlineComments ?? []}
+                      mode="view"
+                    />
+                  )}
                 </div>
               </>
             )}
@@ -252,96 +337,8 @@ export default function EssayDetailDialog({
             {data.feedback && (
               <>
                 <Separator />
-                <div className="space-y-4">
-                  {/* 口頭試問型の知識の誤り。面談でそのまま使えるように出す */}
-                  {(data.feedback.knowledgeInsights?.errors?.length ?? 0) >
-                    0 && (
-                    <div className="space-y-2">
-                      <h3 className="text-sm font-semibold">知識の誤り</h3>
-                      {data.feedback.knowledgeInsights!.errors.map((e, i) => (
-                        <div
-                          key={i}
-                          className={`rounded-lg p-3 text-sm ${
-                            e.severity === "critical"
-                              ? "bg-rose-600 text-white"
-                              : "bg-amber-100 text-amber-950"
-                          }`}
-                        >
-                          <p className="font-medium">「{e.claim}」</p>
-                          <p
-                            className={`mt-1 text-xs leading-relaxed ${
-                              e.severity === "critical"
-                                ? "text-rose-50"
-                                : "text-amber-900"
-                            }`}
-                          >
-                            {e.correction}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <div className="space-y-1">
-                    <h3 className="text-sm font-semibold">総合評価</h3>
-                    <p className="text-muted-foreground text-sm leading-relaxed">
-                      {data.feedback.overall}
-                    </p>
-                  </div>
-                  {data.feedback.goodPoints?.length > 0 && (
-                    <div className="space-y-2">
-                      <h4 className="flex items-center gap-1.5 text-sm font-medium text-emerald-700 dark:text-emerald-400">
-                        <ThumbsUp className="size-3.5" />
-                        良い点
-                      </h4>
-                      <ul className="space-y-1 pl-5">
-                        {data.feedback.goodPoints.map((p, i) => (
-                          <li
-                            key={i}
-                            className="text-muted-foreground list-disc text-sm"
-                          >
-                            {p}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  {data.feedback.improvements?.length > 0 && (
-                    <div className="space-y-2">
-                      <h4 className="flex items-center gap-1.5 text-sm font-medium text-amber-700 dark:text-amber-400">
-                        <Lightbulb className="size-3.5" />
-                        改善点
-                      </h4>
-                      <ul className="space-y-1 pl-5">
-                        {data.feedback.improvements.map((p, i) => (
-                          <li
-                            key={i}
-                            className="text-muted-foreground list-disc text-sm"
-                          >
-                            {p}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-
-                {/* 赤ペン。生徒が見ているものと同じ部品で同じ見え方にする */}
-                {data.feedback.languageCorrections &&
-                  data.feedback.languageCorrections.length > 0 && (
-                    <>
-                      <Separator />
-                      <div className="space-y-2">
-                        <h3 className="text-sm font-semibold">
-                          赤ペン添削（{data.feedback.languageCorrections.length}
-                          件）
-                        </h3>
-                        <RedPenText
-                          text={data.ocrText ?? ""}
-                          corrections={data.feedback.languageCorrections}
-                        />
-                      </div>
-                    </>
-                  )}
+                {/* 総合評価と、本文に結び付かない指摘。本文に結び付く指摘は元テキストの印から見る */}
+                <GlobalFeedbackList model={model} feedback={feedbackForView} />
 
                 {data.feedback.brushedUpText && (
                   <>

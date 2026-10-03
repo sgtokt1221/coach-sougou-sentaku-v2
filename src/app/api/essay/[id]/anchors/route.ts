@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
-import { verifyAuthToken, adminDb } from "@/lib/firebase/admin";
+import { adminDb } from "@/lib/firebase/admin";
+import { authorizeEssayAccess } from "@/lib/api/essay-access";
 import { feedbackWithDerivedIssues } from "@/lib/essay/review-core";
 import { isPartialEssay } from "@/lib/essay/derive-weakness-issues";
 import {
@@ -22,17 +23,13 @@ export const maxDuration = 60;
  * 2回目からは保存したものを返す（テーマ深掘りと同じ「読む人だけが1回払う」作り）。
  * 位置が計算で決まらない指摘があるときだけ AI 判定を1回呼ぶ。
  *
- * 結果画面を開いた時点で裏で呼ばれ、詳細を開くまでにできていることが多い。
+ * 生徒の結果画面と管理者の答案ダイアログを開いた時点で裏で呼ばれる。
  */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const auth = await verifyAuthToken(request);
-    if (!auth) {
-      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
-    }
     if (!adminDb) {
       return NextResponse.json(
         { error: "Firestore に接続できません" },
@@ -49,13 +46,9 @@ export async function POST(
       );
     }
     const data = snap.data()!;
-    // 本人以外には作らない（作ると AI の費用が発生し、答案の中身も読むため）
-    if (data.userId !== auth.uid) {
-      return NextResponse.json(
-        { error: "この答案へのアクセス権がありません" },
-        { status: 403 }
-      );
-    }
+    // 生徒本人と、担当の管理者・講師だけ（作ると AI の費用が発生し、答案の中身も読むため）
+    const access = await authorizeEssayAccess(request, data);
+    if (access instanceof NextResponse) return access;
 
     const saved = data.feedbackAnchors as FeedbackAnchors | undefined;
     if (saved?.version === FEEDBACK_ANCHORS_VERSION && saved.judged) {

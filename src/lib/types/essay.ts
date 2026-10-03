@@ -39,6 +39,8 @@ export interface Essay {
   lectureId?: string;
   /** 管理者/講師による範囲指定インラインコメント */
   inlineComments?: EssayInlineComment[];
+  /** 指摘を本文に結び付けた結果（管理者の答案APIが返す） */
+  feedbackAnchors?: FeedbackAnchors | null;
   /** 出題の文脈（出題形式・制限字数・課題文）。管理者の答案詳細で表示する */
   questionContext?: EssayQuestionContextData;
   /** topic を下書きから時刻で推定して復元したか */

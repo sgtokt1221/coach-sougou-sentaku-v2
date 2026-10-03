@@ -184,6 +184,8 @@ export async function GET(
       ...essay,
       coachThreads,
       topicEstimated,
+      // 指摘を本文に結び付けた結果（生徒と同じ見え方で出すため）。無ければ画面が /anchors で作る
+      feedbackAnchors: data.feedbackAnchors ?? null,
       questionContext: {
         questionType: ctx.questionType ?? null,
         wordLimit: ctx.wordLimit ?? null,

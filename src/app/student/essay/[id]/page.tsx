@@ -63,6 +63,7 @@ import { buildNextStepHint, headroomAxisLabel } from "@/lib/essay/next-step";
 import { EssayResultSummary } from "@/components/essay/EssayResultSummary";
 import { pickDisplayIssues } from "@/lib/essay/display-issues";
 import { AnchoredFeedbackView } from "@/components/essay/AnchoredFeedbackView";
+import { useEssayFeedbackAnchors } from "@/hooks/useEssayFeedbackAnchors";
 import { EssayReviewCoach } from "@/components/essay/EssayReviewCoach";
 import { sourceEngagementLabel } from "@/lib/essay/source-engagement";
 import { essayScoreAxisRows } from "@/lib/essay/score-axes";
@@ -281,13 +282,6 @@ export default function EssayResultPage() {
     OralExamKnowledgeDigest | undefined
   >();
   const [generatingDeepDive, setGeneratingDeepDive] = useState(false);
-  /**
-   * 指摘を本文に結び付けた結果。保存済みでなければ、結果を開いた時点で裏で作る
-   * （詳細を開くまでにできていることが多い）。できるまでは計算で決まる分だけで出す。
-   */
-  const [feedbackAnchors, setFeedbackAnchors] =
-    useState<FeedbackAnchors | null>(null);
-  const [anchorsPending, setAnchorsPending] = useState(false);
 
   /**
    * テーマの深掘りは開いたときだけ作る。採点のたびに作ると、読まない人のぶんも払う。
@@ -426,42 +420,12 @@ export default function EssayResultPage() {
     if (id) load();
   }, [id]);
 
-  const hasResult = Boolean(result);
-  const savedAnchors = result?.feedbackAnchors ?? null;
-  useEffect(() => {
-    if (!id || !hasResult) return;
-    if (savedAnchors?.judged) {
-      setFeedbackAnchors(savedAnchors);
-      return;
-    }
-    let alive = true;
-    setAnchorsPending(true);
-    (async () => {
-      try {
-        const [{ authFetch }, { auth }] = await Promise.all([
-          import("@/lib/api/client"),
-          import("@/lib/firebase/config"),
-        ]);
-        await auth?.authStateReady();
-        const res = await authFetch(`/api/essay/${id}/anchors`, {
-          method: "POST",
-        });
-        if (!res.ok) return;
-        const data = (await res.json()) as {
-          feedbackAnchors?: FeedbackAnchors;
-        };
-        if (alive && data.feedbackAnchors)
-          setFeedbackAnchors(data.feedbackAnchors);
-      } catch {
-        // 作れなくても計算で決まる分だけで表示する
-      } finally {
-        if (alive) setAnchorsPending(false);
-      }
-    })();
-    return () => {
-      alive = false;
-    };
-  }, [id, hasResult, savedAnchors]);
+  /**
+   * 指摘を本文に結び付けた結果。保存済みでなければ、結果を開いた時点で裏で作る
+   * （詳細を開くまでにできていることが多い）。できるまでは計算で決まる分だけで出す。
+   */
+  const { anchors: feedbackAnchors, pending: anchorsPending } =
+    useEssayFeedbackAnchors(result ? id : null, result?.feedbackAnchors);
 
   // インラインコメントに未読があれば既読化
   const hasUnreadComments = (result?.inlineComments ?? []).some((c) => !c.read);
@@ -1034,7 +998,7 @@ export default function EssayResultPage() {
                 // この画面の講評の型は弱点の文面を省略可にしているだけで、中身は共通の型と同じ
                 feedback={result.feedback as Partial<SharedEssayFeedback>}
                 anchors={feedbackAnchors}
-                anchorsPending={anchorsPending && !feedbackAnchors}
+                anchorsPending={anchorsPending}
                 oralExam={
                   result.questionType === "oral_exam" ? result.oralExam : null
                 }

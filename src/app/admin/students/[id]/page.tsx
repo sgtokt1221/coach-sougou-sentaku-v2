@@ -43,10 +43,7 @@ import {
   KeyRound,
   X,
   Eye,
-  ThumbsUp,
-  Lightbulb,
   ArrowRightLeft,
-  PenLine,
   Star,
   Languages,
   Plus,
@@ -80,7 +77,14 @@ import { TeacherAssignmentSection } from "@/components/admin/TeacherAssignmentSe
 import { FloatingStudentChat } from "@/components/chat/FloatingStudentChat";
 import { HighSchoolSelect } from "@/components/shared/HighSchoolSelect";
 import { CommentableEssayText } from "@/components/essay/CommentableEssayText";
-import { RedPenText } from "@/components/essay/RedPenText";
+import {
+  AnchoredEssayBody,
+  FeedbackLegend,
+  GlobalFeedbackList,
+  SelectedSpanFeedback,
+  useAnchoredFeedback,
+} from "@/components/essay/AnchoredFeedbackView";
+import { useEssayFeedbackAnchors } from "@/hooks/useEssayFeedbackAnchors";
 import type { StudentDetail } from "@/lib/types/admin";
 import { getDisplayGrade } from "@/lib/utils/grade";
 import {
@@ -610,6 +614,27 @@ function AdminStudentDetailPageInner() {
   const [essayFbText, setEssayFbText] = useState("");
   const [essayFbOpen, setEssayFbOpen] = useState(false);
   const [essayLoading, setEssayLoading] = useState(false);
+  /**
+   * 答案の指摘を本文に結び付けて、生徒と同じ見え方で出す。面談で「ここを直そう」と
+   * 話すときに、生徒の画面と指している箇所が食い違わないようにする。
+   * 左の本文は「AIの指摘」（印付き）と「コメントを付ける」（講師がドラッグで付ける）を切り替える。
+   */
+  const { anchors: essayAnchors, pending: essayAnchorsPending } =
+    useEssayFeedbackAnchors(essayDetail?.id, essayDetail?.feedbackAnchors);
+  const essayOralExam =
+    essayDetail?.questionContext?.questionType === "oral_exam"
+      ? (essayDetail.questionContext.oralExam ?? null)
+      : null;
+  const essayFeedbackModel = useAnchoredFeedback({
+    text: essayDetail?.ocrText ?? "",
+    feedback: (essayDetail?.feedback ?? {}) as Partial<EssayFeedback>,
+    anchors: essayAnchors,
+    oralExam: essayOralExam,
+  });
+  const [essayMarkSelected, setEssayMarkSelected] = useState<string[] | null>(
+    null
+  );
+  const [essayTextMode, setEssayTextMode] = useState<"ai" | "comment">("ai");
 
   async function openEssayDetail(essayId: string) {
     setEssayDetailOpen(true);
@@ -619,6 +644,8 @@ function AdminStudentDetailPageInner() {
     );
     setEssayLoading(true);
     setEssayDetail(null);
+    setEssayMarkSelected(null);
+    setEssayTextMode("ai");
     try {
       const res = await authFetch(
         `/api/admin/students/${id}/essays/${essayId}`
@@ -1725,37 +1752,98 @@ function AdminStudentDetailPageInner() {
                 {/* 左: 生徒の原文。講師が読みながら右の講評を追えるよう、
                   本文側だけを長く取り内部スクロールを付けない。 */}
                 <div className="space-y-2 lg:col-span-2">
-                  <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <h3 className="text-foreground text-sm font-semibold">
-                      元テキスト（ドラッグでコメント可）
-                    </h3>
-                    {essayDetail.feedback?.quantitativeAnalysis && (
-                      <EssayWordCount
-                        analysis={essayDetail.feedback.quantitativeAnalysis}
-                      />
-                    )}
-                  </div>
-                  <CommentableEssayText
-                    quoteOnly
-                    onQuote={(q) => {
-                      setEssayFbText((prev) => appendQuote(prev, q));
-                      setEssayFbOpen(true);
-                    }}
-                    text={essayDetail.ocrText}
-                    comments={essayDetail.inlineComments ?? []}
-                    mode="edit"
-                    fullHeight
-                    onAdd={(range) => addEssayComment(essayDetail.id, range)}
-                    onDelete={(cid) => deleteEssayComment(essayDetail.id, cid)}
-                    canDelete={(c) =>
-                      userProfile?.role !== "teacher" ||
-                      c.createdBy === user?.uid
-                    }
+                  <SegmentControl
+                    fullWidth
+                    size="sm"
+                    value={essayTextMode}
+                    onChange={(v) => setEssayTextMode(v as "ai" | "comment")}
+                    options={[
+                      {
+                        id: "ai",
+                        label: "AIの指摘",
+                        count: essayFeedbackModel.marked.length,
+                      },
+                      {
+                        id: "comment",
+                        label: "コメントを付ける",
+                        count: essayDetail.inlineComments?.length ?? 0,
+                      },
+                    ]}
                   />
+                  {essayTextMode === "ai" ? (
+                    <div className="space-y-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-muted-foreground text-xs">
+                          印を押すと、その箇所への指摘が右に出ます（生徒と同じ見え方）
+                        </p>
+                        <FeedbackLegend />
+                      </div>
+                      {essayAnchorsPending && (
+                        <p className="text-muted-foreground text-xs">
+                          指摘を本文に配置しています…
+                        </p>
+                      )}
+                      <AnchoredEssayBody
+                        model={essayFeedbackModel}
+                        text={essayDetail.ocrText ?? ""}
+                        feedback={
+                          (essayDetail.feedback ?? {}) as Partial<EssayFeedback>
+                        }
+                        oralExam={essayOralExam}
+                        selected={essayMarkSelected}
+                        onSelect={setEssayMarkSelected}
+                      />
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex flex-wrap items-baseline justify-between gap-2">
+                        <h3 className="text-foreground text-sm font-semibold">
+                          元テキスト（ドラッグでコメント可）
+                        </h3>
+                        {essayDetail.feedback?.quantitativeAnalysis && (
+                          <EssayWordCount
+                            analysis={essayDetail.feedback.quantitativeAnalysis}
+                          />
+                        )}
+                      </div>
+                      <CommentableEssayText
+                        quoteOnly
+                        onQuote={(q) => {
+                          setEssayFbText((prev) => appendQuote(prev, q));
+                          setEssayFbOpen(true);
+                        }}
+                        text={essayDetail.ocrText}
+                        comments={essayDetail.inlineComments ?? []}
+                        mode="edit"
+                        fullHeight
+                        onAdd={(range) =>
+                          addEssayComment(essayDetail.id, range)
+                        }
+                        onDelete={(cid) =>
+                          deleteEssayComment(essayDetail.id, cid)
+                        }
+                        canDelete={(c) =>
+                          userProfile?.role !== "teacher" ||
+                          c.createdBy === user?.uid
+                        }
+                      />
+                    </>
+                  )}
                 </div>
 
                 {/* 右: 出題・スコア・講評 */}
                 <div className="mt-6 space-y-6 lg:col-span-3 lg:mt-0">
+                  {/* 本文の印を押したときの指摘。右の欄は長いので、上に固定して見失わないようにする */}
+                  <div className="lg:sticky lg:top-14 lg:z-10">
+                    <SelectedSpanFeedback
+                      model={essayFeedbackModel}
+                      feedback={
+                        (essayDetail.feedback ?? {}) as Partial<EssayFeedback>
+                      }
+                      selected={essayMarkSelected}
+                      onClose={() => setEssayMarkSelected(null)}
+                    />
+                  </div>
                   {/* 出題の文脈。生徒が何を読んで何に答えたかが分からないと添削の妥当性を判断できない */}
                   <EssayQuestionContext
                     topic={essayDetail.topic}
@@ -1918,124 +2006,17 @@ function AdminStudentDetailPageInner() {
                     </div>
                   )}
 
-                  {/* Feedback */}
+                  {/* Feedback。総合評価と、本文に結び付かない指摘。本文に結び付く指摘
+                    （赤ペン・改善点・弱点・知識の誤りなど）は左の本文の印から見る */}
                   {essayDetail.feedback && (
                     <>
                       <Separator />
-
-                      <div className="space-y-4">
-                        {/* 口頭試問型の知識の誤り。面談でそのまま使えるように出す */}
-                        {(essayDetail.feedback.knowledgeInsights?.errors
-                          ?.length ?? 0) > 0 && (
-                          <div className="space-y-2">
-                            <h3 className="text-foreground text-sm font-semibold">
-                              知識の誤り
-                            </h3>
-                            {essayDetail.feedback.knowledgeInsights!.errors.map(
-                              (e, i) => (
-                                <div
-                                  key={i}
-                                  className={`rounded-lg p-3 text-sm ${
-                                    e.severity === "critical"
-                                      ? "bg-rose-600 text-white"
-                                      : "bg-amber-100 text-amber-950"
-                                  }`}
-                                >
-                                  <p className="font-medium">「{e.claim}」</p>
-                                  <p
-                                    className={`mt-1 text-xs leading-relaxed ${
-                                      e.severity === "critical"
-                                        ? "text-rose-50"
-                                        : "text-amber-900"
-                                    }`}
-                                  >
-                                    {e.correction}
-                                  </p>
-                                </div>
-                              )
-                            )}
-                          </div>
-                        )}
-
-                        {/* Overall */}
-                        <div className="space-y-1">
-                          <h3 className="text-foreground text-sm font-semibold">
-                            総合評価
-                          </h3>
-                          <p className="text-muted-foreground text-sm leading-relaxed">
-                            {essayDetail.feedback.overall}
-                          </p>
-                        </div>
-
-                        {/* Good points */}
-                        {essayDetail.feedback.goodPoints.length > 0 && (
-                          <div className="space-y-2">
-                            <h4 className="flex items-center gap-1.5 text-sm font-medium text-emerald-700 dark:text-emerald-400">
-                              <ThumbsUp className="size-3.5" />
-                              良い点
-                            </h4>
-                            <ul className="space-y-1 pl-5">
-                              {essayDetail.feedback.goodPoints.map((p, i) => (
-                                <li
-                                  key={i}
-                                  className="text-muted-foreground list-disc text-sm"
-                                >
-                                  {p}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-
-                        {/* Improvements */}
-                        {essayDetail.feedback.improvements.length > 0 && (
-                          <div className="space-y-2">
-                            <h4 className="flex items-center gap-1.5 text-sm font-medium text-amber-700 dark:text-amber-400">
-                              <Lightbulb className="size-3.5" />
-                              改善点
-                            </h4>
-                            <ul className="space-y-1 pl-5">
-                              {essayDetail.feedback.improvements.map((p, i) => (
-                                <li
-                                  key={i}
-                                  className="text-muted-foreground list-disc text-sm"
-                                >
-                                  {p}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* 赤ペン添削。生徒が見ているものと同じ部品で、同じ見え方にする。
-                      面談で「ここを直そう」と話すときに、生徒の画面と食い違うと
-                      指している箇所が伝わらない */}
-                      {essayDetail.feedback.languageCorrections &&
-                        essayDetail.feedback.languageCorrections.length > 0 && (
-                          <>
-                            <Separator />
-                            <div className="space-y-2">
-                              <h3 className="text-foreground flex items-center gap-1.5 text-sm font-semibold">
-                                <PenLine className="size-3.5" />
-                                赤ペン添削
-                                <Badge variant="secondary" className="text-xs">
-                                  {
-                                    essayDetail.feedback.languageCorrections
-                                      .length
-                                  }
-                                  件
-                                </Badge>
-                              </h3>
-                              <RedPenText
-                                text={essayDetail.ocrText ?? ""}
-                                corrections={
-                                  essayDetail.feedback.languageCorrections
-                                }
-                              />
-                            </div>
-                          </>
-                        )}
+                      <GlobalFeedbackList
+                        model={essayFeedbackModel}
+                        feedback={
+                          essayDetail.feedback as Partial<EssayFeedback>
+                        }
+                      />
 
                       {/* Brushed up text */}
                       {essayDetail.feedback.brushedUpText && (
