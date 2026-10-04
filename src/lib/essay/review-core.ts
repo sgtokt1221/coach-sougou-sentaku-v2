@@ -313,8 +313,24 @@ ${input.ocrText}
 
   const baseContentCap = offTopic ? 3 : narrowed || missingRequired ? 6 : 10;
   const contentCap = Math.min(baseContentCap, sourceCaps.content);
-  const structureCap = contentCap;
-  const maturityCap = contentCap;
+  /**
+   * 字数。プロンプトだけで指示していたため、モデルが従わないと素通りしていた。
+   *   30%未満: 論として成立していない → 内容の4軸（構成・論理・回答力・成熟度）を3点以下。
+   *            主題の判定だけに任せると、白紙同然の答案が「主題どおり」と判定された回に
+   *            回答力4点になっていた（v27 の検証 N1）
+   *   80%未満: 論を展開しきれていない → 構成・論理を6点以下
+   *   100%超: 制限字数の超過。本番では採点対象外や大幅減点になることが多い → 構成4点以下
+   * 口頭試問型は小問ごとに字数があり、合計の字数で判定できないので外す。
+   */
+  const lengthApplies = input.questionType !== "oral_exam";
+  const blankCap = lengthApplies && fillRate != null && fillRate < 30 ? 3 : 10;
+  const shortCap = Math.min(
+    blankCap,
+    lengthApplies && fillRate != null && fillRate < 80 ? 6 : 10
+  );
+  const overCap = lengthApplies && fillRate != null && fillRate > 100 ? 4 : 10;
+  const structureCap = Math.min(contentCap, shortCap, overCap);
+  const maturityCap = Math.min(contentCap, blankCap);
   /**
    * 回答力は taskFulfillment の結論そのものなので、他の軸より強く縛る。
    * 主題がずれている・主題の一部しか論じていない（answersQuestion=false）なら
@@ -322,7 +338,8 @@ ${input.ocrText}
    */
   const responsivenessCap = Math.min(
     offTopic || narrowed ? 3 : missingRequired ? 5 : 10,
-    sourceCaps.content
+    sourceCaps.content,
+    blankCap
   );
   /**
    * 1文ずつの点検の結果を点に反映する。ルーブリックの段と一致させている
@@ -333,6 +350,7 @@ ${input.ocrText}
   const selfContradicted = (sentenceCheck?.contradictions.length ?? 0) > 0;
   const logicCap = Math.min(
     contentCap,
+    shortCap,
     contradicted ? 4 : 10,
     // 自分の主張どうしが食い違う答案は、主張と根拠が揃っている(6点)とは言えない
     selfContradicted ? 5 : 10,

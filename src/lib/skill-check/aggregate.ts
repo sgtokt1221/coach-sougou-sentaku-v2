@@ -128,8 +128,19 @@ export async function computeEssayAggregate(
 function isPracticed(data: FirebaseFirestore.DocumentData): boolean {
   if (data?.status !== "completed") return false;
   const messages = Array.isArray(data.messages) ? data.messages : [];
-  return messages.some((m: { role?: string }) => m?.role === "student");
+  /**
+   * 生徒の答えが3つ以上ある面接だけをランクに入れる。宿題の1問1答や、
+   * 2問で切り上げた面接も通常の面接と同じ重さで平均に入っており、
+   * 1回の答えの出来でランクが動いていた（2026-10-05）。
+   */
+  const answers = messages.filter(
+    (m: { role?: string }) => m?.role === "student"
+  ).length;
+  return answers >= MIN_ANSWERS_FOR_RANK;
 }
+
+/** 面接をランクに入れるのに要る、生徒の答えの数 */
+const MIN_ANSWERS_FOR_RANK = 3;
 
 /**
  * 面接のランク。生徒が話した completed の面接の直近の平均。

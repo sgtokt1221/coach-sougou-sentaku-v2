@@ -81,7 +81,8 @@ const SCORE_LABELS: Partial<Record<keyof InterviewScores, string>> = {
   resourceConsistency: "資料との整合性（合計外）",
   // 口頭試問では合計に入る（満点50）。合計外と書くと点の内訳が合わなくなる
   knowledgeAccuracy: "専門知識の正確性",
-  criticalThinking: "応用思考力（合計外）",
+  // 口頭試問でだけ採点し、合計に入る
+  criticalThinking: "応用思考力",
   collaboration: "協調性（合計外）",
   leadership: "リーダーシップ（合計外）",
   listening: "傾聴力（合計外）",
@@ -224,6 +225,19 @@ export default function InterviewResultPage() {
    * 40 を直書きすると、口頭試問だけ割合とランクが実際より高く出る。
    */
   const totalMax = interviewTotalMax(result.scores);
+  /**
+   * 口頭試問は回によって合計に入る軸が違う。満点40の回（2026-10-05〜）は
+   * AP合致度・熱意が合計外、満点50の回は応用思考力が合計外。
+   */
+  const scoreLabel = (key: keyof InterviewScores): string => {
+    const base = SCORE_LABELS[key] ?? key;
+    if (result.mode !== "oral_exam") return base;
+    const outside =
+      totalMax === 50
+        ? key === "criticalThinking"
+        : key === "apAlignment" || key === "enthusiasm";
+    return outside ? `${base}（合計外）` : base;
+  };
   const percentage = getScorePercentage(result.scores.total, totalMax);
   const rank = getRankFromPercentage(percentage);
 
@@ -284,9 +298,11 @@ export default function InterviewResultPage() {
                         </span>
                       </div>
                       <p className="text-muted-foreground mt-1 text-sm">
-                        {result.mode === "oral_exam"
-                          ? "総合スコア（内容4軸＋専門知識）"
-                          : "総合スコア（内容4軸）"}
+                        {result.mode !== "oral_exam"
+                          ? "総合スコア（内容4軸）"
+                          : interviewTotalMax(result.scores) === 50
+                            ? "総合スコア（内容4軸＋専門知識）"
+                            : "総合スコア（明確さ・具体性・専門知識・応用思考力）"}
                       </p>
                       <div className="mt-2">
                         <Badge className="border-0 bg-indigo-500 text-white">
@@ -320,7 +336,7 @@ export default function InterviewResultPage() {
                         className="flex items-center justify-between"
                       >
                         <span className="text-sm font-medium text-slate-700">
-                          {SCORE_LABELS[key] ?? key}
+                          {scoreLabel(key)}
                         </span>
                         <div className="flex items-center gap-2">
                           <div className="h-2 w-20 overflow-hidden rounded-full bg-slate-100">
@@ -347,7 +363,7 @@ export default function InterviewResultPage() {
                         className="flex items-center justify-between"
                       >
                         <span className="text-sm font-medium text-slate-700">
-                          {SCORE_LABELS[key] ?? key}
+                          {scoreLabel(key)}
                         </span>
                         <div className="flex items-center gap-2">
                           <div className="h-2 w-20 overflow-hidden rounded-full bg-slate-100">

@@ -150,7 +150,10 @@ export async function POST(request: NextRequest) {
       rootEssayId: essayId,
       parentEssayId: null,
       retryContext: {
-        questionType: form?.questionType ?? "lecture",
+        // 型に資料が無ければ資料なしの設問として採点する。以前は "lecture"
+        // （講演動画の書き起こしを読む型）を渡しており、講演の中身を使っていない
+        // として論理を6点以下に抑える規則が、テーマ型・解決策型にもかかっていた
+        questionType: form?.questionType,
         lectureInfo,
         wordLimit: lecture.exercise.wordLimit,
         ...(lecture.exercise.sourceText
@@ -170,9 +173,11 @@ export async function POST(request: NextRequest) {
     try {
       const coreResult = await reviewEssayCore({
         ocrText: answerText,
-        topic,
+        // 採点には実際の設問を渡す。保存する topic（講座名）を渡すと、
+        // 主題ずれの判定が講座名と答案を比べてしまう
+        topic: lecture.exercise.prompt,
         // 型が questionType を指定していればそれを使う（資料型は数値の読み違いを減点する）
-        questionType: form?.questionType ?? "lecture",
+        questionType: form?.questionType,
         sourceText: lecture.exercise.sourceText,
         chartDataSummary: lecture.exercise.chartDataSummary,
         lectureInfo,

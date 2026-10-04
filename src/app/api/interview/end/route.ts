@@ -23,6 +23,7 @@ import {
   scoreInterviewCore,
   InterviewScoreParseError,
 } from "@/lib/interview/score-core";
+import { loadStatementForInterview } from "@/lib/interview/statement-context";
 
 export const maxDuration = 120;
 
@@ -267,6 +268,20 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      let statementContext = "";
+      if (adminDb && userId && sessionMode !== "oral_exam") {
+        try {
+          statementContext = await loadStatementForInterview(
+            adminDb,
+            userId,
+            sessionUniversityId,
+            sessionFacultyId
+          );
+        } catch (err) {
+          console.warn("[interview/end] 志望理由書の取得に失敗:", err);
+        }
+      }
+
       const coreResult = await scoreInterviewCore({
         messages: scoringMessages,
         universityName,
@@ -276,6 +291,7 @@ export async function POST(request: NextRequest) {
         presentationContent,
         ...(sessionOralExam ? { oralExam: sessionOralExam } : {}),
         selfAnalysisContext,
+        statementContext,
         videoAnalysis,
         ...(previousAttempt ? { previousAttempt } : {}),
       });

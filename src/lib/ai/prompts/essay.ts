@@ -92,12 +92,15 @@ APが与えられていない場合は評価しません。
 ## 設問への適合を点に反映する
 taskFulfillment の判定は、そのまま点に反映してください。
 **responsiveness は taskFulfillment の結論と必ず一致させます**（下の基準どおり）。
-- answersQuestion が false のとき（主題を外している・すり替えている）:
+- 別の話題が中心（subjectMatch = different。主題を外している・すり替えている）とき:
   回答力は **3点以下**。構成・論理性・議論の成熟度も **3点以下**。設問と別の
   問いに答えている以上、その論の運びも具体例も考察も、この設問への評価には
   なりません。表現力だけは文章そのものを見て通常どおり付けます（6点まで）。
+- 主題の一部だけを論じている（subjectMatch = narrower。「AとBの関係」でAだけ等）とき:
+  回答力は **3点以下**。構成・論理性・議論の成熟度は **6点以下**。
 - 要求の欠落がある（答えてはいるが一部が missing）とき:
   回答力は **5点以下**。構成・論理性・議論の成熟度は **6点以下**。
+（この3つはサーバーでも同じ上限をかけます。ここに無い軸の上限を足さないでください。）
 - 上の条件に当てはまらないときは、通常どおり基準で付けます。
 
 ## 採点の手順
@@ -200,7 +203,8 @@ structure と expression で、根拠の有無は logic で見ます。ここで
 
 ## 重い減点事由
 - 設問が明示的に求めている要素（「〜を比較せよ」「〜の方策を示せ」等）が欠けている場合、
-  最も重い減点事由として扱い、logic と reasoningMaturity を4点以下にします。
+  最も重い減点事由として扱います。点の上限は上の「設問への適合を点に反映する」の
+  とおりです（回答力5点以下、構成・論理性・成熟度6点以下）。
   この場合 taskFulfillment の該当 requirement を missing にし、
   improvements の1件目で「設問は何を求めていたか」を書きます。
 - 資料（課題文・英文・グラフ・講義）が与えられている設問で、その内容を取り違えて
@@ -369,8 +373,14 @@ function buildWordLimitRule(options: EssayReviewPromptOptions): string {
   if (typeof wordLimit !== "number" || wordLimit <= 0 || fillRate == null) {
     return "制限字数はありません。短さそのものでは減点せず、必要要素の不足だけを評価してください。";
   }
+  if (fillRate < 30) {
+    return `制限字数は${wordLimit}字で、この答案の充足率は${fillRate}%です（サーバー計算値）。30%未満のため論として成立していないと判定します。structure・logic・responsiveness・reasoningMaturity は3点以下にしてください。`;
+  }
   if (fillRate < FILL_RATE_PENALTY_THRESHOLD) {
     return `制限字数は${wordLimit}字で、この答案の充足率は${fillRate}%です（サーバー計算値）。${FILL_RATE_PENALTY_THRESHOLD}%未満のため論を展開しきれていないと判定します。structure と logic は6点以下にしてください。`;
+  }
+  if (fillRate > 100) {
+    return `制限字数は${wordLimit}字で、この答案は${fillRate}%と制限字数を超えています（サーバー計算値）。本番では字数超過は採点対象外や大幅減点になることが多いため、structure は4点以下にし、improvements の1件目でおよそ何字削る必要があるかと、どこを削るかを示してください。`;
   }
   return `制限字数は${wordLimit}字で、この答案の充足率は${fillRate}%です（サーバー計算値）。${FILL_RATE_PENALTY_THRESHOLD}%は満たしているため、字数を理由に加点も減点もせず、内容面だけを評価してください。`;
 }
@@ -424,7 +434,14 @@ function buildQuestionTypeRubric(questionType?: string): string {
         "小問集合なので、序論・本論・結論の三段構成が無いことを理由に下げてはいけません。",
       ].join("");
     default:
-      return "資料のない設問です。設問への直接的な応答、主張、根拠、反論検討を重視します。読解の誤りによる減点は適用しません。";
+      return [
+        "資料のない設問です。設問への直接的な応答、主張、根拠、反論検討を重視します。読解の誤りによる減点は適用しません。",
+        // 小論文講座の型（テーマ型・解決策型）は lectureInfo に観点が入る。
+        // 以前は渡しても採点のどこに効くかが決まっていなかった
+        "reference_data の lectureInfo に「この型で特に見るところ」がある場合は、その観点を",
+        "logic と reasoningMaturity で見ます（例: 解決策型で原因と解決策が対応していなければ logic 5点以下、",
+        "解決策が実行できるかに触れていなければ reasoningMaturity 5点以下）。",
+      ].join("");
   }
 }
 

@@ -227,7 +227,14 @@ export const AI_PROMPT_VERSIONS = {
     //        場所の「段落」の1語で「段落のつながりが弱い」に落ち、本番150件中39件が
     //        このラベルに集まっていた。表現力・議論の成熟度の弱点はほぼ積まれていなかった
     //      - 論理性の基準に、答案内の主張の食い違いを足した
-    promptVersion: "essay-review-v26",
+    // v27（2026-10-05）: 規則の食い違いをなくし、字数をサーバーでも効かせた。
+    //      - 要求の欠落の上限が2か所で違っていた（6点以下／論理・成熟度4点以下）。
+    //        サーバーと同じ「回答力5・構成・論理・成熟度6」に一本化
+    //      - 主題の一部だけ（narrower）の上限をプロンプトにも書いた（回答力3・内容6）
+    //      - 字数: 80%未満の構成・論理6点以下をサーバーでもかけ、100%超（制限字数の
+    //        超過）は構成4点以下にした。以前は超過がどれだけでも無傷だった
+    //      - 講座の型の観点（解決策型の原因と解決策の対応など）を logic・成熟度で見る
+    promptVersion: "essay-review-v27",
     schemaVersion: "essay-review-output-v3",
   },
   interviewScore: {
@@ -238,7 +245,10 @@ export const AI_PROMPT_VERSIONS = {
     //     あわせてモード別の軸を保存し（P0-2）、合計を内容4軸に固定した（P0-1）。
     // v2: repeatedIssues に「助言ではなく、引用できる弱点だけ」を課した
     //     （小論文添削 v21 と同じ理由。弱点リストが汎用ラベルで埋まっていた）
-    promptVersion: "interview-score-v3",
+    // v4（2026-10-05）: 口頭試問の合計を「明確さ・具体性・専門知識・応用思考力」の
+    //     40点にした（AP合致度・熱意は聞いていないので合計外）。志望理由書を渡し、
+    //     答えとの食い違いを improvements で指摘させる（点は動かさない）。
+    promptVersion: "interview-score-v4",
     schemaVersion: "interview-score-output-v1",
   },
   chocoReview: {

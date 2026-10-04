@@ -14,13 +14,11 @@ export const INTERVIEW_CONTENT_MAX = 40;
 /** 伝達（動画）評価の満点 */
 export const INTERVIEW_DELIVERY_MAX = 10;
 
-/**
- * 口頭試問の満点。共通4軸に加えて専門知識の正確性(knowledgeAccuracy)を合計に入れる。
- *
- * 口頭試問は知識を問う試験なので、知識の正確さが合計外だと
- * 「答えられていないのに点が高い」結果になる（2026-09-19 ユーザー指摘）。
+/*
+ * 口頭試問は 2026-09-19〜10-04 の間、共通4軸＋専門知識の50点満点だった
+ * （その回は totalMax=50 を持つ）。2026-10-05 以降は明確さ・具体性・専門知識・
+ * 応用思考力の40点（score-core.ts）。
  */
-export const INTERVIEW_ORAL_EXAM_MAX = 50;
 
 /**
  * その面接の合計の満点を返す。
