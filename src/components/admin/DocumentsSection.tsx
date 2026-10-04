@@ -88,6 +88,8 @@ interface DocumentListItem {
     apAlignment?: number;
     structure: number;
     originality: number;
+    /** v9 で追加。旧データと学業活動報告書には無い */
+    learningPlan?: number;
     /** v4 で追加。旧データには無い */
     expression?: number;
   };
@@ -136,6 +138,8 @@ interface DocumentDetail {
     apAlignment?: number;
     structure: number;
     originality: number;
+    /** v9 で追加。旧データと学業活動報告書には無い */
+    learningPlan?: number;
     /** v4 で追加。旧データには無い */
     expression?: number;
   };
@@ -160,7 +164,13 @@ interface DocumentDetail {
     content: string;
     wordCount: number;
     createdAt: string;
-    aiScore?: { apAlignment?: number; structure: number; originality: number };
+    aiScore?: {
+      apAlignment?: number;
+      structure: number;
+      originality: number;
+      learningPlan?: number;
+      expression?: number;
+    };
     feedbackSummary?: string;
   }[];
   /** この書類を書いていたときの AIコーチ会話（セクション単位） */
@@ -271,6 +281,7 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
               : undefined,
           structure: feedback?.structureScore,
           originality: feedback?.originalityScore,
+          learningPlan: feedback?.learningPlanScore ?? undefined,
           expression: feedback?.expressionScore,
         },
         languageCorrections: feedback?.languageCorrections ?? [],

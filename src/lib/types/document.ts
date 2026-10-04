@@ -104,15 +104,27 @@ export interface DocumentVersion {
  * 画面ごとに合計の出し方が散ると、同じ書類が場所によって違う点に見える。
  *
  * AP合致度を最も重くしているのは、出願書類が「その大学が求める人物像に
- * 合っているか」を示す書類だから。表現（日本語の正確さ）は内容ではないが、
- * 提出書類は読み直される前提の文章なので軽くはしない。
+ * 合っているか」を示す書類だから。
+ *
+ * v9（2026-10-05）で「学びの計画・将来像」を足し、表現を 9→5 に下げた。
+ * 大学の書類審査が重く見る「入学後に何を学び、何を実現したいか」が軸に無く、
+ * 文の書き方（表現）が40点中9点を占めていた。学業活動報告書は学びの計画を
+ * 求めない書類なので採点せず、分母から外す（APが無いときと同じ扱い）。
  */
 export const DOCUMENT_SCORE_WEIGHTS = {
-  apAlignment: 12,
-  structure: 10,
+  apAlignment: 11,
+  structure: 8,
   originality: 9,
-  expression: 9,
+  learningPlan: 7,
+  expression: 5,
 } as const;
+
+/** 学びの計画・将来像を採点しない書類（活動の事実と学びを示す書類） */
+export function documentAssessesLearningPlan(
+  documentType: string | undefined
+): boolean {
+  return documentType !== "学業活動報告書";
+}
 
 export type DocumentScoreAxis = keyof typeof DOCUMENT_SCORE_WEIGHTS;
 
@@ -166,6 +178,7 @@ export const DOCUMENT_SCORE_LABELS: Record<DocumentScoreAxis, string> = {
   apAlignment: "AP合致度",
   structure: "構成",
   originality: "独自性",
+  learningPlan: "学びの計画",
   expression: "表現",
 };
 
@@ -187,6 +200,11 @@ export interface DocumentFeedback {
   apAlignmentAssessability: "assessable" | "insufficient_context";
   structureScore: number;
   originalityScore: number;
+  /**
+   * 学びの計画・将来像（v9 で追加。旧データには無い）。
+   * 学業活動報告書では採点せず null
+   */
+  learningPlanScore?: number | null;
   /** 日本語の正確さと読みやすさ（v4 で追加。旧データには無い） */
   expressionScore?: number;
   overallFeedback: string;
@@ -202,6 +220,7 @@ export interface DocumentFeedback {
     apAlignment: string[];
     structure: string[];
     originality: string[];
+    learningPlan?: string[];
   };
   /** 日本語の直し（赤ペン）。v4 で追加。旧データには無い */
   languageCorrections?: LanguageCorrection[];

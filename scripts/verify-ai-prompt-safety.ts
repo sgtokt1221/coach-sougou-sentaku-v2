@@ -103,6 +103,21 @@ const documentPrompt = buildDocumentReviewPrompt({
 });
 assert.ok(documentPrompt.includes("apAlignmentScoreはnull"));
 assert.ok(documentPrompt.includes("APを推測しない"));
+// 改善例は生徒がそのまま貼るので、作った数字の手本を置かない（v9）
+assert.ok(!documentPrompt.includes("69人"), "document: 作った数字の手本が無い");
+assert.ok(
+  documentPrompt.includes("example に事実を作らないでください"),
+  "document: 改善例に事実を作らない"
+);
+assert.ok(!documentPrompt.includes("迷ったら6点"), "document: 中央に寄せない");
+assert.ok(
+  documentPrompt.includes("learningPlan を採点します") &&
+    buildDocumentReviewPrompt({
+      hasAdmissionPolicy: true,
+      documentType: "学業活動報告書",
+    }).includes("learningPlan は採点せず null"),
+  "document: 学びの計画は活動報告書だけ採点しない"
+);
 
 const rewritePrompt = buildDocumentRewritePrompt({
   instruction: `簡潔に${marker}`,
@@ -168,6 +183,7 @@ const validDocumentReview = {
   apAlignmentAssessability: "insufficient_context" as const,
   structureScore: 6,
   originalityScore: 5,
+  learningPlanScore: 6,
   // v4 で追加。フィクスチャが追随しておらず、この検証はずっと落ちていた
   expressionScore: 6,
   overallFeedback: "講評",
@@ -186,6 +202,7 @@ const validDocumentReview = {
     apAlignment: [],
     structure: ["引用"],
     originality: ["引用"],
+    learningPlan: ["引用"],
   },
   languageCorrections: [
     {

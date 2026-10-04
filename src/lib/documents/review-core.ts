@@ -2,7 +2,10 @@ import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { buildDocumentReviewPrompt } from "@/lib/ai/prompts/document";
 import { DocumentReviewOutputSchema } from "@/lib/ai/schemas/document-review";
-import type { DocumentFeedback } from "@/lib/types/document";
+import {
+  documentAssessesLearningPlan,
+  type DocumentFeedback,
+} from "@/lib/types/document";
 import { prepareAdmissionPolicy } from "@/lib/ai/admission-policy";
 import {
   loadStudentDocumentContext,
@@ -136,6 +139,7 @@ export async function reviewDocumentCore(params: {
     ? Math.round((wordCount / targetWordCount) * 100)
     : null;
 
+  const assessLearningPlan = documentAssessesLearningPlan(documentData.type);
   const systemPrompt = buildDocumentReviewPrompt({
     hasAdmissionPolicy,
     documentType: documentData.type,
@@ -248,6 +252,10 @@ ${content}
       : "insufficient_context",
     structureScore: parsed.structureScore,
     originalityScore: parsed.originalityScore,
+    // 採点しない書類種別でモデルが点を付けても捨てる（分母に入れない）
+    learningPlanScore: assessLearningPlan
+      ? (parsed.learningPlanScore ?? null)
+      : null,
     expressionScore: parsed.expressionScore,
     overallFeedback: parsed.overallFeedback,
     /**
@@ -277,6 +285,9 @@ ${content}
         : [],
       structure: matchingEvidence(content, parsed.scoreEvidence.structure),
       originality: matchingEvidence(content, parsed.scoreEvidence.originality),
+      learningPlan: assessLearningPlan
+        ? matchingEvidence(content, parsed.scoreEvidence.learningPlan)
+        : [],
     },
     /**
      * 赤ペンは本文に完全一致する原文だけを残す。作られた引用を弾くため。

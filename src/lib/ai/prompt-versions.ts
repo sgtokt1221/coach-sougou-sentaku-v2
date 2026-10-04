@@ -297,8 +297,18 @@ export const AI_PROMPT_VERSIONS = {
     //     文字列1本だったため「具体性を高めましょう」で終わる指摘が混ざり、
     //     生徒が次に何をすればよいか分からなかった。書き換え例を別欄にして
     //     省略できないようにした。
-    promptVersion: "document-review-v8",
-    schemaVersion: "document-review-output-v2",
+    // v9（2026-10-05）: 実態とのずれを直した。
+    //     - 改善例（example）が「69人全員が納得」のような作った数字を手本にしており、
+    //       生徒がそのまま貼ると架空の実績が提出される。本文と登録情報に無い事実を
+    //       example に書かないようにし、手本も作り直した
+    //     - 「学びの計画」の軸を足した（学業活動報告書は採点しない）。大学が重く見る
+    //       入学後の学びと将来像が軸に無く、共通の視点に書かれているだけだった
+    //     - 「迷ったら6点」をやめた。6点＝ランクB「合格ラインに到達」なので、
+    //       ふつうの書類が合格水準に見えていた
+    //     - 配点を AP11・構成8・独自性9・学び7・表現5 に変えた（表現が 9/40 で重すぎた）
+    promptVersion: "document-review-v9",
+    // output-v3: learningPlanScore と scoreEvidence.learningPlan を追加
+    schemaVersion: "document-review-output-v3",
   },
   statementDraft: {
     // v3: 活動実績を渡すようにした。以前は自己分析だけで書かせていたため、

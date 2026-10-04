@@ -1004,6 +1004,7 @@ function ReviewPanel({
                   apAlignment: feedback.apAlignmentScore,
                   structure: feedback.structureScore,
                   originality: feedback.originalityScore,
+                  learningPlan: feedback.learningPlanScore,
                   expression: feedback.expressionScore,
                 }}
               />
@@ -1029,6 +1030,14 @@ function ReviewPanel({
                   score={feedback.originalityScore}
                   axis="originality"
                 />
+                {/* v9 で追加。旧データと学業活動報告書には無い */}
+                {typeof feedback.learningPlanScore === "number" && (
+                  <ScoreBar
+                    label="学びの計画"
+                    score={feedback.learningPlanScore}
+                    axis="learningPlan"
+                  />
+                )}
                 {/* v4 で追加。旧データには無いので、あるときだけ出す */}
                 {typeof feedback.expressionScore === "number" && (
                   <ScoreBar

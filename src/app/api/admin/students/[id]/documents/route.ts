@@ -25,6 +25,8 @@ interface DocumentListItem {
     apAlignment?: number;
     structure: number;
     originality: number;
+    /** v9 で追加。旧データと学業活動報告書には無い */
+    learningPlan?: number;
     /** v4 で追加。旧データには無い */
     expression?: number;
   };
@@ -115,6 +117,7 @@ export async function GET(
                   : undefined,
               structure: feedback.structureScore,
               originality: feedback.originalityScore,
+              learningPlan: feedback.learningPlanScore ?? undefined,
               // v4 で追加。総合点の分母に関わるので一覧にも返す
               expression: feedback.expressionScore,
             }

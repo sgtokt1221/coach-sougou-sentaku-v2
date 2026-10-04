@@ -100,6 +100,7 @@ export async function GET(
                 : undefined,
             structure: feedback.structureScore,
             originality: feedback.originalityScore,
+            learningPlan: feedback.learningPlanScore ?? undefined,
             expression: feedback.expressionScore,
           }
         : undefined,
@@ -135,6 +136,8 @@ export async function GET(
                     : undefined,
                 structure: v.feedback.structureScore,
                 originality: v.feedback.originalityScore,
+                learningPlan: v.feedback.learningPlanScore ?? undefined,
+                expression: v.feedback.expressionScore,
               }
             : undefined,
           feedbackSummary: v.feedback?.overallFeedback ?? undefined,

@@ -17,6 +17,7 @@ export interface DocumentScoreInput {
   apAlignment?: number | null;
   structure?: number | null;
   originality?: number | null;
+  learningPlan?: number | null;
   expression?: number | null;
 }
 
@@ -96,12 +97,14 @@ export function DocumentTotalScoreCard({
         </p>
       )}
 
-      <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-4">
+      <div className="mt-3 grid grid-cols-2 gap-x-2 gap-y-1.5 sm:grid-cols-5">
         {axes.map((axis) => {
           const value = scores[axis];
           return (
             <div key={axis} className="text-xs">
-              <div className="text-muted-foreground">{DOCUMENT_SCORE_LABELS[axis]}</div>
+              <div className="text-muted-foreground whitespace-nowrap">
+                {DOCUMENT_SCORE_LABELS[axis]}
+              </div>
               <div className="tabular-nums">
                 {typeof value === "number" ? (
                   <>

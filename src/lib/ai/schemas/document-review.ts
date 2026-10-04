@@ -25,6 +25,8 @@ export const DocumentReviewOutputSchema = z.object({
   apAlignmentAssessability: z.enum(["assessable", "insufficient_context"]),
   structureScore: score,
   originalityScore: score,
+  /** 学びの計画・将来像（document-review-v9 で追加）。学業活動報告書では null */
+  learningPlanScore: score.nullable(),
   /** 日本語の正確さと読みやすさ（document-review-v4 で追加） */
   expressionScore: score,
   overallFeedback: z.string().max(2000),
@@ -58,6 +60,7 @@ export const DocumentReviewOutputSchema = z.object({
     apAlignment: evidence,
     structure: evidence,
     originality: evidence,
+    learningPlan: evidence,
   }),
   /**
    * 日本語の直し（赤ペン）。小論文添削にはあったが書類には無く、
