@@ -1028,7 +1028,16 @@ export function ChatThread({
             色と大きさは管理者・講師だけが付けられる。生徒側に出すと
             装飾の練習の場になってしまうため。
           */}
-            <div className="flex items-end gap-2">
+            {/*
+              管理者・講師の装飾付きの入力欄は、色の段を含むので幅が要る。スマホで1行に
+              ボタンと並べると約150pxしか残らず、色の段が3行に折れて入力欄も細くなっていた。
+              スマホでは入力欄を1段目に横幅いっぱい、ボタンを2段目に置く（PCは1行のまま）。
+            */}
+            <div
+              className={`flex items-end gap-2 ${
+                currentRole === "coach" ? "flex-wrap sm:flex-nowrap" : ""
+              }`}
+            >
               <input
                 ref={fileRef}
                 type="file"
@@ -1067,7 +1076,7 @@ export function ChatThread({
               {currentRole === "coach" ? (
                 // RichField の className は中の入力欄に渡るので、横幅を伸ばす
                 // 指定はここで外側に付ける（付けないと入力欄が左に寄る）
-                <div className="min-w-0 flex-1">
+                <div className="order-first min-w-0 basis-full sm:order-none sm:flex-1 sm:basis-0">
                   <RichField
                     value={text}
                     onChange={setText}
@@ -1102,7 +1111,8 @@ export function ChatThread({
               <Button
                 type="button"
                 size="icon"
-                className="shrink-0"
+                // スマホの2段目では右端に寄せる（左は添付などのボタン）
+                className={`shrink-0 ${currentRole === "coach" ? "ml-auto sm:ml-0" : ""}`}
                 disabled={
                   sending ||
                   (!text.trim() && pending.length === 0 && !pendingRef)
