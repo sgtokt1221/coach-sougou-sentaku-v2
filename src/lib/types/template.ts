@@ -58,11 +58,11 @@ export interface DraftGenerateResponse {
   sections: {
     id: string;
     title: string;
-    /** 本人が書く欄の中身。生成直後は空（AIは本文を書かない） */
+    /** その段の本文。生成直後は AI が書いた完全な文章が入る（生徒が直せる） */
     content: string;
-    /** その段に入れる要素。これを見て本人が書く */
+    /** 旧版（template-draft-v2 まで）の骨子。保存済みの作成途中データに残っていることがある */
     points?: string[];
-    /** 書き出す前に本人が答える問い */
+    /** 旧版の問い。points と同じく旧データにだけある */
     guidingQuestion?: string;
     placeholder?: string;
   }[];

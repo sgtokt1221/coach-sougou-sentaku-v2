@@ -7,7 +7,10 @@ import {
   normalizeSelfAnalysisData,
   type SelfAnalysisData,
 } from "@/lib/ai/prompts/statement";
-import { fitToCharLimit } from "@/lib/ai/fit-char-limit";
+import {
+  fitStatementToTarget,
+  joinStatementStructure,
+} from "@/lib/documents/statement-length";
 import { StatementDraftOutputSchema } from "@/lib/ai/schemas/statement";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { prepareAdmissionPolicy } from "@/lib/ai/admission-policy";
@@ -181,33 +184,15 @@ export async function POST(request: NextRequest) {
         throw new Error("Claude APIの構造化応答が不正です");
       }
 
-      const structure = { ...response.parsed_output.structure };
-      const limit = Math.round((body.targetWordCount || 800) * 1.1);
-      let draft = joinStatementStructure(structure);
-      if (draft.length > limit) {
-        const entries = Object.entries(structure).filter(([, text]) =>
-          text.trim()
-        );
-        const contentBudget = Math.max(1, limit - (entries.length - 1) * 2);
-        const originalLength = entries.reduce(
-          (sum, [, text]) => sum + text.length,
-          0
-        );
-        // セクションは互いに独立なので並列で圧縮する（直列だと4本分の待ち時間になる）
-        const compressed = await Promise.all(
-          entries.map(async ([key, text]) => {
-            const sectionLimit = Math.max(
-              20,
-              Math.floor(contentBudget * (text.length / originalLength))
-            );
-            return [key, await fitToCharLimit(client, text, sectionLimit)] as const;
-          })
-        );
-        for (const [key, text] of compressed) {
-          structure[key as keyof typeof structure] = text;
-        }
-        draft = joinStatementStructure(structure);
-      }
+      const target = body.targetWordCount || 800;
+      const limit = Math.round(target * 1.1);
+      // 生徒が設定した字数の90〜110%に合わせる（超えれば縮め、足りなければ伸ばす）
+      const structure = await fitStatementToTarget(
+        client,
+        { ...response.parsed_output.structure },
+        target
+      );
+      const draft = joinStatementStructure(structure);
       if (draft.length > limit) {
         throw new Error("志望理由書を指定文字数内に収められませんでした");
       }
@@ -230,15 +215,6 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-function joinStatementStructure(
-  structure: StatementDraftResponse["structure"]
-): string {
-  return Object.values(structure)
-    .map((text) => text.trim())
-    .filter(Boolean)
-    .join("\n\n");
 }
 
 function generateMockStatement(

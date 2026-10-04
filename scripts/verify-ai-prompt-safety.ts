@@ -10,6 +10,8 @@ import {
   normalizeSelfAnalysisData,
 } from "../src/lib/ai/prompts/statement";
 import { buildTemplateDraftPrompt } from "../src/lib/ai/prompts/template-draft";
+import { DOCUMENT_COMPLETE_PROSE_RULE } from "../src/lib/ai/prompts/shared";
+import { TemplateDraftOutputSchema } from "../src/lib/ai/schemas/template-draft";
 import {
   AI_MODEL_SONNET,
   AI_MODEL_STATEMENT,
@@ -254,6 +256,41 @@ assert.equal(
     scores: { ...validEssayReview.scores, logic: -1 },
   }).success,
   false
+);
+
+/**
+ * 出願書類の文章を書く3つの経路（一括作成・フレームワーク形式・コーチの見本）は、
+ * 空欄を残さず完全な文章で書き、字数を設定に合わせる（2026-10-04 方針変更）。
+ * 古い指示（空欄を残す・本文は書かない・短いままでよい）が戻っていないことを確かめる。
+ */
+for (const [name, prompt] of [
+  ["statement", statementPrompt],
+  ["template", templatePrompt],
+  ["documentCoach", documentCoachPrompt],
+] as const) {
+  assert.ok(
+    prompt.includes(DOCUMENT_COMPLETE_PROSE_RULE),
+    `${name}: 完全な文章として書く決まりが入っている`
+  );
+  assert.ok(
+    !prompt.includes("プレースホルダーを残します") &&
+      !prompt.includes("〔ここに実際の出来事〕と空欄で示します"),
+    `${name}: 空欄を残す指示が無い`
+  );
+}
+assert.ok(!templatePrompt.includes("本文は書きません"), "template: 本文を書く");
+assert.ok(
+  !statementPrompt.includes("短いままで構いません"),
+  "statement: 短いままでよいとしない"
+);
+for (const p of [statementPrompt, templatePrompt]) {
+  assert.ok(p.includes("90%〜110%"), "字数を設定の90〜110%に合わせる");
+}
+assert.ok(
+  TemplateDraftOutputSchema.safeParse({
+    sections: [{ id: "a", title: "t", text: "本文" }],
+  }).success,
+  "template schema: 段ごとの本文（text）を受け取る"
 );
 
 console.log("AI prompt safety verification passed.");

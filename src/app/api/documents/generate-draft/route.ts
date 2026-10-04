@@ -5,6 +5,7 @@ import type {
 } from "@/lib/types/template";
 import { getFrameworkByType } from "@/lib/templates/frameworks";
 import { buildTemplateDraftPrompt } from "@/lib/ai/prompts/template-draft";
+import { charRangeFor, fitToCharRange } from "@/lib/ai/fit-char-limit";
 import { TemplateDraftOutputSchema } from "@/lib/ai/schemas/template-draft";
 import { adminDb } from "@/lib/firebase/admin";
 import { requireFeature } from "@/lib/api/subscription";
@@ -163,27 +164,45 @@ export async function POST(request: NextRequest) {
       message.parsed_output.sections.map((section) => [section.id, section])
     );
     /**
-     * 返すのは骨子だけ。本文は空にして、本人が書く。
-     * 本文を返すと最終稿にAIの書いた文字列が残り、手を入れても生成物の印は
-     * 消えるとは限らないため（このアプリは本人が書く形に統一している）。
+     * 各段の本文を、生徒が設定した字数に合わせる。
+     * 段ごとに目安（設定字数を段の数で割った字数）の90〜110%に収め、足りなければ
+     * 事実を足さずに考えを展開して伸ばし、超えていれば縮める。
+     * 以前は本文を返さず骨子（要素と問い）だけを返し、本人が書く形にしていた。
      */
-    const sections = framework.sections.map((s) => {
-      const generated = sectionsById.get(s.id);
-      return {
-        id: s.id,
-        title: generated?.title || s.title,
-        content: "",
-        points: generated?.points ?? [],
-        guidingQuestion: generated?.guidingQuestion || s.guidingQuestion,
-        placeholder: `【${s.guidingQuestion}】\n${s.placeholder ?? "ここに記入してください。"}`,
-      };
-    });
+    const target = body.targetWordCount || 800;
+    const perSection = target / Math.max(1, framework.sections.length);
+    const { min, max } = charRangeFor(perSection);
+    const sections = await Promise.all(
+      framework.sections.map(async (s) => {
+        const generated = sectionsById.get(s.id);
+        const raw = (generated?.text ?? "").trim();
+        const content = raw
+          ? await fitToCharRange(
+              client,
+              raw,
+              min,
+              max,
+              `${s.title}（${s.description}）`
+            )
+          : "";
+        return {
+          id: s.id,
+          title: generated?.title || s.title,
+          content,
+          placeholder: `【${s.guidingQuestion}】\n${s.placeholder ?? "ここに記入してください。"}`,
+        };
+      })
+    );
+    const draft = sections
+      .map((s) => s.content.trim())
+      .filter(Boolean)
+      .join("\n\n");
 
     const result: DraftGenerateResponse = {
-      draft: "",
+      draft,
       frameworkType: body.frameworkType,
       sections,
-      wordCount: 0,
+      wordCount: draft.length,
       aiMetadata: {
         ...AI_PROMPT_VERSIONS.templateDraft,
         model: generationModel,

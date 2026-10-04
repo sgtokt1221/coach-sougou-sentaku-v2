@@ -928,7 +928,7 @@ export default function NewDocumentPage() {
           {activities.length === 0 ? (
             <Card>
               <CardContent className="text-muted-foreground py-8 text-center">
-                登録済みの活動実績がありません。スキップして骨子を作れます。
+                登録済みの活動実績がありません。スキップして下書きを作れます。
               </CardContent>
             </Card>
           ) : (
@@ -1035,7 +1035,7 @@ export default function NewDocumentPage() {
               <CardContent className="space-y-4 py-12 text-center">
                 <Loader2 className="text-primary mx-auto h-8 w-8 animate-spin" />
                 <p className="text-muted-foreground">
-                  AIが骨子を作っています...
+                  AIが下書きを書いています...
                 </p>
               </CardContent>
             </Card>
@@ -1064,7 +1064,7 @@ export default function NewDocumentPage() {
                 <Card className="lg:flex lg:min-h-0 lg:flex-1 lg:flex-col lg:overflow-hidden">
                   <CardHeader className="lg:shrink-0">
                     <CardTitle className="text-lg">
-                      {writingMode === "free" ? "本文" : "骨子を見ながら書く"}
+                      {writingMode === "free" ? "本文" : "下書き（段ごとに直せます）"}
                     </CardTitle>
                   </CardHeader>
                   <CardContent

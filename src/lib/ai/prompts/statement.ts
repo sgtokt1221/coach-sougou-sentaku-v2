@@ -3,7 +3,10 @@
  */
 import { FACULTY_AGENCY_FOCUS_DOCUMENT } from "./shared";
 import type { ActivityContext } from "@/lib/documents/student-context";
-import { ACTIVITY_GROUNDING_RULE } from "./shared";
+import {
+  ACTIVITY_GROUNDING_RULE,
+  DOCUMENT_COMPLETE_PROSE_RULE,
+} from "./shared";
 
 export interface SelfAnalysisData {
   values: string[];
@@ -120,17 +123,27 @@ const STATEMENT_DRAFT_SYSTEM_PROMPT = `あなたは総合型選抜の志望理�
 - 生徒の価値観・経験から、志望分野、大学で取り組みたい問い、将来像へ一貫してつなぎます。
 - APは単語を貼り付けず、生徒の確認済み事実との意味的な接続として表現します。
 - 大学固有のカリキュラム情報は提供されていないため、授業名・教員名・研究室名を推測しません。
-- 材料がない箇所は、用途が分かる「【原体験を入力】」等のプレースホルダーを残します。
-- 事実不足を一般的な人物像で埋めません。
 - 各段落を自然につなぎ、一つの物語として読めるようにします。
-- 字数は厳守します。<reference_data> の sectionCharLimits に各セクションの上限字数を示すので、
-  どのセクションもその字数を超えないように書きます。4つの合計は targetWordCount 以内に収めます。
-- 出力する前に各セクションの文字数を数え、上限を超えていれば削ってから出力します。
-  情報を詰め込むより、上限を守ることを優先します。
-- 字数合わせのために事実を追加しません。材料が足りなければ短いままで構いません。
+- 字数は生徒が設定した targetWordCount に合わせます。4つの合計を targetWordCount の90%〜110%にします
+  （短すぎても長すぎてもいけません）。<reference_data> の sectionCharLimits が各セクションの目安字数です。
+- 出力する前に各セクションの文字数を数え、目安から大きく外れていれば書き足すか削ってから出力します。
+- 字数合わせのために事実を追加しません。足りない分は下の【完全な文章として書く】に従い、考えを展開して埋めます。
 - 出力は指定された構造化出力スキーマに従います。
 
+${DOCUMENT_COMPLETE_PROSE_RULE}
+
 ${FACULTY_AGENCY_FOCUS_DOCUMENT}`;
+
+/**
+ * 志望理由書の4セクションの字数の比率（%）。プロンプトの目安字数と、
+ * 生成後に足りないセクションを伸ばす処理（generate-statement）で同じものを使う。
+ */
+export const STATEMENT_SECTION_RATIOS = {
+  intro: 20,
+  body: 40,
+  strengths: 25,
+  conclusion: 15,
+} as const;
 
 export function buildStatementDraftPrompt(
   universityName: string,
@@ -142,12 +155,7 @@ export function buildStatementDraftPrompt(
   activities: ActivityContext[] = []
 ): string {
   const target = targetWordCount || 800;
-  const sectionRatios = {
-    intro: 20,
-    body: 40,
-    strengths: 25,
-    conclusion: 15,
-  };
+  const sectionRatios = STATEMENT_SECTION_RATIOS;
   const referenceData = {
     universityName,
     facultyName,
@@ -156,7 +164,7 @@ export function buildStatementDraftPrompt(
     activities: activities.length > 0 ? activities : null,
     targetWordCount: target,
     sectionRatios,
-    // 比率だけだとモデルが字数に落とせず超過するため、実数の上限も渡す
+    // 比率だけだとモデルが字数に落とせないため、セクションごとの目安字数を実数でも渡す
     sectionCharLimits: {
       intro: Math.round((target * sectionRatios.intro) / 100),
       body: Math.round((target * sectionRatios.body) / 100),

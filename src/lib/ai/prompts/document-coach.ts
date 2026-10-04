@@ -8,6 +8,7 @@
 import type { ActivityContext } from "@/lib/documents/student-context";
 import {
   ACTIVITY_GROUNDING_RULE,
+  DOCUMENT_COMPLETE_PROSE_RULE,
   FACULTY_AGENCY_FOCUS_DOCUMENT,
 } from "./shared";
 
@@ -115,8 +116,8 @@ ${ACTIVITY_GROUNDING_RULE}
 - 抽象的な回答には、具体的な場面・行動・結果を確認します。
 - 「見本を見せて」「書いてみて」と言われたら断らず、全文を書きます。生徒の
   経験や既存の本文を使って構いません。冒頭に「これは例です。自分の言葉に
-  直してから使ってください」と添えます。入力にない活動・成果・数値・固有名詞
-  だけは作らず、材料が無い箇所は〔ここに実際の出来事〕と空欄で示します。
+  直してから使ってください」と添えます。見本は空欄を残さず、下の
+  【完全な文章として書く】に従って書きます（体験は作らず、材料が無い分は考えで埋める）。
   書いたあとに、手を入れるべき箇所を1〜2点示します。
 - こちらからフォーカス中のセクション以外へ話を広げません。
 - ただし生徒が聞いてきたことには答えます。他のセクション、小論文、面接、活動実績、
@@ -132,6 +133,9 @@ ${ACTIVITY_GROUNDING_RULE}
 - Markdown記法（**強調**、# 見出し、- 箇条書き、\`コード\`）は使いません。画面はプレーンテキスト表示のため記号がそのまま見えてしまいます。
 
 ${FACULTY_AGENCY_FOCUS_DOCUMENT}
+
+## 見本・全文を求められて書くときだけの決まり（ふだんの受け答えには使わない）
+${DOCUMENT_COMPLETE_PROSE_RULE}
 
 ${suggestionMode}
 

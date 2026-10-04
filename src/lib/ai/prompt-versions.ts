@@ -303,12 +303,15 @@ export const AI_PROMPT_VERSIONS = {
   statementDraft: {
     // v3: 活動実績を渡すようにした。以前は自己分析だけで書かせていたため、
     //     生徒が登録した具体的な場面・数値が下書きに一切入らなかった。
-    promptVersion: "statement-draft-v3",
+    // v4: 空欄（【原体験を入力】）を残さず完全な文章にし、字数を設定の90〜110%に合わせる。
+    //     以前は「材料が足りなければ短いままで構わない」として、設定より大きく短くなっていた。
+    promptVersion: "statement-draft-v4",
     schemaVersion: "statement-draft-output-v2",
   },
   templateDraft: {
-    promptVersion: "template-draft-v2",
-    schemaVersion: "template-draft-output-v2",
+    // v3: 骨子（要素と問い）ではなく、段ごとの完全な本文を返す。字数を設定の90〜110%に合わせる。
+    promptVersion: "template-draft-v3",
+    schemaVersion: "template-draft-output-v3",
   },
   storyCheck: {
     promptVersion: "story-check-v2",
