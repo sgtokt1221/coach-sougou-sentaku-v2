@@ -199,6 +199,9 @@ export default function NewDocumentPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           wizardState: { ...v, completed: false },
+          // 書類は志望校を選んだ時点（目標字数を決める前）に作られる。
+          // 本体の目標字数も合わせないと、一覧の「N/800字」が初期値のまま残る
+          targetWordCount: v.targetWordCount,
           autosave: true,
         }),
       });
@@ -669,6 +672,7 @@ export default function NewDocumentPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           content: draftResult.draft,
+          targetWordCount,
           wizardState: {
             currentStep: 4,
             writingMode: writingMode ?? undefined,
