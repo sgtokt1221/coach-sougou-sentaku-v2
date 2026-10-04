@@ -111,13 +111,6 @@ function ScoreBar({
   );
 }
 
-/** AIが返す「直すところ」。書き換えた本文は受け取らない */
-interface DocumentFix {
-  location: string;
-  problem: string;
-  action: string;
-}
-
 export default function DocumentEditorPage() {
   const router = useRouter();
   const params = useParams();
@@ -147,7 +140,8 @@ export default function DocumentEditorPage() {
 
   const [rewriteInstruction, setRewriteInstruction] = useState("");
   const [rewriting, setRewriting] = useState(false);
-  const [rewriteFixes, setRewriteFixes] = useState<DocumentFix[] | null>(null);
+  /** AIが書き換えた本文の案。生徒が「置き換える」を押すまで本文には入れない */
+  const [rewritten, setRewritten] = useState<string | null>(null);
 
   const loadDocument = useCallback(async () => {
     setLoading(true);
@@ -308,10 +302,9 @@ export default function DocumentEditorPage() {
   }
 
   /**
-   * 生徒の指示に対して、AIに「どこをどう直すか」を出させる。
-   *
-   * 以前は書き換えた本文を返してそのまま置き換えていた。最終稿にAIの書いた
-   * 文字列が残るため、指摘までにして本文は本人が直す形にした。
+   * 生徒の指示に沿って、AIに本文を書き換えた案を作らせる。
+   * 案は画面に出すだけで、本文は生徒が「この内容で置き換える」を押したときに変わる。
+   * （一時期は「どこをどう直すか」だけを返していたが、名前どおり書き換える形に戻した）
    */
   async function handleRewrite(instructionOverride?: string) {
     const instruction = (instructionOverride ?? rewriteInstruction).trim();
@@ -324,8 +317,8 @@ export default function DocumentEditorPage() {
         body: JSON.stringify({ content, instruction }),
       });
       if (res.ok) {
-        const data = (await res.json()) as { fixes: DocumentFix[] };
-        setRewriteFixes(data.fixes ?? []);
+        const data = (await res.json()) as { rewritten: string };
+        setRewritten(data.rewritten ?? null);
       } else {
         const err = await res.json().catch(() => ({}));
         toast.error(err?.error || "書き換えに失敗しました");
@@ -339,20 +332,51 @@ export default function DocumentEditorPage() {
 
   /**
    * AIコーチの助言のとおりに書き換える。
-   *
-   * 出すのは「どこをどう直すか」だけで、本文は変えない。直すのは本人。
-   * コーチは左、指摘は右の道具パネルにあるので、気づかれないまま
+   * コーチは左、書き換え案は右の道具パネルにあるので、気づかれないまま
    * 眠らないよう、こちらから開く。
    */
   async function handleCoachRewrite(instruction: string) {
     setToolsOpen(true);
     await handleRewrite(instruction);
-    toast.info("直すところを出しました。本文は自分で直してください");
+    toast.info("書き換え案を出しました。確かめてから置き換えてください");
   }
 
-  /** 指摘を閉じる。本文には影響しない。 */
+  /** 書き換え案を閉じる。本文には影響しない */
   function discardRewrite() {
-    setRewriteFixes(null);
+    setRewritten(null);
+  }
+
+  /**
+   * 書き換え案で本文を置き換える。置き換える前の本文は版として残すので、
+   * バージョン履歴からいつでも戻せる（版に戻す処理と同じ2段）。
+   */
+  async function applyRewrite() {
+    if (!rewritten) return;
+    setSaving(true);
+    try {
+      if (content.trim()) {
+        const keep = await authFetch(`/api/documents/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content }),
+        });
+        if (!keep.ok) throw new Error();
+      }
+      const res = await authFetch(`/api/documents/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: rewritten }),
+      });
+      if (!res.ok) throw new Error();
+      setContent(rewritten);
+      setRewritten(null);
+      await loadDocument();
+      toast.success("書き換えました。前の本文はバージョン履歴に残っています");
+    } catch {
+      toast.error("置き換えられませんでした。もう一度お試しください");
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function commitStatus(status: DocumentStatus) {
@@ -628,7 +652,9 @@ export default function DocumentEditorPage() {
           rewriteInstruction={rewriteInstruction}
           setRewriteInstruction={setRewriteInstruction}
           rewriting={rewriting}
-          rewriteFixes={rewriteFixes}
+          rewritten={rewritten}
+          currentContent={content}
+          onApplyRewrite={applyRewrite}
           onRewrite={handleRewrite}
           onDiscardRewrite={discardRewrite}
         />
@@ -712,7 +738,9 @@ export default function DocumentEditorPage() {
               rewriteInstruction={rewriteInstruction}
               setRewriteInstruction={setRewriteInstruction}
               rewriting={rewriting}
-              rewriteFixes={rewriteFixes}
+              rewritten={rewritten}
+              currentContent={content}
+              onApplyRewrite={applyRewrite}
               onRewrite={handleRewrite}
               onDiscardRewrite={discardRewrite}
             />
@@ -889,7 +917,9 @@ function ReviewPanel({
   rewriteInstruction,
   setRewriteInstruction,
   rewriting,
-  rewriteFixes,
+  rewritten,
+  currentContent,
+  onApplyRewrite,
   onRewrite,
   onDiscardRewrite,
 }: {
@@ -909,7 +939,11 @@ function ReviewPanel({
   rewriteInstruction: string;
   setRewriteInstruction: (v: string) => void;
   rewriting: boolean;
-  rewriteFixes: DocumentFix[] | null;
+  /** AIが書き換えた本文の案（置き換えるまで本文には入らない） */
+  rewritten: string | null;
+  /** 今の本文。書き換え案と見比べるために出す */
+  currentContent: string;
+  onApplyRewrite: () => void;
   /** 講師からの範囲コメント（本文が編集用テキストエリアのため一覧で見せる） */
   onRewrite: () => void;
   onDiscardRewrite: () => void;
@@ -1034,7 +1068,7 @@ function ReviewPanel({
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-muted-foreground text-sm">
-            指示を伝えると、AIがどこをどう直すかを出します。本文は自分で直します（AIが書いた文をそのまま提出しないため）。
+            指示を伝えると、AIが本文を書き換えた案を出します。確かめてから置き換えます（置き換える前の本文はバージョン履歴に残ります）。
           </p>
           <Textarea
             placeholder="例: もっと具体的なエピソードを入れて簡潔にまとめて"
@@ -1048,46 +1082,16 @@ function ReviewPanel({
             disabled={rewriting || contentEmpty || !rewriteInstruction.trim()}
           >
             <Wand2 className="mr-2 size-4" />
-            {rewriting ? "確認中..." : "直すところを出す"}
+            {rewriting ? "書き換えています..." : "書き換え案を作る"}
           </Button>
 
-          {rewriteFixes && rewriteFixes.length > 0 && (
-            <>
-              <Separator />
-              <div className="space-y-2">
-                <p className="text-sm font-medium">直すところ</p>
-                <p className="text-muted-foreground text-xs">
-                  本文は自動では変わりません。左のエディタで自分で直してください。
-                </p>
-                <ul className="space-y-2">
-                  {rewriteFixes.map((f, i) => (
-                    <li key={i} className="rounded-md border p-3 text-xs">
-                      {f.location && (
-                        <p className="text-foreground/70 mb-1">
-                          「{f.location}」
-                        </p>
-                      )}
-                      {f.problem && (
-                        <p className="text-rose-700 dark:text-rose-300">
-                          {f.problem}
-                        </p>
-                      )}
-                      {f.action && (
-                        <p className="mt-1 leading-relaxed">{f.action}</p>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="w-full"
-                  onClick={onDiscardRewrite}
-                >
-                  閉じる
-                </Button>
-              </div>
-            </>
+          {rewritten && (
+            <RewritePreview
+              rewritten={rewritten}
+              currentContent={currentContent}
+              onApply={onApplyRewrite}
+              onDiscard={onDiscardRewrite}
+            />
           )}
         </CardContent>
       </Card>
@@ -1376,5 +1380,59 @@ function TeacherComments({
         ))}
       </CardContent>
     </Card>
+  );
+}
+
+/**
+ * AIの書き換え案。今の本文と見比べてから置き換える。
+ * 本文は「この内容で置き換える」を押すまで変わらない。
+ */
+function RewritePreview({
+  rewritten,
+  currentContent,
+  onApply,
+  onDiscard,
+}: {
+  rewritten: string;
+  currentContent: string;
+  onApply: () => void;
+  onDiscard: () => void;
+}) {
+  const [showCurrent, setShowCurrent] = useState(false);
+  return (
+    <>
+      <Separator />
+      <div className="space-y-2">
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-sm font-medium">書き換え案</p>
+          <span className="text-muted-foreground text-xs tabular-nums">
+            {currentContent.length}字 → {rewritten.length}字
+          </span>
+        </div>
+        <div className="bg-muted/50 max-h-80 overflow-y-auto rounded-md p-3 text-sm leading-relaxed whitespace-pre-wrap">
+          {rewritten}
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowCurrent((v) => !v)}
+          className="text-muted-foreground hover:text-foreground text-xs underline underline-offset-2"
+        >
+          {showCurrent ? "今の本文を閉じる" : "今の本文と比べる"}
+        </button>
+        {showCurrent && (
+          <div className="max-h-60 overflow-y-auto rounded-md border p-3 text-xs leading-relaxed whitespace-pre-wrap">
+            {currentContent}
+          </div>
+        )}
+        <div className="flex gap-2">
+          <Button size="sm" className="flex-1" onClick={onApply}>
+            この内容で置き換える
+          </Button>
+          <Button size="sm" variant="outline" onClick={onDiscard}>
+            やめる
+          </Button>
+        </div>
+      </div>
+    </>
   );
 }

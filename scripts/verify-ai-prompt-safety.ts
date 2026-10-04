@@ -280,6 +280,11 @@ for (const [name, prompt] of [
 }
 assert.ok(!templatePrompt.includes("本文は書きません"), "template: 本文を書く");
 assert.ok(
+  rewritePrompt.includes(DOCUMENT_COMPLETE_PROSE_RULE) &&
+    !rewritePrompt.includes("本文は書き換えません"),
+  "rewrite: 書き換えた本文を、完全な文章として返す"
+);
+assert.ok(
   !statementPrompt.includes("短いままで構いません"),
   "statement: 短いままでよいとしない"
 );

@@ -4,12 +4,16 @@ import { requireFeature } from "@/lib/api/subscription";
 import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
 import { buildDocumentRewritePrompt } from "@/lib/ai/prompts/document-rewrite";
-import { cleanAiText, fitToCharLimit } from "@/lib/ai/fit-char-limit";
+import {
+  charRangeFor,
+  cleanAiText,
+  fitToCharRange,
+} from "@/lib/ai/fit-char-limit";
 import { prepareAdmissionPolicy } from "@/lib/ai/admission-policy";
 import { loadStudentDocumentContext } from "@/lib/documents/student-context";
 
 /**
- * AIによる書き換え。本文を丸ごと生成し直す。
+ * AIによる書き換え。指示に沿って本文を丸ごと書き直す（一時期は「直すところ」だけを返していた）。
  */
 export const maxDuration = 180;
 
@@ -113,7 +117,9 @@ export async function POST(
     );
 
     const client = new Anthropic();
+    const instructionCharLimit = extractCharLimit(instruction);
     const systemPrompt = buildDocumentRewritePrompt({
+      instructionCharLimit,
       instruction,
       documentType: data?.type ?? "出願書類",
       universityName: data?.universityName ?? "未指定",
@@ -150,34 +156,39 @@ export async function POST(
 
     const rawText =
       response.content[0].type === "text" ? response.content[0].text : "";
-
-    /**
-     * 「対象 / 問題 / やること」の3行で1件。書き換えた本文は受け取らない
-     * （返せば結局それが本文に入り、最終稿にAIの文字列が残るため）。
-     */
-    const fixes = cleanAiText(rawText)
-      .split(/\n\s*\n/)
-      .map((block) => {
-        const pick = (key: string) =>
-          block.match(new RegExp(`${key}[:：]\\s*(.+)`))?.[1]?.trim() ?? "";
-        return {
-          location: pick("対象"),
-          problem: pick("問題"),
-          action: pick("やること"),
-        };
-      })
-      .filter((f) => f.problem || f.action)
-      .slice(0, 6);
-
-    if (fixes.length === 0) {
+    let rewritten = cleanAiText(rawText);
+    if (!rewritten) {
       console.error("Empty rewrite response:", rawText);
       return NextResponse.json(
-        { error: "直すところを取得できませんでした" },
+        { error: "書き換えた本文を取得できませんでした" },
         { status: 500 }
       );
     }
 
-    return NextResponse.json({ fixes });
+    /**
+     * 字数を合わせる。指示に「N字以内」があればその字数、無ければ生徒が設定した目標字数。
+     * どちらも無ければ元の本文の分量のまま（合わせない）。
+     */
+    const target: number | undefined =
+      instructionCharLimit ?? data?.targetWordCount ?? undefined;
+    if (target) {
+      const { min, max } = instructionCharLimit
+        ? {
+            min: Math.round(instructionCharLimit * 0.9),
+            max: instructionCharLimit,
+          }
+        : charRangeFor(target);
+      rewritten = await fitToCharRange(
+        client,
+        rewritten,
+        min,
+        max,
+        `${data?.type ?? "出願書類"}の本文`
+      );
+    }
+
+    // 本文はまだ保存しない。生徒が「この内容で置き換える」を選んだときに画面側が保存する
+    return NextResponse.json({ rewritten });
   } catch (error) {
     console.error("Document rewrite error:", error);
     return NextResponse.json(
