@@ -388,7 +388,11 @@ export default function NewDocumentPage() {
         if (Array.isArray(ws?.selectedActivityIds)) {
           setSelectedActivityIds(ws.selectedActivityIds);
         }
-        if (typeof ws?.targetWordCount === "number") {
+        // 本体を優先する。編集画面で変えた目標字数は本体にしか入らず、
+        // wizardState の値は古いことがある（再開して自動保存すると本体を戻してしまう）
+        if (typeof doc.targetWordCount === "number") {
+          setTargetWordCount(doc.targetWordCount);
+        } else if (typeof ws?.targetWordCount === "number") {
           setTargetWordCount(ws.targetWordCount);
         }
         const fw = fwType
