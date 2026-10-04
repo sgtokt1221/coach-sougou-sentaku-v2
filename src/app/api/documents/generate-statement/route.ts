@@ -20,6 +20,7 @@ import {
 } from "@/lib/ai/prompt-versions";
 import type { AiGenerationMetadata } from "@/lib/types/ai";
 import { loadActivityContexts } from "@/lib/documents/student-context";
+import { normalizeStudentEmphasis } from "@/lib/ai/prompts/shared";
 
 // 生成(40-50秒)に加えて字数超過時の圧縮リライトが走るため、60秒では打ち切られる。
 export const maxDuration = 300;
@@ -29,6 +30,8 @@ interface GenerateStatementRequest {
   facultyId: string;
   /** 目標文字数。未指定時は 800 字。 */
   targetWordCount?: number;
+  /** 任意。特に熱く書いてほしい点・内容の方向性 */
+  emphasis?: string;
 }
 
 interface StatementDraftResponse {
@@ -151,7 +154,8 @@ export async function POST(request: NextRequest) {
         admissionPolicy,
         selfAnalysis,
         body.targetWordCount || 800,
-        activities
+        activities,
+        normalizeStudentEmphasis(body.emphasis)
       );
       const Anthropic = (await import("@anthropic-ai/sdk")).default;
       const client = new Anthropic({ apiKey });
@@ -190,7 +194,8 @@ export async function POST(request: NextRequest) {
       const structure = await fitStatementToTarget(
         client,
         { ...response.parsed_output.structure },
-        target
+        target,
+        normalizeStudentEmphasis(body.emphasis)
       );
       const draft = joinStatementStructure(structure);
       if (draft.length > limit) {

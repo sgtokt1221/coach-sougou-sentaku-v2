@@ -50,6 +50,8 @@ export interface DraftGenerateRequest {
   facultyName: string;
   activityIds?: string[];
   targetWordCount?: number;
+  /** 任意。特に熱く書いてほしい点・内容の方向性（400字まで） */
+  emphasis?: string;
 }
 
 export interface DraftGenerateResponse {

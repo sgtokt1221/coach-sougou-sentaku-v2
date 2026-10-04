@@ -6,6 +6,7 @@ import type { ActivityContext } from "@/lib/documents/student-context";
 import {
   ACTIVITY_GROUNDING_RULE,
   DOCUMENT_COMPLETE_PROSE_RULE,
+  buildStudentEmphasisRule,
 } from "./shared";
 
 export interface SelfAnalysisData {
@@ -152,7 +153,9 @@ export function buildStatementDraftPrompt(
   selfAnalysis: SelfAnalysisData,
   targetWordCount = 800,
   /** 活動実績。以前は渡しておらず、自己分析だけで志望理由書を書かせていた */
-  activities: ActivityContext[] = []
+  activities: ActivityContext[] = [],
+  /** 生徒が任意で書いた「特に熱く書いてほしい点・方向性」 */
+  emphasis = ""
 ): string {
   const target = targetWordCount || 800;
   const sectionRatios = STATEMENT_SECTION_RATIOS;
@@ -179,6 +182,8 @@ export function buildStatementDraftPrompt(
 ${ACTIVITY_GROUNDING_RULE}
 - 自己分析の価値観・将来像を、activities にある具体的な場面・数値・役割で裏づけること。
   抽象的な言葉だけで段落を埋めないこと。
+
+${buildStudentEmphasisRule(emphasis)}
 
 <reference_data>
 ${JSON.stringify(referenceData)}

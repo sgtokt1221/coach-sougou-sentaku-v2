@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { STUDENT_EMPHASIS_MAX_CHARS } from "@/lib/ai/prompts/shared";
 import { SectionTextarea } from "@/components/documents/SectionTextarea";
 import {
   ArrowLeft,
@@ -152,6 +153,8 @@ export default function NewDocumentPage() {
    * 入力中は文字列のまま持ち、欄を離れたとき・Enter で数値に確定する。
    */
   const [wordCountInput, setWordCountInput] = useState("800");
+  /** 任意。特に熱く書いてほしい点・内容の方向性。AIの下書き作成に渡す */
+  const [emphasis, setEmphasis] = useState("");
   useEffect(() => {
     setWordCountInput(String(targetWordCount));
   }, [targetWordCount]);
@@ -191,6 +194,7 @@ export default function NewDocumentPage() {
       frameworkType?: string;
       selectedActivityIds: string[];
       targetWordCount: number;
+      emphasis?: string;
       sections?: { id: string; content: string }[];
     }) => {
       if (!docId) return;
@@ -221,6 +225,7 @@ export default function NewDocumentPage() {
       frameworkType: frameworkType ?? undefined,
       selectedActivityIds,
       targetWordCount,
+      emphasis,
       sections:
         draftResult?.sections.map((s) => ({ id: s.id, content: s.content })) ??
         [],
@@ -307,6 +312,7 @@ export default function NewDocumentPage() {
             frameworkType: frameworkType ?? undefined,
             selectedActivityIds,
             targetWordCount,
+            emphasis,
             completed: false,
           },
         }),
@@ -388,6 +394,7 @@ export default function NewDocumentPage() {
         if (Array.isArray(ws?.selectedActivityIds)) {
           setSelectedActivityIds(ws.selectedActivityIds);
         }
+        if (typeof ws?.emphasis === "string") setEmphasis(ws.emphasis);
         // 本体を優先する。編集画面で変えた目標字数は本体にしか入らず、
         // wizardState の値は古いことがある（再開して自動保存すると本体を戻してしまう）
         if (typeof doc.targetWordCount === "number") {
@@ -565,6 +572,7 @@ export default function NewDocumentPage() {
         facultyName: selectedUniversity.facultyName,
         activityIds: selectedActivityIds,
         targetWordCount,
+        emphasis: emphasis.trim() || undefined,
       };
 
       const res = await authFetch("/api/documents/generate-draft", {
@@ -600,6 +608,7 @@ export default function NewDocumentPage() {
           universityId: selectedUniversity.universityId,
           facultyId: selectedUniversity.facultyId,
           targetWordCount,
+          emphasis: emphasis.trim() || undefined,
         }),
       });
 
@@ -683,6 +692,7 @@ export default function NewDocumentPage() {
             frameworkType: frameworkType ?? undefined,
             selectedActivityIds,
             targetWordCount,
+            emphasis,
             completed: true,
           },
         }),
@@ -963,6 +973,29 @@ export default function NewDocumentPage() {
             </div>
             <p className="text-muted-foreground text-xs">
               {TARGET_WORD_COUNT_MIN}〜{TARGET_WORD_COUNT_MAX}字。AIはこの字数（90〜110%）で下書きを書きます。
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="emphasis">
+              特に熱く書いてほしい点・書類の方向性
+              <span className="text-muted-foreground ml-1 text-xs font-normal">
+                （任意）
+              </span>
+            </Label>
+            <Textarea
+              id="emphasis"
+              value={emphasis}
+              onChange={(e) =>
+                setEmphasis(e.target.value.slice(0, STUDENT_EMPHASIS_MAX_CHARS))
+              }
+              rows={3}
+              placeholder="例: 祖母の入院で薬剤師の仕事を知ったことを一番熱く書きたい。将来は地域の病院で働きたいという方向でまとめてほしい。"
+            />
+            <p className="text-muted-foreground text-xs">
+              AIが下書きを書くときに、ここに書いた点を最も熱く、この方向でまとめます。
+              書いた出来事は使いますが、書いていない体験は足しません。（
+              {emphasis.length}/{STUDENT_EMPHASIS_MAX_CHARS}字）
             </p>
           </div>
 

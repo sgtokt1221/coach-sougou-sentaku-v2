@@ -320,4 +320,24 @@ assert.ok(
   "template schema: 段ごとの本文（text）を受け取る"
 );
 
+/**
+ * 生徒の希望（熱く書いてほしい点・方向性）。入れたときだけ両方のプロンプトに入り、
+ * 空なら何も足さない（2026-10-05）。
+ */
+{
+  const wish = `へき地医療の方向で${marker}`;
+  const withWish = buildStatementDraftPrompt(
+    "大学",
+    "学部",
+    "AP",
+    normalizeSelfAnalysisData(null),
+    800,
+    [],
+    wish
+  );
+  assert.ok(withWish.includes("<student_emphasis>") && withWish.includes(wish), "statement: 希望が入る");
+  assert.ok(!statementPrompt.includes("<student_emphasis>"), "statement: 希望が空なら入らない");
+  assert.ok(!templatePrompt.includes("<student_emphasis>"), "template: 希望が空なら入らない");
+}
+
 console.log("AI prompt safety verification passed.");

@@ -41,7 +41,9 @@ export function joinStatementStructure(structure: StatementStructure): string {
 export async function fitStatementToTarget(
   client: Anthropic,
   input: StatementStructure,
-  target: number
+  target: number,
+  /** 生徒の希望（熱く書いてほしい点・方向性）。伸ばすときに方向がぶれないよう渡す */
+  emphasis = ""
 ): Promise<StatementStructure> {
   const structure = { ...input };
   const limit = Math.round(target * 1.1);
@@ -83,7 +85,9 @@ export async function fitStatementToTarget(
             text,
             min,
             max,
-            STATEMENT_SECTION_LABELS[key]
+            emphasis
+              ? `${STATEMENT_SECTION_LABELS[key]}。生徒の希望（この方向で書く）: ${emphasis}`
+              : STATEMENT_SECTION_LABELS[key]
           ),
         ] as const;
       })

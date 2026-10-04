@@ -4,6 +4,7 @@ import type { SelfAnalysisContext } from "./document";
 import {
   ACTIVITY_GROUNDING_RULE,
   DOCUMENT_COMPLETE_PROSE_RULE,
+  buildStudentEmphasisRule,
 } from "./shared";
 
 const TEMPLATE_DRAFT_SYSTEM_PROMPT = `あなたは総合型選抜（旧AO入試）の出願書類作成を支援する専門家です。
@@ -48,7 +49,9 @@ export function buildTemplateDraftPrompt(
     structuredData?: StructuredActivityData;
   }[],
   /** 自己分析。以前は渡しておらず、価値観や将来像を無視した下書きになっていた */
-  selfAnalysis?: SelfAnalysisContext
+  selfAnalysis?: SelfAnalysisContext,
+  /** 生徒が任意で書いた「特に熱く書いてほしい点・方向性」 */
+  emphasis = ""
 ): string {
   const target = targetWordCount || 800;
   // 比率だけだとモデルが字数に落とせないため、セクションごとの目安字数を実数で渡す
@@ -85,6 +88,8 @@ export function buildTemplateDraftPrompt(
   };
 
   return `${TEMPLATE_DRAFT_SYSTEM_PROMPT}
+
+${buildStudentEmphasisRule(emphasis)}
 
 <reference_data>
 ${JSON.stringify(referenceData)}

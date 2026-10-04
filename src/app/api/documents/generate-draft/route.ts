@@ -13,6 +13,7 @@ import { requireRole } from "@/lib/api/auth";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { prepareAdmissionPolicy } from "@/lib/ai/admission-policy";
 import { loadStudentDocumentContext } from "@/lib/documents/student-context";
+import { normalizeStudentEmphasis } from "@/lib/ai/prompts/shared";
 import {
   AI_PROMPT_VERSIONS,
   selectDocumentModel,
@@ -117,6 +118,7 @@ export async function POST(request: NextRequest) {
     const client = new Anthropic({ apiKey });
     const generationModel = selectDocumentModel(body.documentType);
 
+    const emphasis = normalizeStudentEmphasis(body.emphasis);
     const systemPrompt = buildTemplateDraftPrompt(
       framework,
       universityName,
@@ -125,7 +127,8 @@ export async function POST(request: NextRequest) {
       body.documentType,
       body.targetWordCount || 800,
       activities,
-      selfAnalysis
+      selfAnalysis,
+      emphasis
     );
 
     const message = await client.messages.parse({
@@ -182,7 +185,9 @@ export async function POST(request: NextRequest) {
               raw,
               min,
               max,
-              `${s.title}（${s.description}）`
+              emphasis
+                ? `${s.title}（${s.description}）。生徒の希望（この方向で書く）: ${emphasis}`
+                : `${s.title}（${s.description}）`
             )
           : "";
         return {
