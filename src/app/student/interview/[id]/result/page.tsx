@@ -79,7 +79,8 @@ const SCORE_LABELS: Partial<Record<keyof InterviewScores, string>> = {
   presentationStructure: "発表の論理構成（合計外）",
   dataEvidence: "データの根拠（合計外）",
   resourceConsistency: "資料との整合性（合計外）",
-  knowledgeAccuracy: "専門知識の正確性（合計外）",
+  // 口頭試問では合計に入る（満点50）。合計外と書くと点の内訳が合わなくなる
+  knowledgeAccuracy: "専門知識の正確性",
   criticalThinking: "応用思考力（合計外）",
   collaboration: "協調性（合計外）",
   leadership: "リーダーシップ（合計外）",
@@ -198,8 +199,8 @@ export default function InterviewResultPage() {
   }
 
   /**
-   * 合計に入るのは内容4軸だけ。ボディランゲージとモード別の軸は
-   * 満点も評価可否も違うので、合計外と分かるラベルで並べる。
+   * 合計に入るのは内容4軸と、口頭試問の専門知識の正確性だけ。ボディランゲージと
+   * ほかのモード別の軸は満点も評価可否も違うので、合計外と分かるラベルで並べる。
    */
   const allScoreKeys: (keyof Omit<InterviewScores, "total">)[] = [
     "clarity",

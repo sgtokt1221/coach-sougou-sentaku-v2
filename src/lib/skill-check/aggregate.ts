@@ -134,7 +134,7 @@ function isPracticed(data: FirebaseFirestore.DocumentData): boolean {
 /**
  * 面接のランク。生徒が話した completed の面接の直近の平均。
  * 満点は答案ごとに違う（共通40点・口頭試問50点）ので、40点スケールに揃える
- * （ランクの境界 INTERVIEW_SKILL_RANK_THRESHOLDS は40点スケール）。
+ * （ランクは40点スケールの合計から calculateInterviewRank で出す）。
  * 以前は一律 ×40/50 しており、40点満点の面接が2割低く出ていた。
  */
 export async function computeInterviewAggregate(

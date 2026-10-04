@@ -53,11 +53,3 @@ export interface InterviewSkillCheckStatus {
 export const INTERVIEW_SKILL_CHECK_REFRESH_DAYS = 30;
 /** 5ターン短縮面接 */
 export const INTERVIEW_SKILL_CHECK_MAX_TURNS = 5;
-/** 合計40点満点でのランク閾値 */
-export const INTERVIEW_SKILL_RANK_THRESHOLDS: Record<SkillRank, number> = {
-  S: 36,
-  A: 32,
-  B: 25,
-  C: 17,
-  D: 0,
-};

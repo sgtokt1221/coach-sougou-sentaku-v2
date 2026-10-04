@@ -1,11 +1,21 @@
 import type { SkillRank } from "@/lib/types/skill-check";
+import { getRankFromPercentage } from "@/lib/score-rank";
 
+/**
+ * 合計点からランクを出す。境目は1回の結果画面と同じ割合（score-rank.ts）を使う。
+ *
+ * 以前は小論文 45/40/32/22（50点）・面接 36/32/25/17（40点）と別の境目を持って
+ * いて、1回の結果はAなのに、同じ点が並ぶと平均のランクはBになることがあった。
+ * ランクはS〜Dなので、F（20%以下）はDにまとめる。
+ */
+export function rankFromTotal(total: number, max: number): SkillRank {
+  const rank = getRankFromPercentage(max > 0 ? (total / max) * 100 : 0);
+  return rank === "F" ? "D" : rank;
+}
+
+/** 小論文（50点満点）のランク */
 export function calculateRank(total: number): SkillRank {
-  if (total >= 45) return "S";
-  if (total >= 40) return "A";
-  if (total >= 32) return "B";
-  if (total >= 22) return "C";
-  return "D";
+  return rankFromTotal(total, 50);
 }
 
 export interface RankMeta {
@@ -42,7 +52,7 @@ export const RANK_META: Record<SkillRank, RankMeta> = {
     borderColor: "border-emerald-500",
     gradientFrom: "from-emerald-300",
     gradientTo: "to-teal-600",
-    minScore: 40,
+    minScore: 37.5,
   },
   B: {
     label: "B",
@@ -52,7 +62,7 @@ export const RANK_META: Record<SkillRank, RankMeta> = {
     borderColor: "border-sky-500",
     gradientFrom: "from-sky-300",
     gradientTo: "to-sky-600",
-    minScore: 32,
+    minScore: 30,
   },
   C: {
     label: "C",
@@ -63,7 +73,7 @@ export const RANK_META: Record<SkillRank, RankMeta> = {
     // S（ゴールド）と区別するため、明確にオレンジ系
     gradientFrom: "from-amber-300",
     gradientTo: "to-amber-500",
-    minScore: 22,
+    minScore: 22.5,
   },
   D: {
     label: "D",
