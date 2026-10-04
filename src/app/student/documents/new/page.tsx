@@ -90,6 +90,10 @@ function reconstructDraftResult(
 const STEPS = ["書類タイプ", "志望校", "構成", "活動実績", "下書き作成"];
 type WritingMode = "framework" | "free";
 
+/** 目標文字数として受け付ける範囲 */
+const TARGET_WORD_COUNT_MIN = 100;
+const TARGET_WORD_COUNT_MAX = 4000;
+
 export default function NewDocumentPage() {
   const router = useRouter();
   const { userProfile } = useAuth();
@@ -142,6 +146,23 @@ export default function NewDocumentPage() {
   const [writingMode, setWritingMode] = useState<WritingMode | null>(null);
   const [selectedActivityIds, setSelectedActivityIds] = useState<string[]>([]);
   const [targetWordCount, setTargetWordCount] = useState(800);
+  /**
+   * 目標文字数の入力欄の文字列。数値の状態に直結させると、消した瞬間に 0 が入り、
+   * 続けて打つと「0700」のようになって思った数字が入らなかった。
+   * 入力中は文字列のまま持ち、欄を離れたとき・Enter で数値に確定する。
+   */
+  const [wordCountInput, setWordCountInput] = useState("800");
+  useEffect(() => {
+    setWordCountInput(String(targetWordCount));
+  }, [targetWordCount]);
+  function commitWordCount() {
+    const n = Number(wordCountInput);
+    const next = Number.isFinite(n) && n > 0
+      ? Math.min(TARGET_WORD_COUNT_MAX, Math.max(TARGET_WORD_COUNT_MIN, Math.round(n)))
+      : targetWordCount;
+    setTargetWordCount(next);
+    setWordCountInput(String(next));
+  }
   const [generating, setGenerating] = useState(false);
   const [draftResult, setDraftResult] = useState<DraftGenerateResponse | null>(
     null
@@ -916,13 +937,25 @@ export default function NewDocumentPage() {
 
           <div className="space-y-2">
             <Label htmlFor="wordCount">目標文字数</Label>
-            <Input
-              id="wordCount"
-              type="number"
-              value={targetWordCount}
-              onChange={(e) => setTargetWordCount(Number(e.target.value))}
-              className="w-32"
-            />
+            <div className="flex items-center gap-2">
+              <Input
+                id="wordCount"
+                inputMode="numeric"
+                value={wordCountInput}
+                onChange={(e) =>
+                  setWordCountInput(e.target.value.replace(/[^0-9０-９]/g, "").replace(/[０-９]/g, (d) => String.fromCharCode(d.charCodeAt(0) - 0xfee0)))
+                }
+                onBlur={commitWordCount}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") commitWordCount();
+                }}
+                className="w-32"
+              />
+              <span className="text-muted-foreground text-sm">字</span>
+            </div>
+            <p className="text-muted-foreground text-xs">
+              {TARGET_WORD_COUNT_MIN}〜{TARGET_WORD_COUNT_MAX}字。AIはこの字数（90〜110%）で下書きを書きます。
+            </p>
           </div>
 
           {activities.length === 0 ? (
@@ -1063,9 +1096,32 @@ export default function NewDocumentPage() {
               <div className="mt-4 space-y-4 lg:mt-0 lg:flex lg:h-full lg:min-h-0 lg:min-w-0 lg:flex-col">
                 <Card className="lg:flex lg:min-h-0 lg:flex-1 lg:flex-col lg:overflow-hidden">
                   <CardHeader className="lg:shrink-0">
-                    <CardTitle className="text-lg">
-                      {writingMode === "free" ? "本文" : "下書き（段ごとに直せます）"}
-                    </CardTitle>
+                    <div className="flex flex-wrap items-baseline justify-between gap-2">
+                      <CardTitle className="text-lg">
+                        {writingMode === "free" ? "本文" : "下書き（段ごとに直せます）"}
+                      </CardTitle>
+                      {/* 段ごとに書くと全体の字数が分からないので、合計を常に出す */}
+                      {(() => {
+                        const total = draftResult.sections.reduce(
+                          (n, sec) => n + sec.content.length,
+                          0
+                        );
+                        const inRange =
+                          total >= targetWordCount * 0.9 &&
+                          total <= targetWordCount * 1.1;
+                        return (
+                          <span
+                            className={`text-sm tabular-nums ${inRange ? "text-muted-foreground" : "font-medium text-amber-700 dark:text-amber-400"}`}
+                          >
+                            合計 {total}字 / 目標 {targetWordCount}字
+                            {!inRange &&
+                              (total < targetWordCount * 0.9
+                                ? "（少なめ）"
+                                : "（多め）")}
+                          </span>
+                        );
+                      })()}
+                    </div>
                   </CardHeader>
                   <CardContent
                     className={

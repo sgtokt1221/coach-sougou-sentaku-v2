@@ -846,15 +846,30 @@ function EditorPanel({
               </span>
               <span>/ 目標</span>
               {/* 目標文字数を編集（未設定可）。onBlur で保存。 */}
+              {/*
+                type="number" だと、日本語入力のまま打った全角の数字が空として扱われ、
+                欄を離れた瞬間に目標字数が「未設定」で保存されていた。文字で受けて全角も読む。
+              */}
               <input
-                type="number"
-                min={100}
-                step={100}
+                inputMode="numeric"
                 defaultValue={targetWordCount ?? ""}
                 placeholder="未設定"
                 aria-label="目標文字数"
                 className="bg-background h-6 w-16 rounded border px-1 text-base lg:text-xs"
-                onBlur={(e) => onTargetChange(Number(e.target.value))}
+                onBlur={(e) =>
+                  onTargetChange(
+                    Number(
+                      e.target.value
+                        .replace(/[０-９]/g, (d) =>
+                          String.fromCharCode(d.charCodeAt(0) - 0xfee0)
+                        )
+                        .replace(/[^0-9]/g, "")
+                    )
+                  )
+                }
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") e.currentTarget.blur();
+                }}
               />
               <span>字</span>
             </span>
