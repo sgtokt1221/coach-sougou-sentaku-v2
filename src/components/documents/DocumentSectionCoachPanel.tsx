@@ -6,6 +6,7 @@ import {
   Send,
   Loader2,
   Sparkles,
+  CornerDownLeft,
   Target,
   Sprout,
   Wand2,
@@ -16,8 +17,6 @@ import { MobileSlideOverPanel } from "@/components/shared/MobileSlideOverPanel";
 import { authFetch } from "@/lib/api/client";
 import { stripSuggestion } from "@/lib/ai/prompts/document-coach";
 import { APReference } from "@/components/coach/APReference";
-import { SelfWriteBox } from "@/components/documents/SelfWriteBox";
-import type { SelfWriteItem } from "@/lib/types/document-selfwrite";
 import { SelfAnalysisReference } from "@/components/essay/SelfAnalysisReference";
 import type {
   DocumentCoachMessage,
@@ -63,7 +62,13 @@ interface Props {
   docId?: string | null;
   /** フォーカス中以外のセクション（参照用）。重複や流れの相談に答えるのに要る */
   otherSections?: { title: string; content: string }[];
+  /** 候補の文章でセクションを置き換える */
   onApplySuggestion: (sectionId: string, text: string) => void;
+  /**
+   * 候補の文章をセクションの末尾に足す。渡したときだけ「末尾に足す」を出す
+   * （編集画面はセクション＝本文全体なので、置き換えと足すの両方が要る）
+   */
+  onAppendSuggestion?: (sectionId: string, text: string) => void;
   /**
    * コーチの助言のとおりに本文を書き換える。
    *
@@ -113,6 +118,7 @@ function PanelBody({
   docId,
   otherSections,
   onApplySuggestion,
+  onAppendSuggestion,
   onRequestRewrite,
   rewriting,
 }: Props) {
@@ -312,16 +318,6 @@ function PanelBody({
   };
 
   const currentSuggestion = currentKey ? suggestions[currentKey] : undefined;
-  /**
-   * コーチが返した「入れる要素」。1行1件の箇条書きで来る。
-   * 箇条書きの記号が無い行が混じっても拾えるよう、記号は落として扱う。
-   */
-  const suggestionItems: SelfWriteItem[] = (currentSuggestion ?? "")
-    .split("\n")
-    .map((l) => l.replace(/^[・\-*\s]+/, "").trim())
-    .filter(Boolean)
-    .slice(0, 6)
-    .map((label) => ({ label }));
 
   /** 書き換えの指示に使う、直近のコーチの助言（最初の定型あいさつは除く） */
   const lastAdvice = [...(current?.messages ?? [])]
@@ -348,9 +344,12 @@ function PanelBody({
       .filter(Boolean)
       .join("\n\n");
 
-  const handleApply = (text: string) => {
+  const handleApply = (
+    text: string,
+    apply: (sectionId: string, text: string) => void
+  ) => {
     if (!focusedSection) return;
-    onApplySuggestion(focusedSection.id, text);
+    apply(focusedSection.id, text);
     // 使用済みの提案は一度クリア (重複振り込みを防ぐ)
     setSuggestions((prev) => {
       const next = { ...prev };
@@ -469,18 +468,44 @@ function PanelBody({
           </div>
         )}
 
-        {/*
-          コーチは本文ではなく「入れる要素」を返す。それを見て本人が書き、
-          書いた文だけが本文へ入る（AIの文字列を最終稿に残さないため）。
-        */}
-        {focusedSection && suggestionItems.length > 0 && (
-          <SelfWriteBox
-            mode="elements"
-            target={focusedSection.title}
-            items={suggestionItems}
-            acceptLabel="この文を本文へ入れる"
-            onAccept={handleApply}
-          />
+        {/* コーチが書いた本文の候補。ボタンでそのままセクションへ入れられる */}
+        {focusedSection && currentSuggestion && (
+          <div className="space-y-2 rounded-lg bg-teal-50 p-3 dark:bg-teal-950">
+            <div className="flex items-center justify-between text-xs font-medium text-teal-700 dark:text-teal-300">
+              <span className="flex items-center gap-1">
+                <Sparkles className="size-3.5" />
+                本文の候補
+              </span>
+              <span className="text-muted-foreground font-normal">
+                {currentSuggestion.length}字
+              </span>
+            </div>
+            <p className="text-foreground/90 text-sm whitespace-pre-wrap">
+              {currentSuggestion}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                onClick={() => handleApply(currentSuggestion, onApplySuggestion)}
+                className="h-8 gap-1 text-xs"
+              >
+                <CornerDownLeft className="size-3.5" />
+                {onAppendSuggestion ? "本文と置き換える" : "このセクションに入れる"}
+              </Button>
+              {onAppendSuggestion && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() =>
+                    handleApply(currentSuggestion, onAppendSuggestion)
+                  }
+                  className="h-8 gap-1 text-xs"
+                >
+                  末尾に足す
+                </Button>
+              )}
+            </div>
+          </div>
         )}
 
         {/* コーチの助言のとおりに本文を書き換える（案を見てから置き換える） */}

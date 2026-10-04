@@ -280,6 +280,11 @@ for (const [name, prompt] of [
 }
 assert.ok(!templatePrompt.includes("本文は書きません"), "template: 本文を書く");
 assert.ok(
+  !documentCoachPrompt.includes("本文そのものは書きません") &&
+    documentCoachPrompt.includes("断らずに書きます"),
+  "documentCoach: 頼まれたら本文の候補を書く（ボタンで本文へ入れられる）"
+);
+assert.ok(
   rewritePrompt.includes(DOCUMENT_COMPLETE_PROSE_RULE) &&
     !rewritePrompt.includes("本文は書き換えません"),
   "rewrite: 書き換えた本文を、完全な文章として返す"

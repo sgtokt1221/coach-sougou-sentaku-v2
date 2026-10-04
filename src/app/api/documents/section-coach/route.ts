@@ -174,9 +174,9 @@ export async function POST(request: NextRequest) {
     const client = new Anthropic();
     const response = await client.messages.create({
       model: AI_MODEL_SONNET,
-      // 背景知識を聞かれたときは長めに答えるため、800 では途中で切れる
-      // 背景知識や見本（全文の参考例）を書くため長めに取る
-      max_tokens: 2500,
+      // 背景知識や本文の候補を書くため長めに取る。編集画面ではセクションが
+      // 本文全体（1200字超もある）なので、直した全文を書くと 2500 では切れうる
+      max_tokens: 4096,
       system: systemPrompt,
       messages: [
         ...trimmedHistory.map((m) => ({ role: m.role, content: m.content })),

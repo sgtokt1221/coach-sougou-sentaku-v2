@@ -673,13 +673,17 @@ export default function DocumentEditorPage() {
             docId={id}
             onRequestRewrite={handleCoachRewrite}
             rewriting={rewriting}
+            // 編集画面の「セクション」は本文全体。直した全文なら置き換え、
+            // 足す段落なら末尾へ。置き換えても元に戻すボタンで戻せる
             onApplySuggestion={(_sectionId, text) => {
-              // 編集画面の「セクション」は本文全体なので、置き換えると
-              // 書いたものが丸ごと消える。末尾に足して本人に配置させる。
+              setContent(text);
+              toast.success("本文を置き換えました。元に戻すこともできます");
+            }}
+            onAppendSuggestion={(_sectionId, text) => {
               setContent((prev) =>
                 prev.trim() ? `${prev.trimEnd()}\n\n${text}` : text
               );
-              toast.success("本文の末尾に追記しました。位置は自由に動かせます");
+              toast.success("本文の末尾に足しました。位置は自由に動かせます");
             }}
           />
         </div>
