@@ -40,6 +40,16 @@ async function main() {
       skipped++; // 移行済み
       continue;
     }
+    // 口頭試問（合計の軸が違う）・totalMax が付いている回・v5（一貫性）の回は
+    // この移行の対象ではない。素通しすると v4/v5 の合計を旧4軸の和で上書きする
+    if (
+      x.mode === "oral_exam" ||
+      typeof s.totalMax === "number" ||
+      typeof s.consistency === "number"
+    ) {
+      skipped++;
+      continue;
+    }
 
     const content =
       (s.clarity ?? 0) +

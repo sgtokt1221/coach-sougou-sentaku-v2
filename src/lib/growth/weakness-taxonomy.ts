@@ -524,6 +524,21 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     ],
   },
   {
+    id: "iv.consistency.low",
+    category: "other",
+    label: "書類や前の答えと食い違う",
+    description: "志望理由書に書いたことと面接の答えが合わない、深掘りで話が変わる",
+    keywords: [
+      "一貫性",
+      "書類と食い違",
+      "書類と違",
+      "書類では",
+      "前の答えと",
+      "話が変わ",
+      "答えがぶれ",
+    ],
+  },
+  {
     id: "iv.enthusiasm.low",
     category: "other",
     label: "熱意・主体性が伝わらない",

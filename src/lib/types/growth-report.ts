@@ -114,7 +114,9 @@ export interface GrowthReport {
     categoryAverages?: {
       clarity: number;
       apAlignment: number;
-      enthusiasm: number;
+      /** 一貫性（v5〜）。それ以前のレポートは enthusiasm */
+      consistency?: number;
+      enthusiasm?: number;
       specificity: number;
       bodyLanguage: number;
     };

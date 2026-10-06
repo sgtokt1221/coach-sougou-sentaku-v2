@@ -8,6 +8,7 @@ import { MOCK_UNIVERSITIES } from "@/lib/matching/mockData";
 import { resolveTargetUniversities } from "@/lib/universities/resolve";
 import type { StudentDetail } from "@/lib/types/admin";
 import { normalizedEssayTotal } from "@/lib/types/essay";
+import { normalizedInterviewTotal } from "@/lib/types/interview";
 import { getThemeById } from "@/data/essay-themes";
 import { getPastQuestionById } from "@/data/essay-past-questions";
 import {
@@ -314,10 +315,11 @@ export async function GET(
         return {
           date:
             data.startedAt?.toDate().toISOString() ?? new Date().toISOString(),
-          total: s?.total ?? null,
+          // 満点の違う回（旧口頭試問 50）が混ざるので 40 点に換算する
+          total: s?.total != null ? normalizedInterviewTotal(s) : null,
           clarity: s?.clarity ?? 0,
           apAlignment: s?.apAlignment ?? 0,
-          enthusiasm: s?.enthusiasm ?? 0,
+          consistency: s?.consistency ?? s?.enthusiasm ?? 0,
           specificity: s?.specificity ?? 0,
           // 動画なしの回は未測定。0 にすると「最低評価」として平均を下げる
           bodyLanguage:
@@ -332,7 +334,7 @@ export async function GET(
           total: number;
           clarity: number;
           apAlignment: number;
-          enthusiasm: number;
+          consistency: number;
           specificity: number;
           bodyLanguage: number | null;
         } => i.total != null
@@ -388,8 +390,10 @@ export async function GET(
             apAlignment: avg(
               recentInterviewScores.map((s) => (s.apAlignment as number) ?? 0)
             ),
-            enthusiasm: avg(
-              recentInterviewScores.map((s) => (s.enthusiasm as number) ?? 0)
+            consistency: avg(
+              recentInterviewScores.map(
+                (s) => (s.consistency as number) ?? (s.enthusiasm as number) ?? 0
+              )
             ),
             specificity: avg(
               recentInterviewScores.map((s) => (s.specificity as number) ?? 0)
@@ -412,7 +416,7 @@ export async function GET(
     const INTERVIEW_CATEGORY_LABELS: Record<string, string> = {
       clarity: "明確さ",
       apAlignment: "AP合致度",
-      enthusiasm: "熱意",
+      consistency: "一貫性",
       specificity: "具体性",
       bodyLanguage: "ボディランゲージ",
     };

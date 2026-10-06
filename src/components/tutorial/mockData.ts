@@ -169,7 +169,7 @@ export const INTERVIEW_MOCK = {
   scores: [
     { label: "明確さ", score: 8, max: 10 },
     { label: "AP合致度", score: 9, max: 10 },
-    { label: "熱意", score: 7, max: 10 },
+    { label: "一貫性", score: 7, max: 10 },
     { label: "具体性", score: 8, max: 10 },
   ],
   totalScore: 32,

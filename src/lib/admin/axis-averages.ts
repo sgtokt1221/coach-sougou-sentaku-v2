@@ -14,7 +14,8 @@ export type EssayAxisAverages = {
 export type InterviewAxisAverages = {
   clarity: number;
   apAlignment: number;
-  enthusiasm: number;
+  /** 一貫性（v5）。旧回は熱意の値を入れている */
+  consistency: number;
   specificity: number;
   bodyLanguage: number | null;
 };
@@ -67,7 +68,7 @@ export function computeAxisAverages(
       ? {
           clarity: avgOf(ivTrend.map((p) => p.clarity)),
           apAlignment: avgOf(ivTrend.map((p) => p.apAlignment)),
-          enthusiasm: avgOf(ivTrend.map((p) => p.enthusiasm)),
+          consistency: avgOf(ivTrend.map((p) => p.consistency)),
           specificity: avgOf(ivTrend.map((p) => p.specificity)),
           bodyLanguage: avgMeasured(ivTrend.map((p) => p.bodyLanguage)),
         }

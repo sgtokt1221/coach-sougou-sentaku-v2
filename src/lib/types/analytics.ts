@@ -48,7 +48,10 @@ export interface BigQueryInterviewLog {
   mode: string;
   score_clarity: number;
   score_ap_alignment: number;
-  score_enthusiasm: number;
+  /** 熱意。v4 までの軸。v5 以降は null */
+  score_enthusiasm: number | null;
+  /** 一貫性。v5 以降 */
+  score_consistency?: number | null;
   score_specificity: number;
   score_total: number;
   /** その面接の満点。口頭試問は専門知識を合計に入れるので50、他は40 */

@@ -698,7 +698,10 @@ export function StatsSummaryCard({
       : [
           { subject: "明確さ", value: c.clarity },
           { subject: "AP合致度", value: c.apAlignment },
-          { subject: "熱意", value: c.enthusiasm },
+          {
+            subject: typeof c.consistency === "number" ? "一貫性" : "熱意",
+            value: c.consistency ?? c.enthusiasm ?? 0,
+          },
           { subject: "具体性", value: c.specificity },
           { subject: "ボディランゲージ", value: c.bodyLanguage },
         ];

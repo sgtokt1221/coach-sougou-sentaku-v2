@@ -33,20 +33,39 @@ export function interviewTotalMax(
   return scores?.totalMax ?? INTERVIEW_CONTENT_MAX;
 }
 
+/**
+ * 比較・平均・グラフに使う、40点満点に換算した合計。
+ * 満点50の旧口頭試問をそのまま混ぜると平均が上がる（小論文の normalizedEssayTotal と同じ考え方）。
+ */
+export function normalizedInterviewTotal(
+  scores: Pick<InterviewScores, "total" | "totalMax"> | null | undefined
+): number {
+  if (!scores) return 0;
+  const max = interviewTotalMax(scores);
+  return max > 0 ? (scores.total / max) * INTERVIEW_CONTENT_MAX : 0;
+}
+
 export interface InterviewScores {
   clarity: number; // 明確さ 0-10
   apAlignment: number; // AP合致度 0-10
-  enthusiasm: number; // 熱意 0-10
+  /**
+   * 一貫性 0-10（interview-score-v5、2026-10-07〜）。志望理由書との整合、
+   * 深掘りされても前の答えと矛盾しないか、自分の言葉で話せているか。
+   * 「熱意」を置き換えた軸。旧データには無い
+   */
+  consistency?: number;
+  /** 熱意 0-10。v4 までの軸。読み取り専用（新しい回には付かない） */
+  enthusiasm?: number;
   specificity: number; // 具体性 0-10
   /** 伝達（動画）0-10。動画が無い回は null = 評価不能 */
   bodyLanguage: number | null;
   /**
-   * 合計。共通4軸（0-40）、口頭試問は専門知識の正確性を足して 0-50。
-   * 満点は totalMax を見ること（モードで変わる）。
+   * 合計 0-40。どの軸が入るかは回で違う（axis-layout.ts の interviewAxisLayout が正本）。
+   * 口頭試問は 2026-09-19〜10-04 の回だけ 0-50。
    */
   total: number;
   /**
-   * この回の合計の満点。口頭試問は50、それ以外は40。
+   * この回の合計の満点。基本 40。旧口頭試問だけ 50。
    * 旧データには無いので、読む側は interviewTotalMax() を通す。
    */
   totalMax?: number;

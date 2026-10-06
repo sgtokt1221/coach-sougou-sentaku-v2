@@ -18,7 +18,9 @@ export const InterviewScoreOutputSchema = z.object({
   scores: z.object({
     clarity: score,
     apAlignment: score,
-    enthusiasm: score,
+    /** 一貫性（v5）。旧プロンプトとの互換のため enthusiasm も任意で受ける */
+    consistency: score.optional(),
+    enthusiasm: score.optional(),
     specificity: score,
     // プレゼン
     presentationStructure: score.optional(),

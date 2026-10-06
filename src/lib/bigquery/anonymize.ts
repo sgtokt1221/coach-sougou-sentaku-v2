@@ -154,7 +154,8 @@ interface InterviewBQRecord {
   score_clarity: number;
   /** AP未取得は null（0点と区別する） */
   score_ap_alignment: number | null;
-  score_enthusiasm: number;
+  score_enthusiasm: number | null;
+  score_consistency?: number | null;
   score_specificity: number;
   score_total: number;
   weakness_tags: string[];

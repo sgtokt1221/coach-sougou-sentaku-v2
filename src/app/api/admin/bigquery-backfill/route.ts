@@ -182,6 +182,7 @@ async function backfillInterviews(
       score_clarity: scores.clarity ?? null,
       score_ap_alignment: scores.apAlignment ?? null,
       score_enthusiasm: scores.enthusiasm ?? null,
+      score_consistency: scores.consistency ?? null,
       score_specificity: scores.specificity ?? null,
       score_total: scores.total ?? null,
       weakness_tags: Array.isArray(d.weaknessTags) ? d.weaknessTags : [],

@@ -26,6 +26,7 @@ import {
   type GdSpeakerKey,
   type SelfAnalysisContext,
 } from "@/lib/ai/prompts/interview-realtime";
+import { buildSubmittedDocumentBlock } from "@/lib/ai/prompts/interview";
 import type { InterviewMode } from "@/lib/types/interview";
 import type { InterviewTendency } from "@/lib/types/university";
 import {
@@ -255,14 +256,20 @@ export async function POST(request: NextRequest) {
      * クライアントから受け取ると、欠けたときに試験官が黙って別の分野を問う。
      */
     let oralExam: { subject: string; scope?: string } | undefined;
-    if (mode === "oral_exam" && sessionId) {
+    /** 面接官に読ませる志望理由書。開始時にセッションへ写した本文を使う（文字の面接と同じ） */
+    let submittedDocument = "";
+    if (sessionId) {
       try {
         const { adminDb } = await import("@/lib/firebase/admin");
         const snap = await adminDb?.doc(`interviews/${sessionId}`).get();
-        oralExam = snap?.data()?.oralExam;
+        const data = snap?.data();
+        if (mode === "oral_exam") oralExam = data?.oralExam;
+        if (typeof data?.statementSnapshot === "string") {
+          submittedDocument = data.statementSnapshot;
+        }
       } catch (err) {
         console.warn(
-          "[gemini-live-session] 口頭試問の分野を引けませんでした",
+          "[gemini-live-session] セッション情報を引けませんでした",
           err
         );
       }
@@ -281,7 +288,7 @@ export async function POST(request: NextRequest) {
     );
     const token = await issueGeminiLiveToken(
       ai,
-      instructions,
+      instructions + buildSubmittedDocumentBlock(mode, submittedDocument),
       GEMINI_INDIVIDUAL_VOICE,
       {
         strictTurnTaking: true,

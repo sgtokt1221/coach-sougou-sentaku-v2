@@ -51,6 +51,10 @@ import VoiceAnalysisReport from "@/components/interview/VoiceAnalysisReport";
 import VideoAnalysisReport from "@/components/interview/VideoAnalysisReport";
 import AppearanceReport from "@/components/interview/AppearanceReport";
 import { getRankFromPercentage, getScorePercentage } from "@/lib/score-rank";
+import {
+  interviewAxisLayout,
+  interviewAxisLabel,
+} from "@/lib/interview/axis-layout";
 
 interface InterviewResult {
   id: string;
@@ -70,27 +74,10 @@ interface InterviewResult {
   summary?: SessionSummary;
 }
 
-const SCORE_LABELS: Partial<Record<keyof InterviewScores, string>> = {
-  clarity: "明確さ",
-  apAlignment: "AP合致度",
-  enthusiasm: "熱意",
-  specificity: "具体性",
-  bodyLanguage: "ボディランゲージ（合計外）",
-  presentationStructure: "発表の論理構成（合計外）",
-  dataEvidence: "データの根拠（合計外）",
-  resourceConsistency: "資料との整合性（合計外）",
-  // 口頭試問では合計に入る（満点50）。合計外と書くと点の内訳が合わなくなる
-  knowledgeAccuracy: "専門知識の正確性",
-  // 口頭試問でだけ採点し、合計に入る
-  criticalThinking: "応用思考力",
-  collaboration: "協調性（合計外）",
-  leadership: "リーダーシップ（合計外）",
-  listening: "傾聴力（合計外）",
-};
-
 const SCORE_COLORS: Partial<Record<keyof InterviewScores, string>> = {
   clarity: "bg-sky-500",
   apAlignment: "bg-purple-500",
+  consistency: "bg-amber-500",
   enthusiasm: "bg-amber-500",
   specificity: "bg-emerald-500",
   bodyLanguage: "bg-teal-500",
@@ -200,43 +187,15 @@ export default function InterviewResultPage() {
   }
 
   /**
-   * 合計に入るのは内容4軸と、口頭試問の専門知識の正確性だけ。ボディランゲージと
-   * ほかのモード別の軸は満点も評価可否も違うので、合計外と分かるラベルで並べる。
+   * 軸の並びと「合計外」の判定は axis-layout.ts が正本（管理者の詳細と同じ）。
+   * 口頭試問は版で合計に入る軸が違い、v5 では熱意が一貫性に替わっている。
    */
-  const allScoreKeys: (keyof Omit<InterviewScores, "total">)[] = [
-    "clarity",
-    "apAlignment",
-    "enthusiasm",
-    "specificity",
-    "bodyLanguage",
-    "presentationStructure",
-    "dataEvidence",
-    "resourceConsistency",
-    "knowledgeAccuracy",
-    "criticalThinking",
-    "collaboration",
-    "leadership",
-    "listening",
-  ];
-  const scoreKeys = allScoreKeys.filter((k) => result.scores[k] != null);
-
-  /**
-   * 満点はモードで変わる（口頭試問は専門知識の正確性を合計に入れるので50）。
-   * 40 を直書きすると、口頭試問だけ割合とランクが実際より高く出る。
-   */
+  const axes = interviewAxisLayout(result.mode, result.scores);
+  const scoreKeys = axes.map((a) => a.key);
   const totalMax = interviewTotalMax(result.scores);
-  /**
-   * 口頭試問は回によって合計に入る軸が違う。満点40の回（2026-10-05〜）は
-   * AP合致度・熱意が合計外、満点50の回は応用思考力が合計外。
-   */
   const scoreLabel = (key: keyof InterviewScores): string => {
-    const base = SCORE_LABELS[key] ?? key;
-    if (result.mode !== "oral_exam") return base;
-    const outside =
-      totalMax === 50
-        ? key === "criticalThinking"
-        : key === "apAlignment" || key === "enthusiasm";
-    return outside ? `${base}（合計外）` : base;
+    const axis = axes.find((a) => a.key === key);
+    return axis ? interviewAxisLabel(axis) : key;
   };
   const percentage = getScorePercentage(result.scores.total, totalMax);
   const rank = getRankFromPercentage(percentage);

@@ -89,6 +89,7 @@ export const INTERVIEW_SESSIONS_SCHEMA: TableSchema = {
     { name: "score_clarity", type: "INT64", mode: "NULLABLE" },
     { name: "score_ap_alignment", type: "INT64", mode: "NULLABLE" },
     { name: "score_enthusiasm", type: "INT64", mode: "NULLABLE" },
+    { name: "score_consistency", type: "INT64", mode: "NULLABLE" },
     { name: "score_specificity", type: "INT64", mode: "NULLABLE" },
     { name: "score_total", type: "INT64", mode: "NULLABLE" },
     /** その答案の満点。口頭試問型は60。集計はこれで割って揃える */

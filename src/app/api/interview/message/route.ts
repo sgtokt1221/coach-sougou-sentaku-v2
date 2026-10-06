@@ -81,7 +81,8 @@ export async function POST(request: NextRequest) {
         undefined,
         presentationContent,
         undefined,
-        oralExam
+        oralExam,
+        (sessionData?.statementSnapshot as string | undefined) ?? undefined
       );
     }
 

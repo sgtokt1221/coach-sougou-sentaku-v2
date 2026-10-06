@@ -248,7 +248,11 @@ export const AI_PROMPT_VERSIONS = {
     // v4（2026-10-05）: 口頭試問の合計を「明確さ・具体性・専門知識・応用思考力」の
     //     40点にした（AP合致度・熱意は聞いていないので合計外）。志望理由書を渡し、
     //     答えとの食い違いを improvements で指摘させる（点は動かさない）。
-    promptVersion: "interview-score-v4",
+    // v5（2026-10-07）: 「熱意」を「一貫性（consistency）」に置き換えた。熱意は会話の
+    //     文字から測れず、本番で重い「書類との整合・深掘りで崩れないか・自分の言葉か」が
+    //     軸に無かった。保存キーも変える（旧回の enthusiasm は読み取り専用）。
+    //     面接官にも志望理由書を渡し、書類に基づいて質問・確認させる（statementSnapshot）。
+    promptVersion: "interview-score-v5",
     schemaVersion: "interview-score-output-v1",
   },
   chocoReview: {

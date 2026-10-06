@@ -92,7 +92,8 @@ export const AP_SCORE_LINE = {
 export const INTERVIEW_SCORE_LINES = [
   { key: "clarity", label: "明確さ", color: "var(--chart-1)" },
   { key: "apAlignment", label: "AP合致度", color: "var(--chart-5)" },
-  { key: "enthusiasm", label: "熱意", color: "var(--chart-2)" },
+  // v5 で熱意→一貫性。旧回の点は読む側が熱意の値をこの系列に入れる
+  { key: "consistency", label: "一貫性（10/6以前は熱意）", color: "var(--chart-2)" },
   { key: "specificity", label: "具体性", color: "var(--chart-3)" },
   { key: "bodyLanguage", label: "ボディランゲージ", color: "var(--chart-4)" },
 ] as const;

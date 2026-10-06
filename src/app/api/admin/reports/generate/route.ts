@@ -536,11 +536,17 @@ export async function POST(request: NextRequest) {
         scores: s
           ? {
               total: typeof s.total === "number" ? s.total : 0,
+              totalMax: typeof s.totalMax === "number" ? s.totalMax : undefined,
               clarity: typeof s.clarity === "number" ? s.clarity : undefined,
               apAlignment:
                 typeof s.apAlignment === "number" ? s.apAlignment : undefined,
-              enthusiasm:
-                typeof s.enthusiasm === "number" ? s.enthusiasm : undefined,
+              // v5 の一貫性。旧回は熱意の値を同じ枠に入れる
+              consistency:
+                typeof s.consistency === "number"
+                  ? s.consistency
+                  : typeof s.enthusiasm === "number"
+                    ? s.enthusiasm
+                    : undefined,
               specificity:
                 typeof s.specificity === "number" ? s.specificity : undefined,
               bodyLanguage:

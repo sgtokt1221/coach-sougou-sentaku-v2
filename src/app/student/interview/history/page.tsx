@@ -45,7 +45,8 @@ interface InterviewHistoryItem {
   totalMax?: number;
   clarity: number;
   apAlignment: number;
-  enthusiasm: number;
+  /** 一貫性（v5）。旧回は熱意の値 */
+  consistency: number;
   specificity: number;
   /** 動画なしの回は null（評価不能）。0 と混ぜない */
   bodyLanguage: number | null;
@@ -84,9 +85,11 @@ export default function InterviewHistoryPage() {
           ? new Date(item.startedAt).toISOString().slice(0, 10)
           : ""),
       totalScore: item.totalScore ?? item.scores?.total ?? 0,
+      // 以前はここで totalMax を落としていて、旧口頭試問の 38/50 が「38/40」と出ていた
+      totalMax: item.scores?.totalMax,
       clarity: item.scores?.clarity ?? 0,
       apAlignment: item.scores?.apAlignment ?? 0,
-      enthusiasm: item.scores?.enthusiasm ?? 0,
+      consistency: item.scores?.consistency ?? item.scores?.enthusiasm ?? 0,
       specificity: item.scores?.specificity ?? 0,
       bodyLanguage: item.scores?.bodyLanguage ?? null,
     })
@@ -105,7 +108,7 @@ export default function InterviewHistoryPage() {
     total: item.totalScore,
     clarity: item.clarity,
     apAlignment: item.apAlignment,
-    enthusiasm: item.enthusiasm,
+    consistency: item.consistency,
     specificity: item.specificity,
     bodyLanguage: item.bodyLanguage,
   }));
@@ -181,7 +184,7 @@ export default function InterviewHistoryPage() {
                         axisLine={false}
                       />
                       <YAxis
-                        domain={[0, 50]}
+                        domain={[0, 40]}
                         tick={{ fontSize: 11 }}
                         tickLine={false}
                         axisLine={false}

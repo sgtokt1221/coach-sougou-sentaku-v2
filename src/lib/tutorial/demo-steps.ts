@@ -210,7 +210,7 @@ export const DEMO_STEPS: Record<string, DemoStepConfig> = {
         selector: "[data-tour='interview-score']",
         title: "4軸評価",
         description:
-          "明確さ・AP合致度・熱意・具体性の4軸で採点。終了後に全ログも保存されます。",
+          "明確さ・AP合致度・一貫性・具体性の4軸で採点。終了後に全ログも保存されます。",
       },
     ],
   },

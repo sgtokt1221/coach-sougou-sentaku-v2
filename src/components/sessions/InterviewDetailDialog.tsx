@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { interviewAxisLayout, interviewAxisLabel } from "@/lib/interview/axis-layout";
+import { interviewTotalMax, type InterviewScores } from "@/lib/types/interview";
+import { rankFromTotal } from "@/lib/skill-check/rank";
 import {
   Dialog,
   DialogContent,
@@ -18,13 +21,7 @@ interface InterviewDetail {
   targetUniversity?: string;
   targetFaculty?: string;
   mode?: string;
-  scores?: {
-    clarity: number;
-    apAlignment: number;
-    enthusiasm: number;
-    specificity: number;
-    total: number;
-  };
+  scores?: InterviewScores;
   feedback?: { overall: string; goodPoints: string[]; improvements: string[] };
   conversationSummary?: {
     keyWeaknesses: string[];
@@ -41,16 +38,11 @@ const MODE_LABELS: Record<string, string> = {
   presentation: "プレゼン",
   oral_exam: "口頭試問",
 };
-const SCORE_LABELS: Record<string, string> = {
-  clarity: "明確さ",
-  apAlignment: "AP合致度",
-  enthusiasm: "熱意",
-  specificity: "具体性",
-};
-
-function scoreColor(total: number): string {
-  if (total >= 32) return "text-emerald-600 dark:text-emerald-400";
-  if (total >= 24) return "text-amber-600 dark:text-amber-400";
+/** 色はランク（割合）で決める。32/24 点の決め打ちは満点50の回で合わなかった */
+function scoreColor(total: number, max: number): string {
+  const rank = rankFromTotal(total, max);
+  if (rank === "S" || rank === "A") return "text-emerald-600 dark:text-emerald-400";
+  if (rank === "B" || rank === "C") return "text-amber-600 dark:text-amber-400";
   return "text-rose-600 dark:text-rose-400";
 }
 
@@ -117,17 +109,17 @@ export default function InterviewDetailDialog({
               <div className="space-y-3">
                 <p className="text-sm font-medium">スコア</p>
                 <div className="space-y-2">
-                  {(["clarity", "apAlignment", "enthusiasm", "specificity"] as const).map((key) => (
-                    <div key={key} className="flex items-center gap-3">
-                      <span className="w-20 text-xs text-muted-foreground">{SCORE_LABELS[key]}</span>
-                      <Progress value={(data.scores![key] / 10) * 100} className="h-2 flex-1" />
-                      <span className="w-8 text-right text-sm font-medium">{data.scores![key]}</span>
+                  {interviewAxisLayout(data.mode, data.scores).map((axis) => (
+                    <div key={axis.key} className="flex items-center gap-3">
+                      <span className="w-28 text-xs text-muted-foreground">{interviewAxisLabel(axis)}</span>
+                      <Progress value={((data.scores![axis.key] ?? 0) / 10) * 100} className="h-2 flex-1" />
+                      <span className="w-8 text-right text-sm font-medium">{data.scores![axis.key]}</span>
                     </div>
                   ))}
                   <div className="flex items-center justify-between border-t pt-1">
                     <span className="text-sm font-medium">合計</span>
-                    <span className={`text-lg font-bold ${scoreColor(data.scores.total)}`}>
-                      {data.scores.total}/40
+                    <span className={`text-lg font-bold ${scoreColor(data.scores.total, interviewTotalMax(data.scores))}`}>
+                      {data.scores.total}/{interviewTotalMax(data.scores)}
                     </span>
                   </div>
                 </div>

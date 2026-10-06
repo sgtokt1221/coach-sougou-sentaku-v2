@@ -28,8 +28,12 @@ export async function loadStatementForInterview(
         typeof d.content === "string" &&
         d.content.trim().length >= 100
     )
-    // 同じ学部の書類を先に、その中で新しい順
+    // 完成した書類 → 同じ学部 → 新しい順。新しさだけで選ぶと、空欄入りの下書きが
+    // 完成版より先に選ばれる（エミュレータで【原体験を入力】の下書きが渡った）
     .sort((a, b) => {
+      const sa = a.status === "final" ? 0 : 1;
+      const sb = b.status === "final" ? 0 : 1;
+      if (sa !== sb) return sa - sb;
       const fa = a.facultyId === facultyId ? 0 : 1;
       const fb = b.facultyId === facultyId ? 0 : 1;
       if (fa !== fb) return fa - fb;

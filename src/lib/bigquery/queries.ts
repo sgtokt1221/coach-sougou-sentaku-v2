@@ -171,6 +171,7 @@ export interface InterviewScoreTrendRow {
   avg_clarity: number;
   avg_ap_alignment: number;
   avg_enthusiasm: number;
+  avg_consistency: number;
   avg_specificity: number;
   avg_total: number;
   session_count: number;
@@ -191,6 +192,7 @@ export async function getInterviewScoreTrends(
       AVG(score_clarity)       AS avg_clarity,
       AVG(score_ap_alignment)  AS avg_ap_alignment,
       AVG(score_enthusiasm)    AS avg_enthusiasm,
+      AVG(score_consistency)   AS avg_consistency,
       AVG(score_specificity)   AS avg_specificity,
       AVG(score_total)         AS avg_total,
       COUNT(*)                 AS session_count

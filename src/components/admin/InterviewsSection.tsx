@@ -24,6 +24,11 @@ import {
 import { useAuthSWR } from "@/lib/api/swr";
 import { interviewTotalMax } from "@/lib/types/interview";
 import { authFetch } from "@/lib/api/client";
+import { normalizedInterviewTotal } from "@/lib/types/interview";
+import {
+  interviewAxisLayout,
+  interviewAxisLabel,
+} from "@/lib/interview/axis-layout";
 import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
 import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
 import { scoreToSkillRank } from "@/lib/history-rank";
@@ -66,12 +71,6 @@ interface InterviewDetail {
   duration: number;
 }
 
-const SCORE_LABELS: Record<string, string> = {
-  clarity: "明確さ",
-  apAlignment: "AP合致度",
-  enthusiasm: "熱意",
-  specificity: "具体性",
-};
 
 function modeBadge(mode: InterviewMode) {
   const colors: Record<InterviewMode, string> = {
@@ -141,11 +140,12 @@ export function InterviewsSection({
   // Statistics
   const completedInterviews = items.filter((i) => i.scores);
   const totalCount = completedInterviews.length;
+  // 満点が違う回（旧口頭試問 50）が混ざるので 40 点に換算して平均する
   const avgScore =
     totalCount > 0
       ? Math.round(
           completedInterviews.reduce(
-            (sum, i) => sum + (i.scores?.total ?? 0),
+            (sum, i) => sum + normalizedInterviewTotal(i.scores),
             0
           ) / totalCount
         )
@@ -317,27 +317,24 @@ export function InterviewsSection({
                 <div className="space-y-3">
                   <p className="text-sm font-medium">スコア</p>
                   <div className="space-y-2">
-                    {(
-                      [
-                        "clarity",
-                        "apAlignment",
-                        "enthusiasm",
-                        "specificity",
-                      ] as const
-                    ).map((key) => (
-                      <div key={key} className="flex items-center gap-3">
-                        <span className="text-muted-foreground w-20 text-xs">
-                          {SCORE_LABELS[key]}
-                        </span>
-                        <Progress
-                          value={(detailData.scores![key] / 10) * 100}
-                          className="h-2 flex-1"
-                        />
-                        <span className="w-8 text-right text-sm font-medium">
-                          {detailData.scores![key]}
-                        </span>
-                      </div>
-                    ))}
+                    {/* 軸はモードと版で違う（口頭試問は専門知識・応用思考力が合計に入る）。
+                        4軸固定だと合計と合わなかった */}
+                    {interviewAxisLayout(detailData.mode, detailData.scores).map(
+                      (axis) => (
+                        <div key={axis.key} className="flex items-center gap-3">
+                          <span className="text-muted-foreground w-28 text-xs">
+                            {interviewAxisLabel(axis)}
+                          </span>
+                          <Progress
+                            value={((detailData.scores![axis.key] ?? 0) / 10) * 100}
+                            className="h-2 flex-1"
+                          />
+                          <span className="w-8 text-right text-sm font-medium">
+                            {detailData.scores![axis.key]}
+                          </span>
+                        </div>
+                      )
+                    )}
                     <div className="flex items-center justify-between border-t pt-1">
                       <span className="text-sm font-medium">合計</span>
                       <span

@@ -1,3 +1,4 @@
+import { normalizedInterviewTotal } from "@/lib/types/interview";
 import type { GrowthReport, WeaknessProgress } from "@/lib/types/growth-report";
 import { normalizedEssayTotal } from "@/lib/types/essay";
 
@@ -24,9 +25,12 @@ export interface InterviewData {
   startedAt: Date;
   scores: {
     total: number;
+    /** 合計の満点。旧口頭試問は 50。無ければ 40 */
+    totalMax?: number;
     clarity?: number;
     apAlignment?: number;
-    enthusiasm?: number;
+    /** 一貫性（v5）。詰める側で旧回の熱意を入れる */
+    consistency?: number;
     specificity?: number;
     bodyLanguage?: number;
   } | null;
@@ -180,7 +184,7 @@ export function computeEssayStats(
 const INTERVIEW_CATEGORIES = [
   "clarity",
   "apAlignment",
-  "enthusiasm",
+  "consistency",
   "specificity",
   "bodyLanguage",
 ] as const;
@@ -196,9 +200,10 @@ export function computeInterviewStats(
     return { count: 0, avgScore: 0, scoreChange: 0 };
   }
 
+  // 満点の違う回（旧口頭試問 50）が混ざるので 40 点に換算して平均する
   const avgScore =
     Math.round(
-      (scored.reduce((sum, i) => sum + (i.scores?.total ?? 0), 0) /
+      (scored.reduce((sum, i) => sum + normalizedInterviewTotal(i.scores), 0) /
         scored.length) *
         10
     ) / 10;
@@ -206,7 +211,10 @@ export function computeInterviewStats(
   const prevAvg =
     prevScored.length > 0
       ? Math.round(
-          (prevScored.reduce((sum, i) => sum + (i.scores?.total ?? 0), 0) /
+          (prevScored.reduce(
+            (sum, i) => sum + normalizedInterviewTotal(i.scores),
+            0
+          ) /
             prevScored.length) *
             10
         ) / 10
@@ -241,7 +249,7 @@ export function computeInterviewStats(
     categoryAverages: {
       clarity: avgOf("clarity"),
       apAlignment: avgOf("apAlignment"),
-      enthusiasm: avgOf("enthusiasm"),
+      consistency: avgOf("consistency"),
       specificity: avgOf("specificity"),
       bodyLanguage: avgOf("bodyLanguage"),
     },

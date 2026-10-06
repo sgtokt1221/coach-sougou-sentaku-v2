@@ -86,6 +86,7 @@ export async function POST(request: NextRequest) {
     let selfAnalysisContext = "";
     let sessionUniversityId = "";
     let sessionFacultyId = "";
+    let sessionStatementSnapshot = "";
     let sessionMode = mode ?? "";
     let homeworkAssignmentIdFromSession: string | undefined;
     /** 口頭試問の出題分野（開始時に保存したもの）。採点でも同じ分野で見る */
@@ -121,6 +122,10 @@ export async function POST(request: NextRequest) {
           }
           sessionUniversityId = sessionData.universityId ?? "";
           sessionFacultyId = sessionData.facultyId ?? "";
+          // 面接官が見ていた書類と同じ本文で採点する
+          if (typeof sessionData.statementSnapshot === "string") {
+            sessionStatementSnapshot = sessionData.statementSnapshot;
+          }
           // モードもセッション側を優先する（別モードの基準で採点させない）
           if (sessionData.mode) sessionMode = sessionData.mode;
           const stored = sessionData.messages;
@@ -216,7 +221,8 @@ export async function POST(request: NextRequest) {
             scores: {
               clarity: number;
               apAlignment: number;
-              enthusiasm: number;
+              consistency?: number;
+              enthusiasm?: number;
               specificity: number;
             };
             feedbackSummary: string[];
@@ -255,7 +261,8 @@ export async function POST(request: NextRequest) {
               scores: {
                 clarity: ps.clarity ?? 0,
                 apAlignment: ps.apAlignment ?? 0,
-                enthusiasm: ps.enthusiasm ?? 0,
+                consistency: ps.consistency,
+                enthusiasm: ps.enthusiasm,
                 specificity: ps.specificity ?? 0,
               },
               feedbackSummary: [pf?.overall ?? "", ...(pf?.improvements ?? [])]
@@ -268,8 +275,8 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      let statementContext = "";
-      if (adminDb && userId && sessionMode !== "oral_exam") {
+      let statementContext = sessionStatementSnapshot;
+      if (!statementContext && adminDb && userId && sessionMode !== "oral_exam") {
         try {
           statementContext = await loadStatementForInterview(
             adminDb,
@@ -487,7 +494,8 @@ export async function POST(request: NextRequest) {
       mode: sessionMode,
       score_clarity: scores.clarity,
       score_ap_alignment: scores.apAlignment,
-      score_enthusiasm: scores.enthusiasm,
+      score_enthusiasm: scores.enthusiasm ?? null,
+      score_consistency: scores.consistency ?? null,
       score_specificity: scores.specificity,
       score_total: scores.total,
       score_maximum: scores.totalMax ?? 40,

@@ -135,7 +135,8 @@ export interface StudentDetail {
   interviewCategoryAverages?: {
     clarity: number;
     apAlignment: number;
-    enthusiasm: number;
+    /** 一貫性（v5）。旧回は熱意の値を入れる */
+    consistency: number;
     specificity: number;
     /** 全回とも動画なしなら null（未測定。0 と区別する） */
     bodyLanguage: number | null;
@@ -209,7 +210,8 @@ export interface InterviewScoreTrendPoint {
   total: number;
   clarity: number;
   apAlignment: number;
-  enthusiasm: number;
+  /** 一貫性（v5）。旧回は熱意の値を入れる */
+  consistency: number;
   specificity: number;
   /** 動画なしの回は null（未測定） */
   bodyLanguage: number | null;

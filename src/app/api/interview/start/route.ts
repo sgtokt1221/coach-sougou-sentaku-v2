@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { buildInterviewSystemPrompt } from "@/lib/ai/prompts/interview";
+import { loadStatementForInterview } from "@/lib/interview/statement-context";
 import { getInterviewContent } from "@/lib/interview/content-store";
 import type { ContentMode } from "@/lib/types/interview-content";
 import type {
@@ -135,6 +136,19 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    /**
+     * 志望校向けの志望理由書。面接官が書類に基づいて質問し、採点で一貫性を見るために、
+     * 開始時の本文をセッションに写しておく（途中で書類を直しても面接中は同じ本文を使う）。
+     */
+    let statementSnapshot = "";
+    if (adminDb && userId && userId !== "dev-user" && mode !== "oral_exam" && mode !== "group_discussion") {
+      try {
+        statementSnapshot = await loadStatementForInterview(adminDb, userId, universityId, facultyId);
+      } catch (err) {
+        console.warn("[interview/start] 志望理由書の取得に失敗:", err);
+      }
+    }
+
     // 宿題提出など固定のお題で開始したい場合は Claude を呼ばず、お題をそのまま冒頭発話にする
     const fixedOpening =
       typeof customOpeningQuestion === "string" &&
@@ -172,7 +186,8 @@ export async function POST(request: NextRequest) {
         interviewTendency,
         presentationContent,
         contentCandidates,
-        oralExamTopic
+        oralExamTopic,
+        statementSnapshot
       );
 
       // GD の導入は 司会→健太→美咲→翔太→司会(締め) の 5 発話を一度に返すため長めに
@@ -211,6 +226,7 @@ export async function POST(request: NextRequest) {
           startedAt: FieldValue.serverTimestamp(),
           universityContext: { universityName, facultyName, admissionPolicy },
           inputMode: resolvedInputMode,
+          statementSnapshot: statementSnapshot || null,
           sourceType: sourceType ?? "manual",
           // 続きのターンと採点でも同じ分野を使うため、セッションに残す
           ...(oralExamTopic ? { oralExam: oralExamTopic } : {}),
