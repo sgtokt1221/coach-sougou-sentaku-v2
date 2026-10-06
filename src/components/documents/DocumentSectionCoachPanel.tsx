@@ -70,6 +70,11 @@ interface Props {
    */
   onAppendSuggestion?: (sectionId: string, text: string) => void;
   /**
+   * 先頭のボタンの文言（候補をどう入れるか）。渡さなければ「このセクションに入れる」。
+   * 編集画面は選択範囲・候補の長さで入れ方が変わるので、ここで文言を受け取る
+   */
+  describeApply?: (text: string) => string;
+  /**
    * コーチの助言のとおりに本文を書き換える。
    *
    * 書き換えは「AIで書き換え」の欄でしかできず、コーチに直してもらった内容を
@@ -119,6 +124,7 @@ function PanelBody({
   otherSections,
   onApplySuggestion,
   onAppendSuggestion,
+  describeApply,
   onRequestRewrite,
   rewriting,
 }: Props) {
@@ -318,6 +324,9 @@ function PanelBody({
   };
 
   const currentSuggestion = currentKey ? suggestions[currentKey] : undefined;
+  const applyLabel = currentSuggestion
+    ? (describeApply?.(currentSuggestion) ?? "このセクションに入れる")
+    : "";
 
   /** 書き換えの指示に使う、直近のコーチの助言（最初の定型あいさつは除く） */
   const lastAdvice = [...(current?.messages ?? [])]
@@ -468,7 +477,8 @@ function PanelBody({
           </div>
         )}
 
-        {/* コーチが書いた本文の候補。ボタンでそのままセクションへ入れられる */}
+        {/* コーチが書いた本文の候補。ボタンでそのままセクションへ入れられる。
+            文言は編集画面の状態（選択範囲など）で変わる */}
         {focusedSection && currentSuggestion && (
           <div className="space-y-2 rounded-lg bg-teal-50 p-3 dark:bg-teal-950">
             <div className="flex items-center justify-between text-xs font-medium text-teal-700 dark:text-teal-300">
@@ -490,9 +500,9 @@ function PanelBody({
                 className="h-8 gap-1 text-xs"
               >
                 <CornerDownLeft className="size-3.5" />
-                {onAppendSuggestion ? "本文と置き換える" : "このセクションに入れる"}
+                {applyLabel}
               </Button>
-              {onAppendSuggestion && (
+              {onAppendSuggestion && applyLabel !== "末尾に足す" && (
                 <Button
                   size="sm"
                   variant="outline"

@@ -4,7 +4,9 @@ import { requireFeature } from "@/lib/api/subscription";
 import {
   buildDocumentSectionCoachSystemPrompt,
   extractSuggestion,
+  extractRestoreVersionId,
   stripSuggestion,
+  type DocumentCoachSavedVersion,
   type DocumentCoachSelfAnalysisContext,
 } from "@/lib/ai/prompts/document-coach";
 import { stripMarkdown } from "@/lib/ai/plain-text";
@@ -137,6 +139,41 @@ export async function POST(request: NextRequest) {
    */
   const { selfAnalysis, activities } = await loadStudentDocumentContext(uid);
 
+  /**
+   * この書類の保存済みの版（新しい順に5件）。「前の文に戻して」と頼まれたときに
+   * どれを戻すかを選ばせる。以前は渡しておらず、本文を消してしまった生徒に
+   * 「変更前の全文を復元する機能は持っていない」と答えていた（2026-10-06）。
+   * 本人の書類だけを読む。
+   */
+  let versionsById = new Map<string, string>();
+  let savedVersions: DocumentCoachSavedVersion[] = [];
+  if (body.docId) {
+    try {
+      const docSnap = await adminDb.doc(`documents/${body.docId}`).get();
+      const docData = docSnap.data();
+      if (docData && docData.userId === uid) {
+        const versions = (
+          Array.isArray(docData.versions) ? docData.versions : []
+        ) as { id?: string; content?: string; createdAt?: string }[];
+        const recent = versions
+          .filter((v) => v.id && typeof v.content === "string" && v.content.trim())
+          .sort((a, b) =>
+            String(b.createdAt ?? "").localeCompare(String(a.createdAt ?? ""))
+          )
+          .slice(0, 5);
+        versionsById = new Map(recent.map((v) => [v.id!, v.content!]));
+        savedVersions = recent.map((v) => ({
+          id: v.id!,
+          savedAt: v.createdAt ?? "",
+          chars: v.content!.length,
+          content: truncate(v.content!, 1500),
+        }));
+      }
+    } catch (err) {
+      console.warn("[documents/section-coach] versions fetch failed:", err);
+    }
+  }
+
   const historyMessages: DocumentCoachMessage[] = existing?.messages ?? [];
   const trimmedHistory = historyMessages.slice(-MAX_HISTORY_TURNS * 2);
   const turnCount = Math.floor(trimmedHistory.length / 2) + 1;
@@ -158,6 +195,7 @@ export async function POST(request: NextRequest) {
     admissionPolicy,
     selfAnalysis,
     activities,
+    savedVersions,
     turnCount,
   });
 
@@ -176,7 +214,7 @@ export async function POST(request: NextRequest) {
       model: AI_MODEL_SONNET,
       // 背景知識や本文の候補を書くため長めに取る。編集画面ではセクションが
       // 本文全体（1200字超もある）なので、直した全文を書くと 2500 では切れうる
-      max_tokens: 4096,
+      max_tokens: 6000,
       system: systemPrompt,
       messages: [
         ...trimmedHistory.map((m) => ({ role: m.role, content: m.content })),
@@ -201,7 +239,11 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const applicableText = extractSuggestion(reply);
+  // 版を戻すときは、モデルに書き写させず保存済みの本文をそのまま候補にする
+  const restoreId = extractRestoreVersionId(reply);
+  const applicableText =
+    (restoreId ? versionsById.get(restoreId) : undefined) ??
+    extractSuggestion(reply);
   const replyClean = stripSuggestion(reply);
   // Firestore に保存するのは振り込み候補を含むフル応答 (履歴復元時に再生する)
   const assistantMsg: DocumentCoachMessage = {

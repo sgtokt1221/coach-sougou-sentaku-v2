@@ -103,6 +103,33 @@ export async function PUT(
     };
     let newVersion: Record<string, unknown> | null = null;
 
+    /**
+     * 本文が半分未満に減る保存（自動保存を含む）では、減る前の本文を版に残す。
+     * 自動保存は版を作らないため、AIの候補で本文を置き換えた生徒が「戻して」と
+     * 頼んでも戻す版が無かった（2026-10-06、祖父の話を含む全文が消えた）。
+     */
+    let beforeDeletion: Record<string, unknown> | null = null;
+    if (typeof body.content === "string") {
+      const prev = existing.data()?.content;
+      const prevVersions = (existing.data()?.versions ?? []) as {
+        content?: string;
+      }[];
+      if (
+        typeof prev === "string" &&
+        prev.length >= 200 &&
+        body.content.length < prev.length * 0.5 &&
+        prevVersions[prevVersions.length - 1]?.content !== prev
+      ) {
+        beforeDeletion = {
+          id: `v-${Date.now()}-before`,
+          content: prev,
+          wordCount: prev.length,
+          createdAt: now,
+          reason: "before-large-deletion",
+        };
+      }
+    }
+
     if (body.content !== undefined) {
       updates.content = body.content;
       updates.wordCount = body.content.length;
@@ -141,8 +168,11 @@ export async function PUT(
       }
     }
 
-    if (newVersion) {
-      updates.versions = FieldValue.arrayUnion(newVersion);
+    const addedVersions = [beforeDeletion, newVersion].filter(
+      (v): v is Record<string, unknown> => v !== null
+    );
+    if (addedVersions.length > 0) {
+      updates.versions = FieldValue.arrayUnion(...addedVersions);
     }
 
     await docRef.update(updates);

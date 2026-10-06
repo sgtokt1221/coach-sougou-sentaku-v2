@@ -20,6 +20,22 @@ import {
  */
 export const SUGGESTION_DELIMITER = "---ここから振り込み候補---";
 
+/**
+ * 「前の文に戻して」と頼まれたときに、戻す版の id を書かせる境界線。
+ * 本文はモデルに書き写させず、サーバーが保存済みの版をそのまま候補にする
+ * （書き写させると一字でも変わりうる）。2026-10-07 追加。
+ */
+export const RESTORE_DELIMITER = "---ここから版を戻す---";
+
+/** コーチに見せる保存済みの版 */
+export interface DocumentCoachSavedVersion {
+  id: string;
+  savedAt: string;
+  chars: number;
+  /** 本文（長いものは先頭だけ） */
+  content: string;
+}
+
 export interface DocumentCoachSelfAnalysisContext {
   values?: string[];
   strengths?: string[];
@@ -44,6 +60,8 @@ export interface DocumentCoachContext {
   selfAnalysis?: DocumentCoachSelfAnalysisContext;
   /** 登録済みの活動実績。深掘りの材料にする */
   activities?: ActivityContext[];
+  /** この書類の保存済みの版（新しい順）。「前の文に戻して」に応えるのに使う */
+  savedVersions?: DocumentCoachSavedVersion[];
   turnCount: number;
 }
 
@@ -86,6 +104,10 @@ ${
     selfAnalysis: ctx.selfAnalysis ?? null,
     activities:
       ctx.activities && ctx.activities.length > 0 ? ctx.activities : null,
+    savedVersions:
+      ctx.savedVersions && ctx.savedVersions.length > 0
+        ? ctx.savedVersions
+        : null,
   };
 
   return `あなたは、高校生が総合型選抜の出願書類を書く過程を支援する対話型コーチです。
@@ -134,9 +156,34 @@ ${DOCUMENT_COMPLETE_PROSE_RULE}
 
 ${suggestionMode}
 
+## 前の文に戻す
+- 生徒が「戻して」「前の文にして」「〜を書いていたときのに戻して」など、以前の本文に
+  戻すことを頼んだら、savedVersions から生徒の言う版を選びます（savedAt と content で判断）。
+- 選べたら、応答を1〜2文書いた後（どの版か日時と冒頭で示す）、次の境界線と、その版の id だけを1行で書きます。
+  本文は書き写しません。画面がその版の本文をそのまま候補として出します。
+
+${RESTORE_DELIMITER}
+(版の id)
+
+- どの版か決めきれないときは、候補の版を日時と冒頭の数十字で2〜3個挙げて、どれか尋ねます。
+- savedVersions が無い、または該当する版が無いときは、保存された版が無いことを正直に伝え、
+  「戻る」ボタン（編集欄の上）で戻せる場合があることを案内します。
+  「この機能は持っていない」とは言いません。
+
 <reference_data>
 ${JSON.stringify(referenceData)}
 </reference_data>`;
+}
+
+/** AI 応答から、戻す版の id を取り出す。無ければ null */
+export function extractRestoreVersionId(reply: string): string | null {
+  const idx = reply.indexOf(RESTORE_DELIMITER);
+  if (idx < 0) return null;
+  const id = reply
+    .slice(idx + RESTORE_DELIMITER.length)
+    .trim()
+    .split(/\s/)[0];
+  return id || null;
 }
 
 /** AI 応答から振り込み候補を抽出する。境界線がなければ null。 */
@@ -147,9 +194,11 @@ export function extractSuggestion(reply: string): string | null {
   return after.length > 0 ? after : null;
 }
 
-/** AI 応答から振り込み候補部分を除いた対話表示用本文を取得する。 */
+/** AI 応答から振り込み候補・戻す版の指定を除いた対話表示用本文を取得する。 */
 export function stripSuggestion(reply: string): string {
-  const idx = reply.indexOf(SUGGESTION_DELIMITER);
-  if (idx < 0) return reply.trim();
-  return reply.slice(0, idx).trim();
+  const cuts = [SUGGESTION_DELIMITER, RESTORE_DELIMITER]
+    .map((d) => reply.indexOf(d))
+    .filter((i) => i >= 0);
+  if (cuts.length === 0) return reply.trim();
+  return reply.slice(0, Math.min(...cuts)).trim();
 }

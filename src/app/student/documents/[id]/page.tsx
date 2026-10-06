@@ -111,6 +111,22 @@ function ScoreBar({
   );
 }
 
+type CoachApplyMode = "selection" | "replace" | "cursor" | "append";
+
+const COACH_APPLY_LABELS: Record<CoachApplyMode, string> = {
+  selection: "選んだ範囲と差し替える",
+  replace: "本文と置き換える",
+  cursor: "カーソルの位置に入れる",
+  append: "末尾に足す",
+};
+
+const COACH_APPLY_DONE: Record<CoachApplyMode, string> = {
+  selection: "選んだ範囲を差し替えました",
+  replace: "本文を置き換えました。前の本文はバージョン履歴に残っています",
+  cursor: "カーソルの位置に入れました",
+  append: "本文の末尾に足しました",
+};
+
 export default function DocumentEditorPage() {
   const router = useRouter();
   const params = useParams();
@@ -350,6 +366,50 @@ export default function DocumentEditorPage() {
    * 書き換え案で本文を置き換える。置き換える前の本文は版として残すので、
    * バージョン履歴からいつでも戻せる（版に戻す処理と同じ2段）。
    */
+  /** 本文の選択範囲・カーソル位置（編集欄の onSelect で更新） */
+  const [selection, setSelection] = useState<{
+    start: number;
+    end: number;
+  } | null>(null);
+
+  /**
+   * AIコーチの候補をどう入れるか。
+   * - 本文を選んでいれば、その範囲と差し替える
+   * - 本文が空か、候補が本文の6割以上（直した全文や、戻した版）なら全体を置き換える
+   * - それ以外はカーソルの位置に入れる（位置が分からなければ末尾）
+   */
+  function coachApplyMode(text: string): CoachApplyMode {
+    if (selection && selection.end > selection.start) return "selection";
+    if (!content.trim() || text.length >= content.length * 0.6) return "replace";
+    return selection ? "cursor" : "append";
+  }
+
+  async function applyCoachCandidate(text: string) {
+    const mode = coachApplyMode(text);
+    if (mode === "replace" && content.trim()) {
+      // 置き換える前の本文を版に残す。「前の文に戻して」で戻せるようにする
+      const keep = await authFetch(`/api/documents/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content }),
+      }).catch(() => null);
+      if (!keep?.ok) {
+        toast.error("今の本文を残せなかったので、置き換えをやめました");
+        return;
+      }
+    }
+    if (mode === "replace") {
+      setContent(text);
+    } else if (mode === "append") {
+      setContent(content.trim() ? `${content.trimEnd()}\n\n${text}` : text);
+    } else {
+      const { start, end } = selection!;
+      setContent(content.slice(0, start) + text + content.slice(end));
+    }
+    setSelection(null);
+    toast.success(COACH_APPLY_DONE[mode]);
+  }
+
   async function applyRewrite() {
     if (!rewritten) return;
     setSaving(true);
@@ -612,6 +672,7 @@ export default function DocumentEditorPage() {
           saving={saving}
           saveStatus={saveStatus}
           lastSavedAt={lastSavedAt}
+          onSelectionChange={(start, end) => setSelection({ start, end })}
           /**
            * モバイルにも道具の入口を出す。以前はここにツールバーが無く、
            * バージョン履歴（＝過去の版に戻す操作）へ辿り着けなかった。
@@ -673,11 +734,11 @@ export default function DocumentEditorPage() {
             docId={id}
             onRequestRewrite={handleCoachRewrite}
             rewriting={rewriting}
-            // 編集画面の「セクション」は本文全体。直した全文なら置き換え、
-            // 足す段落なら末尾へ。置き換えても元に戻すボタンで戻せる
+            // 入れ方は候補と本文の状態で決める（coachApplyMode）。以前は
+            // 「本文と置き換える」が先頭のボタンで、1段落の候補でも全文が消えた
+            describeApply={(text) => COACH_APPLY_LABELS[coachApplyMode(text)]}
             onApplySuggestion={(_sectionId, text) => {
-              setContent(text);
-              toast.success("本文を置き換えました。元に戻すこともできます");
+              void applyCoachCandidate(text);
             }}
             onAppendSuggestion={(_sectionId, text) => {
               setContent((prev) =>
@@ -700,6 +761,7 @@ export default function DocumentEditorPage() {
             saving={saving}
             saveStatus={saveStatus}
             lastSavedAt={lastSavedAt}
+            onSelectionChange={(start, end) => setSelection({ start, end })}
             toolbar={
               <DocumentToolbar
                 onOpen={(v) => {
@@ -799,6 +861,7 @@ function EditorPanel({
   saveStatus,
   lastSavedAt,
   toolbar,
+  onSelectionChange,
 }: {
   content: string;
   setContent: (v: string) => void;
@@ -813,6 +876,8 @@ function EditorPanel({
   lastSavedAt: Date | null;
   /** 本文の上に並べる操作（AI添削などのシートを開くボタン群） */
   toolbar?: React.ReactNode;
+  /** 選択範囲・カーソル位置。AIコーチの候補を入れる場所に使う */
+  onSelectionChange?: (start: number, end: number) => void;
 }) {
   // AIの書き換えや下書き復元で本文を丸ごと差し替えるため、
   // ブラウザ標準の取り消しでは戻れない。履歴をアプリ側で持つ
@@ -833,6 +898,12 @@ function EditorPanel({
           className="bg-background focus:ring-ring min-h-[clamp(16rem,45dvh,28rem)] w-full resize-y rounded-md border p-3 text-base focus:ring-2 focus:outline-none lg:min-h-[400px] lg:text-sm"
           value={content}
           onChange={(e) => setContent(e.target.value)}
+          onSelect={(e) =>
+            onSelectionChange?.(
+              e.currentTarget.selectionStart,
+              e.currentTarget.selectionEnd
+            )
+          }
           placeholder="書類の内容を入力してください..."
         />
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
