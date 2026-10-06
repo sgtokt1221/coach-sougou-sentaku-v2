@@ -1314,32 +1314,52 @@ function ReviewPanel({
                 const open = openVersionId === v.id;
                 return (
                   <div key={v.id} className="rounded border text-xs">
-                    <button
-                      type="button"
-                      className="hover:bg-muted/40 flex w-full items-center justify-between gap-2 p-2 text-left"
-                      onClick={() => setOpenVersionId(open ? null : v.id)}
-                    >
-                      <span className="min-w-0">
-                        {/* 版のIDは生徒には意味が無い。いつ・どれくらいの版かで選ぶ */}
-                        <span className="font-medium">
-                          {formatVersionDate(v.createdAt)}
+                    <div className="flex items-center gap-1 pr-1">
+                      <button
+                        type="button"
+                        className="hover:bg-muted/40 flex min-w-0 flex-1 items-center justify-between gap-2 p-2 text-left"
+                        onClick={() => setOpenVersionId(open ? null : v.id)}
+                      >
+                        <span className="min-w-0">
+                          {/* 版のIDは生徒には意味が無い。いつ・どれくらいの版かで選ぶ */}
+                          <span className="font-medium">
+                            {formatVersionDate(v.createdAt)}
+                          </span>
+                          <span className="text-muted-foreground ml-2">
+                            {v.wordCount} 文字
+                          </span>
+                          {v.feedback && (
+                            <Badge
+                              variant="secondary"
+                              className="ml-2 text-[10px]"
+                            >
+                              添削済み
+                            </Badge>
+                          )}
+                          {v.reason === "before-large-deletion" && (
+                            <Badge
+                              variant="secondary"
+                              className="ml-2 text-[10px]"
+                            >
+                              大きく減る前
+                            </Badge>
+                          )}
                         </span>
-                        <span className="text-muted-foreground ml-2">
-                          {v.wordCount} 文字
-                        </span>
-                        {v.feedback && (
-                          <Badge
-                            variant="secondary"
-                            className="ml-2 text-[10px]"
-                          >
-                            添削済み
-                          </Badge>
-                        )}
-                      </span>
-                      <ChevronDown
-                        className={`size-4 shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
-                      />
-                    </button>
+                        <ChevronDown
+                          className={`size-4 shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
+                        />
+                      </button>
+                      {/* 中身を開かなくても戻せるように、行にも置く（開いた中にしか無く見つからなかった） */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 shrink-0 gap-1 px-2 text-xs"
+                        onClick={() => onRestoreVersion(v)}
+                      >
+                        <History className="size-3.5" />
+                        この版に戻す
+                      </Button>
+                    </div>
                     {open && (
                       <div className="space-y-2 border-t p-2">
                         <div className="bg-muted/40 max-h-60 overflow-y-auto rounded p-2 leading-relaxed whitespace-pre-wrap">

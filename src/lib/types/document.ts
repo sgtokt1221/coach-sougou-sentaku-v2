@@ -95,6 +95,8 @@ export interface DocumentVersion {
   wordCount: number;
   createdAt: string;
   feedback?: DocumentFeedback;
+  /** 本文が半分未満に減る保存の前に、サーバーが自動で残した版 */
+  reason?: "before-large-deletion";
 }
 
 /**
