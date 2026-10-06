@@ -29,6 +29,10 @@ import {
 import { FluidLoader } from "@/components/shared/FluidLoader";
 import { toast } from "sonner";
 import { authFetch } from "@/lib/api/client";
+import { useAuthSWR } from "@/lib/api/swr";
+import type { Document } from "@/lib/types/document";
+import { defaultDocumentTitle } from "@/lib/documents/title";
+import { MAX_INTERVIEW_DOCUMENTS } from "@/lib/interview/document-limit";
 import { InterviewHistory } from "@/components/interview/InterviewHistory";
 import { UniversityPicker } from "@/components/essay/UniversityPicker";
 import type { InterviewMode } from "@/lib/types/interview";
@@ -216,6 +220,64 @@ export default function InterviewNewPage() {
   const universityId = selectedUni?.universityId ?? "";
   const facultyId = selectedUni?.facultyId ?? "";
 
+  /**
+   * 面接官と採点に渡す提出書類。提出する書類は1通とは限らないので、生徒が選ぶ。
+   * null はまだ既定を入れていない状態。既定は志望校の志望理由書・自己推薦書から1通
+   * （完成 → 同じ学部 → 新しい順。サーバーの自動選択と同じ並び）。
+   */
+  const { data: docsData } = useAuthSWR<{ documents: Document[] }>(
+    "/api/documents"
+  );
+  const usableDocs = (docsData?.documents ?? []).filter(
+    (d) => (d.content ?? "").trim().length >= 100
+  );
+  const [selectedDocIds, setSelectedDocIds] = useState<string[] | null>(null);
+  const docTitle = (d: Document) =>
+    d.title?.trim() ||
+    defaultDocumentTitle(d.universityName ?? "", d.facultyName ?? "", d.type);
+  useEffect(() => {
+    // 志望校を変えたら既定を選び直す
+    setSelectedDocIds(null);
+  }, [selectedCompoundId]);
+  useEffect(() => {
+    if (selectedDocIds !== null || !docsData || !universityId) return;
+    const auto = usableDocs
+      .filter(
+        (d) =>
+          d.universityId === universityId &&
+          (d.type === "志望理由書" || d.type === "自己推薦書")
+      )
+      .sort((a, b) => {
+        const sa = a.status === "final" ? 0 : 1;
+        const sb = b.status === "final" ? 0 : 1;
+        if (sa !== sb) return sa - sb;
+        const fa = a.facultyId === facultyId ? 0 : 1;
+        const fb = b.facultyId === facultyId ? 0 : 1;
+        if (fa !== fb) return fa - fb;
+        return String(b.updatedAt).localeCompare(String(a.updatedAt));
+      })[0];
+    setSelectedDocIds(auto ? [auto.id] : []);
+  }, [selectedDocIds, docsData, universityId, facultyId, usableDocs]);
+  // 志望校の書類を先に並べる
+  const docOptions = [...usableDocs].sort((a, b) => {
+    const ua = a.universityId === universityId ? 0 : 1;
+    const ub = b.universityId === universityId ? 0 : 1;
+    if (ua !== ub) return ua - ub;
+    return String(b.updatedAt).localeCompare(String(a.updatedAt));
+  });
+  const usesDocuments =
+    selectedMode === "individual" || selectedMode === "presentation";
+  const toggleDoc = (id: string) =>
+    setSelectedDocIds((prev) => {
+      const cur = prev ?? [];
+      if (cur.includes(id)) return cur.filter((x) => x !== id);
+      if (cur.length >= MAX_INTERVIEW_DOCUMENTS) {
+        toast.info(`渡せる書類は${MAX_INTERVIEW_DOCUMENTS}通までです`);
+        return cur;
+      }
+      return [...cur, id];
+    });
+
   async function handleStart() {
     if (!selectedCompoundId || !selectedMode) return;
 
@@ -237,6 +299,11 @@ export default function InterviewNewPage() {
                   subject: oralExamSubject.trim(),
                   scope: oralExamScope.trim() || undefined,
                 }
+              : undefined,
+          // 選んだ書類（空なら渡さない）。一覧を読めていないときは省略してサーバーに任せる
+          documentIds:
+            usesDocuments && selectedDocIds !== null
+              ? selectedDocIds
               : undefined,
         }),
       });
@@ -663,6 +730,54 @@ export default function InterviewNewPage() {
                         maxLength={100}
                       />
                     </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* 面接官に渡す提出書類（個人面接・プレゼン） */}
+              {usesDocuments && docOptions.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">
+                      面接官に渡す書類（任意）
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2 p-3 lg:p-4">
+                    <p className="text-muted-foreground text-xs leading-relaxed">
+                      本番の面接官は提出書類を読んで質問します。この面接で提出する書類を選んでください（
+                      {MAX_INTERVIEW_DOCUMENTS}
+                      通まで）。面接官は書類の内容を掘り下げ、採点では書類と答えが食い違っていないかも見ます。
+                      何も選ばなければ書類なしで面接します。
+                    </p>
+                    {docOptions.map((d) => {
+                      const checked = (selectedDocIds ?? []).includes(d.id);
+                      return (
+                        <label
+                          key={d.id}
+                          className={`flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-2 transition-colors ${
+                            checked ? "border-primary bg-primary/5" : "hover:bg-muted/50"
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            className="mt-1 size-4 shrink-0"
+                            checked={checked}
+                            onChange={() => toggleDoc(d.id)}
+                          />
+                          <span className="min-w-0">
+                            <span className="block truncate text-sm font-medium">
+                              {docTitle(d)}
+                            </span>
+                            <span className="text-muted-foreground text-xs">
+                              {d.type}・{(d.content ?? "").length}字
+                              {d.status === "final" ? "・完成" : "・下書き"}
+                              {d.universityId !== universityId &&
+                                `・${d.universityName ?? ""}`}
+                            </span>
+                          </span>
+                        </label>
+                      );
+                    })}
                   </CardContent>
                 </Card>
               )}

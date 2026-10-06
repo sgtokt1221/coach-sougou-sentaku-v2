@@ -184,6 +184,11 @@ export interface InterviewStartRequest {
   sourceType?: "manual" | "homework" | "skill_check";
   /** sourceType === "homework" の時に紐付ける HomeworkAssignment ID */
   homeworkAssignmentId?: string;
+  /**
+   * 面接官と採点に渡す提出書類（生徒が選んだもの、3通まで）。
+   * 空の配列は「渡さない」。省略したときは志望校の書類から自動で1通選ぶ
+   */
+  documentIds?: string[];
 }
 
 export interface InterviewStartResponse {

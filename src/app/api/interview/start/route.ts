@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { buildInterviewSystemPrompt } from "@/lib/ai/prompts/interview";
-import { loadStatementForInterview } from "@/lib/interview/statement-context";
+import {
+  loadSelectedDocumentsForInterview,
+  loadStatementForInterview,
+} from "@/lib/interview/statement-context";
 import { getInterviewContent } from "@/lib/interview/content-store";
 import type { ContentMode } from "@/lib/types/interview-content";
 import type {
@@ -28,6 +31,7 @@ export async function POST(request: NextRequest) {
       sourceType,
       homeworkAssignmentId,
       oralExam,
+      documentIds,
     } = body;
     /** 口頭試問以外では分野を持ち回らない（他モードのプロンプトに混ざらないように） */
     const oralExamTopic =
@@ -143,7 +147,10 @@ export async function POST(request: NextRequest) {
     let statementSnapshot = "";
     if (adminDb && userId && userId !== "dev-user" && mode !== "oral_exam" && mode !== "group_discussion") {
       try {
-        statementSnapshot = await loadStatementForInterview(adminDb, userId, universityId, facultyId);
+        // 生徒が選んだ書類（空の配列は「渡さない」）。指定が無いときだけ自動で1通選ぶ
+        statementSnapshot = Array.isArray(documentIds)
+          ? await loadSelectedDocumentsForInterview(adminDb, userId, documentIds)
+          : await loadStatementForInterview(adminDb, userId, universityId, facultyId);
       } catch (err) {
         console.warn("[interview/start] 志望理由書の取得に失敗:", err);
       }
