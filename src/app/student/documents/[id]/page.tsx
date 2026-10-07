@@ -34,6 +34,7 @@ import {
   ChevronUp,
   ShieldCheck,
   Wand2,
+  Languages,
   MessageSquare,
   Pencil,
 } from "lucide-react";
@@ -73,6 +74,13 @@ import {
 import { useTextHistory } from "@/hooks/useTextHistory";
 import { UndoRedoButtons } from "@/components/shared/UndoRedoButtons";
 import { DocumentSectionCoachPanel } from "@/components/documents/DocumentSectionCoachPanel";
+import {
+  DOCUMENT_PROSE_STYLE_LABELS,
+  detectUnnaturalJapanese,
+  guessProseStyle,
+  totalFindingCount,
+  type DocumentProseStyle,
+} from "@/lib/documents/natural-japanese";
 /** 2状態表示: draft=outline / それ以外(完成扱い)=default。 */
 function statusVariant2(status: DocumentStatus): "outline" | "default" {
   return status === "draft" ? "outline" : "default";
@@ -360,6 +368,44 @@ export default function DocumentEditorPage() {
   /** 書き換え案を閉じる。本文には影響しない */
   function discardRewrite() {
     setRewritten(null);
+    setNaturalizeNotes(null);
+  }
+
+  /**
+   * 「自然な日本語に整える」。意味を変えずに決まり文句・翻訳調・比喩などを直した案を出す。
+   * 案は書き換え案と同じ表示・同じ置き換え（前の本文は版に残る）を通る。
+   */
+  const [naturalizing, setNaturalizing] = useState(false);
+  const [naturalizeNotes, setNaturalizeNotes] = useState<NaturalizeNotes | null>(
+    null
+  );
+  async function handleNaturalize(style: DocumentProseStyle) {
+    if (!doc || !content.trim()) return;
+    setNaturalizing(true);
+    try {
+      const res = await authFetch(`/api/documents/${id}/naturalize`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content, style }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast.error(data?.error || "整えられませんでした");
+        return;
+      }
+      setRewritten(data.rewritten ?? null);
+      setNaturalizeNotes({
+        changes: data.changes ?? [],
+        questions: data.questions ?? [],
+        beforeCount: totalFindingCount(data.before ?? []),
+        afterCount: totalFindingCount(data.after ?? []),
+        notice: data.notice,
+      });
+    } catch {
+      toast.error("整えられませんでした");
+    } finally {
+      setNaturalizing(false);
+    }
   }
 
   /**
@@ -430,6 +476,7 @@ export default function DocumentEditorPage() {
       if (!res.ok) throw new Error();
       setContent(rewritten);
       setRewritten(null);
+      setNaturalizeNotes(null);
       await loadDocument();
       toast.success("書き換えました。前の本文はバージョン履歴に残っています");
     } catch {
@@ -718,6 +765,9 @@ export default function DocumentEditorPage() {
           onApplyRewrite={applyRewrite}
           onRewrite={handleRewrite}
           onDiscardRewrite={discardRewrite}
+          naturalizing={naturalizing}
+          naturalizeNotes={naturalizeNotes}
+          onNaturalize={handleNaturalize}
         />
       </MobileSlideOverPanel>
 
@@ -809,6 +859,9 @@ export default function DocumentEditorPage() {
               onApplyRewrite={applyRewrite}
               onRewrite={handleRewrite}
               onDiscardRewrite={discardRewrite}
+              naturalizing={naturalizing}
+              naturalizeNotes={naturalizeNotes}
+              onNaturalize={handleNaturalize}
             />
           </div>
         </SheetContent>
@@ -1012,6 +1065,9 @@ function ReviewPanel({
   onApplyRewrite,
   onRewrite,
   onDiscardRewrite,
+  naturalizing,
+  naturalizeNotes,
+  onNaturalize,
 }: {
   feedback: DocumentFeedback | null;
   reviewing: boolean;
@@ -1037,6 +1093,10 @@ function ReviewPanel({
   /** 講師からの範囲コメント（本文が編集用テキストエリアのため一覧で見せる） */
   onRewrite: () => void;
   onDiscardRewrite: () => void;
+  naturalizing: boolean;
+  /** 「自然な日本語に整える」の結果。あるとき、案はこちらのカードに出す */
+  naturalizeNotes: NaturalizeNotes | null;
+  onNaturalize: (style: DocumentProseStyle) => void;
 }) {
   /** 中身を開いている版。1つずつ開く */
   const [openVersionId, setOpenVersionId] = useState<string | null>(null);
@@ -1184,7 +1244,7 @@ function ReviewPanel({
             {rewriting ? "書き換えています..." : "書き換え案を作る"}
           </Button>
 
-          {rewritten && (
+          {rewritten && !naturalizeNotes && (
             <RewritePreview
               rewritten={rewritten}
               currentContent={currentContent}
@@ -1194,6 +1254,17 @@ function ReviewPanel({
           )}
         </CardContent>
       </Card>
+
+      <NaturalizeCard
+        currentContent={currentContent}
+        contentEmpty={contentEmpty}
+        naturalizing={naturalizing}
+        notes={naturalizeNotes}
+        rewritten={rewritten}
+        onNaturalize={onNaturalize}
+        onApply={onApplyRewrite}
+        onDiscard={onDiscardRewrite}
+      />
 
       {/* 個別性・テンプレ表現チェック */}
       <Card>
@@ -1497,6 +1568,150 @@ function TeacherComments({
             <p className="mt-1 text-sm whitespace-pre-wrap">{c.comment}</p>
           </div>
         ))}
+      </CardContent>
+    </Card>
+  );
+}
+
+interface NaturalizeNotes {
+  changes: string[];
+  questions: string[];
+  beforeCount: number;
+  afterCount: number;
+  notice?: string;
+}
+
+/**
+ * 自然な日本語に整える。出典: nanaism/yomiyasu・coji/natural-japanese（MIT）の観点を
+ * src/lib/documents/natural-japanese.ts に移したもの。押す前に引っかかった表現を数えて見せる。
+ */
+function NaturalizeCard({
+  currentContent,
+  contentEmpty,
+  naturalizing,
+  notes,
+  rewritten,
+  onNaturalize,
+  onApply,
+  onDiscard,
+}: {
+  currentContent: string;
+  contentEmpty: boolean;
+  naturalizing: boolean;
+  notes: NaturalizeNotes | null;
+  rewritten: string | null;
+  onNaturalize: (style: DocumentProseStyle) => void;
+  onApply: () => void;
+  onDiscard: () => void;
+}) {
+  const [style, setStyle] = useState<DocumentProseStyle>(() =>
+    guessProseStyle(currentContent)
+  );
+  const findings = detectUnnaturalJapanese(currentContent, style);
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Languages className="size-4" />
+          自然な日本語に整える
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <p className="text-muted-foreground text-sm">
+          意味と事実は変えずに、決まり文句・翻訳調・大げさな言葉・長すぎる文などを読みやすく直した案を出します。本文に無い出来事や数字は足しません。
+        </p>
+        <div className="flex items-center gap-2 text-sm">
+          <span className="text-muted-foreground">文体</span>
+          {(Object.keys(DOCUMENT_PROSE_STYLE_LABELS) as DocumentProseStyle[]).map(
+            (s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => setStyle(s)}
+                className={`rounded-full border px-3 py-1 text-xs ${
+                  style === s
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "hover:bg-muted"
+                }`}
+              >
+                {DOCUMENT_PROSE_STYLE_LABELS[s]}
+              </button>
+            )
+          )}
+        </div>
+        {!contentEmpty && (
+          <div className="bg-muted/40 rounded-md p-2 text-xs">
+            {findings.length === 0 ? (
+              <p className="text-muted-foreground">
+                機械的に引っかかる表現はありません（読みにくい文だけを直します）
+              </p>
+            ) : (
+              <ul className="space-y-1">
+                {findings.map((f) => (
+                  <li key={f.id}>
+                    <span className="font-medium">{f.label}</span>
+                    <span className="text-muted-foreground"> {f.count}件</span>
+                    {f.samples[0] && (
+                      <span className="text-muted-foreground">
+                        （「{f.samples[0]}」など）
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+        <Button
+          className="w-full"
+          variant="outline"
+          onClick={() => onNaturalize(style)}
+          disabled={naturalizing || contentEmpty}
+        >
+          <Languages className="mr-2 size-4" />
+          {naturalizing ? "整えています..." : "整えた案を作る"}
+        </Button>
+
+        {notes && rewritten && (
+          <>
+            <div className="space-y-2 text-xs">
+              <p>
+                引っかかった表現: {notes.beforeCount}件 → {notes.afterCount}件
+              </p>
+              {notes.notice && (
+                <p className="rounded-md bg-amber-50 p-2 text-amber-800 dark:bg-amber-950 dark:text-amber-200">
+                  {notes.notice}
+                </p>
+              )}
+              {notes.changes.length > 0 && (
+                <div>
+                  <p className="font-medium">変えたところ</p>
+                  <ul className="text-muted-foreground list-disc space-y-0.5 pl-4">
+                    {notes.changes.map((c, i) => (
+                      <li key={i}>{c}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {notes.questions.length > 0 && (
+                <div>
+                  <p className="font-medium">書き足すと伝わるところ</p>
+                  <ul className="text-muted-foreground list-disc space-y-0.5 pl-4">
+                    {notes.questions.map((q, i) => (
+                      <li key={i}>{q}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+            <RewritePreview
+              rewritten={rewritten}
+              currentContent={currentContent}
+              onApply={onApply}
+              onDiscard={onDiscard}
+            />
+          </>
+        )}
       </CardContent>
     </Card>
   );

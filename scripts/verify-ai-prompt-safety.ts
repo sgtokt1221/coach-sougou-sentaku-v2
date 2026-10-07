@@ -1,3 +1,8 @@
+import {
+  introducedFacts,
+  detectUnnaturalJapanese,
+} from "../src/lib/documents/natural-japanese";
+import { buildDocumentNaturalizePrompt } from "../src/lib/ai/prompts/document-naturalize";
 import assert from "node:assert/strict";
 import { prepareAdmissionPolicy } from "../src/lib/ai/admission-policy";
 import { buildDocumentReviewPrompt } from "../src/lib/ai/prompts/document";
@@ -338,6 +343,31 @@ assert.ok(
   assert.ok(withWish.includes("<student_emphasis>") && withWish.includes(wish), "statement: 希望が入る");
   assert.ok(!statementPrompt.includes("<student_emphasis>"), "statement: 希望が空なら入らない");
   assert.ok(!templatePrompt.includes("<student_emphasis>"), "template: 希望が空なら入らない");
+}
+
+/**
+ * 自然な日本語に整える（2026-10-07）。足された事実を拾えること、
+ * 「基礎」のような普通の語を比喩として拾わないこと、プロンプトが足さない決まりを持つこと。
+ */
+{
+  assert.deepEqual(
+    introducedFacts("部員の意見が割れた。", "69人の部員の意見が割れた。"),
+    ["69"],
+    "naturalize: 足された数字を拾う"
+  );
+  assert.deepEqual(
+    introducedFacts("二〇五〇年に一千万人", "2050年までに一千万人に達する"),
+    ["2050"],
+    "naturalize: 漢数字を算用数字に直したものは足された扱い（直さないよう指示する材料）"
+  );
+  assert.ok(
+    !detectUnnaturalJapanese("基礎からしっかり学びたい。", "dearu").some(
+      (f) => f.id === "figurative"
+    ),
+    "naturalize: 「基礎」を比喩として拾わない"
+  );
+  const np = buildDocumentNaturalizePrompt({ documentType: "志望理由書", style: "dearu", findings: [] });
+  assert.ok(np.includes("足さない") && np.includes("だ・である"), "naturalize: 足さない決まりと文体");
 }
 
 console.log("AI prompt safety verification passed.");
