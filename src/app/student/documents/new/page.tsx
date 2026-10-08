@@ -617,6 +617,7 @@ export default function NewDocumentPage() {
         throw new Error(payload?.error ?? "自己分析下書きの生成に失敗しました");
       }
       const data = await res.json();
+      if (data.notice) toast.info(data.notice);
 
       const sections =
         writingMode === "free"

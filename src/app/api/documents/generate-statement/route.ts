@@ -44,6 +44,8 @@ interface StatementDraftResponse {
   };
   improvementSuggestions: string[];
   aiMetadata: AiGenerationMetadata;
+  /** 字数が目標を超えたときなどの知らせ */
+  notice?: string;
 }
 
 export async function POST(request: NextRequest) {
@@ -198,10 +200,17 @@ export async function POST(request: NextRequest) {
         normalizeStudentEmphasis(body.emphasis)
       );
       const draft = joinStatementStructure(structure);
-      if (draft.length > limit) {
-        throw new Error("志望理由書を指定文字数内に収められませんでした");
-      }
+      /**
+       * それでも上限を超えたときは、下書きを捨てずに知らせて返す。
+       * 以前はここで例外にしており、生成した下書きごと失われて 500 になっていた
+       * （2026-10-09 本番。生徒は何も受け取れない）。超えた分は生徒が削れる。
+       */
+      const notice =
+        draft.length > limit
+          ? `目標${target}字に対して${draft.length}字あります。${draft.length - target}字ほど削ってください。`
+          : undefined;
       statementResponse = {
+        notice,
         draft,
         structure,
         improvementSuggestions: response.parsed_output.improvementSuggestions,
