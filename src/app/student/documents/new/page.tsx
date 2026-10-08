@@ -22,7 +22,7 @@ import {
   Star,
 } from "lucide-react";
 import type { DocumentType } from "@/lib/types/document";
-import { DOCUMENT_TYPE_LABELS } from "@/lib/types/document";
+import { CREATABLE_DOCUMENT_TYPES } from "@/lib/types/document";
 import type {
   FrameworkType,
   FrameworkDefinition,
@@ -89,6 +89,8 @@ function reconstructDraftResult(
 }
 
 const STEPS = ["書類タイプ", "志望校", "構成", "活動実績", "下書き作成"];
+/** 構成（フレームワーク）の手順は、作りかけのフレームワーク形式の書類を再開したときだけ出す */
+const FRAMEWORK_STEP_INDEX = 2;
 type WritingMode = "framework" | "free";
 
 /** 目標文字数として受け付ける範囲 */
@@ -144,7 +146,11 @@ export default function NewDocumentPage() {
   const [frameworkType, setFrameworkType] = useState<FrameworkType | null>(
     null
   );
-  const [writingMode, setWritingMode] = useState<WritingMode | null>(null);
+  /**
+   * 書き方。2026-10-09 にフレームワーク（STAR・PREP など）の選択をやめ、新しい書類は
+   * つながった1本の本文で作る（"free"）。フレームワークで作りかけた書類を再開したときだけ "framework"
+   */
+  const [writingMode, setWritingMode] = useState<WritingMode | null>("free");
   const [selectedActivityIds, setSelectedActivityIds] = useState<string[]>([]);
   const [targetWordCount, setTargetWordCount] = useState(800);
   /**
@@ -307,7 +313,7 @@ export default function NewDocumentPage() {
           targetWordCount,
           initialContent: "",
           wizardState: {
-            currentStep: 2,
+            currentStep: 3,
             writingMode: writingMode ?? undefined,
             frameworkType: frameworkType ?? undefined,
             selectedActivityIds,
@@ -338,6 +344,7 @@ export default function NewDocumentPage() {
     writingMode,
     frameworkType,
     selectedActivityIds,
+    emphasis,
   ]);
 
   /** 次のステップへ。志望校ステップ(1)を抜けるとき早期作成し、保留中の自動保存を確定する。 */
@@ -353,13 +360,18 @@ export default function NewDocumentPage() {
       await createDraftDocument();
     }
     void flush();
-    setStep((s) => Math.min(4, s + 1));
+    // 構成（フレームワーク）の手順は飛ばす。作りかけのフレームワーク形式の書類だけ通る
+    setStep((s) =>
+      s === 1 && writingMode !== "framework" ? 3 : Math.min(4, s + 1)
+    );
   };
 
   /** 前のステップへ。保留中の自動保存を確定してから戻る。 */
   const handleBack = () => {
     void flush();
-    setStep((s) => Math.max(0, s - 1));
+    setStep((s) =>
+      s === 3 && writingMode !== "framework" ? 1 : Math.max(0, s - 1)
+    );
   };
 
   /**
@@ -389,7 +401,8 @@ export default function NewDocumentPage() {
         const fwType: string | undefined = ws?.frameworkType;
         const restoredWritingMode: WritingMode | null =
           ws?.writingMode === "free" ? "free" : fwType ? "framework" : null;
-        setWritingMode(restoredWritingMode);
+        // 書き方が記録されていない旧データも、新しい作り方（1本の本文）で続ける
+        setWritingMode(restoredWritingMode ?? "free");
         if (fwType) setFrameworkType(fwType as FrameworkType);
         if (Array.isArray(ws?.selectedActivityIds)) {
           setSelectedActivityIds(ws.selectedActivityIds);
@@ -458,7 +471,14 @@ export default function NewDocumentPage() {
           // 旧データ（見出し入り本文）は従来ロジックで分割復元
           setDraftResult(reconstructDraftResult(doc.content, fw));
         }
-        if (typeof ws?.currentStep === "number") setStep(ws.currentStep);
+        if (typeof ws?.currentStep === "number") {
+          // 構成の手順は無くなったので、そこで止まっていた書類は次の手順から再開する
+          setStep(
+            ws.currentStep === 2 && restoredWritingMode !== "framework"
+              ? 3
+              : ws.currentStep
+          );
+        }
       } catch (err) {
         console.error("Resume load failed:", err);
         setResumeFailed(true);
@@ -535,6 +555,10 @@ export default function NewDocumentPage() {
 
   const recommendedFrameworks = template?.recommendedFrameworks || [];
 
+  const visibleSteps = STEPS.map((label, index) => ({ label, index })).filter(
+    ({ index }) => index !== FRAMEWORK_STEP_INDEX || writingMode === "framework"
+  );
+
   const canProceed = () => {
     switch (step) {
       case 0:
@@ -609,6 +633,7 @@ export default function NewDocumentPage() {
           facultyId: selectedUniversity.facultyId,
           targetWordCount,
           emphasis: emphasis.trim() || undefined,
+          documentType,
         }),
       });
 
@@ -643,6 +668,8 @@ export default function NewDocumentPage() {
         evaluationScores: data.evaluationScores,
         improvementSuggestions: data.improvementSuggestions,
       });
+      // 1本の本文なので、AIコーチもすぐその本文について話せるようにする
+      if (writingMode === "free") setFocusedSectionId("free");
       await persistContent(data.draft);
     } catch (err) {
       console.error("Self-analysis draft generation failed:", err);
@@ -742,7 +769,7 @@ export default function NewDocumentPage() {
 
       {/* Step indicator */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2">
-        {STEPS.map((label, i) => (
+        {visibleSteps.map(({ label, index: i }, n) => (
           <div key={label} className="flex items-center gap-2">
             <div
               className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium whitespace-nowrap ${
@@ -756,11 +783,11 @@ export default function NewDocumentPage() {
               {i < step ? (
                 <CheckCircle className="h-3.5 w-3.5" />
               ) : (
-                <span className="w-3.5 text-center text-xs">{i + 1}</span>
+                <span className="w-3.5 text-center text-xs">{n + 1}</span>
               )}
               {label}
             </div>
-            {i < STEPS.length - 1 && (
+            {n < visibleSteps.length - 1 && (
               <ArrowRight className="text-muted-foreground h-4 w-4 shrink-0" />
             )}
           </div>
@@ -770,7 +797,7 @@ export default function NewDocumentPage() {
       {/* Step 0: Document type */}
       {step === 0 && (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {(Object.keys(DOCUMENT_TYPE_LABELS) as DocumentType[]).map((type) => (
+          {CREATABLE_DOCUMENT_TYPES.map((type) => (
             <Card
               key={type}
               className={`cursor-pointer transition-all hover:shadow-md ${
@@ -1053,27 +1080,24 @@ export default function NewDocumentPage() {
                     {selectedUniversity?.facultyName}
                   </p>
                   <p className="text-muted-foreground text-sm">
-                    構成:{" "}
-                    {writingMode === "free"
-                      ? "自由記述"
-                      : frameworkType
-                        ? FRAMEWORK_TYPE_LABELS[frameworkType]
-                        : "未選択"}
+                    {writingMode === "framework" && frameworkType
+                      ? `構成: ${FRAMEWORK_TYPE_LABELS[frameworkType]} / `
+                      : ""}
                     {selectedActivityIds.length > 0 &&
-                      ` / 活動実績: ${selectedActivityIds.length}件`}
-                    {` / 目標: ${targetWordCount}字`}
+                      `活動実績: ${selectedActivityIds.length}件 / `}
+                    {`目標: ${targetWordCount}字`}
                   </p>
                 </div>
 
                 <div className="space-y-3">
-                  {documentType === "志望理由書" && (
+                  {writingMode === "free" && (
                     <Button
                       onClick={handleGenerateFromSelfAnalysis}
                       size="lg"
                       className="gap-2 bg-gradient-to-r from-sky-500 to-purple-600 hover:from-sky-600 hover:to-purple-700"
                     >
                       <Sparkles className="h-4 w-4" />
-                      自己分析から自動下書き生成
+                      自己分析と活動実績からAIで下書きを作る
                     </Button>
                   )}
 

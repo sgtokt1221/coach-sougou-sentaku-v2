@@ -21,6 +21,7 @@ import {
 import type { AiGenerationMetadata } from "@/lib/types/ai";
 import { loadActivityContexts } from "@/lib/documents/student-context";
 import { normalizeStudentEmphasis } from "@/lib/ai/prompts/shared";
+import { CREATABLE_DOCUMENT_TYPES } from "@/lib/types/document";
 
 // 生成(40-50秒)に加えて字数超過時の圧縮リライトが走るため、60秒では打ち切られる。
 export const maxDuration = 300;
@@ -32,6 +33,8 @@ interface GenerateStatementRequest {
   targetWordCount?: number;
   /** 任意。特に熱く書いてほしい点・内容の方向性 */
   emphasis?: string;
+  /** 書類の種類（志望理由書 / 自己推薦書）。無ければ志望理由書 */
+  documentType?: string;
 }
 
 interface StatementDraftResponse {
@@ -73,6 +76,11 @@ export async function POST(request: NextRequest) {
       );
     }
     const { universityId, facultyId } = body;
+    const documentType = (CREATABLE_DOCUMENT_TYPES as readonly string[]).includes(
+      body.documentType ?? ""
+    )
+      ? (body.documentType as string)
+      : "志望理由書";
 
     // 大学・学部情報を取得
     const universityDoc = await adminDb
@@ -157,7 +165,8 @@ export async function POST(request: NextRequest) {
         selfAnalysis,
         body.targetWordCount || 800,
         activities,
-        normalizeStudentEmphasis(body.emphasis)
+        normalizeStudentEmphasis(body.emphasis),
+        documentType
       );
       const Anthropic = (await import("@anthropic-ai/sdk")).default;
       const client = new Anthropic({ apiKey });
@@ -197,7 +206,8 @@ export async function POST(request: NextRequest) {
         client,
         { ...response.parsed_output.structure },
         target,
-        normalizeStudentEmphasis(body.emphasis)
+        normalizeStudentEmphasis(body.emphasis),
+        documentType
       );
       const draft = joinStatementStructure(structure);
       /**

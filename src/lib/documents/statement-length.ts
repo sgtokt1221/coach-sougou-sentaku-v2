@@ -4,7 +4,10 @@ import {
   fitToCharLimit,
   fitToCharRange,
 } from "@/lib/ai/fit-char-limit";
-import { STATEMENT_SECTION_RATIOS } from "@/lib/ai/prompts/statement";
+import {
+  STATEMENT_SECTION_RATIOS,
+  statementKindOf,
+} from "@/lib/ai/prompts/statement";
 
 export type StatementStructure = {
   intro: string;
@@ -13,13 +16,6 @@ export type StatementStructure = {
   conclusion: string;
 };
 
-/** 伸ばすときに渡すセクションの役割（伸ばす方向がぶれないようにする） */
-const STATEMENT_SECTION_LABELS: Record<keyof StatementStructure, string> = {
-  intro: "志望理由書の導入（志望のきっかけと結論）",
-  body: "志望理由（その学部で学びたいこと・問題意識）",
-  strengths: "自己の強みと、大学でどう生かし貢献するか",
-  conclusion: "将来への展開（卒業後に何をしたいか）",
-};
 
 /** 4セクションをつなぐ空行の字数（"\n\n" × 3） */
 const SEPARATOR_CHARS = 6;
@@ -46,8 +42,11 @@ export async function fitStatementToTarget(
   input: StatementStructure,
   target: number,
   /** 生徒の希望（熱く書いてほしい点・方向性）。伸ばすときに方向がぶれないよう渡す */
-  emphasis = ""
+  emphasis = "",
+  /** 書類の種類。伸ばすときに渡す段の役割（伸ばす方向がぶれないようにする） */
+  documentType = "志望理由書"
 ): Promise<StatementStructure> {
+  const kind = statementKindOf(documentType);
   const structure = { ...input };
   const limit = Math.round(target * 1.1);
   let draft = joinStatementStructure(structure);
@@ -93,8 +92,8 @@ export async function fitStatementToTarget(
             min,
             max,
             emphasis
-              ? `${STATEMENT_SECTION_LABELS[key]}。生徒の希望（この方向で書く）: ${emphasis}`
-              : STATEMENT_SECTION_LABELS[key]
+              ? `${kind.name}の「${kind.sections[key]}」の段。生徒の希望（この方向で書く）: ${emphasis}`
+              : `${kind.name}の「${kind.sections[key]}」の段`
           ),
         ] as const;
       })

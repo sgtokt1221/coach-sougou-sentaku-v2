@@ -244,6 +244,13 @@ export interface DocumentCreateRequest {
   wizardState?: DocumentWizardState;
 }
 
+/**
+ * 新しく作れる書類の種類（2026-10-09〜）。ほかの種類（学業活動報告書・研究計画書・
+ * 学びの設計書）は既存の書類を開いて直せるように型には残すが、作成画面には出さない。
+ */
+export const CREATABLE_DOCUMENT_TYPES = ["志望理由書", "自己推薦書"] as const;
+export type CreatableDocumentType = (typeof CREATABLE_DOCUMENT_TYPES)[number];
+
 export const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
   志望理由書: "志望理由書",
   学業活動報告書: "学業活動報告書",
