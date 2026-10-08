@@ -26,6 +26,8 @@ function daysUntil(dateStr: string): number {
 }
 
 interface UniversityGroup {
+  /** まとめるときの鍵（大学ID＋学部ID）。画面の key にも同じものを使う */
+  key: string;
   universityId: string;
   universityName: string;
   facultyName: string;
@@ -94,10 +96,11 @@ export default function DocumentsPage() {
     groupMap.get(key)!.push(doc);
   }
 
-  for (const [, docs] of groupMap) {
+  for (const [key, docs] of groupMap) {
     const first = docs[0];
     const finalCount = docs.filter((d) => isDocumentComplete(d.status)).length;
     universityGroups.push({
+      key,
       universityId: first.universityId,
       universityName: first.universityName,
       facultyName: first.facultyName,
@@ -161,7 +164,9 @@ export default function DocumentsPage() {
       ) : (
         <div className="space-y-6">
           {universityGroups.map((group, index) => {
-            const groupKey = `${group.universityId}-${group.facultyName}`;
+            // まとめた鍵（大学ID＋学部ID）をそのまま使う。学部名で作ると、同じ学部名で
+            // 学部IDが違う書類のグループが重なり、React が片方を落とすことがあった
+            const groupKey = group.key;
             const isExpanded = isGroupExpanded(groupKey, index);
 
             return (
@@ -224,7 +229,7 @@ export default function DocumentsPage() {
                             </div>
                             <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
                               <span>
-                                {doc.wordCount}
+                                {doc.wordCount ?? 0}
                                 {doc.targetWordCount ? `/${doc.targetWordCount}` : ""} 文字
                               </span>
                               {days !== null && (

@@ -668,8 +668,11 @@ export default function NewDocumentPage() {
         evaluationScores: data.evaluationScores,
         improvementSuggestions: data.improvementSuggestions,
       });
-      // 1本の本文なので、AIコーチもすぐその本文について話せるようにする
-      if (writingMode === "free") setFocusedSectionId("free");
+      if (writingMode === "free") {
+        // 1本の本文の書類は、そのまま編集画面へ（AI添削などの道具はそちらにある）
+        await finishWizard(data.draft);
+        return;
+      }
       await persistContent(data.draft);
     } catch (err) {
       console.error("Self-analysis draft generation failed:", err);
@@ -683,7 +686,12 @@ export default function NewDocumentPage() {
     }
   };
 
-  const handleStartFreeWriting = () => {
+  const handleStartFreeWriting = async () => {
+    // 白紙から書く場合も、本文は編集画面で書く
+    if (writingMode === "free" && docId) {
+      await finishWizard("");
+      return;
+    }
     setDraftResult({
       draft: "",
       sections: [
@@ -704,7 +712,19 @@ export default function NewDocumentPage() {
    * 早期作成済みの書類へ最終本文とウィザード完了状態(completed:true)を保存する。
    */
   const handleSave = async () => {
-    if (!docId || !draftResult) return;
+    if (!draftResult) return;
+    await finishWizard(draftResult.draft);
+  };
+
+  /**
+   * 作成画面を完了にして編集画面へ移る。
+   *
+   * AI添削・書き換え・自然な日本語に整える・バージョン履歴は編集画面にしか無い。
+   * フレームワーク形式をやめた（2026-10-09）ので、1本の本文で作る書類は下書きを作った時点で
+   * 編集画面へ移す（以前は「書類として保存」を押すまで道具が使えなかった）。
+   */
+  async function finishWizard(content: string) {
+    if (!docId) return;
     setSaving(true);
 
     try {
@@ -712,7 +732,7 @@ export default function NewDocumentPage() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          content: draftResult.draft,
+          content,
           targetWordCount,
           wizardState: {
             currentStep: 4,
@@ -737,7 +757,7 @@ export default function NewDocumentPage() {
     } finally {
       setSaving(false);
     }
-  };
+  }
 
   const toggleActivity = (id: string) => {
     setSelectedActivityIds((prev) =>

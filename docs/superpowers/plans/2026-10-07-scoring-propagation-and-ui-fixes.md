@@ -67,7 +67,7 @@ P0→P1→P2 の順に依存する。P3・P4・P5 は P1 の後なら並行で�
 
 ## P0: 黙って壊れているもの
 
-### Task 0.1: 書類一覧で同じ学部名の書類が消える
+### Task 0.1: 書類一覧で同じ学部名の書類が消える ✅ 2026-10-09
 `src/app/student/documents/page.tsx:88-104, 164`
 
 グループは `universityId-facultyId` で作るのに、React の key は `universityId-facultyName`。同じ学部名で学部IDが違う書類があると key が重なり、片方のグループが落ちる（コンソールに「two children with the same key」。本番でも学部IDが揃っていない書類で起こりうる）。
