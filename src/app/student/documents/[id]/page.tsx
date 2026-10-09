@@ -154,6 +154,32 @@ export default function DocumentEditorPage() {
   const [feedback, setFeedback] = useState<DocumentFeedback | null>(null);
   const [showVersions, setShowVersions] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
+  /**
+   * ツールバーの道具を開き、その道具のカードまで送る。
+   * 以前はどのボタンも同じ引き出しを先頭で開くだけで、バージョン履歴や
+   * 日本語を整えるカードまで自分でスクロールする必要があった。
+   */
+  function openTool(tool: DocumentToolKey) {
+    if (tool === "versions") setShowVersions(true);
+    setToolsOpen(true);
+    // 引き出しは開く動きの途中で中身が描画される。見えている方のカードが現れて
+    // 位置が落ち着くまで待ってから送る（すぐ送ると開く動きに打ち消された）
+    let tries = 0;
+    let lastTop: number | null = null;
+    const tick = () => {
+      const target = Array.from(
+        document.querySelectorAll<HTMLElement>(`[data-tool="${tool}"]`)
+      ).find((el) => el.offsetParent !== null);
+      const top = target ? Math.round(target.getBoundingClientRect().left) : null;
+      if (target && top === lastTop) {
+        target.scrollIntoView({ block: "start" });
+        return;
+      }
+      lastTop = top;
+      if (++tries < 20) window.setTimeout(tick, 80);
+    };
+    window.setTimeout(tick, 80);
+  }
   const [aiLikeness, setAiLikeness] = useState<DocumentAiLikeness | null>(null);
 
   const [aiChecking, setAiChecking] = useState(false);
@@ -726,10 +752,7 @@ export default function DocumentEditorPage() {
            */
           toolbar={
             <DocumentToolbar
-              onOpen={(v) => {
-                if (v === "versions") setShowVersions(true);
-                setToolsOpen(true);
-              }}
+              onOpen={openTool}
               hasFeedback={!!feedback}
               versionCount={doc.versions?.length ?? 0}
               commentCount={doc.inlineComments?.length ?? 0}
@@ -814,10 +837,7 @@ export default function DocumentEditorPage() {
             onSelectionChange={(start, end) => setSelection({ start, end })}
             toolbar={
               <DocumentToolbar
-                onOpen={(v) => {
-                  if (v === "versions") setShowVersions(true);
-                  setToolsOpen(true);
-                }}
+                onOpen={openTool}
                 hasFeedback={!!feedback}
                 versionCount={doc.versions?.length ?? 0}
                 commentCount={doc.inlineComments?.length ?? 0}
@@ -1103,7 +1123,7 @@ function ReviewPanel({
   return (
     <div className="space-y-4">
       {/* AI Review */}
-      <Card>
+      <Card data-tool="review">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
             <Sparkles className="size-4" />
@@ -1218,7 +1238,7 @@ function ReviewPanel({
       </Card>
 
       {/* AIで書き換え */}
-      <Card>
+      <Card data-tool="rewrite">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
             <Wand2 className="size-4" />
@@ -1267,7 +1287,7 @@ function ReviewPanel({
       />
 
       {/* 個別性・テンプレ表現チェック */}
-      <Card>
+      <Card data-tool="likeness">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
             <ShieldCheck className="size-4" />
@@ -1362,7 +1382,7 @@ function ReviewPanel({
 
       {/* Version History */}
       {versions && versions.length > 0 && (
-        <Card>
+        <Card data-tool="versions">
           <CardHeader className="pb-3">
             <button
               className="flex w-full items-center justify-between"
@@ -1459,6 +1479,14 @@ function ReviewPanel({
 }
 
 /** 本文の上に置く、AIの道具を開くボタン群。名前はホバーで出す（幅を食わせない） */
+type DocumentToolKey =
+  | "comments"
+  | "review"
+  | "rewrite"
+  | "naturalize"
+  | "likeness"
+  | "versions";
+
 function DocumentToolbar({
   onOpen,
   hasFeedback,
@@ -1466,7 +1494,7 @@ function DocumentToolbar({
   commentCount,
 }: {
   onOpen: (
-    target: "comments" | "review" | "rewrite" | "likeness" | "versions"
+    target: DocumentToolKey
   ) => void;
   hasFeedback: boolean;
   versionCount: number;
@@ -1492,6 +1520,12 @@ function DocumentToolbar({
       dot: hasFeedback,
     },
     { key: "rewrite" as const, icon: Wand2, label: "AIで書き換え", dot: false },
+    {
+      key: "naturalize" as const,
+      icon: Languages,
+      label: "日本語を整える",
+      dot: false,
+    },
     {
       key: "likeness" as const,
       icon: ShieldCheck,
@@ -1543,7 +1577,7 @@ function TeacherComments({
 }) {
   if ((inlineComments ?? []).length === 0) return null;
   return (
-    <Card>
+    <Card data-tool="comments">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
           <MessageSquare className="size-4" />
@@ -1609,7 +1643,7 @@ function NaturalizeCard({
   );
   const findings = detectUnnaturalJapanese(currentContent, style);
   return (
-    <Card>
+    <Card data-tool="naturalize">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
           <Languages className="size-4" />
