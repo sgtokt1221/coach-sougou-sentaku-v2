@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import type { StudentProfile } from "@/lib/types/user";
@@ -15,11 +16,18 @@ import { SectionTextarea } from "@/components/documents/SectionTextarea";
 import {
   ArrowLeft,
   ArrowRight,
+  Check,
   CheckCircle,
+  CheckCircle2,
+  Circle,
   FileText,
+  GraduationCap,
   Loader2,
+  Plus,
+  Search,
   Sparkles,
   Star,
+  type LucideIcon,
 } from "lucide-react";
 import type { DocumentType } from "@/lib/types/document";
 import { CREATABLE_DOCUMENT_TYPES } from "@/lib/types/document";
@@ -88,7 +96,7 @@ function reconstructDraftResult(
   };
 }
 
-const STEPS = ["書類タイプ", "志望校", "構成", "活動実績", "下書き作成"];
+const STEPS = ["書類タイプ", "志望校", "構成", "書く内容", "下書き作成"];
 /** 構成（フレームワーク）の手順は、作りかけのフレームワーク形式の書類を再開したときだけ出す */
 const FRAMEWORK_STEP_INDEX = 2;
 type WritingMode = "framework" | "free";
@@ -765,163 +773,225 @@ export default function NewDocumentPage() {
     );
   };
 
+  const currentStepNumber =
+    visibleSteps.findIndex(({ index }) => index === step) + 1;
+  /** 下書きを直す画面（フレームワーク形式の再開など）は2列になるので広く取る */
+  const wideLayout = step === 4 && !!draftResult;
+  const isSameUniversity = (u: UniversityOption) =>
+    selectedUniversity?.universityId === u.universityId &&
+    selectedUniversity?.facultyId === u.facultyId;
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" onClick={() => router.back()}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
+    <div
+      className={`mx-auto w-full space-y-8 px-4 py-6 lg:py-8 ${
+        wideLayout ? "max-w-6xl" : "max-w-2xl"
+      }`}
+    >
+      <div className="space-y-2">
+        <Button
+          variant="ghost"
+          className="text-muted-foreground -ml-2 h-11 gap-2 px-2 text-sm lg:min-h-11"
+          onClick={() => router.back()}
+        >
+          <ArrowLeft className="size-5" />
           戻る
         </Button>
         <h1 className="text-2xl font-bold">新しい書類を作成</h1>
         {docId && (
-          <span className="text-muted-foreground ml-auto text-xs whitespace-nowrap">
+          <p className="text-muted-foreground text-sm" aria-live="polite">
             {saveStatus === "saving" && "保存中…"}
             {saveStatus === "saved" &&
               lastSavedAt &&
-              `保存済み ${lastSavedAt.toLocaleTimeString("ja-JP", {
+              `途中まで保存済み（${lastSavedAt.toLocaleTimeString("ja-JP", {
                 hour: "2-digit",
                 minute: "2-digit",
-              })}`}
-            {saveStatus === "error" && "保存に失敗（自動再試行）"}
-          </span>
+              })}）`}
+            {saveStatus === "error" && "保存に失敗しました（自動で再試行します）"}
+            {saveStatus !== "saving" &&
+              saveStatus !== "error" &&
+              !(saveStatus === "saved" && lastSavedAt) &&
+              "途中までの内容は自動で保存されます"}
+          </p>
         )}
       </div>
 
-      {/* Step indicator */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2">
-        {visibleSteps.map(({ label, index: i }, n) => (
-          <div key={label} className="flex items-center gap-2">
-            <div
-              className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium whitespace-nowrap ${
-                i === step
-                  ? "bg-primary text-primary-foreground"
-                  : i < step
-                    ? "bg-primary/20 text-primary"
-                    : "bg-muted text-muted-foreground"
-              }`}
-            >
-              {i < step ? (
-                <CheckCircle className="h-3.5 w-3.5" />
-              ) : (
-                <span className="w-3.5 text-center text-xs">{n + 1}</span>
-              )}
-              {label}
-            </div>
-            {n < visibleSteps.length - 1 && (
-              <ArrowRight className="text-muted-foreground h-4 w-4 shrink-0" />
-            )}
-          </div>
-        ))}
-      </div>
+      {/* 手順の表示 */}
+      <nav aria-label="作成の手順">
+        <p className="sr-only">
+          手順 {currentStepNumber} / {visibleSteps.length}
+        </p>
+        <ol
+          className="grid"
+          style={{
+            gridTemplateColumns: `repeat(${visibleSteps.length}, minmax(0, 1fr))`,
+          }}
+        >
+          {visibleSteps.map(({ label, index: i }, n) => {
+            const done = i < step;
+            const current = i === step;
+            return (
+              <li
+                key={label}
+                className="relative flex flex-col items-center gap-2 text-center"
+                aria-current={current ? "step" : undefined}
+              >
+                {n > 0 && (
+                  <span
+                    aria-hidden
+                    className={`absolute top-4 h-0.5 rounded-full ${
+                      i <= step ? "bg-primary" : "bg-border"
+                    }`}
+                    style={{
+                      left: "calc(-50% + 1.5rem)",
+                      right: "calc(50% + 1.5rem)",
+                    }}
+                  />
+                )}
+                <span
+                  className={`flex size-8 items-center justify-center rounded-full text-sm font-bold tabular-nums ${
+                    current
+                      ? "bg-primary text-primary-foreground"
+                      : done
+                        ? "bg-primary/15 text-primary"
+                        : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {done ? <Check className="size-4" strokeWidth={2.5} /> : n + 1}
+                </span>
+                <span
+                  className={`text-sm leading-tight ${
+                    current
+                      ? "text-foreground font-bold"
+                      : "text-muted-foreground"
+                  }`}
+                >
+                  {label}
+                  {done && <span className="sr-only">（済み）</span>}
+                </span>
+              </li>
+            );
+          })}
+        </ol>
+      </nav>
 
       {/* Step 0: Document type */}
       {step === 0 && (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {CREATABLE_DOCUMENT_TYPES.map((type) => (
-            <Card
-              key={type}
-              className={`cursor-pointer transition-all hover:shadow-md ${
-                documentType === type
-                  ? "ring-primary border-primary ring-2"
-                  : ""
-              }`}
-              onClick={() => setDocumentType(type)}
-            >
-              <CardHeader className="pb-2">
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <FileText className="h-4 w-4" />
-                  {type}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground text-sm">
-                  {DOCUMENT_TEMPLATES.find((t) => t.documentType === type)
+        <section className="space-y-6">
+          <StepHeading
+            title="どの書類を作りますか"
+            description="作れるのは志望理由書と自己推薦書です。"
+          />
+          <div className="grid gap-4 sm:grid-cols-2">
+            {CREATABLE_DOCUMENT_TYPES.map((type) => (
+              <ChoiceCard
+                key={type}
+                selected={documentType === type}
+                onClick={() => setDocumentType(type)}
+                icon={FileText}
+                title={type}
+                description={
+                  DOCUMENT_TYPE_DESCRIPTIONS[type] ??
+                  DOCUMENT_TEMPLATES.find((t) => t.documentType === type)
                     ?.sampleStructure.split("\n")[0]
                     .replace("【", "")
-                    .replace("】", "") || type}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                    .replace("】", "")
+                }
+              />
+            ))}
+          </div>
+        </section>
       )}
 
       {/* Step 1: University selection */}
       {step === 1 && (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {universities.map((u) => (
-            <Card
-              key={`${u.universityId}-${u.facultyId}`}
-              className={`cursor-pointer transition-all hover:shadow-md ${
-                selectedUniversity?.universityId === u.universityId &&
-                selectedUniversity?.facultyId === u.facultyId
-                  ? "ring-primary border-primary ring-2"
-                  : ""
-              }`}
-              onClick={() => setSelectedUniversity(u)}
-            >
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base">{u.universityName}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground text-sm">{u.facultyName}</p>
-              </CardContent>
-            </Card>
-          ))}
-
-          {/* 他の大学から選ぶ */}
-          <div className="pt-2">
-            {!showAllUniversities ? (
-              <button
-                type="button"
-                onClick={() => setShowAllUniversities(true)}
-                className="text-muted-foreground hover:text-primary text-xs underline transition-colors"
-              >
-                他の大学・学部から選ぶ
-              </button>
-            ) : (
-              <div className="space-y-2">
-                <Label className="text-xs">他の大学・学部</Label>
-                <select
-                  className="border-border bg-background w-full rounded-md border px-3 py-2 text-sm"
-                  value={
-                    selectedUniversity
-                      ? `${selectedUniversity.universityId}:${selectedUniversity.facultyId}`
-                      : ""
-                  }
-                  onChange={(e) => {
-                    const uni = allUniversities.find(
-                      (u) =>
-                        `${u.universityId}:${u.facultyId}` === e.target.value
-                    );
-                    if (uni) setSelectedUniversity(uni);
-                  }}
-                >
-                  <option value="">選択してください</option>
-                  {allUniversities.map((u) => (
-                    <option
-                      key={`${u.universityId}:${u.facultyId}`}
-                      value={`${u.universityId}:${u.facultyId}`}
-                    >
-                      {u.universityName} — {u.facultyName}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Step 2: Framework selection */}
-      {step === 2 && (
-        <div className="space-y-4">
-          {template && (
-            <p className="text-muted-foreground text-sm">
-              {documentType}には以下のフレームワークが推奨されます。
+        <section className="space-y-6">
+          <StepHeading
+            title="どの大学・学部に出しますか"
+            description="志望校に登録している大学・学部から選べます。"
+          />
+          {universities.length > 0 ? (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {universities.map((u) => (
+                <ChoiceCard
+                  key={`${u.universityId}-${u.facultyId}`}
+                  selected={isSameUniversity(u)}
+                  onClick={() => setSelectedUniversity(u)}
+                  icon={GraduationCap}
+                  title={u.universityName}
+                  description={u.facultyName}
+                />
+              ))}
+            </div>
+          ) : (
+            <p className="bg-muted rounded-xl px-4 py-4 text-sm sm:px-6">
+              志望校がまだ登録されていません。下の「他の大学・学部から選ぶ」から選べます。
             </p>
           )}
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+
+          {/* 他の大学から選ぶ */}
+          {!showAllUniversities ? (
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11 gap-2 px-4 text-sm lg:min-h-11"
+              onClick={() => setShowAllUniversities(true)}
+            >
+              <Search className="size-5" />
+              他の大学・学部から選ぶ
+            </Button>
+          ) : (
+            <div className="space-y-2">
+              <Label htmlFor="otherUniversity" className="text-base font-bold">
+                他の大学・学部
+              </Label>
+              <select
+                id="otherUniversity"
+                className={`border-input bg-card focus-visible:ring-ring h-11 w-full rounded-lg border px-3 text-base focus-visible:ring-2 focus-visible:outline-none ${
+                  selectedUniversity &&
+                  !universities.some((u) => isSameUniversity(u))
+                    ? "border-primary ring-primary ring-1"
+                    : ""
+                }`}
+                value={
+                  selectedUniversity
+                    ? `${selectedUniversity.universityId}:${selectedUniversity.facultyId}`
+                    : ""
+                }
+                onChange={(e) => {
+                  const uni = allUniversities.find(
+                    (u) =>
+                      `${u.universityId}:${u.facultyId}` === e.target.value
+                  );
+                  if (uni) setSelectedUniversity(uni);
+                }}
+              >
+                <option value="">選択してください</option>
+                {allUniversities.map((u) => (
+                  <option
+                    key={`${u.universityId}:${u.facultyId}`}
+                    value={`${u.universityId}:${u.facultyId}`}
+                  >
+                    {u.universityName} {u.facultyName}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* Step 2: Framework selection（フレームワーク形式の書類を再開したときだけ） */}
+      {step === 2 && (
+        <section className="space-y-6">
+          <StepHeading
+            title="構成を選ぶ"
+            description={
+              template
+                ? `${documentType}には「推奨」の付いた構成が向いています。`
+                : undefined
+            }
+          />
+          <div className="grid gap-4 sm:grid-cols-2">
             <Card
               className={`cursor-pointer transition-all hover:shadow-md ${
                 writingMode === "free"
@@ -936,9 +1006,11 @@ export default function NewDocumentPage() {
               }}
             >
               <CardHeader className="pb-2">
-                <CardTitle className="flex items-center gap-2 text-base">
+                <CardTitle className="flex flex-wrap items-center gap-2 text-base">
                   自由記述
-                  <Badge variant="outline">フレームワークなし</Badge>
+                  <Badge variant="outline" className="h-6 text-sm">
+                    フレームワークなし
+                  </Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -965,10 +1037,10 @@ export default function NewDocumentPage() {
                   }}
                 >
                   <CardHeader className="pb-2">
-                    <CardTitle className="flex items-center gap-2 text-base">
+                    <CardTitle className="flex flex-wrap items-center gap-2 text-base">
                       {fw.name}
                       {isRecommended && (
-                        <Badge variant="secondary" className="gap-1">
+                        <Badge variant="secondary" className="h-6 gap-1 text-sm">
                           <Star className="h-3 w-3" />
                           推奨
                         </Badge>
@@ -981,7 +1053,7 @@ export default function NewDocumentPage() {
                     </p>
                     <div className="flex flex-wrap gap-1">
                       {fw.sections.map((s) => (
-                        <Badge key={s.id} variant="outline" className="text-xs">
+                        <Badge key={s.id} variant="outline" className="h-6 text-sm">
                           {s.title}
                         </Badge>
                       ))}
@@ -991,22 +1063,29 @@ export default function NewDocumentPage() {
               );
             })}
           </div>
-        </div>
+        </section>
       )}
 
-      {/* Step 3: Activity selection */}
+      {/* Step 3: 字数・方向性・活動実績 */}
       {step === 3 && (
-        <div className="space-y-4">
-          <p className="text-muted-foreground text-sm">
-            活動実績を選択すると、下書きに自動的に反映されます（任意）。
-          </p>
+        <section className="space-y-8">
+          <StepHeading
+            title="字数と書く内容を決める"
+            description="AIが下書きを書くときの条件です。白紙から書く場合も、目標文字数は書類に残ります。"
+          />
 
-          <div className="space-y-2">
-            <Label htmlFor="wordCount">目標文字数</Label>
+          <div className="space-y-3">
+            <Label htmlFor="wordCount" className="text-base font-bold">
+              目標文字数
+            </Label>
+            <p className="text-muted-foreground text-sm" id="wordCountHelp">
+              {TARGET_WORD_COUNT_MIN}〜{TARGET_WORD_COUNT_MAX}字。AIはこの字数の90〜110%で下書きを書きます。
+            </p>
             <div className="flex items-center gap-2">
               <Input
                 id="wordCount"
                 inputMode="numeric"
+                aria-describedby="wordCountHelp"
                 value={wordCountInput}
                 onChange={(e) =>
                   setWordCountInput(e.target.value.replace(/[^0-9０-９]/g, "").replace(/[０-９]/g, (d) => String.fromCharCode(d.charCodeAt(0) - 0xfee0)))
@@ -1015,149 +1094,248 @@ export default function NewDocumentPage() {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") commitWordCount();
                 }}
-                className="w-32"
+                className="bg-card h-11 w-32 text-base tabular-nums md:text-base"
               />
-              <span className="text-muted-foreground text-sm">字</span>
+              <span className="text-base">字</span>
             </div>
-            <p className="text-muted-foreground text-xs">
-              {TARGET_WORD_COUNT_MIN}〜{TARGET_WORD_COUNT_MAX}字。AIはこの字数（90〜110%）で下書きを書きます。
-            </p>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="emphasis">
-              特に熱く書いてほしい点・書類の方向性
-              <span className="text-muted-foreground ml-1 text-xs font-normal">
-                （任意）
-              </span>
-            </Label>
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <Label htmlFor="emphasis" className="text-base font-bold">
+                特に熱く書いてほしい点・書類の方向性
+              </Label>
+              <OptionalTag />
+            </div>
+            <p className="text-muted-foreground text-sm" id="emphasisHelp">
+              ここに書いた点を一番熱く、この方向でまとめます。書いた出来事は使いますが、書いていない体験は足しません。
+            </p>
             <Textarea
               id="emphasis"
+              aria-describedby="emphasisHelp"
               value={emphasis}
               onChange={(e) =>
                 setEmphasis(e.target.value.slice(0, STUDENT_EMPHASIS_MAX_CHARS))
               }
-              rows={3}
+              rows={4}
+              className="bg-card text-base md:text-base"
               placeholder="例: 祖母の入院で薬剤師の仕事を知ったことを一番熱く書きたい。将来は地域の病院で働きたいという方向でまとめてほしい。"
             />
-            <p className="text-muted-foreground text-xs">
-              AIが下書きを書くときに、ここに書いた点を最も熱く、この方向でまとめます。
-              書いた出来事は使いますが、書いていない体験は足しません。（
-              {emphasis.length}/{STUDENT_EMPHASIS_MAX_CHARS}字）
+            <p className="text-muted-foreground text-right text-sm tabular-nums">
+              {emphasis.length} / {STUDENT_EMPHASIS_MAX_CHARS}字
             </p>
           </div>
 
-          {activities.length === 0 ? (
-            <Card>
-              <CardContent className="text-muted-foreground py-8 text-center">
-                登録済みの活動実績がありません。スキップして下書きを作れます。
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid gap-3 sm:grid-cols-2">
-              {activities.map((a) => (
-                <Card
-                  key={a.id}
-                  className={`cursor-pointer transition-all hover:shadow-md ${
-                    selectedActivityIds.includes(a.id)
-                      ? "ring-primary border-primary ring-2"
-                      : ""
-                  }`}
-                  onClick={() => toggleActivity(a.id)}
-                >
-                  <CardHeader className="pb-2">
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      <input
-                        type="checkbox"
-                        checked={selectedActivityIds.includes(a.id)}
-                        readOnly
-                        className="h-4 w-4 rounded"
-                      />
-                      {a.title}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground line-clamp-2 text-sm">
-                      {a.description}
-                    </p>
-                  </CardContent>
-                </Card>
-              ))}
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="text-base font-bold">下書きに使う活動実績</h3>
+              <OptionalTag />
             </div>
-          )}
-        </div>
+            {activities.length === 0 ? (
+              <div className="bg-muted flex flex-col gap-4 rounded-xl px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">
+                    登録済みの活動実績はありません
+                  </p>
+                  <p className="text-muted-foreground text-sm">
+                    なくても下書きは作れます。登録すると、部活・研究・ボランティアなどの経験が下書きに入ります。
+                  </p>
+                </div>
+                <Button
+                  asChild
+                  variant="outline"
+                  className="bg-card h-11 shrink-0 gap-2 px-4 text-sm lg:min-h-11"
+                >
+                  <Link href="/student/activities/new">
+                    <Plus className="size-5" />
+                    活動実績を登録する
+                  </Link>
+                </Button>
+              </div>
+            ) : (
+              <>
+                <p className="text-muted-foreground text-sm">
+                  選んだ活動実績が下書きに入ります。
+                  {selectedActivityIds.length > 0 && (
+                    <span className="text-foreground font-medium whitespace-nowrap">
+                      {selectedActivityIds.length}件選択中
+                    </span>
+                  )}
+                </p>
+                <ul className="space-y-3">
+                  {activities.map((a) => {
+                    const checked = selectedActivityIds.includes(a.id);
+                    return (
+                      <li key={a.id}>
+                        <button
+                          type="button"
+                          role="checkbox"
+                          aria-checked={checked}
+                          onClick={() => toggleActivity(a.id)}
+                          className={`focus-visible:ring-ring flex min-h-11 w-full items-start gap-4 rounded-xl px-4 py-4 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none sm:px-6 ${
+                            checked
+                              ? "bg-primary/10 ring-primary ring-2"
+                              : "bg-card ring-foreground/10 hover:bg-muted/50 ring-1"
+                          }`}
+                        >
+                          <span
+                            aria-hidden
+                            className={`mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-md ${
+                              checked
+                                ? "bg-primary text-primary-foreground"
+                                : "border-input bg-card border-2"
+                            }`}
+                          >
+                            {checked && <Check className="size-4" strokeWidth={3} />}
+                          </span>
+                          <span className="min-w-0 flex-1 space-y-1">
+                            <span className="block text-base font-medium">
+                              {a.title}
+                            </span>
+                            {a.description && (
+                              <span className="text-muted-foreground line-clamp-2 block text-sm">
+                                {a.description}
+                              </span>
+                            )}
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <Link
+                  href="/student/activities/new"
+                  className="text-primary inline-flex min-h-11 items-center gap-2 text-sm font-medium hover:underline"
+                >
+                  <Plus className="size-5" />
+                  活動実績を登録する
+                </Link>
+              </>
+            )}
+          </div>
+        </section>
       )}
 
       {/* Step 4: Generate & preview */}
       {step === 4 && (
-        <div className="space-y-4">
+        <section className="space-y-6">
+          {!draftResult && (
+            <StepHeading
+              title="下書きの作り方を選ぶ"
+              description={
+                writingMode === "free"
+                  ? "どちらを選んでも編集画面に移ります。AI添削や書き換えはそこで使えます。"
+                  : undefined
+              }
+            />
+          )}
+
+          {!draftResult && (
+            <dl className="bg-muted grid grid-cols-[auto_minmax(0,1fr)] gap-x-6 gap-y-2 rounded-xl px-4 py-4 text-sm sm:px-6">
+              <dt className="text-muted-foreground">書類</dt>
+              <dd className="font-medium">{documentType}</dd>
+              <dt className="text-muted-foreground">志望校</dt>
+              <dd className="font-medium">
+                {selectedUniversity?.universityName}{" "}
+                {selectedUniversity?.facultyName}
+              </dd>
+              {writingMode === "framework" && frameworkType && (
+                <>
+                  <dt className="text-muted-foreground">構成</dt>
+                  <dd className="font-medium">
+                    {FRAMEWORK_TYPE_LABELS[frameworkType]}
+                  </dd>
+                </>
+              )}
+              <dt className="text-muted-foreground">目標文字数</dt>
+              <dd className="font-medium tabular-nums">{targetWordCount}字</dd>
+              <dt className="text-muted-foreground">活動実績</dt>
+              <dd className="font-medium">
+                {selectedActivityIds.length > 0
+                  ? `${selectedActivityIds.length}件`
+                  : "使わない"}
+              </dd>
+              {emphasis.trim() && (
+                <>
+                  <dt className="text-muted-foreground">熱く書く点</dt>
+                  <dd className="line-clamp-2 font-medium">{emphasis.trim()}</dd>
+                </>
+              )}
+            </dl>
+          )}
+
           {!draftResult && !generating && (
-            <Card>
-              <CardContent className="space-y-4 py-8 text-center">
-                <div className="space-y-2">
-                  <p className="font-medium">
-                    {documentType} - {selectedUniversity?.universityName}{" "}
-                    {selectedUniversity?.facultyName}
-                  </p>
-                  <p className="text-muted-foreground text-sm">
-                    {writingMode === "framework" && frameworkType
-                      ? `構成: ${FRAMEWORK_TYPE_LABELS[frameworkType]} / `
-                      : ""}
-                    {selectedActivityIds.length > 0 &&
-                      `活動実績: ${selectedActivityIds.length}件 / `}
-                    {`目標: ${targetWordCount}字`}
-                  </p>
-                </div>
-
-                <div className="space-y-3">
-                  {writingMode === "free" && (
-                    <Button
-                      onClick={handleGenerateFromSelfAnalysis}
-                      size="lg"
-                      className="gap-2 bg-gradient-to-r from-sky-500 to-purple-600 hover:from-sky-600 hover:to-purple-700"
-                    >
-                      <Sparkles className="h-4 w-4" />
+            <div className="space-y-4">
+              {writingMode === "free" && (
+                <button
+                  type="button"
+                  onClick={handleGenerateFromSelfAnalysis}
+                  disabled={saving}
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-ring flex min-h-11 w-full items-start gap-4 rounded-xl px-4 py-4 text-left transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:opacity-60 sm:px-6"
+                >
+                  <Sparkles className="mt-0.5 size-6 shrink-0" />
+                  <span className="space-y-1">
+                    <span className="block text-base font-bold">
                       自己分析と活動実績からAIで下書きを作る
-                    </Button>
-                  )}
+                    </span>
+                    <span className="text-primary-foreground/85 block text-sm">
+                      自己分析・選んだ活動実績・熱く書いてほしい点をもとに、目標文字数の下書きを書きます。
+                    </span>
+                  </span>
+                </button>
+              )}
 
-                  {writingMode === "framework" && (
-                    <Button
-                      onClick={handleGenerate}
-                      size="lg"
-                      className="gap-2"
-                      variant="outline"
-                    >
-                      <Sparkles className="h-4 w-4" />
-                      フレームワーク形式で下書き生成
-                    </Button>
-                  )}
+              {writingMode === "framework" && (
+                <button
+                  type="button"
+                  onClick={handleGenerate}
+                  className="bg-card ring-foreground/10 hover:bg-muted/50 focus-visible:ring-ring flex min-h-11 w-full items-start gap-4 rounded-xl px-4 py-4 text-left ring-1 transition-colors focus-visible:ring-2 focus-visible:outline-none sm:px-6"
+                >
+                  <Sparkles className="text-primary mt-0.5 size-6 shrink-0" />
+                  <span className="block text-base font-bold">
+                    フレームワーク形式で下書き生成
+                  </span>
+                </button>
+              )}
 
-                  {writingMode === "free" && (
-                    <Button
-                      onClick={handleStartFreeWriting}
-                      size="lg"
-                      className="gap-2"
-                      variant="outline"
-                    >
-                      <FileText className="h-4 w-4" />
+              {writingMode === "free" && (
+                <button
+                  type="button"
+                  onClick={handleStartFreeWriting}
+                  disabled={saving}
+                  className="bg-card ring-foreground/10 hover:bg-muted/50 focus-visible:ring-ring flex min-h-11 w-full items-start gap-4 rounded-xl px-4 py-4 text-left ring-1 transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:opacity-60 sm:px-6"
+                >
+                  {saving ? (
+                    <Loader2 className="text-primary mt-0.5 size-6 shrink-0 animate-spin" />
+                  ) : (
+                    <FileText className="text-primary mt-0.5 size-6 shrink-0" />
+                  )}
+                  <span className="space-y-1">
+                    <span className="block text-base font-bold">
                       白紙から自由に書き始める
-                    </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+                    </span>
+                    <span className="text-muted-foreground block text-sm">
+                      何も入っていない本文から、自分で書き始めます。
+                    </span>
+                  </span>
+                </button>
+              )}
+            </div>
           )}
 
           {generating && (
-            <Card>
-              <CardContent className="space-y-4 py-12 text-center">
-                <Loader2 className="text-primary mx-auto h-8 w-8 animate-spin" />
-                <p className="text-muted-foreground">
-                  AIが下書きを書いています...
+            <div
+              className="bg-muted space-y-3 rounded-xl px-4 py-12 text-center"
+              role="status"
+            >
+              <Loader2 className="text-primary mx-auto size-8 animate-spin" />
+              <p className="text-base font-medium">AIが下書きを書いています…</p>
+              {writingMode === "free" && (
+                <p className="text-muted-foreground text-sm">
+                  書き終わると編集画面に移ります。このままお待ちください。
                 </p>
-              </CardContent>
-            </Card>
+              )}
+            </div>
           )}
 
           {draftResult && (
@@ -1279,22 +1457,122 @@ export default function NewDocumentPage() {
               </div>
             </div>
           )}
-        </div>
+        </section>
       )}
 
       {/* Navigation */}
       {step < 4 && (
-        <div className="flex justify-between">
-          <Button variant="outline" onClick={handleBack} disabled={step === 0}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            前へ
-          </Button>
-          <Button onClick={handleNext} disabled={!canProceed() || creating}>
+        <div className="border-border flex items-center gap-3 border-t pt-6">
+          {step > 0 && (
+            <Button
+              variant="outline"
+              className="bg-card h-11 gap-2 px-4 text-sm lg:min-h-11"
+              onClick={handleBack}
+            >
+              <ArrowLeft className="size-5" />
+              前へ
+            </Button>
+          )}
+          <Button
+            className="ml-auto h-11 min-w-32 gap-2 px-6 text-sm lg:min-h-11"
+            onClick={handleNext}
+            disabled={!canProceed() || creating}
+          >
+            {creating ? <Loader2 className="size-5 animate-spin" /> : null}
             次へ
-            <ArrowRight className="ml-2 h-4 w-4" />
+            <ArrowRight className="size-5" />
           </Button>
         </div>
       )}
     </div>
+  );
+}
+
+/** 書類の種類カードの説明（画面に出す文言だけ） */
+const DOCUMENT_TYPE_DESCRIPTIONS: Partial<Record<DocumentType, string>> = {
+  志望理由書: "なぜこの大学・学部で学びたいのか、入学後に何をしたいのかを書きます。",
+  自己推薦書: "これまでの経験と強みから、自分を大学に推薦する理由を書きます。",
+};
+
+/** 手順ごとの見出しと説明 */
+function StepHeading({
+  title,
+  description,
+}: {
+  title: string;
+  description?: string;
+}) {
+  return (
+    <div className="space-y-1">
+      <h2 className="text-xl font-bold">{title}</h2>
+      {description && (
+        <p className="text-muted-foreground text-base">{description}</p>
+      )}
+    </div>
+  );
+}
+
+/** 「任意」の札 */
+function OptionalTag() {
+  return (
+    <span className="bg-muted text-muted-foreground rounded-full px-2.5 py-0.5 text-sm">
+      任意
+    </span>
+  );
+}
+
+/**
+ * 1つだけ選ぶ選択肢のカード。カード全体が押せる。
+ * 選択中はベタ塗り（primary 地に白抜き文字）＋チェックで示す。
+ */
+function ChoiceCard({
+  selected,
+  onClick,
+  icon: Icon,
+  title,
+  description,
+}: {
+  selected: boolean;
+  onClick: () => void;
+  icon: LucideIcon;
+  title: string;
+  description?: string;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={selected}
+      onClick={onClick}
+      className={`focus-visible:ring-ring flex min-h-11 w-full items-start gap-4 rounded-xl px-4 py-4 text-left transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none sm:px-6 sm:py-6 ${
+        selected
+          ? "bg-primary text-primary-foreground"
+          : "bg-card text-card-foreground ring-foreground/10 hover:bg-muted/50 ring-1"
+      }`}
+    >
+      <Icon
+        className={`mt-0.5 size-6 shrink-0 ${selected ? "" : "text-primary"}`}
+        strokeWidth={1.75}
+      />
+      <span className="min-w-0 flex-1 space-y-1">
+        <span className="block text-lg font-bold">{title}</span>
+        {description && (
+          <span
+            className={`block text-sm ${
+              selected ? "text-primary-foreground/85" : "text-muted-foreground"
+            }`}
+          >
+            {description}
+          </span>
+        )}
+      </span>
+      {selected ? (
+        <CheckCircle2 className="mt-0.5 size-6 shrink-0" aria-hidden />
+      ) : (
+        <Circle
+          className="text-muted-foreground/60 mt-0.5 size-6 shrink-0"
+          aria-hidden
+        />
+      )}
+    </button>
   );
 }

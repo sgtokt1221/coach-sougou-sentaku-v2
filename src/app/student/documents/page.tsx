@@ -1,29 +1,63 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FileText, Plus, Clock, CheckCircle, AlertTriangle, FolderOpen, ChevronDown, ChevronUp, Trash2 } from "lucide-react";
-import { EmptyState } from "@/components/shared/EmptyState";
-import type { Document, DocumentStatus } from "@/lib/types/document";
-import { documentStatusLabel2, isDocumentComplete } from "@/lib/types/document";
-import { DocumentReviewBadge } from "@/components/documents/DocumentReviewBadge";
+import {
+  FileText,
+  Plus,
+  Clock,
+  AlertTriangle,
+  ChevronDown,
+  ChevronRight,
+  Trash2,
+} from "lucide-react";
+import type { Document, DocumentReviewState } from "@/lib/types/document";
+import {
+  DOCUMENT_REVIEW_LABELS,
+  documentStatusLabel2,
+  isDocumentComplete,
+} from "@/lib/types/document";
 import { useAuthSWR } from "@/lib/api/swr";
 import { authFetch } from "@/lib/api/client";
-
-/** 2状態表示: draft=outline / それ以外(完成扱い)=default。 */
-function statusVariant2(status: DocumentStatus): "outline" | "default" {
-  return status === "draft" ? "outline" : "default";
-}
 
 function daysUntil(dateStr: string): number {
   const now = new Date();
   const target = new Date(dateStr);
   return Math.ceil((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 }
+
+/** 状態の札。色だけに頼らず必ず文字を添える。 */
+function StatusChip({
+  tone,
+  children,
+}: {
+  tone: "solid" | "muted" | "soft" | "danger";
+  children: React.ReactNode;
+}) {
+  const cls = {
+    solid: "bg-primary text-primary-foreground",
+    soft: "bg-primary/15 text-primary",
+    muted: "bg-muted text-foreground",
+    danger: "bg-destructive/10 text-destructive",
+  }[tone];
+  return (
+    <span
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-sm font-medium whitespace-nowrap ${cls}`}
+    >
+      {children}
+    </span>
+  );
+}
+
+/** 管理者レビューの状態の札（一覧の行用。編集画面のバッジとは別に、14px で出す） */
+const REVIEW_TONE: Record<DocumentReviewState, "soft" | "danger" | "muted"> = {
+  approved: "soft",
+  revision_requested: "danger",
+  resubmitted: "muted",
+};
 
 interface UniversityGroup {
   /** まとめるときの鍵（大学ID＋学部ID）。画面の key にも同じものを使う */
@@ -32,6 +66,7 @@ interface UniversityGroup {
   universityName: string;
   facultyName: string;
   documents: Document[];
+  completedCount: number;
   completionRate: number;
 }
 
@@ -50,21 +85,39 @@ export default function DocumentsPage() {
   /** 削除ボタン・確認文の文言を書類の状態で出し分ける。 */
   const deleteLabels = (d: Document) => {
     if (isWizardIncomplete(d)) {
-      return { action: "破棄", confirm: "破棄しますか？", running: "破棄中..." };
+      return { action: "破棄", confirm: "作成途中の書類を破棄しますか？", running: "破棄中..." };
     }
     if (isDocumentComplete(d.status)) {
       return {
         action: "削除",
-        confirm: "提出済みの書類です。削除すると元に戻せません。削除しますか？",
+        confirm: "完成した書類です。削除すると元に戻せません。削除しますか？",
         running: "削除中...",
       };
     }
-    return { action: "削除", confirm: "削除しますか？", running: "削除中..." };
+    return { action: "削除", confirm: "この書類を削除しますか？元に戻せません。", running: "削除中..." };
   };
 
   /** カードのリンク先。作成途中はウィザード再開、それ以外は書類詳細へ。 */
   const hrefFor = (d: Document) =>
     isWizardIncomplete(d) ? `/student/documents/new?resume=${d.id}` : `/student/documents/${d.id}`;
+
+  /**
+   * 行に出す題。グループの見出しに大学・学部名が出ているので、題の頭に同じ名前が
+   * 付いていれば省く（「立命館大学薬学部 志望理由書」→「志望理由書」）。
+   */
+  const displayTitle = (d: Document) => {
+    const title = d.title || d.type;
+    for (const prefix of [
+      `${d.universityName}${d.facultyName}`,
+      `${d.universityName} ${d.facultyName}`,
+    ]) {
+      if (prefix.trim() && title.startsWith(prefix)) {
+        const rest = title.slice(prefix.length).trim();
+        return rest || d.type;
+      }
+    }
+    return title;
+  };
 
   /**
    * 書類を削除する。DELETE 成功後は SWR キャッシュから当該書類を除外する。
@@ -105,6 +158,7 @@ export default function DocumentsPage() {
       universityName: first.universityName,
       facultyName: first.facultyName,
       documents: docs,
+      completedCount: finalCount,
       completionRate: docs.length > 0 ? Math.round((finalCount / docs.length) * 100) : 0,
     });
   }
@@ -133,36 +187,46 @@ export default function DocumentsPage() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-5 lg:py-8 space-y-4 lg:space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold flex items-center gap-2">
-          <FileText className="size-5" />
-          出願書類
-        </h1>
-        <Button onClick={() => router.push("/student/documents/new")}>
-          <Plus className="size-4 mr-2" />
-          新規作成
-        </Button>
+    <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 lg:py-8">
+      <div className="space-y-2">
+        <div className="flex items-center justify-between gap-4">
+          <h1 className="text-2xl font-bold">出願書類</h1>
+          <Button
+          className="h-11 shrink-0 gap-2 px-4 text-sm lg:min-h-11"
+          onClick={() => router.push("/student/documents/new")}
+        >
+          <Plus className="size-5" />
+          新しく作る
+          </Button>
+        </div>
+        <p className="text-muted-foreground text-sm">
+          志望理由書・自己推薦書を、大学・学部ごとにまとめています。
+        </p>
       </div>
 
       {loading ? (
         <div className="space-y-4">
-          <Skeleton className="h-40 w-full" />
-          <Skeleton className="h-40 w-full" />
+          <Skeleton className="h-40 w-full rounded-xl" />
+          <Skeleton className="h-24 w-full rounded-xl" />
         </div>
       ) : documents.length === 0 ? (
-        <Card>
-          <CardContent>
-            <EmptyState
-              icon={FolderOpen}
-              title="まだ書類がありません"
-              description="出願書類の作成を始めましょう"
-              action={{ label: "書類を作成する", href: "/student/documents/new" }}
-            />
-          </CardContent>
-        </Card>
+        <div className="bg-muted flex flex-col items-center gap-4 rounded-xl px-6 py-12 text-center">
+          <FileText className="text-muted-foreground size-10" strokeWidth={1.75} />
+          <div className="space-y-1">
+            <p className="text-lg font-bold">まだ書類がありません</p>
+            <p className="text-muted-foreground text-sm">
+              志望校を選んで、志望理由書・自己推薦書の下書きを作れます。
+            </p>
+          </div>
+          <Button asChild className="h-11 gap-2 px-4 text-sm lg:min-h-11">
+            <Link href="/student/documents/new">
+              <Plus className="size-5" />
+              書類を作成する
+            </Link>
+          </Button>
+        </div>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-4">
           {universityGroups.map((group, index) => {
             // まとめた鍵（大学ID＋学部ID）をそのまま使う。学部名で作ると、同じ学部名で
             // 学部IDが違う書類のグループが重なり、React が片方を落とすことがあった
@@ -170,137 +234,155 @@ export default function DocumentsPage() {
             const isExpanded = isGroupExpanded(groupKey, index);
 
             return (
-              <Card key={groupKey}>
-                <CardHeader
-                  className="pb-3 cursor-pointer hover:bg-muted/50 transition-colors"
+              <section
+                key={groupKey}
+                className="bg-card text-card-foreground ring-foreground/10 overflow-hidden rounded-xl ring-1"
+              >
+                <button
+                  type="button"
+                  className="hover:bg-muted/50 flex w-full items-center gap-3 px-4 py-4 text-left transition-colors sm:px-6"
+                  aria-expanded={isExpanded}
                   onClick={() => toggleGroup(groupKey)}
                 >
-                  <div className="flex items-center justify-between">
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <h2 className="text-lg font-bold">
+                      {group.universityName} {group.facultyName}
+                    </h2>
                     <div className="flex items-center gap-3">
-                      <CardTitle className="text-base">
-                        {group.universityName} {group.facultyName}
-                      </CardTitle>
-                      <Badge variant="outline" className="text-xs">
-                        {group.documents.length}件
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-muted-foreground">
-                        {group.completionRate}% 完了
+                      <div
+                        className="bg-muted h-2 flex-1 overflow-hidden rounded-full"
+                        role="progressbar"
+                        aria-valuenow={group.completionRate}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-label="完成した書類の割合"
+                      >
+                        <div
+                          className="bg-primary h-full rounded-full transition-all"
+                          style={{ width: `${group.completionRate}%` }}
+                        />
+                      </div>
+                      <span className="text-muted-foreground text-sm whitespace-nowrap tabular-nums">
+                        {group.documents.length}件中 {group.completedCount}件完成
                       </span>
-                      {isExpanded ? (
-                        <ChevronUp className="size-4 text-muted-foreground" />
-                      ) : (
-                        <ChevronDown className="size-4 text-muted-foreground" />
-                      )}
                     </div>
                   </div>
-                  <div className="w-full bg-muted rounded-full h-2 mt-2">
-                    <div
-                      className="bg-primary rounded-full h-2 transition-all"
-                      style={{ width: `${group.completionRate}%` }}
-                    />
-                  </div>
-                </CardHeader>
+                  <ChevronDown
+                    className={`text-muted-foreground size-5 shrink-0 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                    aria-hidden
+                  />
+                </button>
+
                 {isExpanded && (
-                  <CardContent className="space-y-2">
+                  <ul className="border-border divide-border divide-y border-t">
                     {group.documents.map((doc) => {
                       const days = doc.deadline ? daysUntil(doc.deadline) : null;
                       const labels = deleteLabels(doc);
+                      const incomplete = isWizardIncomplete(doc);
+                      const title = displayTitle(doc);
+                      const showType = !title.includes(doc.type);
+                      const confirming = confirmingDiscardId === doc.id;
                       return (
-                        <div
-                          key={doc.id}
-                          className="flex items-center justify-between p-3 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors"
-                          onClick={() => router.push(hrefFor(doc))}
-                        >
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium text-sm">{doc.title || doc.type}</span>
-                              {doc.title && doc.title !== doc.type && !doc.title.includes(doc.type) && (
-                                <span className="text-muted-foreground text-xs">{doc.type}</span>
-                              )}
-                              {isWizardIncomplete(doc) && (
-                                <Badge variant="outline">作成途中</Badge>
-                              )}
-                              <Badge variant={statusVariant2(doc.status)}>
-                                {documentStatusLabel2(doc.status)}
-                              </Badge>
-                              <DocumentReviewBadge state={doc.review?.state} />
-                            </div>
-                            <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                              <span>
-                                {doc.wordCount ?? 0}
-                                {doc.targetWordCount ? `/${doc.targetWordCount}` : ""} 文字
-                              </span>
-                              {days !== null && (
-                                <span className="flex items-center gap-1">
-                                  {days <= 7 ? (
-                                    <AlertTriangle className="size-3 text-amber-500" />
-                                  ) : days <= 0 ? (
-                                    <AlertTriangle className="size-3 text-rose-500" />
-                                  ) : (
-                                    <Clock className="size-3" />
-                                  )}
-                                  {days > 0 ? `あと${days}日` : days === 0 ? "今日が期限" : "期限超過"}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          {isDocumentComplete(doc.status) && (
-                            <CheckCircle className="size-5 text-emerald-500 shrink-0" />
-                          )}
-                          {confirmingDiscardId === doc.id ? (
-                            <div
-                              className="flex items-center gap-1 shrink-0"
-                              onClick={(e) => e.stopPropagation()}
+                        <li key={doc.id} className="hover:bg-muted/50 transition-colors">
+                          <div className="flex items-center gap-2 pr-2 sm:pr-4">
+                            <Link
+                              href={hrefFor(doc)}
+                              className="flex min-h-11 min-w-0 flex-1 items-center gap-3 py-4 pr-2 pl-4 sm:pl-6"
                             >
-                              <span className="text-xs text-muted-foreground">{labels.confirm}</span>
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                disabled={discardingId === doc.id}
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  void handleDiscard(doc.id);
-                                }}
-                              >
-                                {discardingId === doc.id ? labels.running : `${labels.action}する`}
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={discardingId === doc.id}
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  setConfirmingDiscardId(null);
-                                }}
-                              >
-                                キャンセル
-                              </Button>
-                            </div>
-                          ) : (
+                              <div className="min-w-0 flex-1 space-y-2">
+                                <p className="text-base font-medium break-words">
+                                  {title}
+                                  {showType && (
+                                    <span className="text-muted-foreground ml-2 text-sm font-normal">
+                                      {doc.type}
+                                    </span>
+                                  )}
+                                </p>
+                                <div className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
+                                  {incomplete ? (
+                                    <StatusChip tone="muted">作成途中</StatusChip>
+                                  ) : (
+                                    <StatusChip
+                                      tone={isDocumentComplete(doc.status) ? "solid" : "muted"}
+                                    >
+                                      {documentStatusLabel2(doc.status)}
+                                    </StatusChip>
+                                  )}
+                                  {doc.review?.state && (
+                                    <StatusChip tone={REVIEW_TONE[doc.review.state]}>
+                                      {DOCUMENT_REVIEW_LABELS[doc.review.state]}
+                                    </StatusChip>
+                                  )}
+                                  {incomplete ? (
+                                    <span>続きから作る</span>
+                                  ) : (
+                                    <span className="whitespace-nowrap tabular-nums">
+                                      {doc.wordCount ?? 0}
+                                      {doc.targetWordCount ? ` / ${doc.targetWordCount}` : ""}字
+                                    </span>
+                                  )}
+                                  {days !== null && (
+                                    <span
+                                      className={`flex items-center gap-1 whitespace-nowrap ${
+                                        days <= 0
+                                          ? "text-destructive font-medium"
+                                          : days <= 7
+                                            ? "text-foreground font-medium"
+                                            : ""
+                                      }`}
+                                    >
+                                      {days <= 7 ? (
+                                        <AlertTriangle className="size-4" />
+                                      ) : (
+                                        <Clock className="size-4" />
+                                      )}
+                                      {days > 0 ? `期限まであと${days}日` : days === 0 ? "今日が期限" : "期限超過"}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              <ChevronRight className="text-muted-foreground size-5 shrink-0" aria-hidden />
+                            </Link>
                             <Button
                               variant="ghost"
-                              size="sm"
-                              className="shrink-0 text-muted-foreground hover:text-destructive"
-                              aria-label={labels.action}
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                setConfirmingDiscardId(doc.id);
-                              }}
+                              size="icon"
+                              className="text-muted-foreground hover:text-destructive size-11 shrink-0 lg:min-h-11 lg:min-w-11"
+                              aria-label={`${title}を${labels.action}`}
+                              disabled={confirming}
+                              onClick={() => setConfirmingDiscardId(doc.id)}
                             >
-                              <Trash2 className="size-4" />
+                              <Trash2 className="size-5" />
                             </Button>
+                          </div>
+                          {confirming && (
+                            <div className="bg-muted mx-4 mb-4 flex flex-col gap-3 rounded-lg p-4 sm:mx-6 sm:flex-row sm:items-center sm:justify-between">
+                              <p className="text-sm font-medium">{labels.confirm}</p>
+                              <div className="flex shrink-0 gap-2">
+                                <Button
+                                  variant="outline"
+                                  className="h-11 px-4 text-sm lg:min-h-11"
+                                  disabled={discardingId === doc.id}
+                                  onClick={() => setConfirmingDiscardId(null)}
+                                >
+                                  やめる
+                                </Button>
+                                <Button
+                                  variant="destructive"
+                                  className="h-11 px-4 text-sm lg:min-h-11"
+                                  disabled={discardingId === doc.id}
+                                  onClick={() => void handleDiscard(doc.id)}
+                                >
+                                  {discardingId === doc.id ? labels.running : `${labels.action}する`}
+                                </Button>
+                              </div>
+                            </div>
                           )}
-                        </div>
+                        </li>
                       );
                     })}
-                  </CardContent>
+                  </ul>
                 )}
-              </Card>
+              </section>
             );
           })}
         </div>
