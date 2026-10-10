@@ -7,13 +7,12 @@ import {
   type DocumentFeedback,
 } from "@/lib/types/document";
 import { prepareAdmissionPolicy } from "@/lib/ai/admission-policy";
-import {
-  loadStudentDocumentContext,
-} from "@/lib/documents/student-context";
+import { loadStudentDocumentContext } from "@/lib/documents/student-context";
 import {
   AI_PROMPT_VERSIONS,
   selectDocumentModel,
 } from "@/lib/ai/prompt-versions";
+import { judgeApMap } from "@/lib/documents/ap-map-judge";
 
 /**
  * 出願書類のAI添削のコア。
@@ -46,7 +45,7 @@ const DISPLAY_MAX_CORRECTIONS = 5;
 export class DocumentReviewError extends Error {
   constructor(
     message: string,
-    public readonly status: number,
+    public readonly status: number
   ) {
     super(message);
     this.name = "DocumentReviewError";
@@ -73,7 +72,9 @@ export async function reviewDocumentCore(params: {
   const { adminDb } = await import("@/lib/firebase/admin");
   if (!adminDb) throw new DocumentReviewError("サーバー設定エラー", 500);
 
-  const documentSnap = await adminDb.doc(`documents/${params.documentId}`).get();
+  const documentSnap = await adminDb
+    .doc(`documents/${params.documentId}`)
+    .get();
   if (!documentSnap.exists) {
     throw new DocumentReviewError("書類が見つかりません", 404);
   }
@@ -99,7 +100,7 @@ export async function reviewDocumentCore(params: {
       const universityData = universitySnap.data()!;
       const faculty = Array.isArray(universityData.faculties)
         ? universityData.faculties.find(
-            (item: { id?: string }) => item.id === facultyId,
+            (item: { id?: string }) => item.id === facultyId
           )
         : undefined;
       if (typeof faculty?.admissionPolicy === "string") {
@@ -156,6 +157,22 @@ export async function reviewDocumentCore(params: {
   };
 
   /**
+   * APとの対応表は別の呼び出しで、本体の添削と並列に走らせる（待ち時間を足さない）。
+   * 失敗しても null が返るだけで、添削そのものは返す。
+   */
+  const apMapPromise = hasAdmissionPolicy
+    ? judgeApMap({
+        client,
+        model: reviewModel,
+        admissionPolicy,
+        content,
+        documentType: documentData.type ?? "出願書類",
+        universityName: documentData.universityName ?? "未指定",
+        facultyName: documentData.facultyName ?? "未指定",
+      })
+    : Promise.resolve(null);
+
+  /**
    * messages.parse は max_tokens を thinking と本文で共有する。
    *
    * 志望理由書は claude-sonnet-5 なので拡張思考が効く。effort 既定だと実測で
@@ -208,7 +225,7 @@ ${content}
       });
       throw new DocumentReviewError(
         "AI添削の結果を受け取れませんでした。もう一度実行してください",
-        502,
+        502
       );
     });
 
@@ -225,7 +242,7 @@ ${content}
     });
     throw new DocumentReviewError(
       "添削結果が長くなりすぎて途中で終了しました。時間をおいて再実行してください",
-      502,
+      502
     );
   }
   if (!response.parsed_output) {
@@ -238,10 +255,11 @@ ${content}
   }
 
   const parsed = response.parsed_output;
+  const apMap = await apMapPromise;
   if (hasAdmissionPolicy && parsed.apAlignmentScore === null) {
     throw new DocumentReviewError(
       "AP合致度の評価結果を検証できませんでした",
-      502,
+      502
     );
   }
 
@@ -266,7 +284,7 @@ ${content}
     improvements: parsed.improvements
       .slice(0, DISPLAY_MAX_IMPROVEMENTS)
       .map((item) =>
-        [item.location, item.problem, item.action].filter(Boolean).join(" / "),
+        [item.location, item.problem, item.action].filter(Boolean).join(" / ")
       ),
     improvementDetails: parsed.improvements
       .slice(0, DISPLAY_MAX_IMPROVEMENTS)
@@ -298,9 +316,18 @@ ${content}
         (c) =>
           c.original.length > 0 &&
           content.includes(c.original) &&
-          c.original !== c.suggestion,
+          c.original !== c.suggestion
       )
       .slice(0, DISPLAY_MAX_CORRECTIONS),
+    apMap,
+    ...(apMap
+      ? {
+          apMapMetadata: {
+            ...AI_PROMPT_VERSIONS.documentApMap,
+            model: reviewModel,
+          },
+        }
+      : {}),
     aiMetadata: {
       ...AI_PROMPT_VERSIONS.documentReview,
       model: reviewModel,
@@ -320,7 +347,7 @@ ${content}
         feedbackAt,
         updatedAt: feedbackAt,
       },
-      { merge: true },
+      { merge: true }
     );
   } catch (err) {
     // 保存に失敗しても添削結果は返す（画面では見られる）

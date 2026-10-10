@@ -226,7 +226,27 @@ export interface DocumentFeedback {
   };
   /** 日本語の直し（赤ペン）。v4 で追加。旧データには無い */
   languageCorrections?: LanguageCorrection[];
+  /**
+   * APの要素ごとの対応（2026-10-11 追加）。旧データ・AP未取得・判定失敗は無いか null。
+   * 本体の添削とは別の呼び出しで作る（src/lib/documents/ap-map-judge.ts）
+   */
+  apMap?: DocumentApMapItem[] | null;
+  /** apMap を作った呼び出しの版とモデル */
+  apMapMetadata?: AiGenerationMetadata;
   aiMetadata?: AiGenerationMetadata;
+}
+
+/** APの要素1つと、本文がそれに応えているか */
+export interface DocumentApMapItem {
+  /** APが求めることの短い要約 */
+  element: string;
+  /** APからの引用 */
+  apQuote: string;
+  status: "met" | "partial" | "missing";
+  /** 本文からの引用。本文に完全一致しないものは保存時に null にする */
+  evidence: string | null;
+  /** 一部だけ・欠けているとき、何を書けば応えられるか */
+  advice: string | null;
 }
 
 export interface DocumentCreateRequest {

@@ -11,6 +11,8 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { DocumentReviewProgress } from "@/components/documents/DocumentReviewProgress";
 import { DocumentImprovements } from "@/components/documents/DocumentImprovements";
+import { DocumentReviewView } from "@/components/documents/DocumentReviewView";
+import { SegmentControl } from "@/components/shared/SegmentControl";
 import { DocumentTotalScoreCard } from "@/components/documents/DocumentTotalScore";
 import {
   Sheet,
@@ -152,6 +154,13 @@ export default function DocumentEditorPage() {
   const [titleDraft, setTitleDraft] = useState("");
   const [reviewing, setReviewing] = useState(false);
   const [feedback, setFeedback] = useState<DocumentFeedback | null>(null);
+  /**
+   * 添削した時点の本文。指摘の印はこちらに付ける（編集中の本文は動くので）。
+   * 版から拾った旧データのように、どの本文への添削か分からないときは null
+   */
+  const [reviewedContent, setReviewedContent] = useState<string | null>(null);
+  /** 本文の欄に出すもの。「添削を見る」は添削した本文に指摘の印を付けて出す */
+  const [editorView, setEditorView] = useState<"write" | "review">("write");
   const [showVersions, setShowVersions] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
   /**
@@ -170,7 +179,9 @@ export default function DocumentEditorPage() {
       const target = Array.from(
         document.querySelectorAll<HTMLElement>(`[data-tool="${tool}"]`)
       ).find((el) => el.offsetParent !== null);
-      const top = target ? Math.round(target.getBoundingClientRect().left) : null;
+      const top = target
+        ? Math.round(target.getBoundingClientRect().left)
+        : null;
       if (target && top === lastTop) {
         target.scrollIntoView({ block: "start" });
         return;
@@ -207,6 +218,9 @@ export default function DocumentEditorPage() {
         .reverse()
         .find((v) => v.feedback);
       setFeedback(data.feedback ?? latestWithFeedback?.feedback ?? null);
+      setReviewedContent(
+        data.feedback && data.feedbackContent ? data.feedbackContent : null
+      );
     } catch {
       setDoc(null);
     } finally {
@@ -317,6 +331,10 @@ export default function DocumentEditorPage() {
       if (res.ok) {
         const data = await res.json();
         setFeedback(data.feedback);
+        // 終わったらそのまま本文の上で指摘を読ませる
+        setReviewedContent(content);
+        setEditorView("review");
+        setToolsOpen(false);
       } else {
         const err = await res.json().catch(() => ({}));
         toast.error(err?.error || "AI添削に失敗しました");
@@ -402,9 +420,8 @@ export default function DocumentEditorPage() {
    * 案は書き換え案と同じ表示・同じ置き換え（前の本文は版に残る）を通る。
    */
   const [naturalizing, setNaturalizing] = useState(false);
-  const [naturalizeNotes, setNaturalizeNotes] = useState<NaturalizeNotes | null>(
-    null
-  );
+  const [naturalizeNotes, setNaturalizeNotes] =
+    useState<NaturalizeNotes | null>(null);
   async function handleNaturalize(style: DocumentProseStyle) {
     if (!doc || !content.trim()) return;
     setNaturalizing(true);
@@ -452,7 +469,8 @@ export default function DocumentEditorPage() {
    */
   function coachApplyMode(text: string): CoachApplyMode {
     if (selection && selection.end > selection.start) return "selection";
-    if (!content.trim() || text.length >= content.length * 0.6) return "replace";
+    if (!content.trim() || text.length >= content.length * 0.6)
+      return "replace";
     return selection ? "cursor" : "append";
   }
 
@@ -635,6 +653,27 @@ export default function DocumentEditorPage() {
     );
   }
 
+  const reviewWide =
+    editorView === "review" && !!feedback && reviewedContent !== null;
+  /** 本文の欄の「書く／添削を見る」。添削した本文が分かるときだけ切り替えを出す */
+  const reviewViewProps = {
+    view: editorView,
+    onViewChange: setEditorView,
+    reviewStale: reviewedContent !== null && reviewedContent !== content,
+    reviewView:
+      feedback && reviewedContent !== null ? (
+        <DocumentReviewView
+          reviewedText={reviewedContent}
+          feedback={feedback}
+          currentContent={content}
+          onApply={(next) => {
+            setContent(next);
+            toast.success("本文に入れました");
+          }}
+        />
+      ) : null,
+  };
+
   async function saveTitle() {
     setEditingTitle(false);
     const title = normalizeDocumentTitle(titleDraft);
@@ -746,6 +785,7 @@ export default function DocumentEditorPage() {
           saveStatus={saveStatus}
           lastSavedAt={lastSavedAt}
           onSelectionChange={(start, end) => setSelection({ start, end })}
+          {...reviewViewProps}
           /**
            * モバイルにも道具の入口を出す。以前はここにツールバーが無く、
            * バージョン履歴（＝過去の版に戻す操作）へ辿り着けなかった。
@@ -791,13 +831,17 @@ export default function DocumentEditorPage() {
           naturalizing={naturalizing}
           naturalizeNotes={naturalizeNotes}
           onNaturalize={handleNaturalize}
+          onShowInText={
+            reviewedContent !== null ? () => setEditorView("review") : undefined
+          }
         />
       </MobileSlideOverPanel>
 
       {/* Desktop layout: 左にAIコーチ、右にエディタ。AI添削などの道具は
           右のシートに畳み、書く場所を広く取る（3列は詰まりすぎた） */}
       <div className="hidden gap-6 lg:grid lg:grid-cols-3">
-        <div className="lg:h-[calc(100dvh-12rem)]">
+        {/* 添削を本文の上で読む間はコーチを畳み、本文と指摘を横に並べる幅を取る */}
+        <div className={reviewWide ? "hidden" : "lg:h-[calc(100dvh-12rem)]"}>
           <DocumentSectionCoachPanel
             frameworkType={doc?.type ?? "free"}
             focusedSection={coachSection}
@@ -821,7 +865,7 @@ export default function DocumentEditorPage() {
             }}
           />
         </div>
-        <div className="lg:col-span-2">
+        <div className={reviewWide ? "lg:col-span-3" : "lg:col-span-2"}>
           <EditorPanel
             content={content}
             setContent={setContent}
@@ -835,6 +879,7 @@ export default function DocumentEditorPage() {
             saveStatus={saveStatus}
             lastSavedAt={lastSavedAt}
             onSelectionChange={(start, end) => setSelection({ start, end })}
+            {...reviewViewProps}
             toolbar={
               <DocumentToolbar
                 onOpen={openTool}
@@ -882,6 +927,14 @@ export default function DocumentEditorPage() {
               naturalizing={naturalizing}
               naturalizeNotes={naturalizeNotes}
               onNaturalize={handleNaturalize}
+              onShowInText={
+                reviewedContent !== null
+                  ? () => {
+                      setEditorView("review");
+                      setToolsOpen(false);
+                    }
+                  : undefined
+              }
             />
           </div>
         </SheetContent>
@@ -935,6 +988,10 @@ function EditorPanel({
   lastSavedAt,
   toolbar,
   onSelectionChange,
+  view = "write",
+  onViewChange,
+  reviewView,
+  reviewStale = false,
 }: {
   content: string;
   setContent: (v: string) => void;
@@ -951,6 +1008,12 @@ function EditorPanel({
   toolbar?: React.ReactNode;
   /** 選択範囲・カーソル位置。AIコーチの候補を入れる場所に使う */
   onSelectionChange?: (start: number, end: number) => void;
+  view?: "write" | "review";
+  onViewChange?: (view: "write" | "review") => void;
+  /** 添削を本文の上で読む画面。添削が無いときは null（切り替えを出さない） */
+  reviewView?: React.ReactNode;
+  /** 添削の後に本文を書き換えたか */
+  reviewStale?: boolean;
 }) {
   // AIの書き換えや下書き復元で本文を丸ごと差し替えるため、
   // ブラウザ標準の取り消しでは戻れない。履歴をアプリ側で持つ
@@ -967,18 +1030,42 @@ function EditorPanel({
             canRedo={history.canRedo}
           />
         </div>
-        <textarea
-          className="bg-background focus:ring-ring min-h-[clamp(16rem,45dvh,28rem)] w-full resize-y rounded-md border p-3 text-base focus:ring-2 focus:outline-none lg:min-h-[400px] lg:text-sm"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          onSelect={(e) =>
-            onSelectionChange?.(
-              e.currentTarget.selectionStart,
-              e.currentTarget.selectionEnd
-            )
-          }
-          placeholder="書類の内容を入力してください..."
-        />
+        {reviewView && onViewChange && (
+          <div className="flex flex-wrap items-center gap-3">
+            <SegmentControl
+              size="sm"
+              value={view}
+              onChange={onViewChange}
+              options={[
+                { id: "write", label: "書く" },
+                { id: "review", label: "添削を見る" },
+              ]}
+            />
+            {view === "review" && reviewStale && (
+              <span className="text-muted-foreground text-xs">
+                添削後に書き換えあり
+              </span>
+            )}
+          </div>
+        )}
+        {reviewView && view === "review" ? (
+          <div className="min-h-[clamp(16rem,45dvh,28rem)] rounded-md border p-3 lg:min-h-[400px]">
+            {reviewView}
+          </div>
+        ) : (
+          <textarea
+            className="bg-background focus:ring-ring min-h-[clamp(16rem,45dvh,28rem)] w-full resize-y rounded-md border p-3 text-base focus:ring-2 focus:outline-none lg:min-h-[400px] lg:text-sm"
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            onSelect={(e) =>
+              onSelectionChange?.(
+                e.currentTarget.selectionStart,
+                e.currentTarget.selectionEnd
+              )
+            }
+            placeholder="書類の内容を入力してください..."
+          />
+        )}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           {/* 情報行: 文字数・保存状態（モバイルでは1段目、長い状態文でも横溢れしない） */}
           <div className="text-muted-foreground flex min-w-0 items-center gap-3 text-sm">
@@ -1088,6 +1175,7 @@ function ReviewPanel({
   naturalizing,
   naturalizeNotes,
   onNaturalize,
+  onShowInText,
 }: {
   feedback: DocumentFeedback | null;
   reviewing: boolean;
@@ -1117,6 +1205,8 @@ function ReviewPanel({
   /** 「自然な日本語に整える」の結果。あるとき、案はこちらのカードに出す */
   naturalizeNotes: NaturalizeNotes | null;
   onNaturalize: (style: DocumentProseStyle) => void;
+  /** 改善点・赤ペン・APとの対応を本文の上で見る。添削した本文が分かるときだけ */
+  onShowInText?: () => void;
 }) {
   /** 中身を開いている版。1つずつ開く */
   const [openVersionId, setOpenVersionId] = useState<string | null>(null);
@@ -1207,29 +1297,42 @@ function ReviewPanel({
                 </p>
               </div>
 
-              {(feedback.improvementDetails?.length ||
-                feedback.improvements.length) > 0 && (
+              {/* 改善点などは本文の上で読む（ここに同じものを二重に並べない） */}
+              {onShowInText ? (
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={onShowInText}
+                >
+                  本文で見る
+                </Button>
+              ) : (
                 <>
-                  <Separator />
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium">改善点</p>
-                    <DocumentImprovements
-                      improvements={feedback.improvements}
-                      details={feedback.improvementDetails}
-                    />
-                  </div>
-                </>
-              )}
+                  {(feedback.improvementDetails?.length ||
+                    feedback.improvements.length) > 0 && (
+                    <>
+                      <Separator />
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium">改善点</p>
+                        <DocumentImprovements
+                          improvements={feedback.improvements}
+                          details={feedback.improvementDetails}
+                        />
+                      </div>
+                    </>
+                  )}
 
-              {feedback.apSpecificNotes && (
-                <>
-                  <Separator />
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium">APに関する注意</p>
-                    <p className="text-muted-foreground text-sm">
-                      {feedback.apSpecificNotes}
-                    </p>
-                  </div>
+                  {feedback.apSpecificNotes && (
+                    <>
+                      <Separator />
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium">APに関する注意</p>
+                        <p className="text-muted-foreground text-sm">
+                          {feedback.apSpecificNotes}
+                        </p>
+                      </div>
+                    </>
+                  )}
                 </>
               )}
             </>
@@ -1493,9 +1596,7 @@ function DocumentToolbar({
   versionCount,
   commentCount,
 }: {
-  onOpen: (
-    target: DocumentToolKey
-  ) => void;
+  onOpen: (target: DocumentToolKey) => void;
   hasFeedback: boolean;
   versionCount: number;
   /** 先生からの範囲コメント件数。0なら出さない */
@@ -1656,22 +1757,22 @@ function NaturalizeCard({
         </p>
         <div className="flex items-center gap-2 text-sm">
           <span className="text-muted-foreground">文体</span>
-          {(Object.keys(DOCUMENT_PROSE_STYLE_LABELS) as DocumentProseStyle[]).map(
-            (s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => setStyle(s)}
-                className={`rounded-full border px-3 py-1 text-xs ${
-                  style === s
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "hover:bg-muted"
-                }`}
-              >
-                {DOCUMENT_PROSE_STYLE_LABELS[s]}
-              </button>
-            )
-          )}
+          {(
+            Object.keys(DOCUMENT_PROSE_STYLE_LABELS) as DocumentProseStyle[]
+          ).map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => setStyle(s)}
+              className={`rounded-full border px-3 py-1 text-xs ${
+                style === s
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "hover:bg-muted"
+              }`}
+            >
+              {DOCUMENT_PROSE_STYLE_LABELS[s]}
+            </button>
+          ))}
         </div>
         {!contentEmpty && (
           <div className="bg-muted/40 rounded-md p-2 text-xs">

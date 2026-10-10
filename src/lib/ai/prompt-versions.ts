@@ -324,6 +324,13 @@ export const AI_PROMPT_VERSIONS = {
     // output-v3: learningPlanScore と scoreEvidence.learningPlan を追加
     schemaVersion: "document-review-output-v3",
   },
+  documentApMap: {
+    // v1（2026-10-11）: APを要素に分け、本文が応えているかを要素ごとに判定する。
+    //     AP合致度が点数1つと自由文だけで、何を足せばよいかが分からなかった。
+    //     本体の添削スキーマには足さず、並列の別呼び出しにした（max_tokens の枠を守るため）。
+    promptVersion: "document-ap-map-v1",
+    schemaVersion: "document-ap-map-output-v1",
+  },
   statementDraft: {
     // v3: 活動実績を渡すようにした。以前は自己分析だけで書かせていたため、
     //     生徒が登録した具体的な場面・数値が下書きに一切入らなかった。
